@@ -1,6 +1,7 @@
 # QB64
 
-![githubstrip](https://user-images.githubusercontent.com/10699359/109433808-1026f580-79f1-11eb-9472-2d4180dff14c.png)
+![githubstrip](https://avatars.githubusercontent.com/u/104205737?s=200&v=4)
+
 
 QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows (XP and up), Linux and macOS.
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/QB64Team/qb64/issues)
@@ -56,10 +57,10 @@ Replacing `-c` with `-x` will compile without opening a separate compiler window
 
 <a name="Additional_Info"></a>
 # Additional Information
-More about QB64 at our wiki: https://wiki.qb64.org
+More about QB64 at our wiki: https://qb64phoenix.com/qb64wiki
 
-We have a community forum at: https://forum.qb64.org
+We have a community forum at: https://qb64phoenix.com/forum
 
-We tweet from [@QB64Team](https://twitter.com/QB64team)
+We don't currently tweet.  Sorry.
 
-Find us on Discord: https://discord.qb64.org
+Find us on Discord: https://discord.gg/8YsAZrN3qb
