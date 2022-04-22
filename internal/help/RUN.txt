@@ -1,0 +1,63 @@
+'''RUN''' is a control flow statement that clears and restarts the program currently in memory or executes another specified program.
+
+The multi-modular technique goes back to when QBasic and QuickBASIC had module size constraints. In QB64 it has been implemented so that that older code can still be compiled, though '''it is advisable to use single modules for a single project (not counting [[$INCLUDE]] libraries), for ease of sharing and also because the module size constraints no longer exist.'''
+
+
+
+{{PageSyntax}}
+:: '''RUN''' [{''line_number'' | ''filespec$''}] [''command_parameter(s)'']
+
+
+{{Parameters}}
+* ''line number'' specifies a line number in the main module code. 
+* An optional ''filespec'' specifies a program to load into memory and run. 
+: * BAS or EXE extensions are assumed to be the same as the calling module's extension, EXE or BAS (Qbasic only).
+: * ''file names specs'' with other extensions must use the full filename. No extension requires a dot.
+* In '''QB64''' ''command line parameters'' can follow the program file name and be read using the [[COMMAND$]] function later.
+
+
+''Usage:''
+* The starting [[line number]] MUST be one used in the main module code, even if RUN is called from within a SUB or FUNCTION.
+* If no line number is given the currently loaded program runs from the first executable line.
+* In '''QB64''' RUN can open any kind of executable program and provide case sensitive program specific parameters. 
+** Recommended practice to run external programs is to use [[SHELL]].
+* RUN closes all open files and closes the invoking program module before the called program starts.
+* RUN resets the [[RANDOMIZE]] sequence to the starting [[RND]] function value.
+* '''Note: Calling RUN repeatedly may cause a stack leak in QB64 if it is called from within a [[SUB]] or [[FUNCTION]]. Avoid when possible.'''
+
+
+''Example 1:'' Shows how RUN can reference multiple line numbers in the main module code. No line number executes first code line.
+{{CodeStart}} '' ''
+PRINT " A", " B", " C", " D"
+10 A = 1
+20 B = 2
+30 C = 3
+40 D = 4
+50 {{Cl|PRINT}} A, B, C, D
+60 {{Cl|IF...THEN|IF}} A = 0 {{Cl|THEN}} 70 {{Cl|ELSE}} {{Cl|RUN}} 20    'RUN clears all values
+70 {{Cl|IF...THEN|IF}} B = 0 {{Cl|THEN}} 80 {{Cl|ELSE}} {{Cl|RUN}} 30
+80 {{Cl|IF...THEN|IF}} C = 0 {{Cl|THEN}} 90 {{Cl|ELSE}} {{Cl|RUN}} 40
+90 {{Cl|IF...THEN|IF}} D = 0 {{Cl|THEN}} 100 {{Cl|ELSE}} {{Cl|RUN}} 50
+100 {{Cl|PRINT}}
+{{Cl|INPUT}} "Do you want to quit?(Y/N)", quit$
+{{Cl|IF...THEN|IF}} {{Cl|UCASE$}}(quit$) = "Y" {{Cl|THEN}} {{Cl|END}} {{Cl|ELSE}} {{Cl|RUN}}  'RUN without line number executes at first code line
+'' ''
+{{CodeEnd}} 
+{{OutputStart}}A       B       C       D
+1       2       3       4
+0       2       3       4
+0       0       3       4
+0       0       0       4
+0       0       0       0
+
+Do you want to quit?(Y/N)_
+{{OutputEnd}}
+
+
+''See also:'' 
+* [[CHAIN]], [[SHELL]]
+* [[COMMAND$]]
+
+
+{{PageNavigation}}
+<

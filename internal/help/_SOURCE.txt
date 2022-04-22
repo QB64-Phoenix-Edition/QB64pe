@@ -1,0 +1,45 @@
+{{DISPLAYTITLE:_SOURCE}}
+The [[_SOURCE]] statement establishes the image SOURCE using a handle created by [[_LOADIMAGE]], [[_NEWIMAGE]] or [[_COPYIMAGE]].
+
+
+{{PageSyntax}}
+: [[_SOURCE]] {{Parameter|handle&amp;}}
+
+
+{{PageDescription}}
+* The handle is a [[LONG]] integer value from the [[_SOURCE (function)|_SOURCE]] function or a handle created by [[_NEWIMAGE]]. 
+* If the handle is designated as 0, it refers to the current [[SCREEN]] image.
+* A source image can only supply information to a program. [[POINT]] and [[GET (graphics statement)|GET]] might require a source other than the one currently active.
+
+
+{{PageExamples}}
+{{CodeStart}} '' ''
+{{Cl|SCREEN}} 13
+a = {{Cl|_NEWIMAGE}}(320,200,13)
+{{Cl|_DEST}} a
+{{Cl|PSET}} (100, 100), 15
+{{Cl|_SOURCE}} a
+{{Cl|_DEST}} 0
+{{Cl|PRINT}} {{Cl|POINT}}(100, 100) '' ''
+{{CodeEnd}}
+{{OutputStart}}
+ 15
+{{OutputEnd}}
+: ''Explanation:'' Create a new image with handle 'a', then use [[_DEST]] to define the image to draw on. Draw a pixel then set the source to 'a' and use [[POINT]] to show what color is in that position. White (15) and is the color set with [[PSET]]. Use [[_DEST]] 0 for the screen to display the results.
+
+
+===More examples===
+See the examples in:
+* [[Bitmaps]]
+* [[SAVEIMAGE]]
+* [[SaveIcon32]]
+
+
+{{PageSeeAlso}}
+* [[_DEST]]
+* [[_SOURCE (function)]]
+* [[POINT]], [[GET (graphics statement)]]
+
+
+{{PageNavigation}}
+<

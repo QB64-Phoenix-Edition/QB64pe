@@ -1,0 +1,34 @@
+The [[KILL]] statement deletes a file designated by a [[STRING]] value or variable.
+
+
+{{PageSyntax}}
+: [[KILL]] {{Parameter|fileSpec$}}
+
+
+* {{Parameter|fileSpec$}} is a literal or variable string path and filename. Wildcards * and ? can be used with caution.
+::'''*''' denotes one or more wildcard letters of a name or extension
+::'''?''' denotes one wildcard letter of a name or extension
+
+* {{Parameter|fileSpec$}} can include a path that can be either relative to the program's current location or absolute, from the root drive.
+* [[KILL]] cannot remove an [[OPEN]] file. The program must [[CLOSE]] it first.  
+* If the path or file does not exist, a "File not found" or "Path not found" [[ERROR Codes|error]] will result. See [[_FILEEXISTS]].
+* {{InlineCode}}[[SHELL]] "DEL /Q " + fileName${{InlineCodeEnd}} does the same without a prompt or verification for wildcard deletions.
+* {{InlineCode}}[[SHELL]] "DEL /P " + fileName${{InlineCodeEnd}} will ask for user verification. 
+* Cannot delete folders or directories. Use [[RMDIR]] to remove empty folders.
+* '''Warning: files deleted with [[KILL]] will not go to the Recycle Bin and they cannot be restored.'''
+
+
+{{PageExamples}} 
+{{CodeStart}}
+KILL "C:\Qbasic\data\2000data.dat"
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[RMDIR]], [[FILES]], [[SHELL]], [[OPEN]]
+* [[CHDIR]], [[MKDIR]], [[NAME]]
+* [[_FILEEXISTS]], [[_DIREXISTS]]
+
+
+{{PageNavigation}}
+<

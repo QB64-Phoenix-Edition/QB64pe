@@ -1,0 +1,239 @@
+The [[COLOR]] statement is used to change the foreground and background colors for printing text.
+
+{{PageSyntax}}
+: [[COLOR]] [{{Parameter|foreground&amp;}}][, {{Parameter|background&amp;}}]
+
+
+{{PageDescription}}
+* {{Parameter|background&amp;}} colors are available in all QB64 color SCREEN modes. 
+* [[SCREEN]] mode 10 has only 3 white foreground attributes including flashing. 
+* To change the {{Parameter|background&amp;}} color only, use a comma and the desired color. Ex: [[COLOR]] , {{Parameter|background&amp;}}
+* Graphic drawing statements like [[PSET]], [[PRESET]], [[LINE]], etc, also use the colors set by the [[COLOR]] statement if no color is passed when they are called.
+* The [[$COLOR]] metacommand adds named color constants for both text and 32-bit modes.
+
+
+==Screen Mode Attributes==
+* '''SCREEN 0''' {{Parameter|background&amp;}} colors 0 to 7 can be changed each text character without affecting other text. Use [[CLS]] after a background color statement to create a fullscreen background color. 64 [[DAC]] hues with 16 high intensity blinking foreground (16 to 31) color attributes. See [[_BLINK]].
+** See example 7 below for more SCREEN 0 background colors.
+* '''SCREEN 1''' has '''4 background color attributes''': 0 = black, 1 = blue, 2 = green, 3 = grey. White foreground color only.
+* '''SCREEN 2''' is '''monochrome''' with white forecolor and black background.
+* '''SCREEN 7''' can use 16 ([[DAC]]) colors with background colors. RGB settings can be changed in colors 0 to 7 using [[_PALETTECOLOR]]. 
+* '''SCREEN 8''' has 16 color attributes with 16 background colors. 
+* '''SCREEN 9''' can use up to 64 [[DAC]] color hues in 16 color attributes with background colors assigned to attribute 0 with a [[_PALETTECOLOR]] swap. RGB settings can be changed in colors 0 to 5 and 7 using [[_PALETTECOLOR]].
+* '''SCREEN 10''' has '''only 4 color attributes''' with black background. COLOR 0 = black, 1 = grey, 2 = flash white and 3 = bright white.
+* '''SCREEN 11''' is '''monochrome''' with white forecolor and a black background.
+* '''SCREEN 12''' can use 16 color attributes with a black background. 256K possible RGB color hues. Background colors can be used with QB64.
+* '''SCREEN 13''' can use 256 color attributes with a black background. 256K possible RGB hues.
+* [[PALETTE]] swaps can be made in SCREEN 7 and 9 only. Those screens were [[DAC]] screen modes in QBasic.
+* [[_DEST]] can be used to set the destination page or image to color using '''QB64'''.
+* [[_DEFAULTCOLOR]] returns the current color being used on an image or screen page handle.
+
+
+===24/32-Bit colors using QB64===
+* Pixel color intensities for red, green, blue and alpha range from 0 to 255 when used with [[_RGB]], [[_RGBA]], [[_RGB32]] and [[RGBA32]].
+* Combined RGB function values returned are [[LONG]] values. '''Blue intensity values may be cut off using [[SINGLE]] variables.'''
+* [[_ALPHA]] transparency values can range from 0 as transparent up to 255 which is fully opaque. 
+* [[_CLEARCOLOR]] can also be used to set a color as transparent.
+* Colors can be mixed by using [[_BLEND]] (default) in 32-bit screen modes. [[_DONTBLEND]] disables blending.
+* '''NOTE: Default 32-bit backgrounds are clear black or [[_RGBA]](0, 0, 0, 0). Use [[CLS]] to make the black opaque.'''
+
+&lt;p style="text-align: center">([[#toc|Return to Table of Contents]])&lt;/p>
+
+==RGB Palette Intensities==
+RGB intensity values can be converted to hexadecimal values to create the [[LONG]] [[_PALETTECOLOR]] value in non-32-bit screens:
+{{CodeStart}} '' ''
+{{Cl|SCREEN}} 12
+alpha$ = "FF" 'solid alpha colors only
+{{Cl|OUT}} {{Cl|&amp;H}}3C8, 0: {{Cl|OUT}} {{Cl|&amp;H}}3C9, 0: {{Cl|OUT}} {{Cl|&amp;H}}3C9, 0: {{Cl|OUT}} {{Cl|&amp;H}}3C9, 20 'set black background to dark blue
+{{Cl|PRINT}} "Attribute = Hex value      Red          Green         Blue "
+{{Cl|PRINT}}
+{{Cl|COLOR}} 7 
+{{Cl|FOR...NEXT|FOR}} attribute = 0 {{Cl|TO}} 15
+  {{Cl|OUT}} {{Cl|&amp;H}}3C7, attribute 'set color attribute to read
+  red$ = {{Cl|HEX$}}({{Cl|INP}}({{Cl|&amp;H}}3C9) * 4) 'convert port setting to 32 bit values
+  grn$ = {{Cl|HEX$}}({{Cl|INP}}({{Cl|&amp;H}}3C9) * 4)
+  blu$ = {{Cl|HEX$}}({{Cl|INP}}({{Cl|&amp;H}}3C9) * 4)
+  {{Cl|IF...THEN|IF}} {{Cl|LEN}}(red$) = 1 {{Cl|THEN}} red$ = "0" + red$ '2 hex digits required
+  {{Cl|IF...THEN|IF}} {{Cl|LEN}}(grn$) = 1 {{Cl|THEN}} grn$ = "0" + grn$ 'for low or zero hex values
+  {{Cl|IF...THEN|IF}} {{Cl|LEN}}(blu$) = 1 {{Cl|THEN}} blu$ = "0" + blu$
+  hex32$ = "{{Cl|&amp;H}}" + alpha$ + red$ + grn$ + blu$
+  {{Cl|_PALETTECOLOR}} attribute, {{Cl|VAL}}(hex32$) 'VAL converts hex string to a LONG 32 bit value
+  {{Cl|IF...THEN|IF}} attribute {{Cl|THEN}} {{Cl|COLOR}} attribute 'exclude black color print
+  {{Cl|PRINT}} "{{Cl|COLOR}}" + {{Cl|STR$}}(attribute) + " = " + hex32$, red$, grn$, blu$ 'returns closest attribute
+{{Cl|NEXT}} '' ''
+{{CodeEnd}}
+{{OutputStart}}Attribute  Hex value      Red        Green       Blue 
+
+{{text|COLOR 0 &lt;nowiki>=&lt;/nowiki> &amp;HFF000050       00         00         50|#A8A8A8}}
+{{text|COLOR 1 &lt;nowiki>=&lt;/nowiki> &amp;HFF0000A8       00         00         A8|#0050A8}}
+{{text|COLOR 2 &lt;nowiki>=&lt;/nowiki> &amp;HFF00A800       00         A8         00|#00A800}}
+{{text|COLOR 3 &lt;nowiki>=&lt;/nowiki> &amp;HFF00A8A8       00         A8         A8|#00A8A8}}
+{{text|COLOR 4 &lt;nowiki>=&lt;/nowiki> &amp;HFFA80000       A8         00         00|#A80000}}
+{{text|COLOR 5 &lt;nowiki>=&lt;/nowiki> &amp;HFFA800A8       A8         00         A8|#A800A8}}
+{{text|COLOR 6 &lt;nowiki>=&lt;/nowiki> &amp;HFFA85400       A8         54         00|#A85400}}
+{{text|COLOR 7 &lt;nowiki>=&lt;/nowiki> &amp;HFFA8A8A8       A8         A8         A8|#A8A8A8}}
+{{text|COLOR 8 &lt;nowiki>=&lt;/nowiki> &amp;HFF545454       54         54         54|#545454}}
+{{text|COLOR 9 &lt;nowiki>=&lt;/nowiki> &amp;HFF5454FC       54         54         FC|#5454FC}}
+{{text|COLOR 10 &lt;nowiki>=&lt;/nowiki> &amp;HFF54FC54      54         FC         54|#54FC54}}
+{{text|COLOR 11 &lt;nowiki>=&lt;/nowiki> &amp;HFF5454FC      54         FC         FC|#54FCFC}}
+{{text|COLOR 12 &lt;nowiki>=&lt;/nowiki> &amp;HFFFC5454      FC         54         54|#FC5454}}
+{{text|COLOR 13 &lt;nowiki>=&lt;/nowiki> &amp;HFFFC54FC      FC         54         FC|#FC54FC}}
+{{text|COLOR 14 &lt;nowiki>=&lt;/nowiki> &amp;HFFFCFC54      FC         FC         54|#FCFC54}}
+{{text|COLOR 15 &lt;nowiki>=&lt;/nowiki> &amp;HFFFCFCFC      FC         FC         FC|#FCFCFC}}
+{{OutputEnd}}
+:''Explanation:'' The RGB intensity values are multiplied by 4 to get the [[_RGB]] intensity values as [[HEX$|hexadecimal]] values. The individual 2 digit [[HEX$]] intensity values can be added to "&amp;HFF" to make up the 32-bit hexadecimal string value necessary for [[VAL]] to return to [[_PALETTECOLOR]]. The statement is only included in the example to show how that can be done with any 32-bit color value.
+:'''Note:''' Black has a blue hex value of 50 due to the [[OUT]] background color setting which makes it dark blue.
+
+
+===Reading and setting color port intensities using [[INP]] and [[OUT]]===
+* Legacy code may use [[INP]] and [[OUT]] to read or set color port intensities. '''QB64''' emulates VGA memory to maintain compatibility.
+* The same can be achieved using [[_PALETTECOLOR]] ('''recommended practice''').
+
+:'''{{text|OUT &amp;H3C7, attribute|green}}''' 'Set port to read RGB settings with:
+:'''{{text|color_intensity &lt;nowiki>=&lt;/nowiki> INP(&amp;H3C9)|green}}''' 'reads present intensity setting
+ 
+:'''{{text|OUT &amp;H3C8, attribute|green}}''' 'Set port to write RGB settings with:
+:'''{{text|OUT &amp;H3C9, color_intensity|green}}''' 'writes new intensity setting
+
+* After every 3 reads or writes, changes to next higher color attribute. Loops can be used to set more than one attribute's intensities.
+* Color port setting of red, green and blue intensities can be done in ascending order.
+* Color port attribute intensity values range from 0 to 63 (1/4 of the 32-bit values) in QBasic's legacy 4 and 8 bit screen modes.
+
+&lt;p style="text-align: center">([[#toc|Return to Table of Contents]])&lt;/p>
+
+
+{{PageExamples}}
+''Example 1:'' Reading the default RGB color settings of color attribute 15.
+{{CodeStart}} '' ''
+ {{Cl|OUT}} &amp;H3C7, 15
+ red% = {{Cl|INP}}(&amp;H3C9)
+ green% = {{Cl|INP}}(&amp;H3C9)
+ blue% = {{Cl|INP}}(&amp;H3C9)
+ {{Cl|PRINT}} red%, green%, blue% '' ''
+{{CodeEnd}}
+
+{{OutputStart}}
+ 63       63       63
+{{OutputEnd}}
+
+
+''Example 2:'' Changing the color settings of attribute 0 (the background) to dark blue in [[SCREEN]]s 12 or 13.
+{{CodeStart}} '' ''
+{{Cl|SCREEN}} 12
+{{Cl|OUT}} {{Cl|&amp;H}}3C8, 0          'set color port attribute to write
+{{Cl|OUT}} {{Cl|&amp;H}}3C9, 0          'red intensity
+{{Cl|OUT}} {{Cl|&amp;H}}3C9, 0          'green intensity
+{{Cl|OUT}} {{Cl|&amp;H}}3C9, 30         'blue intensity 
+
+{{Cl|OUT}} {{Cl|&amp;H}}3C7, 0
+{{Cl|PRINT}} {{Cl|INP}}({{Cl|&amp;H}}3C9); {{Cl|INP}}({{Cl|&amp;H}}3C9); {{Cl|INP}}({{Cl|&amp;H}}3C9)
+{{Cl|END}}'' ''
+{{CodeEnd}}
+{{CodeStart}} 0  0  30 {{CodeEnd}}
+
+
+''Example 3:'' Printing in fullscreen SCREEN 0 mode with a color background under the text only.
+{{CodeStart}} '' ''
+{{Cl|SCREEN}} 0: {{Cl|_FULLSCREEN}} ' used for fullscreen instead of window
+{{Cl|COLOR}} 30, 6: {{Cl|LOCATE}} 12, 4: {{Cl|PRINT}} "Hello!" '' ''
+{{CodeEnd}}
+:''Result:'' Hello! is printed in flashing high intensity yellow with brown background behind text only when in Qbasic [[_FULLSCREEN|fullscreen]].
+
+
+''Example 4:'' Using [[CLS]] after setting the background color in SCREEN 0 to make the color cover the entire screen.
+{{CodeStart}} '' ''
+{{Cl|SCREEN}} 0: {{Cl|_FULLSCREEN}}
+{{Cl|COLOR}} , 7: {{Cl|CLS}}
+{{Cl|COLOR}} 9: {{Cl|PRINT}} "Hello" '' ''
+{{CodeEnd}}
+{{TextStart}}{{text|Hello|blue}}{{TextEnd}}
+:''Result:'' The blue word Hello is printed to a totally grey background in [[_FULLSCREEN|fullscreen]].
+
+
+''Example 5:'' Using a different foreground color for each letter:
+{{CodeStart}} '' ''
+{{Cl|SCREEN}} 0
+{{Cl|COLOR}} 1: {{Cl|PRINT}} "H";
+{{Cl|COLOR}} 3: {{Cl|PRINT}} "E";
+{{Cl|COLOR}} 4: {{Cl|PRINT}} "L";
+{{Cl|COLOR}} 5: {{Cl|PRINT}} "L";
+{{Cl|COLOR}} 6: {{Cl|PRINT}} "O"
+{{Cl|COLOR}} 9: {{Cl|PRINT}} "W";
+{{Cl|COLOR}} 11: {{Cl|PRINT}} "O";
+{{Cl|COLOR}} 12: {{Cl|PRINT}} "R";
+{{Cl|COLOR}} 13: {{Cl|PRINT}} "L";
+{{Cl|COLOR}} 14: {{Cl|PRINT}} "D" '' ''
+{{CodeEnd}}
+
+{{OutputStart}}
+{{text|H|darkblue}}{{text|E|darkcyan}}{{text|L|darkred}}{{text|L|darkmagenta}}{{text|O|goldenrod}}
+{{text|W|blue}}{{text|O|cyan}}{{text|R|red}}{{text|L|magenta}}{{text|D|yellow}}
+{{OutputEnd}}
+
+
+''Example 6:'' Doing the same as Example 5 but in only a few lines:
+{{CodeStart}} '' ''
+{{Cl|SCREEN (statement)|SCREEN}} 0
+text$ = "HelloWorld"
+{{Cl|FOR...NEXT|FOR}} textpos = 1 {{Cl|TO}} {{Cl|LEN}}(text$)
+  {{Cl|COLOR}} textpos
+  {{Cl|IF...THEN|IF}} textpos &lt;> 5 {{Cl|THEN}} {{Cl|PRINT}} {{Cl|MID$}}(text$, textpos, 1);
+  {{Cl|IF...THEN|IF}} textpos = 5 {{Cl|THEN}} {{Cl|PRINT}} {{Cl|MID$}}(text$, textpos, 1)    'start print on next row
+{{Cl|NEXT}}
+
+{{CodeEnd}}
+{{OutputStart}}
+{{text|H|darkblue}}{{text|e|darkgreen}}{{text|l|darkcyan}}{{text|l|darkred}}{{text|o|darkmagenta}}
+{{text|W|goldenrod}}{{text|o|lightgrey}}{{text|r|dimgray}}{{text|l|blue}}{{text|d|lime}} '' ''
+{{OutputEnd}}
+: ''Explanation:''Semicolon(;) means that the next PRINT happens on the same line, we don't want that when it comes to position 5 so when it is at position 5 the next PRINT will move to the next line (when it isn't at position 5 we want it to continue printing the letter side-by-side on the same line though).
+
+
+''Example 7:'' Since SCREEN 0 only uses background colors 0 to 7 by default, use [[_PALETTECOLOR]] to change color intensities of color 0.
+{{CodeStart}} '' ''
+{{Cl|_PALETTECOLOR}} 0, _RGB32(255, 255, 255) 'change color 0 intensity
+{{Cl|_PALETTECOLOR}} 8, _RGB32(0, 0, 0) 'change color 8 intensity
+
+{{Cl|COLOR}} 8: {{Cl|PRINT}} "Black on bright white!" '' ''
+{{CodeEnd}}
+{{WhiteStart}}'''{{text|Black on bright white!|#000000}}'''
+{{WhiteEnd}}
+----
+: ''Explanation:'' Since QB64 does not have [[DAC]] [[SCREEN]] 0 limitations, changing color intensities for custom background colors is possible.
+
+
+''Example 8:'' Changing light gray text in [[SCREEN]] 0 to a 32 bit custom color using a [[LONG]] HTML hexadecimal value:
+{{CodeStart}} '' ''
+{{Cl|COLOR}} 7
+{{Cl|PRINT}} "Color 7 is gray"
+K$ = {{Cl|INPUT$}}(1)
+{{Cl|_PALETTECOLOR}} 7, {{Cl|&amp;H}}FFDAA520 ' FF alpha makes the color translucent
+{{Cl|PRINT}} "Color 7 is now Goldenrod in {{Cl|SCREEN}} 0! '' ''
+{{CodeEnd}}
+{{OutputStart}}
+{{text|Color 7 is gray|#A8A8A8}}
+{{text|Color 7 is now Goldenrod in SCREEN 0!|#DAA520}}
+{{OutputEnd}}
+: ''Explanation:'' [[_RGB32]] could be used to make custom 32 bit colors or HTML values could be used after &amp;HFF for solid colors.
+&lt;p style="text-align: center">([[#toc|Return to Table of Contents]])&lt;/p>
+
+
+{{PageSeeAlso}}
+* [[$COLOR]] (metacommand)
+* [[_RGB]], [[_RGBA]], [[_RGB32]], [[RGBA32]].
+* [[_RED]], [[_GREEN]], [[_BLUE]]
+* [[_RED32]], [[_GREEN32]], [[_BLUE32]]
+* [[_ALPHA]], [[_ALPHA32]], [[_CLEARCOLOR]]
+* [[PRINT]], [[LOCATE]], [[SCREEN]]
+* [[POINT]], [[SCREEN (function)]]
+* [[OUT]], [[INP]], [[PALETTE]]
+* [[_BLINK]]
+* [[_DEFAULTCOLOR]]
+* [[_BACKGROUNDCOLOR]]
+* [[_PALETTECOLOR]]
+* [[Windows_Libraries#Color_Dialog_Box|Color Dialog Box]]
+* [http://www.w3schools.com/html/html_colornames.asp Hexadecimal Color Values]
+
+
+{{PageNavigation}}
+<

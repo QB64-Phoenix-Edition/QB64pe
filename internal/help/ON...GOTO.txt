@@ -1,0 +1,50 @@
+[[ON...GOTO]] is a control-flow statement that branches to a line or label in a list depending on a numerical expression.
+
+
+{{PageSyntax}}
+: '''ON''' {{Parameter|numericalExpression}} [[GOTO]] {{Parameter|labelOrNumber}}[,{{Parameter|labelOrNumber}}][,...]
+
+
+{{PageDescription}}
+* {{Parameter|numericalExpression}} represents the ''line'' or ''label'' that the program should branch to: 1 branches to the first line or label in the list, 2 branches to the second, etc.
+* The procedure must be used after the number value is determined or in a loop to monitor current user events.
+* '''Note:''' [[SELECT CASE]] provides a much more convenient way of doing this task.
+
+
+==QBasic/QuickBASIC==
+* In QuickBASIC 4.5 the list could contain a maximum of 60 line numbers or labels, while '''QB64''' has no limit.
+
+
+{{PageExamples}}
+''Example:'' Changing the program flow when a value is not 0.
+{{CodeStart}} '' ''
+{{Cl|CLS}}
+a = 2
+{{Cl|ON...GOTO|ON a GOTO}} hello, hereweare, 143
+{{Cl|END}}
+hello:
+{{Cl|PRINT}} "you don't get to see this!"
+{{Cl|END}}
+hereweare:
+PRINT "And here we are..."
+END
+143
+PRINT "you don't get to see this neither..."
+END '' ''
+{{CodeEnd}}
+{{OutputStart}}
+And here we are...
+{{OutputEnd}}
+
+''Explanation:'' Since ''a'' equals 2 it goes to the second item in the list (hereweare) and branches to there. Try changing ''a' to 1 or 3.
+
+
+{{PageSeeAlso}}
+* [[ON...GOSUB]]
+* [[GOTO]]
+* [[GOSUB]]
+* [[SELECT CASE]]
+
+
+{{PageNavigation}}
+<

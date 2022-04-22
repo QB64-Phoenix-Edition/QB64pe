@@ -1,0 +1,80 @@
+The [[ON_TIMER(n)|ON TIMER]] statement sets up a timed event to be repeated at specified intervals throughout a program when enabled.
+
+
+{{PageSyntax}} 
+: '''ON TIMER'''({{Parameter|seconds%}}) [[GOSUB]] {{{Parameter|lineLabel}}|{{Parameter|lineNumber}}}
+: '''ON TIMER'''([{{Parameter|number%}},] {{Parameter|seconds!}}) { [[SUB]]procedure | [[GOSUB]] {{{Parameter|lineLabel}}|{{Parameter|lineNumber}}} }
+
+
+{{PageDescription}}
+===Legacy syntax===
+* In the first syntax, the [[INTEGER]] {{Parameter|seconds%}} parameter can be from 1 to 86400 seconds (one day).
+* A [[TIMER (statement)|TIMER ON]] statement must follow an '''ON TIMER''' event setup to initiate it.
+* [[TIMER (statement)|TIMER STOP]] disables timer events but remembers previous events when enabled again by a [[TIMER (statement)|TIMER ON]] statement, and the recorded events may be executed immediately if a timer event has occurred. 
+* [[TIMER (statement)|TIMER OFF]] disables timer event trapping. Events will not be remembered in a subsequent [[TIMER (statement)|TIMER ON]] statement.
+* '''ON TIMER''' events will interrupt a [[SLEEP]] call and [[RETURN]] to running program procedures.
+* Only one TIMER event can be set at a time using this legacy syntax and all TIMER code must be in the main code, as it uses [[GOSUB]].
+
+
+===QB64 syntax===
+* '''QB64''' can use multiple numbered timer events and [[SINGLE]] floating point second values down to one millisecond (.001).
+* The '''TIMER''' {{Parameter|number%}} must be obtained from the [[_FREETIMER]] function. Store _FREETIMER numbers in a variable or an array to be able to reference them later.
+* If the '''TIMER''' number is omitted or {{InlineCode}}'''ON TIMER'''(0, {{Parameter|seconds!}}){{InlineCodeEnd}} is used, then the TIMER used is the ''base TIMER'' (same as in the legacy syntax above).
+* [[SUB]] procedures are allowed to be referenced, but [[CALL]] must not be used. 
+* '''[[SUB]] parameter values are passed by value and should be [[SHARED]] or literal values.'''
+* Specific '''TIMER''' events can be turned on, suspended, turned off or freed using [[TIMER (statement)|TIMER(n)]] ON, STOP, OFF or FREE.
+* Use '''TIMER(n) FREE''' to release a timer event after it has been turned off or is no longer used.
+** The ''base TIMER'' cannot be freed.
+* '''QB64''' allows TIMER statements to also be inside of SUB and FUNCTION procedures.
+* '''ON TIMER''' events will interrupt a [[SLEEP]] call and [[RETURN]] to running program procedures.
+* [[$CHECKING]]:OFF can disable all QB64 event checking. '''Setting $CHECKING:OFF is only designed for 100% stable, error-less sections of code, where every CPU cycle saved counts.'''
+
+
+==QB64 Timing Alternatives==
+* The [[TIMER]] function can be used to find timed intervals down to 1 millisecond(.001) accuracy.
+* The [[_DELAY]] statement can be used to delay program execution for intervals down to milliseconds.
+* [[_LIMIT]] can slow down loops to a specified number of frames per second. This can also alleviate a program's CPU usage.
+
+
+{{PageExamples}}
+''Example:'' Using a numbered TIMER to check the mouse button press status in '''QB64'''.
+{{CodeStart}} '' ''
+{{Cl|DIM}} {{Cl|SHARED}} Button {{Cl|AS}} {{Cl|LONG}}    'share variable value with Sub
+
+t1 = _{{Cl|TIMER (statement)|FREE}}{{Cl|TIMER}}              'get a timer number from _FREETIMER ONLY!
+{{Cl|ON TIMER(n)|ON TIMER}}(t1, .05) MouseClick
+{{Cl|TIMER}}(t1) ON
+
+DO
+  {{Cl|LOCATE}} 1, 1
+  {{Cl|IF...THEN|IF}} Button {{Cl|THEN}}
+    {{Cl|PRINT}} "Mouse button"; Button; "is pressed.";
+  {{Cl|ELSE}} {{Cl|PRINT}} {{Cl|SPACE$}}(70)
+  {{Cl|END IF}}
+  {{Cl|_DISPLAY}}
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} = {{Cl|CHR$}}(27)
+{{Cl|TIMER}}(t1) {{Cl|OFF}}
+{{Cl|TIMER}}(t1) {{Cl|TIMER (statement)|FREE}} 'release timer
+{{Cl|END}}
+
+{{Cl|SUB}} MouseClick
+{{Cl|DO...LOOP|DO}} {{Cl|WHILE}} {{Cl|_MOUSEINPUT}}
+  {{Cl|IF...THEN|IF}} {{Cl|_MOUSEBUTTON}}(1) {{Cl|THEN}}
+    {{Cl|COLOR}} 10: Button = 1
+  {{Cl|ELSEIF}} {{Cl|_MOUSEBUTTON}}(2) {{Cl|THEN}}
+    {{Cl|COLOR}} 12: Button = 2
+  {{Cl|ELSE}} Button = 0
+  {{Cl|END IF}}
+{{Cl|LOOP}}
+{{Cl|END SUB}} '' ''
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[TIMER]], [[_FREETIMER]]
+* [[TIMER (statement)]], [[_DELAY]], [[_LIMIT]]
+* [[$CHECKING]] {{text|(QB64 [[Metacommand]])}}
+
+
+{{PageNavigation}}
+<

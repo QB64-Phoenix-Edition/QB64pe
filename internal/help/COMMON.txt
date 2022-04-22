@@ -1,0 +1,26 @@
+[[COMMON]] shares common variable values with other linked or [[CHAIN]]ed modules.
+
+==Legacy support==
+* The multi-modular technique goes back to when QBasic and QuickBASIC had module size constraints. In QB64 [[COMMON]] has been implemented so that that older code can still be compiled, though '''it is advisable to use single modules for a single project (not counting [[$INCLUDE]] libraries), for ease of sharing and also because the module size constraints no longer exist.'''
+
+
+{{PageSyntax}}
+: [[COMMON]] [SHARED] variableList 
+
+
+{{PageDescription}}
+* COMMON must be called before any executable statements.
+* [[SHARED]] makes the variables shared within [[SUB]] and [[FUNCTION]] procedures within that module.
+* variableList is the list of common variables made available separated by commas.
+* Remember to keep the variable type ''order'' the same in all modules, as the variables names don't matter.
+* [[COMMON SHARED]] is most commonly used to share the variables with subs and functions of that module.
+* '''Note: Values assigned to shared variables used as procedure call parameters will not be passed to other procedures. The shared variable value must be assigned inside of the [[SUB]] or [[FUNCTION]] procedure to be passed.'''
+
+
+{{PageSeeAlso}}
+* [[COMMON SHARED]], [[CHAIN]]
+* [[DIM]], [[REDIM]], [[SHARED]]
+* [[DEFSTR]], [[DEFLNG]], [[DEFINT]], [[DEFSNG]], [[DEFDBL]]
+
+{{PageNavigation}}
+<

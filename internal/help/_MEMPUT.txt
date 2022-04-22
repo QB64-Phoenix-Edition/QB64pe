@@ -1,0 +1,44 @@
+{{DISPLAYTITLE:_MEMPUT}}
+The [[_MEMPUT]] statement writes data to a portion of a designated memory block at an [[OFFSET]] position.
+
+
+{{PageSyntax}}
+: [[_MEMPUT]] {{Parameter|memoryBlock}}, {{Parameter|bytePosition}}, {{Parameter|sourceVariable}} [AS {{Parameter|type}}]
+
+
+{{Parameters}}
+* {{Parameter|memoryBlock}} is a [[_MEM]] variable type memory block name created by [[_MEMNEW]] or the [[_MEM (function)|_MEM]] function.
+* {{Parameter|bytePosition}} is the {{Parameter|memoryBlock}}.[[OFFSET]] start position plus any bytes needed to read specific values. 
+* The {{Parameter|sourceVariable}} type designates the size and {{Parameter|bytePosition}} it should be written to. It can be a variable, [[arrays|array]] or user defined type.
+* {{Parameter|bytePosition}} can be converted [[AS]] a specific variable ''[[TYPE|type]]'' before being written to the {{Parameter|memoryBlock}} as bytes.
+
+
+{{PageDescription}}
+* The _MEMPUT statement is similar to the [[PUT]] file statement, but {{Parameter|bytePosition}} is required.
+* The {{Parameter|memoryBlock}}.[[OFFSET]] returns the starting byte position of the block. Add bytes to move into the block.
+* The variable type held in the memory block can determine the next ''byte position'' to write a value. 
+* [[LEN]] can be used to determine the byte size of numerical or user defined variable [[type]]s regardless of the value held.
+* [[STRING]] values should be of a defined length. Variable length strings can actually move around in memory and not be found.
+
+
+{{PageDescription}}
+''Example:'' _MEMPUT can be used just like [[POKE]] without [[DEF SEG]].
+{{CodeStart}} '' ''
+{{Cl|DIM}} o {{Cl|AS}} {{Cl|_MEM}}
+o = {{Cl|_MEM (function)|_MEM}}(d&amp;)
+{{Cl|_MEMPUT}} o, o.OFFSET + 1, 3 {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|_BYTE}}  'POKE
+v = {{Cl|_MEMGET (function)|_MEMGET}}(o, o.OFFSET + 1, {{Cl|_UNSIGNED}} {{Cl|_BYTE}}) 'PEEK
+{{Cl|PRINT}} v 'prints 3
+{{Cl|PRINT}} d&amp; 'print 768 because the 2nd byte of d&amp; has been set to 3 or 3 * 256 '' ''
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[_MEMGET]], [[_MEMGET (function)]]
+* [[_MEM]], [[_MEM (function)]]
+* [[_MEMIMAGE]], [[_MEMNEW]]
+* [[_MEMFREE]], [[_MEMCOPY]]
+
+
+{{PageNavigation}}
+<
