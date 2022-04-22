@@ -228,10 +228,10 @@ FUNCTION ide2 (ignore)
         COLOR 1, 7: _PRINTSTRING ((idewx - 8) / 2, idewy - 4), " Status "
         COLOR 15, 1
 
-        IF os$ = "LNX" THEN
-            _PRINTSTRING (2, idewy - 3), "Creating executable file named " + CHR$(34) + f$ + extension$ + CHR$(34) + "..."
-        ELSE
+        IF os$ = "WIN" THEN
             _PRINTSTRING (2, idewy - 3),  "Creating .EXE file named " + CHR$(34) + f$ + extension$ + CHR$(34) + "..."
+        ELSE
+            _PRINTSTRING (2, idewy - 3), "Creating executable file named " + CHR$(34) + f$ + extension$ + CHR$(34) + "..."
         END IF
 
         PCOPY 3, 0
