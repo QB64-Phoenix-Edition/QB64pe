@@ -16,7 +16,7 @@ QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compat
 3.  [Additional Info](#Additional_Info)
 
 # Installation <a name="Installation"></a>
-Download the appropriate package for your operating system over at https://github.com/QB64Team/qb64/releases.
+Download the appropriate package for your operating system over at https://github.com/QB64-Phoenix-Edition/QB64pe/releases/tag/v1.0alpha 
 
 <a name="Windows"></a>
 ## Windows
