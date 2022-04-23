@@ -5,7 +5,7 @@ The [[_CLEARCOLOR]] statement sets a specific color to be treated as transparent
 {{PageSyntax}}
 :[[_CLEARCOLOR]] {{{Parameter|color&amp;}}|_NONE}[, {{Parameter|Dest_Handle&amp;}}]
 
-{{Parameters}}
+{{PageParameters}}
 * In color modes using a palette, {{Parameter|color&amp;}} is the palette index of the new transparent color value or _NONE designates no clear colors.
 * If {{Parameter|color&amp;}} is not a valid palette index, an [[ERROR Codes|illegal function call]] error will occur.
 * In 32-bit color modes, {{Parameter|color&amp;}} is the [[_LONG]] color value of the new transparent color.
@@ -33,7 +33,6 @@ K$ = INPUT$(1)
 {{Cl|PRINT}} {{Cl|_CLEARCOLOR}}(img&amp;)           'displays closest clear color attribute
 {{Cl|END}} '' ''
 {{CodeEnd}}
-
 
 ''Example 2:'' Using a _CLEARCOLOR transparency with images created on a [[_NEWIMAGE]] page. Does not require an image file.
 {{CodeStart}}{{Cl|SCREEN (statement)|SCREEN}} {{Cl|_NEWIMAGE}}(512, 384, 32) ' screen uses handle value
@@ -80,7 +79,7 @@ DO
 {{Cl|LOOP}} {{Cl|UNTIL}} a&amp; = 0
 {{Cl|END}}
 {{CodeEnd}}
-:''Note:'' If the _CLEARCOLOR image background was not put onto a separate page, [[_SETALPHA]] would display it also.
+:''Note:'' If the _CLEARCOLOR background was not put onto a separate page, [[_SETALPHA]] would display it also.
 
 
 
@@ -92,4 +91,3 @@ DO
 
 
 {{PageNavigation}}
-<

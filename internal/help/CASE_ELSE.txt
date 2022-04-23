@@ -1,2 +1,62 @@
-#REDIRECT [[SELECT CASE]]
-<
+#REDIRECT [[SELECT CASE#allCASES]]
+
+[[CASE ELSE]] is used in a [[SELECT CASE]] procedure as an alternative if no other [[CASE]] statements are true. 
+
+
+{{PageDescription}}
+* [[CASE ELSE]] should be listed at the bottom of the case list as it will supersede any case statements after it.
+* Use it as a "safety net" or as an alternative for all values not covered in the [[CASE]] statements.
+
+
+{{PageExamples}}
+''Example 1:''
+{{CodeStart}}
+
+a = 100
+{{Cl|SELECT CASE}} a
+{{Cl|CASE}} {{Cl|IS}} &lt; 99: {{Cl|PRINT}} "a is &lt; 99"
+{{Cl|CASE}} 99: {{Cl|PRINT}} "a is 99"
+{{Cl|CASE}} {{Cl|IS}} > 100: {{Cl|PRINT}} "a is > 100"
+{{Cl|CASE ELSE}}
+{{Cl|PRINT}} "a is 100"
+{{Cl|END SELECT}}
+
+{{CodeEnd}}
+
+{{OutputStart}}
+
+a is 100
+
+{{OutputEnd}}
+
+
+''Example 2:''
+{{CodeStart}}
+
+a = 100
+{{Cl|SELECT CASE}} a
+{{Cl|CASE}} 10: {{Cl|PRINT}} "a is 10"
+{{Cl|CASE}} 20: {{Cl|PRINT}} "a is 20"
+{{Cl|CASE}} 30: {{Cl|PRINT}} "a is 30"
+{{Cl|CASE ELSE}}: {{Cl|PRINT}} "a is something other than 10, 20 and 30"
+{{Cl|END SELECT}}
+
+{{CodeEnd}}
+{{OutputStart}}
+
+a is something other than 10, 20 and 30
+
+
+{{OutputEnd}}
+
+
+
+
+
+
+{{PageSeeAlso}}
+*[[SELECT CASE]]
+*[[IF...THEN]], [[ELSE]]
+
+
+{{PageNavigation}}

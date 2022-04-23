@@ -5,7 +5,7 @@ The [[LOCATE]] statement locates the screen text row and column positions for a 
 : [[LOCATE]] [{{Parameter|row%}}][, {{Parameter|column%}}] [, {{Parameter|cursor%}}][, {{Parameter|cursorStart%}}, {{Parameter|cursorStop%}}]
 
 
-{{Parameters}}
+{{PageParameters}}
 * optional text {{Parameter|row%}} [[INTEGER]] values are from 1 to 25, 43 or 50 in [[SCREEN]] 0 and  25 in most other legacy graphic screen modes, except screens 11 and 12 which can have 30 or 60 rows.  
 * optional {{Parameter|column%}} [[INTEGER]] values are from 1 to 40 or 80 in [[SCREEN]] 0 and 80 in all other legacy screen modes.
 * optional {{Parameter|cursor%}} value can be 0 to turn displaying the cursor off or 1 to turn it on.
@@ -21,6 +21,7 @@ The [[LOCATE]] statement locates the screen text row and column positions for a 
 * When [[PRINT]]ing on the bottom 2 ''rows'', use a [[semicolon]] after the PRINT expression to avoid a screen roll.
 * If the {{Parameter|cursorStart%}} line is given, the {{Parameter|cursorStop%}} line must also be given. A wider range between them produces a taller cursor.
 * If you use LOCATE beyond the current number of rows in text mode, QB64 will try to adapt the screen instead of tossing an error.
+* When writing to the console, only the ''row'' and ''column'' arguments are used, all others are ignored. Furthermore, on non-Windows systems LOCATE statements that do not give both a ''row'' and ''column'' will be ignored entirely.
 
 
 {{PageExamples}}
@@ -53,4 +54,3 @@ LOOP '' ''
 
 
 {{PageNavigation}}
-<

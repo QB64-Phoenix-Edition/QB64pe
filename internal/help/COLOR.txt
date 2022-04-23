@@ -10,6 +10,8 @@ The [[COLOR]] statement is used to change the foreground and background colors f
 * To change the {{Parameter|background&amp;}} color only, use a comma and the desired color. Ex: [[COLOR]] , {{Parameter|background&amp;}}
 * Graphic drawing statements like [[PSET]], [[PRESET]], [[LINE]], etc, also use the colors set by the [[COLOR]] statement if no color is passed when they are called.
 * The [[$COLOR]] metacommand adds named color constants for both text and 32-bit modes.
+* [[COLOR]] works when outputting text to [[$CONSOLE]].
+** On macOS, colors in console mode will not match the VGA palette. See [https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit 8-bit ANSI colors]
 
 
 ==Screen Mode Attributes==
@@ -137,7 +139,7 @@ alpha$ = "FF" 'solid alpha colors only
 {{Cl|SCREEN}} 0: {{Cl|_FULLSCREEN}} ' used for fullscreen instead of window
 {{Cl|COLOR}} 30, 6: {{Cl|LOCATE}} 12, 4: {{Cl|PRINT}} "Hello!" '' ''
 {{CodeEnd}}
-:''Result:'' Hello! is printed in flashing high intensity yellow with brown background behind text only when in Qbasic [[_FULLSCREEN|fullscreen]].
+:''Result:'' Hello! is printed in flashing high intensity yellow with brown background behind text only when in QBasic [[_FULLSCREEN|fullscreen]].
 
 
 ''Example 4:'' Using [[CLS]] after setting the background color in SCREEN 0 to make the color cover the entire screen.
@@ -236,4 +238,3 @@ K$ = {{Cl|INPUT$}}(1)
 
 
 {{PageNavigation}}
-<

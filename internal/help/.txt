@@ -1,59 +1,43 @@
-==Welcome to the QB64 Wiki==
-
-QB64 is a modern extended BASIC programming language that retains QBasic/QuickBASIC 4.5 compatibility and compiles native binaries for Windows, Linux, and macOS.
-
-[[File:IDE_macos.png|thumb|left|QB64's IDE running on macOS Catalina]]
-
-{| align="right"
-  | __TOC__
-  |}
-
-==Getting started==
-* Grab the latest version of QB64 from [https://github.com/QB64Team/qb64/releases/latest the releases page].
-
-===FAQ===
-* [[QB64 FAQ|Frequently asked questions about QB64]]
-
-===Get in touch===
-* [https://qb64phoenix.com/forum/index.php QB64 Phoenix Edition Forum]
-* [https://discord.com/invite/2t9HTYK Discord invitation]
+The [[\]] mathematical operator performs [[INTEGER]] division on a numerical value.
 
 
-==Keywords==
-* [[Keyword Reference - Alphabetical]]
-* [[Keyword Reference - By usage]]
-* [[Syntax Reference - QB64]]
+{{PageSyntax}} 
+:return_value = number [[\]] divisor
 
-===Known issues===
-* [[Keywords currently not supported by QB64|Legacy keywords not supported by QB64]]
-* [[Keywords currently not supported by QB64#Keywords_Not_Supported_in_Linux_or_MAC_OSX_versions|Keywords not supported in Linux or macOS versions]]
 
-==Articles and Tutorials==
-* [http://www.qb64sourcecode.com Terry Ritchie's QB64 Game Programming]
-* [https://www.youtube.com/watch?v=hE-Voij5k5Q&amp;list=PLF6199808BD4901E1 School Freeware series on QB64 (YouTube)]
-* [[Arrays]]
-* [[ASCII|ASCII Character Codes]]
-* [[Binary|Binary Numbers]]
-* [[Boolean|Boolean Operations]]
-* [[_CLIPBOARD$|Clipboard]] 
-* [[Converting Bytes to Bits]]
-* [[Console Window]]
-* [[Controller Devices]] (Keyboard, Mouse, Joystick, Gamepad)
-* [[Downloading Files]] (TCP/IP)
-* [[Windows Environment|Environment (Windows Registry)]]
-* [[Hardware images]]
-* [[Images|Image file procedures]]
-* [[Keyboard scancodes|Keyboard Scan Codes]]
-* [[Libraries]] ([[C Libraries|C++]], [[Windows Libraries|Windows]], [[DLL Libraries|DLL]])
+{{PageDescription}}
+* Number value can be any literal or variable numerical type.
+* '''Divisor (second value) must not be a  value of 0 to .5'''. This will create a [[ERROR Codes|"Division by zero" error!]] due to [[CINT]] rounding.
+* Return values will be [[INTEGER]] or [[LONG]] value types only.
+* Rounding is done to the closest EVEN [[INTEGER|integer]] or [[LONG|long integer]] value.
+* Use the [[/]] integer division operator for [[SINGLE]] or [[DOUBLE]] floating decimal point return values.
+* Division and multiplication operations are performed before addition and subtraction in QBasic's order of operations.
+
+
+{{PageExamples}}
+Displays how floating decimal point values are rounded to the closest even [[INTEGER|integer]] value.
+{{CodeStart}} '' ''
+{{Cl|PRINT}} 0.5 \ 1
+{{Cl|PRINT}} 1.5 \ 1
+{{Cl|PRINT}} 2.5 \ 1
+{{Cl|PRINT}} 3.5 \ 1
+{{Cl|PRINT}} 4.5 \ 1
+{{Cl|PRINT}} 5.5 \ 1 '' ''
+{{CodeEnd}}
+{{OutputStart}}0
+2
+2
+4
+4
+6
+{{OutputEnd}}
+
+
+{{PageSeeAlso}}
+* [[MOD|MOD (remainder division operator)]] 
+* [[/|/ (normal division operator)]]
+* [[INT]], [[CINT]], [[FIX]], [[_ROUND]]
 * [[Mathematical Operations]]
-* [[PDS (7.1) Procedures]]
-* [[Port Access Libraries]]
-* [[QB 4.5 Library Ports For QB64]]
-* [[Relational Operations]]
-* [[Line numbers]]
-* [[Line number|Removing line numbers]]
-* [[Resource Table extraction]] {{text|([[Resource_Table_extraction#Extract_Icon|Icon Extraction]])}}
-* [[Screen Memory]]
-* [[Text Using Graphics|Text, Fonts and Unicode Using Graphics]]
-* [[Variable Types]]
-<
+
+
+{{PageNavigation}}

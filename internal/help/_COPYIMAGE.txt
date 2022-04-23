@@ -6,7 +6,7 @@ The [[_COPYIMAGE]] function creates an identical designated image in memory with
 : newhandle&amp; = [[_COPYIMAGE]][({{Parameter|imageHandle&amp;}}[, {{Parameter|mode%}})]]
 
 
-{{Parameters}}
+{{PageParameters}}
 * The [[LONG]] ''newhandle&amp;'' value returned will be different than the source handle value supplied.
 * If ''imageHandle&amp;'' parameter is omitted or zero is designated, the current software [[_DEST|destination]] screen or image is copied.
 * If 1 is designated instead of an ''imageHandle&amp;'', it designates the last OpenGL hardware surface to copy.
@@ -48,7 +48,7 @@ DO: {{Cl|SLEEP}}: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} &lt;> ""
 : ''Note:'' Only free valid handle values with [[_FREEIMAGE]] AFTER a new [[SCREEN]] mode is being used by the program.
 
 
-''Example 2:'' Program that copies desktop to a hardware image to form a 3D triangle ('''version 1.000 and up'''):
+''Example 2:'' Program that copies desktop to a hardware image to form a 3D triangle:
 {{CodeStart}} '' ''
 {{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(640, 480, 32)
 my_hardware_handle = {{Cl|_COPYIMAGE}}({{Cl|_SCREENIMAGE}}, 33) 'take a screenshot and use it as our texture
@@ -70,4 +70,3 @@ my_hardware_handle = {{Cl|_COPYIMAGE}}({{Cl|_SCREENIMAGE}}, 33) 'take a screensh
 
 
 {{PageNavigation}}
-<

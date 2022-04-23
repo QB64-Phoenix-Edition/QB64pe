@@ -24,31 +24,14 @@ A [[FUNCTION]] block statement is used to create a function procedure to return 
 * The IDE can create the FUNCTION and END FUNCTION lines for you. Use the ''New FUNCTION...'' option in the Edit Menu. A box will come up for you to enter a name for the FUNCTION. Enter all code between the FUNCTION and [[END FUNCTION]] lines.
 
 
-==QBasic/QuickBASIC==
+{{PageQBasic}}
 * Once a FUNCTION was created and used, the QBasic IDE would DECLARE it when the file was saved. '''QB64 doesn't need these declarations.'''
 * QBasic's IDE could place a [[DEFINT]], [[DEFSNG]], [[DEFLNG]], [[DEFDBL]] or [[DEFSTR]] statement before the FUNCTION line if it is used in the main module. It may even be the wrong variable type needed.
 * QBasic allowed programmers to add DATA fields anywhere because the IDE separated the main code from other procedures.
 
 
 {{PageExamples}}
-''Example 1:'' A simple function that returns the current path. Place [[FUNCTION]] or [[SUB]] procedures after the program [[END]].
-{{CodeStart}} '' ''
-{{Cl|PRINT}} "Current path = "; PATH$
-{{Cl|END}}
-
-{{Cl|FUNCTION}} PATH$
-    f% = {{Cl|FREEFILE}}
-    file$ = "D0Spath.inf" 'file name uses a zero to prevent an overwrite of existing file name
-    {{Cl|SHELL}} {{Cl|_HIDE}} "CD > " + file$ 'send screen information to a created text file
-    {{Cl|OPEN}} file$ {{Cl|FOR (file statement)|FOR}} {{Cl|INPUT (file mode)|INPUT}} {{Cl|AS}} #f% 'file should exist with one line of text
-    {{Cl|LINE INPUT (file statement)|LINE INPUT}} #f%, PATH$ 'read file path text to function name
-    {{Cl|CLOSE}} #f%
-    {{Cl|KILL}} file$
-{{Cl|END FUNCTION}} '' ''
-{{CodeEnd}}
-
-
-''Example 2:'' Returns a [[LONG]] array byte size required for a certain sized graphics screen pixel area [[GET (graphics statement)|GET]].
+''Example 1:'' Returns a [[LONG]] array byte size required for a certain sized graphics screen pixel area [[GET (graphics statement)|GET]].
 {{CodeStart}} '' ''
 {{Cl|INPUT}} "Enter a screen mode: ", mode%
 {{Cl|INPUT}} "Enter image width: ", wide&amp;
@@ -80,4 +63,3 @@ IntegerArray&amp; = ImageBufferSize&amp;(wide&amp;, deep&amp;, mode%) \ 2 ' retu
 
 
 {{PageNavigation}}
-<

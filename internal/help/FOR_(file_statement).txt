@@ -1,119 +1,26 @@
-The [[OPEN]] statement is used to open a file or [[OPEN_COM|COM]] serial communications port for program input or output.
+#REDIRECT [[OPEN#File_Access_Modes]]
+
+[[FOR (file statement)|FOR]] is used in a [[OPEN]] statement to indicate the file mode with which to open a file.
 
 
 {{PageSyntax}}
-: [[OPEN]] {{Parameter|fileName$}} ['''FOR''' {{Parameter|mode}}] [{{{KW|ACCESS}}|{{{KW|LOCK}}|SHARED}} [{READ|WRITE}] [[AS]] [#]{{Parameter|fileNumber&amp;}} [LEN = {{Parameter|recordLength}}]
-
-
-===Legacy ''GW-BASIC'' syntax===
-: [[OPEN]] {{Parameter|modeLetter$}}, [#]{{Parameter|fileNumber&amp;}}, {{Parameter|fileName$}}[, {{Parameter|recordLength}}]
-
-
-{{Parameters}}
-* The {{Parameter|fileName$}} is a [[STRING]] variable or literal file name (path optional) in quotes. 
-* FOR mode can be: [[APPEND]] (write to end), [[BINARY]] (read/write), [[INPUT (file mode)|INPUT]] (read), [[OUTPUT]] (write new) or [[RANDOM]] (read/write).
-* GW-BASIC's {{Parameter|modeLetter$}} is a [[STRING]] variable or the letter "A", "B", "I", "O" or "R" designating the OPEN modes above.
-* {{Parameter|fileNumber&amp;}} can be any '''positive''' [[INTEGER]] or [[LONG]] whole number value or an unused value determined by the [[FREEFILE]] function.
-* [[LEN]] = or {{Parameter|recordLength}} is optional to denote the RANDOM file record byte length (default = 128) or sequential (default = 512) load buffer.
+: [[OPEN]] ... [[FOR (file statement)|FOR]] {APPEND|BINARY|INPUT|OUTPUT|RANDOM}
 
 
 {{PageDescription}}
-* '''QB64''' can open as many files as your computer memory can handle. QBasic could only open about 15 at a time.
-* '''QB64 will allocate 4 bytes of memory for every possible file number up to the highest number used in a program.'''
-* {{Parameter|mode}} defaults to RANDOM if the {{Parameter|mode}} or FOR access statement is omitted. (see open modes described below)
-* '''Only the {{Parameter|fileName$}}, {{Parameter|fileNumber&amp;}} and LEN = {{Parameter|recordLength}} values can use variable values in the QBasic syntax.'''
-* If [[LEN]] = is ommitted, sequential file record sizes default to 512 and [[RANDOM]] to 128 bytes in Qbasic.
-* {{Parameter|fileName$}} can be up to 255 characters with no limit on file name extension length in '''QB64'''. 
-* Once a file or port is opened, it can be used in any program procedure using the assigned file number. 
-* The '''"SCRN:"''' device is supported in '''version 1.000 and up''' (see Example 3).
-* '''Devices such as "KYBD:", "CONS:", "COMn" and "LPTn:" are [[Keywords currently not supported by QB64|not supported in QB64.]]'''. 
-: '''Note:''' OPEN "LPTn" is not supported by QB64, but may be supported directly by your operating system. 
-* [[OPEN COM]] can also be used for serial port access in '''QB64'''.
-
-
-{{PageErrors}}
-* Illegal '''QB64''' Windows filename characters are ''' " * / \ | ? : &lt; > '''. Multiple dots (periods) are allowed.
-* Possible OPEN [[ERROR Codes|errors]] include "Bad file name or number", "Bad File Mode", "File Not Found" or "Path Not Found".
-** An OPEN file not found error may occur if [[CHR$]](0) to (31) are used in a Windows file name.
-* '''QB64''' does not have DOS file name limitations.
-
-
-==Details==
-===File ACCESS and LOCK Permissions===
-* [[ACCESS]] clause limits file access to READ, WRITE or READ WRITE on a network.
-* [[LOCK (access)|LOCK]] clause can specify SHARED or a LOCK READ or LOCK WRITE file lock in an OPEN statement working on a network.
-* A separate [[LOCK]] statement can lock or [[UNLOCK]] file access on a network using a format that can lock specific records.
-* If another process already has access to a specified file, program access is denied for that file OPEN access. A "Permission Denied" error 70 will be returned. A network program must be able to handle a denial of access error.
-
-===File Access Modes===
-* FOR mode can be:
-** '''OUTPUT''': Sequential mode creates a new file or erases an existing file for new program output. Use [[WRITE (file statement)|WRITE #]] to write numerical or text data or [[PRINT (file statement)|PRINT #]] for text. '''OUTPUT clears files of all data''' and clears the receive buffer on other devices such as [[ON COM(n)|COM]].
-** '''APPEND''': Sequential mode creates a new file if it doesn't exist or appends program output to the end of an existing file. Use [[WRITE (file statement)|WRITE #]] for numerical or text data or [[PRINT (file statement)|PRINT #]] for text as in the OUTPUT mode. '''APPEND does not remove previous data.''' 
-** '''INPUT''' : Sequential mode '''only reads input''' from an existing file. '''[[ERROR Codes|File error]] if file does not exist.''' Use [[INPUT (file statement)|INPUT #]] for comma separated numerical or text data and [[LINE INPUT (file statement)|LINE INPUT #]] or [[INPUT$]] to only read text data. '''Use [[_FILEEXISTS]] or [[_DIREXISTS]] to avoid errors.'''
-** '''BINARY''': Creates a new file when it doesn't exist or reads and writes to an existing binary file. Use [[GET|GET #]] to read or [[PUT|PUT #]] to write byte positions simultaneously. [[LEN]] = statements are ignored in this mode.
-** '''RANDOM''': Creates a new file when it doesn't exist or reads or writes to an existing random file record. Use [[GET|GET #]] or [[PUT|PUT #]] to read or write to file records. A [[LEN]] = statement can define the byte size of a record (no LEN statement defaults to 128 bytes)
-** Modes '''INPUT''', '''BINARY''' and '''RANDOM''' allow a file to be concurrently opened in a different mode and number.
-
-
-====GW-BASIC modes====
-* ''Mode letter'' is a variable or literal [[STRING]] letter value as one of the following:
-** "A" = '''APPEND'''.
-** "B" = '''BINARY'''.
-** "I" = '''INPUT'''.
-** "O" = '''OUTPUT'''.
-** "R" = '''RANDOM'''.
+* If [[FOR (file statement)|FOR]] isn't used in an [[OPEN]] statement, the default file mode {{KW|RANDOM}} is used.
+** {{KW|APPEND}} - Keeps the information of the file intact while you can insert information at the end of it, writing permission only.
+** {{KW|BINARY}} - Opens the file in binary mode, use this with binary files.
+** {{KW|INPUT (file mode)|INPUT}} - Opens the file for viewing only.
+** {{KW|OUTPUT}} - The entire contents of the file is erased while you can put new information inside it, writing permission only.
+** {{KW|RANDOM}} - The default, you can get/put records defined by a record length (the variables type or LEN=length).
 
 
 {{PageExamples}}
-''Example 1:'' Function that displays errors and the number of errors in QBasic filenames. Returns 0 when filename is OK.
+'''Warning:''' Make sure you don't have a file named test.tst before you run this or it will be overwritten.
 
 {{CodeStart}}
- file$ = "Hello,~1.mp3"      'example call below
- {{Cl|LOCATE}} 20, 30: errors% = CheckName%(file$): {{Cl|COLOR}} 14: {{Cl|PRINT}} "  Total Errors ="; errors% 
 
-{{Cl|FUNCTION}} CheckName% (Filename$)
-  '{{Cl|NOT}}E: Function also displays filename errors so {{Cl|LOCATE}} on screen before call!
-  {{Cl|DIM}} L {{Cl|AS}} {{Cl|INTEGER}}, DP {{Cl|AS}} {{Cl|INTEGER}}, XL {{Cl|AS}} {{Cl|INTEGER}}
-  L = {{Cl|LEN}}(Filename$): DP = {{Cl|INSTR}}(Filename$, "."): {{Cl|IF...THEN|IF}} DP {{Cl|THEN}} XL = L - DP 'extension
-  {{Cl|IF...THEN|IF}} L = 0 {{Cl|OR (boolean)|OR}} L > 12 {{Cl|OR (boolean)|OR}} DP > 9 {{Cl|OR (boolean)|OR}} XL > 3 {{Cl|THEN}} 
-    CheckName% = -1: {{Cl|COLOR}} 12: {{Cl|PRINT}} "Illegal format!"; : {{Cl|EXIT FUNCTION}}
-  {{Cl|END IF}}
-  {{Cl|FOR...NEXT|FOR}} i% = 1 {{Cl|TO}} L      'check each filename character"
-     code% = {{Cl|ASC}}({{Cl|MID$}}(Filename$, i%, 1)): {{Cl|COLOR}} 10      ' see ASCII codes
-     {{Cl|SELECT CASE}} code%       'check for errors and highlight in red
-	'{{Cl|CASE}} 34, 42 {{Cl|TO}} 44, 47, 58 {{Cl|TO}} 63, 91 {{Cl|TO}} 93, 124: E% = E% + 1: {{Cl|COLOR}} 12 ' '''QBasic errors'''
-        {{Cl|CASE}} 34, 42, 47, 58, 60, 62, 92, 124: E% = E% + 1: {{Cl|COLOR}} 12 ' '''QB64 errors'''
-        {{Cl|CASE}} 46: dot% = dot% + 1: {{Cl|IF...THEN|IF}} dot% > 1 {{Cl|THEN}} E% = E% + 1: {{Cl|COLOR}} 12
-     {{Cl|END SELECT}}     
-     {{Cl|PRINT}} {{Cl|CHR$}}(code%);  'use {{Cl|LOCATE}} before {{Cl|FUNCTION}} call to place print
-  {{Cl|NEXT}}  
-  CheckName% = E%
-{{Cl|END FUNCTION}} '' ''
-{{CodeEnd}}
-''Note: The QBasic character error list is commented out and the function will return invalid filenames under QB64.
-
-{{OutputStart}}
-                         {{text|Hello|#54FC54}}{{text|,|red}}{{text|~1.mp3|#54FC54}}  {{text|Total Errors|yellow}}&lt;nowiki> = &lt;/nowiki>{{text|1|yellow}}
-{{OutputEnd}}
-:''Note:'' The screen output displays filename characters in green except for red comma QBasic error.
-
-
-''Example 2:'' When '''OPEN "SCRN:" FOR OUTPUT AS #f''' is used, '''PRINT #f''' will print the text to the screen instead of to a file:
-{{CodeStart}} '' ''
-f% = {{Cl|FREEFILE}} 'should always be 1 at program start
-{{Cl|OPEN}} "SCRN:" {{Cl|FOR...NEXT|FOR}} {{Cl|OUTPUT}} {{Cl|AS}} #f%
-g% = {{Cl|FREEFILE}} 'should always be 2 after 1
-{{Cl|OPEN}} "temp.txt" {{Cl|FOR...NEXT|FOR}} {{Cl|OUTPUT}} {{Cl|AS}} #g%
-
-{{Cl|FOR...NEXT|FOR}} i = 1 {{Cl|TO}} 2
-    {{Cl|PRINT (file statement)|PRINT}} #i, "Hello World, Screen and File version"
-NEXT '' ''
-{{CodeEnd}}{{small|code by Steve McNeill}}
-: ''Note:'' Linux or Mac file names can use a path destination such as ".\SCRN:" to use SCRN: as an actual file name. 
-
-
-''Example 3:'' Showcasing different file modes.
-{{CodeStart}}
 {{Cl|CLS}}
 
 {{Cl|OPEN}} "test.tst" {{Cl|FOR (file statement)|FOR}} {{Cl|OUTPUT}} {{Cl|AS}} #1
@@ -142,21 +49,10 @@ A new file was created named test.tst and then deleted.
 If test.tst did exist:
 It was overwritten with this and deleted.
 {{OutputEnd}}
-:'''Warning:''' Make sure you don't have a file named test.tst before you run this or it will be overwritten.
 
 
-{{PageSeeAlso}} 
-* [[PRINT (file statement)]], [[INPUT (file statement)]]
-* [[GET]], [[PUT]], [[WRITE (file statement)]] 
-* [[INPUT$]], [[LINE INPUT (file statement)]]
-* [[CLOSE]], [[LOF]], [[EOF]], [[LOC]]
-* [[SEEK (statement)]], [[SEEK]]
-* [[OPEN COM]], [[LEN]], [[RESET]] 
-* [[FIELD]], [[TYPE]]
-* [[_FILEEXISTS]], [[_DIREXISTS]]
-* [[_OPENCLIENT]], [[_OPENHOST]], [[_OPENCONNECTION]] {{text|(TCP/IP)}}
-* [[_SNDOPEN]], [[_LOADIMAGE]]
+{{PageSeeAlso}}
+* [[OPEN]]
 
 
 {{PageNavigation}}
-<
