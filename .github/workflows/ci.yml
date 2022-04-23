@@ -1,0 +1,47 @@
+name: CI
+
+on: [ push, pull_request ]
+
+jobs:
+  linux-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: sudo apt update && sudo apt install libglu1-mesa-dev libncurses-dev
+    - name: Bootstrap compiler
+      run: .ci/bootstrap.sh lnx
+    - name: Compile
+      run: .ci/compile.sh
+
+  macos-build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Bootstrap compiler
+      run: .ci/bootstrap.sh osx
+    - name: Compile
+      run: .ci/compile.sh
+
+  windows-x86-build:
+    runs-on: windows-latest
+    env:
+      PLATFORM: x86
+    steps:
+    - uses: actions/checkout@v2
+    - name: Bootstrap compiler
+      run: .ci/bootstrap.bat
+    - name: Compile
+      run: .ci/compile.bat
+
+  windows-x64-build:
+    runs-on: windows-latest
+    env:
+      PLATFORM: x64
+    steps:
+    - uses: actions/checkout@v2
+    - name: Bootstrap compiler
+      run: .ci/bootstrap.bat
+    - name: Compile
+      run: .ci/compile.bat
+
