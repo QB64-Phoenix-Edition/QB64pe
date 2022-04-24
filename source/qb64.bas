@@ -12462,7 +12462,6 @@ lnx = 0: IF os$ = "LNX" THEN lnx = 1
 mac = 0: IF MacOSX THEN mac = 1: o$ = "osx"
 defines$ = "": defines_header$ = " -D "
 ver$ = Version$ 'eg. "0.123"
-x = INSTR(ver$, "."): IF x THEN ASC(ver$, x) = 95 'change "." to "_"
 libs$ = ""
 
 IF DEPENDENCY(DEPENDENCY_GL) THEN
