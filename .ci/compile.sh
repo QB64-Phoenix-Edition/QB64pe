@@ -1,6 +1,5 @@
 #!/bin/bash
 
-echo From git `echo $GITHUB_SHA | sed 's/\(.......\).*$/\1/'` > internal/version.txt
 ./qb64_bootstrap -x -w source/qb64.bas
 SUCCESS=$?
 rm qb64_bootstrap

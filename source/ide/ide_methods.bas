@@ -181,7 +181,7 @@ FUNCTION ide2 (ignore)
             IF _ERRORLINE > 0 OR _INCLERRORLINE > 0 THEN
                 ideerrormessageTITLE$ = ideerrormessageTITLE$ + str2$(_ERRORLINE) + "-" + str2$(_INCLERRORLINE)
             END IF
-            IF LEN(AutoBuildMsg$) THEN ideerrormessageTITLE$ = ideerrormessageTITLE$ + "-" + MID$(AutoBuildMsg$, 10)
+            IF IsCiVersion THEN ideerrormessageTITLE$ = ideerrormessageTITLE$ + "-" + Version$
             ideerrormessageTITLE$ = ideerrormessageTITLE$ + ")"
             IF ideerrormessageTITLE$ = "Error ()" THEN ideerrormessageTITLE$ = "Error"
             IF AttemptToLoadRecent = -1 THEN
@@ -201,11 +201,11 @@ FUNCTION ide2 (ignore)
                 errorat$ = errorat$ + CHR$(10) + " " + CHR$(10) + "(module: " + _
                            RemoveFileExtension$(LEFT$(_INCLERRORFILE$, 60))
                 errorat$ = errorat$ + ", on line: " + str2$(inclerrorline)
-                IF LEN(AutoBuildMsg$) THEN errorat$ = errorat$ + ", " + MID$(AutoBuildMsg$, 10)
+                IF IsCiVersion THEN errorat$ = errorat$ + ", " + Version$
                 errorat$ = errorat$ + ")"
             ELSE
                 errorat$ = errorat$ + CHR$(10) + " " + CHR$(10) + "(on line: " + str2$(_ERRORLINE)
-                IF LEN(AutoBuildMsg$) THEN errorat$ = errorat$ + ", " + MID$(AutoBuildMsg$, 10)
+                IF IsCiVersion THEN errorat$ = errorat$ + ", " + Version$
                 errorat$ = errorat$ + ")"
             END IF
         END IF
@@ -5173,8 +5173,8 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#About..." THEN
                 helpabout:
                 PCOPY 2, 0
-                m$ = "QB64 Version " + Version$ + CHR$(10) + DevChannel$
-                IF LEN(AutoBuildMsg$) THEN m$ = m$ + CHR$(10) + AutoBuildMsg$
+                m$ = "QB64 Version " + Version$
+                IF IsCiVersion THEN m$ = m$ + CHR$(10) + "CI Build"
                 result = idemessagebox("About", m$, "")
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -8015,7 +8015,6 @@ SUB DebugMode
     'print version in the status bar
     IF LEN(versionStringStatus$) = 0 THEN
         versionStringStatus$ = " v" + Version$
-        IF LEN(AutoBuildMsg$) THEN versionStringStatus$ = versionStringStatus$ + MID$(AutoBuildMsg$, _INSTRREV(AutoBuildMsg$, " "))
         versionStringStatus$ = versionStringStatus$ + " "
     END IF
     COLOR 2, 3
@@ -15479,8 +15478,7 @@ END FUNCTION 'yes/no box
 '        Result$ = Download$("", "", "", 0)
 '    NEXT
 
-'    m$ = "Current version: " + Version$ + " " + DevChannel$
-'    IF LEN(AutoBuildMsg$) THEN m$ = m$ + ", " + AutoBuildMsg$
+'    m$ = "Current version: " + Version$
 '    m$ = m$ + ".\n"
 
 '    DIM button$(1 TO 3)
@@ -19436,7 +19434,6 @@ SUB UpdateIdeInfo
 
     IF LEN(versionStringStatus$) = 0 THEN
         versionStringStatus$ = " v" + Version$
-        IF LEN(AutoBuildMsg$) THEN versionStringStatus$ = versionStringStatus$ + MID$(AutoBuildMsg$, _INSTRREV(AutoBuildMsg$, " "))
         versionStringStatus$ = versionStringStatus$ + " "
     END IF
     '_PRINTSTRING (idewx - 22 - LEN(versionStringStatus$), idewy + idesubwindow), CHR$(179)

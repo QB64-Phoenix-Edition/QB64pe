@@ -6,42 +6,67 @@ jobs:
   linux-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: Install dependencies
       run: sudo apt update && sudo apt install libglu1-mesa-dev libncurses-dev
+    - name: Calculate Version
+      run: .ci/calculate_version.sh
     - name: Bootstrap compiler
       run: .ci/bootstrap.sh lnx
     - name: Compile
       run: .ci/compile.sh
+    - name: Print QB64 Version
+      run: ./qb64 -?
 
   macos-build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Calculate Version
+      run: .ci/calculate_version.sh
     - name: Bootstrap compiler
       run: .ci/bootstrap.sh osx
     - name: Compile
       run: .ci/compile.sh
+    - name: Print QB64 Version
+      run: ./qb64 -?
 
   windows-x86-build:
     runs-on: windows-latest
     env:
       PLATFORM: x86
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Calculate Version
+      shell: bash
+      run: .ci/calculate_version.sh
     - name: Bootstrap compiler
       run: .ci/bootstrap.bat
     - name: Compile
       run: .ci/compile.bat
+    - name: Print QB64 Version
+      run: ./qb64 -?
 
   windows-x64-build:
     runs-on: windows-latest
     env:
       PLATFORM: x64
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Calculate Version
+      shell: bash
+      run: .ci/calculate_version.sh
     - name: Bootstrap compiler
       run: .ci/bootstrap.bat
     - name: Compile
       run: .ci/compile.bat
-
+    - name: Print QB64 Version
+      run: ./qb64 -?
