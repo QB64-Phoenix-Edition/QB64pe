@@ -3,94 +3,70 @@ name: CI
 on: [ push, pull_request ]
 
 jobs:
-  linux-build:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: x64
+            prefix: lnx
+          - os: macos-latest
+            platform: x64
+            prefix: osx
+          - os: windows-latest
+            platform: x64
+            prefix: win
+          - os: windows-latest
+            platform: x86
+            prefix: win
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      PLATFORM: ${{ matrix.platform }}
+
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
+
     - name: Install dependencies
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: sudo apt update && sudo apt install libglu1-mesa-dev libncurses-dev
-    - name: Calculate Version
-      run: .ci/calculate_version.sh
-    - name: Bootstrap compiler
-      run: .ci/bootstrap.sh lnx
-    - name: Compile
-      run: .ci/compile.sh
-    - name: Print QB64 Version
-      run: ./qb64 -?
-    - name: Create QB64 tar.gz
-      run: .ci/deploy.sh lnx
-    - uses: actions/upload-artifact@v3
-      with:
-        name: qb64-linux
-        path: qb64_lnx.tar.gz
 
-  macos-build:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Calculate Version
-      run: .ci/calculate_version.sh
-    - name: Bootstrap compiler
-      run: .ci/bootstrap.sh osx
-    - name: Compile
-      run: .ci/compile.sh
-    - name: Print QB64 Version
-      run: ./qb64 -?
-    - name: Create QB64 tar.gz
-      run: .ci/deploy.sh osx
-    - uses: actions/upload-artifact@v3
-      with:
-        name: qb64-osx
-        path: qb64_osx.tar.gz
-
-  windows-x86-build:
-    runs-on: windows-latest
-    env:
-      PLATFORM: x86
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
     - name: Calculate Version
       shell: bash
       run: .ci/calculate_version.sh
-    - name: Bootstrap compiler
-      run: .ci/bootstrap.bat
-    - name: Compile
-      run: .ci/compile.bat
-    - name: Print QB64 Version
-      run: ./qb64 -?
-    - name: Create QB64 7z
-      run: .ci/deploy.ps1
-    - uses: actions/upload-artifact@v3
-      with:
-        name: qb64-win-x86
-        path: qb64_win-x86.7z
 
-  windows-x64-build:
-    runs-on: windows-latest
-    env:
-      PLATFORM: x64
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Calculate Version
-      shell: bash
-      run: .ci/calculate_version.sh
-    - name: Bootstrap compiler
+    - name: Bootstrap compiler Linux/OSX
+      if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+      run: .ci/bootstrap.sh ${{ matrix.prefix }}
+
+    - name: Bootstrap compiler Windows
+      if: ${{ matrix.os == 'windows-latest' }}
       run: .ci/bootstrap.bat
-    - name: Compile
+
+    - name: Compile Linux/OSX
+      if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+      run: .ci/compile.sh
+
+    - name: Compile Windows
+      if: ${{ matrix.os == 'windows-latest' }}
       run: .ci/compile.bat
+
     - name: Print QB64 Version
       run: ./qb64 -?
-    - name: Create QB64 7z
-      run: .ci/deploy.ps1
+
+    - name: Create QB64 Artifact
+      shell: bash
+      run: .ci/deploy.sh ${{ matrix.os }}
+
     - uses: actions/upload-artifact@v3
       with:
-        name: qb64-win-x64
-        path: qb64_win-x64.7z
+        name: qb64-${{ matrix.prefix }}-${{ matrix.platform }}
+        path: |
+          qb64_win-x86.7z
+          qb64_win-x64.7z
+          qb64_lnx.tar.gz
+          qb64_osx.tar.gz
