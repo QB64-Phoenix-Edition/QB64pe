@@ -1,28 +1,28 @@
-Dim Shared IDECommentColor As _Unsigned Long, IDEMetaCommandColor As _Unsigned Long
-Dim Shared IDEQuoteColor As _Unsigned Long, IDETextColor As _Unsigned Long
-Dim Shared IDEBackgroundColor As _Unsigned Long, IDEChromaColor As _Unsigned Long
-Dim Shared IDEBackgroundColor2 As _Unsigned Long, IDEBracketHighlightColor As _Unsigned Long
-Dim Shared IDEKeywordColor As _Unsigned Long, IDENumbersColor As _Unsigned Long
-Dim Shared IDE_AutoPosition As _Byte, IDE_TopPosition As Integer, IDE_LeftPosition As Integer
-Dim Shared IDE_BypassAutoPosition As _Byte, idesortsubs As _Byte, IDESubsLength As _Byte
-Dim Shared IDENormalCursorStart As Long, IDENormalCursorEnd As Long
-Dim Shared MouseButtonSwapped As _Byte
-Dim Shared PasteCursorAtEnd As _Byte
-Dim Shared SaveExeWithSource As _Byte, EnableQuickNav As _Byte
-Dim Shared IDEShowErrorsImmediately As _Byte
-Dim Shared ShowLineNumbersSeparator As _Byte, ShowLineNumbersUseBG As _Byte
-Dim Shared IgnoreWarnings As _Byte, qb64versionprinted As _Byte
-Dim Shared DisableSyntaxHighlighter As _Byte, ExeToSourceFolderFirstTimeMsg As _Byte
-Dim Shared WhiteListQB64FirstTimeMsg As _Byte, ideautolayoutkwcapitals As _Byte
-Dim Shared WatchListToConsole As _Byte
-Dim Shared windowSettingsSection$, colorSettingsSection$, customDictionarySection$
-Dim Shared mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$
-Dim Shared colorSchemesSection$, debugSettingsSection$, iniFolderIndex$, DebugInfoIniWarning$, ConfigFile$
-Dim Shared idebaseTcpPort As Long, AutoAddDebugCommand As _Byte
-Dim Shared wikiBaseAddress$
+DIM SHARED IDECommentColor AS _UNSIGNED LONG, IDEMetaCommandColor AS _UNSIGNED LONG
+DIM SHARED IDEQuoteColor AS _UNSIGNED LONG, IDETextColor AS _UNSIGNED LONG
+DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LONG
+DIM SHARED IDEBackgroundColor2 AS _UNSIGNED LONG, IDEBracketHighlightColor AS _UNSIGNED LONG
+DIM SHARED IDEKeywordColor AS _UNSIGNED LONG, IDENumbersColor AS _UNSIGNED LONG
+DIM SHARED IDE_AutoPosition AS _BYTE, IDE_TopPosition AS INTEGER, IDE_LeftPosition AS INTEGER
+DIM SHARED IDE_BypassAutoPosition AS _BYTE, idesortsubs AS _BYTE, IDESubsLength AS _BYTE
+DIM SHARED IDENormalCursorStart AS LONG, IDENormalCursorEnd AS LONG
+DIM SHARED MouseButtonSwapped AS _BYTE
+DIM SHARED PasteCursorAtEnd AS _BYTE
+DIM SHARED SaveExeWithSource AS _BYTE, EnableQuickNav AS _BYTE
+DIM SHARED IDEShowErrorsImmediately AS _BYTE
+DIM SHARED ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
+DIM SHARED IgnoreWarnings AS _BYTE, qb64versionprinted AS _BYTE
+DIM SHARED DisableSyntaxHighlighter AS _BYTE, ExeToSourceFolderFirstTimeMsg AS _BYTE
+DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE, ideautolayoutkwcapitals AS _BYTE
+DIM SHARED WatchListToConsole AS _BYTE
+DIM SHARED windowSettingsSection$, colorSettingsSection$, customDictionarySection$
+DIM SHARED mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$
+DIM SHARED colorSchemesSection$, debugSettingsSection$, iniFolderIndex$, DebugInfoIniWarning$, ConfigFile$
+DIM SHARED idebaseTcpPort AS LONG, AutoAddDebugCommand AS _BYTE
+DIM SHARED wikiBaseAddress$
 
 ConfigFile$ = "internal/config.ini"
-iniFolderIndex$ = Str$(tempfolderindex)
+iniFolderIndex$ = STR$(tempfolderindex)
 DebugInfoIniWarning$ = " 'Do not change manually. Use 'qb64 -s', or Debug->Advanced in the IDE"
 
 windowSettingsSection$ = "IDE WINDOW" + iniFolderIndex$
@@ -218,7 +218,7 @@ IF result = 0 OR idedebuginfo <> 1 THEN
 END IF
 Include_GDB_Debugging_Info = idedebuginfo
 
-wikiBaseAddress$ = "https://qb64phoenix.com/qb64wiki"
+wikiBaseAddress$ = "https://wiki.qb64.org"
 IF ReadConfigSetting(generalSettingsSection$, "WikiBaseAddress", value$) THEN
     wikiBaseAddress$ = value$
 ELSE WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
