@@ -1,3 +1,20 @@
+#QB64 Phoenix Edition build -- Changelog
+No real version number set as of yet.  Has unofficial distinction of being "First Release"
+
+## Additions (All platforms)
+- Created and added a resource files folder to /internal.  Users and wiki contributors can reference these when sharing code and samples, to make certain that users will always have the necessay resource files at hand to run the code.
+      -- In internal/resource files/ are several new subfolders:  audio files, common h files, fonts, images, word lists 
+
+## Fixes (All platforms)
+- Fix wiki help to use new wiki location
+- QB64.ico now matches the icon for the forums and elsewhere
+
+## Restructuring
+- subfolders in /source were all merged into the main /source folder.  This is to allow each file to easily $INCLUDE inside all other files, making it so that syntax checking and auto-formatting can work when editing and working with the files in the future.
+
+
+
+
 # QB64 development build - Changelog
 Upcoming version is currently identified as v2.1, but that number may change before release.
 
