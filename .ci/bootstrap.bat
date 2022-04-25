@@ -1,11 +1,15 @@
 @ECHO OFF
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-cd internal\c
-set MINGW=mingw32
-IF "%PLATFORM%"=="x64" set MINGW=mingw64
-ren %MINGW% c_compiler
-cd ../..
+mkdir internal\c\c_compiler
+
+cd internal\c\mingw
+set MINGW=mingw32.exe
+IF "%PLATFORM%"=="x64" set MINGW=mingw64.exe
+
+%MINGW% -y -o"..\c_compiler\"
+
+cd ..\..\..
 
 echo Building library 'LibQB'
 cd internal\c\libqb\os\win
