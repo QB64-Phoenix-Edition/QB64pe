@@ -70,3 +70,16 @@ jobs:
           qb64_win-x64.7z
           qb64_lnx.tar.gz
           qb64_osx.tar.gz
+
+    - name: Create release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+        files: |
+          qb64_win-x86.7z
+          qb64_win-x64.7z
+          qb64_lnx.tar.gz
+          qb64_osx.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
