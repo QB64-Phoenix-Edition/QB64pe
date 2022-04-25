@@ -19,6 +19,12 @@ jobs:
       run: .ci/compile.sh
     - name: Print QB64 Version
       run: ./qb64 -?
+    - name: Create QB64 tar.gz
+      run: .ci/deploy.sh lnx
+    - uses: actions/upload-artifact@v3
+      with:
+        name: qb64-linux
+        path: qb64_lnx.tar.gz
 
   macos-build:
     runs-on: macos-latest
@@ -34,6 +40,12 @@ jobs:
       run: .ci/compile.sh
     - name: Print QB64 Version
       run: ./qb64 -?
+    - name: Create QB64 tar.gz
+      run: .ci/deploy.sh osx
+    - uses: actions/upload-artifact@v3
+      with:
+        name: qb64-osx
+        path: qb64_osx.tar.gz
 
   windows-x86-build:
     runs-on: windows-latest
@@ -52,6 +64,12 @@ jobs:
       run: .ci/compile.bat
     - name: Print QB64 Version
       run: ./qb64 -?
+    - name: Create QB64 7z
+      run: .ci/deploy.ps1
+    - uses: actions/upload-artifact@v3
+      with:
+        name: qb64-win-x86
+        path: qb64_win-x86.7z
 
   windows-x64-build:
     runs-on: windows-latest
@@ -70,3 +88,9 @@ jobs:
       run: .ci/compile.bat
     - name: Print QB64 Version
       run: ./qb64 -?
+    - name: Create QB64 7z
+      run: .ci/deploy.ps1
+    - uses: actions/upload-artifact@v3
+      with:
+        name: qb64-win-x64
+        path: qb64_win-x64.7z
