@@ -57,10 +57,10 @@ Replacing `-c` with `-x` will compile without opening a separate compiler window
 
 <a name="Additional_Info"></a>
 # Additional Information
-More about QB64 at our wiki: https://qb64phoenix.com/qb64wiki
+More about QB64 at our wiki: https://wiki.qb64phoenix.com
 
-We have a community forum at: https://qb64phoenix.com/forum
+We have a community forum at: https://forum.qb64phoenix.com
 
-We don't currently tweet.  Sorry.
+Our gihub repository is at: https://repo.qb64phoenix.com
 
-Find us on Discord: https://discord.gg/8YsAZrN3qb
+Find us on Discord: https://discord.qb64phoenix.com
