@@ -5173,7 +5173,7 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#About..." THEN
                 helpabout:
                 PCOPY 2, 0
-                m$ = "QB64 Version " + Version$
+                m$ = "QB64 Phoenix Edition Version " + Version$
                 IF IsCiVersion THEN m$ = m$ + CHR$(10) + "CI Build"
                 result = idemessagebox("About", m$, "")
                 PCOPY 3, 0: SCREEN , , 3, 0
