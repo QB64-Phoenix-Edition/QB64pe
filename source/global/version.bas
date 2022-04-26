@@ -1,10 +1,10 @@
 DIM SHARED Version AS STRING
 DIM SHARED IsCiVersion AS _BYTE
 
-Version$ = "2.1.0"
+Version$ = "0.5.0"
 
 ' If ./internal/version.txt exist, then this is some kind of CI build with a label
-IF _FILEEXISTS("internal/version.txt") THEN
+If _FILEEXISTS("internal/version.txt") THEN
     versionfile = FREEFILE
     OPEN "internal/version.txt" FOR INPUT AS #versionfile
 
