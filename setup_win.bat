@@ -10,13 +10,11 @@ del /q /s internal\c\parts\*.a >nul 2>nul
 del /q /s internal\temp\*.* >nul 2>nul
 
 if exist internal\c\c_compiler\bin\c++.exe goto skipccompsetup
-cd internal\c\c_compiler
-reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && set MINGW=mingw32.exe || set MINGW=mingw64.exe
-echo Extracting %MINGW% as C++ Compiler
-@echo off
-%MINGW% -y
-
-cd ../../..
+cd internal\c
+reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && set MINGW=mingw32 || set MINGW=mingw64
+echo Using %MINGW% as C++ Compiler
+ren %MINGW% c_compiler
+cd ../..
 :skipccompsetup
 
 echo Building library 'LibQB'
