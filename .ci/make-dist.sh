@@ -36,6 +36,7 @@ case "$buildPlatform" in
         format=7zip
 
         cp ./qb64.exe $DIST_ROOT
+        cp -r ./internal/c/c_compiler $DIST_ROOT/internal/c/
         ;;
 
     ubuntu-latest)
