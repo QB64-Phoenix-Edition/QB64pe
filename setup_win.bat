@@ -9,6 +9,8 @@ del /q /s internal\c\parts\*.o >nul 2>nul
 del /q /s internal\c\parts\*.a >nul 2>nul
 del /q /s internal\temp\*.* >nul 2>nul
 
+mkdir internal\c\c_compiler
+
 if exist internal\c\c_compiler\bin\c++.exe goto skipccompsetup
 cd internal\c\mingw
 reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && set MINGW=mingw32.exe || set MINGW=mingw64.exe
