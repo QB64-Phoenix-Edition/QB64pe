@@ -3,13 +3,17 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 mkdir internal\c\c_compiler
 
-cd internal\c\mingw
 set MINGW=mingw32.exe
 IF "%PLATFORM%"=="x64" set MINGW=mingw64.exe
 
-%MINGW% -y -o"..\c_compiler\"
+set url="https://www.qb64phoenix.com/qb64_files/%MINGW%"
 
-cd ..\..\..
+echo Downloading %url%...
+curl %url% -o %MINGW%
+
+echo Extracting %MINGW% as C++ Compiler
+@echo off
+%MINGW% -y -o"./internal/c/c_compiler/"
 
 echo Building library 'LibQB'
 cd internal\c\libqb\os\win
