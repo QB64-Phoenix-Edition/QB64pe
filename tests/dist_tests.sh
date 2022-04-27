@@ -22,12 +22,12 @@ case "$2" in
         ;;
 
     lnx)
-        ./setup_lnx.sh 1>"$RESULTS_DIR/linux-setup.txt"
+        ./setup_lnx.sh "dont_run" 1>"$RESULTS_DIR/linux-setup.txt"
         assert_success_named "Linux setup" cat "$RESULTS_DIR/linux-setup.txt"
         ;;
 
     osx)
-        ./setup_osx.command 1>"$RESULTS_DIR/osx-setup.txt"
+        ./setup_osx.command "." "dont_run" 1>"$RESULTS_DIR/osx-setup.txt"
         assert_success_named "OSX setup" cat "$RESULTS_DIR/osx-setup.txt"
         ;;
 esac
