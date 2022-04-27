@@ -62,7 +62,15 @@ jobs:
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.os }}
 
+      # Note that compiling programs in dist does modify the ./dist and make it
+      # dirty, but that's ok because we've already create the .7z or .tar.gz
+      # artifacts in the previous step
+    - name: Test QB64 Artifact
+      shell: bash
+      run: tests/run_dist_tests.sh ./dist/qb64 ${{ matrix.prefix }}
+
     - uses: actions/upload-artifact@v3
+      if: always()
       with:
         name: qb64-${{ matrix.prefix }}-${{ matrix.platform }}
         path: |
