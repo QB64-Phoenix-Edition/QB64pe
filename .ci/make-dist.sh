@@ -43,7 +43,8 @@ case "$buildPlatform" in
         filename="qb64_lnx.tar.gz"
         format=tar
 
-        cp -p ./qb64         $DIST_ROOT
+        # Not sure if we should distribute this
+        # cp -p ./qb64         $DIST_ROOT
         cp -p ./setup_lnx.sh $DIST_ROOT
         ;;
 
