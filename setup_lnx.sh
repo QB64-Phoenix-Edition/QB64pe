@@ -1,6 +1,8 @@
 #!/bin/bash
-#QB64 Installer -- Shell Script -- Matt Kilgore 2013
-#Version 5 -- January 2020
+# QB64 Installer
+# Argument 1: If not blank, qb64 will not be started after compilation
+
+dont_run="$1"
 
 #This checks the currently installed packages for the one's QB64 needs
 #And runs the package manager to install them if that is the case
@@ -164,8 +166,11 @@ Path=$_pwd
 StartupNotify=false
 EOF
 
-  echo "Running QB64..."
-  ./qb64 &
+  if [ -z "$dont_run" ]; then
+    echo "Running QB64..."
+    ./qb64 &
+  fi
+
   echo "QB64 is located in this folder:"
   echo "`pwd`"
   echo "There is a ./run_qb64.sh script in this folder that should let you run qb64 if using the executable directly isn't working."

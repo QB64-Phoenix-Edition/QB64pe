@@ -1,4 +1,9 @@
-cd "$(dirname "$0")"
+# Argument 1: Location of qb64 (blank means current directory
+# Argument 2: If not blank, qb64 will not be started after compiltaion
+
+cd "$(dirname "$1")"
+dont_run="$2"
+
 Pause()
 {
 OLDCONFIG=`stty -g`
@@ -28,7 +33,7 @@ if [ -z "$(which clang++)" ]; then
   echo "Attempting to install Apple's Command Line Tools for Xcode..."
   echo "After installation is finished, run this setup script again."
   xcode-select --install
-  Pause
+  [ -z "$dont_run" ] && Pause
   exit 1
 fi
 
@@ -38,7 +43,7 @@ rm -f libqb_setup.o
 ./setup_build.command
 if [ ! -f ./libqb_setup.o ]; then
   echo "Compilation of ./internal/c/libqb/os/osx/libqb_setup.o failed!"
-  Pause
+  [ -z "$dont_run" ] && Pause
   exit 1
 fi
 popd >/dev/null
@@ -49,7 +54,7 @@ rm -f src.o
 ./setup_build.command
 if [ ! -f ./src.o ]; then
   echo "Compilation of ./internal/c/parts/video/font/ttf/os/osx/src.o failed!"
-  Pause
+  [ -z "$dont_run" ] && Pause
   exit 1
 fi
 popd >/dev/null
@@ -62,14 +67,17 @@ popd >/dev/null
 
 echo ""
 if [ -f ./qb64 ]; then
-  echo "Launching 'QB64'"
-  ./qb64
+  if [ -z "$dont_run" ]; then
+    echo "Launching 'QB64'"
+    ./qb64
+  fi
   echo ""
   echo "Note: 'qb64' is located in same folder as this setup program."
   echo "Press any key to continue..."
-  Pause
+  [ -z "$dont_run" ] && Pause
+  exit 0
 else
   echo "Compilation of QB64 failed!"
-  Pause
+  [ -z "$dont_run" ] && Pause
   exit 1
 fi
