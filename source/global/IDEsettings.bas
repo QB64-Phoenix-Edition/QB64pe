@@ -218,7 +218,7 @@ IF result = 0 OR idedebuginfo <> 1 THEN
 END IF
 Include_GDB_Debugging_Info = idedebuginfo
 
-wikiBaseAddress$ = "https://wiki.qb64.org"
+wikiBaseAddress$ = "https://qb64phoenix.com/qb64wiki"
 IF ReadConfigSetting(generalSettingsSection$, "WikiBaseAddress", value$) THEN
     wikiBaseAddress$ = value$
 ELSE WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
