@@ -1,6 +1,14 @@
 name: CI
 
-on: [ push, pull_request ]
+on:
+  pull_request:
+    branches:
+      - 'main'
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -31,6 +39,13 @@ jobs:
       with:
         fetch-depth: 0
 
+      # A deploy key is setup so that the potential push of ./internal/source can
+      # trigger a new build. Care is taken to make sure loops cannot happen.
+    - uses: webfactory/ssh-agent@v0.5.4
+      if: ${{ github.event_name == 'push' && matrix.os == 'ubuntu-latest' }}
+      with:
+        ssh-private-key: ${{ secrets.ACTION_DEPLOY_KEY }}
+
     - name: Install dependencies
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev zlib1g-dev
@@ -60,9 +75,24 @@ jobs:
 
     - name: Create QB64 Artifact
       shell: bash
-      run: .ci/deploy.sh ${{ matrix.os }}
+      run: .ci/make-dist.sh ${{ matrix.os }}
+
+      # Note that compiling programs in dist does modify the ./dist and make it
+      # dirty, but that's ok because we've already create the .7z or .tar.gz
+      # artifacts in the previous step
+    - name: Test QB64 Artifact
+      shell: bash
+      run: tests/run_dist_tests.sh ./dist/qb64 ${{ matrix.prefix }}
+
+      # Only update ./internal/source if we're building on Linux, building on
+      # the main branch, and building a Pull request merge. Otherwise the repo
+      # is left alone.
+    - name: Update ./internal/source
+      if: ${{ github.event_name == 'push' &&  matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
+      run: .ci/push-internal-source.sh
 
     - uses: actions/upload-artifact@v3
+      if: always()
       with:
         name: qb64-${{ matrix.prefix }}-${{ matrix.platform }}
         path: |
