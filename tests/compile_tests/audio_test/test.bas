@@ -1,0 +1,6 @@
+
+s = _SNDOPEN("foobar.mp3", "VOL,PAUSE,SETPOS"): _SNDLOOP s
+_SNDCLOSE s
+
+SYSTEM
+
