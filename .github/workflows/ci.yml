@@ -1,6 +1,14 @@
 name: CI
 
-on: [ push, pull_request ]
+on:
+  pull_request:
+    branches:
+      - 'main'
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -34,7 +42,7 @@ jobs:
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
     - uses: webfactory/ssh-agent@v0.5.4
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+      if: ${{ github.event_name == 'push' && matrix.os == 'ubuntu-latest' }}
       with:
         ssh-private-key: ${{ secrets.ACTION_DEPLOY_KEY }}
 
