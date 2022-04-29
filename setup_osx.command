@@ -60,10 +60,7 @@ fi
 popd >/dev/null
 
 echo "Building 'QB64' (~3 min)"
-cp ./internal/source/* ./internal/temp/
-pushd internal/c >/dev/null
-clang++ -w qbx.cpp libqb/os/osx/libqb_setup.o parts/video/font/ttf/os/osx/src.o -framework GLUT -framework OpenGL -framework Cocoa -o ../../qb64
-popd >/dev/null
+make OS=osx BUILD_QB64=y
 
 echo ""
 if [ -f ./qb64 ]; then

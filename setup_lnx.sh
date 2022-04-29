@@ -109,37 +109,8 @@ elif [ -z "$DISTRO" ]; then
 fi
 
 echo "Compiling and installing QB64..."
-
-### Build process
-find . -name "*.sh" -exec chmod +x {} \;
-find internal/c/parts -type f -iname "*.a" -exec rm -f {} \;
-find internal/c/parts -type f -iname "*.o" -exec rm -f {} \;
-find internal/c/libqb -type f -iname "*.o" -exec rm -f {} \;
-rm ./internal/temp/*
-
-echo "Building library 'LibQB'"
-pushd internal/c/libqb/os/lnx >/dev/null
-rm -f libqb_setup.o
-./setup_build.sh
-popd >/dev/null
-
-echo "Building library 'FreeType'"
-pushd internal/c/parts/video/font/ttf/os/lnx >/dev/null
-rm -f src.o
-./setup_build.sh
-popd >/dev/null
-
-echo "Building library 'Core:FreeGLUT'"
-pushd internal/c/parts/core/os/lnx >/dev/null
-rm -f src.a
-./setup_build.sh
-popd >/dev/null
-
-echo "Building 'QB64'"
-cp -r ./internal/source/* ./internal/temp/
-pushd internal/c >/dev/null
-g++ -no-pie -w qbx.cpp libqb/os/lnx/libqb_setup.o parts/video/font/ttf/os/lnx/src.o parts/core/os/lnx/src.a -lGL -lGLU -lX11 -lpthread -ldl -lrt -D FREEGLUT_STATIC -o ../../qb64
-popd
+make clean
+make OS=lnx BUILD_QB64=y
 
 if [ -e "./qb64" ]; then
   echo "Done compiling!!"
