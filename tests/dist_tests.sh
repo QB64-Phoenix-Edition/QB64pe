@@ -38,6 +38,7 @@ show_failure()
 {
     cat "$RESULTS_DIR/$1-compile_result.txt"
     cat "$RESULTS_DIR/$1-compilelog.txt"
+    cat "$RESULTS_DIR/$1-errorcompilelog.txt"
 }
 
 for basFile in $TEST_CASES/*.bas
@@ -50,6 +51,7 @@ do
     ./qb64 -x  "$TEST_CASES/$test.bas" -o "$outputExe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
     cp ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
+    cp ./internal/temp/errorcompilelog.txt $RESULTS_DIR/$test-errorcompilelog.txt
 
     (exit $ERR)
     assert_success_named "compile" "Compilation Error:" show_failure $test
