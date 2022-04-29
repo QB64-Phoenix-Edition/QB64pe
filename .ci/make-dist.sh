@@ -16,6 +16,7 @@ cp ./CHANGELOG.md $DIST_ROOT
 cp ./COPYING.txt  $DIST_ROOT
 cp ./README.md    $DIST_ROOT
 cp ./qb64.1       $DIST_ROOT
+cp ./Makefile     $DIST_ROOT
 
 cp -rp ./internal/source  $DIST_ROOT/internal/
 cp -rp ./internal/help    $DIST_ROOT/internal/
