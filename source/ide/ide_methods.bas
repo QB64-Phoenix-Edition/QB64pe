@@ -331,6 +331,7 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0: RunMenuID = m
         menu$(m, i) = "Run": i = i + 1
         menu$(m, i) = "#Start  F5": i = i + 1
+        menu$(m, i) = "Run only (No exe)": i = i + 1
         menuDesc$(m, i - 1) = "Compiles current program and runs it"
         menu$(m, i) = "Modify #COMMAND$...": i = i + 1
         menuDesc$(m, i - 1) = "Sets string returned by COMMAND$ function"
@@ -1705,7 +1706,7 @@ FUNCTION ide2 (ignore)
 
                 LOCATE , , 0
                 clearStatusWindow 0
-
+                If NoExeSaved then idecompiled = 0: GOTO mustGenerateExe
                 IF idecompiled THEN
 
                     IF iderunmode = 2 AND _FILEEXISTS(lastBinaryGenerated$) THEN
@@ -5765,6 +5766,15 @@ FUNCTION ide2 (ignore)
                 startPaused = 0
                 GOTO idemrun
             END IF
+
+            IF menu$(m, s) = "Run only (No exe)" THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                NoExeSaved = -1
+                startPaused = 0
+                GOTO idemrun
+            END IF
+
+
 
             IF menu$(m, s) = "Modify #COMMAND$..." THEN
                 PCOPY 2, 0
