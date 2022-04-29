@@ -9,7 +9,6 @@ rm internal/temp/debug_* internal/temp/recompile_*
 
 mv internal/temp/* internal/source/
 
-find . -type f -iname "*.a" -exec rm {} \;
-find . -type f -iname "*.o" -exec rm {} \;
+make clean OS=lnx
 
 exit $SUCCESS
