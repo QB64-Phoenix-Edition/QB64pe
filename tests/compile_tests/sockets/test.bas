@@ -1,0 +1,3 @@
+
+result = _OPENHOST("foobar")
+
