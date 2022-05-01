@@ -12472,21 +12472,6 @@ IF VersionInfoSet OR ExeIconSet THEN
     END IF
 END IF
 
-IF os$ = "WIN" THEN
-    IF ExeIconSet OR VersionInfoSet THEN
-        ffh = FREEFILE
-        OPEN tmpdir$ + "call_windres.bat" FOR OUTPUT AS #ffh
-        PRINT #ffh, "internal\c\c_compiler\bin\windres.exe -i " + tmpdir$ + "icon.rc -o " + tmpdir$ + "icon.o"
-        CLOSE #ffh
-        SHELL _HIDE tmpdir$ + "call_windres.bat"
-        IF _FILEEXISTS(tmpdir$ + "icon.o") = 0 THEN
-            a$ = "Bad icon file"
-            IF VersionInfoSet THEN a$ = a$ + " or invalid $VERSIONINFO values"
-            GOTO errmes
-        END IF
-    END IF
-END IF
-
 'Update dependencies
 
 o$ = LCASE$(os$)
