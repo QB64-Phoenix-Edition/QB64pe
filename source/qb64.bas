@@ -1082,7 +1082,7 @@ IF C = 9 THEN 'run
                     SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(lastBinaryGenerated$)
                 ELSE
                     SHELL QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
-                    SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(lastBinaryGenerated$)
+                    SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(path.exe$ + lastBinaryGenerated$)
                 END IF
             END IF
             IF path.exe$ = "./" THEN path.exe$ = ""
