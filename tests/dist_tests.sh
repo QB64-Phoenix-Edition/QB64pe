@@ -8,10 +8,8 @@ ROOT=$(pwd)
 TEST_CASES="$ROOT/tests/dist"
 
 RESULTS_DIR="$ROOT/tests/results/$PREFIX"
-OUTPUT_DIR="$ROOT/tests/output/$PREFIX"
 
 mkdir -p "$RESULTS_DIR"
-mkdir -p "$OUTPUT_DIR"
 
 # Move into distribution location
 cd $1
@@ -41,7 +39,7 @@ show_failure()
 for basFile in $TEST_CASES/*.bas
 do 
     test=$(basename $basFile .bas)
-    outputExe="$OUTPUT_DIR/$test-output"
+    outputExe="$RESULTS_DIR/$test-output"
 
     TESTCASE=$test
 

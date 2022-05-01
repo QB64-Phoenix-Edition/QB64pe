@@ -73,6 +73,10 @@ jobs:
     - name: Print QB64 Version
       run: ./qb64 -?
 
+    - name: Test
+      shell: bash
+      run: tests/run_tests.sh
+
     - name: Create QB64 Artifact
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.os }}
@@ -96,6 +100,7 @@ jobs:
       with:
         name: qb64-${{ matrix.prefix }}-${{ matrix.platform }}
         path: |
+          tests/results/
           qb64_win-x86.7z
           qb64_win-x64.7z
           qb64_lnx.tar.gz
