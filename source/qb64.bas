@@ -3286,10 +3286,12 @@ DO
                 CASE "FILEVERSION#"
                     GOSUB ValidateVersion
                     viFileVersionNum$ = VersionInfoValue$
+                    if viFileVersion$ = "" THEN viFileVersion$ = viFileVersionNum$
                     layout$ = SCase$("$VersionInfo:FILEVERSION#=") + VersionInfoValue$
                 CASE "PRODUCTVERSION#"
                     GOSUB ValidateVersion
                     viProductVersionNum$ = VersionInfoValue$
+                    if viProductVersion$ = "" THEN viProductVersion$ = viProductVersionNum$
                     layout$ = SCase$("$VersionInfo:PRODUCTVERSION#=") + VersionInfoValue$
                 CASE "COMPANYNAME"
                     viCompanyName$ = VersionInfoValue$
