@@ -1066,7 +1066,7 @@ IF C = 9 THEN 'run
 
 
     IF iderunmode = 1 THEN
-        If NoExeSaved Then
+        IF NoExeSaved THEN
             'This is the section which deals with if the user selected to run the program without
             'saving an EXE file to the disk.
             'We start off by first running the EXE, and then we delete it from the drive.
@@ -1086,7 +1086,7 @@ IF C = 9 THEN 'run
                 END IF
             END IF
             IF path.exe$ = "./" THEN path.exe$ = ""
-            MakeTempExe = 0 'reset the flag for a temp EXE
+            NoExeSaved = 0 'reset the flag for a temp EXE
             sendc$ = CHR$(6) 'ready
             GOTO sendcommand
         END IF
@@ -16855,25 +16855,25 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             IF RIGHT$(e$, 2) = "&&" THEN
                                 e$ = LEFT$(e$, LEN(e$) - 2)
                             ELSE
-                                If Right$(e$, 1) = "&" Or Right$(e$, 1) = "%" Then e$ = Left$(e$, Len(e$) - 1)
-                            End If
-                        End If
+                                IF RIGHT$(e$, 1) = "&" OR RIGHT$(e$, 1) = "%" THEN e$ = LEFT$(e$, LEN(e$) - 1)
+                            END IF
+                        END IF
                         t = typname2typ(e$)
-                        If t = 0 Then Give_Error "Invalid TYPE name": Exit Function
-                        If t And ISOFFSETINBITS Then Give_Error qb64prefix$ + "BIT TYPE unsupported": Exit Function
+                        IF t = 0 THEN Give_Error "Invalid TYPE name": EXIT FUNCTION
+                        IF t AND ISOFFSETINBITS THEN Give_Error qb64prefix$ + "BIT TYPE unsupported": EXIT FUNCTION
                         memget_size = typname2typsize
-                        If t And ISSTRING Then
-                            If (t And ISFIXEDLENGTH) = 0 Then Give_Error "Expected STRING * ...": Exit Function
+                        IF t AND ISSTRING THEN
+                            IF (t AND ISFIXEDLENGTH) = 0 THEN Give_Error "Expected STRING * ...": EXIT FUNCTION
                             memget_ctyp$ = "qbs*"
-                        Else
-                            If t And ISUDT Then
-                                memget_size = udtxsize(t And 511) \ 8
+                        ELSE
+                            IF t AND ISUDT THEN
+                                memget_size = udtxsize(t AND 511) \ 8
                                 memget_ctyp$ = "void*"
-                            Else
-                                memget_size = (t And 511) \ 8
+                            ELSE
+                                memget_size = (t AND 511) \ 8
                                 memget_ctyp$ = typ2ctyp$(t, "")
-                            End If
-                        End If
+                            END IF
+                        END IF
 
 
 
@@ -16882,21 +16882,21 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         'assume checking off
                         offs$ = evaluatetotyp(memget_offs$, OFFSETTYPE - ISPOINTER)
                         blkoffs$ = evaluatetotyp(memget_blk$, -6)
-                        If NoChecks = 0 Then
+                        IF NoChecks = 0 THEN
                             'change offs$ to be the return of the safe version
                             offs$ = "func__memget((mem_block*)" + blkoffs$ + "," + offs$ + "," + str2(memget_size) + ")"
-                        End If
-                        If t And ISSTRING Then
+                        END IF
+                        IF t AND ISSTRING THEN
                             r$ = "qbs_new_txt_len((char*)" + offs$ + "," + str2(memget_size) + ")"
-                        Else
-                            If t And ISUDT Then
+                        ELSE
+                            IF t AND ISUDT THEN
                                 r$ = "((void*)+" + offs$ + ")"
-                                t = ISUDT + ISPOINTER + (t And 511)
-                            Else
+                                t = ISUDT + ISPOINTER + (t AND 511)
+                            ELSE
                                 r$ = "*(" + memget_ctyp$ + "*)(" + offs$ + ")"
-                                If t And ISPOINTER Then t = t - ISPOINTER
-                            End If
-                        End If
+                                IF t AND ISPOINTER THEN t = t - ISPOINTER
+                            END IF
+                        END IF
 
 
 
@@ -16907,460 +16907,460 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         typ& = t
 
 
-                        GoTo evalfuncspecial
-                    End If
-                End If
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
 
                 '------------------------------------------------------------------------------------------------------------
                 e2$ = e$
                 e$ = evaluate(e$, sourcetyp)
-                If Error_Happened Then Exit Function
+                IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
                 '***special case***
-                If n$ = "_MEM" Or (n$ = "MEM" And qb64prefix_set = 1) Then
-                    If curarg = 1 Then
-                        If args = 1 Then
+                IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
+                    IF curarg = 1 THEN
+                        IF args = 1 THEN
                             targettyp = -7
-                        End If
-                        If args = 2 Then
-                            r$ = RTrim$(id2.callname) + "_at_offset" + Right$(r$, Len(r$) - Len(RTrim$(id2.callname)))
-                            If (sourcetyp And ISOFFSET) = 0 Then Give_Error "Expected _MEM(_OFFSET-value,...)": Exit Function
-                        End If
-                    End If
-                End If
+                        END IF
+                        IF args = 2 THEN
+                            r$ = RTRIM$(id2.callname) + "_at_offset" + RIGHT$(r$, LEN(r$) - LEN(RTRIM$(id2.callname)))
+                            IF (sourcetyp AND ISOFFSET) = 0 THEN Give_Error "Expected _MEM(_OFFSET-value,...)": EXIT FUNCTION
+                        END IF
+                    END IF
+                END IF
 
                 '*special case*
-                If n$ = "_OFFSET" Or (n$ = "OFFSET" And qb64prefix_set = 1) Then
-                    If (sourcetyp And ISREFERENCE) = 0 Then
-                        Give_Error qb64prefix$ + "OFFSET expects the name of a variable/array": Exit Function
-                    End If
-                    If (sourcetyp And ISARRAY) Then
-                        If (sourcetyp And ISOFFSETINBITS) Then Give_Error qb64prefix$ + "OFFSET cannot reference _BIT type arrays": Exit Function
-                    End If
+                IF n$ = "_OFFSET" OR (n$ = "OFFSET" AND qb64prefix_set = 1) THEN
+                    IF (sourcetyp AND ISREFERENCE) = 0 THEN
+                        Give_Error qb64prefix$ + "OFFSET expects the name of a variable/array": EXIT FUNCTION
+                    END IF
+                    IF (sourcetyp AND ISARRAY) THEN
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error qb64prefix$ + "OFFSET cannot reference _BIT type arrays": EXIT FUNCTION
+                    END IF
                     r$ = "((uptrszint)(" + evaluatetotyp$(e2$, -6) + "))"
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     typ& = UOFFSETTYPE - ISPOINTER
-                    GoTo evalfuncspecial
-                End If '_OFFSET
+                    GOTO evalfuncspecial
+                END IF '_OFFSET
 
                 '*_OFFSET exceptions*
-                If sourcetyp And ISOFFSET Then
-                    If n$ = "MKSMBF" And RTrim$(id2.musthave) = "$" Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                    If n$ = "MKDMBF" And RTrim$(id2.musthave) = "$" Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                End If
+                IF sourcetyp AND ISOFFSET THEN
+                    IF n$ = "MKSMBF" AND RTRIM$(id2.musthave) = "$" THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                    IF n$ = "MKDMBF" AND RTRIM$(id2.musthave) = "$" THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                END IF
 
                 '*special case*
-                If n$ = "ENVIRON" Then
-                    If sourcetyp And ISSTRING Then
-                        If sourcetyp And ISREFERENCE Then e$ = refer(e$, sourcetyp, 0)
-                        If Error_Happened Then Exit Function
-                        GoTo dontevaluate
-                    End If
-                End If
+                IF n$ = "ENVIRON" THEN
+                    IF sourcetyp AND ISSTRING THEN
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        GOTO dontevaluate
+                    END IF
+                END IF
 
                 '*special case*
-                If n$ = "LEN" Then
+                IF n$ = "LEN" THEN
                     typ& = LONGTYPE - ISPOINTER
-                    If (sourcetyp And ISREFERENCE) = 0 Then
+                    IF (sourcetyp AND ISREFERENCE) = 0 THEN
                         'could be a string expression
-                        If sourcetyp And ISSTRING Then
+                        IF sourcetyp AND ISSTRING THEN
                             r$ = "((int32)(" + e$ + ")->len)"
-                            GoTo evalfuncspecial
-                        End If
-                        Give_Error "String expression or variable name required in LEN statement": Exit Function
-                    End If
+                            GOTO evalfuncspecial
+                        END IF
+                        Give_Error "String expression or variable name required in LEN statement": EXIT FUNCTION
+                    END IF
                     r$ = evaluatetotyp$(e2$, -5) 'use evaluatetotyp to get 'element' size
-                    If Error_Happened Then Exit Function
-                    GoTo evalfuncspecial
-                End If
+                    IF Error_Happened THEN EXIT FUNCTION
+                    GOTO evalfuncspecial
+                END IF
 
 
                 '*special case*
-                If n$ = "_BIN" Or (n$ = "BIN" And qb64prefix_set = 1) Then
-                    If RTrim$(id2.musthave) = "$" Then
-                        bits = sourcetyp And 511
+                IF n$ = "_BIN" OR (n$ = "BIN" AND qb64prefix_set = 1) THEN
+                    IF RTRIM$(id2.musthave) = "$" THEN
+                        bits = sourcetyp AND 511
 
-                        If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
+                        IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                         wasref = 0
-                        If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0): wasref = 1
-                        If Error_Happened Then Exit Function
-                        bits = sourcetyp And 511
-                        If (sourcetyp And ISOFFSETINBITS) Then
+                        IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0): wasref = 1
+                        IF Error_Happened THEN EXIT FUNCTION
+                        bits = sourcetyp AND 511
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN
                             e$ = "func__bin(" + e$ + "," + str2$(bits) + ")"
-                        Else
-                            If (sourcetyp And ISFLOAT) Then
+                        ELSE
+                            IF (sourcetyp AND ISFLOAT) THEN
                                 e$ = "func__bin_float(" + e$ + ")"
-                            Else
-                                If bits = 64 Then
-                                    If wasref = 0 Then bits = 0
-                                End If
+                            ELSE
+                                IF bits = 64 THEN
+                                    IF wasref = 0 THEN bits = 0
+                                END IF
                                 e$ = "func__bin(" + e$ + "," + str2$(bits) + ")"
-                            End If
-                        End If
+                            END IF
+                        END IF
                         typ& = STRINGTYPE - ISPOINTER
                         r$ = e$
-                        GoTo evalfuncspecial
-                    End If
-                End If
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
 
                 '*special case*
-                If n$ = "OCT" Then
-                    If RTrim$(id2.musthave) = "$" Then
-                        bits = sourcetyp And 511
+                IF n$ = "OCT" THEN
+                    IF RTRIM$(id2.musthave) = "$" THEN
+                        bits = sourcetyp AND 511
 
-                        If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
+                        IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                         wasref = 0
-                        If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0): wasref = 1
-                        If Error_Happened Then Exit Function
-                        bits = sourcetyp And 511
-                        If (sourcetyp And ISOFFSETINBITS) Then
+                        IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0): wasref = 1
+                        IF Error_Happened THEN EXIT FUNCTION
+                        bits = sourcetyp AND 511
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN
                             e$ = "func_oct(" + e$ + "," + str2$(bits) + ")"
-                        Else
-                            If (sourcetyp And ISFLOAT) Then
+                        ELSE
+                            IF (sourcetyp AND ISFLOAT) THEN
                                 e$ = "func_oct_float(" + e$ + ")"
-                            Else
-                                If bits = 64 Then
-                                    If wasref = 0 Then bits = 0
-                                End If
+                            ELSE
+                                IF bits = 64 THEN
+                                    IF wasref = 0 THEN bits = 0
+                                END IF
                                 e$ = "func_oct(" + e$ + "," + str2$(bits) + ")"
-                            End If
-                        End If
+                            END IF
+                        END IF
                         typ& = STRINGTYPE - ISPOINTER
                         r$ = e$
-                        GoTo evalfuncspecial
-                    End If
-                End If
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
 
                 '*special case*
-                If n$ = "HEX" Then
-                    If RTrim$(id2.musthave) = "$" Then
-                        bits = sourcetyp And 511
-                        If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
+                IF n$ = "HEX" THEN
+                    IF RTRIM$(id2.musthave) = "$" THEN
+                        bits = sourcetyp AND 511
+                        IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                         wasref = 0
-                        If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0): wasref = 1
-                        If Error_Happened Then Exit Function
-                        bits = sourcetyp And 511
-                        If (sourcetyp And ISOFFSETINBITS) Then
+                        IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0): wasref = 1
+                        IF Error_Happened THEN EXIT FUNCTION
+                        bits = sourcetyp AND 511
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN
                             chars = (bits + 3) \ 4
                             e$ = "func_hex(" + e$ + "," + str2$(chars) + ")"
-                        Else
-                            If (sourcetyp And ISFLOAT) Then
+                        ELSE
+                            IF (sourcetyp AND ISFLOAT) THEN
                                 e$ = "func_hex_float(" + e$ + ")"
-                            Else
-                                If bits = 8 Then chars = 2
-                                If bits = 16 Then chars = 4
-                                If bits = 32 Then chars = 8
-                                If bits = 64 Then
-                                    If wasref = 1 Then chars = 16 Else chars = 0
-                                End If
+                            ELSE
+                                IF bits = 8 THEN chars = 2
+                                IF bits = 16 THEN chars = 4
+                                IF bits = 32 THEN chars = 8
+                                IF bits = 64 THEN
+                                    IF wasref = 1 THEN chars = 16 ELSE chars = 0
+                                END IF
                                 e$ = "func_hex(" + e$ + "," + str2$(chars) + ")"
-                            End If
-                        End If
+                            END IF
+                        END IF
                         typ& = STRINGTYPE - ISPOINTER
                         r$ = e$
-                        GoTo evalfuncspecial
-                    End If
-                End If
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
 
 
                 '*special case*
-                If n$ = "EXP" Then
-                    bits = sourcetyp And 511
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
-                    bits = sourcetyp And 511
+                IF n$ = "EXP" THEN
+                    bits = sourcetyp AND 511
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    bits = sourcetyp AND 511
                     typ& = SINGLETYPE - ISPOINTER
-                    If (sourcetyp And ISFLOAT) Then
-                        If bits = 32 Then e$ = "func_exp_single(" + e$ + ")" Else e$ = "func_exp_float(" + e$ + ")": typ& = FLOATTYPE - ISPOINTER
-                    Else
-                        If (sourcetyp And ISOFFSETINBITS) Then
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        IF bits = 32 THEN e$ = "func_exp_single(" + e$ + ")" ELSE e$ = "func_exp_float(" + e$ + ")": typ& = FLOATTYPE - ISPOINTER
+                    ELSE
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN
                             e$ = "func_exp_float(" + e$ + ")": typ& = FLOATTYPE - ISPOINTER
-                        Else
-                            If bits <= 16 Then e$ = "func_exp_single(" + e$ + ")" Else e$ = "func_exp_float(" + e$ + ")": typ& = FLOATTYPE - ISPOINTER
-                        End If
-                    End If
+                        ELSE
+                            IF bits <= 16 THEN e$ = "func_exp_single(" + e$ + ")" ELSE e$ = "func_exp_float(" + e$ + ")": typ& = FLOATTYPE - ISPOINTER
+                        END IF
+                    END IF
                     r$ = e$
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case*
-                If n$ = "INT" Then
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                IF n$ = "INT" THEN
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    If (sourcetyp And ISFLOAT) Then e$ = "floor(" + e$ + ")" Else e$ = "(" + e$ + ")"
-                    r$ = e$
-                    typ& = sourcetyp
-                    GoTo evalfuncspecial
-                End If
-
-                '*special case*
-                If n$ = "FIX" Then
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
-                    'establish which function (if any!) should be used
-                    bits = sourcetyp And 511
-                    If (sourcetyp And ISFLOAT) Then
-                        If bits > 64 Then e$ = "func_fix_float(" + e$ + ")" Else e$ = "func_fix_double(" + e$ + ")"
-                    Else
-                        e$ = "(" + e$ + ")"
-                    End If
+                    IF (sourcetyp AND ISFLOAT) THEN e$ = "floor(" + e$ + ")" ELSE e$ = "(" + e$ + ")"
                     r$ = e$
                     typ& = sourcetyp
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case*
-                If n$ = "_ROUND" Or (n$ = "ROUND" And qb64prefix_set = 1) Then
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                IF n$ = "FIX" THEN
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    If (sourcetyp And ISFLOAT) Then
-                        bits = sourcetyp And 511
-                        If bits > 64 Then e$ = "func_round_float(" + e$ + ")" Else e$ = "func_round_double(" + e$ + ")"
-                    Else
+                    bits = sourcetyp AND 511
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        IF bits > 64 THEN e$ = "func_fix_float(" + e$ + ")" ELSE e$ = "func_fix_double(" + e$ + ")"
+                    ELSE
                         e$ = "(" + e$ + ")"
-                    End If
+                    END IF
+                    r$ = e$
+                    typ& = sourcetyp
+                    GOTO evalfuncspecial
+                END IF
+
+                '*special case*
+                IF n$ = "_ROUND" OR (n$ = "ROUND" AND qb64prefix_set = 1) THEN
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    'establish which function (if any!) should be used
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        bits = sourcetyp AND 511
+                        IF bits > 64 THEN e$ = "func_round_float(" + e$ + ")" ELSE e$ = "func_round_double(" + e$ + ")"
+                    ELSE
+                        e$ = "(" + e$ + ")"
+                    END IF
                     r$ = e$
                     typ& = 64&
-                    If (sourcetyp And ISOFFSET) Then
-                        If sourcetyp And ISUNSIGNED Then typ& = UOFFSETTYPE - ISPOINTER Else typ& = OFFSETTYPE - ISPOINTER
-                    End If
-                    GoTo evalfuncspecial
-                End If
+                    IF (sourcetyp AND ISOFFSET) THEN
+                        IF sourcetyp AND ISUNSIGNED THEN typ& = UOFFSETTYPE - ISPOINTER ELSE typ& = OFFSETTYPE - ISPOINTER
+                    END IF
+                    GOTO evalfuncspecial
+                END IF
 
 
                 '*special case*
-                If n$ = "CDBL" Then
-                    If (sourcetyp And ISOFFSET) Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                IF n$ = "CDBL" THEN
+                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp And 511
-                    If (sourcetyp And ISFLOAT) Then
-                        If bits > 64 Then e$ = "func_cdbl_float(" + e$ + ")"
-                    Else
+                    bits = sourcetyp AND 511
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        IF bits > 64 THEN e$ = "func_cdbl_float(" + e$ + ")"
+                    ELSE
                         e$ = "((double)(" + e$ + "))"
-                    End If
+                    END IF
                     r$ = e$
                     typ& = DOUBLETYPE - ISPOINTER
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case*
-                If n$ = "CSNG" Then
-                    If (sourcetyp And ISOFFSET) Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                IF n$ = "CSNG" THEN
+                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp And 511
-                    If (sourcetyp And ISFLOAT) Then
-                        If bits = 64 Then e$ = "func_csng_double(" + e$ + ")"
-                        If bits > 64 Then e$ = "func_csng_float(" + e$ + ")"
-                    Else
+                    bits = sourcetyp AND 511
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        IF bits = 64 THEN e$ = "func_csng_double(" + e$ + ")"
+                        IF bits > 64 THEN e$ = "func_csng_float(" + e$ + ")"
+                    ELSE
                         e$ = "((double)(" + e$ + "))"
-                    End If
+                    END IF
                     r$ = e$
                     typ& = SINGLETYPE - ISPOINTER
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
 
                 '*special case*
-                If n$ = "CLNG" Then
-                    If (sourcetyp And ISOFFSET) Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                IF n$ = "CLNG" THEN
+                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp And 511
-                    If (sourcetyp And ISFLOAT) Then
-                        If bits > 64 Then e$ = "func_clng_float(" + e$ + ")" Else e$ = "func_clng_double(" + e$ + ")"
-                    Else 'integer
-                        If (sourcetyp And ISUNSIGNED) Then
-                            If bits = 32 Then e$ = "func_clng_ulong(" + e$ + ")"
-                            If bits > 32 Then e$ = "func_clng_uint64(" + e$ + ")"
-                        Else 'signed
-                            If bits > 32 Then e$ = "func_clng_int64(" + e$ + ")"
-                        End If
-                    End If
+                    bits = sourcetyp AND 511
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        IF bits > 64 THEN e$ = "func_clng_float(" + e$ + ")" ELSE e$ = "func_clng_double(" + e$ + ")"
+                    ELSE 'integer
+                        IF (sourcetyp AND ISUNSIGNED) THEN
+                            IF bits = 32 THEN e$ = "func_clng_ulong(" + e$ + ")"
+                            IF bits > 32 THEN e$ = "func_clng_uint64(" + e$ + ")"
+                        ELSE 'signed
+                            IF bits > 32 THEN e$ = "func_clng_int64(" + e$ + ")"
+                        END IF
+                    END IF
                     r$ = e$
                     typ& = 32&
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case*
-                If n$ = "CINT" Then
-                    If (sourcetyp And ISOFFSET) Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                    If (sourcetyp And ISSTRING) Then Give_Error "Expected numeric value": Exit Function
-                    If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                IF n$ = "CINT" THEN
+                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
+                    IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp And 511
-                    If (sourcetyp And ISFLOAT) Then
-                        If bits > 64 Then e$ = "func_cint_float(" + e$ + ")" Else e$ = "func_cint_double(" + e$ + ")"
-                    Else 'integer
-                        If (sourcetyp And ISUNSIGNED) Then
-                            If bits > 15 And bits <= 32 Then e$ = "func_cint_ulong(" + e$ + ")"
-                            If bits > 32 Then e$ = "func_cint_uint64(" + e$ + ")"
-                        Else 'signed
-                            If bits > 16 And bits <= 32 Then e$ = "func_cint_long(" + e$ + ")"
-                            If bits > 32 Then e$ = "func_cint_int64(" + e$ + ")"
-                        End If
-                    End If
+                    bits = sourcetyp AND 511
+                    IF (sourcetyp AND ISFLOAT) THEN
+                        IF bits > 64 THEN e$ = "func_cint_float(" + e$ + ")" ELSE e$ = "func_cint_double(" + e$ + ")"
+                    ELSE 'integer
+                        IF (sourcetyp AND ISUNSIGNED) THEN
+                            IF bits > 15 AND bits <= 32 THEN e$ = "func_cint_ulong(" + e$ + ")"
+                            IF bits > 32 THEN e$ = "func_cint_uint64(" + e$ + ")"
+                        ELSE 'signed
+                            IF bits > 16 AND bits <= 32 THEN e$ = "func_cint_long(" + e$ + ")"
+                            IF bits > 32 THEN e$ = "func_cint_int64(" + e$ + ")"
+                        END IF
+                    END IF
                     r$ = e$
                     typ& = 16&
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case MKI,MKL,MKS,MKD,_MK (part #2)
                 mktype = 0
                 size = 0
-                If n$ = "MKI" Then mktype = 1: mktype$ = "%"
-                If n$ = "MKL" Then mktype = 2: mktype$ = "&"
-                If n$ = "MKS" Then mktype = 3: mktype$ = "!"
-                If n$ = "MKD" Then mktype = 4: mktype$ = "#"
-                If n$ = "_MK" Or (n$ = "MK" And qb64prefix_set = 1) Then mktype = -1
-                If mktype Then
-                    If mktype <> -1 Or curarg = 2 Then
+                IF n$ = "MKI" THEN mktype = 1: mktype$ = "%"
+                IF n$ = "MKL" THEN mktype = 2: mktype$ = "&"
+                IF n$ = "MKS" THEN mktype = 3: mktype$ = "!"
+                IF n$ = "MKD" THEN mktype = 4: mktype$ = "#"
+                IF n$ = "_MK" OR (n$ = "MK" AND qb64prefix_set = 1) THEN mktype = -1
+                IF mktype THEN
+                    IF mktype <> -1 OR curarg = 2 THEN
                         'IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert " + qb64prefix$ + "OFFSET type to other types": EXIT FUNCTION
                         'both _MK and trad. process the following
                         qtyp& = 0
-                        If mktype$ = "%%" Then ctype$ = "b": qtyp& = BYTETYPE - ISPOINTER
-                        If mktype$ = "~%%" Then ctype$ = "ub": qtyp& = UBYTETYPE - ISPOINTER
-                        If mktype$ = "%" Then ctype$ = "i": qtyp& = INTEGERTYPE - ISPOINTER
-                        If mktype$ = "~%" Then ctype$ = "ui": qtyp& = UINTEGERTYPE - ISPOINTER
-                        If mktype$ = "&" Then ctype$ = "l": qtyp& = LONGTYPE - ISPOINTER
-                        If mktype$ = "~&" Then ctype$ = "ul": qtyp& = ULONGTYPE - ISPOINTER
-                        If mktype$ = "&&" Then ctype$ = "i64": qtyp& = INTEGER64TYPE - ISPOINTER
-                        If mktype$ = "~&&" Then ctype$ = "ui64": qtyp& = UINTEGER64TYPE - ISPOINTER
-                        If mktype$ = "!" Then ctype$ = "s": qtyp& = SINGLETYPE - ISPOINTER
-                        If mktype$ = "#" Then ctype$ = "d": qtyp& = DOUBLETYPE - ISPOINTER
-                        If mktype$ = "##" Then ctype$ = "f": qtyp& = FLOATTYPE - ISPOINTER
-                        If mktype$ = "%&" Then ctype$ = "o": qtyp& = OFFSETTYPE - ISPOINTER
-                        If mktype$ = "~%&" Then ctype$ = "uo": qtyp& = UOFFSETTYPE - ISPOINTER
-                        If Left$(mktype$, 2) = "~`" Then ctype$ = "ubit": qtyp& = UINTEGER64TYPE - ISPOINTER: size = Val(Right$(mktype$, Len(mktype$) - 2))
-                        If Left$(mktype$, 1) = "`" Then ctype$ = "bit": qtyp& = INTEGER64TYPE - ISPOINTER: size = Val(Right$(mktype$, Len(mktype$) - 1))
-                        If qtyp& = 0 Then Give_Error qb64prefix$ + "MK only accepts numeric types": Exit Function
-                        If size Then
+                        IF mktype$ = "%%" THEN ctype$ = "b": qtyp& = BYTETYPE - ISPOINTER
+                        IF mktype$ = "~%%" THEN ctype$ = "ub": qtyp& = UBYTETYPE - ISPOINTER
+                        IF mktype$ = "%" THEN ctype$ = "i": qtyp& = INTEGERTYPE - ISPOINTER
+                        IF mktype$ = "~%" THEN ctype$ = "ui": qtyp& = UINTEGERTYPE - ISPOINTER
+                        IF mktype$ = "&" THEN ctype$ = "l": qtyp& = LONGTYPE - ISPOINTER
+                        IF mktype$ = "~&" THEN ctype$ = "ul": qtyp& = ULONGTYPE - ISPOINTER
+                        IF mktype$ = "&&" THEN ctype$ = "i64": qtyp& = INTEGER64TYPE - ISPOINTER
+                        IF mktype$ = "~&&" THEN ctype$ = "ui64": qtyp& = UINTEGER64TYPE - ISPOINTER
+                        IF mktype$ = "!" THEN ctype$ = "s": qtyp& = SINGLETYPE - ISPOINTER
+                        IF mktype$ = "#" THEN ctype$ = "d": qtyp& = DOUBLETYPE - ISPOINTER
+                        IF mktype$ = "##" THEN ctype$ = "f": qtyp& = FLOATTYPE - ISPOINTER
+                        IF mktype$ = "%&" THEN ctype$ = "o": qtyp& = OFFSETTYPE - ISPOINTER
+                        IF mktype$ = "~%&" THEN ctype$ = "uo": qtyp& = UOFFSETTYPE - ISPOINTER
+                        IF LEFT$(mktype$, 2) = "~`" THEN ctype$ = "ubit": qtyp& = UINTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(mktype$, LEN(mktype$) - 2))
+                        IF LEFT$(mktype$, 1) = "`" THEN ctype$ = "bit": qtyp& = INTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(mktype$, LEN(mktype$) - 1))
+                        IF qtyp& = 0 THEN Give_Error qb64prefix$ + "MK only accepts numeric types": EXIT FUNCTION
+                        IF size THEN
                             r$ = ctype$ + "2string(" + str2(size) + ","
-                        Else
+                        ELSE
                             r$ = ctype$ + "2string("
-                        End If
+                        END IF
                         nocomma = 1
                         targettyp = qtyp&
-                    End If
-                End If
+                    END IF
+                END IF
 
                 '*special case CVI,CVL,CVS,CVD,_CV (part #2)
                 cvtype = 0
-                If n$ = "CVI" Then cvtype = 1: cvtype$ = "%"
-                If n$ = "CVL" Then cvtype = 2: cvtype$ = "&"
-                If n$ = "CVS" Then cvtype = 3: cvtype$ = "!"
-                If n$ = "CVD" Then cvtype = 4: cvtype$ = "#"
-                If n$ = "_CV" Or (n$ = "CV" And qb64prefix_set = 1) Then cvtype = -1
-                If cvtype Then
-                    If cvtype <> -1 Or curarg = 2 Then
-                        If (sourcetyp And ISSTRING) = 0 Then Give_Error n$ + " requires a STRING argument": Exit Function
-                        If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                        If Error_Happened Then Exit Function
+                IF n$ = "CVI" THEN cvtype = 1: cvtype$ = "%"
+                IF n$ = "CVL" THEN cvtype = 2: cvtype$ = "&"
+                IF n$ = "CVS" THEN cvtype = 3: cvtype$ = "!"
+                IF n$ = "CVD" THEN cvtype = 4: cvtype$ = "#"
+                IF n$ = "_CV" OR (n$ = "CV" AND qb64prefix_set = 1) THEN cvtype = -1
+                IF cvtype THEN
+                    IF cvtype <> -1 OR curarg = 2 THEN
+                        IF (sourcetyp AND ISSTRING) = 0 THEN Give_Error n$ + " requires a STRING argument": EXIT FUNCTION
+                        IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
                         typ& = 0
-                        If cvtype$ = "%%" Then ctype$ = "b": typ& = BYTETYPE - ISPOINTER
-                        If cvtype$ = "~%%" Then ctype$ = "ub": typ& = UBYTETYPE - ISPOINTER
-                        If cvtype$ = "%" Then ctype$ = "i": typ& = INTEGERTYPE - ISPOINTER
-                        If cvtype$ = "~%" Then ctype$ = "ui": typ& = UINTEGERTYPE - ISPOINTER
-                        If cvtype$ = "&" Then ctype$ = "l": typ& = LONGTYPE - ISPOINTER
-                        If cvtype$ = "~&" Then ctype$ = "ul": typ& = ULONGTYPE - ISPOINTER
-                        If cvtype$ = "&&" Then ctype$ = "i64": typ& = INTEGER64TYPE - ISPOINTER
-                        If cvtype$ = "~&&" Then ctype$ = "ui64": typ& = UINTEGER64TYPE - ISPOINTER
-                        If cvtype$ = "!" Then ctype$ = "s": typ& = SINGLETYPE - ISPOINTER
-                        If cvtype$ = "#" Then ctype$ = "d": typ& = DOUBLETYPE - ISPOINTER
-                        If cvtype$ = "##" Then ctype$ = "f": typ& = FLOATTYPE - ISPOINTER
-                        If cvtype$ = "%&" Then ctype$ = "o": typ& = OFFSETTYPE - ISPOINTER
-                        If cvtype$ = "~%&" Then ctype$ = "uo": typ& = UOFFSETTYPE - ISPOINTER
-                        If Left$(cvtype$, 2) = "~`" Then ctype$ = "ubit": typ& = UINTEGER64TYPE - ISPOINTER: size = Val(Right$(cvtype$, Len(cvtype$) - 2))
-                        If Left$(cvtype$, 1) = "`" Then ctype$ = "bit": typ& = INTEGER64TYPE - ISPOINTER: size = Val(Right$(cvtype$, Len(cvtype$) - 1))
-                        If typ& = 0 Then Give_Error qb64prefix$ + "CV cannot return STRING type!": Exit Function
-                        If ctype$ = "bit" Or ctype$ = "ubit" Then
+                        IF cvtype$ = "%%" THEN ctype$ = "b": typ& = BYTETYPE - ISPOINTER
+                        IF cvtype$ = "~%%" THEN ctype$ = "ub": typ& = UBYTETYPE - ISPOINTER
+                        IF cvtype$ = "%" THEN ctype$ = "i": typ& = INTEGERTYPE - ISPOINTER
+                        IF cvtype$ = "~%" THEN ctype$ = "ui": typ& = UINTEGERTYPE - ISPOINTER
+                        IF cvtype$ = "&" THEN ctype$ = "l": typ& = LONGTYPE - ISPOINTER
+                        IF cvtype$ = "~&" THEN ctype$ = "ul": typ& = ULONGTYPE - ISPOINTER
+                        IF cvtype$ = "&&" THEN ctype$ = "i64": typ& = INTEGER64TYPE - ISPOINTER
+                        IF cvtype$ = "~&&" THEN ctype$ = "ui64": typ& = UINTEGER64TYPE - ISPOINTER
+                        IF cvtype$ = "!" THEN ctype$ = "s": typ& = SINGLETYPE - ISPOINTER
+                        IF cvtype$ = "#" THEN ctype$ = "d": typ& = DOUBLETYPE - ISPOINTER
+                        IF cvtype$ = "##" THEN ctype$ = "f": typ& = FLOATTYPE - ISPOINTER
+                        IF cvtype$ = "%&" THEN ctype$ = "o": typ& = OFFSETTYPE - ISPOINTER
+                        IF cvtype$ = "~%&" THEN ctype$ = "uo": typ& = UOFFSETTYPE - ISPOINTER
+                        IF LEFT$(cvtype$, 2) = "~`" THEN ctype$ = "ubit": typ& = UINTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(cvtype$, LEN(cvtype$) - 2))
+                        IF LEFT$(cvtype$, 1) = "`" THEN ctype$ = "bit": typ& = INTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(cvtype$, LEN(cvtype$) - 1))
+                        IF typ& = 0 THEN Give_Error qb64prefix$ + "CV cannot return STRING type!": EXIT FUNCTION
+                        IF ctype$ = "bit" OR ctype$ = "ubit" THEN
                             r$ = "string2" + ctype$ + "(" + e$ + "," + str2(size) + ")"
-                        Else
+                        ELSE
                             r$ = "string2" + ctype$ + "(" + e$ + ")"
-                        End If
-                        GoTo evalfuncspecial
-                    End If
-                End If
+                        END IF
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
 
                 '*special case
-                If RTrim$(id2.n) = "STRING" Then
-                    If curarg = 2 Then
-                        If (sourcetyp And ISSTRING) Then
-                            If (sourcetyp And ISREFERENCE) Then e$ = refer(e$, sourcetyp, 0)
-                            If Error_Happened Then Exit Function
+                IF RTRIM$(id2.n) = "STRING" THEN
+                    IF curarg = 2 THEN
+                        IF (sourcetyp AND ISSTRING) THEN
+                            IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                            IF Error_Happened THEN EXIT FUNCTION
                             sourcetyp = 64&
                             e$ = "(" + e$ + "->chr[0])"
-                        End If
-                    End If
-                End If
+                        END IF
+                    END IF
+                END IF
 
                 '*special case
-                If RTrim$(id2.n) = "SADD" Then
-                    If (sourcetyp And ISREFERENCE) = 0 Then
-                        Give_Error "SADD only accepts variable-length string variables": Exit Function
-                    End If
-                    If (sourcetyp And ISFIXEDLENGTH) Then
-                        Give_Error "SADD only accepts variable-length string variables": Exit Function
-                    End If
-                    If (sourcetyp And ISINCONVENTIONALMEMORY) = 0 Then
+                IF RTRIM$(id2.n) = "SADD" THEN
+                    IF (sourcetyp AND ISREFERENCE) = 0 THEN
+                        Give_Error "SADD only accepts variable-length string variables": EXIT FUNCTION
+                    END IF
+                    IF (sourcetyp AND ISFIXEDLENGTH) THEN
+                        Give_Error "SADD only accepts variable-length string variables": EXIT FUNCTION
+                    END IF
+                    IF (sourcetyp AND ISINCONVENTIONALMEMORY) = 0 THEN
                         recompile = 1
-                        cmemlist(Val(e$)) = 1
+                        cmemlist(VAL(e$)) = 1
                         r$ = "[CONVENTIONAL_MEMORY_REQUIRED]"
                         typ& = 64&
-                        GoTo evalfuncspecial
-                    End If
+                        GOTO evalfuncspecial
+                    END IF
                     r$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     r$ = "((unsigned short)(" + r$ + "->chr-&cmem[1280]))"
                     typ& = 64&
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case
-                If RTrim$(id2.n) = "VARPTR" Then
-                    If (sourcetyp And ISREFERENCE) = 0 Then
-                        Give_Error "Expected reference to a variable/array": Exit Function
-                    End If
+                IF RTRIM$(id2.n) = "VARPTR" THEN
+                    IF (sourcetyp AND ISREFERENCE) = 0 THEN
+                        Give_Error "Expected reference to a variable/array": EXIT FUNCTION
+                    END IF
 
-                    If RTrim$(id2.musthave) = "$" Then
-                        If (sourcetyp And ISINCONVENTIONALMEMORY) = 0 Then
+                    IF RTRIM$(id2.musthave) = "$" THEN
+                        IF (sourcetyp AND ISINCONVENTIONALMEMORY) = 0 THEN
                             recompile = 1
-                            cmemlist(Val(e$)) = 1
+                            cmemlist(VAL(e$)) = 1
                             r$ = "[CONVENTIONAL_MEMORY_REQUIRED]"
                             typ& = ISSTRING
-                            GoTo evalfuncspecial
-                        End If
+                            GOTO evalfuncspecial
+                        END IF
 
-                        If (sourcetyp And ISARRAY) Then
-                            If (sourcetyp And ISSTRING) = 0 Then Give_Error "VARPTR$ only accepts variable-length string arrays": Exit Function
-                            If (sourcetyp And ISFIXEDLENGTH) Then Give_Error "VARPTR$ only accepts variable-length string arrays": Exit Function
-                        End If
+                        IF (sourcetyp AND ISARRAY) THEN
+                            IF (sourcetyp AND ISSTRING) = 0 THEN Give_Error "VARPTR$ only accepts variable-length string arrays": EXIT FUNCTION
+                            IF (sourcetyp AND ISFIXEDLENGTH) THEN Give_Error "VARPTR$ only accepts variable-length string arrays": EXIT FUNCTION
+                        END IF
 
                         'must be a simple variable
                         '!assuming it is in cmem in DBLOCK
                         r$ = refer(e$, sourcetyp, 1)
-                        If Error_Happened Then Exit Function
-                        If (sourcetyp And ISSTRING) Then
-                            If (sourcetyp And ISARRAY) Then r$ = refer(e$, sourcetyp, 0)
-                            If Error_Happened Then Exit Function
+                        IF Error_Happened THEN EXIT FUNCTION
+                        IF (sourcetyp AND ISSTRING) THEN
+                            IF (sourcetyp AND ISARRAY) THEN r$ = refer(e$, sourcetyp, 0)
+                            IF Error_Happened THEN EXIT FUNCTION
                             r$ = r$ + "->cmem_descriptor_offset"
                             t = 3
-                        Else
+                        ELSE
                             r$ = "((unsigned short)(((uint8*)" + r$ + ")-&cmem[1280]))"
                             '*top bit on=unsigned
                             '*second top bit on=bit-value (lower bits indicate the size)
@@ -17374,28 +17374,28 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             'LONG=20
                             'BIT=64+n
                             t = 0
-                            If (sourcetyp And ISUNSIGNED) Then t = t + 128
-                            If (sourcetyp And ISOFFSETINBITS) Then
+                            IF (sourcetyp AND ISUNSIGNED) THEN t = t + 128
+                            IF (sourcetyp AND ISOFFSETINBITS) THEN
                                 t = t + 64
-                                t = t + (sourcetyp And 63)
-                            Else
-                                bits = sourcetyp And 511
-                                If (sourcetyp And ISFLOAT) Then
-                                    If bits = 32 Then t = t + 4
-                                    If bits = 64 Then t = t + 8
-                                    If bits = 256 Then t = t + 6
-                                Else
-                                    If bits = 8 Then t = t + 1
-                                    If bits = 16 Then t = t + 2
-                                    If bits = 32 Then t = t + 20
-                                    If bits = 64 Then t = t + 5
-                                End If
-                            End If
-                        End If
+                                t = t + (sourcetyp AND 63)
+                            ELSE
+                                bits = sourcetyp AND 511
+                                IF (sourcetyp AND ISFLOAT) THEN
+                                    IF bits = 32 THEN t = t + 4
+                                    IF bits = 64 THEN t = t + 8
+                                    IF bits = 256 THEN t = t + 6
+                                ELSE
+                                    IF bits = 8 THEN t = t + 1
+                                    IF bits = 16 THEN t = t + 2
+                                    IF bits = 32 THEN t = t + 20
+                                    IF bits = 64 THEN t = t + 5
+                                END IF
+                            END IF
+                        END IF
                         r$ = "func_varptr_helper(" + str2(t) + "," + r$ + ")"
                         typ& = ISSTRING
-                        GoTo evalfuncspecial
-                    End If 'end of varptr$
+                        GOTO evalfuncspecial
+                    END IF 'end of varptr$
 
 
 
@@ -17408,163 +17408,163 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
 
                     'VARPTR
-                    If (sourcetyp And ISINCONVENTIONALMEMORY) = 0 Then
+                    IF (sourcetyp AND ISINCONVENTIONALMEMORY) = 0 THEN
                         recompile = 1
-                        cmemlist(Val(e$)) = 1
+                        cmemlist(VAL(e$)) = 1
                         r$ = "[CONVENTIONAL_MEMORY_REQUIRED]"
                         typ& = 64&
-                        GoTo evalfuncspecial
-                    End If
+                        GOTO evalfuncspecial
+                    END IF
 
-                    If (sourcetyp And ISARRAY) Then
-                        If (sourcetyp And ISOFFSETINBITS) Then Give_Error "VARPTR cannot reference _BIT type arrays": Exit Function
+                    IF (sourcetyp AND ISARRAY) THEN
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "VARPTR cannot reference _BIT type arrays": EXIT FUNCTION
 
                         'string array?
-                        If (sourcetyp And ISSTRING) Then
-                            If (sourcetyp And ISFIXEDLENGTH) Then
-                                getid Val(e$)
-                                If Error_Happened Then Exit Function
+                        IF (sourcetyp AND ISSTRING) THEN
+                            IF (sourcetyp AND ISFIXEDLENGTH) THEN
+                                getid VAL(e$)
+                                IF Error_Happened THEN EXIT FUNCTION
                                 m = id.tsize
-                                index$ = Right$(e$, Len(e$) - InStr(e$, sp3))
+                                index$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3))
                                 typ = 64&
                                 r$ = "((" + index$ + ")*" + str2(m) + ")"
-                                GoTo evalfuncspecial
-                            Else
+                                GOTO evalfuncspecial
+                            ELSE
                                 'return the offset of the string's descriptor
                                 r$ = refer(e$, sourcetyp, 0)
-                                If Error_Happened Then Exit Function
+                                IF Error_Happened THEN EXIT FUNCTION
                                 r$ = r$ + "->cmem_descriptor_offset"
                                 typ = 64&
-                                GoTo evalfuncspecial
-                            End If
-                        End If
+                                GOTO evalfuncspecial
+                            END IF
+                        END IF
 
-                        If sourcetyp And ISUDT Then
-                            e$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip idnumber
-                            e$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip u
-                            o$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip e
+                        IF sourcetyp AND ISUDT THEN
+                            e$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip idnumber
+                            e$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip u
+                            o$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip e
                             typ = 64&
                             r$ = "(" + o$ + ")"
-                            GoTo evalfuncspecial
-                        End If
+                            GOTO evalfuncspecial
+                        END IF
 
                         'non-UDT array
-                        m = (sourcetyp And 511) \ 8 'calculate size multiplier
-                        index$ = Right$(e$, Len(e$) - InStr(e$, sp3))
+                        m = (sourcetyp AND 511) \ 8 'calculate size multiplier
+                        index$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3))
                         typ = 64&
                         r$ = "((" + index$ + ")*" + str2(m) + ")"
-                        GoTo evalfuncspecial
+                        GOTO evalfuncspecial
 
-                    End If
+                    END IF
 
                     'not an array
 
-                    If sourcetyp And ISUDT Then
+                    IF sourcetyp AND ISUDT THEN
                         r$ = refer(e$, sourcetyp, 1)
-                        If Error_Happened Then Exit Function
-                        e$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip idnumber
-                        e$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip u
-                        o$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip e
+                        IF Error_Happened THEN EXIT FUNCTION
+                        e$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip idnumber
+                        e$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip u
+                        o$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip e
                         typ = 64&
 
                         'if sub/func arg, may not be in DBLOCK
-                        getid Val(e$)
-                        If Error_Happened Then Exit Function
-                        If id.sfarg Then 'could be in DBLOCK
+                        getid VAL(e$)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        IF id.sfarg THEN 'could be in DBLOCK
                             'note: segment could be the closest segment to UDT element or the base of DBLOCK
                             r$ = "varptr_dblock_check(((uint8*)" + r$ + ")+(" + o$ + "))"
-                        Else 'definitely in DBLOCK
+                        ELSE 'definitely in DBLOCK
                             'give offset relative to DBLOCK
                             r$ = "((unsigned short)(((uint8*)" + r$ + ") - &cmem[1280] + (" + o$ + ") ))"
-                        End If
+                        END IF
 
-                        GoTo evalfuncspecial
-                    End If
+                        GOTO evalfuncspecial
+                    END IF
 
                     typ = 64&
                     r$ = refer(e$, sourcetyp, 1)
-                    If Error_Happened Then Exit Function
-                    If (sourcetyp And ISSTRING) Then
-                        If (sourcetyp And ISFIXEDLENGTH) Then
+                    IF Error_Happened THEN EXIT FUNCTION
+                    IF (sourcetyp AND ISSTRING) THEN
+                        IF (sourcetyp AND ISFIXEDLENGTH) THEN
 
                             'if sub/func arg, may not be in DBLOCK
-                            getid Val(e$)
-                            If Error_Happened Then Exit Function
-                            If id.sfarg Then 'could be in DBLOCK
+                            getid VAL(e$)
+                            IF Error_Happened THEN EXIT FUNCTION
+                            IF id.sfarg THEN 'could be in DBLOCK
                                 r$ = "varptr_dblock_check(" + r$ + "->chr)"
-                            Else 'definitely in DBLOCK
+                            ELSE 'definitely in DBLOCK
                                 r$ = "((unsigned short)(" + r$ + "->chr-&cmem[1280]))"
-                            End If
+                            END IF
 
-                        Else
+                        ELSE
                             r$ = r$ + "->cmem_descriptor_offset"
-                        End If
-                        GoTo evalfuncspecial
-                    End If
+                        END IF
+                        GOTO evalfuncspecial
+                    END IF
 
                     'single, simple variable
                     'if sub/func arg, may not be in DBLOCK
-                    getid Val(e$)
-                    If Error_Happened Then Exit Function
-                    If id.sfarg Then 'could be in DBLOCK
+                    getid VAL(e$)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    IF id.sfarg THEN 'could be in DBLOCK
                         r$ = "varptr_dblock_check((uint8*)" + r$ + ")"
-                    Else 'definitely in DBLOCK
+                    ELSE 'definitely in DBLOCK
                         r$ = "((unsigned short)(((uint8*)" + r$ + ")-&cmem[1280]))"
-                    End If
+                    END IF
 
-                    GoTo evalfuncspecial
-                End If
+                    GOTO evalfuncspecial
+                END IF
 
                 '*special case*
-                If RTrim$(id2.n) = "VARSEG" Then
-                    If (sourcetyp And ISREFERENCE) = 0 Then
-                        Give_Error "Expected reference to a variable/array": Exit Function
-                    End If
-                    If (sourcetyp And ISINCONVENTIONALMEMORY) = 0 Then
+                IF RTRIM$(id2.n) = "VARSEG" THEN
+                    IF (sourcetyp AND ISREFERENCE) = 0 THEN
+                        Give_Error "Expected reference to a variable/array": EXIT FUNCTION
+                    END IF
+                    IF (sourcetyp AND ISINCONVENTIONALMEMORY) = 0 THEN
                         recompile = 1
-                        cmemlist(Val(e$)) = 1
+                        cmemlist(VAL(e$)) = 1
                         r$ = "[CONVENTIONAL_MEMORY_REQUIRED]"
                         typ& = 64&
-                        GoTo evalfuncspecial
-                    End If
+                        GOTO evalfuncspecial
+                    END IF
                     'array?
-                    If (sourcetyp And ISARRAY) Then
-                        If (sourcetyp And ISFIXEDLENGTH) = 0 Then
-                            If (sourcetyp And ISSTRING) Then
+                    IF (sourcetyp AND ISARRAY) THEN
+                        IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
+                            IF (sourcetyp AND ISSTRING) THEN
                                 r$ = "80"
                                 typ = 64&
-                                GoTo evalfuncspecial
-                            End If
-                        End If
+                                GOTO evalfuncspecial
+                            END IF
+                        END IF
                         typ = 64&
                         r$ = "( ( ((ptrszint)(" + refer(e$, sourcetyp, 1) + "[0])) - ((ptrszint)(&cmem[0])) ) /16)"
-                        If Error_Happened Then Exit Function
-                        GoTo evalfuncspecial
-                    End If
+                        IF Error_Happened THEN EXIT FUNCTION
+                        GOTO evalfuncspecial
+                    END IF
 
                     'single variable/(var-len)string/udt? (usually stored in DBLOCK)
                     typ = 64&
                     'if sub/func arg, may not be in DBLOCK
-                    getid Val(e$)
-                    If Error_Happened Then Exit Function
-                    If id.sfarg <> 0 And (sourcetyp And ISSTRING) = 0 Then
-                        If sourcetyp And ISUDT Then
+                    getid VAL(e$)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    IF id.sfarg <> 0 AND (sourcetyp AND ISSTRING) = 0 THEN
+                        IF sourcetyp AND ISUDT THEN
                             r$ = refer(e$, sourcetyp, 1)
-                            If Error_Happened Then Exit Function
-                            e$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip idnumber
-                            e$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip u
-                            o$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'skip e
+                            IF Error_Happened THEN EXIT FUNCTION
+                            e$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip idnumber
+                            e$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip u
+                            o$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'skip e
                             r$ = "varseg_dblock_check(((uint8*)" + r$ + ")+(" + o$ + "))"
-                        Else
+                        ELSE
                             r$ = "varseg_dblock_check((uint8*)" + refer(e$, sourcetyp, 1) + ")"
-                            If Error_Happened Then Exit Function
-                        End If
-                    Else
+                            IF Error_Happened THEN EXIT FUNCTION
+                        END IF
+                    ELSE
                         'can be assumed to be in DBLOCK
                         r$ = "80"
-                    End If
-                    GoTo evalfuncspecial
-                End If 'varseg
+                    END IF
+                    GOTO evalfuncspecial
+                END IF 'varseg
 
 
 
@@ -17589,113 +17589,113 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 'note: this comment makes no sense...
                 'any numeric variable, but it must be type-speficied
 
-                If targettyp = -2 Then
+                IF targettyp = -2 THEN
                     e$ = evaluatetotyp(e2$, -2)
-                    If Error_Happened Then Exit Function
-                    GoTo dontevaluate
-                End If '-2
+                    IF Error_Happened THEN EXIT FUNCTION
+                    GOTO dontevaluate
+                END IF '-2
 
-                If targettyp = -7 Then
+                IF targettyp = -7 THEN
                     e$ = evaluatetotyp(e2$, -7)
-                    If Error_Happened Then Exit Function
-                    GoTo dontevaluate
-                End If '-7
+                    IF Error_Happened THEN EXIT FUNCTION
+                    GOTO dontevaluate
+                END IF '-7
 
-                If targettyp = -8 Then
+                IF targettyp = -8 THEN
                     e$ = evaluatetotyp(e2$, -8)
-                    If Error_Happened Then Exit Function
-                    GoTo dontevaluate
-                End If '-8
+                    IF Error_Happened THEN EXIT FUNCTION
+                    GOTO dontevaluate
+                END IF '-8
 
-                If sourcetyp And ISOFFSET Then
-                    If (targettyp And ISOFFSET) = 0 Then
-                        If id2.internal_subfunc = 0 Then Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-                    End If
-                End If
+                IF sourcetyp AND ISOFFSET THEN
+                    IF (targettyp AND ISOFFSET) = 0 THEN
+                        IF id2.internal_subfunc = 0 THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+                    END IF
+                END IF
 
                 'note: this is used for functions like STR(...) which accept all types...
                 explicitreference = 0
-                If targettyp = -1 Then
+                IF targettyp = -1 THEN
                     explicitreference = 1
-                    If (sourcetyp And ISSTRING) Then Give_Error "Number required for function": Exit Function
+                    IF (sourcetyp AND ISSTRING) THEN Give_Error "Number required for function": EXIT FUNCTION
                     targettyp = sourcetyp
-                    If (targettyp And ISPOINTER) Then targettyp = targettyp - ISPOINTER
-                End If
+                    IF (targettyp AND ISPOINTER) THEN targettyp = targettyp - ISPOINTER
+                END IF
 
                 'pointer?
-                If (targettyp And ISPOINTER) Then
-                    If dereference = 0 Then 'check deferencing wasn't used
+                IF (targettyp AND ISPOINTER) THEN
+                    IF dereference = 0 THEN 'check deferencing wasn't used
 
 
 
                         'note: array pointer
-                        If (targettyp And ISARRAY) Then
-                            If (sourcetyp And ISREFERENCE) = 0 Then Give_Error "Expected arrayname()": Exit Function
-                            If (sourcetyp And ISARRAY) = 0 Then Give_Error "Expected arrayname()": Exit Function
-                            If Debug Then Print #9, "evaluatefunc:array reference:[" + e$ + "]"
+                        IF (targettyp AND ISARRAY) THEN
+                            IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            IF (sourcetyp AND ISARRAY) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            IF Debug THEN PRINT #9, "evaluatefunc:array reference:[" + e$ + "]"
 
                             'check arrays are of same type
                             targettyp2 = targettyp: sourcetyp2 = sourcetyp
-                            targettyp2 = targettyp2 And (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
-                            sourcetyp2 = sourcetyp2 And (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
-                            If sourcetyp2 <> targettyp2 Then Give_Error "Incorrect array type passed to function": Exit Function
+                            targettyp2 = targettyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
+                            sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
+                            IF sourcetyp2 <> targettyp2 THEN Give_Error "Incorrect array type passed to function": EXIT FUNCTION
 
                             'check arrayname was followed by '()'
-                            If targettyp And ISUDT Then
-                                If Debug Then Print #9, "evaluatefunc:array reference:udt reference:[" + e$ + "]"
+                            IF targettyp AND ISUDT THEN
+                                IF Debug THEN PRINT #9, "evaluatefunc:array reference:udt reference:[" + e$ + "]"
                                 'get UDT info
-                                udtrefid = Val(e$)
+                                udtrefid = VAL(e$)
                                 getid udtrefid
-                                If Error_Happened Then Exit Function
-                                udtrefi = InStr(e$, sp3) 'end of id
-                                udtrefi2 = InStr(udtrefi + 1, e$, sp3) 'end of u
-                                udtrefu = Val(Mid$(e$, udtrefi + 1, udtrefi2 - udtrefi - 1))
-                                udtrefi3 = InStr(udtrefi2 + 1, e$, sp3) 'skip e
-                                udtrefe = Val(Mid$(e$, udtrefi2 + 1, udtrefi3 - udtrefi2 - 1))
-                                o$ = Right$(e$, Len(e$) - udtrefi3)
+                                IF Error_Happened THEN EXIT FUNCTION
+                                udtrefi = INSTR(e$, sp3) 'end of id
+                                udtrefi2 = INSTR(udtrefi + 1, e$, sp3) 'end of u
+                                udtrefu = VAL(MID$(e$, udtrefi + 1, udtrefi2 - udtrefi - 1))
+                                udtrefi3 = INSTR(udtrefi2 + 1, e$, sp3) 'skip e
+                                udtrefe = VAL(MID$(e$, udtrefi2 + 1, udtrefi3 - udtrefi2 - 1))
+                                o$ = RIGHT$(e$, LEN(e$) - udtrefi3)
                                 'note: most of the UDT info above is not required
-                                If Left$(o$, 4) <> "(0)*" Then Give_Error "Expected arrayname()": Exit Function
-                            Else
-                                If Right$(e$, 2) <> sp3 + "0" Then Give_Error "Expected arrayname()": Exit Function
-                            End If
+                                IF LEFT$(o$, 4) <> "(0)*" THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            ELSE
+                                IF RIGHT$(e$, 2) <> sp3 + "0" THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            END IF
 
 
-                            idnum = Val(Left$(e$, InStr(e$, sp3) - 1))
+                            idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1))
                             getid idnum
-                            If Error_Happened Then Exit Function
+                            IF Error_Happened THEN EXIT FUNCTION
 
-                            If targettyp And ISFIXEDLENGTH Then
-                                targettypsize = CVL(Mid$(id2.argsize, curarg * 4 - 4 + 1, 4))
-                                If id.tsize <> targettypsize Then Give_Error "Incorrect array type passed to function": Exit Function
-                            End If
+                            IF targettyp AND ISFIXEDLENGTH THEN
+                                targettypsize = CVL(MID$(id2.argsize, curarg * 4 - 4 + 1, 4))
+                                IF id.tsize <> targettypsize THEN Give_Error "Incorrect array type passed to function": EXIT FUNCTION
+                            END IF
 
-                            If Mid$(sfcmemargs(targetid), curarg, 1) = Chr$(1) Then 'cmem required?
-                                If cmemlist(idnum) = 0 Then
+                            IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
+                                IF cmemlist(idnum) = 0 THEN
                                     cmemlist(idnum) = 1
 
                                     recompile = 1
-                                End If
-                            End If
+                                END IF
+                            END IF
 
 
 
-                            If id.linkid = 0 Then
+                            IF id.linkid = 0 THEN
                                 'if id.linkid is 0, it means the number of array elements is definietly
                                 'known of the array being passed, this is not some "fake"/unknown array.
                                 'using the numer of array elements of a fake array would be dangerous!
 
-                                If nelereq = 0 Then
+                                IF nelereq = 0 THEN
                                     'only continue if the number of array elements required is unknown
                                     'and it needs to be set
 
-                                    If id.arrayelements <> -1 Then
+                                    IF id.arrayelements <> -1 THEN
                                         nelereq = id.arrayelements
-                                        Mid$(id2.nelereq, curarg, 1) = Chr$(nelereq)
-                                    End If
+                                        MID$(id2.nelereq, curarg, 1) = CHR$(nelereq)
+                                    END IF
 
                                     ids(targetid) = id2
 
-                                Else
+                                ELSE
 
                                     'the number of array elements required is known AND
                                     'the number of elements in the array to be passed is known
@@ -17706,18 +17706,18 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                     'print id.arrayelements,nelereq
                                     '             1       ,  2
 
-                                    If id.arrayelements <> nelereq Then Give_Error "Passing arrays with a differing number of elements to a SUB/FUNCTION is not supported": Exit Function
+                                    IF id.arrayelements <> nelereq THEN Give_Error "Passing arrays with a differing number of elements to a SUB/FUNCTION is not supported": EXIT FUNCTION
 
 
 
-                                End If
-                            End If
+                                END IF
+                            END IF
 
 
                             e$ = refer(e$, sourcetyp, 1)
-                            If Error_Happened Then Exit Function
-                            GoTo dontevaluate
-                        End If
+                            IF Error_Happened THEN EXIT FUNCTION
+                            GOTO dontevaluate
+                        END IF
 
 
 
@@ -17734,79 +17734,79 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                         'target is not an array
 
-                        If (targettyp And ISSTRING) = 0 Then
-                            If (sourcetyp And ISREFERENCE) Then
-                                idnum = Val(Left$(e$, InStr(e$, sp3) - 1)) 'id# of sourcetyp
+                        IF (targettyp AND ISSTRING) = 0 THEN
+                            IF (sourcetyp AND ISREFERENCE) THEN
+                                idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1)) 'id# of sourcetyp
 
                                 targettyp2 = targettyp: sourcetyp2 = sourcetyp
 
                                 'get info about source/target
-                                arr = 0: If (sourcetyp2 And ISARRAY) Then arr = 1
-                                passudtelement = 0: If (targettyp2 And ISUDT) = 0 And (sourcetyp2 And ISUDT) <> 0 Then passudtelement = 1: sourcetyp2 = sourcetyp2 - ISUDT
+                                arr = 0: IF (sourcetyp2 AND ISARRAY) THEN arr = 1
+                                passudtelement = 0: IF (targettyp2 AND ISUDT) = 0 AND (sourcetyp2 AND ISUDT) <> 0 THEN passudtelement = 1: sourcetyp2 = sourcetyp2 - ISUDT
 
                                 'remove flags irrelevant for comparison... ISPOINTER,ISREFERENCE,ISINCONVENTIONALMEMORY,ISARRAY
-                                targettyp2 = targettyp2 And (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
-                                sourcetyp2 = sourcetyp2 And (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
+                                targettyp2 = targettyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
+                                sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
 
                                 'compare types
-                                If sourcetyp2 = targettyp2 Then
+                                IF sourcetyp2 = targettyp2 THEN
 
-                                    If sourcetyp And ISUDT Then
+                                    IF sourcetyp AND ISUDT THEN
                                         'udt/udt array
 
                                         'get info
-                                        udtrefid = Val(e$)
+                                        udtrefid = VAL(e$)
                                         getid udtrefid
-                                        If Error_Happened Then Exit Function
-                                        udtrefi = InStr(e$, sp3) 'end of id
-                                        udtrefi2 = InStr(udtrefi + 1, e$, sp3) 'end of u
-                                        udtrefu = Val(Mid$(e$, udtrefi + 1, udtrefi2 - udtrefi - 1))
-                                        udtrefi3 = InStr(udtrefi2 + 1, e$, sp3) 'skip e
-                                        udtrefe = Val(Mid$(e$, udtrefi2 + 1, udtrefi3 - udtrefi2 - 1))
-                                        o$ = Right$(e$, Len(e$) - udtrefi3)
+                                        IF Error_Happened THEN EXIT FUNCTION
+                                        udtrefi = INSTR(e$, sp3) 'end of id
+                                        udtrefi2 = INSTR(udtrefi + 1, e$, sp3) 'end of u
+                                        udtrefu = VAL(MID$(e$, udtrefi + 1, udtrefi2 - udtrefi - 1))
+                                        udtrefi3 = INSTR(udtrefi2 + 1, e$, sp3) 'skip e
+                                        udtrefe = VAL(MID$(e$, udtrefi2 + 1, udtrefi3 - udtrefi2 - 1))
+                                        o$ = RIGHT$(e$, LEN(e$) - udtrefi3)
                                         'note: most of the UDT info above is not required
 
-                                        If arr Then
-                                            n2$ = scope$ + "ARRAY_UDT_" + RTrim$(id.n) + "[0]"
-                                        Else
-                                            n2$ = scope$ + "UDT_" + RTrim$(id.n)
-                                        End If
+                                        IF arr THEN
+                                            n2$ = scope$ + "ARRAY_UDT_" + RTRIM$(id.n) + "[0]"
+                                        ELSE
+                                            n2$ = scope$ + "UDT_" + RTRIM$(id.n)
+                                        END IF
 
                                         e$ = "(void*)( ((char*)(" + n2$ + ")) + (" + o$ + ") )"
 
                                         'convert void* to target type*
-                                        If passudtelement Then e$ = "(" + typ2ctyp$(targettyp2 + (targettyp And ISUNSIGNED), "") + "*)" + e$
-                                        If Error_Happened Then Exit Function
+                                        IF passudtelement THEN e$ = "(" + typ2ctyp$(targettyp2 + (targettyp AND ISUNSIGNED), "") + "*)" + e$
+                                        IF Error_Happened THEN EXIT FUNCTION
 
-                                    Else
+                                    ELSE
                                         'not a udt
-                                        If arr Then
-                                            If (sourcetyp2 And ISOFFSETINBITS) Then Give_Error "Cannot pass BIT array offsets": Exit Function
+                                        IF arr THEN
+                                            IF (sourcetyp2 AND ISOFFSETINBITS) THEN Give_Error "Cannot pass BIT array offsets": EXIT FUNCTION
                                             e$ = "(&(" + refer(e$, sourcetyp, 0) + "))"
-                                            If Error_Happened Then Exit Function
-                                        Else
+                                            IF Error_Happened THEN EXIT FUNCTION
+                                        ELSE
                                             e$ = refer(e$, sourcetyp, 1)
-                                            If Error_Happened Then Exit Function
-                                        End If
+                                            IF Error_Happened THEN EXIT FUNCTION
+                                        END IF
 
                                         'note: signed/unsigned mismatch requires casting
-                                        If (sourcetyp And ISUNSIGNED) <> (targettyp And ISUNSIGNED) Then
-                                            e$ = "(" + typ2ctyp$(targettyp2 + (targettyp And ISUNSIGNED), "") + "*)" + e$
-                                            If Error_Happened Then Exit Function
-                                        End If
+                                        IF (sourcetyp AND ISUNSIGNED) <> (targettyp AND ISUNSIGNED) THEN
+                                            e$ = "(" + typ2ctyp$(targettyp2 + (targettyp AND ISUNSIGNED), "") + "*)" + e$
+                                            IF Error_Happened THEN EXIT FUNCTION
+                                        END IF
 
-                                    End If 'udt?
+                                    END IF 'udt?
 
                                     'force recompile if target needs to be in cmem and the source is not
-                                    If Mid$(sfcmemargs(targetid), curarg, 1) = Chr$(1) Then 'cmem required?
-                                        If cmemlist(idnum) = 0 Then
+                                    IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
+                                        IF cmemlist(idnum) = 0 THEN
                                             cmemlist(idnum) = 1
                                             recompile = 1
-                                        End If
-                                    End If
+                                        END IF
+                                    END IF
 
-                                    GoTo dontevaluate
-                                End If 'similar
+                                    GOTO dontevaluate
+                                END IF 'similar
 
                                 'IF sourcetyp2 = targettyp2 THEN
                                 'IF arr THEN
@@ -17818,25 +17818,25 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                 'GOTO dontevaluate
                                 'END IF
 
-                            End If 'source is a reference
+                            END IF 'source is a reference
 
-                        Else 'string
+                        ELSE 'string
                             'its a string
 
-                            If (sourcetyp And ISREFERENCE) Then
-                                idnum = Val(Left$(e$, InStr(e$, sp3) - 1)) 'id# of sourcetyp
-                                If Mid$(sfcmemargs(targetid), curarg, 1) = Chr$(1) Then 'cmem required?
-                                    If cmemlist(idnum) = 0 Then
+                            IF (sourcetyp AND ISREFERENCE) THEN
+                                idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1)) 'id# of sourcetyp
+                                IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
+                                    IF cmemlist(idnum) = 0 THEN
                                         cmemlist(idnum) = 1
                                         recompile = 1
-                                    End If
-                                End If
-                            End If 'reference
+                                    END IF
+                                END IF
+                            END IF 'reference
 
-                        End If 'string
+                        END IF 'string
 
-                    End If 'dereference was not used
-                End If 'pointer
+                    END IF 'dereference was not used
+                END IF 'pointer
 
 
                 'note: Target is not a pointer...
@@ -17851,417 +17851,417 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 'END IF
 
                 'String-numeric mismatch?
-                If targettyp And ISSTRING Then
-                    If (sourcetyp And ISSTRING) = 0 Then
+                IF targettyp AND ISSTRING THEN
+                    IF (sourcetyp AND ISSTRING) = 0 THEN
                         nth = curarg
-                        If omitarg_last <> 0 And nth > omitarg_last Then nth = nth - 1
-                        If ids(targetid).args = 1 Then Give_Error "String required for function": Exit Function
-                        Give_Error str_nth$(nth) + " function argument requires a string": Exit Function
-                    End If
-                End If
-                If (targettyp And ISSTRING) = 0 Then
-                    If sourcetyp And ISSTRING Then
+                        IF omitarg_last <> 0 AND nth > omitarg_last THEN nth = nth - 1
+                        IF ids(targetid).args = 1 THEN Give_Error "String required for function": EXIT FUNCTION
+                        Give_Error str_nth$(nth) + " function argument requires a string": EXIT FUNCTION
+                    END IF
+                END IF
+                IF (targettyp AND ISSTRING) = 0 THEN
+                    IF sourcetyp AND ISSTRING THEN
                         nth = curarg
-                        If omitarg_last <> 0 And nth > omitarg_last Then nth = nth - 1
-                        If ids(targetid).args = 1 Then Give_Error "Number required for function": Exit Function
-                        Give_Error str_nth$(nth) + " function argument requires a number": Exit Function
-                    End If
-                End If
+                        IF omitarg_last <> 0 AND nth > omitarg_last THEN nth = nth - 1
+                        IF ids(targetid).args = 1 THEN Give_Error "Number required for function": EXIT FUNCTION
+                        Give_Error str_nth$(nth) + " function argument requires a number": EXIT FUNCTION
+                    END IF
+                END IF
 
                 'change to "non-pointer" value
-                If (sourcetyp And ISREFERENCE) Then
+                IF (sourcetyp AND ISREFERENCE) THEN
                     e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
-                End If
+                    IF Error_Happened THEN EXIT FUNCTION
+                END IF
 
-                If explicitreference = 0 Then
-                    If targettyp And ISUDT Then
+                IF explicitreference = 0 THEN
+                    IF targettyp AND ISUDT THEN
                         nth = curarg
-                        If omitarg_last <> 0 And nth > omitarg_last Then nth = nth - 1
-                        If qb64prefix_set And udtxcname(targettyp And 511) = "_MEM" Then
-                            x$ = "'" + Mid$(RTrim$(udtxcname(targettyp And 511)), 2) + "'"
-                        Else
-                            x$ = "'" + RTrim$(udtxcname(targettyp And 511)) + "'"
-                        End If
-                        If ids(targetid).args = 1 Then Give_Error "TYPE " + x$ + " required for function": Exit Function
-                        Give_Error str_nth$(nth) + " function argument requires TYPE " + x$: Exit Function
-                    End If
-                Else
-                    If sourcetyp And ISUDT Then Give_Error "Number required for function": Exit Function
-                End If
+                        IF omitarg_last <> 0 AND nth > omitarg_last THEN nth = nth - 1
+                        IF qb64prefix_set AND udtxcname(targettyp AND 511) = "_MEM" THEN
+                            x$ = "'" + MID$(RTRIM$(udtxcname(targettyp AND 511)), 2) + "'"
+                        ELSE
+                            x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
+                        END IF
+                        IF ids(targetid).args = 1 THEN Give_Error "TYPE " + x$ + " required for function": EXIT FUNCTION
+                        Give_Error str_nth$(nth) + " function argument requires TYPE " + x$: EXIT FUNCTION
+                    END IF
+                ELSE
+                    IF sourcetyp AND ISUDT THEN Give_Error "Number required for function": EXIT FUNCTION
+                END IF
 
                 'round to integer if required
-                If (sourcetyp And ISFLOAT) Then
-                    If (targettyp And ISFLOAT) = 0 Then
+                IF (sourcetyp AND ISFLOAT) THEN
+                    IF (targettyp AND ISFLOAT) = 0 THEN
                         '**32 rounding fix
-                        bits = targettyp And 511
-                        If bits <= 16 Then e$ = "qbr_float_to_long(" + e$ + ")"
-                        If bits > 16 And bits < 32 Then e$ = "qbr_double_to_long(" + e$ + ")"
-                        If bits >= 32 Then e$ = "qbr(" + e$ + ")"
-                    End If
-                End If
+                        bits = targettyp AND 511
+                        IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
+                        IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
+                        IF bits >= 32 THEN e$ = "qbr(" + e$ + ")"
+                    END IF
+                END IF
 
-                If explicitreference Then
-                    If (targettyp And ISOFFSETINBITS) Then
+                IF explicitreference THEN
+                    IF (targettyp AND ISOFFSETINBITS) THEN
                         'integer value can fit inside int64
                         e$ = "(int64)(" + e$ + ")"
-                    Else
-                        If (targettyp And ISFLOAT) Then
-                            If (targettyp And 511) = 32 Then e$ = "(float)(" + e$ + ")"
-                            If (targettyp And 511) = 64 Then e$ = "(double)(" + e$ + ")"
-                            If (targettyp And 511) = 256 Then e$ = "(long double)(" + e$ + ")"
-                        Else
-                            If (targettyp And ISUNSIGNED) Then
-                                If (targettyp And 511) = 8 Then e$ = "(uint8)(" + e$ + ")"
-                                If (targettyp And 511) = 16 Then e$ = "(uint16)(" + e$ + ")"
-                                If (targettyp And 511) = 32 Then e$ = "(uint32)(" + e$ + ")"
-                                If (targettyp And 511) = 64 Then e$ = "(uint64)(" + e$ + ")"
-                            Else
-                                If (targettyp And 511) = 8 Then e$ = "(int8)(" + e$ + ")"
-                                If (targettyp And 511) = 16 Then e$ = "(int16)(" + e$ + ")"
-                                If (targettyp And 511) = 32 Then e$ = "(int32)(" + e$ + ")"
-                                If (targettyp And 511) = 64 Then e$ = "(int64)(" + e$ + ")"
-                            End If
-                        End If 'float?
-                    End If 'offset in bits?
-                End If 'explicit?
+                    ELSE
+                        IF (targettyp AND ISFLOAT) THEN
+                            IF (targettyp AND 511) = 32 THEN e$ = "(float)(" + e$ + ")"
+                            IF (targettyp AND 511) = 64 THEN e$ = "(double)(" + e$ + ")"
+                            IF (targettyp AND 511) = 256 THEN e$ = "(long double)(" + e$ + ")"
+                        ELSE
+                            IF (targettyp AND ISUNSIGNED) THEN
+                                IF (targettyp AND 511) = 8 THEN e$ = "(uint8)(" + e$ + ")"
+                                IF (targettyp AND 511) = 16 THEN e$ = "(uint16)(" + e$ + ")"
+                                IF (targettyp AND 511) = 32 THEN e$ = "(uint32)(" + e$ + ")"
+                                IF (targettyp AND 511) = 64 THEN e$ = "(uint64)(" + e$ + ")"
+                            ELSE
+                                IF (targettyp AND 511) = 8 THEN e$ = "(int8)(" + e$ + ")"
+                                IF (targettyp AND 511) = 16 THEN e$ = "(int16)(" + e$ + ")"
+                                IF (targettyp AND 511) = 32 THEN e$ = "(int32)(" + e$ + ")"
+                                IF (targettyp AND 511) = 64 THEN e$ = "(int64)(" + e$ + ")"
+                            END IF
+                        END IF 'float?
+                    END IF 'offset in bits?
+                END IF 'explicit?
 
 
-                If (targettyp And ISPOINTER) Then 'pointer required
-                    If (targettyp And ISSTRING) Then GoTo dontevaluate 'no changes required
+                IF (targettyp AND ISPOINTER) THEN 'pointer required
+                    IF (targettyp AND ISSTRING) THEN GOTO dontevaluate 'no changes required
                     '20090703
                     t$ = typ2ctyp$(targettyp, "")
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     v$ = "pass" + str2$(uniquenumber)
                     'assume numeric type
-                    If Mid$(sfcmemargs(targetid), curarg, 1) = Chr$(1) Then 'cmem required?
-                        bytesreq = ((targettyp And 511) + 7) \ 8
-                        Print #defdatahandle, t$ + " *" + v$ + "=NULL;"
-                        Print #13, "if(" + v$ + "==NULL){"
-                        Print #13, "cmem_sp-=" + str2(bytesreq) + ";"
-                        Print #13, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
-                        Print #13, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                        Print #13, "}"
+                    IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
+                        bytesreq = ((targettyp AND 511) + 7) \ 8
+                        PRINT #defdatahandle, t$ + " *" + v$ + "=NULL;"
+                        PRINT #13, "if(" + v$ + "==NULL){"
+                        PRINT #13, "cmem_sp-=" + str2(bytesreq) + ";"
+                        PRINT #13, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
+                        PRINT #13, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                        PRINT #13, "}"
                         e$ = "&(*" + v$ + "=" + e$ + ")"
-                    Else
-                        Print #13, t$ + " " + v$ + ";"
+                    ELSE
+                        PRINT #13, t$ + " " + v$ + ";"
                         e$ = "&(" + v$ + "=" + e$ + ")"
-                    End If
-                    GoTo dontevaluate
-                End If
+                    END IF
+                    GOTO dontevaluate
+                END IF
 
                 dontevaluate:
 
-                If id2.ccall Then
+                IF id2.ccall THEN
 
                     'if a forced cast from a returned ccall function is in e$, remove it
-                    If Left$(e$, 3) = "(  " Then
+                    IF LEFT$(e$, 3) = "(  " THEN
                         e$ = removecast$(e$)
-                    End If
+                    END IF
 
-                    If targettyp And ISSTRING Then
+                    IF targettyp AND ISSTRING THEN
                         e$ = "(char*)(" + e$ + ")->chr"
-                    End If
+                    END IF
 
-                    If LTrim$(RTrim$(e$)) = "0" Then e$ = "NULL"
+                    IF LTRIM$(RTRIM$(e$)) = "0" THEN e$ = "NULL"
 
-                End If
+                END IF
 
                 r$ = r$ + e$
 
                 '***special case****
-                If n$ = "_MEM" Or (n$ = "MEM" And qb64prefix_set = 1) Then
-                    If args = 1 Then
-                        If curarg = 1 Then r$ = r$ + ")": GoTo evalfuncspecial
-                    End If
-                    If args = 2 Then
-                        If curarg = 2 Then r$ = r$ + ")": GoTo evalfuncspecial
-                    End If
-                End If
+                IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
+                    IF args = 1 THEN
+                        IF curarg = 1 THEN r$ = r$ + ")": GOTO evalfuncspecial
+                    END IF
+                    IF args = 2 THEN
+                        IF curarg = 2 THEN r$ = r$ + ")": GOTO evalfuncspecial
+                    END IF
+                END IF
 
-                If i <> n And nocomma = 0 Then r$ = r$ + ","
+                IF i <> n AND nocomma = 0 THEN r$ = r$ + ","
                 nocomma = 0
                 firsti = i + 1
                 curarg = curarg + 1
-            End If
+            END IF
 
-            If (curarg >= omitarg_first And curarg <= omitarg_last) And i = n Then
-                targettyp = CVL(Mid$(id2.arg, curarg * 4 - 4 + 1, 4))
+            IF (curarg >= omitarg_first AND curarg <= omitarg_last) AND i = n THEN
+                targettyp = CVL(MID$(id2.arg, curarg * 4 - 4 + 1, 4))
                 'IF (targettyp AND ISSTRING) THEN Give_Error "QB64 doesn't support optional string arguments for functions yet!": EXIT FUNCTION
-                For fi = 1 To omitargs: r$ = r$ + ",NULL": Next
+                FOR fi = 1 TO omitargs: r$ = r$ + ",NULL": NEXT
                 curarg = curarg + omitargs
-            End If
+            END IF
 
-        Next
-    End If
+        NEXT
+    END IF
 
-    If n$ = "UBOUND" Or n$ = "LBOUND" Then
-        If r$ = ",NULL" Then r$ = ",1"
-        If n$ = "UBOUND" Then r2$ = "func_ubound(" Else r2$ = "func_lbound("
+    IF n$ = "UBOUND" OR n$ = "LBOUND" THEN
+        IF r$ = ",NULL" THEN r$ = ",1"
+        IF n$ = "UBOUND" THEN r2$ = "func_ubound(" ELSE r2$ = "func_lbound("
         e$ = refer$(ulboundarray$, sourcetyp, 1)
-        If Error_Happened Then Exit Function
+        IF Error_Happened THEN EXIT FUNCTION
         'note: ID contins refer'ed array info
 
         arrayelements = id.arrayelements '2009
-        If arrayelements = -1 Then arrayelements = 1 '2009
+        IF arrayelements = -1 THEN arrayelements = 1 '2009
 
         r$ = r2$ + e$ + r$ + "," + str2$(arrayelements) + ")"
         typ& = INTEGER64TYPE - ISPOINTER
-        GoTo evalfuncspecial
-    End If
+        GOTO evalfuncspecial
+    END IF
 
-    If passomit Then
-        If omitarg_first Then r$ = r$ + ",0" Else r$ = r$ + ",1"
-    End If
+    IF passomit THEN
+        IF omitarg_first THEN r$ = r$ + ",0" ELSE r$ = r$ + ",1"
+    END IF
     r$ = r$ + ")"
 
     evalfuncspecial:
 
-    If n$ = "ABS" Then typ& = sourcetyp 'ABS Note: ABS() returns argument #1's type
+    IF n$ = "ABS" THEN typ& = sourcetyp 'ABS Note: ABS() returns argument #1's type
 
     'QB-like conversion of math functions returning floating point values
-    If n$ = "SIN" Or n$ = "COS" Or n$ = "TAN" Or n$ = "ATN" Or n$ = "SQR" Or n$ = "LOG" Then
-        b = sourcetyp And 511
-        If sourcetyp And ISFLOAT Then
+    IF n$ = "SIN" OR n$ = "COS" OR n$ = "TAN" OR n$ = "ATN" OR n$ = "SQR" OR n$ = "LOG" THEN
+        b = sourcetyp AND 511
+        IF sourcetyp AND ISFLOAT THEN
             'Default is FLOATTYPE
-            If b = 64 Then typ& = DOUBLETYPE - ISPOINTER
-            If b = 32 Then typ& = SINGLETYPE - ISPOINTER
-        Else
+            IF b = 64 THEN typ& = DOUBLETYPE - ISPOINTER
+            IF b = 32 THEN typ& = SINGLETYPE - ISPOINTER
+        ELSE
             'Default is FLOATTYPE
-            If b <= 32 Then typ& = DOUBLETYPE - ISPOINTER
-            If b <= 16 Then typ& = SINGLETYPE - ISPOINTER
-        End If
-    End If
+            IF b <= 32 THEN typ& = DOUBLETYPE - ISPOINTER
+            IF b <= 16 THEN typ& = SINGLETYPE - ISPOINTER
+        END IF
+    END IF
 
-    If id2.ret = ISUDT + (1) Then
+    IF id2.ret = ISUDT + (1) THEN
         '***special case***
         v$ = "func" + str2$(uniquenumber)
-        Print #defdatahandle, "mem_block " + v$ + ";"
+        PRINT #defdatahandle, "mem_block " + v$ + ";"
         r$ = "(" + v$ + "=" + r$ + ")"
-    End If
+    END IF
 
-    If id2.ccall Then
-        If Left$(r$, 11) = "(  char*  )" Then
+    IF id2.ccall THEN
+        IF LEFT$(r$, 11) = "(  char*  )" THEN
             r$ = "qbs_new_txt(" + r$ + ")"
-        End If
-    End If
+        END IF
+    END IF
 
-    If Debug Then Print #9, "evaluatefunc:out:"; r$
+    IF Debug THEN PRINT #9, "evaluatefunc:out:"; r$
     evaluatefunc$ = r$
-End Function
+END FUNCTION
 
-Function variablesize$ (i As Long) 'ID or -1 (if ID already 'loaded')
+FUNCTION variablesize$ (i AS LONG) 'ID or -1 (if ID already 'loaded')
     'Note: assumes whole bytes, no bit offsets/sizes
-    If i <> -1 Then getid i
-    If Error_Happened Then Exit Function
+    IF i <> -1 THEN getid i
+    IF Error_Happened THEN EXIT FUNCTION
     'find base size from type
-    t = id.t: If t = 0 Then t = id.arraytype
-    bytes = (t And 511) \ 8
+    t = id.t: IF t = 0 THEN t = id.arraytype
+    bytes = (t AND 511) \ 8
 
-    If t And ISUDT Then 'correct size for UDTs
-        u = t And 511
+    IF t AND ISUDT THEN 'correct size for UDTs
+        u = t AND 511
         bytes = udtxsize(u) \ 8
-    End If
+    END IF
 
-    If t And ISSTRING Then 'correct size for strings
-        If t And ISFIXEDLENGTH Then
+    IF t AND ISSTRING THEN 'correct size for strings
+        IF t AND ISFIXEDLENGTH THEN
             bytes = id.tsize
-        Else
-            If id.arraytype Then Give_Error "Cannot determine size of variable-length string array": Exit Function
-            variablesize$ = scope$ + "STRING_" + RTrim$(id.n) + "->len"
-            Exit Function
-        End If
-    End If
+        ELSE
+            IF id.arraytype THEN Give_Error "Cannot determine size of variable-length string array": EXIT FUNCTION
+            variablesize$ = scope$ + "STRING_" + RTRIM$(id.n) + "->len"
+            EXIT FUNCTION
+        END IF
+    END IF
 
-    If id.arraytype Then 'multiply size for arrays
-        n$ = RTrim$(id.callname)
+    IF id.arraytype THEN 'multiply size for arrays
+        n$ = RTRIM$(id.callname)
         s$ = str2(bytes) + "*(" + n$ + "[2]&1)" 'note: multiplying by 0 if array not currently defined (affects dynamic arrays)
-        arrayelements = id.arrayelements: If arrayelements = -1 Then arrayelements = 1 '2009
-        For i2 = 1 To arrayelements
+        arrayelements = id.arrayelements: IF arrayelements = -1 THEN arrayelements = 1 '2009
+        FOR i2 = 1 TO arrayelements
             s$ = s$ + "*" + n$ + "[" + str2(i2 * 4 - 4 + 5) + "]"
-        Next
+        NEXT
         variablesize$ = "(" + s$ + ")"
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     variablesize$ = str2(bytes)
-End Function
+END FUNCTION
 
 
 
-Function evaluatetotyp$ (a2$, targettyp As Long)
+FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     'note: 'evaluatetotyp' no longer performs 'fixoperationorder' on a2$ (in many cases, this has already been done)
     a$ = a2$
     e$ = evaluate(a$, sourcetyp)
-    If Error_Happened Then Exit Function
+    IF Error_Happened THEN EXIT FUNCTION
 
     'Offset protection:
-    If sourcetyp And ISOFFSET Then
-        If (targettyp And ISOFFSET) = 0 And targettyp >= 0 Then
-            Give_Error "Cannot convert _OFFSET type to other types": Exit Function
-        End If
-    End If
+    IF sourcetyp AND ISOFFSET THEN
+        IF (targettyp AND ISOFFSET) = 0 AND targettyp >= 0 THEN
+            Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
+        END IF
+    END IF
 
     '-5 size
     '-6 offset
-    If targettyp = -4 Or targettyp = -5 Or targettyp = -6 Then '? -> byte_element(offset,element size in bytes)
-        If (sourcetyp And ISREFERENCE) = 0 Then Give_Error "Expected variable name/array element": Exit Function
-        If (sourcetyp And ISOFFSETINBITS) Then Give_Error "Variable/element cannot be BIT aligned": Exit Function
+    IF targettyp = -4 OR targettyp = -5 OR targettyp = -6 THEN '? -> byte_element(offset,element size in bytes)
+        IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
 
         ' print "-4: evaluated as ["+e$+"]":sleep 1
 
-        If (sourcetyp And ISUDT) Then 'User Defined Type -> byte_element(offset,bytes)
-            If udtxvariable(sourcetyp And 511) Then Give_Error "UDT must have fixed size": Exit Function
-            idnumber = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            u = Val(e$) 'closest parent
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            E = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
+        IF (sourcetyp AND ISUDT) THEN 'User Defined Type -> byte_element(offset,bytes)
+            IF udtxvariable(sourcetyp AND 511) THEN Give_Error "UDT must have fixed size": EXIT FUNCTION
+            idnumber = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            u = VAL(e$) 'closest parent
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            E = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
             o$ = e$
             getid idnumber
-            If Error_Happened Then Exit Function
-            n$ = "UDT_" + RTrim$(id.n)
-            If id.arraytype Then
+            IF Error_Happened THEN EXIT FUNCTION
+            n$ = "UDT_" + RTRIM$(id.n)
+            IF id.arraytype THEN
                 n$ = "ARRAY_" + n$ + "[0]"
                 'whole array reference examplename()?
-                If Left$(o$, 3) = "(0)" Then
+                IF LEFT$(o$, 3) = "(0)" THEN
                     'use -2 type method
-                    GoTo method2usealludt
-                End If
-            End If
+                    GOTO method2usealludt
+                END IF
+            END IF
 
             dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
 
             'determine size of element
-            If E = 0 Then 'no specific element, use size of entire type
+            IF E = 0 THEN 'no specific element, use size of entire type
                 bytes$ = str2(udtxsize(u) \ 8)
-            Else 'a specific element
-                If (udtetype(E) And ISSTRING) > 0 And (udtetype(E) And ISFIXEDLENGTH) = 0 And (targettyp = -5) Then
+            ELSE 'a specific element
+                IF (udtetype(E) AND ISSTRING) > 0 AND (udtetype(E) AND ISFIXEDLENGTH) = 0 AND (targettyp = -5) THEN
                     evaluatetotyp$ = "(*(qbs**)" + dst$ + ")->len"
-                    Exit Function
-                ElseIf (udtetype(E) And ISSTRING) > 0 And (udtetype(E) And ISFIXEDLENGTH) = 0 And (targettyp = -4) Then
+                    EXIT FUNCTION
+                ELSEIF (udtetype(E) AND ISSTRING) > 0 AND (udtetype(E) AND ISFIXEDLENGTH) = 0 AND (targettyp = -4) THEN
                     dst$ = "(*((qbs**)((char*)" + scope$ + n$ + "+(" + o$ + "))))->chr"
                     bytes$ = "(*((qbs**)((char*)" + scope$ + n$ + "+(" + o$ + "))))->len"
                     evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
-                    Exit Function
-                End If
+                    EXIT FUNCTION
+                END IF
                 bytes$ = str2(udtesize(E) \ 8)
-            End If
+            END IF
             evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
-            If targettyp = -5 Then evaluatetotyp$ = bytes$
-            If targettyp = -6 Then evaluatetotyp$ = dst$
-            Exit Function
-        End If
+            IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+            IF targettyp = -6 THEN evaluatetotyp$ = dst$
+            EXIT FUNCTION
+        END IF
 
-        If (sourcetyp And ISARRAY) Then 'Array reference -> byte_element(offset,bytes)
+        IF (sourcetyp AND ISARRAY) THEN 'Array reference -> byte_element(offset,bytes)
             'whole array reference examplename()?
-            If Right$(e$, 2) = sp3 + "0" Then
+            IF RIGHT$(e$, 2) = sp3 + "0" THEN
                 'use -2 type method
-                If sourcetyp And ISSTRING Then
-                    If (sourcetyp And ISFIXEDLENGTH) = 0 Then
-                        Give_Error "Cannot pass array of variable-length strings": Exit Function
-                    End If
-                End If
-                GoTo method2useall
-            End If
+                IF sourcetyp AND ISSTRING THEN
+                    IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
+                        Give_Error "Cannot pass array of variable-length strings": EXIT FUNCTION
+                    END IF
+                END IF
+                GOTO method2useall
+            END IF
             'assume a specific element
-            If sourcetyp And ISSTRING Then
-                If sourcetyp And ISFIXEDLENGTH Then
-                    idnumber = Val(e$)
+            IF sourcetyp AND ISSTRING THEN
+                IF sourcetyp AND ISFIXEDLENGTH THEN
+                    idnumber = VAL(e$)
                     getid idnumber
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     bytes$ = str2(id.tsize)
                     e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
-                    If targettyp = -5 Then evaluatetotyp$ = bytes$
-                    If targettyp = -6 Then evaluatetotyp$ = e$ + "->chr"
-                Else
+                    IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+                    IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
+                ELSE
                     e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
 
                     evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + e$ + "->len," + NewByteElement$ + ")"
-                    If targettyp = -5 Then evaluatetotyp$ = e$ + "->len"
-                    If targettyp = -6 Then evaluatetotyp$ = e$ + "->chr"
-                End If
-                Exit Function
-            End If
+                    IF targettyp = -5 THEN evaluatetotyp$ = e$ + "->len"
+                    IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
+                END IF
+                EXIT FUNCTION
+            END IF
             e$ = refer(e$, sourcetyp, 0)
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
-            bytes$ = str2((sourcetyp And 511) \ 8)
+            bytes$ = str2((sourcetyp AND 511) \ 8)
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
-            If targettyp = -5 Then evaluatetotyp$ = bytes$
-            If targettyp = -6 Then evaluatetotyp$ = e$
-            Exit Function
-        End If
+            IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+            IF targettyp = -6 THEN evaluatetotyp$ = e$
+            EXIT FUNCTION
+        END IF
 
-        If sourcetyp And ISSTRING Then 'String -> byte_element(offset,bytes)
-            If sourcetyp And ISFIXEDLENGTH Then
-                idnumber = Val(e$)
+        IF sourcetyp AND ISSTRING THEN 'String -> byte_element(offset,bytes)
+            IF sourcetyp AND ISFIXEDLENGTH THEN
+                idnumber = VAL(e$)
                 getid idnumber
-                If Error_Happened Then Exit Function
+                IF Error_Happened THEN EXIT FUNCTION
                 bytes$ = str2(id.tsize)
                 e$ = refer(e$, sourcetyp, 0)
-                If Error_Happened Then Exit Function
-            Else
+                IF Error_Happened THEN EXIT FUNCTION
+            ELSE
                 e$ = refer(e$, sourcetyp, 0)
-                If Error_Happened Then Exit Function
+                IF Error_Happened THEN EXIT FUNCTION
                 bytes$ = e$ + "->len"
-            End If
+            END IF
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
-            If targettyp = -5 Then evaluatetotyp$ = bytes$
-            If targettyp = -6 Then evaluatetotyp$ = e$ + "->chr"
-            Exit Function
-        End If
+            IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+            IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
+            EXIT FUNCTION
+        END IF
 
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
-        If Error_Happened Then Exit Function
-        size = (sourcetyp And 511) \ 8 'calculate its size in bytes
+        IF Error_Happened THEN EXIT FUNCTION
+        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
         evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + str2(size) + "," + NewByteElement$ + ")"
-        If targettyp = -5 Then evaluatetotyp$ = str2(size)
-        If targettyp = -6 Then evaluatetotyp$ = e$
-        Exit Function
+        IF targettyp = -5 THEN evaluatetotyp$ = str2(size)
+        IF targettyp = -6 THEN evaluatetotyp$ = e$
+        EXIT FUNCTION
 
-    End If '-4, -5, -6
-
-
+    END IF '-4, -5, -6
 
 
-    If targettyp = -8 Then '? -> _MEM structure helper {offset, fullsize, typeval, elementsize, sf_mem_lock|???}
-        If (sourcetyp And ISREFERENCE) = 0 Then Give_Error "Expected variable name/array element": Exit Function
-        If (sourcetyp And ISOFFSETINBITS) Then Give_Error "Variable/element cannot be BIT aligned": Exit Function
 
 
-        If (sourcetyp And ISUDT) Then 'User Defined Type -> byte_element(offset,bytes)
-            idnumber = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            u = Val(e$) 'closest parent
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            E = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
+    IF targettyp = -8 THEN '? -> _MEM structure helper {offset, fullsize, typeval, elementsize, sf_mem_lock|???}
+        IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
+
+
+        IF (sourcetyp AND ISUDT) THEN 'User Defined Type -> byte_element(offset,bytes)
+            idnumber = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            u = VAL(e$) 'closest parent
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            E = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
             o$ = e$
             getid idnumber
-            If Error_Happened Then Exit Function
-            n$ = "UDT_" + RTrim$(id.n)
-            If id.arraytype Then
+            IF Error_Happened THEN EXIT FUNCTION
+            n$ = "UDT_" + RTRIM$(id.n)
+            IF id.arraytype THEN
                 n$ = "ARRAY_" + n$ + "[0]"
                 'whole array reference examplename()?
-                If Left$(o$, 3) = "(0)" Then
+                IF LEFT$(o$, 3) = "(0)" THEN
                     'use -7 type method
-                    GoTo method2usealludt__7
-                End If
-            End If
+                    GOTO method2usealludt__7
+                END IF
+            END IF
             'determine size of element
-            If E = 0 Then 'no specific element, use size of entire type
+            IF E = 0 THEN 'no specific element, use size of entire type
                 bytes$ = str2(udtxsize(u) \ 8)
                 t1 = ISUDT + udtetype(u)
-            Else 'a specific element
+            ELSE 'a specific element
                 bytes$ = str2(udtesize(E) \ 8)
                 t1 = udtetype(E)
-            End If
+            END IF
             dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
             'evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
             'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
@@ -18270,34 +18270,34 @@ Function evaluatetotyp$ (a2$, targettyp As Long)
             t = Type2MemTypeValue(t1)
             evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + str2(t) + "," + bytes$ + ",sf_mem_lock"
 
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
-        If (sourcetyp And ISARRAY) Then 'Array reference -> byte_element(offset,bytes)
+        IF (sourcetyp AND ISARRAY) THEN 'Array reference -> byte_element(offset,bytes)
             'whole array reference examplename()?
-            If Right$(e$, 2) = sp3 + "0" Then
+            IF RIGHT$(e$, 2) = sp3 + "0" THEN
                 'use -7 type method
-                If sourcetyp And ISSTRING Then
-                    If (sourcetyp And ISFIXEDLENGTH) = 0 Then
-                        Give_Error "Cannot pass array of variable-length strings": Exit Function
-                    End If
-                End If
-                GoTo method2useall__7
-            End If
+                IF sourcetyp AND ISSTRING THEN
+                    IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
+                        Give_Error "Cannot pass array of variable-length strings": EXIT FUNCTION
+                    END IF
+                END IF
+                GOTO method2useall__7
+            END IF
 
-            idnumber = Val(e$)
+            idnumber = VAL(e$)
             getid idnumber
-            If Error_Happened Then Exit Function
-            n$ = RTrim$(id.callname)
+            IF Error_Happened THEN EXIT FUNCTION
+            n$ = RTRIM$(id.callname)
             lk$ = "(mem_lock*)((ptrszint*)" + n$ + ")[" + str2(4 * id.arrayelements + 4 + 1 - 1) + "]"
 
             'assume a specific element
 
-            If sourcetyp And ISSTRING Then
-                If sourcetyp And ISFIXEDLENGTH Then
+            IF sourcetyp AND ISSTRING THEN
+                IF sourcetyp AND ISFIXEDLENGTH THEN
                     bytes$ = str2(id.tsize)
                     e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     'evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
                     'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
                     'IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
@@ -18305,18 +18305,18 @@ Function evaluatetotyp$ (a2$, targettyp As Long)
                     t = Type2MemTypeValue(sourcetyp)
                     evaluatetotyp$ = "(ptrszint)" + e$ + "->chr," + bytes$ + "," + str2(t) + "," + bytes$ + "," + lk$
 
-                Else
+                ELSE
 
-                    Give_Error qb64prefix$ + "MEMELEMENT cannot reference variable-length strings": Exit Function
+                    Give_Error qb64prefix$ + "MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
 
-                End If
-                Exit Function
-            End If
+                END IF
+                EXIT FUNCTION
+            END IF
 
             e$ = refer(e$, sourcetyp, 0)
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
-            bytes$ = str2((sourcetyp And 511) \ 8)
+            bytes$ = str2((sourcetyp AND 511) \ 8)
             'evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
             'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
             'IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -18324,20 +18324,20 @@ Function evaluatetotyp$ (a2$, targettyp As Long)
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "," + bytes$ + "," + str2(t) + "," + bytes$ + "," + lk$
 
-            Exit Function
-        End If 'isarray
+            EXIT FUNCTION
+        END IF 'isarray
 
-        If sourcetyp And ISSTRING Then 'String -> byte_element(offset,bytes)
-            If sourcetyp And ISFIXEDLENGTH Then
-                idnumber = Val(e$)
+        IF sourcetyp AND ISSTRING THEN 'String -> byte_element(offset,bytes)
+            IF sourcetyp AND ISFIXEDLENGTH THEN
+                idnumber = VAL(e$)
                 getid idnumber
-                If Error_Happened Then Exit Function
+                IF Error_Happened THEN EXIT FUNCTION
                 bytes$ = str2(id.tsize)
                 e$ = refer(e$, sourcetyp, 0)
-                If Error_Happened Then Exit Function
-            Else
-                Give_Error qb64prefix$ + "MEMELEMENT cannot reference variable-length strings": Exit Function
-            End If
+                IF Error_Happened THEN EXIT FUNCTION
+            ELSE
+                Give_Error qb64prefix$ + "MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
+            END IF
 
             'evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
             'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
@@ -18346,13 +18346,13 @@ Function evaluatetotyp$ (a2$, targettyp As Long)
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "->chr," + bytes$ + "," + str2(t) + "," + bytes$ + ",sf_mem_lock"
 
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
-        If Error_Happened Then Exit Function
-        size = (sourcetyp And 511) \ 8 'calculate its size in bytes
+        IF Error_Happened THEN EXIT FUNCTION
+        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
         'evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + str2(size) + "," + NewByteElement$ + ")"
         'IF targettyp = -5 THEN evaluatetotyp$ = str2(size)
         'IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -18360,11 +18360,9 @@ Function evaluatetotyp$ (a2$, targettyp As Long)
         t = Type2MemTypeValue(sourcetyp)
         evaluatetotyp$ = "(ptrszint)" + e$ + "," + str2(size) + "," + str2(t) + "," + str2(size) + ",sf_mem_lock"
 
-        Exit Function
+        EXIT FUNCTION
 
-    End If '-8
-
-
+    END IF '-8
 
 
 
@@ -18373,305 +18371,307 @@ Function evaluatetotyp$ (a2$, targettyp As Long)
 
 
 
-    If targettyp = -7 Then '? -> _MEM structure helper {offset, fullsize, typeval, elementsize, sf_mem_lock|???}
+
+
+    IF targettyp = -7 THEN '? -> _MEM structure helper {offset, fullsize, typeval, elementsize, sf_mem_lock|???}
         method2useall__7:
-        If (sourcetyp And ISREFERENCE) = 0 Then Give_Error "Expected variable name/array element": Exit Function
-        If (sourcetyp And ISOFFSETINBITS) Then Give_Error "Variable/element cannot be BIT aligned": Exit Function
+        IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
 
         'User Defined Type
-        If (sourcetyp And ISUDT) Then
+        IF (sourcetyp AND ISUDT) THEN
             '           print "CI: -2 type from a UDT":sleep 1
-            idnumber = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            u = Val(e$) 'closest parent
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            E = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
+            idnumber = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            u = VAL(e$) 'closest parent
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            E = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
 
             o$ = e$
             getid idnumber
-            If Error_Happened Then Exit Function
-            n$ = "UDT_" + RTrim$(id.n): If id.arraytype Then n$ = "ARRAY_" + n$ + "[0]"
+            IF Error_Happened THEN EXIT FUNCTION
+            n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
             method2usealludt__7:
             bytes$ = variablesize$(-1) + "-(" + o$ + ")"
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
 
 
             'evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
 
             'note: myudt.myelement results in a size of 1 because it is a continuous run of no consistent granularity
-            If E <> 0 Then size = 1 Else size = udtxsize(u) \ 8
+            IF E <> 0 THEN size = 1 ELSE size = udtxsize(u) \ 8
 
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + str2(t) + "," + str2(size) + ",sf_mem_lock"
 
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
         'Array reference
-        If (sourcetyp And ISARRAY) Then
-            If sourcetyp And ISSTRING Then
-                If (sourcetyp And ISFIXEDLENGTH) = 0 Then
-                    Give_Error qb64prefix$ + "MEM cannot reference variable-length strings": Exit Function
-                End If
-            End If
+        IF (sourcetyp AND ISARRAY) THEN
+            IF sourcetyp AND ISSTRING THEN
+                IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
+                    Give_Error qb64prefix$ + "MEM cannot reference variable-length strings": EXIT FUNCTION
+                END IF
+            END IF
 
-            idnumber = Val(e$)
+            idnumber = VAL(e$)
             getid idnumber
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
 
-            n$ = RTrim$(id.callname)
+            n$ = RTRIM$(id.callname)
             lk$ = "(mem_lock*)((ptrszint*)" + n$ + ")[" + str2(4 * id.arrayelements + 4 + 1 - 1) + "]"
 
             tsize = id.tsize 'used later to determine element size of fixed length strings
             'note: array references consist of idnumber|unmultiplied-element-index
-            index$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'get element index
+            index$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'get element index
             bytes$ = variablesize$(-1)
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             e$ = refer(e$, sourcetyp, 0)
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
 
-            If sourcetyp And ISSTRING Then
+            IF sourcetyp AND ISSTRING THEN
                 e$ = "((" + e$ + ")->chr)" '[2013] handle fixed string arrays differently because they are already pointers
-            Else
+            ELSE
                 e$ = "(&(" + e$ + "))"
-            End If
+            END IF
 
             '           print "CI: array: e$["+e$+"], bytes$["+bytes$+"]":sleep 1
             'calculate size of elements
-            If sourcetyp And ISSTRING Then
+            IF sourcetyp AND ISSTRING THEN
                 bytes = tsize
-            Else
-                bytes = (sourcetyp And 511) \ 8
-            End If
+            ELSE
+                bytes = (sourcetyp AND 511) \ 8
+            END IF
             bytes$ = bytes$ + "-(" + str2(bytes) + "*(" + index$ + "))"
 
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "," + bytes$ + "," + str2(t) + "," + str2(bytes) + "," + lk$
 
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
         'String
-        If sourcetyp And ISSTRING Then
-            If (sourcetyp And ISFIXEDLENGTH) = 0 Then Give_Error qb64prefix$ + "MEM cannot reference variable-length strings": Exit Function
+        IF sourcetyp AND ISSTRING THEN
+            IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN Give_Error qb64prefix$ + "MEM cannot reference variable-length strings": EXIT FUNCTION
 
-            idnumber = Val(e$)
-            getid idnumber: If Error_Happened Then Exit Function
+            idnumber = VAL(e$)
+            getid idnumber: IF Error_Happened THEN EXIT FUNCTION
             bytes$ = str2(id.tsize)
-            e$ = refer(e$, sourcetyp, 0): If Error_Happened Then Exit Function
+            e$ = refer(e$, sourcetyp, 0): IF Error_Happened THEN EXIT FUNCTION
 
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "->chr," + bytes$ + "," + str2(t) + "," + bytes$ + ",sf_mem_lock"
 
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
-        If Error_Happened Then Exit Function
-        size = (sourcetyp And 511) \ 8 'calculate its size in bytes
+        IF Error_Happened THEN EXIT FUNCTION
+        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
 
         t = Type2MemTypeValue(sourcetyp)
         evaluatetotyp$ = "(ptrszint)" + e$ + "," + str2(size) + "," + str2(t) + "," + str2(size) + ",sf_mem_lock"
 
-        Exit Function
+        EXIT FUNCTION
 
-    End If '-7 _MEM structure helper
+    END IF '-7 _MEM structure helper
 
 
-    If targettyp = -2 Then '? -> byte_element(offset,max possible bytes)
+    IF targettyp = -2 THEN '? -> byte_element(offset,max possible bytes)
         method2useall:
         ' print "CI: eval2typ detected target type of -2 for ["+a2$+"] evaluated as ["+e$+"]":sleep 1
 
-        If (sourcetyp And ISREFERENCE) = 0 Then Give_Error "Expected variable name/array element": Exit Function
-        If (sourcetyp And ISOFFSETINBITS) Then Give_Error "Variable/element cannot be BIT aligned": Exit Function
+        IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
 
         'User Defined Type -> byte_element(offset,bytes)
-        If (sourcetyp And ISUDT) Then
+        IF (sourcetyp AND ISUDT) THEN
             '           print "CI: -2 type from a UDT":sleep 1
-            idnumber = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            u = Val(e$) 'closest parent
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
-            E = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i)
+            idnumber = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            u = VAL(e$) 'closest parent
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
+            E = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
             o$ = e$
             getid idnumber
-            If Error_Happened Then Exit Function
-            n$ = "UDT_" + RTrim$(id.n): If id.arraytype Then n$ = "ARRAY_" + n$ + "[0]"
+            IF Error_Happened THEN EXIT FUNCTION
+            n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
             method2usealludt:
             bytes$ = variablesize$(-1) + "-(" + o$ + ")"
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
             evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
-            If targettyp = -5 Then evaluatetotyp$ = bytes$
-            If targettyp = -6 Then evaluatetotyp$ = dst$
-            Exit Function
-        End If
+            IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+            IF targettyp = -6 THEN evaluatetotyp$ = dst$
+            EXIT FUNCTION
+        END IF
 
         'Array reference -> byte_element(offset,bytes)
-        If (sourcetyp And ISARRAY) Then
+        IF (sourcetyp AND ISARRAY) THEN
             'array of variable length strings (special case, can only refer to single element)
-            If sourcetyp And ISSTRING Then
-                If (sourcetyp And ISFIXEDLENGTH) = 0 Then
+            IF sourcetyp AND ISSTRING THEN
+                IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
                     e$ = refer(e$, sourcetyp, 0)
-                    If Error_Happened Then Exit Function
+                    IF Error_Happened THEN EXIT FUNCTION
                     evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + e$ + "->len," + NewByteElement$ + ")"
-                    If targettyp = -5 Then evaluatetotyp$ = e$ + "->len"
-                    If targettyp = -6 Then evaluatetotyp$ = e$ + "->chr"
-                    Exit Function
-                End If
-            End If
-            idnumber = Val(e$)
+                    IF targettyp = -5 THEN evaluatetotyp$ = e$ + "->len"
+                    IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
+                    EXIT FUNCTION
+                END IF
+            END IF
+            idnumber = VAL(e$)
             getid idnumber
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             tsize = id.tsize 'used later to determine element size of fixed length strings
             'note: array references consist of idnumber|unmultiplied-element-index
-            index$ = Right$(e$, Len(e$) - InStr(e$, sp3)) 'get element index
+            index$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'get element index
             bytes$ = variablesize$(-1)
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             e$ = refer(e$, sourcetyp, 0)
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
             '           print "CI: array: e$["+e$+"], bytes$["+bytes$+"]":sleep 1
             'calculate size of elements
-            If sourcetyp And ISSTRING Then
+            IF sourcetyp AND ISSTRING THEN
                 bytes = tsize
-            Else
-                bytes = (sourcetyp And 511) \ 8
-            End If
+            ELSE
+                bytes = (sourcetyp AND 511) \ 8
+            END IF
             bytes$ = bytes$ + "-(" + str2(bytes) + "*(" + index$ + "))"
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
-            If targettyp = -5 Then evaluatetotyp$ = bytes$
-            If targettyp = -6 Then evaluatetotyp$ = e$
+            IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+            IF targettyp = -6 THEN evaluatetotyp$ = e$
             '           print "CI: array ->["+"byte_element((uint64)" + e$ + "," + bytes$+ ","+NewByteElement$+")"+"]":sleep 1
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
         'String -> byte_element(offset,bytes)
-        If sourcetyp And ISSTRING Then
-            If sourcetyp And ISFIXEDLENGTH Then
-                idnumber = Val(e$)
+        IF sourcetyp AND ISSTRING THEN
+            IF sourcetyp AND ISFIXEDLENGTH THEN
+                idnumber = VAL(e$)
                 getid idnumber
-                If Error_Happened Then Exit Function
+                IF Error_Happened THEN EXIT FUNCTION
                 bytes$ = str2(id.tsize)
                 e$ = refer(e$, sourcetyp, 0)
-                If Error_Happened Then Exit Function
-            Else
+                IF Error_Happened THEN EXIT FUNCTION
+            ELSE
                 e$ = refer(e$, sourcetyp, 0)
-                If Error_Happened Then Exit Function
+                IF Error_Happened THEN EXIT FUNCTION
                 bytes$ = e$ + "->len"
-            End If
+            END IF
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
-            If targettyp = -5 Then evaluatetotyp$ = bytes$
-            If targettyp = -6 Then evaluatetotyp$ = e$ + "->chr"
-            Exit Function
-        End If
+            IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+            IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
+            EXIT FUNCTION
+        END IF
 
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
-        If Error_Happened Then Exit Function
-        size = (sourcetyp And 511) \ 8 'calculate its size in bytes
+        IF Error_Happened THEN EXIT FUNCTION
+        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
         evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + str2(size) + "," + NewByteElement$ + ")"
-        If targettyp = -5 Then evaluatetotyp$ = str2(size)
-        If targettyp = -6 Then evaluatetotyp$ = e$
-        Exit Function
+        IF targettyp = -5 THEN evaluatetotyp$ = str2(size)
+        IF targettyp = -6 THEN evaluatetotyp$ = e$
+        EXIT FUNCTION
 
-    End If '-2 byte_element(offset,bytes)
+    END IF '-2 byte_element(offset,bytes)
 
 
 
     'string?
-    If (sourcetyp And ISSTRING) <> (targettyp And ISSTRING) Then
-        Give_Error "Illegal string-number conversion": Exit Function
-    End If
+    IF (sourcetyp AND ISSTRING) <> (targettyp AND ISSTRING) THEN
+        Give_Error "Illegal string-number conversion": EXIT FUNCTION
+    END IF
 
-    If (sourcetyp And ISSTRING) Then
+    IF (sourcetyp AND ISSTRING) THEN
         evaluatetotyp$ = e$
-        If (sourcetyp And ISREFERENCE) Then
+        IF (sourcetyp AND ISREFERENCE) THEN
             evaluatetotyp$ = refer(e$, sourcetyp, 0)
-            If Error_Happened Then Exit Function
-        End If
-        Exit Function
-    End If
+            IF Error_Happened THEN EXIT FUNCTION
+        END IF
+        EXIT FUNCTION
+    END IF
 
     'pointer required?
-    If (targettyp And ISPOINTER) Then
-        Give_Error "evaluatetotyp received a request for a pointer (unsupported)": Exit Function
+    IF (targettyp AND ISPOINTER) THEN
+        Give_Error "evaluatetotyp received a request for a pointer (unsupported)": EXIT FUNCTION
         '...
-        Give_Error "Invalid pointer": Exit Function
-    End If
+        Give_Error "Invalid pointer": EXIT FUNCTION
+    END IF
 
     'change to "non-pointer" value
-    If (sourcetyp And ISREFERENCE) Then
+    IF (sourcetyp AND ISREFERENCE) THEN
         e$ = refer(e$, sourcetyp, 0)
-        If Error_Happened Then Exit Function
-    End If
+        IF Error_Happened THEN EXIT FUNCTION
+    END IF
     'check if successful
-    If (sourcetyp And ISPOINTER) Then
-        Give_Error "evaluatetotyp couldn't convert pointer type!": Exit Function
-    End If
+    IF (sourcetyp AND ISPOINTER) THEN
+        Give_Error "evaluatetotyp couldn't convert pointer type!": EXIT FUNCTION
+    END IF
 
     'round to integer if required
-    If (sourcetyp And ISFLOAT) Then
-        If (targettyp And ISFLOAT) = 0 Then
-            bits = targettyp And 511
+    IF (sourcetyp AND ISFLOAT) THEN
+        IF (targettyp AND ISFLOAT) = 0 THEN
+            bits = targettyp AND 511
             '**32 rounding fix
-            If bits <= 16 Then e$ = "qbr_float_to_long(" + e$ + ")"
-            If bits > 16 And bits < 32 Then e$ = "qbr_double_to_long(" + e$ + ")"
-            If bits >= 32 Then e$ = "qbr(" + e$ + ")"
-        End If
-    End If
+            IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
+            IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
+            IF bits >= 32 THEN e$ = "qbr(" + e$ + ")"
+        END IF
+    END IF
 
     evaluatetotyp$ = e$
-End Function
+END FUNCTION
 
-Function findid& (n2$)
-    n$ = UCase$(n2$) 'case insensitive
+FUNCTION findid& (n2$)
+    n$ = UCASE$(n2$) 'case insensitive
 
     'return all strings as 'not found'
-    If Asc(n$) = 34 Then GoTo noid
+    IF ASC(n$) = 34 THEN GOTO noid
 
     'if findidsecondarg was set, it will be used for finding the name of a sub (not a func or variable)
     secondarg$ = findidsecondarg: findidsecondarg = ""
 
     'if findanotherid was set, findid will continue scan from last index, otherwise, it will begin a new search
     findanother = findanotherid: findanotherid = 0
-    If findanother <> 0 And findidinternal <> 2 Then Give_Error "FINDID() ERROR: Invalid repeat search requested!": Exit Function 'cannot continue search, no more indexes left!
-    If Error_Happened Then Exit Function
+    IF findanother <> 0 AND findidinternal <> 2 THEN Give_Error "FINDID() ERROR: Invalid repeat search requested!": EXIT FUNCTION 'cannot continue search, no more indexes left!
+    IF Error_Happened THEN EXIT FUNCTION
     '(the above should never happen)
     findid& = 2 '2=not finished searching all indexes
 
     'seperate symbol from name (if a symbol has been added), this is the only way symbols can be passed to findid
     i = 0
-    i = InStr(n$, "~"): If i Then GoTo gotsc
-    i = InStr(n$, "`"): If i Then GoTo gotsc
-    i = InStr(n$, "%"): If i Then GoTo gotsc
-    i = InStr(n$, "&"): If i Then GoTo gotsc
-    i = InStr(n$, "!"): If i Then GoTo gotsc
-    i = InStr(n$, "#"): If i Then GoTo gotsc
-    i = InStr(n$, "$"): If i Then GoTo gotsc
+    i = INSTR(n$, "~"): IF i THEN GOTO gotsc
+    i = INSTR(n$, "`"): IF i THEN GOTO gotsc
+    i = INSTR(n$, "%"): IF i THEN GOTO gotsc
+    i = INSTR(n$, "&"): IF i THEN GOTO gotsc
+    i = INSTR(n$, "!"): IF i THEN GOTO gotsc
+    i = INSTR(n$, "#"): IF i THEN GOTO gotsc
+    i = INSTR(n$, "$"): IF i THEN GOTO gotsc
     gotsc:
-    If i Then
-        sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1)
-        If sc$ = "`" Or sc$ = "~`" Then sc$ = sc$ + "1" 'clarify abbreviated 1 bit reference
-    Else
+    IF i THEN
+        sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1)
+        IF sc$ = "`" OR sc$ = "~`" THEN sc$ = sc$ + "1" 'clarify abbreviated 1 bit reference
+    ELSE
         '''    'no symbol passed, so check what symbol could be assumed under the current DEF...
         '''    v = ASC(n$): IF v = 95 THEN v = 27 ELSE v = v - 64
         '''    IF v >= 1 AND v <= 27 THEN 'safeguard against n$ not being a standard name
         '''        couldhavesc$ = defineextaz(v)
         '''        IF couldhavesc$ = "`" OR couldhavesc$ = "~`" THEN couldhavesc$ = couldhavesc$ + "1" 'clarify abbreviated 1 bit reference
         '''    END IF 'safeguard
-    End If
+    END IF
 
     'optimizations for later comparisons
-    insf$ = subfunc + Space$(256 - Len(subfunc))
-    secondarg$ = secondarg$ + Space$(256 - Len(secondarg$))
-    If Len(sc$) Then scpassed = 1: sc$ = sc$ + Space$(8 - Len(sc$)) Else scpassed = 0
+    insf$ = subfunc + SPACE$(256 - LEN(subfunc))
+    secondarg$ = secondarg$ + SPACE$(256 - LEN(secondarg$))
+    IF LEN(sc$) THEN scpassed = 1: sc$ = sc$ + SPACE$(8 - LEN(sc$)) ELSE scpassed = 0
     '''IF LEN(couldhavesc$) THEN couldhavesc$ = couldhavesc$ + SPACE$(8 - LEN(couldhavesc$)): couldhavescpassed = 1 ELSE couldhavescpassed = 0
-    If Len(n$) < 256 Then n$ = n$ + Space$(256 - Len(n$))
+    IF LEN(n$) < 256 THEN n$ = n$ + SPACE$(256 - LEN(n$))
 
     'FUNCTION HashFind (a$, searchflags, resultflags, resultreference)
     '(0,1,2)z=hashfind[rev]("RUMI",Hashflag_label,resflag,resref)
@@ -18680,15 +18680,15 @@ Function findid& (n2$)
     '2=found, more items still to scan
 
     'NEW HASH SYSTEM
-    n$ = RTrim$(n$)
-    If findanother Then
+    n$ = RTRIM$(n$)
+    IF findanother THEN
         hashretry:
         z = HashFindCont(unrequired, i)
-    Else
+    ELSE
         z = HashFind(n$, 1, unrequired, i)
-    End If
+    END IF
     findidinternal = z
-    If z = 0 Then GoTo noid
+    IF z = 0 THEN GOTO noid
     findid = z
 
 
@@ -18703,36 +18703,36 @@ Function findid& (n2$)
     ''    IF ids(i).n = n$ THEN 'same name?
 
     'in scope?
-    If ids(i).subfunc = 0 And ids(i).share = 0 Then 'scope check required (not a shared variable or the name of a sub/function)
-        If ids(i).insubfunc <> insf$ Then GoTo findidnomatch
-    End If
+    IF ids(i).subfunc = 0 AND ids(i).share = 0 THEN 'scope check required (not a shared variable or the name of a sub/function)
+        IF ids(i).insubfunc <> insf$ THEN GOTO findidnomatch
+    END IF
 
     'some subs require a second argument (eg. PUT #, DEF SEG, etc.)
-    If ids(i).subfunc = 2 Then
-        If Asc(ids(i).secondargmustbe) <> 32 Then 'exists?
-            If RTrim$(secondarg$) = UCase$(RTrim$(ids(i).secondargmustbe)) Then
-            ElseIf qb64prefix_set = 1 And Left$(ids(i).secondargmustbe, 1) = "_" And Left$(secondarg$, 1) <> "_" And RTrim$(secondarg$) = UCase$(Mid$(RTrim$(ids(i).secondargmustbe), 2)) Then
-            Else
-                GoTo findidnomatch
-            End If
-        End If
-        If Asc(ids(i).secondargcantbe) <> 32 Then 'exists?
-            If RTrim$(secondarg$) <> UCase$(RTrim$(ids(i).secondargcantbe)) Then
-            ElseIf qb64prefix_set = 1 And Left$(ids(i).secondargcantbe, 1) = "_" And Left$(secondarg$, 1) <> "_" And RTrim$(secondarg$) <> UCase$(Mid$(RTrim$(ids(i).secondargcantbe), 2)) Then
-            Else
-                GoTo findidnomatch
-            End If
-        End If
-    End If 'second sub argument possible
+    IF ids(i).subfunc = 2 THEN
+        IF ASC(ids(i).secondargmustbe) <> 32 THEN 'exists?
+            IF RTRIM$(secondarg$) = UCASE$(RTRIM$(ids(i).secondargmustbe)) THEN
+            ELSEIF qb64prefix_set = 1 AND LEFT$(ids(i).secondargmustbe, 1) = "_" AND LEFT$(secondarg$, 1) <> "_" AND RTRIM$(secondarg$) = UCASE$(MID$(RTRIM$(ids(i).secondargmustbe), 2)) THEN
+            ELSE
+                GOTO findidnomatch
+            END IF
+        END IF
+        IF ASC(ids(i).secondargcantbe) <> 32 THEN 'exists?
+            IF RTRIM$(secondarg$) <> UCASE$(RTRIM$(ids(i).secondargcantbe)) THEN
+            ELSEIF qb64prefix_set = 1 AND LEFT$(ids(i).secondargcantbe, 1) = "_" AND LEFT$(secondarg$, 1) <> "_" AND RTRIM$(secondarg$) <> UCASE$(MID$(RTRIM$(ids(i).secondargcantbe), 2)) THEN
+            ELSE
+                GOTO findidnomatch
+            END IF
+        END IF
+    END IF 'second sub argument possible
 
     'must have symbol?
     'typically for variables defined automatically or by a symbol and not the full type name
     imusthave = CVI(ids(i).musthave) 'speed up checks of first 2 characters
-    amusthave = imusthave And 255 'speed up checks of first character
-    If amusthave <> 32 Then
-        If scpassed Then
-            If sc$ = ids(i).musthave Then GoTo findidok
-        End If
+    amusthave = imusthave AND 255 'speed up checks of first character
+    IF amusthave <> 32 THEN
+        IF scpassed THEN
+            IF sc$ = ids(i).musthave THEN GOTO findidok
+        END IF
         '''    IF couldhavescpassed THEN
         '''        IF couldhavesc$ = ids(i).musthave THEN GOTO findidok
         '''    END IF
@@ -18742,27 +18742,27 @@ Function findid& (n2$)
 
         'note: symbol defined fixed length strings cannot be referred to by $ without an extension
         'note: sc$ and couldhavesc$ are already changed from ` to `1 to match stored musthave
-        GoTo findidnomatch
-    End If
+        GOTO findidnomatch
+    END IF
 
     'may have symbol?
     'typically for variables formally dim'd
     'note: couldhavesc$ needn't be considered for mayhave checks
-    If scpassed Then 'symbol was passed, so it must match the mayhave symbol
+    IF scpassed THEN 'symbol was passed, so it must match the mayhave symbol
         imayhave = CVI(ids(i).mayhave) 'speed up checks of first 2 characters
-        amayhave = imayhave And 255 'speed up checks of first character
-        If amayhave = 32 Then GoTo findidnomatch 'it cannot have the symbol passed (nb. musthave symbols have already been ok'd)
+        amayhave = imayhave AND 255 'speed up checks of first character
+        IF amayhave = 32 THEN GOTO findidnomatch 'it cannot have the symbol passed (nb. musthave symbols have already been ok'd)
         'note: variable length strings are not a problem here, as they can only have one possible extension
 
-        If amayhave = 36 Then '"$"
-            If imayhave <> 8228 Then '"$ "
+        IF amayhave = 36 THEN '"$"
+            IF imayhave <> 8228 THEN '"$ "
                 'it is a fixed length string
-                If CVI(sc$) = 8228 Then GoTo findidok 'allow myvariable$ to become myvariable$10
+                IF CVI(sc$) = 8228 THEN GOTO findidok 'allow myvariable$ to become myvariable$10
                 'allow later comparison to verify if extension is correct
-            End If
-        End If
-        If sc$ <> ids(i).mayhave Then GoTo findidnomatch
-    End If 'scpassed
+            END IF
+        END IF
+        IF sc$ <> ids(i).mayhave THEN GOTO findidnomatch
+    END IF 'scpassed
 
     'return id
     findidok:
@@ -18773,133 +18773,133 @@ Function findid& (n2$)
     temp$ = refer$(str2$(i), t, 1)
     manageVariableList "", temp$, 0, 1
     currentid = i
-    Exit Function
+    EXIT FUNCTION
 
     'END IF 'same name
     findidnomatch:
     'NEXT
-    If z = 2 Then GoTo hashretry
+    IF z = 2 THEN GOTO hashretry
 
     'totally unclassifiable
     noid:
     findid& = 0
     currentid = -1
-End Function
+END FUNCTION
 
-Function FindArray (secure$)
+FUNCTION FindArray (secure$)
     FindArray = -1
     n$ = secure$
-    If Debug Then Print #9, "func findarray:in:" + n$
-    If alphanumeric(Asc(n$)) = 0 Then FindArray = 0: Exit Function
+    IF Debug THEN PRINT #9, "func findarray:in:" + n$
+    IF alphanumeric(ASC(n$)) = 0 THEN FindArray = 0: EXIT FUNCTION
 
     'establish whether n$ includes an extension
-    i = InStr(n$, "~"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
-    i = InStr(n$, "`"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
-    i = InStr(n$, "%"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
-    i = InStr(n$, "&"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
-    i = InStr(n$, "!"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
-    i = InStr(n$, "#"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
-    i = InStr(n$, "$"): If i Then sc$ = Right$(n$, Len(n$) - i + 1): n$ = Left$(n$, i - 1): GoTo gotsc2
+    i = INSTR(n$, "~"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
+    i = INSTR(n$, "`"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
+    i = INSTR(n$, "%"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
+    i = INSTR(n$, "&"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
+    i = INSTR(n$, "!"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
+    i = INSTR(n$, "#"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
+    i = INSTR(n$, "$"): IF i THEN sc$ = RIGHT$(n$, LEN(n$) - i + 1): n$ = LEFT$(n$, i - 1): GOTO gotsc2
     gotsc2:
     n2$ = n$ + sc$
 
-    If sc$ <> "" Then
+    IF sc$ <> "" THEN
         'has an extension
         'note! findid must unambiguify ` to `5 or $ to $10 where applicable
-        try = findid(n2$): If Error_Happened Then Exit Function
-        Do While try
-            If id.arraytype Then
-                Exit Function
-            End If
-            If try = 2 Then findanotherid = 1: try = findid(n2$) Else try = 0
-            If Error_Happened Then Exit Function
-        Loop
+        try = findid(n2$): IF Error_Happened THEN EXIT FUNCTION
+        DO WHILE try
+            IF id.arraytype THEN
+                EXIT FUNCTION
+            END IF
+            IF try = 2 THEN findanotherid = 1: try = findid(n2$) ELSE try = 0
+            IF Error_Happened THEN EXIT FUNCTION
+        LOOP
 
-    Else
+    ELSE
         'no extension
 
         '1. pass as is, without any extension (local)
-        try = findid(n2$): If Error_Happened Then Exit Function
-        Do While try
-            If id.arraytype Then
-                If subfuncn = 0 Then Exit Function
-                If id.insubfuncn = subfuncn Then Exit Function
-            End If
-            If try = 2 Then findanotherid = 1: try = findid(n2$) Else try = 0
-            If Error_Happened Then Exit Function
-        Loop
+        try = findid(n2$): IF Error_Happened THEN EXIT FUNCTION
+        DO WHILE try
+            IF id.arraytype THEN
+                IF subfuncn = 0 THEN EXIT FUNCTION
+                IF id.insubfuncn = subfuncn THEN EXIT FUNCTION
+            END IF
+            IF try = 2 THEN findanotherid = 1: try = findid(n2$) ELSE try = 0
+            IF Error_Happened THEN EXIT FUNCTION
+        LOOP
 
         '2. that failed, so apply the _define'd extension and pass (local)
-        a = Asc(UCase$(n$)): If a = 95 Then a = 91
+        a = ASC(UCASE$(n$)): IF a = 95 THEN a = 91
         a = a - 64 'so A=1, Z=27 and _=28
         n2$ = n$ + defineextaz(a)
-        try = findid(n2$): If Error_Happened Then Exit Function
-        Do While try
-            If id.arraytype Then
-                If subfuncn = 0 Then Exit Function
-                If id.insubfuncn = subfuncn Then Exit Function
-                Exit Function
-            End If
-            If try = 2 Then findanotherid = 1: try = findid(n2$) Else try = 0
-            If Error_Happened Then Exit Function
-        Loop
+        try = findid(n2$): IF Error_Happened THEN EXIT FUNCTION
+        DO WHILE try
+            IF id.arraytype THEN
+                IF subfuncn = 0 THEN EXIT FUNCTION
+                IF id.insubfuncn = subfuncn THEN EXIT FUNCTION
+                EXIT FUNCTION
+            END IF
+            IF try = 2 THEN findanotherid = 1: try = findid(n2$) ELSE try = 0
+            IF Error_Happened THEN EXIT FUNCTION
+        LOOP
 
         '3. pass as is, without any extension (global)
         n2$ = n$
-        try = findid(n2$): If Error_Happened Then Exit Function
-        Do While try
-            If id.arraytype Then
-                Exit Function
-            End If
-            If try = 2 Then findanotherid = 1: try = findid(n2$) Else try = 0
-            If Error_Happened Then Exit Function
-        Loop
+        try = findid(n2$): IF Error_Happened THEN EXIT FUNCTION
+        DO WHILE try
+            IF id.arraytype THEN
+                EXIT FUNCTION
+            END IF
+            IF try = 2 THEN findanotherid = 1: try = findid(n2$) ELSE try = 0
+            IF Error_Happened THEN EXIT FUNCTION
+        LOOP
 
         '4. that failed, so apply the _define'd extension and pass (global)
-        a = Asc(UCase$(n$)): If a = 95 Then a = 91
+        a = ASC(UCASE$(n$)): IF a = 95 THEN a = 91
         a = a - 64 'so A=1, Z=27 and _=28
         n2$ = n$ + defineextaz(a)
-        try = findid(n2$): If Error_Happened Then Exit Function
-        Do While try
-            If id.arraytype Then
-                Exit Function
-            End If
-            If try = 2 Then findanotherid = 1: try = findid(n2$) Else try = 0
-            If Error_Happened Then Exit Function
-        Loop
+        try = findid(n2$): IF Error_Happened THEN EXIT FUNCTION
+        DO WHILE try
+            IF id.arraytype THEN
+                EXIT FUNCTION
+            END IF
+            IF try = 2 THEN findanotherid = 1: try = findid(n2$) ELSE try = 0
+            IF Error_Happened THEN EXIT FUNCTION
+        LOOP
 
-    End If
+    END IF
     FindArray = 0
-End Function
+END FUNCTION
 
 
 
 
 
-Function fixoperationorder$ (savea$)
-    Static uboundlbound As _Byte
+FUNCTION fixoperationorder$ (savea$)
+    STATIC uboundlbound AS _BYTE
 
     a$ = savea$
-    If Debug Then Print #9, "fixoperationorder:in:" + a$
+    IF Debug THEN PRINT #9, "fixoperationorder:in:" + a$
 
     fooindwel = fooindwel + 1
 
     n = numelements(a$) 'n is maintained throughout function
 
-    If fooindwel = 1 Then 'actions to take on initial call only
+    IF fooindwel = 1 THEN 'actions to take on initial call only
         uboundlbound = 0
 
         'Quick check for duplicate binary operations
-        uppercasea$ = UCase$(a$) 'capitalize it once to reduce calls to ucase over and over
-        For i = 1 To n - 1
+        uppercasea$ = UCASE$(a$) 'capitalize it once to reduce calls to ucase over and over
+        FOR i = 1 TO n - 1
             temp1$ = getelement(uppercasea$, i)
             temp2$ = getelement(uppercasea$, i + 1)
-            If temp1$ = "AND" And temp2$ = "AND" Then Give_Error "Error: AND AND": Exit Function
-            If temp1$ = "OR" And temp2$ = "OR" Then Give_Error "Error: OR OR": Exit Function
-            If temp1$ = "XOR" And temp2$ = "XOR" Then Give_Error "Error: XOR XOR": Exit Function
-            If temp1$ = "IMP" And temp2$ = "IMP" Then Give_Error "Error: IMP IMP": Exit Function
-            If temp1$ = "EQV" And temp2$ = "EQV" Then Give_Error "Error: EQV EQV": Exit Function
-        Next
+            IF temp1$ = "AND" AND temp2$ = "AND" THEN Give_Error "Error: AND AND": EXIT FUNCTION
+            IF temp1$ = "OR" AND temp2$ = "OR" THEN Give_Error "Error: OR OR": EXIT FUNCTION
+            IF temp1$ = "XOR" AND temp2$ = "XOR" THEN Give_Error "Error: XOR XOR": EXIT FUNCTION
+            IF temp1$ = "IMP" AND temp2$ = "IMP" THEN Give_Error "Error: IMP IMP": EXIT FUNCTION
+            IF temp1$ = "EQV" AND temp2$ = "EQV" THEN Give_Error "Error: EQV EQV": EXIT FUNCTION
+        NEXT
 
         '----------------A. 'Quick' mismatched brackets check----------------
         b = 0
@@ -18908,24 +18908,24 @@ Function fixoperationorder$ (savea$)
         b2$ = sp + ")" + sp
         i = 1
         findmmb:
-        i1 = InStr(i, a2$, b1$)
-        i2 = InStr(i, a2$, b2$)
+        i1 = INSTR(i, a2$, b1$)
+        i2 = INSTR(i, a2$, b2$)
         i3 = i1
-        If i2 Then
-            If i1 = 0 Then
+        IF i2 THEN
+            IF i1 = 0 THEN
                 i3 = i2
-            Else
-                If i2 < i1 Then i3 = i2
-            End If
-        End If
-        If i3 Then
-            If i3 = i1 Then b = b + 1
-            If i3 = i2 Then b = b - 1
+            ELSE
+                IF i2 < i1 THEN i3 = i2
+            END IF
+        END IF
+        IF i3 THEN
+            IF i3 = i1 THEN b = b + 1
+            IF i3 = i2 THEN b = b - 1
             i = i3 + 2
-            If b < 0 Then Give_Error "Missing (": Exit Function
-            GoTo findmmb
-        End If
-        If b > 0 Then Give_Error "Missing )": Exit Function
+            IF b < 0 THEN Give_Error "Missing (": EXIT FUNCTION
+            GOTO findmmb
+        END IF
+        IF b > 0 THEN Give_Error "Missing )": EXIT FUNCTION
 
         '----------------B. 'Quick' correction of over-use of +,- ----------------
         'note: the results of this change are beneficial to foolayout
@@ -18933,43 +18933,43 @@ Function fixoperationorder$ (savea$)
 
         'rule 1: change ++ to +
         rule1:
-        i = InStr(a2$, sp + "+" + sp + "+" + sp)
-        If i Then
-            a2$ = Left$(a2$, i + 2) + Right$(a2$, Len(a2$) - i - 4)
-            a$ = Mid$(a2$, 2, Len(a2$) - 2)
+        i = INSTR(a2$, sp + "+" + sp + "+" + sp)
+        IF i THEN
+            a2$ = LEFT$(a2$, i + 2) + RIGHT$(a2$, LEN(a2$) - i - 4)
+            a$ = MID$(a2$, 2, LEN(a2$) - 2)
             n = n - 1
-            If Debug Then Print #9, "fixoperationorder:+/-:" + a$
-            GoTo rule1
-        End If
+            IF Debug THEN PRINT #9, "fixoperationorder:+/-:" + a$
+            GOTO rule1
+        END IF
 
         'rule 2: change -+ to -
         rule2:
-        i = InStr(a2$, sp + "-" + sp + "+" + sp)
-        If i Then
-            a2$ = Left$(a2$, i + 2) + Right$(a2$, Len(a2$) - i - 4)
-            a$ = Mid$(a2$, 2, Len(a2$) - 2)
+        i = INSTR(a2$, sp + "-" + sp + "+" + sp)
+        IF i THEN
+            a2$ = LEFT$(a2$, i + 2) + RIGHT$(a2$, LEN(a2$) - i - 4)
+            a$ = MID$(a2$, 2, LEN(a2$) - 2)
             n = n - 1
-            If Debug Then Print #9, "fixoperationorder:+/-:" + a$
-            GoTo rule2
-        End If
+            IF Debug THEN PRINT #9, "fixoperationorder:+/-:" + a$
+            GOTO rule2
+        END IF
 
         'rule 3: change anyoperator-- to anyoperator
         rule3:
-        If InStr(a2$, sp + "-" + sp + "-" + sp) Then
-            For i = 1 To n - 2
-                If isoperator(getelement(a$, i)) Then
-                    If getelement(a$, i + 1) = "-" Then
-                        If getelement(a$, i + 2) = "-" Then
+        IF INSTR(a2$, sp + "-" + sp + "-" + sp) THEN
+            FOR i = 1 TO n - 2
+                IF isoperator(getelement(a$, i)) THEN
+                    IF getelement(a$, i + 1) = "-" THEN
+                        IF getelement(a$, i + 2) = "-" THEN
                             removeelements a$, i + 1, i + 2, 0
                             a2$ = sp + a$ + sp
                             n = n - 2
-                            If Debug Then Print #9, "fixoperationorder:+/-:" + a$
-                            GoTo rule3
-                        End If
-                    End If
-                End If
-            Next
-        End If 'rule 3
+                            IF Debug THEN PRINT #9, "fixoperationorder:+/-:" + a$
+                            GOTO rule3
+                        END IF
+                    END IF
+                END IF
+            NEXT
+        END IF 'rule 3
 
 
 
@@ -18988,103 +18988,103 @@ Function fixoperationorder$ (savea$)
         'before: anyoperator,-,number,^
         'after:  anyoperator,CHR$(241),number,^
 
-        For i = 1 To n - 1
-            If i > n - 1 Then Exit For 'n changes, so manually exit if required
+        FOR i = 1 TO n - 1
+            IF i > n - 1 THEN EXIT FOR 'n changes, so manually exit if required
 
-            If Asc(getelement(a$, i)) = 45 Then '-
+            IF ASC(getelement(a$, i)) = 45 THEN '-
 
                 neg = 0
-                If i = 1 Then
+                IF i = 1 THEN
                     neg = 1
-                Else
+                ELSE
                     a2$ = getelement(a$, i - 1)
-                    c = Asc(a2$)
-                    If c = 40 Or c = 44 Then '(,
+                    c = ASC(a2$)
+                    IF c = 40 OR c = 44 THEN '(,
                         neg = 1
-                    Else
-                        If isoperator(a2$) Then neg = 1
-                    End If '()
-                End If 'i=1
-                If neg = 1 Then
+                    ELSE
+                        IF isoperator(a2$) THEN neg = 1
+                    END IF '()
+                END IF 'i=1
+                IF neg = 1 THEN
 
                     a2$ = getelement(a$, i + 1)
-                    c = Asc(a2$)
-                    If c >= 48 And c <= 57 Then
-                        c2 = 0: If i < n - 1 Then c2 = Asc(getelement(a$, i + 2))
-                        If c2 <> 94 Then 'not ^
+                    c = ASC(a2$)
+                    IF c >= 48 AND c <= 57 THEN
+                        c2 = 0: IF i < n - 1 THEN c2 = ASC(getelement(a$, i + 2))
+                        IF c2 <> 94 THEN 'not ^
                             'number...
-                            i2 = InStr(a2$, ",")
-                            If i2 And Asc(a2$, i2 + 1) <> 38 Then '&H/&O/&B values don't need the assumed negation
-                                a2$ = "-" + Left$(a2$, i2) + "-" + Right$(a2$, Len(a2$) - i2)
-                            Else
+                            i2 = INSTR(a2$, ",")
+                            IF i2 AND ASC(a2$, i2 + 1) <> 38 THEN '&H/&O/&B values don't need the assumed negation
+                                a2$ = "-" + LEFT$(a2$, i2) + "-" + RIGHT$(a2$, LEN(a2$) - i2)
+                            ELSE
                                 a2$ = "-" + a2$
-                            End If
+                            END IF
                             removeelements a$, i, i + 1, 0
                             insertelements a$, i - 1, a2$
                             n = n - 1
-                            If Debug Then Print #9, "fixoperationorder:negation:" + a$
+                            IF Debug THEN PRINT #9, "fixoperationorder:negation:" + a$
 
-                            GoTo negdone
+                            GOTO negdone
 
-                        End If
-                    End If
+                        END IF
+                    END IF
 
 
                     'not a number (or for exceptions)...
                     removeelements a$, i, i, 0
-                    insertelements a$, i - 1, Chr$(241)
-                    If Debug Then Print #9, "fixoperationorder:negation:" + a$
+                    insertelements a$, i - 1, CHR$(241)
+                    IF Debug THEN PRINT #9, "fixoperationorder:negation:" + a$
 
-                End If 'isoperator
-            End If '-
+                END IF 'isoperator
+            END IF '-
             negdone:
-        Next
+        NEXT
 
 
 
-    End If 'fooindwel=1
+    END IF 'fooindwel=1
 
 
 
     '----------------D. 'Quick' Add 'power of' with negation {}bracketing to bottom bracket level----------------
     pownegused = 0
     powneg:
-    If InStr(a$, "^" + sp + Chr$(241)) Then 'quick check
+    IF INSTR(a$, "^" + sp + CHR$(241)) THEN 'quick check
         b = 0
         b1 = 0
-        For i = 1 To n
+        FOR i = 1 TO n
             a2$ = getelement(a$, i)
-            c = Asc(a2$)
-            If c = 40 Then b = b + 1
-            If c = 41 Then b = b - 1
-            If b = 0 Then
-                If b1 Then
-                    If isoperator(a2$) Then
-                        If a2$ <> "^" And a2$ <> Chr$(241) Then
+            c = ASC(a2$)
+            IF c = 40 THEN b = b + 1
+            IF c = 41 THEN b = b - 1
+            IF b = 0 THEN
+                IF b1 THEN
+                    IF isoperator(a2$) THEN
+                        IF a2$ <> "^" AND a2$ <> CHR$(241) THEN
                             insertelements a$, i - 1, "}"
                             insertelements a$, b1, "{"
                             n = n + 2
-                            If Debug Then Print #9, "fixoperationorder:^-:" + a$
-                            GoTo powneg
+                            IF Debug THEN PRINT #9, "fixoperationorder:^-:" + a$
+                            GOTO powneg
                             pownegused = 1
-                        End If
-                    End If
-                End If
-                If c = 94 Then '^
-                    If getelement$(a$, i + 1) = Chr$(241) Then b1 = i: i = i + 1
-                End If
-            End If 'b=0
-        Next i
-        If b1 Then
+                        END IF
+                    END IF
+                END IF
+                IF c = 94 THEN '^
+                    IF getelement$(a$, i + 1) = CHR$(241) THEN b1 = i: i = i + 1
+                END IF
+            END IF 'b=0
+        NEXT i
+        IF b1 THEN
             insertelements a$, b1, "{"
             a$ = a$ + sp + "}"
             n = n + 2
-            If Debug Then Print #9, "fixoperationorder:^-:" + a$
+            IF Debug THEN PRINT #9, "fixoperationorder:^-:" + a$
             pownegused = 1
-            GoTo powneg
-        End If
+            GOTO powneg
+        END IF
 
-    End If 'quick check
+    END IF 'quick check
 
 
     '----------------E. Find lowest & highest operator level in bottom bracket level----------------
@@ -19092,112 +19092,112 @@ Function fixoperationorder$ (savea$)
     lco = 255
     hco = 0
     b = 0
-    For i = 1 To n
+    FOR i = 1 TO n
         a2$ = getelement(a$, i)
-        c = Asc(a2$)
-        If c = 40 Or c = 123 Then b = b + 1
-        If c = 41 Or c = 125 Then b = b - 1
-        If b = 0 Then
+        c = ASC(a2$)
+        IF c = 40 OR c = 123 THEN b = b + 1
+        IF c = 41 OR c = 125 THEN b = b - 1
+        IF b = 0 THEN
             op = isoperator(a2$)
-            If op Then
-                If op < lco Then lco = op
-                If op > hco Then hco = op
-            End If
-        End If
-    Next
+            IF op THEN
+                IF op < lco THEN lco = op
+                IF op > hco THEN hco = op
+            END IF
+        END IF
+    NEXT
 
     '----------------F. Add operator {}bracketting----------------
     'apply bracketting only if required
-    If hco <> 0 Then 'operators were used
-        If lco <> hco Then
+    IF hco <> 0 THEN 'operators were used
+        IF lco <> hco THEN
             'brackets needed
 
-            If lco = 6 Then 'NOT exception
+            IF lco = 6 THEN 'NOT exception
                 'Step 1: Add brackets as follows ~~~ ( NOT ( ~~~ NOT ~~~ NOT ~~~ NOT ~~~ ))
                 'Step 2: Recheck line from beginning
-                If n = 1 Then Give_Error "Expected NOT ...": Exit Function
+                IF n = 1 THEN Give_Error "Expected NOT ...": EXIT FUNCTION
                 b = 0
-                For i = 1 To n
+                FOR i = 1 TO n
                     a2$ = getelement(a$, i)
-                    c = Asc(a2$)
-                    If c = 40 Or c = 123 Then b = b + 1
-                    If c = 41 Or c = 125 Then b = b - 1
-                    If b = 0 Then
-                        If UCase$(a2$) = "NOT" Then
-                            If i = n Then Give_Error "Expected NOT ...": Exit Function
-                            If i = 1 Then a$ = "NOT" + sp + "{" + sp + getelements$(a$, 2, n) + sp + "}": n = n + 2: GoTo lco_bracketting_done
+                    c = ASC(a2$)
+                    IF c = 40 OR c = 123 THEN b = b + 1
+                    IF c = 41 OR c = 125 THEN b = b - 1
+                    IF b = 0 THEN
+                        IF UCASE$(a2$) = "NOT" THEN
+                            IF i = n THEN Give_Error "Expected NOT ...": EXIT FUNCTION
+                            IF i = 1 THEN a$ = "NOT" + sp + "{" + sp + getelements$(a$, 2, n) + sp + "}": n = n + 2: GOTO lco_bracketting_done
                             a$ = getelements$(a$, 1, i - 1) + sp + "{" + sp + "NOT" + sp + "{" + sp + getelements$(a$, i + 1, n) + sp + "}" + sp + "}"
                             n = n + 4
-                            GoTo NOT_recheck
-                        End If 'not
-                    End If 'b=0
-                Next
-            End If 'NOT exception
+                            GOTO NOT_recheck
+                        END IF 'not
+                    END IF 'b=0
+                NEXT
+            END IF 'NOT exception
 
             n2 = n
             b = 0
             a3$ = "{"
             n = 1
-            For i = 1 To n2
+            FOR i = 1 TO n2
                 a2$ = getelement(a$, i)
-                c = Asc(a2$)
-                If c = 40 Or c = 123 Then b = b + 1
-                If c = 41 Or c = 125 Then b = b - 1
-                If b = 0 Then
+                c = ASC(a2$)
+                IF c = 40 OR c = 123 THEN b = b + 1
+                IF c = 41 OR c = 125 THEN b = b - 1
+                IF b = 0 THEN
                     op = isoperator(a2$)
-                    If op = lco Then
-                        If i = 1 Then
+                    IF op = lco THEN
+                        IF i = 1 THEN
                             a3$ = a2$ + sp + "{"
                             n = 2
-                        Else
-                            If i = n2 Then Give_Error "Expected variable/value after '" + UCase$(a2$) + "'": Exit Function
+                        ELSE
+                            IF i = n2 THEN Give_Error "Expected variable/value after '" + UCASE$(a2$) + "'": EXIT FUNCTION
                             a3$ = a3$ + sp + "}" + sp + a2$ + sp + "{"
                             n = n + 3
-                        End If
-                        GoTo fixop0
-                    End If
+                        END IF
+                        GOTO fixop0
+                    END IF
 
-                End If 'b=0
+                END IF 'b=0
                 a3$ = a3$ + sp + a2$
                 n = n + 1
                 fixop0:
-            Next
+            NEXT
             a3$ = a3$ + sp + "}"
             n = n + 1
             a$ = a3$
 
             lco_bracketting_done:
-            If Debug Then Print #9, "fixoperationorder:lco bracketing["; lco; ","; hco; "]:" + a$
+            IF Debug THEN PRINT #9, "fixoperationorder:lco bracketing["; lco; ","; hco; "]:" + a$
 
             '--------(F)G. Remove indwelling {}bracketting from power-negation--------
-            If pownegused Then
+            IF pownegused THEN
                 b = 0
                 i = 0
-                Do
+                DO
                     i = i + 1
-                    If i > n Then Exit Do
-                    c = Asc(getelement(a$, i))
-                    If c = 41 Or c = 125 Then b = b - 1
-                    If (c = 123 Or c = 125) And b <> 0 Then
+                    IF i > n THEN EXIT DO
+                    c = ASC(getelement(a$, i))
+                    IF c = 41 OR c = 125 THEN b = b - 1
+                    IF (c = 123 OR c = 125) AND b <> 0 THEN
                         removeelements a$, i, i, 0
                         n = n - 1
                         i = i - 1
-                        If Debug Then Print #9, "fixoperationorder:^- {} removed:" + a$
-                    End If
-                    If c = 40 Or c = 123 Then b = b + 1
-                Loop
-            End If 'pownegused
+                        IF Debug THEN PRINT #9, "fixoperationorder:^- {} removed:" + a$
+                    END IF
+                    IF c = 40 OR c = 123 THEN b = b + 1
+                LOOP
+            END IF 'pownegused
 
-        End If 'lco <> hco
-    End If 'hco <> 0
+        END IF 'lco <> hco
+    END IF 'hco <> 0
 
     '--------Bracketting of multiple NOT/negation unary operators--------
-    If Left$(a$, 4) = Chr$(241) + sp + Chr$(241) + sp Then
-        a$ = Chr$(241) + sp + "{" + sp + getelements$(a$, 2, n) + sp + "}": n = n + 2
-    End If
-    If UCase$(Left$(a$, 8)) = "NOT" + sp + "NOT" + sp Then
+    IF LEFT$(a$, 4) = CHR$(241) + sp + CHR$(241) + sp THEN
+        a$ = CHR$(241) + sp + "{" + sp + getelements$(a$, 2, n) + sp + "}": n = n + 2
+    END IF
+    IF UCASE$(LEFT$(a$, 8)) = "NOT" + sp + "NOT" + sp THEN
         a$ = "NOT" + sp + "{" + sp + getelements$(a$, 2, n) + sp + "}": n = n + 2
-    End If
+    END IF
 
     '----------------H. Identification/conversion of elements within bottom bracket level----------------
     'actions performed:
@@ -19209,38 +19209,38 @@ Function fixoperationorder$ (savea$)
     b = 0
     c = 0
     lastt = 0: lastti = 0
-    For i = 1 To n
+    FOR i = 1 TO n
         f2$ = getelement(a$, i)
         lastc = c
-        c = Asc(f2$)
+        c = ASC(f2$)
 
-        If c = 40 Or c = 123 Then
-            If c <> 40 Or b <> 0 Then f2$ = "" 'skip temporary & indwelling  brackets
+        IF c = 40 OR c = 123 THEN
+            IF c <> 40 OR b <> 0 THEN f2$ = "" 'skip temporary & indwelling  brackets
             b = b + 1
-            GoTo classdone
-        End If
-        If c = 41 Or c = 125 Then
+            GOTO classdone
+        END IF
+        IF c = 41 OR c = 125 THEN
 
             b = b - 1
 
             'check for "("+sp+")" after literal-string, operator, number or nothing
-            If b = 0 Then 'must be within the lowest level
-                If c = 41 Then
-                    If lastc = 40 Then
-                        If lastti = i - 2 Or lastti = 0 Then
-                            If lastt >= 0 And lastt <= 3 Then
-                                Give_Error "Unexpected (": Exit Function
-                            End If
-                        End If
-                    End If
-                End If
-            End If
+            IF b = 0 THEN 'must be within the lowest level
+                IF c = 41 THEN
+                    IF lastc = 40 THEN
+                        IF lastti = i - 2 OR lastti = 0 THEN
+                            IF lastt >= 0 AND lastt <= 3 THEN
+                                Give_Error "Unexpected (": EXIT FUNCTION
+                            END IF
+                        END IF
+                    END IF
+                END IF
+            END IF
 
-            If c <> 41 Or b <> 0 Then f2$ = "" 'skip temporary & indwelling  brackets
-            GoTo classdone
-        End If
+            IF c <> 41 OR b <> 0 THEN f2$ = "" 'skip temporary & indwelling  brackets
+            GOTO classdone
+        END IF
 
-        If b = 0 Then
+        IF b = 0 THEN
 
             'classifications/conversions:
             '1. quoted string ("....)
@@ -19251,114 +19251,114 @@ Function fixoperationorder$ (savea$)
 
 
             'quoted string?
-            If c = 34 Then '"
+            IF c = 34 THEN '"
                 lastt = 1: lastti = i
 
                 'convert \\ to \
                 'convert \??? to CHR$(&O???)
                 x2 = 1
-                x = InStr(x2, f2$, "\")
-                Do While x
-                    c2 = Asc(f2$, x + 1)
-                    If c2 = 92 Then '\\
-                        f2$ = Left$(f2$, x) + Right$(f2$, Len(f2$) - x - 1) 'remove second \
+                x = INSTR(x2, f2$, "\")
+                DO WHILE x
+                    c2 = ASC(f2$, x + 1)
+                    IF c2 = 92 THEN '\\
+                        f2$ = LEFT$(f2$, x) + RIGHT$(f2$, LEN(f2$) - x - 1) 'remove second \
                         x2 = x + 1
-                    Else
+                    ELSE
                         'octal triplet value
-                        c3 = (Asc(f2$, x + 3) - 48) + (Asc(f2$, x + 2) - 48) * 8 + (Asc(f2$, x + 1) - 48) * 64
-                        f2$ = Left$(f2$, x - 1) + Chr$(c3) + Right$(f2$, Len(f2$) - x - 3)
+                        c3 = (ASC(f2$, x + 3) - 48) + (ASC(f2$, x + 2) - 48) * 8 + (ASC(f2$, x + 1) - 48) * 64
+                        f2$ = LEFT$(f2$, x - 1) + CHR$(c3) + RIGHT$(f2$, LEN(f2$) - x - 3)
                         x2 = x + 1
-                    End If
-                    x = InStr(x2, f2$, "\")
-                Loop
+                    END IF
+                    x = INSTR(x2, f2$, "\")
+                LOOP
                 'remove ',len' (if it exists)
-                x = InStr(2, f2$, Chr$(34) + ","): If x Then f2$ = Left$(f2$, x)
-                GoTo classdone
-            End If
+                x = INSTR(2, f2$, CHR$(34) + ","): IF x THEN f2$ = LEFT$(f2$, x)
+                GOTO classdone
+            END IF
 
             'number?
-            If (c >= 48 And c <= 57) Or c = 45 Then
+            IF (c >= 48 AND c <= 57) OR c = 45 THEN
                 lastt = 2: lastti = i
 
-                x = InStr(f2$, ",")
-                If x Then
-                    removeelements a$, i, i, 0: insertelements a$, i - 1, Left$(f2$, x - 1)
-                    f2$ = Right$(f2$, Len(f2$) - x)
-                End If
+                x = INSTR(f2$, ",")
+                IF x THEN
+                    removeelements a$, i, i, 0: insertelements a$, i - 1, LEFT$(f2$, x - 1)
+                    f2$ = RIGHT$(f2$, LEN(f2$) - x)
+                END IF
 
-                If x = 0 Then
-                    c2 = Asc(f2$, Len(f2$))
-                    If c2 < 48 Or c2 > 57 Then
+                IF x = 0 THEN
+                    c2 = ASC(f2$, LEN(f2$))
+                    IF c2 < 48 OR c2 > 57 THEN
                         x = 1 'extension given
-                    Else
-                        x = InStr(f2$, "`")
-                    End If
-                End If
+                    ELSE
+                        x = INSTR(f2$, "`")
+                    END IF
+                END IF
 
                 'add appropriate integer symbol if none present
-                If x = 0 Then
+                IF x = 0 THEN
                     f3$ = f2$
                     s$ = ""
-                    If c = 45 Then
+                    IF c = 45 THEN
                         s$ = "&&"
-                        If (f3$ < "-2147483648" And Len(f3$) = 11) Or Len(f3$) < 11 Then s$ = "&"
-                        If (f3$ <= "-32768" And Len(f3$) = 6) Or Len(f3$) < 6 Then s$ = "%"
-                    Else
+                        IF (f3$ < "-2147483648" AND LEN(f3$) = 11) OR LEN(f3$) < 11 THEN s$ = "&"
+                        IF (f3$ <= "-32768" AND LEN(f3$) = 6) OR LEN(f3$) < 6 THEN s$ = "%"
+                    ELSE
                         s$ = "~&&"
-                        If (f3$ <= "9223372036854775807" And Len(f3$) = 19) Or Len(f3$) < 19 Then s$ = "&&"
-                        If (f3$ <= "2147483647" And Len(f3$) = 10) Or Len(f3$) < 10 Then s$ = "&"
-                        If (f3$ <= "32767" And Len(f3$) = 5) Or Len(f3$) < 5 Then s$ = "%"
-                    End If
+                        IF (f3$ <= "9223372036854775807" AND LEN(f3$) = 19) OR LEN(f3$) < 19 THEN s$ = "&&"
+                        IF (f3$ <= "2147483647" AND LEN(f3$) = 10) OR LEN(f3$) < 10 THEN s$ = "&"
+                        IF (f3$ <= "32767" AND LEN(f3$) = 5) OR LEN(f3$) < 5 THEN s$ = "%"
+                    END IF
                     f3$ = f3$ + s$
                     removeelements a$, i, i, 0: insertelements a$, i - 1, f3$
-                End If 'x=0
+                END IF 'x=0
 
-                GoTo classdone
-            End If
+                GOTO classdone
+            END IF
 
             'operator?
-            If isoperator(f2$) Then
+            IF isoperator(f2$) THEN
                 lastt = 3: lastti = i
-                If Len(f2$) > 1 Then
-                    If f2$ <> SCase2$(f2$) Then
+                IF LEN(f2$) > 1 THEN
+                    IF f2$ <> SCase2$(f2$) THEN
                         f2$ = SCase2$(f2$)
                         removeelements a$, i, i, 0
                         insertelements a$, i - 1, f2$
-                    End If
-                End If
+                    END IF
+                END IF
                 'append negation
-                If f2$ = Chr$(241) Then f$ = f$ + sp + "-": GoTo classdone_special
-                GoTo classdone
-            End If
+                IF f2$ = CHR$(241) THEN f$ = f$ + sp + "-": GOTO classdone_special
+                GOTO classdone
+            END IF
 
-            If alphanumeric(c) Then
+            IF alphanumeric(c) THEN
                 lastt = 4: lastti = i
 
-                If i < n Then nextc = Asc(getelement(a$, i + 1)) Else nextc = 0
+                IF i < n THEN nextc = ASC(getelement(a$, i + 1)) ELSE nextc = 0
 
                 ' a constant?
-                If nextc <> 40 Then '<>"(" (not an array)
-                    If lastc <> 46 Then '<>"." (not an element of a UDT)
+                IF nextc <> 40 THEN '<>"(" (not an array)
+                    IF lastc <> 46 THEN '<>"." (not an element of a UDT)
 
-                        e$ = UCase$(f2$)
+                        e$ = UCASE$(f2$)
                         es$ = removesymbol$(e$)
-                        If Error_Happened Then Exit Function
+                        IF Error_Happened THEN EXIT FUNCTION
 
                         hashfound = 0
                         hashname$ = e$
                         hashchkflags = HASHFLAG_CONSTANT
                         hashres = HashFindRev(hashname$, hashchkflags, hashresflags, hashresref)
-                        Do While hashres
-                            If constsubfunc(hashresref) = subfuncn Or constsubfunc(hashresref) = 0 Then
-                                If constdefined(hashresref) Then
+                        DO WHILE hashres
+                            IF constsubfunc(hashresref) = subfuncn OR constsubfunc(hashresref) = 0 THEN
+                                IF constdefined(hashresref) THEN
                                     hashfound = 1
-                                    Exit Do
-                                End If
-                            End If
-                            If hashres <> 1 Then hashres = HashFindCont(hashresflags, hashresref) Else hashres = 0
-                        Loop
+                                    EXIT DO
+                                END IF
+                            END IF
+                            IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
+                        LOOP
 
-                        If hashfound Then
+                        IF hashfound THEN
                             i2 = hashresref
                             'FOR i2 = constlast TO 0 STEP -1
                             'IF e$ = constname(i2) THEN
@@ -19370,119 +19370,119 @@ Function fixoperationorder$ (savea$)
                             'is a STATIC variable overriding this constant?
                             staticvariable = 0
                             try = findid(e$ + es$)
-                            If Error_Happened Then Exit Function
-                            Do While try
-                                If id.arraytype = 0 Then staticvariable = 1: Exit Do 'if it's not an array, it's probably a static variable
-                                If try = 2 Then findanotherid = 1: try = findid(e$ + es$) Else try = 0
-                                If Error_Happened Then Exit Function
-                            Loop
+                            IF Error_Happened THEN EXIT FUNCTION
+                            DO WHILE try
+                                IF id.arraytype = 0 THEN staticvariable = 1: EXIT DO 'if it's not an array, it's probably a static variable
+                                IF try = 2 THEN findanotherid = 1: try = findid(e$ + es$) ELSE try = 0
+                                IF Error_Happened THEN EXIT FUNCTION
+                            LOOP
                             'add symbol and try again
-                            If staticvariable = 0 Then
-                                If Len(es$) = 0 Then
-                                    a = Asc(UCase$(e$)): If a = 95 Then a = 91
+                            IF staticvariable = 0 THEN
+                                IF LEN(es$) = 0 THEN
+                                    a = ASC(UCASE$(e$)): IF a = 95 THEN a = 91
                                     a = a - 64 'so A=1, Z=27 and _=28
                                     es2$ = defineextaz(a)
                                     try = findid(e$ + es2$)
-                                    If Error_Happened Then Exit Function
-                                    Do While try
-                                        If id.arraytype = 0 Then staticvariable = 1: Exit Do 'if it's not an array, it's probably a static variable
-                                        If try = 2 Then findanotherid = 1: try = findid(e$ + es2$) Else try = 0
-                                        If Error_Happened Then Exit Function
-                                    Loop
-                                End If
-                            End If
+                                    IF Error_Happened THEN EXIT FUNCTION
+                                    DO WHILE try
+                                        IF id.arraytype = 0 THEN staticvariable = 1: EXIT DO 'if it's not an array, it's probably a static variable
+                                        IF try = 2 THEN findanotherid = 1: try = findid(e$ + es2$) ELSE try = 0
+                                        IF Error_Happened THEN EXIT FUNCTION
+                                    LOOP
+                                END IF
+                            END IF
 
-                            If staticvariable = 0 Then
+                            IF staticvariable = 0 THEN
 
                                 t = consttype(i2)
-                                If t And ISSTRING Then
-                                    If Len(es$) > 0 And es$ <> "$" Then Give_Error "Type mismatch": Exit Function
+                                IF t AND ISSTRING THEN
+                                    IF LEN(es$) > 0 AND es$ <> "$" THEN Give_Error "Type mismatch": EXIT FUNCTION
                                     e$ = conststring(i2)
-                                Else 'not a string
-                                    If Len(es$) Then et = typname2typ(es$) Else et = 0
-                                    If Error_Happened Then Exit Function
-                                    If et And ISSTRING Then Give_Error "Type mismatch": Exit Function
+                                ELSE 'not a string
+                                    IF LEN(es$) THEN et = typname2typ(es$) ELSE et = 0
+                                    IF Error_Happened THEN EXIT FUNCTION
+                                    IF et AND ISSTRING THEN Give_Error "Type mismatch": EXIT FUNCTION
                                     'convert value to general formats
-                                    If t And ISFLOAT Then
+                                    IF t AND ISFLOAT THEN
                                         v## = constfloat(i2)
                                         v&& = v##
                                         v~&& = v&&
-                                    Else
-                                        If t And ISUNSIGNED Then
+                                    ELSE
+                                        IF t AND ISUNSIGNED THEN
                                             v~&& = constuinteger(i2)
                                             v&& = v~&&
                                             v## = v&&
-                                        Else
+                                        ELSE
                                             v&& = constinteger(i2)
                                             v## = v&&
                                             v~&& = v&&
-                                        End If
-                                    End If
+                                        END IF
+                                    END IF
                                     'apply type conversion if necessary
-                                    If et Then t = et
+                                    IF et THEN t = et
                                     '(todo: range checking)
                                     'convert value into string for returning
-                                    If t And ISFLOAT Then
-                                        e$ = LTrim$(RTrim$(Str$(v##)))
-                                    Else
-                                        If t And ISUNSIGNED Then
-                                            e$ = LTrim$(RTrim$(Str$(v~&&)))
-                                        Else
-                                            e$ = LTrim$(RTrim$(Str$(v&&)))
-                                        End If
-                                    End If
+                                    IF t AND ISFLOAT THEN
+                                        e$ = LTRIM$(RTRIM$(STR$(v##)))
+                                    ELSE
+                                        IF t AND ISUNSIGNED THEN
+                                            e$ = LTRIM$(RTRIM$(STR$(v~&&)))
+                                        ELSE
+                                            e$ = LTRIM$(RTRIM$(STR$(v&&)))
+                                        END IF
+                                    END IF
 
                                     'floats returned by str$ must be converted to qb64 standard format
-                                    If t And ISFLOAT Then
-                                        t2 = t And 511
+                                    IF t AND ISFLOAT THEN
+                                        t2 = t AND 511
                                         'find E,D or F
                                         s$ = ""
-                                        If InStr(e$, "E") Then s$ = "E"
-                                        If InStr(e$, "D") Then s$ = "D"
-                                        If InStr(e$, "F") Then s$ = "F"
-                                        If Len(s$) Then
+                                        IF INSTR(e$, "E") THEN s$ = "E"
+                                        IF INSTR(e$, "D") THEN s$ = "D"
+                                        IF INSTR(e$, "F") THEN s$ = "F"
+                                        IF LEN(s$) THEN
                                             'E,D,F found
-                                            x = InStr(e$, s$)
+                                            x = INSTR(e$, s$)
                                             'as incorrect type letter may have been returned by STR$, override it
-                                            If t2 = 32 Then s$ = "E"
-                                            If t2 = 64 Then s$ = "D"
-                                            If t2 = 256 Then s$ = "F"
-                                            Mid$(e$, x, 1) = s$
-                                            If InStr(e$, ".") = 0 Then e$ = Left$(e$, x - 1) + ".0" + Right$(e$, Len(e$) - x + 1): x = x + 2
-                                            If Left$(e$, 1) = "." Then e$ = "0" + e$
-                                            If Left$(e$, 2) = "-." Then e$ = "-0" + Right$(e$, Len(e$) - 1)
-                                            If InStr(e$, "+") = 0 And InStr(e$, "-") = 0 Then
-                                                e$ = Left$(e$, x) + "+" + Right$(e$, Len(e$) - x)
-                                            End If
-                                        Else
+                                            IF t2 = 32 THEN s$ = "E"
+                                            IF t2 = 64 THEN s$ = "D"
+                                            IF t2 = 256 THEN s$ = "F"
+                                            MID$(e$, x, 1) = s$
+                                            IF INSTR(e$, ".") = 0 THEN e$ = LEFT$(e$, x - 1) + ".0" + RIGHT$(e$, LEN(e$) - x + 1): x = x + 2
+                                            IF LEFT$(e$, 1) = "." THEN e$ = "0" + e$
+                                            IF LEFT$(e$, 2) = "-." THEN e$ = "-0" + RIGHT$(e$, LEN(e$) - 1)
+                                            IF INSTR(e$, "+") = 0 AND INSTR(e$, "-") = 0 THEN
+                                                e$ = LEFT$(e$, x) + "+" + RIGHT$(e$, LEN(e$) - x)
+                                            END IF
+                                        ELSE
                                             'E,D,F not found
-                                            If InStr(e$, ".") = 0 Then e$ = e$ + ".0"
-                                            If Left$(e$, 1) = "." Then e$ = "0" + e$
-                                            If Left$(e$, 2) = "-." Then e$ = "-0" + Right$(e$, Len(e$) - 1)
-                                            If t2 = 32 Then e$ = e$ + "E+0"
-                                            If t2 = 64 Then e$ = e$ + "D+0"
-                                            If t2 = 256 Then e$ = e$ + "F+0"
-                                        End If
-                                    Else
+                                            IF INSTR(e$, ".") = 0 THEN e$ = e$ + ".0"
+                                            IF LEFT$(e$, 1) = "." THEN e$ = "0" + e$
+                                            IF LEFT$(e$, 2) = "-." THEN e$ = "-0" + RIGHT$(e$, LEN(e$) - 1)
+                                            IF t2 = 32 THEN e$ = e$ + "E+0"
+                                            IF t2 = 64 THEN e$ = e$ + "D+0"
+                                            IF t2 = 256 THEN e$ = e$ + "F+0"
+                                        END IF
+                                    ELSE
                                         s$ = typevalue2symbol$(t)
-                                        If Error_Happened Then Exit Function
+                                        IF Error_Happened THEN EXIT FUNCTION
                                         e$ = e$ + s$ 'simply append symbol to integer
-                                    End If
+                                    END IF
 
-                                End If 'not a string
+                                END IF 'not a string
 
                                 removeelements a$, i, i, 0
                                 insertelements a$, i - 1, e$
                                 'alter f2$ here to original casing
                                 f2$ = constcname(i2) + es$
-                                GoTo classdone
+                                GOTO classdone
 
-                            End If 'not static
+                            END IF 'not static
                             'END IF 'same name
                             'NEXT
-                        End If 'hashfound
-                    End If 'not udt element
-                End If 'not array
+                        END IF 'hashfound
+                    END IF 'not udt element
+                END IF 'not array
 
                 'variable/array/udt?
                 u$ = f2$
@@ -19490,61 +19490,61 @@ Function fixoperationorder$ (savea$)
                 try_string$ = f2$
                 try_string2$ = try_string$ 'pure version of try_string$
 
-                For try_method = 1 To 4
+                FOR try_method = 1 TO 4
                     try_string$ = try_string2$
-                    If try_method = 2 Or try_method = 4 Then
+                    IF try_method = 2 OR try_method = 4 THEN
                         dtyp$ = removesymbol(try_string$)
-                        If Len(dtyp$) = 0 Then
-                            If isoperator(try_string$) = 0 Then
-                                If isvalidvariable(try_string$) Then
-                                    If Left$(try_string$, 1) = "_" Then v = 27 Else v = Asc(UCase$(try_string$)) - 64
+                        IF LEN(dtyp$) = 0 THEN
+                            IF isoperator(try_string$) = 0 THEN
+                                IF isvalidvariable(try_string$) THEN
+                                    IF LEFT$(try_string$, 1) = "_" THEN v = 27 ELSE v = ASC(UCASE$(try_string$)) - 64
                                     try_string$ = try_string$ + defineextaz(v)
-                                End If
-                            End If
-                        Else
+                                END IF
+                            END IF
+                        ELSE
                             try_string$ = try_string2$
-                        End If
-                    End If
+                        END IF
+                    END IF
                     try = findid(try_string$)
-                    If Error_Happened Then Exit Function
-                    Do While try
-                        If (subfuncn = id.insubfuncn And try_method <= 2) Or try_method >= 3 Then
+                    IF Error_Happened THEN EXIT FUNCTION
+                    DO WHILE try
+                        IF (subfuncn = id.insubfuncn AND try_method <= 2) OR try_method >= 3 THEN
 
-                            If Debug Then Print #9, "found id matching " + f2$
+                            IF Debug THEN PRINT #9, "found id matching " + f2$
 
-                            If nextc = 40 Or uboundlbound <> 0 Then '(
+                            IF nextc = 40 OR uboundlbound <> 0 THEN '(
 
                                 uboundlbound = 0
 
                                 'function or array?
-                                If id.arraytype <> 0 Or id.subfunc = 1 Then
+                                IF id.arraytype <> 0 OR id.subfunc = 1 THEN
                                     'note: even if it's an array of UDTs, the bracketted index will follow immediately
 
                                     'correct name
                                     f3$ = f2$
                                     s$ = removesymbol$(f3$)
-                                    If Error_Happened Then Exit Function
-                                    If id.internal_subfunc Then
-                                        f2$ = SCase$(RTrim$(id.cn)) + s$
-                                        If (UCase$(f2$) = "UBOUND" Or UCase$(f2$) = "LBOUND") Then
+                                    IF Error_Happened THEN EXIT FUNCTION
+                                    IF id.internal_subfunc THEN
+                                        f2$ = SCase$(RTRIM$(id.cn)) + s$
+                                        IF (UCASE$(f2$) = "UBOUND" OR UCASE$(f2$) = "LBOUND") THEN
                                             uboundlbound = 2
-                                        End If
-                                    Else
-                                        f2$ = RTrim$(id.cn) + s$
-                                    End If
+                                        END IF
+                                    ELSE
+                                        f2$ = RTRIM$(id.cn) + s$
+                                    END IF
                                     removeelements a$, i, i, 0
-                                    insertelements a$, i - 1, UCase$(f2$)
+                                    insertelements a$, i - 1, UCASE$(f2$)
                                     f$ = f$ + f2$ + sp + "(" + sp
 
                                     'skip (but record with nothing inside them) brackets
                                     b2 = 1 'already in first bracket
-                                    For i2 = i + 2 To n
-                                        c2 = Asc(getelement(a$, i2))
-                                        If c2 = 40 Then b2 = b2 + 1
-                                        If c2 = 41 Then b2 = b2 - 1
-                                        If b2 = 0 Then Exit For 'note: mismatched brackets check ensures this always succeeds
+                                    FOR i2 = i + 2 TO n
+                                        c2 = ASC(getelement(a$, i2))
+                                        IF c2 = 40 THEN b2 = b2 + 1
+                                        IF c2 = 41 THEN b2 = b2 - 1
+                                        IF b2 = 0 THEN EXIT FOR 'note: mismatched brackets check ensures this always succeeds
                                         f$ = f$ + sp
-                                    Next
+                                    NEXT
 
                                     'adjust i accordingly
                                     i = i2
@@ -19552,142 +19552,142 @@ Function fixoperationorder$ (savea$)
                                     f$ = f$ + ")"
 
                                     'jump to UDT section if array is of UDT type (and elements are referenced)
-                                    If id.arraytype And ISUDT Then
-                                        If i < n Then nextc = Asc(getelement(a$, i + 1)) Else nextc = 0
-                                        If nextc = 46 Then t = id.arraytype: GoTo fooudt
-                                    End If
+                                    IF id.arraytype AND ISUDT THEN
+                                        IF i < n THEN nextc = ASC(getelement(a$, i + 1)) ELSE nextc = 0
+                                        IF nextc = 46 THEN t = id.arraytype: GOTO fooudt
+                                    END IF
 
                                     f$ = f$ + sp
-                                    GoTo classdone_special
-                                End If 'id.arraytype
-                            End If 'nextc "("
+                                    GOTO classdone_special
+                                END IF 'id.arraytype
+                            END IF 'nextc "("
 
-                            If nextc <> 40 Then 'not "(" (this avoids confusing simple variables with arrays)
-                                If id.t <> 0 Or id.subfunc = 1 Then 'simple variable or function (without parameters)
+                            IF nextc <> 40 THEN 'not "(" (this avoids confusing simple variables with arrays)
+                                IF id.t <> 0 OR id.subfunc = 1 THEN 'simple variable or function (without parameters)
 
-                                    If id.t And ISUDT Then
+                                    IF id.t AND ISUDT THEN
                                         'note: it may or may not be followed by a period (eg. if whole udt is being referred to)
                                         'check if next item is a period
 
                                         'correct name
-                                        If id.internal_subfunc Then
-                                            f2$ = SCase$(RTrim$(id.cn)) + removesymbol$(f2$)
-                                        Else
-                                            f2$ = RTrim$(id.cn) + removesymbol$(f2$)
-                                        End If
-                                        If Error_Happened Then Exit Function
+                                        IF id.internal_subfunc THEN
+                                            f2$ = SCase$(RTRIM$(id.cn)) + removesymbol$(f2$)
+                                        ELSE
+                                            f2$ = RTRIM$(id.cn) + removesymbol$(f2$)
+                                        END IF
+                                        IF Error_Happened THEN EXIT FUNCTION
                                         removeelements a$, i, i, 0
-                                        insertelements a$, i - 1, UCase$(f2$)
+                                        insertelements a$, i - 1, UCASE$(f2$)
                                         f$ = f$ + f2$
 
 
 
-                                        If nextc <> 46 Then f$ = f$ + sp: GoTo classdone_special 'no sub-elements referenced
+                                        IF nextc <> 46 THEN f$ = f$ + sp: GOTO classdone_special 'no sub-elements referenced
                                         t = id.t
 
                                         fooudt:
 
                                         f$ = f$ + sp + "." + sp
-                                        E = udtxnext(t And 511) 'next element to check
+                                        E = udtxnext(t AND 511) 'next element to check
                                         i = i + 2
 
                                         'loop
 
                                         '"." encountered, i must be an element
-                                        If i > n Then Give_Error "Expected .element": Exit Function
+                                        IF i > n THEN Give_Error "Expected .element": EXIT FUNCTION
                                         f2$ = getelement(a$, i)
                                         s$ = removesymbol$(f2$)
-                                        If Error_Happened Then Exit Function
-                                        u$ = UCase$(f2$) + Space$(256 - Len(f2$)) 'fast scanning
+                                        IF Error_Happened THEN EXIT FUNCTION
+                                        u$ = UCASE$(f2$) + SPACE$(256 - LEN(f2$)) 'fast scanning
 
                                         'is f$ the same as element e?
                                         fooudtnexte:
-                                        If udtename(E) = u$ Then
+                                        IF udtename(E) = u$ THEN
                                             'match found
                                             'todo: check symbol(s$) matches element's type
 
                                             'correct name
-                                            f2$ = RTrim$(udtecname(E)) + s$
+                                            f2$ = RTRIM$(udtecname(E)) + s$
                                             removeelements a$, i, i, 0
-                                            insertelements a$, i - 1, UCase$(f2$)
+                                            insertelements a$, i - 1, UCASE$(f2$)
                                             f$ = f$ + f2$
 
-                                            If i = n Then f$ = f$ + sp: GoTo classdone_special
-                                            nextc = Asc(getelement(a$, i + 1))
-                                            If nextc <> 46 Then f$ = f$ + sp: GoTo classdone_special 'no sub-elements referenced
+                                            IF i = n THEN f$ = f$ + sp: GOTO classdone_special
+                                            nextc = ASC(getelement(a$, i + 1))
+                                            IF nextc <> 46 THEN f$ = f$ + sp: GOTO classdone_special 'no sub-elements referenced
                                             'sub-element exists
                                             t = udtetype(E)
-                                            If (t And ISUDT) = 0 Then Give_Error "Invalid . after element": Exit Function
-                                            GoTo fooudt
+                                            IF (t AND ISUDT) = 0 THEN Give_Error "Invalid . after element": EXIT FUNCTION
+                                            GOTO fooudt
 
-                                        End If 'match found
+                                        END IF 'match found
 
                                         'no, so check next element
                                         E = udtenext(E)
-                                        If E = 0 Then Give_Error "Element not defined": Exit Function
-                                        GoTo fooudtnexte
+                                        IF E = 0 THEN Give_Error "Element not defined": EXIT FUNCTION
+                                        GOTO fooudtnexte
 
-                                    End If 'udt
+                                    END IF 'udt
 
                                     'non array/udt based variable
                                     f3$ = f2$
                                     s$ = removesymbol$(f3$)
-                                    If Error_Happened Then Exit Function
-                                    If id.internal_subfunc Then
-                                        f2$ = SCase$(RTrim$(id.cn)) + s$
-                                    Else
-                                        f2$ = RTrim$(id.cn) + s$
-                                    End If
+                                    IF Error_Happened THEN EXIT FUNCTION
+                                    IF id.internal_subfunc THEN
+                                        f2$ = SCase$(RTRIM$(id.cn)) + s$
+                                    ELSE
+                                        f2$ = RTRIM$(id.cn) + s$
+                                    END IF
                                     'change was is returned to uppercase
                                     removeelements a$, i, i, 0
-                                    insertelements a$, i - 1, UCase$(f2$)
-                                    GoTo CouldNotClassify
-                                End If 'id.t
+                                    insertelements a$, i - 1, UCASE$(f2$)
+                                    GOTO CouldNotClassify
+                                END IF 'id.t
 
-                            End If 'nextc not "("
+                            END IF 'nextc not "("
 
-                        End If
-                        If try = 2 Then findanotherid = 1: try = findid(try_string$) Else try = 0
-                        If Error_Happened Then Exit Function
-                    Loop
-                Next 'try method (1-4)
+                        END IF
+                        IF try = 2 THEN findanotherid = 1: try = findid(try_string$) ELSE try = 0
+                        IF Error_Happened THEN EXIT FUNCTION
+                    LOOP
+                NEXT 'try method (1-4)
                 CouldNotClassify:
 
                 'alphanumeric, but item name is unknown... is it an internal type? if so, use capitals
-                f3$ = UCase$(f2$)
+                f3$ = UCASE$(f2$)
                 internaltype = 0
-                If f3$ = "STRING" Then internaltype = 1
-                If f3$ = "_UNSIGNED" Or (f3$ = "UNSIGNED" And qb64prefix_set = 1) Then internaltype = 1
-                If f3$ = "_BIT" Or (f3$ = "BIT" And qb64prefix_set = 1) Then internaltype = 1
-                If f3$ = "_BYTE" Or (f3$ = "BYTE" And qb64prefix_set = 1) Then internaltype = 1
-                If f3$ = "INTEGER" Then internaltype = 1
-                If f3$ = "LONG" Then internaltype = 1
-                If f3$ = "_INTEGER64" Or (f3$ = "INTEGER64" And qb64prefix_set = 1) Then internaltype = 1
-                If f3$ = "SINGLE" Then internaltype = 1
-                If f3$ = "DOUBLE" Then internaltype = 1
-                If f3$ = "_FLOAT" Or (f3$ = "FLOAT" And qb64prefix_set = 1) Then internaltype = 1
-                If f3$ = "_OFFSET" Or (f3$ = "OFFSET" And qb64prefix_set = 1) Then internaltype = 1
-                If internaltype = 1 Then
+                IF f3$ = "STRING" THEN internaltype = 1
+                IF f3$ = "_UNSIGNED" OR (f3$ = "UNSIGNED" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "_BIT" OR (f3$ = "BIT" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "_BYTE" OR (f3$ = "BYTE" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "INTEGER" THEN internaltype = 1
+                IF f3$ = "LONG" THEN internaltype = 1
+                IF f3$ = "_INTEGER64" OR (f3$ = "INTEGER64" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "SINGLE" THEN internaltype = 1
+                IF f3$ = "DOUBLE" THEN internaltype = 1
+                IF f3$ = "_FLOAT" OR (f3$ = "FLOAT" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "_OFFSET" OR (f3$ = "OFFSET" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF internaltype = 1 THEN
                     f2$ = SCase2$(f3$)
                     removeelements a$, i, i, 0
                     insertelements a$, i - 1, f3$
-                    GoTo classdone
-                End If
+                    GOTO classdone
+                END IF
 
-                GoTo classdone
-            End If 'alphanumeric
+                GOTO classdone
+            END IF 'alphanumeric
 
             classdone:
             f$ = f$ + f2$
-        End If 'b=0
+        END IF 'b=0
         f$ = f$ + sp
         classdone_special:
-    Next
+    NEXT
 
-    If Len(f$) Then f$ = Left$(f$, Len(f$) - 1) 'remove trailing 'sp'
+    IF LEN(f$) THEN f$ = LEFT$(f$, LEN(f$) - 1) 'remove trailing 'sp'
 
-    If Debug Then Print #9, "fixoperationorder:identification:" + a$, n
-    If Debug Then Print #9, "fixoperationorder:identification(layout):" + f$, n
+    IF Debug THEN PRINT #9, "fixoperationorder:identification:" + a$, n
+    IF Debug THEN PRINT #9, "fixoperationorder:identification(layout):" + f$, n
 
 
     '----------------I. Pass (){}bracketed items (if any) to fixoperationorder & build return----------------
@@ -19699,20 +19699,20 @@ Function fixoperationorder$ (savea$)
     p1 = 0 'where level 1 began
     aa$ = ""
     n = numelements(a$)
-    For i = 1 To n
+    FOR i = 1 TO n
 
         openbracket = 0
 
         a2$ = getelement(a$, i)
 
-        c = Asc(a2$)
+        c = ASC(a2$)
 
 
 
-        If c = 40 Or c = 123 Then '({
+        IF c = 40 OR c = 123 THEN '({
             b = b + 1
 
-            If b = 1 Then
+            IF b = 1 THEN
 
 
 
@@ -19720,191 +19720,191 @@ Function fixoperationorder$ (savea$)
                 p1 = i + 1
                 aa$ = aa$ + "(" + sp
 
-            End If
+            END IF
 
             openbracket = 1
 
-            GoTo foopass
+            GOTO foopass
 
-        End If '({
+        END IF '({
 
-        If c = 44 Then ',
-            If b = 1 Then
-                GoTo foopassit
-            End If
-        End If
+        IF c = 44 THEN ',
+            IF b = 1 THEN
+                GOTO foopassit
+            END IF
+        END IF
 
-        If c = 41 Or c = 125 Then ')}
-            If uboundlbound Then uboundlbound = uboundlbound - 1
+        IF c = 41 OR c = 125 THEN ')}
+            IF uboundlbound THEN uboundlbound = uboundlbound - 1
             b = b - 1
 
-            If b = 0 Then
+            IF b = 0 THEN
                 foopassit:
-                If p1 <> i Then
+                IF p1 <> i THEN
                     foo$ = fixoperationorder(getelements(a$, p1, i - 1))
-                    If Error_Happened Then Exit Function
-                    If Len(foo$) Then
+                    IF Error_Happened THEN EXIT FUNCTION
+                    IF LEN(foo$) THEN
                         aa$ = aa$ + foo$ + sp
-                        If c = 125 Then ff$ = ff$ + tlayout$ + sp Else ff$ = ff$ + tlayout$ + sp2 'spacing between ) } , varies
-                    End If
-                End If
-                If c = 44 Then aa$ = aa$ + "," + sp: ff$ = ff$ + "," + sp Else aa$ = aa$ + ")" + sp
+                        IF c = 125 THEN ff$ = ff$ + tlayout$ + sp ELSE ff$ = ff$ + tlayout$ + sp2 'spacing between ) } , varies
+                    END IF
+                END IF
+                IF c = 44 THEN aa$ = aa$ + "," + sp: ff$ = ff$ + "," + sp ELSE aa$ = aa$ + ")" + sp
                 p1 = i + 1
-            End If
+            END IF
 
-            GoTo foopass
-        End If ')}
-
-
+            GOTO foopass
+        END IF ')}
 
 
-        If b = 0 Then aa$ = aa$ + a2$ + sp
+
+
+        IF b = 0 THEN aa$ = aa$ + a2$ + sp
 
 
         foopass:
 
         f2$ = getelementspecial(f$, i)
-        If Error_Happened Then Exit Function
-        If Len(f2$) Then
+        IF Error_Happened THEN EXIT FUNCTION
+        IF LEN(f2$) THEN
 
             'use sp2 to join items connected by a period
-            If c = 46 Then '"."
-                If i > 1 And i < n Then 'stupidity check
-                    If Len(ff$) Then Mid$(ff$, Len(ff$), 1) = sp2 'convert last spacer to a sp2
+            IF c = 46 THEN '"."
+                IF i > 1 AND i < n THEN 'stupidity check
+                    IF LEN(ff$) THEN MID$(ff$, LEN(ff$), 1) = sp2 'convert last spacer to a sp2
                     ff$ = ff$ + "." + sp2
-                    GoTo fooloopnxt
-                End If
-            End If
+                    GOTO fooloopnxt
+                END IF
+            END IF
 
             'spacing just before (
-            If openbracket Then
+            IF openbracket THEN
 
                 'convert last spacer?
-                If i <> 1 Then
-                    If isoperator(getelement$(a$, i - 1)) = 0 Then
-                        Mid$(ff$, Len(ff$), 1) = sp2
-                    End If
-                End If
+                IF i <> 1 THEN
+                    IF isoperator(getelement$(a$, i - 1)) = 0 THEN
+                        MID$(ff$, LEN(ff$), 1) = sp2
+                    END IF
+                END IF
                 ff$ = ff$ + f2$ + sp2
-            Else 'not openbracket
+            ELSE 'not openbracket
                 ff$ = ff$ + f2$ + sp
-            End If
+            END IF
 
-        End If 'len(f2$)
+        END IF 'len(f2$)
 
         fooloopnxt:
 
-    Next
+    NEXT
 
-    If Len(aa$) Then aa$ = Left$(aa$, Len(aa$) - 1)
-    If Len(ff$) Then ff$ = Left$(ff$, Len(ff$) - 1)
+    IF LEN(aa$) THEN aa$ = LEFT$(aa$, LEN(aa$) - 1)
+    IF LEN(ff$) THEN ff$ = LEFT$(ff$, LEN(ff$) - 1)
 
-    If Debug Then Print #9, "fixoperationorder:return:" + aa$
-    If Debug Then Print #9, "fixoperationorder:layout:" + ff$
+    IF Debug THEN PRINT #9, "fixoperationorder:return:" + aa$
+    IF Debug THEN PRINT #9, "fixoperationorder:layout:" + ff$
     tlayout$ = ff$
     fixoperationorder$ = aa$
 
     fooindwel = fooindwel - 1
-End Function
+END FUNCTION
 
 
 
 
-Function getelementspecial$ (savea$, elenum)
+FUNCTION getelementspecial$ (savea$, elenum)
     a$ = savea$
-    If a$ = "" Then Exit Function 'no elements!
+    IF a$ = "" THEN EXIT FUNCTION 'no elements!
 
     n = 1
     p = 1
     getelementspecialnext:
-    i = InStr(p, a$, sp)
+    i = INSTR(p, a$, sp)
 
     'avoid sp inside "..."
-    i2 = InStr(p, a$, Chr$(34))
-    If i2 < i And i2 <> 0 Then
-        i3 = InStr(i2 + 1, a$, Chr$(34)): If i3 = 0 Then Give_Error "Expected " + Chr$(34): Exit Function
-        i = InStr(i3, a$, sp)
-    End If
+    i2 = INSTR(p, a$, CHR$(34))
+    IF i2 < i AND i2 <> 0 THEN
+        i3 = INSTR(i2 + 1, a$, CHR$(34)): IF i3 = 0 THEN Give_Error "Expected " + CHR$(34): EXIT FUNCTION
+        i = INSTR(i3, a$, sp)
+    END IF
 
-    If elenum = n Then
-        If i Then
-            getelementspecial$ = Mid$(a$, p, i - p)
-        Else
-            getelementspecial$ = Right$(a$, Len(a$) - p + 1)
-        End If
-        Exit Function
-    End If
+    IF elenum = n THEN
+        IF i THEN
+            getelementspecial$ = MID$(a$, p, i - p)
+        ELSE
+            getelementspecial$ = RIGHT$(a$, LEN(a$) - p + 1)
+        END IF
+        EXIT FUNCTION
+    END IF
 
-    If i = 0 Then Exit Function 'no more elements!
+    IF i = 0 THEN EXIT FUNCTION 'no more elements!
     n = n + 1
     p = i + 1
-    GoTo getelementspecialnext
-End Function
+    GOTO getelementspecialnext
+END FUNCTION
 
 
 
-Function getelement$ (a$, elenum)
-    If a$ = "" Then Exit Function 'no elements!
+FUNCTION getelement$ (a$, elenum)
+    IF a$ = "" THEN EXIT FUNCTION 'no elements!
 
     n = 1
     p = 1
     getelementnext:
-    i = InStr(p, a$, sp)
+    i = INSTR(p, a$, sp)
 
-    If elenum = n Then
-        If i Then
-            getelement$ = Mid$(a$, p, i - p)
-        Else
-            getelement$ = Right$(a$, Len(a$) - p + 1)
-        End If
-        Exit Function
-    End If
+    IF elenum = n THEN
+        IF i THEN
+            getelement$ = MID$(a$, p, i - p)
+        ELSE
+            getelement$ = RIGHT$(a$, LEN(a$) - p + 1)
+        END IF
+        EXIT FUNCTION
+    END IF
 
-    If i = 0 Then Exit Function 'no more elements!
+    IF i = 0 THEN EXIT FUNCTION 'no more elements!
     n = n + 1
     p = i + 1
-    GoTo getelementnext
-End Function
+    GOTO getelementnext
+END FUNCTION
 
-Function getelements$ (a$, i1, i2)
-    If i2 < i1 Then getelements$ = "": Exit Function
+FUNCTION getelements$ (a$, i1, i2)
+    IF i2 < i1 THEN getelements$ = "": EXIT FUNCTION
     n = 1
     p = 1
     getelementsnext:
-    i = InStr(p, a$, sp)
-    If n = i1 Then
+    i = INSTR(p, a$, sp)
+    IF n = i1 THEN
         i1pos = p
-    End If
-    If n = i2 Then
-        If i Then
-            getelements$ = Mid$(a$, i1pos, i - i1pos)
-        Else
-            getelements$ = Right$(a$, Len(a$) - i1pos + 1)
-        End If
-        Exit Function
-    End If
+    END IF
+    IF n = i2 THEN
+        IF i THEN
+            getelements$ = MID$(a$, i1pos, i - i1pos)
+        ELSE
+            getelements$ = RIGHT$(a$, LEN(a$) - i1pos + 1)
+        END IF
+        EXIT FUNCTION
+    END IF
     n = n + 1
     p = i + 1
-    GoTo getelementsnext
-End Function
+    GOTO getelementsnext
+END FUNCTION
 
-Sub getid (i As Long)
-    If i = -1 Then Give_Error "-1 passed to getid!": Exit Sub
+SUB getid (i AS LONG)
+    IF i = -1 THEN Give_Error "-1 passed to getid!": EXIT SUB
 
     id = ids(i)
 
     currentid = i
-End Sub
+END SUB
 
-Sub insertelements (a$, i, elements$)
-    If i = 0 Then
-        If a$ = "" Then
+SUB insertelements (a$, i, elements$)
+    IF i = 0 THEN
+        IF a$ = "" THEN
             a$ = elements$
-            Exit Sub
-        End If
+            EXIT SUB
+        END IF
         a$ = elements$ + sp + a$
-        Exit Sub
-    End If
+        EXIT SUB
+    END IF
 
     a2$ = ""
     n = numelements(a$)
@@ -19912,94 +19912,94 @@ Sub insertelements (a$, i, elements$)
 
 
 
-    For i2 = 1 To n
-        If i2 > 1 Then a2$ = a2$ + sp
+    FOR i2 = 1 TO n
+        IF i2 > 1 THEN a2$ = a2$ + sp
         a2$ = a2$ + getelement$(a$, i2)
-        If i = i2 Then a2$ = a2$ + sp + elements$
-    Next
+        IF i = i2 THEN a2$ = a2$ + sp + elements$
+    NEXT
 
     a$ = a2$
 
-End Sub
+END SUB
 
-Function isoperator (a2$)
-    a$ = UCase$(a2$)
+FUNCTION isoperator (a2$)
+    a$ = UCASE$(a2$)
     l = 0
-    l = l + 1: If a$ = "IMP" Then GoTo opfound
-    l = l + 1: If a$ = "EQV" Then GoTo opfound
-    l = l + 1: If a$ = "XOR" Then GoTo opfound
-    l = l + 1: If a$ = "OR" Then GoTo opfound
-    l = l + 1: If a$ = "AND" Then GoTo opfound
-    l = l + 1: If a$ = "NOT" Then GoTo opfound
+    l = l + 1: IF a$ = "IMP" THEN GOTO opfound
+    l = l + 1: IF a$ = "EQV" THEN GOTO opfound
+    l = l + 1: IF a$ = "XOR" THEN GOTO opfound
+    l = l + 1: IF a$ = "OR" THEN GOTO opfound
+    l = l + 1: IF a$ = "AND" THEN GOTO opfound
+    l = l + 1: IF a$ = "NOT" THEN GOTO opfound
     l = l + 1
-    If a$ = "=" Then GoTo opfound
-    If a$ = ">" Then GoTo opfound
-    If a$ = "<" Then GoTo opfound
-    If a$ = "<>" Then GoTo opfound
-    If a$ = "<=" Then GoTo opfound
-    If a$ = ">=" Then GoTo opfound
+    IF a$ = "=" THEN GOTO opfound
+    IF a$ = ">" THEN GOTO opfound
+    IF a$ = "<" THEN GOTO opfound
+    IF a$ = "<>" THEN GOTO opfound
+    IF a$ = "<=" THEN GOTO opfound
+    IF a$ = ">=" THEN GOTO opfound
     l = l + 1
-    If a$ = "+" Then GoTo opfound
-    If a$ = "-" Then GoTo opfound '!CAREFUL! could be negation
-    l = l + 1: If a$ = "MOD" Then GoTo opfound
-    l = l + 1: If a$ = "\" Then GoTo opfound
+    IF a$ = "+" THEN GOTO opfound
+    IF a$ = "-" THEN GOTO opfound '!CAREFUL! could be negation
+    l = l + 1: IF a$ = "MOD" THEN GOTO opfound
+    l = l + 1: IF a$ = "\" THEN GOTO opfound
     l = l + 1
-    If a$ = "*" Then GoTo opfound
-    If a$ = "/" Then GoTo opfound
+    IF a$ = "*" THEN GOTO opfound
+    IF a$ = "/" THEN GOTO opfound
     'NEGATION LEVEL (MUST BE SET AFTER CALLING ISOPERATOR BY CONTEXT)
-    l = l + 1: If a$ = Chr$(241) Then GoTo opfound
-    l = l + 1: If a$ = "^" Then GoTo opfound
-    Exit Function
+    l = l + 1: IF a$ = CHR$(241) THEN GOTO opfound
+    l = l + 1: IF a$ = "^" THEN GOTO opfound
+    EXIT FUNCTION
     opfound:
     isoperator = l
-End Function
+END FUNCTION
 
-Function isuinteger (i$)
-    If Len(i$) = 0 Then Exit Function
-    If Asc(i$, 1) = 48 And Len(i$) > 1 Then Exit Function
-    For c = 1 To Len(i$)
-        v = Asc(i$, c)
-        If v < 48 Or v > 57 Then Exit Function
-    Next
+FUNCTION isuinteger (i$)
+    IF LEN(i$) = 0 THEN EXIT FUNCTION
+    IF ASC(i$, 1) = 48 AND LEN(i$) > 1 THEN EXIT FUNCTION
+    FOR c = 1 TO LEN(i$)
+        v = ASC(i$, c)
+        IF v < 48 OR v > 57 THEN EXIT FUNCTION
+    NEXT
     isuinteger = -1
-End Function
+END FUNCTION
 
-Function isvalidvariable (a$)
-    For i = 1 To Len(a$)
-        c = Asc(a$, i)
+FUNCTION isvalidvariable (a$)
+    FOR i = 1 TO LEN(a$)
+        c = ASC(a$, i)
         t = 0
-        If c >= 48 And c <= 57 Then t = 1 'numeric
-        If c >= 65 And c <= 90 Then t = 2 'uppercase
-        If c >= 97 And c <= 122 Then t = 2 'lowercase
-        If c = 95 Then t = 2 '_ underscore
-        If t = 2 Or (t = 1 And i > 1) Then
+        IF c >= 48 AND c <= 57 THEN t = 1 'numeric
+        IF c >= 65 AND c <= 90 THEN t = 2 'uppercase
+        IF c >= 97 AND c <= 122 THEN t = 2 'lowercase
+        IF c = 95 THEN t = 2 '_ underscore
+        IF t = 2 OR (t = 1 AND i > 1) THEN
             'valid (continue)
-        Else
-            If i = 1 Then isvalidvariable = 0: Exit Function
-            Exit For
-        End If
-    Next
+        ELSE
+            IF i = 1 THEN isvalidvariable = 0: EXIT FUNCTION
+            EXIT FOR
+        END IF
+    NEXT
 
     isvalidvariable = 1
-    If i > n Then Exit Function 'i is always greater than n because n is undefined here. Why didn't I remove this line and the ones below it, which will never run? Cause I'm a coward. F.h.
-    e$ = Right$(a$, Len(a$) - i - 1)
-    If e$ = "%%" Or e$ = "~%%" Then Exit Function
-    If e$ = "%" Or e$ = "~%" Then Exit Function
-    If e$ = "&" Or e$ = "~&" Then Exit Function
-    If e$ = "&&" Or e$ = "~&&" Then Exit Function
-    If e$ = "!" Or e$ = "#" Or e$ = "##" Then Exit Function
-    If e$ = "$" Then Exit Function
-    If e$ = "`" Then Exit Function
-    If Left$(e$, 1) <> "$" And Left$(e$, 1) <> "`" Then isvalidvariable = 0: Exit Function
-    e$ = Right$(e$, Len(e$) - 1)
-    If isuinteger(e$) Then isvalidvariable = 1: Exit Function
+    IF i > n THEN EXIT FUNCTION 'i is always greater than n because n is undefined here. Why didn't I remove this line and the ones below it, which will never run? Cause I'm a coward. F.h.
+    e$ = RIGHT$(a$, LEN(a$) - i - 1)
+    IF e$ = "%%" OR e$ = "~%%" THEN EXIT FUNCTION
+    IF e$ = "%" OR e$ = "~%" THEN EXIT FUNCTION
+    IF e$ = "&" OR e$ = "~&" THEN EXIT FUNCTION
+    IF e$ = "&&" OR e$ = "~&&" THEN EXIT FUNCTION
+    IF e$ = "!" OR e$ = "#" OR e$ = "##" THEN EXIT FUNCTION
+    IF e$ = "$" THEN EXIT FUNCTION
+    IF e$ = "`" THEN EXIT FUNCTION
+    IF LEFT$(e$, 1) <> "$" AND LEFT$(e$, 1) <> "`" THEN isvalidvariable = 0: EXIT FUNCTION
+    e$ = RIGHT$(e$, LEN(e$) - 1)
+    IF isuinteger(e$) THEN isvalidvariable = 1: EXIT FUNCTION
     isvalidvariable = 0
-End Function
+END FUNCTION
 
 
 
 
-Function lineformat$ (a$)
+FUNCTION lineformat$ (a$)
     a2$ = ""
     linecontinuation = 0
 
@@ -20008,68 +20008,68 @@ Function lineformat$ (a$)
     a$ = a$ + "  " 'add 2 extra spaces to make reading next char easier
 
     ca$ = a$
-    a$ = UCase$(a$)
+    a$ = UCASE$(a$)
 
-    n = Len(a$)
+    n = LEN(a$)
     i = 1
     lineformatnext:
-    If i >= n Then GoTo lineformatdone
+    IF i >= n THEN GOTO lineformatdone
 
-    c = Asc(a$, i)
-    c$ = Chr$(c) '***remove later***
+    c = ASC(a$, i)
+    c$ = CHR$(c) '***remove later***
 
     '----------------quoted string----------------
-    If c = 34 Then '"
-        a2$ = a2$ + sp + Chr$(34)
+    IF c = 34 THEN '"
+        a2$ = a2$ + sp + CHR$(34)
         p1 = i + 1
-        For i2 = i + 1 To n - 2
-            c2 = Asc(a$, i2)
+        FOR i2 = i + 1 TO n - 2
+            c2 = ASC(a$, i2)
 
-            If c2 = 34 Then
-                a2$ = a2$ + Mid$(ca$, p1, i2 - p1 + 1) + "," + str2$(i2 - (i + 1))
+            IF c2 = 34 THEN
+                a2$ = a2$ + MID$(ca$, p1, i2 - p1 + 1) + "," + str2$(i2 - (i + 1))
                 i = i2 + 1
-                Exit For
-            End If
+                EXIT FOR
+            END IF
 
-            If c2 = 92 Then '\
-                a2$ = a2$ + Mid$(ca$, p1, i2 - p1) + "\\"
+            IF c2 = 92 THEN '\
+                a2$ = a2$ + MID$(ca$, p1, i2 - p1) + "\\"
                 p1 = i2 + 1
-            End If
+            END IF
 
-            If c2 < 32 Or c2 > 126 Then
-                o$ = Oct$(c2)
-                If Len(o$) < 3 Then
+            IF c2 < 32 OR c2 > 126 THEN
+                o$ = OCT$(c2)
+                IF LEN(o$) < 3 THEN
                     o$ = "0" + o$
-                    If Len(o$) < 3 Then o$ = "0" + o$
-                End If
-                a2$ = a2$ + Mid$(ca$, p1, i2 - p1) + "\" + o$
+                    IF LEN(o$) < 3 THEN o$ = "0" + o$
+                END IF
+                a2$ = a2$ + MID$(ca$, p1, i2 - p1) + "\" + o$
                 p1 = i2 + 1
-            End If
+            END IF
 
-        Next
+        NEXT
 
-        If i2 = n - 1 Then 'no closing "
-            a2$ = a2$ + Mid$(ca$, p1, (n - 2) - p1 + 1) + Chr$(34) + "," + str2$((n - 2) - (i + 1) + 1)
+        IF i2 = n - 1 THEN 'no closing "
+            a2$ = a2$ + MID$(ca$, p1, (n - 2) - p1 + 1) + CHR$(34) + "," + str2$((n - 2) - (i + 1) + 1)
             i = n - 1
-        End If
+        END IF
 
-        GoTo lineformatnext
+        GOTO lineformatnext
 
-    End If
+    END IF
 
     '----------------number----------------
     firsti = i
-    If c = 46 Then
-        c2$ = Mid$(a$, i + 1, 1): c2 = Asc(c2$)
-        If (c2 >= 48 And c2 <= 57) Then GoTo lfnumber
-    End If
-    If (c >= 48 And c <= 57) Then '0-9
+    IF c = 46 THEN
+        c2$ = MID$(a$, i + 1, 1): c2 = ASC(c2$)
+        IF (c2 >= 48 AND c2 <= 57) THEN GOTO lfnumber
+    END IF
+    IF (c >= 48 AND c <= 57) THEN '0-9
         lfnumber:
 
         'handle 'IF a=1 THEN a=2 ELSE 100' by assuming numeric after ELSE to be a
-        If Right$(a2$, 5) = sp + "ELSE" Then
+        IF RIGHT$(a2$, 5) = sp + "ELSE" THEN
             a2$ = a2$ + sp + "GOTO"
-        End If
+        END IF
 
         'Number will be converted to the following format:
         ' 999999  .        99999  E        +         999
@@ -20090,573 +20090,573 @@ Function lineformat$ (a$)
         lfreadnumber:
         valid = 0
 
-        If c = 46 Then
-            If mode = 0 Then valid = 1: dp = 1: mode = 1
-        End If
+        IF c = 46 THEN
+            IF mode = 0 THEN valid = 1: dp = 1: mode = 1
+        END IF
 
-        If c >= 48 And c <= 57 Then '0-9
+        IF c >= 48 AND c <= 57 THEN '0-9
             valid = 1
-            If mode = 0 Then whole$ = whole$ + c$
-            If mode = 1 Then frac$ = frac$ + c$
-            If mode = 2 Then mode = 3
-            If mode = 3 Then ex$ = ex$ + c$
-        End If
+            IF mode = 0 THEN whole$ = whole$ + c$
+            IF mode = 1 THEN frac$ = frac$ + c$
+            IF mode = 2 THEN mode = 3
+            IF mode = 3 THEN ex$ = ex$ + c$
+        END IF
 
-        If c = 69 Or c = 68 Or c = 70 Then 'E,D,F
-            If mode < 2 Then
+        IF c = 69 OR c = 68 OR c = 70 THEN 'E,D,F
+            IF mode < 2 THEN
                 valid = 1
-                If c = 69 Then ed = 1
-                If c = 68 Then ed = 2
-                If c = 70 Then ed = 3
+                IF c = 69 THEN ed = 1
+                IF c = 68 THEN ed = 2
+                IF c = 70 THEN ed = 3
                 mode = 2
-            End If
-        End If
+            END IF
+        END IF
 
-        If c = 43 Or c = 45 Then '+,-
-            If mode = 2 Then
+        IF c = 43 OR c = 45 THEN '+,-
+            IF mode = 2 THEN
                 valid = 1
-                If c = 45 Then pm = -1
+                IF c = 45 THEN pm = -1
                 mode = 3
-            End If
-        End If
+            END IF
+        END IF
 
-        If valid Then
-            If i <= n Then i = i + 1: c$ = Mid$(a$, i, 1): c = Asc(c$): GoTo lfreadnumber
-        End If
+        IF valid THEN
+            IF i <= n THEN i = i + 1: c$ = MID$(a$, i, 1): c = ASC(c$): GOTO lfreadnumber
+        END IF
 
 
 
         'cull leading 0s off whole$
-        Do While Left$(whole$, 1) = "0": whole$ = Right$(whole$, Len(whole$) - 1): Loop
+        DO WHILE LEFT$(whole$, 1) = "0": whole$ = RIGHT$(whole$, LEN(whole$) - 1): LOOP
         'cull trailing 0s off frac$
-        Do While Right$(frac$, 1) = "0": frac$ = Left$(frac$, Len(frac$) - 1): Loop
+        DO WHILE RIGHT$(frac$, 1) = "0": frac$ = LEFT$(frac$, LEN(frac$) - 1): LOOP
         'cull leading 0s off ex$
-        Do While Left$(ex$, 1) = "0": ex$ = Right$(ex$, Len(ex$) - 1): Loop
+        DO WHILE LEFT$(ex$, 1) = "0": ex$ = RIGHT$(ex$, LEN(ex$) - 1): LOOP
 
-        If dp <> 0 Or ed <> 0 Then float = 1 Else float = 0
+        IF dp <> 0 OR ed <> 0 THEN float = 1 ELSE float = 0
 
         extused = 1
 
-        If ed Then e$ = "": GoTo lffoundext 'no extensions valid after E/D/F specified
+        IF ed THEN e$ = "": GOTO lffoundext 'no extensions valid after E/D/F specified
 
         '3-character extensions
-        If i <= n - 2 Then
-            e$ = Mid$(a$, i, 3)
-            If e$ = "~%%" And float = 0 Then i = i + 3: GoTo lffoundext
-            If e$ = "~&&" And float = 0 Then i = i + 3: GoTo lffoundext
-            If e$ = "~%&" And float = 0 Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-        End If
+        IF i <= n - 2 THEN
+            e$ = MID$(a$, i, 3)
+            IF e$ = "~%%" AND float = 0 THEN i = i + 3: GOTO lffoundext
+            IF e$ = "~&&" AND float = 0 THEN i = i + 3: GOTO lffoundext
+            IF e$ = "~%&" AND float = 0 THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+        END IF
         '2-character extensions
-        If i <= n - 1 Then
-            e$ = Mid$(a$, i, 2)
-            If e$ = "%%" And float = 0 Then i = i + 2: GoTo lffoundext
-            If e$ = "~%" And float = 0 Then i = i + 2: GoTo lffoundext
-            If e$ = "&&" And float = 0 Then i = i + 2: GoTo lffoundext
-            If e$ = "~&" And float = 0 Then i = i + 2: GoTo lffoundext
-            If e$ = "%&" And float = 0 Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-            If e$ = "##" Then
+        IF i <= n - 1 THEN
+            e$ = MID$(a$, i, 2)
+            IF e$ = "%%" AND float = 0 THEN i = i + 2: GOTO lffoundext
+            IF e$ = "~%" AND float = 0 THEN i = i + 2: GOTO lffoundext
+            IF e$ = "&&" AND float = 0 THEN i = i + 2: GOTO lffoundext
+            IF e$ = "~&" AND float = 0 THEN i = i + 2: GOTO lffoundext
+            IF e$ = "%&" AND float = 0 THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+            IF e$ = "##" THEN
                 i = i + 2
                 ed = 3
                 e$ = ""
-                GoTo lffoundext
-            End If
-            If e$ = "~`" Then
+                GOTO lffoundext
+            END IF
+            IF e$ = "~`" THEN
                 i = i + 2
-                GoTo lffoundbitext
-            End If
-        End If
+                GOTO lffoundbitext
+            END IF
+        END IF
         '1-character extensions
-        If i <= n Then
-            e$ = Mid$(a$, i, 1)
-            If e$ = "%" And float = 0 Then i = i + 1: GoTo lffoundext
-            If e$ = "&" And float = 0 Then i = i + 1: GoTo lffoundext
-            If e$ = "!" Then
+        IF i <= n THEN
+            e$ = MID$(a$, i, 1)
+            IF e$ = "%" AND float = 0 THEN i = i + 1: GOTO lffoundext
+            IF e$ = "&" AND float = 0 THEN i = i + 1: GOTO lffoundext
+            IF e$ = "!" THEN
                 i = i + 1
                 ed = 1
                 e$ = ""
-                GoTo lffoundext
-            End If
-            If e$ = "#" Then
+                GOTO lffoundext
+            END IF
+            IF e$ = "#" THEN
                 i = i + 1
                 ed = 2
                 e$ = ""
-                GoTo lffoundext
-            End If
-            If e$ = "`" Then
+                GOTO lffoundext
+            END IF
+            IF e$ = "`" THEN
                 i = i + 1
                 lffoundbitext:
                 bitn$ = ""
-                Do While i <= n
-                    c2 = Asc(Mid$(a$, i, 1))
-                    If c2 >= 48 And c2 <= 57 Then
-                        bitn$ = bitn$ + Chr$(c2)
+                DO WHILE i <= n
+                    c2 = ASC(MID$(a$, i, 1))
+                    IF c2 >= 48 AND c2 <= 57 THEN
+                        bitn$ = bitn$ + CHR$(c2)
                         i = i + 1
-                    Else
-                        Exit Do
-                    End If
-                Loop
-                If bitn$ = "" Then bitn$ = "1"
+                    ELSE
+                        EXIT DO
+                    END IF
+                LOOP
+                IF bitn$ = "" THEN bitn$ = "1"
                 'cull leading 0s off bitn$
-                Do While Left$(bitn$, 1) = "0": bitn$ = Right$(bitn$, Len(bitn$) - 1): Loop
+                DO WHILE LEFT$(bitn$, 1) = "0": bitn$ = RIGHT$(bitn$, LEN(bitn$) - 1): LOOP
                 e$ = e$ + bitn$
-                GoTo lffoundext
-            End If
-        End If
+                GOTO lffoundext
+            END IF
+        END IF
 
-        If float Then 'floating point types CAN be assumed
+        IF float THEN 'floating point types CAN be assumed
             'calculate first significant digit offset & number of significant digits
-            If whole$ <> "" Then
-                offset = Len(whole$) - 1
-                sigdigits = Len(whole$) + Len(frac$)
-            Else
-                If frac$ <> "" Then
+            IF whole$ <> "" THEN
+                offset = LEN(whole$) - 1
+                sigdigits = LEN(whole$) + LEN(frac$)
+            ELSE
+                IF frac$ <> "" THEN
                     offset = -1
-                    sigdigits = Len(frac$)
-                    For i2 = 1 To Len(frac$)
-                        If Mid$(frac$, i2, 1) <> "0" Then Exit For
+                    sigdigits = LEN(frac$)
+                    FOR i2 = 1 TO LEN(frac$)
+                        IF MID$(frac$, i2, 1) <> "0" THEN EXIT FOR
                         offset = offset - 1
                         sigdigits = sigdigits - 1
-                    Next
-                Else
+                    NEXT
+                ELSE
                     'number is 0
                     offset = 0
                     sigdigits = 0
-                End If
-            End If
-            sigdig$ = Right$(whole$ + frac$, sigdigits)
+                END IF
+            END IF
+            sigdig$ = RIGHT$(whole$ + frac$, sigdigits)
             'SINGLE?
-            If sigdigits <= 7 Then 'QBASIC interprets anything with more than 7 sig. digits as a DOUBLE
-                If offset <= 38 And offset >= -38 Then 'anything outside this range cannot be represented as a SINGLE
-                    If offset = 38 Then
-                        If sigdig$ > "3402823" Then GoTo lfxsingle
-                    End If
-                    If offset = -38 Then
-                        If sigdig$ < "1175494" Then GoTo lfxsingle
-                    End If
+            IF sigdigits <= 7 THEN 'QBASIC interprets anything with more than 7 sig. digits as a DOUBLE
+                IF offset <= 38 AND offset >= -38 THEN 'anything outside this range cannot be represented as a SINGLE
+                    IF offset = 38 THEN
+                        IF sigdig$ > "3402823" THEN GOTO lfxsingle
+                    END IF
+                    IF offset = -38 THEN
+                        IF sigdig$ < "1175494" THEN GOTO lfxsingle
+                    END IF
                     ed = 1
                     e$ = ""
-                    GoTo lffoundext
-                End If
-            End If
+                    GOTO lffoundext
+                END IF
+            END IF
             lfxsingle:
             'DOUBLE?
-            If sigdigits <= 16 Then 'QB64 handles DOUBLES with 16-digit precision
-                If offset <= 308 And offset >= -308 Then 'anything outside this range cannot be represented as a DOUBLE
-                    If offset = 308 Then
-                        If sigdig$ > "1797693134862315" Then GoTo lfxdouble
-                    End If
-                    If offset = -308 Then
-                        If sigdig$ < "2225073858507201" Then GoTo lfxdouble
-                    End If
+            IF sigdigits <= 16 THEN 'QB64 handles DOUBLES with 16-digit precision
+                IF offset <= 308 AND offset >= -308 THEN 'anything outside this range cannot be represented as a DOUBLE
+                    IF offset = 308 THEN
+                        IF sigdig$ > "1797693134862315" THEN GOTO lfxdouble
+                    END IF
+                    IF offset = -308 THEN
+                        IF sigdig$ < "2225073858507201" THEN GOTO lfxdouble
+                    END IF
                     ed = 2
                     e$ = ""
-                    GoTo lffoundext
-                End If
-            End If
+                    GOTO lffoundext
+                END IF
+            END IF
             lfxdouble:
             'assume _FLOAT
             ed = 3
-            e$ = "": GoTo lffoundext
-        End If
+            e$ = "": GOTO lffoundext
+        END IF
 
         extused = 0
         e$ = ""
         lffoundext:
 
         'make sure a leading numberic character exists
-        If whole$ = "" Then whole$ = "0"
+        IF whole$ = "" THEN whole$ = "0"
         'if a float, ensure frac$<>"" and dp=1
-        If float Then
+        IF float THEN
             dp = 1
-            If frac$ = "" Then frac$ = "0"
-        End If
+            IF frac$ = "" THEN frac$ = "0"
+        END IF
         'if ed is specified, make sure ex$ exists
-        If ed <> 0 And ex$ = "" Then ex$ = "0"
+        IF ed <> 0 AND ex$ = "" THEN ex$ = "0"
 
         a2$ = a2$ + sp
         a2$ = a2$ + whole$
-        If dp Then a2$ = a2$ + "." + frac$
-        If ed Then
-            If ed = 1 Then a2$ = a2$ + "E"
-            If ed = 2 Then a2$ = a2$ + "D"
-            If ed = 3 Then a2$ = a2$ + "F"
-            If pm = -1 And ex$ <> "0" Then a2$ = a2$ + "-" Else a2$ = a2$ + "+"
+        IF dp THEN a2$ = a2$ + "." + frac$
+        IF ed THEN
+            IF ed = 1 THEN a2$ = a2$ + "E"
+            IF ed = 2 THEN a2$ = a2$ + "D"
+            IF ed = 3 THEN a2$ = a2$ + "F"
+            IF pm = -1 AND ex$ <> "0" THEN a2$ = a2$ + "-" ELSE a2$ = a2$ + "+"
             a2$ = a2$ + ex$
-        End If
+        END IF
         a2$ = a2$ + e$
 
-        If extused Then a2$ = a2$ + "," + Mid$(a$, firsti, i - firsti)
+        IF extused THEN a2$ = a2$ + "," + MID$(a$, firsti, i - firsti)
 
-        GoTo lineformatnext
-    End If
+        GOTO lineformatnext
+    END IF
 
     '----------------(number)&H...----------------
     'note: the final value, not the number of hex characters, sets the default type
-    If c = 38 Then '&
-        If Mid$(a$, i + 1, 1) = "H" Then
+    IF c = 38 THEN '&
+        IF MID$(a$, i + 1, 1) = "H" THEN
             i = i + 2
             hx$ = ""
             lfreadhex:
-            If i <= n Then
-                c$ = Mid$(a$, i, 1): c = Asc(c$)
-                If (c >= 48 And c <= 57) Or (c >= 65 And c <= 70) Then hx$ = hx$ + c$: i = i + 1: GoTo lfreadhex
-            End If
+            IF i <= n THEN
+                c$ = MID$(a$, i, 1): c = ASC(c$)
+                IF (c >= 48 AND c <= 57) OR (c >= 65 AND c <= 70) THEN hx$ = hx$ + c$: i = i + 1: GOTO lfreadhex
+            END IF
             fullhx$ = "&H" + hx$
 
             'cull leading 0s off hx$
-            Do While Left$(hx$, 1) = "0": hx$ = Right$(hx$, Len(hx$) - 1): Loop
-            If hx$ = "" Then hx$ = "0"
+            DO WHILE LEFT$(hx$, 1) = "0": hx$ = RIGHT$(hx$, LEN(hx$) - 1): LOOP
+            IF hx$ = "" THEN hx$ = "0"
 
             bitn$ = ""
             '3-character extensions
-            If i <= n - 2 Then
-                e$ = Mid$(a$, i, 3)
-                If e$ = "~%%" Then i = i + 3: GoTo lfhxext
-                If e$ = "~&&" Then i = i + 3: GoTo lfhxext
-                If e$ = "~%&" Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-            End If
+            IF i <= n - 2 THEN
+                e$ = MID$(a$, i, 3)
+                IF e$ = "~%%" THEN i = i + 3: GOTO lfhxext
+                IF e$ = "~&&" THEN i = i + 3: GOTO lfhxext
+                IF e$ = "~%&" THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+            END IF
             '2-character extensions
-            If i <= n - 1 Then
-                e$ = Mid$(a$, i, 2)
-                If e$ = "%%" Then i = i + 2: GoTo lfhxext
-                If e$ = "~%" Then i = i + 2: GoTo lfhxext
-                If e$ = "&&" Then i = i + 2: GoTo lfhxext
-                If e$ = "%&" Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-                If e$ = "~&" Then i = i + 2: GoTo lfhxext
-                If e$ = "~`" Then
+            IF i <= n - 1 THEN
+                e$ = MID$(a$, i, 2)
+                IF e$ = "%%" THEN i = i + 2: GOTO lfhxext
+                IF e$ = "~%" THEN i = i + 2: GOTO lfhxext
+                IF e$ = "&&" THEN i = i + 2: GOTO lfhxext
+                IF e$ = "%&" THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+                IF e$ = "~&" THEN i = i + 2: GOTO lfhxext
+                IF e$ = "~`" THEN
                     i = i + 2
-                    GoTo lfhxbitext
-                End If
-            End If
+                    GOTO lfhxbitext
+                END IF
+            END IF
             '1-character extensions
-            If i <= n Then
-                e$ = Mid$(a$, i, 1)
-                If e$ = "%" Then i = i + 1: GoTo lfhxext
-                If e$ = "&" Then i = i + 1: GoTo lfhxext
-                If e$ = "`" Then
+            IF i <= n THEN
+                e$ = MID$(a$, i, 1)
+                IF e$ = "%" THEN i = i + 1: GOTO lfhxext
+                IF e$ = "&" THEN i = i + 1: GOTO lfhxext
+                IF e$ = "`" THEN
                     i = i + 1
                     lfhxbitext:
-                    Do While i <= n
-                        c2 = Asc(Mid$(a$, i, 1))
-                        If c2 >= 48 And c2 <= 57 Then
-                            bitn$ = bitn$ + Chr$(c2)
+                    DO WHILE i <= n
+                        c2 = ASC(MID$(a$, i, 1))
+                        IF c2 >= 48 AND c2 <= 57 THEN
+                            bitn$ = bitn$ + CHR$(c2)
                             i = i + 1
-                        Else
-                            Exit Do
-                        End If
-                    Loop
-                    If bitn$ = "" Then bitn$ = "1"
+                        ELSE
+                            EXIT DO
+                        END IF
+                    LOOP
+                    IF bitn$ = "" THEN bitn$ = "1"
                     'cull leading 0s off bitn$
-                    Do While Left$(bitn$, 1) = "0": bitn$ = Right$(bitn$, Len(bitn$) - 1): Loop
-                    GoTo lfhxext
-                End If
-            End If
+                    DO WHILE LEFT$(bitn$, 1) = "0": bitn$ = RIGHT$(bitn$, LEN(bitn$) - 1): LOOP
+                    GOTO lfhxext
+                END IF
+            END IF
             'if no valid extension context was given, assume one
             'note: leading 0s have been culled, so LEN(hx$) reflects its values size
             e$ = "&&"
-            If Len(hx$) <= 8 Then e$ = "&" 'as in QBASIC, signed values must be used
-            If Len(hx$) <= 4 Then e$ = "%" 'as in QBASIC, signed values must be used
-            GoTo lfhxext2
+            IF LEN(hx$) <= 8 THEN e$ = "&" 'as in QBASIC, signed values must be used
+            IF LEN(hx$) <= 4 THEN e$ = "%" 'as in QBASIC, signed values must be used
+            GOTO lfhxext2
             lfhxext:
             fullhx$ = fullhx$ + e$ + bitn$
             lfhxext2:
 
             'build 8-byte unsigned integer rep. of hx$
-            If Len(hx$) > 16 Then Give_Error "Overflow": Exit Function
+            IF LEN(hx$) > 16 THEN Give_Error "Overflow": EXIT FUNCTION
             v~&& = 0
-            For i2 = 1 To Len(hx$)
-                v2 = Asc(Mid$(hx$, i2, 1))
-                If v2 <= 57 Then v2 = v2 - 48 Else v2 = v2 - 65 + 10
+            FOR i2 = 1 TO LEN(hx$)
+                v2 = ASC(MID$(hx$, i2, 1))
+                IF v2 <= 57 THEN v2 = v2 - 48 ELSE v2 = v2 - 65 + 10
                 v~&& = v~&& * 16 + v2
-            Next
+            NEXT
 
             finishhexoctbin:
             num$ = str2u64$(v~&&) 'correct for unsigned values (overflow of unsigned can be checked later)
-            If Left$(e$, 1) <> "~" Then 'note: range checking will be performed later in fixop.order
+            IF LEFT$(e$, 1) <> "~" THEN 'note: range checking will be performed later in fixop.order
                 'signed
 
-                If e$ = "%%" Then
-                    If v~&& > 127 Then
-                        If v~&& > 255 Then Give_Error "Overflow": Exit Function
-                        v~&& = ((Not v~&&) And 255) + 1
+                IF e$ = "%%" THEN
+                    IF v~&& > 127 THEN
+                        IF v~&& > 255 THEN Give_Error "Overflow": EXIT FUNCTION
+                        v~&& = ((NOT v~&&) AND 255) + 1
                         num$ = "-" + sp + str2u64$(v~&&)
-                    End If
-                End If
+                    END IF
+                END IF
 
-                If e$ = "%" Then
-                    If v~&& > 32767 Then
-                        If v~&& > 65535 Then Give_Error "Overflow": Exit Function
-                        v~&& = ((Not v~&&) And 65535) + 1
+                IF e$ = "%" THEN
+                    IF v~&& > 32767 THEN
+                        IF v~&& > 65535 THEN Give_Error "Overflow": EXIT FUNCTION
+                        v~&& = ((NOT v~&&) AND 65535) + 1
                         num$ = "-" + sp + str2u64$(v~&&)
-                    End If
-                End If
+                    END IF
+                END IF
 
-                If e$ = "&" Then
-                    If v~&& > 2147483647 Then
-                        If v~&& > 4294967295 Then Give_Error "Overflow": Exit Function
-                        v~&& = ((Not v~&&) And 4294967295) + 1
+                IF e$ = "&" THEN
+                    IF v~&& > 2147483647 THEN
+                        IF v~&& > 4294967295 THEN Give_Error "Overflow": EXIT FUNCTION
+                        v~&& = ((NOT v~&&) AND 4294967295) + 1
                         num$ = "-" + sp + str2u64$(v~&&)
-                    End If
-                End If
+                    END IF
+                END IF
 
-                If e$ = "&&" Then
-                    If v~&& > 9223372036854775807 Then
+                IF e$ = "&&" THEN
+                    IF v~&& > 9223372036854775807 THEN
                         'note: no error checking necessary
-                        v~&& = (Not v~&&) + 1
+                        v~&& = (NOT v~&&) + 1
                         num$ = "-" + sp + str2u64$(v~&&)
-                    End If
-                End If
+                    END IF
+                END IF
 
-                If e$ = "`" Then
-                    vbitn = Val(bitn$)
-                    h~&& = 1: For i2 = 1 To vbitn - 1: h~&& = h~&& * 2: Next: h~&& = h~&& - 1 'build h~&&
-                    If v~&& > h~&& Then
-                        h~&& = 1: For i2 = 1 To vbitn: h~&& = h~&& * 2: Next: h~&& = h~&& - 1 'build h~&&
-                        If v~&& > h~&& Then Give_Error "Overflow": Exit Function
-                        v~&& = ((Not v~&&) And h~&&) + 1
+                IF e$ = "`" THEN
+                    vbitn = VAL(bitn$)
+                    h~&& = 1: FOR i2 = 1 TO vbitn - 1: h~&& = h~&& * 2: NEXT: h~&& = h~&& - 1 'build h~&&
+                    IF v~&& > h~&& THEN
+                        h~&& = 1: FOR i2 = 1 TO vbitn: h~&& = h~&& * 2: NEXT: h~&& = h~&& - 1 'build h~&&
+                        IF v~&& > h~&& THEN Give_Error "Overflow": EXIT FUNCTION
+                        v~&& = ((NOT v~&&) AND h~&&) + 1
                         num$ = "-" + sp + str2u64$(v~&&)
-                    End If
-                End If
+                    END IF
+                END IF
 
-            End If '<>"~"
+            END IF '<>"~"
 
             a2$ = a2$ + sp + num$ + e$ + bitn$ + "," + fullhx$
 
-            GoTo lineformatnext
-        End If
-    End If
+            GOTO lineformatnext
+        END IF
+    END IF
 
     '----------------(number)&O...----------------
     'note: the final value, not the number of oct characters, sets the default type
-    If c = 38 Then '&
-        If Mid$(a$, i + 1, 1) = "O" Then
+    IF c = 38 THEN '&
+        IF MID$(a$, i + 1, 1) = "O" THEN
             i = i + 2
             'note: to avoid mistakes, hx$ is used instead of 'ot$'
             hx$ = ""
             lfreadoct:
-            If i <= n Then
-                c$ = Mid$(a$, i, 1): c = Asc(c$)
-                If c >= 48 And c <= 55 Then hx$ = hx$ + c$: i = i + 1: GoTo lfreadoct
-            End If
+            IF i <= n THEN
+                c$ = MID$(a$, i, 1): c = ASC(c$)
+                IF c >= 48 AND c <= 55 THEN hx$ = hx$ + c$: i = i + 1: GOTO lfreadoct
+            END IF
             fullhx$ = "&O" + hx$
 
             'cull leading 0s off hx$
-            Do While Left$(hx$, 1) = "0": hx$ = Right$(hx$, Len(hx$) - 1): Loop
-            If hx$ = "" Then hx$ = "0"
+            DO WHILE LEFT$(hx$, 1) = "0": hx$ = RIGHT$(hx$, LEN(hx$) - 1): LOOP
+            IF hx$ = "" THEN hx$ = "0"
 
             bitn$ = ""
             '3-character extensions
-            If i <= n - 2 Then
-                e$ = Mid$(a$, i, 3)
-                If e$ = "~%%" Then i = i + 3: GoTo lfotext
-                If e$ = "~&&" Then i = i + 3: GoTo lfotext
-                If e$ = "~%&" Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-            End If
+            IF i <= n - 2 THEN
+                e$ = MID$(a$, i, 3)
+                IF e$ = "~%%" THEN i = i + 3: GOTO lfotext
+                IF e$ = "~&&" THEN i = i + 3: GOTO lfotext
+                IF e$ = "~%&" THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+            END IF
             '2-character extensions
-            If i <= n - 1 Then
-                e$ = Mid$(a$, i, 2)
-                If e$ = "%%" Then i = i + 2: GoTo lfotext
-                If e$ = "~%" Then i = i + 2: GoTo lfotext
-                If e$ = "&&" Then i = i + 2: GoTo lfotext
-                If e$ = "%&" Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-                If e$ = "~&" Then i = i + 2: GoTo lfotext
-                If e$ = "~`" Then
+            IF i <= n - 1 THEN
+                e$ = MID$(a$, i, 2)
+                IF e$ = "%%" THEN i = i + 2: GOTO lfotext
+                IF e$ = "~%" THEN i = i + 2: GOTO lfotext
+                IF e$ = "&&" THEN i = i + 2: GOTO lfotext
+                IF e$ = "%&" THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+                IF e$ = "~&" THEN i = i + 2: GOTO lfotext
+                IF e$ = "~`" THEN
                     i = i + 2
-                    GoTo lfotbitext
-                End If
-            End If
+                    GOTO lfotbitext
+                END IF
+            END IF
             '1-character extensions
-            If i <= n Then
-                e$ = Mid$(a$, i, 1)
-                If e$ = "%" Then i = i + 1: GoTo lfotext
-                If e$ = "&" Then i = i + 1: GoTo lfotext
-                If e$ = "`" Then
+            IF i <= n THEN
+                e$ = MID$(a$, i, 1)
+                IF e$ = "%" THEN i = i + 1: GOTO lfotext
+                IF e$ = "&" THEN i = i + 1: GOTO lfotext
+                IF e$ = "`" THEN
                     i = i + 1
                     lfotbitext:
                     bitn$ = ""
-                    Do While i <= n
-                        c2 = Asc(Mid$(a$, i, 1))
-                        If c2 >= 48 And c2 <= 57 Then
-                            bitn$ = bitn$ + Chr$(c2)
+                    DO WHILE i <= n
+                        c2 = ASC(MID$(a$, i, 1))
+                        IF c2 >= 48 AND c2 <= 57 THEN
+                            bitn$ = bitn$ + CHR$(c2)
                             i = i + 1
-                        Else
-                            Exit Do
-                        End If
-                    Loop
-                    If bitn$ = "" Then bitn$ = "1"
+                        ELSE
+                            EXIT DO
+                        END IF
+                    LOOP
+                    IF bitn$ = "" THEN bitn$ = "1"
                     'cull leading 0s off bitn$
-                    Do While Left$(bitn$, 1) = "0": bitn$ = Right$(bitn$, Len(bitn$) - 1): Loop
-                    GoTo lfotext
-                End If
-            End If
+                    DO WHILE LEFT$(bitn$, 1) = "0": bitn$ = RIGHT$(bitn$, LEN(bitn$) - 1): LOOP
+                    GOTO lfotext
+                END IF
+            END IF
             'if no valid extension context was given, assume one
             'note: leading 0s have been culled, so LEN(hx$) reflects its values size
             e$ = "&&"
             '37777777777
-            If Len(hx$) <= 11 Then
-                If Len(hx$) < 11 Or Asc(Left$(hx$, 1)) <= 51 Then e$ = "&"
-            End If
+            IF LEN(hx$) <= 11 THEN
+                IF LEN(hx$) < 11 OR ASC(LEFT$(hx$, 1)) <= 51 THEN e$ = "&"
+            END IF
             '177777
-            If Len(hx$) <= 6 Then
-                If Len(hx$) < 6 Or Left$(hx$, 1) = "1" Then e$ = "%"
-            End If
+            IF LEN(hx$) <= 6 THEN
+                IF LEN(hx$) < 6 OR LEFT$(hx$, 1) = "1" THEN e$ = "%"
+            END IF
 
-            GoTo lfotext2
+            GOTO lfotext2
             lfotext:
             fullhx$ = fullhx$ + e$ + bitn$
             lfotext2:
 
             'build 8-byte unsigned integer rep. of hx$
             '1777777777777777777777 (22 digits)
-            If Len(hx$) > 22 Then Give_Error "Overflow": Exit Function
-            If Len(hx$) = 22 Then
-                If Left$(hx$, 1) <> "1" Then Give_Error "Overflow": Exit Function
-            End If
+            IF LEN(hx$) > 22 THEN Give_Error "Overflow": EXIT FUNCTION
+            IF LEN(hx$) = 22 THEN
+                IF LEFT$(hx$, 1) <> "1" THEN Give_Error "Overflow": EXIT FUNCTION
+            END IF
             '********change v& to v~&&********
             v~&& = 0
-            For i2 = 1 To Len(hx$)
-                v2 = Asc(Mid$(hx$, i2, 1))
+            FOR i2 = 1 TO LEN(hx$)
+                v2 = ASC(MID$(hx$, i2, 1))
                 v2 = v2 - 48
                 v~&& = v~&& * 8 + v2
-            Next
+            NEXT
 
-            GoTo finishhexoctbin
-        End If
-    End If
+            GOTO finishhexoctbin
+        END IF
+    END IF
 
     '----------------(number)&B...----------------
     'note: the final value, not the number of bin characters, sets the default type
-    If c = 38 Then '&
-        If Mid$(a$, i + 1, 1) = "B" Then
+    IF c = 38 THEN '&
+        IF MID$(a$, i + 1, 1) = "B" THEN
             i = i + 2
             'note: to avoid mistakes, hx$ is used instead of 'bi$'
             hx$ = ""
             lfreadbin:
-            If i <= n Then
-                c$ = Mid$(a$, i, 1): c = Asc(c$)
-                If c >= 48 And c <= 49 Then hx$ = hx$ + c$: i = i + 1: GoTo lfreadbin
-            End If
+            IF i <= n THEN
+                c$ = MID$(a$, i, 1): c = ASC(c$)
+                IF c >= 48 AND c <= 49 THEN hx$ = hx$ + c$: i = i + 1: GOTO lfreadbin
+            END IF
             fullhx$ = "&B" + hx$
 
             'cull leading 0s off hx$
-            Do While Left$(hx$, 1) = "0": hx$ = Right$(hx$, Len(hx$) - 1): Loop
-            If hx$ = "" Then hx$ = "0"
+            DO WHILE LEFT$(hx$, 1) = "0": hx$ = RIGHT$(hx$, LEN(hx$) - 1): LOOP
+            IF hx$ = "" THEN hx$ = "0"
 
             bitn$ = ""
             '3-character extensions
-            If i <= n - 2 Then
-                e$ = Mid$(a$, i, 3)
-                If e$ = "~%%" Then i = i + 3: GoTo lfbiext
-                If e$ = "~&&" Then i = i + 3: GoTo lfbiext
-                If e$ = "~%&" Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-            End If
+            IF i <= n - 2 THEN
+                e$ = MID$(a$, i, 3)
+                IF e$ = "~%%" THEN i = i + 3: GOTO lfbiext
+                IF e$ = "~&&" THEN i = i + 3: GOTO lfbiext
+                IF e$ = "~%&" THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+            END IF
             '2-character extensions
-            If i <= n - 1 Then
-                e$ = Mid$(a$, i, 2)
-                If e$ = "%%" Then i = i + 2: GoTo lfbiext
-                If e$ = "~%" Then i = i + 2: GoTo lfbiext
-                If e$ = "&&" Then i = i + 2: GoTo lfbiext
-                If e$ = "%&" Then Give_Error "Cannot use _OFFSET symbols after numbers": Exit Function
-                If e$ = "~&" Then i = i + 2: GoTo lfbiext
-                If e$ = "~`" Then
+            IF i <= n - 1 THEN
+                e$ = MID$(a$, i, 2)
+                IF e$ = "%%" THEN i = i + 2: GOTO lfbiext
+                IF e$ = "~%" THEN i = i + 2: GOTO lfbiext
+                IF e$ = "&&" THEN i = i + 2: GOTO lfbiext
+                IF e$ = "%&" THEN Give_Error "Cannot use _OFFSET symbols after numbers": EXIT FUNCTION
+                IF e$ = "~&" THEN i = i + 2: GOTO lfbiext
+                IF e$ = "~`" THEN
                     i = i + 2
-                    GoTo lfbibitext
-                End If
-            End If
+                    GOTO lfbibitext
+                END IF
+            END IF
 
 
             '1-character extensions
-            If i <= n Then
-                e$ = Mid$(a$, i, 1)
-                If e$ = "%" Then i = i + 1: GoTo lfbiext
-                If e$ = "&" Then i = i + 1: GoTo lfbiext
-                If e$ = "`" Then
+            IF i <= n THEN
+                e$ = MID$(a$, i, 1)
+                IF e$ = "%" THEN i = i + 1: GOTO lfbiext
+                IF e$ = "&" THEN i = i + 1: GOTO lfbiext
+                IF e$ = "`" THEN
                     i = i + 1
                     lfbibitext:
                     bitn$ = ""
-                    Do While i <= n
-                        c2 = Asc(Mid$(a$, i, 1))
-                        If c2 >= 48 And c2 <= 57 Then
-                            bitn$ = bitn$ + Chr$(c2)
+                    DO WHILE i <= n
+                        c2 = ASC(MID$(a$, i, 1))
+                        IF c2 >= 48 AND c2 <= 57 THEN
+                            bitn$ = bitn$ + CHR$(c2)
                             i = i + 1
-                        Else
-                            Exit Do
-                        End If
-                    Loop
-                    If bitn$ = "" Then bitn$ = "1"
+                        ELSE
+                            EXIT DO
+                        END IF
+                    LOOP
+                    IF bitn$ = "" THEN bitn$ = "1"
                     'cull leading 0s off bitn$
-                    Do While Left$(bitn$, 1) = "0": bitn$ = Right$(bitn$, Len(bitn$) - 1): Loop
-                    GoTo lfbiext
-                End If
-            End If
+                    DO WHILE LEFT$(bitn$, 1) = "0": bitn$ = RIGHT$(bitn$, LEN(bitn$) - 1): LOOP
+                    GOTO lfbiext
+                END IF
+            END IF
             'if no valid extension context was given, assume one
             'note: leading 0s have been culled, so LEN(hx$) reflects its values size
             e$ = "&&"
-            If Len(hx$) <= 32 Then e$ = "&"
-            If Len(hx$) <= 16 Then e$ = "%"
+            IF LEN(hx$) <= 32 THEN e$ = "&"
+            IF LEN(hx$) <= 16 THEN e$ = "%"
 
-            GoTo lfbiext2
+            GOTO lfbiext2
             lfbiext:
             fullhx$ = fullhx$ + e$ + bitn$
             lfbiext2:
 
             'build 8-byte unsigned integer rep. of hx$
-            If Len(hx$) > 64 Then Give_Error "Overflow": Exit Function
+            IF LEN(hx$) > 64 THEN Give_Error "Overflow": EXIT FUNCTION
 
             v~&& = 0
-            For i2 = 1 To Len(hx$)
-                v2 = Asc(Mid$(hx$, i2, 1))
+            FOR i2 = 1 TO LEN(hx$)
+                v2 = ASC(MID$(hx$, i2, 1))
                 v2 = v2 - 48
                 v~&& = v~&& * 2 + v2
-            Next
+            NEXT
 
-            GoTo finishhexoctbin
-        End If
-    End If
+            GOTO finishhexoctbin
+        END IF
+    END IF
 
 
     '----------------(number)&H??? error----------------
-    If c = 38 Then Give_Error "Expected &H... or &O...": Exit Function
+    IF c = 38 THEN Give_Error "Expected &H... or &O...": EXIT FUNCTION
 
     '----------------variable/name----------------
     '*trailing _ is treated as a seperate line extension*
-    If (c >= 65 And c <= 90) Or c = 95 Then 'A-Z(a-z) or _
-        If c = 95 Then p2 = 0 Else p2 = i
-        For i2 = i + 1 To n
-            c2 = Asc(a$, i2)
-            If Not alphanumeric(c2) Then Exit For
-            If c2 <> 95 Then p2 = i2
-        Next
-        If p2 Then 'not just underscores!
+    IF (c >= 65 AND c <= 90) OR c = 95 THEN 'A-Z(a-z) or _
+        IF c = 95 THEN p2 = 0 ELSE p2 = i
+        FOR i2 = i + 1 TO n
+            c2 = ASC(a$, i2)
+            IF NOT alphanumeric(c2) THEN EXIT FOR
+            IF c2 <> 95 THEN p2 = i2
+        NEXT
+        IF p2 THEN 'not just underscores!
             'char is from i to p2
             n2 = p2 - i + 1
-            a3$ = Mid$(a$, i, n2)
+            a3$ = MID$(a$, i, n2)
 
             '----(variable/name)rem----
-            If n2 = 3 Then
-                If a3$ = "REM" Then
+            IF n2 = 3 THEN
+                IF a3$ = "REM" THEN
                     i = i + n2
-                    If i < n Then
-                        c = Asc(a$, i)
-                        If c = 46 Then a2$ = a2$ + sp + Mid$(ca$, i - n2, n2): GoTo extcheck 'rem.Variable is a valid variable name in QB45
-                    End If
+                    IF i < n THEN
+                        c = ASC(a$, i)
+                        IF c = 46 THEN a2$ = a2$ + sp + MID$(ca$, i - n2, n2): GOTO extcheck 'rem.Variable is a valid variable name in QB45
+                    END IF
 
                     'note: In QBASIC 'IF cond THEN REM comment' counts as a single line IF statement, however use of ' instead of REM does not
-                    If UCase$(Right$(a2$, 5)) = sp + "THEN" Then a2$ = a2$ + sp + "'" 'add nop
+                    IF UCASE$(RIGHT$(a2$, 5)) = sp + "THEN" THEN a2$ = a2$ + sp + "'" 'add nop
                     layoutcomment = SCase$("Rem")
-                    GoTo comment
-                End If
-            End If
+                    GOTO comment
+                END IF
+            END IF
 
             '----(variable/name)data----
-            If n2 = 4 Then
-                If a3$ = "DATA" Then
+            IF n2 = 4 THEN
+                IF a3$ = "DATA" THEN
                     x$ = ""
                     i = i + n2
-                    If i < n Then
-                        c = Asc(a$, i)
-                        If c = 46 Then a2$ = a2$ + sp + Mid$(ca$, i - n2, n2): GoTo extcheck 'data.Variable is a valid variable name in QB45
-                    End If
+                    IF i < n THEN
+                        c = ASC(a$, i)
+                        IF c = 46 THEN a2$ = a2$ + sp + MID$(ca$, i - n2, n2): GOTO extcheck 'data.Variable is a valid variable name in QB45
+                    END IF
 
                     scan = 0
                     speechmarks = 0
@@ -20666,36 +20666,36 @@ Function lineformat$ (a$)
                     p1 = 0
                     p2 = 0
                     nextdatachr:
-                    If i < n Then
-                        c = Asc(a$, i)
-                        If c = 9 Or c = 32 Then
-                            If scan = 0 Then GoTo skipwhitespace
-                        End If
+                    IF i < n THEN
+                        c = ASC(a$, i)
+                        IF c = 9 OR c = 32 THEN
+                            IF scan = 0 THEN GOTO skipwhitespace
+                        END IF
 
-                        If c = 58 Then '":"
-                            If speechmarks = 0 Then finaldata = 1: GoTo adddata
-                        End If
+                        IF c = 58 THEN '":"
+                            IF speechmarks = 0 THEN finaldata = 1: GOTO adddata
+                        END IF
 
-                        If c = 44 Then '","
-                            If speechmarks = 0 Then
+                        IF c = 44 THEN '","
+                            IF speechmarks = 0 THEN
                                 adddata:
-                                If prepass = 0 Then
-                                    If p1 Then
+                                IF prepass = 0 THEN
+                                    IF p1 THEN
                                         'FOR i2 = p1 TO p2
                                         '    DATA_add ASC(ca$, i2)
                                         'NEXT
-                                        x$ = x$ + Mid$(ca$, p1, p2 - p1 + 1)
-                                    End If
+                                        x$ = x$ + MID$(ca$, p1, p2 - p1 + 1)
+                                    END IF
                                     'assume closing "
-                                    If speechmarks Then
+                                    IF speechmarks THEN
                                         'DATA_add 34
-                                        x$ = x$ + Chr$(34)
-                                    End If
+                                        x$ = x$ + CHR$(34)
+                                    END IF
                                     'append comma
                                     'DATA_add 44
-                                    x$ = x$ + Chr$(44)
-                                End If
-                                If finaldata = 1 Then GoTo finisheddata
+                                    x$ = x$ + CHR$(44)
+                                END IF
+                                IF finaldata = 1 THEN GOTO finisheddata
                                 e$ = ""
                                 p1 = 0
                                 p2 = 0
@@ -20703,228 +20703,228 @@ Function lineformat$ (a$)
                                 scan = 0
                                 commanext = 0
                                 i = i + 1
-                                GoTo nextdatachr
-                            End If
-                        End If '","
+                                GOTO nextdatachr
+                            END IF
+                        END IF '","
 
-                        If commanext = 1 Then
-                            If c <> 32 And c <> 9 Then Give_Error "Expected , after quoted string in DATA statement": Exit Function
-                        End If
+                        IF commanext = 1 THEN
+                            IF c <> 32 AND c <> 9 THEN Give_Error "Expected , after quoted string in DATA statement": EXIT FUNCTION
+                        END IF
 
-                        If c = 34 Then
-                            If speechmarks = 1 Then
+                        IF c = 34 THEN
+                            IF speechmarks = 1 THEN
                                 commanext = 1
                                 speechmarks = 0
-                            End If
-                            If scan = 0 Then speechmarks = 1
-                        End If
+                            END IF
+                            IF scan = 0 THEN speechmarks = 1
+                        END IF
 
                         scan = 1
 
-                        If p1 = 0 Then p1 = i: p2 = i
-                        If c <> 9 And c <> 32 Then p2 = i
+                        IF p1 = 0 THEN p1 = i: p2 = i
+                        IF c <> 9 AND c <> 32 THEN p2 = i
 
                         skipwhitespace:
-                        i = i + 1: GoTo nextdatachr
-                    End If 'i<n
-                    finaldata = 1: GoTo adddata
+                        i = i + 1: GOTO nextdatachr
+                    END IF 'i<n
+                    finaldata = 1: GOTO adddata
                     finisheddata:
                     e$ = ""
-                    If prepass = 0 Then
-                        Put #16, , x$
-                        DataOffset = DataOffset + Len(x$)
+                    IF prepass = 0 THEN
+                        PUT #16, , x$
+                        DataOffset = DataOffset + LEN(x$)
 
-                        e$ = Space$((Len(x$) - 1) * 2)
-                        For ec = 1 To Len(x$) - 1
+                        e$ = SPACE$((LEN(x$) - 1) * 2)
+                        FOR ec = 1 TO LEN(x$) - 1
                             '2 chr hex encode each character
-                            v1 = Asc(x$, ec)
-                            v2 = v1 \ 16: If v2 <= 9 Then v2 = v2 + 48 Else v2 = v2 + 55
-                            v1 = v1 And 15: If v1 <= 9 Then v1 = v1 + 48 Else v1 = v1 + 55
-                            Asc(e$, ec * 2 - 1) = v1
-                            Asc(e$, ec * 2) = v2
-                        Next
+                            v1 = ASC(x$, ec)
+                            v2 = v1 \ 16: IF v2 <= 9 THEN v2 = v2 + 48 ELSE v2 = v2 + 55
+                            v1 = v1 AND 15: IF v1 <= 9 THEN v1 = v1 + 48 ELSE v1 = v1 + 55
+                            ASC(e$, ec * 2 - 1) = v1
+                            ASC(e$, ec * 2) = v2
+                        NEXT
 
-                    End If
+                    END IF
 
-                    a2$ = a2$ + sp + "DATA": If Len(e$) Then a2$ = a2$ + sp + "_" + e$
-                    GoTo lineformatnext
-                End If
-            End If
+                    a2$ = a2$ + sp + "DATA": IF LEN(e$) THEN a2$ = a2$ + sp + "_" + e$
+                    GOTO lineformatnext
+                END IF
+            END IF
 
-            a2$ = a2$ + sp + Mid$(ca$, i, n2)
+            a2$ = a2$ + sp + MID$(ca$, i, n2)
             i = i + n2
 
             '----(variable/name)extensions----
             extcheck:
-            If n2 > 40 Then Give_Error "Identifier longer than 40 character limit": Exit Function
-            c3 = Asc(a$, i)
+            IF n2 > 40 THEN Give_Error "Identifier longer than 40 character limit": EXIT FUNCTION
+            c3 = ASC(a$, i)
             m = 0
-            If c3 = 126 Then '"~"
-                e2$ = Mid$(a$, i + 1, 2)
-                If e2$ = "&&" Then e2$ = "~&&": GoTo lfgetve
-                If e2$ = "%%" Then e2$ = "~%%": GoTo lfgetve
-                If e2$ = "%&" Then e2$ = "~%&": GoTo lfgetve
-                e2$ = Chr$(Asc(e2$))
-                If e2$ = "&" Then e2$ = "~&": GoTo lfgetve
-                If e2$ = "%" Then e2$ = "~%": GoTo lfgetve
-                If e2$ = "`" Then m = 1: e2$ = "~`": GoTo lfgetve
-            End If
-            If c3 = 37 Then
-                c4 = Asc(a$, i + 1)
-                If c4 = 37 Then e2$ = "%%": GoTo lfgetve
-                If c4 = 38 Then e2$ = "%&": GoTo lfgetve
-                e2$ = "%": GoTo lfgetve
-            End If
-            If c3 = 38 Then
-                c4 = Asc(a$, i + 1)
-                If c4 = 38 Then e2$ = "&&": GoTo lfgetve
-                e2$ = "&": GoTo lfgetve
-            End If
-            If c3 = 33 Then e2$ = "!": GoTo lfgetve
-            If c3 = 35 Then
-                c4 = Asc(a$, i + 1)
-                If c4 = 35 Then e2$ = "##": GoTo lfgetve
-                e2$ = "#": GoTo lfgetve
-            End If
-            If c3 = 36 Then m = 1: e2$ = "$": GoTo lfgetve
-            If c3 = 96 Then m = 1: e2$ = "`": GoTo lfgetve
+            IF c3 = 126 THEN '"~"
+                e2$ = MID$(a$, i + 1, 2)
+                IF e2$ = "&&" THEN e2$ = "~&&": GOTO lfgetve
+                IF e2$ = "%%" THEN e2$ = "~%%": GOTO lfgetve
+                IF e2$ = "%&" THEN e2$ = "~%&": GOTO lfgetve
+                e2$ = CHR$(ASC(e2$))
+                IF e2$ = "&" THEN e2$ = "~&": GOTO lfgetve
+                IF e2$ = "%" THEN e2$ = "~%": GOTO lfgetve
+                IF e2$ = "`" THEN m = 1: e2$ = "~`": GOTO lfgetve
+            END IF
+            IF c3 = 37 THEN
+                c4 = ASC(a$, i + 1)
+                IF c4 = 37 THEN e2$ = "%%": GOTO lfgetve
+                IF c4 = 38 THEN e2$ = "%&": GOTO lfgetve
+                e2$ = "%": GOTO lfgetve
+            END IF
+            IF c3 = 38 THEN
+                c4 = ASC(a$, i + 1)
+                IF c4 = 38 THEN e2$ = "&&": GOTO lfgetve
+                e2$ = "&": GOTO lfgetve
+            END IF
+            IF c3 = 33 THEN e2$ = "!": GOTO lfgetve
+            IF c3 = 35 THEN
+                c4 = ASC(a$, i + 1)
+                IF c4 = 35 THEN e2$ = "##": GOTO lfgetve
+                e2$ = "#": GOTO lfgetve
+            END IF
+            IF c3 = 36 THEN m = 1: e2$ = "$": GOTO lfgetve
+            IF c3 = 96 THEN m = 1: e2$ = "`": GOTO lfgetve
             '(no symbol)
 
             'cater for unusual names/labels (eg a.0b%)
-            If Asc(a$, i) = 46 Then '"."
-                c2 = Asc(a$, i + 1)
-                If c2 >= 48 And c2 <= 57 Then
+            IF ASC(a$, i) = 46 THEN '"."
+                c2 = ASC(a$, i + 1)
+                IF c2 >= 48 AND c2 <= 57 THEN
                     'scan until no further alphanumerics
                     p2 = i + 1
-                    For i2 = i + 2 To n
-                        c = Asc(a$, i2)
+                    FOR i2 = i + 2 TO n
+                        c = ASC(a$, i2)
 
-                        If Not alphanumeric(c) Then Exit For
-                        If c <> 95 Then p2 = i2 'don't including trailing _
-                    Next
-                    a2$ = a2$ + sp + "." + sp + Mid$(ca$, i + 1, p2 - (i + 1) + 1) 'case sensitive
+                        IF NOT alphanumeric(c) THEN EXIT FOR
+                        IF c <> 95 THEN p2 = i2 'don't including trailing _
+                    NEXT
+                    a2$ = a2$ + sp + "." + sp + MID$(ca$, i + 1, p2 - (i + 1) + 1) 'case sensitive
                     n2 = n2 + 1 + (p2 - (i + 1) + 1)
                     i = p2 + 1
-                    GoTo extcheck 'it may have an extension or be continued with another "."
-                End If
-            End If
+                    GOTO extcheck 'it may have an extension or be continued with another "."
+                END IF
+            END IF
 
-            GoTo lineformatnext
+            GOTO lineformatnext
 
             lfgetve:
-            i = i + Len(e2$)
+            i = i + LEN(e2$)
             a2$ = a2$ + e2$
-            If m Then 'allow digits after symbol
+            IF m THEN 'allow digits after symbol
                 lfgetvd:
-                If i < n Then
-                    c = Asc(a$, i)
-                    If c >= 48 And c <= 57 Then a2$ = a2$ + Chr$(c): i = i + 1: GoTo lfgetvd
-                End If
-            End If 'm
+                IF i < n THEN
+                    c = ASC(a$, i)
+                    IF c >= 48 AND c <= 57 THEN a2$ = a2$ + CHR$(c): i = i + 1: GOTO lfgetvd
+                END IF
+            END IF 'm
 
-            GoTo lineformatnext
+            GOTO lineformatnext
 
-        End If 'p2
-    End If 'variable/name
+        END IF 'p2
+    END IF 'variable/name
     '----------------variable/name end----------------
 
     '----------------spacing----------------
-    If c = 32 Or c = 9 Then i = i + 1: GoTo lineformatnext
+    IF c = 32 OR c = 9 THEN i = i + 1: GOTO lineformatnext
 
     '----------------symbols----------------
     '--------single characters--------
-    If lfsinglechar(c) Then
-        If (c = 60) Or (c = 61) Or (c = 62) Then
+    IF lfsinglechar(c) THEN
+        IF (c = 60) OR (c = 61) OR (c = 62) THEN
             count = 0
-            Do
+            DO
                 count = count + 1
-                If i + count >= Len(a$) - 2 Then Exit Do
-            Loop Until Asc(a$, i + count) <> 32
-            c2 = Asc(a$, i + count)
-            If c = 60 Then '<
-                If c2 = 61 Then a2$ = a2$ + sp + "<=": i = i + count + 1: GoTo lineformatnext
-                If c2 = 62 Then a2$ = a2$ + sp + "<>": i = i + count + 1: GoTo lineformatnext
-            ElseIf c = 62 Then '>
-                If c2 = 61 Then a2$ = a2$ + sp + ">=": i = i + count + 1: GoTo lineformatnext
-                If c2 = 60 Then a2$ = a2$ + sp + "<>": i = i + count + 1: GoTo lineformatnext '>< to <>
-            ElseIf c = 61 Then '=
-                If c2 = 62 Then a2$ = a2$ + sp + ">=": i = i + count + 1: GoTo lineformatnext '=> to >=
-                If c2 = 60 Then a2$ = a2$ + sp + "<=": i = i + count + 1: GoTo lineformatnext '=< to <=
-            End If
-        End If
+                IF i + count >= LEN(a$) - 2 THEN EXIT DO
+            LOOP UNTIL ASC(a$, i + count) <> 32
+            c2 = ASC(a$, i + count)
+            IF c = 60 THEN '<
+                IF c2 = 61 THEN a2$ = a2$ + sp + "<=": i = i + count + 1: GOTO lineformatnext
+                IF c2 = 62 THEN a2$ = a2$ + sp + "<>": i = i + count + 1: GOTO lineformatnext
+            ELSEIF c = 62 THEN '>
+                IF c2 = 61 THEN a2$ = a2$ + sp + ">=": i = i + count + 1: GOTO lineformatnext
+                IF c2 = 60 THEN a2$ = a2$ + sp + "<>": i = i + count + 1: GOTO lineformatnext '>< to <>
+            ELSEIF c = 61 THEN '=
+                IF c2 = 62 THEN a2$ = a2$ + sp + ">=": i = i + count + 1: GOTO lineformatnext '=> to >=
+                IF c2 = 60 THEN a2$ = a2$ + sp + "<=": i = i + count + 1: GOTO lineformatnext '=< to <=
+            END IF
+        END IF
 
-        If c = 36 And Len(a2$) Then GoTo badusage '$
+        IF c = 36 AND LEN(a2$) THEN GOTO badusage '$
 
 
-        a2$ = a2$ + sp + Chr$(c)
+        a2$ = a2$ + sp + CHR$(c)
         i = i + 1
-        GoTo lineformatnext
-    End If
+        GOTO lineformatnext
+    END IF
     badusage:
 
-    If c <> 39 Then Give_Error "Unexpected character on line": Exit Function 'invalid symbol encountered
+    IF c <> 39 THEN Give_Error "Unexpected character on line": EXIT FUNCTION 'invalid symbol encountered
 
     '----------------comment(')----------------
     layoutcomment = "'"
     i = i + 1
     comment:
-    If i >= n Then GoTo lineformatdone2
-    c$ = Right$(a$, Len(a$) - i + 1)
-    cc$ = Right$(ca$, Len(ca$) - i + 1)
-    If Len(c$) = 0 Then GoTo lineformatdone2
-    layoutcomment$ = RTrim$(layoutcomment$ + cc$)
+    IF i >= n THEN GOTO lineformatdone2
+    c$ = RIGHT$(a$, LEN(a$) - i + 1)
+    cc$ = RIGHT$(ca$, LEN(ca$) - i + 1)
+    IF LEN(c$) = 0 THEN GOTO lineformatdone2
+    layoutcomment$ = RTRIM$(layoutcomment$ + cc$)
 
-    c$ = LTrim$(c$)
-    If Len(c$) = 0 Then GoTo lineformatdone2
-    ac = Asc(c$)
+    c$ = LTRIM$(c$)
+    IF LEN(c$) = 0 THEN GOTO lineformatdone2
+    ac = ASC(c$)
     'note: any non-whitespace character between the comment leader and the
     '      first '$' renders this a plain comment
     '    : the leading '$' does NOT have to be part of a valid metacommand.
     '      E.g., REM $FOO $DYNAMIC is a valid metacommand line
-    If ac <> 36 Then GoTo lineformatdone2
-    nocasec$ = LTrim$(Right$(ca$, Len(ca$) - i + 1))
+    IF ac <> 36 THEN GOTO lineformatdone2
+    nocasec$ = LTRIM$(RIGHT$(ca$, LEN(ca$) - i + 1))
     memmode = 0
     x = 1
-    Do
+    DO
         'note: metacommands may appear on a line any number of times but only
         '      the last appearance of $INCLUDE, and either $STATIC or $DYNAMIC,
         '      is processed
         '    : metacommands do not need to be terminated by word boundaries.
         '      E.g., $STATICanychars$DYNAMIC is valid
 
-        If Mid$(c$, x, 7) = "$STATIC" Then
+        IF MID$(c$, x, 7) = "$STATIC" THEN
             memmode = 1
-        ElseIf Mid$(c$, x, 8) = "$DYNAMIC" Then
+        ELSEIF MID$(c$, x, 8) = "$DYNAMIC" THEN
             memmode = 2
-        ElseIf Mid$(c$, x, 8) = "$INCLUDE" Then
+        ELSEIF MID$(c$, x, 8) = "$INCLUDE" THEN
             'note: INCLUDE adds the file AFTER the line it is on has been processed
             'skip spaces until :
-            For xx = x + 8 To Len(c$)
-                ac = Asc(Mid$(c$, xx, 1))
-                If ac = 58 Then Exit For ':
-                If ac <> 32 And ac <> 9 Then Give_Error "Expected $INCLUDE:'filename'": Exit Function
-            Next
+            FOR xx = x + 8 TO LEN(c$)
+                ac = ASC(MID$(c$, xx, 1))
+                IF ac = 58 THEN EXIT FOR ':
+                IF ac <> 32 AND ac <> 9 THEN Give_Error "Expected $INCLUDE:'filename'": EXIT FUNCTION
+            NEXT
             x = xx
             'skip spaces until '
-            For xx = x + 1 To Len(c$)
-                ac = Asc(Mid$(c$, xx, 1))
-                If ac = 39 Then Exit For 'character:'
-                If ac <> 32 And ac <> 9 Then Give_Error "Expected $INCLUDE:'filename'": Exit Function
-            Next
+            FOR xx = x + 1 TO LEN(c$)
+                ac = ASC(MID$(c$, xx, 1))
+                IF ac = 39 THEN EXIT FOR 'character:'
+                IF ac <> 32 AND ac <> 9 THEN Give_Error "Expected $INCLUDE:'filename'": EXIT FUNCTION
+            NEXT
             x = xx
-            xx = InStr(x + 1, c$, "'")
-            If xx = 0 Then Give_Error "Expected $INCLUDE:'filename'": Exit Function
-            addmetainclude$ = Mid$(nocasec$, x + 1, xx - x - 1)
-            If addmetainclude$ = "" Then Give_Error "Expected $INCLUDE:'filename'": Exit Function
-        End If
+            xx = INSTR(x + 1, c$, "'")
+            IF xx = 0 THEN Give_Error "Expected $INCLUDE:'filename'": EXIT FUNCTION
+            addmetainclude$ = MID$(nocasec$, x + 1, xx - x - 1)
+            IF addmetainclude$ = "" THEN Give_Error "Expected $INCLUDE:'filename'": EXIT FUNCTION
+        END IF
 
-        x = InStr(x + 1, c$, "$")
-    Loop While x <> 0
+        x = INSTR(x + 1, c$, "$")
+    LOOP WHILE x <> 0
 
-    If memmode = 1 Then addmetastatic = 1
-    If memmode = 2 Then addmetadynamic = 1
+    IF memmode = 1 THEN addmetastatic = 1
+    IF memmode = 2 THEN addmetadynamic = 1
 
-    GoTo lineformatdone2
+    GOTO lineformatdone2
 
 
 
@@ -20932,77 +20932,77 @@ Function lineformat$ (a$)
 
     'line continuation?
     'note: line continuation in idemode is illegal
-    If Len(a2$) Then
-        If Right$(a2$, 1) = "_" Then
+    IF LEN(a2$) THEN
+        IF RIGHT$(a2$, 1) = "_" THEN
 
             linecontinuation = 1 'avoids auto-format glitches
             layout$ = ""
 
             'remove _ from the end of the building string
-            If Len(a2$) >= 2 Then
-                If Right$(a2$, 2) = sp + "_" Then a2$ = Left$(a2$, Len(a2$) - 1)
-            End If
-            a2$ = Left$(a2$, Len(a2$) - 1)
+            IF LEN(a2$) >= 2 THEN
+                IF RIGHT$(a2$, 2) = sp + "_" THEN a2$ = LEFT$(a2$, LEN(a2$) - 1)
+            END IF
+            a2$ = LEFT$(a2$, LEN(a2$) - 1)
 
-            If inclevel Then
+            IF inclevel THEN
                 fh = 99 + inclevel
-                If EOF(fh) Then GoTo lineformatdone2
-                Line Input #fh, a$
+                IF EOF(fh) THEN GOTO lineformatdone2
+                LINE INPUT #fh, a$
                 inclinenumber(inclevel) = inclinenumber(inclevel) + 1
-                GoTo includecont 'note: should not increase linenumber
-            End If
+                GOTO includecont 'note: should not increase linenumber
+            END IF
 
-            If idemode Then
-                idecommand$ = Chr$(100)
+            IF idemode THEN
+                idecommand$ = CHR$(100)
                 ignore = ide(0)
                 ideerror = 0
                 a$ = idereturn$
-                If a$ = "" Then GoTo lineformatdone2
-            Else
+                IF a$ = "" THEN GOTO lineformatdone2
+            ELSE
                 a$ = lineinput3$
-                If a$ = Chr$(13) Then GoTo lineformatdone2
-            End If
+                IF a$ = CHR$(13) THEN GOTO lineformatdone2
+            END IF
 
             linenumber = linenumber + 1
 
             includecont:
 
             contline = 1
-            GoTo continueline
-        End If
-    End If
+            GOTO continueline
+        END IF
+    END IF
 
     lineformatdone2:
-    If Left$(a2$, 1) = sp Then a2$ = Right$(a2$, Len(a2$) - 1)
+    IF LEFT$(a2$, 1) = sp THEN a2$ = RIGHT$(a2$, LEN(a2$) - 1)
 
     'fix for trailing : error
-    If Right$(a2$, 1) = ":" Then a2$ = a2$ + sp + "'" 'add nop
+    IF RIGHT$(a2$, 1) = ":" THEN a2$ = a2$ + sp + "'" 'add nop
 
-    If Debug Then Print #9, "lineformat():return:" + a2$
-    If Error_Happened Then Exit Function
+    IF Debug THEN PRINT #9, "lineformat():return:" + a2$
+    IF Error_Happened THEN EXIT FUNCTION
     lineformat$ = a2$
 
-End Function
+END FUNCTION
 
 
-Sub makeidrefer (ref$, typ As Long)
+SUB makeidrefer (ref$, typ AS LONG)
     ref$ = str2$(currentid)
     typ = id.t + ISREFERENCE
-End Sub
+END SUB
 
-Function numelements (a$)
-    If a$ = "" Then Exit Function
+FUNCTION numelements (a$)
+    IF a$ = "" THEN EXIT FUNCTION
     n = 1
     p = 1
     numelementsnext:
-    i = InStr(p, a$, sp)
-    If i = 0 Then numelements = n: Exit Function
+    i = INSTR(p, a$, sp)
+    IF i = 0 THEN numelements = n: EXIT FUNCTION
     n = n + 1
     p = i + 1
-    GoTo numelementsnext
-End Function
+    GOTO numelementsnext
+END FUNCTION
 
-Function operatorusage (operator$, typ As Long, info$, lhs As Long, rhs As Long, result As Long)
+FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG, result AS LONG)
     lhs = 7: rhs = 7: result = 0
     'return values
     '1 = use info$ as the operator without any other changes
@@ -21019,70 +21019,70 @@ Function operatorusage (operator$, typ As Long, info$, lhs As Long, rhs As Long,
     '8=bool
 
     'string operator
-    If (typ And ISSTRING) Then
+    IF (typ AND ISSTRING) THEN
         lhs = 4: rhs = 4
         result = 4
-        If operator$ = "+" Then info$ = "qbs_add": operatorusage = 2: Exit Function
+        IF operator$ = "+" THEN info$ = "qbs_add": operatorusage = 2: EXIT FUNCTION
         result = 8
-        If operator$ = "=" Then info$ = "qbs_equal": operatorusage = 2: Exit Function
-        If operator$ = "<>" Then info$ = "qbs_notequal": operatorusage = 2: Exit Function
-        If operator$ = ">" Then info$ = "qbs_greaterthan": operatorusage = 2: Exit Function
-        If operator$ = "<" Then info$ = "qbs_lessthan": operatorusage = 2: Exit Function
-        If operator$ = ">=" Then info$ = "qbs_greaterorequal": operatorusage = 2: Exit Function
-        If operator$ = "<=" Then info$ = "qbs_lessorequal": operatorusage = 2: Exit Function
-        If Debug Then Print #9, "INVALID STRING OPERATOR!": End
-    End If
+        IF operator$ = "=" THEN info$ = "qbs_equal": operatorusage = 2: EXIT FUNCTION
+        IF operator$ = "<>" THEN info$ = "qbs_notequal": operatorusage = 2: EXIT FUNCTION
+        IF operator$ = ">" THEN info$ = "qbs_greaterthan": operatorusage = 2: EXIT FUNCTION
+        IF operator$ = "<" THEN info$ = "qbs_lessthan": operatorusage = 2: EXIT FUNCTION
+        IF operator$ = ">=" THEN info$ = "qbs_greaterorequal": operatorusage = 2: EXIT FUNCTION
+        IF operator$ = "<=" THEN info$ = "qbs_lessorequal": operatorusage = 2: EXIT FUNCTION
+        IF Debug THEN PRINT #9, "INVALID STRING OPERATOR!": END
+    END IF
 
     'assume numeric operator
     lhs = 1 + 2: rhs = 1 + 2
-    If operator$ = "^" Then result = 2: info$ = "pow2": operatorusage = 2: Exit Function
-    If operator$ = Chr$(241) Then info$ = "-": operatorusage = 5: Exit Function
-    If operator$ = "/" Then
+    IF operator$ = "^" THEN result = 2: info$ = "pow2": operatorusage = 2: EXIT FUNCTION
+    IF operator$ = CHR$(241) THEN info$ = "-": operatorusage = 5: EXIT FUNCTION
+    IF operator$ = "/" THEN
         info$ = "/ ": operatorusage = 1
         'for / division, either the lhs or the rhs must be a float to make
         'c++ return a result in floating point form
-        If (typ And ISFLOAT) Then
+        IF (typ AND ISFLOAT) THEN
             'lhs is a float
             lhs = 2
             rhs = 1 + 2
-        Else
+        ELSE
             'lhs isn't a float!
             lhs = 1 + 2
             rhs = 2
-        End If
+        END IF
         result = 2
-        Exit Function
-    End If
-    If operator$ = "*" Then info$ = "*": operatorusage = 1: Exit Function
-    If operator$ = "+" Then info$ = "+": operatorusage = 1: Exit Function
-    If operator$ = "-" Then info$ = "-": operatorusage = 1: Exit Function
+        EXIT FUNCTION
+    END IF
+    IF operator$ = "*" THEN info$ = "*": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "+" THEN info$ = "+": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "-" THEN info$ = "-": operatorusage = 1: EXIT FUNCTION
 
     result = 8
-    If operator$ = "=" Then info$ = "==": operatorusage = 3: Exit Function
-    If operator$ = ">" Then info$ = ">": operatorusage = 3: Exit Function
-    If operator$ = "<" Then info$ = "<": operatorusage = 3: Exit Function
-    If operator$ = "<>" Then info$ = "!=": operatorusage = 3: Exit Function
-    If operator$ = "<=" Then info$ = "<=": operatorusage = 3: Exit Function
-    If operator$ = ">=" Then info$ = ">=": operatorusage = 3: Exit Function
+    IF operator$ = "=" THEN info$ = "==": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = ">" THEN info$ = ">": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = "<" THEN info$ = "<": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = "<>" THEN info$ = "!=": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = "<=" THEN info$ = "<=": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = ">=" THEN info$ = ">=": operatorusage = 3: EXIT FUNCTION
 
     lhs = 1: rhs = 1: result = 1
-    operator$ = UCase$(operator$)
-    If operator$ = "MOD" Then info$ = "%": operatorusage = 1: Exit Function
-    If operator$ = "\" Then info$ = "/ ": operatorusage = 1: Exit Function
-    If operator$ = "IMP" Then info$ = "|": operatorusage = 4: Exit Function
-    If operator$ = "EQV" Then info$ = "^": operatorusage = 4: Exit Function
-    If operator$ = "XOR" Then info$ = "^": operatorusage = 1: Exit Function
-    If operator$ = "OR" Then info$ = "|": operatorusage = 1: Exit Function
-    If operator$ = "AND" Then info$ = "&": operatorusage = 1: Exit Function
+    operator$ = UCASE$(operator$)
+    IF operator$ = "MOD" THEN info$ = "%": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "\" THEN info$ = "/ ": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "IMP" THEN info$ = "|": operatorusage = 4: EXIT FUNCTION
+    IF operator$ = "EQV" THEN info$ = "^": operatorusage = 4: EXIT FUNCTION
+    IF operator$ = "XOR" THEN info$ = "^": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "OR" THEN info$ = "|": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "AND" THEN info$ = "&": operatorusage = 1: EXIT FUNCTION
 
     lhs = 7
-    If operator$ = "NOT" Then info$ = "~": operatorusage = 5: Exit Function
+    IF operator$ = "NOT" THEN info$ = "~": operatorusage = 5: EXIT FUNCTION
 
-    If Debug Then Print #9, "INVALID NUMBERIC OPERATOR!": End
+    IF Debug THEN PRINT #9, "INVALID NUMBERIC OPERATOR!": END
 
-End Function
+END FUNCTION
 
-Function refer$ (a2$, typ As Long, method As Long)
+FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
     typbak = typ
     'method: 0 return an equation which calculates the value of the "variable"
     '        1 return the C name of the variable, typ will be left unchanged
@@ -21090,202 +21090,202 @@ Function refer$ (a2$, typ As Long, method As Long)
     a$ = a2$
 
     'retrieve ID
-    i = InStr(a$, sp3)
-    If i Then
-        idnumber = Val(Left$(a$, i - 1)): a$ = Right$(a$, Len(a$) - i)
-    Else
-        idnumber = Val(a$)
-    End If
+    i = INSTR(a$, sp3)
+    IF i THEN
+        idnumber = VAL(LEFT$(a$, i - 1)): a$ = RIGHT$(a$, LEN(a$) - i)
+    ELSE
+        idnumber = VAL(a$)
+    END IF
     getid idnumber
-    If Error_Happened Then Exit Function
+    IF Error_Happened THEN EXIT FUNCTION
 
     'UDT?
-    If typ And ISUDT Then
-        If method = 1 Then
-            n$ = "UDT_" + RTrim$(id.n)
-            If id.t = 0 Then n$ = "ARRAY_" + n$
+    IF typ AND ISUDT THEN
+        IF method = 1 THEN
+            n$ = "UDT_" + RTRIM$(id.n)
+            IF id.t = 0 THEN n$ = "ARRAY_" + n$
             n$ = scope$ + n$
             refer$ = n$
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
         'print "UDTSUBSTRING[idX|u|e|o]:"+a$
 
-        u = Val(a$)
-        i = InStr(a$, sp3): a$ = Right$(a$, Len(a$) - i): E = Val(a$)
-        i = InStr(a$, sp3): o$ = Right$(a$, Len(a$) - i)
-        n$ = "UDT_" + RTrim$(id.n): If id.t = 0 Then n$ = "ARRAY_" + n$ + "[0]"
-        If E = 0 Then Give_Error "User defined types in expressions are invalid": Exit Function
-        If typ And ISOFFSETINBITS Then Give_Error "Cannot resolve bit-length variables inside user defined types": Exit Function
+        u = VAL(a$)
+        i = INSTR(a$, sp3): a$ = RIGHT$(a$, LEN(a$) - i): E = VAL(a$)
+        i = INSTR(a$, sp3): o$ = RIGHT$(a$, LEN(a$) - i)
+        n$ = "UDT_" + RTRIM$(id.n): IF id.t = 0 THEN n$ = "ARRAY_" + n$ + "[0]"
+        IF E = 0 THEN Give_Error "User defined types in expressions are invalid": EXIT FUNCTION
+        IF typ AND ISOFFSETINBITS THEN Give_Error "Cannot resolve bit-length variables inside user defined types": EXIT FUNCTION
 
-        If typ And ISSTRING Then
-            If typ And ISFIXEDLENGTH Then
+        IF typ AND ISSTRING THEN
+            IF typ AND ISFIXEDLENGTH THEN
                 o2$ = "(((uint8*)" + scope$ + n$ + ")+(" + o$ + "))"
                 r$ = "qbs_new_fixed(" + o2$ + "," + str2(udtetypesize(E)) + ",1)"
                 typ = STRINGTYPE + ISFIXEDLENGTH 'ISPOINTER retained, it is still a pointer!
-            Else
+            ELSE
                 r$ = "*((qbs**)((char*)" + scope$ + n$ + "+(" + o$ + ")))"
                 typ = STRINGTYPE
-            End If
-        Else
+            END IF
+        ELSE
             typ = typ - ISUDT - ISREFERENCE - ISPOINTER
-            If typ And ISARRAY Then typ = typ - ISARRAY
+            IF typ AND ISARRAY THEN typ = typ - ISARRAY
             t$ = typ2ctyp$(typ, "")
-            If Error_Happened Then Exit Function
+            IF Error_Happened THEN EXIT FUNCTION
             o2$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
             r$ = "*" + "(" + t$ + "*)" + o2$
-        End If
+        END IF
 
         'print "REFER:"+r$+","+str2$(typ)
         refer$ = r$
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
 
     'array?
-    If id.arraytype Then
+    IF id.arraytype THEN
 
-        n$ = RTrim$(id.callname)
-        If method = 1 Then
+        n$ = RTRIM$(id.callname)
+        IF method = 1 THEN
             refer$ = n$
             typ = typbak
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
         typ = typ - ISPOINTER - ISREFERENCE 'typ now looks like a regular value
 
-        If (typ And ISSTRING) Then
-            If (typ And ISFIXEDLENGTH) Then
+        IF (typ AND ISSTRING) THEN
+            IF (typ AND ISFIXEDLENGTH) THEN
                 offset$ = "&((uint8*)(" + n$ + "[0]))[(" + a$ + ")*" + str2(id.tsize) + "]"
                 r$ = "qbs_new_fixed(" + offset$ + "," + str2(id.tsize) + ",1)"
-            Else
+            ELSE
                 r$ = "((qbs*)(((uint64*)(" + n$ + "[0]))[" + a$ + "]))"
-            End If
+            END IF
             stringprocessinghappened = 1
             refer$ = r$
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
-        If (typ And ISOFFSETINBITS) Then
+        IF (typ AND ISOFFSETINBITS) THEN
             'IF (typ AND ISUNSIGNED) THEN r$ = "getubits_" ELSE r$ = "getbits_"
             'r$ = r$ + str2(typ AND 511) + "("
-            If (typ And ISUNSIGNED) Then r$ = "getubits" Else r$ = "getbits"
-            r$ = r$ + "(" + str2(typ And 511) + ","
+            IF (typ AND ISUNSIGNED) THEN r$ = "getubits" ELSE r$ = "getbits"
+            r$ = r$ + "(" + str2(typ AND 511) + ","
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ","
             r$ = r$ + a$ + ")"
             refer$ = r$
-            Exit Function
-        Else
+            EXIT FUNCTION
+        ELSE
             t$ = ""
-            If (typ And ISFLOAT) Then
-                If (typ And 511) = 32 Then t$ = "float"
-                If (typ And 511) = 64 Then t$ = "double"
-                If (typ And 511) = 256 Then t$ = "long double"
-            Else
-                If (typ And ISUNSIGNED) Then
-                    If (typ And 511) = 8 Then t$ = "uint8"
-                    If (typ And 511) = 16 Then t$ = "uint16"
-                    If (typ And 511) = 32 Then t$ = "uint32"
-                    If (typ And 511) = 64 Then t$ = "uint64"
-                    If typ And ISOFFSET Then t$ = "uptrszint"
-                Else
-                    If (typ And 511) = 8 Then t$ = "int8"
-                    If (typ And 511) = 16 Then t$ = "int16"
-                    If (typ And 511) = 32 Then t$ = "int32"
-                    If (typ And 511) = 64 Then t$ = "int64"
-                    If typ And ISOFFSET Then t$ = "ptrszint"
-                End If
-            End If
-        End If
-        If t$ = "" Then Give_Error "Cannot find C type to return array data": Exit Function
+            IF (typ AND ISFLOAT) THEN
+                IF (typ AND 511) = 32 THEN t$ = "float"
+                IF (typ AND 511) = 64 THEN t$ = "double"
+                IF (typ AND 511) = 256 THEN t$ = "long double"
+            ELSE
+                IF (typ AND ISUNSIGNED) THEN
+                    IF (typ AND 511) = 8 THEN t$ = "uint8"
+                    IF (typ AND 511) = 16 THEN t$ = "uint16"
+                    IF (typ AND 511) = 32 THEN t$ = "uint32"
+                    IF (typ AND 511) = 64 THEN t$ = "uint64"
+                    IF typ AND ISOFFSET THEN t$ = "uptrszint"
+                ELSE
+                    IF (typ AND 511) = 8 THEN t$ = "int8"
+                    IF (typ AND 511) = 16 THEN t$ = "int16"
+                    IF (typ AND 511) = 32 THEN t$ = "int32"
+                    IF (typ AND 511) = 64 THEN t$ = "int64"
+                    IF typ AND ISOFFSET THEN t$ = "ptrszint"
+                END IF
+            END IF
+        END IF
+        IF t$ = "" THEN Give_Error "Cannot find C type to return array data": EXIT FUNCTION
         r$ = "((" + t$ + "*)(" + n$ + "[0]))[" + a$ + "]"
         refer$ = r$
-        Exit Function
-    End If 'array
+        EXIT FUNCTION
+    END IF 'array
 
     'variable?
-    If id.t Then
-        r$ = RTrim$(id.n)
+    IF id.t THEN
+        r$ = RTRIM$(id.n)
         t = id.t
         'remove irrelavant flags
-        If (t And ISINCONVENTIONALMEMORY) Then t = t - ISINCONVENTIONALMEMORY
+        IF (t AND ISINCONVENTIONALMEMORY) THEN t = t - ISINCONVENTIONALMEMORY
         'string?
-        If (t And ISSTRING) Then
-            If (t And ISFIXEDLENGTH) Then
-                r$ = scope$ + "STRING" + str2(id.tsize) + "_" + r$: GoTo ref
-            End If
-            r$ = scope$ + "STRING_" + r$: GoTo ref
-        End If
+        IF (t AND ISSTRING) THEN
+            IF (t AND ISFIXEDLENGTH) THEN
+                r$ = scope$ + "STRING" + str2(id.tsize) + "_" + r$: GOTO ref
+            END IF
+            r$ = scope$ + "STRING_" + r$: GOTO ref
+        END IF
         'bit-length single variable?
-        If (t And ISOFFSETINBITS) Then
-            If (t And ISUNSIGNED) Then
-                r$ = "*" + scope$ + "UBIT" + str2(t And 511) + "_" + r$
-            Else
-                r$ = "*" + scope$ + "BIT" + str2(t And 511) + "_" + r$
-            End If
-            GoTo ref
-        End If
-        If t = BYTETYPE Then r$ = "*" + scope$ + "BYTE_" + r$: GoTo ref
-        If t = UBYTETYPE Then r$ = "*" + scope$ + "UBYTE_" + r$: GoTo ref
-        If t = INTEGERTYPE Then r$ = "*" + scope$ + "INTEGER_" + r$: GoTo ref
-        If t = UINTEGERTYPE Then r$ = "*" + scope$ + "UINTEGER_" + r$: GoTo ref
-        If t = LONGTYPE Then r$ = "*" + scope$ + "LONG_" + r$: GoTo ref
-        If t = ULONGTYPE Then r$ = "*" + scope$ + "ULONG_" + r$: GoTo ref
-        If t = INTEGER64TYPE Then r$ = "*" + scope$ + "INTEGER64_" + r$: GoTo ref
-        If t = UINTEGER64TYPE Then r$ = "*" + scope$ + "UINTEGER64_" + r$: GoTo ref
-        If t = SINGLETYPE Then r$ = "*" + scope$ + "SINGLE_" + r$: GoTo ref
-        If t = DOUBLETYPE Then r$ = "*" + scope$ + "DOUBLE_" + r$: GoTo ref
-        If t = FLOATTYPE Then r$ = "*" + scope$ + "FLOAT_" + r$: GoTo ref
-        If t = OFFSETTYPE Then r$ = "*" + scope$ + "OFFSET_" + r$: GoTo ref
-        If t = UOFFSETTYPE Then r$ = "*" + scope$ + "UOFFSET_" + r$: GoTo ref
+        IF (t AND ISOFFSETINBITS) THEN
+            IF (t AND ISUNSIGNED) THEN
+                r$ = "*" + scope$ + "UBIT" + str2(t AND 511) + "_" + r$
+            ELSE
+                r$ = "*" + scope$ + "BIT" + str2(t AND 511) + "_" + r$
+            END IF
+            GOTO ref
+        END IF
+        IF t = BYTETYPE THEN r$ = "*" + scope$ + "BYTE_" + r$: GOTO ref
+        IF t = UBYTETYPE THEN r$ = "*" + scope$ + "UBYTE_" + r$: GOTO ref
+        IF t = INTEGERTYPE THEN r$ = "*" + scope$ + "INTEGER_" + r$: GOTO ref
+        IF t = UINTEGERTYPE THEN r$ = "*" + scope$ + "UINTEGER_" + r$: GOTO ref
+        IF t = LONGTYPE THEN r$ = "*" + scope$ + "LONG_" + r$: GOTO ref
+        IF t = ULONGTYPE THEN r$ = "*" + scope$ + "ULONG_" + r$: GOTO ref
+        IF t = INTEGER64TYPE THEN r$ = "*" + scope$ + "INTEGER64_" + r$: GOTO ref
+        IF t = UINTEGER64TYPE THEN r$ = "*" + scope$ + "UINTEGER64_" + r$: GOTO ref
+        IF t = SINGLETYPE THEN r$ = "*" + scope$ + "SINGLE_" + r$: GOTO ref
+        IF t = DOUBLETYPE THEN r$ = "*" + scope$ + "DOUBLE_" + r$: GOTO ref
+        IF t = FLOATTYPE THEN r$ = "*" + scope$ + "FLOAT_" + r$: GOTO ref
+        IF t = OFFSETTYPE THEN r$ = "*" + scope$ + "OFFSET_" + r$: GOTO ref
+        IF t = UOFFSETTYPE THEN r$ = "*" + scope$ + "UOFFSET_" + r$: GOTO ref
         ref:
-        If (t And ISSTRING) Then stringprocessinghappened = 1
-        If (t And ISPOINTER) Then t = t - ISPOINTER
+        IF (t AND ISSTRING) THEN stringprocessinghappened = 1
+        IF (t AND ISPOINTER) THEN t = t - ISPOINTER
         typ = t
-        If method = 1 Then
-            If Left$(r$, 1) = "*" Then r$ = Right$(r$, Len(r$) - 1)
+        IF method = 1 THEN
+            IF LEFT$(r$, 1) = "*" THEN r$ = RIGHT$(r$, LEN(r$) - 1)
             typ = typbak
-        End If
+        END IF
         refer$ = r$
-        Exit Function
-    End If 'variable
+        EXIT FUNCTION
+    END IF 'variable
 
 
 
-End Function
+END FUNCTION
 
-Sub regid
+SUB regid
     idn = idn + 1
 
-    If idn > ids_max Then
+    IF idn > ids_max THEN
         ids_max = ids_max * 2
-        ReDim _Preserve ids(1 To ids_max) As idstruct
-        ReDim _Preserve cmemlist(1 To ids_max + 1) As Integer
-        ReDim _Preserve sfcmemargs(1 To ids_max + 1) As String * 100
-        ReDim _Preserve arrayelementslist(1 To ids_max + 1) As Integer
-    End If
+        REDIM _PRESERVE ids(1 TO ids_max) AS idstruct
+        REDIM _PRESERVE cmemlist(1 TO ids_max + 1) AS INTEGER
+        REDIM _PRESERVE sfcmemargs(1 TO ids_max + 1) AS STRING * 100
+        REDIM _PRESERVE arrayelementslist(1 TO ids_max + 1) AS INTEGER
+    END IF
 
-    n$ = RTrim$(id.n)
+    n$ = RTRIM$(id.n)
 
-    If reginternalsubfunc = 0 Then
-        If validname(n$) = 0 Then Give_Error "Invalid name": Exit Sub
-    End If
+    IF reginternalsubfunc = 0 THEN
+        IF validname(n$) = 0 THEN Give_Error "Invalid name": EXIT SUB
+    END IF
 
     'register case sensitive name if none given
-    If Asc(id.cn) = 32 Then
-        n$ = RTrim$(id.n)
-        id.n = UCase$(n$)
+    IF ASC(id.cn) = 32 THEN
+        n$ = RTRIM$(id.n)
+        id.n = UCASE$(n$)
         id.cn = n$
-    End If
+    END IF
 
     id.insubfunc = subfunc
     id.insubfuncn = subfuncn
 
     'note: cannot be STATIC and SHARED at the same time
-    If dimshared Then
+    IF dimshared THEN
         id.share = dimshared
-    Else
-        If dimstatic Then id.staticscope = 1
-    End If
+    ELSE
+        IF dimstatic THEN id.staticscope = 1
+    END IF
 
     ids(idn) = id
 
@@ -21296,201 +21296,201 @@ Sub regid
 
     'sub/function?
     'Note: QBASIC does not allow: Internal type names (INTEGER,LONG,...)
-    If id.subfunc Then
+    IF id.subfunc THEN
         ids(currentid).internal_subfunc = reginternalsubfunc
-        If id.subfunc = 1 Then hashflags = hashflags + HASHFLAG_FUNCTION Else hashflags = hashflags + HASHFLAG_SUB
-        If reginternalsubfunc = 0 Then 'allow internal definition of subs/functions without checks
+        IF id.subfunc = 1 THEN hashflags = hashflags + HASHFLAG_FUNCTION ELSE hashflags = hashflags + HASHFLAG_SUB
+        IF reginternalsubfunc = 0 THEN 'allow internal definition of subs/functions without checks
             hashchkflags = HASHFLAG_RESERVED + HASHFLAG_CONSTANT
-            If id.subfunc = 1 Then hashchkflags = hashchkflags + HASHFLAG_FUNCTION Else hashchkflags = hashchkflags + HASHFLAG_SUB
+            IF id.subfunc = 1 THEN hashchkflags = hashchkflags + HASHFLAG_FUNCTION ELSE hashchkflags = hashchkflags + HASHFLAG_SUB
             hashres = HashFind(n$, hashchkflags, hashresflags, hashresref)
-            Do While hashres
-                If hashres Then
+            DO WHILE hashres
+                IF hashres THEN
                     'Note: Numeric sub/function names like 'mid' do not clash with Internal string sub/function names
                     '      like 'MID$' because MID$ always requires a '$'. For user defined string sub/function names
                     '      the '$' would be optional so the rule should not be applied there.
                     allow = 0
-                    If hashresflags And (HASHFLAG_FUNCTION + HASHFLAG_SUB) Then
-                        If RTrim$(ids(hashresref).musthave) = "$" Then
-                            If InStr(ids(currentid).mayhave, "$") = 0 Then allow = 1
-                        End If
-                    End If
-                    If allow = 0 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                End If 'hashres
-                If hashres <> 1 Then hashres = HashFindCont(hashresflags, hashresref) Else hashres = 0
-            Loop
-            If idemode Then
-                If InStr(listOfCustomKeywords$, "@" + UCase$(n$) + "@") = 0 Then
-                    listOfCustomKeywords$ = listOfCustomKeywords$ + "@" + UCase$(n$) + "@"
-                End If
-            End If
-        End If 'reginternalsubfunc = 0
-    End If
+                    IF hashresflags AND (HASHFLAG_FUNCTION + HASHFLAG_SUB) THEN
+                        IF RTRIM$(ids(hashresref).musthave) = "$" THEN
+                            IF INSTR(ids(currentid).mayhave, "$") = 0 THEN allow = 1
+                        END IF
+                    END IF
+                    IF allow = 0 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                END IF 'hashres
+                IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
+            LOOP
+            IF idemode THEN
+                IF INSTR(listOfCustomKeywords$, "@" + UCASE$(n$) + "@") = 0 THEN
+                    listOfCustomKeywords$ = listOfCustomKeywords$ + "@" + UCASE$(n$) + "@"
+                END IF
+            END IF
+        END IF 'reginternalsubfunc = 0
+    END IF
 
     'variable?
-    If id.t Then
+    IF id.t THEN
         hashflags = hashflags + HASHFLAG_VARIABLE
-        If reginternalvariable = 0 Then
+        IF reginternalvariable = 0 THEN
             allow = 0
             var_recheck:
-            If Asc(id.musthave) = 32 Then astype2 = 1 '"AS type" declaration?
+            IF ASC(id.musthave) = 32 THEN astype2 = 1 '"AS type" declaration?
             scope2 = subfuncn
             hashchkflags = HASHFLAG_RESERVED + HASHFLAG_SUB + HASHFLAG_FUNCTION + HASHFLAG_CONSTANT + HASHFLAG_VARIABLE
             hashres = HashFind(n$, hashchkflags, hashresflags, hashresref)
-            Do While hashres
+            DO WHILE hashres
 
                 'conflict with reserved word?
-                If hashresflags And HASHFLAG_RESERVED Then
-                    musthave$ = RTrim$(id.musthave)
-                    If InStr(musthave$, "$") Then
+                IF hashresflags AND HASHFLAG_RESERVED THEN
+                    musthave$ = RTRIM$(id.musthave)
+                    IF INSTR(musthave$, "$") THEN
                         'All reserved words can be used as variables in QBASIC if "$" is appended to the variable name!
                         '(allow)
-                    Else
-                        Give_Error "Name already in use (" + n$ + ")": Exit Sub 'Conflicts with reserved word
-                    End If
-                End If 'HASHFLAG_RESERVED
+                    ELSE
+                        Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'Conflicts with reserved word
+                    END IF
+                END IF 'HASHFLAG_RESERVED
 
                 'conflict with sub/function?
-                If hashresflags And (HASHFLAG_FUNCTION + HASHFLAG_SUB) Then
-                    If ids(hashresref).internal_subfunc = 0 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub 'QBASIC doesn't allow a variable of the same name as a user-defined sub/func
-                    If RTrim$(id.n) = "WIDTH" And ids(hashresref).subfunc = 2 Then GoTo varname_exception
-                    musthave$ = RTrim$(id.musthave)
-                    If Len(musthave$) = 0 Then
-                        If RTrim$(ids(hashresref).musthave) = "$" Then
+                IF hashresflags AND (HASHFLAG_FUNCTION + HASHFLAG_SUB) THEN
+                    IF ids(hashresref).internal_subfunc = 0 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'QBASIC doesn't allow a variable of the same name as a user-defined sub/func
+                    IF RTRIM$(id.n) = "WIDTH" AND ids(hashresref).subfunc = 2 THEN GOTO varname_exception
+                    musthave$ = RTRIM$(id.musthave)
+                    IF LEN(musthave$) = 0 THEN
+                        IF RTRIM$(ids(hashresref).musthave) = "$" THEN
                             'a sub/func requiring "$" can co-exist with implicit numeric variables
-                            If InStr(id.mayhave, "$") Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                        Else
-                            Give_Error "Name already in use (" + n$ + ")": Exit Sub 'Implicitly defined variables cannot conflict with sub/func names
-                        End If
-                    End If 'len(musthave$)=0
-                    If InStr(musthave$, "$") Then
-                        If RTrim$(ids(hashresref).musthave) = "$" Then Give_Error "Name already in use (" + n$ + ")": Exit Sub 'A sub/function name already exists as a string
+                            IF INSTR(id.mayhave, "$") THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                        ELSE
+                            Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'Implicitly defined variables cannot conflict with sub/func names
+                        END IF
+                    END IF 'len(musthave$)=0
+                    IF INSTR(musthave$, "$") THEN
+                        IF RTRIM$(ids(hashresref).musthave) = "$" THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'A sub/function name already exists as a string
                         '(allow)
-                    Else
-                        If RTrim$(ids(hashresref).musthave) <> "$" Then Give_Error "Name already in use (" + n$ + ")": Exit Sub 'A non-"$" sub/func name already exists with this name
-                    End If
-                End If 'HASHFLAG_FUNCTION + HASHFLAG_SUB
+                    ELSE
+                        IF RTRIM$(ids(hashresref).musthave) <> "$" THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'A non-"$" sub/func name already exists with this name
+                    END IF
+                END IF 'HASHFLAG_FUNCTION + HASHFLAG_SUB
 
                 'conflict with constant?
-                If hashresflags And HASHFLAG_CONSTANT Then
+                IF hashresflags AND HASHFLAG_CONSTANT THEN
                     scope1 = constsubfunc(hashresref)
-                    If (scope1 = 0 And AllowLocalName = 0) Or scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                End If
+                    IF (scope1 = 0 AND AllowLocalName = 0) OR scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                END IF
 
                 'conflict with variable?
-                If hashresflags And HASHFLAG_VARIABLE Then
-                    astype1 = 0: If Asc(ids(hashresref).musthave) = 32 Then astype1 = 1
+                IF hashresflags AND HASHFLAG_VARIABLE THEN
+                    astype1 = 0: IF ASC(ids(hashresref).musthave) = 32 THEN astype1 = 1
                     scope1 = ids(hashresref).insubfuncn
-                    If astype1 = 1 And astype2 = 1 Then
-                        If scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                    End If
+                    IF astype1 = 1 AND astype2 = 1 THEN
+                        IF scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                    END IF
                     'same type?
-                    If id.t = ids(hashresref).t Then
-                        If id.tsize = ids(hashresref).tsize Then
-                            If scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                        End If
-                    End If
+                    IF id.t = ids(hashresref).t THEN
+                        IF id.tsize = ids(hashresref).tsize THEN
+                            IF scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                        END IF
+                    END IF
                     'will astype'd fixed STRING-variable mask a non-fixed string?
-                    If id.t And ISFIXEDLENGTH Then
-                        If astype2 = 1 Then
-                            If ids(hashresref).t And ISSTRING Then
-                                If (ids(hashresref).t And ISFIXEDLENGTH) = 0 Then
-                                    If scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                                End If
-                            End If
-                        End If
-                    End If
-                End If
+                    IF id.t AND ISFIXEDLENGTH THEN
+                        IF astype2 = 1 THEN
+                            IF ids(hashresref).t AND ISSTRING THEN
+                                IF (ids(hashresref).t AND ISFIXEDLENGTH) = 0 THEN
+                                    IF scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                                END IF
+                            END IF
+                        END IF
+                    END IF
+                END IF
 
                 varname_exception:
-                If hashres <> 1 Then hashres = HashFindCont(hashresflags, hashresref) Else hashres = 0
-            Loop
-        End If 'reginternalvariable
-    End If 'variable
+                IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
+            LOOP
+        END IF 'reginternalvariable
+    END IF 'variable
 
     'array?
-    If id.arraytype Then
+    IF id.arraytype THEN
         hashflags = hashflags + HASHFLAG_ARRAY
         allow = 0
         ary_recheck:
         scope2 = subfuncn
-        If Asc(id.musthave) = 32 Then astype2 = 1 '"AS type" declaration?
+        IF ASC(id.musthave) = 32 THEN astype2 = 1 '"AS type" declaration?
         hashchkflags = HASHFLAG_RESERVED + HASHFLAG_SUB + HASHFLAG_FUNCTION + HASHFLAG_ARRAY
         hashres = HashFind(n$, hashchkflags, hashresflags, hashresref)
-        Do While hashres
+        DO WHILE hashres
 
             'conflict with reserved word?
-            If hashresflags And HASHFLAG_RESERVED Then
-                musthave$ = RTrim$(id.musthave)
-                If InStr(musthave$, "$") Then
+            IF hashresflags AND HASHFLAG_RESERVED THEN
+                musthave$ = RTRIM$(id.musthave)
+                IF INSTR(musthave$, "$") THEN
                     'All reserved words can be used as variables in QBASIC if "$" is appended to the variable name!
                     '(allow)
-                Else
-                    Give_Error "Name already in use (" + n$ + ")": Exit Sub 'Conflicts with reserved word
-                End If
-            End If 'HASHFLAG_RESERVED
+                ELSE
+                    Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'Conflicts with reserved word
+                END IF
+            END IF 'HASHFLAG_RESERVED
 
             'conflict with sub/function?
-            If hashresflags And (HASHFLAG_FUNCTION + HASHFLAG_SUB) Then
-                If ids(hashresref).internal_subfunc = 0 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub 'QBASIC doesn't allow a variable of the same name as a user-defined sub/func
-                If RTrim$(id.n) = "WIDTH" And ids(hashresref).subfunc = 2 Then GoTo arrayname_exception
-                musthave$ = RTrim$(id.musthave)
+            IF hashresflags AND (HASHFLAG_FUNCTION + HASHFLAG_SUB) THEN
+                IF ids(hashresref).internal_subfunc = 0 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'QBASIC doesn't allow a variable of the same name as a user-defined sub/func
+                IF RTRIM$(id.n) = "WIDTH" AND ids(hashresref).subfunc = 2 THEN GOTO arrayname_exception
+                musthave$ = RTRIM$(id.musthave)
 
-                If Len(musthave$) = 0 Then
-                    If RTrim$(ids(hashresref).musthave) = "$" Then
+                IF LEN(musthave$) = 0 THEN
+                    IF RTRIM$(ids(hashresref).musthave) = "$" THEN
                         'a sub/func requiring "$" can co-exist with implicit numeric variables
-                        If InStr(id.mayhave, "$") Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                    Else
-                        Give_Error "Name already in use (" + n$ + ")": Exit Sub 'Implicitly defined variables cannot conflict with sub/func names
-                    End If
-                End If 'len(musthave$)=0
-                If InStr(musthave$, "$") Then
-                    If RTrim$(ids(hashresref).musthave) = "$" Then Give_Error "Name already in use (" + n$ + ")": Exit Sub 'A sub/function name already exists as a string
+                        IF INSTR(id.mayhave, "$") THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                    ELSE
+                        Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'Implicitly defined variables cannot conflict with sub/func names
+                    END IF
+                END IF 'len(musthave$)=0
+                IF INSTR(musthave$, "$") THEN
+                    IF RTRIM$(ids(hashresref).musthave) = "$" THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'A sub/function name already exists as a string
                     '(allow)
-                Else
-                    If RTrim$(ids(hashresref).musthave) <> "$" Then Give_Error "Name already in use (" + n$ + ")": Exit Sub 'A non-"$" sub/func name already exists with this name
-                End If
-            End If 'HASHFLAG_FUNCTION + HASHFLAG_SUB
+                ELSE
+                    IF RTRIM$(ids(hashresref).musthave) <> "$" THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB 'A non-"$" sub/func name already exists with this name
+                END IF
+            END IF 'HASHFLAG_FUNCTION + HASHFLAG_SUB
 
             'conflict with array?
-            If hashresflags And HASHFLAG_ARRAY Then
-                astype1 = 0: If Asc(ids(hashresref).musthave) = 32 Then astype1 = 1
+            IF hashresflags AND HASHFLAG_ARRAY THEN
+                astype1 = 0: IF ASC(ids(hashresref).musthave) = 32 THEN astype1 = 1
                 scope1 = ids(hashresref).insubfuncn
-                If astype1 = 1 And astype2 = 1 Then
-                    If scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                End If
+                IF astype1 = 1 AND astype2 = 1 THEN
+                    IF scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                END IF
                 'same type?
-                If id.arraytype = ids(hashresref).arraytype Then
-                    If id.tsize = ids(hashresref).tsize Then
-                        If scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                    End If
-                End If
+                IF id.arraytype = ids(hashresref).arraytype THEN
+                    IF id.tsize = ids(hashresref).tsize THEN
+                        IF scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                    END IF
+                END IF
                 'will astype'd fixed STRING-variable mask a non-fixed string?
-                If id.arraytype And ISFIXEDLENGTH Then
-                    If astype2 = 1 Then
-                        If ids(hashresref).arraytype And ISSTRING Then
-                            If (ids(hashresref).arraytype And ISFIXEDLENGTH) = 0 Then
-                                If scope1 = scope2 Then Give_Error "Name already in use (" + n$ + ")": Exit Sub
-                            End If
-                        End If
-                    End If
-                End If
-            End If
+                IF id.arraytype AND ISFIXEDLENGTH THEN
+                    IF astype2 = 1 THEN
+                        IF ids(hashresref).arraytype AND ISSTRING THEN
+                            IF (ids(hashresref).arraytype AND ISFIXEDLENGTH) = 0 THEN
+                                IF scope1 = scope2 THEN Give_Error "Name already in use (" + n$ + ")": EXIT SUB
+                            END IF
+                        END IF
+                    END IF
+                END IF
+            END IF
 
             arrayname_exception:
-            If hashres <> 1 Then hashres = HashFindCont(hashresflags, hashresref) Else hashres = 0
-        Loop
-    End If 'array
+            IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
+        LOOP
+    END IF 'array
 
     'add it to the hash table
     HashAdd n$, hashflags, currentid
 
-End Sub
+END SUB
 
-Sub reginternal
+SUB reginternal
     reginternalsubfunc = 1
     '$INCLUDE:'subs_functions\subs_functions.bas'
     reginternalsubfunc = 0
-End Sub
+END SUB
 
 'this sub is faulty atm!
 'sub replacelement (a$, i, newe$)
@@ -21515,138 +21515,138 @@ End Sub
 'end sub
 
 
-Sub removeelements (a$, first, last, keepindexing)
+SUB removeelements (a$, first, last, keepindexing)
     a2$ = ""
     'note: first and last MUST be valid
     '      keepindexing means the number of elements will stay the same
     '       but some elements will be equal to ""
 
     n = numelements(a$)
-    For i = 1 To n
-        If i < first Or i > last Then
+    FOR i = 1 TO n
+        IF i < first OR i > last THEN
             a2$ = a2$ + sp + getelement(a$, i)
-        Else
-            If keepindexing Then a2$ = a2$ + sp
-        End If
-    Next
-    If Left$(a2$, 1) = sp Then a2$ = Right$(a2$, Len(a2$) - 1)
+        ELSE
+            IF keepindexing THEN a2$ = a2$ + sp
+        END IF
+    NEXT
+    IF LEFT$(a2$, 1) = sp THEN a2$ = RIGHT$(a2$, LEN(a2$) - 1)
 
     a$ = a2$
 
-End Sub
+END SUB
 
 
 
-Function symboltype (s$) 'returns type or 0(not a valid symbol)
+FUNCTION symboltype (s$) 'returns type or 0(not a valid symbol)
     'note: sets symboltype_size for fixed length strings
     'created: 2011 (fast & comprehensive)
-    If Len(s$) = 0 Then Exit Function
+    IF LEN(s$) = 0 THEN EXIT FUNCTION
     'treat common cases first
-    a = Asc(s$)
-    l = Len(s$)
-    If a = 37 Then '%
-        If l = 1 Then symboltype = 16: Exit Function
-        If l > 2 Then Exit Function
-        If Asc(s$, 2) = 37 Then symboltype = 8: Exit Function
-        If Asc(s$, 2) = 38 Then symboltype = OFFSETTYPE - ISPOINTER: Exit Function '%&
-        Exit Function
-    End If
-    If a = 38 Then '&
-        If l = 1 Then symboltype = 32: Exit Function
-        If l > 2 Then Exit Function
-        If Asc(s$, 2) = 38 Then symboltype = 64: Exit Function
-        Exit Function
-    End If
-    If a = 33 Then '!
-        If l = 1 Then symboltype = 32 + ISFLOAT: Exit Function
-        Exit Function
-    End If
-    If a = 35 Then '#
-        If l = 1 Then symboltype = 64 + ISFLOAT: Exit Function
-        If l > 2 Then Exit Function
-        If Asc(s$, 2) = 35 Then symboltype = 64 + ISFLOAT: Exit Function
-        Exit Function
-    End If
-    If a = 36 Then '$
-        If l = 1 Then symboltype = ISSTRING: Exit Function
-        If isuinteger(Right$(s$, l - 1)) Then
-            If l >= (1 + 10) Then
-                If l > (1 + 10) Then Exit Function
-                If s$ > "$2147483647" Then Exit Function
-            End If
-            symboltype_size = Val(Right$(s$, l - 1))
+    a = ASC(s$)
+    l = LEN(s$)
+    IF a = 37 THEN '%
+        IF l = 1 THEN symboltype = 16: EXIT FUNCTION
+        IF l > 2 THEN EXIT FUNCTION
+        IF ASC(s$, 2) = 37 THEN symboltype = 8: EXIT FUNCTION
+        IF ASC(s$, 2) = 38 THEN symboltype = OFFSETTYPE - ISPOINTER: EXIT FUNCTION '%&
+        EXIT FUNCTION
+    END IF
+    IF a = 38 THEN '&
+        IF l = 1 THEN symboltype = 32: EXIT FUNCTION
+        IF l > 2 THEN EXIT FUNCTION
+        IF ASC(s$, 2) = 38 THEN symboltype = 64: EXIT FUNCTION
+        EXIT FUNCTION
+    END IF
+    IF a = 33 THEN '!
+        IF l = 1 THEN symboltype = 32 + ISFLOAT: EXIT FUNCTION
+        EXIT FUNCTION
+    END IF
+    IF a = 35 THEN '#
+        IF l = 1 THEN symboltype = 64 + ISFLOAT: EXIT FUNCTION
+        IF l > 2 THEN EXIT FUNCTION
+        IF ASC(s$, 2) = 35 THEN symboltype = 64 + ISFLOAT: EXIT FUNCTION
+        EXIT FUNCTION
+    END IF
+    IF a = 36 THEN '$
+        IF l = 1 THEN symboltype = ISSTRING: EXIT FUNCTION
+        IF isuinteger(RIGHT$(s$, l - 1)) THEN
+            IF l >= (1 + 10) THEN
+                IF l > (1 + 10) THEN EXIT FUNCTION
+                IF s$ > "$2147483647" THEN EXIT FUNCTION
+            END IF
+            symboltype_size = VAL(RIGHT$(s$, l - 1))
             symboltype = ISSTRING + ISFIXEDLENGTH
-            Exit Function
-        End If
-        Exit Function
-    End If
-    If a = 96 Then '`
-        If l = 1 Then symboltype = 1 + ISOFFSETINBITS: Exit Function
-        If isuinteger(Right$(s$, l - 1)) Then
-            If l > 3 Then Exit Function
-            n = Val(Right$(s$, l - 1))
-            If n > 64 Then Exit Function
-            symboltype = n + ISOFFSETINBITS: Exit Function
-        End If
-        Exit Function
-    End If
-    If a = 126 Then '~
-        If l = 1 Then Exit Function
-        a = Asc(s$, 2)
-        If a = 37 Then '%
-            If l = 2 Then symboltype = 16 + ISUNSIGNED: Exit Function
-            If l > 3 Then Exit Function
-            If Asc(s$, 3) = 37 Then symboltype = 8 + ISUNSIGNED: Exit Function
-            If Asc(s$, 3) = 38 Then symboltype = UOFFSETTYPE - ISPOINTER: Exit Function '~%&
-            Exit Function
-        End If
-        If a = 38 Then '&
-            If l = 2 Then symboltype = 32 + ISUNSIGNED: Exit Function
-            If l > 3 Then Exit Function
-            If Asc(s$, 3) = 38 Then symboltype = 64 + ISUNSIGNED: Exit Function
-            Exit Function
-        End If
-        If a = 96 Then '`
-            If l = 2 Then symboltype = 1 + ISOFFSETINBITS + ISUNSIGNED: Exit Function
-            If isuinteger(Right$(s$, l - 2)) Then
-                If l > 4 Then Exit Function
-                n = Val(Right$(s$, l - 2))
-                If n > 64 Then Exit Function
-                symboltype = n + ISOFFSETINBITS + ISUNSIGNED: Exit Function
-            End If
-            Exit Function
-        End If
-    End If '~
-End Function
+            EXIT FUNCTION
+        END IF
+        EXIT FUNCTION
+    END IF
+    IF a = 96 THEN '`
+        IF l = 1 THEN symboltype = 1 + ISOFFSETINBITS: EXIT FUNCTION
+        IF isuinteger(RIGHT$(s$, l - 1)) THEN
+            IF l > 3 THEN EXIT FUNCTION
+            n = VAL(RIGHT$(s$, l - 1))
+            IF n > 64 THEN EXIT FUNCTION
+            symboltype = n + ISOFFSETINBITS: EXIT FUNCTION
+        END IF
+        EXIT FUNCTION
+    END IF
+    IF a = 126 THEN '~
+        IF l = 1 THEN EXIT FUNCTION
+        a = ASC(s$, 2)
+        IF a = 37 THEN '%
+            IF l = 2 THEN symboltype = 16 + ISUNSIGNED: EXIT FUNCTION
+            IF l > 3 THEN EXIT FUNCTION
+            IF ASC(s$, 3) = 37 THEN symboltype = 8 + ISUNSIGNED: EXIT FUNCTION
+            IF ASC(s$, 3) = 38 THEN symboltype = UOFFSETTYPE - ISPOINTER: EXIT FUNCTION '~%&
+            EXIT FUNCTION
+        END IF
+        IF a = 38 THEN '&
+            IF l = 2 THEN symboltype = 32 + ISUNSIGNED: EXIT FUNCTION
+            IF l > 3 THEN EXIT FUNCTION
+            IF ASC(s$, 3) = 38 THEN symboltype = 64 + ISUNSIGNED: EXIT FUNCTION
+            EXIT FUNCTION
+        END IF
+        IF a = 96 THEN '`
+            IF l = 2 THEN symboltype = 1 + ISOFFSETINBITS + ISUNSIGNED: EXIT FUNCTION
+            IF isuinteger(RIGHT$(s$, l - 2)) THEN
+                IF l > 4 THEN EXIT FUNCTION
+                n = VAL(RIGHT$(s$, l - 2))
+                IF n > 64 THEN EXIT FUNCTION
+                symboltype = n + ISOFFSETINBITS + ISUNSIGNED: EXIT FUNCTION
+            END IF
+            EXIT FUNCTION
+        END IF
+    END IF '~
+END FUNCTION
 
-Function removesymbol$ (varname$)
-    i = InStr(varname$, "~"): If i Then GoTo foundsymbol
-    i = InStr(varname$, "`"): If i Then GoTo foundsymbol
-    i = InStr(varname$, "%"): If i Then GoTo foundsymbol
-    i = InStr(varname$, "&"): If i Then GoTo foundsymbol
-    i = InStr(varname$, "!"): If i Then GoTo foundsymbol
-    i = InStr(varname$, "#"): If i Then GoTo foundsymbol
-    i = InStr(varname$, "$"): If i Then GoTo foundsymbol
-    Exit Function
+FUNCTION removesymbol$ (varname$)
+    i = INSTR(varname$, "~"): IF i THEN GOTO foundsymbol
+    i = INSTR(varname$, "`"): IF i THEN GOTO foundsymbol
+    i = INSTR(varname$, "%"): IF i THEN GOTO foundsymbol
+    i = INSTR(varname$, "&"): IF i THEN GOTO foundsymbol
+    i = INSTR(varname$, "!"): IF i THEN GOTO foundsymbol
+    i = INSTR(varname$, "#"): IF i THEN GOTO foundsymbol
+    i = INSTR(varname$, "$"): IF i THEN GOTO foundsymbol
+    EXIT FUNCTION
     foundsymbol:
-    If i = 1 Then Give_Error "Expected variable name before symbol": Exit Function
-    symbol$ = Right$(varname$, Len(varname$) - i + 1)
-    If symboltype(symbol$) = 0 Then Give_Error "Invalid symbol": Exit Function
+    IF i = 1 THEN Give_Error "Expected variable name before symbol": EXIT FUNCTION
+    symbol$ = RIGHT$(varname$, LEN(varname$) - i + 1)
+    IF symboltype(symbol$) = 0 THEN Give_Error "Invalid symbol": EXIT FUNCTION
     removesymbol$ = symbol$
-    varname$ = Left$(varname$, i - 1)
-End Function
+    varname$ = LEFT$(varname$, i - 1)
+END FUNCTION
 
-Function scope$
-    If id.share Then scope$ = module$ + "__": Exit Function
+FUNCTION scope$
+    IF id.share THEN scope$ = module$ + "__": EXIT FUNCTION
     scope$ = module$ + "_" + subfunc$ + "_"
-End Function
+END FUNCTION
 
-Function seperateargs (a$, ca$, pass&)
+FUNCTION seperateargs (a$, ca$, pass&)
     pass& = 0
 
-    For i = 1 To OptMax: separgs(i) = "": Next
-    For i = 1 To OptMax + 1: separgslayout(i) = "": Next
-    For i = 1 To OptMax
+    FOR i = 1 TO OptMax: separgs(i) = "": NEXT
+    FOR i = 1 TO OptMax + 1: separgslayout(i) = "": NEXT
+    FOR i = 1 TO OptMax
         Lev(i) = 0
         EntryLev(i) = 0
         DitchLev(i) = 0
@@ -21654,24 +21654,24 @@ Function seperateargs (a$, ca$, pass&)
         TempList(i) = 0
         PassRule(i) = 0
         LevelEntered(i) = 0
-    Next
+    NEXT
 
-    Dim id2 As idstruct
+    DIM id2 AS idstruct
 
     id2 = id
 
-    If id2.args = 0 Then Exit Function 'no arguments!
+    IF id2.args = 0 THEN EXIT FUNCTION 'no arguments!
 
 
     s$ = id2.specialformat
-    s$ = RTrim$(s$)
+    s$ = RTRIM$(s$)
 
     'build a special format if none exists
-    If s$ = "" Then
-        For i = 1 To id2.args
-            If i <> 1 Then s$ = s$ + ",?" Else s$ = "?"
-        Next
-    End If
+    IF s$ = "" THEN
+        FOR i = 1 TO id2.args
+            IF i <> 1 THEN s$ = s$ + ",?" ELSE s$ = "?"
+        NEXT
+    END IF
 
     'note: dim'd arrays moved to global to prevent high recreation cost
 
@@ -21681,75 +21681,75 @@ Function seperateargs (a$, ca$, pass&)
     level = 0
     lastt = 0
     ditchlevel = 0
-    For i = 1 To Len(s$)
-        s2$ = Mid$(s$, i, 1)
+    FOR i = 1 TO LEN(s$)
+        s2$ = MID$(s$, i, 1)
 
-        If s2$ = "[" Then
+        IF s2$ = "[" THEN
             level = level + 1
             LevelEntered(level) = 0
-            GoTo nextsymbol
-        End If
+            GOTO nextsymbol
+        END IF
 
-        If s2$ = "]" Then
+        IF s2$ = "]" THEN
             level = level - 1
-            If level < ditchlevel Then ditchlevel = level
-            GoTo nextsymbol
-        End If
+            IF level < ditchlevel THEN ditchlevel = level
+            GOTO nextsymbol
+        END IF
 
-        If s2$ = "{" Then
+        IF s2$ = "{" THEN
             lastt = lastt + 1: Lev(lastt) = level: PassRule(lastt) = 0
             DitchLev(lastt) = ditchlevel: ditchlevel = level 'store & reset ditch level
             i = i + 1
-            i2 = InStr(i, s$, "}")
+            i2 = INSTR(i, s$, "}")
             numopts = 0
             nextopt:
             numopts = numopts + 1
-            i3 = InStr(i + 1, s$, "|")
-            If i3 <> 0 And i3 < i2 Then
-                Opt(lastt, numopts) = Mid$(s$, i, i3 - i)
-                i = i3 + 1: GoTo nextopt
-            End If
-            Opt(lastt, numopts) = Mid$(s$, i, i2 - i)
+            i3 = INSTR(i + 1, s$, "|")
+            IF i3 <> 0 AND i3 < i2 THEN
+                Opt(lastt, numopts) = MID$(s$, i, i3 - i)
+                i = i3 + 1: GOTO nextopt
+            END IF
+            Opt(lastt, numopts) = MID$(s$, i, i2 - i)
             T(lastt) = numopts
             'calculate words in each option
-            For x = 1 To T(lastt)
+            FOR x = 1 TO T(lastt)
                 w = 1
                 x2 = 1
                 newword:
-                If InStr(x2, RTrim$(Opt(lastt, x)), " ") Then w = w + 1: x2 = InStr(x2, RTrim$(Opt(lastt, x)), " ") + 1: GoTo newword
+                IF INSTR(x2, RTRIM$(Opt(lastt, x)), " ") THEN w = w + 1: x2 = INSTR(x2, RTRIM$(Opt(lastt, x)), " ") + 1: GOTO newword
                 OptWords(lastt, x) = w
-            Next
+            NEXT
             i = i2
 
             'set entry level routine
             EntryLev(lastt) = level 'default level when continuing a previously entered level
-            If LevelEntered(level) = 0 Then
+            IF LevelEntered(level) = 0 THEN
                 EntryLev(lastt) = 0
-                For i2 = 1 To level - 1
-                    If LevelEntered(i2) = 1 Then EntryLev(lastt) = i2
-                Next
-            End If
+                FOR i2 = 1 TO level - 1
+                    IF LevelEntered(i2) = 1 THEN EntryLev(lastt) = i2
+                NEXT
+            END IF
             LevelEntered(level) = 1
 
-            GoTo nextsymbol
-        End If
+            GOTO nextsymbol
+        END IF
 
-        If s2$ = "?" Then
+        IF s2$ = "?" THEN
             lastt = lastt + 1: Lev(lastt) = level: PassRule(lastt) = 0
             DitchLev(lastt) = ditchlevel: ditchlevel = level 'store & reset ditch level
             T(lastt) = 0
             'set entry level routine
             EntryLev(lastt) = level 'default level when continuing a previously entered level
-            If LevelEntered(level) = 0 Then
+            IF LevelEntered(level) = 0 THEN
                 EntryLev(lastt) = 0
-                For i2 = 1 To level - 1
-                    If LevelEntered(i2) = 1 Then EntryLev(lastt) = i2
-                Next
-            End If
+                FOR i2 = 1 TO level - 1
+                    IF LevelEntered(i2) = 1 THEN EntryLev(lastt) = i2
+                NEXT
+            END IF
             LevelEntered(level) = 1
 
-            GoTo nextsymbol
-        End If
+            GOTO nextsymbol
+        END IF
 
         'assume "special" character (like ( ) , . - etc.)
         lastt = lastt + 1: Lev(lastt) = level: PassRule(lastt) = 0
@@ -21758,55 +21758,55 @@ Function seperateargs (a$, ca$, pass&)
 
         'set entry level routine
         EntryLev(lastt) = level 'default level when continuing a previously entered level
-        If LevelEntered(level) = 0 Then
+        IF LevelEntered(level) = 0 THEN
             EntryLev(lastt) = 0
-            For i2 = 1 To level - 1
-                If LevelEntered(i2) = 1 Then EntryLev(lastt) = i2
-            Next
-        End If
+            FOR i2 = 1 TO level - 1
+                IF LevelEntered(i2) = 1 THEN EntryLev(lastt) = i2
+            NEXT
+        END IF
         LevelEntered(level) = 1
 
-        GoTo nextsymbol
+        GOTO nextsymbol
 
         nextsymbol:
-    Next
+    NEXT
 
 
-    If Debug Then
-        Print #9, "--------SEPERATE ARGUMENTS REPORT #1:1--------"
-        For i = 1 To lastt
-            Print #9, i, "OPT=" + Chr$(34) + RTrim$(Opt(i, 1)) + Chr$(34)
-            Print #9, i, "OPTWORDS="; OptWords(i, 1)
-            Print #9, i, "T="; T(i)
-            Print #9, i, "DONTPASS="; DontPass(i)
-            Print #9, i, "PASSRULE="; PassRule(i)
-            Print #9, i, "LEV="; Lev(i)
-            Print #9, i, "ENTRYLEV="; EntryLev(i)
-        Next
-    End If
+    IF Debug THEN
+        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #1:1--------"
+        FOR i = 1 TO lastt
+            PRINT #9, i, "OPT=" + CHR$(34) + RTRIM$(Opt(i, 1)) + CHR$(34)
+            PRINT #9, i, "OPTWORDS="; OptWords(i, 1)
+            PRINT #9, i, "T="; T(i)
+            PRINT #9, i, "DONTPASS="; DontPass(i)
+            PRINT #9, i, "PASSRULE="; PassRule(i)
+            PRINT #9, i, "LEV="; Lev(i)
+            PRINT #9, i, "ENTRYLEV="; EntryLev(i)
+        NEXT
+    END IF
 
 
     'Any symbols already have dontpass() set to 1
     'This sets any {}blocks with only one option/word (eg. {PRINT}) at the lowest level to dontpass()=1
     'because their content is manadatory and there is no choice as to which word to use
-    For x = 1 To lastt
-        If Lev(x) = 0 Then
-            If T(x) = 1 Then DontPass(x) = 1
-        End If
-    Next
+    FOR x = 1 TO lastt
+        IF Lev(x) = 0 THEN
+            IF T(x) = 1 THEN DontPass(x) = 1
+        END IF
+    NEXT
 
-    If Debug Then
-        Print #9, "--------SEPERATE ARGUMENTS REPORT #1:2--------"
-        For i = 1 To lastt
-            Print #9, i, "OPT=" + Chr$(34) + RTrim$(Opt(i, 1)) + Chr$(34)
-            Print #9, i, "OPTWORDS="; OptWords(i, 1)
-            Print #9, i, "T="; T(i)
-            Print #9, i, "DONTPASS="; DontPass(i)
-            Print #9, i, "PASSRULE="; PassRule(i)
-            Print #9, i, "LEV="; Lev(i)
-            Print #9, i, "ENTRYLEV="; EntryLev(i)
-        Next
-    End If
+    IF Debug THEN
+        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #1:2--------"
+        FOR i = 1 TO lastt
+            PRINT #9, i, "OPT=" + CHR$(34) + RTRIM$(Opt(i, 1)) + CHR$(34)
+            PRINT #9, i, "OPTWORDS="; OptWords(i, 1)
+            PRINT #9, i, "T="; T(i)
+            PRINT #9, i, "DONTPASS="; DontPass(i)
+            PRINT #9, i, "PASSRULE="; PassRule(i)
+            PRINT #9, i, "LEV="; Lev(i)
+            PRINT #9, i, "ENTRYLEV="; EntryLev(i)
+        NEXT
+    END IF
 
 
 
@@ -21819,127 +21819,127 @@ Function seperateargs (a$, ca$, pass&)
     '      has to be made, in such cases, a flag is preferable to wasting a full new int32 on 'hello'
 
     templistn = 0
-    For l = 1 To 32767
+    FOR l = 1 TO 32767
         scannextlevel = 0
-        For x = 1 To lastt
-            If Lev(x) > l Then scannextlevel = 1
+        FOR x = 1 TO lastt
+            IF Lev(x) > l THEN scannextlevel = 1
 
-            If x1 Then
-                If EntryLev(x) < l Then 'end of block reached
-                    If MustPassOpt Then
+            IF x1 THEN
+                IF EntryLev(x) < l THEN 'end of block reached
+                    IF MustPassOpt THEN
                         'If there's an opt () which must be passed that will be identified,
                         'all the 1 option {}blocks can be assumed...
-                        If MustPassOptNeedsFlag Then
+                        IF MustPassOptNeedsFlag THEN
                             'The MustPassOpt requires a flag, so use the same flag for everything
-                            For x2 = 1 To templistn
+                            FOR x2 = 1 TO templistn
                                 PassRule(TempList(x2)) = PassFlag
-                            Next
+                            NEXT
                             PassFlag = PassFlag * 2
-                        Else
+                        ELSE
                             'The MustPassOpt is a {}block which doesn't need a flag, so everything else needs to
                             'reference it
-                            For x2 = 1 To templistn
-                                If TempList(x2) <> MustPassOpt Then PassRule(TempList(x2)) = -MustPassOpt
-                            Next
-                        End If
-                    Else
+                            FOR x2 = 1 TO templistn
+                                IF TempList(x2) <> MustPassOpt THEN PassRule(TempList(x2)) = -MustPassOpt
+                            NEXT
+                        END IF
+                    ELSE
                         'if not, use a unique flag for everything in this block
-                        For x2 = 1 To templistn: PassRule(TempList(x2)) = PassFlag: Next
-                        If templistn <> 0 Then PassFlag = PassFlag * 2
-                    End If
+                        FOR x2 = 1 TO templistn: PassRule(TempList(x2)) = PassFlag: NEXT
+                        IF templistn <> 0 THEN PassFlag = PassFlag * 2
+                    END IF
                     x1 = 0
-                End If
-            End If
+                END IF
+            END IF
 
 
-            If Lev(x) = l Then 'on same level
-                If EntryLev(x) < l Then 'just (re)entered this level (not continuing along it)
+            IF Lev(x) = l THEN 'on same level
+                IF EntryLev(x) < l THEN 'just (re)entered this level (not continuing along it)
                     x1 = x 'set x1 to the starting element of this level
                     MustPassOpt = 0
                     templistn = 0
-                End If
-            End If
+                END IF
+            END IF
 
-            If x1 Then
-                If Lev(x) = l Then 'same level
+            IF x1 THEN
+                IF Lev(x) = l THEN 'same level
 
-                    If T(x) <> 1 Then
+                    IF T(x) <> 1 THEN
                         'It isn't a symbol or a {}block with only one option therefore this opt () must be passed
-                        If MustPassOpt = 0 Then
+                        IF MustPassOpt = 0 THEN
                             MustPassOpt = x 'Only record the first instance (it MAY require a flag)
-                            If T(x) = 0 Then MustPassOptNeedsFlag = 1 Else MustPassOptNeedsFlag = 0
-                        Else
+                            IF T(x) = 0 THEN MustPassOptNeedsFlag = 1 ELSE MustPassOptNeedsFlag = 0
+                        ELSE
                             'Update current MustPassOpt to non-flag-based {}block if possible (to save flag usage)
                             '(Consider [{A|B}?], where a flag is not required)
-                            If MustPassOptNeedsFlag = 1 Then
-                                If T(x) > 1 Then
+                            IF MustPassOptNeedsFlag = 1 THEN
+                                IF T(x) > 1 THEN
                                     MustPassOpt = x: MustPassOptNeedsFlag = 0
-                                End If
-                            End If
-                        End If
+                                END IF
+                            END IF
+                        END IF
                         'add to list
                         templistn = templistn + 1: TempList(templistn) = x
-                    End If
+                    END IF
 
-                    If T(x) = 1 Then
+                    IF T(x) = 1 THEN
                         'It is a symbol or a {}block with only one option
                         'a {}block with only one option MAY not need to be passed
                         'depending on if anything else is in this block could make the existance of this opt () assumed
                         'Note: Symbols which are not encapsulated inside a {}block never need to be passed
                         '      Symbols already have dontpass() set to 1
-                        If DontPass(x) = 0 Then templistn = templistn + 1: TempList(templistn) = x: DontPass(x) = 1
-                    End If
+                        IF DontPass(x) = 0 THEN templistn = templistn + 1: TempList(templistn) = x: DontPass(x) = 1
+                    END IF
 
-                End If
-            End If
+                END IF
+            END IF
 
-        Next
+        NEXT
 
         'scan last run (mostly just a copy of code from above)
-        If x1 Then
-            If MustPassOpt Then
+        IF x1 THEN
+            IF MustPassOpt THEN
                 'If there's an opt () which must be passed that will be identified,
                 'all the 1 option {}blocks can be assumed...
-                If MustPassOptNeedsFlag Then
+                IF MustPassOptNeedsFlag THEN
                     'The MustPassOpt requires a flag, so use the same flag for everything
-                    For x2 = 1 To templistn
+                    FOR x2 = 1 TO templistn
                         PassRule(TempList(x2)) = PassFlag
-                    Next
+                    NEXT
                     PassFlag = PassFlag * 2
-                Else
+                ELSE
                     'The MustPassOpt is a {}block which doesn't need a flag, so everything else needs to
                     'reference it
-                    For x2 = 1 To templistn
-                        If TempList(x2) <> MustPassOpt Then PassRule(TempList(x2)) = -MustPassOpt
-                    Next
-                End If
-            Else
+                    FOR x2 = 1 TO templistn
+                        IF TempList(x2) <> MustPassOpt THEN PassRule(TempList(x2)) = -MustPassOpt
+                    NEXT
+                END IF
+            ELSE
                 'if not, use a unique flag for everything in this block
-                For x2 = 1 To templistn: PassRule(TempList(x2)) = PassFlag: Next
-                If templistn <> 0 Then PassFlag = PassFlag * 2
-            End If
+                FOR x2 = 1 TO templistn: PassRule(TempList(x2)) = PassFlag: NEXT
+                IF templistn <> 0 THEN PassFlag = PassFlag * 2
+            END IF
             x1 = 0
-        End If
+        END IF
 
-        If scannextlevel = 0 Then Exit For
-    Next
+        IF scannextlevel = 0 THEN EXIT FOR
+    NEXT
 
-    If Debug Then
-        Print #9, "--------SEPERATE ARGUMENTS REPORT #1:3--------"
-        For i = 1 To lastt
-            Print #9, i, "OPT=" + Chr$(34) + RTrim$(Opt(i, 1)) + Chr$(34)
-            Print #9, i, "OPTWORDS="; OptWords(i, 1)
-            Print #9, i, "T="; T(i)
-            Print #9, i, "DONTPASS="; DontPass(i)
-            Print #9, i, "PASSRULE="; PassRule(i)
-            Print #9, i, "LEV="; Lev(i)
-            Print #9, i, "ENTRYLEV="; EntryLev(i)
-        Next
-    End If
+    IF Debug THEN
+        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #1:3--------"
+        FOR i = 1 TO lastt
+            PRINT #9, i, "OPT=" + CHR$(34) + RTRIM$(Opt(i, 1)) + CHR$(34)
+            PRINT #9, i, "OPTWORDS="; OptWords(i, 1)
+            PRINT #9, i, "T="; T(i)
+            PRINT #9, i, "DONTPASS="; DontPass(i)
+            PRINT #9, i, "PASSRULE="; PassRule(i)
+            PRINT #9, i, "LEV="; Lev(i)
+            PRINT #9, i, "ENTRYLEV="; EntryLev(i)
+        NEXT
+    END IF
 
 
 
-    For i = 1 To lastt: separgs(i) = "n-ll": Next
+    FOR i = 1 TO lastt: separgs(i) = "n-ll": NEXT
 
 
 
@@ -21958,51 +21958,51 @@ Function seperateargs (a$, ca$, pass&)
     'An expression ("?") simply means a branch where you can scan ahead
 
     Branches = 0
-    Dim BranchFormatPos(1 To 100) As Long
-    Dim BranchTaken(1 To 100) As Long
+    DIM BranchFormatPos(1 TO 100) AS LONG
+    DIM BranchTaken(1 TO 100) AS LONG
     '1=taken (this usually involves moving up a level)
     '0=not taken
-    Dim BranchInputPos(1 To 100) As Long
-    Dim BranchWithExpression(1 To 100) As Long
+    DIM BranchInputPos(1 TO 100) AS LONG
+    DIM BranchWithExpression(1 TO 100) AS LONG
     'non-zero=expression expected before next item for format item value represents
     '0=no expression allowed before next item
-    Dim BranchLevel(1 To 100) As Long 'Level before this branch was/wasn't taken
+    DIM BranchLevel(1 TO 100) AS LONG 'Level before this branch was/wasn't taken
 
     n = numelements(ca$)
     i = 1 'Position within ca$
 
     level = 0
     Expression = 0
-    For x = 1 To lastt
+    FOR x = 1 TO lastt
 
         ContinueScan:
 
-        If DitchLev(x) < level Then 'dropping down to a lower level
+        IF DitchLev(x) < level THEN 'dropping down to a lower level
             'we can only go as low as the 'ditch' will allow us, which will limit our options
             level = DitchLev(x)
-        End If
+        END IF
 
-        If EntryLev(x) <= level Then 'possible to enter level
+        IF EntryLev(x) <= level THEN 'possible to enter level
 
             'But was this optional or were we forced to be on this level?
-            If EntryLev(x) < Lev(x) Then
+            IF EntryLev(x) < Lev(x) THEN
                 optional = 1
-                If level > EntryLev(x) Then optional = 0
-            Else
+                IF level > EntryLev(x) THEN optional = 0
+            ELSE
                 'entrylev=lev
                 optional = 0
-            End If
+            END IF
 
             t = T(x)
 
-            If t = 0 Then 'A "?" expression
-                If Expression Then
+            IF t = 0 THEN 'A "?" expression
+                IF Expression THEN
                     '*********backtrack************
                     'We are tracking an expression which we assumed would be present but was not
-                    GoTo Backtrack
+                    GOTO Backtrack
                     '******************************
-                End If
-                If optional Then
+                END IF
+                IF optional THEN
                     Branches = Branches + 1
                     BranchFormatPos(Branches) = x
                     BranchTaken(Branches) = 1
@@ -22010,27 +22010,27 @@ Function seperateargs (a$, ca$, pass&)
                     BranchWithExpression(Branches) = 0
                     BranchLevel(Branches) = level
                     level = Lev(x)
-                End If
+                END IF
                 Expression = x
-            End If 'A "?" expression
+            END IF 'A "?" expression
 
-            If t Then
+            IF t THEN
 
                 currentlev = level
 
                 'Add new branch if new level will be entered
-                If optional Then
+                IF optional THEN
                     Branches = Branches + 1
                     BranchFormatPos(Branches) = x
                     BranchTaken(Branches) = 1
                     BranchInputPos(Branches) = i
                     BranchWithExpression(Branches) = Expression
                     BranchLevel(Branches) = level
-                End If
+                END IF
 
                 'Scan for Opt () options
                 i1 = i: i2 = i
-                If Expression Then i2 = n
+                IF Expression THEN i2 = n
                 'Scan a$ for opt () x
                 'Note: Finding the closest opt option is necessary
                 'Note: This needs to be bracket sensitive
@@ -22038,94 +22038,94 @@ Function seperateargs (a$, ca$, pass&)
                 position = OutOfRange
                 which = 0
                 removePrefix = 0
-                If i <= n Then 'Past end of contect check
-                    For o = 1 To t
+                IF i <= n THEN 'Past end of contect check
+                    FOR o = 1 TO t
                         words = OptWords(x, o)
                         b = 0
-                        For i3 = i1 To i2
-                            If i3 + words - 1 <= n Then 'enough elements exist
+                        FOR i3 = i1 TO i2
+                            IF i3 + words - 1 <= n THEN 'enough elements exist
                                 c$ = getelement$(a$, i3)
-                                If b = 0 Then
+                                IF b = 0 THEN
                                     'Build comparison string (spacing elements)
-                                    For w = 2 To words
+                                    FOR w = 2 TO words
                                         c$ = c$ + " " + getelement$(a$, i3 + w - 1)
-                                    Next w
+                                    NEXT w
                                     'Compare
-                                    noPrefixMatch = Left$(Opt(x, o), 1) = "_" And qb64prefix_set = 1 And c$ = UCase$(Mid$(RTrim$(Opt(x, o)), 2))
-                                    If c$ = UCase$(RTrim$(Opt(x, o))) Or noPrefixMatch Then
+                                    noPrefixMatch = LEFT$(Opt(x, o), 1) = "_" AND qb64prefix_set = 1 AND c$ = UCASE$(MID$(RTRIM$(Opt(x, o)), 2))
+                                    IF c$ = UCASE$(RTRIM$(Opt(x, o))) OR noPrefixMatch THEN
                                         'Record Match
-                                        If i3 < position Then
+                                        IF i3 < position THEN
                                             position = i3
                                             which = o
-                                            If noPrefixMatch Then removePrefix = 1
+                                            IF noPrefixMatch THEN removePrefix = 1
                                             bvalue = b
-                                            Exit For 'Exit the i3 loop
-                                        End If 'position check
-                                    End If 'match
-                                End If
+                                            EXIT FOR 'Exit the i3 loop
+                                        END IF 'position check
+                                    END IF 'match
+                                END IF
 
-                                If Asc(c$) = 44 And b = 0 Then
-                                    Exit For 'Expressions cannot contain a "," in their base level
+                                IF ASC(c$) = 44 AND b = 0 THEN
+                                    EXIT FOR 'Expressions cannot contain a "," in their base level
                                     'Because this wasn't interceppted by the above code it isn't the Opt either
-                                End If
-                                If Asc(c$) = 40 Then
+                                END IF
+                                IF ASC(c$) = 40 THEN
                                     b = b + 1
-                                End If
-                                If Asc(c$) = 41 Then
+                                END IF
+                                IF ASC(c$) = 41 THEN
                                     b = b - 1
-                                    If b = -1 Then Exit For 'Exited current bracketting level, making any following match invalid
-                                End If
+                                    IF b = -1 THEN EXIT FOR 'Exited current bracketting level, making any following match invalid
+                                END IF
 
-                            End If 'enough elements exist
-                        Next i3
-                    Next o
-                End If 'Past end of contect check
+                            END IF 'enough elements exist
+                        NEXT i3
+                    NEXT o
+                END IF 'Past end of contect check
 
-                If position <> OutOfRange Then 'Found?
+                IF position <> OutOfRange THEN 'Found?
                     'Found...
                     level = Lev(x) 'Adjust level
-                    If Expression Then
+                    IF Expression THEN
                         'Found...Expression...
                         'Has an expression been provided?
-                        If position > i And bvalue = 0 Then
+                        IF position > i AND bvalue = 0 THEN
                             'Found...Expression...Provided...
                             separgs(Expression) = getelements$(ca$, i, position - 1)
                             Expression = 0
                             i = position
-                        Else
+                        ELSE
                             'Found...Expression...Omitted...
                             '*********backtrack************
-                            GoTo OptCheckBacktrack
+                            GOTO OptCheckBacktrack
                             '******************************
-                        End If
-                    End If 'Expression
+                        END IF
+                    END IF 'Expression
                     i = i + OptWords(x, which)
-                    separgslayout(x) = Chr$(Len(RTrim$(Opt(x, which))) - removePrefix) + SCase$(Mid$(RTrim$(Opt(x, which)), removePrefix + 1))
-                    separgs(x) = Chr$(0) + str2(which)
-                Else
+                    separgslayout(x) = CHR$(LEN(RTRIM$(Opt(x, which))) - removePrefix) + SCase$(MID$(RTRIM$(Opt(x, which)), removePrefix + 1))
+                    separgs(x) = CHR$(0) + str2(which)
+                ELSE
                     'Not Found...
                     '*********backtrack************
                     OptCheckBacktrack:
                     'Was this optional?
-                    If Lev(x) > EntryLev(x) Then 'Optional Opt ()?
+                    IF Lev(x) > EntryLev(x) THEN 'Optional Opt ()?
                         'Not Found...Optional...
                         'Simply don't enter the optional higher level and continue as normal
                         BranchTaken(Branches) = 0
                         level = currentlev 'We aren't entering the level after all, so our level should remain at the opt's entrylevel
-                    Else
+                    ELSE
                         Backtrack:
                         'Not Found...Mandatory...
                         '1)Erase previous branches where both options have been tried
-                        For branch = Branches To 1 Step -1 'Remove branches until last taken branch is found
-                            If BranchTaken(branch) Then Exit For
+                        FOR branch = Branches TO 1 STEP -1 'Remove branches until last taken branch is found
+                            IF BranchTaken(branch) THEN EXIT FOR
                             Branches = Branches - 1 'Remove branch (it has already been tried with both possible combinations)
-                        Next
-                        If Branches = 0 Then 'All options have been exhausted
+                        NEXT
+                        IF Branches = 0 THEN 'All options have been exhausted
                             seperateargs_error = 1
                             seperateargs_error_message = "Syntax error"
-                            If Len(id2.hr_syntax) > 0 Then seperateargs_error_message = seperateargs_error_message + " - Reference: " + id2.hr_syntax
-                            Exit Function
-                        End If
+                            IF LEN(id2.hr_syntax) > 0 THEN seperateargs_error_message = seperateargs_error_message + " - Reference: " + id2.hr_syntax
+                            EXIT FUNCTION
+                        END IF
                         '2)Toggle taken branch to untaken and revert
                         BranchTaken(Branches) = 0 'toggle branch to untaken
                         Expression = BranchWithExpression(Branches)
@@ -22133,59 +22133,59 @@ Function seperateargs (a$, ca$, pass&)
                         x = BranchFormatPos(Branches)
                         level = BranchLevel(Branches)
                         '3)Erase any content created after revert position
-                        If Expression Then separgs(Expression) = "n-ll"
-                        For x2 = x To lastt
+                        IF Expression THEN separgs(Expression) = "n-ll"
+                        FOR x2 = x TO lastt
                             separgs(x2) = "n-ll"
                             separgslayout(x2) = ""
-                        Next
-                    End If 'Optional Opt ()?
+                        NEXT
+                    END IF 'Optional Opt ()?
                     '******************************
 
-                End If 'Found?
+                END IF 'Found?
 
-            End If 't
+            END IF 't
 
-        End If 'possible to enter level
+        END IF 'possible to enter level
 
-    Next x
+    NEXT x
 
     'Final expression?
-    If Expression Then
-        If i <= n Then
+    IF Expression THEN
+        IF i <= n THEN
             separgs(Expression) = getelements$(ca$, i, n)
 
             'can this be an expression?
             'check it passes bracketting and comma rules
             b = 0
-            For i2 = i To n
+            FOR i2 = i TO n
                 c$ = getelement$(a$, i2)
-                If Asc(c$) = 44 And b = 0 Then
-                    GoTo Backtrack
-                End If
-                If Asc(c$) = 40 Then
+                IF ASC(c$) = 44 AND b = 0 THEN
+                    GOTO Backtrack
+                END IF
+                IF ASC(c$) = 40 THEN
                     b = b + 1
-                End If
-                If Asc(c$) = 41 Then
+                END IF
+                IF ASC(c$) = 41 THEN
                     b = b - 1
-                    If b = -1 Then GoTo Backtrack
-                End If
-            Next
-            If b <> 0 Then GoTo Backtrack
+                    IF b = -1 THEN GOTO Backtrack
+                END IF
+            NEXT
+            IF b <> 0 THEN GOTO Backtrack
 
             i = n + 1 'So it passes the test below
-        Else
-            GoTo Backtrack
-        End If
-    End If 'Expression
+        ELSE
+            GOTO Backtrack
+        END IF
+    END IF 'Expression
 
-    If i <> n + 1 Then GoTo Backtrack 'Trailing content?
+    IF i <> n + 1 THEN GOTO Backtrack 'Trailing content?
 
-    If Debug Then
-        Print #9, "--------SEPERATE ARGUMENTS REPORT #2--------"
-        For i = 1 To lastt
-            Print #9, i, separgs(i)
-        Next
-    End If
+    IF Debug THEN
+        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #2--------"
+        FOR i = 1 TO lastt
+            PRINT #9, i, separgs(i)
+        NEXT
+    END IF
 
     '   DIM PassRule(1 TO 100) AS LONG
     '   '0 means no pass rule
@@ -22194,47 +22194,47 @@ Function seperateargs (a$, ca$, pass&)
     '   PassFlag = 1
 
 
-    If PassFlag <> 1 Then seperateargs = 1 'Return whether a 'passed' flags variable is required
+    IF PassFlag <> 1 THEN seperateargs = 1 'Return whether a 'passed' flags variable is required
     pass& = 0 'The 'passed' value (shared by argument reference)
 
     'Note: The separgs() elements will be compacted to the C++ function arguments
     x = 1 'The new index to move compacted content to within separgs()
 
-    For i = 1 To lastt
+    FOR i = 1 TO lastt
 
-        If DontPass(i) = 0 Then
+        IF DontPass(i) = 0 THEN
 
-            If PassRule(i) > 0 Then
-                If separgs(i) <> "n-ll" Then pass& = pass& Or PassRule(i) 'build 'passed' flags
-            End If
+            IF PassRule(i) > 0 THEN
+                IF separgs(i) <> "n-ll" THEN pass& = pass& OR PassRule(i) 'build 'passed' flags
+            END IF
 
             separgs(x) = separgs(i)
             separgslayout(x) = separgslayout(i)
 
-            If Len(separgs(x)) Then
-                If Asc(separgs(x)) = 0 Then
+            IF LEN(separgs(x)) THEN
+                IF ASC(separgs(x)) = 0 THEN
                     'switch omit layout tag from item to layout info
-                    separgs(x) = Right$(separgs(x), Len(separgs(x)) - 1)
-                    separgslayout(x) = separgslayout(x) + Chr$(0)
-                End If
-            End If
+                    separgs(x) = RIGHT$(separgs(x), LEN(separgs(x)) - 1)
+                    separgslayout(x) = separgslayout(x) + CHR$(0)
+                END IF
+            END IF
 
-            If separgs(x) = "n-ll" Then separgs(x) = "N-LL"
+            IF separgs(x) = "n-ll" THEN separgs(x) = "N-LL"
             x = x + 1
 
-        Else
+        ELSE
             'its gonna be skipped!
             'add layout to the next one to be safe
 
             'for syntax such as [{HELLO}] which uses a flag instead of being passed
-            If PassRule(i) > 0 Then
-                If separgs(i) <> "n-ll" Then pass& = pass& Or PassRule(i) 'build 'passed' flags
-            End If
+            IF PassRule(i) > 0 THEN
+                IF separgs(i) <> "n-ll" THEN pass& = pass& OR PassRule(i) 'build 'passed' flags
+            END IF
 
             separgslayout(i + 1) = separgslayout(i) + separgslayout(i + 1)
 
-        End If
-    Next
+        END IF
+    NEXT
     separgslayout(x) = separgslayout(i) 'set final layout
 
     'x = x - 1
@@ -22242,12 +22242,12 @@ Function seperateargs (a$, ca$, pass&)
     'PRINT "pass omit (0/1):"; omit
     'PRINT "pass&="; pass&
 
-End Function
+END FUNCTION
 
-Sub setrefer (a2$, typ2 As Long, e2$, method As Long)
+SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
     a$ = a2$: typ = typ2: e$ = e2$
-    If method <> 1 Then e$ = fixoperationorder$(e$)
-    If Error_Happened Then Exit Sub
+    IF method <> 1 THEN e$ = fixoperationorder$(e$)
+    IF Error_Happened THEN EXIT SUB
     tl$ = tlayout$
 
     'method: 0 evaulatetotyp e$
@@ -22256,649 +22256,649 @@ Sub setrefer (a2$, typ2 As Long, e2$, method As Long)
     ' this function handles the problem
 
     'retrieve ID
-    i = InStr(a$, sp3)
-    If i Then
-        idnumber = Val(Left$(a$, i - 1)): a$ = Right$(a$, Len(a$) - i)
-    Else
-        idnumber = Val(a$)
-    End If
+    i = INSTR(a$, sp3)
+    IF i THEN
+        idnumber = VAL(LEFT$(a$, i - 1)): a$ = RIGHT$(a$, LEN(a$) - i)
+    ELSE
+        idnumber = VAL(a$)
+    END IF
     getid idnumber
-    If Error_Happened Then Exit Sub
+    IF Error_Happened THEN EXIT SUB
 
     'UDT?
-    If typ And ISUDT Then
+    IF typ AND ISUDT THEN
 
         'print "setrefer-ing a UDT!"
-        u = Val(a$)
-        i = InStr(a$, sp3): a$ = Right$(a$, Len(a$) - i): E = Val(a$)
-        i = InStr(a$, sp3): o$ = Right$(a$, Len(a$) - i)
-        n$ = "UDT_" + RTrim$(id.n): If id.t = 0 Then n$ = "ARRAY_" + n$ + "[0]"
+        u = VAL(a$)
+        i = INSTR(a$, sp3): a$ = RIGHT$(a$, LEN(a$) - i): E = VAL(a$)
+        i = INSTR(a$, sp3): o$ = RIGHT$(a$, LEN(a$) - i)
+        n$ = "UDT_" + RTRIM$(id.n): IF id.t = 0 THEN n$ = "ARRAY_" + n$ + "[0]"
 
-        If E <> 0 And u = 1 Then 'Setting _MEM type elements is not allowed!
-            Give_Error "Cannot set read-only element of _MEM TYPE": Exit Sub
-        End If
+        IF E <> 0 AND u = 1 THEN 'Setting _MEM type elements is not allowed!
+            Give_Error "Cannot set read-only element of _MEM TYPE": EXIT SUB
+        END IF
 
-        If E = 0 Then
+        IF E = 0 THEN
             'use u and u's size
 
-            If method <> 0 Then Give_Error "Unexpected internal code reference to UDT": Exit Sub
+            IF method <> 0 THEN Give_Error "Unexpected internal code reference to UDT": EXIT SUB
             lhsscope$ = scope$
             e$ = evaluate(e$, t2)
-            If Error_Happened Then Exit Sub
-            If (t2 And ISUDT) = 0 Then Give_Error "Expected = similar user defined type": Exit Sub
+            IF Error_Happened THEN EXIT SUB
+            IF (t2 AND ISUDT) = 0 THEN Give_Error "Expected = similar user defined type": EXIT SUB
 
-            If (t2 And ISREFERENCE) = 0 Then
-                If t2 And ISPOINTER Then
+            IF (t2 AND ISREFERENCE) = 0 THEN
+                IF t2 AND ISPOINTER THEN
                     src$ = "((char*)" + e$ + ")"
-                    e2 = 0: u2 = t2 And 511
-                Else
+                    e2 = 0: u2 = t2 AND 511
+                ELSE
                     src$ = "((char*)&" + e$ + ")"
-                    e2 = 0: u2 = t2 And 511
-                End If
-                GoTo directudt
-            End If
+                    e2 = 0: u2 = t2 AND 511
+                END IF
+                GOTO directudt
+            END IF
 
             '****problem****
-            idnumber2 = Val(e$)
+            idnumber2 = VAL(e$)
             getid idnumber2
 
 
-            If Error_Happened Then Exit Sub
-            n2$ = "UDT_" + RTrim$(id.n): If id.t = 0 Then n2$ = "ARRAY_" + n2$ + "[0]"
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i): u2 = Val(e$)
-            i = InStr(e$, sp3): e$ = Right$(e$, Len(e$) - i): e2 = Val(e$)
-            i = InStr(e$, sp3): o2$ = Right$(e$, Len(e$) - i)
+            IF Error_Happened THEN EXIT SUB
+            n2$ = "UDT_" + RTRIM$(id.n): IF id.t = 0 THEN n2$ = "ARRAY_" + n2$ + "[0]"
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i): u2 = VAL(e$)
+            i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i): e2 = VAL(e$)
+            i = INSTR(e$, sp3): o2$ = RIGHT$(e$, LEN(e$) - i)
             'WARNING: u2 may need minor modifications based on e to see if they are the same
 
             'we have now established we have 2 pointers to similar data types!
             'ASSUME BYTE TYPE!!!
             src$ = "((char*)" + scope$ + n2$ + ")+(" + o2$ + ")"
             directudt:
-            If u <> u2 Or e2 <> 0 Then Give_Error "Expected = similar user defined type": Exit Sub
+            IF u <> u2 OR e2 <> 0 THEN Give_Error "Expected = similar user defined type": EXIT SUB
             dst$ = "((char*)" + lhsscope$ + n$ + ")+(" + o$ + ")"
             copy_full_udt dst$, src$, 12, 0, u
 
             'print "setFULLUDTrefer!"
 
             tlayout$ = tl$
-            Exit Sub
+            EXIT SUB
 
-        End If 'e=0
+        END IF 'e=0
 
-        If typ And ISOFFSETINBITS Then Give_Error "Cannot resolve bit-length variables inside user defined types": Exit Sub
-        If typ And ISSTRING Then
-            If typ And ISFIXEDLENGTH Then
+        IF typ AND ISOFFSETINBITS THEN Give_Error "Cannot resolve bit-length variables inside user defined types": EXIT SUB
+        IF typ AND ISSTRING THEN
+            IF typ AND ISFIXEDLENGTH THEN
                 o2$ = "(((uint8*)" + scope$ + n$ + ")+(" + o$ + "))"
                 r$ = "qbs_new_fixed(" + o2$ + "," + str2(udtetypesize(E)) + ",1)"
-            Else
+            ELSE
                 r$ = "*((qbs**)((char*)(" + scope$ + n$ + ")+(" + o$ + ")))"
-            End If
-            If method = 0 Then e$ = evaluatetotyp(e$, STRINGTYPE - ISPOINTER)
-            If Error_Happened Then Exit Sub
-            Print #12, "qbs_set(" + r$ + "," + e$ + ");"
-            Print #12, cleanupstringprocessingcall$ + "0);"
-        Else
+            END IF
+            IF method = 0 THEN e$ = evaluatetotyp(e$, STRINGTYPE - ISPOINTER)
+            IF Error_Happened THEN EXIT SUB
+            PRINT #12, "qbs_set(" + r$ + "," + e$ + ");"
+            PRINT #12, cleanupstringprocessingcall$ + "0);"
+        ELSE
             typ = typ - ISUDT - ISREFERENCE - ISPOINTER
-            If typ And ISARRAY Then typ = typ - ISARRAY
+            IF typ AND ISARRAY THEN typ = typ - ISARRAY
             t$ = typ2ctyp$(typ, "")
-            If Error_Happened Then Exit Sub
+            IF Error_Happened THEN EXIT SUB
             o2$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
             r$ = "*" + "(" + t$ + "*)" + o2$
-            If method = 0 Then e$ = evaluatetotyp(e$, typ)
-            If Error_Happened Then Exit Sub
-            Print #12, r$ + "=" + e$ + ";"
-        End If
+            IF method = 0 THEN e$ = evaluatetotyp(e$, typ)
+            IF Error_Happened THEN EXIT SUB
+            PRINT #12, r$ + "=" + e$ + ";"
+        END IF
 
         'print "setUDTrefer:"+r$,e$
         tlayout$ = tl$
-        If Left$(r$, 1) = "*" Then r$ = Mid$(r$, 2)
-        Exit Sub
-    End If
+        IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
+        EXIT SUB
+    END IF
 
 
     'array?
-    If id.arraytype Then
-        n$ = RTrim$(id.callname)
+    IF id.arraytype THEN
+        n$ = RTRIM$(id.callname)
         typ = typ - ISPOINTER - ISREFERENCE 'typ now looks like a regular value
 
-        If (typ And ISSTRING) Then
-            If (typ And ISFIXEDLENGTH) Then
+        IF (typ AND ISSTRING) THEN
+            IF (typ AND ISFIXEDLENGTH) THEN
                 offset$ = "&((uint8*)(" + n$ + "[0]))[tmp_long*" + str2(id.tsize) + "]"
                 r$ = "qbs_new_fixed(" + offset$ + "," + str2(id.tsize) + ",1)"
-                Print #12, "tmp_long=" + a$ + ";"
-                If method = 0 Then
+                PRINT #12, "tmp_long=" + a$ + ";"
+                IF method = 0 THEN
                     l$ = "if (!new_error) qbs_set(" + r$ + "," + evaluatetotyp(e$, typ) + ");"
-                    If Error_Happened Then Exit Sub
-                Else
+                    IF Error_Happened THEN EXIT SUB
+                ELSE
                     l$ = "if (!new_error) qbs_set(" + r$ + "," + e$ + ");"
-                End If
-                Print #12, l$
-            Else
-                Print #12, "tmp_long=" + a$ + ";"
-                If method = 0 Then
+                END IF
+                PRINT #12, l$
+            ELSE
+                PRINT #12, "tmp_long=" + a$ + ";"
+                IF method = 0 THEN
                     l$ = "if (!new_error) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
-                    If Error_Happened Then Exit Sub
-                Else
+                    IF Error_Happened THEN EXIT SUB
+                ELSE
                     l$ = "if (!new_error) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
-                End If
-                Print #12, l$
-            End If
-            Print #12, cleanupstringprocessingcall$ + "0);"
+                END IF
+                PRINT #12, l$
+            END IF
+            PRINT #12, cleanupstringprocessingcall$ + "0);"
             tlayout$ = tl$
-            If Left$(r$, 1) = "*" Then r$ = Mid$(r$, 2)
-            Exit Sub
-        End If
+            IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
+            EXIT SUB
+        END IF
 
-        If (typ And ISOFFSETINBITS) Then
+        IF (typ AND ISOFFSETINBITS) THEN
             'r$ = "setbits_" + str2(typ AND 511) + "("
-            r$ = "setbits(" + str2(typ And 511) + ","
+            r$ = "setbits(" + str2(typ AND 511) + ","
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ",tmp_long,"
-            Print #12, "tmp_long=" + a$ + ";"
-            If method = 0 Then
+            PRINT #12, "tmp_long=" + a$ + ";"
+            IF method = 0 THEN
                 l$ = "if (!new_error) " + r$ + evaluatetotyp(e$, typ) + ");"
-                If Error_Happened Then Exit Sub
-            Else
+                IF Error_Happened THEN EXIT SUB
+            ELSE
                 l$ = "if (!new_error) " + r$ + e$ + ");"
-            End If
-            Print #12, l$
+            END IF
+            PRINT #12, l$
             tlayout$ = tl$
-            Exit Sub
-        Else
+            EXIT SUB
+        ELSE
             t$ = ""
-            If (typ And ISFLOAT) Then
-                If (typ And 511) = 32 Then t$ = "float"
-                If (typ And 511) = 64 Then t$ = "double"
-                If (typ And 511) = 256 Then t$ = "long double"
-            Else
-                If (typ And ISUNSIGNED) Then
-                    If (typ And 511) = 8 Then t$ = "uint8"
-                    If (typ And 511) = 16 Then t$ = "uint16"
-                    If (typ And 511) = 32 Then t$ = "uint32"
-                    If (typ And 511) = 64 Then t$ = "uint64"
-                    If typ And ISOFFSET Then t$ = "uptrszint"
-                Else
-                    If (typ And 511) = 8 Then t$ = "int8"
-                    If (typ And 511) = 16 Then t$ = "int16"
-                    If (typ And 511) = 32 Then t$ = "int32"
-                    If (typ And 511) = 64 Then t$ = "int64"
-                    If typ And ISOFFSET Then t$ = "ptrszint"
-                End If
-            End If
-        End If
-        If t$ = "" Then Give_Error "Cannot find C type to return array data": Exit Sub
-        Print #12, "tmp_long=" + a$ + ";"
-        If method = 0 Then
+            IF (typ AND ISFLOAT) THEN
+                IF (typ AND 511) = 32 THEN t$ = "float"
+                IF (typ AND 511) = 64 THEN t$ = "double"
+                IF (typ AND 511) = 256 THEN t$ = "long double"
+            ELSE
+                IF (typ AND ISUNSIGNED) THEN
+                    IF (typ AND 511) = 8 THEN t$ = "uint8"
+                    IF (typ AND 511) = 16 THEN t$ = "uint16"
+                    IF (typ AND 511) = 32 THEN t$ = "uint32"
+                    IF (typ AND 511) = 64 THEN t$ = "uint64"
+                    IF typ AND ISOFFSET THEN t$ = "uptrszint"
+                ELSE
+                    IF (typ AND 511) = 8 THEN t$ = "int8"
+                    IF (typ AND 511) = 16 THEN t$ = "int16"
+                    IF (typ AND 511) = 32 THEN t$ = "int32"
+                    IF (typ AND 511) = 64 THEN t$ = "int64"
+                    IF typ AND ISOFFSET THEN t$ = "ptrszint"
+                END IF
+            END IF
+        END IF
+        IF t$ = "" THEN Give_Error "Cannot find C type to return array data": EXIT SUB
+        PRINT #12, "tmp_long=" + a$ + ";"
+        IF method = 0 THEN
             l$ = "if (!new_error) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + evaluatetotyp(e$, typ) + ";"
-            If Error_Happened Then Exit Sub
-        Else
+            IF Error_Happened THEN EXIT SUB
+        ELSE
             l$ = "if (!new_error) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + e$ + ";"
-        End If
+        END IF
 
-        Print #12, l$
+        PRINT #12, l$
         tlayout$ = tl$
-        Exit Sub
-    End If 'array
+        EXIT SUB
+    END IF 'array
 
     'variable?
-    If id.t Then
-        r$ = RTrim$(id.n)
+    IF id.t THEN
+        r$ = RTRIM$(id.n)
         t = id.t
         'remove irrelavant flags
-        If (t And ISINCONVENTIONALMEMORY) Then t = t - ISINCONVENTIONALMEMORY
+        IF (t AND ISINCONVENTIONALMEMORY) THEN t = t - ISINCONVENTIONALMEMORY
         typ = t
 
         'string variable?
-        If (t And ISSTRING) Then
-            If (t And ISFIXEDLENGTH) Then
+        IF (t AND ISSTRING) THEN
+            IF (t AND ISFIXEDLENGTH) THEN
                 r$ = scope$ + "STRING" + str2(id.tsize) + "_" + r$
-            Else
+            ELSE
                 r$ = scope$ + "STRING_" + r$
-            End If
-            If method = 0 Then e$ = evaluatetotyp(e$, ISSTRING)
-            If Error_Happened Then Exit Sub
-            Print #12, "qbs_set(" + r$ + "," + e$ + ");"
-            Print #12, cleanupstringprocessingcall$ + "0);"
-            If arrayprocessinghappened Then arrayprocessinghappened = 0
+            END IF
+            IF method = 0 THEN e$ = evaluatetotyp(e$, ISSTRING)
+            IF Error_Happened THEN EXIT SUB
+            PRINT #12, "qbs_set(" + r$ + "," + e$ + ");"
+            PRINT #12, cleanupstringprocessingcall$ + "0);"
+            IF arrayprocessinghappened THEN arrayprocessinghappened = 0
             tlayout$ = tl$
-            If Left$(r$, 1) = "*" Then r$ = Mid$(r$, 2)
-            Exit Sub
-        End If
+            IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
+            EXIT SUB
+        END IF
 
         'bit-length variable?
-        If (t And ISOFFSETINBITS) Then
-            b = t And 511
-            If (t And ISUNSIGNED) Then
-                r$ = "*" + scope$ + "UBIT" + str2(t And 511) + "_" + r$
-                If method = 0 Then e$ = evaluatetotyp(e$, 64& + ISUNSIGNED)
-                If Error_Happened Then Exit Sub
+        IF (t AND ISOFFSETINBITS) THEN
+            b = t AND 511
+            IF (t AND ISUNSIGNED) THEN
+                r$ = "*" + scope$ + "UBIT" + str2(t AND 511) + "_" + r$
+                IF method = 0 THEN e$ = evaluatetotyp(e$, 64& + ISUNSIGNED)
+                IF Error_Happened THEN EXIT SUB
                 l$ = r$ + "=(" + e$ + ")&" + str2(bitmask(b)) + ";"
-                Print #12, l$
-            Else
-                r$ = "*" + scope$ + "BIT" + str2(t And 511) + "_" + r$
-                If method = 0 Then e$ = evaluatetotyp(e$, 64&)
-                If Error_Happened Then Exit Sub
+                PRINT #12, l$
+            ELSE
+                r$ = "*" + scope$ + "BIT" + str2(t AND 511) + "_" + r$
+                IF method = 0 THEN e$ = evaluatetotyp(e$, 64&)
+                IF Error_Happened THEN EXIT SUB
                 l$ = "if ((" + r$ + "=" + e$ + ")&" + str2(2 ^ (b - 1)) + "){"
-                Print #12, l$
+                PRINT #12, l$
                 'signed bit is set
                 l$ = r$ + "|=" + str2(bitmaskinv(b)) + ";"
-                Print #12, l$
-                Print #12, "}else{"
+                PRINT #12, l$
+                PRINT #12, "}else{"
                 'signed bit is not set
                 l$ = r$ + "&=" + str2(bitmask(b)) + ";"
-                Print #12, l$
-                Print #12, "}"
-            End If
-            If stringprocessinghappened Then Print #12, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
-            If arrayprocessinghappened Then arrayprocessinghappened = 0
+                PRINT #12, l$
+                PRINT #12, "}"
+            END IF
+            IF stringprocessinghappened THEN PRINT #12, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
+            IF arrayprocessinghappened THEN arrayprocessinghappened = 0
             tlayout$ = tl$
-            If Left$(r$, 1) = "*" Then r$ = Mid$(r$, 2)
-            Exit Sub
-        End If
+            IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
+            EXIT SUB
+        END IF
 
         'standard variable?
-        If t = BYTETYPE Then r$ = "*" + scope$ + "BYTE_" + r$: GoTo sref
-        If t = UBYTETYPE Then r$ = "*" + scope$ + "UBYTE_" + r$: GoTo sref
-        If t = INTEGERTYPE Then r$ = "*" + scope$ + "INTEGER_" + r$: GoTo sref
-        If t = UINTEGERTYPE Then r$ = "*" + scope$ + "UINTEGER_" + r$: GoTo sref
-        If t = LONGTYPE Then r$ = "*" + scope$ + "LONG_" + r$: GoTo sref
-        If t = ULONGTYPE Then r$ = "*" + scope$ + "ULONG_" + r$: GoTo sref
-        If t = INTEGER64TYPE Then r$ = "*" + scope$ + "INTEGER64_" + r$: GoTo sref
-        If t = UINTEGER64TYPE Then r$ = "*" + scope$ + "UINTEGER64_" + r$: GoTo sref
-        If t = SINGLETYPE Then r$ = "*" + scope$ + "SINGLE_" + r$: GoTo sref
-        If t = DOUBLETYPE Then r$ = "*" + scope$ + "DOUBLE_" + r$: GoTo sref
-        If t = FLOATTYPE Then r$ = "*" + scope$ + "FLOAT_" + r$: GoTo sref
-        If t = OFFSETTYPE Then r$ = "*" + scope$ + "OFFSET_" + r$: GoTo sref
-        If t = UOFFSETTYPE Then r$ = "*" + scope$ + "UOFFSET_" + r$: GoTo sref
+        IF t = BYTETYPE THEN r$ = "*" + scope$ + "BYTE_" + r$: GOTO sref
+        IF t = UBYTETYPE THEN r$ = "*" + scope$ + "UBYTE_" + r$: GOTO sref
+        IF t = INTEGERTYPE THEN r$ = "*" + scope$ + "INTEGER_" + r$: GOTO sref
+        IF t = UINTEGERTYPE THEN r$ = "*" + scope$ + "UINTEGER_" + r$: GOTO sref
+        IF t = LONGTYPE THEN r$ = "*" + scope$ + "LONG_" + r$: GOTO sref
+        IF t = ULONGTYPE THEN r$ = "*" + scope$ + "ULONG_" + r$: GOTO sref
+        IF t = INTEGER64TYPE THEN r$ = "*" + scope$ + "INTEGER64_" + r$: GOTO sref
+        IF t = UINTEGER64TYPE THEN r$ = "*" + scope$ + "UINTEGER64_" + r$: GOTO sref
+        IF t = SINGLETYPE THEN r$ = "*" + scope$ + "SINGLE_" + r$: GOTO sref
+        IF t = DOUBLETYPE THEN r$ = "*" + scope$ + "DOUBLE_" + r$: GOTO sref
+        IF t = FLOATTYPE THEN r$ = "*" + scope$ + "FLOAT_" + r$: GOTO sref
+        IF t = OFFSETTYPE THEN r$ = "*" + scope$ + "OFFSET_" + r$: GOTO sref
+        IF t = UOFFSETTYPE THEN r$ = "*" + scope$ + "UOFFSET_" + r$: GOTO sref
         sref:
         t2 = t - ISPOINTER
-        If method = 0 Then e$ = evaluatetotyp(e$, t2)
-        If Error_Happened Then Exit Sub
+        IF method = 0 THEN e$ = evaluatetotyp(e$, t2)
+        IF Error_Happened THEN EXIT SUB
         l$ = r$ + "=" + e$ + ";"
-        Print #12, l$
-        If stringprocessinghappened Then Print #12, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
-        If arrayprocessinghappened Then arrayprocessinghappened = 0
+        PRINT #12, l$
+        IF stringprocessinghappened THEN PRINT #12, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
+        IF arrayprocessinghappened THEN arrayprocessinghappened = 0
         tlayout$ = tl$
 
-        If Left$(r$, 1) = "*" Then r$ = Mid$(r$, 2)
-        Exit Sub
-    End If 'variable
+        IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
+        EXIT SUB
+    END IF 'variable
 
     tlayout$ = tl$
-End Sub
+END SUB
 
-Function str2$ (v As Long)
-    str2$ = _Trim$(Str$(v))
-End Function
+FUNCTION str2$ (v AS LONG)
+    str2$ = _TRIM$(STR$(v))
+END FUNCTION
 
-Function str2u64$ (v~&&)
-    str2u64$ = LTrim$(RTrim$(Str$(v~&&)))
-End Function
+FUNCTION str2u64$ (v~&&)
+    str2u64$ = LTRIM$(RTRIM$(STR$(v~&&)))
+END FUNCTION
 
-Function str2i64$ (v&&)
-    str2i64$ = LTrim$(RTrim$(Str$(v&&)))
-End Function
+FUNCTION str2i64$ (v&&)
+    str2i64$ = LTRIM$(RTRIM$(STR$(v&&)))
+END FUNCTION
 
-Function typ2ctyp$ (t As Long, tstr As String)
+FUNCTION typ2ctyp$ (t AS LONG, tstr AS STRING)
     ctyp$ = ""
     'typ can be passed as either: (the unused value is ignored)
     'i. as a typ value in t
     'ii. as a typ symbol (eg. "~%") in tstr
     'iii. as a typ name (eg. _UNSIGNED INTEGER) in tstr
-    If tstr$ = "" Then
-        If (t And ISARRAY) Then Exit Function 'cannot return array types
-        If (t And ISSTRING) Then typ2ctyp$ = "qbs": Exit Function
-        b = t And 511
-        If (t And ISUDT) Then typ2ctyp$ = "void": Exit Function
-        If (t And ISOFFSETINBITS) Then
-            If b <= 32 Then ctyp$ = "int32" Else ctyp$ = "int64"
-            If (t And ISUNSIGNED) Then ctyp$ = "u" + ctyp$
-            typ2ctyp$ = ctyp$: Exit Function
-        End If
-        If (t And ISFLOAT) Then
-            If b = 32 Then ctyp$ = "float"
-            If b = 64 Then ctyp$ = "double"
-            If b = 256 Then ctyp$ = "long double"
-        Else
-            If b = 8 Then ctyp$ = "int8"
-            If b = 16 Then ctyp$ = "int16"
-            If b = 32 Then ctyp$ = "int32"
-            If b = 64 Then ctyp$ = "int64"
-            If t And ISOFFSET Then ctyp$ = "ptrszint"
-            If (t And ISUNSIGNED) Then ctyp$ = "u" + ctyp$
-        End If
-        If t And ISOFFSET Then
-            ctyp$ = "ptrszint": If (t And ISUNSIGNED) Then ctyp$ = "uptrszint"
-        End If
-        typ2ctyp$ = ctyp$: Exit Function
-    End If
+    IF tstr$ = "" THEN
+        IF (t AND ISARRAY) THEN EXIT FUNCTION 'cannot return array types
+        IF (t AND ISSTRING) THEN typ2ctyp$ = "qbs": EXIT FUNCTION
+        b = t AND 511
+        IF (t AND ISUDT) THEN typ2ctyp$ = "void": EXIT FUNCTION
+        IF (t AND ISOFFSETINBITS) THEN
+            IF b <= 32 THEN ctyp$ = "int32" ELSE ctyp$ = "int64"
+            IF (t AND ISUNSIGNED) THEN ctyp$ = "u" + ctyp$
+            typ2ctyp$ = ctyp$: EXIT FUNCTION
+        END IF
+        IF (t AND ISFLOAT) THEN
+            IF b = 32 THEN ctyp$ = "float"
+            IF b = 64 THEN ctyp$ = "double"
+            IF b = 256 THEN ctyp$ = "long double"
+        ELSE
+            IF b = 8 THEN ctyp$ = "int8"
+            IF b = 16 THEN ctyp$ = "int16"
+            IF b = 32 THEN ctyp$ = "int32"
+            IF b = 64 THEN ctyp$ = "int64"
+            IF t AND ISOFFSET THEN ctyp$ = "ptrszint"
+            IF (t AND ISUNSIGNED) THEN ctyp$ = "u" + ctyp$
+        END IF
+        IF t AND ISOFFSET THEN
+            ctyp$ = "ptrszint": IF (t AND ISUNSIGNED) THEN ctyp$ = "uptrszint"
+        END IF
+        typ2ctyp$ = ctyp$: EXIT FUNCTION
+    END IF
 
     ts$ = tstr$
     'is ts$ a symbol?
-    If ts$ = "$" Then ctyp$ = "qbs"
-    If ts$ = "!" Then ctyp$ = "float"
-    If ts$ = "#" Then ctyp$ = "double"
-    If ts$ = "##" Then ctyp$ = "long double"
-    If Left$(ts$, 1) = "~" Then unsgn = 1: ts$ = Right$(ts$, Len(ts$) - 1)
-    If Left$(ts$, 1) = "`" Then
-        n$ = Right$(ts$, Len(ts$) - 1)
+    IF ts$ = "$" THEN ctyp$ = "qbs"
+    IF ts$ = "!" THEN ctyp$ = "float"
+    IF ts$ = "#" THEN ctyp$ = "double"
+    IF ts$ = "##" THEN ctyp$ = "long double"
+    IF LEFT$(ts$, 1) = "~" THEN unsgn = 1: ts$ = RIGHT$(ts$, LEN(ts$) - 1)
+    IF LEFT$(ts$, 1) = "`" THEN
+        n$ = RIGHT$(ts$, LEN(ts$) - 1)
         b = 1
-        If n$ <> "" Then
-            If isuinteger(n$) = 0 Then Give_Error "Invalid index after _BIT type": Exit Function
-            b = Val(n$)
-            If b > 64 Then Give_Error "Invalid index after _BIT type": Exit Function
-        End If
-        If b <= 32 Then ctyp$ = "int32" Else ctyp$ = "int64"
-        If unsgn Then ctyp$ = "u" + ctyp$
-        typ2ctyp$ = ctyp$: Exit Function
-    End If
-    If ts$ = "%&" Then
-        typ2ctyp$ = "ptrszint": If (t And ISUNSIGNED) Then typ2ctyp$ = "uptrszint"
-        Exit Function
-    End If
-    If ts$ = "%%" Then ctyp$ = "int8"
-    If ts$ = "%" Then ctyp$ = "int16"
-    If ts$ = "&" Then ctyp$ = "int32"
-    If ts$ = "&&" Then ctyp$ = "int64"
-    If ctyp$ <> "" Then
-        If unsgn Then ctyp$ = "u" + ctyp$
-        typ2ctyp$ = ctyp$: Exit Function
-    End If
+        IF n$ <> "" THEN
+            IF isuinteger(n$) = 0 THEN Give_Error "Invalid index after _BIT type": EXIT FUNCTION
+            b = VAL(n$)
+            IF b > 64 THEN Give_Error "Invalid index after _BIT type": EXIT FUNCTION
+        END IF
+        IF b <= 32 THEN ctyp$ = "int32" ELSE ctyp$ = "int64"
+        IF unsgn THEN ctyp$ = "u" + ctyp$
+        typ2ctyp$ = ctyp$: EXIT FUNCTION
+    END IF
+    IF ts$ = "%&" THEN
+        typ2ctyp$ = "ptrszint": IF (t AND ISUNSIGNED) THEN typ2ctyp$ = "uptrszint"
+        EXIT FUNCTION
+    END IF
+    IF ts$ = "%%" THEN ctyp$ = "int8"
+    IF ts$ = "%" THEN ctyp$ = "int16"
+    IF ts$ = "&" THEN ctyp$ = "int32"
+    IF ts$ = "&&" THEN ctyp$ = "int64"
+    IF ctyp$ <> "" THEN
+        IF unsgn THEN ctyp$ = "u" + ctyp$
+        typ2ctyp$ = ctyp$: EXIT FUNCTION
+    END IF
     'is tstr$ a named type? (eg. 'LONG')
     s$ = type2symbol$(tstr$)
-    If Error_Happened Then Exit Function
-    If Len(s$) Then
+    IF Error_Happened THEN EXIT FUNCTION
+    IF LEN(s$) THEN
         typ2ctyp$ = typ2ctyp$(0, s$)
-        If Error_Happened Then Exit Function
-        Exit Function
-    End If
+        IF Error_Happened THEN EXIT FUNCTION
+        EXIT FUNCTION
+    END IF
 
-    Give_Error "Invalid type": Exit Function
+    Give_Error "Invalid type": EXIT FUNCTION
 
-End Function
+END FUNCTION
 
-Function type2symbol$ (typ$)
+FUNCTION type2symbol$ (typ$)
     t$ = typ$
-    For i = 1 To Len(t$)
-        If Mid$(t$, i, 1) = sp Then Mid$(t$, i, 1) = " "
-    Next
+    FOR i = 1 TO LEN(t$)
+        IF MID$(t$, i, 1) = sp THEN MID$(t$, i, 1) = " "
+    NEXT
     e$ = "Cannot convert type (" + typ$ + ") to symbol"
-    t2$ = "_UNSIGNED _BIT": s$ = "~`1": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED _BYTE": s$ = "~%%": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED LONG": s$ = "~&": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED _INTEGER64": s$ = "~&&": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED INTEGER": s$ = "~%": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED _OFFSET": s$ = "~%&": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_BIT": s$ = "`1": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_BYTE": s$ = "%%": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "LONG": s$ = "&": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_INTEGER64": s$ = "&&": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_OFFSET": s$ = "%&": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "SINGLE": s$ = "!": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "DOUBLE": s$ = "#": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "_FLOAT": s$ = "##": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "STRING": s$ = "$": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED BIT": s$ = "~`1": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED BYTE": s$ = "~%%": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED LONG": s$ = "~&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED INTEGER64": s$ = "~&&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED INTEGER": s$ = "~%": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED OFFSET": s$ = "~%&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED _BIT": s$ = "~`1": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED _BYTE": s$ = "~%%": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED _INTEGER64": s$ = "~&&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "UNSIGNED _OFFSET": s$ = "~%&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED BIT": s$ = "~`1": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED BYTE": s$ = "~%%": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED INTEGER64": s$ = "~&&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "_UNSIGNED OFFSET": s$ = "~%&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "BIT": s$ = "`1": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "BYTE": s$ = "%%": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "INTEGER64": s$ = "&&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "INTEGER": s$ = "%": If t$ = t2$ Then GoTo t2sfound
-    t2$ = "OFFSET": s$ = "%&": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    t2$ = "FLOAT": s$ = "##": If qb64prefix_set = 1 And t$ = t2$ Then GoTo t2sfound
-    Give_Error e$: Exit Function
+    t2$ = "_UNSIGNED _BIT": s$ = "~`1": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED _BYTE": s$ = "~%%": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED LONG": s$ = "~&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED _INTEGER64": s$ = "~&&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED INTEGER": s$ = "~%": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED _OFFSET": s$ = "~%&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_BIT": s$ = "`1": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_BYTE": s$ = "%%": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "LONG": s$ = "&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_INTEGER64": s$ = "&&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_OFFSET": s$ = "%&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "SINGLE": s$ = "!": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "DOUBLE": s$ = "#": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_FLOAT": s$ = "##": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "STRING": s$ = "$": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED BIT": s$ = "~`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED LONG": s$ = "~&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED INTEGER": s$ = "~%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _BIT": s$ = "~`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED BIT": s$ = "~`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "BIT": s$ = "`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "BYTE": s$ = "%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "INTEGER64": s$ = "&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "INTEGER": s$ = "%": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "OFFSET": s$ = "%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "FLOAT": s$ = "##": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    Give_Error e$: EXIT FUNCTION
     t2sfound:
     type2symbol$ = s$
-    If Len(t2$) <> Len(t$) Then
-        If s$ <> "$" And s$ <> "~`1" And s$ <> "`1" Then Give_Error e$: Exit Function
-        t$ = Right$(t$, Len(t$) - Len(t2$))
-        If Left$(t$, 3) <> " * " Then Give_Error e$: Exit Function
-        t$ = Right$(t$, Len(t$) - 3)
-        If isuinteger(t$) = 0 Then Give_Error e$: Exit Function
-        v = Val(t$)
-        If v = 0 Then Give_Error e$: Exit Function
-        If s$ <> "$" And v > 64 Then Give_Error e$: Exit Function
-        If s$ = "$" Then
+    IF LEN(t2$) <> LEN(t$) THEN
+        IF s$ <> "$" AND s$ <> "~`1" AND s$ <> "`1" THEN Give_Error e$: EXIT FUNCTION
+        t$ = RIGHT$(t$, LEN(t$) - LEN(t2$))
+        IF LEFT$(t$, 3) <> " * " THEN Give_Error e$: EXIT FUNCTION
+        t$ = RIGHT$(t$, LEN(t$) - 3)
+        IF isuinteger(t$) = 0 THEN Give_Error e$: EXIT FUNCTION
+        v = VAL(t$)
+        IF v = 0 THEN Give_Error e$: EXIT FUNCTION
+        IF s$ <> "$" AND v > 64 THEN Give_Error e$: EXIT FUNCTION
+        IF s$ = "$" THEN
             s$ = s$ + str2$(v)
-        Else
-            s$ = Left$(s$, Len(s$) - 1) + str2$(v)
-        End If
+        ELSE
+            s$ = LEFT$(s$, LEN(s$) - 1) + str2$(v)
+        END IF
         type2symbol$ = s$
-    End If
-End Function
+    END IF
+END FUNCTION
 
 'Strips away bits/indentifiers which make locating a variables source difficult
-Function typecomp (typ)
+FUNCTION typecomp (typ)
     typ2 = typ
-    If (typ2 And ISINCONVENTIONALMEMORY) Then typ2 = typ2 - ISINCONVENTIONALMEMORY
+    IF (typ2 AND ISINCONVENTIONALMEMORY) THEN typ2 = typ2 - ISINCONVENTIONALMEMORY
     typecomp = typ2
-End Function
+END FUNCTION
 
-Function typname2typ& (t2$)
+FUNCTION typname2typ& (t2$)
     typname2typsize = 0 'the default
 
     t$ = t2$
 
     'symbol?
     ts$ = t$
-    If ts$ = "$" Then typname2typ& = STRINGTYPE: Exit Function
-    If ts$ = "!" Then typname2typ& = SINGLETYPE: Exit Function
-    If ts$ = "#" Then typname2typ& = DOUBLETYPE: Exit Function
-    If ts$ = "##" Then typname2typ& = FLOATTYPE: Exit Function
+    IF ts$ = "$" THEN typname2typ& = STRINGTYPE: EXIT FUNCTION
+    IF ts$ = "!" THEN typname2typ& = SINGLETYPE: EXIT FUNCTION
+    IF ts$ = "#" THEN typname2typ& = DOUBLETYPE: EXIT FUNCTION
+    IF ts$ = "##" THEN typname2typ& = FLOATTYPE: EXIT FUNCTION
 
     'fixed length string?
-    If Left$(ts$, 1) = "$" Then
-        n$ = Right$(ts$, Len(ts$) - 1)
-        If isuinteger(n$) = 0 Then Give_Error "Invalid index after STRING * type": Exit Function
-        b = Val(n$)
-        If b = 0 Then Give_Error "Invalid index after STRING * type": Exit Function
+    IF LEFT$(ts$, 1) = "$" THEN
+        n$ = RIGHT$(ts$, LEN(ts$) - 1)
+        IF isuinteger(n$) = 0 THEN Give_Error "Invalid index after STRING * type": EXIT FUNCTION
+        b = VAL(n$)
+        IF b = 0 THEN Give_Error "Invalid index after STRING * type": EXIT FUNCTION
         typname2typsize = b
         typname2typ& = STRINGTYPE + ISFIXEDLENGTH
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     'unsigned?
-    If Left$(ts$, 1) = "~" Then unsgn = 1: ts$ = Right$(ts$, Len(ts$) - 1)
+    IF LEFT$(ts$, 1) = "~" THEN unsgn = 1: ts$ = RIGHT$(ts$, LEN(ts$) - 1)
 
     'bit-type?
-    If Left$(ts$, 1) = "`" Then
-        n$ = Right$(ts$, Len(ts$) - 1)
+    IF LEFT$(ts$, 1) = "`" THEN
+        n$ = RIGHT$(ts$, LEN(ts$) - 1)
         b = 1
-        If n$ <> "" Then
-            If isuinteger(n$) = 0 Then Give_Error "Invalid index after _BIT type": Exit Function
-            b = Val(n$)
-            If b > 64 Then Give_Error "Invalid index after _BIT type": Exit Function
-        End If
-        If unsgn Then typname2typ& = UBITTYPE + (b - 1) Else typname2typ& = BITTYPE + (b - 1)
-        Exit Function
-    End If
+        IF n$ <> "" THEN
+            IF isuinteger(n$) = 0 THEN Give_Error "Invalid index after _BIT type": EXIT FUNCTION
+            b = VAL(n$)
+            IF b > 64 THEN Give_Error "Invalid index after _BIT type": EXIT FUNCTION
+        END IF
+        IF unsgn THEN typname2typ& = UBITTYPE + (b - 1) ELSE typname2typ& = BITTYPE + (b - 1)
+        EXIT FUNCTION
+    END IF
 
     t = 0
-    If ts$ = "%%" Then t = BYTETYPE
-    If ts$ = "%" Then t = INTEGERTYPE
-    If ts$ = "&" Then t = LONGTYPE
-    If ts$ = "&&" Then t = INTEGER64TYPE
-    If ts$ = "%&" Then t = OFFSETTYPE
+    IF ts$ = "%%" THEN t = BYTETYPE
+    IF ts$ = "%" THEN t = INTEGERTYPE
+    IF ts$ = "&" THEN t = LONGTYPE
+    IF ts$ = "&&" THEN t = INTEGER64TYPE
+    IF ts$ = "%&" THEN t = OFFSETTYPE
 
-    If t Then
-        If unsgn Then t = t + ISUNSIGNED
-        typname2typ& = t: Exit Function
-    End If
+    IF t THEN
+        IF unsgn THEN t = t + ISUNSIGNED
+        typname2typ& = t: EXIT FUNCTION
+    END IF
     'not a valid symbol
 
     'type name?
-    For i = 1 To Len(t$)
-        If Mid$(t$, i, 1) = sp Then Mid$(t$, i, 1) = " "
-    Next
-    If t$ = "STRING" Then typname2typ& = STRINGTYPE: Exit Function
+    FOR i = 1 TO LEN(t$)
+        IF MID$(t$, i, 1) = sp THEN MID$(t$, i, 1) = " "
+    NEXT
+    IF t$ = "STRING" THEN typname2typ& = STRINGTYPE: EXIT FUNCTION
 
-    If Left$(t$, 9) = "STRING * " Then
+    IF LEFT$(t$, 9) = "STRING * " THEN
 
-        n$ = Right$(t$, Len(t$) - 9)
+        n$ = RIGHT$(t$, LEN(t$) - 9)
 
         'constant check 2011
         hashfound = 0
         hashname$ = n$
         hashchkflags = HASHFLAG_CONSTANT
         hashres = HashFindRev(hashname$, hashchkflags, hashresflags, hashresref)
-        Do While hashres
-            If constsubfunc(hashresref) = subfuncn Or constsubfunc(hashresref) = 0 Then
-                If constdefined(hashresref) Then
+        DO WHILE hashres
+            IF constsubfunc(hashresref) = subfuncn OR constsubfunc(hashresref) = 0 THEN
+                IF constdefined(hashresref) THEN
                     hashfound = 1
-                    Exit Do
-                End If
-            End If
-            If hashres <> 1 Then hashres = HashFindCont(hashresflags, hashresref) Else hashres = 0
-        Loop
-        If hashfound Then
+                    EXIT DO
+                END IF
+            END IF
+            IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
+        LOOP
+        IF hashfound THEN
             i2 = hashresref
             t = consttype(i2)
-            If t And ISSTRING Then Give_Error "Expected STRING * numeric-constant": Exit Function
+            IF t AND ISSTRING THEN Give_Error "Expected STRING * numeric-constant": EXIT FUNCTION
             'convert value to general formats
-            If t And ISFLOAT Then
+            IF t AND ISFLOAT THEN
                 v## = constfloat(i2)
                 v&& = v##
                 v~&& = v&&
-            Else
-                If t And ISUNSIGNED Then
+            ELSE
+                IF t AND ISUNSIGNED THEN
                     v~&& = constuinteger(i2)
                     v&& = v~&&
                     v## = v&&
-                Else
+                ELSE
                     v&& = constinteger(i2)
                     v## = v&&
                     v~&& = v&&
-                End If
-            End If
-            If v&& < 1 Or v&& > 9999999999 Then Give_Error "STRING * out-of-range constant": Exit Function
+                END IF
+            END IF
+            IF v&& < 1 OR v&& > 9999999999 THEN Give_Error "STRING * out-of-range constant": EXIT FUNCTION
             b = v&&
-            GoTo constantlenstr
-        End If
+            GOTO constantlenstr
+        END IF
 
-        If isuinteger(n$) = 0 Or Len(n$) > 10 Then Give_Error "Invalid number/constant after STRING * type": Exit Function
-        b = Val(n$)
-        If b = 0 Or Len(n$) > 10 Then Give_Error "Invalid number after STRING * type": Exit Function
+        IF isuinteger(n$) = 0 OR LEN(n$) > 10 THEN Give_Error "Invalid number/constant after STRING * type": EXIT FUNCTION
+        b = VAL(n$)
+        IF b = 0 OR LEN(n$) > 10 THEN Give_Error "Invalid number after STRING * type": EXIT FUNCTION
         constantlenstr:
         typname2typsize = b
         typname2typ& = STRINGTYPE + ISFIXEDLENGTH
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-    If t$ = "SINGLE" Then typname2typ& = SINGLETYPE: Exit Function
-    If t$ = "DOUBLE" Then typname2typ& = DOUBLETYPE: Exit Function
-    If t$ = "_FLOAT" Or (t$ = "FLOAT" And qb64prefix_set = 1) Then typname2typ& = FLOATTYPE: Exit Function
-    If Left$(t$, 10) = "_UNSIGNED " Or (Left$(t$, 9) = "UNSIGNED " And qb64prefix_set = 1) Then
+    IF t$ = "SINGLE" THEN typname2typ& = SINGLETYPE: EXIT FUNCTION
+    IF t$ = "DOUBLE" THEN typname2typ& = DOUBLETYPE: EXIT FUNCTION
+    IF t$ = "_FLOAT" OR (t$ = "FLOAT" AND qb64prefix_set = 1) THEN typname2typ& = FLOATTYPE: EXIT FUNCTION
+    IF LEFT$(t$, 10) = "_UNSIGNED " OR (LEFT$(t$, 9) = "UNSIGNED " AND qb64prefix_set = 1) THEN
         u = 1
-        t$ = Mid$(t$, InStr(t$, Chr$(32)) + 1)
-    End If
-    If Left$(t$, 4) = "_BIT" Or (Left$(t$, 3) = "BIT" And qb64prefix_set = 1) Then
-        If t$ = "_BIT" Or (t$ = "BIT" And qb64prefix_set = 1) Then
-            If u Then typname2typ& = UBITTYPE Else typname2typ& = BITTYPE
-            Exit Function
-        End If
-        If Left$(t$, 7) <> "_BIT * " Or (Left$(t$, 6) = "BIT * " And qb64prefix_set = 1) Then Give_Error "Expected _BIT * number": Exit Function
+        t$ = MID$(t$, INSTR(t$, CHR$(32)) + 1)
+    END IF
+    IF LEFT$(t$, 4) = "_BIT" OR (LEFT$(t$, 3) = "BIT" AND qb64prefix_set = 1) THEN
+        IF t$ = "_BIT" OR (t$ = "BIT" AND qb64prefix_set = 1) THEN
+            IF u THEN typname2typ& = UBITTYPE ELSE typname2typ& = BITTYPE
+            EXIT FUNCTION
+        END IF
+        IF LEFT$(t$, 7) <> "_BIT * " OR (LEFT$(t$, 6) = "BIT * " AND qb64prefix_set = 1) THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
 
-        n$ = Right$(t$, Len(t$) - 7)
-        If isuinteger(n$) = 0 Then Give_Error "Invalid size after " + qb64prefix$ + "BIT *": Exit Function
-        b = Val(n$)
-        If b = 0 Or b > 64 Then Give_Error "Invalid size after " + qb64prefix$ + "BIT *": Exit Function
-        t = BITTYPE - 1 + b: If u Then t = t + ISUNSIGNED
+        n$ = RIGHT$(t$, LEN(t$) - 7)
+        IF isuinteger(n$) = 0 THEN Give_Error "Invalid size after " + qb64prefix$ + "BIT *": EXIT FUNCTION
+        b = VAL(n$)
+        IF b = 0 OR b > 64 THEN Give_Error "Invalid size after " + qb64prefix$ + "BIT *": EXIT FUNCTION
+        t = BITTYPE - 1 + b: IF u THEN t = t + ISUNSIGNED
         typname2typ& = t
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     t = 0
-    If t$ = "_BYTE" Or (t$ = "BYTE" And qb64prefix_set = 1) Then t = BYTETYPE
-    If t$ = "INTEGER" Then t = INTEGERTYPE
-    If t$ = "LONG" Then t = LONGTYPE
-    If t$ = "_INTEGER64" Or (t$ = "INTEGER64" And qb64prefix_set = 1) Then t = INTEGER64TYPE
-    If t$ = "_OFFSET" Or (t$ = "OFFSET" And qb64prefix_set = 1) Then t = OFFSETTYPE
-    If t Then
-        If u Then t = t + ISUNSIGNED
+    IF t$ = "_BYTE" OR (t$ = "BYTE" AND qb64prefix_set = 1) THEN t = BYTETYPE
+    IF t$ = "INTEGER" THEN t = INTEGERTYPE
+    IF t$ = "LONG" THEN t = LONGTYPE
+    IF t$ = "_INTEGER64" OR (t$ = "INTEGER64" AND qb64prefix_set = 1) THEN t = INTEGER64TYPE
+    IF t$ = "_OFFSET" OR (t$ = "OFFSET" AND qb64prefix_set = 1) THEN t = OFFSETTYPE
+    IF t THEN
+        IF u THEN t = t + ISUNSIGNED
         typname2typ& = t
-        Exit Function
-    End If
-    If u Then Exit Function '_UNSIGNED (nothing)
+        EXIT FUNCTION
+    END IF
+    IF u THEN EXIT FUNCTION '_UNSIGNED (nothing)
 
     'UDT?
-    For i = 1 To lasttype
-        If t$ = RTrim$(udtxname(i)) Then
+    FOR i = 1 TO lasttype
+        IF t$ = RTRIM$(udtxname(i)) THEN
             typname2typ& = ISUDT + ISPOINTER + i
-            Exit Function
-        ElseIf RTrim$(udtxname(i)) = "_MEM" And t$ = "MEM" And qb64prefix_set = 1 Then
+            EXIT FUNCTION
+        ELSEIF RTRIM$(udtxname(i)) = "_MEM" AND t$ = "MEM" AND qb64prefix_set = 1 THEN
             typname2typ& = ISUDT + ISPOINTER + i
-            Exit Function
-        End If
-    Next
+            EXIT FUNCTION
+        END IF
+    NEXT
 
     'return 0 (failed)
-End Function
+END FUNCTION
 
-Function uniquenumber&
+FUNCTION uniquenumber&
     uniquenumbern = uniquenumbern + 1
     uniquenumber& = uniquenumbern
-End Function
+END FUNCTION
 
-Function validlabel (LABEL2$)
+FUNCTION validlabel (LABEL2$)
     create = CreatingLabel: CreatingLabel = 0
     validlabel = 0
-    If Len(LABEL2$) = 0 Then Exit Function
+    IF LEN(LABEL2$) = 0 THEN EXIT FUNCTION
     clabel$ = LABEL2$
-    label$ = UCase$(LABEL2$)
+    label$ = UCASE$(LABEL2$)
 
     n = numelements(label$)
 
-    If n = 1 Then
+    IF n = 1 THEN
 
         'Note: Reserved words and internal sub/function names are invalid
         hashres = HashFind(label$, HASHFLAG_RESERVED + HASHFLAG_SUB + HASHFLAG_FUNCTION, hashresflags, hashresref)
-        Do While hashres
-            If hashresflags And (HASHFLAG_SUB + HASHFLAG_FUNCTION) Then
-                If ids(hashresref).internal_subfunc Then Exit Function
+        DO WHILE hashres
+            IF hashresflags AND (HASHFLAG_SUB + HASHFLAG_FUNCTION) THEN
+                IF ids(hashresref).internal_subfunc THEN EXIT FUNCTION
 
-                If hashresflags And HASHFLAG_SUB Then 'could be a label or a sub call!
+                IF hashresflags AND HASHFLAG_SUB THEN 'could be a label or a sub call!
 
                     'analyze format
-                    If Asc(ids(hashresref).specialformat) = 32 Then
-                        If ids(hashresref).args = 0 Then onecommandsub = 1 Else onecommandsub = 0
-                    Else
-                        If Asc(ids(hashresref).specialformat) <> 91 Then '"["
+                    IF ASC(ids(hashresref).specialformat) = 32 THEN
+                        IF ids(hashresref).args = 0 THEN onecommandsub = 1 ELSE onecommandsub = 0
+                    ELSE
+                        IF ASC(ids(hashresref).specialformat) <> 91 THEN '"["
                             onecommandsub = 0
-                        Else
+                        ELSE
                             onecommandsub = 1
-                            a$ = RTrim$(ids(hashresref).specialformat)
+                            a$ = RTRIM$(ids(hashresref).specialformat)
                             b = 1
-                            For x = 2 To Len(a$)
-                                a = Asc(a$, x)
-                                If a = 91 Then b = b + 1
-                                If a = 93 Then b = b - 1
-                                If b = 0 And x <> Len(a$) Then onecommandsub = 0: Exit For
-                            Next
-                        End If
-                    End If
-                    If create <> 0 And onecommandsub = 1 Then
-                        If InStr(SubNameLabels$, sp + UCase$(label$) + sp) = 0 Then PossibleSubNameLabels$ = PossibleSubNameLabels$ + UCase$(label$) + sp: Exit Function 'treat as sub call
-                    End If
+                            FOR x = 2 TO LEN(a$)
+                                a = ASC(a$, x)
+                                IF a = 91 THEN b = b + 1
+                                IF a = 93 THEN b = b - 1
+                                IF b = 0 AND x <> LEN(a$) THEN onecommandsub = 0: EXIT FOR
+                            NEXT
+                        END IF
+                    END IF
+                    IF create <> 0 AND onecommandsub = 1 THEN
+                        IF INSTR(SubNameLabels$, sp + UCASE$(label$) + sp) = 0 THEN PossibleSubNameLabels$ = PossibleSubNameLabels$ + UCASE$(label$) + sp: EXIT FUNCTION 'treat as sub call
+                    END IF
 
-                End If 'sub name
+                END IF 'sub name
 
-            Else
+            ELSE
                 'reserved
-                Exit Function
-            End If
-            If hashres <> 1 Then hashres = HashFindCont(hashresflags, hashresref) Else hashres = 0
-        Loop
+                EXIT FUNCTION
+            END IF
+            IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
+        LOOP
 
         'Numeric label?
         'quasi numbers are possible, but:
@@ -22906,419 +22906,419 @@ Function validlabel (LABEL2$)
         'b) They must be typed with the exact same characters to match
         t$ = label$
         'numeric?
-        a = Asc(t$)
-        If (a >= 48 And a <= 57) Or a = 46 Then
+        a = ASC(t$)
+        IF (a >= 48 AND a <= 57) OR a = 46 THEN
 
             'refer to original formatting if possible (eg. 1.10 not 1.1)
-            x = InStr(t$, Chr$(44))
-            If x Then
-                t$ = Right$(t$, Len(t$) - x)
-            End If
+            x = INSTR(t$, CHR$(44))
+            IF x THEN
+                t$ = RIGHT$(t$, LEN(t$) - x)
+            END IF
 
             'note: The symbols ! and # are valid trailing symbols in QBASIC, regardless of the number's size,
             '      so they are allowed in QB64 for compatibility reasons
             addsymbol$ = removesymbol$(t$)
-            If Error_Happened Then Exit Function
-            If Len(addsymbol$) Then
-                If InStr(addsymbol$, "$") Then Exit Function
-                If addsymbol$ <> "#" And addsymbol$ <> "!" Then addsymbol$ = ""
-            End If
+            IF Error_Happened THEN EXIT FUNCTION
+            IF LEN(addsymbol$) THEN
+                IF INSTR(addsymbol$, "$") THEN EXIT FUNCTION
+                IF addsymbol$ <> "#" AND addsymbol$ <> "!" THEN addsymbol$ = ""
+            END IF
 
-            If a = 46 Then dp = 1
-            For x = 2 To Len(t$)
-                a = Asc(Mid$(t$, x, 1))
-                If a = 46 Then dp = dp + 1
-                If (a < 48 Or a > 57) And a <> 46 Then Exit Function 'not numeric
-            Next x
-            If dp > 1 Then Exit Function 'too many decimal points
-            If dp = 1 And Len(t$) = 1 Then Exit Function 'cant have '.' as a label
+            IF a = 46 THEN dp = 1
+            FOR x = 2 TO LEN(t$)
+                a = ASC(MID$(t$, x, 1))
+                IF a = 46 THEN dp = dp + 1
+                IF (a < 48 OR a > 57) AND a <> 46 THEN EXIT FUNCTION 'not numeric
+            NEXT x
+            IF dp > 1 THEN EXIT FUNCTION 'too many decimal points
+            IF dp = 1 AND LEN(t$) = 1 THEN EXIT FUNCTION 'cant have '.' as a label
 
             tlayout$ = t$ + addsymbol$
 
-            i = InStr(t$, "."): If i Then Mid$(t$, i, 1) = "p"
-            If addsymbol$ = "#" Then t$ = t$ + "d"
-            If addsymbol$ = "!" Then t$ = t$ + "s"
+            i = INSTR(t$, "."): IF i THEN MID$(t$, i, 1) = "p"
+            IF addsymbol$ = "#" THEN t$ = t$ + "d"
+            IF addsymbol$ = "!" THEN t$ = t$ + "s"
 
-            If Len(t$) > 40 Then Exit Function
+            IF LEN(t$) > 40 THEN EXIT FUNCTION
 
             LABEL2$ = t$
             validlabel = 1
-            Exit Function
-        End If 'numeric
+            EXIT FUNCTION
+        END IF 'numeric
 
-    End If 'n=1
+    END IF 'n=1
 
     'Alpha-numeric label?
     'Build label
 
     'structure check (???.???.???.???)
-    If (n And 1) = 0 Then Exit Function 'must be an odd number of elements
-    For nx = 2 To n - 1 Step 2
+    IF (n AND 1) = 0 THEN EXIT FUNCTION 'must be an odd number of elements
+    FOR nx = 2 TO n - 1 STEP 2
         a$ = getelement$(LABEL2$, nx)
-        If a$ <> "." Then Exit Function 'every 2nd element must be a period
-    Next
+        IF a$ <> "." THEN EXIT FUNCTION 'every 2nd element must be a period
+    NEXT
 
     'cannot begin with numeric
-    c = Asc(clabel$): If c >= 48 And c <= 57 Then Exit Function
+    c = ASC(clabel$): IF c >= 48 AND c <= 57 THEN EXIT FUNCTION
 
     'elements check
     label3$ = ""
-    For nx = 1 To n Step 2
+    FOR nx = 1 TO n STEP 2
         label$ = getelement$(clabel$, nx)
 
         'alpha-numeric?
-        For x = 1 To Len(label$)
-            If alphanumeric(Asc(label$, x)) = 0 Then Exit Function
-        Next
+        FOR x = 1 TO LEN(label$)
+            IF alphanumeric(ASC(label$, x)) = 0 THEN EXIT FUNCTION
+        NEXT
 
         'build label
-        If label3$ = "" Then label3$ = UCase$(label$): tlayout$ = label$ Else label3$ = label3$ + fix046$ + UCase$(label$): tlayout$ = tlayout$ + "." + label$
-    Next nx
+        IF label3$ = "" THEN label3$ = UCASE$(label$): tlayout$ = label$ ELSE label3$ = label3$ + fix046$ + UCASE$(label$): tlayout$ = tlayout$ + "." + label$
+    NEXT nx
 
     validlabel = 1
     LABEL2$ = label3$
 
-End Function
+END FUNCTION
 
-Sub xend
-    If vWatchOn = 1 Then
+SUB xend
+    IF vWatchOn = 1 THEN
         'check if closedmain = 0 in case a main module ends in an include.
-        If (inclinenumber(inclevel) = 0 Or closedmain = 0) Then vWatchAddLabel 0, -1
-        Print #12, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
-    End If
-    Print #12, "sub_end();"
-End Sub
+        IF (inclinenumber(inclevel) = 0 OR closedmain = 0) THEN vWatchAddLabel 0, -1
+        PRINT #12, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+    END IF
+    PRINT #12, "sub_end();"
+END SUB
 
-Sub xfileprint (a$, ca$, n)
+SUB xfileprint (a$, ca$, n)
     u$ = str2$(uniquenumber)
-    Print #12, "tab_spc_cr_size=2;"
-    If n = 2 Then Give_Error "Expected # ... , ...": Exit Sub
+    PRINT #12, "tab_spc_cr_size=2;"
+    IF n = 2 THEN Give_Error "Expected # ... , ...": EXIT SUB
     a3$ = ""
     b = 0
-    For i = 3 To n
+    FOR i = 3 TO n
         a2$ = getelement$(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If a2$ = "," And b = 0 Then
-            If a3$ = "" Then Give_Error "Expected # ... , ...": Exit Sub
-            GoTo printgotfn
-        End If
-        If a3$ = "" Then a3$ = a2$ Else a3$ = a3$ + sp + a2$
-    Next
-    Give_Error "Expected # ... ,": Exit Sub
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF a2$ = "," AND b = 0 THEN
+            IF a3$ = "" THEN Give_Error "Expected # ... , ...": EXIT SUB
+            GOTO printgotfn
+        END IF
+        IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
+    NEXT
+    Give_Error "Expected # ... ,": EXIT SUB
     printgotfn:
     e$ = fixoperationorder$(a3$)
-    If Error_Happened Then Exit Sub
+    IF Error_Happened THEN EXIT SUB
     l$ = SCase$("Print") + sp + "#" + sp2 + tlayout$ + sp2 + ","
     e$ = evaluatetotyp(e$, 64&)
-    If Error_Happened Then Exit Sub
-    Print #12, "tab_fileno=tmp_fileno=" + e$ + ";"
-    Print #12, "if (new_error) goto skip" + u$ + ";"
+    IF Error_Happened THEN EXIT SUB
+    PRINT #12, "tab_fileno=tmp_fileno=" + e$ + ";"
+    PRINT #12, "if (new_error) goto skip" + u$ + ";"
     i = i + 1
 
     'PRINT USING? (file)
-    If n >= i Then
-        If getelement(a$, i) = "USING" Then
+    IF n >= i THEN
+        IF getelement(a$, i) = "USING" THEN
             'get format string
             fpujump:
             l$ = l$ + sp + SCase$("Using")
             e$ = "": b = 0: puformat$ = ""
-            For i = i + 1 To n
+            FOR i = i + 1 TO n
                 a2$ = getelement(ca$, i)
-                If a2$ = "(" Then b = b + 1
-                If a2$ = ")" Then b = b - 1
-                If b = 0 Then
-                    If a2$ = "," Then Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": Exit Sub
-                    If a2$ = ";" Then
+                IF a2$ = "(" THEN b = b + 1
+                IF a2$ = ")" THEN b = b - 1
+                IF b = 0 THEN
+                    IF a2$ = "," THEN Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": EXIT SUB
+                    IF a2$ = ";" THEN
                         e$ = fixoperationorder$(e$)
-                        If Error_Happened Then Exit Sub
+                        IF Error_Happened THEN EXIT SUB
                         l$ = l$ + sp + tlayout$ + sp2 + ";"
                         e$ = evaluate(e$, typ)
-                        If Error_Happened Then Exit Sub
-                        If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                        If Error_Happened Then Exit Sub
-                        If (typ And ISSTRING) = 0 Then Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": Exit Sub
+                        IF Error_Happened THEN EXIT SUB
+                        IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                        IF Error_Happened THEN EXIT SUB
+                        IF (typ AND ISSTRING) = 0 THEN Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": EXIT SUB
                         puformat$ = e$
-                        Exit For
-                    End If ';
-                End If 'b
-                If Len(e$) Then e$ = e$ + sp + a2$ Else e$ = a2$
-            Next
-            If puformat$ = "" Then Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": Exit Sub
-            If i = n Then Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": Exit Sub
+                        EXIT FOR
+                    END IF ';
+                END IF 'b
+                IF LEN(e$) THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
+            NEXT
+            IF puformat$ = "" THEN Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": EXIT SUB
+            IF i = n THEN Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": EXIT SUB
             'create build string
-            Print #12, "tqbs=qbs_new(0,0);"
+            PRINT #12, "tqbs=qbs_new(0,0);"
             'set format start/index variable
-            Print #12, "tmp_long=0;" 'scan format from beginning
+            PRINT #12, "tmp_long=0;" 'scan format from beginning
             'create string to hold format in for multiple references
             puf$ = "print_using_format" + u$
-            If subfunc = "" Then
-                Print #13, "static qbs *" + puf$ + ";"
-            Else
-                Print #13, "qbs *" + puf$ + ";"
-            End If
-            Print #12, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
-            Print #12, "if (new_error) goto skip" + u$ + ";"
+            IF subfunc = "" THEN
+                PRINT #13, "static qbs *" + puf$ + ";"
+            ELSE
+                PRINT #13, "qbs *" + puf$ + ";"
+            END IF
+            PRINT #12, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
+            PRINT #12, "if (new_error) goto skip" + u$ + ";"
             'print expressions
             b = 0
             e$ = ""
             last = 0
-            For i = i + 1 To n
+            FOR i = i + 1 TO n
                 a2$ = getelement(ca$, i)
-                If a2$ = "(" Then b = b + 1
-                If a2$ = ")" Then b = b - 1
-                If b = 0 Then
-                    If a2$ = ";" Or a2$ = "," Then
+                IF a2$ = "(" THEN b = b + 1
+                IF a2$ = ")" THEN b = b - 1
+                IF b = 0 THEN
+                    IF a2$ = ";" OR a2$ = "," THEN
                         fprintulast:
                         e$ = fixoperationorder$(e$)
-                        If Error_Happened Then Exit Sub
-                        If last Then l$ = l$ + sp + tlayout$ Else l$ = l$ + sp + tlayout$ + sp2 + a2$
+                        IF Error_Happened THEN EXIT SUB
+                        IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
                         e$ = evaluate(e$, typ)
-                        If Error_Happened Then Exit Sub
-                        If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                        If Error_Happened Then Exit Sub
-                        If typ And ISSTRING Then
+                        IF Error_Happened THEN EXIT SUB
+                        IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                        IF Error_Happened THEN EXIT SUB
+                        IF typ AND ISSTRING THEN
 
-                            If Left$(e$, 9) = "func_tab(" Or Left$(e$, 9) = "func_spc(" Then
+                            IF LEFT$(e$, 9) = "func_tab(" OR LEFT$(e$, 9) = "func_spc(" THEN
 
                                 'TAB/SPC exception
                                 'note: position in format-string must be maintained
                                 '-print any string up until now
-                                Print #12, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
+                                PRINT #12, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
                                 '-print e$
-                                Print #12, "qbs_set(tqbs," + e$ + ");"
-                                Print #12, "if (new_error) goto skip_pu" + u$ + ";"
-                                Print #12, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
+                                PRINT #12, "qbs_set(tqbs," + e$ + ");"
+                                PRINT #12, "if (new_error) goto skip_pu" + u$ + ";"
+                                PRINT #12, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
                                 '-set length of tqbs to 0
-                                Print #12, "tqbs->len=0;"
+                                PRINT #12, "tqbs->len=0;"
 
-                            Else
+                            ELSE
 
                                 'regular string
-                                Print #12, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
+                                PRINT #12, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
 
-                            End If
+                            END IF
 
-                        Else 'not a string
-                            If typ And ISFLOAT Then
-                                If (typ And 511) = 32 Then Print #12, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                If (typ And 511) = 64 Then Print #12, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                If (typ And 511) > 64 Then Print #12, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                            Else
-                                If ((typ And 511) = 64) And (typ And ISUNSIGNED) <> 0 Then
-                                    Print #12, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                Else
-                                    Print #12, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                End If
-                            End If
-                        End If 'string/not string
-                        Print #12, "if (new_error) goto skip_pu" + u$ + ";"
+                        ELSE 'not a string
+                            IF typ AND ISFLOAT THEN
+                                IF (typ AND 511) = 32 THEN PRINT #12, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND 511) = 64 THEN PRINT #12, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND 511) > 64 THEN PRINT #12, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                            ELSE
+                                IF ((typ AND 511) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
+                                    PRINT #12, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                ELSE
+                                    PRINT #12, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                END IF
+                            END IF
+                        END IF 'string/not string
+                        PRINT #12, "if (new_error) goto skip_pu" + u$ + ";"
                         e$ = ""
-                        If last Then Exit For
-                        GoTo fprintunext
-                    End If
-                End If
-                If Len(e$) Then e$ = e$ + sp + a2$ Else e$ = a2$
+                        IF last THEN EXIT FOR
+                        GOTO fprintunext
+                    END IF
+                END IF
+                IF LEN(e$) THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
                 fprintunext:
-            Next
-            If e$ <> "" Then a2$ = "": last = 1: GoTo fprintulast
-            Print #12, "skip_pu" + u$ + ":"
+            NEXT
+            IF e$ <> "" THEN a2$ = "": last = 1: GOTO fprintulast
+            PRINT #12, "skip_pu" + u$ + ":"
             'check for errors
-            Print #12, "if (new_error){"
-            Print #12, "g_tmp_long=new_error; new_error=0; sub_file_print(tmp_fileno,tqbs,0,0,0); new_error=g_tmp_long;"
-            Print #12, "}else{"
-            If a2$ = "," Or a2$ = ";" Then nl = 0 Else nl = 1 'note: a2$ is set to the last element of a$
-            Print #12, "sub_file_print(tmp_fileno,tqbs,0,0," + str2$(nl) + ");"
-            Print #12, "}"
-            Print #12, "qbs_free(tqbs);"
-            Print #12, "qbs_free(" + puf$ + ");"
-            Print #12, "skip" + u$ + ":"
-            Print #12, cleanupstringprocessingcall$ + "0);"
-            Print #12, "tab_spc_cr_size=1;"
+            PRINT #12, "if (new_error){"
+            PRINT #12, "g_tmp_long=new_error; new_error=0; sub_file_print(tmp_fileno,tqbs,0,0,0); new_error=g_tmp_long;"
+            PRINT #12, "}else{"
+            IF a2$ = "," OR a2$ = ";" THEN nl = 0 ELSE nl = 1 'note: a2$ is set to the last element of a$
+            PRINT #12, "sub_file_print(tmp_fileno,tqbs,0,0," + str2$(nl) + ");"
+            PRINT #12, "}"
+            PRINT #12, "qbs_free(tqbs);"
+            PRINT #12, "qbs_free(" + puf$ + ");"
+            PRINT #12, "skip" + u$ + ":"
+            PRINT #12, cleanupstringprocessingcall$ + "0);"
+            PRINT #12, "tab_spc_cr_size=1;"
             tlayout$ = l$
-            Exit Sub
-        End If
-    End If
+            EXIT SUB
+        END IF
+    END IF
     'end of print using code
 
-    If i > n Then
-        Print #12, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
-        GoTo printblankline
-    End If
+    IF i > n THEN
+        PRINT #12, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
+        GOTO printblankline
+    END IF
     b = 0
     e$ = ""
     last = 0
-    For i = i To n
+    FOR i = i TO n
         a2$ = getelement(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If b = 0 Then
-            If a2$ = ";" Or a2$ = "," Or UCase$(a2$) = "USING" Then
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF b = 0 THEN
+            IF a2$ = ";" OR a2$ = "," OR UCASE$(a2$) = "USING" THEN
                 printfilelast:
 
-                If UCase$(a2$) = "USING" Then
-                    If e$ <> "" Then gotofpu = 1 Else GoTo fpujump
-                End If
+                IF UCASE$(a2$) = "USING" THEN
+                    IF e$ <> "" THEN gotofpu = 1 ELSE GOTO fpujump
+                END IF
 
-                If a2$ = "," Then usetab = 1 Else usetab = 0
-                If last = 1 Then newline = 1 Else newline = 0
+                IF a2$ = "," THEN usetab = 1 ELSE usetab = 0
+                IF last = 1 THEN newline = 1 ELSE newline = 0
                 extraspace = 0
 
-                If Len(e$) Then
+                IF LEN(e$) THEN
                     ebak$ = e$
                     pnrtnum = 0
                     printfilenumber:
                     e$ = fixoperationorder$(e$)
-                    If Error_Happened Then Exit Sub
-                    If pnrtnum = 0 Then
-                        If last Then l$ = l$ + sp + tlayout$ Else l$ = l$ + sp + tlayout$ + sp2 + a2$
-                    End If
+                    IF Error_Happened THEN EXIT SUB
+                    IF pnrtnum = 0 THEN
+                        IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
+                    END IF
                     e$ = evaluate(e$, typ)
-                    If Error_Happened Then Exit Sub
-                    If (typ And ISSTRING) = 0 Then
+                    IF Error_Happened THEN EXIT SUB
+                    IF (typ AND ISSTRING) = 0 THEN
                         e$ = "STR$" + sp + "(" + sp + ebak$ + sp + ")"
                         extraspace = 1
                         pnrtnum = 1
-                        GoTo printfilenumber 'force re-evaluation
-                    End If
-                    If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                    If Error_Happened Then Exit Sub
+                        GOTO printfilenumber 'force re-evaluation
+                    END IF
+                    IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                    IF Error_Happened THEN EXIT SUB
                     'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
-                    Print #12, "sub_file_print(tmp_fileno," + e$ + ","; extraspace; ","; usetab; ","; newline; ");"
-                Else 'len(e$)=0
-                    If a2$ = "," Then l$ = l$ + sp + a2$
-                    If a2$ = ";" Then
-                        If Right$(l$, 1) <> ";" Then l$ = l$ + sp + a2$ 'concat ;; to ;
-                    End If
-                    If usetab Then Print #12, "sub_file_print(tmp_fileno,nothingstring,0,1,0);"
-                End If 'len(e$)
-                Print #12, "if (new_error) goto skip" + u$ + ";"
+                    PRINT #12, "sub_file_print(tmp_fileno," + e$ + ","; extraspace; ","; usetab; ","; newline; ");"
+                ELSE 'len(e$)=0
+                    IF a2$ = "," THEN l$ = l$ + sp + a2$
+                    IF a2$ = ";" THEN
+                        IF RIGHT$(l$, 1) <> ";" THEN l$ = l$ + sp + a2$ 'concat ;; to ;
+                    END IF
+                    IF usetab THEN PRINT #12, "sub_file_print(tmp_fileno,nothingstring,0,1,0);"
+                END IF 'len(e$)
+                PRINT #12, "if (new_error) goto skip" + u$ + ";"
 
                 e$ = ""
-                If gotofpu Then GoTo fpujump
-                If last Then Exit For
-                GoTo printfilenext
-            End If ', or ;
-        End If 'b=0
-        If e$ <> "" Then e$ = e$ + sp + a2$ Else e$ = a2$
+                IF gotofpu THEN GOTO fpujump
+                IF last THEN EXIT FOR
+                GOTO printfilenext
+            END IF ', or ;
+        END IF 'b=0
+        IF e$ <> "" THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
         printfilenext:
-    Next
-    If e$ <> "" Then a2$ = "": last = 1: GoTo printfilelast
+    NEXT
+    IF e$ <> "" THEN a2$ = "": last = 1: GOTO printfilelast
     printblankline:
-    Print #12, "skip" + u$ + ":"
-    Print #12, cleanupstringprocessingcall$ + "0);"
-    Print #12, "tab_spc_cr_size=1;"
+    PRINT #12, "skip" + u$ + ":"
+    PRINT #12, cleanupstringprocessingcall$ + "0);"
+    PRINT #12, "tab_spc_cr_size=1;"
     tlayout$ = l$
-End Sub
+END SUB
 
-Sub xfilewrite (ca$, n)
+SUB xfilewrite (ca$, n)
     l$ = SCase$("Write") + sp + "#"
     u$ = str2$(uniquenumber)
-    Print #12, "tab_spc_cr_size=2;"
-    If n = 2 Then Give_Error "Expected # ...": Exit Sub
+    PRINT #12, "tab_spc_cr_size=2;"
+    IF n = 2 THEN Give_Error "Expected # ...": EXIT SUB
     a3$ = ""
     b = 0
-    For i = 3 To n
+    FOR i = 3 TO n
         a2$ = getelement$(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If a2$ = "," And b = 0 Then
-            If a3$ = "" Then Give_Error "Expected # ... , ...": Exit Sub
-            GoTo writegotfn
-        End If
-        If a3$ = "" Then a3$ = a2$ Else a3$ = a3$ + sp + a2$
-    Next
-    Give_Error "Expected # ... ,": Exit Sub
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF a2$ = "," AND b = 0 THEN
+            IF a3$ = "" THEN Give_Error "Expected # ... , ...": EXIT SUB
+            GOTO writegotfn
+        END IF
+        IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
+    NEXT
+    Give_Error "Expected # ... ,": EXIT SUB
     writegotfn:
     e$ = fixoperationorder$(a3$)
-    If Error_Happened Then Exit Sub
+    IF Error_Happened THEN EXIT SUB
     l$ = l$ + sp2 + tlayout$ + sp2 + ","
     e$ = evaluatetotyp(e$, 64&)
-    If Error_Happened Then Exit Sub
-    Print #12, "tab_fileno=tmp_fileno=" + e$ + ";"
-    Print #12, "if (new_error) goto skip" + u$ + ";"
+    IF Error_Happened THEN EXIT SUB
+    PRINT #12, "tab_fileno=tmp_fileno=" + e$ + ";"
+    PRINT #12, "if (new_error) goto skip" + u$ + ";"
     i = i + 1
-    If i > n Then
-        Print #12, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
-        GoTo writeblankline
-    End If
+    IF i > n THEN
+        PRINT #12, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
+        GOTO writeblankline
+    END IF
     b = 0
     e$ = ""
     last = 0
-    For i = i To n
+    FOR i = i TO n
         a2$ = getelement(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If b = 0 Then
-            If a2$ = "," Then
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF b = 0 THEN
+            IF a2$ = "," THEN
                 writefilelast:
-                If last = 1 Then newline = 1 Else newline = 0
+                IF last = 1 THEN newline = 1 ELSE newline = 0
                 ebak$ = e$
                 reevaled = 0
                 writefilenumber:
                 e$ = fixoperationorder$(e$)
-                If Error_Happened Then Exit Sub
-                If reevaled = 0 Then
+                IF Error_Happened THEN EXIT SUB
+                IF reevaled = 0 THEN
                     l$ = l$ + sp + tlayout$
-                    If last = 0 Then l$ = l$ + sp2 + ","
-                End If
+                    IF last = 0 THEN l$ = l$ + sp2 + ","
+                END IF
                 e$ = evaluate(e$, typ)
-                If Error_Happened Then Exit Sub
-                If reevaled = 0 Then
-                    If (typ And ISSTRING) = 0 Then
+                IF Error_Happened THEN EXIT SUB
+                IF reevaled = 0 THEN
+                    IF (typ AND ISSTRING) = 0 THEN
                         e$ = "LTRIM$" + sp + "(" + sp + "STR$" + sp + "(" + sp + ebak$ + sp + ")" + sp + ")"
-                        If last = 0 Then e$ = e$ + sp + "+" + sp + Chr$(34) + "," + Chr$(34) + ",1"
+                        IF last = 0 THEN e$ = e$ + sp + "+" + sp + CHR$(34) + "," + CHR$(34) + ",1"
                         reevaled = 1
-                        GoTo writefilenumber 'force re-evaluation
-                    Else
-                        e$ = Chr$(34) + "\042" + Chr$(34) + ",1" + sp + "+" + sp + ebak$ + sp + "+" + sp + Chr$(34) + "\042" + Chr$(34) + ",1"
-                        If last = 0 Then e$ = e$ + sp + "+" + sp + Chr$(34) + "," + Chr$(34) + ",1"
+                        GOTO writefilenumber 'force re-evaluation
+                    ELSE
+                        e$ = CHR$(34) + "\042" + CHR$(34) + ",1" + sp + "+" + sp + ebak$ + sp + "+" + sp + CHR$(34) + "\042" + CHR$(34) + ",1"
+                        IF last = 0 THEN e$ = e$ + sp + "+" + sp + CHR$(34) + "," + CHR$(34) + ",1"
                         reevaled = 1
-                        GoTo writefilenumber 'force re-evaluation
-                    End If
-                End If
-                If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                If Error_Happened Then Exit Sub
+                        GOTO writefilenumber 'force re-evaluation
+                    END IF
+                END IF
+                IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
-                Print #12, "sub_file_print(tmp_fileno," + e$ + ",0,0,"; newline; ");"
-                Print #12, "if (new_error) goto skip" + u$ + ";"
+                PRINT #12, "sub_file_print(tmp_fileno," + e$ + ",0,0,"; newline; ");"
+                PRINT #12, "if (new_error) goto skip" + u$ + ";"
                 e$ = ""
-                If last Then Exit For
-                GoTo writefilenext
-            End If ',
-        End If 'b=0
-        If e$ <> "" Then e$ = e$ + sp + a2$ Else e$ = a2$
+                IF last THEN EXIT FOR
+                GOTO writefilenext
+            END IF ',
+        END IF 'b=0
+        IF e$ <> "" THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
         writefilenext:
-    Next
-    If e$ <> "" Then a2$ = ",": last = 1: GoTo writefilelast
+    NEXT
+    IF e$ <> "" THEN a2$ = ",": last = 1: GOTO writefilelast
     writeblankline:
     'print #12, "}"'new_error
-    Print #12, "skip" + u$ + ":"
-    Print #12, cleanupstringprocessingcall$ + "0);"
-    Print #12, "tab_spc_cr_size=1;"
-    layoutdone = 1: If Len(layout$) Then layout$ = layout$ + sp + l$ Else layout$ = l$
-End Sub
+    PRINT #12, "skip" + u$ + ":"
+    PRINT #12, cleanupstringprocessingcall$ + "0);"
+    PRINT #12, "tab_spc_cr_size=1;"
+    layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+END SUB
 
-Sub xgosub (ca$)
+SUB xgosub (ca$)
     a2$ = getelement(ca$, 2)
-    If validlabel(a2$) = 0 Then Give_Error "Invalid label": Exit Sub
+    IF validlabel(a2$) = 0 THEN Give_Error "Invalid label": EXIT SUB
 
     v = HashFind(a2$, HASHFLAG_LABEL, ignore, r)
     x = 1
     labchk200:
-    If v Then
+    IF v THEN
         s = Labels(r).Scope
-        If s = subfuncn Or s = -1 Then 'same scope?
-            If s = -1 Then Labels(r).Scope = subfuncn 'acquire scope
+        IF s = subfuncn OR s = -1 THEN 'same scope?
+            IF s = -1 THEN Labels(r).Scope = subfuncn 'acquire scope
             x = 0 'already defined
-            tlayout$ = RTrim$(Labels(r).cn)
-        Else
-            If v = 2 Then v = HashFindCont(ignore, r): GoTo labchk200
-        End If
-    End If
-    If x Then
+            tlayout$ = RTRIM$(Labels(r).cn)
+        ELSE
+            IF v = 2 THEN v = HashFindCont(ignore, r): GOTO labchk200
+        END IF
+    END IF
+    IF x THEN
         'does not exist
-        nLabels = nLabels + 1: If nLabels > Labels_Ubound Then Labels_Ubound = Labels_Ubound * 2: ReDim _Preserve Labels(1 To Labels_Ubound) As Label_Type
+        nLabels = nLabels + 1: IF nLabels > Labels_Ubound THEN Labels_Ubound = Labels_Ubound * 2: REDIM _PRESERVE Labels(1 TO Labels_Ubound) AS Label_Type
         Labels(nLabels) = Empty_Label
         HashAdd a2$, HASHFLAG_LABEL, nLabels
         r = nLabels
@@ -23326,81 +23326,81 @@ Sub xgosub (ca$)
         Labels(r).cn = tlayout$
         Labels(r).Scope = subfuncn
         Labels(r).Error_Line = linenumber
-    End If 'x
+    END IF 'x
 
     l$ = SCase$("GoSub") + sp + tlayout$
-    layoutdone = 1: If Len(layout$) Then layout$ = layout$ + sp + l$ Else layout$ = l$
+    layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
     'note: This code fragment also used by ON ... GOTO/GOSUB
     'assume label is reachable (revise)
-    Print #12, "return_point[next_return_point++]=" + str2(gosubid) + ";"
-    Print #12, "if (next_return_point>=return_points) more_return_points();"
-    Print #12, "goto LABEL_" + a2$ + ";"
+    PRINT #12, "return_point[next_return_point++]=" + str2(gosubid) + ";"
+    PRINT #12, "if (next_return_point>=return_points) more_return_points();"
+    PRINT #12, "goto LABEL_" + a2$ + ";"
     'add return point jump
-    Print #15, "case " + str2(gosubid) + ":"
-    Print #15, "goto RETURN_" + str2(gosubid) + ";"
-    Print #15, "break;"
-    Print #12, "RETURN_" + str2(gosubid) + ":;"
+    PRINT #15, "case " + str2(gosubid) + ":"
+    PRINT #15, "goto RETURN_" + str2(gosubid) + ";"
+    PRINT #15, "break;"
+    PRINT #12, "RETURN_" + str2(gosubid) + ":;"
     gosubid = gosubid + 1
-End Sub
+END SUB
 
-Sub xongotogosub (a$, ca$, n)
-    If n < 4 Then Give_Error "Expected ON expression GOTO/GOSUB label,label,...": Exit Sub
+SUB xongotogosub (a$, ca$, n)
+    IF n < 4 THEN Give_Error "Expected ON expression GOTO/GOSUB label,label,...": EXIT SUB
     l$ = SCase$("On")
     b = 0
-    For i = 2 To n
+    FOR i = 2 TO n
         e2$ = getelement$(a$, i)
-        If e2$ = "(" Then b = b + 1
-        If e2$ = ")" Then b = b - 1
-        If e2$ = "GOTO" Or e2$ = "GOSUB" Then Exit For
-    Next
-    If i >= n Or i = 2 Then Give_Error "Expected ON expression GOTO/GOSUB label,label,...": Exit Sub
+        IF e2$ = "(" THEN b = b + 1
+        IF e2$ = ")" THEN b = b - 1
+        IF e2$ = "GOTO" OR e2$ = "GOSUB" THEN EXIT FOR
+    NEXT
+    IF i >= n OR i = 2 THEN Give_Error "Expected ON expression GOTO/GOSUB label,label,...": EXIT SUB
     e$ = getelements$(ca$, 2, i - 1)
 
-    g = 0: If e2$ = "GOSUB" Then g = 1
+    g = 0: IF e2$ = "GOSUB" THEN g = 1
     e$ = fixoperationorder(e$)
-    If Error_Happened Then Exit Sub
+    IF Error_Happened THEN EXIT SUB
     l$ = l$ + sp + tlayout$
     e$ = evaluate(e$, typ)
-    If Error_Happened Then Exit Sub
-    If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-    If Error_Happened Then Exit Sub
-    If (typ And ISSTRING) Then Give_Error "Expected numeric expression": Exit Sub
-    If (typ And ISFLOAT) Then
+    IF Error_Happened THEN EXIT SUB
+    IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+    IF Error_Happened THEN EXIT SUB
+    IF (typ AND ISSTRING) THEN Give_Error "Expected numeric expression": EXIT SUB
+    IF (typ AND ISFLOAT) THEN
         e$ = "qbr_float_to_long(" + e$ + ")"
-    End If
+    END IF
     l$ = l$ + sp + e2$
     u$ = str2$(uniquenumber)
-    Print #13, "static int32 ongo_" + u$ + "=0;"
-    Print #12, "ongo_" + u$ + "=" + e$ + ";"
+    PRINT #13, "static int32 ongo_" + u$ + "=0;"
+    PRINT #12, "ongo_" + u$ + "=" + e$ + ";"
     ln = 1
     labelwaslast = 0
-    For i = i + 1 To n
+    FOR i = i + 1 TO n
         e$ = getelement$(ca$, i)
-        If e$ = "," Then
+        IF e$ = "," THEN
             l$ = l$ + sp2 + ","
-            If i = n Then Give_Error "Trailing , invalid": Exit Sub
+            IF i = n THEN Give_Error "Trailing , invalid": EXIT SUB
             ln = ln + 1
             labelwaslast = 0
-        Else
-            If labelwaslast Then Give_Error "Expected ,": Exit Sub
-            If validlabel(e$) = 0 Then Give_Error "Invalid label!": Exit Sub
+        ELSE
+            IF labelwaslast THEN Give_Error "Expected ,": EXIT SUB
+            IF validlabel(e$) = 0 THEN Give_Error "Invalid label!": EXIT SUB
 
             v = HashFind(e$, HASHFLAG_LABEL, ignore, r)
             x = 1
             labchk507:
-            If v Then
+            IF v THEN
                 s = Labels(r).Scope
-                If s = subfuncn Or s = -1 Then 'same scope?
-                    If s = -1 Then Labels(r).Scope = subfuncn 'acquire scope
+                IF s = subfuncn OR s = -1 THEN 'same scope?
+                    IF s = -1 THEN Labels(r).Scope = subfuncn 'acquire scope
                     x = 0 'already defined
-                    tlayout$ = RTrim$(Labels(r).cn)
-                Else
-                    If v = 2 Then v = HashFindCont(ignore, r): GoTo labchk507
-                End If
-            End If
-            If x Then
+                    tlayout$ = RTRIM$(Labels(r).cn)
+                ELSE
+                    IF v = 2 THEN v = HashFindCont(ignore, r): GOTO labchk507
+                END IF
+            END IF
+            IF x THEN
                 'does not exist
-                nLabels = nLabels + 1: If nLabels > Labels_Ubound Then Labels_Ubound = Labels_Ubound * 2: ReDim _Preserve Labels(1 To Labels_Ubound) As Label_Type
+                nLabels = nLabels + 1: IF nLabels > Labels_Ubound THEN Labels_Ubound = Labels_Ubound * 2: REDIM _PRESERVE Labels(1 TO Labels_Ubound) AS Label_Type
                 Labels(nLabels) = Empty_Label
                 HashAdd e$, HASHFLAG_LABEL, nLabels
                 r = nLabels
@@ -23408,430 +23408,430 @@ Sub xongotogosub (a$, ca$, n)
                 Labels(r).cn = tlayout$
                 Labels(r).Scope = subfuncn
                 Labels(r).Error_Line = linenumber
-            End If 'x
+            END IF 'x
 
             l$ = l$ + sp + tlayout$
-            If g Then 'gosub
+            IF g THEN 'gosub
                 lb$ = e$
-                Print #12, "if (ongo_" + u$ + "==" + str2$(ln) + "){"
+                PRINT #12, "if (ongo_" + u$ + "==" + str2$(ln) + "){"
                 'note: This code fragment also used by ON ... GOTO/GOSUB
                 'assume label is reachable (revise)
-                Print #12, "return_point[next_return_point++]=" + str2(gosubid) + ";"
-                Print #12, "if (next_return_point>=return_points) more_return_points();"
-                Print #12, "goto LABEL_" + lb$ + ";"
+                PRINT #12, "return_point[next_return_point++]=" + str2(gosubid) + ";"
+                PRINT #12, "if (next_return_point>=return_points) more_return_points();"
+                PRINT #12, "goto LABEL_" + lb$ + ";"
                 'add return point jump
-                Print #15, "case " + str2(gosubid) + ":"
-                Print #15, "goto RETURN_" + str2(gosubid) + ";"
-                Print #15, "break;"
-                Print #12, "RETURN_" + str2(gosubid) + ":;"
+                PRINT #15, "case " + str2(gosubid) + ":"
+                PRINT #15, "goto RETURN_" + str2(gosubid) + ";"
+                PRINT #15, "break;"
+                PRINT #12, "RETURN_" + str2(gosubid) + ":;"
                 gosubid = gosubid + 1
-                Print #12, "goto ongo_" + u$ + "_skip;"
-                Print #12, "}"
-            Else 'goto
-                Print #12, "if (ongo_" + u$ + "==" + str2$(ln) + ") goto LABEL_" + e$ + ";"
-            End If
+                PRINT #12, "goto ongo_" + u$ + "_skip;"
+                PRINT #12, "}"
+            ELSE 'goto
+                PRINT #12, "if (ongo_" + u$ + "==" + str2$(ln) + ") goto LABEL_" + e$ + ";"
+            END IF
             labelwaslast = 1
-        End If
-    Next
-    Print #12, "if (ongo_" + u$ + "<0) error(5);"
-    If g = 1 Then Print #12, "ongo_" + u$ + "_skip:;"
-    layoutdone = 1: If Len(layout$) Then layout$ = layout$ + sp + l$ Else layout$ = l$
-End Sub
+        END IF
+    NEXT
+    PRINT #12, "if (ongo_" + u$ + "<0) error(5);"
+    IF g = 1 THEN PRINT #12, "ongo_" + u$ + "_skip:;"
+    layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+END SUB
 
-Sub xprint (a$, ca$, n)
+SUB xprint (a$, ca$, n)
     u$ = str2$(uniquenumber)
 
     l$ = SCase$("Print")
-    If Asc(a$) = 76 Then lp = 1: lp$ = "l": l$ = SCase$("LPrint"): Print #12, "tab_LPRINT=1;": DEPENDENCY(DEPENDENCY_PRINTER) = 1 '"L"
+    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): PRINT #12, "tab_LPRINT=1;": DEPENDENCY(DEPENDENCY_PRINTER) = 1 '"L"
 
     'PRINT USING?
-    If n >= 2 Then
-        If getelement(a$, 2) = "USING" Then
+    IF n >= 2 THEN
+        IF getelement(a$, 2) = "USING" THEN
             'get format string
             i = 3
             pujump:
             l$ = l$ + sp + SCase$("Using")
             e$ = "": b = 0: puformat$ = ""
-            For i = i To n
+            FOR i = i TO n
                 a2$ = getelement(ca$, i)
-                If a2$ = "(" Then b = b + 1
-                If a2$ = ")" Then b = b - 1
-                If b = 0 Then
-                    If a2$ = "," Then Give_Error "Expected PRINT USING formatstring ; ...": Exit Sub
-                    If a2$ = ";" Then
+                IF a2$ = "(" THEN b = b + 1
+                IF a2$ = ")" THEN b = b - 1
+                IF b = 0 THEN
+                    IF a2$ = "," THEN Give_Error "Expected PRINT USING formatstring ; ...": EXIT SUB
+                    IF a2$ = ";" THEN
                         e$ = fixoperationorder$(e$)
-                        If Error_Happened Then Exit Sub
+                        IF Error_Happened THEN EXIT SUB
                         l$ = l$ + sp + tlayout$ + sp2 + ";"
                         e$ = evaluate(e$, typ)
-                        If Error_Happened Then Exit Sub
-                        If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                        If Error_Happened Then Exit Sub
-                        If (typ And ISSTRING) = 0 Then Give_Error "Expected PRINT USING formatstring ; ...": Exit Sub
+                        IF Error_Happened THEN EXIT SUB
+                        IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                        IF Error_Happened THEN EXIT SUB
+                        IF (typ AND ISSTRING) = 0 THEN Give_Error "Expected PRINT USING formatstring ; ...": EXIT SUB
                         puformat$ = e$
-                        Exit For
-                    End If ';
-                End If 'b
-                If Len(e$) Then e$ = e$ + sp + a2$ Else e$ = a2$
-            Next
-            If puformat$ = "" Then Give_Error "Expected PRINT USING formatstring ; ...": Exit Sub
-            If i = n Then Give_Error "Expected PRINT USING formatstring ; ...": Exit Sub
+                        EXIT FOR
+                    END IF ';
+                END IF 'b
+                IF LEN(e$) THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
+            NEXT
+            IF puformat$ = "" THEN Give_Error "Expected PRINT USING formatstring ; ...": EXIT SUB
+            IF i = n THEN Give_Error "Expected PRINT USING formatstring ; ...": EXIT SUB
             'create build string
-            If TQBSset = 0 Then
-                Print #12, "tqbs=qbs_new(0,0);"
-            Else
-                Print #12, "qbs_set(tqbs,qbs_new_txt_len(" + Chr$(34) + Chr$(34) + ",0));"
-            End If
+            IF TQBSset = 0 THEN
+                PRINT #12, "tqbs=qbs_new(0,0);"
+            ELSE
+                PRINT #12, "qbs_set(tqbs,qbs_new_txt_len(" + CHR$(34) + CHR$(34) + ",0));"
+            END IF
             'set format start/index variable
-            Print #12, "tmp_long=0;" 'scan format from beginning
+            PRINT #12, "tmp_long=0;" 'scan format from beginning
 
 
             'create string to hold format in for multiple references
             puf$ = "print_using_format" + u$
-            If subfunc = "" Then
-                Print #13, "static qbs *" + puf$ + ";"
-            Else
-                Print #13, "qbs *" + puf$ + ";"
-            End If
-            Print #12, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
-            Print #12, "if (new_error) goto skip_pu" + u$ + ";"
+            IF subfunc = "" THEN
+                PRINT #13, "static qbs *" + puf$ + ";"
+            ELSE
+                PRINT #13, "qbs *" + puf$ + ";"
+            END IF
+            PRINT #12, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
+            PRINT #12, "if (new_error) goto skip_pu" + u$ + ";"
 
             'print expressions
             b = 0
             e$ = ""
             last = 0
-            For i = i + 1 To n
+            FOR i = i + 1 TO n
                 a2$ = getelement(ca$, i)
-                If a2$ = "(" Then b = b + 1
-                If a2$ = ")" Then b = b - 1
-                If b = 0 Then
-                    If a2$ = ";" Or a2$ = "," Then
+                IF a2$ = "(" THEN b = b + 1
+                IF a2$ = ")" THEN b = b - 1
+                IF b = 0 THEN
+                    IF a2$ = ";" OR a2$ = "," THEN
                         printulast:
                         e$ = fixoperationorder$(e$)
-                        If Error_Happened Then Exit Sub
-                        If last Then l$ = l$ + sp + tlayout$ Else l$ = l$ + sp + tlayout$ + sp2 + a2$
+                        IF Error_Happened THEN EXIT SUB
+                        IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
                         e$ = evaluate(e$, typ)
-                        If Error_Happened Then Exit Sub
-                        If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                        If Error_Happened Then Exit Sub
-                        If typ And ISSTRING Then
+                        IF Error_Happened THEN EXIT SUB
+                        IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                        IF Error_Happened THEN EXIT SUB
+                        IF typ AND ISSTRING THEN
 
-                            If Left$(e$, 9) = "func_tab(" Or Left$(e$, 9) = "func_spc(" Then
+                            IF LEFT$(e$, 9) = "func_tab(" OR LEFT$(e$, 9) = "func_spc(" THEN
 
                                 'TAB/SPC exception
                                 'note: position in format-string must be maintained
                                 '-print any string up until now
-                                Print #12, "qbs_" + lp$ + "print(tqbs,0);"
+                                PRINT #12, "qbs_" + lp$ + "print(tqbs,0);"
                                 '-print e$
-                                Print #12, "qbs_set(tqbs," + e$ + ");"
-                                Print #12, "if (new_error) goto skip_pu" + u$ + ";"
-                                If lp Then Print #12, "lprint_makefit(tqbs);" Else Print #12, "makefit(tqbs);"
-                                Print #12, "qbs_" + lp$ + "print(tqbs,0);"
+                                PRINT #12, "qbs_set(tqbs," + e$ + ");"
+                                PRINT #12, "if (new_error) goto skip_pu" + u$ + ";"
+                                IF lp THEN PRINT #12, "lprint_makefit(tqbs);" ELSE PRINT #12, "makefit(tqbs);"
+                                PRINT #12, "qbs_" + lp$ + "print(tqbs,0);"
                                 '-set length of tqbs to 0
-                                Print #12, "tqbs->len=0;"
+                                PRINT #12, "tqbs->len=0;"
 
-                            Else
+                            ELSE
 
                                 'regular string
-                                Print #12, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
+                                PRINT #12, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
 
-                            End If
+                            END IF
 
 
 
-                        Else 'not a string
-                            If typ And ISFLOAT Then
-                                If (typ And 511) = 32 Then Print #12, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                If (typ And 511) = 64 Then Print #12, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                If (typ And 511) > 64 Then Print #12, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                            Else
-                                If ((typ And 511) = 64) And (typ And ISUNSIGNED) <> 0 Then
-                                    Print #12, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                Else
-                                    Print #12, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                End If
-                            End If
-                        End If 'string/not string
-                        Print #12, "if (new_error) goto skip_pu" + u$ + ";"
+                        ELSE 'not a string
+                            IF typ AND ISFLOAT THEN
+                                IF (typ AND 511) = 32 THEN PRINT #12, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND 511) = 64 THEN PRINT #12, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND 511) > 64 THEN PRINT #12, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                            ELSE
+                                IF ((typ AND 511) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
+                                    PRINT #12, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                ELSE
+                                    PRINT #12, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                END IF
+                            END IF
+                        END IF 'string/not string
+                        PRINT #12, "if (new_error) goto skip_pu" + u$ + ";"
                         e$ = ""
-                        If last Then Exit For
-                        GoTo printunext
-                    End If
-                End If
-                If Len(e$) Then e$ = e$ + sp + a2$ Else e$ = a2$
+                        IF last THEN EXIT FOR
+                        GOTO printunext
+                    END IF
+                END IF
+                IF LEN(e$) THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
                 printunext:
-            Next
-            If e$ <> "" Then a2$ = "": last = 1: GoTo printulast
-            Print #12, "skip_pu" + u$ + ":"
+            NEXT
+            IF e$ <> "" THEN a2$ = "": last = 1: GOTO printulast
+            PRINT #12, "skip_pu" + u$ + ":"
             'check for errors
-            Print #12, "if (new_error){"
-            Print #12, "g_tmp_long=new_error; new_error=0; qbs_" + lp$ + "print(tqbs,0); new_error=g_tmp_long;"
-            Print #12, "}else{"
-            If a2$ = "," Or a2$ = ";" Then nl = 0 Else nl = 1 'note: a2$ is set to the last element of a$
-            Print #12, "qbs_" + lp$ + "print(tqbs," + str2$(nl) + ");"
-            Print #12, "}"
-            Print #12, "qbs_free(tqbs);"
-            Print #12, "qbs_free(" + puf$ + ");"
-            Print #12, "skip" + u$ + ":"
-            Print #12, cleanupstringprocessingcall$ + "0);"
-            If lp Then Print #12, "tab_LPRINT=0;"
+            PRINT #12, "if (new_error){"
+            PRINT #12, "g_tmp_long=new_error; new_error=0; qbs_" + lp$ + "print(tqbs,0); new_error=g_tmp_long;"
+            PRINT #12, "}else{"
+            IF a2$ = "," OR a2$ = ";" THEN nl = 0 ELSE nl = 1 'note: a2$ is set to the last element of a$
+            PRINT #12, "qbs_" + lp$ + "print(tqbs," + str2$(nl) + ");"
+            PRINT #12, "}"
+            PRINT #12, "qbs_free(tqbs);"
+            PRINT #12, "qbs_free(" + puf$ + ");"
+            PRINT #12, "skip" + u$ + ":"
+            PRINT #12, cleanupstringprocessingcall$ + "0);"
+            IF lp THEN PRINT #12, "tab_LPRINT=0;"
             tlayout$ = l$
-            Exit Sub
-        End If
-    End If
+            EXIT SUB
+        END IF
+    END IF
     'end of print using code
 
     b = 0
     e$ = ""
     last = 0
-    Print #12, "tqbs=qbs_new(0,0);" 'initialize the temp string
+    PRINT #12, "tqbs=qbs_new(0,0);" 'initialize the temp string
     TQBSset = -1 'set the temporary flag so we don't create a temp string twice, in case USING comes after something
-    For i = 2 To n
+    FOR i = 2 TO n
         a2$ = getelement(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If b = 0 Then
-            If a2$ = ";" Or a2$ = "," Or UCase$(a2$) = "USING" Then
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF b = 0 THEN
+            IF a2$ = ";" OR a2$ = "," OR UCASE$(a2$) = "USING" THEN
                 printlast:
 
-                If UCase$(a2$) = "USING" Then
-                    If e$ <> "" Then gotopu = 1 Else i = i + 1: GoTo pujump
-                End If
+                IF UCASE$(a2$) = "USING" THEN
+                    IF e$ <> "" THEN gotopu = 1 ELSE i = i + 1: GOTO pujump
+                END IF
 
-                If Len(e$) Then
+                IF LEN(e$) THEN
                     ebak$ = e$
                     pnrtnum = 0
                     printnumber:
                     e$ = fixoperationorder$(e$)
-                    If Error_Happened Then Exit Sub
-                    If pnrtnum = 0 Then
-                        If last Then l$ = l$ + sp + tlayout$ Else l$ = l$ + sp + tlayout$ + sp2 + a2$
-                    End If
+                    IF Error_Happened THEN EXIT SUB
+                    IF pnrtnum = 0 THEN
+                        IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
+                    END IF
                     e$ = evaluate(e$, typ)
-                    If Error_Happened Then Exit Sub
-                    If (typ And ISSTRING) = 0 Then
+                    IF Error_Happened THEN EXIT SUB
+                    IF (typ AND ISSTRING) = 0 THEN
                         'not a string expresion!
-                        e$ = "STR$" + sp + "(" + sp + ebak$ + sp + ")" + sp + "+" + sp + Chr$(34) + " " + Chr$(34)
+                        e$ = "STR$" + sp + "(" + sp + ebak$ + sp + ")" + sp + "+" + sp + CHR$(34) + " " + CHR$(34)
                         pnrtnum = 1
-                        GoTo printnumber
-                    End If
-                    If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                    If Error_Happened Then Exit Sub
-                    Print #12, "qbs_set(tqbs," + e$ + ");"
-                    Print #12, "if (new_error) goto skip" + u$ + ";"
-                    If lp Then Print #12, "lprint_makefit(tqbs);" Else Print #12, "makefit(tqbs);"
-                    Print #12, "qbs_" + lp$ + "print(tqbs,0);"
-                Else
-                    If a2$ = "," Then l$ = l$ + sp + a2$
-                    If a2$ = ";" Then
-                        If Right$(l$, 1) <> ";" Then l$ = l$ + sp + a2$ 'concat ;; to ;
-                    End If
-                End If 'len(e$)
-                If a2$ = "," Then Print #12, "tab();"
+                        GOTO printnumber
+                    END IF
+                    IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                    IF Error_Happened THEN EXIT SUB
+                    PRINT #12, "qbs_set(tqbs," + e$ + ");"
+                    PRINT #12, "if (new_error) goto skip" + u$ + ";"
+                    IF lp THEN PRINT #12, "lprint_makefit(tqbs);" ELSE PRINT #12, "makefit(tqbs);"
+                    PRINT #12, "qbs_" + lp$ + "print(tqbs,0);"
+                ELSE
+                    IF a2$ = "," THEN l$ = l$ + sp + a2$
+                    IF a2$ = ";" THEN
+                        IF RIGHT$(l$, 1) <> ";" THEN l$ = l$ + sp + a2$ 'concat ;; to ;
+                    END IF
+                END IF 'len(e$)
+                IF a2$ = "," THEN PRINT #12, "tab();"
                 e$ = ""
 
-                If gotopu Then i = i + 1: GoTo pujump
+                IF gotopu THEN i = i + 1: GOTO pujump
 
-                If last Then
-                    Print #12, "qbs_" + lp$ + "print(nothingstring,1);" 'go to new line
-                    Exit For
-                End If
+                IF last THEN
+                    PRINT #12, "qbs_" + lp$ + "print(nothingstring,1);" 'go to new line
+                    EXIT FOR
+                END IF
 
-                GoTo printnext
-            End If 'a2$
-        End If 'b=0
+                GOTO printnext
+            END IF 'a2$
+        END IF 'b=0
 
-        If Len(e$) Then e$ = e$ + sp + a2$ Else e$ = a2$
+        IF LEN(e$) THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
         printnext:
-    Next
-    If Len(e$) Then a2$ = "": last = 1: GoTo printlast
-    If n = 1 Then Print #12, "qbs_" + lp$ + "print(nothingstring,1);"
-    Print #12, "skip" + u$ + ":"
-    Print #12, "qbs_free(tqbs);"
-    Print #12, cleanupstringprocessingcall$ + "0);"
-    If lp Then Print #12, "tab_LPRINT=0;"
+    NEXT
+    IF LEN(e$) THEN a2$ = "": last = 1: GOTO printlast
+    IF n = 1 THEN PRINT #12, "qbs_" + lp$ + "print(nothingstring,1);"
+    PRINT #12, "skip" + u$ + ":"
+    PRINT #12, "qbs_free(tqbs);"
+    PRINT #12, cleanupstringprocessingcall$ + "0);"
+    IF lp THEN PRINT #12, "tab_LPRINT=0;"
     tlayout$ = l$
-End Sub
+END SUB
 
 
 
 
-Sub xread (ca$, n)
+SUB xread (ca$, n)
     l$ = SCase$("Read")
-    If n = 1 Then Give_Error "Expected variable": Exit Sub
+    IF n = 1 THEN Give_Error "Expected variable": EXIT SUB
     i = 2
-    If i > n Then Give_Error "Expected , ...": Exit Sub
+    IF i > n THEN Give_Error "Expected , ...": EXIT SUB
     a3$ = ""
     b = 0
-    For i = i To n
+    FOR i = i TO n
         a2$ = getelement$(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If (a2$ = "," And b = 0) Or i = n Then
-            If i = n Then
-                If a3$ = "" Then a3$ = a2$ Else a3$ = a3$ + sp + a2$
-            End If
-            If a3$ = "" Then Give_Error "Expected , ...": Exit Sub
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF (a2$ = "," AND b = 0) OR i = n THEN
+            IF i = n THEN
+                IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
+            END IF
+            IF a3$ = "" THEN Give_Error "Expected , ...": EXIT SUB
             e$ = fixoperationorder$(a3$)
-            If Error_Happened Then Exit Sub
-            l$ = l$ + sp + tlayout$: If i <> n Then l$ = l$ + sp2 + ","
+            IF Error_Happened THEN EXIT SUB
+            l$ = l$ + sp + tlayout$: IF i <> n THEN l$ = l$ + sp2 + ","
             e$ = evaluate(e$, t)
-            If Error_Happened Then Exit Sub
-            If (t And ISREFERENCE) = 0 Then Give_Error "Expected variable": Exit Sub
+            IF Error_Happened THEN EXIT SUB
+            IF (t AND ISREFERENCE) = 0 THEN Give_Error "Expected variable": EXIT SUB
 
-            If (t And ISSTRING) Then
+            IF (t AND ISSTRING) THEN
                 e$ = refer(e$, t, 0)
-                If Error_Happened Then Exit Sub
-                Print #12, "sub_read_string(data,&data_offset,data_size," + e$ + ");"
+                IF Error_Happened THEN EXIT SUB
+                PRINT #12, "sub_read_string(data,&data_offset,data_size," + e$ + ");"
                 stringprocessinghappened = 1
-            Else
+            ELSE
                 'numeric variable
-                If (t And ISFLOAT) <> 0 Or (t And 511) <> 64 Then
-                    If (t And ISOFFSETINBITS) Then
+                IF (t AND ISFLOAT) <> 0 OR (t AND 511) <> 64 THEN
+                    IF (t AND ISOFFSETINBITS) THEN
                         setrefer e$, t, "((int64)func_read_float(data,&data_offset,data_size," + str2(t) + "))", 1
-                        If Error_Happened Then Exit Sub
-                    Else
+                        IF Error_Happened THEN EXIT SUB
+                    ELSE
                         setrefer e$, t, "func_read_float(data,&data_offset,data_size," + str2(t) + ")", 1
-                        If Error_Happened Then Exit Sub
-                    End If
-                Else
-                    If t And ISUNSIGNED Then
+                        IF Error_Happened THEN EXIT SUB
+                    END IF
+                ELSE
+                    IF t AND ISUNSIGNED THEN
                         setrefer e$, t, "func_read_uint64(data,&data_offset,data_size)", 1
-                        If Error_Happened Then Exit Sub
-                    Else
+                        IF Error_Happened THEN EXIT SUB
+                    ELSE
                         setrefer e$, t, "func_read_int64(data,&data_offset,data_size)", 1
-                        If Error_Happened Then Exit Sub
-                    End If
-                End If
-            End If 'string/numeric
-            If i = n Then Exit For
+                        IF Error_Happened THEN EXIT SUB
+                    END IF
+                END IF
+            END IF 'string/numeric
+            IF i = n THEN EXIT FOR
             a3$ = "": a2$ = ""
-        End If
-        If a3$ = "" Then a3$ = a2$ Else a3$ = a3$ + sp + a2$
-    Next
-    If stringprocessinghappened Then Print #12, cleanupstringprocessingcall$ + "0);"
-    layoutdone = 1: If Len(layout$) Then layout$ = layout$ + sp + l$ Else layout$ = l$
-End Sub
+        END IF
+        IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
+    NEXT
+    IF stringprocessinghappened THEN PRINT #12, cleanupstringprocessingcall$ + "0);"
+    layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+END SUB
 
-Sub xwrite (ca$, n)
+SUB xwrite (ca$, n)
     l$ = SCase$("Write")
     u$ = str2$(uniquenumber)
-    If n = 1 Then
-        Print #12, "qbs_print(nothingstring,1);"
-        GoTo writeblankline2
-    End If
+    IF n = 1 THEN
+        PRINT #12, "qbs_print(nothingstring,1);"
+        GOTO writeblankline2
+    END IF
     b = 0
     e$ = ""
     last = 0
-    For i = 2 To n
+    FOR i = 2 TO n
         a2$ = getelement(ca$, i)
-        If a2$ = "(" Then b = b + 1
-        If a2$ = ")" Then b = b - 1
-        If b = 0 Then
-            If a2$ = "," Then
+        IF a2$ = "(" THEN b = b + 1
+        IF a2$ = ")" THEN b = b - 1
+        IF b = 0 THEN
+            IF a2$ = "," THEN
                 writelast:
-                If last = 1 Then newline = 1 Else newline = 0
+                IF last = 1 THEN newline = 1 ELSE newline = 0
                 ebak$ = e$
                 reevaled = 0
                 writechecked:
                 e$ = fixoperationorder$(e$)
-                If Error_Happened Then Exit Sub
-                If reevaled = 0 Then
+                IF Error_Happened THEN EXIT SUB
+                IF reevaled = 0 THEN
                     l$ = l$ + sp + tlayout$
-                    If last = 0 Then l$ = l$ + sp2 + ","
-                End If
+                    IF last = 0 THEN l$ = l$ + sp2 + ","
+                END IF
                 e$ = evaluate(e$, typ)
-                If Error_Happened Then Exit Sub
-                If reevaled = 0 Then
-                    If (typ And ISSTRING) = 0 Then
+                IF Error_Happened THEN EXIT SUB
+                IF reevaled = 0 THEN
+                    IF (typ AND ISSTRING) = 0 THEN
                         e$ = "LTRIM$" + sp + "(" + sp + "STR$" + sp + "(" + sp + ebak$ + sp + ")" + sp + ")"
-                        If last = 0 Then e$ = e$ + sp + "+" + sp + Chr$(34) + "," + Chr$(34) + ",1"
+                        IF last = 0 THEN e$ = e$ + sp + "+" + sp + CHR$(34) + "," + CHR$(34) + ",1"
                         reevaled = 1
-                        GoTo writechecked 'force re-evaluation
-                    Else
-                        e$ = Chr$(34) + "\042" + Chr$(34) + ",1" + sp + "+" + sp + ebak$ + sp + "+" + sp + Chr$(34) + "\042" + Chr$(34) + ",1"
-                        If last = 0 Then e$ = e$ + sp + "+" + sp + Chr$(34) + "," + Chr$(34) + ",1"
+                        GOTO writechecked 'force re-evaluation
+                    ELSE
+                        e$ = CHR$(34) + "\042" + CHR$(34) + ",1" + sp + "+" + sp + ebak$ + sp + "+" + sp + CHR$(34) + "\042" + CHR$(34) + ",1"
+                        IF last = 0 THEN e$ = e$ + sp + "+" + sp + CHR$(34) + "," + CHR$(34) + ",1"
                         reevaled = 1
-                        GoTo writechecked 'force re-evaluation
-                    End If
-                End If
-                If (typ And ISREFERENCE) Then e$ = refer(e$, typ, 0)
-                If Error_Happened Then Exit Sub
+                        GOTO writechecked 'force re-evaluation
+                    END IF
+                END IF
+                IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
+                IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
-                Print #12, "qbs_print(" + e$ + ","; newline; ");"
-                Print #12, "if (new_error) goto skip" + u$ + ";"
+                PRINT #12, "qbs_print(" + e$ + ","; newline; ");"
+                PRINT #12, "if (new_error) goto skip" + u$ + ";"
                 e$ = ""
-                If last Then Exit For
-                GoTo writenext
-            End If ',
-        End If 'b=0
-        If e$ <> "" Then e$ = e$ + sp + a2$ Else e$ = a2$
+                IF last THEN EXIT FOR
+                GOTO writenext
+            END IF ',
+        END IF 'b=0
+        IF e$ <> "" THEN e$ = e$ + sp + a2$ ELSE e$ = a2$
         writenext:
-    Next
-    If e$ <> "" Then a2$ = ",": last = 1: GoTo writelast
+    NEXT
+    IF e$ <> "" THEN a2$ = ",": last = 1: GOTO writelast
     writeblankline2:
-    Print #12, "skip" + u$ + ":"
-    Print #12, cleanupstringprocessingcall$ + "0);"
-    layoutdone = 1: If Len(layout$) Then layout$ = layout$ + sp + l$ Else layout$ = l$
-End Sub
+    PRINT #12, "skip" + u$ + ":"
+    PRINT #12, cleanupstringprocessingcall$ + "0);"
+    layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+END SUB
 
-Function evaluateconst$ (a2$, t As Long)
+FUNCTION evaluateconst$ (a2$, t AS LONG)
     a$ = a2$
-    If Debug Then Print #9, "evaluateconst:in:" + a$
+    IF Debug THEN PRINT #9, "evaluateconst:in:" + a$
 
 
-    Dim block(1000) As String
-    Dim status(1000) As Integer
+    DIM block(1000) AS STRING
+    DIM status(1000) AS INTEGER
     '0=unprocessed (can be "")
     '1=processed
-    Dim btype(1000) As Long 'for status=1 blocks
+    DIM btype(1000) AS LONG 'for status=1 blocks
 
     'put a$ into blocks
     n = numelements(a$)
-    For i = 1 To n
+    FOR i = 1 TO n
         block(i) = getelement$(a$, i)
-    Next
+    NEXT
 
     evalconstevalbrack:
 
     'find highest bracket level
     l = 0
     b = 0
-    For i = 1 To n
-        If block(i) = "(" Then b = b + 1
-        If block(i) = ")" Then b = b - 1
-        If b > l Then l = b
-    Next
+    FOR i = 1 TO n
+        IF block(i) = "(" THEN b = b + 1
+        IF block(i) = ")" THEN b = b - 1
+        IF b > l THEN l = b
+    NEXT
 
     'if brackets exist, evaluate that item first
-    If l Then
+    IF l THEN
 
         b = 0
         e$ = ""
-        For i = 1 To n
+        FOR i = 1 TO n
 
-            If block(i) = ")" Then
-                If b = l Then block(i) = "": Exit For
+            IF block(i) = ")" THEN
+                IF b = l THEN block(i) = "": EXIT FOR
                 b = b - 1
-            End If
+            END IF
 
-            If b >= l Then
-                If Len(e$) = 0 Then e$ = block(i) Else e$ = e$ + sp + block(i)
+            IF b >= l THEN
+                IF LEN(e$) = 0 THEN e$ = block(i) ELSE e$ = e$ + sp + block(i)
                 block(i) = ""
-            End If
+            END IF
 
-            If block(i) = "(" Then
+            IF block(i) = "(" THEN
                 b = b + 1
-                If b = l Then i2 = i: block(i) = ""
-            End If
+                IF b = l THEN i2 = i: block(i) = ""
+            END IF
 
-        Next i
+        NEXT i
 
         status(i) = 1
         block(i) = evaluateconst$(e$, btype(i))
-        If Error_Happened Then Exit Function
-        GoTo evalconstevalbrack
+        IF Error_Happened THEN EXIT FUNCTION
+        GOTO evalconstevalbrack
 
-    End If 'l
+    END IF 'l
 
     'linear equation remains with some pre-calculated & non-pre-calc blocks
 
@@ -23842,143 +23842,143 @@ Function evaluateconst$ (a2$, t As Long)
     '          all float calc. will be performed using a _FLOAT
 
     'convert non-calc block numbers into binary form with QBASIC-like type
-    For i = 1 To n
-        If status(i) = 0 Then
-            If Len(block(i)) Then
+    FOR i = 1 TO n
+        IF status(i) = 0 THEN
+            IF LEN(block(i)) THEN
 
-                a = Asc(block(i))
-                If (a = 45 And Len(block(i)) > 1) Or (a >= 48 And a <= 57) Then 'number?
+                a = ASC(block(i))
+                IF (a = 45 AND LEN(block(i)) > 1) OR (a >= 48 AND a <= 57) THEN 'number?
 
                     'integers
-                    e$ = Right$(block(i), 3)
-                    If e$ = "~&&" Then btype(i) = UINTEGER64TYPE - ISPOINTER: GoTo gotconstblkityp
-                    If e$ = "~%%" Then btype(i) = UBYTETYPE - ISPOINTER: GoTo gotconstblkityp
-                    e$ = Right$(block(i), 2)
-                    If e$ = "&&" Then btype(i) = INTEGER64TYPE - ISPOINTER: GoTo gotconstblkityp
-                    If e$ = "%%" Then btype(i) = BYTETYPE - ISPOINTER: GoTo gotconstblkityp
-                    If e$ = "~%" Then btype(i) = UINTEGERTYPE - ISPOINTER: GoTo gotconstblkityp
-                    If e$ = "~&" Then btype(i) = ULONGTYPE - ISPOINTER: GoTo gotconstblkityp
-                    e$ = Right$(block(i), 1)
-                    If e$ = "%" Then btype(i) = INTEGERTYPE - ISPOINTER: GoTo gotconstblkityp
-                    If e$ = "&" Then btype(i) = LONGTYPE - ISPOINTER: GoTo gotconstblkityp
+                    e$ = RIGHT$(block(i), 3)
+                    IF e$ = "~&&" THEN btype(i) = UINTEGER64TYPE - ISPOINTER: GOTO gotconstblkityp
+                    IF e$ = "~%%" THEN btype(i) = UBYTETYPE - ISPOINTER: GOTO gotconstblkityp
+                    e$ = RIGHT$(block(i), 2)
+                    IF e$ = "&&" THEN btype(i) = INTEGER64TYPE - ISPOINTER: GOTO gotconstblkityp
+                    IF e$ = "%%" THEN btype(i) = BYTETYPE - ISPOINTER: GOTO gotconstblkityp
+                    IF e$ = "~%" THEN btype(i) = UINTEGERTYPE - ISPOINTER: GOTO gotconstblkityp
+                    IF e$ = "~&" THEN btype(i) = ULONGTYPE - ISPOINTER: GOTO gotconstblkityp
+                    e$ = RIGHT$(block(i), 1)
+                    IF e$ = "%" THEN btype(i) = INTEGERTYPE - ISPOINTER: GOTO gotconstblkityp
+                    IF e$ = "&" THEN btype(i) = LONGTYPE - ISPOINTER: GOTO gotconstblkityp
 
                     'ubit-type?
-                    If InStr(block(i), "~`") Then
-                        x = InStr(block(i), "~`")
-                        If x = Len(block(i)) - 1 Then block(i) = block(i) + "1"
-                        btype(i) = UBITTYPE - ISPOINTER - 1 + Val(Right$(block(i), Len(block(i)) - x - 1))
-                        block(i) = _MK$(_Integer64, Val(Left$(block(i), x - 1)))
+                    IF INSTR(block(i), "~`") THEN
+                        x = INSTR(block(i), "~`")
+                        IF x = LEN(block(i)) - 1 THEN block(i) = block(i) + "1"
+                        btype(i) = UBITTYPE - ISPOINTER - 1 + VAL(RIGHT$(block(i), LEN(block(i)) - x - 1))
+                        block(i) = _MK$(_INTEGER64, VAL(LEFT$(block(i), x - 1)))
                         status(i) = 1
-                        GoTo gotconstblktyp
-                    End If
+                        GOTO gotconstblktyp
+                    END IF
 
                     'bit-type?
-                    If InStr(block(i), "`") Then
-                        x = InStr(block(i), "`")
-                        If x = Len(block(i)) Then block(i) = block(i) + "1"
-                        btype(i) = BITTYPE - ISPOINTER - 1 + Val(Right$(block(i), Len(block(i)) - x))
-                        block(i) = _MK$(_Integer64, Val(Left$(block(i), x - 1)))
+                    IF INSTR(block(i), "`") THEN
+                        x = INSTR(block(i), "`")
+                        IF x = LEN(block(i)) THEN block(i) = block(i) + "1"
+                        btype(i) = BITTYPE - ISPOINTER - 1 + VAL(RIGHT$(block(i), LEN(block(i)) - x))
+                        block(i) = _MK$(_INTEGER64, VAL(LEFT$(block(i), x - 1)))
                         status(i) = 1
-                        GoTo gotconstblktyp
-                    End If
+                        GOTO gotconstblktyp
+                    END IF
 
                     'floats
-                    If InStr(block(i), "E") Then
-                        block(i) = _MK$(_Float, Val(block(i)))
+                    IF INSTR(block(i), "E") THEN
+                        block(i) = _MK$(_FLOAT, VAL(block(i)))
                         btype(i) = SINGLETYPE - ISPOINTER
                         status(i) = 1
-                        GoTo gotconstblktyp
-                    End If
-                    If InStr(block(i), "D") Then
-                        block(i) = _MK$(_Float, Val(block(i)))
+                        GOTO gotconstblktyp
+                    END IF
+                    IF INSTR(block(i), "D") THEN
+                        block(i) = _MK$(_FLOAT, VAL(block(i)))
                         btype(i) = DOUBLETYPE - ISPOINTER
                         status(i) = 1
-                        GoTo gotconstblktyp
-                    End If
-                    If InStr(block(i), "F") Then
-                        block(i) = _MK$(_Float, Val(block(i)))
+                        GOTO gotconstblktyp
+                    END IF
+                    IF INSTR(block(i), "F") THEN
+                        block(i) = _MK$(_FLOAT, VAL(block(i)))
                         btype(i) = FLOATTYPE - ISPOINTER
                         status(i) = 1
-                        GoTo gotconstblktyp
-                    End If
+                        GOTO gotconstblktyp
+                    END IF
 
-                    Give_Error "Invalid CONST expression.1": Exit Function
+                    Give_Error "Invalid CONST expression.1": EXIT FUNCTION
 
                     gotconstblkityp:
-                    block(i) = Left$(block(i), Len(block(i)) - Len(e$))
-                    block(i) = _MK$(_Integer64, Val(block(i)))
+                    block(i) = LEFT$(block(i), LEN(block(i)) - LEN(e$))
+                    block(i) = _MK$(_INTEGER64, VAL(block(i)))
                     status(i) = 1
                     gotconstblktyp:
 
-                End If 'a
+                END IF 'a
 
-                If a = 34 Then 'string?
+                IF a = 34 THEN 'string?
                     'no changes need to be made to block(i) which is of format "CHARACTERS",size
                     btype(i) = STRINGTYPE - ISPOINTER
                     status(i) = 1
-                End If
+                END IF
 
-            End If 'len<>0
-        End If 'status
-    Next
+            END IF 'len<>0
+        END IF 'status
+    NEXT
 
     'remove NULL blocks
     n2 = 0
-    For i = 1 To n
-        If block(i) <> "" Then
+    FOR i = 1 TO n
+        IF block(i) <> "" THEN
             n2 = n2 + 1
             block(n2) = block(i)
             status(n2) = status(i)
             btype(n2) = btype(i)
-        End If
-    Next
+        END IF
+    NEXT
     n = n2
 
     'only one block?
-    If n = 1 Then
-        If status(1) = 0 Then Give_Error "Invalid CONST expression.2": Exit Function
+    IF n = 1 THEN
+        IF status(1) = 0 THEN Give_Error "Invalid CONST expression.2": EXIT FUNCTION
         t = btype(1)
         evaluateconst$ = block(1)
-        Exit Function
-    End If 'n=1
+        EXIT FUNCTION
+    END IF 'n=1
 
     'evaluate equation (equation cannot contain any STRINGs)
 
     '[negation/not][variable]
     e$ = block(1)
-    If status(1) = 0 Then
-        If n <> 2 Then Give_Error "Invalid CONST expression.4": Exit Function
-        If status(2) = 0 Then Give_Error "Invalid CONST expression.5": Exit Function
-        If btype(2) And ISSTRING Then Give_Error "Invalid CONST expression.6": Exit Function
+    IF status(1) = 0 THEN
+        IF n <> 2 THEN Give_Error "Invalid CONST expression.4": EXIT FUNCTION
+        IF status(2) = 0 THEN Give_Error "Invalid CONST expression.5": EXIT FUNCTION
+        IF btype(2) AND ISSTRING THEN Give_Error "Invalid CONST expression.6": EXIT FUNCTION
         o$ = block(1)
 
-        If o$ = Chr$(241) Then
-            If btype(2) And ISFLOAT Then
-                r## = -_CV(_Float, block(2))
-                evaluateconst$ = _MK$(_Float, r##)
-            Else
-                r&& = -_CV(_Integer64, block(2))
-                evaluateconst$ = _MK$(_Integer64, r&&)
-            End If
+        IF o$ = CHR$(241) THEN
+            IF btype(2) AND ISFLOAT THEN
+                r## = -_CV(_FLOAT, block(2))
+                evaluateconst$ = _MK$(_FLOAT, r##)
+            ELSE
+                r&& = -_CV(_INTEGER64, block(2))
+                evaluateconst$ = _MK$(_INTEGER64, r&&)
+            END IF
             t = btype(2)
-            Exit Function
-        End If
+            EXIT FUNCTION
+        END IF
 
-        If UCase$(o$) = "NOT" Then
-            If btype(2) And ISFLOAT Then
-                r&& = _CV(_Float, block(2))
-            Else
-                r&& = _CV(_Integer64, block(2))
-            End If
-            r&& = Not r&&
+        IF UCASE$(o$) = "NOT" THEN
+            IF btype(2) AND ISFLOAT THEN
+                r&& = _CV(_FLOAT, block(2))
+            ELSE
+                r&& = _CV(_INTEGER64, block(2))
+            END IF
+            r&& = NOT r&&
             t = btype(2)
-            If t And ISFLOAT Then t = LONGTYPE - ISPOINTER 'markdown to LONG
-            evaluateconst$ = _MK$(_Integer64, r&&)
-            Exit Function
-        End If
+            IF t AND ISFLOAT THEN t = LONGTYPE - ISPOINTER 'markdown to LONG
+            evaluateconst$ = _MK$(_INTEGER64, r&&)
+            EXIT FUNCTION
+        END IF
 
-        Give_Error "Invalid CONST expression.7": Exit Function
-    End If
+        Give_Error "Invalid CONST expression.7": EXIT FUNCTION
+    END IF
 
     '[variable][bool-operator][variable]...
 
@@ -23991,635 +23991,635 @@ Function evaluateconst$ (a2$, t As Long)
     evalconstequ:
 
     'get operator
-    If i >= n Then Give_Error "Invalid CONST expression.8": Exit Function
-    o$ = UCase$(block(i))
+    IF i >= n THEN Give_Error "Invalid CONST expression.8": EXIT FUNCTION
+    o$ = UCASE$(block(i))
     i = i + 1
-    If isoperator(o$) = 0 Then Give_Error "Invalid CONST expression.9": Exit Function
-    If i > n Then Give_Error "Invalid CONST expression.10": Exit Function
+    IF isoperator(o$) = 0 THEN Give_Error "Invalid CONST expression.9": EXIT FUNCTION
+    IF i > n THEN Give_Error "Invalid CONST expression.10": EXIT FUNCTION
 
     'string/numeric mismatch?
-    If (btype(i) And ISSTRING) <> (et And ISSTRING) Then Give_Error "Invalid CONST expression.11": Exit Function
+    IF (btype(i) AND ISSTRING) <> (et AND ISSTRING) THEN Give_Error "Invalid CONST expression.11": EXIT FUNCTION
 
-    If et And ISSTRING Then
-        If o$ <> "+" Then Give_Error "Invalid CONST expression.12": Exit Function
+    IF et AND ISSTRING THEN
+        IF o$ <> "+" THEN Give_Error "Invalid CONST expression.12": EXIT FUNCTION
         'concat strings
-        s1$ = Right$(ev$, Len(ev$) - 1)
-        s1$ = Left$(s1$, InStr(s1$, Chr$(34)) - 1)
-        s1size = Val(Right$(ev$, Len(ev$) - Len(s1$) - 3))
-        s2$ = Right$(block(i), Len(block(i)) - 1)
-        s2$ = Left$(s2$, InStr(s2$, Chr$(34)) - 1)
-        s2size = Val(Right$(block(i), Len(block(i)) - Len(s2$) - 3))
-        ev$ = Chr$(34) + s1$ + s2$ + Chr$(34) + "," + str2$(s1size + s2size)
-        GoTo econstmarkedup
-    End If
+        s1$ = RIGHT$(ev$, LEN(ev$) - 1)
+        s1$ = LEFT$(s1$, INSTR(s1$, CHR$(34)) - 1)
+        s1size = VAL(RIGHT$(ev$, LEN(ev$) - LEN(s1$) - 3))
+        s2$ = RIGHT$(block(i), LEN(block(i)) - 1)
+        s2$ = LEFT$(s2$, INSTR(s2$, CHR$(34)) - 1)
+        s2size = VAL(RIGHT$(block(i), LEN(block(i)) - LEN(s2$) - 3))
+        ev$ = CHR$(34) + s1$ + s2$ + CHR$(34) + "," + str2$(s1size + s2size)
+        GOTO econstmarkedup
+    END IF
 
     'prepare left and right values
-    If et And ISFLOAT Then
+    IF et AND ISFLOAT THEN
         linteger = 0
-        l## = _CV(_Float, ev$)
+        l## = _CV(_FLOAT, ev$)
         l&& = l##
-    Else
+    ELSE
         linteger = 1
-        l&& = _CV(_Integer64, ev$)
+        l&& = _CV(_INTEGER64, ev$)
         l## = l&&
-    End If
-    If btype(i) And ISFLOAT Then
+    END IF
+    IF btype(i) AND ISFLOAT THEN
         rinteger = 0
-        r## = _CV(_Float, block(i))
+        r## = _CV(_FLOAT, block(i))
         r&& = r##
-    Else
+    ELSE
         rinteger = 1
-        r&& = _CV(_Integer64, block(i))
+        r&& = _CV(_INTEGER64, block(i))
         r## = r&&
-    End If
+    END IF
 
-    If linteger = 1 And rinteger = 1 Then
-        If o$ = "+" Then r&& = l&& + r&&: GoTo econstmarkupi
-        If o$ = "-" Then r&& = l&& - r&&: GoTo econstmarkupi
-        If o$ = "*" Then r&& = l&& * r&&: GoTo econstmarkupi
-        If o$ = "^" Then r## = l&& ^ r&&: GoTo econstmarkupf
-        If o$ = "/" Then r## = l&& / r&&: GoTo econstmarkupf
-        If o$ = "\" Then r&& = l&& \ r&&: GoTo econstmarkupi
-        If o$ = "MOD" Then r&& = l&& Mod r&&: GoTo econstmarkupi
-        If o$ = "=" Then r&& = l&& = r&&: GoTo econstmarkupi16
-        If o$ = ">" Then r&& = l&& > r&&: GoTo econstmarkupi16
-        If o$ = "<" Then r&& = l&& < r&&: GoTo econstmarkupi16
-        If o$ = ">=" Then r&& = l&& >= r&&: GoTo econstmarkupi16
-        If o$ = "<=" Then r&& = l&& <= r&&: GoTo econstmarkupi16
-        If o$ = "<>" Then r&& = l&& <> r&&: GoTo econstmarkupi16
-        If o$ = "IMP" Then r&& = l&& Imp r&&: GoTo econstmarkupi
-        If o$ = "EQV" Then r&& = l&& Eqv r&&: GoTo econstmarkupi
-        If o$ = "XOR" Then r&& = l&& Xor r&&: GoTo econstmarkupi
-        If o$ = "OR" Then r&& = l&& Or r&&: GoTo econstmarkupi
-        If o$ = "AND" Then r&& = l&& And r&&: GoTo econstmarkupi
-    End If
+    IF linteger = 1 AND rinteger = 1 THEN
+        IF o$ = "+" THEN r&& = l&& + r&&: GOTO econstmarkupi
+        IF o$ = "-" THEN r&& = l&& - r&&: GOTO econstmarkupi
+        IF o$ = "*" THEN r&& = l&& * r&&: GOTO econstmarkupi
+        IF o$ = "^" THEN r## = l&& ^ r&&: GOTO econstmarkupf
+        IF o$ = "/" THEN r## = l&& / r&&: GOTO econstmarkupf
+        IF o$ = "\" THEN r&& = l&& \ r&&: GOTO econstmarkupi
+        IF o$ = "MOD" THEN r&& = l&& MOD r&&: GOTO econstmarkupi
+        IF o$ = "=" THEN r&& = l&& = r&&: GOTO econstmarkupi16
+        IF o$ = ">" THEN r&& = l&& > r&&: GOTO econstmarkupi16
+        IF o$ = "<" THEN r&& = l&& < r&&: GOTO econstmarkupi16
+        IF o$ = ">=" THEN r&& = l&& >= r&&: GOTO econstmarkupi16
+        IF o$ = "<=" THEN r&& = l&& <= r&&: GOTO econstmarkupi16
+        IF o$ = "<>" THEN r&& = l&& <> r&&: GOTO econstmarkupi16
+        IF o$ = "IMP" THEN r&& = l&& IMP r&&: GOTO econstmarkupi
+        IF o$ = "EQV" THEN r&& = l&& EQV r&&: GOTO econstmarkupi
+        IF o$ = "XOR" THEN r&& = l&& XOR r&&: GOTO econstmarkupi
+        IF o$ = "OR" THEN r&& = l&& OR r&&: GOTO econstmarkupi
+        IF o$ = "AND" THEN r&& = l&& AND r&&: GOTO econstmarkupi
+    END IF
 
-    If o$ = "+" Then r## = l## + r##: GoTo econstmarkupf
-    If o$ = "-" Then r## = l## - r##: GoTo econstmarkupf
-    If o$ = "*" Then r## = l## * r##: GoTo econstmarkupf
-    If o$ = "^" Then r## = l## ^ r##: GoTo econstmarkupf
-    If o$ = "/" Then r## = l## / r##: GoTo econstmarkupf
-    If o$ = "\" Then r&& = l## \ r##: GoTo econstmarkupi32
-    If o$ = "MOD" Then r&& = l## Mod r##: GoTo econstmarkupi32
-    If o$ = "=" Then r&& = l## = r##: GoTo econstmarkupi16
-    If o$ = ">" Then r&& = l## > r##: GoTo econstmarkupi16
-    If o$ = "<" Then r&& = l## < r##: GoTo econstmarkupi16
-    If o$ = ">=" Then r&& = l## >= r##: GoTo econstmarkupi16
-    If o$ = "<=" Then r&& = l## <= r##: GoTo econstmarkupi16
-    If o$ = "<>" Then r&& = l## <> r##: GoTo econstmarkupi16
-    If o$ = "IMP" Then r&& = l## Imp r##: GoTo econstmarkupi32
-    If o$ = "EQV" Then r&& = l## Eqv r##: GoTo econstmarkupi32
-    If o$ = "XOR" Then r&& = l## Xor r##: GoTo econstmarkupi32
-    If o$ = "OR" Then r&& = l## Or r##: GoTo econstmarkupi32
-    If o$ = "AND" Then r&& = l## And r##: GoTo econstmarkupi32
+    IF o$ = "+" THEN r## = l## + r##: GOTO econstmarkupf
+    IF o$ = "-" THEN r## = l## - r##: GOTO econstmarkupf
+    IF o$ = "*" THEN r## = l## * r##: GOTO econstmarkupf
+    IF o$ = "^" THEN r## = l## ^ r##: GOTO econstmarkupf
+    IF o$ = "/" THEN r## = l## / r##: GOTO econstmarkupf
+    IF o$ = "\" THEN r&& = l## \ r##: GOTO econstmarkupi32
+    IF o$ = "MOD" THEN r&& = l## MOD r##: GOTO econstmarkupi32
+    IF o$ = "=" THEN r&& = l## = r##: GOTO econstmarkupi16
+    IF o$ = ">" THEN r&& = l## > r##: GOTO econstmarkupi16
+    IF o$ = "<" THEN r&& = l## < r##: GOTO econstmarkupi16
+    IF o$ = ">=" THEN r&& = l## >= r##: GOTO econstmarkupi16
+    IF o$ = "<=" THEN r&& = l## <= r##: GOTO econstmarkupi16
+    IF o$ = "<>" THEN r&& = l## <> r##: GOTO econstmarkupi16
+    IF o$ = "IMP" THEN r&& = l## IMP r##: GOTO econstmarkupi32
+    IF o$ = "EQV" THEN r&& = l## EQV r##: GOTO econstmarkupi32
+    IF o$ = "XOR" THEN r&& = l## XOR r##: GOTO econstmarkupi32
+    IF o$ = "OR" THEN r&& = l## OR r##: GOTO econstmarkupi32
+    IF o$ = "AND" THEN r&& = l## AND r##: GOTO econstmarkupi32
 
-    Give_Error "Invalid CONST expression.13": Exit Function
+    Give_Error "Invalid CONST expression.13": EXIT FUNCTION
 
     econstmarkupi16:
     et = INTEGERTYPE - ISPOINTER
-    ev$ = _MK$(_Integer64, r&&)
-    GoTo econstmarkedup
+    ev$ = _MK$(_INTEGER64, r&&)
+    GOTO econstmarkedup
 
     econstmarkupi32:
     et = LONGTYPE - ISPOINTER
-    ev$ = _MK$(_Integer64, r&&)
-    GoTo econstmarkedup
+    ev$ = _MK$(_INTEGER64, r&&)
+    GOTO econstmarkedup
 
     econstmarkupi:
-    If et <> btype(i) Then
+    IF et <> btype(i) THEN
         'keep unsigned?
-        u = 0: If (et And ISUNSIGNED) <> 0 And (btype(i) And ISUNSIGNED) <> 0 Then u = 1
-        lb = et And 511: rb = btype(i) And 511
+        u = 0: IF (et AND ISUNSIGNED) <> 0 AND (btype(i) AND ISUNSIGNED) <> 0 THEN u = 1
+        lb = et AND 511: rb = btype(i) AND 511
         ob = 0
-        If lb = rb Then
-            If (et And ISOFFSETINBITS) <> 0 And (btype(i) And ISOFFSETINBITS) <> 0 Then ob = 1
+        IF lb = rb THEN
+            IF (et AND ISOFFSETINBITS) <> 0 AND (btype(i) AND ISOFFSETINBITS) <> 0 THEN ob = 1
             b = lb
-        End If
-        If lb > rb Then
-            If (et And ISOFFSETINBITS) <> 0 Then ob = 1
+        END IF
+        IF lb > rb THEN
+            IF (et AND ISOFFSETINBITS) <> 0 THEN ob = 1
             b = lb
-        End If
-        If lb < rb Then
-            If (btype(i) And ISOFFSETINBITS) <> 0 Then ob = 1
+        END IF
+        IF lb < rb THEN
+            IF (btype(i) AND ISOFFSETINBITS) <> 0 THEN ob = 1
             b = rb
-        End If
+        END IF
         et = b
-        If ob Then et = et + ISOFFSETINBITS
-        If u Then et = et + ISUNSIGNED
-    End If
-    ev$ = _MK$(_Integer64, r&&)
-    GoTo econstmarkedup
+        IF ob THEN et = et + ISOFFSETINBITS
+        IF u THEN et = et + ISUNSIGNED
+    END IF
+    ev$ = _MK$(_INTEGER64, r&&)
+    GOTO econstmarkedup
 
     econstmarkupf:
     lfb = 0: rfb = 0
     lib = 0: rib = 0
-    If et And ISFLOAT Then lfb = et And 511 Else lib = et And 511
-    If btype(i) And ISFLOAT Then rfb = btype(i) And 511 Else rib = btype(i) And 511
+    IF et AND ISFLOAT THEN lfb = et AND 511 ELSE lib = et AND 511
+    IF btype(i) AND ISFLOAT THEN rfb = btype(i) AND 511 ELSE rib = btype(i) AND 511
     f = 32
-    If lib > 16 Or rib > 16 Then f = 64
-    If lfb > 32 Or rfb > 32 Then f = 64
-    If lib > 32 Or rib > 32 Then f = 256
-    If lfb > 64 Or rfb > 64 Then f = 256
+    IF lib > 16 OR rib > 16 THEN f = 64
+    IF lfb > 32 OR rfb > 32 THEN f = 64
+    IF lib > 32 OR rib > 32 THEN f = 256
+    IF lfb > 64 OR rfb > 64 THEN f = 256
     et = ISFLOAT + f
-    ev$ = _MK$(_Float, r##)
+    ev$ = _MK$(_FLOAT, r##)
 
     econstmarkedup:
 
     i = i + 1
 
-    If i <= n Then GoTo evalconstequ
+    IF i <= n THEN GOTO evalconstequ
 
     t = et
     evaluateconst$ = ev$
 
-End Function
+END FUNCTION
 
-Function typevalue2symbol$ (t)
+FUNCTION typevalue2symbol$ (t)
 
-    If t And ISSTRING Then
-        If t And ISFIXEDLENGTH Then Give_Error "Cannot convert expression type to symbol": Exit Function
+    IF t AND ISSTRING THEN
+        IF t AND ISFIXEDLENGTH THEN Give_Error "Cannot convert expression type to symbol": EXIT FUNCTION
         typevalue2symbol$ = "$"
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     s$ = ""
 
-    If t And ISUNSIGNED Then s$ = "~"
+    IF t AND ISUNSIGNED THEN s$ = "~"
 
-    b = t And 511
+    b = t AND 511
 
-    If t And ISOFFSETINBITS Then
-        If b > 1 Then s$ = s$ + "`" + str2$(b) Else s$ = s$ + "`"
+    IF t AND ISOFFSETINBITS THEN
+        IF b > 1 THEN s$ = s$ + "`" + str2$(b) ELSE s$ = s$ + "`"
         typevalue2symbol$ = s$
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-    If t And ISFLOAT Then
-        If b = 32 Then s$ = "!"
-        If b = 64 Then s$ = "#"
-        If b = 256 Then s$ = "##"
+    IF t AND ISFLOAT THEN
+        IF b = 32 THEN s$ = "!"
+        IF b = 64 THEN s$ = "#"
+        IF b = 256 THEN s$ = "##"
         typevalue2symbol$ = s$
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-    If b = 8 Then s$ = s$ + "%%"
-    If b = 16 Then s$ = s$ + "%"
-    If b = 32 Then s$ = s$ + "&"
-    If b = 64 Then s$ = s$ + "&&"
+    IF b = 8 THEN s$ = s$ + "%%"
+    IF b = 16 THEN s$ = s$ + "%"
+    IF b = 32 THEN s$ = s$ + "&"
+    IF b = 64 THEN s$ = s$ + "&&"
     typevalue2symbol$ = s$
 
-End Function
+END FUNCTION
 
 
-Function id2fulltypename$
+FUNCTION id2fulltypename$
     t = id.t
-    If t = 0 Then t = id.arraytype
+    IF t = 0 THEN t = id.arraytype
     size = id.tsize
-    bits = t And 511
-    If t And ISUDT Then
-        a$ = RTrim$(udtxcname(t And 511))
-        id2fulltypename$ = a$: Exit Function
-    End If
-    If t And ISSTRING Then
-        If t And ISFIXEDLENGTH Then a$ = "STRING * " + str2(size) Else a$ = "STRING"
-        id2fulltypename$ = a$: Exit Function
-    End If
-    If t And ISOFFSETINBITS Then
-        If bits > 1 Then a$ = qb64prefix$ + "BIT * " + str2(bits) Else a$ = qb64prefix$ + "BIT"
-        If t And ISUNSIGNED Then a$ = qb64prefix$ + "UNSIGNED " + a$
-        id2fulltypename$ = a$: Exit Function
-    End If
-    If t And ISFLOAT Then
-        If bits = 32 Then a$ = "SINGLE"
-        If bits = 64 Then a$ = "DOUBLE"
-        If bits = 256 Then a$ = qb64prefix$ + "FLOAT"
-    Else 'integer-based
-        If bits = 8 Then a$ = qb64prefix$ + "BYTE"
-        If bits = 16 Then a$ = "INTEGER"
-        If bits = 32 Then a$ = "LONG"
-        If bits = 64 Then a$ = qb64prefix$ + "INTEGER64"
-        If t And ISUNSIGNED Then a$ = qb64prefix$ + "UNSIGNED " + a$
-    End If
-    If t And ISOFFSET Then
+    bits = t AND 511
+    IF t AND ISUDT THEN
+        a$ = RTRIM$(udtxcname(t AND 511))
+        id2fulltypename$ = a$: EXIT FUNCTION
+    END IF
+    IF t AND ISSTRING THEN
+        IF t AND ISFIXEDLENGTH THEN a$ = "STRING * " + str2(size) ELSE a$ = "STRING"
+        id2fulltypename$ = a$: EXIT FUNCTION
+    END IF
+    IF t AND ISOFFSETINBITS THEN
+        IF bits > 1 THEN a$ = qb64prefix$ + "BIT * " + str2(bits) ELSE a$ = qb64prefix$ + "BIT"
+        IF t AND ISUNSIGNED THEN a$ = qb64prefix$ + "UNSIGNED " + a$
+        id2fulltypename$ = a$: EXIT FUNCTION
+    END IF
+    IF t AND ISFLOAT THEN
+        IF bits = 32 THEN a$ = "SINGLE"
+        IF bits = 64 THEN a$ = "DOUBLE"
+        IF bits = 256 THEN a$ = qb64prefix$ + "FLOAT"
+    ELSE 'integer-based
+        IF bits = 8 THEN a$ = qb64prefix$ + "BYTE"
+        IF bits = 16 THEN a$ = "INTEGER"
+        IF bits = 32 THEN a$ = "LONG"
+        IF bits = 64 THEN a$ = qb64prefix$ + "INTEGER64"
+        IF t AND ISUNSIGNED THEN a$ = qb64prefix$ + "UNSIGNED " + a$
+    END IF
+    IF t AND ISOFFSET THEN
         a$ = qb64prefix$ + "OFFSET"
-        If t And ISUNSIGNED Then a$ = qb64prefix$ + "UNSIGNED " + a$
-    End If
+        IF t AND ISUNSIGNED THEN a$ = qb64prefix$ + "UNSIGNED " + a$
+    END IF
     id2fulltypename$ = a$
-End Function
+END FUNCTION
 
-Function id2shorttypename$
+FUNCTION id2shorttypename$
     t = id.t
-    If t = 0 Then t = id.arraytype
+    IF t = 0 THEN t = id.arraytype
     size = id.tsize
-    bits = t And 511
-    If t And ISUDT Then
-        a$ = RTrim$(udtxcname(t And 511))
-        id2shorttypename$ = a$: Exit Function
-    End If
-    If t And ISSTRING Then
-        If t And ISFIXEDLENGTH Then a$ = "STRING" + str2(size) Else a$ = "STRING"
-        id2shorttypename$ = a$: Exit Function
-    End If
-    If t And ISOFFSETINBITS Then
-        If t And ISUNSIGNED Then a$ = "_U" Else a$ = "_"
-        If bits > 1 Then a$ = a$ + "BIT" + str2(bits) Else a$ = a$ + "BIT1"
-        id2shorttypename$ = a$: Exit Function
-    End If
-    If t And ISFLOAT Then
-        If bits = 32 Then a$ = "SINGLE"
-        If bits = 64 Then a$ = "DOUBLE"
-        If bits = 256 Then a$ = "_FLOAT"
-    Else 'integer-based
-        If bits = 8 Then
-            If (t And ISUNSIGNED) Then a$ = "_UBYTE" Else a$ = "_BYTE"
-        End If
-        If bits = 16 Then
-            If (t And ISUNSIGNED) Then a$ = "UINTEGER" Else a$ = "INTEGER"
-        End If
-        If bits = 32 Then
-            If (t And ISUNSIGNED) Then a$ = "ULONG" Else a$ = "LONG"
-        End If
-        If bits = 64 Then
-            If (t And ISUNSIGNED) Then a$ = "_UINTEGER64" Else a$ = "_INTEGER64"
-        End If
-    End If
+    bits = t AND 511
+    IF t AND ISUDT THEN
+        a$ = RTRIM$(udtxcname(t AND 511))
+        id2shorttypename$ = a$: EXIT FUNCTION
+    END IF
+    IF t AND ISSTRING THEN
+        IF t AND ISFIXEDLENGTH THEN a$ = "STRING" + str2(size) ELSE a$ = "STRING"
+        id2shorttypename$ = a$: EXIT FUNCTION
+    END IF
+    IF t AND ISOFFSETINBITS THEN
+        IF t AND ISUNSIGNED THEN a$ = "_U" ELSE a$ = "_"
+        IF bits > 1 THEN a$ = a$ + "BIT" + str2(bits) ELSE a$ = a$ + "BIT1"
+        id2shorttypename$ = a$: EXIT FUNCTION
+    END IF
+    IF t AND ISFLOAT THEN
+        IF bits = 32 THEN a$ = "SINGLE"
+        IF bits = 64 THEN a$ = "DOUBLE"
+        IF bits = 256 THEN a$ = "_FLOAT"
+    ELSE 'integer-based
+        IF bits = 8 THEN
+            IF (t AND ISUNSIGNED) THEN a$ = "_UBYTE" ELSE a$ = "_BYTE"
+        END IF
+        IF bits = 16 THEN
+            IF (t AND ISUNSIGNED) THEN a$ = "UINTEGER" ELSE a$ = "INTEGER"
+        END IF
+        IF bits = 32 THEN
+            IF (t AND ISUNSIGNED) THEN a$ = "ULONG" ELSE a$ = "LONG"
+        END IF
+        IF bits = 64 THEN
+            IF (t AND ISUNSIGNED) THEN a$ = "_UINTEGER64" ELSE a$ = "_INTEGER64"
+        END IF
+    END IF
     id2shorttypename$ = a$
-End Function
+END FUNCTION
 
-Function symbol2fulltypename$ (s2$)
+FUNCTION symbol2fulltypename$ (s2$)
     'note: accepts both symbols and type names
     s$ = s2$
 
-    If Left$(s$, 1) = "~" Then
+    IF LEFT$(s$, 1) = "~" THEN
         u = 1
-        If Len(typ$) = 1 Then Give_Error "Expected ~...": Exit Function
-        s$ = Right$(s$, Len(s$) - 1)
+        IF LEN(typ$) = 1 THEN Give_Error "Expected ~...": EXIT FUNCTION
+        s$ = RIGHT$(s$, LEN(s$) - 1)
         u$ = qb64prefix$ + "UNSIGNED "
-    End If
+    END IF
 
-    If s$ = "%%" Then t$ = u$ + qb64prefix$ + "BYTE": GoTo gotsym2typ
-    If s$ = "%" Then t$ = u$ + "INTEGER": GoTo gotsym2typ
-    If s$ = "&" Then t$ = u$ + "LONG": GoTo gotsym2typ
-    If s$ = "&&" Then t$ = u$ + qb64prefix$ + "INTEGER64": GoTo gotsym2typ
-    If s$ = "%&" Then t$ = u$ + qb64prefix$ + "OFFSET": GoTo gotsym2typ
+    IF s$ = "%%" THEN t$ = u$ + qb64prefix$ + "BYTE": GOTO gotsym2typ
+    IF s$ = "%" THEN t$ = u$ + "INTEGER": GOTO gotsym2typ
+    IF s$ = "&" THEN t$ = u$ + "LONG": GOTO gotsym2typ
+    IF s$ = "&&" THEN t$ = u$ + qb64prefix$ + "INTEGER64": GOTO gotsym2typ
+    IF s$ = "%&" THEN t$ = u$ + qb64prefix$ + "OFFSET": GOTO gotsym2typ
 
-    If Left$(s$, 1) = "`" Then
-        If Len(s$) = 1 Then
+    IF LEFT$(s$, 1) = "`" THEN
+        IF LEN(s$) = 1 THEN
             t$ = u$ + qb64prefix$ + "BIT * 1"
-            GoTo gotsym2typ
-        End If
-        n$ = Right$(s$, Len(s$) - 1)
-        If isuinteger(n$) = 0 Then Give_Error "Expected number after symbol `": Exit Function
+            GOTO gotsym2typ
+        END IF
+        n$ = RIGHT$(s$, LEN(s$) - 1)
+        IF isuinteger(n$) = 0 THEN Give_Error "Expected number after symbol `": EXIT FUNCTION
         t$ = u$ + qb64prefix$ + "BIT * " + n$
-        GoTo gotsym2typ
-    End If
+        GOTO gotsym2typ
+    END IF
 
-    If u = 1 Then Give_Error "Expected type symbol after ~": Exit Function
+    IF u = 1 THEN Give_Error "Expected type symbol after ~": EXIT FUNCTION
 
-    If s$ = "!" Then t$ = "SINGLE": GoTo gotsym2typ
-    If s$ = "#" Then t$ = "DOUBLE": GoTo gotsym2typ
-    If s$ = "##" Then t$ = qb64prefix$ + "FLOAT": GoTo gotsym2typ
-    If s$ = "$" Then t$ = "STRING": GoTo gotsym2typ
+    IF s$ = "!" THEN t$ = "SINGLE": GOTO gotsym2typ
+    IF s$ = "#" THEN t$ = "DOUBLE": GOTO gotsym2typ
+    IF s$ = "##" THEN t$ = qb64prefix$ + "FLOAT": GOTO gotsym2typ
+    IF s$ = "$" THEN t$ = "STRING": GOTO gotsym2typ
 
-    If Left$(s$, 1) = "$" Then
-        n$ = Right$(s$, Len(s$) - 1)
-        If isuinteger(n$) = 0 Then Give_Error "Expected number after symbol $": Exit Function
+    IF LEFT$(s$, 1) = "$" THEN
+        n$ = RIGHT$(s$, LEN(s$) - 1)
+        IF isuinteger(n$) = 0 THEN Give_Error "Expected number after symbol $": EXIT FUNCTION
         t$ = "STRING * " + n$
-        GoTo gotsym2typ
-    End If
+        GOTO gotsym2typ
+    END IF
 
     t$ = s$
 
     gotsym2typ:
 
-    If Right$(" " + t$, 5) = " _BIT" Then t$ = t$ + " * 1" 'clarify (_UNSIGNED) _BIT as (_UNSIGNED) _BIT * 1
+    IF RIGHT$(" " + t$, 5) = " _BIT" THEN t$ = t$ + " * 1" 'clarify (_UNSIGNED) _BIT as (_UNSIGNED) _BIT * 1
 
-    For i = 1 To Len(t$)
-        If Asc(t$, i) = Asc(sp) Then Asc(t$, i) = 32
-    Next
+    FOR i = 1 TO LEN(t$)
+        IF ASC(t$, i) = ASC(sp) THEN ASC(t$, i) = 32
+    NEXT
 
     symbol2fulltypename$ = t$
 
-End Function
+END FUNCTION
 
-Sub lineinput3load (f$)
-    Open f$ For Binary As #1
+SUB lineinput3load (f$)
+    OPEN f$ FOR BINARY AS #1
     l = LOF(1)
-    lineinput3buffer$ = Space$(l)
-    Get #1, , lineinput3buffer$
-    If Len(lineinput3buffer$) Then If Right$(lineinput3buffer$, 1) = Chr$(26) Then lineinput3buffer$ = Left$(lineinput3buffer$, Len(lineinput3buffer$) - 1)
-    Close #1
+    lineinput3buffer$ = SPACE$(l)
+    GET #1, , lineinput3buffer$
+    IF LEN(lineinput3buffer$) THEN IF RIGHT$(lineinput3buffer$, 1) = CHR$(26) THEN lineinput3buffer$ = LEFT$(lineinput3buffer$, LEN(lineinput3buffer$) - 1)
+    CLOSE #1
     lineinput3index = 1
-End Sub
+END SUB
 
-Function lineinput3$
+FUNCTION lineinput3$
     'returns CHR$(13) if no more lines are available
-    l = Len(lineinput3buffer$)
-    If lineinput3index > l Then lineinput3$ = Chr$(13): Exit Function
-    c13 = InStr(lineinput3index, lineinput3buffer$, Chr$(13))
-    c10 = InStr(lineinput3index, lineinput3buffer$, Chr$(10))
-    If c10 = 0 And c13 = 0 Then
-        lineinput3$ = Mid$(lineinput3buffer$, lineinput3index, l - lineinput3index + 1)
+    l = LEN(lineinput3buffer$)
+    IF lineinput3index > l THEN lineinput3$ = CHR$(13): EXIT FUNCTION
+    c13 = INSTR(lineinput3index, lineinput3buffer$, CHR$(13))
+    c10 = INSTR(lineinput3index, lineinput3buffer$, CHR$(10))
+    IF c10 = 0 AND c13 = 0 THEN
+        lineinput3$ = MID$(lineinput3buffer$, lineinput3index, l - lineinput3index + 1)
         lineinput3index = l + 1
-        Exit Function
-    End If
-    If c10 = 0 Then c10 = 2147483647
-    If c13 = 0 Then c13 = 2147483647
-    If c10 < c13 Then
+        EXIT FUNCTION
+    END IF
+    IF c10 = 0 THEN c10 = 2147483647
+    IF c13 = 0 THEN c13 = 2147483647
+    IF c10 < c13 THEN
         '10 before 13
-        lineinput3$ = Mid$(lineinput3buffer$, lineinput3index, c10 - lineinput3index)
+        lineinput3$ = MID$(lineinput3buffer$, lineinput3index, c10 - lineinput3index)
         lineinput3index = c10 + 1
-        If lineinput3index <= l Then
-            If Asc(Mid$(lineinput3buffer$, lineinput3index, 1)) = 13 Then lineinput3index = lineinput3index + 1
-        End If
-    Else
+        IF lineinput3index <= l THEN
+            IF ASC(MID$(lineinput3buffer$, lineinput3index, 1)) = 13 THEN lineinput3index = lineinput3index + 1
+        END IF
+    ELSE
         '13 before 10
-        lineinput3$ = Mid$(lineinput3buffer$, lineinput3index, c13 - lineinput3index)
+        lineinput3$ = MID$(lineinput3buffer$, lineinput3index, c13 - lineinput3index)
         lineinput3index = c13 + 1
-        If lineinput3index <= l Then
-            If Asc(Mid$(lineinput3buffer$, lineinput3index, 1)) = 10 Then lineinput3index = lineinput3index + 1
-        End If
-    End If
-End Function
+        IF lineinput3index <= l THEN
+            IF ASC(MID$(lineinput3buffer$, lineinput3index, 1)) = 10 THEN lineinput3index = lineinput3index + 1
+        END IF
+    END IF
+END FUNCTION
 
-Function getfilepath$ (f$)
-    For i = Len(f$) To 1 Step -1
-        a$ = Mid$(f$, i, 1)
-        If a$ = "/" Or a$ = "\" Then
-            getfilepath$ = Left$(f$, i)
-            Exit Function
-        End If
-    Next
+FUNCTION getfilepath$ (f$)
+    FOR i = LEN(f$) TO 1 STEP -1
+        a$ = MID$(f$, i, 1)
+        IF a$ = "/" OR a$ = "\" THEN
+            getfilepath$ = LEFT$(f$, i)
+            EXIT FUNCTION
+        END IF
+    NEXT
     getfilepath$ = ""
-End Function
+END FUNCTION
 
-Function eleucase$ (a$)
+FUNCTION eleucase$ (a$)
     'this function upper-cases all elements except for quoted strings
     'check first element
-    If Len(a$) = 0 Then Exit Function
+    IF LEN(a$) = 0 THEN EXIT FUNCTION
     i = 1
-    If Asc(a$) = 34 Then
-        i2 = InStr(a$, sp)
-        If i2 = 0 Then eleucase$ = a$: Exit Function
-        a2$ = Left$(a$, i2 - 1)
+    IF ASC(a$) = 34 THEN
+        i2 = INSTR(a$, sp)
+        IF i2 = 0 THEN eleucase$ = a$: EXIT FUNCTION
+        a2$ = LEFT$(a$, i2 - 1)
         i = i2
-    End If
+    END IF
     'check other elements
-    sp34$ = sp + Chr$(34)
-    If i < Len(a$) Then
-        Do While InStr(i, a$, sp34$)
-            i2 = InStr(i, a$, sp34$)
-            a2$ = a2$ + UCase$(Mid$(a$, i, i2 - i + 1)) 'everything prior including spacer
-            i3 = InStr(i2 + 1, a$, sp): If i3 = 0 Then i3 = Len(a$) Else i3 = i3 - 1
-            a2$ = a2$ + Mid$(a$, i2 + 1, i3 - (i2 + 1) + 1) 'everything from " to before next spacer or end
+    sp34$ = sp + CHR$(34)
+    IF i < LEN(a$) THEN
+        DO WHILE INSTR(i, a$, sp34$)
+            i2 = INSTR(i, a$, sp34$)
+            a2$ = a2$ + UCASE$(MID$(a$, i, i2 - i + 1)) 'everything prior including spacer
+            i3 = INSTR(i2 + 1, a$, sp): IF i3 = 0 THEN i3 = LEN(a$) ELSE i3 = i3 - 1
+            a2$ = a2$ + MID$(a$, i2 + 1, i3 - (i2 + 1) + 1) 'everything from " to before next spacer or end
             i = i3 + 1
-            If i > Len(a$) Then Exit Do
-        Loop
-    End If
-    a2$ = a2$ + UCase$(Mid$(a$, i, Len(a$) - i + 1))
+            IF i > LEN(a$) THEN EXIT DO
+        LOOP
+    END IF
+    a2$ = a2$ + UCASE$(MID$(a$, i, LEN(a$) - i + 1))
     eleucase$ = a2$
-End Function
+END FUNCTION
 
 
-Sub SetDependency (requirement)
-    If requirement Then
+SUB SetDependency (requirement)
+    IF requirement THEN
         DEPENDENCY(requirement) = 1
-    End If
-End Sub
+    END IF
+END SUB
 
-Sub Build (path$)
+SUB Build (path$)
     previous_dir$ = _CWD$
 
     'Count the separators in the path
     depth = 1
-    For x = 1 To Len(path$)
-        If Asc(path$, x) = 92 Or Asc(path$, x) = 47 Then depth = depth + 1
-    Next
-    ChDir path$
+    FOR x = 1 TO LEN(path$)
+        IF ASC(path$, x) = 92 OR ASC(path$, x) = 47 THEN depth = depth + 1
+    NEXT
+    CHDIR path$
 
     return_path$ = ".."
-    For x = 2 To depth
+    FOR x = 2 TO depth
         return_path$ = return_path$ + "\.."
-    Next
+    NEXT
 
-    bfh = FreeFile
-    Open "build" + BATCHFILE_EXTENSION For Binary As #bfh
-    Do Until EOF(bfh)
-        Line Input #bfh, c$
+    bfh = FREEFILE
+    OPEN "build" + BATCHFILE_EXTENSION FOR BINARY AS #bfh
+    DO UNTIL EOF(bfh)
+        LINE INPUT #bfh, c$
         use = 0
-        If Len(c$) Then use = 1
-        If c$ = "pause" Then use = 0
-        If Left$(c$, 1) = "#" Then use = 0 'eg. #!/bin/sh
-        If Left$(c$, 13) = "cd " + Chr$(34) + "$(dirname" Then use = 0 'eg. cd "$(dirname "$0")"
-        If InStr(LCase$(c$), "press any key") Then Exit Do
+        IF LEN(c$) THEN use = 1
+        IF c$ = "pause" THEN use = 0
+        IF LEFT$(c$, 1) = "#" THEN use = 0 'eg. #!/bin/sh
+        IF LEFT$(c$, 13) = "cd " + CHR$(34) + "$(dirname" THEN use = 0 'eg. cd "$(dirname "$0")"
+        IF INSTR(LCASE$(c$), "press any key") THEN EXIT DO
         c$ = GDB_Fix$(c$)
-        If use Then
-            If os$ = "WIN" Then
-                Shell _Hide "cmd /C " + c$ + " 2>> " + QuotedFilename$(return_path$ + "\" + compilelog$)
-            Else
-                Shell _Hide c$ + " 2>> " + QuotedFilename$(previous_dir$ + "/" + compilelog$)
-            End If
-        End If
-    Loop
-    Close #bfh
+        IF use THEN
+            IF os$ = "WIN" THEN
+                SHELL _HIDE "cmd /C " + c$ + " 2>> " + QuotedFilename$(return_path$ + "\" + compilelog$)
+            ELSE
+                SHELL _HIDE c$ + " 2>> " + QuotedFilename$(previous_dir$ + "/" + compilelog$)
+            END IF
+        END IF
+    LOOP
+    CLOSE #bfh
 
-    If os$ = "WIN" Then
-        ChDir return_path$
-    Else
-        ChDir previous_dir$
-    End If
-End Sub
+    IF os$ = "WIN" THEN
+        CHDIR return_path$
+    ELSE
+        CHDIR previous_dir$
+    END IF
+END SUB
 
-Function GDB_Fix$ (g_command$) 'edit a gcc/g++ command line to include debugging info
+FUNCTION GDB_Fix$ (g_command$) 'edit a gcc/g++ command line to include debugging info
     c$ = g_command$
-    If Include_GDB_Debugging_Info Then
-        If Left$(c$, 4) = "gcc " Or Left$(c$, 4) = "g++ " Then
-            c$ = Left$(c$, 4) + " -g " + Right$(c$, Len(c$) - 4)
-            GoTo added_gdb_flag
-        End If
-        For o = 1 To 6
-            If o = 1 Then o$ = "\g++ "
-            If o = 2 Then o$ = "/g++ "
-            If o = 3 Then o$ = "\gcc "
-            If o = 4 Then o$ = "/gcc "
-            If o = 5 Then o$ = " gcc "
-            If o = 6 Then o$ = " g++ "
-            x = InStr(UCase$(c$), UCase$(o$))
+    IF Include_GDB_Debugging_Info THEN
+        IF LEFT$(c$, 4) = "gcc " OR LEFT$(c$, 4) = "g++ " THEN
+            c$ = LEFT$(c$, 4) + " -g " + RIGHT$(c$, LEN(c$) - 4)
+            GOTO added_gdb_flag
+        END IF
+        FOR o = 1 TO 6
+            IF o = 1 THEN o$ = "\g++ "
+            IF o = 2 THEN o$ = "/g++ "
+            IF o = 3 THEN o$ = "\gcc "
+            IF o = 4 THEN o$ = "/gcc "
+            IF o = 5 THEN o$ = " gcc "
+            IF o = 6 THEN o$ = " g++ "
+            x = INSTR(UCASE$(c$), UCASE$(o$))
             'note: -g adds debug symbols
-            If x Then c$ = Left$(c$, x - 1) + o$ + " -g " + Right$(c$, Len(c$) - x - (Len(o$) - 1)): Exit For
-        Next
+            IF x THEN c$ = LEFT$(c$, x - 1) + o$ + " -g " + RIGHT$(c$, LEN(c$) - x - (LEN(o$) - 1)): EXIT FOR
+        NEXT
         added_gdb_flag:
         'note: -s strips all debug symbols which is good for size but not for debugging
-        x = InStr(c$, " -s "): If x Then c$ = Left$(c$, x - 1) + " " + Right$(c$, Len(c$) - x - 3)
-    End If
+        x = INSTR(c$, " -s "): IF x THEN c$ = LEFT$(c$, x - 1) + " " + RIGHT$(c$, LEN(c$) - x - 3)
+    END IF
     GDB_Fix$ = c$
-End Function
+END FUNCTION
 
 
-Sub PATH_SLASH_CORRECT (a$)
-    If os$ = "WIN" Then
-        For x = 1 To Len(a$)
-            If Asc(a$, x) = 47 Then Asc(a$, x) = 92
-        Next
-    Else
-        For x = 1 To Len(a$)
-            If Asc(a$, x) = 92 Then Asc(a$, x) = 47
-        Next
-    End If
-End Sub
+SUB PATH_SLASH_CORRECT (a$)
+    IF os$ = "WIN" THEN
+        FOR x = 1 TO LEN(a$)
+            IF ASC(a$, x) = 47 THEN ASC(a$, x) = 92
+        NEXT
+    ELSE
+        FOR x = 1 TO LEN(a$)
+            IF ASC(a$, x) = 92 THEN ASC(a$, x) = 47
+        NEXT
+    END IF
+END SUB
 
 'Steve Subs/Functins for _MATH support with CONST
-Function Evaluate_Expression$ (e$)
+FUNCTION Evaluate_Expression$ (e$)
     t$ = e$ 'So we preserve our original data, we parse a temp copy of it
     PreParse t$
 
 
-    If Left$(t$, 5) = "ERROR" Then Evaluate_Expression$ = t$: Exit Function
+    IF LEFT$(t$, 5) = "ERROR" THEN Evaluate_Expression$ = t$: EXIT FUNCTION
 
     'Deal with brackets first
     exp$ = "(" + t$ + ")" 'Starting and finishing brackets for our parse routine.
 
-    Do
-        Eval_E = InStr(exp$, ")")
-        If Eval_E > 0 Then
+    DO
+        Eval_E = INSTR(exp$, ")")
+        IF Eval_E > 0 THEN
             c = 0
-            Do Until Eval_E - c <= 0
+            DO UNTIL Eval_E - c <= 0
                 c = c + 1
-                If Eval_E Then
-                    If Mid$(exp$, Eval_E - c, 1) = "(" Then Exit Do
-                End If
-            Loop
+                IF Eval_E THEN
+                    IF MID$(exp$, Eval_E - c, 1) = "(" THEN EXIT DO
+                END IF
+            LOOP
             s = Eval_E - c + 1
-            If s < 1 Then Evaluate_Expression$ = "ERROR -- BAD () Count": Exit Function
-            eval$ = " " + Mid$(exp$, s, Eval_E - s) + " " 'pad with a space before and after so the parser can pick up the values properly.
+            IF s < 1 THEN Evaluate_Expression$ = "ERROR -- BAD () Count": EXIT FUNCTION
+            eval$ = " " + MID$(exp$, s, Eval_E - s) + " " 'pad with a space before and after so the parser can pick up the values properly.
 
             ParseExpression eval$
-            eval$ = LTrim$(RTrim$(eval$))
-            If Left$(eval$, 5) = "ERROR" Then Evaluate_Expression$ = eval$: Exit Function
-            exp$ = DWD(Left$(exp$, s - 2) + eval$ + Mid$(exp$, Eval_E + 1))
-            If Mid$(exp$, 1, 1) = "N" Then Mid$(exp$, 1) = "-"
-        End If
-    Loop Until Eval_E = 0
+            eval$ = LTRIM$(RTRIM$(eval$))
+            IF LEFT$(eval$, 5) = "ERROR" THEN Evaluate_Expression$ = eval$: EXIT FUNCTION
+            exp$ = DWD(LEFT$(exp$, s - 2) + eval$ + MID$(exp$, Eval_E + 1))
+            IF MID$(exp$, 1, 1) = "N" THEN MID$(exp$, 1) = "-"
+        END IF
+    LOOP UNTIL Eval_E = 0
     c = 0
-    Do
+    DO
         c = c + 1
-        Select Case Mid$(exp$, c, 1)
-            Case "0" To "9", ".", "-" 'At this point, we should only have number values left.
-            Case Else: Evaluate_Expression$ = "ERROR - Unknown Diagnosis: (" + exp$ + ") ": Exit Function
-        End Select
-    Loop Until c >= Len(exp$)
+        SELECT CASE MID$(exp$, c, 1)
+            CASE "0" TO "9", ".", "-" 'At this point, we should only have number values left.
+            CASE ELSE: Evaluate_Expression$ = "ERROR - Unknown Diagnosis: (" + exp$ + ") ": EXIT FUNCTION
+        END SELECT
+    LOOP UNTIL c >= LEN(exp$)
 
     Evaluate_Expression$ = exp$
-End Function
+END FUNCTION
 
 
 
-Sub ParseExpression (exp$)
-    Dim num(10) As String
+SUB ParseExpression (exp$)
+    DIM num(10) AS STRING
     'PRINT exp$
     exp$ = DWD(exp$)
     'We should now have an expression with no () to deal with
 
-    For J = 1 To 250
+    FOR J = 1 TO 250
         lowest = 0
-        Do Until lowest = Len(exp$)
-            lowest = Len(exp$): OpOn = 0
-            For P = 1 To UBound(OName)
+        DO UNTIL lowest = LEN(exp$)
+            lowest = LEN(exp$): OpOn = 0
+            FOR P = 1 TO UBOUND(OName)
                 'Look for first valid operator
-                If J = PL(P) Then 'Priority levels match
-                    If Left$(exp$, 1) = "-" Then startAt = 2 Else startAt = 1
-                    op = InStr(startAt, exp$, OName(P))
-                    If op = 0 And Left$(OName(P), 1) = "_" And qb64prefix_set = 1 Then
+                IF J = PL(P) THEN 'Priority levels match
+                    IF LEFT$(exp$, 1) = "-" THEN startAt = 2 ELSE startAt = 1
+                    op = INSTR(startAt, exp$, OName(P))
+                    IF op = 0 AND LEFT$(OName(P), 1) = "_" AND qb64prefix_set = 1 THEN
                         'try again without prefix
-                        op = InStr(startAt, exp$, Mid$(OName(P), 2))
-                        If op > 0 Then
-                            exp$ = Left$(exp$, op - 1) + "_" + Mid$(exp$, op)
+                        op = INSTR(startAt, exp$, MID$(OName(P), 2))
+                        IF op > 0 THEN
+                            exp$ = LEFT$(exp$, op - 1) + "_" + MID$(exp$, op)
                             lowest = lowest + 1
-                        End If
-                    End If
-                    If op > 0 And op < lowest Then lowest = op: OpOn = P
-                End If
-            Next
-            If OpOn = 0 Then Exit Do 'We haven't gotten to the proper PL for this OP to be processed yet.
-            If Left$(exp$, 1) = "-" Then startAt = 2 Else startAt = 1
-            op = InStr(startAt, exp$, OName(OpOn))
+                        END IF
+                    END IF
+                    IF op > 0 AND op < lowest THEN lowest = op: OpOn = P
+                END IF
+            NEXT
+            IF OpOn = 0 THEN EXIT DO 'We haven't gotten to the proper PL for this OP to be processed yet.
+            IF LEFT$(exp$, 1) = "-" THEN startAt = 2 ELSE startAt = 1
+            op = INSTR(startAt, exp$, OName(OpOn))
 
             numset = 0
 
             '*** SPECIAL OPERATION RULESETS
-            If OName(OpOn) = "-" Then 'check for BOOLEAN operators before the -
-                Select Case Mid$(exp$, op - 3, 3)
-                    Case "NOT", "XOR", "AND", "EQV", "IMP"
-                        Exit Do 'Not an operator, it's a negative
-                End Select
-                If Mid$(exp$, op - 3, 2) = "OR" Then Exit Do 'Not an operator, it's a negative
-            End If
+            IF OName(OpOn) = "-" THEN 'check for BOOLEAN operators before the -
+                SELECT CASE MID$(exp$, op - 3, 3)
+                    CASE "NOT", "XOR", "AND", "EQV", "IMP"
+                        EXIT DO 'Not an operator, it's a negative
+                END SELECT
+                IF MID$(exp$, op - 3, 2) = "OR" THEN EXIT DO 'Not an operator, it's a negative
+            END IF
 
-            If op Then
-                c = Len(OName(OpOn)) - 1
-                Do
-                    Select Case Mid$(exp$, op + c + 1, 1)
-                        Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "N": numset = -1 'Valid digit
-                        Case "-" 'We need to check if it's a minus or a negative
-                            If OName(OpOn) = "_PI" Or numset Then Exit Do
-                        Case ",": numset = 0
-                        Case Else 'Not a valid digit, we found our separator
-                            Exit Do
-                    End Select
+            IF op THEN
+                c = LEN(OName(OpOn)) - 1
+                DO
+                    SELECT CASE MID$(exp$, op + c + 1, 1)
+                        CASE "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "N": numset = -1 'Valid digit
+                        CASE "-" 'We need to check if it's a minus or a negative
+                            IF OName(OpOn) = "_PI" OR numset THEN EXIT DO
+                        CASE ",": numset = 0
+                        CASE ELSE 'Not a valid digit, we found our separator
+                            EXIT DO
+                    END SELECT
                     c = c + 1
-                Loop Until op + c >= Len(exp$)
+                LOOP UNTIL op + c >= LEN(exp$)
                 E = op + c
 
                 c = 0
-                Do
+                DO
                     c = c + 1
-                    Select Case Mid$(exp$, op - c, 1)
-                        Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "N" 'Valid digit
-                        Case "-" 'We need to check if it's a minus or a negative
+                    SELECT CASE MID$(exp$, op - c, 1)
+                        CASE "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "N" 'Valid digit
+                        CASE "-" 'We need to check if it's a minus or a negative
                             c1 = c
                             bad = 0
-                            Do
+                            DO
                                 c1 = c1 + 1
-                                Select Case Mid$(exp$, op - c1, 1)
-                                    Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."
+                                SELECT CASE MID$(exp$, op - c1, 1)
+                                    CASE "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."
                                         bad = -1
-                                        Exit Do 'It's a minus sign
-                                    Case Else
+                                        EXIT DO 'It's a minus sign
+                                    CASE ELSE
                                         'It's a negative sign and needs to count as part of our numbers
-                                End Select
-                            Loop Until op - c1 <= 0
-                            If bad Then Exit Do 'We found our seperator
-                        Case Else 'Not a valid digit, we found our separator
-                            Exit Do
-                    End Select
-                Loop Until op - c <= 0
+                                END SELECT
+                            LOOP UNTIL op - c1 <= 0
+                            IF bad THEN EXIT DO 'We found our seperator
+                        CASE ELSE 'Not a valid digit, we found our separator
+                            EXIT DO
+                    END SELECT
+                LOOP UNTIL op - c <= 0
                 s = op - c
-                num(1) = Mid$(exp$, s + 1, op - s - 1) 'Get our first number
-                num(2) = Mid$(exp$, op + Len(OName(OpOn)), E - op - Len(OName(OpOn)) + 1) 'Get our second number
-                If Mid$(num(1), 1, 1) = "N" Then Mid$(num(1), 1) = "-"
-                If Mid$(num(2), 1, 1) = "N" Then Mid$(num(2), 1) = "-"
-                If num(1) = "-" Then
+                num(1) = MID$(exp$, s + 1, op - s - 1) 'Get our first number
+                num(2) = MID$(exp$, op + LEN(OName(OpOn)), E - op - LEN(OName(OpOn)) + 1) 'Get our second number
+                IF MID$(num(1), 1, 1) = "N" THEN MID$(num(1), 1) = "-"
+                IF MID$(num(2), 1, 1) = "N" THEN MID$(num(2), 1) = "-"
+                IF num(1) = "-" THEN
                     num(3) = "N" + EvaluateNumbers(OpOn, num())
-                Else
+                ELSE
                     num(3) = EvaluateNumbers(OpOn, num())
-                End If
-                If Mid$(num(3), 1, 1) = "-" Then Mid$(num(3), 1) = "N"
-                If Left$(num(3), 5) = "ERROR" Then exp$ = num(3): Exit Sub
-                exp$ = LTrim$(N2S(DWD(Left$(exp$, s) + RTrim$(LTrim$(num(3))) + Mid$(exp$, E + 1))))
-            End If
+                END IF
+                IF MID$(num(3), 1, 1) = "-" THEN MID$(num(3), 1) = "N"
+                IF LEFT$(num(3), 5) = "ERROR" THEN exp$ = num(3): EXIT SUB
+                exp$ = LTRIM$(N2S(DWD(LEFT$(exp$, s) + RTRIM$(LTRIM$(num(3))) + MID$(exp$, E + 1))))
+            END IF
             op = 0
-        Loop
-    Next
+        LOOP
+    NEXT
 
-End Sub
+END SUB
 
 
 
-Sub Set_OrderOfOperations
+SUB Set_OrderOfOperations
     'PL sets our priortity level. 1 is highest to 65535 for the lowest.
     'I used a range here so I could add in new priority levels as needed.
     'OName ended up becoming the name of our commands, as I modified things.... Go figure!  LOL!
-    ReDim OName(10000) As String, PL(10000) As Integer
+    REDIM OName(10000) AS STRING, PL(10000) AS INTEGER
     'Constants get evaluated first, with a Priority Level of 1
 
     i = i + 1: OName(i) = "C_UOF": PL(i) = 5 'convert to unsigned offset
@@ -24717,301 +24717,301 @@ Sub Set_OrderOfOperations
     i = i + 1: OName(i) = "IMP": PL(i) = 130
     i = i + 1: OName(i) = ",": PL(i) = 1000
 
-    ReDim _Preserve OName(i) As String, PL(i) As Integer
-End Sub
+    REDIM _PRESERVE OName(i) AS STRING, PL(i) AS INTEGER
+END SUB
 
-Function EvaluateNumbers$ (p, num() As String)
-    Dim n1 As _Float, n2 As _Float, n3 As _Float
+FUNCTION EvaluateNumbers$ (p, num() AS STRING)
+    DIM n1 AS _FLOAT, n2 AS _FLOAT, n3 AS _FLOAT
     'PRINT "EVALNUM:"; OName(p), num(1), num(2)
 
-    If _Trim$(num(1)) = "" Then num(1) = "0"
+    IF _TRIM$(num(1)) = "" THEN num(1) = "0"
 
-    If PL(p) >= 20 And (Len(_Trim$(num(1))) = 0 Or Len(_Trim$(num(2))) = 0) Then
-        EvaluateNumbers$ = "ERROR - Missing operand": Exit Function
-    End If
+    IF PL(p) >= 20 AND (LEN(_TRIM$(num(1))) = 0 OR LEN(_TRIM$(num(2))) = 0) THEN
+        EvaluateNumbers$ = "ERROR - Missing operand": EXIT FUNCTION
+    END IF
 
-    If InStr(num(1), ",") Then
-        EvaluateNumbers$ = "ERROR - Invalid comma (" + num(1) + ")": Exit Function
-    End If
-    l2 = InStr(num(2), ",")
-    If l2 Then
-        Select Case OName(p) 'only certain commands should pass a comma value
-            Case "C_RG", "C_RA", "_RGB", "_RGBA", "_RED", "_GREEN", "C_BL", "_ALPHA"
-            Case Else
-                C$ = Mid$(num(2), l2)
-                num(2) = Left$(num(2), l2 - 1)
-        End Select
-    End If
+    IF INSTR(num(1), ",") THEN
+        EvaluateNumbers$ = "ERROR - Invalid comma (" + num(1) + ")": EXIT FUNCTION
+    END IF
+    l2 = INSTR(num(2), ",")
+    IF l2 THEN
+        SELECT CASE OName(p) 'only certain commands should pass a comma value
+            CASE "C_RG", "C_RA", "_RGB", "_RGBA", "_RED", "_GREEN", "C_BL", "_ALPHA"
+            CASE ELSE
+                C$ = MID$(num(2), l2)
+                num(2) = LEFT$(num(2), l2 - 1)
+        END SELECT
+    END IF
 
-    Select Case PL(p) 'divide up the work so we want do as much case checking
-        Case 5 'Type conversions
+    SELECT CASE PL(p) 'divide up the work so we want do as much case checking
+        CASE 5 'Type conversions
             'Note, these are special cases and work with the number BEFORE the command and not after
-            Select Case OName(p) 'Depending on our operator..
-                Case "C_UOF": n1~%& = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1~%&)))
-                Case "C_ULO": n1%& = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1%&)))
-                Case "C_UBY": n1~%% = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1~%%)))
-                Case "C_UIN": n1~% = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1~%)))
-                Case "C_BY": n1%% = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1%%)))
-                Case "C_IN": n1% = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1%)))
-                Case "C_UIF": n1~&& = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1~&&)))
-                Case "C_OF": n1~& = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1~&)))
-                Case "C_IF": n1&& = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1&&)))
-                Case "C_LO": n1& = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1&)))
-                Case "C_UBI": n1~` = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1~`)))
-                Case "C_BI": n1` = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1`)))
-                Case "C_FL": n1## = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1##)))
-                Case "C_DO": n1# = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1#)))
-                Case "C_SI": n1! = Val(num(1)): EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1!)))
-            End Select
-            Exit Function
-        Case 10 'functions
-            Select Case OName(p) 'Depending on our operator..
-                Case "_PI"
+            SELECT CASE OName(p) 'Depending on our operator..
+                CASE "C_UOF": n1~%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%&)))
+                CASE "C_ULO": n1%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%&)))
+                CASE "C_UBY": n1~%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%%)))
+                CASE "C_UIN": n1~% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%)))
+                CASE "C_BY": n1%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%%)))
+                CASE "C_IN": n1% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%)))
+                CASE "C_UIF": n1~&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&&)))
+                CASE "C_OF": n1~& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&)))
+                CASE "C_IF": n1&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&&)))
+                CASE "C_LO": n1& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&)))
+                CASE "C_UBI": n1~` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~`)))
+                CASE "C_BI": n1` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1`)))
+                CASE "C_FL": n1## = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1##)))
+                CASE "C_DO": n1# = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1#)))
+                CASE "C_SI": n1! = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1!)))
+            END SELECT
+            EXIT FUNCTION
+        CASE 10 'functions
+            SELECT CASE OName(p) 'Depending on our operator..
+                CASE "_PI"
                     n1 = 3.14159265358979323846264338327950288## 'Future compatable in case something ever stores extra digits for PI
-                    If num(2) <> "" Then n1 = n1 * Val(num(2))
-                Case "_ACOS": n1 = _Acos(Val(num(2)))
-                Case "_ASIN": n1 = _Asin(Val(num(2)))
-                Case "_ARCSEC": n1 = _Arcsec(Val(num(2)))
-                Case "_ARCCSC": n1 = _Arccsc(Val(num(2)))
-                Case "_ARCCOT": n1 = _Arccot(Val(num(2)))
-                Case "_SECH": n1 = _Sech(Val(num(2)))
-                Case "_CSCH": n1 = _Csch(Val(num(2)))
-                Case "_COTH": n1 = _Coth(Val(num(2)))
-                Case "C_RG"
+                    IF num(2) <> "" THEN n1 = n1 * VAL(num(2))
+                CASE "_ACOS": n1 = _ACOS(VAL(num(2)))
+                CASE "_ASIN": n1 = _ASIN(VAL(num(2)))
+                CASE "_ARCSEC": n1 = _ARCSEC(VAL(num(2)))
+                CASE "_ARCCSC": n1 = _ARCCSC(VAL(num(2)))
+                CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
+                CASE "_SECH": n1 = _SECH(VAL(num(2)))
+                CASE "_CSCH": n1 = _CSCH(VAL(num(2)))
+                CASE "_COTH": n1 = _COTH(VAL(num(2)))
+                CASE "C_RG"
                     n$ = num(2)
-                    If n$ = "" Then EvaluateNumbers$ = "ERROR - Invalid null _RGB32": Exit Function
-                    c1 = InStr(n$, ",")
-                    If c1 Then c2 = InStr(c1 + 1, n$, ",")
-                    If c2 Then c3 = InStr(c2 + 1, n$, ",")
-                    If c3 Then c4 = InStr(c3 + 1, n$, ",")
-                    If c1 = 0 Then 'there's no comma in the command to parse.  It's a grayscale value
-                        n = Val(num(2))
+                    IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGB32": EXIT FUNCTION
+                    c1 = INSTR(n$, ",")
+                    IF c1 THEN c2 = INSTR(c1 + 1, n$, ",")
+                    IF c2 THEN c3 = INSTR(c2 + 1, n$, ",")
+                    IF c3 THEN c4 = INSTR(c3 + 1, n$, ",")
+                    IF c1 = 0 THEN 'there's no comma in the command to parse.  It's a grayscale value
+                        n = VAL(num(2))
                         n1 = _RGB32(n, n, n)
-                    ElseIf c2 = 0 Then 'there's one comma and not 2.  It's grayscale with alpha.
-                        n = Val(Left$(num(2), c1))
-                        n2 = Val(Mid$(num(2), c1 + 1))
+                    ELSEIF c2 = 0 THEN 'there's one comma and not 2.  It's grayscale with alpha.
+                        n = VAL(LEFT$(num(2), c1))
+                        n2 = VAL(MID$(num(2), c1 + 1))
                         n1 = _RGBA32(n, n, n, n2)
-                    ElseIf c3 = 0 Then 'there's two commas.  It's _RGB values
-                        n = Val(Left$(num(2), c1))
-                        n2 = Val(Mid$(num(2), c1 + 1))
-                        n3 = Val(Mid$(num(2), c2 + 1))
+                    ELSEIF c3 = 0 THEN 'there's two commas.  It's _RGB values
+                        n = VAL(LEFT$(num(2), c1))
+                        n2 = VAL(MID$(num(2), c1 + 1))
+                        n3 = VAL(MID$(num(2), c2 + 1))
                         n1 = _RGB32(n, n2, n3)
-                    ElseIf c4 = 0 Then 'there's three commas.  It's _RGBA values
-                        n = Val(Left$(num(2), c1))
-                        n2 = Val(Mid$(num(2), c1 + 1))
-                        n3 = Val(Mid$(num(2), c2 + 1))
-                        n4 = Val(Mid$(num(2), c3 + 1))
+                    ELSEIF c4 = 0 THEN 'there's three commas.  It's _RGBA values
+                        n = VAL(LEFT$(num(2), c1))
+                        n2 = VAL(MID$(num(2), c1 + 1))
+                        n3 = VAL(MID$(num(2), c2 + 1))
+                        n4 = VAL(MID$(num(2), c3 + 1))
                         n1 = _RGBA32(n, n2, n3, n4)
-                    Else 'we have more than three commas.  I have no idea WTH type of values got passed here!
-                        EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + ")": Exit Function
-                    End If
-                Case "C_RA"
+                    ELSE 'we have more than three commas.  I have no idea WTH type of values got passed here!
+                        EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + ")": EXIT FUNCTION
+                    END IF
+                CASE "C_RA"
                     n$ = num(2)
-                    If n$ = "" Then EvaluateNumbers$ = "ERROR - Invalid null _RGBA32": Exit Function
-                    c1 = InStr(n$, ",")
-                    If c1 Then c2 = InStr(c1 + 1, n$, ",")
-                    If c2 Then c3 = InStr(c2 + 1, n$, ",")
-                    If c3 Then c4 = InStr(c3 + 1, n$, ",")
-                    If c3 = 0 Or c4 <> 0 Then EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + ")": Exit Function
+                    IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGBA32": EXIT FUNCTION
+                    c1 = INSTR(n$, ",")
+                    IF c1 THEN c2 = INSTR(c1 + 1, n$, ",")
+                    IF c2 THEN c3 = INSTR(c2 + 1, n$, ",")
+                    IF c3 THEN c4 = INSTR(c3 + 1, n$, ",")
+                    IF c3 = 0 OR c4 <> 0 THEN EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + ")": EXIT FUNCTION
                     'we have to have 3 commas; not more, not less.
-                    n = Val(Left$(num(2), c1))
-                    n2 = Val(Mid$(num(2), c1 + 1))
-                    n3 = Val(Mid$(num(2), c2 + 1))
-                    n4 = Val(Mid$(num(2), c3 + 1))
+                    n = VAL(LEFT$(num(2), c1))
+                    n2 = VAL(MID$(num(2), c1 + 1))
+                    n3 = VAL(MID$(num(2), c2 + 1))
+                    n4 = VAL(MID$(num(2), c3 + 1))
                     n1 = _RGBA32(n, n2, n3, n4)
-                Case "_RGB"
+                CASE "_RGB"
                     n$ = num(2)
-                    If n$ = "" Then EvaluateNumbers$ = "ERROR - Invalid null _RGB": Exit Function
-                    c1 = InStr(n$, ",")
-                    If c1 Then c2 = InStr(c1 + 1, n$, ",")
-                    If c2 Then c3 = InStr(c2 + 1, n$, ",")
-                    If c3 Then c4 = InStr(c3 + 1, n$, ",")
-                    If c3 = 0 Or c4 <> 0 Then EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + "). _RGB requires 4 parameters for Red, Green, Blue, ScreenMode.": Exit Function
+                    IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGB": EXIT FUNCTION
+                    c1 = INSTR(n$, ",")
+                    IF c1 THEN c2 = INSTR(c1 + 1, n$, ",")
+                    IF c2 THEN c3 = INSTR(c2 + 1, n$, ",")
+                    IF c3 THEN c4 = INSTR(c3 + 1, n$, ",")
+                    IF c3 = 0 OR c4 <> 0 THEN EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + "). _RGB requires 4 parameters for Red, Green, Blue, ScreenMode.": EXIT FUNCTION
                     'we have to have 3 commas; not more, not less.
-                    n = Val(Left$(num(2), c1))
-                    n2 = Val(Mid$(num(2), c1 + 1))
-                    n3 = Val(Mid$(num(2), c2 + 1))
-                    n4 = Val(Mid$(num(2), c3 + 1))
-                    Select Case n4
-                        Case 0 To 2, 7 To 13, 256, 32 'these are the good screen values
-                        Case Else
-                            EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + Str$(n4) + ")": Exit Function
-                    End Select
-                    t = _NewImage(1, 1, n4)
+                    n = VAL(LEFT$(num(2), c1))
+                    n2 = VAL(MID$(num(2), c1 + 1))
+                    n3 = VAL(MID$(num(2), c2 + 1))
+                    n4 = VAL(MID$(num(2), c3 + 1))
+                    SELECT CASE n4
+                        CASE 0 TO 2, 7 TO 13, 256, 32 'these are the good screen values
+                        CASE ELSE
+                            EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + STR$(n4) + ")": EXIT FUNCTION
+                    END SELECT
+                    t = _NEWIMAGE(1, 1, n4)
                     n1 = _RGB(n, n2, n3, t)
-                    _FreeImage t
-                Case "_RGBA"
+                    _FREEIMAGE t
+                CASE "_RGBA"
                     n$ = num(2)
-                    If n$ = "" Then EvaluateNumbers$ = "ERROR - Invalid null _RGBA": Exit Function
-                    c1 = InStr(n$, ",")
-                    If c1 Then c2 = InStr(c1 + 1, n$, ",")
-                    If c2 Then c3 = InStr(c2 + 1, n$, ",")
-                    If c3 Then c4 = InStr(c3 + 1, n$, ",")
-                    If c4 Then c5 = InStr(c4 + 1, n$, ",")
-                    If c4 = 0 Or c5 <> 0 Then EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + "). _RGBA requires 5 parameters for Red, Green, Blue, Alpha, ScreenMode.": Exit Function
+                    IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGBA": EXIT FUNCTION
+                    c1 = INSTR(n$, ",")
+                    IF c1 THEN c2 = INSTR(c1 + 1, n$, ",")
+                    IF c2 THEN c3 = INSTR(c2 + 1, n$, ",")
+                    IF c3 THEN c4 = INSTR(c3 + 1, n$, ",")
+                    IF c4 THEN c5 = INSTR(c4 + 1, n$, ",")
+                    IF c4 = 0 OR c5 <> 0 THEN EvaluateNumbers$ = "ERROR - Invalid comma count (" + num(2) + "). _RGBA requires 5 parameters for Red, Green, Blue, Alpha, ScreenMode.": EXIT FUNCTION
                     'we have to have 4 commas; not more, not less.
-                    n = Val(Left$(num(2), c1))
-                    n2 = Val(Mid$(num(2), c1 + 1))
-                    n3 = Val(Mid$(num(2), c2 + 1))
-                    n4 = Val(Mid$(num(2), c3 + 1))
-                    n5 = Val(Mid$(num(2), c4 + 1))
-                    Select Case n5
-                        Case 0 To 2, 7 To 13, 256, 32 'these are the good screen values
-                        Case Else
-                            EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + Str$(n5) + ")": Exit Function
-                    End Select
-                    t = _NewImage(1, 1, n5)
+                    n = VAL(LEFT$(num(2), c1))
+                    n2 = VAL(MID$(num(2), c1 + 1))
+                    n3 = VAL(MID$(num(2), c2 + 1))
+                    n4 = VAL(MID$(num(2), c3 + 1))
+                    n5 = VAL(MID$(num(2), c4 + 1))
+                    SELECT CASE n5
+                        CASE 0 TO 2, 7 TO 13, 256, 32 'these are the good screen values
+                        CASE ELSE
+                            EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + STR$(n5) + ")": EXIT FUNCTION
+                    END SELECT
+                    t = _NEWIMAGE(1, 1, n5)
                     n1 = _RGBA(n, n2, n3, n4, t)
-                    _FreeImage t
-                Case "_RED", "_GREEN", "_BLUE", "_ALPHA"
+                    _FREEIMAGE t
+                CASE "_RED", "_GREEN", "_BLUE", "_ALPHA"
                     n$ = num(2)
-                    If n$ = "" Then EvaluateNumbers$ = "ERROR - Invalid null " + OName(p): Exit Function
-                    c1 = InStr(n$, ",")
-                    If c1 = 0 Then EvaluateNumbers$ = "ERROR - " + OName(p) + " requires 2 parameters for Color, ScreenMode.": Exit Function
-                    If c1 Then c2 = InStr(c1 + 1, n$, ",")
-                    If c2 Then EvaluateNumbers$ = "ERROR - " + OName(p) + " requires 2 parameters for Color, ScreenMode.": Exit Function
-                    n = Val(Left$(num(2), c1))
-                    n2 = Val(Mid$(num(2), c1 + 1))
-                    Select Case n2
-                        Case 0 To 2, 7 To 13, 256, 32 'these are the good screen values
-                        Case Else
-                            EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + Str$(n2) + ")": Exit Function
-                    End Select
-                    t = _NewImage(1, 1, n4)
-                    Select Case OName(p)
-                        Case "_RED": n1 = _Red(n, t)
-                        Case "_BLUE": n1 = _Blue(n, t)
-                        Case "_GREEN": n1 = _Green(n, t)
-                        Case "_ALPHA": n1 = _Alpha(n, t)
-                    End Select
-                    _FreeImage t
-                Case "C_RX", "C_GR", "C_BL", "C_AL"
+                    IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null " + OName(p): EXIT FUNCTION
+                    c1 = INSTR(n$, ",")
+                    IF c1 = 0 THEN EvaluateNumbers$ = "ERROR - " + OName(p) + " requires 2 parameters for Color, ScreenMode.": EXIT FUNCTION
+                    IF c1 THEN c2 = INSTR(c1 + 1, n$, ",")
+                    IF c2 THEN EvaluateNumbers$ = "ERROR - " + OName(p) + " requires 2 parameters for Color, ScreenMode.": EXIT FUNCTION
+                    n = VAL(LEFT$(num(2), c1))
+                    n2 = VAL(MID$(num(2), c1 + 1))
+                    SELECT CASE n2
+                        CASE 0 TO 2, 7 TO 13, 256, 32 'these are the good screen values
+                        CASE ELSE
+                            EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + STR$(n2) + ")": EXIT FUNCTION
+                    END SELECT
+                    t = _NEWIMAGE(1, 1, n4)
+                    SELECT CASE OName(p)
+                        CASE "_RED": n1 = _RED(n, t)
+                        CASE "_BLUE": n1 = _BLUE(n, t)
+                        CASE "_GREEN": n1 = _GREEN(n, t)
+                        CASE "_ALPHA": n1 = _ALPHA(n, t)
+                    END SELECT
+                    _FREEIMAGE t
+                CASE "C_RX", "C_GR", "C_BL", "C_AL"
                     n$ = num(2)
-                    If n$ = "" Then EvaluateNumbers$ = "ERROR - Invalid null " + OName(p): Exit Function
-                    n = Val(num(2))
-                    Select Case OName(p)
-                        Case "C_RX": n1 = _Red32(n)
-                        Case "C_BL": n1 = _Blue32(n)
-                        Case "C_GR": n1 = _Green32(n)
-                        Case "C_AL": n1 = _Alpha32(n)
-                    End Select
-                Case "COS": n1 = Cos(Val(num(2)))
-                Case "SIN": n1 = Sin(Val(num(2)))
-                Case "TAN": n1 = Tan(Val(num(2)))
-                Case "LOG": n1 = Log(Val(num(2)))
-                Case "EXP": n1 = Exp(Val(num(2)))
-                Case "ATN": n1 = Atn(Val(num(2)))
-                Case "_D2R": n1 = 0.0174532925 * (Val(num(2)))
-                Case "_D2G": n1 = 1.1111111111 * (Val(num(2)))
-                Case "_R2D": n1 = 57.2957795 * (Val(num(2)))
-                Case "_R2G": n1 = 0.015707963 * (Val(num(2)))
-                Case "_G2D": n1 = 0.9 * (Val(num(2)))
-                Case "_G2R": n1 = 63.661977237 * (Val(num(2)))
-                Case "ABS": n1 = Abs(Val(num(2)))
-                Case "SGN": n1 = Sgn(Val(num(2)))
-                Case "INT": n1 = Int(Val(num(2)))
-                Case "_ROUND": n1 = _Round(Val(num(2)))
-                Case "_CEIL": n1 = _Ceil(Val(num(2)))
-                Case "FIX": n1 = Fix(Val(num(2)))
-                Case "_SEC": n1 = _Sec(Val(num(2)))
-                Case "_CSC": n1 = _Csc(Val(num(2)))
-                Case "_COT": n1 = _Cot(Val(num(2)))
-            End Select
-        Case 20 To 60 'Math Operators
-            Select Case OName(p) 'Depending on our operator..
-                Case "^": n1 = Val(num(1)) ^ Val(num(2))
-                Case "SQR": n1 = Sqr(Val(num(2)))
-                Case "ROOT"
-                    n1 = Val(num(1)): n2 = Val(num(2))
-                    If n2 = 1 Then EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1))): Exit Function
-                    If n1 < 0 And n2 >= 1 Then sign = -1: n1 = -n1 Else sign = 1
+                    IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null " + OName(p): EXIT FUNCTION
+                    n = VAL(num(2))
+                    SELECT CASE OName(p)
+                        CASE "C_RX": n1 = _RED32(n)
+                        CASE "C_BL": n1 = _BLUE32(n)
+                        CASE "C_GR": n1 = _GREEN32(n)
+                        CASE "C_AL": n1 = _ALPHA32(n)
+                    END SELECT
+                CASE "COS": n1 = COS(VAL(num(2)))
+                CASE "SIN": n1 = SIN(VAL(num(2)))
+                CASE "TAN": n1 = TAN(VAL(num(2)))
+                CASE "LOG": n1 = LOG(VAL(num(2)))
+                CASE "EXP": n1 = EXP(VAL(num(2)))
+                CASE "ATN": n1 = ATN(VAL(num(2)))
+                CASE "_D2R": n1 = 0.0174532925 * (VAL(num(2)))
+                CASE "_D2G": n1 = 1.1111111111 * (VAL(num(2)))
+                CASE "_R2D": n1 = 57.2957795 * (VAL(num(2)))
+                CASE "_R2G": n1 = 0.015707963 * (VAL(num(2)))
+                CASE "_G2D": n1 = 0.9 * (VAL(num(2)))
+                CASE "_G2R": n1 = 63.661977237 * (VAL(num(2)))
+                CASE "ABS": n1 = ABS(VAL(num(2)))
+                CASE "SGN": n1 = SGN(VAL(num(2)))
+                CASE "INT": n1 = INT(VAL(num(2)))
+                CASE "_ROUND": n1 = _ROUND(VAL(num(2)))
+                CASE "_CEIL": n1 = _CEIL(VAL(num(2)))
+                CASE "FIX": n1 = FIX(VAL(num(2)))
+                CASE "_SEC": n1 = _SEC(VAL(num(2)))
+                CASE "_CSC": n1 = _CSC(VAL(num(2)))
+                CASE "_COT": n1 = _COT(VAL(num(2)))
+            END SELECT
+        CASE 20 TO 60 'Math Operators
+            SELECT CASE OName(p) 'Depending on our operator..
+                CASE "^": n1 = VAL(num(1)) ^ VAL(num(2))
+                CASE "SQR": n1 = SQR(VAL(num(2)))
+                CASE "ROOT"
+                    n1 = VAL(num(1)): n2 = VAL(num(2))
+                    IF n2 = 1 THEN EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1))): EXIT FUNCTION
+                    IF n1 < 0 AND n2 >= 1 THEN sign = -1: n1 = -n1 ELSE sign = 1
                     n3 = 1## / n2
-                    If n3 <> Int(n3) And n2 < 1 Then sign = Sgn(n1): n1 = Abs(n1)
+                    IF n3 <> INT(n3) AND n2 < 1 THEN sign = SGN(n1): n1 = ABS(n1)
                     n1 = sign * (n1 ^ n3)
-                Case "*": n1 = Val(num(1)) * Val(num(2))
-                Case "/"
-                    If Val(num(2)) <> 0 Then
-                        n1 = Val(num(1)) / Val(num(2))
-                    Else
+                CASE "*": n1 = VAL(num(1)) * VAL(num(2))
+                CASE "/"
+                    IF VAL(num(2)) <> 0 THEN
+                        n1 = VAL(num(1)) / VAL(num(2))
+                    ELSE
                         EvaluateNumbers$ = "ERROR - Division By Zero"
-                        Exit Function
-                    End If
-                Case "\"
-                    If Val(num(2)) <> 0 Then
-                        n1 = Val(num(1)) \ Val(num(2))
-                    Else
+                        EXIT FUNCTION
+                    END IF
+                CASE "\"
+                    IF VAL(num(2)) <> 0 THEN
+                        n1 = VAL(num(1)) \ VAL(num(2))
+                    ELSE
                         EvaluateNumbers$ = "ERROR - Division By Zero"
-                        Exit Function
-                    End If
-                Case "MOD"
-                    If Val(num(2)) <> 0 Then
-                        n1 = Val(num(1)) Mod Val(num(2))
-                    Else
+                        EXIT FUNCTION
+                    END IF
+                CASE "MOD"
+                    IF VAL(num(2)) <> 0 THEN
+                        n1 = VAL(num(1)) MOD VAL(num(2))
+                    ELSE
                         EvaluateNumbers$ = "ERROR - Division By Zero"
-                        Exit Function
-                    End If
-                Case "+": n1 = Val(num(1)) + Val(num(2))
-                Case "-":
-                    n1 = Val(num(1)) - Val(num(2))
-            End Select
-        Case 70 'Relational Operators =, >, <, <>, <=, >=
-            Select Case OName(p) 'Depending on our operator..
-                Case "=": n1 = Val(num(1)) = Val(num(2))
-                Case ">": n1 = Val(num(1)) > Val(num(2))
-                Case "<": n1 = Val(num(1)) < Val(num(2))
-                Case "<>", "><": n1 = Val(num(1)) <> Val(num(2))
-                Case "<=", "=<": n1 = Val(num(1)) <= Val(num(2))
-                Case ">=", "=>": n1 = Val(num(1)) >= Val(num(2))
-            End Select
-        Case Else 'a value we haven't processed elsewhere
-            Select Case OName(p) 'Depending on our operator..
-                Case "NOT": n1 = Not Val(num(2))
-                Case "AND": n1 = Val(num(1)) And Val(num(2))
-                Case "OR": n1 = Val(num(1)) Or Val(num(2))
-                Case "XOR": n1 = Val(num(1)) Xor Val(num(2))
-                Case "EQV": n1 = Val(num(1)) Eqv Val(num(2))
-                Case "IMP": n1 = Val(num(1)) Imp Val(num(2))
-            End Select
-    End Select
+                        EXIT FUNCTION
+                    END IF
+                CASE "+": n1 = VAL(num(1)) + VAL(num(2))
+                CASE "-":
+                    n1 = VAL(num(1)) - VAL(num(2))
+            END SELECT
+        CASE 70 'Relational Operators =, >, <, <>, <=, >=
+            SELECT CASE OName(p) 'Depending on our operator..
+                CASE "=": n1 = VAL(num(1)) = VAL(num(2))
+                CASE ">": n1 = VAL(num(1)) > VAL(num(2))
+                CASE "<": n1 = VAL(num(1)) < VAL(num(2))
+                CASE "<>", "><": n1 = VAL(num(1)) <> VAL(num(2))
+                CASE "<=", "=<": n1 = VAL(num(1)) <= VAL(num(2))
+                CASE ">=", "=>": n1 = VAL(num(1)) >= VAL(num(2))
+            END SELECT
+        CASE ELSE 'a value we haven't processed elsewhere
+            SELECT CASE OName(p) 'Depending on our operator..
+                CASE "NOT": n1 = NOT VAL(num(2))
+                CASE "AND": n1 = VAL(num(1)) AND VAL(num(2))
+                CASE "OR": n1 = VAL(num(1)) OR VAL(num(2))
+                CASE "XOR": n1 = VAL(num(1)) XOR VAL(num(2))
+                CASE "EQV": n1 = VAL(num(1)) EQV VAL(num(2))
+                CASE "IMP": n1 = VAL(num(1)) IMP VAL(num(2))
+            END SELECT
+    END SELECT
 
-    EvaluateNumbers$ = RTrim$(LTrim$(Str$(n1))) + C$
-End Function
+    EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1))) + C$
+END FUNCTION
 
-Function DWD$ (exp$) 'Deal With Duplicates
+FUNCTION DWD$ (exp$) 'Deal With Duplicates
     'To deal with duplicate operators in our code.
     'Such as --  becomes a +
     '++ becomes a +
     '+- becomes a -
     '-+ becomes a -
     t$ = exp$
-    Do
+    DO
         bad = 0
-        Do
-            l = InStr(t$, "++")
-            If l Then t$ = Left$(t$, l - 1) + "+" + Mid$(t$, l + 2): bad = -1
-        Loop Until l = 0
-        Do
-            l = InStr(t$, "+-")
-            If l Then t$ = Left$(t$, l - 1) + "-" + Mid$(t$, l + 2): bad = -1
-        Loop Until l = 0
-        Do
-            l = InStr(t$, "-+")
-            If l Then t$ = Left$(t$, l - 1) + "-" + Mid$(t$, l + 2): bad = -1
-        Loop Until l = 0
-        Do
-            l = InStr(t$, "--")
-            If l Then t$ = Left$(t$, l - 1) + "+" + Mid$(t$, l + 2): bad = -1
-        Loop Until l = 0
-    Loop Until Not bad
+        DO
+            l = INSTR(t$, "++")
+            IF l THEN t$ = LEFT$(t$, l - 1) + "+" + MID$(t$, l + 2): bad = -1
+        LOOP UNTIL l = 0
+        DO
+            l = INSTR(t$, "+-")
+            IF l THEN t$ = LEFT$(t$, l - 1) + "-" + MID$(t$, l + 2): bad = -1
+        LOOP UNTIL l = 0
+        DO
+            l = INSTR(t$, "-+")
+            IF l THEN t$ = LEFT$(t$, l - 1) + "-" + MID$(t$, l + 2): bad = -1
+        LOOP UNTIL l = 0
+        DO
+            l = INSTR(t$, "--")
+            IF l THEN t$ = LEFT$(t$, l - 1) + "+" + MID$(t$, l + 2): bad = -1
+        LOOP UNTIL l = 0
+    LOOP UNTIL NOT bad
     DWD$ = t$
-End Function
+END FUNCTION
 
-Sub PreParse (e$)
-    Dim f As _Float
-    Static TotalPrefixedPP_TypeMod As Long, TotalPP_TypeMod As Long
+SUB PreParse (e$)
+    DIM f AS _FLOAT
+    STATIC TotalPrefixedPP_TypeMod AS LONG, TotalPP_TypeMod AS LONG
 
-    If PP_TypeMod(0) = "" Then
-        ReDim PP_TypeMod(100) As String, PP_ConvertedMod(100) As String 'Large enough to hold all values to begin with
+    IF PP_TypeMod(0) = "" THEN
+        REDIM PP_TypeMod(100) AS STRING, PP_ConvertedMod(100) AS STRING 'Large enough to hold all values to begin with
         PP_TypeMod(0) = "Initialized" 'Set so we don't do this section over and over, as we keep the values in shared memory.
         'and the below is a conversion list so symbols don't get cross confused.
         i = i + 1: PP_TypeMod(i) = "~`": PP_ConvertedMod(i) = "C_UBI" 'unsigned bit
@@ -25043,636 +25043,636 @@ Sub PreParse (e$)
         i = i + 1: PP_TypeMod(i) = "BLUE32": PP_ConvertedMod(i) = "C_BL" 'blue32
         i = i + 1: PP_TypeMod(i) = "ALPHA32": PP_ConvertedMod(i) = "C_AL" 'alpha32
         TotalPP_TypeMod = i
-        ReDim _Preserve PP_TypeMod(i) As String, PP_ConvertedMod(i) As String 'And then resized to just contain the necessary space in memory
-    End If
+        REDIM _PRESERVE PP_TypeMod(i) AS STRING, PP_ConvertedMod(i) AS STRING 'And then resized to just contain the necessary space in memory
+    END IF
     t$ = e$
 
     'First strip all spaces
     t$ = ""
-    For i = 1 To Len(e$)
-        If Mid$(e$, i, 1) <> " " Then t$ = t$ + Mid$(e$, i, 1)
-    Next
+    FOR i = 1 TO LEN(e$)
+        IF MID$(e$, i, 1) <> " " THEN t$ = t$ + MID$(e$, i, 1)
+    NEXT
 
-    t$ = UCase$(t$)
-    If t$ = "" Then e$ = "ERROR -- NULL string; nothing to evaluate": Exit Sub
+    t$ = UCASE$(t$)
+    IF t$ = "" THEN e$ = "ERROR -- NULL string; nothing to evaluate": EXIT SUB
 
     'ERROR CHECK by counting our brackets
     l = 0
-    Do
-        l = InStr(l + 1, t$, "("): If l Then c = c + 1
-    Loop Until l = 0
+    DO
+        l = INSTR(l + 1, t$, "("): IF l THEN c = c + 1
+    LOOP UNTIL l = 0
     l = 0
-    Do
-        l = InStr(l + 1, t$, ")"): If l Then c1 = c1 + 1
-    Loop Until l = 0
-    If c <> c1 Then e$ = "ERROR -- Bad Parenthesis:" + Str$(c) + "( vs" + Str$(c1) + ")": Exit Sub
+    DO
+        l = INSTR(l + 1, t$, ")"): IF l THEN c1 = c1 + 1
+    LOOP UNTIL l = 0
+    IF c <> c1 THEN e$ = "ERROR -- Bad Parenthesis:" + STR$(c) + "( vs" + STR$(c1) + ")": EXIT SUB
 
     'replace existing CONST values
     sep$ = "()+-*/\><=^"
-    For i2 = 0 To constlast
+    FOR i2 = 0 TO constlast
         thisConstName$ = constname(i2)
-        For replaceConstPass = 1 To 2
+        FOR replaceConstPass = 1 TO 2
             found = 0
-            Do
-                found = InStr(found + 1, UCase$(t$), thisConstName$)
-                If found Then
-                    If found > 1 Then
-                        If InStr(sep$, Mid$(t$, found - 1, 1)) = 0 Then _Continue
-                    End If
-                    If found + Len(thisConstName$) <= Len(t$) Then
-                        If InStr(sep$, Mid$(t$, found + Len(thisConstName$), 1)) = 0 Then _Continue
-                    End If
+            DO
+                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
+                IF found THEN
+                    IF found > 1 THEN
+                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
+                    END IF
+                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
+                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
+                    END IF
                     t = consttype(i2)
-                    If t And ISSTRING Then
+                    IF t AND ISSTRING THEN
                         r$ = conststring(i2)
-                        i4 = _InStrRev(r$, ",")
-                        r$ = Left$(r$, i4 - 1)
-                    Else
-                        If t And ISFLOAT Then
-                            r$ = Str$(constfloat(i2))
+                        i4 = _INSTRREV(r$, ",")
+                        r$ = LEFT$(r$, i4 - 1)
+                    ELSE
+                        IF t AND ISFLOAT THEN
+                            r$ = STR$(constfloat(i2))
                             r$ = N2S(r$)
-                        Else
-                            If t And ISUNSIGNED Then r$ = Str$(constuinteger(i2)) Else r$ = Str$(constinteger(i2))
-                        End If
-                    End If
-                    t$ = Left$(t$, found - 1) + _Trim$(r$) + Mid$(t$, found + Len(thisConstName$))
-                End If
-            Loop Until found = 0
+                        ELSE
+                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
+                        END IF
+                    END IF
+                    t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
+                END IF
+            LOOP UNTIL found = 0
             thisConstName$ = constname(i2) + constnamesymbol(i2)
-        Next
-    Next
+        NEXT
+    NEXT
 
     'Modify so that NOT will process properly
     l = 0
-    Do
-        l = InStr(l + 1, t$, "NOT ")
-        If l Then
+    DO
+        l = INSTR(l + 1, t$, "NOT ")
+        IF l THEN
             'We need to work magic on the statement so it looks pretty.
             ' 1 + NOT 2 + 1 is actually processed as 1 + (NOT 2 + 1)
             'Look for something not proper
-            l1 = InStr(l + 1, t$, "AND")
-            If l1 = 0 Or (InStr(l + 1, t$, "OR") > 0 And InStr(l + 1, t$, "OR") < l1) Then l1 = InStr(l + 1, t$, "OR")
-            If l1 = 0 Or (InStr(l + 1, t$, "XOR") > 0 And InStr(l + 1, t$, "XOR") < l1) Then l1 = InStr(l + 1, t$, "XOR")
-            If l1 = 0 Or (InStr(l + 1, t$, "EQV") > 0 And InStr(l + 1, t$, "EQV") < l1) Then l1 = InStr(l + 1, t$, "EQV")
-            If l1 = 0 Or (InStr(l + 1, t$, "IMP") > 0 And InStr(l + 1, t$, "IMP") < l1) Then l1 = InStr(l + 1, t$, "IMP")
-            If l1 = 0 Then l1 = Len(t$) + 1
-            t$ = Left$(t$, l - 1) + "(" + Mid$(t$, l, l1 - l) + ")" + Mid$(t$, l + l1 - l)
+            l1 = INSTR(l + 1, t$, "AND")
+            IF l1 = 0 OR (INSTR(l + 1, t$, "OR") > 0 AND INSTR(l + 1, t$, "OR") < l1) THEN l1 = INSTR(l + 1, t$, "OR")
+            IF l1 = 0 OR (INSTR(l + 1, t$, "XOR") > 0 AND INSTR(l + 1, t$, "XOR") < l1) THEN l1 = INSTR(l + 1, t$, "XOR")
+            IF l1 = 0 OR (INSTR(l + 1, t$, "EQV") > 0 AND INSTR(l + 1, t$, "EQV") < l1) THEN l1 = INSTR(l + 1, t$, "EQV")
+            IF l1 = 0 OR (INSTR(l + 1, t$, "IMP") > 0 AND INSTR(l + 1, t$, "IMP") < l1) THEN l1 = INSTR(l + 1, t$, "IMP")
+            IF l1 = 0 THEN l1 = LEN(t$) + 1
+            t$ = LEFT$(t$, l - 1) + "(" + MID$(t$, l, l1 - l) + ")" + MID$(t$, l + l1 - l)
             l = l + 3
             'PRINT t$
-        End If
-    Loop Until l = 0
+        END IF
+    LOOP UNTIL l = 0
 
     uboundPP_TypeMod = TotalPrefixedPP_TypeMod
-    If qb64prefix_set = 1 Then uboundPP_TypeMod = TotalPP_TypeMod
-    For j = 1 To uboundPP_TypeMod
+    IF qb64prefix_set = 1 THEN uboundPP_TypeMod = TotalPP_TypeMod
+    FOR j = 1 TO uboundPP_TypeMod
         l = 0
-        Do
-            l = InStr(l + 1, t$, PP_TypeMod(j))
-            If l = 0 Then Exit Do
-            i = 0: l1 = 0: l2 = 0: lo = Len(PP_TypeMod(j))
-            Do
-                If PL(i) > 10 Then
-                    l2 = _InStrRev(l, t$, OName$(i))
-                    If l2 > 0 And l2 > l1 Then l1 = l2
-                End If
+        DO
+            l = INSTR(l + 1, t$, PP_TypeMod(j))
+            IF l = 0 THEN EXIT DO
+            i = 0: l1 = 0: l2 = 0: lo = LEN(PP_TypeMod(j))
+            DO
+                IF PL(i) > 10 THEN
+                    l2 = _INSTRREV(l, t$, OName$(i))
+                    IF l2 > 0 AND l2 > l1 THEN l1 = l2
+                END IF
                 i = i + lo
-            Loop Until i > UBound(PL)
-            l$ = Left$(t$, l1)
-            m$ = Mid$(t$, l1 + 1, l - l1 - 1)
-            r$ = PP_ConvertedMod(j) + Mid$(t$, l + lo)
-            If j > 15 Then
+            LOOP UNTIL i > UBOUND(PL)
+            l$ = LEFT$(t$, l1)
+            m$ = MID$(t$, l1 + 1, l - l1 - 1)
+            r$ = PP_ConvertedMod(j) + MID$(t$, l + lo)
+            IF j > 15 THEN
                 t$ = l$ + m$ + r$ 'replacement routine for commands which might get confused with others, like _RGB and _RGB32
-            Else
+            ELSE
                 'the first 15 commands need to properly place the parenthesis around the value we want to convert.
                 t$ = l$ + "(" + m$ + ")" + r$
-            End If
-            l = l + 2 + Len(PP_TypeMod(j)) 'move forward from the length of the symbol we checked + the new "(" and  ")"
-        Loop
-    Next
+            END IF
+            l = l + 2 + LEN(PP_TypeMod(j)) 'move forward from the length of the symbol we checked + the new "(" and  ")"
+        LOOP
+    NEXT
 
     'Check for bad operators before a ( bracket
     l = 0
-    Do
-        l = InStr(l + 1, t$, "(")
-        If l > 0 And l > 2 Then 'Don't check the starting bracket; there's nothing before it.
+    DO
+        l = INSTR(l + 1, t$, "(")
+        IF l > 0 AND l > 2 THEN 'Don't check the starting bracket; there's nothing before it.
             good = 0
-            For i = 1 To UBound(OName)
-                m$ = Mid$(t$, l - Len(OName(i)), Len(OName(i)))
-                If m$ = OName(i) Then
-                    good = -1: Exit For 'We found an operator after our ), and it's not a CONST (like PI)
-                Else
-                    If Left$(OName(i), 1) = "_" And qb64prefix_set = 1 Then
+            FOR i = 1 TO UBOUND(OName)
+                m$ = MID$(t$, l - LEN(OName(i)), LEN(OName(i)))
+                IF m$ = OName(i) THEN
+                    good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
+                ELSE
+                    IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
                         'try without prefix
-                        m$ = Mid$(t$, l - (Len(OName(i)) - 1), Len(OName(i)) - 1)
-                        If m$ = Mid$(OName(i), 2) Then good = -1: Exit For
-                    End If
-                End If
-            Next
-            If Not good Then e$ = "ERROR - Improper operations before (.": Exit Sub
+                        m$ = MID$(t$, l - (LEN(OName(i)) - 1), LEN(OName(i)) - 1)
+                        IF m$ = MID$(OName(i), 2) THEN good = -1: EXIT FOR
+                    END IF
+                END IF
+            NEXT
+            IF NOT good THEN e$ = "ERROR - Improper operations before (.": EXIT SUB
             l = l + 1
-        End If
-    Loop Until l = 0
+        END IF
+    LOOP UNTIL l = 0
 
     'Check for bad operators after a ) bracket
     l = 0
-    Do
-        l = InStr(l + 1, t$, ")")
-        If l > 0 And l < Len(t$) Then
+    DO
+        l = INSTR(l + 1, t$, ")")
+        IF l > 0 AND l < LEN(t$) THEN
             good = 0
-            For i = 1 To UBound(OName)
-                m$ = Mid$(t$, l + 1, Len(OName(i)))
-                If m$ = OName(i) Then
-                    good = -1: Exit For 'We found an operator after our ), and it's not a CONST (like PI
-                Else
-                    If Left$(OName(i), 1) = "_" And qb64prefix_set = 1 Then
+            FOR i = 1 TO UBOUND(OName)
+                m$ = MID$(t$, l + 1, LEN(OName(i)))
+                IF m$ = OName(i) THEN
+                    good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI
+                ELSE
+                    IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
                         'try without prefix
-                        m$ = Mid$(t$, l + 1, Len(OName(i)) - 1)
-                        If m$ = Mid$(OName(i), 2) Then good = -1: Exit For
-                    End If
-                End If
-            Next
-            If Mid$(t$, l + 1, 1) = ")" Then good = -1
-            If Not good Then e$ = "ERROR - Improper operations after ).": Exit Sub
+                        m$ = MID$(t$, l + 1, LEN(OName(i)) - 1)
+                        IF m$ = MID$(OName(i), 2) THEN good = -1: EXIT FOR
+                    END IF
+                END IF
+            NEXT
+            IF MID$(t$, l + 1, 1) = ")" THEN good = -1
+            IF NOT good THEN e$ = "ERROR - Improper operations after ).": EXIT SUB
             l = l + 1
-        End If
-    Loop Until l = 0 Or l = Len(t$) 'last symbol is a bracket
+        END IF
+    LOOP UNTIL l = 0 OR l = LEN(t$) 'last symbol is a bracket
 
     'Turn all &H (hex) numbers into decimal values for the program to process properly
     l = 0
-    Do
-        l = InStr(t$, "&H")
-        If l Then
+    DO
+        l = INSTR(t$, "&H")
+        IF l THEN
             E = l + 1: finished = 0
-            Do
+            DO
                 E = E + 1
-                comp$ = Mid$(t$, E, 1)
-                Select Case comp$
-                    Case "0" To "9", "A" To "F" 'All is good, our next digit is a number, continue to add to the hex$
-                    Case Else
+                comp$ = MID$(t$, E, 1)
+                SELECT CASE comp$
+                    CASE "0" TO "9", "A" TO "F" 'All is good, our next digit is a number, continue to add to the hex$
+                    CASE ELSE
                         good = 0
-                        For i = 1 To UBound(OName)
-                            If Mid$(t$, E, Len(OName(i))) = OName(i) And PL(i) > 1 And PL(i) <= 250 Then good = -1: Exit For 'We found an operator after our ), and it's not a CONST (like PI)
-                        Next
-                        If Not good Then e$ = "ERROR - Improper &H value. (" + comp$ + ")": Exit Sub
+                        FOR i = 1 TO UBOUND(OName)
+                            IF MID$(t$, E, LEN(OName(i))) = OName(i) AND PL(i) > 1 AND PL(i) <= 250 THEN good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
+                        NEXT
+                        IF NOT good THEN e$ = "ERROR - Improper &H value. (" + comp$ + ")": EXIT SUB
                         E = E - 1
                         finished = -1
-                End Select
-            Loop Until finished Or E = Len(t$)
-            t$ = Left$(t$, l - 1) + LTrim$(RTrim$(Str$(Val(Mid$(t$, l, E - l + 1))))) + Mid$(t$, E + 1)
-        End If
-    Loop Until l = 0
+                END SELECT
+            LOOP UNTIL finished OR E = LEN(t$)
+            t$ = LEFT$(t$, l - 1) + LTRIM$(RTRIM$(STR$(VAL(MID$(t$, l, E - l + 1))))) + MID$(t$, E + 1)
+        END IF
+    LOOP UNTIL l = 0
 
     'Turn all &B (binary) numbers into decimal values for the program to process properly
     l = 0
-    Do
-        l = InStr(t$, "&B")
-        If l Then
+    DO
+        l = INSTR(t$, "&B")
+        IF l THEN
             E = l + 1: finished = 0
-            Do
+            DO
                 E = E + 1
-                comp$ = Mid$(t$, E, 1)
-                Select Case comp$
-                    Case "0", "1" 'All is good, our next digit is a number, continue to add to the hex$
-                    Case Else
+                comp$ = MID$(t$, E, 1)
+                SELECT CASE comp$
+                    CASE "0", "1" 'All is good, our next digit is a number, continue to add to the hex$
+                    CASE ELSE
                         good = 0
-                        For i = 1 To UBound(OName)
-                            If Mid$(t$, E, Len(OName(i))) = OName(i) And PL(i) > 1 And PL(i) <= 250 Then good = -1: Exit For 'We found an operator after our ), and it's not a CONST (like PI)
-                        Next
-                        If Not good Then e$ = "ERROR - Improper &B value. (" + comp$ + ")": Exit Sub
+                        FOR i = 1 TO UBOUND(OName)
+                            IF MID$(t$, E, LEN(OName(i))) = OName(i) AND PL(i) > 1 AND PL(i) <= 250 THEN good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
+                        NEXT
+                        IF NOT good THEN e$ = "ERROR - Improper &B value. (" + comp$ + ")": EXIT SUB
                         E = E - 1
                         finished = -1
-                End Select
-            Loop Until finished Or E = Len(t$)
-            bin$ = Mid$(t$, l + 2, E - l - 1)
-            For i = 1 To Len(bin$)
-                If Mid$(bin$, i, 1) = "1" Then f = f + 2 ^ (Len(bin$) - i)
-            Next
-            t$ = Left$(t$, l - 1) + LTrim$(RTrim$(Str$(f))) + Mid$(t$, E + 1)
-        End If
-    Loop Until l = 0
+                END SELECT
+            LOOP UNTIL finished OR E = LEN(t$)
+            bin$ = MID$(t$, l + 2, E - l - 1)
+            FOR i = 1 TO LEN(bin$)
+                IF MID$(bin$, i, 1) = "1" THEN f = f + 2 ^ (LEN(bin$) - i)
+            NEXT
+            t$ = LEFT$(t$, l - 1) + LTRIM$(RTRIM$(STR$(f))) + MID$(t$, E + 1)
+        END IF
+    LOOP UNTIL l = 0
 
 
     't$ = N2S(t$)
     VerifyString t$
     e$ = t$
-End Sub
+END SUB
 
 
 
-Sub VerifyString (t$)
+SUB VerifyString (t$)
     'ERROR CHECK for unrecognized operations
     j = 1
-    Do
-        comp$ = Mid$(t$, j, 1)
-        Select Case comp$
-            Case "0" To "9", ".", "(", ")", ",": j = j + 1
-            Case Else
+    DO
+        comp$ = MID$(t$, j, 1)
+        SELECT CASE comp$
+            CASE "0" TO "9", ".", "(", ")", ",": j = j + 1
+            CASE ELSE
                 good = 0
                 extrachar = 0
-                For i = 1 To UBound(OName)
-                    If Mid$(t$, j, Len(OName(i))) = OName(i) Then
-                        good = -1: Exit For 'We found an operator after our ), and it's not a CONST (like PI)
-                    Else
-                        If Left$(OName(i), 1) = "_" And qb64prefix_set = 1 Then
+                FOR i = 1 TO UBOUND(OName)
+                    IF MID$(t$, j, LEN(OName(i))) = OName(i) THEN
+                        good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
+                    ELSE
+                        IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
                             'try without prefix
-                            If Mid$(t$, j, Len(OName(i)) - 1) = Mid$(OName(i), 2) Then
-                                good = -1: extrachar = 1: Exit For
-                            End If
-                        End If
-                    End If
-                Next
-                If Not good Then t$ = "ERROR - Bad Operational value. (" + comp$ + ")": Exit Sub
-                j = j + (Len(OName(i)) - extrachar)
-        End Select
-    Loop Until j > Len(t$)
-End Sub
+                            IF MID$(t$, j, LEN(OName(i)) - 1) = MID$(OName(i), 2) THEN
+                                good = -1: extrachar = 1: EXIT FOR
+                            END IF
+                        END IF
+                    END IF
+                NEXT
+                IF NOT good THEN t$ = "ERROR - Bad Operational value. (" + comp$ + ")": EXIT SUB
+                j = j + (LEN(OName(i)) - extrachar)
+        END SELECT
+    LOOP UNTIL j > LEN(t$)
+END SUB
 
-Function N2S$ (exp$) 'scientific Notation to String
+FUNCTION N2S$ (exp$) 'scientific Notation to String
 
-    t$ = LTrim$(RTrim$(exp$))
-    If Left$(t$, 1) = "-" Or Left$(t$, 1) = "N" Then sign$ = "-": t$ = Mid$(t$, 2)
+    t$ = LTRIM$(RTRIM$(exp$))
+    IF LEFT$(t$, 1) = "-" OR LEFT$(t$, 1) = "N" THEN sign$ = "-": t$ = MID$(t$, 2)
 
-    dp = InStr(t$, "D+"): dm = InStr(t$, "D-")
-    ep = InStr(t$, "E+"): em = InStr(t$, "E-")
-    check1 = Sgn(dp) + Sgn(dm) + Sgn(ep) + Sgn(em)
-    If check1 < 1 Or check1 > 1 Then N2S = exp$: Exit Function 'If no scientic notation is found, or if we find more than 1 type, it's not SN!
+    dp = INSTR(t$, "D+"): dm = INSTR(t$, "D-")
+    ep = INSTR(t$, "E+"): em = INSTR(t$, "E-")
+    check1 = SGN(dp) + SGN(dm) + SGN(ep) + SGN(em)
+    IF check1 < 1 OR check1 > 1 THEN N2S = exp$: EXIT FUNCTION 'If no scientic notation is found, or if we find more than 1 type, it's not SN!
 
-    Select Case l 'l now tells us where the SN starts at.
-        Case Is < dp: l = dp
-        Case Is < dm: l = dm
-        Case Is < ep: l = ep
-        Case Is < em: l = em
-    End Select
+    SELECT CASE l 'l now tells us where the SN starts at.
+        CASE IS < dp: l = dp
+        CASE IS < dm: l = dm
+        CASE IS < ep: l = ep
+        CASE IS < em: l = em
+    END SELECT
 
-    l$ = Left$(t$, l - 1) 'The left of the SN
-    r$ = Mid$(t$, l + 1): r&& = Val(r$) 'The right of the SN, turned into a workable long
+    l$ = LEFT$(t$, l - 1) 'The left of the SN
+    r$ = MID$(t$, l + 1): r&& = VAL(r$) 'The right of the SN, turned into a workable long
 
 
-    If InStr(l$, ".") Then 'Location of the decimal, if any
-        If r&& > 0 Then
-            r&& = r&& - Len(l$) + 2
-        Else
+    IF INSTR(l$, ".") THEN 'Location of the decimal, if any
+        IF r&& > 0 THEN
+            r&& = r&& - LEN(l$) + 2
+        ELSE
             r&& = r&& + 1
-        End If
-        l$ = Left$(l$, 1) + Mid$(l$, 3)
-    End If
+        END IF
+        l$ = LEFT$(l$, 1) + MID$(l$, 3)
+    END IF
 
-    Select Case r&&
-        Case 0 'what the heck? We solved it already?
+    SELECT CASE r&&
+        CASE 0 'what the heck? We solved it already?
             'l$ = l$
-        Case Is < 0
-            For i = 1 To -r&&
+        CASE IS < 0
+            FOR i = 1 TO -r&&
                 l$ = "0" + l$
-            Next
+            NEXT
             l$ = "0." + l$
-        Case Else
-            For i = 1 To r&&
+        CASE ELSE
+            FOR i = 1 TO r&&
                 l$ = l$ + "0"
-            Next
-    End Select
+            NEXT
+    END SELECT
 
     N2S$ = sign$ + l$
-End Function
+END FUNCTION
 
 
-Function QuotedFilename$ (f$)
+FUNCTION QuotedFilename$ (f$)
 
-    If os$ = "WIN" Then
-        QuotedFilename$ = Chr$(34) + f$ + Chr$(34)
-        Exit Function
-    End If
+    IF os$ = "WIN" THEN
+        QuotedFilename$ = CHR$(34) + f$ + CHR$(34)
+        EXIT FUNCTION
+    END IF
 
-    If os$ = "LNX" Then
+    IF os$ = "LNX" THEN
         QuotedFilename$ = "'" + f$ + "'"
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-End Function
+END FUNCTION
 
 
-Function HashValue& (a$) 'returns the hash table value of a string
+FUNCTION HashValue& (a$) 'returns the hash table value of a string
     '[5(first)][5(second)][5(last)][5(2nd-last)][3(length AND 7)][1(first char is underscore)]
-    l = Len(a$)
-    If l = 0 Then Exit Function 'an (invalid) NULL string equates to 0
-    a = Asc(a$)
-    If a <> 95 Then 'does not begin with underscore
-        Select Case l
-            Case 1
+    l = LEN(a$)
+    IF l = 0 THEN EXIT FUNCTION 'an (invalid) NULL string equates to 0
+    a = ASC(a$)
+    IF a <> 95 THEN 'does not begin with underscore
+        SELECT CASE l
+            CASE 1
                 HashValue& = hash1char(a) + 1048576
-                Exit Function
-            Case 2
+                EXIT FUNCTION
+            CASE 2
                 HashValue& = hash2char(CVI(a$)) + 2097152
-                Exit Function
-            Case 3
-                HashValue& = hash2char(CVI(a$)) + hash1char(Asc(a$, 3)) * 1024 + 3145728
-                Exit Function
-            Case Else
-                HashValue& = hash2char(CVI(a$)) + hash2char(Asc(a$, l) + Asc(a$, l - 1) * 256) * 1024 + (l And 7) * 1048576
-                Exit Function
-        End Select
-    Else 'does begin with underscore
-        Select Case l
-            Case 1
-                HashValue& = (1048576 + 8388608): Exit Function 'note: underscore only is illegal in QB64 but supported by hash
-            Case 2
-                HashValue& = hash1char(Asc(a$, 2)) + (2097152 + 8388608)
-                Exit Function
-            Case 3
-                HashValue& = hash2char(Asc(a$, 2) + Asc(a$, 3) * 256) + (3145728 + 8388608)
-                Exit Function
-            Case 4
-                HashValue& = hash2char((CVL(a$) And &HFFFF00) \ 256) + hash1char(Asc(a$, 4)) * 1024 + (4194304 + 8388608)
-                Exit Function
-            Case Else
-                HashValue& = hash2char((CVL(a$) And &HFFFF00) \ 256) + hash2char(Asc(a$, l) + Asc(a$, l - 1) * 256) * 1024 + (l And 7) * 1048576 + 8388608
-                Exit Function
-        End Select
-    End If
-End Function
+                EXIT FUNCTION
+            CASE 3
+                HashValue& = hash2char(CVI(a$)) + hash1char(ASC(a$, 3)) * 1024 + 3145728
+                EXIT FUNCTION
+            CASE ELSE
+                HashValue& = hash2char(CVI(a$)) + hash2char(ASC(a$, l) + ASC(a$, l - 1) * 256) * 1024 + (l AND 7) * 1048576
+                EXIT FUNCTION
+        END SELECT
+    ELSE 'does begin with underscore
+        SELECT CASE l
+            CASE 1
+                HashValue& = (1048576 + 8388608): EXIT FUNCTION 'note: underscore only is illegal in QB64 but supported by hash
+            CASE 2
+                HashValue& = hash1char(ASC(a$, 2)) + (2097152 + 8388608)
+                EXIT FUNCTION
+            CASE 3
+                HashValue& = hash2char(ASC(a$, 2) + ASC(a$, 3) * 256) + (3145728 + 8388608)
+                EXIT FUNCTION
+            CASE 4
+                HashValue& = hash2char((CVL(a$) AND &HFFFF00) \ 256) + hash1char(ASC(a$, 4)) * 1024 + (4194304 + 8388608)
+                EXIT FUNCTION
+            CASE ELSE
+                HashValue& = hash2char((CVL(a$) AND &HFFFF00) \ 256) + hash2char(ASC(a$, l) + ASC(a$, l - 1) * 256) * 1024 + (l AND 7) * 1048576 + 8388608
+                EXIT FUNCTION
+        END SELECT
+    END IF
+END FUNCTION
 
-Sub HashAdd (a$, flags, reference)
+SUB HashAdd (a$, flags, reference)
 
     'find the index to use
-    If HashListFreeLast > 0 Then
+    IF HashListFreeLast > 0 THEN
         'take from free list
         i = HashListFree(HashListFreeLast)
         HashListFreeLast = HashListFreeLast - 1
-    Else
-        If HashListNext > HashListSize Then
+    ELSE
+        IF HashListNext > HashListSize THEN
             'double hash list size
             HashListSize = HashListSize * 2
-            ReDim _Preserve HashList(1 To HashListSize) As HashListItem
-            ReDim _Preserve HashListName(1 To HashListSize) As String * 256
-        End If
+            REDIM _PRESERVE HashList(1 TO HashListSize) AS HashListItem
+            REDIM _PRESERVE HashListName(1 TO HashListSize) AS STRING * 256
+        END IF
         i = HashListNext
         HashListNext = HashListNext + 1
-    End If
+    END IF
 
     'setup links to index
     x = HashValue(a$)
     i2 = HashTable(x)
-    If i2 Then
+    IF i2 THEN
         i3 = HashList(i2).LastItem
         HashList(i2).LastItem = i
         HashList(i3).NextItem = i
         HashList(i).PrevItem = i3
-    Else
+    ELSE
         HashTable(x) = i
         HashList(i).PrevItem = 0
         HashList(i).LastItem = i
-    End If
+    END IF
     HashList(i).NextItem = 0
 
     'set common hashlist values
     HashList(i).Flags = flags
     HashList(i).Reference = reference
-    HashListName(i) = UCase$(a$)
+    HashListName(i) = UCASE$(a$)
 
-End Sub
+END SUB
 
-Function HashFind (a$, searchflags, resultflags, resultreference)
+FUNCTION HashFind (a$, searchflags, resultflags, resultreference)
     '(0,1,2)z=hashfind[rev]("RUMI",Hashflag_label,resflag,resref)
     '0=doesn't exist
     '1=found, no more items to scan
     '2=found, more items still to scan
     i = HashTable(HashValue(a$))
-    If i Then
-        ua$ = UCase$(a$) + Space$(256 - Len(a$))
+    IF i THEN
+        ua$ = UCASE$(a$) + SPACE$(256 - LEN(a$))
         hashfind_next:
         f = HashList(i).Flags
-        If searchflags And f Then 'flags in common
-            If HashListName(i) = ua$ Then
+        IF searchflags AND f THEN 'flags in common
+            IF HashListName(i) = ua$ THEN
                 resultflags = f
                 resultreference = HashList(i).Reference
                 i2 = HashList(i).NextItem
-                If i2 Then
+                IF i2 THEN
                     HashFind = 2
                     HashFind_NextListItem = i2
                     HashFind_Reverse = 0
                     HashFind_SearchFlags = searchflags
                     HashFind_Name = ua$
                     HashRemove_LastFound = i
-                    Exit Function
-                Else
+                    EXIT FUNCTION
+                ELSE
                     HashFind = 1
                     HashRemove_LastFound = i
-                    Exit Function
-                End If
-            End If
-        End If
+                    EXIT FUNCTION
+                END IF
+            END IF
+        END IF
         i = HashList(i).NextItem
-        If i Then GoTo hashfind_next
-    End If
-End Function
+        IF i THEN GOTO hashfind_next
+    END IF
+END FUNCTION
 
-Function HashFindRev (a$, searchflags, resultflags, resultreference)
+FUNCTION HashFindRev (a$, searchflags, resultflags, resultreference)
     '(0,1,2)z=hashfind[rev]("RUMI",Hashflag_label,resflag,resref)
     '0=doesn't exist
     '1=found, no more items to scan
     '2=found, more items still to scan
     i = HashTable(HashValue(a$))
-    If i Then
+    IF i THEN
         i = HashList(i).LastItem
-        ua$ = UCase$(a$) + Space$(256 - Len(a$))
+        ua$ = UCASE$(a$) + SPACE$(256 - LEN(a$))
         hashfindrev_next:
         f = HashList(i).Flags
-        If searchflags And f Then 'flags in common
-            If HashListName(i) = ua$ Then
+        IF searchflags AND f THEN 'flags in common
+            IF HashListName(i) = ua$ THEN
                 resultflags = f
                 resultreference = HashList(i).Reference
                 i2 = HashList(i).PrevItem
-                If i2 Then
+                IF i2 THEN
                     HashFindRev = 2
                     HashFind_NextListItem = i2
                     HashFind_Reverse = 1
                     HashFind_SearchFlags = searchflags
                     HashFind_Name = ua$
                     HashRemove_LastFound = i
-                    Exit Function
-                Else
+                    EXIT FUNCTION
+                ELSE
                     HashFindRev = 1
                     HashRemove_LastFound = i
-                    Exit Function
-                End If
-            End If
-        End If
+                    EXIT FUNCTION
+                END IF
+            END IF
+        END IF
         i = HashList(i).PrevItem
-        If i Then GoTo hashfindrev_next
-    End If
-End Function
+        IF i THEN GOTO hashfindrev_next
+    END IF
+END FUNCTION
 
-Function HashFindCont (resultflags, resultreference)
+FUNCTION HashFindCont (resultflags, resultreference)
     '(0,1,2)z=hashfind[rev](resflag,resref)
     '0=no more items exist
     '1=found, no more items to scan
     '2=found, more items still to scan
-    If HashFind_Reverse Then
+    IF HashFind_Reverse THEN
 
         i = HashFind_NextListItem
         hashfindrevc_next:
         f = HashList(i).Flags
-        If HashFind_SearchFlags And f Then 'flags in common
-            If HashListName(i) = HashFind_Name Then
+        IF HashFind_SearchFlags AND f THEN 'flags in common
+            IF HashListName(i) = HashFind_Name THEN
                 resultflags = f
                 resultreference = HashList(i).Reference
                 i2 = HashList(i).PrevItem
-                If i2 Then
+                IF i2 THEN
                     HashFindCont = 2
                     HashFind_NextListItem = i2
                     HashRemove_LastFound = i
-                    Exit Function
-                Else
+                    EXIT FUNCTION
+                ELSE
                     HashFindCont = 1
                     HashRemove_LastFound = i
-                    Exit Function
-                End If
-            End If
-        End If
+                    EXIT FUNCTION
+                END IF
+            END IF
+        END IF
         i = HashList(i).PrevItem
-        If i Then GoTo hashfindrevc_next
-        Exit Function
+        IF i THEN GOTO hashfindrevc_next
+        EXIT FUNCTION
 
-    Else
+    ELSE
 
         i = HashFind_NextListItem
         hashfindc_next:
         f = HashList(i).Flags
-        If HashFind_SearchFlags And f Then 'flags in common
-            If HashListName(i) = HashFind_Name Then
+        IF HashFind_SearchFlags AND f THEN 'flags in common
+            IF HashListName(i) = HashFind_Name THEN
                 resultflags = f
                 resultreference = HashList(i).Reference
                 i2 = HashList(i).NextItem
-                If i2 Then
+                IF i2 THEN
                     HashFindCont = 2
                     HashFind_NextListItem = i2
                     HashRemove_LastFound = i
-                    Exit Function
-                Else
+                    EXIT FUNCTION
+                ELSE
                     HashFindCont = 1
                     HashRemove_LastFound = i
-                    Exit Function
-                End If
-            End If
-        End If
+                    EXIT FUNCTION
+                END IF
+            END IF
+        END IF
         i = HashList(i).NextItem
-        If i Then GoTo hashfindc_next
-        Exit Function
+        IF i THEN GOTO hashfindc_next
+        EXIT FUNCTION
 
-    End If
-End Function
+    END IF
+END FUNCTION
 
-Sub HashRemove
+SUB HashRemove
 
     i = HashRemove_LastFound
 
     'add to free list
     HashListFreeLast = HashListFreeLast + 1
-    If HashListFreeLast > HashListFreeSize Then
+    IF HashListFreeLast > HashListFreeSize THEN
         HashListFreeSize = HashListFreeSize * 2
-        ReDim _Preserve HashListFree(1 To HashListFreeSize) As Long
-    End If
+        REDIM _PRESERVE HashListFree(1 TO HashListFreeSize) AS LONG
+    END IF
     HashListFree(HashListFreeLast) = i
 
     'unlink
     i1 = HashList(i).PrevItem
-    If i1 Then
+    IF i1 THEN
         'not first item in list
         i2 = HashList(i).NextItem
-        If i2 Then
+        IF i2 THEN
             '(not first and) not last item
             HashList(i1).NextItem = i2
             HashList(i2).LastItem = i1
-        Else
+        ELSE
             'last item
             x = HashTable(HashValue(HashListName$(i)))
             HashList(x).LastItem = i1
             HashList(i1).NextItem = 0
-        End If
-    Else
+        END IF
+    ELSE
         'first item in list
         x = HashTable(HashValue(HashListName$(i)))
         i2 = HashList(i).NextItem
-        If i2 Then
+        IF i2 THEN
             '(first item but) not last item
             HashTable(x) = i2
             HashList(i2).PrevItem = 0
             HashList(i2).LastItem = HashList(i).LastItem
-        Else
+        ELSE
             '(first and) last item
             HashTable(x) = 0
-        End If
-    End If
+        END IF
+    END IF
 
-End Sub
+END SUB
 
-Sub HashDump 'used for debugging purposes
-    fh = FreeFile
-    Open "hashdump.txt" For Output As #fh
+SUB HashDump 'used for debugging purposes
+    fh = FREEFILE
+    OPEN "hashdump.txt" FOR OUTPUT AS #fh
     b$ = "12345678901234567890123456789012}"
-    For x = 0 To 16777215
-        If HashTable(x) Then
+    FOR x = 0 TO 16777215
+        IF HashTable(x) THEN
 
-            Print #fh, "START HashTable("; x; "):"
+            PRINT #fh, "START HashTable("; x; "):"
             i = HashTable(x)
 
             'validate
             lasti = HashList(i).LastItem
-            If HashList(i).LastItem = 0 Or HashList(i).PrevItem <> 0 Or HashValue(HashListName(i)) <> x Then GoTo corrupt
+            IF HashList(i).LastItem = 0 OR HashList(i).PrevItem <> 0 OR HashValue(HashListName(i)) <> x THEN GOTO corrupt
 
-            Print #fh, "  HashList("; i; ").LastItem="; HashList(i).LastItem
+            PRINT #fh, "  HashList("; i; ").LastItem="; HashList(i).LastItem
             hashdumpnextitem:
-            x$ = "  [" + Str$(i) + "]" + HashListName(i)
+            x$ = "  [" + STR$(i) + "]" + HashListName(i)
 
             f = HashList(i).Flags
-            x$ = x$ + ",.Flags=" + Str$(f) + "{"
-            For z = 1 To 32
-                Asc(b$, z) = (f And 1) + 48
+            x$ = x$ + ",.Flags=" + STR$(f) + "{"
+            FOR z = 1 TO 32
+                ASC(b$, z) = (f AND 1) + 48
                 f = f \ 2
-            Next
+            NEXT
             x$ = x$ + b$
 
-            x$ = x$ + ",.Reference=" + Str$(HashList(i).Reference)
+            x$ = x$ + ",.Reference=" + STR$(HashList(i).Reference)
 
-            Print #fh, x$
+            PRINT #fh, x$
 
             'validate
             i1 = HashList(i).PrevItem
             i2 = HashList(i).NextItem
-            If i1 Then
-                If HashList(i1).NextItem <> i Then GoTo corrupt
-            End If
-            If i2 Then
-                If HashList(i2).PrevItem <> i Then GoTo corrupt
-            End If
-            If i2 = 0 Then
-                If lasti <> i Then GoTo corrupt
-            End If
+            IF i1 THEN
+                IF HashList(i1).NextItem <> i THEN GOTO corrupt
+            END IF
+            IF i2 THEN
+                IF HashList(i2).PrevItem <> i THEN GOTO corrupt
+            END IF
+            IF i2 = 0 THEN
+                IF lasti <> i THEN GOTO corrupt
+            END IF
 
             i = HashList(i).NextItem
-            If i Then GoTo hashdumpnextitem
+            IF i THEN GOTO hashdumpnextitem
 
-            Print #fh, "END HashTable("; x; ")"
-        End If
-    Next
-    Close #fh
+            PRINT #fh, "END HashTable("; x; ")"
+        END IF
+    NEXT
+    CLOSE #fh
 
-    Exit Sub
+    EXIT SUB
     corrupt:
-    Print #fh, "HASH TABLE CORRUPT!" 'should never happen
-    Close #fh
+    PRINT #fh, "HASH TABLE CORRUPT!" 'should never happen
+    CLOSE #fh
 
-End Sub
+END SUB
 
-Sub HashClear 'clear entire hash table
+SUB HashClear 'clear entire hash table
 
     HashListSize = 65536
     HashListNext = 1
     HashListFreeSize = 1024
     HashListFreeLast = 0
-    ReDim HashList(1 To HashListSize) As HashListItem
-    ReDim HashListName(1 To HashListSize) As String * 256
-    ReDim HashListFree(1 To HashListFreeSize) As Long
-    ReDim HashTable(16777215) As Long '64MB lookup table with indexes to the hashlist
+    REDIM HashList(1 TO HashListSize) AS HashListItem
+    REDIM HashListName(1 TO HashListSize) AS STRING * 256
+    REDIM HashListFree(1 TO HashListFreeSize) AS LONG
+    REDIM HashTable(16777215) AS LONG '64MB lookup table with indexes to the hashlist
 
     HashFind_NextListItem = 0
     HashFind_Reverse = 0
@@ -25680,223 +25680,223 @@ Sub HashClear 'clear entire hash table
     HashFind_Name = ""
     HashRemove_LastFound = 0
 
-End Sub
+END SUB
 
-Function removecast$ (a$)
+FUNCTION removecast$ (a$)
     removecast$ = a$
-    If InStr(a$, "  )") Then
-        removecast$ = Right$(a$, Len(a$) - InStr(a$, "  )") - 2)
-    End If
-End Function
+    IF INSTR(a$, "  )") THEN
+        removecast$ = RIGHT$(a$, LEN(a$) - INSTR(a$, "  )") - 2)
+    END IF
+END FUNCTION
 
-Function converttabs$ (a2$)
-    If ideautoindent Then s = ideautoindentsize Else s = 4
+FUNCTION converttabs$ (a2$)
+    IF ideautoindent THEN s = ideautoindentsize ELSE s = 4
     a$ = a2$
-    Do While InStr(a$, CHR_TAB)
-        x = InStr(a$, CHR_TAB)
-        a$ = Left$(a$, x - 1) + Space$(s - ((x - 1) Mod s)) + Right$(a$, Len(a$) - x)
-    Loop
+    DO WHILE INSTR(a$, CHR_TAB)
+        x = INSTR(a$, CHR_TAB)
+        a$ = LEFT$(a$, x - 1) + SPACE$(s - ((x - 1) MOD s)) + RIGHT$(a$, LEN(a$) - x)
+    LOOP
     converttabs$ = a$
-End Function
+END FUNCTION
 
 
-Function NewByteElement$
+FUNCTION NewByteElement$
     a$ = "byte_element_" + str2$(uniquenumber)
     NewByteElement$ = a$
-    If use_global_byte_elements Then
-        Print #18, "byte_element_struct *" + a$ + "=(byte_element_struct*)malloc(12);"
-    Else
-        Print #13, "byte_element_struct *" + a$ + "=NULL;"
-        Print #13, "if (!" + a$ + "){"
-        Print #13, "if ((mem_static_pointer+=12)<mem_static_limit) " + a$ + "=(byte_element_struct*)(mem_static_pointer-12); else " + a$ + "=(byte_element_struct*)mem_static_malloc(12);"
-        Print #13, "}"
-    End If
-End Function
+    IF use_global_byte_elements THEN
+        PRINT #18, "byte_element_struct *" + a$ + "=(byte_element_struct*)malloc(12);"
+    ELSE
+        PRINT #13, "byte_element_struct *" + a$ + "=NULL;"
+        PRINT #13, "if (!" + a$ + "){"
+        PRINT #13, "if ((mem_static_pointer+=12)<mem_static_limit) " + a$ + "=(byte_element_struct*)(mem_static_pointer-12); else " + a$ + "=(byte_element_struct*)mem_static_malloc(12);"
+        PRINT #13, "}"
+    END IF
+END FUNCTION
 
-Function validname (a$)
+FUNCTION validname (a$)
     'notes:
     '1) '_1' is invalid because it has no alphabet letters
     '2) 'A_' is invalid because it has a trailing _
     '3) '_1A' is invalid because it contains a number before the first alphabet letter
     '4) names cannot be longer than 40 characters
-    l = Len(a$)
+    l = LEN(a$)
 
-    If l = 0 Or l > 40 Then
-        If l = 0 Then Exit Function
+    IF l = 0 OR l > 40 THEN
+        IF l = 0 THEN EXIT FUNCTION
         'Note: variable names with periods need to be obfuscated, and this affects their length
-        i = InStr(a$, fix046$)
-        Do While i
-            l = l - Len(fix046$) + 1
-            i = InStr(i + 1, a$, fix046$)
-        Loop
-        If l > 40 Then Exit Function
-        l = Len(a$)
-    End If
+        i = INSTR(a$, fix046$)
+        DO WHILE i
+            l = l - LEN(fix046$) + 1
+            i = INSTR(i + 1, a$, fix046$)
+        LOOP
+        IF l > 40 THEN EXIT FUNCTION
+        l = LEN(a$)
+    END IF
 
     'check for single, leading underscore
-    If l >= 2 Then
-        If Asc(a$, 1) = 95 And Asc(a$, 2) <> 95 Then Exit Function
-    End If
+    IF l >= 2 THEN
+        IF ASC(a$, 1) = 95 AND ASC(a$, 2) <> 95 THEN EXIT FUNCTION
+    END IF
 
-    For i = 1 To l
-        a = Asc(a$, i)
-        If alphanumeric(a) = 0 Then Exit Function
-        If isnumeric(a) Then
+    FOR i = 1 TO l
+        a = ASC(a$, i)
+        IF alphanumeric(a) = 0 THEN EXIT FUNCTION
+        IF isnumeric(a) THEN
             trailingunderscore = 0
-            If alphabetletter = 0 Then Exit Function
-        Else
-            If a = 95 Then
+            IF alphabetletter = 0 THEN EXIT FUNCTION
+        ELSE
+            IF a = 95 THEN
                 trailingunderscore = 1
-            Else
+            ELSE
                 alphabetletter = 1
                 trailingunderscore = 0
-            End If
-        End If
-    Next
-    If trailingunderscore Then Exit Function
+            END IF
+        END IF
+    NEXT
+    IF trailingunderscore THEN EXIT FUNCTION
     validname = 1
-End Function
+END FUNCTION
 
-Function str_nth$ (x)
-    If x = 1 Then str_nth$ = "1st": Exit Function
-    If x = 2 Then str_nth$ = "2nd": Exit Function
-    If x = 3 Then str_nth$ = "3rd": Exit Function
+FUNCTION str_nth$ (x)
+    IF x = 1 THEN str_nth$ = "1st": EXIT FUNCTION
+    IF x = 2 THEN str_nth$ = "2nd": EXIT FUNCTION
+    IF x = 3 THEN str_nth$ = "3rd": EXIT FUNCTION
     str_nth$ = str2(x) + "th"
-End Function
+END FUNCTION
 
-Sub Give_Error (a$)
+SUB Give_Error (a$)
     Error_Happened = 1
     Error_Message = a$
-End Sub
+END SUB
 
-Sub WriteConfigSetting (section$, item$, value$)
+SUB WriteConfigSetting (section$, item$, value$)
     WriteSetting ConfigFile$, section$, item$, value$
-End Sub
+END SUB
 
-Function ReadConfigSetting (section$, item$, value$)
+FUNCTION ReadConfigSetting (section$, item$, value$)
     value$ = ReadSetting$(ConfigFile$, section$, item$)
-    ReadConfigSetting = (Len(value$) > 0)
-End Function
+    ReadConfigSetting = (LEN(value$) > 0)
+END FUNCTION
 
-Function VRGBS~& (text$, DefaultColor As _Unsigned Long)
+FUNCTION VRGBS~& (text$, DefaultColor AS _UNSIGNED LONG)
     'Value of RGB String = VRGBS without a ton of typing
     'A function to get the RGB value back from a string such as _RGB32(255,255,255)
     'text$ is the string that we send to check for a value
     'DefaultColor is the value we send back if the string isn't in the proper format
 
     VRGBS~& = DefaultColor 'A return the default value if we can't parse the string properly
-    If UCase$(Left$(text$, 4)) = "_RGB" Then
-        rpos = InStr(text$, "(")
-        gpos = InStr(rpos, text$, ",")
-        bpos = InStr(gpos + 1, text$, ",")
-        If rpos <> 0 And bpos <> 0 And gpos <> 0 Then
-            red = Val(_Trim$(Mid$(text$, rpos + 1)))
-            green = Val(_Trim$(Mid$(text$, gpos + 1)))
-            blue = Val(_Trim$(Mid$(text$, bpos + 1)))
+    IF UCASE$(LEFT$(text$, 4)) = "_RGB" THEN
+        rpos = INSTR(text$, "(")
+        gpos = INSTR(rpos, text$, ",")
+        bpos = INSTR(gpos + 1, text$, ",")
+        IF rpos <> 0 AND bpos <> 0 AND gpos <> 0 THEN
+            red = VAL(_TRIM$(MID$(text$, rpos + 1)))
+            green = VAL(_TRIM$(MID$(text$, gpos + 1)))
+            blue = VAL(_TRIM$(MID$(text$, bpos + 1)))
             VRGBS~& = _RGB32(red, green, blue)
-        End If
-    End If
-End Function
+        END IF
+    END IF
+END FUNCTION
 
-Function rgbs$ (c As _Unsigned Long)
-    rgbs$ = "_RGB32(" + _Trim$(Str$(_Red32(c))) + ", " + _Trim$(Str$(_Green32(c))) + ", " + _Trim$(Str$(_Blue32(c))) + ")"
-End Function
+FUNCTION rgbs$ (c AS _UNSIGNED LONG)
+    rgbs$ = "_RGB32(" + _TRIM$(STR$(_RED32(c))) + ", " + _TRIM$(STR$(_GREEN32(c))) + ", " + _TRIM$(STR$(_BLUE32(c))) + ")"
+END FUNCTION
 
-Function EvalPreIF (text$, err$)
+FUNCTION EvalPreIF (text$, err$)
     temp$ = text$ 'so we don't corrupt the string sent to us for evaluation
     err$ = "" 'null the err message to begin with
     'first order of business is to solve for <>=
-    Dim PC_Op(3) As String
+    DIM PC_Op(3) AS STRING
     PC_Op(1) = "="
     PC_Op(2) = "<"
     PC_Op(3) = ">"
-    Do
+    DO
         'look for the existence of the first symbol if there is any
         firstsymbol$ = "": first = 0
-        For i = 1 To UBound(PC_Op)
-            temp = InStr(temp$, PC_Op(i))
-            If first = 0 Then first = temp: firstsymbol$ = PC_Op(i)
-            If temp <> 0 And temp < first Then first = temp: firstsymbol$ = PC_Op(i)
-        Next
-        If firstsymbol$ <> "" Then 'we've got = < >; let's see if we have a combination of them
+        FOR i = 1 TO UBOUND(PC_Op)
+            temp = INSTR(temp$, PC_Op(i))
+            IF first = 0 THEN first = temp: firstsymbol$ = PC_Op(i)
+            IF temp <> 0 AND temp < first THEN first = temp: firstsymbol$ = PC_Op(i)
+        NEXT
+        IF firstsymbol$ <> "" THEN 'we've got = < >; let's see if we have a combination of them
             secondsymbol = 0: second = 0
-            For i = first + 1 To Len(temp$)
-                a$ = Mid$(temp$, i, 1)
-                Select Case a$
-                    Case " " 'ignore spaces
-                    Case "=", "<", ">"
-                        If a$ = firstsymbol$ Then err$ = "Duplicate operator (" + a$ + ")": Exit Function
+            FOR i = first + 1 TO LEN(temp$)
+                a$ = MID$(temp$, i, 1)
+                SELECT CASE a$
+                    CASE " " 'ignore spaces
+                    CASE "=", "<", ">"
+                        IF a$ = firstsymbol$ THEN err$ = "Duplicate operator (" + a$ + ")": EXIT FUNCTION
                         second = i: secondsymbol$ = a$
-                    Case Else 'we found a symbol we don't recognize
-                        Exit For
-                End Select
-            Next
-        End If
-        If first Then 'we found a symbol
-            l$ = RTrim$(Left$(temp$, first - 1))
-            If second Then rightstart = second + 1 Else rightstart = first + 1
+                    CASE ELSE 'we found a symbol we don't recognize
+                        EXIT FOR
+                END SELECT
+            NEXT
+        END IF
+        IF first THEN 'we found a symbol
+            l$ = RTRIM$(LEFT$(temp$, first - 1))
+            IF second THEN rightstart = second + 1 ELSE rightstart = first + 1
 
-            r$ = LTrim$(Mid$(temp$, rightstart))
-            symbol$ = Mid$(temp$, first, 1) + Mid$(temp$, second, 1)
+            r$ = LTRIM$(MID$(temp$, rightstart))
+            symbol$ = MID$(temp$, first, 1) + MID$(temp$, second, 1)
             'now we check for spaces to separate this segment from any other AND/OR conditions and such
-            For i = Len(l$) To 1 Step -1
-                If Asc(l$, i) = 32 Then Exit For
-            Next
-            leftside$ = RTrim$(Left$(temp$, i))
-            l$ = LTrim$(RTrim$(Mid$(temp$, i + 1, Len(l$) - i)))
-            If validname(l$) = 0 Then err$ = "Invalid flag name": Exit Function
-            rightstop = Len(r$)
-            For i = 1 To Len(r$)
-                If Asc(r$, i) = 32 Then Exit For
-            Next
-            rightside$ = LTrim$(Mid$(r$, i + 1))
-            r$ = LTrim$(RTrim$(Left$(r$, i - 1)))
-            If symbol$ = "=<" Then symbol$ = "<="
-            If symbol$ = "=>" Then symbol$ = ">="
-            If symbol$ = "><" Then symbol$ = "<>"
+            FOR i = LEN(l$) TO 1 STEP -1
+                IF ASC(l$, i) = 32 THEN EXIT FOR
+            NEXT
+            leftside$ = RTRIM$(LEFT$(temp$, i))
+            l$ = LTRIM$(RTRIM$(MID$(temp$, i + 1, LEN(l$) - i)))
+            IF validname(l$) = 0 THEN err$ = "Invalid flag name": EXIT FUNCTION
+            rightstop = LEN(r$)
+            FOR i = 1 TO LEN(r$)
+                IF ASC(r$, i) = 32 THEN EXIT FOR
+            NEXT
+            rightside$ = LTRIM$(MID$(r$, i + 1))
+            r$ = LTRIM$(RTRIM$(LEFT$(r$, i - 1)))
+            IF symbol$ = "=<" THEN symbol$ = "<="
+            IF symbol$ = "=>" THEN symbol$ = ">="
+            IF symbol$ = "><" THEN symbol$ = "<>"
             result$ = " 0 "
-            If symbol$ = "<>" Then 'check to see if we're NOT equal in any case with <>
-                For i = 0 To UserDefineCount
-                    If UserDefine(0, i) = l$ And UserDefine(1, i) <> r$ Then result$ = " -1 ": GoTo finishedcheck
-                Next
-            End If
-            If InStr(symbol$, "=") Then 'check to see if we're equal in any case with =
+            IF symbol$ = "<>" THEN 'check to see if we're NOT equal in any case with <>
+                FOR i = 0 TO UserDefineCount
+                    IF UserDefine(0, i) = l$ AND UserDefine(1, i) <> r$ THEN result$ = " -1 ": GOTO finishedcheck
+                NEXT
+            END IF
+            IF INSTR(symbol$, "=") THEN 'check to see if we're equal in any case with =
                 UserFound = 0
-                For i = 0 To UserDefineCount
-                    If UserDefine(0, i) = l$ Then
+                FOR i = 0 TO UserDefineCount
+                    IF UserDefine(0, i) = l$ THEN
                         UserFound = -1
-                        If UserDefine(1, i) = r$ Then result$ = " -1 ": GoTo finishedcheck
-                    End If
-                Next
-                If UserFound = 0 And LTrim$(RTrim$(r$)) = "UNDEFINED" Then result$ = " -1 ": GoTo finishedcheck
-                If UserFound = -1 And LTrim$(RTrim$(r$)) = "DEFINED" Then result$ = " -1 ": GoTo finishedcheck
-            End If
+                        IF UserDefine(1, i) = r$ THEN result$ = " -1 ": GOTO finishedcheck
+                    END IF
+                NEXT
+                IF UserFound = 0 AND LTRIM$(RTRIM$(r$)) = "UNDEFINED" THEN result$ = " -1 ": GOTO finishedcheck
+                IF UserFound = -1 AND LTRIM$(RTRIM$(r$)) = "DEFINED" THEN result$ = " -1 ": GOTO finishedcheck
+            END IF
 
-            If InStr(symbol$, ">") Then 'check to see if we're greater than in any case with >
-                For i = 0 To UserDefineCount
-                    If VerifyNumber(r$) And VerifyNumber(UserDefine(1, i)) Then 'we're comparing numeric values
-                        If UserDefine(0, i) = l$ And Val(UserDefine(1, i)) > Val(r$) Then result$ = " -1 ": GoTo finishedcheck
-                    Else
-                        If UserDefine(0, i) = l$ And UserDefine(1, i) > r$ Then result$ = " -1 ": GoTo finishedcheck
-                    End If
-                Next
-            End If
-            If InStr(symbol$, "<") Then 'check to see if we're less than in any case with <
-                For i = 0 To UserDefineCount
-                    If VerifyNumber(r$) And VerifyNumber(UserDefine(1, i)) Then 'we're comparing numeric values
-                        If UserDefine(0, i) = l$ And Val(UserDefine(1, i)) < Val(r$) Then result$ = " -1 ": GoTo finishedcheck
-                    Else
-                        If UserDefine(0, i) = l$ And UserDefine(1, i) < r$ Then result$ = " -1 ": GoTo finishedcheck
-                    End If
-                Next
-            End If
+            IF INSTR(symbol$, ">") THEN 'check to see if we're greater than in any case with >
+                FOR i = 0 TO UserDefineCount
+                    IF VerifyNumber(r$) AND VerifyNumber(UserDefine(1, i)) THEN 'we're comparing numeric values
+                        IF UserDefine(0, i) = l$ AND VAL(UserDefine(1, i)) > VAL(r$) THEN result$ = " -1 ": GOTO finishedcheck
+                    ELSE
+                        IF UserDefine(0, i) = l$ AND UserDefine(1, i) > r$ THEN result$ = " -1 ": GOTO finishedcheck
+                    END IF
+                NEXT
+            END IF
+            IF INSTR(symbol$, "<") THEN 'check to see if we're less than in any case with <
+                FOR i = 0 TO UserDefineCount
+                    IF VerifyNumber(r$) AND VerifyNumber(UserDefine(1, i)) THEN 'we're comparing numeric values
+                        IF UserDefine(0, i) = l$ AND VAL(UserDefine(1, i)) < VAL(r$) THEN result$ = " -1 ": GOTO finishedcheck
+                    ELSE
+                        IF UserDefine(0, i) = l$ AND UserDefine(1, i) < r$ THEN result$ = " -1 ": GOTO finishedcheck
+                    END IF
+                NEXT
+            END IF
 
 
 
             finishedcheck:
             temp$ = leftside$ + result$ + rightside$
-        End If
-    Loop Until first = 0
+        END IF
+    LOOP UNTIL first = 0
 
     'And at this point we should now be down to a statement with nothing but AND/OR/XORS in it
 
@@ -25904,233 +25904,233 @@ Function EvalPreIF (text$, err$)
     PC_Op(2) = " OR "
     PC_Op(3) = " XOR "
 
-    Do
+    DO
         first = 0
-        For i = 1 To UBound(PC_Op)
-            If PC_Op(i) <> "" Then
-                t = InStr(temp$, PC_Op(i))
-                If first <> 0 Then
-                    If t < first And t <> 0 Then first = t: firstsymbol = i
-                Else
+        FOR i = 1 TO UBOUND(PC_Op)
+            IF PC_Op(i) <> "" THEN
+                t = INSTR(temp$, PC_Op(i))
+                IF first <> 0 THEN
+                    IF t < first AND t <> 0 THEN first = t: firstsymbol = i
+                ELSE
                     first = t: firstsymbol = i
-                End If
-            End If
-        Next
-        If first = 0 Then Exit Do
-        leftside$ = RTrim$(Left$(temp$, first - 1))
-        symbol$ = Mid$(temp$, first, Len(PC_Op(firstsymbol)))
-        t$ = Mid$(temp$, first + Len(PC_Op(firstsymbol)))
-        t = InStr(t$, " ") 'the first space we come to
-        If t Then
-            m$ = LTrim$(RTrim$(Left$(t$, t - 1)))
-            rightside$ = LTrim$(Mid$(t$, t))
-        Else
-            m$ = LTrim$(Mid$(t$, t))
+                END IF
+            END IF
+        NEXT
+        IF first = 0 THEN EXIT DO
+        leftside$ = RTRIM$(LEFT$(temp$, first - 1))
+        symbol$ = MID$(temp$, first, LEN(PC_Op(firstsymbol)))
+        t$ = MID$(temp$, first + LEN(PC_Op(firstsymbol)))
+        t = INSTR(t$, " ") 'the first space we come to
+        IF t THEN
+            m$ = LTRIM$(RTRIM$(LEFT$(t$, t - 1)))
+            rightside$ = LTRIM$(MID$(t$, t))
+        ELSE
+            m$ = LTRIM$(MID$(t$, t))
             rightside$ = ""
-        End If
+        END IF
         leftresult = 0
-        If VerifyNumber(leftside$) Then
-            If Val(leftside$) <> 0 Then leftresult = -1
-        Else
-            For i = 0 To UserDefineCount
-                If UserDefine(0, i) = leftside$ Then
-                    t$ = LTrim$(RTrim$(UserDefine(1, i)))
-                    If t$ <> "0" And t$ <> "" Then leftresult = -1: Exit For
-                End If
-            Next
-        End If
+        IF VerifyNumber(leftside$) THEN
+            IF VAL(leftside$) <> 0 THEN leftresult = -1
+        ELSE
+            FOR i = 0 TO UserDefineCount
+                IF UserDefine(0, i) = leftside$ THEN
+                    t$ = LTRIM$(RTRIM$(UserDefine(1, i)))
+                    IF t$ <> "0" AND t$ <> "" THEN leftresult = -1: EXIT FOR
+                END IF
+            NEXT
+        END IF
         rightresult = 0
-        If VerifyNumber(m$) Then
-            If Val(m$) <> 0 Then rightresult = -1
-        Else
-            For i = 0 To UserDefineCount
-                If UserDefine(0, i) = m$ Then
-                    t$ = LTrim$(RTrim$(UserDefine(1, i)))
-                    If t$ <> "0" And t$ <> "" Then rightresult = -1: Exit For
-                End If
-            Next
-        End If
-        Select Case LTrim$(RTrim$(symbol$))
-            Case "AND"
-                If leftresult <> 0 And rightresult <> 0 Then result$ = " -1 " Else result$ = " 0 "
-            Case "OR"
-                If leftresult <> 0 Or rightresult <> 0 Then result$ = " -1 " Else result$ = " 0 "
-            Case "XOR"
-                If leftresult <> rightresult Then result$ = " -1 " Else result$ = " 0 "
-        End Select
+        IF VerifyNumber(m$) THEN
+            IF VAL(m$) <> 0 THEN rightresult = -1
+        ELSE
+            FOR i = 0 TO UserDefineCount
+                IF UserDefine(0, i) = m$ THEN
+                    t$ = LTRIM$(RTRIM$(UserDefine(1, i)))
+                    IF t$ <> "0" AND t$ <> "" THEN rightresult = -1: EXIT FOR
+                END IF
+            NEXT
+        END IF
+        SELECT CASE LTRIM$(RTRIM$(symbol$))
+            CASE "AND"
+                IF leftresult <> 0 AND rightresult <> 0 THEN result$ = " -1 " ELSE result$ = " 0 "
+            CASE "OR"
+                IF leftresult <> 0 OR rightresult <> 0 THEN result$ = " -1 " ELSE result$ = " 0 "
+            CASE "XOR"
+                IF leftresult <> rightresult THEN result$ = " -1 " ELSE result$ = " 0 "
+        END SELECT
         temp$ = result$ + rightside$
-    Loop
+    LOOP
 
-    If VerifyNumber(temp$) Then
-        EvalPreIF = Val(temp$)
-    Else
-        If InStr(temp$, " ") Then err$ = "Invalid Resolution of $IF; check statements" 'If we've got more than 1 statement, it's invalid
-        For i = 0 To UserDefineCount
-            If UserDefine(0, i) = temp$ Then
-                t$ = LTrim$(RTrim$(UserDefine(1, i)))
-                If t$ <> "0" And t$ <> "" Then EvalPreIF = -1: Exit For
-            End If
-        Next
-    End If
+    IF VerifyNumber(temp$) THEN
+        EvalPreIF = VAL(temp$)
+    ELSE
+        IF INSTR(temp$, " ") THEN err$ = "Invalid Resolution of $IF; check statements" 'If we've got more than 1 statement, it's invalid
+        FOR i = 0 TO UserDefineCount
+            IF UserDefine(0, i) = temp$ THEN
+                t$ = LTRIM$(RTRIM$(UserDefine(1, i)))
+                IF t$ <> "0" AND t$ <> "" THEN EvalPreIF = -1: EXIT FOR
+            END IF
+        NEXT
+    END IF
 
-End Function
+END FUNCTION
 
-Function VerifyNumber (text$)
-    t$ = LTrim$(RTrim$(text$))
-    v = Val(t$)
-    t1$ = LTrim$(Str$(v))
-    If t$ = t1$ Then VerifyNumber = -1
-End Function
+FUNCTION VerifyNumber (text$)
+    t$ = LTRIM$(RTRIM$(text$))
+    v = VAL(t$)
+    t1$ = LTRIM$(STR$(v))
+    IF t$ = t1$ THEN VerifyNumber = -1
+END FUNCTION
 
-Sub initialise_udt_varstrings (n$, udt, file, base_offset)
-    If Not udtxvariable(udt) Then Exit Sub
+SUB initialise_udt_varstrings (n$, udt, file, base_offset)
+    IF NOT udtxvariable(udt) THEN EXIT SUB
     element = udtxnext(udt)
     offset = 0
-    Do While element
-        If udtetype(element) And ISSTRING Then
-            If (udtetype(element) And ISFIXEDLENGTH) = 0 Then
-                Print #file, "*(qbs**)(((char*)" + n$ + ")+" + Str$(base_offset + offset) + ") = qbs_new(0,0);"
-            End If
-        ElseIf udtetype(element) And ISUDT Then
-            initialise_udt_varstrings n$, udtetype(element) And 511, file, offset
-        End If
+    DO WHILE element
+        IF udtetype(element) AND ISSTRING THEN
+            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+                PRINT #file, "*(qbs**)(((char*)" + n$ + ")+" + STR$(base_offset + offset) + ") = qbs_new(0,0);"
+            END IF
+        ELSEIF udtetype(element) AND ISUDT THEN
+            initialise_udt_varstrings n$, udtetype(element) AND 511, file, offset
+        END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
-    Loop
-End Sub
+    LOOP
+END SUB
 
-Sub free_udt_varstrings (n$, udt, file, base_offset)
-    If Not udtxvariable(udt) Then Exit Sub
+SUB free_udt_varstrings (n$, udt, file, base_offset)
+    IF NOT udtxvariable(udt) THEN EXIT SUB
     element = udtxnext(udt)
     offset = 0
-    Do While element
-        If udtetype(element) And ISSTRING Then
-            If (udtetype(element) And ISFIXEDLENGTH) = 0 Then
-                Print #file, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + Str$(base_offset + offset) + ")));"
-            End If
-        ElseIf udtetype(element) And ISUDT Then
-            initialise_udt_varstrings n$, udtetype(element) And 511, file, offset
-        End If
+    DO WHILE element
+        IF udtetype(element) AND ISSTRING THEN
+            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+                PRINT #file, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(base_offset + offset) + ")));"
+            END IF
+        ELSEIF udtetype(element) AND ISUDT THEN
+            initialise_udt_varstrings n$, udtetype(element) AND 511, file, offset
+        END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
-    Loop
-End Sub
+    LOOP
+END SUB
 
-Sub clear_udt_with_varstrings (n$, udt, file, base_offset)
-    If Not udtxvariable(udt) Then Exit Sub
+SUB clear_udt_with_varstrings (n$, udt, file, base_offset)
+    IF NOT udtxvariable(udt) THEN EXIT SUB
     element = udtxnext(udt)
     offset = 0
-    Do While element
-        If udtetype(element) And ISSTRING Then
-            If (udtetype(element) And ISFIXEDLENGTH) = 0 Then
-                Print #file, "(*(qbs**)(((char*)" + n$ + ")+" + Str$(base_offset + offset) + "))->len=0;"
-            Else
-                Print #file, "memset((char*)" + n$ + "+" + Str$(base_offset + offset) + ",0," + Str$(udtesize(element) \ 8) + ");"
-            End If
-        Else
-            If udtetype(element) And ISUDT Then
-                clear_udt_with_varstrings n$, udtetype(element) And 511, file, base_offset + offset
-            Else
-                Print #file, "memset((char*)" + n$ + "+" + Str$(base_offset + offset) + ",0," + Str$(udtesize(element) \ 8) + ");"
-            End If
-        End If
+    DO WHILE element
+        IF udtetype(element) AND ISSTRING THEN
+            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+                PRINT #file, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(base_offset + offset) + "))->len=0;"
+            ELSE
+                PRINT #file, "memset((char*)" + n$ + "+" + STR$(base_offset + offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+            END IF
+        ELSE
+            IF udtetype(element) AND ISUDT THEN
+                clear_udt_with_varstrings n$, udtetype(element) AND 511, file, base_offset + offset
+            ELSE
+                PRINT #file, "memset((char*)" + n$ + "+" + STR$(base_offset + offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+            END IF
+        END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
-    Loop
-End Sub
+    LOOP
+END SUB
 
 
-Sub initialise_array_udt_varstrings (n$, udt, base_offset, bytesperelement$, acc$)
-    If Not udtxvariable(udt) Then Exit Sub
+SUB initialise_array_udt_varstrings (n$, udt, base_offset, bytesperelement$, acc$)
+    IF NOT udtxvariable(udt) THEN EXIT SUB
     offset = base_offset
     element = udtxnext(udt)
-    Do While element
-        If udtetype(element) And ISSTRING Then
-            If (udtetype(element) And ISFIXEDLENGTH) = 0 Then
-                acc$ = acc$ + Chr$(13) + Chr$(10) + "*(qbs**)(" + n$ + "[0]+(" + bytesperelement$ + "-1)*tmp_long+" + Str$(offset) + ")=qbs_new(0,0);"
-            End If
-        ElseIf udtetype(element) And ISUDT Then
-            initialise_array_udt_varstrings n$, udtetype(element) And 511, offset, bytesperelement$, acc$
-        End If
+    DO WHILE element
+        IF udtetype(element) AND ISSTRING THEN
+            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+                acc$ = acc$ + CHR$(13) + CHR$(10) + "*(qbs**)(" + n$ + "[0]+(" + bytesperelement$ + "-1)*tmp_long+" + STR$(offset) + ")=qbs_new(0,0);"
+            END IF
+        ELSEIF udtetype(element) AND ISUDT THEN
+            initialise_array_udt_varstrings n$, udtetype(element) AND 511, offset, bytesperelement$, acc$
+        END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
-    Loop
-End Sub
+    LOOP
+END SUB
 
-Sub free_array_udt_varstrings (n$, udt, base_offset, bytesperelement$, acc$)
-    If Not udtxvariable(udt) Then Exit Sub
+SUB free_array_udt_varstrings (n$, udt, base_offset, bytesperelement$, acc$)
+    IF NOT udtxvariable(udt) THEN EXIT SUB
     offset = base_offset
     element = udtxnext(udt)
-    Do While element
-        If udtetype(element) And ISSTRING Then
-            If (udtetype(element) And ISFIXEDLENGTH) = 0 Then
-                acc$ = acc$ + Chr$(13) + Chr$(10) + "qbs_free(*(qbs**)(" + n$ + "[0]+(" + bytesperelement$ + "-1)*tmp_long+" + Str$(offset) + "));"
-            End If
-        ElseIf udtetype(element) And ISUDT Then
-            free_array_udt_varstrings n$, udtetype(element) And 511, offset, bytesperelement$, acc$
-        End If
+    DO WHILE element
+        IF udtetype(element) AND ISSTRING THEN
+            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+                acc$ = acc$ + CHR$(13) + CHR$(10) + "qbs_free(*(qbs**)(" + n$ + "[0]+(" + bytesperelement$ + "-1)*tmp_long+" + STR$(offset) + "));"
+            END IF
+        ELSEIF udtetype(element) AND ISUDT THEN
+            free_array_udt_varstrings n$, udtetype(element) AND 511, offset, bytesperelement$, acc$
+        END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
-    Loop
-End Sub
+    LOOP
+END SUB
 
-Sub copy_full_udt (dst$, src$, file, base_offset, udt)
-    If Not udtxvariable(udt) Then
-        Print #file, "memcpy(" + dst$ + "+" + Str$(base_offset) + "," + src$ + "+" + Str$(base_offset) + "," + Str$(udtxsize(udt) \ 8) + ");"
-        Exit Sub
-    End If
+SUB copy_full_udt (dst$, src$, file, base_offset, udt)
+    IF NOT udtxvariable(udt) THEN
+        PRINT #file, "memcpy(" + dst$ + "+" + STR$(base_offset) + "," + src$ + "+" + STR$(base_offset) + "," + STR$(udtxsize(udt) \ 8) + ");"
+        EXIT SUB
+    END IF
     offset = base_offset
     element = udtxnext(udt)
-    Do While element
-        If ((udtetype(element) And ISSTRING) > 0) And (udtetype(element) And ISFIXEDLENGTH) = 0 Then
-            Print #file, "qbs_set(*(qbs**)(" + dst$ + "+" + Str$(offset) + "), *(qbs**)(" + src$ + "+" + Str$(offset) + "));"
-        ElseIf ((udtetype(element) And ISUDT) > 0) Then
-            copy_full_udt dst$, src$, 12, offset, udtetype(element) And 511
-        Else
-            Print #file, "memcpy((" + dst$ + "+" + Str$(offset) + "),(" + src$ + "+" + Str$(offset) + ")," + Str$(udtesize(element) \ 8) + ");"
-        End If
+    DO WHILE element
+        IF ((udtetype(element) AND ISSTRING) > 0) AND (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+            PRINT #file, "qbs_set(*(qbs**)(" + dst$ + "+" + STR$(offset) + "), *(qbs**)(" + src$ + "+" + STR$(offset) + "));"
+        ELSEIF ((udtetype(element) AND ISUDT) > 0) THEN
+            copy_full_udt dst$, src$, 12, offset, udtetype(element) AND 511
+        ELSE
+            PRINT #file, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
+        END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
-    Loop
-End Sub
+    LOOP
+END SUB
 
-Sub dump_udts
-    f = FreeFile
-    Open "types.txt" For Output As #f
-    Print #f, "Name   Size   Align? Next   Var?"
-    For i = 1 To lasttype
-        Print #f, RTrim$(udtxname(i)), udtxsize(i), udtxbytealign(i), udtxnext(i), udtxvariable(i)
-    Next i
-    Print #f, "Name   Size   Align? Next   Type   Tsize  Arr"
-    For i = 1 To lasttypeelement
-        Print #f, RTrim$(udtename(i)), udtesize(i), udtebytealign(i), udtenext(i), udtetype(i), udtetypesize(i), udtearrayelements(i)
-    Next i
-    Close #f
-End Sub
+SUB dump_udts
+    f = FREEFILE
+    OPEN "types.txt" FOR OUTPUT AS #f
+    PRINT #f, "Name   Size   Align? Next   Var?"
+    FOR i = 1 TO lasttype
+        PRINT #f, RTRIM$(udtxname(i)), udtxsize(i), udtxbytealign(i), udtxnext(i), udtxvariable(i)
+    NEXT i
+    PRINT #f, "Name   Size   Align? Next   Type   Tsize  Arr"
+    FOR i = 1 TO lasttypeelement
+        PRINT #f, RTRIM$(udtename(i)), udtesize(i), udtebytealign(i), udtenext(i), udtetype(i), udtetypesize(i), udtearrayelements(i)
+    NEXT i
+    CLOSE #f
+END SUB
 
-Sub manageVariableList (__name$, __cname$, localIndex As Long, action As _Byte)
-    Dim findItem As Long, cname$, i As Long, j As Long, name$, temp$
-    name$ = RTrim$(__name$)
-    cname$ = RTrim$(__cname$)
+SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
+    DIM findItem AS LONG, cname$, i AS LONG, j AS LONG, name$, temp$
+    name$ = RTRIM$(__name$)
+    cname$ = RTRIM$(__cname$)
 
-    If Len(cname$) = 0 Then Exit Sub
+    IF LEN(cname$) = 0 THEN EXIT SUB
 
-    findItem = InStr(cname$, "[")
-    If findItem Then
-        cname$ = Left$(cname$, findItem - 1)
-    End If
+    findItem = INSTR(cname$, "[")
+    IF findItem THEN
+        cname$ = LEFT$(cname$, findItem - 1)
+    END IF
 
     found = 0
-    For i = 1 To totalVariablesCreated
-        If usedVariableList(i).cname = cname$ Then found = -1: Exit For
-    Next
+    FOR i = 1 TO totalVariablesCreated
+        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT FOR
+    NEXT
 
-    Select Case action
-        Case 0 'add
-            If found = 0 Then
-                If i > UBound(usedVariableList) Then
-                    ReDim _Preserve usedVariableList(UBound(usedVariableList) + 999) As usedVarList
-                End If
+    SELECT CASE action
+        CASE 0 'add
+            IF found = 0 THEN
+                IF i > UBOUND(usedVariableList) THEN
+                    REDIM _PRESERVE usedVariableList(UBOUND(usedVariableList) + 999) AS usedVarList
+                END IF
 
                 usedVariableList(i).id = currentid
                 usedVariableList(i).used = 0
@@ -26139,16 +26139,16 @@ Sub manageVariableList (__name$, __cname$, localIndex As Long, action As _Byte)
                 usedVariableList(i).storage = ""
                 usedVariableList(i).linenumber = linenumber
                 usedVariableList(i).includeLevel = inclevel
-                If inclevel > 0 Then
+                IF inclevel > 0 THEN
                     usedVariableList(i).includedLine = inclinenumber(inclevel)
                     thisincname$ = getfilepath$(incname$(inclevel))
-                    thisincname$ = Mid$(incname$(inclevel), Len(thisincname$) + 1)
+                    thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
                     usedVariableList(i).includedFile = thisincname$
-                Else
+                ELSE
                     totalMainVariablesCreated = totalMainVariablesCreated + 1
                     usedVariableList(i).includedLine = 0
                     usedVariableList(i).includedFile = ""
-                End If
+                END IF
                 usedVariableList(i).scope = subfuncn
                 usedVariableList(i).subfunc = subfunc
                 usedVariableList(i).varType = id2fulltypename$
@@ -26156,24 +26156,24 @@ Sub manageVariableList (__name$, __cname$, localIndex As Long, action As _Byte)
                 usedVariableList(i).localIndex = localIndex
 
                 'remove eventual instances of fix046$ in name$
-                Do While InStr(name$, fix046$)
-                    x = InStr(name$, fix046$): name$ = Left$(name$, x - 1) + "." + Right$(name$, Len(name$) - x + 1 - Len(fix046$))
-                Loop
+                DO WHILE INSTR(name$, fix046$)
+                    x = INSTR(name$, fix046$): name$ = LEFT$(name$, x - 1) + "." + RIGHT$(name$, LEN(name$) - x + 1 - LEN(fix046$))
+                LOOP
 
-                If Len(RTrim$(id.musthave)) > 0 Then
-                    usedVariableList(i).name = name$ + RTrim$(id.musthave)
-                ElseIf Len(RTrim$(id.mayhave)) > 0 Then
-                    usedVariableList(i).name = name$ + RTrim$(id.mayhave)
-                Else
+                IF LEN(RTRIM$(id.musthave)) > 0 THEN
+                    usedVariableList(i).name = name$ + RTRIM$(id.musthave)
+                ELSEIF LEN(RTRIM$(id.mayhave)) > 0 THEN
+                    usedVariableList(i).name = name$ + RTRIM$(id.mayhave)
+                ELSE
                     usedVariableList(i).name = name$
-                End If
+                END IF
 
-                If (id.arrayelements > 0) Then
+                IF (id.arrayelements > 0) THEN
                     usedVariableList(i).isarray = -1
                     usedVariableList(i).name = usedVariableList(i).name + "()"
-                Else
+                ELSE
                     usedVariableList(i).isarray = 0
-                End If
+                END IF
                 usedVariableList(i).watchRange = ""
                 usedVariableList(i).arrayElementSize = 0
                 usedVariableList(i).indexes = ""
@@ -26182,12 +26182,12 @@ Sub manageVariableList (__name$, __cname$, localIndex As Long, action As _Byte)
                 usedVariableList(i).elementOffset = ""
                 totalVariablesCreated = totalVariablesCreated + 1
 
-                temp$ = MKL$(-1) + MKL$(Len(cname$)) + cname$
-                found = InStr(backupVariableWatchList$, temp$)
-                If found Then
+                temp$ = MKL$(-1) + MKL$(LEN(cname$)) + cname$
+                found = INSTR(backupVariableWatchList$, temp$)
+                IF found THEN
                     'this variable existed in a previous edit of this program
                     'in this same session; let's preselect it.
-                    j = CVL(Mid$(backupVariableWatchList$, found + Len(temp$), 4))
+                    j = CVL(MID$(backupVariableWatchList$, found + LEN(temp$), 4))
 
                     'if there have been changes in TYPEs, this variable won't be preselected
                     IF (LEN(backupUsedVariableList(j).elements) > 0 AND backupTypeDefinitions$ = typeDefinitions$) OR _
@@ -26199,138 +26199,138 @@ Sub manageVariableList (__name$, __cname$, localIndex As Long, action As _Byte)
                         usedVariableList(i).elements = backupUsedVariableList(j).elements
                         usedVariableList(i).elementTypes = backupUsedVariableList(j).elementTypes
                         usedVariableList(i).elementOffset = backupUsedVariableList(j).elementOffset
-                    End If
-                End If
-            End If
-        Case Else 'find and mark as used
-            If found Then
+                    END IF
+                END IF
+            END IF
+        CASE ELSE 'find and mark as used
+            IF found THEN
                 usedVariableList(i).used = -1
-            End If
-    End Select
-End Sub
+            END IF
+    END SELECT
+END SUB
 
-Sub addWarning (whichLineNumber As Long, includeLevel As Long, incLineNumber As Long, incFileName$, header$, text$)
+SUB addWarning (whichLineNumber AS LONG, includeLevel AS LONG, incLineNumber AS LONG, incFileName$, header$, text$)
     warningsissued = -1
     totalWarnings = totalWarnings + 1
 
-    If idemode = 0 And ShowWarnings Then
+    IF idemode = 0 AND ShowWarnings THEN
         thissource$ = getfilepath$(CMDLineFile)
-        thissource$ = Mid$(CMDLineFile, Len(thissource$) + 1)
+        thissource$ = MID$(CMDLineFile, LEN(thissource$) + 1)
         thisincname$ = getfilepath$(incFileName$)
-        thisincname$ = Mid$(incFileName$, Len(thisincname$) + 1)
+        thisincname$ = MID$(incFileName$, LEN(thisincname$) + 1)
 
-        If Not MonochromeLoggingMode Then Color 15
-        If includeLevel > 0 And incLineNumber > 0 Then
-            Print thisincname$; ":";
-            Print str2$(incLineNumber); ": ";
-        Else
-            Print thissource$; ":";
-            Print str2$(whichLineNumber); ": ";
-        End If
+        IF NOT MonochromeLoggingMode THEN COLOR 15
+        IF includeLevel > 0 AND incLineNumber > 0 THEN
+            PRINT thisincname$; ":";
+            PRINT str2$(incLineNumber); ": ";
+        ELSE
+            PRINT thissource$; ":";
+            PRINT str2$(whichLineNumber); ": ";
+        END IF
 
-        If Not MonochromeLoggingMode Then Color 13
-        Print "warning: ";
-        If Not MonochromeLoggingMode Then Color 7
-        Print header$
+        IF NOT MonochromeLoggingMode THEN COLOR 13
+        PRINT "warning: ";
+        IF NOT MonochromeLoggingMode THEN COLOR 7
+        PRINT header$
 
-        If Len(text$) > 0 Then
-            If Not MonochromeLoggingMode Then Color 2
-            Print Space$(4); text$
-            If Not MonochromeLoggingMode Then Color 7
-        End If
-    ElseIf idemode Then
-        If Not IgnoreWarnings Then
-            If whichLineNumber > maxLineNumber Then maxLineNumber = whichLineNumber
-            If lastWarningHeader <> header$ Then
+        IF LEN(text$) > 0 THEN
+            IF NOT MonochromeLoggingMode THEN COLOR 2
+            PRINT SPACE$(4); text$
+            IF NOT MonochromeLoggingMode THEN COLOR 7
+        END IF
+    ELSEIF idemode THEN
+        IF NOT IgnoreWarnings THEN
+            IF whichLineNumber > maxLineNumber THEN maxLineNumber = whichLineNumber
+            IF lastWarningHeader <> header$ THEN
                 lastWarningHeader = header$
-                GoSub increaseWarningCount
+                GOSUB increaseWarningCount
                 warning$(warningListItems) = header$
                 warningLines(warningListItems) = 0
-            End If
+            END IF
 
-            GoSub increaseWarningCount
+            GOSUB increaseWarningCount
             warning$(warningListItems) = text$
             warningLines(warningListItems) = whichLineNumber
-            If includeLevel > 0 Then
+            IF includeLevel > 0 THEN
                 thisincname$ = getfilepath$(incFileName$)
-                thisincname$ = Mid$(incFileName$, Len(thisincname$) + 1)
+                thisincname$ = MID$(incFileName$, LEN(thisincname$) + 1)
                 warningIncLines(warningListItems) = incLineNumber
                 warningIncFiles(warningListItems) = thisincname$
-            Else
+            ELSE
                 warningIncLines(warningListItems) = 0
                 warningIncFiles(warningListItems) = ""
-            End If
-        End If
-    End If
-    Exit Sub
+            END IF
+        END IF
+    END IF
+    EXIT SUB
     increaseWarningCount:
     warningListItems = warningListItems + 1
-    If warningListItems > UBound(warning$) Then
-        ReDim _Preserve warning$(warningListItems + 999)
-        ReDim _Preserve warningLines(warningListItems + 999) As Long
-        ReDim _Preserve warningIncLines(warningListItems + 999) As Long
-        ReDim _Preserve warningIncFiles(warningListItems + 999) As String
-    End If
-    Return
-End Sub
+    IF warningListItems > UBOUND(warning$) THEN
+        REDIM _PRESERVE warning$(warningListItems + 999)
+        REDIM _PRESERVE warningLines(warningListItems + 999) AS LONG
+        REDIM _PRESERVE warningIncLines(warningListItems + 999) AS LONG
+        REDIM _PRESERVE warningIncFiles(warningListItems + 999) AS STRING
+    END IF
+    RETURN
+END SUB
 
-Function SCase$ (t$)
-    If ideautolayoutkwcapitals Then SCase$ = UCase$(t$) Else SCase$ = t$
-End Function
+FUNCTION SCase$ (t$)
+    IF ideautolayoutkwcapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
+END FUNCTION
 
-Function SCase2$ (t$)
+FUNCTION SCase2$ (t$)
     separator$ = sp
-    If ideautolayoutkwcapitals Then
-        SCase2$ = UCase$(t$)
-    Else
+    IF ideautolayoutkwcapitals THEN
+        SCase2$ = UCASE$(t$)
+    ELSE
         newWord = -1
         temp$ = ""
-        For i = 1 To Len(t$)
-            s$ = Mid$(t$, i, 1)
-            If newWord Then
-                If s$ = "_" Or s$ = separator$ Then
+        FOR i = 1 TO LEN(t$)
+            s$ = MID$(t$, i, 1)
+            IF newWord THEN
+                IF s$ = "_" OR s$ = separator$ THEN
                     temp$ = temp$ + s$
-                Else
-                    temp$ = temp$ + UCase$(s$)
+                ELSE
+                    temp$ = temp$ + UCASE$(s$)
                     newWord = 0
-                End If
-            Else
-                If s$ = separator$ Then
+                END IF
+            ELSE
+                IF s$ = separator$ THEN
                     temp$ = temp$ + separator$
                     newWord = -1
-                Else
-                    temp$ = temp$ + LCase$(s$)
-                End If
-            End If
-        Next
+                ELSE
+                    temp$ = temp$ + LCASE$(s$)
+                END IF
+            END IF
+        NEXT
         SCase2$ = temp$
-    End If
-End Function
+    END IF
+END FUNCTION
 
-Sub increaseUDTArrays
-    x = UBound(udtxname)
-    ReDim _Preserve udtxname(x + 1000) As String * 256
-    ReDim _Preserve udtxcname(x + 1000) As String * 256
-    ReDim _Preserve udtxsize(x + 1000) As Long
-    ReDim _Preserve udtxbytealign(x + 1000) As Integer 'first element MUST be on a byte alignment & size is a multiple of 8
-    ReDim _Preserve udtxnext(x + 1000) As Long
-    ReDim _Preserve udtxvariable(x + 1000) As Integer 'true if the udt contains variable length elements
+SUB increaseUDTArrays
+    x = UBOUND(udtxname)
+    REDIM _PRESERVE udtxname(x + 1000) AS STRING * 256
+    REDIM _PRESERVE udtxcname(x + 1000) AS STRING * 256
+    REDIM _PRESERVE udtxsize(x + 1000) AS LONG
+    REDIM _PRESERVE udtxbytealign(x + 1000) AS INTEGER 'first element MUST be on a byte alignment & size is a multiple of 8
+    REDIM _PRESERVE udtxnext(x + 1000) AS LONG
+    REDIM _PRESERVE udtxvariable(x + 1000) AS INTEGER 'true if the udt contains variable length elements
     'elements
-    ReDim _Preserve udtename(x + 1000) As String * 256
-    ReDim _Preserve udtecname(x + 1000) As String * 256
-    ReDim _Preserve udtebytealign(x + 1000) As Integer
-    ReDim _Preserve udtesize(x + 1000) As Long
-    ReDim _Preserve udtetype(x + 1000) As Long
-    ReDim _Preserve udtetypesize(x + 1000) As Long
-    ReDim _Preserve udtearrayelements(x + 1000) As Long
-    ReDim _Preserve udtenext(x + 1000) As Long
-End Sub
+    REDIM _PRESERVE udtename(x + 1000) AS STRING * 256
+    REDIM _PRESERVE udtecname(x + 1000) AS STRING * 256
+    REDIM _PRESERVE udtebytealign(x + 1000) AS INTEGER
+    REDIM _PRESERVE udtesize(x + 1000) AS LONG
+    REDIM _PRESERVE udtetype(x + 1000) AS LONG
+    REDIM _PRESERVE udtetypesize(x + 1000) AS LONG
+    REDIM _PRESERVE udtearrayelements(x + 1000) AS LONG
+    REDIM _PRESERVE udtenext(x + 1000) AS LONG
+END SUB
 
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'subs_functions\extensions\opengl\opengl_methods.bas'
 '$INCLUDE:'utilities\ini-manager\ini.bm'
 
-DefLng A-Z
+DEFLNG A-Z
 
 '-------- Optional IDE Component (2/2) --------
 '$INCLUDE:'ide\ide_methods.bas'
