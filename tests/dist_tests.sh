@@ -17,6 +17,10 @@ cd $1
 # Specific steps for each platform
 case "$2" in
     win)
+        # Verify that the Resource information was correctly applied
+        # windres returns an error if the exe has no resource section
+        windresResult=$($ROOT/internal/c/c_compiler/bin/windres.exe -i ./qb64.exe)
+        assert_success_named "Windows Resource Section" printf "\n$windresResult\n"
         ;;
 
     lnx)
