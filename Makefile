@@ -177,13 +177,18 @@ else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
-ifneq ($(filter y,$(DEP_ICON)),)
+ifneq ($(filter y,$(DEP_ICON_RC) $(DEP_ICON)),)
 	CXXFLAGS += -DDEPENDENCY_ICON
-	EXE_OBJS += $(ICON_OBJ)
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 else
 	CXXFLAGS += -DDEPENDENCY_NO_ICON
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
+endif
+
+ifneq ($(filter y,$(DEP_ICON_RC)),)
+	ifeq ($(OS),win)
+		EXE_OBJS += $(ICON_OBJ)
+	endif
 endif
 
 ifneq ($(filter y,$(DEP_SCREENIMAGE)),)
@@ -277,7 +282,7 @@ ifeq ($(OS),win)
 		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
 	endif
 
-	ifneq ($(filter y,$(DEP_ICON) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
+	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
 		CXXLIBS += -lgdi32
 	endif
 endif
