@@ -26,6 +26,8 @@ REDIM SHARED PL(1000) AS INTEGER 'Priority Level
 REDIM SHARED PP_TypeMod(0) AS STRING, PP_ConvertedMod(0) AS STRING 'Prepass Name Conversion variables.
 Set_OrderOfOperations
 
+DIM SHARED NoExeSaved AS INTEGER
+
 DIM SHARED vWatchOn, vWatchRecompileAttempts, vWatchDesiredState, vWatchErrorCall$
 DIM SHARED vWatchNewVariable$, vWatchVariableExclusions$
 vWatchErrorCall$ = "if (stop_program) {*__LONG_VWATCH_LINENUMBER=0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);};if(new_error){bkp_new_error=new_error;new_error=0;*__LONG_VWATCH_LINENUMBER=-1; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);new_error=bkp_new_error;};"
@@ -1060,7 +1062,37 @@ IF C = 9 THEN 'run
 
     'execute program
 
+
+
+
     IF iderunmode = 1 THEN
+        IF NoExeSaved THEN
+            'This is the section which deals with if the user selected to run the program without
+            'saving an EXE file to the disk.
+            'We start off by first running the EXE, and then we delete it from the drive.
+            'making it a temporary file when all is said and done.
+            IF os$ = "WIN" THEN
+                SHELL QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$ 'run the newly created program
+                SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) 'kill it
+            END IF
+            IF path.exe$ = "" THEN path.exe$ = "./"
+            IF os$ = "LNX" THEN
+                IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
+                    SHELL QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
+                    SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(lastBinaryGenerated$)
+                ELSE
+                    SHELL QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
+                    SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(path.exe$ + lastBinaryGenerated$)
+                END IF
+            END IF
+            IF path.exe$ = "./" THEN path.exe$ = ""
+            NoExeSaved = 0 'reset the flag for a temp EXE
+            sendc$ = CHR$(6) 'ready
+            GOTO sendcommand
+        END IF
+
+
+
         IF os$ = "WIN" THEN SHELL _DONTWAIT QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$
         IF path.exe$ = "" THEN path.exe$ = "./"
         IF os$ = "LNX" THEN
@@ -13266,8 +13298,6 @@ IF compfailed THEN
 ELSE
     IF idemode = 0 AND NOT QuietMode THEN PRINT "Output: "; lastBinaryGenerated$
 END IF
-
-
 
 Skip_Build:
 
