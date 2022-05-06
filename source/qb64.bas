@@ -14,8 +14,6 @@ $EXEICON:'./qb64.ico'
 
 $VERSIONINFO:CompanyName=QB64
 $VERSIONINFO:FileDescription=QB64 Compiler
-$VERSIONINFO:FileVersion#=0,5,0,0
-$VERSIONINFO:ProductVersion#=0,5,0,0
 $VERSIONINFO:InternalName=qb64.bas
 $VERSIONINFO:LegalCopyright=MIT
 $VERSIONINFO:LegalTrademarks=
