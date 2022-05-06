@@ -14609,7 +14609,7 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
         //(only applies to non-fixed width fonts)
         if (!fontwidth[write_page->font]) { // unpredictable width
             w = chrwidth(character);
-            if ((write_page->cursor_x + w) > write_page->width) {
+            if ((write_page->cursor_x - 1 + w) > write_page->width) {
                 newline();
                 // entered_new_line not set, a character will follow
             }
