@@ -1,7 +1,10 @@
-if(oldstr3516){
-if(oldstr3516->fixed)qbs_set(oldstr3516,_SUB_BUILD_STRING_PATH);
-qbs_free(_SUB_BUILD_STRING_PATH);
+if(oldstr3524){
+if(oldstr3524->fixed)qbs_set(oldstr3524,_SUB_PARSEEXPRESSION_STRING_EXP);
+qbs_free(_SUB_PARSEEXPRESSION_STRING_EXP);
 }
-qbs_free(_SUB_BUILD_STRING_PREVIOUS_DIR);
-qbs_free(_SUB_BUILD_STRING_RETURN_PATH);
-qbs_free(_SUB_BUILD_STRING_C);
+if (_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[2]&1){
+tmp_long=_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[0]))[tmp_long]);
+free((void*)(_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[0]));
+}
+free_mem_lock( (mem_lock*)((ptrszint*)_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM)[8] );
