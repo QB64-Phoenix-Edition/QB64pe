@@ -13638,28 +13638,6 @@ FUNCTION Type2MemTypeValue (t1)
     Type2MemTypeValue = t
 END FUNCTION
 
-FUNCTION FileHasExtension (f$)
-    FOR i = LEN(f$) TO 1 STEP -1
-        a = ASC(f$, i)
-        IF a = 47 OR a = 92 THEN EXIT FOR
-        IF a = 46 THEN FileHasExtension = -1: EXIT FUNCTION
-    NEXT
-END FUNCTION
-
-FUNCTION RemoveFileExtension$ (f$) 'returns f$ without extension
-    FOR i = LEN(f$) TO 1 STEP -1
-        a = ASC(f$, i)
-        IF a = 47 OR a = 92 THEN EXIT FOR
-        IF a = 46 THEN RemoveFileExtension$ = LEFT$(f$, i - 1): EXIT FUNCTION
-    NEXT
-    RemoveFileExtension$ = f$
-END FUNCTION
-
-
-
-
-
-
 'udt is non-zero if this is an array of udt's, to allow examining each udt element
 FUNCTION allocarray (n2$, elements$, elementsize, udt)
     dimsharedlast = dimshared: dimshared = 0
@@ -24334,17 +24312,6 @@ FUNCTION lineinput3$
     END IF
 END FUNCTION
 
-FUNCTION getfilepath$ (f$)
-    FOR i = LEN(f$) TO 1 STEP -1
-        a$ = MID$(f$, i, 1)
-        IF a$ = "/" OR a$ = "\" THEN
-            getfilepath$ = LEFT$(f$, i)
-            EXIT FUNCTION
-        END IF
-    NEXT
-    getfilepath$ = ""
-END FUNCTION
-
 FUNCTION eleucase$ (a$)
     'this function upper-cases all elements except for quoted strings
     'check first element
@@ -24446,19 +24413,6 @@ FUNCTION GDB_Fix$ (g_command$) 'edit a gcc/g++ command line to include debugging
     END IF
     GDB_Fix$ = c$
 END FUNCTION
-
-
-SUB PATH_SLASH_CORRECT (a$)
-    IF os$ = "WIN" THEN
-        FOR x = 1 TO LEN(a$)
-            IF ASC(a$, x) = 47 THEN ASC(a$, x) = 92
-        NEXT
-    ELSE
-        FOR x = 1 TO LEN(a$)
-            IF ASC(a$, x) = 92 THEN ASC(a$, x) = 47
-        NEXT
-    END IF
-END SUB
 
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$)
