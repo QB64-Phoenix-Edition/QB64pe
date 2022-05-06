@@ -3360,52 +3360,37 @@ DO
             IF LEN(ExeIconFile$) = 0 THEN a$ = "Expected $EXEICON:'filename'": GOTO errmes
             layout$ = SCase$("$ExeIcon:'") + ExeIconFile$ + "'" + MID$(a3$, SecondDelimiter + 1)
 
-            IF INSTR(_OS$, "WIN") THEN
-                'Actual metacommand processing. Windows only.
-                'Expand relative path to full path:
-                IconPath$ = ""
-                IF LEFT$(ExeIconFile$, 2) = "./" OR LEFT$(ExeIconFile$, 2) = ".\" THEN
-                    'Relative to source file's folder
-                    IF NoIDEMode THEN
-                        IconPath$ = path.source$
-                        IF LEN(IconPath$) > 0 AND RIGHT$(IconPath$, 1) <> pathsep$ THEN IconPath$ = IconPath$ + pathsep$
-                    ELSE
-                        IF LEN(ideprogname) THEN IconPath$ = idepath$ + pathsep$
-                    END IF
-                    ExeIconFile$ = IconPath$ + MID$(ExeIconFile$, 3)
-                ELSEIF INSTR(ExeIconFile$, "/") OR INSTR(ExeIconFile$, "\") THEN
-                    FOR i = LEN(ExeIconFile$) TO 1 STEP -1
-                        IF MID$(ExeIconFile$, i, 1) = "/" OR MID$(ExeIconFile$, i, 1) = "\" THEN
-                            IconPath$ = LEFT$(ExeIconFile$, i)
-                            ExeIconFile$ = MID$(ExeIconFile$, i + 1)
-                            IF _DIREXISTS(IconPath$) = 0 THEN a$ = "File '" + ExeIconFile$ + "' not found": GOTO errmes
-                            currentdir$ = _CWD$
-                            CHDIR IconPath$
-                            IconPath$ = _CWD$
-                            CHDIR currentdir$
-                            ExeIconFile$ = IconPath$ + pathsep$ + ExeIconFile$
-                            EXIT FOR
-                        END IF
-                    NEXT
+            IconPath$ = ""
+            IF LEFT$(ExeIconFile$, 2) = "./" OR LEFT$(ExeIconFile$, 2) = ".\" THEN
+                'Relative to source file's folder
+                IF NoIDEMode THEN
+                    IconPath$ = path.source$
+                    IF LEN(IconPath$) > 0 AND RIGHT$(IconPath$, 1) <> pathsep$ THEN IconPath$ = IconPath$ + pathsep$
+                ELSE
+                    IF LEN(ideprogname) THEN IconPath$ = idepath$ + pathsep$
                 END IF
 
-                IF _FILEEXISTS(ExeIconFile$) = 0 THEN
-                    IF LEN(IconPath$) THEN
-                        a$ = "File '" + MID$(ExeIconFile$, LEN(IconPath$) + 1) + "' not found": GOTO errmes
-                    ELSE
-                        a$ = "File '" + ExeIconFile$ + "' not found": GOTO errmes
+                ExeIconFile$ = IconPath$ + MID$(ExeIconFile$, 3)
+            ELSEIF INSTR(ExeIconFile$, "/") OR INSTR(ExeIconFile$, "\") THEN
+                FOR i = LEN(ExeIconFile$) TO 1 STEP -1
+                    IF MID$(ExeIconFile$, i, 1) = "/" OR MID$(ExeIconFile$, i, 1) = "\" THEN
+                        IconPath$ = LEFT$(ExeIconFile$, i)
+                        ExeIconFileOnly$ = MID$(ExeIconFile$, i + 1)
+
+                        IF _DIREXISTS(IconPath$) = 0 THEN a$ = "File '" + ExeIconFileOnly$ + "' not found": GOTO errmes
+
+                        currentdir$ = _CWD$
+                        CHDIR IconPath$
+                        IconPath$ = _CWD$
+                        CHDIR currentdir$
+
+                        ExeIconFile$ = IconPath$ + pathsep$ + ExeIconFileOnly$
+                        EXIT FOR
                     END IF
-                ELSE
-                    iconfilehandle = FREEFILE
-                    E = 0
-                    ON ERROR GOTO qberror_test
-                    OPEN tmpdir$ + "icon.rc" FOR OUTPUT AS #iconfilehandle
-                    PRINT #iconfilehandle, "0 ICON " + QuotedFilename$(StrReplace$(ExeIconFile$, "\", "/"))
-                    CLOSE #iconfilehandle
-                    IF E = 1 THEN a$ = "Error creating icon resource file": GOTO errmes
-                    ON ERROR GOTO qberror
-                END IF
+                NEXT
             END IF
+
+            IF _FILEEXISTS(ExeIconFile$) = 0 THEN a$ = "File '" + ExeIconFile$ + "' not found": GOTO errmes
 
             ExeIconSet = linenumber
             SetDependency DEPENDENCY_ICON
@@ -12376,68 +12361,73 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     path.exe$ = t.path.exe$
 END IF
 
+IF ExeIconSet THEN
+    linenumber = ExeIconSet 'on error, this allows reporting the linenumber where $EXEICON was used
+    wholeline = " $EXEICON:'" + ExeIconFile$ + "'"
 
-IF os$ = "WIN" THEN
-    'Prepare to embed icon into .EXE
-    IF ExeIconSet OR VersionInfoSet THEN
-        IF _FILEEXISTS(tmpdir$ + "icon.o") THEN
-            E = 0
-            ON ERROR GOTO qberror_test
-            KILL tmpdir$ + "icon.o"
-            IF E = 1 OR _FILEEXISTS(tmpdir$ + "icon.o") = -1 THEN a$ = "Error creating resource file": GOTO errmes
-            ON ERROR GOTO qberror
-        END IF
-    END IF
+    ' Copy icon file into temp directory with known name
+    ' This solves the problem of the resource file needing an absolute path
+    ON ERROR GOTO qberror_test
+
+    DIM errNo AS LONG
+    errNo = CopyFile&(ExeIconFile$, tmpdir$ + "icon.ico")
+    if errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(ExeIconFile$) + " to temp directory": GOTO errmes
+
+    ON ERROR GOTO qberror
+END IF
+
+IF VersionInfoSet THEN
+    manifest = FREEFILE
+    OPEN tmpdir$ + file$ + extension$ + ".manifest" FOR OUTPUT AS #manifest
+    PRINT #manifest, "<?xml version=" + QuotedFilename("1.0") + " encoding=" + QuotedFilename("UTF-8") + " standalone=" + QuotedFilename("yes") + "?>"
+    PRINT #manifest, "<assembly xmlns=" + QuotedFilename("urn:schemas-microsoft-com:asm.v1") + " manifestVersion=" + QuotedFilename("1.0") + ">"
+    PRINT #manifest, "<assemblyIdentity"
+    PRINT #manifest, "    version=" + QuotedFilename("1.0.0.0")
+    PRINT #manifest, "    processorArchitecture=" + QuotedFilename("*")
+    PRINT #manifest, "    name=" + QuotedFilename(viCompanyName$ + "." + viProductName$ + "." + viProductName$)
+    PRINT #manifest, "    type=" + QuotedFilename("win32")
+    PRINT #manifest, "/>"
+    PRINT #manifest, "<description>" + viFileDescription$ + "</description>"
+    PRINT #manifest, "<dependency>"
+    PRINT #manifest, "    <dependentAssembly>"
+    PRINT #manifest, "        <assemblyIdentity"
+    PRINT #manifest, "            type=" + QuotedFilename("win32")
+    PRINT #manifest, "            name=" + QuotedFilename("Microsoft.Windows.Common-Controls")
+    PRINT #manifest, "            version=" + QuotedFilename("6.0.0.0")
+    PRINT #manifest, "            processorArchitecture=" + QuotedFilename("*")
+    PRINT #manifest, "            publicKeyToken=" + QuotedFilename("6595b64144ccf1df")
+    PRINT #manifest, "            language=" + QuotedFilename("*")
+    PRINT #manifest, "        />"
+    PRINT #manifest, "    </dependentAssembly>"
+    PRINT #manifest, "</dependency>"
+    PRINT #manifest, "</assembly>"
+    CLOSE #manifest
+
+    manifestembed = FREEFILE
+    OPEN tmpdir$ + "manifest.h" FOR OUTPUT AS #manifestembed
+    PRINT #manifestembed, "#ifndef RESOURCE_H"
+    PRINT #manifestembed, "#define   RESOURCE_H"
+    PRINT #manifestembed, "#ifdef    __cplusplus"
+    PRINT #manifestembed, "extern " + QuotedFilename("C") + " {"
+    PRINT #manifestembed, "#endif"
+    PRINT #manifestembed, "#ifdef    __cplusplus"
+    PRINT #manifestembed, "}"
+    PRINT #manifestembed, "#endif"
+    PRINT #manifestembed, "#endif    /* RESOURCE_H */"
+    PRINT #manifestembed, "#define CREATEPROCESS_MANIFEST_RESOURCE_ID 1 /*Defined manifest file*/"
+    PRINT #manifestembed, "#define RT_MANIFEST                       24"
+    CLOSE #manifestembed
+END IF
+
+IF VersionInfoSet OR ExeIconSet THEN
+    iconfilehandle = FREEFILE
+    OPEN tmpdir$ + "icon.rc" FOR OUTPUT AS #iconfilehandle
 
     IF ExeIconSet THEN
-        linenumber = ExeIconSet 'on error, this allows reporting the linenumber where $EXEICON was used
-        wholeline = " $EXEICON:'" + ExeIconFile$ + "'"
+        PRINT #iconfilehandle, "0 ICON " + QuotedFilename$("icon.ico")
     END IF
 
     IF VersionInfoSet THEN
-        manifest = FREEFILE
-        OPEN tmpdir$ + file$ + extension$ + ".manifest" FOR OUTPUT AS #manifest
-        PRINT #manifest, "<?xml version=" + QuotedFilename("1.0") + " encoding=" + QuotedFilename("UTF-8") + " standalone=" + QuotedFilename("yes") + "?>"
-        PRINT #manifest, "<assembly xmlns=" + QuotedFilename("urn:schemas-microsoft-com:asm.v1") + " manifestVersion=" + QuotedFilename("1.0") + ">"
-        PRINT #manifest, "<assemblyIdentity"
-        PRINT #manifest, "    version=" + QuotedFilename("1.0.0.0")
-        PRINT #manifest, "    processorArchitecture=" + QuotedFilename("*")
-        PRINT #manifest, "    name=" + QuotedFilename(viCompanyName$ + "." + viProductName$ + "." + viProductName$)
-        PRINT #manifest, "    type=" + QuotedFilename("win32")
-        PRINT #manifest, "/>"
-        PRINT #manifest, "<description>" + viFileDescription$ + "</description>"
-        PRINT #manifest, "<dependency>"
-        PRINT #manifest, "    <dependentAssembly>"
-        PRINT #manifest, "        <assemblyIdentity"
-        PRINT #manifest, "            type=" + QuotedFilename("win32")
-        PRINT #manifest, "            name=" + QuotedFilename("Microsoft.Windows.Common-Controls")
-        PRINT #manifest, "            version=" + QuotedFilename("6.0.0.0")
-        PRINT #manifest, "            processorArchitecture=" + QuotedFilename("*")
-        PRINT #manifest, "            publicKeyToken=" + QuotedFilename("6595b64144ccf1df")
-        PRINT #manifest, "            language=" + QuotedFilename("*")
-        PRINT #manifest, "        />"
-        PRINT #manifest, "    </dependentAssembly>"
-        PRINT #manifest, "</dependency>"
-        PRINT #manifest, "</assembly>"
-        CLOSE #manifest
-
-        manifestembed = FREEFILE
-        OPEN tmpdir$ + "manifest.h" FOR OUTPUT AS #manifestembed
-        PRINT #manifestembed, "#ifndef RESOURCE_H"
-        PRINT #manifestembed, "#define   RESOURCE_H"
-        PRINT #manifestembed, "#ifdef    __cplusplus"
-        PRINT #manifestembed, "extern " + QuotedFilename("C") + " {"
-        PRINT #manifestembed, "#endif"
-        PRINT #manifestembed, "#ifdef    __cplusplus"
-        PRINT #manifestembed, "}"
-        PRINT #manifestembed, "#endif"
-        PRINT #manifestembed, "#endif    /* RESOURCE_H */"
-        PRINT #manifestembed, "#define CREATEPROCESS_MANIFEST_RESOURCE_ID 1 /*Defined manifest file*/"
-        PRINT #manifestembed, "#define RT_MANIFEST                       24"
-        CLOSE #manifestembed
-
-        iconfilehandle = FREEFILE
-        OPEN tmpdir$ + "icon.rc" FOR APPEND AS #iconfilehandle
         PRINT #iconfilehandle, ""
         PRINT #iconfilehandle, "#include " + QuotedFilename("manifest.h")
         PRINT #iconfilehandle, ""
@@ -12471,7 +12461,9 @@ IF os$ = "WIN" THEN
         PRINT #iconfilehandle, "END"
         CLOSE #iconfilehandle
     END IF
+END IF
 
+IF os$ = "WIN" THEN
     IF ExeIconSet OR VersionInfoSet THEN
         ffh = FREEFILE
         OPEN tmpdir$ + "call_windres.bat" FOR OUTPUT AS #ffh
@@ -13645,28 +13637,6 @@ FUNCTION Type2MemTypeValue (t1)
     END IF
     Type2MemTypeValue = t
 END FUNCTION
-
-FUNCTION FileHasExtension (f$)
-    FOR i = LEN(f$) TO 1 STEP -1
-        a = ASC(f$, i)
-        IF a = 47 OR a = 92 THEN EXIT FOR
-        IF a = 46 THEN FileHasExtension = -1: EXIT FUNCTION
-    NEXT
-END FUNCTION
-
-FUNCTION RemoveFileExtension$ (f$) 'returns f$ without extension
-    FOR i = LEN(f$) TO 1 STEP -1
-        a = ASC(f$, i)
-        IF a = 47 OR a = 92 THEN EXIT FOR
-        IF a = 46 THEN RemoveFileExtension$ = LEFT$(f$, i - 1): EXIT FUNCTION
-    NEXT
-    RemoveFileExtension$ = f$
-END FUNCTION
-
-
-
-
-
 
 'udt is non-zero if this is an array of udt's, to allow examining each udt element
 FUNCTION allocarray (n2$, elements$, elementsize, udt)
@@ -24342,17 +24312,6 @@ FUNCTION lineinput3$
     END IF
 END FUNCTION
 
-FUNCTION getfilepath$ (f$)
-    FOR i = LEN(f$) TO 1 STEP -1
-        a$ = MID$(f$, i, 1)
-        IF a$ = "/" OR a$ = "\" THEN
-            getfilepath$ = LEFT$(f$, i)
-            EXIT FUNCTION
-        END IF
-    NEXT
-    getfilepath$ = ""
-END FUNCTION
-
 FUNCTION eleucase$ (a$)
     'this function upper-cases all elements except for quoted strings
     'check first element
@@ -24454,19 +24413,6 @@ FUNCTION GDB_Fix$ (g_command$) 'edit a gcc/g++ command line to include debugging
     END IF
     GDB_Fix$ = c$
 END FUNCTION
-
-
-SUB PATH_SLASH_CORRECT (a$)
-    IF os$ = "WIN" THEN
-        FOR x = 1 TO LEN(a$)
-            IF ASC(a$, x) = 47 THEN ASC(a$, x) = 92
-        NEXT
-    ELSE
-        FOR x = 1 TO LEN(a$)
-            IF ASC(a$, x) = 92 THEN ASC(a$, x) = 47
-        NEXT
-    END IF
-END SUB
 
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$)
@@ -26327,6 +26273,7 @@ SUB increaseUDTArrays
 END SUB
 
 '$INCLUDE:'utilities\strings.bas'
+'$INCLUDE:'utilities\file.bas'
 '$INCLUDE:'subs_functions\extensions\opengl\opengl_methods.bas'
 '$INCLUDE:'utilities\ini-manager\ini.bm'
 
