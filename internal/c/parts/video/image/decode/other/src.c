@@ -52,44 +52,46 @@
 //
 // Paletted PNG, BMP, GIF, and PIC images are automatically depalettized.
 
-//STBIDEF stbi_uc *stbi_load               (char              const *filename,           int *x, int *y, int *comp, int req_comp);
-//STBIDEF stbi_uc *stbi_load_from_memory   (stbi_uc           const *buffer, int len   , int *x, int *y, int *comp, int req_comp);
-//STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void *user, int *x, int *y, int *comp, int req_comp);
+// STBIDEF stbi_uc *stbi_load               (char              const *filename,           int *x, int *y, int *comp, int req_comp);
+// STBIDEF stbi_uc *stbi_load_from_memory   (stbi_uc           const *buffer, int len   , int *x, int *y, int *comp, int req_comp);
+// STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void *user, int *x, int *y, int *comp, int req_comp);
 
 #define STB_IMAGE_IMPLEMENTATION
 #ifdef QB64_BACKSLASH_FILESYSTEM
- #include "src\\stb_image.h"
+#    include "src\\stb_image.h"
 #else
- #include "src/stb_image.h"
+#    include "src/stb_image.h"
 #endif
 
-uint8 *image_decode_other(uint8 *content,int32 bytes,int32 *result,int32 *x,int32 *y){
-//Result:bit 1=Success,bit 2=32bit[BGRA]
-*result=0;
+uint8 *image_decode_other(uint8 *content, int32 bytes, int32 *result, int32 *x, int32 *y) {
+    // Result:bit 1=Success,bit 2=32bit[BGRA]
+    *result = 0;
 
-int32 h=0,w=0;
-uint8 *out;
-int comp=0;
+    int32 h = 0, w = 0;
+    uint8 *out;
+    int comp = 0;
 
-out=stbi_load_from_memory(content,bytes,&w,&h,&comp,4);
+    out = stbi_load_from_memory(content, bytes, &w, &h, &comp, 4);
 
-if (out==NULL) return NULL;
+    if (out == NULL)
+        return NULL;
 
-//RGBA->BGRA
-uint8* cp=out;
-int32 x2,y2;
-int32 r,g,b,a;
-for (y2=0;y2<h;y2++){
-for (x2=0;x2<w;x2++){
- r=cp[0]; b=cp[2];
- cp[0]=b; cp[2]=r;
- cp+=4;
-}
-}
+    // RGBA->BGRA
+    uint8 *cp = out;
+    int32 x2, y2;
+    int32 r, g, b, a;
+    for (y2 = 0; y2 < h; y2++) {
+        for (x2 = 0; x2 < w; x2++) {
+            r = cp[0];
+            b = cp[2];
+            cp[0] = b;
+            cp[2] = r;
+            cp += 4;
+        }
+    }
 
-*result=1+2;
-*x=w;
-*y=h;
-return out;
-
+    *result = 1 + 2;
+    *x = w;
+    *y = h;
+    return out;
 }

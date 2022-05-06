@@ -7,7 +7,7 @@ void sub__printimage(int32 i) { return; }
 
 void sub__printimage(int32 i) {
 
-#ifdef QB64_WINDOWS
+#    ifdef QB64_WINDOWS
 
     static LPSTR szPrinterName = NULL;
     DWORD dwNameLen;
@@ -66,8 +66,7 @@ void sub__printimage(int32 i) {
     }
     s2 = &img[-i2];
     sub__dontblend(i2, 1);
-    sub__putimage(NULL, NULL, NULL, NULL, i, i2, NULL, NULL, NULL, NULL,
-                  8 + 32);
+    sub__putimage(NULL, NULL, NULL, NULL, i, i2, NULL, NULL, NULL, NULL, 8 + 32);
 
     ZeroMemory(&bi, sizeof(BITMAPINFOHEADER));
 
@@ -84,8 +83,7 @@ void sub__printimage(int32 i) {
     bi.biClrImportant = 0;
 
     for (y = 0; y < h; y++) {
-        SetDIBitsToDevice(dc, 0, y, w, 1, 0, 0, 0, 1, s2->offset32 + (y * w),
-                          (BITMAPINFO *)&bi, DIB_RGB_COLORS);
+        SetDIBitsToDevice(dc, 0, y, w, 1, 0, 0, 0, 1, s2->offset32 + (y * w), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
     }
 
     sub__freeimage(i2, 1);
@@ -101,7 +99,7 @@ void sub__printimage(int32 i) {
     }
     DeleteDC(dc);
 failed:;
-#endif
+#    endif
 }
 
 #endif

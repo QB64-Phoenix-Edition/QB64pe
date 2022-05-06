@@ -9,8 +9,7 @@ int32 new_hardware_img(int32 x, int32 y, uint32 *pixels, int32 flags) {
     int32 handle;
     hardware_img_struct *hardware_img;
     handle = list_add(hardware_img_handles);
-    hardware_img =
-        (hardware_img_struct *)list_get(hardware_img_handles, handle);
+    hardware_img = (hardware_img_struct *)list_get(hardware_img_handles, handle);
     hardware_img->w = x;
     hardware_img->h = y;
     hardware_img->dest_context_handle = 0;
@@ -145,8 +144,7 @@ int32 new_hardware_img(int32 x, int32 y, uint32 *pixels, int32 flags) {
     int32 handle;
     hardware_img_struct *hardware_img;
     handle = list_add(hardware_img_handles);
-    hardware_img =
-        (hardware_img_struct *)list_get(hardware_img_handles, handle);
+    hardware_img = (hardware_img_struct *)list_get(hardware_img_handles, handle);
     hardware_img->w = x;
     hardware_img->h = y;
     hardware_img->dest_context_handle = 0;
@@ -177,21 +175,18 @@ int32 new_hardware_img(int32 x, int32 y, uint32 *pixels, int32 flags) {
         static int glerrorcode;
         glerrorcode = glGetError(); // clear any previous errors
         if (force_NPO2_fix == 0)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_BGRA,
-                         GL_UNSIGNED_BYTE, pixels);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
         glerrorcode = glGetError();
         if (glerrorcode != 0 || force_NPO2_fix == 1) {
             int32 nx = x, ny = y;
             uint32 *npixels = NPO2_texture_generate(&nx, &ny, pixels);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nx, ny, 0, GL_BGRA,
-                         GL_UNSIGNED_BYTE, npixels);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nx, ny, 0, GL_BGRA, GL_UNSIGNED_BYTE, npixels);
             hardware_img->source_state.PO2_fix = PO2_FIX__EXPANDED;
             hardware_img->PO2_w = nx;
             hardware_img->PO2_h = ny;
             glerrorcode = glGetError();
             if (glerrorcode) {
-                gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, x, y, GL_BGRA,
-                                  GL_UNSIGNED_BYTE, pixels);
+                gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, x, y, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
                 glerrorcode = glGetError();
                 if (glerrorcode) {
                     alert("gluBuild2DMipmaps failed");
@@ -209,8 +204,7 @@ int32 new_hardware_img(int32 x, int32 y, uint32 *pixels, int32 flags) {
 
 void hardware_img_buffer_to_texture(int32 handle) {
     static hardware_img_struct *hardware_img;
-    hardware_img =
-        (hardware_img_struct *)list_get(hardware_img_handles, handle);
+    hardware_img = (hardware_img_struct *)list_get(hardware_img_handles, handle);
     if (hardware_img->texture_handle == 0) {
         hardware_img->texture_handle = new_texture_handle();
         glBindTexture(GL_TEXTURE_2D, hardware_img->texture_handle);
@@ -218,25 +212,19 @@ void hardware_img_buffer_to_texture(int32 handle) {
         static int glerrorcode;
         glerrorcode = glGetError(); // clear any previous errors
         if (force_NPO2_fix == 0)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hardware_img->w,
-                         hardware_img->h, 0, GL_BGRA, GL_UNSIGNED_BYTE,
-                         hardware_img->software_pixel_buffer);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hardware_img->w, hardware_img->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, hardware_img->software_pixel_buffer);
         glerrorcode = glGetError();
         if (glerrorcode != 0 || force_NPO2_fix == 1) {
             hardware_img->source_state.PO2_fix = PO2_FIX__EXPANDED;
             int32 x = hardware_img->w;
             int32 y = hardware_img->h;
-            uint32 *pixels = NPO2_texture_generate(
-                &x, &y, hardware_img->software_pixel_buffer);
+            uint32 *pixels = NPO2_texture_generate(&x, &y, hardware_img->software_pixel_buffer);
             hardware_img->PO2_w = x;
             hardware_img->PO2_h = y;
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_BGRA,
-                         GL_UNSIGNED_BYTE, pixels);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
             glerrorcode = glGetError();
             if (glerrorcode) {
-                gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, hardware_img->w,
-                                  hardware_img->h, GL_BGRA, GL_UNSIGNED_BYTE,
-                                  hardware_img->software_pixel_buffer);
+                gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, hardware_img->w, hardware_img->h, GL_BGRA, GL_UNSIGNED_BYTE, hardware_img->software_pixel_buffer);
                 glerrorcode = glGetError();
                 if (glerrorcode) {
                     alert("gluBuild2DMipmaps failed");
@@ -258,7 +246,7 @@ void hardware_img_requires_depthbuffer(hardware_img_struct *hardware_img) {
         // inspiration...
         // http://www.opengl.org/wiki/Framebuffer_Object_Examples#Color_texture.2C_Depth_texture
         static GLuint depth_tex;
-#ifndef QB64_GLES
+#    ifndef QB64_GLES
         glGenTextures(1, &depth_tex);
         glBindTexture(GL_TEXTURE_2D, depth_tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -266,22 +254,16 @@ void hardware_img_requires_depthbuffer(hardware_img_struct *hardware_img) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
-                        GL_COMPARE_R_TO_TEXTURE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, hardware_img->w,
-                     hardware_img->h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE,
-                     NULL);
-        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-                                  GL_TEXTURE_2D, depth_tex, 0 /*mipmap level*/);
-#else
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, hardware_img->w, hardware_img->h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_tex, 0 /*mipmap level*/);
+#    else
         glGenRenderbuffers(1, &depth_tex);
         glBindRenderbuffer(GL_RENDERBUFFER, depth_tex);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16,
-                              hardware_img->w, hardware_img->h);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                  GL_RENDERBUFFER, depth_tex);
-#endif
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, hardware_img->w, hardware_img->h);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_tex);
+#    endif
         // NULL means reserve texture memory, but texels are undefined
         glClear(GL_DEPTH_BUFFER_BIT);
         hardware_img->depthbuffer_handle = depth_tex;
