@@ -4,8 +4,10 @@
 PREFIX="QBasic"
 
 RESULTS_DIR="./tests/results/$PREFIX"
+EXES_DIR="./tests/exes/$PREFIX"
 
 mkdir -p $RESULTS_DIR
+mkdir -p $EXES_DIR
 
 QB64=$1
 
@@ -26,7 +28,7 @@ do
 
     TESTCASE=$test
 
-    "$QB64" -x  "$sourceFile" -o "./$RESULTS_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
+    "$QB64" -x  "$sourceFile" -o "./$EXES_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
     cp ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
 
