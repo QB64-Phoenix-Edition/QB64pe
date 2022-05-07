@@ -12509,8 +12509,7 @@ IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN        makedeps$ = makedeps$ + " DEP_AU
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN             makedeps$ = makedeps$ + " DEP_ZLIB=y"
 IF inline_DATA = 0 AND DataOffset THEN          makedeps$ = makedeps$ + " DEP_DATA=y"
 IF Console THEN                                 makedeps$ = makedeps$ + " DEP_CONSOLE=y"
-
-IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
+IF ExeIconSet OR VersionInfoSet THEN            makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 makeline$ = make$ + makedeps$ + " EXE=" + QuotedFilename$(path.exe$ + file$ + extension$)
 
