@@ -10,6 +10,17 @@ $CONSOLE
 'Initially the "SCREEN" will be hidden, if the -x option is used it will never be created
 $SCREENHIDE
 
+$EXEICON:'./qb64.ico'
+
+$VERSIONINFO:CompanyName=QB64
+$VERSIONINFO:FileDescription=QB64 Compiler
+$VERSIONINFO:InternalName=qb64.bas
+$VERSIONINFO:LegalCopyright=MIT
+$VERSIONINFO:LegalTrademarks=
+$VERSIONINFO:OriginalFilename=qb64.exe
+$VERSIONINFO:ProductName=QB64
+$VERSIONINFO:Comments=QB64 is a modern extended BASIC programming language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows, Linux and macOS.
+
 '$INCLUDE:'global\version.bas'
 '$INCLUDE:'global\settings.bas'
 '$INCLUDE:'global\constants.bas'
