@@ -1,9 +1,11 @@
 
-QB_VERSION := 2.3
-QB_VERSION_UNDERSCORE := $(patsubst .,_,$(QB_VERSION))
+# The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
+TEMP_ID ?=
 
 # Disable implicit rules
 MAKEFLAGS += --no-builtin-rules
+
+CXXFLAGS += $(CXXFLAGS_EXTRA)
 
 EXE_OBJS :=
 EXE_LIBS :=
@@ -15,7 +17,7 @@ endif
 ifeq ($(OS),lnx)
 	PATH_INTERNAL := ./internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)/source
-	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)/temp
+	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)/temp$(TEMP_ID)
 	PATH_INTERNAL_C := $(PATH_INTERNAL)/c
 	CP := cp -r
 	RM := rm -fr
@@ -31,7 +33,7 @@ endif
 ifeq ($(OS),win)
 	PATH_INTERNAL := internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)\source
-	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)\temp
+	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)\temp$(TEMP_ID)
 	PATH_INTERNAL_C := $(PATH_INTERNAL)\c
 	SHELL := cmd
 	CP := xcopy /E /C /H /R /Y
@@ -53,7 +55,7 @@ endif
 ifeq ($(OS),osx)
 	PATH_INTERNAL := ./internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)/source
-	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)/temp
+	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)/temp$(TEMP_ID)
 	PATH_INTERNAL_C := $(PATH_INTERNAL)/c
 	CP := cp -r
 	RM := rm -fr
@@ -103,7 +105,7 @@ ifeq ($(OS),osx)
 	CXXLIBS := -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa
 endif
 
-QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx.o
+QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).o
 
 $(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp/*.txt)
 
@@ -136,7 +138,7 @@ include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
 
 .PHONY: all clean
 
-QBLIB_NAME := libqb_make_$(QB_VERSION_UNDERSCORE)_
+QBLIB_NAME := libqb_make_
 
 CLEAN_LIST += $(wildcard $(PATH_INTERNAL_C)/libqb/$(QBLIB_NAME)*.o)
 
@@ -290,6 +292,8 @@ endif
 ifneq ($(filter y,$(DEP_DATA)),)
 	EXE_OBJS += $(PATH_INTERNAL_TEMP)/data.o
 endif
+
+# CXXLIBS += $(shell cat "$(PATH_INTERNAL_TEMP)/extra_libs.txt")
 
 QBLIB := $(PATH_INTERNAL_C)/libqb/$(QBLIB_NAME).o
 

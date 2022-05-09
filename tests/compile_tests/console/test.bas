@@ -1,3 +1,4 @@
 $CONSOLE:ONLY
 
-Print "Hello, World!"
+Print "Hello, World!";
+SYSTEM

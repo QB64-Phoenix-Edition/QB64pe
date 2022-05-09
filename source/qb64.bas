@@ -12511,7 +12511,27 @@ IF inline_DATA = 0 AND DataOffset THEN          makedeps$ = makedeps$ + " DEP_DA
 IF Console THEN                                 makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN            makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
+IF tempfolderindex > 1 THEN                     makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
+
+IF Include_GDB_Debugging_Info THEN
+    makedeps$ = makedeps$ + " CXXFLAGS_EXTRA=-Og"
+ELSE
+    makedeps$ = makedeps$ + " CXXFLAGS_EXTRA=-O2"
+END IF
+
 makeline$ = make$ + makedeps$ + " EXE=" + QuotedFilename$(path.exe$ + file$ + extension$)
+
+' Handle providing extra libraries to Make
+DIM extraLibsFile AS LONG
+extraLibsFile = FREEFILE
+OPEN tmpdir$ + "extra_libs.txt" FOR OUTPUT AS #extraLibsFile
+
+_ECHO mylib$
+IF LEN(mylib$) THEN
+    PRINT #extraLibsFile, mylib$, mylibopt$
+END IF
+
+CLOSE #extraLibsFile
 
 IF os$ = "WIN" THEN
 
@@ -12644,16 +12664,6 @@ IF os$ = "WIN" THEN
             dummy = DarkenFGBG(0)
         END IF
     END IF
-
-    '       'add custom libraries
-    '       'mylib$="..\..\"+x$+".lib"
-    '       IF LEN(mylib$) THEN
-    '           x = INSTR(a$, ".cpp ")
-    '           IF x THEN
-    '               x = x + 3
-    '               a$ = LEFT$(a$, x) + " " + mylib$ + " " + RIGHT$(a$, LEN(a$) - x)
-    '           END IF
-    '       END IF
 
     ffh = FREEFILE
     OPEN tmpdir$ + "recompile_win.bat" FOR OUTPUT AS #ffh
@@ -12827,15 +12837,6 @@ IF os$ = "LNX" THEN
     CLOSE #150
     'change qbx.cpp to qbx999.cpp?
     x = INSTR(a$, "qbx.cpp"): IF x <> 0 AND tempfolderindex <> 1 THEN a$ = LEFT$(a$, x - 1) + "qbx" + str2$(tempfolderindex) + ".cpp" + RIGHT$(a$, LEN(a$) - (x + 6))
-
-    'add custom libraries
-    IF LEN(mylib$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 5
-            a$ = LEFT$(a$, x - 1) + " " + mylibopt$ + " " + mylib$ + " " + RIGHT$(a$, LEN(a$) - x + 1)
-        END IF
-    END IF
 
     IF INSTR(_OS$, "[MACOSX]") THEN
 
