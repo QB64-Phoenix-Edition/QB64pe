@@ -61,11 +61,21 @@ DIM SHARED wpUtfReplCnt: wpUtfReplCnt = -1 'wpUtfRepl index counter (pre-increme
 'Note: All UTF-8 values must be reversed in MKI$/MKL$, as it flips them to little endian.
 '      In the wiki text they are noted in big endian, hence we need to pre-flip them.
 '2-byte sequences
-wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA0C2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(255) 'non-breaking space
-wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA2C2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(155) 'cent (ø)
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA9C2): wpUtfRepl(wpUtfReplCnt).repl = "(c)" 'copyright
-wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HBDC2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(171) '1/2 fraction
-wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HBCC2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(172) '1/4 fraction
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA9C3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(130) 'accent (é)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA2C3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(131) 'accent (â)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA0C3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(133) 'accent (à)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA5C3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(134) 'accent (å)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA7C3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(135) 'accent (ç)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HAAC3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(136) 'accent (ê)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HABC3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(137) 'accent (ë)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA8C3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(138) 'accent (è)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HAFC3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(139) 'accent (ï)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HAEC3): wpUtfRepl(wpUtfReplCnt).repl = CHR$(140) 'accent (î)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA2C2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(155) 'cents (ø)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HBDC2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(171) 'fraction (½)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HBCC2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(172) 'fraction (¼)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA0C2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(255) 'non-breaking space
 '3-byte sequences
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HA680E2): wpUtfRepl(wpUtfReplCnt).repl = "..." 'ellipsis
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H8C94E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(218) 'single line draw (top/left corner)
