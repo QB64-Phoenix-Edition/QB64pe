@@ -8,19 +8,20 @@ END FUNCTION
 
 FUNCTION Wiki$ (PageName$)
     Help_PageLoaded$ = PageName$
-    PageName2$ = PageName$
 
-    DO WHILE INSTR(PageName2$, " ")
-        ASC(PageName2$, INSTR(PageName2$, " ")) = 95
-    LOOP
-    DO WHILE INSTR(PageName2$, "&")
-        i = INSTR(PageName2$, "&")
-        PageName2$ = LEFT$(PageName2$, i - 1) + "%26" + RIGHT$(PageName2$, LEN(PageName2$) - i)
-    LOOP
-    DO WHILE INSTR(PageName2$, "/")
-        i = INSTR(PageName2$, "/")
-        PageName2$ = LEFT$(PageName2$, i - 1) + "%2F" + RIGHT$(PageName2$, LEN(PageName2$) - i)
-    LOOP
+    'Escape all invalid and other critical chars in filenames
+    PageName2$ = ""
+    FOR i = 1 TO LEN(PageName$)
+        c = ASC(PageName$, i)
+        SELECT CASE c
+            CASE 32 '                                    '(space)
+                PageName2$ = PageName2$ + "_"
+            CASE 34, 38, 42, 47, 58, 60, 62, 63, 92, 124 '("&*/:<>?\|)
+                PageName2$ = PageName2$ + "%" + HEX$(c)
+            CASE ELSE
+                PageName2$ = PageName2$ + CHR$(c)
+        END SELECT
+    NEXT
 
     'Is this page in the cache?
     IF Help_IgnoreCache = 0 THEN
@@ -49,6 +50,7 @@ FUNCTION Wiki$ (PageName$)
         END IF
     END IF
 
+    'check for curl
     IF _SHELLHIDE("curl --version") <> 0 THEN
         PCOPY 2, 0
         result = idemessagebox("QB64", "Cannot find 'curl'.", "#Abort")
@@ -56,6 +58,7 @@ FUNCTION Wiki$ (PageName$)
         EXIT FUNCTION
     END IF
 
+    'download message (Status Bar)
     IF Help_Recaching = 0 THEN
         a$ = "Downloading '" + PageName$ + "' page..."
         IF LEN(a$) > 60 THEN a$ = LEFT$(a$, 57) + STRING$(3, 250)
@@ -67,53 +70,69 @@ FUNCTION Wiki$ (PageName$)
         PCOPY 3, 0
     END IF
 
+    'url query and output arguments for curl
     url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
     outputFile$ = Cache_Folder$ + "/" + PageName2$ + ".txt"
-
-    'wiki text delimiters:
+    'wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
 
-    SHELL _HIDE "curl -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
+    'download page using curl (opt -k = allow unsecure connections in case of cert errors)
+    SHELL _HIDE "curl -k -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
     OPEN outputFile$ FOR BINARY AS #fh 'get new content
     a$ = SPACE$(LOF(fh))
     GET #fh, 1, a$
     CLOSE #fh
 
+    'find wikitext in the downloaded page
     s1 = INSTR(a$, s1$)
-    IF s1 > 0 THEN
-        'clean up downloaded contents
-        a$ = MID$(a$, s1 + LEN(s1$))
-        s2 = INSTR(a$, s2$)
-        IF s2 > 0 THEN
-            a$ = LEFT$(a$, s2)
-        END IF
-
-        OPEN outputFile$ FOR OUTPUT AS #fh 'clear old content
-        PRINT #fh, a$ 'save clean content
+    IF s1 > 0 THEN a$ = MID$(a$, s1 + LEN(s1$)): s2 = INSTR(a$, s2$): ELSE s2 = 0
+    IF s2 > 0 THEN a$ = LEFT$(a$, s2 - 1)
+    IF s1 > 0 AND s2 > 0 AND a$ <> "" THEN
+        'if wikitext was found, then substitute entities & save it
+        '--- first HTML specific
+        WHILE INSTR(a$, "&amp;") > 0 '         '&amp; must be first and looped until all
+            a$ = StrReplace$(a$, "&amp;", "&") 'multi-escapes are resolved (eg. &amp;lt; &amp;amp;lt; etc.)
+        WEND
+        a$ = StrReplace$(a$, "&lt;", "<")
+        a$ = StrReplace$(a$, "&gt;", ">")
+        a$ = StrReplace$(a$, "&quot;", CHR$(34))
+        '--- then other entities
+        a$ = StrReplace$(a$, "&verbar;", "|")
+        a$ = StrReplace$(a$, "&pi;", CHR$(227))
+        a$ = StrReplace$(a$, "&theta;", CHR$(233))
+        a$ = StrReplace$(a$, "&sup1;", CHR$(252))
+        a$ = StrReplace$(a$, "&sup2;", CHR$(253))
+        a$ = StrReplace$(a$, "&nbsp;", CHR$(255))
+        '--- now save it
+        OPEN outputFile$ FOR OUTPUT AS #fh
+        PRINT #fh, a$
         CLOSE #fh
+    ELSE
+        'delete page, if empty or corrupted (force re-download on next access)
+        KILL outputFile$
+        a$ = "{{PageInternalError}}" + CHR$(10) +_
+             "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
+             "* or the download from Wiki failed and corrupted the page data." + CHR$(10) +_
+             "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10)
     END IF
 
     Wiki$ = a$
-    EXIT FUNCTION
 END FUNCTION
 
 SUB Help_AddTxt (t$, col, link)
-
     IF t$ = CHR$(13) THEN Help_NewLine: EXIT SUB
 
     FOR i = 1 TO LEN(t$)
-
         c = ASC(t$, i)
 
-
-        IF Help_BG_Col = 0 AND Help_LockWrap = 0 THEN
+        IF Help_LockParse = 0 AND Help_LockWrap = 0 THEN
 
             'addtxt handles all wrapping issues
             IF c = 32 THEN
 
-                IF Help_Pos = Help_ww THEN Help_NewLine: GOTO special
+                IF Help_Pos = Help_ww THEN Help_NewLine: _CONTINUE
 
                 Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 32
                 Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = col + Help_BG_Col * 16
@@ -121,8 +140,7 @@ SUB Help_AddTxt (t$, col, link)
                 Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = link \ 256
 
                 Help_Wrap_Pos = Help_Txt_Len 'pos to backtrack to when wrapping content
-                Help_Pos = Help_Pos + 1
-                GOTO special
+                Help_Pos = Help_Pos + 1: _CONTINUE
             END IF
 
             IF Help_Pos > Help_ww THEN
@@ -141,18 +159,15 @@ SUB Help_AddTxt (t$, col, link)
                 END IF
             END IF
 
-        END IF 'bg_col=0
+        END IF 'locks = 0
 
-        c = ASC(t$, i)
         Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = c
         Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = col + Help_BG_Col * 16
         Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = link AND 255
         Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = link \ 256
 
         Help_Pos = Help_Pos + 1
-        special:
     NEXT
-
 END SUB
 
 SUB Help_NewLine
@@ -168,50 +183,22 @@ SUB Help_NewLine
     Help_Wrap_Pos = 0
 
     IF Help_Underline THEN
-        Help_Underline = 0
         w = Help_Pos
         Help_Pos = 1
-        Help_AddTxt STRING$(w - 1, 196), Help_Col, 0
+        Help_AddTxt STRING$(w - 1, 196), Help_Underline, 0
+        Help_Underline = 0 'keep before Help_NewLine (recursion)
         Help_NewLine
     END IF
     Help_Pos = 1
 
-    IF Help_NewLineIndent THEN
+    IF Help_Center > 0 THEN 'center overrides regular indent
+        Help_NewLineIndent = 0
+        Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0
+        Help_CIndent$ = MID$(Help_CIndent$, 2)
+    ELSEIF Help_NewLineIndent > 0 THEN
         Help_AddTxt SPACE$(Help_NewLineIndent), Help_Col, 0
     END IF
-
-
 END SUB
-
-SUB Help_PreView
-
-    OPEN "help_preview.txt" FOR OUTPUT AS #1
-    FOR i = 1 TO LEN(Help_Txt$) STEP 4
-        c = ASC(Help_Txt$, i)
-        c$ = CHR$(c)
-        IF c = 13 THEN c$ = CHR$(13) + CHR$(10)
-        PRINT #1, c$;
-    NEXT
-    CLOSE #1
-
-    CLS
-    FOR i = 1 TO LEN(Help_Txt$) STEP 4
-        c = ASC(Help_Txt$, i)
-        col = ASC(Help_Txt$, i + 1)
-        IF c = 13 THEN
-            COLOR col AND 15, col \ 16
-            PRINT SPACE$(help_w - POS(0));
-            COLOR 7, 0
-            PRINT SPACE$(_WIDTH - POS(0) + 1);
-            COLOR col AND 15, col \ 16
-            SLEEP
-        ELSE
-            COLOR col AND 15, col \ 16
-            PRINT CHR$(c);
-        END IF
-    NEXT
-END SUB
-
 
 FUNCTION Help_Col 'helps to calculate the default color
     col = Help_Col_Normal
@@ -220,10 +207,7 @@ FUNCTION Help_Col 'helps to calculate the default color
     Help_Col = col
 END FUNCTION
 
-
-
 SUB WikiParse (a$)
-    'PRINT "Parsing...": _DISPLAY
 
     'wiki page interpret
 
@@ -234,12 +218,24 @@ SUB WikiParse (a$)
 
     Help_Pos = 1: Help_Wrap_Pos = 0
     Help_Line$ = MKL$(1)
+    'word wrap locks (lock wrapping only, but continue parsing regularly)
     Help_LockWrap = 0
+    'parser locks (neg: soft lock, zero: unlocked, pos: hard lock)
+    'hard:  2 = inside code blocks,  1 = inside output blocks
+    'soft: -1 = inside text blocks, -2 = inside fixed blocks
+    '=> all parser locks also imply a wrapping lock
+    '=> hard locks almost every parsing except utf-8 substitution and line breaks
+    '=> soft allows all elements not disrupting the current block, hence only
+    '   paragraph creating things are locked (eg. headings, lists, rulers etc.),
+    '   but text styles, links and template processing is still possible
+    Help_LockParse = 0
     Help_Bold = 0: Help_Italic = 0
     Help_Underline = 0
     Help_BG_Col = 0
+    Help_Center = 0: Help_CIndent$ = ""
+    Help_DList = 0
 
-    link = 0: elink = 0: cb = 0
+    link = 0: elink = 0: cb = 0: nl = 1
 
     col = Help_Col
 
@@ -262,14 +258,14 @@ SUB WikiParse (a$)
     ' :=indent (if beginning a new line)
     ' CHR$(10)=new line character
 
-    prefetch = 16
+    prefetch = 20
     DIM c$(prefetch)
     FOR ii = 1 TO prefetch
         c$(ii) = SPACE$(ii)
     NEXT
 
     i = INSTR(a$, "<span ")
-    DO WHILE i
+    DO WHILE i > 0
         a$ = LEFT$(a$, i - 1) + MID$(a$, INSTR(i + 1, a$, ">") + 1)
         i = INSTR(a$, "<span ")
     LOOP
@@ -278,6 +274,7 @@ SUB WikiParse (a$)
     i = 1
     DO WHILE i <= n
 
+        'Get next char and fill prefetch array
         c = ASC(a$, i): c$ = CHR$(c)
         FOR i1 = 1 TO prefetch
             ii = i
@@ -291,104 +288,92 @@ SUB WikiParse (a$)
             NEXT
         NEXT
 
-        IF c = 38 THEN '"&"
-            s$ = "&quot;"
+        'Wiki specific code must be handled always
+        s$ = "__NOEDITSECTION__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOEDITSECTION__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOTOC__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "<nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "</nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+
+        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+            'Handle some direct HTML code
+            s$ = "<sup>": IF c$(LEN(s$)) = s$ THEN Help_AddTxt "^", col, 0: i = i + LEN(s$) - 1: GOTO charDone
+            s$ = "</sup>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+
+            s$ = "<center>"
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
-                c$ = CHR$(34): c = ASC(c$)
-                GOTO SpecialChr
+                wla$ = wikiLookAhead$(a$, i + 1, "</center>")
+                IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
+                    i = i + LEN(wla$) + 9 'ignore TOC links and nested center
+                ELSE
+                    Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
+                    Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0 'center content
+                    Help_CIndent$ = MID$(Help_CIndent$, 2)
+                END IF
+                GOTO charDone
             END IF
-
-            s$ = "&amp;"
+            s$ = "</center>"
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
-                c$ = "&": c = ASC(c$)
-                GOTO SpecialChr
+                Help_Center = 0
+                Help_NewLine
+                GOTO charDone
             END IF
 
-            s$ = "&gt;"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                c$ = ">": c = ASC(c$)
-                GOTO SpecialChr
-            END IF
-
-            IF c$(2) = CHR$(194) + CHR$(160) THEN 'some kind of white-space formatting unicode combo
-                i = i + 1
-                GOTO Special
-            END IF
-
-            s$ = "&lt;code>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO Special
-            s$ = "&lt;/code>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO Special
-
-            s$ = "&lt;center>"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                GOTO Special
-            END IF
-
-            s$ = "&lt;/center>"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                GOTO Special
-            END IF
-
-            s$ = "&lt;nowiki>"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                GOTO Special
-            END IF
-
-            s$ = "&lt;/nowiki>"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                GOTO Special
-            END IF
-
-
-            s$ = "&lt;p style="
+            s$ = "<p style="
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 1) = ">" THEN i = ii: EXIT FOR
+                    IF MID$(a$, ii, 1) = ">" THEN
+                        wla$ = wikiLookAhead$(a$, ii + 1, "</p>")
+                        IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
+                            i = ii + LEN(wla$) + 4 'ignore TOC links and nested center
+                        ELSEIF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
+                            Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
+                            Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0 'center (if in style)
+                            Help_CIndent$ = MID$(Help_CIndent$, 2)
+                            i = ii
+                        END IF
+                        EXIT FOR
+                    END IF
                 NEXT
-                GOTO Special
+                GOTO charDone
+            END IF
+            s$ = "</p>"
+            IF c$(LEN(s$)) = s$ THEN
+                i = i + LEN(s$) - 1
+                Help_Center = 0
+                Help_NewLine
+                GOTO charDone
             END IF
 
-            s$ = "&lt;/p"
+            s$ = "<div"
+            IF c$(LEN(s$)) = s$ THEN 'ignore divisions (TOC and letter links)
+                i = i + LEN(s$) - 1
+                FOR ii = i TO LEN(a$) - 1
+                    IF MID$(a$, ii, 6) = "</div>" THEN i = ii + 5: EXIT FOR
+                NEXT
+                GOTO charDone
+            END IF
+            s$ = "<!--" 'ignore HTML comments
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 1) = ">" THEN i = ii: EXIT FOR
+                    IF MID$(a$, ii, 3) = "-->" THEN i = ii + 2: EXIT FOR
                 NEXT
-                GOTO Special
+                GOTO charDone
             END IF
 
-            s$ = "&lt;div"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 9) = "&lt;/div>" THEN i = ii + 8: EXIT FOR
-                NEXT
-                GOTO Special
-            END IF
-
-            s$ = "&lt;"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                c$ = "<": c = ASC(c$)
-                GOTO SpecialChr
-            END IF
-            SpecialChr:
-        END IF 'c=38 '"&"
-
-        'Links
-        IF c = 91 THEN '"["
-            IF c$(2) = "[[" AND link = 0 THEN
-                i = i + 1
-                link = 1
-                link$ = ""
-                GOTO Special
+            'Links
+            IF c = 91 THEN '"["
+                IF c$(2) = "[[" AND link = 0 THEN
+                    i = i + 1
+                    link = 1
+                    link$ = ""
+                    GOTO charDone
+                END IF
             END IF
         END IF
         IF link = 1 THEN
@@ -397,14 +382,14 @@ SUB WikiParse (a$)
                 link = 0
                 text$ = link$
                 i2 = INSTR(link$, "|")
-                IF i2 THEN
+                IF i2 > 0 THEN
                     text$ = RIGHT$(link$, LEN(link$) - i2)
                     link$ = LEFT$(link$, i2 - 1)
                 END IF
 
                 IF INSTR(link$, "#") THEN 'local page links not supported yet
                     Help_AddTxt text$, 8, 0
-                    GOTO Special
+                    GOTO charDone
                 END IF
 
                 Help_LinkN = Help_LinkN + 1
@@ -415,79 +400,102 @@ SUB WikiParse (a$)
                 ELSE
                     Help_AddTxt text$, Help_Col_Bold, Help_LinkN
                 END IF
-                GOTO Special
+                GOTO charDone
             END IF
             link$ = link$ + c$
-            GOTO Special
+            GOTO charDone
         END IF
 
+        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+            'External links
+            IF c = 91 THEN '"["
+                IF (c$(6) = "[http:" OR c$(7) = "[https:") AND elink = 0 THEN
+                    elink = 2
+                    elink$ = ""
+                    GOTO charDone
+                END IF
+            END IF
+            IF elink = 2 THEN
+                IF c$ = " " THEN
+                    elink = 1
+                    GOTO charDone
+                END IF
+                elink$ = elink$ + c$
+                GOTO charDone
+            END IF
+            IF elink >= 1 THEN
+                IF c$ = "]" THEN
+                    elink = 0
+                    elink$ = " " + elink$
+                    Help_LockWrap = 1: Help_Wrap_Pos = 0
+                    Help_AddTxt elink$, 8, 0
+                    Help_LockWrap = 0
+                    elink$ = ""
+                    GOTO charDone
+                END IF
+            END IF
+        END IF
 
-        'External links
-        IF c = 91 THEN '"["
-            IF c$(6) = "[http:" AND elink = 0 THEN
-                elink = 2
-                elink$ = ""
-                GOTO Special
-            END IF
-        END IF
-        IF elink = 2 THEN
-            IF c$ = " " THEN
-                elink = 1
-                GOTO Special
-            END IF
-            elink$ = elink$ + c$
-            GOTO Special
-        END IF
-        IF elink >= 1 THEN
-            IF c$ = "]" THEN
-                elink = 0
-                elink$ = " " + elink$
-                Help_LockWrap = 1: Help_Wrap_Pos = 0
-                Help_AddTxt elink$, 8, 0
-                Help_LockWrap = 0
-                elink$ = ""
-                GOTO Special
-            END IF
-        END IF
-
+        'Templates
         IF c = 123 THEN '"{"
-            IF c$(5) = "{{KW|" THEN 'this is really a link!
-                i = i + 4
+            IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{KW|" THEN 'just nice wrapped links
+                i = i + 4 '                                               'KW is deprecated (but kept for existing pages)
                 link = 1
                 link$ = ""
-                GOTO Special
+                GOTO charDone
             END IF
-            IF c$(5) = "{{Cl|" THEN 'this is really a link too (in code example)
-                i = i + 4
-                link = 1
-                link$ = ""
-                GOTO Special
-            END IF
-            IF c$(2) = "{{" THEN
+            IF c$(2) = "{{" THEN 'any other templates
                 i = i + 1
                 cb = 1
                 cb$ = ""
-                GOTO Special
+                GOTO charDone
             END IF
         END IF
-
         IF cb = 1 THEN
             IF c$ = "|" OR c$(2) = "}}" THEN
                 IF c$(2) = "}}" THEN i = i + 1
-                cb = 0
+                cb = 0: cbo$ = ""
 
-                IF cb$ = "PageSyntax" THEN Help_AddTxt "Syntax:" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageParameters" THEN Help_AddTxt "Parameters:" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageDescription" THEN Help_AddTxt "Description:" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageAvailability" THEN Help_AddTxt "Availability:" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageExamples" THEN Help_AddTxt "Code Examples:" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageSeeAlso" THEN Help_AddTxt "See also:" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageLegacySupport" THEN Help_AddTxt "Legacy support" + CHR$(13), Help_Col_Section, 0
-                IF cb$ = "PageQBasic" THEN Help_AddTxt "QBasic/QuickBASIC" + CHR$(13), Help_Col_Section, 0
+                IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+                    'Standard section headings (section color, h3 w/o underline, h2 with underline)
+                    'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
+                    IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
+                    IF cb$ = "PageLegacySupport" THEN cbo$ = "Legacy support" 'sub-sect
+                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page suffix is deprecated (but kept for existing pages)
+                    IF cb$ = "PageDescription" THEN cbo$ = "Description:"
+                    IF cb$ = "PageQBasic" THEN cbo$ = "QBasic/QuickBASIC" 'sub-sect
+                    IF cb$ = "PageNotes" THEN cbo$ = "Notes" 'sub-sect
+                    IF cb$ = "PageErrors" THEN cbo$ = "Errors" 'sub-sect
+                    IF cb$ = "PageUseWith" THEN cbo$ = "Use with" 'sub-sect
+                    IF cb$ = "PageAvailability" THEN cbo$ = "Availability:"
+                    IF cb$ = "PageExamples" THEN cbo$ = "Examples:"
+                    IF cb$ = "PageSeeAlso" THEN cbo$ = "See also:"
+                    'Independent main page end sections (centered, no title)
+                    IF cb$ = "PageCopyright" THEN cbo$ = "Copyright"
+                    IF cb$ = "PageNavigation" THEN cbo$ = "" 'ignored for built-in help
+                    'Internally used templates (not available in Wiki)
+                    IF cb$ = "PageWelcome" THEN cbo$ = "Welcome:"
+                    IF cb$ = "PageCommunity" THEN cbo$ = "Community:"
+                    IF cb$ = "PageInternalError" THEN cbo$ = "Sorry, an error occurred:"
+                    '----------
+                    IF cbo$ <> "" THEN
+                        IF RIGHT$(cbo$, 1) = ":" THEN Help_Underline = Help_Col_Section
+                        Help_AddTxt cbo$, Help_Col_Section, 0: Help_NewLine
+                        IF cbo$ = "Copyright" THEN
+                            Help_NewLine: Help_AddTxt "1991-2006 Silicon Graphics, Inc.", 7, 0: Help_NewLine
+                            Help_AddTxt "This document is licensed under the SGI Free Software B License.", 7, 0: Help_NewLine
+                            Help_AddTxt "https://spdx.org/licenses/SGI-B-2.0.html https://spdx.org/licenses/SGI-B-2.0.html", 15, 0: Help_NewLine
+                        END IF
+                    END IF
+                END IF
 
-                IF cb$ = "CodeStart" THEN
-                    Help_NewLine
-                    Help_BG_Col = 1
+                IF cb$ = "CodeStart" AND Help_LockParse = 0 THEN
+                    IF Help_Txt_Len >= 8 THEN
+                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
+                    END IF
+                    Help_BG_Col = 1: Help_LockParse = 2
+                    Help_AddTxt STRING$(Help_ww - 15, 196) + " Code Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     'Skip non-meaningful content before section begins
                     ws = 1
                     FOR ii = i + 1 TO LEN(a$)
@@ -496,10 +504,19 @@ SUB WikiParse (a$)
                     NEXT
                     IF ws THEN i = ii
                 END IF
-                IF cb$ = "CodeEnd" THEN Help_BG_Col = 0
-                IF cb$ = "OutputStart" THEN
-                    Help_NewLine
-                    Help_BG_Col = 2
+                IF cb$ = "CodeEnd" AND Help_LockParse <> 0 THEN
+                    IF nl = 0 THEN Help_NewLine
+                    Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
+                    Help_BG_Col = 0: Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
+                IF LEFT$(cb$, 11) = "OutputStart" AND Help_LockParse = 0 THEN 'does also match new OutputStartBGn templates
+                    IF Help_Txt_Len >= 8 THEN
+                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
+                    END IF
+                    Help_BG_Col = 2: Help_LockParse = 1
+                    Help_AddTxt STRING$(Help_ww - 17, 196) + " Output Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     'Skip non-meaningful content before section begins
                     ws = 1
                     FOR ii = i + 1 TO LEN(a$)
@@ -508,247 +525,248 @@ SUB WikiParse (a$)
                     NEXT
                     IF ws THEN i = ii
                 END IF
-                IF cb$ = "OutputEnd" THEN Help_BG_Col = 0
+                IF cb$ = "OutputEnd" AND Help_LockParse <> 0 THEN
+                    IF nl = 0 THEN Help_NewLine
+                    Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
+                    Help_BG_Col = 0: Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
+                IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
+                    IF Help_Txt_Len >= 8 THEN
+                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
+                    END IF
+                    Help_BG_Col = 6: Help_LockParse = -1
+                    Help_AddTxt STRING$(Help_ww - 15, 196) + " Text Block " + STRING$(3, 196), 15, 0: Help_NewLine
+                    'Skip non-meaningful content before section begins
+                    ws = 1
+                    FOR ii = i + 1 TO LEN(a$)
+                        IF ASC(a$, ii) = 10 THEN EXIT FOR
+                        IF ASC(a$, ii) <> 32 AND ASC(a$, ii) <> 39 THEN ws = 0
+                    NEXT
+                    IF ws THEN i = ii
+                END IF
+                IF cb$ = "TextEnd" AND Help_LockParse <> 0 THEN
+                    IF nl = 0 THEN Help_NewLine
+                    Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
+                    Help_BG_Col = 0: Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
+                IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
+                    IF Help_Txt_Len >= 8 THEN
+                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
+                    END IF
+                    Help_BG_Col = 6: Help_LockParse = -2
+                    Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
+                    'Skip non-meaningful content before section begins
+                    ws = 1
+                    FOR ii = i + 1 TO LEN(a$)
+                        IF ASC(a$, ii) = 10 THEN EXIT FOR
+                        IF ASC(a$, ii) <> 32 AND ASC(a$, ii) <> 39 THEN ws = 0
+                    NEXT
+                    IF ws THEN i = ii
+                END IF
+                IF (cb$ = "FixedEnd" OR cb$ = "WhiteEnd") AND Help_LockParse <> 0 THEN 'White is deprecated (but kept for existing pages)
+                    IF nl = 0 THEN Help_NewLine
+                    Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
+                    Help_BG_Col = 0: Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
 
-                GOTO Special
+                IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                END IF
+                GOTO charDone
 
             END IF
 
             cb$ = cb$ + c$ 'reading maro name
-            GOTO Special
+            GOTO charDone
         END IF 'cb=1
-
         IF c$(2) = "}}" THEN 'probably the end of a text section of macro'd text
             i = i + 1
-            GOTO Special
+            GOTO charDone
         END IF
 
-
-
-        IF c$(4) = " == " THEN
-            i = i + 3
-            Help_Underline = 1
-            GOTO Special
-        END IF
-        IF c$(3) = "== " THEN
-            i = i + 2
-            Help_Underline = 1
-            GOTO Special
-        END IF
-        IF c$(3) = " ==" THEN
-            i = i + 2
-            GOTO Special
-        END IF
-        IF c$(2) = "==" THEN
-            i = i + 1
-            Help_Underline = 1
-            GOTO Special
+        IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+            'Custom section headings (current color, h3 w/o underline, h2 with underline)
+            ii = 0
+            IF c$(5) = " === " THEN ii = 4
+            IF c$(4) = "=== " THEN ii = 3
+            IF c$(4) = " ===" THEN ii = 3
+            IF c$(3) = "===" THEN ii = 2
+            IF ii > 0 THEN i = i + ii: GOTO charDone
+            ii = 0
+            IF c$(4) = " == " THEN ii = 3
+            IF c$(3) = "== " THEN ii = 2
+            IF c$(3) = " ==" THEN ii = 2
+            IF c$(2) = "==" THEN ii = 1
+            IF ii > 0 THEN i = i + ii: Help_Underline = col: GOTO charDone
         END IF
 
-
-        IF c$(3) = "'''" THEN
-            i = i + 2
-            IF Help_Bold = 0 THEN Help_Bold = 1 ELSE Help_Bold = 0
-            col = Help_Col
-            GOTO Special
-        END IF
-
-        IF c$(2) = "''" THEN
-            i = i + 1
-            IF Help_Italic = 0 THEN Help_Italic = 1 ELSE Help_Italic = 0
-            col = Help_Col
-            GOTO Special
-        END IF
-
-        IF nl = 1 THEN
-
-            IF c$(3) = "** " THEN
+        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+            'Bold & Italic styles
+            IF c$(3) = "'''" THEN
                 i = i + 2
-                Help_AddTxt "    " + CHR$(254) + " ", col, 0
-                Help_NewLineIndent = Help_NewLineIndent + 6
-                GOTO Special
+                IF Help_Bold = 0 THEN Help_Bold = 1 ELSE Help_Bold = 0
+                col = Help_Col
+                GOTO charDone
             END IF
-            IF c$(2) = "* " THEN
+            IF c$(2) = "''" THEN
                 i = i + 1
-                Help_AddTxt CHR$(254) + " ", col, 0
-                Help_NewLineIndent = Help_NewLineIndent + 2
-                GOTO Special
+                IF Help_Italic = 0 THEN Help_Italic = 1 ELSE Help_Italic = 0
+                col = Help_Col
+                GOTO charDone
             END IF
-            IF c$(2) = "**" THEN
-                i = i + 1
-                Help_AddTxt "    " + CHR$(254) + " ", col, 0
-                Help_NewLineIndent = Help_NewLineIndent + 6
-                GOTO Special
-            END IF
-            IF c$ = "*" THEN
-                Help_AddTxt CHR$(254) + " ", col, 0
-                Help_NewLineIndent = Help_NewLineIndent + 2
-                GOTO Special
-            END IF
-
         END IF
 
-        s$ = "{|"
-        IF c$(LEN(s$)) = s$ THEN
-            IF MID$(a$, i, 20) = "{| class=" + CHR$(34) + "wikitable" + CHR$(34) THEN
-                REDIM tableRow(1 TO 100) AS STRING
-                REDIM tableCol(1 TO 100) AS INTEGER
-                DIM totalCols AS INTEGER
-                DIM totalRows AS INTEGER
-                DIM thisCol AS INTEGER
-                totalCols = 0: totalRows = 0
-                DO
-                    l$ = wikiGetLine$(a$, i)
-                    IF l$ = "|}" OR i >= LEN(a$) THEN EXIT DO
-                    IF l$ = "|-" THEN _CONTINUE
+        IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+            'Rulers
+            IF c$(4) = "----" AND nl = 1 THEN
+                i = i + 3
+                Help_AddTxt STRING$(Help_ww, 196), 8, 0
+                GOTO charDone
+            END IF
 
-                    m$ = ""
-                    IF LEFT$(l$, 2) = "! " THEN m$ = "!!"
-                    IF LEFT$(l$, 2) = "| " THEN m$ = "||"
+            'Definition lists
+            IF c$ = ";" AND nl = 1 THEN 'definition (new line only)
+                Help_Bold = 1: col = Help_Col: Help_DList = 1
+                IF c$(3) = ";* " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
+                IF c$(2) = ";*" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
+                GOTO charDone
+            END IF
+            IF c$ = ":" AND Help_DList > 0 THEN 'description (same or new line)
+                Help_Bold = 0: col = Help_Col
+                IF nl = 0 THEN Help_NewLine
+                Help_AddTxt "   ", col, 0
+                Help_NewLineIndent = Help_NewLineIndent + 3
+                IF Help_DList > 1 THEN
+                    Help_AddTxt CHR$(4) + " ", 15, 0
+                    Help_NewLineIndent = Help_NewLineIndent + 2
+                END IF
+                Help_DList = 0
+                GOTO charDone
+            END IF
+            IF c$ = ":" AND nl = 1 THEN 'independent description w/o definition (new line only)
+                Help_AddTxt "   ", col, 0
+                Help_NewLineIndent = Help_NewLineIndent + 3
+                GOTO charDoneKnl 'keep nl state for possible <UL> list bullets
+            END IF
 
-                    IF LEN(m$) THEN
-                        'new row
-                        totalRows = totalRows + 1
-                        IF totalRows > UBOUND(tableRow) THEN
-                            REDIM _PRESERVE tableRow(1 TO UBOUND(tableRow) + 99) AS STRING
-                        END IF
+            'Unordered lists
+            IF nl = 1 THEN
+                IF c$(3) = "** " THEN
+                    i = i + 2
+                    Help_AddTxt "   " + CHR$(4) + " ", 15, 0
+                    Help_NewLineIndent = Help_NewLineIndent + 5
+                    GOTO charDone
+                END IF
+                IF c$(2) = "* " THEN
+                    i = i + 1
+                    Help_AddTxt CHR$(4) + " ", 15, 0
+                    Help_NewLineIndent = Help_NewLineIndent + 2
+                    GOTO charDone
+                END IF
+                IF c$(2) = "**" THEN
+                    i = i + 1
+                    Help_AddTxt "   " + CHR$(4) + " ", 15, 0
+                    Help_NewLineIndent = Help_NewLineIndent + 5
+                    GOTO charDone
+                END IF
+                IF c$ = "*" THEN
+                    Help_AddTxt CHR$(4) + " ", 15, 0
+                    Help_NewLineIndent = Help_NewLineIndent + 2
+                    GOTO charDone
+                END IF
+            END IF
+        END IF
 
-                        'columns
-                        j = 3
-                        thisCol = 0
-                        DO
-                            p$ = wikiGetUntil$(l$, j, m$)
-                            j = j + 1
-                            IF LEN(_TRIM$(p$)) THEN
-                                thisCol = thisCol + 1
-                                IF totalCols < thisCol THEN totalCols = thisCol
-                                IF thisCol > UBOUND(tableCol) THEN
-                                    REDIM _PRESERVE tableCol(1 TO UBOUND(tableCol) + 99) AS INTEGER
-                                END IF
-                                IF tableCol(thisCol) < LEN(_TRIM$(p$)) + 2 THEN tableCol(thisCol) = LEN(_TRIM$(p$)) + 2
-                                tableRow(totalRows) = tableRow(totalRows) + _TRIM$(p$) + CHR$(0)
-                            END IF
-                        LOOP WHILE j < LEN(l$)
-                    END IF
-                LOOP
-                backupHelp_BG_Col = Help_BG_Col
-                backupBold = Help_Bold
-                Help_BG_Col = 2
-                FOR printTable = 1 TO totalRows
-                    IF printTable = 1 THEN
-                        Help_Bold = 1
-                    ELSE
-                        Help_Bold = 0
-                    END IF
-                    col = Help_Col
-
-                    j = 1
-                    tableOutput$ = ""
-                    FOR checkCol = 1 TO totalCols
-                        p$ = wikiGetUntil$(tableRow(printTable), j, CHR$(0))
-                        p$ = StrReplace$(p$, "&lt;", "<")
-                        p$ = StrReplace$(p$, "&gt;", ">")
-                        p$ = StrReplace$(p$, CHR$(194) + CHR$(160), "")
-                        p$ = StrReplace$(p$, "&amp;", "&")
-                        p$ = StrReplace$(p$, CHR$(226) + CHR$(136) + CHR$(146), "-")
-                        p$ = StrReplace$(p$, "<nowiki>", "")
-                        p$ = StrReplace$(p$, "</nowiki>", "")
-                        p$ = StrReplace$(p$, "<center>", "")
-                        p$ = StrReplace$(p$, "</center>", "")
-                        p$ = StrReplace$(p$, "</span>", "")
-
-                        thisCol$ = SPACE$(tableCol(checkCol))
-                        MID$(thisCol$, 2) = p$
-                        tableOutput$ = tableOutput$ + thisCol$
-                    NEXT
-                    Help_AddTxt tableOutput$, col, 0
-                    Help_AddTxt CHR$(13), col, 0
-                NEXT
-                Help_BG_Col = backupHelp_BG_Col
-                Help_Bold = backupBold
-                Help_AddTxt CHR$(13), col, 0
-            ELSE
+        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+            'Tables (ignored)
+            IF c$(2) = "{|" THEN
                 i = i + 1
                 FOR ii = i TO LEN(a$) - 1
                     IF MID$(a$, ii, 2) = "|}" THEN i = ii + 1: EXIT FOR
                 NEXT
+                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
+                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                GOTO charDone
             END IF
-            GOTO Special
         END IF
 
-        IF c$(3) = CHR$(226) + CHR$(128) + CHR$(166) THEN '...
+        'Unicodes
+        IF ((c AND &HE0~%%) = 192) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) THEN '2-byte UTF-8
+            i = i + 1
+            FOR ii = 0 TO wpUtfReplCnt
+                IF wpUtfRepl(ii).utf8 = c$(2) + MKI$(&H2020) THEN
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                END IF
+            NEXT
+            GOTO charDone
+        END IF
+        IF ((c AND &HF0~%%) = 224) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) AND ((ASC(c$(3), 3) AND &HC0~%%) = 128) THEN '3-byte UTF-8
             i = i + 2
-            Help_AddTxt "...", col, 0
-            GOTO Special
+            FOR ii = 0 TO wpUtfReplCnt
+                IF wpUtfRepl(ii).utf8 = c$(3) + CHR$(0) THEN
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                END IF
+            NEXT
+            GOTO charDone
         END IF
-
-        IF c$ = CHR$(226) THEN 'UNICODE UTF8 extender, it's a very good bet the following 2 characters will be 2 bytes of UNICODE
-            i = i + 2
-            GOTO Special
-        END IF
-
-        IF c$ = ":" AND nl = 1 THEN
-            Help_AddTxt "    ", col, 0
-            Help_NewLineIndent = Help_NewLineIndent + 4
-            i = i + 1: GOTO special2
-        END IF
-
-        s$ = "__NOTOC__" + CHR$(10)
-        IF c$(LEN(s$)) = s$ THEN
-            i = i + LEN(s$) - 1
-            GOTO Special
-        END IF
-        s$ = "__NOTOC__"
-        IF c$(LEN(s$)) = s$ THEN
-            i = i + LEN(s$) - 1
-            GOTO Special
-        END IF
-
-        IF c$(4) = "----" THEN
+        IF ((c AND &HF8~%%) = 240) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) AND ((ASC(c$(3), 3) AND &HC0~%%) = 128) AND ((ASC(c$(4), 4) AND &HC0~%%) = 128) THEN '4-byte UTF-8
             i = i + 3
-            Help_AddTxt STRING$(100, 196), 8, 0
-            GOTO Special
+            FOR ii = 0 TO wpUtfReplCnt
+                IF wpUtfRepl(ii).utf8 = c$(4) THEN
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                END IF
+            NEXT
+            GOTO charDone
         END IF
 
-
-
-        IF c$ = CHR$(10) THEN
+        'Line breaks
+        IF c = 10 OR c$(4) = "<br>" OR c$(6) = "<br />" THEN
+            IF c$(4) = "<br>" THEN i = i + 3
+            IF c$(6) = "<br />" THEN i = i + 5
             Help_NewLineIndent = 0
 
-            IF Help_Txt_Len >= 8 THEN
-                IF ASC(Help_Txt$, Help_Txt_Len - 3) = 13 AND ASC(Help_Txt$, Help_Txt_Len - 7) = 13 THEN GOTO skipdoubleblanks
+            IF Help_LockParse > -2 THEN 'everywhere except in fixed blocks
+                IF Help_Txt_Len >= 8 THEN 'allow max. one blank line (ie. collapse multi blanks to just one)
+                    IF ASC(Help_Txt$, Help_Txt_Len - 3) = 13 AND ASC(Help_Txt$, Help_Txt_Len - 7) = 13 THEN
+                        IF Help_Center > 0 THEN Help_CIndent$ = MID$(Help_CIndent$, 2) 'drop respective center indent
+                        Help_DList = 0: Help_Bold = 0: col = Help_Col 'definition list incl. style ends after blank line
+                        GOTO skipMultiBlanks
+                    END IF
+                END IF
             END IF
-
             Help_AddTxt CHR$(13), col, 0
 
-            skipdoubleblanks:
+            skipMultiBlanks:
+            IF Help_LockParse <> 0 THEN 'in all blocks reset styles at EOL
+                Help_Bold = 0: Help_Italic = 0
+                col = Help_Col
+            END IF
             nl = 1
-            i = i + 1: GOTO special2
+            GOTO charDoneKnl 'keep just set nl state
         END IF
 
         Help_AddTxt CHR$(c), col, 0
 
-        Special:
-        i = i + 1
+        charDone:
         nl = 0
-        special2:
+        charDoneKnl: 'done, but keep nl state
+        i = i + 1
     LOOP
 
     'Trim Help_Txt$
     Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len) + CHR$(13) 'chr13 stops reads past end of content
-
-    'generate preview file
-    'OPEN "help_preview.txt" FOR OUTPUT AS #1
-    'FOR i = 1 TO LEN(Help_Txt$) STEP 4
-    '    c = ASC(Help_Txt$, i)
-    '    c$ = CHR$(c)
-    '    IF c = 13 THEN c$ = CHR$(13) + CHR$(10)
-    '    PRINT #1, c$;
-    'NEXT
-    'CLOSE #1
-
-    'PRINT "Finished parsing!": _DISPLAY
-
 
     IF Help_PageLoaded$ = "Keyword Reference - Alphabetical" THEN
 
@@ -806,7 +824,6 @@ SUB WikiParse (a$)
                         a2$ = LEFT$(a2$, INSTR(a2$, "...") - 1)
                     END IF
 
-
                     skip = 0
                     IF UCASE$(LEFT$(a2$, 3)) <> "_GL" THEN
                         FOR ci = 1 TO LEN(a2$)
@@ -859,25 +876,71 @@ SUB WikiParse (a$)
         CLOSE #fh
 
     END IF
-
-
-
-
-
 END SUB
 
-FUNCTION wikiGetLine$ (a$, i)
-    wikiGetLine$ = wikiGetUntil(a$, i, CHR$(10))
+FUNCTION wikiBuildCIndent$ (a$)
+    wikiBuildCIndent$ = "": IF a$ = "" THEN EXIT FUNCTION
+
+    org$ = a$: b$ = "" 'eliminate internal links
+    FOR i = 1 TO LEN(org$)
+        IF MID$(org$, i, 2) = "[[" THEN
+            FOR ii = i + 2 TO LEN(org$)
+                IF MID$(org$, ii, 1) = "|" THEN i = ii + 1: EXIT FOR
+                IF MID$(org$, ii, 2) = "]]" THEN i = i + 2: EXIT FOR
+            NEXT
+        END IF
+        IF MID$(org$, i, 2) = "]]" THEN i = i + 2
+        b$ = b$ + MID$(org$, i, 1)
+    NEXT
+    org$ = b$: b$ = "" 'eliminate templates
+    FOR i = 1 TO LEN(org$)
+        IF MID$(org$, i, 2) = "{{" THEN
+            FOR ii = i + 2 TO LEN(org$)
+                IF MID$(org$, ii, 1) = "|" THEN i = ii + 1: EXIT FOR
+                IF MID$(org$, ii, 2) = "}}" THEN i = i + 2: EXIT FOR
+            NEXT
+        END IF
+        IF MID$(org$, i, 1) = "|" THEN
+            FOR ii = i + 1 TO LEN(org$)
+                IF MID$(org$, ii, 2) = "}}" THEN i = ii: EXIT FOR
+            NEXT
+        END IF
+        IF MID$(org$, i, 2) = "}}" THEN i = i + 2
+        b$ = b$ + MID$(org$, i, 1)
+    NEXT
+    org$ = b$: b$ = "" 'eliminate text styles and ext. links
+    FOR i = 1 TO LEN(org$)
+        IF MID$(org$, i, 3) = "'''" THEN i = i + 3
+        IF MID$(org$, i, 2) = "''" THEN i = i + 2
+        IF MID$(org$, i, 1) = "[" THEN i = i + 1
+        IF MID$(org$, i, 1) = "]" THEN i = i + 1
+        b$ = b$ + MID$(org$, i, 1)
+    NEXT
+    b$ = b$ + CHR$(10)
+
+    i = 1: st = 1: br = 0: res$ = ""
+    WHILE i <= LEN(b$)
+        ws = INSTR(i, b$, " "): lb = INSTR(i, b$, CHR$(10))
+        IF lb > 0 AND (ws > lb OR lb - st <= Help_ww) THEN SWAP ws, lb
+        IF ws > 0 AND ws - st <= Help_ww THEN
+            br = ws: i = ws + 1
+            IF ASC(b$, ws) <> 10 AND i <= LEN(b$) THEN _CONTINUE
+        END IF
+        IF br = 0 THEN br = lb
+        ci = (Help_ww - (br - st)) \ 2: IF ci < 0 THEN ci = 0
+        res$ = res$ + CHR$(ci)
+        i = br + 1: st = br + 1: br = 0
+    WEND
+    wikiBuildCIndent$ = res$
 END FUNCTION
 
-FUNCTION wikiGetUntil$ (a$, i, separator$)
-    IF i >= LEN(a$) THEN EXIT FUNCTION
-    j = INSTR(i, a$, separator$)
+FUNCTION wikiLookAhead$ (a$, i, token$)
+    wikiLookAhead$ = "": IF i >= LEN(a$) THEN EXIT FUNCTION
+    j = INSTR(i, a$, token$)
     IF j = 0 THEN
-        wikiGetUntil$ = MID$(a$, i)
-        i = LEN(a$)
+        wikiLookAhead$ = MID$(a$, i)
     ELSE
-        wikiGetUntil$ = MID$(a$, i, j - i)
+        wikiLookAhead$ = MID$(a$, i, j - i)
         i = j + 1
     END IF
 END FUNCTION
