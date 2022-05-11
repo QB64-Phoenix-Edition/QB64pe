@@ -1,23 +1,28 @@
 
-# The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
-TEMP_ID ?=
-
 # Disable implicit rules
 MAKEFLAGS += --no-builtin-rules
 
-# Extra flags go at the beginning
+# OS defaults to Linux if not provided
+ifndef OS
+	OS := lnx
+endif
+
+# The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
+# This is blank for the 'normal' files
+TEMP_ID ?=
+
+# Extra flags go at the beginning of the library list
 #
 # This is important for libraries, since they could potentially be referencing
 # things from our dependencies
 CXXFLAGS += $(CXXFLAGS_EXTRA)
 CXXLIBS += $(CXXLIBS_EXTRA)
 
+# There are no C lib flags, those all go in CXXLIBS
+CFLAGS += $(CFLAGS_EXTRA)
+
 EXE_OBJS :=
 EXE_LIBS :=
-
-ifndef OS
-	OS := lnx
-endif
 
 ifeq ($(OS),lnx)
 	PATH_INTERNAL := ./internal
@@ -28,6 +33,9 @@ ifeq ($(OS),lnx)
 	RM := rm -fr
 	OBJCOPY := objcopy
 	FIXPATH = $1
+
+	# Check bitness by getting length of `long
+	# 64 bits on x86_64, 32 bits on x86
 	BITS := $(shell getconf LONG_BIT)
 
 	ifeq ($(BITS),)
@@ -50,6 +58,8 @@ ifeq ($(OS),win)
 	ICON_OBJ := $(PATH_INTERNAL_TEMP)\icon.o
 	RM := del /Q
 	FIXPATH = $(subst /,\,$1)
+
+	# Check bitness by seeing which compiler we have
 	ifeq ($(wildcard $(PATH_INTERNAL_C)\c_compiler\i686-w64-mingw32),)
 		BITS := 64
 	else
