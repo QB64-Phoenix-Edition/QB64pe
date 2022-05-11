@@ -3,12 +3,6 @@ setlocal
 echo QB64 Setup
 echo.
 
-del /q /s internal\c\libqb\*.o >nul 2>nul
-del /q /s internal\c\libqb\*.a >nul 2>nul
-del /q /s internal\c\parts\*.o >nul 2>nul
-del /q /s internal\c\parts\*.a >nul 2>nul
-del /q /s internal\temp\*.* >nul 2>nul
-
 mkdir internal\c\c_compiler
 
 if exist internal\c\c_compiler\bin\c++.exe goto skipccompsetup
