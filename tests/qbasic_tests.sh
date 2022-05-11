@@ -29,6 +29,9 @@ do
 
     TESTCASE=$test
 
+    # Clear out temp folder before next compile, avoids stale compilelog files
+    rm -fr ./internal/temp/*
+
     "$QB64" -x  "$sourceFile" -o "./$EXES_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
     cp_if_exists ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
