@@ -5,7 +5,12 @@ TEMP_ID ?=
 # Disable implicit rules
 MAKEFLAGS += --no-builtin-rules
 
+# Extra flags go at the beginning
+#
+# This is important for libraries, since they could potentially be referencing
+# things from our dependencies
 CXXFLAGS += $(CXXFLAGS_EXTRA)
+CXXLIBS += $(CXXLIBS_EXTRA)
 
 EXE_OBJS :=
 EXE_LIBS :=
@@ -92,17 +97,17 @@ CLEAN_LIST :=
 CXXFLAGS := -w
 
 ifeq ($(OS),lnx)
-	CXXLIBS := -lGL -lGLU -lX11 -lpthread -ldl -lrt
+	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
 	CXXFLAGS += -DFREEGLUT_STATIC
 endif
 
 ifeq ($(OS),win)
-	CXXLIBS := -static-libgcc -static-libstdc++
+	CXXLIBS += -static-libgcc -static-libstdc++
 	CXXFLAGS += -DGLEW_STATIC -DFREEGLUT_STATIC
 endif
 
 ifeq ($(OS),osx)
-	CXXLIBS := -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa
+	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa
 endif
 
 QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).o
