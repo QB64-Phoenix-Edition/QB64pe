@@ -12516,10 +12516,11 @@ ELSE
     CxxFlagsExtra$ = "-O2"
 END IF
 
-CxxLibsExtra$ = CxxLibsExtra$ + " " + mylib$ + " " + mylibopt$
+CxxLibsExtra$ = mylib$ + " " + mylibopt$
 
 makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(path.exe$ + file$ + extension$)
 makeline$ = makeline$ + " CXXFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$)
+makeline$ = makeline$ + " CFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$) ' Just the -O flag, use for C files as well
 makeline$ = makeline$ + " CXXLIBS_EXTRA=" + AddQuotes$(CxxLibsExtra$)
 
 IF os$ = "WIN" THEN
