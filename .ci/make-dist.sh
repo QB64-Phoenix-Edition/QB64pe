@@ -1,5 +1,11 @@
 #!/bin/bash
 
+buildPlatform=$1
+format=
+
+ARCHIVE_ROOT=qb64
+DIST_ROOT=./dist/$ARCHIVE_ROOT
+
 case "$buildPlatform" in
     windows-latest)
         ./internal/c/c_compiler/bin/mingw32-make.exe OS=win clean
@@ -11,12 +17,6 @@ case "$buildPlatform" in
         make OS=osx clean
         ;;
 esac
-
-buildPlatform=$1
-format=
-
-ARCHIVE_ROOT=qb64
-DIST_ROOT=./dist/$ARCHIVE_ROOT
 
 mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
