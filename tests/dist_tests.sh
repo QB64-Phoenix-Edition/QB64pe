@@ -14,6 +14,12 @@ mkdir -p "$RESULTS_DIR"
 # Move into distribution location
 cd $1
 
+# Verify that ./internal/temp/ is empty save for temp.bin
+# xargs trims the front whitespace on OSX
+tempCount=$(find ./internal/temp/ -type f | wc -l | xargs)
+[ "$tempCount" == "1" ]
+assert_success_named "./Internal/temp file count" echo "Temp has too many files: $tempCount"
+
 # Specific steps for each platform
 case "$2" in
     win)
