@@ -1,5 +1,17 @@
 #!/bin/bash
 
+case "$buildPlatform" in
+    windows-latest)
+        ./internal/c/c_compiler/bin/mingw32-make.exe OS=win clean
+        ;;
+    ubuntu-latest)
+        make OS=lnx clean
+        ;;
+    macos-latest)
+        make OS=osx clean
+        ;;
+esac
+
 buildPlatform=$1
 format=
 
