@@ -317,9 +317,12 @@ EXE_OBJS := $(QBLIB) $(EXE_OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-# FIXME: 32-bit support
 $(PATH_INTERNAL_TEMP)/data.o: $(PATH_INTERNAL_TEMP)/data.bin
 	$(OBJCOPY) -Ibinary $(OBJCOPY_FLAGS) $< $@
+
+# Clean all files out of ./internal/temp except for temp.bin
+CLEAN_LIST += $(wildcard $(PATH_INTERNAL_TEMP)/*)
+CLEAN_LIST := $(filter-out $(PATH_INTERNAL_TEMP)/temp.bin,$(CLEAN_LIST))
 
 clean:
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
