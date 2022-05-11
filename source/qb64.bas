@@ -12478,19 +12478,13 @@ o$ = LCASE$(os$)
 win = 0: IF os$ = "WIN" THEN win = 1
 lnx = 0: IF os$ = "LNX" THEN lnx = 1
 mac = 0: IF MacOSX THEN mac = 1: o$ = "osx"
-defines$ = "": defines_header$ = " -D "
 ver$ = Version$ 'eg. "0.123"
 libs$ = ""
-make$ = ""
 makedeps$ = ""
+make$ = GetMakeExecutable$
 
 localpath$ = "internal\c\"
 
-IF os$ = "WIN" THEN
-    make$ = "internal\c\c_compiler\bin\mingw32-make.exe"
-else
-    make$ = "make"
-end if
 
 IF DEPENDENCY(DEPENDENCY_GL) THEN               makedeps$ = makedeps$ + " DEP_GL=y"
 IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN      makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
@@ -12513,25 +12507,20 @@ IF ExeIconSet OR VersionInfoSet THEN            makedeps$ = makedeps$ + " DEP_IC
 
 IF tempfolderindex > 1 THEN                     makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
+CxxFlagsExtra$ = ""
+CxxLibsExtra$ = ""
+
 IF Include_GDB_Debugging_Info THEN
-    makedeps$ = makedeps$ + " CXXFLAGS_EXTRA=-Og"
+    CxxFlagsExtra$ = "-Og"
 ELSE
-    makedeps$ = makedeps$ + " CXXFLAGS_EXTRA=-O2"
+    CxxFlagsExtra$ = "-O2"
 END IF
 
-makeline$ = make$ + makedeps$ + " EXE=" + QuotedFilename$(path.exe$ + file$ + extension$)
+CxxLibsExtra$ = CxxLibsExtra$ + " " + mylib$ + " " + mylibopt$
 
-' Handle providing extra libraries to Make
-DIM extraLibsFile AS LONG
-extraLibsFile = FREEFILE
-OPEN tmpdir$ + "extra_libs.txt" FOR OUTPUT AS #extraLibsFile
-
-_ECHO mylib$
-IF LEN(mylib$) THEN
-    PRINT #extraLibsFile, mylib$, mylibopt$
-END IF
-
-CLOSE #extraLibsFile
+makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(path.exe$ + file$ + extension$)
+makeline$ = makeline$ + " CXXFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$)
+makeline$ = makeline$ + " CXXLIBS_EXTRA=" + AddQuotes$(CxxLibsExtra$)
 
 IF os$ = "WIN" THEN
 
@@ -12664,16 +12653,6 @@ IF os$ = "WIN" THEN
             dummy = DarkenFGBG(0)
         END IF
     END IF
-
-    ffh = FREEFILE
-    OPEN tmpdir$ + "recompile_win.bat" FOR OUTPUT AS #ffh
-    PRINT #ffh, "@echo off"
-    PRINT #ffh, "cd %0\..\"
-    PRINT #ffh, "echo Recompiling..."
-    PRINT #ffh, "cd ../c"
-    PRINT #ffh, makeline$
-    PRINT #ffh, "pause"
-    CLOSE ffh
 
     ffh = FREEFILE
     OPEN tmpdir$ + "debug_win.bat" FOR OUTPUT AS #ffh
@@ -12826,26 +12805,13 @@ IF os$ = "LNX" THEN
     NEXT
 
     IF INSTR(_OS$, "[MACOSX]") THEN
-        OPEN "./internal/c/makeline_osx.txt" FOR INPUT AS #150
-    ELSEIF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN
-        OPEN "./internal/c/makeline_lnx_nogui.txt" FOR INPUT AS #150
-    ELSE
-        OPEN "./internal/c/makeline_lnx.txt" FOR INPUT AS #150
-    END IF
-
-    LINE INPUT #150, a$: a$ = GDB_Fix(a$)
-    CLOSE #150
-    'change qbx.cpp to qbx999.cpp?
-    x = INSTR(a$, "qbx.cpp"): IF x <> 0 AND tempfolderindex <> 1 THEN a$ = LEFT$(a$, x - 1) + "qbx" + str2$(tempfolderindex) + ".cpp" + RIGHT$(a$, LEN(a$) - (x + 6))
-
-    IF INSTR(_OS$, "[MACOSX]") THEN
 
         ffh = FREEFILE
         OPEN tmpdir$ + "recompile_osx.command" FOR OUTPUT AS #ffh
         PRINT #ffh, "cd " + CHR_QUOTE + "$(dirname " + CHR_QUOTE + "$0" + CHR_QUOTE + ")" + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "echo " + CHR_QUOTE + "Recompiling..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "cd ../c" + CHR$(10);
-        PRINT #ffh, a$ + CHR$(10);
+        PRINT #ffh, makeline$ + CHR$(10);
         PRINT #ffh, "read -p " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         CLOSE ffh
         SHELL _HIDE "chmod +x " + tmpdir$ + "recompile_osx.command"
@@ -12884,7 +12850,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "}" + CHR$(10);
         PRINT #ffh, "echo " + CHR_QUOTE + "Recompiling..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "cd ../c" + CHR$(10);
-        PRINT #ffh, a$ + CHR$(10);
+        PRINT #ffh, makeline$ + CHR$(10);
         PRINT #ffh, "echo " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
@@ -12951,7 +12917,7 @@ END IF
 
 IF compfailed THEN
     IF idemode THEN
-        idemessage$ = "C++ Compilation failed " + CHR$(0) + "(Check " + _TRIM$(compilelog$) + ")"
+        idemessage$ = "C++ Compilation failed " + CHR$(0) + "(Check " + _TRIM$(compilelog$) + " And " + _TRIM$(errorcompilelog$) + ")"
         GOTO ideerror
     END IF
     IF compfailed THEN
@@ -13195,41 +13161,13 @@ FUNCTION ParseCMDLineArgs$ ()
                         WriteConfigSetting generalSettingsSection$, "DebugInfo", "True" + DebugInfoIniWarning$
                         idedebuginfo = 1
                         Include_GDB_Debugging_Info = idedebuginfo
-                        IF os$ = "WIN" THEN
-                            CHDIR "internal\c"
-                            SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-                            CHDIR "..\.."
-                        END IF
-                        IF os$ = "LNX" THEN
-                            CHDIR "./internal/c"
-
-                            IF INSTR(_OS$, "[MACOSX]") THEN
-                                SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-                            ELSE
-                                SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-                            END IF
-                            CHDIR "../.."
-                        END IF
+                        PurgeTemporaryBuildFiles (os$), (MacOSX)
                     CASE ":debuginfo=false"
                         PRINT "debuginfo = false"
                         WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
                         idedebuginfo = 0
                         Include_GDB_Debugging_Info = idedebuginfo
-                        IF os$ = "WIN" THEN
-                            CHDIR "internal\c"
-                            SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-                            CHDIR "..\.."
-                        END IF
-                        IF os$ = "LNX" THEN
-                            CHDIR "./internal/c"
-
-                            IF INSTR(_OS$, "[MACOSX]") THEN
-                                SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-                            ELSE
-                                SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-                            END IF
-                            CHDIR "../.."
-                        END IF
+                        PurgeTemporaryBuildFiles (os$), (MacOSX)
                     CASE ELSE
                         PRINT "Invalid settings switch: "; token$
                         PRINT
@@ -13243,21 +13181,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 IF MID$(token$, 3, 1) = ":" THEN ideStartAtLine = VAL(MID$(token$, 4))
                 cmdlineswitch = -1
             CASE "-p" 'Purge
-                IF os$ = "WIN" THEN
-                    CHDIR "internal\c"
-                    SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-                    CHDIR "..\.."
-                END IF
-                IF os$ = "LNX" THEN
-                    CHDIR "./internal/c"
-
-                    IF INSTR(_OS$, "[MACOSX]") THEN
-                        SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-                    ELSE
-                        SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-                    END IF
-                    CHDIR "../.."
-                END IF
+                PurgeTemporaryBuildFiles (os$), (MacOSX)
                 cmdlineswitch = -1
             CASE "-z" 'Not compiling C code
                 No_C_Compile_Mode = 1
@@ -24017,74 +23941,6 @@ SUB SetDependency (requirement)
     END IF
 END SUB
 
-SUB Build (path$)
-    previous_dir$ = _CWD$
-
-    'Count the separators in the path
-    depth = 1
-    FOR x = 1 TO LEN(path$)
-        IF ASC(path$, x) = 92 OR ASC(path$, x) = 47 THEN depth = depth + 1
-    NEXT
-    CHDIR path$
-
-    return_path$ = ".."
-    FOR x = 2 TO depth
-        return_path$ = return_path$ + "\.."
-    NEXT
-
-    bfh = FREEFILE
-    OPEN "build" + BATCHFILE_EXTENSION FOR BINARY AS #bfh
-    DO UNTIL EOF(bfh)
-        LINE INPUT #bfh, c$
-        use = 0
-        IF LEN(c$) THEN use = 1
-        IF c$ = "pause" THEN use = 0
-        IF LEFT$(c$, 1) = "#" THEN use = 0 'eg. #!/bin/sh
-        IF LEFT$(c$, 13) = "cd " + CHR$(34) + "$(dirname" THEN use = 0 'eg. cd "$(dirname "$0")"
-        IF INSTR(LCASE$(c$), "press any key") THEN EXIT DO
-        c$ = GDB_Fix$(c$)
-        IF use THEN
-            IF os$ = "WIN" THEN
-                SHELL _HIDE "cmd /C " + c$ + " 2>> " + QuotedFilename$(return_path$ + "\" + compilelog$)
-            ELSE
-                SHELL _HIDE c$ + " 2>> " + QuotedFilename$(previous_dir$ + "/" + compilelog$)
-            END IF
-        END IF
-    LOOP
-    CLOSE #bfh
-
-    IF os$ = "WIN" THEN
-        CHDIR return_path$
-    ELSE
-        CHDIR previous_dir$
-    END IF
-END SUB
-
-FUNCTION GDB_Fix$ (g_command$) 'edit a gcc/g++ command line to include debugging info
-    c$ = g_command$
-    IF Include_GDB_Debugging_Info THEN
-        IF LEFT$(c$, 4) = "gcc " OR LEFT$(c$, 4) = "g++ " THEN
-            c$ = LEFT$(c$, 4) + " -g " + RIGHT$(c$, LEN(c$) - 4)
-            GOTO added_gdb_flag
-        END IF
-        FOR o = 1 TO 6
-            IF o = 1 THEN o$ = "\g++ "
-            IF o = 2 THEN o$ = "/g++ "
-            IF o = 3 THEN o$ = "\gcc "
-            IF o = 4 THEN o$ = "/gcc "
-            IF o = 5 THEN o$ = " gcc "
-            IF o = 6 THEN o$ = " g++ "
-            x = INSTR(UCASE$(c$), UCASE$(o$))
-            'note: -g adds debug symbols
-            IF x THEN c$ = LEFT$(c$, x - 1) + o$ + " -g " + RIGHT$(c$, LEN(c$) - x - (LEN(o$) - 1)): EXIT FOR
-        NEXT
-        added_gdb_flag:
-        'note: -s strips all debug symbols which is good for size but not for debugging
-        x = INSTR(c$, " -s "): IF x THEN c$ = LEFT$(c$, x - 1) + " " + RIGHT$(c$, LEN(c$) - x - 3)
-    END IF
-    GDB_Fix$ = c$
-END FUNCTION
-
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$)
     t$ = e$ 'So we preserve our original data, we parse a temp copy of it
@@ -25945,6 +25801,7 @@ END SUB
 
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'
+'$INCLUDE:'utilities\build.bas'
 '$INCLUDE:'subs_functions\extensions\opengl\opengl_methods.bas'
 '$INCLUDE:'utilities\ini-manager\ini.bm'
 
