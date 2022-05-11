@@ -31,8 +31,8 @@ do
 
     "$QB64" -x  "$sourceFile" -o "./$EXES_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
-    cp ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
-    cp ./internal/temp/errorcompilelog.txt $RESULTS_DIR/$test-errorcompilelog.txt
+    cp_if_exists ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
+    cp_if_exists ./internal/temp/errorcompilelog.txt $RESULTS_DIR/$test-errorcompilelog.txt
 
     (exit $ERR)
     assert_success_named "Compile" "Compilation Error:" show_failure $test

@@ -69,6 +69,11 @@ assert_ignored ()
     echo "$PREFIX: $TEST_COUNT: $TESTCASE:$YELLOW IGNORED!$RESET"
 }
 
+cp_if_exists ()
+(
+    [ -f "$1" ] && cp "$1" "$2"
+)
+
 . "$TEST_SCRIPT" "$@"
 
 exit $TOTAL_RESULT
