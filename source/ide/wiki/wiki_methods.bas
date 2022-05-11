@@ -692,15 +692,18 @@ SUB WikiParse (a$)
         IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
             'Tables (ignored)
             IF c$(2) = "{|" THEN
-                i = i + 1
-                FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 2) = "|}" THEN i = ii + 1: EXIT FOR
+                wla$ = wikiLookAhead$(a$, i + 2, "|}"): iii = 0
+                FOR ii = 1 TO LEN(wla$)
+                    IF MID$(wla$, ii, 1) = "|" AND MID$(wla$, ii, 2) <> "|-" THEN iii = iii + 1
                 NEXT
-                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
-                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
-                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
-                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
-                Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                i = i + 1 + LEN(wla$) + 2
+                IF iii > 1 OR INSTR(wla$, "__TOC__") = 0 THEN 'ignore TOC only tables
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                END IF
                 GOTO charDone
             END IF
         END IF
