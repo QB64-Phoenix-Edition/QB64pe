@@ -306,7 +306,7 @@ SUB WikiParse (a$)
                 i = i + LEN(s$) - 1
                 wla$ = wikiLookAhead$(a$, i + 1, "</center>")
                 IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                    i = i + LEN(wla$) + 9 'ignore TOC links and nested center
+                    i = i + LEN(wla$) + 9 'ignore TOC links
                 ELSE
                     Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                     Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0 'center content
@@ -329,7 +329,7 @@ SUB WikiParse (a$)
                     IF MID$(a$, ii, 1) = ">" THEN
                         wla$ = wikiLookAhead$(a$, ii + 1, "</p>")
                         IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                            i = ii + LEN(wla$) + 4 'ignore TOC links and nested center
+                            i = ii + LEN(wla$) + 4 'ignore TOC links
                         ELSEIF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
                             Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                             Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0 'center (if in style)
@@ -436,6 +436,22 @@ SUB WikiParse (a$)
             END IF
         END IF
 
+        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+            'Bold & Italic styles
+            IF c$(3) = "'''" THEN
+                i = i + 2
+                IF Help_Bold = 0 THEN Help_Bold = 1 ELSE Help_Bold = 0
+                col = Help_Col
+                GOTO charDone
+            END IF
+            IF c$(2) = "''" THEN
+                i = i + 1
+                IF Help_Italic = 0 THEN Help_Italic = 1 ELSE Help_Italic = 0
+                col = Help_Col
+                GOTO charDone
+            END IF
+        END IF
+
         'Templates
         IF c = 123 THEN '"{"
             IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{KW|" THEN 'just nice wrapped links
@@ -451,12 +467,18 @@ SUB WikiParse (a$)
                 GOTO charDone
             END IF
         END IF
-        IF cb = 1 THEN
+        IF cb > 0 THEN
             IF c$ = "|" OR c$(2) = "}}" THEN
-                IF c$(2) = "}}" THEN i = i + 1
-                cb = 0: cbo$ = ""
+                IF c$ = "|" AND cb = 2 THEN
+                    wla$ = wikiLookAhead$(a$, i + 1, "}}")
+                    cb = 0: i = i + LEN(wla$) + 2 'after 1st, ignore all further template parameters
+                ELSEIF c$(2) = "}}" THEN
+                    cb = 0: i = i + 1
+                END IF
+                IF c$ = "|" AND cb = 1 THEN cb = 2
 
                 IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+                    cbo$ = ""
                     'Standard section headings (section color, h3 w/o underline, h2 with underline)
                     'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
                     IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
@@ -585,13 +607,10 @@ SUB WikiParse (a$)
 
             END IF
 
-            cb$ = cb$ + c$ 'reading maro name
+            IF cb = 1 THEN cb$ = cb$ + c$ 'reading macro name
+            IF cb = 2 THEN Help_AddTxt CHR$(c), col, 0 'copy macro'd text
             GOTO charDone
-        END IF 'cb=1
-        IF c$(2) = "}}" THEN 'probably the end of a text section of macro'd text
-            i = i + 1
-            GOTO charDone
-        END IF
+        END IF 'cb > 0
 
         IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
             'Custom section headings (current color, h3 w/o underline, h2 with underline)
@@ -607,22 +626,6 @@ SUB WikiParse (a$)
             IF c$(3) = " ==" THEN ii = 2
             IF c$(2) = "==" THEN ii = 1
             IF ii > 0 THEN i = i + ii: Help_Underline = col: GOTO charDone
-        END IF
-
-        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
-            'Bold & Italic styles
-            IF c$(3) = "'''" THEN
-                i = i + 2
-                IF Help_Bold = 0 THEN Help_Bold = 1 ELSE Help_Bold = 0
-                col = Help_Col
-                GOTO charDone
-            END IF
-            IF c$(2) = "''" THEN
-                i = i + 1
-                IF Help_Italic = 0 THEN Help_Italic = 1 ELSE Help_Italic = 0
-                col = Help_Col
-                GOTO charDone
-            END IF
         END IF
 
         IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
