@@ -2,9 +2,8 @@
 # Disable implicit rules
 MAKEFLAGS += --no-builtin-rules
 
-# OS defaults to Linux if not provided
 ifndef OS
-	OS := lnx
+$(error "OS must be set to 'lnx', 'win', or 'osx'")
 endif
 
 # The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
