@@ -138,6 +138,7 @@ endif
 	# Required dependencies of QB64 itself
 	DEP_FONT := y
 	DEP_ICON := y
+	DEP_ICON_RC := y
 	DEP_SOCKETS := y
 endif
 
