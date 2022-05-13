@@ -193,7 +193,7 @@ SUB Help_NewLine
 
     IF Help_Center > 0 THEN 'center overrides regular indent
         Help_NewLineIndent = 0
-        Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0
+        Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), Help_Col, 0
         Help_CIndent$ = MID$(Help_CIndent$, 2)
     ELSEIF Help_NewLineIndent > 0 THEN
         Help_AddTxt SPACE$(Help_NewLineIndent), Help_Col, 0
@@ -264,12 +264,6 @@ SUB WikiParse (a$)
         c$(ii) = SPACE$(ii)
     NEXT
 
-    i = INSTR(a$, "<span ")
-    DO WHILE i > 0
-        a$ = LEFT$(a$, i - 1) + MID$(a$, INSTR(i + 1, a$, ">") + 1)
-        i = INSTR(a$, "<span ")
-    LOOP
-
     n = LEN(a$)
     i = 1
     DO WHILE i <= n
@@ -301,7 +295,7 @@ SUB WikiParse (a$)
             s$ = "<sup>": IF c$(LEN(s$)) = s$ THEN Help_AddTxt "^", col, 0: i = i + LEN(s$) - 1: GOTO charDone
             s$ = "</sup>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
 
-            s$ = "<center>"
+            s$ = "<center>" 'centered section
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 wla$ = wikiLookAhead$(a$, i + 1, "</center>")
@@ -309,7 +303,7 @@ SUB WikiParse (a$)
                     i = i + LEN(wla$) + 9 'ignore TOC links
                 ELSE
                     Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
-                    Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0 'center content
+                    Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center content
                     Help_CIndent$ = MID$(Help_CIndent$, 2)
                 END IF
                 GOTO charDone
@@ -321,8 +315,7 @@ SUB WikiParse (a$)
                 Help_NewLine
                 GOTO charDone
             END IF
-
-            s$ = "<p style="
+            s$ = "<p style=" 'custom paragraph (maybe centered)
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 FOR ii = i TO LEN(a$) - 1
@@ -332,7 +325,7 @@ SUB WikiParse (a$)
                             i = ii + LEN(wla$) + 4 'ignore TOC links
                         ELSEIF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
                             Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
-                            Help_AddTxt SPACE$(ASC(LEFT$(Help_CIndent$, 1))), col, 0 'center (if in style)
+                            Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center (if in style)
                             Help_CIndent$ = MID$(Help_CIndent$, 2)
                             i = ii
                         END IF
@@ -348,9 +341,22 @@ SUB WikiParse (a$)
                 Help_NewLine
                 GOTO charDone
             END IF
+            s$ = "<span" 'custom inline attributes ignored
+            IF c$(LEN(s$)) = s$ THEN
+                i = i + LEN(s$) - 1
+                FOR ii = i TO LEN(a$) - 1
+                    IF MID$(a$, ii, 1) = ">" THEN i = ii: EXIT FOR
+                NEXT
+                GOTO charDone
+            END IF
+            s$ = "</span>"
+            IF c$(LEN(s$)) = s$ THEN
+                i = i + LEN(s$) - 1
+                GOTO charDone
+            END IF
 
-            s$ = "<div"
-            IF c$(LEN(s$)) = s$ THEN 'ignore divisions (TOC and letter links)
+            s$ = "<div" 'ignore divisions (TOC and letter links)
+            IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 FOR ii = i TO LEN(a$) - 1
                     IF MID$(a$, ii, 6) = "</div>" THEN i = ii + 5: EXIT FOR
@@ -395,7 +401,7 @@ SUB WikiParse (a$)
                 Help_LinkN = Help_LinkN + 1
                 Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
 
-                IF Help_BG_Col = 0 THEN
+                IF Help_LockParse = 0 THEN
                     Help_AddTxt text$, Help_Col_Link, Help_LinkN
                 ELSE
                     Help_AddTxt text$, Help_Col_Bold, Help_LinkN
@@ -473,6 +479,15 @@ SUB WikiParse (a$)
                     wla$ = wikiLookAhead$(a$, i + 1, "}}")
                     cb = 0: i = i + LEN(wla$) + 2 'after 1st, ignore all further template parameters
                 ELSEIF c$(2) = "}}" THEN
+                    IF LCASE$(LEFT$(cb$, 5)) = "small" THEN
+                        IF ASC(cb$, 6) = 196 THEN
+                            Help_AddTxt " " + STRING$(Help_ww - Help_Pos, CHR$(196)), 15, 0
+                            Help_BG_Col = 0: col = Help_Col
+                        ELSE
+                            Help_Center = 0
+                        END IF
+                        Help_NewLine: cb$ = "" 'avoid reactivation below
+                    END IF
                     cb = 0: i = i + 1
                 END IF
                 IF c$ = "|" AND cb = 1 THEN cb = 2
@@ -511,6 +526,7 @@ SUB WikiParse (a$)
                     END IF
                 END IF
 
+                'Code Block
                 IF cb$ = "CodeStart" AND Help_LockParse = 0 THEN
                     IF Help_Txt_Len >= 8 THEN
                         IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
@@ -532,6 +548,7 @@ SUB WikiParse (a$)
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
+                'Output Block
                 IF LEFT$(cb$, 11) = "OutputStart" AND Help_LockParse = 0 THEN 'does also match new OutputStartBGn templates
                     IF Help_Txt_Len >= 8 THEN
                         IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
@@ -549,10 +566,13 @@ SUB WikiParse (a$)
                 END IF
                 IF cb$ = "OutputEnd" AND Help_LockParse <> 0 THEN
                     IF nl = 0 THEN Help_NewLine
-                    Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
+                    Help_AddTxt STRING$((Help_ww - 54) \ 2, 196), 15, 0
+                    Help_AddTxt " This block does not reflect the actual output colors ", 15, 0
+                    Help_AddTxt STRING$(Help_ww - Help_Pos + 1, CHR$(196)), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
+                'Text Block
                 IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
                     IF Help_Txt_Len >= 8 THEN
                         IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
@@ -574,6 +594,7 @@ SUB WikiParse (a$)
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
+                'Fixed Block
                 IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
                     IF Help_Txt_Len >= 8 THEN
                         IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
@@ -596,6 +617,7 @@ SUB WikiParse (a$)
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
 
+                'Template wrapped table
                 IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
@@ -603,8 +625,38 @@ SUB WikiParse (a$)
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
                 END IF
-                GOTO charDone
 
+                'Small template text will be centered (maybe as block note)
+                IF LCASE$(cb$) = "small" AND Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+                    wla$ = wikiLookAhead$(a$, i + 1, "}}")
+                    Help_CIndent$ = wikiBuildCIndent$(wla$): iii = 0
+                    IF i > 31 AND ASC(Help_CIndent$, 1) >= Help_ww / 4 THEN
+                        IF INSTR(MID$(a$, i - 30, 30), "{{CodeEnd}}") > 0 THEN iii = -1
+                        IF INSTR(MID$(a$, i - 30, 30), "{{TextEnd}}") > 0 THEN iii = -6
+                        IF INSTR(MID$(a$, i - 31, 31), "{{FixedEnd}}") > 0 THEN iii = -6
+                        IF INSTR(MID$(a$, i - 31, 31), "{{WhiteEnd}}") > 0 THEN iii = -6
+                    END IF
+                    IF iii <> 0 THEN
+                        FOR ii = Help_Txt_Len - 3 TO 1 STEP -4
+                            IF ASC(Help_Txt$, ii) = 13 AND iii < 0 THEN
+                                help_h = help_h - 1: Help_Line$ = LEFT$(Help_Line$, LEN(Help_Line$) - 4)
+                            ELSEIF ASC(Help_Txt$, ii) = 196 AND iii < 0 THEN
+                                iii = -iii
+                            ELSEIF ASC(Help_Txt$, ii) = 13 AND iii > 0 THEN
+                                Help_Txt_Len = ii + 3: EXIT FOR
+                            END IF
+                        NEXT
+                        Help_BG_Col = iii: cb$ = cb$ + CHR$(196) 'special signal byte
+                        Help_AddTxt STRING$(ASC(Help_CIndent$, 1) - 1, CHR$(196)) + " ", 15, 0
+                        col = 15 'further text color until closing
+                    ELSE
+                        Help_Center = 1: cb$ = cb$ + CHR$(0) 'no special signal
+                        Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center content
+                    END IF
+                    Help_CIndent$ = MID$(Help_CIndent$, 2)
+                END IF
+
+                GOTO charDone
             END IF
 
             IF cb = 1 THEN cb$ = cb$ + c$ 'reading macro name
@@ -756,8 +808,7 @@ SUB WikiParse (a$)
 
             skipMultiBlanks:
             IF Help_LockParse <> 0 THEN 'in all blocks reset styles at EOL
-                Help_Bold = 0: Help_Italic = 0
-                col = Help_Col
+                Help_Bold = 0: Help_Italic = 0: col = Help_Col
             END IF
             nl = 1
             GOTO charDoneKnl 'keep just set nl state
@@ -795,7 +846,7 @@ SUB WikiParse (a$)
                     lnkx2 = x2: IF lnk = 0 THEN lnkx2 = lnkx2 - 1
 
                     IF lnkx1 <> 3 THEN GOTO ignorelink
-                    IF ASC(a$, 1) <> 254 THEN GOTO ignorelink
+                    IF ASC(a$, 1) <> 4 THEN GOTO ignorelink
 
                     'retrieve lnk info
                     lnk2 = lnk: IF lnk2 = 0 THEN lnk2 = oldlnk
@@ -922,7 +973,8 @@ FUNCTION wikiBuildCIndent$ (a$)
         IF MID$(org$, i, 1) = "]" THEN i = i + 1
         b$ = b$ + MID$(org$, i, 1)
     NEXT
-    b$ = b$ + CHR$(10)
+    b$ = StrReplace$(b$, "<br>", CHR$(10)) 'conver HTML line breaks
+    b$ = b$ + CHR$(10) 'safety fallback
 
     i = 1: st = 1: br = 0: res$ = ""
     WHILE i <= LEN(b$)
