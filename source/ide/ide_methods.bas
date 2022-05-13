@@ -18820,18 +18820,20 @@ SUB ideupdatehelpbox
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, l$
                     IF LEN(l$) THEN
-                        c = INSTR(l$, ","): PageName2$ = RIGHT$(l$, LEN(l$) - c)
-                        DO WHILE INSTR(PageName2$, " ")
-                            ASC(PageName2$, INSTR(PageName2$, " ")) = 95
-                        LOOP
-                        DO WHILE INSTR(PageName2$, "&")
-                            i = INSTR(PageName2$, "&")
-                            PageName2$ = LEFT$(PageName2$, i - 1) + "%26" + RIGHT$(PageName2$, LEN(PageName2$) - i)
-                        LOOP
-                        DO WHILE INSTR(PageName2$, "/")
-                            i = INSTR(PageName2$, "/")
-                            PageName2$ = LEFT$(PageName2$, i - 1) + "%2F" + RIGHT$(PageName2$, LEN(PageName2$) - i)
-                        LOOP
+                        c = INSTR(l$, ","): l$ = RIGHT$(l$, LEN(l$) - c)
+                        'Escape all invalid and other critical chars in filenames
+                        PageName2$ = ""
+                        FOR i = 1 TO LEN(l$)
+                            c = ASC(l$, i)
+                            SELECT CASE c
+                                CASE 32 '                                    '(space)
+                                    PageName2$ = PageName2$ + "_"
+                                CASE 34, 38, 42, 47, 58, 60, 62, 63, 92, 124 '("&*/:<>?\|)
+                                    PageName2$ = PageName2$ + "%" + HEX$(c)
+                                CASE ELSE
+                                    PageName2$ = PageName2$ + CHR$(c)
+                            END SELECT
+                        NEXT
                         PageName2$ = PageName2$ + ".txt"
                         IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN
                             f$ = f$ + PageName2$ + CHR$(0)
