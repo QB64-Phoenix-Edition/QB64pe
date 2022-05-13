@@ -527,6 +527,13 @@ SUB WikiParse (a$)
                 END IF
 
                 'Code Block
+                IF cb$ = "InlineCode" AND Help_LockParse = 0 THEN
+                    Help_BG_Col = 1: Help_LockParse = 2
+                END IF
+                IF cb$ = "InlineCodeEnd" AND Help_LockParse <> 0 THEN
+                    Help_BG_Col = 0: Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
                 IF cb$ = "CodeStart" AND Help_LockParse = 0 THEN
                     IF Help_Txt_Len >= 8 THEN
                         IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
