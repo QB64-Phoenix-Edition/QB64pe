@@ -142,7 +142,6 @@ endif
 	DEP_SOCKETS := y
 endif
 
-include $(PATH_INTERNAL_C)/libqb/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/conversion/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/decode/mp3_mini/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/decode/ogg/build.mk
@@ -307,8 +306,6 @@ endif
 ifneq ($(filter y,$(DEP_DATA)),)
 	EXE_OBJS += $(PATH_INTERNAL_TEMP)/data.o
 endif
-
-# CXXLIBS += $(shell cat "$(PATH_INTERNAL_TEMP)/extra_libs.txt")
 
 QBLIB := $(PATH_INTERNAL_C)/libqb/$(QBLIB_NAME).o
 
