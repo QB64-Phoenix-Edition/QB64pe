@@ -12511,9 +12511,7 @@ CxxFlagsExtra$ = ""
 CxxLibsExtra$ = ""
 
 IF Include_GDB_Debugging_Info THEN
-    CxxFlagsExtra$ = "-Og"
-ELSE
-    CxxFlagsExtra$ = "-O2"
+    CxxFlagsExtra$ = "-g"
 END IF
 
 CxxLibsExtra$ = mylib$ + " " + mylibopt$
