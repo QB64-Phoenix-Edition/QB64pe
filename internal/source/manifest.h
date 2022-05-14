@@ -1,7 +1,7 @@
 #ifndef RESOURCE_H
 #define   RESOURCE_H
 #ifdef    __cplusplus
-extern "C" {
+extern 'C' {
 #endif
 #ifdef    __cplusplus
 }
