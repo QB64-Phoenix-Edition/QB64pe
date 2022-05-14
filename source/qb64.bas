@@ -1050,10 +1050,6 @@ IF C = 9 THEN 'run
             END IF
         END IF
 
-        IF path.exe$ = "" THEN
-            IF INSTR(_OS$, "WIN") THEN path.exe$ = "..\..\" ELSE path.exe$ = "../../"
-        END IF
-
         'inform IDE of name change if necessary (IDE will respond with message 9 and corrected name)
         IF i <> 1 THEN
             sendc$ = CHR$(12) + file$
@@ -1199,9 +1195,6 @@ IF LEN(path.source$) THEN
     CHDIR currentdir$
 END IF
 IF SaveExeWithSource THEN path.exe$ = path.source$
-IF path.exe$ = "" THEN
-    IF INSTR(_OS$, "WIN") THEN path.exe$ = "..\..\" ELSE path.exe$ = "../../"
-END IF
 
 FOR x = LEN(f$) TO 1 STEP -1
     a$ = MID$(f$, x, 1)
@@ -11850,23 +11843,23 @@ ELSE
             IF OS_BITS = 32 THEN
                 x$ = CHR$(0): PUT #16, , x$
                 PRINT #18, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                PRINT #18, "extern char *binary_____temp" + tempfolderindexstr2$ + "__data_bin_start;"
+                PRINT #18, "extern char *binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
                 PRINT #18, "}"
-                PRINT #18, "uint8 *data=(uint8*)&binary_____temp" + tempfolderindexstr2$ + "__data_bin_start;"
+                PRINT #18, "uint8 *data=(uint8*)&binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
             ELSE
                 x$ = CHR$(0): PUT #16, , x$
                 PRINT #18, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                PRINT #18, "extern char *_binary_____temp" + tempfolderindexstr2$ + "__data_bin_start;"
+                PRINT #18, "extern char *_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
                 PRINT #18, "}"
-                PRINT #18, "uint8 *data=(uint8*)&_binary_____temp" + tempfolderindexstr2$ + "__data_bin_start;"
+                PRINT #18, "uint8 *data=(uint8*)&_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
             END IF
         END IF
         IF os$ = "LNX" THEN
             x$ = CHR$(0): PUT #16, , x$
             PRINT #18, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-            PRINT #18, "extern char *_binary____temp" + tempfolderindexstr2$ + "_data_bin_start;"
+            PRINT #18, "extern char *_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
             PRINT #18, "}"
-            PRINT #18, "uint8 *data=(uint8*)&_binary____temp" + tempfolderindexstr2$ + "_data_bin_start;"
+            PRINT #18, "uint8 *data=(uint8*)&_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
         END IF
     ELSE
         'inline data
@@ -12290,7 +12283,11 @@ IF Debug THEN PRINT #9, "Finished generation of code for saving/sharing common a
 
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
+
+errorcompilelog$ = tmpdir$ + "errorcompilelog.txt"
 compilelog$ = tmpdir$ + "compilelog.txt"
+
+OPEN errorcompilelog$ FOR OUTPUT AS #1: CLOSE #1 'Clear log
 OPEN compilelog$ FOR OUTPUT AS #1: CLOSE #1 'Clear log
 
 IF idemode = 0 AND NOT QuietMode THEN
@@ -12361,7 +12358,6 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
         END IF
     END IF
     t.path.exe$ = path.exe$
-    IF path.exe$ = "../../" OR path.exe$ = "..\..\" THEN path.exe$ = ""
     IF _FILEEXISTS(path.exe$ + file$ + extension$) THEN
         E = 0
         ON ERROR GOTO qberror_test
@@ -12392,24 +12388,24 @@ END IF
 IF VersionInfoSet THEN
     manifest = FREEFILE
     OPEN tmpdir$ + file$ + extension$ + ".manifest" FOR OUTPUT AS #manifest
-    PRINT #manifest, "<?xml version=" + QuotedFilename("1.0") + " encoding=" + QuotedFilename("UTF-8") + " standalone=" + QuotedFilename("yes") + "?>"
-    PRINT #manifest, "<assembly xmlns=" + QuotedFilename("urn:schemas-microsoft-com:asm.v1") + " manifestVersion=" + QuotedFilename("1.0") + ">"
+    PRINT #manifest, "<?xml version=" + AddQuotes$("1.0") + " encoding=" + AddQuotes$("UTF-8") + " standalone=" + AddQuotes$("yes") + "?>"
+    PRINT #manifest, "<assembly xmlns=" + AddQuotes$("urn:schemas-microsoft-com:asm.v1") + " manifestVersion=" + AddQuotes$("1.0") + ">"
     PRINT #manifest, "<assemblyIdentity"
-    PRINT #manifest, "    version=" + QuotedFilename("1.0.0.0")
-    PRINT #manifest, "    processorArchitecture=" + QuotedFilename("*")
-    PRINT #manifest, "    name=" + QuotedFilename(viCompanyName$ + "." + viProductName$ + "." + viProductName$)
-    PRINT #manifest, "    type=" + QuotedFilename("win32")
+    PRINT #manifest, "    version=" + AddQuotes$("1.0.0.0")
+    PRINT #manifest, "    processorArchitecture=" + AddQuotes$("*")
+    PRINT #manifest, "    name=" + AddQuotes$(viCompanyName$ + "." + viProductName$ + "." + viProductName$)
+    PRINT #manifest, "    type=" + AddQuotes$("win32")
     PRINT #manifest, "/>"
     PRINT #manifest, "<description>" + viFileDescription$ + "</description>"
     PRINT #manifest, "<dependency>"
     PRINT #manifest, "    <dependentAssembly>"
     PRINT #manifest, "        <assemblyIdentity"
-    PRINT #manifest, "            type=" + QuotedFilename("win32")
-    PRINT #manifest, "            name=" + QuotedFilename("Microsoft.Windows.Common-Controls")
-    PRINT #manifest, "            version=" + QuotedFilename("6.0.0.0")
-    PRINT #manifest, "            processorArchitecture=" + QuotedFilename("*")
-    PRINT #manifest, "            publicKeyToken=" + QuotedFilename("6595b64144ccf1df")
-    PRINT #manifest, "            language=" + QuotedFilename("*")
+    PRINT #manifest, "            type=" + AddQuotes$("win32")
+    PRINT #manifest, "            name=" + AddQuotes$("Microsoft.Windows.Common-Controls")
+    PRINT #manifest, "            version=" + AddQuotes$("6.0.0.0")
+    PRINT #manifest, "            processorArchitecture=" + AddQuotes$("*")
+    PRINT #manifest, "            publicKeyToken=" + AddQuotes$("6595b64144ccf1df")
+    PRINT #manifest, "            language=" + AddQuotes$("*")
     PRINT #manifest, "        />"
     PRINT #manifest, "    </dependentAssembly>"
     PRINT #manifest, "</dependency>"
@@ -12421,7 +12417,7 @@ IF VersionInfoSet THEN
     PRINT #manifestembed, "#ifndef RESOURCE_H"
     PRINT #manifestembed, "#define   RESOURCE_H"
     PRINT #manifestembed, "#ifdef    __cplusplus"
-    PRINT #manifestembed, "extern " + QuotedFilename("C") + " {"
+    PRINT #manifestembed, "extern " + AddQuotes$("C") + " {"
     PRINT #manifestembed, "#endif"
     PRINT #manifestembed, "#ifdef    __cplusplus"
     PRINT #manifestembed, "}"
@@ -12437,57 +12433,42 @@ IF VersionInfoSet OR ExeIconSet THEN
     OPEN tmpdir$ + "icon.rc" FOR OUTPUT AS #iconfilehandle
 
     IF ExeIconSet THEN
-        PRINT #iconfilehandle, "0 ICON " + QuotedFilename$("icon.ico")
+        PRINT #iconfilehandle, "0 ICON " + AddQuotes$("icon.ico")
     END IF
 
     IF VersionInfoSet THEN
         PRINT #iconfilehandle, ""
-        PRINT #iconfilehandle, "#include " + QuotedFilename("manifest.h")
+        PRINT #iconfilehandle, "#include " + AddQuotes$("manifest.h")
         PRINT #iconfilehandle, ""
-        PRINT #iconfilehandle, "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST " + QuotedFilename(file$ + extension$ + ".manifest")
+        PRINT #iconfilehandle, "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST " + AddQuotes$(file$ + extension$ + ".manifest")
         PRINT #iconfilehandle, ""
         PRINT #iconfilehandle, "1 VERSIONINFO"
         IF LEN(viFileVersionNum$) THEN PRINT #iconfilehandle, "FILEVERSION     "; viFileVersionNum$
         IF LEN(viProductVersionNum$) THEN PRINT #iconfilehandle, "PRODUCTVERSION  "; viProductVersionNum$
         PRINT #iconfilehandle, "BEGIN"
-        PRINT #iconfilehandle, "    BLOCK " + QuotedFilename$("StringFileInfo")
+        PRINT #iconfilehandle, "    BLOCK " + AddQuotes$("StringFileInfo")
         PRINT #iconfilehandle, "    BEGIN"
-        PRINT #iconfilehandle, "        BLOCK " + QuotedFilename$("040904E4")
+        PRINT #iconfilehandle, "        BLOCK " + AddQuotes$("040904E4")
         PRINT #iconfilehandle, "        BEGIN"
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("CompanyName") + "," + QuotedFilename$(viCompanyName$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("FileDescription") + "," + QuotedFilename$(viFileDescription$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("FileVersion") + "," + QuotedFilename$(viFileVersion$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("InternalName") + "," + QuotedFilename$(viInternalName$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("LegalCopyright") + "," + QuotedFilename$(viLegalCopyright$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("LegalTrademarks") + "," + QuotedFilename$(viLegalTrademarks$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("OriginalFilename") + "," + QuotedFilename$(viOriginalFilename$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("ProductName") + "," + QuotedFilename$(viProductName$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("ProductVersion") + "," + QuotedFilename$(viProductVersion$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("Comments") + "," + QuotedFilename$(viComments$ + "\0")
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("Web") + "," + QuotedFilename$(viWeb$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("CompanyName") + "," + AddQuotes$(viCompanyName$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("FileDescription") + "," + AddQuotes$(viFileDescription$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("FileVersion") + "," + AddQuotes$(viFileVersion$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("InternalName") + "," + AddQuotes$(viInternalName$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("LegalCopyright") + "," + AddQuotes$(viLegalCopyright$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("LegalTrademarks") + "," + AddQuotes$(viLegalTrademarks$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("OriginalFilename") + "," + AddQuotes$(viOriginalFilename$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("ProductName") + "," + AddQuotes$(viProductName$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("ProductVersion") + "," + AddQuotes$(viProductVersion$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("Comments") + "," + AddQuotes$(viComments$ + "\0")
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("Web") + "," + AddQuotes$(viWeb$ + "\0")
         PRINT #iconfilehandle, "        END"
         PRINT #iconfilehandle, "    END"
-        PRINT #iconfilehandle, "    BLOCK " + QuotedFilename$("VarFileInfo")
+        PRINT #iconfilehandle, "    BLOCK " + AddQuotes$("VarFileInfo")
         PRINT #iconfilehandle, "    BEGIN"
-        PRINT #iconfilehandle, "            VALUE " + QuotedFilename$("Translation") + ", 0x409, 0x04E4"
+        PRINT #iconfilehandle, "            VALUE " + AddQuotes$("Translation") + ", 0x409, 0x04E4"
         PRINT #iconfilehandle, "    END"
         PRINT #iconfilehandle, "END"
         CLOSE #iconfilehandle
-    END IF
-END IF
-
-IF os$ = "WIN" THEN
-    IF ExeIconSet OR VersionInfoSet THEN
-        ffh = FREEFILE
-        OPEN tmpdir$ + "call_windres.bat" FOR OUTPUT AS #ffh
-        PRINT #ffh, "internal\c\c_compiler\bin\windres.exe -i " + tmpdir$ + "icon.rc -o " + tmpdir$ + "icon.o"
-        CLOSE #ffh
-        SHELL _HIDE tmpdir$ + "call_windres.bat"
-        IF _FILEEXISTS(tmpdir$ + "icon.o") = 0 THEN
-            a$ = "Bad icon file"
-            IF VersionInfoSet THEN a$ = a$ + " or invalid $VERSIONINFO values"
-            GOTO errmes
-        END IF
     END IF
 END IF
 
@@ -12497,197 +12478,52 @@ o$ = LCASE$(os$)
 win = 0: IF os$ = "WIN" THEN win = 1
 lnx = 0: IF os$ = "LNX" THEN lnx = 1
 mac = 0: IF MacOSX THEN mac = 1: o$ = "osx"
-defines$ = "": defines_header$ = " -D "
 ver$ = Version$ 'eg. "0.123"
 libs$ = ""
-
-IF DEPENDENCY(DEPENDENCY_GL) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_GL"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN
-    DEPENDENCY(DEPENDENCY_IMAGE_CODEC) = 1 'used by OSX to read in screen capture files
-END IF
-
-IF DEPENDENCY(DEPENDENCY_IMAGE_CODEC) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_IMAGE_CODEC"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_CONSOLE_ONLY"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_SOCKETS"
-ELSE
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_NO_SOCKETS"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_PRINTER) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_PRINTER"
-ELSE
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_NO_PRINTER"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_ICON) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_ICON"
-ELSE
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_NO_ICON"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_SCREENIMAGE"
-ELSE
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_NO_SCREENIMAGE"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN
-    d$ = "internal\c\parts\video\font\ttf\"
-    'rebuild?
-    IF _FILEEXISTS(d$ + "os\" + o$ + "\src.o") = 0 THEN
-        Build d$ + "os\" + o$
-    END IF
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_LOADFONT"
-    libs$ = libs$ + " " + "parts\video\font\ttf\os\" + o$ + "\src.o"
-END IF
+makedeps$ = ""
+make$ = GetMakeExecutable$
 
 localpath$ = "internal\c\"
 
-IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_DEVICEINPUT"
-    libname$ = "input\game_controller"
-    libpath$ = "parts\" + libname$ + "\os\" + o$
-    libfile$ = libpath$ + "\src.a"
-    IF _FILEEXISTS(localpath$ + libfile$) = 0 THEN Build localpath$ + libpath$ 'rebuild?
-    libs$ = libs$ + " " + libfile$
+
+IF DEPENDENCY(DEPENDENCY_GL) THEN               makedeps$ = makedeps$ + " DEP_GL=y"
+IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN      makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
+IF DEPENDENCY(DEPENDENCY_IMAGE_CODEC) THEN      makedeps$ = makedeps$ + " DEP_IMAGE_CODEC=y"
+IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN     makedeps$ = makedeps$ + " DEP_CONSOLE_ONLY=y"
+IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN          makedeps$ = makedeps$ + " DEP_SOCKETS=y"
+IF DEPENDENCY(DEPENDENCY_PRINTER) THEN          makedeps$ = makedeps$ + " DEP_PRINTER=y"
+IF DEPENDENCY(DEPENDENCY_ICON) THEN             makedeps$ = makedeps$ + " DEP_ICON=y"
+IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN      makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
+IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN         makedeps$ = makedeps$ + " DEP_FONT=y"
+IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN      makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN     makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN makedeps$ = makedeps$ + " DEP_AUDIO_CONVERSION=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN     makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN        makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
+IF DEPENDENCY(DEPENDENCY_ZLIB) THEN             makedeps$ = makedeps$ + " DEP_ZLIB=y"
+IF inline_DATA = 0 AND DataOffset THEN          makedeps$ = makedeps$ + " DEP_DATA=y"
+IF Console THEN                                 makedeps$ = makedeps$ + " DEP_CONSOLE=y"
+IF ExeIconSet OR VersionInfoSet THEN            makedeps$ = makedeps$ + " DEP_ICON_RC=y"
+
+IF tempfolderindex > 1 THEN                     makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
+
+CxxFlagsExtra$ = ""
+CxxLibsExtra$ = ""
+
+IF Include_GDB_Debugging_Info THEN
+    CxxFlagsExtra$ = "-g"
 END IF
 
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) = 1
-IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN DEPENDENCY(DEPENDENCY_AUDIO_OUT) = 1
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN DEPENDENCY(DEPENDENCY_AUDIO_OUT) = 1
+CxxLibsExtra$ = mylib$ + " " + mylibopt$
 
-
-IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_AUDIO_CONVERSION"
-
-    d1$ = "parts\audio\conversion"
-    d2$ = d1$ + "\os\" + o$
-    d3$ = "internal\c\" + d2$
-    IF _FILEEXISTS(d3$ + "\src.a") = 0 THEN 'rebuild?
-        Build d3$
-    END IF
-    libs$ = libs$ + " " + d2$ + "\src.a"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN
-    'General decoder
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_AUDIO_DECODE"
-    'MINI_MP3 decoder
-    d1$ = "parts\audio\decode\mp3_mini"
-    d2$ = d1$ + "\os\" + o$
-    d3$ = "internal\c\" + d2$
-    IF _FILEEXISTS(d3$ + "\src.a") = 0 THEN 'rebuild?
-        Build d3$
-    END IF
-    libs$ = libs$ + " " + d2$ + "\src.a"
-    'OGG decoder
-    d1$ = "parts\audio\decode\ogg"
-    d2$ = d1$ + "\os\" + o$
-    d3$ = "internal\c\" + d2$
-    IF _FILEEXISTS(d3$ + "\src.o") = 0 THEN 'rebuild?
-        Build d3$
-    END IF
-    libs$ = libs$ + " " + d2$ + "\src.o"
-    'WAV decoder
-    '(no action required)
-END IF
-
-IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_AUDIO_OUT"
-    d1$ = "parts\audio\out"
-    d2$ = d1$ + "\os\" + o$
-    d3$ = "internal\c\" + d2$
-    IF _FILEEXISTS(d3$ + "\src.a") = 0 THEN 'rebuild?
-        Build d3$
-    END IF
-    libs$ = libs$ + " " + d2$ + "\src.a"
-END IF
-
-IF DEPENDENCY(DEPENDENCY_ZLIB) THEN
-    defines$ = defines$ + defines_header$ + "DEPENDENCY_ZLIB"
-    IF MacOSX THEN
-        libs$ = libs$ + " -lz"
-    ELSE
-        libs$ = libs$ + " -l:libz.a"
-    END IF
-END IF
-
-'finalize libs$ and defines$ strings
-IF LEN(libs$) THEN libs$ = libs$ + " "
-PATH_SLASH_CORRECT libs$
-IF LEN(defines$) THEN defines$ = defines$ + " "
-
-'Build core?
-IF mac = 0 THEN 'macosx uses Apple's GLUT not FreeGLUT
-    d1$ = "parts\core"
-    d2$ = d1$ + "\os\" + o$
-    d3$ = "internal\c\" + d2$
-    IF _FILEEXISTS(d3$ + "\src.a") = 0 THEN 'rebuild?
-        Build d3$
-    END IF
-END IF 'mac = 0
-
-'Build libqb?
-depstr$ = ver$ + "_"
-FOR i = 1 TO DEPENDENCY_LAST
-    IF DEPENDENCY(i) THEN depstr$ = depstr$ + "1" ELSE depstr$ = depstr$ + "0"
-NEXT
-libqb$ = " libqb\os\" + o$ + "\libqb_" + depstr$ + ".o "
-PATH_SLASH_CORRECT libqb$
-IF _FILEEXISTS("internal\c\" + LTRIM$(RTRIM$(libqb$))) = 0 THEN
-    CHDIR "internal\c"
-    IF os$ = "WIN" THEN
-        SHELL _HIDE GDB_Fix("cmd /c c_compiler\bin\g++ -c -s -w -Wall libqb.cpp -D FREEGLUT_STATIC " + defines$ + " -o libqb\os\" + o$ + "\libqb_" + depstr$ + ".o") + " 2>> ..\..\" + compilelog$
-    ELSE
-        IF mac THEN
-            SHELL _HIDE GDB_Fix("g++ -c -s -w -Wall libqb.mm " + defines$ + " -o libqb/os/" + o$ + "/libqb_" + depstr$ + ".o") + " 2>> ../../" + compilelog$
-        ELSE
-            SHELL _HIDE GDB_Fix("g++ -c -s -w -Wall libqb.cpp -D FREEGLUT_STATIC " + defines$ + " -o libqb/os/" + o$ + "/libqb_" + depstr$ + ".o") + " 2>> ../../" + compilelog$
-        END IF
-    END IF
-    CHDIR "..\.."
-END IF
-
-'link-time only defines
-IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
-    IF mac THEN defines$ = defines$ + " -framework AudioUnit -framework AudioToolbox "
-END IF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(path.exe$ + file$ + extension$)
+makeline$ = makeline$ + " CXXFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$)
+makeline$ = makeline$ + " CFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$) ' Just the -O flag, use for C files as well
+makeline$ = makeline$ + " CXXLIBS_EXTRA=" + AddQuotes$(CxxLibsExtra$)
 
 IF os$ = "WIN" THEN
+
+    makeline$ = makeline$ + " OS=win"
 
     'resolve static function definitions and add to global.txt
     FOR x = 1 TO ResolveStaticFunctions
@@ -12808,143 +12644,14 @@ IF os$ = "WIN" THEN
         END IF
     NEXT
 
-    IF inline_DATA = 0 THEN
-        IF DataOffset THEN
-            IF OS_BITS = 32 THEN
-                OPEN ".\internal\c\makedat_win32.txt" FOR BINARY AS #150: LINE INPUT #150, a$: CLOSE #150
-            ELSE
-                OPEN ".\internal\c\makedat_win64.txt" FOR BINARY AS #150: LINE INPUT #150, a$: CLOSE #150
-            END IF
-            a$ = a$ + " " + tmpdir2$ + "data.bin " + tmpdir2$ + "data.o"
-            CHDIR ".\internal\c"
-            SHELL _HIDE "cmd /c " + a$ + " 2>> ..\..\" + compilelog$
-            CHDIR "..\.."
+    If No_C_Compile_Mode = 0 THEN
+        SHELL _HIDE "cmd /c " + makeline$ + " 1>> " + compilelog$ + " 2>> " + errorcompilelog$
+
+        IF idemode THEN
+            'Restore fg/bg colors
+            dummy = DarkenFGBG(0)
         END IF
     END IF
-
-
-
-
-    OPEN ".\internal\c\makeline_win.txt" FOR BINARY AS #150
-    LINE INPUT #150, a$: a$ = GDB_Fix(a$)
-    CLOSE #150
-    IF RIGHT$(a$, 7) = " ..\..\" THEN a$ = LEFT$(a$, LEN(a$) - 6) 'makeline.txt patch (line will become unrequired in later versions)
-    'change qbx.cpp to qbx999.cpp?
-    x = INSTR(a$, "qbx.cpp"): IF x <> 0 AND tempfolderindex <> 1 THEN a$ = LEFT$(a$, x - 1) + "qbx" + str2$(tempfolderindex) + ".cpp" + RIGHT$(a$, LEN(a$) - (x + 6))
-
-    IF Console THEN
-        x = INSTR(a$, " -s"): a$ = LEFT$(a$, x - 1) + " -mconsole" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN
-        a$ = StrRemove(a$, "-mwindows")
-        a$ = StrRemove(a$, "-lopengl32")
-        a$ = StrRemove(a$, "-lglu32")
-        a$ = StrRemove(a$, "parts\core\os\win\src.a")
-        a$ = StrRemove(a$, "-D FREEGLUT_STATIC")
-        a$ = StrRemove(a$, "-D GLEW_STATIC")
-    END IF
-
-    a$ = StrRemove(a$, "-lws2_32")
-    IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -lws2_32" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    a$ = StrRemove(a$, "-lwinspool")
-    IF DEPENDENCY(DEPENDENCY_PRINTER) THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -lwinspool" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    a$ = StrRemove(a$, "-lwinmm")
-    IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) <> 0 OR DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = 0 THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -lwinmm" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    a$ = StrRemove(a$, "-lksguid")
-    IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -lksguid" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    a$ = StrRemove(a$, "-ldxguid")
-    IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -ldxguid" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    a$ = StrRemove(a$, "-lole32")
-    IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -lole32" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    a$ = StrRemove(a$, "-lgdi32")
-    IF DEPENDENCY(DEPENDENCY_ICON) <> 0 OR DEPENDENCY(DEPENDENCY_SCREENIMAGE) <> 0 OR DEPENDENCY(DEPENDENCY_PRINTER) <> 0 THEN
-        x = INSTR(a$, " -o"): a$ = LEFT$(a$, x - 1) + " -lgdi32" + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    IF inline_DATA = 0 THEN
-        'add data.o?
-        IF DataOffset THEN
-            x = INSTR(a$, ".cpp ")
-            IF x THEN
-                x = x + 3
-                a$ = LEFT$(a$, x) + " " + tmpdir2$ + "data.o" + " " + RIGHT$(a$, LEN(a$) - x)
-            END IF
-        END IF
-    END IF
-
-    'add custom libraries
-    'mylib$="..\..\"+x$+".lib"
-    IF LEN(mylib$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 3
-            a$ = LEFT$(a$, x) + " " + mylib$ + " " + RIGHT$(a$, LEN(a$) - x)
-        END IF
-    END IF
-
-
-    'add dependent libraries
-    IF LEN(libs$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 5
-            a$ = LEFT$(a$, x - 1) + libs$ + RIGHT$(a$, LEN(a$) - x + 1)
-        END IF
-    END IF
-
-    'add dependency defines
-    IF LEN(defines$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 5
-            a$ = LEFT$(a$, x - 1) + defines$ + RIGHT$(a$, LEN(a$) - x + 1)
-        END IF
-    END IF
-
-    'add libqb
-    x = INSTR(a$, ".cpp ")
-    IF x THEN
-        x = x + 5
-        a$ = LEFT$(a$, x - 1) + libqb$ + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-    'Add icon.o to the makeline
-    IF ExeIconSet OR VersionInfoSet THEN
-        IF x THEN 'Use the previous libqb insertion point
-            a$ = LEFT$(a$, x + LEN(libqb$)) + "..\..\" + tmpdir$ + "icon.o " + MID$(a$, x + LEN(libqb$) + 1)
-        END IF
-    END IF
-
-    a$ = a$ + QuotedFilename$(path.exe$ + file$ + extension$)
-
-    ffh = FREEFILE
-    OPEN tmpdir$ + "recompile_win.bat" FOR OUTPUT AS #ffh
-    PRINT #ffh, "@echo off"
-    PRINT #ffh, "cd %0\..\"
-    PRINT #ffh, "echo Recompiling..."
-    PRINT #ffh, "cd ../c"
-    PRINT #ffh, a$
-    PRINT #ffh, "pause"
-    CLOSE ffh
 
     ffh = FREEFILE
     OPEN tmpdir$ + "debug_win.bat" FOR OUTPUT AS #ffh
@@ -12961,20 +12668,16 @@ IF os$ = "WIN" THEN
     PRINT #ffh, "internal\c\c_compiler\bin\gdb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
     PRINT #ffh, "pause"
     CLOSE ffh
-
-    IF No_C_Compile_Mode = 0 THEN
-        CHDIR ".\internal\c"
-        SHELL _HIDE "cmd /c " + a$ + " 2>> ..\..\" + compilelog$
-        CHDIR "..\.."
-        IF idemode THEN
-            'Restore fg/bg colors
-            dummy = DarkenFGBG(0)
-        END IF
-    END IF 'No_C_Compile_Mode=0
-
 END IF
 
 IF os$ = "LNX" THEN
+
+    IF INSTR(_OS$, "[MACOSX]") THEN
+        makeline$ = makeline$ + " OS=osx"
+    ELSE
+        makeline$ = makeline$ + " OS=lnx"
+    END IF
+
     FOR x = 1 TO ResolveStaticFunctions
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
@@ -13100,84 +12803,6 @@ IF os$ = "LNX" THEN
         END IF
     NEXT
 
-    IF inline_DATA = 0 THEN
-        IF DataOffset THEN
-            IF INSTR(_OS$, "[32BIT]") THEN b$ = "32" ELSE b$ = "64"
-            OPEN ".\internal\c\makedat_lnx" + b$ + ".txt" FOR BINARY AS #150: LINE INPUT #150, a$: CLOSE #150
-            a$ = a$ + " " + tmpdir2$ + "data.bin " + tmpdir2$ + "data.o"
-            CHDIR ".\internal\c"
-            SHELL _HIDE a$ + " 2>> ../../" + compilelog$
-            CHDIR "..\.."
-        END IF
-    END IF
-
-    IF INSTR(_OS$, "[MACOSX]") THEN
-        OPEN "./internal/c/makeline_osx.txt" FOR INPUT AS #150
-    ELSEIF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN
-        OPEN "./internal/c/makeline_lnx_nogui.txt" FOR INPUT AS #150
-    ELSE
-        OPEN "./internal/c/makeline_lnx.txt" FOR INPUT AS #150
-    END IF
-
-    LINE INPUT #150, a$: a$ = GDB_Fix(a$)
-    CLOSE #150
-    'change qbx.cpp to qbx999.cpp?
-    x = INSTR(a$, "qbx.cpp"): IF x <> 0 AND tempfolderindex <> 1 THEN a$ = LEFT$(a$, x - 1) + "qbx" + str2$(tempfolderindex) + ".cpp" + RIGHT$(a$, LEN(a$) - (x + 6))
-
-    IF inline_DATA = 0 THEN
-        'add data.o?
-        IF DataOffset THEN
-            x = INSTR(a$, "-lrt")
-            IF x THEN
-                a$ = LEFT$(a$, x - 1) + " " + tmpdir2$ + "data.o " + RIGHT$(a$, LEN(a$) - x + 1)
-            END IF
-        END IF
-    END IF
-
-
-    'add custom libraries
-    IF LEN(mylib$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 5
-            a$ = LEFT$(a$, x - 1) + " " + mylibopt$ + " " + mylib$ + " " + RIGHT$(a$, LEN(a$) - x + 1)
-        END IF
-    END IF
-
-    'add dependent libraries
-    IF LEN(libs$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 5
-            a$ = LEFT$(a$, x - 1) + libs$ + RIGHT$(a$, LEN(a$) - x + 1)
-        END IF
-    END IF
-
-    'add dependency defines
-    IF LEN(defines$) THEN
-        x = INSTR(a$, ".cpp ")
-        IF x THEN
-            x = x + 5
-            a$ = LEFT$(a$, x - 1) + defines$ + RIGHT$(a$, LEN(a$) - x + 1)
-        END IF
-    END IF
-
-    'add libqb
-    x = INSTR(a$, ".cpp ")
-    IF x THEN
-        x = x + 5
-        a$ = LEFT$(a$, x - 1) + libqb$ + RIGHT$(a$, LEN(a$) - x + 1)
-    END IF
-
-
-
-
-
-
-
-
-    a$ = a$ + QuotedFilename$(path.exe$ + file$ + extension$)
-
     IF INSTR(_OS$, "[MACOSX]") THEN
 
         ffh = FREEFILE
@@ -13185,7 +12810,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "cd " + CHR_QUOTE + "$(dirname " + CHR_QUOTE + "$0" + CHR_QUOTE + ")" + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "echo " + CHR_QUOTE + "Recompiling..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "cd ../c" + CHR$(10);
-        PRINT #ffh, a$ + CHR$(10);
+        PRINT #ffh, makeline$ + CHR$(10);
         PRINT #ffh, "read -p " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         CLOSE ffh
         SHELL _HIDE "chmod +x " + tmpdir$ + "recompile_osx.command"
@@ -13224,7 +12849,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "}" + CHR$(10);
         PRINT #ffh, "echo " + CHR_QUOTE + "Recompiling..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "cd ../c" + CHR$(10);
-        PRINT #ffh, a$ + CHR$(10);
+        PRINT #ffh, makeline$ + CHR$(10);
         PRINT #ffh, "echo " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
@@ -13253,9 +12878,7 @@ IF os$ = "LNX" THEN
     END IF
 
     IF No_C_Compile_Mode = 0 THEN
-        CHDIR "./internal/c"
-        SHELL _HIDE a$ + " 2>> ../../" + compilelog$
-        CHDIR "../.."
+        SHELL _HIDE makeline$ + " 1>> " + compilelog$ + " 2>> " + errorcompilelog$
         IF idemode THEN
             'Restore fg/bg colors
             dummy = DarkenFGBG(0)
@@ -13293,7 +12916,7 @@ END IF
 
 IF compfailed THEN
     IF idemode THEN
-        idemessage$ = "C++ Compilation failed " + CHR$(0) + "(Check " + _TRIM$(compilelog$) + ")"
+        idemessage$ = "C++ Compilation failed " + CHR$(0) + "(Check " + _TRIM$(compilelog$) + " And " + _TRIM$(errorcompilelog$) + ")"
         GOTO ideerror
     END IF
     IF compfailed THEN
@@ -13537,41 +13160,13 @@ FUNCTION ParseCMDLineArgs$ ()
                         WriteConfigSetting generalSettingsSection$, "DebugInfo", "True" + DebugInfoIniWarning$
                         idedebuginfo = 1
                         Include_GDB_Debugging_Info = idedebuginfo
-                        IF os$ = "WIN" THEN
-                            CHDIR "internal\c"
-                            SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-                            CHDIR "..\.."
-                        END IF
-                        IF os$ = "LNX" THEN
-                            CHDIR "./internal/c"
-
-                            IF INSTR(_OS$, "[MACOSX]") THEN
-                                SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-                            ELSE
-                                SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-                            END IF
-                            CHDIR "../.."
-                        END IF
+                        PurgeTemporaryBuildFiles (os$), (MacOSX)
                     CASE ":debuginfo=false"
                         PRINT "debuginfo = false"
                         WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
                         idedebuginfo = 0
                         Include_GDB_Debugging_Info = idedebuginfo
-                        IF os$ = "WIN" THEN
-                            CHDIR "internal\c"
-                            SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-                            CHDIR "..\.."
-                        END IF
-                        IF os$ = "LNX" THEN
-                            CHDIR "./internal/c"
-
-                            IF INSTR(_OS$, "[MACOSX]") THEN
-                                SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-                            ELSE
-                                SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-                            END IF
-                            CHDIR "../.."
-                        END IF
+                        PurgeTemporaryBuildFiles (os$), (MacOSX)
                     CASE ELSE
                         PRINT "Invalid settings switch: "; token$
                         PRINT
@@ -13585,21 +13180,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 IF MID$(token$, 3, 1) = ":" THEN ideStartAtLine = VAL(MID$(token$, 4))
                 cmdlineswitch = -1
             CASE "-p" 'Purge
-                IF os$ = "WIN" THEN
-                    CHDIR "internal\c"
-                    SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-                    CHDIR "..\.."
-                END IF
-                IF os$ = "LNX" THEN
-                    CHDIR "./internal/c"
-
-                    IF INSTR(_OS$, "[MACOSX]") THEN
-                        SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-                    ELSE
-                        SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-                    END IF
-                    CHDIR "../.."
-                END IF
+                PurgeTemporaryBuildFiles (os$), (MacOSX)
                 cmdlineswitch = -1
             CASE "-z" 'Not compiling C code
                 No_C_Compile_Mode = 1
@@ -24359,74 +23940,6 @@ SUB SetDependency (requirement)
     END IF
 END SUB
 
-SUB Build (path$)
-    previous_dir$ = _CWD$
-
-    'Count the separators in the path
-    depth = 1
-    FOR x = 1 TO LEN(path$)
-        IF ASC(path$, x) = 92 OR ASC(path$, x) = 47 THEN depth = depth + 1
-    NEXT
-    CHDIR path$
-
-    return_path$ = ".."
-    FOR x = 2 TO depth
-        return_path$ = return_path$ + "\.."
-    NEXT
-
-    bfh = FREEFILE
-    OPEN "build" + BATCHFILE_EXTENSION FOR BINARY AS #bfh
-    DO UNTIL EOF(bfh)
-        LINE INPUT #bfh, c$
-        use = 0
-        IF LEN(c$) THEN use = 1
-        IF c$ = "pause" THEN use = 0
-        IF LEFT$(c$, 1) = "#" THEN use = 0 'eg. #!/bin/sh
-        IF LEFT$(c$, 13) = "cd " + CHR$(34) + "$(dirname" THEN use = 0 'eg. cd "$(dirname "$0")"
-        IF INSTR(LCASE$(c$), "press any key") THEN EXIT DO
-        c$ = GDB_Fix$(c$)
-        IF use THEN
-            IF os$ = "WIN" THEN
-                SHELL _HIDE "cmd /C " + c$ + " 2>> " + QuotedFilename$(return_path$ + "\" + compilelog$)
-            ELSE
-                SHELL _HIDE c$ + " 2>> " + QuotedFilename$(previous_dir$ + "/" + compilelog$)
-            END IF
-        END IF
-    LOOP
-    CLOSE #bfh
-
-    IF os$ = "WIN" THEN
-        CHDIR return_path$
-    ELSE
-        CHDIR previous_dir$
-    END IF
-END SUB
-
-FUNCTION GDB_Fix$ (g_command$) 'edit a gcc/g++ command line to include debugging info
-    c$ = g_command$
-    IF Include_GDB_Debugging_Info THEN
-        IF LEFT$(c$, 4) = "gcc " OR LEFT$(c$, 4) = "g++ " THEN
-            c$ = LEFT$(c$, 4) + " -g " + RIGHT$(c$, LEN(c$) - 4)
-            GOTO added_gdb_flag
-        END IF
-        FOR o = 1 TO 6
-            IF o = 1 THEN o$ = "\g++ "
-            IF o = 2 THEN o$ = "/g++ "
-            IF o = 3 THEN o$ = "\gcc "
-            IF o = 4 THEN o$ = "/gcc "
-            IF o = 5 THEN o$ = " gcc "
-            IF o = 6 THEN o$ = " g++ "
-            x = INSTR(UCASE$(c$), UCASE$(o$))
-            'note: -g adds debug symbols
-            IF x THEN c$ = LEFT$(c$, x - 1) + o$ + " -g " + RIGHT$(c$, LEN(c$) - x - (LEN(o$) - 1)): EXIT FOR
-        NEXT
-        added_gdb_flag:
-        'note: -s strips all debug symbols which is good for size but not for debugging
-        x = INSTR(c$, " -s "): IF x THEN c$ = LEFT$(c$, x - 1) + " " + RIGHT$(c$, LEN(c$) - x - 3)
-    END IF
-    GDB_Fix$ = c$
-END FUNCTION
-
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$)
     t$ = e$ 'So we preserve our original data, we parse a temp copy of it
@@ -26287,6 +25800,7 @@ END SUB
 
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'
+'$INCLUDE:'utilities\build.bas'
 '$INCLUDE:'subs_functions\extensions\opengl\opengl_methods.bas'
 '$INCLUDE:'utilities\ini-manager\ini.bm'
 

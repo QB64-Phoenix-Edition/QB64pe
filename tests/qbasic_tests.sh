@@ -15,6 +15,7 @@ show_failure()
 {
     cat "$RESULTS_DIR/$1-compile_result.txt"
     cat "$RESULTS_DIR/$1-compilelog.txt"
+    cat "$RESULTS_DIR/$1-errorcompilelog.txt"
 }
 
 for sourceFile in $(find ./tests/qbasic_testcases/n54/ -name '*.bas') \
@@ -28,9 +29,13 @@ do
 
     TESTCASE=$test
 
+    # Clear out temp folder before next compile, avoids stale compilelog files
+    rm -fr ./internal/temp/*
+
     "$QB64" -x  "$sourceFile" -o "./$EXES_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
-    cp ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
+    cp_if_exists ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
+    cp_if_exists ./internal/temp/errorcompilelog.txt $RESULTS_DIR/$test-errorcompilelog.txt
 
     (exit $ERR)
     assert_success_named "Compile" "Compilation Error:" show_failure $test
