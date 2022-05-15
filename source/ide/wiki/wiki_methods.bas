@@ -590,13 +590,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_CheckBlankLine
                     Help_BG_Col = 1: Help_LockParse = 2
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Code Block " + STRING$(3, 196), 15, 0: Help_NewLine
-                    'Skip non-meaningful content before section begins
-                    ws = 1
-                    FOR ii = i + 1 TO LEN(a$)
-                        IF ASC(a$, ii) = 10 THEN EXIT FOR
-                        IF ASC(a$, ii) <> 32 AND ASC(a$, ii) <> 39 THEN ws = 0
-                    NEXT
-                    IF ws THEN i = ii
+                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
                 IF cb$ = "CodeEnd" AND Help_LockParse <> 0 THEN
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
@@ -609,13 +603,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_CheckBlankLine
                     Help_BG_Col = 2: Help_LockParse = 1
                     Help_AddTxt STRING$(Help_ww - 17, 196) + " Output Block " + STRING$(3, 196), 15, 0: Help_NewLine
-                    'Skip non-meaningful content before section begins
-                    ws = 1
-                    FOR ii = i + 1 TO LEN(a$)
-                        IF ASC(a$, ii) = 10 THEN EXIT FOR
-                        IF ASC(a$, ii) <> 32 AND ASC(a$, ii) <> 39 THEN ws = 0
-                    NEXT
-                    IF ws THEN i = ii
+                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
                 IF cb$ = "OutputEnd" AND Help_LockParse <> 0 THEN
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
@@ -630,13 +618,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_CheckBlankLine
                     Help_BG_Col = 6: Help_LockParse = -1
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Text Block " + STRING$(3, 196), 15, 0: Help_NewLine
-                    'Skip non-meaningful content before section begins
-                    ws = 1
-                    FOR ii = i + 1 TO LEN(a$)
-                        IF ASC(a$, ii) = 10 THEN EXIT FOR
-                        IF ASC(a$, ii) <> 32 AND ASC(a$, ii) <> 39 THEN ws = 0
-                    NEXT
-                    IF ws THEN i = ii
+                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
                 IF cb$ = "TextEnd" AND Help_LockParse <> 0 THEN
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
@@ -649,13 +631,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_CheckBlankLine
                     Help_BG_Col = 6: Help_LockParse = -2
                     Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
-                    'Skip non-meaningful content before section begins
-                    ws = 1
-                    FOR ii = i + 1 TO LEN(a$)
-                        IF ASC(a$, ii) = 10 THEN EXIT FOR
-                        IF ASC(a$, ii) <> 32 AND ASC(a$, ii) <> 39 THEN ws = 0
-                    NEXT
-                    IF ws THEN i = ii
+                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
                 IF (cb$ = "FixedEnd" OR cb$ = "WhiteEnd") AND Help_LockParse <> 0 THEN 'White is deprecated (but kept for existing pages)
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
@@ -981,7 +957,6 @@ FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text
         wikiLookAhead$ = MID$(a$, i)
     ELSE
         wikiLookAhead$ = MID$(a$, i, j - i)
-        i = j + 1
     END IF
 END FUNCTION
 
@@ -1023,8 +998,9 @@ FUNCTION wikiBuildCIndent$ (a$) 'Pre-calc center indentions
         IF MID$(org$, i, 1) = "]" THEN i = i + 1
         b$ = b$ + MID$(org$, i, 1)
     NEXT
-    b$ = StrReplace$(b$, "<br>", CHR$(10)) 'conver HTML line breaks
-    b$ = b$ + CHR$(10) 'safety fallback
+    b$ = StrReplace$(b$, "<br>", CHR$(10)) 'convert HTML line breaks
+    b$ = StrReplace$(b$, "<br />", CHR$(10)) 'convert XHTML line breaks
+    b$ = _TRIM$(b$) + CHR$(10) 'safety fallback
 
     i = 1: st = 1: br = 0: res$ = ""
     WHILE i <= LEN(b$)
@@ -1034,7 +1010,13 @@ FUNCTION wikiBuildCIndent$ (a$) 'Pre-calc center indentions
             br = ws: i = ws + 1
             IF ASC(b$, ws) <> 10 AND i <= LEN(b$) THEN _CONTINUE
         END IF
-        IF br = 0 THEN br = lb
+        IF br = 0 THEN
+            IF lb < ws THEN
+                br = lb
+            ELSE
+                IF ws > 0 THEN br = ws: ELSE br = lb
+            END IF
+        END IF
         ci = (Help_ww - (br - st)) \ 2: IF ci < 0 THEN ci = 0
         res$ = res$ + CHR$(ci)
         i = br + 1: st = br + 1: br = 0
