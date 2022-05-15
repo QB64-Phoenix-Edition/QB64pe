@@ -84,7 +84,11 @@ else
 endif
 
 ifdef BUILD_QB64
-	EXE ?= qb64
+	ifeq ($(OS),win)
+		EXE ?= qb64.exe
+	else
+		EXE ?= qb64
+	endif
 else
 
 ifneq ($(filter clean,$(MAKECMDGOALS)),)
