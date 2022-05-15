@@ -6,7 +6,7 @@ FUNCTION Back2BackName$ (a$)
     Back2BackName$ = a$
 END FUNCTION
 
-FUNCTION Wiki$ (PageName$)
+FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     Help_PageLoaded$ = PageName$
 
     'Escape all invalid and other critical chars in filenames
@@ -50,7 +50,7 @@ FUNCTION Wiki$ (PageName$)
         END IF
     END IF
 
-    'check for curl
+    'Check for curl
     IF _SHELLHIDE("curl --version") <> 0 THEN
         PCOPY 2, 0
         result = idemessagebox("QB64", "Cannot find 'curl'.", "#Abort")
@@ -58,7 +58,7 @@ FUNCTION Wiki$ (PageName$)
         EXIT FUNCTION
     END IF
 
-    'download message (Status Bar)
+    'Download message (Status Bar)
     IF Help_Recaching = 0 THEN
         a$ = "Downloading '" + PageName$ + "' page..."
         IF LEN(a$) > 60 THEN a$ = LEFT$(a$, 57) + STRING$(3, 250)
@@ -70,14 +70,14 @@ FUNCTION Wiki$ (PageName$)
         PCOPY 3, 0
     END IF
 
-    'url query and output arguments for curl
+    'Url query and output arguments for curl
     url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
     outputFile$ = Cache_Folder$ + "/" + PageName2$ + ".txt"
-    'wikitext delimiters
+    'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
 
-    'download page using curl (opt -k = allow unsecure connections in case of cert errors)
+    'Download page using curl (opt -k = allow unsecure connections in case of cert errors)
     SHELL _HIDE "curl -k -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
     OPEN outputFile$ FOR BINARY AS #fh 'get new content
@@ -85,12 +85,12 @@ FUNCTION Wiki$ (PageName$)
     GET #fh, 1, a$
     CLOSE #fh
 
-    'find wikitext in the downloaded page
+    'Find wikitext in the downloaded page
     s1 = INSTR(a$, s1$)
     IF s1 > 0 THEN a$ = MID$(a$, s1 + LEN(s1$)): s2 = INSTR(a$, s2$): ELSE s2 = 0
     IF s2 > 0 THEN a$ = LEFT$(a$, s2 - 1)
     IF s1 > 0 AND s2 > 0 AND a$ <> "" THEN
-        'if wikitext was found, then substitute entities & save it
+        'If wikitext was found, then substitute entities & save it
         '--- first HTML specific
         WHILE INSTR(a$, "&amp;") > 0 '         '&amp; must be first and looped until all
             a$ = StrReplace$(a$, "&amp;", "&") 'multi-escapes are resolved (eg. &amp;lt; &amp;amp;lt; etc.)
@@ -110,7 +110,7 @@ FUNCTION Wiki$ (PageName$)
         PRINT #fh, a$
         CLOSE #fh
     ELSE
-        'delete page, if empty or corrupted (force re-download on next access)
+        'Delete page, if empty or corrupted (force re-download on next access)
         KILL outputFile$
         a$ = "{{PageInternalError}}" + CHR$(10) +_
              "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
@@ -121,7 +121,7 @@ FUNCTION Wiki$ (PageName$)
     Wiki$ = a$
 END FUNCTION
 
-SUB Help_AddTxt (t$, col, link)
+SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
     IF t$ = CHR$(13) THEN Help_NewLine: EXIT SUB
 
     FOR i = 1 TO LEN(t$)
@@ -129,9 +129,7 @@ SUB Help_AddTxt (t$, col, link)
 
         IF Help_LockParse = 0 AND Help_LockWrap = 0 THEN
 
-            'addtxt handles all wrapping issues
             IF c = 32 THEN
-
                 IF Help_Pos = Help_ww THEN Help_NewLine: _CONTINUE
 
                 Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 32
@@ -159,7 +157,7 @@ SUB Help_AddTxt (t$, col, link)
                 END IF
             END IF
 
-        END IF 'locks = 0
+        END IF
 
         Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = c
         Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = col + Help_BG_Col * 16
@@ -170,7 +168,7 @@ SUB Help_AddTxt (t$, col, link)
     NEXT
 END SUB
 
-SUB Help_NewLine
+SUB Help_NewLine 'Start a new help line, apply indention (if any)
     IF Help_Pos > help_w THEN help_w = Help_Pos
 
     Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 13
@@ -200,27 +198,54 @@ SUB Help_NewLine
     END IF
 END SUB
 
-FUNCTION Help_Col 'helps to calculate the default color
+SUB Help_CheckFinishLine 'Make sure the current help line is finished
+    IF Help_Txt_Len >= 4 THEN
+        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+    END IF
+END SUB
+
+SUB Help_CheckBlankLine 'Make sure the last help line is a blank line (implies finish current)
+    IF Help_Txt_Len >= 8 THEN
+        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
+    END IF
+END SUB
+
+SUB Help_CheckRemoveBlankLine 'If the last help line is blank, then remove it
+    IF Help_Txt_Len >= 8 THEN
+        IF ASC(Help_Txt$, Help_Txt_Len - 3) = 13 THEN
+            Help_Txt_Len = Help_Txt_Len - 4
+            help_h = help_h - 1
+            Help_Line$ = LEFT$(Help_Line$, LEN(Help_Line$) - 4)
+        END IF
+        FOR i = Help_Txt_Len - 3 TO 1 STEP -4
+            IF ASC(Help_Txt$, i) <> 32 THEN
+                Help_Txt_Len = i + 3: EXIT FOR
+            END IF
+        NEXT
+        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+    END IF
+END SUB
+
+FUNCTION Help_Col 'Helps to calculate the default color
     col = Help_Col_Normal
     IF Help_Italic THEN col = Help_Col_Italic
     IF Help_Bold THEN col = Help_Col_Bold 'Note: Bold overrides italic
     Help_Col = col
 END FUNCTION
 
-SUB WikiParse (a$)
+SUB WikiParse (a$) 'Wiki page interpret
 
-    'wiki page interpret
-
-    'clear info
+    'Clear info
     help_h = 0: help_w = 0: Help_Line$ = "": Help_Link$ = "": Help_LinkN = 0
     Help_Txt$ = SPACE$(1000000)
     Help_Txt_Len = 0
 
     Help_Pos = 1: Help_Wrap_Pos = 0
     Help_Line$ = MKL$(1)
-    'word wrap locks (lock wrapping only, but continue parsing regularly)
+    'Word wrap locks (lock wrapping only, but continue parsing regularly)
     Help_LockWrap = 0
-    'parser locks (neg: soft lock, zero: unlocked, pos: hard lock)
+    'Parser locks (neg: soft lock, zero: unlocked, pos: hard lock)
     'hard:  2 = inside code blocks,  1 = inside output blocks
     'soft: -1 = inside text blocks, -2 = inside fixed blocks
     '=> all parser locks also imply a wrapping lock
@@ -258,12 +283,14 @@ SUB WikiParse (a$)
     ' :=indent (if beginning a new line)
     ' CHR$(10)=new line character
 
+    'Init prefetch array
     prefetch = 20
     DIM c$(prefetch)
     FOR ii = 1 TO prefetch
         c$(ii) = SPACE$(ii)
     NEXT
 
+    'BEGIN_PARSE_LOOP
     n = LEN(a$)
     i = 1
     DO WHILE i <= n
@@ -282,7 +309,7 @@ SUB WikiParse (a$)
             NEXT
         NEXT
 
-        'Wiki specific code must be handled always
+        'Wiki specific code handling (no restrictions)
         s$ = "__NOEDITSECTION__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "__NOEDITSECTION__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
@@ -290,8 +317,9 @@ SUB WikiParse (a$)
         s$ = "<nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "</nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
 
-        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
-            'Handle some direct HTML code
+        'Direct HTML code is not handled in Code/Output blocks (hard lock), as all text
+        'could be part of the code example itself (just imagine a HTML parser/writer demo)
+        IF Help_LockParse <= 0 THEN
             s$ = "<sup>": IF c$(LEN(s$)) = s$ THEN Help_AddTxt "^", col, 0: i = i + LEN(s$) - 1: GOTO charDone
             s$ = "</sup>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
 
@@ -371,55 +399,35 @@ SUB WikiParse (a$)
                 NEXT
                 GOTO charDone
             END IF
-
-            'Links
-            IF c = 91 THEN '"["
-                IF c$(2) = "[[" AND link = 0 THEN
-                    i = i + 1
-                    link = 1
-                    link$ = ""
-                    GOTO charDone
-                END IF
-            END IF
         END IF
-        IF link = 1 THEN
-            IF c$(2) = "]]" OR c$(2) = "}}" THEN
-                i = i + 1
-                link = 0
-                text$ = link$
-                i2 = INSTR(link$, "|")
-                IF i2 > 0 THEN
-                    text$ = RIGHT$(link$, LEN(link$) - i2)
-                    link$ = LEFT$(link$, i2 - 1)
-                END IF
 
-                IF INSTR(link$, "#") THEN 'local page links not supported yet
-                    Help_AddTxt text$, 8, 0
-                    GOTO charDone
-                END IF
-
-                Help_LinkN = Help_LinkN + 1
-                Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
-
-                IF Help_LockParse = 0 THEN
-                    Help_AddTxt text$, Help_Col_Link, Help_LinkN
-                ELSE
-                    Help_AddTxt text$, Help_Col_Bold, Help_LinkN
-                END IF
+        'Wiki text styles are not handled in Code/Output blocks (hard lock),
+        'as they could be part of the code example itself
+        IF Help_LockParse <= 0 THEN
+            'Bold style
+            IF c$(3) = "'''" THEN
+                i = i + 2
+                IF Help_Bold = 0 THEN Help_Bold = 1 ELSE Help_Bold = 0
+                col = Help_Col
                 GOTO charDone
             END IF
-            link$ = link$ + c$
-            GOTO charDone
+            'Italic style
+            IF c$(2) = "''" THEN
+                i = i + 1
+                IF Help_Italic = 0 THEN Help_Italic = 1 ELSE Help_Italic = 0
+                col = Help_Col
+                GOTO charDone
+            END IF
         END IF
 
-        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+        'Wiki links ([ext], [[int]]) are not handled in Code/Output blocks (hard lock),
+        'as all text could be part of the code example itself
+        IF Help_LockParse <= 0 THEN
             'External links
-            IF c = 91 THEN '"["
-                IF (c$(6) = "[http:" OR c$(7) = "[https:") AND elink = 0 THEN
-                    elink = 2
-                    elink$ = ""
-                    GOTO charDone
-                END IF
+            IF (c$(6) = "[http:" OR c$(7) = "[https:") AND elink = 0 THEN
+                elink = 2
+                elink$ = ""
+                GOTO charDone
             END IF
             IF elink = 2 THEN
                 IF c$ = " " THEN
@@ -440,38 +448,82 @@ SUB WikiParse (a$)
                     GOTO charDone
                 END IF
             END IF
-        END IF
-
-        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
-            'Bold & Italic styles
-            IF c$(3) = "'''" THEN
-                i = i + 2
-                IF Help_Bold = 0 THEN Help_Bold = 1 ELSE Help_Bold = 0
-                col = Help_Col
-                GOTO charDone
-            END IF
-            IF c$(2) = "''" THEN
+            'Internal links
+            IF c$(2) = "[[" AND link = 0 THEN
                 i = i + 1
-                IF Help_Italic = 0 THEN Help_Italic = 1 ELSE Help_Italic = 0
-                col = Help_Col
-                GOTO charDone
-            END IF
-        END IF
-
-        'Templates
-        IF c = 123 THEN '"{"
-            IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{KW|" THEN 'just nice wrapped links
-                i = i + 4 '                                               'KW is deprecated (but kept for existing pages)
                 link = 1
                 link$ = ""
                 GOTO charDone
             END IF
-            IF c$(2) = "{{" THEN 'any other templates
+        END IF
+        'However, the internal link logic must run always, as it also handles
+        'the template {{Cb|, {{Cl| and {{KW| links used in code blocks
+        IF link = 1 THEN
+            IF c$(2) = "]]" OR c$(2) = "}}" THEN
                 i = i + 1
-                cb = 1
-                cb$ = ""
+                link = 0
+                text$ = link$
+                i2 = INSTR(link$, "|")
+                IF i2 > 0 THEN
+                    text$ = RIGHT$(link$, LEN(link$) - i2)
+                    link$ = LEFT$(link$, i2 - 1)
+                END IF
+
+                IF INSTR(link$, "#") THEN 'local page links not supported
+                    Help_AddTxt text$, 8, 0
+                    GOTO charDone
+                END IF
+
+                Help_LinkN = Help_LinkN + 1
+                Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
+
+                IF Help_LockParse = 0 THEN
+                    Help_AddTxt text$, Help_Col_Link, Help_LinkN
+                ELSE
+                    Help_AddTxt text$, Help_Col_Bold, Help_LinkN
+                END IF
                 GOTO charDone
             END IF
+            link$ = link$ + c$
+            GOTO charDone
+        END IF
+
+        'Wiki tables ({|...|}) are not handled in Code/Output blocks (hard lock),
+        'as everything could be part of the code example itself
+        IF Help_LockParse <= 0 THEN
+            'Tables (ignored, give info, if not in blocks)
+            IF c$(2) = "{|" THEN
+                wla$ = wikiLookAhead$(a$, i + 2, "|}"): iii = 0
+                FOR ii = 1 TO LEN(wla$)
+                    IF MID$(wla$, ii, 1) = "|" AND MID$(wla$, ii, 2) <> "|-" THEN iii = iii + 1
+                NEXT
+                i = i + 1 + LEN(wla$) + 2
+                IF iii > 1 OR INSTR(wla$, "__TOC__") = 0 THEN 'ignore TOC only tables
+                    IF Help_LockParse = 0 THEN
+                        Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                    END IF
+                END IF
+                GOTO charDone
+            END IF
+        END IF
+
+        'Wiki templates are handled always, as these are the basic building blocks of all
+        'the wiki pages, but look for special conditions inside (Help_LockParse checks)
+        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{KW|" THEN 'just nice wrapped links
+            i = i + 4 '                                               'KW is deprecated (but kept for existing pages)
+            link = 1
+            link$ = ""
+            GOTO charDone
+        END IF
+        IF c$(2) = "{{" THEN 'any other templates
+            i = i + 1
+            cb = 1
+            cb$ = ""
+            GOTO charDone
         END IF
         IF cb > 0 THEN
             IF c$ = "|" OR c$(2) = "}}" THEN
@@ -492,7 +544,7 @@ SUB WikiParse (a$)
                 END IF
                 IF c$ = "|" AND cb = 1 THEN cb = 2
 
-                IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+                IF Help_LockParse = 0 THEN 'no section headings in blocks
                     cbo$ = ""
                     'Standard section headings (section color, h3 w/o underline, h2 with underline)
                     'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
@@ -518,7 +570,7 @@ SUB WikiParse (a$)
                     IF cbo$ <> "" THEN
                         IF RIGHT$(cbo$, 1) = ":" THEN Help_Underline = Help_Col_Section
                         Help_AddTxt cbo$, Help_Col_Section, 0: Help_NewLine
-                        IF cbo$ = "Copyright" THEN
+                        IF cbo$ = "Copyright" THEN '_gl commands only
                             Help_NewLine: Help_AddTxt "1991-2006 Silicon Graphics, Inc.", 7, 0: Help_NewLine
                             Help_AddTxt "This document is licensed under the SGI Free Software B License.", 7, 0: Help_NewLine
                             Help_AddTxt "https://spdx.org/licenses/SGI-B-2.0.html https://spdx.org/licenses/SGI-B-2.0.html", 15, 0: Help_NewLine
@@ -535,10 +587,7 @@ SUB WikiParse (a$)
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
                 IF cb$ = "CodeStart" AND Help_LockParse = 0 THEN
-                    IF Help_Txt_Len >= 8 THEN
-                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
-                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
-                    END IF
+                    Help_CheckBlankLine
                     Help_BG_Col = 1: Help_LockParse = 2
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Code Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     'Skip non-meaningful content before section begins
@@ -550,17 +599,14 @@ SUB WikiParse (a$)
                     IF ws THEN i = ii
                 END IF
                 IF cb$ = "CodeEnd" AND Help_LockParse <> 0 THEN
-                    IF nl = 0 THEN Help_NewLine
+                    Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
                 'Output Block
                 IF LEFT$(cb$, 11) = "OutputStart" AND Help_LockParse = 0 THEN 'does also match new OutputStartBGn templates
-                    IF Help_Txt_Len >= 8 THEN
-                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
-                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
-                    END IF
+                    Help_CheckBlankLine
                     Help_BG_Col = 2: Help_LockParse = 1
                     Help_AddTxt STRING$(Help_ww - 17, 196) + " Output Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     'Skip non-meaningful content before section begins
@@ -572,7 +618,7 @@ SUB WikiParse (a$)
                     IF ws THEN i = ii
                 END IF
                 IF cb$ = "OutputEnd" AND Help_LockParse <> 0 THEN
-                    IF nl = 0 THEN Help_NewLine
+                    Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$((Help_ww - 54) \ 2, 196), 15, 0
                     Help_AddTxt " This block does not reflect the actual output colors ", 15, 0
                     Help_AddTxt STRING$(Help_ww - Help_Pos + 1, CHR$(196)), 15, 0: Help_NewLine
@@ -581,10 +627,7 @@ SUB WikiParse (a$)
                 END IF
                 'Text Block
                 IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
-                    IF Help_Txt_Len >= 8 THEN
-                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
-                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
-                    END IF
+                    Help_CheckBlankLine
                     Help_BG_Col = 6: Help_LockParse = -1
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Text Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     'Skip non-meaningful content before section begins
@@ -596,17 +639,14 @@ SUB WikiParse (a$)
                     IF ws THEN i = ii
                 END IF
                 IF cb$ = "TextEnd" AND Help_LockParse <> 0 THEN
-                    IF nl = 0 THEN Help_NewLine
+                    Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
                 'Fixed Block
                 IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
-                    IF Help_Txt_Len >= 8 THEN
-                        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
-                        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
-                    END IF
+                    Help_CheckBlankLine
                     Help_BG_Col = 6: Help_LockParse = -2
                     Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     'Skip non-meaningful content before section begins
@@ -618,14 +658,14 @@ SUB WikiParse (a$)
                     IF ws THEN i = ii
                 END IF
                 IF (cb$ = "FixedEnd" OR cb$ = "WhiteEnd") AND Help_LockParse <> 0 THEN 'White is deprecated (but kept for existing pages)
-                    IF nl = 0 THEN Help_NewLine
+                    Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
 
                 'Template wrapped table
-                IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+                IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse = 0 THEN 'no table info in blocks
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
@@ -634,7 +674,7 @@ SUB WikiParse (a$)
                 END IF
 
                 'Small template text will be centered (maybe as block note)
-                IF LCASE$(cb$) = "small" AND Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
+                IF LCASE$(cb$) = "small" AND Help_LockParse <= 0 THEN 'keep as is in Code/Output blocks
                     wla$ = wikiLookAhead$(a$, i + 1, "}}")
                     Help_CIndent$ = wikiBuildCIndent$(wla$): iii = 0
                     IF i > 31 AND ASC(Help_CIndent$, 1) >= Help_ww / 4 THEN
@@ -669,9 +709,11 @@ SUB WikiParse (a$)
             IF cb = 1 THEN cb$ = cb$ + c$ 'reading macro name
             IF cb = 2 THEN Help_AddTxt CHR$(c), col, 0 'copy macro'd text
             GOTO charDone
-        END IF 'cb > 0
+        END IF
 
-        IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+        'Wiki headings (==...==}) are not handled in blocks (soft- and hard lock), as it would
+        'disrupt the block, also in code blocks it could be part of the code example itself
+        IF Help_LockParse = 0 THEN
             'Custom section headings (current color, h3 w/o underline, h2 with underline)
             ii = 0
             IF c$(5) = " === " THEN ii = 4
@@ -687,22 +729,37 @@ SUB WikiParse (a$)
             IF ii > 0 THEN i = i + ii: Help_Underline = col: GOTO charDone
         END IF
 
-        IF Help_LockParse = 0 THEN 'keep text AS IS in all blocks
+        'Wiki/HTML rulers (----, <hr>) are not handled in blocks (soft- and hard lock), as it would
+        'disrupt the block, also in code blocks it could be part of the code example itself
+        IF Help_LockParse = 0 THEN
             'Rulers
             IF c$(4) = "----" AND nl = 1 THEN
                 i = i + 3
                 Help_AddTxt STRING$(Help_ww, 196), 8, 0
                 GOTO charDone
             END IF
+            IF c$(4) = "<hr>" OR c$(6) = "<hr />" THEN
+                IF c$(4) = "<hr>" THEN i = i + 3
+                IF c$(6) = "<hr />" THEN i = i + 5
+                Help_CheckFinishLine
+                Help_AddTxt STRING$(Help_ww, 196), 8, 0
+                GOTO charDone
+            END IF
+        END IF
 
+        'Wiki definition lists (;...:...) are not handled in blocks (soft- and hard lock), as it would
+        'disrupt the block, also in code blocks it could be part of the code example itself
+        IF Help_LockParse = 0 THEN
             'Definition lists
             IF c$ = ";" AND nl = 1 THEN 'definition (new line only)
+                IF c$(2) = "; " THEN i = i + 1
                 Help_Bold = 1: col = Help_Col: Help_DList = 1
                 IF c$(3) = ";* " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
                 IF c$(2) = ";*" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
                 GOTO charDone
             END IF
             IF c$ = ":" AND Help_DList > 0 THEN 'description (same or new line)
+                IF c$(2) = ": " THEN i = i + 1
                 Help_Bold = 0: col = Help_Col
                 IF nl = 0 THEN Help_NewLine
                 Help_AddTxt "   ", col, 0
@@ -714,33 +771,27 @@ SUB WikiParse (a$)
                 Help_DList = 0
                 GOTO charDone
             END IF
-            IF c$ = ":" AND nl = 1 THEN 'independent description w/o definition (new line only)
+            IF c$ = ":" AND nl = 1 THEN 'description w/o definition (new line only)
+                IF c$(2) = ": " THEN i = i + 1
                 Help_AddTxt "   ", col, 0
                 Help_NewLineIndent = Help_NewLineIndent + 3
                 GOTO charDoneKnl 'keep nl state for possible <UL> list bullets
             END IF
+        END IF
 
+        'Wiki lists (*, **) are not handled in blocks (soft- and hard lock), as it would
+        'disrupt the block, also in code blocks it could be part of the code example itself
+        IF Help_LockParse = 0 THEN
             'Unordered lists
             IF nl = 1 THEN
-                IF c$(3) = "** " THEN
-                    i = i + 2
-                    Help_AddTxt "   " + CHR$(4) + " ", 15, 0
-                    Help_NewLineIndent = Help_NewLineIndent + 5
-                    GOTO charDone
-                END IF
-                IF c$(2) = "* " THEN
-                    i = i + 1
-                    Help_AddTxt CHR$(4) + " ", 15, 0
-                    Help_NewLineIndent = Help_NewLineIndent + 2
-                    GOTO charDone
-                END IF
                 IF c$(2) = "**" THEN
-                    i = i + 1
+                    IF c$(3) = "** " THEN i = i + 2: ELSE i = i + 1
                     Help_AddTxt "   " + CHR$(4) + " ", 15, 0
                     Help_NewLineIndent = Help_NewLineIndent + 5
                     GOTO charDone
                 END IF
                 IF c$ = "*" THEN
+                    IF c$(2) = "* " THEN i = i + 1
                     Help_AddTxt CHR$(4) + " ", 15, 0
                     Help_NewLineIndent = Help_NewLineIndent + 2
                     GOTO charDone
@@ -748,26 +799,7 @@ SUB WikiParse (a$)
             END IF
         END IF
 
-        IF Help_LockParse <= 0 THEN 'keep text AS IS in Code/Output blocks
-            'Tables (ignored)
-            IF c$(2) = "{|" THEN
-                wla$ = wikiLookAhead$(a$, i + 2, "|}"): iii = 0
-                FOR ii = 1 TO LEN(wla$)
-                    IF MID$(wla$, ii, 1) = "|" AND MID$(wla$, ii, 2) <> "|-" THEN iii = iii + 1
-                NEXT
-                i = i + 1 + LEN(wla$) + 2
-                IF iii > 1 OR INSTR(wla$, "__TOC__") = 0 THEN 'ignore TOC only tables
-                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ษออออออออออออออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "The original help page has a table here, please ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
-                END IF
-                GOTO charDone
-            END IF
-        END IF
-
-        'Unicodes
+        'Unicode handling (no restrictions)
         IF ((c AND &HE0~%%) = 192) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) THEN '2-byte UTF-8
             i = i + 1
             FOR ii = 0 TO wpUtfReplCnt
@@ -796,7 +828,7 @@ SUB WikiParse (a$)
             GOTO charDone
         END IF
 
-        'Line breaks
+        'Line break handling (no restrictions)
         IF c = 10 OR c$(4) = "<br>" OR c$(6) = "<br />" THEN
             IF c$(4) = "<br>" THEN i = i + 3
             IF c$(6) = "<br />" THEN i = i + 5
@@ -820,7 +852,6 @@ SUB WikiParse (a$)
             nl = 1
             GOTO charDoneKnl 'keep just set nl state
         END IF
-
         Help_AddTxt CHR$(c), col, 0
 
         charDone:
@@ -828,6 +859,7 @@ SUB WikiParse (a$)
         charDoneKnl: 'done, but keep nl state
         i = i + 1
     LOOP
+    'END_PARSE_LOOP
 
     'Trim Help_Txt$
     Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len) + CHR$(13) 'chr13 stops reads past end of content
@@ -942,7 +974,18 @@ SUB WikiParse (a$)
     END IF
 END SUB
 
-FUNCTION wikiBuildCIndent$ (a$)
+FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text
+    wikiLookAhead$ = "": IF i >= LEN(a$) THEN EXIT FUNCTION
+    j = INSTR(i, a$, token$)
+    IF j = 0 THEN
+        wikiLookAhead$ = MID$(a$, i)
+    ELSE
+        wikiLookAhead$ = MID$(a$, i, j - i)
+        i = j + 1
+    END IF
+END FUNCTION
+
+FUNCTION wikiBuildCIndent$ (a$) 'Pre-calc center indentions
     wikiBuildCIndent$ = "": IF a$ = "" THEN EXIT FUNCTION
 
     org$ = a$: b$ = "" 'eliminate internal links
@@ -997,16 +1040,5 @@ FUNCTION wikiBuildCIndent$ (a$)
         i = br + 1: st = br + 1: br = 0
     WEND
     wikiBuildCIndent$ = res$
-END FUNCTION
-
-FUNCTION wikiLookAhead$ (a$, i, token$)
-    wikiLookAhead$ = "": IF i >= LEN(a$) THEN EXIT FUNCTION
-    j = INSTR(i, a$, token$)
-    IF j = 0 THEN
-        wikiLookAhead$ = MID$(a$, i)
-    ELSE
-        wikiLookAhead$ = MID$(a$, i, j - i)
-        i = j + 1
-    END IF
 END FUNCTION
 
