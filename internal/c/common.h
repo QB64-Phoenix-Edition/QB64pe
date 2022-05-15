@@ -87,9 +87,7 @@
 #        include <sys/types.h>
 #        include <sys/wait.h>
 #        include <unistd.h>
-#        ifndef QB64_MACOSX
-#            include <dlfcn.h>
-#        endif
+#        include <dlfcn.h>
 
 #    endif
 

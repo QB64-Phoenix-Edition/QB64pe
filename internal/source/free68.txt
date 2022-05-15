@@ -1,6 +1,10 @@
-if(oldstr3511){
-if(oldstr3511->fixed)qbs_set(oldstr3511,_FUNC_GDB_FIX_STRING_G_COMMAND);
-qbs_free(_FUNC_GDB_FIX_STRING_G_COMMAND);
+if(oldstr3466){
+if(oldstr3466->fixed)qbs_set(oldstr3466,_SUB_PARSEEXPRESSION_STRING_EXP);
+qbs_free(_SUB_PARSEEXPRESSION_STRING_EXP);
 }
-qbs_free(_FUNC_GDB_FIX_STRING_C);
-qbs_free(_FUNC_GDB_FIX_STRING_O);
+if (_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[2]&1){
+tmp_long=_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[0]))[tmp_long]);
+free((void*)(_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM[0]));
+}
+free_mem_lock( (mem_lock*)((ptrszint*)_SUB_PARSEEXPRESSION_ARRAY_STRING_NUM)[8] );

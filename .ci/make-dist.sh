@@ -6,6 +6,18 @@ format=
 ARCHIVE_ROOT=qb64
 DIST_ROOT=./dist/$ARCHIVE_ROOT
 
+case "$buildPlatform" in
+    windows-latest)
+        ./internal/c/c_compiler/bin/mingw32-make.exe OS=win clean
+        ;;
+    ubuntu-latest)
+        make OS=lnx clean
+        ;;
+    macos-latest)
+        make OS=osx clean
+        ;;
+esac
+
 mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
 mkdir -p $DIST_ROOT/internal/c
@@ -16,6 +28,7 @@ cp ./CHANGELOG.md $DIST_ROOT
 cp ./COPYING.txt  $DIST_ROOT
 cp ./README.md    $DIST_ROOT
 cp ./qb64.1       $DIST_ROOT
+cp ./Makefile     $DIST_ROOT
 
 cp -rp ./internal/source  $DIST_ROOT/internal/
 cp -rp ./internal/help    $DIST_ROOT/internal/

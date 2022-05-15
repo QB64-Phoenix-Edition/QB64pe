@@ -1,3 +1,8 @@
-Dim Shared OldFont
+$CONSOLE:ONLY
+CHDIR _STARTDIR$
 
-OldFont = _LOADFONT("C:\Windows\Fonts\OLDENGL.TTF", 38)
+Dim OldFont AS LONG
+OldFont = _LOADFONT("slick.ttf", 10)
+
+print OldFont;
+SYSTEM

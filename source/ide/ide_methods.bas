@@ -4939,7 +4939,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Purge C++ #Libraries" THEN
                 PCOPY 2, 0
-                purgeprecompiledcontent
+                PurgeTemporaryBuildFiles (os$), (MacOSX)
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -15248,7 +15248,7 @@ FUNCTION ideadvancedbox
                     WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
                 END IF
                 Include_GDB_Debugging_Info = idedebuginfo
-                purgeprecompiledcontent
+                PurgeTemporaryBuildFiles (os$), (MacOSX)
                 idechangemade = 1 'force recompilation
                 startPausedPending = 0
             END IF
@@ -19934,24 +19934,6 @@ FUNCTION isnumber (__a$)
 END FUNCTION
 
 '$INCLUDE:'wiki\wiki_methods.bas'
-
-SUB purgeprecompiledcontent
-    IF os$ = "WIN" THEN
-        CHDIR "internal\c"
-        SHELL _HIDE "cmd /c purge_all_precompiled_content_win.bat"
-        CHDIR "..\.."
-    END IF
-    IF os$ = "LNX" THEN
-        CHDIR "./internal/c"
-
-        IF INSTR(_OS$, "[MACOSX]") THEN
-            SHELL _HIDE "./purge_all_precompiled_content_osx.command"
-        ELSE
-            SHELL _HIDE "./purge_all_precompiled_content_lnx.sh"
-        END IF
-        CHDIR "../.."
-    END IF
-END SUB
 
 SUB printWrapStatus (x AS INTEGER, y AS INTEGER, initialX AS INTEGER, __text$)
     DIM text$, nextWord$

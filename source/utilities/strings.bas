@@ -31,3 +31,7 @@ FUNCTION StrReplace$ (myString$, find$, replaceWith$) 'noncase sensitive
     LOOP
     StrReplace$ = a$
 END FUNCTION
+
+FUNCTION AddQuotes$ (s$)
+    AddQuotes$ = CHR$(34) + s$ + CHR$(34)
+END FUNCTION
