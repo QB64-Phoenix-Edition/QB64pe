@@ -89,7 +89,7 @@ ifdef BUILD_QB64
 	else
 		EXE ?= qb64
 	endif
-else
+endif
 
 ifneq ($(filter clean,$(MAKECMDGOALS)),)
 	# We have to define this for the Makefile to work,
@@ -99,8 +99,6 @@ endif
 
 ifndef EXE
 $(error Please provide executable name as 'EXE=executable')
-endif
-
 endif
 
 all: $(EXE)
