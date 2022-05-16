@@ -19,10 +19,10 @@ echo Extracting %MINGW% as C++ Compiler
 
 :skipccompsetup
 
-echo "Cleaning..."
+echo Cleaning...
 internal\c\c_compiler\bin\mingw32-make.exe OS=win clean >NUL
 
-echo "Building QB64..."
+echo Building QB64...
 internal\c\c_compiler\bin\mingw32-make.exe OS=win BUILD_QB64=y || goto report_error
 
 echo.
