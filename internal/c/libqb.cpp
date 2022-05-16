@@ -27356,13 +27356,19 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 
 int32 func_screenwidth() {
 #ifdef QB64_GLUT
-    while (!window_exists) {
-        Sleep(100);
-    }
+    //while (!window_exists) {
+    //    Sleep(100);               //endless loop which is completely unneeded here.
+    //}                             //we can get the desktop's width and height without there needing to be an active screen (such as $SCREENHIDE)
+
 #    ifdef QB64_WINDOWS
-    while (!window_handle) {
+
+    int32 waited_enough = 20;
+
+    while (!window_handle&&waited_enough>0) {
         Sleep(100);
+        waited_enough = waited_enough - 1;
     }
+    if (waited_enough == 0) return 0; //if the screen isn't created and doesn't have a handle after two seconds, then return a value of 0.  Don't run an endless loop!
 #    endif
     return glutGet(GLUT_SCREEN_WIDTH);
 #else
@@ -27376,13 +27382,19 @@ int32 func_screenwidth() {
 
 int32 func_screenheight() {
 #ifdef QB64_GLUT
-    while (!window_exists) {
-        Sleep(100);
-    }
+    //while (!window_exists) {
+    //    Sleep(100);                 //same comments as above -- endless loopfor unneeded window handle check here.
+    //}
 #    ifdef QB64_WINDOWS
-    while (!window_handle) {
+
+    int32 waited_enough = 20;
+
+    while (!window_handle && waited_enough > 0) {
         Sleep(100);
+        waited_enough = waited_enough - 1;
     }
+    if (waited_enough == 0)
+        return 0; // if the screen isn't created and doesn't have a handle after two seconds, then return a value of 0.  Don't run an endless loop!
 #    endif
     return glutGet(GLUT_SCREEN_HEIGHT);
 #else
@@ -27396,14 +27408,21 @@ int32 func_screenheight() {
 
 void sub_screenicon() {
 #ifdef QB64_GLUT
-    while (!window_exists) {
+    int32 waited_enough = 20;
+
+    while (!window_exists&&waited_enough>0) {
         Sleep(100);
+        waited_enough = waited_enough - 1;   //don't make this an endless loop.  Give it an exit condition for some sort after a few seconds!
     }
 #    ifdef QB64_WINDOWS
-    while (!window_handle) {
+
+    while (!window_handle && waited_enough > 0) {
         Sleep(100);
+        waited_enough = waited_enough - 1; //same here.  Endless loops are a bad no-no!
     }
 #    endif
+    if (waited_enough == 0)
+        return; // if the screen isn't created and doesn't have a handle after two seconds, then just return and don't try to minimize the window.
     glutIconifyWindow();
     return;
 #endif
