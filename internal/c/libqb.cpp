@@ -27356,7 +27356,7 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 
 int32 func_screenwidth() {
 #ifdef QB64_WINDOWS
-    return GetSystemMetrics(0);
+    return GetSystemMetrics(SM_CXSCREEN);
 #else
 #    ifdef QB64_GLUT
     return glutGet(GLUT_SCREEN_WIDTH);
@@ -27368,7 +27368,7 @@ int32 func_screenwidth() {
 
 int32 func_screenheight() {
 #ifdef QB64_WINDOWS
-    return GetSystemMetrics(1);
+    return GetSystemMetrics(SM_CYSCREEN);
 #else
 #    ifdef QB64_GLUT
     return glutGet(GLUT_SCREEN_HEIGHT);
