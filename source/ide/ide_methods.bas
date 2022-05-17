@@ -19989,8 +19989,8 @@ SUB RetrieveSearchHistory (SearchHistory() as string)
     redim _preserve SearchHistory(1 to 10000) 'large initial array to hold the data
     Do until eof(fh)
        ln = ln + 1
-       line input #fh, SearchHistory(ln)
        if ln > ubound(SearchHistory) then redim _preserve SearhHistory(1 to ln + 10000) 'large resize, it necessary
+       line input #fh, SearchHistory(ln)
     Loop
     redim _preserve SearchHistory(1 to ln) 'resize to proper size before exit
     CLOSE #fh
