@@ -19,8 +19,11 @@ echo Extracting %MINGW% as C++ Compiler
 
 :skipccompsetup
 
-internal\c\c_compiler\bin\mingw32-make.exe OS=win clean
-internal\c\c_compiler\bin\mingw32-make.exe OS=win BUILD_QB64=y
+echo Cleaning...
+internal\c\c_compiler\bin\mingw32-make.exe OS=win clean >NUL 2>NUL
+
+echo Building QB64...
+internal\c\c_compiler\bin\mingw32-make.exe OS=win BUILD_QB64=y || goto report_error
 
 echo.
 echo Launching 'QB64'
@@ -28,3 +31,10 @@ qb64
 
 echo.
 pause
+
+exit 0
+
+report_error:
+echo "Error compiling QB64."
+echo "Please review above steps and report to https://github.com/QB64-Phoenix-Edition/QB64pe/issues if you can't get it to work"
+exit 1

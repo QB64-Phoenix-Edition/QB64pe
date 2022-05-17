@@ -84,8 +84,12 @@ else
 endif
 
 ifdef BUILD_QB64
-	EXE ?= qb64
-else
+	ifeq ($(OS),win)
+		EXE ?= qb64.exe
+	else
+		EXE ?= qb64
+	endif
+endif
 
 ifneq ($(filter clean,$(MAKECMDGOALS)),)
 	# We have to define this for the Makefile to work,
@@ -95,8 +99,6 @@ endif
 
 ifndef EXE
 $(error Please provide executable name as 'EXE=executable')
-endif
-
 endif
 
 all: $(EXE)
@@ -341,6 +343,8 @@ clean:
 
 $(EXE): $(EXE_OBJS) $(EXE_LIBS)
 	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o $@ $(EXE_LIBS) $(CXXLIBS)
+ifneq ($(filter-out osx,$(OS)),)
 	$(OBJCOPY) --only-keep-debug $@ $(PATH_INTERNAL_TEMP)/$@.sym
 	$(OBJCOPY) --strip-unneeded $@
+endif
 
