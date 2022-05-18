@@ -13,7 +13,7 @@ If _FILEEXISTS("internal/version.txt") THEN
     LINE INPUT #versionfile, VersionLabel$
     Version$ = Version$ + VersionLabel$
 
-    if VersionLabel$ <> "" then
+    if VersionLabel$ <> "" AND VersionLabel$ <> "-UNKNOWN" then
         IsCiVersion = -1
     end if
 
