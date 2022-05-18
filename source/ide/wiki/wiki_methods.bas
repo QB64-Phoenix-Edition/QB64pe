@@ -90,8 +90,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     IF s1 > 0 THEN a$ = MID$(a$, s1 + LEN(s1$)): s2 = INSTR(a$, s2$): ELSE s2 = 0
     IF s2 > 0 THEN a$ = LEFT$(a$, s2 - 1)
     IF s1 > 0 AND s2 > 0 AND a$ <> "" THEN
-        'If wikitext was found, then substitute entities & save it
-        '--- first HTML specific
+        'If wikitext was found, then substitute stuff & save it
+        '--- first HTML specific entities
         WHILE INSTR(a$, "&amp;") > 0 '         '&amp; must be first and looped until all
             a$ = StrReplace$(a$, "&amp;", "&") 'multi-escapes are resolved (eg. &amp;lt; &amp;amp;lt; etc.)
         WEND
@@ -105,7 +105,14 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "&sup1;", CHR$(252))
         a$ = StrReplace$(a$, "&sup2;", CHR$(253))
         a$ = StrReplace$(a$, "&nbsp;", CHR$(255))
-        '--- put a download date/time entry ---
+        '--- useless empty text styles
+        a$ = StrReplace$(a$, "Start}}'' ''", "Start}}")
+        a$ = StrReplace$(a$, "Start}} '' ''", "Start}}")
+        a$ = StrReplace$(a$, "Start}}" + CHR$(10) + "'' ''", "Start}}")
+        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + "{{", CHR$(10) + "{{")
+        a$ = StrReplace$(a$, "'' '' " + CHR$(10) + "{{", CHR$(10) + "{{")
+        a$ = StrReplace$(a$, "'' ''" + MKI$(&H0A0A) + "{{", CHR$(10) + "{{")
+        '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
         OPEN outputFile$ FOR OUTPUT AS #fh
@@ -303,7 +310,8 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_AddTxt "   Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
     Help_AddTxt "   ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
     Help_AddTxt SPACE$(Help_ww - i - 2 - Help_Pos) + CHR$(4), 14, 0
-    Help_AddTxt " " + d$, 7, 0: Help_NewLine
+    IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
+    Help_AddTxt " " + d$, i, 0: Help_NewLine
     Help_AddTxt "ÄÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 7, "Ä"), 14, 0: Help_NewLine
 
     'Init prefetch array
