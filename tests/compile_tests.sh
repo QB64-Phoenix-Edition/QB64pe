@@ -13,7 +13,6 @@ show_failure()
 {
     cat "$RESULTS_DIR/$1-compile_result.txt"
     cat "$RESULTS_DIR/$1-compilelog.txt"
-    cat "$RESULTS_DIR/$1-errorcompilelog.txt"
 }
 
 show_incorrect_result()
@@ -33,7 +32,6 @@ do
     "$QB64" -x  "./tests/compile_tests/$test/test.bas" -o "$EXE" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
     cp_if_exists ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
-    cp_if_exists ./internal/temp/errorcompilelog.txt $RESULTS_DIR/$test-errorcompilelog.txt
 
     (exit $ERR)
     assert_success_named "Compile" "Compilation Error:" show_failure $test
