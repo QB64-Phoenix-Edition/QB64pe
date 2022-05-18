@@ -105,6 +105,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "&sup1;", CHR$(252))
         a$ = StrReplace$(a$, "&sup2;", CHR$(253))
         a$ = StrReplace$(a$, "&nbsp;", CHR$(255))
+        '--- put a download date/time entry ---
+        a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
         OPEN outputFile$ FOR OUTPUT AS #fh
         PRINT #fh, a$
@@ -183,7 +185,11 @@ SUB Help_NewLine 'Start a new help line, apply indention (if any)
     IF Help_Underline THEN
         w = Help_Pos
         Help_Pos = 1
-        Help_AddTxt STRING$(w - 1, 196), Help_Underline, 0
+        IF Help_Underline = Help_Col_Section THEN
+            Help_AddTxt STRING$(w - 1, 205), Help_Underline, 0
+        ELSE
+            Help_AddTxt STRING$(w - 1, 196), Help_Underline, 0
+        END IF
         Help_Underline = 0 'keep before Help_NewLine (recursion)
         Help_NewLine
     END IF
@@ -265,23 +271,40 @@ SUB WikiParse (a$) 'Wiki page interpret
     col = Help_Col
 
     'Syntax Notes:
-    ' '''=bold
-    ' ''=italic
-    ' {{macroname|macroparam}} or simply {{macroname}}
-    '  eg. {{KW|PRINT}}=a key word, a link to a page
-    '      {{Cl|PRINT}}=a key word in a code example, will be printed in bold and aqua
-    '      {{Parameter|expression}}=a parameter, in italics
-    '      {{PageSyntax}} {{PageParameters}} {{PageDescription}} {{PageExamples}}
-    '      {{CodeStart}} {{CodeEnd}} {{OutputStart}} {{OutputEnd}}
-    '      {{PageSeeAlso}} {{PageNavigation}} {{PageLegacySupport}}
-    '      {{PageQBasic}} {{PageAvailability}}
-    ' [[SPACE$]]=a link to wikipage called "SPACE$"
-    ' [[INTEGER|integer]]=a link, link's name is on left and text to appear is on right
-    ' *=a dot point
-    ' **=a sub(ie. further indented) dot point
-    ' &quot;=a quotation mark
-    ' :=indent (if beginning a new line)
-    ' CHR$(10)=new line character
+    '=============
+    'everywhere in text
+    '------------------
+    ' ''' = bold text style
+    ' ''  = italic etxt style
+    ' [url text]    = external link to url with text to appear (url ends at 1st found space)
+    ' [[page]]      = link to another wikipage
+    ' [[page|text]] = link to another wikipage with alternative text to appear
+    ' {{templatename|param|param|param}} or simply {{templatename}} = predefined styles
+    '---------------------
+    'at start of line only
+    '---------------------
+    ' *  = dot list point
+    ' ** = sub (ie. further indented) dot list point
+    ' ;def:desc = full definition/description list
+    ' :desc     = description only, but indented as in a full def/desc list
+    ' ;* def:desc = combi list, list dot always belongs to description
+    ' :* desc     = combi, description only
+
+    'First find and write the page title and last update
+    d$ = "Page not yet updated, expect visual glitches.": i = INSTR(a$, "{{QBDLDATE:")
+    IF i > 0 THEN
+        d$ = "Last updated: " + MID$(a$, i + 11, INSTR(i + 11, a$, "}}") - i - 11)
+        i = INSTR(a$, "{{QBDLTIME:")
+        IF i > 0 THEN d$ = d$ + ", at " + MID$(a$, i + 11, INSTR(i + 11, a$, "}}") - i - 11)
+    END IF
+    t$ = Help_PageLoaded$: i = INSTR(a$, "{{DISPLAYTITLE:")
+    IF i > 0 THEN t$ = MID$(a$, i + 15, INSTR(i + 15, a$, "}}") - i - 15)
+    i = LEN(d$): ii = LEN(t$)
+    Help_AddTxt "   Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
+    Help_AddTxt "   ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
+    Help_AddTxt SPACE$(Help_ww - i - 2 - Help_Pos) + CHR$(4), 14, 0
+    Help_AddTxt " " + d$, 7, 0: Help_NewLine
+    Help_AddTxt "ÄÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 7, "Ä"), 14, 0: Help_NewLine
 
     'Init prefetch array
     prefetch = 20
@@ -533,7 +556,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 ELSEIF c$(2) = "}}" THEN
                     IF LCASE$(LEFT$(cb$, 5)) = "small" THEN
                         IF ASC(cb$, 6) = 196 THEN
-                            Help_AddTxt " " + STRING$(Help_ww - Help_Pos, CHR$(196)), 15, 0
+                            Help_AddTxt " " + STRING$(Help_ww - Help_Pos, 196), 15, 0
                             Help_BG_Col = 0: col = Help_Col
                         ELSE
                             Help_Center = 0
@@ -563,8 +586,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                     IF cb$ = "PageCopyright" THEN cbo$ = "Copyright"
                     IF cb$ = "PageNavigation" THEN cbo$ = "" 'ignored for built-in help
                     'Internally used templates (not available in Wiki)
-                    IF cb$ = "PageWelcome" THEN cbo$ = "Welcome:"
-                    IF cb$ = "PageCommunity" THEN cbo$ = "Community:"
                     IF cb$ = "PageInternalError" THEN cbo$ = "Sorry, an error occurred:"
                     '----------
                     IF cbo$ <> "" THEN
@@ -609,7 +630,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$((Help_ww - 54) \ 2, 196), 15, 0
                     Help_AddTxt " This block does not reflect the actual output colors ", 15, 0
-                    Help_AddTxt STRING$(Help_ww - Help_Pos + 1, CHR$(196)), 15, 0: Help_NewLine
+                    Help_AddTxt STRING$(Help_ww - Help_Pos + 1, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
@@ -670,7 +691,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                             END IF
                         NEXT
                         Help_BG_Col = iii: cb$ = cb$ + CHR$(196) 'special signal byte
-                        Help_AddTxt STRING$(ASC(Help_CIndent$, 1) - 1, CHR$(196)) + " ", 15, 0
+                        Help_AddTxt STRING$(ASC(Help_CIndent$, 1) - 1, 196) + " ", 15, 0
                         col = 15 'further text color until closing
                     ELSE
                         Help_Center = 1: cb$ = cb$ + CHR$(0) 'no special signal
@@ -741,7 +762,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 Help_AddTxt "   ", col, 0
                 Help_NewLineIndent = Help_NewLineIndent + 3
                 IF Help_DList > 1 THEN
-                    Help_AddTxt CHR$(4) + " ", 15, 0
+                    Help_AddTxt CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 2
                 END IF
                 Help_DList = 0
@@ -762,13 +783,13 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF nl = 1 THEN
                 IF c$(2) = "**" THEN
                     IF c$(3) = "** " THEN i = i + 2: ELSE i = i + 1
-                    Help_AddTxt "   " + CHR$(4) + " ", 15, 0
+                    Help_AddTxt "   " + CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 5
                     GOTO charDone
                 END IF
                 IF c$ = "*" THEN
                     IF c$(2) = "* " THEN i = i + 1
-                    Help_AddTxt CHR$(4) + " ", 15, 0
+                    Help_AddTxt CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 2
                     GOTO charDone
                 END IF
@@ -814,7 +835,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF Help_Txt_Len >= 8 THEN 'allow max. one blank line (ie. collapse multi blanks to just one)
                     IF ASC(Help_Txt$, Help_Txt_Len - 3) = 13 AND ASC(Help_Txt$, Help_Txt_Len - 7) = 13 THEN
                         IF Help_Center > 0 THEN Help_CIndent$ = MID$(Help_CIndent$, 2) 'drop respective center indent
-                        Help_DList = 0: Help_Bold = 0: col = Help_Col 'definition list incl. style ends after blank line
                         GOTO skipMultiBlanks
                     END IF
                 END IF
@@ -824,6 +844,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             skipMultiBlanks:
             IF Help_LockParse <> 0 THEN 'in all blocks reset styles at EOL
                 Help_Bold = 0: Help_Italic = 0: col = Help_Col
+            ELSE
+                IF c = 10 THEN Help_DList = 0: Help_Bold = 0: col = Help_Col 'def list incl. style ends after real new line
             END IF
             nl = 1
             GOTO charDoneKnl 'keep just set nl state
