@@ -18600,7 +18600,7 @@ FUNCTION removeDoubleSlashes$(f$)
 END FUNCTION
 
 SUB IdeAddSearched (s2$)
-    s$ = CRLF + s2$ + CRLF
+    s$ = s2$ + CHR$(10)
     fh = FREEFILE
     OPEN ".\internal\temp\searched.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$
     x = INSTR(UCASE$(a$), UCASE$(s$))
