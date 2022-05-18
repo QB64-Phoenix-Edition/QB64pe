@@ -12284,10 +12284,8 @@ IF Debug THEN PRINT #9, "Finished generation of code for saving/sharing common a
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
-errorcompilelog$ = tmpdir$ + "errorcompilelog.txt"
 compilelog$ = tmpdir$ + "compilelog.txt"
 
-OPEN errorcompilelog$ FOR OUTPUT AS #1: CLOSE #1 'Clear log
 OPEN compilelog$ FOR OUTPUT AS #1: CLOSE #1 'Clear log
 
 IF idemode = 0 AND NOT QuietMode THEN
@@ -12645,7 +12643,7 @@ IF os$ = "WIN" THEN
     NEXT
 
     If No_C_Compile_Mode = 0 THEN
-        SHELL _HIDE "cmd /c " + makeline$ + " 1>> " + compilelog$ + " 2>> " + errorcompilelog$
+        SHELL _HIDE "cmd /c " + makeline$ + " 1>> " + compilelog$ + " 2>&1"
 
         IF idemode THEN
             'Restore fg/bg colors
@@ -12878,7 +12876,7 @@ IF os$ = "LNX" THEN
     END IF
 
     IF No_C_Compile_Mode = 0 THEN
-        SHELL _HIDE makeline$ + " 1>> " + compilelog$ + " 2>> " + errorcompilelog$
+        SHELL _HIDE makeline$ + " 1>> " + compilelog$ + " 2>&1"
         IF idemode THEN
             'Restore fg/bg colors
             dummy = DarkenFGBG(0)
@@ -12916,7 +12914,7 @@ END IF
 
 IF compfailed THEN
     IF idemode THEN
-        idemessage$ = "C++ Compilation failed " + CHR$(0) + "(Check " + _TRIM$(compilelog$) + " And " + _TRIM$(errorcompilelog$) + ")"
+        idemessage$ = "C++ Compilation failed " + CHR$(0) + "(Check " + _TRIM$(compilelog$) + ")"
         GOTO ideerror
     END IF
     IF compfailed THEN
