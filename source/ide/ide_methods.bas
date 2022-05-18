@@ -10276,22 +10276,7 @@ FUNCTION idechange$
         a2$ = idefindtext
     END IF
 
-    'retrieve search history
-    ln = 0
-    fh = FREEFILE
-    OPEN ".\internal\temp\searched.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$
-    CLOSE #fh
-    a$ = RIGHT$(a$, LEN(a$) - 2)
-    DO WHILE LEN(a$)
-        ai = INSTR(a$, CRLF)
-        IF ai THEN
-            f$ = LEFT$(a$, ai - 1): IF ai = LEN(a$) - 1 THEN a$ = "" ELSE a$ = RIGHT$(a$, LEN(a$) - ai - 3)
-            ln = ln + 1
-            REDIM _PRESERVE SearchHistory(1 TO ln)
-            SearchHistory(ln) = f$
-        END IF
-    LOOP
-    ln = 0
+    RetrieveSearchHistory SearchHistory()
 
     i = 0
     idepar p, 60, 14, "Change"
@@ -11131,22 +11116,7 @@ FUNCTION idefind$
         a2$ = idefindtext
     END IF
 
-    'retrieve search history
-    ln = 0
-    fh = FREEFILE
-    OPEN ".\internal\temp\searched.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$
-    CLOSE #fh
-    a$ = RIGHT$(a$, LEN(a$) - 2)
-    DO WHILE LEN(a$)
-        ai = INSTR(a$, CRLF)
-        IF ai THEN
-            f$ = LEFT$(a$, ai - 1): IF ai = LEN(a$) - 1 THEN a$ = "" ELSE a$ = RIGHT$(a$, LEN(a$) - ai - 3)
-            ln = ln + 1
-            REDIM _PRESERVE SearchHistory(1 TO ln)
-            SearchHistory(ln) = f$
-        END IF
-    LOOP
-    ln = 0
+    RetrieveSearchHistory SearchHistory()
 
     i = 0
     idepar p, 60, 11, "Find"
@@ -17698,23 +17668,11 @@ FUNCTION idesearchedbox$
 
     ln = 0
     l$ = ""
-    fh = FREEFILE
-    OPEN ".\internal\temp\searched.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$
-    a$ = RIGHT$(a$, LEN(a$) - 2)
-    DO WHILE LEN(a$)
-        ai = INSTR(a$, CRLF)
-        IF ai THEN
-            f$ = LEFT$(a$, ai - 1): IF ai = LEN(a$) - 1 THEN a$ = "" ELSE a$ = RIGHT$(a$, LEN(a$) - ai - 3)
-            IF LEN(l$) THEN l$ = l$ + sep + f$ ELSE l$ = f$
-            ln = ln + 1
-        END IF
-    LOOP
-    CLOSE #fh
-
-    IF ln = 0 THEN
-        l$ = sep
-    END IF
-
+    REDIM SearchHistory(0) AS STRING
+    RetrieveSearchHistory SearchHistory()
+    FOR i = 1 to UBOUND(SearchHistory)
+        l$ = SearchHistory(i) + sep + l$
+    NEXT
     '72,19
 
     h = idewy + idesubwindow - 9
@@ -18630,7 +18588,7 @@ FUNCTION removeDoubleSlashes$(f$)
 END FUNCTION
 
 SUB IdeAddSearched (s2$)
-    s$ = CRLF + s2$ + CRLF
+    s$ = s2$ + CRLF
     fh = FREEFILE
     OPEN ".\internal\temp\searched.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$
     x = INSTR(UCASE$(a$), UCASE$(s$))
@@ -20014,6 +19972,24 @@ FUNCTION GetBytes$(__value$, numberOfBytes&)
     GetBytes$ = MID$(value$, getBytesPosition&, numberOfBytes&)
     getBytesPosition& = getBytesPosition& + numberOfBytes&
 END FUNCTION
+
+SUB RetrieveSearchHistory (SearchHistory() as string)
+    fh = FREEFILE
+    OPEN ".\internal\temp\searched.bin" FOR BINARY AS #fh
+    redim _preserve SearchHistory(1 to 10000) AS STRING 'large initial array to hold the data
+    IF LOF(FH) THEN
+        Do until eof(fh)
+           ln = ln + 1
+           if ln > ubound(SearchHistory) then redim _preserve SearhHistory(1 to ln + 10000) AS STRING 'large resize, it necessary
+           line input #fh, SearchHistory(ln)
+        Loop
+        redim _preserve SearchHistory(1 to ln) AS STRING'resize to proper size before exit
+    ELSE
+       REDIM SearchHistory(1) AS STRING
+       SearchHistory(1) = ""
+    END IF
+    CLOSE #fh
+end sub
 
 'FUNCTION Download$ (url$, outputVar$, lookFor$, timelimit) STATIC
 '    'as seen on http://www.qb64.org/wiki/Downloading_Files
