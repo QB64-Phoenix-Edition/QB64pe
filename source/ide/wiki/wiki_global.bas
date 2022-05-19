@@ -20,6 +20,7 @@ DIM SHARED Help_NewLineIndent
 DIM SHARED Help_Underline
 'Link Types:
 ' PAGE:wikipagename
+' EXTL:external link url
 DIM SHARED Help_Pos, Help_Wrap_Pos
 DIM SHARED Help_BG_Col
 DIM SHARED Help_Col_Normal: Help_Col_Normal = 7

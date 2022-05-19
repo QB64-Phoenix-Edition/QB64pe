@@ -2588,54 +2588,72 @@ FUNCTION ide2 (ignore)
                             NEXT
                             l2 = INSTR(l1, Help_Link$, Help_Link_Sep$) - 1
                             l$ = MID$(Help_Link$, l1, l2 - l1 + 1)
-                            'assume PAGE
-                            l$ = RIGHT$(l$, LEN(l$) - 5)
 
                             IF mCLICK OR K$ = CHR$(13) THEN
                                 mCLICK = 0
 
-                                IF Back$(Help_Back_Pos) <> l$ THEN
-                                    Help_Select = 0: Help_MSelect = 0
-                                    'COLOR 7, 0
-
-                                    Help_Back(Help_Back_Pos).sx = Help_sx 'update position
-                                    Help_Back(Help_Back_Pos).sy = Help_sy
-                                    Help_Back(Help_Back_Pos).cx = Help_cx
-                                    Help_Back(Help_Back_Pos).cy = Help_cy
-
-                                    top = UBOUND(back$)
-
-                                    IF Help_Back_Pos < top THEN
-                                        IF Back$(Help_Back_Pos + 1) = l$ THEN
-                                            GOTO usenextentry
-                                        END IF
+                                IF LEFT$(l$, 5) = "EXTL:" THEN
+                                    l$ = RIGHT$(l$, LEN(l$) - 5)
+                                    l$ = StrReplace$(l$, " ", "%20")
+                                    IF INSTR(_OS$, "WIN") = 0 THEN
+                                        l$ = StrReplace$(l$, "$", "\$")
+                                        l$ = StrReplace$(l$, "&", "\&")
+                                        l$ = StrReplace$(l$, "(", "\(")
+                                        l$ = StrReplace$(l$, ")", "\)")
                                     END IF
+                                    IF INSTR(_OS$, "WIN") THEN
+                                        SHELL _HIDE _DONTWAIT "start " + l$
+                                    ELSEIF INSTR(_OS$, "MAC") THEN
+                                        SHELL _HIDE _DONTWAIT "open " + l$
+                                    ELSE
+                                        SHELL _HIDE _DONTWAIT "xdg-open " + l$
+                                    END IF
+                                    GOTO specialchar
+                                ELSEIF LEFT$(l$, 5) = "PAGE:" THEN
+                                    l$ = RIGHT$(l$, LEN(l$) - 5)
+                                    IF Back$(Help_Back_Pos) <> l$ THEN
+                                        Help_Select = 0: Help_MSelect = 0
+                                        'COLOR 7, 0
 
-                                    top = top + 1
-                                    REDIM _PRESERVE Back(top) AS STRING
-                                    REDIM _PRESERVE Help_Back(top) AS Help_Back_Type
-                                    REDIM _PRESERVE Back_Name(top) AS STRING
-                                    'Shuffle array upwards after current pos
-                                    FOR x = top - 1 TO Help_Back_Pos + 1 STEP -1
-                                        Back_Name$(x + 1) = Back_Name$(x)
-                                        Back$(x + 1) = Back$(x)
-                                        Help_Back(x + 1).sx = Help_Back(x).sx
-                                        Help_Back(x + 1).sy = Help_Back(x).sy
-                                        Help_Back(x + 1).cx = Help_Back(x).cx
-                                        Help_Back(x + 1).cy = Help_Back(x).cy
-                                    NEXT
-                                    usenextentry:
-                                    Help_Back_Pos = Help_Back_Pos + 1
-                                    Back$(Help_Back_Pos) = l$
-                                    Back_Name$(Help_Back_Pos) = Back2BackName$(l$)
-                                    Help_Back(Help_Back_Pos).sx = 1
-                                    Help_Back(Help_Back_Pos).sy = 1
-                                    Help_Back(Help_Back_Pos).cx = 1
-                                    Help_Back(Help_Back_Pos).cy = 1
-                                    Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
-                                    a$ = Wiki(l$)
-                                    WikiParse a$
-                                    GOTO newpageparsed
+                                        Help_Back(Help_Back_Pos).sx = Help_sx 'update position
+                                        Help_Back(Help_Back_Pos).sy = Help_sy
+                                        Help_Back(Help_Back_Pos).cx = Help_cx
+                                        Help_Back(Help_Back_Pos).cy = Help_cy
+
+                                        top = UBOUND(back$)
+
+                                        IF Help_Back_Pos < top THEN
+                                            IF Back$(Help_Back_Pos + 1) = l$ THEN
+                                                GOTO usenextentry
+                                            END IF
+                                        END IF
+
+                                        top = top + 1
+                                        REDIM _PRESERVE Back(top) AS STRING
+                                        REDIM _PRESERVE Help_Back(top) AS Help_Back_Type
+                                        REDIM _PRESERVE Back_Name(top) AS STRING
+                                        'Shuffle array upwards after current pos
+                                        FOR x = top - 1 TO Help_Back_Pos + 1 STEP -1
+                                            Back_Name$(x + 1) = Back_Name$(x)
+                                            Back$(x + 1) = Back$(x)
+                                            Help_Back(x + 1).sx = Help_Back(x).sx
+                                            Help_Back(x + 1).sy = Help_Back(x).sy
+                                            Help_Back(x + 1).cx = Help_Back(x).cx
+                                            Help_Back(x + 1).cy = Help_Back(x).cy
+                                        NEXT
+                                        usenextentry:
+                                        Help_Back_Pos = Help_Back_Pos + 1
+                                        Back$(Help_Back_Pos) = l$
+                                        Back_Name$(Help_Back_Pos) = Back2BackName$(l$)
+                                        Help_Back(Help_Back_Pos).sx = 1
+                                        Help_Back(Help_Back_Pos).sy = 1
+                                        Help_Back(Help_Back_Pos).cx = 1
+                                        Help_Back(Help_Back_Pos).cy = 1
+                                        Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
+                                        a$ = Wiki(l$)
+                                        WikiParse a$
+                                        GOTO newpageparsed
+                                    END IF
                                 END IF
                             END IF
 

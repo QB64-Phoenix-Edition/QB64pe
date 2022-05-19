@@ -22,12 +22,13 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
                 PageName2$ = PageName2$ + CHR$(c)
         END SELECT
     NEXT
+    PageName3$ = wikiSafeName$(PageName2$) 'case independent name
 
     'Is this page in the cache?
     IF Help_IgnoreCache = 0 THEN
-        IF _FILEEXISTS(Cache_Folder$ + "/" + PageName2$ + ".txt") THEN
+        IF _FILEEXISTS(Cache_Folder$ + "/" + PageName3$ + ".txt") THEN
             fh = FREEFILE
-            OPEN Cache_Folder$ + "/" + PageName2$ + ".txt" FOR BINARY AS #fh
+            OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR BINARY AS #fh
             a$ = SPACE$(LOF(fh))
             GET #fh, , a$
             CLOSE #fh
@@ -40,8 +41,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
             LOOP
             IF removedchr13 THEN
                 fh = FREEFILE
-                OPEN Cache_Folder$ + "/" + PageName2$ + ".txt" FOR OUTPUT AS #fh: CLOSE #fh
-                OPEN Cache_Folder$ + "/" + PageName2$ + ".txt" FOR BINARY AS #fh
+                OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR OUTPUT AS #fh: CLOSE #fh
+                OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR BINARY AS #fh
                 PUT #fh, 1, a$
                 CLOSE #fh
             END IF
@@ -72,7 +73,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
 
     'Url query and output arguments for curl
     url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
-    outputFile$ = Cache_Folder$ + "/" + PageName2$ + ".txt"
+    outputFile$ = Cache_Folder$ + "/" + PageName3$ + ".txt"
     'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
@@ -121,7 +122,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     ELSE
         'Delete page, if empty or corrupted (force re-download on next access)
         KILL outputFile$
-        a$ = "{{PageInternalError}}" + CHR$(10) +_
+        a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10) +_
              "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
              "* or the download from Wiki failed and corrupted the page data." + CHR$(10) +_
              "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10)
@@ -303,6 +304,8 @@ SUB WikiParse (a$) 'Wiki page interpret
         d$ = "Last updated: " + MID$(a$, i + 11, INSTR(i + 11, a$, "}}") - i - 11)
         i = INSTR(a$, "{{QBDLTIME:")
         IF i > 0 THEN d$ = d$ + ", at " + MID$(a$, i + 11, INSTR(i + 11, a$, "}}") - i - 11)
+    ELSEIF INSTR(a$, "{{PageInternalError}}") > 0 THEN
+        d$ = "Page not found."
     END IF
     t$ = Help_PageLoaded$: i = INSTR(a$, "{{DISPLAYTITLE:")
     IF i > 0 THEN t$ = MID$(a$, i + 15, INSTR(i + 15, a$, "}}") - i - 15)
@@ -456,28 +459,32 @@ SUB WikiParse (a$) 'Wiki page interpret
         IF Help_LockParse <= 0 THEN
             'External links
             IF (c$(6) = "[http:" OR c$(7) = "[https:") AND elink = 0 THEN
-                elink = 2
+                elink = 1
                 elink$ = ""
                 GOTO charDone
             END IF
-            IF elink = 2 THEN
-                IF c$ = " " THEN
-                    elink = 1
+            IF elink = 1 THEN
+                IF c$ = "]" THEN
+                    elink = 0
+                    etext$ = elink$
+                    i2 = INSTR(elink$, " ")
+                    IF i2 > 0 THEN
+                        etext$ = RIGHT$(elink$, LEN(elink$) - i2)
+                        elink$ = LEFT$(elink$, i2 - 1)
+                    END IF
+
+                    Help_LinkN = Help_LinkN + 1
+                    Help_Link$ = Help_Link$ + "EXTL:" + elink$ + Help_Link_Sep$
+
+                    IF Help_LockParse = 0 THEN
+                        Help_AddTxt etext$, Help_Col_Link, Help_LinkN
+                    ELSE
+                        Help_AddTxt etext$, Help_Col_Bold, Help_LinkN
+                    END IF
                     GOTO charDone
                 END IF
                 elink$ = elink$ + c$
                 GOTO charDone
-            END IF
-            IF elink >= 1 THEN
-                IF c$ = "]" THEN
-                    elink = 0
-                    elink$ = " " + elink$
-                    Help_LockWrap = 1: Help_Wrap_Pos = 0
-                    Help_AddTxt elink$, 8, 0
-                    Help_LockWrap = 0
-                    elink$ = ""
-                    GOTO charDone
-                END IF
             END IF
             'Internal links
             IF c$(2) = "[[" AND link = 0 THEN
@@ -502,6 +509,9 @@ SUB WikiParse (a$) 'Wiki page interpret
 
                 IF INSTR(link$, "#") THEN 'local page links not supported
                     Help_AddTxt text$, 8, 0
+                    GOTO charDone
+                ELSEIF LEFT$(link$, 9) = "Category:" THEN 'ignore category links
+                    Help_CheckRemoveBlankLine
                     GOTO charDone
                 END IF
 
@@ -979,6 +989,19 @@ SUB WikiParse (a$) 'Wiki page interpret
 
     END IF
 END SUB
+
+FUNCTION wikiSafeName$(page$) 'create a unique name for both case sensitive & insensitive systems
+    ext$ = SPACE$(LEN(page$))
+    FOR i = 1 TO LEN(page$)
+        c = ASC(page$, i)
+        SELECT CASE c
+            CASE 65 TO 90: ASC(ext$, i) = 49 'upper = 1
+            CASE 97 TO 122: ASC(ext$, i) = 48 'lower = 0
+            CASE ELSE: ASC(ext$, i) = c 'non-letter = take as is
+        END SELECT
+    NEXT
+    wikiSafeName$ = page$ + "_" + ext$
+END FUNCTION
 
 FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text
     wikiLookAhead$ = "": IF i >= LEN(a$) THEN EXIT FUNCTION
