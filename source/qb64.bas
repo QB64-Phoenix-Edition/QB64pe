@@ -1086,10 +1086,10 @@ IF C = 9 THEN 'run
             IF os$ = "LNX" THEN
                 IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
                     SHELL QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
-                    SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(lastBinaryGenerated$)
+                    KILL lastBinaryGenerated$
                 ELSE
                     SHELL QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
-                    SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(path.exe$ + lastBinaryGenerated$)
+                    KILL path.exe$ + lastBinaryGenerated$
                 END IF
             END IF
             IF path.exe$ = "./" THEN path.exe$ = ""
@@ -3290,12 +3290,12 @@ DO
                 CASE "FILEVERSION#"
                     GOSUB ValidateVersion
                     viFileVersionNum$ = VersionInfoValue$
-                    if viFileVersion$ = "" THEN viFileVersion$ = viFileVersionNum$
+                    IF viFileVersion$ = "" THEN viFileVersion$ = viFileVersionNum$
                     layout$ = SCase$("$VersionInfo:FILEVERSION#=") + VersionInfoValue$
                 CASE "PRODUCTVERSION#"
                     GOSUB ValidateVersion
                     viProductVersionNum$ = VersionInfoValue$
-                    if viProductVersion$ = "" THEN viProductVersion$ = viProductVersionNum$
+                    IF viProductVersion$ = "" THEN viProductVersion$ = viProductVersionNum$
                     layout$ = SCase$("$VersionInfo:PRODUCTVERSION#=") + VersionInfoValue$
                 CASE "COMPANYNAME"
                     viCompanyName$ = VersionInfoValue$
@@ -12378,7 +12378,7 @@ IF ExeIconSet THEN
 
     DIM errNo AS LONG
     errNo = CopyFile&(ExeIconFile$, tmpdir$ + "icon.ico")
-    if errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(ExeIconFile$) + " to temp directory": GOTO errmes
+    IF errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(ExeIconFile$) + " to temp directory": GOTO errmes
 
     ON ERROR GOTO qberror
 END IF
@@ -12484,26 +12484,26 @@ make$ = GetMakeExecutable$
 localpath$ = "internal\c\"
 
 
-IF DEPENDENCY(DEPENDENCY_GL) THEN               makedeps$ = makedeps$ + " DEP_GL=y"
-IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN      makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
-IF DEPENDENCY(DEPENDENCY_IMAGE_CODEC) THEN      makedeps$ = makedeps$ + " DEP_IMAGE_CODEC=y"
-IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN     makedeps$ = makedeps$ + " DEP_CONSOLE_ONLY=y"
-IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN          makedeps$ = makedeps$ + " DEP_SOCKETS=y"
-IF DEPENDENCY(DEPENDENCY_PRINTER) THEN          makedeps$ = makedeps$ + " DEP_PRINTER=y"
-IF DEPENDENCY(DEPENDENCY_ICON) THEN             makedeps$ = makedeps$ + " DEP_ICON=y"
-IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN      makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
-IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN         makedeps$ = makedeps$ + " DEP_FONT=y"
-IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN      makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN     makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
+IF DEPENDENCY(DEPENDENCY_GL) THEN makedeps$ = makedeps$ + " DEP_GL=y"
+IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
+IF DEPENDENCY(DEPENDENCY_IMAGE_CODEC) THEN makedeps$ = makedeps$ + " DEP_IMAGE_CODEC=y"
+IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN makedeps$ = makedeps$ + " DEP_CONSOLE_ONLY=y"
+IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN makedeps$ = makedeps$ + " DEP_SOCKETS=y"
+IF DEPENDENCY(DEPENDENCY_PRINTER) THEN makedeps$ = makedeps$ + " DEP_PRINTER=y"
+IF DEPENDENCY(DEPENDENCY_ICON) THEN makedeps$ = makedeps$ + " DEP_ICON=y"
+IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
+IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN makedeps$ = makedeps$ + " DEP_FONT=y"
+IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
 IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN makedeps$ = makedeps$ + " DEP_AUDIO_CONVERSION=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN     makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN        makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
-IF DEPENDENCY(DEPENDENCY_ZLIB) THEN             makedeps$ = makedeps$ + " DEP_ZLIB=y"
-IF inline_DATA = 0 AND DataOffset THEN          makedeps$ = makedeps$ + " DEP_DATA=y"
-IF Console THEN                                 makedeps$ = makedeps$ + " DEP_CONSOLE=y"
-IF ExeIconSet OR VersionInfoSet THEN            makedeps$ = makedeps$ + " DEP_ICON_RC=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
+IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
+IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
+IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
+IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
+IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
-IF tempfolderindex > 1 THEN                     makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
+IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
 CxxFlagsExtra$ = ""
 CxxLibsExtra$ = ""
@@ -12642,7 +12642,7 @@ IF os$ = "WIN" THEN
         END IF
     NEXT
 
-    If No_C_Compile_Mode = 0 THEN
+    IF No_C_Compile_Mode = 0 THEN
         SHELL _HIDE "cmd /c " + makeline$ + " 1>> " + compilelog$ + " 2>&1"
 
         IF idemode THEN
