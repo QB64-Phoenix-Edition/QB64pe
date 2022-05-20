@@ -1086,10 +1086,10 @@ IF C = 9 THEN 'run
             IF os$ = "LNX" THEN
                 IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
                     SHELL QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
-                    KILL QuotedFilename$(lastBinaryGenerated$)
+                    KILL lastBinaryGenerated$
                 ELSE
                     SHELL QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
-                    KILL QuotedFilename$(path.exe$ + lastBinaryGenerated$)
+                    KILL path.exe$ + lastBinaryGenerated$
                 END IF
             END IF
             IF path.exe$ = "./" THEN path.exe$ = ""
