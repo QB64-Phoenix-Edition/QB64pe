@@ -1,0 +1,112 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:12:51}}
+The [[DIM]] statement is used to declare a variable or a list of variables as a specified data type or to dimension [[$STATIC]] or [[$DYNAMIC]] [[Arrays|arrays]].
+
+
+{{PageSyntax}}
+::''To declare variables:''
+:::[[DIM]] [{{KW|SHARED}}] ''variable''[{suffix| {{KW|AS}} [{{KW|_UNSIGNED}}] ''type''}] [, ''variable2''...]]
+
+::''To declare arrays:''
+:::[[DIM]] [{{KW|SHARED}}] ''array([lowest% {{KW|TO}}] highest%])''[{suffix| {{KW|AS}} [{{KW|_UNSIGNED}}] ''type''}] [, ''variable2''...]
+
+::'' '''QB64''' Alternative Syntax:''
+:::[[DIM]] [{{KW|SHARED}}] {{KW|AS}} [{{KW|_UNSIGNED}}] ''type'' ''variable''  [, ''variable2''...]
+:::[[DIM]] [{{KW|SHARED}}] {{KW|AS}} [{{KW|_UNSIGNED}}] ''type'' ''array([lowest% {{KW|TO}}] highest%])'' [, ''array2(elements)''...]
+
+
+{{PageDescription}}
+* Sets the [[INTEGER]] range of elements (indices) of a [[STATIC]] array. If only one number is used, the [[LBOUND|lowest boundary]] is 0 by default. 
+* When used before an array is dimensioned, '''[[OPTION BASE]] 1''' can set the default [[LBOUND|lower boundary]] of arrays to 1.
+* DIM [[SHARED]] shares variable values with sub-procedures without passing the value in a parameter.
+* Use the [[AS]] keyword to define a variable or array ''type'' [[AS]]...
+** [[INTEGER]] (or use variable suffix '''%''')
+** [[LONG]] (or use variable suffix '''&''')
+** [[SINGLE]] (or use variable suffix '''!''' or no suffix by default)
+** [[DOUBLE]] (or use variable suffix '''#''')
+** [[STRING]] (or use variable suffix '''$'''). An AS multiplier can set the string [[LEN|length]]. Ex: {{InlineCode}}DIM ''variable'' AS STRING * 8{{InlineCodeEnd}}
+* '''QB64''' variable types: 
+** [[_BIT]] (or use variable suffix '''`'''). An AS multiplier can be used for multiple bits. Ex: {{InlineCode}}DIM ''variable'' AS _BIT * 8{{InlineCodeEnd}}
+** [[_BYTE]] (or use variable suffix '''%%''')
+** [[_INTEGER64]] (or use variable suffix '''&&''')
+** [[_FLOAT]] (or use variable suffix '''##''')
+** [[_OFFSET]] (or use variable suffix '''%&''')
+** DIM AS [[_MEM]] (the _MEM type has no type suffix).
+* '''Note: When a variable has not been defined or has no type suffix, the type defaults to [[SINGLE]].'''
+* When using the '''AS type variable-list''' syntax, type symbols cannot be used.
+* When the [[$DYNAMIC]] metacommand or [[REDIM]] is used, array element sizes are changeable (not [[$STATIC]]).
+* Use [[REDIM]] instead of DIM to dimension arrays as dynamic without the {{KW|$DYNAMIC}} metacommand.
+* Use [[REDIM]] [[_PRESERVE]] in '''QB64''' to retain previous array values when changing the size of an array. 
+* [[REDIM]] [[_PRESERVE]] cannot change the number of array dimensions. An [[ERROR Codes|error]] will occur.
+* [[$DYNAMIC|Dynamic]] arrays MUST be [[REDIM]]ensioned if [[ERASE]] or [[CLEAR]] are used, as the arrays are completely removed.
+* All numerical variable types '''except''' {{KW|SINGLE}}, {{KW|DOUBLE}} and {{KW|_FLOAT}} can be dimensioned as [[_UNSIGNED]] (suffix ~) or positive only.
+* '''NOTE:''' Many QBasic keyword variable names can be used with a [[STRING]] suffix ($). You cannot use them without the suffix, use a numerical suffix or use ''DIM, [[REDIM]], [[_DEFINE]], [[BYVAL]] or [[TYPE]] variable [[AS]]'' statements. '''Although possible, it's recommended to avoid using reserved names.'''
+* '''Warning: Do not use negative array upper bound index values, or OS access or "Out of Memory" [[ERROR Codes|errors]] will occur.'''
+
+
+{{PageExamples}}
+''Example 1:'' Defines Qt variable as a one byte fixed length string.
+{{CodeStart}}
+ {{Cl|DIM}} Qt {{Cl|AS}} {{Cl|STRING}} * 1 
+{{CodeEnd}}
+
+''Example 2:'' Dimensions and types an array. 
+{{CodeStart}}
+ {{Cl|DIM}} Image(2000) {{Cl|AS}} {{Cl|INTEGER}}
+{{CodeEnd}}
+
+''Example 3:'' Dimensions array with an [[INTEGER]] type suffix.
+{{CodeStart}}
+ {{Cl|DIM}} Image%(2000)  
+{{CodeEnd}}
+
+''Example 4:'' Dimensions a range of [[Arrays|array]] elements as [[SHARED]] integers.
+{{CodeStart}}
+ {{Cl|DIM}} {{Cl|SHARED}} Image(1 {{Cl|TO}} 1000) {{Cl|AS}} {{Cl|INTEGER}} 
+{{CodeEnd}}
+
+''Example 5:'' Dimensions variable as an [[Arrays|array]] of 8 elements of the type [[UNSIGNED]] BIT.
+{{CodeStart}}
+ {{Cl|DIM}} bit(8) {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|_BIT}} 
+{{CodeEnd}}
+
+
+''Example 6:'' QB64 is more flexible than QBasic when it comes to "Duplicate Definition" errors. The following code does not error:
+{{CodeStart}}
+x = 1 'x is a {{Cl|SINGLE}} variable
+{{Cl|PRINT}} x
+{{Cl|DIM}} x {{Cl|AS}} {{Cl|LONG}}
+{{Cl|PRINT}} x 
+{{CodeEnd}}
+: ''Explanation:'' The [[SINGLE]] variable can be differentiated from the [[LONG]] x variable by using suffixes like x! or x& in later code.
+
+
+''Example 7:'' The following code will create a "Name already in use" '''status error''' in QB64 when the variable types are the same.
+{{CodeStart}}
+x = 1 'x is a {{Cl|SINGLE}} variable
+{{Cl|PRINT}} x
+{{Cl|DIM}} x {{Cl|AS}} {{Cl|SINGLE}}
+{{Cl|PRINT}} x 
+{{CodeEnd}}
+: ''Explanation:'' QB64 gives an error because the creation of the new variable would make referring to the existing one impossible.
+
+
+''Example 8:'' Using QB64's alternative syntax to declare multiple variables/arrays of the same type.
+{{CodeStart}}
+{{Cl|DIM}} {{Cl|AS}} {{Cl|LONG}} w, h, id, weight, index 'all of these variables are created as type LONG
+{{Cl|DIM}} {{Cl|AS}} {{Cl|SINGLE}} x, y, z               'all of these variables are created as type SINGLE
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[_DEFINE]], [[_PRESERVE]]
+* [[REDIM]], [[TYPE]]
+* [[ERASE]], [[CLEAR]]
+* [[DEFINT]], [[DEFSNG]], [[DEFLNG]], [[DEFDBL]], [[DEFSTR]]
+* [[Mathematical Operations]], [[Arrays]]
+* [[Variable Types]]
+* [[OPTION _EXPLICIT]]
+
+
+{{PageNavigation}}
+

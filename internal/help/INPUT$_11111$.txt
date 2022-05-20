@@ -1,0 +1,61 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:13:47}}
+The [[INPUT$]] function is used to receive data from the user's keyboard, an open file or an open port.
+
+
+{{PageSyntax}}
+: {{Parameter|result$}} = [[INPUT$]]({{Parameter|numberOfBytes%}}[, fileOrPortNumber])
+
+
+* Keyboard input is limited to the [[INTEGER]] {{Parameter|numberOfBytes%}} (characters) designated by program.
+* The keyboard is the default device when a file or port number is omitted. The {{Parameter|numberOfBytes%}} is number of key presses to read.
+* INPUT$ will wait until the number of bytes are read from the keyboard or port. One byte per loop is recommended with ports.
+* [[RANDOM]] opened file bytes can be up to the [[LEN]] = recordLength statement, or 128 if no statement is used.
+* fileOrPortNumber is the number that was used in the [[OPEN]] AS statement.
+* Returns [[STRING]] values including spaces or even extended [[ASCII]] characters.
+* Backspace key results in the [[CHR$]](8) character being added to an entry.
+* Use {{InlineCode}}{{Cl|LOCATE}} , , 1{{InlineCodeEnd}} to view the cursor entry. Turn the cursor off using {{InlineCode}}{{Cl|LOCATE}} , , 0{{InlineCodeEnd}}.
+* Use [[_DEST]] [[_CONSOLE]] before INPUT$ is used  to receive input from a [[$CONSOLE|console]] window.
+
+
+==QBasic/QuickBASIC==
+* {{Parameter|numberOfBytes%}} could not exceed 32767 in [[BINARY]] files or a QBasic error would occur. 
+* Ctrl + Break would not interrupt the QBasic program until there was a full INPUT$ key entry. In '''QB64''' Ctrl + Break will immediately exit a running program.
+
+
+{{PageExamples}}
+''Example 1:'' A keyboard limited length entry can be made with a fixed blinking cursor. Entry must be completed before it can be shown.
+{{CodeStart}}
+{{Cl|LOCATE}} 10, 10, 1         'display fixed cursor at location
+year$ = {{Cl|INPUT$}}(4)        'waits until all 4 digits are entered
+PRINT year$              'display the text entry 
+{{CodeEnd}}
+
+
+''Example 2:'' Reading bytes from a text file for an 80 wide screen mode.
+{{CodeStart}}
+{{Cl|LOCATE}} 5, 5, 1                    'locate and display cursor
+{{Cl|OPEN}} "Diary.txt" FOR {{Cl|INPUT (file mode)|INPUT}} AS #1  'open existing text file
+text$ = {{Cl|INPUT$}}(70, 1)
+{{Cl|LOCATE}} 5, 6, 0: PRINT text$       'print text and turn cursor off 
+{{CodeEnd}}
+
+
+''Example 3:'' Getting the entire text file data as one string value.
+{{CodeStart}}
+{{Cl|OPEN}} "Diary.txt FOR {{Cl|BINARY}} AS #1  'open an existing file up to 32767 bytes
+IF {{Cl|LOF}}(1) <= 32767 THEN Text$ = {{Cl|INPUT$}}(LOF(1), 1)
+{{Cl|CLOSE}} #1 
+{{CodeEnd}}
+:''Explanation:'' The IF statement gets the entire contents when the file size is less than 32768. The program can then work with the string by using [[MID$]] or [[INSTR]]. Note: A text file string will also have '''CrLf''' line break end characters [[CHR$]](13) + [[CHR$]](10).
+
+
+{{PageSeeAlso}}
+* [[INPUT]], [[LINE INPUT]] {{text|(keyboard input)}}
+* [[INPUT (file mode)]], [[INPUT (file statement)|INPUT #]], [[LINE INPUT (file statement)|LINE INPUT #]] {{text|(file input)}}
+* [[OPEN]], [[LOC]] {{text|(file)}} 
+* [[LOCATE]] {{text|(cursor on/off)}}
+
+
+{{PageNavigation}}
+

@@ -1,0 +1,37 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:14:12}}
+The [[LOC]] function returns the status of a serial (COM) port received buffer or the current byte position in an open file.
+
+
+{{PageSyntax}}
+: {{Parameter|bytes%}} = LOC({{Parameter|fileOrPortNumber%}})
+
+
+* {{Parameter|fileOrPortNumber%}} is the number used in the port [[OPEN]] AS statement.
+* Returns 0 if the buffer is empty. Any value above 0 indicates the COM port has received data.
+* Use it in conjunction with [[INPUT$]] to get the data bytes received.
+* Can also be used to read the current position in a file routine. See [[SEEK]].
+
+
+{{PageExamples}}
+''Example:'' Reading and writing from a COM port opened in Basic.
+{{CodeStart}}
+{{Cl|OPEN}} "{{Cl|OPEN_COM|COM}}1: 9600,N,8,1,OP0" {{Cl|FOR (file statement)|FOR}} {{Cl|RANDOM}} {{Cl|AS}} #1 {{Cl|LEN}} = 2048 ' random mode = input and output
+  {{Cl|DO}}: t$ = {{Cl|INKEY$}} ' get any transmit keypresses from user
+    {{Cl|IF}} {{Cl|LEN}}(t$) {{Cl|THEN}} {{Cl|PRINT (file statement)|PRINT}} #1, t$ ' send keyboard byte to transmit buffer
+    bytes% = {{Cl|LOC}}(1) ' bytes in buffer
+    {{Cl|IF}} bytes% {{Cl|THEN}} ' check receive buffer for data"
+      r$ = {{Cl|INPUT$}}(bytes%, 1)          ' get bytes in the receive buffer
+      {{Cl|PRINT}} r$; ' print byte strings consecutively to screen"
+    {{Cl|END IF}}    
+  {{Cl|LOOP}} {{Cl|UNTIL}} t$ = {{Cl|CHR$}}(27) 'escape key exit
+{{Cl|CLOSE}} # 
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[PRINT]], [[OPEN COM]], [[PRINT (file statement)]]
+* [[SEEK]]
+
+{{PageNavigation}}
+

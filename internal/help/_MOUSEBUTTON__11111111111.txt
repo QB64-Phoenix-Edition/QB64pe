@@ -1,0 +1,176 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:09:22}}
+{{DISPLAYTITLE:_MOUSEBUTTON}}
+The [[_MOUSEBUTTON]] function returns the button status of a specified mouse button when read after [[_MOUSEINPUT]].
+
+
+{{PageSyntax}}
+: {{Parameter|buttonStatus%%}} = [[_MOUSEBUTTON]]({{Parameter|buttoNumber}})
+
+
+{{Parameters}}
+* [[INTEGER]] {{Parameter|buttoNumber}} designates the mouse button to read (See [[_DEVICES]] for more than 3).
+** 1 = Left mouse button
+** 2 = Right mouse button
+** 3 = Center or scroll button 
+
+
+{{PageDescription}}
+* Returns -1 if the corresponding {{Parameter|buttoNumber}} is pressed or zero when released. 
+* Read [[_MOUSEINPUT]] first to return the current button up or down status. (See Example 2)
+* Button clicks and mouse movements will be remembered and should be cleared after an [[INPUT]] statement or other interruption. 
+* To clear unread mouse input, use a [[_MOUSEINPUT]] loop that loops until it returns 0.
+* Use [[_DEVICE$]] to find the "[MOUSE]" [[_DEVICES]] number to find the number of buttons available using [[_LASTBUTTON]].
+* '''Note:''' The center mouse button can also be read as [[_BUTTON]](2) on [[_DEVICEINPUT]](2) when a mouse is present.
+
+
+{{PageExamples}}
+''Example 1:'' Finding the number of mouse buttons available in QB64. This could also be used for other controller devices.
+{{CodeStart}}
+{{Cl|FOR...NEXT|FOR}} d = 1 {{Cl|TO}} {{Cl|_DEVICES}}  'number of input devices found
+  dev$ = {{Cl|_DEVICE$}}(d)
+  {{Cl|IF...THEN|IF}} {{Cl|INSTR}}(dev$, "[MOUSE]") {{Cl|THEN}} buttons = {{Cl|_LASTBUTTON}}(d): {{Cl|EXIT}} {{Cl|FOR...NEXT|FOR}}
+{{Cl|NEXT}}
+{{Cl|PRINT}} buttons; "mouse buttons available" 
+{{CodeEnd}}
+
+
+''Example 2:'' How to monitor when a button is down or wait until a mouse button is not held down.
+{{CodeStart}}
+{{Cl|PRINT}} "Hold down the left mouse button until you want to quit!"
+DO
+    i = {{Cl|_MOUSEINPUT}} ' read #1
+    {{Cl|IF...THEN|IF}} {{Cl|_MOUSEBUTTON}}(1) {{Cl|THEN}} {{Cl|PRINT}} "Left button down!": {{Cl|EXIT DO}}
+{{Cl|LOOP}}
+{{Cl|DO...LOOP|DO}} '                                                      need to wait
+    i = {{Cl|_MOUSEINPUT}} '  read #2                         until the mouse
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|NOT}} {{Cl|_MOUSEBUTTON}}(1) '                       button is released
+
+{{Cl|PRINT}} "DONE!" 
+{{CodeEnd}}
+
+
+''Example 3:'' Checking for a click or a double-click by the user.
+{{CodeStart}}
+{{Cl|DO...LOOP|DO}}  'main program loop
+
+  {{Cl|DO...LOOP|DO}} {{Cl|WHILE}} {{Cl|_MOUSEINPUT}}                'check mouse status
+    buttondown = {{Cl|_MOUSEBUTTON}}(1)
+  {{Cl|LOOP}}
+  {{Cl|DO...LOOP|DO}} {{Cl|WHILE}} buttondown                 'check for button release
+    i = {{Cl|_MOUSEINPUT}}
+    buttondown = {{Cl|_MOUSEBUTTON}}(1)
+    Click = 1
+  {{Cl|LOOP}}
+
+  {{Cl|IF...THEN|IF}} Click = 1 {{Cl|THEN}}                   'if button was pressed and released
+    t = {{Cl|TIMER}} + .3
+    {{Cl|DO...LOOP|DO}} {{Cl|WHILE}} {{Cl|TIMER}} < t      'check for a second press within .3 seconds
+      i = {{Cl|_MOUSEINPUT}}
+      {{Cl|IF...THEN|IF}} {{Cl|_MOUSEBUTTON}}(1) {{Cl|THEN}} Click = 2: {{Cl|EXIT DO}}
+    {{Cl|LOOP}}
+    {{Cl|IF...THEN|IF}} Click = 2 {{Cl|THEN}} {{Cl|PRINT}} "Double click" {{Cl|ELSE}} {{Cl|PRINT}} "Click"
+  {{Cl|END IF}}
+  Click = 0: buttondown = 0            'reset where needed
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} = {{Cl|CHR$}}(27) 
+{{CodeEnd}}
+: ''Explanation:'' To find the current button status read [[_MOUSEINPUT]] repeatedly. The [[TIMER]] loop looks for a second click.
+
+
+''Example 4:'' Verifying that a user clicked and released a mouse button on a program button.
+{{CodeStart}}
+{{Cl|SCREEN}} 12
+{{Cl|LINE}} (250, 250)-(300, 300), 14, BF
+
+{{Cl|DO...LOOP|DO}}
+  Mouser mx, my, mb
+  {{Cl|IF...THEN|IF}} mb {{Cl|THEN}}
+    {{Cl|IF...THEN|IF}} mx >= 250 {{Cl|AND (boolean)|AND}} my >= 250 {{Cl|AND (boolean)|AND}} mx <= 300 {{Cl|AND (boolean)|AND}} my <= 300 {{Cl|THEN}} 'button down
+      {{Cl|DO...LOOP|DO}} {{Cl|WHILE}} mb 'wait for button release
+        Mouser mx, my, mb
+      {{Cl|LOOP}}
+      'verify mouse still in box area
+      {{Cl|IF...THEN|IF}} mx >= 250 {{Cl|AND (boolean)|AND}} my >= 250 {{Cl|AND (boolean)|AND}} mx <= 300 {{Cl|AND (boolean)|AND}} my <= 300 {{Cl|THEN}} {{Cl|PRINT}} "Click verified on yellow box!"
+    {{Cl|END IF}}
+  {{Cl|END IF}}
+{{Cl|LOOP}}
+
+{{Cl|SUB}} Mouser (x, y, b)
+mi = {{Cl|_MOUSEINPUT}}
+b = {{Cl|_MOUSEBUTTON}}(1)
+x = {{Cl|_MOUSEX}}
+y = {{Cl|_MOUSEY}}
+{{Cl|END SUB}} 
+{{CodeEnd}}
+: ''Explanation:'' The mouse SUB has no internal [[_MOUSEINPUT]] loop so that no button presses, releases or moves are missed.
+: If the above read procedure goes to another one, it may be advisable to skip over unread input in a [[_MOUSEINPUT]] only loop.
+{{TextStart}}{{Cb|SUB}} Catchup
+{{Cb|DO...LOOP|DO}} {{Cb|WHILE}} {{Cb|_MOUSEINPUT}}: {{Cb|LOOP }}
+{{Cb|END SUB}} 
+{{TextEnd}}
+: The above procedure can be used to catch up after [[INPUT]], [[LINE INPUT]] or [[INPUT$]] delays when mouse input may accumulate.
+
+
+''Example 5:'' Combining mouse button or keyboard selections in a menu or test:
+{{CodeStart}}
+{{Cl|DO...LOOP|DO}} 'main program loop in demo only
+  {{Cl|LOCATE}} 10, 10: {{Cl|PRINT}} "A" 'position A, B & C in same position on every question
+  {{Cl|LOCATE}} 12, 10: {{Cl|PRINT}} "B"
+  {{Cl|LOCATE}} 14, 10: {{Cl|PRINT}} "C" 'demo only
+
+  {{Cl|DO...LOOP|DO}}: {{Cl|_LIMIT}} 10 'get user answer loop
+    {{Cl|DO...LOOP|DO}} {{Cl|WHILE}} {{Cl|_MOUSEINPUT}}: {{Cl|LOOP}} 'read mouse
+    K$ = {{Cl|UCASE$}}({{Cl|INKEY$}}) 'read keypresses also
+    x% = {{Cl|_MOUSEX}}
+    y% = {{Cl|_MOUSEY}}
+    Lclick = {{Cl|_MOUSEBUTTON}}(1)
+
+    {{Cl|LOCATE}} 20, 10: {{Cl|PRINT}} x%, y%, Lclick 'only used to find mouse coordinates
+    {{Cl|IF...THEN|IF}} x% = 10 {{Cl|AND (boolean)|AND}} y% = 10 {{Cl|AND (boolean)|AND}} Lclick {{Cl|THEN}} 'position clicked
+      DO
+        i = {{Cl|_MOUSEINPUT}}
+        x% = {{Cl|_MOUSEX}}
+        y% = {{Cl|_MOUSEY}}
+      {{Cl|LOOP}} {{Cl|WHILE}} {{Cl|_MOUSEBUTTON}}(1)
+      {{Cl|IF...THEN|IF}} x% = 10 {{Cl|AND (boolean)|AND}} y% = 10 {{Cl|THEN}} K$ = "A" 'position released
+    {{Cl|END IF}}
+    {{Cl|IF...THEN|IF}} x% = 10 {{Cl|AND (boolean)|AND}} y% = 12 {{Cl|AND (boolean)|AND}} Lclick {{Cl|THEN}} 'position clicked
+      DO
+        i = {{Cl|_MOUSEINPUT}}
+        x% = {{Cl|_MOUSEX}}
+        y% = {{Cl|_MOUSEY}}
+      {{Cl|LOOP}} {{Cl|WHILE}} {{Cl|_MOUSEBUTTON}}(1)
+      {{Cl|IF...THEN|IF}} x% = 10 {{Cl|AND (boolean)|AND}} y% = 12 {{Cl|THEN}} K$ = "B" 'position released
+    {{Cl|END IF}}
+    {{Cl|IF...THEN|IF}} x% = 10 {{Cl|AND (boolean)|AND}} y% = 14 {{Cl|AND (boolean)|AND}} Lclick {{Cl|THEN}} 'position clicked
+      DO
+        i = {{Cl|_MOUSEINPUT}}
+        x% = {{Cl|_MOUSEX}}
+        y% = {{Cl|_MOUSEY}}
+      {{Cl|LOOP}} {{Cl|WHILE}} {{Cl|_MOUSEBUTTON}}(1)
+      {{Cl|IF...THEN|IF}} x% = 10 {{Cl|AND (boolean)|AND}} y% = 14 {{Cl|THEN}} K$ = "C" 'position released
+    {{Cl|END IF}}
+  {{Cl|LOOP}} {{Cl|UNTIL}} K$ = "A" {{Cl|OR (boolean)|OR}} K$ = "B" {{Cl|OR (boolean)|OR}} K$ = "C" '{{Cl|GOTO}} next question
+
+  {{Cl|IF...THEN|IF}} {{Cl|LEN}}(K$) {{Cl|THEN}} 'DEMO ONLY
+    {{Cl|LOCATE}} 22, 35: {{Cl|PRINT}} "  Answer = "; K$ 'display user answer at location
+    {{Cl|_DELAY}} 2 'allow time for user to view answer
+    {{Cl|LOCATE}} 22, 35: {{Cl|PRINT}} "SELECT AGAIN"
+    K$ = "" 'reset K$
+  {{Cl|END IF}}
+{{Cl|LOOP}} 'DEMO only loop use red X box to quit 
+{{CodeEnd}} {{small|Code by Ted Weissgerber}}
+: ''Explanation:'' User can cancel letter selection by moving pointer off letter before releasing the left mouse button.
+
+
+{{PageSeeAlso}}
+* [[_MOUSEX]], [[_MOUSEY]], [[_MOUSEWHEEL]]
+* [[_MOUSEINPUT]], [[_MOUSEMOVE]]
+* [[_MOUSESHOW]], [[_MOUSEHIDE]]
+* [[_DEVICES]], [[_DEVICE$]], [[_LASTBUTTON]]
+* [[_BUTTON]], [[_BUTTONCHANGE]] {{text|([[DEVICES|devices]])}}
+* [[Controller Devices]]
+
+
+{{PageNavigation}}
+

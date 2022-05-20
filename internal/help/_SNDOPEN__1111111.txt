@@ -1,0 +1,113 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:10:59}}
+{{DISPLAYTITLE:_SNDOPEN}}
+The [[_SNDOPEN]] function loads a sound file into memory and returns a [[LONG]] handle value above 0.
+
+
+{{PageSyntax}}
+: {{Parameter|soundHandle&}} = [[_SNDOPEN]]({{Parameter|fileName$}})
+
+
+{{PageDescription}}
+* Returns a [[LONG]] {{Parameter|soundHandle&}} value to the sound file in memory. '''A zero value means the sound could not be loaded.'''
+* The literal or variable [[STRING]] sound {{Parameter|fileName$}} can be '''WAV, OGG or MP3''' file types.
+* '''Always check the handle value returned is greater than zero before attempting to play the sound.'''
+* The handle can be used by most of the _SND sound playing functions and statements in QB64 except [[_SNDPLAYFILE]] which plays a sound file directly from the disk and does not use a handle value.
+* Handles can be closed with [[_SNDCLOSE]] when the sound is no longer necessary. 
+* If a WAV sound file won't play, try it using the Windows [[Windows_Libraries#Play_WAV_Sounds|Play WAV sounds library]] to check it or convert the sound file to OGG.
+
+
+{{PageExamples}}
+''Snippet 1:'' Loading a sound file to use in the program later. Only load it once and use the handle any time you want.
+{{CodeStart}}
+h& = {{Cl|_SNDOPEN}}("dog.wav")
+IF h& = 0 THEN BEEP ELSE {{Cl|_SNDPLAY}} h&      'check for valid handle before using!
+{{CodeEnd}}
+
+
+''Snippet 2:'' Playing a sound from 2 different speakers based on program results.
+{{CodeStart}}
+Laff& = {{Cl|_SNDOPEN}}("KONGlaff.ogg") 'load sound file and get LONG handle value 
+{{Cl|IF}} LaffX! < -1 {{Cl|THEN}} LaffX! = -1   'set full volume to left speaker
+{{Cl|IF}} LaffX! > 1 {{Cl|THEN}} LaffX! = 1     'set full volume to right speaker
+
+{{Cl|_SNDBAL}} Laff&, LaffX!             'balance sound to left or right speaker
+{{Cl|_SNDPLAY}} Laff&                    'play sound 
+{{CodeEnd}}
+
+
+''Example:'' Playing a file and controlling playback:
+{{CodeStart}}
+s& = {{Cl|_SNDOPEN}}("song.ogg")
+{{Cl|PRINT}} "{{Cl|READ}}Y"; s&
+{{Cl|_SNDPLAY}} s&
+{{Cl|_SNDLOOP}} s&
+
+
+xleft = -1
+xright = 1
+DO
+    k$ = {{Cl|INKEY$}}
+    {{Cl|SELECT CASE}} k$
+        {{Cl|CASE}} "f"
+            xleft = xleft - 0.1
+            {{Cl|_SNDBAL}} s&, xleft, , , 1
+        {{Cl|CASE}} "g"
+            xleft = xleft + 0.1
+            {{Cl|_SNDBAL}} s&, xleft, , , 1
+        {{Cl|CASE}} "h"
+            xright = xright - 0.1
+            {{Cl|_SNDBAL}} s&, xright, , , 2
+        {{Cl|CASE}} "j"
+            xright = xright + 0.1
+            {{Cl|_SNDBAL}} s&, xright, , , 2
+        {{Cl|CASE}} "n"
+            volume = volume - 0.1
+            {{Cl|_SNDVOL}} s&, volume
+        {{Cl|CASE}} "m"
+            volume = volume + 0.1
+            {{Cl|_SNDVOL}} s&, volume
+        {{Cl|CASE}} "p"
+            {{Cl|_SNDPAUSE}} s&
+        {{Cl|CASE}} " "
+            {{Cl|_SNDPLAY}} s&
+        {{Cl|CASE}} "i"
+            {{Cl|PRINT}} {{Cl|_SNDPLAYING}}(s&)
+            {{Cl|PRINT}} {{Cl|_SNDPAUSED}}(s&)
+            {{Cl|SLEEP}}
+        {{Cl|CASE}} "b"
+            {{Cl|_SNDSETPOS}} s&, 110
+        {{Cl|CASE}} "l"
+            {{Cl|_SNDLIMIT}} s&, 10
+            {{Cl|PRINT}} "LIM"
+            {{Cl|SLEEP}}
+        {{Cl|CASE}} "k"
+            {{Cl|_SNDSTOP}} s&
+        {{Cl|CASE}} "c"
+            {{Cl|_SNDCLOSE}} s&
+            {{Cl|SLEEP}}
+            s2& = {{Cl|_SNDOPEN}}("song.ogg")
+        {{Cl|CASE}} "d"
+            s2& = {{Cl|_SNDCOPY}}(s&)
+            {{Cl|_SNDPLAY}} s2&
+    {{Cl|END SELECT}}
+    {{Cl|LOCATE}} 1, 1
+    {{Cl|PRINT}} xleft, xright, volume, {{Cl|_SNDGETPOS}}(s&); "   "
+LOOP
+{{CodeEnd}}{{small|Code by Johny B}}
+
+
+
+{{PageSeeAlso}}
+* [[_SNDCLOSE]], [[_SNDPLAY]], [[_SNDSTOP]]
+* [[_SNDPAUSE]], [[_SNDLOOP]], [[_SNDLIMIT]]
+* [[_SNDSETPOS]], [[_SNDGETPOS]]
+* [[_SNDPLAYING]], [[_SNDPAUSED]]
+* [[_SNDCOPY]], [[_SNDPLAYCOPY]]
+* [[_SNDBAL]], [[_SNDLEN]], [[_SNDVOL]]
+* [[_SNDPLAYFILE]] {{text|(plays a named sound file directly and closes)}}
+* [[_SNDRAW]], [[_SNDRATE]], [[_SNDRAWLEN]] {{text|(raw sounds without files)}}
+
+
+{{PageNavigation}}
+

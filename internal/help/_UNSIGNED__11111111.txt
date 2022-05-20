@@ -1,0 +1,92 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:11:31}}
+{{DISPLAYTITLE:_UNSIGNED}}
+[[_UNSIGNED]] defines a numerical value as being only positive.
+
+
+{{PageSyntax}} 
+: [[DIM]] {{Parameter|variable}} [[AS]] [{{KW|_UNSIGNED}}] {{Parameter|datatype}}
+
+: [[_DEFINE]] {{Parameter|letterRange}} [[AS]] [{{KW|_UNSIGNED}}] {{Parameter|datatype}}
+
+
+{{PageDescription}}
+* Datatype can be any of the following: [[INTEGER]], [[LONG]], [[_BIT]], [[_BYTE]], [[_INTEGER64]], [[_OFFSET]]
+*'''[[SINGLE]], [[DOUBLE]] and [[_FLOAT]] variable types cannot be _UNSIGNED.'''
+* [[_UNSIGNED]] can be used in a [[_DEFINE]] statement to set undefined variable name first letters as all positive-only values.
+* Can also be used in [[DIM]] statements or subprocedure parameter definitions following [[AS]].
+* [[_UNSIGNED]] allows larger positive numerical variable value limits than signed ones.
+* The unsigned variable type suffix used is the '''tilde (~)''', right before the number's own type suffix: {{Parameter|variableName~&}}
+
+
+<center>How negative values affect the [[_UNSIGNED]] value returned by a [[_BYTE]] (8 bits). </center>
+{{WhiteStart}}
+                        00000001 - unsigned & signed are both 1    
+                        01111111 - unsigned & signed are both 127  
+                        11111111 - unsigned is 255 but signed is -1
+                        11111110 - unsigned is 254 but signed is -2
+                        11111101 - unsigned is 253 but signed is -3
+{{WhiteEnd}}
+
+
+{{PageExamples}}
+''Example 1:''  In '''QB64''', when a signed [[INTEGER]] value exceeds 32767, the value may become a negative value:
+{{CodeStart}}
+i% = 38000
+{{Cl|PRINT}} i% 
+{{CodeEnd}}{{OutputStart}}-27536
+{{OutputEnd}}
+:''Explanation:'' Use an [[_UNSIGNED]] [[INTEGER]] or a ~% variable type suffix for only positive integer values up to 65535.
+
+
+''Example 2:'' In '''QB64''', [[_UNSIGNED]] [[INTEGER]] values greater than 65535 cycle over again from zero:
+{{CodeStart}}
+i~% = 70000
+{{Cl|PRINT}} i~% 
+{{CodeEnd}}{{OutputStart}} 4464
+{{OutputEnd}}
+:''Explanation:'' In QB64 an unsigned integer value of 65536 would be 0 with values increasing by the value minus 65536. 
+
+
+''Example 3:'' Demonstrating how _UNSIGNED variables expand the [[INTEGER]] range.
+{{CodeStart}}
+{{Cl|DIM}} n {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|INTEGER}}
+{{Cl|DIM}} pn {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|INTEGER}}
+{{Cl|LOCATE}} 3, 6: {{Cl|PRINT}} "Press Esc to exit loop"
+{{Cl|FOR...NEXT|FOR}} n = 1 {{Cl|TO}} 80000
+  {{Cl|_LIMIT}} 10000 ' 6.5 second loop 
+  {{Cl|LOCATE}} 12, 37: {{Cl|PRINT}} n ' display current value
+  {{Cl|IF...THEN|IF}} n > 0 {{Cl|THEN}} pn = n ' find highest value
+  {{Cl|IF...THEN|IF}} n = 0 {{Cl|THEN}} Count = Count + 1: {{Cl|LOCATE}} 14, 37: {{Cl|PRINT}} "Count:"; Count; "Max:"; pn
+  {{Cl|IF...THEN|IF}} {{Cl|INP}}(&H60) = 1 {{Cl|THEN}} {{Cl|EXIT|EXIT FOR}} ' escape key exit
+{{Cl|NEXT}} n
+{{Cl|END}} 
+{{CodeEnd}}
+{{OutputStart}}
+
+   Press Esc to exit loop
+
+
+
+
+                           65462
+
+                          Count: 13 Max: 65535
+
+
+{{OutputEnd}}
+''Explanation:'' The maximum value can only be 65535 (32767 + 32768) so the FOR loop repeats itself. Remove the [[_UNSIGNED]] parts and run it again.
+
+
+
+{{PageSeeAlso}}
+* DECLARE, [[SUB]], [[FUNCTION]]
+* [[DIM]], [[_DEFINE]]
+* [[DEFSTR]], [[DEFLNG]], [[DEFINT]], [[DEFSNG]], [[DEFDBL]]
+* [[INTEGER]], [[LONG]], [[_INTEGER64]]
+* [[ABS]], [[SGN]]
+* [[Variable Types]]
+
+
+{{PageNavigation}}
+

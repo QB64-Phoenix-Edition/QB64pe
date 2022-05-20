@@ -1,0 +1,78 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:13:37}}
+This function returns the hexadecimal (base 16) representation of any numeric value.
+
+
+{{PageSyntax}}
+: {{Parameter|hexvalue$}} = [[HEX$]]({{Parameter|number}})
+
+
+{{PageParameters}}
+* {{Parameter|number}} can be any [[INTEGER]], [[LONG]] or [[_INTEGER64]] value, positive or negative.
+* {{Parameter|number}} can also be any [[SINGLE]], [[DOUBLE]] or [[_FLOAT]] value, but only the integer part of the value is converted in that case. That is, from the value ''-123.45'' the function would convert the ''-123'' only.
+
+
+{{PageDescription}}
+* The function returns the base 16 (hexadecimal) representation of the given {{Parameter|number}} as [[STRING]].
+* Different from [[STR$]], this function does not return a leading sign placeholder space, so no [[LTRIM$]] to strip that space from positive numbers is necessary.
+* [[VAL]] can convert the returned hex string value back to a decimal value by prefixing the string with "[[&H]]".
+** Eg. {{InlineCode}}decimal = VAL("&H" + hexvalue$){{InlineCodeEnd}}.
+
+
+{{PageExamples}}
+;Example 1: Comparing decimal, hexadecimal, octal and binary string values from 0 to 15.
+{{CodeStart}}
+tabletop$ = " Decimal | Hexadecimal | Octal | Binary "
+tablesep$ = "---------+-------------+-------+--------"
+tableout$ = "  \ \    |      \\     |   \\  |  \  \  " 'the PRINT USING template
+
+{{Cl|LOCATE}} 2, 10: {{Cl|PRINT}} tabletop$
+{{Cl|LOCATE}} 3, 10: {{Cl|PRINT}} tablesep$
+{{Cl|FOR...NEXT|FOR}} n% = 0 {{Cl|TO}} 15
+    {{Cl|LOCATE}} 4 + n%, 10: {{Cl|PRINT USING}} tableout$; {{Cl|STR$}}(n%); {{Cl|HEX$}}(n%); {{Cl|OCT$}}(n%); {{Cl|_BIN$}}(n%)
+{{Cl|NEXT}} n%
+{{CodeEnd}}
+;Note:Although the decimal numbers 0-15 have a maximum width of 2 digits only, an extra space in the ''tableout$'' template is needed when using the (fixed width string) slash output format, as [[STR$]] values contain a leading sign placeholder space.
+{{OutputStart}}
+          Decimal | Hexadecimal | Octal | Binary
+         ---------+-------------+-------+--------
+            0     |      0      |   0   |  0
+            1     |      1      |   1   |  1
+            2     |      2      |   2   |  10
+            3     |      3      |   3   |  11
+            4     |      4      |   4   |  100
+            5     |      5      |   5   |  101
+            6     |      6      |   6   |  110
+            7     |      7      |   7   |  111
+            8     |      8      |   10  |  1000
+            9     |      9      |   11  |  1001
+            10    |      A      |   12  |  1010
+            11    |      B      |   13  |  1011
+            12    |      C      |   14  |  1100
+            13    |      D      |   15  |  1101
+            14    |      E      |   16  |  1110
+            15    |      F      |   17  |  1111
+{{OutputEnd}}
+
+
+;Example 2:Converting a hexadecimal value to decimal.
+{{CodeStart}}
+hexvalue$ = {{Cl|HEX$}}(255)
+{{Cl|PRINT}} "Hex: "; hexvalue$
+{{Cl|PRINT}} "Converting Hex value to Decimal:"; {{Cl|VAL}}("&H" + hexvalue$)
+{{CodeEnd}}
+{{OutputStart}}
+Hex: FF
+Converting Hex value to Decimal: 255
+{{OutputEnd}}
+
+
+{{PageSeeAlso}}
+* [[_BIN$]], [[OCT$]], [[STR$]], [[VAL]]
+* [[&B]] {{text|(binary)}}, [[&H]] {{text|(hexadecimal)}}, [[&O]] {{text|(octal)}}
+* [[Base Comparisons]]
+* [[HEX$ 32 Bit Values]]
+
+
+{{PageNavigation}}
+

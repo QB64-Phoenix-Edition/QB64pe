@@ -1,0 +1,29 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:09:46}}
+{{DISPLAYTITLE:_OPENHOST}}
+The [[_OPENHOST]] function opens a Host which listens for new connections and returns a Host status handle.
+
+
+{{PageSyntax}}
+: {{Parameter|hostHandle}} = [[_OPENHOST]]('''"TCP/IP:8080"''')
+
+
+{{PageDescription}}
+* Creates an [[ERROR Codes|Illegal Function Call]] error if called with a string argument of the wrong syntax.
+* The port used in the syntax example is 8080.
+* Valid {{Parameter|hostHandle}} values are negative numbers.
+* If the syntax is correct but they fail to begin/connect a {{Parameter|hostHandle}} of 0 is returned.
+* Always check if the handle returned is 0 (failed) before continuing.  
+* [[CLOSE]] {{Parameter|hostHandle}} closes the host. A failed handle value of 0 does not need to be closed.
+
+
+
+{{PageSeeAlso}}
+* [[_OPENCONNECTION]], [[_OPENCLIENT]]
+* [[_CONNECTED]], [[_CONNECTIONADDRESS]]
+* [[Email Demo]], [[Inter-Program Data Sharing Demo]] 
+* [[Downloading Files]]
+
+
+{{PageNavigation}}
+

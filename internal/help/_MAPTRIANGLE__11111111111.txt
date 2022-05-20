@@ -1,0 +1,710 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:09:00}}
+{{DISPLAYTITLE:_MAPTRIANGLE}}
+The [[_MAPTRIANGLE]] statement maps a triangular portion of an image onto a destination image or screen page.
+
+
+{{PageSyntax}}
+===2D drawing===
+:[[_MAPTRIANGLE]] [{_SEAMLESS}] '''('''{{Parameter|sx1}}''',''' {{Parameter|sy1}}''')-('''{{Parameter|sx2}}''',''' {{Parameter|sy2}}''')-('''{{Parameter|sx3}}''',''' {{Parameter|sy3}}'''),''' {{Parameter|source&}} '''TO ('''{{Parameter|dx1}}''',''' {{Parameter|dy1}}''')-('''{{Parameter|dx2}}''',''' {{Parameter|dy2}}''')-('''{{Parameter|dx3}}''',''' {{Parameter|dy3}}''')'''[, {{Parameter|destination&}}][{_SMOOTH|_SMOOTHSHRUNK|_SMOOTHSTRETCHED}]]
+
+
+===3D drawing (hardware images only)===
+
+:[[_MAPTRIANGLE]] [{_CLOCKWISE|_ANTICLOCKWISE}] [{_SEAMLESS}] '''('''{{Parameter|sx1}}''',''' {{Parameter|sy1}}''')-('''{{Parameter|sx2}}''',''' {{Parameter|sy2}}''')-('''{{Parameter|sx3}}''',''' {{Parameter|sy3}}'''),''' {{Parameter|source&}} '''TO ('''{{Parameter|dx1}}''',''' {{Parameter|dy1}}''',''' {{Parameter|dz1}}''')-('''{{Parameter|dx2}}''',''' {{Parameter|dy2}}''',''' {{Parameter|dz2}}''')-('''{{Parameter|dx3}}''',''' {{Parameter|dy3}}''',''' {{Parameter|dz3}}''')'''[, {{Parameter|destination&}}][{_SMOOTH|_SMOOTHSHRUNK|_SMOOTHSTRETCHED}]]
+
+
+{{Parameters}}
+* The '''_SEAMLESS''' option makes the triangle skip the right-most and bottom-most pixels of the triangle. When you make larger objects using several triangles, there can be a "seam" where they overlap when using alpha transparency and the seam would be twice as bright. '''_SEAMLESS''' is ignored when rendering 3D content and is not yet supported when drawing 2D hardware images.'''
+* For 3D drawing use the '''_CLOCKWISE''' and '''_ANTICLOCKWISE''' arguments to only draw triangles in the correct direction. See ''Example 4''. 
+* Coordinates are [[SINGLE]] values where whole numbers represent the exact center of a pixel of the source texture. 
+* {{Parameter|source&}} and optional {{Parameter|destination&}} are [[LONG]] image or screen page handles. 
+* Supports an optional final argument '''_SMOOTH''' which applies linear filtering. See ''Example 3''. 
+* Use '''_SMOOTHSTRETCHED''' or '''_SMOOTHSHRUNK''' for when a pixelated/smooth effect is desirable but not both.
+
+
+{{PageDescription}}
+* This statement is used similar to [[_PUTIMAGE]] to place triangular sections of an image, but is more flexible.
+* The [[STEP]] keyword can be used to for coordinates relative to the last graphic coordinates used.
+* For 2D drawing, the destination coordinates are pixel coordinates either on-screen or on the destination image.
+* For 3D drawing, the destination coordinates represent left (-x) to right (+x), bottom (-y) to top (+y) & furthest (-z) to nearest (z=-1). The center of the screen is therefore (0,0,-1). Note that a z value of 0 will result in off-screen content. The furthest visible z value is -10,000.
+* When drawing '''software images''' coordinate positions are '''limited from -16383 to 16383'''
+* The source coordinates can be positioned outside the boundary of the ''source'' image to achieve a tiled effect.
+* If the {{Parameter|destination&}} image handle is the current [[SCREEN]] page, [[_DEST]] or hardware layer, then it can be omitted.
+* '''Hardware images''' (created using mode 33 via [[_LOADIMAGE]] or [[_COPYIMAGE]]) can be used as the source or destination.
+
+
+{{PageExamples}}
+''Example 1:'' Rotating the an image using a rotation and zoom SUB with _MAPTRIANGLE.
+{{CodeStart}}
+{{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(800, 600, 32)
+
+Image& = {{Cl|_LOADIMAGE}}("qb64_trans.png")   'any 24/32 bit image
+
+{{Cl|DO}}
+  {{Cl|CLS}}
+  RotoZoom 400, 300, Image&, 1.5 + {{Cl|SIN}}(zoom), angle
+  {{Cl|LOCATE}} 1, 1: {{Cl|PRINT}} "Angle:"; {{Cl|CINT}}(angle)
+  {{Cl|PRINT USING|PRINT}} "Zoom"; {{Cl|PRINT USING|USING}} "##.###"; 1.5 + {{Cl|SIN}}(zoom)
+  {{Cl|_DISPLAY}}
+  angle = angle + .5: {{Cl|IF...THEN|IF}} angle >= 360 {{Cl|THEN}} angle = angle - 360
+  zoom = zoom + .01
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
+{{Cl|END}}
+
+{{Cl|SUB}} RotoZoom (X {{Cl|AS}} {{Cl|LONG}}, Y {{Cl|AS}} {{Cl|LONG}}, Image {{Cl|AS}} {{Cl|LONG}}, Scale {{Cl|AS}} {{Cl|SINGLE}}, Rotation {{Cl|AS}} {{Cl|SINGLE}})
+{{Cl|DIM}} px(3) {{Cl|AS}} {{Cl|SINGLE}}: {{Cl|DIM}} py(3) {{Cl|AS}} {{Cl|SINGLE}}
+W& = {{Cl|_WIDTH (function)|_WIDTH}}(Image&): H& = {{Cl|_HEIGHT}}(Image&)
+px(0) = -W& / 2: py(0) = -H& / 2: px(1) = -W& / 2:py(1) = H& / 2 
+px(2) = W& / 2: py(2) = H& / 2: px(3) = W& / 2: py(3) = -H& / 2
+sinr! = {{Cl|SIN}}(-Rotation / 57.2957795131): cosr! = {{Cl|COS}}(-Rotation / 57.2957795131)
+{{Cl|FOR...NEXT|FOR}} i& = 0 {{Cl|TO}} 3
+  x2& = (px(i&) * cosr! + sinr! * py(i&)) * Scale + X: y2& = (py(i&) * cosr! - px(i&) * sinr!) * Scale + Y
+  px(i&) = x2&: py(i&) = y2&
+{{Cl|NEXT}}
+{{Cl|_MAPTRIANGLE}} (0, 0)-(0, H& - 1)-(W& - 1, H& - 1), Image& TO(px(0), py(0))-(px(1), py(1))-(px(2), py(2))
+{{Cl|_MAPTRIANGLE}} (0, 0)-(W& - 1, 0)-(W& - 1, H& - 1), Image& TO(px(0), py(0))-(px(3), py(3))-(px(2), py(2))
+{{Cl|END SUB}} 
+{{CodeEnd}}
+{{small|Code by Galleon}}
+{{WhiteStart}}
+        '''Triangle sections of image in code above     __ '''  
+                                                    '''|\2|'''
+                                                 ''' 1→|_\|'''
+{{WhiteEnd}}
+
+
+''Example 2:'' A 3D Spinning Cube demo using a software image and [[_MAPTRIANGLE]]:
+{{CodeStart}}
+' Copyright (C) 2011 by Andrew L. Ayers
+
+{{Cl|DIM}} OBJECT(9, 9, 4, 2) {{Cl|AS}} {{Cl|LONG}}
+
+' OBJECTS DEFINED {{Cl|AS}} FOLLOWS:
+'   (#OBJECTS,#PLANES PER OBJECT,#{{Cl|POINT}}S PER PLANE, XYZ TRIPLE)
+
+{{Cl|DIM}} DPLANE2D(4, 1) {{Cl|AS}} {{Cl|LONG}} ' {{Cl|SCREEN}} PLANE COORDINATES
+
+' DPLANE2D DEFINED {{Cl|AS}} FOLLOWS:
+'   (#{{Cl|POINT}}S PER PLANE, XY {{Cl|DOUBLE}})
+
+{{Cl|DIM}} DPLANE3D(4, 2) {{Cl|AS}} {{Cl|LONG}} ' 3D PLANE COORDINATES
+
+' DPLANE3D DEFINED {{Cl|AS}} FOLLOWS:
+'   (#{{Cl|POINT}}S PER PLANE, XYZ TRIPLE)
+
+{{Cl|DIM}} PLANECOL(9) {{Cl|AS}} {{Cl|INTEGER}}
+{{Cl|DIM}} STAB(359), CTAB(359) ' SINE/COSINE TABLES
+D& = 400: MX& = 0: MY& = 0: MZ& = -100
+'
+' COMPUTE SINE/COSINE TABLES
+{{Cl|FOR...NEXT|FOR}} t& = 0 {{Cl|TO}} 359
+  STAB(t&) = {{Cl|SIN}}((6.282 / 360) * t&)
+  CTAB(t&) = {{Cl|COS}}((6.282 / 360) * t&)
+{{Cl|NEXT}}
+'
+' BUILD CUBE IN OBJECT ARRAY
+' PLANE 0
+OBJECT(0, 0, 0, 0) = -30: OBJECT(0, 0, 0, 1) = 30: OBJECT(0, 0, 0, 2) = -30
+OBJECT(0, 0, 1, 0) = -30: OBJECT(0, 0, 1, 1) = -30: OBJECT(0, 0, 1, 2) = -30
+OBJECT(0, 0, 2, 0) = 30: OBJECT(0, 0, 2, 1) = -30: OBJECT(0, 0, 2, 2) = -30
+OBJECT(0, 0, 3, 0) = 30: OBJECT(0, 0, 3, 1) = 30: OBJECT(0, 0, 3, 2) = -30
+OBJECT(0, 0, 4, 0) = 0: OBJECT(0, 0, 4, 1) = 0: OBJECT(0, 0, 4, 2) = -30
+' PLANE 1
+OBJECT(0, 1, 0, 0) = 30: OBJECT(0, 1, 0, 1) = 30: OBJECT(0, 1, 0, 2) = -30
+OBJECT(0, 1, 1, 0) = 30: OBJECT(0, 1, 1, 1) = -30: OBJECT(0, 1, 1, 2) = -30
+OBJECT(0, 1, 2, 0) = 30: OBJECT(0, 1, 2, 1) = -30: OBJECT(0, 1, 2, 2) = 30
+OBJECT(0, 1, 3, 0) = 30: OBJECT(0, 1, 3, 1) = 30: OBJECT(0, 1, 3, 2) = 30
+OBJECT(0, 1, 4, 0) = 30: OBJECT(0, 1, 4, 1) = 0: OBJECT(0, 1, 4, 2) = 0
+' PLANE 2
+OBJECT(0, 2, 0, 0) = 30: OBJECT(0, 2, 0, 1) = 30: OBJECT(0, 2, 0, 2) = 30
+OBJECT(0, 2, 1, 0) = 30: OBJECT(0, 2, 1, 1) = -30: OBJECT(0, 2, 1, 2) = 30
+OBJECT(0, 2, 2, 0) = -30: OBJECT(0, 2, 2, 1) = -30: OBJECT(0, 2, 2, 2) = 30
+OBJECT(0, 2, 3, 0) = -30: OBJECT(0, 2, 3, 1) = 30: OBJECT(0, 2, 3, 2) = 30
+OBJECT(0, 2, 4, 0) = 0: OBJECT(0, 2, 4, 1) = 0: OBJECT(0, 2, 4, 2) = 30
+' PLANE 3
+OBJECT(0, 3, 0, 0) = -30: OBJECT(0, 3, 0, 1) = 30: OBJECT(0, 3, 0, 2) = 30
+OBJECT(0, 3, 1, 0) = -30: OBJECT(0, 3, 1, 1) = -30: OBJECT(0, 3, 1, 2) = 30
+OBJECT(0, 3, 2, 0) = -30: OBJECT(0, 3, 2, 1) = -30: OBJECT(0, 3, 2, 2) = -30
+OBJECT(0, 3, 3, 0) = -30: OBJECT(0, 3, 3, 1) = 30: OBJECT(0, 3, 3, 2) = -30
+OBJECT(0, 3, 4, 0) = -30: OBJECT(0, 3, 4, 1) = 0: OBJECT(0, 3, 4, 2) = 0
+' PLANE 4
+OBJECT(0, 4, 0, 0) = -30: OBJECT(0, 4, 0, 1) = -30: OBJECT(0, 4, 0, 2) = -30
+OBJECT(0, 4, 1, 0) = -30: OBJECT(0, 4, 1, 1) = -30: OBJECT(0, 4, 1, 2) = 30
+OBJECT(0, 4, 2, 0) = 30: OBJECT(0, 4, 2, 1) = -30: OBJECT(0, 4, 2, 2) = 30
+OBJECT(0, 4, 3, 0) = 30: OBJECT(0, 4, 3, 1) = -30: OBJECT(0, 4, 3, 2) = -30
+OBJECT(0, 4, 4, 0) = 0: OBJECT(0, 4, 4, 1) = -30: OBJECT(0, 4, 4, 2) = 0
+' PLANE 5
+OBJECT(0, 5, 0, 0) = -30: OBJECT(0, 5, 0, 1) = 30: OBJECT(0, 5, 0, 2) = -30
+OBJECT(0, 5, 1, 0) = 30: OBJECT(0, 5, 1, 1) = 30: OBJECT(0, 5, 1, 2) = -30
+OBJECT(0, 5, 2, 0) = 30: OBJECT(0, 5, 2, 1) = 30: OBJECT(0, 5, 2, 2) = 30
+OBJECT(0, 5, 3, 0) = -30: OBJECT(0, 5, 3, 1) = 30: OBJECT(0, 5, 3, 2) = 30
+OBJECT(0, 5, 4, 0) = 0: OBJECT(0, 5, 4, 1) = 30: OBJECT(0, 5, 4, 2) = 0
+' SET UP PLANE {{Cl|COLOR}}S ON CUBE
+'
+PLANECOL(0) = 3
+PLANECOL(1) = 4
+PLANECOL(2) = 5
+PLANECOL(3) = 6
+PLANECOL(4) = 7
+PLANECOL(5) = 8
+'
+{{Cl|_TITLE}} "QB64 _MAPTRIANGLE CUBE DEMO"
+{{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(800, 600, 32)
+TextureImage& = {{Cl|_LOADIMAGE}}("qb64_trans.png") 'any 24/32 bit image
+'{{Cl|_PUTIMAGE}} , Image&
+
+DO
+  ' LIMIT {{Cl|TO}} 25 FPS
+  {{Cl|_LIMIT}} 25
+  ' ERASE LAST IMAGE
+  {{Cl|CLS}}
+
+  ' CALCULATE POSITION OF NEW IMAGE
+  {{Cl|FOR...NEXT|FOR}} OB& = 0 {{Cl|TO}} 0 ' UP {{Cl|TO}} 9 OBJECTS
+    SP = STAB(PIT(OB&)): CP = CTAB(PIT(OB&))
+    SY = STAB(YAW(OB&)): CY = CTAB(YAW(OB&))
+    SR = STAB(ROL(OB&)): CR = CTAB(ROL(OB&))
+    {{Cl|FOR...NEXT|FOR}} PL& = 0 {{Cl|TO}} 5 ' CONSISTING OF UP {{Cl|TO}} 9 PLANES
+      '
+      {{Cl|FOR...NEXT|FOR}} PN& = 0 {{Cl|TO}} 3 ' EACH PLANE WITH UP {{Cl|TO}} 4 {{Cl|POINT}}S (#5 {{Cl|TO}} {{Cl|PAINT}})
+        '
+        ' TRANSLATE, {{Cl|THEN}} ROTATE
+        TX& = OBJECT(OB&, PL&, PN&, 0)
+        TY& = OBJECT(OB&, PL&, PN&, 1)
+        TZ& = OBJECT(OB&, PL&, PN&, 2)
+        RX& = (TZ& * CP - TY& * SP) * SY - ((TZ& * SP + TY& * CP) * SR + TX& * CR) * CY
+        RY& = (TZ& * SP + TY& * CP) * CR - TX& * SR
+        RZ& = (TZ& * CP - TY& * SP) * CY + ((TZ& * SP + TY& * CP) * SR + TX& * CR) * SY
+        '
+        ' ROTATE, {{Cl|THEN}} TRANSLATE
+        RX& = RX& + MX&
+        RY& = RY& + MY&
+        RZ& = RZ& + MZ&
+        '
+        DPLANE3D(PN&, 0) = RX&: DPLANE3D(PN&, 1) = RY&: DPLANE3D(PN&, 2) = RZ&
+        DPLANE2D(PN&, 0) = 399 + (D& * RX& / RZ&)
+        DPLANE2D(PN&, 1) = 299 + (D& * RY& / RZ&)
+      {{Cl|NEXT}}
+      '
+      ' CHECK {{Cl|TO}} SEE {{Cl|IF...THEN|IF}} PLANE IS VISIBLE
+      x1& = DPLANE3D(0, 0): y1& = DPLANE3D(0, 1): Z1& = DPLANE3D(0, 2)
+      x2& = DPLANE3D(1, 0): y2& = DPLANE3D(1, 1): Z2& = DPLANE3D(1, 2)
+      x3& = DPLANE3D(2, 0): y3& = DPLANE3D(2, 1): Z3& = DPLANE3D(2, 2)
+      T1& = -x1& * (y2& * Z3& - y3& * Z2&)
+      T2& = x2& * (y3& * Z1& - y1& * Z3&)
+      T3& = x3& * (y1& * Z2& - y2& * Z1&)
+      '
+      VISIBLE& = T1& - T2& - T3&
+      {{Cl|IF...THEN|IF}} VISIBLE& > 0 {{Cl|THEN}}
+        ' DRAW PLANE
+        xx1% = DPLANE2D(0, 0): yy1% = DPLANE2D(0, 1)
+        xx2% = DPLANE2D(1, 0): yy2% = DPLANE2D(1, 1)
+        xx3% = DPLANE2D(2, 0): yy3% = DPLANE2D(2, 1)
+        col% = PLANECOL(PL&)
+
+        {{Cl|_MAPTRIANGLE}} (0, 0)-(0, 255)-(255, 255), TextureImage& TO(xx3%, yy3%)-(xx2%, yy2%)-(xx1%, yy1%)
+        ' CALL DrawTriangle(xx1%, yy1%, xx2%, yy2%, xx3%, yy3%, col%)
+        xx1% = DPLANE2D(0, 0): yy1% = DPLANE2D(0, 1)
+        xx3% = DPLANE2D(2, 0): yy3% = DPLANE2D(2, 1)
+        xx4% = DPLANE2D(3, 0): yy4% = DPLANE2D(3, 1)
+        {{Cl|_MAPTRIANGLE}} (0, 0)-(255, 255)-(255, 0), TextureImage& TO(xx3%, yy3%)-(xx1%, yy1%)-(xx4%, yy4%)
+        'CALL DrawTriangle(xx1%, yy1%, xx3%, yy3%, xx4%, yy4%, col%)
+      {{Cl|END IF}}
+    {{Cl|NEXT}}
+    '
+    ' ROTATE OBJECT
+    PIT(OB&) = PIT(OB&) + 5
+    {{Cl|IF...THEN|IF}} PIT(OB&) > 359 {{Cl|THEN}} PIT(OB&) = 0
+    YAW(OB&) = YAW(OB&) + 7
+    {{Cl|IF...THEN|IF}} YAW(OB&) > 359 {{Cl|THEN}} YAW(OB&) = 0
+    ROL(OB&) = ROL(OB&) + 9
+    {{Cl|IF...THEN|IF}} ROL(OB&) > 359 {{Cl|THEN}} ROL(OB&) = 0
+  {{Cl|NEXT}}
+  '
+  ' Calculate Frames per Second
+  frames% = frames% + 1
+  {{Cl|IF...THEN|IF}} oldtime$ <> {{Cl|TIME$}} {{Cl|THEN}}
+    fps% = frames%
+    frames% = 1
+    oldtime$ = {{Cl|TIME$}}
+  {{Cl|END IF}}
+  {{Cl|COLOR}} {{Cl|_RGB}}(255, 255, 255): {{Cl|LOCATE}} 1, 1: {{Cl|PRINT}} "FPS :"; fps%
+  '
+  ' Show Image on Screen
+  {{Cl|_DISPLAY}}
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
+{{Cl|WIDTH}} 80: {{Cl|SCREEN}} 0: {{Cl|CLS}}
+
+
+{{Cl|SUB}} DrawHline (fromx%, tox%, yy%, col%)
+  '{{Cl|DEF SEG}} = {{Cl|&H}}A000
+  '{{Cl|IF...THEN|IF}} fromx% > tox% {{Cl|THEN}} {{Cl|SWAP}} fromx%, tox%
+  'yyy& = yy%
+  'sloc& = yyy& * 320 + fromx%
+  'eloc& = sloc& + (tox% - fromx%)
+  '{{Cl|FOR...NEXT|FOR}} t& = sloc& {{Cl|TO}} eloc&
+  '  {{Cl|POKE}} t&, col%
+  '{{Cl|NEXT}}
+  '{{Cl|DEF SEG}}
+  {{Cl|LINE}} (fromx%, yy%)-(tox%, yy%), {{Cl|_RGB}}(255, 255, 255) 'col%
+{{Cl|END SUB}}
+
+{{Cl|SUB}} DrawTriangle (x1%, y1%, x2%, y2%, x3%, y3%, col%)
+  DO
+    sflag% = 0
+    {{Cl|IF...THEN|IF}} y1% > y2% {{Cl|THEN}}
+      sflag% = 1
+      {{Cl|SWAP}} y1%, y2%
+      {{Cl|SWAP}} x1%, x2%
+    {{Cl|END IF}}
+    {{Cl|IF...THEN|IF}} y2% > y3% {{Cl|THEN}}
+      sflag% = 1
+      {{Cl|SWAP}} y2%, y3%
+      {{Cl|SWAP}} x2%, x3%
+    {{Cl|END IF}}
+  {{Cl|LOOP}} {{Cl|UNTIL}} sflag% = 0
+  '
+  {{Cl|IF...THEN|IF}} y2% = y3% {{Cl|THEN}}
+    ' Draw a flat bottomed triangle
+    ydiff1% = y2% - y1%
+    ydiff2% = y3% - y1%
+    {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+      slope1! = (x2% - x1%) / ydiff1%
+    {{Cl|ELSE}}
+      slope1! = 0
+    {{Cl|END IF}}
+    {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+      slope2! = (x3% - x1%) / ydiff2%
+    {{Cl|ELSE}}
+      slope2! = 0
+    {{Cl|END IF}}
+    sx! = x1%: ex! = x1%
+    {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y2%
+      {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+      sx! = sx! + slope1!
+      ex! = ex! + slope2!
+    {{Cl|NEXT}}
+    {{Cl|EXIT SUB}}
+  {{Cl|ELSE}}
+    {{Cl|IF...THEN|IF}} y1% = y2% {{Cl|THEN}}
+      '
+      ' Draw a flat topped triangle
+      ydiff1% = y3% - y1%
+      ydiff2% = y3% - y2%
+      {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+        slope1! = (x3% - x1%) / ydiff1%
+      {{Cl|ELSE}}
+        slope1! = 0
+      {{Cl|END IF}}
+      {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+        slope2! = (x3% - x2%) / ydiff2%
+      {{Cl|ELSE}}
+        slope2! = 0
+      {{Cl|END IF}}
+      sx! = x1%: ex! = x2%
+      {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y3%
+        {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+        sx! = sx! + slope1!
+        ex! = ex! + slope2!
+      {{Cl|NEXT}}
+      x1% = sx!: x2% = ex!
+      {{Cl|EXIT SUB}}
+    {{Cl|ELSE}}
+      ' Draw a general purpose triangle
+      ' First draw the flat bottom portion (top half)
+      ydiff1% = y2% - y1%
+      ydiff2% = y3% - y1%
+      {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+        slope1! = (x2% - x1%) / ydiff1%
+      {{Cl|ELSE}}
+        slope1! = 0
+      {{Cl|END IF}}
+      {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+        slope2! = (x3% - x1%) / ydiff2%
+      {{Cl|ELSE}}
+        slope2! = 0
+      {{Cl|END IF}}
+      sx! = x1%: ex! = x1%
+      {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y2%
+        {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+        sx! = sx! + slope1!
+        ex! = ex! + slope2!
+      {{Cl|NEXT}}
+      ' Then draw the flat topped portion (bottom half)
+      x1% = x2%
+      x2% = ex!
+      y1% = y2%
+      ydiff1% = y3% - y1%
+      ydiff2% = y3% - y2%
+      {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+        slope1! = (x3% - x1%) / ydiff1%
+      {{Cl|ELSE}}
+        slope1! = 0
+      {{Cl|END IF}}
+      {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+        slope2! = (x3% - x2%) / ydiff2%
+      {{Cl|ELSE}}
+        slope2! = 0
+      {{Cl|END IF}}
+      sx! = x1%: ex! = x2%
+      {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y3%
+        {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+        sx! = sx! + slope1!
+        ex! = ex! + slope2!
+      {{Cl|NEXT}}
+      x1% = sx!: x2% = ex!
+    {{Cl|END IF}}
+  {{Cl|END IF}}
+  '
+{{Cl|END SUB}} 
+{{CodeEnd}}{{small|Demo by Andrew L. Ayers}}
+
+
+''Example 3:'' A 3D Spinning Cube demo using a hardware image and '''QB64GL''' hardware acceleration with [[_MAPTRIANGLE]]:
+{{CodeStart}}
+' Copyright (C) 2011 by Andrew L. Ayers
+
+{{Cl|DIM}} OBJECT(9, 9, 4, 2) {{Cl|AS}} {{Cl|LONG}}
+
+' OBJECTS DEFINED {{Cl|AS}} FOLLOWS:
+'   (#OBJECTS,#PLANES PER OBJECT,#{{Cl|POINT}}S PER PLANE, XYZ TRIPLE)
+
+{{Cl|DIM}} DPLANE2D(4, 1) {{Cl|AS}} {{Cl|LONG}} ' {{Cl|SCREEN}} PLANE COORDINATES
+
+' DPLANE2D DEFINED {{Cl|AS}} FOLLOWS:
+'   (#{{Cl|POINT}}S PER PLANE, XY {{Cl|DOUBLE}})
+
+{{Cl|DIM}} DPLANE3D(4, 2) {{Cl|AS}} {{Cl|LONG}} ' 3D PLANE COORDINATES
+
+' DPLANE3D DEFINED {{Cl|AS}} FOLLOWS:
+'   (#{{Cl|POINT}}S PER PLANE, XYZ TRIPLE)
+
+{{Cl|DIM}} PLANECOL(9) {{Cl|AS}} {{Cl|INTEGER}}
+{{Cl|DIM}} STAB(359), CTAB(359) ' SINE/COSINE TABLES
+D& = 400: MX& = 0: MY& = 0: MZ& = -100
+'
+' COMPUTE SINE/COSINE TABLES
+{{Cl|FOR...NEXT|FOR}} t& = 0 {{Cl|TO}} 359
+    STAB(t&) = {{Cl|SIN}}((6.282 / 360) * t&)
+    CTAB(t&) = {{Cl|COS}}((6.282 / 360) * t&)
+{{Cl|NEXT}}
+'
+' BUILD CUBE IN OBJECT ARRAY
+' PLANE 0
+OBJECT(0, 0, 0, 0) = -30: OBJECT(0, 0, 0, 1) = 30: OBJECT(0, 0, 0, 2) = -30
+OBJECT(0, 0, 1, 0) = -30: OBJECT(0, 0, 1, 1) = -30: OBJECT(0, 0, 1, 2) = -30
+OBJECT(0, 0, 2, 0) = 30: OBJECT(0, 0, 2, 1) = -30: OBJECT(0, 0, 2, 2) = -30
+OBJECT(0, 0, 3, 0) = 30: OBJECT(0, 0, 3, 1) = 30: OBJECT(0, 0, 3, 2) = -30
+OBJECT(0, 0, 4, 0) = 0: OBJECT(0, 0, 4, 1) = 0: OBJECT(0, 0, 4, 2) = -30
+' PLANE 1
+OBJECT(0, 1, 0, 0) = 30: OBJECT(0, 1, 0, 1) = 30: OBJECT(0, 1, 0, 2) = -30
+OBJECT(0, 1, 1, 0) = 30: OBJECT(0, 1, 1, 1) = -30: OBJECT(0, 1, 1, 2) = -30
+OBJECT(0, 1, 2, 0) = 30: OBJECT(0, 1, 2, 1) = -30: OBJECT(0, 1, 2, 2) = 30
+OBJECT(0, 1, 3, 0) = 30: OBJECT(0, 1, 3, 1) = 30: OBJECT(0, 1, 3, 2) = 30
+OBJECT(0, 1, 4, 0) = 30: OBJECT(0, 1, 4, 1) = 0: OBJECT(0, 1, 4, 2) = 0
+' PLANE 2
+OBJECT(0, 2, 0, 0) = 30: OBJECT(0, 2, 0, 1) = 30: OBJECT(0, 2, 0, 2) = 30
+OBJECT(0, 2, 1, 0) = 30: OBJECT(0, 2, 1, 1) = -30: OBJECT(0, 2, 1, 2) = 30
+OBJECT(0, 2, 2, 0) = -30: OBJECT(0, 2, 2, 1) = -30: OBJECT(0, 2, 2, 2) = 30
+OBJECT(0, 2, 3, 0) = -30: OBJECT(0, 2, 3, 1) = 30: OBJECT(0, 2, 3, 2) = 30
+OBJECT(0, 2, 4, 0) = 0: OBJECT(0, 2, 4, 1) = 0: OBJECT(0, 2, 4, 2) = 30
+' PLANE 3
+OBJECT(0, 3, 0, 0) = -30: OBJECT(0, 3, 0, 1) = 30: OBJECT(0, 3, 0, 2) = 30
+OBJECT(0, 3, 1, 0) = -30: OBJECT(0, 3, 1, 1) = -30: OBJECT(0, 3, 1, 2) = 30
+OBJECT(0, 3, 2, 0) = -30: OBJECT(0, 3, 2, 1) = -30: OBJECT(0, 3, 2, 2) = -30
+OBJECT(0, 3, 3, 0) = -30: OBJECT(0, 3, 3, 1) = 30: OBJECT(0, 3, 3, 2) = -30
+OBJECT(0, 3, 4, 0) = -30: OBJECT(0, 3, 4, 1) = 0: OBJECT(0, 3, 4, 2) = 0
+' PLANE 4
+OBJECT(0, 4, 0, 0) = -30: OBJECT(0, 4, 0, 1) = -30: OBJECT(0, 4, 0, 2) = -30
+OBJECT(0, 4, 1, 0) = -30: OBJECT(0, 4, 1, 1) = -30: OBJECT(0, 4, 1, 2) = 30
+OBJECT(0, 4, 2, 0) = 30: OBJECT(0, 4, 2, 1) = -30: OBJECT(0, 4, 2, 2) = 30
+OBJECT(0, 4, 3, 0) = 30: OBJECT(0, 4, 3, 1) = -30: OBJECT(0, 4, 3, 2) = -30
+OBJECT(0, 4, 4, 0) = 0: OBJECT(0, 4, 4, 1) = -30: OBJECT(0, 4, 4, 2) = 0
+' PLANE 5
+OBJECT(0, 5, 0, 0) = -30: OBJECT(0, 5, 0, 1) = 30: OBJECT(0, 5, 0, 2) = -30
+OBJECT(0, 5, 1, 0) = 30: OBJECT(0, 5, 1, 1) = 30: OBJECT(0, 5, 1, 2) = -30
+OBJECT(0, 5, 2, 0) = 30: OBJECT(0, 5, 2, 1) = 30: OBJECT(0, 5, 2, 2) = 30
+OBJECT(0, 5, 3, 0) = -30: OBJECT(0, 5, 3, 1) = 30: OBJECT(0, 5, 3, 2) = 30
+OBJECT(0, 5, 4, 0) = 0: OBJECT(0, 5, 4, 1) = 30: OBJECT(0, 5, 4, 2) = 0
+' SET UP PLANE {{Cl|COLOR}}S ON CUBE
+'
+PLANECOL(0) = 3
+PLANECOL(1) = 4
+PLANECOL(2) = 5
+PLANECOL(3) = 6
+PLANECOL(4) = 7
+PLANECOL(5) = 8
+'
+{{Cl|_TITLE}} "QB64 {{Cl|_MAPTRIANGLE}} CUBE DEMO"
+{{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(800, 600, 32)
+
+TextureImage& = {{Cl|_LOADIMAGE}}("qb64_trans.png", 32) 'any 24/32 bit image
+{{Cl|_SETALPHA}} 128, , TextureImage&
+TextureImage& = {{Cl|_COPYIMAGE}}(TextureImage&, 33)'copy of hardware image
+
+'{{Cl|_PUTIMAGE}} , Image&
+
+DO
+
+    ' LIMIT {{Cl|TO}} 25 FPS
+    '{{Cl|_LIMIT}} 25
+    ' {{Cl|ERASE}} LAST IMAGE
+    '{{Cl|CLS}} , {{Cl|_RGB}}(0, 0, 160)
+
+    ' CALCULATE POSITION OF NEW IMAGE
+    {{Cl|FOR...NEXT|FOR}} OB& = 0 {{Cl|TO}} 0 ' UP {{Cl|TO}} 9 OBJECTS
+        SP = STAB(PIT(OB&)): CP = CTAB(PIT(OB&))
+        SY = STAB(YAW(OB&)): CY = CTAB(YAW(OB&))
+        SR = STAB(ROL(OB&)): CR = CTAB(ROL(OB&))
+        {{Cl|FOR...NEXT|FOR}} PL& = 0 {{Cl|TO}} 5 ' CONSISTING OF UP {{Cl|TO}} 9 PLANES
+            '
+            {{Cl|FOR...NEXT|FOR}} PN& = 0 {{Cl|TO}} 3 ' EACH PLANE WITH UP {{Cl|TO}} 4 {{Cl|POINT}}S (#5 {{Cl|TO}} {{Cl|PAINT}})
+                '
+                ' TRANSLATE, {{Cl|THEN}} ROTATE
+                TX& = OBJECT(OB&, PL&, PN&, 0)
+                TY& = OBJECT(OB&, PL&, PN&, 1)
+                TZ& = OBJECT(OB&, PL&, PN&, 2)
+                RX& = (TZ& * CP - TY& * SP) * SY - ((TZ& * SP + TY& * CP) * SR + TX& * CR) * CY
+                RY& = (TZ& * SP + TY& * CP) * CR - TX& * SR
+                RZ& = (TZ& * CP - TY& * SP) * CY + ((TZ& * SP + TY& * CP) * SR + TX& * CR) * SY
+                '
+                ' ROTATE, {{Cl|THEN}} TRANSLATE
+                RX& = RX& + MX&
+                RY& = RY& + MY&
+                RZ& = RZ& + MZ&
+                '
+                DPLANE3D(PN&, 0) = RX&: DPLANE3D(PN&, 1) = RY&: DPLANE3D(PN&, 2) = RZ&
+                DPLANE2D(PN&, 0) = 399 + (D& * RX& / RZ&)
+                DPLANE2D(PN&, 1) = 299 + (D& * RY& / RZ&)
+            {{Cl|NEXT}}
+            '
+            ' CHECK {{Cl|TO}} SEE {{Cl|IF...THEN|IF}} PLANE {{Cl|IS}} VISIBLE
+            x1& = DPLANE3D(0, 0): y1& = DPLANE3D(0, 1): Z1& = DPLANE3D(0, 2)
+            x2& = DPLANE3D(1, 0): y2& = DPLANE3D(1, 1): Z2& = DPLANE3D(1, 2)
+            x3& = DPLANE3D(2, 0): y3& = DPLANE3D(2, 1): Z3& = DPLANE3D(2, 2)
+            T1& = -x1& * (y2& * Z3& - y3& * Z2&)
+            T2& = x2& * (y3& * Z1& - y1& * Z3&)
+            T3& = x3& * (y1& * Z2& - y2& * Z1&)
+            '
+            VISIBLE& = T1& - T2& - T3&
+            {{Cl|IF...THEN|IF}} VISIBLE& > 0 {{Cl|THEN}}
+                ' {{Cl|DRAW}} PLANE
+                xx1% = DPLANE2D(0, 0): yy1% = DPLANE2D(0, 1)
+                xx2% = DPLANE2D(1, 0): yy2% = DPLANE2D(1, 1)
+                xx3% = DPLANE2D(2, 0): yy3% = DPLANE2D(2, 1)
+                col% = PLANECOL(PL&)
+
+                {{Cl|_BLEND}} TextureImage&
+                {{Cl|_MAPTRIANGLE}} (0, 0)-(0, 255)-(255, 255), TextureImage& TO(xx1%, yy1%)-(xx2%, yy2%)-(xx3%, yy3%)
+
+                ' {{Cl|CALL}} DrawTriangle(xx1%, yy1%, xx2%, yy2%, xx3%, yy3%, col%)
+                xx1% = DPLANE2D(0, 0): yy1% = DPLANE2D(0, 1)
+                xx3% = DPLANE2D(2, 0): yy3% = DPLANE2D(2, 1)
+                xx4% = DPLANE2D(3, 0): yy4% = DPLANE2D(3, 1)
+
+                {{Cl|_DONTBLEND}} TextureImage&
+                {{Cl|_MAPTRIANGLE}} (0, 0)-(255, 255)-(255, 0), TextureImage& TO(xx3%, yy3%)-(xx1%, yy1%)-(xx4%, yy4%), , _SMOOTH
+                '{{Cl|CALL}} DrawTriangle(xx1%, yy1%, xx3%, yy3%, xx4%, yy4%, col%)
+            {{Cl|END IF}}
+        {{Cl|NEXT}}
+        '
+        ' ROTATE OBJECT
+        PIT(OB&) = PIT(OB&) + 5
+        {{Cl|IF...THEN|IF}} PIT(OB&) > 359 {{Cl|THEN}} PIT(OB&) = 0
+        YAW(OB&) = YAW(OB&) + 7
+        {{Cl|IF...THEN|IF}} YAW(OB&) > 359 {{Cl|THEN}} YAW(OB&) = 0
+        ROL(OB&) = ROL(OB&) + 9
+        {{Cl|IF...THEN|IF}} ROL(OB&) > 359 {{Cl|THEN}} ROL(OB&) = 0
+    {{Cl|NEXT}}
+    '
+    ' Calculate Frames per Second
+    frames% = frames% + 1
+    {{Cl|IF...THEN|IF}} oldtime$ <> {{Cl|TIME$}} {{Cl|THEN}}
+        fps% = frames%
+        frames% = 1
+        oldtime$ = {{Cl|TIME$}}
+    {{Cl|END IF}}
+    {{Cl|COLOR}} {{Cl|_RGB}}(255, 255, 255): {{Cl|LOCATE}} 1, 1: {{Cl|PRINT}} "FPS :"; fps%
+    '
+    ' Show Image on Screen
+    {{Cl|_DISPLAY}}
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
+{{Cl|WIDTH}} 80: {{Cl|SCREEN}} 0: {{Cl|CLS}}
+
+{{Cl|SUB}} DrawHline (fromx%, tox%, yy%, col%)
+'{{Cl|DEF SEG}} = {{Cl|&H}}A000
+'{{Cl|IF...THEN|IF}} fromx% > tox% {{Cl|THEN}} {{Cl|SWAP}} fromx%, tox%
+'yyy& = yy%
+'sloc& = yyy& * 320 + fromx%
+'eloc& = sloc& + (tox% - fromx%)
+'{{Cl|FOR...NEXT|FOR}} t& = sloc& {{Cl|TO}} eloc&
+'  {{Cl|POKE}} t&, col%
+'{{Cl|NEXT}}
+'{{Cl|DEF SEG}}
+{{Cl|LINE}} (fromx%, yy%)-(tox%, yy%), {{Cl|_RGB}}(255, 255, 255) 'col%
+{{Cl|END SUB}}
+
+{{Cl|SUB}} DrawTriangle (x1%, y1%, x2%, y2%, x3%, y3%, col%)
+DO
+    sflag% = 0
+    {{Cl|IF...THEN|IF}} y1% > y2% {{Cl|THEN}}
+        sflag% = 1
+        {{Cl|SWAP}} y1%, y2%
+        {{Cl|SWAP}} x1%, x2%
+    {{Cl|END IF}}
+    {{Cl|IF...THEN|IF}} y2% > y3% {{Cl|THEN}}
+        sflag% = 1
+        {{Cl|SWAP}} y2%, y3%
+        {{Cl|SWAP}} x2%, x3%
+    {{Cl|END IF}}
+{{Cl|LOOP}} {{Cl|UNTIL}} sflag% = 0
+'
+{{Cl|IF...THEN|IF}} y2% = y3% {{Cl|THEN}}
+    ' Draw a flat bottomed triangle
+    ydiff1% = y2% - y1%
+    ydiff2% = y3% - y1%
+    {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+        slope1! = (x2% - x1%) / ydiff1%
+    {{Cl|ELSE}}
+        slope1! = 0
+    {{Cl|END IF}}
+    {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+        slope2! = (x3% - x1%) / ydiff2%
+    {{Cl|ELSE}}
+        slope2! = 0
+    {{Cl|END IF}}
+    sx! = x1%: ex! = x1%
+    {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y2%
+        {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+        sx! = sx! + slope1!
+        ex! = ex! + slope2!
+    {{Cl|NEXT}}
+    {{Cl|EXIT SUB}}
+{{Cl|ELSE}}
+    {{Cl|IF...THEN|IF}} y1% = y2% {{Cl|THEN}}
+        '
+        ' Draw a flat topped triangle
+        ydiff1% = y3% - y1%
+        ydiff2% = y3% - y2%
+        {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+            slope1! = (x3% - x1%) / ydiff1%
+        {{Cl|ELSE}}
+            slope1! = 0
+        {{Cl|END IF}}
+        {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+            slope2! = (x3% - x2%) / ydiff2%
+        {{Cl|ELSE}}
+            slope2! = 0
+        {{Cl|END IF}}
+        sx! = x1%: ex! = x2%
+        {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y3%
+            {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+            sx! = sx! + slope1!
+            ex! = ex! + slope2!
+        {{Cl|NEXT}}
+        x1% = sx!: x2% = ex!
+        {{Cl|EXIT SUB}}
+    {{Cl|ELSE}}
+        ' Draw a general purpose triangle
+        ' First draw the flat bottom portion (top half)
+        ydiff1% = y2% - y1%
+        ydiff2% = y3% - y1%
+        {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+            slope1! = (x2% - x1%) / ydiff1%
+        {{Cl|ELSE}}
+            slope1! = 0
+        {{Cl|END IF}}
+        {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+            slope2! = (x3% - x1%) / ydiff2%
+        {{Cl|ELSE}}
+            slope2! = 0
+        {{Cl|END IF}}
+        sx! = x1%: ex! = x1%
+        {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y2%
+            {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+            sx! = sx! + slope1!
+            ex! = ex! + slope2!
+        {{Cl|NEXT}}
+        ' Then draw the flat topped portion (bottom half)
+        x1% = x2%
+        x2% = ex!
+        y1% = y2%
+        ydiff1% = y3% - y1%
+        ydiff2% = y3% - y2%
+        {{Cl|IF...THEN|IF}} ydiff1% <> 0 {{Cl|THEN}}
+            slope1! = (x3% - x1%) / ydiff1%
+        {{Cl|ELSE}}
+            slope1! = 0
+        {{Cl|END IF}}
+        {{Cl|IF...THEN|IF}} ydiff2% <> 0 {{Cl|THEN}}
+            slope2! = (x3% - x2%) / ydiff2%
+        {{Cl|ELSE}}
+            slope2! = 0
+        {{Cl|END IF}}
+        sx! = x1%: ex! = x2%
+        {{Cl|FOR...NEXT|FOR}} y% = y1% {{Cl|TO}} y3%
+            {{Cl|CALL}} DrawHline({{Cl|CINT}}(sx!), {{Cl|CINT}}(ex!), y%, col%)
+            sx! = sx! + slope1!
+            ex! = ex! + slope2!
+        {{Cl|NEXT}}
+        x1% = sx!: x2% = ex!
+    {{Cl|END IF}}
+{{Cl|END IF}}
+'
+{{Cl|END SUB}}
+{{CodeEnd}}{{small|Adapted from a demo by Andrew L. Ayers}}
+
+
+''Example 4:'' Using a desktop image with _MAPTRIANGLE _ANTICLOCKWISE rendering.
+{{CodeStart}}
+{{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(800, 600, 32)
+
+ss32 = {{Cl|_SCREENIMAGE}} 'take a 32bit software screenshot
+{{Cl|_SETALPHA}} 128, , ss32 'make it a bit transparent
+ss33 = {{Cl|_COPYIMAGE}}(ss32, 33) 'convert it to a hardware image (mode 33)
+{{Cl|_FREEIMAGE}} ss32 'we don't need this anymore
+
+DO
+    {{Cl|CLS}} , {{Cl|_RGB}}(0, 128, 255) 'use our software screen as a blue backdrop
+
+    'rotate our destination points
+    'the QB64 3D co-ordinate system is the same as  OpenGL's:
+    '    negative z is in front of you, if it doesn't have a negative z value you won't see it!
+    '    x goes from left to right, 0 is the middle of the screen
+    '    y goes from bottom to top, 0 is the middle of the screen
+    scale = 10
+    dist = -10
+    angle = angle + 0.1
+    x1 = {{Cl|SIN}}(angle) * scale
+    z1 = {{Cl|COS}}(angle) * scale
+    x2 = {{Cl|SIN}}(angle + 3.14) * scale 'adding 3.14 adds 180 degrees
+    z2 = {{Cl|COS}}(angle + 3.14) * scale
+    'what we performed above is a 2D/horizontal rotation of points
+    '(3D rotations are beyond the scope of this example)
+
+    'draw the triangle
+    '_ANTICLOCKWISE makes it only draw when our triangle is facing the correct direction
+    '_SMOOTH applies linear filtering to avoid a pixelated look
+
+    {{Cl|_MAPTRIANGLE}} '''_ANTICLOCKWISE''' ({{Cl|_WIDTH (function)|_WIDTH}}(ss33) / 2, 0)-(0, {{Cl|_HEIGHT}}(ss33))-({{Cl|_WIDTH (function)|_WIDTH}}(ss33),_
+    {{Cl|_HEIGHT}}(ss33)), ss33 TO(0, scale, dist)-(x1, -scale, z1 + dist)-(x2, -scale, z2 + dist), , '''_SMOOTH'''
+
+    {{Cl|_LIMIT}} 30
+    {{Cl|_DISPLAY}}
+{{Cl|LOOP}} 
+{{CodeEnd}}
+: '''Tip:''' If you are using Linux you might want to replace "[[_SCREENIMAGE]]" with a [[_LOADIMAGE]] command if you don't see anything.
+
+
+{{PageSeeAlso}}
+* [[_PUTIMAGE]]
+* [[_LOADIMAGE]]
+* [[_COPYIMAGE]]
+* [[GET (graphics statement)]], [[PUT (graphics statement)]]
+* [[STEP]], [[SIN]], [[COS]]
+* [[Hardware images]]
+
+
+{{PageNavigation}}
+
