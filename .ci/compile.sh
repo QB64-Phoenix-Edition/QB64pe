@@ -6,6 +6,8 @@ SUCCESS=$?
 rm qb64_bootstrap
 rm internal/source/*
 rm internal/temp/debug_* internal/temp/recompile_*
+rm internal/temp/qb64.sym
+rm internal/temp/qb64_bootstrap.sym
 
 mv internal/temp/* internal/source/
 
