@@ -78,8 +78,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
 
-    'Download page using curl (opt -k = allow unsecure connections in case of cert errors)
-    SHELL _HIDE "curl -k -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
+    'Download page using curl
+    SHELL _HIDE "curl -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
     OPEN outputFile$ FOR BINARY AS #fh 'get new content
     a$ = SPACE$(LOF(fh))
@@ -106,13 +106,15 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "&sup1;", CHR$(252))
         a$ = StrReplace$(a$, "&sup2;", CHR$(253))
         a$ = StrReplace$(a$, "&nbsp;", CHR$(255))
-        '--- useless empty text styles
+        '--- useless styles in blocks
         a$ = StrReplace$(a$, "Start}}'' ''", "Start}}")
         a$ = StrReplace$(a$, "Start}} '' ''", "Start}}")
         a$ = StrReplace$(a$, "Start}}" + CHR$(10) + "'' ''", "Start}}")
         a$ = StrReplace$(a$, "'' ''" + CHR$(10) + "{{", CHR$(10) + "{{")
         a$ = StrReplace$(a$, "'' '' " + CHR$(10) + "{{", CHR$(10) + "{{")
         a$ = StrReplace$(a$, "'' ''" + MKI$(&H0A0A) + "{{", CHR$(10) + "{{")
+        '--- wiki redirects
+        a$ = StrReplace$(a$, "#REDIRECT", "See page")
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
@@ -283,7 +285,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     'everywhere in text
     '------------------
     ' ''' = bold text style
-    ' ''  = italic etxt style
+    ' ''  = italic text style
     ' [url text]    = external link to url with text to appear (url ends at 1st found space)
     ' [[page]]      = link to another wikipage
     ' [[page|text]] = link to another wikipage with alternative text to appear
@@ -309,6 +311,10 @@ SUB WikiParse (a$) 'Wiki page interpret
     END IF
     t$ = Help_PageLoaded$: i = INSTR(a$, "{{DISPLAYTITLE:")
     IF i > 0 THEN t$ = MID$(a$, i + 15, INSTR(i + 15, a$, "}}") - i - 15)
+    IF LEFT$(t$, 4) = "agp@" THEN
+        d$ = "Auto-generated temporary page."
+        t$ = MID$(t$, 5)
+    END IF
     i = LEN(d$): ii = LEN(t$)
     Help_AddTxt "   Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
     Help_AddTxt "   ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
@@ -458,7 +464,7 @@ SUB WikiParse (a$) 'Wiki page interpret
         'as all text could be part of the code example itself
         IF Help_LockParse <= 0 THEN
             'External links
-            IF (c$(6) = "[http:" OR c$(7) = "[https:") AND elink = 0 THEN
+            IF c$(5) = "[http" AND elink = 0 THEN
                 elink = 1
                 elink$ = ""
                 GOTO charDone
@@ -1027,6 +1033,17 @@ FUNCTION wikiBuildCIndent$ (a$) 'Pre-calc center indentions
         IF MID$(org$, i, 2) = "]]" THEN i = i + 2
         b$ = b$ + MID$(org$, i, 1)
     NEXT
+    org$ = b$: b$ = "" 'eliminate external links
+    FOR i = 1 TO LEN(org$)
+        IF MID$(org$, i, 5) = "[http" THEN
+            FOR ii = i + 5 TO LEN(org$)
+                IF MID$(org$, ii, 1) = " " THEN i = ii + 1: EXIT FOR
+                IF MID$(org$, ii, 1) = "]" THEN i = i + 1: EXIT FOR
+            NEXT
+        END IF
+        IF MID$(org$, i, 1) = "]" THEN i = i + 1
+        b$ = b$ + MID$(org$, i, 1)
+    NEXT
     org$ = b$: b$ = "" 'eliminate templates
     FOR i = 1 TO LEN(org$)
         IF MID$(org$, i, 2) = "{{" THEN
@@ -1043,12 +1060,10 @@ FUNCTION wikiBuildCIndent$ (a$) 'Pre-calc center indentions
         IF MID$(org$, i, 2) = "}}" THEN i = i + 2
         b$ = b$ + MID$(org$, i, 1)
     NEXT
-    org$ = b$: b$ = "" 'eliminate text styles and ext. links
+    org$ = b$: b$ = "" 'eliminate text styles
     FOR i = 1 TO LEN(org$)
         IF MID$(org$, i, 3) = "'''" THEN i = i + 3
         IF MID$(org$, i, 2) = "''" THEN i = i + 2
-        IF MID$(org$, i, 1) = "[" THEN i = i + 1
-        IF MID$(org$, i, 1) = "]" THEN i = i + 1
         b$ = b$ + MID$(org$, i, 1)
     NEXT
     b$ = StrReplace$(b$, "<br>", CHR$(10)) 'convert HTML line breaks

@@ -2820,10 +2820,13 @@ FUNCTION ide2 (ignore)
                             LOOP
 
                             IF UCASE$(n$) = a2$ THEN
-                                a$ = "'''" + backupn$ + "''' is a symbol that is used in your program as follows:"
+                                a$ = "{{DISPLAYTITLE:agp@" + backupn$ + "}}" + CHR$(10)
+                                a$ = a$ + "This is a subroutine or function that is used in your program as follows:" + CHR$(10)
                                 a$ = a$ + CHR$(10) + CHR$(10) + "{{PageSyntax}}" + CHR$(10)
-                                a$ = a$ + ": " + sf$ + "'''" + backupn$ + "''' " + args$
-                                a$ = a$ + CHR$(10) + "{{PageNavigation}}"
+                                a$ = a$ + ": [[" + LEFT$(sf$, LEN(sf$) - 1) + "]] '''" + backupn$ + "''' " + args$ + CHR$(10)
+                                a$ = a$ + CHR$(10) + CHR$(10) + "{{PageSeeAlso}}" + CHR$(10)
+                                a$ = a$ + "* [[Sub (explanatory)]]" + CHR$(10)
+                                a$ = a$ + "* [[Function (explanatory)]]" + CHR$(10)
 
                                 IdeContextHelpSF = -1
 
@@ -5407,7 +5410,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Update All #Pages..." THEN
                 PCOPY 2, 0
-                q$ = ideyesnobox("Update Help", "This can take up to 10 minutes.\nRedownload all cached help content from the wiki?")
+                q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
                 IF q$ = "Y" THEN ideupdatehelpbox
                 PCOPY 3, 0: SCREEN , , 3, 0
