@@ -14616,6 +14616,7 @@ FUNCTION idezfilelist$ (path$, method, mask$) 'method0=*.bas, method1=*.*, metho
         DO UNTIL EOF(150)
             LINE INPUT #150, a$
             IF LEN(a$) THEN 'skip blank entries
+                IF path$ = "internal/help" THEN a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + ".txt" 'remove spelling label
                 IF filelist$ = "" THEN filelist$ = a$ ELSE filelist$ = filelist$ + sep + a$
             END IF
         LOOP
@@ -14655,6 +14656,7 @@ FUNCTION idezfilelist$ (path$, method, mask$) 'method0=*.bas, method1=*.*, metho
                     EXIT FOR
                 END IF
             NEXT
+            IF path$ = "internal/help" THEN a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + ".txt" 'remove spelling label
             IF filelist$ = "" THEN filelist$ = a$ ELSE filelist$ = filelist$ + sep + a$
         LOOP
         CLOSE #150
@@ -18774,7 +18776,7 @@ SUB ideupdatehelpbox
         SELECT CASE UpdateStep
             CASE 1
                 'Create a list of all files to be recached
-                f$ = CHR$(0) + idezfilelist$("internal/help", 1, "") + CHR$(0)
+                f$ = CHR$(0) + idezfilelist$("internal/help", 2, "*.txt") + CHR$(0)
                 IF LEN(f$) = 2 THEN f$ = CHR$(0)
 
                 'Prepend core pages to list
@@ -19824,9 +19826,19 @@ FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
     'check if topic$ is in help links
     '    - returns a list of help links separated by CHR$(0)
     '    - returns the total number of links found by changing 'lnks'
+    IF NOT _FILEEXISTS("internal\help\links.bin") THEN
+        q$ = ideyesnobox("Help problem", "The help system is not yet initialized,\ndo it now? (Make sure you're online.)")
+        PCOPY 3, 0: SCREEN , , 3, 0
+        IF q$ = "N" THEN lnks = 0: lnks$ = CHR$(0): GOTO noLinksFile
+        Help_IgnoreCache = 1
+        a$ = Wiki$("Keyword Reference - Alphabetical")
+        Help_IgnoreCache = 0
+        Help_ww = 78: WikiParse a$ 'assume standard IDE width for parsing
+    END IF
+    '----------
     a2$ = UCASE$(topic$)
     fh = FREEFILE
-    OPEN "internal\help\links.bin" FOR BINARY AS #fh
+    OPEN "internal\help\links.bin" FOR INPUT AS #fh
     lnks = 0: lnks$ = CHR$(0)
     DO UNTIL EOF(fh)
         LINE INPUT #fh, l$
@@ -19844,6 +19856,7 @@ FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
         END IF
     LOOP
     CLOSE #fh
+    noLinksFile:
     findHelpTopic$ = lnks$
 END FUNCTION
 
