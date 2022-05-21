@@ -2593,20 +2593,22 @@ FUNCTION ide2 (ignore)
                                 mCLICK = 0
 
                                 IF LEFT$(l$, 5) = "EXTL:" THEN
-                                    l$ = RIGHT$(l$, LEN(l$) - 5)
-                                    l$ = StrReplace$(l$, " ", "%20")
-                                    IF INSTR(_OS$, "WIN") = 0 THEN
-                                        l$ = StrReplace$(l$, "$", "\$")
-                                        l$ = StrReplace$(l$, "&", "\&")
-                                        l$ = StrReplace$(l$, "(", "\(")
-                                        l$ = StrReplace$(l$, ")", "\)")
-                                    END IF
-                                    IF INSTR(_OS$, "WIN") THEN
-                                        SHELL _HIDE _DONTWAIT "start " + l$
-                                    ELSEIF INSTR(_OS$, "MAC") THEN
-                                        SHELL _HIDE _DONTWAIT "open " + l$
-                                    ELSE
-                                        SHELL _HIDE _DONTWAIT "xdg-open " + l$
+                                    IF (K$ = CHR$(13)) OR (mY = Help_cy - Help_sy + Help_wy1 AND mX = Help_cx - Help_sx + Help_wx1) THEN
+                                        l$ = RIGHT$(l$, LEN(l$) - 5)
+                                        l$ = StrReplace$(l$, " ", "%20")
+                                        IF INSTR(_OS$, "WIN") = 0 THEN
+                                            l$ = StrReplace$(l$, "$", "\$")
+                                            l$ = StrReplace$(l$, "&", "\&")
+                                            l$ = StrReplace$(l$, "(", "\(")
+                                            l$ = StrReplace$(l$, ")", "\)")
+                                        END IF
+                                        IF INSTR(_OS$, "WIN") THEN
+                                            SHELL _HIDE _DONTWAIT "start " + l$
+                                        ELSEIF INSTR(_OS$, "MAC") THEN
+                                            SHELL _HIDE _DONTWAIT "open " + l$
+                                        ELSE
+                                            SHELL _HIDE _DONTWAIT "xdg-open " + l$
+                                        END IF
                                     END IF
                                     GOTO specialchar
                                 ELSEIF LEFT$(l$, 5) = "PAGE:" THEN
