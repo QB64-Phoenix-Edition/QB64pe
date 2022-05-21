@@ -16,6 +16,7 @@ curl %url% -o %MINGW%
 echo Extracting %MINGW% as C++ Compiler
 @echo off
 %MINGW% -y -o"./internal/c/c_compiler/"
+del %MINGW%
 
 :skipccompsetup
 
