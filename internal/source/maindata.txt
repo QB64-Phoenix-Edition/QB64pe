@@ -257,10 +257,23 @@ if(__LONG_HELP_ITALIC==NULL){
 __LONG_HELP_ITALIC=(int32*)mem_static_malloc(4);
 *__LONG_HELP_ITALIC=0;
 }
+if(__LONG_HELP_DLIST==NULL){
+__LONG_HELP_DLIST=(int32*)mem_static_malloc(4);
+*__LONG_HELP_DLIST=0;
+}
 if(__LONG_HELP_LOCKWRAP==NULL){
 __LONG_HELP_LOCKWRAP=(int32*)mem_static_malloc(4);
 *__LONG_HELP_LOCKWRAP=0;
 }
+if(__LONG_HELP_LOCKPARSE==NULL){
+__LONG_HELP_LOCKPARSE=(int32*)mem_static_malloc(4);
+*__LONG_HELP_LOCKPARSE=0;
+}
+if(__LONG_HELP_CENTER==NULL){
+__LONG_HELP_CENTER=(int32*)mem_static_malloc(4);
+*__LONG_HELP_CENTER=0;
+}
+if (!__STRING_HELP_CINDENT)__STRING_HELP_CINDENT=qbs_new(0,0);
 if (!__ARRAY_LONG_HELP_LINELEN){
 __ARRAY_LONG_HELP_LINELEN=(ptrszint*)mem_static_malloc(9*ptrsz);
 new_mem_lock();
@@ -322,6 +335,21 @@ __LONG_HELP_RECACHING=(int32*)mem_static_malloc(4);
 if(__LONG_HELP_IGNORECACHE==NULL){
 __LONG_HELP_IGNORECACHE=(int32*)mem_static_malloc(4);
 *__LONG_HELP_IGNORECACHE=0;
+}
+if (!__ARRAY_UDT_WPUTFREPL){
+__ARRAY_UDT_WPUTFREPL=(ptrszint*)mem_static_malloc(9*ptrsz);
+new_mem_lock();
+mem_lock_tmp->type=4;
+((ptrszint*)__ARRAY_UDT_WPUTFREPL)[8]=(ptrszint)mem_lock_tmp;
+__ARRAY_UDT_WPUTFREPL[2]=0;
+__ARRAY_UDT_WPUTFREPL[4]=2147483647;
+__ARRAY_UDT_WPUTFREPL[5]=0;
+__ARRAY_UDT_WPUTFREPL[6]=0;
+__ARRAY_UDT_WPUTFREPL[0]=(ptrszint)nothingvalue;
+}
+if(__LONG_WPUTFREPLCNT==NULL){
+__LONG_WPUTFREPLCNT=(int32*)mem_static_malloc(4);
+*__LONG_WPUTFREPLCNT=0;
 }
 if(__BYTE_ALTSPECIAL==NULL){
 __BYTE_ALTSPECIAL=(int8*)mem_static_malloc(1);
