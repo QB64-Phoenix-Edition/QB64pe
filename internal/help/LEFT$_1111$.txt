@@ -1,0 +1,72 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:14:05}}
+The [[LEFT$]] string function returns a number of characters from the left of a [[STRING]].
+
+
+{{PageSyntax}}
+: [[LEFT$]]({{Parameter|stringValue$}}, {{Parameter|numberOfCharacters%}})
+
+
+{{Parameters}}
+* {{Parameter|stringValue$}} can be any [[STRING]] literal or variable.
+* {{Parameter|numberOfCharacters%}} [[INTEGER]] determines the number of characters to return from left of string.
+
+
+{{PageDescription}}
+* If the number of characters exceeds the string length the entire string is returned. Use [[LEN]] to determine a string's length.
+* [[LEFT$]] returns always start at the first character of the string, even if it's a space. [[LTRIM$]] can remove leading spaces.
+* '''{{Parameter|numberOfCharacters%}} cannot be a negative value.'''
+
+
+{{PageExamples}}
+''Example 1:'' Getting the left portion of a string value. 
+{{CodeStart}}
+name$ = "Tom Williams"
+
+First$ = LEFT$(name$, 3)
+
+PRINT First$ 
+{{CodeEnd}}
+{{OutputStart}}Tom {{OutputEnd}}
+
+
+''Example 2:'' A replace function using LEFT$ and [[RIGHT$]] with [[INSTR]] to insert a different length word into an existing string. 
+{{CodeStart}}
+text$ = "This is my sentence to change my words."
+{{Cl|PRINT}} text$
+oldword$ = "my" 
+newword$ = "your"
+
+x = Replace(text$, oldword$, newword$) 
+{{Cl|IF...THEN|IF}} x {{Cl|THEN}} {{Cl|PRINT}} text$; x
+
+{{Cl|END}}
+
+{{Cl|FUNCTION}} Replace (text$, old$, new$) 'can also be used as a {{Cl|SUB}} without the count assignment
+{{Cl|DO...LOOP|DO}}
+  find = {{Cl|INSTR}}(start + 1, text$, old$) 'find location of a word in text
+  {{Cl|IF...THEN|IF}} find {{Cl|THEN}}
+    count = count + 1
+    first$ = {{Cl|LEFT$}}(text$, find - 1) 'text before word including spaces
+    last$ = {{Cl|RIGHT$}}(text$, {{Cl|LEN}}(text$) - (find + {{Cl|LEN}}(old$) - 1)) 'text after word
+    text$ = first$ + new$ + last$
+  {{Cl|END IF}}
+  start = find
+{{Cl|LOOP}} {{Cl|WHILE}} find
+Replace = count 'function returns the number of replaced words. Comment out in SUB
+{{Cl|END FUNCTION}} 
+{{CodeEnd}}
+{{OutputStart}}This is my sentence to change my words.
+This is your sentence to change your words.{{OutputEnd}}
+: ''Note:'' The [[MID$ (statement)|MID$]] statement can only substitute words or sections of the original string length. It cannot change the string length.
+
+
+{{PageSeeAlso}}
+* [[RIGHT$]], [[MID$]]
+* [[LTRIM$]], [[RTRIM$]]
+* [[MID$ (statement)]]
+* [[INSTR]], [[LEN]]
+
+
+{{PageNavigation}}
+

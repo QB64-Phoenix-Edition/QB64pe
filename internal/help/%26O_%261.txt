@@ -1,0 +1,45 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:24:49}}
+The '''&O''' prefix denotes that a integer value is expressed in an Octal base 8 format.
+
+
+{{PageSyntax}}
+:::: a& = &O12345671234
+
+
+* The base eight numbering system only uses octal digit values of 0 to 7.
+* Leading zero values '''can''' be omitted as they add nothing to the return value.
+* Decimal values returned can be any '''signed''' [[INTEGER]], [[LONG]] integer, or [[_INTEGER64]] value so use those type of variables when converting directly as shown above. The program [[ERROR Codes|"overflow"]] error limits are listed as:
+:: * [[INTEGER]]: 6 octal digits or a decimal value range from -32,768 to 32,767
+:: * [[LONG]]: 11 octal digits or a decimal value range from -2,147,483,648 to 2,147,483,647
+:: * [[_INTEGER64]]: 22 octal digits or decimal values from -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807.
+* [[LONG]] Octal values can be expressed by appending & after the number. Example: &O100000& = 32768
+
+
+''Example:'' The maximum octal values of decimal value  -1 in each numerical type are:
+{{CodeStart}}
+c&& = -1: d& = -1: e% = -1: f%% = -1
+oc$ = {{Cl|OCT$}}(f%%)
+{{Cl|PRINT}} "Max octal {{Cl|_BYTE}} = "; oc$; " with"; {{Cl|LEN}}(oc$); "digits ="; {{Cl|VAL}}("{{Cl|&O}}" + oc$)
+oc$ = {{Cl|OCT$}}(e%)
+{{Cl|PRINT}} "Max octal {{Cl|INTEGER}} = "; oc$; " with"; {{Cl|LEN}}(oc$); "digits ="; {{Cl|VAL}}("{{Cl|&O}}" + oc$)
+oc$ = {{Cl|OCT$}}(d&)
+{{Cl|PRINT}} "Max octal {{Cl|LONG}} = "; oc$; " with"; {{Cl|LEN}}(oc$); "digits ="; {{Cl|VAL}}("{{Cl|&O}}" + oc$)
+oc$ = {{Cl|OCT$}}(c&&)
+{{Cl|PRINT}} "Max octal {{Cl|_INTEGER64}} = "; oc$; " with"; {{Cl|LEN}}(oc$); "digits ="; {{Cl|VAL}}("{{Cl|&O}}" + oc$) 
+{{CodeEnd}}
+{{OutputStart}}Max octal _BYTE = 377 with 3 digits = 255
+Max octal INTEGER = 177777 with 6 digits = 65535
+Max octal LONG = 37777777777 with 11 digits = 4294967295
+Max octal _INTEGER64 = 1777777777777777777777 with 22 digits =-1
+{{OutputEnd}}
+
+
+''See also:''
+* [[OCT$]], [[HEX$]], [[VAL]]
+* [[&B]] (binary), [[&H]] (hexadecimal)
+* [[Base Comparisons]]
+
+
+{{PageNavigation}}
+

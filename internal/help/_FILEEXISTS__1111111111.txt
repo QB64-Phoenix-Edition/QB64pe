@@ -1,0 +1,35 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:08:12}}
+{{DISPLAYTITLE:_FILEEXISTS}}
+The '''_FILEEXISTS''' function determines if a designated file name exists and returns true (-1) or false (0).
+
+
+{{PageSyntax}}
+: {{Parameter|theFileExists%}} = [[_FILEEXISTS]]({{Parameter|filename$}})
+
+
+{{PageDescription}}
+* The {{Parameter|filename$}} parameter can be a literal or variable [[STRING|string]] value that can include a path.
+* The function returns -1 when a file exists and 0 when it does not.
+* The function reads the system information directly without using a [[SHELL]] procedure.
+* The function will use the appropriate Operating System path separators. [[_OS$]] can determine the operating system.
+* '''This function does not guarantee that a file can be accessed or opened, just that it exists.'''
+
+
+{{PageExamples}}
+{{Parameter|Example:'' Checks if a file exists before opening it.
+{{CodeStart}}
+{{Cl|IF}} {{Cl|_FILEEXISTS}}("mysettings.ini") THEN
+    {{Cl|PRINT}} "Settings file found."
+{{Cl|END IF}}
+{{CodeEnd}}}}
+
+
+{{PageSeeAlso}}
+* [[_DIREXISTS]], [[_OS$]]
+* [[SHELL]], [[FILES]]
+* [[KILL]]
+
+
+{{PageNavigation}}
+

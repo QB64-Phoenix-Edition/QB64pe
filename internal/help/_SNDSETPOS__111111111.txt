@@ -1,0 +1,36 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:11:14}}
+{{DISPLAYTITLE:_SNDSETPOS}}
+The [[_SNDSETPOS]] statement changes the current/starting playing position in seconds of a sound.
+
+
+{{PageSyntax}}
+: [[_SNDSETPOS]] {{Parameter|handle&}}, {{Parameter|position!}}
+
+
+{{PageDescription}}
+*Changes the current/starting playing position in seconds (a [[SINGLE]] value) of a sound in memory.
+*If {{Parameter|position!}} is past the length of the sound, playback will be interrupted.
+*Function cannot be called while a looping sound is being played (see [[_SNDLOOP]]).
+* In versions '''prior to build 20170811/60''', the sound identified by {{Parameter|handle&}} must have been opened using the [[_SNDOPEN|"SETPOS" capability]] to use this statement.
+
+
+{{PageExamples}}
+''Example:'' To check the current playing position in an MP3 file, use [[_SNDPLAY]] with [[_SNDGETPOS]] printed in a loop
+{{CodeStart}}
+SoundFile& = {{Cl|_SNDOPEN}}("YourSoundFile.mp3") '<<< your MP3 sound file here!
+{{Cl|_SNDSETPOS}} SoundFile&, 5.5   'set to play sound 5 1/2 seconds into music 
+{{Cl|_SNDPLAY}} SoundFile&  'play sound 
+Do: {{Cl|_LIMIT}} 60     
+   LOCATE 5, 2: PRINT "Current play position> "; {{Cl|_SNDGETPOS}}(SoundFile&)
+LOOP UNTIL {{Cl|_KEYDOWN}}(27) OR {{Cl|NOT}} {{Cl|_SNDPLAYING}}(SoundFile&) 'ESC or end of sound exit
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[_SNDGETPOS]], [[_SNDLEN]] 
+* [[_SNDOPEN]], [[_SNDLIMIT]]
+
+
+{{PageNavigation}}
+

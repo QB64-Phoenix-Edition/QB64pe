@@ -2588,54 +2588,74 @@ FUNCTION ide2 (ignore)
                             NEXT
                             l2 = INSTR(l1, Help_Link$, Help_Link_Sep$) - 1
                             l$ = MID$(Help_Link$, l1, l2 - l1 + 1)
-                            'assume PAGE
-                            l$ = RIGHT$(l$, LEN(l$) - 5)
 
                             IF mCLICK OR K$ = CHR$(13) THEN
                                 mCLICK = 0
 
-                                IF Back$(Help_Back_Pos) <> l$ THEN
-                                    Help_Select = 0: Help_MSelect = 0
-                                    'COLOR 7, 0
-
-                                    Help_Back(Help_Back_Pos).sx = Help_sx 'update position
-                                    Help_Back(Help_Back_Pos).sy = Help_sy
-                                    Help_Back(Help_Back_Pos).cx = Help_cx
-                                    Help_Back(Help_Back_Pos).cy = Help_cy
-
-                                    top = UBOUND(back$)
-
-                                    IF Help_Back_Pos < top THEN
-                                        IF Back$(Help_Back_Pos + 1) = l$ THEN
-                                            GOTO usenextentry
+                                IF LEFT$(l$, 5) = "EXTL:" THEN
+                                    IF (K$ = CHR$(13)) OR (mY = Help_cy - Help_sy + Help_wy1 AND mX = Help_cx - Help_sx + Help_wx1) THEN
+                                        l$ = RIGHT$(l$, LEN(l$) - 5)
+                                        l$ = StrReplace$(l$, " ", "%20")
+                                        IF INSTR(_OS$, "WIN") = 0 THEN
+                                            l$ = StrReplace$(l$, "$", "\$")
+                                            l$ = StrReplace$(l$, "&", "\&")
+                                            l$ = StrReplace$(l$, "(", "\(")
+                                            l$ = StrReplace$(l$, ")", "\)")
+                                        END IF
+                                        IF INSTR(_OS$, "WIN") THEN
+                                            SHELL _HIDE _DONTWAIT "start " + l$
+                                        ELSEIF INSTR(_OS$, "MAC") THEN
+                                            SHELL _HIDE _DONTWAIT "open " + l$
+                                        ELSE
+                                            SHELL _HIDE _DONTWAIT "xdg-open " + l$
                                         END IF
                                     END IF
+                                    GOTO specialchar
+                                ELSEIF LEFT$(l$, 5) = "PAGE:" THEN
+                                    l$ = RIGHT$(l$, LEN(l$) - 5)
+                                    IF Back$(Help_Back_Pos) <> l$ THEN
+                                        Help_Select = 0: Help_MSelect = 0
+                                        'COLOR 7, 0
 
-                                    top = top + 1
-                                    REDIM _PRESERVE Back(top) AS STRING
-                                    REDIM _PRESERVE Help_Back(top) AS Help_Back_Type
-                                    REDIM _PRESERVE Back_Name(top) AS STRING
-                                    'Shuffle array upwards after current pos
-                                    FOR x = top - 1 TO Help_Back_Pos + 1 STEP -1
-                                        Back_Name$(x + 1) = Back_Name$(x)
-                                        Back$(x + 1) = Back$(x)
-                                        Help_Back(x + 1).sx = Help_Back(x).sx
-                                        Help_Back(x + 1).sy = Help_Back(x).sy
-                                        Help_Back(x + 1).cx = Help_Back(x).cx
-                                        Help_Back(x + 1).cy = Help_Back(x).cy
-                                    NEXT
-                                    usenextentry:
-                                    Help_Back_Pos = Help_Back_Pos + 1
-                                    Back$(Help_Back_Pos) = l$
-                                    Back_Name$(Help_Back_Pos) = Back2BackName$(l$)
-                                    Help_Back(Help_Back_Pos).sx = 1
-                                    Help_Back(Help_Back_Pos).sy = 1
-                                    Help_Back(Help_Back_Pos).cx = 1
-                                    Help_Back(Help_Back_Pos).cy = 1
-                                    Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
-                                    a$ = Wiki(l$)
-                                    WikiParse a$
-                                    GOTO newpageparsed
+                                        Help_Back(Help_Back_Pos).sx = Help_sx 'update position
+                                        Help_Back(Help_Back_Pos).sy = Help_sy
+                                        Help_Back(Help_Back_Pos).cx = Help_cx
+                                        Help_Back(Help_Back_Pos).cy = Help_cy
+
+                                        top = UBOUND(back$)
+
+                                        IF Help_Back_Pos < top THEN
+                                            IF Back$(Help_Back_Pos + 1) = l$ THEN
+                                                GOTO usenextentry
+                                            END IF
+                                        END IF
+
+                                        top = top + 1
+                                        REDIM _PRESERVE Back(top) AS STRING
+                                        REDIM _PRESERVE Help_Back(top) AS Help_Back_Type
+                                        REDIM _PRESERVE Back_Name(top) AS STRING
+                                        'Shuffle array upwards after current pos
+                                        FOR x = top - 1 TO Help_Back_Pos + 1 STEP -1
+                                            Back_Name$(x + 1) = Back_Name$(x)
+                                            Back$(x + 1) = Back$(x)
+                                            Help_Back(x + 1).sx = Help_Back(x).sx
+                                            Help_Back(x + 1).sy = Help_Back(x).sy
+                                            Help_Back(x + 1).cx = Help_Back(x).cx
+                                            Help_Back(x + 1).cy = Help_Back(x).cy
+                                        NEXT
+                                        usenextentry:
+                                        Help_Back_Pos = Help_Back_Pos + 1
+                                        Back$(Help_Back_Pos) = l$
+                                        Back_Name$(Help_Back_Pos) = Back2BackName$(l$)
+                                        Help_Back(Help_Back_Pos).sx = 1
+                                        Help_Back(Help_Back_Pos).sy = 1
+                                        Help_Back(Help_Back_Pos).cx = 1
+                                        Help_Back(Help_Back_Pos).cy = 1
+                                        Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
+                                        a$ = Wiki(l$)
+                                        WikiParse a$
+                                        GOTO newpageparsed
+                                    END IF
                                 END IF
                             END IF
 
@@ -2802,10 +2822,13 @@ FUNCTION ide2 (ignore)
                             LOOP
 
                             IF UCASE$(n$) = a2$ THEN
-                                a$ = "'''" + backupn$ + "''' is a symbol that is used in your program as follows:"
+                                a$ = "{{DISPLAYTITLE:agp@" + backupn$ + "}}" + CHR$(10)
+                                a$ = a$ + "This is a subroutine or function that is used in your program as follows:" + CHR$(10)
                                 a$ = a$ + CHR$(10) + CHR$(10) + "{{PageSyntax}}" + CHR$(10)
-                                a$ = a$ + ": " + sf$ + "'''" + backupn$ + "''' " + args$
-                                a$ = a$ + CHR$(10) + "{{PageNavigation}}"
+                                a$ = a$ + ": [[" + LEFT$(sf$, LEN(sf$) - 1) + "]] '''" + backupn$ + "''' " + args$ + CHR$(10)
+                                a$ = a$ + CHR$(10) + CHR$(10) + "{{PageSeeAlso}}" + CHR$(10)
+                                a$ = a$ + "* [[Sub (explanatory)]]" + CHR$(10)
+                                a$ = a$ + "* [[Function (explanatory)]]" + CHR$(10)
 
                                 IdeContextHelpSF = -1
 
@@ -5389,7 +5412,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Update All #Pages..." THEN
                 PCOPY 2, 0
-                q$ = ideyesnobox("Update Help", "This can take up to 10 minutes.\nRedownload all cached help content from the wiki?")
+                q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
                 IF q$ = "Y" THEN ideupdatehelpbox
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -14595,6 +14618,7 @@ FUNCTION idezfilelist$ (path$, method, mask$) 'method0=*.bas, method1=*.*, metho
         DO UNTIL EOF(150)
             LINE INPUT #150, a$
             IF LEN(a$) THEN 'skip blank entries
+                IF path$ = "internal/help" THEN a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + ".txt" 'remove spelling label
                 IF filelist$ = "" THEN filelist$ = a$ ELSE filelist$ = filelist$ + sep + a$
             END IF
         LOOP
@@ -14634,6 +14658,7 @@ FUNCTION idezfilelist$ (path$, method, mask$) 'method0=*.bas, method1=*.*, metho
                     EXIT FOR
                 END IF
             NEXT
+            IF path$ = "internal/help" THEN a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + ".txt" 'remove spelling label
             IF filelist$ = "" THEN filelist$ = a$ ELSE filelist$ = filelist$ + sep + a$
         LOOP
         CLOSE #150
@@ -18753,7 +18778,7 @@ SUB ideupdatehelpbox
         SELECT CASE UpdateStep
             CASE 1
                 'Create a list of all files to be recached
-                f$ = CHR$(0) + idezfilelist$("internal/help", 1, "") + CHR$(0)
+                f$ = CHR$(0) + idezfilelist$("internal/help", 2, "*.txt") + CHR$(0)
                 IF LEN(f$) = 2 THEN f$ = CHR$(0)
 
                 'Prepend core pages to list
@@ -18778,18 +18803,20 @@ SUB ideupdatehelpbox
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, l$
                     IF LEN(l$) THEN
-                        c = INSTR(l$, ","): PageName2$ = RIGHT$(l$, LEN(l$) - c)
-                        DO WHILE INSTR(PageName2$, " ")
-                            ASC(PageName2$, INSTR(PageName2$, " ")) = 95
-                        LOOP
-                        DO WHILE INSTR(PageName2$, "&")
-                            i = INSTR(PageName2$, "&")
-                            PageName2$ = LEFT$(PageName2$, i - 1) + "%26" + RIGHT$(PageName2$, LEN(PageName2$) - i)
-                        LOOP
-                        DO WHILE INSTR(PageName2$, "/")
-                            i = INSTR(PageName2$, "/")
-                            PageName2$ = LEFT$(PageName2$, i - 1) + "%2F" + RIGHT$(PageName2$, LEN(PageName2$) - i)
-                        LOOP
+                        c = INSTR(l$, ","): l$ = RIGHT$(l$, LEN(l$) - c)
+                        'Escape all invalid and other critical chars in filenames
+                        PageName2$ = ""
+                        FOR i = 1 TO LEN(l$)
+                            c = ASC(l$, i)
+                            SELECT CASE c
+                                CASE 32 '                                    '(space)
+                                    PageName2$ = PageName2$ + "_"
+                                CASE 34, 38, 42, 47, 58, 60, 62, 63, 92, 124 '("&*/:<>?\|)
+                                    PageName2$ = PageName2$ + "%" + HEX$(c)
+                                CASE ELSE
+                                    PageName2$ = PageName2$ + CHR$(c)
+                            END SELECT
+                        NEXT
                         PageName2$ = PageName2$ + ".txt"
                         IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN
                             f$ = f$ + PageName2$ + CHR$(0)
@@ -19801,9 +19828,19 @@ FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
     'check if topic$ is in help links
     '    - returns a list of help links separated by CHR$(0)
     '    - returns the total number of links found by changing 'lnks'
+    IF NOT _FILEEXISTS("internal\help\links.bin") THEN
+        q$ = ideyesnobox("Help problem", "The help system is not yet initialized,\ndo it now? (Make sure you're online.)")
+        PCOPY 3, 0: SCREEN , , 3, 0
+        IF q$ = "N" THEN lnks = 0: lnks$ = CHR$(0): GOTO noLinksFile
+        Help_IgnoreCache = 1
+        a$ = Wiki$("Keyword Reference - Alphabetical")
+        Help_IgnoreCache = 0
+        Help_ww = 78: WikiParse a$ 'assume standard IDE width for parsing
+    END IF
+    '----------
     a2$ = UCASE$(topic$)
     fh = FREEFILE
-    OPEN "internal\help\links.bin" FOR BINARY AS #fh
+    OPEN "internal\help\links.bin" FOR INPUT AS #fh
     lnks = 0: lnks$ = CHR$(0)
     DO UNTIL EOF(fh)
         LINE INPUT #fh, l$
@@ -19821,6 +19858,7 @@ FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
         END IF
     LOOP
     CLOSE #fh
+    noLinksFile:
     findHelpTopic$ = lnks$
 END FUNCTION
 

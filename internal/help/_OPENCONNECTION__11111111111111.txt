@@ -1,0 +1,27 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:09:45}}
+{{DISPLAYTITLE:_OPENCONNECTION}}
+The [[_OPENCONNECTION]] function opens a connection from a client that the host has detected and returns a status handle.
+
+
+{{PageSyntax}}
+:{{Parameter|connectHandle}} = [[_OPENCONNECTION]]({{Parameter|hostHandle}})
+
+
+{{PageDescription}} 
+* Valid {{Parameter|connectHandle}} values returned are negative numbers.
+* If the syntax is correct but they fail to begin/connect, a {{Parameter|connectHandle}} of 0 is returned. 
+* Always check if the handle returned is 0 (failed) before continuing.  
+* [[CLOSE]] #{{Parameter|connectHandle}} closes the connection. Failed connections({{Parameter|connectHandle}} = 0) do not need to be closed.
+* As a '''Host''' you can check for new clients (users). Each will have a unique connection handle.
+* Creates an [[ERROR Codes|Illegal Function Call]] error if called with a string argument of the wrong syntax.
+* Handle values can be used as the open number by [[GET (TCP/IP statement)|GET #]] read statement and [[PUT (TCP/IP statement)|PUT #]] write statement.
+
+
+{{PageSeeAlso}}
+* [[_OPENHOST]], [[_OPENCLIENT]]
+* [[_CONNECTED]], [[_CONNECTIONADDRESS]]
+
+
+{{PageNavigation}}
+

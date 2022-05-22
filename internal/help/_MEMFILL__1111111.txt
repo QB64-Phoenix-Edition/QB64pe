@@ -1,0 +1,51 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:09:11}}
+{{DISPLAYTITLE:_MEMFILL}}
+The [[_MEMFILL]] statement converts a value to a specified type, then fills memory with that type including any non-whole remainder.
+
+
+{{PageSyntax}}
+: [[_MEMFILL]] {{Parameter|memoryBlock}}, {{Parameter|memoryBlock.OFFSET}}, {{Parameter|fillBytes}}, {{Parameter|value}} [AS {{Parameter|variableType}}]
+
+
+{{Parameters}}
+* The {{Parameter|memoryBlock}} [[_MEM]] memory block is the block referenced to be filled.
+* {{Parameter|memoryBlock.OFFSET}} is the starting offset of the above referenced memory block.
+* The {{Parameter|fillBytes}} is the number of bytes to fill the memory block.
+* The {{Parameter|value}} is the value to place in the memory block at the designated OFFSET position. 
+* A literal or variable {{Parameter|value}} can be optionally set [[AS]] a variable [[type]] appropriate for the memory block.
+
+
+{{PageDescription}}
+* To clear previous data from a [[_MEMNEW]] memory block, use _MEMFILL with a {{Parameter|value}} of 0.
+
+
+{{PageExamples}}
+''Example:'' Filling array values quickly using FOR loops or a simple memory fill.
+{{CodeStart}}
+{{Cl|DIM}} a(100, 100) {{Cl|AS}} {{Cl|LONG}}
+{{Cl|DIM}} b(100, 100) {{Cl|AS}} {{Cl|LONG}}
+
+'filling array a with value 13
+{{Cl|FOR...NEXT|FOR}} i1 = 0 {{Cl|TO}} 100
+    {{Cl|FOR...NEXT|FOR}} i2 = 0 {{Cl|TO}} 100
+        a(i1, i2) = 13
+    {{Cl|NEXT}}
+{{Cl|NEXT}}
+
+'filling array b with value 13
+{{Cl|DIM}} mema {{Cl|AS}} {{Cl|_MEM}}
+mema = {{Cl|_MEM (function)|_MEM}}(b())
+{{Cl|_MEMFILL}} mema, mema.OFFSET, mema.SIZE, 13 {{Cl|AS}} {{Cl|LONG}}
+{{Cl|_MEMFREE}} mema 
+{{CodeEnd}}
+
+
+{{PageSeeAlso}}
+* [[_MEM]], [[_MEM (function)]]
+* [[_MEMIMAGE]], [[_MEMNEW]]
+* [[_MEMGET]], [[_MEMPUT]]
+
+
+{{PageNavigation}}
+

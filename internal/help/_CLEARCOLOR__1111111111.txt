@@ -1,0 +1,100 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:06:58}}
+{{DISPLAYTITLE:_CLEARCOLOR}}
+The [[_CLEARCOLOR]] statement sets a specific color to be treated as transparent when an image is later put (via [[_PUTIMAGE]]) onto another image. 
+
+{|align="right"
+|__TOC__
+|}
+
+{{PageSyntax}}
+:[[_CLEARCOLOR]] {{{Parameter|color&}}|_NONE}[, {{Parameter|Dest_Handle&}}]
+
+{{Parameters}}
+* In color modes using a palette, {{Parameter|color&}} is the palette index of the new transparent color value or _NONE designates no clear colors.
+* If {{Parameter|color&}} is not a valid palette index, an [[ERROR Codes|illegal function call]] error will occur.
+* In 32-bit color modes, {{Parameter|color&}} is the [[_LONG]] color value of the new transparent color.
+* If {{Parameter|Dest_Handle&}} is omitted, the destination is assumed to be the current write page. Zero can designate the current program screen.
+
+
+{{PageDescription}}
+* If {{Parameter|Dest_Handle&}} is an invalid handle, then an [[ERROR Codes|invalid handle]] error is returned. Check for bad handle values of -1 first.
+* In 32-bit color modes, it simply sets the Alpha to 0 for all pixels matching the specified color.
+* In the second syntax, transparency is disabled for color modes using a palette.
+* '''Note:''' [[_SETALPHA]] can affect any _CLEARCOLOR alpha setting within the color range set.
+* '''NOTE: 32 bit [[_NEWIMAGE]] screen page backgrounds are transparent black or [[_ALPHA]] 0. Use [[_DONTBLEND]] or [[CLS]] for opaque.'''
+
+
+{{PageExamples}}
+''Example 1:'' Using _CLEARCOLOR to "mask" the background color of an image.
+{{CodeStart}}
+{{Cl|SCREEN (statement)|SCREEN}} 13
+img& = {{Cl|_LOADIMAGE}}("qb64_trans.png")
+{{Cl|_PUTIMAGE}} , img&, 0               'place actual image with background
+K$ = INPUT$(1)
+{{Cl|CLS}} , {{Cl|_RGB}}(255, 0, 0)             'clear screen with red background
+{{Cl|_CLEARCOLOR}} {{Cl|_RGB}}(255, 255, 255), img&
+{{Cl|_PUTIMAGE}} , img&, 0               'place image without white background
+{{Cl|PRINT}} {{Cl|_CLEARCOLOR}}(img&)           'displays closest clear color attribute
+{{Cl|END}} 
+{{CodeEnd}}
+
+
+''Example 2:'' Using a _CLEARCOLOR transparency with images created on a [[_NEWIMAGE]] page. Does not require an image file.
+{{CodeStart}}{{Cl|SCREEN (statement)|SCREEN}} {{Cl|_NEWIMAGE}}(512, 384, 32) ' screen uses handle value
+{{Cl|CIRCLE}}(50, 50), 50, {{Cl|_RGB}}(128, 0, 0) ' create a red ball image
+{{Cl|PAINT}}(50, 50), {{Cl|_RGB}}(255, 0, 0), {{Cl|_RGB}}(128, 0, 0)
+redball = {{Cl|_NEWIMAGE}}(101, 101, 32) ' create a new image page
+{{Cl|_PUTIMAGE}} , 0, redball,(0, 0)-(101, 101) ' put screen page 0 image onto redball page
+{{Cl|_CLEARCOLOR}} {{Cl|_RGB}}(0, 0, 0), redball ' makes black become see-through
+{{Cl|CLS}}, {{Cl|_RGB}}(0, 0, 255) ' erase original ball and create a blue background
+{{Cl|DO...LOOP|DO}}
+{{Cl|_PUTIMAGE| _PUTIMAGE}} ({{Cl|RND}} * 512, {{Cl|RND}} * 384), redball
+{{Cl|SLEEP| SLEEP}} 1 ' one second delay
+{{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> "" 
+{{CodeEnd}}
+
+
+''Example 3:'' Fading an image with a _CLEARCOLOR background using a new page image to prevent [[_SETALPHA]] changes.
+{{CodeStart}}
+mainscreen = {{Cl|_NEWIMAGE}}(640, 480, 32) ' Main Screen (viewable)
+{{Cl|SCREEN}} mainscreen
+{{Cl|_SCREENMOVE}} {{Cl|_SCREENMOVE|_MIDDLE}}
+Image1& = {{Cl|_LOADIMAGE}}("qb64_trans.png") '<<<<<< any image with one background color to clear
+
+{{Cl|IF...THEN|IF}} Image1& < -1 {{Cl|THEN}} 'check loaded image handle value before using!
+  {{Cl|_SOURCE}} Image1&
+  clr~& = {{Cl|POINT}}(0, 0) 'get background color from image source
+  {{Cl|_CLEARCOLOR}} clr~&, Image1& 'clear background color of loaded image
+  NewImage1& = {{Cl|_NEWIMAGE}}({{Cl|_WIDTH (function)|_WIDTH}}(Image1&), {{Cl|_HEIGHT}}(Image1&), 32) 'new image page
+  {{Cl|_PUTIMAGE}} , Image1&, NewImage1& 'put image without background color on new page
+  {{Cl|_FREEIMAGE}} Image1& 'free loaded image from memory
+{{Cl|END IF}}
+{{Cl|_DEST}} mainscreen:
+
+a& = 0: d = 1
+DO
+  {{Cl|_LIMIT}} 10 'regulate speed of fades
+  {{Cl|CLS}}
+  a& = a& + d
+  {{Cl|IF...THEN|IF}} a& = 255 {{Cl|THEN}} d = -d 'reverse fade 
+  {{Cl|_SETALPHA}} a&, , NewImage1& 'sets alpha level of all colors to fade image page in/out
+  {{Cl|_PUTIMAGE}} (0, 342), NewImage1& 
+  {{Cl|LOCATE}} 1, 1: {{Cl|PRINT}} "Alpha: "; a&
+  {{Cl|_DISPLAY}}
+{{Cl|LOOP}} {{Cl|UNTIL}} a& = 0
+{{Cl|END}}
+{{CodeEnd}}
+:''Note:'' If the _CLEARCOLOR image background was not put onto a separate page, [[_SETALPHA]] would display it also.
+
+
+
+{{PageSeeAlso}}
+* [[_CLEARCOLOR (function)]]
+* [[_SETALPHA]] {{text|(sets transparency level)}}
+* [[_ALPHA]], [[_ALPHA32]] {{text|(read functions)}}
+* [[Images]], [[Creating Sprite Masks]]
+
+
+{{PageNavigation}}
+

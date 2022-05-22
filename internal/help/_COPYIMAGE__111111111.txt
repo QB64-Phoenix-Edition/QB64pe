@@ -1,0 +1,75 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:07:19}}
+{{DISPLAYTITLE:_COPYIMAGE}}
+The [[_COPYIMAGE]] function creates an identical designated image in memory with a different negative [[LONG]] handle value.
+
+
+{{PageSyntax}}
+: newhandle& = [[_COPYIMAGE]][({{Parameter|imageHandle&}}[, {{Parameter|mode%}})]]
+
+
+{{Parameters}}
+* The [[LONG]] ''newhandle&'' value returned will be different than the source handle value supplied.
+* If ''imageHandle&'' parameter is omitted or zero is designated, the current software [[_DEST|destination]] screen or image is copied.
+* If 1 is designated instead of an ''imageHandle&'', it designates the last OpenGL hardware surface to copy.
+* ''Mode'' 32 can be used to convert 256 color images to 32 bit colors.
+* ''Mode'' 33 images are hardware accelerated in '''version 1.000 and up''', and are created using [[_LOADIMAGE]] or [[_COPYIMAGE]].
+
+
+{{PageDescription}}
+* The function copies any image or screen handle to a new and unique negative [[LONG]] handle value.
+* Valid copy handles are less than -1. Invalid handles return -1 or 0 if it was never created.
+* Every attribute of the passed image or program screen is copied to a new handle value in memory.
+* '''32 bit screen surface backgrounds (black) have zero [[_ALPHA]] so that they are transparent when placed over other surfaces.'''
+: Use [[CLS]] or [[_DONTBLEND]] to make a new surface background [[_ALPHA]] 255 or opaque.
+*  '''Images are not deallocated when the [[SUB]] or [[FUNCTION]] they are created in ends. Free them with [[_FREEIMAGE]].'''
+* '''It is important to free discarded images with [[_FREEIMAGE]] to prevent PC memory allocation errors!'''
+* '''Do not try to free image handles currently being used as the active [[SCREEN]]. Change screen modes first.'''
+
+
+{{PageExamples}}
+''Example:'' Restoring a Legacy SCREEN using the _COPYIMAGE return value.
+{{CodeStart}}
+
+{{Cl|SCREEN}} 13
+{{Cl|CIRCLE}} (160, 100), 100, 40
+DO: {{Cl|SLEEP}}: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
+
+'backup screen before changing {{Cl|SCREEN}} mode
+oldmode& = {{Cl|_COPYIMAGE}}(0)  'the 0 value designates the current destination {{Cl|SCREEN}}
+
+s& = {{Cl|_NEWIMAGE}}(800, 600, 32)
+{{Cl|SCREEN}} s&
+{{Cl|LINE}} (100, 100)-(500, 500), {{Cl|_RGB}}(0, 255, 255), BF
+DO: {{Cl|SLEEP}}: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
+
+{{Cl|SCREEN}} oldmode&        'restore original screen
+{{Cl|IF...THEN|IF}} s& < -1 THEN {{Cl|_FREEIMAGE}} s&
+{{Cl|END}} 
+{{CodeEnd}}
+: ''Note:'' Only free valid handle values with [[_FREEIMAGE]] AFTER a new [[SCREEN]] mode is being used by the program.
+
+
+''Example 2:'' Program that copies desktop to a hardware image to form a 3D triangle ('''version 1.000 and up'''):
+{{CodeStart}}
+{{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(640, 480, 32)
+my_hardware_handle = {{Cl|_COPYIMAGE}}({{Cl|_SCREENIMAGE}}, 33) 'take a screenshot and use it as our texture
+{{Cl|_MAPTRIANGLE}} (0, 0)-(500, 0)-(250, 500), my_hardware_handle TO_ 
+(-1, 0, -1)-(1, 0, -1)-(0, 5, -10), , _SMOOTH
+{{Cl|_DISPLAY}}
+{{Cl|DO...LOOP|DO}}: {{Cl|_LIMIT}} 30: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> "" 
+{{CodeEnd}}{{small|Code courtesy of Galleon}}
+
+
+{{PageSeeAlso}}
+* [[_LOADIMAGE]], [[_NEWIMAGE]]
+* [[_PUTIMAGE]], [[_MAPTRIANGLE]]
+* [[_SOURCE]], [[_DEST]]
+* [[_FREEIMAGE]]
+* [[_FILELIST$ (function)]] {{text|(Demo of _COPYIMAGE)}}
+* [[_DISPLAYORDER]]
+* [[Hardware images]]
+
+
+{{PageNavigation}}
+

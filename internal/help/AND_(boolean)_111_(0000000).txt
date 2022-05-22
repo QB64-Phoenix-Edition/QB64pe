@@ -1,0 +1,66 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:11:46}}
+The [[AND (boolean)|AND]] conditonal operator is used to include another evaluation in an [[IF...THEN]] or [[Boolean]] statement.
+
+
+
+{{PageSyntax}}
+: IF {{Parameter|condition}} [[AND (boolean)|AND]] {{Parameter|condition2}}
+
+
+{{PageDescription}}
+* If {{Parameter|condition}} [[AND (boolean)|AND]] {{Parameter|condition2}} are true then the evaluation returns true (-1).
+* {{Parameter|condition}} and {{Parameter|condition2}} can also contain their own AND evaluations.
+* Both the IF evaluation and the AND evaluation must be true for the statement to be true.
+* Statements can use parenthesis to clarify an evaluation.
+* [[AND (boolean)]] and [[OR (boolean)]] cannot be used to combine command line operations.
+* Not to be confused with the [[AND]] and [[OR]] numerical operations.
+
+
+{{Template:RelationalTable}}
+
+
+{{PageExamples}}
+''Example:'' Using AND in an IF statement.
+{{CodeStart}}
+
+a% = 100
+b% = 50
+
+{{Cl|IF...THEN|IF}} a% > b% {{Cl|AND (boolean)|AND}} a% < 200 {{Cl|THEN}} {{Cl|PRINT}} "True"
+
+{{CodeEnd}}
+{{OutputStart}}
+True
+{{OutputEnd}}
+''Explanation:'' Both condition evaluations must be true for the code to be executed.
+
+
+''Example:'' Using a AND a more complex way.
+{{CodeStart}}
+a% = 100
+b% = 50
+c% = 25
+d% = 50
+e% = 100
+
+{{Cl|IF...THEN|IF}} (a% > b% {{Cl|AND (boolean)|AND}} b% > c%) {{Cl|AND (boolean)|AND}} (c% < d% {{Cl|AND (boolean)|AND}} d% < e%) {{Cl|THEN}}
+{{Cl|PRINT}} "True"
+{{Cl|ELSE}}
+{{Cl|PRINT}} "False"
+{{Cl|END IF}} 
+{{CodeEnd}}
+{{OutputStart}}
+True
+{{OutputEnd}}
+''Explanation:'' The evaluations in the paranteses are evaluated first then the evaluation ''of'' the paranteses takes place, since all evaluations return True the IF...THEN evaluation returns True. If any of the evaluations returned False then the IF...THEN evaluation would also return False.
+
+
+{{PageSeeAlso}}
+* [[AND]], [[OR]] {{text|(logical operators)}}
+* [[OR (boolean)]], [[XOR (boolean)]]
+* [[IF...THEN]]
+
+
+{{PageNavigation}}
+

@@ -1,0 +1,94 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:09:16}}
+{{DISPLAYTITLE:_MEMIMAGE}}
+The [[_MEMIMAGE]] function returns a [[_MEM]] value referring to an image's memory using a designated image handle.
+
+
+{{PageSyntax}}
+: {{Parameter|imageBlock}} = [[_MEMIMAGE]][({{Parameter|imageHandle&}})]
+
+
+{{Parameters}}
+* The {{Parameter|imageBlock}} [[_MEM]] type variable holds the read-only elements .OFFSET, .SIZE, .TYPE and .ELEMENTSIZE.
+* If the optional {{Parameter|imageHandle&}} isn't passed, it is assumed to be the current [[_DEST]]ination program screen image. 
+
+
+{{PageDescription}}
+* Use the function to place images into memory access blocks for faster data access.
+* All values created by this function must be freed using [[_MEMFREE]] with a valid [[_MEM]] [[type]] variable.
+* Image handle values and the memory used must still be freed using [[_FREEIMAGE]] when no longer required.
+
+
+{{PageExamples}}
+''Example 1:'' Darkening an image using memory with [[$CHECKING]]:OFF for greater speed. Use any 24 bit image file name on the second code line.
+{{CodeStart}}
+{{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(1024, 768, 32)
+i& = {{Cl|_LOADIMAGE}}("turtle.jpg") '<<<<<<<<<<<<< use any 24 bit image file
+
+{{Cl|FOR...NEXT|FOR}} n! = 1 {{Cl|TO}} 0.01 {{Cl|STEP}} -0.01
+    i2& = {{Cl|_COPYIMAGE}}(i&)
+    DarkenImage i2&, n!
+    {{Cl|_PUTIMAGE}} (0, 0), i2&
+    {{Cl|_FREEIMAGE}} i2&
+    {{Cl|_DISPLAY}}
+{{Cl|NEXT}}
+
+{{Cl|SUB}} DarkenImage (Image {{Cl|AS}} {{Cl|LONG}}, Value_From_0_To_1 {{Cl|AS}} {{Cl|SINGLE}})
+{{Cl|IF...THEN|IF}} Value_From_0_To_1 <= 0 {{Cl|OR (boolean)|OR}} Value_From_0_To_1 >= 1 {{Cl|OR (boolean)|OR}} {{Cl|_PIXELSIZE}}(Image) <> 4 {{Cl|THEN}} {{Cl|EXIT SUB}}
+{{Cl|DIM}} Buffer {{Cl|AS}} {{Cl|_MEM}}: Buffer = {{Cl|_MEMIMAGE}}(Image) 'Get a memory reference to our image
+{{Cl|DIM}} Frac_Value {{Cl|AS}} {{Cl|LONG}}: Frac_Value = Value_From_0_To_1 * 65536 'Used to avoid slow floating point calculations
+{{Cl|DIM}} O {{Cl|AS}} {{Cl|_OFFSET}}, O_Last {{Cl|AS}} {{Cl|_OFFSET}}
+O = Buffer.OFFSET 'We start at this offset
+O_Last = Buffer.OFFSET + {{Cl|_WIDTH (function)|_WIDTH}}(Image) * {{Cl|_HEIGHT}}(Image) * 4 'We stop when we get to this offset
+'use on error free code ONLY!
+{{Cl|$CHECKING}}:OFF 
+DO
+    {{Cl|_MEMPUT}} Buffer, O, {{Cl|_MEMGET (function)|_MEMGET}}(Buffer, O, {{Cl|_UNSIGNED}} {{Cl|_BYTE}}) * Frac_Value \ 65536 {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|_BYTE}}
+    {{Cl|_MEMPUT}} Buffer, O + 1, {{Cl|_MEMGET (function)|_MEMGET}}(Buffer, O + 1, {{Cl|_UNSIGNED}} {{Cl|_BYTE}}) * Frac_Value \ 65536 {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|_BYTE}}
+    {{Cl|_MEMPUT}} Buffer, O + 2, {{Cl|_MEMGET (function)|_MEMGET}}(Buffer, O + 2, {{Cl|_UNSIGNED}} {{Cl|_BYTE}}) * Frac_Value \ 65536 {{Cl|AS}} {{Cl|_UNSIGNED}} {{Cl|_BYTE}}
+    O = O + 4
+{{Cl|LOOP}} {{Cl|UNTIL}} O = O_Last
+'turn checking back on when done!
+{{Cl|$CHECKING}}:ON 
+{{Cl|_MEMFREE}} Buffer
+{{Cl|END SUB}} 
+{{CodeEnd}}{{small|Code by Galleon}}
+: ''Explanation:'' The second value passed to DarkenImage is a value from 0.0 to 1.0 where 0.0 is full darkness and 1 is none.
+
+
+''Example 2:'' Reading information stored in an image with [[_MEMIMAGE]] to print [[ASC]] text characters to the screen.
+{{CodeStart}}
+{{Cl|SCREEN}} 13
+{{Cl|_FULLSCREEN}}
+{{Cl|PSET}} (0, 0), {{Cl|ASC}}("H")
+{{Cl|PSET}} (1, 0), {{Cl|ASC}}("E")
+{{Cl|PSET}} (2, 0), {{Cl|ASC}}("L")
+{{Cl|PSET}} (3, 0), {{Cl|ASC}}("L")
+{{Cl|PSET}} (4, 0), {{Cl|ASC}}("O")
+{{Cl|PSET}} (5, 0), 32
+{{Cl|PSET}} (6, 0), {{Cl|ASC}}("W")
+{{Cl|PSET}} (7, 0), {{Cl|ASC}}("O")
+{{Cl|PSET}} (8, 0), {{Cl|ASC}}("R")
+{{Cl|PSET}} (9, 0), {{Cl|ASC}}("L")
+{{Cl|PSET}} (10, 0), {{Cl|ASC}}("D")
+{{Cl|DIM}} m {{Cl|AS}} {{Cl|_MEM}}
+m = {{Cl|_MEMIMAGE}}
+x1$ = {{Cl|_MEMGET (function)|_MEMGET}}(m, m.OFFSET, {{Cl|STRING}} * 11) 'convert numbers to ASCII text characters
+{{Cl|_MEMFREE}} m 'free memory when done
+{{Cl|LOCATE}} 10, 1: {{Cl|PRINT}} {{Cl|LEN}}(x1$) 'prints 11 as byte length
+{{Cl|PRINT}} x1$ 'prints HELLO WORLD
+{{Cl|END}} 
+{{CodeEnd}}
+: ''Notes:'' The colors in the upper left corner are the text data used. An image could hold a hidden text message this way.
+
+
+{{PageSeeAlso}}
+* [[_MEM]]
+* [[_MEMNEW]]
+* [[_MEMGET]], [[_MEMPUT]]
+* [[_MEMFREE]]
+* [[$CHECKING]]
+
+
+{{PageNavigation}}
+

@@ -1,0 +1,55 @@
+{{QBDLDATE:05-20-2022}}
+{{QBDLTIME:23:10:03}}
+{{DISPLAYTITLE:_PRINTWIDTH}}{{DISPLAYTITLE:}}
+The [[_PRINTWIDTH]] function returns the width in pixels of the text [[STRING|string]] specified.
+
+
+{{PageSyntax}}
+: {{Parameter|pixelWidth%}} = [[_PRINTWIDTH]]({{Parameter|textToPrint$}}[, {{Parameter|destinationHandle&}}])
+
+
+{{PageDescription}}
+* {{Parameter|textToPrint$}} is any literal or variable [[STRING]] value.
+* If the {{Parameter|destinationHandle&}} is omitted, the current destination image or screen page is used.
+* Useful to find the width of the font print [[STRING|string]] before actually printing it.
+* Can be used with variable-width fonts or built-in fonts, unlike [[_FONTWIDTH]] which requires a MONOSPACE font handle.
+* In SCREEN 0, _PRINTWIDTH returns the character length of a text string, exactly as [[LEN]]({{Parameter|textToPrint$}}) ('''version 1.000 and up''').
+
+
+{{PageExamples}}
+''Example:'' SUB returns font or screen mode's text block size using _PRINTWIDTH and [[_FONTHEIGHT]] without a handle parameter.
+{{CodeStart}}
+{{Cl|DO}}
+  {{Cl|INPUT}} "Enter Screen mode 1, 2 or 7 to 13: ", scr$
+  mode% = {{Cl|VAL}}(scr$)
+{{Cl|LOOP}} {{Cl|UNTIL}} mode% > 0 
+{{Cl|SCREEN (statement)|SCREEN}} mode%
+{{Cl|INPUT}} "Enter first name of TTF font to use or hit enter for text size: ", TTFont$
+{{Cl|IF}} {{Cl|LEN}}(TTFont$) {{Cl|THEN}} {{Cl|INPUT (file mode)|INPUT}} "Enter font height: ", hi$
+height& = {{Cl|VAL}}(hi$)
+{{Cl|IF}} height& > 0 {{Cl|THEN}} {{Cl|_FONT}} {{Cl|_LOADFONT}}("C:\Windows\Fonts\" + TTFont$ + ".ttf", height&, style$)
+
+TextSize wide&, high&       'get the font or current screen mode's text block pixel size
+
+{{Cl|_PRINTSTRING}} (20, 100), {{Cl|CHR$}}(1) + {{Cl|STR$}}(wide&) + " X" + {{Cl|STR$}}(high&) + " " + {{Cl|CHR$}}(2)
+
+{{Cl|END}}
+
+{{Cl|SUB}} TextSize (TextWidth&, TextHeight&)
+TextWidth& = {{Cl|_PRINTWIDTH}}("W")     'measure width of one font or text character
+TextHeight& = {{Cl|_FONTHEIGHT}}         'can measure normal text block heights also   
+{{Cl|END SUB}} 
+{{CodeEnd}}
+{{small|Code by Ted Weissgerber}}
+<center>'''Note:''' The SUB procedure does not need the font handle for font sizes after [[_FONT]] enables one.</center>
+
+
+{{PageSeeAlso}}
+* [[_FONTWIDTH]], [[_FONTHEIGHT]]
+* [[_NEWIMAGE]], [[_LOADFONT]]
+* [[_PRINTSTRING]], [[_FONT]]
+* [[Text Using Graphics]]
+
+
+{{PageNavigation}}
+
