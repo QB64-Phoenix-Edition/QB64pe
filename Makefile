@@ -123,7 +123,7 @@ endif
 
 QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).o
 
-$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp/*.txt)
+$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp$(TEMP_ID)/*.txt)
 
 EXE_OBJS += $(QB_QBX_OBJ)
 
@@ -342,9 +342,9 @@ clean:
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
 
 $(EXE): $(EXE_OBJS) $(EXE_LIBS)
-	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o $@ $(EXE_LIBS) $(CXXLIBS)
+	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o "$@" $(EXE_LIBS) $(CXXLIBS)
 ifneq ($(filter-out osx,$(OS)),)
-	$(OBJCOPY) --only-keep-debug $@ $(PATH_INTERNAL_TEMP)/$@.sym
-	$(OBJCOPY) --strip-unneeded $@
+	$(OBJCOPY) --only-keep-debug "$@" "$(PATH_INTERNAL_TEMP)/$(notdir $@).sym"
+	$(OBJCOPY) --strip-unneeded "$@"
 endif
 
