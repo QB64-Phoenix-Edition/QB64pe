@@ -123,7 +123,7 @@ endif
 
 QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).o
 
-$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp/*.txt)
+$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp$(TEMP_ID)/*.txt)
 
 EXE_OBJS += $(QB_QBX_OBJ)
 
