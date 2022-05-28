@@ -105,7 +105,7 @@ all: $(EXE)
 
 CLEAN_LIST :=
 
-CXXFLAGS := -w
+CXXFLAGS += -w
 
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
