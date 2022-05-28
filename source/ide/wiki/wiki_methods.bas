@@ -32,20 +32,6 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
             a$ = SPACE$(LOF(fh))
             GET #fh, , a$
             CLOSE #fh
-            chr13 = INSTR(a$, CHR$(13))
-            removedchr13 = 0
-            DO WHILE chr13 > 0
-                removedchr13 = -1
-                a$ = LEFT$(a$, chr13 - 1) + MID$(a$, chr13 + 1)
-                chr13 = INSTR(a$, CHR$(13))
-            LOOP
-            IF removedchr13 THEN
-                fh = FREEFILE
-                OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR OUTPUT AS #fh: CLOSE #fh
-                OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR BINARY AS #fh
-                PUT #fh, 1, a$
-                CLOSE #fh
-            END IF
             Wiki$ = a$
             EXIT FUNCTION
         END IF
@@ -112,9 +98,10 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "Start}}" + CHR$(10) + "'' ''", "Start}}")
         a$ = StrReplace$(a$, "'' ''" + CHR$(10) + "{{", CHR$(10) + "{{")
         a$ = StrReplace$(a$, "'' '' " + CHR$(10) + "{{", CHR$(10) + "{{")
-        a$ = StrReplace$(a$, "'' ''" + MKI$(&H0A0A) + "{{", CHR$(10) + "{{")
-        '--- wiki redirects
+        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + CHR$(10) + "{{", CHR$(10) + "{{")
+        '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
+        a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
