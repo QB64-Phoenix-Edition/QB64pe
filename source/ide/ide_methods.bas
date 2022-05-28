@@ -387,8 +387,6 @@ FUNCTION ide2 (ignore)
         END IF
         menu$(m, i) = "Set Base #TCP/IP Port Number...": i = i + 1
         menuDesc$(m, i - 1) = "Sets the initial port number for TCP/IP communication with the debuggee"
-        menu$(m, i) = "#Advanced (C++)...": i = i + 1
-        menuDesc$(m, i - 1) = "Enables embedding C++ debug information into compiled program"
         menu$(m, i) = "Purge C++ #Libraries": i = i + 1
         menuDesc$(m, i - 1) = "Purges all pre-compiled content"
         menusize(m) = i - 1
@@ -4950,14 +4948,6 @@ FUNCTION ide2 (ignore)
                 keywordHighlight = oldkeywordHighlight
                 retval$ = idergbmixer$(-1) 'retval is ignored
                 IF LEN(retval$) THEN insertAtCursor retval$
-                PCOPY 3, 0: SCREEN , , 3, 0
-                GOTO ideloop
-            END IF
-
-            IF menu$(m, s) = "#Advanced (C++)..." THEN
-                PCOPY 2, 0
-                retval = ideadvancedbox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -15046,6 +15036,65 @@ FUNCTION idelayoutbox
     LOOP
 END FUNCTION
 
+FUNCTION idebackupbox
+    a2$ = str2$(idebackupsize)
+    v$ = ideinputbox$("Backup/Undo", "#Undo buffer limit (10-2000MB)", a2$, "0123456789", 50, 4, 0)
+    IF v$ = "" THEN EXIT FUNCTION
+
+    'save changes
+    v& = VAL(v$)
+    IF v& < 10 THEN v& = 10
+    IF v& > 2000 THEN v& = 2000
+
+    IF v& < idebackupsize THEN
+        OPEN tmpdir$ + "undo2.bin" FOR OUTPUT AS #151: CLOSE #151
+        ideundobase = 0
+        ideundopos = 0
+    END IF
+
+    idebackupsize = v&
+    WriteConfigSetting generalSettingsSection$, "BackupSize", STR$(v&) + " 'in MB"
+    idebackupbox = 1
+END FUNCTION
+
+SUB idegotobox
+    IF idegotobox_LastLineNum > 0 THEN a2$ = str2$(idegotobox_LastLineNum) ELSE a2$ = ""
+    v$ = ideinputbox$("Go To Line", "#Line", a2$, "0123456789", 30, 8, 0)
+    IF v$ = "" THEN EXIT SUB
+
+    v& = VAL(v$)
+    IF v& < 1 THEN v& = 1
+    IF v& > iden THEN v& = iden
+    idegotobox_LastLineNum = v&
+    AddQuickNavHistory
+    idecy = v&
+    idecentercurrentline
+    ideselect = 0
+END SUB
+
+SUB ideSetTCPPortBox
+    a2$ = str2$(idebaseTcpPort)
+    v$ = ideinputbox$("Base TCP/IP Port Number", "#Port number for $DEBUG mode", a2$, "0123456789", 45, 5, 0)
+    IF v$ = "" THEN EXIT SUB
+
+    idebaseTcpPort = VAL(v$)
+    IF idebaseTcpPort = 0 THEN idebaseTcpPort = 9000
+    WriteConfigSetting debugSettingsSection$, "BaseTCPPort", str2$(idebaseTcpPort)
+END SUB
+
+FUNCTION idegetlinenumberbox(title$, initialValue&)
+    a2$ = str2$(initialValue&)
+    IF a2$ = "0" THEN a2$ = ""
+    v$ = ideinputbox$(title$, "#Line", a2$, "0123456789", 30, 8, 0)
+    IF v$ = "" THEN EXIT FUNCTION
+
+    v& = VAL(v$)
+    IF v& < 1 THEN v& = 1
+    IF v& > iden THEN v& = iden
+
+    idegetlinenumberbox = v&
+END FUNCTION
+
 FUNCTION ideCompilerSettingsBox
 
     '-------- generic dialog box header --------
@@ -15058,6 +15107,7 @@ FUNCTION ideCompilerSettingsBox
     DIM sep AS STRING * 1
     DIM optimizeCheckBox AS LONG
     DIM stripDebugCheckBox AS LONG
+    DIM addDebugSymbolsCheckBox AS LONG
     DIM maxParallelTextBox AS LONG
     DIM extraCppFlagsTextBox AS LONG
     DIM extraLinkerFlagsTextBox AS LONG
@@ -15111,6 +15161,7 @@ FUNCTION ideCompilerSettingsBox
     o(i).txt = idenewtxt(ExtraLinkerFlags)
     o(i).v1 = LEN(a2$)
 
+    a2$ = str2$(idewy + idesubwindow)
     i = i + 1
     maxParallelTextBox = i
     o(i).typ = 1
@@ -15208,16 +15259,22 @@ FUNCTION ideCompilerSettingsBox
         IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT FUNCTION 'cancel
         IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
             'save changes
-            v% = o(optimizeCheckBox).sel: IF v% <> 0 THEN v% = 1
+            v% = o(optimizeCheckBox).sel: IF v% <> 0 THEN v% = -1
             IF OptimizeCppProgram <> v% THEN
                 OptimizeCppProgram = v%
                 WriteConfigSetting compilerSettingsSection$, "OptimizeCppProgram", BoolToTFString$(OptimizeCppProgram)
             END IF
 
-            v% = o(stripDebugCheckBox).sel: IF v% <> 0 THEN v% = 1
+            v% = o(stripDebugCheckBox).sel: IF v% <> 0 THEN v% = -1
             IF StripDebugSymbols <> v% THEN
                 StripDebugSymbols = v%
                 WriteConfigSetting compilerSettingsSection$, "StripDebugSymbols", BoolToTFString$(StripDebugSymbols)
+            END IF
+
+            v% = o(addDebugSymbolsCheckBox).sel: IF v% <> 0 THEN v% = -1
+            IF Include_GDB_Debugging_Info <> v% THEN
+                Include_GDB_Debugging_Info = v%
+                WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(Include_GDB_Debugging_Info)
             END IF
 
             v% = VAL(idetxt(o(maxParallelTextBox).txt))
@@ -15232,226 +15289,9 @@ FUNCTION ideCompilerSettingsBox
             ExtraLinkerFlags$ = idetxt(o(extraLinkerFlagsTextBox).txt)
             WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
 
-            EXIT FUNCTION
-        END IF
-
-        'end of custom controls
-
-        mousedown = 0
-        mouseup = 0
-    LOOP
-END FUNCTION
-
-
-
-
-
-FUNCTION idebackupbox
-    a2$ = str2$(idebackupsize)
-    v$ = ideinputbox$("Backup/Undo", "#Undo buffer limit (10-2000MB)", a2$, "0123456789", 50, 4, 0)
-    IF v$ = "" THEN EXIT FUNCTION
-
-    'save changes
-    v& = VAL(v$)
-    IF v& < 10 THEN v& = 10
-    IF v& > 2000 THEN v& = 2000
-
-    IF v& < idebackupsize THEN
-        OPEN tmpdir$ + "undo2.bin" FOR OUTPUT AS #151: CLOSE #151
-        ideundobase = 0
-        ideundopos = 0
-    END IF
-
-    idebackupsize = v&
-    WriteConfigSetting generalSettingsSection$, "BackupSize", STR$(v&) + " 'in MB"
-    idebackupbox = 1
-END FUNCTION
-
-SUB idegotobox
-    IF idegotobox_LastLineNum > 0 THEN a2$ = str2$(idegotobox_LastLineNum) ELSE a2$ = ""
-    v$ = ideinputbox$("Go To Line", "#Line", a2$, "0123456789", 30, 8, 0)
-    IF v$ = "" THEN EXIT SUB
-
-    v& = VAL(v$)
-    IF v& < 1 THEN v& = 1
-    IF v& > iden THEN v& = iden
-    idegotobox_LastLineNum = v&
-    AddQuickNavHistory
-    idecy = v&
-    idecentercurrentline
-    ideselect = 0
-END SUB
-
-SUB ideSetTCPPortBox
-    a2$ = str2$(idebaseTcpPort)
-    v$ = ideinputbox$("Base TCP/IP Port Number", "#Port number for $DEBUG mode", a2$, "0123456789", 45, 5, 0)
-    IF v$ = "" THEN EXIT SUB
-
-    idebaseTcpPort = VAL(v$)
-    IF idebaseTcpPort = 0 THEN idebaseTcpPort = 9000
-    WriteConfigSetting debugSettingsSection$, "BaseTCPPort", str2$(idebaseTcpPort)
-END SUB
-
-FUNCTION idegetlinenumberbox(title$, initialValue&)
-    a2$ = str2$(initialValue&)
-    IF a2$ = "0" THEN a2$ = ""
-    v$ = ideinputbox$(title$, "#Line", a2$, "0123456789", 30, 8, 0)
-    IF v$ = "" THEN EXIT FUNCTION
-
-    v& = VAL(v$)
-    IF v& < 1 THEN v& = 1
-    IF v& > iden THEN v& = iden
-
-    idegetlinenumberbox = v&
-END FUNCTION
-
-
-
-FUNCTION ideadvancedbox
-
-    '-------- generic dialog box header --------
-    PCOPY 0, 2
-    PCOPY 0, 1
-    SCREEN , , 1, 0
-    focus = 1
-    DIM p AS idedbptype
-    DIM o(1 TO 100) AS idedbotype
-    DIM sep AS STRING * 1
-    sep = CHR$(0)
-    '-------- end of generic dialog box header --------
-
-    '-------- init --------
-    DIM Direct_Text$(100)
-
-    i = 0
-
-    i = i + 1
-    o(i).typ = 3 '
-    'o(i).y = y
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-
-    y = 2 '2nd blank line
-
-    i = i + 1
-    o(i).typ = 4 'check box --- focus=3
-    o(i).y = y
-    o(i).nam = idenewtxt("Embed C++ debug information into executable")
-    o(i).sel = idedebuginfo
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " This setting is not required for $DEBUG mode"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Use it to investigate crashes/freezes at C++ (not QB64) code level"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Use internal/temp/debug batch file to debug your executable"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Increases executable size"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Makes public the names of variables in your program's code"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " QB64 libraries will be purged then rebuilt"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " This setting also affects command line compilation"
-
-    y = y + 2
-
-    o(1).y = y 'close button
-
-    '-------- end of init --------
-
-    idepar p, 75, y, "Advanced Options"
-
-    '-------- generic init --------
-    FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
-    '-------- end of generic init --------
-
-    DO 'main loop
-
-
-        '-------- generic display dialog box & objects --------
-        idedrawpar p
-        f = 1: cx = 0: cy = 0
-        FOR i = 1 TO 100
-            IF o(i).typ THEN
-
-                'prepare object
-                o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
-                idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
-            END IF
-        NEXT i
-        lastfocus = f - 1
-        '-------- end of generic display dialog box & objects --------
-
-        '-------- custom display changes --------
-        FOR y = 1 TO 100
-            IF LEN(Direct_Text$(y)) THEN
-                COLOR 0, 7: _PRINTSTRING (p.x + 1, p.y + y), Direct_Text$(y)
-            END IF
-        NEXT
-        '-------- end of custom display changes --------
-
-        'update visual page and cursor position
-        PCOPY 1, 0
-        IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
-
-        '-------- read input --------
-        change = 0
-        DO
-            GetInput
-            IF mWHEEL THEN change = 1
-            IF KB THEN change = 1
-            IF mCLICK THEN mousedown = 1: change = 1
-            IF mRELEASE THEN mouseup = 1: change = 1
-            IF mB THEN change = 1
-            alt = KALT: IF alt <> oldalt THEN change = 1
-            oldalt = alt
-            _LIMIT 100
-        LOOP UNTIL change
-        IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
-        'convert "alt+letter" scancode to letter's ASCII character
-        altletter$ = ""
-        IF alt AND NOT KCTRL THEN
-            IF LEN(K$) = 1 THEN
-                k = ASC(UCASE$(K$))
-                IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
-            END IF
-        END IF
-        SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
-        '-------- end of read input --------
-
-        '-------- generic input response --------
-        info = 0
-        IF K$ = "" THEN K$ = CHR$(255)
-        IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
-        IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
-        IF focus < 1 THEN focus = lastfocus
-        IF focus > lastfocus THEN focus = 1
-        f = 1
-        FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
-                focusoffset = focus - f
-                ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
-            END IF
-        NEXT
-        '-------- end of generic input response --------
-
-        'specific post controls
-
-        IF K$ = CHR$(27) OR (focus = 2 AND info <> 0) THEN EXIT FUNCTION
-
-        IF K$ = CHR$(13) OR (focus = 1 AND info <> 0) THEN 'close
-            'save changes
-
-            'update idedebuginfo?
-            v% = o(2).sel: IF v% <> 0 THEN v% = 1
-            IF v% <> idedebuginfo THEN
-                idedebuginfo = v%
-                IF idedebuginfo THEN
-                    WriteConfigSetting generalSettingsSection$, "DebugInfo", "True" + DebugInfoIniWarning$
-                ELSE
-                    WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
-                END IF
-                Include_GDB_Debugging_Info = idedebuginfo
-                PurgeTemporaryBuildFiles (os$), (MacOSX)
-                idechangemade = 1 'force recompilation
-                startPausedPending = 0
-            END IF
+            ' Clean compiled files, since they may change due to the different settings
+            PurgeTemporaryBuildFiles (os$), (MacOSX)
+            idechangemade = 1 'force recompilation
 
             EXIT FUNCTION
         END IF
@@ -15462,14 +15302,8 @@ FUNCTION ideadvancedbox
         mouseup = 0
     LOOP
 
-    ideadvancedbox = 0
+    ideCompilerSettingsBox = 0
 END FUNCTION
-
-
-
-
-
-
 
 FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
 
