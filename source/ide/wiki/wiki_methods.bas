@@ -772,8 +772,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$ = ";" AND nl = 1 THEN 'definition (new line only)
                 IF c$(2) = "; " THEN i = i + 1
                 Help_Bold = 1: col = Help_Col: Help_DList = 1
-                IF c$(3) = ";* " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
-                IF c$(2) = ";*" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
+                IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
+                IF c$(2) = ";*" OR c$(2) = ";#" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
                 GOTO charDone
             END IF
             IF c$ = ":" AND Help_DList > 0 THEN 'description (same or new line)
@@ -800,16 +800,16 @@ SUB WikiParse (a$) 'Wiki page interpret
         'Wiki lists (*, **) are not handled in blocks (soft- and hard lock), as it would
         'disrupt the block, also in code blocks it could be part of the code example itself
         IF Help_LockParse = 0 THEN
-            'Unordered lists
+            'Unordered/Ordered lists
             IF nl = 1 THEN
-                IF c$(2) = "**" THEN
-                    IF c$(3) = "** " THEN i = i + 2: ELSE i = i + 1
+                IF c$(2) = "**" OR c$(2) = "##" THEN
+                    IF c$(3) = "** " OR c$(3) = "## " THEN i = i + 2: ELSE i = i + 1
                     Help_AddTxt "   " + CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 5
                     GOTO charDone
                 END IF
-                IF c$ = "*" THEN
-                    IF c$(2) = "* " THEN i = i + 1
+                IF c$ = "*" OR c$ = "#" THEN
+                    IF c$(2) = "* " OR c$(2) = "# " THEN i = i + 1
                     Help_AddTxt CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 2
                     GOTO charDone
