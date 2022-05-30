@@ -39,10 +39,20 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
 
     'Check for curl
     IF _SHELLHIDE("curl --version") <> 0 THEN
-        PCOPY 2, 0
-        result = idemessagebox("QB64", "Cannot find 'curl'.", "#Abort")
-        PCOPY 3, 0: SCREEN , , 3, 0
-        EXIT FUNCTION
+        a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
+        IF PageName$ = "Initialize" THEN
+            a$ = a$ + "To be able to initialize the help system, "
+        ELSEIF PageName$ = "Update All" THEN
+            a$ = a$ + "To be able to update the help pages from the online Wiki, "
+        ELSE
+            a$ = a$ + "The requested help page is not yet cached locally. To download the help page from the online Wiki, "
+        END IF
+        a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
+        a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
+        a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
+        a$ = a$ + "** Unpack and drop the ''curl'' executable into the QB64 folder." + CHR$(10)
+        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the QB64 folder too." + CHR$(10)
+        Wiki$ = a$: EXIT FUNCTION
     END IF
 
     'Download message (Status Bar)
