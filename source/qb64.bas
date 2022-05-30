@@ -13104,6 +13104,14 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT "  -z                      Generate C code without compiling to executable"
                 PRINT
                 SYSTEM
+            CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden build option)
+                Help_Recaching = 2: Help_IgnoreCache = 1
+                IF ideupdatehelpbox THEN
+                    _DEST _CONSOLE
+                    PRINT "Update failed: curl not found"
+                    SYSTEM 1
+                END IF
+                SYSTEM
             CASE "-c" 'Compile instead of edit
                 NoIDEMode = 1
                 cmdlineswitch = -1

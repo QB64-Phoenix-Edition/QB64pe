@@ -5415,7 +5415,9 @@ FUNCTION ide2 (ignore)
                 q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
                 IF q$ = "Y" THEN
+                    Help_Recaching = 1: Help_IgnoreCache = 1
                     uerr = ideupdatehelpbox
+                    Help_Recaching = 0: Help_IgnoreCache = 0
                     PCOPY 3, 0: SCREEN , , 3, 0
                     IF uerr THEN
                         lnk$ = "Update All"
@@ -18634,6 +18636,13 @@ END SUB
 
 FUNCTION ideupdatehelpbox
     ideupdatehelpbox = 0 'all good, getting 1 on error
+    IF Help_Recaching = 2 THEN
+        DIM FullMessage$(1 TO 2)
+        UpdateStep = 1
+        Help_ww = 78
+        GOTO startMainLoop
+    END IF
+
     '-------- generic dialog box header --------
     PCOPY 0, 2
     PCOPY 0, 1
@@ -18675,8 +18684,9 @@ FUNCTION ideupdatehelpbox
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
+    startMainLoop:
     DO 'main loop
-
+        IF Help_Recaching = 2 GOTO updateRoutine
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -18781,6 +18791,7 @@ FUNCTION ideupdatehelpbox
         END IF
         'end of custom controls
 
+        updateRoutine:
         '-------- update routine -------------------------------------
         SELECT CASE UpdateStep
             CASE 1
@@ -18798,9 +18809,7 @@ FUNCTION ideupdatehelpbox
             CASE 3
                 'Download and PARSE alphabetical index to build required F1 help links
                 FullMessage$(1) = "Regenerating keyword list..."
-                Help_Recaching = 1: Help_IgnoreCache = 1
                 a$ = Wiki$("Keyword Reference - Alphabetical")
-                Help_Recaching = 0: Help_IgnoreCache = 0
                 IF INSTR(a$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO
                 WikiParse a$
                 UpdateStep = UpdateStep + 1
@@ -18858,15 +18867,14 @@ FUNCTION ideupdatehelpbox
                         f2$ = LEFT$(f2$, LEN(f2$) - 4)
                         n = n + 1
                         FullMessage$(2) = "Page title: " + f2$
-                        Help_IgnoreCache = 1: Help_Recaching = 1
                         ignore$ = Wiki$(f2$)
-                        Help_Recaching = 0: Help_IgnoreCache = 0
                     END IF
                 ELSE
                     UpdateStep = UpdateStep + 1
                 END IF
             CASE 6
                 stoprecache:
+                IF Help_Recaching = 2 THEN EXIT DO
                 FullMessage$(1) = "All pages updated."
                 FullMessage$(2) = ""
                 idetxt(o(ButtonID).txt) = "#Close"
