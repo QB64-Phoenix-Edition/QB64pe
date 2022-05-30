@@ -98,7 +98,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: qb64-${{ matrix.prefix }}-${{ matrix.platform }}
+        name: qb64-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}
         path: |
           tests/results/
           qb64_win-x86.7z
