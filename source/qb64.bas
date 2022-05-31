@@ -12505,19 +12505,33 @@ IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
-CxxFlagsExtra$ = ""
-CxxLibsExtra$ = ""
+CxxFlagsExtra$ = ExtraCppFlags
+CxxLibsExtra$ = ExtraLinkerFlags
 
-IF Include_GDB_Debugging_Info THEN
-    CxxFlagsExtra$ = "-g"
+' If debugging then use `-Og` rather than `-O2`
+IF OptimizeCppProgram THEN
+    IF Include_GDB_Debugging_Info THEN
+        CxxFlagsExtra$ = CxxFlagsExtra$ + " -Og"
+    ELSE
+        CxxFlagsExtra$ = CxxFlagsExtra$ + " -O2"
+    END IF
+ELSE
+    IF Include_GDB_Debugging_Info THEN
+        CxxFlagsExtra$ = CxxFlagsExtra$ + " -g"
+    END IF
 END IF
 
-CxxLibsExtra$ = mylib$ + " " + mylibopt$
+CxxLibsExtra$ = CxxLibsExtra$ + " " + mylib$ + " " + mylibopt$
 
 makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(StrReplace$(path.exe$ + file$ + extension$, " ", "\ "))
-makeline$ = makeline$ + " CXXFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$)
-makeline$ = makeline$ + " CFLAGS_EXTRA=" + AddQuotes$(CxxFlagsExtra$) ' Just the -O flag, use for C files as well
-makeline$ = makeline$ + " CXXLIBS_EXTRA=" + AddQuotes$(CxxLibsExtra$)
+makeline$ = makeline$ + " " + AddQuotes$("CXXFLAGS_EXTRA=" + CxxFlagsExtra$)
+makeline$ = makeline$ + " " + AddQuotes$("CFLAGS_EXTRA=" + CxxFlagsExtra$)
+makeline$ = makeline$ + " " + AddQuotes$("CXXLIBS_EXTRA=" + CxxLibsExtra$)
+makeline$ = makeline$ + " -j" + AddQuotes$(str2$(MaxParallelProcesses))
+
+IF NOT StripDebugSymbols THEN
+    makeline$ = makeline$ + " STRIP_SYMBOLS=n"
+END IF
 
 IF os$ = "WIN" THEN
 
@@ -13164,7 +13178,7 @@ FUNCTION ParseCMDLineArgs$ ()
                     CASE ":debuginfo=true"
                         PRINT "debuginfo = true"
                         WriteConfigSetting generalSettingsSection$, "DebugInfo", "True" + DebugInfoIniWarning$
-                        idedebuginfo = 1
+                        idedebuginfo = -1
                         Include_GDB_Debugging_Info = idedebuginfo
                         PurgeTemporaryBuildFiles (os$), (MacOSX)
                     CASE ":debuginfo=false"

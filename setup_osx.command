@@ -27,7 +27,7 @@ fi
 
 echo "Building 'QB64'"
 make OS=osx clean
-make OS=osx BUILD_QB64=y
+make OS=osx BUILD_QB64=y -j3
 
 echo ""
 if [ -f ./qb64 ]; then

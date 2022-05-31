@@ -105,7 +105,7 @@ all: $(EXE)
 
 CLEAN_LIST :=
 
-CXXFLAGS := -w
+CXXFLAGS += -w
 
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
@@ -119,6 +119,11 @@ endif
 
 ifeq ($(OS),osx)
 	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa
+
+	# OSX doesn't strip using objcopy, so we're using `-s` instead
+	ifneq ($(STRIP_SYMBOLS),n)
+		CXXLIBS += -s
+	endif
 endif
 
 QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).o
@@ -344,7 +349,9 @@ clean:
 $(EXE): $(EXE_OBJS) $(EXE_LIBS)
 	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o "$@" $(EXE_LIBS) $(CXXLIBS)
 ifneq ($(filter-out osx,$(OS)),)
+ifneq ($(STRIP_SYMBOLS),n)
 	$(OBJCOPY) --only-keep-debug "$@" "$(PATH_INTERNAL_TEMP)/$(notdir $@).sym"
 	$(OBJCOPY) --strip-unneeded "$@"
+endif
 endif
 
