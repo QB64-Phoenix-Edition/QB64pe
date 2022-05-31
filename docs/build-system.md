@@ -108,6 +108,7 @@ These flags control some basic settings for how the `Makefile` can compile the p
 | `CXXFLAGS_EXTRA` | None | Collection of C++ compiler flags | No | These flags are provided to the compiler when building the C++ files. This includes the generate source files, but also files like `libqb.cpp`. |
 | `CXXLIBS_EXTRA` | None | Collection of linker flags | No | These flags are provided to the compiler (`g++` or `clang++`) when linking the final executable. Typically includes the `-l` library flags |
 | `CFLAGS_EXTRA` | None | Collection of C compiler flags | No | These flags are provided to the compiler when building C files |
+| `STRIP_SYMBOLS` | None | `n` | No | Symbols are stripped by default, if this is `n` then symbols will not be stripped from the executable |
 
 These flags controls whether certain dependencies are compiled in or not. All of them are blank by default and should be set to `y` to use them. Note that the program being built may not compile if you supply the wrong dependency settings - may of them supply functions that will not be defined if the dependency is required, and some of them (Ex. `DEP_GL`) have requirements the program being compiled must meet.
 

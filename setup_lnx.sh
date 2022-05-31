@@ -110,7 +110,7 @@ fi
 
 echo "Compiling and installing QB64..."
 make clean
-make OS=lnx BUILD_QB64=y
+make OS=lnx BUILD_QB64=y -j3
 
 if [ -e "./qb64" ]; then
   echo "Done compiling!!"

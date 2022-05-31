@@ -17,13 +17,17 @@ DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE, ideautolayoutkwcapitals AS _BYTE
 DIM SHARED WatchListToConsole AS _BYTE
 DIM SHARED windowSettingsSection$, colorSettingsSection$, customDictionarySection$
 DIM SHARED mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$
-DIM SHARED colorSchemesSection$, debugSettingsSection$, iniFolderIndex$, DebugInfoIniWarning$, ConfigFile$
+DIM SHARED colorSchemesSection$, debugSettingsSection$, iniFolderIndex$, ConfigFile$
+DIM SHARED compilerSettingsSection$
 DIM SHARED idebaseTcpPort AS LONG, AutoAddDebugCommand AS _BYTE
 DIM SHARED wikiBaseAddress$
+DIM SHARED MaxParallelProcesses AS _UNSIGNED LONG
+DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
+DIM SHARED StripDebugSymbols AS _UNSIGNED LONG
+DIM SHARED OptimizeCppProgram AS _UNSIGNED LONG
 
 ConfigFile$ = "internal/config.ini"
 iniFolderIndex$ = STR$(tempfolderindex)
-DebugInfoIniWarning$ = " 'Do not change manually. Use 'qb64 -s', or Debug->Advanced in the IDE"
 
 windowSettingsSection$ = "IDE WINDOW" + iniFolderIndex$
 colorSettingsSection$ = "IDE COLOR SETTINGS" + iniFolderIndex$
@@ -33,6 +37,7 @@ mouseSettingsSection$ = "MOUSE SETTINGS"
 generalSettingsSection$ = "GENERAL SETTINGS"
 displaySettingsSection$ = "IDE DISPLAY SETTINGS"
 debugSettingsSection$ = "DEBUG SETTINGS"
+compilerSettingsSection$ = "COMPILER SETTINGS"
 
 IniSetAddQuotes 0
 IniSetForceReload -1
@@ -211,9 +216,9 @@ IF idebackupsize < 10 OR idebackupsize > 2000 THEN idebackupsize = 100: WriteCon
 
 result = ReadConfigSetting(generalSettingsSection$, "DebugInfo", value$)
 idedebuginfo = VAL(value$)
-IF UCASE$(LEFT$(value$, 4)) = "TRUE" THEN idedebuginfo = 1
-IF result = 0 OR idedebuginfo <> 1 THEN
-    WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
+IF UCASE$(LEFT$(value$, 4)) = "TRUE" THEN idedebuginfo = -1
+IF result = 0 OR idedebuginfo <> -1 THEN
+    WriteConfigSetting generalSettingsSection$, "DebugInfo", "False"
     idedebuginfo = 0
 END IF
 Include_GDB_Debugging_Info = idedebuginfo
@@ -520,6 +525,15 @@ IF ReadConfigSetting(colorSettingsSection$, "BackgroundColor2", value$) THEN
     IDEBackgroundColor2 = VRGBS(value$, IDEBackgroundColor2)
 ELSE WriteConfigSetting colorSettingsSection$, "BackgroundColor2", rgbs$(IDEBackgroundColor2)
 END IF
+
+'Compiler Settings ------------------------------------------------------------
+OptimizeCppProgram = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "OptimizeCppProgram", 0)
+StripDebugSymbols = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "StripDebugSymbols", -1)
+
+MaxParallelProcesses = ReadWriteLongSettingValue&(compilerSettingsSection$, "MaxParallelProcesses", 3)
+
+ExtraCppFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
+ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
 
 'End of initial settings ------------------------------------------------------
 

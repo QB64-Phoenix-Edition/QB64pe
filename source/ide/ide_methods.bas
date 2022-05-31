@@ -387,8 +387,6 @@ FUNCTION ide2 (ignore)
         END IF
         menu$(m, i) = "Set Base #TCP/IP Port Number...": i = i + 1
         menuDesc$(m, i - 1) = "Sets the initial port number for TCP/IP communication with the debuggee"
-        menu$(m, i) = "#Advanced (C++)...": i = i + 1
-        menuDesc$(m, i - 1) = "Enables embedding C++ debug information into compiled program"
         menu$(m, i) = "Purge C++ #Libraries": i = i + 1
         menuDesc$(m, i - 1) = "Purges all pre-compiled content"
         menusize(m) = i - 1
@@ -401,6 +399,8 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Changes or customizes IDE color scheme"
         menu$(m, i) = "#Code Layout...": i = i + 1
         menuDesc$(m, i - 1) = "Changes auto-format features"
+        menu$(m, i) = "C++ C#ompiler Settings...": i = i + 1
+        menuDesc$(m, i - 1) = "Change settings for compiling the C++ code"
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Language...": i = i + 1
         menuDesc$(m, i - 1) = "Changes code page to use with TTF fonts"
@@ -4952,14 +4952,6 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF menu$(m, s) = "#Advanced (C++)..." THEN
-                PCOPY 2, 0
-                retval = ideadvancedbox
-                'retval is ignored
-                PCOPY 3, 0: SCREEN , , 3, 0
-                GOTO ideloop
-            END IF
-
             IF menu$(m, s) = "Purge C++ #Libraries" THEN
                 PCOPY 2, 0
                 PurgeTemporaryBuildFiles (os$), (MacOSX)
@@ -5103,6 +5095,14 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#Code Layout..." THEN
                 PCOPY 2, 0
                 retval = idelayoutbox
+                IF retval THEN idechangemade = 1: idelayoutallow = 2: startPausedPending = 0 'recompile if options changed
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "C++ C#ompiler Settings..." THEN
+                PCOPY 2, 0
+                retval = ideCompilerSettingsBox
                 IF retval THEN idechangemade = 1: idelayoutallow = 2: startPausedPending = 0 'recompile if options changed
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -15036,11 +15036,6 @@ FUNCTION idelayoutbox
     LOOP
 END FUNCTION
 
-
-
-
-
-
 FUNCTION idebackupbox
     a2$ = str2$(idebackupsize)
     v$ = ideinputbox$("Backup/Undo", "#Undo buffer limit (10-2000MB)", a2$, "0123456789", 50, 4, 0)
@@ -15100,9 +15095,7 @@ FUNCTION idegetlinenumberbox(title$, initialValue&)
     idegetlinenumberbox = v&
 END FUNCTION
 
-
-
-FUNCTION ideadvancedbox
+FUNCTION ideCompilerSettingsBox
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -15112,42 +15105,83 @@ FUNCTION ideadvancedbox
     DIM p AS idedbptype
     DIM o(1 TO 100) AS idedbotype
     DIM sep AS STRING * 1
+    DIM optimizeCheckBox AS LONG
+    DIM stripDebugCheckBox AS LONG
+    DIM addDebugSymbolsCheckBox AS LONG
+    DIM maxParallelTextBox AS LONG
+    DIM extraCppFlagsTextBox AS LONG
+    DIM extraLinkerFlagsTextBox AS LONG
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
     '-------- init --------
-    DIM Direct_Text$(100)
-
     i = 0
+    y = 0
 
     i = i + 1
-    o(i).typ = 3 '
-    'o(i).y = y
+    optimizeCheckBox = i
+    o(i).typ = 4 'check box
+    y = y + 2: o(i).y = y
+    o(i).nam = idenewtxt("Compile #program with C++ optimization flag")
+    o(i).sel = OptimizeCppProgram
+
+    i = i + 1
+    stripDebugCheckBox = i
+    o(i).typ = 4 'check box
+    y = y + 1: o(i).y = y
+    o(i).nam = idenewtxt("#Strip C++ symbols from executable")
+    o(i).sel = -StripDebugSymbols
+
+    i = i + 1
+    addDebugSymbolsCheckBox = i
+    o(i).typ = 4 'check box
+    y = y + 1: o(i).y = y
+    o(i).nam = idenewtxt("#Add C++ Debug Information")
+    o(i).sel = Include_GDB_Debugging_Info
+
+    y = y + 1 ' Blank line
+
+    a2$ = str2$(idewy + idesubwindow)
+    i = i + 1
+    extraCppFlagsTextBox = i
+    o(i).typ = 1
+    o(i).x = 2
+    y = y + 2: o(i).y = y: y = y + 1
+    o(i).nam = idenewtxt("C++ Compiler #Flags")
+    o(i).txt = idenewtxt(ExtraCppFlags)
+    o(i).v1 = LEN(a2$)
+
+    a2$ = str2$(idewy + idesubwindow)
+    i = i + 1
+    extraLinkerFlagsTextBox = i
+    o(i).typ = 1
+    o(i).x = 2
+    y = y + 2: o(i).y = y: y = y + 1
+    o(i).nam = idenewtxt("C++ #Linker Flags")
+    o(i).txt = idenewtxt(ExtraLinkerFlags)
+    o(i).v1 = LEN(a2$)
+
+    a2$ = str2$(idewy + idesubwindow)
+    i = i + 1
+    maxParallelTextBox = i
+    o(i).typ = 1
+    o(i).x = 2
+    y = y + 2: o(i).y = y: y = y + 1
+    o(i).nam = idenewtxt("#Max C++ Compiler Processes")
+    o(i).txt = idenewtxt(str2$(MaxParallelProcesses))
+    o(i).v1 = LEN(a2$)
+
+    y = y + 1 ' Blank line
+
+    i = i + 1
+    buttonsid = i
+    o(i).typ = 3
+    y = y + 1: o(i).y = y
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
     o(i).dft = 1
 
-    y = 2 '2nd blank line
-
-    i = i + 1
-    o(i).typ = 4 'check box --- focus=3
-    o(i).y = y
-    o(i).nam = idenewtxt("Embed C++ debug information into executable")
-    o(i).sel = idedebuginfo
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " This setting is not required for $DEBUG mode"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Use it to investigate crashes/freezes at C++ (not QB64) code level"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Use internal/temp/debug batch file to debug your executable"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Increases executable size"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " Makes public the names of variables in your program's code"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " QB64 libraries will be purged then rebuilt"
-    y = y + 1: Direct_Text$(y) = "     " + CHR$(254) + " This setting also affects command line compilation"
-
-    y = y + 2
-
-    o(1).y = y 'close button
-
+    idepar p, 60, y, "C++ Compiler Settings"
     '-------- end of init --------
-
-    idepar p, 75, y, "Advanced Options"
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
@@ -15173,11 +15207,6 @@ FUNCTION ideadvancedbox
         '-------- end of generic display dialog box & objects --------
 
         '-------- custom display changes --------
-        FOR y = 1 TO 100
-            IF LEN(Direct_Text$(y)) THEN
-                COLOR 0, 7: _PRINTSTRING (p.x + 1, p.y + y), Direct_Text$(y)
-            END IF
-        NEXT
         '-------- end of custom display changes --------
 
         'update visual page and cursor position
@@ -15227,26 +15256,42 @@ FUNCTION ideadvancedbox
         '-------- end of generic input response --------
 
         'specific post controls
-
-        IF K$ = CHR$(27) OR (focus = 2 AND info <> 0) THEN EXIT FUNCTION
-
-        IF K$ = CHR$(13) OR (focus = 1 AND info <> 0) THEN 'close
+        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT FUNCTION 'cancel
+        IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
             'save changes
-
-            'update idedebuginfo?
-            v% = o(2).sel: IF v% <> 0 THEN v% = 1
-            IF v% <> idedebuginfo THEN
-                idedebuginfo = v%
-                IF idedebuginfo THEN
-                    WriteConfigSetting generalSettingsSection$, "DebugInfo", "True" + DebugInfoIniWarning$
-                ELSE
-                    WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
-                END IF
-                Include_GDB_Debugging_Info = idedebuginfo
-                PurgeTemporaryBuildFiles (os$), (MacOSX)
-                idechangemade = 1 'force recompilation
-                startPausedPending = 0
+            v% = o(optimizeCheckBox).sel: IF v% <> 0 THEN v% = -1
+            IF OptimizeCppProgram <> v% THEN
+                OptimizeCppProgram = v%
+                WriteConfigSetting compilerSettingsSection$, "OptimizeCppProgram", BoolToTFString$(OptimizeCppProgram)
             END IF
+
+            v% = o(stripDebugCheckBox).sel: IF v% <> 0 THEN v% = -1
+            IF StripDebugSymbols <> v% THEN
+                StripDebugSymbols = v%
+                WriteConfigSetting compilerSettingsSection$, "StripDebugSymbols", BoolToTFString$(StripDebugSymbols)
+            END IF
+
+            v% = o(addDebugSymbolsCheckBox).sel: IF v% <> 0 THEN v% = -1
+            IF Include_GDB_Debugging_Info <> v% THEN
+                Include_GDB_Debugging_Info = v%
+                WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(Include_GDB_Debugging_Info)
+            END IF
+
+            v% = VAL(idetxt(o(maxParallelTextBox).txt))
+            IF v% > 0 AND v% <> MaxParallelProcesses THEN
+                MaxParallelProcesses = v%
+                WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", str2$(MaxParallelProcesses)
+            END IF
+
+            ExtraCppFlags$ = idetxt(o(extraCppFlagsTextBox).txt)
+            WriteConfigSetting compilerSettingsSection$, "ExtraCppFlags", ExtraCppFlags$
+
+            ExtraLinkerFlags$ = idetxt(o(extraLinkerFlagsTextBox).txt)
+            WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
+
+            ' Clean compiled files, since they may change due to the different settings
+            PurgeTemporaryBuildFiles (os$), (MacOSX)
+            idechangemade = 1 'force recompilation
 
             EXIT FUNCTION
         END IF
@@ -15257,14 +15302,8 @@ FUNCTION ideadvancedbox
         mouseup = 0
     LOOP
 
-    ideadvancedbox = 0
+    ideCompilerSettingsBox = 0
 END FUNCTION
-
-
-
-
-
-
 
 FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
 
