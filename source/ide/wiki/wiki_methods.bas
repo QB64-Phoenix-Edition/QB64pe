@@ -32,20 +32,6 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
             a$ = SPACE$(LOF(fh))
             GET #fh, , a$
             CLOSE #fh
-            chr13 = INSTR(a$, CHR$(13))
-            removedchr13 = 0
-            DO WHILE chr13 > 0
-                removedchr13 = -1
-                a$ = LEFT$(a$, chr13 - 1) + MID$(a$, chr13 + 1)
-                chr13 = INSTR(a$, CHR$(13))
-            LOOP
-            IF removedchr13 THEN
-                fh = FREEFILE
-                OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR OUTPUT AS #fh: CLOSE #fh
-                OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR BINARY AS #fh
-                PUT #fh, 1, a$
-                CLOSE #fh
-            END IF
             Wiki$ = a$
             EXIT FUNCTION
         END IF
@@ -53,10 +39,20 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
 
     'Check for curl
     IF _SHELLHIDE("curl --version") <> 0 THEN
-        PCOPY 2, 0
-        result = idemessagebox("QB64", "Cannot find 'curl'.", "#Abort")
-        PCOPY 3, 0: SCREEN , , 3, 0
-        EXIT FUNCTION
+        a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
+        IF PageName$ = "Initialize" THEN
+            a$ = a$ + "To be able to initialize the help system, "
+        ELSEIF PageName$ = "Update All" THEN
+            a$ = a$ + "To be able to update the help pages from the online Wiki, "
+        ELSE
+            a$ = a$ + "The requested help page is not yet cached locally. To download the help page from the online Wiki, "
+        END IF
+        a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
+        a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
+        a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
+        a$ = a$ + "** Unpack and drop the ''curl'' executable into the QB64 folder." + CHR$(10)
+        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the QB64 folder too." + CHR$(10)
+        Wiki$ = a$: EXIT FUNCTION
     END IF
 
     'Download message (Status Bar)
@@ -112,9 +108,10 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "Start}}" + CHR$(10) + "'' ''", "Start}}")
         a$ = StrReplace$(a$, "'' ''" + CHR$(10) + "{{", CHR$(10) + "{{")
         a$ = StrReplace$(a$, "'' '' " + CHR$(10) + "{{", CHR$(10) + "{{")
-        a$ = StrReplace$(a$, "'' ''" + MKI$(&H0A0A) + "{{", CHR$(10) + "{{")
-        '--- wiki redirects
+        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + CHR$(10) + "{{", CHR$(10) + "{{")
+        '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
+        a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
@@ -775,8 +772,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$ = ";" AND nl = 1 THEN 'definition (new line only)
                 IF c$(2) = "; " THEN i = i + 1
                 Help_Bold = 1: col = Help_Col: Help_DList = 1
-                IF c$(3) = ";* " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
-                IF c$(2) = ";*" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
+                IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
+                IF c$(2) = ";*" OR c$(2) = ";#" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
                 GOTO charDone
             END IF
             IF c$ = ":" AND Help_DList > 0 THEN 'description (same or new line)
@@ -803,16 +800,16 @@ SUB WikiParse (a$) 'Wiki page interpret
         'Wiki lists (*, **) are not handled in blocks (soft- and hard lock), as it would
         'disrupt the block, also in code blocks it could be part of the code example itself
         IF Help_LockParse = 0 THEN
-            'Unordered lists
+            'Unordered/Ordered lists
             IF nl = 1 THEN
-                IF c$(2) = "**" THEN
-                    IF c$(3) = "** " THEN i = i + 2: ELSE i = i + 1
+                IF c$(2) = "**" OR c$(2) = "##" THEN
+                    IF c$(3) = "** " OR c$(3) = "## " THEN i = i + 2: ELSE i = i + 1
                     Help_AddTxt "   " + CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 5
                     GOTO charDone
                 END IF
-                IF c$ = "*" THEN
-                    IF c$(2) = "* " THEN i = i + 1
+                IF c$ = "*" OR c$ = "#" THEN
+                    IF c$(2) = "* " OR c$(2) = "# " THEN i = i + 1
                     Help_AddTxt CHR$(4) + " ", 14, 0
                     Help_NewLineIndent = Help_NewLineIndent + 2
                     GOTO charDone

@@ -2307,7 +2307,7 @@ FUNCTION ide2 (ignore)
                                 Help_sy = Help_Back(Help_Back_Pos).sy
                                 Help_cx = Help_Back(Help_Back_Pos).cx
                                 Help_cy = Help_Back(Help_Back_Pos).cy
-                                a$ = Wiki(Back$(Help_Back_Pos))
+                                a$ = Wiki$(Back$(Help_Back_Pos))
                                 WikiParse a$
                                 GOTO newpageparsed
                             END IF
@@ -2565,7 +2565,7 @@ FUNCTION ide2 (ignore)
                     Help_sy = Help_Back(Help_Back_Pos).sy
                     Help_cx = Help_Back(Help_Back_Pos).cx
                     Help_cy = Help_Back(Help_Back_Pos).cy
-                    a$ = Wiki(Back$(Help_Back_Pos))
+                    a$ = Wiki$(Back$(Help_Back_Pos))
                     WikiParse a$
                     GOTO newpageparsed
                 END IF
@@ -2652,7 +2652,7 @@ FUNCTION ide2 (ignore)
                                         Help_Back(Help_Back_Pos).cx = 1
                                         Help_Back(Help_Back_Pos).cy = 1
                                         Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
-                                        a$ = Wiki(l$)
+                                        a$ = Wiki$(l$)
                                         WikiParse a$
                                         GOTO newpageparsed
                                     END IF
@@ -2758,7 +2758,7 @@ FUNCTION ide2 (ignore)
                 Help_Back(Help_Back_Pos).cy = 1
                 Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
 
-                a$ = Wiki(lnk$)
+                a$ = Wiki$(lnk$)
 
                 IF idehelp = 0 THEN
                     IF idesubwindow THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO ideloop
@@ -5414,8 +5414,16 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
-                IF q$ = "Y" THEN ideupdatehelpbox
-                PCOPY 3, 0: SCREEN , , 3, 0
+                IF q$ = "Y" THEN
+                    Help_Recaching = 1: Help_IgnoreCache = 1
+                    uerr = ideupdatehelpbox
+                    Help_Recaching = 0: Help_IgnoreCache = 0
+                    PCOPY 3, 0: SCREEN , , 3, 0
+                    IF uerr THEN
+                        lnk$ = "Update All"
+                        GOTO OpenHelpLnk
+                    END IF
+                END IF
                 GOTO ideloop
             END IF
 
@@ -17607,7 +17615,7 @@ SUB Help_ShowText
     IF setup = 0 AND UBOUND(back$) = 1 THEN
         setup = 1
         IF IdeContextHelpSF = 0 THEN
-            a$ = Wiki(Back$(1))
+            a$ = Wiki$(Back$(1))
             WikiParse a$
         END IF
     END IF
@@ -18665,7 +18673,15 @@ SUB IdeAddSearched (s2$)
     CLOSE #fh
 END SUB
 
-SUB ideupdatehelpbox
+FUNCTION ideupdatehelpbox
+    ideupdatehelpbox = 0 'all good, getting 1 on error
+    IF Help_Recaching = 2 THEN
+        DIM FullMessage$(1 TO 2)
+        UpdateStep = 1
+        Help_ww = 78
+        GOTO startMainLoop
+    END IF
+
     '-------- generic dialog box header --------
     PCOPY 0, 2
     PCOPY 0, 1
@@ -18707,8 +18723,9 @@ SUB ideupdatehelpbox
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
+    startMainLoop:
     DO 'main loop
-
+        IF Help_Recaching = 2 GOTO updateRoutine
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -18813,6 +18830,7 @@ SUB ideupdatehelpbox
         END IF
         'end of custom controls
 
+        updateRoutine:
         '-------- update routine -------------------------------------
         SELECT CASE UpdateStep
             CASE 1
@@ -18830,9 +18848,8 @@ SUB ideupdatehelpbox
             CASE 3
                 'Download and PARSE alphabetical index to build required F1 help links
                 FullMessage$(1) = "Regenerating keyword list..."
-                Help_Recaching = 1: Help_IgnoreCache = 1
                 a$ = Wiki$("Keyword Reference - Alphabetical")
-                Help_Recaching = 0: Help_IgnoreCache = 0
+                IF INSTR(a$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO
                 WikiParse a$
                 UpdateStep = UpdateStep + 1
             CASE 4
@@ -18889,13 +18906,14 @@ SUB ideupdatehelpbox
                         f2$ = LEFT$(f2$, LEN(f2$) - 4)
                         n = n + 1
                         FullMessage$(2) = "Page title: " + f2$
-                        Help_IgnoreCache = 1: Help_Recaching = 1: ignore$ = Wiki(f2$): Help_Recaching = 0: Help_IgnoreCache = 0
+                        ignore$ = Wiki$(f2$)
                     END IF
                 ELSE
                     UpdateStep = UpdateStep + 1
                 END IF
             CASE 6
                 stoprecache:
+                IF Help_Recaching = 2 THEN EXIT DO
                 FullMessage$(1) = "All pages updated."
                 FullMessage$(2) = ""
                 idetxt(o(ButtonID).txt) = "#Close"
@@ -18906,7 +18924,7 @@ SUB ideupdatehelpbox
         mousedown = 0
         mouseup = 0
     LOOP
-END SUB
+END FUNCTION
 
 FUNCTION ideASCIIbox$(relaunch)
 
@@ -19867,20 +19885,30 @@ FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
     'check if topic$ is in help links
     '    - returns a list of help links separated by CHR$(0)
     '    - returns the total number of links found by changing 'lnks'
-    IF NOT _FILEEXISTS("internal\help\links.bin") THEN
+    lnks = 0: lnks$ = CHR$(0)
+    fh = FREEFILE
+    '----------
+    linksFileExist = _FILEEXISTS("internal\help\links.bin")
+    IF linksFileExist THEN
+        OPEN "internal\help\links.bin" FOR INPUT AS #fh
+        linksFileEmpty = (LOF(fh) = 0): CLOSE #fh
+    END IF
+    IF (NOT linksFileExist) OR linksFileEmpty THEN
         q$ = ideyesnobox("Help problem", "The help system is not yet initialized,\ndo it now? (Make sure you're online.)")
         PCOPY 3, 0: SCREEN , , 3, 0
-        IF q$ = "N" THEN lnks = 0: lnks$ = CHR$(0): GOTO noLinksFile
+        IF q$ = "N" GOTO noLinksFile
         Help_IgnoreCache = 1
         a$ = Wiki$("Keyword Reference - Alphabetical")
         Help_IgnoreCache = 0
+        IF INSTR(a$, "{{PageInternalError}}") THEN
+            lnks = 1: lnks$ = lnks$ + "Initialize" + CHR$(0)
+            GOTO noLinksFile
+        END IF
         Help_ww = 78: WikiParse a$ 'assume standard IDE width for parsing
     END IF
     '----------
     a2$ = UCASE$(topic$)
-    fh = FREEFILE
     OPEN "internal\help\links.bin" FOR INPUT AS #fh
-    lnks = 0: lnks$ = CHR$(0)
     DO UNTIL EOF(fh)
         LINE INPUT #fh, l$
         c = INSTR(l$, ","): l1$ = LEFT$(l$, c - 1): l2$ = RIGHT$(l$, LEN(l$) - c)
