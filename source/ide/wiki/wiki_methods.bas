@@ -132,6 +132,7 @@ END FUNCTION
 
 SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
     IF t$ = CHR$(13) THEN Help_NewLine: EXIT SUB
+    IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine: Help_ChkBlank = 0
 
     FOR i = 1 TO LEN(t$)
         c = ASC(t$, i)
@@ -202,12 +203,14 @@ SUB Help_NewLine 'Start a new help line, apply indention (if any)
     END IF
     Help_Pos = 1
 
-    IF Help_Center > 0 THEN 'center overrides regular indent
-        Help_NewLineIndent = 0
-        Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), Help_Col, 0
-        Help_CIndent$ = MID$(Help_CIndent$, 2)
-    ELSEIF Help_NewLineIndent > 0 THEN
-        Help_AddTxt SPACE$(Help_NewLineIndent), Help_Col, 0
+    IF Help_ChkBlank = 0 THEN 'no indention on blank line checks
+        IF Help_Center > 0 THEN 'center overrides regular indent
+            Help_NewLineIndent = 0
+            Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), Help_Col, 0
+            Help_CIndent$ = MID$(Help_CIndent$, 2)
+        ELSEIF Help_NewLineIndent > 0 THEN
+            Help_AddTxt SPACE$(Help_NewLineIndent), Help_Col, 0
+        END IF
     END IF
 END SUB
 
@@ -271,7 +274,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_Underline = 0
     Help_BG_Col = 0
     Help_Center = 0: Help_CIndent$ = ""
-    Help_DList = 0
+    Help_DList = 0: Help_ChkBlank = 0
 
     link = 0: elink = 0: cb = 0: nl = 1
 
@@ -703,7 +706,9 @@ SUB WikiParse (a$) 'Wiki page interpret
                     END IF
                     IF iii <> 0 THEN
                         FOR ii = Help_Txt_Len - 3 TO 1 STEP -4
-                            IF ASC(Help_Txt$, ii) = 13 AND iii < 0 THEN
+                            IF ASC(Help_Txt$, ii) = 32 AND iii < 0 THEN
+                                Help_Pos = Help_Pos - 1
+                            ELSEIF ASC(Help_Txt$, ii) = 13 AND iii < 0 THEN
                                 help_h = help_h - 1: Help_Line$ = LEFT$(Help_Line$, LEN(Help_Line$) - 4)
                             ELSEIF ASC(Help_Txt$, ii) = 196 AND iii < 0 THEN
                                 iii = -iii
@@ -753,14 +758,17 @@ SUB WikiParse (a$) 'Wiki page interpret
             'Rulers
             IF c$(4) = "----" AND nl = 1 THEN
                 i = i + 3
+                Help_CheckBlankLine
                 Help_AddTxt STRING$(Help_ww, 196), 8, 0
+                Help_ChkBlank = 1
                 GOTO charDone
             END IF
             IF c$(4) = "<hr>" OR c$(6) = "<hr />" THEN
                 IF c$(4) = "<hr>" THEN i = i + 3
                 IF c$(6) = "<hr />" THEN i = i + 5
-                Help_CheckFinishLine
+                Help_CheckBlankLine
                 Help_AddTxt STRING$(Help_ww, 196), 8, 0
+                Help_ChkBlank = 1
                 GOTO charDone
             END IF
         END IF

@@ -5,7 +5,7 @@ IF _DIREXISTS("internal") = 0 THEN GOTO NoInternalFolder
 IF _DIREXISTS(Cache_Folder$) = 0 THEN MKDIR Cache_Folder$
 DIM SHARED Help_sx, Help_sy, Help_cx, Help_cy
 DIM SHARED Help_Select, Help_cx1, Help_cy1, Help_SelX1, Help_SelX2, Help_SelY1, Help_SelY2
-DIM SHARED Help_MSelect
+DIM SHARED Help_MSelect, Help_ChkBlank
 Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
 DIM SHARED Help_wx1, Help_wy1, Help_wx2, Help_wy2 'defines the text section of the help window on-screen
 DIM SHARED Help_ww, Help_wh 'width & height of text region
