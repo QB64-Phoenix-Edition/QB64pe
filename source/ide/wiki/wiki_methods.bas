@@ -625,6 +625,7 @@ SUB WikiParse (a$) 'Wiki page interpret
 
                 'Code Block
                 IF cb$ = "InlineCode" AND Help_LockParse = 0 THEN
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 1: Help_LockParse = 2
                 END IF
                 IF cb$ = "InlineCodeEnd" AND Help_LockParse <> 0 THEN
@@ -633,6 +634,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
                 IF cb$ = "CodeStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 1: Help_LockParse = 2
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Code Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -646,6 +648,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 'Output Block
                 IF LEFT$(cb$, 11) = "OutputStart" AND Help_LockParse = 0 THEN 'does also match new OutputStartBGn templates
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 2: Help_LockParse = 1
                     Help_AddTxt STRING$(Help_ww - 17, 196) + " Output Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -661,6 +664,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 'Text Block
                 IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 6: Help_LockParse = -1
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Text Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -674,6 +678,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 'Fixed Block
                 IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 6: Help_LockParse = -2
                     Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
