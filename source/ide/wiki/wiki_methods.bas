@@ -578,7 +578,9 @@ SUB WikiParse (a$) 'Wiki page interpret
                     wla$ = wikiLookAhead$(a$, i + 1, "}}")
                     cb = 0: i = i + LEN(wla$) + 2 'after 1st, ignore all further template parameters
                 ELSEIF c$(2) = "}}" THEN
-                    IF LCASE$(LEFT$(cb$, 5)) = "small" THEN
+                    IF cb$ = "Parameter" THEN
+                        Help_Italic = 0: col = Help_Col
+                    ELSEIF LCASE$(LEFT$(cb$, 5)) = "small" THEN
                         IF ASC(cb$, 6) = 196 THEN
                             Help_AddTxt " " + STRING$(Help_ww - Help_Pos, 196), 15, 0
                             Help_BG_Col = 0: col = Help_Col
@@ -597,7 +599,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
                     IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
                     IF cb$ = "PageLegacySupport" THEN cbo$ = "Legacy support" 'sub-sect
-                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page suffix is deprecated (but kept for existing pages)
+                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page prefix is deprecated (but kept for existing pages)
                     IF cb$ = "PageDescription" THEN cbo$ = "Description:"
                     IF cb$ = "PageQBasic" THEN cbo$ = "QBasic/QuickBASIC" 'sub-sect
                     IF cb$ = "PageNotes" THEN cbo$ = "Notes" 'sub-sect
@@ -697,6 +699,11 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                END IF
+
+                'Parameter template text will be italic
+                IF c$ = "|" AND cb$ = "Parameter" AND Help_LockParse <= 0 THEN 'keep as is in Code/Output blocks
+                    Help_Italic = 1: col = Help_Col
                 END IF
 
                 'Small template text will be centered (maybe as block note)
