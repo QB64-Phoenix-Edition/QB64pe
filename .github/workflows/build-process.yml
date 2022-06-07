@@ -32,6 +32,11 @@ jobs:
       with:
         fetch-depth: 0
 
+    - uses: maxim-lobanov/setup-xcode@v1
+      if: ${{ matrix.os == 'macos-latest' }}
+      with:
+        xcode-version: '11.7.0' # MacOS 10.15 Catalina
+
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
     - uses: webfactory/ssh-agent@v0.5.4
