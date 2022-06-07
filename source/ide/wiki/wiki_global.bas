@@ -26,7 +26,7 @@ DIM SHARED Help_BG_Col
 DIM SHARED Help_Col_Normal: Help_Col_Normal = 7
 DIM SHARED Help_Col_Link: Help_Col_Link = 9
 DIM SHARED Help_Col_Bold: Help_Col_Bold = 15
-DIM SHARED Help_Col_Italic: Help_Col_Italic = 15
+DIM SHARED Help_Col_Italic: Help_Col_Italic = 3
 DIM SHARED Help_Col_Section: Help_Col_Section = 8
 DIM SHARED Help_Bold, Help_Italic, Help_DList
 DIM SHARED Help_LockWrap, Help_LockParse

@@ -485,7 +485,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     IF Help_LockParse = 0 THEN
                         Help_AddTxt etext$, Help_Col_Link, Help_LinkN
                     ELSE
-                        Help_AddTxt etext$, Help_Col_Bold, Help_LinkN
+                        Help_AddTxt etext$, Help_Col_Italic, Help_LinkN
                     END IF
                     GOTO charDone
                 END IF
@@ -527,7 +527,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF Help_LockParse = 0 THEN
                     Help_AddTxt text$, Help_Col_Link, Help_LinkN
                 ELSE
-                    Help_AddTxt text$, Help_Col_Bold, Help_LinkN
+                    Help_AddTxt text$, Help_Col_Italic, Help_LinkN
                 END IF
                 GOTO charDone
             END IF
@@ -578,7 +578,9 @@ SUB WikiParse (a$) 'Wiki page interpret
                     wla$ = wikiLookAhead$(a$, i + 1, "}}")
                     cb = 0: i = i + LEN(wla$) + 2 'after 1st, ignore all further template parameters
                 ELSEIF c$(2) = "}}" THEN
-                    IF LCASE$(LEFT$(cb$, 5)) = "small" THEN
+                    IF cb$ = "Parameter" THEN
+                        Help_Italic = 0: col = Help_Col
+                    ELSEIF LCASE$(LEFT$(cb$, 5)) = "small" THEN
                         IF ASC(cb$, 6) = 196 THEN
                             Help_AddTxt " " + STRING$(Help_ww - Help_Pos, 196), 15, 0
                             Help_BG_Col = 0: col = Help_Col
@@ -597,7 +599,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
                     IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
                     IF cb$ = "PageLegacySupport" THEN cbo$ = "Legacy support" 'sub-sect
-                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page suffix is deprecated (but kept for existing pages)
+                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page prefix is deprecated (but kept for existing pages)
                     IF cb$ = "PageDescription" THEN cbo$ = "Description:"
                     IF cb$ = "PageQBasic" THEN cbo$ = "QBasic/QuickBASIC" 'sub-sect
                     IF cb$ = "PageNotes" THEN cbo$ = "Notes" 'sub-sect
@@ -625,6 +627,7 @@ SUB WikiParse (a$) 'Wiki page interpret
 
                 'Code Block
                 IF cb$ = "InlineCode" AND Help_LockParse = 0 THEN
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 1: Help_LockParse = 2
                 END IF
                 IF cb$ = "InlineCodeEnd" AND Help_LockParse <> 0 THEN
@@ -633,6 +636,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
                 IF cb$ = "CodeStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 1: Help_LockParse = 2
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Code Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -646,6 +650,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 'Output Block
                 IF LEFT$(cb$, 11) = "OutputStart" AND Help_LockParse = 0 THEN 'does also match new OutputStartBGn templates
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 2: Help_LockParse = 1
                     Help_AddTxt STRING$(Help_ww - 17, 196) + " Output Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -661,6 +666,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 'Text Block
                 IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 6: Help_LockParse = -1
                     Help_AddTxt STRING$(Help_ww - 15, 196) + " Text Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -674,6 +680,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 'Fixed Block
                 IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
                     Help_CheckBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 6: Help_LockParse = -2
                     Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
@@ -692,6 +699,11 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "use the ", 15, 0: ii = Help_BG_Col: Help_BG_Col = 3: Help_AddTxt " View on Wiki ", 15, 0: Help_BG_Col = ii: Help_AddTxt " button in the upper right", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "บ ", 8, 0: Help_AddTxt "corner to load the page into your browser.      ", 15, 0: Help_AddTxt " บ", 8, 0: Help_NewLine
                     Help_AddTxt SPACE$((Help_ww - 52) \ 2) + "ศออออออออออออออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                END IF
+
+                'Parameter template text will be italic
+                IF c$ = "|" AND cb$ = "Parameter" AND Help_LockParse <= 0 THEN 'keep as is in Code/Output blocks
+                    Help_Italic = 1: col = Help_Col
                 END IF
 
                 'Small template text will be centered (maybe as block note)
