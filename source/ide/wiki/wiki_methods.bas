@@ -485,7 +485,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     IF Help_LockParse = 0 THEN
                         Help_AddTxt etext$, Help_Col_Link, Help_LinkN
                     ELSE
-                        Help_AddTxt etext$, Help_Col_Bold, Help_LinkN
+                        Help_AddTxt etext$, Help_Col_Italic, Help_LinkN
                     END IF
                     GOTO charDone
                 END IF
@@ -527,7 +527,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF Help_LockParse = 0 THEN
                     Help_AddTxt text$, Help_Col_Link, Help_LinkN
                 ELSE
-                    Help_AddTxt text$, Help_Col_Bold, Help_LinkN
+                    Help_AddTxt text$, Help_Col_Italic, Help_LinkN
                 END IF
                 GOTO charDone
             END IF
