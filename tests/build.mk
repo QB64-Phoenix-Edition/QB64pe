@@ -10,6 +10,12 @@ TEST_CFLAGS-$(win) += -mconsole
 TEST_DEF_OBJS := tests/c/test.o
 
 # Defines the list of test sets
+TESTS += buffer
+
+# Describe how to build each test
+buffer.src-y := ./tests/c/buffer.cpp \
+				$(PATH_LIBQB)/src/buffer.cpp
+
 
 TEST_OBJS := $(TEST_DEF_OBJS)
 TEST_OBJS += $(foreach test,$(TESTS),$(filter ./tests/c/%,$($(test)).objs-y))
