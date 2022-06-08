@@ -379,3 +379,5 @@ ifneq ($(STRIP_SYMBOLS),n)
 endif
 endif
 
+-include ./tests/build.mk
+
