@@ -20083,7 +20083,7 @@ SUB RetrieveSearchHistory (SearchHistory() as string)
     IF LOF(FH) THEN
         Do until eof(fh)
            ln = ln + 1
-           if ln > ubound(SearchHistory) then redim _preserve SearhHistory(1 to ln + 10000) AS STRING 'large resize, it necessary
+           if ln > ubound(SearchHistory) then redim _preserve SearchHistory(1 to ln + 10000) AS STRING 'large resize, it necessary
            line input #fh, SearchHistory(ln)
         Loop
         redim _preserve SearchHistory(1 to ln) AS STRING'resize to proper size before exit
