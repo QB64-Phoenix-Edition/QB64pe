@@ -22,6 +22,8 @@
 
 #endif
 
+#include "mutex.h"
+
 int32 disableEvents = 0;
 
 // Global console vvalues
@@ -528,64 +530,6 @@ int64 display_frame_order_next = 1;
 int64 last_rendered_hardware_display_frame_order = 0;
 int64 last_hardware_display_frame_order = 0;
 
-#ifdef QB64_WINDOWS
-struct MUTEX {
-    HANDLE handle;
-};
-
-MUTEX *new_mutex() {
-    MUTEX *m = (MUTEX *)calloc(1, sizeof(MUTEX));
-    m->handle = CreateMutex(NULL,  // default security attributes
-                            FALSE, // initially not owned
-                            NULL); // unnamed mutex
-    return m;
-}
-
-void free_mutex(MUTEX *mutex) {
-    // todo
-}
-
-void lock_mutex(MUTEX *m) {
-    if (m == NULL)
-        return;
-    WaitForSingleObject(m->handle, // handle to mutex
-                        INFINITE); // no time-out interval
-}
-
-void unlock_mutex(MUTEX *m) {
-    if (m == NULL)
-        return;
-    ReleaseMutex(m->handle);
-}
-#endif
-#ifdef QB64_UNIX
-struct MUTEX {
-    pthread_mutex_t handle;
-};
-
-MUTEX *new_mutex() {
-    MUTEX *m = (MUTEX *)calloc(1, sizeof(MUTEX));
-    pthread_mutex_init(&m->handle, NULL);
-    return m;
-}
-
-void free_mutex(MUTEX *mutex) {
-    // todo
-}
-
-void lock_mutex(MUTEX *m) {
-    if (m == NULL)
-        return;
-    pthread_mutex_lock(&m->handle);
-}
-
-void unlock_mutex(MUTEX *m) {
-    if (m == NULL)
-        return;
-    pthread_mutex_unlock(&m->handle);
-}
-#endif
-
 // List Interface
 // Purpose: Unify and optimize the way QB64 references lists of objects (such as handles)
 // Notes: Does not use index 0
@@ -606,8 +550,8 @@ struct list {
     ptrszint *index_cleanup;
     ptrszint indexes;
     ptrszint indexes_last;
-    MUTEX *lock_add;
-    MUTEX *lock_remove;
+    struct libqb_mutex *lock_add;
+    struct libqb_mutex *lock_remove;
 };
 
 // fwd refs
@@ -628,22 +572,28 @@ list *list_new(ptrszint structure_size) {
 
 list *list_new_threadsafe(ptrszint structure_size) {
     list *L = list_new(structure_size);
-    L->lock_add = new_mutex();
-    L->lock_remove = new_mutex();
+    L->lock_add = libqb_mutex_new();
+    L->lock_remove = libqb_mutex_new();
     return L;
 }
 
 ptrszint list_add(list *L) {
-    lock_mutex(L->lock_add);
+    if (L->lock_add)
+        libqb_mutex_lock(L->lock_add);
+
     ptrszint i;
     if (L->structures_freed) { // retrieve index from freed list if possible
-        lock_mutex(L->lock_remove);
+        if (L->lock_remove)
+            libqb_mutex_lock(L->lock_remove);
+
         i = L->structure_freed[L->structures_freed--];
         uint8 *structure;
         structure = (uint8 *)L->index[i];
         memset(structure, 0, L->user_structure_size);
         *(ptrszint *)(structure + L->user_structure_size) = i;
-        unlock_mutex(L->lock_remove);
+
+        if (L->lock_remove)
+            libqb_mutex_unlock(L->lock_remove);
     } else {
         // create new buffer?
         if ((L->structures + 1) > L->structures_last) {
@@ -676,20 +626,29 @@ ptrszint list_add(list *L) {
             L->index[i] = (ptrszint)(L->structure + (L->internal_structure_size * L->structures));
         }
     }
-    unlock_mutex(L->lock_add);
+
+    if (L->lock_add)
+        libqb_mutex_unlock(L->lock_add);
+
     return i;
 } // list_add
 
 ptrszint list_remove(list *L, ptrszint i) { // returns -1 on success, 0 on failure
-    lock_mutex(L->lock_remove);
+    if (L->lock_remove)
+        libqb_mutex_lock(L->lock_remove);
+
     if ((i < 1) || (i > L->indexes)) {
-        unlock_mutex(L->lock_remove);
+        if (L->lock_remove)
+            libqb_mutex_unlock(L->lock_remove);
+
         return 0;
     }
     uint8 *structure;
     structure = (uint8 *)(L->index[i]);
     if (!*(ptrszint *)(structure + L->user_structure_size)) {
-        unlock_mutex(L->lock_remove);
+        if (L->lock_remove)
+            libqb_mutex_unlock(L->lock_remove);
+
         return 0;
     }
     // expand buffer?
@@ -707,7 +666,10 @@ ptrszint list_remove(list *L, ptrszint i) { // returns -1 on success, 0 on failu
     L->structure_freed[L->structures_freed + 1] = i;
     *(ptrszint *)(structure + L->user_structure_size) = 0;
     L->structures_freed++;
-    unlock_mutex(L->lock_remove);
+
+    if (L->lock_remove)
+        libqb_mutex_unlock(L->lock_remove);
+
     return -1;
 };
 
