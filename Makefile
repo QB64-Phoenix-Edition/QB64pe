@@ -24,14 +24,20 @@ EXE_OBJS :=
 EXE_LIBS :=
 
 ifeq ($(OS),lnx)
+	lnx := y
+
 	PATH_INTERNAL := ./internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)/source
 	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)/temp$(TEMP_ID)
 	PATH_INTERNAL_C := $(PATH_INTERNAL)/c
+	PATH_LIBQB := $(PATH_INTERNAL_C)/libqb
 	CP := cp -r
 	RM := rm -fr
+	MKDIR := mkdir -p
 	OBJCOPY := objcopy
 	FIXPATH = $1
+	PLATFORM := posix
+	EXTENSION :=
 
 	# Check bitness by getting length of `long
 	# 64 bits on x86_64, 32 bits on x86
@@ -43,10 +49,13 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
+	win := y
+
 	PATH_INTERNAL := internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)\source
 	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)\temp$(TEMP_ID)
 	PATH_INTERNAL_C := $(PATH_INTERNAL)\c
+	PATH_LIBQB := $(PATH_INTERNAL_C)\libqb
 	SHELL := cmd
 	CP := xcopy /E /C /H /R /Y
 	AR := $(PATH_INTERNAL_C)\c_compiler\bin\ar.exe
@@ -56,7 +65,10 @@ ifeq ($(OS),win)
 	WINDRES := $(PATH_INTERNAL_C)\c_compiler\bin\windres.exe
 	ICON_OBJ := $(PATH_INTERNAL_TEMP)\icon.o
 	RM := del /Q
+	MKDIR := mkdir
 	FIXPATH = $(subst /,\,$1)
+	PLATFORM := windows
+	EXTENSION := .exe
 
 	# Check bitness by seeing which compiler we have
 	ifeq ($(wildcard $(PATH_INTERNAL_C)\c_compiler\i686-w64-mingw32),)
@@ -67,14 +79,20 @@ ifeq ($(OS),win)
 endif
 
 ifeq ($(OS),osx)
+	osx := y
+
 	PATH_INTERNAL := ./internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)/source
 	PATH_INTERNAL_TEMP := $(PATH_INTERNAL)/temp$(TEMP_ID)
 	PATH_INTERNAL_C := $(PATH_INTERNAL)/c
+	PATH_LIBQB := $(PATH_INTERNAL_C)/libqb
 	CP := cp -r
 	RM := rm -fr
+	MKDIR := mkdir -p
 	FIXPATH = $1
 	BITS := 64
+	PLATFORM := posix
+	EXTENSION :=
 endif
 
 ifeq ($(BITS),64)
@@ -91,9 +109,9 @@ ifdef BUILD_QB64
 	endif
 endif
 
-ifneq ($(filter clean,$(MAKECMDGOALS)),)
+ifneq ($(filter clean build-tests,$(MAKECMDGOALS)),)
 	# We have to define this for the Makefile to work,
-	# but it doesn't actually matter what it is since clean won't compile anything
+	# but it doesn't actually matter what it is since clean and build-tests don't compile an executable
 	EXE := blah
 endif
 
@@ -104,8 +122,9 @@ endif
 all: $(EXE)
 
 CLEAN_LIST :=
+CLEAN_DEP_LIST :=
 
-CXXFLAGS += -w
+CXXFLAGS += -w -std=gnu++11
 
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
@@ -148,6 +167,11 @@ endif
 	DEP_ICON_RC := y
 	DEP_SOCKETS := y
 endif
+
+include $(PATH_INTERNAL_C)/libqb/build.mk
+
+CXXFLAGS += -I$(PATH_LIBQB)/include
+EXE_LIBS += $(libqb-objs-y)
 
 include $(PATH_INTERNAL_C)/parts/audio/conversion/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/decode/mp3_mini/build.mk
@@ -343,7 +367,7 @@ $(PATH_INTERNAL_TEMP)/data.o: $(PATH_INTERNAL_TEMP)/data.bin
 CLEAN_LIST += $(wildcard $(PATH_INTERNAL_TEMP)/*)
 CLEAN_LIST := $(filter-out $(PATH_INTERNAL_TEMP)/temp.bin,$(CLEAN_LIST))
 
-clean:
+clean: $(CLEAN_DEP_LIST)
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
 
 $(EXE): $(EXE_OBJS) $(EXE_LIBS)
