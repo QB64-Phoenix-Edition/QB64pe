@@ -74,6 +74,10 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' }}
       run: .ci/compile.bat
 
+    - name: Test libqb
+      shell: bash
+      run: tests/run_c_tests.sh
+
     - name: Print QB64 Version
       run: ./qb64 -?
 
