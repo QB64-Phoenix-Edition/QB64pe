@@ -7,7 +7,7 @@ TEST_CFLAGS-y := -I'./tests/c/include' \
 
 TEST_CFLAGS-$(win) += -mconsole
 
-TEST_DEF_OBJS :=
+TEST_DEF_OBJS := tests/c/test.o
 
 # Defines the list of test sets
 
