@@ -54,6 +54,10 @@ jobs:
       shell: bash
       run: .ci/calculate_version.sh
 
+    - name: Read version for artifacts
+      shell: bash
+      run: echo "version=$(.ci/read-version.sh)" >> $GITHUB_ENV
+
     - name: Bootstrap compiler Linux/OSX
       if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
       run: .ci/bootstrap.sh ${{ matrix.prefix }}
@@ -79,7 +83,7 @@ jobs:
 
     - name: Create QB64 Artifact
       shell: bash
-      run: .ci/make-dist.sh ${{ matrix.os }}
+      run: .ci/make-dist.sh ${{ matrix.os }} "${{ env.version }}"
 
       # Note that compiling programs in dist does modify the ./dist and make it
       # dirty, but that's ok because we've already create the .7z or .tar.gz
@@ -98,13 +102,13 @@ jobs:
     - uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: qb64-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}
+        name: qb64-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
         path: |
           tests/results/
-          qb64_win-x86.7z
-          qb64_win-x64.7z
-          qb64_lnx.tar.gz
-          qb64_osx.tar.gz
+          qb64_win-x86*.7z
+          qb64_win-x64*.7z
+          qb64_lnx*.tar.gz
+          qb64_osx*.tar.gz
 
     - name: Create release
       if: startsWith(github.ref, 'refs/tags/v')
@@ -112,9 +116,9 @@ jobs:
       with:
         draft: true
         files: |
-          qb64_win-x86.7z
-          qb64_win-x64.7z
-          qb64_lnx.tar.gz
-          qb64_osx.tar.gz
+          qb64_win-x86*.7z
+          qb64_win-x64*.7z
+          qb64_lnx*.tar.gz
+          qb64_osx*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

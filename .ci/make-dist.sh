@@ -1,6 +1,7 @@
 #!/bin/bash
 
 buildPlatform=$1
+version=$2
 format=
 
 ARCHIVE_ROOT=qb64
@@ -44,7 +45,7 @@ cp -p ./internal/c/*      $DIST_ROOT/internal/c/
 
 case "$buildPlatform" in
     windows-latest)
-        filename="qb64_win-$PLATFORM.7z"
+        filename="qb64_win-$PLATFORM-$version.7z"
 
         format=7zip
 
@@ -53,7 +54,7 @@ case "$buildPlatform" in
         ;;
 
     ubuntu-latest)
-        filename="qb64_lnx.tar.gz"
+        filename="qb64_lnx-$version.tar.gz"
         format=tar
 
         # Not sure if we should distribute this
@@ -62,7 +63,7 @@ case "$buildPlatform" in
         ;;
 
     macos-latest)
-        filename="qb64_osx.tar.gz"
+        filename="qb64_osx-$version.tar.gz"
         format=tar
 
         cp -p ./qb64_start.command $DIST_ROOT
