@@ -399,7 +399,7 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Changes or customizes IDE color scheme"
         menu$(m, i) = "#Code Layout...": i = i + 1
         menuDesc$(m, i - 1) = "Changes auto-format features"
-        menu$(m, i) = "C++ C#ompiler Settings...": i = i + 1
+        menu$(m, i) = "C++ Co#mpiler Settings...": i = i + 1
         menuDesc$(m, i - 1) = "Change settings for compiling the C++ code"
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Language...": i = i + 1
