@@ -12523,7 +12523,12 @@ END IF
 
 CxxLibsExtra$ = CxxLibsExtra$ + " " + mylib$ + " " + mylibopt$
 
-makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(StrReplace$(path.exe$ + file$ + extension$, " ", "\ "))
+' Make and the shell don't like certain characters in the file name, so we
+' escape them to get them to handle them properly
+escapedExe$ = StrReplace$(path.exe$ + file$ + extension$, " ", "\ ")
+escapedExe$ = StrReplace$(escapedExe$, "$", "$$")
+
+makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(escapedExe$)
 makeline$ = makeline$ + " " + AddQuotes$("CXXFLAGS_EXTRA=" + CxxFlagsExtra$)
 makeline$ = makeline$ + " " + AddQuotes$("CFLAGS_EXTRA=" + CxxFlagsExtra$)
 makeline$ = makeline$ + " " + AddQuotes$("CXXLIBS_EXTRA=" + CxxLibsExtra$)
