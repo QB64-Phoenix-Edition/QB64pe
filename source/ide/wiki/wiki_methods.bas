@@ -116,7 +116,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
         OPEN outputFile$ FOR OUTPUT AS #fh
-        PRINT #fh, a$
+        PRINT #fh, a$;
         CLOSE #fh
     ELSE
         'Delete page, if empty or corrupted (force re-download on next access)
