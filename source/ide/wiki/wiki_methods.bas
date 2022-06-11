@@ -95,6 +95,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "&lt;", "<")
         a$ = StrReplace$(a$, "&gt;", ">")
         a$ = StrReplace$(a$, "&quot;", CHR$(34))
+        a$ = StrReplace$(a$, "&apos;", "'")
         '--- then other entities
         a$ = StrReplace$(a$, "&verbar;", "|")
         a$ = StrReplace$(a$, "&pi;", CHR$(227))
