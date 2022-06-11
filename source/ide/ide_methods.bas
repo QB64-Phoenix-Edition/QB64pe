@@ -5100,7 +5100,7 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF menu$(m, s) = "C++ C#ompiler Settings..." THEN
+            IF menu$(m, s) = "C++ Co#mpiler Settings..." THEN
                 PCOPY 2, 0
                 retval = ideCompilerSettingsBox
                 IF retval THEN idechangemade = 1: idelayoutallow = 2: startPausedPending = 0 'recompile if options changed
