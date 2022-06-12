@@ -2271,7 +2271,8 @@ FUNCTION ide2 (ignore)
             IF mCLICK THEN
                 IF (mY = idewy AND (mX >= idewx - 17 AND mX <= idewx - 4)) THEN 'view on wiki
                     launchWiki:
-                    url$ = StrReplace$(wikiBaseAddress$ + "/index.php?title=" + Back$(Help_Back_Pos), " ", "%20")
+                    url$ = wikiBaseAddress$ + "/index.php?title=" + Back$(Help_Back_Pos)
+                    url$ = StrReplace$(url$, " ", "%20"): url$ = StrReplace$(url$, "&", "%26")
                     IF INSTR(_OS$, "WIN") = 0 THEN
                         url$ = StrReplace$(url$, "$", "\$")
                         url$ = StrReplace$(url$, "&", "\&")
@@ -2596,6 +2597,7 @@ FUNCTION ide2 (ignore)
                                     IF (K$ = CHR$(13)) OR (mY = Help_cy - Help_sy + Help_wy1 AND mX = Help_cx - Help_sx + Help_wx1) THEN
                                         l$ = RIGHT$(l$, LEN(l$) - 5)
                                         l$ = StrReplace$(l$, " ", "%20")
+                                        l$ = StrReplace$(l$, "&", "%26")
                                         IF INSTR(_OS$, "WIN") = 0 THEN
                                             l$ = StrReplace$(l$, "$", "\$")
                                             l$ = StrReplace$(l$, "&", "\&")
