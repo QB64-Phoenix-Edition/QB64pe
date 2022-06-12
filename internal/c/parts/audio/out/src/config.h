@@ -1,9 +1,4 @@
-#define QB64_OS_H_NO_TYPES
-#ifdef WIN32
- #include "..\..\..\..\os.h"
-#else
- #include "../../../../os.h"
-#endif
+#include "../../../../libqb/include/libqb-common.h"
 
 #ifndef CONFIG_H
 #define CONFIG_H

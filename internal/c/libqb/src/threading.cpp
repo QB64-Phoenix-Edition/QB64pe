@@ -1,4 +1,6 @@
 
+#include "libqb-common.h"
+
 #include "mutex.h"
 #include "condvar.h"
 #include "completion.h"
