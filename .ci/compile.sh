@@ -1,5 +1,7 @@
 #!/bin/bash
 
+os=$1
+
 ./qb64_bootstrap -x -w source/qb64.bas
 SUCCESS=$?
 
@@ -11,6 +13,6 @@ rm internal/temp/qb64_bootstrap.sym
 
 mv internal/temp/* internal/source/
 
-make clean OS=lnx
+make clean OS=$os
 
 exit $SUCCESS

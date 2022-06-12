@@ -161,7 +161,7 @@ include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
 
 QBLIB_NAME := libqb_make_
 
-CLEAN_LIST += $(wildcard $(PATH_INTERNAL_C)/libqb/$(QBLIB_NAME)*.o)
+CLEAN_LIST += $(wildcard $(PATH_INTERNAL_C)/$(QBLIB_NAME)*.o)
 
 ifneq ($(filter y,$(DEP_GL)),)
 	CXXFLAGS += -DDEPENDENCY_GL
@@ -314,7 +314,7 @@ ifneq ($(filter y,$(DEP_DATA)),)
 	EXE_OBJS += $(PATH_INTERNAL_TEMP)/data.o
 endif
 
-QBLIB := $(PATH_INTERNAL_C)/libqb/$(QBLIB_NAME).o
+QBLIB := $(PATH_INTERNAL_C)/$(QBLIB_NAME).o
 
 ifneq ($(OS),osx)
 $(QBLIB): $(PATH_INTERNAL_C)/libqb.cpp
