@@ -32,7 +32,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
             a$ = SPACE$(LOF(fh))
             GET #fh, , a$
             CLOSE #fh
-            Wiki$ = a$
+            Wiki$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
             EXIT FUNCTION
         END IF
     END IF
