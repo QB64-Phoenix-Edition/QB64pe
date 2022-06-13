@@ -1084,7 +1084,7 @@ id.args = 2
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "?[,?]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_COPYIMAGE[(imageHandle&[, mode])]"
+id.hr_syntax = "_COPYIMAGE(imageHandle&[, mode])"
 regid
 
 'IMAGE SELECTION
@@ -1873,7 +1873,7 @@ id.callname = "sub__sndrawdone"
 id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
-id.hr_syntax = "_SNDRAWDONE"
+id.hr_syntax = "_SNDRAWDONE [pipeHandle&]"
 regid
 
 clearid
@@ -1892,7 +1892,7 @@ id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
 id.ret = DOUBLETYPE - ISPOINTER
-id.hr_syntax = "_SNDRAWLEN"
+id.hr_syntax = "_SNDRAWLEN [pipeHandle&]"
 regid
 
 clearid
