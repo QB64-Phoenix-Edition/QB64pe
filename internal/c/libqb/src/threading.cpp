@@ -17,17 +17,15 @@ void completion_clear(struct completion *comp) {
 }
 
 void completion_wait(struct completion *comp) {
-    libqb_mutex_lock(comp->mutex);
+    libqb_mutex_guard guard(comp->mutex);
 
     while (!comp->finished)
         libqb_condvar_wait(comp->var, comp->mutex);
-
-    libqb_mutex_unlock(comp->mutex);
 }
 
 void completion_finish(struct completion *comp) {
-    libqb_mutex_lock(comp->mutex);
+    libqb_mutex_guard guard(comp->mutex);
+
     comp->finished = 1;
     libqb_condvar_broadcast(comp->var);
-    libqb_mutex_unlock(comp->mutex);
 }
