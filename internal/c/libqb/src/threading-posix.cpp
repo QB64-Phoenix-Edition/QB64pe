@@ -31,16 +31,10 @@ void libqb_mutex_free(struct libqb_mutex *mutex) {
 }
 
 void libqb_mutex_lock(struct libqb_mutex *m) {
-    if (m == NULL)
-        return;
-
     pthread_mutex_lock(&m->mtx);
 }
 
 void libqb_mutex_unlock(struct libqb_mutex *m) {
-    if (m == NULL)
-        return;
-
     pthread_mutex_unlock(&m->mtx);
 }
 
