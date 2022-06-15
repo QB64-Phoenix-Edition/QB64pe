@@ -2273,6 +2273,7 @@ FUNCTION ide2 (ignore)
                     launchWiki:
                     url$ = wikiBaseAddress$ + "/index.php?title=" + Back$(Help_Back_Pos)
                     url$ = StrReplace$(url$, " ", "%20"): url$ = StrReplace$(url$, "&", "%26")
+                    url$ = StrReplace$(url$, "+", "%2B")
                     IF INSTR(_OS$, "WIN") = 0 THEN
                         url$ = StrReplace$(url$, "$", "\$")
                         url$ = StrReplace$(url$, "&", "\&")
@@ -18867,9 +18868,9 @@ FUNCTION ideupdatehelpbox
                         FOR i = 1 TO LEN(l$)
                             c = ASC(l$, i)
                             SELECT CASE c
-                                CASE 32 '                                    '(space)
+                                CASE 32 '                                        '(space)
                                     PageName2$ = PageName2$ + "_"
-                                CASE 34, 38, 42, 47, 58, 60, 62, 63, 92, 124 '("&*/:<>?\|)
+                                CASE 34, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("&*+/:<>?\|)
                                     PageName2$ = PageName2$ + "%" + HEX$(c)
                                 CASE ELSE
                                     PageName2$ = PageName2$ + CHR$(c)
