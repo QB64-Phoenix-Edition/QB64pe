@@ -13,6 +13,10 @@ rm internal/temp/qb64_bootstrap.sym
 
 mv internal/temp/* internal/source/
 
+
+# Build libqb test executables
+make -j8 OS=$os build-tests
+
 make clean OS=$os
 
 exit $SUCCESS
