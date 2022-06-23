@@ -2271,7 +2271,9 @@ FUNCTION ide2 (ignore)
             IF mCLICK THEN
                 IF (mY = idewy AND (mX >= idewx - 17 AND mX <= idewx - 4)) THEN 'view on wiki
                     launchWiki:
-                    url$ = StrReplace$(wikiBaseAddress$ + "/index.php?title=" + Back$(Help_Back_Pos), " ", "%20")
+                    url$ = wikiBaseAddress$ + "/index.php?title=" + Back$(Help_Back_Pos)
+                    url$ = StrReplace$(url$, " ", "%20"): url$ = StrReplace$(url$, "&", "%26")
+                    url$ = StrReplace$(url$, "+", "%2B")
                     IF INSTR(_OS$, "WIN") = 0 THEN
                         url$ = StrReplace$(url$, "$", "\$")
                         url$ = StrReplace$(url$, "&", "\&")
@@ -2596,6 +2598,7 @@ FUNCTION ide2 (ignore)
                                     IF (K$ = CHR$(13)) OR (mY = Help_cy - Help_sy + Help_wy1 AND mX = Help_cx - Help_sx + Help_wx1) THEN
                                         l$ = RIGHT$(l$, LEN(l$) - 5)
                                         l$ = StrReplace$(l$, " ", "%20")
+                                        l$ = StrReplace$(l$, "&", "%26")
                                         IF INSTR(_OS$, "WIN") = 0 THEN
                                             l$ = StrReplace$(l$, "$", "\$")
                                             l$ = StrReplace$(l$, "&", "\&")
@@ -18865,9 +18868,9 @@ FUNCTION ideupdatehelpbox
                         FOR i = 1 TO LEN(l$)
                             c = ASC(l$, i)
                             SELECT CASE c
-                                CASE 32 '                                    '(space)
+                                CASE 32 '                                        '(space)
                                     PageName2$ = PageName2$ + "_"
-                                CASE 34, 38, 42, 47, 58, 60, 62, 63, 92, 124 '("&*/:<>?\|)
+                                CASE 34, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("&*+/:<>?\|)
                                     PageName2$ = PageName2$ + "%" + HEX$(c)
                                 CASE ELSE
                                     PageName2$ = PageName2$ + CHR$(c)
