@@ -294,8 +294,8 @@ SUB WikiParse (a$) 'Wiki page interpret
     '---------------------
     'at start of line only
     '---------------------
-    ' *  = dot list point
-    ' ** = sub (ie. further indented) dot list point
+    ' *  or #  = dot list point
+    ' ** or ## = sub (ie. further indented) dot list point
     ' ;def:desc = full definition/description list
     ' :desc     = description only, but indented as in a full def/desc list
     ' ;* def:desc = combi list, list dot always belongs to description
@@ -508,16 +508,21 @@ SUB WikiParse (a$) 'Wiki page interpret
                 i = i + 1
                 link = 0
                 text$ = link$
-                i2 = INSTR(link$, "|")
+                i2 = INSTR(link$, "|") 'pipe link?
                 IF i2 > 0 THEN
-                    text$ = RIGHT$(link$, LEN(link$) - i2)
-                    link$ = LEFT$(link$, i2 - 1)
+                    text$ = RIGHT$(link$, LEN(link$) - i2) 'text part
+                    link$ = LEFT$(link$, i2 - 1) '         'link part
                 END IF
-
-                IF INSTR(link$, "#") THEN 'local page links not supported
-                    Help_AddTxt text$, 8, 0
-                    GOTO charDone
-                ELSEIF LEFT$(link$, 9) = "Category:" THEN 'ignore category links
+                i2 = INSTR(link$, "#") 'local link?
+                IF i2 > 0 THEN
+                    link$ = LEFT$(link$, i2 - 1) 'link to TOP
+                    IF link$ = "" THEN
+                        IF LEFT$(text$, 1) = "#" THEN text$ = MID$(text$, 2)
+                        Help_AddTxt text$, 8, 0
+                        GOTO charDone
+                    END IF
+                END IF
+                IF LEFT$(link$, 9) = "Category:" THEN 'ignore category links
                     Help_CheckRemoveBlankLine
                     GOTO charDone
                 END IF
