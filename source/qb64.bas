@@ -12547,7 +12547,7 @@ IF os$ = "WIN" THEN
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
-            SHELL _HIDE "internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >internal\temp\nm_output.txt"
+            SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >internal\temp\nm_output.txt"
             fh = FREEFILE
             s$ = " " + ResolveStaticFunction_Name(x) + "("
             OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
@@ -12602,7 +12602,7 @@ IF os$ = "WIN" THEN
             END IF
 
             IF n = 0 THEN 'a C++ dynamic object library?
-                SHELL _HIDE "internal\c\c_compiler\bin\nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >.\internal\temp\nm_output_dynamic.txt"
+                SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >.\internal\temp\nm_output_dynamic.txt"
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
                 OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
