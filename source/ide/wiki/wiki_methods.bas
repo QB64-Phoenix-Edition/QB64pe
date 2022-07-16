@@ -7,7 +7,7 @@ FUNCTION Back2BackName$ (a$)
 END FUNCTION
 
 FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
-    Help_PageLoaded$ = PageName$
+    IF LEFT$(PageName$, 9) <> "Template:" THEN Help_PageLoaded$ = PageName$
 
     'Escape all invalid and other critical chars in filenames
     PageName2$ = ""
@@ -700,6 +700,15 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
+
+                'Template wrapped plugin
+                IF RIGHT$(cb$, 6) = "Plugin" AND Help_LockParse = 0 THEN 'no plugins in blocks
+                    pit$ = Wiki$("Template:" + cb$)
+                    IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
+                        a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
+                        n = n + LEN(pit$)
+                    END IF
                 END IF
 
                 'Template wrapped table
