@@ -5338,8 +5338,8 @@ FUNCTION ide2 (ignore)
                 IF idehelp THEN
                     Help_IgnoreCache = 1
                     a$ = Wiki$(Back$(Help_Back_Pos))
-                    Help_IgnoreCache = 0
                     WikiParse a$
+                    Help_IgnoreCache = 0
                 END IF
                 GOTO ideloop
             END IF
