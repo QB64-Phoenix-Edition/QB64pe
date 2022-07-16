@@ -22,8 +22,9 @@
 
 // HACK: internal\c/os.h: declaration does not declare anything [-fpermissive]
 // TODO: Investigate a better way of dealing with this
-// Something in miniaudio does not like the int64 define from os.h
-// The rest are typedef'd in stb_vorbis.c
+// Something in miniaudio does not like the int64 defined in os.h
+// The remaining are typedef'd in stb_vorbis.c
+// I really don't want to touch miniaudio and rest of the stuff because I'll continue refreshing these with newer versions
 #undef int64
 #undef int32
 #undef uint32
@@ -113,7 +114,7 @@ typedef struct {
     ma_bool8 initializationFailed; // This is set to true if a past initialization attempt failed
     ma_engine maEngine;            // This is the primary miniaudio "engine" context. Everything happens using this!
     ma_result maResult;            // This is the result of the last miniaudio operation (used for trapping errors)
-    int32 sndInternal;             // Internal sound handle that we will use for Beep() & Sound()
+    int32 sndInternal;             // Internal sound handle that we will use for Beep() & Sound(). TODO: Do we really need this? See Beep() and Sound()
     list *soundHandles;            // This is the audio handle list used by the engine and by everything else
 } AudioEngine;
 //-----------------------------------------------------------------------------------------------------
@@ -121,7 +122,7 @@ typedef struct {
 //-----------------------------------------------------------------------------------------------------
 // GLOBAL VARIABLES
 //-----------------------------------------------------------------------------------------------------
-// This is the global audio engine state
+// This keeps track of the audio engine state
 static AudioEngine audioEngine = {0}; // Zero the whole structure
 //-----------------------------------------------------------------------------------------------------
 
@@ -216,8 +217,9 @@ static void InitializeSoundHandle(SoundHandle *snd) {
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
 void sub_sound(double frequency, double lengthInClockTicks) {
-    // TODO: miniaudio has waveform API that can be used to generare various kind of waves
+    // TODO: miniaudio has waveform API that can be used to generare various kind of sound waves
     // We can use that or just put this through sndraw just like the OpenAL code did
+    // Hmmm... decisions, decisions... XD
 }
 
 /// <summary>
@@ -440,8 +442,8 @@ void sub__sndplaycopy(int32 src_handle, double volume, int32 passed) {
         if (passed)
             ma_sound_set_volume(&dst_snd->maSound, volume);
 
-        sub__sndplay(dst_handle);                       // Play the sound
-        dst_snd->autoKill = MA_TRUE;                    // Set to auto kill
+        sub__sndplay(dst_handle);    // Play the sound
+        dst_snd->autoKill = MA_TRUE; // Set to auto kill
     }
 }
 
@@ -467,7 +469,7 @@ void sub__sndplayfile(qbs *fileName, int32 sync, double volume, int32 passed) {
 
     // TODO:
     //	Implement volume
-    //	Emulate QB64 path behavior
+    //	Emulate QB64 path behavior?
     if (audioEngine.isInitialized) {
         ma_engine_play_sound(&audioEngine.maEngine, (const char *)fileNameZ->chr, NULL);
     }
@@ -561,7 +563,9 @@ void sub__sndloop(int32 handle) {
 /// <param name="z"></param>
 /// <param name="channel"></param>
 /// <param name="passed"></param>
-void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int32 passed) {}
+void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int32 passed) {
+    // TODO: This should be easy because miniaudio support stereo panning and also OpenAL style positional audio
+}
 
 /// <summary>
 ///
@@ -647,7 +651,16 @@ double func__sndrawlen(int32 handle, int32 passed) { return 0; }
 /// <param name="i"></param>
 /// <param name="targetChannel"></param>
 /// <returns></returns>
-mem_block func__memsound(int32 i, int32 targetChannel) {}
+mem_block func__memsound(int32 i, int32 targetChannel) {
+    // TODO: Out of all the functions, this is probably going to be the most difficult or kludgy or both
+    //  Since we want miniaudio to manage all audio resouces, audio data is stored how miniaudio wants in memory
+    //  In miniaudio's case, stereo audio data is store as iterleaved in memory. Apparently, this is true for many audio libs out there
+    //  This is completely unlike what the old OpenAL code was doing
+    //  One way to implement this is to have two temp buffers - one for left and one for right and let the user use those
+    //  When the user is done using and closes the mem object, then the interleave data should be created from the buffers for miniaudio (yuck!)
+    //  The second way is to simply expose the miniaudio's interleaved buffer to the user. This will break compatibility. But then, how many people really use
+    //  this stuff?
+}
 
 /// <summary>
 ///
@@ -658,7 +671,14 @@ mem_block func__memsound(int32 i, int32 targetChannel) {}
 /// <param name="bits"></param>
 /// <param name="passed"></param>
 /// <returns></returns>
-int32 func__newsound(int32 size, int32 rate, int32 channels, int32 bits, int32 passed) { return 0; }
+int32 func__newsound(int32 size, int32 rate, int32 channels, int32 bits, int32 passed) {
+    // This is a new addition to the QBPE Audio API
+    // This allows a user to create a empty sound buffer with a given specification
+    // The user then can fill the buffer with whatever they want and play it
+    // This obviously needs to be greenlit by the QBPE maintainers
+
+    return 0;
+}
 
 /// <summary>
 /// This initializes the QBPE audio subsystem.
