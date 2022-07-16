@@ -15,6 +15,14 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
-#include "miniaudio/audio.h"
+// Enable Ogg Vorbis decoding
+#define STB_VORBIS_HEADER_ONLY
+#include "extras/stb_vorbis.c"
+// The main miniaudio header
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
+// The stb_vorbis implementation must come after the implementation of miniaudio
+#undef STB_VORBIS_HEADER_ONLY
+#include "extras/stb_vorbis.c"
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------

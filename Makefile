@@ -176,7 +176,7 @@ EXE_LIBS += $(libqb-objs-y)
 # include $(PATH_INTERNAL_C)/parts/audio/conversion/build.mk
 # include $(PATH_INTERNAL_C)/parts/audio/decode/mp3_mini/build.mk
 # include $(PATH_INTERNAL_C)/parts/audio/decode/ogg/build.mk
-# include $(PATH_INTERNAL_C)/parts/audio/out/build.mk
+include $(PATH_INTERNAL_C)/parts/audio/build.mk
 include $(PATH_INTERNAL_C)/parts/core/build.mk
 include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
 include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
