@@ -12,7 +12,18 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-// HACK for: internal\c/os.h: declaration does not declare anything [-fpermissive]
+// TODO: We'll need to enabled the conditional compile below once our code is full implemented
+// #ifndef DEPENDENCY_AUDIO_OUT
+// // Stubs:
+// void snd_mainloop() { return; }
+// void snd_init() { return; }
+// void snd_un_init() { return; }
+// #else
+
+// HACK: internal\c/os.h: declaration does not declare anything [-fpermissive]
+// TODO: Investigate a better way of dealing with this
+// Something in miniaudio does not like the int64 define from os.h
+// The rest are typedef'd in stb_vorbis.c
 #undef int64
 #undef int32
 #undef uint32
@@ -199,26 +210,31 @@ static void InitializeSoundHandle(SoundHandle *snd) {
 }
 
 /// <summary>
-/// This generates a default 'beep' sound.
-/// Sends the sound samples for playback and immediately returns.
-/// This is in-line with the behavior of 'Sound' and 'Play'.
-/// </summary>
-void sub_beep() {}
-
-/// <summary>
 /// This generates a sound at the specified frequency for the specified amount of time.
 /// Returns immediately after sending the data for playback.
 /// </summary>
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
-void sub_sound(double frequency, double lengthInClockTicks) {}
+void sub_sound(double frequency, double lengthInClockTicks) {
+    // TODO: miniaudio has waveform API that can be used to generare various kind of waves
+    // We can use that or just put this through sndraw just like the OpenAL code did
+}
+
+/// <summary>
+/// This generates a default 'beep' sound.
+/// Sends the sound samples for playback and immediately returns.
+/// This is in-line with the behavior of 'Sound' and 'Play'.
+/// </summary>
+void sub_beep() { sub_sound(783.99, 0.25); }
 
 /// <summary>
 /// Processes and plays the MML specified in the string.
 /// Returns immediately after it is completed submitting all samples for playback.
 /// </summary>
 /// <param name="str">The string to play</param>
-void sub_play(qbs *str) {}
+void sub_play(qbs *str) {
+    // TODO: We'll probably implement this uing sndraw like the old OpenAL code
+}
 
 /// <summary>
 /// This returns the sample rate from ma engine if ma is initialized.
@@ -369,8 +385,9 @@ void sub__sndplay(int32 handle) {
         if (!snd || snd->type != SOUND_STATIC)
             return;
 
-        // Reset position to zero only if we are not looping or we've reached the end of the sound
-        if (!ma_sound_is_looping(&snd->maSound) || ma_sound_at_end(&snd->maSound)) {
+        // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
+        // This is based on the old OpenAl-soft code behavior
+        if (ma_sound_is_playing(&snd->maSound) && (!ma_sound_is_looping(&snd->maSound) || ma_sound_at_end(&snd->maSound))) {
             audioEngine.maResult = ma_sound_seek_to_pcm_frame(&snd->maSound, 0);
             assert(audioEngine.maResult == MA_SUCCESS);
         }
@@ -387,12 +404,46 @@ void sub__sndplay(int32 handle) {
 }
 
 /// <summary>
-///
+/// This sets the volume of a sound loaded in memory using a sound handle.
 /// </summary>
-/// <param name="handle"></param>
-/// <param name="volume"></param>
-/// <param name="passed"></param>
-void sub__sndplaycopy(int32 handle, double volume, int32 passed) {}
+/// <param name="handle">A sound handle</param>
+/// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
+void sub__sndvol(int32 handle, float volume) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
+        SoundHandle *snd = (SoundHandle *)list_get(audioEngine.soundHandles, handle);
+        if (!snd || snd->type != SOUND_STATIC)
+            return;
+
+        ma_sound_set_volume(&snd->maSound, volume);
+    }
+}
+
+/// <summary>
+/// This copies a sound, plays it, and automatically closes the copy
+/// </summary>
+/// <param name="handle">A sound handle to copy</param>
+/// <param name="volume">The volume at which the sound should be played (0.0 - 1.0)</param>
+/// <param name="passed">How many parameters were passed?</param>
+void sub__sndplaycopy(int32 src_handle, double volume, int32 passed) {
+    // We are simply going to use sndcopy, then setup some stuff like volume and autokill and then use sndplay
+    int32 dst_handle = func__sndcopy(src_handle);
+
+    // Check if we succeeded and then proceed
+    if (dst_handle > 0) {
+        SoundHandle *dst_snd = (SoundHandle *)list_get(audioEngine.soundHandles, dst_handle);
+        if (!dst_snd || dst_snd->type != SOUND_STATIC) {
+            sub__sndclose(dst_handle);
+            return;
+        }
+
+        // Set the volume if requested
+        if (passed)
+            ma_sound_set_volume(&dst_snd->maSound, volume);
+
+        sub__sndplay(dst_handle);                       // Play the sound
+        dst_snd->autoKill = MA_TRUE;                    // Set to auto kill
+    }
+}
 
 /// <summary>
 /// This is a "fire and forget" style of function.
@@ -474,21 +525,6 @@ int32 func__sndpaused(int32 handle) {
 }
 
 /// <summary>
-/// This sets the volume of a sound loaded in memory using a sound handle.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
-void sub__sndvol(int32 handle, float volume) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
-        SoundHandle *snd = (SoundHandle *)list_get(audioEngine.soundHandles, handle);
-        if (!snd || snd->type != SOUND_STATIC)
-            return;
-
-        ma_sound_set_volume(&snd->maSound, volume);
-    }
-}
-
-/// <summary>
 /// This is like sub__sndplay but the sound is looped
 /// </summary>
 /// <param name="handle"></param>
@@ -498,8 +534,9 @@ void sub__sndloop(int32 handle) {
         if (!snd || snd->type != SOUND_STATIC)
             return;
 
-        // Reset cursor to zero only if we are not looping or we've reached the end of the sound
-        if (!ma_sound_is_looping(&snd->maSound) || ma_sound_at_end(&snd->maSound)) {
+        // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
+        // This is based on the old OpenAl-soft code behavior
+        if (ma_sound_is_playing(&snd->maSound) && (!ma_sound_is_looping(&snd->maSound) || ma_sound_at_end(&snd->maSound))) {
             audioEngine.maResult = ma_sound_seek_to_pcm_frame(&snd->maSound, 0);
             assert(audioEngine.maResult == MA_SUCCESS);
         }
@@ -664,8 +701,26 @@ void snd_init() {
 /// </summary>
 void snd_un_init() {
     if (audioEngine.isInitialized) {
-        // Free more stuff here?
-        // TODO: Free all internal handles here
+        // Free all internal handles here
+        for (int32 handle = 1; handle <= audioEngine.soundHandles->indexes; handle++) {
+            SoundHandle *snd;
+            snd = (SoundHandle *)list_get(audioEngine.soundHandles, handle);
+
+            if (snd) {
+                switch (snd->type) {
+                case SOUND_STATIC:
+                    sub__sndclose(handle);
+                    break;
+
+                case SOUND_RAW:
+                    // TODO:
+                    break;
+
+                default:
+                    assert(MA_TRUE); // It should not come here
+                }
+            }
+        }
 
         // Shutdown miniaudio
         ma_engine_uninit(&audioEngine.maEngine);
@@ -686,15 +741,20 @@ void snd_un_init() {
 void snd_mainloop() {
     if (audioEngine.isInitialized) {
         // Scan through the list and find anything that we need to stop and close
-        for (int32 listIndex = 1; listIndex <= audioEngine.soundHandles->indexes; listIndex++) {
+        for (int32 handle = 1; handle <= audioEngine.soundHandles->indexes; handle++) {
             SoundHandle *snd;
-            snd = (SoundHandle *)list_get(audioEngine.soundHandles, listIndex);
+            snd = (SoundHandle *)list_get(audioEngine.soundHandles, handle);
+
             if (snd) {
                 // We are only looking for stuff that is set to auto-destruct
                 if (snd->autoKill) {
                     switch (snd->type) {
                     case SOUND_STATIC:
-                        // TODO:
+                        // Dispose the sound if it has finished playing
+                        // Note that looping sounds can never be disposed here
+                        if (!ma_sound_is_playing(&snd->maSound)) {
+                            sub__sndclose(handle);
+                        }
                         break;
 
                     case SOUND_RAW:
@@ -714,4 +774,5 @@ void snd_mainloop() {
 //-----------------------------------------------------------------------------------------------------
 // HACK for: internal\c/os.h: error: declaration does not declare anything [-fpermissive]
 #define int64 long long int
+// #endif
 //-----------------------------------------------------------------------------------------------------
