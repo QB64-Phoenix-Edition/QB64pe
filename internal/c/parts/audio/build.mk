@@ -1,9 +1,9 @@
-# Include the correct files if DEPENDENCY_AUDIO_OUT is defined
-ifdef DEPENDENCY_AUDIO_OUT
+# Include the correct files if DEP_AUDIO_OUT is defined
+ifdef DEP_AUDIO_OUT
 MINIAUDIO_SRCS += miniaudio_impl.cpp
 MINIAUDIO_SRCS += audio.cpp
 else
-# If DEP_AUDIO_MINIAUDIO is blank, then we compile a stub that doesn't do anything
+# If DEP_AUDIO_OUT is undefined, then we compile a stub that doesn't do anything
 MINIAUDIO_SRCS += stub_audio.cpp
 endif
 
