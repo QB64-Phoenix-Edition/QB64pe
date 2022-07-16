@@ -22105,18 +22105,18 @@ double func_sqr(double value) {
 }
 
 #ifdef QB64_BACKSLASH_FILESYSTEM
-#    include "parts\\audio\\out\\src.c"
+#    include "parts\\audio\\src.c"
 #else
-#    include "parts/audio/out/src.c"
+#    include "parts/audio/src.c"
 #endif
 
-#ifdef QB64_BACKSLASH_FILESYSTEM
+/* #ifdef QB64_BACKSLASH_FILESYSTEM
 #    include "parts\\audio\\conversion\\src.c"
 #    include "parts\\audio\\decode\\src.c"
 #else
 #    include "parts/audio/conversion/src.c"
 #    include "parts/audio/decode/src.c"
-#endif
+#endif */
 
 #ifdef DEPENDENCY_ZLIB
 #    ifdef QB64_BACKSLASH_FILESYSTEM
