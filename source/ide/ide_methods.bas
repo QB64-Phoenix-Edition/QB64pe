@@ -5338,7 +5338,7 @@ FUNCTION ide2 (ignore)
                 IF idehelp THEN
                     Help_IgnoreCache = 1
                     a$ = Wiki$(Back$(Help_Back_Pos))
-                    WikiParse a$
+                    WikiParse a$ 'reparse updated page incl. plugin templates
                     Help_IgnoreCache = 0
                 END IF
                 GOTO ideloop
@@ -5415,7 +5415,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Update All #Pages..." THEN
                 PCOPY 2, 0
-                q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
+                q$ = ideyesnobox("Update Help", "This can take up to 20 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
                 IF q$ = "Y" THEN
                     Help_Recaching = 1: Help_IgnoreCache = 1
@@ -18853,7 +18853,7 @@ FUNCTION ideupdatehelpbox
                 FullMessage$(1) = "Regenerating keyword list..."
                 a$ = Wiki$("Keyword Reference - Alphabetical")
                 IF INSTR(a$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO
-                WikiParse a$
+                WikiParse a$ 'update links.bin and check for plugin templates
                 UpdateStep = UpdateStep + 1
             CASE 4
                 'Add all linked pages to download list (if not already in list)
@@ -18910,6 +18910,7 @@ FUNCTION ideupdatehelpbox
                         n = n + 1
                         FullMessage$(2) = "Page title: " + f2$
                         ignore$ = Wiki$(f2$)
+                        WikiParse ignore$ 'just check for plugin templates
                     END IF
                 ELSE
                     UpdateStep = UpdateStep + 1
