@@ -19,7 +19,11 @@
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
 #include "libqb-common.h"
-// This is required for the 'qbs' stuff. Not sure if it is OK to include this header like this
+// Although Matt says we should not be doing this, this has worked out to be ok so far
+// We need 'qbs' and also the 'mem' stuff from here
+// I am not using 'list' anymore and have migrated the code to use C++ vectors instead
+// We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
+// For now, we'll wait for Matt until he sorts out things to smaller and logical files
 #include "../../../libqb.h"
 //-----------------------------------------------------------------------------------------------------
 
@@ -29,6 +33,7 @@
 void sub_sound(double frequency, double lengthInClockTicks);
 void sub_beep();
 void sub_play(qbs *str);
+
 int32 func__sndrate();
 int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed);
 void sub__sndclose(int32 handle);
@@ -47,12 +52,15 @@ double func__sndgetpos(int32 handle);
 void sub__sndsetpos(int32 handle, double seconds);
 void sub__sndlimit(int32 handle, double limit);
 void sub__sndstop(int32 handle);
+
 int32 func__sndopenraw();
 void sub__sndraw(float left, float right, int32 handle, int32 passed);
 void sub__sndrawdone(int32 handle, int32 passed);
 double func__sndrawlen(int32 handle, int32 passed);
+
 mem_block func__memsound(int32 i, int32 targetChannel);
 int32 func__newsound(int32 size, int32 rate, int32 channels, int32 bits, int32 passed);
+
 void snd_init();
 void snd_un_init();
 void snd_mainloop();
