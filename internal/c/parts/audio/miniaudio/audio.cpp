@@ -62,24 +62,6 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
 // STRUCTURES
 //-----------------------------------------------------------------------------------------------------
 /// <summary>
-/// This is a node in a queue that can hold a single floating point sample frame.
-/// </summary>
-typedef struct SampleFrameNode {
-    struct SampleFrameNode *next;
-    float leftSample;
-    float rightSample;
-} SampleFrameNode;
-
-/// <summary>
-/// This is a queue of type SampleFrameNode.
-/// </summary>
-typedef struct {
-    SampleFrameNode *first;
-    SampleFrameNode *last;
-    size_t sampleFrames;
-} SampleFrameQueue;
-
-/// <summary>
 /// Type of sound
 /// </summary>
 typedef enum {
@@ -99,7 +81,7 @@ typedef struct {
     ma_bool8 isInternal;               // Is this a sound handle that is used internally by the audio engine?
     ma_sound maSound;                  // miniaudio sound
     ma_uint32 maFlags;                 // miniaudio flags that were used when initializing the sound
-    SampleFrameQueue sampleFrameQueue; // Raw sample frame queue
+    // TODO: SampleFrameQueue sampleFrameQueue; // Raw sample frame queue
 } SoundHandle;
 
 /// <summary>
@@ -125,72 +107,6 @@ static AudioEngine audioEngine = {0};
 //-----------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-----------------------------------------------------------------------------------------------------
-/// <summary>
-/// This pushes a sample frame at the back of the queue.
-/// Note that in QBPE all samples frames are assumed to be stereo.
-/// Mono sample frames are simply simulated by playing the same data from left and right.
-/// For this to work correctly the queue (q) must zeroed out by the user before use!
-/// </summary>
-/// <param name="q">A pointer to the queue</param>
-/// <param name="l">The left sample</param>
-/// <param name="r">The right sample</param>
-/// <returns>Returns true if operation was successful</returns>
-static ma_bool8 PushSampleFrameBack(SampleFrameQueue *q, float l, float r) {
-    // Attempt to allocate a node
-    SampleFrameNode *node = (SampleFrameNode *)malloc(sizeof(SampleFrameNode));
-
-    // Return false if memory allocation failed
-    if (!node)
-        return MA_FALSE;
-
-    // Save the data
-    node->leftSample = l;
-    node->rightSample = r;
-    node->next = NULL; // Set the next node for node to NULL
-
-    if (q->sampleFrames)
-        q->last->next = node; // Add the node to the last node if we have samples frames in the queue
-    else
-        q->first = node; // Else this is the first node
-
-    q->last = node;    // The last item in the queue is node
-    q->sampleFrames++; // Increase the frame count
-
-    return MA_TRUE;
-}
-
-/// <summary>
-/// This pops a sample frame at the front of the queue.
-/// The sample frame can be accessed before popping with q->first.leftSample and q->first.rightSample.
-/// </summary>
-/// <param name="q">A pointer to the queue</param>
-/// <param name="l">Pointer to left sample</param>
-/// <param name="r">Pointer to right sample</param>
-/// <returns>Returns true if we were able to pop. False means the queue is empty</returns>
-static ma_bool8 PopSampleFrameFront(SampleFrameQueue *q, float *l, float *r) {
-    // Only if the queue has some sample frames then...
-    if (q->sampleFrames) {
-        SampleFrameNode *node = q->first; // Set node to the first frame in the queue
-
-        q->sampleFrames--;     // Decrement the frame count now so that we know what to do with 'last'
-        q->first = node->next; // Detach the node. If this is the last node then 'first' will be NULL cause node->next is NULL
-
-        if (!q->sampleFrames)
-            q->last = NULL; // This means that node was the last node
-
-        // Retrieve the left and right samples
-        *l = node->leftSample;
-        *r = node->rightSample;
-
-        // Free the node
-        free(node);
-
-        return MA_TRUE;
-    }
-
-    return MA_FALSE;
-}
-
 /// <summary>
 /// This allocates a sound handle.
 /// It will return -1 on error.
@@ -244,7 +160,7 @@ static ma_bool8 InitializeSoundHandle(int32 handle) {
     if (handle >= 0 && handle < audioEngine.soundHandles.size() && !audioEngine.soundHandles[handle]->isUsed) {
         audioEngine.soundHandles[handle]->type = SOUND_NONE;
         audioEngine.soundHandles[handle]->autoKill = MA_FALSE;
-        audioEngine.soundHandles[handle]->sampleFrameQueue = {0};
+        // TODO: audioEngine.soundHandles[handle]->sampleFrameQueue = {0};
         audioEngine.soundHandles[handle]->maSound = {0};
         // We do not use pitch shifting, so this will give a little performance boost
         audioEngine.soundHandles[handle]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_WAIT_INIT;
@@ -582,7 +498,18 @@ void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int3
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
-            ma_sound_set_position(&audioEngine.soundHandles[handle]->maSound, x, y, z);               // Use full 3D positioning
+
+            ma_vec3f v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound); // Get the current position in 3D space
+
+            // Set the previous values of x, y, z if these were not passed
+            if (!(passed & 1))
+                x = v.x;
+            if (!(passed & 2))
+                y = v.y;
+            if (!(passed & 4))
+                z = v.z;
+
+            ma_sound_set_position(&audioEngine.soundHandles[handle]->maSound, x, y, z); // Use full 3D positioning
         } else {
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
             ma_sound_set_pan(&audioEngine.soundHandles[handle]->maSound, x);                           // Just use stereo panning
