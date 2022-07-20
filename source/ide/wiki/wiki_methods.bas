@@ -370,8 +370,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 wla$ = wikiLookAhead$(a$, i + 1, "</center>")
-                IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                    i = i + LEN(wla$) + 9 'ignore TOC links
+                IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "#top") > 0 OR INSTR(wla$, "to Top") > 0 THEN
+                    i = i + LEN(wla$) + 9 'ignore TOC/TOP links
                 ELSE
                     Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                     Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center content
@@ -392,8 +392,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                 FOR ii = i TO LEN(a$) - 1
                     IF MID$(a$, ii, 1) = ">" THEN
                         wla$ = wikiLookAhead$(a$, ii + 1, "</p>")
-                        IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                            i = ii + LEN(wla$) + 4 'ignore TOC links
+                        IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "#top") > 0 OR INSTR(wla$, "to Top") > 0 THEN
+                            i = ii + LEN(wla$) + 4 'ignore TOC/TOP links
                         ELSEIF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
                             Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                             Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center (if in style)
