@@ -29,7 +29,7 @@
 // FORWARD DECLARATIONS
 //-----------------------------------------------------------------------------------------------------
 // These are stuff that was not declared anywhere else
-// Again, we will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff when those become available
+// Again, we will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
 qbs *qbs_new_txt_len(const char *txt, int32 len);
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
 //-----------------------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
 //-----------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-----------------------------------------------------------------------------------------------------
-// In QuickBASIC false means 0 and true means -1 (sad, but true)
+// In QuickBASIC false means 0 and true means -1 (sad, but true XD)
 #define QB_FALSE MA_FALSE
 #define QB_TRUE -MA_TRUE
 
@@ -46,7 +46,7 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
 #define INVALID_SOUND_HANDLE -1
 
 // This is the string that must be passed in the requirements parameter to stream a sound from storage
-#define REQUIREMENT_STREAM "STREAM"
+#define REQUIREMENT_STRING_STREAM "STREAM"
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -59,119 +59,119 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
-// STRUCTURES
+// STRUCTURES, CLASSES & ENUMERATIONS
 //-----------------------------------------------------------------------------------------------------
 /// <summary>
 /// Type of sound
 /// </summary>
-typedef enum {
-    SOUND_NONE,   // No sound
-    SOUND_STATIC, // Static sounds that are completely managed by miniaudio
-    SOUND_RAW     // Raw sound stream that is managed outside miniaudio by the audio engine
-} SoundType;
+enum struct SoundType {
+    None,   // No sound or internal sound whose buffer is managed by the QBPE audio engine
+    Static, // Static sounds that are completely managed by miniaudio
+    Raw     // Raw sound stream that is managed by the QBPE audio engine
+};
 
 /// <summary>
 /// Sound handle type
 /// This describes every sound the system will ever play (including raw streams).
 /// </summary>
-typedef struct {
-    ma_bool8 isUsed;                   // Is this handle in active use
-    SoundType type;                    // Type of sound (see SoundType enum)
-    ma_bool8 autoKill;                 // Do we need to auto-clean this sample / stream after playback is done?
-    ma_bool8 isInternal;               // Is this a sound handle that is used internally by the audio engine?
-    ma_sound maSound;                  // miniaudio sound
-    ma_uint32 maFlags;                 // miniaudio flags that were used when initializing the sound
+struct SoundHandle {
+    bool isUsed;       // Is this handle in active use
+    SoundType type;    // Type of sound (see SoundType enum)
+    bool autoKill;     // Do we need to auto-clean this sample / stream after playback is done?
+    ma_sound maSound;  // miniaudio sound
+    ma_uint32 maFlags; // miniaudio flags that were used when initializing the sound
     // TODO: SampleFrameQueue sampleFrameQueue; // Raw sample frame queue
-} SoundHandle;
+};
 
 /// <summary>
 ///	Type will help us keep track of the audio engine state
 /// </summary>
-typedef struct {
-    ma_bool8 isInitialized;        // This is set to true if we were able to initialize miniaudio and allocated all required resources
-    ma_bool8 initializationFailed; // This is set to true if a past initialization attempt failed
-    ma_engine maEngine;            // This is the primary miniaudio "engine" context. Everything happens using this!
-    ma_result maResult;            // This is the result of the last miniaudio operation (used for trapping errors)
-    int32 sndInternal;             // Internal sound handle that we will use for Beep() & Sound(). TODO: Do we really need this? See Beep() and Sound()
+struct AudioEngine {
+    bool isInitialized;        // This is set to true if we were able to initialize miniaudio and allocated all required resources
+    bool initializationFailed; // This is set to true if a past initialization attempt failed
+    ma_engine maEngine;        // This is the primary miniaudio "engine" context. Everything happens using this!
+    ma_result maResult;        // This is the result of the last miniaudio operation (used for trapping errors)
+    ma_uint32 sampleRate;      // Sample rate used by the miniaudio engine
+    int32 sndInternal;         // Internal sound handle that we will use for Beep() & Sound(). TODO: Do we really need this? See Beep() and Sound()
     std::vector<SoundHandle *> soundHandles; // This is the audio handle list used by the engine and by everything else
-} AudioEngine;
+
+    AudioEngine(const AudioEngine &) = delete;      // No default copy constructor
+    AudioEngine &operator=(AudioEngine &) = delete; // No assignment operator
+
+    /// <summary>
+    ///	Just initializes some important members
+    /// </summary>
+    AudioEngine() {
+        isInitialized = initializationFailed = false;
+        sampleRate = 0;
+        sndInternal = INVALID_SOUND_HANDLE;
+    }
+
+    /// <summary>
+    /// This allocates a sound handle.
+    /// It will return -1 on error.
+    /// Handle 0 is used internally for Beep, Sound and Play and thus cannot be used by the user.
+    /// Basically, we go through the vector and find an object pointer were 'isUsed' is set as false and return the index.
+    /// If such an object pointer is not found, then we add a pointer to a new object at the end of the vector and return the index.
+    /// We are using pointers because miniaudio keeps using stuff from ma_sound and these cannot move in memory when the vector is resized.
+    /// The handle is put-up for recycling simply by setting the 'isUsed' member to false.
+    /// Note that this means the vector will keep growing until the largest handle (index) and never shrink.
+    /// The choice of using a vector was simple - performance. Vector performance when using 'indexes' is next to no other.
+    /// It's just like using an array. Only that the array is dynamic. The vector will be pruned only when snd_un_init gets called.
+    /// We will however, be good citizens and will also 'delete' the objects when snd_un_init gets called.
+    /// All this means that a sloppy programmer may be able to grow the vector and eventually the system may run out of memory and crash.
+    /// But that's ok. Sloppy programmers (like me) must be punished until they learn! XD
+    /// BTW, int32 was a bad choice for handles and obviously 64-bit size_t is way larger. Oh well...
+    /// </summary>
+    /// <returns>Returns a non-negative handle if successful</returns>
+    int32 AllocateSoundHandle() {
+        size_t h, vectorSize = soundHandles.size(); // Save the vector size
+
+        // Scan through the vector and return a slot that is not being used
+        // This loop should not execute if size is 0
+        for (h = 0; h < vectorSize; h++) {
+            if (!soundHandles[h]->isUsed)
+                break;
+        }
+
+        if (h >= vectorSize) {
+            // If we have reached here then either the vector is empty or there are no empty slots
+            // Simply create a new SoundHandle at the back of the vector
+            soundHandles.push_back(new SoundHandle);
+            size_t newVectorSize = soundHandles.size();
+
+            // If newVectorSize == vectorSize then push_back() failed
+            if (newVectorSize <= vectorSize)
+                return INVALID_SOUND_HANDLE;
+
+            h = newVectorSize - 1; // The handle is simply newsize - 1
+        }
+
+        // Initializes a sound handle that was just allocated.
+        // This will set it to 'in use' after applying some defaults.
+        soundHandles[h]->type = SoundType::None;
+        soundHandles[h]->autoKill = false;
+        // TODO: soundHandles[h]->sampleFrameQueue = {0};
+        soundHandles[h]->maSound = {0};
+        // We do not use pitch shifting, so this will give a little performance boost
+        soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
+        soundHandles[h]->isUsed = true;
+
+        return (int32)(h); // Return newVectorSize - 1 as the handle
+    }
+};
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
 // GLOBAL VARIABLES
 //-----------------------------------------------------------------------------------------------------
 // This keeps track of the audio engine state
-static AudioEngine audioEngine = {0};
+static AudioEngine audioEngine;
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
 // FUNCTIONS
 //-----------------------------------------------------------------------------------------------------
-/// <summary>
-/// This allocates a sound handle.
-/// It will return -1 on error.
-/// Handle 0 is used internally for Beep, Sound and Play and thus cannot be used by the user.
-/// Basically, we go through the vector and find an object pointer were 'isUsed' is set as false and return the index.
-/// If such an object pointer is not found, then we add a pointer to a new object at the end of the vector and return the index.
-/// We are using pointers because miniaudio keeps using stuff from ma_sound and these cannot move in memory when the vector is resized.
-/// The handle is put-up for recycling simply by setting the 'isUsed' member to false.
-/// Note that this means the vector will keep growing until the largest handle (index) and never shrink.
-/// The choice of using a vector was simple - performance. Vector performance when using 'indexes' is next to no other.
-/// It's just like using an array. Only that the array is dynamic. The vector will be pruned only when snd_un_init gets called.
-/// We will however, be good citizens and will also 'delete' the objects when snd_un_init gets called.
-/// All this means that a sloppy programmer may be able to grow the vector and eventually the system may run out of memory and crash.
-/// But that's ok. Sloppy programmers (like me) must be punished until they learn! XD
-/// BTW, int32 was a bad choice for handles and obviously 64-bit size_t is way larger. Oh well...
-/// </summary>
-/// <returns>Returns a non-negative handle if successful</returns>
-static int32 AllocateSoundHandle() {
-    size_t vectorSize = audioEngine.soundHandles.size(); // Save the vector size
-
-    // Scan through the vector and return a slot that is not being used
-    // This loop should not execute if size is 0
-    for (size_t i = 0; i < vectorSize; i++) {
-        if (!audioEngine.soundHandles[i]->isUsed)
-            return (int32)i;
-    }
-
-    // If we have reached here then either the vector is empty or there are no empty slots
-    // Simply create a new SoundHandle at the back of the vector and return it's position
-    audioEngine.soundHandles.push_back(new SoundHandle);
-    size_t newVectorSize = audioEngine.soundHandles.size();
-
-    // If newVectorSize == vectorSize then emplace_back() failed
-    if (newVectorSize <= vectorSize)
-        return INVALID_SOUND_HANDLE;
-
-    audioEngine.soundHandles[newVectorSize - 1]->isUsed = MA_FALSE; // Set the isUsed flag to false
-
-    return (int32)(newVectorSize - 1); // Return newVectorSize - 1 as the handle
-}
-
-/// <summary>
-/// Initializes a sound handle that was just allocated.
-/// The handle must not be 'in use'.
-/// This will set it to 'in use' after applying some defaults.
-/// Note that this allows us to initiaze the internal sound handle (0)
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <returns>True if sound handle is not in use</returns>
-static ma_bool8 InitializeSoundHandle(int32 handle) {
-    if (handle >= 0 && handle < audioEngine.soundHandles.size() && !audioEngine.soundHandles[handle]->isUsed) {
-        audioEngine.soundHandles[handle]->type = SOUND_NONE;
-        audioEngine.soundHandles[handle]->autoKill = MA_FALSE;
-        // TODO: audioEngine.soundHandles[handle]->sampleFrameQueue = {0};
-        audioEngine.soundHandles[handle]->maSound = {0};
-        // We do not use pitch shifting, so this will give a little performance boost
-        audioEngine.soundHandles[handle]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_WAIT_INIT;
-        audioEngine.soundHandles[handle]->isUsed = MA_TRUE;
-
-        return MA_TRUE;
-    }
-
-    return MA_FALSE;
-}
-
 /// <summary>
 /// This generates a sound at the specified frequency for the specified amount of time.
 /// Returns immediately after sending the data for playback.
@@ -179,9 +179,58 @@ static ma_bool8 InitializeSoundHandle(int32 handle) {
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
 void sub_sound(double frequency, double lengthInClockTicks) {
-    // TODO: miniaudio has waveform API that can be used to generare various kind of sound waves
-    // We can use that or just put this through sndraw just like the OpenAL code did
-    // Hmmm... decisions, decisions... XD
+    // We'll allocate a buffer just once
+    // This buffer will be resized as required and will be freed by the system when the program ends
+    // This is much faster then allocating and freening multiple times if we have a good crt
+    static float *waveformBuffer = nullptr;
+
+    // Exit if frequency or length is 0 or if the audio engine is not initialized
+    if (frequency <= 0 || lengthInClockTicks <= 0 || !audioEngine.isInitialized || audioEngine.sndInternal != 0 ||
+        audioEngine.soundHandles[audioEngine.sndInternal]->type != SoundType::None)
+        return;
+
+    // Calculate the sample frames (duration) of the sound
+    ma_uint64 sampleFrames = (ma_uint64)((double)audioEngine.sampleRate * lengthInClockTicks / 18.2);
+
+    // Allocate the 'sample frame' number of bytes for the waveform buffer
+    float *tmp = (float *)realloc(waveformBuffer, sampleFrames * sizeof(float));
+
+    // Exit if memory allocation failed
+    if (!tmp)
+        return;
+
+    // Save the buffer pointer now that it is successfully allocated
+    waveformBuffer = tmp;
+
+    // Create a sine wave
+    ma_waveform_config maWaveConfig = ma_waveform_config_init(ma_format_f32, 1, audioEngine.sampleRate, ma_waveform_type_sine, 1, frequency);
+    ma_waveform maSineWave;
+    audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
+    assert(audioEngine.maResult == MA_SUCCESS);
+    audioEngine.maResult = ma_waveform_read_pcm_frames(&maSineWave, waveformBuffer, sampleFrames, NULL); // Generate the waveform
+    assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Setup the ma buffer
+    ma_audio_buffer_config maBufferConfig = ma_audio_buffer_config_init(ma_format_f32, 1, sampleFrames, waveformBuffer, NULL);
+    ma_audio_buffer maBuffer;
+    audioEngine.maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
+    assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Create a ma sound from the ma buffer
+    audioEngine.maResult =
+        ma_sound_init_from_data_source(&audioEngine.maEngine, &maBuffer, 0, NULL, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    assert(audioEngine.maResult == MA_SUCCESS);
+    audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Wait for the sound to end
+    // This also blocks the caller and correctly implements original QuickBASIC behavior
+    while (ma_sound_is_playing(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound))
+        Sleep(0);
+
+    ma_sound_uninit(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    ma_audio_buffer_uninit(&maBuffer);
+    ma_waveform_uninit(&maSineWave);
 }
 
 /// <summary>
@@ -189,7 +238,7 @@ void sub_sound(double frequency, double lengthInClockTicks) {
 /// Sends the sound samples for playback and immediately returns.
 /// This is in-line with the behavior of 'Sound' and 'Play'.
 /// </summary>
-void sub_beep() { sub_sound(783.99, 0.25); }
+void sub_beep() { sub_sound(900, 5); }
 
 /// <summary>
 /// Processes and plays the MML specified in the string.
@@ -204,7 +253,7 @@ void sub_play(qbs *str) {
 /// This returns the sample rate from ma engine if ma is initialized.
 /// </summary>
 /// <returns>miniaudio sample rtate</returns>
-int32 func__sndrate() { return audioEngine.isInitialized ? ma_engine_get_sample_rate(&audioEngine.maEngine) : 0; }
+int32 func__sndrate() { return audioEngine.sampleRate; }
 
 /// <summary>
 /// This loads a sound file into memory and returns a LONG handle value above 0.
@@ -232,19 +281,19 @@ int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed) {
         return INVALID_SOUND_HANDLE; // Return INVALID_SOUND_HANDLE if file name is null length string
 
     // Alocate a sound handle
-    int32 handle = AllocateSoundHandle();
+    int32 handle = audioEngine.AllocateSoundHandle();
     // Initialize the sound handle data
-    if (!InitializeSoundHandle(handle) || handle <= 0) // We are not expected to open files with handle 0
+    if (handle <= 0) // We are not expected to open files with handle 0
         return INVALID_SOUND_HANDLE;
 
     // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SOUND_STATIC;
+    audioEngine.soundHandles[handle]->type = SoundType::Static;
 
     // Set the flags to specifiy how we want the audio file to be opened
     // TODO: case insensitive compare
     if (passed && requirements->len) {
         qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STREAM), 1))
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM), 1))
             audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM; // Check if the user wants to stream the file
     } else {
         audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE; // Else decode and load the whole sound in memory
@@ -257,7 +306,7 @@ int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed) {
 
     // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
-        audioEngine.soundHandles[handle]->isUsed = MA_FALSE;
+        audioEngine.soundHandles[handle]->isUsed = false;
 
         return INVALID_SOUND_HANDLE;
     }
@@ -275,11 +324,11 @@ void sub__sndclose(int32 handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
         // Sound type specific cleanup
         switch (audioEngine.soundHandles[handle]->type) {
-        case SOUND_STATIC:
+        case SoundType::Static:
             ma_sound_uninit(&audioEngine.soundHandles[handle]->maSound);
             break;
 
-        case SOUND_RAW:
+        case SoundType::Raw:
             // TODO:
             break;
 
@@ -288,7 +337,7 @@ void sub__sndclose(int32 handle) {
         }
 
         // Now simply set the 'isUsed' member to false
-        audioEngine.soundHandles[handle]->isUsed = MA_FALSE;
+        audioEngine.soundHandles[handle]->isUsed = false;
     }
 }
 
@@ -299,16 +348,16 @@ void sub__sndclose(int32 handle) {
 /// <returns>A new sound handle if successful or 0 on failure</returns>
 int32 func__sndcopy(int32 src_handle) {
     // Check for all invalid cases
-    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(src_handle) || audioEngine.soundHandles[src_handle]->type != SOUND_STATIC)
+    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundType::Static)
         return INVALID_SOUND_HANDLE;
 
     // Alocate a sound handle
-    int32 dst_handle = AllocateSoundHandle();
+    int32 dst_handle = audioEngine.AllocateSoundHandle();
     // Initialize the sound handle data
-    if (!InitializeSoundHandle(dst_handle) || dst_handle <= 0) // We are not expected to open files with handle 0
+    if (dst_handle <= 0) // We are not expected to open files with handle 0
         return INVALID_SOUND_HANDLE;
 
-    audioEngine.soundHandles[dst_handle]->type = SOUND_STATIC;                                     // Set some handle properties
+    audioEngine.soundHandles[dst_handle]->type = SoundType::Static;                                // Set some handle properties
     audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags; // Copy the flags
 
     // Initialize a new copy of the sound
@@ -317,7 +366,7 @@ int32 func__sndcopy(int32 src_handle) {
 
     // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
-        audioEngine.soundHandles[dst_handle]->isUsed = MA_FALSE;
+        audioEngine.soundHandles[dst_handle]->isUsed = false;
 
         return INVALID_SOUND_HANDLE;
     }
@@ -330,7 +379,7 @@ int32 func__sndcopy(int32 src_handle) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndplay(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -367,8 +416,8 @@ void sub__sndplaycopy(int32 src_handle, double volume, int32 passed) {
         if (passed)
             ma_sound_set_volume(&audioEngine.soundHandles[dst_handle]->maSound, volume);
 
-        sub__sndplay(dst_handle);                                 // Play the sound
-        audioEngine.soundHandles[dst_handle]->autoKill = MA_TRUE; // Set to auto kill
+        sub__sndplay(dst_handle);                              // Play the sound
+        audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
     }
 }
 
@@ -387,9 +436,9 @@ void sub__sndplayfile(qbs *fileName, int32 sync, double volume, int32 passed) {
     static qbs *reqs = NULL;
 
     if (!reqs) {
-        // Since this never changes we can get away by doing this just once
+        // Since this never changes, we can get away by doing this just once
         reqs = qbs_new(0, 0);
-        qbs_set(reqs, qbs_new_txt(REQUIREMENT_STREAM));
+        qbs_set(reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM));
     }
 
     // We will not wrap this in a 'if initialized' block because SndOpen will take care of that
@@ -399,8 +448,8 @@ void sub__sndplayfile(qbs *fileName, int32 sync, double volume, int32 passed) {
         if (passed & 2)
             ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
 
-        sub__sndplay(handle);                                 // Play the sound
-        audioEngine.soundHandles[handle]->autoKill = MA_TRUE; // Set to auto kill
+        sub__sndplay(handle);                              // Play the sound
+        audioEngine.soundHandles[handle]->autoKill = true; // Set to auto kill
     }
 }
 
@@ -409,7 +458,7 @@ void sub__sndplayfile(qbs *fileName, int32 sync, double volume, int32 passed) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndpause(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         // Stop the sound and just leave it at that
         // miniaudio does not reset the play cursor
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
@@ -423,7 +472,7 @@ void sub__sndpause(int32 handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Return true if the sound is playing. False otherwise</returns>
 int32 func__sndplaying(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         return ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) ? QB_TRUE : QB_FALSE;
     }
 
@@ -436,7 +485,7 @@ int32 func__sndplaying(int32 handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns true if the sound is paused. False otherwise</returns>
 int32 func__sndpaused(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         return !ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
                        (ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || !ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))
                    ? QB_TRUE
@@ -453,7 +502,7 @@ int32 func__sndpaused(int32 handle) {
 /// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
 void sub__sndvol(int32 handle, float volume) {
     // TODO: We should enable this for raw pcm sounds too
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
     }
 }
@@ -463,7 +512,7 @@ void sub__sndvol(int32 handle, float volume) {
 /// </summary>
 /// <param name="handle"></param>
 void sub__sndloop(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -495,7 +544,7 @@ void sub__sndloop(int32 handle) {
 /// <param name="passed">How many parameters were passed?</param>
 void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int32 passed) {
     // TODO: We should enable this for raw pcm sounds too
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
@@ -523,7 +572,7 @@ void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int3
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns the length of a sound in seconds</returns>
 double func__sndlen(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
         assert(audioEngine.maResult == MA_SUCCESS);
@@ -540,7 +589,7 @@ double func__sndlen(int32 handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns the current playing position in seconds from an open sound file</returns>
 double func__sndgetpos(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         float playCursorSeconds = 0;
         audioEngine.maResult = ma_sound_get_cursor_in_seconds(&audioEngine.soundHandles[handle]->maSound, &playCursorSeconds);
         assert(audioEngine.maResult == MA_SUCCESS);
@@ -557,7 +606,7 @@ double func__sndgetpos(int32 handle) {
 /// <param name="handle">A sound handle</param>
 /// <param name="seconds">The position to set in seconds</param>
 void sub__sndsetpos(int32 handle, double seconds) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         float lengthSeconds;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
         if (audioEngine.maResult != MA_SUCCESS)
@@ -588,7 +637,7 @@ void sub__sndsetpos(int32 handle, double seconds) {
 /// <param name="handle">A sound handle</param>
 /// <param name="limit">The number of seconds that the sound will play</param>
 void sub__sndlimit(int32 handle, double limit) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000);
     }
 }
@@ -598,7 +647,7 @@ void sub__sndlimit(int32 handle, double limit) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndstop(int32 handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SOUND_STATIC) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         // Stop the sound first
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
         assert(audioEngine.maResult == MA_SUCCESS);
@@ -688,21 +737,21 @@ void snd_init() {
 
     // If failed, then set the global flag so that we don't attempt to initialize again
     if (audioEngine.maResult != MA_SUCCESS) {
-        audioEngine.initializationFailed = MA_TRUE;
+        audioEngine.initializationFailed = true;
         return;
     }
+
+    // Get and save the engine sample rate
+    audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
     // Allocate a sound handle
     // Not that this should always be 0
     // We will use this handle internally for Beep(), Sound() etc.
-    audioEngine.sndInternal = AllocateSoundHandle();
+    audioEngine.sndInternal = audioEngine.AllocateSoundHandle();
     assert(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
-    if (!InitializeSoundHandle(audioEngine.sndInternal))
-        assert(MA_TRUE);                                                 // It should not come here
-    audioEngine.soundHandles[audioEngine.sndInternal]->type = SOUND_RAW; // Set the type as raw
 
     // Set the initialized flag as true
-    audioEngine.isInitialized = MA_TRUE;
+    audioEngine.isInitialized = true;
 }
 
 /// <summary>
@@ -714,11 +763,11 @@ void snd_un_init() {
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
             // Perform and sound type specific cleanup
             switch (audioEngine.soundHandles[handle]->type) {
-            case SOUND_STATIC:
+            case SoundType::Static:
                 // TODO:
                 break;
 
-            case SOUND_RAW:
+            case SoundType::Raw:
                 // TODO:
                 break;
 
@@ -737,7 +786,7 @@ void snd_un_init() {
         ma_engine_uninit(&audioEngine.maEngine);
 
         // Set global flag as false
-        audioEngine.isInitialized = FALSE;
+        audioEngine.isInitialized = false;
     }
 }
 
@@ -752,7 +801,7 @@ void snd_mainloop() {
             // We are only looking for stuff that is set to auto-destruct
             if (audioEngine.soundHandles[handle]->isUsed && audioEngine.soundHandles[handle]->autoKill) {
                 switch (audioEngine.soundHandles[handle]->type) {
-                case SOUND_STATIC:
+                case SoundType::Static:
                     // Dispose the sound if it has finished playing
                     // Note that this means that temporary looping sounds will never close
                     // Well thats on the programmer. Probably they want it that way
@@ -761,7 +810,7 @@ void snd_mainloop() {
                     }
                     break;
 
-                case SOUND_RAW:
+                case SoundType::Raw:
                     // TODO:
                     break;
 
