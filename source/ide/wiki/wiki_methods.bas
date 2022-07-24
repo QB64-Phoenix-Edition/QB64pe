@@ -7,7 +7,7 @@ FUNCTION Back2BackName$ (a$)
 END FUNCTION
 
 FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
-    Help_PageLoaded$ = PageName$
+    IF LEFT$(PageName$, 9) <> "Template:" THEN Help_PageLoaded$ = PageName$
 
     'Escape all invalid and other critical chars in filenames
     PageName2$ = ""
@@ -271,7 +271,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     '   paragraph creating things are locked (eg. headings, lists, rulers etc.),
     '   but text styles, links and template processing is still possible
     Help_LockParse = 0
-    Help_Bold = 0: Help_Italic = 0
+    Help_Bold = 0: Help_Italic = 0: Help_Heading = 0
     Help_Underline = 0
     Help_BG_Col = 0
     Help_Center = 0: Help_CIndent$ = ""
@@ -285,21 +285,23 @@ SUB WikiParse (a$) 'Wiki page interpret
     '=============
     'everywhere in text
     '------------------
-    ' ''' = bold text style
-    ' ''  = italic text style
-    ' [url text]    = external link to url with text to appear (url ends at 1st found space)
-    ' [[page]]      = link to another wikipage
-    ' [[page|text]] = link to another wikipage with alternative text to appear
-    ' {{templatename|param|param|param}} or simply {{templatename}} = predefined styles
+    ' ''' => bold text style
+    ' ''  => italic text style
+    ' [url text]    => external link to url with text to appear (url ends at 1st found space)
+    ' [[page]]      => link to another wikipage
+    ' [[page|text]] => link to another wikipage with alternative text to appear
+    ' {{templatename|param|param|param}} or simply {{templatename}} => predefined styles
     '---------------------
     'at start of line only
     '---------------------
-    ' *  or #  = dot list point
-    ' ** or ## = sub (ie. further indented) dot list point
-    ' ;def:desc = full definition/description list
-    ' :desc     = description only, but indented as in a full def/desc list
-    ' ;* def:desc = combi list, list dot always belongs to description
-    ' :* desc     = combi, description only
+    ' == or ===   => start a <h2> or <h3> section heading respectively
+    ' ----        => create a horizontal ruler
+    ' *  or #     => start a dot list item
+    ' ** or ##    => start a sub (ie. further indented) dot list item
+    ' ;def:desc   => create a full definition/description list (def = bold, desc indented underneath)
+    ' :desc       => start a description only (desc indented as in a full def/desc list)
+    ' ;* def:desc => combined list, list dot always belongs to description
+    ' :* desc     => combined, description only
 
     'First find and write the page title and last update
     d$ = "Page not yet updated, expect visual glitches.": i = INSTR(a$, "{{QBDLDATE:")
@@ -368,8 +370,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 wla$ = wikiLookAhead$(a$, i + 1, "</center>")
-                IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                    i = i + LEN(wla$) + 9 'ignore TOC links
+                IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "#top") > 0 OR INSTR(wla$, "to Top") > 0 THEN
+                    i = i + LEN(wla$) + 9 'ignore TOC/TOP links
                 ELSE
                     Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                     Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center content
@@ -390,8 +392,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                 FOR ii = i TO LEN(a$) - 1
                     IF MID$(a$, ii, 1) = ">" THEN
                         wla$ = wikiLookAhead$(a$, ii + 1, "</p>")
-                        IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                            i = ii + LEN(wla$) + 4 'ignore TOC links
+                        IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "#top") > 0 OR INSTR(wla$, "to Top") > 0 THEN
+                            i = ii + LEN(wla$) + 4 'ignore TOC/TOP links
                         ELSEIF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
                             Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                             Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center (if in style)
@@ -700,6 +702,15 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
 
+                'Template wrapped plugin
+                IF RIGHT$(cb$, 6) = "Plugin" AND Help_LockParse = 0 THEN 'no plugins in blocks
+                    pit$ = Wiki$("Template:" + cb$)
+                    IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
+                        a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
+                        n = n + LEN(pit$)
+                    END IF
+                END IF
+
                 'Template wrapped table
                 IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse = 0 THEN 'no table info in blocks
                     Help_LinkN = Help_LinkN + 1
@@ -761,16 +772,16 @@ SUB WikiParse (a$) 'Wiki page interpret
         IF Help_LockParse = 0 THEN
             'Custom section headings (current color, h3 w/o underline, h2 with underline)
             ii = 0
-            IF c$(5) = " === " THEN ii = 4
-            IF c$(4) = "=== " THEN ii = 3
-            IF c$(4) = " ===" THEN ii = 3
-            IF c$(3) = "===" THEN ii = 2
+            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0
+            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0
+            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_Heading = 3
+            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_Heading = 3
             IF ii > 0 THEN i = i + ii: GOTO charDone
             ii = 0
-            IF c$(4) = " == " THEN ii = 3
-            IF c$(3) = "== " THEN ii = 2
-            IF c$(3) = " ==" THEN ii = 2
-            IF c$(2) = "==" THEN ii = 1
+            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0
+            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0
+            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_Heading = 2
+            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_Heading = 2
             IF ii > 0 THEN i = i + ii: Help_Underline = col: GOTO charDone
         END IF
 

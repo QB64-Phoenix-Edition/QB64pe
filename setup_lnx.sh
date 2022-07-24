@@ -109,7 +109,7 @@ elif [ -z "$DISTRO" ]; then
 fi
 
 echo "Compiling and installing QB64..."
-make clean
+make clean OS=lnx
 make OS=lnx BUILD_QB64=y -j3
 
 if [ -e "./qb64" ]; then
