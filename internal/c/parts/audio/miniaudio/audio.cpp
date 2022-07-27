@@ -30,11 +30,11 @@
 //-----------------------------------------------------------------------------------------------------
 // These are stuff that was not declared anywhere else
 // Again, we will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
-qbs *qbs_new_txt_len(const char *txt, int32 len);
-int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
+qbs *qbs_new_txt_len(const char *txt, int32 len);                   // Not declared in libqb.h
+int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 
 #ifndef QB64_WINDOWS
-void Sleep(uint32 milliseconds);
+void Sleep(uint32 milliseconds); // There is a non-Windows implementation. However it is not declared anywhere
 #endif
 //-----------------------------------------------------------------------------------------------------
 
@@ -60,6 +60,12 @@ void Sleep(uint32 milliseconds);
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
 // Here we are checking > 0 because this is meant to check user handles only
 #define IS_SOUND_HANDLE_VALID(_handle_) ((_handle_) > 0 && (_handle_) < audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed)
+
+#ifdef QB64_WINDOWS
+#    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
+#else
+#    define ZERO_VARIABLE(_v_) memset(&(_v_), NULL, sizeof(_v_))
+#endif
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -83,6 +89,7 @@ struct SampleFrameBlockNode {
     ma_uint32 size;             // Size of the block in 'samples'. See below
     ma_uint32 offset;           // Where is the write cursor in the buffer?
     float *buffer;              // The actual sample frame block buffer
+    bool force;                 // When this is set, the buffer will be processed even when if it is not full
 
     SampleFrameBlockNode(const SampleFrameBlockNode &) = delete;      // No default copy constructor
     SampleFrameBlockNode &operator=(SampleFrameBlockNode &) = delete; // No assignment operator
@@ -97,6 +104,7 @@ struct SampleFrameBlockNode {
         next = nullptr;             // Set this to null. This will managed by the 'Queue' struct
         size = sampleFrames << 1;   // 2 channels (stereo)
         offset = 0;                 // Set the write cursor to 0
+        force = false;
         buffer = new float[size](); // Allocate a zeroed float buffer of size floats. Ah, Creative Silence!
     }
 
@@ -129,7 +137,7 @@ struct SampleFrameBlockNode {
     /// Check if the buffer is completely filled.
     /// </summary>
     /// <returns>Returns true if buffer is full</returns>
-    bool IsBufferFull() { return buffer && offset >= size; }
+    bool IsBufferFull() { return buffer && (offset >= size || force); }
 };
 
 /// <summary>
@@ -147,8 +155,10 @@ struct SampleFrameBlockQueue {
     ma_uint32 bufferSampleFrames;          // Size of the ping-pong buffer in *samples frames*
     bool updateFlag;                       // We will only update the buffer with fresh samples when this flag is not equal to the check condition
     ma_uint32 bufferUpdatePosition;        // The position (in samples) in the buffer where we should be copying a sample block
-    ma_sound *maSound;                     // Pointer to a sound object that was passed in the constructor
-    ma_engine *maEngine;                   // Pointer to a ma engine object
+    ma_uint32 sampleFramesPlaying;         // The number of sample frames that was sent for playback
+    ma_uint64 maEngineTime;                // miniaudio engine time use for correct length calculation
+    ma_sound *maSound;                     // Pointer to a ma_sound object that was passed in the constructor
+    ma_engine *maEngine;                   // Pointer to a ma_engine object
     ma_audio_buffer maBuffer;              // miniaudio buffer object
     ma_audio_buffer_config maBufferConfig; // miniaudio buffer configuration
     ma_result maResult;                    // This is the result of the last miniaudio operation (used for trapping errors)
@@ -163,19 +173,14 @@ struct SampleFrameBlockQueue {
     /// <param name="pmaSound">A pointer to a miniaudio sound object</param>
     SampleFrameBlockQueue(ma_engine *pmaEngine, ma_sound *pmaSound) {
         first = last = nullptr;
-        blockCount = frameCount = 0;
+        blockCount = frameCount = sampleFramesPlaying = maEngineTime = bufferUpdatePosition = 0;
         maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
-        // We'll have to see if this is a good number or if we can decrease it
-        // Note the node will allocates twice this to account for 2 channels
-        // This is a key member. Setting this to large value will cause latency issues
-        // Setting this to a tiny value may cause clicks, pops or gaps in the stream
-        blockSampleFrames = sampleRate >> 4;
-        bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
-        buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 here is for 2 channels - stereo)
-        bufferUpdatePosition = 0;                     // This will be set to the correct position by checking updateFlag
-        updateFlag = false;                           // Set this to false because we want the initial check to fail
+        blockSampleFrames = sampleRate >> 4;              // Note the node will allocates twice this to account for 2 channels
+        bufferSampleFrames = blockSampleFrames * 2;       // We want the playback buffer twice the size of a block to do a proper ping-pong
+        buffer = new float[bufferSampleFrames * 2]();     // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 is for 2 channels - stereo)
+        updateFlag = false;                               // Set this to false because we want the initial check to fail
 
         if (buffer) {
             // Setup the ma buffer
@@ -186,6 +191,13 @@ struct SampleFrameBlockQueue {
             // Create a ma_sound from the ma_buffer
             maResult = ma_sound_init_from_data_source(maEngine, &maBuffer, 0, NULL, maSound);
             assert(maResult == MA_SUCCESS);
+
+            // Play the ma_sound
+            maResult = ma_sound_start(maSound);
+            assert(maResult == MA_SUCCESS);
+
+            // Set the buffer to loop forever
+            ma_sound_set_looping(maSound, MA_TRUE);
         }
     }
 
@@ -193,9 +205,6 @@ struct SampleFrameBlockQueue {
     /// This simply pops all sample blocks
     /// </summary>
     ~SampleFrameBlockQueue() {
-        while (PopSampleFrameBlock())
-            ;
-
         if (buffer) {
             // Stop playback
             maResult = ma_sound_stop(maSound);
@@ -207,6 +216,9 @@ struct SampleFrameBlockQueue {
             // Delete the ma_buffer object
             ma_audio_buffer_uninit(&maBuffer);
         }
+
+        while (PopSampleFrameBlock())
+            ;
 
         delete[] buffer;
     }
@@ -248,16 +260,6 @@ struct SampleFrameBlockQueue {
         ++blockCount; // Increase the frame block count
         ++frameCount; // Increment the frame count
 
-        // Kickstart buffer playback and looping if the first block was created
-        if (1 == blockCount) {
-            // Play the ma sound
-            maResult = ma_sound_start(maSound);
-            assert(maResult == MA_SUCCESS);
-
-            // Set the buffer to loop
-            ma_sound_set_looping(maSound, MA_TRUE);
-        }
-
         return true;
     }
 
@@ -292,20 +294,14 @@ struct SampleFrameBlockQueue {
     /// </summary>
     /// <returns>The length left to play in sample frames</returns>
     size_t GetSampleFramesRemaining() {
-        size_t bufferSampleFramesRemaining = 0;
+        // Calculate the time difference (here time is simply the number sum of sample frames processed by ma_engine)
+        ma_uint64 maEngineDeltaTime = ma_engine_get_time(maEngine) - maEngineTime;
 
-        if (ma_sound_is_playing(maSound)) {
-            // Figure out which pcm frame of the buffer is miniaudio playing
-            ma_uint64 readCursor;
-            maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
-            assert(maResult == MA_SUCCESS);
-
-            // Figure out how many frames we have remaining in the buffer
-            bufferSampleFramesRemaining = readCursor < blockSampleFrames ? blockSampleFrames - readCursor : bufferSampleFrames - readCursor;
-        }
+        // Decrement the delta from the sample frames that are playing
+        sampleFramesPlaying = maEngineDeltaTime > sampleFramesPlaying ? 0 : sampleFramesPlaying - maEngineDeltaTime;
 
         // Add this to the frames in the queue
-        return bufferSampleFramesRemaining + frameCount;
+        return sampleFramesPlaying + frameCount;
     }
 
     /// <summary>
@@ -323,43 +319,40 @@ struct SampleFrameBlockQueue {
     /// <summary>
     /// This keeps the ping-pong buffer fed and the sound stream going
     /// </summary>
-    /// <param name="purge">If this flag is set then we will push any incomplete blocks to the sound buffer</param>
-    void Update(bool purge) {
-        // Only bother if the buffer is actually playing
-        if (ma_sound_is_playing(maSound)) {
-            // Figure out which pcm frame of the buffer is miniaudio playing
-            ma_uint64 readCursor;
-            maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
-            assert(maResult == MA_SUCCESS);
+    void Update() {
+        // Figure out which pcm frame of the buffer is miniaudio playing
+        ma_uint64 readCursor;
+        maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
+        assert(maResult == MA_SUCCESS);
 
-            bool checkCondition = readCursor < blockSampleFrames; // Since buffer sample frame size = blockSampleFrames * 2
+        bool checkCondition = readCursor < blockSampleFrames; // Since buffer sample frame size = blockSampleFrames * 2
 
-            // Only proceed to update if our flag is not the same as our condition
-            if (checkCondition != updateFlag) {
-                // The line below does two sneaky things that deserve explanation
-                //	1. We are using bufferSampleFrames which is set to exactly halfway through the buffer since we are using stereo (see constructor)
-                //	2. The boolean condition above will always be 1 if the read cursor is in the lower-half and hence push the position to the top-half
-                bufferUpdatePosition = checkCondition * bufferSampleFrames; // This line basically toggles the buffer copy position
+        // Only proceed to update if our flag is not the same as our condition
+        if (checkCondition != updateFlag) {
+            // The line below does two sneaky things that deserve explanation
+            //	1. We are using bufferSampleFrames which is set to exactly halfway through the buffer since we are using stereo (see constructor)
+            //	2. The boolean condition above will always be 1 if the read cursor is in the lower-half and hence push the position to the top-half
+            bufferUpdatePosition = checkCondition * bufferSampleFrames; // This line basically toggles the buffer copy position
 
-                if (blockCount) // Check if we have any blocks in the queue
-                {
-                    if (first->IsBufferFull() || (purge && 1 == blockCount)) // We will stream the block only if it is full or the purge flag is set
-                    {
-                        // Simply copy the first block in the queue
-                        if (first->buffer)
-                            std::copy(first->buffer, first->buffer + first->size, buffer + bufferUpdatePosition);
+            // Check if we have any blocks in the queue and stream only if the block is full
+            if (blockCount && first->IsBufferFull()) {
+                // We check this here so that even if the buffer is not allocated, the block object will be popped off
+                if (first->buffer)
+                    // Simply copy the first block in the queue
+                    std::copy(first->buffer, first->buffer + first->size, buffer + bufferUpdatePosition);
 
-                        // And then pop it off
-                        PopSampleFrameBlock();
-                    }
-                } else {
-                    // Stop looping the buffer if this was the last block and read cursor is in the lower half
-                    if (checkCondition)
-                        ma_sound_set_looping(maSound, MA_FALSE);
-                }
+                // Save the number of samples frames sent for playback and the current time for correct time calculation
+                sampleFramesPlaying = blockSampleFrames;
+                maEngineTime = ma_engine_get_time(maEngine);
 
-                updateFlag = checkCondition; // Save our check condition to our flag
+                // And then pop it off
+                PopSampleFrameBlock();
+            } else { // Else we'll stream silence
+                // We are using bufferSampleFrames here for the same reason as the explanation above
+                std::fill(buffer + bufferUpdatePosition, buffer + bufferUpdatePosition + bufferSampleFrames, NULL);
             }
+
+            updateFlag = checkCondition; // Save our check condition to our flag
         }
     }
 };
@@ -457,7 +450,7 @@ struct AudioEngine {
         soundHandles[h]->type = SoundType::None;
         soundHandles[h]->autoKill = false;
         soundHandles[h]->rawQueue = nullptr;
-        soundHandles[h]->maSound = {};
+        ZERO_VARIABLE(soundHandles[h]->maSound);
         // We do not use pitch shifting, so this will give a little performance boost
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         soundHandles[h]->isUsed = true;
@@ -1055,9 +1048,10 @@ void sub__sndrawdone(int32 handle, int32 passed) {
         handle = audioEngine.sndInternalRaw;
 
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
-        while (audioEngine.soundHandles[handle]->rawQueue->GetSampleFramesRemaining()) {
-            audioEngine.soundHandles[handle]->rawQueue->Update(true);
-            Sleep(0);
+        // Set the last block's force flag to true
+        if (audioEngine.soundHandles[handle]->rawQueue->last)
+        {
+            audioEngine.soundHandles[handle]->rawQueue->last->force = true;
         }
     }
 }
@@ -1179,7 +1173,7 @@ void snd_mainloop() {
             if (audioEngine.soundHandles[handle]->isUsed) {
                 // Keep raw audio streams going
                 if (audioEngine.soundHandles[handle]->type == SoundType::Raw)
-                    audioEngine.soundHandles[handle]->rawQueue->Update(true); // TODO: We should not be setting this to true
+                    audioEngine.soundHandles[handle]->rawQueue->Update();
 
                 // Look for stuff that is set to auto-destruct
                 if (audioEngine.soundHandles[handle]->autoKill) {
