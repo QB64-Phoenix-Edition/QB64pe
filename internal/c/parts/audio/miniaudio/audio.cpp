@@ -32,6 +32,10 @@
 // Again, we will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
 qbs *qbs_new_txt_len(const char *txt, int32 len);
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
+
+#ifndef QB64_WINDOWS
+void Sleep(uint32 milliseconds);
+#endif
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -71,28 +75,319 @@ enum struct SoundType {
 };
 
 /// <summary>
+/// This struct encapsulates a sample frame block and it's management.
+/// We choose these 'classes' to be barebones and completely transparent for performance reasons.
+/// </summary>
+struct SampleFrameBlockNode {
+    SampleFrameBlockNode *next; // Next block node in the chain
+    ma_uint32 size;             // Size of the block in 'samples'. See below
+    ma_uint32 offset;           // Where is the write cursor in the buffer?
+    float *buffer;              // The actual sample frame block buffer
+
+    SampleFrameBlockNode(const SampleFrameBlockNode &) = delete;      // No default copy constructor
+    SampleFrameBlockNode &operator=(SampleFrameBlockNode &) = delete; // No assignment operator
+
+    /// <summary>
+    /// The constructor parameter is in sample frames.
+    /// For a stereo sample frame we'll need (sample frames * 2) samples.
+    /// Each sample is sizeof(float) bytes.
+    /// </summary>
+    /// <param name="sampleFrames">Number of sample frames needed</param>
+    SampleFrameBlockNode(ma_uint32 sampleFrames) {
+        next = nullptr;             // Set this to null. This will managed by the 'Queue' struct
+        size = sampleFrames << 1;   // 2 channels (stereo)
+        offset = 0;                 // Set the write cursor to 0
+        buffer = new float[size](); // Allocate a zeroed float buffer of size floats. Ah, Creative Silence!
+    }
+
+    /// <summary>
+    /// Free the sample frame block that was allocated.
+    /// </summary>
+    ~SampleFrameBlockNode() { delete[] buffer; }
+
+    /// <summary>
+    /// Pushes a sample frame in the block and increments the offset.
+    /// miniaudio expects it's stereo PCM data interleaved (LRLR format).
+    /// </summary>
+    /// <param name="l">Left floating point sample</param>
+    /// <param name="r">Right floating point sample</param>
+    /// <returns>Return true if operation was succcessful. False if block is full</returns>
+    bool PushSampleFrame(float l, float r) {
+        if (buffer && offset < size) {
+            buffer[offset] = l;
+            ++offset;
+            buffer[offset] = r;
+            ++offset;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if the buffer is completely filled.
+    /// </summary>
+    /// <returns>Returns true if buffer is full</returns>
+    bool IsBufferFull() { return buffer && offset >= size; }
+};
+
+/// <summary>
+/// This is a light weight queue of type SampleFrameBlockNode and also the guts of SndRaw.
+/// We could have used some std container too but I wanted something really lean, simple and transparent.
+/// </summary>
+struct SampleFrameBlockQueue {
+    SampleFrameBlockNode *first;           // First sample frame block
+    SampleFrameBlockNode *last;            // Last sample frame block
+    size_t blockCount;                     // Sample frame block count
+    size_t frameCount;                     // Number of sample frames we have in the queue
+    ma_uint32 sampleRate;                  // The sample rate reported by ma_engine
+    ma_uint32 blockSampleFrames;           // How many sample frames do we need per 'block'. See below
+    float *buffer;                         // This is the ping-pong buffer where the samples block will be 'streamed' to
+    ma_uint32 bufferSampleFrames;          // Size of the ping-pong buffer in *samples frames*
+    bool updateFlag;                       // We will only update the buffer with fresh samples when this flag is not equal to the check condition
+    ma_uint32 bufferUpdatePosition;        // The position (in samples) in the buffer where we should be copying a sample block
+    ma_sound *maSound;                     // Pointer to a sound object that was passed in the constructor
+    ma_engine *maEngine;                   // Pointer to a ma engine object
+    ma_audio_buffer maBuffer;              // miniaudio buffer object
+    ma_audio_buffer_config maBufferConfig; // miniaudio buffer configuration
+    ma_result maResult;                    // This is the result of the last miniaudio operation (used for trapping errors)
+
+    SampleFrameBlockQueue(const SampleFrameBlockQueue &) = delete;      // No default copy constructor
+    SampleFrameBlockQueue &operator=(SampleFrameBlockQueue &) = delete; // No assignment operator
+
+    /// <summary>
+    /// This initialized the queue and calculates the sample frames per block
+    /// </summary>
+    /// <param name="pmaEngine">A pointer to a miniaudio engine object</param>
+    /// <param name="pmaSound">A pointer to a miniaudio sound object</param>
+    SampleFrameBlockQueue(ma_engine *pmaEngine, ma_sound *pmaSound) {
+        first = last = nullptr;
+        blockCount = frameCount = 0;
+        maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
+        maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
+        sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
+        // We'll have to see if this is a good number or if we can decrease it
+        // Note the node will allocates twice this to account for 2 channels
+        // This is a key member. Setting this to large value will cause latency issues
+        // Setting this to a tiny value may cause clicks, pops or gaps in the stream
+        blockSampleFrames = sampleRate >> 4;
+        bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
+        buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 here is for 2 channels - stereo)
+        bufferUpdatePosition = 0;                     // This will be set to the correct position by checking updateFlag
+        updateFlag = false;                           // Set this to false because we want the initial check to fail
+
+        if (buffer) {
+            // Setup the ma buffer
+            maBufferConfig = ma_audio_buffer_config_init(ma_format_f32, 2, bufferSampleFrames, buffer, NULL);
+            maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
+            assert(maResult == MA_SUCCESS);
+
+            // Create a ma_sound from the ma_buffer
+            maResult = ma_sound_init_from_data_source(maEngine, &maBuffer, 0, NULL, maSound);
+            assert(maResult == MA_SUCCESS);
+        }
+    }
+
+    /// <summary>
+    /// This simply pops all sample blocks
+    /// </summary>
+    ~SampleFrameBlockQueue() {
+        while (PopSampleFrameBlock())
+            ;
+
+        if (buffer) {
+            // Stop playback
+            maResult = ma_sound_stop(maSound);
+            assert(maResult == MA_SUCCESS);
+
+            // Delete the ma_sound object
+            ma_sound_uninit(maSound);
+
+            // Delete the ma_buffer object
+            ma_audio_buffer_uninit(&maBuffer);
+        }
+
+        delete[] buffer;
+    }
+
+    /// <summary>
+    /// This pushes a sample frame into the queue.
+    /// If there are no sample frame blocks then it creates one.
+    /// If the last sample frame block is full it creates a new one and links it to the chain.
+    /// Note that in QBPE all samples frames are assumed to be stereo.
+    /// Mono sample frames are simply simulated by playing the same data from left and right.
+    /// </summary>
+    /// <param name="l">The left sample</param>
+    /// <param name="r">The right sample</param>
+    /// <returns>Returns true if operation was successful</returns>
+    bool PushSampleFrame(float l, float r) {
+        // Attempt to push the frame into the last node if one exists
+        // If successfull return true
+        if (last && last->PushSampleFrame(l, r)) {
+            ++frameCount; // Increment the frame count
+            return true;
+        }
+
+        // If we reached here, then it means that either there are no nodes or the last one is full
+        // Simply create a new node and then link it to the chain
+        SampleFrameBlockNode *node = new SampleFrameBlockNode(blockSampleFrames);
+
+        // Return false if memory allocation failed or we're mot able to save the sample frame
+        if (!node || !node->PushSampleFrame(l, r)) {
+            delete node;
+            return false; // Ignore the sample frame and exit silently
+        }
+
+        if (last)
+            last->next = node; // Add the node to the last node if we have nodes in the queue
+        else
+            first = node; // Else this is the first node
+
+        last = node;  // The last item in the queue is node
+        ++blockCount; // Increase the frame block count
+        ++frameCount; // Increment the frame count
+
+        // Kickstart buffer playback and looping if the first block was created
+        if (1 == blockCount) {
+            // Play the ma sound
+            maResult = ma_sound_start(maSound);
+            assert(maResult == MA_SUCCESS);
+
+            // Set the buffer to loop
+            ma_sound_set_looping(maSound, MA_TRUE);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// This pops a sample frame block from the front of the queue.
+    /// The sample frame block can be accessed before popping using the 'first' member.
+    /// Popping a block frees and invalidates the memory it was using. So, pop a block only when we are sure that we do not need it.
+    /// </summary>
+    /// <returns>Returns true if we were able to pop. False means the queue is empty</returns>
+    bool PopSampleFrameBlock() {
+        // Only if the queue has some sample frame blocks then...
+        if (blockCount) {
+            SampleFrameBlockNode *node = first; // Set node to the first frame in the queue
+
+            --blockCount;                    // Decrement the frame count now so that we know what to do with 'last'
+            frameCount -= node->offset >> 1; // Decrease frame count by number of sample frames written in the block (/ 2 for channels)
+            first = node->next;              // Detach the node. If this is the last node then 'first' will be NULL cause node->next is NULL
+
+            if (!blockCount)
+                last = nullptr; // This means that node was the last node
+
+            delete node; // Free the node
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns the length, in sample frames of sound queued.
+    /// </summary>
+    /// <returns>The length left to play in sample frames</returns>
+    size_t GetSampleFramesRemaining() {
+        size_t bufferSampleFramesRemaining = 0;
+
+        if (ma_sound_is_playing(maSound)) {
+            // Figure out which pcm frame of the buffer is miniaudio playing
+            ma_uint64 readCursor;
+            maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
+            assert(maResult == MA_SUCCESS);
+
+            // Figure out how many frames we have remaining in the buffer
+            bufferSampleFramesRemaining = readCursor < blockSampleFrames ? blockSampleFrames - readCursor : bufferSampleFrames - readCursor;
+        }
+
+        // Add this to the frames in the queue
+        return bufferSampleFramesRemaining + frameCount;
+    }
+
+    /// <summary>
+    /// Returns the length, in seconds of sound queued.
+    /// </summary>
+    /// <returns>The length left to play in seconds</returns>
+    double GetTimeRemaining() { return (double)GetSampleFramesRemaining() / sampleRate; }
+
+    /// <summary>
+    /// Check if everything is ready to go
+    /// </summary>
+    /// <returns>Returns true if everything is a go</returns>
+    bool IsSetupValid() { return buffer && maEngine && maSound && maResult == MA_SUCCESS; }
+
+    /// <summary>
+    /// This keeps the ping-pong buffer fed and the sound stream going
+    /// </summary>
+    /// <param name="purge">If this flag is set then we will push any incomplete blocks to the sound buffer</param>
+    void Update(bool purge) {
+        // Only bother if the buffer is actually playing
+        if (ma_sound_is_playing(maSound)) {
+            // Figure out which pcm frame of the buffer is miniaudio playing
+            ma_uint64 readCursor;
+            maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
+            assert(maResult == MA_SUCCESS);
+
+            bool checkCondition = readCursor < blockSampleFrames; // Since buffer sample frame size = blockSampleFrames * 2
+
+            // Only proceed to update if our flag is not the same as our condition
+            if (checkCondition != updateFlag) {
+                // The line below does two sneaky things that deserve explanation
+                //	1. We are using bufferSampleFrames which is set to exactly halfway through the buffer since we are using stereo (see constructor)
+                //	2. The boolean condition above will always be 1 if the read cursor is in the lower-half and hence push the position to the top-half
+                bufferUpdatePosition = checkCondition * bufferSampleFrames; // This line basically toggles the buffer copy position
+
+                if (blockCount) // Check if we have any blocks in the queue
+                {
+                    if (first->IsBufferFull() || (purge && 1 == blockCount)) // We will stream the block only if it is full or the purge flag is set
+                    {
+                        // Simply copy the first block in the queue
+                        if (first->buffer)
+                            std::copy(first->buffer, first->buffer + first->size, buffer + bufferUpdatePosition);
+
+                        // And then pop it off
+                        PopSampleFrameBlock();
+                    }
+                } else {
+                    // Stop looping the buffer if this was the last block and read cursor is in the lower half
+                    if (checkCondition)
+                        ma_sound_set_looping(maSound, MA_FALSE);
+                }
+
+                updateFlag = checkCondition; // Save our check condition to our flag
+            }
+        }
+    }
+};
+
+/// <summary>
 /// Sound handle type
 /// This describes every sound the system will ever play (including raw streams).
 /// </summary>
 struct SoundHandle {
-    bool isUsed;       // Is this handle in active use
-    SoundType type;    // Type of sound (see SoundType enum)
-    bool autoKill;     // Do we need to auto-clean this sample / stream after playback is done?
-    ma_sound maSound;  // miniaudio sound
-    ma_uint32 maFlags; // miniaudio flags that were used when initializing the sound
-    // TODO: SampleFrameQueue sampleFrameQueue; // Raw sample frame queue
+    bool isUsed;                     // Is this handle in active use
+    SoundType type;                  // Type of sound (see SoundType enum)
+    bool autoKill;                   // Do we need to auto-clean this sample / stream after playback is done?
+    ma_sound maSound;                // miniaudio sound
+    ma_uint32 maFlags;               // miniaudio flags that were used when initializing the sound
+    SampleFrameBlockQueue *rawQueue; // Raw sample frame queue
 };
 
 /// <summary>
 ///	Type will help us keep track of the audio engine state
 /// </summary>
 struct AudioEngine {
-    bool isInitialized;        // This is set to true if we were able to initialize miniaudio and allocated all required resources
-    bool initializationFailed; // This is set to true if a past initialization attempt failed
-    ma_engine maEngine;        // This is the primary miniaudio "engine" context. Everything happens using this!
-    ma_result maResult;        // This is the result of the last miniaudio operation (used for trapping errors)
-    ma_uint32 sampleRate;      // Sample rate used by the miniaudio engine
-    int32 sndInternal;         // Internal sound handle that we will use for Beep() & Sound(). TODO: Do we really need this? See Beep() and Sound()
+    bool isInitialized;                      // This is set to true if we were able to initialize miniaudio and allocated all required resources
+    bool initializationFailed;               // This is set to true if a past initialization attempt failed
+    ma_engine maEngine;                      // This is the primary miniaudio "engine" context. Everything happens using this!
+    ma_result maResult;                      // This is the result of the last miniaudio operation (used for trapping errors)
+    ma_uint32 sampleRate;                    // Sample rate used by the miniaudio engine
+    int32 sndInternal;                       // Internal sound handle that we will use for Beep() & Sound()
+    int32 sndInternalRaw;                    // Internal sound handle that we will use for 'handle-less' raw streames
     std::vector<SoundHandle *> soundHandles; // This is the audio handle list used by the engine and by everything else
 
     AudioEngine(const AudioEngine &) = delete;      // No default copy constructor
@@ -104,7 +399,7 @@ struct AudioEngine {
     AudioEngine() {
         isInitialized = initializationFailed = false;
         sampleRate = 0;
-        sndInternal = INVALID_SOUND_HANDLE;
+        sndInternal = sndInternalRaw = INVALID_SOUND_HANDLE;
     }
 
     /// <summary>
@@ -125,6 +420,9 @@ struct AudioEngine {
     /// </summary>
     /// <returns>Returns a non-negative handle if successful</returns>
     int32 AllocateSoundHandle() {
+        if (!isInitialized)
+            return INVALID_SOUND_HANDLE;
+
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
         // Scan through the vector and return a slot that is not being used
@@ -147,17 +445,61 @@ struct AudioEngine {
             h = newVectorSize - 1; // The handle is simply newsize - 1
         }
 
+        // Check if the new operator above was successfull
+        if (!soundHandles[h]) {
+            soundHandles.pop_back();
+
+            return INVALID_SOUND_HANDLE;
+        }
+
         // Initializes a sound handle that was just allocated.
         // This will set it to 'in use' after applying some defaults.
         soundHandles[h]->type = SoundType::None;
         soundHandles[h]->autoKill = false;
-        // TODO: soundHandles[h]->sampleFrameQueue = {0};
-        soundHandles[h]->maSound = {0};
+        soundHandles[h]->rawQueue = nullptr;
+        soundHandles[h]->maSound = {};
         // We do not use pitch shifting, so this will give a little performance boost
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         soundHandles[h]->isUsed = true;
 
         return (int32)(h); // Return newVectorSize - 1 as the handle
+    }
+
+    /// <summary>
+    /// The frees and unloads an open sound.
+    /// If the sound is playing or looping, it will be stopped.
+    /// If the sound is a stream of raw samples then it is stopped and freed.
+    /// Finally the handle is invalidated and put-up for recycling.
+    /// </summary>
+    /// <param name="handle">A sound handle</param>
+    void FreeSoundHandle(int32 handle) {
+        if (isInitialized && handle >= 0 && handle < soundHandles.size() && soundHandles[handle]->isUsed) {
+            // Sound type specific cleanup
+            switch (soundHandles[handle]->type) {
+            case SoundType::Static:
+                ma_sound_uninit(&soundHandles[handle]->maSound);
+
+                break;
+
+            case SoundType::Raw:
+                delete soundHandles[handle]->rawQueue;
+                soundHandles[handle]->rawQueue = nullptr;
+
+                break;
+
+            case SoundType::None:
+                if (handle != 0)
+                    assert(false && "Sound type is 'None' when handle value is not 0");
+
+                break;
+
+            default:
+                assert(false && "Condition not handled"); // It should not come here
+            }
+
+            // Now simply set the 'isUsed' member to false
+            soundHandles[handle]->isUsed = false;
+        }
     }
 };
 //-----------------------------------------------------------------------------------------------------
@@ -174,7 +516,6 @@ static AudioEngine audioEngine;
 //-----------------------------------------------------------------------------------------------------
 /// <summary>
 /// This generates a sound at the specified frequency for the specified amount of time.
-/// Returns immediately after sending the data for playback.
 /// </summary>
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
@@ -220,6 +561,8 @@ void sub_sound(double frequency, double lengthInClockTicks) {
     audioEngine.maResult =
         ma_sound_init_from_data_source(&audioEngine.maEngine, &maBuffer, 0, NULL, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
     assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Play the ma sound
     audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
     assert(audioEngine.maResult == MA_SUCCESS);
 
@@ -235,8 +578,6 @@ void sub_sound(double frequency, double lengthInClockTicks) {
 
 /// <summary>
 /// This generates a default 'beep' sound.
-/// Sends the sound samples for playback and immediately returns.
-/// This is in-line with the behavior of 'Sound' and 'Play'.
 /// </summary>
 void sub_beep() { sub_sound(900, 5); }
 
@@ -264,8 +605,8 @@ int32 func__sndrate() { return audioEngine.sampleRate; }
 /// <returns>Returns a valid sound handle (> 0) if successful or 0 if it fails</returns>
 int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed) {
     // Some QB strings that we'll need
-    static qbs *fileNameZ = NULL;
-    static qbs *reqs = NULL;
+    static qbs *fileNameZ = nullptr;
+    static qbs *reqs = nullptr;
 
     if (!audioEngine.isInitialized)
         return INVALID_SOUND_HANDLE;
@@ -282,7 +623,6 @@ int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed) {
 
     // Alocate a sound handle
     int32 handle = audioEngine.AllocateSoundHandle();
-    // Initialize the sound handle data
     if (handle <= 0) // We are not expected to open files with handle 0
         return INVALID_SOUND_HANDLE;
 
@@ -316,28 +656,14 @@ int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed) {
 
 /// <summary>
 /// The frees and unloads an open sound.
-/// If the sound is playing or looping, it will be stopped.
+/// If the sound is playing, it'll let it finish. Looping sounds will loop until the program is closed.
 /// If the sound is a stream of raw samples then any remaining samples pending for playback will be sent to miniaudio and then the handle will be freed.
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndclose(int32 handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
-        // Sound type specific cleanup
-        switch (audioEngine.soundHandles[handle]->type) {
-        case SoundType::Static:
-            ma_sound_uninit(&audioEngine.soundHandles[handle]->maSound);
-            break;
-
-        case SoundType::Raw:
-            // TODO:
-            break;
-
-        default:
-            assert(MA_TRUE); // It should not come here
-        }
-
-        // Now simply set the 'isUsed' member to false
-        audioEngine.soundHandles[handle]->isUsed = false;
+        // Simply set the autokill flag to true and let the sound loop handle disposing the sound
+        audioEngine.soundHandles[handle]->autoKill = true;
     }
 }
 
@@ -433,7 +759,7 @@ void sub__sndplaycopy(int32 src_handle, double volume, int32 passed) {
 /// <param name="passed">How many parameters were passed?</param>
 void sub__sndplayfile(qbs *fileName, int32 sync, double volume, int32 passed) {
     // We need this to send requirements to SndOpen
-    static qbs *reqs = NULL;
+    static qbs *reqs = nullptr;
 
     if (!reqs) {
         // Since this never changes, we can get away by doing this just once
@@ -561,6 +887,7 @@ void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int3
             ma_sound_set_position(&audioEngine.soundHandles[handle]->maSound, x, y, z); // Use full 3D positioning
         } else {
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
+            ma_sound_set_pan_mode(&audioEngine.soundHandles[handle]->maSound, ma_pan_mode_pan);        // Set true panning
             ma_sound_set_pan(&audioEngine.soundHandles[handle]->maSound, x);                           // Just use stereo panning
         }
     }
@@ -659,69 +986,130 @@ void sub__sndstop(int32 handle) {
 }
 
 /// <summary>
-///
+/// This function opens a new channel to fill with _SNDRAW content to manage multiple dynamically generated sounds.
 /// </summary>
-/// <returns></returns>
-int32 func__sndopenraw() { return 0; }
+/// <returns>A new sound handle if successful or 0 on failure</returns>
+int32 func__sndopenraw() {
+    // Return invalid handle if audio engine is not initialized
+    if (!audioEngine.isInitialized)
+        return INVALID_SOUND_HANDLE;
 
-/// <summary>
-///
-/// </summary>
-/// <param name="left"></param>
-/// <param name="right"></param>
-/// <param name="handle"></param>
-/// <param name="passed"></param>
-void sub__sndraw(float left, float right, int32 handle, int32 passed) {}
+    // Alocate a sound handle
+    int32 handle = audioEngine.AllocateSoundHandle();
+    if (handle <= 0) // We are not expected to open files with handle 0
+        return INVALID_SOUND_HANDLE;
 
-/// <summary>
-///
-/// </summary>
-/// <param name="handle"></param>
-/// <param name="passed"></param>
-void sub__sndrawdone(int32 handle, int32 passed) {}
+    // Set some handle properties
+    audioEngine.soundHandles[handle]->type = SoundType::Raw;
 
-/// <summary>
-///
-/// </summary>
-/// <param name="handle"></param>
-/// <param name="passed"></param>
-/// <returns></returns>
-double func__sndrawlen(int32 handle, int32 passed) { return 0; }
+    // Create the raw sound object
+    audioEngine.soundHandles[handle]->rawQueue = new SampleFrameBlockQueue(&audioEngine.maEngine, &audioEngine.soundHandles[handle]->maSound);
+    if (!audioEngine.soundHandles[handle]->rawQueue)
+        return INVALID_SOUND_HANDLE;
 
-/// <summary>
-///
-/// </summary>
-/// <param name="i"></param>
-/// <param name="targetChannel"></param>
-/// <returns></returns>
-mem_block func__memsound(int32 i, int32 targetChannel) {
-    // TODO: Out of all the functions, this is probably going to be the most difficult or kludgy or both
-    //  Since we want miniaudio to manage all audio resouces, audio data is stored how miniaudio wants in memory
-    //  In miniaudio's case, stereo audio data is store as iterleaved in memory. Apparently, this is true for many audio libs out there
-    //  This is completely unlike what the old OpenAL code was doing
-    //  One way to implement this is to have two temp buffers - one for left and one for right and let the user use those
-    //  When the user is done using and closes the mem object, then the interleave data should be created from the buffers for miniaudio (yuck!)
-    //  The second way is to simply expose the miniaudio's interleaved buffer to the user. This will break compatibility. But then, how many people really use
-    //  this stuff?
+    // Check if everything was setup correctly
+    if (!audioEngine.soundHandles[handle]->rawQueue->IsSetupValid()) {
+        delete audioEngine.soundHandles[handle]->rawQueue;
+        audioEngine.soundHandles[handle]->rawQueue = nullptr;
+
+        return INVALID_SOUND_HANDLE;
+    }
+
+    return handle;
 }
 
 /// <summary>
-///
+/// This plays sound wave sample frequencies created by a program.
 /// </summary>
-/// <param name="size"></param>
-/// <param name="rate"></param>
-/// <param name="channels"></param>
-/// <param name="bits"></param>
-/// <param name="passed"></param>
+/// <param name="left">Left channel sample</param>
+/// <param name="right">Right channel sample</param>
+/// <param name="handle">A sound handle</param>
+/// <param name="passed">How many parameters were passed?</param>
+void sub__sndraw(float left, float right, int32 handle, int32 passed) {
+    // Use the default raw handle if handle was not passed
+    if (!(passed & 2)) {
+        // Check if the default handle was created
+        if (audioEngine.sndInternalRaw <= 0) {
+            audioEngine.sndInternalRaw = func__sndopenraw();
+        }
+
+        handle = audioEngine.sndInternalRaw;
+    }
+
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+        if (!(passed & 1))
+            right = left;
+
+        audioEngine.soundHandles[handle]->rawQueue->PushSampleFrame(left, right);
+    }
+}
+
+/// <summary>
+/// This ensures that the final buffer portion is played in short sound effects even if it is incomplete.
+/// </summary>
+/// <param name="handle">A sound handle</param>
+/// <param name="passed">How many parameters were passed?</param>
+void sub__sndrawdone(int32 handle, int32 passed) {
+    // Use the default raw handle if handle was not passed
+    if (!passed)
+        handle = audioEngine.sndInternalRaw;
+
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+        while (audioEngine.soundHandles[handle]->rawQueue->GetSampleFramesRemaining()) {
+            audioEngine.soundHandles[handle]->rawQueue->Update(true);
+            Sleep(0);
+        }
+    }
+}
+
+/// <summary>
+/// This function returns the length, in seconds, of a _SNDRAW sound currently queued.
+/// </summary>
+/// <param name="handle">A sound handle</param>
+/// <param name="passed">How many parameters were passed?</param>
 /// <returns></returns>
-int32 func__newsound(int32 size, int32 rate, int32 channels, int32 bits, int32 passed) {
-    // This is a new addition to the QBPE Audio API
-    // This allows a user to create a empty sound buffer with a given specification
-    // The user then can fill the buffer with whatever they want and play it
-    // This obviously needs to be greenlit by the QBPE maintainers
+double func__sndrawlen(int32 handle, int32 passed) {
+    // Use the default raw handle if handle was not passed
+    if (!passed)
+        handle = audioEngine.sndInternalRaw;
+
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+        return audioEngine.soundHandles[handle]->rawQueue->GetTimeRemaining();
+    }
 
     return 0;
 }
+
+/// <summary>
+/// This function returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function.
+/// </summary>
+/// <param name="handle">A sound handle</param>
+/// <param name="targetChannel">The channel data is required. This is ignored with miniaudio as it uses interleaved samples</param>
+/// <returns>A _MEM value that can be used to access the sound data</returns>
+mem_block func__memsound(int32 handle, int32 targetChannel) {
+    // TODO: Out of all the functions, this is probably going to be the most difficult or kludgy or both
+    //  Since we want miniaudio to manage all audio resouces, audio data is stored how miniaudio wants in memory
+    //  In miniaudio's case, stereo audio data is store as interleaved in memory. Apparently, this is true for many audio libs out there
+    //  This is completely unlike what the old OpenAL code was doing
+    //  One way to implement this is to have two temp buffers - one for left and one for right and let the user use those
+    //  When the user is done using and closes the mem object, then the interleave data should be created from the buffers for miniaudio (yuck!)
+    //  The second way is to simply expose the miniaudio's interleaved buffer to the user. This will break compatibility for stereo sound.
+    //  But then, how many people really use this stuff?
+}
+
+/// <summary>
+/// This is a new addition to the QBPE Audio API.
+/// It returns a _MEM value referring to a newly created sound's raw data in memory with the given specification.
+/// The user can then fill the buffer with whatever they want (using _MEMSOUND) and play it.
+/// This obviously needs to be greenlit by the QBPE maintainers.
+/// </summary>
+/// <param name="frames">The number of sample frames required</param>
+/// <param name="rate">The sample rate of the sound</param>
+/// <param name="channels">The number of sound channels</param>
+/// <param name="bits">The bit depth of the sound</param>
+/// <param name="passed">How many parameters were passed?</param>
+/// <returns>A new sound handle if successful or 0 on failure</returns>
+int32 func__newsound(int32 frames, int32 rate, int32 channels, int32 bits, int32 passed) { return 0; }
 
 /// <summary>
 /// This initializes the QBPE audio subsystem.
@@ -741,17 +1129,17 @@ void snd_init() {
         return;
     }
 
+    // Set the initialized flag as true
+    audioEngine.isInitialized = true;
+
     // Get and save the engine sample rate
     audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
     // Allocate a sound handle
-    // Not that this should always be 0
+    // Note that this should always be 0
     // We will use this handle internally for Beep(), Sound() etc.
     audioEngine.sndInternal = audioEngine.AllocateSoundHandle();
     assert(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
-
-    // Set the initialized flag as true
-    audioEngine.isInitialized = true;
 }
 
 /// <summary>
@@ -761,31 +1149,20 @@ void snd_un_init() {
     if (audioEngine.isInitialized) {
         // Free all sound handles here
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
-            // Perform and sound type specific cleanup
-            switch (audioEngine.soundHandles[handle]->type) {
-            case SoundType::Static:
-                // TODO:
-                break;
-
-            case SoundType::Raw:
-                // TODO:
-                break;
-
-            default:
-                assert(MA_TRUE); // It should not come here
-            }
-
-            sub__sndclose(handle);                   // Let SndClose do it's thing
+            audioEngine.FreeSoundHandle(handle);     // Let FreeSoundHandle do it's thing
             delete audioEngine.soundHandles[handle]; // Now free the object created by AllocateSoundHandle()
         }
 
         // Now that all sounds are closed and SoundHandle objects are freed, clear the vector
         audioEngine.soundHandles.clear();
 
+        // Invalidate internal handles
+        audioEngine.sndInternal = audioEngine.sndInternalRaw = INVALID_SOUND_HANDLE;
+
         // Shutdown miniaudio
         ma_engine_uninit(&audioEngine.maEngine);
 
-        // Set global flag as false
+        // Set engine initialized flag as false
         audioEngine.isInitialized = false;
     }
 }
@@ -796,29 +1173,43 @@ void snd_un_init() {
 /// </summary>
 void snd_mainloop() {
     if (audioEngine.isInitialized) {
-        // Scan through the list and find anything that we need to stop and close
+        // Scan through the whole handle to find anything we need to update or close
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
-            // We are only looking for stuff that is set to auto-destruct
-            if (audioEngine.soundHandles[handle]->isUsed && audioEngine.soundHandles[handle]->autoKill) {
-                switch (audioEngine.soundHandles[handle]->type) {
-                case SoundType::Static:
-                    // Dispose the sound if it has finished playing
-                    // Note that this means that temporary looping sounds will never close
-                    // Well thats on the programmer. Probably they want it that way
-                    if (!ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound)) {
-                        sub__sndclose(handle);
+            // Only process handles that are in use
+            if (audioEngine.soundHandles[handle]->isUsed) {
+                // Keep raw audio streams going
+                if (audioEngine.soundHandles[handle]->type == SoundType::Raw)
+                    audioEngine.soundHandles[handle]->rawQueue->Update(true); // TODO: We should not be setting this to true
+
+                // Look for stuff that is set to auto-destruct
+                if (audioEngine.soundHandles[handle]->autoKill) {
+                    switch (audioEngine.soundHandles[handle]->type) {
+                    case SoundType::Static:
+                        // Dispose the sound if it has finished playing
+                        // Note that this means that temporary looping sounds will never close
+                        // Well thats on the programmer. Probably they want it that way
+                        if (!ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound))
+                            audioEngine.FreeSoundHandle(handle);
+
+                        break;
+
+                    case SoundType::Raw:
+                        // Close the raw stream if we have no more frames in the queue or playing
+                        if (!audioEngine.soundHandles[handle]->rawQueue->GetSampleFramesRemaining())
+                            audioEngine.FreeSoundHandle(handle);
+
+                        break;
+
+                    case SoundType::None:
+                        if (handle != 0)
+                            assert(false && "Sound type is 'None' when handle value is not 0");
+
+                        break;
+
+                    default:
+                        assert(false && "Condition not handled"); // It should not come here
                     }
-                    break;
-
-                case SoundType::Raw:
-                    // TODO:
-                    break;
-
-                default:
-                    assert(MA_TRUE); // It should not come here
                 }
-
-                // TODO: more common housekeeping here
             }
         }
     }

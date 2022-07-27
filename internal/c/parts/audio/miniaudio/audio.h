@@ -58,8 +58,8 @@ void sub__sndraw(float left, float right, int32 handle, int32 passed);
 void sub__sndrawdone(int32 handle, int32 passed);
 double func__sndrawlen(int32 handle, int32 passed);
 
-mem_block func__memsound(int32 i, int32 targetChannel);
-int32 func__newsound(int32 size, int32 rate, int32 channels, int32 bits, int32 passed);
+mem_block func__memsound(int32 handle, int32 targetChannel);
+int32 func__newsound(int32 frames, int32 rate, int32 channels, int32 bits, int32 passed);
 
 void snd_init();
 void snd_un_init();
