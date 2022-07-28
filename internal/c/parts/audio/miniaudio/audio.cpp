@@ -20,6 +20,11 @@
 // Enable Ogg Vorbis decoding
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
+// PulseAudio has serious stuttering issues in ChromeOS Linux (Crostini) and possibly others
+// This may be due to this - https://github.com/mackron/miniaudio/issues/427
+// And https://wiki.archlinux.org/title/PulseAudio/Troubleshooting#Glitches,_skips_or_crackling
+// We'll have to look at this closely later. If this is fixed, then remove this define from here & miniaudio_impl.cpp
+#define MA_NO_PULSEAUDIO
 // The main miniaudio header
 #include "miniaudio.h"
 //-----------------------------------------------------------------------------------------------------
@@ -70,13 +75,13 @@ void Sleep(uint32 milliseconds); // There is a non-Windows implementation. Howev
 #endif
 
 #if defined(AE_DEBUG) && AE_DEBUG > 0
-#    define DEBUG_PRINT(_fmt_, _args_...) fprintf(stderr, "\nDEBUG: %s:%d:%s(): " _fmt_, __FILE__, __LINE__, __func__, ##_args_)
+#    define DEBUG_PRINT(_fmt_, _args_...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, ##_args_)
 #    define DEBUG_CHECK(_exp_)                                                                                                                                 \
         if (!(_exp_))                                                                                                                                          \
         DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
-#    define DEBUG_PRINT(_fmt_, _args_...) /* Don't do anything in release builds */
-#    define DEBUG_CHECK(_exp_)            /* Don't do anything in release builds */
+#    define DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
+#    define DEBUG_CHECK(_exp_)            // Don't do anything in release builds
 #endif
 //-----------------------------------------------------------------------------------------------------
 
