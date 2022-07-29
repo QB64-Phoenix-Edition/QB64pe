@@ -5,7 +5,7 @@
 //   \__\_\___/_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
 //                                                      |___/
 //
-//	QBPE Audio engine powered by miniaudio (https://miniaud.io/)
+//	QBPE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //	Copyright (c) 2022 Samuel Gomes
 //	https://github.com/a740g
