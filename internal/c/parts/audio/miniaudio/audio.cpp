@@ -16,6 +16,7 @@
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
 #include "audio.h"
+#include <algorithm>
 #include <vector>
 // Enable Ogg Vorbis decoding
 #define STB_VORBIS_HEADER_ONLY
@@ -77,13 +78,21 @@ void Sleep(uint32 milliseconds); // There is a non-Windows implementation. Howev
 #endif
 
 #if defined(AE_DEBUG) && AE_DEBUG > 0
-#    define DEBUG_PRINT(_fmt_, _args_...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, ##_args_)
+#    ifdef _MSC_VER
+#        define DEBUG_PRINT(_fmt_, ...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
+#    else
+#        define DEBUG_PRINT(_fmt_, _args_...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, ##_args_)
+#    endif
 #    define DEBUG_CHECK(_exp_)                                                                                                                                 \
         if (!(_exp_))                                                                                                                                          \
         DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
-#    define DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
-#    define DEBUG_CHECK(_exp_)            // Don't do anything in release builds
+#    ifdef _MSC_VER
+#        define DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
+#    else
+#        define DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
+#    endif
+#    define DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
 //-----------------------------------------------------------------------------------------------------
 
@@ -193,7 +202,7 @@ struct SampleFrameBlockQueue {
     /// <param name="pmaSound">A pointer to a miniaudio sound object</param>
     SampleFrameBlockQueue(ma_engine *pmaEngine, ma_sound *pmaSound) {
         first = last = nullptr;
-        blockCount = frameCount = sampleFramesPlaying = maEngineTime = bufferUpdatePosition = 0;
+        blockCount = frameCount = maEngineTime = sampleFramesPlaying = bufferUpdatePosition = 0;
         maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
@@ -328,7 +337,7 @@ struct SampleFrameBlockQueue {
 
         // Decrement the delta from the sample frames that are playing
         // Using std::min here is probably risky since these are all unsigned types
-        sampleFramesPlaying = maEngineDeltaTime > sampleFramesPlaying ? 0 : sampleFramesPlaying - maEngineDeltaTime;
+        sampleFramesPlaying = maEngineDeltaTime > sampleFramesPlaying ? 0 : (ma_uint32)(sampleFramesPlaying - maEngineDeltaTime);
 
         // Add this to the frames in the queue
         return sampleFramesPlaying + frameCount;
@@ -861,12 +870,14 @@ int32 func__sndpaused(int32 handle) {
 
 /// <summary>
 /// This sets the volume of a sound loaded in memory using a sound handle.
+/// New: This works for both static and raw sounds.
 /// </summary>
 /// <param name="handle">A sound handle</param>
 /// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
 void sub__sndvol(int32 handle, float volume) {
     // TODO: We should enable this for raw pcm sounds too
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
+        (audioEngine.soundHandles[handle]->type == SoundType::Static || audioEngine.soundHandles[handle]->type == SoundType::Raw)) {
         ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
     }
 }
@@ -899,6 +910,7 @@ void sub__sndloop(int32 handle) {
 /// <summary>
 /// This will attempt to set the balance or 3D position of a sound.
 /// Note that unlike the OpenAL code, we will do pure stereo panning if y & z are absent.
+/// New: This works for both static and raw sounds.
 /// </summary>
 /// <param name="handle">A sound handle</param>
 /// <param name="x">x distance values go from left (negative) to right (positive)</param>
@@ -907,8 +919,8 @@ void sub__sndloop(int32 handle) {
 /// <param name="channel">channel value 1 denotes left (mono) and 2 denotes right (stereo) channel. This has no meaning for miniaudio and is ignored</param>
 /// <param name="passed">How many parameters were passed?</param>
 void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int32 passed) {
-    // TODO: We should enable this for raw pcm sounds too
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
+        (audioEngine.soundHandles[handle]->type == SoundType::Static || audioEngine.soundHandles[handle]->type == SoundType::Raw)) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
@@ -1141,10 +1153,10 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
 /// The user can then fill the buffer with whatever they want (using _MEMSOUND) and play it.
 /// This obviously needs to be greenlit by the QBPE maintainers.
 /// </summary>
-/// <param name="frames">The number of sample frames required</param>
-/// <param name="rate">The sample rate of the sound</param>
-/// <param name="channels">The number of sound channels</param>
-/// <param name="bits">The bit depth of the sound</param>
+/// <param name="frames">The number of sample frames required. This is mandatory</param>
+/// <param name="rate">The sample rate of the sound. This will default to device sample rate</param>
+/// <param name="channels">The number of sound channels. This will default to mono/param>
+/// <param name="bits">The bit depth of the sound. This will default to device native format</param>
 /// <param name="passed">How many parameters were passed?</param>
 /// <returns>A new sound handle if successful or 0 on failure</returns>
 int32 func__newsound(int32 frames, int32 rate, int32 channels, int32 bits, int32 passed) { return 0; }
