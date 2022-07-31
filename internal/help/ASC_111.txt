@@ -1,5 +1,5 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:11:50}}
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:41:05}}
 The [[ASC]] function returns the [[ASCII]] code number of a certain [[STRING]] text character or a keyboard press.
 
 
@@ -7,11 +7,11 @@ The [[ASC]] function returns the [[ASCII]] code number of a certain [[STRING]] t
 : {{Parameter|code%}} = [[ASC]]({{Parameter|text$}}[, {{Parameter|position%}}])
 
 
-* {{Parameter|text$}} [[STRING|string]] character parameter must have a length of at least 1 byte or an error occurs. 
+* {{Parameter|text$}} [[STRING|string]] character parameter must have a length of at least 1 byte or an error occurs.
 * '''In QB64''' the optional byte {{Parameter|position%}} [[INTEGER]] parameter greater than 0 can specify the ASCII code of any character in a string to be returned.
 * If the optional {{Parameter|position%}} parameter is omitted, ASC will return the [[ASCII]] code of the first [[STRING]] character.
-* [[ASCII]] code [[INTEGER]] or [[_UNSIGNED]] [[_BYTE]] values returned range from 0 to 255. 
-* ASC returns 0 when reading [[ASCII]] 2 byte codes returned by [[INKEY$]] when the arrow, function, Home/Page keys are used. 
+* [[ASCII]] code [[INTEGER]] or [[_UNSIGNED]] [[_BYTE]] values returned range from 0 to 255.
+* ASC returns 0 when reading [[ASCII]] 2 byte codes returned by [[INKEY$]] when the arrow, function, Home/Page keys are used.
 ** Use QB64's {{Parameter|position%}} parameter to read the second byte if necessary. {{Text|IF ASC(key$) <nowiki>=</nowiki> 0 THEN byte2 <nowiki>=</nowiki> ASC(key$, 2)|green}}
 * In '''QB64''' ASC string byte position reads are about '''5 times faster''' than [[MID$]] when parsing strings. See [[MID$]] ''Example 2''.
 
@@ -23,34 +23,34 @@ The [[ASC]] function returns the [[ASCII]] code number of a certain [[STRING]] t
 
 {{WhiteStart}}'                                '''ASCII Keyboard Codes'''
 '
-'''' Esc  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12  Sys ScL Pause'''                  
+'''' Esc  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12  Sys ScL Pause'''
 '  27 +59 +60 +61 +62 +63 +64 +65 +66 +67 +68  +133 +134   -   -    -
-'''' `~  1!  2@  3#  4$  5%  6^  7&  8*  9(  0) -_ =+ BkSp   Ins Hme PUp   NumL  /   *    -''' 
+'''' `~  1!  2@  3#  4$  5%  6^  7&  8*  9(  0) -_ =+ BkSp   Ins Hme PUp   NumL  /   *    -'''
 ' 126 33  64  35  36  37  94  38  42  40  41 95 43   8    +82 +71 +73    -    47  42   45
 '''  96 49  50  51  52  53  54  55  56  57  48 45 61''
 '''' Tab Q   W   E   R   T   Y   U   I   O   P  [{  ]}  \|   Del End PDn   7Hme 8/▲  9PU  + '''
 '  9  81  87  69  82  84  89  85  73  79  80 123 125 124  +83 +79 +81   +71  +72  +73  43
 '''    113 119 101 114 116 121 117 105 111 112  91  93  92                 55   56   57 ''
-'''' CapL  A   S   D   F   G   H   J   K   L   ;:  '" Enter                4/◄-  5   6/-►  
+'''' CapL  A   S   D   F   G   H   J   K   L   ;:  '" Enter                4/◄-  5   6/-►
 '   -   65  83  68  70  71  72  74  75  76  58  34  13                  +75  +76  +77  '''E'''
-'''       97 115 100 102 103 104 106 107 108  59  39                       52   53   54 '' '''n'''                                    
+'''       97 115 100 102 103 104 106 107 108  59  39                       52   53   54 '' '''n'''
 '''' Shift  Z   X   C   V   B   N   M   ,<  .>  /?    Shift       ▲        1End 2/▼  3PD  t'''
 '   *    90  88  67  86  66  78  77  60  62  63      *        +72       +79  +80  +81  '''e'''
 '''       122 120  99 118  98 110 109  44  46  47                          49   50   51 '' '''r'''
 '''' Ctrl Win Alt       Spacebar          Alt Win Menu Ctrl   ◄-  ▼   -►   0Ins     .Del '''
-'  *    -   *           32              *   -   -    *    +75 +80 +77   +82       +83  13 
+'  *    -   *           32              *   -   -    *    +75 +80 +77   +82       +83  13
 '                                                                   ''     48        46''
 '
 ' '''    ''Italics'' = LCase/NumLock On  ____________  + = 2 Byte: CHR$(0) + CHR$(code)'''
 '{{small|NOTE: The above commented table can be copied and pasted directly into the QB64 IDE}}
-{{WhiteEnd}} 
+{{WhiteEnd}}
 
 
 <center>'''[[ASCII#Two_Byte_Codes|Two Byte Ctrl, Alt and Shift + Function key combinations]]'''</center>
 
 {{WhiteStart}}                    '''Two Byte Characters        Key                 CHR$(0) + "?" '''
 
-                    CHR$(0) + CHR$(16-50)      [Alt] + letter       
+                    CHR$(0) + CHR$(16-50)      [Alt] + letter
                     CHR$(0) + CHR$(59)         [F1]                 ";"
                     CHR$(0) + CHR$(60)         [F2]                 "<"
                     CHR$(0) + CHR$(61)         [F3]                 "="
@@ -75,7 +75,7 @@ The [[ASC]] function returns the [[ASCII]] code number of a certain [[STRING]] t
                     CHR$(0) + CHR$(84-93)      [Shift] + F1-10
                     CHR$(0) + CHR$(94-103)     [Ctrl] + F1-10
                     CHR$(0) + CHR$(104-113)    [Alt] + F1-10
-                    CHR$(0) + CHR$(114-119)    [Ctrl] + keypad 
+                    CHR$(0) + CHR$(114-119)    [Ctrl] + keypad
                     CHR$(0) + CHR$(120-129)    [Alt] + number
                     CHR$(0) + CHR$(130 or 131) [Alt] + _/- or +/=   "é" or "â"
                     CHR$(0) + CHR$(133)        [F11]                "à"
@@ -93,9 +93,9 @@ The [[ASC]] function returns the [[ASCII]] code number of a certain [[STRING]] t
 {{PageExamples}}
 ''Example 1:'' How ASC can be used to find any ASCII code in a string of characters using QB64.
 {{CodeStart}}
- {{Cl|PRINT}} ASC("A")
- {{Cl|PRINT}} ASC("Be a rockstar")
- {{Cl|PRINT}} ASC("QB64 is not only COMPATIBLE, it can find any part of the string!", 18) 
+ {{Cl|PRINT}} {{Cl|ASC}}("A")
+ {{Cl|PRINT}} {{Cl|ASC}}("Be a rockstar")
+ {{Cl|PRINT}} {{Cl|ASC}}("QB64 is not only COMPATIBLE, it can find any part of the string!", 18)
 {{CodeEnd}}
 
 ''Returns:''
@@ -116,13 +116,13 @@ The [[ASC]] function returns the [[ASCII]] code number of a certain [[STRING]] t
 Q$ = {{Cl|CHR$}}(34) ' quote character
 {{Cl|COLOR}} 10: {{Cl|LOCATE}} 5, 22: {{Cl|PRINT}} "Press some keys or combinations!"
 {{Cl|COLOR}} 13: {{Cl|LOCATE}} 23, 30: {{Cl|PRINT}} "Escape key Quits"
-DO
-   DO: {{Cl|SLEEP}}: key$ = {{Cl|INKEY$}}: {{Cl|LOOP}} {{Cl|UNTIL}} key$ <> "" ' prevent ASC empty string read error
+{{Cl|DO}}
+   {{Cl|DO}}: {{Cl|SLEEP}}: key$ = {{Cl|INKEY$}}: {{Cl|LOOP}} {{Cl|UNTIL}} key$ <> "" ' prevent ASC empty string read error
    code% = {{Cl|ASC}}(key$): {{Cl|COLOR}} 11: {{Cl|LOCATE}} 10, 10
    {{Cl|IF...THEN|IF}} code% {{Cl|THEN}}    ' ASC returns any value greater than 0
-    {{Cl|PRINT}} "{{Cl|CHR$}}(" + {{Cl|LTRIM$}}({{Cl|STR$}}(code%)) + ")" + {{Cl|SPACE$}}(13): 
+    {{Cl|PRINT}} "{{Cl|CHR$}}(" + {{Cl|LTRIM$}}({{Cl|STR$}}(code%)) + ")" + {{Cl|SPACE$}}(13):
     {{Cl|IF...THEN|IF}} code% > 8 {{Cl|AND (boolean)|AND}} code% < 14 {{Cl|THEN}} code% = 32    ' unprintable control codes
-    {{Cl|COLOR}} 14: {{Cl|LOCATE}} 10, 50: {{Cl|PRINT}} {{Cl|CHR$}}(code%) + {{Cl|SPACE$}}(13)        
+    {{Cl|COLOR}} 14: {{Cl|LOCATE}} 10, 50: {{Cl|PRINT}} {{Cl|CHR$}}(code%) + {{Cl|SPACE$}}(13)
    {{Cl|ELSE}}: {{Cl|PRINT}} "{{Cl|CHR$}}(0) + {{Cl|CHR$}}(" + {{Cl|LTRIM$}}({{Cl|STR$}}({{Cl|ASC}}(key$, 2))) + ")"
     {{Cl|COLOR}} 14: {{Cl|LOCATE}} 10, 50: {{Cl|PRINT}} "{{Cl|CHR$}}(0) + " + Q$ + {{Cl|CHR$}}({{Cl|ASC}}(key$, 2)) + Q$
    {{Cl|END IF}}
@@ -135,22 +135,22 @@ DO
 
 ''Example 3:'' Reading only numerical values input by a program user.
 {{CodeStart}}
- DO: {{Cl|SLEEP}} ' requires a keypress to run loop once
-   K$ = {{Cl|{{Cl|INKEY$}}}}
+ {{Cl|DO}}: {{Cl|SLEEP}} ' requires a keypress to run loop once
+   K$ = {{Cl|INKEY$}}
    code = {{Cl|ASC}}(K$)
-   {{Cl|IF...THEN|IF}} code >= 48 {{Cl|AND (boolean)|AND}} code <= 57 {{Cl|THEN}} entry$ = entry$ + {{Cl|{{Cl|CHR$}}}}(code) ' numbers only
-   {{Cl|IF...THEN|IF}} code = 46 {{Cl|AND (boolean)|AND}} flag = 0 {{Cl|THEN}} 
+   {{Cl|IF}} code >= 48 {{Cl|AND (boolean)|AND}} code <= 57 {{Cl|THEN}} entry$ = entry$ + {{Cl|CHR$}}(code) ' numbers only
+   {{Cl|IF}} code = 46 {{Cl|AND (boolean)|AND}} flag = 0 {{Cl|THEN}}
       entry$ = entry$ + K$: flag = 1: mark = {{Cl|LEN}}(entry$) ' decimal point
    {{Cl|END IF}}
-   L = {{Cl|{{Cl|LEN}}}}(entry$) ' check entry length for possible backspace
-   {{Cl|IF...THEN|IF}} code = 8 {{Cl|AND (boolean)|AND}} L > 0 {{Cl|THEN}} ' backspace pressed and entry has a length
-     entry$ = {{Cl|{{Cl|MID$}}}}(entry$, 1, L - 1) ' remove one character from entry$
-     {{Cl|IF...THEN|IF}} L - 1 < mark {{Cl|THEN}} flag = 0 ' allow another decimal point if removed.
-     {{Cl|LOCATE}} 10, {{Cl|POS}}(0) - 1: {{Cl|PRINT}} {{Cl|{{Cl|SPACE$}}}}(1); ' remove character from screen
+   L = {{Cl|LEN}}(entry$) ' check entry length for possible backspace
+   {{Cl|IF}} code = 8 {{Cl|AND (boolean)|AND}} L > 0 {{Cl|THEN}} ' backspace pressed and entry has a length
+     entry$ = {{Cl|MID$}}(entry$, 1, L - 1) ' remove one character from entry$
+     {{Cl|IF}} L - 1 < mark {{Cl|THEN}} flag = 0 ' allow another decimal point if removed.
+     {{Cl|LOCATE}} 10, {{Cl|POS}}(0) - 1: {{Cl|PRINT}} {{Cl|SPACE$}}(1); ' remove character from screen
    {{Cl|END IF}}
-   {{Cl|LOCATE}} 10, 10: {{Cl|PRINT}} entry$; 
+   {{Cl|LOCATE}} 10, 10: {{Cl|PRINT}} entry$;
    ' display present entry to user(semicolon required for correct POS return)
- {{Cl|LOOP}} {{Cl|UNTIL}} code = 13 {{Cl|AND}} L 
+ {{Cl|LOOP}} {{Cl|UNTIL}} code = 13 {{Cl|AND}} L
 {{CodeEnd}}
 
 ''Explanation:'' [[SLEEP]] waits for a keypress allowing background programs to use the processor time. It also keeps the press in the keyboard buffer for [[INKEY$]] to read and guarantees that ASC will not read an empty string value to create an error. Filtered codes 48 to 57 are only number characters. One decimal point is allowed by using the flag. Code 8 is a backspace request which is ignored if the entry has no characters. If it is allowed it removes the last character from the entry and the screen. The loop exits when the user presses the [Enter] key and the entry has a length.
@@ -167,3 +167,4 @@ DO
 
 {{PageNavigation}}
 
+[[Category:Latest]]
