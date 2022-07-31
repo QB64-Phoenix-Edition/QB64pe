@@ -132,6 +132,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
 END FUNCTION
 
 SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
+    IF t$ = "" THEN EXIT SUB
     IF t$ = CHR$(13) THEN Help_NewLine: EXIT SUB
     IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine: Help_ChkBlank = 0
 
@@ -191,13 +192,13 @@ SUB Help_NewLine 'Start a new help line, apply indention (if any)
     Help_Line$ = Help_Line$ + MKL$(Help_Txt_Len + 1)
     Help_Wrap_Pos = 0
 
-    IF Help_Underline THEN
+    IF Help_Underline > 0 THEN
         w = Help_Pos
         Help_Pos = 1
-        IF Help_Underline = Help_Col_Section THEN
-            Help_AddTxt STRING$(w - 1, 205), Help_Underline, 0
+        IF Help_Underline = 2 THEN 'double/single line?
+            Help_AddTxt STRING$(w - 1, 205), Help_Col_Section, 0 'ÍÍÍ
         ELSE
-            Help_AddTxt STRING$(w - 1, 196), Help_Underline, 0
+            Help_AddTxt STRING$(w - 1, 196), Help_Col_Section, 0 'ÄÄÄ
         END IF
         Help_Underline = 0 'keep before Help_NewLine (recursion)
         Help_NewLine
@@ -206,11 +207,11 @@ SUB Help_NewLine 'Start a new help line, apply indention (if any)
 
     IF Help_ChkBlank = 0 THEN 'no indention on blank line checks
         IF Help_Center > 0 THEN 'center overrides regular indent
-            Help_NewLineIndent = 0
+            Help_LIndent$ = ""
             Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), Help_Col, 0
             Help_CIndent$ = MID$(Help_CIndent$, 2)
-        ELSEIF Help_NewLineIndent > 0 THEN
-            Help_AddTxt SPACE$(Help_NewLineIndent), Help_Col, 0
+        ELSEIF Help_LIndent$ <> "" THEN
+            Help_AddTxt Help_LIndent$, 3, 0
         END IF
     END IF
 END SUB
@@ -247,7 +248,8 @@ END SUB
 FUNCTION Help_Col 'Helps to calculate the default color
     col = Help_Col_Normal
     IF Help_Italic THEN col = Help_Col_Italic
-    IF Help_Bold THEN col = Help_Col_Bold 'Note: Bold overrides italic
+    IF Help_Bold THEN col = Help_Col_Bold 'Bold overrides Italic
+    IF Help_Heading THEN col = Help_Col_Section 'Heading overrides all
     Help_Col = col
 END FUNCTION
 
@@ -277,7 +279,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_Center = 0: Help_CIndent$ = ""
     Help_DList = 0: Help_ChkBlank = 0
 
-    link = 0: elink = 0: cb = 0: nl = 1
+    link = 0: elink = 0: cb = 0: nl = 1: ah = 0: dl = 0
 
     col = Help_Col
 
@@ -605,33 +607,22 @@ SUB WikiParse (a$) 'Wiki page interpret
 
                 IF Help_LockParse = 0 THEN 'no section headings in blocks
                     cbo$ = ""
-                    'Standard section headings (section color, h3 w/o underline, h2 with underline)
+                    'Standard section headings (section color, h3 single underline, h2 double underline)
                     'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
                     IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
-                    IF cb$ = "PageLegacySupport" THEN cbo$ = "Legacy support" 'sub-sect
                     IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page prefix is deprecated (but kept for existing pages)
                     IF cb$ = "PageDescription" THEN cbo$ = "Description:"
-                    IF cb$ = "PageQBasic" THEN cbo$ = "QBasic/QuickBASIC" 'sub-sect
                     IF cb$ = "PageNotes" THEN cbo$ = "Notes" 'sub-sect
                     IF cb$ = "PageErrors" THEN cbo$ = "Errors" 'sub-sect
-                    IF cb$ = "PageUseWith" THEN cbo$ = "Use with" 'sub-sect
                     IF cb$ = "PageAvailability" THEN cbo$ = "Availability:"
                     IF cb$ = "PageExamples" THEN cbo$ = "Examples:"
                     IF cb$ = "PageSeeAlso" THEN cbo$ = "See also:"
-                    'Independent main page end sections (centered, no title)
-                    IF cb$ = "PageCopyright" THEN cbo$ = "Copyright"
-                    IF cb$ = "PageNavigation" THEN cbo$ = "" 'ignored for built-in help
                     'Internally used templates (not available in Wiki)
                     IF cb$ = "PageInternalError" THEN cbo$ = "Sorry, an error occurred:"
                     '----------
                     IF cbo$ <> "" THEN
-                        IF RIGHT$(cbo$, 1) = ":" THEN Help_Underline = Help_Col_Section
-                        Help_AddTxt cbo$, Help_Col_Section, 0: Help_NewLine
-                        IF cbo$ = "Copyright" THEN '_gl commands only
-                            Help_NewLine: Help_AddTxt "1991-2006 Silicon Graphics, Inc.", 7, 0: Help_NewLine
-                            Help_AddTxt "This document is licensed under the SGI Free Software B License.", 7, 0: Help_NewLine
-                            Help_AddTxt "https://spdx.org/licenses/SGI-B-2.0.html https://spdx.org/licenses/SGI-B-2.0.html", 15, 0: Help_NewLine
-                        END IF
+                        IF RIGHT$(cbo$, 1) = ":" THEN Help_Underline = 2: ELSE Help_Underline = 1
+                        Help_AddTxt cbo$, Help_Col_Section, 0: ah = 2
                     END IF
                 END IF
 
@@ -770,19 +761,19 @@ SUB WikiParse (a$) 'Wiki page interpret
         'Wiki headings (==...==}) are not handled in blocks (soft- and hard lock), as it would
         'disrupt the block, also in code blocks it could be part of the code example itself
         IF Help_LockParse = 0 THEN
-            'Custom section headings (current color, h3 w/o underline, h2 with underline)
+            'Custom section headings (section color, h3 single underline, h2 double underline)
             ii = 0
-            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0
-            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0
-            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_Heading = 3
-            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_Heading = 3
-            IF ii > 0 THEN i = i + ii: GOTO charDone
+            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0: ah = 2
+            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0: ah = 2
+            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 3
+            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_CheckBlankLine: Help_Heading = 3
+            IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 1: GOTO charDone
             ii = 0
-            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0
-            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0
-            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_Heading = 2
-            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_Heading = 2
-            IF ii > 0 THEN i = i + ii: Help_Underline = col: GOTO charDone
+            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0: ah = 2
+            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0: ah = 2
+            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_CheckBlankLine: Help_Heading = 2
+            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 2
+            IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 2: GOTO charDone
         END IF
 
         'Wiki/HTML rulers (----, <hr>) are not handled in blocks (soft- and hard lock), as it would
@@ -812,28 +803,39 @@ SUB WikiParse (a$) 'Wiki page interpret
             'Definition lists
             IF c$ = ";" AND nl = 1 THEN 'definition (new line only)
                 IF c$(2) = "; " THEN i = i + 1
+                IF ah = 0 AND dl = 0 THEN Help_CheckBlankLine
                 Help_Bold = 1: col = Help_Col: Help_DList = 1
                 IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
                 IF c$(2) = ";*" OR c$(2) = ";#" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
+                IF dl < 3 THEN
+                    Help_AddTxt "Þ ", 3, 0: dl = 1
+                    Help_LIndent$ = Help_LIndent$ + "Þ "
+                END IF
                 GOTO charDone
             END IF
-            IF c$ = ":" AND Help_DList > 0 THEN 'description (same or new line)
+            IF c$ = ":" AND Help_DList > 0 THEN 'description (same line)
                 IF c$(2) = ": " THEN i = i + 1
-                Help_Bold = 0: col = Help_Col
-                IF nl = 0 THEN Help_NewLine
-                Help_AddTxt "   ", col, 0
-                Help_NewLineIndent = Help_NewLineIndent + 3
+                Help_Bold = 0: col = Help_Col: Help_NewLine
+                Help_AddTxt " ", 3, 0: dl = 3
+                Help_LIndent$ = Help_LIndent$ + " "
                 IF Help_DList > 1 THEN
                     Help_AddTxt CHR$(4) + " ", 14, 0
-                    Help_NewLineIndent = Help_NewLineIndent + 2
+                    Help_LIndent$ = Help_LIndent$ + "  "
                 END IF
                 Help_DList = 0
                 GOTO charDone
             END IF
-            IF c$ = ":" AND nl = 1 THEN 'description w/o definition (new line only)
+            IF c$ = ":" AND nl = 1 THEN 'description w/o definition (new line)
                 IF c$(2) = ": " THEN i = i + 1
-                Help_AddTxt "   ", col, 0
-                Help_NewLineIndent = Help_NewLineIndent + 3
+                IF ah = 0 AND dl = 0 THEN Help_CheckBlankLine
+                IF dl < 3 THEN
+                    Help_AddTxt "Þ ", 3, 0: dl = 2
+                    Help_LIndent$ = Help_LIndent$ + "Þ "
+                END IF
+                IF ASC(c$(2), 2) <> 58 AND ASC(c$(2), 2) <> 59 THEN
+                    Help_AddTxt " ", 3, 0: dl = 3
+                    Help_LIndent$ = Help_LIndent$ + " "
+                END IF
                 GOTO charDoneKnl 'keep nl state for possible <UL> list bullets
             END IF
         END IF
@@ -846,13 +848,13 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF c$(2) = "**" OR c$(2) = "##" THEN
                     IF c$(3) = "** " OR c$(3) = "## " THEN i = i + 2: ELSE i = i + 1
                     Help_AddTxt "   " + CHR$(4) + " ", 14, 0
-                    Help_NewLineIndent = Help_NewLineIndent + 5
+                    Help_LIndent$ = Help_LIndent$ + "     "
                     GOTO charDone
                 END IF
                 IF c$ = "*" OR c$ = "#" THEN
                     IF c$(2) = "* " OR c$(2) = "# " THEN i = i + 1
                     Help_AddTxt CHR$(4) + " ", 14, 0
-                    Help_NewLineIndent = Help_NewLineIndent + 2
+                    Help_LIndent$ = Help_LIndent$ + "  "
                     GOTO charDone
                 END IF
             END IF
@@ -891,7 +893,10 @@ SUB WikiParse (a$) 'Wiki page interpret
         IF c = 10 OR c$(4) = "<br>" OR c$(6) = "<br />" THEN
             IF c$(4) = "<br>" THEN i = i + 3
             IF c$(6) = "<br />" THEN i = i + 5
-            Help_NewLineIndent = 0
+            IF c = 10 THEN 'on real new line only
+                IF dl > 1 THEN dl = dl - 1 'update def list state
+                Help_LIndent$ = "" 'end all list indention
+            END IF
 
             IF Help_LockParse > -2 THEN 'everywhere except in fixed blocks
                 IF Help_Txt_Len >= 8 THEN 'allow max. one blank line (ie. collapse multi blanks to just one)
@@ -907,7 +912,16 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF Help_LockParse <> 0 THEN 'in all blocks reset styles at EOL
                 Help_Bold = 0: Help_Italic = 0: col = Help_Col
             ELSE
-                IF c = 10 THEN Help_DList = 0: Help_Bold = 0: col = Help_Col 'def list incl. style ends after real new line
+                IF c = 10 THEN 'on real new line only
+                    Help_DList = 0: Help_Bold = 0: col = Help_Col 'def list incl. style ends
+                    IF ah > 0 THEN ah = ah - 1 'update after heading state
+                    IF dl > 0 THEN
+                        IF ASC(c$(2), 2) <> 59 AND ASC(c$(2), 2) <> 58 THEN
+                            dl = 0 'end of def list indention
+                            Help_ChkBlank = 1
+                        END IF
+                    END IF
+                END IF
             END IF
             nl = 1
             GOTO charDoneKnl 'keep just set nl state
@@ -1034,7 +1048,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     END IF
 END SUB
 
-FUNCTION wikiSafeName$(page$) 'create a unique name for both case sensitive & insensitive systems
+FUNCTION wikiSafeName$ (page$) 'create a unique name for both case sensitive & insensitive systems
     ext$ = SPACE$(LEN(page$))
     FOR i = 1 TO LEN(page$)
         c = ASC(page$, i)
