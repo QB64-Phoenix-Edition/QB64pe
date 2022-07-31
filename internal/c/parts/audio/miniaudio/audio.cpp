@@ -41,6 +41,8 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not f
 #ifndef QB64_WINDOWS
 void Sleep(uint32 milliseconds); // There is a non-Windows implementation. However it is not declared anywhere
 #endif
+
+extern ptrszint dblock; // 32bit offset of dblock. Did not find this declared anywhere
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -64,7 +66,10 @@ void Sleep(uint32 milliseconds); // There is a non-Windows implementation. Howev
 //-----------------------------------------------------------------------------------------------------
 // MACROS
 //-----------------------------------------------------------------------------------------------------
-// This basically checks if the handle is within sh vector limits and 'isUsed' is set to true
+#define SAMPLE_FRAME_SIZE_BY_TYPE(_channels_, _type_) ((_channels_) * (sizeof(_type_) / sizeof(ma_uint8)))
+#define SAMPLE_FRAME_SIZE_BY_FORMAT(_channels_, _format_) ((_channels_) * (ma_get_bytes_per_sample(_format_)))
+
+// This basically checks if the handle is within vector limits and 'isUsed' is set to true
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
 // Here we are checking > 0 because this is meant to check user handles only
 #define IS_SOUND_HANDLE_VALID(_handle_)                                                                                                                        \
@@ -114,11 +119,12 @@ enum struct SoundType {
 /// </summary>
 struct SampleFrameBlockNode {
     SampleFrameBlockNode *next; // Next block node in the chain
-    ma_uint32 size;             // Size of the block in 'samples'. See below
+    ma_uint32 samples;          // Size of the block in 'samples'. See below
     ma_uint32 offset;           // Where is the write cursor in the buffer (in samples!)?
     float *buffer;              // The actual sample frame block buffer
     bool force;                 // When this is set, the buffer will be processed even when if it is not full
 
+    SampleFrameBlockNode() = delete;                                  // No default constructor
     SampleFrameBlockNode(const SampleFrameBlockNode &) = delete;      // No default copy constructor
     SampleFrameBlockNode &operator=(SampleFrameBlockNode &) = delete; // No assignment operator
 
@@ -129,11 +135,11 @@ struct SampleFrameBlockNode {
     /// </summary>
     /// <param name="sampleFrames">Number of sample frames needed</param>
     SampleFrameBlockNode(ma_uint32 sampleFrames) {
-        next = nullptr;             // Set this to null. This will managed by the 'Queue' struct
-        size = sampleFrames << 1;   // 2 channels (stereo)
-        offset = 0;                 // Set the write cursor to 0
-        force = false;              // Set the force flag to false by default
-        buffer = new float[size](); // Allocate a zeroed float buffer of size floats. Ah, Creative Silence!
+        next = nullptr;                // Set this to null. This will managed by the 'Queue' struct
+        samples = sampleFrames << 1;   // 2 channels (stereo)
+        offset = 0;                    // Set the write cursor to 0
+        force = false;                 // Set the force flag to false by default
+        buffer = new float[samples](); // Allocate a zeroed float buffer of size floats. Ah, Creative Silence!
     }
 
     /// <summary>
@@ -150,7 +156,7 @@ struct SampleFrameBlockNode {
     /// <param name="r">Right floating point sample</param>
     /// <returns>Return true if operation was succcessful. False if block is full</returns>
     bool PushSampleFrame(float l, float r) {
-        if (buffer && offset < size) {
+        if (buffer && offset < samples) {
             buffer[offset] = l;
             ++offset;
             buffer[offset] = r;
@@ -166,7 +172,7 @@ struct SampleFrameBlockNode {
     /// Check if the buffer is completely filled.
     /// </summary>
     /// <returns>Returns true if buffer is full</returns>
-    bool IsBufferFull() { return offset >= size || force; }
+    bool IsBufferFull() { return offset >= samples || force; }
 };
 
 /// <summary>
@@ -192,6 +198,7 @@ struct SampleFrameBlockQueue {
     ma_audio_buffer_config maBufferConfig; // miniaudio buffer configuration
     ma_result maResult;                    // This is the result of the last miniaudio operation (used for trapping errors)
 
+    SampleFrameBlockQueue() = delete;                                   // No default constructor
     SampleFrameBlockQueue(const SampleFrameBlockQueue &) = delete;      // No default copy constructor
     SampleFrameBlockQueue &operator=(SampleFrameBlockQueue &) = delete; // No assignment operator
 
@@ -207,9 +214,10 @@ struct SampleFrameBlockQueue {
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
 
-        // We can get away with '>> 4' because the sound loop function is called @ ~60Hz
+        // We can get away with '>> 3' because the sound loop function is called @ ~60Hz
+        // This should work even on entry level systems. Tested on AMD A6-9200 (230.4 GFLOPS), Crostini Linux
         // Also note that the nodes will allocates twice this to account for 2 channels
-        blockSampleFrames = sampleRate >> 4;
+        blockSampleFrames = sampleRate >> 3;
 
         bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
         buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 is for 2 channels - stereo)
@@ -379,7 +387,7 @@ struct SampleFrameBlockQueue {
                 // We check this here so that even if the buffer is not allocated, the block object will be popped off
                 if (first->buffer) {
                     // Simply copy the first block in the queue
-                    std::copy(first->buffer, first->buffer + first->size, buffer + bufferUpdatePosition);
+                    std::copy(first->buffer, first->buffer + first->samples, buffer + bufferUpdatePosition);
                 }
 
                 // Save the number of samples frames sent for playback and the current time for correct time calculation
@@ -445,11 +453,11 @@ struct AudioEngine {
     /// The handle is put-up for recycling simply by setting the 'isUsed' member to false.
     /// Note that this means the vector will keep growing until the largest handle (index) and never shrink.
     /// The choice of using a vector was simple - performance. Vector performance when using 'indexes' is next to no other.
-    /// It's just like using an array. Only that the array is dynamic. The vector will be pruned only when snd_un_init gets called.
+    /// The vector will be pruned only when snd_un_init gets called.
     /// We will however, be good citizens and will also 'delete' the objects when snd_un_init gets called.
     /// All this means that a sloppy programmer may be able to grow the vector and eventually the system may run out of memory and crash.
     /// But that's ok. Sloppy programmers (like me) must be punished until they learn! XD
-    /// BTW, int32 was a bad choice for handles and obviously 64-bit size_t is way larger. Oh well...
+    /// BTW, int32 was a bad choice for handles. Oh well...
     /// </summary>
     /// <returns>Returns a non-negative handle if successful</returns>
     int32 AllocateSoundHandle() {
@@ -557,65 +565,116 @@ static AudioEngine audioEngine;
 // FUNCTIONS
 //-----------------------------------------------------------------------------------------------------
 /// <summary>
+/// This creates 16-bit signed stereo data. The sound buffer is allocated and then returned.
+/// Do we really need stereo for Play(), Sound() and Beep()?
+/// </summary>
+/// <param name="frequency">The sound frequency</param>
+/// <param name="length">The duration of the sound in seconds</param>
+/// <param name="volume">The volume of the sound (0.0 - 1.0)</param>
+/// <param name="soundwave_bytes">A pointer to an integer that will receive the buffer size in bytes. This cannot be NULL</param>
+/// <returns></returns>
+static ma_uint8 *GenerateWaveform(double frequency, double length, double volume, ma_int32 *soundwave_bytes) {
+    // Calculate the sample frames (duration) of the sound
+    ma_uint64 sampleFrames = (ma_uint64)(length * audioEngine.sampleRate);
+    if (!sampleFrames)
+        sampleFrames = 1;
+
+    *soundwave_bytes = sampleFrames * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+
+    ma_uint8 *buffer = (ma_uint8 *)malloc(*soundwave_bytes);
+    if (!buffer)
+        return nullptr;
+
+    // Create a sine wave
+    ma_waveform_config maWaveConfig =
+        ma_waveform_config_init(ma_format::ma_format_s16, 2, audioEngine.sampleRate, ma_waveform_type::ma_waveform_type_sine, volume, frequency);
+    ma_waveform maSineWave;
+    audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
+    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+
+    ma_uint64 sampleFramesGenerated = sampleFrames;
+    audioEngine.maResult = ma_waveform_read_pcm_frames(&maSineWave, buffer, sampleFrames, &sampleFramesGenerated); // Generate the waveform
+    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+    DEBUG_CHECK(sampleFramesGenerated <= sampleFrames);
+
+    ma_waveform_uninit(&maSineWave);
+
+    *soundwave_bytes = sampleFramesGenerated * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+
+    return buffer;
+}
+
+/// <summary>
+/// Returns the of a sound buffer in bytes.
+/// </summary>
+/// <param name="length">Length in seconds</param>
+/// <returns>Length in bytes</returns>
+static ma_int32 WaveformBufferSize(double length) {
+    ma_int32 samples = (ma_int32)(length * audioEngine.sampleRate);
+    if (!samples)
+        samples = 1;
+
+    return samples * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+}
+
+/// <summary>
+/// This sends a buffer to a raw queue for playback.
+/// Buffer required in 16-bit stereo at native frequency.
+/// The buffer is freed.
+/// </summary>
+/// <param name="data">Sound buffer</param>
+/// <param name="bytes">Length of buffer in bytes</param>
+/// <param name="block">So we have to wait until playback completes</param>
+/// <param name="sndRawQueue">A pointer to a raw queue object</param>
+static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
+    // Move data into sndraw handle
+    for (size_t i = 0; i < bytes; i += 4) {
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->PushSampleFrame((float)((ma_int16 *)(data + i))[0] / 32768.0f,
+                                                                                     (float)((ma_int16 *)(data + i))[1] / 32768.0f);
+    }
+
+    free(data); // free the sound data
+
+    // This will push any unfinished block for playback
+    if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
+
+    if (block)
+        DEBUG_PRINT("Blocking requested");
+}
+
+/// <summary>
 /// This generates a sound at the specified frequency for the specified amount of time.
 /// </summary>
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
 void sub_sound(double frequency, double lengthInClockTicks) {
-    // We'll allocate a buffer just once
-    // This buffer will be resized as required and will be freed by the system when the program ends
-    // This is much faster then allocating and freening multiple times if we have a good crt
-    static float *waveformBuffer = nullptr;
+    ma_uint8 *data;
 
-    // Exit if frequency or length is 0 or if the audio engine is not initialized
-    if (frequency <= 0 || lengthInClockTicks <= 0 || !audioEngine.isInitialized || audioEngine.sndInternal != 0 ||
-        audioEngine.soundHandles[audioEngine.sndInternal]->type != SoundType::None)
+    if (new_error || !audioEngine.isInitialized || audioEngine.sndInternal != 0)
         return;
 
-    // Calculate the sample frames (duration) of the sound
-    ma_uint64 sampleFrames = (ma_uint64)((double)audioEngine.sampleRate * lengthInClockTicks / 18.2);
-
-    // Allocate the 'sample frame' number of bytes for the waveform buffer
-    float *tmp = (float *)realloc(waveformBuffer, sampleFrames * sizeof(float));
-
-    // Exit if memory allocation failed
-    if (!tmp)
+    if ((frequency < 37.0) && (frequency != 0))
+        goto error;
+    if (frequency > 32767.0)
+        goto error;
+    if (lengthInClockTicks < 0.0)
+        goto error;
+    if (lengthInClockTicks > 65535.0)
+        goto error;
+    if (lengthInClockTicks == 0.0)
         return;
 
-    // Save the buffer pointer now that it is successfully allocated
-    waveformBuffer = tmp;
+    audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // This will start processing handle 0 as a raw stream
 
-    // Create a sine wave
-    ma_waveform_config maWaveConfig = ma_waveform_config_init(ma_format_f32, 1, audioEngine.sampleRate, ma_waveform_type_sine, 1, frequency);
-    ma_waveform maSineWave;
-    audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-    audioEngine.maResult = ma_waveform_read_pcm_frames(&maSineWave, waveformBuffer, sampleFrames, NULL); // Generate the waveform
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+    ma_int32 soundwave_bytes;
+    data = GenerateWaveform(frequency, lengthInClockTicks / 18.2, 1, &soundwave_bytes);
+    SendWaveformToQueue(data, soundwave_bytes, true);
 
-    // Setup the ma buffer
-    ma_audio_buffer_config maBufferConfig = ma_audio_buffer_config_init(ma_format_f32, 1, sampleFrames, waveformBuffer, NULL);
-    ma_audio_buffer maBuffer;
-    audioEngine.maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-
-    // Create a ma sound from the ma buffer
-    audioEngine.maResult =
-        ma_sound_init_from_data_source(&audioEngine.maEngine, &maBuffer, 0, NULL, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-
-    // Play the ma sound
-    audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-
-    // Wait for the sound to end
-    // This also blocks the caller and correctly implements original QuickBASIC behavior
-    while (ma_sound_is_playing(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound))
-        Sleep(0);
-
-    ma_sound_uninit(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-    ma_audio_buffer_uninit(&maBuffer);
-    ma_waveform_uninit(&maSineWave);
+    return;
+    
+error:
+    error(5);
 }
 
 /// <summary>
@@ -625,11 +684,561 @@ void sub_beep() { sub_sound(900, 5); }
 
 /// <summary>
 /// Processes and plays the MML specified in the string.
-/// Returns immediately after it is completed submitting all samples for playback.
+/// Ummm. Spaghetti goodness.
+/// Formats:
+/// A[#|+|-][0-64]
+/// 0-64 is like temp. Lnumber, 0 is whatever the current default is
 /// </summary>
 /// <param name="str">The string to play</param>
 void sub_play(qbs *str) {
-    // TODO: We'll probably implement this uing sndraw like the old OpenAL code
+    static ma_int32 soundwave_bytes;
+    static ma_uint8 *b, *wave, *wave2;
+    static double d;
+    static ma_int32 i, bytes_left, a, x, x2, x3, x4, wave_bytes, wave_base;
+    static ma_int32 o = 4;
+    static double t = 120; // quarter notes per minute (120/60=2 per second)
+    static double l = 4;
+    static double pause = 1.0 / 8.0; // ML 0.0, MN 1.0/8.0, MS 1.0/4.0
+    static double length, length2;   // derived from l and t
+    static double frequency;
+    static double mb = 0;
+    static double v = 50;
+    static ma_int32 n;         // the semitone-intervaled note to be played
+    static ma_int32 n_changed; //+,#,- applied?
+    static ma_int64 number;
+    static ma_int32 number_entered;
+    static ma_int32 followup; // 1=play note
+    static ma_int32 playit;
+    static ma_int32 fullstops = 0;
+
+    if (new_error || !audioEngine.isInitialized || audioEngine.sndInternal != 0)
+        return;
+
+    audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // This will start processing handle 0 as a raw stream
+
+    b = str->chr;
+    bytes_left = str->len;
+    wave = NULL;
+    wave_bytes = 0;
+    n_changed = 0;
+    n = 0;
+    number_entered = 0;
+    number = 0;
+    followup = 0;
+    length = 1.0 / (t / 60.0) * (4.0 / l);
+    playit = 0;
+    wave_base = 0; // point at which new sounds will be inserted
+
+next_byte:
+    if ((bytes_left--) || followup) {
+
+        if (bytes_left < 0) {
+            i = 32;
+            goto follow_up;
+        }
+
+        i = *b++;
+        if (i == 32)
+            goto next_byte;
+        if (i >= 97 && i <= 122)
+            a = i - 32;
+        else
+            a = i;
+
+        if (i == 61) { //= (+VARPTR$)
+            if (fullstops) {
+                error(5);
+                return;
+            }
+            if (number_entered) {
+                error(5);
+                return;
+            }
+            number_entered = 2;
+            // VARPTR$ reference
+            /*
+               'BYTE=1
+               'INTEGER=2
+               'STRING=3 SUB-STRINGS must use "X"+VARPTR$(string$)
+               'SINGLE=4
+               'INT64=5
+               'FLOAT=6
+               'DOUBLE=8
+               'LONG=20
+               'BIT=64+n
+             */
+            if (bytes_left < 3) {
+                error(5);
+                return;
+            }
+            i = *b++;
+            bytes_left--; // read type byte
+            x = *(ma_uint16 *)b;
+            b += 2;
+            bytes_left -= 2; // read offset within DBLOCK
+            // note: allowable _BIT type variables in VARPTR$ are all at a byte offset and are all
+            //      padded until the next byte
+            d = 0;
+            switch (i) {
+            case 1:
+                d = *(char *)(dblock + x);
+                break;
+            case (1 + 128):
+                d = *(ma_uint8 *)(dblock + x);
+                break;
+            case 2:
+                d = *(ma_int16 *)(dblock + x);
+                break;
+            case (2 + 128):
+                d = *(ma_uint16 *)(dblock + x);
+                break;
+            case 4:
+                d = *(float *)(dblock + x);
+                break;
+            case 5:
+                d = *(ma_int64 *)(dblock + x);
+                break;
+            case (5 + 128):
+                d = *(ma_int64 *)(dblock + x); // unsigned conversion is unsupported!
+                break;
+            case 6:
+                d = *(long double *)(dblock + x);
+                break;
+            case 8:
+                d = *(double *)(dblock + x);
+                break;
+            case 20:
+                d = *(ma_int32 *)(dblock + x);
+                break;
+            case (20 + 128):
+                d = *(ma_uint32 *)(dblock + x);
+                break;
+            default:
+                // bit type?
+                if ((i & 64) == 0) {
+                    error(5);
+                    return;
+                }
+                x2 = i & 63;
+                if (x2 > 56) {
+                    error(5);
+                    return;
+                } // valid number of bits?
+                // create a mask
+                static ma_int64 i64num, mask, i64x;
+                mask = (((ma_int64)1) << x2) - 1;
+                i64num = (*(ma_int64 *)(dblock + x)) & mask;
+                // signed?
+                if (i & 128) {
+                    mask = ((ma_int64)1) << (x2 - 1);
+                    if (i64num & mask) { // top bit on?
+                        mask = -1;
+                        mask <<= x2;
+                        i64num += mask;
+                    }
+                } // signed
+                d = i64num;
+            }
+            if (d > 2147483647.0 || d < -2147483648.0) {
+                error(5);
+                return;
+            } // out of range value!
+            number = round(d);
+            goto next_byte;
+        }
+
+        // read in a number
+        if ((i >= 48) && (i <= 57)) {
+            if (fullstops || (number_entered == 2)) {
+                error(5);
+                return;
+            }
+            if (!number_entered) {
+                number = 0;
+                number_entered = 1;
+            }
+            number = number * 10 + i - 48;
+            goto next_byte;
+        }
+
+        // read fullstops
+        if (i == 46) {
+            if (followup != 7 && followup != 1 && followup != 4) {
+                error(5);
+                return;
+            }
+            fullstops++;
+            goto next_byte;
+        }
+
+    follow_up:
+
+        if (followup == 8) { // V...
+            if (!number_entered) {
+                error(5);
+                return;
+            }
+            number_entered = 0;
+            if (number > 100) {
+                error(5);
+                return;
+            }
+            v = number;
+            followup = 0;
+            if (bytes_left < 0)
+                goto done;
+        } // 8
+
+        if (followup == 7) { // P...
+            if (number_entered) {
+                number_entered = 0;
+                if (number < 1 || number > 64) {
+                    error(5);
+                    return;
+                }
+                length2 = 1.0 / (t / 60.0) * (4.0 / ((double)number));
+            } else {
+                length2 = length;
+            }
+            d = length2;
+            for (x = 1; x <= fullstops; x++) {
+                d /= 2.0;
+                length2 = length2 + d;
+            }
+            fullstops = 0;
+
+            soundwave_bytes = WaveformBufferSize(length2);
+            if (!wave) {
+                // create buffer
+                wave = (ma_uint8 *)calloc(soundwave_bytes, 1);
+                wave_bytes = soundwave_bytes;
+                wave_base = 0;
+            } else {
+                // increase buffer?
+                if ((wave_base + soundwave_bytes) > wave_bytes) {
+                    wave = (ma_uint8 *)realloc(wave, wave_base + soundwave_bytes);
+                    memset(wave + wave_base, 0, wave_base + soundwave_bytes - wave_bytes);
+                    wave_bytes = wave_base + soundwave_bytes;
+                }
+            }
+            if (i != 44) {
+                wave_base += soundwave_bytes;
+            }
+
+            playit = 1;
+            followup = 0;
+            if (i == 44)
+                goto next_byte;
+            if (bytes_left < 0)
+                goto done;
+        } // 7
+
+        if (followup == 6) { // T...
+            if (!number_entered) {
+                error(5);
+                return;
+            }
+            number_entered = 0;
+            if (number < 32 || number > 255) {
+                number = 120;
+            }
+            t = number;
+            length = 1.0 / (t / 60.0) * (4.0 / l);
+            followup = 0;
+            if (bytes_left < 0)
+                goto done;
+        } // 6
+
+        if (followup == 5) { // M...
+            if (number_entered) {
+                error(5);
+                return;
+            }
+            switch (a) {
+            case 76: // L
+                pause = 0;
+                break;
+            case 78: // N
+                pause = 1.0 / 8.0;
+                break;
+            case 83: // S
+                pause = 1.0 / 4.0;
+                break;
+
+            case 66: // MB
+                if (!mb) {
+                    mb = 1;
+                    if (playit) {
+                        playit = 0;
+                        SendWaveformToQueue(wave, wave_bytes, true);
+                    }
+                    wave = NULL;
+                }
+                break;
+            case 70: // MF
+                if (mb) {
+                    mb = 0;
+                    // preceding MB content incorporated into MF block
+                }
+                break;
+            default:
+                error(5);
+                return;
+            }
+            followup = 0;
+            goto next_byte;
+        } // 5
+
+        if (followup == 4) { // N...
+            if (!number_entered) {
+                error(5);
+                return;
+            }
+            number_entered = 0;
+            if (number > 84) {
+                error(5);
+                return;
+            }
+            n = -33 + number;
+            goto followup1;
+            followup = 0;
+            if (bytes_left < 0)
+                goto done;
+        } // 4
+
+        if (followup == 3) { // O...
+            if (!number_entered) {
+                error(5);
+                return;
+            }
+            number_entered = 0;
+            if (number > 6) {
+                error(5);
+                return;
+            }
+            o = number;
+            followup = 0;
+            if (bytes_left < 0)
+                goto done;
+        } // 3
+
+        if (followup == 2) { // L...
+            if (!number_entered) {
+                error(5);
+                return;
+            }
+            number_entered = 0;
+            if (number < 1 || number > 64) {
+                error(5);
+                return;
+            }
+            l = number;
+            length = 1.0 / (t / 60.0) * (4.0 / l);
+            followup = 0;
+            if (bytes_left < 0)
+                goto done;
+        } // 2
+
+        if (followup == 1) { // A-G...
+            if (i == 45) {   //-
+                if (n_changed || number_entered) {
+                    error(5);
+                    return;
+                }
+                n_changed = 1;
+                n--;
+                goto next_byte;
+            }
+            if (i == 43 || i == 35) { //+,#
+                if (n_changed || number_entered) {
+                    error(5);
+                    return;
+                }
+                n_changed = 1;
+                n++;
+                goto next_byte;
+            }
+        followup1:
+            if (number_entered) {
+                number_entered = 0;
+                if (number < 0 || number > 64) {
+                    error(5);
+                    return;
+                }
+                if (!number)
+                    length2 = length;
+                else
+                    length2 = 1.0 / (t / 60.0) * (4.0 / ((double)number));
+            } else {
+                length2 = length;
+            } // number_entered
+            d = length2;
+            for (x = 1; x <= fullstops; x++) {
+                d /= 2.0;
+                length2 = length2 + d;
+            }
+            fullstops = 0;
+            // frequency=(2^(note/12))*440
+            frequency = pow(2.0, ((double)n) / 12.0) * 440.0;
+
+            // create wave
+            wave2 = GenerateWaveform(frequency, length2 * (1.0 - pause), v / 100.0, &soundwave_bytes);
+            if (pause > 0) {
+                wave2 = (ma_uint8 *)realloc(wave2, soundwave_bytes + WaveformBufferSize(length2 * pause));
+                memset(wave2 + soundwave_bytes, 0, WaveformBufferSize(length2 * pause));
+                soundwave_bytes += WaveformBufferSize(length2 * pause);
+            }
+
+            if (!wave) {
+                // adopt buffer
+                wave = wave2;
+                wave_bytes = soundwave_bytes;
+                wave_base = 0;
+            } else {
+                // mix required?
+                if (wave_base == wave_bytes)
+                    x = 0;
+                else
+                    x = 1;
+                // increase buffer?
+                if ((wave_base + soundwave_bytes) > wave_bytes) {
+                    wave = (ma_uint8 *)realloc(wave, wave_base + soundwave_bytes);
+                    memset(wave + wave_base, 0, wave_base + soundwave_bytes - wave_bytes);
+                    wave_bytes = wave_base + soundwave_bytes;
+                }
+                // mix or copy
+                if (x) {
+                    // mix
+                    static ma_int16 *sp, *sp2;
+                    sp = (ma_int16 *)(wave + wave_base);
+                    sp2 = (ma_int16 *)wave2;
+                    x2 = soundwave_bytes / 2;
+                    for (x = 0; x < x2; x++) {
+                        x3 = *sp2++;
+                        x4 = *sp;
+                        x4 += x3;
+                        if (x4 > 32767)
+                            x4 = 32767;
+                        if (x4 < -32767)
+                            x4 = -32767;
+                        *sp++ = x4;
+                    } // x
+                } else {
+                    // copy
+                    memcpy(wave + wave_base, wave2, soundwave_bytes);
+                } // x
+                free(wave2);
+            }
+            if (i != 44) {
+                wave_base += soundwave_bytes;
+            }
+
+            playit = 1;
+            n_changed = 0;
+            followup = 0;
+            if (i == 44)
+                goto next_byte;
+            if (bytes_left < 0)
+                goto done;
+        } // 1
+
+        if (a >= 65 && a <= 71) {
+            // modify a to represent a semitonal note (n) interval
+            switch (a) {
+                //[c][ ][d][ ][e][f][ ][g][ ][a][ ][b]
+                // 0  1  2  3  4  5  6  7  8  9  0  1
+            case 65:
+                n = 9;
+                break;
+            case 66:
+                n = 11;
+                break;
+            case 67:
+                n = 0;
+                break;
+            case 68:
+                n = 2;
+                break;
+            case 69:
+                n = 4;
+                break;
+            case 70:
+                n = 5;
+                break;
+            case 71:
+                n = 7;
+                break;
+            }
+            n = n + (o - 2) * 12 - 9;
+            followup = 1;
+            goto next_byte;
+        } // a
+
+        if (a == 76) { // L
+            followup = 2;
+            goto next_byte;
+        }
+
+        if (a == 77) { // M
+            followup = 5;
+            goto next_byte;
+        }
+
+        if (a == 78) { // N
+            followup = 4;
+            goto next_byte;
+        }
+
+        if (a == 79) { // O
+            followup = 3;
+            goto next_byte;
+        }
+
+        if (a == 84) { // T
+            followup = 6;
+            goto next_byte;
+        }
+
+        if (a == 60) { //<
+            o--;
+            if (o < 0)
+                o = 0;
+            goto next_byte;
+        }
+
+        if (a == 62) { //>
+            o++;
+            if (o > 6)
+                o = 6;
+            goto next_byte;
+        }
+
+        if (a == 80) { // P
+            followup = 7;
+            goto next_byte;
+        }
+
+        if (a == 86) { // V
+            followup = 8;
+            goto next_byte;
+        }
+
+        error(5);
+        return;
+    } // bytes_left
+done:
+    if (number_entered || followup) {
+        error(5);
+        return;
+    } // unhandled data
+
+    if (playit) {
+        if (mb) {
+            SendWaveformToQueue(wave, wave_bytes, false);
+        } else {
+            SendWaveformToQueue(wave, wave_bytes, true);
+        }
+    } // playit
 }
 
 /// <summary>
@@ -681,7 +1290,6 @@ int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed) {
     }
 
     // Forward the request to miniaudio to open the sound file
-    // TODO: Check if we need to emulate QB64 path behavior or if this will just work
     audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, (const char *)fileNameZ->chr, audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
                                                    &audioEngine.soundHandles[handle]->maSound);
 
@@ -709,7 +1317,6 @@ void sub__sndclose(int32 handle) {
         sub__sndrawdone(handle, true);
 
         // Simply set the autokill flag to true and let the sound loop handle disposing the sound
-        // TODO: We will need to add fences to ensure the user cannot change anything for a sounds that are marked as autokill
         audioEngine.soundHandles[handle]->autoKill = true;
     }
 }
@@ -875,7 +1482,6 @@ int32 func__sndpaused(int32 handle) {
 /// <param name="handle">A sound handle</param>
 /// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
 void sub__sndvol(int32 handle, float volume) {
-    // TODO: We should enable this for raw pcm sounds too
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
         (audioEngine.soundHandles[handle]->type == SoundType::Static || audioEngine.soundHandles[handle]->type == SoundType::Raw)) {
         ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
@@ -1188,12 +1794,18 @@ void snd_init() {
     // We will let miniaudio choose the device sample rate for us. This ensures we get the lowest latency and resampling artifacts
     audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
+    DEBUG_PRINT("Audio engine initialized at %uHz sample rate", audioEngine.sampleRate);
+
     // Reserve sound handle 0 so that nothing else can use it
-    // We will use this handle internally for Beep(), Sound() etc.
+    // We will use this handle internally for Play(), Beep(), Sound() etc.
     audioEngine.sndInternal = audioEngine.AllocateSoundHandle();
     DEBUG_CHECK(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
 
-    DEBUG_PRINT("Audio engine initialized at %uHz sample rate", audioEngine.sampleRate);
+    // Just do a basic setup and mark the type as 'none'
+    // If Play(), Sound(), Beep() are called, those will mark it as 'raw'
+    audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue =
+        new SampleFrameBlockQueue(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::None;
 }
 
 /// <summary>
@@ -1201,6 +1813,11 @@ void snd_init() {
 /// </summary>
 void snd_un_init() {
     if (audioEngine.isInitialized) {
+        // Special handling for handle 0
+        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::None;
+        delete audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue;
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue = nullptr;
+
         // Free all sound handles here
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
             audioEngine.FreeSoundHandle(handle);     // Let FreeSoundHandle do it's thing
