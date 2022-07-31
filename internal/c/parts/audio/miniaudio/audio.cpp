@@ -214,10 +214,10 @@ struct SampleFrameBlockQueue {
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
 
-        // We can get away with '>> 3' because the sound loop function is called @ ~60Hz
+        // We can get away with '>> 4' because the sound loop function is called @ ~60Hz
         // This should work even on entry level systems. Tested on AMD A6-9200 (230.4 GFLOPS), Crostini Linux
         // Also note that the nodes will allocates twice this to account for 2 channels
-        blockSampleFrames = sampleRate >> 3;
+        blockSampleFrames = sampleRate >> 4;
 
         bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
         buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 is for 2 channels - stereo)
@@ -574,6 +574,73 @@ static AudioEngine audioEngine;
 /// <param name="soundwave_bytes">A pointer to an integer that will receive the buffer size in bytes. This cannot be NULL</param>
 /// <returns></returns>
 static ma_uint8 *GenerateWaveform(double frequency, double length, double volume, ma_int32 *soundwave_bytes) {
+#if 1
+
+    static ma_uint8 *data;
+    static ma_int32 i;
+    static ma_int16 x, lastx;
+    static ma_int16 *sp;
+    static double samples;
+    static ma_int32 samplesi;
+    static ma_int32 direction;
+    static double value;
+    static double volume_multiplier;
+    static ma_int32 waveend;
+    static double gradient;
+
+    // calculate total number of samples required
+    samples = length * audioEngine.sampleRate;
+    samplesi = samples;
+    if (!samplesi)
+        samplesi = 1;
+
+    *soundwave_bytes = samplesi * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+    data = (ma_uint8 *)malloc(*soundwave_bytes);
+    sp = (ma_int16 *)data;
+
+    direction = 1;
+    value = 0;
+    volume_multiplier = volume * 32767.0;
+    waveend = 0;
+
+    // frequency*4.0*length is the total distance value will travel (+1,-2,+1[repeated])
+    // samples is the number of steps to do this in
+    if (samples)
+        gradient = (frequency * 4.0 * length) / samples;
+    else
+        gradient = 0; // avoid division by 0
+
+    lastx = 1; // set to 1 to avoid passing initial comparison
+    for (i = 0; i < samplesi; i++) {
+        x = value * volume_multiplier;
+        *sp++ = x;
+        *sp++ = x;
+        if (x > 0) {
+            if (lastx <= 0) {
+                waveend = i;
+            }
+        }
+        lastx = x;
+        if (direction) {
+            if ((value += gradient) >= 1.0) {
+                direction = 0;
+                value = 2.0 - value;
+            }
+        } else {
+            if ((value -= gradient) <= -1.0) {
+                direction = 1;
+                value = -2.0 - value;
+            }
+        }
+    } // i
+
+    if (waveend)
+        *soundwave_bytes = waveend * 4;
+
+    return (ma_uint8 *)data;
+
+#else
+
     // Calculate the sample frames (duration) of the sound
     ma_uint64 sampleFrames = (ma_uint64)(length * audioEngine.sampleRate);
     if (!sampleFrames)
@@ -587,7 +654,7 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
 
     // Create a sine wave
     ma_waveform_config maWaveConfig =
-        ma_waveform_config_init(ma_format::ma_format_s16, 2, audioEngine.sampleRate, ma_waveform_type::ma_waveform_type_sine, volume, frequency);
+        ma_waveform_config_init(ma_format::ma_format_s16, 2, audioEngine.sampleRate, ma_waveform_type::ma_waveform_type_square, volume, frequency);
     ma_waveform maSineWave;
     audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
     DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -602,6 +669,8 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
     *soundwave_bytes = sampleFramesGenerated * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
 
     return buffer;
+
+#endif
 }
 
 /// <summary>
@@ -610,7 +679,9 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
 /// <param name="length">Length in seconds</param>
 /// <returns>Length in bytes</returns>
 static ma_int32 WaveformBufferSize(double length) {
-    ma_int32 samples = (ma_int32)(length * audioEngine.sampleRate);
+    static ma_int32 samples;
+
+    samples = (ma_int32)(length * audioEngine.sampleRate);
     if (!samples)
         samples = 1;
 
@@ -627,8 +698,10 @@ static ma_int32 WaveformBufferSize(double length) {
 /// <param name="block">So we have to wait until playback completes</param>
 /// <param name="sndRawQueue">A pointer to a raw queue object</param>
 static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
+    static ma_int32 i;
+
     // Move data into sndraw handle
-    for (size_t i = 0; i < bytes; i += 4) {
+    for (i = 0; i < bytes; i += 4) {
         audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->PushSampleFrame((float)((ma_int16 *)(data + i))[0] / 32768.0f,
                                                                                      (float)((ma_int16 *)(data + i))[1] / 32768.0f);
     }
@@ -639,8 +712,12 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
         audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
 
-    if (block)
-        DEBUG_PRINT("Blocking requested");
+    if (block) {
+        while (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetSampleFramesRemaining()) {
+            audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->Update();
+            Sleep(0);
+        }
+    }
 }
 
 /// <summary>
@@ -649,7 +726,10 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
 void sub_sound(double frequency, double lengthInClockTicks) {
-    ma_uint8 *data;
+#if 1
+
+    static ma_uint8 *data;
+    static ma_int32 soundwave_bytes;
 
     if (new_error || !audioEngine.isInitialized || audioEngine.sndInternal != 0)
         return;
@@ -667,14 +747,70 @@ void sub_sound(double frequency, double lengthInClockTicks) {
 
     audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // This will start processing handle 0 as a raw stream
 
-    ma_int32 soundwave_bytes;
     data = GenerateWaveform(frequency, lengthInClockTicks / 18.2, 1, &soundwave_bytes);
     SendWaveformToQueue(data, soundwave_bytes, true);
 
     return;
-    
+
 error:
     error(5);
+
+#else
+
+    // We'll allocate a buffer just once
+    // This buffer will be resized as required and will be freed by the system when the program ends
+    // This is much faster then allocating and freening multiple times if we have a good crt
+    static float *waveformBuffer = nullptr;
+
+    // Exit if frequency or length is 0 or if the audio engine is not initialized
+    if (frequency <= 0 || lengthInClockTicks <= 0 || !audioEngine.isInitialized || audioEngine.sndInternal != 0 ||
+        audioEngine.soundHandles[audioEngine.sndInternal]->type != SoundType::None)
+        return;
+
+    // Calculate the sample frames (duration) of the sound
+    ma_uint64 sampleFrames = (ma_uint64)((double)audioEngine.sampleRate * lengthInClockTicks / 18.2);
+
+    // Allocate the 'sample frame' number of bytes for the waveform buffer
+    float *tmp = (float *)realloc(waveformBuffer, sampleFrames * sizeof(float));
+
+    // Exit if memory allocation failed
+    if (!tmp)
+        return;
+
+    // Save the buffer pointer now that it is successfully allocated
+    waveformBuffer = tmp;
+
+    // Create a sine wave
+    ma_waveform_config maWaveConfig = ma_waveform_config_init(ma_format_f32, 1, audioEngine.sampleRate, ma_waveform_type_sine, 1, frequency);
+    ma_waveform maSineWave;
+    audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
+    assert(audioEngine.maResult == MA_SUCCESS);
+    audioEngine.maResult = ma_waveform_read_pcm_frames(&maSineWave, waveformBuffer, sampleFrames, NULL); // Generate the waveform
+    assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Setup the ma buffer
+    ma_audio_buffer_config maBufferConfig = ma_audio_buffer_config_init(ma_format_f32, 1, sampleFrames, waveformBuffer, NULL);
+    ma_audio_buffer maBuffer;
+    audioEngine.maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
+    assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Create a ma sound from the ma buffer
+    audioEngine.maResult =
+        ma_sound_init_from_data_source(&audioEngine.maEngine, &maBuffer, 0, NULL, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    assert(audioEngine.maResult == MA_SUCCESS);
+    audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    assert(audioEngine.maResult == MA_SUCCESS);
+
+    // Wait for the sound to end
+    // This also blocks the caller and correctly implements original QuickBASIC behavior
+    while (ma_sound_is_playing(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound))
+        Sleep(0);
+
+    ma_sound_uninit(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    ma_audio_buffer_uninit(&maBuffer);
+    ma_waveform_uninit(&maSineWave);
+
+#endif
 }
 
 /// <summary>
