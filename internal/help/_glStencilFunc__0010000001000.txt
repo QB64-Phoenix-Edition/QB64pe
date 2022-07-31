@@ -1,80 +1,31 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:23:02}}
-'''_glStencilFunc:''' set front and back function and reference value for stencil testing
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:52:14}}
+{{DISPLAYTITLE:_glStencilFunc}}
+The '''_glStencilFunc''' statement sets the statement and reference value for stencil testing.
 
 
 {{PageSyntax}}
-
-  SUB _glStencilFunc (BYVAL func AS _UNSIGNED LONG, BYVAL ref AS LONG, BYVAL mask AS _UNSIGNED LONG)
-  void '''_glStencilFunc'''(GLenum {{Parameter|func}}, GLint {{Parameter|ref}}, GLuint {{Parameter|mask}});
+: '''_glStencilFunc''' GLenum {{Parameter|func}}, GLint {{Parameter|ref}}, GLuint {{Parameter|mask}}
 
 
-; func
-: Specifies the test function. Eight symbolic constants are valid: {{KW|_GL_NEVER}}, {{KW|_GL_LESS}}, {{KW|_GL_LEQUAL}}, {{KW|_GL_GREATER}}, {{KW|_GL_GEQUAL}}, {{KW|_GL_EQUAL}}, {{KW|_GL_NOTEQUAL}}, and {{KW|_GL_ALWAYS}}. The initial value is {{KW|_GL_ALWAYS}}.
-; ref
-: Specifies the reference value for the stencil test. {{Parameter|ref}} is clamped to the range [0, 2<sup>n</sup> - 1, where ''n'' is the number of bitplanes in the stencil buffer. The initial value is 0.
-; mask
-: Specifies a mask that is ANDed with both the reference value and the stored stencil value when the test is done. The initial value is all 1's.
+{{PageParameters}}
+* OpenGL is using its own set of variable types to describe its command parameters.
+* Use the following table to find the respective QB64 [[Variable Types]].
+{{OpenGLTypesPlugin}}
 
 
 {{PageDescription}}
-
-Stenciling, like depth-buffering, enables and disables drawing on a per-pixel basis. Stencil planes are first drawn into using GL drawing primitives, then geometry and images are rendered using the stencil planes to mask out portions of the screen. Stenciling is typically used in multipass rendering algorithms to achieve special effects, such as decals, outlining, and constructive solid geometry rendering.
-
-The stencil test conditionally eliminates a pixel based on the outcome of a comparison between the reference value and the value in the stencil buffer. To enable and disable the test, call {{KW|_glEnable}} and {{KW|_glDisable}} with argument {{KW|_GL_STENCIL_TEST}}. To specify actions based on the outcome of the stencil test, call {{KW|_glStencilOp}} or {{KW|_glStencilOpSeparate}}.
-
-There can be two separate sets of {{Parameter|func}}, {{Parameter|ref}}, and {{Parameter|mask}} parameters; one affects back-facing polygons, and the other affects front-facing polygons as well as other non-polygon primitives. {{KW|_glStencilFunc}} sets both front and back stencil state to the same values. Use {{KW|_glStencilFuncSeparate}} to set front and back stencil state to different values.
-
-{{Parameter|func}} is a symbolic constant that determines the stencil comparison function. It accepts one of eight values, shown in the following list. {{Parameter|ref}} is an integer reference value that is used in the stencil comparison. It is clamped to the range [0, 2<sup>n</sup> - 1], where ''n'' is the number of bitplanes in the stencil buffer. {{Parameter|mask}} is bitwise ANDed with both the reference value and the stored stencil value, with the ANDed values participating in the comparison.
-
-If ''stencil'' represents the value stored in the corresponding stencil buffer location, the following list shows the effect of each comparison function that can be specified by {{Parameter|func}}. Only if the comparison succeeds is the pixel passed through to the next stage in the rasterization process (see {{KW|_glStencilOp}}). All tests treat ''stencil'' values as unsigned integers in the range [0, 2<sup>n</sup> - 1], where ''n'' is the number of bitplanes in the stencil buffer.
-
-The following values are accepted by {{Parameter|func}}:
-
-; {{KW|_GL_NEVER}}
-: Always fails.
-; {{KW|_GL_LESS}}
-: Passes if ( {{Parameter|ref}} & {{Parameter|mask}} ) < ( ''stencil'' & {{Parameter|mask}} ).
-; {{KW|_GL_LEQUAL}}
-: Passes if ( {{Parameter|ref}} & {{Parameter|mask}} ) <= ( ''stencil'' & {{Parameter|mask}} ).
-; {{KW|_GL_GREATER}}
-: Passes if ( {{Parameter|ref}} & {{Parameter|mask}} ) > ( ''stencil'' & {{Parameter|mask}} ).
-; {{KW|_GL_GEQUAL}}
-: Passes if ( {{Parameter|ref}} & {{Parameter|mask}} ) >= ( ''stencil'' & {{Parameter|mask}} ).
-; {{KW|_GL_EQUAL}}
-: Passes if ( {{Parameter|ref}} & {{Parameter|mask}} ) = ( ''stencil'' & {{Parameter|mask}} ).
-; {{KW|_GL_NOTEQUAL}}
-: Passes if ( {{Parameter|ref}} & {{Parameter|mask}} ) != ( ''stencil'' & {{Parameter|mask}} ).
-; {{KW|_GL_ALWAYS}}
-: Always passes.
-
-{{PageNotes}}
-
-Initially, the stencil test is disabled. If there is no stencil buffer, no stencil modification can occur and it is as if the stencil test always passes.
-
-{{KW|_glStencilFunc}} is the same as calling {{KW|_glStencilFuncSeparate}} with {{Parameter|face}} set to {{KW|_GL_FRONT_AND_BACK}}.
-
-
-{{PageErrors}}
-
-{{KW|_GL_INVALID_ENUM}} is generated if {{Parameter|func}} is not one of the eight accepted values.
-
-
-{{PageUseWith}}
-
-{{KW|_glGet}} with argument {{KW|_GL_STENCIL_FUNC}}, {{KW|_GL_STENCIL_VALUE_MASK}}, {{KW|_GL_STENCIL_REF}}, {{KW|_GL_STENCIL_BACK_FUNC}}, {{KW|_GL_STENCIL_BACK_VALUE_MASK}}, {{KW|_GL_STENCIL_BACK_REF}}, or {{KW|_GL_STENCIL_BITS}}
-
-{{KW|_glIsEnabled}} with argument {{KW|_GL_STENCIL_TEST}}
+* OpenGL's documentation is available in several places, so we won't reproduce it here for another time.
+* The full description for this command can be found at [https://docs.microsoft.com/en-us/windows/win32/opengl/glstencilfunc Microsoft Docs] and is also valid for QB64 usage.
 
 
 {{PageSeeAlso}}
-
-[[_GL|SUB _GL]]
-{{KW|_glEnable|(GL_STENCIL_TEST)}}, {{KW|_glLogicOp}}, {{KW|_glStencilFuncSeparate}}, {{KW|_glStencilMask}}, {{KW|_glStencilMaskSeparate}}, {{KW|_glStencilOp}}, {{KW|_glStencilOpSeparate}}
-
-
-{{PageCopyright}}
+* [[_GL|SUB _GL]]
+* [[_glAlphaFunc]], [[_glBegin]], [[_glBlendFunc]], [[_glDepthFunc]]
+* [[_glEnable]], [[_glEnd]], [[_glIsEnabled]], [[_glLogicOp]]
+* [[_glStencilOp]]
 
 
 {{PageNavigation}}
 
+[[Category:Final]]

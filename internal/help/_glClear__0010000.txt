@@ -1,59 +1,30 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:17:48}}
-'''_glClear:''' clear buffers to preset values
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:46:11}}
+{{DISPLAYTITLE:_glClear}}
+The '''_glClear''' statement clears buffers to preset values.
 
 
 {{PageSyntax}}
-
-:: [[SUB]] _glClear ([[BYVAL]] mask AS [[_UNSIGNED]] [[LONG]])
-::  void '''_glClear'''(GLbitfield {{Parameter|mask}});
+: '''_glClear''' GLbitfield {{Parameter|mask}}
 
 
 {{PageParameters}}
-* ''mask'' that indicate the buffer [[OR]] buffers to be cleared. The three masks are [[_GL_COLOR_BUFFER_BIT]], [[_GL_DEPTH_BUFFER_BIT]], and [[_GL_STENCIL_BUFFER_BIT]].
+* OpenGL is using its own set of variable types to describe its command parameters.
+* Use the following table to find the respective QB64 [[Variable Types]].
+{{OpenGLTypesPlugin}}
 
 
 {{PageDescription}}
-
-* [[_glClear]] sets the bitplane area of the window to values previously selected by [[_glClearColor]], [[glClearDepth]], and [[_glClearStencil]]. 
-* Multiple color buffers can be cleared simultaneously by selecting more than one buffer at a time using [[_glDrawBuffer]].
-* The pixel ownership test, the scissor test, dithering, and the buffer writemasks affect the operation of [[_glClear]]. The scissor box bounds the cleared region. Alpha function, blend function, logical operation, stenciling, texture mapping, and depth-buffering are ignored by [[_glClear]].
-
-* [[_glClear]] takes a single argument that is the bitwise OR of several values indicating which buffer is to be cleared. The values are as follows:
-
-::: [[_GL_COLOR_BUFFER_BIT]]: Indicates the buffers currently enabled for color writing.
-::: [[_GL_DEPTH_BUFFER_BIT]]: Indicates the depth buffer.
-::: [[_GL_STENCIL_BUFFER_BIT]]: Indicates the stencil buffer.
-
-* The value to which each buffer is cleared depends on the setting of the clear value for that buffer.
-
-
-{{PageNotes}}
-
-If a buffer is not present, then a '''_glClear''' directed at that buffer has no effect.
-
-
-{{PageErrors}}
-
-{{KW|_GL_INVALID_VALUE}} is generated if any bit other than the three defined bits is set in {{Parameter|mask}}.
-
-
-{{PageUseWith}}
-
-{{KW|_glGet}} with argument {{KW|_GL_DEPTH_CLEAR_VALUE}}
-
-{{KW|_glGet}} with argument {{KW|_GL_COLOR_CLEAR_VALUE}}
-
-{{KW|_glGet}} with argument {{KW|_GL_STENCIL_CLEAR_VALUE}}
+* OpenGL's documentation is available in several places, so we won't reproduce it here for another time.
+* The full description for this command can be found at [https://docs.microsoft.com/en-us/windows/win32/opengl/glclear Microsoft Docs] and is also valid for QB64 usage.
 
 
 {{PageSeeAlso}}
-* [[_GL]] 
-* [[_glClearBuffer]], [[_glClearColor]], [[_glClearDepth]], [[_glClearStencil]] 
-* [[_glColorMask]], [[_glDepthMask]], [[_glStencilMask]]
-* [[_glDrawBuffer]], [[_glDrawBuffers]]
-* [[_glScissor]]
+* [[_GL|SUB _GL]]
+* [[_glClearAccum]], [[_glClearColor]], [[_glClearDepth]], [[_glClearIndex]]
+* [[_glClearStencil]], [[_glDrawBuffer]], [https://docs.microsoft.com/en-us/windows/win32/opengl/glgetbooleanv--glgetdoublev--glgetfloatv--glgetintegerv _glGet], [[_glScissor]]
 
 
-{{PageCopyright}}
+{{PageNavigation}}
 
+[[Category:Final]]

@@ -1,5 +1,5 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:13:20}}
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:42:20}}
 The [[FILES]] statement is used to print a list of files in the current directory using a file specification.
 
 
@@ -25,27 +25,7 @@ The [[FILES]] statement is used to print a list of files in the current director
 ''Example 1:'' Finding a list of all BAS files in the current folder. 
 {{CodeStart}}{{Cl|FILES}} "*.BAS"
 {{CodeEnd}}
-<!-- broken link: <center>'''[http://i301.photobucket.com/albums/nn53/burger2227/FILESss.jpg Screenshot shows only the end of a long list of files]'''</center> -->
 
-
-<!-- function obsoleted by _FILEEXISTS; function doesn't use the FILES statement and is not relevant in this context; may be moved to an exclusive page if desired;
-
-{{Parameter|Example 2:'' A function that verifies that a file exists if it is not empty. Note: This function will delete empty files.
-{{CodeStart}}
-{{Cl|INPUT}} "Enter a file name: ", file$
-{{Cl|IF}} Exist%(file$) {{Cl|THEN}} {{Cl|OPEN}} file$ {{Cl|FOR (file statement)|FOR}} {{Cl|INPUT (file mode)|INPUT}} {{Cl|AS}} #1: found% = -1   'function call demo
-{{Cl|CLOSE}} #1
-{{Cl|IF}} found% THEN {{Cl|PRINT}} "File exists!" {{Cl|ELSE}} {{Cl|PRINT}} "File not found!"
-{{Cl|END}}
-
-{{Cl|FUNCTION}} Exist% (filename$)
-f% = {{Cl|FREEFILE}}
-{{Cl|OPEN}} filename$ {{Cl|FOR (file statement)|FOR}} {{Cl|APPEND}} {{Cl|AS}} #f%
-{{Cl|IF}} {{Cl|LOF}}(f%) {{Cl|THEN}} Exist% = -1 {{Cl|ELSE}} Exist% = 0: {{Cl|CLOSE}} #f%: {{Cl|KILL}} filename$ 'delete empty files
-{{Cl|CLOSE}} #f% 
-{{Cl|END FUNCTION}} 
-{{CodeEnd}}{{small|Code by Ted Weissgerber}}}}
--->
 
 ==Alternative file list solutions==
 ''Alternative 1:'' The DIR$ function adapted from PDS (7.1) returns a filename or a list when more than one exist. The file spec can use a path and/or wildcards.
@@ -98,7 +78,6 @@ DIR$ = DirList$(Index%)
 ''Alternative 2:''
 * The member-contributed [[FILELIST$]] function uses the mouse and does not affect your program screens. It can verify that a file name exists or display a list of long and short file names to choose from. It also avoids program errors when a file name does not exist. <!-- broken link: [http://i301.photobucket.com/albums/nn53/burger2227/FILE-ss2.jpg FILELIST$ function screenshot] -->
 
-<!-- The referenced library is not present in this link anymore ''See Library:'' File Exist C++ Function that does not create a temp file. [http://qb64.net/wiki/index.php?title=C_Libraries#File_Exist FileExist Function] -->
 
 {{PageSeeAlso}}
 * [[SHELL]], [[SCREEN (function)]] {{text|(See Example 3)}}
@@ -112,4 +91,3 @@ DIR$ = DirList$(Index%)
 
 
 {{PageNavigation}}
-

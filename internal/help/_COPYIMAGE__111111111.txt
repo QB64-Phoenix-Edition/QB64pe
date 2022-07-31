@@ -1,16 +1,16 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:07:19}}
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:36:58}}
 {{DISPLAYTITLE:_COPYIMAGE}}
-The [[_COPYIMAGE]] function creates an identical designated image in memory with a different negative [[LONG]] handle value.
+This function creates an identical designated image in memory with a different negative [[LONG]] handle value.
 
 
 {{PageSyntax}}
-: newhandle& = [[_COPYIMAGE]][({{Parameter|imageHandle&}}[, {{Parameter|mode%}})]]
+: newhandle& = [[_COPYIMAGE]]({{Parameter|imageHandle&}}[, {{Parameter|mode%}}])
 
 
 {{Parameters}}
 * The [[LONG]] ''newhandle&'' value returned will be different than the source handle value supplied.
-* If ''imageHandle&'' parameter is omitted or zero is designated, the current software [[_DEST|destination]] screen or image is copied.
+* If ''imageHandle&'' is designated being zero, the current software [[_DEST|destination]] screen or image is copied.
 * If 1 is designated instead of an ''imageHandle&'', it designates the last OpenGL hardware surface to copy.
 * ''Mode'' 32 can be used to convert 256 color images to 32 bit colors.
 * ''Mode'' 33 images are hardware accelerated in '''version 1.000 and up''', and are created using [[_LOADIMAGE]] or [[_COPYIMAGE]].
@@ -22,15 +22,14 @@ The [[_COPYIMAGE]] function creates an identical designated image in memory with
 * Every attribute of the passed image or program screen is copied to a new handle value in memory.
 * '''32 bit screen surface backgrounds (black) have zero [[_ALPHA]] so that they are transparent when placed over other surfaces.'''
 : Use [[CLS]] or [[_DONTBLEND]] to make a new surface background [[_ALPHA]] 255 or opaque.
-*  '''Images are not deallocated when the [[SUB]] or [[FUNCTION]] they are created in ends. Free them with [[_FREEIMAGE]].'''
+* '''Images are not deallocated when the [[SUB]] or [[FUNCTION]] they are created in ends. Free them with [[_FREEIMAGE]].'''
 * '''It is important to free discarded images with [[_FREEIMAGE]] to prevent PC memory allocation errors!'''
 * '''Do not try to free image handles currently being used as the active [[SCREEN]]. Change screen modes first.'''
 
 
 {{PageExamples}}
-''Example:'' Restoring a Legacy SCREEN using the _COPYIMAGE return value.
+;Example 1:Restoring a Legacy SCREEN using the _COPYIMAGE return value.
 {{CodeStart}}
-
 {{Cl|SCREEN}} 13
 {{Cl|CIRCLE}} (160, 100), 100, 40
 DO: {{Cl|SLEEP}}: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
@@ -45,20 +44,21 @@ DO: {{Cl|SLEEP}}: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
 
 {{Cl|SCREEN}} oldmode&        'restore original screen
 {{Cl|IF...THEN|IF}} s& < -1 THEN {{Cl|_FREEIMAGE}} s&
-{{Cl|END}} 
+{{Cl|END}}
 {{CodeEnd}}
-: ''Note:'' Only free valid handle values with [[_FREEIMAGE]] AFTER a new [[SCREEN]] mode is being used by the program.
-
-
-''Example 2:'' Program that copies desktop to a hardware image to form a 3D triangle ('''version 1.000 and up'''):
+{{small|Code courtesy of Galleon}}
+;Note:Only free valid handle values with [[_FREEIMAGE]] AFTER a new [[SCREEN]] mode is being used by the program.
+----
+;Example 2:Program that copies desktop to a hardware image to form a 3D triangle ('''version 1.000 and up'''):
 {{CodeStart}}
 {{Cl|SCREEN}} {{Cl|_NEWIMAGE}}(640, 480, 32)
 my_hardware_handle = {{Cl|_COPYIMAGE}}({{Cl|_SCREENIMAGE}}, 33) 'take a screenshot and use it as our texture
 {{Cl|_MAPTRIANGLE}} (0, 0)-(500, 0)-(250, 500), my_hardware_handle TO_ 
 (-1, 0, -1)-(1, 0, -1)-(0, 5, -10), , _SMOOTH
 {{Cl|_DISPLAY}}
-{{Cl|DO...LOOP|DO}}: {{Cl|_LIMIT}} 30: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> "" 
-{{CodeEnd}}{{small|Code courtesy of Galleon}}
+{{Cl|DO...LOOP|DO}}: {{Cl|_LIMIT}} 30: {{Cl|LOOP}} {{Cl|UNTIL}} {{Cl|INKEY$}} <> ""
+{{CodeEnd}}
+{{small|Code courtesy of Galleon}}
 
 
 {{PageSeeAlso}}
@@ -72,4 +72,3 @@ my_hardware_handle = {{Cl|_COPYIMAGE}}({{Cl|_SCREENIMAGE}}, 33) 'take a screensh
 
 
 {{PageNavigation}}
-
