@@ -1824,6 +1824,14 @@ double func__sndrawlen(int32 handle, int32 passed) {
         handle = audioEngine.sndInternalRaw;
 
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+        // This is for mainitianing compatibility with the SndRaw examples in the wiki
+        // Ideally, we should use _SNDRAWDONE at least once before checking for _SNDRAWLEN in a loop
+        // However, none of the examples in the wiki seem to do that
+        // So, we'll set the last blocks force flag to true only when there are > 1 block
+        // This should help avoid those examples from locking up in an infinite loop
+        if (audioEngine.soundHandles[handle]->rawQueue->blockCount > 1)
+            audioEngine.soundHandles[handle]->rawQueue->last->force = true;
+
         return audioEngine.soundHandles[handle]->rawQueue->GetTimeRemaining();
     }
 
