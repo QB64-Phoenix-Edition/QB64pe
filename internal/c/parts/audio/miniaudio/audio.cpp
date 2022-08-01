@@ -448,7 +448,7 @@ struct AudioEngine {
     ma_engine maEngine;                      // This is the primary miniaudio engine 'context'. Everything happens using this!
     ma_result maResult;                      // This is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                    // Sample rate used by the miniaudio engine
-    int32 sndInternal;                       // Internal sound handle that we will use for Beep() & Sound()
+    int32 sndInternal;                       // Internal sound handle that we will use for Play(), Beep() & Sound()
     int32 sndInternalRaw;                    // Internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles; // This is the audio handle list used by the engine and by everything else
 
@@ -845,6 +845,30 @@ error:
 /// This generates a default 'beep' sound.
 /// </summary>
 void sub_beep() { sub_sound(900, 5); }
+
+/// <summary>
+/// This was designed to returned the number of notes in the background music queue.
+/// However, here we just return the number of sample frame remaining to play when Play(), Sound() or Beep() are used.
+/// This allows programs like the following to compile and work.
+///
+///     Music$ = "MBT180o2P2P8L8GGGL2E-P24P8L8FFFL2D"
+///     PLAY Music$
+///     WHILE PLAY(0) > 5: WEND
+///     PRINT "Just about done!"
+/// </summary>
+/// <param name="ignore">Well, it's ignored</param>
+/// <returns>Returns the number of sample frames left to play for Play(), Sound() & Beep()</returns>
+int32 func_play(int32 ignore) {
+    if (audioEngine.isInitialized && audioEngine.sndInternal == 0) {
+        // This will push any unfinished block for playback
+        if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
+            audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
+
+        return (int32)audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetSampleFramesRemaining();
+    }
+
+    return 0;
+}
 
 /// <summary>
 /// Processes and plays the MML specified in the string.

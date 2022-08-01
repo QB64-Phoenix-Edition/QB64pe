@@ -33,6 +33,7 @@
 void sub_sound(double frequency, double lengthInClockTicks);
 void sub_beep();
 void sub_play(qbs *str);
+int32 func_play(int32 ignore);
 
 int32 func__sndrate();
 int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed);
@@ -59,7 +60,6 @@ void sub__sndrawdone(int32 handle, int32 passed);
 double func__sndrawlen(int32 handle, int32 passed);
 
 mem_block func__memsound(int32 handle, int32 targetChannel);
-int32 func__newsound(int32 frames, int32 rate, int32 channels, int32 bits, int32 passed);
 
 void snd_init();
 void snd_un_init();
