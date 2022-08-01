@@ -602,8 +602,6 @@ static AudioEngine audioEngine;
 /// <param name="soundwave_bytes">A pointer to an integer that will receive the buffer size in bytes. This cannot be NULL</param>
 /// <returns></returns>
 static ma_uint8 *GenerateWaveform(double frequency, double length, double volume, ma_int32 *soundwave_bytes) {
-#if 1
-
     static ma_uint8 *data;
     static ma_int32 i;
     static ma_int16 x, lastx;
@@ -663,42 +661,9 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
     } // i
 
     if (waveend)
-        *soundwave_bytes = waveend * 4;
+        *soundwave_bytes = waveend * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
 
     return (ma_uint8 *)data;
-
-#else
-
-    // Calculate the sample frames (duration) of the sound
-    ma_uint64 sampleFrames = (ma_uint64)(length * audioEngine.sampleRate);
-    if (!sampleFrames)
-        sampleFrames = 1;
-
-    *soundwave_bytes = sampleFrames * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
-
-    ma_uint8 *buffer = (ma_uint8 *)malloc(*soundwave_bytes);
-    if (!buffer)
-        return nullptr;
-
-    // Create a sine wave
-    ma_waveform_config maWaveConfig =
-        ma_waveform_config_init(ma_format::ma_format_s16, 2, audioEngine.sampleRate, ma_waveform_type::ma_waveform_type_square, volume, frequency);
-    ma_waveform maSineWave;
-    audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-
-    ma_uint64 sampleFramesGenerated = sampleFrames;
-    audioEngine.maResult = ma_waveform_read_pcm_frames(&maSineWave, buffer, sampleFrames, &sampleFramesGenerated); // Generate the waveform
-    DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-    DEBUG_CHECK(sampleFramesGenerated <= sampleFrames);
-
-    ma_waveform_uninit(&maSineWave);
-
-    *soundwave_bytes = sampleFramesGenerated * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
-
-    return buffer;
-
-#endif
 }
 
 /// <summary>
@@ -727,6 +692,7 @@ static ma_int32 WaveformBufferSize(double length) {
 /// <param name="sndRawQueue">A pointer to a raw queue object</param>
 static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     static ma_int32 i;
+    static ma_int64 time_ms;
 
     // Move data into sndraw handle
     for (i = 0; i < bytes; i += 4) {
@@ -741,10 +707,9 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
         audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
 
     if (block) {
-        while (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetSampleFramesRemaining()) {
-            audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->Update();
-            Sleep(0);
-        }
+        time_ms = (ma_int64)audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetTimeRemaining() * 950.0 - 250.0;
+        if (time_ms > 0)
+            Sleep(time_ms);
     }
 }
 
@@ -754,8 +719,6 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
 /// <param name="frequency">Sound frequency</param>
 /// <param name="lengthInClockTicks">Duration in clock ticks. There are 18.2 clock ticks per second</param>
 void sub_sound(double frequency, double lengthInClockTicks) {
-#if 1
-
     static ma_uint8 *data;
     static ma_int32 soundwave_bytes;
 
@@ -782,63 +745,6 @@ void sub_sound(double frequency, double lengthInClockTicks) {
 
 error:
     error(5);
-
-#else
-
-    // We'll allocate a buffer just once
-    // This buffer will be resized as required and will be freed by the system when the program ends
-    // This is much faster then allocating and freening multiple times if we have a good crt
-    static float *waveformBuffer = nullptr;
-
-    // Exit if frequency or length is 0 or if the audio engine is not initialized
-    if (frequency <= 0 || lengthInClockTicks <= 0 || !audioEngine.isInitialized || audioEngine.sndInternal != 0 ||
-        audioEngine.soundHandles[audioEngine.sndInternal]->type != SoundType::None)
-        return;
-
-    // Calculate the sample frames (duration) of the sound
-    ma_uint64 sampleFrames = (ma_uint64)((double)audioEngine.sampleRate * lengthInClockTicks / 18.2);
-
-    // Allocate the 'sample frame' number of bytes for the waveform buffer
-    float *tmp = (float *)realloc(waveformBuffer, sampleFrames * sizeof(float));
-
-    // Exit if memory allocation failed
-    if (!tmp)
-        return;
-
-    // Save the buffer pointer now that it is successfully allocated
-    waveformBuffer = tmp;
-
-    // Create a sine wave
-    ma_waveform_config maWaveConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, audioEngine.sampleRate, ma_waveform_type_sine, 1, frequency);
-    ma_waveform maSineWave;
-    audioEngine.maResult = ma_waveform_init(&maWaveConfig, &maSineWave);
-    assert(audioEngine.maResult == MA_SUCCESS);
-    audioEngine.maResult = ma_waveform_read_pcm_frames(&maSineWave, waveformBuffer, sampleFrames, NULL); // Generate the waveform
-    assert(audioEngine.maResult == MA_SUCCESS);
-
-    // Setup the ma buffer
-    ma_audio_buffer_config maBufferConfig = ma_audio_buffer_config_init(ma_format::ma_format_f32, 1, sampleFrames, waveformBuffer, NULL);
-    ma_audio_buffer maBuffer;
-    audioEngine.maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
-    assert(audioEngine.maResult == MA_SUCCESS);
-
-    // Create a ma sound from the ma buffer
-    audioEngine.maResult =
-        ma_sound_init_from_data_source(&audioEngine.maEngine, &maBuffer, 0, NULL, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-    assert(audioEngine.maResult == MA_SUCCESS);
-    audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-    assert(audioEngine.maResult == MA_SUCCESS);
-
-    // Wait for the sound to end
-    // This also blocks the caller and correctly implements original QuickBASIC behavior
-    while (ma_sound_is_playing(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound))
-        Sleep(0);
-
-    ma_sound_uninit(&audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-    ma_audio_buffer_uninit(&maBuffer);
-    ma_waveform_uninit(&maSineWave);
-
-#endif
 }
 
 /// <summary>
