@@ -34,7 +34,7 @@
 // FORWARD DECLARATIONS
 //-----------------------------------------------------------------------------------------------------
 // These are stuff that was not declared anywhere else
-// Again, we will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
+// We will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
 qbs *qbs_new_txt_len(const char *txt, int32 len);                   // Not declared in libqb.h
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 void new_mem_lock();                                                // This is required for MemSound()
@@ -76,8 +76,7 @@ extern mem_lock *mem_lock_tmp;  // Same as above
 //-----------------------------------------------------------------------------------------------------
 // MACROS
 //-----------------------------------------------------------------------------------------------------
-#define SAMPLE_FRAME_SIZE_BY_TYPE(_channels_, _type_) ((_channels_) * (sizeof(_type_) / sizeof(ma_uint8)))
-#define SAMPLE_FRAME_SIZE_BY_FORMAT(_channels_, _format_) ((_channels_) * (ma_get_bytes_per_sample(_format_)))
+#define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
 
 // This basically checks if the handle is within vector limits and 'isUsed' is set to true
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
@@ -620,7 +619,7 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
     if (!samplesi)
         samplesi = 1;
 
-    *soundwave_bytes = samplesi * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+    *soundwave_bytes = samplesi * SAMPLE_FRAME_SIZE(ma_int16, 2);
     data = (ma_uint8 *)malloc(*soundwave_bytes);
     sp = (ma_int16 *)data;
 
@@ -661,7 +660,7 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
     } // i
 
     if (waveend)
-        *soundwave_bytes = waveend * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+        *soundwave_bytes = waveend * SAMPLE_FRAME_SIZE(ma_int16, 2);
 
     return (ma_uint8 *)data;
 }
@@ -678,7 +677,7 @@ static ma_int32 WaveformBufferSize(double length) {
     if (!samples)
         samples = 1;
 
-    return samples * SAMPLE_FRAME_SIZE_BY_TYPE(2, ma_int16);
+    return samples * SAMPLE_FRAME_SIZE(ma_int16, 2);
 }
 
 /// <summary>
@@ -695,7 +694,7 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     static ma_int64 time_ms;
 
     // Move data into sndraw handle
-    for (i = 0; i < bytes; i += 4) {
+    for (i = 0; i < bytes; i += SAMPLE_FRAME_SIZE(ma_int16, 2)) {
         audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->PushSampleFrame((float)((ma_int16 *)(data + i))[0] / 32768.0f,
                                                                                      (float)((ma_int16 *)(data + i))[1] / 32768.0f);
     }
@@ -754,7 +753,7 @@ void sub_beep() { sub_sound(900, 5); }
 
 /// <summary>
 /// This was designed to returned the number of notes in the background music queue.
-/// However, here we just return the number of sample frame remaining to play when Play(), Sound() or Beep() are used.
+/// However, here we'll just return the number of sample frame remaining to play when Play(), Sound() or Beep() are used.
 /// This allows programs like the following to compile and work.
 ///
 ///     Music$ = "MBT180o2P2P8L8GGGL2E-P24P8L8FFFL2D"
@@ -1840,7 +1839,7 @@ double func__sndrawlen(int32 handle, int32 passed) {
 
 /// <summary>
 /// This function returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function.
-/// miniaudio supports a variety of sample and channel formats. Translating all of that to basic 2 channel 16-bit formats that
+/// miniaudio supports a variety of sample and channel formats. Translating all of that to basic 2 channel 16-bit format that
 /// MemSound was originally supporting would require significant overhead both in terms of system resources and code.
 /// For now we are just exposing the underlying PCM data directly from miniaudio. This fits rather well using the existing mem structure.
 /// Mono sounds should continue to work just as it was before. Stereo and multi-channel sounds however will be required to be handled correctly
@@ -1851,20 +1850,21 @@ double func__sndrawlen(int32 handle, int32 passed) {
 /// <returns>A _MEM value that can be used to access the sound data</returns>
 mem_block func__memsound(int32 handle, int32 targetChannel) {
     static mem_block mb;
-    static ma_data_source *pcmData;
     static ma_format maFormat;
     static ma_uint32 channels;
     static ma_uint64 sampleFrames;
+    static ma_resource_manager_data_buffer *ds;
 
     if (new_error || !audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundType::Static ||
         audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM || !(audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_DECODE))
         goto error;
 
     // Get the pointer to the data source
-    // TODO: The hope is that this will have the raw frames without any header data. But this needs to be tested thoroughly!
-    pcmData = ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
-    if (!pcmData)
+    ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
+    if (!ds->pNode->data.backend.decoded.pData)
         goto error;
+
+    DEBUG_PRINT("Raw PCM data pointer = %p", ds->pNode->data.backend.decoded.pData);
 
     // Query the data format
     if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS)
@@ -1873,6 +1873,8 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
     // Get the length in sample frames
     if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS)
         goto error;
+
+    DEBUG_PRINT("format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
 
     if (audioEngine.soundHandles[handle]->memLockOffset) {
         mb.lock_offset = (ptrszint)audioEngine.soundHandles[handle]->memLockOffset;
@@ -1894,11 +1896,13 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
     if (maFormat == ma_format::ma_format_u8)
         mb.type |= 2; // Unsigned
 
-    mb.elementsize = SAMPLE_FRAME_SIZE_BY_FORMAT(channels, maFormat); // Set the element size. This is the size of each PCM frame in bytes
-    mb.offset = (ptrszint)pcmData;                                    // Setup offset
-    mb.size = sampleFrames * mb.elementsize;                          // Setup size (in bytes)
-    mb.sound = handle;                                                // Copy the handle
-    mb.image = 0;                                                     // Not needed. Set to 0
+    mb.elementsize = ma_get_bytes_per_frame(maFormat, channels); // Set the element size. This is the size of each PCM frame in bytes
+    mb.offset = (ptrszint)ds->pNode->data.backend.decoded.pData; // Setup offset
+    mb.size = sampleFrames * mb.elementsize;                     // Setup size (in bytes)
+    mb.sound = handle;                                           // Copy the handle
+    mb.image = 0;                                                // Not needed. Set to 0
+
+    DEBUG_PRINT("elementsize = %lli, size = %lli, type = %lli", mb.elementsize, mb.size, mb.type);
 
     return mb;
 
@@ -1911,6 +1915,8 @@ error:
     mb.elementsize = 0;
     mb.sound = 0;
     mb.image = 0;
+
+    DEBUG_PRINT("Error occured");
 
     return mb;
 }
