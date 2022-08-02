@@ -621,6 +621,8 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
 
     *soundwave_bytes = samplesi * SAMPLE_FRAME_SIZE(ma_int16, 2);
     data = (ma_uint8 *)malloc(*soundwave_bytes);
+    if (!data)
+        return nullptr;
     sp = (ma_int16 *)data;
 
     direction = 1;
@@ -693,6 +695,9 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     static ma_int32 i;
     static ma_int64 time_ms;
 
+    if (!data)
+        return;
+
     // Move data into sndraw handle
     for (i = 0; i < bytes; i += SAMPLE_FRAME_SIZE(ma_int16, 2)) {
         audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->PushSampleFrame((float)((ma_int16 *)(data + i))[0] / 32768.0f,
@@ -705,8 +710,10 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
         audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
 
+    // This will wait for the block to finish (if specified)
+    // We'll be good citizens and give-up our time-slices while waiting
     if (block) {
-        time_ms = (ma_int64)audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetTimeRemaining() * 950.0 - 250.0;
+        time_ms = (ma_int64)(audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetTimeRemaining() * 950.0 - 250.0);
         if (time_ms > 0)
             Sleep(time_ms);
     }
@@ -1861,18 +1868,37 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
 
     // Get the pointer to the data source
     ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
-    if (!ds->pNode->data.backend.decoded.pData)
+    if (!ds || !ds->pNode) {
+        DEBUG_PRINT("Data source pointer OR node pointer is NULL");
         goto error;
+    }
+
+    // Check if the data is one contigious buffer or a link list of decoded pages
+    // We cannot have a mem object for a link list of decoded pages for obvious reasons
+    if (ds->pNode->data.type != ma_resource_manager_data_supply_type::ma_resource_manager_data_supply_type_decoded) {
+        DEBUG_PRINT("Data is not a contigious buffer. Type = %u", ds->pNode->data.type);
+        goto error;
+    }
+
+    // Check the data pointer
+    if (!ds->pNode->data.backend.decoded.pData) {
+        DEBUG_PRINT("Data source data pointer is NULL");
+        goto error;
+    }
 
     DEBUG_PRINT("Raw PCM data pointer = %p", ds->pNode->data.backend.decoded.pData);
 
     // Query the data format
-    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS)
+    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS) {
+        DEBUG_PRINT("Data format query failed");
         goto error;
+    }
 
     // Get the length in sample frames
-    if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS)
+    if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS) {
+        DEBUG_PRINT("PCM frames query failed");
         goto error;
+    }
 
     DEBUG_PRINT("format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
 
@@ -1888,7 +1914,8 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
         audioEngine.soundHandles[handle]->memLockId = mem_lock_id;
     }
 
-    // Setup type (TODO: do we really need to do this?)
+    // Setup type: This was not done in the old code
+    // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
     if (maFormat == ma_format::ma_format_f32)
         mb.type = 4; // FP32
     else
@@ -1915,8 +1942,6 @@ error:
     mb.elementsize = 0;
     mb.sound = 0;
     mb.image = 0;
-
-    DEBUG_PRINT("Error occured");
 
     return mb;
 }
