@@ -702,15 +702,21 @@ SUB WikiParse (a$) 'Wiki page interpret
                     END IF
                 END IF
 
-                'Template wrapped table
+                'Template wrapped table (try to get a readable plugin first)
                 IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse = 0 THEN 'no table info in blocks
-                    Help_LinkN = Help_LinkN + 1
-                    Help_Link$ = Help_Link$ + "EXTL:" + wikiBaseAddress$ + "/index.php?title=Template:" + cb$ + Help_Link_Sep$
-                    Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ษออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " The original page has a table here,  ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " please click inside this box to load ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " the table into your standard browser.", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                    Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ศออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                    pit$ = Wiki$("Template:" + LEFT$(cb$, LEN(cb$) - 5) + "Plugin")
+                    IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
+                        a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
+                        n = n + LEN(pit$)
+                    ELSE
+                        Help_LinkN = Help_LinkN + 1
+                        Help_Link$ = Help_Link$ + "EXTL:" + wikiBaseAddress$ + "/index.php?title=Template:" + cb$ + Help_Link_Sep$
+                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ษออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " The original page has a table here,  ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " please click inside this box to load ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " the table into your standard browser.", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
+                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ศออออออออออออออออออออออออออออออออออออออผ", 8, 0
+                    END IF
                 END IF
 
                 'Parameter template text will be italic
