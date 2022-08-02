@@ -211,7 +211,7 @@ SUB Help_NewLine 'Start a new help line, apply indention (if any)
             Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), Help_Col, 0
             Help_CIndent$ = MID$(Help_CIndent$, 2)
         ELSEIF Help_LIndent$ <> "" THEN
-            Help_AddTxt Help_LIndent$, 3, 0
+            Help_AddTxt Help_LIndent$, 11, 0
         END IF
     END IF
 END SUB
@@ -814,7 +814,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
                 IF c$(2) = ";*" OR c$(2) = ";#" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
                 IF dl < 3 THEN
-                    Help_AddTxt "Þ ", 3, 0: dl = 1
+                    Help_AddTxt "Þ ", 11, 0: dl = 1
                     Help_LIndent$ = Help_LIndent$ + "Þ "
                 END IF
                 GOTO charDone
@@ -822,7 +822,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$ = ":" AND Help_DList > 0 THEN 'description (same line)
                 IF c$(2) = ": " THEN i = i + 1
                 Help_Bold = 0: col = Help_Col: Help_NewLine
-                Help_AddTxt " ", 3, 0: dl = 3
+                Help_AddTxt " ", 11, 0: dl = 3
                 Help_LIndent$ = Help_LIndent$ + " "
                 IF Help_DList > 1 THEN
                     Help_AddTxt CHR$(4) + " ", 14, 0
@@ -835,11 +835,11 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF c$(2) = ": " THEN i = i + 1
                 IF ah = 0 AND dl = 0 THEN Help_CheckBlankLine
                 IF dl < 3 THEN
-                    Help_AddTxt "Þ ", 3, 0: dl = 2
+                    Help_AddTxt "Þ ", 11, 0: dl = 2
                     Help_LIndent$ = Help_LIndent$ + "Þ "
                 END IF
                 IF ASC(c$(2), 2) <> 58 AND ASC(c$(2), 2) <> 59 THEN
-                    Help_AddTxt " ", 3, 0: dl = 3
+                    Help_AddTxt " ", 11, 0: dl = 3
                     Help_LIndent$ = Help_LIndent$ + " "
                 END IF
                 GOTO charDoneKnl 'keep nl state for possible <UL> list bullets
