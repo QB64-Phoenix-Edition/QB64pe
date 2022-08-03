@@ -1854,7 +1854,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
 /// by the user by checking the 'elementsize' member - which is set to the size (in bytes) of each PCM frame.
 /// </summary>
 /// <param name="handle">A sound handle</param>
-/// <param name="targetChannel">This should be 0 (for interleaved) or 1 (for mono). Anything else will generate an error</param>
+/// <param name="targetChannel">This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure</param>
 /// <returns>A _MEM value that can be used to access the sound data</returns>
 mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     static mem_block mb;
@@ -1864,15 +1864,9 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     static ma_resource_manager_data_buffer *ds;
 
     // The sound cannot be steaming and must be completely decoded in memory
-    if (new_error || !audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundType::Static ||
+    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundType::Static ||
         audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM || !(audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_DECODE))
         goto error;
-
-    // Raise an error if invalid (unsupported) channel values were passed
-    if (targetChannel != 0 || targetChannel != 1) {
-        error(5);
-        goto error;
-    }
 
     // Get the pointer to the data source
     ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
@@ -1902,13 +1896,19 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
         goto error;
     }
 
+    // Do not proceed if invalid (unsupported) channel values were passed
+    if (targetChannel != 0 && targetChannel != 1) {
+        DEBUG_PRINT("Sound channels = %u, Target channel %i not supported", channels, targetChannel);
+        goto error;
+    }
+
     // Get the length in sample frames
     if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS) {
         DEBUG_PRINT("PCM frames query failed");
         goto error;
     }
 
-    DEBUG_PRINT("format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
+    DEBUG_PRINT("Format = %u, Channels = %u, Frames = %llu", maFormat, channels, sampleFrames);
 
     if (audioEngine.soundHandles[handle]->memLockOffset) {
         mb.lock_offset = (ptrszint)audioEngine.soundHandles[handle]->memLockOffset;
@@ -1937,7 +1937,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     mb.sound = handle;                                           // Copy the handle
     mb.image = 0;                                                // Not needed. Set to 0
 
-    DEBUG_PRINT("elementsize = %lli, size = %lli, type = %lli", mb.elementsize, mb.size, mb.type);
+    DEBUG_PRINT("ElementSize = %lli, Size = %lli, Type = %lli", mb.elementsize, mb.size, mb.type);
 
     return mb;
 
