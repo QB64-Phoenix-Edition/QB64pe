@@ -17,13 +17,14 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
-#include "libqb-common.h"
-// Although Matt says we should not be doing this, this has worked out to be ok so far
-// We need 'qbs' and also the 'mem' stuff from here
-// I am not using 'list' anymore and have migrated the code to use C++ vectors instead
-// We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
-// For now, we'll wait for Matt until he sorts out things to smaller and logical files
-#include "../../../libqb.h"
+#include <stdint.h>
+//-----------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------
+// FORWARD DECLARATIONS
+//-----------------------------------------------------------------------------------------------------
+struct qbs;
+struct mem_block;
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -32,33 +33,33 @@
 void sub_sound(double frequency, double lengthInClockTicks);
 void sub_beep();
 void sub_play(qbs *str);
-int32 func_play(int32 ignore);
+int32_t func_play(int32_t ignore);
 
-int32 func__sndrate();
-int32 func__sndopen(qbs *fileName, qbs *requirements, int32 passed);
-void sub__sndclose(int32 handle);
-int32 func__sndcopy(int32 src_handle);
-void sub__sndplay(int32 handle);
-void sub__sndplaycopy(int32 src_handle, double volume, int32 passed);
-void sub__sndplayfile(qbs *fileName, int32 sync, double volume, int32 passed);
-void sub__sndpause(int32 handle);
-int32 func__sndplaying(int32 handle);
-int32 func__sndpaused(int32 handle);
-void sub__sndvol(int32 handle, float volume);
-void sub__sndloop(int32 handle);
-void sub__sndbal(int32 handle, double x, double y, double z, int32 channel, int32 passed);
-double func__sndlen(int32 handle);
-double func__sndgetpos(int32 handle);
-void sub__sndsetpos(int32 handle, double seconds);
-void sub__sndlimit(int32 handle, double limit);
-void sub__sndstop(int32 handle);
+int32_t func__sndrate();
+int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed);
+void sub__sndclose(int32_t handle);
+int32_t func__sndcopy(int32_t src_handle);
+void sub__sndplay(int32_t handle);
+void sub__sndplaycopy(int32_t src_handle, double volume, int32_t passed);
+void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed);
+void sub__sndpause(int32_t handle);
+int32_t func__sndplaying(int32_t handle);
+int32_t func__sndpaused(int32_t handle);
+void sub__sndvol(int32_t handle, float volume);
+void sub__sndloop(int32_t handle);
+void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, int32_t passed);
+double func__sndlen(int32_t handle);
+double func__sndgetpos(int32_t handle);
+void sub__sndsetpos(int32_t handle, double seconds);
+void sub__sndlimit(int32_t handle, double limit);
+void sub__sndstop(int32_t handle);
 
-int32 func__sndopenraw();
-void sub__sndraw(float left, float right, int32 handle, int32 passed);
-void sub__sndrawdone(int32 handle, int32 passed);
-double func__sndrawlen(int32 handle, int32 passed);
+int32_t func__sndopenraw();
+void sub__sndraw(float left, float right, int32_t handle, int32_t passed);
+void sub__sndrawdone(int32_t handle, int32_t passed);
+double func__sndrawlen(int32_t handle, int32_t passed);
 
-mem_block func__memsound(int32 handle, int32 targetChannel);
+mem_block func__memsound(int32_t handle, int32_t targetChannel);
 
 void snd_init();
 void snd_un_init();

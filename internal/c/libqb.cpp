@@ -22104,7 +22104,7 @@ double func_sqr(double value) {
     return sqrt(value);
 }
 
-#include "parts/audio/src.c"
+#include "audio.h"
 
 #ifdef DEPENDENCY_ZLIB
 #    ifdef QB64_BACKSLASH_FILESYSTEM

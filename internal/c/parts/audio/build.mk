@@ -7,11 +7,11 @@ else
 MINIAUDIO_SRCS += stub_audio.cpp
 endif
 
-MINIAUDIO_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/miniaudio/%.o,$(MINIAUDIO_SRCS))
+MINIAUDIO_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/%.o,$(MINIAUDIO_SRCS))
 
 CLEAN_LIST += $(MINIAUDIO_OBJS)
 
-$(PATH_INTERNAL_C)/parts/audio/miniaudio/%.o: $(PATH_INTERNAL_C)/parts/audio/miniaudio/%.cpp
+$(PATH_INTERNAL_C)/parts/audio/%.o: $(PATH_INTERNAL_C)/parts/audio/%.cpp
 	$(CXX) $(CXXFLAGS) -Wall $< -c -o $@
 
 EXE_LIBS += $(MINIAUDIO_OBJS)
