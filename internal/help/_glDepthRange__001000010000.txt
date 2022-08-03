@@ -1,45 +1,30 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:18:55}}
-'''_glDepthRange:''' specify mapping of depth values from normalized device coordinates to window coordinates
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:48:07}}
+{{DISPLAYTITLE:_glDepthRange}}
+The '''_glDepthRange''' statement specifies the mapping of z values from normalized device coordinates to window coordinates.
 
 
 {{PageSyntax}}
+: '''_glDepthRange''' GLclampd {{Parameter|zNear}}, GLclampd {{Parameter|zFar}}
 
-::  SUB _glDepthRange (BYVAL zNear AS DOUBLE, BYVAL zFar AS DOUBLE)
 
-::  void '''_glDepthRange'''(GLdouble {{Parameter|nearVal}}, GLdouble {{Parameter|farVal}});
-::  void '''_glDepthRangef'''(GLfloat {{Parameter|nearVal}}, GLfloat {{Parameter|farVal}});
-
-; nearVal
-: Specifies the mapping of the near clipping plane to window coordinates. The initial value is 0.
-; farVal
-: Specifies the mapping of the far clipping plane to window coordinates. The initial value is 1.
+{{PageParameters}}
+* OpenGL is using its own set of variable types to describe its command parameters.
+* Use the following table to find the respective QB64 [[Variable Types]].
+{{OpenGLTypesPlugin}}
 
 
 {{PageDescription}}
-
-After clipping and division by ''w'', depth coordinates range from -1 to 1, corresponding to the near and far clipping planes. '''_glDepthRange''' specifies a linear mapping of the normalized depth coordinates in this range to window depth coordinates. Regardless of the actual depth buffer implementation, window coordinate depth values are treated as though they range from 0 through 1 (like color components). Thus, the values accepted by '''_glDepthRange''' are both clamped to this range before they are accepted.
-
-The setting of (0,1) maps the near plane to 0 and the far plane to 1. With this mapping, the depth buffer range is fully utilized.
-
-
-{{PageNotes}}
-
-It is not necessary that {{Parameter|nearVal}} be less than {{Parameter|farVal}}. Reverse mappings such as ''nearVal'' = 1, and ''farVal'' = 0 are acceptable.
-
-The type of the {{Parameter|nearVal}} and {{Parameter|farVal}} parameters was changed from GLclampf to GLfloat for '''_glDepthRangef''' and from GLclampd to GLdouble for '''_glDepthRange'''. This change is transparent to user code.
-
-
-{{PageUseWith}}
-
-{{KW|_glGet}} with argument {{KW|_GL_DEPTH_RANGE}}
+* OpenGL's documentation is available in several places, so we won't reproduce it here for another time.
+* The full description for this command can be found at [https://docs.microsoft.com/en-us/windows/win32/opengl/gldepthrange Microsoft Docs] and is also valid for QB64 usage.
 
 
 {{PageSeeAlso}}
+* [[_GL|SUB _GL]]
+* [[_glBegin]], [[_glDepthFunc]], [[_glEnd]], [https://docs.microsoft.com/en-us/windows/win32/opengl/glgetbooleanv--glgetdoublev--glgetfloatv--glgetintegerv _glGet]
+* [[_glViewport]]
 
-[[_GL|SUB _GL]]
-{{KW|_glDepthFunc}}, {{KW|_glDepthRangeArray}}, {{KW|_glDepthRangeIndexed}}, {{KW|_glPolygonOffset}}, {{KW|_glViewport}}
 
+{{PageNavigation}}
 
-{{PageCopyright}}
-
+[[Category:Final]]
