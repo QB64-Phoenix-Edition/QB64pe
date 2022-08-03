@@ -1,32 +1,31 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:20:42}}
-'''_glIsTexture:''' determine if a name corresponds to a texture
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:50:03}}
+{{DISPLAYTITLE:_glIsTexture}}
+The '''_glIsTexture''' function determines if a name corresponds to a texture.
 
 
 {{PageSyntax}}
-
-  FUNCTION _glIsTexture~%% (BYVAL texture AS _UNSIGNED LONG)
-  GLboolean '''_glIsTexture'''(GLuint {{Parameter|texture}});
+: GLboolean {{Parameter|result}} = '''_glIsTexture''' (GLuint {{Parameter|texture}})
 
 
-; texture
-: Specifies a value that may be the name of a texture.
+{{PageParameters}}
+* OpenGL is using its own set of variable types to describe its command parameters.
+* Use the following table to find the respective QB64 [[Variable Types]].
+{{OpenGLTypesPlugin}}
 
 
 {{PageDescription}}
-
-'''_glIsTexture''' returns {{KW|_GL_TRUE}} if {{Parameter|texture}} is currently the name of a texture. If {{Parameter|texture}} is zero, or is a non-zero value that is not currently the name of a texture, or if an error occurs, '''_glIsTexture''' returns {{KW|_GL_FALSE}}.
-
-A name returned by {{KW|_glGenTextures}}, but not yet associated with a texture by calling {{KW|_glBindTexture}}, is not the name of a texture.
+* OpenGL's documentation is available in several places, so we won't reproduce it here for another time.
+* The full description for this command can be found at [https://docs.microsoft.com/en-us/windows/win32/opengl/glistexture Microsoft Docs] and is also valid for QB64 usage.
 
 
 {{PageSeeAlso}}
+* [[_GL|SUB _GL]]
+* [[_glBegin]], [[_glBindTexture]], [[_glEnd]], [[_glGenTextures]]
+* [https://docs.microsoft.com/en-us/windows/win32/opengl/glgetbooleanv--glgetdoublev--glgetfloatv--glgetintegerv _glGet], [https://docs.microsoft.com/en-us/windows/win32/opengl/glgettexparameter _glGetTexParameter], [[_glTexImage1D]], [[_glTexImage2D]]
+* [https://docs.microsoft.com/en-us/windows/win32/opengl/gltexparameter-functions _glTexParameter]
 
-[[_GL|SUB _GL]]
-{{KW|_glBindTexture}}, {{KW|_glDeleteTextures}}, {{KW|_glGenTextures}}
 
+{{PageNavigation}}
 
-{{PageCopyright}}
-
-Copyright 1991-2006 Silicon Graphics, Inc. This document is licensed under the SGI Free Software B License. For details, see [http://oss.sgi.com/projects/FreeB/ http://oss.sgi.com/projects/FreeB/].
-
+[[Category:Final]]

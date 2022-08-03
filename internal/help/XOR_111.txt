@@ -1,5 +1,5 @@
-{{QBDLDATE:05-20-2022}}
-{{QBDLTIME:23:17:33}}
+{{QBDLDATE:07-31-2022}}
+{{QBDLTIME:23:45:48}}
 Bitwise operators are much like the regular mathematics operators (+, * etc.) but are defined in terms of the individual bits of their operands. The full list of bitwise operators, with a brief summary of its operation:
 * '''AND''': True if both inputs are true
 * '''OR''': True if one or both inputs are true
@@ -17,20 +17,7 @@ If ''value1'' or ''value2'' are non-integer numeric types, they are rounded to t
 
 {{PageDescription}}
 Bitwise operators work by comparing the corresponding bits in each of the input values to generate a single bit in the output value. The operators differ in how they do the comparison. The table below shows the output bit for each pair of input bits:
-{| class="wikitable"
-! colspan="2"|Operands
-! colspan="6"|Operations
-|-
-! A !! B !! A AND B !! A OR B !! NOT A !! A XOR B !! A IMP B !! A EQV B
-|-
-| align="center"|0 || align="center"|0 || align="center"|0 || align="center"|0 || align="center"|1 || align="center"|0 || align="center"|1 || align="center"|1
-|-
-| align="center"|0 || align="center"|1 || align="center"|0 || align="center"|1 || align="center"|1 || align="center"|1 || align="center"|1 || align="center"|0
-|-
-| align="center"|1 || align="center"|0 || align="center"|0 || align="center"|1 || align="center"|0 || align="center"|1 || align="center"|0 || align="center"|0
-|-
-| align="center"|1 || align="center"|1 || align="center"|1 || align="center"|1 || align="center"|0 || align="center"|0 || align="center"|1 || align="center"|1
-|}
+{{LogicalTruthTable}}
 Again, note that the NOT operator only has one operand. It is shown in the same table for convenience.
 
 If one input has more bits than the other (say, an INTEGER vs a LONG) the shorter will be considered to have 0's in the missing bit positions if it is positive, or 1's if it is negative. This scheme comes about because of the [[wikipedia:Two's_complement|Two's Complement]] system for representing negative numbers. As a general rule, there should not be any surprises.
@@ -105,4 +92,3 @@ Flag C is set
 {{OutputEnd}}
 
 {{PageNavigation}}
-
