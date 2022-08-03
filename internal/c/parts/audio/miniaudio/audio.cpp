@@ -55,10 +55,10 @@ extern mem_lock *mem_lock_tmp;  // Same as above
 // Set this to 1 if we want to print debug messages to stderr
 #define AE_DEBUG 0
 
-// This should be defined elsewhere in libqb. Since it is not, we are doing it here
+// This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define INVALID_MEM_LOCK 1073741821
 
-// This should be defined elsewhere in libqb. Since it is not, we are doing it here
+// This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define MEM_TYPE_SOUND 5
 
 // In QuickBASIC false means 0 and true means -1 (sad, but true XD)
@@ -1862,6 +1862,7 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
     static ma_uint64 sampleFrames;
     static ma_resource_manager_data_buffer *ds;
 
+    // The sound cannot be steaming and must be completely decoded in memory
     if (new_error || !audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundType::Static ||
         audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM || !(audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_DECODE))
         goto error;
@@ -1869,7 +1870,7 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
     // Get the pointer to the data source
     ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
     if (!ds || !ds->pNode) {
-        DEBUG_PRINT("Data source pointer OR node pointer is NULL");
+        DEBUG_PRINT("Data source pointer OR data source node pointer is NULL");
         goto error;
     }
 
@@ -1886,7 +1887,7 @@ mem_block func__memsound(int32 handle, int32 targetChannel) {
         goto error;
     }
 
-    DEBUG_PRINT("Raw PCM data pointer = %p", ds->pNode->data.backend.decoded.pData);
+    DEBUG_PRINT("Data source data pointer = %p", ds->pNode->data.backend.decoded.pData);
 
     // Query the data format
     if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS) {
@@ -2033,7 +2034,7 @@ void snd_mainloop() {
 
     double currentTime = func_timer(0.001, true);
     if (currentTime - frameTime > 1) {
-        DEBUG_PRINT("Sound loop FPS = %i", frameCounter);
+        DEBUG_PRINT("Sound loop Hz = %i", frameCounter);
         frameTime = currentTime;
         frameCounter = 0;
     }
