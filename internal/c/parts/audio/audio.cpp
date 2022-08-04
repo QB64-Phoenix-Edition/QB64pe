@@ -1851,7 +1851,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
 /// MemSound was originally supporting would require significant overhead both in terms of system resources and code.
 /// For now we are just exposing the underlying PCM data directly from miniaudio. This fits rather well using the existing mem structure.
 /// Mono sounds should continue to work just as it was before. Stereo and multi-channel sounds however will be required to be handled correctly
-/// by the user by checking the 'elementsize' member - which is set to the size (in bytes) of each PCM frame.
+/// by the user by checking the 'elementsize' (for frame size in bytes) and 'type' (for data type) members.
 /// </summary>
 /// <param name="handle">A sound handle</param>
 /// <param name="targetChannel">This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure</param>
@@ -1981,6 +1981,9 @@ void snd_init() {
 
     // Attempt to initialize with miniaudio defaults
     audioEngine.maResult = ma_engine_init(&audioEngine.maEngineConfig, &audioEngine.maEngine);
+
+    // Set the resource manager decorder sample rate to the device sample rate (miniaudio engine bug?)
+    audioEngine.maResourceManager.config.decodedSampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
     // If failed, then set the global flag so that we don't attempt to initialize again
     if (audioEngine.maResult != MA_SUCCESS) {

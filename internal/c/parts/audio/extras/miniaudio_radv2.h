@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "../miniaudio.h"
 #include "radv2/opal.cpp"
 #define RAD_DETECT_REPEATS 1
 #include "radv2/player20.cpp"
