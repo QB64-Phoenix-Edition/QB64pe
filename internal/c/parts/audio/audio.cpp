@@ -15,13 +15,13 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include "audio.h"
 #include <algorithm>
 #include <vector>
 // Enable Ogg Vorbis decoding
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
 // The main miniaudio header
-#include "audio.h"
 #include "miniaudio.h"
 // Although Matt says we should not be doing this, this has worked out to be ok so far
 // We need 'qbs' and also the 'mem' stuff from here
@@ -29,25 +29,6 @@
 // We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
 // For now, we'll wait for Matt until he sorts out things to smaller and logical files
 #include "../../libqb.h"
-//-----------------------------------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------------------------------
-// FORWARD DECLARATIONS
-//-----------------------------------------------------------------------------------------------------
-// These are stuff that was not declared anywhere else
-// We will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
-qbs *qbs_new_txt_len(const char *txt, int32 len);                   // Not declared in libqb.h
-int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
-void new_mem_lock();                                                // This is required for MemSound()
-void free_mem_lock(mem_lock *lock);                                 // Same as above
-#ifndef QB64_WINDOWS
-void Sleep(uint32 milliseconds); // There is a non-Windows implementation. However it is not declared anywhere
-#endif
-
-extern ptrszint dblock;         // Required for Play(). Did not find this declared anywhere
-extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
-extern mem_lock *mem_lock_base; // Same as above
-extern mem_lock *mem_lock_tmp;  // Same as above
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -109,6 +90,28 @@ extern mem_lock *mem_lock_tmp;  // Same as above
 #    endif
 #    define DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
+//-----------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------
+// FORWARD DECLARATIONS
+//-----------------------------------------------------------------------------------------------------
+// This adds our customer backend (format decoders) VTables to our ma_resource_manager_config
+void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
+
+// These are stuff that was not declared anywhere else
+// We will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
+qbs *qbs_new_txt_len(const char *txt, int32 len);                   // Not declared in libqb.h
+int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
+void new_mem_lock();                                                // This is required for MemSound()
+void free_mem_lock(mem_lock *lock);                                 // Same as above
+#ifndef QB64_WINDOWS
+void Sleep(uint32 milliseconds); // There is a non-Windows implementation. However it is not declared anywhere
+#endif
+
+extern ptrszint dblock;         // Required for Play(). Did not find this declared anywhere
+extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
+extern mem_lock *mem_lock_base; // Same as above
+extern mem_lock *mem_lock_tmp;  // Same as above
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -213,7 +216,7 @@ struct SampleFrameBlockQueue {
     SampleFrameBlockQueue &operator=(SampleFrameBlockQueue &) = delete; // No assignment operator
 
     /// <summary>
-    /// This initialized the queue and calculates the sample frames per block
+    /// This initializes the queue and calculates the sample frames per block
     /// </summary>
     /// <param name="pmaEngine">A pointer to a miniaudio engine object</param>
     /// <param name="pmaSound">A pointer to a miniaudio sound object</param>
@@ -224,10 +227,10 @@ struct SampleFrameBlockQueue {
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
 
-        // We can get away with '>> 4' because the sound loop function is called @ ~60Hz
+        // We can get away with '>> 3' because the sound loop function is called @ ~60Hz
         // This should work even on entry level systems. Tested on AMD A6-9200 (230.4 GFLOPS), Crostini Linux
         // Also note that the nodes will allocates twice this to account for 2 channels
-        blockSampleFrames = sampleRate >> 4;
+        blockSampleFrames = sampleRate >> 3;
 
         bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
         buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 is for 2 channels - stereo)
@@ -443,14 +446,17 @@ struct SoundHandle {
 ///	Type will help us keep track of the audio engine state
 /// </summary>
 struct AudioEngine {
-    bool isInitialized;                      // This is set to true if we were able to initialize miniaudio and allocated all required resources
-    bool initializationFailed;               // This is set to true if a past initialization attempt failed
-    ma_engine maEngine;                      // This is the primary miniaudio engine 'context'. Everything happens using this!
-    ma_result maResult;                      // This is the result of the last miniaudio operation (used for trapping errors)
-    ma_uint32 sampleRate;                    // Sample rate used by the miniaudio engine
-    int32_t sndInternal;                     // Internal sound handle that we will use for Play(), Beep() & Sound()
-    int32_t sndInternalRaw;                  // Internal sound handle that we will use for the QB64 'handle-less' raw stream
-    std::vector<SoundHandle *> soundHandles; // This is the audio handle list used by the engine and by everything else
+    bool isInitialized;                                 // This is set to true if we were able to initialize miniaudio and allocated all required resources
+    bool initializationFailed;                          // This is set to true if a past initialization attempt failed
+    ma_resource_manager_config maResourceManagerConfig; // miniaudio resource manager configuration
+    ma_resource_manager maResourceManager;              // miniaudio resource manager
+    ma_engine_config maEngineConfig;                    // miniaudio engine configuration  (will be used to pass in the resource manager)
+    ma_engine maEngine;                                 // This is the primary miniaudio engine 'context'. Everything happens using this!
+    ma_result maResult;                                 // This is the result of the last miniaudio operation (used for trapping errors)
+    ma_uint32 sampleRate;                               // Sample rate used by the miniaudio engine
+    int32_t sndInternal;                                // Internal sound handle that we will use for Play(), Beep() & Sound()
+    int32_t sndInternalRaw;                             // Internal sound handle that we will use for the QB64 'handle-less' raw stream
+    std::vector<SoundHandle *> soundHandles;            // This is the audio handle list used by the engine and by everything else
 
     AudioEngine(const AudioEngine &) = delete;      // No default copy constructor
     AudioEngine &operator=(AudioEngine &) = delete; // No assignment operator
@@ -776,7 +782,6 @@ int32_t func_play(int32_t ignore) {
         // This will push any unfinished block for playback
         if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
             audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
-
         return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetSampleFramesRemaining();
     }
 
@@ -1351,7 +1356,7 @@ int32_t func__sndrate() { return audioEngine.sampleRate; }
 /// <summary>
 /// This loads a sound file into memory and returns a LONG handle value above 0.
 /// </summary>
-/// <param name="fileName">The is the pathname for the sound file. This can be any format the miniaudio or a miniaudio plugin</param>
+/// <param name="fileName">The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports</param>
 /// <param name="requirements">This is leftover from the old QB64-SDL days. But we use this to pass some parameters like 'stream'</param>
 /// <param name="passed">How many parameters were passed?</param>
 /// <returns>Returns a valid sound handle (> 0) if successful or 0 if it fails</returns>
@@ -1397,7 +1402,6 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
         audioEngine.soundHandles[handle]->isUsed = false;
-
         return INVALID_SOUND_HANDLE;
     }
 
@@ -1448,7 +1452,6 @@ int32_t func__sndcopy(int32_t src_handle) {
     // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
         audioEngine.soundHandles[dst_handle]->isUsed = false;
-
         return INVALID_SOUND_HANDLE;
     }
 
@@ -1660,7 +1663,6 @@ double func__sndlen(int32_t handle) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
         DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-
         return lengthSeconds;
     }
 
@@ -1677,7 +1679,6 @@ double func__sndgetpos(int32_t handle) {
         float playCursorSeconds = 0;
         audioEngine.maResult = ma_sound_get_cursor_in_seconds(&audioEngine.soundHandles[handle]->maSound, &playCursorSeconds);
         DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
-
         return playCursorSeconds;
     }
 
@@ -1768,7 +1769,6 @@ int32_t func__sndopenraw() {
     if (!audioEngine.soundHandles[handle]->rawQueue->IsSetupValid()) {
         delete audioEngine.soundHandles[handle]->rawQueue;
         audioEngine.soundHandles[handle]->rawQueue = nullptr;
-
         return INVALID_SOUND_HANDLE;
     }
 
@@ -1963,14 +1963,30 @@ void snd_init() {
     if (audioEngine.isInitialized || audioEngine.initializationFailed)
         return;
 
+    // Initialize the miniaudio resource manager
+    audioEngine.maResourceManagerConfig = ma_resource_manager_config_init();
+    AudioEngineAttachCustomBackendVTables(&audioEngine.maResourceManagerConfig);
+    audioEngine.maResourceManagerConfig.pCustomDecodingBackendUserData = NULL; // <- pUserData parameter of each function in the decoding backend vtables
+
+    audioEngine.maResult = ma_resource_manager_init(&audioEngine.maResourceManagerConfig, &audioEngine.maResourceManager);
+    if (audioEngine.maResult != MA_SUCCESS) {
+        audioEngine.initializationFailed = true;
+        DEBUG_PRINT("Failed to initialize miniaudio resource manager");
+        return;
+    }
+
+    // Once we have a resource manager we can create the engine
+    audioEngine.maEngineConfig = ma_engine_config_init();
+    audioEngine.maEngineConfig.pResourceManager = &audioEngine.maResourceManager;
+
     // Attempt to initialize with miniaudio defaults
-    audioEngine.maResult = ma_engine_init(NULL, &audioEngine.maEngine);
+    audioEngine.maResult = ma_engine_init(&audioEngine.maEngineConfig, &audioEngine.maEngine);
 
     // If failed, then set the global flag so that we don't attempt to initialize again
     if (audioEngine.maResult != MA_SUCCESS) {
+        ma_resource_manager_uninit(&audioEngine.maResourceManager);
         audioEngine.initializationFailed = true;
         DEBUG_PRINT("miniaudio initialization failed");
-
         return;
     }
 
@@ -2019,6 +2035,9 @@ void snd_un_init() {
 
         // Shutdown miniaudio
         ma_engine_uninit(&audioEngine.maEngine);
+
+        // Shutdown the miniaudio resource manager
+        ma_resource_manager_uninit(&audioEngine.maResourceManager);
 
         // Set engine initialized flag as false
         audioEngine.isInitialized = false;

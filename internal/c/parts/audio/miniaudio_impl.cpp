@@ -29,5 +29,29 @@
 // The stb_vorbis implementation must come after the implementation of miniaudio
 #undef STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
+// RADv2 format support
+#include "extras/miniaudio_radv2.h"
+//-----------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------
+// GLOBAL VARIABLES
+//-----------------------------------------------------------------------------------------------------
+// Add custom backend (format) vtables here
+// The order in the array defines the order of priority
+// The vtables will be passed in to the resource manager config
+ma_decoding_backend_vtable *maCustomBackendVTables[] = {&ma_decoding_backend_vtable_radv2};
+//-----------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------
+// FUNCTIONS
+//-----------------------------------------------------------------------------------------------------
+/// <summary>
+/// This simply attaches the format decode VTables array to ma_resource_manager_config
+/// </summary>
+void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig) {
+    // Attach the VTable
+    maResourceManagerConfig->ppCustomDecodingBackendVTables = maCustomBackendVTables;
+    maResourceManagerConfig->customDecodingBackendCount = ma_countof(maCustomBackendVTables);
+}
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
