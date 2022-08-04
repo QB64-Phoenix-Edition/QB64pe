@@ -40,8 +40,17 @@ struct ma_radv2 {
 };
 
 static ma_result ma_radv2_seek_to_pcm_frame(ma_radv2 *pRadv2, ma_uint64 frameIndex) {
-    // We do not have any seeking support in RADv2 player
-    return MA_NOT_IMPLEMENTED;
+    if (!pRadv2) {
+        return MA_INVALID_ARGS;
+    }
+
+    // We can only reset the player to the beginning
+    if (!frameIndex) {
+        pRadv2->player->Stop();
+        return MA_SUCCESS;
+    }
+
+    return MA_INVALID_OPERATION; // Anything else is not seekable
 }
 
 static ma_result ma_radv2_get_data_format(ma_radv2 *pRadv2, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate, ma_channel *pChannelMap,
@@ -107,7 +116,7 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
     bool repeat = false;
     int16_t *buffer;
 
-    while (totalFramesRead < frameCount && pRadv2->player->GetPlayTimeInSeconds() < pRadv2->totalTime) {
+    while (totalFramesRead < frameCount) {
         // Set to the correct buffer offset
         buffer = (int16_t *)ma_offset_pcm_frames_ptr(pFramesOut, totalFramesRead, format, channels);
         // Get the left and right sample
@@ -132,16 +141,28 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
         *pFramesRead = totalFramesRead;
     }
 
-    if (result == MA_SUCCESS && totalFramesRead == 0) {
-        result = MA_AT_END;
-    }
-
     return result;
 }
 
 static ma_result ma_radv2_get_cursor_in_pcm_frames(ma_radv2 *pRadv2, ma_uint64 *pCursor) {
-    // Since there is no seeking support, we'll not implement this as well
-    return MA_NOT_IMPLEMENTED;
+    if (!pCursor) {
+        return MA_INVALID_ARGS;
+    }
+
+    *pCursor = 0; /* Safety. */
+
+    if (!pRadv2) {
+        return MA_INVALID_ARGS;
+    }
+
+    ma_int64 offset = (ma_int64)pRadv2->player->GetPlayTimeInSeconds() * MA_DEFAULT_SAMPLE_RATE;
+    if (offset < 0) {
+        return MA_INVALID_FILE;
+    }
+
+    *pCursor = (ma_uint64)offset;
+
+    return MA_SUCCESS;
 }
 
 static ma_result ma_radv2_get_length_in_pcm_frames(ma_radv2 *pRadv2, ma_uint64 *pLength) {
@@ -156,9 +177,9 @@ static ma_result ma_radv2_get_length_in_pcm_frames(ma_radv2 *pRadv2, ma_uint64 *
     }
 
     // Total time in seconds * Opal sample rate
-    ma_uint64 length = (ma_uint64)pRadv2->totalTime * MA_DEFAULT_SAMPLE_RATE;
+    ma_int64 length = (ma_int64)pRadv2->totalTime * MA_DEFAULT_SAMPLE_RATE;
     if (length < 0) {
-        return MA_NOT_IMPLEMENTED; // This will allow miniaudio to poll the player and get whatever samples it can
+        return MA_INVALID_FILE;
     }
 
     *pLength = (ma_uint64)length;
