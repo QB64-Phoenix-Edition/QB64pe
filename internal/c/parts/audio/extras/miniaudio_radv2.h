@@ -20,7 +20,6 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
-#include <stdio.h>
 #include "../miniaudio.h"
 #include "radv2/opal.cpp"
 #define RAD_DETECT_REPEATS 1
@@ -434,8 +433,8 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     }
 
     // Open the file for reading
-    FILE *fd = nullptr;
-    if (fopen_s(&fd, pFilePath, "rb") != 0 || !fd) {
+    FILE *fd = fopen(pFilePath, "rb");
+    if (!fd) {
         return MA_INVALID_FILE;
     }
 
