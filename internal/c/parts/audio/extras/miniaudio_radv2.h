@@ -8,7 +8,7 @@
 //	QBPE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //	This implements a data source that decodes Reality Adlib Tracker 2 tunes
-//  https://www.3eality.com/productions/reality-adlib-tracker/docs
+//	https://www.3eality.com/productions/reality-adlib-tracker/docs
 //
 //	Copyright (c) 2022 Samuel Gomes
 //	https://github.com/a740g
@@ -20,6 +20,7 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include <stdio.h>
 #include "../miniaudio.h"
 #include "radv2/opal.cpp"
 #define RAD_DETECT_REPEATS 1
@@ -280,8 +281,7 @@ static ma_result ma_radv2_init_internal(const ma_decoding_backend_config *pConfi
 
     if (pConfig != NULL && pConfig->preferredFormat == ma_format_s16) {
         pRadv2->format = pConfig->preferredFormat;
-    }
-    else {
+    } else {
         /* Getting here means something other than s16 was specified. Just leave this unset to use the default format. */
     }
 
