@@ -1981,10 +1981,6 @@ void snd_init() {
 
     // Attempt to initialize with miniaudio defaults
     audioEngine.maResult = ma_engine_init(&audioEngine.maEngineConfig, &audioEngine.maEngine);
-
-    // Set the resource manager decorder sample rate to the device sample rate (miniaudio engine bug?)
-    audioEngine.maResourceManager.config.decodedSampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
-
     // If failed, then set the global flag so that we don't attempt to initialize again
     if (audioEngine.maResult != MA_SUCCESS) {
         ma_resource_manager_uninit(&audioEngine.maResourceManager);
@@ -1993,12 +1989,13 @@ void snd_init() {
         return;
     }
 
+    // Get and save the engine sample rate. We will let miniaudio choose the device sample rate for us
+    // This ensures we get the lowest latency
+    // Set the resource manager decorder sample rate to the device sample rate (miniaudio engine bug?)
+    audioEngine.maResourceManager.config.decodedSampleRate = audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
+
     // Set the initialized flag as true
     audioEngine.isInitialized = true;
-
-    // Get and save the engine sample rate
-    // We will let miniaudio choose the device sample rate for us. This ensures we get the lowest latency and resampling artifacts
-    audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
     DEBUG_PRINT("Audio engine initialized at %uHz sample rate", audioEngine.sampleRate);
 

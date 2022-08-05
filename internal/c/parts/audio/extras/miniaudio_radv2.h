@@ -8,6 +8,7 @@
 //	QBPE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //	This implements a data source that decodes Reality Adlib Tracker 2 tunes
+//  https://www.3eality.com/productions/reality-adlib-tracker/docs
 //
 //	Copyright (c) 2022 Samuel Gomes
 //	https://github.com/a740g
@@ -16,11 +17,15 @@
 
 #pragma once
 
+//-----------------------------------------------------------------------------------------------------
+// HEADER FILES
+//-----------------------------------------------------------------------------------------------------
 #include "../miniaudio.h"
 #include "radv2/opal.cpp"
 #define RAD_DETECT_REPEATS 1
 #include "radv2/player20.cpp"
 #include "radv2/validate20.cpp"
+//-----------------------------------------------------------------------------------------------------
 
 struct ma_radv2 {
     // This part is for miniaudio
@@ -31,13 +36,13 @@ struct ma_radv2 {
     void *pReadSeekTellUserData;
     ma_format format;
 
-    // This part if format specific
-    RADPlayer *player;
-    Opal *adlib;
-    void *tune;
-    uint32_t totalTime;
-    int sampleCount;
-    int sampleUpdate;
+    // This part is format specific
+    RADPlayer *player;  // RADv2 player object
+    Opal *adlib;        // Opal Adlib emulator object
+    void *tune;         // The song data
+    uint32_t totalTime; // Total time in seconds
+    int sampleCount;    // The number of samples generated in each update
+    int sampleUpdate;   // Size of each update in samples after which the player must be updated
 };
 
 static ma_result ma_radv2_seek_to_pcm_frame(ma_radv2 *pRadv2, ma_uint64 frameIndex) {
@@ -273,6 +278,13 @@ static ma_result ma_radv2_init_internal(const ma_decoding_backend_config *pConfi
     MA_ZERO_OBJECT(pRadv2);
     pRadv2->format = ma_format_s16; // RADv2 Opal outputs 16-bit signed samples by default
 
+    if (pConfig != NULL && pConfig->preferredFormat == ma_format_s16) {
+        pRadv2->format = pConfig->preferredFormat;
+    }
+    else {
+        /* Getting here means something other than s16 was specified. Just leave this unset to use the default format. */
+    }
+
     dataSourceConfig = ma_data_source_config_init();
     dataSourceConfig.vtable = &ma_data_source_vtable_radv2;
 
@@ -359,7 +371,7 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
     }
 
     // Read the file
-    if (ma_radv2_of_callback__read(pRadv2, (unsigned char *)pRadv2->tune, file_size) < 1) {
+    if (ma_radv2_of_callback__read(pRadv2, (unsigned char *)pRadv2->tune, (int)file_size) < 1) {
         delete[] pRadv2->tune;
         delete pRadv2->adlib;
         delete pRadv2->player;
@@ -618,3 +630,4 @@ static ma_decoding_backend_vtable ma_decoding_backend_vtable_radv2 = {ma_decodin
                                                                       NULL, /* onInitFileW() */
                                                                       NULL, /* onInitMemory() */
                                                                       ma_decoding_backend_uninit__radv2};
+//-----------------------------------------------------------------------------------------------------
