@@ -15,6 +15,8 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+// Set this to 1 if we want to print debug messages to stderr
+#define AUDIO_DEBUG 0
 #include "audio.h"
 #include <algorithm>
 #include <vector>
@@ -34,9 +36,6 @@
 //-----------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-----------------------------------------------------------------------------------------------------
-// Set this to 1 if we want to print debug messages to stderr
-#define AE_DEBUG 0
-
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define INVALID_MEM_LOCK 1073741821
 
@@ -71,24 +70,6 @@
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
 #else
 #    define ZERO_VARIABLE(_v_) memset(&(_v_), NULL, sizeof(_v_))
-#endif
-
-#if defined(AE_DEBUG) && AE_DEBUG > 0
-#    ifdef _MSC_VER
-#        define DEBUG_PRINT(_fmt_, ...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
-#    else
-#        define DEBUG_PRINT(_fmt_, _args_...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, ##_args_)
-#    endif
-#    define DEBUG_CHECK(_exp_)                                                                                                                                 \
-        if (!(_exp_))                                                                                                                                          \
-        DEBUG_PRINT("Condition (%s) failed", #_exp_)
-#else
-#    ifdef _MSC_VER
-#        define DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
-#    else
-#        define DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
-#    endif
-#    define DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
 //-----------------------------------------------------------------------------------------------------
 
@@ -240,21 +221,21 @@ struct SampleFrameBlockQueue {
             // Setup the ma buffer
             maBufferConfig = ma_audio_buffer_config_init(ma_format::ma_format_f32, 2, bufferSampleFrames, buffer, NULL);
             maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
-            DEBUG_CHECK(maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
             // Create a ma_sound from the ma_buffer
             maResult = ma_sound_init_from_data_source(maEngine, &maBuffer, 0, NULL, maSound);
-            DEBUG_CHECK(maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
             // Play the ma_sound
             maResult = ma_sound_start(maSound);
-            DEBUG_CHECK(maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
             // Set the buffer to loop forever
             ma_sound_set_looping(maSound, MA_TRUE);
         }
 
-        DEBUG_PRINT("Raw sound stream created with %u sample frame block size", blockSampleFrames);
+        AUDIO_DEBUG_PRINT("Raw sound stream created with %u sample frame block size", blockSampleFrames);
     }
 
     /// <summary>
@@ -264,7 +245,7 @@ struct SampleFrameBlockQueue {
         if (buffer) {
             // Stop playback
             maResult = ma_sound_stop(maSound);
-            DEBUG_CHECK(maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
             // Delete the ma_sound object
             ma_sound_uninit(maSound);
@@ -278,7 +259,7 @@ struct SampleFrameBlockQueue {
 
         delete[] buffer;
 
-        DEBUG_PRINT("Raw sound stream closed");
+        AUDIO_DEBUG_PRINT("Raw sound stream closed");
     }
 
     /// <summary>
@@ -391,7 +372,7 @@ struct SampleFrameBlockQueue {
         // Figure out which pcm frame of the buffer is miniaudio playing
         ma_uint64 readCursor;
         maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
-        DEBUG_CHECK(maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
         bool checkCondition = readCursor < blockSampleFrames; // Since buffer sample frame size = blockSampleFrames * 2
 
@@ -496,7 +477,7 @@ struct AudioEngine {
         // This loop should not execute if size is 0
         for (h = 0; h < vectorSize; h++) {
             if (!soundHandles[h]->isUsed) {
-                DEBUG_PRINT("Sound handle %i recycled", h);
+                AUDIO_DEBUG_PRINT("Sound handle %i recycled", h);
                 break;
             }
         }
@@ -520,7 +501,7 @@ struct AudioEngine {
 
             h = newVectorSize - 1; // The handle is simply newsize - 1
 
-            DEBUG_PRINT("Sound handle %i created", h);
+            AUDIO_DEBUG_PRINT("Sound handle %i created", h);
         }
 
         // Initializes a sound handle that was just allocated.
@@ -536,7 +517,7 @@ struct AudioEngine {
         soundHandles[h]->memLockOffset = nullptr;
         soundHandles[h]->isUsed = true;
 
-        DEBUG_PRINT("Sound handle %i returned", h);
+        AUDIO_DEBUG_PRINT("Sound handle %i returned", h);
 
         return (int32_t)(h);
     }
@@ -565,12 +546,12 @@ struct AudioEngine {
 
             case SoundType::None:
                 if (handle != 0)
-                    DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
+                    AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
 
                 break;
 
             default:
-                DEBUG_PRINT("Condition not handled"); // It should not come here
+                AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
             }
 
             // Now simply set the 'isUsed' member to false
@@ -582,7 +563,7 @@ struct AudioEngine {
                 soundHandles[handle]->memLockOffset = nullptr;
             }
 
-            DEBUG_PRINT("Sound handle %i marked as free", handle);
+            AUDIO_DEBUG_PRINT("Sound handle %i marked as free", handle);
         }
     }
 };
@@ -790,7 +771,7 @@ int32_t func_play(int32_t ignore) {
 
 /// <summary>
 /// Processes and plays the MML specified in the string.
-/// Ummm. Spaghetti goodness.
+/// Mmmmm. Spaghetti goodness.
 /// Formats:
 /// A[#|+|-][0-64]
 /// 0-64 is like temp. Lnumber, 0 is whatever the current default is
@@ -1401,10 +1382,12 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
 
     // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
+        AUDIO_DEBUG_PRINT("'%s' failed to open", fileNameZ->chr);
         audioEngine.soundHandles[handle]->isUsed = false;
         return INVALID_SOUND_HANDLE;
     }
 
+    AUDIO_DEBUG_PRINT("'%s' successfully opened", fileNameZ->chr);
     return handle;
 }
 
@@ -1469,12 +1452,12 @@ void sub__sndplay(int32_t handle) {
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
             (!ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))) {
             audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, 0);
-            DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
         }
 
         // Kickstart playback
         audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[handle]->maSound);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
 
         // Stop looping the sound if it is
         if (ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound)) {
@@ -1546,7 +1529,7 @@ void sub__sndpause(int32_t handle) {
         // Stop the sound and just leave it at that
         // miniaudio does not reset the play cursor
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
     }
 }
 
@@ -1603,12 +1586,12 @@ void sub__sndloop(int32_t handle) {
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
             (!ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))) {
             audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, 0);
-            DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
         }
 
         // Kickstart playback
         audioEngine.maResult = ma_sound_start(&audioEngine.soundHandles[handle]->maSound);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
 
         // Start looping the sound if it is not
         if (!ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound)) {
@@ -1662,7 +1645,7 @@ double func__sndlen(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
         return lengthSeconds;
     }
 
@@ -1678,7 +1661,7 @@ double func__sndgetpos(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         float playCursorSeconds = 0;
         audioEngine.maResult = ma_sound_get_cursor_in_seconds(&audioEngine.soundHandles[handle]->maSound, &playCursorSeconds);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
         return playCursorSeconds;
     }
 
@@ -1700,7 +1683,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
         if (seconds > lengthSeconds) // If position is beyond length then simply stop playback and exit
         {
             audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
-            DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+            AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
             return;
         }
 
@@ -1712,7 +1695,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
 
         audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound,
                                                           lengthSampleFrames * (seconds / lengthSeconds)); // Set the postion in PCM frames
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
     }
 }
 
@@ -1735,11 +1718,11 @@ void sub__sndstop(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
         // Stop the sound first
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
 
         // Also reset the playback cursor to zero
         audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, 0);
-        DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+        AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
     }
 }
 
@@ -1871,44 +1854,44 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     // Get the pointer to the data source
     ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
     if (!ds || !ds->pNode) {
-        DEBUG_PRINT("Data source pointer OR data source node pointer is NULL");
+        AUDIO_DEBUG_PRINT("Data source pointer OR data source node pointer is NULL");
         goto error;
     }
 
     // Check if the data is one contigious buffer or a link list of decoded pages
     // We cannot have a mem object for a link list of decoded pages for obvious reasons
     if (ds->pNode->data.type != ma_resource_manager_data_supply_type::ma_resource_manager_data_supply_type_decoded) {
-        DEBUG_PRINT("Data is not a contigious buffer. Type = %u", ds->pNode->data.type);
+        AUDIO_DEBUG_PRINT("Data is not a contigious buffer. Type = %u", ds->pNode->data.type);
         goto error;
     }
 
     // Check the data pointer
     if (!ds->pNode->data.backend.decoded.pData) {
-        DEBUG_PRINT("Data source data pointer is NULL");
+        AUDIO_DEBUG_PRINT("Data source data pointer is NULL");
         goto error;
     }
 
-    DEBUG_PRINT("Data source data pointer = %p", ds->pNode->data.backend.decoded.pData);
+    AUDIO_DEBUG_PRINT("Data source data pointer = %p", ds->pNode->data.backend.decoded.pData);
 
     // Query the data format
     if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS) {
-        DEBUG_PRINT("Data format query failed");
+        AUDIO_DEBUG_PRINT("Data format query failed");
         goto error;
     }
 
     // Do not proceed if invalid (unsupported) channel values were passed
     if (targetChannel != 0 && targetChannel != 1) {
-        DEBUG_PRINT("Sound channels = %u, Target channel %i not supported", channels, targetChannel);
+        AUDIO_DEBUG_PRINT("Sound channels = %u, Target channel %i not supported", channels, targetChannel);
         goto error;
     }
 
     // Get the length in sample frames
     if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS) {
-        DEBUG_PRINT("PCM frames query failed");
+        AUDIO_DEBUG_PRINT("PCM frames query failed");
         goto error;
     }
 
-    DEBUG_PRINT("Format = %u, Channels = %u, Frames = %llu", maFormat, channels, sampleFrames);
+    AUDIO_DEBUG_PRINT("Format = %u, Channels = %u, Frames = %llu", maFormat, channels, sampleFrames);
 
     if (audioEngine.soundHandles[handle]->memLockOffset) {
         mb.lock_offset = (ptrszint)audioEngine.soundHandles[handle]->memLockOffset;
@@ -1937,7 +1920,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     mb.sound = handle;                                           // Copy the handle
     mb.image = 0;                                                // Not needed. Set to 0
 
-    DEBUG_PRINT("ElementSize = %lli, Size = %lli, Type = %lli", mb.elementsize, mb.size, mb.type);
+    AUDIO_DEBUG_PRINT("ElementSize = %lli, Size = %lli, Type = %lli", mb.elementsize, mb.size, mb.type);
 
     return mb;
 
@@ -1971,7 +1954,7 @@ void snd_init() {
     audioEngine.maResult = ma_resource_manager_init(&audioEngine.maResourceManagerConfig, &audioEngine.maResourceManager);
     if (audioEngine.maResult != MA_SUCCESS) {
         audioEngine.initializationFailed = true;
-        DEBUG_PRINT("Failed to initialize miniaudio resource manager");
+        AUDIO_DEBUG_PRINT("Failed to initialize miniaudio resource manager");
         return;
     }
 
@@ -1985,7 +1968,7 @@ void snd_init() {
     if (audioEngine.maResult != MA_SUCCESS) {
         ma_resource_manager_uninit(&audioEngine.maResourceManager);
         audioEngine.initializationFailed = true;
-        DEBUG_PRINT("miniaudio initialization failed");
+        AUDIO_DEBUG_PRINT("miniaudio initialization failed");
         return;
     }
 
@@ -1997,12 +1980,12 @@ void snd_init() {
     // Set the initialized flag as true
     audioEngine.isInitialized = true;
 
-    DEBUG_PRINT("Audio engine initialized at %uHz sample rate", audioEngine.sampleRate);
+    AUDIO_DEBUG_PRINT("Audio engine initialized at %uHz sample rate", audioEngine.sampleRate);
 
     // Reserve sound handle 0 so that nothing else can use it
     // We will use this handle internally for Play(), Beep(), Sound() etc.
     audioEngine.sndInternal = audioEngine.AllocateSoundHandle();
-    DEBUG_CHECK(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
+    AUDIO_DEBUG_CHECK(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
 
     // Just do a basic setup and mark the type as 'none'
     // If Play(), Sound(), Beep() are called, those will mark it as 'raw'
@@ -2042,7 +2025,7 @@ void snd_un_init() {
         // Set engine initialized flag as false
         audioEngine.isInitialized = false;
 
-        DEBUG_PRINT("Audio engine shutdown");
+        AUDIO_DEBUG_PRINT("Audio engine shutdown");
     }
 }
 
@@ -2051,22 +2034,6 @@ void snd_un_init() {
 /// We use this for housekeeping and other stuff.
 /// </summary>
 void snd_mainloop() {
-    /*
-#ifdef AE_DEBUG
-    static int frameCounter = 0;
-    static double frameTime = 0;
-
-    ++frameCounter;
-
-    double currentTime = func_timer(0.001, true);
-    if (currentTime - frameTime > 1) {
-        DEBUG_PRINT("Sound loop Hz = %i", frameCounter);
-        frameTime = currentTime;
-        frameCounter = 0;
-    }
-#endif
-    */
-
     if (audioEngine.isInitialized) {
         // Scan through the whole handle vector to find anything we need to update or close
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
@@ -2097,12 +2064,12 @@ void snd_mainloop() {
 
                     case SoundType::None:
                         if (handle != 0)
-                            DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
+                            AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
 
                         break;
 
                     default:
-                        DEBUG_PRINT("Condition not handled"); // It should not come here
+                        AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
                     }
                 }
             }

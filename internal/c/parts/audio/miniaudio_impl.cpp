@@ -33,6 +33,8 @@
 #include "extras/miniaudio_radv2.h"
 // MIDI format support
 #include "extras/miniaudio_tinysoundfont.h"
+// MOD, S3M, XM & IT support
+#include "extras/miniaudio_libxmp-lite.h"
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -41,7 +43,8 @@
 // Add custom backend (format) vtables here
 // The order in the array defines the order of priority
 // The vtables will be passed in to the resource manager config
-ma_decoding_backend_vtable *maCustomBackendVTables[] = {&ma_decoding_backend_vtable_radv2, &ma_decoding_backend_vtable_tsf};
+ma_decoding_backend_vtable *maCustomBackendVTables[] = {&ma_decoding_backend_vtable_radv2, &ma_decoding_backend_vtable_tsf,
+                                                        &ma_decoding_backend_vtable_modplay};
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------

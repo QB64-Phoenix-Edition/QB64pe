@@ -8,7 +8,10 @@
 //	QBPE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //	This implements a data source that decodes MIDI files using TinySoundFont + TinyMidiLoader
-//	https://github.com/schellingb/TinySoundFont
+//	https://github.com/schellingb/TinySoundFont (MIT)
+//
+//	Soundfont (awe32rom.h) from dos-like
+//	https://github.com/mattiasgustavsson/dos-like (MIT)
 //
 //	Copyright (c) 2022 Samuel Gomes
 //	https://github.com/a740g
@@ -21,17 +24,17 @@
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
 #include "../miniaudio.h"
+#include "tinysoundfont/awe32rom.h"
 #define TSF_IMPLEMENTATION
 #include "tinysoundfont/tsf.h"
 #define TML_IMPLEMENTATION
-#include "tinysoundfont/soundfont.h"
 #include "tinysoundfont/tml.h"
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
 // CONSTANTS
 //-----------------------------------------------------------------------------------------------------
-#define TSF_SOUNDFONT_FILENAME "soundfont.sf2"
+#define TSF_DEFAULT_SOUNDFONT_FILENAME "soundfont.sf2"
 //-----------------------------------------------------------------------------------------------------
 
 struct ma_tsf {
@@ -119,21 +122,12 @@ static ma_result ma_tsf_read_pcm_frames(ma_tsf *pTsf, void *pFramesOut, ma_uint6
         return MA_INVALID_ARGS;
     }
 
-    /* We always use floating point format. */
-    ma_result result = MA_SUCCESS; /* Must be initialized to MA_SUCCESS. */
-    ma_format format;
-    ma_uint32 channels;
+    ma_result result = MA_SUCCESS; // Must be initialized to MA_SUCCESS
     ma_uint64 totalFramesRead = 0;
-
-    ma_tsf_get_data_format(pTsf, &format, &channels, NULL, NULL, 0);
-
     ma_uint8 *buffer = (ma_uint8 *)pFramesOut;
+    ma_int64 SampleBlock, SampleCount = frameCount; // Number of samples to process
 
-    // Number of samples to process
-    ma_int64 SampleBlock, SampleCount = frameCount;
-
-    for (SampleBlock = TSF_RENDER_EFFECTSAMPLEBLOCK; SampleCount;
-         SampleCount -= SampleBlock, buffer += (SampleBlock * ma_get_bytes_per_frame(format, channels))) {
+    for (SampleBlock = TSF_RENDER_EFFECTSAMPLEBLOCK; SampleCount; SampleCount -= SampleBlock, buffer += (SampleBlock * (sizeof(short) * 2))) {
         // We progress the MIDI playback and then process TSF_RENDER_EFFECTSAMPLEBLOCK samples at once
         if (SampleBlock > SampleCount)
             SampleBlock = SampleCount;
@@ -162,16 +156,11 @@ static ma_result ma_tsf_read_pcm_frames(ma_tsf *pTsf, void *pFramesOut, ma_uint6
             }
         }
 
-        if (format == ma_format::ma_format_f32) {
-            // Render the block of audio samples in float format
-            tsf_render_float(pTsf->tinySoundFont, (float *)buffer, (int)SampleBlock);
-        } else {
-            // Render the block of audio samples in float format
-            tsf_render_short(pTsf->tinySoundFont, (short *)buffer, (int)SampleBlock);
-        }
+        // Render the block of audio samples in int16 format
+        tsf_render_short(pTsf->tinySoundFont, (short *)buffer, (int)SampleBlock);
         totalFramesRead += SampleBlock;
 
-        // Reset the MIDI message pointer if we are looping & have reach the end of the message list
+        // Signal end of stream is we have reached the end
         if (pTsf->midiMessage == NULL) {
             result = MA_AT_END;
             break;
@@ -196,7 +185,7 @@ static ma_result ma_tsf_get_cursor_in_pcm_frames(ma_tsf *pTsf, ma_uint64 *pCurso
         return MA_INVALID_ARGS;
     }
 
-    ma_int64 offset = (ma_int64)((pTsf->currentTime / 1000) * MA_DEFAULT_SAMPLE_RATE);
+    ma_int64 offset = ((ma_int64)pTsf->currentTime * MA_DEFAULT_SAMPLE_RATE) / 1000;
     if (offset < 0) {
         return MA_INVALID_FILE;
     }
@@ -218,7 +207,7 @@ static ma_result ma_tsf_get_length_in_pcm_frames(ma_tsf *pTsf, ma_uint64 *pLengt
     }
 
     // Total time in seconds * Opal sample rate
-    ma_int64 length = ((ma_int64)pTsf->totalTime / 1000) * MA_DEFAULT_SAMPLE_RATE;
+    ma_int64 length = ((ma_int64)pTsf->totalTime * MA_DEFAULT_SAMPLE_RATE) / 1000;
     if (length < 0) {
         return MA_INVALID_FILE;
     }
@@ -311,12 +300,12 @@ static ma_result ma_tsf_init_internal(const ma_decoding_backend_config *pConfig,
     }
 
     MA_ZERO_OBJECT(pTsf);
-    pTsf->format = ma_format_f32; /* f32 by default. */
+    pTsf->format = ma_format::ma_format_s16; // We'll render 16-bit signed samples by default
 
-    if (pConfig != NULL && (pConfig->preferredFormat == ma_format_f32 || pConfig->preferredFormat == ma_format_s16)) {
+    if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_s16) {
         pTsf->format = pConfig->preferredFormat;
     } else {
-        /* Getting here means something other than f32 and s16 was specified. Just leave this unset to use the default format. */
+        /* Getting here means something other than s16 was specified. Just leave this unset to use the default format. */
     }
 
     dataSourceConfig = ma_data_source_config_init();
@@ -350,15 +339,44 @@ static ma_result ma_tsf_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
     pTsf->onTell = onTell;
     pTsf->pReadSeekTellUserData = pReadSeekTellUserData;
 
+    // Seek to the end of the file
+    if (ma_tsf_of_callback__seek(pTsf, 0, SEEK_END) != 0) {
+        return MA_BAD_SEEK;
+    }
+
+    // Calculate the length
+    ma_int64 file_size = ma_tsf_of_callback__tell(pTsf);
+    if (file_size < 1) {
+        return MA_INVALID_FILE;
+    }
+
+    // See to the beginning of the file
+    if (ma_tsf_of_callback__seek(pTsf, 0, SEEK_SET) != 0) {
+        return MA_BAD_SEEK;
+    }
+
+    // Allocate some memory for the tune
+    ma_uint8 *tune = new ma_uint8[file_size];
+    if (tune == nullptr) {
+        return MA_OUT_OF_MEMORY;
+    }
+
+    // Read the file
+    if (ma_tsf_of_callback__read(pTsf, tune, (int)file_size) < 1) {
+        delete[] tune;
+        return MA_IO_ERROR;
+    }
+
     // Attempt to load a SoundFont from a file
-    pTsf->tinySoundFont = tsf_load_filename(TSF_SOUNDFONT_FILENAME);
+    pTsf->tinySoundFont = tsf_load_filename(TSF_DEFAULT_SOUNDFONT_FILENAME);
 
     if (!pTsf->tinySoundFont) {
         // Attempt to load the soundfont from memory
-        pTsf->tinySoundFont = tsf_load_memory(soundfont, sizeof(soundfont));
+        pTsf->tinySoundFont = tsf_load_memory(awe32rom, sizeof(awe32rom));
 
         // Return failue if loading from memory also failed. This should not happen though
         if (!pTsf->tinySoundFont) {
+            delete[] tune;
             return MA_OUT_OF_MEMORY;
         }
     }
@@ -369,59 +387,20 @@ static ma_result ma_tsf_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
     // Set the SoundFont rendering output mode
     tsf_set_output(pTsf->tinySoundFont, TSF_STEREO_INTERLEAVED, MA_DEFAULT_SAMPLE_RATE);
 
-    // Find the size of the file
-    if (ma_tsf_of_callback__seek(pTsf, 0, SEEK_END) != 0) {
-        tsf_close(pTsf->tinySoundFont);
-        pTsf->tinySoundFont = TSF_NULL;
-        return MA_BAD_SEEK;
-    }
-
-    // Calculate the length
-    ma_int64 file_size = ma_tsf_of_callback__tell(pTsf);
-    if (file_size < 1) {
-        tsf_close(pTsf->tinySoundFont);
-        pTsf->tinySoundFont = TSF_NULL;
-        return MA_INVALID_FILE;
-    }
-
-    // Allocate some memory for the tune
-    ma_uint8 *tune = new ma_uint8[file_size];
-    if (tune == nullptr) {
-        tsf_close(pTsf->tinySoundFont);
-        pTsf->tinySoundFont = TSF_NULL;
-        return MA_OUT_OF_MEMORY;
-    }
-
-    // See to the beginning of the file
-    if (ma_tsf_of_callback__seek(pTsf, 0, SEEK_SET) != 0) {
-        delete[] tune;
-        tsf_close(pTsf->tinySoundFont);
-        pTsf->tinySoundFont = TSF_NULL;
-        return MA_BAD_SEEK;
-    }
-
-    // Read the file
-    if (ma_tsf_of_callback__read(pTsf, (unsigned char *)tune, (int)file_size) < 1) {
-        delete[] tune;
-        tsf_close(pTsf->tinySoundFont);
-        pTsf->tinySoundFont = TSF_NULL;
-        return MA_IO_ERROR;
-    }
-
     // Initialize TML
     pTsf->tinyMidiLoader = tml_load_memory(tune, (int)file_size);
     if (!pTsf->tinyMidiLoader) {
-        delete[] tune;
         tsf_close(pTsf->tinySoundFont);
         pTsf->tinySoundFont = TSF_NULL;
+        delete[] tune;
         return MA_INVALID_FILE;
     }
 
-    // Get the total duration of the song ignoring the rest of the stuff
-    tml_get_info(pTsf->tinyMidiLoader, NULL, NULL, NULL, NULL, &pTsf->totalTime);
-
     // Free the memory now that we don't need it anymore
     delete[] tune;
+
+    // Get the total duration of the song ignoring the rest of the stuff
+    tml_get_info(pTsf->tinyMidiLoader, NULL, NULL, NULL, NULL, &pTsf->totalTime);
 
     // Setup some stuff
     pTsf->midiMessage = pTsf->tinyMidiLoader; // Set up the global MidiMessage pointer to the first MIDI message
@@ -447,11 +426,11 @@ static ma_result ma_tsf_init_file(const char *pFilePath, const ma_decoding_backe
     }
 
     // Attempt to load a SoundFont from a file
-    pTsf->tinySoundFont = tsf_load_filename(TSF_SOUNDFONT_FILENAME);
+    pTsf->tinySoundFont = tsf_load_filename(TSF_DEFAULT_SOUNDFONT_FILENAME);
 
     if (!pTsf->tinySoundFont) {
         // Attempt to load the soundfont from memory
-        pTsf->tinySoundFont = tsf_load_memory(soundfont, sizeof(soundfont));
+        pTsf->tinySoundFont = tsf_load_memory(awe32rom, sizeof(awe32rom));
 
         // Return failue if loading from memory also failed. This should not happen though
         if (!pTsf->tinySoundFont) {

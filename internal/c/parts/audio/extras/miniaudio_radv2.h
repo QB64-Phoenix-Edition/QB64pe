@@ -8,7 +8,31 @@
 //	QBPE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //	This implements a data source that decodes Reality Adlib Tracker 2 tunes
-//	https://www.3eality.com/productions/reality-adlib-tracker/docs
+//	https://realityproductions.itch.io/rad (Public Domain)
+//
+//	From:	Willy Reeve <shayde0@gmail.com>
+//	Sent:	Sunday, 7 August, 2022 01:23 PM
+//	To:	Samuel Gomes <v_2samg@hotmail.com>
+//	Cc:	Carl Pettitt <carl@clonestudios.co.uk>
+//	Subject:	Re: Contact from Reality website
+//
+//	Hi Samuel,
+//
+//	The player source code is Public Domain.
+//
+//	Shayde
+//
+//	On Fri, Aug 5, 2022 at 6:33 AM Reality website <rogue@3eality.com> wrote:
+//	Contact from the Reality website:
+//	Name: Samuel Gomes
+//	Email: v_2samg@hotmail.com
+//	Message:
+//
+//	RADv2 - great stuff! I am planning to integrate the included player code in my projects. Can you please
+//	let me know the license type for the player code? If there is one, putting it somewhere on the site or
+//	zip would be fantastic!
+//
+//	Thanks!
 //
 //	Copyright (c) 2022 Samuel Gomes
 //	https://github.com/a740g
@@ -39,7 +63,7 @@ struct ma_radv2 {
     // This part is format specific
     RADPlayer *player;  // RADv2 player object
     Opal *adlib;        // Opal Adlib emulator object
-    void *tune;         // The song data
+    ma_uint8 *tune;     // The song data (RADv2 needs this to be alive for rendering samples!)
     uint32_t totalTime; // Total time in seconds
     int sampleCount;    // The number of samples generated in each update
     int sampleUpdate;   // Size of each update in samples after which the player must be updated
@@ -51,7 +75,7 @@ static ma_result ma_radv2_seek_to_pcm_frame(ma_radv2 *pRadv2, ma_uint64 frameInd
     }
 
     // We can only reset the player to the beginning
-    if (!frameIndex) {
+    if (frameIndex == 0) {
         pRadv2->player->Stop();
         return MA_SUCCESS;
     }
@@ -111,24 +135,15 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
         return MA_INVALID_ARGS;
     }
 
-    /* We always use floating point format. */
     ma_result result = MA_SUCCESS; /* Must be initialized to MA_SUCCESS. */
     ma_uint64 totalFramesRead = 0;
-    ma_format format;
-    ma_uint32 channels;
-
-    ma_radv2_get_data_format(pRadv2, &format, &channels, NULL, NULL, 0);
-
+    int16_t *buffer = (int16_t *)pFramesOut;
     bool repeat = false;
-    int16_t *buffer;
 
     while (totalFramesRead < frameCount) {
-        // Set to the correct buffer offset
-        buffer = (int16_t *)ma_offset_pcm_frames_ptr(pFramesOut, totalFramesRead, format, channels);
-        // Get the left and right sample
-        pRadv2->adlib->Sample(&buffer[0], &buffer[1]);
-        // Increment the frame counter
-        ++totalFramesRead;
+        pRadv2->adlib->Sample(&buffer[0], &buffer[1]); // Get the left and right sample
+        buffer += 2;                                   // Increment the buffer pointer twice for 2 channels
+        ++totalFramesRead;                             // Increment the frame counter
 
         // Time to update player?
         pRadv2->sampleCount++;
@@ -276,9 +291,9 @@ static ma_result ma_radv2_init_internal(const ma_decoding_backend_config *pConfi
     }
 
     MA_ZERO_OBJECT(pRadv2);
-    pRadv2->format = ma_format_s16; // RADv2 Opal outputs 16-bit signed samples by default
+    pRadv2->format = ma_format::ma_format_s16; // RADv2 Opal outputs 16-bit signed samples by default
 
-    if (pConfig != NULL && pConfig->preferredFormat == ma_format_s16) {
+    if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_s16) {
         pRadv2->format = pConfig->preferredFormat;
     } else {
         /* Getting here means something other than s16 was specified. Just leave this unset to use the default format. */
@@ -315,9 +330,40 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
     pRadv2->onTell = onTell;
     pRadv2->pReadSeekTellUserData = pReadSeekTellUserData;
 
+    // Find the size of the file
+    if (ma_radv2_of_callback__seek(pRadv2, 0, SEEK_END) != 0) {
+        return MA_BAD_SEEK;
+    }
+
+    // Calculate the length
+    ma_int64 file_size = ma_radv2_of_callback__tell(pRadv2);
+    if (file_size < 1) {
+        return MA_INVALID_FILE;
+    }
+
+    // See to the beginning of the file
+    if (ma_radv2_of_callback__seek(pRadv2, 0, SEEK_SET) != 0) {
+        return MA_BAD_SEEK;
+    }
+
+    // Allocate some memory for the tune
+    pRadv2->tune = new uint8_t[file_size];
+    if (!pRadv2->tune) {
+        return MA_OUT_OF_MEMORY;
+    }
+
+    // Read the file
+    if (ma_radv2_of_callback__read(pRadv2, pRadv2->tune, (int)file_size) < 1) {
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
+        return MA_IO_ERROR;
+    }
+
     // Create the RADv2 Player objects
     pRadv2->player = new RADPlayer();
     if (!pRadv2->player) {
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_OUT_OF_MEMORY;
     }
 
@@ -326,68 +372,19 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
     if (!pRadv2->adlib) {
         delete pRadv2->player;
         pRadv2->player = nullptr;
-        return MA_OUT_OF_MEMORY;
-    }
-
-    // Find the size of the file
-    if (ma_radv2_of_callback__seek(pRadv2, 0, SEEK_END) != 0) {
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_BAD_SEEK;
-    }
-
-    // Calculate the length
-    ma_int64 file_size = ma_radv2_of_callback__tell(pRadv2);
-    if (file_size < 1) {
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_INVALID_FILE;
-    }
-
-    // Allocate some memory for the tune
-    pRadv2->tune = new uint8_t[file_size];
-    if (!pRadv2->tune) {
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_OUT_OF_MEMORY;
-    }
-
-    // See to the beginning of the file
-    if (ma_radv2_of_callback__seek(pRadv2, 0, SEEK_SET) != 0) {
         delete[] pRadv2->tune;
-        delete pRadv2->adlib;
-        delete pRadv2->player;
         pRadv2->tune = nullptr;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_BAD_SEEK;
-    }
-
-    // Read the file
-    if (ma_radv2_of_callback__read(pRadv2, (unsigned char *)pRadv2->tune, (int)file_size) < 1) {
-        delete[] pRadv2->tune;
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->tune = nullptr;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_IO_ERROR;
+        return MA_OUT_OF_MEMORY;
     }
 
     // Check if the file is valid
     if (RADValidate(pRadv2->tune, file_size)) {
-        delete[] pRadv2->tune;
         delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->tune = nullptr;
         pRadv2->adlib = nullptr;
+        delete pRadv2->player;
         pRadv2->player = nullptr;
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_INVALID_FILE;
     }
 
@@ -398,12 +395,12 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
 
     // Get the playback rate
     if (pRadv2->player->GetHertz() < 0) {
-        delete[] pRadv2->tune;
         delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->tune = nullptr;
         pRadv2->adlib = nullptr;
+        delete pRadv2->player;
         pRadv2->player = nullptr;
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_INVALID_FILE;
     }
 
@@ -438,10 +435,48 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
         return MA_INVALID_FILE;
     }
 
+    // Find the size of the file
+    if (fseek(fd, 0, SEEK_END) != 0) {
+        fclose(fd);
+        return MA_BAD_SEEK;
+    }
+
+    // Calculate the length
+    ma_int64 file_size = ftell(fd);
+    if (file_size < 1) {
+        fclose(fd);
+        return MA_INVALID_FILE;
+    }
+
+    // Seek to the beginning of the file
+    if (fseek(fd, 0, SEEK_SET) != 0) {
+        fclose(fd);
+        return MA_BAD_SEEK;
+    }
+
+    // Allocate some memory for the tune
+    pRadv2->tune = new uint8_t[file_size];
+    if (!pRadv2->tune) {
+        fclose(fd);
+        return MA_OUT_OF_MEMORY;
+    }
+
+    // Read the file
+    if (fread(pRadv2->tune, file_size, sizeof(uint8_t), fd) < 1) {
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
+        fclose(fd);
+        return MA_IO_ERROR;
+    }
+
+    // Close the file now that we've read it into memory
+    fclose(fd);
+
     // Create the RADv2 Player objects
     pRadv2->player = new RADPlayer();
     if (!pRadv2->player) {
-        fclose(fd);
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_OUT_OF_MEMORY;
     }
 
@@ -449,78 +484,20 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     pRadv2->adlib = new Opal(MA_DEFAULT_SAMPLE_RATE);
     if (!pRadv2->adlib) {
         delete pRadv2->player;
-        fclose(fd);
         pRadv2->player = nullptr;
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_OUT_OF_MEMORY;
     }
-
-    // Find the size of the file
-    if (fseek(fd, 0, SEEK_END) != 0) {
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        fclose(fd);
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_BAD_SEEK;
-    }
-
-    // Calculate the length
-    ma_int64 file_size = ftell(fd);
-    if (file_size < 1) {
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        fclose(fd);
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_INVALID_FILE;
-    }
-
-    // Allocate some memory for the tune
-    pRadv2->tune = new uint8_t[file_size];
-    if (!pRadv2->tune) {
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        fclose(fd);
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_OUT_OF_MEMORY;
-    }
-
-    // Seek to the beginning of the file
-    if (fseek(fd, 0, SEEK_SET) != 0) {
-        delete[] pRadv2->tune;
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        fclose(fd);
-        pRadv2->tune = nullptr;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_BAD_SEEK;
-    }
-
-    // Read the file
-    if (fread(pRadv2->tune, file_size, sizeof(uint8_t), fd) < 1) {
-        delete[] pRadv2->tune;
-        delete pRadv2->adlib;
-        delete pRadv2->player;
-        fclose(fd);
-        pRadv2->tune = nullptr;
-        pRadv2->adlib = nullptr;
-        pRadv2->player = nullptr;
-        return MA_IO_ERROR;
-    }
-
-    // Close the file now that we've read it into memory
-    fclose(fd);
 
     // Check if the file is valid
     if (RADValidate(pRadv2->tune, file_size)) {
-        delete[] pRadv2->tune;
         delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->tune = nullptr;
         pRadv2->adlib = nullptr;
+        delete pRadv2->player;
         pRadv2->player = nullptr;
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_INVALID_FILE;
     }
 
@@ -531,12 +508,12 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
 
     // Get the playback rate
     if (pRadv2->player->GetHertz() < 0) {
-        delete[] pRadv2->tune;
         delete pRadv2->adlib;
-        delete pRadv2->player;
-        pRadv2->tune = nullptr;
         pRadv2->adlib = nullptr;
+        delete pRadv2->player;
         pRadv2->player = nullptr;
+        delete[] pRadv2->tune;
+        pRadv2->tune = nullptr;
         return MA_INVALID_FILE;
     }
 
@@ -559,12 +536,12 @@ static void ma_radv2_uninit(ma_radv2 *pRadv2, const ma_allocation_callbacks *pAl
     // Stop any ongoing playback
     pRadv2->player->Stop();
 
-    delete[] pRadv2->tune;
     delete pRadv2->adlib;
-    delete pRadv2->player;
-    pRadv2->tune = nullptr;
     pRadv2->adlib = nullptr;
+    delete pRadv2->player;
     pRadv2->player = nullptr;
+    delete[] pRadv2->tune;
+    pRadv2->tune = nullptr;
 
     ma_data_source_uninit(&pRadv2->ds);
 }
