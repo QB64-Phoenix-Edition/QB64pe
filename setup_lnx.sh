@@ -33,10 +33,10 @@ fi
 GET_WGET=
 #Path to Icon
 #Relative Path to icon -- Don't include beginning or trailing '/'
-QB64_ICON_PATH="internal/source"
+QB64_ICON_PATH="source"
 
 #Name of the Icon picture
-QB64_ICON_NAME="qb64icon32.png"
+QB64_ICON_NAME="qb64pe.png"
 
 DISTRO=
 
