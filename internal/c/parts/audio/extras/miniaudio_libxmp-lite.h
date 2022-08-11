@@ -35,8 +35,9 @@ struct ma_modplay {
     ma_format format;
 
     // This part is format specific
-    xmp_context xmpContext; // The player context
-    xmp_frame_info xmpFrameInfo;
+    xmp_context xmpContext;      // The player context
+    xmp_frame_info xmpFrameInfo; // LibXMP frameinfo - used to detect loops
+    ma_uint32 loopCount;         // We'll maintain our own loop counter and check this against LibXMP's to detect new loops
 };
 
 static ma_result ma_modplay_seek_to_pcm_frame(ma_modplay *pModplay, ma_uint64 frameIndex) {
@@ -103,11 +104,17 @@ static ma_result ma_modplay_read_pcm_frames(ma_modplay *pModplay, void *pFramesO
         return MA_INVALID_ARGS;
     }
 
-    ma_result result = MA_SUCCESS; /* Must be initialized to MA_SUCCESS. */
+    ma_result result = MA_SUCCESS; // Must be initialized to MA_SUCCESS
 
-    // Render samples
-    int xmpError = xmp_play_buffer(pModplay->xmpContext, pFramesOut, (int)(frameCount * sizeof(ma_int16) * 2), 2);
-    if (xmpError == -XMP_END || xmpError == -XMP_ERROR_STATE) {
+    // Render some 16-bit stereo sample frames
+    int xmpError = xmp_play_buffer(pModplay->xmpContext, pFramesOut, (int)(frameCount * sizeof(ma_int16) * 2), 0);
+
+    // Get the frame information to detect if we are looping
+    xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
+
+    // Check if we have reached the end or are looping
+    if (pModplay->xmpFrameInfo.loop_count != pModplay->loopCount || xmpError == -XMP_END || xmpError == -XMP_ERROR_STATE) {
+        pModplay->loopCount = pModplay->xmpFrameInfo.loop_count;
         result = MA_AT_END;
     }
 
@@ -356,8 +363,8 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_INTERP, XMP_INTERP_SPLINE);
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_DSP, XMP_DSP_ALL);
 
-    // Get the frame information
-    xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
+    xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo); // Get the frame information
+    pModplay->loopCount = pModplay->xmpFrameInfo.loop_count;           // Save the loop counter
 
     return MA_SUCCESS;
 }
@@ -414,8 +421,8 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_INTERP, XMP_INTERP_SPLINE);
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_DSP, XMP_DSP_ALL);
 
-    // Get the frame information
-    xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
+    xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo); // Get the frame information
+    pModplay->loopCount = pModplay->xmpFrameInfo.loop_count;           // Save the loop counter
 
     return MA_SUCCESS;
 }

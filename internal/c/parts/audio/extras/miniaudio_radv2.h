@@ -137,7 +137,7 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
 
     ma_result result = MA_SUCCESS; /* Must be initialized to MA_SUCCESS. */
     ma_uint64 totalFramesRead = 0;
-    int16_t *buffer = (int16_t *)pFramesOut;
+    ma_int16 *buffer = (ma_int16 *)pFramesOut;
     bool repeat = false;
 
     while (totalFramesRead < frameCount) {

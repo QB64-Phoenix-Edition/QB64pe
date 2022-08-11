@@ -125,7 +125,7 @@ static ma_result ma_tsf_read_pcm_frames(ma_tsf *pTsf, void *pFramesOut, ma_uint6
     ma_result result = MA_SUCCESS; // Must be initialized to MA_SUCCESS
     ma_uint64 totalFramesRead = 0;
     ma_uint8 *buffer = (ma_uint8 *)pFramesOut;
-    ma_int64 SampleBlock, SampleCount = frameCount; // Number of samples to process
+    ma_int64 SampleBlock, SampleCount = frameCount; // Number of sample frames to process
 
     for (SampleBlock = TSF_RENDER_EFFECTSAMPLEBLOCK; SampleCount; SampleCount -= SampleBlock, buffer += (SampleBlock * (sizeof(short) * 2))) {
         // We progress the MIDI playback and then process TSF_RENDER_EFFECTSAMPLEBLOCK samples at once
@@ -160,9 +160,12 @@ static ma_result ma_tsf_read_pcm_frames(ma_tsf *pTsf, void *pFramesOut, ma_uint6
         tsf_render_short(pTsf->tinySoundFont, (short *)buffer, (int)SampleBlock);
         totalFramesRead += SampleBlock;
 
-        // Signal end of stream is we have reached the end
+        // Signal end of stream if we have reached the end
         if (pTsf->midiMessage == NULL) {
             result = MA_AT_END;
+            // However, also reset the position to the beginning just in case we want to loop
+            pTsf->midiMessage = pTsf->tinyMidiLoader; // Set up the global MidiMessage pointer to the first MIDI message
+            pTsf->currentTime = 0;                    // Reset playback time
             break;
         }
     }

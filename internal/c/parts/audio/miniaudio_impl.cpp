@@ -53,6 +53,7 @@ ma_decoding_backend_vtable *maCustomBackendVTables[] = {&ma_decoding_backend_vta
 /// <summary>
 /// This simply attaches the format decode VTables array to ma_resource_manager_config
 /// </summary>
+/// <param name="maResourceManagerConfig">Pointer to a miniaudio resource manager config object. This cannot be NULL</param>
 void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig) {
     // Attach the VTable
     maResourceManagerConfig->ppCustomDecodingBackendVTables = maCustomBackendVTables;
