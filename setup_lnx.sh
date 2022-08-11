@@ -115,20 +115,20 @@ make OS=lnx BUILD_QB64=y -j3
 if [ -e "./qb64" ]; then
   echo "Done compiling!!"
 
-  echo "Creating ./run_qb64.sh script..."
+  echo "Creating ./run_qb64pe.sh script..."
   _pwd=`pwd`
-  echo "#!/bin/sh" > ./run_qb64.sh
-  echo "cd $_pwd" >> ./run_qb64.sh
-  echo "./qb64 &" >> ./run_qb64.sh
+  echo "#!/bin/sh" > ./run_qb64pe.sh
+  echo "cd $_pwd" >> ./run_qb64pe.sh
+  echo "./qb64 &" >> ./run_qb64pe.sh
   
-  chmod +x ./run_qb64.sh
+  chmod +x ./run_qb64pe.sh
   #chmod -R 777 ./
   echo "Adding QB64 menu entry..."
-  cat > ~/.local/share/applications/qb64.desktop <<EOF
+  cat > ~/.local/share/applications/qb64pe.desktop <<EOF
 [Desktop Entry]
 Name=QB64 Programming IDE
 GenericName=QB64 Programming IDE
-Exec=$_pwd/run_qb64.sh
+Exec=$_pwd/run_qb64pe.sh
 Icon=$_pwd/$QB64_ICON_PATH/$QB64_ICON_NAME
 Terminal=false
 Type=Application
@@ -144,7 +144,7 @@ EOF
 
   echo "QB64 is located in this folder:"
   echo "`pwd`"
-  echo "There is a ./run_qb64.sh script in this folder that should let you run qb64 if using the executable directly isn't working."
+  echo "There is a ./run_qb64pe.sh script in this folder that should let you run qb64 if using the executable directly isn't working."
   echo 
   echo "You should also find a QB64 option in the Programming/Development section of your menu you can use."
 else

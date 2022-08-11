@@ -82,7 +82,7 @@ IF _DIREXISTS("internal") = 0 THEN
     PRINT "QB64 cannot locate the 'internal' folder"
     PRINT
     PRINT "Check that QB64 has been extracted properly."
-    PRINT "For MacOSX, launch 'qb64_start.command' or enter './qb64' in Terminal."
+    PRINT "For MacOSX, launch 'qb64pe_start.command' or enter './qb64' in Terminal."
     PRINT "For Linux, in the console enter './qb64'."
     DO
         _LIMIT 1
