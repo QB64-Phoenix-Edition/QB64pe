@@ -1,10 +1,10 @@
 @ECHO OFF
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-qb64_bootstrap.exe -x -w source\qb64pe.bas
+qb64pe_bootstrap.exe -x -w source\qb64pe.bas
 IF ERRORLEVEL 1 exit /b 1
 
-del qb64_bootstrap.exe
+del qb64pe_bootstrap.exe
 del /q /s internal\source\*
 move internal\temp\* internal\source\
 

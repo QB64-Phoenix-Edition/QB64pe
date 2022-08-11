@@ -94,7 +94,7 @@ jobs:
       # artifacts in the previous step
     - name: Test QB64 Artifact
       shell: bash
-      run: tests/run_dist_tests.sh ./dist/qb64 ${{ matrix.prefix }}
+      run: tests/run_dist_tests.sh ./dist/qb64pe ${{ matrix.prefix }}
 
       # Only update ./internal/source if we're building on Linux, building on
       # the main branch, and building a Pull request merge. Otherwise the repo
@@ -106,13 +106,13 @@ jobs:
     - uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: qb64-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
+        name: qb64pe-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
         path: |
           tests/results/
-          qb64_win-x86*.7z
-          qb64_win-x64*.7z
-          qb64_lnx*.tar.gz
-          qb64_osx*.tar.gz
+          qb64pe_win-x86*.7z
+          qb64pe_win-x64*.7z
+          qb64pe_lnx*.tar.gz
+          qb64pe_osx*.tar.gz
 
     - name: Create release
       if: startsWith(github.ref, 'refs/tags/v')
@@ -120,9 +120,9 @@ jobs:
       with:
         draft: true
         files: |
-          qb64_win-x86*.7z
-          qb64_win-x64*.7z
-          qb64_lnx*.tar.gz
-          qb64_osx*.tar.gz
+          qb64pe_win-x86*.7z
+          qb64pe_win-x64*.7z
+          qb64pe_lnx*.tar.gz
+          qb64pe_osx*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

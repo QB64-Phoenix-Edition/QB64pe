@@ -6,7 +6,7 @@ Build Process
 
 This describes the process that goes on to compile a QB64 program into an executable.
 
-1. `QB64pe.bas` takes the QB64 source code and produces C++ source code for the program. That C++ source is placed into various files and goes into `./internal/temp`.
+1. `QB64-PE` takes the QB64 source code and produces C++ source code for the program. That C++ source is placed into various files and goes into `./internal/temp`.
 2. `make` is used to run the `Makefile` at the root of this repository. It is supplied the `OS` parameter, the `EXE` parameter for the final executable name, and a variety of `DEP_*` parameters depending on what dependencies the QB64 program requires.
     1. 3rd party dependencies located in `./internal/c/parts/` are compiled if requested. Each of these has its own `build.mk` file that includes the `make` logic to build that dependency.
     2. `./internal/c/libqb.cpp` is compiled with various C preprocessor flags depending on the provided `DEP_*` flags. The name is changed depending on the settings it is compiled with so that we don't accidentally use a libqb compiled with different settings.
@@ -21,11 +21,11 @@ This describes how QB64 itself is built by the CI process to produce a release o
 
 1. Before CI ever begins, `./internal/source/` contains the generated C++ source of a previous version of `qb64pe.bas`.
 2. `.ci/calculate_version.sh` is run to determine what version this CI build should be considered. That information is written to `./internal/version.txt`, if it is a release version `./internal/version.txt` is removed.
-3. `qb64_bootstrap` is compiled from `./internal/source`
-    1. `make` is used to call the `Makefile` with the proper `OS` setting, `EXE=qb64_bootstrap`, and `BUILD_QB64=y`.
+3. `qb64pe_bootstrap` is compiled from `./internal/source`
+    1. `make` is used to call the `Makefile` with the proper `OS` setting, `EXE=qb64pe_bootstrap`, and `BUILD_QB64=y`.
     2. The Makefile will take care of copying `./internal/source` into `./internal/temp` and compiling QB64 with the proper settings.
-4. `qb64_bootstrap` is used to compile `./source/qb64pe.bas` into a proper `qb64pe` executable
-    1. We run `./qb64_bootstrap -x ./source/qb64pe.bas` to compile QB64. This compiles QB64 the same way as a regular QB64 program as detailed in 'Build Process'
+4. `qb64pe_bootstrap` is used to compile `./source/qb64pe.bas` into a proper `qb64pe` executable
+    1. We run `./qb64pe_bootstrap -x ./source/qb64pe.bas` to compile QB64. This compiles QB64 the same way as a regular QB64 program as detailed in 'Build Process'
 5. `./internal/source` is cleared out and, excluding a few files, the contents of `./internal/temp` are copied into `./internal/source` as the new generated C++ source of QB64.
 6. `tests/run_tests.sh` is run to test the compiled version of QB64. A failure of these tests fails the build at this stage.
 7. `.ci/make-dist.sh` is run to produce the distribution of QB64, which is stored as a build artifact and potentially a release artifact..
@@ -40,17 +40,17 @@ Repository Layout
 
  - `.ci/` - All files in this folder are related to the CI build process.
    - `bootstrap.bat`
-     - Windows only, Downloads MinGW compiler, builds the precompiled version of QB64 located in `./internal/source` as `qb64_bootstrap.exe`.
+     - Windows only, Downloads MinGW compiler, builds the precompiled version of QB64 located in `./internal/source` as `qb64pe_bootstrap.exe`.
    - `bootstrap.sh`
-     - Linux and OSX, builds the precompiled version of QB64 located in `./internal/source` as `qb64_bootstrap.exe`.
+     - Linux and OSX, builds the precompiled version of QB64 located in `./internal/source` as `qb64pe_bootstrap.exe`.
    - `compile.bat`
-     - Uses `qb64_bootstrap.exe` to build `./source/qb64pe.bas`. This compiled QB64 is the released `QB64pe.exe`.
+     - Uses `qb64pe_bootstrap.exe` to build `./source/qb64pe.bas`. This compiled QB64 is the released `QB64pe.exe`.
    - `compile.sh`
-     - Uses `qb64_bootstrap` to build `./source/qb64pe.bas`. This built QB64 is what is used for testing, and the sources from this QB64 are placed into `./internal/source`.
+     - Uses `qb64pe_bootstrap` to build `./source/qb64pe.bas`. This built QB64 is what is used for testing, and the sources from this QB64 are placed into `./internal/source`.
    - `make-dist.sh`
      - Copies all the relevant parts of QB64 into a new folder, which can be distributed as a release.
    - `push-internal-source.sh`
-     - If `./internal/source` is different after building `./source/qb64pe.bas`, then this will automatically push those changes to the repository to update the sources used to build `qb64_bootstrap`.
+     - If `./internal/source` is different after building `./source/qb64pe.bas`, then this will automatically push those changes to the repository to update the sources used to build `qb64pe_bootstrap`.
  - `internal/`
    - `help/`
      - Contains a downloaded copy of the help files, so that they do not have to be downloaded when QB64 is installed.

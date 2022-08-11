@@ -2,10 +2,10 @@
 
 os=$1
 
-./qb64_bootstrap -x -w source/qb64pe.bas
+./qb64pe_bootstrap -x -w source/qb64pe.bas
 SUCCESS=$?
 
-rm qb64_bootstrap
+rm qb64pe_bootstrap
 rm internal/source/*
 rm internal/temp/debug_* internal/temp/recompile_*
 rm internal/temp/qb64pe.sym
