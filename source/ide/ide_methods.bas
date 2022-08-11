@@ -1167,7 +1167,7 @@ FUNCTION ide2 (ignore)
         END IF 'skipdisplay
 
         IF WhiteListQB64FirstTimeMsg = 0 THEN
-            IF INSTR(_OS$, "WIN") THEN whiteListProcess$ = "and the process 'qb64.exe' " ELSE whiteListProcess$ = ""
+            IF INSTR(_OS$, "WIN") THEN whiteListProcess$ = "and the process 'qb64pe.exe' " ELSE whiteListProcess$ = ""
             result = idemessagebox("Welcome to QB64", "QB64 is an independently distributed program, and as such" + CHR$(10) + _
                                                       "both 'qb64" + extension$ + "' and the programs you create with it may" + CHR$(10) + _
                                                       "eventually be flagged as false positives by your" + CHR$(10) + _

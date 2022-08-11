@@ -28,7 +28,7 @@ cp -rp ./licenses $DIST_ROOT
 cp ./CHANGELOG.md $DIST_ROOT
 cp ./COPYING.txt  $DIST_ROOT
 cp ./README.md    $DIST_ROOT
-cp ./qb64.1       $DIST_ROOT
+cp ./qb64pe.1     $DIST_ROOT
 cp ./Makefile     $DIST_ROOT
 
 cp -rp ./internal/source  $DIST_ROOT/internal/
@@ -49,7 +49,7 @@ case "$buildPlatform" in
 
         format=7zip
 
-        cp ./qb64.exe $DIST_ROOT
+        cp ./qb64pe.exe $DIST_ROOT
         cp -r ./internal/c/c_compiler $DIST_ROOT/internal/c/
         ;;
 
@@ -58,7 +58,7 @@ case "$buildPlatform" in
         format=tar
 
         # Not sure if we should distribute this
-        # cp -p ./qb64         $DIST_ROOT
+        # cp -p ./qb64pe       $DIST_ROOT
         cp -p ./setup_lnx.sh $DIST_ROOT
         ;;
 
@@ -66,9 +66,9 @@ case "$buildPlatform" in
         filename="qb64_osx-$version.tar.gz"
         format=tar
 
-        cp -p ./qb64_start.command $DIST_ROOT
-        cp -p ./qb64.1             $DIST_ROOT
-        cp -p ./setup_osx.command  $DIST_ROOT
+        cp -p ./qb64pe_start.command $DIST_ROOT
+        cp -p ./qb64pe.1             $DIST_ROOT
+        cp -p ./setup_osx.command    $DIST_ROOT
         ;;
 esac
 

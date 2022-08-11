@@ -103,9 +103,9 @@ endif
 
 ifdef BUILD_QB64
 	ifeq ($(OS),win)
-		EXE ?= qb64.exe
+		EXE ?= qb64pe.exe
 	else
-		EXE ?= qb64
+		EXE ?= qb64pe
 	endif
 endif
 
