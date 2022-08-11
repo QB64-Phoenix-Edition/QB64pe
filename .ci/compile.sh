@@ -2,7 +2,7 @@
 
 os=$1
 
-./qb64_bootstrap -x -w source/qb64.bas
+./qb64_bootstrap -x -w source/qb64pe.bas
 SUCCESS=$?
 
 rm qb64_bootstrap
