@@ -19,6 +19,13 @@ case "$buildPlatform" in
         ;;
 esac
 
+# populate internal/help
+# 1. create dir / 2. download vital Wiki pages
+# 3. include static pages from repository
+mkdir -p $DIST_ROOT/internal/help
+./qb64pe -u
+cp -rp ./internal/help $DIST_ROOT/internal/
+
 mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
 mkdir -p $DIST_ROOT/internal/c
@@ -32,7 +39,6 @@ cp ./qb64pe.1     $DIST_ROOT
 cp ./Makefile     $DIST_ROOT
 
 cp -rp ./internal/source  $DIST_ROOT/internal/
-cp -rp ./internal/help    $DIST_ROOT/internal/
 cp -rp ./internal/support $DIST_ROOT/internal/
 cp -rp ./internal/temp    $DIST_ROOT/internal/
 cp ./internal/config.ini  $DIST_ROOT/internal/

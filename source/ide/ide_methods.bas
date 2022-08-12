@@ -18863,22 +18863,24 @@ FUNCTION ideupdatehelpbox
                     LINE INPUT #fh, l$
                     IF LEN(l$) THEN
                         c = INSTR(l$, ","): l$ = RIGHT$(l$, LEN(l$) - c)
-                        'Escape all invalid and other critical chars in filenames
-                        PageName2$ = ""
-                        FOR i = 1 TO LEN(l$)
-                            c = ASC(l$, i)
-                            SELECT CASE c
-                                CASE 32 '                                        '(space)
-                                    PageName2$ = PageName2$ + "_"
-                                CASE 34, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("&*+/:<>?\|)
-                                    PageName2$ = PageName2$ + "%" + HEX$(c)
-                                CASE ELSE
-                                    PageName2$ = PageName2$ + CHR$(c)
-                            END SELECT
-                        NEXT
-                        PageName2$ = PageName2$ + ".txt"
-                        IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN
-                            f$ = f$ + PageName2$ + CHR$(0)
+                        IF Help_Recaching < 2 OR LEFT$(l$, 3) <> "_gl" THEN 'ignore _GL pages for 'qb64pe -u' (build time update)
+                            'Escape all invalid and other critical chars in filenames
+                            PageName2$ = ""
+                            FOR i = 1 TO LEN(l$)
+                                c = ASC(l$, i)
+                                SELECT CASE c
+                                    CASE 32 '                                        '(space)
+                                        PageName2$ = PageName2$ + "_"
+                                    CASE 34, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("&*+/:<>?\|)
+                                        PageName2$ = PageName2$ + "%" + HEX$(c)
+                                    CASE ELSE
+                                        PageName2$ = PageName2$ + CHR$(c)
+                                END SELECT
+                            NEXT
+                            PageName2$ = PageName2$ + ".txt"
+                            IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN
+                                f$ = f$ + PageName2$ + CHR$(0)
+                            END IF
                         END IF
                     END IF
                 LOOP
