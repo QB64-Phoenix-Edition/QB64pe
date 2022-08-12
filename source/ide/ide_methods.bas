@@ -18838,8 +18838,12 @@ FUNCTION ideupdatehelpbox
         SELECT CASE UpdateStep
             CASE 1
                 'Create a list of all files to be recached
-                f$ = CHR$(0) + idezfilelist$("internal/help", 2, "*.txt") + CHR$(0)
-                IF LEN(f$) = 2 THEN f$ = CHR$(0)
+                IF Help_Recaching < 2 THEN
+                    f$ = CHR$(0) + idezfilelist$("internal/help", 2, "*.txt") + CHR$(0)
+                    IF LEN(f$) = 2 THEN f$ = CHR$(0)
+                ELSE
+                    f$ = CHR$(0) 'no dir scan for 'qb64pe -u' (build time update)
+                END IF
 
                 'Prepend core pages to list
                 f$ = CHR$(0) + "Keyword_Reference_-_By_usage.txt" + f$
