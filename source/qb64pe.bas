@@ -79,11 +79,11 @@ QB64_uptime! = TIMER
 NoInternalFolder:
 IF _DIREXISTS("internal") = 0 THEN
     _SCREENSHOW
-    PRINT "QB64 cannot locate the 'internal' folder"
+    PRINT "QB64-PE cannot locate the 'internal' folder"
     PRINT
-    PRINT "Check that QB64 has been extracted properly."
-    PRINT "For MacOSX, launch 'qb64pe_start.command' or enter './qb64' in Terminal."
-    PRINT "For Linux, in the console enter './qb64'."
+    PRINT "Check that QB64-PE has been extracted properly."
+    PRINT "For MacOSX, launch 'qb64pe_start.command' or enter './qb64pe' in Terminal."
+    PRINT "For Linux, in the console enter './qb64pe'."
     DO
         _LIMIT 1
     LOOP UNTIL INKEY$ <> ""
@@ -117,7 +117,7 @@ DIM SHARED UseGL 'declared SUB _GL (no params)
 DIM SHARED OS_BITS AS LONG, WindowTitle AS STRING
 OS_BITS = 64: IF INSTR(_OS$, "[32BIT]") THEN OS_BITS = 32
 
-IF OS_BITS = 32 THEN WindowTitle = "QB64 x32" ELSE WindowTitle = "QB64 x64"
+IF OS_BITS = 32 THEN WindowTitle = "QB64 Phoenix Edition (x32)" ELSE WindowTitle = "QB64 Phoenix Edition (x64)"
 _TITLE WindowTitle
 
 DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode
@@ -1161,7 +1161,7 @@ GOTO sendcommand
 noide:
 IF (qb64versionprinted = 0 OR ConsoleMode = 0) AND NOT QuietMode THEN
     qb64versionprinted = -1
-    PRINT "QB64 Compiler V" + Version$
+    PRINT "QB64-PE Compiler V" + Version$
 END IF
 
 IF CMDLineFile = "" THEN
@@ -2878,7 +2878,7 @@ OPEN tmpdir$ + "inpchain.txt" FOR OUTPUT AS #23: CLOSE #23 'will be appended to 
 OPEN tmpdir$ + "ontimer.txt" FOR OUTPUT AS #24
 OPEN tmpdir$ + "ontimerj.txt" FOR OUTPUT AS #25
 
-'*****#26 used for locking qb64
+'*****#26 used for locking qb64pe
 
 OPEN tmpdir$ + "onkey.txt" FOR OUTPUT AS #27
 OPEN tmpdir$ + "onkeyj.txt" FOR OUTPUT AS #28
@@ -3946,7 +3946,7 @@ DO
 
 
                     'assume library name in double quotes follows
-                    'assume library is in main qb64 folder
+                    'assume library is in main qb64pe folder
                     x$ = getelement$(ca$, x)
                     IF ASC(x$) <> 34 THEN a$ = "Expected LIBRARY " + CHR$(34) + "..." + CHR$(34): GOTO errmes
                     x$ = RIGHT$(x$, LEN(x$) - 1)
@@ -13101,9 +13101,9 @@ FUNCTION ParseCMDLineArgs$ ()
         SELECT CASE LCASE$(LEFT$(token$, 2))
             CASE "-?" 'Command-line help
                 _DEST _CONSOLE
-                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64 Compiler V" + Version$
+                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
                 PRINT
-                PRINT "Usage: qb64 [switches] <file>"
+                PRINT "Usage: qb64pe [switches] <file>"
                 PRINT
                 PRINT "Options:"
                 PRINT "  <file>                  Source file to load" '                                '80 columns
@@ -13156,7 +13156,7 @@ FUNCTION ParseCMDLineArgs$ ()
             CASE "-s" 'Settings
                 settingsMode = -1
                 _DEST _CONSOLE
-                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64 Compiler V" + Version$
+                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
                 SELECT CASE LCASE$(MID$(token$, 3))
                     CASE ""
                         PRINT "debuginfo     = ";

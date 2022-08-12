@@ -339,7 +339,7 @@ FUNCTION ide2 (ignore)
 
         RunMenuSaveExeWithSource = i
         menu$(m, i) = "Output EXE to Source #Folder": i = i + 1
-        menuDesc$(m, i - 1) = "Toggles compiling program to QB64's folder or to source folder"
+        menuDesc$(m, i - 1) = "Toggles compiling program to QB64-PE's folder or to source folder"
         IF SaveExeWithSource THEN
             menu$(RunMenuID, RunMenuSaveExeWithSource) = CHR$(7) + menu$(RunMenuID, RunMenuSaveExeWithSource)
         END IF
@@ -479,9 +479,9 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Launches the default browser and navigates to the current article on the wiki"
         menu$(m, i) = "-": i = i + 1
         'menu$(m, i) = "Check for #Newer Version...": i = i + 1
-        'menuDesc$(m, i - 1) = "Displays the current version of QB64"
+        'menuDesc$(m, i - 1) = "Displays the current version of QB64-PE"
         menu$(m, i) = "#About...": i = i + 1
-        menuDesc$(m, i - 1) = "Displays the current version of QB64"
+        menuDesc$(m, i - 1) = "Displays the current version of QB64-PE"
         menusize(m) = i - 1
 
         menus = m
@@ -1168,11 +1168,11 @@ FUNCTION ide2 (ignore)
 
         IF WhiteListQB64FirstTimeMsg = 0 THEN
             IF INSTR(_OS$, "WIN") THEN whiteListProcess$ = "and the process 'qb64pe.exe' " ELSE whiteListProcess$ = ""
-            result = idemessagebox("Welcome to QB64", "QB64 is an independently distributed program, and as such" + CHR$(10) + _
-                                                      "both 'qb64" + extension$ + "' and the programs you create with it may" + CHR$(10) + _
+            result = idemessagebox("Welcome to QB64-PE", "QB64-PE is an independently distributed program, and as such" + CHR$(10) + _
+                                                      "both 'qb64pe" + extension$ + "' and the programs you create with it may" + CHR$(10) + _
                                                       "eventually be flagged as false positives by your" + CHR$(10) + _
                                                       "antivirus/antimalware software." + CHR$(10) + CHR$(10) + _
-                                                      "It is advisable to whitelist your whole QB64 folder" + CHR$(10) + _
+                                                      "It is advisable to whitelist your whole 'qb64pe' folder" + CHR$(10) + _
                                                       whiteListProcess$ + "to avoid operation errors.", "#OK;#Don't show this again")
 
             PCOPY 3, 0: SCREEN , , 3, 0
@@ -1684,7 +1684,7 @@ FUNCTION ide2 (ignore)
                                            "source code is saved. You can change that by unchecking the" + CHR$(10) + _
                                            "option 'Output EXE to Source Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
                 ELSE
-                    result = idemessagebox("Run", "Your program will be compiled to your QB64 folder. You can" + CHR$(10) + _
+                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can" + CHR$(10) + _
                                          "change that by checking the option 'Output EXE to Source" + CHR$(10) + _
                                          "Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
                 END IF
@@ -2980,7 +2980,7 @@ FUNCTION ide2 (ignore)
                         GOTO regularTextBox_click
                     ELSEIF ActiveINCLUDELink > 0 THEN
                         'Double-click on an $INCLUDE statement launches that file in
-                        'a separate instance of QB64:
+                        'a separate instance of QB64-PE:
                         p$ = idepath$ + pathsep$
                         f$ = p$ + ActiveINCLUDELinkFile
                         IF _FILEEXISTS(f$) = 0 THEN f$ = ActiveINCLUDELinkFile
@@ -18198,7 +18198,7 @@ SUB IdeMakeFileMenu
     END IF
     menu$(m, i) = "-": i = i + 1
     menu$(m, i) = "E#xit": i = i + 1
-    menuDesc$(m, i - 1) = "Exits QB64"
+    menuDesc$(m, i - 1) = "Exits QB64-PE"
     menusize(m) = i - 1
 END SUB
 
@@ -19718,9 +19718,9 @@ FUNCTION BinaryFormatCheck% (pathToCheck$, pathSepToCheck$, fileToCheck$)
                     _PRINTSTRING (2, idewy - 3), "Preparing to convert..."
                     PCOPY 3, 0
                     IF INSTR(_OS$, "WIN") THEN
-                        SHELL _HIDE "qb64 -x internal/support/converter/QB45BIN.bas -o internal/utilities/QB45BIN"
+                        SHELL _HIDE "qb64pe -x internal/support/converter/QB45BIN.bas -o internal/utilities/QB45BIN"
                     ELSE
-                        SHELL _HIDE "./qb64 -x ./internal/support/converter/QB45BIN.bas -o ./internal/utilities/QB45BIN"
+                        SHELL _HIDE "./qb64pe -x ./internal/support/converter/QB45BIN.bas -o ./internal/utilities/QB45BIN"
                     END IF
                     IF _FILEEXISTS(convertUtility$) THEN GOTO ConvertIt
                     clearStatusWindow 0

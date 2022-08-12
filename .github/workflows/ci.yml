@@ -78,21 +78,21 @@ jobs:
       shell: bash
       run: tests/run_c_tests.sh
 
-    - name: Print QB64 Version
+    - name: Print QB64-PE Version
       run: ./qb64pe -?
 
     - name: Test
       shell: bash
       run: tests/run_tests.sh
 
-    - name: Create QB64 Artifact
+    - name: Create QB64-PE Artifact
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.os }} "${{ env.version }}"
 
       # Note that compiling programs in dist does modify the ./dist and make it
       # dirty, but that's ok because we've already create the .7z or .tar.gz
       # artifacts in the previous step
-    - name: Test QB64 Artifact
+    - name: Test QB64-PE Artifact
       shell: bash
       run: tests/run_dist_tests.sh ./dist/qb64pe ${{ matrix.prefix }}
 

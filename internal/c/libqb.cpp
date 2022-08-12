@@ -27496,7 +27496,7 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
         if (!ExeIcon16)
             ExeIcon16 = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 16, 16, 0);
 
-        // If we have an embedded icon, we'll use it instead of QB64's default
+        // If we have an embedded icon, we'll use it instead of QB64-PE's default
         if (!(passed & 1) && (ExeIcon)) {
             SendMessage(window_handle, WM_SETICON, ICON_BIG, (LPARAM)ExeIcon);
 

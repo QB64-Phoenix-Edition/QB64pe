@@ -50,8 +50,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
         a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
         a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
-        a$ = a$ + "** Unpack and drop the ''curl'' executable into the QB64 folder." + CHR$(10)
-        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the QB64 folder too." + CHR$(10)
+        a$ = a$ + "** Unpack and drop the ''curl'' executable into the '''qb64pe''' folder." + CHR$(10)
+        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the '''qb64pe''' folder too." + CHR$(10)
         Wiki$ = a$: EXIT FUNCTION
     END IF
 
