@@ -4,18 +4,8 @@ extern uint32 matchcol(int32 r, int32 g, int32 b);
 // Stub(s):
 int32 func__loadimage(qbs *f, int32 bpp, int32 passed);
 #else
-
-#    ifdef QB64_BACKSLASH_FILESYSTEM
-#        include "decode\\jpg\\src.c"
-#        include "decode\\bmp\\src.c"
-#        include "decode\\other\\src.c" //PNG, TGA, BMP, PSD, GIF, HDR, PIC, PNM(PPM/PGM)
-#        include "decode\\png\\src.c"
-#    else
-#        include "decode/bmp/src.c"
-#        include "decode/jpg/src.c"
-#        include "decode/other/src.c" //PNG, TGA, BMP, PSD, GIF, HDR, PIC, PNM(PPM/PGM)
-#        include "decode/png/src.c"
-#    endif
+#    include "decode/pcx/src.c"
+#    include "decode/stb/src.c"
 
 int32 func__loadimage(qbs *f, int32 bpp, int32 passed) {
     if (new_error)
@@ -66,61 +56,24 @@ int32 func__loadimage(qbs *f, int32 bpp, int32 passed) {
         return -1;
     }
 
-    // Identify format:
-    static int32 format;
-    format = 0;
-
-    //'.png'
-    if (lof >= 8) {
-        if ((content[0] == 0x89) && (content[1] == 0x50) && (content[2] == 0x4E) && (content[3] == 0x47) && (content[4] == 0x0D) && (content[5] == 0x0A) &&
-            (content[6] == 0x1A) && (content[7] == 0x0A)) {
-            format = 2;
-            goto got_format;
-        } // PNG
-    }     // 8
-
-    //'.bmp'
-    if (lof >= 6) {
-        if ((content[0] == 0x42) && (content[1] == 0x4D)) {
-            if ((*((int32 *)(&content[2]))) == lof) { // length of file
-                format = 3;
-                goto got_format;
-            }
-        } // BMP
-    }     // 6
-
-    //'.jpg' The first two bytes of every JPEG stream are the Start Of Image (SOI) marker values FFh D8h
-    if (lof >= 2) {
-        if ((content[0] == 0xFF) && (content[1] == 0xD8)) {
-            format = 1;
-            goto got_format;
-        } // JP[E]G
-    }     // 2
-
-got_format:
-
     static uint8 *pixels;
     static int32 x, y;
 
-    if (format == 1)
-        pixels = image_decode_jpg(content, lof, &result, &x, &y);
-    if (format == 2)
-        pixels = image_decode_png(content, lof, &result, &x, &y);
-    if (format == 3)
-        pixels = image_decode_bmp(content, lof, &result, &x, &y);
+    // Try to load the image using dr_pcx
+    pixels = image_decode_pcx(content, lof, &result, &x, &y);
+    // If that failed try loading via stb_image
     if (!(result & 1)) {
-        pixels = image_decode_other(content, lof, &result, &x, &y);
+        pixels = image_decode_stb(content, lof, &result, &x, &y);
     }
+
+    // Free the memory holding the file
     free(content);
+
+    // Return failure if nothing was able to load the image
     if (!(result & 1))
         return -1;
 
-    //...
-
     static int32 i;
-    static int32 prevDest;
-    static uint16 scanX, scanY;
-    static uint8 red, green, blue;
 
     i = func__newimage(x, y, 32, 1);
     if (i == -1) {
