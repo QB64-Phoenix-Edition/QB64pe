@@ -126,8 +126,8 @@ if [ -e "./qb64pe" ]; then
   echo "Adding QB64-PE menu entry..."
   cat > ~/.local/share/applications/qb64pe.desktop <<EOF
 [Desktop Entry]
-Name=QB64 Programming IDE
-GenericName=QB64 Programming IDE
+Name=QB64-PE Programming IDE
+GenericName=QB64-PE Programming IDE
 Exec=$_pwd/run_qb64pe.sh
 Icon=$_pwd/$QB64_ICON_PATH/$QB64_ICON_NAME
 Terminal=false
