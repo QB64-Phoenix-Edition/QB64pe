@@ -18873,9 +18873,9 @@ FUNCTION ideupdatehelpbox
                             FOR i = 1 TO LEN(l$)
                                 c = ASC(l$, i)
                                 SELECT CASE c
-                                    CASE 32 '                                        '(space)
+                                    CASE 32 '                                            '(space)
                                         PageName2$ = PageName2$ + "_"
-                                    CASE 34, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("&*+/:<>?\|)
+                                    CASE 34, 36, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("$&*+/:<>?\|)
                                         PageName2$ = PageName2$ + "%" + HEX$(c)
                                     CASE ELSE
                                         PageName2$ = PageName2$ + CHR$(c)

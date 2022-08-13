@@ -19,8 +19,10 @@ case "$buildPlatform" in
         ;;
 esac
 
-# update internal/help from Wiki
+# 1. update internal/help from Wiki
+# 2. cleanup internal/temp from qb64pe run
 ./qb64pe -u
+rm -f ./internal/temp/tempfoldersearch.bin
 
 mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
