@@ -19,15 +19,8 @@ case "$buildPlatform" in
         ;;
 esac
 
-# populate internal/help
-# 1. create folder in dist:
-# 2. copy static pages from repo: to dist:
-# 3. update maintained pages from the Wiki
-# 4. cleanup internal/temp (repo:)
-mkdir -p $DIST_ROOT/internal/help
-cp -rp ./internal/help $DIST_ROOT/internal/
+# update internal/help from Wiki
 ./qb64pe -u
-rm -f ./internal/temp/files.txt
 
 mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
@@ -42,6 +35,7 @@ cp ./qb64pe.1     $DIST_ROOT
 cp ./Makefile     $DIST_ROOT
 
 cp -rp ./internal/source  $DIST_ROOT/internal/
+cp -rp ./internal/help    $DIST_ROOT/internal/
 cp -rp ./internal/support $DIST_ROOT/internal/
 cp -rp ./internal/temp    $DIST_ROOT/internal/
 cp ./internal/config.ini  $DIST_ROOT/internal/
