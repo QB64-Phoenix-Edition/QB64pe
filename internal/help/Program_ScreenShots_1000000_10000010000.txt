@@ -1,0 +1,258 @@
+{{QBDLDATE:08-13-2022}}
+{{QBDLTIME:21:38:19}}
+<center> '''Creating Screenshot Bitmaps inside of your Programs'''</center>
+
+
+''Syntax:'' EightBit Minimum_Column%, Minimum_Row%, Maximum_Column%, Maximum_Row%, NewFileName$
+
+
+* The values of x1%, y%1, x2% and y2% can be any ON SCREEN area coordinates in the screen mode used.
+* You MUST subtract one when using the '''QB64'''  FULL SCREEN [[_WIDTH]] and [[_HEIGHT]] values! Otherwise [[POINT]] will return an [[ERROR Codes|Illegal function error]]! The maximum is one pixel less than the [[SCREEN (statement)| SCREEN]] resolution or the screen dimensions.
+* Both [[SUB]]s can be used in '''QB64''' or QBasic! The FourBit SUB takes about 8 seconds in QB.
+* FourBit SUB creates 4 BPP(16 color) and EightBit SUB creates 8 BPP(256 color) bitmaps.
+
+
+<center>'''QB64 Custom Screens'''</center>
+* See the [[ThirtyTwoBit SUB]] routine to create QB64 screenshots of [[_NEWIMAGE]] screen pages or copy images loaded using  [[_LOADIMAGE]]. Creates 256 or 24/32 bit color bitmaps using the QB64 image and page handles.
+
+
+{{CodeStart}}
+
+'----------------- Freeware by Bob Seguin 2003 -- (TheBOB) --------------------------|
+'|                                                                                   |
+'|   ---- Decreased {{Cl|POINT}} time of 4 bit fullscreen to 8 seconds in QBasic ----       |
+'|                     by Ted Weissgerber July, 2008                                 |
+'|     - Add a special keypress to a game program to create a Screenshot -           |
+'|                                                                                   |
+'--------------------------------- DEMO CODE -----------------------------------------
+
+{{Cl|DO}}: {{Cl|CLS}}
+{{Cl|INPUT}} "ENTER Screen Mode 12 or 13 (0 quits): ", scrn%
+
+{{Cl|IF}} scrn% = 13 {{Cl|THEN}}
+  {{Cl|SCREEN (statement)|SCREEN}} 13              '8 bit (256 colors) only
+  {{Cl|LINE}} (0, 0)-(319, 199), 13, BF
+  {{Cl|CIRCLE}} (160, 100), 50, 11
+  {{Cl|PAINT}} {{Cl|STEP}}(0, 0), 9, 11
+  Start! = {{Cl|TIMER}}
+  EightBIT 0, 0, 319, 199, "Purple8"
+
+{{Cl|ELSEIF}} scrn% = 12 {{Cl|THEN}}
+  {{Cl|SCREEN (statement)|SCREEN}} 12              '4 bit(16 colors) only
+  {{Cl|LINE}} (0, 0)-(639, 479), 13, BF
+  {{Cl|LINE}} (100, 100)-(500, 400), 12, BF
+  {{Cl|CIRCLE}} (320, 240), 100, 11
+  {{Cl|PAINT}} {{Cl|STEP}}(0, 0), 9, 11
+  Start! = {{Cl|TIMER}}
+  FourBIT 0, 0, 639, 479, "Purple4"  '469, 239
+{{Cl|ELSE}} : {{Cl|SYSTEM}}
+{{Cl|END IF}}
+
+Finish! = {{Cl|TIMER}}  'elapsed times valid for QB only
+{{Cl|PRINT}} "Elapsed time ="; Finish! - Start!; "secs."; "Press Escape to quit!"
+{{Cl|DO}}: K$ = {{Cl|INKEY$}}: {{Cl|LOOP}} {{Cl|UNTIL}} K$ <> ""
+{{Cl|LOOP}} {{Cl|UNTIL}} K$ = {{Cl|CHR$}}(27)
+{{Cl|SYSTEM}}      
+
+            '****************  End DEMO code ***********************
+{{CodeEnd}}
+{{CodeStart}} 
+''
+{{Cl|SUB}} EightBit (x1%, y1%, x2%, y2%, Filename$)   'SCREEN 13(256 color) bitmap maker
+'NOTE: Adjust x2% = 319 and y2% = 199 for legal POINTs when fullscreen in SCREEN 13 
+{{Cl|DIM}} FileCOLORS%(1 {{Cl|TO}} 768)
+{{Cl|DIM}} Colors8%(255)
+{{Cl|IF}} x1% > x2% {{Cl|THEN}} {{Cl|SWAP}} x1%, x2%
+{{Cl|IF}} y1% > y2% {{Cl|THEN}} {{Cl|SWAP}} y1%, y2%
+{{Cl|IF}} {{Cl|INSTR}}(Filename$, ".BMP") = 0 {{Cl|THEN}}
+Filename$ = {{Cl|RTRIM$}}({{Cl|LEFT$}}(Filename$, 8)) + ".BMP"
+{{Cl|END IF}}
+
+FileTYPE$ = "BM"
+Reserved1% = 0
+Reserved2% = 0
+OffsetBITS& = 1078
+InfoHEADER& = 40
+PictureWIDTH& = (x2% - x1%) + 1
+PictureDEPTH& = (y2% - y1%) + 1
+NumPLANES% = 1
+BPP% = 8
+Compression& = 0
+WidthPELS& = 3780
+DepthPELS& = 3780
+NumCOLORS& = 256
+
+{{Cl|IF}} (PictureWIDTH& {{Cl|AND}} 3) {{Cl|THEN}} ZeroPAD$ = {{Cl|SPACE$}}(4 - (x& {{Cl|AND}} 3))
+
+ImageSIZE& = (PictureWIDTH& + {{Cl|LEN}}(ZeroPAD$)) * PictureDEPTH&
+FileSize& = ImageSIZE& + OffsetBITS&
+
+{{Cl|OUT}} {{Cl|&H}}3C7, 0
+{{Cl|FOR}} n = 1 {{Cl|TO}} 768 {{Cl|STEP}} 3
+  FileCOLORS%(n) = {{Cl|INP}}({{Cl|&H}}3C9)
+  FileCOLORS%(n + 1) = {{Cl|INP}}({{Cl|&H}}3C9)
+  FileCOLORS%(n + 2) = {{Cl|INP}}({{Cl|&H}}3C9)
+{{Cl|NEXT}} n
+f% = {{Cl|FREEFILE}}
+{{Cl|OPEN}} Filename$ {{Cl|FOR (file statement)|FOR}} {{Cl|BINARY}} {{Cl|AS}} #f%
+
+{{Cl|PUT}} #f%, , FileTYPE$
+{{Cl|PUT}} #f%, , FileSize&
+{{Cl|PUT}} #f%, , Reserved1% 'should be zero
+{{Cl|PUT}} #f%, , Reserved2% 'should be zero
+{{Cl|PUT}} #f%, , OffsetBITS&
+{{Cl|PUT}} #f%, , InfoHEADER&
+{{Cl|PUT}} #f%, , PictureWIDTH&
+{{Cl|PUT}} #f%, , PictureDEPTH&
+{{Cl|PUT}} #f%, , NumPLANES%
+{{Cl|PUT}} #f%, , BPP%
+{{Cl|PUT}} #f%, , Compression&
+{{Cl|PUT}} #f%, , ImageSIZE&
+{{Cl|PUT}} #f%, , WidthPELS&
+{{Cl|PUT}} #f%, , DepthPELS&
+{{Cl|PUT}} #f%, , NumCOLORS&
+{{Cl|PUT}} #f%, , SigCOLORS&     '51 to 54
+
+u$ = " "
+{{Cl|FOR}} n% = 1 {{Cl|TO}} 768 {{Cl|STEP}} 3  '{{Cl|PUT}} as BGR order colors
+  Colr$ = {{Cl|CHR$}}(FileCOLORS%(n% + 2) * 4)
+  {{Cl|PUT}} #f%, , Colr$
+  Colr$ = {{Cl|CHR$}}(FileCOLORS%(n% + 1) * 4)
+  {{Cl|PUT}} #f%, , Colr$
+  Colr$ = {{Cl|CHR$}}(FileCOLORS%(n%) * 4)
+  {{Cl|PUT}} #f%, , Colr$
+  {{Cl|PUT}} #f%, , u$ 'Unused byte
+{{Cl|NEXT}} n%
+
+{{Cl|FOR}} y = y2% {{Cl|TO}} y1% {{Cl|STEP}} -1   'place bottom up
+  {{Cl|FOR}} x = x1% {{Cl|TO}} x2%
+    a$ = {{Cl|CHR$}}({{Cl|POINT}}(x, y))
+    Colors8%({{Cl|ASC}}(a$)) = 1
+    {{Cl|PUT}} #f%, , a$
+  {{Cl|NEXT}} x
+  {{Cl|PUT}} #f%, , ZeroPAD$
+{{Cl|NEXT}} y
+
+{{Cl|FOR}} n = 0 {{Cl|TO}} 255
+  {{Cl|IF}} Colors8%(n) = 1 {{Cl|THEN}} SigCOLORS& = SigCOLORS& + 1
+{{Cl|NEXT}} n
+
+{{Cl|PUT}} #f%, 51, SigCOLORS&
+{{Cl|CLOSE}} #f%
+{{Cl|END SUB}}    
+
+{{CodeEnd}}
+{{CodeStart}}
+
+''
+{{Cl|SUB}} FourBit (x1%, y1%, x2%, y2%, Filename$)   ' SCREEN 12(16 color) bitmap maker
+       'fullscreen takes about 8 seconds in QB
+'NOTE: Adjust x2% = 639 and y2% = 479 for legal POINTs when fullscreen in SCREEN 12 
+{{Cl|DIM}} FileCOLORS%(1 {{Cl|TO}} 48)
+{{Cl|DIM}} Colors4%(0 {{Cl|TO}} 15)
+{{Cl|IF}} x1% > x2% {{Cl|THEN}} {{Cl|SWAP}} x1%, x2%
+{{Cl|IF}} y1% > y2% {{Cl|THEN}} {{Cl|SWAP}} y1%, y2%
+{{Cl|IF}} {{Cl|INSTR}}(Filename$, ".BMP") = 0 {{Cl|THEN}}
+    Filename$ = {{Cl|RTRIM$}}({{Cl|LEFT$}}(Filename$, 8)) + ".BMP"
+{{Cl|END IF}}
+  
+FileTYPE$ = "BM"
+Reserved1% = 0
+Reserved2% = 0
+OffsetBITS& = 118
+InfoHEADER& = 40
+PictureWIDTH& = (x2% - x1%) + 1
+PictureDEPTH& = (y2% - y1%) + 1
+NumPLANES% = 1
+BPP% = 4
+Compression& = 0
+WidthPELS& = 3780
+DepthPELS& = 3780
+NumCOLORS& = 16
+
+{{Cl|IF}} PictureWIDTH& {{Cl|MOD}} 8 <> 0 {{Cl|THEN}}
+   ZeroPAD$ = {{Cl|SPACE$}}((8 - PictureWIDTH& {{Cl|MOD}} 8) \ 2)
+{{Cl|END IF}}
+
+ImageSIZE& = (((PictureWIDTH& + {{Cl|LEN}}(ZeroPAD$)) * PictureDEPTH&) + .1) / 2
+FileSize& = ImageSIZE& + OffsetBITS&
+  
+{{Cl|OUT}} {{Cl|&H}}3C7, 0                    'start at color 0
+{{Cl|FOR}} n = 1 {{Cl|TO}} 48 {{Cl|STEP}} 3
+  FileCOLORS%(n) = {{Cl|INP}}({{Cl|&H}}3C9)
+  FileCOLORS%(n + 1) = {{Cl|INP}}({{Cl|&H}}3C9)
+  FileCOLORS%(n + 2) = {{Cl|INP}}({{Cl|&H}}3C9)
+{{Cl|NEXT}} n
+f% = {{Cl|FREEFILE}}
+{{Cl|OPEN}} Filename$ {{Cl|FOR (file statement)|FOR}} {{Cl|BINARY}} {{Cl|AS}} #f%
+                                   'Header bytes
+{{Cl|PUT}} #f%, , FileTYPE$                   '2 '1 to 2
+{{Cl|PUT}} #f%, , FileSize&                   '4
+{{Cl|PUT}} #f%, , Reserved1% 'should be zero  '2
+{{Cl|PUT}} #f%, , Reserved2% 'should be zero  '2
+{{Cl|PUT}} #f%, , OffsetBITS&                 '4
+{{Cl|PUT}} #f%, , InfoHEADER&                 '4
+{{Cl|PUT}} #f%, , PictureWIDTH&               '4
+{{Cl|PUT}} #f%, , PictureDEPTH&               '4
+{{Cl|PUT}} #f%, , NumPLANES%                  '2
+{{Cl|PUT}} #f%, , BPP%                        '2
+{{Cl|PUT}} #f%, , Compression&                '4
+{{Cl|PUT}} #f%, , ImageSIZE&                  '4
+{{Cl|PUT}} #f%, , WidthPELS&                  '4
+{{Cl|PUT}} #f%, , DepthPELS&                  '4
+{{Cl|PUT}} #f%, , NumCOLORS&                  '4
+{{Cl|PUT}} #f%, , SigCOLORS&                  '4 '51 - 54
+
+u$ = " "             'unused byte
+{{Cl|FOR}} n% = 1 {{Cl|TO}} 46 {{Cl|STEP}} 3   '{{Cl|PUT (graphics statement)|PUT}} as BGR order colors
+  Colr$ = {{Cl|CHR$}}(FileCOLORS%(n% + 2) * 4)
+  {{Cl|PUT}} #f%, , Colr$
+  Colr$ = {{Cl|CHR$}}(FileCOLORS%(n% + 1) * 4)
+  {{Cl|PUT}} #f%, , Colr$
+  Colr$ = {{Cl|CHR$}}(FileCOLORS%(n%) * 4)
+  {{Cl|PUT}} #f%, , Colr$
+  {{Cl|PUT}} #f, , u$ 'add Unused byte
+{{Cl|NEXT}} n%
+
+{{Cl|FOR}} y = y2% {{Cl|TO}} y1% {{Cl|STEP}} -1    'Place from bottom up
+  {{Cl|FOR}} x = x1% {{Cl|TO}} x2% {{Cl|STEP}} 2   'nibble steps
+    HiX = {{Cl|POINT}}(x, y): Colors4%(HiX) = 1     'added here
+    LoX = {{Cl|POINT}}(x + 1, y): Colors4%(LoX) = 1
+    HiNIBBLE$ = {{Cl|HEX$}}(HiX)
+    LoNIBBLE$ = {{Cl|HEX$}}(LoX)
+    Hex{{Cl|VAL}}$ = "{{Cl|&H}}" + HiNIBBLE$ + LoNIBBLE$
+    a$ = {{Cl|CHR$}}({{Cl|VAL}}(Hex{{Cl|VAL}}$))
+    {{Cl|PUT}} #f%, , a$
+  {{Cl|NEXT}} x
+  {{Cl|PUT}} #f%, , ZeroPAD$
+{{Cl|NEXT}} y
+
+{{Cl|FOR}} n = 0 {{Cl|TO}} 15
+  {{Cl|IF}} Colors4%(n) = 1 {{Cl|THEN}} SigCOLORS& = SigCOLORS& + 1
+{{Cl|NEXT}} n
+{{Cl|PUT}} #f%, 51, SigCOLORS&     
+
+{{Cl|CLOSE}} #f%
+'{{Cl|BEEP}}         'optional sound not needed in QB64 as speed is fast
+{{Cl|END SUB}}   
+
+{{CodeEnd}}
+
+
+''See Examples:''
+
+*{{KW|SAVEIMAGE}} (QB64 full screen Image to Bitmap SUB by Galleon)
+
+* {{KW|ThirtyTwoBit SUB}} (QB64 saves partial Image area to bitmap)
+
+*{{KW|Bitmaps}}
+
+
+''See also:''
+
+* [[_LOADIMAGE]]
+* [[POINT]], [[PUT]]
+
+
+
+{{PageNavigation}}

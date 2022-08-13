@@ -1,14 +1,14 @@
 //----------------------------------------------------------------------------------------------------
-//    ___  ___ ___ ___     _          _ _       ___           _
-//   / _ \| _ ) _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                      |___/
+//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
+//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
+//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
+//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
+//                                                                |___/
 //
-//	QBPE Audio Engine powered by miniaudio (https://miniaud.io/)
+//  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//	Copyright (c) 2022 Samuel Gomes
-//	https://github.com/a740g
+//  Copyright (c) 2022 Samuel Gomes
+//  https://github.com/a740g
 //
 //-----------------------------------------------------------------------------------------------------
 
@@ -421,6 +421,25 @@ struct SoundHandle {
     SampleFrameBlockQueue *rawQueue; // Raw sample frame queue
     void *memLockOffset;             // This is a pointer from new_mem_lock()
     uint64 memLockId;                // This is mem_lock_id created by new_mem_lock()
+
+    SoundHandle(const SoundHandle &) = delete;      // No default copy constructor
+    SoundHandle &operator=(SoundHandle &) = delete; // No assignment operator
+
+    /// <summary>
+    ///	Just initializes some important members.
+    /// 'inUse' will be set to true by AllocateSoundHandle().
+    /// This is done here, as well as slightly differently in AllocateSoundHandle() for safety.
+    /// </summary>
+    SoundHandle() {
+        isUsed = false;
+        type = SoundType::None;
+        autoKill = false;
+        rawQueue = nullptr;
+        ZERO_VARIABLE(maSound);
+        maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
+        memLockId = INVALID_MEM_LOCK;
+        memLockOffset = nullptr;
+    }
 };
 
 /// <summary>
@@ -438,16 +457,18 @@ struct AudioEngine {
     int32_t sndInternal;                                // Internal sound handle that we will use for Play(), Beep() & Sound()
     int32_t sndInternalRaw;                             // Internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // This is the audio handle list used by the engine and by everything else
+    int32_t lowestFreeHandle;                           // This is the lowest handle then was recently freed. We'll start checking for free handles from here
 
     AudioEngine(const AudioEngine &) = delete;      // No default copy constructor
     AudioEngine &operator=(AudioEngine &) = delete; // No assignment operator
 
     /// <summary>
-    ///	Just initializes some important members
+    ///	Just initializes some important members.
     /// </summary>
     AudioEngine() {
         isInitialized = initializationFailed = false;
         sampleRate = 0;
+        lowestFreeHandle = 0;
         sndInternal = sndInternalRaw = INVALID_SOUND_HANDLE;
     }
 
@@ -464,7 +485,7 @@ struct AudioEngine {
     /// We will however, be good citizens and will also 'delete' the objects when snd_un_init gets called.
     /// All this means that a sloppy programmer may be able to grow the vector and eventually the system may run out of memory and crash.
     /// But that's ok. Sloppy programmers (like me) must be punished until they learn! XD
-    /// BTW, int32 was a bad choice for handles. Oh well...
+    /// This also increments 'lowestFreeHandle' to allocated handle + 1.
     /// </summary>
     /// <returns>Returns a non-negative handle if successful</returns>
     int32_t AllocateSoundHandle() {
@@ -473,12 +494,24 @@ struct AudioEngine {
 
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
-        // Scan through the vector and return a slot that is not being used
-        // This loop should not execute if size is 0
-        for (h = 0; h < vectorSize; h++) {
+        // Scan the vector starting from lowestFreeHandle
+        // This will help us quickly allocate a free handle and should be a decent optimization for SndPlayCopy()
+        for (h = lowestFreeHandle; h < vectorSize; h++) {
             if (!soundHandles[h]->isUsed) {
-                AUDIO_DEBUG_PRINT("Sound handle %i recycled", h);
+                AUDIO_DEBUG_PRINT("Recent sound handle %i recycled", h);
                 break;
+            }
+        }
+
+        if (h >= vectorSize) {
+            // Scan through the entire vector and return a slot that is not being used
+            // Ideally this should execute in extremely few (if at all) senarios
+            // Also, this loop should not execute if size is 0
+            for (h = 0; h < vectorSize; h++) {
+                if (!soundHandles[h]->isUsed) {
+                    AUDIO_DEBUG_PRINT("Sound handle %i recycled", h);
+                    break;
+                }
             }
         }
 
@@ -499,10 +532,12 @@ struct AudioEngine {
                 return INVALID_SOUND_HANDLE;
             }
 
-            h = newVectorSize - 1; // The handle is simply newsize - 1
+            h = newVectorSize - 1; // The handle is simply newVectorSize - 1
 
             AUDIO_DEBUG_PRINT("Sound handle %i created", h);
         }
+
+        AUDIO_DEBUG_CHECK(soundHandles[h]->isUsed == false);
 
         // Initializes a sound handle that was just allocated.
         // This will set it to 'in use' after applying some defaults.
@@ -519,6 +554,8 @@ struct AudioEngine {
 
         AUDIO_DEBUG_PRINT("Sound handle %i returned", h);
 
+        lowestFreeHandle = h + 1; // Set lowestFreeHandle to allocated handle + 1
+
         return (int32_t)(h);
     }
 
@@ -527,6 +564,7 @@ struct AudioEngine {
     /// If the sound is playing or looping, it will be stopped.
     /// If the sound is a stream of raw samples then it is stopped and freed.
     /// Finally the handle is invalidated and put-up for recycling.
+    /// If the handle being freed is lower than 'lowestFreeHandle' then this saves the handle to 'lowestFreeHandle'.
     /// </summary>
     /// <param name="handle">A sound handle</param>
     void FreeSoundHandle(int32_t handle) {
@@ -554,14 +592,20 @@ struct AudioEngine {
                 AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
             }
 
-            // Now simply set the 'isUsed' member to false
-            soundHandles[handle]->isUsed = false;
-
+            // Invalidate any memsound stuff
             if (soundHandles[handle]->memLockOffset) {
                 free_mem_lock((mem_lock *)soundHandles[handle]->memLockOffset);
                 soundHandles[handle]->memLockId = INVALID_MEM_LOCK;
                 soundHandles[handle]->memLockOffset = nullptr;
             }
+
+            // Now simply set the 'isUsed' member to false so that the handle can be recycled
+            soundHandles[handle]->isUsed = false;
+            soundHandles[handle]->type = SoundType::None;
+
+            // Save the free hanndle to lowestFreeHandle if it is lower than lowestFreeHandle
+            if (handle < lowestFreeHandle)
+                lowestFreeHandle = handle;
 
             AUDIO_DEBUG_PRINT("Sound handle %i marked as free", handle);
         }

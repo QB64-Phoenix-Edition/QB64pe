@@ -1,0 +1,87 @@
+{{QBDLDATE:08-13-2022}}
+{{QBDLTIME:21:38:41}}
+<center>'''The SAVEIMAGE SUB program to create [[Bitmaps]] of other type Images or Screenshots'''</center>
+
+
+<center>'''Bitmaps''' are image files with the .BMP file name extension.</center>
+
+
+* Bitmaps can be 1, 4, 8 or 24/32 bits per pixel(BPP) color palettes. QB64 is capable of working with high color bitmaps.
+* Screen or Image width and height calculations are automatically made using the image handle value.
+* Use an image handle value of 0(zero) to get a screen shot of the entire active program screen. 
+* '''Note: SCREEN 0 text mode cannot be screen saved in QBasic or QB64.'''
+
+
+''The following example uses a SUB program created to save a 32 bit JPEG image as a bitmap using QB64's graphic functions:''
+
+: Module Demo Code: Change the _LOADIMAGE filename to an image file you can access.
+{{CodeStart}}
+i& = {{Cl|_LOADIMAGE}}("nice.jpg",32) ' loads a 32 bit .JPG file image
+SaveImage i&, "nice"      'saves it as .BMP file "nice.bmp"
+'SaveImage 0, "screenshot" 'saves entire program screen as "screenshot.bmp"
+{{Cl|END}}
+{{CodeEnd}}
+{{CodeStart}}
+{{Cl|SUB}} SaveImage (image {{Cl|AS}} {{Cl|LONG}}, filename {{Cl|AS}} {{Cl|STRING}})
+bytesperpixel& = {{Cl|_PIXELSIZE}}(image&)
+{{Cl|IF}} bytesperpixel& = 0 {{Cl|THEN}} {{Cl|PRINT}} "Text modes unsupported!": {{Cl|END}}
+{{Cl|IF}} bytesperpixel& = 1 {{Cl|THEN}} bpp& = 8 {{Cl|ELSE}} bpp& = 24
+x& = {{Cl|_WIDTH (function)|_WIDTH}}(image&)
+y& = {{Cl|_HEIGHT}}(image&)
+b$="BM????QB64????"+{{Cl|MKL$}}(40)+{{Cl|MKL$}}(x&)+{{Cl|MKL$}}(y&)+{{Cl|MKI$}}(1)+{{Cl|MKI$}}(bpp&)+{{Cl|MKL$}}(0)+"????"+{{Cl|STRING$}}(16, 0) 'partial BMP header info(???? to be filled later)
+{{Cl|IF}} bytesperpixel& = 1 {{Cl|THEN}}
+  {{Cl|FOR...NEXT|FOR}} c& = 0 {{Cl|TO}} 255 ' read BGR color settings from JPG image + 1 byte spacer({{Cl|CHR$}}(0))
+    cv& = {{Cl|_PALETTECOLOR (function)|_PALETTECOLOR}}(c&, image&) ' color attribute to read. 
+    b$ = b$ +{{Cl|CHR$}}({{Cl|_BLUE32}}(cv&))+{{Cl|CHR$}}({{Cl|_GREEN32}}(cv&))+{{Cl|CHR$}}({{Cl|_RED32}}(cv&))+{{Cl|CHR$}}(0) 'spacer byte
+  {{Cl|NEXT}}
+{{Cl|END IF}}
+{{Cl|MID$}}(b$, 11, 4) = {{Cl|MKL$}}({{Cl|LEN}}(b$)) ' image pixel data offset(BMP header)
+lastsource& = {{Cl|_SOURCE}}
+{{Cl|_SOURCE}} image&
+{{Cl|IF}} ((x& * 3) {{Cl|MOD}} 4) {{Cl|THEN}} padder$ = {{Cl|STRING$}}(4 - ((x& * 3) {{Cl|MOD}} 4), 0)
+{{Cl|FOR...NEXT|FOR}} py& = y& - 1 {{Cl|TO}} 0 {{Cl|STEP}} -1 ' read JPG image pixel color data 
+  r$ = ""
+  {{Cl|FOR...NEXT|FOR}} px& = 0 {{Cl|TO}} x& - 1
+   c& = {{Cl|POINT}}(px&, py&) 'POINT 32 bit values are large {{Cl|LONG}} values 
+   {{Cl|IF}} bytesperpixel& = 1 {{Cl|THEN}} r$ = r$ + {{Cl|CHR$}}(c&) {{Cl|ELSE}} r$ = r$ + {{Cl|LEFT$}}({{Cl|MKL$}}(c&), 3)
+  {{Cl|NEXT}} px&  
+  d$ = d$ + r$ + padder$
+{{Cl|NEXT}} py&
+{{Cl|_SOURCE}} lastsource&
+{{Cl|MID$}}(b$, 35, 4) = {{Cl|MKL$}}({{Cl|LEN}}(d$)) ' image size(BMP header)
+b$ = b$ + d$ ' total file data bytes to create file
+{{Cl|MID$}}(b$, 3, 4) = {{Cl|MKL$}}({{Cl|LEN}}(b$)) ' size of data file(BMP header)
+{{Cl|IF}} {{Cl|LCASE$}}({{Cl|RIGHT$}}(filename$, 4)) <> ".bmp" {{Cl|THEN}} ext$ = ".bmp"
+f& = {{Cl|FREEFILE}}
+{{Cl|OPEN}} filename$ + ext$ {{Cl|FOR (file statement)|FOR}} {{Cl|OUTPUT}} {{Cl|AS}} #f&: {{Cl|CLOSE}} #f& ' erases an existing file
+{{Cl|OPEN}} filename$ + ext$ {{Cl|FOR (file statement)|FOR}} {{Cl|BINARY}} {{Cl|AS}} #f&
+{{Cl|PUT}} #f&,,b$
+{{Cl|CLOSE}} #f&
+{{Cl|END SUB}} '' ''     
+{{CodeEnd}}
+{{small|Code by Galleon}}
+<center>'''This SUB program can also be [[$INCLUDE|Included]] with any program!'''</center>
+
+
+''SUB Explanation:'' b$ and d$ assemble the entire string of data to create a bitmap file. Some of the bitmap header info is placed later using a [[MID$ (statement)]] to add final header numerical data converted to [[ASCII]] characters by [[MKI$]] or [[MKL$]]. 
+
+After the header, the [[RGB]] color settings are created using [[ASCII]] characters read backwards as Blue, Green, Red and CHR$(0) as a spacer. [[MKL$]] places the byte values in reverse order too. Bitmaps and icons require that format. [[LEFT$]] trims off the [[_ALPHA]] byte.
+
+The actual image is read as pixel attributes from the image bottom to the top for proper formatting with zero padding when necessary.
+
+'''* Note:''' 32-bit images will be saved as 24-bit BMP files. All palette indexed images/modes will be saved as 256 color BMP files. Text modes cannot be saved. As QB64 has no official _SAVEIMAGE command yet and QBasic programs to save screen-shots don't work in QB64 yet this is a very useful alternative.
+
+
+
+''See also:''
+* [[_LOADIMAGE]], [[_ICON]], [[$EXEICON]]
+* [[SCREEN (statement)]]
+* [[TYPE]], [[MKI$]], [[MKL$]]
+* [[Program ScreenShots]] {{text|(member SUB program)}}
+* [[ThirtyTwoBit SUB]] {{text|(member SUB captures selected area)}}
+* [[ThirtyTwoBit MEM SUB]] {{text|(Fast SUB uses memory instead of POINT)}}
+* [[SaveIcon32]] {{text|(converts any image to icon)}}
+* [[Bitmaps]], [[Icons and Cursors]]
+
+
+{{PageNavigation}}

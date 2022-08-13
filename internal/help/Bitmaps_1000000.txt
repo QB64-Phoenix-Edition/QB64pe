@@ -1,0 +1,351 @@
+{{QBDLDATE:08-13-2022}}
+{{QBDLTIME:21:37:51}}
+<center>'''Bitmaps''' are image files with the .BMP file name extension.</center>
+
+{| align="right" style="max-width:25%;"
+|  __TOC__
+|}
+* Bitmaps can use 1, 4, 8 or 24/32 bits per pixel(BPP) color palettes.
+* Unlike QBasic, QB64 is capable of working with 24 bit per pixel color(16 million) bitmaps and can create 32 bit screens to use them with the [[_NEWIMAGE]] function.
+* Text SCREEN mode 0 cannot be screen saved in QBasic or QB64.
+* The structure of the Bitmap header can be placed in a [[TYPE]] definition as below. This information can be used to find out the bitmap's '''Width''' and '''Height''' dimensions, '''Bits Per Pixel''' used and the '''offset''' of the actual image pixel data.  
+* It should be noted that '''QB64's''' [[_LOADIMAGE]] function can load bitmaps and other type of images directly into a program and be placed simply by using [[_PUTIMAGE]]. [[_NEWIMAGE]] can create 256 or 32 bit [[SCREEN (statement)|SCREEN]] modes to display those images.
+
+==Bitmap Header==
+{{TextStart}}
+'Bitmap.BI can be included at start of program
+
+{{Cb|TYPE}} BMPEntry              '''' Description                          Bytes    QB64 Function''' 
+   ID AS {{Cb|STRING}} * 2        ' File ID("BM" text or 19778 AS Integer) 2      {{Cb|CVI}}("BM")
+   Size AS {{Cb|LONG}}            ' Total Size of the file                 4      {{Cb|LOF}}
+   Res1 AS {{Cb|INTEGER}}         ' Reserved 1 always 0                    2 
+   Res2 AS {{Cb|INTEGER}}         ' Reserved 2 always 0                    2 
+   Offset AS {{Cb|LONG}}          ' Start offset of image pixel data       4      (add one for {{Cb|GET}})
+{{Cb|END TYPE}}                   '                                 Total 14
+
+{{Cb|TYPE}} BMPHeader          'BMP header also used in Icon and Cursor files(.ICO and .CUR)
+   Hsize AS {{Cb|LONG}}           ' Info header size (always 40)           4 
+   PWidth AS {{Cb|LONG}}          ' Image width                            4      {{Cb|_WIDTH (function)|_WIDTH}}(handle&)
+   PDepth AS {{Cb|LONG}}          ' Image height (doubled in icons)        4      {{Cb|_HEIGHT}}(handle&)
+   Planes AS {{Cb|INTEGER}}       ' Number of planes (normally 1)          2 
+   BPP AS {{Cb|INTEGER}}          ' Bits per pixel(palette 1, 4, 8, 24)    2      {{Cb|_PIXELSIZE}}(handle&)
+   Compression AS {{Cb|LONG}}     ' Compression type(normally 0)           4
+   ImageBytes AS {{Cb|LONG}}      ' (Width + padder) * Height              4
+   Xres AS {{Cb|LONG}}            ' Width in PELS per metre(normally 0)    4
+   Yres AS {{Cb|LONG}}            ' Depth in PELS per metre(normally 0)    4
+   NumColors AS {{Cb|LONG}}       ' Number of Colors(normally 0)           4       2 ^ BPP 
+   SigColors AS {{Cb|LONG}}       ' Significant Colors(normally 0)         4
+{{Cb|END TYPE}}                   '                 Total Header bytes =  40 
+{{TextEnd}}
+{{CodeStart}}
+'{{Cl|$INCLUDE}}: 'Bitmap.BI'  'use only when including a BI file 
+ 
+{{Cl|DIM}} {{Cl|SHARED}} ENT AS BMPEntry
+{{Cl|DIM}} {{Cl|SHARED}} BMP AS BMPHeader 
+{{Cl|LINE INPUT}} "Enter a bitmap file name: ", file$ '<<<< enter a bitmap file name
+
+{{Cl|OPEN}} file$ FOR {{Cl|BINARY}} AS #1
+{{Cl|GET|GET #}}1, 1, ENT   'get entry header(1 is first file byte in QB64 and Qbasic)
+{{Cl|GET|GET #}}1, , BMP    'get bitmap header information 
+
+PRINT "Size:"; ENT.Size; "bytes, Offset:"; ENT.Offset
+PRINT BMP.PWidth; "X"; BMP.PDepth
+PRINT "BPP ="; BMP.BPP 
+{{Cl|CLOSE}} #1 
+{{CodeEnd}}
+:''Explanation:'' Use two [[GET]]s to read all of the header information from the start of the bitmap file opened FOR [[BINARY]]. It reads all 54 bytes as [[STRING]], [[INTEGER]] and [[LONG]] type DOT variable values. [[TYPE]] DOT variables do not require type suffixes!
+
+
+''Snippet:'' Use the DOT variable name values like this [[GET (graphics statement)]] after you load the bitmap image to the screen:
+{{TextStart}}
+{{Cb|GET (graphics statement)|GET}} (0, 0)-(BMP.PWidth - 1, BMP.PDepth - 1), Image(48) 'index after 16 * 3 RGB palette colors(0 to 47) 
+{{CodeEnd}}
+
+The bitmap image is now stored in an {{KW|Arrays|array}} to {{KW|BSAVE}} to a file. The RGB color information follows the file header as [[ASCII]] character values read using {{KW|ASC}}. The color values could be indexed at the start of the Array with the image being offset to: index = NumberOfColors * 3. As determined by the {{KW|SCREEN (statement)|SCREEN}} mode used. In SCREEN 13(256 colors) the index would be 768.
+
+
+{{WhiteStart}}                               '''BITMAP COMPRESSION METHODS'''
+
+'''Value	Identified by	Compression method	Comments'''
+  0	BI_RGB	            none	       Most common
+  1	BI_RLE8	        * RLE 8-bit/pixel      Used only with 8-bit/pixel bitmaps
+  2	BI_RLE4	        * RLE 4-bit/pixel      Used only with 4-bit/pixel bitmaps
+  3	BI_BITFIELDS	  Bit field            Used only with 16 and 32-bit/pixel bitmaps.
+  4	BI_JPEG	          JPEG	               Bitmap contains a JPEG image
+  5	BI_PNG	          PNG	               Bitmap contains a PNG image
+      
+      * RLE stands for ''Run Length Encoding'' which counts the number of consecutive pixels 
+        that are of the same color instead of assigning each pixel color separately. 
+{{WhiteEnd}}
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==Image Data==
+{{WhiteStart}}                                     '''Windows/OS2 Bitmaps'''
+
+                                         ┌─────────┐
+                                         │BMP Entry│
+                                         │ 14 Byte │
+                                         │─────────│
+                                         │ Bitmap  │   
+                                         │ Header  │
+                                         │ 40 Byte │
+                                         └────┬────┘
+                               ┌─────────┬────┴────┬─────────┐
+                               │     ┌───┴───┐ ┌───┴───┐     │
+                               │     │ 4 BPP │ │ 8 BPP │     │ 
+                               │     │Palette│ │Palette│     │
+                               │     │64 Byte│ │1024 B │     │
+                           ┌───┴───┐ └───┬───┘ └───┬───┘ ┌───┴───┐      
+                           │ 1 BPP │ ┌───┴───┐ ┌───┴───┐ │24 BPP │
+                           │ IMAGE │ │ IMAGE │ │ IMAGE │ │ IMAGE │
+                           │ DATA  │ │ DATA  │ │ DATA  │ │ DATA  │
+                           │(W*H)\8│ │(W*H)\2│ │(W*H)*1│ │(W*H)*3│
+                           │ bytes │ │ bytes │ │ bytes │ │ bytes │
+                           └───────┘ └───────┘ └───────┘ └───────┘
+{{WhiteEnd}} 
+<center>'''Bits Per Pixel (BPP)'''</center>
+BPP returns '''1 bit'''(Black and white), '''4 bit'''(16 colors), '''8 bit'''(256 colors) or '''24 bit'''(16 million colors) for each pixel. In QBasic 24 bit can only be in greyscale, but QB64 can display them as True Color. 24 bit is also often referred to as 32 bit, but each pixel uses three bytes of information for the Red, Green and Blue color intensity settings. Intensity settings are read as [[ASCII]] characters using [[ASC]].
+
+
+<center>'''Palette Data (4 and 8 Bit Only)'''</center>
+* '''Attribute''' color intensities for '''4''' and '''8 BPP''' are set by the bitmap itself using the '''Palette data''' immediately following the bitmap header. The data is read as Blue, Green and Red color intensities with a one byte padder following each BGR setting. This is true for ALL Windows/OS2 bitmap color intensities including 24 bit, which reads the intensities directly from the '''image pixel data'''!
+<center>'''The Four Bit Palette is 64 bytes and the Eight Bit is 1024 bytes. One Bit and 24/32 Bit have no palette data!'''</center>
+<center>'''Note: [[_COPYPALETTE]] may be required to adapt the [[SCREEN]] palette to the custom colors of the bitmap.</center>
+
+
+: Why BGR instead of RGB? Because the [[LONG]] [[_RGBA32]] value with 0 [[_ALPHA]] is written to a file as 4 [[MKL$]] [[ASCII]] characters.
+{{CodeStart}}
+{{Cl|SCREEN}} 13 '8 bit, 256 color screen mode
+Q$ = {{Cl|CHR$}}(34)
+{{Cl|INPUT}} "Enter a color number 1 to 255: ", colour
+{{Cl|PRINT}}
+{{Cl|OUT}} {{Cl|&H}}3C7, colour
+red = {{Cl|INP}}({{Cl|&H}}3C9) * 4
+green = {{Cl|INP}}({{Cl|&H}}3C9) * 4
+blue = {{Cl|INP}}({{Cl|&H}}3C9) * 4
+alpha = 0 'alpha values > 127 in _RGBA or _RGBA32 should use {{Cl|_UNSIGNED}} {{Cl|LONG}}
+
+{{Cl|COLOR}} {{Cl|_RGB}}(red, green, blue) 'returns closest attribute in 4 or 8 bit screen modes
+rgba~& = {{Cl|_RGBA32}}(red, green, blue, alpha) 'alpha is actually highest byte
+{{Cl|PRINT}} "RGBA ="; red; green; blue; alpha
+{{Cl|PRINT}} "{{Cl|_RGBA32}} ="; rgba~&; " {{Cl|&H}}"; {{Cl|HEX$}}(rgba~&)
+
+{{Cl|_PRINTSTRING}} (40, 40), "BGR0 = " + Q$ + {{Cl|MKL$}}(rgba~&) + Q$ 'rightmost always {{Cl|CHR$}}(0) spacer
+
+{{Cl|END}} 
+{{CodeEnd}}
+: ''Note:'' 16 colors at 4 bytes each = 64 bytes. 256 colors at 4 bytes each = 1024 bytes in the palette data with [[CHR$]](0) spacers.
+
+<center>'''Warning! Use [[_UNSIGNED]] [[LONG]] when comparing [[_RGB]] or [[_RGB32]] full [[_ALPHA]] values with [[POINT]] values!'''</center>
+
+
+<center>'''Image Data'''</center>
+* '''Image data''' starts immediately after the bitmap header with '''One Bit''' and '''24 Bit''' colors. Immediately after the palette data with '''4 Bit''' and '''8 Bit''' colors. Image pixel data is read starting with the data from the '''BOTTOM''' row of the image. This is another idiosyncrasy of the Windows/OS2 bitmap. The pixel columns thankfully are read left to right. You may notice the image being drawn from the bottom up in QBasic. The size of the data in a 24 Bit bitmap is almost triple the size of an 8 Bit one!
+<center>'''NOTE: The header Offset sets the position as the byte preceding the image data!'''</center>
+
+
+<center>'''Image Data Padding Prevents Image Skewing'''</center>
+* Image data is '''byte padded''' for odd bitmap widths and a minimum pixel byte width as set below:
+:* '''1 BPP:''' minimum pixel widths of multiples of 32 (32 bits = 4 bytes) per row. Use: Padder bytes = 32 - (width MOD 32)
+:* '''4 BPP:''' minimum pixel widths of multiples of 8 (32 bits = 4 bytes) per row. Padder bytes = (8 - (width MOD 8)) \ 2
+:* '''8 BPP:''' minimum pixel widths of multiples of 4 (4 bytes) per row. Padder bytes = 4 - (width MOD 4)
+:* '''24 BPP:''' minimum pixel widths of multiples of 4 (3 bytes/pixel = 12 bytes) per row. Padder bytes = 4 - ((width * 3) MOD 4)
+
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==One Bit:== 
+Since the pixel value is either on(white) or off(black), eight pixels can be stored in one byte of information. The total byte value determines which pixels are on or off. The '''MSB'''(highest)value is to the left and each pixel's on value decreases by an exponent of two down to a value of 1 for the '''LSB'''. However a minimum of 4 bytes of data must be used for each row of data, so a padder is used for other widths. The padder can be determined before the data is read using the following routine:
+{{CodeStart}} 
+{{Cl|SUB}} OneBit          'Any Screen as Black and White        
+BitsOver = BMP.PWidth {{Cl|MOD}} 32  'check bitmap width for 4 byte or odd width
+{{Cl|IF}} BitsOver {{Cl|THEN}} ZeroPAD$ = {{Cl|SPACE$}}((32 - BitsOver) \ 8) '16 and 48 wide have 2 byte padder
+y = BMPHead.PDepth - 1: o$ = " "
+{{Cl|GET}} #1, BMP.Offset, o$  ' offset is last byte of BMP header data (NO Palette)
+a$ = " "       'define a one byte string to read ASCII characters
+{{Cl|DO}}
+x = 0
+    {{Cl|DO}}
+      {{Cl|GET}} #1, , a$
+      CharVAL = {{Cl|ASC}}(a$)        'ASCII value cannot use {{Cl|_BYTE}}
+      Bit = 128                   'start at MSB 
+      {{Cl|FOR...NEXT|FOR}} BitCOUNT = 1 {{Cl|TO}} 8
+        {{Cl|IF}} CharVAL {{Cl|AND}} Bit {{Cl|THEN}} 
+          {{Cl|PSET}} (x, y), {{Cl|_RGB}}(255, 255, 255) '_RGB works in 1, 4, 8 or 32 bit screen mode
+        {{Cl|ELSE}} {{Cl|PSET}} (x, y), {{Cl|_RGB}}(0, 0, 0) 'set pixels on as white
+        {{Cl|END IF}}
+        Bit = Bit / 2            'decrease exponent of 2 bit value 
+        x = x + 1                'move one pixel to the right
+      {{Cl|NEXT}} BitCOUNT
+    {{Cl|LOOP}} {{Cl|WHILE}} x < BMP.PWidth  
+    {{Cl|GET}} #1, , ZeroPAD$             'skip the padder bytes if any
+    y = y - 1                      'move up one row from bottom
+{{Cl|LOOP}} {{Cl|UNTIL}} y = -1
+{{Cl|END}} {{Cl|SUB}} '' ''   
+{{CodeEnd}}
+{{small|Code by Bob Seguin}}
+: One bit pixels are also used to create [[AND]] masks that can blend with a background for icons or cursors which are another form of bitmap. In fact, icons and cursors use a partial (40 byte) bitmap header! They just don't have the first 14 bytes of information. [[PSET]] can also use the B&W color values [[_RGB]](255, 255, 255) and [[_RGB]](0, 0, 0) when working in 4, 8 or 32 bit screen modes.
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==Four Bit:== 
+Pixels can use 16 colors in QBasic legacy [[SCREEN (statement)|SCREEN]] modes 7, 8, 9, 12 and 13. After the bitmap header, the color '''palette''' is read to set the color intensities as explained above. Then the individual pixel attributes are read from the '''image data'''. Each '''pixel''' uses half a byte of color '''attribute''' information. To determine the pixel's attribute, each "nibble" is read by dividing the byte's [[ASCII]] value by 16 for the first pixel's value while the second pixel's value is found using [[AND]] 15 as shown below: 
+
+{{CodeStart}}
+{{Cl|SUB}} FourBIT  ' 4 bit(16 color) Screens 7, 8, 9, 12 or 13 
+{{Cl|IF}} BMP.PWidth {{Cl|MOD}} 8 {{Cl|THEN}} ZeroPAD$ = {{Cl|SPACE$}}((8 - BMP.PWidth {{Cl|MOD}} 8) \ 2)
+a$ = " "   
+{{Cl|OUT}} {{Cl|&H}}3C8, 0                         'start at attribute 0 
+{{Cl|FOR...NEXT|FOR}} Colr = 0 {{Cl|TO}} 15        'read palette data for intensities    
+    {{Cl|GET}} #1, , a$: Blu = {{Cl|ASC}}(a$) \ 4  'intensity is divided by 4 to use {{Cl|OUT}}
+    {{Cl|GET}} #1, , a$: Grn = {{Cl|ASC}}(a$) \ 4
+    {{Cl|GET}} #1, , a$: Red = {{Cl|ASC}}(a$) \ 4
+    {{Cl|OUT}} {{Cl|&H}}3C9, Red          'NOTE: RGB settings could also be sent directly to an
+    {{Cl|OUT}} {{Cl|&H}}3C9, Grn          'array when the data is to be stored by a file using 
+    {{Cl|OUT}} {{Cl|&H}}3C9, Blu          '{{Cl|BSAVE}} or with one {{Cl|PUT}} # to a {{Cl|BINARY}} file in QB64
+    {{Cl|GET}} #1, , a$          '--- skip unused spacer byte
+{{Cl|NEXT}} Colr
+o$ = " "
+{{Cl|GET}} #1, BMP.Offset, o$    'Offset is the last byte of palette data
+y = BMP.PDepth - 1: a$ = " "
+{{Cl|DO}}
+  x = 0                             'image placed at left side of screen
+  {{Cl|DO}}   
+    {{Cl|GET}} #1, , a$
+    HiNIBBLE = {{Cl|ASC}}(a$) \ {{Cl|&H}}10       'ASCII value divided by 16 colors
+    LoNIBBLE = {{Cl|ASC}}(a$) {{Cl|AND}} {{Cl|&H}}F      'ASCII value AND 15
+    {{Cl|PSET}} (x, y), HiNIBBLE   
+    x = x + 1
+    {{Cl|PSET}} (x, y), LoNIBBLE
+    x = x + 1
+  {{Cl|LOOP}} {{Cl|WHILE}} x < BMPHead.PWidth
+    {{Cl|GET}} #1, , ZeroPAD$           'skip padder bytes if any
+    y = y - 1                    'move up one row from bottom
+{{Cl|LOOP}} {{Cl|UNTIL}} y = -1
+{{Cl|END}} {{Cl|SUB}} 
+{{CodeEnd}}
+{{small|Code by Bob Seguin}}
+
+
+<center>'''How Nibble values are read'''</center>
+Each half of a byte of image pixel data stores a color attribute value from 0 to 15 or from 0000 to 1111 in binary with 1 designating that the bit is on. So when the two halves are added the [[Binary|binary]] byte value for two white pixels totals 111111111 binary or 255. 
+
+:* To get the high nibble, divide the byte value by 16(&H10) using integer division: HiNibble = 255 \ 16 = 15
+:* To get the low nibble, use the byte value [[AND]] 15(&HF) to get all set bit values up to 15: LoNibble = 255 AND 15 = 15
+
+:[[AND]] 15 will return any lower byte value while integer division by 16 will return any byte value over 15 as attributes 0 to 15.
+
+: '''QB64''' can [[GET (graphics statement)|GET]] a full Screen 12 image into one [[BINARY]] file with [[PUT]] using an 80K [[INTEGER]] array instead of using 3 in QBasic!
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==Eight Bit:==
+Pixels can use 256 colors in QBasic legacy [[SCREEN (statement)|SCREEN]] mode 13 or a [[_NEWIMAGE]] Screen using 256 or "borrowing" screen 13. '''Image data''' is immediately after the 1024 bytes of '''palette data''' BGR intensity settings. Pixel '''attributes''' are each set by reading the byte's [[ASCII]] value directly.  
+
+{{CodeStart}}
+{{Cl|SUB}} EightBIT   ' 8 Bit (256 color) Screen 13 Only  
+{{Cl|IF}} BMP.PWidth {{Cl|MOD}} 4 {{Cl|THEN}} ZeroPAD$ = {{Cl|SPACE$}}(4 - (BMP.PWidth {{Cl|MOD}} 4)) 'check for padder
+a$ = " "
+{{Cl|OUT}} {{Cl|&H}}3C8, 0                           'start at attribute 0 
+{{Cl|FOR...NEXT|FOR}} Colr = 0 {{Cl|TO}} 255
+    {{Cl|GET}} #1, , a$: Blu = {{Cl|ASC}}(a$) \ 4
+    {{Cl|GET}} #1, , a$: Grn = {{Cl|ASC}}(a$) \ 4
+    {{Cl|GET}} #1, , a$: Red = {{Cl|ASC}}(a$) \ 4
+    {{Cl|OUT}} {{Cl|&H}}3C9, Red
+    {{Cl|OUT}} {{Cl|&H}}3C9, Grn
+    {{Cl|OUT}} {{Cl|&H}}3C9, Blu
+    {{Cl|GET}} #1, , a$                        '--- skip unused spacer byte
+{{Cl|NEXT}} Colr
+y = BMP.PDepth - 1: o$ = " "
+{{Cl|GET}} #1, BMP.Offset, o$   'Offset is last byte of palette data.
+p$ = " "
+{{Cl|DO}}: x = 0
+  {{Cl|DO}}
+    {{Cl|GET}} #1, , p$
+    {{Cl|PSET}} (x, y), {{Cl|ASC}}(p$)
+    x = x + 1
+  {{Cl|LOOP}} {{Cl|WHILE}} x < BMP.PWidth
+  {{Cl|GET}} #1, , ZeroPAD$                  'skip padder if any
+  y = y - 1                            'move up one row from bottom
+{{Cl|LOOP}} {{Cl|UNTIL}} y = -1
+{{Cl|END SUB}} 
+{{CodeEnd}}
+{{small|Code by Bob Seguin}}
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==Twenty Four Bit:==
+For screen modes created by [[_NEWIMAGE]] using 24 or 32 bit bitmaps. '''Image data''' starts immediately after the bitmap header. There is no palette data! Each BGR '''color intensity''' is one byte of the [[ASCII]] code value directly. Values range from 0 to 255 using '''QB64's''' [[_RGB]] or [[_RGB32]] functions to set the [[PSET]] colors as below:
+
+{{CodeStart}}
+{{Cl|SUB}} TrueCOLOR            '24/32 BIT               
+{{Cl|IF}} ((BMP.PWidth * 3) {{Cl|MOD}} 4) <> 0 {{Cl|THEN}}        '3 byte pixels
+ZeroPAD$ = {{Cl|SPACE$}}((4 - ((BMP.PWidth * 3) {{Cl|MOD}} 4)))
+{{Cl|END IF}}
+y = BMP.PDepth - 1: o$ = " "
+{{Cl|GET}} #1, BMP.Offset, o$       'Offset is last byte of BMP header data
+R$ = " "
+G$ = " "
+B$ = " "
+{{Cl|DO}}
+x = 0                               'place image to left side of screen
+  {{Cl|DO}}
+    {{Cl|GET}} #1, , B$             'intensities read in reverse order BGR like palette
+    {{Cl|GET}} #1, , G$
+    {{Cl|GET}} #1, , R$
+    red& = {{Cl|ASC}}(R$)           'read ASCII code value 0 to 255 (or use {{Cl|_UNSIGNED}} {{Cl|_BYTE}})
+    green& = {{Cl|ASC}}(G$)
+    blue& = {{Cl|ASC}}(B$)
+    {{Cl|PSET}} (x, y), {{Cl|_RGB}}(red&, green&, blue&) 'legacy screens give closest 4 or 8 bit attribute
+    x = x + 1
+  {{Cl|LOOP}} {{Cl|WHILE}} x < BMP.PWidth
+  {{Cl|GET}} #1, , ZeroPAD$         'skip padder if any
+  y = y - 1                         'move up one row from bottom
+{{Cl|LOOP}} {{Cl|UNTIL}} y = -1
+{{Cl|END}} {{Cl|SUB}}    
+{{CodeEnd}}{{small|Code by Ted Weissgerber}}
+: Why BGR instead of RGB? Because the [[_RGB]] [[LONG]] value without [[_ALPHA]] is written to the file backwards as [[LEFT$]]([[MKL$]], 3).
+
+
+<center>'''Converting to Grey Scale or Black and White'''</center>
+
+<center>The palettes can be set to greyscale by ignoring the actual '''palette data''' and/or averaging the pixel's RGB '''image data'''.</center>
+<center> It may also be necessary when trying to view 24 BPP bitmaps in SCREEN 12 or 13.</center>
+
+<center>''See:'' [[Grey Scale Bitmaps]]</center>
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==Creating Bitmaps==
+
+:In [[BINARY]] files, numerical data can also be converted to [[ASCII]] characters by using [[MKI$]] for [[INTEGER]]s or [[MKL$]] for [[LONG]] values. [[GET]] can convert [[_MK$]] values to numerical values and [[PUT]] can convert numerical values to [[STRING]] values. When the [[LONG]] [[MKL$]] color values are [[PUT]] into bitmaps the Red value is placed as the third [[ASCII]] character and the blue becomes the first character. That not only happens to the BGR palette data, but the BGR 24 bit image color values [[PUT]] using the [[LEFT$|left]] 3 bytes.
+{{WhiteStart}}                 pixelcolor$ = {{Cb|LEFT$}}(MKL$({{Cb|_RGB}}(red%, green%, blue%)), 3) {{WhiteEnd}}
+
+:After the header, the RGB '''color intensity palette''' settings for '''16''' and '''256''' color bitmaps are created using [[MKL$]] [[ASCII]] characters set backwards as Blue, Green, Red and [[CHR$]](0) as a spacer. Four and Eight BPP bitmaps require that format.
+
+:The actual 4 bit or 8 bit image is read as [[ASCII]] color attributes from the image bottom to the top for proper bitmap formatting adding padder spacing when needed. 24/32 bit images use 3 color intensity values as [[ASCII]] character bytes in BGR order.
+
+
+''Bitmap creation SUB programs:''
+
+* [[SAVEIMAGE]] {{text|(Galleon's Full Image Bitmap creator)}}
+* [[SaveIcon32]] {{text|(Creates Icons from any image)}}
+* [[Program ScreenShots]] {{text|(Member program for Qbasic's legacy screen modes)}}
+* [[ThirtyTwoBit SUB]] {{text|(QB64 32 bit Image area to bitmap)}}
+
+<p style="text-align: center">([[#toc|Return to Table of Contents]])</p>
+
+==References==
+
+''See also:''
+* [[_LOADIMAGE]], [[_PUTIMAGE]]
+* [[SCREEN (statement)]]
+* [[TYPE]], [[_ICON]]
+* [[Icons and Cursors]]
+* [[GIF Images]]
+* [[Resource_Table_extraction#Extract_Icon|Bitmap Extraction from EXE]]
+* [[$EXEICON]] {{text|(Icons viewed in Windows Explorer)}}
+
+
+{{PageNavigation}}
