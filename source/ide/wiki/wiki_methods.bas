@@ -75,7 +75,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     s2$ = "</textarea>"
 
     'Download page using curl
-    SHELL _HIDE "curl -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
+    SHELL _HIDE "curl -s -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
     OPEN outputFile$ FOR BINARY AS #fh 'get new content
     a$ = SPACE$(LOF(fh))
