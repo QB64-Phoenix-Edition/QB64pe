@@ -321,8 +321,8 @@ SUB WikiParse (a$) 'Wiki page interpret
         t$ = MID$(t$, 5)
     END IF
     i = LEN(d$): ii = LEN(t$)
-    Help_AddTxt "   Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
-    Help_AddTxt "   ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
+    Help_AddTxt "  Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
+    Help_AddTxt "  ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
     i = Help_ww - i - 2 - Help_Pos: IF i < 2 THEN i = 2
     Help_AddTxt SPACE$(i) + CHR$(4), 14, 0
     IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
