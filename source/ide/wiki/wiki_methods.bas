@@ -75,7 +75,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     s2$ = "</textarea>"
 
     'Download page using curl
-    SHELL _HIDE "curl -s -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
+    SHELL _HIDE "curl --silent -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
     OPEN outputFile$ FOR BINARY AS #fh 'get new content
     a$ = SPACE$(LOF(fh))
@@ -323,10 +323,11 @@ SUB WikiParse (a$) 'Wiki page interpret
     i = LEN(d$): ii = LEN(t$)
     Help_AddTxt "   Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
     Help_AddTxt "   ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
-    Help_AddTxt SPACE$(Help_ww - i - 2 - Help_Pos) + CHR$(4), 14, 0
+    i = Help_ww - i - 2 - Help_Pos: IF i < 2 THEN i = 2
+    Help_AddTxt SPACE$(i) + CHR$(4), 14, 0
     IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
-    Help_AddTxt " " + d$, i, 0: Help_NewLine
-    Help_AddTxt "ÄÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 7, "Ä"), 14, 0: Help_NewLine
+    Help_LockWrap = 1: Help_AddTxt " " + d$, i, 0: Help_NewLine: Help_LockWrap = 0
+    Help_AddTxt "ÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 6, "Ä"), 14, 0: Help_NewLine
 
     'Init prefetch array
     prefetch = 20
