@@ -1,5 +1,5 @@
 #define DR_PCX_IMPLEMENTATION
-#include "src/dr_pcx.h "
+#include "src/dr_pcx.h"
 
 uint8 *image_decode_pcx(uint8 *content, int32 bytes, int32 *result, int32 *x, int32 *y) {
     // Result:bit 1=Success,bit 2=32bit[BGRA]
