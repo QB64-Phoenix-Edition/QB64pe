@@ -19,7 +19,7 @@ int32_t func__loadimage(qbs *f, int32_t bpp, int32_t passed);
 
 #else
 #    define DR_PCX_IMPLEMENTATION
-#    include "dr_pcx.h "
+#    include "dr_pcx.h"
 #    define STB_IMAGE_IMPLEMENTATION
 #    include "stb_image.h"
 
