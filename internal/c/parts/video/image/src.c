@@ -186,7 +186,7 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, uint32_t *sr
 /// This function loads an image into memory and returns valid LONG image handle values that are less than -1.
 /// </summary>
 /// <param name="f">The filename of the image</param>
-/// <param name="bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp or 256=8bpp</param>
+/// <param name="bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp, 256=8bpp or 257=8bpp without palette remap</param>
 /// <param name="passed">How many parameters were passed?</param>
 /// <returns>Valid LONG image handle values that are less than -1 or -1 on failure</returns>
 int32_t func__loadimage(qbs *f, int32_t bpp, int32_t passed) {
@@ -296,9 +296,8 @@ int32_t func__loadimage(qbs *f, int32_t bpp, int32_t passed) {
             // Copy the palette and then free it
             memcpy(img[-i].pal, palette, 256 * sizeof(uint32_t));
             free(palette);
-
         } else {
-            // Remap the image palette to QB64 default palette and then free our palette
+            // Remap the image indexes to QB64 default palette and then free our palette
             image_remap_palette(pixels256, x, y, palette, palette_256);
             free(palette);
 
@@ -321,6 +320,7 @@ int32_t func__loadimage(qbs *f, int32_t bpp, int32_t passed) {
     // Free pixel memory. We can do this because both dr_pcx and stb_image uses free()
     free(pixels);
 
+    // This only executes if bpp is 32
     if (isHardware) {
         auto iHardware = func__copyimage(i, 33, 1);
         sub__freeimage(i, 1);
