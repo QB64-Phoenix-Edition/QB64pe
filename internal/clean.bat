@@ -1,6 +1,6 @@
 @echo off
 
-echo This batch is an admin tool to return QB64 to its pre-setup state
+echo This batch is an admin tool to return QB64-PE to its pre-setup state
 pause
 
 echo Purging temp folders
