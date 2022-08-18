@@ -31,7 +31,6 @@ mkdir -p $DIST_ROOT/internal/c
 
 cp -rp ./source   $DIST_ROOT
 cp -rp ./licenses $DIST_ROOT
-cp ./CHANGELOG.md $DIST_ROOT
 cp ./COPYING.txt  $DIST_ROOT
 cp ./README.md    $DIST_ROOT
 cp ./qb64pe.1     $DIST_ROOT

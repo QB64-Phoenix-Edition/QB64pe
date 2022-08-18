@@ -38,7 +38,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     END IF
 
     'Check for curl
-    IF _SHELLHIDE("curl --version") <> 0 THEN
+    IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
         a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
         IF PageName$ = "Initialize" THEN
             a$ = a$ + "To be able to initialize the help system, "
