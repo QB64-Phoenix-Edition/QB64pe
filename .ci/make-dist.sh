@@ -7,6 +7,12 @@ format=
 ARCHIVE_ROOT=qb64pe
 DIST_ROOT=./dist/$ARCHIVE_ROOT
 
+# populate internal/help from static download and updates from Wiki
+curl --silent -o ./help.zip https://qb64phoenix.com/qb64_files/help.zip
+unzip -oqq ./help.zip -d ./internal
+./qb64pe -u
+# end internal/help
+
 case "$buildPlatform" in
     windows-latest)
         ./internal/c/c_compiler/bin/mingw32-make.exe OS=win clean
@@ -18,11 +24,6 @@ case "$buildPlatform" in
         make OS=osx clean
         ;;
 esac
-
-# 1. update internal/help from Wiki
-# 2. cleanup internal/temp from qb64pe run
-./qb64pe -u
-rm -f ./internal/temp/tempfoldersearch.bin
 
 mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
