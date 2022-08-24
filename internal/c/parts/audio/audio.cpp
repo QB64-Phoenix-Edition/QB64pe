@@ -69,7 +69,7 @@
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
 #else
-#    define ZERO_VARIABLE(_v_) memset(&(_v_), NULL, sizeof(_v_))
+#    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #endif
 //-----------------------------------------------------------------------------------------------------
 
@@ -1918,7 +1918,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     AUDIO_DEBUG_PRINT("Data source data pointer = %p", ds->pNode->data.backend.decoded.pData);
 
     // Query the data format
-    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS) {
+    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, 0) != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Data format query failed");
         goto error;
     }
