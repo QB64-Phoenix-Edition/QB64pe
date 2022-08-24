@@ -1,0 +1,184 @@
+'+---------------+---------------------------------------------------+
+'| ###### ###### |     .--. .         .-.                            |
+'| ##  ## ##   # |     |   )|        (   ) o                         |
+'| ##  ##  ##    |     |--' |--. .-.  `-.  .  .-...--.--. .-.        |
+'| ######   ##   |     |  \ |  |(   )(   ) | (   ||  |  |(   )       |
+'| ##      ##    |     '   `'  `-`-'  `-'-' `-`-`|'  '  `-`-'`-      |
+'| ##     ##   # |                            ._.'                   |
+'| ##     ###### |  Sources & Documents placed in the Public Domain. |
+'+---------------+---------------------------------------------------+
+
+'---------------------------------------------------------------------
+FUNCTION CreateBuf%
+'--- option _explicit requirements ---
+DIM aub&, buf&
+'--- find next free handle ---
+aub& = UBOUND(simplebuffer_array$)
+buf& = 0: CreateBuf% = SBE_NoMoreBuffers
+WHILE buf& < aub&
+    IF simplebuffer_array$(buf& + 1) = "" THEN EXIT WHILE
+    buf& = buf& + 106
+    IF buf& >= 3473408 THEN EXIT FUNCTION '=> allow max. 32768 buffers
+WEND
+'--- expand array, if necessary ---
+IF aub& < buf& + 105 THEN REDIM _PRESERVE simplebuffer_array$(0 TO buf& + 10599) 'extend by 100 buffers
+'--- init buffer ---
+simplebuffer_array$(buf& + 0) = SPACE$(10000) '                        => the actual buffer
+simplebuffer_array$(buf& + 1) = MKL$(1) + MKL$(0) + "EolU" + MKL$(-1) '=> cursor position + buffer length + EOL mode + changed state
+'--- return new handle ---
+CreateBuf% = buf& \ 106
+END FUNCTION
+
+'---------------------------------------------------------------------
+SUB DisposeBuf (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- erase buffer data ---
+buf& = handle% * 106
+simplebuffer_array$(buf& + 0) = ""
+simplebuffer_array$(buf& + 1) = ""
+END SUB
+
+'---------------------------------------------------------------------
+SUB BufToFile (handle%, fileSpec$)
+'--- option _explicit requirements ---
+DIM buf&, ff%, op$
+'--- write file (overwrite existing !!!) ---
+buf& = handle% * 106
+ff% = FREEFILE: op$ = LEFT$(simplebuffer_array$(buf& + 0), GetBufLen&(handle%))
+OPEN fileSpec$ FOR OUTPUT LOCK WRITE AS ff%: CLOSE ff%
+OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
+PUT ff%, , op$
+CLOSE ff%
+'--- set state ---
+MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(0)
+END SUB
+
+'---------------------------------------------------------------------
+SUB WriteBufLine (handle%, text$)
+'--- option _explicit requirements ---
+DIM buf&, cur&, txl&, brc$, brl%, cbl&&, chg&
+'--- prepare values ---
+buf& = handle% * 106
+cur& = GetBufPos&(handle%): txl& = LEN(text$)
+brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+cbl&& = GetBufLen&(handle%): chg& = txl& + brl%
+'--- check buffer length ---
+IF cbl&& + chg& > LEN(simplebuffer_array$(buf& + 0)) THEN
+    simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(10000)
+END IF
+'--- write into buffer ---
+MID$(simplebuffer_array$(buf& + 0), cur&) = text$ + brc$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
+MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + chg&)
+MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& + chg&)
+MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+END SUB
+
+'---------------------------------------------------------------------
+FUNCTION ReadBufRawData$ (handle%, size&) 'size change intended
+'--- option _explicit requirements ---
+DIM buf&, cur&, eob&
+'--- prepare values ---
+buf& = handle% * 106
+cur& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
+IF size& > eob& - cur& THEN size& = eob& - cur&
+'--- read from buffer ---
+ReadBufRawData$ = MID$(simplebuffer_array$(buf& + 0), cur&, size&)
+MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + size&)
+END FUNCTION
+
+'---------------------------------------------------------------------
+SUB WriteBufRawData (handle%, rawData$)
+'--- option _explicit requirements ---
+DIM buf&, cur&, rdl&, cbl&&
+'--- prepare values ---
+buf& = handle% * 106
+cur& = GetBufPos&(handle%): rdl& = LEN(rawData$)
+cbl&& = GetBufLen&(handle%)
+'--- check buffer length ---
+IF cbl&& + rdl& > LEN(simplebuffer_array$(buf& + 0)) THEN
+    simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(10000)
+END IF
+'--- write into buffer ---
+MID$(simplebuffer_array$(buf& + 0), cur&) = rawData$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
+MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + rdl&)
+MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& + rdl&)
+IF rdl& > 0 THEN
+    MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolU"
+    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+END IF
+END SUB
+
+'---------------------------------------------------------------------
+FUNCTION SeekBuf& (handle%, displace&, mode%)
+'--- option _explicit requirements ---
+DIM buf&, cur&, eob&, brc$, brl%, origin&, newPos&
+'--- prepare values ---
+buf& = handle% * 106
+cur& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
+brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+'--- select origin ---
+SELECT CASE mode%
+    CASE SBM_BufStart: origin& = 1
+    CASE SBM_BufCurrent: origin& = cur&
+    CASE SBM_BufEnd: origin& = eob&
+    CASE ELSE
+        SeekBuf& = SBE_UnknownMode
+        EXIT FUNCTION
+END SELECT
+'--- seek to new position ---
+newPos& = origin& + displace&
+IF newPos& < 1 OR newPos& > eob& THEN
+    SeekBuf& = SBE_OutOfBounds
+ELSE
+    MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(newPos&)
+    SeekBuf& = cur&
+END IF
+END FUNCTION
+
+'---------------------------------------------------------------------
+FUNCTION GetBufPos& (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- return cursor position in buffer ---
+buf& = handle% * 106
+GetBufPos& = CVL(MID$(simplebuffer_array$(buf& + 1), 1, 4))
+END FUNCTION
+
+'---------------------------------------------------------------------
+FUNCTION GetBufLen& (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- return actual buffer length ---
+buf& = handle% * 106
+GetBufLen& = CVL(MID$(simplebuffer_array$(buf& + 1), 5, 4))
+END FUNCTION
+
+'---------------------------------------------------------------------
+FUNCTION IsBufChanged% (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- return BufChanged condition ---
+buf& = handle% * 106
+IsBufChanged% = CVL(MID$(simplebuffer_array$(buf& + 1), 13, 4))
+END FUNCTION
+
+'---------------------------------------------------------------------
+FUNCTION BufEolSeq$ (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- return buffer specific EndOfLine sequence ---
+buf& = handle% * 106
+SELECT CASE MID$(simplebuffer_array$(buf& + 1), 9, 4)
+    CASE "EolU", "EolN" 'OS native mode
+        BufEolSeq$ = CHR$(13) + CHR$(10) 'default is Windows
+        IF INSTR(_OS$, "[LINUX]") > 0 THEN BufEolSeq$ = CHR$(10) 'true for MacOSX too
+    CASE "EolL" 'forced Linux/MacOSX
+        BufEolSeq$ = CHR$(10)
+    CASE "EolW" 'forced Windows
+        BufEolSeq$ = CHR$(13) + CHR$(10)
+END SELECT
+END FUNCTION
+
+'$INCLUDE: 'sb_qb64pe_extension.bm'
+
