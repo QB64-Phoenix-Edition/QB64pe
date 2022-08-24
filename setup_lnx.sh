@@ -1,10 +1,10 @@
 #!/bin/bash
-# QB64 Installer
-# Argument 1: If not blank, qb64 will not be started after compilation
+# QB64-PE Installer
+# Argument 1: If not blank, qb64pe will not be started after compilation
 
 dont_run="$1"
 
-#This checks the currently installed packages for the one's QB64 needs
+#This checks the currently installed packages for the one's QB64-PE needs
 #And runs the package manager to install them if that is the case
 pkg_install() {
   #Search
@@ -33,10 +33,10 @@ fi
 GET_WGET=
 #Path to Icon
 #Relative Path to icon -- Don't include beginning or trailing '/'
-QB64_ICON_PATH="internal/source"
+QB64_ICON_PATH="source"
 
 #Name of the Icon picture
-QB64_ICON_NAME="qb64icon32.png"
+QB64_ICON_NAME="qb64pe.png"
 
 DISTRO=
 
@@ -100,7 +100,7 @@ elif [ "$DISTRO" == "voidlinux" ]; then
 
 elif [ -z "$DISTRO" ]; then
   echo "Unable to detect distro, skipping package installation"
-  echo "Please be aware that for QB64 to compile, you will need the following installed:"
+  echo "Please be aware that for QB64-PE to compile, you will need the following installed:"
   echo "  OpenGL developement libraries"
   echo "  ALSA development libraries"
   echo "  GNU C++ Compiler (g++)"
@@ -108,27 +108,27 @@ elif [ -z "$DISTRO" ]; then
   echo "  zlib"
 fi
 
-echo "Compiling and installing QB64..."
+echo "Compiling and installing QB64-PE..."
 make clean OS=lnx
 make OS=lnx BUILD_QB64=y -j3
 
-if [ -e "./qb64" ]; then
+if [ -e "./qb64pe" ]; then
   echo "Done compiling!!"
 
-  echo "Creating ./run_qb64.sh script..."
+  echo "Creating ./run_qb64pe.sh script..."
   _pwd=`pwd`
-  echo "#!/bin/sh" > ./run_qb64.sh
-  echo "cd $_pwd" >> ./run_qb64.sh
-  echo "./qb64 &" >> ./run_qb64.sh
+  echo "#!/bin/sh" > ./run_qb64pe.sh
+  echo "cd $_pwd" >> ./run_qb64pe.sh
+  echo "./qb64pe &" >> ./run_qb64pe.sh
   
-  chmod +x ./run_qb64.sh
+  chmod +x ./run_qb64pe.sh
   #chmod -R 777 ./
-  echo "Adding QB64 menu entry..."
-  cat > ~/.local/share/applications/qb64.desktop <<EOF
+  echo "Adding QB64-PE menu entry..."
+  cat > ~/.local/share/applications/qb64pe.desktop <<EOF
 [Desktop Entry]
-Name=QB64 Programming IDE
-GenericName=QB64 Programming IDE
-Exec=$_pwd/run_qb64.sh
+Name=QB64-PE Programming IDE
+GenericName=QB64-PE Programming IDE
+Exec=$_pwd/run_qb64pe.sh
 Icon=$_pwd/$QB64_ICON_PATH/$QB64_ICON_NAME
 Terminal=false
 Type=Application
@@ -138,22 +138,22 @@ StartupNotify=false
 EOF
 
   if [ -z "$dont_run" ]; then
-    echo "Running QB64..."
-    ./qb64 &
+    echo "Running QB64-PE..."
+    ./qb64pe &
   fi
 
-  echo "QB64 is located in this folder:"
+  echo "QB64-PE is located in this folder:"
   echo "`pwd`"
-  echo "There is a ./run_qb64.sh script in this folder that should let you run qb64 if using the executable directly isn't working."
+  echo "There is a ./run_qb64pe.sh script in this folder that should let you run qb64pe if using the executable directly isn't working."
   echo 
-  echo "You should also find a QB64 option in the Programming/Development section of your menu you can use."
+  echo "You should also find a QB64-PE option in the Programming/Development section of your menu you can use."
 else
-  ### QB64 didn't compile
-  echo "It appears that the qb64 executable file was not created, this is usually an indication of a compile failure (You probably saw lots of error messages pop up on the screen)"
+  ### QB64-PE didn't compile
+  echo "It appears that the qb64pe executable file was not created, this is usually an indication of a compile failure (You probably saw lots of error messages pop up on the screen)"
   echo "Usually these are due to missing packages needed for compilation. If you're not running a distro supported by this compiler, please note you will need to install the packages listed above."
-  echo "If you need help, please feel free to post on the QB64 Forums detailing what happened and what distro you are using."
+  echo "If you need help, please feel free to post on the QB64 Phoenix Edition Forums detailing what happened and what distro you are using."
   echo "Also, please tell them the exact contents of this next line:"
   echo "DISTRO: $DISTRO"
 fi
 echo
-echo "Thank you for using the QB64 installer."
+echo "Thank you for using the QB64-PE installer."

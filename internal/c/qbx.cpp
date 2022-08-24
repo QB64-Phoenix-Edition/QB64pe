@@ -1638,7 +1638,7 @@ chain_retry:
         // attempt .bas compilation
         qbs_set(str, qbs_new_txt_len("\x022", 1));
         qbs_set(str, qbs_add(str, thisexe_path));
-        qbs_set(str, qbs_add(str, qbs_new_txt("qb64.exe")));
+        qbs_set(str, qbs_add(str, qbs_new_txt("qb64pe.exe")));
         qbs_set(str, qbs_add(str, qbs_new_txt_len("\x022", 1)));
         qbs_set(str, qbs_add(str, qbs_new_txt(" -c ")));
         qbs_set(str, qbs_add(str, f_path));

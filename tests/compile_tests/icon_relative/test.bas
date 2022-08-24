@@ -1,4 +1,4 @@
 
-$EXEICON:'./qb64.ico'
+$EXEICON:'./qb64pe.ico'
 _ICON
 
