@@ -15,7 +15,7 @@ echo Extracting %MINGW% as C++ Compiler
 @echo off
 %MINGW% -y -o"./internal/c/c_compiler/"
 
-echo Bootstrapping QB64
-internal\c\c_compiler\bin\mingw32-make.exe -j8 OS=win BUILD_QB64=y EXE=.\qb64_bootstrap.exe
+echo Bootstrapping QB64-PE
+internal\c\c_compiler\bin\mingw32-make.exe -j8 OS=win BUILD_QB64=y EXE=.\qb64pe_bootstrap.exe
 IF ERRORLEVEL 1 exit /b 1
 

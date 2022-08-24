@@ -14,9 +14,9 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     FOR i = 1 TO LEN(PageName$)
         c = ASC(PageName$, i)
         SELECT CASE c
-            CASE 32 '                                        '(space)
+            CASE 32 '                                            '(space)
                 PageName2$ = PageName2$ + "_"
-            CASE 34, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("&*+/:<>?\|)
+            CASE 34, 36, 38, 42, 43, 47, 58, 60, 62, 63, 92, 124 '("$&*+/:<>?\|)
                 PageName2$ = PageName2$ + "%" + HEX$(c)
             CASE ELSE
                 PageName2$ = PageName2$ + CHR$(c)
@@ -38,7 +38,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     END IF
 
     'Check for curl
-    IF _SHELLHIDE("curl --version") <> 0 THEN
+    IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
         a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
         IF PageName$ = "Initialize" THEN
             a$ = a$ + "To be able to initialize the help system, "
@@ -50,8 +50,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
         a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
         a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
-        a$ = a$ + "** Unpack and drop the ''curl'' executable into the QB64 folder." + CHR$(10)
-        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the QB64 folder too." + CHR$(10)
+        a$ = a$ + "** Unpack and drop the ''curl'' executable into the '''qb64pe''' folder." + CHR$(10)
+        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the '''qb64pe''' folder too." + CHR$(10)
         Wiki$ = a$: EXIT FUNCTION
     END IF
 
@@ -75,7 +75,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     s2$ = "</textarea>"
 
     'Download page using curl
-    SHELL _HIDE "curl -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
+    SHELL _HIDE "curl --silent -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
     OPEN outputFile$ FOR BINARY AS #fh 'get new content
     a$ = SPACE$(LOF(fh))
@@ -321,12 +321,13 @@ SUB WikiParse (a$) 'Wiki page interpret
         t$ = MID$(t$, 5)
     END IF
     i = LEN(d$): ii = LEN(t$)
-    Help_AddTxt "   Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
-    Help_AddTxt "   ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
-    Help_AddTxt SPACE$(Help_ww - i - 2 - Help_Pos) + CHR$(4), 14, 0
+    Help_AddTxt "  Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
+    Help_AddTxt "  ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
+    i = Help_ww - i - 2 - Help_Pos: IF i < 2 THEN i = 2
+    Help_AddTxt SPACE$(i) + CHR$(4), 14, 0
     IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
-    Help_AddTxt " " + d$, i, 0: Help_NewLine
-    Help_AddTxt "ÄÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 7, "Ä"), 14, 0: Help_NewLine
+    Help_LockWrap = 1: Help_AddTxt " " + d$, i, 0: Help_NewLine: Help_LockWrap = 0
+    Help_AddTxt "ÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 6, "Ä"), 14, 0: Help_NewLine
 
     'Init prefetch array
     prefetch = 20

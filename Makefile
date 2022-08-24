@@ -103,9 +103,9 @@ endif
 
 ifdef BUILD_QB64
 	ifeq ($(OS),win)
-		EXE ?= qb64.exe
+		EXE ?= qb64pe.exe
 	else
-		EXE ?= qb64
+		EXE ?= qb64pe
 	endif
 endif
 
@@ -154,14 +154,14 @@ EXE_OBJS += $(QB_QBX_OBJ)
 CLEAN_LIST += $(QB_QBX_OBJ)
 
 ifdef BUILD_QB64
-	# Copy the QB64 source code into temp before compiling
+	# Copy the QB64-PE source code into temp before compiling
 ifeq ($(OS),win)
 	_shell := $(shell $(CP) $(PATH_INTERNAL_SRC)\\* $(PATH_INTERNAL_TEMP)\\)
 else
 	_shell := $(shell $(CP) $(PATH_INTERNAL_SRC)/* $(PATH_INTERNAL_TEMP)/)
 endif
 
-	# Required dependencies of QB64 itself
+	# Required dependencies of QB64-PE itself
 	DEP_FONT := y
 	DEP_ICON := y
 	DEP_ICON_RC := y

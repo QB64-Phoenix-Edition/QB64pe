@@ -25,7 +25,7 @@ case "$2" in
     win)
         # Verify that the Resource information was correctly applied
         # windres returns an error if the exe has no resource section
-        windresResult=$($ROOT/internal/c/c_compiler/bin/windres.exe -i ./qb64.exe)
+        windresResult=$($ROOT/internal/c/c_compiler/bin/windres.exe -i ./qb64pe.exe)
         assert_success_named "Windows Resource Section" printf "\n$windresResult\n"
         ;;
 
@@ -53,7 +53,7 @@ do
 
     TESTCASE=$test
 
-    ./qb64 -x  "$TEST_CASES/$test.bas" -o "$outputExe" 1>$RESULTS_DIR/$test-compile_result.txt
+    ./qb64pe -x  "$TEST_CASES/$test.bas" -o "$outputExe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
     cp_if_exists ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
 
