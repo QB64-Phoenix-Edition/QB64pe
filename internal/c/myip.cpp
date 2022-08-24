@@ -1,4 +1,5 @@
-// Note: Updated 23/9/2018: Switched to www.qb64.org since .net is down;
+// Note: Updated 12/8/2022: Switched to qb64phoenix.com since .org is dead;
+// Note: Updated 23/9/2018: Switched to www.qb64.org since .net is dead;
 // replaces implementation with download sample code from wiki Note: Updated
 // 26/3/2014: Switched to WWW.QB64.NET to avoid IP changes when QB64 moves
 // servers Note: Updated 16/1/2013: Switched to QB64.NET IP service Note: Updated
@@ -14,7 +15,7 @@
 
     $CHECKING:OFF
     FUNCTION whatismyip$
-        url$ = "www.qb64.org/ip.php"
+        url$ = "qb64phoenix.com/qb64_files/ip.php"
         url2$ = url$
         x = INSTR(url2$, "/")
         IF x THEN url2$ = LEFT$(url$, x - 1)
@@ -145,7 +146,7 @@ qbs *WHATISMYIP() { // changed name from FUNC_WHATISMYIP to WHATISMYIP
     if (new_error)
         goto exit_subfunc;
     qbs_set(_FUNC_WHATISMYIP_STRING_URL,
-            qbs_new_txt_len("www.qb64.org/ip.php", 19));
+            qbs_new_txt_len("qb64phoenix.com/qb64_files/ip.php", 33));
     qbs_cleanup(qbs_tmp_base, 0);
     qbs_set(_FUNC_WHATISMYIP_STRING_URL2, _FUNC_WHATISMYIP_STRING_URL);
     qbs_cleanup(qbs_tmp_base, 0);

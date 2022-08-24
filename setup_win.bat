@@ -1,6 +1,6 @@
 @echo off
 setlocal
-echo QB64 Setup
+echo QB64-PE Setup
 echo.
 
 mkdir internal\c\c_compiler
@@ -23,12 +23,12 @@ del %MINGW%
 echo Cleaning...
 internal\c\c_compiler\bin\mingw32-make.exe OS=win clean >NUL 2>NUL
 
-echo Building QB64...
+echo Building QB64-PE...
 internal\c\c_compiler\bin\mingw32-make.exe OS=win BUILD_QB64=y || goto report_error
 
 echo.
-echo Launching 'QB64'
-qb64
+echo Launching 'QB64-PE'
+qb64pe
 
 echo.
 pause
@@ -36,6 +36,6 @@ pause
 exit 0
 
 report_error:
-echo "Error compiling QB64."
+echo "Error compiling QB64-PE."
 echo "Please review above steps and report to https://github.com/QB64-Phoenix-Edition/QB64pe/issues if you can't get it to work"
 exit 1
