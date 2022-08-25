@@ -69,7 +69,7 @@
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
 #else
-#    define ZERO_VARIABLE(_v_) memset(&(_v_), NULL, sizeof(_v_))
+#    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #endif
 //-----------------------------------------------------------------------------------------------------
 
@@ -652,9 +652,19 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
         samplesi = 1;
 
     *soundwave_bytes = samplesi * SAMPLE_FRAME_SIZE(ma_int16, 2);
-    data = (ma_uint8 *)malloc(*soundwave_bytes);
+
+    // Frequency equal to or above 20000 will produce silence
+    // This is per QuickBASIC 4.5 behavior
+    if (frequency < 20000) {
+        data = (ma_uint8 *)malloc(*soundwave_bytes);
+    } else {
+        data = (ma_uint8 *)calloc(*soundwave_bytes, sizeof(ma_uint8));
+        return data;
+    }
+
     if (!data)
         return nullptr;
+
     sp = (ma_int16 *)data;
 
     direction = 1;
@@ -696,7 +706,7 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
     if (waveend)
         *soundwave_bytes = waveend * SAMPLE_FRAME_SIZE(ma_int16, 2);
 
-    return (ma_uint8 *)data;
+    return data;
 }
 
 /// <summary>
@@ -1918,7 +1928,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     AUDIO_DEBUG_PRINT("Data source data pointer = %p", ds->pNode->data.backend.decoded.pData);
 
     // Query the data format
-    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, NULL) != MA_SUCCESS) {
+    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, 0) != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Data format query failed");
         goto error;
     }
