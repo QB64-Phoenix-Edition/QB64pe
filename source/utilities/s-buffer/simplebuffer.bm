@@ -64,9 +64,9 @@ cur& = GetBufPos&(handle%): txl& = LEN(text$)
 brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
 cbl&& = GetBufLen&(handle%): chg& = txl& + brl%
 '--- check buffer length ---
-IF cbl&& + chg& > LEN(simplebuffer_array$(buf& + 0)) THEN
+WHILE cbl&& + chg& > LEN(simplebuffer_array$(buf& + 0))
     simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(10000)
-END IF
+WEND
 '--- write into buffer ---
 MID$(simplebuffer_array$(buf& + 0), cur&) = text$ + brc$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
 MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + chg&)
@@ -96,9 +96,9 @@ buf& = handle% * 106
 cur& = GetBufPos&(handle%): rdl& = LEN(rawData$)
 cbl&& = GetBufLen&(handle%)
 '--- check buffer length ---
-IF cbl&& + rdl& > LEN(simplebuffer_array$(buf& + 0)) THEN
+WHILE cbl&& + rdl& > LEN(simplebuffer_array$(buf& + 0))
     simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(10000)
-END IF
+WEND
 '--- write into buffer ---
 MID$(simplebuffer_array$(buf& + 0), cur&) = rawData$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
 MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + rdl&)
