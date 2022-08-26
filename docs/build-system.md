@@ -128,6 +128,7 @@ These flags controls whether certain dependencies are compiled in or not. All of
 | `DEP_DATA` | Compiles in data produced via `DATA` statements. |
 | `DEP_CONSOLE` | On Windows, this gives the program console support (graphical support is still allowed) |
 | `DEP_CONSOLE_ONLY` | Same as `DEP_CONSOLE`, but also removes GLUT and graphics support. |
+| `DEP_AUDIO_MINIAUDIO` | Enables the miniaudio backend. Should not be used with the other `DEP_AUDIO` switches which enable the old backend. |
 
 Versioning
 ----------

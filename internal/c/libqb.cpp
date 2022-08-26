@@ -23,6 +23,7 @@
 #endif
 
 #include "mutex.h"
+#include "audio.h"
 
 int32 disableEvents = 0;
 
@@ -22101,26 +22102,15 @@ double func_sqr(double value) {
     return sqrt(value);
 }
 
-#ifdef QB64_BACKSLASH_FILESYSTEM
-#    include "parts\\audio\\out\\src.c"
-#else
+#ifndef DEPENDENCY_AUDIO_MINIAUDIO
 #    include "parts/audio/out/src.c"
-#endif
-
-#ifdef QB64_BACKSLASH_FILESYSTEM
-#    include "parts\\audio\\conversion\\src.c"
-#    include "parts\\audio\\decode\\src.c"
-#else
 #    include "parts/audio/conversion/src.c"
 #    include "parts/audio/decode/src.c"
 #endif
 
+
 #ifdef DEPENDENCY_ZLIB
-#    ifdef QB64_BACKSLASH_FILESYSTEM
-#        include "parts\\zlib\\src.c"
-#    else
-#        include "parts/zlib/src.c"
-#    endif
+#    include "parts/zlib/src.c"
 #endif
 
 qbs *func_command_str = NULL;

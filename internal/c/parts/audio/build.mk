@@ -1,5 +1,5 @@
 # Include the correct files if DEP_AUDIO_OUT is defined
-ifdef DEP_AUDIO_OUT
+ifdef DEP_AUDIO_MINIAUDIO
 	MINIAUDIO_SRCS := \
 		audio.cpp \
 		miniaudio_impl.cpp
@@ -34,7 +34,7 @@ ifdef DEP_AUDIO_OUT
 		extras/libxmp-lite/win32.c \
 		extras/libxmp-lite/xm_load.c
 else
-# If DEP_AUDIO_OUT is undefined, then we compile a stub that doesn't do anything
+# If DEP_AUDIO_MINIAUDIO is undefined, then we compile a stub that doesn't do anything
 	MINIAUDIO_SRCS := \
 		stub_audio.cpp
 endif
@@ -47,7 +47,5 @@ $(PATH_INTERNAL_C)/parts/audio/%.o: $(PATH_INTERNAL_C)/parts/audio/%.cpp
 
 $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.c
 	$(CC) $(CFLAGS) -Wall -DLIBXMP_CORE_PLAYER -DLIBXMP_NO_PROWIZARD -DLIBXMP_NO_DEPACKERS -DBUILDING_STATIC $< -c -o $@
-
-EXE_LIBS += $(MINIAUDIO_OBJS)
 
 CLEAN_LIST += $(MINIAUDIO_OBJS)
