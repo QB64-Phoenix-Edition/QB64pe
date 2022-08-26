@@ -1,0 +1,97 @@
+'--- This function simulates the open behavior of real files depending
+'--- on the file OPEN mode. That way the file OPEN calls are easily
+'--- replaceable by OpenBuffer%() calls without worry about the internal
+'--- differences of the buffer system compared to real files.
+'--- Respective CLOSE calls can be simply removed as buffers remain
+'--- always accessible until cleared/disposed.
+'-----
+'--- The file names given to this function should be just the same as
+'--- you would use to open a real file, i.e. inclusive full or relative
+'--- path as required.
+'--- Modes names can be short, only the first character is checked.
+'---------------------------------------------------------------------
+FUNCTION OpenBuffer% (sbMode$, sbName$)
+'--- option _explicit requirements ---
+DIM buf%, nul&
+'--- buffer already existing? ---
+FOR buf% = 0  TO UBOUND(SBufN)
+    IF SBufN(buf%) = sbName$ THEN EXIT FOR
+NEXT buf%
+'--- simulate file modes ---
+SELECT CASE UCASE$(LEFT$(sbMode$, 1))
+    CASE "A" 'append
+        IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
+        nul& = SeekBuf&(buf%, 0, SBM_BufEnd)
+    CASE "B" 'binary
+        IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
+        nul& = SeekBuf&(buf%, 0, SBM_BufStart)
+    CASE "I" 'input
+        IF buf% > UBOUND(SBufN) THEN ERROR 53 'buffer not found
+        nul& = SeekBuf&(buf%, 0, SBM_BufStart)
+    CASE "O" 'output
+        IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufN(buf%) = ""
+        GOSUB newBuf
+    CASE ELSE 'random or unknown mode
+        buf% = SBE_NoMoreBuffers 'not supported
+END SELECT
+OpenBuffer% = buf%
+EXIT FUNCTION
+'----------
+newBuf:
+buf% = CreateBuf%
+IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+SBufN(buf%) = sbName$
+RETURN
+END FUNCTION
+
+'--- This subroutine will clear the given buffer or ALL buffers, if the
+'--- name argument is empty.
+'--- Clearing a buffer is the equivalent to KILLing a real file.
+'-----
+'--- To designate a single buffer to clear, use the same file name as
+'--- given at the respective OpenBuffer%() call.
+'---------------------------------------------------------------------
+SUB ClearBuffers (sbName$)
+'--- option _explicit requirements ---
+DIM buf%
+'--- clear/dispose buffer(s) ---
+IF sbName$ <> "" THEN
+    FOR buf% = 0  TO UBOUND(SBufN)
+        IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
+    NEXT buf%
+    IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
+    DisposeBuf buf%: SBufN(buf%) = ""
+ELSE
+    FOR buf% = 0  TO UBOUND(SBufN)
+        IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufN(buf%) = ""
+    NEXT buf%
+END IF
+END SUB
+
+'--- This subroutine will write the current contents of the given buffer
+'--- or ALL buffers, if the name argument is empty, into the respective
+'--- files on disk (using names as given by the OpenBuffer%() function)
+'--- The change state of the buffer(s) is checked first to avoid needless
+'--- disk writes.
+'-----
+'--- To designate a single buffer to write, use the same file name as
+'--- given at the respective OpenBuffer%() call.
+'---------------------------------------------------------------------
+SUB WriteBuffers (sbName$)
+'--- option _explicit requirements ---
+DIM buf%
+'--- write buffer(s) ---
+IF sbName$ <> "" THEN
+    FOR buf% = 0  TO UBOUND(SBufN)
+        IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
+    NEXT buf%
+    IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
+    IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
+ELSE
+    FOR buf% = 0  TO UBOUND(SBufN)
+        IF SBufN(buf%) <> "" THEN
+            IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
+        END IF
+    NEXT buf%
+END IF
+END SUB

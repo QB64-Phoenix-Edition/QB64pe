@@ -36,6 +36,18 @@ qbs_free(__STRING_ININEWFILE);
 qbs_free(__STRING_INILASTSECTION);
 qbs_free(__STRING_INILASTKEY);
 qbs_free(__STRING_INILF);
+if (__ARRAY_STRING_SIMPLEBUFFER_ARRAY[2]&1){
+tmp_long=__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long]);
+free((void*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]));
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_SIMPLEBUFFER_ARRAY)[8] );
+if (__ARRAY_STRING_SBUFN[2]&1){
+tmp_long=__ARRAY_STRING_SBUFN[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_SBUFN[0]))[tmp_long]);
+free((void*)(__ARRAY_STRING_SBUFN[0]));
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_SBUFN)[8] );
 qbs_free(__STRING_CACHE_FOLDER);
 qbs_free(__STRING_HELP_TXT);
 qbs_free(__STRING_HELP_LINE);
