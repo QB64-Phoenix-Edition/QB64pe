@@ -52,8 +52,6 @@ Repository Layout
    - `push-internal-source.sh`
      - If `./internal/source` is different after building `./source/qb64pe.bas`, then this will automatically push those changes to the repository to update the sources used to build `qb64pe_bootstrap`.
  - `internal/`
-   - `help/`
-     - Contains a downloaded copy of the help files, so that they do not have to be downloaded when QB64-PE is installed.
    - `c/` - Contains everything related to the C/C++ source files for QB64-PE.
      - `c_compiler/` 
        - On Windows, this folder is populated with the MinGW C++ compiler during the CI process (or when using `setup_win.bat`.
