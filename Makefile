@@ -181,6 +181,7 @@ include $(PATH_INTERNAL_C)/parts/audio/conversion/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/decode/mp3_mini/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/decode/ogg/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/out/build.mk
+include $(PATH_INTERNAL_C)/parts/audio/build.mk
 include $(PATH_INTERNAL_C)/parts/core/build.mk
 include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
 include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
@@ -266,6 +267,15 @@ else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
+ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
+	EXE_LIBS += $(MINIAUDIO_OBJS)
+
+	CXXFLAGS += -DDEPENDENCY_AUDIO_MINIAUDIO
+	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+else
+	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
+endif
+
 ifneq ($(filter y,$(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE)),)
 	EXE_LIBS += $(QB_AUDIO_CONVERSION_LIB)
 	CXXFLAGS += -DDEPENDENCY_AUDIO_CONVERSION
@@ -329,7 +339,7 @@ ifeq ($(OS),win)
 		CXXLIBS += -lwinspool
 	endif
 
-	ifneq ($(filter y,$(DEP_AUDIO_OUT) $(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE)),)
+	ifneq ($(filter y,$(DEP_AUDIO_OUT) $(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE) $(DEP_AUDIO_MINIAUDIO)),)
 		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
 	endif
 

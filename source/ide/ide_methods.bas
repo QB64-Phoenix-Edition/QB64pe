@@ -399,8 +399,8 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Changes or customizes IDE color scheme"
         menu$(m, i) = "#Code Layout...": i = i + 1
         menuDesc$(m, i - 1) = "Changes auto-format features"
-        menu$(m, i) = "C++ Co#mpiler Settings...": i = i + 1
-        menuDesc$(m, i - 1) = "Change settings for compiling the C++ code"
+        menu$(m, i) = "Co#mpiler Settings...": i = i + 1
+        menuDesc$(m, i - 1) = "Change settings for compiling your code"
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Language...": i = i + 1
         menuDesc$(m, i - 1) = "Changes code page to use with TTF fonts"
@@ -5103,7 +5103,7 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF menu$(m, s) = "C++ Co#mpiler Settings..." THEN
+            IF menu$(m, s) = "Co#mpiler Settings..." THEN
                 PCOPY 2, 0
                 retval = ideCompilerSettingsBox
                 IF retval THEN idechangemade = 1: idelayoutallow = 2: startPausedPending = 0 'recompile if options changed
@@ -15123,6 +15123,7 @@ FUNCTION ideCompilerSettingsBox
     DIM maxParallelTextBox AS LONG
     DIM extraCppFlagsTextBox AS LONG
     DIM extraLinkerFlagsTextBox AS LONG
+    DIM useOldAudioBackend AS LONG
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
@@ -15186,13 +15187,22 @@ FUNCTION ideCompilerSettingsBox
     y = y + 1 ' Blank line
 
     i = i + 1
+    useOldAudioBackend = i
+    o(i).typ = 4 'check box
+    y = y + 1: o(i).y = y
+    o(i).nam = idenewtxt("#Use old audio backend (LGPL)")
+    o(i).sel = NOT UseMiniaudioBackend
+
+    y = y + 1 ' Blank line
+
+    i = i + 1
     buttonsid = i
     o(i).typ = 3
     y = y + 1: o(i).y = y
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
     o(i).dft = 1
 
-    idepar p, 60, y, "C++ Compiler Settings"
+    idepar p, 60, y, "Compiler Settings"
     '-------- end of init --------
 
     '-------- generic init --------
@@ -15287,6 +15297,12 @@ FUNCTION ideCompilerSettingsBox
             IF Include_GDB_Debugging_Info <> v% THEN
                 Include_GDB_Debugging_Info = v%
                 WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(Include_GDB_Debugging_Info)
+            END IF
+
+            v% = o(useOldAudioBackend).sel: IF v% <> 0 THEN v% = -1
+            IF UseMiniaudioBackend <> NOT v% THEN
+                UseMiniaudioBackend = NOT v%
+                WriteConfigSetting compilerSettingsSection$, "UseMiniaudioBackend", BoolToTFString$(UseMiniaudioBackend)
             END IF
 
             v% = VAL(idetxt(o(maxParallelTextBox).txt))
