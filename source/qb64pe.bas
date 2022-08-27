@@ -12366,14 +12366,20 @@ IF DEPENDENCY(DEPENDENCY_ICON) THEN makedeps$ = makedeps$ + " DEP_ICON=y"
 IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
 IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN makedeps$ = makedeps$ + " DEP_FONT=y"
 IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN makedeps$ = makedeps$ + " DEP_AUDIO_CONVERSION=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
-IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
 IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
 IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
+
+IF UseMiniaudioBackend = 0 THEN
+    IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
+    IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN makedeps$ = makedeps$ + " DEP_AUDIO_CONVERSION=y"
+    IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
+ELSE
+    IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) OR DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) OR DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
+        makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
+    END IF
+END IF
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
