@@ -39,6 +39,10 @@ ifeq ($(OS),lnx)
 	PLATFORM := posix
 	EXTENSION :=
 
+	# Compiling with -no-pie lets some file explorers know we're an executable,
+	# not a shared object
+	CXXFLAGS += -no-pie
+
 	# Check bitness by getting length of `long
 	# 64 bits on x86_64, 32 bits on x86
 	BITS := $(shell getconf LONG_BIT)
