@@ -5,7 +5,7 @@ QB64-PE makes extensive use of third party libraries to provide
 functionality. These third party libraries have their own licenses that you
 must respect when distributing any programs compiled by QB64-PE.
 
-As a general note, almost third party libraries used by QB64-PE are either MIT,
+As a general note, almost all third party libraries used by QB64-PE are either MIT,
 Public Domain, or some other permissive license. Meeting their requirements can
 be done by simply distributing the licenses in the `./licenses` folder with
 your compiled program.
@@ -52,8 +52,8 @@ These libraries are pulled in if `_LOADIMAGE()` functionality is used.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| NanoJPEG | MIT | license_nanojpeg.txt | internal/c/parts/video/image/decode/jpg |
-| LodePNG | ZLIB | license_lodepng.txt | internal/c/parts/video/image/decode/png |
+| PCX image loader | Unlicense/Public Domain | license_dr_pcx.txt | internal/c/parts/video/image/dr_pcx.h |
+| stb_image | MIT | license_stb_image.txt | internal/c/parts/video/image/stb_image.h |
 
 ## Font Support
 
