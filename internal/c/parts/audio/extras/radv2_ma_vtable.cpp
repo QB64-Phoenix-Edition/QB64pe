@@ -39,16 +39,19 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include <string.h>
+#include <stdio.h>
+
 #include "../miniaudio.h"
 #include "radv2/opal.cpp"
 #define RAD_DETECT_REPEATS 1
 #include "radv2/player20.cpp"
 #include "radv2/validate20.cpp"
+
+#include "vtables.h"
 //-----------------------------------------------------------------------------------------------------
 
 struct ma_radv2 {
@@ -96,7 +99,7 @@ static ma_result ma_radv2_get_data_format(ma_radv2 *pRadv2, ma_format *pFormat, 
         *pSampleRate = 0;
     }
     if (pChannelMap != NULL) {
-        MA_ZERO_MEMORY(pChannelMap, sizeof(*pChannelMap) * channelMapCap);
+        memset(pChannelMap, 0, sizeof(*pChannelMap) * channelMapCap);
     }
 
     if (!pRadv2) {
@@ -290,7 +293,7 @@ static ma_result ma_radv2_init_internal(const ma_decoding_backend_config *pConfi
         return MA_INVALID_ARGS;
     }
 
-    MA_ZERO_OBJECT(pRadv2);
+    memset(pRadv2, 0, sizeof(*pRadv2));
     pRadv2->format = ma_format::ma_format_s16; // RADv2 Opal outputs 16-bit signed samples by default
 
     if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_s16) {
@@ -606,4 +609,6 @@ static ma_decoding_backend_vtable ma_decoding_backend_vtable_radv2 = {ma_decodin
                                                                       NULL, /* onInitFileW() */
                                                                       NULL, /* onInitMemory() */
                                                                       ma_decoding_backend_uninit__radv2};
+
+ma_decoding_backend_vtable *radv2_ma_vtable = &ma_decoding_backend_vtable_radv2;
 //-----------------------------------------------------------------------------------------------------

@@ -15,14 +15,18 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include <stdio.h>
+#include <string.h>
+
 #include "../miniaudio.h"
+
 #define BUILDING_STATIC 1
 #include "libxmp-lite/xmp.h"
+
+#include "vtables.h"
 //-----------------------------------------------------------------------------------------------------
 
 struct ma_modplay {
@@ -65,7 +69,7 @@ static ma_result ma_modplay_get_data_format(ma_modplay *pModplay, ma_format *pFo
         *pSampleRate = 0;
     }
     if (pChannelMap != NULL) {
-        MA_ZERO_MEMORY(pChannelMap, sizeof(*pChannelMap) * channelMapCap);
+        memset(pChannelMap, 0, sizeof(*pChannelMap) * channelMapCap);
     }
 
     if (pModplay == NULL) {
@@ -254,7 +258,7 @@ static ma_result ma_modplay_init_internal(const ma_decoding_backend_config *pCon
         return MA_INVALID_ARGS;
     }
 
-    MA_ZERO_OBJECT(pModplay);
+    memset(pModplay, 0, sizeof(*pModplay));
     pModplay->format = ma_format::ma_format_s16; // We'll render 16-bit signed samples by default
 
     if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_s16) {
@@ -498,8 +502,10 @@ static void ma_decoding_backend_uninit__modplay(void *pUserData, ma_data_source 
     ma_free(pModplay, pAllocationCallbacks);
 }
 
-static ma_decoding_backend_vtable ma_decoding_backend_vtable_modplay = {ma_decoding_backend_init__modplay, ma_decoding_backend_init_file__modplay,
+static ma_decoding_backend_vtable ma_decoding_backend_vtable_modplay = { ma_decoding_backend_init__modplay, ma_decoding_backend_init_file__modplay,
                                                                         NULL, /* onInitFileW() */
                                                                         NULL, /* onInitMemory() */
                                                                         ma_decoding_backend_uninit__modplay};
+
+ma_decoding_backend_vtable *mod_ma_vtable = &ma_decoding_backend_vtable_modplay;
 //-----------------------------------------------------------------------------------------------------

@@ -18,23 +18,55 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include "libqb-common.h"
+#include <string.h>
+
 #include "../miniaudio.h"
-#include "tinysoundfont/awe32rom.h"
+
 #define TSF_IMPLEMENTATION
 #include "tinysoundfont/tsf.h"
 #define TML_IMPLEMENTATION
 #include "tinysoundfont/tml.h"
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// CONSTANTS
-//-----------------------------------------------------------------------------------------------------
-#define TSF_DEFAULT_SOUNDFONT_FILENAME "soundfont.sf2"
+#include "vtables.h"
+
+extern "C" {
+    // These symbols reference a soundfont compiled into the program
+    //
+    // We provide a macro to expand to the correct symbol name
+
+#if defined(QB64_WINDOWS) && defined(QB64_32)
+    // On 32-bit Windows, we use objcopy, and the symbols do not have an
+    // underscore prefix
+    extern char binary_soundfont_sf2_start[];
+    extern char binary_soundfont_sf2_end[];
+
+#   define SOUNDFONT_BIN binary_soundfont_sf2_start
+#   define SOUNDFONT_SIZE (binary_soundfont_sf2_end - binary_soundfont_sf2_start)
+
+#elif defined(QB64_WINDOWS) || defined(QB64_LINUX)
+    // On Linux and 64-bit Windows, we use objcopy, and the symbols do have an
+    // underscore prefix.
+    extern char _binary_soundfont_sf2_start[];
+    extern char _binary_soundfont_sf2_end[];
+
+#   define SOUNDFONT_BIN _binary_soundfont_sf2_start
+#   define SOUNDFONT_SIZE (_binary_soundfont_sf2_end - _binary_soundfont_sf2_start)
+
+#else
+    // On Mac OS we use xxd, which gives an array and size
+    extern unsigned char soundfont_sf2[];
+    extern unsigned int soundfont_sf2_len;
+
+#   define SOUNDFONT_BIN soundfont_sf2
+#   define SOUNDFONT_SIZE soundfont_sf2_len
+
+#endif
+}
+
 //-----------------------------------------------------------------------------------------------------
 
 struct ma_tsf {
@@ -83,7 +115,7 @@ static ma_result ma_tsf_get_data_format(ma_tsf *pTsf, ma_format *pFormat, ma_uin
         *pSampleRate = 0;
     }
     if (pChannelMap != NULL) {
-        MA_ZERO_MEMORY(pChannelMap, sizeof(*pChannelMap) * channelMapCap);
+        memset(pChannelMap, 0, sizeof(*pChannelMap) * channelMapCap);
     }
 
     if (pTsf == NULL) {
@@ -302,7 +334,7 @@ static ma_result ma_tsf_init_internal(const ma_decoding_backend_config *pConfig,
         return MA_INVALID_ARGS;
     }
 
-    MA_ZERO_OBJECT(pTsf);
+    memset(pTsf, 0, sizeof(&pTsf));
     pTsf->format = ma_format::ma_format_s16; // We'll render 16-bit signed samples by default
 
     if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_s16) {
@@ -320,6 +352,15 @@ static ma_result ma_tsf_init_internal(const ma_decoding_backend_config *pConfig,
     }
 
     return MA_SUCCESS;
+}
+
+ma_result ma_tsf_load_memory(ma_tsf *pTsf)
+{
+    // Attempt to load a SoundFont from memory
+    pTsf->tinySoundFont = tsf_load_memory(SOUNDFONT_BIN, SOUNDFONT_SIZE);
+
+    // Return failue if loading from memory also failed. This should not happen though
+    return pTsf->tinySoundFont? MA_SUCCESS: MA_OUT_OF_MEMORY;
 }
 
 static ma_result ma_tsf_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,
@@ -370,18 +411,11 @@ static ma_result ma_tsf_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
         return MA_IO_ERROR;
     }
 
-    // Attempt to load a SoundFont from a file
-    pTsf->tinySoundFont = tsf_load_filename(TSF_DEFAULT_SOUNDFONT_FILENAME);
-
-    if (!pTsf->tinySoundFont) {
-        // Attempt to load the soundfont from memory
-        pTsf->tinySoundFont = tsf_load_memory(awe32rom, sizeof(awe32rom));
-
-        // Return failue if loading from memory also failed. This should not happen though
-        if (!pTsf->tinySoundFont) {
-            delete[] tune;
-            return MA_OUT_OF_MEMORY;
-        }
+    // Load soundfont
+    result = ma_tsf_load_memory(pTsf);
+    if (result != MA_SUCCESS) {
+        delete[] tune;
+        return result;
     }
 
     // Initialize preset on special 10th MIDI channel to use percussion sound bank (128) if available
@@ -428,18 +462,10 @@ static ma_result ma_tsf_init_file(const char *pFilePath, const ma_decoding_backe
         return MA_INVALID_FILE;
     }
 
-    // Attempt to load a SoundFont from a file
-    pTsf->tinySoundFont = tsf_load_filename(TSF_DEFAULT_SOUNDFONT_FILENAME);
-
-    if (!pTsf->tinySoundFont) {
-        // Attempt to load the soundfont from memory
-        pTsf->tinySoundFont = tsf_load_memory(awe32rom, sizeof(awe32rom));
-
-        // Return failue if loading from memory also failed. This should not happen though
-        if (!pTsf->tinySoundFont) {
-            return MA_OUT_OF_MEMORY;
-        }
-    }
+    // Load soundfont
+    result = ma_tsf_load_memory(pTsf);
+    if (result != MA_SUCCESS)
+        return result;
 
     // Initialize preset on special 10th MIDI channel to use percussion sound bank (128) if available
     tsf_channel_set_bank_preset(pTsf->tinySoundFont, 9, 128, 0);
@@ -540,4 +566,6 @@ static void ma_decoding_backend_uninit__tsf(void *pUserData, ma_data_source *pBa
 static ma_decoding_backend_vtable ma_decoding_backend_vtable_tsf = {ma_decoding_backend_init__tsf, ma_decoding_backend_init_file__tsf, NULL, /* onInitFileW() */
                                                                     NULL, /* onInitMemory() */
                                                                     ma_decoding_backend_uninit__tsf};
+
+ma_decoding_backend_vtable *midi_ma_vtable = &ma_decoding_backend_vtable_tsf;
 //-----------------------------------------------------------------------------------------------------

@@ -27,13 +27,12 @@
 #        define uint8 uint8_t
 #    endif
 
+#    define ptrszint intptr_t
+#    define uptrszint uintptr_t
+
 #    ifdef QB64_64
-#        define ptrszint int64
-#        define uptrszint uint64
 #        define ptrsz 8
 #    else
-#        define ptrszint int32
-#        define uptrszint uint32
 #        define ptrsz 4
 #    endif
 #endif
