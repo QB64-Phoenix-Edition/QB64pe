@@ -98,8 +98,8 @@
 #        endif
 #    endif
 
-    // QB64 string descriptor structure
-    struct qbs_field {
+// QB64 string descriptor structure
+struct qbs_field {
     int32 fileno;
     int64 fileid;
     int64 size;

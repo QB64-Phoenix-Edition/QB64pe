@@ -1196,23 +1196,10 @@ inline uint64_t func__ror64(uint64_t value, unsigned int count) {
 }
 // a740g: ROR & ROL additions end
 
-// a740g: SHL & SHR fixes start
-inline uint8_t func__shl8(uint8_t value, unsigned int count) { return value << count; }
+// bit-shifting
+inline uint64 func__shl(uint64 a1, int b1) { return a1 << b1; }
 
-inline uint8_t func__shr8(uint8_t value, unsigned int count) { return value >> count; }
-
-inline uint16_t func__shl16(uint16_t value, unsigned int count) { return value << count; }
-
-inline uint16_t func__shr16(uint16_t value, unsigned int count) { return value >> count; }
-
-inline uint32_t func__shl32(uint32_t value, unsigned int count) { return value << count; }
-
-inline uint32_t func__shr32(uint32_t value, unsigned int count) { return value >> count; }
-
-inline uint64_t func__shl64(uint64_t value, unsigned int count) { return value << count; }
-
-inline uint64_t func__shr64(uint64_t value, unsigned int count) { return value >> count; }
-// a740g: SHL & SHR fixes end
+inline uint64 func__shr(uint64 a1, int b1) { return a1 >> b1; }
 
 inline int64 func__readbit(uint64 a1, int b1) {
     if (a1 & 1ull << b1)
