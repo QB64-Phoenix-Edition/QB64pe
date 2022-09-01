@@ -11,18 +11,30 @@ b = &B1111111100000000
 c = &B11111111111111110000000000000000
 d = &B1111111111111111111111111111111100000000000000000000000000000000
 
-PRINT a, b, c, d
-PRINT _BIN$(a), _BIN$(b), _BIN$(c), _BIN$(d)
+PRINT a; ":"; _BIN$(a)
+PRINT b; ":"; _BIN$(b)
+PRINT c; ":"; _BIN$(c)
+PRINT d; ":"; _BIN$(d)
 
-PRINT _ROL(a, 1), _ROL(b, 1), _ROL(c, 1), _ROL(d, 1)
-PRINT _BIN$(_ROL(a, 1)), _BIN$(_ROL(b, 1)), _BIN$(_ROL(c, 1)), _BIN$(_ROL(d, 1))
+PRINT _ROL(a, 1); ":"; _BIN$(_ROL(a, 1))
+PRINT _ROL(b, 1); ":"; _BIN$(_ROL(b, 1))
+PRINT _ROL(c, 1); ":"; _BIN$(_ROL(c, 1))
+PRINT _ROL(d, 1); ":"; _BIN$(_ROL(d, 1))
 
-PRINT _ROR(a, 1), _ROR(b, 1), _ROR(c, 1), _ROR(d, 1)
-PRINT _BIN$(_ROR(a, 1)), _BIN$(_ROR(b, 1)), _BIN$(_ROR(c, 1)), _BIN$(_ROR(d, 1))
+PRINT _ROR(a, 1); ":"; _BIN$(_ROR(a, 1))
+PRINT _ROR(b, 1); ":"; _BIN$(_ROR(b, 1))
+PRINT _ROR(c, 1); ":"; _BIN$(_ROR(c, 1))
+PRINT _ROR(d, 1); ":"; _BIN$(_ROR(d, 1))
 
-PRINT _BIN$(_ROL(240~%%, 5)), _BIN$(_ROL(65280~%, 5)), _BIN$(_ROL(4294901760~&, 5)), _BIN$(_ROL(18446744069414584320~&&, 5))
+PRINT a; ":"; _BIN$(_ROL(240~%%, 5))
+PRINT b; ":"; _BIN$(_ROL(65280~%, 5))
+PRINT c; ":"; _BIN$(_ROL(4294901760~&, 5))
+PRINT d; ":"; _BIN$(_ROL(18446744069414584320~&&, 5))
 
-PRINT _BIN$(_ROR(240~%%, 5)), _BIN$(_ROR(65280~%, 5)), _BIN$(_ROR(4294901760~&, 5)), _BIN$(_ROR(18446744069414584320~&&, 5))
+PRINT a; ":"; _BIN$(_ROR(240~%%, 5))
+PRINT b; ":"; _BIN$(_ROR(65280~%, 5))
+PRINT c; ":"; _BIN$(_ROR(4294901760~&, 5))
+PRINT d; ":"; _BIN$(_ROR(18446744069414584320~&&, 5))
 
 SYSTEM
 
