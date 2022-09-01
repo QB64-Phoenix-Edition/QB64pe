@@ -3667,13 +3667,15 @@ id.ret = LONGTYPE - ISPOINTER
 id.hr_syntax = "_AUTODISPLAY"
 regid
 
+' a740: SHR & SHL fixes
+' These are mostly stubs now as we handle these in evaluatefunc
 clearid
 id.n = qb64prefix$ + "SHR"
 id.subfunc = 1
 id.callname = "func__shr"
 id.args = 2
-id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-id.ret = UINTEGER64TYPE - ISPOINTER
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) ' ***overridden by function evaluatefunc***
+id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
 id.hr_syntax = "_SHR(numericalVariable, numericalValue)"
 regid
 
@@ -3682,10 +3684,31 @@ id.n = qb64prefix$ + "SHL"
 id.subfunc = 1
 id.callname = "func__shl"
 id.args = 2
-id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-id.ret = UINTEGER64TYPE - ISPOINTER
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) ' ***overridden by function evaluatefunc***
+id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
 id.hr_syntax = "_SHL(numericalVariable, numericalValue)"
 regid
+' a740: end of SHR & SHL fixes
+
+' a740g: ROR & ROL additions
+clearid
+id.n = qb64prefix$ + "ROL"
+id.subfunc = 1
+id.args = 2
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)  ' ***overridden by function evaluatefunc***
+id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
+id.hr_syntax = "_ROL(numericalVariable, numericalValue)"
+regid
+
+clearid
+id.n = qb64prefix$ + "ROR"
+id.subfunc = 1
+id.args = 2
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)  ' ***overridden by function evaluatefunc***
+id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
+id.hr_syntax = "_ROR(numericalVariable, numericalValue)"
+regid
+' a740g: end of ROR & ROL additions
 
 clearid
 id.n = qb64prefix$ + "Deflate"

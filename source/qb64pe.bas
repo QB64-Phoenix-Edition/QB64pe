@@ -16384,6 +16384,154 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
+                ' a740g: ROR support
+                IF n$ = "_ROR" OR (n$ = "ROR" AND qb64prefix_set = 1) THEN
+                    IF curarg = 1 THEN ' First paramater
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN ' Bad parameters types
+                            Give_Error "Expected non-floating-point value"
+                            EXIT FUNCTION
+                        END IF
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0) ' This gets the C-style dereferencing syntax for an identifier (I think XD)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        'establish which function (if any!) should be used
+                        IF (sourcetyp AND 511) = 8 THEN ' sourcetyp is the type of data (bits can be examined to get more details)
+                            e$ = "func__ror8(" + e$
+                            typ& = UBYTETYPE - ISPOINTER ' We force the return type here. This passed back up to the caller
+                        ELSEIF (sourcetyp AND 511) = 16 THEN
+                            e$ = "func__ror16(" + e$
+                            typ& = UINTEGERTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 32 THEN
+                            e$ = "func__ror32(" + e$
+                            typ& = ULONGTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 64 THEN
+                            e$ = "func__ror64(" + e$
+                            typ& = UINTEGER64TYPE - ISPOINTER
+                        ELSE
+                            Give_Error "Unknown data size"
+                            EXIT FUNCTION
+                        END IF
+                        r$ = e$ ' Save whatever syntax he have so far
+                        e$ = "" ' This must be cleared so that it is not repeated when we get to parameter 2
+                        GOTO dontevaluate ' Don't evaluate until we get the second parameter
+                    ELSEIF curarg = 2 THEN ' Second parameter
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        r$ = r$ + e$ + ")"
+                        GOTO evalfuncspecial ' Evaluate now that we have everything
+                    END IF
+                END IF
+
+                ' a740g: ROL support
+                IF n$ = "_ROL" OR (n$ = "ROL" AND qb64prefix_set = 1) THEN
+                    IF curarg = 1 THEN
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN
+                            Give_Error "Expected non-floating-point value"
+                            EXIT FUNCTION
+                        END IF
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        'establish which function (if any!) should be used
+                        IF (sourcetyp AND 511) = 8 THEN
+                            e$ = "func__rol8(" + e$
+                            typ& = UBYTETYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 16 THEN
+                            e$ = "func__rol16(" + e$
+                            typ& = UINTEGERTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 32 THEN
+                            e$ = "func__rol32(" + e$
+                            typ& = ULONGTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 64 THEN
+                            e$ = "func__rol64(" + e$
+                            typ& = UINTEGER64TYPE - ISPOINTER
+                        ELSE
+                            Give_Error "Unknown data size"
+                            EXIT FUNCTION
+                        END IF
+                        r$ = e$
+                        e$ = ""
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        r$ = r$ + e$ + ")"
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
+                ' a740g: SHR support
+                IF n$ = "_SHR" OR (n$ = "SHR" AND qb64prefix_set = 1) THEN
+                    IF curarg = 1 THEN
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN
+                            Give_Error "Expected non-floating-point value"
+                            EXIT FUNCTION
+                        END IF
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        'establish which function (if any!) should be used
+                        IF (sourcetyp AND 511) = 8 THEN
+                            e$ = "func__shr8(" + e$
+                            typ& = UBYTETYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 16 THEN
+                            e$ = "func__shr16(" + e$
+                            typ& = UINTEGERTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 32 THEN
+                            e$ = "func__shr32(" + e$
+                            typ& = ULONGTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 64 THEN
+                            e$ = "func__shr64(" + e$
+                            typ& = UINTEGER64TYPE - ISPOINTER
+                        ELSE
+                            Give_Error "Unknown data size"
+                            EXIT FUNCTION
+                        END IF
+                        r$ = e$
+                        e$ = ""
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        r$ = r$ + e$ + ")"
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
+                ' a740g: SHL support
+                IF n$ = "_SHL" OR (n$ = "SHL" AND qb64prefix_set = 1) THEN
+                    IF curarg = 1 THEN
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN
+                            Give_Error "Expected non-floating-point value"
+                            EXIT FUNCTION
+                        END IF
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        'establish which function (if any!) should be used
+                        IF (sourcetyp AND 511) = 8 THEN
+                            e$ = "func__shl8(" + e$
+                            typ& = UBYTETYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 16 THEN
+                            e$ = "func__shl16(" + e$
+                            typ& = UINTEGERTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 32 THEN
+                            e$ = "func__shl32(" + e$
+                            typ& = ULONGTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 64 THEN
+                            e$ = "func__shl64(" + e$
+                            typ& = UINTEGER64TYPE - ISPOINTER
+                        ELSE
+                            Give_Error "Unknown data size"
+                            EXIT FUNCTION
+                        END IF
+                        r$ = e$
+                        e$ = ""
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        r$ = r$ + e$ + ")"
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
                 '***special case***
                 IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
                     IF curarg = 1 THEN
