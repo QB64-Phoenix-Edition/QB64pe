@@ -3689,7 +3689,7 @@ regid
 
 ' a740g: ROR & ROL additions
 clearid
-id.n = qb64prefix$ + "ROL"
+id.n = qb64prefix$ + "RoL"
 id.subfunc = 1
 id.args = 2
 id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)  ' ***overridden by function evaluatefunc***
@@ -3698,7 +3698,7 @@ id.hr_syntax = "_ROL(numericalVariable, numericalValue)"
 regid
 
 clearid
-id.n = qb64prefix$ + "ROR"
+id.n = qb64prefix$ + "RoR"
 id.subfunc = 1
 id.args = 2
 id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)  ' ***overridden by function evaluatefunc***
