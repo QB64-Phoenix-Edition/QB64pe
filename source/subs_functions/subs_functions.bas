@@ -3668,7 +3668,7 @@ id.hr_syntax = "_AUTODISPLAY"
 regid
 
 clearid
-id.n = qb64prefix$ + "SHR"
+id.n = qb64prefix$ + "ShR" ' a740g: Changed to camel case
 id.subfunc = 1
 id.callname = "func__shr"
 id.args = 2
@@ -3678,7 +3678,7 @@ id.hr_syntax = "_SHR(numericalVariable, numericalValue)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SHL"
+id.n = qb64prefix$ + "ShL" ' a740g: Changed to camel case
 id.subfunc = 1
 id.callname = "func__shl"
 id.args = 2

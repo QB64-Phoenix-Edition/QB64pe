@@ -16397,7 +16397,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         ' Establish which function (if any!) should be used
                         IF (sourcetyp AND 511) = 8 THEN ' sourcetyp is the type of data (bits can be examined to get more details)
                             e$ = "func__" + rotlr_n$ + "8(" + e$
-                            typ& = UBYTETYPE - ISPOINTER ' We force the return type here. This passed back up to the caller
+                            typ& = UBYTETYPE - ISPOINTER ' We force the return type here. This is passed back up to the caller
                         ELSEIF (sourcetyp AND 511) = 16 THEN
                             e$ = "func__" + rotlr_n$ + "16(" + e$
                             typ& = UINTEGERTYPE - ISPOINTER
