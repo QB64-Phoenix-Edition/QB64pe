@@ -12829,7 +12829,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, makeline$ + CHR$(10);
         PRINT #ffh, "read -p " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "recompile_osx.command"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "recompile_osx.command")
 
         ffh = FREEFILE
         OPEN tmpdir$ + "debug_osx.command" FOR OUTPUT AS #ffh
@@ -12849,7 +12849,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "gdb " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34) + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "debug_osx.command"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "debug_osx.command")
 
     ELSE
 
@@ -12869,7 +12869,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "echo " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "recompile_lnx.sh"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "recompile_lnx.sh")
 
         ffh = FREEFILE
         OPEN tmpdir$ + "debug_lnx.sh" FOR OUTPUT AS #ffh
@@ -12889,7 +12889,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "gdb " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34) + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "debug_lnx.sh"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "debug_lnx.sh")
 
     END IF
 
@@ -12916,7 +12916,7 @@ IF os$ = "LNX" THEN
         PRINT #ff, "exit";
         PRINT #ff, CHR$(10);
         CLOSE #ff
-        SHELL _HIDE "chmod +x " + path.exe$ + file$ + extension$ + "_start.command"
+        SHELL _HIDE "chmod +x " + AddQuotes$(path.exe$ + file$ + extension$ + "_start.command")
     END IF
 
 END IF
