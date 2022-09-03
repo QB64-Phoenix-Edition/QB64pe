@@ -24356,24 +24356,6 @@ void call_int(int32 i) {
 // Creating/destroying an image surface:
 
 int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
-#ifdef QB64_WINDOWS
-#    if WINVER >= 0x0600 // this block is not compatible with XP
-    static bool j;
-    if (j != 1) {
-        FARPROC dpiaware;
-        HMODULE user32 = LoadLibrary(TEXT("user32.dll"));
-        if (user32 != NULL) {
-            dpiaware = GetProcAddress(user32, "SetProcessDPIAware");
-            if (NULL != dpiaware) {
-                (dpiaware)();
-                j = 1;
-                FreeLibrary(user32);
-            }
-            FreeLibrary(user32);
-        }
-    }
-#    endif
-#endif
     static int32 i;
     if (new_error)
         return 0;
