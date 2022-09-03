@@ -16384,6 +16384,44 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
+                ' a740g: ROR & ROL support
+                IF n$ = "_ROR" OR (n$ = "ROR" AND qb64prefix_set = 1) OR n$ = "_ROL" OR (n$ = "ROL" AND qb64prefix_set = 1) THEN
+                    rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' Get the last 3 characters and convert to lower case. We'll need this to construct the C call
+                    IF curarg = 1 THEN ' First paramater
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN ' Bad parameters types
+                            Give_Error "Expected non-floating-point value"
+                            EXIT FUNCTION
+                        END IF
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0) ' This gets the C-style dereferencing syntax for an identifier (I think XD)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        ' Establish which function (if any!) should be used
+                        IF (sourcetyp AND 511) = 8 THEN ' sourcetyp is the type of data (bits can be examined to get more details)
+                            e$ = "func__" + rotlr_n$ + "8(" + e$
+                            typ& = UBYTETYPE - ISPOINTER ' We force the return type here. This is passed back up to the caller
+                        ELSEIF (sourcetyp AND 511) = 16 THEN
+                            e$ = "func__" + rotlr_n$ + "16(" + e$
+                            typ& = UINTEGERTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 32 THEN
+                            e$ = "func__" + rotlr_n$ + "32(" + e$
+                            typ& = ULONGTYPE - ISPOINTER
+                        ELSEIF (sourcetyp AND 511) = 64 THEN
+                            e$ = "func__" + rotlr_n$ + "64(" + e$
+                            typ& = UINTEGER64TYPE - ISPOINTER
+                        ELSE
+                            Give_Error "Unknown data size"
+                            EXIT FUNCTION
+                        END IF
+                        r$ = e$ ' Save whatever syntax he have so far
+                        e$ = "" ' This must be cleared so that it is not repeated when we get to parameter 2
+                        GOTO dontevaluate ' Don't evaluate until we get the second parameter
+                    ELSEIF curarg = 2 THEN ' Second parameter
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+                        r$ = r$ + e$ + ")"
+                        GOTO evalfuncspecial ' Evaluate now that we have everything
+                    END IF
+                END IF
+
                 '***special case***
                 IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
                     IF curarg = 1 THEN

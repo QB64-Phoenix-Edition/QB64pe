@@ -3668,7 +3668,7 @@ id.hr_syntax = "_AUTODISPLAY"
 regid
 
 clearid
-id.n = qb64prefix$ + "SHR"
+id.n = qb64prefix$ + "ShR" ' a740g: Changed to camel case
 id.subfunc = 1
 id.callname = "func__shr"
 id.args = 2
@@ -3678,7 +3678,7 @@ id.hr_syntax = "_SHR(numericalVariable, numericalValue)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SHL"
+id.n = qb64prefix$ + "ShL" ' a740g: Changed to camel case
 id.subfunc = 1
 id.callname = "func__shl"
 id.args = 2
@@ -3686,6 +3686,26 @@ id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.ret = UINTEGER64TYPE - ISPOINTER
 id.hr_syntax = "_SHL(numericalVariable, numericalValue)"
 regid
+
+' a740g: ROR & ROL additions
+clearid
+id.n = qb64prefix$ + "RoL"
+id.subfunc = 1
+id.args = 2
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)  ' ***overridden by function evaluatefunc***
+id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
+id.hr_syntax = "_ROL(numericalVariable, numericalValue)"
+regid
+
+clearid
+id.n = qb64prefix$ + "RoR"
+id.subfunc = 1
+id.args = 2
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)  ' ***overridden by function evaluatefunc***
+id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
+id.hr_syntax = "_ROR(numericalVariable, numericalValue)"
+regid
+' a740g: end of ROR & ROL additions
 
 clearid
 id.n = qb64prefix$ + "Deflate"

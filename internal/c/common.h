@@ -63,6 +63,7 @@
 #    include <fcntl.h>
 #    include <fstream>
 #    include <iostream>
+#    include <limits.h>
 #    include <string.h>
 #    include <time.h>
 

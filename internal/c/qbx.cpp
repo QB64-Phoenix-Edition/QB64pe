@@ -1142,6 +1142,60 @@ inline int32 func_sgn(long double v) {
     return 0;
 }
 
+// a740g: ROR & ROL additions start
+// The rotation functions below are the way they are for a couple of reasons:
+//  1. They are safer (well folks seem to think so; see https://en.wikipedia.org/wiki/Circular_shift#Implementing_circular_shifts)
+//  2. We are using C library constants and there is just 1 numeric literal - '1'
+//  3. GGC recognizes the 'pattern' and will optimize it out to 'roX' and 3 more instructions when using O2
+inline uint8_t func__rol8(uint8_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value << count) | (value >> (-count & mask));
+}
+
+inline uint8_t func__ror8(uint8_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value >> count) | (value << (-count & mask));
+}
+
+inline uint16_t func__rol16(uint16_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value << count) | (value >> (-count & mask));
+}
+
+inline uint16_t func__ror16(uint16_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value >> count) | (value << (-count & mask));
+}
+
+inline uint32_t func__rol32(uint32_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value << count) | (value >> (-count & mask));
+}
+
+inline uint32_t func__ror32(uint32_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value >> count) | (value << (-count & mask));
+}
+
+inline uint64_t func__rol64(uint64_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value << count) | (value >> (-count & mask));
+}
+
+inline uint64_t func__ror64(uint64_t value, unsigned int count) {
+    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
+    count &= mask;
+    return (value >> count) | (value << (-count & mask));
+}
+// a740g: ROR & ROL additions end
+
 // bit-shifting
 inline uint64 func__shl(uint64 a1, int b1) { return a1 << b1; }
 
