@@ -37149,22 +37149,25 @@ int32 func__resize() {
 }
 
 void sub__windowscale(int32 amount) {
+#ifdef QB64_GUI
     int32 tempx, tempy;
-        if (amount < 50) return; // don't scale the screen to less than 50% of it's original size!!
+    if (amount < 50)
+        return; // don't scale the screen to less than 50% of it's original size!!
 
-        tempx = environment_2d__screen_width * amount / 100;  // basically our width of the screen
-        tempy = environment_2d__screen_height * amount / 100; // and this is the height of the screen
-        if (tempx < 320) return; // minimal window width of 320.
-        if (tempy < 240) return; // minimal window height of 240
-        
-        ScreenResize = 1;
-        ScreenResizeScale = amount;
+    tempx = environment_2d__screen_width * amount / 100;  // basically our width of the screen
+    tempy = environment_2d__screen_height * amount / 100; // and this is the height of the screen
+    if (tempx < 320)
+        return; // minimal window width of 320.
+    if (tempy < 240)
+        return; // minimal window height of 240
 
-        resize_snapback = 0;
-        resize_pending = 1; // this says we're going to do a resize
+    resize_snapback = 0;
+    resize_pending = 1; // this says we're going to do a resize
+    resize_auto = 1;
 
-        glutReshapeWindow(tempx, tempy);
-        glutPostRedisplay();
+    glutReshapeWindow(tempx, tempy);
+    glutPostRedisplay();
+#endif
 }
 
 

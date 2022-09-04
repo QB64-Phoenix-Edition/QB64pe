@@ -3892,6 +3892,6 @@ id.subfunc = 2
 id.callname = "sub__windowscale"
 id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.hr_syntax = "_WINDOWSCALE(amount)"
+id.hr_syntax = "_WINDOWSCALE amount"
 regid
 
