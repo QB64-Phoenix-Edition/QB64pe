@@ -563,9 +563,11 @@ static void ma_decoding_backend_uninit__tsf(void *pUserData, ma_data_source *pBa
     ma_free(pTsf, pAllocationCallbacks);
 }
 
-static ma_decoding_backend_vtable ma_decoding_backend_vtable_tsf = {ma_decoding_backend_init__tsf, ma_decoding_backend_init_file__tsf, NULL, /* onInitFileW() */
-                                                                    NULL, /* onInitMemory() */
-                                                                    ma_decoding_backend_uninit__tsf};
-
-ma_decoding_backend_vtable *midi_ma_vtable = &ma_decoding_backend_vtable_tsf;
+ma_decoding_backend_vtable ma_vtable_midi = {
+    ma_decoding_backend_init__tsf,
+    ma_decoding_backend_init_file__tsf,
+    NULL, /* onInitFileW() */
+    NULL, /* onInitMemory() */
+    ma_decoding_backend_uninit__tsf
+};
 //-----------------------------------------------------------------------------------------------------

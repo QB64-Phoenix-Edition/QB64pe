@@ -605,10 +605,11 @@ static void ma_decoding_backend_uninit__radv2(void *pUserData, ma_data_source *p
     ma_free(pRadv2, pAllocationCallbacks);
 }
 
-static ma_decoding_backend_vtable ma_decoding_backend_vtable_radv2 = {ma_decoding_backend_init__radv2, ma_decoding_backend_init_file__radv2,
-                                                                      NULL, /* onInitFileW() */
-                                                                      NULL, /* onInitMemory() */
-                                                                      ma_decoding_backend_uninit__radv2};
-
-ma_decoding_backend_vtable *radv2_ma_vtable = &ma_decoding_backend_vtable_radv2;
+ma_decoding_backend_vtable ma_vtable_radv2 = {
+    ma_decoding_backend_init__radv2,
+    ma_decoding_backend_init_file__radv2,
+    NULL, /* onInitFileW() */
+    NULL, /* onInitMemory() */
+    ma_decoding_backend_uninit__radv2
+};
 //-----------------------------------------------------------------------------------------------------

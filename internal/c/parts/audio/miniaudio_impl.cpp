@@ -40,9 +40,9 @@
 // The order in the array defines the order of priority
 // The vtables will be passed in to the resource manager config
 static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
-    radv2_ma_vtable,
-    midi_ma_vtable,
-    mod_ma_vtable,
+    &ma_vtable_radv2,
+    &ma_vtable_midi,
+    &ma_vtable_modplay,
 };
 //-----------------------------------------------------------------------------------------------------
 

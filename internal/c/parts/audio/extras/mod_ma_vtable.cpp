@@ -502,10 +502,12 @@ static void ma_decoding_backend_uninit__modplay(void *pUserData, ma_data_source 
     ma_free(pModplay, pAllocationCallbacks);
 }
 
-static ma_decoding_backend_vtable ma_decoding_backend_vtable_modplay = { ma_decoding_backend_init__modplay, ma_decoding_backend_init_file__modplay,
-                                                                        NULL, /* onInitFileW() */
-                                                                        NULL, /* onInitMemory() */
-                                                                        ma_decoding_backend_uninit__modplay};
+ma_decoding_backend_vtable ma_vtable_modplay = {
+    ma_decoding_backend_init__modplay,
+    ma_decoding_backend_init_file__modplay,
+    NULL, /* onInitFileW() */
+    NULL, /* onInitMemory() */
+    ma_decoding_backend_uninit__modplay
+};
 
-ma_decoding_backend_vtable *mod_ma_vtable = &ma_decoding_backend_vtable_modplay;
 //-----------------------------------------------------------------------------------------------------
