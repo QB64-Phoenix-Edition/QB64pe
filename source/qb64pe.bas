@@ -13106,6 +13106,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT
                 PRINT "Options:"
                 PRINT "  <file>                  Source file to load" '                                '80 columns
+                PRINT "  -v                      Print version"
                 PRINT "  -c                      Compile instead of edit"
                 PRINT "  -o <output file>        Write output executable to <output file>"
                 PRINT "  -x                      Compile instead of edit and output the result to the"
@@ -13120,8 +13121,15 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT "  -l:<line number>        Start the IDE at the specified line number"
                 PRINT "  -p                      Purge all pre-compiled content first"
                 PRINT "  -z                      Generate C code without compiling to executable"
+                PRINT "  -f[:setting=value]      compiler settings to use"
                 PRINT
                 SYSTEM
+
+            CASE "-v" ' Print version
+                _DEST _CONSOLE
+                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
+                SYSTEM
+
             CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden build option)
                 Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
@@ -13211,6 +13219,34 @@ FUNCTION ParseCMDLineArgs$ ()
                 ConsoleMode = 1 'Implies -x
                 NoIDEMode = 1 'Implies -c
                 cmdlineswitch = -1
+
+            CASE "-f" 'temporary setting
+                token$ = MID$(token$, 3)
+
+                SELECT CASE LCASE$(LEFT$(token$, INSTR(token$, "=") - 1))
+                    CASE ":useminiaudio"
+                        IF NOT ParseBooleanSetting&(token$, UseMiniaudioBackend) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":optimizecppprogram"
+                        IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":stripdebugsymbols"
+                        IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":extracppflags"
+                        IF NOT ParseStringSetting&(token$, ExtraCppFlags) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":extralinkerflags"
+                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":maxcompilerprocesses"
+                        IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                        IF MaxParallelProcesses = 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
+
+                    CASE ELSE
+                        PrintTemporarySettingsHelpAndExit ""
+                END SELECT
+
             CASE ELSE 'Something we don't recognise, assume it's a filename
                 IF PassedFileName$ = "" THEN PassedFileName$ = token$
         END SELECT
@@ -13221,6 +13257,80 @@ FUNCTION ParseCMDLineArgs$ ()
     ELSE
         IF cmdlineswitch = 0 AND settingsMode = -1 THEN SYSTEM
     END IF
+END FUNCTION
+
+FUNCTION InvalidSettingError$(token$)
+    InvalidSettingError$ = "Invalid temporary setting switch: " + AddQuotes$(token$)
+END FUNCTION
+
+SUB PrintTemporarySettingsHelpAndExit(errstr$)
+    _DEST _CONSOLE
+
+    PRINT "QB64-PE Compiler V" + Version$
+
+    IF errstr$ <> "" THEN
+        PRINT "Error: "; errstr$
+    END IF
+
+    PRINT
+    PRINT "Note: Defaults can be changed by IDE settings"
+    PRINT
+    PRINT "Valid settings:"
+    PRINT "    -f:UseMiniAudio=[true|false]       (Use Miniaudio Audio backend, default true)"
+    PRINT "    -f:OptimizeCppProgram=[true|false] (Use C++ Optimization flag, default false)"
+    PRINT "    -f:StripDebugSymbols=[true|false]  (Stirp C++ debug symbols, default true)"
+    PRINT "    -f:ExtraCppFlags=[string]          (Extra flags to pass to the C++ compiler)"
+    PRINT "    -f:ExtraLinkerFlags=[string]       (Extra flags to pass at link time)"
+    PRINT "    -f:MaxCompilerProcesses=[integer]  (Max C++ compiler processes to start in parallel)"
+
+    SYSTEM
+END SUB
+
+FUNCTION ParseBooleanSetting&(token$, setting AS _UNSIGNED LONG)
+    DIM equals AS LONG
+    DIM value AS STRING
+
+    equals = INSTR(token$, "=")
+    IF equals = -1 THEN ParseBooleanSetting& = 0: EXIT FUNCTION
+
+    value = LCASE$(MID$(token$, equals + 1))
+
+    SELECT CASE value
+        CASE "true", "on", "yes"
+            setting = -1
+            ParseBooleanSetting& = -1
+
+        CASE "false", "off", "no"
+            setting = 0
+            ParseBooleanSetting& = -1
+
+        CASE ELSE
+            ParseBooleanSetting& = 0
+    END SELECT
+END FUNCTION
+
+FUNCTION ParseLongSetting&(token$, setting AS _UNSIGNED LONG)
+    DIM equals AS LONG
+    DIM value AS STRING
+
+    equals = INSTR(token$, "=")
+    IF equals = -1 THEN ParseLongSetting& = 0: EXIT FUNCTION
+
+    setting = VAL(MID$(token$, equals + 1))
+
+    ParseLongSetting& = -1
+END FUNCTION
+
+FUNCTION ParseStringSetting&(token$, setting AS STRING)
+    DIM equals AS LONG
+    DIM value AS STRING
+
+    equals = INSTR(token$, "=")
+    IF equals = -1 THEN ParseStringSetting& = 0: EXIT FUNCTION
+
+    setting = MID$(token$, equals + 1)
+
+    ParseStringSetting& = -1
 END FUNCTION
 
 FUNCTION Type2MemTypeValue (t1)
