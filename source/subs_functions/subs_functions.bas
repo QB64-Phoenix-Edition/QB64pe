@@ -3867,3 +3867,23 @@ id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.ret = UINTEGER64TYPE - ISPOINTER
 id.hr_syntax = "_TOGGLEBIT(numericalVariable, numericalValue)"
 regid
+
+clearid
+id.n = qb64prefix$ + "WindowWidth"
+id.subfunc = 1
+id.callname = "func__scaledwidth"
+id.args = 0
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.ret = UINTEGER64TYPE - ISPOINTER
+id.hr_syntax = "_WINDOWWIDTH"
+regid
+
+clearid
+id.n = qb64prefix$ + "WindowHeight"
+id.subfunc = 1
+id.callname = "func__scaledheight"
+id.args = 0
+id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.ret = UINTEGER64TYPE - ISPOINTER
+id.hr_syntax = "_WINDOWHEIGHT"
+regid
