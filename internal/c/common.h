@@ -255,18 +255,12 @@ struct mem_block {
     ptrszint size;
     int64 lock_id;        // 64-bit key, must be present at lock's offset or memory region is invalid
     ptrszint lock_offset; // pointer to lock
-    ptrszint type;
-    /*
-        memorytype (4 bytes, but only the first used, for flags):
-        1 integer values
-        2 unsigned (set in conjunction with integer)
-        4 floating point values
-        8 char string(s) 'element-size is the memory size of 1 string
-    */
+    ptrszint type;        // https://qb64phoenix.com/qb64wiki/index.php/MEM
     ptrszint elementsize;
     int32 image;
     int32 sound;
 };
+
 struct mem_lock {
     uint64 id;
     int32 type; // required to know what action to take (if any) when a request is made to free the block

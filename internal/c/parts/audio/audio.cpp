@@ -1962,11 +1962,13 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     // Setup type: This was not done in the old code
     // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
     if (maFormat == ma_format::ma_format_f32)
-        mb.type = 4; // FP32
-    else
-        mb.type = 1; // Integer
-    if (maFormat == ma_format::ma_format_u8)
-        mb.type |= 2; // Unsigned
+        mb.type = 4 + 256; // FP32
+    else if (maFormat == ma_format::ma_format_s32)
+        mb.type = 4 + 128; // Int32
+    else if (maFormat == ma_format::ma_format_s16)
+        mb.type = 2 + 128; // Int16
+    else if (maFormat == ma_format::ma_format_u8)
+        mb.type = 1 + 128 + 1024; // Int8
 
     mb.elementsize = ma_get_bytes_per_frame(maFormat, channels); // Set the element size. This is the size of each PCM frame in bytes
     mb.offset = (ptrszint)ds->pNode->data.backend.decoded.pData; // Setup offset
