@@ -50,7 +50,14 @@ do
 
     compileResultOutput="$RESULTS_DIR/$category-$testName-compile_result.txt"
 
-    "$QB64" -q -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
+    # A .flags file contains any extra compiler flags to provide to QB64 for this test
+    compilerFlags=
+    if test -f "./tests/compile_tests/$category/$testName.flags"; then
+        compilerFlags=$(cat "./tests/compile_tests/$category/$testName.flags")
+    fi
+
+    # -m and -q make sure that we get predictable results
+    "$QB64" $compilerFlags -m -q -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
     ERR=$?
     cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testName-compilelog.txt"
 

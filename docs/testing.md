@@ -17,6 +17,9 @@ the program compiled from the `*.bas` file should produce. For `*.err` tests,
 the `*.err` file contains the text of the error the QB64-PE compiler should
 produce when attempting to compile that code.
 
+Tests can also have an optional `*.flags` file. The contents of this file will
+be provide as command line arguments to QB64-PE when compiling the test source.
+
 These tests are run via the `./tests/compile_tests.sh` script. The script
 searches the `./tests/compile_tests` directory for any `*.bas` files, and then
 uses the provide QB64-PE compiler to test them.
