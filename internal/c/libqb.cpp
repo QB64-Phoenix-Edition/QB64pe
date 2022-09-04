@@ -37126,9 +37126,9 @@ qbs *func__droppedfile(int32 fileIndex, int32 passed) {
 void sub__resize(int32 on_off, int32 stretch_smooth) {
 
     if (on_off == 1)
-        resize_snapback = 0;
+        resize_snapback = 0; //ON
     if (on_off == 2)
-        resize_snapback = 1;
+        resize_snapback = 1; //OFF
     // no change if omitted
 
     if (stretch_smooth) {
@@ -37147,6 +37147,26 @@ int32 func__resize() {
     }
     return 0;
 }
+
+void sub__windowscale(int32 amount) {
+    int32 tempx, tempy;
+        if (amount < 50) return; // don't scale the screen to less than 50% of it's original size!!
+
+        tempx = environment_2d__screen_width * amount / 100;  // basically our width of the screen
+        tempy = environment_2d__screen_height * amount / 100; // and this is the height of the screen
+        if (tempx < 320) return; // minimal window width of 320.
+        if (tempy < 240) return; // minimal window height of 240
+        
+        ScreenResize = 1;
+        ScreenResizeScale = amount;
+
+        resize_snapback = 0;
+        resize_pending = 1; // this says we're going to do a resize
+
+        glutReshapeWindow(tempx, tempy);
+        glutPostRedisplay();
+}
+
 
 int32 func__resizewidth() { return resize_event_x; }
 int32 func__resizeheight() { return resize_event_y; }

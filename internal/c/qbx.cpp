@@ -104,6 +104,7 @@ extern void sub__resize(int32 on_off, int32 stretch_smooth);
 extern int32 func__resize();
 extern int32 func__resizewidth();
 extern int32 func__resizeheight();
+extern void sub__windowscale(int32 amount);
 
 extern int32 FontLoad(uint8 *content, int32 content_bytes,
                       int32 default_pixel_height, int32 which_font,

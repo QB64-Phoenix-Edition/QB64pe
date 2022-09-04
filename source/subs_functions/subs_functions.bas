@@ -3873,7 +3873,6 @@ id.n = qb64prefix$ + "WindowWidth"
 id.subfunc = 1
 id.callname = "func__scaledwidth"
 id.args = 0
-id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.ret = UINTEGER64TYPE - ISPOINTER
 id.hr_syntax = "_WINDOWWIDTH"
 regid
@@ -3883,7 +3882,16 @@ id.n = qb64prefix$ + "WindowHeight"
 id.subfunc = 1
 id.callname = "func__scaledheight"
 id.args = 0
-id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-id.ret = UINTEGER64TYPE - ISPOINTER
+id.ret = LONGTYPE - ISPOINTER
 id.hr_syntax = "_WINDOWHEIGHT"
 regid
+
+clearid
+id.n = qb64prefix$ + "WindowScale"
+id.subfunc = 2
+id.callname = "sub__windowscale"
+id.args = 1
+id.arg = MKL$(LONGTYPE - ISPOINTER)
+id.hr_syntax = "_WINDOWSCALE(amount)"
+regid
+
