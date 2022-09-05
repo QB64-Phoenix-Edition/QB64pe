@@ -12525,6 +12525,7 @@ CxxLibsExtra$ = CxxLibsExtra$ + " " + mylib$ + " " + mylibopt$
 ' Make and the shell don't like certain characters in the file name, so we
 ' escape them to get them to handle them properly
 escapedExe$ = StrReplace$(path.exe$ + file$ + extension$, " ", "\ ")
+escapedExe$ = StrReplace$(escapedExe$, CHR$(34), "\" + CHR$(34))
 escapedExe$ = StrReplace$(escapedExe$, "$", "$$")
 
 makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(escapedExe$)

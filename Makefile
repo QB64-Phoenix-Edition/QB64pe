@@ -386,11 +386,11 @@ clean: $(CLEAN_DEP_LIST)
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
 
 $(EXE): $(EXE_OBJS) $(EXE_LIBS)
-	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o '$@' $(EXE_LIBS) $(CXXLIBS)
+	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o "$@" $(EXE_LIBS) $(CXXLIBS)
 ifneq ($(filter-out osx,$(OS)),)
 ifneq ($(STRIP_SYMBOLS),n)
-	$(OBJCOPY) --only-keep-debug '$@' '$(PATH_INTERNAL_TEMP)/$(notdir $@).sym'
-	$(OBJCOPY) --strip-unneeded '$@'
+	$(OBJCOPY) --only-keep-debug "$@" "$(PATH_INTERNAL_TEMP)/$(notdir $@).sym"
+	$(OBJCOPY) --strip-unneeded "$@"
 endif
 endif
 
