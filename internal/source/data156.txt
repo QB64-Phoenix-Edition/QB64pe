@@ -1,5 +1,23 @@
-float *_FUNC_MAP_SINGLE_MAP=NULL;
-if(_FUNC_MAP_SINGLE_MAP==NULL){
-_FUNC_MAP_SINGLE_MAP=(float*)mem_static_malloc(4);
-*_FUNC_MAP_SINGLE_MAP=0;
+qbs*oldstr3918=NULL;
+if(_SUB_WRITEBUFFERS_STRING_SBNAME->tmp||_SUB_WRITEBUFFERS_STRING_SBNAME->fixed||_SUB_WRITEBUFFERS_STRING_SBNAME->readonly){
+oldstr3918=_SUB_WRITEBUFFERS_STRING_SBNAME;
+if (oldstr3918->cmem_descriptor){
+_SUB_WRITEBUFFERS_STRING_SBNAME=qbs_new_cmem(oldstr3918->len,0);
+}else{
+_SUB_WRITEBUFFERS_STRING_SBNAME=qbs_new(oldstr3918->len,0);
 }
+memcpy(_SUB_WRITEBUFFERS_STRING_SBNAME->chr,oldstr3918->chr,oldstr3918->len);
+}
+int16 *_SUB_WRITEBUFFERS_INTEGER_BUF=NULL;
+if(_SUB_WRITEBUFFERS_INTEGER_BUF==NULL){
+_SUB_WRITEBUFFERS_INTEGER_BUF=(int16*)mem_static_malloc(2);
+*_SUB_WRITEBUFFERS_INTEGER_BUF=0;
+}
+int32 fornext_value3920;
+int32 fornext_finalvalue3920;
+int32 fornext_step3920;
+uint8 fornext_step_negative3920;
+int32 fornext_value3922;
+int32 fornext_finalvalue3922;
+int32 fornext_step3922;
+uint8 fornext_step_negative3922;
