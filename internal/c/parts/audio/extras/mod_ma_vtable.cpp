@@ -18,6 +18,10 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include "libqb-common.h"
+#include "audio.h"
+#include "filepath.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -385,8 +389,8 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
     }
 
     // Check the file extension
-    if (!ma_path_extension_equal(pFilePath, "it") && !ma_path_extension_equal(pFilePath, "xm") && !ma_path_extension_equal(pFilePath, "s3m") &&
-        !ma_path_extension_equal(pFilePath, "mod")) {
+    if (!filepath_has_extension(pFilePath, "it") && !filepath_has_extension(pFilePath, "xm") && !filepath_has_extension(pFilePath, "s3m") &&
+        !filepath_has_extension(pFilePath, "mod")) {
         return MA_INVALID_FILE;
     }
 

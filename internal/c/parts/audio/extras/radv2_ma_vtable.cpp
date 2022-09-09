@@ -42,6 +42,10 @@
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include "libqb-common.h"
+#include "audio.h"
+#include "filepath.h"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -428,7 +432,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     }
 
     // Check the file extension
-    if (!ma_path_extension_equal(pFilePath, "rad")) {
+    if (!filepath_has_extension(pFilePath, "rad")) {
         return MA_INVALID_FILE;
     }
 

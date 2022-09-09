@@ -22,6 +22,9 @@
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
 #include "libqb-common.h"
+#include "audio.h"
+#include "filepath.h"
+
 #include <string.h>
 
 #include "../miniaudio.h"
@@ -458,7 +461,7 @@ static ma_result ma_tsf_init_file(const char *pFilePath, const ma_decoding_backe
     }
 
     // Check the file extension
-    if (!ma_path_extension_equal(pFilePath, "mid") && !ma_path_extension_equal(pFilePath, "midi")) {
+    if (!filepath_has_extension(pFilePath, "mid") && !filepath_has_extension(pFilePath, "midi")) {
         return MA_INVALID_FILE;
     }
 

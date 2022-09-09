@@ -4234,7 +4234,6 @@ Retrieves the version of miniaudio as a string which can be useful for logging p
 MA_API const char* ma_version_string(void);
 
 
-
 /**************************************************************************************************************************************************************
 
 Logging
@@ -11017,89 +11016,6 @@ MA_API void ma_sound_group_set_stop_time_in_milliseconds(ma_sound_group* pGroup,
 MA_API ma_bool32 ma_sound_group_is_playing(const ma_sound_group* pGroup);
 MA_API ma_uint64 ma_sound_group_get_time_in_pcm_frames(const ma_sound_group* pGroup);
 #endif  /* MA_NO_ENGINE */
-
-/*
- * The below functions used to be private to miniaudio. They were moved out of
- * the implementation section to allow us to make use of them in our decoders.
- */
-#if !defined(_MSC_VER) && !defined(__DMC__)
-    #include <strings.h>    /* For strcasecmp(). */
-#endif
-
-static const char* ma_path_file_name(const char* path)
-{
-    const char* fileName;
-
-    if (path == NULL) {
-        return NULL;
-    }
-
-    fileName = path;
-
-    /* We just loop through the path until we find the last slash. */
-    while (path[0] != '\0') {
-        if (path[0] == '/' || path[0] == '\\') {
-            fileName = path;
-        }
-
-        path += 1;
-    }
-
-    /* At this point the file name is sitting on a slash, so just move forward. */
-    while (fileName[0] != '\0' && (fileName[0] == '/' || fileName[0] == '\\')) {
-        fileName += 1;
-    }
-
-    return fileName;
-}
-
-static const char* ma_path_extension(const char* path)
-{
-    const char* extension;
-    const char* lastOccurance;
-
-    if (path == NULL) {
-        path = "";
-    }
-
-    extension = ma_path_file_name(path);
-    lastOccurance = NULL;
-
-    /* Just find the last '.' and return. */
-    while (extension[0] != '\0') {
-        if (extension[0] == '.') {
-            extension += 1;
-            lastOccurance = extension;
-        }
-
-        extension += 1;
-    }
-
-    return (lastOccurance != NULL) ? lastOccurance : extension;
-}
-
-static ma_bool32 ma_path_extension_equal(const char* path, const char* extension)
-{
-    const char* ext1;
-    const char* ext2;
-
-    if (path == NULL || extension == NULL) {
-        return MA_FALSE;
-    }
-
-    ext1 = extension;
-    ext2 = ma_path_extension(path);
-
-#if defined(_MSC_VER) || defined(__DMC__)
-    return _stricmp(ext1, ext2) == 0;
-#else
-    return strcasecmp(ext1, ext2) == 0;
-#endif
-}
-
-#ifndef MA_DEFAULT_SAMPLE_RATE
-#define MA_DEFAULT_SAMPLE_RATE                              48000
-#endif
 
 #ifdef __cplusplus
 }
@@ -61823,6 +61739,34 @@ MA_API ma_result ma_decoder_init_memory(const void* pData, size_t dataSize, cons
 #define MA_HAS_PATH_API
 #endif
 
+#if defined(MA_HAS_PATH_API)
+static const char* ma_path_file_name(const char* path)
+{
+    const char* fileName;
+
+    if (path == NULL) {
+        return NULL;
+    }
+
+    fileName = path;
+
+    /* We just loop through the path until we find the last slash. */
+    while (path[0] != '\0') {
+        if (path[0] == '/' || path[0] == '\\') {
+            fileName = path;
+        }
+
+        path += 1;
+    }
+
+    /* At this point the file name is sitting on a slash, so just move forward. */
+    while (fileName[0] != '\0' && (fileName[0] == '/' || fileName[0] == '\\')) {
+        fileName += 1;
+    }
+
+    return fileName;
+}
+
 static const wchar_t* ma_path_file_name_w(const wchar_t* path)
 {
     const wchar_t* fileName;
@@ -61850,6 +61794,32 @@ static const wchar_t* ma_path_file_name_w(const wchar_t* path)
     return fileName;
 }
 
+
+static const char* ma_path_extension(const char* path)
+{
+    const char* extension;
+    const char* lastOccurance;
+
+    if (path == NULL) {
+        path = "";
+    }
+
+    extension = ma_path_file_name(path);
+    lastOccurance = NULL;
+
+    /* Just find the last '.' and return. */
+    while (extension[0] != '\0') {
+        if (extension[0] == '.') {
+            extension += 1;
+            lastOccurance = extension;
+        }
+
+        extension += 1;
+    }
+
+    return (lastOccurance != NULL) ? lastOccurance : extension;
+}
+
 static const wchar_t* ma_path_extension_w(const wchar_t* path)
 {
     const wchar_t* extension;
@@ -61873,6 +61843,26 @@ static const wchar_t* ma_path_extension_w(const wchar_t* path)
     }
 
     return (lastOccurance != NULL) ? lastOccurance : extension;
+}
+
+
+static ma_bool32 ma_path_extension_equal(const char* path, const char* extension)
+{
+    const char* ext1;
+    const char* ext2;
+
+    if (path == NULL || extension == NULL) {
+        return MA_FALSE;
+    }
+
+    ext1 = extension;
+    ext2 = ma_path_extension(path);
+
+#if defined(_MSC_VER) || defined(__DMC__)
+    return _stricmp(ext1, ext2) == 0;
+#else
+    return strcasecmp(ext1, ext2) == 0;
+#endif
 }
 
 static ma_bool32 ma_path_extension_equal_w(const wchar_t* path, const wchar_t* extension)
@@ -61916,6 +61906,7 @@ static ma_bool32 ma_path_extension_equal_w(const wchar_t* path, const wchar_t* e
     }
 #endif
 }
+#endif  /* MA_HAS_PATH_API */
 
 
 
