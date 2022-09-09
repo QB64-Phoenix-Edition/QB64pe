@@ -46,9 +46,10 @@
 #define QB_FALSE MA_FALSE
 #define QB_TRUE -MA_TRUE
 
-// This is returned to the caller if handle allocation fails. We do not return 0 becuase 0 is a valid vector index
-// Technically all handles < 1 are invalid as far as the user is concerned (see IS_SOUND_HANDLE_VALID)
-#define INVALID_SOUND_HANDLE -1
+// This is returned to the caller if handle allocation fails with a -1
+// AllocateSoundHandle() does not return 0 because it is a valid internal handle
+// Handle 0 is 'handled' as a special case
+#define INVALID_SOUND_HANDLE 0
 
 // This is the string that must be passed in the requirements parameter to stream a sound from storage
 #define REQUIREMENT_STRING_STREAM "STREAM"
@@ -458,6 +459,7 @@ struct AudioEngine {
     int32_t sndInternalRaw;                             // Internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // This is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // This is the lowest handle then was recently freed. We'll start checking for free handles from here
+    bool musicBackground;                               // Should 'Sound' and 'Play' work in the background or block the caller?
 
     AudioEngine(const AudioEngine &) = delete;      // No default copy constructor
     AudioEngine &operator=(AudioEngine &) = delete; // No assignment operator
@@ -470,6 +472,7 @@ struct AudioEngine {
         sampleRate = 0;
         lowestFreeHandle = 0;
         sndInternal = sndInternalRaw = INVALID_SOUND_HANDLE;
+        musicBackground = false;
     }
 
     /// <summary>
@@ -490,7 +493,7 @@ struct AudioEngine {
     /// <returns>Returns a non-negative handle if successful</returns>
     int32_t AllocateSoundHandle() {
         if (!isInitialized)
-            return INVALID_SOUND_HANDLE;
+            return -1; // We cannot return 0 here. Since 0 is a valid internal handle
 
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
@@ -521,7 +524,7 @@ struct AudioEngine {
             SoundHandle *newHandle = new SoundHandle;
 
             if (!newHandle)
-                return INVALID_SOUND_HANDLE;
+                return -1; // We cannot return 0 here. Since 0 is a valid internal handle
 
             soundHandles.push_back(newHandle);
             size_t newVectorSize = soundHandles.size();
@@ -529,7 +532,7 @@ struct AudioEngine {
             // If newVectorSize == vectorSize then push_back() failed
             if (newVectorSize <= vectorSize) {
                 delete newHandle;
-                return INVALID_SOUND_HANDLE;
+                return -1; // We cannot return 0 here. Since 0 is a valid internal handle
             }
 
             h = newVectorSize - 1; // The handle is simply newVectorSize - 1
@@ -787,7 +790,7 @@ void sub_sound(double frequency, double lengthInClockTicks) {
     audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // This will start processing handle 0 as a raw stream
 
     data = GenerateWaveform(frequency, lengthInClockTicks / 18.2, 1, &soundwave_bytes);
-    SendWaveformToQueue(data, soundwave_bytes, true);
+    SendWaveformToQueue(data, soundwave_bytes, !audioEngine.musicBackground);
 
     return;
 
@@ -842,7 +845,6 @@ void sub_play(qbs *str) {
     static double pause = 1.0 / 8.0; // ML 0.0, MN 1.0/8.0, MS 1.0/4.0
     static double length, length2;   // derived from l and t
     static double frequency;
-    static double mb = 0;
     static double v = 50;
     static ma_int32 n;         // the semitone-intervaled note to be played
     static ma_int32 n_changed; //+,#,- applied?
@@ -1107,8 +1109,8 @@ next_byte:
                 break;
 
             case 66: // MB
-                if (!mb) {
-                    mb = 1;
+                if (!audioEngine.musicBackground) {
+                    audioEngine.musicBackground = true;
                     if (playit) {
                         playit = 0;
                         SendWaveformToQueue(wave, wave_bytes, true);
@@ -1117,8 +1119,8 @@ next_byte:
                 }
                 break;
             case 70: // MF
-                if (mb) {
-                    mb = 0;
+                if (audioEngine.musicBackground) {
+                    audioEngine.musicBackground = false;
                     // preceding MB content incorporated into MF block
                 }
                 break;
@@ -1374,11 +1376,7 @@ done:
     } // unhandled data
 
     if (playit) {
-        if (mb) {
-            SendWaveformToQueue(wave, wave_bytes, false);
-        } else {
-            SendWaveformToQueue(wave, wave_bytes, true);
-        }
+        SendWaveformToQueue(wave, wave_bytes, !audioEngine.musicBackground);
     } // playit
 }
 
