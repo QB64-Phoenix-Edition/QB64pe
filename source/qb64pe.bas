@@ -898,6 +898,13 @@ DIM controlvalue(1000) AS LONG
 DIM controlstate(1000) AS INTEGER
 DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
 
+'
+' Collection of flags indicating which unstable features should be used during compilation
+'
+REDIM SHARED unstableFlags(1) AS _BYTE
+DIM UNSTABLE_MIDI AS LONG
+
+UNSTABLE_MIDI = 1
 
 
 
@@ -1612,7 +1619,18 @@ udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
 udtenext(i2) = 0
 
+' Reset all unstable flags
+REDIM SHARED unstableFlags(1) AS _BYTE
 
+' Indicates if a MIDI sound font was selected
+'
+' Captures both the line number and line contents for error reporting later-on
+' in the compilation process
+MidiSoundFontSet = 0
+MidiSoundFontLine$ = ""
+
+' If MidiSoundFont$ is blank, then the default is used
+MidiSoundFont$ = ""
 
 
 
@@ -1891,6 +1909,25 @@ DO
             GOTO finishedlinepp
         END IF
 
+        ' We check for Unstable flags during the preprocessing step because it
+        ' impacts what valid commands there are in all the other steps
+        IF LEFT$(temp$, 10) = "$UNSTABLE:" THEN
+            token$ = UCASE$(LTRIM$(RTRIM$(MID$(temp$, 11))))
+
+            SELECT CASE token$
+                CASE "MIDI"
+                    IF NOT UseMiniaudioBackend THEN
+                        a$ = "Midi is not supported with the old OpenAL audio backend."
+                        GOTO errmes
+                    END IF
+
+                    unstableFlags(UNSTABLE_MIDI) = -1
+
+                CASE ELSE
+                    a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
+                    GOTO errmes
+            END SELECT
+        END IF
 
         cwholeline$ = wholeline$
         wholeline$ = eleucase$(wholeline$) '********REMOVE THIS LINE LATER********
@@ -3401,6 +3438,72 @@ DO
             IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "do{"
             WriteBufLine MainTxtBuf, "sub__icon(NULL,NULL,0);"
             GOTO finishedline2
+        END IF
+
+        IF LEFT$(a3u$, 10) = "$UNSTABLE:" THEN
+            layout$ = SCase("$Unstable:")
+
+            token$ = LTRIM$(RTRIM$(MID$(a3u$, 11)))
+
+            SELECT CASE token$
+                CASE "MIDI"
+                    layout$ = layout$ + SCase$("Midi")
+            END SELECT
+
+            GOTO finishednonexec
+        END IF
+
+        IF unstableFlags(UNSTABLE_MIDI) THEN
+            IF LEFT$(a3u$, 15) = "$MIDISOUNDFONT:" THEN
+                IF MidiSoundFontSet THEN
+                    a$ = "$MIDISOUNDFONT already defined"
+                    GOTO errmes
+                END IF
+
+                layout$ = SCase$("$MidiSoundFont:")
+
+                MidiSoundFont$ = LTRIM$(RTRIM$(MID$(a3$, 16)))
+
+                IF MID$(MidiSoundFont$, 1, 1) = CHR$(34) THEN
+                    ' We have a quoted filename, verify it is valid
+
+                    ' We don't touch the filename in the formatting
+                    layout$ = layout$ + MidiSoundFont$
+
+                    ' Strip the leading quote
+                    MidiSoundFont$ = MID$(MidiSoundFont$, 2)
+
+                    ' Verify that there is a quote character at the end
+                    IF INSTR(MidiSoundFont$, CHR$(34)) = 0 THEN a$ = "Expected " + CHR$(34) + " character at the end of the file name": GOTO errmes
+
+                    ' Verify there are no extra characters after end quote
+                    IF INSTR(MidiSoundFont$, CHR$(34)) <> LEN(MidiSoundFont$) THEN a$ = "Unexpected characters after the quoted file name": GOTO errmes
+
+                    MidiSoundFont$ = MID$(MidiSoundFont$, 1, LEN(MidiSoundFont$) - 1)
+
+                    IF NOT _FILEEXISTS(MidiSoundFont$) THEN
+                        a$ = "Soundfont file " + AddQuotes$(MidiSoundFont$) + " could not be found!"
+                        GOTO errmes
+                    END IF
+                ELSE
+                    ' Constant values, only one for now
+                    SELECT CASE UCASE$(MidiSoundFont$)
+                        CASE "DEFAULT"
+                            layout$ = layout$ + SCase$("Default")
+
+                            ' Clear MidiSoundFont$ to indicate the default should be used
+                            MidiSoundFont$ = ""
+
+                        CASE ELSE
+                            a$ = "Unrecognized Soundfont option " + AddQuotes$(MidiSoundFont$)
+                            GOTO errmes
+                    END SELECT
+                END IF
+
+                MidiSoundFontSet = linenumber
+                MidiSoundFontLine$ = layout$
+                GOTO finishednonexec
+            END IF
         END IF
 
     END IF 'QB64 Metacommands
@@ -12342,6 +12445,22 @@ END IF
 'actions are performed on the disk based files
 WriteBuffers ""
 
+IF MidiSoundFontSet THEN
+    linenumber = MidiSoundFontSet
+    wholeline = MidiSoundFontLine$
+
+    IF MidiSoundFont$ = "" THEN
+        MidiSoundFont$ = "internal/support/default_soundfont.sf2"
+    END IF
+
+    ON ERROR GOTO qberror_test
+
+    errNo = CopyFile&(MidiSoundFont$, tmpdir$ + "soundfont.sf2")
+    IF errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(MidiSoundFont$) + " to temp directory": GOTO errmes
+
+    ON ERROR GOTO qberror
+END IF
+
 'Update dependencies
 
 o$ = LCASE$(os$)
@@ -12371,7 +12490,7 @@ IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
 IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
-IF UseMiniaudioBackend = 0 THEN
+IF NOT UseMiniaudioBackend THEN
     IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
     IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN makedeps$ = makedeps$ + " DEP_AUDIO_CONVERSION=y"
     IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
@@ -12380,6 +12499,8 @@ ELSE
         makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
     END IF
 END IF
+
+IF MidiSoundFontSet THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE_MIDI=y"
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
@@ -12708,7 +12829,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, makeline$ + CHR$(10);
         PRINT #ffh, "read -p " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "recompile_osx.command"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "recompile_osx.command")
 
         ffh = FREEFILE
         OPEN tmpdir$ + "debug_osx.command" FOR OUTPUT AS #ffh
@@ -12728,7 +12849,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "gdb " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34) + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "debug_osx.command"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "debug_osx.command")
 
     ELSE
 
@@ -12748,7 +12869,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "echo " + CHR_QUOTE + "Press ENTER to exit..." + CHR_QUOTE + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "recompile_lnx.sh"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "recompile_lnx.sh")
 
         ffh = FREEFILE
         OPEN tmpdir$ + "debug_lnx.sh" FOR OUTPUT AS #ffh
@@ -12768,7 +12889,7 @@ IF os$ = "LNX" THEN
         PRINT #ffh, "gdb " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34) + CHR$(10);
         PRINT #ffh, "Pause" + CHR$(10);
         CLOSE ffh
-        SHELL _HIDE "chmod +x " + tmpdir$ + "debug_lnx.sh"
+        SHELL _HIDE "chmod +x " + AddQuotes$(tmpdir$ + "debug_lnx.sh")
 
     END IF
 
@@ -12795,7 +12916,7 @@ IF os$ = "LNX" THEN
         PRINT #ff, "exit";
         PRINT #ff, CHR$(10);
         CLOSE #ff
-        SHELL _HIDE "chmod +x " + path.exe$ + file$ + extension$ + "_start.command"
+        SHELL _HIDE "chmod +x " + AddQuotes$(path.exe$ + file$ + extension$ + "_start.command")
     END IF
 
 END IF
@@ -12985,6 +13106,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT
                 PRINT "Options:"
                 PRINT "  <file>                  Source file to load" '                                '80 columns
+                PRINT "  -v                      Print version"
                 PRINT "  -c                      Compile instead of edit"
                 PRINT "  -o <output file>        Write output executable to <output file>"
                 PRINT "  -x                      Compile instead of edit and output the result to the"
@@ -12999,8 +13121,15 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT "  -l:<line number>        Start the IDE at the specified line number"
                 PRINT "  -p                      Purge all pre-compiled content first"
                 PRINT "  -z                      Generate C code without compiling to executable"
+                PRINT "  -f[:setting=value]      compiler settings to use"
                 PRINT
                 SYSTEM
+
+            CASE "-v" ' Print version
+                _DEST _CONSOLE
+                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
+                SYSTEM
+
             CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden build option)
                 Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
@@ -13090,6 +13219,34 @@ FUNCTION ParseCMDLineArgs$ ()
                 ConsoleMode = 1 'Implies -x
                 NoIDEMode = 1 'Implies -c
                 cmdlineswitch = -1
+
+            CASE "-f" 'temporary setting
+                token$ = MID$(token$, 3)
+
+                SELECT CASE LCASE$(LEFT$(token$, INSTR(token$, "=") - 1))
+                    CASE ":useminiaudio"
+                        IF NOT ParseBooleanSetting&(token$, UseMiniaudioBackend) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":optimizecppprogram"
+                        IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":stripdebugsymbols"
+                        IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":extracppflags"
+                        IF NOT ParseStringSetting&(token$, ExtraCppFlags) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":extralinkerflags"
+                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":maxcompilerprocesses"
+                        IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                        IF MaxParallelProcesses = 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
+
+                    CASE ELSE
+                        PrintTemporarySettingsHelpAndExit ""
+                END SELECT
+
             CASE ELSE 'Something we don't recognise, assume it's a filename
                 IF PassedFileName$ = "" THEN PassedFileName$ = token$
         END SELECT
@@ -13100,6 +13257,80 @@ FUNCTION ParseCMDLineArgs$ ()
     ELSE
         IF cmdlineswitch = 0 AND settingsMode = -1 THEN SYSTEM
     END IF
+END FUNCTION
+
+FUNCTION InvalidSettingError$(token$)
+    InvalidSettingError$ = "Invalid temporary setting switch: " + AddQuotes$(token$)
+END FUNCTION
+
+SUB PrintTemporarySettingsHelpAndExit(errstr$)
+    _DEST _CONSOLE
+
+    PRINT "QB64-PE Compiler V" + Version$
+
+    IF errstr$ <> "" THEN
+        PRINT "Error: "; errstr$
+    END IF
+
+    PRINT
+    PRINT "Note: Defaults can be changed by IDE settings"
+    PRINT
+    PRINT "Valid settings:"
+    PRINT "    -f:UseMiniAudio=[true|false]       (Use Miniaudio Audio backend, default true)"
+    PRINT "    -f:OptimizeCppProgram=[true|false] (Use C++ Optimization flag, default false)"
+    PRINT "    -f:StripDebugSymbols=[true|false]  (Stirp C++ debug symbols, default true)"
+    PRINT "    -f:ExtraCppFlags=[string]          (Extra flags to pass to the C++ compiler)"
+    PRINT "    -f:ExtraLinkerFlags=[string]       (Extra flags to pass at link time)"
+    PRINT "    -f:MaxCompilerProcesses=[integer]  (Max C++ compiler processes to start in parallel)"
+
+    SYSTEM
+END SUB
+
+FUNCTION ParseBooleanSetting&(token$, setting AS _UNSIGNED LONG)
+    DIM equals AS LONG
+    DIM value AS STRING
+
+    equals = INSTR(token$, "=")
+    IF equals = -1 THEN ParseBooleanSetting& = 0: EXIT FUNCTION
+
+    value = LCASE$(MID$(token$, equals + 1))
+
+    SELECT CASE value
+        CASE "true", "on", "yes"
+            setting = -1
+            ParseBooleanSetting& = -1
+
+        CASE "false", "off", "no"
+            setting = 0
+            ParseBooleanSetting& = -1
+
+        CASE ELSE
+            ParseBooleanSetting& = 0
+    END SELECT
+END FUNCTION
+
+FUNCTION ParseLongSetting&(token$, setting AS _UNSIGNED LONG)
+    DIM equals AS LONG
+    DIM value AS STRING
+
+    equals = INSTR(token$, "=")
+    IF equals = -1 THEN ParseLongSetting& = 0: EXIT FUNCTION
+
+    setting = VAL(MID$(token$, equals + 1))
+
+    ParseLongSetting& = -1
+END FUNCTION
+
+FUNCTION ParseStringSetting&(token$, setting AS STRING)
+    DIM equals AS LONG
+    DIM value AS STRING
+
+    equals = INSTR(token$, "=")
+    IF equals = -1 THEN ParseStringSetting& = 0: EXIT FUNCTION
+
+    setting = MID$(token$, equals + 1)
+
+    ParseStringSetting& = -1
 END FUNCTION
 
 FUNCTION Type2MemTypeValue (t1)

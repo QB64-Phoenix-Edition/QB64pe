@@ -1,5 +1,6 @@
 #!/bin/bash
 # Arg 1: qb54 location
+# Arg 2: Optional category to test
 
 PREFIX="Compilation"
 
@@ -9,10 +10,14 @@ mkdir -p $RESULTS_DIR
 
 QB64=$1
 
+if [ "$#" -eq 2 ]; then
+    CATEGORY="/$2"
+fi
+
 show_failure()
 {
-    cat "$RESULTS_DIR/$1-compile_result.txt"
-    cat "$RESULTS_DIR/$1-compilelog.txt"
+    cat "$RESULTS_DIR/$1-$2-compile_result.txt"
+    cat "$RESULTS_DIR/$2-compilelog.txt"
 }
 
 show_incorrect_result()
@@ -21,41 +26,77 @@ show_incorrect_result()
     printf "GOT:      '%s'\n" "$2"
 }
 
-for test in ./tests/compile_tests/*
-do 
-    test=$(basename "$test")
 
-    TESTCASE="$test"
-    EXE="$RESULTS_DIR/$test - output"
+# Each .bas file represents a separate test.
+while IFS= read -r test
+do 
+    category=$(basename "$(dirname "$test")")
+    testName=$(basename "$test" .bas)
+
+    TESTCASE="$category/$testName"
+    EXE="$RESULTS_DIR/$category-$testName - output"
+
+    # If a .err file exists, then this test is actually testing a compilation error
+    testType="success"
+    if test -f "./tests/compile_tests/$category/$testName.err"; then
+        testType="error"
+    fi
 
     # Clear out temp folder before next compile, avoids stale compilelog files
     rm -fr ./internal/temp/*
 
-    "$QB64" -x  "./tests/compile_tests/$test/test.bas" -o "$EXE" 1>"$RESULTS_DIR/$test-compile_result.txt"
-    ERR=$?
-    cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$test-compilelog.txt"
+    # Clean up existing EXE, so we don't use it by accident
+    rm -f "$EXE*"
 
-    (exit $ERR)
-    assert_success_named "Compile" "Compilation Error:" show_failure "$test"
+    compileResultOutput="$RESULTS_DIR/$category-$testName-compile_result.txt"
 
-    test -f "$EXE"
-    assert_success_named "exe exists" "$test-output executable does not exist!" show_failure "$test"
-
-    if [ ! -f "./tests/compile_tests/$test/test.output" ]; then
-        continue
+    # A .flags file contains any extra compiler flags to provide to QB64 for this test
+    compilerFlags=
+    if test -f "./tests/compile_tests/$category/$testName.flags"; then
+        compilerFlags=$(cat "./tests/compile_tests/$category/$testName.flags")
     fi
 
-    expectedResult="$(cat "./tests/compile_tests/$test/test.output")"
-
-    pushd . > /dev/null
-    cd "./tests/compile_tests/$test"
-    testResult=$("../../../$EXE" 2>&1)
+    # -m and -q make sure that we get predictable results
+    "$QB64" $compilerFlags -m -q -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
     ERR=$?
-    popd > /dev/null
+    cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testName-compilelog.txt"
 
-    (exit $ERR)
-    assert_success_named "run" "Execution Error:" echo "$testResult"
+    if [ "$testType" == "success" ]; then
+        (exit $ERR)
+        assert_success_named "Compile" "Compilation Error:" show_failure "$category" "$testName"
 
-    [ "$testResult" == "$expectedResult" ]
-    assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$testResult"
-done
+        test -f "$EXE"
+        assert_success_named "exe exists" "$test-output executable does not exist!" show_failure "$category" "$testName"
+
+        # Some tests do not have an output or err file because they should
+        # compile successfully but cannot be run on the build agents
+        if [ ! -f "./tests/compile_tests/$category/$testName.output" ]; then
+            continue
+        fi
+
+        expectedResult="$(cat "./tests/compile_tests/$category/$testName.output")"
+
+        pushd . > /dev/null
+        cd "./tests/compile_tests/$category"
+        testResult=$("../../../$EXE" 2>&1)
+        ERR=$?
+        popd > /dev/null
+
+        (exit $ERR)
+        assert_success_named "run" "Execution Error:" echo "$testResult"
+
+        [ "$testResult" == "$expectedResult" ]
+        assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$testResult"
+    else
+        ! (exit $ERR)
+        assert_success_named "Compile" "Compilation Success, was expecting error:" show_failure "$category" "$testName"
+
+        ! test -f "$EXE"
+        assert_success_named "Exe exists" "'$category-$testName - output' exists, it should not!" show_failure "$category" "$testName"
+
+        expectedErr="$(cat "./tests/compile_tests/$category/$testName.err")"
+
+        diffResult=$(diff -y "./tests/compile_tests/$category/$testName.err" "$compileResultOutput")
+        assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
+    fi
+done < <(find ./tests/compile_tests$CATEGORY -name "*.bas" -print)

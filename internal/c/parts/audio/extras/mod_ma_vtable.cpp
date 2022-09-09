@@ -15,14 +15,22 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-----------------------------------------------------------------------------------------------------
 // HEADER FILES
 //-----------------------------------------------------------------------------------------------------
+#include "libqb-common.h"
+#include "audio.h"
+#include "filepath.h"
+
+#include <stdio.h>
+#include <string.h>
+
 #include "../miniaudio.h"
+
 #define BUILDING_STATIC 1
 #include "libxmp-lite/xmp.h"
+
+#include "vtables.h"
 //-----------------------------------------------------------------------------------------------------
 
 struct ma_modplay {
@@ -65,7 +73,7 @@ static ma_result ma_modplay_get_data_format(ma_modplay *pModplay, ma_format *pFo
         *pSampleRate = 0;
     }
     if (pChannelMap != NULL) {
-        MA_ZERO_MEMORY(pChannelMap, sizeof(*pChannelMap) * channelMapCap);
+        memset(pChannelMap, 0, sizeof(*pChannelMap) * channelMapCap);
     }
 
     if (pModplay == NULL) {
@@ -254,7 +262,7 @@ static ma_result ma_modplay_init_internal(const ma_decoding_backend_config *pCon
         return MA_INVALID_ARGS;
     }
 
-    MA_ZERO_OBJECT(pModplay);
+    memset(pModplay, 0, sizeof(*pModplay));
     pModplay->format = ma_format::ma_format_s16; // We'll render 16-bit signed samples by default
 
     if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_s16) {
@@ -381,8 +389,8 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
     }
 
     // Check the file extension
-    if (!ma_path_extension_equal(pFilePath, "it") && !ma_path_extension_equal(pFilePath, "xm") && !ma_path_extension_equal(pFilePath, "s3m") &&
-        !ma_path_extension_equal(pFilePath, "mod")) {
+    if (!filepath_has_extension(pFilePath, "it") && !filepath_has_extension(pFilePath, "xm") && !filepath_has_extension(pFilePath, "s3m") &&
+        !filepath_has_extension(pFilePath, "mod")) {
         return MA_INVALID_FILE;
     }
 
@@ -498,8 +506,12 @@ static void ma_decoding_backend_uninit__modplay(void *pUserData, ma_data_source 
     ma_free(pModplay, pAllocationCallbacks);
 }
 
-static ma_decoding_backend_vtable ma_decoding_backend_vtable_modplay = {ma_decoding_backend_init__modplay, ma_decoding_backend_init_file__modplay,
-                                                                        NULL, /* onInitFileW() */
-                                                                        NULL, /* onInitMemory() */
-                                                                        ma_decoding_backend_uninit__modplay};
+ma_decoding_backend_vtable ma_vtable_modplay = {
+    ma_decoding_backend_init__modplay,
+    ma_decoding_backend_init_file__modplay,
+    NULL, /* onInitFileW() */
+    NULL, /* onInitMemory() */
+    ma_decoding_backend_uninit__modplay
+};
+
 //-----------------------------------------------------------------------------------------------------

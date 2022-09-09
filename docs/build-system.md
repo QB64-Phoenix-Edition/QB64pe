@@ -66,6 +66,8 @@ Repository Layout
  - `tests/` - Contains the tests run on QB64-PE during CI to verify changes.
    - `compile_tests/`
      - Testcases related to specific dependencies that QB64 can pull in. These tests are largely intended to test that QB64-PE and the Makefile correctly pulls in the proper dependencies.
+   - `c`
+     - The source for the C++-based tests.
    - `qbasic_testcases/`
      - A variety of collected QB64 sample programs
    - `dist/`
@@ -80,6 +82,8 @@ Repository Layout
      - Runs the distribution test collecitons.
    - `run_tests.sh`
      - Runs all individual test collections.
+   - `run_c_tests.sh`
+     - Runs all the C++ test cases.
  - `setup_lnx.sh`
    - Used as part of the Linux release to install dependencies and compile QB64-PE.
  - `setup_osx.command`
