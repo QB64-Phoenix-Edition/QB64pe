@@ -6605,7 +6605,6 @@ int32 selectfont(int32 f, img_struct *im) {
 int32 nmodes = 0;
 int32 anymode = 0;
 
-float x_scale = 1, y_scale = 1;
 int32 x_offset = 0, y_offset = 0;
 int32 x_limit = 0, y_limit = 0;
 
@@ -23959,17 +23958,20 @@ void sub__mousemove(float x, float y) {
         if (y2 > sy - 1)
             goto error;
     }
+
     // x2,y2 are pixel co-ordinates
     // adjust for fullscreen position as necessary:
-    x2 *= x_scale;
-    y2 *= y_scale;
-    x2 += x_offset;
-    y2 += y_offset;
+    x2 *= environment_2d__screen_x_scale;
+    y2 *= environment_2d__screen_y_scale;
+    x2 += environment_2d__screen_x1;
+    y2 += environment_2d__screen_y1;
+
     while (!window_exists) {
         Sleep(100);
     }
     glutWarpPointer(x2, y2);
     return;
+
 error:
     error(5);
 #endif
