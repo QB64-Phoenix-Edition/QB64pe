@@ -15,7 +15,7 @@ goto downloadfinished
 
 :download64choice
 choice /C 12 /M "Do you prefer to download 1)32-bit QB64-PE or 2)64-bit QB64-PE"
-if errorlevel == 1 goto download32
+if %errorlevel% == 1 goto download32
 set MINGW=mingw64.exe
 
 :downloadfinished
