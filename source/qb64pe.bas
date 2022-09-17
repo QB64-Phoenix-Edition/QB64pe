@@ -13312,7 +13312,6 @@ END FUNCTION
 
 FUNCTION ParseLongSetting&(token$, setting AS _UNSIGNED LONG)
     DIM equals AS LONG
-    DIM value AS STRING
 
     equals = INSTR(token$, "=")
     IF equals = -1 THEN ParseLongSetting& = 0: EXIT FUNCTION
@@ -13324,7 +13323,6 @@ END FUNCTION
 
 FUNCTION ParseStringSetting&(token$, setting AS STRING)
     DIM equals AS LONG
-    DIM value AS STRING
 
     equals = INSTR(token$, "=")
     IF equals = -1 THEN ParseStringSetting& = 0: EXIT FUNCTION
