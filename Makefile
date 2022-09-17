@@ -340,6 +340,10 @@ ifeq ($(OS),win)
 		CXXLIBS += -lwinspool
 	endif
 
+	ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
+		CXXLIBS += -lwinmm
+	endif
+
 	ifneq ($(filter y,$(DEP_AUDIO_OUT) $(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE) $(DEP_AUDIO_MINIAUDIO)),)
 		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
 	endif
