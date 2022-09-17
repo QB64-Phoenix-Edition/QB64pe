@@ -19,6 +19,7 @@
 // Set this to 1 if we want to print debug messages to stderr
 #define IMAGE_DEBUG 0
 #include "image.h"
+#include <unordered_map>
 #define DR_PCX_IMPLEMENTATION
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -186,25 +187,21 @@ static uint8_t *image_convert_8bpp(uint8_t *src, int w, int h, uint32_t *palette
 static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut) {
     IMAGE_DEBUG_PRINT("Extracting 8bpp image (%i, %i) from 32bpp", w, h);
 
+    unordered_map<uint32_t, int> colorMap;
+
     // Allocate memory for new image (8-bit indexed)
     auto pixels = (uint8_t *)malloc(w * h);
     if (!pixels) {
         return nullptr;
     }
 
-    int i, j;
     auto uniqueColors = 0; // As long as this is <= 256 we will keep going until we are done
     auto src32bpp = (uint32_t *)src;
-    for (i = 0; i < w * h; i++) {
+    for (auto i = 0; i < w * h; i++) {
         auto srcColor = src32bpp[i];
 
         // Check if the src color exists in our palette
-        for (j = 0; j < uniqueColors; j++) {
-            if (srcColor == paletteOut[j])
-                break; // If we have a match then exit the loop
-        }
-
-        if (j >= uniqueColors) {
+        if (colorMap.find(srcColor) == colorMap.end()) {
             // If we reached here, then the color is not in our table
             ++uniqueColors;
             if (uniqueColors > 256) {
@@ -214,10 +211,11 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
             }
 
             paletteOut[uniqueColors - 1] = srcColor; // Store the color as unique
+            colorMap[srcColor] = uniqueColors - 1;   // Add this color to the map
             pixels[i] = uniqueColors - 1;
         } else {
             // If we reached here, then the color is in our table
-            pixels[i] = j;
+            pixels[i] = colorMap[srcColor]; // Simply fetch the index from the map
         }
     }
 
