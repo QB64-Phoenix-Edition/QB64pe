@@ -87,6 +87,13 @@ do
 
         [ "$testResult" == "$expectedResult" ]
         assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$testResult"
+
+        # Restart pulseaudio between each test to make sound tests work on Linux
+        if [ "$CI_TESTING" == "y" ] && command -v pulseaudio > /dev/null
+        then
+            pulseaudio -k
+            pulseaudio -D
+        fi
     else
         ! (exit $ERR)
         assert_success_named "Compile" "Compilation Success, was expecting error:" show_failure "$category" "$testName"
