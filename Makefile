@@ -186,6 +186,7 @@ include $(PATH_INTERNAL_C)/parts/audio/build.mk
 include $(PATH_INTERNAL_C)/parts/core/build.mk
 include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
 include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
+include $(PATH_INTERNAL_C)/parts/video/image/build.mk
 
 .PHONY: all clean
 

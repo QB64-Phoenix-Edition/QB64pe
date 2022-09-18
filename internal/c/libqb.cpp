@@ -24,6 +24,7 @@
 
 #include "mutex.h"
 #include "audio.h"
+#include "image.h"
 
 int32 disableEvents = 0;
 
@@ -24404,12 +24405,6 @@ int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
     }
     return -i;
 }
-
-#ifdef QB64_BACKSLASH_FILESYSTEM
-#    include "parts\\video\\image\\src.c"
-#else
-#    include "parts/video/image/src.c"
-#endif
 
 int32 func__copyimage(int32 i, int32 mode, int32 passed) {
     static int32 i2, bytes;
