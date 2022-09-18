@@ -12563,6 +12563,11 @@ IF NOT StripDebugSymbols THEN
     makeline$ = makeline$ + " STRIP_SYMBOLS=n"
 END IF
 
+' We avoid generating the license file if the user picked the "No Exe" option
+IF GenerateLicenseFile AND NOT NoExeSaved THEN
+    makeline$ = makeline$ + " GENERATE_LICENSE=y"
+END IF
+
 IF os$ = "WIN" THEN
 
     makeline$ = makeline$ + " OS=win"
@@ -13269,6 +13274,9 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
                         IF MaxParallelProcesses = 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
 
+                    CASE ":generatelicensefile"
+                        IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
                     CASE ELSE
                         PrintTemporarySettingsHelpAndExit ""
                 END SELECT
@@ -13302,12 +13310,13 @@ SUB PrintTemporarySettingsHelpAndExit(errstr$)
     PRINT "Note: Defaults can be changed by IDE settings"
     PRINT
     PRINT "Valid settings:"
-    PRINT "    -f:UseMiniAudio=[true|false]       (Use Miniaudio Audio backend, default true)"
-    PRINT "    -f:OptimizeCppProgram=[true|false] (Use C++ Optimization flag, default false)"
-    PRINT "    -f:StripDebugSymbols=[true|false]  (Stirp C++ debug symbols, default true)"
-    PRINT "    -f:ExtraCppFlags=[string]          (Extra flags to pass to the C++ compiler)"
-    PRINT "    -f:ExtraLinkerFlags=[string]       (Extra flags to pass at link time)"
-    PRINT "    -f:MaxCompilerProcesses=[integer]  (Max C++ compiler processes to start in parallel)"
+    PRINT "    -f:UseMiniAudio=[true|false]         (Use Miniaudio Audio backend, default true)"
+    PRINT "    -f:OptimizeCppProgram=[true|false]   (Use C++ Optimization flag, default false)"
+    PRINT "    -f:StripDebugSymbols=[true|false]    (Stirp C++ debug symbols, default true)"
+    PRINT "    -f:ExtraCppFlags=[string]            (Extra flags to pass to the C++ compiler)"
+    PRINT "    -f:ExtraLinkerFlags=[string]         (Extra flags to pass at link time)"
+    PRINT "    -f:MaxCompilerProcesses=[integer]    (Max C++ compiler processes to start in parallel)"
+    PRINT "    -f:GenerateLicenseFile=[true|false]  (Produce a license.txt file for the program)"
 
     SYSTEM
 END SUB

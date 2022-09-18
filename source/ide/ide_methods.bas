@@ -343,6 +343,12 @@ FUNCTION ide2 (ignore)
         IF SaveExeWithSource THEN
             menu$(RunMenuID, RunMenuSaveExeWithSource) = CHR$(7) + menu$(RunMenuID, RunMenuSaveExeWithSource)
         END IF
+        GenerateLicenseEnableMenu = i
+        menu$(m, i) = "#Generate License For EXE": i = i + 1
+        menuDesc$(m, i - 1) = "The license file is placed next to the executable"
+        IF GenerateLicenseFile THEN
+            menu$(RunMenuID, GenerateLicenseEnableMenu) = CHR$(7) + menu$(RunMenuID, GenerateLicenseEnableMenu)
+        END IF
         menu$(m, i) = "-": i = i + 1
 
         IF os$ = "LNX" THEN
@@ -5050,6 +5056,21 @@ FUNCTION ide2 (ignore)
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 idecompiled = 0
+                GOTO ideloop
+            END IF
+
+            IF MID$(menu$(m, s), 1) = "#Generate License For EXE" OR MID$(menu$(m, s), 2) = "#Generate License For EXE" THEN
+                PCOPY 2, 0
+                GenerateLicenseFile = NOT GenerateLicenseFile
+                WriteConfigSetting compilerSettingsSection$, "GenerateLicenseFile", BoolToTFString$(GenerateLicenseFile)
+
+                IF GenerateLicenseFile THEN
+                    menu$(RunMenuID, GenerateLicenseEnableMenu) = CHR$(7) + "#Generate License For EXE"
+                ELSE
+                    menu$(RunMenuID, GenerateLicenseEnableMenu) = "#Generate License For EXE"
+                END IF
+
+                PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
 

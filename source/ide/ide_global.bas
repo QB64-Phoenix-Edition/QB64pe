@@ -222,6 +222,7 @@ DIM SHARED ViewMenuID AS INTEGER, ViewMenuShowLineNumbersSubMenuID AS INTEGER
 DIM SHARED ViewMenuShowSeparatorID AS INTEGER, ViewMenuShowBGID AS INTEGER
 DIM SHARED ViewMenuCompilerWarnings AS INTEGER
 DIM SHARED RunMenuID AS INTEGER, RunMenuSaveExeWithSource AS INTEGER, brackethighlight AS INTEGER
+DIM SHARED GenerateLicenseEnableMenu AS INTEGER
 DIM SHARED DebugMenuID AS INTEGER, DebugMenuCallStack AS INTEGER, DebugMenuWatchListToConsole AS INTEGER
 DIM SHARED DebugMenuAutoAddCommand AS INTEGER
 DIM SHARED multihighlight AS INTEGER, keywordHighlight AS INTEGER
