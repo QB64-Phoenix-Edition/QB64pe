@@ -9,3 +9,6 @@ jobs:
   build:
     uses: ./.github/workflows/build-process.yml
     secrets: inherit
+    uses: webfactory/ssh-agent@v0.5.4
+    with:
+    ssh-private-key: ${{ secrets.PRIVATEKEY }}
