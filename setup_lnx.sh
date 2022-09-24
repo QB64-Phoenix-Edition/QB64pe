@@ -81,7 +81,7 @@ if [ "$DISTRO" == "arch" ]; then
   pkg_install
 elif [ "$DISTRO" == "linuxmint" ] || [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "debian" ] || [ "$DISTRO" == "zorin" ]; then
   echo "Debian based distro detected."
-  pkg_list="g++ make x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev zlib1g-dev $GET_WGET"
+  pkg_list="build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev zlib1g-dev $GET_WGET"
   installed_packages=`dpkg -l`
   installer_command="sudo apt-get -y install "
   pkg_install
