@@ -23735,6 +23735,11 @@ FUNCTION evaluateconst$ (a2$, t AS LONG)
     'string/numeric mismatch?
     IF (btype(i) AND ISSTRING) <> (et AND ISSTRING) THEN Give_Error "Invalid CONST expression.11": EXIT FUNCTION
 
+    ' The left and right operands needs to have valid types. They might not if
+    ' the user wrote something invalid like `1 OR OR 2`
+    IF et = 0 THEN Give_Error "Invalid CONST expression.14": EXIT FUNCTION
+    IF btype(i) = 0 THEN Give_Error "Invalid CONST expression.15": EXIT FUNCTION
+
     IF et AND ISSTRING THEN
         IF o$ <> "+" THEN Give_Error "Invalid CONST expression.12": EXIT FUNCTION
         'concat strings
