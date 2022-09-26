@@ -24315,8 +24315,8 @@ SUB Set_OrderOfOperations
     i = i + 1: OName(i) = "ASC": PL(i) = 10
     i = i + 1: OName(i) = "C_RG": PL(i) = 10 '_RGB32 converted
     i = i + 1: OName(i) = "C_RA": PL(i) = 10 '_RGBA32 converted
-    i = i + 1: OName(i) = "_RGB": PL(i) = 10
     i = i + 1: OName(i) = "_RGBA": PL(i) = 10
+    i = i + 1: OName(i) = "_RGB": PL(i) = 10
     i = i + 1: OName(i) = "C_RX": PL(i) = 10 '_RED32 converted
     i = i + 1: OName(i) = "C_GR": PL(i) = 10 ' _GREEN32 converted
     i = i + 1: OName(i) = "C_BL": PL(i) = 10 '_BLUE32 converted
