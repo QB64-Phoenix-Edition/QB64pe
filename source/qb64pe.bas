@@ -24379,7 +24379,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
     l2 = INSTR(num(2), ",")
     IF l2 THEN
         SELECT CASE OName(p) 'only certain commands should pass a comma value
-            CASE "C_RG", "C_RA", "_RGB", "_RGBA", "_RED", "_GREEN", "C_BL", "_ALPHA"
+            CASE "C_RG", "C_RA", "_RGB", "_RGBA", "_RED", "_GREEN", "_BLUE", "C_BL", "_ALPHA"
             CASE ELSE
                 C$ = MID$(num(2), l2)
                 num(2) = LEFT$(num(2), l2 - 1)
