@@ -22580,9 +22580,15 @@ FUNCTION typname2typ& (t2$)
             IF u THEN typname2typ& = UBITTYPE ELSE typname2typ& = BITTYPE
             EXIT FUNCTION
         END IF
-        IF LEFT$(t$, 7) <> "_BIT * " OR (LEFT$(t$, 6) = "BIT * " AND qb64prefix_set = 1) THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
 
-        n$ = RIGHT$(t$, LEN(t$) - 7)
+        IF LEFT$(t$, 7) <> "_BIT * " AND LEFT$(t$, 6) <> "BIT * " THEN Give_Error "Expected " + qb64prefix$ + "BIT * number": EXIT FUNCTION
+
+        IF LEFT$(t$, 4) = "_BIT" THEN
+            n$ = RIGHT$(t$, LEN(t$) - 7)
+        ELSE
+            n$ = RIGHT$(t$, LEN(t$) - 6)
+        END IF
+
         IF isuinteger(n$) = 0 THEN Give_Error "Invalid size after " + qb64prefix$ + "BIT *": EXIT FUNCTION
         b = VAL(n$)
         IF b = 0 OR b > 64 THEN Give_Error "Invalid size after " + qb64prefix$ + "BIT *": EXIT FUNCTION
