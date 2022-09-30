@@ -56,9 +56,14 @@ do
         compilerFlags=$(cat "./tests/compile_tests/$category/$testName.flags")
     fi
 
+    pushd . >/dev/null
+    cd "./tests/compile_tests/$category"
+
     # -m and -q make sure that we get predictable results
-    "$QB64" $compilerFlags -m -q -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
+    "../../../$QB64" $compilerFlags -m -q -x "$testName.bas" -o "$EXE" 1>"../../../$compileResultOutput"
     ERR=$?
+
+    popd >/dev/null
     cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testName-compilelog.txt"
 
     if [ "$testType" == "success" ]; then

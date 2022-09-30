@@ -380,6 +380,9 @@ DIM SHARED compilelog$
 '$INCLUDE:'global\IDEsettings.bas'
 
 CMDLineFile = ParseCMDLineArgs$
+IF CMDLineFile <> "" AND _FILEEXISTS(_STARTDIR$ + "/" + CMDLineFile) THEN
+    CMDLineFile = _STARTDIR$ + "/" + CMDLineFile
+END IF
 
 IF ConsoleMode THEN
     _DEST _CONSOLE
