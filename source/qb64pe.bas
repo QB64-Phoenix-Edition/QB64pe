@@ -23735,6 +23735,11 @@ FUNCTION evaluateconst$ (a2$, t AS LONG)
     'string/numeric mismatch?
     IF (btype(i) AND ISSTRING) <> (et AND ISSTRING) THEN Give_Error "Invalid CONST expression.11": EXIT FUNCTION
 
+    ' The left and right operands needs to have valid types. They might not if
+    ' the user wrote something invalid like `1 OR OR 2`
+    IF et = 0 THEN Give_Error "Invalid CONST expression.14": EXIT FUNCTION
+    IF btype(i) = 0 THEN Give_Error "Invalid CONST expression.15": EXIT FUNCTION
+
     IF et AND ISSTRING THEN
         IF o$ <> "+" THEN Give_Error "Invalid CONST expression.12": EXIT FUNCTION
         'concat strings
@@ -24315,8 +24320,8 @@ SUB Set_OrderOfOperations
     i = i + 1: OName(i) = "ASC": PL(i) = 10
     i = i + 1: OName(i) = "C_RG": PL(i) = 10 '_RGB32 converted
     i = i + 1: OName(i) = "C_RA": PL(i) = 10 '_RGBA32 converted
-    i = i + 1: OName(i) = "_RGB": PL(i) = 10
     i = i + 1: OName(i) = "_RGBA": PL(i) = 10
+    i = i + 1: OName(i) = "_RGB": PL(i) = 10
     i = i + 1: OName(i) = "C_RX": PL(i) = 10 '_RED32 converted
     i = i + 1: OName(i) = "C_GR": PL(i) = 10 ' _GREEN32 converted
     i = i + 1: OName(i) = "C_BL": PL(i) = 10 '_BLUE32 converted
@@ -24379,7 +24384,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
     l2 = INSTR(num(2), ",")
     IF l2 THEN
         SELECT CASE OName(p) 'only certain commands should pass a comma value
-            CASE "C_RG", "C_RA", "_RGB", "_RGBA", "_RED", "_GREEN", "C_BL", "_ALPHA"
+            CASE "C_RG", "C_RA", "_RGB", "_RGBA", "_RED", "_GREEN", "_BLUE", "C_BL", "_ALPHA"
             CASE ELSE
                 C$ = MID$(num(2), l2)
                 num(2) = LEFT$(num(2), l2 - 1)

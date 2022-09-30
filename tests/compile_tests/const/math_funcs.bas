@@ -1,0 +1,107 @@
+$CONSOLE:ONLY
+_DEST _CONSOLE
+
+' This list comprises all of the math functions usable in CONST
+CONST const_PI = _PI
+CONST const_ACOS = _ACOS(.2)
+CONST const_ASIN = _ASIN(.2)
+CONST const_ARCSEC = _ARCSEC(.2)
+CONST const_ARCCOT = _ARCCOT(.2)
+CONST const_ARCCSC = _ARCCSC(.2)
+CONST const_SECH = _SECH(.2)
+CONST const_CSCH = _CSCH(.2)
+CONST const_COTH = _COTH(.2)
+CONST const_COS = COS(.2)
+CONST const_SIN = SIN(.2)
+CONST const_TAN = TAN(.2)
+CONST const_LOG = LOG(.2)
+CONST const_EXP = EXP(.2)
+CONST const_ATN = ATN(.2)
+CONST const_D2R = _D2R(.2)
+CONST const_D2G = _D2G(.2)
+CONST const_R2D = _R2D(.2)
+CONST const_R2G = _R2G(.2)
+CONST const_G2D = _G2D(.2)
+CONST const_G2R = _G2R(.2)
+CONST const_ABS = ABS(2)
+CONST const_SGN = SGN(-20)
+CONST const_INT = INT(20.2)
+CONST const_ROUND = _ROUND(20.2)
+CONST const_CEIL = _CEIL(20.2)
+CONST const_FIX = FIX(20.5)
+CONST const_SEC = _SEC(2)
+CONST const_CSC = _CSC(2)
+CONST const_COT = _COT(2)
+' CONST const_ASC = ASC("a") ' Bugged, not implemented
+CONST const__RGB32 = _RGB32(2, 3, 4)
+CONST const__RGBA32 = _RGBA32(2, 3, 4, 5)
+CONST const__RGB32_1 = _RGB32(2)
+CONST const__RGB32_2 = _RGB32(2, 3)
+CONST const__RGB32_4 = _RGB32(2, 3, 4, 5)
+CONST const__RGB = _RGB(2, 3, 4, 2)
+CONST const__RGBA = _RGBA(2, 3, 4, 2, 2)
+CONST const__RED32 = _RED32(22)
+CONST const__GREEN32 = _GREEN32(22)
+CONST const__BLUE32 = _BLUE32(22)
+CONST const__ALPHA32 = _ALPHA32(22)
+CONST const__RED = _RED(22, 0)
+CONST const__GREEN = _GREEN(22, 0)
+CONST const__BLUE = _BLUE(22, 0)
+CONST const__ALPHA = _ALPHA(2222, 0)
+CONST const_SQR = SQR(20)
+CONST const_ROOT = 20 ROOT 3
+
+' The answers have to be within the allowed range, to account for floating point
+' differences.
+PRINT "PI: ";   3.141592653589793   * .999999 < const_PI;     3.141592653589793  * 1.000001 > const_PI
+PRINT "ACOS: "; 1.369438406004566   * .999999 < const_ACOS;   1.369438406004566  * 1.000001 > const_ACOS
+PRINT "ASIN: "; .2013579207903308   * .999999 < const_ASIN;   .2013579207903308  * 1.000001 > const_ASIN
+PRINT "ARCSEC: "; .2013579207903308 * .999999 < const_ARCSEC; .2013579207903308  * 1.000001 > const_ARCSEC
+PRINT "ARCCOT: "; 1.373400766945016 * .999999 < const_ARCCOT; 1.373400766945016  * 1.000001 > const_ARCCOT
+PRINT "ARCCSC: "; .2013579207903308 * .999999 < const_ARCCSC; .2013579207903308  * 1.000001 > const_ARCCSC
+PRINT "SECH: "; .9803279976447253   * .999999 < const_SECH;   .9803279976447253  * 1.000001 > const_SECH
+PRINT "CSCH: "; 4.966821568814516   * .999999 < const_CSCH;   4.966821568814516  * 1.000001 > const_CSCH
+PRINT "COTH: "; 1.44280551632034    * .999999 < const_COTH;   1.44280551632034   * 1.000001 > const_COTH
+PRINT "COS: "; .9800665778412416    * .999999 < const_COS;    .9800665778412416  * 1.000001 > const_COS
+PRINT "SIN: "; .1986693307950612    * .999999 < const_SIN;    .1986693307950612  * 1.000001 > const_SIN
+PRINT "TAN: "; .2027100355086725    * .999999 < const_TAN;    .2027100355086725  * 1.000001 > const_TAN
+PRINT "EXP: "; 1.22140275816017     * .999999 < const_EXP;    1.22140275816017   * 1.000001 > const_EXP
+PRINT "ATN: "; .1973955598498808    * .999999 < const_ATN;    .1973955598498808  * 1.000001 > const_ATN
+PRINT "D2R: "; .0034906585          * .999999 < const_D2R;    .0034906585        * 1.000001 > const_D2R
+PRINT "D2G: "; .22222222222         * .999999 < const_D2G;    .22222222222       * 1.000001 > const_D2G
+PRINT "R2D: "; 11.4591559           * .999999 < const_R2D;    11.4591559         * 1.000001 > const_R2D
+PRINT "R2G: "; .0031415926          * .999999 < const_R2G;    .0031415926        * 1.000001 > const_R2G
+PRINT "G2D: "; .18                  * .999999 < const_G2D;    .18                * 1.000001 > const_G2D
+PRINT "G2R: "; 12.7323954474        * .999999 < const_G2R;    12.7323954474      * 1.000001 > const_G2R
+PRINT "CSC: "; 1.099750170294616    * .999999 < const_CSC;    1.099750170294616  * 1.000001 > const_CSC
+PRINT "SQR: "; 4.47213595499958     * .999999 < const_SQR;    4.47213595499958   * 1.000001 > const_SQR
+PRINT "ROOT: "; 2.714417616594907   * .999999 < const_ROOT;   2.714417616594907  * 1.000001 > const_ROOT
+
+PRINT "LOG: "; -1.6094379124341     * .999999 > const_LOG;    -1.6094379124341   * 1.000001 < const_LOG
+PRINT "SEC: "; -2.402997961722381   * .999999 > const_SEC;    -2.402997961722381 * 1.000001 < const_SEC
+PRINT "COT: "; -.4576575543602858   * .999999 > const_COT;    -.4576575543602858 * 1.000001 < const_COT
+
+PRINT "ABS: "; const_ABS
+PRINT "SGN: "; const_SGN
+PRINT "INT: "; const_INT
+PRINT "ROUND: "; const_ROUND
+PRINT "CEIL: "; const_CEIL
+PRINT "FIX: "; const_FIX
+PRINT "ASC: "; const_ASC
+PRINT "RGB32: "; HEX$(const__RGB32)
+PRINT "RGBA32: "; HEX$(const__RGBA32)
+PRINT "1: "; HEX$(const__RGB32_1)
+PRINT "2: "; HEX$(const__RGB32_2)
+PRINT "4: "; HEX$(const__RGB32_4)
+PRINT "RGB: "; HEX$(const__RGB)
+PRINT "RGBA: "; HEX$(const__RGBA)
+PRINT "RED32: "; HEX$(const__RED32)
+PRINT "GREEN32: "; const__GREEN32
+PRINT "BLUE32: "; const__BLUE32
+PRINT "ALPHA32: "; const__ALPHA32
+PRINT "RED: "; const__RED
+PRINT "GREEN: "; const__GREEN
+PRINT "BLUE: "; const__BLUE
+PRINT "ALPHA: "; const__ALPHA
+
+SYSTEM
