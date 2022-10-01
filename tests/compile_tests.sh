@@ -60,7 +60,7 @@ do
     cd "./tests/compile_tests/$category"
 
     # -m and -q make sure that we get predictable results
-    "../../../$QB64" $compilerFlags -m -q -x "$testName.bas" -o "$EXE" 1>"../../../$compileResultOutput"
+    "../../../$QB64" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
     ERR=$?
 
     popd >/dev/null
