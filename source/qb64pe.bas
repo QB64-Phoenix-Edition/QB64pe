@@ -379,7 +379,13 @@ DIM SHARED compilelog$
 
 '$INCLUDE:'global\IDEsettings.bas'
 
+DIM OutputIsRelativeToStartDir AS LONG
+
 CMDLineFile = ParseCMDLineArgs$
+IF CMDLineFile <> "" AND _FILEEXISTS(_STARTDIR$ + "/" + CMDLineFile) THEN
+    CMDLineFile = _STARTDIR$ + "/" + CMDLineFile
+    OutputIsRelativeToStartDir = -1
+END IF
 
 IF ConsoleMode THEN
     _DEST _CONSOLE
@@ -12316,19 +12322,38 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
         path.out$ = getfilepath$(outputfile_cmd$)
         f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
         file$ = RemoveFileExtension$(f$)
-        IF LEN(path.out$) THEN
+
+        IF LEN(path.out$) OR OutputIsRelativeToStartDir THEN
+            currentdir$ = _CWD$
+
+            IF OutputIsRelativeToStartDir THEN
+                ' This CHDIR makes the next CHDIR relative to _STARTDIR$
+                ' We do this if the provided source file was also relative to _STARTDIR$
+                CHDIR _STARTDIR$
+
+                ' If there was no provided path then that is the same as the
+                ' output file being directly in _STARTDIR$. Assigning it here
+                ' is perfectly fine and avoids failing the error check below
+                ' with a blank string.
+                IF LEN(path.out$) = 0 THEN
+                    path.out$ = _STARTDIR$
+                END IF
+            END IF
+
             IF _DIREXISTS(path.out$) = 0 THEN
                 PRINT
                 PRINT "Can't create output executable - path not found: " + path.out$
                 IF ConsoleMode THEN SYSTEM 1
                 END 1
             END IF
-            currentdir$ = _CWD$
+
             CHDIR path.out$
             path.out$ = _CWD$
             CHDIR currentdir$
+
             IF RIGHT$(path.out$, 1) <> pathsep$ THEN path.out$ = path.out$ + pathsep$
             path.exe$ = path.out$
+
             SaveExeWithSource = -1 'Override the global setting if an output file was specified
         END IF
     END IF
