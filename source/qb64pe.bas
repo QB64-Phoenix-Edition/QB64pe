@@ -22382,41 +22382,54 @@ FUNCTION type2symbol$ (typ$)
         IF MID$(t$, i, 1) = sp THEN MID$(t$, i, 1) = " "
     NEXT
     e$ = "Cannot convert type (" + typ$ + ") to symbol"
-    t2$ = "_UNSIGNED _BIT": s$ = "~`1": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED _BYTE": s$ = "~%%": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED LONG": s$ = "~&": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED _INTEGER64": s$ = "~&&": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED INTEGER": s$ = "~%": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED _OFFSET": s$ = "~%&": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_BIT": s$ = "`1": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_BYTE": s$ = "%%": IF t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "INTEGER": s$ = "%": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "LONG": s$ = "&": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_INTEGER64": s$ = "&&": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_OFFSET": s$ = "%&": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "SINGLE": s$ = "!": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "DOUBLE": s$ = "#": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_FLOAT": s$ = "##": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "STRING": s$ = "$": IF t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED BIT": s$ = "~`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED LONG": s$ = "~&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED INTEGER": s$ = "~%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED _BIT": s$ = "~`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED _BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED _INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "UNSIGNED _OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED BIT": s$ = "~`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "_UNSIGNED OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "BIT": s$ = "`1": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_BYTE": s$ = "%%": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "BYTE": s$ = "%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_UNSIGNED LONG": s$ = "~&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED LONG": s$ = "~&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_UNSIGNED INTEGER": s$ = "~%": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED INTEGER": s$ = "~%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_UNSIGNED _BYTE": s$ = "~%%": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED BYTE": s$ = "~%%": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_UNSIGNED _OFFSET": s$ = "~%&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED OFFSET": s$ = "~%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_UNSIGNED _INTEGER64": s$ = "~&&": IF t$ = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED INTEGER64": s$ = "~&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_INTEGER64": s$ = "&&": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "INTEGER64": s$ = "&&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
-    t2$ = "INTEGER": s$ = "%": IF t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_OFFSET": s$ = "%&": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "OFFSET": s$ = "%&": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    t2$ = "_FLOAT": s$ = "##": IF t$ = t2$ THEN GOTO t2sfound
     t2$ = "FLOAT": s$ = "##": IF qb64prefix_set = 1 AND t$ = t2$ THEN GOTO t2sfound
+
+    ' These can have a length after them, so LEFT$() is used
+    t2$ = "STRING": s$ = "$": IF LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED _BIT": s$ = "~`1": IF LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+    t2$ = "_UNSIGNED BIT": s$ = "~`1": IF qb64prefix_set = 1 AND LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED _BIT": s$ = "~`1": IF qb64prefix_set = 1 AND LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+    t2$ = "UNSIGNED BIT": s$ = "~`1": IF qb64prefix_set = 1 AND LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+    t2$ = "_BIT": s$ = "`1": IF LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+    t2$ = "BIT": s$ = "`1": IF qb64prefix_set = 1 AND LEFT$(t$, LEN(t2$)) = t2$ THEN GOTO t2sfound
+
     Give_Error e$: EXIT FUNCTION
     t2sfound:
     type2symbol$ = s$
@@ -22567,9 +22580,15 @@ FUNCTION typname2typ& (t2$)
             IF u THEN typname2typ& = UBITTYPE ELSE typname2typ& = BITTYPE
             EXIT FUNCTION
         END IF
-        IF LEFT$(t$, 7) <> "_BIT * " OR (LEFT$(t$, 6) = "BIT * " AND qb64prefix_set = 1) THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
 
-        n$ = RIGHT$(t$, LEN(t$) - 7)
+        IF LEFT$(t$, 7) <> "_BIT * " AND LEFT$(t$, 6) <> "BIT * " THEN Give_Error "Expected " + qb64prefix$ + "BIT * number": EXIT FUNCTION
+
+        IF LEFT$(t$, 4) = "_BIT" THEN
+            n$ = RIGHT$(t$, LEN(t$) - 7)
+        ELSE
+            n$ = RIGHT$(t$, LEN(t$) - 6)
+        END IF
+
         IF isuinteger(n$) = 0 THEN Give_Error "Invalid size after " + qb64prefix$ + "BIT *": EXIT FUNCTION
         b = VAL(n$)
         IF b = 0 OR b > 64 THEN Give_Error "Invalid size after " + qb64prefix$ + "BIT *": EXIT FUNCTION
