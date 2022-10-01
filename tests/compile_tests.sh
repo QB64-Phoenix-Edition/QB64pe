@@ -26,6 +26,11 @@ show_incorrect_result()
     printf "GOT:      '%s'\n" "$2"
 }
 
+# This env variable exists when running in CI. It can also be defined locally
+# to enable the small OS-dependent testing
+#
+# This is either win, lnx, or osx
+OS=$CI_OS
 
 # Each .bas file represents a separate test.
 while IFS= read -r test
@@ -35,6 +40,10 @@ do
 
     TESTCASE="$category/$testName"
     EXE="$RESULTS_DIR/$category-$testName - output"
+
+    if [ "$OS" == "win" ]; then
+        EXE="$EXE.exe"
+    fi
 
     # If a .err file exists, then this test is actually testing a compilation error
     testType="success"
@@ -56,6 +65,13 @@ do
         compilerFlags=$(cat "./tests/compile_tests/$category/$testName.flags")
     fi
 
+    # If a license file for this OS exists, then we also check the generated license is correct
+    checkLicense=
+    if [ ! -z "$OS" ] && test -f "./tests/compile_tests/$category/$testName.$OS.license"; then
+        compilerFlags="$compilerFlags -f:GenerateLicenseFile=true"
+        checkLicense=y
+    fi
+
     pushd . >/dev/null
     cd "./tests/compile_tests/$category"
 
@@ -72,6 +88,14 @@ do
 
         test -f "$EXE"
         assert_success_named "exe exists" "$test-output executable does not exist!" show_failure "$category" "$testName"
+
+        if [ "$checkLicense" == "y" ]; then
+            expectedResult="$(cat "./tests/compile_tests/$category/$testName.$OS.license")"
+            testResult="$(cat "$EXE.license.txt")"
+
+            [ "$testResult" == "$expectedResult" ]
+            assert_success_named "license" "License file is wrong:" show_incorrect_result "$expectedResult" "$testResult"
+        fi
 
         # Some tests do not have an output or err file because they should
         # compile successfully but cannot be run on the build agents
