@@ -26,6 +26,7 @@ DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
 DIM SHARED StripDebugSymbols AS _UNSIGNED LONG
 DIM SHARED OptimizeCppProgram AS _UNSIGNED LONG
 DIM SHARED UseMiniaudioBackend AS _UNSIGNED LONG
+DIM SHARED GenerateLicenseFile AS _UNSIGNED LONG
 
 ConfigFile$ = "internal/config.ini"
 iniFolderIndex$ = STR$(tempfolderindex)
@@ -537,6 +538,7 @@ ExtraCppFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCpp
 ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
 
 UseMiniaudioBackend = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseMiniaudioBackend", -1)
+GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
 
 'End of initial settings ------------------------------------------------------
 

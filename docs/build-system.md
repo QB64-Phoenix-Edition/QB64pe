@@ -111,6 +111,8 @@ These flags control some basic settings for how the `Makefile` can compile the p
 | `CXXLIBS_EXTRA` | None | Collection of linker flags | No | These flags are provided to the compiler (`g++` or `clang++`) when linking the final executable. Typically includes the `-l` library flags |
 | `CFLAGS_EXTRA` | None | Collection of C compiler flags | No | These flags are provided to the compiler when building C files |
 | `STRIP_SYMBOLS` | None | `n` | No | Symbols are stripped by default, if this is `n` then symbols will not be stripped from the executable |
+| `GENERATE_LICENSE` | None | `y` | No | Generates a `.license.txt` file next to your executable, which contains all the licenses that apply to the executable |
+| `LICENSE` | `$(EXE).license.txt`| License file name | No | Specifies an alternative filename for the license file |
 
 These flags controls whether certain dependencies are compiled in or not. All of them are blank by default and should be set to `y` to use them. Note that the program being built may not compile if you supply the wrong dependency settings - may of them supply functions that will not be defined if the dependency is required, and some of them (Ex. `DEP_GL`) have requirements the program being compiled must meet.
 

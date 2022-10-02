@@ -123,6 +123,11 @@ ifndef EXE
 $(error Please provide executable name as 'EXE=executable')
 endif
 
+GENERATE_LICENSE ?= n
+
+LICENSE ?= $(EXE).license.txt
+LICENSE_IN_USE := qb64
+
 all: $(EXE)
 
 CLEAN_LIST :=
@@ -204,6 +209,8 @@ endif
 ifneq ($(filter y,$(DEP_SCREENIMAGE) $(DEP_IMAGE_CODEC)),)
 	CXXFLAGS += -DDEPENDENCY_IMAGE_CODEC
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += dr_pcx stb_image
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -257,6 +264,8 @@ ifneq ($(filter y,$(DEP_FONT)),)
 	EXE_LIBS += $(QB_FONT_LIB)
 	CXXFLAGS += -DDEPENDENCY_LOADFONT
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += freetype_ftl
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -274,6 +283,12 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 
 	CXXFLAGS += -DDEPENDENCY_AUDIO_MINIAUDIO
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += miniaudio libxmp-lite radv2 stbvorbis
+
+	ifdef DEP_AUDIO_DECODE_MIDI
+		LICENSE_IN_USE += tinysoundfont tinymidiloader
+	endif
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -282,6 +297,8 @@ ifneq ($(filter y,$(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE)),)
 	EXE_LIBS += $(QB_AUDIO_CONVERSION_LIB)
 	CXXFLAGS += -DDEPENDENCY_AUDIO_CONVERSION
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += opus
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -290,6 +307,8 @@ ifneq ($(filter y,$(DEP_AUDIO_DECODE)),)
 	EXE_LIBS += $(QB_AUDIO_DECODE_MP3_LIB) $(QB_AUDIO_DECODE_OGG_LIB)
 	CXXFLAGS += -DDEPENDENCY_AUDIO_DECODE
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += mpg123 stbvorbis
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -301,6 +320,8 @@ ifneq ($(filter y,$(DEP_AUDIO_OUT) $(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE)),
 		CXXLIBS += -framework AudioUnit -framework AudioToolbox
 	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += openal
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -313,15 +334,21 @@ ifneq ($(filter y,$(DEP_ZLIB)),)
 		CXXLIBS += "-l:libz.a"
 	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += zlib
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
 ifneq ($(OS),osx)
 	EXE_LIBS += $(QB_CORE_LIB)
+
+	LICENSE_IN_USE += freeglut
 endif
 
 ifeq ($(OS),win)
+	LICENSE_IN_USE += mingw-base-runtime libstdc++
+
 	ifneq ($(filter y,$(DEP_CONSOLE_ONLY) $(DEP_CONSOLE)),)
 		CXXLIBS += -mconsole
 	endif
@@ -329,6 +356,8 @@ ifeq ($(OS),win)
 	ifneq ($(filter y,$(DEP_CONSOLE_ONLY)),)
 		CXXFLAGS := $(filter-out -DFREEGLUT_STATIC,$(CXXFLAGS))
 		EXE_LIBS := $(filter-out $(QB_CORE_LIB),$(EXE_LIBS))
+
+		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
 	else
 		CXXLIBS += -mwindows -lopengl32 -lglu32 -lwinmm
 	endif
@@ -357,6 +386,7 @@ endif
 ifneq ($(filter y,$(DEP_DATA)),)
 	EXE_OBJS += $(PATH_INTERNAL_TEMP)/data.o
 endif
+
 
 QBLIB := $(PATH_INTERNAL_C)/$(QBLIB_NAME).o
 
@@ -390,12 +420,26 @@ CLEAN_LIST := $(filter-out $(PATH_INTERNAL_TEMP)/temp.bin,$(CLEAN_LIST))
 clean: $(CLEAN_DEP_LIST)
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
 
-$(EXE): $(EXE_OBJS) $(EXE_LIBS)
+ifeq ($(GENERATE_LICENSE),y)
+LICENSE_FILES := $(patsubst %,licenses/license_%.txt,$(LICENSE_IN_USE))
+LICENSE_DEP := $(LICENSE)
+endif
+
+$(EXE): $(EXE_OBJS) $(EXE_LIBS) $(LICENSE_DEP)
 	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o "$@" $(EXE_LIBS) $(CXXLIBS)
 ifneq ($(filter-out osx,$(OS)),)
 ifneq ($(STRIP_SYMBOLS),n)
 	$(OBJCOPY) --only-keep-debug "$@" "$(PATH_INTERNAL_TEMP)/$(notdir $@).sym"
 	$(OBJCOPY) --strip-unneeded "$@"
+endif
+endif
+
+$(LICENSE): $(LICENSE_FILES)
+ifeq ($(GENERATE_LICENSE),y)
+ifeq ($(OS),win)
+	type $(call FIXPATH,$^) > "$@"
+else
+	cat $^ > "$@"
 endif
 endif
 
