@@ -1523,8 +1523,11 @@ void sub__sndplay(int32_t handle) {
 /// </summary>
 /// <param name="handle">A sound handle to copy</param>
 /// <param name="volume">The volume at which the sound should be played (0.0 - 1.0)</param>
+/// <param name="x">x distance values go from left (negative) to right (positive)</param>
+/// <param name="y">y distance values go from below (negative) to above (positive).</param>
+/// <param name="z">z distance values go from behind (negative) to in front (positive).</param>
 /// <param name="passed">How many parameters were passed?</param>
-void sub__sndplaycopy(int32_t src_handle, double volume, int32_t passed) {
+void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, double z, int32_t passed) {
     // We are simply going to use sndcopy, then setup some stuff like volume and autokill and then use sndplay
     // We are not checking if the audio engine was initialized because if not we'll get an invalid handle anyway
     int32_t dst_handle = func__sndcopy(src_handle);
@@ -1532,8 +1535,26 @@ void sub__sndplaycopy(int32_t src_handle, double volume, int32_t passed) {
     // Check if we succeeded and then proceed
     if (dst_handle > 0) {
         // Set the volume if requested
-        if (passed)
+        if (passed & 1)
             ma_sound_set_volume(&audioEngine.soundHandles[dst_handle]->maSound, volume);
+
+        if (passed & 4 || passed & 8) {                                                                   // If y or z or both are passed
+            ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_TRUE); // Enable 3D spatialization
+
+            // Set values of x, y, z to 0 if these were not passed
+            if (!(passed & 2))
+                x = 0.0;
+            if (!(passed & 4))
+                y = 0.0;
+            if (!(passed & 8))
+                z = 0.0;
+
+            ma_sound_set_position(&audioEngine.soundHandles[dst_handle]->maSound, x, y, z); // Use full 3D positioning
+        } else if (passed & 2) {
+            ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
+            ma_sound_set_pan_mode(&audioEngine.soundHandles[dst_handle]->maSound, ma_pan_mode_pan);        // Set true panning
+            ma_sound_set_pan(&audioEngine.soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
+        }
 
         sub__sndplay(dst_handle);                              // Play the sound
         audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "audio.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -216,11 +217,6 @@ extern void sub__maptriangle(int32 cull_options, float sx1, float sy1,
                              int32 smooth_options, int32 passed);
 extern void sub__depthbuffer(int32 options, int32 dst, int32 passed);
 extern int32 func_play(int32 ignore);
-extern int32 func__sndrate();
-extern int32 func__sndopenraw();
-extern void sub__sndrawdone(int32 handle, int32 passed);
-extern void sub__sndraw(float left, float right, int32 handle, int32 passed);
-extern double func__sndrawlen(int32 handle, int32 passed);
 extern void sub_paletteusing(void *element, int32 bits);
 extern int64 func_read_int64(uint8 *data, ptrszint *data_offset,
                              ptrszint data_size);
@@ -581,26 +577,6 @@ extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern double func_sqr(double value);
 extern void sub_beep();
 extern void snd_check();
-extern int32 func__sndraw(uint8 *data, uint32 bytes);
-extern int32 func__sndopen(qbs *filename, qbs *requirements, int32 passed);
-extern double func__sndlen(int32 handle);
-extern void sub__sndlimit(int32 handle, double limit);
-extern void sub__sndstop(int32 handle);
-extern void sub__sndsetpos(int32 handle, double sec);
-extern double func__sndgetpos(int32 handle);
-extern void sub__sndbal(int32 handle, double x, double y, double z,
-                        int32 channel, int32 passed);
-extern void sub__sndplay(int32 handle);
-extern void sub__sndloop(int32 handle);
-extern int32 func__sndcopy(int32 handle);
-extern void sub__sndvol(int32 handle, float volume);
-extern void sub__sndpause(int32 handle);
-extern int32 func__sndpaused(int32 handle);
-extern int32 func__sndplaying(int32 handle);
-extern void sub__sndclose(int32 handle);
-extern void sub__sndplayfile(qbs *filename, int32 sync, double volume,
-                             int32 passed);
-extern void sub__sndplaycopy(int32 handle, double volume, int32 passed);
 extern qbs *func_command(int32 index, int32 passed);
 extern int32 func__commandcount();
 extern void sub_kill(qbs *str);

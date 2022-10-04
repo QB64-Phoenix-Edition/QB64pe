@@ -1149,7 +1149,7 @@ void sub__sndclose(int32 handle) {
 
 //"macros"
 
-void sub__sndplaycopy(int32 handle, double volume, int32 passed) {
+void sub__sndplaycopy(int32 handle, double volume, double x, double y, double z, int32 passed) {
     if (new_error)
         return;
     sndsetup();
@@ -1157,7 +1157,7 @@ void sub__sndplaycopy(int32 handle, double volume, int32 passed) {
     handle2 = func__sndcopy(handle);
     if (!handle2)
         return; // an error has already happened
-    if (passed) {
+    if (passed & 1) {
         sub__sndvol(handle2, volume);
         if (sub__sndvol_error) {
             sub__sndclose(handle2);
