@@ -1540,16 +1540,7 @@ void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, dou
 
         if (passed & 4 || passed & 8) {                                                                   // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_TRUE); // Enable 3D spatialization
-
-            // Set values of x, y, z to 0 if these were not passed
-            if (!(passed & 2))
-                x = 0.0;
-            if (!(passed & 4))
-                y = 0.0;
-            if (!(passed & 8))
-                z = 0.0;
-
-            ma_sound_set_position(&audioEngine.soundHandles[dst_handle]->maSound, x, y, z); // Use full 3D positioning
+            ma_sound_set_position(&audioEngine.soundHandles[dst_handle]->maSound, x, y, z);               // Use full 3D positioning
         } else if (passed & 2) {
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
             ma_sound_set_pan_mode(&audioEngine.soundHandles[dst_handle]->maSound, ma_pan_mode_pan);        // Set true panning
@@ -1559,6 +1550,8 @@ void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, dou
         sub__sndplay(dst_handle);                              // Play the sound
         audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
     }
+
+    AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %lf, 3D (%lf, %lf, %lf)", dst_handle, volume, x, y, z);
 }
 
 /// <summary>
