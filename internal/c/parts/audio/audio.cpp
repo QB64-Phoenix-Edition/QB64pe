@@ -1538,10 +1538,10 @@ void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, dou
         if (passed & 1)
             ma_sound_set_volume(&audioEngine.soundHandles[dst_handle]->maSound, volume);
 
-        if (passed & 4 || passed & 8) {                                                                   // If y or z or both are passed
-            ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_TRUE); // Enable 3D spatialization
-            ma_sound_set_position(&audioEngine.soundHandles[dst_handle]->maSound, x, y, z);               // Use full 3D positioning
-        } else if (passed & 2) {
+        if (passed & 4 || passed & 8) {                                                                    // If y or z or both are passed
+            ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_TRUE);  // Enable 3D spatialization
+            ma_sound_set_position(&audioEngine.soundHandles[dst_handle]->maSound, x, y, z);                // Use full 3D positioning
+        } else if (passed & 2) {                                                                           // If x is passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
             ma_sound_set_pan_mode(&audioEngine.soundHandles[dst_handle]->maSound, ma_pan_mode_pan);        // Set true panning
             ma_sound_set_pan(&audioEngine.soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
@@ -1693,8 +1693,8 @@ void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, 
             if (!(passed & 4))
                 z = v.z;
 
-            ma_sound_set_position(&audioEngine.soundHandles[handle]->maSound, x, y, z); // Use full 3D positioning
-        } else {
+            ma_sound_set_position(&audioEngine.soundHandles[handle]->maSound, x, y, z);                // Use full 3D positioning
+        } else if (passed & 1) {                                                                       // Only bother if x is passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
             ma_sound_set_pan_mode(&audioEngine.soundHandles[handle]->maSound, ma_pan_mode_pan);        // Set true panning
             ma_sound_set_pan(&audioEngine.soundHandles[handle]->maSound, x);                           // Just use stereo panning
