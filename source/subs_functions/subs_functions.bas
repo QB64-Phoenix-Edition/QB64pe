@@ -1929,10 +1929,10 @@ clearid
 id.n = qb64prefix$ + "SndPlayCopy": id.Dependency = DEPENDENCY_AUDIO_OUT
 id.subfunc = 2
 id.callname = "sub__sndplaycopy"
-id.args = 2
-id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
-id.specialformat = "?[,?]"
-id.hr_syntax = "_SNDPLAYCOPY handle&[, volume!]"
+id.args = 5
+id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
+id.specialformat = "?[,[?][,[?][,[?][,[?]]]]]"
+id.hr_syntax = "_SNDPLAYCOPY handle&[, volume!][, x!][, y!][, z!]"
 regid
 
 clearid
@@ -2018,9 +2018,8 @@ id.callname = "sub__sndbal"
 id.args = 5
 id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
 id.specialformat = "?,[?][,[?][,[?][,[?]]]]"
-id.hr_syntax = "_SNDBAL handle&[, x!][, y!][, z!][, channel&]]"
+id.hr_syntax = "_SNDBAL handle&[, x!][, y!][, z!][, channel&]"
 regid
-
 
 clearid
 id.n = qb64prefix$ + "SndVol": id.Dependency = DEPENDENCY_AUDIO_OUT

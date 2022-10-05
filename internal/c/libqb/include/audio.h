@@ -66,7 +66,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed);
 void sub__sndclose(int32_t handle);
 int32_t func__sndcopy(int32_t src_handle);
 void sub__sndplay(int32_t handle);
-void sub__sndplaycopy(int32_t src_handle, double volume, int32_t passed);
+void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, double z, int32_t passed);
 void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed);
 void sub__sndpause(int32_t handle);
 int32_t func__sndplaying(int32_t handle);
