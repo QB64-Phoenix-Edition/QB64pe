@@ -36,12 +36,13 @@
 /// @param count Point to an integer that will hold the count of tokens. This cannot be NULL
 /// @return Array of string tokens. This must be freed using gui_free_tokens()
 static char **gui_tokenize(const char *input, int32_t *count) {
-    auto str = strdup(input); // since strtok() modifys the string
+    auto str = strdup(input);
     auto capacity = 2;
     char **result = (char **)malloc(capacity * sizeof(*result));
+    char *saveptr;
 
     (*count) = 0; // Set count to zero
-    auto tok = strtok(str, "|");
+    auto tok = strtok_r(str, "|", &saveptr);
 
     for (;;) {
         if ((*count) >= capacity)
@@ -52,7 +53,7 @@ static char **gui_tokenize(const char *input, int32_t *count) {
         if (!tok)
             break;
 
-        tok = strtok(nullptr, "|");
+        tok = strtok_r(nullptr, "|", &saveptr);
     }
 
     free(str);
