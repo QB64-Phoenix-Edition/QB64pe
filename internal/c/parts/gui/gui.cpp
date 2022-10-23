@@ -41,24 +41,24 @@ static char **gui_tokenize(const char *input, int32_t *count) {
     char **result = (char **)malloc(capacity * sizeof(*result));
     char *saveptr;
 
-    (*count) = 0; // Set count to zero
+    *count = 0;
     auto tok = strtok_r(str, "|", &saveptr);
 
     for (;;) {
-        if ((*count) >= capacity)
+        if (*count >= capacity)
             result = (char **)realloc(result, (capacity *= 2) * sizeof(*result));
 
-        result[(*count)++] = tok ? strdup(tok) : tok;
+        result[*count] = tok ? strdup(tok) : tok;
 
         if (!tok)
             break;
+
+        ++(*count);
 
         tok = strtok_r(nullptr, "|", &saveptr);
     }
 
     free(str);
-
-    --(*count); // Since incrementing happens before we check for null above
 
     return result;
 }
