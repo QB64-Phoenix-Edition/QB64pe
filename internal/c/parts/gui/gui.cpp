@@ -109,10 +109,10 @@ void sub__guiNotifyPopup(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsIconType, int32
 }
 
 /// @brief Shows a standard system message dialog box
-/// @param qbsTitle [OPTIONAL] Title of the dialog box
-/// @param qbsMessage [OPTIONAL] The message that will be displayed
-/// @param qbsDialogType [OPTIONAL] The dialog type ("ok" "okcancel" "yesno" "yesnocancel")
-/// @param qbsIconType [OPTIONAL] The dialog icon type ("info" "warning" "error" "question")
+/// @param qbsTitle Title of the dialog box
+/// @param qbsMessage The message that will be displayed
+/// @param qbsDialogType The dialog type ("ok" "okcancel" "yesno" "yesnocancel")
+/// @param qbsIconType The dialog icon type ("info" "warning" "error" "question")
 /// @param nDefaultButon [OPTIONAL] The default button that will be selected
 /// @param passed How many parameters were passed?
 /// @return 0 for cancel/no, 1 for ok/yes, 2 for no in yesnocancel
@@ -184,8 +184,8 @@ void sub__guiMessageBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsIconType, int32_
 }
 
 /// @brief Shows an input box for getting a string from the user
-/// @param qbsTitle [OPTIONAL] Title of the dialog box
-/// @param qbsMessage [OPTIONAL] The message or prompt that will be displayed
+/// @param qbsTitle Title of the dialog box
+/// @param qbsMessage The message or prompt that will be displayed
 /// @param qbsDefaultInput [OPTIONAL] The default response that can be changed by the user
 /// @param passed How many parameters were passed?
 /// @return The user response or an empty string if the user cancelled
@@ -222,7 +222,7 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
 }
 
 /// @brief Shows the browse for folder dialog box
-/// @param qbsTitle [OPTIONAL] Title of the dialog box
+/// @param qbsTitle Title of the dialog box
 /// @param qbsDefaultPath [OPTIONAL] The default path from where to start browsing
 /// @param passed How many parameters were passed?
 /// @return The path selected by the user or an empty string if the user cancelled
@@ -249,7 +249,7 @@ qbs *func__guiSelectFolderDialog(qbs *qbsTitle, qbs *qbsDefaultPath, int32_t pas
 }
 
 /// @brief Shows the color picker dialog box
-/// @param qbsTitle [OPTIONAL] Title of the dialog box
+/// @param qbsTitle Title of the dialog box
 /// @param nDefaultRGB [OPTIONAL] Default selected color
 /// @param passed How many parameters were passed?
 /// @return 0 on cancel (i.e. no color, no alpha, nothing). Else, returns color with alpha set to 255
@@ -272,10 +272,10 @@ uint32_t func__guiColorChooserDialog(qbs *qbsTitle, uint32_t nDefaultRGB, int32_
 }
 
 /// @brief Shows the system file open dialog box
-/// @param qbsTitle [OPTIONAL] Title of the dialog box
-/// @param qbsDefaultPathAndFile [OPTIONAL] The default path (and filename) that will be pre-populated
-/// @param qbsFilterPatterns [OPTIONAL] File filters separated using '|' (e.g. "*.png|*.jpg")
-/// @param qbsSingleFilterDescription [OPTIONAL] Single filter description (e.g. "Image files")
+/// @param qbsTitle Title of the dialog box
+/// @param qbsDefaultPathAndFile The default path (and filename) that will be pre-populated
+/// @param qbsFilterPatterns File filters separated using '|' (e.g. "*.png|*.jpg")
+/// @param qbsSingleFilterDescription Single filter description (e.g. "Image files")
 /// @param nAllowMultipleSelects [OPTIONAL] Should multiple file selection be allowed?
 /// @param passed How many parameters were passed?
 /// @return The file name (or names separated by '|' if multiselect was on) selected by the user or an empty string if the user cancelled
@@ -320,10 +320,10 @@ qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
 }
 
 /// @brief Shows the system file save dialog box
-/// @param qbsTitle [OPTIONAL] Title of the dialog box
-/// @param qbsDefaultPathAndFile [OPTIONAL] The default path (and filename) that will be pre-populated
-/// @param qbsFilterPatterns [OPTIONAL] File filters separated using '|' (e.g. "*.png|*.jpg")
-/// @param qbsSingleFilterDescription [OPTIONAL] Single filter description (e.g. "Image files")
+/// @param qbsTitle Title of the dialog box
+/// @param qbsDefaultPathAndFile The default path (and filename) that will be pre-populated
+/// @param qbsFilterPatterns File filters separated using '|' (e.g. "*.png|*.jpg")
+/// @param qbsSingleFilterDescription Single filter description (e.g. "Image files")
 /// @return The file name selected by the user or an empty string if the user cancelled
 qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription) {
     static qbs *aTitle = nullptr;

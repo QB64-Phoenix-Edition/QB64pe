@@ -58,7 +58,6 @@
 // FORWARD DECLARATIONS
 //-----------------------------------------------------------------------------------------------------
 // These should be replaced with appropriate header files when Matt finishes cleaning up libqb
-qbs *qbs_new_txt_len(const char *, int32); // Not declared in libqb.h
 void sub__freeimage(int32, int32);         // Not declared in libqb.h
 
 extern img_struct *img;        // Required by func__loadimage
