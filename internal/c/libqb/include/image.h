@@ -42,6 +42,13 @@
 #    endif
 #    define IMAGE_DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
+
+// The byte ordering here are straight from libqb.cpp. So, if libqb.cpp is wrong, then we are wrong! ;)
+#define IMAGE_GET_BGRA_RED(c) (uint32_t(c) >> 16 & 0xFF)
+#define IMAGE_GET_BGRA_GREEN(c) (uint32_t(c) >> 8 & 0xFF)
+#define IMAGE_GET_BGRA_BLUE(c) (uint32_t(c) & 0xFF)
+#define IMAGE_GET_BGRA_ALPHA(c) (uint32_t(c) >> 24)
+#define IMAGE_MAKE_BGRA(r, g, b, a) (uint32_t((uint8_t(b) | (uint16_t(uint8_t(g)) << 8)) | (uint32_t(uint8_t(r)) << 16) | (uint32_t(uint8_t(a)) << 24)))
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------

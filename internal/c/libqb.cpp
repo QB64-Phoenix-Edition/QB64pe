@@ -25,6 +25,7 @@
 #include "mutex.h"
 #include "audio.h"
 #include "image.h"
+#include "gui.h"
 
 int32 disableEvents = 0;
 

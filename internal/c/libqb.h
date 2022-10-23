@@ -30,6 +30,7 @@ int32 func__display();
 void qbg_sub_view_print(int32, int32, int32);
 qbs *qbs_new(int32, uint8);
 qbs *qbs_new_txt(const char *);
+qbs *qbs_new_txt_len(const char *, int32_t);    // a740g: Added this here for now so that we don't have to decare it ourselves everywhere
 qbs *qbs_add(qbs *, qbs *);
 qbs *qbs_set(qbs *, qbs *);
 void qbg_sub_window(float, float, float, float, int32);

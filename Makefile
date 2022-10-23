@@ -192,6 +192,7 @@ include $(PATH_INTERNAL_C)/parts/core/build.mk
 include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
 include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
 include $(PATH_INTERNAL_C)/parts/video/image/build.mk
+include $(PATH_INTERNAL_C)/parts/gui/build.mk
 
 .PHONY: all clean
 
@@ -211,6 +212,15 @@ ifneq ($(filter y,$(DEP_SCREENIMAGE) $(DEP_IMAGE_CODEC)),)
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += dr_pcx stb_image
+else
+	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
+endif
+
+ifneq ($(filter y,$(DEP_COMMON_DIALOGS)),)
+	CXXFLAGS += -DDEPENDENCY_COMMON_DIALOGS
+	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += tinyfiledialogs
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -380,6 +390,10 @@ ifeq ($(OS),win)
 
 	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
 		CXXLIBS += -lgdi32
+	endif
+
+	ifneq ($(filter y,$(DEP_COMMON_DIALOGS)),)
+		CXXLIBS += -lcomdlg32 -lole32
 	endif
 endif
 
