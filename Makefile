@@ -369,7 +369,7 @@ ifeq ($(OS),win)
 
 		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
 	else
-		CXXLIBS += -mwindows -lopengl32 -lglu32 -lwinmm
+		CXXLIBS += -mwindows -lopengl32 -lglu32 -lwinmm -lcomdlg32 -lole32
 	endif
 
 	ifneq ($(filter y,$(DEP_SOCKETS)),)
@@ -390,10 +390,6 @@ ifeq ($(OS),win)
 
 	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
 		CXXLIBS += -lgdi32
-	endif
-
-	ifneq ($(filter y,$(DEP_COMMON_DIALOGS)),)
-		CXXLIBS += -lcomdlg32 -lole32
 	endif
 endif
 

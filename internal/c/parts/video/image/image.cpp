@@ -29,7 +29,7 @@
 // We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
 // Matt is already doing work to separate and modularize libqb
 // So, this will be replaced with relevant stuff once that work is done
-#include "../../libqb.h"
+#include "../../../libqb.h"
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------

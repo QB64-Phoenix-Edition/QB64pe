@@ -1,22 +1,25 @@
 
-GUI_SRCS := \
-	gui.cpp
-
 TFD_SRCS := \
 	tinyfiledialogs.c
 
-GUI_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/gui/%.o,$(GUI_SRCS))
+GUI_SRCS := \
+	gui.cpp
 
 TFD_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/gui/%.o,$(TFD_SRCS))
 
-$(PATH_INTERNAL_C)/parts/gui/%.o: $(PATH_INTERNAL_C)/parts/gui/%.cpp
-	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+GUI_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/gui/%.o,$(GUI_SRCS))
 
 $(PATH_INTERNAL_C)/parts/gui/%.o: $(PATH_INTERNAL_C)/parts/gui/%.c
 	$(CC) -O2 $(CFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
+$(PATH_INTERNAL_C)/parts/gui/%.o: $(PATH_INTERNAL_C)/parts/gui/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+
+# We'll use tdf to replace the libqb Alert & MessageBox stuff
+EXE_LIBS += $(TFD_OBJS)
+
 ifdef DEP_COMMON_DIALOGS
-	EXE_LIBS += $(GUI_OBJS) $(TFD_OBJS)
+	EXE_LIBS += $(GUI_OBJS)
 endif
 
-CLEAN_LIST += $(GUI_OBJS) $(TFD_OBJS)
+CLEAN_LIST += $(TFD_OBJS) $(GUI_OBJS)
