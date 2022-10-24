@@ -126,7 +126,7 @@ endif
 GENERATE_LICENSE ?= n
 
 LICENSE ?= $(EXE).license.txt
-LICENSE_IN_USE := qb64
+LICENSE_IN_USE := qb64 tinyfiledialogs
 
 all: $(EXE)
 
@@ -212,15 +212,6 @@ ifneq ($(filter y,$(DEP_SCREENIMAGE) $(DEP_IMAGE_CODEC)),)
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += dr_pcx stb_image
-else
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
-endif
-
-ifneq ($(filter y,$(DEP_COMMON_DIALOGS)),)
-	CXXFLAGS += -DDEPENDENCY_COMMON_DIALOGS
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
-
-	LICENSE_IN_USE += tinyfiledialogs
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif

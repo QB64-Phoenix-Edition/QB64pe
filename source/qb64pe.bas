@@ -107,7 +107,6 @@ CONST DEPENDENCY_ICON = 10: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_SCREENIMAGE = 11: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_DEVICEINPUT = 12: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'removes support for gamepad input if not present
 CONST DEPENDENCY_ZLIB = 13: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'ZLIB library linkage, if desired, for compression/decompression.
-CONST DEPENDENCY_COMMON_DIALOGS = 14: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 ' a740g: common dialogs support using tiny file dialogs
 
 
 
@@ -12512,7 +12511,6 @@ IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENI
 IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN makedeps$ = makedeps$ + " DEP_FONT=y"
 IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
-IF DEPENDENCY(DEPENDENCY_COMMON_DIALOGS) THEN makedeps$ = makedeps$ + " DEP_COMMON_DIALOGS=y" ' a740g: Common dialogs support using tiny file dialogs
 IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
 IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"

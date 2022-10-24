@@ -15,11 +15,6 @@ $(PATH_INTERNAL_C)/parts/gui/%.o: $(PATH_INTERNAL_C)/parts/gui/%.c
 $(PATH_INTERNAL_C)/parts/gui/%.o: $(PATH_INTERNAL_C)/parts/gui/%.cpp
 	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
-# We'll use tdf to replace the libqb Alert & MessageBox stuff
-EXE_LIBS += $(TFD_OBJS)
-
-ifdef DEP_COMMON_DIALOGS
-	EXE_LIBS += $(GUI_OBJS)
-endif
+EXE_LIBS += $(TFD_OBJS) $(GUI_OBJS)
 
 CLEAN_LIST += $(TFD_OBJS) $(GUI_OBJS)

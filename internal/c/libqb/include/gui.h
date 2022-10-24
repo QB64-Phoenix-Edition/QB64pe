@@ -39,4 +39,7 @@ uint32_t func__guiColorChooserDialog(qbs *qbsTitle, uint32_t nDefaultRGB, int32_
 qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription, int32_t nAllowMultipleSelects,
                              int32_t passed);
 qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription);
+
+int gui_alert(const char *message, const char *title, const char *type);
+bool gui_alert(const char *fmt, ...);
 //-----------------------------------------------------------------------------------------------------

@@ -3870,7 +3870,6 @@ regid
 ' a740g: Common dialog support using tiny file dialogs
 clearid
 id.n = qb64prefix$ + "NotifyPopup" ' Name in CaMeL case
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 2 ' 1 = function, 2 = sub
 id.callname = "sub__guiNotifyPopup" ' C/C++ function name
 id.args = 3 ' number of arguments - "passed"
@@ -3881,7 +3880,6 @@ id.hr_syntax = "_NOTIFYPOPUP [title$][, message$][, iconType$]" ' syntax help
 regid
 clearid
 id.n = qb64prefix$ + "MessageBox" ' Name in CaMeL case
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 2 ' 1 = function, 2 = sub
 id.callname = "sub__guiMessageBox" ' C/C++ function name
 id.args = 3 ' number of arguments - "passed"
@@ -3893,7 +3891,6 @@ regid
 clearid
 id.n = qb64prefix$ + "SelectFolderDialog" ' Name in CaMeL case
 id.musthave = "$"
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiSelectFolderDialog" ' C/C++ function name
 id.args = 2 ' number of arguments - "passed"
@@ -3905,7 +3902,6 @@ regid
 
 clearid
 id.n = qb64prefix$ + "ColorChooserDialog" ' Name in CaMeL case
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiColorChooserDialog" ' C/C++ function name
 id.args = 2 ' number of arguments - "passed"
@@ -3917,7 +3913,6 @@ regid
 
 clearid
 id.n = qb64prefix$ + "MessageBox" ' Name in CaMeL case
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiMessageBox" ' C/C++ function name
 id.args = 5 ' number of arguments - "passed"
@@ -3930,7 +3925,6 @@ regid
 clearid
 id.n = qb64prefix$ + "InputBox" ' Name in CaMeL case
 id.musthave = "$"
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiInputBox" ' C/C++ function name
 id.args = 3 ' number of arguments - "passed"
@@ -3943,7 +3937,6 @@ regid
 clearid
 id.n = qb64prefix$ + "OpenFileDialog" ' Name in CaMeL case
 id.musthave = "$"
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiOpenFileDialog" ' C/C++ function name
 id.args = 5 ' number of arguments - "passed"
@@ -3956,7 +3949,6 @@ regid
 clearid
 id.n = qb64prefix$ + "SaveFileDialog" ' Name in CaMeL case
 id.musthave = "$"
-id.Dependency = DEPENDENCY_COMMON_DIALOGS ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiSaveFileDialog" ' C/C++ function name
 id.args = 4 ' number of arguments - "passed"

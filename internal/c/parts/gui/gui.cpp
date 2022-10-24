@@ -194,7 +194,7 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
     static qbs *aTitle = nullptr;
     static qbs *aMessage = nullptr;
     static qbs *aDefaultInput = nullptr;
-    char *sDefaultInput = nullptr;
+    static qbs *qbsInput;
 
     if (!aTitle)
         aTitle = qbs_new(0, 0);
@@ -208,6 +208,8 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
     qbs_set(aTitle, qbs_add(qbsTitle, qbs_new_txt_len("\0", 1)));
     qbs_set(aMessage, qbs_add(qbsMessage, qbs_new_txt_len("\0", 1)));
 
+    char *sDefaultInput;
+
     if (passed) {
         qbs_set(aDefaultInput, qbs_add(qbsDefaultInput, qbs_new_txt_len("\0", 1)));
         sDefaultInput =
@@ -219,7 +221,12 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
 
     auto sInput = tinyfd_inputBox((const char *)aTitle->chr, (const char *)aMessage->chr, (const char *)sDefaultInput);
 
-    return qbs_new_txt(sInput);
+    // Create a new qbs and then copy the string to it
+    qbsInput = qbs_new(sInput ? strlen(sInput): 0, 1);
+    if (qbsInput->len)
+        memcpy(qbsInput->chr, sInput, qbsInput->len);
+
+    return qbsInput;
 }
 
 /// @brief Shows the browse for folder dialog box
@@ -230,6 +237,7 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
 qbs *func__guiSelectFolderDialog(qbs *qbsTitle, qbs *qbsDefaultPath, int32_t passed) {
     static qbs *aTitle = nullptr;
     static qbs *aDefaultPath = nullptr;
+    static qbs *qbsFolder;
 
     if (!aTitle)
         aTitle = qbs_new(0, 0);
@@ -246,7 +254,12 @@ qbs *func__guiSelectFolderDialog(qbs *qbsTitle, qbs *qbsDefaultPath, int32_t pas
 
     auto sFolder = tinyfd_selectFolderDialog((const char *)aTitle->chr, (const char *)aDefaultPath->chr);
 
-    return qbs_new_txt(sFolder);
+    // Create a new qbs and then copy the string to it
+    qbsFolder = qbs_new(sFolder ? strlen(sFolder) : 0, 1);
+    if (qbsFolder->chr)
+        memcpy(qbsFolder->chr, sFolder, qbsFolder->len);
+
+    return qbsFolder;
 }
 
 /// @brief Shows the color picker dialog box
@@ -286,6 +299,7 @@ qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
     static qbs *aDefaultPathAndFile = nullptr;
     static qbs *aFilterPatterns = nullptr;
     static qbs *aSingleFilterDescription = nullptr;
+    static qbs *qbsFileName;
 
     if (!aTitle)
         aTitle = qbs_new(0, 0);
@@ -317,7 +331,12 @@ qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
 
     gui_free_tokens(psaFilterPatterns); // free memory used by tokenizer
 
-    return qbs_new_txt(sFileName);
+    // Create a new qbs and then copy the string to it
+    qbsFileName = qbs_new(sFileName ? strlen(sFileName) : 0, 1);
+    if (qbsFileName->len)
+        memcpy(qbsFileName->chr, sFileName, qbsFileName->len);
+
+    return qbsFileName;
 }
 
 /// @brief Shows the system file save dialog box
@@ -331,6 +350,7 @@ qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
     static qbs *aDefaultPathAndFile = nullptr;
     static qbs *aFilterPatterns = nullptr;
     static qbs *aSingleFilterDescription = nullptr;
+    static qbs *qbsFileName;
 
     if (!aTitle)
         aTitle = qbs_new(0, 0);
@@ -359,7 +379,51 @@ qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
 
     gui_free_tokens(psaFilterPatterns); // free memory used by tokenizer
 
-    return qbs_new_txt(sFileName);
+    // Create a new qbs and then copy the string to it
+    qbsFileName = qbs_new(sFileName ? strlen(sFileName) : 0, 1);
+    if (qbsFileName->len)
+        memcpy(qbsFileName->chr, sFileName, qbsFileName->len);
+
+    return qbsFileName;
+}
+
+/// @brief This is used internally by libqb to show warning and failure messages
+/// @param message The message the will show inside the dialog box
+/// @param title The dialog box title
+/// @param type The type of dialog box (see tinyfd_messageBox)
+/// @return returns the value retured by tinyfd_messageBox
+int gui_alert(const char *message, const char *title, const char *type) { return tinyfd_messageBox(title, message, type, "error", 1); }
+
+/// @brief This is used internally by libqb to show warning and failure messages
+/// @param fmt A string that contains a printf style format
+/// @param ... Additional arguments
+/// @return true if successful, false otherwise
+bool gui_alert(const char *fmt, ...) {
+    if (!fmt) return false;
+    
+    size_t l = strlen(fmt) * 2 + UCHAR_MAX;
+
+    char *buf = (char *)malloc(l);
+    if (!buf)
+        return false;
+
+    va_list args;
+    va_start(args, fmt);
+
+    if (vsnprintf(buf, l, fmt, args) < 0) {
+        va_end(args);
+        free(buf);
+
+        return false;
+    }
+
+    va_end(args);
+
+    gui_alert(buf, "Alert", "ok");
+
+    free(buf);
+
+    return true;
 }
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------

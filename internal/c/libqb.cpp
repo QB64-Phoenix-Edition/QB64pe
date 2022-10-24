@@ -1,8 +1,6 @@
 #include "libqb.h"
 #include "common.h"
 
-#include "parts/gui/tinyfiledialogs.h"  // We need this for alert(...)
-
 #ifdef QB64_GUI
 #    include "parts/core/glew/src/glew.c"
 #endif
@@ -501,21 +499,6 @@ int32 dont_call_sub_gl = 0;
 
 void GLUT_DISPLAY_REQUEST();
 
-// a740g: These are driven via tiny file dialogs
-int alert(char* message, char* title, char* type) {
-	return tinyfd_messageBox((const char*)title, (const char*)message, (const char*)type, "error", 1);
-}
-
-void alert(char* message) {
-	alert(message, "Alert", "ok");
-}
-
-void alert(int64_t x) {
-	static char buffer[32] = {};
-	sprintf(buffer, "%lld", x);
-	alert(buffer);
-}
-
 void timerCB(int millisec) // not currently being used
 {
 #ifdef QB64_GLUT
@@ -616,8 +599,7 @@ ptrszint list_add(list *L) {
             // note: L->structure is only modified by list_add
             L->structure = (uint8 *)calloc(1, L->internal_structure_size * (new_structures_last + 1));
             if (L->structure == NULL) {
-                alert("list_add: failed to allocate new buffer, structure size:");
-                alert(L->internal_structure_size);
+                gui_alert("list_add: failed to allocate new buffer, structure size: %lld", (int64_t)L->internal_structure_size);
             }
             L->structures_last = new_structures_last;
             L->structures = 0;
@@ -1077,8 +1059,7 @@ int32 new_hardware_img(int32 x, int32 y, uint32 *pixels, int32 flags) {
                 gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, x, y, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
                 glerrorcode = glGetError();
                 if (glerrorcode) {
-                    alert("gluBuild2DMipmaps failed");
-                    alert(glerrorcode);
+                    gui_alert("gluBuild2DMipmaps failed: %i", glerrorcode);
                 }
                 hardware_img->source_state.PO2_fix = PO2_FIX__MIPMAPPED;
                 hardware_img->PO2_w = x;
@@ -1115,8 +1096,7 @@ void hardware_img_buffer_to_texture(int32 handle) {
                 gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, hardware_img->w, hardware_img->h, GL_BGRA, GL_UNSIGNED_BYTE, hardware_img->software_pixel_buffer);
                 glerrorcode = glGetError();
                 if (glerrorcode) {
-                    alert("gluBuild2DMipmaps failed");
-                    alert(glerrorcode);
+                    gui_alert("gluBuild2DMipmaps failed: %i", glerrorcode);
                 }
                 hardware_img->source_state.PO2_fix = PO2_FIX__MIPMAPPED;
                 hardware_img->PO2_w = hardware_img->w;
@@ -7645,7 +7625,7 @@ skip_0F_opcodes:
     else
         i2 = i2 - 10 + 65;
     unknown_opcode_mess->chr[17] = i2;
-    alert((char *)unknown_opcode_mess->chr, "X86 Error", "ok");
+    gui_alert((const char *)unknown_opcode_mess->chr, "X86 Error", "ok");
     exit(86);
 done:
     if (*ip)
@@ -7936,10 +7916,10 @@ void fix_error() {
         snprintf(errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
 
         if (prevent_handling) {
-            v = alert(errmess, errtitle, "ok");
+            v = gui_alert(errmess, errtitle, "ok");
             exit(0);
         } else {
-            v = alert(errmess, errtitle, "yesno");
+            v = gui_alert(errmess, errtitle, "yesno");
         }
 
         if ((v == 2) || (v == 0)) {
@@ -7963,107 +7943,107 @@ void error(int32 error_number) {
 
     // out of memory errors
     if (error_number == 257) {
-        alert("Out of memory", "Critical Error #1", "ok");
+        gui_alert("Out of memory", "Critical Error #1", "ok");
         exit(0);
     } // generic "Out of memory" error
     // tracable "Out of memory" errors
     if (error_number == 502) {
-        alert("Out of memory", "Critical Error #2", "ok");
+        gui_alert("Out of memory", "Critical Error #2", "ok");
         exit(0);
     }
     if (error_number == 503) {
-        alert("Out of memory", "Critical Error #3", "ok");
+        gui_alert("Out of memory", "Critical Error #3", "ok");
         exit(0);
     }
     if (error_number == 504) {
-        alert("Out of memory", "Critical Error #4", "ok");
+        gui_alert("Out of memory", "Critical Error #4", "ok");
         exit(0);
     }
     if (error_number == 505) {
-        alert("Out of memory", "Critical Error #5", "ok");
+        gui_alert("Out of memory", "Critical Error #5", "ok");
         exit(0);
     }
     if (error_number == 506) {
-        alert("Out of memory", "Critical Error #6", "ok");
+        gui_alert("Out of memory", "Critical Error #6", "ok");
         exit(0);
     }
     if (error_number == 507) {
-        alert("Out of memory", "Critical Error #7", "ok");
+        gui_alert("Out of memory", "Critical Error #7", "ok");
         exit(0);
     }
     if (error_number == 508) {
-        alert("Out of memory", "Critical Error #8", "ok");
+        gui_alert("Out of memory", "Critical Error #8", "ok");
         exit(0);
     }
     if (error_number == 509) {
-        alert("Out of memory", "Critical Error #9", "ok");
+        gui_alert("Out of memory", "Critical Error #9", "ok");
         exit(0);
     }
     if (error_number == 510) {
-        alert("Out of memory", "Critical Error #10", "ok");
+        gui_alert("Out of memory", "Critical Error #10", "ok");
         exit(0);
     }
     if (error_number == 511) {
-        alert("Out of memory", "Critical Error #11", "ok");
+        gui_alert("Out of memory", "Critical Error #11", "ok");
         exit(0);
     }
     if (error_number == 512) {
-        alert("Out of memory", "Critical Error #12", "ok");
+        gui_alert("Out of memory", "Critical Error #12", "ok");
         exit(0);
     }
     if (error_number == 513) {
-        alert("Out of memory", "Critical Error #13", "ok");
+        gui_alert("Out of memory", "Critical Error #13", "ok");
         exit(0);
     }
     if (error_number == 514) {
-        alert("Out of memory", "Critical Error #14", "ok");
+        gui_alert("Out of memory", "Critical Error #14", "ok");
         exit(0);
     }
     if (error_number == 515) {
-        alert("Out of memory", "Critical Error #15", "ok");
+        gui_alert("Out of memory", "Critical Error #15", "ok");
         exit(0);
     }
     if (error_number == 516) {
-        alert("Out of memory", "Critical Error #16", "ok");
+        gui_alert("Out of memory", "Critical Error #16", "ok");
         exit(0);
     }
     if (error_number == 517) {
-        alert("Out of memory", "Critical Error #17", "ok");
+        gui_alert("Out of memory", "Critical Error #17", "ok");
         exit(0);
     }
     if (error_number == 518) {
-        alert("Out of memory", "Critical Error #18", "ok");
+        gui_alert("Out of memory", "Critical Error #18", "ok");
         exit(0);
     }
 
     // other critical errors
     if (error_number == 11) {
-        alert("Division by zero", "Critical Error", "ok");
+        gui_alert("Division by zero", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 256) {
-        alert("Out of stack space", "Critical Error", "ok");
+        gui_alert("Out of stack space", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 259) {
-        alert("Cannot find dynamic library file", "Critical Error", "ok");
+        gui_alert("Cannot find dynamic library file", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 260) {
-        alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
+        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 261) {
-        alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
+        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
         exit(0);
     }
 
     if (error_number == 270) {
-        alert("_GL command called outside of SUB _GL's scope", "Critical Error", "ok");
+        gui_alert("_GL command called outside of SUB _GL's scope", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 271) {
-        alert("END/SYSTEM called within SUB _GL's scope", "Critical Error", "ok");
+        gui_alert("END/SYSTEM called within SUB _GL's scope", "Critical Error", "ok");
         exit(0);
     }
 
@@ -28343,7 +28323,7 @@ void showvalue(__int64 v) {
     if (s == NULL)
         s = qbs_new(0, 0);
     qbs_set(s, qbs_str(v));
-    alert((char *)s->chr, "showvalue", "ok");
+    gui_alert((char *)s->chr, "showvalue", "ok");
 }
 #endif
 
@@ -35006,7 +34986,7 @@ void free_hardware_img(int32 handle, int32 caller_id) {
     hardware_img = (hardware_img_struct *)list_get(hardware_img_handles, handle);
 
     if (hardware_img == NULL) {
-        alert("free_hardware_img: image does not exist");
+        gui_alert("free_hardware_img: image does not exist");
     }
 
     if (hardware_img->dest_context_handle) {
@@ -36395,10 +36375,10 @@ void GLUT_DISPLAY_REQUEST() {
                 static hardware_img_struct *f1;
                 f1 = (hardware_img_struct *)list_get(hardware_img_handles, software_screen_hardware_frame);
                 if (software_screen_hardware_frame == 0) {
-                    alert("Invalid software_screen_hardware_frame!!");
+                    gui_alert("Invalid software_screen_hardware_frame!!");
                 }
                 if (f1 == NULL)
-                    alert("Invalid software_screen_hardware_frame!");
+                    gui_alert("Invalid software_screen_hardware_frame!");
 
                 static int32 use_alpha;
                 use_alpha = 0;
@@ -36438,7 +36418,7 @@ void GLUT_DISPLAY_REQUEST() {
                                 hardware_graphics_command_struct *last_hgc =
                                     (hardware_graphics_command_struct *)list_get(hardware_graphics_command_handles, last_hardware_command_rendered);
                                 if (last_hgc == NULL)
-                                    alert("Rendering: Last HGC is NULL!");
+                                    gui_alert("Rendering: Last HGC is NULL!");
                                 command = last_hgc->next_command;
                                 caller_flag = 200;
                             }
@@ -36526,10 +36506,8 @@ void GLUT_DISPLAY_REQUEST() {
 
                         hardware_graphics_command_struct *hgcx =
                             (hardware_graphics_command_struct *)list_get(hardware_graphics_command_handles, next_hardware_command_to_remove);
-                        alert(order);
-                        alert(hgcx->order);
-                        alert(command);
-                        alert("Renderer: Command does not exist.");
+                        gui_alert("Renderer: Command does not exist: command = %i, hgcx->order = %lld, order = %lld", command, hgcx->order, order);
+
                     }
                     if (hgc->order == order) {
                         if (first_command_prev_order == 0)
@@ -37958,7 +37936,7 @@ int main(int argc, char *argv[]) {
 
     GLenum err = glewInit();
     if (GLEW_OK != err) {
-        alert((char *)glewGetErrorString(err));
+        gui_alert((char *)glewGetErrorString(err));
     }
     if (glewIsSupported("GL_EXT_framebuffer_object"))
         framebufferobjects_supported = 1;
@@ -38254,7 +38232,7 @@ void display() {
             }
         }
         if (frame_i == -1) {
-            alert("Software frame buffer: Failed to find available frame");
+            gui_alert("Software frame buffer: Failed to find available frame");
             return;
         }
         display_frame[frame_i].state = DISPLAY_FRAME_STATE__BUILDING;
@@ -38431,7 +38409,7 @@ void display() {
                 if (i2 != -1) {
                     memcpy(display_frame[frame_i].bgra, display_frame[i2].bgra, display_frame[frame_i].w * display_frame[frame_i].h * 4);
                 } else {
-                    alert("Text Screen Update: Failed to locate previous frame's data for comparison");
+                    gui_alert("Text Screen Update: Failed to locate previous frame's data for comparison");
                     check_last = 0; // never occurs, safe-guard only
                 }
             }
