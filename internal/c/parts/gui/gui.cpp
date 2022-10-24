@@ -222,7 +222,7 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
     auto sInput = tinyfd_inputBox((const char *)aTitle->chr, (const char *)aMessage->chr, (const char *)sDefaultInput);
 
     // Create a new qbs and then copy the string to it
-    qbsInput = qbs_new(sInput ? strlen(sInput): 0, 1);
+    qbsInput = qbs_new(sInput ? strlen(sInput) : 0, 1);
     if (qbsInput->len)
         memcpy(qbsInput->chr, sInput, qbsInput->len);
 
@@ -279,7 +279,10 @@ uint32_t func__guiColorChooserDialog(qbs *qbsTitle, uint32_t nDefaultRGB, int32_
         nDefaultRGB = 0;
 
     // Break the color into RGB components
-    uint8_t lRGB[3] = {IMAGE_GET_BGRA_RED(nDefaultRGB), IMAGE_GET_BGRA_GREEN(nDefaultRGB), IMAGE_GET_BGRA_BLUE(nDefaultRGB)};
+    uint8_t lRGB[3];
+    lRGB[0] = IMAGE_GET_BGRA_RED(nDefaultRGB);
+    lRGB[1] = IMAGE_GET_BGRA_GREEN(nDefaultRGB);
+    lRGB[2] = IMAGE_GET_BGRA_BLUE(nDefaultRGB);
 
     // On cancel, return 0 (i.e. no color, no alpha, nothing). Else, return color with alpha set to 255
     return !tinyfd_colorChooser((const char *)aTitle->chr, nullptr, lRGB, lRGB) ? 0 : IMAGE_MAKE_BGRA(lRGB[0], lRGB[1], lRGB[2], 0xFF);
@@ -399,8 +402,9 @@ int gui_alert(const char *message, const char *title, const char *type) { return
 /// @param ... Additional arguments
 /// @return true if successful, false otherwise
 bool gui_alert(const char *fmt, ...) {
-    if (!fmt) return false;
-    
+    if (!fmt)
+        return false;
+
     size_t l = strlen(fmt) * 2 + UCHAR_MAX;
 
     char *buf = (char *)malloc(l);
