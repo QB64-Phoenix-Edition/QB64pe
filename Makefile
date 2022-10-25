@@ -360,7 +360,7 @@ ifeq ($(OS),win)
 
 		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
 	else
-		CXXLIBS += -mwindows -lopengl32 -lglu32 -lwinmm -lcomdlg32 -lole32
+		CXXLIBS += -mwindows -lopengl32 -lglu32 -lwinmm
 	endif
 
 	ifneq ($(filter y,$(DEP_SOCKETS)),)
