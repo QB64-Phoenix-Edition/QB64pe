@@ -126,7 +126,7 @@ endif
 GENERATE_LICENSE ?= n
 
 LICENSE ?= $(EXE).license.txt
-LICENSE_IN_USE := qb64
+LICENSE_IN_USE := qb64 tinyfiledialogs
 
 all: $(EXE)
 
@@ -141,7 +141,7 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
-	CXXLIBS += -static-libgcc -static-libstdc++
+	CXXLIBS += -static-libgcc -static-libstdc++ -lcomdlg32 -lole32
 	CXXFLAGS += -DGLEW_STATIC -DFREEGLUT_STATIC
 endif
 
@@ -192,6 +192,7 @@ include $(PATH_INTERNAL_C)/parts/core/build.mk
 include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
 include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
 include $(PATH_INTERNAL_C)/parts/video/image/build.mk
+include $(PATH_INTERNAL_C)/parts/gui/build.mk
 
 .PHONY: all clean
 

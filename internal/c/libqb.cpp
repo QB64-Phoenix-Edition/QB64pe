@@ -25,6 +25,7 @@
 #include "mutex.h"
 #include "audio.h"
 #include "image.h"
+#include "gui.h"
 
 int32 disableEvents = 0;
 
@@ -216,9 +217,6 @@ void log_event(int32 x) {
 
 // forward references
 void sub__printimage(int32 i);
-
-void alert(int32 x);
-void alert(char *x);
 
 // GUI notification variables
 int32 force_display_update = 0;
@@ -601,8 +599,7 @@ ptrszint list_add(list *L) {
             // note: L->structure is only modified by list_add
             L->structure = (uint8 *)calloc(1, L->internal_structure_size * (new_structures_last + 1));
             if (L->structure == NULL) {
-                alert("list_add: failed to allocate new buffer, structure size:");
-                alert(L->internal_structure_size);
+                gui_alert("list_add: failed to allocate new buffer, structure size: %lld", (int64_t)L->internal_structure_size);
             }
             L->structures_last = new_structures_last;
             L->structures = 0;
@@ -1062,8 +1059,7 @@ int32 new_hardware_img(int32 x, int32 y, uint32 *pixels, int32 flags) {
                 gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, x, y, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
                 glerrorcode = glGetError();
                 if (glerrorcode) {
-                    alert("gluBuild2DMipmaps failed");
-                    alert(glerrorcode);
+                    gui_alert("gluBuild2DMipmaps failed: %i", glerrorcode);
                 }
                 hardware_img->source_state.PO2_fix = PO2_FIX__MIPMAPPED;
                 hardware_img->PO2_w = x;
@@ -1100,8 +1096,7 @@ void hardware_img_buffer_to_texture(int32 handle) {
                 gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, hardware_img->w, hardware_img->h, GL_BGRA, GL_UNSIGNED_BYTE, hardware_img->software_pixel_buffer);
                 glerrorcode = glGetError();
                 if (glerrorcode) {
-                    alert("gluBuild2DMipmaps failed");
-                    alert(glerrorcode);
+                    gui_alert("gluBuild2DMipmaps failed: %i", glerrorcode);
                 }
                 hardware_img->source_state.PO2_fix = PO2_FIX__MIPMAPPED;
                 hardware_img->PO2_w = hardware_img->w;
@@ -2560,128 +2555,9 @@ int32 exit_ok = 0;
 
 // substitute Windows functionality
 #ifndef QB64_WINDOWS
-// MessageBox defines
-#    define IDOK 1
-#    define IDCANCEL 2
-#    define IDABORT 3
-#    define IDRETRY 4
-#    define IDIGNORE 5
-#    define IDYES 6
-#    define IDNO 7
-#    define MB_OK 0x00000000L
-#    define MB_OKCANCEL 0x00000001L
-#    define MB_ABORTRETRYIGNORE 0x00000002L
-#    define MB_YESNOCANCEL 0x00000003L
-#    define MB_YESNO 0x00000004L
-#    define MB_RETRYCANCEL 0x00000005L
-#    define MB_SYSTEMMODAL 0x00001000L
-// alternate implementations of MessageBox
-#    ifdef QB64_MACOSX
-int MessageBox(int ignore, char *message, char *header, int type) {
-
-    CFStringRef header_ref = CFStringCreateWithCString(NULL, header, kCFStringEncodingASCII);
-    CFStringRef message_ref = CFStringCreateWithCString(NULL, message, kCFStringEncodingASCII);
-    CFOptionFlags result;
-    if (type & MB_SYSTEMMODAL)
-        type -= MB_SYSTEMMODAL;
-    if (type == MB_YESNO) {
-        CFUserNotificationDisplayAlert(0, // no timeout
-                                       kCFUserNotificationNoteAlertLevel, NULL, NULL, NULL, header_ref, message_ref, CFSTR("No"), CFSTR("Yes"), NULL, &result);
-        CFRelease(header_ref);
-        CFRelease(message_ref);
-        if (result == kCFUserNotificationDefaultResponse)
-            return IDNO;
-        else
-            return IDYES;
-    }
-    if (type == MB_OK) {
-        CFUserNotificationDisplayAlert(0, // no timeout
-                                       kCFUserNotificationNoteAlertLevel, NULL, NULL, NULL, header_ref, message_ref, CFSTR("OK"), NULL, NULL, &result);
-        CFRelease(header_ref);
-        CFRelease(message_ref);
-        return IDOK;
-    }
-    return IDCANCEL;
-}
-#    else
-int MessageBox(int ignore, char *message, char *title, int type) {
-    static qbs *s = NULL;
-    if (!s)
-        s = qbs_new(0, 0);
-    if (type & MB_SYSTEMMODAL)
-        type -= MB_SYSTEMMODAL;
-    if (type == MB_YESNO) {
-        qbs_set(s, qbs_new_txt("xmessage -center -title "));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt(title)));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt(" -buttons Yes:2,No:1 ")));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt(message)));
-        qbs_set(s, qbs_add(s, qbs_new_txt("                         ")));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 0;
-        static int status;
-        status = system((char *)s->chr);
-        if (-1 != status) {
-            static int32 r;
-            r = WEXITSTATUS(status);
-            if (r == 2)
-                return IDYES;
-            if (r == 1)
-                return IDNO;
-        }
-        return IDNO;
-    } // MB_YESNO
-    if (type == MB_OK) {
-        qbs_set(s, qbs_new_txt("xmessage -center -title "));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt(title)));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt(" -buttons OK:1 ")));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt(message)));
-        qbs_set(s, qbs_add(s, qbs_new_txt("                         ")));
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 34;
-        qbs_set(s, qbs_add(s, qbs_new_txt("?")));
-        s->chr[s->len - 1] = 0;
-        system((char *)s->chr);
-        return IDOK;
-    } // MB_OK
-    return IDCANCEL;
-}
-#    endif
-
 void AllocConsole() { return; }
 void FreeConsole() { return; }
 #endif
-
-int MessageBox2(int ignore, char *message, char *title, int type) {
-
-#ifdef QB64_WINDOWS
-    return MessageBox(window_handle, message, title, type);
-#else
-    return MessageBox(NULL, message, title, type);
-#endif
-}
-
-void alert(int32 x) {
-    static char str[100];
-    memset(&str[0], 0, 100);
-    sprintf(str, "%d", x);
-    MessageBox(0, &str[0], "Alert", MB_OK);
-}
-
-void alert(char *x) { MessageBox(0, x, "Alert", MB_OK); }
 
 // vc->project->properties->configuration properties->general->configuration type->application(.exe)
 // vc->project->properties->configuration properties->general->configuration type->static library(.lib)
@@ -7749,7 +7625,7 @@ skip_0F_opcodes:
     else
         i2 = i2 - 10 + 65;
     unknown_opcode_mess->chr[17] = i2;
-    MessageBox2(NULL, (char *)unknown_opcode_mess->chr, "X86 Error", MB_OK | MB_SYSTEMMODAL);
+    gui_alert((const char *)unknown_opcode_mess->chr, "X86 Error", "ok");
     exit(86);
 done:
     if (*ip)
@@ -8040,13 +7916,13 @@ void fix_error() {
         snprintf(errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
 
         if (prevent_handling) {
-            v = MessageBox2(NULL, errmess, errtitle, MB_OK);
+            v = gui_alert(errmess, errtitle, "ok");
             exit(0);
         } else {
-            v = MessageBox2(NULL, errmess, errtitle, MB_YESNO | MB_SYSTEMMODAL);
+            v = gui_alert(errmess, errtitle, "yesno");
         }
 
-        if ((v == IDNO) || (v == IDOK)) {
+        if ((v == 2) || (v == 0)) {
             close_program = 1;
             end();
         }
@@ -8067,107 +7943,107 @@ void error(int32 error_number) {
 
     // out of memory errors
     if (error_number == 257) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #1", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #1", "ok");
         exit(0);
     } // generic "Out of memory" error
     // tracable "Out of memory" errors
     if (error_number == 502) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #2", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #2", "ok");
         exit(0);
     }
     if (error_number == 503) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #3", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #3", "ok");
         exit(0);
     }
     if (error_number == 504) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #4", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #4", "ok");
         exit(0);
     }
     if (error_number == 505) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #5", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #5", "ok");
         exit(0);
     }
     if (error_number == 506) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #6", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #6", "ok");
         exit(0);
     }
     if (error_number == 507) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #7", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #7", "ok");
         exit(0);
     }
     if (error_number == 508) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #8", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #8", "ok");
         exit(0);
     }
     if (error_number == 509) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #9", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #9", "ok");
         exit(0);
     }
     if (error_number == 510) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #10", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #10", "ok");
         exit(0);
     }
     if (error_number == 511) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #11", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #11", "ok");
         exit(0);
     }
     if (error_number == 512) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #12", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #12", "ok");
         exit(0);
     }
     if (error_number == 513) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #13", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #13", "ok");
         exit(0);
     }
     if (error_number == 514) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #14", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #14", "ok");
         exit(0);
     }
     if (error_number == 515) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #15", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #15", "ok");
         exit(0);
     }
     if (error_number == 516) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #16", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #16", "ok");
         exit(0);
     }
     if (error_number == 517) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #17", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #17", "ok");
         exit(0);
     }
     if (error_number == 518) {
-        MessageBox2(NULL, "Out of memory", "Critical Error #18", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of memory", "Critical Error #18", "ok");
         exit(0);
     }
 
     // other critical errors
     if (error_number == 11) {
-        MessageBox2(NULL, "Division by zero", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Division by zero", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 256) {
-        MessageBox2(NULL, "Out of stack space", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Out of stack space", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 259) {
-        MessageBox2(NULL, "Cannot find dynamic library file", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Cannot find dynamic library file", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 260) {
-        MessageBox2(NULL, "Sub/Function does not exist in dynamic library", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 261) {
-        MessageBox2(NULL, "Sub/Function does not exist in dynamic library", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
         exit(0);
     }
 
     if (error_number == 270) {
-        MessageBox2(NULL, "_GL command called outside of SUB _GL's scope", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("_GL command called outside of SUB _GL's scope", "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 271) {
-        MessageBox2(NULL, "END/SYSTEM called within SUB _GL's scope", "Critical Error", MB_OK | MB_SYSTEMMODAL);
+        gui_alert("END/SYSTEM called within SUB _GL's scope", "Critical Error", "ok");
         exit(0);
     }
 
@@ -28447,7 +28323,7 @@ void showvalue(__int64 v) {
     if (s == NULL)
         s = qbs_new(0, 0);
     qbs_set(s, qbs_str(v));
-    MessageBox2(NULL, (char *)s->chr, "showvalue", MB_OK | MB_SYSTEMMODAL);
+    gui_alert((char *)s->chr, "showvalue", "ok");
 }
 #endif
 
@@ -35110,7 +34986,7 @@ void free_hardware_img(int32 handle, int32 caller_id) {
     hardware_img = (hardware_img_struct *)list_get(hardware_img_handles, handle);
 
     if (hardware_img == NULL) {
-        alert("free_hardware_img: image does not exist");
+        gui_alert("free_hardware_img: image does not exist");
     }
 
     if (hardware_img->dest_context_handle) {
@@ -36499,10 +36375,10 @@ void GLUT_DISPLAY_REQUEST() {
                 static hardware_img_struct *f1;
                 f1 = (hardware_img_struct *)list_get(hardware_img_handles, software_screen_hardware_frame);
                 if (software_screen_hardware_frame == 0) {
-                    alert("Invalid software_screen_hardware_frame!!");
+                    gui_alert("Invalid software_screen_hardware_frame!!");
                 }
                 if (f1 == NULL)
-                    alert("Invalid software_screen_hardware_frame!");
+                    gui_alert("Invalid software_screen_hardware_frame!");
 
                 static int32 use_alpha;
                 use_alpha = 0;
@@ -36542,7 +36418,7 @@ void GLUT_DISPLAY_REQUEST() {
                                 hardware_graphics_command_struct *last_hgc =
                                     (hardware_graphics_command_struct *)list_get(hardware_graphics_command_handles, last_hardware_command_rendered);
                                 if (last_hgc == NULL)
-                                    alert("Rendering: Last HGC is NULL!");
+                                    gui_alert("Rendering: Last HGC is NULL!");
                                 command = last_hgc->next_command;
                                 caller_flag = 200;
                             }
@@ -36630,10 +36506,8 @@ void GLUT_DISPLAY_REQUEST() {
 
                         hardware_graphics_command_struct *hgcx =
                             (hardware_graphics_command_struct *)list_get(hardware_graphics_command_handles, next_hardware_command_to_remove);
-                        alert(order);
-                        alert(hgcx->order);
-                        alert(command);
-                        alert("Renderer: Command does not exist.");
+                        gui_alert("Renderer: Command does not exist: command = %i, hgcx->order = %lld, order = %lld", command, hgcx->order, order);
+
                     }
                     if (hgc->order == order) {
                         if (first_command_prev_order == 0)
@@ -38062,7 +37936,7 @@ int main(int argc, char *argv[]) {
 
     GLenum err = glewInit();
     if (GLEW_OK != err) {
-        alert((char *)glewGetErrorString(err));
+        gui_alert((char *)glewGetErrorString(err));
     }
     if (glewIsSupported("GL_EXT_framebuffer_object"))
         framebufferobjects_supported = 1;
@@ -38358,7 +38232,7 @@ void display() {
             }
         }
         if (frame_i == -1) {
-            alert("Software frame buffer: Failed to find available frame");
+            gui_alert("Software frame buffer: Failed to find available frame");
             return;
         }
         display_frame[frame_i].state = DISPLAY_FRAME_STATE__BUILDING;
@@ -38535,7 +38409,7 @@ void display() {
                 if (i2 != -1) {
                     memcpy(display_frame[frame_i].bgra, display_frame[i2].bgra, display_frame[frame_i].w * display_frame[frame_i].h * 4);
                 } else {
-                    alert("Text Screen Update: Failed to locate previous frame's data for comparison");
+                    gui_alert("Text Screen Update: Failed to locate previous frame's data for comparison");
                     check_last = 0; // never occurs, safe-guard only
                 }
             }

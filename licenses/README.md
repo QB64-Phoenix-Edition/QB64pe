@@ -91,6 +91,14 @@ These are used if you make use of MIDI support.
 | TinySoundFont | MIT | license_tinysoundfont.txt | internal/c/parts/audio/extras/tinysoundfont/tsf.h
 | TinyMidiLoader | ZLIB | license_tinymidiloader.txt | internal/c/parts/audio/extras/tinysoundfont.tml.h |
 
+## Common Dialogs Support
+
+This is used by libqb to show alerts and also by the common dialog functions and subroutines.
+
+| Library | License | License file | Location |
+| :------ | :-----: | :----------- | :------- |
+| tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui
+
 ## Legacy OpenAL audio backend
 
 The below licenses apply when making use of the legacy OpenAL audio backend (can be enabled in `Compiler Settings`). These replace all other sound related libraries:

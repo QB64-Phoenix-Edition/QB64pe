@@ -1,5 +1,6 @@
 #include "common.h"
 #include "audio.h"
+#include "gui.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader

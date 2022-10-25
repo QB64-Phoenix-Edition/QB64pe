@@ -29,7 +29,7 @@
 // We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
 // Matt is already doing work to separate and modularize libqb
 // So, this will be replaced with relevant stuff once that work is done
-#include "../../libqb.h"
+#include "../../../libqb.h"
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------
@@ -42,12 +42,6 @@
 //-----------------------------------------------------------------------------------------------------
 // MACROS
 //-----------------------------------------------------------------------------------------------------
-// The byte ordering here are straight from libqb.cpp. So, if libqb.cpp is wrong, then we are wrong! ;)
-#define IMAGE_GET_BGRA_RED(c) (uint32_t(c) >> 16 & 0xFF)
-#define IMAGE_GET_BGRA_GREEN(c) (uint32_t(c) >> 8 & 0xFF)
-#define IMAGE_GET_BGRA_BLUE(c) (uint32_t(c) & 0xFF)
-#define IMAGE_GET_BGRA_ALPHA(c) (uint32_t(c) >> 24)
-#define IMAGE_MAKE_BGRA(r, g, b, a) (uint32_t((uint8_t(b) | (uint16_t(uint8_t(g)) << 8)) | (uint32_t(uint8_t(r)) << 16) | (uint32_t(uint8_t(a)) << 24)))
 // Calculates the RGB distance in the RGB color cube
 #define IMAGE_CALCULATE_RGB_DISTANCE(r1, g1, b1, r2, g2, b2)                                                                                                   \
     sqrt(((float(r2) - float(r1)) * (float(r2) - float(r1))) + ((float(g2) - float(g1)) * (float(g2) - float(g1))) +                                           \
@@ -64,7 +58,6 @@
 // FORWARD DECLARATIONS
 //-----------------------------------------------------------------------------------------------------
 // These should be replaced with appropriate header files when Matt finishes cleaning up libqb
-qbs *qbs_new_txt_len(const char *, int32); // Not declared in libqb.h
 void sub__freeimage(int32, int32);         // Not declared in libqb.h
 
 extern img_struct *img;        // Required by func__loadimage

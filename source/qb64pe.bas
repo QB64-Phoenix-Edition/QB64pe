@@ -13293,11 +13293,11 @@ FUNCTION ParseCMDLineArgs$ ()
     END IF
 END FUNCTION
 
-FUNCTION InvalidSettingError$(token$)
+FUNCTION InvalidSettingError$ (token$)
     InvalidSettingError$ = "Invalid temporary setting switch: " + AddQuotes$(token$)
 END FUNCTION
 
-SUB PrintTemporarySettingsHelpAndExit(errstr$)
+SUB PrintTemporarySettingsHelpAndExit (errstr$)
     _DEST _CONSOLE
 
     PRINT "QB64-PE Compiler V" + Version$
@@ -13321,7 +13321,7 @@ SUB PrintTemporarySettingsHelpAndExit(errstr$)
     SYSTEM
 END SUB
 
-FUNCTION ParseBooleanSetting&(token$, setting AS _UNSIGNED LONG)
+FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
     DIM equals AS LONG
     DIM value AS STRING
 
@@ -13344,7 +13344,7 @@ FUNCTION ParseBooleanSetting&(token$, setting AS _UNSIGNED LONG)
     END SELECT
 END FUNCTION
 
-FUNCTION ParseLongSetting&(token$, setting AS _UNSIGNED LONG)
+FUNCTION ParseLongSetting& (token$, setting AS _UNSIGNED LONG)
     DIM equals AS LONG
 
     equals = INSTR(token$, "=")
@@ -13355,7 +13355,7 @@ FUNCTION ParseLongSetting&(token$, setting AS _UNSIGNED LONG)
     ParseLongSetting& = -1
 END FUNCTION
 
-FUNCTION ParseStringSetting&(token$, setting AS STRING)
+FUNCTION ParseStringSetting& (token$, setting AS STRING)
     DIM equals AS LONG
 
     equals = INSTR(token$, "=")

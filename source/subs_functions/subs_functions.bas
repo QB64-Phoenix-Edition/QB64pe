@@ -1970,7 +1970,7 @@ id.args = 2
 id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
 id.specialformat = "?[,?]"
 id.ret = ULONGTYPE - ISPOINTER
-id.hr_syntax = "_SNDOPEN(fileName$)"
+id.hr_syntax = "_SNDOPEN(fileName$[, capabilities$])"
 regid
 
 clearid
@@ -3866,3 +3866,95 @@ id.arg = MKL$(UINTEGER64TYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.ret = UINTEGER64TYPE - ISPOINTER
 id.hr_syntax = "_TOGGLEBIT(numericalVariable, numericalValue)"
 regid
+
+' a740g: Common dialog support using tiny file dialogs
+clearid
+id.n = qb64prefix$ + "NotifyPopup" ' Name in CaMeL case
+id.subfunc = 2 ' 1 = function, 2 = sub
+id.callname = "sub__guiNotifyPopup" ' C/C++ function name
+id.args = 3 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "[?][,[?][,?]]" ' special format (optional in [])
+id.hr_syntax = "_NOTIFYPOPUP [title$][, message$][, iconType$]" ' syntax help
+
+regid
+clearid
+id.n = qb64prefix$ + "MessageBox" ' Name in CaMeL case
+id.subfunc = 2 ' 1 = function, 2 = sub
+id.callname = "sub__guiMessageBox" ' C/C++ function name
+id.args = 3 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "[?][,[?][,?]]" ' special format (optional in [])
+id.hr_syntax = "_MESSAGEBOX [title$][, message$][, iconType$]" ' syntax help
+regid
+
+clearid
+id.n = qb64prefix$ + "SelectFolderDialog" ' Name in CaMeL case
+id.musthave = "$"
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__guiSelectFolderDialog" ' C/C++ function name
+id.args = 2 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "?[,?]" ' special format (optional in [])
+id.ret = STRINGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_SELECTFOLDERDIALOG$(title$[, defaultPath$])" ' syntax help
+regid
+
+clearid
+id.n = qb64prefix$ + "ColorChooserDialog" ' Name in CaMeL case
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__guiColorChooserDialog" ' C/C++ function name
+id.args = 2 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "?[,?]" ' special format (optional in [])
+id.ret = LONGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_COLORCHOOSERDIALOG&(title$[, defaultRGB&])" ' syntax help
+regid
+
+clearid
+id.n = qb64prefix$ + "MessageBox" ' Name in CaMeL case
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__guiMessageBox" ' C/C++ function name
+id.args = 5 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "?,?,?,?[,?]" ' special format (optional in [])
+id.ret = LONGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_MESSAGEBOX&(title$, message$, dialogType$, iconType$[, defaultButton&])" ' syntax help
+regid
+
+clearid
+id.n = qb64prefix$ + "InputBox" ' Name in CaMeL case
+id.musthave = "$"
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__guiInputBox" ' C/C++ function name
+id.args = 3 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "?,?[,?]" ' special format (optional in [])
+id.ret = STRINGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_INPUTBOX$(title$, message$[, defaultInput$])" ' syntax help
+regid
+
+clearid
+id.n = qb64prefix$ + "OpenFileDialog" ' Name in CaMeL case
+id.musthave = "$"
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__guiOpenFileDialog" ' C/C++ function name
+id.args = 5 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "?,?,?,?[,?]" ' special format (optional in [])
+id.ret = STRINGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_OPENFILEDIALOG$(title$, defaultPathAndFile$, filterPatterns$, singleFilterDescription$[, allowMultipleSelects&])" ' syntax help
+regid
+
+clearid
+id.n = qb64prefix$ + "SaveFileDialog" ' Name in CaMeL case
+id.musthave = "$"
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__guiSaveFileDialog" ' C/C++ function name
+id.args = 4 ' number of arguments - "passed"
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' arguments & types
+id.ret = STRINGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_SAVEFILEDIALOG$(title$, defaultPathAndFile$, filterPatterns$, singleFilterDescription$)" ' syntax help
+regid
+' a740g: Common dialog support using tiny file dialogs
+

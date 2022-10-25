@@ -82,7 +82,6 @@ void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourc
 
 // These are stuff that was not declared anywhere else
 // We will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
-qbs *qbs_new_txt_len(const char *txt, int32 len);                   // Not declared in libqb.h
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 void new_mem_lock();                                                // This is required for MemSound()
 void free_mem_lock(mem_lock *lock);                                 // Same as above
