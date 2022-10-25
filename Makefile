@@ -141,7 +141,7 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
-	CXXLIBS += -static-libgcc -static-libstdc++
+	CXXLIBS += -static-libgcc -static-libstdc++ -lcomdlg32 -lole32
 	CXXFLAGS += -DGLEW_STATIC -DFREEGLUT_STATIC
 endif
 
