@@ -1,8 +1,7 @@
-# Argument 1: Location of qb64pe (blank means current directory
-# Argument 2: If not blank, qb64pe will not be started after compiltaion
+# Argument 1: If not blank, qb64pe will not be started after compiltaion
 
-cd "$(dirname "$1")"
-dont_run="$2"
+cd "$(dirname "$0")"
+dont_run="$1"
 
 Pause()
 {
