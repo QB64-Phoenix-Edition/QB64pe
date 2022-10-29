@@ -35,7 +35,17 @@ case "$2" in
         ;;
 
     osx)
-        ./setup_osx.command "." "dont_run" 1>"$RESULTS_DIR/osx-setup.txt"
+        # When testing the OSX script we run it from a different directory as
+        # that is the typical way it is used.
+        pushd . > /dev/null
+        cd "$ROOT"
+
+        $1/setup_osx.command "dont_run" 1>"$RESULTS_DIR/osx-setup.txt"
+        ERR=$?
+
+        popd > /dev/null
+
+        (exit $ERR)
         assert_success_named "OSX setup" cat "$RESULTS_DIR/osx-setup.txt"
         ;;
 esac
