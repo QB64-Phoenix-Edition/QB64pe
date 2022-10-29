@@ -3,7 +3,7 @@ The code is 100% compatible C C++
 (just comment out << extern "C" >> in the header file) */
 
 /*_________
- /         \ tinyfiledialogs.c v3.8.8 [Apr 22, 2021] zlib licence
+ /         \ tinyfiledialogs.c v3.8.9 [Oct 27, 2022] zlib licence
  |tiny file| Unique code file created [November 9, 2014]
  | dialogs | Copyright (c) 2014 - 2021 Guillaume Vareille http://ysengrin.com
  \____  ___/ http://tinyfiledialogs.sourceforge.net
@@ -99,7 +99,7 @@ Thanks for contributions, bug corrections & thorough testing to:
 #endif
 #define LOW_MULTIPLE_FILES 32
 
-char tinyfd_version[8] = "3.8.8";
+char tinyfd_version[8] = "3.8.9";
 
 /******************************************************************************************************/
 /**************************************** UTF-8 on Windows ********************************************/
@@ -1101,6 +1101,22 @@ int tinyfd_messageBoxW(
                         aCode += MB_DEFBUTTON2;
                 }
         }
+        else if (aDialogType && !wcscmp(L"yesnocancel", aDialogType))
+        {
+            aCode += MB_YESNOCANCEL;
+            if (aDefaultButton == 1)
+            {
+                aCode += MB_DEFBUTTON1;
+            }
+            else if (aDefaultButton == 2)
+            {
+                aCode += MB_DEFBUTTON2;
+            }
+            else
+            {
+                aCode += MB_DEFBUTTON3;
+            }
+        }
         else
         {
                 aCode += MB_OK;
@@ -1109,17 +1125,18 @@ int tinyfd_messageBoxW(
         aCode += MB_TOPMOST;
 
         lBoxReturnValue = MessageBoxW(GetForegroundWindow(), aMessage, aTitle, aCode);
-        if (((aDialogType
-                && wcscmp(L"okcancel", aDialogType)
-                && wcscmp(L"yesno", aDialogType)))
-                || (lBoxReturnValue == IDOK)
-                || (lBoxReturnValue == IDYES))
+
+        if ( (lBoxReturnValue == IDNO) && (aDialogType && !wcscmp(L"yesnocancel", aDialogType)) )
         {
-                return 1;
+            return 2;
+        }
+        else if ( (lBoxReturnValue == IDOK) || (lBoxReturnValue == IDYES) )
+        {
+            return 1;
         }
         else
         {
-                return 0;
+            return 0;
         }
 }
 
