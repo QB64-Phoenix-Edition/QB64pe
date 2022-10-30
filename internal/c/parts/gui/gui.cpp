@@ -321,8 +321,12 @@ qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
     qbs_set(aFilterPatterns, qbs_add(qbsFilterPatterns, qbs_new_txt_len("\0", 1)));
     qbs_set(aSingleFilterDescription, qbs_add(qbsSingleFilterDescription, qbs_new_txt_len("\0", 1)));
 
-    if (!passed)
-        nAllowMultipleSelects = false;
+    // If nAllowMultipleSelects is < 0 tinyfd_openFileDialog allows a program to force-free any working memory that it may be using and returns NULL
+    // This is really not an issue even if it is not done because tinyfd_openFileDialog 'recycles' it working memory and anything not feed will be taken care of
+    // by the OS on program exit
+    // Unfortunately in case of QB64, true is -1 and this does not blend well with the spirit of BASIC (is that even a thing? XD)
+    // To work around this, we trap any non-zero values and re-interpret those as 1
+    nAllowMultipleSelects = !passed || !nAllowMultipleSelects ? false : true;
 
     char *sSingleFilterDescription = aSingleFilterDescription->len == 1 ? nullptr : (char *)aSingleFilterDescription->chr;
 
