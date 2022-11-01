@@ -433,5 +433,57 @@ bool gui_alert(const char *fmt, ...) {
 
     return true;
 }
+
+#ifndef QB64_WINDOWS
+
+#    define IDOK 1
+#    define IDCANCEL 2
+#    define IDABORT 3
+#    define IDRETRY 4
+#    define IDIGNORE 5
+#    define IDYES 6
+#    define IDNO 7
+#    define MB_OK 0x00000000L
+#    define MB_OKCANCEL 0x00000001L
+#    define MB_ABORTRETRYIGNORE 0x00000002L
+#    define MB_YESNOCANCEL 0x00000003L
+#    define MB_YESNO 0x00000004L
+#    define MB_RETRYCANCEL 0x00000005L
+#    define MB_SYSTEMMODAL 0x00001000L
+
+// This exists because InForm calls it directly.
+// It only supports the "MB_OK" and "MB_YESNO" options
+int MessageBox(int ignore, char *message, char *title, int type) {
+    const char *msgType;
+    const char *icon;
+    int yesret;
+
+    switch (type & 0b00000111) {
+    case MB_YESNO:
+        msgType = "yesno";
+        icon = "question";
+        yesret = IDYES;
+        break;
+
+    case MB_OK:
+    default:
+        msgType = "ok";
+        icon = "info";
+        yesret = IDOK;
+        break;
+    }
+
+    int result = tinyfd_messageBox(title, message, msgType, icon, 1 /* OK/Yes */);
+
+    switch (result) {
+    case 1:
+        return yesret;
+
+    case 0:
+    default:
+        return IDNO;
+    }
+}
+#endif
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
