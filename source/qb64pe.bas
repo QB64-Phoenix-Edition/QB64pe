@@ -907,10 +907,12 @@ DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
 '
 ' Collection of flags indicating which unstable features should be used during compilation
 '
-REDIM SHARED unstableFlags(1) AS _BYTE
+REDIM SHARED unstableFlags(1 TO 2) AS _BYTE
 DIM UNSTABLE_MIDI AS LONG
+DIM UNSTABLE_HTTP AS LONG
 
 UNSTABLE_MIDI = 1
+UNSTABLE_HTTP = 2
 
 
 
@@ -1626,7 +1628,7 @@ udtenext(i3) = i2
 udtenext(i2) = 0
 
 ' Reset all unstable flags
-REDIM SHARED unstableFlags(1) AS _BYTE
+FOR i = 1 TO UBOUND(unstableFlags): unstableFlags(i) = 0: NEXT
 
 ' Indicates if a MIDI sound font was selected
 '
@@ -1928,6 +1930,9 @@ DO
                     END IF
 
                     unstableFlags(UNSTABLE_MIDI) = -1
+
+                CASE "HTTP"
+                    unstableFlags(UNSTABLE_HTTP) = -1
 
                 CASE ELSE
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
@@ -3454,6 +3459,8 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     layout$ = layout$ + SCase$("Midi")
+                CASE "HTTP"
+                    layout$ = layout$ + SCase$("Http")
             END SELECT
 
             GOTO finishednonexec
@@ -12523,6 +12530,10 @@ ELSE
     IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) OR DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) OR DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
         makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
     END IF
+END IF
+
+IF unstableFlags(UNSTABLE_HTTP) AND DEPENDENCY(DEPENDENCY_SOCKETS) <> 0 THEN
+    makedeps$ = makedeps$ + " DEP_HTTP=y"
 END IF
 
 IF MidiSoundFontSet THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE_MIDI=y"
