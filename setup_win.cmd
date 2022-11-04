@@ -87,7 +87,7 @@ if not exist "internal\c\c_compiler\bin\c++.exe" (
 
 rem Run make clean
 echo Cleaning...
-internal\c\c_compiler\bin\mingw32-make.exe OS=win clean >NUL 2>NUL
+internal\c\c_compiler\bin\mingw32-make.exe OS=win clean > NUL 2> NUL
 
 rem Now build QB64-PE
 echo Building QB64-PE...
