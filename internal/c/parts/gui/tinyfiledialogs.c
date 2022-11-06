@@ -1175,6 +1175,120 @@ int tinyfd_messageBoxW(
         }
 }
 
+static LRESULT CALLBACK hiddenNotifyWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_CREATE:
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+static HWND notifyWindow = NULL;
+static HICON notifyIcon = NULL;
+
+// Creates a hidden window to tie the Notifications too
+static void setupNotifyHandles()
+{
+    if (notifyWindow || notifyIcon)
+        return;
+
+    WNDCLASSEX wndclass = {
+        sizeof(WNDCLASSEX),
+        CS_DBLCLKS,
+        hiddenNotifyWindowProc,
+        0,
+        0,
+        GetModuleHandle(0),
+        LoadIcon(0,IDI_APPLICATION),
+        LoadCursor(0,IDC_ARROW),
+        (HBRUSH)(COLOR_WINDOW + 1),
+        0,
+        "notifyIconClass",
+        LoadIcon(0,IDI_APPLICATION)
+    };
+
+    if (!RegisterClassEx(&wndclass))
+        return;
+
+    notifyWindow = CreateWindowEx(
+        0,
+        "notifyIconClass",
+        "title",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        0,
+        0,
+        GetModuleHandle(NULL),
+        0
+    );
+
+    if (!notifyWindow)
+        return;
+
+    // Attempt to load 32x32 image
+    notifyIcon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 32, 32, 0);
+
+    // Fallback to 16x16 if it's there
+    if (!notifyIcon)
+        notifyIcon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 16, 16, 0);
+
+    // Use default 'application' icon
+    if (!notifyIcon)
+        notifyIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
+}
+
+// Creates the notification entry if it does not yet exist
+static void createWinNotificationEntry()
+{
+    NOTIFYICONDATAW notificationData;
+    memset(&notificationData, 0, sizeof(notificationData));
+
+    notificationData.cbSize = sizeof(notificationData);
+    notificationData.hWnd = notifyWindow;
+    notificationData.uID = 0;
+    notificationData.hIcon = notifyIcon;
+
+    notificationData.uFlags = NIF_ICON | NIF_STATE | NIF_TIP;
+
+    wcscpy(notificationData.szTip, L"QB64-PE Application");
+    Shell_NotifyIconW(NIM_ADD, &notificationData);
+}
+
+static void sendWinNotification(const wchar_t *title, const wchar_t *message, const wchar_t *iconType)
+{
+    NOTIFYICONDATAW notificationData;
+    memset(&notificationData, 0, sizeof(notificationData));
+    notificationData.cbSize = sizeof(notificationData);
+    notificationData.hWnd = notifyWindow;
+    notificationData.uID = 0;
+    notificationData.hIcon = notifyIcon;
+
+    notificationData.uFlags = NIF_INFO;
+
+    wcsncpy(notificationData.szInfoTitle, title, ARRAYSIZE(notificationData.szInfoTitle));
+    wcsncpy(notificationData.szInfo, message, ARRAYSIZE(notificationData.szInfo));
+
+    if (iconType && !wcscmp(L"warning", iconType))
+        notificationData.dwInfoFlags = NIIF_WARNING;
+    else if (iconType && !wcscmp(L"error", iconType))
+        notificationData.dwInfoFlags = NIIF_ERROR;
+    else
+        notificationData.dwInfoFlags = NIIF_INFO;
+
+    notificationData.uTimeout = 10; // Ignored on Vista+
+
+    Shell_NotifyIconW(NIM_MODIFY, &notificationData);
+}
 
 /* return has only meaning for tinyfd_query */
 int tinyfd_notifyPopupW(
@@ -1188,63 +1302,16 @@ int tinyfd_notifyPopupW(
         size_t lDialogStringLen;
 
         if (aTitle && !wcscmp(aTitle, L"tinyfd_query")) { strcpy(tinyfd_response, "windows_wchar"); return 1; }
-        
-        if (quoteDetectedW(aTitle)) return tinyfd_notifyPopupW(L"INVALID TITLE WITH QUOTES", aMessage, aIconType);
-		if (quoteDetectedW(aMessage)) return tinyfd_notifyPopupW(aTitle, L"INVALID MESSAGE WITH QUOTES", aIconType);
 
-        lTitleLen = aTitle ? wcslen(aTitle) : 0;
-        lMessageLen = aMessage ? wcslen(aMessage) : 0;
-        lDialogStringLen = 3 * MAX_PATH_OR_CMD + lTitleLen + lMessageLen;
-        lDialogString = (wchar_t *)malloc(2 * lDialogStringLen);
-        if (!lDialogString) return 0;
+        setupNotifyHandles();
 
-        wcscpy(lDialogString, L"powershell.exe -command \"\
-function Show-BalloonTip {\
-[cmdletbinding()] \
-param( \
-[string]$Title = ' ', \
-[string]$Message = ' ', \
-[ValidateSet('info', 'warning', 'error')] \
-[string]$IconType = 'info');\
-[system.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null ; \
-$balloon = New-Object System.Windows.Forms.NotifyIcon ; \
-$path = Get-Process -id $pid | Select-Object -ExpandProperty Path ; \
-$icon = [System.Drawing.Icon]::ExtractAssociatedIcon($path) ;");
+        // Can't send notification if the handles aren't setup
+        if (!notifyWindow || !notifyIcon)
+            return 0;
 
-        wcscat(lDialogString, L"\
-$balloon.Icon = $icon ; \
-$balloon.BalloonTipIcon = $IconType ; \
-$balloon.BalloonTipText = $Message ; \
-$balloon.BalloonTipTitle = $Title ; \
-$balloon.Text = 'tinyfiledialogs' ; \
-$balloon.Visible = $true ; \
-$balloon.ShowBalloonTip(5000)};\
-Show-BalloonTip");
+        createWinNotificationEntry();
+        sendWinNotification(aTitle, aMessage, aIconType);
 
-        if (aTitle && wcslen(aTitle))
-        {
-                wcscat(lDialogString, L" -Title '");
-                wcscat(lDialogString, aTitle);
-                wcscat(lDialogString, L"'");
-        }
-        if (aMessage && wcslen(aMessage))
-        {
-                wcscat(lDialogString, L" -Message '");
-                wcscat(lDialogString, aMessage);
-                wcscat(lDialogString, L"'");
-        }
-        if (aMessage && wcslen(aIconType))
-        {
-                wcscat(lDialogString, L" -IconType '");
-                wcscat(lDialogString, aIconType);
-                wcscat(lDialogString, L"'");
-        }
-        wcscat(lDialogString, L"\"");
-
-        /* wprintf ( L"lDialogString: %ls\n" , lDialogString ) ; */
-
-        hiddenConsoleW(lDialogString, aTitle, 0);
-        free(lDialogString);
         return 1;
 }
 
@@ -2859,10 +2926,7 @@ int tinyfd_notifyPopup(
         char const * aMessage , /* NULL or "" may contain \n \t */
         char const * aIconType ) /* "info" "warning" "error" */
 {
-	if (tfd_quoteDetected(aTitle)) return tinyfd_notifyPopup("INVALID TITLE WITH QUOTES", aMessage, aIconType);
-	if (tfd_quoteDetected(aMessage)) return tinyfd_notifyPopup(aTitle, "INVALID MESSAGE WITH QUOTES", aIconType);
-
-    if ( powershellPresent() && (!tinyfd_forceConsole || !(
+    if ( (!tinyfd_forceConsole || !(
             GetConsoleWindow() ||
             dialogPresent()))
 			&& (!getenv("SSH_CLIENT") || getenvDISPLAY()))
