@@ -13503,128 +13503,98 @@ void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *background
         done = (uint8 *)calloc(i, 1);
     }
 
-    // return if first point is the bordercolor
-    if (qbg_active_page_offset[iy * qbg_width + ix] == bordercol)
+    // The original color of the starting location
+    uint32_t startingColor = qbg_active_page_offset[iy * qbg_width + ix];
+
+    bool borderColorProvided = passed & 4;
+
+    // Exit early if we're already at the border color
+    if (borderColorProvided && qbg_active_page_offset[iy * qbg_width + ix] == bordercol)
         return;
 
     // create first node
     a_x[0] = ix;
     a_y[0] = iy;
     a_t[0] = 15;
-    // types:
-    //&1=check left
-    //&2=check right
-    //&4=check above
-    //&8=check below
 
     a_n = 1;
     qbg_active_page_offset[iy * qbg_width + ix] = tile[ix % sx][iy % sy];
     done[iy * qbg_width + ix] = 1;
 
-nextpass:
-    b_n = 0;
-    for (i = 0; i < a_n; i++) {
-        t = a_t[i];
-        ix = a_x[i];
-        iy = a_y[i];
+    // Each index maps to a direction, in the order:
+    // Left, Right, Up, Down
+    uint32_t xdelta[4] = { -1, 1, 0, 0 };
+    uint32_t ydelta[4] = { 0, 0, -1, 1 };
 
-        // left
-        if (t & 1) {
-            x2 = ix - 1;
-            y2 = iy;
-            if (x2 >= qbg_view_x1) {
-                offset = y2 * qbg_width + x2;
-                if (!done[offset]) {
-                    done[offset] = 1;
-                    if (qbg_active_page_offset[offset] != bordercol) {
-                        qbg_active_page_offset[offset] = tile[x2 % sx][y2 % sy];
-                        b_t[b_n] = 13;
-                        b_x[b_n] = x2;
-                        b_y[b_n] = y2;
-                        b_n++; // add new node
+    // The bits indicate the directions that should be checked for the next
+    // pixel, we ignore the direction we came from.
+    uint32_t dirCheckMap[4] = {
+        1 | 4 | 8, // Left, Up, Down
+        2 | 4 | 8, // Right, Up, Down
+        1 | 2 | 4, // Left, Right, Up
+        1 | 2 | 8, // Left, Right, Down
+    };
+
+    while (true) {
+        b_n = 0;
+        for (i = 0; i < a_n; i++) {
+            t = a_t[i];
+            ix = a_x[i];
+            iy = a_y[i];
+
+            for (int k = 0; k < 4; k++) {
+                if ((t & (1 << k)) == 0)
+                    continue;
+
+                x2 = ix + xdelta[k];
+                y2 = iy + ydelta[k];
+
+                // Verify dimensions are within bounds
+                if (x2 >= qbg_view_x1 && x2 <= qbg_view_x2 && y2 >= qbg_view_y1 && y2 <= qbg_view_y2) {
+                    offset = y2 * qbg_width + x2;
+
+                    // Check that we haven't done this pixel yet
+                    if (!done[offset]) {
+                        done[offset] = 1;
+
+                        // We either check that we didn't hit the border color
+                        // (if provided), or that we're still the starting
+                        // color.
+                        if ((borderColorProvided && qbg_active_page_offset[offset] != bordercol)
+                            || (!borderColorProvided && qbg_active_page_offset[offset] == startingColor)) {
+
+                            qbg_active_page_offset[offset] = tile[x2 % sx][y2 % sy];
+                            b_t[b_n] = dirCheckMap[k];
+                            b_x[b_n] = x2;
+                            b_y[b_n] = y2;
+                            b_n++; // add new node
+                        }
                     }
                 }
             }
         }
 
-        // right
-        if (t & 2) {
-            x2 = ix + 1;
-            y2 = iy;
-            if (x2 <= qbg_view_x2) {
-                offset = y2 * qbg_width + x2;
-                if (!done[offset]) {
-                    done[offset] = 1;
-                    if (qbg_active_page_offset[offset] != bordercol) {
-                        qbg_active_page_offset[offset] = tile[x2 % sx][y2 % sy];
-                        b_t[b_n] = 14;
-                        b_x[b_n] = x2;
-                        b_y[b_n] = y2;
-                        b_n++; // add new node
-                    }
-                }
-            }
+        // no new nodes?
+        if (b_n == 0) {
+            memset(done, 0, write_page->width * write_page->height); // cleanup
+            return;                                                  // finished!
         }
 
-        // above
-        if (t & 4) {
-            x2 = ix;
-            y2 = iy - 1;
-            if (y2 >= qbg_view_y1) {
-                offset = y2 * qbg_width + x2;
-                if (!done[offset]) {
-                    done[offset] = 1;
-                    if (qbg_active_page_offset[offset] != bordercol) {
-                        qbg_active_page_offset[offset] = tile[x2 % sx][y2 % sy];
-                        b_t[b_n] = 7;
-                        b_x[b_n] = x2;
-                        b_y[b_n] = y2;
-                        b_n++; // add new node
-                    }
-                }
-            }
-        }
+        // swap a & b arrays
+        sp = a_x;
+        a_x = b_x;
+        b_x = sp;
 
-        // below
-        if (t & 8) {
-            x2 = ix;
-            y2 = iy + 1;
-            if (y2 <= qbg_view_y2) {
-                offset = y2 * qbg_width + x2;
-                if (!done[offset]) {
-                    done[offset] = 1;
-                    if (qbg_active_page_offset[offset] != bordercol) {
-                        qbg_active_page_offset[offset] = tile[x2 % sx][y2 % sy];
-                        b_t[b_n] = 11;
-                        b_x[b_n] = x2;
-                        b_y[b_n] = y2;
-                        b_n++; // add new node
-                    }
-                }
-            }
-        }
+        sp = a_y;
+        a_y = b_y;
+        b_y = sp;
 
-    } // i
+        cp = a_t;
+        a_t = b_t;
+        b_t = cp;
 
-    // no new nodes?
-    if (b_n == 0) {
-        memset(done, 0, write_page->width * write_page->height); // cleanup
-        return;                                                  // finished!
+        a_n = b_n;
     }
-
-    // swap a & b arrays
-    sp = a_x;
-    a_x = b_x;
-    b_x = sp;
-    sp = a_y;
-    a_y = b_y;
-    b_y = sp;
-    cp = a_t;
-    a_t = b_t;
-    b_t = cp;
-    a_n = b_n;
-
-    goto nextpass;
 }
 
 void sub_circle(double x, double y, double r, uint32 col, double start, double end, double aspect, int32 passed) {
