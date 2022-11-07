@@ -3078,8 +3078,8 @@ char * tinyfd_openFileDialog(
 	char const * aSingleFilterDescription, /* NULL or "image files" */
     int aAllowMultipleSelects ) /* 0 or 1 */
 {
+	static char lBuff[MAX_PATH_OR_CMD];
 	char lString[MAX_PATH_OR_CMD];
-	char lBuff[MAX_PATH_OR_CMD];
 	char * p;
 	char * lPointerInputBox;
 	int i;
