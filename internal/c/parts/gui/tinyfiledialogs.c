@@ -1190,13 +1190,13 @@ static LRESULT CALLBACK hiddenNotifyWindowProc(HWND hwnd, UINT message, WPARAM w
     return 0;
 }
 
-static HWND notifyWindow = NULL;
+static HWND hiddenWindow = NULL;
 static HICON notifyIcon = NULL;
 
 // Creates a hidden window to tie the Notifications too
-static void setupNotifyHandles()
+static void setupHiddenWindowHandles()
 {
-    if (notifyWindow || notifyIcon)
+    if (hiddenWindow || notifyIcon)
         return;
 
     WNDCLASSEX wndclass = {
@@ -1217,7 +1217,7 @@ static void setupNotifyHandles()
     if (!RegisterClassEx(&wndclass))
         return;
 
-    notifyWindow = CreateWindowEx(
+    hiddenWindow = CreateWindowEx(
         0,
         "notifyIconClass",
         "title",
@@ -1232,7 +1232,7 @@ static void setupNotifyHandles()
         0
     );
 
-    if (!notifyWindow)
+    if (!hiddenWindow)
         return;
 
     // Attempt to load 32x32 image
@@ -1254,7 +1254,7 @@ static void createWinNotificationEntry()
     memset(&notificationData, 0, sizeof(notificationData));
 
     notificationData.cbSize = sizeof(notificationData);
-    notificationData.hWnd = notifyWindow;
+    notificationData.hWnd = hiddenWindow;
     notificationData.uID = 0;
     notificationData.hIcon = notifyIcon;
 
@@ -1269,7 +1269,7 @@ static void sendWinNotification(const wchar_t *title, const wchar_t *message, co
     NOTIFYICONDATAW notificationData;
     memset(&notificationData, 0, sizeof(notificationData));
     notificationData.cbSize = sizeof(notificationData);
-    notificationData.hWnd = notifyWindow;
+    notificationData.hWnd = hiddenWindow;
     notificationData.uID = 0;
     notificationData.hIcon = notifyIcon;
 
@@ -1303,10 +1303,10 @@ int tinyfd_notifyPopupW(
 
         if (aTitle && !wcscmp(aTitle, L"tinyfd_query")) { strcpy(tinyfd_response, "windows_wchar"); return 1; }
 
-        setupNotifyHandles();
+        setupHiddenWindowHandles();
 
         // Can't send notification if the handles aren't setup
-        if (!notifyWindow || !notifyIcon)
+        if (!hiddenWindow || !notifyIcon)
             return 0;
 
         createWinNotificationEntry();
@@ -1315,6 +1315,175 @@ int tinyfd_notifyPopupW(
         return 1;
 }
 
+#define ID_TEXT   200
+
+static LPWORD lpwAlignDWORD(LPWORD lpIn)
+{
+    uintptr_t ul;
+
+    ul = (uintptr_t)lpIn;
+    ul += 3;
+    ul >>= 2;
+    ul <<= 2;
+    return (LPWORD)ul;
+}
+
+static char dialogContents[MAX_PATH_OR_CMD] = { 0 };
+
+static BOOL CALLBACK dialogBoxCallback(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    BOOL fError;
+
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        // Allow a max of MAX_PATH_OR_CMD characters in the edit box
+        SendDlgItemMessage(hwndDlg, ID_TEXT, EM_LIMITTEXT, MAX_PATH_OR_CMD, 0);
+        return TRUE;
+
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+        case IDOK:
+            GetDlgItemText(hwndDlg, ID_TEXT, dialogContents, MAX_PATH_OR_CMD);
+            DestroyWindow(hwndDlg);
+            return TRUE;
+
+        case IDCANCEL:
+            memset(dialogContents, 0, sizeof(dialogContents));
+            DestroyWindow(hwndDlg);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *title, const wchar_t *lpszMessage, const wchar_t *defaultText)
+{
+    HGLOBAL hgbl;
+    LPDLGTEMPLATE lpdt;
+    LPDLGITEMTEMPLATE lpdit;
+    LPWORD lpw;
+    LPWSTR lpwsz;
+    LRESULT ret;
+    int nchar;
+
+    // The extra 500 accounts for the default button text, alignment padding, and a few other small things
+    hgbl = GlobalAlloc(GMEM_ZEROINIT, sizeof(DLGTEMPLATE)
+                                        + sizeof(DLGITEMTEMPLATE) * 4
+                                        + (wcslen(lpszMessage) + 1) * sizeof(wchar_t)
+                                        + (wcslen(title) + 1) * sizeof(wchar_t)
+                                        + (wcslen(defaultText) + 1) * sizeof(wchar_t)
+                                        + 500);
+    if (!hgbl)
+        return -1;
+
+    lpdt = (LPDLGTEMPLATE)GlobalLock(hgbl);
+
+    // Define a dialog box.
+
+    lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT;
+    lpdt->cdit = 4;         // Number of controls
+    lpdt->x  = 0;  lpdt->y  = 0;
+    lpdt->cx = 200; lpdt->cy = 70;
+
+    lpw = (LPWORD)(lpdt + 1);
+    *lpw++ = 0;             // No menu
+    *lpw++ = 0;             // Predefined dialog box class (by default)
+
+    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *title++;);
+    lpw = (LPWORD)lpwsz;
+
+    // Add font information
+    const wchar_t *font = L"Arial";
+
+    *lpw++ = 9; // Point size
+    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *font++;); // Font name
+    lpw = (LPWORD)lpwsz;
+
+    //-----------------------
+    // Define an OK button.
+    //-----------------------
+    lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
+    lpdit = (LPDLGITEMTEMPLATE)lpw;
+    lpdit->x  = 160; lpdit->y  = 6;
+    lpdit->cx = 35; lpdit->cy  = 12;
+    lpdit->id = IDOK;       // OK button identifier
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON;
+
+    lpw = (LPWORD)(lpdit + 1);
+    *lpw++ = 0xFFFF;
+    *lpw++ = 0x0080;        // Button class
+
+    lpwsz = (LPWSTR)lpw;
+    nchar = 1 + MultiByteToWideChar(CP_ACP, 0, "OK", -1, lpwsz, 50);
+    lpw += nchar;
+    *lpw++ = 0;             // No creation data
+
+    //-----------------------
+    // Define a Cancel button.
+    //-----------------------
+    lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
+    lpdit = (LPDLGITEMTEMPLATE)lpw;
+    lpdit->x  = 160; lpdit->y = 21;
+    lpdit->cx = 35; lpdit->cy = 12;
+    lpdit->id = IDCANCEL;    // Cancel button identifier
+    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON;
+
+    lpw = (LPWORD)(lpdit + 1);
+    *lpw++ = 0xFFFF;
+    *lpw++ = 0x0080;        // Button class atom
+
+    lpwsz = (LPWSTR)lpw;
+    nchar = 1 + MultiByteToWideChar(CP_ACP, 0, "Cancel", -1, lpwsz, 50);
+    lpw += nchar;
+    *lpw++ = 0;             // No creation data
+
+    //-----------------------
+    // Define a edit text control.
+    //-----------------------
+    lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
+    lpdit = (LPDLGITEMTEMPLATE)lpw;
+    lpdit->x  = 5; lpdit->y   = 53;
+    lpdit->cx = 190; lpdit->cy = 12;
+    lpdit->id = ID_TEXT;    // Text identifier
+    lpdit->style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_LEFT;
+
+    lpw = (LPWORD)(lpdit + 1);
+    *lpw++ = 0xFFFF;
+    *lpw++ = 0x0081;        // Edit class
+
+    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *defaultText++;);
+    lpw = (LPWORD)lpwsz;
+    *lpw++ = 0;             // No creation data
+
+    //-----------------------
+    // Define a static text control.
+    //-----------------------
+    lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
+    lpdit = (LPDLGITEMTEMPLATE)lpw;
+    lpdit->x  = 5; lpdit->y    = 5;
+    lpdit->cx = 150; lpdit->cy = 40;
+    lpdit->id = ID_TEXT;    // Text identifier
+    lpdit->style = WS_CHILD | WS_VISIBLE | SS_LEFT;
+
+    lpw = (LPWORD)(lpdit + 1);
+    *lpw++ = 0xFFFF;
+    *lpw++ = 0x0082;        // Static class
+
+    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *lpszMessage++;);
+    lpw = (LPWORD)lpwsz;
+    *lpw++ = 0;             // No creation data
+
+    // Display the dialog
+    GlobalUnlock(hgbl);
+    ret = DialogBoxIndirect(hinst,
+                           (LPDLGTEMPLATE)hgbl,
+                           hwndOwner,
+                           (DLGPROC)dialogBoxCallback);
+    GlobalFree(hgbl);
+    return ret;
+}
 
 wchar_t * tinyfd_inputBoxW(
         wchar_t const * aTitle, /* NULL or L"" */
@@ -1332,264 +1501,18 @@ wchar_t * tinyfd_inputBoxW(
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
-		if (quoteDetectedW(aTitle)) return tinyfd_inputBoxW(L"INVALID TITLE WITH QUOTES", aMessage, aDefaultInput);
-		if (quoteDetectedW(aMessage)) return tinyfd_inputBoxW(aTitle, L"INVALID MESSAGE WITH QUOTES", aDefaultInput);
-		if (quoteDetectedW(aDefaultInput)) return tinyfd_inputBoxW(aTitle, aMessage, L"INVALID DEFAULT_INPUT WITH QUOTES");
+        memset(dialogContents, 0, sizeof(dialogContents));
 
-        lTitleLen =  aTitle ? wcslen(aTitle) : 0 ;
-        lMessageLen =  aMessage ? wcslen(aMessage) : 0 ;
-        lDialogStringLen = 3 * MAX_PATH_OR_CMD + lTitleLen + lMessageLen;
-        lDialogString = (wchar_t *)malloc(2 * lDialogStringLen);
+        aTitle = aTitle? aTitle: L"";
+        aMessage = aMessage? aMessage: L"";
+        aDefaultInput = aDefaultInput? aDefaultInput: L"";
 
-        if (aDefaultInput)
-        {
-			swprintf(lDialogString,
-#if !defined(__BORLANDC__) && !defined(__TINYC__) && !(defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
-                lDialogStringLen,
-#endif
-                L"%ls\\tinyfd.vbs", _wgetenv(L"TEMP"));
-        }
-        else
-        {
-                swprintf(lDialogString,
-#if !defined(__BORLANDC__) && !defined(__TINYC__) && !(defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
-                        lDialogStringLen,
-#endif
-                L"%ls\\tinyfd.hta", _wgetenv(L"TEMP"));
-        }
-        lIn = _wfopen(lDialogString, L"w");
-        if (!lIn)
-        {
-                free(lDialogString);
-                return NULL;
-        }
+        setupHiddenWindowHandles();
+        DisplayMyMessage(GetModuleHandle(NULL), hiddenWindow, aTitle, aMessage, aDefaultInput);
 
-        if ( aDefaultInput )
-        {
-                wcscpy(lDialogString, L"Dim result:result=InputBox(\"");
-                if (aMessage && wcslen(aMessage))
-                {
-					wcscpy(lBuff, aMessage);
-					replaceWchar(lBuff, L'\n', L' ');
-					wcscat(lDialogString, lBuff);
-                }
-                wcscat(lDialogString, L"\",\"tinyfiledialogsTopWindow\",\"");
-                if (aDefaultInput && wcslen(aDefaultInput))
-                {
-					wcscpy(lBuff, aDefaultInput);
-					replaceWchar(lBuff, L'\n', L' ');
-					wcscat(lDialogString, lBuff);
-                }
-                wcscat(lDialogString, L"\"):If IsEmpty(result) then:WScript.Echo 0");
-                wcscat(lDialogString, L":Else: WScript.Echo \"1\" & result : End If");
-        }
-        else
-        {
-                wcscpy(lDialogString, L"\n\
-<html>\n\
-<head>\n\
-<title>");
-
-                wcscat(lDialogString, L"tinyfiledialogsTopWindow");
-                wcscat(lDialogString, L"</title>\n\
-<HTA:APPLICATION\n\
-ID = 'tinyfdHTA'\n\
-APPLICATIONNAME = 'tinyfd_inputBox'\n\
-MINIMIZEBUTTON = 'no'\n\
-MAXIMIZEBUTTON = 'no'\n\
-BORDER = 'dialog'\n\
-SCROLL = 'no'\n\
-SINGLEINSTANCE = 'yes'\n\
-WINDOWSTATE = 'hidden'>\n\
-\n\
-<script language = 'VBScript'>\n\
-\n\
-intWidth = Screen.Width/4\n\
-intHeight = Screen.Height/6\n\
-ResizeTo intWidth, intHeight\n\
-MoveTo((Screen.Width/2)-(intWidth/2)),((Screen.Height/2)-(intHeight/2))\n\
-result = 0\n\
-\n\
-Sub Window_onLoad\n\
-txt_input.Focus\n\
-End Sub\n\
-\n");
-
-                wcscat(lDialogString, L"\
-Sub Window_onUnload\n\
-Set objFSO = CreateObject(\"Scripting.FileSystemObject\")\n\
-Set oShell = CreateObject(\"WScript.Shell\")\n\
-strTempFolder = oShell.ExpandEnvironmentStrings(\"%TEMP%\")\n\
-Set objFile = objFSO.CreateTextFile(strTempFolder & \"\\tinyfd.txt\",True,True)\n\
-If result = 1 Then\n\
-objFile.Write 1 & txt_input.Value\n\
-Else\n\
-objFile.Write 0\n\
-End If\n\
-objFile.Close\n\
-End Sub\n\
-\n\
-Sub Run_ProgramOK\n\
-result = 1\n\
-window.Close\n\
-End Sub\n\
-\n\
-Sub Run_ProgramCancel\n\
-window.Close\n\
-End Sub\n\
-\n");
-
-                wcscat(lDialogString, L"Sub Default_Buttons\n\
-If Window.Event.KeyCode = 13 Then\n\
-btn_OK.Click\n\
-ElseIf Window.Event.KeyCode = 27 Then\n\
-btn_Cancel.Click\n\
-End If\n\
-End Sub\n\
-\n\
-</script>\n\
-</head>\n\
-<body style = 'background-color:#EEEEEE' onkeypress = 'vbs:Default_Buttons' align = 'top'>\n\
-<table width = '100%' height = '80%' align = 'center' border = '0'>\n\
-<tr border = '0'>\n\
-<td align = 'left' valign = 'middle' style='Font-Family:Arial'>\n");
-
-                wcscat(lDialogString, aMessage ? aMessage : L"");
-
-                wcscat(lDialogString, L"\n\
-</td>\n\
-<td align = 'right' valign = 'middle' style = 'margin-top: 0em'>\n\
-<table  align = 'right' style = 'margin-right: 0em;'>\n\
-<tr align = 'right' style = 'margin-top: 5em;'>\n\
-<input type = 'button' value = 'OK' name = 'btn_OK' onClick = 'vbs:Run_ProgramOK' style = 'width: 5em; margin-top: 2em;'><br>\n\
-<input type = 'button' value = 'Cancel' name = 'btn_Cancel' onClick = 'vbs:Run_ProgramCancel' style = 'width: 5em;'><br><br>\n\
-</tr>\n\
-</table>\n\
-</td>\n\
-</tr>\n\
-</table>\n");
-
-                wcscat(lDialogString, L"<table width = '100%' height = '100%' align = 'center' border = '0'>\n\
-<tr>\n\
-<td align = 'left' valign = 'top'>\n\
-<input type = 'password' id = 'txt_input'\n\
-name = 'txt_input' value = '' style = 'float:left;width:100%' ><BR>\n\
-</td>\n\
-</tr>\n\
-</table>\n\
-</body>\n\
-</html>\n\
-"               ) ;
-        }
-        fputws(lDialogString, lIn);
-        fclose(lIn);
-
-        if (aDefaultInput)
-        {
-                swprintf(lDialogString,
-#if !defined(__BORLANDC__) && !defined(__TINYC__) && !(defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
-                        lDialogStringLen,
-#endif
-                        L"%ls\\tinyfd.txt",_wgetenv(L"TEMP"));
-
-#ifdef TINYFD_NOCCSUNICODE
-				lFile = _wfopen(lDialogString, L"w");
-				fputc(0xFF, lFile);
-				fputc(0xFE, lFile);
-#else
-				lFile = _wfopen(lDialogString, L"wt, ccs=UNICODE"); /*or ccs=UTF-16LE*/
-#endif
-				fclose(lFile);
-
-                wcscpy(lDialogString, L"cmd.exe /c cscript.exe //U //Nologo ");
-                wcscat(lDialogString, L"\"%TEMP%\\tinyfd.vbs\" ");
-                wcscat(lDialogString, L">> \"%TEMP%\\tinyfd.txt\"");
-        }
-        else
-        {
-                wcscpy(lDialogString,
-                        L"cmd.exe /c mshta.exe \"%TEMP%\\tinyfd.hta\"");
-        }
-
-        /* wprintf ( "lDialogString: %ls\n" , lDialogString ) ; */
-
-        hiddenConsoleW(lDialogString, aTitle, 1);
-
-        swprintf(lDialogString,
-#if !defined(__BORLANDC__) && !defined(__TINYC__) && !(defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
-                lDialogStringLen,
-#endif
-				L"%ls\\tinyfd.txt", _wgetenv(L"TEMP"));
-		/* wprintf(L"lDialogString: %ls\n", lDialogString); */
-#ifdef TINYFD_NOCCSUNICODE
-		if (!(lIn = _wfopen(lDialogString, L"r")))
-#else
-		if (!(lIn = _wfopen(lDialogString, L"rt, ccs=UNICODE"))) /*or ccs=UTF-16LE*/
-#endif
-		{
-                _wremove(lDialogString);
-                free(lDialogString);
-                return NULL;
-        }
-
-		memset(lBuff, 0, MAX_PATH_OR_CMD * sizeof(wchar_t) );
-
-#ifdef TINYFD_NOCCSUNICODE
-		fgets((char *)lBuff, 2*MAX_PATH_OR_CMD, lIn);
-#else
-		fgetws(lBuff, MAX_PATH_OR_CMD, lIn);
-#endif
-		fclose(lIn);
-		wipefileW(lDialogString);
-		_wremove(lDialogString);
-
-		if (aDefaultInput)
-		{
-			swprintf(lDialogString,
-#if !defined(__BORLANDC__) && !defined(__TINYC__) && !(defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
-                        lDialogStringLen,
-#endif
-                        L"%ls\\tinyfd.vbs", _wgetenv(L"TEMP"));
-        }
-        else
-        {
-                swprintf(lDialogString,
-#if !defined(__BORLANDC__) && !defined(__TINYC__) && !(defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
-                        lDialogStringLen,
-#endif
-                        L"%ls\\tinyfd.hta", _wgetenv(L"TEMP"));
-        }
-        _wremove(lDialogString);
-        free(lDialogString);
-        /* wprintf( L"lBuff: %ls\n" , lBuff ) ; */
-#ifdef TINYFD_NOCCSUNICODE
-		lResult = !wcsncmp(lBuff+1, L"1", 1);
-#else
-		lResult = !wcsncmp(lBuff, L"1", 1);
-#endif
-
-        /* printf( "lResult: %d \n" , lResult ) ; */
-        if (!lResult)
-        {
-            return NULL ;
-        }
-
-        /* wprintf( "lBuff+1: %ls\n" , lBuff+1 ) ; */
-
-#ifdef TINYFD_NOCCSUNICODE
-		if (aDefaultInput)
-		{
-			lDialogStringLen = wcslen(lBuff) ;
-			lBuff[lDialogStringLen - 1] = L'\0';
-			lBuff[lDialogStringLen - 2] = L'\0';
-		}
-		return lBuff + 2;
-#else
-		if (aDefaultInput) lBuff[wcslen(lBuff) - 1] = L'\0';
-		return lBuff + 1;
-#endif
+        mbstowcs(lBuff, dialogContents, MAX_PATH_OR_CMD);
+        return lBuff;
 }
-
 
 wchar_t * tinyfd_saveFileDialogW(
         wchar_t const * aTitle, /* NULL or "" */
