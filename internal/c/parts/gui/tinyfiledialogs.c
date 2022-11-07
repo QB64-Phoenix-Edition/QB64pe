@@ -712,31 +712,6 @@ void tinyfd_beep(void)
     else MessageBeep(MB_OK);
 }
 
-
-static void wipefileW(wchar_t const * aFilename)
-{
-        int i;
-        FILE * lIn;
-#if defined(__MINGW32_MAJOR_VERSION) && !defined(__MINGW64__) && (__MINGW32_MAJOR_VERSION <= 3)
-        struct _stat st;
-        if (_wstat(aFilename, &st) == 0)
-#else
-        struct __stat64 st;
-        if (_wstat64(aFilename, &st) == 0)
-#endif
-        {
-                if ((lIn = _wfopen(aFilename, L"w")))
-                {
-                        for (i = 0; i < st.st_size; i++)
-                        {
-                                fputc('A', lIn);
-                        }
-                        fclose(lIn);
-                }
-        }
-}
-
-
 static wchar_t * getPathWithoutFinalSlashW(
         wchar_t * aoDestination, /* make sure it is allocated, use _MAX_PATH */
         wchar_t const * aSource) /* aoDestination and aSource can be the same */
@@ -943,56 +918,6 @@ static int fileExists(char const * aFilePathAndName)
         }
 }
 
-static void replaceWchar(wchar_t * aString,
-	wchar_t aOldChr,
-	wchar_t aNewChr)
-{
-	wchar_t * p;
-
-	if (!aString)
-	{
-		return ;
-	}
-
-	if (aOldChr == aNewChr)
-	{
-		return ;
-	}
-
-	p = aString;
-	while ((p = wcsrchr(p, aOldChr)))
-	{
-		*p = aNewChr;
-#ifdef TINYFD_NOCCSUNICODE
-		p++;
-#endif
-		p++;
-	}
-	return ;
-}
-
-
-static int quoteDetectedW(wchar_t const * aString)
-{
-	wchar_t const * p;
-
-	if (!aString) return 0;
-
-	p = aString;
-	while ((p = wcsrchr(p, L'\'')))
-	{
-		return 1;
-	}
-
-	p = aString;
-	while ((p = wcsrchr(p, L'\"')))
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
 #endif /* _WIN32 */
 
 /* source and destination can be the same or ovelap*/
@@ -1055,38 +980,6 @@ static int __stdcall EnumThreadWndProc(HWND hwnd, LPARAM lParam)
         }
         return 1;
 }
-
-
-static void hiddenConsoleW(wchar_t const * aString, wchar_t const * aDialogTitle, int aInFront)
-{
-        STARTUPINFOW StartupInfo;
-        PROCESS_INFORMATION ProcessInfo;
-
-        if (!aString || !wcslen(aString) ) return;
-
-        memset(&StartupInfo, 0, sizeof(StartupInfo));
-        StartupInfo.cb = sizeof(STARTUPINFOW);
-        StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
-        StartupInfo.wShowWindow = SW_HIDE;
-
-        if (!CreateProcessW(NULL, (LPWSTR)aString, NULL, NULL, FALSE,
-                                CREATE_NEW_CONSOLE, NULL, NULL,
-                                &StartupInfo, &ProcessInfo))
-        {
-                return; /* GetLastError(); */
-        }
-
-        WaitForInputIdle(ProcessInfo.hProcess, INFINITE);
-        if (aInFront)
-        {
-                while (EnumWindows(EnumThreadWndProc, (LPARAM)NULL)) {}
-                SetWindowTextW(GetForegroundWindow(), aDialogTitle);
-        }
-        WaitForSingleObject(ProcessInfo.hProcess, INFINITE);
-        CloseHandle(ProcessInfo.hThread);
-        CloseHandle(ProcessInfo.hProcess);
-}
-
 
 int tinyfd_messageBoxW(
         wchar_t const * aTitle, /* NULL or "" */
@@ -1293,11 +1186,6 @@ int tinyfd_notifyPopupW(
         wchar_t const * aMessage, /* NULL or L"" may contain \n \t */
         wchar_t const * aIconType) /* L"info" L"warning" L"error" */
 {
-        wchar_t * lDialogString;
-        size_t lTitleLen;
-        size_t lMessageLen;
-        size_t lDialogStringLen;
-
         if (aTitle && !wcscmp(aTitle, L"tinyfd_query")) { strcpy(tinyfd_response, "windows_wchar"); return 1; }
 
         setupHiddenWindowHandles();
@@ -1329,8 +1217,6 @@ static char dialogContents[MAX_PATH_OR_CMD] = { 0 };
 
 static BOOL CALLBACK dialogBoxCallback(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    BOOL fError;
-
     switch (message)
     {
     case WM_INITDIALOG:
@@ -1388,14 +1274,14 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     *lpw++ = 0;             // No menu
     *lpw++ = 0;             // Predefined dialog box class (by default)
 
-    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *title++;);
+    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *title++;);
     lpw = (LPWORD)lpwsz;
 
     // Add font information
     const wchar_t *font = L"Arial";
 
     *lpw++ = 9; // Point size
-    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *font++;); // Font name
+    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *font++;); // Font name
     lpw = (LPWORD)lpwsz;
 
     //-----------------------
@@ -1450,7 +1336,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     *lpw++ = 0xFFFF;
     *lpw++ = 0x0081;        // Edit class
 
-    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *defaultText++;);
+    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *defaultText++;);
     lpw = (LPWORD)lpwsz;
     *lpw++ = 0;             // No creation data
 
@@ -1468,7 +1354,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     *lpw++ = 0xFFFF;
     *lpw++ = 0x0082;        // Static class
 
-    for (lpwsz = (LPWSTR)lpw; *lpwsz++ = *lpszMessage++;);
+    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *lpszMessage++;);
     lpw = (LPWORD)lpwsz;
     *lpw++ = 0;             // No creation data
 
@@ -1488,13 +1374,6 @@ wchar_t * tinyfd_inputBoxW(
         wchar_t const * aDefaultInput) /* L"" , if NULL it's a passwordBox */
 {
         static wchar_t lBuff[MAX_PATH_OR_CMD];
-        wchar_t * lDialogString;
-        FILE * lIn;
-        FILE * lFile;
-        int lResult;
-        size_t lTitleLen;
-        size_t lMessageLen;
-        size_t lDialogStringLen;
 
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
@@ -2980,7 +2859,6 @@ char * tinyfd_saveFileDialog(
         char lString[MAX_PATH_OR_CMD] ;
         char * p ;
 		char * lPointerInputBox;
-		int i;
 
         lBuff[0]='\0';
 
@@ -3041,7 +2919,6 @@ char * tinyfd_openFileDialog(
 	char lString[MAX_PATH_OR_CMD];
 	char * p;
 	char * lPointerInputBox;
-	int i;
 
     if ( ( !tinyfd_forceConsole || !( GetConsoleWindow() || dialogPresent() ) )
 		&& (!getenv("SSH_CLIENT") || getenvDISPLAY()))
