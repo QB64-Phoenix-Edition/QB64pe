@@ -4133,6 +4133,20 @@ static void concatAndEscapeSingleQuote(char *dest, const char *source)
     tfd_replaceSubStrConCat(source, "'", "'\\''", dest);
 }
 
+// Concats the source string to the destination string, and escapes sutable for
+// osascript run via sh.
+//
+// This is achieved by first escaping double quotes, and then escaping single
+// quotes for bash/sh.
+static void concatAndEscapeOsascript(char *dest, const char *source)
+{
+    char tmp[MAX_PATH_OR_CMD] = "\0";
+
+    tfd_replaceSubStrConCat(source, "\"", "\\\"", tmp);
+
+    concatAndEscapeSingleQuote(dest, tmp);
+}
+
 int tinyfd_messageBox(
         char const * aTitle , /* NULL or "" */
         char const * aMessage , /* NULL or ""  may contain \n and \t */
@@ -4171,13 +4185,13 @@ int tinyfd_messageBox(
                 strcat( lDialogString , " -e 'try' -e 'set {vButton} to {button returned} of ( display dialog \"") ;
                 if ( aMessage && strlen(aMessage) )
                 {
-                        strcat(lDialogString, aMessage) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aMessage) ;
                 }
                 strcat(lDialogString, "\" ") ;
                 if ( aTitle && strlen(aTitle) )
                 {
                         strcat(lDialogString, "with title \"") ;
-                        strcat(lDialogString, aTitle) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aTitle) ;
                         strcat(lDialogString, "\" ") ;
                 }
                 strcat(lDialogString, "with icon ") ;
@@ -4942,13 +4956,13 @@ int tinyfd_notifyPopup(
                 strcat( lDialogString , " -e 'try' -e 'display notification \"") ;
                 if ( aMessage && strlen(aMessage) )
                 {
-                        strcat(lDialogString, aMessage) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aMessage) ;
                 }
                 strcat(lDialogString, " \" ") ;
                 if ( aTitle && strlen(aTitle) )
                 {
                         strcat(lDialogString, "with title \"") ;
-                        strcat(lDialogString, aTitle) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aTitle) ;
                         strcat(lDialogString, "\" ") ;
                 }
 
@@ -5096,13 +5110,13 @@ char * tinyfd_inputBox(
                 strcat( lDialogString , " -e 'try' -e 'display dialog \"") ;
                 if ( aMessage && strlen(aMessage) )
                 {
-                        strcat(lDialogString, aMessage) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aMessage) ;
                 }
                 strcat(lDialogString, "\" ") ;
                 strcat(lDialogString, "default answer \"") ;
                 if ( aDefaultInput && strlen(aDefaultInput) )
                 {
-                        strcat(lDialogString, aDefaultInput) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aDefaultInput) ;
                 }
                 strcat(lDialogString, "\" ") ;
                 if ( ! aDefaultInput )
@@ -5112,7 +5126,7 @@ char * tinyfd_inputBox(
                 if ( aTitle && strlen(aTitle) )
                 {
                         strcat(lDialogString, "with title \"") ;
-                        strcat(lDialogString, aTitle) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aTitle) ;
                         strcat(lDialogString, "\" ") ;
                 }
                 strcat(lDialogString, "with icon note' ") ;
@@ -5593,21 +5607,21 @@ char * tinyfd_saveFileDialog(
                 if ( aTitle && strlen(aTitle) )
                 {
                         strcat(lDialogString, "with prompt \"") ;
-                        strcat(lDialogString, aTitle) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aTitle) ;
                         strcat(lDialogString, "\" ") ;
                 }
                 getPathWithoutFinalSlash( lString , aDefaultPathAndFile ) ;
                 if ( strlen(lString) )
                 {
                         strcat(lDialogString, "default location \"") ;
-                        strcat(lDialogString, lString ) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, lString ) ;
                         strcat(lDialogString , "\" " ) ;
                 }
                 getLastName( lString , aDefaultPathAndFile ) ;
                 if ( strlen(lString) )
                 {
                         strcat(lDialogString, "default name \"") ;
-                        strcat(lDialogString, lString ) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, lString ) ;
                         strcat(lDialogString , "\" " ) ;
                 }
                 strcat( lDialogString , ")' " ) ;
@@ -5966,25 +5980,25 @@ char * tinyfd_openFileDialog(
             if ( aTitle && strlen(aTitle) )
             {
                         strcat(lDialogString, "with prompt \"") ;
-                        strcat(lDialogString, aTitle) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aTitle) ;
                         strcat(lDialogString, "\" ") ;
             }
                 getPathWithoutFinalSlash( lString , aDefaultPathAndFile ) ;
                 if ( strlen(lString) )
                 {
                         strcat(lDialogString, "default location \"") ;
-                        strcat(lDialogString, lString ) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, lString ) ;
                         strcat(lDialogString , "\" " ) ;
                 }
                 if ( aNumOfFilterPatterns > 0 )
                 {
                         strcat(lDialogString , "of type {\"" );
-                        strcat( lDialogString , aFilterPatterns[0] + 2 ) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript( lDialogString , aFilterPatterns[0] + 2 ) ;
                         strcat( lDialogString , "\"" ) ;
                         for ( i = 1 ; i < aNumOfFilterPatterns ; i ++ )
                         {
                                 strcat( lDialogString , ",\"" ) ;
-                                strcat( lDialogString , aFilterPatterns[i] + 2) ; // FIXME: Escape double quotes
+                                concatAndEscapeOsascript( lDialogString , aFilterPatterns[i] + 2) ;
                                 strcat( lDialogString , "\"" ) ;
                         }
                         strcat( lDialogString , "} " ) ;
@@ -6348,13 +6362,13 @@ char * tinyfd_selectFolderDialog(
                 if ( aTitle && strlen(aTitle) )
                 {
                 strcat(lDialogString, "with prompt \"") ;
-                strcat(lDialogString, aTitle) ; // FIXME: Escape double quotes
+                concatAndEscapeOsascript(lDialogString, aTitle) ;
                 strcat(lDialogString, "\" ") ;
                 }
                 if ( aDefaultPath && strlen(aDefaultPath) )
                 {
                         strcat(lDialogString, "default location \"") ;
-                        strcat(lDialogString, aDefaultPath ) ; // FIXME: Escape double quotes
+                        concatAndEscapeOsascript(lDialogString, aDefaultPath ) ;
                         strcat(lDialogString , "\" " ) ;
                 }
                 strcat( lDialogString , ")' " ) ;
