@@ -1229,12 +1229,12 @@ static BOOL CALLBACK dialogBoxCallback(HWND hwndDlg, UINT message, WPARAM wParam
         {
         case IDOK:
             GetDlgItemText(hwndDlg, ID_TEXT, dialogContents, MAX_PATH_OR_CMD);
-            DestroyWindow(hwndDlg);
+            EndDialog(hwndDlg, 0);
             return TRUE;
 
         case IDCANCEL:
             memset(dialogContents, 0, sizeof(dialogContents));
-            DestroyWindow(hwndDlg);
+            EndDialog(hwndDlg, 0);
             return TRUE;
         }
     }
@@ -1331,6 +1331,9 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     lpdit->cx = 190; lpdit->cy = 12;
     lpdit->id = ID_TEXT;    // Text identifier
     lpdit->style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_LEFT;
+
+    if (wcslen(defaultText) == 0)
+        lpdit->style |= ES_PASSWORD;
 
     lpw = (LPWORD)(lpdit + 1);
     *lpw++ = 0xFFFF;
