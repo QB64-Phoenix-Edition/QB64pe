@@ -13523,8 +13523,8 @@ void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *background
 
     // Each index maps to a direction, in the order:
     // Left, Right, Up, Down
-    uint32_t xdelta[4] = { -1, 1, 0, 0 };
-    uint32_t ydelta[4] = { 0, 0, -1, 1 };
+    int32_t xdelta[4] = { -1, 1, 0, 0 };
+    int32_t ydelta[4] = { 0, 0, -1, 1 };
 
     // The bits indicate the directions that should be checked for the next
     // pixel, we ignore the direction we came from.
