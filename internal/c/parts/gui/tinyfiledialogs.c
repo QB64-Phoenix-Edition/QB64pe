@@ -968,19 +968,6 @@ static char * ensureFilesExist(char * aDestination,
 
 #ifdef _WIN32
 
-static int __stdcall EnumThreadWndProc(HWND hwnd, LPARAM lParam)
-{
-        wchar_t lTitleName[MAX_PATH];
-        GetWindowTextW(hwnd, lTitleName, MAX_PATH);
-        /* wprintf(L"lTitleName %ls \n", lTitleName);  */
-        if (wcscmp(L"tinyfiledialogsTopWindow", lTitleName) == 0)
-        {
-                SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-                return 0;
-        }
-        return 1;
-}
-
 int tinyfd_messageBoxW(
         wchar_t const * aTitle, /* NULL or "" */
         wchar_t const * aMessage, /* NULL or ""  may contain \n and \t */
@@ -1274,14 +1261,14 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     *lpw++ = 0;             // No menu
     *lpw++ = 0;             // Predefined dialog box class (by default)
 
-    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *title++;);
+    for (lpwsz = (LPWSTR)lpw; ((*lpwsz++) = *title++););
     lpw = (LPWORD)lpwsz;
 
     // Add font information
     const wchar_t *font = L"Arial";
 
     *lpw++ = 9; // Point size
-    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *font++;); // Font name
+    for (lpwsz = (LPWSTR)lpw; ((*lpwsz++) = *font++);); // Font name
     lpw = (LPWORD)lpwsz;
 
     //-----------------------
@@ -1339,7 +1326,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     *lpw++ = 0xFFFF;
     *lpw++ = 0x0081;        // Edit class
 
-    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *defaultText++;);
+    for (lpwsz = (LPWSTR)lpw; ((*lpwsz++) = *defaultText++););
     lpw = (LPWORD)lpwsz;
     *lpw++ = 0;             // No creation data
 
@@ -1357,7 +1344,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     *lpw++ = 0xFFFF;
     *lpw++ = 0x0082;        // Static class
 
-    for (lpwsz = (LPWSTR)lpw; (*lpwsz++) = *lpszMessage++;);
+    for (lpwsz = (LPWSTR)lpw; ((*lpwsz++) = *lpszMessage++););
     lpw = (LPWORD)lpwsz;
     *lpw++ = 0;             // No creation data
 
