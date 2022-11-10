@@ -28,6 +28,6 @@ endif
 # DEPENDENCY_CONSOLE_ONLY is added here to keep these .cpp files from including
 # the FreeGLUT headers via `libqb.h`. Ideally this is fixed properly in the future.
 $(PATH_INTERNAL_C)/parts/audio/%.o: $(PATH_INTERNAL_C)/parts/audio/%.cpp
-	$(CXX) $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
 CLEAN_LIST += $(MINIAUDIO_REAL_OBJS) $(MINIAUDIO_STUB_OBJS)
