@@ -1,0 +1,111 @@
+
+'
+' Asserts that a created image, 'originalActualImage', is identical to the provide expected image, 'expectedFileName'
+'
+' The created image is converted to 32-bit and saved to the results folder.
+' We then load the expected image as a 32-bit image, compare file sizes,
+' width/height, and each pixel.
+'
+SUB AssertImage(originalActualImage As Long, expectedFileName As String)
+    Dim actualImage As Long
+    Dim ResultsDir As String, TestPrefix As String
+
+    ResultsDir = Command$(1)
+    TestPrefix = Command$(2)
+
+    ' Make sure the test result will be seen
+    _Dest _Console
+
+    ' Convert to 32-bit for comparisons
+    actualImage = _NewImage(_Width(originalActualImage), _Height(originalActualImage), 32)
+    _PUTIMAGE , originalActualImage, actualImage
+
+    'First save the result
+    SaveImage actualImage, ResultsDir + "/" + TestPrefix + "_result.bmp"
+
+    'Compare both images, print whether they are identical
+    Dim expectedImage As Long
+    expectedImage = _LOADIMAGE(expectedFileName, 32)
+
+    If _Width(actualImage) <> _Width(expectedImage) Then
+        Print "Failure! Image width differs, actual:"; _Width(actualImage);", Expected:"; _Width(expectedImage)
+        GoTo freeImages
+    End If
+
+    If _Height(actualImage) <> _Height(expectedImage) Then
+        Print "Failure! Image height differs, actual:"; _Height(actualImage);", Expected:"; _Height(expectedImage)
+        GoTo freeImages
+    End If
+
+    Dim actual As _Mem, expected As _Mem
+
+    actual = _MEMIMAGE(actualImage)
+    expected = _MEMIMAGE(expectedImage)
+
+    IF actual.SIZE <> expected.SIZE THEN
+        Print "Failure! Image sizes differ, Actual:"; actual.SIZE; ", Expected:"; expected.SIZE
+        GoTo freeImages
+    END IF
+
+    w& = _Width(expectedImage)
+    h& = _Height(expectedImage)
+
+    For x& = 0 to w& - 1
+        For y& = 0 to h& - 1
+            pixelOffset = (y& * w& + x&) * 4
+
+            actualPixel& = _MemGet(actual, actual.OFFSET + pixelOffset, LONG)
+            expectedPixel& = _MemGet(expected, expected.OFFSET + pixelOffset, LONG)
+
+            If actualPixel& <> expectedPixel& Then
+                Print "Failure! Image pixels at ("; x&; ","; y&; ") differ, actual: 0x"; HEX$(actualPixel&);", expected: 0x"; HEX$(expectedPixel&)
+                GoTo freeImages
+            End If
+        Next
+    Next
+
+    PRINT "Success, images are identical!"
+
+freeImages:
+    _MEMFREE actual
+    _MEMFREE expected
+    _FreeImage actualImage
+END SUB
+
+' From the QB64-PE Wiki: https://qb64phoenix.com/qb64wiki/index.php/SAVEIMAGE
+Sub SaveImage (image As Long, filename As String)
+    bytesperpixel& = _PixelSize(image&)
+    If bytesperpixel& = 0 Then Print "Text modes unsupported!": End
+    If bytesperpixel& = 1 Then bpp& = 8 Else bpp& = 24
+    x& = _Width(image&)
+    y& = _Height(image&)
+    b$ = "BM????QB64????" + MKL$(40) + MKL$(x&) + MKL$(y&) + MKI$(1) + MKI$(bpp&) + MKL$(0) + "????" + String$(16, 0) 'partial BMP header info(???? to be filled later)
+    If bytesperpixel& = 1 Then
+        For c& = 0 To 255 ' read BGR color settings from JPG image + 1 byte spacer(CHR$(0))
+            cv& = _PaletteColor(c&, image&) ' color attribute to read.
+            b$ = b$ + Chr$(_Blue32(cv&)) + Chr$(_Green32(cv&)) + Chr$(_Red32(cv&)) + Chr$(0) 'spacer byte
+        Next
+    End If
+    Mid$(b$, 11, 4) = MKL$(Len(b$)) ' image pixel data offset(BMP header)
+    lastsource& = _Source
+    _Source image&
+    If ((x& * 3) Mod 4) Then padder$ = String$(4 - ((x& * 3) Mod 4), 0)
+    For py& = y& - 1 To 0 Step -1 ' read JPG image pixel color data
+        r$ = ""
+        For px& = 0 To x& - 1
+            c& = Point(px&, py&) 'POINT 32 bit values are large LONG values
+            If bytesperpixel& = 1 Then r$ = r$ + Chr$(c&) Else r$ = r$ + Left$(MKL$(c&), 3)
+        Next px&
+        d$ = d$ + r$ + padder$
+    Next py&
+    _Source lastsource&
+    Mid$(b$, 35, 4) = MKL$(Len(d$)) ' image size(BMP header)
+    b$ = b$ + d$ ' total file data bytes to create file
+    Mid$(b$, 3, 4) = MKL$(Len(b$)) ' size of data file(BMP header)
+    If LCase$(Right$(filename$, 4)) <> ".bmp" Then ext$ = ".bmp"
+    f& = FreeFile
+    Open filename$ + ext$ For Output As #f&: Close #f& ' erases an existing file
+    Open filename$ + ext$ For Binary As #f&
+    Put #f&, , b$
+    Close #f&
+End Sub

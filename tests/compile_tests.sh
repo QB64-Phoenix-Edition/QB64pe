@@ -107,7 +107,7 @@ do
 
         pushd . > /dev/null
         cd "./tests/compile_tests/$category"
-        testResult=$("../../../$EXE" 2>&1)
+        testResult=$("../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" 2>&1)
         ERR=$?
         popd > /dev/null
 
