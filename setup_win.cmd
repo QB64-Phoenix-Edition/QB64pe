@@ -50,9 +50,9 @@ if %errorlevel% == 2 set MINGW=mingw32
 
 rem Set the correct file to download based on processor type
 if "%MINGW%"=="mingw32" (
-    set url="https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev0/i686-12.2.0-release-win32-sjlj-rt_v10-rev0.7z"
+    set url="https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev1/i686-12.2.0-release-win32-dwarf-rt_v10-rev1.7z"
 ) else (
-    set url="https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev0/x86_64-12.2.0-release-win32-seh-rt_v10-rev0.7z"
+    set url="https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev1/x86_64-12.2.0-release-win32-seh-rt_v10-rev1.7z"
 )
 
 rem Download 7zr.exe. We'll need this to extract the MINGW archive
