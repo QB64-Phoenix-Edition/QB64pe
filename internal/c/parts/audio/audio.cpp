@@ -208,10 +208,10 @@ struct SampleFrameBlockQueue {
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
 
-        // We can get away with '>> 3' because the sound loop function is called @ ~60Hz
+        // We can get away with '>> 4' because the sound loop function is called @ ~60Hz
         // This should work even on entry level systems. Tested on AMD A6-9200 (230.4 GFLOPS), Crostini Linux
         // Also note that the nodes will allocates twice this to account for 2 channels
-        blockSampleFrames = sampleRate >> 3;
+        blockSampleFrames = sampleRate >> 4;
 
         bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
         buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 is for 2 channels - stereo)
