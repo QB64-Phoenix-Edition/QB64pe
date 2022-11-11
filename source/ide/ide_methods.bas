@@ -6257,7 +6257,8 @@ FUNCTION ide2 (ignore)
                         PCOPY 3, 0: SCREEN , , 3, 0
                     END IF '"Y"
                 END IF 'unsaved
-                r$ = idefiledialog$("", 1)
+                r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
+                'r$ = idefiledialog$("", 1) 'for old dialog file open routine.
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
                 IF r$ <> "C" THEN ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -20192,4 +20193,83 @@ end sub
 '    Download = MKI$(0) 'still working
 'END FUNCTION
 
+Function OpenFile$ (IdeOpenFile as string)'load routine copied/pasted from the old IDE file load/save dialog routines
 
+
+                ideopenloop:
+                if IdeOpenFile = "" THEN f$ = _OpenFileDialog$("Open Source File", "", "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64-PE Source Files", 0) ELSE f$ = IdeOpenFile
+                if f$ = "" THEN OpenFile$ = "C":EXIT FUNCTION
+                path$ = ideztakepath$ (f$)
+
+                IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN 'see if the user forgot the .bas extension and check for the file
+
+                    IF (LCASE$(RIGHT$(f$, 4)) <> ".bas") AND AllFiles = 0 THEN f$ = f$ + ".bas"
+
+                    'recheck to see if file exists with bas extension
+                    ideerror = 2
+                    IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN EXIT FUNCTION
+
+                    IdeOpenFile = path$ + idepathsep$ + f$
+
+                    IF BinaryFormatCheck%(path$, idepathsep$, f$) > 0 THEN
+                        IF LEN(IdeOpenFile) THEN
+                            OpenFile$ = "C"
+                            EXIT FUNCTION
+                        ELSE
+                            info = 0: GOTO ideopenloop 'tried to open a zero length file.  Retry?
+                        END IF
+                    END IF
+                END IF
+
+                'load file
+                ideerror = 3
+                idet$ = MKL$(0) + MKL$(0): idel = 1: ideli = 1: iden = 1: IdeBmkN = 0
+                idesx = 1
+                idesy = 1
+                idecx = 1
+                idecy = 1
+                ideselect = 0
+                idefocusline = 0
+                lineinput3load path$ + idepathsep$ + f$
+                idet$ = SPACE$(LEN(lineinput3buffer) * 8)
+                i2 = 1
+                n = 0
+                chrtab$ = CHR$(9)
+                space1$ = " ": space2$ = "  ": space3$ = "   ": space4$ = "    "
+                chr7$ = CHR$(7): chr11$ = CHR$(11): chr12$ = CHR$(12): chr28$ = CHR$(28): chr29$ = CHR$(29): chr30$ = CHR$(30): chr31$ = CHR$(31)
+                DO
+                    a$ = lineinput3$
+                    l = LEN(a$)
+                    IF l THEN asca = ASC(a$) ELSE asca = -1
+                    IF asca <> 13 THEN
+                        IF asca <> -1 THEN
+                            'fix tabs
+                            ideopenfixtabs:
+                            x = INSTR(a$, chrtab$)
+                            IF x THEN
+                                x2 = (x - 1) MOD 4
+                                IF x2 = 0 THEN a$ = LEFT$(a$, x - 1) + space4$ + RIGHT$(a$, l - x): l = l + 3: GOTO ideopenfixtabs
+                                IF x2 = 1 THEN a$ = LEFT$(a$, x - 1) + space3$ + RIGHT$(a$, l - x): l = l + 2: GOTO ideopenfixtabs
+                                IF x2 = 2 THEN a$ = LEFT$(a$, x - 1) + space2$ + RIGHT$(a$, l - x): l = l + 1: GOTO ideopenfixtabs
+                                IF x2 = 3 THEN a$ = LEFT$(a$, x - 1) + space1$ + RIGHT$(a$, l - x): GOTO ideopenfixtabs
+                            END IF
+                        END IF 'asca<>-1
+                        MID$(idet$, i2, l + 8) = MKL$(l) + a$ + MKL$(l): i2 = i2 + l + 8: n = n + 1
+                    END IF
+                LOOP UNTIL asca = 13
+                lineinput3buffer = ""
+                iden = n: IF n = 0 THEN idet$ = MKL$(0) + MKL$(0): iden = 1 ELSE idet$ = LEFT$(idet$, i2 - 1)
+                REDIM IdeBreakpoints(iden) AS _BYTE
+                REDIM IdeSkipLines(iden) AS _BYTE
+                variableWatchList$ = ""
+                backupVariableWatchList$ = "": REDIM backupUsedVariableList(1000) AS usedVarList
+                backupTypeDefinitions$ = ""
+                callstacklist$ = "": callStackLength = 0
+
+                ideerror = 1
+                ideprogname = f$: _TITLE ideprogname + " - " + WindowTitle
+                listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
+                idepath$ = path$
+                IdeAddRecent idepath$ + idepathsep$ + ideprogname$
+                IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
+end sub
