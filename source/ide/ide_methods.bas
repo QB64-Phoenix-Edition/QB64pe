@@ -447,6 +447,14 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Toggles display of warning messages (unused variables, etc)"
         IF IgnoreWarnings THEN menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = CHR$(7) + "Ignore #Warnings"
 
+        OptionsMenuNewDialogs = i
+        menu$(m, i) = "New Dialogs": i = i + 1
+        menuDesc$(m, i - 1) = "Uses New File Dialog Windows"
+        IF NewDialogs THEN
+            menu$(OptionsMenuID, i - 1) = CHR$(7) + menu$(OptionsMenuID, i - 1)
+        END IF
+
+
         'OptionsMenuAutoComplete = i
         'menu$(m, i) = "Code Suggest#ions": i = i + 1
         'menuDesc$(m, i - 1) = "Toggles code suggestions/auto-complete"
@@ -5044,6 +5052,25 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
+            IF RIGHT$(menu$(m, s), 11) = "New Dialogs" THEN
+                PCOPY 2, 0
+
+                IF NewDialogs = 0 THEN
+                    NewDialogs = -1
+                    menu$(OptionsMenuID, OptionsMenuNewDialogs) = CHR$(7) + "New Dialogs"
+                ELSE
+                    NewDialogs = 0
+                    menu$(OptionsMenuID, OptionsMenuNewDialogs) = "New Dialogs"
+                END IF
+                idechangemade = 1
+                startPausedPending = 0
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+
+
+
             IF RIGHT$(menu$(m, s), 28) = "Output EXE to Source #Folder" THEN
                 PCOPY 2, 0
                 SaveExeWithSource = NOT SaveExeWithSource
@@ -6257,8 +6284,11 @@ FUNCTION ide2 (ignore)
                         PCOPY 3, 0: SCREEN , , 3, 0
                     END IF '"Y"
                 END IF 'unsaved
-                r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
-                'r$ = idefiledialog$("", 1) 'for old dialog file open routine.
+                IF NewDialogs Then
+                    r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
+                ELSE
+                    r$ = idefiledialog$("", 1) 'for old dialog file open routine.
+                END IF
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
                 IF r$ <> "C" THEN ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
