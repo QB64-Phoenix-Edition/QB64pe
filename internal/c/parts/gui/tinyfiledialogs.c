@@ -1290,7 +1290,7 @@ static BOOL CALLBACK dialogBoxCallback(HWND hwndDlg, UINT message, WPARAM wParam
     return FALSE;
 }
 
-static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *title, const wchar_t *lpszMessage, const wchar_t *defaultText)
+static LRESULT displayInputBox(HINSTANCE hinst, HWND hwndOwner, const wchar_t *title, const wchar_t *lpszMessage, const wchar_t *defaultText)
 {
     HGLOBAL hgbl;
     LPDLGTEMPLATE lpdt;
@@ -1314,7 +1314,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
 
     // Define a dialog box.
 
-    lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT;
+    lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT | DS_SYSMODAL;
     lpdt->cdit = 4;         // Number of controls
     lpdt->x  = 0;  lpdt->y  = 0;
     lpdt->cx = 200; lpdt->cy = 70;
@@ -1334,6 +1334,27 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     lpw = (LPWORD)lpwsz;
 
     //-----------------------
+    // Define a edit text control.
+    //-----------------------
+    lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
+    lpdit = (LPDLGITEMTEMPLATE)lpw;
+    lpdit->x  = 5; lpdit->y   = 53;
+    lpdit->cx = 190; lpdit->cy = 12;
+    lpdit->id = ID_TEXT;    // Text identifier
+    lpdit->style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_LEFT;
+
+    if (wcslen(defaultText) == 0)
+        lpdit->style |= ES_PASSWORD;
+
+    lpw = (LPWORD)(lpdit + 1);
+    *lpw++ = 0xFFFF;
+    *lpw++ = 0x0081;        // Edit class
+
+    for (lpwsz = (LPWSTR)lpw; ((*lpwsz++) = *defaultText++););
+    lpw = (LPWORD)lpwsz;
+    *lpw++ = 0;             // No creation data
+
+    //-----------------------
     // Define an OK button.
     //-----------------------
     lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
@@ -1341,7 +1362,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     lpdit->x  = 160; lpdit->y  = 6;
     lpdit->cx = 35; lpdit->cy  = 12;
     lpdit->id = IDOK;       // OK button identifier
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON;
+    lpdit->style = WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON;
 
     lpw = (LPWORD)(lpdit + 1);
     *lpw++ = 0xFFFF;
@@ -1360,7 +1381,7 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     lpdit->x  = 160; lpdit->y = 21;
     lpdit->cx = 35; lpdit->cy = 12;
     lpdit->id = IDCANCEL;    // Cancel button identifier
-    lpdit->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON;
+    lpdit->style = WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON;
 
     lpw = (LPWORD)(lpdit + 1);
     *lpw++ = 0xFFFF;
@@ -1369,27 +1390,6 @@ static LRESULT DisplayMyMessage(HINSTANCE hinst, HWND hwndOwner, const wchar_t *
     lpwsz = (LPWSTR)lpw;
     nchar = 1 + MultiByteToWideChar(CP_ACP, 0, "Cancel", -1, lpwsz, 50);
     lpw += nchar;
-    *lpw++ = 0;             // No creation data
-
-    //-----------------------
-    // Define a edit text control.
-    //-----------------------
-    lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
-    lpdit = (LPDLGITEMTEMPLATE)lpw;
-    lpdit->x  = 5; lpdit->y   = 53;
-    lpdit->cx = 190; lpdit->cy = 12;
-    lpdit->id = ID_TEXT;    // Text identifier
-    lpdit->style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_LEFT;
-
-    if (wcslen(defaultText) == 0)
-        lpdit->style |= ES_PASSWORD;
-
-    lpw = (LPWORD)(lpdit + 1);
-    *lpw++ = 0xFFFF;
-    *lpw++ = 0x0081;        // Edit class
-
-    for (lpwsz = (LPWSTR)lpw; ((*lpwsz++) = *defaultText++););
-    lpw = (LPWORD)lpwsz;
     *lpw++ = 0;             // No creation data
 
     //-----------------------
