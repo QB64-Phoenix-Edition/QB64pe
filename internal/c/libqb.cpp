@@ -26,6 +26,7 @@
 #include "audio.h"
 #include "image.h"
 #include "gui.h"
+#include "http.h"
 
 int32 disableEvents = 0;
 

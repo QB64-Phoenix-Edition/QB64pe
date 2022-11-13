@@ -11,10 +11,24 @@ TEST_DEF_OBJS := tests/c/test.o
 
 # Defines the list of test sets
 TESTS += buffer
+TESTS += http
 
 # Describe how to build each test
 buffer.src-y := ./tests/c/buffer.cpp \
 				$(PATH_LIBQB)/src/buffer.cpp
+
+http.src-y := ./tests/c/http.cpp \
+				$(PATH_LIBQB)/src/http.cpp \
+				$(PATH_LIBQB)/src/buffer.cpp \
+				$(PATH_LIBQB)/src/threading-$(PLATFORM).cpp \
+				$(PATH_LIBQB)/src/threading.cpp
+
+http.cflags-y := $(CURL_CXXFLAGS)
+http.libs-y := $(CURL_CXXLIBS)
+http.exe-libs-y := $(CURL_EXE_LIBS)
+
+http.libs-$(lnx) += -lpthread
+http.libs-$(win) += -lws2_32
 
 
 TEST_OBJS := $(TEST_DEF_OBJS)
