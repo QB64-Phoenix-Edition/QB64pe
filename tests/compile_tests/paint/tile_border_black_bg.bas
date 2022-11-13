@@ -13,7 +13,7 @@ _Dest test1&
 Circle (64, 25), 25, 7
 Paint (64, 25), TILE$, 7
 
-AssertImage test1&, "tile_border_black_bg.bmp"
+AssertImage test1&, "tile_border_black_bg.png"
 System
 
 '$include:'../utilities/imageassert.bm'

@@ -16,7 +16,7 @@ Line (0, 0)-(127, 49), 7, BF
 Circle (64, 25), 25, 0
 Paint (64, 25), TILE$
 
-AssertImage test1&, "tile_noborder_white_bg.bmp"
+AssertImage test1&, "tile_noborder_white_bg.png"
 System
 
 '$include:'../utilities/imageassert.bm'
