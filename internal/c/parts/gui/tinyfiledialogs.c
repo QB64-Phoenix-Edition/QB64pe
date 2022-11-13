@@ -918,6 +918,120 @@ static int fileExists(char const * aFilePathAndName)
         }
 }
 
+// Checks that it's the top-level Window for the process
+static BOOL isMainWindow(HWND handle)
+{
+    return GetWindow(handle, GW_OWNER) == (HWND)0 && IsWindowVisible(handle);
+}
+
+struct handle_data {
+    unsigned long process_id;
+    HWND window_handle;
+};
+
+static BOOL CALLBACK enumCallback(HWND handle, LPARAM lParam)
+{
+    struct handle_data *data = (struct handle_data*)lParam;
+    unsigned long process_id = 0;
+
+    GetWindowThreadProcessId(handle, &process_id);
+
+    if (data->process_id != process_id || !isMainWindow(handle))
+        return TRUE; // Keep going to the next window
+
+    data->window_handle = handle;
+    return FALSE; // End the enumeration
+}
+
+static HWND TryGetMainWindow()
+{
+    struct handle_data data = {
+        .process_id = GetCurrentProcessId(),
+        .window_handle = 0,
+    };
+
+    EnumWindows(enumCallback, (LPARAM)&data);
+
+    return data.window_handle;
+}
+
+static LRESULT CALLBACK hiddenWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_CREATE:
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+static HWND CreateHiddenWindow()
+{
+    WNDCLASSEX wndclass = {
+        sizeof(WNDCLASSEX),
+        CS_DBLCLKS,
+        hiddenWindowProc,
+        0,
+        0,
+        GetModuleHandle(0),
+        LoadIcon(0, IDI_APPLICATION),
+        LoadCursor(0, IDC_ARROW),
+        (HBRUSH)(COLOR_WINDOW + 1),
+        0,
+        "hiddenWindowClass",
+        LoadIcon(0, IDI_APPLICATION)
+    };
+
+    if (!RegisterClassEx(&wndclass))
+        return 0;
+
+    return CreateWindowEx(
+        0,
+        "hiddenWindowClass",
+        "hiddenWindow",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        0,
+        0,
+        GetModuleHandle(NULL),
+        0
+    );
+}
+
+static HWND windowForDialogs = 0;
+
+// Returns a window handle sutable for displaying dialogs and notifications
+//
+// We attempt to find a window associated with the program, if none exists then
+// we'll create a hidden one.
+static HWND GetDialogWindow()
+{
+    if (windowForDialogs)
+        return windowForDialogs;
+
+    // First see if our process has a window already
+    windowForDialogs = TryGetMainWindow();
+    if (windowForDialogs)
+        return windowForDialogs;
+
+    // Check if we have an associated console
+    windowForDialogs = GetConsoleWindow();
+    if (windowForDialogs)
+        return windowForDialogs;
+
+    // No sutable window could be found, create a hidden one for us to use
+    windowForDialogs = CreateHiddenWindow();
+    return windowForDialogs;
+}
+
 #endif /* _WIN32 */
 
 /* source and destination can be the same or ovelap*/
@@ -1036,7 +1150,7 @@ int tinyfd_messageBoxW(
 
         aCode += MB_TOPMOST;
 
-        lBoxReturnValue = MessageBoxW(GetForegroundWindow(), aMessage, aTitle, aCode);
+        lBoxReturnValue = MessageBoxW(GetDialogWindow(), aMessage, aTitle, aCode);
 
         if ( (lBoxReturnValue == IDNO) && (aDialogType && !wcscmp(L"yesnocancel", aDialogType)) )
         {
@@ -1052,64 +1166,12 @@ int tinyfd_messageBoxW(
         }
 }
 
-static LRESULT CALLBACK hiddenNotifyWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_CREATE:
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hwnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-static HWND hiddenWindow = NULL;
 static HICON notifyIcon = NULL;
 
 // Creates a hidden window to tie the Notifications too
-static void setupHiddenWindowHandles()
+static void setupNotifyIconHandle()
 {
-    if (hiddenWindow || notifyIcon)
-        return;
-
-    WNDCLASSEX wndclass = {
-        sizeof(WNDCLASSEX),
-        CS_DBLCLKS,
-        hiddenNotifyWindowProc,
-        0,
-        0,
-        GetModuleHandle(0),
-        LoadIcon(0,IDI_APPLICATION),
-        LoadCursor(0,IDC_ARROW),
-        (HBRUSH)(COLOR_WINDOW + 1),
-        0,
-        "notifyIconClass",
-        LoadIcon(0,IDI_APPLICATION)
-    };
-
-    if (!RegisterClassEx(&wndclass))
-        return;
-
-    hiddenWindow = CreateWindowEx(
-        0,
-        "notifyIconClass",
-        "title",
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        0,
-        0,
-        GetModuleHandle(NULL),
-        0
-    );
-
-    if (!hiddenWindow)
+    if (notifyIcon)
         return;
 
     // Attempt to load 32x32 image
@@ -1131,7 +1193,7 @@ static void createWinNotificationEntry()
     memset(&notificationData, 0, sizeof(notificationData));
 
     notificationData.cbSize = sizeof(notificationData);
-    notificationData.hWnd = hiddenWindow;
+    notificationData.hWnd = GetDialogWindow();
     notificationData.uID = 0;
     notificationData.hIcon = notifyIcon;
 
@@ -1146,7 +1208,7 @@ static void sendWinNotification(const wchar_t *title, const wchar_t *message, co
     NOTIFYICONDATAW notificationData;
     memset(&notificationData, 0, sizeof(notificationData));
     notificationData.cbSize = sizeof(notificationData);
-    notificationData.hWnd = hiddenWindow;
+    notificationData.hWnd = GetDialogWindow();
     notificationData.uID = 0;
     notificationData.hIcon = notifyIcon;
 
@@ -1175,10 +1237,10 @@ int tinyfd_notifyPopupW(
 {
         if (aTitle && !wcscmp(aTitle, L"tinyfd_query")) { strcpy(tinyfd_response, "windows_wchar"); return 1; }
 
-        setupHiddenWindowHandles();
+        setupNotifyIconHandle();
 
         // Can't send notification if the handles aren't setup
-        if (!hiddenWindow || !notifyIcon)
+        if (!notifyIcon)
             return 0;
 
         createWinNotificationEntry();
@@ -1373,8 +1435,7 @@ wchar_t * tinyfd_inputBoxW(
         aMessage = aMessage? aMessage: L"";
         aDefaultInput = aDefaultInput? aDefaultInput: L"";
 
-        setupHiddenWindowHandles();
-        DisplayMyMessage(GetModuleHandle(NULL), hiddenWindow, aTitle, aMessage, aDefaultInput);
+        displayInputBox(GetModuleHandle(NULL), GetDialogWindow(), aTitle, aMessage, aDefaultInput);
 
         mbstowcs(lBuff, dialogContents, MAX_PATH_OR_CMD);
         return lBuff;
@@ -1436,7 +1497,7 @@ wchar_t * tinyfd_saveFileDialogW(
         }
 
         ofn.lStructSize = sizeof(OPENFILENAMEW);
-        ofn.hwndOwner = GetForegroundWindow();
+        ofn.hwndOwner = GetDialogWindow();
         ofn.hInstance = 0;
         ofn.lpstrFilter = wcslen(lFilterPatterns) ? lFilterPatterns : NULL;
         ofn.lpstrCustomFilter = NULL;
@@ -1552,7 +1613,7 @@ wchar_t * tinyfd_openFileDialogW(
         }
 
         ofn.lStructSize = sizeof(OPENFILENAME);
-        ofn.hwndOwner = GetForegroundWindow();
+        ofn.hwndOwner = GetDialogWindow();
         ofn.hInstance = 0;
         ofn.lpstrFilter = wcslen(lFilterPatterns) ? lFilterPatterns : NULL;
         ofn.lpstrCustomFilter = NULL;
@@ -1672,7 +1733,7 @@ wchar_t * tinyfd_selectFolderDialogW(
 
         lHResult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-        bInfo.hwndOwner = GetForegroundWindow();
+        bInfo.hwndOwner = GetDialogWindow();
         bInfo.pidlRoot = NULL;
         bInfo.pszDisplayName = lBuff;
         bInfo.lpszTitle = aTitle && wcslen(aTitle) ? aTitle : NULL;
@@ -1734,7 +1795,7 @@ wchar_t * tinyfd_colorChooserW(
 
         /* we can't use aTitle */
         cc.lStructSize = sizeof(CHOOSECOLOR);
-        cc.hwndOwner = GetForegroundWindow();
+        cc.hwndOwner = GetDialogWindow();
         cc.hInstance = NULL;
         cc.rgbResult = RGB(lDefaultRGB[0], lDefaultRGB[1], lDefaultRGB[2]);
         cc.lpCustColors = crCustColors;
