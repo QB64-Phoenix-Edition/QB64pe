@@ -22,7 +22,7 @@ Pset (64, 25), 15 ' Set the starting location a third color
 
 Paint (64, 25), TILE$, 0
 
-AssertImage test1&, "tile_border_white_bg.bmp"
+AssertImage test1&, "tile_border_white_bg.png"
 System
 
 '$include:'../utilities/imageassert.bm'
