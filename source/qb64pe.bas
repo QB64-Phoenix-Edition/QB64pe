@@ -74,6 +74,7 @@ IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELS
 UserDefine(1, 7) = Version$
 
 DIM SHARED QB64_uptime!
+DIM SHARED AS INTEGER NewDialogs, OptionsMenuNewDialogs: NewDialogs = -1
 
 QB64_uptime! = TIMER
 
