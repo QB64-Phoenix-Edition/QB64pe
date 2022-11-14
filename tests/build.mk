@@ -5,7 +5,7 @@ TEST_CFLAGS-y := -I'./tests/c/include' \
 			   -I$(PATH_LIBQB)/include \
 			   -g -std=gnu++11
 
-TEST_CFLAGS-$(win) += -mconsole
+TEST_CFLAGS-$(win) += -mconsole -static-libgcc -static-libstdc++
 
 TEST_DEF_OBJS := tests/c/test.o
 
