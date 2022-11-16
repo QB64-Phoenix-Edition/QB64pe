@@ -1299,6 +1299,18 @@ static LRESULT displayInputBox(HINSTANCE hinst, HWND hwndOwner, const wchar_t *t
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar;
+    int isPassword = 0;
+
+    if (!title)
+        title = L"";
+
+    if (!lpszMessage)
+        lpszMessage = L"";
+
+    if (!defaultText) {
+        isPassword = 1;
+        defaultText = L"";
+    }
 
     // The extra 500 accounts for the default button text, alignment padding, and a few other small things
     hgbl = GlobalAlloc(GMEM_ZEROINIT, sizeof(DLGTEMPLATE)
@@ -1343,7 +1355,7 @@ static LRESULT displayInputBox(HINSTANCE hinst, HWND hwndOwner, const wchar_t *t
     lpdit->id = ID_TEXT;    // Text identifier
     lpdit->style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_LEFT;
 
-    if (wcslen(defaultText) == 0)
+    if (isPassword)
         lpdit->style |= ES_PASSWORD;
 
     lpw = (LPWORD)(lpdit + 1);
@@ -1430,10 +1442,6 @@ wchar_t * tinyfd_inputBoxW(
         if (aTitle&&!wcscmp(aTitle, L"tinyfd_query")){ strcpy(tinyfd_response, "windows_wchar"); return (wchar_t *)1; }
 
         memset(dialogContents, 0, sizeof(dialogContents));
-
-        aTitle = aTitle? aTitle: L"";
-        aMessage = aMessage? aMessage: L"";
-        aDefaultInput = aDefaultInput? aDefaultInput: L"";
 
         displayInputBox(GetModuleHandle(NULL), GetDialogWindow(), aTitle, aMessage, aDefaultInput);
 
