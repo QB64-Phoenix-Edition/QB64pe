@@ -27,6 +27,7 @@ DIM SHARED StripDebugSymbols AS _UNSIGNED LONG
 DIM SHARED OptimizeCppProgram AS _UNSIGNED LONG
 DIM SHARED UseMiniaudioBackend AS _UNSIGNED LONG
 DIM SHARED GenerateLicenseFile AS _UNSIGNED LONG
+DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
 
 ConfigFile$ = "internal/config.ini"
 iniFolderIndex$ = STR$(tempfolderindex)
@@ -231,6 +232,7 @@ IF ReadConfigSetting(generalSettingsSection$, "WikiBaseAddress", value$) THEN
 ELSE WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
 END IF
 
+UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", -1)
 
 'Mouse settings ---------------------------------------------------------------
 result = ReadConfigSetting(mouseSettingsSection$, "SwapMouseButton", value$)
@@ -539,6 +541,7 @@ ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "Extra
 
 UseMiniaudioBackend = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseMiniaudioBackend", -1)
 GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
+
 
 'End of initial settings ------------------------------------------------------
 
