@@ -447,10 +447,10 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Toggles display of warning messages (unused variables, etc)"
         IF IgnoreWarnings THEN menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = CHR$(7) + "Ignore #Warnings"
 
-        OptionsMenuNewDialogs = i
-        menu$(m, i) = "New Dialogs": i = i + 1
-        menuDesc$(m, i - 1) = "Uses New File Dialog Windows"
-        IF NewDialogs THEN
+        OptionsMenuGuiDialogs = i
+        menu$(m, i) = "GUI Dialogs": i = i + 1
+        menuDesc$(m, i - 1) = "Uses GUI-based File Dialog Windows"
+        IF UseGuiDialogs THEN
             menu$(OptionsMenuID, i - 1) = CHR$(7) + menu$(OptionsMenuID, i - 1)
         END IF
 
@@ -5052,16 +5052,17 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF RIGHT$(menu$(m, s), 11) = "New Dialogs" THEN
+            IF RIGHT$(menu$(m, s), 11) = "GUI Dialogs" THEN
                 PCOPY 2, 0
+                UseGuiDialogs = NOT UseGuiDialogs
+                WriteConfigSetting generalSettingsSection$, "UseGuiDialogs", BoolToTFString$(UseGuiDialogs)
 
-                IF NewDialogs = 0 THEN
-                    NewDialogs = -1
-                    menu$(OptionsMenuID, OptionsMenuNewDialogs) = CHR$(7) + "New Dialogs"
+                IF UseGuiDialogs THEN
+                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "GUI Dialogs"
                 ELSE
-                    NewDialogs = 0
-                    menu$(OptionsMenuID, OptionsMenuNewDialogs) = "New Dialogs"
+                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "GUI Dialogs"
                 END IF
+
                 idechangemade = 1
                 startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -6284,7 +6285,7 @@ FUNCTION ide2 (ignore)
                         PCOPY 3, 0: SCREEN , , 3, 0
                     END IF '"Y"
                 END IF 'unsaved
-                IF NewDialogs Then
+                IF UseGuiDialogs Then
                     r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
                 ELSE
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
