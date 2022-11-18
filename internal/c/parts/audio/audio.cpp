@@ -18,13 +18,17 @@
 // Set this to 1 if we want to print debug messages to stderr
 #define AUDIO_DEBUG 0
 #include "audio.h"
+
 #include <algorithm>
 #include <vector>
+
 // Enable Ogg Vorbis decoding
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
+
 // The main miniaudio header
 #include "miniaudio.h"
+
 // Although Matt says we should not be doing this, this has worked out to be ok so far
 // We need 'qbs' and also the 'mem' stuff from here
 // I am not using 'list' anymore and have migrated the code to use C++ vectors instead
