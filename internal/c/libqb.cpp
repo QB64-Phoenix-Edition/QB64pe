@@ -696,18 +696,29 @@ ptrszint list_get_index(list *L, void *structure) { // Retrieves the index value
     return i;
 }
 
+enum class special_handle_type {
+    Invalid,
+    Stream,
+    Host,
+    Http,
+};
+
 // Special Handle system
 //---------------------
 // Purpose: Manage handles to custom QB64 interfaces alongside the standard QB file handle indexing
 // Method:  Uses negative values for custom interface handles
 struct special_handle_struct {
-    int8 type;
-    // 0=Invalid handle (was previously being used but was closed)
-    // 1=Stream (eg. COM, Network[TCP/IP])
-    // 2=Host Listener (used by _OPENCONNECTION)
-    ptrszint index; // an index or pointer to the type's object
+    special_handle_type type;
+    // an index or pointer to the type's object
+    //
+    // Http streams use this as an EOF flag
+    ptrszint index;
 };
 list *special_handles = NULL;
+
+enum class stream_type {
+    Tcp,
+};
 
 // Stream system
 //-------------
@@ -719,8 +730,8 @@ struct stream_struct {
     int8 eof;          // user attempted to read past end of stream
     // Note: 'out' is unrequired because data can be sent directly to the interface
     //-----------------------------------------
-    int8 type;
-    // 1=Network (TCP)
+    stream_type type;
+
     ptrszint index; // an index or pointer to the type's object
 };
 list *stream_handles = NULL;
@@ -17532,21 +17543,29 @@ void sub_close(int32 i2, int32 passed) {
         if (i2 < 0) { // special handle
             // determine which close procedure to call
             x = -(i2 + 1);
+            static stream_struct *st;
             static special_handle_struct *sh;
             sh = (special_handle_struct *)list_get(special_handles, x);
             if (!sh)
                 return;
-            if (sh->type == 1) { // stream
-                static stream_struct *st;
-                st = (stream_struct *)sh->index;
-                if (st->type == 1) { // connection
-                    connection_close(x);
-                } // connection
-            }     // stream
 
-            if (sh->type == 2) { // host listener
+            switch (sh->type) {
+            case special_handle_type::Stream:
+                st = (stream_struct *)sh->index;
+
+                if (st->type == stream_type::Tcp)
+                    connection_close(x);
+
+                break;
+
+            case special_handle_type::Host:
                 connection_close(x);
-            } // host listener
+                break;
+
+            case special_handle_type::Http:
+                libqb_http_close(x);
+                break;
+            }
 
             return;
         } // special handle
@@ -19209,31 +19228,53 @@ void sub_get(int32 i, int64 offset, void *element, int32 passed) {
     static int32 x, x2;
 
     if (i < 0) { // special handle?
+        stream_struct *st;
+        special_handle_struct *sh;
+
         x = -(i + 1);
-        static special_handle_struct *sh;
+
         sh = (special_handle_struct *)list_get(special_handles, x);
         if (!sh) {
             error(52);
             return;
         }
-        if (sh->type == 1) { // stream
-            static stream_struct *st;
+
+        switch (sh->type) {
+        case special_handle_type::Stream:
             st = (stream_struct *)sh->index;
+
             stream_update(st);
             ele = (byte_element_struct *)element;
             if (st->in_size < ele->length) {
                 st->eof = 1;
                 return;
             }
+
             st->eof = 0;
             memcpy((void *)(ele->offset), st->in, ele->length);
             x2 = st->in_size - ele->length;
             if (x2)
                 memmove(st->in, st->in + ele->length, x2);
             st->in_size -= ele->length;
-            return;
-        } // stream
-        error(52);
+            break;
+
+        case special_handle_type::Http:
+            ele = (byte_element_struct *)element;
+
+            // If there's not enough data in the internal buffer to fill this
+            // fixed length request, then report EOF
+            if (libqb_http_get_fixed(x, (char *)ele->offset, ele->length) == -1)
+                sh->index = 1;
+            else
+                sh->index = 2; // Force EOF to report we're not at the end
+
+            break;
+
+        default:
+            error(52);
+            break;
+        }
+
         return;
     } // special handle
 
@@ -19339,26 +19380,48 @@ void sub_get2(int32 i, int64 offset, qbs *str, int32 passed) {
             return;
         }
         x = -(i + 1);
+        static stream_struct *st;
+        static qbs *tqbs;
         static special_handle_struct *sh;
         sh = (special_handle_struct *)list_get(special_handles, x);
         if (!sh) {
             error(52);
             return;
         }
-        if (sh->type == 1) { // stream
-            static stream_struct *st;
+
+        size_t length = 0;
+
+        switch (sh->type) {
+        case special_handle_type::Stream:
             st = (stream_struct *)sh->index;
             stream_update(st);
-            static qbs *tqbs;
+
             tqbs = qbs_new(st->in_size, 1);
             if (st->in_size)
                 memcpy(tqbs->chr, st->in, st->in_size);
+
             st->in_size = 0;
             st->eof = 0;
             qbs_set(str, tqbs);
-            return;
-        } // stream
-        error(52);
+            break;
+
+        case special_handle_type::Http:
+            sh->index = 0; // Reset EOF flag, this allows EOF to be calculated as normal
+
+            libqb_http_get_length(x, &length);
+
+            tqbs = qbs_new(length, 1);
+            if (length)
+                length = libqb_http_get(x, (char *)tqbs->chr, &length);
+
+            qbs_set(str, tqbs);
+            break;
+
+        default:
+            error(52);
+            break;
+        }
+
         return;
     } // special handle
 
@@ -19500,14 +19563,21 @@ void sub_put(int32 i, int64 offset, void *element, int32 passed) {
             error(52);
             return;
         }
-        if (sh->type == 1) { // stream
-            static stream_struct *st;
+
+        static stream_struct *st;
+
+        switch (sh->type) {
+        case special_handle_type::Stream:
             st = (stream_struct *)sh->index;
             ele = (byte_element_struct *)element;
             stream_out(st, (void *)ele->offset, ele->length);
-            return;
-        } // stream
-        error(52);
+            break;
+
+        default:
+            error(52);
+            break;
+        }
+
         return;
     } // special handle
 
@@ -21504,19 +21574,34 @@ int64 func_lof(int32 i) {
 
     if (i < 0) { // special handle?
         static special_handle_struct *sh;
-        sh = (special_handle_struct *)list_get(special_handles, -(i + 1));
+        uint64_t length;
+        int x = -(i + 1);
+        int err;
+
+        sh = (special_handle_struct *)list_get(special_handles, x);
         if (!sh) {
             error(52);
             return 0;
         }
-        if (sh->type == 1) { // stream
-            static stream_struct *st;
+
+        static stream_struct *st;
+        switch (sh->type) {
+        case special_handle_type::Stream:
             st = (stream_struct *)sh->index;
             stream_update(st);
             return st->in_size;
-        } // stream
-        error(52);
-        return 0;
+
+        case special_handle_type::Http:
+            err = libqb_http_get_content_length(x, &length);
+            if (err != 0)
+                return -1;
+
+            return length;
+
+        default:
+            error(52);
+            return 0;
+        }
     } // special handle
 
     if (gfs_fileno_valid(i) != 1) {
@@ -21555,15 +21640,40 @@ int32 func_eof(int32 i) {
             error(52);
             return 0;
         }
-        if (sh->type == 1) { // stream
-            static stream_struct *st;
+
+        static stream_struct *st;
+        size_t length = 0;
+
+        switch (sh->type) {
+        case special_handle_type::Stream:
             st = (stream_struct *)sh->index;
             if (st->eof)
                 return -1;
             return 0;
-        } // stream
-        error(52);
-        return 0;
+
+        case special_handle_type::Http:
+            // If sh->index set it overrides the EOF() check. The caller will need to
+            // use _CONNECTED() to determine whether more data could be coming.
+            if (sh->index == 1)
+                return -1;
+            else if (sh->index == 2)
+                return 0;
+
+            // Only report EOF() if the program had read all incomming data and
+            // the connection is finished.
+            if (libqb_http_connected(x))
+                return 0;
+
+            libqb_http_get_length(x, &length);
+            if (length != 0)
+                return 0;
+
+            return -1;
+
+        default:
+            error(52);
+            return 0;
+        }
     } // special handle
 
     if (gfs_fileno_valid(i) != 1) {
@@ -28628,7 +28738,7 @@ struct connection_struct {
 list *connection_handles = NULL;
 
 void stream_out(stream_struct *st, void *offset, ptrszint bytes) {
-    if (st->type == 1) { // Network
+    if (st->type == stream_type::Tcp) { // Network
         static connection_struct *co;
         co = (connection_struct *)st->index;
         if ((co->type == 1) || (co->type == 3)) { // client or host's connection from a client
@@ -28687,25 +28797,17 @@ expand_and_retry:
 void connection_close(ptrszint i) {
     // Note: 'i' is a positive integer 1 or greater
     //      'i' must be a valid handle
+    static connection_struct *cs;
+    static stream_struct *ss;
     static special_handle_struct *sh;
     sh = (special_handle_struct *)list_get(special_handles, i);
 
-    if (sh->type == 2) { // host listener
-        static connection_struct *cs;
-        cs = (connection_struct *)sh->index;
-        if (cs->protocol == 1)
-            tcp_close(cs->connection);
-        list_remove(connection_handles, list_get_index(connection_handles, cs));
-        list_remove(special_handles, list_get_index(special_handles, sh));
-        return;
-    } // host listener
-
-    // client or connection to host
-    if (sh->type == 1) { // stream
-        static stream_struct *ss;
+    switch (sh->type) {
+    case special_handle_type::Stream:
         ss = (stream_struct *)sh->index;
-        if (ss->type == 1) { // network
-            static connection_struct *cs;
+
+        // FIXME: What if it's not Tcp??
+        if (ss->type == stream_type::Tcp) { // network
             cs = (connection_struct *)ss->index;
             if (cs->protocol == 1)
                 tcp_close(cs->connection);
@@ -28714,7 +28816,21 @@ void connection_close(ptrszint i) {
             list_remove(special_handles, list_get_index(special_handles, sh));
             return;
         } // network
-    }     // stream
+        break;
+
+    case special_handle_type::Host:
+        cs = (connection_struct *)sh->index;
+        if (cs->protocol == 1)
+            tcp_close(cs->connection);
+        list_remove(connection_handles, list_get_index(connection_handles, cs));
+        list_remove(special_handles, list_get_index(special_handles, sh));
+        break;
+
+    case special_handle_type::Http:
+        libqb_http_close(i);
+        list_remove(special_handles, list_get_index(special_handles, sh));
+        break;
+    }
 }
 
 int32 connection_new(int32 method, qbs *info_in, int32 value) {
@@ -28752,14 +28868,21 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
         qbs_set(info, info_in);
         qbs_set(str, qbs_new_txt(":"));
         i = 1;
-    next_part:
-        x = func_instr(i, info, str, 1);
-        if (x) {
+
+        // Split string on each ':'
+        // 
+        // Make sure we don't create more splits than can fix in the array
+        for (int k = 0; k < sizeof(info_part) / sizeof(*info_part) - 1; k++) {
+            x = func_instr(i, info, str, 1);
+            if (!x)
+                break;
+
             parts++;
             qbs_set(info_part[parts], func_mid(info, i, x - i, 1));
             i = x + 1;
-            goto next_part;
         }
+
+        // Add the extra part after the last ':'
         parts++;
         qbs_set(info_part[parts], func_mid(info, i, NULL, NULL));
     } // split info string
@@ -28768,9 +28891,57 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
     static int32 port;
 
     if ((method == 0) || (method == 1)) {
+        if (method == 0 && parts >= 1
+                && (qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("HTTP"))
+                    || qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("HTTPS")))) {
+
+            // Strings given to curl have to be null terminated
+            qbs_set(str, qbs_add(info, strz));
+
+            const char *url = (const char *)str->chr;
+            for (; *url && *url != ':'; url++)
+                ;
+
+            // Shouldn't happen, since parts >= 1
+            if (!*url)
+                return -1;
+
+            // Skip the ':'
+            url++;
+
+            // Special case, if the next character is '/' then someone may have
+            // just passed an http:// URL verbatim with no HTTP: prefix before
+            // it.
+            //
+            // In this situation we'll just use the whole thing and hope that's
+            // what they want.
+            if (*url == '/')
+                url = (const char *)str->chr;
+
+            // Get the handle for this connection, we do this first because the
+            // libqb_http logic uses the handle
+            int32 my_handle = list_add(special_handles);
+
+            int err = libqb_http_open(url, my_handle);
+
+            if (err) {
+                list_remove(special_handles, my_handle);
+                // There's no good way to report the HTTP error here
+                return -1;
+            }
+
+            special_handle_struct *my_handle_struct;
+            my_handle_struct = (special_handle_struct *)list_get(special_handles, my_handle);
+
+            my_handle_struct->type = special_handle_type::Http;
+            my_handle_struct->index = 0; // Not used by Http clients
+
+            return my_handle;
+        }
 
         if (parts < 2)
             return -1;
+
         if (qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("TCP/IP")) == 0) {
             if (qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("QB64IDE")) == 0 || vwatch != -1) {
                 return -1;
@@ -28802,9 +28973,9 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
             my_connection = list_add(connection_handles);
             static connection_struct *my_connection_struct;
             my_connection_struct = (connection_struct *)list_get(connection_handles, my_connection);
-            my_handle_struct->type = 1; // stream
+            my_handle_struct->type = special_handle_type::Stream;
             my_handle_struct->index = (ptrszint)my_stream_struct;
-            my_stream_struct->type = 1; // network
+            my_stream_struct->type = stream_type::Tcp; // network
             my_stream_struct->index = (ptrszint)my_connection_struct;
             my_connection_struct->protocol = 1; // tcp/ip
             my_connection_struct->type = 1;     // client
@@ -28838,7 +29009,7 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
             my_connection = list_add(connection_handles);
             static connection_struct *my_connection_struct;
             my_connection_struct = (connection_struct *)list_get(connection_handles, my_connection);
-            my_handle_struct->type = 2; // host listener
+            my_handle_struct->type = special_handle_type::Host;
             my_handle_struct->index = (ptrszint)my_connection_struct;
             my_connection_struct->protocol = 1; // tcp/ip
             my_connection_struct->type = 2;     // host(listening)
@@ -28853,7 +29024,7 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
         sh = (special_handle_struct *)list_get(special_handles, value);
         if (!sh)
             return -1;
-        if (sh->type != 2)
+        if (sh->type != special_handle_type::Host)
             return -1; // listening host?
         static connection_struct *co;
         co = (connection_struct *)sh->index;
@@ -28874,9 +29045,9 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
         my_connection = list_add(connection_handles);
         static connection_struct *my_connection_struct;
         my_connection_struct = (connection_struct *)list_get(connection_handles, my_connection);
-        my_handle_struct->type = 1; // stream
+        my_handle_struct->type = special_handle_type::Stream;
         my_handle_struct->index = (ptrszint)my_stream_struct;
-        my_stream_struct->type = 1; // network
+        my_stream_struct->type = stream_type::Tcp; // network
         my_stream_struct->index = (ptrszint)my_connection_struct;
         my_connection_struct->protocol = 1; // tcp/ip
         my_connection_struct->type = 3;     // host's client connection
@@ -28951,35 +29122,20 @@ qbs *func__connectionaddress(int32 i) {
 
     if (i < 0) {
         x = -(i + 1);
+        static connection_struct *cs;
+        static stream_struct *ss;
         static special_handle_struct *sh;
+        const char *url;
         sh = (special_handle_struct *)list_get(special_handles, x);
         if (!sh) {
             error(52);
             goto error;
         }
 
-        if (sh->type == 2) { // host listener
-            static connection_struct *cs;
-            cs = (connection_struct *)sh->index;
-            if (cs->protocol == 1) {                                      // TCP/IP
-                qbs_set(str, qbs_new_txt("TCP/IP:"));                     // network type
-                qbs_set(str, qbs_add(str, qbs_ltrim(qbs_str(cs->port)))); // port
-                qbs_set(str, qbs_add(str, qbs_new_txt(":")));
-                tqbs2 = WHATISMYIP();
-                if (tqbs2->len) {
-                    qbs_set(str, qbs_add(str, tqbs2));
-                } else {
-                    qbs_set(str, qbs_add(str, qbs_new_txt("127.0.0.1"))); // localhost
-                }
-                return str;
-            } // TCP/IP
-        }     // host listener
-
-        // client or connection to host
-        if (sh->type == 1) { // stream
-            static stream_struct *ss;
+        switch (sh->type) {
+        case special_handle_type::Stream:
             ss = (stream_struct *)sh->index;
-            if (ss->type == 1) { // network
+            if (ss->type == stream_type::Tcp) { // network
                 static connection_struct *cs;
                 cs = (connection_struct *)ss->index;
                 if (cs->protocol == 1) {                  // TCP/IP
@@ -29005,8 +29161,36 @@ qbs *func__connectionaddress(int32 i) {
                     }
                 } // TCP/IP
             }     // network
-        }         // stream
+            break;
 
+        case special_handle_type::Host:
+            cs = (connection_struct *)sh->index;
+            if (cs->protocol == 1) {                                      // TCP/IP
+                qbs_set(str, qbs_new_txt("TCP/IP:"));                     // network type
+                qbs_set(str, qbs_add(str, qbs_ltrim(qbs_str(cs->port)))); // port
+                qbs_set(str, qbs_add(str, qbs_new_txt(":")));
+                tqbs2 = WHATISMYIP();
+                if (tqbs2->len) {
+                    qbs_set(str, qbs_add(str, tqbs2));
+                } else {
+                    qbs_set(str, qbs_add(str, qbs_new_txt("127.0.0.1"))); // localhost
+                }
+                return str;
+            } // TCP/IP
+            break;
+
+        case special_handle_type::Http:
+            url = libqb_http_get_url(x);
+
+            qbs_set(str, qbs_new_txt("HTTP:"));
+
+            if (url)
+                qbs_set(str, qbs_add(str, qbs_new_txt(url)));
+            else
+                qbs_set(str, qbs_add(str, qbs_new_txt("UNKNOWN")));
+
+            return str;
+        }
     } // i<0
     error(52);
     goto error;
@@ -29031,31 +29215,34 @@ int32 func__connected(int32 i) {
     if (i < 0) {
         static int32 x;
         x = -(i + 1);
+        static stream_struct *ss;
+        static connection_struct *cs;
         static special_handle_struct *sh;
         sh = (special_handle_struct *)list_get(special_handles, x);
         if (!sh)
             goto error;
 
-        if (sh->type == 2) { // host listener
-            static connection_struct *cs;
-            cs = (connection_struct *)sh->index;
-            if (cs->protocol == 1) { // TCP/IP
-                return -1;
-            } // TCP/IP
-        }     // host listener
-
-        // client or connection to host
-        if (sh->type == 1) { // stream
-            static stream_struct *ss;
+        switch (sh->type) {
+        case special_handle_type::Stream:
             ss = (stream_struct *)sh->index;
-            if (ss->type == 1) { // network
-                static connection_struct *cs;
+            if (ss->type == stream_type::Tcp) { // network
                 cs = (connection_struct *)ss->index;
                 if (cs->protocol == 1) { // TCP/IP
                     return tcp_connected(cs->connection);
                 } // TCP/IP
             }     // network
-        }         // stream
+            break;
+
+        case special_handle_type::Host:
+            cs = (connection_struct *)sh->index;
+            if (cs->protocol == 1) { // TCP/IP
+                return -1;
+            } // TCP/IP
+            break;
+
+        case special_handle_type::Http:
+            return libqb_http_connected(x)? -1: 0;
+        }
 
     } // i<0
 error:
@@ -37683,6 +37870,8 @@ int main(int argc, char *argv[]) {
     QB64_GAMEPAD_INIT();
 #endif
 
+    libqb_http_init();
+
 #ifdef QB64_WINDOWS
     {
         uintptr_t thread_handle = _beginthread(QBMAIN_WINDOWS, 0, NULL);
@@ -38127,6 +38316,8 @@ end_program:
 
     // close all open files
     sub_close(NULL, 0);
+
+    libqb_http_stop();
 
 // shutdown device interface
 #ifdef DEPENDENCY_DEVICEINPUT
