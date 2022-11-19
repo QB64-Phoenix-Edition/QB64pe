@@ -39,7 +39,7 @@ jobs:
 
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
-    - uses: webfactory/ssh-agent@v0.5.4
+    - uses: webfactory/ssh-agent@v0.7.0
       if: ${{ github.event_name == 'push' && matrix.prefix == 'lnx' }}
       with:
         ssh-private-key: ${{ secrets.ACTION_DEPLOY_KEY }}
