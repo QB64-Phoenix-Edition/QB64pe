@@ -17,7 +17,7 @@ fi
 show_failure()
 {
     cat "$RESULTS_DIR/$1-$2-compile_result.txt"
-    cat "$RESULTS_DIR/$2-compilelog.txt"
+    cat "$RESULTS_DIR/$1-$2-compilelog.txt"
 }
 
 show_incorrect_result()
