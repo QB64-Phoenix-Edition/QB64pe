@@ -28952,7 +28952,7 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
             if (err) {
                 list_remove(special_handles, my_handle);
                 // There's no good way to report the HTTP error here
-                return -1;
+                return 0;
             }
 
             special_handle_struct *my_handle_struct;
