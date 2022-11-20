@@ -7,5 +7,5 @@ Print h&
 System
 
 errorhand:
-PRINT ERR; ERL
+PRINT "Error:"; ERR; ", Line:"; _ERRORLINE
 RESUME NEXT
