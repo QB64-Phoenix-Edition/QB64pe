@@ -22,6 +22,7 @@ End If
 
 Print "Content-Length: "; length~&
 Print "Url: "; url$
+Print "Status Code: "; _StatusCode(h&)
 Print
 Print result$
 

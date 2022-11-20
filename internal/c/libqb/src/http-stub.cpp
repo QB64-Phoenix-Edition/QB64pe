@@ -41,6 +41,10 @@ int libqb_http_get_content_length(int id, uint64_t *ptr) {
     return -1;
 }
 
+int libqb_http_get_status_code(int id) {
+    return -1;
+}
+
 const char *libqb_http_get_url(int handle) {
     return NULL;
 }

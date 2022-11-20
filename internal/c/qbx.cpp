@@ -574,6 +574,7 @@ extern void sub_seek(int32 i, int64 pos);
 extern int64 func_seek(int32 i);
 extern int64 func_loc(int32 i);
 extern qbs *func_input(int32 n, int32 i, int32 passed);
+extern int32 func__statusCode(int32 handle);
 
 extern double func_sqr(double value);
 extern void sub_beep();

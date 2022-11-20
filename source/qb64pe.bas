@@ -1933,6 +1933,7 @@ DO
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
+                    regUnstableHttp
 
                 CASE ELSE
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
@@ -21270,6 +21271,29 @@ SUB reginternal
     reginternalsubfunc = 1
     '$INCLUDE:'subs_functions\subs_functions.bas'
     reginternalsubfunc = 0
+END SUB
+
+SUB regUnstableHttp
+    reginternalsubfunc = 1
+
+    clearid
+    id.n = qb64prefix$ + "StatusCode" ' Name in CaMeL case
+    id.subfunc = 1 ' 1 = function, 2 = sub
+    id.callname = "func__statusCode" ' C/C++ function name
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_STATUSCODE(httpHandle&)" ' syntax help
+    regid
+
+    ' If we're doing $NOPREFIX then we register it again with the underscore
+    IF qb64prefix_set THEN
+        id.n = "_StatusCode"
+        regid
+    END IF
+
+    reginternalsubfunc = 0
+
 END SUB
 
 'this sub is faulty atm!

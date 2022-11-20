@@ -37,6 +37,8 @@ struct handle {
     uint64_t content_length = 0;
     char *url = NULL;
 
+    int status_code = -1;
+
     handle() {
         io_lock = libqb_mutex_new();
         libqb_buffer_init(&out);
@@ -108,6 +110,8 @@ static void __fillout_curl_info(struct handle *handle) {
 
     if (urlp)
         handle->url = strdup(urlp);
+
+    res = curl_easy_getinfo(handle->con, CURLINFO_RESPONSE_CODE, &handle->status_code);
 
     // If someone is waiting for the info then we let them know
     if (handle->response_started) {
@@ -323,6 +327,21 @@ int libqb_http_get_content_length(int id, uint64_t *length) {
 
         *length = handle->content_length;
         return 0;
+    }
+}
+
+int libqb_http_get_status_code(int id) {
+    if (!is_valid_http_id(id))
+        return -1;
+
+    struct handle *handle = curl_state.handle_table[id];
+
+    wait_for_info(handle);
+
+    {
+        libqb_mutex_guard guard(handle->io_lock);
+
+        return handle->status_code;
     }
 }
 

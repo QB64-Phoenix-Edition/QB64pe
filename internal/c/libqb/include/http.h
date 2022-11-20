@@ -23,6 +23,9 @@ int libqb_http_get_length(int handle, size_t *length);
 // Gets the value from the Content-Length HTTP header. If none was provided, returns an error
 int libqb_http_get_content_length(int handle, uint64_t *length);
 
+// Returns positive status code. -1 indicates there was none (Ex. Connection was unsuccessful)
+int libqb_http_get_status_code(int handle);
+
 // Returns the "effective url" as reported by curl, it indicates the location
 // actually connected to after redirects and such.
 //

@@ -10,6 +10,7 @@ Print h&
 ' situation.
 h& = _OpenClient("https://www.example.com/unknownUrl")
 Print h&
+Print _StatusCode(h&)
 
 System
 

@@ -21699,6 +21699,24 @@ int32 func_eof(int32 i) {
     return 0;
 }
 
+int32 func__statusCode(int32 handle) {
+    if (handle >= 0) {
+        error(52);
+        return -1;
+    }
+
+    int real_handle = -(handle + 1);
+    int code = libqb_http_get_status_code(real_handle);
+
+    if (code == -1) {
+        // Connection isn't valid, it has no status code.
+        error(9);
+        return -1;
+    }
+
+    return code;
+}
+
 void sub_seek(int32 i, int64 pos) {
     if (new_error)
         return;

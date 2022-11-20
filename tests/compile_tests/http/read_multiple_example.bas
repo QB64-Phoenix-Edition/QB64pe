@@ -27,7 +27,7 @@ While Not Done&
 Wend
 
 For x = LBound(handles&) TO UBound(handles&)
-    Print "Handle:"; handles&(x); ", LOF:"; Lof(handles&(x)); ", Content length:"; Len(content$(x))
+    Print "Handle:"; handles&(x); ", LOF:"; Lof(handles&(x)); ", Content length:"; Len(content$(x)); ", Status Code: "; _StatusCode(handles&(x))
 
     Close #handles&(x)
 Next
