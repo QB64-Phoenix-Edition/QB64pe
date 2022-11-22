@@ -5464,7 +5464,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Update All #Pages..." THEN
                 PCOPY 2, 0
-                q$ = ideyesnobox("Update Help", "This can take up to 20 minutes.\nRedownload all cached help content from the wiki?")
+                q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
                 IF q$ = "Y" THEN
                     Help_Recaching = 1: Help_IgnoreCache = 1
@@ -18820,6 +18820,7 @@ FUNCTION ideupdatehelpbox
         'update steps
         SELECT CASE UpdateStep
             CASE 1
+                FullMessage$(1) = "Preparing help update..."
                 FullMessage$(2) = "Generating list of cached content..."
             CASE 2
                 FullMessage$(2) = "Adding core help pages to list..."
@@ -18844,7 +18845,6 @@ FUNCTION ideupdatehelpbox
             maxprogresswidth = 52 'arbitrary
             percentage = INT(n / c * 100)
             percentagechars = INT(maxprogresswidth * n / c)
-            'percentageMsg$ = "[" + STRING$(percentagechars, 254) + SPACE$(maxprogresswidth - percentagechars) + "]" + STR$(percentage) + "%"
             percentageMsg$ = STRING$(percentagechars, 219) + STRING$(maxprogresswidth - percentagechars, 176) + STR$(percentage) + "%"
             _PRINTSTRING (p.x + (p.w \ 2 - LEN(percentageMsg$) \ 2) + 1, p.y + 4), percentageMsg$
         ELSEIF UpdateStep = 6 THEN
@@ -18908,29 +18908,44 @@ FUNCTION ideupdatehelpbox
         SELECT CASE UpdateStep
             CASE 1
                 'Create a list of all files to be recached
+                st# = TIMER(0.001)
                 IF Help_Recaching < 2 THEN
                     f$ = CHR$(0) + idezfilelist$("internal/help", 2, "*.txt") + CHR$(0)
                     IF LEN(f$) = 2 THEN f$ = CHR$(0)
                 ELSE
                     f$ = CHR$(0) 'no dir scan for 'qb64pe -u' (build time update)
                 END IF
-
-                'Prepend core pages to list
-                f$ = CHR$(0) + "Keyword_Reference_-_By_usage.txt" + f$
-                f$ = CHR$(0) + "QB64_Help_Menu.txt" + f$
-                f$ = CHR$(0) + "QB64_FAQ.txt" + f$
+                et# = TIMER(0.001) - st#: IF et# < 0 THEN et# = et# + 86400
+                IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 2
+                'Prepend core pages to list (if not already in list)
+                st# = TIMER(0.001)
+                PageName2$ = "QB64_FAQ.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "QB64_Help_Menu.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "ERROR_Codes.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Keywords_currently_not_supported_by_QB64.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Keyword_Reference_-_By_usage.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                et# = TIMER(0.001) - st#: IF et# < 0 THEN et# = et# + 86400
+                IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 3
                 'Download and PARSE alphabetical index to build required F1 help links
-                FullMessage$(1) = "Regenerating keyword list..."
+                st# = TIMER(0.001)
                 a$ = Wiki$("Keyword Reference - Alphabetical")
                 IF INSTR(a$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO
                 WikiParse a$ 'update links.bin and check for plugin templates
+                et# = TIMER(0.001) - st#: IF et# < 0 THEN et# = et# + 86400
+                IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 4
                 'Add all linked pages to download list (if not already in list)
+                st# = TIMER(0.001)
                 fh = FREEFILE
                 OPEN "internal\help\links.bin" FOR INPUT AS #fh
                 DO UNTIL EOF(fh)
@@ -18952,39 +18967,32 @@ FUNCTION ideupdatehelpbox
                                 END SELECT
                             NEXT
                             PageName2$ = PageName2$ + ".txt"
-                            IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN
-                                f$ = f$ + PageName2$ + CHR$(0)
-                            END IF
+                            IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = f$ + PageName2$ + CHR$(0)
                         END IF
                     END IF
                 LOOP
                 CLOSE #fh
-
-                'Redownload all listed files
-                IF f$ <> CHR$(0) THEN
-                    c = 0 'count files to download
-                    FOR x = 2 TO LEN(f$)
-                        IF ASC(f$, x) = 0 THEN c = c + 1
-                    NEXT
-                    c = c - 1
-
-                    f$ = RIGHT$(f$, LEN(f$) - 1)
-                    z$ = CHR$(0)
-                    n = 0
-                ELSE
-                    GOTO stoprecache
-                END IF
+                'count all listed files to download
+                c = 0
+                FOR x = 2 TO LEN(f$)
+                    IF ASC(f$, x) = 0 THEN c = c + 1
+                NEXT
+                'set start conditions
+                f$ = RIGHT$(f$, LEN(f$) - 1)
+                n = 0
                 FullMessage$(2) = ""
+                et# = TIMER(0.001) - st#: IF et# < 0 THEN et# = et# + 86400
+                IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 5
+                'Redownload all listed files
                 IF LEN(f$) > 0 THEN
-                    x2 = INSTR(f$, z$)
-                    f2$ = LEFT$(f$, x2 - 1): f$ = RIGHT$(f$, LEN(f$) - x2)
-
+                    x2 = INSTR(f$, CHR$(0))
+                    f2$ = LEFT$(f$, x2 - 1): f$ = MID$(f$, x2 + 1)
                     IF RIGHT$(f2$, 4) = ".txt" THEN
                         f2$ = LEFT$(f2$, LEN(f2$) - 4)
                         n = n + 1
-                        FullMessage$(2) = "Page title: " + f2$
+                        FullMessage$(2) = "Page: " + f2$
                         ignore$ = Wiki$(f2$)
                         WikiParse ignore$ 'just check for plugin templates
                     END IF
@@ -18992,7 +19000,6 @@ FUNCTION ideupdatehelpbox
                     UpdateStep = UpdateStep + 1
                 END IF
             CASE 6
-                stoprecache:
                 IF Help_Recaching = 2 THEN EXIT DO
                 FullMessage$(1) = "All pages updated."
                 FullMessage$(2) = ""
