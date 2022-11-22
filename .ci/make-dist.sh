@@ -14,13 +14,13 @@ unzip -oqq ./help.zip -d ./internal
 # end internal/help
 
 case "$buildPlatform" in
-    windows-latest)
+    win)
         ./internal/c/c_compiler/bin/mingw32-make.exe OS=win clean
         ;;
-    ubuntu-latest)
+    lnx)
         make OS=lnx clean
         ;;
-    macos-latest)
+    osx)
         make OS=osx clean
         ;;
 esac
@@ -49,7 +49,7 @@ cp -rp ./internal/c/parts $DIST_ROOT/internal/c/
 cp -p ./internal/c/*      $DIST_ROOT/internal/c/
 
 case "$buildPlatform" in
-    windows-latest)
+    win)
         filename="qb64pe_win-$PLATFORM-$version.7z"
 
         format=7zip
@@ -58,7 +58,7 @@ case "$buildPlatform" in
         cp -r ./internal/c/c_compiler $DIST_ROOT/internal/c/
         ;;
 
-    ubuntu-latest)
+    lnx)
         filename="qb64pe_lnx-$version.tar.gz"
         format=tar
 
@@ -67,7 +67,7 @@ case "$buildPlatform" in
         cp -p ./setup_lnx.sh $DIST_ROOT
         ;;
 
-    macos-latest)
+    osx)
         filename="qb64pe_osx-$version.tar.gz"
         format=tar
 

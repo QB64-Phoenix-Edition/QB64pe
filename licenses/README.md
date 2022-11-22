@@ -71,6 +71,14 @@ These libraries are pulled in if `_INFLATE$()` or `_DEFLATE$()` are used.
 | :------ | :-----: | :----------- | :------- |
 | ZLib | ZLIB | license_zlib.txt | internal/c/c_compiler (provide by MinGW on Windows, system library otherwise) |
 
+## Http Support
+
+These libraries are pulled in if `_OPENCLIENT()` and `$Unstable:Http` areused:
+
+| Library | License | License file | Location |
+| :------ | :-----: | :----------- | :------- |
+| libcurl | curl | license_libcurl.txt | internal/c/parts/network/http/curl/ |
+
 ## Sound Support
 
 These libraries are pulled in when using any sound-related functionality.
