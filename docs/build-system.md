@@ -135,6 +135,7 @@ These flags controls whether certain dependencies are compiled in or not. All of
 | `DEP_CONSOLE` | On Windows, this gives the program console support (graphical support is still allowed) |
 | `DEP_CONSOLE_ONLY` | Same as `DEP_CONSOLE`, but also removes GLUT and graphics support. |
 | `DEP_AUDIO_MINIAUDIO` | Enables the miniaudio backend. Should not be used with the other `DEP_AUDIO` switches which enable the old backend. |
+| `DEP_HTTP` | Enables http support via libcurl. Should only be used if `DEP_SOCKETS` is on. |
 
 Versioning
 ----------
