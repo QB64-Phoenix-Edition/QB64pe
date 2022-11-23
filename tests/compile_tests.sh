@@ -32,6 +32,12 @@ show_incorrect_result()
 # This is either win, lnx, or osx
 OS=$CI_OS
 
+# On Linux, we make use of xvfb-run to provide each test with a framebuffer
+# based X server, which allows graphics to work.
+if [ "$OS" == "lnx" ]; then
+    LNX_PREFIX=xvfb-run
+fi
+
 # Each .bas file represents a separate test.
 while IFS= read -r test
 do 
@@ -107,7 +113,7 @@ do
 
         pushd . > /dev/null
         cd "./tests/compile_tests/$category"
-        testResult=$("../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" 2>&1)
+        testResult=$($LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" 2>&1)
         ERR=$?
         popd > /dev/null
 
