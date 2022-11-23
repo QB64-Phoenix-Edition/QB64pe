@@ -1,6 +1,7 @@
 FUNCTION Back2BackName$ (a$)
     IF a$ = "Keyword Reference - Alphabetical" THEN Back2BackName$ = "Alphabetical": EXIT FUNCTION
     IF a$ = "Keyword Reference - By usage" THEN Back2BackName$ = "By Usage": EXIT FUNCTION
+    IF a$ = "Keywords currently not supported by QB64" THEN Back2BackName$ = "Unsupported": EXIT FUNCTION
     IF a$ = "QB64 Help Menu" THEN Back2BackName$ = "Help": EXIT FUNCTION
     IF a$ = "QB64 FAQ" THEN Back2BackName$ = "FAQ": EXIT FUNCTION
     Back2BackName$ = a$
@@ -70,8 +71,6 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     'Url query and output arguments for curl
     'url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
     url$ = wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit"
-    IF LCASE$(LEFT$(url$, 8)) = "https://" THEN url$ = MID$(url$, 9)
-    IF LCASE$(LEFT$(url$, 7)) = "http://" THEN url$ = MID$(url$, 8)
     outputFile$ = Cache_Folder$ + "/" + PageName3$ + ".txt"
     'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
@@ -84,7 +83,11 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     'a$ = SPACE$(LOF(fh))
     'GET #fh, 1, a$
     'CLOSE #fh
-    a$ = wikiDLPage$(url$, 15)
+    IF PageName$ = "Initialize" OR PageName$ = "Update All" THEN
+        a$ = "" 'dummy pages (for error display)
+    ELSE
+        a$ = wikiDLPage$(url$, 15)
+    END IF
 
     'Find wikitext in the downloaded page
     s1 = INSTR(a$, s1$)
@@ -1072,52 +1075,48 @@ FUNCTION wikiSafeName$ (page$) 'create a unique name for both case sensitive & i
     wikiSafeName$ = page$ + "_" + ext$
 END FUNCTION
 
+$UNSTABLE:HTTP
 FUNCTION wikiDLPage$ (url$, timeout!)
-'--- prepare args ---
-spo% = INSTR(url$, "/")
-hst$ = LEFT$(url$, spo% - 1)
-obj$ = MID$(url$, spo%)
-eol$ = CHR$(13) + CHR$(10)
+'--- set default result & avoid side effects ---
 wikiDLPage$ = ""
+wik$ = url$: tio! = timeout!
 '--- open client ---
-ch& = _OPENCLIENT("TCP/IP:80:" + hst$)
+retry:
+ch& = _OPENCLIENT(wik$)
+IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
+    IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
+        IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
+            IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
+                wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
+                WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+            END IF
+            wik$ = "http://" + MID$(wik$, 9): GOTO retry
+        END IF
+    END IF
+END IF
 IF ch& = 0 THEN EXIT FUNCTION
-'--- send request ---
-req$ = "GET " + obj$ + " HTTP/1.1" + eol$
-req$ = req$ + "Host: " + hst$ + eol$
-req$ = req$ + "User-Agent: QB64-PE/" + Version$ + " (qb64phoenix.com)" + eol$
-req$ = req$ + "Cache-Control: no-cache" + eol$
-req$ = req$ + eol$
-PUT ch&, , req$
-res$ = ""
 '--- wait for response ---
-st! = TIMER
+res$ = "": st! = TIMER
 DO
     _DELAY 0.05
     GET ch&, , rec$
     IF LEN(rec$) > 0 THEN st! = TIMER
     res$ = res$ + rec$
-    IF LEN(res$) < 15 OR LEFT$(res$, 15) = "HTTP/1.1 200 OK" THEN
-        cl% = INSTR(res$, "Content-Length:")
-        IF cl% > 0 THEN
-            cle% = INSTR(cl%, res$, eol$)
-            IF cle% > 0 THEN
-                le& = VAL(MID$(res$, cl% + 15, cle% - cl% - 14))
-                das% = INSTR(cle%, res$, eol$ + eol$)
-                IF das% > 0 THEN
-                    das% = das% + 4
-                    IF (LEN(res$) - das% + 1) = le& THEN
-                        CLOSE ch&
-                        wikiDLPage$ = MID$(res$, das%, le&)
-                        EXIT FUNCTION
-                    END IF
-                END IF
+    IF _STATUSCODE(ch&) = 200 THEN
+        le& = LOF(ch&)
+        IF le& > -1 THEN
+            IF LEN(res$) = le& THEN
+                wikiDLPage$ = res$: EXIT DO
+            END IF
+        ELSE
+            IF EOF(ch&) THEN
+                wikiDLPage$ = res$: EXIT DO
             END IF
         END IF
     ELSE
-        timeout! = 0
+        tio! = 0
     END IF
-LOOP UNTIL TIMER > st! + timeout!
+LOOP UNTIL TIMER > st! + tio!
 CLOSE ch&
 END FUNCTION
 

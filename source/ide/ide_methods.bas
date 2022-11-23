@@ -5464,7 +5464,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Update All #Pages..." THEN
                 PCOPY 2, 0
-                q$ = ideyesnobox("Update Help", "This can take up to 15 minutes.\nRedownload all cached help content from the wiki?")
+                q$ = ideyesnobox("Update Help", "This can take up to 10 minutes.\nRedownload all cached help content from the wiki?")
                 PCOPY 2, 0
                 IF q$ = "Y" THEN
                     Help_Recaching = 1: Help_IgnoreCache = 1
@@ -18994,6 +18994,7 @@ FUNCTION ideupdatehelpbox
                         n = n + 1
                         FullMessage$(2) = "Page: " + f2$
                         ignore$ = Wiki$(f2$)
+                        IF INSTR(ignore$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO
                         WikiParse ignore$ 'just check for plugin templates
                     END IF
                 ELSE
