@@ -23,6 +23,8 @@
 #endif
 
 #include "mutex.h"
+#include "thread.h"
+#include "completion.h"
 #include "audio.h"
 #include "image.h"
 #include "gui.h"
@@ -241,6 +243,21 @@ extern "C" void QB64_Window_Handle(void *handle) {
     //...
 }
 
+static bool is_glut_up();
+static void start_glut_thread();
+
+#define NEEDS_GLUT(error_result) do { \
+        if (!is_glut_up()) { \
+            error(5); \
+            return error_result; \
+        } \
+    } while (0)
+
+#define OPTIONAL_GLUT(result) do { \
+        if (!is_glut_up()) \
+            return result; \
+    } while (0)
+
 // forward references
 void set_view(int32 new_mode);
 void set_render_source(int32 new_handle);
@@ -264,8 +281,6 @@ float environment_2d__screen_y_scale = 1.0f;
 int32 environment_2d__screen_smooth = 0; // 1(LINEAR) or 0(NEAREST)
 int32 environment_2d__letterbox = 0;     // 1=vertical black stripes required, 2=horizontal black stripes required
 
-int32 window_exists = 0;
-int32 create_window = 0;
 int32 window_focused = 0; // Not used on Windows
 uint8 *window_title = NULL;
 int32 temp_window_title_set = 0;
@@ -2575,18 +2590,8 @@ void FreeConsole() { return; }
 // vc->project->properties->configuration properties->general->configuration type->static library(.lib)
 
 extern void QBMAIN(void *);
-extern void TIMERTHREAD();
-void MAIN_LOOP();
-
-#ifdef QB64_WINDOWS
-extern void QBMAIN_WINDOWS(void *);
-extern void TIMERTHREAD_WINDOWS(void *);
-void MAIN_LOOP_WINDOWS(void *);
-#else
-extern void *QBMAIN_LINUX(void *);
-extern void *TIMERTHREAD_LINUX(void *);
-void *MAIN_LOOP_LINUX(void *);
-#endif
+extern void TIMERTHREAD(void *);
+void MAIN_LOOP(void *);
 
 void GLUT_MAINLOOP_THREAD(void *);
 void GLUT_DISPLAY_REQUEST();
@@ -16948,18 +16953,11 @@ int64 func__handle() {
     return (ptrszint)window_handle;
 #    endif
 
-    if (!screen_hide) {
-        while (!window_exists) {
-            Sleep(100);
-        }
-        while (!window_handle) {
-            Sleep(100);
-        }
-        return (ptrszint)window_handle;
-    }
-#endif
-
+    OPTIONAL_GLUT(0);
+    return (ptrszint)window_handle;
+#else
     return 0;
+#endif
 }
 
 qbs *func__title() {
@@ -16980,10 +16978,7 @@ void set_foreground_window(ptrszint i) {
 int32 func__hasfocus() {
 #ifdef QB64_GUI
 #    ifdef QB64_WINDOWS
-    while (!window_handle) {
-        Sleep(100);
-    }
-    return -(window_handle == GetForegroundWindow());
+    return -((HWND)func__handle() == GetForegroundWindow());
 #    elif defined(QB64_LINUX)
     return window_focused;
 #    endif
@@ -23787,14 +23782,10 @@ int32 func_freefile() { return gfs_fileno_freefile(); }
 
 void sub__mousehide() {
 #ifdef QB64_GUI
-    if (!screen_hide) {
-        while (!window_exists) {
-            Sleep(100);
-        }
 #    ifdef QB64_GLUT
-        glutSetCursor(GLUT_CURSOR_NONE);
+    OPTIONAL_GLUT();
+    glutSetCursor(GLUT_CURSOR_NONE);
 #    endif
-    }
 #endif
 }
 
@@ -23809,6 +23800,7 @@ void sub__mouseshow(qbs *style, int32 passed) {
         return;
 
 #ifdef QB64_GLUT
+    OPTIONAL_GLUT();
 
     static qbs *str = NULL;
     if (str == NULL)
@@ -23864,12 +23856,7 @@ void sub__mouseshow(qbs *style, int32 passed) {
     }
 cursor_valid:
 
-    if (!screen_hide) {
-        while (!window_exists) {
-            Sleep(100);
-        }
-        glutSetCursor(mouse_cursor_style);
-    }
+    glutSetCursor(mouse_cursor_style);
 
 #endif
 }
@@ -23901,6 +23888,8 @@ float func__mousemovementy(int32 context, int32 passed) {
 
 void sub__mousemove(float x, float y) {
 #ifdef QB64_GLUT
+    NEEDS_GLUT();
+
     int32 x2, y2, sx, sy;
     if (display_page->text) {
         sx = fontwidth[display_page->font] * display_page->width;
@@ -23949,9 +23938,6 @@ void sub__mousemove(float x, float y) {
     x2 += environment_2d__screen_x1;
     y2 += environment_2d__screen_y1;
 
-    while (!window_exists) {
-        Sleep(100);
-    }
     glutWarpPointer(x2, y2);
     return;
 
@@ -27428,112 +27414,107 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
             handle_window_icon = i;
     }
 
-    if (!screen_hide) {
-        while (!window_exists) {
-            Sleep(100);
-        }
 
 #        ifdef QB64_WINDOWS
-        while (!window_handle) {
-            Sleep(100);
+    HWND win = (HWND)func__handle();
+    if (!win) {
+        return;
+    }
+
+    static HANDLE ExeIcon;
+    static HANDLE ExeIcon16;
+
+    // Attempt to load the first icon embedded in the .exe
+    if (!ExeIcon)
+        ExeIcon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 32, 32, 0);
+    if (!ExeIcon16)
+        ExeIcon16 = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 16, 16, 0);
+
+    // If we have an embedded icon, we'll use it instead of QB64-PE's default
+    if (!(passed & 1) && (ExeIcon)) {
+        SendMessage(win, WM_SETICON, ICON_BIG, (LPARAM)ExeIcon);
+
+        if (ExeIcon16) {
+            SendMessage(win, WM_SETICON, ICON_SMALL, (LPARAM)ExeIcon16);
+        } else {
+            SendMessage(win, WM_SETICON, ICON_SMALL, (LPARAM)ExeIcon);
+        }
+        return;
+    }
+    for (ii = 1; ii <= 2; ii++) {
+
+        if (ii == 1) {
+            i = handle_icon;
+            w = GetSystemMetrics(SM_CXICON);
+            h = GetSystemMetrics(SM_CYICON);
+        }
+        if (ii == 2) {
+            i = handle_window_icon;
+            w = GetSystemMetrics(SM_CXSMICON);
+            h = GetSystemMetrics(SM_CYSMICON);
         }
 
-        static HANDLE ExeIcon;
-        static HANDLE ExeIcon16;
+        // source[http://support.microsoft.com/kb/318876]
+        ICONINFO iinfo;
+        HDC hdc;
+        BITMAPV5HEADER bi;
+        HBITMAP hBitmap, hOldBitmap;
+        void *lpBits;
+        HCURSOR hAlphaCursor = NULL;
+        ZeroMemory(&bi, sizeof(BITMAPV5HEADER));
+        bi.bV5Size = sizeof(BITMAPV5HEADER);
+        bi.bV5Width = w;
+        bi.bV5Height = h;
+        bi.bV5Planes = 1;
+        bi.bV5BitCount = 32;
+        bi.bV5Compression = BI_BITFIELDS;
+        // The following mask specification specifies a supported 32 BPP
+        // alpha format for Windows XP.
+        bi.bV5RedMask = 0x00FF0000;
+        bi.bV5GreenMask = 0x0000FF00;
+        bi.bV5BlueMask = 0x000000FF;
+        bi.bV5AlphaMask = 0xFF000000;
+        hdc = GetDC(NULL);
+        // Create the DIB section with an alpha channel.
+        hBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&lpBits, NULL, (DWORD)0);
+        ReleaseDC(NULL, hdc);
 
-        // Attempt to load the first icon embedded in the .exe
-        if (!ExeIcon)
-            ExeIcon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 32, 32, 0);
-        if (!ExeIcon16)
-            ExeIcon16 = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 16, 16, 0);
+        i2 = func__newimage(w, h, 32, 1);
+        sub__dontblend(i2, 1);
+        sub__putimage(NULL, NULL, NULL, NULL, -i, i2, NULL, NULL, NULL, NULL, 8 + 32);
 
-        // If we have an embedded icon, we'll use it instead of QB64-PE's default
-        if (!(passed & 1) && (ExeIcon)) {
-            SendMessage(window_handle, WM_SETICON, ICON_BIG, (LPARAM)ExeIcon);
-
-            if (ExeIcon16) {
-                SendMessage(window_handle, WM_SETICON, ICON_SMALL, (LPARAM)ExeIcon16);
-            } else {
-                SendMessage(window_handle, WM_SETICON, ICON_SMALL, (LPARAM)ExeIcon);
+        o = img[-i2].offset32;
+        o2 = (uint32 *)lpBits;
+        for (y = 0; y < h; y++) {
+            for (x = 0; x < w; x++) {
+                c = o[(h - 1 - y) * w + x];
+                o2[y * w + x] = c;
             }
-            return;
         }
-        for (ii = 1; ii <= 2; ii++) {
 
-            if (ii == 1) {
-                i = handle_icon;
-                w = GetSystemMetrics(SM_CXICON);
-                h = GetSystemMetrics(SM_CYICON);
-            }
-            if (ii == 2) {
-                i = handle_window_icon;
-                w = GetSystemMetrics(SM_CXSMICON);
-                h = GetSystemMetrics(SM_CYSMICON);
-            }
+        sub__freeimage(i2, 1);
 
-            // source[http://support.microsoft.com/kb/318876]
-            ICONINFO iinfo;
-            HDC hdc;
-            BITMAPV5HEADER bi;
-            HBITMAP hBitmap, hOldBitmap;
-            void *lpBits;
-            HCURSOR hAlphaCursor = NULL;
-            ZeroMemory(&bi, sizeof(BITMAPV5HEADER));
-            bi.bV5Size = sizeof(BITMAPV5HEADER);
-            bi.bV5Width = w;
-            bi.bV5Height = h;
-            bi.bV5Planes = 1;
-            bi.bV5BitCount = 32;
-            bi.bV5Compression = BI_BITFIELDS;
-            // The following mask specification specifies a supported 32 BPP
-            // alpha format for Windows XP.
-            bi.bV5RedMask = 0x00FF0000;
-            bi.bV5GreenMask = 0x0000FF00;
-            bi.bV5BlueMask = 0x000000FF;
-            bi.bV5AlphaMask = 0xFF000000;
-            hdc = GetDC(NULL);
-            // Create the DIB section with an alpha channel.
-            hBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&lpBits, NULL, (DWORD)0);
-            ReleaseDC(NULL, hdc);
+        // Create an empty mask bitmap.
+        HBITMAP hMonoBitmap = CreateBitmap(w, h, 1, 1, NULL);
 
-            i2 = func__newimage(w, h, 32, 1);
-            sub__dontblend(i2, 1);
-            sub__putimage(NULL, NULL, NULL, NULL, -i, i2, NULL, NULL, NULL, NULL, 8 + 32);
+        iinfo.fIcon = TRUE; // Change fIcon to TRUE to create an alpha icon
+        iinfo.xHotspot = 0;
+        iinfo.yHotspot = 0;
+        iinfo.hbmMask = hMonoBitmap;
+        iinfo.hbmColor = hBitmap;
+        // Create the alpha cursor with the alpha DIB section.
+        hAlphaCursor = CreateIconIndirect(&iinfo);
 
-            o = img[-i2].offset32;
-            o2 = (uint32 *)lpBits;
-            for (y = 0; y < h; y++) {
-                for (x = 0; x < w; x++) {
-                    c = o[(h - 1 - y) * w + x];
-                    o2[y * w + x] = c;
-                }
-            }
+        DeleteObject(hBitmap);
+        DeleteObject(hMonoBitmap);
 
-            sub__freeimage(i2, 1);
+        if (ii == 1)
+            SendMessage(win, WM_SETICON, ICON_BIG, (LPARAM)hAlphaCursor);
+        if (ii == 2)
+            SendMessage(win, WM_SETICON, ICON_SMALL, (LPARAM)hAlphaCursor);
 
-            // Create an empty mask bitmap.
-            HBITMAP hMonoBitmap = CreateBitmap(w, h, 1, 1, NULL);
-
-            iinfo.fIcon = TRUE; // Change fIcon to TRUE to create an alpha icon
-            iinfo.xHotspot = 0;
-            iinfo.yHotspot = 0;
-            iinfo.hbmMask = hMonoBitmap;
-            iinfo.hbmColor = hBitmap;
-            // Create the alpha cursor with the alpha DIB section.
-            hAlphaCursor = CreateIconIndirect(&iinfo);
-
-            DeleteObject(hBitmap);
-            DeleteObject(hMonoBitmap);
-
-            if (ii == 1)
-                SendMessage(window_handle, WM_SETICON, ICON_BIG, (LPARAM)hAlphaCursor);
-            if (ii == 2)
-                SendMessage(window_handle, WM_SETICON, ICON_SMALL, (LPARAM)hAlphaCursor);
-
-        } // ii
-
+    } // ii
 #        endif // QB64_WINDOWS
-    }          //! screen_hide
 #    endif     // DEPENDENCY_CONSOLE_ONLY
 } // sub__icon
 #endif // DEPENDENCY_ICON
@@ -27543,6 +27524,7 @@ int32 func_screenwidth() {
     return GetSystemMetrics(SM_CXSCREEN);
 #else
 #    ifdef QB64_GLUT
+    OPTIONAL_GLUT(0);
     return glutGet(GLUT_SCREEN_WIDTH);
 #    else
     return 0;
@@ -27555,6 +27537,7 @@ int32 func_screenheight() {
     return GetSystemMetrics(SM_CYSCREEN);
 #else
 #    ifdef QB64_GLUT
+    OPTIONAL_GLUT(0);
     return glutGet(GLUT_SCREEN_HEIGHT);
 #    else
     return 0;
@@ -27564,28 +27547,14 @@ int32 func_screenheight() {
 
 void sub_screenicon() {
 #ifdef QB64_GLUT
-    while (!window_exists) {
-        Sleep(100);
-    }
-#    ifdef QB64_WINDOWS
-
-    while (!window_handle) {
-        Sleep(100);
-    }
-#    endif
+    NEEDS_GLUT();
     glutIconifyWindow();
-    return;
 #endif
 }
 
 int32 func_windowexists() {
 #ifdef QB64_GLUT
-#    ifdef QB64_WINDOWS
-    if (!window_handle) {
-        return 0;
-    }
-#    endif
-    return -window_exists;
+    return is_glut_up();
 #else
     return -1;
 #endif
@@ -27593,21 +27562,12 @@ int32 func_windowexists() {
 
 int32 func_screenicon() {
 #ifdef QB64_GLUT
-    while (!window_exists) {
-        Sleep(100);
-    }
 #    ifdef QB64_WINDOWS
-    while (!window_handle) {
-        Sleep(100);
-    }
-#    endif
-    extern int32 screen_hide;
-    if (screen_hide) {
-        error(5);
+    HWND win = (HWND)func__handle();
+    if (!win) {
         return 0;
     }
-#    ifdef QB64_WINDOWS
-    return -IsIconic(window_handle);
+    return -IsIconic(win);
 #    else
     /*
         Linux code not compiling for now
@@ -27636,7 +27596,6 @@ int32 func__autodisplay() {
 void sub__autodisplay() { autodisplay = 1; }
 
 void sub__display() {
-
     if (screen_hide)
         return;
 
@@ -32998,14 +32957,10 @@ qbs *func__os() {
 
 int32 func__screenx() {
 #if defined(QB64_GUI) && defined(QB64_WINDOWS) && defined(QB64_GLUT)
-    while (!window_exists) {
-        Sleep(100);
-    } // Wait for window to be created before checking position
+    NEEDS_GLUT(0);
     return glutGet(GLUT_WINDOW_X) - glutGet(GLUT_WINDOW_BORDER_WIDTH);
 #elif defined(QB64_GUI) && defined(QB64_MACOSX) && defined(QB64_GLUT)
-    while (!window_exists) {
-        Sleep(100);
-    } // Wait for window to be created before checking position
+    NEEDS_GLUT(0);
     return glutGet(GLUT_WINDOW_X);
 #endif
     return 0; // if not windows then return 0
@@ -33013,14 +32968,10 @@ int32 func__screenx() {
 
 int32 func__screeny() {
 #if defined(QB64_GUI) && defined(QB64_WINDOWS) && defined(QB64_GLUT)
-    while (!window_exists) {
-        Sleep(100);
-    } // Wait for window to be created before checking position
+    NEEDS_GLUT(0);
     return glutGet(GLUT_WINDOW_Y) - glutGet(GLUT_WINDOW_BORDER_WIDTH) - glutGet(GLUT_WINDOW_HEADER_HEIGHT);
 #elif defined(QB64_GUI) && defined(QB64_MACOSX) && defined(QB64_GLUT)
-    while (!window_exists) {
-        Sleep(100);
-    } // Wait for window to be created before checking position
+    NEEDS_GLUT(0);
     return glutGet(GLUT_WINDOW_Y);
 #endif
     return 0; // if not windows then return 0
@@ -33037,9 +32988,8 @@ void sub__screenmove(int32 x, int32 y, int32 passed) {
         return;
 
 #if defined(QB64_GUI) && defined(QB64_GLUT)
-    while (!window_exists) {
-        Sleep(100);
-    } // wait for window to be created before moving it.
+    NEEDS_GLUT();
+
     if (passed == 2) {
         glutPositionWindow(x, y);
     } else {
@@ -34340,22 +34290,23 @@ void sub__console(int32 onoff) { // on=1 off=2
 }
 
 void sub__screenshow() {
-    if (!window_exists) {
-        create_window = 1;
-    } else {
 #ifdef QB64_GLUT
-        glutShowWindow();
-#endif
-    }
     screen_hide = 0;
+    // $SCREENHIDE programs will not have the window running
+    start_glut_thread();
+    glutShowWindow();
+#endif
 }
 
 void sub__screenhide() {
-    if (window_exists) {
+    if (screen_hide)
+        return;
+
 #ifdef QB64_GLUT
-        glutHideWindow();
+    // start_glut_thread();
+    glutHideWindow();
 #endif
-    }
+
     screen_hide = 1;
 }
 
@@ -37082,15 +37033,14 @@ void sub__title(qbs *title) {
     if (old_buf)
         free(old_buf);
 
-    if (window_exists) {
 #ifdef QB64_GLUT
 #    ifdef QB64_MACOSX
-        temp_window_title_set = 1;
+    temp_window_title_set = 1;
 #    else
-        glutSetWindowTitle((char *)window_title);
+    OPTIONAL_GLUT();
+    glutSetWindowTitle((char *)window_title);
 #    endif
 #endif
-    }
 
 } // title
 
@@ -37111,12 +37061,16 @@ void sub__echo(qbs *message) {
 
 void sub__filedrop(int32 on_off = NULL) {
 #ifdef QB64_WINDOWS
+    HWND win = (HWND)func__handle();
+    if (!win)
+        return;
+
     if ((on_off == NULL) || (on_off == 1)) {
-        DragAcceptFiles((HWND)func__handle(), TRUE);
+        DragAcceptFiles(win, TRUE);
         acceptFileDrop = -1;
     }
     if ((on_off == 2)) {
-        DragAcceptFiles((HWND)func__handle(), FALSE);
+        DragAcceptFiles(win, FALSE);
         acceptFileDrop = 0;
     }
 #endif
@@ -37424,6 +37378,161 @@ static void glutWarning(const char *fmt, va_list lst) {
     // Do something
 }
 
+// Performs all of the FreeGLUT initialization except for calling glutMainLoop()
+static void initialize_glut(int argc, char **argv) {
+#ifdef QB64_GLUT
+#    ifdef CORE_FREEGLUT
+    // This keeps FreeGlut from dumping warnings to console
+    glutInitWarningFunc(glutWarning);
+    glutInitErrorFunc(glutWarning);
+#    endif
+
+    glutInit(&argc, argv);
+
+#    ifdef QB64_MACOSX
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSFlagsChangedMask
+                                          handler:^NSEvent *(NSEvent *event) {
+                                            // notes on bitfields:
+                                            // if ([event modifierFlags] == 131330) keydown_vk(VK+QBVK_LSHIFT);// 100000000100000010
+                                            // if ([event modifierFlags] == 131332) keydown_vk(VK+QBVK_RSHIFT);// 100000000100000100
+                                            // if ([event modifierFlags] == 262401) keydown_vk(VK+QBVK_LCTRL); //1000000000100000001
+                                            // if ([event modifierFlags] == 270592) keydown_vk(VK+QBVK_RCTRL); //1000010000100000000
+                                            // if ([event modifierFlags] == 524576) keydown_vk(VK+QBVK_LALT); //10000000000100100000
+                                            // if ([event modifierFlags] == 524608) keydown_vk(VK+QBVK_RALT); //10000000000101000000
+                                            // caps lock                                                      //   10000000100000000
+
+                                            int x = [event modifierFlags];
+
+                                            if (x & (1 << 0)) {
+                                                if (!keyheld(VK + QBVK_LCTRL))
+                                                    keydown_vk(VK + QBVK_LCTRL);
+                                            } else {
+                                                if (keyheld(VK + QBVK_LCTRL))
+                                                    keyup_vk(VK + QBVK_LCTRL);
+                                            }
+                                            if (x & (1 << 13)) {
+                                                if (!keyheld(VK + QBVK_RCTRL))
+                                                    keydown_vk(VK + QBVK_RCTRL);
+                                            } else {
+                                                if (keyheld(VK + QBVK_RCTRL))
+                                                    keyup_vk(VK + QBVK_RCTRL);
+                                            }
+
+                                            if (x & (1 << 1)) {
+                                                if (!keyheld(VK + QBVK_LSHIFT))
+                                                    keydown_vk(VK + QBVK_LSHIFT);
+                                            } else {
+                                                if (keyheld(VK + QBVK_LSHIFT))
+                                                    keyup_vk(VK + QBVK_LSHIFT);
+                                            }
+                                            if (x & (1 << 2)) {
+                                                if (!keyheld(VK + QBVK_RSHIFT))
+                                                    keydown_vk(VK + QBVK_RSHIFT);
+                                            } else {
+                                                if (keyheld(VK + QBVK_RSHIFT))
+                                                    keyup_vk(VK + QBVK_RSHIFT);
+                                            }
+
+                                            if (x & (1 << 5)) {
+                                                if (!keyheld(VK + QBVK_LALT))
+                                                    keydown_vk(VK + QBVK_LALT);
+                                            } else {
+                                                if (keyheld(VK + QBVK_LALT))
+                                                    keyup_vk(VK + QBVK_LALT);
+                                            }
+                                            if (x & (1 << 6)) {
+                                                if (!keyheld(VK + QBVK_RALT))
+                                                    keydown_vk(VK + QBVK_RALT);
+                                            } else {
+                                                if (keyheld(VK + QBVK_RALT))
+                                                    keyup_vk(VK + QBVK_RALT);
+                                            }
+
+                                            if (x & (1 << 16)) {
+                                                if (!keyheld(VK + QBVK_CAPSLOCK))
+                                                    keydown_vk(VK + QBVK_CAPSLOCK);
+                                            } else {
+                                                if (keyheld(VK + QBVK_CAPSLOCK))
+                                                    keyup_vk(VK + QBVK_CAPSLOCK);
+                                            }
+
+                                            return event;
+                                          }];
+#    endif
+
+#    ifdef QB64_WINDOWS
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
+#    else
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+#    endif
+
+    glutInitWindowSize(640, 400); // cannot be changed unless display_x(etc) are modified
+
+    if (!glutGet(GLUT_DISPLAY_MODE_POSSIBLE)) // must be called on Linux or GLUT crashes
+    {
+        exit(1);
+    }
+
+    if (!window_title) {
+        glutCreateWindow("Untitled");
+    } else {
+        glutCreateWindow((char *)window_title);
+    }
+
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        gui_alert((char *)glewGetErrorString(err));
+    }
+    if (glewIsSupported("GL_EXT_framebuffer_object"))
+        framebufferobjects_supported = 1;
+
+    glutDisplayFunc(GLUT_DISPLAY_REQUEST);
+
+#    ifdef QB64_WINDOWS
+    glutTimerFunc(8, GLUT_TIMER_EVENT, 0);
+#    else
+    glutIdleFunc(GLUT_IDLEFUNC);
+#    endif
+
+    glutKeyboardFunc(GLUT_KEYBOARD_FUNC);
+    glutKeyboardUpFunc(GLUT_KEYBOARDUP_FUNC);
+    glutSpecialFunc(GLUT_SPECIAL_FUNC);
+    glutSpecialUpFunc(GLUT_SPECIALUP_FUNC);
+    glutMouseFunc(GLUT_MOUSE_FUNC);
+    glutMotionFunc(GLUT_MOTION_FUNC);
+    glutPassiveMotionFunc(GLUT_PASSIVEMOTION_FUNC);
+    glutReshapeFunc(GLUT_RESHAPE_FUNC);
+
+#    ifdef CORE_FREEGLUT
+    glutMouseWheelFunc(GLUT_MOUSEWHEEL_FUNC);
+#    endif
+#endif // QB64_GLUT
+}
+
+static bool glut_is_started;
+static struct completion glut_thread_starter;
+static struct completion *glut_thread_initialized;
+
+static void start_glut_thread() {
+    if (glut_is_started)
+        return;
+
+    struct completion init;
+    completion_init(&init);
+
+    glut_thread_initialized = &init;
+
+    completion_finish(&glut_thread_starter);
+
+    completion_wait(&init);
+    completion_clear(&init);
+}
+
+// Checks whether the GLUT thread is running
+static bool is_glut_up() {
+    return glut_is_started;
+}
+
 extern void set_dynamic_info();
 int main(int argc, char *argv[]) {
 
@@ -37585,42 +37694,6 @@ int main(int argc, char *argv[]) {
     segreg[3] = &cpu.ds;
     segreg[4] = &cpu.fs;
     segreg[5] = &cpu.gs;
-
-#ifdef QB64_WINDOWS
-
-    /*
-
-        HANDLE WINAPI GetStdHandle(
-        __in  DWORD nStdHandle
-        );
-        STD_INPUT_HANDLE
-        (DWORD)-10
-
-
-
-        The standard input device. Initially, this is the console input buffer, CONIN$.
-
-        STD_OUTPUT_HANDLE
-        (DWORD)-11
-
-
-
-        The standard output device. Initially, this is the active console screen buffer, CONOUT$.
-
-        STD_ERROR_HANDLE
-        (DWORD)-12
-
-
-
-        The standard error device. Initially, this is the active console screen buffer, CONOUT$.
-
-        // BOOL WINAPI SetConsoleMode(
-        //   __in  HANDLE hConsoleHandle,
-        //   __in  DWORD dwMode
-        // );
-    */
-
-#endif
 
     for (i = 0; i < 32; i++)
         sub_file_print_spaces[i] = 32;
@@ -37901,275 +37974,53 @@ int main(int argc, char *argv[]) {
 
     libqb_http_init();
 
-#ifdef QB64_WINDOWS
-    {
-        uintptr_t thread_handle = _beginthread(QBMAIN_WINDOWS, 0, NULL);
-        SetThreadPriority((HANDLE)thread_handle, THREAD_PRIORITY_NORMAL);
-    }
-#else
-    {
-        static pthread_t thread_handle;
-        pthread_create(&thread_handle, NULL, &QBMAIN_LINUX, NULL);
+#ifdef QB64_GUI
+    if (!screen_hide) {
+        initialize_glut(argc, argv); // Initialize GLUT if the screen isn't hidden
+        glut_is_started = true;
+    } else {
+        completion_init(&glut_thread_starter);
     }
 #endif
 
-#ifdef QB64_WINDOWS
-    {
-        uintptr_t thread_handle = _beginthread(TIMERTHREAD_WINDOWS, 0, NULL);
-        SetThreadPriority((HANDLE)thread_handle, THREAD_PRIORITY_NORMAL);
-    }
-#else
-    {
-        static pthread_t thread_handle;
-        pthread_create(&thread_handle, NULL, &TIMERTHREAD_LINUX, NULL);
-    }
-#endif
+    struct libqb_thread *qbmain = libqb_thread_new();
+    libqb_thread_start(qbmain, QBMAIN, NULL);
 
-    /*
-        GLenum err = glewInit();
-        if (GLEW_OK != err)
-        {
-        exit(0);
-        }
-        //fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-
-
-        GLenum err = glewInit();
-        if (GLEW_OK != err)
-        {
-        qbs_print(qbs_str((int32)err),1);
-
-        qbs_print(qbs_new_txt((char*)glewGetString(err)),1);
-
-        //error(70);
-        //exit(0);
-        }
-    */
+    struct libqb_thread *timer = libqb_thread_new();
+    libqb_thread_start(timer, TIMERTHREAD, NULL);
 
     lock_display_required = 1;
 
-#ifndef QB64_GUI
-    // normally MAIN_LOOP() is launched in a separate thread to reserve the primary thread for GLUT
-    // that is not required, so run MAIN_LOOP() in our primary thread
-    MAIN_LOOP();
-    exit(0);
-#endif
+#ifdef QB64_GUI
 
-#ifdef QB64_WINDOWS
-    {
-        uintptr_t thread_handle = _beginthread(MAIN_LOOP_WINDOWS, 0, NULL);
-        SetThreadPriority((HANDLE)thread_handle, THREAD_PRIORITY_NORMAL);
+    struct libqb_thread *main_loop = libqb_thread_new();
+    libqb_thread_start(main_loop, MAIN_LOOP, NULL);
+
+    // This happens for $SCREENHIDE programs. This thread waits on the
+    // `glut_thread_starter` completion, which will get completed if a
+    // _ScreenShow is used.
+    if (!glut_is_started) {
+        completion_wait(&glut_thread_starter);
+
+        initialize_glut(argc, argv);
+        glut_is_started = true;
+
+        if (glut_thread_initialized)
+            completion_finish(glut_thread_initialized);
     }
-#else
-    {
-        static pthread_t thread_handle;
-        pthread_create(&thread_handle, NULL, &MAIN_LOOP_LINUX, NULL);
-    }
-#endif
-
-    if (!screen_hide)
-        create_window = 1;
-
-    while (!create_window) {
-        Sleep(100);
-    }
-
-#ifdef QB64_GLUT
-    glutInit(&argc, argv);
-
-#    ifdef QB64_MACOSX
-    // This is a global keydown handler for OSX, it requires assistive devices in asseccibility to be enabled
-    // becuase of security concerns (QB64 will not use this)
-    /*
-        [NSEvent addGlobalMonitorForEventsMatchingMask:NSKeyDownMask
-        handler:^(NSEvent *event){
-        NSString *chars = [[event characters] lowercaseString];
-        unichar character = [chars characterAtIndex:0];
-        NSLog(@"keydown globally! Which key? This key: %c", character);
-        }];
-    */
-
-    /*
-        [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask handler:^NSEvent* (NSEvent* event){
-        //NSString *keyPressed = event.charactersIgnoringModifiers;
-        //[self.keystrokes appendString:keyPressed];
-        NSString *chars = [[event characters] lowercaseString];
-        unichar character = [chars characterAtIndex:0];
-        NSLog(@"keydown locally! Which key? This key: %c", character);
-        return event;
-        }];
-    */
-
-    //[[[[NSApplication sharedApplication] mainWindow] standardWindowButton:NSWindowCloseButton] setEnabled:YES];
-
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSFlagsChangedMask
-                                          handler:^NSEvent *(NSEvent *event) {
-                                            // notes on bitfields:
-                                            // if ([event modifierFlags] == 131330) keydown_vk(VK+QBVK_LSHIFT);// 100000000100000010
-                                            // if ([event modifierFlags] == 131332) keydown_vk(VK+QBVK_RSHIFT);// 100000000100000100
-                                            // if ([event modifierFlags] == 262401) keydown_vk(VK+QBVK_LCTRL); //1000000000100000001
-                                            // if ([event modifierFlags] == 270592) keydown_vk(VK+QBVK_RCTRL); //1000010000100000000
-                                            // if ([event modifierFlags] == 524576) keydown_vk(VK+QBVK_LALT); //10000000000100100000
-                                            // if ([event modifierFlags] == 524608) keydown_vk(VK+QBVK_RALT); //10000000000101000000
-                                            // caps lock                                                      //   10000000100000000
-
-                                            int x = [event modifierFlags];
-
-                                            if (x & (1 << 0)) {
-                                                if (!keyheld(VK + QBVK_LCTRL))
-                                                    keydown_vk(VK + QBVK_LCTRL);
-                                            } else {
-                                                if (keyheld(VK + QBVK_LCTRL))
-                                                    keyup_vk(VK + QBVK_LCTRL);
-                                            }
-                                            if (x & (1 << 13)) {
-                                                if (!keyheld(VK + QBVK_RCTRL))
-                                                    keydown_vk(VK + QBVK_RCTRL);
-                                            } else {
-                                                if (keyheld(VK + QBVK_RCTRL))
-                                                    keyup_vk(VK + QBVK_RCTRL);
-                                            }
-
-                                            if (x & (1 << 1)) {
-                                                if (!keyheld(VK + QBVK_LSHIFT))
-                                                    keydown_vk(VK + QBVK_LSHIFT);
-                                            } else {
-                                                if (keyheld(VK + QBVK_LSHIFT))
-                                                    keyup_vk(VK + QBVK_LSHIFT);
-                                            }
-                                            if (x & (1 << 2)) {
-                                                if (!keyheld(VK + QBVK_RSHIFT))
-                                                    keydown_vk(VK + QBVK_RSHIFT);
-                                            } else {
-                                                if (keyheld(VK + QBVK_RSHIFT))
-                                                    keyup_vk(VK + QBVK_RSHIFT);
-                                            }
-
-                                            if (x & (1 << 5)) {
-                                                if (!keyheld(VK + QBVK_LALT))
-                                                    keydown_vk(VK + QBVK_LALT);
-                                            } else {
-                                                if (keyheld(VK + QBVK_LALT))
-                                                    keyup_vk(VK + QBVK_LALT);
-                                            }
-                                            if (x & (1 << 6)) {
-                                                if (!keyheld(VK + QBVK_RALT))
-                                                    keydown_vk(VK + QBVK_RALT);
-                                            } else {
-                                                if (keyheld(VK + QBVK_RALT))
-                                                    keyup_vk(VK + QBVK_RALT);
-                                            }
-
-                                            if (x & (1 << 16)) {
-                                                if (!keyheld(VK + QBVK_CAPSLOCK))
-                                                    keydown_vk(VK + QBVK_CAPSLOCK);
-                                            } else {
-                                                if (keyheld(VK + QBVK_CAPSLOCK))
-                                                    keyup_vk(VK + QBVK_CAPSLOCK);
-                                            }
-
-                                            return event;
-                                          }];
-
-    /*
-        [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask|NSFlagsChangedMask handler:^NSEvent *(NSEvent *incomingEvent) {
-        if (incomingEvent.type == NSFlagsChanged && (incomingEvent.modifierFlags & NSDeviceIndependentModifierFlagsMask)) {
-        NSLog(@"modifier key down");
-        } else if (incomingEvent.type == NSKeyDown) {
-        NSLog(@"other key down");
-        }
-        return incomingEvent;
-        }];
-    */
-
-    /*
-        if (NSApp){
-        NSMenu      *menu;
-        NSMenuItem  *menuItem;
-
-        [NSApp setMainMenu:[[NSMenu alloc] init]];
-
-        menu = [[NSMenu alloc] initWithTitle:@""];
-        [menu addItemWithTitle:@"About..." action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
-
-        menuItem = [[NSMenuItem alloc] initWithTitle:@"Apple" action:nil keyEquivalent:@""];
-        [menuItem setSubmenu:menu];
-        [[NSApp mainMenu] addItem:menuItem];
-        [NSApp setAppleMenu:menu];
-        }
-    */
-
-#    endif
-
-#    ifdef QB64_WINDOWS
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
-#    else
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-#    endif
-
-    glutInitWindowSize(640, 400); // cannot be changed unless display_x(etc) are modified
-
-    // glutInitWindowPosition(300, 200);
-
-    if (!glutGet(GLUT_DISPLAY_MODE_POSSIBLE)) // must be called on Linux or GLUT crashes
-    {
-        exit(1);
-    }
-
-    if (!window_title) {
-        glutCreateWindow("Untitled");
-    } else {
-        glutCreateWindow((char *)window_title);
-    }
-    window_exists = 1;
-
-    GLenum err = glewInit();
-    if (GLEW_OK != err) {
-        gui_alert((char *)glewGetErrorString(err));
-    }
-    if (glewIsSupported("GL_EXT_framebuffer_object"))
-        framebufferobjects_supported = 1;
-
-    glutDisplayFunc(GLUT_DISPLAY_REQUEST);
-
-#    ifdef QB64_WINDOWS
-    glutTimerFunc(8, GLUT_TIMER_EVENT, 0);
-#    else
-    glutIdleFunc(GLUT_IDLEFUNC);
-#    endif
-
-    glutKeyboardFunc(GLUT_KEYBOARD_FUNC);
-    glutKeyboardUpFunc(GLUT_KEYBOARDUP_FUNC);
-    glutSpecialFunc(GLUT_SPECIAL_FUNC);
-    glutSpecialUpFunc(GLUT_SPECIALUP_FUNC);
-    glutMouseFunc(GLUT_MOUSE_FUNC);
-    glutMotionFunc(GLUT_MOTION_FUNC);
-    glutPassiveMotionFunc(GLUT_PASSIVEMOTION_FUNC);
-    glutReshapeFunc(GLUT_RESHAPE_FUNC);
-
-#    ifdef CORE_FREEGLUT
-    glutInitWarningFunc(glutWarning);
-    glutMouseWheelFunc(GLUT_MOUSEWHEEL_FUNC);
-#    endif
 
     glutMainLoop();
 
-#endif // QB64_GLUT
+#else
+    // normally MAIN_LOOP() is launched in a separate thread to reserve the primary thread for GLUT
+    // that is not required, so run MAIN_LOOP() in our primary thread
+    MAIN_LOOP(NULL);
+    return 0;
+#endif
 }
 
 //###################### Main Loop ####################
-#ifdef QB64_WINDOWS
-void MAIN_LOOP_WINDOWS(void *unused) {
-    MAIN_LOOP();
-    return;
-}
-#else
-void *MAIN_LOOP_LINUX(void *unused) {
-    MAIN_LOOP();
-    return NULL;
-}
-#endif
-void MAIN_LOOP() {
+void MAIN_LOOP(void *unused) {
 
     int32 update = 0; // 0=update input,1=update display
 
