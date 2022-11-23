@@ -37420,6 +37420,10 @@ qbs *func__dir(qbs *context_in) {
 #endif
 }
 
+static void glutWarning(const char *fmt, va_list lst) {
+    // Do something
+}
+
 extern void set_dynamic_info();
 int main(int argc, char *argv[]) {
 
@@ -38144,6 +38148,7 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(GLUT_RESHAPE_FUNC);
 
 #    ifdef CORE_FREEGLUT
+    glutInitWarningFunc(glutWarning);
     glutMouseWheelFunc(GLUT_MOUSEWHEEL_FUNC);
 #    endif
 
