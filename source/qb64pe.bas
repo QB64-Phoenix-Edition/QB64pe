@@ -13177,7 +13177,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
                     _DEST _CONSOLE
-                    PRINT "Update failed: curl not found"
+                    PRINT "Update failed: Can't make connection to Wiki."
                     SYSTEM 1
                 END IF
                 SYSTEM
