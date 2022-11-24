@@ -25761,7 +25761,7 @@ got_font_index:
 
 void sub__font(int32 f, int32 i, int32 passed) {
     //_FONT "?[,?]"
-    static int32 i2;
+    int32 i2 = 0; //no need for a static variable here, when we just init it to zero before ever using it.
     static img_struct *im;
     if (new_error)
         return;
@@ -25785,33 +25785,11 @@ void sub__font(int32 f, int32 i, int32 passed) {
     }
     im = &img[i];
     // validate f
-    i2 = 0;
-    if (f == 8)
+    if ((f == 8) || (f == 9) || ((f > 13) && (f < 18))) // built-in fonts 8, 9, 13, 14, 15, 16 should be valid
         i2 = 1;
-    if (f == 9) {
-        i2 = 1;
-        if (!im->text) {
-            error(5);
-            return;
-        } // font 9 can *only* be used on text surfaces
-    }
-    if (f == 14)
-        i2 = 1;
-    if (f == 15) {
-        i2 = 1;
-        if (!im->text) {
-            error(5);
-            return;
-        } // font 15 can *only* be used on text surfaces
-    }
-    if (f == 16)
-        i2 = 1;
-    if (f == 17) {
-        i2 = 1;
-        if (!im->text) {
-            error(5);
-            return;
-        } // font 17 can *only* be used on text surfaces
+    if (((f == 9) || (f == 15) || (f == 17)) && (!im->text)) { // but 9, 15, and 17 are *ONLY* valid for text screes
+        error(5);
+        return;
     }
     if (f >= 32 && f <= lastfont) {
         if (font[f])
@@ -25822,10 +25800,10 @@ void sub__font(int32 f, int32 i, int32 passed) {
         return;
     }
 
-    if (im->text && ((fontflags[f] & 16) == 0)) {
-        error(5);
+    if (im->text && ((fontflags[f] & 16) == 0)) { // fontflags[f] & 16 is the bit which we set for MONOSPACE fonts.  If it's a SCREEN 0 screen, and the font
+        error(5);//                                  isn't monospaced, toss and error and return.
         return;
-    } // only monospace fonts can be used on text surfaces
+    } 
     // note: font changes to text screen mode images requires:
     //      i) font change across all screen pages
     //      ii) locking of the display
