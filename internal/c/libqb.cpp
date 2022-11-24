@@ -25788,16 +25788,31 @@ void sub__font(int32 f, int32 i, int32 passed) {
     i2 = 0;
     if (f == 8)
         i2 = 1;
-    if (f == 9)
+    if (f == 9) {
         i2 = 1;
+        if (!im->text) {
+            error(5);
+            return;
+        } // font 9 can *only* be used on text surfaces
+    }
     if (f == 14)
         i2 = 1;
-    if (f == 15)
+    if (f == 15) {
         i2 = 1;
+        if (!im->text) {
+            error(5);
+            return;
+        } // font 15 can *only* be used on text surfaces
+    }
     if (f == 16)
         i2 = 1;
-    if (f == 17)
+    if (f == 17) {
         i2 = 1;
+        if (!im->text) {
+            error(5);
+            return;
+        } // font 17 can *only* be used on text surfaces
+    }
     if (f >= 32 && f <= lastfont) {
         if (font[f])
             i2 = 1;
