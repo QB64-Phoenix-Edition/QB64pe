@@ -421,6 +421,11 @@ EXE_OBJS := $(QBLIB) $(EXE_OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
+ifeq ($(OS),osx)
+%.o: %.mm
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+endif
+
 $(PATH_INTERNAL_TEMP)/data.o: $(PATH_INTERNAL_TEMP)/data.bin
 	$(OBJCOPY) -Ibinary $(OBJCOPY_FLAGS) $< $@
 
