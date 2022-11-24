@@ -9,16 +9,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             platform: x64
             prefix: lnx
-          - os: macos-latest
+          - os: macos-11
             platform: x64
             prefix: osx
-          - os: windows-latest
+          - os: windows-2022
             platform: x64
             prefix: win
-          - os: windows-latest
+          - os: windows-2022
             platform: x86
             prefix: win
 
@@ -32,21 +32,26 @@ jobs:
       with:
         fetch-depth: 0
 
+    - uses: maxim-lobanov/setup-xcode@v1
+      if: ${{ matrix.prefix == 'osx' }}
+      with:
+        xcode-version: '11.7.0' # MacOS 10.15 Catalina
+
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
-    - uses: webfactory/ssh-agent@v0.5.4
-      if: ${{ github.event_name == 'push' && matrix.os == 'ubuntu-latest' }}
+    - uses: webfactory/ssh-agent@v0.7.0
+      if: ${{ github.event_name == 'push' && matrix.prefix == 'lnx' }}
       with:
         ssh-private-key: ${{ secrets.ACTION_DEPLOY_KEY }}
 
     - name: Install dependencies
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev zlib1g-dev pulseaudio dbus-x11 libportaudio2
+      if: ${{ matrix.prefix == 'lnx' }}
+      run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev zlib1g-dev pulseaudio dbus-x11 libportaudio2 libcurl4-openssl-dev
 
       # Pulseaudio puts a dummy ALSA device in place, which allows us to do
       # audio testing on Linux
     - name: Start Pulseaudio
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+      if: ${{ matrix.prefix == 'lnx' }}
       run: dbus-launch pulseaudio --start
 
     - name: Calculate Version
@@ -58,19 +63,19 @@ jobs:
       run: echo "version=$(.ci/read-version.sh)" >> $GITHUB_ENV
 
     - name: Bootstrap compiler Linux/OSX
-      if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+      if: ${{ matrix.prefix == 'lnx' || matrix.prefix  == 'osx' }}
       run: .ci/bootstrap.sh ${{ matrix.prefix }}
 
     - name: Bootstrap compiler Windows
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.prefix == 'win' }}
       run: .ci/bootstrap.bat
 
     - name: Compile Linux/OSX
-      if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+      if: ${{ matrix.prefix == 'lnx' || matrix.prefix == 'osx' }}
       run: .ci/compile.sh ${{ matrix.prefix }}
 
     - name: Compile Windows
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.prefix == 'win' }}
       run: .ci/compile.bat
 
     - name: Test libqb
@@ -89,7 +94,7 @@ jobs:
 
     - name: Create QB64-PE Artifact
       shell: bash
-      run: .ci/make-dist.sh ${{ matrix.os }} "${{ env.version }}"
+      run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}"
 
       # Note that compiling programs in dist does modify the ./dist and make it
       # dirty, but that's ok because we've already create the .7z or .tar.gz
@@ -102,7 +107,7 @@ jobs:
       # the main branch, and building a Pull request merge. Otherwise the repo
       # is left alone.
     - name: Update ./internal/source
-      if: ${{ github.event_name == 'push' &&  matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
+      if: ${{ github.event_name == 'push' &&  matrix.prefix == 'lnx' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
       run: .ci/push-internal-source.sh
 
     - uses: actions/upload-artifact@v3

@@ -4,7 +4,7 @@
 
 result=0
 
-for test in buffer
+for test in buffer http
 do
     ./tests/exes/cpp/${test}_test || result=1
 done

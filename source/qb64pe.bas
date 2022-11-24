@@ -907,10 +907,12 @@ DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
 '
 ' Collection of flags indicating which unstable features should be used during compilation
 '
-REDIM SHARED unstableFlags(1) AS _BYTE
+REDIM SHARED unstableFlags(1 TO 2) AS _BYTE
 DIM UNSTABLE_MIDI AS LONG
+DIM UNSTABLE_HTTP AS LONG
 
 UNSTABLE_MIDI = 1
+UNSTABLE_HTTP = 2
 
 
 
@@ -1626,7 +1628,7 @@ udtenext(i3) = i2
 udtenext(i2) = 0
 
 ' Reset all unstable flags
-REDIM SHARED unstableFlags(1) AS _BYTE
+FOR i = 1 TO UBOUND(unstableFlags): unstableFlags(i) = 0: NEXT
 
 ' Indicates if a MIDI sound font was selected
 '
@@ -1928,6 +1930,10 @@ DO
                     END IF
 
                     unstableFlags(UNSTABLE_MIDI) = -1
+
+                CASE "HTTP"
+                    unstableFlags(UNSTABLE_HTTP) = -1
+                    regUnstableHttp
 
                 CASE ELSE
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
@@ -3454,6 +3460,8 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     layout$ = layout$ + SCase$("Midi")
+                CASE "HTTP"
+                    layout$ = layout$ + SCase$("Http")
             END SELECT
 
             GOTO finishednonexec
@@ -12525,6 +12533,10 @@ ELSE
     END IF
 END IF
 
+IF unstableFlags(UNSTABLE_HTTP) AND DEPENDENCY(DEPENDENCY_SOCKETS) <> 0 THEN
+    makedeps$ = makedeps$ + " DEP_HTTP=y"
+END IF
+
 IF MidiSoundFontSet THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE_MIDI=y"
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
@@ -21259,6 +21271,29 @@ SUB reginternal
     reginternalsubfunc = 1
     '$INCLUDE:'subs_functions\subs_functions.bas'
     reginternalsubfunc = 0
+END SUB
+
+SUB regUnstableHttp
+    reginternalsubfunc = 1
+
+    clearid
+    id.n = qb64prefix$ + "StatusCode" ' Name in CaMeL case
+    id.subfunc = 1 ' 1 = function, 2 = sub
+    id.callname = "func__statusCode" ' C/C++ function name
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_STATUSCODE(httpHandle&)" ' syntax help
+    regid
+
+    ' If we're doing $NOPREFIX then we register it again with the underscore
+    IF qb64prefix_set THEN
+        id.n = "_StatusCode"
+        regid
+    END IF
+
+    reginternalsubfunc = 0
+
 END SUB
 
 'this sub is faulty atm!

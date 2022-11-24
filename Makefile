@@ -193,6 +193,7 @@ include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
 include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
 include $(PATH_INTERNAL_C)/parts/video/image/build.mk
 include $(PATH_INTERNAL_C)/parts/gui/build.mk
+include $(PATH_INTERNAL_C)/parts/network/http/build.mk
 
 .PHONY: all clean
 
@@ -339,6 +340,14 @@ ifneq ($(filter y,$(DEP_ZLIB)),)
 	LICENSE_IN_USE += zlib
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
+endif
+
+ifneq ($(filter y,$(DEP_HTTP)),)
+	EXE_LIBS += $(CURL_EXE_LIBS)
+	CXXFLAGS += $(CURL_CXXFLAGS)
+	CXXLIBS += $(CURL_CXXLIBS)
+
+	LICENSE_IN_USE += libcurl
 endif
 
 ifneq ($(OS),osx)
