@@ -25785,7 +25785,7 @@ void sub__font(int32 f, int32 i, int32 passed) {
     }
     im = &img[i];
     // validate f
-    if ((f == 8) || (f == 9) || ((f > 13) && (f < 18))) // built-in fonts 8, 9, 13, 14, 15, 16 should be valid
+    if ((f == 8) || (f == 9) || ((f > 13) && (f < 18))) // built-in fonts 8, 9, 14, 15, 16, 17 should be valid
         i2 = 1;
     if (((f == 9) || (f == 15) || (f == 17)) && (!im->text)) { // but 9, 15, and 17 are *ONLY* valid for text screes
         error(5);
