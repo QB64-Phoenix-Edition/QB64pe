@@ -31,3 +31,33 @@ void libqb_start_glut_thread() {
 bool libqb_is_glut_up() {
     return false;
 }
+
+void libqb_process_glut_queue() {
+}
+
+void libqb_glut_set_cursor(int style) {
+
+}
+
+void libqb_glut_warp_pointer(int x, int y)
+{
+}
+
+int libqb_glut_get(int id) {
+    return 0;
+}
+
+void libqb_glut_iconify_window() {
+}
+
+void libqb_glut_position_window(int x, int y) {
+}
+
+void libqb_glut_show_window() {
+}
+
+void libqb_glut_hide_window() {
+}
+
+void libqb_glut_set_window_title(const char *title) {
+}

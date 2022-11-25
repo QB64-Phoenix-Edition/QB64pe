@@ -269,7 +269,6 @@ int32 environment_2d__letterbox = 0;     // 1=vertical black stripes required, 2
 
 int32 window_focused = 0; // Not used on Windows
 uint8 *window_title = NULL;
-int32 temp_window_title_set = 0;
 
 double max_fps = 60; // 60 is the default
 int32 auto_fps = 0;  // set to 1 to make QB64 auto-adjust fps based on load
@@ -500,14 +499,6 @@ static int32 display_required_y = 400;
 int32 dont_call_sub_gl = 0;
 
 void GLUT_DISPLAY_REQUEST();
-
-void timerCB(int millisec) // not currently being used
-{
-#ifdef QB64_GLUT
-    glutPostRedisplay();
-    glutTimerFunc(millisec, timerCB, millisec);
-#endif
-}
 
 struct display_frame_struct {
     int32 state;
@@ -23482,7 +23473,7 @@ void sub__mousehide() {
 #ifdef QB64_GUI
 #    ifdef QB64_GLUT
     OPTIONAL_GLUT();
-    glutSetCursor(GLUT_CURSOR_NONE);
+    libqb_glut_set_cursor(GLUT_CURSOR_NONE);
 #    endif
 #endif
 }
@@ -23554,7 +23545,7 @@ void sub__mouseshow(qbs *style, int32 passed) {
     }
 cursor_valid:
 
-    glutSetCursor(mouse_cursor_style);
+    libqb_glut_set_cursor(mouse_cursor_style);
 
 #endif
 }
@@ -23636,7 +23627,7 @@ void sub__mousemove(float x, float y) {
     x2 += environment_2d__screen_x1;
     y2 += environment_2d__screen_y1;
 
-    glutWarpPointer(x2, y2);
+    libqb_glut_warp_pointer(x2, y2);
     return;
 
 error:
@@ -27216,7 +27207,7 @@ int32 func_screenwidth() {
 #else
 #    ifdef QB64_GLUT
     OPTIONAL_GLUT(0);
-    return glutGet(GLUT_SCREEN_WIDTH);
+    return libqb_glut_get(GLUT_SCREEN_WIDTH);
 #    else
     return 0;
 #    endif
@@ -27229,7 +27220,7 @@ int32 func_screenheight() {
 #else
 #    ifdef QB64_GLUT
     OPTIONAL_GLUT(0);
-    return glutGet(GLUT_SCREEN_HEIGHT);
+    return libqb_glut_get(GLUT_SCREEN_HEIGHT);
 #    else
     return 0;
 #    endif
@@ -27239,7 +27230,7 @@ int32 func_screenheight() {
 void sub_screenicon() {
 #ifdef QB64_GLUT
     NEEDS_GLUT();
-    glutIconifyWindow();
+    libqb_glut_iconify_window();
 #endif
 }
 
@@ -32649,10 +32640,10 @@ qbs *func__os() {
 int32 func__screenx() {
 #if defined(QB64_GUI) && defined(QB64_WINDOWS) && defined(QB64_GLUT)
     NEEDS_GLUT(0);
-    return glutGet(GLUT_WINDOW_X) - glutGet(GLUT_WINDOW_BORDER_WIDTH);
+    return libqb_glut_get(GLUT_WINDOW_X) - libqb_glut_get(GLUT_WINDOW_BORDER_WIDTH);
 #elif defined(QB64_GUI) && defined(QB64_MACOSX) && defined(QB64_GLUT)
     NEEDS_GLUT(0);
-    return glutGet(GLUT_WINDOW_X);
+    return libqb_glut_get(GLUT_WINDOW_X);
 #endif
     return 0; // if not windows then return 0
 }
@@ -32660,10 +32651,10 @@ int32 func__screenx() {
 int32 func__screeny() {
 #if defined(QB64_GUI) && defined(QB64_WINDOWS) && defined(QB64_GLUT)
     NEEDS_GLUT(0);
-    return glutGet(GLUT_WINDOW_Y) - glutGet(GLUT_WINDOW_BORDER_WIDTH) - glutGet(GLUT_WINDOW_HEADER_HEIGHT);
+    return libqb_glut_get(GLUT_WINDOW_Y) - libqb_glut_get(GLUT_WINDOW_BORDER_WIDTH) - libqb_glut_get(GLUT_WINDOW_HEADER_HEIGHT);
 #elif defined(QB64_GUI) && defined(QB64_MACOSX) && defined(QB64_GLUT)
     NEEDS_GLUT(0);
-    return glutGet(GLUT_WINDOW_Y);
+    return libqb_glut_get(GLUT_WINDOW_Y);
 #endif
     return 0; // if not windows then return 0
 }
@@ -32682,18 +32673,18 @@ void sub__screenmove(int32 x, int32 y, int32 passed) {
     NEEDS_GLUT();
 
     if (passed == 2) {
-        glutPositionWindow(x, y);
+        libqb_glut_position_window(x, y);
     } else {
         int32 SW = -1, SH, WW, WH;
         while (SW == -1) {
-            SW = glutGet(GLUT_SCREEN_WIDTH);
+            SW = libqb_glut_get(GLUT_SCREEN_WIDTH);
         }
-        SH = glutGet(GLUT_SCREEN_HEIGHT);
-        WW = glutGet(GLUT_WINDOW_WIDTH);
-        WH = glutGet(GLUT_WINDOW_HEIGHT);
+        SH = libqb_glut_get(GLUT_SCREEN_HEIGHT);
+        WW = libqb_glut_get(GLUT_WINDOW_WIDTH);
+        WH = libqb_glut_get(GLUT_WINDOW_HEIGHT);
         x = (SW - WW) / 2;
         y = (SH - WH) / 2;
-        glutPositionWindow(x, y);
+        libqb_glut_position_window(x, y);
     }
 #endif
 
@@ -33985,7 +33976,7 @@ void sub__screenshow() {
     screen_hide = 0;
     // $SCREENHIDE programs will not have the window running
     libqb_start_glut_thread();
-    glutShowWindow();
+    libqb_glut_show_window();
 #endif
 }
 
@@ -33997,7 +33988,7 @@ void sub__screenhide() {
     // This is probably unnecessary, no conditions allow for screen_hide==0
     // without GLUT running, but it doesn't hurt anything.
     libqb_start_glut_thread();
-    glutHideWindow();
+    libqb_glut_hide_window();
 #endif
 
     screen_hide = 1;
@@ -34657,6 +34648,8 @@ void GLUT_SPECIALUP_FUNC(int key, int x, int y) { GLUT_key_special(key, 0); }
 
 #ifdef QB64_WINDOWS
 void GLUT_TIMER_EVENT(int ignore) {
+    libqb_process_glut_queue();
+
 #    ifdef QB64_GLUT
     glutPostRedisplay();
     int32 msdelay = 1000.0 / max_fps;
@@ -34669,6 +34662,7 @@ void GLUT_TIMER_EVENT(int ignore) {
 }
 #else
 void GLUT_IDLEFUNC() {
+    libqb_process_glut_queue();
 
 #    ifdef QB64_MACOSX
 #        ifdef DEPENDENCY_DEVICEINPUT
@@ -35910,13 +35904,6 @@ void GLUT_DISPLAY_REQUEST() {
     }
     in_GLUT_DISPLAY_REQUEST = 1;
 
-#    ifdef QB64_MACOSX
-    if (temp_window_title_set == 1) {
-        glutSetWindowTitle((char *)window_title);
-        temp_window_title_set = 0;
-    }
-#    endif
-
     // general use variables
     static int32 i, i2, i3;
     static int32 x, y, x2, y2;
@@ -36726,15 +36713,9 @@ void sub__title(qbs *title) {
     if (old_buf)
         free(old_buf);
 
-#ifdef QB64_GLUT
-#    ifdef QB64_MACOSX
-    temp_window_title_set = 1;
-#    else
     OPTIONAL_GLUT();
-    glutSetWindowTitle((char *)window_title);
-#    endif
-#endif
 
+    libqb_glut_set_window_title((char *)window_title);
 } // title
 
 void sub__echo(qbs *message) {
