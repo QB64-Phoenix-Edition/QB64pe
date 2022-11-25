@@ -401,13 +401,8 @@ endif
 
 QBLIB := $(PATH_INTERNAL_C)/$(QBLIB_NAME).o
 
-ifneq ($(OS),osx)
 $(QBLIB): $(PATH_INTERNAL_C)/libqb.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
-else
-$(QBLIB): $(PATH_INTERNAL_C)/libqb.mm
-	$(CXX) $(CXXFLAGS) $< -c -o $@
-endif
 
 ifeq ($(OS),win)
 CLEAN_LIST += $(ICON_OBJ)

@@ -13,13 +13,7 @@
 #ifdef QB64_MACOSX
 #    include <ApplicationServices/ApplicationServices.h>
 
-#    include "Cocoa/Cocoa.h"
-#    include <CoreFoundation/CoreFoundation.h>
-#    include <objc/objc-runtime.h>
-#    include <objc/objc.h>
-
 #    include <mach-o/dyld.h> //required for _NSGetExecutablePath
-
 #endif
 
 #include "mutex.h"
