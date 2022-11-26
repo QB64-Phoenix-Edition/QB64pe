@@ -25599,7 +25599,12 @@ FUNCTION EvalPreIF (text$, err$)
             END IF
             IF INSTR(symbol$, "=") THEN 'check to see if we're equal in any case with =
                 UserFound = 0
+                IF l$ = UserDefine(0, 7) THEN 'we're comparing VERSION numbers
+                    result = CompareVersions(Version$, r$) '-1 is less than, 0 is equal, +1 is greater than
+                    IF result = 0 THEN result$ = " -1 ": GOTO finishedcheck
+                END IF
                 FOR i = 0 TO UserDefineCount
+                    IF i = 7 THEN _CONTINUE
                     IF UserDefine(0, i) = l$ THEN
                         UserFound = -1
                         IF UserDefine(1, i) = r$ THEN result$ = " -1 ": GOTO finishedcheck
@@ -25610,7 +25615,12 @@ FUNCTION EvalPreIF (text$, err$)
             END IF
 
             IF INSTR(symbol$, ">") THEN 'check to see if we're greater than in any case with >
+                IF l$ = UserDefine(0, 7) THEN 'we're comparing VERSION numbers
+                    result = CompareVersions(Version$, r$) '-1 is less than, 0 is equal, +1 is greater than
+                    IF result = 1 THEN result$ = " -1 ": GOTO finishedcheck
+                END IF
                 FOR i = 0 TO UserDefineCount
+                    IF i = 7 THEN _CONTINUE
                     IF VerifyNumber(r$) AND VerifyNumber(UserDefine(1, i)) THEN 'we're comparing numeric values
                         IF UserDefine(0, i) = l$ AND VAL(UserDefine(1, i)) > VAL(r$) THEN result$ = " -1 ": GOTO finishedcheck
                     ELSE
@@ -25618,8 +25628,14 @@ FUNCTION EvalPreIF (text$, err$)
                     END IF
                 NEXT
             END IF
+
             IF INSTR(symbol$, "<") THEN 'check to see if we're less than in any case with <
+                IF l$ = UserDefine(0, 7) THEN 'we're comparing VERSION numbers
+                    result = CompareVersions(Version$, r$) '-1 is less than, 0 is equal, +1 is greater than
+                    IF result = -1 THEN result$ = " -1 ": GOTO finishedcheck
+                END IF
                 FOR i = 0 TO UserDefineCount
+                    IF i = 7 THEN _CONTINUE
                     IF VerifyNumber(r$) AND VerifyNumber(UserDefine(1, i)) THEN 'we're comparing numeric values
                         IF UserDefine(0, i) = l$ AND VAL(UserDefine(1, i)) < VAL(r$) THEN result$ = " -1 ": GOTO finishedcheck
                     ELSE
@@ -25627,8 +25643,6 @@ FUNCTION EvalPreIF (text$, err$)
                     END IF
                 NEXT
             END IF
-
-
 
             finishedcheck:
             temp$ = leftside$ + result$ + rightside$
@@ -26062,6 +26076,40 @@ SUB increaseUDTArrays
     REDIM _PRESERVE udtearrayelements(x + 1000) AS LONG
     REDIM _PRESERVE udtenext(x + 1000) AS LONG
 END SUB
+
+FUNCTION CompareVersions (v1$, v2$)
+    DIM AS LONG p1, p2, p3, p4, p5, p6 'part 1 through 6
+
+    IF GetVersionValues(v1$, p1, p2, p3) = 0 THEN CompareVersions = 666: EXIT FUNCTION 'Evil Error code.  Something went wrong!
+    IF GetVersionValues(v2$, p4, p5, p6) = 0 THEN CompareVersions = 666: EXIT FUNCTION 'Evil Error code.  Something went wrong!
+
+    IF p1 < p4 THEN CompareVersions = -1: EXIT FUNCTION
+    IF p1 > p4 THEN CompareVersions = 1: EXIT FUNCTION
+    IF p2 < p5 THEN CompareVersions = -1: EXIT FUNCTION
+    IF p2 > p5 THEN CompareVersions = 1: EXIT FUNCTION
+    IF p3 < p6 THEN CompareVersions = -1: EXIT FUNCTION
+    IF p3 > p6 THEN CompareVersions = 1: EXIT FUNCTION
+
+    CompareVersions = 0 'if all else fails, the two versions are equal.
+END FUNCTION
+
+FUNCTION GetVersionValues (version$, v1 AS LONG, v2 AS LONG, v3 AS LONG)
+    v$ = version$
+    i = INSTR(v$, ".")
+
+    IF i = 0 THEN EXIT FUNCTION 'if there's no period, then something is wrong with this version
+
+    v1 = VAL(LEFT$(v$, i - 1))
+    v$ = MID$(v$, i + 1)
+    i = INSTR(v$, ".")
+
+    IF i = 0 THEN EXIT FUNCTION 'qb64pe versions have 3 parts separated by 2 periods... If we don't have a second period, something is wrong.
+
+    v2 = VAL(LEFT$(v$, i - 1))
+    v3 = VAL(MID$(v$, i + 1))
+    GetVersionValues = -1
+END FUNCTION
+
 
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'
