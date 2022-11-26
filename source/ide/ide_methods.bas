@@ -20234,11 +20234,20 @@ end sub
 
 Function OpenFile$ (IdeOpenFile as string)'load routine copied/pasted from the old IDE file load/save dialog routines
 
+                STATIC Default_StartDir$
+
+                IF Default_StartDir$ = "" THEN
+                    Default_StartDir$ = _STARTDIR$
+                    if Right$(Default_StartDir$, 1) <> idepathsep$ then Default_StartDir$ = Default_StartDir$ + idepathsep$
+                END IF
 
                 ideopenloop:
-                if IdeOpenFile = "" THEN f$ = _OpenFileDialog$("Open Source File", "", "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64-PE Source Files", 0) ELSE f$ = IdeOpenFile
-                if f$ = "" THEN OpenFile$ = "C":EXIT FUNCTION
+                IF IdeOpenFile = "" THEN f$ = _OpenFileDialog$("Open Source File", Default_StartDir$, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64-PE Source Files", 0) ELSE f$ = IdeOpenFile
+                IF f$ = "" THEN OpenFile$ = "C":EXIT FUNCTION
                 path$ = ideztakepath$ (f$)
+
+                Default_StartDir$ = path$
+                if Right$(Default_StartDir$, 1) <> idepathsep$ then Default_StartDir$ = Default_StartDir$ + idepathsep$
 
                 IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN 'see if the user forgot the .bas extension and check for the file
 
