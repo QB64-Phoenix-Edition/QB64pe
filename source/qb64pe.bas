@@ -26077,39 +26077,33 @@ SUB increaseUDTArrays
     REDIM _PRESERVE udtenext(x + 1000) AS LONG
 END SUB
 
-FUNCTION CompareVersions (v1$, v2$)
-    DIM AS LONG p1, p2, p3, p4, p5, p6 'part 1 through 6
-
-    IF GetVersionValues(v1$, p1, p2, p3) = 0 THEN CompareVersions = 666: EXIT FUNCTION 'Evil Error code.  Something went wrong!
-    IF GetVersionValues(v2$, p4, p5, p6) = 0 THEN CompareVersions = 666: EXIT FUNCTION 'Evil Error code.  Something went wrong!
-
-    IF p1 < p4 THEN CompareVersions = -1: EXIT FUNCTION
-    IF p1 > p4 THEN CompareVersions = 1: EXIT FUNCTION
-    IF p2 < p5 THEN CompareVersions = -1: EXIT FUNCTION
-    IF p2 > p5 THEN CompareVersions = 1: EXIT FUNCTION
-    IF p3 < p6 THEN CompareVersions = -1: EXIT FUNCTION
-    IF p3 > p6 THEN CompareVersions = 1: EXIT FUNCTION
-
-    CompareVersions = 0 'if all else fails, the two versions are equal.
+FUNCTION CompareVersions (v$, v1$)
+    t$ = v$: t1$ = v1$ 'temp strings so we don't change the passed values
+    IF RIGHT$(t$, 8) = "-UNKNOWN" THEN t$ = LEFT$(t$, LEN(t$) - 8)
+    IF RIGHT$(t1$, 8) = "-UNKNOWN" THEN t1$ = LEFT$(t1$, LEN(t1$) - 8)
+    DO
+        l = INSTR(t$, "."): l1 = INSTR(t1$, ".")
+        IF l THEN '                       the first value has a period still
+            v& = VAL(LEFT$(t$, l - 1)) '  take what's to the left of that period for our value
+            t$ = MID$(t$, l + 1) '        strip that period and everything to the left off for the next pass
+        ELSE
+            v& = VAL(t$) '                no period?  Then this is our final pass
+            t$ = ""
+        END IF
+        IF l1 THEN
+            v1& = VAL(LEFT$(t1$, l1 - 1))
+            t1$ = MID$(t1$, l1 + 1)
+        ELSE
+            v1& = VAL(t1$)
+            t1$ = ""
+        END IF
+        IF v& < v1& THEN CompareVersions = -1: EXIT FUNCTION
+        IF v& > v1& THEN CompareVersions = 1: EXIT FUNCTION
+        IF t$ = "" AND t1$ = "" THEN EXIT FUNCTION 'return value 0 -- they're equal
+        IF t$ = "" AND t1$ <> "" THEN CompareVersions = -1: EXIT FUNCTION
+        IF t1$ = "" AND t$ <> "" THEN CompareVersions = 1: EXIT FUNCTION
+    LOOP
 END FUNCTION
-
-FUNCTION GetVersionValues (version$, v1 AS LONG, v2 AS LONG, v3 AS LONG)
-    v$ = version$
-    i = INSTR(v$, ".")
-
-    IF i = 0 THEN EXIT FUNCTION 'if there's no period, then something is wrong with this version
-
-    v1 = VAL(LEFT$(v$, i - 1))
-    v$ = MID$(v$, i + 1)
-    i = INSTR(v$, ".")
-
-    IF i = 0 THEN EXIT FUNCTION 'qb64pe versions have 3 parts separated by 2 periods... If we don't have a second period, something is wrong.
-
-    v2 = VAL(LEFT$(v$, i - 1))
-    v3 = VAL(MID$(v$, i + 1))
-    GetVersionValues = -1
-END FUNCTION
-
 
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'
