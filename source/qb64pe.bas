@@ -1226,6 +1226,11 @@ file$ = f$
 
 fullrecompile:
 
+IF NOT QuietMode THEN
+    PRINT
+    PRINT "Beginning C++ output from QB64 code... "
+END IF
+
 BU_DEPENDENCY_CONSOLE_ONLY = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY)
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
 DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = BU_DEPENDENCY_CONSOLE_ONLY AND 2 'Restore -g switch if used
@@ -1701,11 +1706,6 @@ IF iderecompile THEN
 END IF
 
 IF idemode THEN GOTO ideret1
-
-IF NOT QuietMode THEN
-    PRINT
-    PRINT "Beginning C++ output from QB64 code... "
-END IF
 
 lineinput3load sourcefile$
 
