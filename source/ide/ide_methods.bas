@@ -966,6 +966,7 @@ FUNCTION ide2 (ignore)
 
                     _PALETTECOLOR 1, IDEBackgroundColor, 0
                     _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
+                    _PALETTECOLOR 4, IDEErrorColor,0
                     _PALETTECOLOR 5, IDEBracketHighlightColor, 0
                     _PALETTECOLOR 6, IDEBackgroundColor2, 0
                     _PALETTECOLOR 7, IDEChromaColor, 0
@@ -12410,6 +12411,7 @@ SUB ideshowtext
     IF ideshowtextBypassColorRestore = 0 THEN
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
+        _PALETTECOLOR 4, IDEErrorColor,0
         _PALETTECOLOR 5, IDEBracketHighlightColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
@@ -16461,6 +16463,7 @@ FUNCTION idechoosecolorsbox
 
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
+        _PALETTECOLOR 4, IDEErrorColor,0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
         _PALETTECOLOR 8, IDENumbersColor, 0
@@ -19603,7 +19606,9 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
         TempDarkerIDEChromaColor~& = _RGB32(_RED32(IDEChromaColor) * .5, _GREEN32(IDEChromaColor) * .5, _BLUE32(IDEChromaColor) * .5)
         TempDarkerMetaColor~& = _RGB32(_RED32(IDEMetaCommandColor) * .5, _GREEN32(IDEMetaCommandColor) * .5, _BLUE32(IDEMetaCommandColor) * .5)
         TempDarkerQuoteColor~& = _RGB32(_RED32(IDEQuoteColor) * .5, _GREEN32(IDEQuoteColor) * .5, _BLUE32(IDEQuoteColor) * .5)
+        TempDarkerErrorColor~& =  _RGB32(_RED32(IDEErrorColor) * .5, _GREEN32(IDEErrroColor) * .5, _BLUE32(IDEErrorColor) * .5)
         _PALETTECOLOR 1, TempDarkerBGColor~&, 0
+        _PALETTECOLOR 4, TempDarkerErrorColor~&,0
         _PALETTECOLOR 5, TempDarkerBGColor~&, 0
         _PALETTECOLOR 6, TempDarkerBG2Color~&, 0
         _PALETTECOLOR 7, TempDarkerIDEChromaColor~&, 0
@@ -19615,6 +19620,7 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
         _PALETTECOLOR 14, TempDarkerQuoteColor~&, 0
     ELSE
         _PALETTECOLOR 1, IDEBackgroundColor, 0
+       _PALETTECOLOR 4, IDEErrorColor,0
         _PALETTECOLOR 5, IDEBracketHighlightColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
