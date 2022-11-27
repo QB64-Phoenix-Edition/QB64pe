@@ -4804,21 +4804,11 @@ DO
                         END IF 'dynamiclibrary
 
                         IF LEN(headername$) THEN
-                            IF os$ = "WIN" THEN
-                                IF MID$(headername$, 2, 1) = ":" OR LEFT$(headername$, 1) = "\" THEN
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
-                                ELSE
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "..\\..\\" + headername$ + CHR$(34)
-                                END IF
-                            END IF
-                            IF os$ = "LNX" THEN
-
-                                IF LEFT$(headername$, 1) = "/" THEN
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
-                                ELSE
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
-                                END IF
-
+                            IF (os$ = "WIN" AND (MID$(headername$, 2, 1) = ":" OR LEFT$(headername$, 1) = "\")) _
+                            OR (os$ = "LNX" AND (LEFT$(headername$, 1) = "/")) THEN
+                                WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
+                            ELSE
+                                WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
                             END IF
                         END IF
 
