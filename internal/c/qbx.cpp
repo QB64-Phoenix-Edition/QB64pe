@@ -79,7 +79,7 @@ void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
 
 // forward references
 void QBMAIN(void *);
-void TIMERTHREAD();
+void TIMERTHREAD(void *);
 
 extern int32 requestedKeyboardOverlayImage;
 void requestKeyboardOverlayImage(int32 handle) {
@@ -2235,18 +2235,7 @@ void sub_timer(int32 i, int32 option, int32 passed) {
     }
 }
 
-#ifdef QB64_WINDOWS
-void TIMERTHREAD_WINDOWS(void *unused) {
-    TIMERTHREAD();
-    return;
-}
-#else
-void *TIMERTHREAD_LINUX(void *unused) {
-    TIMERTHREAD();
-    return NULL;
-}
-#endif
-void TIMERTHREAD() {
+void TIMERTHREAD(void *unused) {
     static int32 i;
     static double time_now = 100000;
     while (1) {
@@ -2456,17 +2445,6 @@ void division_by_zero_handler(int ignore) { error(11); }
 //    error(256);//assume stack overflow? (the most likely cause)
 //}
 
-#ifdef QB64_WINDOWS
-void QBMAIN_WINDOWS(void *unused) {
-    QBMAIN(NULL);
-    return;
-}
-#else
-void *QBMAIN_LINUX(void *unused) {
-    QBMAIN(NULL);
-    return NULL;
-}
-#endif
 void QBMAIN(void *unused) {
     fpu_reinit();
 #ifdef QB64_WINDOWS
