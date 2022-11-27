@@ -1226,7 +1226,7 @@ file$ = f$
 
 fullrecompile:
 
-IF NOT QuietMode THEN
+IF idemode = 0 AND NOT QuietMode THEN
     PRINT
     PRINT "Beginning C++ output from QB64 code... "
 END IF
