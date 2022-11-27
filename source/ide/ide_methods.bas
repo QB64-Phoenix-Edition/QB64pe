@@ -16946,6 +16946,20 @@ FUNCTION idechoosecolorsbox
             WriteConfigSetting colorSettingsSection$, "SchemeID", str2$(SchemeID)
             FOR i = 1 TO 10
                 CurrentColor~& = GetCurrentColor(i)
+                SELECT CASE i
+                    CASE 1: colorid$ = "TextColor"
+                    CASE 2: colorid$ = "KeywordColor"
+                    CASE 3: colorid$ = "NumbersColor"
+                    CASE 4: colorid$ = "QuoteColor"
+                    CASE 5: colorid$ = "MetaCommandColor"
+                    CASE 6: colorid$ = "CommentColor"
+                    CASE 7: colorid$ = "BackgroundColor"
+                    CASE 8: colorid$ = "BackgroundColor2"
+                    CASE 9: colorid$ = "HighlightColor"
+                    CASE 10: colorid$ = "ChromaColor"
+                END SELECT
+
+
                 WriteConfigSetting colorSettingsSection$, colorid$, rgbs$(CurrentColor~&)
             NEXT i
 
