@@ -229,7 +229,8 @@ Include_GDB_Debugging_Info = idedebuginfo
 wikiBaseAddress$ = "https://qb64phoenix.com/qb64wiki"
 IF ReadConfigSetting(generalSettingsSection$, "WikiBaseAddress", value$) THEN
     wikiBaseAddress$ = value$
-ELSE WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+ELSE
+    WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
 END IF
 
 UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", -1)

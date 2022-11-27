@@ -1226,6 +1226,11 @@ file$ = f$
 
 fullrecompile:
 
+IF NOT QuietMode THEN
+    PRINT
+    PRINT "Beginning C++ output from QB64 code... "
+END IF
+
 BU_DEPENDENCY_CONSOLE_ONLY = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY)
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
 DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = BU_DEPENDENCY_CONSOLE_ONLY AND 2 'Restore -g switch if used
@@ -1701,11 +1706,6 @@ IF iderecompile THEN
 END IF
 
 IF idemode THEN GOTO ideret1
-
-IF NOT QuietMode THEN
-    PRINT
-    PRINT "Beginning C++ output from QB64 code... "
-END IF
 
 lineinput3load sourcefile$
 
@@ -4804,21 +4804,11 @@ DO
                         END IF 'dynamiclibrary
 
                         IF LEN(headername$) THEN
-                            IF os$ = "WIN" THEN
-                                IF MID$(headername$, 2, 1) = ":" OR LEFT$(headername$, 1) = "\" THEN
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
-                                ELSE
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "..\\..\\" + headername$ + CHR$(34)
-                                END IF
-                            END IF
-                            IF os$ = "LNX" THEN
-
-                                IF LEFT$(headername$, 1) = "/" THEN
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
-                                ELSE
-                                    WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
-                                END IF
-
+                            IF (os$ = "WIN" AND (MID$(headername$, 2, 1) = ":" OR LEFT$(headername$, 1) = "\")) _
+                            OR (os$ = "LNX" AND (LEFT$(headername$, 1) = "/")) THEN
+                                WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
+                            ELSE
+                                WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
                             END IF
                         END IF
 
@@ -12325,11 +12315,15 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
             PRINT "Compiling C++ code into EXE..."
         END IF
     END IF
-    IF LEN(outputfile_cmd$) THEN
-        'resolve relative path for output file
-        path.out$ = getfilepath$(outputfile_cmd$)
-        f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
-        file$ = RemoveFileExtension$(f$)
+
+    ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
+    IF LEN(outputfile_cmd$) Or OutputIsRelativeToStartDir THEN
+        IF LEN(outputfile_cmd$) THEN
+            'resolve relative path for output file
+            path.out$ = getfilepath$(outputfile_cmd$)
+            f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
+            file$ = RemoveFileExtension$(f$)
+        END IF
 
         IF LEN(path.out$) OR OutputIsRelativeToStartDir THEN
             currentdir$ = _CWD$
@@ -13177,7 +13171,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
                     _DEST _CONSOLE
-                    PRINT "Update failed: curl not found"
+                    PRINT "Update failed: Can't make connection to Wiki."
                     SYSTEM 1
                 END IF
                 SYSTEM
@@ -25599,7 +25593,12 @@ FUNCTION EvalPreIF (text$, err$)
             END IF
             IF INSTR(symbol$, "=") THEN 'check to see if we're equal in any case with =
                 UserFound = 0
+                IF l$ = UserDefine(0, 7) THEN 'we're comparing VERSION numbers
+                    result = CompareVersions(Version$, r$) '-1 is less than, 0 is equal, +1 is greater than
+                    IF result = 0 THEN result$ = " -1 ": GOTO finishedcheck
+                END IF
                 FOR i = 0 TO UserDefineCount
+                    IF i = 7 THEN _CONTINUE
                     IF UserDefine(0, i) = l$ THEN
                         UserFound = -1
                         IF UserDefine(1, i) = r$ THEN result$ = " -1 ": GOTO finishedcheck
@@ -25610,7 +25609,12 @@ FUNCTION EvalPreIF (text$, err$)
             END IF
 
             IF INSTR(symbol$, ">") THEN 'check to see if we're greater than in any case with >
+                IF l$ = UserDefine(0, 7) THEN 'we're comparing VERSION numbers
+                    result = CompareVersions(Version$, r$) '-1 is less than, 0 is equal, +1 is greater than
+                    IF result = 1 THEN result$ = " -1 ": GOTO finishedcheck
+                END IF
                 FOR i = 0 TO UserDefineCount
+                    IF i = 7 THEN _CONTINUE
                     IF VerifyNumber(r$) AND VerifyNumber(UserDefine(1, i)) THEN 'we're comparing numeric values
                         IF UserDefine(0, i) = l$ AND VAL(UserDefine(1, i)) > VAL(r$) THEN result$ = " -1 ": GOTO finishedcheck
                     ELSE
@@ -25618,8 +25622,14 @@ FUNCTION EvalPreIF (text$, err$)
                     END IF
                 NEXT
             END IF
+
             IF INSTR(symbol$, "<") THEN 'check to see if we're less than in any case with <
+                IF l$ = UserDefine(0, 7) THEN 'we're comparing VERSION numbers
+                    result = CompareVersions(Version$, r$) '-1 is less than, 0 is equal, +1 is greater than
+                    IF result = -1 THEN result$ = " -1 ": GOTO finishedcheck
+                END IF
                 FOR i = 0 TO UserDefineCount
+                    IF i = 7 THEN _CONTINUE
                     IF VerifyNumber(r$) AND VerifyNumber(UserDefine(1, i)) THEN 'we're comparing numeric values
                         IF UserDefine(0, i) = l$ AND VAL(UserDefine(1, i)) < VAL(r$) THEN result$ = " -1 ": GOTO finishedcheck
                     ELSE
@@ -25627,8 +25637,6 @@ FUNCTION EvalPreIF (text$, err$)
                     END IF
                 NEXT
             END IF
-
-
 
             finishedcheck:
             temp$ = leftside$ + result$ + rightside$
@@ -26062,6 +26070,34 @@ SUB increaseUDTArrays
     REDIM _PRESERVE udtearrayelements(x + 1000) AS LONG
     REDIM _PRESERVE udtenext(x + 1000) AS LONG
 END SUB
+
+FUNCTION CompareVersions (v$, v1$)
+    t$ = v$: t1$ = v1$ 'temp strings so we don't change the passed values
+    IF RIGHT$(t$, 8) = "-UNKNOWN" THEN t$ = LEFT$(t$, LEN(t$) - 8)
+    IF RIGHT$(t1$, 8) = "-UNKNOWN" THEN t1$ = LEFT$(t1$, LEN(t1$) - 8)
+    DO
+        l = INSTR(t$, "."): l1 = INSTR(t1$, ".")
+        IF l THEN '                       the first value has a period still
+            v& = VAL(LEFT$(t$, l - 1)) '  take what's to the left of that period for our value
+            t$ = MID$(t$, l + 1) '        strip that period and everything to the left off for the next pass
+        ELSE
+            v& = VAL(t$) '                no period?  Then this is our final pass
+            t$ = ""
+        END IF
+        IF l1 THEN
+            v1& = VAL(LEFT$(t1$, l1 - 1))
+            t1$ = MID$(t1$, l1 + 1)
+        ELSE
+            v1& = VAL(t1$)
+            t1$ = ""
+        END IF
+        IF v& < v1& THEN CompareVersions = -1: EXIT FUNCTION
+        IF v& > v1& THEN CompareVersions = 1: EXIT FUNCTION
+        IF t$ = "" AND t1$ = "" THEN EXIT FUNCTION 'return value 0 -- they're equal
+        IF t$ = "" AND t1$ <> "" THEN CompareVersions = -1: EXIT FUNCTION
+        IF t1$ = "" AND t$ <> "" THEN CompareVersions = 1: EXIT FUNCTION
+    LOOP
+END FUNCTION
 
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'

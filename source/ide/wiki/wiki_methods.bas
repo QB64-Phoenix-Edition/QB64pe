@@ -1,6 +1,7 @@
 FUNCTION Back2BackName$ (a$)
     IF a$ = "Keyword Reference - Alphabetical" THEN Back2BackName$ = "Alphabetical": EXIT FUNCTION
     IF a$ = "Keyword Reference - By usage" THEN Back2BackName$ = "By Usage": EXIT FUNCTION
+    IF a$ = "Keywords currently not supported by QB64" THEN Back2BackName$ = "Unsupported": EXIT FUNCTION
     IF a$ = "QB64 Help Menu" THEN Back2BackName$ = "Help": EXIT FUNCTION
     IF a$ = "QB64 FAQ" THEN Back2BackName$ = "FAQ": EXIT FUNCTION
     Back2BackName$ = a$
@@ -38,22 +39,22 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     END IF
 
     'Check for curl
-    IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
-        a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
-        IF PageName$ = "Initialize" THEN
-            a$ = a$ + "To be able to initialize the help system, "
-        ELSEIF PageName$ = "Update All" THEN
-            a$ = a$ + "To be able to update the help pages from the online Wiki, "
-        ELSE
-            a$ = a$ + "The requested help page is not yet cached locally. To download the help page from the online Wiki, "
-        END IF
-        a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
-        a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
-        a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
-        a$ = a$ + "** Unpack and drop the ''curl'' executable into the '''qb64pe''' folder." + CHR$(10)
-        a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the '''qb64pe''' folder too." + CHR$(10)
-        Wiki$ = a$: EXIT FUNCTION
-    END IF
+    'IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
+    '    a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
+    '    IF PageName$ = "Initialize" THEN
+    '        a$ = a$ + "To be able to initialize the help system, "
+    '    ELSEIF PageName$ = "Update All" THEN
+    '        a$ = a$ + "To be able to update the help pages from the online Wiki, "
+    '    ELSE
+    '        a$ = a$ + "The requested help page is not yet cached locally. To download the help page from the online Wiki, "
+    '    END IF
+    '    a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
+    '    a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
+    '    a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
+    '    a$ = a$ + "** Unpack and drop the ''curl'' executable into the '''qb64pe''' folder." + CHR$(10)
+    '    a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the '''qb64pe''' folder too." + CHR$(10)
+    '    Wiki$ = a$: EXIT FUNCTION
+    'END IF
 
     'Download message (Status Bar)
     IF Help_Recaching = 0 THEN
@@ -68,19 +69,25 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     END IF
 
     'Url query and output arguments for curl
-    url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
+    'url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
+    url$ = wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit"
     outputFile$ = Cache_Folder$ + "/" + PageName3$ + ".txt"
     'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
 
     'Download page using curl
-    SHELL _HIDE "curl --silent -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
+    'SHELL _HIDE "curl --silent -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
     fh = FREEFILE
-    OPEN outputFile$ FOR BINARY AS #fh 'get new content
-    a$ = SPACE$(LOF(fh))
-    GET #fh, 1, a$
-    CLOSE #fh
+    'OPEN outputFile$ FOR BINARY AS #fh 'get new content
+    'a$ = SPACE$(LOF(fh))
+    'GET #fh, 1, a$
+    'CLOSE #fh
+    IF PageName$ = "Initialize" OR PageName$ = "Update All" THEN
+        a$ = "" 'dummy pages (for error display)
+    ELSE
+        a$ = wikiDLPage$(url$, 15)
+    END IF
 
     'Find wikitext in the downloaded page
     s1 = INSTR(a$, s1$)
@@ -121,7 +128,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         CLOSE #fh
     ELSE
         'Delete page, if empty or corrupted (force re-download on next access)
-        KILL outputFile$
+        'KILL outputFile$
         a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10) +_
              "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
              "* or the download from Wiki failed and corrupted the page data." + CHR$(10) +_
@@ -1066,6 +1073,51 @@ FUNCTION wikiSafeName$ (page$) 'create a unique name for both case sensitive & i
         END SELECT
     NEXT
     wikiSafeName$ = page$ + "_" + ext$
+END FUNCTION
+
+$UNSTABLE:HTTP
+FUNCTION wikiDLPage$ (url$, timeout!)
+'--- set default result & avoid side effects ---
+wikiDLPage$ = ""
+wik$ = url$: tio! = timeout!
+'--- open client ---
+retry:
+ch& = _OPENCLIENT(wik$)
+IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
+    IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
+        IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
+            IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
+                wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
+                WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+            END IF
+            wik$ = "http://" + MID$(wik$, 9): GOTO retry
+        END IF
+    END IF
+END IF
+IF ch& = 0 THEN EXIT FUNCTION
+'--- wait for response ---
+res$ = "": st! = TIMER
+DO
+    _DELAY 0.05
+    GET ch&, , rec$
+    IF LEN(rec$) > 0 THEN st! = TIMER
+    res$ = res$ + rec$
+    IF _STATUSCODE(ch&) = 200 THEN
+        le& = LOF(ch&)
+        IF le& > -1 THEN
+            IF LEN(res$) = le& THEN
+                wikiDLPage$ = res$: EXIT DO
+            END IF
+        ELSE
+            IF EOF(ch&) THEN
+                wikiDLPage$ = res$: EXIT DO
+            END IF
+        END IF
+    ELSE
+        tio! = 0
+    END IF
+LOOP UNTIL TIMER > st! + tio!
+CLOSE ch&
 END FUNCTION
 
 FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text

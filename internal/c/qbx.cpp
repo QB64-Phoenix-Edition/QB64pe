@@ -1291,13 +1291,8 @@ inline uint16 varseg_dblock_check(uint8 *off) {
     }
 }
 
-#ifdef QB64_WINDOWS
-#include "..\\temp\\global.txt"
-#include "..\\temp\\regsf.txt"
-#else
 #include "../temp/global.txt"
 #include "../temp/regsf.txt"
-#endif
 
 extern int32 ScreenResize;
 extern int32 ScreenResizeScale;
@@ -1306,21 +1301,13 @@ extern int32 ScreenResizeScale;
 // main() begins, to set global, static variables
 // controlling app init
 void set_dynamic_info() {
-#ifdef QB64_WINDOWS
-#include "..\\temp\\dyninfo.txt"
-#else
 #include "../temp/dyninfo.txt"
-#endif
 }
 
 void sub_clear(int32 ignore, int32 ignore2, int32 stack, int32 passed) {
     static ptrszint tmp_long;
 // note: stack can be ignored
-#ifdef QB64_WINDOWS
-#include "..\\temp\\clear.txt"
-#else
 #include "../temp/clear.txt"
-#endif
     // reset DATA read offset
     data_offset = 0;
     // close open files
@@ -1399,11 +1386,7 @@ void chain_input() {
                 sub_get(FF, NULL, byte_element((uint64)&int32val, 4), 0);
 
 // read COMMON data
-#ifdef QB64_WINDOWS
-#include "..\\temp\\inpchain.txt"
-#else
 #include "../temp/inpchain.txt"
-#endif
 
                 sub_close(FF, 1);
 
@@ -1614,11 +1597,7 @@ extensions_ready:
 
     chain_savescreenstate(FF);
 
-#ifdef QB64_WINDOWS
-#include "..\\temp\\chain.txt"
-#else
 #include "../temp/chain.txt"
-#endif
     // add "end of commands" value
     int32val = 0;
     sub_put(FF, NULL, byte_element((uint64)&int32val, 4), 0);
@@ -2329,11 +2308,7 @@ onstrig_recheck:
                                         x = onstrig[(di << 8) + i].id;
                                         i64 = onstrig[(di << 8) + i].pass;
                                         switch (x) {
-#ifdef QB64_WINDOWS
-#include "..\\temp\\onstrig.txt"
-#else
 #include "../temp/onstrig.txt"
-#endif
                                         // example.....
                                         // case 1:
                                         //...
@@ -2368,11 +2343,7 @@ onkey_recheck:
                             x = onkey[i].id;
                             i64 = onkey[i].pass;
                             switch (x) {
-#ifdef QB64_WINDOWS
-#include "..\\temp\\onkey.txt"
-#else
 #include "../temp/onkey.txt"
-#endif
                             // example.....
                             // case 1:
                             //...
@@ -2401,17 +2372,11 @@ onkey_recheck:
                             x = ontimer[i].id;
                             i64 = ontimer[i].pass;
                             switch (x) {
-
-#ifdef QB64_WINDOWS
-#include "..\\temp\\ontimer.txt"
-#else
 #include "../temp/ontimer.txt"
-#endif
-                                // example.....
-                                // case 1:
-                                //...
-                                // break;
-
+                            // example.....
+                            // case 1:
+                            //...
+                            // break;
                             default:
                                 break;
                             }                     // switch
@@ -2504,25 +2469,6 @@ void QBMAIN(void *unused) {
         sf_mem_lock->type = 3;
     }
 
-#ifdef QB64_WINDOWS
-#include "..\\temp\\maindata.txt"
-#include "..\\temp\\mainerr.txt"
-#include "..\\temp\\runline.txt"
-    if (timer_event_occurred) {
-        timer_event_occurred--;
-#include "..\\temp\\ontimerj.txt"
-    }
-    if (key_event_occurred) {
-        key_event_occurred--;
-#include "..\\temp\\onkeyj.txt"
-    }
-    if (strig_event_occurred) {
-        strig_event_occurred--;
-#include "..\\temp\\onstrigj.txt"
-    }
-    chain_input();
-#include "..\\temp\\main.txt"
-#else
 #include "../temp/maindata.txt"
 #include "../temp/mainerr.txt"
 #include "../temp/runline.txt"
@@ -2540,6 +2486,5 @@ void QBMAIN(void *unused) {
     }
     chain_input();
 #include "../temp/main.txt"
-#endif
 
     //} (closed by main.txt)
