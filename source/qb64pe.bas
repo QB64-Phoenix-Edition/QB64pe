@@ -1226,6 +1226,11 @@ file$ = f$
 
 fullrecompile:
 
+IF NOT QuietMode THEN
+    PRINT
+    PRINT "Beginning C++ output from QB64 code... "
+END IF
+
 BU_DEPENDENCY_CONSOLE_ONLY = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY)
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
 DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = BU_DEPENDENCY_CONSOLE_ONLY AND 2 'Restore -g switch if used
@@ -1701,11 +1706,6 @@ IF iderecompile THEN
 END IF
 
 IF idemode THEN GOTO ideret1
-
-IF NOT QuietMode THEN
-    PRINT
-    PRINT "Beginning C++ output from QB64 code... "
-END IF
 
 lineinput3load sourcefile$
 
@@ -12315,11 +12315,15 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
             PRINT "Compiling C++ code into EXE..."
         END IF
     END IF
-    IF LEN(outputfile_cmd$) THEN
-        'resolve relative path for output file
-        path.out$ = getfilepath$(outputfile_cmd$)
-        f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
-        file$ = RemoveFileExtension$(f$)
+
+    ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
+    IF LEN(outputfile_cmd$) Or OutputIsRelativeToStartDir THEN
+        IF LEN(outputfile_cmd$) THEN
+            'resolve relative path for output file
+            path.out$ = getfilepath$(outputfile_cmd$)
+            f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
+            file$ = RemoveFileExtension$(f$)
+        END IF
 
         IF LEN(path.out$) OR OutputIsRelativeToStartDir THEN
             currentdir$ = _CWD$
