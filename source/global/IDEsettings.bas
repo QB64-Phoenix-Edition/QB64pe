@@ -458,7 +458,7 @@ END IF
 
 result = ReadConfigSetting(windowSettingsSection$, "IDE_Width", value$)
 idewx = VAL(value$)
-IF idewx < 80 OR idewx > 1000 THEN idewx = 150: WriteConfigSetting windowSettingsSection$, "IDE_Width", "150"
+IF idewx < 80 OR idewx > 1000 THEN idewx = 120: WriteConfigSetting windowSettingsSection$, "IDE_Width", "120"
 
 result = ReadConfigSetting(windowSettingsSection$, "IDE_Height", value$)
 idewy = VAL(value$)
