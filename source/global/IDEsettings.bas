@@ -3,6 +3,7 @@ DIM SHARED IDEQuoteColor AS _UNSIGNED LONG, IDETextColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor2 AS _UNSIGNED LONG, IDEBracketHighlightColor AS _UNSIGNED LONG
 DIM SHARED IDEKeywordColor AS _UNSIGNED LONG, IDENumbersColor AS _UNSIGNED LONG
+DIM SHARED IDEErrorColor AS _UNSIGNED LONG
 DIM SHARED IDE_AutoPosition AS _BYTE, IDE_TopPosition AS INTEGER, IDE_LeftPosition AS INTEGER
 DIM SHARED IDE_BypassAutoPosition AS _BYTE, idesortsubs AS _BYTE, IDESubsLength AS _BYTE
 DIM SHARED IDENormalCursorStart AS LONG, IDENormalCursorEnd AS LONG
@@ -457,17 +458,18 @@ END IF
 
 result = ReadConfigSetting(windowSettingsSection$, "IDE_Width", value$)
 idewx = VAL(value$)
-IF idewx < 80 OR idewx > 1000 THEN idewx = 80: WriteConfigSetting windowSettingsSection$, "IDE_Width", "80"
+IF idewx < 80 OR idewx > 1000 THEN idewx = 120: WriteConfigSetting windowSettingsSection$, "IDE_Width", "120"
 
 result = ReadConfigSetting(windowSettingsSection$, "IDE_Height", value$)
 idewy = VAL(value$)
-IF idewy < 25 OR idewy > 1000 THEN idewy = 25: WriteConfigSetting windowSettingsSection$, "IDE_Height", "25"
+IF idewy < 25 OR idewy > 1000 THEN idewy = 40: WriteConfigSetting windowSettingsSection$, "IDE_Height", "40"
 
 'Color settings ---------------------------------------------------------------
 'Defaults: (= Super Dark Blue scheme, as of v1.5)
 IDETextColor = _RGB32(216, 216, 216)
 IDEKeywordColor = _RGB32(69, 118, 147)
 IDENumbersColor = _RGB32(216, 98, 78)
+IDEErrorColor = _RGB32(170, 0, 0)
 IDEQuoteColor = _RGB32(255, 167, 0)
 IDEMetaCommandColor = _RGB32(85, 206, 85)
 IDECommentColor = _RGB32(98, 98, 98)
@@ -491,10 +493,16 @@ IF ReadConfigSetting(colorSettingsSection$, "KeywordColor", value$) THEN
 ELSE WriteConfigSetting colorSettingsSection$, "KeywordColor", rgbs$(IDEKeywordColor)
 END IF
 
+IF ReadConfigSetting(colorSettingsSection$, "ErrorColor", value$) THEN
+    IDEErrorColor = VRGBS(value$, IDENumbersColor)
+ELSE WriteConfigSetting colorSettingsSection$, "ErrorColor", rgbs$(IDEErrorColor)
+END IF
+
 IF ReadConfigSetting(colorSettingsSection$, "NumbersColor", value$) THEN
     IDENumbersColor = VRGBS(value$, IDENumbersColor)
 ELSE WriteConfigSetting colorSettingsSection$, "NumbersColor", rgbs$(IDENumbersColor)
 END IF
+
 
 IF ReadConfigSetting(colorSettingsSection$, "QuoteColor", value$) THEN
     IDEQuoteColor = VRGBS(value$, IDEQuoteColor)
