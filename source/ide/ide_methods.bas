@@ -966,6 +966,7 @@ FUNCTION ide2 (ignore)
 
                     _PALETTECOLOR 1, IDEBackgroundColor, 0
                     _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
+                    _PALETTECOLOR 4, IDEErrorColor,0
                     _PALETTECOLOR 5, IDEBracketHighlightColor, 0
                     _PALETTECOLOR 6, IDEBackgroundColor2, 0
                     _PALETTECOLOR 7, IDEChromaColor, 0
@@ -12410,6 +12411,7 @@ SUB ideshowtext
     IF ideshowtextBypassColorRestore = 0 THEN
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
+        _PALETTECOLOR 4, IDEErrorColor,0
         _PALETTECOLOR 5, IDEBracketHighlightColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
@@ -16461,6 +16463,7 @@ FUNCTION idechoosecolorsbox
 
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
+        _PALETTECOLOR 4, IDEErrorColor,0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
         _PALETTECOLOR 8, IDENumbersColor, 0
@@ -16633,19 +16636,7 @@ FUNCTION idechoosecolorsbox
                     'Build scheme string
                     SchemeString$ = SchemeString$ + "|"
                     FOR j = 1 TO 10
-                        SELECT CASE j
-                            CASE 1: CurrentColor~& = IDETextColor
-                            CASE 2: CurrentColor~& = IDEKeywordColor
-                            CASE 3: CurrentColor~& = IDENumbersColor
-                            CASE 4: CurrentColor~& = IDEQuoteColor
-                            CASE 5: CurrentColor~& = IDEMetaCommandColor
-                            CASE 6: CurrentColor~& = IDECommentColor
-                            CASE 7: CurrentColor~& = IDEBackgroundColor
-                            CASE 8: CurrentColor~& = IDEBackgroundColor2
-                            CASE 9: CurrentColor~& = IDEBracketHighlightColor
-                            CASE 10: CurrentColor~& = IDEChromaColor
-                        END SELECT
-
+                        CurrentColor~& = GetCurrentColor(j)
                         r$ = str2$(_RED32(CurrentColor~&)): r$ = STRING$(3 - LEN(r$), "0") + r$
                         g$ = str2$(_GREEN32(CurrentColor~&)): g$ = STRING$(3 - LEN(g$), "0") + g$
                         b$ = str2$(_BLUE32(CurrentColor~&)): b$ = STRING$(3 - LEN(b$), "0") + b$
@@ -16672,19 +16663,7 @@ FUNCTION idechoosecolorsbox
 
                     'Build scheme string
                     FOR j = 1 TO 10
-                        SELECT CASE j
-                            CASE 1: CurrentColor~& = IDETextColor
-                            CASE 2: CurrentColor~& = IDEKeywordColor
-                            CASE 3: CurrentColor~& = IDENumbersColor
-                            CASE 4: CurrentColor~& = IDEQuoteColor
-                            CASE 5: CurrentColor~& = IDEMetaCommandColor
-                            CASE 6: CurrentColor~& = IDECommentColor
-                            CASE 7: CurrentColor~& = IDEBackgroundColor
-                            CASE 8: CurrentColor~& = IDEBackgroundColor2
-                            CASE 9: CurrentColor~& = IDEBracketHighlightColor
-                            CASE 10: CurrentColor~& = IDEChromaColor
-                        END SELECT
-
+                        CurrentColor~& = GetCurrentColor(j)
                         r$ = str2$(_RED32(CurrentColor~&)): r$ = STRING$(3 - LEN(r$), "0") + r$
                         g$ = str2$(_GREEN32(CurrentColor~&)): g$ = STRING$(3 - LEN(g$), "0") + g$
                         b$ = str2$(_BLUE32(CurrentColor~&)): b$ = STRING$(3 - LEN(b$), "0") + b$
@@ -16855,32 +16834,21 @@ FUNCTION idechoosecolorsbox
             FOR i = 1 TO 10: SelectionIndicator$(i) = " ": NEXT i
             SelectionIndicator$(SelectedITEM) = CHR$(16)
 
-            i = 0
-            i = i + 1: l$ = SelectionIndicator$(i) + "Normal Text"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Keywords"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Numbers"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Strings"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Metacommand/custom keywords"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Comments"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Background"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Current line background"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Bracket/selection highlight"
-            i = i + 1: l$ = l$ + sep + SelectionIndicator$(i) + "Menus and dialogs"
+            i = 10 'total number of selection indicators
+            l$ = SelectionIndicator$(1) + "Normal Text"
+            l$ = l$ + sep + SelectionIndicator$(2) + "Keywords"
+            l$ = l$ + sep + SelectionIndicator$(3) + "Numbers"
+            l$ = l$ + sep + SelectionIndicator$(4) + "Strings"
+            l$ = l$ + sep + SelectionIndicator$(5) + "Metacommand/custom keywords"
+            l$ = l$ + sep + SelectionIndicator$(6) + "Comments"
+            l$ = l$ + sep + SelectionIndicator$(7) + "Background"
+            l$ = l$ + sep + SelectionIndicator$(8) + "Current line background"
+            l$ = l$ + sep + SelectionIndicator$(9) + "Bracket/selection highlight"
+            l$ = l$ + sep + SelectionIndicator$(10) + "Menus and dialogs"
             idetxt(o(1).txt) = l$
 
             ChangeTextBoxes:
-            SELECT CASE SelectedITEM
-                CASE 1: CurrentColor~& = IDETextColor
-                CASE 2: CurrentColor~& = IDEKeywordColor
-                CASE 3: CurrentColor~& = IDENumbersColor
-                CASE 4: CurrentColor~& = IDEQuoteColor
-                CASE 5: CurrentColor~& = IDEMetaCommandColor
-                CASE 6: CurrentColor~& = IDECommentColor
-                CASE 7: CurrentColor~& = IDEBackgroundColor
-                CASE 8: CurrentColor~& = IDEBackgroundColor2
-                CASE 9: CurrentColor~& = IDEBracketHighlightColor
-                CASE 10: CurrentColor~& = IDEChromaColor
-            END SELECT
+            CurrentColor~& = GetCurrentColor(SelectedITEM)
             idetxt(o(2).txt) = str2$(_RED32(CurrentColor~&))
             idetxt(o(3).txt) = str2$(_GREEN32(CurrentColor~&))
             idetxt(o(4).txt) = str2$(_BLUE32(CurrentColor~&))
@@ -16925,6 +16893,7 @@ FUNCTION idechoosecolorsbox
         END IF
 
         CurrentColor~& = _RGB32(VAL(idetxt(o(2).txt)), VAL(idetxt(o(3).txt)), VAL(idetxt(o(4).txt)))
+
         SELECT CASE SelectedITEM
             CASE 1: IDETextColor = CurrentColor~& 'Normal text
             CASE 2: IDEKeywordColor = CurrentColor~& 'Keywords
@@ -16976,18 +16945,21 @@ FUNCTION idechoosecolorsbox
 
             WriteConfigSetting colorSettingsSection$, "SchemeID", str2$(SchemeID)
             FOR i = 1 TO 10
+                CurrentColor~& = GetCurrentColor(i)
                 SELECT CASE i
-                    CASE 1: CurrentColor~& = IDETextColor: colorid$ = "TextColor"
-                    CASE 2: CurrentColor~& = IDEKeywordColor: colorid$ = "KeywordColor"
-                    CASE 3: CurrentColor~& = IDENumbersColor: colorid$ = "NumbersColor"
-                    CASE 4: CurrentColor~& = IDEQuoteColor: colorid$ = "QuoteColor"
-                    CASE 5: CurrentColor~& = IDEMetaCommandColor: colorid$ = "MetaCommandColor"
-                    CASE 6: CurrentColor~& = IDECommentColor: colorid$ = "CommentColor"
-                    CASE 7: CurrentColor~& = IDEBackgroundColor: colorid$ = "BackgroundColor"
-                    CASE 8: CurrentColor~& = IDEBackgroundColor2: colorid$ = "BackgroundColor2"
-                    CASE 9: CurrentColor~& = IDEBracketHighlightColor: colorid$ = "HighlightColor"
-                    CASE 10: CurrentColor~& = IDEChromaColor: colorid$ = "ChromaColor"
+                    CASE 1: colorid$ = "TextColor"
+                    CASE 2: colorid$ = "KeywordColor"
+                    CASE 3: colorid$ = "NumbersColor"
+                    CASE 4: colorid$ = "QuoteColor"
+                    CASE 5: colorid$ = "MetaCommandColor"
+                    CASE 6: colorid$ = "CommentColor"
+                    CASE 7: colorid$ = "BackgroundColor"
+                    CASE 8: colorid$ = "BackgroundColor2"
+                    CASE 9: colorid$ = "HighlightColor"
+                    CASE 10: colorid$ = "ChromaColor"
                 END SELECT
+
+
                 WriteConfigSetting colorSettingsSection$, colorid$, rgbs$(CurrentColor~&)
             NEXT i
 
@@ -17052,6 +17024,21 @@ FUNCTION idechoosecolorsbox
     RETURN
 END FUNCTION
 
+
+FUNCTION GetCurrentColor~&(Selection AS INTEGER)
+    SELECT CASE Selection
+        CASE 1: GetCurrentColor = IDETextColor
+        CASE 2: GetCurrentColor = IDEKeywordColor
+        CASE 3: GetCurrentColor = IDENumbersColor
+        CASE 4: GetCurrentColor = IDEQuoteColor
+        CASE 5: GetCurrentColor = IDEMetaCommandColor
+        CASE 6: GetCurrentColor = IDECommentColor
+        CASE 7: GetCurrentColor = IDEBackgroundColor
+        CASE 8: GetCurrentColor = IDEBackgroundColor2
+        CASE 9: GetCurrentColor = IDEBracketHighlightColor
+        CASE 10: GetCurrentColor = IDEChromaColor
+    END SELECT
+END FUNCTION
 
 FUNCTION idergbmixer$ (editing)
     '-------- generic dialog box header --------
@@ -19603,7 +19590,9 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
         TempDarkerIDEChromaColor~& = _RGB32(_RED32(IDEChromaColor) * .5, _GREEN32(IDEChromaColor) * .5, _BLUE32(IDEChromaColor) * .5)
         TempDarkerMetaColor~& = _RGB32(_RED32(IDEMetaCommandColor) * .5, _GREEN32(IDEMetaCommandColor) * .5, _BLUE32(IDEMetaCommandColor) * .5)
         TempDarkerQuoteColor~& = _RGB32(_RED32(IDEQuoteColor) * .5, _GREEN32(IDEQuoteColor) * .5, _BLUE32(IDEQuoteColor) * .5)
+        TempDarkerErrorColor~& =  _RGB32(_RED32(IDEErrorColor) * .5, _GREEN32(IDEErrroColor) * .5, _BLUE32(IDEErrorColor) * .5)
         _PALETTECOLOR 1, TempDarkerBGColor~&, 0
+        _PALETTECOLOR 4, TempDarkerErrorColor~&,0
         _PALETTECOLOR 5, TempDarkerBGColor~&, 0
         _PALETTECOLOR 6, TempDarkerBG2Color~&, 0
         _PALETTECOLOR 7, TempDarkerIDEChromaColor~&, 0
@@ -19615,6 +19604,7 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
         _PALETTECOLOR 14, TempDarkerQuoteColor~&, 0
     ELSE
         _PALETTECOLOR 1, IDEBackgroundColor, 0
+       _PALETTECOLOR 4, IDEErrorColor,0
         _PALETTECOLOR 5, IDEBracketHighlightColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
