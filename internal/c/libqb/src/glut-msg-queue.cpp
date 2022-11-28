@@ -73,3 +73,13 @@ void libqb_glut_hide_window() {
 void libqb_glut_set_window_title(const char *title) {
     libqb_queue_glut_message(new glut_message_set_window_title(title));
 }
+
+void libqb_glut_exit_program(int exitcode) {
+    glut_message_exit_program msg(exitcode);
+
+    libqb_queue_glut_message(&msg);
+    msg.wait_for_response();
+
+    // Should never return
+    exit(exitcode);
+}

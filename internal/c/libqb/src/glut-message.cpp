@@ -47,3 +47,8 @@ void glut_message_hide_window::execute() {
 void glut_message_set_window_title::execute() {
     glutSetWindowTitle(newTitle);
 }
+
+void glut_message_exit_program::execute() {
+    exit(exitCode);
+}
+

@@ -37686,7 +37686,7 @@ end_program:
 
     snd_un_init();
 
-    exit(exit_code);
+    libqb_exit(exit_code);
 }
 
 // used to preserve the previous frame's content for comparison/reuse purposes

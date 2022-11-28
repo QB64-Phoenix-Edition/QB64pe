@@ -61,3 +61,12 @@ void libqb_glut_hide_window() {
 
 void libqb_glut_set_window_title(const char *title) {
 }
+
+void libqb_glut_exit_program(int exitcode) {
+    libqb_exit(exitcode);
+}
+
+// Since there's no GLUT thread to deal with we can just exit() like normal
+void libqb_exit(int code) {
+    exit(code);
+}

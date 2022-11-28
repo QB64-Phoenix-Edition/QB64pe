@@ -171,3 +171,18 @@ void libqb_start_main_thread(int argc, char **argv) {
 
     glutMainLoop();
 }
+
+// Due to GLUT making use of cleanup via atexit, we have to call exit() from
+// the same thread handling the GLUT logic so that the atexit handler also runs
+// from that thread (not doing that can result in a segfault due to using GLUT
+// from two threads at the same time).
+//
+// This is acomplished by simply queuing a GLUT message that calls exit() for us.
+void libqb_exit(int exitcode)
+{
+    // If GLUT isn't running then we're free to do the exit() call from here
+    if (!libqb_is_glut_up())
+        exit(exitcode);
+
+    libqb_glut_exit_program(exitcode);
+}

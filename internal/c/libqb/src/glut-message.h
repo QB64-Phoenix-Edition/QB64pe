@@ -118,6 +118,14 @@ class glut_message_set_window_title : public glut_message {
     }
 };
 
+class glut_message_exit_program : public glut_message {
+  public:
+    int exitCode;
+    void execute();
+
+    glut_message_exit_program(int _exitCode) : glut_message(true), exitCode(_exitCode) { }
+};
+
 // Queues a glut_message to be processed. Returns false if the message was not
 // queued.
 bool libqb_queue_glut_message(glut_message *msg);
