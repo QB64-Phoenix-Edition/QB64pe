@@ -1473,6 +1473,20 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
+        IF mY = idewy + idesubwindow THEN 'mouse is on the bottom line of the IDE.  Check user interactions there.
+            IF (mx >= 15 AND mx <= 30) AND mCLICK THEN 'here indicates a click on the AutoSave area.
+                AutoSave = NOT AutoSave
+                D = _DEST: DC = _DEFAULTCOLOR: BC = _BACKGROUNDCOLOR
+                _DEST 0: COLOR 0, 3
+                LOCATE idewy + idesubwindow, 5: PRINT TIME$;
+                LOCATE idewy + idesubwindow, 15
+                IF AutoSave THEN PRINT "[AUTOSAVE: ON ]"; ELSE PRINT "[AUTOSAVE: OFF]";
+                LOCATE idecy - idesy + 3, maxLineNumberLength + idecx - idesx + 2
+                COLOR DC, BC: _DEST D
+            END IF
+        END IF
+
+
         IF mY = idewy + idesubwindow AND mX >= idewx - 21 - LEN(versionStringStatus$) AND mX < idewx - 21 THEN
             'Highlight Version Number
             IF VersionInfoHover = 0 THEN
@@ -20311,3 +20325,52 @@ Function OpenFile$ (IdeOpenFile as string)'load routine copied/pasted from the o
                 IdeAddRecent idepath$ + idepathsep$ + ideprogname$
                 IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
 end sub
+
+SUB DoTimedEvents
+    '********** Clock on IDE
+    D = _DEST: DC = _DEFAULTCOLOR: BC = _BACKGROUNDCOLOR
+    _DEST 0: COLOR 0, 3
+    LOCATE idewy + idesubwindow, 5: PRINT TIME$;
+    LOCATE idewy + idesubwindow, 15
+    IF AutoSave THEN PRINT "[AUTOSAVE: ON ]"; ELSE PRINT "[AUTOSAVE: OFF]";
+    LOCATE idecy - idesy + 3, maxLineNumberLength + idecx - idesx + 2
+    COLOR DC, BC: _DEST D
+    '********** End Clock code
+
+
+    '********** AutoSave every X Minutes
+    STATIC backidet$, TimeElapsed AS _UNSIGNED LONG
+
+    IF Autosave = 0 OR AutoSaveTimer = 0 THEN EXIT SUB
+    TimeElapsed = TimeElapsed + 1
+    IF TimeElapsed MOD (AutoSaveTimer * 60) = 0 THEN
+        IF backidet$ <> idet$ THEN
+            IF NOT _DIREXISTS("internal\autosave") THEN MKDIR "internal\autosave"
+            IF ideprogname = "" THEN
+                ProposedTitle$ = FindProposedTitle$
+                IF ProposedTitle$ = "" THEN
+                    savename$ = "untitled" + tempfolderindexstr$
+                ELSE
+                    savename$ = ProposedTitle$ + ".bas"
+                END IF
+            ELSE
+                savename$ = ideprogname
+            END IF
+            t$ = DATE$ + "-" + TIME$
+            DO
+                l = INSTR(t$, ":")
+                MID$(t$, l) = "-"
+            LOOP UNTIL l = 0
+            savename$ = "internal\autosave\" + savename$ + " (" + t$ + ") .bas"
+            OPEN savename$ FOR OUTPUT AS #1510
+            FOR i = 1 TO iden
+                tempstring$ = idegetline(i)
+                PRINT #1510, tempstring$
+            NEXT
+            CLOSE #1510
+            backidet$ = idet$
+        END IF
+    END IF
+    '************  End AutoSave code
+END SUB
+

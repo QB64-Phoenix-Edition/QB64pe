@@ -74,6 +74,9 @@ IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELS
 UserDefine(1, 7) = Version$
 
 DIM SHARED QB64_uptime!
+DIM SHARED QB64_Timer AS LONG, AutoSave AS INTEGER, AutoSaveTimer AS DOUBLE
+QB64_Timer = _FREETIMER
+ON TIMER(QB64_Timer, 1) DoTimedEvents 'we're only doing a few quick timed events once a second.  Not much chance to slow things down there.
 
 QB64_uptime! = TIMER
 
@@ -393,6 +396,7 @@ ELSE
     _CONSOLE OFF
     _SCREENSHOW
     _ICON
+    TIMER(QB64_Timer) ON
 END IF
 
 'the function ?=ide(?) should always be passed 0, it returns a message code number, any further information
@@ -1438,6 +1442,7 @@ HashAdd "WHILE", f, 0
 
 
 'clear/init variables
+AutoSave = -1
 Console = 0
 ScreenHide = 0
 Asserts = 0
@@ -1940,6 +1945,17 @@ DO
                     GOTO errmes
             END SELECT
         END IF
+
+        IF LEFT$(temp$, 10) = "$AUTOSAVE:" THEN
+            temp1$ = MID$(temp$, 11)
+            l1 = INSTR(temp1$, "*")
+            AutoSaveTimer = VAL(MID$(temp$, 11))
+            IF AutoSaveTimer = 0 THEN a$ = "ERROR: No Time Set on AutoSave": GOTO errmes
+            layout$ = "$AUTOSAVE:" + LTRIM$(STR$(AutoSaveTimer))
+            GOTO finishedlinepp
+        END IF
+
+
 
         cwholeline$ = wholeline$
         wholeline$ = eleucase$(wholeline$) '********REMOVE THIS LINE LATER********
@@ -3190,6 +3206,8 @@ DO
             UserDefine(1, UserDefineCount) = r$
             GOTO finishednonexec
         END IF
+
+        IF LEFT$(a3u$, 9) = "$AUTOSAVE" THEN GOTO finishednonexec
 
         IF a3u$ = "$COLOR:0" THEN
             layout$ = SCase$("$Color:0")
@@ -12317,7 +12335,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     END IF
 
     ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
-    IF LEN(outputfile_cmd$) Or OutputIsRelativeToStartDir THEN
+    IF LEN(outputfile_cmd$) OR OutputIsRelativeToStartDir THEN
         IF LEN(outputfile_cmd$) THEN
             'resolve relative path for output file
             path.out$ = getfilepath$(outputfile_cmd$)
