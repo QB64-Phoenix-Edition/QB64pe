@@ -143,7 +143,7 @@ FUNCTION ide2 (ignore)
     STATIC wholeword.selecty1, wholeword.idecy
     STATIC ForceResize, IDECompilationRequested AS _BYTE
     STATIC QuickNavHover AS _BYTE, FindFieldHover AS _BYTE
-    STATIC VersionInfoHover AS _BYTE, LineNumberHover AS _BYTE
+    STATIC VersionInfoHover AS _BYTE, LineNumberHover AS _BYTE, AutoSaveHover as _BYTE
     STATIC waitingForVarList AS _BYTE
 
     ignore = ignore 'just to clear warnings of unused variables
@@ -1473,19 +1473,25 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF mY = idewy + idesubwindow THEN 'mouse is on the bottom line of the IDE.  Check user interactions there.
-            IF (mx >= 15 AND mx <= 30) AND mCLICK THEN 'here indicates a click on the AutoSave area.
-                AutoSave = NOT AutoSave
-                D = _DEST: DC = _DEFAULTCOLOR: BC = _BACKGROUNDCOLOR
-                _DEST 0: COLOR 0, 3
-                LOCATE idewy + idesubwindow, 5: PRINT TIME$;
-                LOCATE idewy + idesubwindow, 15
-                IF AutoSave THEN PRINT "[AUTOSAVE: ON ]"; ELSE PRINT "[AUTOSAVE: OFF]";
-                LOCATE idecy - idesy + 3, maxLineNumberLength + idecx - idesx + 2
-                COLOR DC, BC: _DEST D
+        COLOR 0, 3
+        _PRINTSTRING (5, idewy + idesubwindow), TIME$
+
+        IF mY = idewy + idesubwindow AND (mx >= 15 AND mx <= 30) THEN 'here indicates a click/hover on the AutoSave area.
+            IF AutoSaveHover = 0 THEN
+                COLOR 13, 6
+                IF AutoSave THEN _PRINTSTRING (15, idewy + idesubwindow), "[AUTOSAVE: ON ]" ELSE _PRINTSTRING (15, idewy + idesubwindow), "[AUTOSAVE: OFF]"
+                updateHover = -1
+                AutoSaveHover = -1
+            END IF
+            IF mClick THEN PCOPY 0, 2:AutoSave = NOT AutoSave
+        ELSE
+            IF AutoSaveHover = -1 THEN
+                AutoSaveHover = 0
+                COLOR 0, 3
+                IF AutoSave THEN _PRINTSTRING (15, idewy + idesubwindow), "[AUTOSAVE: ON ]" ELSE _PRINTSTRING (15, idewy + idesubwindow), "[AUTOSAVE: OFF]"
+                updateHover = -1
             END IF
         END IF
-
 
         IF mY = idewy + idesubwindow AND mX >= idewx - 21 - LEN(versionStringStatus$) AND mX < idewx - 21 THEN
             'Highlight Version Number
@@ -19572,7 +19578,12 @@ SUB UpdateIdeInfo
     IF LEN(a$) < (idewx - 20) THEN a$ = a$ + SPACE$((idewx - 20) - LEN(a$))
     COLOR 0, 3
     _PRINTSTRING (2, idewy + idesubwindow), a$
-
+    _PRINTSTRING (5, idewy + idesubwindow), TIME$
+    IF AUTOSAVE THEN
+        _PRINTSTRING (15, idewy + idesubwindow), "[AUTOSAVE: ON ]"
+    ELSE
+        _PRINTSTRING (15, idewy + idesubwindow), "[AUTOSAVE: OFF]"
+    END IF
     IF LEN(versionStringStatus$) = 0 THEN
         versionStringStatus$ = " v" + Version$
         versionStringStatus$ = versionStringStatus$ + " "
@@ -20332,7 +20343,6 @@ SUB DoTimedEvents
     _DEST 0: COLOR 0, 3
     LOCATE idewy + idesubwindow, 5: PRINT TIME$;
     LOCATE idewy + idesubwindow, 15
-    IF AutoSave THEN PRINT "[AUTOSAVE: ON ]"; ELSE PRINT "[AUTOSAVE: OFF]";
     LOCATE idecy - idesy + 3, maxLineNumberLength + idecx - idesx + 2
     COLOR DC, BC: _DEST D
     '********** End Clock code

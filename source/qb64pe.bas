@@ -1442,7 +1442,7 @@ HashAdd "WHILE", f, 0
 
 
 'clear/init variables
-AutoSave = -1
+AutoSave = 0
 Console = 0
 ScreenHide = 0
 Asserts = 0
