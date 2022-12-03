@@ -12,5 +12,7 @@ $(FREEGLUT_LIB): $(FREEGLUT_OBJS)
 
 QB_CORE_LIB := $(FREEGLUT_LIB)
 
+CXXFLAGS += -I$(PATH_INTERNAL_C)/parts/core/src/ -I$(PATH_INTERNAL_C)/parts/core/glew/include/
+
 CLEAN_LIST += $(FREEGLUT_LIB) $(FREEGLUT_OBJS)
 
