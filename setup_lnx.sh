@@ -75,7 +75,7 @@ fi
 #Find and install packages
 if [ "$DISTRO" == "arch" ]; then
   echo "ArchLinux detected."
-  pkg_list="gcc make zlib xorg-xmessage curl $GET_WGET"
+  pkg_list="gcc make zlib curl $GET_WGET"
   installed_packages=`pacman -Q`
   installer_command="sudo pacman -S "
   pkg_install
@@ -87,13 +87,13 @@ elif [ "$DISTRO" == "linuxmint" ] || [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" ==
   pkg_install
 elif [ "$DISTRO" == "fedora" ] || [ "$DISTRO" == "redhat" ] || [ "$DISTRO" == "centos" ]; then
   echo "Fedora/Redhat based distro detected."
-  pkg_list="gcc-c++ make xmessage mesa-libGLU-devel alsa-lib-devel zlib-devel libcurl-devel $GET_WGET"
+  pkg_list="gcc-c++ make mesa-libGLU-devel alsa-lib-devel zlib-devel libcurl-devel $GET_WGET"
   installed_packages=`yum list installed`
   installer_command="sudo yum install "
   pkg_install
 elif [ "$DISTRO" == "voidlinux" ]; then
    echo "VoidLinux detected."
-   pkg_list="gcc make xmessage glu-devel zlib-devel alsa-lib-devel libcurl-devel $GET_WGET"
+   pkg_list="gcc make glu-devel zlib-devel alsa-lib-devel libcurl-devel $GET_WGET"
    installed_packages=`xbps-query -l |grep -v libgcc`
    installer_command="sudo xbps-install -Sy "
    pkg_install
@@ -104,7 +104,6 @@ elif [ -z "$DISTRO" ]; then
   echo "  OpenGL developement libraries"
   echo "  ALSA development libraries"
   echo "  GNU C++ Compiler (g++)"
-  echo "  xmessage (x11-utils)"
   echo "  zlib"
 fi
 
