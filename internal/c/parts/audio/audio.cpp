@@ -20,6 +20,7 @@
 #include "audio.h"
 
 #include <algorithm>
+#include <queue>
 #include <vector>
 
 // Enable Ogg Vorbis decoding
@@ -102,93 +103,36 @@ extern mem_lock *mem_lock_tmp;  // Same as above
 //-----------------------------------------------------------------------------------------------------
 // STRUCTURES, CLASSES & ENUMERATIONS
 //-----------------------------------------------------------------------------------------------------
-/// <summary>
-/// Type of sound
-/// </summary>
+/// @brief Type of sound
 enum struct SoundType {
     None,   // No sound or internal sound whose buffer is managed by the QBPE audio engine
     Static, // Static sounds that are completely managed by miniaudio
     Raw     // Raw sound stream that is managed by the QBPE audio engine
 };
 
-/// <summary>
-/// This struct encapsulates a sample frame block and it's management.
-/// We choose these 'classes' to be barebones and completely transparent for performance reasons.
-/// </summary>
-struct SampleFrameBlockNode {
-    SampleFrameBlockNode *next; // Next block node in the chain
-    ma_uint32 samples;          // Size of the block in 'samples'. See below
-    ma_uint32 offset;           // Where is the write cursor in the buffer (in samples!)?
-    float *buffer;              // The actual sample frame block buffer
-    bool force;                 // When this is set, the buffer will be processed even when if it is not full
+/// @brief A simple FP32 stereo sample frame
+struct SampleFrame {
+    float l;
+    float r;
 
-    SampleFrameBlockNode() = delete;                                  // No default constructor
-    SampleFrameBlockNode(const SampleFrameBlockNode &) = delete;      // No default copy constructor
-    SampleFrameBlockNode &operator=(SampleFrameBlockNode &) = delete; // No assignment operator
+    SampleFrame() { l = r = 0; }
 
-    /// <summary>
-    /// The constructor parameter is in sample frames.
-    /// For a stereo sample frame we'll need (sample frames * 2) samples.
-    /// Each sample is sizeof(float) bytes.
-    /// </summary>
-    /// <param name="sampleFrames">Number of sample frames needed</param>
-    SampleFrameBlockNode(ma_uint32 sampleFrames) {
-        next = nullptr;                // Set this to null. This will managed by the 'Queue' struct
-        samples = sampleFrames << 1;   // 2 channels (stereo)
-        offset = 0;                    // Set the write cursor to 0
-        force = false;                 // Set the force flag to false by default
-        buffer = new float[samples](); // Allocate a zeroed float buffer of size floats. Ah, Creative Silence!
+    SampleFrame(float left, float right) {
+        l = left;
+        r = right;
     }
-
-    /// <summary>
-    /// Free the sample frame block that was allocated.
-    /// </summary>
-    ~SampleFrameBlockNode() { delete[] buffer; }
-
-    /// <summary>
-    /// Pushes a sample frame in the block and increments the offset.
-    /// miniaudio expects it's stereo PCM data interleaved (LRLR format).
-    /// No clipping is required because miniaudio does that for us (sweet!)
-    /// </summary>
-    /// <param name="l">Left floating point sample</param>
-    /// <param name="r">Right floating point sample</param>
-    /// <returns>Return true if operation was succcessful. False if block is full</returns>
-    bool PushSampleFrame(float l, float r) {
-        if (buffer && offset < samples) {
-            buffer[offset] = l;
-            ++offset;
-            buffer[offset] = r;
-            ++offset;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Check if the buffer is completely filled.
-    /// </summary>
-    /// <returns>Returns true if buffer is full</returns>
-    bool IsBufferFull() { return offset >= samples || force; }
 };
 
-/// <summary>
-/// This is a light weight queue of type SampleFrameBlockNode and also the guts of SndRaw.
-/// We could have used some std container but I wanted something really lean, simple and transparent.
-/// </summary>
+/// @brief This is the guts of SndRaw
 struct SampleFrameBlockQueue {
-    SampleFrameBlockNode *first;           // First sample frame block
-    SampleFrameBlockNode *last;            // Last sample frame block
-    size_t blockCount;                     // Sample frame block count
-    size_t frameCount;                     // Number of sample frames we have in the queue
+    std::queue<SampleFrame> stream;        // raw stereo sample frame stream (which is conveniently block allocated by C++ STL)
     ma_uint32 sampleRate;                  // The sample rate reported by ma_engine
-    ma_uint32 blockSampleFrames;           // How many sample frames do we need per 'block'. See below
-    float *buffer;                         // This is the ping-pong buffer where the samples block will be 'streamed' to
-    ma_uint32 bufferSampleFrames;          // Size of the ping-pong buffer in *samples frames*
+    ma_uint64 blockSampleFrames;           // How many sample frames do we need per 'block'. See below
+    SampleFrame *buffer;                   // This is the ping-pong buffer where the samples block will be 'streamed' to
     bool updateFlag;                       // We will only update the buffer with fresh samples when this flag is not equal to the check condition
-    ma_uint32 bufferUpdatePosition;        // The position (in samples) in the buffer where we should be copying a sample block
-    ma_uint32 sampleFramesPlaying;         // The number of sample frames that was sent for playback
+    ma_uint64 bufferUpdatePosition;        // The position (in samples) in the buffer where we should be copying a sample block
+    ma_uint64 sampleFramesPlaying;         // The number of sample frames that was sent for playback
+    bool force;                            // When this is set, a block will be processed even when it's size is not blockSampleFrames
     ma_uint64 maEngineTime;                // miniaudio engine time use for correct length calculation
     ma_sound *maSound;                     // Pointer to a ma_sound object that was passed in the constructor
     ma_engine *maEngine;                   // Pointer to a ma_engine object
@@ -206,24 +150,21 @@ struct SampleFrameBlockQueue {
     /// <param name="pmaEngine">A pointer to a miniaudio engine object</param>
     /// <param name="pmaSound">A pointer to a miniaudio sound object</param>
     SampleFrameBlockQueue(ma_engine *pmaEngine, ma_sound *pmaSound) {
-        first = last = nullptr;
-        blockCount = frameCount = maEngineTime = sampleFramesPlaying = bufferUpdatePosition = 0;
+        maEngineTime = sampleFramesPlaying = bufferUpdatePosition = 0;
         maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
 
         // We can get away with '>> 4' because the sound loop function is called @ ~60Hz
         // This should work even on entry level systems. Tested on AMD A6-9200 (230.4 GFLOPS), Crostini Linux
-        // Also note that the nodes will allocates twice this to account for 2 channels
         blockSampleFrames = sampleRate >> 4;
-
-        bufferSampleFrames = blockSampleFrames * 2;   // We want the playback buffer twice the size of a block to do a proper ping-pong
-        buffer = new float[bufferSampleFrames * 2](); // Allocate a zeroed float buffer of bufferSizeSampleFrames * 2 floats (2 is for 2 channels - stereo)
-        updateFlag = false;                           // Set this to false because we want the initial check to fail
+        buffer = new SampleFrame[blockSampleFrames * 2](); // Allocate a zeroed float sample frame buffer (* 2 to do a proper ping-pong)
+        updateFlag = false;                                // Set this to false because we want the initial check to fail
+        force = false;                                     // we will not force playback until we have reached blockSampleFrames
 
         if (buffer) {
             // Setup the ma buffer
-            maBufferConfig = ma_audio_buffer_config_init(ma_format::ma_format_f32, 2, bufferSampleFrames, buffer, NULL);
+            maBufferConfig = ma_audio_buffer_config_init(ma_format::ma_format_f32, 2, blockSampleFrames * 2, buffer, NULL); // * 2 to do a proper ping-pong
             maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
@@ -258,80 +199,20 @@ struct SampleFrameBlockQueue {
             ma_audio_buffer_uninit(&maBuffer);
         }
 
-        while (PopSampleFrameBlock())
-            ;
-
         delete[] buffer;
 
         AUDIO_DEBUG_PRINT("Raw sound stream closed");
     }
 
     /// <summary>
-    /// This pushes a sample frame into the queue.
-    /// If there are no sample frame blocks then it creates one.
-    /// If the last sample frame block is full it creates a new one and links it to the chain.
+    /// This pushes a sample frame at the end of the queue.
     /// Note that in QBPE all samples frames are assumed to be stereo.
     /// Mono sample frames are simply simulated by playing the same data from left and right.
-    /// No clipping is required because miniaudio does that for us (sweet!)
+    /// No clipping is required because miniaudio does that for us.
     /// </summary>
     /// <param name="l">The left sample</param>
     /// <param name="r">The right sample</param>
-    /// <returns>Returns true if operation was successful</returns>
-    bool PushSampleFrame(float l, float r) {
-        // Attempt to push the frame into the last node if one exists
-        // If successfull return true
-        if (last && last->PushSampleFrame(l, r)) {
-            ++frameCount; // Increment the frame count
-            return true;
-        }
-
-        // If we reached here, then it means that either there are no nodes or the last one is full
-        // Simply create a new node and then link it to the chain
-        SampleFrameBlockNode *node = new SampleFrameBlockNode(blockSampleFrames);
-
-        // Return false if memory allocation failed or we're mot able to save the sample frame
-        if (!node || !node->PushSampleFrame(l, r)) {
-            delete node;
-            return false; // Ignore the sample frame and exit silently
-        }
-
-        if (last)
-            last->next = node; // Add the node to the last node if we have nodes in the queue
-        else
-            first = node; // Else this is the first node
-
-        last = node;  // The last item in the queue is node
-        ++blockCount; // Increase the frame block count
-        ++frameCount; // Increment the frame count
-
-        return true;
-    }
-
-    /// <summary>
-    /// This pops a sample frame block from the front of the queue.
-    /// The sample frame block can be accessed before popping using the 'first' member.
-    /// Popping a block frees and invalidates the memory it was using. So, pop a block only when we are sure that we do not need it.
-    /// </summary>
-    /// <returns>Returns true if we were able to pop. False means the queue is empty</returns>
-    bool PopSampleFrameBlock() {
-        // Only if the queue has some sample frame blocks then...
-        if (blockCount) {
-            SampleFrameBlockNode *node = first; // Set node to the first frame in the queue
-
-            --blockCount;                    // Decrement the block count now so that we know what to do with 'last'
-            frameCount -= node->offset >> 1; // Decrease frame count by number of sample frames written in the block (/ 2 for channels)
-            first = node->next;              // Detach the node. If this is the last node then 'first' will be NULL cause node->next is NULL
-
-            if (!blockCount)
-                last = nullptr; // This means that node was the last node
-
-            delete node; // Free the node
-
-            return true;
-        }
-
-        return false;
-    }
+    void PushSampleFrame(float l, float r) { stream.emplace(l, r); }
 
     /// <summary>
     /// Returns the length, in sample frames of sound queued.
@@ -343,10 +224,10 @@ struct SampleFrameBlockQueue {
 
         // Decrement the delta from the sample frames that are playing
         // Using std::min here is probably risky since these are all unsigned types
-        sampleFramesPlaying = maEngineDeltaTime > sampleFramesPlaying ? 0 : (ma_uint32)(sampleFramesPlaying - maEngineDeltaTime);
+        sampleFramesPlaying = maEngineDeltaTime > sampleFramesPlaying ? 0 : sampleFramesPlaying - maEngineDeltaTime;
 
         // Add this to the frames in the queue
-        return sampleFramesPlaying + frameCount;
+        return stream.size() + sampleFramesPlaying;
     }
 
     /// <summary>
@@ -357,10 +238,7 @@ struct SampleFrameBlockQueue {
         ma_uint64 sampleFramesRemaining = GetSampleFramesRemaining();
 
         // This will help us avoid situations where we can get a non-zero value even if GetSampleFramesRemaining returns 0
-        if (!sampleFramesRemaining)
-            return 0;
-        else
-            return (double)sampleFramesRemaining / sampleRate;
+        return !sampleFramesRemaining ? 0 : (double)sampleFramesRemaining / (double)sampleRate;
     }
 
     /// <summary>
@@ -382,29 +260,32 @@ struct SampleFrameBlockQueue {
 
         // Only proceed to update if our flag is not the same as our condition
         if (checkCondition != updateFlag) {
-            // The line below does two sneaky things that deserve explanation
-            //	1. We are using bufferSampleFrames which is set to exactly halfway through the buffer since we are using stereo (see constructor)
-            //	2. The boolean condition above will always be 1 if the read cursor is in the lower-half and hence push the position to the top-half
-            //  3. Obviously, this means that if the condition is 0 then position will be set to the lower-half
-            bufferUpdatePosition = checkCondition * bufferSampleFrames; // This line basically toggles the buffer copy position
+            //	The boolean condition above will always be 1 if the read cursor is in the lower-half and hence push the position to the top-half
+            //  Obviously, this means that if the condition is 0 then position will be set to the lower-half
+            bufferUpdatePosition = checkCondition * blockSampleFrames; // This line basically toggles the buffer copy position
+
+            size_t streamSize = stream.size(); // get the length of the raw stream
 
             // Check if we have any blocks in the queue and stream only if the block is full
-            if (blockCount && first->IsBufferFull()) {
-                // We check this here so that even if the buffer is not allocated, the block object will be popped off
-                if (first->buffer) {
-                    // Simply copy the first block in the queue
-                    std::copy(first->buffer, first->buffer + first->samples, buffer + bufferUpdatePosition);
+            if (streamSize && (streamSize >= blockSampleFrames || force)) {
+                for (size_t i = 0; i < blockSampleFrames; i++) {
+                    if (i < streamSize) { // only attempt to pop if we have samples in the queue
+                        buffer[bufferUpdatePosition + i] = stream.front();
+                        stream.pop();
+                    } else { // else we write silence
+                        buffer[bufferUpdatePosition + i] = {};
+                    }
                 }
 
                 // Save the number of samples frames sent for playback and the current time for correct time calculation
                 sampleFramesPlaying = blockSampleFrames;
                 maEngineTime = ma_engine_get_time(maEngine);
-
-                // And then pop it off
-                PopSampleFrameBlock();
             } else { // Else we'll stream silence
-                // We are using bufferSampleFrames here for the same reason as the explanation above
-                std::fill(buffer + bufferUpdatePosition, buffer + bufferUpdatePosition + bufferSampleFrames, NULL);
+                for (size_t i = 0; i < blockSampleFrames; i++)
+                    buffer[bufferUpdatePosition + i] = {};
+
+                sampleFramesPlaying = 0; // we set this to zero so that GetSampleFramesRemaining calculates the correct samples
+                force = false;           // unset the force flag now that all peding samples have finished playing
             }
 
             updateFlag = checkCondition; // Save our check condition to our flag
@@ -489,8 +370,6 @@ struct AudioEngine {
     /// The choice of using a vector was simple - performance. Vector performance when using 'indexes' is next to no other.
     /// The vector will be pruned only when snd_un_init gets called.
     /// We will however, be good citizens and will also 'delete' the objects when snd_un_init gets called.
-    /// All this means that a sloppy programmer may be able to grow the vector and eventually the system may run out of memory and crash.
-    /// But that's ok. Sloppy programmers (like me) must be punished until they learn! XD
     /// This also increments 'lowestFreeHandle' to allocated handle + 1.
     /// </summary>
     /// <returns>Returns a non-negative handle if successful</returns>
@@ -755,8 +634,7 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     free(data); // free the sound data
 
     // This will push any unfinished block for playback
-    if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
+    audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->force = true;
 
     // This will wait for the block to finish (if specified)
     // We'll be good citizens and give-up our time-slices while waiting
@@ -821,8 +699,7 @@ void sub_beep() { sub_sound(900, 5); }
 int32_t func_play(int32_t ignore) {
     if (audioEngine.isInitialized && audioEngine.sndInternal == 0) {
         // This will push any unfinished block for playback
-        if (audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last)
-            audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->last->force = true;
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->force = true;
         return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetSampleFramesRemaining();
     }
 
@@ -1865,9 +1742,7 @@ void sub__sndrawdone(int32_t handle, int32_t passed) {
 
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
         // Set the last block's force flag to true
-        if (audioEngine.soundHandles[handle]->rawQueue->last) {
-            audioEngine.soundHandles[handle]->rawQueue->last->force = true;
-        }
+        audioEngine.soundHandles[handle]->rawQueue->force = true;
     }
 }
 
@@ -1888,8 +1763,8 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
         // However, none of the examples in the wiki seem to do that
         // So, we'll set the last blocks force flag to true only when there are > 1 block
         // This should help avoid those examples from locking up in an infinite loop
-        if (audioEngine.soundHandles[handle]->rawQueue->blockCount > 1)
-            audioEngine.soundHandles[handle]->rawQueue->last->force = true;
+        if (audioEngine.soundHandles[handle]->rawQueue->stream.size() >= audioEngine.soundHandles[handle]->rawQueue->blockSampleFrames)
+            audioEngine.soundHandles[handle]->rawQueue->force = true;
 
         return audioEngine.soundHandles[handle]->rawQueue->GetTimeRemaining();
     }
