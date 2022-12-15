@@ -691,7 +691,7 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     // This will wait for the block to finish (if specified)
     // We'll be good citizens and give-up our time-slices while waiting
     if (block) {
-        auto time_ms = (ma_int64)(RawStreamGetTimeRemaining(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) * 950.0 - 250.0);
+        auto time_ms = (RawStreamGetSampleFramesRemaining(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) * 1000) / audioEngine.sampleRate;
         if (time_ms > 0)
             Sleep(time_ms);
     }
