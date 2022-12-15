@@ -139,11 +139,7 @@ template <class T> class SafeQueue {
 
     /// @brief Returns number of elements in the queue
     /// @return Number of elements
-    std::size_t size() {
-        libqb_mutex_guard lock(m);
-
-        return q.size();
-    }
+    std::size_t size() { return q.size(); }
 };
 
 /// @brief A miniaudiio raw audio stream datasource
@@ -174,15 +170,13 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     auto pRawStream = (RawStream *)pDataSource;
     auto result = MA_SUCCESS; // must be initialized to MA_SUCCESS
     auto buffer = (SampleFrame *)pFramesOut;
+    auto sampleFramesCount = std::min(frameCount, pRawStream->stream.size());
     ma_uint64 sampleFramesRead = 0;
 
-    while (sampleFramesRead < frameCount) {
-        if (pRawStream->stream.size() > 0) { // must have one or more sample frames
-            *buffer = pRawStream->stream.dequeue();
-            ++buffer;           // increment the buffer pointer
-            ++sampleFramesRead; // increment the frame counter
-        } else
-            break; // no more frames to play
+    while (sampleFramesRead < sampleFramesCount) {
+        *buffer = pRawStream->stream.dequeue();
+        ++buffer;           // increment the buffer pointer
+        ++sampleFramesRead; // increment the frame counter
     }
 
     // To keep the stream going, play silence if there are no frames to play
