@@ -12,12 +12,10 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
 // Set this to 1 if we want to print debug messages to stderr
 #define AUDIO_DEBUG 0
 #include "audio.h"
+#include "condvar.h"
 
 #include <algorithm>
 #include <queue>
@@ -36,33 +34,21 @@
 // We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
 // For now, we'll wait for Matt until he sorts out things to smaller and logical files
 #include "../../libqb.h"
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// CONSTANTS
-//-----------------------------------------------------------------------------------------------------
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define INVALID_MEM_LOCK 1073741821
-
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define MEM_TYPE_SOUND 5
-
 // In QuickBASIC false means 0 and true means -1 (sad, but true XD)
 #define QB_FALSE MA_FALSE
 #define QB_TRUE -MA_TRUE
-
 // This is returned to the caller if handle allocation fails with a -1
 // AllocateSoundHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case
 #define INVALID_SOUND_HANDLE 0
-
 // This is the string that must be passed in the requirements parameter to stream a sound from storage
 #define REQUIREMENT_STRING_STREAM "STREAM"
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// MACROS
-//-----------------------------------------------------------------------------------------------------
 #define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
 
 // This basically checks if the handle is within vector limits and 'isUsed' is set to true
@@ -77,11 +63,7 @@
 #else
 #    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #endif
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FORWARD DECLARATIONS
-//-----------------------------------------------------------------------------------------------------
 // This adds our customer backend (format decoders) VTables to our ma_resource_manager_config
 void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
 
@@ -98,11 +80,7 @@ extern ptrszint dblock;         // Required for Play(). Did not find this declar
 extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
 extern mem_lock *mem_lock_base; // Same as above
 extern mem_lock *mem_lock_tmp;  // Same as above
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// STRUCTURES, CLASSES & ENUMERATIONS
-//-----------------------------------------------------------------------------------------------------
 /// @brief Type of sound
 enum struct SoundType {
     None,   // No sound or internal sound whose buffer is managed by the QBPE audio engine
@@ -114,198 +92,286 @@ enum struct SoundType {
 struct SampleFrame {
     float l;
     float r;
+};
 
-    SampleFrame() { l = r = 0; }
+/// @brief A thread-safe queue
+/// @tparam T Data type
+template <class T> class SafeQueue {
+  private:
+    std::queue<T> q;
+    libqb_mutex *m;
+    libqb_condvar *c;
 
-    SampleFrame(float left, float right) {
-        l = left;
-        r = right;
+  public:
+    /// @brief Constructor
+    SafeQueue() : q() {
+        m = libqb_mutex_new();
+        c = libqb_condvar_new();
+    }
+
+    /// @brief Destructor
+    ~SafeQueue() {
+        libqb_condvar_free(c);
+        libqb_mutex_free(m);
+    }
+
+    /// @brief Add an element to the queue
+    /// @param t The element
+    void enqueue(T t) {
+        libqb_mutex_guard lock(m);
+        q.push(t);
+        libqb_condvar_signal(c);
+    }
+
+    /// @brief Get the front element. If the queue is empty, wait till a element is avaiable
+    /// @return Returns the front element
+    T dequeue() {
+        libqb_mutex_guard lock(m);
+
+        while (q.empty())
+            libqb_condvar_wait(c, m); // release lock as long as the wait and reaquire it afterwards
+
+        T val = q.front();
+        q.pop();
+
+        return val;
+    }
+
+    /// @brief Returns number of elements in the queue
+    /// @return Number of elements
+    std::size_t size() {
+        libqb_mutex_guard lock(m);
+
+        return q.size();
     }
 };
 
-/// @brief This is the guts of SndRaw
-struct SampleFrameBlockQueue {
-    std::queue<SampleFrame> stream;        // raw stereo sample frame stream (which is conveniently block allocated by C++ STL)
-    ma_uint32 sampleRate;                  // The sample rate reported by ma_engine
-    ma_uint64 blockSampleFrames;           // How many sample frames do we need per 'block'. See below
-    SampleFrame *buffer;                   // This is the ping-pong buffer where the samples block will be 'streamed' to
-    bool updateFlag;                       // We will only update the buffer with fresh samples when this flag is not equal to the check condition
-    ma_uint64 bufferUpdatePosition;        // The position (in samples) in the buffer where we should be copying a sample block
-    ma_uint64 sampleFramesPlaying;         // The number of sample frames that was sent for playback
-    bool force;                            // When this is set, a block will be processed even when it's size is not blockSampleFrames
-    ma_uint64 maEngineTime;                // miniaudio engine time use for correct length calculation
-    ma_sound *maSound;                     // Pointer to a ma_sound object that was passed in the constructor
-    ma_engine *maEngine;                   // Pointer to a ma_engine object
-    ma_audio_buffer maBuffer;              // miniaudio buffer object
-    ma_audio_buffer_config maBufferConfig; // miniaudio buffer configuration
-    ma_result maResult;                    // This is the result of the last miniaudio operation (used for trapping errors)
+/// @brief A miniaudiio raw audio stream datasource
+struct RawStream {
+    ma_data_source_base ds;        // miniaudio data source
+    ma_engine *maEngine;           // pointer to a ma_engine object that was passed while creating the data source
+    ma_sound *maSound;             // pointer to a ma_sound object that was passed while creating the data source
+    SafeQueue<SampleFrame> stream; // raw stereo sample frame stream (which is conveniently block allocated by C++ STL)
+    ma_uint32 sampleRate;          // the sample rate reported by ma_engine
+};
 
-    SampleFrameBlockQueue() = delete;                                   // No default constructor
-    SampleFrameBlockQueue(const SampleFrameBlockQueue &) = delete;      // No default copy constructor
-    SampleFrameBlockQueue &operator=(SampleFrameBlockQueue &) = delete; // No assignment operator
+/// @brief This is what is used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue
+/// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
+/// @param pFramesOut The sample frames sent to miniaudio
+/// @param frameCount The sample frame count requested by miniaudio
+/// @param pFramesRead The sample frame count that was actually sent (this must not exceed frameCount)
+/// @return MA_SUCCESS on success or an appropriate MA_FAILED_* value on failure
+static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead) {
+    if (pFramesRead)
+        *pFramesRead = 0;
 
-    /// <summary>
-    /// This initializes the queue and calculates the sample frames per block
-    /// </summary>
-    /// <param name="pmaEngine">A pointer to a miniaudio engine object</param>
-    /// <param name="pmaSound">A pointer to a miniaudio sound object</param>
-    SampleFrameBlockQueue(ma_engine *pmaEngine, ma_sound *pmaSound) {
-        maEngineTime = sampleFramesPlaying = bufferUpdatePosition = 0;
-        maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
-        maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
-        sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
+    if (frameCount == 0)
+        return MA_INVALID_ARGS;
 
-        // We can get away with '>> 4' because the sound loop function is called @ ~60Hz
-        // This should work even on entry level systems. Tested on AMD A6-9200 (230.4 GFLOPS), Crostini Linux
-        blockSampleFrames = sampleRate >> 4;
-        buffer = new SampleFrame[blockSampleFrames * 2](); // Allocate a zeroed float sample frame buffer (* 2 to do a proper ping-pong)
-        updateFlag = false;                                // Set this to false because we want the initial check to fail
-        force = false;                                     // we will not force playback until we have reached blockSampleFrames
+    if (!pDataSource)
+        return MA_INVALID_ARGS;
 
-        if (buffer) {
-            // Setup the ma buffer
-            maBufferConfig = ma_audio_buffer_config_init(ma_format::ma_format_f32, 2, blockSampleFrames * 2, buffer, NULL); // * 2 to do a proper ping-pong
-            maResult = ma_audio_buffer_init(&maBufferConfig, &maBuffer);
-            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+    auto pRawStream = (RawStream *)pDataSource;
+    auto result = MA_SUCCESS; // must be initialized to MA_SUCCESS
+    auto buffer = (SampleFrame *)pFramesOut;
+    ma_uint64 sampleFramesRead = 0;
 
-            // Create a ma_sound from the ma_buffer
-            maResult = ma_sound_init_from_data_source(maEngine, &maBuffer, 0, NULL, maSound);
-            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+    while (sampleFramesRead < frameCount) {
+        if (pRawStream->stream.size() > 0) { // must have one or more sample frames
+            *buffer = pRawStream->stream.dequeue();
+            ++buffer;           // increment the buffer pointer
+            ++sampleFramesRead; // increment the frame counter
+        } else
+            break; // no more frames to play
+    }
 
-            // Play the ma_sound
-            maResult = ma_sound_start(maSound);
-            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-            // Set the buffer to loop forever
-            ma_sound_set_looping(maSound, MA_TRUE);
+    // To keep the stream going, play silence if there are no frames to play
+    if (!sampleFramesRead) {
+        while (sampleFramesRead < frameCount) {
+            *buffer = {};
+            ++buffer;
+            ++sampleFramesRead;
         }
-
-        AUDIO_DEBUG_PRINT("Raw sound stream created with %u sample frame block size", blockSampleFrames);
     }
 
-    /// <summary>
-    /// This simply pops all sample blocks
-    /// </summary>
-    ~SampleFrameBlockQueue() {
-        if (buffer) {
-            // Stop playback
-            maResult = ma_sound_stop(maSound);
-            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+    if (pFramesRead)
+        *pFramesRead = sampleFramesRead;
 
-            // Delete the ma_sound object
-            ma_sound_uninit(maSound);
+    return result;
+}
 
-            // Delete the ma_buffer object
-            ma_audio_buffer_uninit(&maBuffer);
-        }
+/// @brief This is a dummy callback function which just tells miniaudio that it succeeded
+/// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
+/// @param frameIndex The frame index to seek to (unused)
+/// @return Always MA_SUCCESS
+static ma_result RawStreamOnSeek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
+    // NOP. Just pretend to be successful.
+    (void)pDataSource;
+    (void)frameIndex;
 
-        delete[] buffer;
+    return MA_SUCCESS;
+}
 
-        AUDIO_DEBUG_PRINT("Raw sound stream closed");
+/// @brief Returns the audio format to miniaudio
+/// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
+/// @param pFormat The ma_format to use (we always return ma_format_f32 because that is what QB64 uses)
+/// @param pChannels The number of audio channels (always 2 - stereo)
+/// @param pSampleRate The sample rate of the stream (we always return the engine sample rate)
+/// @param pChannelMap Sent to ma_channel_map_init_standard
+/// @param channelMapCap Sent to ma_channel_map_init_standard
+/// @return Always MA_SUCCESS
+static ma_result RawStreamOnGetDataFormat(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate,
+                                          ma_channel *pChannelMap, size_t channelMapCap) {
+    auto pRawStream = (RawStream *)pDataSource;
+
+    if (pFormat)
+        *pFormat = ma_format::ma_format_f32; // QB64 SndRaw API uses FP32 samples
+
+    if (pChannels)
+        *pChannels = 2; // stereo
+
+    if (pSampleRate)
+        *pSampleRate = pRawStream->sampleRate; // we'll play at the audio engine sampling rate
+
+    if (pChannelMap)
+        ma_channel_map_init_standard(ma_standard_channel_map_default, pChannelMap, channelMapCap, 2); // stereo
+
+    return MA_SUCCESS;
+}
+
+/// @brief Raw stream data source vtable
+static ma_data_source_vtable maDataSourceVtableRaw = {
+    RawStreamOnRead,          // Returns a bunch of samples from a raw sample stream queue. The samples being returned is removed from the queue
+    RawStreamOnSeek,          // NOP for raw sample stream
+    RawStreamOnGetDataFormat, // Returns the audio format to miniaudio
+    NULL,                     // No notion of a cursor for raw sample stream
+    NULL,                     // No notion of a length for raw sample stream
+    NULL,                     // Cannot loop raw sample stream
+    0                         // flags
+};
+
+/// @brief This creates, initializes and sets up a raw stream for playback
+/// @param pmaEngine This should come from the QBPE sound engine
+/// @param pmaSound This should come from a QBPE sound handle
+/// @return Returns a pointer to a data souce if successful, NULL otherwise
+static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
+    if (!pmaEngine || !pmaSound) { // these should not be NULL
+        AUDIO_DEBUG_PRINT("Invalid arguments");
+
+        return nullptr;
     }
 
-    /// <summary>
-    /// This pushes a sample frame at the end of the queue.
-    /// Note that in QBPE all samples frames are assumed to be stereo.
-    /// Mono sample frames are simply simulated by playing the same data from left and right.
-    /// No clipping is required because miniaudio does that for us.
-    /// </summary>
-    /// <param name="l">The left sample</param>
-    /// <param name="r">The right sample</param>
-    void PushSampleFrame(float l, float r) { stream.emplace(l, r); }
+    auto pRawStream = new RawStream; // create the data source object
+    if (!pRawStream) {
+        AUDIO_DEBUG_PRINT("Failed to create data source");
 
-    /// <summary>
-    /// Returns the length, in sample frames of sound queued.
-    /// </summary>
-    /// <returns>The length left to play in sample frames</returns>
-    ma_uint64 GetSampleFramesRemaining() {
-        // Calculate the time difference (ma_engine time is really just of a sum of sample frames sent to the device)
-        ma_uint64 maEngineDeltaTime = ma_engine_get_time(maEngine) - maEngineTime;
-
-        // Decrement the delta from the sample frames that are playing
-        // Using std::min here is probably risky since these are all unsigned types
-        sampleFramesPlaying = maEngineDeltaTime > sampleFramesPlaying ? 0 : sampleFramesPlaying - maEngineDeltaTime;
-
-        // Add this to the frames in the queue
-        return stream.size() + sampleFramesPlaying;
+        return nullptr;
     }
 
-    /// <summary>
-    /// Returns the length, in seconds of sound queued.
-    /// </summary>
-    /// <returns>The length left to play in seconds</returns>
-    double GetTimeRemaining() {
-        ma_uint64 sampleFramesRemaining = GetSampleFramesRemaining();
+    ZERO_VARIABLE(pRawStream->ds);
+
+    auto dataSourceConfig = ma_data_source_config_init();
+    dataSourceConfig.vtable = &maDataSourceVtableRaw; // attach the vtable to the data source
+
+    auto result = ma_data_source_init(&dataSourceConfig, &pRawStream->ds);
+    if (result != MA_SUCCESS) {
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize data source", result);
+
+        delete pRawStream;
+
+        return nullptr;
+    }
+
+    pRawStream->maSound = pmaSound;                                // save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
+    pRawStream->maEngine = pmaEngine;                              // save the pointer to the ma_engine object (this should come from the QBPE sound engine)
+    pRawStream->sampleRate = ma_engine_get_sample_rate(pmaEngine); // save the sample rate
+
+    result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->ds, 0, NULL, pmaSound); // attach data source to the ma_sound
+    if (result != MA_SUCCESS) {
+        AUDIO_DEBUG_PRINT("Error %i: failed to initalize sound from data source", result);
+
+        delete pRawStream;
+
+        return nullptr;
+    }
+
+    result = ma_sound_start(pmaSound); // play the ma_sound
+    if (result != MA_SUCCESS) {
+        AUDIO_DEBUG_PRINT("Error %i: failed to start sound playback", result);
+
+        ma_sound_uninit(pmaSound); // delete the ma_sound object
+
+        delete pRawStream;
+
+        return nullptr;
+    }
+
+    AUDIO_DEBUG_PRINT("Raw sound stream created");
+
+    return pRawStream;
+}
+
+/// @brief Stops and then frees a raw stream data source previously created with RawStreamCreate()
+/// @param pRawStream Pointer to the data source object
+static void RawStreamDestroy(RawStream *pRawStream) {
+    if (pRawStream) {
+        auto result = ma_sound_stop(pRawStream->maSound); // stop playback
+        AUDIO_DEBUG_CHECK(result == MA_SUCCESS);
+
+        ma_sound_uninit(pRawStream->maSound); // delete the ma_sound object
+
+        delete pRawStream; // delete the raw stream object
+
+        AUDIO_DEBUG_PRINT("Raw sound stream destroyed");
+    }
+}
+
+/// @brief This pushes a sample frame at the end of the queue
+/// @param pRawStream The raw stream object
+/// @param l Sample frame left channel data
+/// @param r Sample frame right channel data
+static void RawStreamPushSampleFrame(RawStream *pRawStream, float l, float r) {
+    if (pRawStream)
+        pRawStream->stream.enqueue({l, r});
+}
+
+/// @brief Returns the length, in sample frames of sound queued
+/// @param pRawStream The raw stream object
+/// @return The length left to play in sample frames
+static ma_uint64 RawStreamGetSampleFramesRemaining(RawStream *pRawStream) {
+    if (pRawStream)
+        return pRawStream->stream.size();
+
+    return 0;
+}
+
+/// @brief Returns the length, in seconds of sound queued
+/// @param pRawStream The raw stream object
+/// @return The length left to play in seconds
+static double RawStreamGetTimeRemaining(RawStream *pRawStream) {
+    if (pRawStream) {
+        auto sampleFramesRemaining = pRawStream->stream.size();
 
         // This will help us avoid situations where we can get a non-zero value even if GetSampleFramesRemaining returns 0
-        return !sampleFramesRemaining ? 0 : (double)sampleFramesRemaining / (double)sampleRate;
+        return !sampleFramesRemaining ? 0 : (double)sampleFramesRemaining / (double)pRawStream->sampleRate;
     }
 
-    /// <summary>
-    /// Check if everything is ready to go
-    /// </summary>
-    /// <returns>Returns true if everything is a go</returns>
-    bool IsSetupValid() { return buffer && maEngine && maSound && maResult == MA_SUCCESS; }
-
-    /// <summary>
-    /// This keeps the ping-pong (ring? whatever...) buffer fed and the sound stream going
-    /// </summary>
-    void Update() {
-        // Figure out which pcm frame of the buffer is miniaudio playing
-        ma_uint64 readCursor;
-        maResult = ma_sound_get_cursor_in_pcm_frames(maSound, &readCursor);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-        bool checkCondition = readCursor < blockSampleFrames; // Since buffer sample frame size = blockSampleFrames * 2
-
-        // Only proceed to update if our flag is not the same as our condition
-        if (checkCondition != updateFlag) {
-            //	The boolean condition above will always be 1 if the read cursor is in the lower-half and hence push the position to the top-half
-            //  Obviously, this means that if the condition is 0 then position will be set to the lower-half
-            bufferUpdatePosition = checkCondition * blockSampleFrames; // This line basically toggles the buffer copy position
-
-            size_t streamSize = stream.size(); // get the length of the raw stream
-
-            // Check if we have any blocks in the queue and stream only if the block is full
-            if (streamSize && (streamSize >= blockSampleFrames || force)) {
-                for (size_t i = 0; i < blockSampleFrames; i++) {
-                    if (i < streamSize) { // only attempt to pop if we have samples in the queue
-                        buffer[bufferUpdatePosition + i] = stream.front();
-                        stream.pop();
-                    } else { // else we write silence
-                        buffer[bufferUpdatePosition + i] = {};
-                    }
-                }
-
-                // Save the number of samples frames sent for playback and the current time for correct time calculation
-                sampleFramesPlaying = blockSampleFrames;
-                maEngineTime = ma_engine_get_time(maEngine);
-            } else { // Else we'll stream silence
-                for (size_t i = 0; i < blockSampleFrames; i++)
-                    buffer[bufferUpdatePosition + i] = {};
-
-                sampleFramesPlaying = 0; // we set this to zero so that GetSampleFramesRemaining calculates the correct samples
-                force = false;           // unset the force flag now that all peding samples have finished playing
-            }
-
-            updateFlag = checkCondition; // Save our check condition to our flag
-        }
-    }
-};
+    return 0;
+}
 
 /// <summary>
 /// Sound handle type
 /// This describes every sound the system will ever play (including raw streams).
 /// </summary>
 struct SoundHandle {
-    bool isUsed;                     // Is this handle in active use?
-    SoundType type;                  // Type of sound (see SoundType enum class)
-    bool autoKill;                   // Do we need to auto-clean this sample / stream after playback is done?
-    ma_sound maSound;                // miniaudio sound
-    ma_uint32 maFlags;               // miniaudio flags that were used when initializing the sound
-    SampleFrameBlockQueue *rawQueue; // Raw sample frame queue
-    void *memLockOffset;             // This is a pointer from new_mem_lock()
-    uint64 memLockId;                // This is mem_lock_id created by new_mem_lock()
+    bool isUsed;          // Is this handle in active use?
+    SoundType type;       // Type of sound (see SoundType enum class)
+    bool autoKill;        // Do we need to auto-clean this sample / stream after playback is done?
+    ma_sound maSound;     // miniaudio sound
+    ma_uint32 maFlags;    // miniaudio flags that were used when initializing the sound
+    RawStream *rawStream; // Raw sample frame queue
+    void *memLockOffset;  // This is a pointer from new_mem_lock()
+    uint64 memLockId;     // This is mem_lock_id created by new_mem_lock()
 
     SoundHandle(const SoundHandle &) = delete;      // No default copy constructor
     SoundHandle &operator=(SoundHandle &) = delete; // No assignment operator
@@ -319,7 +385,7 @@ struct SoundHandle {
         isUsed = false;
         type = SoundType::None;
         autoKill = false;
-        rawQueue = nullptr;
+        rawStream = nullptr;
         ZERO_VARIABLE(maSound);
         maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         memLockId = INVALID_MEM_LOCK;
@@ -428,7 +494,7 @@ struct AudioEngine {
         // This will set it to 'in use' after applying some defaults.
         soundHandles[h]->type = SoundType::None;
         soundHandles[h]->autoKill = false;
-        soundHandles[h]->rawQueue = nullptr;
+        soundHandles[h]->rawStream = nullptr;
         ZERO_VARIABLE(soundHandles[h]->maSound);
         // We do not use pitch shifting, so this will give a little performance boost
         // Spatialization is disabled by default but will be enabled on the fly if required
@@ -462,8 +528,8 @@ struct AudioEngine {
                 break;
 
             case SoundType::Raw:
-                delete soundHandles[handle]->rawQueue;
-                soundHandles[handle]->rawQueue = nullptr;
+                RawStreamDestroy(soundHandles[handle]->rawStream);
+                soundHandles[handle]->rawStream = nullptr;
 
                 break;
 
@@ -496,18 +562,10 @@ struct AudioEngine {
         }
     }
 };
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// GLOBAL VARIABLES
-//-----------------------------------------------------------------------------------------------------
 // This keeps track of the audio engine state
 static AudioEngine audioEngine;
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FUNCTIONS
-//-----------------------------------------------------------------------------------------------------
 /// <summary>
 /// This creates 16-bit signed stereo data. The sound buffer is allocated and then returned.
 /// Do we really need stereo for Play(), Sound() and Beep()?
@@ -619,27 +677,21 @@ static ma_int32 WaveformBufferSize(double length) {
 /// <param name="block">So we have to wait until playback completes</param>
 /// <param name="sndRawQueue">A pointer to a raw queue object</param>
 static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
-    static ma_int32 i;
-    static ma_int64 time_ms;
-
     if (!data)
         return;
 
     // Move data into sndraw handle
-    for (i = 0; i < bytes; i += SAMPLE_FRAME_SIZE(ma_int16, 2)) {
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->PushSampleFrame((float)((ma_int16 *)(data + i))[0] / 32768.0f,
-                                                                                     (float)((ma_int16 *)(data + i))[1] / 32768.0f);
+    for (auto i = 0; i < bytes; i += SAMPLE_FRAME_SIZE(ma_int16, 2)) {
+        RawStreamPushSampleFrame(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream, (float)((ma_int16 *)(data + i))[0] / 32768.0f,
+                                 (float)((ma_int16 *)(data + i))[1] / 32768.0f);
     }
 
     free(data); // free the sound data
 
-    // This will push any unfinished block for playback
-    audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->force = true;
-
     // This will wait for the block to finish (if specified)
     // We'll be good citizens and give-up our time-slices while waiting
     if (block) {
-        time_ms = (ma_int64)(audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetTimeRemaining() * 950.0 - 250.0);
+        auto time_ms = (ma_int64)(RawStreamGetTimeRemaining(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) * 950.0 - 250.0);
         if (time_ms > 0)
             Sleep(time_ms);
     }
@@ -668,7 +720,17 @@ void sub_sound(double frequency, double lengthInClockTicks) {
     if (lengthInClockTicks == 0.0)
         return;
 
-    audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // This will start processing handle 0 as a raw stream
+    // Initialize the raw stream if we have not already
+    if (!audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream =
+            RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+        AUDIO_DEBUG_CHECK(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream != nullptr);
+
+        if (!audioEngine.soundHandles[audioEngine.sndInternal]->rawStream)
+            return;
+
+        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw;
+    }
 
     data = GenerateWaveform(frequency, lengthInClockTicks / 18.2, 1, &soundwave_bytes);
     SendWaveformToQueue(data, soundwave_bytes, !audioEngine.musicBackground);
@@ -698,9 +760,7 @@ void sub_beep() { sub_sound(900, 5); }
 /// <returns>Returns the number of sample frames left to play for Play(), Sound() & Beep()</returns>
 int32_t func_play(int32_t ignore) {
     if (audioEngine.isInitialized && audioEngine.sndInternal == 0) {
-        // This will push any unfinished block for playback
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->force = true;
-        return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue->GetSampleFramesRemaining();
+        return (int32_t)RawStreamGetSampleFramesRemaining(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
     }
 
     return 0;
@@ -737,7 +797,17 @@ void sub_play(qbs *str) {
     if (new_error || !audioEngine.isInitialized || audioEngine.sndInternal != 0)
         return;
 
-    audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // This will start processing handle 0 as a raw stream
+    // Initialize the raw stream if we have not already
+    if (!audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream =
+            RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+        AUDIO_DEBUG_CHECK(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream != nullptr);
+
+        if (!audioEngine.soundHandles[audioEngine.sndInternal]->rawStream)
+            return;
+
+        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw;
+    }
 
     b = str->chr;
     bytes_left = str->len;
@@ -1690,16 +1760,9 @@ int32_t func__sndopenraw() {
     audioEngine.soundHandles[handle]->type = SoundType::Raw;
 
     // Create the raw sound object
-    audioEngine.soundHandles[handle]->rawQueue = new SampleFrameBlockQueue(&audioEngine.maEngine, &audioEngine.soundHandles[handle]->maSound);
-    if (!audioEngine.soundHandles[handle]->rawQueue)
+    audioEngine.soundHandles[handle]->rawStream = RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[handle]->maSound);
+    if (!audioEngine.soundHandles[handle]->rawStream)
         return INVALID_SOUND_HANDLE;
-
-    // Check if everything was setup correctly
-    if (!audioEngine.soundHandles[handle]->rawQueue->IsSetupValid()) {
-        delete audioEngine.soundHandles[handle]->rawQueue;
-        audioEngine.soundHandles[handle]->rawQueue = nullptr;
-        return INVALID_SOUND_HANDLE;
-    }
 
     return handle;
 }
@@ -1726,7 +1789,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
         if (!(passed & 1))
             right = left;
 
-        audioEngine.soundHandles[handle]->rawQueue->PushSampleFrame(left, right);
+        RawStreamPushSampleFrame(audioEngine.soundHandles[handle]->rawStream, left, right);
     }
 }
 
@@ -1736,14 +1799,19 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
 /// <param name="handle">A sound handle</param>
 /// <param name="passed">How many parameters were passed?</param>
 void sub__sndrawdone(int32_t handle, int32_t passed) {
+    // This is NOP now because miniaudio data source automatically pulls in all the samples without us doing anything
+    // As such, we need to think about the future of this function. Probably just leave it this way?
+    (void)handle;
+    (void)passed;
+    /*
     // Use the default raw handle if handle was not passed
     if (!passed)
         handle = audioEngine.sndInternalRaw;
 
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
-        // Set the last block's force flag to true
-        audioEngine.soundHandles[handle]->rawQueue->force = true;
+        // NOP
     }
+    */
 }
 
 /// <summary>
@@ -1758,15 +1826,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
         handle = audioEngine.sndInternalRaw;
 
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
-        // This is for mainitianing compatibility with the SndRaw examples in the wiki
-        // Ideally, we should use _SNDRAWDONE at least once before checking for _SNDRAWLEN in a loop
-        // However, none of the examples in the wiki seem to do that
-        // So, we'll set the last blocks force flag to true only when there are > 1 block
-        // This should help avoid those examples from locking up in an infinite loop
-        if (audioEngine.soundHandles[handle]->rawQueue->stream.size() >= audioEngine.soundHandles[handle]->rawQueue->blockSampleFrames)
-            audioEngine.soundHandles[handle]->rawQueue->force = true;
-
-        return audioEngine.soundHandles[handle]->rawQueue->GetTimeRemaining();
+        return RawStreamGetTimeRemaining(audioEngine.soundHandles[handle]->rawStream);
     }
 
     return 0;
@@ -1932,11 +1992,7 @@ void snd_init() {
     // We will use this handle internally for Play(), Beep(), Sound() etc.
     audioEngine.sndInternal = audioEngine.AllocateSoundHandle();
     AUDIO_DEBUG_CHECK(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
-
-    // Just do a basic setup and mark the type as 'none'
-    // If Play(), Sound(), Beep() are called, those will mark it as 'raw'
-    audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue =
-        new SampleFrameBlockQueue(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
+    audioEngine.soundHandles[audioEngine.sndInternal]->rawStream = nullptr;
     audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::None;
 }
 
@@ -1947,8 +2003,8 @@ void snd_un_init() {
     if (audioEngine.isInitialized) {
         // Special handling for handle 0
         audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::None;
-        delete audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue;
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawQueue = nullptr;
+        RawStreamDestroy(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream = nullptr;
 
         // Free all sound handles here
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
@@ -1985,10 +2041,6 @@ void snd_mainloop() {
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
             // Only process handles that are in use
             if (audioEngine.soundHandles[handle]->isUsed) {
-                // Keep raw audio streams going
-                if (audioEngine.soundHandles[handle]->type == SoundType::Raw)
-                    audioEngine.soundHandles[handle]->rawQueue->Update();
-
                 // Look for stuff that is set to auto-destruct
                 if (audioEngine.soundHandles[handle]->autoKill) {
                     switch (audioEngine.soundHandles[handle]->type) {
@@ -2003,7 +2055,7 @@ void snd_mainloop() {
 
                     case SoundType::Raw:
                         // Close the raw stream if we have no more frames in the queue or playing
-                        if (!audioEngine.soundHandles[handle]->rawQueue->GetSampleFramesRemaining())
+                        if (!RawStreamGetSampleFramesRemaining(audioEngine.soundHandles[handle]->rawStream))
                             audioEngine.FreeSoundHandle(handle);
 
                         break;
@@ -2022,5 +2074,3 @@ void snd_mainloop() {
         }
     }
 }
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
