@@ -280,7 +280,8 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     pRawStream->maEngine = pmaEngine;                              // save the pointer to the ma_engine object (this should come from the QBPE sound engine)
     pRawStream->sampleRate = ma_engine_get_sample_rate(pmaEngine); // save the sample rate
 
-    result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->ds, 0, NULL, pmaSound); // attach data source to the ma_sound
+    result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->ds, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
+                                            pmaSound); // attach data source to the ma_sound
     if (result != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to initalize sound from data source", result);
 
