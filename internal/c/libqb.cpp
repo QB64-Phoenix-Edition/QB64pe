@@ -32221,9 +32221,37 @@ int32 func__keyhit() {
         int32 keyhit_next=0;
         //note: if full, the oldest message is discarded to make way for the new message
     */
+
+    // STEVE TWEAK TO FIX LONG STANDING ERRORS REPORTED BY QB64-PE
+    // THESE CAN BE CONSIDERED "HACKS" AND SHOULD BE REPLACED WHEN/IF SOMEONE EVER SORTS OUT WHAT THE ACTUAL PROBLEM IS WITH WHY QB64-PE DOESN'T REPORT THESE
+    // PROPERLY.
     if (keyhit_next != keyhit_nextfree) {
         static int32 x;
+        static int32 flag;
         x = *(int32 *)&keyhit[keyhit_next];
+        if (x == 100303 || x == 100304) {
+            if (flag == 0) {
+                flag = 1;
+                return 16;
+            }
+            flag = 0;
+        }
+        if (x == 100305 || x == 100306) {
+            if (flag == 0) {
+                flag = 1;
+                return 17;
+            }
+            flag = 0;
+        }
+        if (x == 100307 || x == 100308) {
+            if (flag == 0) {
+                flag = 1;
+                return 18;
+            }
+            flag = 0;
+        }
+        // END STEVE TWEAK FOR KEY CODES 16, 17, 18 (non-directional SHIFT, CTRL, ALT keypresses)
+
         keyhit_next = (keyhit_next + 1) & 0x1FFF;
         return x;
     }
@@ -32235,10 +32263,119 @@ int32 func__keydown(int32 x) {
         error(5);
         return 0;
     }
+
+    // STEVE TWEAK TO FIX LONG STANDING ERRORS REPORTED BY QB64-PE
+    // THESE CAN BE CONSIDERED "HACKS" AND SHOULD BE REPLACED WHEN/IF SOMEONE EVER SORTS OUT WHAT THE ACTUAL PROBLEM IS WITH WHY QB64-PE DOESN'T REPORT THESE
+    // PROPERLY.
+    if (x == 16 && (keyheld(100303) || keyheld(100304)))  //Report SHIFT as being down, if LEFT SHIFT or RIGHT SHIFT is down
+        return -1;
+    if (x == 17 && (keyheld(100305) || keyheld(100306)))  //Ditto for CTRL
+        return -1;
+    if (x == 18 && (keyheld(100307) || keyheld(100308)))  //And same for ALT
+        return -1;
+    // END STEVE TWEAK FOR KEY CODES 16, 17, 18 (non-directional SHIFT, CTRL, ALT keypresses)
+
+#ifdef QB64_WINDOWS
+    if (keyheld(100305) || keyheld(100306)) { // If Ctrl key is down, these don't report their down state at all.  Let's fix that.
+
+        switch (x) { // These are universally accepted keys.  Their value doesn't change if SHIFT is held, or not.
+        case 8:      // Backspace
+            if (GetKeyState(8) & 0x8000)
+                return -1;
+            break;
+        case 9: // Tab
+            if (GetKeyState(9) & 0x8000)
+                return -1;
+            break;
+        case 27: // ESC
+            if (GetKeyState(27) & 0x8000)
+                return -1;
+            break;
+        }
+
+        if (keyheld(100303) || keyheld(100304)) { // These are Shift keys (! to +, rather than 1 to =), for example.
+            switch (x) {
+            case 126: //~
+                if (GetKeyState(192) & 0x8000)
+                    return -1;
+                break;
+            case 41: // )
+                if (GetKeyState(48) & 0x8000)
+                    return -1;
+                break;
+            case 33: // !
+                if (GetKeyState(49) & 0x8000)
+                    return -1;
+                break;
+            case 64: //@
+                if (GetKeyState(50) & 0x8000)
+                    return -1;
+                break;
+            case 35: //#
+                if (GetKeyState(51) & 0x8000)
+                    return -1;
+                break;
+            case 36: //$
+                if (GetKeyState(52) & 0x8000)
+                    return -1;
+                break;
+            case 37: //%
+                if (GetKeyState(53) & 0x8000)
+                    return -1;
+                break;
+            case 94: //^
+                if (GetKeyState(54) & 0x8000)
+                    return -1;
+                break;
+            case 38: //&
+                if (GetKeyState(55) & 0x8000)
+                    return -1;
+                break;
+            case 42: //*
+                if (GetKeyState(56) & 0x8000)
+                    return -1;
+                break;
+            case 40: //(
+                if (GetKeyState(57) & 0x8000)
+                    return -1;
+                break;
+            case 43: //_
+                if (GetKeyState(189) & 0x8000)
+                    return -1;
+                break;
+            case 95: //+
+                if (GetKeyState(187) & 0x8000)
+                    return -1;
+                break;
+            }
+        } else { // These are just CTRL+ key hits.  There's no SHIFT modifier involved with them.  `, 1,2,3...0, -,=
+            switch (x) {
+            case 48 ... 57: // 0 to 9
+                if (GetKeyState(x) & 0x8000)
+                    return -1;
+                break;
+            case 96: // `
+                if (GetKeyState(192) & 0x8000)
+                    return -1;
+                break;
+            case 45: // -
+                if (GetKeyState(189) & 0x8000)
+                    return -1;
+                break;
+            case 61: // =
+                if (GetKeyState(187) & 0x8000)
+                    return -1;
+                break;
+            }
+        }
+    }
+#endif;
+
     if (keyheld(x))
         return -1;
     return 0;
 }
+
 
 static int32 field_failed = 1;
 static int32 field_fileno;
