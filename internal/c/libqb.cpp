@@ -32232,24 +32232,26 @@ int32 func__keyhit() {
         if (x == 100303 || x == 100304) {
             if (flag == 0) {
                 flag = 1;
-                return 16;
+                return 100016;
             }
             flag = 0;
         }
         if (x == 100305 || x == 100306) {
             if (flag == 0) {
                 flag = 1;
-                return 17;
+                return 100017;
             }
             flag = 0;
         }
         if (x == 100307 || x == 100308) {
             if (flag == 0) {
                 flag = 1;
-                return 18;
+                return 100018;
             }
             flag = 0;
         }
+        if (x >= -18 && x <= -16) x = x - 100000;
+
         // END STEVE TWEAK FOR KEY CODES 16, 17, 18 (non-directional SHIFT, CTRL, ALT keypresses)
 
         keyhit_next = (keyhit_next + 1) & 0x1FFF;
@@ -32267,11 +32269,11 @@ int32 func__keydown(int32 x) {
     // STEVE TWEAK TO FIX LONG STANDING ERRORS REPORTED BY QB64-PE
     // THESE CAN BE CONSIDERED "HACKS" AND SHOULD BE REPLACED WHEN/IF SOMEONE EVER SORTS OUT WHAT THE ACTUAL PROBLEM IS WITH WHY QB64-PE DOESN'T REPORT THESE
     // PROPERLY.
-    if (x == 16 && (keyheld(100303) || keyheld(100304)))  //Report SHIFT as being down, if LEFT SHIFT or RIGHT SHIFT is down
+    if (x == 100016 && (keyheld(100303) || keyheld(100304)))  //Report SHIFT as being down, if LEFT SHIFT or RIGHT SHIFT is down
         return -1;
-    if (x == 17 && (keyheld(100305) || keyheld(100306)))  //Ditto for CTRL
+    if (x == 100017 && (keyheld(100305) || keyheld(100306)))  //Ditto for CTRL
         return -1;
-    if (x == 18 && (keyheld(100307) || keyheld(100308)))  //And same for ALT
+    if (x == 100018 && (keyheld(100307) || keyheld(100308)))  //And same for ALT
         return -1;
     // END STEVE TWEAK FOR KEY CODES 16, 17, 18 (non-directional SHIFT, CTRL, ALT keypresses)
 
