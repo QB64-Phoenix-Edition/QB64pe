@@ -12577,7 +12577,7 @@ END IF
 'Clear nm output from previous runs
 FOR x = 1 TO ResolveStaticFunctions
     IF LEN(ResolveStaticFunction_File(x)) THEN
-        s$ = "internal\temp\nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
+        s$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
         IF _FILEEXISTS(s$) THEN KILL s$
     END IF
 NEXT x
@@ -12588,7 +12588,7 @@ IF os$ = "WIN" THEN
 
     'resolve static function definitions and add to global.txt
     FOR x = 1 TO ResolveStaticFunctions
-        nm_output_file$ = "internal\temp\nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
+        nm_output_file$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
@@ -12745,13 +12745,13 @@ IF os$ = "LNX" THEN
     END IF
 
     FOR x = 1 TO ResolveStaticFunctions
-        nm_output_file$ = "internal/temp/nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
+        nm_output_file$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
             IF NOT _FILEEXISTS(nm_output_file$) THEN
-                IF MacOSX = 0 THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>./internal/temp/nm_error.txt"
-                IF MacOSX THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>./internal/temp/nm_error.txt"
+                IF MacOSX = 0 THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>" + CHR$(34) + tmpdir$ + "nm_error.txt" + CHR$(34)
+                IF MacOSX THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>" + CHR$(34) + tmpdir$ + "nm_error.txt" + CHR$(34)
             END IF
 
             IF MacOSX = 0 THEN 'C++ name demangling not supported in MacOSX
@@ -12813,7 +12813,7 @@ IF os$ = "LNX" THEN
             IF n = 0 THEN 'a C++ dynamic object library?
                 IF MacOSX THEN GOTO macosx_libfind_failed
                 IF NOT _FILEEXISTS(nm_output_file$) THEN
-                    SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>./internal/temp/nm_error.txt"
+                    SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>" + CHR$(34) + tmpdir$ + "nm_error.txt" + CHR$(34)
                 END IF
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
