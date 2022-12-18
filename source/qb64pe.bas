@@ -12574,19 +12574,30 @@ IF GenerateLicenseFile AND NOT NoExeSaved THEN
     makeline$ = makeline$ + " GENERATE_LICENSE=y"
 END IF
 
+'Clear nm output from previous runs
+FOR x = 1 TO ResolveStaticFunctions
+    IF LEN(ResolveStaticFunction_File(x)) THEN
+        s$ = "internal\temp\nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
+        IF _FILEEXISTS(s$) THEN KILL s$
+    END IF
+NEXT x
+
 IF os$ = "WIN" THEN
 
     makeline$ = makeline$ + " OS=win"
 
     'resolve static function definitions and add to global.txt
     FOR x = 1 TO ResolveStaticFunctions
+        nm_output_file$ = "internal\temp\nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
-            SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >internal\temp\nm_output.txt"
+            IF NOT _FILEEXISTS(nm_output_file$) THEN
+                SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34)
+            END IF
             fh = FREEFILE
             s$ = " " + ResolveStaticFunction_Name(x) + "("
-            OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
+            OPEN nm_output_file$ FOR BINARY AS #fh
             DO UNTIL EOF(fh)
                 LINE INPUT #fh, a$
                 IF LEN(a$) THEN
@@ -12611,7 +12622,7 @@ IF os$ = "WIN" THEN
             IF n = 0 THEN 'attempt to locate simple function name without brackets
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x)
-                OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
@@ -12638,10 +12649,12 @@ IF os$ = "WIN" THEN
             END IF
 
             IF n = 0 THEN 'a C++ dynamic object library?
-                SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >.\internal\temp\nm_output_dynamic.txt"
+                IF NOT _FILEEXISTS(nm_output_file$) THEN
+                    SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34)
+                END IF
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
@@ -12667,7 +12680,7 @@ IF os$ = "WIN" THEN
             IF n = 0 THEN 'a C dynamic object library?
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x)
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
@@ -12732,16 +12745,19 @@ IF os$ = "LNX" THEN
     END IF
 
     FOR x = 1 TO ResolveStaticFunctions
+        nm_output_file$ = "internal/temp/nm_output_" + StrReplace$(StrReplace$(ResolveStaticFunction_File(x), pathsep$, "."), ":", ".") + ".txt"
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
-            IF MacOSX = 0 THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >./internal/temp/nm_output.txt 2>./internal/temp/nm_error.txt"
-            IF MacOSX THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " >./internal/temp/nm_output.txt 2>./internal/temp/nm_error.txt"
+            IF NOT _FILEEXISTS(nm_output_file$) THEN
+                IF MacOSX = 0 THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>./internal/temp/nm_error.txt"
+                IF MacOSX THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>./internal/temp/nm_error.txt"
+            END IF
 
             IF MacOSX = 0 THEN 'C++ name demangling not supported in MacOSX
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
@@ -12768,7 +12784,7 @@ IF os$ = "LNX" THEN
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x): s2$ = s$
                 IF MacOSX THEN s$ = " _" + ResolveStaticFunction_Name(x) 'search for C mangled name
-                OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
@@ -12796,10 +12812,12 @@ IF os$ = "LNX" THEN
 
             IF n = 0 THEN 'a C++ dynamic object library?
                 IF MacOSX THEN GOTO macosx_libfind_failed
-                SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >./internal/temp/nm_output_dynamic.txt 2>./internal/temp/nm_error.txt"
+                IF NOT _FILEEXISTS(nm_output_file$) THEN
+                    SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >" + CHR$(34) + nm_output_file$ + CHR$(34) + " 2>./internal/temp/nm_error.txt"
+                END IF
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
@@ -12825,7 +12843,7 @@ IF os$ = "LNX" THEN
             IF n = 0 THEN 'a C dynamic object library?
                 fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x)
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
+                OPEN nm_output_file$ FOR BINARY AS #fh
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, a$
                     IF LEN(a$) THEN
