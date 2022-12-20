@@ -40,6 +40,34 @@ simplebuffer_array$(buf& + 1) = ""
 END SUB
 
 '---------------------------------------------------------------------
+FUNCTION FileToBuf% (fileSpec$)
+'--- option _explicit requirements ---
+DIM han%, buf&, ff%, fl&&, ext&
+'--- create a new buffer ---
+han% = CreateBuf%
+buf& = han% * 106
+'--- on success, open file ---
+IF han% >= 0 THEN
+    ff% = FREEFILE
+    OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
+    fl&& = LOF(ff%): ext& = fl&& MOD 16384
+    '--- load file into buffer & adjust length ---
+    simplebuffer_array$(buf& + 0) = SPACE$(fl&&)
+    GET ff%, , simplebuffer_array$(buf& + 0)
+    IF ext& > 0 THEN
+        simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(16384 - ext&)
+    END IF
+    '--- set cursor, buffer length & change state ---
+    MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(1)
+    MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(fl&&)
+    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(0)
+    CLOSE ff%
+END IF
+'--- return new handle ---
+FileToBuf% = han%
+END FUNCTION
+
+'---------------------------------------------------------------------
 SUB BufToFile (handle%, fileSpec$)
 '--- option _explicit requirements ---
 DIM buf&, ff%, dat$
@@ -53,6 +81,22 @@ CLOSE ff%
 '--- reset change state ---
 MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(0)
 END SUB
+
+'---------------------------------------------------------------------
+FUNCTION ReadBufLine$ (handle%)
+'--- option _explicit requirements ---
+DIM buf&, cur&, cbl&&, brc$, brl%, eol&
+'--- prepare values ---
+buf& = handle% * 106
+cur& = GetBufPos&(handle%): cbl&& = GetBufLen&(handle%)
+brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+'--- find next line break ---
+eol& = INSTR(cur&, simplebuffer_array$(buf& + 0), brc$)
+IF eol& = 0 OR eol& > cbl&& THEN eol& = cbl&& + 1: brl% = 0
+'--- read from buffer ---
+ReadBufLine$ = MID$(simplebuffer_array$(buf& + 0), cur&, eol& - cur&)
+MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(eol& + brl%)
+END FUNCTION
 
 '---------------------------------------------------------------------
 SUB WriteBufLine (handle%, text$)
@@ -155,6 +199,12 @@ DIM buf&
 '--- return actual buffer length ---
 buf& = handle% * 106
 GetBufLen& = CVL(MID$(simplebuffer_array$(buf& + 1), 5, 4))
+END FUNCTION
+
+'---------------------------------------------------------------------
+FUNCTION EndOfBuf% (handle%)
+'--- return EndOfBuffer condition ---
+EndOfBuf% = (GetBufPos&(handle%) > GetBufLen&(handle%))
 END FUNCTION
 
 '---------------------------------------------------------------------
