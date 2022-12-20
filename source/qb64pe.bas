@@ -12574,21 +12574,31 @@ IF GenerateLicenseFile AND NOT NoExeSaved THEN
     makeline$ = makeline$ + " GENERATE_LICENSE=y"
 END IF
 
+'Clear nm output from previous runs
+FOR x = 1 TO ResolveStaticFunctions
+    IF LEN(ResolveStaticFunction_File(x)) THEN
+        s$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x))
+        IF _FILEEXISTS(s$) THEN KILL s$
+    END IF
+NEXT x
+
 IF os$ = "WIN" THEN
 
     makeline$ = makeline$ + " OS=win"
 
     'resolve static function definitions and add to global.txt
     FOR x = 1 TO ResolveStaticFunctions
+        nm_output_file$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x))
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
-            SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >internal\temp\nm_output.txt"
-            fh = FREEFILE
+            IF NOT _FILEEXISTS(nm_output_file$) THEN
+                SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + AddQuotes$(ResolveStaticFunction_File(x)) + " --demangle -g >" + AddQuotes$(nm_output_file$)
+            END IF
             s$ = " " + ResolveStaticFunction_Name(x) + "("
-            OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
-            DO UNTIL EOF(fh)
-                LINE INPUT #fh, a$
+            fh = OpenBuffer%("I", nm_output_file$)
+            DO UNTIL EndOfBuf%(fh)
+                a$ = ReadBufLine$(fh)
                 IF LEN(a$) THEN
                     'search for SPACE+functionname+LEFTBRACKET
                     x1 = INSTR(a$, s$)
@@ -12605,15 +12615,13 @@ IF os$ = "WIN" THEN
                     END IF 'x1
                 END IF '<>""
             LOOP
-            CLOSE #fh
             IF n > 1 THEN a$ = "Unable to resolve multiple instances of sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
 
             IF n = 0 THEN 'attempt to locate simple function name without brackets
-                fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x)
-                OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
                         x1 = INSTR(a$, s$)
@@ -12634,16 +12642,16 @@ IF os$ = "WIN" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
             END IF
 
             IF n = 0 THEN 'a C++ dynamic object library?
-                SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >.\internal\temp\nm_output_dynamic.txt"
-                fh = FREEFILE
+                IF NOT _FILEEXISTS(nm_output_file$) THEN
+                    SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file$)
+                END IF
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname+LEFTBRACKET
                         x1 = INSTR(a$, s$)
@@ -12660,16 +12668,14 @@ IF os$ = "WIN" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
                 IF n > 1 THEN a$ = "Unable to resolve multiple instances of sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
             END IF
 
             IF n = 0 THEN 'a C dynamic object library?
-                fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x)
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
                         x1 = INSTR(a$, s$)
@@ -12690,7 +12696,6 @@ IF os$ = "WIN" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
                 IF n = 0 THEN a$ = "Could not find sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
             END IF
 
@@ -12732,18 +12737,20 @@ IF os$ = "LNX" THEN
     END IF
 
     FOR x = 1 TO ResolveStaticFunctions
+        nm_output_file$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x))
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
-            IF MacOSX = 0 THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " --demangle -g >./internal/temp/nm_output.txt 2>./internal/temp/nm_error.txt"
-            IF MacOSX THEN SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " >./internal/temp/nm_output.txt 2>./internal/temp/nm_error.txt"
+            IF NOT _FILEEXISTS(nm_output_file$) THEN
+                IF MacOSX = 0 THEN SHELL _HIDE "nm " + AddQuotes$(ResolveStaticFunction_File(x)) + " --demangle -g >" + AddQuotes$(nm_output_file$) + " 2>" + AddQuotes$(tmpdir$ + "nm_error.txt")
+                IF MacOSX THEN SHELL _HIDE "nm " + AddQuotes$(ResolveStaticFunction_File(x)) + " >" + AddQuotes$(nm_output_file$) + " 2>" + AddQuotes$(tmpdir$ + "nm_error.txt")
+            END IF
 
             IF MacOSX = 0 THEN 'C++ name demangling not supported in MacOSX
-                fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname+LEFTBRACKET
                         x1 = INSTR(a$, s$)
@@ -12760,17 +12767,15 @@ IF os$ = "LNX" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
                 IF n > 1 THEN a$ = "Unable to resolve multiple instances of sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
             END IF 'macosx=0
 
             IF n = 0 THEN 'attempt to locate simple function name without brackets
-                fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x): s2$ = s$
                 IF MacOSX THEN s$ = " _" + ResolveStaticFunction_Name(x) 'search for C mangled name
-                OPEN "internal\temp\nm_output.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
                         x1 = INSTR(a$, s$)
@@ -12791,17 +12796,17 @@ IF os$ = "LNX" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
             END IF
 
             IF n = 0 THEN 'a C++ dynamic object library?
                 IF MacOSX THEN GOTO macosx_libfind_failed
-                SHELL _HIDE "nm " + CHR$(34) + ResolveStaticFunction_File(x) + CHR$(34) + " -D --demangle -g >./internal/temp/nm_output_dynamic.txt 2>./internal/temp/nm_error.txt"
-                fh = FREEFILE
+                IF NOT _FILEEXISTS(nm_output_file$) THEN
+                    SHELL _HIDE "nm " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file$) + " 2>" + AddQuotes$(tmpdir$ + "nm_error.txt")
+                END IF
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname+LEFTBRACKET
                         x1 = INSTR(a$, s$)
@@ -12818,16 +12823,14 @@ IF os$ = "LNX" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
                 IF n > 1 THEN a$ = "Unable to resolve multiple instances of sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
             END IF
 
             IF n = 0 THEN 'a C dynamic object library?
-                fh = FREEFILE
                 s$ = " " + ResolveStaticFunction_Name(x)
-                OPEN "internal\temp\nm_output_dynamic.txt" FOR BINARY AS #fh
-                DO UNTIL EOF(fh)
-                    LINE INPUT #fh, a$
+                fh = OpenBuffer%("I", nm_output_file$)
+                DO UNTIL EndOfBuf%(fh)
+                    a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
                         x1 = INSTR(a$, s$)
@@ -12848,7 +12851,6 @@ IF os$ = "LNX" THEN
                         END IF 'x1
                     END IF '<>""
                 LOOP
-                CLOSE #fh
                 macosx_libfind_failed:
                 IF n = 0 THEN a$ = "Could not find sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
             END IF

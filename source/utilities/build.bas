@@ -26,3 +26,7 @@ FUNCTION GetMakeExecutable$ ()
         GetMakeExecutable$ = "make"
     END IF
 END FUNCTION
+
+FUNCTION MakeNMOutputFilename$ (libfile AS STRING)
+    MakeNMOutputFilename$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(libfile, pathsep$, "."), ":", ".") + ".txt"
+END FUNCTION

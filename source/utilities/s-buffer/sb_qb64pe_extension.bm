@@ -25,8 +25,8 @@ SELECT CASE UCASE$(LEFT$(sbMode$, 1))
     CASE "B" 'binary
         IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
         nul& = SeekBuf&(buf%, 0, SBM_BufStart)
-    CASE "I" 'input
-        IF buf% > UBOUND(SBufN) THEN ERROR 53 'buffer not found
+    CASE "I" 'input (try to load from file, if yet unkown)
+        IF buf% > UBOUND(SBufN) THEN GOSUB loadBuf
         nul& = SeekBuf&(buf%, 0, SBM_BufStart)
     CASE "O" 'output
         IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufN(buf%) = ""
@@ -39,6 +39,12 @@ EXIT FUNCTION
 '----------
 newBuf:
 buf% = CreateBuf%
+IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+SBufN(buf%) = sbName$
+RETURN
+'----------
+loadBuf:
+buf% = FileToBuf%(sbName$)
 IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
 SBufN(buf%) = sbName$
 RETURN
