@@ -29,6 +29,7 @@ mkdir -p $DIST_ROOT
 mkdir -p $DIST_ROOT/internal
 mkdir -p $DIST_ROOT/internal/c
 
+rm -f ./source/.gitignore
 cp -rp ./source   $DIST_ROOT
 cp -rp ./licenses $DIST_ROOT
 cp ./COPYING.txt  $DIST_ROOT

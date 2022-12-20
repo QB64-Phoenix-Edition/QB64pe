@@ -146,7 +146,7 @@ SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
     FOR i = 1 TO LEN(t$)
         c = ASC(t$, i)
 
-        IF Help_LockParse = 0 AND Help_LockWrap = 0 THEN
+        IF (Help_LockParse = -1 OR Help_LockParse = 0) AND Help_LockWrap = 0 THEN
 
             IF c = 32 THEN
                 IF Help_Pos = Help_ww THEN Help_NewLine: _CONTINUE
@@ -274,7 +274,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     'Parser locks (neg: soft lock, zero: unlocked, pos: hard lock)
     'hard:  2 = inside code blocks,  1 = inside output blocks
     'soft: -1 = inside text blocks, -2 = inside fixed blocks
-    '=> all parser locks also imply a wrapping lock
+    '=> all parser locks also imply a wrapping lock (except -1)
     '=> hard locks almost every parsing except utf-8 substitution and line breaks
     '=> soft allows all elements not disrupting the current block, hence only
     '   paragraph creating things are locked (eg. headings, lists, rulers etc.),
@@ -672,6 +672,20 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
+                'Pre Block
+                IF cb$ = "PreStart" AND Help_LockParse = 0 THEN
+                    Help_CheckRemoveBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                    Help_LIndent$ = "  ": Help_LockParse = -1
+                    Help_NewLine
+                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
+                END IF
+                IF cb$ = "PreEnd" AND Help_LockParse <> 0 THEN
+                    Help_LIndent$ = ""
+                    Help_CheckRemoveBlankLine
+                    Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
                 'Text Block
                 IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
@@ -909,7 +923,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$(6) = "<br />" THEN i = i + 5
             IF c = 10 THEN 'on real new line only
                 IF dl > 1 THEN dl = dl - 1 'update def list state
-                Help_LIndent$ = "" 'end all list indention
+                IF Help_LockParse = 0 THEN Help_LIndent$ = "" 'end indention outside blocks
             END IF
 
             IF Help_LockParse > -2 THEN 'everywhere except in fixed blocks
