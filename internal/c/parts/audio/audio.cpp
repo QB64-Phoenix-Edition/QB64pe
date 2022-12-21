@@ -12,27 +12,15 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
+#include <vector>
+#define STB_VORBIS_HEADER_ONLY
+#include "extras/stb_vorbis.c"
+#include "miniaudio.h"
 // Set this to 1 if we want to print debug messages to stderr
 #define AUDIO_DEBUG 0
 #include "audio.h"
-#include "condvar.h"
-
-#include <algorithm>
-#include <queue>
-#include <vector>
-
-// Enable Ogg Vorbis decoding
-#define STB_VORBIS_HEADER_ONLY
-#include "extras/stb_vorbis.c"
-
-// The main miniaudio header
-#include "miniaudio.h"
-
-// Although Matt says we should not be doing this, this has worked out to be ok so far
-// We need 'qbs' and also the 'mem' stuff from here
-// I am not using 'list' anymore and have migrated the code to use C++ vectors instead
-// We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
-// For now, we'll wait for Matt until he sorts out things to smaller and logical files
+#include "mutex.h"
+// We need 'qbs' and 'mem' stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../libqb.h"
 
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
@@ -94,61 +82,81 @@ struct SampleFrame {
     float r;
 };
 
-/// @brief A thread-safe queue
-/// @tparam T Data type
-template <class T> class SafeQueue {
-  private:
-    std::queue<T> q;
-    libqb_mutex *m;
-    libqb_condvar *c;
-
-  public:
-    /// @brief Constructor
-    SafeQueue() : q() {
-        m = libqb_mutex_new();
-        c = libqb_condvar_new();
-    }
-
-    /// @brief Destructor
-    ~SafeQueue() {
-        libqb_condvar_free(c);
-        libqb_mutex_free(m);
-    }
-
-    /// @brief Add an element to the queue
-    /// @param t The element
-    void enqueue(T t) {
-        libqb_mutex_guard lock(m);
-        q.push(t);
-        libqb_condvar_signal(c);
-    }
-
-    /// @brief Get the front element. If the queue is empty, wait till a element is avaiable
-    /// @return Returns the front element
-    T dequeue() {
-        libqb_mutex_guard lock(m);
-
-        while (q.empty())
-            libqb_condvar_wait(c, m); // release lock as long as the wait and reaquire it afterwards
-
-        T val = q.front();
-        q.pop();
-
-        return val;
-    }
-
-    /// @brief Returns number of elements in the queue
-    /// @return Number of elements
-    std::size_t size() { return q.size(); }
-};
-
 /// @brief A miniaudiio raw audio stream datasource
 struct RawStream {
-    ma_data_source_base ds;        // miniaudio data source
-    ma_engine *maEngine;           // pointer to a ma_engine object that was passed while creating the data source
-    ma_sound *maSound;             // pointer to a ma_sound object that was passed while creating the data source
-    SafeQueue<SampleFrame> stream; // raw stereo sample frame stream (which is conveniently block allocated by C++ STL)
-    ma_uint32 sampleRate;          // the sample rate reported by ma_engine
+    ma_data_source_base ds;            // miniaudio data source (this must be the first member of our struct)
+    ma_engine *maEngine;               // pointer to a ma_engine object that was passed while creating the data source
+    ma_sound *maSound;                 // pointer to a ma_sound object that was passed while creating the data source
+    ma_uint32 sampleRate;              // the sample rate reported by ma_engine
+    struct Buffer {                    // we'll give this a name that we'll use below
+        std::vector<SampleFrame> data; // this holds the actual sample frames
+        size_t cursor;                 // where is the read cursor (in frames) in the stream
+    } buffer[2];                       // we need two of these to do a proper ping-pong
+    Buffer *consumer;                  // this is what the miniaudio thread will use to pull data from
+    Buffer *producer;                  // this is what the main thread will use to push data to
+    libqb_mutex *m;                    // we'll use a mutex to give exclusive access to resources used by both threads
+    bool stop;                         // set this to true to stop supply miniaudio samples completely (including silent samples)
+
+    static const size_t DEFAULT_SIZE = 480; // this value is what miniaudio actually asks for in frameCount (seems like a good value)
+
+    // Delete default, copy and move constructors and assignments
+    RawStream() = delete;
+    RawStream(const RawStream &) = delete;
+    RawStream &operator=(const RawStream &) = delete;
+    RawStream &operator=(RawStream &&) = delete;
+    RawStream(RawStream &&) = delete;
+
+    /// @brief This is use to setup the vectors, mutex and set some defaults
+    RawStream(ma_engine *pmaEngine, ma_sound *pmaSound) {
+        maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
+        maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
+        sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
+
+        buffer[0].cursor = buffer[1].cursor = 0;
+        buffer[0].data.reserve(DEFAULT_SIZE * 2); // ensure we have a contigious block twice the default size to account for expansion without reallocation
+        buffer[1].data.reserve(DEFAULT_SIZE * 2); // ensure we have a contigious block twice the default size to account for expansion without reallocation
+
+        consumer = &buffer[0]; // set default consumer
+        producer = &buffer[1]; // set default producer
+
+        m = libqb_mutex_new();
+
+        stop = false; // by default we will send silent samples to keep the playback going
+    }
+
+    /// @brief We use this to destroy the mutex
+    ~RawStream() { libqb_mutex_free(m); }
+
+    /// @brief This switches the consumer and producer Buffers. This is mutex protected and called by the miniaudio thread
+    void SwitchBuffers() {
+        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
+        consumer->data.clear(); // clear the consumer vector
+        consumer->cursor = 0;   // reset the cursor as well
+        std::swap(consumer, producer); // quicky swap the Buffer pointers
+    }
+
+    /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
+    /// @param l Sample frame left channel data
+    /// @param r Sample frame right channel data
+    void PushSampleFrame(float l, float r) {
+        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
+        producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
+    }
+
+    /// @brief Returns the length, in sample frames of sound queued
+    /// @return The length left to play in sample frames
+    ma_uint64 GetSampleFramesRemaining() {
+        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
+        return (consumer->data.size() - consumer->cursor) +
+               (producer->data.size() - producer->cursor); // return sum of producer and consumer sample queue sizes
+    }
+
+    /// @brief Returns the length, in seconds of sound queued
+    /// @return The length left to play in seconds
+    double GetTimeRemaining() { return (double)GetSampleFramesRemaining() / (double)sampleRate; }
 };
 
 /// @brief This is what is used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue
@@ -167,23 +175,30 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     if (!pDataSource)
         return MA_INVALID_ARGS;
 
-    auto pRawStream = (RawStream *)pDataSource;
-    auto result = MA_SUCCESS; // must be initialized to MA_SUCCESS
-    auto buffer = (SampleFrame *)pFramesOut;
-    auto sampleFramesCount = std::min(frameCount, pRawStream->stream.size());
-    ma_uint64 sampleFramesRead = 0;
+    auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
+    auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
+    auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
 
+    auto sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
+    // Switch buffers if we do not have anything left to play
+    if (!sampleFramesCount) {
+        pRawStream->SwitchBuffers();
+        sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
+    }
+    sampleFramesCount = std::min(sampleFramesCount, frameCount); // we'll always send lower of what miniaudio wants or what we have
+
+    ma_uint64 sampleFramesRead = 0; // sample frame counter
+    // Now send the samples to miniaudio
     while (sampleFramesRead < sampleFramesCount) {
-        *buffer = pRawStream->stream.dequeue();
-        ++buffer;           // increment the buffer pointer
-        ++sampleFramesRead; // increment the frame counter
+        maBuffer[sampleFramesRead] = pRawStream->consumer->data[pRawStream->consumer->cursor];
+        ++sampleFramesRead;             // increment the frame counter
+        pRawStream->consumer->cursor++; // increment the read cursor
     }
 
     // To keep the stream going, play silence if there are no frames to play
-    if (!sampleFramesRead) {
+    if (!sampleFramesRead && !pRawStream->stop) {
         while (sampleFramesRead < frameCount) {
-            *buffer = {};
-            ++buffer;
+            maBuffer[sampleFramesRead] = {};
             ++sampleFramesRead;
         }
     }
@@ -234,7 +249,7 @@ static ma_result RawStreamOnGetDataFormat(ma_data_source *pDataSource, ma_format
 }
 
 /// @brief Raw stream data source vtable
-static ma_data_source_vtable maDataSourceVtableRaw = {
+static ma_data_source_vtable rawStreamDataSourceVtable = {
     RawStreamOnRead,          // Returns a bunch of samples from a raw sample stream queue. The samples being returned is removed from the queue
     RawStreamOnSeek,          // NOP for raw sample stream
     RawStreamOnGetDataFormat, // Returns the audio format to miniaudio
@@ -255,7 +270,7 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
         return nullptr;
     }
 
-    auto pRawStream = new RawStream; // create the data source object
+    auto pRawStream = new RawStream(pmaEngine, pmaSound); // create the data source object
     if (!pRawStream) {
         AUDIO_DEBUG_PRINT("Failed to create data source");
 
@@ -265,7 +280,7 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     ZERO_VARIABLE(pRawStream->ds);
 
     auto dataSourceConfig = ma_data_source_config_init();
-    dataSourceConfig.vtable = &maDataSourceVtableRaw; // attach the vtable to the data source
+    dataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
 
     auto result = ma_data_source_init(&dataSourceConfig, &pRawStream->ds);
     if (result != MA_SUCCESS) {
@@ -275,10 +290,6 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
 
         return nullptr;
     }
-
-    pRawStream->maSound = pmaSound;                                // save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
-    pRawStream->maEngine = pmaEngine;                              // save the pointer to the ma_engine object (this should come from the QBPE sound engine)
-    pRawStream->sampleRate = ma_engine_get_sample_rate(pmaEngine); // save the sample rate
 
     result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->ds, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
                                             pmaSound); // attach data source to the ma_sound
@@ -321,39 +332,6 @@ static void RawStreamDestroy(RawStream *pRawStream) {
     }
 }
 
-/// @brief This pushes a sample frame at the end of the queue
-/// @param pRawStream The raw stream object
-/// @param l Sample frame left channel data
-/// @param r Sample frame right channel data
-static void RawStreamPushSampleFrame(RawStream *pRawStream, float l, float r) {
-    if (pRawStream)
-        pRawStream->stream.enqueue({l, r});
-}
-
-/// @brief Returns the length, in sample frames of sound queued
-/// @param pRawStream The raw stream object
-/// @return The length left to play in sample frames
-static ma_uint64 RawStreamGetSampleFramesRemaining(RawStream *pRawStream) {
-    if (pRawStream)
-        return pRawStream->stream.size();
-
-    return 0;
-}
-
-/// @brief Returns the length, in seconds of sound queued
-/// @param pRawStream The raw stream object
-/// @return The length left to play in seconds
-static double RawStreamGetTimeRemaining(RawStream *pRawStream) {
-    if (pRawStream) {
-        auto sampleFramesRemaining = pRawStream->stream.size();
-
-        // This will help us avoid situations where we can get a non-zero value even if GetSampleFramesRemaining returns 0
-        return !sampleFramesRemaining ? 0 : (double)sampleFramesRemaining / (double)pRawStream->sampleRate;
-    }
-
-    return 0;
-}
-
 /// <summary>
 /// Sound handle type
 /// This describes every sound the system will ever play (including raw streams).
@@ -368,8 +346,11 @@ struct SoundHandle {
     void *memLockOffset;  // This is a pointer from new_mem_lock()
     uint64 memLockId;     // This is mem_lock_id created by new_mem_lock()
 
-    SoundHandle(const SoundHandle &) = delete;      // No default copy constructor
-    SoundHandle &operator=(SoundHandle &) = delete; // No assignment operator
+    // Delete copy and move constructors and assignments
+    SoundHandle(const SoundHandle &) = delete;
+    SoundHandle &operator=(const SoundHandle &) = delete;
+    SoundHandle(SoundHandle &&) = delete;
+    SoundHandle &operator=(SoundHandle &&) = delete;
 
     /// <summary>
     ///	Just initializes some important members.
@@ -406,8 +387,11 @@ struct AudioEngine {
     int32_t lowestFreeHandle;                           // This is the lowest handle then was recently freed. We'll start checking for free handles from here
     bool musicBackground;                               // Should 'Sound' and 'Play' work in the background or block the caller?
 
-    AudioEngine(const AudioEngine &) = delete;      // No default copy constructor
-    AudioEngine &operator=(AudioEngine &) = delete; // No assignment operator
+    // Delete copy and move constructors and assignments
+    AudioEngine(const AudioEngine &) = delete;
+    AudioEngine &operator=(const AudioEngine &) = delete;
+    AudioEngine &operator=(AudioEngine &&) = delete;
+    AudioEngine(AudioEngine &&) = delete;
 
     /// <summary>
     ///	Just initializes some important members.
@@ -653,9 +637,7 @@ static ma_uint8 *GenerateWaveform(double frequency, double length, double volume
 /// <param name="length">Length in seconds</param>
 /// <returns>Length in bytes</returns>
 static ma_int32 WaveformBufferSize(double length) {
-    static ma_int32 samples;
-
-    samples = (ma_int32)(length * audioEngine.sampleRate);
+    auto samples = (ma_int32)(length * audioEngine.sampleRate);
     if (!samples)
         samples = 1;
 
@@ -677,8 +659,8 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
 
     // Move data into sndraw handle
     for (auto i = 0; i < bytes; i += SAMPLE_FRAME_SIZE(ma_int16, 2)) {
-        RawStreamPushSampleFrame(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream, (float)((ma_int16 *)(data + i))[0] / 32768.0f,
-                                 (float)((ma_int16 *)(data + i))[1] / 32768.0f);
+        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->PushSampleFrame((float)((ma_int16 *)(data + i))[0] / 32768.0f,
+                                                                                      (float)((ma_int16 *)(data + i))[1] / 32768.0f);
     }
 
     free(data); // free the sound data
@@ -686,7 +668,7 @@ static void SendWaveformToQueue(ma_uint8 *data, ma_int32 bytes, bool block) {
     // This will wait for the block to finish (if specified)
     // We'll be good citizens and give-up our time-slices while waiting
     if (block) {
-        auto time_ms = (RawStreamGetSampleFramesRemaining(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) * 1000) / audioEngine.sampleRate;
+        auto time_ms = (audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining() * 1000) / audioEngine.sampleRate;
         if (time_ms > 0)
             Sleep(time_ms);
     }
@@ -755,7 +737,7 @@ void sub_beep() { sub_sound(900, 5); }
 /// <returns>Returns the number of sample frames left to play for Play(), Sound() & Beep()</returns>
 int32_t func_play(int32_t ignore) {
     if (audioEngine.isInitialized && audioEngine.sndInternal == 0) {
-        return (int32_t)RawStreamGetSampleFramesRemaining(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
+        return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining();
     }
 
     return 0;
@@ -1401,6 +1383,9 @@ void sub__sndclose(int32_t handle) {
         // So it is completly safe to call it this way
         sub__sndrawdone(handle, true);
 
+        if (audioEngine.soundHandles[handle]->type == SoundType::Raw)
+            audioEngine.soundHandles[handle]->rawStream->stop = true; // Signal miniaudio thread that we are going to end playback
+
         // Simply set the autokill flag to true and let the sound loop handle disposing the sound
         audioEngine.soundHandles[handle]->autoKill = true;
     }
@@ -1784,7 +1769,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
         if (!(passed & 1))
             right = left;
 
-        RawStreamPushSampleFrame(audioEngine.soundHandles[handle]->rawStream, left, right);
+        audioEngine.soundHandles[handle]->rawStream->PushSampleFrame(left, right);
     }
 }
 
@@ -1821,7 +1806,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
         handle = audioEngine.sndInternalRaw;
 
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
-        return RawStreamGetTimeRemaining(audioEngine.soundHandles[handle]->rawStream);
+        return audioEngine.soundHandles[handle]->rawStream->GetTimeRemaining();
     }
 
     return 0;
@@ -2040,17 +2025,11 @@ void snd_mainloop() {
                 if (audioEngine.soundHandles[handle]->autoKill) {
                     switch (audioEngine.soundHandles[handle]->type) {
                     case SoundType::Static:
+                    case SoundType::Raw:
                         // Dispose the sound if it has finished playing
                         // Note that this means that temporary looping sounds will never close
                         // Well thats on the programmer. Probably they want it that way
                         if (!ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound))
-                            audioEngine.FreeSoundHandle(handle);
-
-                        break;
-
-                    case SoundType::Raw:
-                        // Close the raw stream if we have no more frames in the queue or playing
-                        if (!RawStreamGetSampleFramesRemaining(audioEngine.soundHandles[handle]->rawStream))
                             audioEngine.FreeSoundHandle(handle);
 
                         break;
