@@ -34,8 +34,10 @@
 // AllocateSoundHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case
 #define INVALID_SOUND_HANDLE 0
-// This is the string that must be passed in the requirements parameter to stream a sound from storage
+// This is the string that can be passed in the requirements parameter to stream a sound from storage
 #define REQUIREMENT_STRING_STREAM "STREAM"
+// This is the string that can be passed in the requirements parameter to load a sound from memory
+#define REQUIREMENT_STRING_MEMORY "MEMORY"
 
 #define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
 
@@ -52,8 +54,9 @@
 #    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #endif
 
-// This adds our customer backend (format decoders) VTables to our ma_resource_manager_config
+// These attaches our customer backend (format decoders) VTables to various miniaudio structs
 void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
+void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
 
 // These are stuff that was not declared anywhere else
 // We will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
@@ -337,14 +340,16 @@ static void RawStreamDestroy(RawStream *pRawStream) {
 /// This describes every sound the system will ever play (including raw streams).
 /// </summary>
 struct SoundHandle {
-    bool isUsed;          // Is this handle in active use?
-    SoundType type;       // Type of sound (see SoundType enum class)
-    bool autoKill;        // Do we need to auto-clean this sample / stream after playback is done?
-    ma_sound maSound;     // miniaudio sound
-    ma_uint32 maFlags;    // miniaudio flags that were used when initializing the sound
-    RawStream *rawStream; // Raw sample frame queue
-    void *memLockOffset;  // This is a pointer from new_mem_lock()
-    uint64 memLockId;     // This is mem_lock_id created by new_mem_lock()
+    bool isUsed;                       // Is this handle in active use?
+    SoundType type;                    // Type of sound (see SoundType enum class)
+    bool autoKill;                     // Do we need to auto-clean this sample / stream after playback is done?
+    ma_sound maSound;                  // miniaudio sound
+    ma_uint32 maFlags;                 // miniaudio flags that were used when initializing the sound
+    ma_decoder_config maDecoderConfig; // miniaudio decoder configuration
+    ma_decoder *maDecoder;             // this is used for files that are loaded directly from memory
+    RawStream *rawStream;              // Raw sample frame queue
+    void *memLockOffset;               // This is a pointer from new_mem_lock()
+    uint64 memLockId;                  // This is mem_lock_id created by new_mem_lock()
 
     // Delete copy and move constructors and assignments
     SoundHandle(const SoundHandle &) = delete;
@@ -364,6 +369,7 @@ struct SoundHandle {
         rawStream = nullptr;
         ZERO_VARIABLE(maSound);
         maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
+        maDecoder = nullptr;
         memLockId = INVALID_MEM_LOCK;
         memLockOffset = nullptr;
     }
@@ -377,7 +383,7 @@ struct AudioEngine {
     bool initializationFailed;                          // This is set to true if a past initialization attempt failed
     ma_resource_manager_config maResourceManagerConfig; // miniaudio resource manager configuration
     ma_resource_manager maResourceManager;              // miniaudio resource manager
-    ma_engine_config maEngineConfig;                    // miniaudio engine configuration  (will be used to pass in the resource manager)
+    ma_engine_config maEngineConfig;                    // miniaudio engine configuration (will be used to pass in the resource manager)
     ma_engine maEngine;                                 // This is the primary miniaudio engine 'context'. Everything happens using this!
     ma_result maResult;                                 // This is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                               // Sample rate used by the miniaudio engine
@@ -478,6 +484,7 @@ struct AudioEngine {
         // We do not use pitch shifting, so this will give a little performance boost
         // Spatialization is disabled by default but will be enabled on the fly if required
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
+        soundHandles[h]->maDecoder = nullptr;
         soundHandles[h]->memLockId = INVALID_MEM_LOCK;
         soundHandles[h]->memLockOffset = nullptr;
         soundHandles[h]->isUsed = true;
@@ -520,6 +527,13 @@ struct AudioEngine {
 
             default:
                 AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
+            }
+
+            // Free any initilized miniaudio decoder
+            if (soundHandles[handle]->maDecoder) {
+                ma_decoder_uninit(soundHandles[handle]->maDecoder);
+                delete soundHandles[handle]->maDecoder;
+                soundHandles[handle]->maDecoder = nullptr;
             }
 
             // Invalidate any memsound stuff
@@ -1275,7 +1289,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     static qbs *fileNameZ = nullptr;
     static qbs *reqs = nullptr;
 
-    if (!audioEngine.isInitialized)
+    if (!audioEngine.isInitialized || !fileName->len)
         return INVALID_SOUND_HANDLE;
 
     if (!fileNameZ)
@@ -1283,10 +1297,6 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
 
     if (!reqs)
         reqs = qbs_new(0, 0);
-
-    qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-    if (fileNameZ->len == 1)
-        return INVALID_SOUND_HANDLE; // Return INVALID_SOUND_HANDLE if file name is null length string
 
     // Alocate a sound handle
     int32_t handle = audioEngine.AllocateSoundHandle();
@@ -1296,27 +1306,70 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     // Set some handle properties
     audioEngine.soundHandles[handle]->type = SoundType::Static;
 
-    // Set the flags to specifiy how we want the audio file to be opened
-    if (passed && requirements->len) {
+    // Prepare the requirements string
+    if (passed && requirements->len)
         qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM), 1))
-            audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM; // Check if the user wants to stream the file
+
+    // Set the flags to specifiy how we want the audio file to be opened
+    if (passed && requirements->len && func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM), 1)) {
+        audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM; // Check if the user wants to stream the file
+        AUDIO_DEBUG_PRINT("Sound will stream");
     } else {
         audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE; // Else decode and load the whole sound in memory
+        AUDIO_DEBUG_PRINT("Sound will be fully decoded");
     }
 
-    // Forward the request to miniaudio to open the sound file
-    audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, (const char *)fileNameZ->chr, audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
-                                                   &audioEngine.soundHandles[handle]->maSound);
+    // Load the file from file or memory based on the requirements string
+    if (passed && requirements->len && func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1)) {
+        // Configure a miniaudio decoder to load the sound from memory
+        AUDIO_DEBUG_PRINT("Loading sound from memory");
+
+        audioEngine.soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
+        if (!audioEngine.soundHandles[handle]->maDecoder) {
+            AUDIO_DEBUG_PRINT("Failed to allocate memory for miniaudio decoder");
+            audioEngine.soundHandles[handle]->isUsed = false;
+            return INVALID_SOUND_HANDLE;
+        }
+
+        // Setup the decoder & attach the custom backed vtables
+        audioEngine.soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
+        AudioEngineAttachCustomBackendVTables(&audioEngine.soundHandles[handle]->maDecoderConfig);
+        audioEngine.soundHandles[handle]->maDecoderConfig.sampleRate = audioEngine.sampleRate;
+
+        audioEngine.maResult = ma_decoder_init_memory(fileName->chr, fileName->len, &audioEngine.soundHandles[handle]->maDecoderConfig,
+                                                      audioEngine.soundHandles[handle]->maDecoder); // initialize the decoder
+        if (audioEngine.maResult != MA_SUCCESS) {
+            delete audioEngine.soundHandles[handle]->maDecoder;
+            audioEngine.soundHandles[handle]->maDecoder = nullptr;
+            AUDIO_DEBUG_PRINT("Failed to initialize miniaudio decoder");
+            audioEngine.soundHandles[handle]->isUsed = false;
+            return INVALID_SOUND_HANDLE;
+        }
+
+        // Finally, load the sound as a data source
+        audioEngine.maResult = ma_sound_init_from_data_source(&audioEngine.maEngine, audioEngine.soundHandles[handle]->maDecoder,
+                                                              audioEngine.soundHandles[handle]->maFlags, NULL, &audioEngine.soundHandles[handle]->maSound);
+    } else {
+        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileNameZ->chr);
+        qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
+
+        // Forward the request to miniaudio to open the sound file
+        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, (const char *)fileNameZ->chr, audioEngine.soundHandles[handle]->maFlags, NULL,
+                                                       NULL, &audioEngine.soundHandles[handle]->maSound);
+    }
 
     // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("'%s' failed to open", fileNameZ->chr);
+        if (audioEngine.soundHandles[handle]->maDecoder) {
+            delete audioEngine.soundHandles[handle]->maDecoder;
+            audioEngine.soundHandles[handle]->maDecoder = nullptr;
+        }
+        AUDIO_DEBUG_PRINT("Error %i: '%s' failed to open", audioEngine.maResult, fileNameZ->chr);
         audioEngine.soundHandles[handle]->isUsed = false;
         return INVALID_SOUND_HANDLE;
     }
 
-    AUDIO_DEBUG_PRINT("'%s' successfully opened", fileNameZ->chr);
+    AUDIO_DEBUG_PRINT("Sound successfully loaded");
     return handle;
 }
 
