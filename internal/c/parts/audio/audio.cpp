@@ -175,7 +175,7 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
     auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
 
-    auto sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
+    ma_uint64 sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
     // Swap buffers if we do not have anything left to play
     if (!sampleFramesCount) {
         pRawStream->SwapBuffers();
