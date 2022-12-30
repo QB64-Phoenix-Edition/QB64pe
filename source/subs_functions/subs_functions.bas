@@ -2058,6 +2058,20 @@ id.arg = MKL$(ULONGTYPE - ISPOINTER)
 id.hr_syntax = "_SNDCLOSE handle&"
 regid
 
+' a740g: Feature request #28
+clearid
+id.n = qb64prefix$ + "NewSound" ' Name in CaMeL case
+id.Dependency = DEPENDENCY_AUDIO_OUT ' QB64-PE library dependency
+id.subfunc = 1 ' 1 = function, 2 = sub
+id.callname = "func__newsound" ' C/C++ function name
+id.args = 4 ' number of arguments "passed"
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
+id.specialformat = "?,?,?[,?]" ' special format (optional in []; functions can have only one optional)
+id.ret = LONGTYPE - ISPOINTER ' return type for functions
+id.hr_syntax = "_NEWSOUND(frames&, channels&, bits&[, rate&])" ' syntax help
+regid
+' a740g: Feature request #28
+
 clearid
 id.n = "Input"
 id.musthave = "$"

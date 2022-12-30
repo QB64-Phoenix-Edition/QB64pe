@@ -87,20 +87,21 @@ struct SampleFrame {
 
 /// @brief A miniaudiio raw audio stream datasource
 struct RawStream {
-    ma_data_source_base ds;            // miniaudio data source (this must be the first member of our struct)
-    ma_engine *maEngine;               // pointer to a ma_engine object that was passed while creating the data source
-    ma_sound *maSound;                 // pointer to a ma_sound object that was passed while creating the data source
-    ma_uint32 sampleRate;              // the sample rate reported by ma_engine
-    struct Buffer {                    // we'll give this a name that we'll use below
-        std::vector<SampleFrame> data; // this holds the actual sample frames
-        size_t cursor;                 // the read cursor (in frames) in the stream
-    } buffer[2];                       // we need two of these to do a proper ping-pong
-    Buffer *consumer;                  // this is what the miniaudio thread will use to pull data from
-    Buffer *producer;                  // this is what the main thread will use to push data to
-    libqb_mutex *m;                    // we'll use a mutex to give exclusive access to resources used by both threads
-    bool stop;                         // set this to true to stop supply of samples completely (including silent samples)
+    ma_data_source_base maDataSource;         // miniaudio data source (this must be the first member of our struct)
+    ma_data_source_config maDataSourceConfig; // config struct for the data source
+    ma_engine *maEngine;                      // pointer to a ma_engine object that was passed while creating the data source
+    ma_sound *maSound;                        // pointer to a ma_sound object that was passed while creating the data source
+    ma_uint32 sampleRate;                     // the sample rate reported by ma_engine
+    struct Buffer {                           // we'll give this a name that we'll use below
+        std::vector<SampleFrame> data;        // this holds the actual sample frames
+        size_t cursor;                        // the read cursor (in frames) in the stream
+    } buffer[2];                              // we need two of these to do a proper ping-pong
+    Buffer *consumer;                         // this is what the miniaudio thread will use to pull data from
+    Buffer *producer;                         // this is what the main thread will use to push data to
+    libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
+    bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
 
-    static const size_t DEFAULT_SIZE = 480; // this value is what miniaudio actually asks for in frameCount (seems like a good value)
+    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amout what miniaudio actually asks for in frameCount
 
     // Delete default, copy and move constructors and assignments
     RawStream() = delete;
@@ -114,28 +115,23 @@ struct RawStream {
         maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
-
-        buffer[0].cursor = buffer[1].cursor = 0;
-        buffer[0].data.reserve(DEFAULT_SIZE * 2); // ensure we have a contigious block twice the default size to account for expansion without reallocation
-        buffer[1].data.reserve(DEFAULT_SIZE * 2); // ensure we have a contigious block twice the default size to account for expansion without reallocation
-
-        consumer = &buffer[0]; // set default consumer
-        producer = &buffer[1]; // set default producer
-
+        buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
+        buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contigious block to account for expansion without reallocation
+        buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contigious block to account for expansion without reallocation
+        consumer = &buffer[0];                            // set default consumer
+        producer = &buffer[1];                            // set default producer
+        stop = false;                                     // by default we will send silent samples to keep the playback going
         m = libqb_mutex_new();
-
-        stop = false; // by default we will send silent samples to keep the playback going
     }
 
     /// @brief We use this to destroy the mutex
     ~RawStream() { libqb_mutex_free(m); }
 
-    /// @brief This switches the consumer and producer Buffers. This is mutex protected and called by the miniaudio thread
-    void SwitchBuffers() {
-        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
-
+    /// @brief This swaps the consumer and producer Buffers. This is mutex protected and called by the miniaudio thread
+    void SwapBuffers() {
+        libqb_mutex_guard lock(m);     // lock the mutex before accessing the vectors
+        consumer->cursor = 0;          // reset the cursor
         consumer->data.clear();        // clear the consumer vector
-        consumer->cursor = 0;          // reset the cursor as well
         std::swap(consumer, producer); // quicky swap the Buffer pointers
     }
 
@@ -143,18 +139,15 @@ struct RawStream {
     /// @param l Sample frame left channel data
     /// @param r Sample frame right channel data
     void PushSampleFrame(float l, float r) {
-        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
-
+        libqb_mutex_guard lock(m);        // lock the mutex before accessing the vectors
         producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
     }
 
     /// @brief Returns the length, in sample frames of sound queued
     /// @return The length left to play in sample frames
     ma_uint64 GetSampleFramesRemaining() {
-        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
-
-        return (consumer->data.size() - consumer->cursor) +
-               (producer->data.size() - producer->cursor); // return sum of producer and consumer sample queue sizes
+        libqb_mutex_guard lock(m);                                                                      // lock the mutex before accessing the vectors
+        return (consumer->data.size() - consumer->cursor) + (producer->data.size() - producer->cursor); // sum of producer and consumer sample frames
     }
 
     /// @brief Returns the length, in seconds of sound queued
@@ -183,9 +176,9 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
 
     auto sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
-    // Switch buffers if we do not have anything left to play
+    // Swap buffers if we do not have anything left to play
     if (!sampleFramesCount) {
-        pRawStream->SwitchBuffers();
+        pRawStream->SwapBuffers();
         sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
     }
     sampleFramesCount = std::min(sampleFramesCount, frameCount); // we'll always send lower of what miniaudio wants or what we have
@@ -280,12 +273,12 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
         return nullptr;
     }
 
-    ZERO_VARIABLE(pRawStream->ds);
+    ZERO_VARIABLE(pRawStream->maDataSource);
 
-    auto dataSourceConfig = ma_data_source_config_init();
-    dataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
+    pRawStream->maDataSourceConfig = ma_data_source_config_init();
+    pRawStream->maDataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
 
-    auto result = ma_data_source_init(&dataSourceConfig, &pRawStream->ds);
+    auto result = ma_data_source_init(&pRawStream->maDataSourceConfig, &pRawStream->maDataSource);
     if (result != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to initialize data source", result);
 
@@ -294,7 +287,7 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
         return nullptr;
     }
 
-    result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->ds, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
+    result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->maDataSource, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
                                             pmaSound); // attach data source to the ma_sound
     if (result != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to initalize sound from data source", result);
@@ -340,16 +333,18 @@ static void RawStreamDestroy(RawStream *pRawStream) {
 /// This describes every sound the system will ever play (including raw streams).
 /// </summary>
 struct SoundHandle {
-    bool isUsed;                       // Is this handle in active use?
-    SoundType type;                    // Type of sound (see SoundType enum class)
-    bool autoKill;                     // Do we need to auto-clean this sample / stream after playback is done?
-    ma_sound maSound;                  // miniaudio sound
-    ma_uint32 maFlags;                 // miniaudio flags that were used when initializing the sound
-    ma_decoder_config maDecoderConfig; // miniaudio decoder configuration
-    ma_decoder *maDecoder;             // this is used for files that are loaded directly from memory
-    RawStream *rawStream;              // Raw sample frame queue
-    void *memLockOffset;               // This is a pointer from new_mem_lock()
-    uint64 memLockId;                  // This is mem_lock_id created by new_mem_lock()
+    bool isUsed;                                // Is this handle in active use?
+    SoundType type;                             // Type of sound (see SoundType enum class)
+    bool autoKill;                              // Do we need to auto-clean this sample / stream after playback is done?
+    ma_sound maSound;                           // miniaudio sound
+    ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
+    ma_decoder_config maDecoderConfig;          // miniaudio decoder configuration
+    ma_decoder *maDecoder;                      // this is used for files that are loaded directly from memory
+    ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
+    ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
+    RawStream *rawStream;                       // Raw sample frame queue
+    void *memLockOffset;                        // This is a pointer from new_mem_lock()
+    uint64 memLockId;                           // This is mem_lock_id created by new_mem_lock()
 
     // Delete copy and move constructors and assignments
     SoundHandle(const SoundHandle &) = delete;
@@ -366,10 +361,11 @@ struct SoundHandle {
         isUsed = false;
         type = SoundType::None;
         autoKill = false;
-        rawStream = nullptr;
         ZERO_VARIABLE(maSound);
         maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         maDecoder = nullptr;
+        maAudioBuffer = nullptr;
+        rawStream = nullptr;
         memLockId = INVALID_MEM_LOCK;
         memLockOffset = nullptr;
     }
@@ -479,12 +475,13 @@ struct AudioEngine {
         // This will set it to 'in use' after applying some defaults.
         soundHandles[h]->type = SoundType::None;
         soundHandles[h]->autoKill = false;
-        soundHandles[h]->rawStream = nullptr;
         ZERO_VARIABLE(soundHandles[h]->maSound);
         // We do not use pitch shifting, so this will give a little performance boost
         // Spatialization is disabled by default but will be enabled on the fly if required
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         soundHandles[h]->maDecoder = nullptr;
+        soundHandles[h]->maAudioBuffer = nullptr;
+        soundHandles[h]->rawStream = nullptr;
         soundHandles[h]->memLockId = INVALID_MEM_LOCK;
         soundHandles[h]->memLockOffset = nullptr;
         soundHandles[h]->isUsed = true;
@@ -529,11 +526,19 @@ struct AudioEngine {
                 AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
             }
 
-            // Free any initilized miniaudio decoder
+            // Free any initialized miniaudio decoder
             if (soundHandles[handle]->maDecoder) {
                 ma_decoder_uninit(soundHandles[handle]->maDecoder);
                 delete soundHandles[handle]->maDecoder;
                 soundHandles[handle]->maDecoder = nullptr;
+                AUDIO_DEBUG_PRINT("Decoder uninitialized");
+            }
+
+            // Free any initialized audio buffer
+            if (soundHandles[handle]->maAudioBuffer) {
+                ma_audio_buffer_uninit_and_free(soundHandles[handle]->maAudioBuffer);
+                soundHandles[handle]->maAudioBuffer = nullptr;
+                AUDIO_DEBUG_PRINT("Audio buffer uninitialized & freed");
             }
 
             // Invalidate any memsound stuff
@@ -541,6 +546,7 @@ struct AudioEngine {
                 free_mem_lock((mem_lock *)soundHandles[handle]->memLockOffset);
                 soundHandles[handle]->memLockId = INVALID_MEM_LOCK;
                 soundHandles[handle]->memLockOffset = nullptr;
+                AUDIO_DEBUG_PRINT("MemSound stuff invalidated");
             }
 
             // Now simply set the 'isUsed' member to false so that the handle can be recycled
@@ -559,12 +565,12 @@ struct AudioEngine {
 // This keeps track of the audio engine state
 static AudioEngine audioEngine;
 
-/// @brief This creates a mono FP32 sine waveform based on frequency, length and volume
+/// @brief This creates a mono FP32 waveform based on frequency, length and volume
 /// @param frequency The sound frequency
 /// @param length The duration of the sound in seconds
 /// @param volume The volume of the sound (0.0 - 1.0)
 /// @param soundwave_bytes A pointer to an integer that will receive the buffer size in bytes. This cannot be NULL
-/// @return A buffer wuth the floating point waveform
+/// @return A buffer containing the floating point waveform
 static float *GenerateWaveform(double frequency, double length, double volume, int *soundwave_bytes) {
     // Calculate the number of samples
     auto samples = length * audioEngine.sampleRate;
@@ -1358,7 +1364,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
                                                        NULL, &audioEngine.soundHandles[handle]->maSound);
     }
 
-    // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
+    // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
         if (audioEngine.soundHandles[handle]->maDecoder) {
             delete audioEngine.soundHandles[handle]->maDecoder;
@@ -1816,6 +1822,75 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
 }
 
 /// <summary>
+/// This returns a sound handle to a newly created sound's raw data in memory with the given specification.
+/// The user can then fill the buffer with whatever they want (using _MEMSOUND) and play it.
+/// This is basically the sound equivalent of _NEWIMAGE.
+/// </summary>
+/// <param name="frames">The number of sample frames required</param>
+/// <param name="channels">The number of sound channels. This can be 1 (mono) or 2 (stereo)/param>
+/// <param name="bits">The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32)</param>
+/// <param name="rate">The sample rate of the sound. This will default to device sample rate</param>
+/// <param name="passed">How many parameters were passed?</param>
+/// <returns>A new sound handle if successful or 0 on failure</returns>
+int32_t func__newsound(int32_t frames, int32_t channels, int32_t bits, int32_t rate, int32_t passed) {
+    if (!audioEngine.isInitialized || frames <= 0) {
+        AUDIO_DEBUG_CHECK(frames > 0);
+        return INVALID_SOUND_HANDLE;
+    }
+
+    // Set sample rate to engine sample rate if not passed
+    if (!passed) {
+        rate = audioEngine.sampleRate;
+        AUDIO_DEBUG_PRINT("Defaulting sample rate to %u", rate);
+    }
+
+    // Validate all parameters
+    if (rate <= 0 || (channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
+        AUDIO_DEBUG_PRINT("Invalid channels (%i), bits (%i) or rate (%i)", channels, bits, rate);
+        return INVALID_SOUND_HANDLE;
+    }
+
+    // Alocate a sound handle
+    int32_t handle = audioEngine.AllocateSoundHandle();
+    if (handle < 1)
+        return INVALID_SOUND_HANDLE;
+
+    // Set some handle properties
+    audioEngine.soundHandles[handle]->type = SoundType::Static;
+
+    // Setup the ma_audio_buffer
+    audioEngine.soundHandles[handle]->maAudioBufferConfig = ma_audio_buffer_config_init(
+        (bits == 32 ? ma_format::ma_format_f32 : (bits == 16 ? ma_format::ma_format_s16 : ma_format::ma_format_u8)), channels, frames, NULL, NULL);
+
+    // Set the sample rate
+    audioEngine.soundHandles[handle]->maAudioBufferConfig.sampleRate = rate;
+
+    // Allocate and initialize ma_audio_buffer
+    audioEngine.maResult =
+        ma_audio_buffer_alloc_and_init(&audioEngine.soundHandles[handle]->maAudioBufferConfig, &audioEngine.soundHandles[handle]->maAudioBuffer);
+    if (audioEngine.maResult != MA_SUCCESS) {
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize audio buffer", audioEngine.maResult);
+        audioEngine.soundHandles[handle]->isUsed = false;
+        return INVALID_SOUND_HANDLE;
+    }
+
+    // Create a ma_sound from the ma_audio_buffer
+    audioEngine.maResult = ma_sound_init_from_data_source(&audioEngine.maEngine, audioEngine.soundHandles[handle]->maAudioBuffer,
+                                                          audioEngine.soundHandles[handle]->maFlags, NULL, &audioEngine.soundHandles[handle]->maSound);
+    if (audioEngine.maResult != MA_SUCCESS) {
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize data source", audioEngine.maResult);
+        audioEngine.soundHandles[handle]->isUsed = false;
+        ma_audio_buffer_uninit_and_free(audioEngine.soundHandles[handle]->maAudioBuffer);
+        audioEngine.soundHandles[handle]->maAudioBuffer = nullptr;
+        return INVALID_SOUND_HANDLE;
+    }
+
+    AUDIO_DEBUG_PRINT("Frames = %i, Channels = %i, Bits = %i, Rate = %i", frames, channels, bits, rate);
+
+    return handle;
+}
+
+/// <summary>
 /// This function returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function.
 /// miniaudio supports a variety of sample and channel formats. Translating all of that to basic 2 channel 16-bit format that
 /// MemSound was originally supporting would require significant overhead both in terms of system resources and code.
@@ -1827,63 +1902,106 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
 /// <param name="targetChannel">This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure</param>
 /// <returns>A _MEM value that can be used to access the sound data</returns>
 mem_block func__memsound(int32_t handle, int32_t targetChannel) {
-    static mem_block mb;
-    static ma_format maFormat;
-    static ma_uint32 channels;
-    static ma_uint64 sampleFrames;
-    static ma_resource_manager_data_buffer *ds;
+    ma_format maFormat;
+    ma_uint32 channels;
+    ma_uint64 sampleFrames;
+    ptrszint data;
 
-    // The sound cannot be steaming and must be completely decoded in memory
+    // Setup mem_block (assuming failure)
+    mem_block mb = {};
+    mb.lock_offset = (ptrszint)mem_lock_base;
+    mb.lock_id = INVALID_MEM_LOCK;
+
+    // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
     if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundType::Static ||
-        audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM || !(audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_DECODE))
-        goto error;
-
-    // Get the pointer to the data source
-    ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
-    if (!ds || !ds->pNode) {
-        AUDIO_DEBUG_PRINT("Data source pointer OR data source node pointer is NULL");
-        goto error;
+        (targetChannel != 0 && targetChannel != 1)) {
+        AUDIO_DEBUG_PRINT("Invalid handle (%i), sound type (%i) or channel (%i)", handle, audioEngine.soundHandles[handle]->type, targetChannel);
+        return mb;
     }
 
-    // Check if the data is one contigious buffer or a link list of decoded pages
-    // We cannot have a mem object for a link list of decoded pages for obvious reasons
-    if (ds->pNode->data.type != ma_resource_manager_data_supply_type::ma_resource_manager_data_supply_type_decoded) {
-        AUDIO_DEBUG_PRINT("Data is not a contigious buffer. Type = %u", ds->pNode->data.type);
-        goto error;
-    }
+    // Check what kind of sound we are dealing with and take appropriate path
+    if (audioEngine.soundHandles[handle]->maAudioBuffer) { // we are dealing with a user created audio buffer
+        AUDIO_DEBUG_PRINT("Entering ma_audio_buffer path");
+        maFormat = audioEngine.soundHandles[handle]->maAudioBufferConfig.format;
+        channels = audioEngine.soundHandles[handle]->maAudioBufferConfig.channels;
+        sampleFrames = audioEngine.soundHandles[handle]->maAudioBufferConfig.sizeInFrames;
+        data = (ptrszint)&audioEngine.soundHandles[handle]->maAudioBuffer->_pExtraData[0];
+    } else { // we are dealing with a sound loaded from file or memory
+        AUDIO_DEBUG_PRINT("Entering ma_resource_manager_data_buffer path");
 
-    // Check the data pointer
-    if (!ds->pNode->data.backend.decoded.pData) {
-        AUDIO_DEBUG_PRINT("Data source data pointer is NULL");
-        goto error;
-    }
+        // The sound cannot be steaming and must be completely decoded in memory
+        if (audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM || !(audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_DECODE)) {
+            AUDIO_DEBUG_PRINT("Sound data is not completely decoded");
+            return mb;
+        }
 
-    AUDIO_DEBUG_PRINT("Data source data pointer = %p", ds->pNode->data.backend.decoded.pData);
+        // Get the pointer to the data source
+        auto ds = (ma_resource_manager_data_buffer *)ma_sound_get_data_source(&audioEngine.soundHandles[handle]->maSound);
+        if (!ds || !ds->pNode) {
+            AUDIO_DEBUG_PRINT("Data source pointer OR data source node pointer is NULL");
+            return mb;
+        }
 
-    // Query the data format
-    if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, 0) != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("Data format query failed");
-        goto error;
-    }
+        // Check if the data is one contigious buffer or a link list of decoded pages
+        // We cannot have a mem object for a link list of decoded pages for obvious reasons
+        if (ds->pNode->data.type != ma_resource_manager_data_supply_type::ma_resource_manager_data_supply_type_decoded) {
+            AUDIO_DEBUG_PRINT("Data is not a contigious buffer. Type = %u", ds->pNode->data.type);
+            return mb;
+        }
 
-    // Do not proceed if invalid (unsupported) channel values were passed
-    if (targetChannel != 0 && targetChannel != 1) {
-        AUDIO_DEBUG_PRINT("Sound channels = %u, Target channel %i not supported", channels, targetChannel);
-        goto error;
-    }
+        // Check the data pointer
+        if (!ds->pNode->data.backend.decoded.pData) {
+            AUDIO_DEBUG_PRINT("Data source data pointer is NULL");
+            return mb;
+        }
 
-    // Get the length in sample frames
-    if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("PCM frames query failed");
-        goto error;
+        // Query the data format
+        if (ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, &maFormat, &channels, NULL, NULL, 0) != MA_SUCCESS) {
+            AUDIO_DEBUG_PRINT("Data format query failed");
+            return mb;
+        }
+
+        // Get the length in sample frames
+        if (ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &sampleFrames) != MA_SUCCESS) {
+            AUDIO_DEBUG_PRINT("PCM frames query failed");
+            return mb;
+        }
+
+        data = (ptrszint)ds->pNode->data.backend.decoded.pData;
     }
 
     AUDIO_DEBUG_PRINT("Format = %u, Channels = %u, Frames = %llu", maFormat, channels, sampleFrames);
 
+    // Setup type: This was not done in the old code
+    // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
+    switch (maFormat) {
+    case ma_format::ma_format_f32:
+        mb.type = 4 + 256; // FP32
+        break;
+
+    case ma_format::ma_format_s32:
+        mb.type = 4 + 128; // signed int32
+        break;
+
+    case ma_format::ma_format_s16:
+        mb.type = 2 + 128; // signed int16
+        break;
+
+    case ma_format::ma_format_u8:
+        mb.type = 1 + 128 + 1024; // unsigned int8
+        break;
+
+    default:
+        AUDIO_DEBUG_PRINT("Unsupported audio format");
+        return mb;
+    }
+
     if (audioEngine.soundHandles[handle]->memLockOffset) {
+        AUDIO_DEBUG_PRINT("Returning previously created mem_lock");
         mb.lock_offset = (ptrszint)audioEngine.soundHandles[handle]->memLockOffset;
         mb.lock_id = audioEngine.soundHandles[handle]->memLockId;
     } else {
+        AUDIO_DEBUG_PRINT("Returning new mem_lock");
         new_mem_lock();
         mem_lock_tmp->type = MEM_TYPE_SOUND;
         mb.lock_offset = (ptrszint)mem_lock_tmp;
@@ -1892,36 +2010,13 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
         audioEngine.soundHandles[handle]->memLockId = mem_lock_id;
     }
 
-    // Setup type: This was not done in the old code
-    // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
-    if (maFormat == ma_format::ma_format_f32)
-        mb.type = 4 + 256; // FP32
-    else if (maFormat == ma_format::ma_format_s32)
-        mb.type = 4 + 128; // Int32
-    else if (maFormat == ma_format::ma_format_s16)
-        mb.type = 2 + 128; // Int16
-    else if (maFormat == ma_format::ma_format_u8)
-        mb.type = 1 + 128 + 1024; // Int8
-
     mb.elementsize = ma_get_bytes_per_frame(maFormat, channels); // Set the element size. This is the size of each PCM frame in bytes
-    mb.offset = (ptrszint)ds->pNode->data.backend.decoded.pData; // Setup offset
+    mb.offset = data;                                            // Setup offset
     mb.size = sampleFrames * mb.elementsize;                     // Setup size (in bytes)
     mb.sound = handle;                                           // Copy the handle
     mb.image = 0;                                                // Not needed. Set to 0
 
     AUDIO_DEBUG_PRINT("ElementSize = %lli, Size = %lli, Type = %lli", mb.elementsize, mb.size, mb.type);
-
-    return mb;
-
-error:
-    mb.offset = 0;
-    mb.size = 0;
-    mb.lock_offset = (ptrszint)mem_lock_base;
-    mb.lock_id = INVALID_MEM_LOCK;
-    mb.type = 0;
-    mb.elementsize = 0;
-    mb.sound = 0;
-    mb.image = 0;
 
     return mb;
 }
@@ -1975,8 +2070,6 @@ void snd_init() {
     // We will use this handle internally for Play(), Beep(), Sound() etc.
     audioEngine.sndInternal = audioEngine.AllocateSoundHandle();
     AUDIO_DEBUG_CHECK(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
-    audioEngine.soundHandles[audioEngine.sndInternal]->rawStream = nullptr;
-    audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::None;
 }
 
 /// <summary>
@@ -1984,11 +2077,6 @@ void snd_init() {
 /// </summary>
 void snd_un_init() {
     if (audioEngine.isInitialized) {
-        // Special handling for handle 0
-        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::None;
-        RawStreamDestroy(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream = nullptr;
-
         // Free all sound handles here
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
             audioEngine.FreeSoundHandle(handle);     // Let FreeSoundHandle do it's thing
