@@ -1829,24 +1829,16 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
 /// <param name="frames">The number of sample frames required</param>
 /// <param name="channels">The number of sound channels. This can be 1 (mono) or 2 (stereo)/param>
 /// <param name="bits">The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32)</param>
-/// <param name="rate">The sample rate of the sound. This will default to device sample rate</param>
-/// <param name="passed">How many parameters were passed?</param>
 /// <returns>A new sound handle if successful or 0 on failure</returns>
-int32_t func__newsound(int32_t frames, int32_t channels, int32_t bits, int32_t rate, int32_t passed) {
+int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
     if (!audioEngine.isInitialized || frames <= 0) {
         AUDIO_DEBUG_CHECK(frames > 0);
         return INVALID_SOUND_HANDLE;
     }
 
-    // Set sample rate to engine sample rate if not passed
-    if (!passed) {
-        rate = audioEngine.sampleRate;
-        AUDIO_DEBUG_PRINT("Defaulting sample rate to %u", rate);
-    }
-
     // Validate all parameters
-    if (rate <= 0 || (channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
-        AUDIO_DEBUG_PRINT("Invalid channels (%i), bits (%i) or rate (%i)", channels, bits, rate);
+    if ((channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
+        AUDIO_DEBUG_PRINT("Invalid channels (%i) or bits (%i)", channels, bits);
         return INVALID_SOUND_HANDLE;
     }
 
@@ -1862,8 +1854,10 @@ int32_t func__newsound(int32_t frames, int32_t channels, int32_t bits, int32_t r
     audioEngine.soundHandles[handle]->maAudioBufferConfig = ma_audio_buffer_config_init(
         (bits == 32 ? ma_format::ma_format_f32 : (bits == 16 ? ma_format::ma_format_s16 : ma_format::ma_format_u8)), channels, frames, NULL, NULL);
 
-    // Set the sample rate
-    audioEngine.soundHandles[handle]->maAudioBufferConfig.sampleRate = rate;
+    // This currently has no effect. Sample rate always defaults to engine sample rate
+    // Sample rate support for audio buffer is coming in miniaudio version 0.12
+    // Once we have support, we can add sample rate as an optional 4th parameter
+    // audioEngine.soundHandles[handle]->maAudioBufferConfig.sampleRate = audioEngine.sampleRate;
 
     // Allocate and initialize ma_audio_buffer
     audioEngine.maResult =
@@ -1885,7 +1879,7 @@ int32_t func__newsound(int32_t frames, int32_t channels, int32_t bits, int32_t r
         return INVALID_SOUND_HANDLE;
     }
 
-    AUDIO_DEBUG_PRINT("Frames = %i, Channels = %i, Bits = %i, Rate = %i", frames, channels, bits, rate);
+    AUDIO_DEBUG_PRINT("Frames = %i, Channels = %i, Bits = %i", frames, channels, bits);
 
     return handle;
 }
