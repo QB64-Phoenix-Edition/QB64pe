@@ -8,6 +8,7 @@ Print "Size ="; Len(buffer)
 
 Dim h As Long: h = _SndOpen(buffer, "memory")
 Print "Handle ="; h
+Print "Length ="; _SndLen(h)
 
 System
 
