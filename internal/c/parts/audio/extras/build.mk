@@ -39,9 +39,17 @@ $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o: $(PATH_INTERNAL_C)/parts/
 $(LIBXMP_LIB): $(LIBXMP_OBJS)
 	$(AR) rcs $@ $^
 
+HIVELY_SRCS := hvl_replay.c
+
+HIVELY_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o,$(HIVELY_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.c
+	$(CC) -O2 $(CFLAGS) -Wall $< -c -o $@
+
 MA_VTABLES_SRCS := \
 	mod_ma_vtable.cpp \
-	radv2_ma_vtable.cpp
+	radv2_ma_vtable.cpp \
+	hively_ma_vtable.cpp
 
 MA_VTABLES_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(MA_VTABLES_SRCS))
 
@@ -78,5 +86,5 @@ $(PATH_INTERNAL_TEMP)/soundfont.o: $(PATH_INTERNAL_TEMP)/soundfont.sf2
 endif
 endif
 
-CLEAN_LIST += $(LIBXMP_LIB) $(LIBXMP_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
+CLEAN_LIST += $(LIBXMP_LIB) $(LIBXMP_OBJS) $(HIVELY_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
 

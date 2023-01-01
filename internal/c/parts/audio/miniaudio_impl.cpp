@@ -28,6 +28,7 @@
 // The vtables will be passed in to the resource manager config
 static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
     &ma_vtable_radv2,
+    &ma_vtable_hively,
     &ma_vtable_midi,
     &ma_vtable_modplay,
 };
