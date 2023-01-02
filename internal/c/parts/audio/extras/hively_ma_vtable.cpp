@@ -209,11 +209,11 @@ static ma_result ma_hively_ds_get_length(ma_data_source *pDataSource, ma_uint64 
 
 /// @brief HivelyTracker data source vtable
 static ma_data_source_vtable ma_data_source_vtable_hively = {
-    ma_hively_ds_read,            // Returns a bunch of samples from a raw sample stream queue. The samples being returned is removed from the queue
-    ma_hively_ds_seek,            // NOP for raw sample stream
+    ma_hively_ds_read,            // Decodes and returns multiple frames of audio
+    ma_hively_ds_seek,            // Can only support seeking to position 0
     ma_hively_ds_get_data_format, // Returns the audio format to miniaudio
-    ma_hively_ds_get_cursor,      // No notion of a cursor for raw sample stream
-    ma_hively_ds_get_length,      // No notion of a length for raw sample stream
+    ma_hively_ds_get_cursor,      // Not supported
+    ma_hively_ds_get_length,      // Returns the precalculated length
     NULL,                         // onSetLooping: NOP
     0                             // flags: none
 };
