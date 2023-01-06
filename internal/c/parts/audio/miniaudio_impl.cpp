@@ -26,6 +26,8 @@
 // Add custom backend (format) vtables here
 // The order in the array defines the order of priority
 // The vtables will be passed in to the resource manager config
+// ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs which does not have any signatures
+// This can lead to incorrect detection
 static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
     &ma_vtable_radv2,
     &ma_vtable_hively,

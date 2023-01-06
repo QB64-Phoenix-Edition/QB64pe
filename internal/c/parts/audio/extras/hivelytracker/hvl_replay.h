@@ -1,3 +1,28 @@
+//----------------------------------------------------------------------------------------------------
+//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
+//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
+//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
+//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
+//                                                                |___/
+//
+//  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
+//
+//	hvl_replay.c + hvl_replay.h is a modified AHX & HVL replayer from
+//	https://github.com/pete-gordon/hivelytracker (BSD 3-Clause License)
+//
+//	Some modifications were required to make this suitable for QB64-PE. The points below lists the
+//  changes that were made. We may need to redo these if we need to reconstruct these files from
+//  newer versions of the HivelyTracker replayer code.
+//
+//  1. Use the replayer code in 'Replayer_Windows'
+//  2. Comment out all printfs from hvl_replay.c and hvl_tables.c
+//  3. hvl_tables.c and hvl_replay.c can be amalgamated like in 'hvl2wav'
+//  4. hvl_tables.c and hvl_replay.h can be amalgamated iike in 'hvl2wav'
+//  5. Add 'extern "C"' block around the function declarations in hvl_replay.h
+//  6. Change 'typedef char int8' to 'typedef signed char int8' in hvl_replay.h
+//
+//-----------------------------------------------------------------------------------------------------
+
 #pragma once
 
 typedef signed char int8;

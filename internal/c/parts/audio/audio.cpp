@@ -611,7 +611,7 @@ static float *GenerateWaveform(double frequency, double length, double volume, i
     auto waveend = 0;
     auto lastx = 1.0f; // set to 1 to avoid passing initial comparison
 
-    for (int i = 0; i < samplesi; i++) {
+    for (auto i = 0; i < samplesi; i++) {
         auto x = (float)(value * volume);
         data[i] = x;
 
@@ -1684,7 +1684,7 @@ double func__sndgetpos(int32_t handle) {
 /// <param name="seconds">The position to set in seconds</param>
 void sub__sndsetpos(int32_t handle, double seconds) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
-        float lengthSeconds;
+        float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
         if (audioEngine.maResult != MA_SUCCESS)
             return;
