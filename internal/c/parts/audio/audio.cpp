@@ -143,6 +143,16 @@ struct RawStream {
         producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
     }
 
+    /// @brief This pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread
+    /// @param buffer The buffer containing the sample frames. This cannot be NULL
+    /// @param frames The total number of frames in the buffer
+    void PushMonoSampleFrames(float *buffer, ma_uint64 frames) {
+        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+        for (ma_uint64 i = 0; i < frames; i++) {
+            producer->data.push_back({buffer[i], buffer[i]});
+        }
+    }
+
     /// @brief Returns the length, in sample frames of sound queued
     /// @return The length left to play in sample frames
     ma_uint64 GetSampleFramesRemaining() {
@@ -650,13 +660,8 @@ static void SendWaveformToQueue(float *data, int bytes, bool block) {
     if (!data)
         return;
 
-    auto samples = bytes / SAMPLE_FRAME_SIZE(float, 1);
-
-    // Move data into sndraw handle
-    for (auto i = 0; i < samples; i++) {
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->PushSampleFrame(data[i], data[i]);
-    }
-
+    // Push data to the raw stream
+    audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->PushMonoSampleFrames(data, bytes / SAMPLE_FRAME_SIZE(float, 1));
     free(data); // free the sound data
 
     // This will wait for the block to finish (if specified)
@@ -1272,9 +1277,8 @@ done:
         return;
     } // unhandled data
 
-    if (playit) {
+    if (playit)
         SendWaveformToQueue((float *)wave, wave_bytes, !audioEngine.musicBackground);
-    } // playit
 }
 
 /// <summary>
