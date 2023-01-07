@@ -17,7 +17,7 @@
 #include "extras/stb_vorbis.c"
 #include "miniaudio.h"
 // Set this to 1 if we want to print debug messages to stderr
-#define AUDIO_DEBUG 1
+#define AUDIO_DEBUG 0
 #include "audio.h"
 #include "mutex.h"
 // We need 'qbs' and 'mem' stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
