@@ -17,7 +17,7 @@
 #include "extras/stb_vorbis.c"
 #include "miniaudio.h"
 // Set this to 1 if we want to print debug messages to stderr
-#define AUDIO_DEBUG 0
+#define AUDIO_DEBUG 1
 #include "audio.h"
 #include "mutex.h"
 // We need 'qbs' and 'mem' stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
@@ -1414,23 +1414,47 @@ int32_t func__sndcopy(int32_t src_handle) {
     if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundType::Static)
         return INVALID_SOUND_HANDLE;
 
-    // Alocate a sound handle
-    int32_t dst_handle = audioEngine.AllocateSoundHandle();
-    // Initialize the sound handle data
-    if (dst_handle < 1) // We are not expected to open files with handle 0
-        return INVALID_SOUND_HANDLE;
+    int32_t dst_handle = INVALID_SOUND_HANDLE;
 
-    audioEngine.soundHandles[dst_handle]->type = SoundType::Static;                                // Set some handle properties
-    audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags; // Copy the flags
+    // Miniaudio will not copy sounds attached to ma_audio_buffers so we'll handle the duplication ourselves
+    // Sadly, since this involves a buffer copy there may be a delay before the sound can play (especially if the sound is lengthy)
+    // The delay may be noticeable when _SNDPLAYCOPY is used multiple times on the a _SNDNEW sound
+    if (audioEngine.soundHandles[src_handle]->maAudioBuffer) {
+        AUDIO_DEBUG_PRINT("Doing custom sound copy");
 
-    // Initialize a new copy of the sound
-    audioEngine.maResult = ma_sound_init_copy(&audioEngine.maEngine, &audioEngine.soundHandles[src_handle]->maSound,
-                                              audioEngine.soundHandles[dst_handle]->maFlags, NULL, &audioEngine.soundHandles[dst_handle]->maSound);
+        auto frames = audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.sizeInFrames;
+        auto channels = audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.channels;
+        auto format = audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.format;
 
-    // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
-    if (audioEngine.maResult != MA_SUCCESS) {
-        audioEngine.soundHandles[dst_handle]->isUsed = false;
-        return INVALID_SOUND_HANDLE;
+        // First create a new _SNDNEW sound with the same properties at the source
+        dst_handle = func__sndnew(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format));
+        if (dst_handle < 1)
+            return INVALID_SOUND_HANDLE;
+
+        // Next memcopy the samples from the source to the dest
+        memcpy((void *)audioEngine.soundHandles[dst_handle]->maAudioBuffer->ref.pData, audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.pData,
+               frames * ma_get_bytes_per_frame(format, channels)); // naughty const void* casting, but should be OK
+    } else {
+        AUDIO_DEBUG_PRINT("Doing regular miniaudio sound copy");
+        
+        dst_handle = audioEngine.AllocateSoundHandle(); // alocate a sound handle
+        if (dst_handle < 1)
+            return INVALID_SOUND_HANDLE;
+
+        audioEngine.soundHandles[dst_handle]->type = SoundType::Static;                                // set some handle properties
+        audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags; // copy the flags
+
+        // Initialize a new copy of the sound
+        audioEngine.maResult = ma_sound_init_copy(&audioEngine.maEngine, &audioEngine.soundHandles[src_handle]->maSound,
+                                                  audioEngine.soundHandles[dst_handle]->maFlags, NULL, &audioEngine.soundHandles[dst_handle]->maSound);
+
+        // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
+        if (audioEngine.maResult != MA_SUCCESS) {
+            audioEngine.soundHandles[dst_handle]->isUsed = false;
+            AUDIO_DEBUG_PRINT("Error %i: failed to copy sound", audioEngine.maResult);
+
+            return INVALID_SOUND_HANDLE;
+        }
     }
 
     return dst_handle;
@@ -1458,6 +1482,8 @@ void sub__sndplay(int32_t handle) {
         if (ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound)) {
             ma_sound_set_looping(&audioEngine.soundHandles[handle]->maSound, MA_FALSE);
         }
+
+        AUDIO_DEBUG_PRINT("Playing sound %i", handle);
     }
 }
 
@@ -1473,7 +1499,9 @@ void sub__sndplay(int32_t handle) {
 void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, double z, int32_t passed) {
     // We are simply going to use sndcopy, then setup some stuff like volume and autokill and then use sndplay
     // We are not checking if the audio engine was initialized because if not we'll get an invalid handle anyway
-    int32_t dst_handle = func__sndcopy(src_handle);
+    auto dst_handle = func__sndcopy(src_handle);
+
+    AUDIO_DEBUG_PRINT("Source handle = %i, destination handle = %i", src_handle, dst_handle);
 
     // Check if we succeeded and then proceed
     if (dst_handle > 0) {
@@ -1492,9 +1520,9 @@ void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, dou
 
         sub__sndplay(dst_handle);                              // Play the sound
         audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
-    }
 
-    AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %lf, 3D (%lf, %lf, %lf)", dst_handle, volume, x, y, z);
+        AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %lf, 3D (%lf, %lf, %lf)", dst_handle, volume, x, y, z);
+    }
 }
 
 /// <summary>
@@ -1877,13 +1905,15 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
                                                           audioEngine.soundHandles[handle]->maFlags, NULL, &audioEngine.soundHandles[handle]->maSound);
     if (audioEngine.maResult != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to initialize data source", audioEngine.maResult);
-        audioEngine.soundHandles[handle]->isUsed = false;
         ma_audio_buffer_uninit_and_free(audioEngine.soundHandles[handle]->maAudioBuffer);
         audioEngine.soundHandles[handle]->maAudioBuffer = nullptr;
+        audioEngine.soundHandles[handle]->isUsed = false;
         return INVALID_SOUND_HANDLE;
     }
 
-    AUDIO_DEBUG_PRINT("Frames = %i, Channels = %i, Bits = %i", frames, channels, bits);
+    AUDIO_DEBUG_PRINT("Frames = %i, channels = %i, bits = %i, ma_format = %i, pointer = %p", audioEngine.soundHandles[handle]->maAudioBuffer->ref.sizeInFrames,
+                      audioEngine.soundHandles[handle]->maAudioBuffer->ref.channels, bits, audioEngine.soundHandles[handle]->maAudioBuffer->ref.format,
+                      audioEngine.soundHandles[handle]->maAudioBuffer->ref.pData);
 
     return handle;
 }
@@ -1900,10 +1930,10 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
 /// <param name="targetChannel">This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure</param>
 /// <returns>A _MEM value that can be used to access the sound data</returns>
 mem_block func__memsound(int32_t handle, int32_t targetChannel) {
-    ma_format maFormat;
-    ma_uint32 channels;
-    ma_uint64 sampleFrames;
-    ptrszint data;
+    ma_format maFormat = ma_format::ma_format_unknown;
+    ma_uint32 channels = 0;
+    ma_uint64 sampleFrames = 0;
+    ptrszint data = NULL;
 
     // Setup mem_block (assuming failure)
     mem_block mb = {};
@@ -1920,10 +1950,10 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     // Check what kind of sound we are dealing with and take appropriate path
     if (audioEngine.soundHandles[handle]->maAudioBuffer) { // we are dealing with a user created audio buffer
         AUDIO_DEBUG_PRINT("Entering ma_audio_buffer path");
-        maFormat = audioEngine.soundHandles[handle]->maAudioBufferConfig.format;
-        channels = audioEngine.soundHandles[handle]->maAudioBufferConfig.channels;
-        sampleFrames = audioEngine.soundHandles[handle]->maAudioBufferConfig.sizeInFrames;
-        data = (ptrszint)&audioEngine.soundHandles[handle]->maAudioBuffer->_pExtraData[0];
+        maFormat = audioEngine.soundHandles[handle]->maAudioBuffer->ref.format;
+        channels = audioEngine.soundHandles[handle]->maAudioBuffer->ref.channels;
+        sampleFrames = audioEngine.soundHandles[handle]->maAudioBuffer->ref.sizeInFrames;
+        data = (ptrszint)audioEngine.soundHandles[handle]->maAudioBuffer->ref.pData;
     } else { // we are dealing with a sound loaded from file or memory
         AUDIO_DEBUG_PRINT("Entering ma_resource_manager_data_buffer path");
 
@@ -1968,7 +1998,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
         data = (ptrszint)ds->pNode->data.backend.decoded.pData;
     }
 
-    AUDIO_DEBUG_PRINT("Format = %u, Channels = %u, Frames = %llu", maFormat, channels, sampleFrames);
+    AUDIO_DEBUG_PRINT("Format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
 
     // Setup type: This was not done in the old code
     // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
@@ -2014,7 +2044,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     mb.sound = handle;                                           // Copy the handle
     mb.image = 0;                                                // Not needed. Set to 0
 
-    AUDIO_DEBUG_PRINT("ElementSize = %lli, Size = %lli, Type = %lli", mb.elementsize, mb.size, mb.type);
+    AUDIO_DEBUG_PRINT("ElementSize = %lli, size = %lli, type = %lli, pointer = %p", mb.elementsize, mb.size, mb.type, mb.offset);
 
     return mb;
 }
