@@ -27052,6 +27052,16 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
     if (!(passed & 2))
         handle_window_icon = handle_icon;
     if (!(passed & 1)) {
+        if (!image_qbicon16_handle) {
+            image_qbicon16_handle = func__newimage(image_qbicon16_w, image_qbicon16_h, 32, 1);
+            memcpy(img[-image_qbicon16_handle].offset32, &image_qbicon16[0], image_qbicon16_w * image_qbicon16_h * 4);
+        }
+
+        if (!image_qbicon32_handle) {
+            image_qbicon32_handle = func__newimage(image_qbicon32_w, image_qbicon32_h, 32, 1);
+            memcpy(img[-image_qbicon32_handle].offset32, &image_qbicon32[0], image_qbicon32_w * image_qbicon32_h * 4);
+        }
+
         handle_icon = image_qbicon32_handle;
         handle_window_icon = image_qbicon16_handle;
     }
@@ -37444,15 +37454,6 @@ int main(int argc, char *argv[]) {
         i = -console_image;
         img[i].console = 1;
     }
-
-    // int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-    //                   void *(*start_routine) (void *), void *arg);
-
-    // create icon images
-    image_qbicon16_handle = func__newimage(image_qbicon16_w, image_qbicon16_h, 32, 1);
-    memcpy(img[-image_qbicon16_handle].offset32, &image_qbicon16[0], image_qbicon16_w * image_qbicon16_h * 4);
-    image_qbicon32_handle = func__newimage(image_qbicon32_w, image_qbicon32_h, 32, 1);
-    memcpy(img[-image_qbicon32_handle].offset32, &image_qbicon32[0], image_qbicon32_w * image_qbicon32_h * 4);
 
     // setup default _DEVICE(s)
     i = 0;
