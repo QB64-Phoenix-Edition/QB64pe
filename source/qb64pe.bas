@@ -12582,6 +12582,15 @@ FOR x = 1 TO ResolveStaticFunctions
     END IF
 NEXT x
 
+' Delete existing qbx.o file, it ensures that it always gets rebuilt
+ON ERROR GOTO qberror_test
+IF tempfolderindex > 1 THEN
+    KILL "internal/c/qbx" + str2$(tempfolderindex) + ".o"
+ELSE
+    KILL "internal/c/qbx.o"
+END IF
+ON ERROR GOTO qberror
+
 IF os$ = "WIN" THEN
 
     makeline$ = makeline$ + " OS=win"
