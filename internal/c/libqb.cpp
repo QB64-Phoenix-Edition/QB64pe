@@ -25,6 +25,9 @@
 #include "http.h"
 #include "keyhandler.h"
 #include "glut-thread.h"
+#include "datetime.h"
+#include "rounding.h"
+#include "event.h"
 
 int32 disableEvents = 0;
 
@@ -41,102 +44,8 @@ int32 func__getconsoleinput(); // declare here, so we can use with SLEEP and END
 uint32 rotateLeft(uint32 word, uint32 shift) { return (word << shift) | (word >> (32 - shift)); }
 
 #ifndef QB64_WINDOWS
-void Sleep(uint32 milliseconds) {
-    static uint64 sec, nsec;
-    sec = milliseconds / 1000;
-    nsec = (milliseconds % 1000) * 1000000;
-    static timespec ts;
-    ts.tv_sec = sec;
-    ts.tv_nsec = nsec;
-    nanosleep(&ts, NULL);
-}
-
 void ZeroMemory(void *ptr, int64 bytes) { memset(ptr, 0, bytes); }
 #endif
-#ifdef QB64_NOT_X86
-int64 qbr(long double f) {
-    int64 i;
-    int temp = 0;
-    if (f > 9223372036854775807) {
-        temp = 1;
-        f = f - 9223372036854775808u;
-    } // if it's too large for a signed int64, make it an unsigned int64 and return that value if possible.
-    if (f < 0)
-        i = f - 0.5f;
-    else
-        i = f + 0.5f;
-    if (temp)
-        return i | 0x8000000000000000; //+9223372036854775808;
-    return i;
-}
-uint64 qbr_longdouble_to_uint64(long double f) {
-    if (f < 0)
-        return (f - 0.5f);
-    else
-        return (f + 0.5f);
-}
-int32 qbr_float_to_long(float f) {
-    if (f < 0)
-        return (f - 0.5f);
-    else
-        return (f + 0.5f);
-}
-int32 qbr_double_to_long(double f) {
-    if (f < 0)
-        return (f - 0.5f);
-    else
-        return (f + 0.5f);
-}
-void fpu_reinit() {} // do nothing
-#else
-// QBASIC compatible rounding via FPU:
-// FLDS=load single
-// FLDL=load double
-// FLDT=load long double
-int64 qbr(long double f) {
-    int64 i;
-    int temp = 0;
-    if (f > 9223372036854775807) {
-        temp = 1;
-        f = f - 9223372036854775808u;
-    } // if it's too large for a signed int64, make it an unsigned int64 and return that value if possible.
-    __asm__("fldt %1;"
-            "fistpll %0;"
-            : "=m"(i)
-            : "m"(f));
-    if (temp)
-        return i | 0x8000000000000000; // if it's an unsigned int64, manually set the bit flag
-    return i;
-}
-uint64 qbr_longdouble_to_uint64(long double f) {
-    uint64 i;
-    __asm__("fldt %1;"
-            "fistpll %0;"
-            : "=m"(i)
-            : "m"(f));
-    return i;
-}
-int32 qbr_float_to_long(float f) {
-    int32 i;
-    __asm__("flds %1;"
-            "fistpl %0;"
-            : "=m"(i)
-            : "m"(f));
-    return i;
-}
-int32 qbr_double_to_long(double f) {
-    int32 i;
-    __asm__("fldl %1;"
-            "fistpl %0;"
-            : "=m"(i)
-            : "m"(f));
-    return i;
-}
-void fpu_reinit() {
-    unsigned int mode = 0x37F;
-    asm("fldcw %0" : : "m"(*&mode));
-}
-#endif // x86 support
 // bit-array access functions (note: used to be included through 'bit.cpp')
 uint64 getubits(uint32 bsize, uint8 *base, ptrszint i) {
     int64 bmask;
@@ -220,8 +129,6 @@ void sub__printimage(int32 i);
 // GUI notification variables
 int32 force_display_update = 0;
 
-void sub__delay(double seconds);
-
 void *generic_window_handle = NULL;
 int32 acceptFileDrop = 0;
 #ifdef QB64_WINDOWS
@@ -292,8 +199,6 @@ int32 ScreenResize = 0;
 extern "C" int QB64_Resizable() { return ScreenResize; }
 
 int32 sub_gl_called = 0;
-
-extern void evnt(uint32 linenumber, uint32 inclinenumber = 0, const char *incfilename = NULL);
 
 extern "C" int qb64_custom_event(int event, int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, void *p1, void *p2);
 #ifdef QB64_WINDOWS
@@ -1180,40 +1085,6 @@ static uint16 codepage437_to_unicode16[] = {
 #    include "parts/video/font/ttf/src.c"
 #endif
 
-#ifdef QB64_MACOSX
-#    include <mach/mach_time.h>
-#    define ORWL_NANO (+1.0E-9)
-#    define ORWL_GIGA UINT64_C(1000000000)
-static double orwl_timebase = 0.0;
-static uint64_t orwl_timestart = 0;
-int64 orwl_gettime(void) {
-    if (!orwl_timestart) {
-        mach_timebase_info_data_t tb = {0};
-        mach_timebase_info(&tb);
-        orwl_timebase = tb.numer;
-        orwl_timebase /= tb.denom;
-        orwl_timestart = mach_absolute_time();
-    }
-    struct timespec t;
-    double diff = (mach_absolute_time() - orwl_timestart) * orwl_timebase;
-    t.tv_sec = diff * ORWL_NANO;
-    t.tv_nsec = diff - (t.tv_sec * ORWL_GIGA);
-    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
-}
-#endif
-
-#ifdef QB64_LINUX
-int64 GetTicks() {
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-    return tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
-}
-#elif defined QB64_MACOSX
-int64 GetTicks() { return orwl_gettime(); }
-#else
-int64 GetTicks() { return ((((int64)clock()) * ((int64)1000)) / ((int64)CLOCKS_PER_SEC)); }
-#endif
-
 /* Restricted Functionality: (Security focused approach, does not include restricting sound etc)
 
     Block while compiling: (ONLY things that cannot be caught at runtime)
@@ -1315,7 +1186,6 @@ void sub_shell4(qbs *, int32); //_DONTWAIT & _HIDE
 int32 func__source();
 int32 func_pos(int32 ignore);
 
-double func_timer(double accuracy, int32 passed);
 int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
 void display();
 void validatepage(int32);
@@ -7387,9 +7257,6 @@ extern uint32 cmem_sp;     //=65536;
 extern ptrszint dblock;    // 32bit offset of dblock
 extern uint64 *nothingvalue;
 
-uint32 qb64_firsttimervalue;  // based on time of day
-uint32 clock_firsttimervalue; // based on program launch time
-
 uint8 wait_needed = 1;
 
 int32 full_screen = 0;      // 0,1(stretched/closest),2(1:1)
@@ -7454,7 +7321,6 @@ extern uint8 stop_program;
 int32 global_counter = 0;
 extern double last_line;
 void end(void);
-extern uint32 new_error;
 extern uint32 error_err; //=0;
 extern double error_erl; //=0;
 extern uint32 error_occurred;
@@ -16779,78 +16645,6 @@ float func_rnd(float n, int32 passed) {
     return (double)rnd_seed / 0x1000000;
 }
 
-double func_timer(double accuracy, int32 passed) {
-    if (new_error)
-        return 0;
-    static uint32 x;
-    static double d;
-    static float f;
-    x = GetTicks();
-    x -= clock_firsttimervalue;
-    x += qb64_firsttimervalue;
-    // make timer value loop after midnight
-    // note: there are 86400000 milliseconds in 24hrs(1 day)
-    x %= 86400000;
-    d = x;       // convert to double
-    d /= 1000.0; // convert from ms to sec
-    // reduce accuracy
-    if (!passed) {
-        accuracy = 18.2;
-    } else {
-        if (accuracy <= 0.0) {
-            error(5);
-            return 0;
-        }
-        accuracy = 1.0 / accuracy;
-    }
-    d *= accuracy;
-    d = qbr(d);
-    d /= accuracy;
-    if (!passed) {
-        f = d;
-        d = f;
-    }
-    return d;
-}
-
-void sub__delay(double seconds) {
-    double ms, base, elapsed, prev_now, now; // cannot be static
-    base = GetTicks();
-    if (new_error)
-        return;
-    if (seconds < 0) {
-        error(5);
-        return;
-    }
-    if (seconds > 2147483.647) {
-        error(5);
-        return;
-    }
-    ms = seconds * 1000.0;
-    now = base; // force first prev=... assignment to equal base
-recalculate:
-    prev_now = now;
-    now = GetTicks();
-    elapsed = now - base;
-    if (elapsed < 0) {                  // GetTicks looped
-        base = now - (prev_now - base); // calculate new base
-    }
-    if (elapsed < ms) {
-        int64 wait; // cannot be static
-        wait = ms - elapsed;
-        if (!wait)
-            wait = 1;
-        if (wait >= 10) {
-            Sleep(9);
-            evnt(0); // check for new events
-            // recalculate time
-            goto recalculate;
-        } else {
-            Sleep(wait);
-        }
-    }
-}
-
 void sub__fps(double fps, int32 passed) {
     // passed=1 means _AUTO
     // passed=2 means use fps
@@ -16873,60 +16667,6 @@ void sub__fps(double fps, int32 passed) {
         max_fps = fps;
         auto_fps = 0;
     }
-}
-
-void sub__limit(double fps) {
-    if (new_error)
-        return;
-    static double prev = 0;
-    double ms, now, elapsed; // cannot be static
-    if (fps <= 0.0) {
-        error(5);
-        return;
-    }
-    ms = 1000.0 / fps;
-    if (ms > 60000.0) {
-        error(5);
-        return;
-    } // max. 1 min delay between frames allowed to avoid accidental lock-up of program
-recalculate:
-    now = GetTicks();
-    if (prev == 0.0) { // first call?
-        prev = now;
-        return;
-    }
-    if (now < prev) { // value looped?
-        prev = now;
-        return;
-    }
-    elapsed = now - prev; // elapsed time since prev
-
-    if (elapsed == ms) {
-        prev = prev + ms;
-        return;
-    }
-
-    if (elapsed < ms) {
-        int64 wait; // cannot be static
-        wait = ms - elapsed;
-        if (!wait)
-            wait = 1;
-        if (wait >= 10) {
-            Sleep(9);
-            evnt(0); // check for new events
-        } else {
-            Sleep(wait);
-        }
-        // recalculate time
-        goto recalculate;
-    }
-
-    // too long since last call, adjust prev to current time
-    // minor overshoot up to 32ms is recovered, otherwise time is re-seeded
-    if (elapsed <= (ms + 32.0))
-        prev = prev + ms;
-    else
-        prev = now;
 }
 
 int32 generic_put(int32 i, int32 offset, uint8 *cp, int32 bytes) {
@@ -37309,53 +37049,6 @@ int main(int argc, char *argv[]) {
     func_command_count = argc;
     func_command_array = argv;
 
-    // struct tm:
-    //        int tm_sec;     /* seconds after the minute - [0,59] */
-    //        int tm_min;     /* minutes after the hour - [0,59] */
-    //        int tm_hour;    /* hours since midnight - [0,23] */
-    //        int tm_mday;    /* day of the month - [1,31] */
-    //        int tm_mon;     /* months since January - [0,11] */
-    //        int tm_year;    /* years since 1900 */
-    //        int tm_wday;    /* days since Sunday - [0,6] */
-    //        int tm_yday;    /* days since January 1 - [0,365] */
-    //        int tm_isdst;   /* daylight savings time flag */
-    tm *qb64_tm;
-    time_t qb64_tm_val;
-    time_t qb64_tm_val_old;
-    // call both timing routines as close as possible to each other to maximize accuracy
-    // wait for second "hand" to "tick over"/move
-    time(&qb64_tm_val_old);
-    // note: time() returns the time as seconds elapsed since midnight, January 1, 1970, or -1 in the case of an error.
-    if (qb64_tm_val_old != -1) {
-        do {
-            time(&qb64_tm_val);
-        } while (qb64_tm_val == qb64_tm_val_old);
-    } else {
-        qb64_tm_val = 0; // time unknown! (set to midnight, January 1, 1970)
-    }
-    clock_firsttimervalue = GetTicks();
-    // calculate localtime as milliseconds past midnight
-    qb64_tm = localtime(&qb64_tm_val);
-    /* re: localtime()
-        Return a pointer to the structure result, or NULL if the date passed to the function is:
-        Before midnight, January 1, 1970.
-        After 03:14:07, January 19, 2038, UTC (using _time32 and time32_t).
-        After 23:59:59, December 31, 3000, UTC (using _time64 and __time64_t).
-    */
-    if (qb64_tm) {
-        qb64_firsttimervalue = qb64_tm->tm_hour * 3600 + qb64_tm->tm_min * 60 + qb64_tm->tm_sec;
-        qb64_firsttimervalue *= 1000;
-    } else {
-        qb64_firsttimervalue = 0; // time unknown! (set to midnight)
-    }
-    /* Used as follows for calculating TIMER value:
-        x=GetTicks();
-        x-=clock_firsttimervalue;
-        x+=qb64_firsttimervalue;
-    */
-
-    // init truetype .ttf/.fon font library
-
 #ifdef QB64_WINDOWS
     // for caps lock, use the state of the lock (=1)
     // for held keys check against (=-127)
@@ -37524,12 +37217,10 @@ main_loop:
     }
 
     // update timer bytes in cmem
-    static uint32 cmem_ticks;
-    static double cmem_ticks_double;
+    uint64_t cmem_ticks;
 
-    cmem_ticks = GetTicks();
-    cmem_ticks -= clock_firsttimervalue;
-    cmem_ticks += qb64_firsttimervalue;
+    cmem_ticks = (uint64_t)(func_timer(0.001, 1) * 1000);
+
     // make timer value loop after midnight
     // note: there are 86400000 milliseconds in 24hrs(1 day)
     cmem_ticks %= 86400000;
