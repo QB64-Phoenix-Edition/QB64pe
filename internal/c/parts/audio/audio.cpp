@@ -353,7 +353,6 @@ class BufferMap {
 
   public:
     // Delete copy and move constructors and assignments
-    BufferMap(const BufferMap &) = delete;
     BufferMap &operator=(const BufferMap &) = delete;
     BufferMap(BufferMap &&) = delete;
     BufferMap &operator=(BufferMap &&) = delete;
