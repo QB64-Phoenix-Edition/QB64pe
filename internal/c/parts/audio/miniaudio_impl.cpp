@@ -12,51 +12,41 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
 // Enable Ogg Vorbis decoding
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
-// PulseAudio has serious stuttering issues in ChromeOS Linux (Crostini) and possibly others
-// This may be due to this - https://github.com/mackron/miniaudio/issues/427
-// And https://wiki.archlinux.org/title/PulseAudio/Troubleshooting#Glitches,_skips_or_crackling
-// We'll have to look at this closely later. If this is fixed, then remove this define from here & audio.cpp
-#define MA_NO_PULSEAUDIO
 // The main miniaudio header
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 // The stb_vorbis implementation must come after the implementation of miniaudio
 #undef STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
-
 #include "extras/vtables.h"
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// GLOBAL VARIABLES
-//-----------------------------------------------------------------------------------------------------
 // Add custom backend (format) vtables here
 // The order in the array defines the order of priority
 // The vtables will be passed in to the resource manager config
+// ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs which does not have any signatures
+// This can lead to incorrect detection
 static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
     &ma_vtable_radv2,
+    &ma_vtable_hively,
     &ma_vtable_midi,
     &ma_vtable_modplay,
 };
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FUNCTIONS
-//-----------------------------------------------------------------------------------------------------
-/// <summary>
-/// This simply attaches the format decode VTables array to ma_resource_manager_config
-/// </summary>
-/// <param name="maResourceManagerConfig">Pointer to a miniaudio resource manager config object. This cannot be NULL</param>
+/// @brief This simply attaches the format decode VTables array to ma_resource_manager_config
+/// @param maDecoderConfig Pointer to a miniaudio resource manager config object. This cannot be NULL
 void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig) {
     // Attach the VTable
     maResourceManagerConfig->ppCustomDecodingBackendVTables = maCustomBackendVTables;
     maResourceManagerConfig->customDecodingBackendCount = ma_countof(maCustomBackendVTables);
 }
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
+
+/// @brief This simply attaches the format decode VTables array to ma_decoder_config
+/// @param maDecoderConfig Pointer to a miniaudio decoder config object. This cannot be NULL
+void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig) {
+    // Attach the VTable
+    maDecoderConfig->ppCustomBackendVTables = maCustomBackendVTables;
+    maDecoderConfig->customBackendCount = ma_countof(maCustomBackendVTables);
+}
