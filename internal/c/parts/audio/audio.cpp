@@ -352,6 +352,12 @@ class BufferMap {
     std::unordered_map<intptr_t, Buffer> buffers;
 
   public:
+    // Delete copy and move constructors and assignments
+    BufferMap(const BufferMap &) = delete;
+    BufferMap &operator=(const BufferMap &) = delete;
+    BufferMap(BufferMap &&) = delete;
+    BufferMap &operator=(BufferMap &&) = delete;
+
     /// @brief This will simply free all buffers that were allocated
     ~BufferMap() {
         for (auto &it : buffers) {
