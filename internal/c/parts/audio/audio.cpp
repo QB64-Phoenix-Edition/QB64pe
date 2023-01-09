@@ -12,6 +12,7 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
+#include <unordered_map>
 #include <vector>
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
@@ -338,6 +339,100 @@ static void RawStreamDestroy(RawStream *pRawStream) {
     }
 }
 
+/// @brief A class that can manage a list of buffers using unique keys
+class BufferMap {
+  private:
+    /// @brief A buffer that is made up of a raw pointer, size and reference count
+    struct Buffer {
+        void *data;
+        size_t size;
+        size_t refCount;
+    };
+
+    std::unordered_map<intptr_t, Buffer> buffers;
+
+  public:
+    /// @brief This will simply free all buffers that were allocated
+    ~BufferMap() {
+        for (auto &it : buffers) {
+            free(it.second.data);
+            AUDIO_DEBUG_PRINT("Buffer freed of size %llu", it.second.size);
+        }
+    }
+
+    /// @brief Adds a buffer to the map using a unique key only if it was not added before
+    /// @param data The raw data pointer. The data is copied
+    /// @param size The size of the data
+    /// @param key The unique key that should be used
+    /// @return True if successful
+    bool AddBuffer(const void *data, size_t size, intptr_t key) {
+        if (data && size && key && buffers.find(key) == buffers.end()) {
+            Buffer buf = {};
+
+            buf.data = malloc(size);
+            if (!buf.data)
+                return false;
+
+            buf.size = size;
+            buf.refCount = 1;
+            memcpy(buf.data, data, size);
+            buffers.emplace(key, std::move(buf));
+
+            AUDIO_DEBUG_PRINT("Added buffer of size %llu to map", size);
+            return true;
+        }
+
+        AUDIO_DEBUG_PRINT("Failed to add buffer of size %llu", size);
+        return false;
+    }
+
+    /// @brief Increments the buffer reference count
+    /// @param key The unique key for the buffer
+    void AddRef(intptr_t key) {
+        const auto it = buffers.find(key);
+        if (it != buffers.end()) {
+            auto &buf = it->second;
+            buf.refCount += 1;
+            AUDIO_DEBUG_PRINT("Increased reference count to %llu", buf.refCount);
+        } else {
+            AUDIO_DEBUG_PRINT("Buffer not found");
+        }
+    }
+
+    /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero
+    /// @param key The unique key for the buffer
+    void Release(intptr_t key) {
+        const auto it = buffers.find(key);
+        if (it != buffers.end()) {
+            auto &buf = it->second;
+            buf.refCount -= 1;
+            AUDIO_DEBUG_PRINT("Decreased reference count to %llu", buf.refCount);
+
+            if (buf.refCount < 1) {
+                free(buf.data);
+                AUDIO_DEBUG_PRINT("Buffer freed of size %llu", buf.size);
+                buffers.erase(key);
+            }
+        } else {
+            AUDIO_DEBUG_PRINT("Buffer not found");
+        }
+    }
+
+    /// @brief Gets the raw pointer and size of the buffer with the given key
+    /// @param key The unique key for the buffer
+    /// @return An std::pair of the buffer raw pointer and size
+    std::pair<const void *, size_t> GetBuffer(intptr_t key) const {
+        const auto it = buffers.find(key);
+        if (it == buffers.end()) {
+            AUDIO_DEBUG_PRINT("Buffer not found");
+            return {nullptr, 0};
+        }
+        const auto &buf = it->second;
+        AUDIO_DEBUG_PRINT("Returning buffer of size %llu", buf.size);
+        return {buf.data, buf.size};
+    }
+};
+
 /// <summary>
 /// Sound handle type
 /// This describes every sound the system will ever play (including raw streams).
@@ -350,6 +445,7 @@ struct SoundHandle {
     ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
     ma_decoder_config maDecoderConfig;          // miniaudio decoder configuration
     ma_decoder *maDecoder;                      // this is used for files that are loaded directly from memory
+    intptr_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
     ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
     ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
     RawStream *rawStream;                       // Raw sample frame queue
@@ -374,10 +470,11 @@ struct SoundHandle {
         ZERO_VARIABLE(maSound);
         maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         maDecoder = nullptr;
+        bufferKey = 0;
         maAudioBuffer = nullptr;
         rawStream = nullptr;
-        memLockId = INVALID_MEM_LOCK;
         memLockOffset = nullptr;
+        memLockId = INVALID_MEM_LOCK;
     }
 };
 
@@ -398,6 +495,7 @@ struct AudioEngine {
     std::vector<SoundHandle *> soundHandles;            // This is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // This is the lowest handle then was recently freed. We'll start checking for free handles from here
     bool musicBackground;                               // Should 'Sound' and 'Play' work in the background or block the caller?
+    BufferMap bufferMap;                                // This is used to keep track of and manage memory used by 'in-memory' sound files
 
     // Delete copy and move constructors and assignments
     AudioEngine(const AudioEngine &) = delete;
@@ -490,6 +588,7 @@ struct AudioEngine {
         // Spatialization is disabled by default but will be enabled on the fly if required
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
         soundHandles[h]->maDecoder = nullptr;
+        soundHandles[h]->bufferKey = 0;
         soundHandles[h]->maAudioBuffer = nullptr;
         soundHandles[h]->rawStream = nullptr;
         soundHandles[h]->memLockId = INVALID_MEM_LOCK;
@@ -541,6 +640,7 @@ struct AudioEngine {
                 ma_decoder_uninit(soundHandles[handle]->maDecoder);
                 delete soundHandles[handle]->maDecoder;
                 soundHandles[handle]->maDecoder = nullptr;
+                bufferMap.Release(soundHandles[handle]->bufferKey);
                 AUDIO_DEBUG_PRINT("Decoder uninitialized");
             }
 
@@ -1287,6 +1387,50 @@ done:
 /// <returns>miniaudio sample rtate</returns>
 int32_t func__sndrate() { return audioEngine.sampleRate; }
 
+/// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle
+/// @param buffer A raw pointer to the sound file in memory
+/// @param size The size of the file in memory
+/// @param handle A valid sound handle
+/// @return MA_SUCCESS if successful. Else, a valid ma_result
+static ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int32_t handle) {
+    if (!IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->maDecoder || !buffer || !size)
+        return MA_INVALID_ARGS;
+
+    audioEngine.soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
+    if (!audioEngine.soundHandles[handle]->maDecoder) {
+        AUDIO_DEBUG_PRINT("Failed to allocate memory for miniaudio decoder");
+        return MA_OUT_OF_MEMORY;
+    }
+
+    // Setup the decoder & attach the custom backed vtables
+    audioEngine.soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
+    AudioEngineAttachCustomBackendVTables(&audioEngine.soundHandles[handle]->maDecoderConfig);
+    audioEngine.soundHandles[handle]->maDecoderConfig.sampleRate = audioEngine.sampleRate;
+
+    audioEngine.maResult = ma_decoder_init_memory(buffer, size, &audioEngine.soundHandles[handle]->maDecoderConfig,
+                                                  audioEngine.soundHandles[handle]->maDecoder); // initialize the decoder
+    if (audioEngine.maResult != MA_SUCCESS) {
+        delete audioEngine.soundHandles[handle]->maDecoder;
+        audioEngine.soundHandles[handle]->maDecoder = nullptr;
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize miniaudio decoder", audioEngine.maResult);
+        return audioEngine.maResult;
+    }
+
+    // Finally, load the sound as a data source
+    audioEngine.maResult = ma_sound_init_from_data_source(&audioEngine.maEngine, audioEngine.soundHandles[handle]->maDecoder,
+                                                          audioEngine.soundHandles[handle]->maFlags, NULL, &audioEngine.soundHandles[handle]->maSound);
+
+    if (audioEngine.maResult != MA_SUCCESS) {
+        ma_decoder_uninit(audioEngine.soundHandles[handle]->maDecoder);
+        delete audioEngine.soundHandles[handle]->maDecoder;
+        audioEngine.soundHandles[handle]->maDecoder = nullptr;
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound", audioEngine.maResult);
+        return audioEngine.maResult;
+    }
+
+    return MA_SUCCESS;
+}
+
 /// <summary>
 /// This loads a sound file into memory and returns a LONG handle value above 0.
 /// </summary>
@@ -1334,31 +1478,10 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
         // Configure a miniaudio decoder to load the sound from memory
         AUDIO_DEBUG_PRINT("Loading sound from memory");
 
-        audioEngine.soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
-        if (!audioEngine.soundHandles[handle]->maDecoder) {
-            AUDIO_DEBUG_PRINT("Failed to allocate memory for miniaudio decoder");
-            audioEngine.soundHandles[handle]->isUsed = false;
-            return INVALID_SOUND_HANDLE;
-        }
-
-        // Setup the decoder & attach the custom backed vtables
-        audioEngine.soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
-        AudioEngineAttachCustomBackendVTables(&audioEngine.soundHandles[handle]->maDecoderConfig);
-        audioEngine.soundHandles[handle]->maDecoderConfig.sampleRate = audioEngine.sampleRate;
-
-        audioEngine.maResult = ma_decoder_init_memory(fileName->chr, fileName->len, &audioEngine.soundHandles[handle]->maDecoderConfig,
-                                                      audioEngine.soundHandles[handle]->maDecoder); // initialize the decoder
-        if (audioEngine.maResult != MA_SUCCESS) {
-            delete audioEngine.soundHandles[handle]->maDecoder;
-            audioEngine.soundHandles[handle]->maDecoder = nullptr;
-            AUDIO_DEBUG_PRINT("Failed to initialize miniaudio decoder");
-            audioEngine.soundHandles[handle]->isUsed = false;
-            return INVALID_SOUND_HANDLE;
-        }
-
-        // Finally, load the sound as a data source
-        audioEngine.maResult = ma_sound_init_from_data_source(&audioEngine.maEngine, audioEngine.soundHandles[handle]->maDecoder,
-                                                              audioEngine.soundHandles[handle]->maFlags, NULL, &audioEngine.soundHandles[handle]->maSound);
+        audioEngine.soundHandles[handle]->bufferKey = (intptr_t)fileName->chr;                                      // make a unique key and save it
+        audioEngine.bufferMap.AddBuffer(fileName->chr, fileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
+        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);   // get the buffer pointer and size
+        audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, handle);                               // create the ma_sound
     } else {
         AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileNameZ->chr);
         qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
@@ -1370,11 +1493,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
 
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
-        if (audioEngine.soundHandles[handle]->maDecoder) {
-            delete audioEngine.soundHandles[handle]->maDecoder;
-            audioEngine.soundHandles[handle]->maDecoder = nullptr;
-        }
-        AUDIO_DEBUG_PRINT("Error %i: '%s' failed to open", audioEngine.maResult, fileNameZ->chr);
+        AUDIO_DEBUG_PRINT("Error %i: failed to open sound", audioEngine.maResult);
         audioEngine.soundHandles[handle]->isUsed = false;
         return INVALID_SOUND_HANDLE;
     }
@@ -1420,7 +1539,7 @@ int32_t func__sndcopy(int32_t src_handle) {
     // Sadly, since this involves a buffer copy there may be a delay before the sound can play (especially if the sound is lengthy)
     // The delay may be noticeable when _SNDPLAYCOPY is used multiple times on the a _SNDNEW sound
     if (audioEngine.soundHandles[src_handle]->maAudioBuffer) {
-        AUDIO_DEBUG_PRINT("Doing custom sound copy");
+        AUDIO_DEBUG_PRINT("Doing custom sound copy for ma_audio_buffer");
 
         auto frames = audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.sizeInFrames;
         auto channels = audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.channels;
@@ -1434,9 +1553,30 @@ int32_t func__sndcopy(int32_t src_handle) {
         // Next memcopy the samples from the source to the dest
         memcpy((void *)audioEngine.soundHandles[dst_handle]->maAudioBuffer->ref.pData, audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.pData,
                frames * ma_get_bytes_per_frame(format, channels)); // naughty const void* casting, but should be OK
+    } else if (audioEngine.soundHandles[src_handle]->maDecoder) {
+        AUDIO_DEBUG_PRINT("Doing custom sound copy for ma_decoder");
+
+        dst_handle = audioEngine.AllocateSoundHandle(); // alocate a sound handle
+        if (dst_handle < 1)
+            return INVALID_SOUND_HANDLE;
+
+        audioEngine.soundHandles[dst_handle]->type = SoundType::Static;                                               // set some handle properties
+        audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags;                // copy the flags
+        audioEngine.soundHandles[dst_handle]->bufferKey = audioEngine.soundHandles[src_handle]->bufferKey;            // copy the BufferMap unique key
+        audioEngine.bufferMap.AddRef(audioEngine.soundHandles[dst_handle]->bufferKey);                                // increase the reference count
+        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[dst_handle]->bufferKey); // get the buffer pointer and size
+        audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, dst_handle);                             // create the ma_sound
+
+        if (audioEngine.maResult != MA_SUCCESS) {
+            audioEngine.bufferMap.Release(audioEngine.soundHandles[dst_handle]->bufferKey);
+            audioEngine.soundHandles[dst_handle]->isUsed = false;
+            AUDIO_DEBUG_PRINT("Error %i: failed to copy sound", audioEngine.maResult);
+
+            return INVALID_SOUND_HANDLE;
+        }
     } else {
         AUDIO_DEBUG_PRINT("Doing regular miniaudio sound copy");
-        
+
         dst_handle = audioEngine.AllocateSoundHandle(); // alocate a sound handle
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;

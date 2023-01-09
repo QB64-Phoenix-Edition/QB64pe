@@ -7,12 +7,12 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//	This implements a data source that decodes Amiga AHX and HLV formats
+//  This implements a data source that decodes Amiga AHX and HLV formats
 //
-//	https://github.com/pete-gordon/hivelytracker (BSD 3-Clause)
+//  https://github.com/pete-gordon/hivelytracker (BSD 3-Clause)
 //
-//	Copyright (c) 2022 Samuel Gomes
-//	https://github.com/a740g
+//  Copyright (c) 2022 Samuel Gomes
+//  https://github.com/a740g
 //
 //--------------------------------------------------------------------------------------------------
 
