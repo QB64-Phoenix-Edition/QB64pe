@@ -2,6 +2,8 @@
 libqb-objs-y += $(PATH_LIBQB)/src/threading.o
 libqb-objs-y += $(PATH_LIBQB)/src/buffer.o
 libqb-objs-y += $(PATH_LIBQB)/src/filepath.o
+libqb-objs-y += $(PATH_LIBQB)/src/datetime.o
+libqb-objs-y += $(PATH_LIBQB)/src/rounding.o
 
 libqb-objs-$(DEP_HTTP) += $(PATH_LIBQB)/src/http.o
 libqb-objs-y$(DEP_HTTP) += $(PATH_LIBQB)/src/http-stub.o

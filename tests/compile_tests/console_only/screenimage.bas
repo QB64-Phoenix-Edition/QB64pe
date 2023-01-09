@@ -6,7 +6,7 @@ $ELSE
 
 ' We can't do _SCREENIMAGE on Linux or Mac OS build agents, but we can still test
 ' that it compiles
-PRINT -13;
+PRINT -11;
 SYSTEM
 
 $END IF

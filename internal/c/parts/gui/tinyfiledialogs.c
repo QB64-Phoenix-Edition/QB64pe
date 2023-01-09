@@ -3139,10 +3139,6 @@ char * tinyfd_colorChooser(
 
 #else /* unix */
 
-static char gPython2Name[16];
-static char gPython3Name[16];
-static char gPythonName[16];
-
 int tfd_isDarwin(void)
 {
         static int lsIsDarwin = -1 ;
@@ -3247,26 +3243,6 @@ static int * getMajorMinorPatch( char const * aExecutable )
 
 	if ( !lArray[0] && !lArray[1] && !lArray[2] ) return NULL;
 	return lArray ;
-}
-
-
-static int tryCommand( char const * aCommand )
-{
-        char lBuff[MAX_PATH_OR_CMD] ;
-        FILE * lIn ;
-
-        lIn = popen( aCommand , "r" ) ;
-        if ( fgets( lBuff , sizeof( lBuff ) , lIn ) == NULL )
-        {       /* present */
-                pclose( lIn ) ;
-                return 1 ;
-        }
-        else
-        {
-                pclose( lIn ) ;
-                return 0 ;
-        }
-
 }
 
 
@@ -3960,7 +3936,6 @@ int tinyfd_messageBox(
 {
         char lBuff[MAX_PATH_OR_CMD] ;
         char * lDialogString = NULL ;
-        char * lpDialogString;
         FILE * lIn ;
         int lWasGraphicDialog = 0 ;
         int lWasXterm = 0 ;
@@ -4734,7 +4709,6 @@ int tinyfd_notifyPopup(
 {
     char lBuff[MAX_PATH_OR_CMD];
         char * lDialogString = NULL ;
-    char * lpDialogString ;
         FILE * lIn ;
         size_t lTitleLen ;
         size_t lMessageLen ;
@@ -4882,7 +4856,6 @@ char * tinyfd_inputBox(
 {
         static char lBuff[MAX_PATH_OR_CMD];
         char * lDialogString = NULL;
-        char * lpDialogString;
         FILE * lIn ;
         int lResult ;
         int lWasGdialog = 0 ;

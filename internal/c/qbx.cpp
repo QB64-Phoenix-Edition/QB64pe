@@ -1,6 +1,9 @@
 #include "common.h"
 #include "audio.h"
 #include "gui.h"
+#include "event.h"
+#include "rounding.h"
+#include "datetime.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -56,7 +59,6 @@ qbs *func__inflate(qbs *text, int64 originalsize, int32 passed);
     #endif
 */
 
-extern void error(int32 error_number);
 extern int32 sub_gl_called;
 
 #ifdef QB64_GUI
@@ -96,11 +98,7 @@ extern int32 func__scaledheight();
 extern qbs *func__cwd();
 extern qbs *func__startdir();
 
-extern void sub__limit(double fps);
-
 extern void sub__fps(double fps, int32 passed);
-
-extern void sub__delay(double seconds);
 
 extern void sub__resize(int32 on_off, int32 stretch_smooth);
 extern int32 func__resize();
@@ -462,7 +460,6 @@ extern long double func_val(qbs *s);
 extern void sub_out(int32 port, int32 data);
 extern void sub_randomize(double seed, int32 passed);
 extern float func_rnd(float n, int32 passed);
-extern double func_timer(double accuracy, int32 passed);
 extern void sub_sound(double frequency, double lengthinclockticks);
 // following are declared below to allow for inlining
 // extern double func_abs(double d);
@@ -516,22 +513,6 @@ extern qbs *func_time();
 extern int32 func_csrlin();
 extern int32 func_pos(int32 ignore);
 extern double func_log(double value);
-extern double func_csng_float(long double value);
-extern double func_csng_double(double value);
-extern double func_cdbl_float(long double value);
-extern int32 func_cint_double(double value);
-extern int64 func_cint_float(long double value);
-extern int16 func_cint_long(int32 value);
-extern int16 func_cint_ulong(uint32 value);
-extern int16 func_cint_int64(int64 value);
-extern int16 func_cint_uint64(uint64 value);
-extern int32 func_clng_double(double value);
-extern int64 func_clng_float(long double value);
-extern int32 func_clng_ulong(uint32 value);
-extern int32 func_clng_int64(int64 value);
-extern int32 func_clng_uint64(uint64 value);
-extern int64 func_round_double(long double value);
-extern int64 func_round_float(long double value);
 extern double func_fix_double(double value);
 extern long double func_fix_float(long double value);
 extern double func_exp_single(double value);
@@ -702,14 +683,8 @@ uint64 func__setbit(uint64 a1, int b1);
 uint64 func__resetbit(uint64 a1, int b1);
 uint64 func__togglebit(uint64 a1, int b1);
 #ifndef QB64_WINDOWS
-extern void Sleep(uint32 milliseconds);
 extern void ZeroMemory(void *ptr, int64 bytes);
 #endif
-extern int64 qbr(long double f);
-extern uint64 qbr_longdouble_to_uint64(long double f);
-extern int32 qbr_float_to_long(float f);
-extern int32 qbr_double_to_long(double f);
-extern void fpu_reinit(void);
 
 extern uint64 getubits(uint32 bsize, uint8 *base, ptrszint i);
 extern int64 getbits(uint32 bsize, uint8 *base, ptrszint i);
@@ -870,112 +845,6 @@ template <typename T> static T qbs_cleanup(uint32 base, T passvalue) {
     return passvalue;
 }
 
-// CSNG
-inline double func_csng_float(long double value) {
-    if ((value <= 3.402823466E38) && (value >= -3.402823466E38)) {
-        return value;
-    }
-    error(6);
-    return 0;
-}
-inline double func_csng_double(double value) {
-    if ((value <= 3.402823466E38) && (value >= -3.402823466E38)) {
-        return value;
-    }
-    error(6);
-    return 0;
-}
-
-// CDBL
-inline double func_cdbl_float(long double value) {
-    if ((value <= 1.7976931348623157E308) &&
-        (value >= -1.7976931348623157E308)) {
-        return value;
-    }
-    error(6);
-    return 0;
-}
-
-// CINT
-// func_cint_single uses func_cint_double
-inline int32 func_cint_double(double value) {
-    if ((value < 32767.5) && (value >= -32768.5)) {
-        return qbr_double_to_long(value);
-    }
-    error(6);
-    return 0;
-}
-inline int64 func_cint_float(long double value) {
-    if ((value < 32767.5) && (value >= -32768.5)) {
-        return qbr(value);
-    }
-    error(6);
-    return 0;
-}
-inline int16 func_cint_long(int32 value) {
-    if ((value >= -32768) && (value <= 32767))
-        return value;
-    error(6);
-    return 0;
-}
-inline int16 func_cint_ulong(uint32 value) {
-    if (value <= 32767)
-        return value;
-    error(6);
-    return 0;
-}
-inline int16 func_cint_int64(int64 value) {
-    if ((value >= -32768) && (value <= 32767))
-        return value;
-    error(6);
-    return 0;
-}
-inline int16 func_cint_uint64(uint64 value) {
-    if (value <= 32767)
-        return value;
-    error(6);
-    return 0;
-}
-
-// CLNG
-// func_clng_single uses func_clng_double
-//-2147483648 to 2147483647
-inline int32 func_clng_double(double value) {
-    if ((value < 2147483647.5) && (value >= -2147483648.5)) {
-        return qbr_double_to_long(value);
-    }
-    error(6);
-    return 0;
-}
-inline int64 func_clng_float(long double value) {
-    if ((value < 2147483647.5) && (value >= -2147483648.5)) {
-        return qbr(value);
-    }
-    error(6);
-    return 0;
-}
-inline int32 func_clng_ulong(uint32 value) {
-    if (value <= 2147483647)
-        return value;
-    error(6);
-    return 0;
-}
-inline int32 func_clng_int64(int64 value) {
-    if ((value >= -2147483648) && (value <= 2147483647))
-        return value;
-    error(6);
-    return 0;
-}
-inline int32 func_clng_uint64(uint64 value) {
-    if (value <= 2147483647)
-        return value;
-    error(6);
-    return 0;
-}
-
-//_ROUND (note: round performs no error checking)
-inline int64 func_round_double(long double value) { return qbr(value); }
-inline int64 func_round_float(long double value) { return qbr(value); }
 
 // force abs to return floating point numbers correctly
 inline double func_abs(double d) { return fabs(d); }
@@ -2395,8 +2264,7 @@ extern int64 display_lock_confirmed;
 extern int64 display_lock_released;
 
 uint32 r;
-void evnt(uint32 linenumber, uint32 inclinenumber = 0,
-          const char *incfilename = NULL) {
+void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
     if (disableEvents)
         return;
 

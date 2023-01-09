@@ -55,9 +55,10 @@ size_t libqb_buffer_read(struct libqb_buffer *buffer, char *out, size_t length) 
 
         if (len == entry->length - offset) {
             // This buffer is done, drop it
-            libqb_buffer_entry_free(entry);
             buffer->head = buffer->head->next;
             buffer->cur_entry_offset = 0;
+
+            libqb_buffer_entry_free(entry);
         } else {
             // We didn't use the whole buffer, length == 0, loop will end
             buffer->cur_entry_offset = offset + len;
