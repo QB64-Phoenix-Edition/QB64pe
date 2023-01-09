@@ -53,7 +53,7 @@ extern uint32 palette_256[];   // Required by func__loadimage
 static uint8_t *image_decode_from_file(const char *fileName, int *xOut, int *yOut) {
     auto compOut = 0;
 
-    IMAGE_DEBUG_PRINT("Loading image from file");
+    IMAGE_DEBUG_PRINT("Loading image from file %s", fileName);
 
     // Attempt to load file as a PCX first using dr_pcx
     auto pixels = drpcx_load_file(fileName, DRPCX_FALSE, xOut, yOut, &compOut, 4);
@@ -195,7 +195,7 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
             // If we reached here, then the color is not in our table
             ++uniqueColors;
             if (uniqueColors > 256) {
-                IMAGE_DEBUG_PRINT("Image has more than 256 unique colors (%i)", uniqueColors);
+                IMAGE_DEBUG_PRINT("Image has more than 256 unique colors");
                 free(pixels);
                 return nullptr; // Exit with failure if we have > 256 colors
             }
@@ -208,6 +208,8 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
             pixels[i] = colorMap[srcColor]; // Simply fetch the index from the map
         }
     }
+
+    IMAGE_DEBUG_PRINT("Unique colors = %i", uniqueColors);
 
     return pixels;
 }
@@ -259,63 +261,61 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
     static qbs *fileNameZ = nullptr;
 
     if (new_error || !fileName->len)
-        return 0;
+        return INVALID_IMAGE_HANDLE;
 
     if (!fileNameZ)
         fileNameZ = qbs_new(0, 0);
 
-    auto loadFromMemory = false;
-    if (bpp & 0x10000) { // check if user wants to load from memory
-        loadFromMemory = true;
+    auto isLoadFromMemory = false; // should the image be loaded from memory?
+    auto isHardwareImage = false;  // should the image be converted to a hardware image?
+    auto isRemapPalette = true;    // should the palette be re-mapped to the QB64 default palette?
+
+    // Handle special cases and set the above flags if required
+    IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
+    if (bpp & 0x10000) { // load from memory?
+        isLoadFromMemory = true;
         bpp &= ~0x10000;
+        IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
     }
-
-    auto isHardware = false;
-    auto dontRemapPalette = false;
-
-    if (bpp == 33) { // handle special cases
+    if (bpp == 33) { // hardware image?
+        isHardwareImage = true;
         bpp = 32;
-        isHardware = true;
-        IMAGE_DEBUG_PRINT("Hardware image requested");
+        IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
     } else if (bpp == 257) {
+        isRemapPalette = false;
         bpp = 256;
-        dontRemapPalette = true;
-        IMAGE_DEBUG_PRINT("No palette remap requested");
+        IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
     }
 
     // Validate bpp
-    if (passed) {
+    if (passed && bpp != 0) {
         if ((bpp != 32) && (bpp != 256)) {
+            IMAGE_DEBUG_PRINT("Invalid bpp (0x%X)", bpp);
             error(5);
-            return 0;
+            return INVALID_IMAGE_HANDLE;
         }
     } else {
-        if (write_page->text) {
-            error(5);
-            return 0;
+        if (write_page->bits_per_pixel < 32) {
+            bpp = 256;
+            IMAGE_DEBUG_PRINT("Defaulting to 8bpp");
+        } else {
+            bpp = 32;
+            IMAGE_DEBUG_PRINT("Defaulting to 32bpp");
         }
-        bpp = -1;
-        IMAGE_DEBUG_PRINT("BPP was not spcified. Defaulting to 32bpp");
     }
 
     int x, y;
     uint8_t *pixels;
 
-    if (loadFromMemory) {
+    if (isLoadFromMemory) {
         pixels = image_decode_from_memory(fileName->chr, fileName->len, &x, &y);
     } else {
         qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-        if (fileNameZ->len == 1)
-            return INVALID_IMAGE_HANDLE; // Return invalid handle if null length string
-
-        // Try to load the image
         pixels = image_decode_from_file((const char *)fileNameZ->chr, &x, &y);
     }
 
     if (!pixels)
         return INVALID_IMAGE_HANDLE; // Return invalid handle if loading the image failed
-
-    IMAGE_DEBUG_PRINT("'%s' successfully loaded", fileNameZ->chr);
 
     // Convert RGBA to BGRA
     auto cp = pixels;
@@ -325,7 +325,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
             auto b = cp[2];
             cp[0] = b;
             cp[2] = r;
-            cp += 4;
+            cp += sizeof(uint32_t);
         }
     }
 
@@ -336,7 +336,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
         IMAGE_DEBUG_PRINT("Entering 8bpp path");
 
         i = func__newimage(x, y, 256, 1);
-        if (i == -1) {
+        if (i == INVALID_IMAGE_HANDLE) {
             free(pixels);
             return INVALID_IMAGE_HANDLE;
         }
@@ -357,15 +357,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
             }
         }
 
-        if (dontRemapPalette) {
-            // Copy the 8bpp pixel data and then free it
-            memcpy(img[-i].offset, pixels256, x * y);
-            free(pixels256);
-
-            // Copy the palette and then free it
-            memcpy(img[-i].pal, palette, 256 * sizeof(uint32_t));
-            free(palette);
-        } else {
+        if (isRemapPalette) {
             // Remap the image indexes to QB64 default palette and then free our palette
             image_remap_palette(pixels256, x, y, palette, palette_256);
             free(palette);
@@ -376,12 +368,20 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
 
             // Copy the default QB64 palette
             memcpy(img[-i].pal, palette_256, 256 * sizeof(uint32_t));
+        } else {
+            // Copy the 8bpp pixel data and then free it
+            memcpy(img[-i].offset, pixels256, x * y);
+            free(pixels256);
+
+            // Copy the palette and then free it
+            memcpy(img[-i].pal, palette, 256 * sizeof(uint32_t));
+            free(palette);
         }
     } else {
         IMAGE_DEBUG_PRINT("Entering 32bpp path");
 
         i = func__newimage(x, y, 32, 1);
-        if (i == -1) {
+        if (i == INVALID_IMAGE_HANDLE) {
             free(pixels);
             return INVALID_IMAGE_HANDLE;
         }
@@ -392,7 +392,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
     free(pixels);
 
     // This only executes if bpp is 32
-    if (isHardware) {
+    if (isHardwareImage) {
         IMAGE_DEBUG_PRINT("Making hardware image");
 
         auto iHardware = func__copyimage(i, 33, 1);
