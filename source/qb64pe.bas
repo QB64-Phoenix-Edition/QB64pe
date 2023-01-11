@@ -12317,7 +12317,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     END IF
 
     ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
-    IF LEN(outputfile_cmd$) Or OutputIsRelativeToStartDir THEN
+    IF LEN(outputfile_cmd$) OR OutputIsRelativeToStartDir THEN
         IF LEN(outputfile_cmd$) THEN
             'resolve relative path for output file
             path.out$ = getfilepath$(outputfile_cmd$)
@@ -16700,6 +16700,17 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF Error_Happened THEN EXIT FUNCTION
                         r$ = r$ + e$ + ")"
                         GOTO evalfuncspecial ' Evaluate now that we have everything
+                    END IF
+                END IF
+
+                ' a740g: _LOADIMAGE special case
+                IF n$ = "_LOADIMAGE" OR (n$ = "LOADIMAGE" AND qb64prefix_set = 1) THEN
+                    IF curarg = 2 THEN
+                        IF sourcetyp AND ISSTRING THEN
+                            IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                            IF Error_Happened THEN EXIT FUNCTION
+                            GOTO dontevaluate
+                        END IF
                     END IF
                 END IF
 

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "audio.h"
+#include "image.h"
 #include "gui.h"
 #include "event.h"
 #include "rounding.h"
@@ -585,7 +586,6 @@ extern void call_absolute(int32 args, uint16 offset);
 extern void call_interrupt(int32 i);
 extern void sub_play(qbs *str);
 extern int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
-extern int32 func__loadimage(qbs *f, int32 bpp, int32 passed);
 extern int32 func__copyimage(int32 i, int32 mode, int32 passed);
 extern void sub__freeimage(int32 i, int32 passed);
 extern void sub__source(int32 i);

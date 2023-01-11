@@ -1063,7 +1063,7 @@ id.args = 2
 id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "?[,?]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_LOADIMAGE(fileName$[, mode])"
+id.hr_syntax = "_LOADIMAGE(fileName$[, mode& | mode$])"
 regid
 
 clearid

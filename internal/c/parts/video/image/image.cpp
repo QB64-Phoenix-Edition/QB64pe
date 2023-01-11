@@ -26,6 +26,12 @@
 
 // This is returned to the caller if something goes wrong while loading the image
 #define INVALID_IMAGE_HANDLE -1
+// Various requirement strings for func__imageload
+#define REQUIREMENT_STRING_HARDWARE "HARDWARE"
+#define REQUIREMENT_STRING_MEMORY "MEMORY"
+#define REQUIREMENT_STRING_32BPP "32BPP"
+#define REQUIREMENT_STRING_8BPP "8BPP"
+#define REQUIREMENT_STRING_ADAPTIVE "ADAPTIVE"
 
 // Calculates the RGB distance in the RGB color cube
 #define IMAGE_CALCULATE_RGB_DISTANCE(r1, g1, b1, r2, g2, b2)                                                                                                   \
@@ -39,7 +45,8 @@
 #endif
 
 // These should be replaced with appropriate header files when Matt finishes cleaning up libqb
-void sub__freeimage(int32, int32); // Not declared in libqb.h
+void sub__freeimage(int32, int32);                                  // Not declared in libqb.h
+int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 
 extern img_struct *img;        // Required by func__loadimage
 extern img_struct *write_page; // Required by func__loadimage
@@ -185,24 +192,24 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
         return nullptr;
     }
 
-    auto uniqueColors = 0; // As long as this is <= 256 we will keep going until we are done
-    auto src32bpp = (uint32_t *)src;
+    auto uniqueColors = 0;           // as long as this is < 256 we will keep going until we are done
+    auto src32bpp = (uint32_t *)src; // get a 32-bit int pointer to the image data
     for (auto i = 0; i < w * h; i++) {
-        auto srcColor = src32bpp[i];
+        auto srcColor = src32bpp[i]; // get the 32bpp pixel
 
         // Check if the src color exists in our palette
         if (colorMap.find(srcColor) == colorMap.end()) {
             // If we reached here, then the color is not in our table
-            ++uniqueColors;
-            if (uniqueColors > 256) {
-                IMAGE_DEBUG_PRINT("Image has more than 256 unique colors");
+            if (uniqueColors > 255) {
+                IMAGE_DEBUG_PRINT("Image has more than %i unique colors", uniqueColors);
                 free(pixels);
                 return nullptr; // Exit with failure if we have > 256 colors
             }
 
-            paletteOut[uniqueColors - 1] = srcColor; // Store the color as unique
-            colorMap[srcColor] = uniqueColors - 1;   // Add this color to the map
-            pixels[i] = uniqueColors - 1;
+            paletteOut[uniqueColors] = srcColor; // Store the color as unique
+            colorMap[srcColor] = uniqueColors;   // Add this color to the map
+            pixels[i] = uniqueColors;            // set the pixel to the color index
+            ++uniqueColors;                      // increment unique colors
         } else {
             // If we reached here, then the color is in our table
             pixels[i] = colorMap[srcColor]; // Simply fetch the index from the map
@@ -249,13 +256,45 @@ static void image_remap_palette(uint8_t *src, int w, int h, uint32_t *src_pal, u
     }
 }
 
-/// <summary>
-/// This function loads an image into memory and returns valid LONG image handle values that are less than -1.
-/// </summary>
-/// <param name="fileName">The filename of the image</param>
-/// <param name="bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp, 256=8bpp or 257=8bpp without palette remap, | 0x10000 to load from memory</param>
-/// <param name="passed">How many parameters were passed?</param>
-/// <returns>Valid LONG image handle values that are less than -1 or -1 on failure</returns>
+/// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
+/// @param fileName The filename or memory buffer of the image
+/// @param requirements hardware, memory, 32bpp, 8bpp, adaptive
+/// @param passed How many parameters were passed?
+/// @return Valid LONG image handle values that are less than -1 or -1 on failure
+int32_t func__loadimage(qbs *fileName, qbs *requirements, int32_t passed) {
+    static qbs *reqs = nullptr;
+    if (!reqs)
+        reqs = qbs_new(0, 0);
+
+    auto bpp = 0;
+
+    if (passed && requirements->len) {
+        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_8BPP), 1))
+            bpp = 256;
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_32BPP), 1))
+            bpp = 32;
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_ADAPTIVE), 1) && bpp == 256)
+            bpp = 257;
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && bpp == 32)
+            bpp = 33;
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1))
+            bpp |= 0x10000;
+    }
+
+    return func__loadimage(fileName, bpp, passed);
+}
+
+/// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1.
+/// @param fileName The filename or memory buffer of the image
+/// @param bpp bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp, 256=8bpp or 257=8bpp without palette remap
+/// @param passed How many parameters were passed?
+/// @return Valid LONG image handle values that are less than -1 or -1 on failure
 int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
     // QB string that we'll need null terminate the filename
     static qbs *fileNameZ = nullptr;
