@@ -258,10 +258,10 @@ static void image_remap_palette(uint8_t *src, int w, int h, uint32_t *src_pal, u
 
 /// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
 /// @param fileName The filename or memory buffer of the image
-/// @param requirements hardware, memory, 32bpp, 8bpp, adaptive
+/// @param requirements A qbs that can contain one or more of: hardware, memory, 32bpp, 8bpp, adaptive
 /// @param passed How many parameters were passed?
 /// @return Valid LONG image handle values that are less than -1 or -1 on failure
-int32_t func__loadimage(qbs *fileName, qbs *requirements, int32_t passed) {
+int32_t func__loadimage_ex(qbs *fileName, qbs *requirements, int32_t passed) {
     static qbs *reqs = nullptr;
     if (!reqs)
         reqs = qbs_new(0, 0);
@@ -269,6 +269,8 @@ int32_t func__loadimage(qbs *fileName, qbs *requirements, int32_t passed) {
     auto bpp = 0;
 
     if (passed && requirements->len) {
+        IMAGE_DEBUG_PRINT("Parsing requirements");
+
         qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
 
         if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_8BPP), 1))
@@ -277,10 +279,10 @@ int32_t func__loadimage(qbs *fileName, qbs *requirements, int32_t passed) {
         if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_32BPP), 1))
             bpp = 32;
 
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_ADAPTIVE), 1) && bpp == 256)
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_ADAPTIVE), 1) && (bpp == 256 || bpp == 0))
             bpp = 257;
 
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && bpp == 32)
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && (bpp == 32 || bpp == 0))
             bpp = 33;
 
         if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1))

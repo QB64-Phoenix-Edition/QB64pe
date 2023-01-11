@@ -62,6 +62,6 @@ struct qbs;
 // FUNCTIONS
 //-----------------------------------------------------------------------------------------------------
 int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed);
-int32_t func__loadimage(qbs *fileName, qbs *requirements, int32_t passed);
+int32_t func__loadimage_ex(qbs *fileName, qbs *requirements, int32_t passed);
 //-----------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------
