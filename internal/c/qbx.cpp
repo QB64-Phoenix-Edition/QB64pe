@@ -2073,6 +2073,9 @@ void sub_timer(int32 i, int32 option, int32 passed) {
     // ref: uint8 active;//0=OFF, 1=ON, 2=STOP
     if (option == 1) { // ON
         ontimer[i].active = 1;
+
+        // This is necessary so that if a timer triggered while stopped we will run it now.
+        qbevent = 1;
         return;
     }
     if (option == 2) { // OFF
