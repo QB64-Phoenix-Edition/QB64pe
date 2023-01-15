@@ -20093,36 +20093,53 @@ void sub_sleep(int32 seconds, int32 passed) {
         DWORD dwRet;
         HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
         FlushConsoleInputBuffer(hStdin);
-        if (passed) {
-            do {
+
+        do {
+            uint32_t sleepms = 10;
+
+            // Check if ms is less than 10, if so sleep for that many ms to
+            // try to make the sleep a bit more accurate
+            if (passed && ms < 10 && ms > 0)
+                sleepms = ms;
+
+            // Only sleep for a max of 10ms intervals so that we can pump the evnt() handler
+            dwRet = WaitForSingleObject(hStdin, sleepms); // this should provide our pause
+
+            if (dwRet == WAIT_OBJECT_0) { // this says the console had input
+                junk = func__getconsoleinput();
+                if (junk == 1) { // this is a valid keyboard event.  Let's exit SLEEP in the console.
+                    Sleep(100);  // Give the user time to remove their finger from the key, before clearing the buffer.
+                    FlushConsoleInputBuffer(
+                        hStdin); // flush the keyboard buffer after, so we don't leave stray events to be processed (such as key up events).
+                    return;
+                } else { // we had an input event such as the mouse.  Ignore it and clear the buffer so we don't keep responding to mouse inputs
+                    FlushConsoleInputBuffer(hStdin);
+                }
+            }
+
+            // Handle periodic events (timers and some other things)
+            evnt(0);
+
+            // evnt() may trigger us to end sleep early
+            if (sleep_break)
+                return;
+            if (stop_program)
+                return;
+
+            // We only update the ms count if we were provided a max number of
+            // seconds to sleep
+            if (passed) {
                 now = GetTicks();
                 if (now < prev)
                     return;           // value looped?
                 elapsed = now - prev; // elapsed time since prev
                 ms = ms - elapsed;
                 prev = now;
-                dwRet = WaitForSingleObject(hStdin, ms); // this should provide our pause
-                if (dwRet == WAIT_TIMEOUT)
-                    return;                   // and if we timeout without any input, we exit early.
-                if (dwRet == WAIT_OBJECT_0) { // this says the console had input
-                    junk = func__getconsoleinput();
-                    if (junk == 1) { // this is a valid keyboard event.  Let's exit SLEEP in the console.
-                        Sleep(100);  // Give the user time to remove their finger from the key, before clearing the buffer.
-                        FlushConsoleInputBuffer(
-                            hStdin); // flush the keyboard buffer after, so we don't leave stray events to be processed (such as key up events).
-                        return;
-                    } else { // we had an input event such as the mouse.  Ignore it and clear the buffer so we don't keep responding to mouse inputs
-                        FlushConsoleInputBuffer(hStdin);
-                    }
-                }
-            } while (ms > 0); // as long as our timer hasn't expired, we continue to run the loop and countdown the time remaining
-            return;           // if we get here, something odd happened.  We should expire automatically with the WAIT_TIMEOUT event before this occurs.
-        }
-        do { // ignore all console input unless it's a keydown event
-            junk = func__getconsoleinput();
-        } while (junk != 1);             // only when junk = 1 do we have a keyboard event
-        Sleep(100);                      // Give the user time to remove their finger from the key, before clearing the buffer.
-        FlushConsoleInputBuffer(hStdin); // and flush the keyboard buffer after, so we don't leave stray events to be processed.
+            }
+
+        } while (!passed || ms > 0); // We loop if we weren't provided a number of seconds to sleep, or if we reached the timeout
+
+        // If we got here, then we timed out
         return;
     }
 #endif
