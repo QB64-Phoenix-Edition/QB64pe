@@ -363,9 +363,9 @@ SUB WikiParse (a$) 'Wiki page interpret
         NEXT
 
         'Wiki specific code handling (no restrictions)
-        s$ = "__NOEDITSECTION__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOEDITSECTION__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
         s$ = "__NOEDITSECTION__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
-        s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
         s$ = "__NOTOC__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "<nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "</nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
