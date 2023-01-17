@@ -369,6 +369,39 @@ SUB WikiParse (a$) 'Wiki page interpret
         s$ = "__NOTOC__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "<nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "</nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "<gallery" 'Wiki gallery (supported for command availability only)
+        IF c$(LEN(s$)) = s$ THEN
+            i = i + LEN(s$) - 1: nl = 0
+            FOR ii = i TO LEN(a$) - 1
+                IF MID$(a$, ii, 1) = ">" THEN
+                    wla$ = wikiLookAhead$(a$, ii + 1, "</gallery>"): v$ = wla$: nl = 1
+                    IF INSTR(MID$(a$, i, ii - i), "48px") = 0 OR INSTR(MID$(a$, i, ii - i), "nolines") = 0 THEN
+                        i = ii + LEN(wla$) 'ignore this gallery
+                    ELSE
+                        wla$ = StrRemove$(wla$, " "): wla$ = StrRemove$(wla$, CHR$(10))
+                        wla$ = StrReplace$(wla$, "|'''", "|*"): wla$ = StrReplace$(wla$, "'''", "'' / ")
+                        wla$ = StrReplace$(wla$, "File:Qb64.png|*", "'''QB64;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Qbpe.png|*", "'''QB64-PE;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Win.png|*", "'''Windows;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Lnx.png|*", "'''Linux;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Osx.png|*", "'''macOS;''' ''")
+                        IF INSTR(wla$, ":") > 0 THEN
+                            i = ii + LEN(v$) 'although gallery parameters match, at least
+                            EXIT FOR '       'one image does not, so ignore this gallery
+                        END IF
+                        wla$ = StrReplace$(wla$, ";", ":")
+                        wla$ = StrReplace$(wla$, "''all''", "''all versions''")
+                        wla$ = "* " + LEFT$(wla$, LEN(wla$) - 3) + CHR$(10)
+                        a$ = LEFT$(a$, ii) + wla$ + MID$(a$, ii + LEN(v$) + 1)
+                        n = LEN(a$): i = ii
+                    END IF
+                    EXIT FOR
+                END IF
+            NEXT
+            GOTO charDoneKnl 'keep nl state for next wiki token
+        END IF
+        s$ = "</gallery>" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
+        s$ = "</gallery>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
 
         'Direct HTML code is not handled in Code/Output blocks (hard lock), as all text
         'could be part of the code example itself (just imagine a HTML parser/writer demo)
