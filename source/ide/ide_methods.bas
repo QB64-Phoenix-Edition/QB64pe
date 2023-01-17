@@ -2495,7 +2495,7 @@ FUNCTION ide2 (ignore)
                             LOOP
 
                             IF Back_Name$(Help_Back_Pos) = "Alphabetical" OR Back_Name$(Help_Back_Pos) = "By Usage" THEN
-                                IF lnkx1 <> 3 THEN
+                                IF lnkx1 > 3 THEN
                                     cx = px + 1
                                     GOTO helpscanrow
                                 END IF
@@ -2521,6 +2521,10 @@ FUNCTION ide2 (ignore)
                 END IF
             END IF
             foundsstr:
+            IF Help_LinkL THEN
+                Help_Select = 0: Help_sy = cy - 3
+                Help_Search_Str = "": Help_LinkL = 0
+            END IF
             strnotfound:
 
             IF KB = KEY_HOME AND KCONTROL THEN
@@ -2611,7 +2615,7 @@ FUNCTION ide2 (ignore)
 
                                 IF LEFT$(l$, 5) = "EXTL:" THEN
                                     IF (K$ = CHR$(13)) OR (mY = Help_cy - Help_sy + Help_wy1 AND mX = Help_cx - Help_sx + Help_wx1) THEN
-                                        l$ = RIGHT$(l$, LEN(l$) - 5)
+                                        l$ = MID$(l$, 6)
                                         l$ = StrReplace$(l$, " ", "%20")
                                         l$ = StrReplace$(l$, "&", "%26")
                                         IF INSTR(_OS$, "WIN") = 0 THEN
@@ -2630,10 +2634,14 @@ FUNCTION ide2 (ignore)
                                     END IF
                                     GOTO specialchar
                                 ELSEIF LEFT$(l$, 5) = "PAGE:" THEN
-                                    l$ = RIGHT$(l$, LEN(l$) - 5)
+                                    l$ = MID$(l$, 6)
+                                    l2 = INSTR(l$, "#") 'local link?
+                                    IF l2 > 0 THEN
+                                        Help_Search_Str = StrReplace$(MID$(l$, l2 + 1), "_", " ")
+                                        l$ = LEFT$(l$, l2 - 1): Help_LinkL = -1
+                                    END IF
                                     IF Back$(Help_Back_Pos) <> l$ THEN
                                         Help_Select = 0: Help_MSelect = 0
-                                        'COLOR 7, 0
 
                                         Help_Back(Help_Back_Pos).sx = Help_sx 'update position
                                         Help_Back(Help_Back_Pos).sy = Help_sy
@@ -2672,6 +2680,10 @@ FUNCTION ide2 (ignore)
                                         Help_sx = 1: Help_sy = 1: Help_cx = 1: Help_cy = 1
                                         a$ = Wiki$(l$)
                                         WikiParse a$
+                                    END IF
+                                    IF Help_LinkL THEN
+                                        norep = 1: GOTO delsrchagain
+                                    ELSE
                                         GOTO newpageparsed
                                     END IF
                                 END IF

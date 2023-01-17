@@ -263,9 +263,9 @@ END FUNCTION
 SUB WikiParse (a$) 'Wiki page interpret
 
     'Clear info
-    help_h = 0: help_w = 0: Help_Line$ = "": Help_Link$ = "": Help_LinkN = 0
-    Help_Txt$ = SPACE$(1000000)
-    Help_Txt_Len = 0
+    help_h = 0: help_w = 0
+    Help_Line$ = "": Help_Txt$ = SPACE$(1000000): Help_Txt_Len = 0
+    Help_Link$ = "SECT:dummylink" + Help_Link_Sep$: Help_LinkN = 1
 
     Help_Pos = 1: Help_Wrap_Pos = 0
     Help_Line$ = MKL$(1)
@@ -286,7 +286,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_Center = 0: Help_CIndent$ = ""
     Help_DList = 0: Help_ChkBlank = 0
 
-    link = 0: elink = 0: cb = 0: nl = 1: ah = 0: dl = 0
+    link = 0: elink = 0: cb = 0: nl = 1: hl = 0: ah = 0: dl = 0
 
     col = Help_Col
 
@@ -521,8 +521,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                     etext$ = elink$
                     i2 = INSTR(elink$, " ")
                     IF i2 > 0 THEN
-                        etext$ = RIGHT$(elink$, LEN(elink$) - i2)
-                        elink$ = LEFT$(elink$, i2 - 1)
+                        etext$ = MID$(elink$, i2 + 1) 'text part
+                        elink$ = LEFT$(elink$, i2 - 1) 'link part
                     END IF
 
                     Help_LinkN = Help_LinkN + 1
@@ -555,17 +555,13 @@ SUB WikiParse (a$) 'Wiki page interpret
                 text$ = link$
                 i2 = INSTR(link$, "|") 'pipe link?
                 IF i2 > 0 THEN
-                    text$ = RIGHT$(link$, LEN(link$) - i2) 'text part
-                    link$ = LEFT$(link$, i2 - 1) '         'link part
+                    text$ = MID$(link$, i2 + 1) 'text part
+                    link$ = LEFT$(link$, i2 - 1) 'link part
                 END IF
                 i2 = INSTR(link$, "#") 'local link?
                 IF i2 > 0 THEN
-                    link$ = LEFT$(link$, i2 - 1) 'link to TOP
-                    IF link$ = "" THEN
-                        IF LEFT$(text$, 1) = "#" THEN text$ = MID$(text$, 2)
-                        Help_AddTxt text$, 8, 0
-                        GOTO charDone
-                    END IF
+                    IF text$ = link$ THEN text$ = MID$(link$, i2 + 1) 'use anchor if no alternate text yet
+                    IF LEFT$(link$, 1) = "#" THEN link$ = Help_PageLoaded$ + link$ 'add current page if missing
                 END IF
                 IF LEFT$(link$, 9) = "Category:" THEN 'ignore category links
                     Help_CheckRemoveBlankLine
@@ -663,7 +659,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     '----------
                     IF cbo$ <> "" THEN
                         IF RIGHT$(cbo$, 1) = ":" THEN Help_Underline = 2: ELSE Help_Underline = 1
-                        Help_AddTxt cbo$, Help_Col_Section, 0: ah = 2
+                        Help_AddTxt cbo$, Help_Col_Section, 1: ah = 2
                     END IF
                 END IF
 
@@ -824,16 +820,16 @@ SUB WikiParse (a$) 'Wiki page interpret
         IF Help_LockParse = 0 THEN
             'Custom section headings (section color, h3 single underline, h2 double underline)
             ii = 0
-            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0: ah = 2
-            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0: ah = 2
-            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 3
-            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_CheckBlankLine: Help_Heading = 3
+            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 3: hl = 1
+            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_CheckBlankLine: Help_Heading = 3: hl = 1
             IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 1: GOTO charDone
             ii = 0
-            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0: ah = 2
-            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0: ah = 2
-            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_CheckBlankLine: Help_Heading = 2
-            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 2
+            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_CheckBlankLine: Help_Heading = 2: hl = 1
+            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 2: hl = 1
             IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 2: GOTO charDone
         END IF
 
@@ -987,7 +983,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             nl = 1
             GOTO charDoneKnl 'keep just set nl state
         END IF
-        Help_AddTxt CHR$(c), col, 0
+        Help_AddTxt CHR$(c), col, hl
 
         charDone:
         nl = 0
