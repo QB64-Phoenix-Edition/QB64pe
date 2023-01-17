@@ -16,9 +16,10 @@ DIM SHARED Help_Pos, Help_Wrap_Pos
 DIM SHARED Help_Line$ 'index of first txt element of a line
 DIM SHARED Help_Link$ 'the link info [sep][type:]...[sep]
 DIM SHARED Help_Link_Sep$: Help_Link_Sep$ = CHR$(13)
-DIM SHARED Help_LinkN
+DIM SHARED Help_LinkN, Help_LinkL '# of links, local link flag
 'Link Types:
 ' PAGE:wikipagename
+' SECT:dummylink (not processed, just to mark page sections as search targets for local links)
 ' EXTL:external link url
 DIM SHARED Help_BG_Col
 DIM SHARED Help_Col_Normal: Help_Col_Normal = 7
