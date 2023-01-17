@@ -38,24 +38,6 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         END IF
     END IF
 
-    'Check for curl
-    'IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
-    '    a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
-    '    IF PageName$ = "Initialize" THEN
-    '        a$ = a$ + "To be able to initialize the help system, "
-    '    ELSEIF PageName$ = "Update All" THEN
-    '        a$ = a$ + "To be able to update the help pages from the online Wiki, "
-    '    ELSE
-    '        a$ = a$ + "The requested help page is not yet cached locally. To download the help page from the online Wiki, "
-    '    END IF
-    '    a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
-    '    a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
-    '    a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
-    '    a$ = a$ + "** Unpack and drop the ''curl'' executable into the '''qb64pe''' folder." + CHR$(10)
-    '    a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the '''qb64pe''' folder too." + CHR$(10)
-    '    Wiki$ = a$: EXIT FUNCTION
-    'END IF
-
     'Download message (Status Bar)
     IF Help_Recaching = 0 THEN
         a$ = "Downloading '" + PageName$ + "' page..."
@@ -68,21 +50,14 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         PCOPY 3, 0
     END IF
 
-    'Url query and output arguments for curl
-    'url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
+    'Url query and output file name
     url$ = wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit"
     outputFile$ = Cache_Folder$ + "/" + PageName3$ + ".txt"
     'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
 
-    'Download page using curl
-    'SHELL _HIDE "curl --silent -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
-    fh = FREEFILE
-    'OPEN outputFile$ FOR BINARY AS #fh 'get new content
-    'a$ = SPACE$(LOF(fh))
-    'GET #fh, 1, a$
-    'CLOSE #fh
+    'Download page using (lib)curl
     IF PageName$ = "Initialize" OR PageName$ = "Update All" THEN
         a$ = "" 'dummy pages (for error display)
     ELSE
@@ -120,19 +95,22 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
         a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
+        IF RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
+        fh = FREEFILE
         OPEN outputFile$ FOR OUTPUT AS #fh
         PRINT #fh, a$;
         CLOSE #fh
     ELSE
-        'Delete page, if empty or corrupted (force re-download on next access)
-        'KILL outputFile$
+        'Error message, if empty or corrupted (force re-download on next access)
         a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10) +_
              "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
              "* or the download from Wiki failed and corrupted the page data." + CHR$(10) +_
-             "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10)
+             "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10) +_
+             ";Note:This may also just be a temporary server issue. If the problem persists " +_
+             "after waiting some time, then please feel free to leave us a message." + CHR$(10)
     END IF
 
     Wiki$ = a$
@@ -1120,47 +1098,73 @@ END FUNCTION
 
 $UNSTABLE:HTTP
 FUNCTION wikiDLPage$ (url$, timeout!)
-'--- set default result & avoid side effects ---
-wikiDLPage$ = ""
-wik$ = url$: tio! = timeout!
-'--- open client ---
-retry:
-ch& = _OPENCLIENT(wik$)
-IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
-    IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
-        IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
-            IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
-                wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
-                WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+    '--- set default result & avoid side effects ---
+    wikiDLPage$ = ""
+    wik$ = url$: tio# = timeout!
+    '--- request wiki page ---
+    retry:
+    ch& = _OPENCLIENT(wik$)
+    IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
+        IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
+            IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
+                'no external curl available (see notes below)
+                IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
+                    IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
+                        wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
+                        WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+                    END IF
+                    wik$ = "http://" + MID$(wik$, 9): GOTO retry
+                END IF
             END IF
-            wik$ = "http://" + MID$(wik$, 9): GOTO retry
         END IF
     END IF
-END IF
-IF ch& = 0 THEN EXIT FUNCTION
-'--- wait for response ---
-res$ = "": st! = TIMER
-DO
-    _DELAY 0.05
-    GET ch&, , rec$
-    IF LEN(rec$) > 0 THEN st! = TIMER
-    res$ = res$ + rec$
+    IF ch& = 0 GOTO oneLastChance
+    '--- read the response ---
     IF _STATUSCODE(ch&) = 200 THEN
-        le& = LOF(ch&)
-        IF le& > -1 THEN
-            IF LEN(res$) = le& THEN
-                wikiDLPage$ = res$: EXIT DO
-            END IF
-        ELSE
+        res$ = "": st# = TIMER(0.001)
+        DO
+            _DELAY 0.05
+            GET ch&, , rec$
+            IF LEN(rec$) > 0 THEN st# = TIMER(0.001)
+            res$ = res$ + rec$
             IF EOF(ch&) THEN
                 wikiDLPage$ = res$: EXIT DO
             END IF
-        END IF
-    ELSE
-        tio! = 0
+            IF st# + tio# >= 86400 THEN st# = st# - 86400
+        LOOP UNTIL TIMER(0.001) > st# + tio#
     END IF
-LOOP UNTIL TIMER > st! + tio!
-CLOSE ch&
+    CLOSE ch&
+    EXIT FUNCTION
+    '--- try external curl ---
+    oneLastChance:
+    'The external curl tool (if available), together with its local CA
+    'bundle is used as a silent fallback option. It's for people on old
+    'systems with outdated CA stores. They can use the unsecure http:
+    'choice given above for now, but who knows how long http: is still
+    'supported by web hosters with today's raising security concerns.
+    'Once it isn't supported anymore, those users can then simply drop
+    'the external curl & CA bundle into the qb64pe folder as done in
+    'former QB64-PE versions, to get secure access again.
+    ' However, we shouldn't promote this too much in the release notes
+    'and instead only give that information to people who complain about
+    'not working Wiki downloads in the Forum/Discord.
+    '--- check for curl ---
+    IF _SHELLHIDE("curl --version >NUL") = 0 THEN
+        '--- 1st restore https: protocol, if changed above ---
+        IF LCASE$(LEFT$(wik$, 7)) = "http://" THEN wik$ = "https://" + MID$(wik$, 8)
+        '--- issue curl request ---
+        responseFile$ = Cache_Folder$ + "/curlResponse.txt"
+        SHELL _HIDE "curl --silent -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
+        '--- read the response ---
+        fh = FREEFILE
+        OPEN responseFile$ FOR BINARY AS #fh
+        res$ = SPACE$(LOF(fh))
+        GET #fh, , res$
+        CLOSE #fh
+        KILL responseFile$
+        '--- set result ---
+        wikiDLPage$ = res$
+    END IF
 END FUNCTION
 
 FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text
