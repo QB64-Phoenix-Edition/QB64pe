@@ -38,24 +38,6 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         END IF
     END IF
 
-    'Check for curl
-    'IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
-    '    a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10)
-    '    IF PageName$ = "Initialize" THEN
-    '        a$ = a$ + "To be able to initialize the help system, "
-    '    ELSEIF PageName$ = "Update All" THEN
-    '        a$ = a$ + "To be able to update the help pages from the online Wiki, "
-    '    ELSE
-    '        a$ = a$ + "The requested help page is not yet cached locally. To download the help page from the online Wiki, "
-    '    END IF
-    '    a$ = a$ + "a tool called ''curl'' is required, but it wasn't found on your system." + CHR$(10) + CHR$(10)
-    '    a$ = a$ + "* To get ''curl'', visit the official [https://curl.se/download.html download page]." + CHR$(10)
-    '    a$ = a$ + "** Grab the latest ''binary'' archive available for your system." + CHR$(10)
-    '    a$ = a$ + "** Unpack and drop the ''curl'' executable into the '''qb64pe''' folder." + CHR$(10)
-    '    a$ = a$ + "** If there's a file named ''curl-ca-bundle.crt'' or similar, drop it into the '''qb64pe''' folder too." + CHR$(10)
-    '    Wiki$ = a$: EXIT FUNCTION
-    'END IF
-
     'Download message (Status Bar)
     IF Help_Recaching = 0 THEN
         a$ = "Downloading '" + PageName$ + "' page..."
@@ -68,21 +50,14 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         PCOPY 3, 0
     END IF
 
-    'Url query and output arguments for curl
-    'url$ = CHR$(34) + wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit" + CHR$(34)
+    'Url query and output file name
     url$ = wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit"
     outputFile$ = Cache_Folder$ + "/" + PageName3$ + ".txt"
     'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"
     s2$ = "</textarea>"
 
-    'Download page using curl
-    'SHELL _HIDE "curl --silent -o " + CHR$(34) + outputFile$ + CHR$(34) + " " + url$
-    fh = FREEFILE
-    'OPEN outputFile$ FOR BINARY AS #fh 'get new content
-    'a$ = SPACE$(LOF(fh))
-    'GET #fh, 1, a$
-    'CLOSE #fh
+    'Download page using (lib)curl
     IF PageName$ = "Initialize" OR PageName$ = "Update All" THEN
         a$ = "" 'dummy pages (for error display)
     ELSE
@@ -120,19 +95,22 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
         a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
+        IF RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
+        fh = FREEFILE
         OPEN outputFile$ FOR OUTPUT AS #fh
         PRINT #fh, a$;
         CLOSE #fh
     ELSE
-        'Delete page, if empty or corrupted (force re-download on next access)
-        'KILL outputFile$
+        'Error message, if empty or corrupted (force re-download on next access)
         a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10) +_
              "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
              "* or the download from Wiki failed and corrupted the page data." + CHR$(10) +_
-             "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10)
+             "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10) +_
+             ";Note:This may also just be a temporary server issue. If the problem persists " +_
+             "after waiting some time, then please feel free to leave us a message." + CHR$(10)
     END IF
 
     Wiki$ = a$
@@ -263,9 +241,9 @@ END FUNCTION
 SUB WikiParse (a$) 'Wiki page interpret
 
     'Clear info
-    help_h = 0: help_w = 0: Help_Line$ = "": Help_Link$ = "": Help_LinkN = 0
-    Help_Txt$ = SPACE$(1000000)
-    Help_Txt_Len = 0
+    help_h = 0: help_w = 0
+    Help_Line$ = "": Help_Txt$ = SPACE$(1000000): Help_Txt_Len = 0
+    Help_Link$ = "SECT:dummylink" + Help_Link_Sep$: Help_LinkN = 1
 
     Help_Pos = 1: Help_Wrap_Pos = 0
     Help_Line$ = MKL$(1)
@@ -286,7 +264,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_Center = 0: Help_CIndent$ = ""
     Help_DList = 0: Help_ChkBlank = 0
 
-    link = 0: elink = 0: cb = 0: nl = 1: ah = 0: dl = 0
+    link = 0: elink = 0: cb = 0: nl = 1: hl = 0: ah = 0: dl = 0
 
     col = Help_Col
 
@@ -363,12 +341,45 @@ SUB WikiParse (a$) 'Wiki page interpret
         NEXT
 
         'Wiki specific code handling (no restrictions)
-        s$ = "__NOEDITSECTION__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOEDITSECTION__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
         s$ = "__NOEDITSECTION__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
-        s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
         s$ = "__NOTOC__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "<nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "</nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "<gallery" 'Wiki gallery (supported for command availability only)
+        IF c$(LEN(s$)) = s$ THEN
+            i = i + LEN(s$) - 1: nl = 0
+            FOR ii = i TO LEN(a$) - 1
+                IF MID$(a$, ii, 1) = ">" THEN
+                    wla$ = wikiLookAhead$(a$, ii + 1, "</gallery>"): v$ = wla$: nl = 1
+                    IF INSTR(MID$(a$, i, ii - i), "48px") = 0 OR INSTR(MID$(a$, i, ii - i), "nolines") = 0 THEN
+                        i = ii + LEN(wla$) 'ignore this gallery
+                    ELSE
+                        wla$ = StrRemove$(wla$, " "): wla$ = StrRemove$(wla$, CHR$(10))
+                        wla$ = StrReplace$(wla$, "|'''", "|*"): wla$ = StrReplace$(wla$, "'''", "'' / ")
+                        wla$ = StrReplace$(wla$, "File:Qb64.png|*", "'''QB64;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Qbpe.png|*", "'''QB64-PE;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Win.png|*", "'''Windows;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Lnx.png|*", "'''Linux;''' ''")
+                        wla$ = StrReplace$(wla$, "File:Osx.png|*", "'''macOS;''' ''")
+                        IF INSTR(wla$, ":") > 0 THEN
+                            i = ii + LEN(v$) 'although gallery parameters match, at least
+                            EXIT FOR '       'one image does not, so ignore this gallery
+                        END IF
+                        wla$ = StrReplace$(wla$, ";", ":")
+                        wla$ = StrReplace$(wla$, "''all''", "''all versions''")
+                        wla$ = "* " + LEFT$(wla$, LEN(wla$) - 3) + CHR$(10)
+                        a$ = LEFT$(a$, ii) + wla$ + MID$(a$, ii + LEN(v$) + 1)
+                        n = LEN(a$): i = ii
+                    END IF
+                    EXIT FOR
+                END IF
+            NEXT
+            GOTO charDoneKnl 'keep nl state for next wiki token
+        END IF
+        s$ = "</gallery>" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
+        s$ = "</gallery>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
 
         'Direct HTML code is not handled in Code/Output blocks (hard lock), as all text
         'could be part of the code example itself (just imagine a HTML parser/writer demo)
@@ -488,8 +499,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                     etext$ = elink$
                     i2 = INSTR(elink$, " ")
                     IF i2 > 0 THEN
-                        etext$ = RIGHT$(elink$, LEN(elink$) - i2)
-                        elink$ = LEFT$(elink$, i2 - 1)
+                        etext$ = MID$(elink$, i2 + 1) 'text part
+                        elink$ = LEFT$(elink$, i2 - 1) 'link part
                     END IF
 
                     Help_LinkN = Help_LinkN + 1
@@ -522,17 +533,13 @@ SUB WikiParse (a$) 'Wiki page interpret
                 text$ = link$
                 i2 = INSTR(link$, "|") 'pipe link?
                 IF i2 > 0 THEN
-                    text$ = RIGHT$(link$, LEN(link$) - i2) 'text part
-                    link$ = LEFT$(link$, i2 - 1) '         'link part
+                    text$ = MID$(link$, i2 + 1) 'text part
+                    link$ = LEFT$(link$, i2 - 1) 'link part
                 END IF
                 i2 = INSTR(link$, "#") 'local link?
                 IF i2 > 0 THEN
-                    link$ = LEFT$(link$, i2 - 1) 'link to TOP
-                    IF link$ = "" THEN
-                        IF LEFT$(text$, 1) = "#" THEN text$ = MID$(text$, 2)
-                        Help_AddTxt text$, 8, 0
-                        GOTO charDone
-                    END IF
+                    IF text$ = link$ THEN text$ = MID$(link$, i2 + 1) 'use anchor if no alternate text yet
+                    IF LEFT$(link$, 1) = "#" THEN link$ = Help_PageLoaded$ + link$ 'add current page if missing
                 END IF
                 IF LEFT$(link$, 9) = "Category:" THEN 'ignore category links
                     Help_CheckRemoveBlankLine
@@ -630,7 +637,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                     '----------
                     IF cbo$ <> "" THEN
                         IF RIGHT$(cbo$, 1) = ":" THEN Help_Underline = 2: ELSE Help_Underline = 1
-                        Help_AddTxt cbo$, Help_Col_Section, 0: ah = 2
+                        Help_AddTxt cbo$, Help_Col_Section, 1: ah = 2
                     END IF
                 END IF
 
@@ -791,16 +798,16 @@ SUB WikiParse (a$) 'Wiki page interpret
         IF Help_LockParse = 0 THEN
             'Custom section headings (section color, h3 single underline, h2 double underline)
             ii = 0
-            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0: ah = 2
-            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0: ah = 2
-            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 3
-            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_CheckBlankLine: Help_Heading = 3
+            IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(3) = "===" AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 3: hl = 1
+            IF c$(4) = "=== " AND nl = 1 THEN ii = 3: Help_CheckBlankLine: Help_Heading = 3: hl = 1
             IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 1: GOTO charDone
             ii = 0
-            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0: ah = 2
-            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0: ah = 2
-            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_CheckBlankLine: Help_Heading = 2
-            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 2
+            IF c$(3) = " ==" AND Help_Heading = 2 THEN ii = 2: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(2) = "==" AND Help_Heading = 2 THEN ii = 1: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(2) = "==" AND nl = 1 THEN ii = 1: Help_CheckBlankLine: Help_Heading = 2: hl = 1
+            IF c$(3) = "== " AND nl = 1 THEN ii = 2: Help_CheckBlankLine: Help_Heading = 2: hl = 1
             IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 2: GOTO charDone
         END IF
 
@@ -954,7 +961,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             nl = 1
             GOTO charDoneKnl 'keep just set nl state
         END IF
-        Help_AddTxt CHR$(c), col, 0
+        Help_AddTxt CHR$(c), col, hl
 
         charDone:
         nl = 0
@@ -1091,47 +1098,73 @@ END FUNCTION
 
 $UNSTABLE:HTTP
 FUNCTION wikiDLPage$ (url$, timeout!)
-'--- set default result & avoid side effects ---
-wikiDLPage$ = ""
-wik$ = url$: tio! = timeout!
-'--- open client ---
-retry:
-ch& = _OPENCLIENT(wik$)
-IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
-    IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
-        IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
-            IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
-                wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
-                WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+    '--- set default result & avoid side effects ---
+    wikiDLPage$ = ""
+    wik$ = url$: tio# = timeout!
+    '--- request wiki page ---
+    retry:
+    ch& = _OPENCLIENT(wik$)
+    IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
+        IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
+            IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
+                'no external curl available (see notes below)
+                IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
+                    IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
+                        wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
+                        WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
+                    END IF
+                    wik$ = "http://" + MID$(wik$, 9): GOTO retry
+                END IF
             END IF
-            wik$ = "http://" + MID$(wik$, 9): GOTO retry
         END IF
     END IF
-END IF
-IF ch& = 0 THEN EXIT FUNCTION
-'--- wait for response ---
-res$ = "": st! = TIMER
-DO
-    _DELAY 0.05
-    GET ch&, , rec$
-    IF LEN(rec$) > 0 THEN st! = TIMER
-    res$ = res$ + rec$
+    IF ch& = 0 GOTO oneLastChance
+    '--- read the response ---
     IF _STATUSCODE(ch&) = 200 THEN
-        le& = LOF(ch&)
-        IF le& > -1 THEN
-            IF LEN(res$) = le& THEN
-                wikiDLPage$ = res$: EXIT DO
-            END IF
-        ELSE
+        res$ = "": st# = TIMER(0.001)
+        DO
+            _DELAY 0.05
+            GET ch&, , rec$
+            IF LEN(rec$) > 0 THEN st# = TIMER(0.001)
+            res$ = res$ + rec$
             IF EOF(ch&) THEN
                 wikiDLPage$ = res$: EXIT DO
             END IF
-        END IF
-    ELSE
-        tio! = 0
+            IF st# + tio# >= 86400 THEN st# = st# - 86400
+        LOOP UNTIL TIMER(0.001) > st# + tio#
     END IF
-LOOP UNTIL TIMER > st! + tio!
-CLOSE ch&
+    CLOSE ch&
+    EXIT FUNCTION
+    '--- try external curl ---
+    oneLastChance:
+    'The external curl tool (if available), together with its local CA
+    'bundle is used as a silent fallback option. It's for people on old
+    'systems with outdated CA stores. They can use the unsecure http:
+    'choice given above for now, but who knows how long http: is still
+    'supported by web hosters with today's raising security concerns.
+    'Once it isn't supported anymore, those users can then simply drop
+    'the external curl & CA bundle into the qb64pe folder as done in
+    'former QB64-PE versions, to get secure access again.
+    ' However, we shouldn't promote this too much in the release notes
+    'and instead only give that information to people who complain about
+    'not working Wiki downloads in the Forum/Discord.
+    '--- check for curl ---
+    IF _SHELLHIDE("curl --version >NUL") = 0 THEN
+        '--- 1st restore https: protocol, if changed above ---
+        IF LCASE$(LEFT$(wik$, 7)) = "http://" THEN wik$ = "https://" + MID$(wik$, 8)
+        '--- issue curl request ---
+        responseFile$ = Cache_Folder$ + "/curlResponse.txt"
+        SHELL _HIDE "curl --silent -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
+        '--- read the response ---
+        fh = FREEFILE
+        OPEN responseFile$ FOR BINARY AS #fh
+        res$ = SPACE$(LOF(fh))
+        GET #fh, , res$
+        CLOSE #fh
+        KILL responseFile$
+        '--- set result ---
+        wikiDLPage$ = res$
+    END IF
 END FUNCTION
 
 FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text
