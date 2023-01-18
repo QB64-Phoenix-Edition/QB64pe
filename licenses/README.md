@@ -88,7 +88,8 @@ These libraries are pulled in when using any sound-related functionality.
 | Miniaudio | MIT | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
-| std_vorbus | Public Domain | license_stdvorbis.txt | internal/c/parts/audio/extras/std_vorbis.c |
+| std_vorbis | Public Domain | license_stdvorbis.txt | internal/c/parts/audio/extras/std_vorbis.c |
+| HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker |
 
 ## MIDI Support
 
