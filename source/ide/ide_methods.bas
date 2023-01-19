@@ -2747,6 +2747,11 @@ FUNCTION ide2 (ignore)
                 IF INSTR(UCASE$(lnk$), "PARENTHESIS") THEN GOTO ideloop
 
                 OpenHelpLink:
+                l2 = INSTR(lnk$, "#") 'local link?
+                IF l2 > 0 THEN
+                    Help_Search_Str = StrReplace$(MID$(lnk$, l2 + 1), "_", " ")
+                    lnk$ = LEFT$(lnk$, l2 - 1): Help_LinkL = -1
+                END IF
 
 
                 Help_Back(Help_Back_Pos).sx = Help_sx 'update position
@@ -2805,7 +2810,11 @@ FUNCTION ide2 (ignore)
                 END IF
 
                 GOSUB redrawitall
-                GOTO specialchar
+                IF Help_LinkL THEN
+                    norep = 1: GOTO searchnext
+                ELSE
+                    GOTO specialchar
+                END IF
 
             ELSE
                 'No help found; Does the user want help for a SUB or FUNCTION?
