@@ -18959,8 +18959,9 @@ FUNCTION ideupdatehelpbox
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, l$
                     IF LEN(l$) THEN
-                        c = INSTR(l$, ","): l$ = RIGHT$(l$, LEN(l$) - c)
-                        IF Help_Recaching < 2 OR LEFT$(l$, 3) <> "_gl" THEN 'ignore _GL pages for 'qb64pe -u' (build time update)
+                        c = INSTR(l$, ","): l$ = MID$(l$, c + 1) '              'we only need the page name here
+                        c = INSTR(l$, "#"): IF c > 0 THEN l$ = LEFT$(l$, c - 1) 'but not the local link target (if any)
+                        IF Help_Recaching < 2 OR LEFT$(l$, 3) <> "_gl" THEN '   'ignore _GL pages for 'qb64pe -u' (build time update)
                             'Escape all invalid and other critical chars in filenames
                             PageName2$ = ""
                             FOR i = 1 TO LEN(l$)
