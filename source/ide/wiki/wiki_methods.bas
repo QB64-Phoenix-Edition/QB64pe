@@ -357,6 +357,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                         i = ii + LEN(wla$) 'ignore this gallery
                     ELSE
                         wla$ = StrRemove$(wla$, " "): wla$ = StrRemove$(wla$, CHR$(10))
+                        wla$ = StrRemove$(wla$, "File:Apix.png") 'alpha pixels image (separator only)
                         wla$ = StrReplace$(wla$, "|'''", "|*"): wla$ = StrReplace$(wla$, "'''", "'' / ")
                         wla$ = StrReplace$(wla$, "File:Qb64.png|*", "'''QB64;''' ''")
                         wla$ = StrReplace$(wla$, "File:Qbpe.png|*", "'''QB64-PE;''' ''")
