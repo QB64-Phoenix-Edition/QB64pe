@@ -250,7 +250,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_Center = 0: Help_CIndent$ = ""
     Help_DList = 0: Help_ChkBlank = 0
 
-    link = 0: elink = 0: cb = 0: nl = 1: hl = 0: ah = 0: dl = 0
+    link = 0: elink = 0: ue = 0: uu = 0: cb = 0: nl = 1: hl = 0: ah = 0: dl = 0
 
     col = Help_Col
 
@@ -865,33 +865,49 @@ SUB WikiParse (a$) 'Wiki page interpret
             END IF
         END IF
 
+        'HTML entity handling (no restrictions)
+        IF c$ = "&" THEN 'possible entity
+            FOR ii = 0 TO wpEntReplCnt
+                ent$ = RTRIM$(wpEntRepl(ii).enti)
+                IF c$(LEN(ent$)) = ent$ THEN
+                    Help_AddTxt RTRIM$(wpEntRepl(ii).repl), col, 0
+                    i = i + LEN(ent$) - 1: GOTO charDone
+                END IF
+            NEXT
+            ii = INSTR(c$(8), ";"): iii = INSTR(c$(8), " ") 'unknown entity?
+            IF ii > 0 AND (iii = 0 OR iii > ii) THEN
+                Help_AddTxt c$(ii), 8, 0: ue = -1
+                i = i + ii - 1: GOTO charDone
+            END IF
+        END IF
+
         'Unicode handling (no restrictions)
         IF ((c AND &HE0~%%) = 192) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) THEN '2-byte UTF-8
             i = i + 1
             FOR ii = 0 TO wpUtfReplCnt
                 IF wpUtfRepl(ii).utf8 = c$(2) + MKI$(&H2020) THEN
-                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: GOTO charDone
                 END IF
             NEXT
-            GOTO charDone
+            Help_AddTxt CHR$(168), 8, 0: uu = -1: GOTO charDone
         END IF
         IF ((c AND &HF0~%%) = 224) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) AND ((ASC(c$(3), 3) AND &HC0~%%) = 128) THEN '3-byte UTF-8
             i = i + 2
             FOR ii = 0 TO wpUtfReplCnt
                 IF wpUtfRepl(ii).utf8 = c$(3) + CHR$(0) THEN
-                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: GOTO charDone
                 END IF
             NEXT
-            GOTO charDone
+            Help_AddTxt CHR$(168), 8, 0: uu = -1: GOTO charDone
         END IF
         IF ((c AND &HF8~%%) = 240) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) AND ((ASC(c$(3), 3) AND &HC0~%%) = 128) AND ((ASC(c$(4), 4) AND &HC0~%%) = 128) THEN '4-byte UTF-8
             i = i + 3
             FOR ii = 0 TO wpUtfReplCnt
                 IF wpUtfRepl(ii).utf8 = c$(4) THEN
-                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: GOTO charDone
                 END IF
             NEXT
-            GOTO charDone
+            Help_AddTxt CHR$(168), 8, 0: uu = -1: GOTO charDone
         END IF
 
         'Line break handling (no restrictions)
@@ -940,6 +956,41 @@ SUB WikiParse (a$) 'Wiki page interpret
     LOOP
     'END_PARSE_LOOP
 
+    'Write and rearrange Entity & Unicode error messages (if any)
+    IF ue OR uu THEN
+        Help_LinkN = Help_LinkN + 1
+        Help_Link$ = Help_Link$ + "EXTL:https://qb64phoenix.com/forum/forumdisplay.php?fid=25" + Help_Link_Sep$
+        stp = CVL(RIGHT$(Help_Line$, 4))
+        Help_AddTxt STRING$(Help_ww, 196), 14, 0: Help_NewLine
+        itp = CVL(MID$(Help_Line$, 13, 4)): dtl = CVL(RIGHT$(Help_Line$, 4)) - stp
+        txt$ = MID$(Help_Txt$, stp, dtl) + MID$(Help_Txt$, itp, stp - itp): MID$(Help_Txt$, itp, LEN(txt$)) = txt$
+        Help_Line$ = LEFT$(Help_Line$, 12) + MKL$(itp) + MID$(Help_Line$, 13, LEN(Help_Line$) - 16)
+        FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
+        IF uu THEN
+            stp = CVL(RIGHT$(Help_Line$, 4))
+            Help_AddTxt "!>", 4, 0
+            Help_AddTxt " Page uses ", Help_Col_Normal, 0
+            Help_AddTxt "unknown UTF-8 characters", 8, 0
+            Help_AddTxt ", please report it in the ", Help_Col_Normal, 0
+            Help_AddTxt "Wiki Forum.", Help_Col_Link, Help_LinkN: Help_NewLine
+            itp = CVL(MID$(Help_Line$, 13, 4)): dtl = CVL(RIGHT$(Help_Line$, 4)) - stp
+            txt$ = MID$(Help_Txt$, stp, dtl) + MID$(Help_Txt$, itp, stp - itp): MID$(Help_Txt$, itp, LEN(txt$)) = txt$
+            Help_Line$ = LEFT$(Help_Line$, 12) + MKL$(itp) + MID$(Help_Line$, 13, LEN(Help_Line$) - 16)
+            FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
+        END IF
+        IF ue THEN
+            stp = CVL(RIGHT$(Help_Line$, 4))
+            Help_AddTxt "!>", 4, 0
+            Help_AddTxt " Page uses ", Help_Col_Normal, 0
+            Help_AddTxt "unknown HTML entities", 8, 0
+            Help_AddTxt ", please report it in the ", Help_Col_Normal, 0
+            Help_AddTxt "Wiki Forum.", Help_Col_Link, Help_LinkN: Help_NewLine
+            itp = CVL(MID$(Help_Line$, 13, 4)): dtl = CVL(RIGHT$(Help_Line$, 4)) - stp
+            txt$ = MID$(Help_Txt$, stp, dtl) + MID$(Help_Txt$, itp, stp - itp): MID$(Help_Txt$, itp, LEN(txt$)) = txt$
+            Help_Line$ = LEFT$(Help_Line$, 12) + MKL$(itp) + MID$(Help_Line$, 13, LEN(Help_Line$) - 16)
+            FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
+        END IF
+    END IF
     'Trim Help_Txt$
     Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len) + CHR$(13) 'chr13 stops reads past end of content
 
