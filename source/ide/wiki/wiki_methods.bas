@@ -534,7 +534,11 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
 
                 Help_LinkN = Help_LinkN + 1
-                Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
+                IF LEFT$(link$, 10) = "Wikipedia:" THEN 'expand Wikipedia as external links
+                    Help_Link$ = Help_Link$ + "EXTL:https://en.wikipedia.org/wiki/" + MID$(link$, 11) + Help_Link_Sep$
+                ELSE '                                  'else as internal help page link
+                    Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
+                END IF
 
                 IF Help_LockParse = 0 THEN
                     Help_AddTxt text$, Help_Col_Link, Help_LinkN
