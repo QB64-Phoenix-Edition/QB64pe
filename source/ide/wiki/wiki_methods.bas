@@ -80,7 +80,8 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
         a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
-        IF RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
+        WHILE LEFT$(a$, 1) = CHR$(10): a$ = MID$(a$, 2): WEND
+        IF LEN(a$) > 0 AND RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
@@ -236,10 +237,10 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_LockWrap = 0
     'Parser locks (neg: soft lock, zero: unlocked, pos: hard lock)
     'hard:  2 = inside code blocks,  1 = inside output blocks
-    'soft: -1 = inside text blocks, -2 = inside fixed blocks
-    '=> all parser locks also imply a wrapping lock (except -1)
-    '=> hard locks almost every parsing except utf-8 substitution and line breaks
-    '=> soft allows all elements not disrupting the current block, hence only
+    'soft: -1 = inside text blocks, -2 = inside pre or fixed blocks
+    '=> all parser locks also imply a wrapping lock (except text (-1))
+    '=> hard: locks almost every parsing except HTML-entity/UTF-8 substitution and line breaks
+    '=> soft: allows all elements not disrupting the current block, hence only
     '   paragraph creating things are locked (eg. headings, lists, rulers etc.),
     '   but text styles, links and template processing is still possible
     Help_LockParse = 0
@@ -292,7 +293,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     END IF
     i = LEN(d$): ii = LEN(t$)
     Help_AddTxt "  Ú" + STRING$(ii + 2, "Ä") + "¿", 14, 0: Help_NewLine
-    Help_AddTxt "  ³ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ³", 14, 0
+    Help_AddTxt "  ³ ", 14, 0: Help_AddTxt t$, 9, 0: Help_AddTxt " ³", 14, 0
     i = Help_ww - i - 2 - Help_Pos: IF i < 2 THEN i = 2
     Help_AddTxt SPACE$(i) + CHR$(4), 14, 0
     IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
@@ -666,7 +667,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF cb$ = "PreStart" AND Help_LockParse = 0 THEN
                     Help_CheckRemoveBlankLine
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
-                    Help_LIndent$ = "  ": Help_LockParse = -1
+                    Help_LIndent$ = "  ": Help_LockParse = -2
                     Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
