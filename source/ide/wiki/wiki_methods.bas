@@ -77,21 +77,6 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "&lt;", "<")
         a$ = StrReplace$(a$, "&gt;", ">")
         a$ = StrReplace$(a$, "&quot;", CHR$(34))
-        a$ = StrReplace$(a$, "&apos;", "'")
-        '--- then other entities
-        a$ = StrReplace$(a$, "&verbar;", "|")
-        a$ = StrReplace$(a$, "&pi;", CHR$(227))
-        a$ = StrReplace$(a$, "&theta;", CHR$(233))
-        a$ = StrReplace$(a$, "&sup1;", CHR$(252))
-        a$ = StrReplace$(a$, "&sup2;", CHR$(253))
-        a$ = StrReplace$(a$, "&nbsp;", CHR$(255))
-        '--- useless styles in blocks
-        a$ = StrReplace$(a$, "Start}}'' ''", "Start}}")
-        a$ = StrReplace$(a$, "Start}} '' ''", "Start}}")
-        a$ = StrReplace$(a$, "Start}}" + CHR$(10) + "'' ''", "Start}}")
-        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + "{{", CHR$(10) + "{{")
-        a$ = StrReplace$(a$, "'' '' " + CHR$(10) + "{{", CHR$(10) + "{{")
-        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + CHR$(10) + "{{", CHR$(10) + "{{")
         '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
         a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
@@ -526,7 +511,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             END IF
         END IF
         'However, the internal link logic must run always, as it also handles
-        'the template {{Cb|, {{Cl| and {{KW| links used in code blocks
+        'the template {{Cb| and {{Cl| links used in text/code blocks
         IF link = 1 THEN
             IF c$(2) = "]]" OR c$(2) = "}}" THEN
                 i = i + 1
@@ -588,8 +573,8 @@ SUB WikiParse (a$) 'Wiki page interpret
 
         'Wiki templates are handled always, as these are the basic building blocks of all
         'the wiki pages, but look for special conditions inside (Help_LockParse checks)
-        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{KW|" THEN 'just nice wrapped links
-            i = i + 4 '                                               'KW is deprecated (but kept for existing pages)
+        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" THEN 'just nice wrapped links
+            i = i + 4
             link = 1
             link$ = ""
             GOTO charDone
@@ -623,13 +608,10 @@ SUB WikiParse (a$) 'Wiki page interpret
 
                 IF Help_LockParse = 0 THEN 'no section headings in blocks
                     cbo$ = ""
-                    'Standard section headings (section color, h3 single underline, h2 double underline)
-                    'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
+                    'Standard section headings (section color, double underline)
                     IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
-                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page prefix is deprecated (but kept for existing pages)
+                    IF cb$ = "PageParameters" THEN cbo$ = "Parameters:"
                     IF cb$ = "PageDescription" THEN cbo$ = "Description:"
-                    IF cb$ = "PageNotes" THEN cbo$ = "Notes" 'sub-sect
-                    IF cb$ = "PageErrors" THEN cbo$ = "Errors" 'sub-sect
                     IF cb$ = "PageAvailability" THEN cbo$ = "Availability:"
                     IF cb$ = "PageExamples" THEN cbo$ = "Examples:"
                     IF cb$ = "PageSeeAlso" THEN cbo$ = "See also:"
@@ -709,14 +691,14 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
                 'Fixed Block
-                IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
+                IF cb$ = "FixedStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 6: Help_LockParse = -2
                     Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
-                IF (cb$ = "FixedEnd" OR cb$ = "WhiteEnd") AND Help_LockParse <> 0 THEN 'White is deprecated (but kept for existing pages)
+                IF cb$ = "FixedEnd" AND Help_LockParse <> 0 THEN
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
@@ -729,23 +711,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                     IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
                         a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
                         n = n + LEN(pit$)
-                    END IF
-                END IF
-
-                'Template wrapped table (try to get a readable plugin first)
-                IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse = 0 THEN 'no table info in blocks
-                    pit$ = Wiki$("Template:" + LEFT$(cb$, LEN(cb$) - 5) + "Plugin")
-                    IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
-                        a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
-                        n = n + LEN(pit$)
-                    ELSE
-                        Help_LinkN = Help_LinkN + 1
-                        Help_Link$ = Help_Link$ + "EXTL:" + wikiBaseAddress$ + "/index.php?title=Template:" + cb$ + Help_Link_Sep$
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ษออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " The original page has a table here,  ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " please click inside this box to load ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " the table into your standard browser.", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ศออออออออออออออออออออออออออออออออออออออผ", 8, 0
                     END IF
                 END IF
 
@@ -762,7 +727,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                         IF INSTR(MID$(a$, i - 30, 30), "{{CodeEnd}}") > 0 THEN iii = -1
                         IF INSTR(MID$(a$, i - 30, 30), "{{TextEnd}}") > 0 THEN iii = -6
                         IF INSTR(MID$(a$, i - 31, 31), "{{FixedEnd}}") > 0 THEN iii = -6
-                        IF INSTR(MID$(a$, i - 31, 31), "{{WhiteEnd}}") > 0 THEN iii = -6
                     END IF
                     IF iii <> 0 THEN
                         FOR ii = Help_Txt_Len - 3 TO 1 STEP -4
