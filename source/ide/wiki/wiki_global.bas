@@ -52,12 +52,30 @@ DIM SHARED Help_Search_Str AS STRING
 DIM SHARED Help_PageLoaded AS STRING
 DIM SHARED Help_Recaching, Help_IgnoreCache
 
+'HTML entity replacements
+'(for non HTML chars only, ie. no &amp; &lt; &gt; &quot; which are handled in SUB Wiki$ directly)
+TYPE wikiEntityReplace
+    enti AS STRING * 8 '= entity as supported (ie. name where available, else as decimal number)
+    repl AS STRING * 8 '= replacement string (1-8 chars)
+END TYPE
+DIM SHARED wpEntRepl(0 TO 10) AS wikiEntityReplace
+DIM SHARED wpEntReplCnt: wpEntReplCnt = -1 'wpEntRepl index counter (pre-increment, hence
+'you don't need "wpEntReplCnt - 1" when used in loops, just do "0 TO wpEntReplCnt"
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&apos;": wpEntRepl(wpEntReplCnt).repl = "'" 'apostrophe
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&#91;": wpEntRepl(wpEntReplCnt).repl = "[" 'open square bracket
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&#93;": wpEntRepl(wpEntReplCnt).repl = "]" 'close square bracket
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&#123;": wpEntRepl(wpEntReplCnt).repl = "{" 'open curly bracket
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&#125;": wpEntRepl(wpEntReplCnt).repl = "}" 'close curly bracket
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&pi;": wpEntRepl(wpEntReplCnt).repl = CHR$(227) 'pi
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&theta;": wpEntRepl(wpEntReplCnt).repl = CHR$(233) 'theta
+wpEntReplCnt = wpEntReplCnt + 1: wpEntRepl(wpEntReplCnt).enti = "&nbsp;": wpEntRepl(wpEntReplCnt).repl = CHR$(255) 'non-breaking space
+
 'Unicode replacements
 TYPE wikiUtf8Replace
     utf8 AS STRING * 4 '= MKI$(reversed hex 2-byte UTF-8 sequence) or MKL$(reversed hex 3/4-byte UTF-8 sequence)
     repl AS STRING * 8 '= replacement string (1-8 chars)
 END TYPE
-DIM SHARED wpUtfRepl(0 TO 50) AS wikiUtf8Replace
+DIM SHARED wpUtfRepl(0 TO 40) AS wikiUtf8Replace
 DIM SHARED wpUtfReplCnt: wpUtfReplCnt = -1 'wpUtfRepl index counter (pre-increment, hence
 'you don't need "wpUtfReplCnt - 1" when used in loops, just do "0 TO wpUtfReplCnt"
 'Note: All UTF-8 values must be reversed in MKI$/MKL$, as it flips them to little endian.

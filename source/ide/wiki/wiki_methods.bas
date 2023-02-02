@@ -77,25 +77,11 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = StrReplace$(a$, "&lt;", "<")
         a$ = StrReplace$(a$, "&gt;", ">")
         a$ = StrReplace$(a$, "&quot;", CHR$(34))
-        a$ = StrReplace$(a$, "&apos;", "'")
-        '--- then other entities
-        a$ = StrReplace$(a$, "&verbar;", "|")
-        a$ = StrReplace$(a$, "&pi;", CHR$(227))
-        a$ = StrReplace$(a$, "&theta;", CHR$(233))
-        a$ = StrReplace$(a$, "&sup1;", CHR$(252))
-        a$ = StrReplace$(a$, "&sup2;", CHR$(253))
-        a$ = StrReplace$(a$, "&nbsp;", CHR$(255))
-        '--- useless styles in blocks
-        a$ = StrReplace$(a$, "Start}}'' ''", "Start}}")
-        a$ = StrReplace$(a$, "Start}} '' ''", "Start}}")
-        a$ = StrReplace$(a$, "Start}}" + CHR$(10) + "'' ''", "Start}}")
-        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + "{{", CHR$(10) + "{{")
-        a$ = StrReplace$(a$, "'' '' " + CHR$(10) + "{{", CHR$(10) + "{{")
-        a$ = StrReplace$(a$, "'' ''" + CHR$(10) + CHR$(10) + "{{", CHR$(10) + "{{")
         '--- wiki redirects & crlf
         a$ = StrReplace$(a$, "#REDIRECT", "See page")
         a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
-        IF RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
+        WHILE LEFT$(a$, 1) = CHR$(10): a$ = MID$(a$, 2): WEND
+        IF LEN(a$) > 0 AND RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
         '--- put a download date/time entry
         a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
         '--- now save it
@@ -251,10 +237,10 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_LockWrap = 0
     'Parser locks (neg: soft lock, zero: unlocked, pos: hard lock)
     'hard:  2 = inside code blocks,  1 = inside output blocks
-    'soft: -1 = inside text blocks, -2 = inside fixed blocks
-    '=> all parser locks also imply a wrapping lock (except -1)
-    '=> hard locks almost every parsing except utf-8 substitution and line breaks
-    '=> soft allows all elements not disrupting the current block, hence only
+    'soft: -1 = inside text blocks, -2 = inside pre or fixed blocks
+    '=> all parser locks also imply a wrapping lock (except text (-1))
+    '=> hard: locks almost every parsing except HTML-entity/UTF-8 substitution and line breaks
+    '=> soft: allows all elements not disrupting the current block, hence only
     '   paragraph creating things are locked (eg. headings, lists, rulers etc.),
     '   but text styles, links and template processing is still possible
     Help_LockParse = 0
@@ -264,7 +250,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_Center = 0: Help_CIndent$ = ""
     Help_DList = 0: Help_ChkBlank = 0
 
-    link = 0: elink = 0: cb = 0: nl = 1: hl = 0: ah = 0: dl = 0
+    link = 0: elink = 0: ue = 0: uu = 0: cb = 0: nl = 1: hl = 0: ah = 0: dl = 0
 
     col = Help_Col
 
@@ -307,7 +293,7 @@ SUB WikiParse (a$) 'Wiki page interpret
     END IF
     i = LEN(d$): ii = LEN(t$)
     Help_AddTxt "  ฺ" + STRING$(ii + 2, "ฤ") + "ฟ", 14, 0: Help_NewLine
-    Help_AddTxt "  ณ ", 14, 0: Help_AddTxt t$, 12, 0: Help_AddTxt " ณ", 14, 0
+    Help_AddTxt "  ณ ", 14, 0: Help_AddTxt t$, 9, 0: Help_AddTxt " ณ", 14, 0
     i = Help_ww - i - 2 - Help_Pos: IF i < 2 THEN i = 2
     Help_AddTxt SPACE$(i) + CHR$(4), 14, 0
     IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
@@ -526,7 +512,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             END IF
         END IF
         'However, the internal link logic must run always, as it also handles
-        'the template {{Cb|, {{Cl| and {{KW| links used in code blocks
+        'the template {{Cb| and {{Cl| links used in text/code blocks
         IF link = 1 THEN
             IF c$(2) = "]]" OR c$(2) = "}}" THEN
                 i = i + 1
@@ -548,7 +534,11 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
 
                 Help_LinkN = Help_LinkN + 1
-                Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
+                IF LEFT$(link$, 10) = "Wikipedia:" THEN 'expand Wikipedia as external links
+                    Help_Link$ = Help_Link$ + "EXTL:https://en.wikipedia.org/wiki/" + MID$(link$, 11) + Help_Link_Sep$
+                ELSE '                                  'else as internal help page link
+                    Help_Link$ = Help_Link$ + "PAGE:" + link$ + Help_Link_Sep$
+                END IF
 
                 IF Help_LockParse = 0 THEN
                     Help_AddTxt text$, Help_Col_Link, Help_LinkN
@@ -588,8 +578,8 @@ SUB WikiParse (a$) 'Wiki page interpret
 
         'Wiki templates are handled always, as these are the basic building blocks of all
         'the wiki pages, but look for special conditions inside (Help_LockParse checks)
-        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{KW|" THEN 'just nice wrapped links
-            i = i + 4 '                                               'KW is deprecated (but kept for existing pages)
+        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" THEN 'just nice wrapped links
+            i = i + 4
             link = 1
             link$ = ""
             GOTO charDone
@@ -623,13 +613,10 @@ SUB WikiParse (a$) 'Wiki page interpret
 
                 IF Help_LockParse = 0 THEN 'no section headings in blocks
                     cbo$ = ""
-                    'Standard section headings (section color, h3 single underline, h2 double underline)
-                    'Recommended order of main page sections (h2) with it's considered sub-sections (h3)
+                    'Standard section headings (section color, double underline)
                     IF cb$ = "PageSyntax" THEN cbo$ = "Syntax:"
-                    IF cb$ = "PageParameters" OR cb$ = "Parameters" THEN cbo$ = "Parameters:" 'w/o Page prefix is deprecated (but kept for existing pages)
+                    IF cb$ = "PageParameters" THEN cbo$ = "Parameters:"
                     IF cb$ = "PageDescription" THEN cbo$ = "Description:"
-                    IF cb$ = "PageNotes" THEN cbo$ = "Notes" 'sub-sect
-                    IF cb$ = "PageErrors" THEN cbo$ = "Errors" 'sub-sect
                     IF cb$ = "PageAvailability" THEN cbo$ = "Availability:"
                     IF cb$ = "PageExamples" THEN cbo$ = "Examples:"
                     IF cb$ = "PageSeeAlso" THEN cbo$ = "See also:"
@@ -684,7 +671,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF cb$ = "PreStart" AND Help_LockParse = 0 THEN
                     Help_CheckRemoveBlankLine
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
-                    Help_LIndent$ = "  ": Help_LockParse = -1
+                    Help_LIndent$ = "  ": Help_LockParse = -2
                     Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
@@ -709,14 +696,14 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
                 'Fixed Block
-                IF (cb$ = "FixedStart" OR cb$ = "WhiteStart") AND Help_LockParse = 0 THEN 'White is deprecated (but kept for existing pages)
+                IF cb$ = "FixedStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                     Help_BG_Col = 6: Help_LockParse = -2
                     Help_AddTxt STRING$(Help_ww - 16, 196) + " Fixed Block " + STRING$(3, 196), 15, 0: Help_NewLine
                     IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
                 END IF
-                IF (cb$ = "FixedEnd" OR cb$ = "WhiteEnd") AND Help_LockParse <> 0 THEN 'White is deprecated (but kept for existing pages)
+                IF cb$ = "FixedEnd" AND Help_LockParse <> 0 THEN
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
@@ -729,23 +716,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                     IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
                         a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
                         n = n + LEN(pit$)
-                    END IF
-                END IF
-
-                'Template wrapped table (try to get a readable plugin first)
-                IF RIGHT$(cb$, 5) = "Table" AND Help_LockParse = 0 THEN 'no table info in blocks
-                    pit$ = Wiki$("Template:" + LEFT$(cb$, LEN(cb$) - 5) + "Plugin")
-                    IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
-                        a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
-                        n = n + LEN(pit$)
-                    ELSE
-                        Help_LinkN = Help_LinkN + 1
-                        Help_Link$ = Help_Link$ + "EXTL:" + wikiBaseAddress$ + "/index.php?title=Template:" + cb$ + Help_Link_Sep$
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ษออออออออออออออออออออออออออออออออออออออป", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " The original page has a table here,  ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " please click inside this box to load ", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "บ", 8, 0: Help_AddTxt " the table into your standard browser.", 15, Help_LinkN: Help_AddTxt "บ", 8, 0: Help_NewLine
-                        Help_AddTxt SPACE$((Help_ww - 40) \ 2) + "ศออออออออออออออออออออออออออออออออออออออผ", 8, 0
                     END IF
                 END IF
 
@@ -762,7 +732,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                         IF INSTR(MID$(a$, i - 30, 30), "{{CodeEnd}}") > 0 THEN iii = -1
                         IF INSTR(MID$(a$, i - 30, 30), "{{TextEnd}}") > 0 THEN iii = -6
                         IF INSTR(MID$(a$, i - 31, 31), "{{FixedEnd}}") > 0 THEN iii = -6
-                        IF INSTR(MID$(a$, i - 31, 31), "{{WhiteEnd}}") > 0 THEN iii = -6
                     END IF
                     IF iii <> 0 THEN
                         FOR ii = Help_Txt_Len - 3 TO 1 STEP -4
@@ -896,33 +865,49 @@ SUB WikiParse (a$) 'Wiki page interpret
             END IF
         END IF
 
+        'HTML entity handling (no restrictions)
+        IF c$ = "&" THEN 'possible entity
+            FOR ii = 0 TO wpEntReplCnt
+                ent$ = RTRIM$(wpEntRepl(ii).enti)
+                IF c$(LEN(ent$)) = ent$ THEN
+                    Help_AddTxt RTRIM$(wpEntRepl(ii).repl), col, 0
+                    i = i + LEN(ent$) - 1: GOTO charDone
+                END IF
+            NEXT
+            ii = INSTR(c$(8), ";"): iii = INSTR(c$(8), " ") 'unknown entity?
+            IF ii > 0 AND (iii = 0 OR iii > ii) THEN
+                Help_AddTxt c$(ii), 8, 0: ue = -1
+                i = i + ii - 1: GOTO charDone
+            END IF
+        END IF
+
         'Unicode handling (no restrictions)
         IF ((c AND &HE0~%%) = 192) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) THEN '2-byte UTF-8
             i = i + 1
             FOR ii = 0 TO wpUtfReplCnt
                 IF wpUtfRepl(ii).utf8 = c$(2) + MKI$(&H2020) THEN
-                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: GOTO charDone
                 END IF
             NEXT
-            GOTO charDone
+            Help_AddTxt CHR$(168), 8, 0: uu = -1: GOTO charDone
         END IF
         IF ((c AND &HF0~%%) = 224) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) AND ((ASC(c$(3), 3) AND &HC0~%%) = 128) THEN '3-byte UTF-8
             i = i + 2
             FOR ii = 0 TO wpUtfReplCnt
                 IF wpUtfRepl(ii).utf8 = c$(3) + CHR$(0) THEN
-                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: GOTO charDone
                 END IF
             NEXT
-            GOTO charDone
+            Help_AddTxt CHR$(168), 8, 0: uu = -1: GOTO charDone
         END IF
         IF ((c AND &HF8~%%) = 240) AND ((ASC(c$(2), 2) AND &HC0~%%) = 128) AND ((ASC(c$(3), 3) AND &HC0~%%) = 128) AND ((ASC(c$(4), 4) AND &HC0~%%) = 128) THEN '4-byte UTF-8
             i = i + 3
             FOR ii = 0 TO wpUtfReplCnt
                 IF wpUtfRepl(ii).utf8 = c$(4) THEN
-                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: EXIT FOR
+                    Help_AddTxt RTRIM$(wpUtfRepl(ii).repl), col, 0: GOTO charDone
                 END IF
             NEXT
-            GOTO charDone
+            Help_AddTxt CHR$(168), 8, 0: uu = -1: GOTO charDone
         END IF
 
         'Line break handling (no restrictions)
@@ -971,6 +956,41 @@ SUB WikiParse (a$) 'Wiki page interpret
     LOOP
     'END_PARSE_LOOP
 
+    'Write and rearrange Entity & Unicode error messages (if any)
+    IF ue OR uu THEN
+        Help_LinkN = Help_LinkN + 1
+        Help_Link$ = Help_Link$ + "EXTL:https://qb64phoenix.com/forum/forumdisplay.php?fid=25" + Help_Link_Sep$
+        stp = CVL(RIGHT$(Help_Line$, 4))
+        Help_AddTxt STRING$(Help_ww, 196), 14, 0: Help_NewLine
+        itp = CVL(MID$(Help_Line$, 13, 4)): dtl = CVL(RIGHT$(Help_Line$, 4)) - stp
+        txt$ = MID$(Help_Txt$, stp, dtl) + MID$(Help_Txt$, itp, stp - itp): MID$(Help_Txt$, itp, LEN(txt$)) = txt$
+        Help_Line$ = LEFT$(Help_Line$, 12) + MKL$(itp) + MID$(Help_Line$, 13, LEN(Help_Line$) - 16)
+        FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
+        IF uu THEN
+            stp = CVL(RIGHT$(Help_Line$, 4))
+            Help_AddTxt "!>", 4, 0
+            Help_AddTxt " Page uses ", Help_Col_Normal, 0
+            Help_AddTxt "unknown UTF-8 characters", 8, 0
+            Help_AddTxt ", please report it in the ", Help_Col_Normal, 0
+            Help_AddTxt "Wiki Forum.", Help_Col_Link, Help_LinkN: Help_NewLine
+            itp = CVL(MID$(Help_Line$, 13, 4)): dtl = CVL(RIGHT$(Help_Line$, 4)) - stp
+            txt$ = MID$(Help_Txt$, stp, dtl) + MID$(Help_Txt$, itp, stp - itp): MID$(Help_Txt$, itp, LEN(txt$)) = txt$
+            Help_Line$ = LEFT$(Help_Line$, 12) + MKL$(itp) + MID$(Help_Line$, 13, LEN(Help_Line$) - 16)
+            FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
+        END IF
+        IF ue THEN
+            stp = CVL(RIGHT$(Help_Line$, 4))
+            Help_AddTxt "!>", 4, 0
+            Help_AddTxt " Page uses ", Help_Col_Normal, 0
+            Help_AddTxt "unknown HTML entities", 8, 0
+            Help_AddTxt ", please report it in the ", Help_Col_Normal, 0
+            Help_AddTxt "Wiki Forum.", Help_Col_Link, Help_LinkN: Help_NewLine
+            itp = CVL(MID$(Help_Line$, 13, 4)): dtl = CVL(RIGHT$(Help_Line$, 4)) - stp
+            txt$ = MID$(Help_Txt$, stp, dtl) + MID$(Help_Txt$, itp, stp - itp): MID$(Help_Txt$, itp, LEN(txt$)) = txt$
+            Help_Line$ = LEFT$(Help_Line$, 12) + MKL$(itp) + MID$(Help_Line$, 13, LEN(Help_Line$) - 16)
+            FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
+        END IF
+    END IF
     'Trim Help_Txt$
     Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len) + CHR$(13) 'chr13 stops reads past end of content
 
