@@ -12322,7 +12322,12 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
             'resolve relative path for output file
             path.out$ = getfilepath$(outputfile_cmd$)
             f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
-            file$ = RemoveFileExtension$(f$)
+
+            If UCASE$(GetFileExtension$(f$)) = "EXE" Then
+                file$ = RemoveFileExtension$(f$)
+            Else
+                file$ = f$
+            End If
         END IF
 
         IF LEN(path.out$) OR OutputIsRelativeToStartDir THEN
