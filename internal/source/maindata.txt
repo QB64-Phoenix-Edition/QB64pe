@@ -367,6 +367,21 @@ if(__LONG_HELP_IGNORECACHE==NULL){
 __LONG_HELP_IGNORECACHE=(int32*)mem_static_malloc(4);
 *__LONG_HELP_IGNORECACHE=0;
 }
+if (!__ARRAY_UDT_WPENTREPL){
+__ARRAY_UDT_WPENTREPL=(ptrszint*)mem_static_malloc(9*ptrsz);
+new_mem_lock();
+mem_lock_tmp->type=4;
+((ptrszint*)__ARRAY_UDT_WPENTREPL)[8]=(ptrszint)mem_lock_tmp;
+__ARRAY_UDT_WPENTREPL[2]=0;
+__ARRAY_UDT_WPENTREPL[4]=2147483647;
+__ARRAY_UDT_WPENTREPL[5]=0;
+__ARRAY_UDT_WPENTREPL[6]=0;
+__ARRAY_UDT_WPENTREPL[0]=(ptrszint)nothingvalue;
+}
+if(__LONG_WPENTREPLCNT==NULL){
+__LONG_WPENTREPLCNT=(int32*)mem_static_malloc(4);
+*__LONG_WPENTREPLCNT=0;
+}
 if (!__ARRAY_UDT_WPUTFREPL){
 __ARRAY_UDT_WPUTFREPL=(ptrszint*)mem_static_malloc(9*ptrsz);
 new_mem_lock();

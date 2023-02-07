@@ -2065,7 +2065,7 @@ id.Dependency = DEPENDENCY_AUDIO_OUT ' QB64-PE library dependency
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__sndnew" ' C/C++ function name
 id.args = 3 ' number of arguments "passed"
-id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
 id.ret = LONGTYPE - ISPOINTER ' return type for functions
 id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)" ' syntax help
 regid
@@ -3918,9 +3918,9 @@ id.n = qb64prefix$ + "ColorChooserDialog" ' Name in CaMeL case
 id.subfunc = 1 ' 1 = function, 2 = sub
 id.callname = "func__guiColorChooserDialog" ' C/C++ function name
 id.args = 2 ' number of arguments - "passed"
-id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) ' arguments & types
 id.specialformat = "?[,?]" ' special format (optional in [])
-id.ret = LONGTYPE - ISPOINTER ' return type for functions
+id.ret = ULONGTYPE - ISPOINTER ' return type for functions
 id.hr_syntax = "_COLORCHOOSERDIALOG&(title$[, defaultRGB&])" ' syntax help
 regid
 
