@@ -12582,8 +12582,11 @@ END IF
 'Clear nm output from previous runs
 FOR x = 1 TO ResolveStaticFunctions
     IF LEN(ResolveStaticFunction_File(x)) THEN
-        s$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x))
-        IF _FILEEXISTS(s$) THEN KILL s$
+        s$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x), 0)
+        IF _FILEEXISTS(s$) THEN KILL s$: ClearBuffers s$
+
+        s$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x), 1)
+        IF _FILEEXISTS(s$) THEN KILL s$: ClearBuffers s$
     END IF
 NEXT x
 
@@ -12602,7 +12605,8 @@ IF os$ = "WIN" THEN
 
     'resolve static function definitions and add to global.txt
     FOR x = 1 TO ResolveStaticFunctions
-        nm_output_file$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x))
+        nm_output_file$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x), 0)
+        nm_output_file_dynamic$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x), 1)
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
@@ -12659,8 +12663,8 @@ IF os$ = "WIN" THEN
             END IF
 
             IF n = 0 THEN 'a C++ dynamic object library?
-                IF NOT _FILEEXISTS(nm_output_file$) THEN
-                    SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file$)
+                IF NOT _FILEEXISTS(nm_output_file_dynamic$) THEN
+                    SHELL _HIDE "cmd /c internal\c\c_compiler\bin\nm.exe " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file_dynamic$)
                 END IF
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
                 fh = OpenBuffer%("I", nm_output_file$)
@@ -12687,7 +12691,7 @@ IF os$ = "WIN" THEN
 
             IF n = 0 THEN 'a C dynamic object library?
                 s$ = " " + ResolveStaticFunction_Name(x)
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer%("I", nm_output_file_dynamic$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -12751,7 +12755,8 @@ IF os$ = "LNX" THEN
     END IF
 
     FOR x = 1 TO ResolveStaticFunctions
-        nm_output_file$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x))
+        nm_output_file$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x), 0)
+        nm_output_file_dynamic$ = MakeNMOutputFilename$(ResolveStaticFunction_File(x), 1)
         IF LEN(ResolveStaticFunction_File(x)) THEN
 
             n = 0
@@ -12814,8 +12819,8 @@ IF os$ = "LNX" THEN
 
             IF n = 0 THEN 'a C++ dynamic object library?
                 IF MacOSX THEN GOTO macosx_libfind_failed
-                IF NOT _FILEEXISTS(nm_output_file$) THEN
-                    SHELL _HIDE "nm " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file$) + " 2>" + AddQuotes$(tmpdir$ + "nm_error.txt")
+                IF NOT _FILEEXISTS(nm_output_file_dynamic$) THEN
+                    SHELL _HIDE "nm " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file_dynamic$) + " 2>" + AddQuotes$(tmpdir$ + "nm_error.txt")
                 END IF
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
                 fh = OpenBuffer%("I", nm_output_file$)
@@ -12842,7 +12847,7 @@ IF os$ = "LNX" THEN
 
             IF n = 0 THEN 'a C dynamic object library?
                 s$ = " " + ResolveStaticFunction_Name(x)
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer%("I", nm_output_file_dynamic$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
