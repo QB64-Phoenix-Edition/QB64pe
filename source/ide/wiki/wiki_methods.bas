@@ -449,7 +449,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 3) = "-->" THEN i = ii + 2: EXIT FOR
+                    IF MID$(a$, ii, 4) = "-->" + CHR$(10) THEN i = ii + 3: GOTO charDoneKnl
+                    IF MID$(a$, ii, 3) = "-->" THEN i = ii + 2: GOTO charDone
                 NEXT
                 GOTO charDone
             END IF
@@ -922,8 +923,8 @@ SUB WikiParse (a$) 'Wiki page interpret
 
         'Line break handling (no restrictions)
         IF c = 10 OR c$(4) = "<br>" OR c$(6) = "<br />" THEN
-            IF c$(4) = "<br>" THEN i = i + 3
-            IF c$(6) = "<br />" THEN i = i + 5
+            IF c$(4) = "<br>" THEN i = i + 3: IF ASC(c$(5), 5) = 10 THEN i = i + 1
+            IF c$(6) = "<br />" THEN i = i + 5: IF ASC(c$(7), 7) = 10 THEN i = i + 1
             IF c = 10 THEN 'on real new line only
                 IF dl > 1 THEN dl = dl - 1 'update def list state
                 IF Help_LockParse = 0 THEN Help_LIndent$ = "" 'end indention outside blocks
@@ -1317,7 +1318,10 @@ FUNCTION wikiBuildCIndent$ (a$) 'Pre-calc center indentions
         b$ = b$ + MID$(org$, i, 1)
         charDoneUtf:
     NEXT
-
+    b$ = StrReplace$(b$, "<br>" + CHR$(10), CHR$(10)) 'convert HTML line breaks
+    b$ = StrReplace$(b$, "<br>", CHR$(10))
+    b$ = StrReplace$(b$, "<br />" + CHR$(10), CHR$(10)) 'convert XHTML line breaks
+    b$ = StrReplace$(b$, "<br />", CHR$(10))
     b$ = _TRIM$(b$) + CHR$(10) 'safety fallback
 
     i = 1: st = 1: br = 0: res$ = ""
