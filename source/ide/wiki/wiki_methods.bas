@@ -301,7 +301,8 @@ SUB WikiParse (a$) 'Wiki page interpret
     Help_AddTxt SPACE$(i) + CHR$(4), 14, 0
     IF LEFT$(d$, 4) = "Page" THEN i = 8: ELSE i = 7
     Help_LockWrap = 1: Help_AddTxt " " + d$, i, 0: Help_NewLine: Help_LockWrap = 0
-    Help_AddTxt "ÄÄÁ" + STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 6, "Ä"), 14, 0: Help_NewLine
+    Help_AddTxt "ÄÄÁ", 14, 1 '#toc/#top local link anchor
+    Help_AddTxt STRING$(ii + 2, "Ä") + "Á" + STRING$(Help_ww - ii - 6, "Ä"), 14, 0: Help_NewLine
 
     'Init prefetch array
     prefetch = 20
@@ -334,6 +335,8 @@ SUB WikiParse (a$) 'Wiki page interpret
         s$ = "__NOEDITSECTION__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "__NOTOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
         s$ = "__NOTOC__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
+        s$ = "__TOC__" + CHR$(10): IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDoneKnl
+        s$ = "__TOC__": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "<nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "</nowiki>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
         s$ = "<gallery" 'Wiki gallery (supported for command availability only)
@@ -532,7 +535,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                         text$ = MID$(link$, i2 + 1) 'use anchor part
                         lcol$ = MID$(lcol$, i2 + 1) 'and respective color part
                     END IF
-
+                    IF MID$(link$, i2 + 1, 3) = "toc" THEN MID$(link$, i2 + 1, 3) = "ÄÄÁ" 'redirect #toc to page head
+                    IF MID$(link$, i2 + 1, 3) = "top" THEN MID$(link$, i2 + 1, 3) = "ÄÄÁ" 'redirect #top to page head
                     IF LEFT$(link$, 1) = "#" THEN link$ = Help_PageLoaded$ + link$ 'add current page if missing
                 END IF
                 IF LEFT$(link$, 9) = "Category:" THEN 'ignore category links
@@ -715,7 +719,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
 
                 'Template wrapped plugin
-                IF RIGHT$(cb$, 6) = "Plugin" AND Help_LockParse = 0 THEN 'no plugins in blocks
+                IF (cb$ = "PageNavigation" OR RIGHT$(cb$, 6) = "Plugin") AND Help_LockParse = 0 THEN 'no plugins in blocks
                     pit$ = Wiki$("Template:" + cb$)
                     IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
                         a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
@@ -770,7 +774,13 @@ SUB WikiParse (a$) 'Wiki page interpret
         'Wiki headings (==...==}) are not handled in blocks (soft- and hard lock), as it would
         'disrupt the block, also in code blocks it could be part of the code example itself
         IF Help_LockParse = 0 THEN
-            'Custom section headings (section color, h3 single underline, h2 double underline)
+            'Custom section headings (section color, h4 no underline, h3 single underline, h2 double underline)
+            ii = 0
+            IF c$(5) = " ====" AND Help_Heading = 4 THEN ii = 4: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(4) = "====" AND Help_Heading = 4 THEN ii = 3: Help_Heading = 0: hl = 0: ah = 2
+            IF c$(4) = "====" AND nl = 1 THEN ii = 3: Help_CheckBlankLine: Help_Heading = 4: hl = 1
+            IF c$(5) = "==== " AND nl = 1 THEN ii = 4: Help_CheckBlankLine: Help_Heading = 4: hl = 1
+            IF ii > 0 THEN i = i + ii: col = Help_Col: Help_Underline = 0: GOTO charDone
             ii = 0
             IF c$(4) = " ===" AND Help_Heading = 3 THEN ii = 3: Help_Heading = 0: hl = 0: ah = 2
             IF c$(3) = "===" AND Help_Heading = 3 THEN ii = 2: Help_Heading = 0: hl = 0: ah = 2
