@@ -27,7 +27,7 @@ DIM SHARED Help_Col_Link: Help_Col_Link = 9
 DIM SHARED Help_Col_Bold: Help_Col_Bold = 15
 DIM SHARED Help_Col_Italic: Help_Col_Italic = 3
 DIM SHARED Help_Col_Section: Help_Col_Section = 8
-DIM SHARED Help_Bold, Help_Italic, Help_Heading
+DIM SHARED Help_Bold, Help_Italic, Help_LinkTxt, Help_Heading
 DIM SHARED Help_Underline, Help_ChkBlank
 DIM SHARED Help_LockWrap, Help_LockParse
 DIM SHARED Help_DList, Help_LIndent$
