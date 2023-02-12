@@ -25,7 +25,7 @@ SELECT CASE UCASE$(LEFT$(sbMode$, 1))
     CASE "B" 'binary
         IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
         nul& = SeekBuf&(buf%, 0, SBM_BufStart)
-    CASE "I" 'input (try to load from file, if yet unkown)
+    CASE "I" 'input (try to load from file, if yet unknown)
         IF buf% > UBOUND(SBufN) THEN GOSUB loadBuf
         nul& = SeekBuf&(buf%, 0, SBM_BufStart)
     CASE "O" 'output

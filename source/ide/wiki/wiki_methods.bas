@@ -361,8 +361,9 @@ SUB WikiParse (a$) 'Wiki page interpret
                             EXIT FOR '       'one image does not, so ignore this gallery
                         END IF
                         wla$ = StrReplace$(wla$, ";", ":")
+                        wla$ = StrReplace$(wla$, "''none''", "''no versions''")
                         wla$ = StrReplace$(wla$, "''all''", "''all versions''")
-                        wla$ = "* " + LEFT$(wla$, LEN(wla$) - 3) + CHR$(10)
+                        wla$ = "* " + LEFT$(wla$, LEN(wla$) - 3) + MKI$(&H0A0A)
                         a$ = LEFT$(a$, ii) + wla$ + MID$(a$, ii + LEN(v$) + 1)
                         n = LEN(a$): i = ii
                     END IF
@@ -576,7 +577,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 ELSEIF c$(2) = "}}" THEN
                     IF cb$ = "Parameter" THEN
                         Help_Italic = 0: col = Help_Col
-                    ELSEIF LCASE$(LEFT$(cb$, 5)) = "small" THEN
+                    ELSEIF LEFT$(cb$, 5) = "Small" THEN
                         IF ASC(cb$, 6) = 196 THEN
                             Help_AddTxt " " + STRING$(Help_ww - Help_Pos, 196), 15, 0
                             Help_BG_Col = 0: col = Help_Col
@@ -645,20 +646,6 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_BG_Col = 0: Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
-                'Pre Block
-                IF cb$ = "PreStart" AND Help_LockParse = 0 THEN
-                    Help_CheckRemoveBlankLine
-                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
-                    Help_LIndent$ = "  ": Help_LockParse = -2
-                    Help_NewLine
-                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
-                END IF
-                IF cb$ = "PreEnd" AND Help_LockParse <> 0 THEN
-                    Help_LIndent$ = ""
-                    Help_CheckRemoveBlankLine
-                    Help_LockParse = 0
-                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
-                END IF
                 'Text Block
                 IF cb$ = "TextStart" AND Help_LockParse = 0 THEN
                     Help_CheckBlankLine
@@ -671,6 +658,20 @@ SUB WikiParse (a$) 'Wiki page interpret
                     Help_CheckFinishLine: Help_CheckRemoveBlankLine
                     Help_AddTxt STRING$(Help_ww, 196), 15, 0: Help_NewLine
                     Help_BG_Col = 0: Help_LockParse = 0
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                END IF
+                'Pre Block
+                IF cb$ = "PreStart" AND Help_LockParse = 0 THEN
+                    Help_CheckRemoveBlankLine
+                    Help_Bold = 0: Help_Italic = 0: col = Help_Col
+                    Help_LIndent$ = "  ": Help_LockParse = -2
+                    Help_NewLine
+                    IF c$(3) = "}}" + CHR$(10) THEN i = i + 1
+                END IF
+                IF cb$ = "PreEnd" AND Help_LockParse <> 0 THEN
+                    Help_LIndent$ = ""
+                    Help_CheckRemoveBlankLine
+                    Help_LockParse = 0
                     Help_Bold = 0: Help_Italic = 0: col = Help_Col
                 END IF
                 'Fixed Block
@@ -703,7 +704,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
 
                 'Small template text will be centered (maybe as block note)
-                IF LCASE$(cb$) = "small" AND Help_LockParse <= 0 THEN 'keep as is in Code/Output blocks
+                IF cb$ = "Small" AND Help_LockParse <= 0 THEN 'keep as is in Code/Output blocks
                     wla$ = wikiLookAhead$(a$, i + 1, "}}")
                     Help_CIndent$ = wikiBuildCIndent$(wla$): iii = 0
                     IF i > 31 AND ASC(Help_CIndent$, 1) >= Help_ww / 4 THEN
@@ -772,7 +773,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             IF c$(4) = "----" AND nl = 1 THEN
                 i = i + 3
                 Help_CheckBlankLine
-                Help_AddTxt STRING$(Help_ww, 196), 8, 0
+                Help_AddTxt STRING$(Help_ww, 196), 14, 0
                 Help_ChkBlank = 1
                 GOTO charDone
             END IF
@@ -780,7 +781,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF c$(4) = "<hr>" THEN i = i + 3
                 IF c$(6) = "<hr />" THEN i = i + 5
                 Help_CheckBlankLine
-                Help_AddTxt STRING$(Help_ww, 196), 8, 0
+                Help_AddTxt STRING$(Help_ww, 196), 14, 0
                 Help_ChkBlank = 1
                 GOTO charDone
             END IF
