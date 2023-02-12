@@ -104,7 +104,6 @@ END FUNCTION
 
 SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
     IF t$ = "" THEN EXIT SUB
-    IF t$ = CHR$(13) THEN Help_NewLine: EXIT SUB
     IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine: Help_ChkBlank = 0
 
     FOR i = 1 TO LEN(t$)
@@ -155,7 +154,7 @@ SUB Help_NewLine 'Start a new help line, apply indention (if any)
     IF Help_Pos > help_w THEN help_w = Help_Pos
 
     Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 13
-    Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = Help_BG_Col * 16
+    Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 128 + (Help_BG_Col * 16)
     Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 0
     Help_Txt_Len = Help_Txt_Len + 1: ASC(Help_Txt$, Help_Txt_Len) = 0
 
@@ -189,20 +188,20 @@ END SUB
 
 SUB Help_CheckFinishLine 'Make sure the current help line is finished
     IF Help_Txt_Len >= 4 THEN
-        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+        IF ASC(Help_Txt$, Help_Txt_Len - 2) < 128 THEN Help_NewLine
     END IF
 END SUB
 
 SUB Help_CheckBlankLine 'Make sure the last help line is a blank line (implies finish current)
     IF Help_Txt_Len >= 8 THEN
-        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
-        IF ASC(Help_Txt$, Help_Txt_Len - 7) <> 13 THEN Help_NewLine
+        IF ASC(Help_Txt$, Help_Txt_Len - 2) < 128 THEN Help_NewLine
+        IF ASC(Help_Txt$, Help_Txt_Len - 6) < 128 THEN Help_NewLine
     END IF
 END SUB
 
 SUB Help_CheckRemoveBlankLine 'If the last help line is blank, then remove it
     IF Help_Txt_Len >= 8 THEN
-        IF ASC(Help_Txt$, Help_Txt_Len - 3) = 13 THEN
+        IF ASC(Help_Txt$, Help_Txt_Len - 2) > 127 THEN
             Help_Txt_Len = Help_Txt_Len - 4
             help_h = help_h - 1
             Help_Line$ = LEFT$(Help_Line$, LEN(Help_Line$) - 4)
@@ -212,7 +211,7 @@ SUB Help_CheckRemoveBlankLine 'If the last help line is blank, then remove it
                 Help_Txt_Len = i + 3: EXIT FOR
             END IF
         NEXT
-        IF ASC(Help_Txt$, Help_Txt_Len - 3) <> 13 THEN Help_NewLine
+        IF ASC(Help_Txt$, Help_Txt_Len - 2) < 128 THEN Help_NewLine
     END IF
 END SUB
 
@@ -737,11 +736,11 @@ SUB WikiParse (a$) 'Wiki page interpret
                         FOR ii = Help_Txt_Len - 3 TO 1 STEP -4
                             IF ASC(Help_Txt$, ii) = 32 AND iii < 0 THEN
                                 Help_Pos = Help_Pos - 1
-                            ELSEIF ASC(Help_Txt$, ii) = 13 AND iii < 0 THEN
+                            ELSEIF ASC(Help_Txt$, ii + 1) > 127 AND iii < 0 THEN
                                 help_h = help_h - 1: Help_Line$ = LEFT$(Help_Line$, LEN(Help_Line$) - 4)
                             ELSEIF ASC(Help_Txt$, ii) = 196 AND iii < 0 THEN
                                 iii = -iii
-                            ELSEIF ASC(Help_Txt$, ii) = 13 AND iii > 0 THEN
+                            ELSEIF ASC(Help_Txt$, ii + 1) > 127 AND iii > 0 THEN
                                 Help_Txt_Len = ii + 3: EXIT FOR
                             END IF
                         NEXT
@@ -921,13 +920,13 @@ SUB WikiParse (a$) 'Wiki page interpret
 
             IF Help_LockParse > -2 THEN 'everywhere except in fixed blocks
                 IF Help_Txt_Len >= 8 THEN 'allow max. one blank line (ie. collapse multi blanks to just one)
-                    IF ASC(Help_Txt$, Help_Txt_Len - 3) = 13 AND ASC(Help_Txt$, Help_Txt_Len - 7) = 13 THEN
+                    IF ASC(Help_Txt$, Help_Txt_Len - 2) > 127 AND ASC(Help_Txt$, Help_Txt_Len - 6) > 127 THEN
                         IF Help_Center > 0 THEN Help_CIndent$ = MID$(Help_CIndent$, 2) 'drop respective center indent
                         GOTO skipMultiBlanks
                     END IF
                 END IF
             END IF
-            Help_AddTxt CHR$(13), col, 0
+            Help_NewLine
 
             skipMultiBlanks:
             IF Help_LockParse <> 0 THEN 'in all blocks reset styles at EOL
@@ -991,8 +990,8 @@ SUB WikiParse (a$) 'Wiki page interpret
             FOR i = 17 TO LEN(Help_Line$) STEP 4: MID$(Help_Line$, i, 4) = MKL$(CVL(MID$(Help_Line$, i, 4)) + dtl): NEXT
         END IF
     END IF
-    'Trim Help_Txt$
-    Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len) + CHR$(13) 'chr13 stops reads past end of content
+    'Finish and Trim Help_Txt$
+    Help_CheckFinishLine: Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len)
 
     IF Help_PageLoaded$ = "Keyword Reference - Alphabetical" THEN
 
@@ -1007,11 +1006,11 @@ SUB WikiParse (a$) 'Wiki page interpret
             c = ASC(Help_Txt$, x)
             oldlnk = 0
             lnkx1 = 0: lnkx2 = 0
-            DO UNTIL c = 13
+            DO UNTIL ASC(Help_Txt$, x + 1) > 127
                 ASC(a$, x2) = c
                 lnk = CVI(MID$(Help_Txt$, x + 2, 2))
                 IF oldlnk = 0 AND lnk <> 0 THEN lnkx1 = x2
-                IF (lnk = 0 OR ASC(Help_Txt$, x + 4) = 13) AND lnkx1 <> 0 THEN
+                IF (lnk = 0 OR ASC(Help_Txt$, x + 5) > 127) AND lnkx1 <> 0 THEN
                     lnkx2 = x2: IF lnk = 0 THEN lnkx2 = lnkx2 - 1
 
                     IF lnkx1 <> 3 THEN GOTO ignorelink

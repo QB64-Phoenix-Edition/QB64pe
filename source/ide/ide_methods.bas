@@ -2376,7 +2376,7 @@ FUNCTION ide2 (ignore)
                         x = l
                         x3 = 1
                         c = ASC(Help_Txt$, x)
-                        DO UNTIL c = 13
+                        DO UNTIL ASC(Help_Txt$, x + 1) > 127
                             IF Help_Select = 2 THEN
                                 IF y >= Help_SelY1 AND y <= Help_SelY2 THEN
                                     IF x3 >= Help_SelX1 AND x3 <= Help_SelX2 THEN
@@ -2464,7 +2464,7 @@ FUNCTION ide2 (ignore)
                         x = l
                         a$ = ""
                         c = ASC(Help_Txt$, x)
-                        DO UNTIL c = 13
+                        DO UNTIL ASC(Help_Txt$, x + 1) > 127
                             lnk = CVI(MID$(Help_Txt$, x + 2, 2))
                             IF lnk THEN a$ = a$ + CHR$(c) ELSE a$ = a$ + CHR$(0) 'only add text with links
                             x = x + 4: c = ASC(Help_Txt$, x)
@@ -2485,7 +2485,7 @@ FUNCTION ide2 (ignore)
                             c = ASC(Help_Txt$, x)
                             oldlnk = 0
                             lnkx1 = 0: lnkx2 = 0
-                            DO UNTIL c = 13
+                            DO UNTIL ASC(Help_Txt$, x + 1) > 127
                                 lnk = CVI(MID$(Help_Txt$, x + 2, 2))
                                 IF lnkx1 = 0 AND lnk <> 0 AND oldlnk = 0 AND px = x2 THEN lnkx1 = x2
                                 IF lnkx1 <> 0 AND lnk = 0 AND lnkx2 = 0 THEN lnkx2 = x2 - 1
@@ -2597,7 +2597,7 @@ FUNCTION ide2 (ignore)
                 x = l
                 x2 = 1
                 c = ASC(Help_Txt$, x)
-                DO UNTIL c = 13
+                DO UNTIL ASC(Help_Txt$, x + 1) > 127
 
                     IF x2 = Help_cx THEN
                         lnk = CVI(MID$(Help_Txt$, x + 2, 2))
@@ -17723,7 +17723,7 @@ SUB Help_ShowText
             sx = Help_wx1
             c = ASC(Help_Txt$, x): col = ASC(Help_Txt$, x + 1)
             LOCATE sy, sx
-            DO UNTIL c = 13
+            DO UNTIL col > 127
                 COLOR col AND 15, col \ 16
                 IF IdeSystem = 3 AND Help_Select = 2 THEN
                     IF y >= Help_SelY1 AND y <= Help_SelY2 THEN
@@ -17744,8 +17744,7 @@ SUB Help_ShowText
             Help_LineLen(y - Help_sy) = x3 - 1
 
             FOR x4 = 1 TO Help_wx2 - POS(0) + 1
-                IF col = 0 THEN col = 7
-                COLOR col AND 15, col \ 16
+                COLOR 7, (col - 128) \ 16
                 IF IdeSystem = 3 AND Help_Select = 2 THEN
                     IF y >= Help_SelY1 AND y <= Help_SelY2 THEN
                         IF x3 >= Help_SelX1 AND x3 <= Help_SelX2 THEN
