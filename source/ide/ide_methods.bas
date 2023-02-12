@@ -17703,19 +17703,9 @@ SUB Help_ShowText
 
     REDIM Help_LineLen(Help_wh)
 
-    COLOR 7, 0
-
-    'CLS
-    'FOR y = Help_wy1 - 1 TO Help_wy2 + 1
-    '    FOR x = Help_wx1 - 1 TO Help_wx2 + 1
-    '        LOCATE y, x: PRINT chr$(219);
-    '    NEXT
-    'NEXT
-
     sy = Help_wy1
     FOR y = Help_sy TO Help_sy + Help_wh - 1
         IF y <= help_h THEN
-            'PRINT CVL(MID$(Help_Line$, (y - 1) * 4 + 1, 4)), LEN(Help_Txt$)
             l = CVL(MID$(Help_Line$, (y - 1) * 4 + 1, 4))
             x = l
             x3 = 1
@@ -17778,21 +17768,6 @@ SUB Help_ShowText
         END IF
         sy = sy + 1
     NEXT
-
-    'LOCATE Help_cy - Help_sy + Help_wy1, Help_cx - Help_sx + Help_wx1
-    'COLOR 15, 4
-    'PRINT CHR$(SCREEN(CSRLIN, POS(0)));
-
-    'c = 0
-    'DO
-    '    old_kcontrol = KCONTROL
-    '    GetInput
-    '    IF KB > 0 THEN c = 1
-    '    IF mCLICK THEN c = 1
-    '    IF mWHEEL THEN c = 1
-    '    IF KCONTROL AND old_kcontrol = 0 THEN c = 0
-    '    IF mB THEN c = 1
-    'LOOP UNTIL c
 
 END SUB
 

@@ -377,20 +377,13 @@ SUB WikiParse (a$) 'Wiki page interpret
         'Direct HTML code is not handled in Code/Output blocks (hard lock), as all text
         'could be part of the code example itself (just imagine a HTML parser/writer demo)
         IF Help_LockParse <= 0 THEN
-            s$ = "<sup>": IF c$(LEN(s$)) = s$ THEN Help_AddTxt "^", col, 0: i = i + LEN(s$) - 1: GOTO charDone
-            s$ = "</sup>": IF c$(LEN(s$)) = s$ THEN i = i + LEN(s$) - 1: GOTO charDone
-
             s$ = "<center>" 'centered section
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
                 wla$ = wikiLookAhead$(a$, i + 1, "</center>")
-                IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "#top") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                    i = i + LEN(wla$) + 9 'ignore TOC/TOP links
-                ELSE
-                    Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
-                    Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center content
-                    Help_CIndent$ = MID$(Help_CIndent$, 2)
-                END IF
+                Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
+                Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center content
+                Help_CIndent$ = MID$(Help_CIndent$, 2)
                 GOTO charDone
             END IF
             s$ = "</center>"
@@ -406,9 +399,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 FOR ii = i TO LEN(a$) - 1
                     IF MID$(a$, ii, 1) = ">" THEN
                         wla$ = wikiLookAhead$(a$, ii + 1, "</p>")
-                        IF INSTR(wla$, "#toc") > 0 OR INSTR(wla$, "#top") > 0 OR INSTR(wla$, "to Top") > 0 THEN
-                            i = ii + LEN(wla$) + 4 'ignore TOC/TOP links
-                        ELSEIF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
+                        IF INSTR(MID$(a$, i, ii - i), "center") > 0 THEN
                             Help_Center = 1: Help_CIndent$ = wikiBuildCIndent$(wla$)
                             Help_AddTxt SPACE$(ASC(Help_CIndent$, 1)), col, 0 'center (if in style)
                             Help_CIndent$ = MID$(Help_CIndent$, 2)
@@ -426,28 +417,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 Help_NewLine
                 GOTO charDone
             END IF
-            s$ = "<span" 'custom inline attributes ignored
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 1) = ">" THEN i = ii: EXIT FOR
-                NEXT
-                GOTO charDone
-            END IF
-            s$ = "</span>"
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                GOTO charDone
-            END IF
 
-            s$ = "<div" 'ignore divisions (TOC and letter links)
-            IF c$(LEN(s$)) = s$ THEN
-                i = i + LEN(s$) - 1
-                FOR ii = i TO LEN(a$) - 1
-                    IF MID$(a$, ii, 6) = "</div>" THEN i = ii + 5: EXIT FOR
-                NEXT
-                GOTO charDone
-            END IF
             s$ = "<!--" 'ignore HTML comments
             IF c$(LEN(s$)) = s$ THEN
                 i = i + LEN(s$) - 1
