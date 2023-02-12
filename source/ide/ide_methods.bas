@@ -2432,8 +2432,8 @@ FUNCTION ide2 (ignore)
             END IF
             keep_select:
 
-            IF KB = 9 THEN
-                IF LEN(Help_Search_Str) THEN norep = 1: GOTO delsrchagain
+            IF KB = KEY_TAB THEN
+                IF LEN(Help_Search_Str) THEN norep = 1: GOTO searchnext
             END IF
 
             IF LEN(K$) = 1 AND KCONTROL = 0 THEN
@@ -2450,7 +2450,7 @@ FUNCTION ide2 (ignore)
                     END IF
                     Help_Search_Time = t#
                     'search for next appropriate link
-                    delsrchagain:
+                    searchnext:
                     ox = Help_cx
                     oy = Help_cy
                     IF oy > help_h THEN oy = 1
@@ -2682,7 +2682,7 @@ FUNCTION ide2 (ignore)
                                         WikiParse a$
                                     END IF
                                     IF Help_LinkL THEN
-                                        norep = 1: GOTO delsrchagain
+                                        norep = 1: GOTO searchnext
                                     ELSE
                                         GOTO newpageparsed
                                     END IF
@@ -2746,7 +2746,12 @@ FUNCTION ide2 (ignore)
 
                 IF INSTR(UCASE$(lnk$), "PARENTHESIS") THEN GOTO ideloop
 
-                OpenHelpLnk:
+                OpenHelpLink:
+                l2 = INSTR(lnk$, "#") 'local link?
+                IF l2 > 0 THEN
+                    Help_Search_Str = StrReplace$(MID$(lnk$, l2 + 1), "_", " ")
+                    lnk$ = LEFT$(lnk$, l2 - 1): Help_LinkL = -1
+                END IF
 
 
                 Help_Back(Help_Back_Pos).sx = Help_sx 'update position
@@ -2805,7 +2810,11 @@ FUNCTION ide2 (ignore)
                 END IF
 
                 GOSUB redrawitall
-                GOTO specialchar
+                IF Help_LinkL THEN
+                    norep = 1: GOTO searchnext
+                ELSE
+                    GOTO specialchar
+                END IF
 
             ELSE
                 'No help found; Does the user want help for a SUB or FUNCTION?
@@ -5361,17 +5370,17 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#Contents Page" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "QB64 Help Menu"
-                GOTO OpenHelpLnk
+                GOTO OpenHelpLink
             END IF
             IF menu$(m, s) = "Keyword #Index" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "Keyword Reference - Alphabetical"
-                GOTO OpenHelpLnk
+                GOTO OpenHelpLink
             END IF
             IF menu$(m, s) = "#Keywords by Usage" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "Keyword Reference - By usage"
-                GOTO OpenHelpLnk
+                GOTO OpenHelpLink
             END IF
 
             IF menu$(m, s) = "#View  Shift+F1" THEN
@@ -5486,7 +5495,7 @@ FUNCTION ide2 (ignore)
                     PCOPY 3, 0: SCREEN , , 3, 0
                     IF uerr THEN
                         lnk$ = "Update All"
-                        GOTO OpenHelpLnk
+                        GOTO OpenHelpLink
                     END IF
                 END IF
                 GOTO ideloop
@@ -18950,8 +18959,9 @@ FUNCTION ideupdatehelpbox
                 DO UNTIL EOF(fh)
                     LINE INPUT #fh, l$
                     IF LEN(l$) THEN
-                        c = INSTR(l$, ","): l$ = RIGHT$(l$, LEN(l$) - c)
-                        IF Help_Recaching < 2 OR LEFT$(l$, 3) <> "_gl" THEN 'ignore _GL pages for 'qb64pe -u' (build time update)
+                        c = INSTR(l$, ","): l$ = MID$(l$, c + 1) '              'we only need the page name here
+                        c = INSTR(l$, "#"): IF c > 0 THEN l$ = LEFT$(l$, c - 1) 'but not the local link target (if any)
+                        IF Help_Recaching < 2 OR LEFT$(l$, 3) <> "_gl" THEN '   'ignore _GL pages for 'qb64pe -u' (build time update)
                             'Escape all invalid and other critical chars in filenames
                             PageName2$ = ""
                             FOR i = 1 TO LEN(l$)

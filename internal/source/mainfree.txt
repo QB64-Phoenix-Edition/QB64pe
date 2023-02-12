@@ -85,6 +85,14 @@ free((void*)(__ARRAY_UDT_HELP_BACK[0]));
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_UDT_HELP_BACK)[8] );
 qbs_free(__STRING_HELP_SEARCH_STR);
 qbs_free(__STRING_HELP_PAGELOADED);
+if (__ARRAY_UDT_WPENTREPL[2]&1){
+if (__ARRAY_UDT_WPENTREPL[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_UDT_WPENTREPL[0]));
+}else{
+free((void*)(__ARRAY_UDT_WPENTREPL[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_UDT_WPENTREPL)[8] );
 if (__ARRAY_UDT_WPUTFREPL[2]&1){
 if (__ARRAY_UDT_WPUTFREPL[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_UDT_WPUTFREPL[0]));

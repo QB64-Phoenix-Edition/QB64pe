@@ -94,8 +94,20 @@ static void __fillout_curl_info(struct handle *handle) {
 
     handle->has_info = true;
 
-    curl_off_t cl;
-    CURLcode res = curl_easy_getinfo(handle->con, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &cl);
+    uint64_t cl;
+
+    // MacOS High Sierra has a version a bit lower than this
+#if CURL_AT_LEAST_VERSION(7, 55, 0)
+    curl_off_t curloff;
+    CURLcode res = curl_easy_getinfo(handle->con, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &curloff);
+
+    cl = (uint64_t)curloff;
+#else
+    double dbl = 0;
+    CURLcode res = curl_easy_getinfo(handle->con, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dbl);
+
+    cl = (uint64_t)dbl;
+#endif
 
     if (res != CURLE_OK || cl == -1) {
         handle->has_content_length = false;
