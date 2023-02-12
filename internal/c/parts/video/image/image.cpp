@@ -29,8 +29,6 @@
 // Various requirement strings for func__imageload
 #define REQUIREMENT_STRING_HARDWARE "HARDWARE"
 #define REQUIREMENT_STRING_MEMORY "MEMORY"
-#define REQUIREMENT_STRING_32BPP "32BPP"
-#define REQUIREMENT_STRING_8BPP "8BPP"
 #define REQUIREMENT_STRING_ADAPTIVE "ADAPTIVE"
 
 // Calculates the RGB distance in the RGB color cube
@@ -73,7 +71,7 @@ static uint8_t *image_decode_from_file(const char *fileName, int *xOut, int *yOu
             return nullptr; // Return NULL if all attempts failed
     }
 
-    IMAGE_DEBUG_CHECK(compOut > 2); // Returned component should always be 3 or more
+    IMAGE_DEBUG_CHECK(compOut > 2);
 
     return pixels;
 }
@@ -100,7 +98,7 @@ static uint8_t *image_decode_from_memory(const void *data, size_t size, int *xOu
             return nullptr; // Return NULL if all attempts failed
     }
 
-    IMAGE_DEBUG_CHECK(compOut > 2); // Returned component should always be 3 or more
+    IMAGE_DEBUG_CHECK(compOut > 2);
 
     return pixels;
 }
@@ -256,92 +254,74 @@ static void image_remap_palette(uint8_t *src, int w, int h, uint32_t *src_pal, u
     }
 }
 
-/// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
-/// @param fileName The filename or memory buffer of the image
-/// @param requirements A qbs that can contain one or more of: hardware, memory, 32bpp, 8bpp, adaptive
-/// @param passed How many parameters were passed?
-/// @return Valid LONG image handle values that are less than -1 or -1 on failure
-int32_t func__loadimage_ex(qbs *fileName, qbs *requirements, int32_t passed) {
-    static qbs *reqs = nullptr;
-    if (!reqs)
-        reqs = qbs_new(0, 0);
-
-    auto bpp = 0;
-
-    if (passed && requirements->len) {
-        IMAGE_DEBUG_PRINT("Parsing requirements");
-
-        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
-
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_8BPP), 1))
-            bpp = 256;
-
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_32BPP), 1))
-            bpp = 32;
-
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_ADAPTIVE), 1) && (bpp == 256 || bpp == 0))
-            bpp = 257;
-
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && (bpp == 32 || bpp == 0))
-            bpp = 33;
-
-        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1))
-            bpp |= 0x10000;
-    }
-
-    return func__loadimage(fileName, bpp, passed);
-}
-
 /// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1.
 /// @param fileName The filename or memory buffer of the image
 /// @param bpp bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp, 256=8bpp or 257=8bpp without palette remap
+/// @param requirements A qbs that can contain one or more of: hardware, memory, 32bpp, 8bpp, adaptive
 /// @param passed How many parameters were passed?
 /// @return Valid LONG image handle values that are less than -1 or -1 on failure
-int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
-    // QB string that we'll need null terminate the filename
-    static qbs *fileNameZ = nullptr;
+int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t passed) {
+    static qbs *fileNameZ = nullptr; // QB string that we'll need null terminate the filename
+    static qbs *reqs = nullptr;      // QB strign that we'll need to convert requirements to uppercase
 
-    if (new_error || !fileName->len)
+    if (new_error || !fileName->len) // leave if we do not have a file name, data or there was an error
         return INVALID_IMAGE_HANDLE;
 
     if (!fileNameZ)
         fileNameZ = qbs_new(0, 0);
+
+    if (!reqs)
+        reqs = qbs_new(0, 0);
 
     auto isLoadFromMemory = false; // should the image be loaded from memory?
     auto isHardwareImage = false;  // should the image be converted to a hardware image?
     auto isRemapPalette = true;    // should the palette be re-mapped to the QB64 default palette?
 
     // Handle special cases and set the above flags if required
-    IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
-    if (bpp & 0x10000) { // load from memory?
-        isLoadFromMemory = true;
-        bpp &= ~0x10000;
-        IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
-    }
-    if (bpp == 33) { // hardware image?
-        isHardwareImage = true;
-        bpp = 32;
-        IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
-    } else if (bpp == 257) {
-        isRemapPalette = false;
-        bpp = 256;
-        IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
-    }
+    IMAGE_DEBUG_PRINT("bpp = 0x%X, passed = 0x%X", bpp, passed);
+    if (passed & 1) {
+        if (bpp == 33) { // hardware image?
+            isHardwareImage = true;
+            bpp = 32;
+            IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
+        } else if (bpp == 257) { // adaptive palette?
+            isRemapPalette = false;
+            bpp = 256;
+            IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
+        }
 
-    // Validate bpp
-    if (passed && bpp != 0) {
-        if ((bpp != 32) && (bpp != 256)) {
+        if ((bpp != 32) && (bpp != 256)) { // invalid BPP?
             IMAGE_DEBUG_PRINT("Invalid bpp (0x%X)", bpp);
             error(5);
             return INVALID_IMAGE_HANDLE;
         }
     } else {
-        if (write_page->bits_per_pixel < 32) {
+        if (write_page->bits_per_pixel < 32) { // default to 8bpp for all legacy screen modes
             bpp = 256;
             IMAGE_DEBUG_PRINT("Defaulting to 8bpp");
-        } else {
+        } else { // default to 32bpp for everything else
             bpp = 32;
             IMAGE_DEBUG_PRINT("Defaulting to 32bpp");
+        }
+    }
+
+    // Check requirements string and set appropriate flags
+    if ((passed & 2) && requirements->len) {
+        IMAGE_DEBUG_PRINT("Parsing requirements");
+
+        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && bpp == 32) {
+            isHardwareImage = true;
+            IMAGE_DEBUG_PRINT("Generating hardware image");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_ADAPTIVE), 1) && bpp == 256) {
+            isRemapPalette = false;
+            IMAGE_DEBUG_PRINT("Generating adaptive palette");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1)) {
+            isLoadFromMemory = true;
+            IMAGE_DEBUG_PRINT("Loading image from memory");
         }
     }
 

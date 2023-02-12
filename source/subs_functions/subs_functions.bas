@@ -1059,11 +1059,11 @@ clearid
 id.n = qb64prefix$ + "LoadImage": id.Dependency = DEPENDENCY_IMAGE_CODEC
 id.subfunc = 1
 id.callname = "func__loadimage"
-id.args = 2
-id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "?[,?]"
+id.args = 3
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
+id.specialformat = "?[,[?][,?]]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_LOADIMAGE(fileName$[, mode& | mode$])"
+id.hr_syntax = "_LOADIMAGE(fileName$[, [mode&][, requirements$]])"
 regid
 
 clearid

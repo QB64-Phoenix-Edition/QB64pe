@@ -16703,18 +16703,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                ' a740g: _LOADIMAGE special case
-                IF n$ = "_LOADIMAGE" OR (n$ = "LOADIMAGE" AND qb64prefix_set = 1) THEN
-                    IF curarg = 2 THEN ' second parameter
-                        IF sourcetyp AND ISSTRING THEN ' only tweak if second paramater is a string
-                            IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
-                            IF Error_Happened THEN EXIT FUNCTION
-                            r$ = _TRIM$(id2.callname) + "_ex" + RIGHT$(r$, LEN(r$) - LEN(_TRIM$(id2.callname)))
-                            GOTO dontevaluate
-                        END IF
-                    END IF
-                END IF
-
                 '***special case***
                 IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
                     IF curarg = 1 THEN
