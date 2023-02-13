@@ -5,43 +5,28 @@
 //   \__\_\___/\___/ |_||_| |___| |___|_|_|_\__,_\__, \___| |____|_|_.__/_| \__,_|_|  \_, |
 //                                               |___/                                |__/
 //
-//  QB64-PE Image Library
 //  Powered by stb_image (https://github.com/nothings/stb) & dr_pcx (https://github.com/mackron/dr_pcx)
-//
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
 //
 //-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
-// Set this to 1 if we want to print debug messages to stderr
-#define IMAGE_DEBUG 0
-#include "image.h"
 #include <unordered_map>
 #define DR_PCX_IMPLEMENTATION
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-// The below include is a bad idea because of reasons mentioned in https://github.com/QB64-Phoenix-Edition/QB64pe/issues/172
-// However, we need a bunch of things like the 'qbs' and 'image' structs and some more
-// We'll likely keep the 'include' this way because I do not want to duplicate stuff and cause issues
-// Matt is already doing work to separate and modularize libqb
-// So, this will be replaced with relevant stuff once that work is done
+// Set this to 1 if we want to print debug messages to stderr
+#define IMAGE_DEBUG 0
+#include "image.h"
+// We need 'qbs' and 'image' structs stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../../libqb.h"
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// CONSTANTS
-//-----------------------------------------------------------------------------------------------------
 // This is returned to the caller if something goes wrong while loading the image
 #define INVALID_IMAGE_HANDLE -1
-//-----------------------------------------------------------------------------------------------------
+// Various requirement strings for func__imageload
+#define REQUIREMENT_STRING_HARDWARE "HARDWARE"
+#define REQUIREMENT_STRING_MEMORY "MEMORY"
+#define REQUIREMENT_STRING_ADAPTIVE "ADAPTIVE"
 
-//-----------------------------------------------------------------------------------------------------
-// MACROS
-//-----------------------------------------------------------------------------------------------------
 // Calculates the RGB distance in the RGB color cube
 #define IMAGE_CALCULATE_RGB_DISTANCE(r1, g1, b1, r2, g2, b2)                                                                                                   \
     sqrt(((float(r2) - float(r1)) * (float(r2) - float(r1))) + ((float(g2) - float(g1)) * (float(g2) - float(g1))) +                                           \
@@ -52,33 +37,24 @@
 #else
 #    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #endif
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FORWARD DECLARATIONS
-//-----------------------------------------------------------------------------------------------------
 // These should be replaced with appropriate header files when Matt finishes cleaning up libqb
-void sub__freeimage(int32, int32);         // Not declared in libqb.h
+void sub__freeimage(int32, int32);                                  // Not declared in libqb.h
+int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 
 extern img_struct *img;        // Required by func__loadimage
 extern img_struct *write_page; // Required by func__loadimage
 extern uint32 palette_256[];   // Required by func__loadimage
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FUNCTIONS
-//-----------------------------------------------------------------------------------------------------
-/// <summary>
-/// Decodes an image file using the dr_pcx & stb_image libraries.
-/// </summary>
-/// <param name="fileName">A valid filename</param>
-/// <param name="xOut">Out: width in pixels. This cannot be NULL</param>
-/// <param name="yOut">Out: height in pixels. This cannot be NULL</param>
-/// <returns>A pointer to the raw pixel data in RGBA format or NULL on failure</returns>
-static uint8_t *image_decode(const char *fileName, int *xOut, int *yOut) {
+/// @brief Decodes an image file freom a file using the dr_pcx & stb_image libraries.
+/// @param fileName A valid filename
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
+static uint8_t *image_decode_from_file(const char *fileName, int *xOut, int *yOut) {
     auto compOut = 0;
 
-    IMAGE_DEBUG_PRINT("Image dimensions (passed) = (%i, %i)", *xOut, *yOut);
+    IMAGE_DEBUG_PRINT("Loading image from file %s", fileName);
 
     // Attempt to load file as a PCX first using dr_pcx
     auto pixels = drpcx_load_file(fileName, DRPCX_FALSE, xOut, yOut, &compOut, 4);
@@ -91,20 +67,42 @@ static uint8_t *image_decode(const char *fileName, int *xOut, int *yOut) {
             return nullptr; // Return NULL if all attempts failed
     }
 
-    IMAGE_DEBUG_CHECK(compOut > 2); // Returned component should always be 3 or more
+    IMAGE_DEBUG_CHECK(compOut > 2);
 
     return pixels;
 }
 
-/// <summary>
-/// Clamps a color channel to the range 0 - 255.
-/// </summary>
-/// <param name="n">The color component</param>
-/// <returns>The clamped value</returns>
-static inline uint8_t image_clamp_component(int32_t n) {
-    n &= -(n >= 0);
-    return n | ((255 - n) >> 31);
+/// @brief Decodes an image file from memory using the dr_pcx & stb_image libraries
+/// @param data The raw pointer to the file in memory
+/// @param size The size of the file in memory
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
+static uint8_t *image_decode_from_memory(const void *data, size_t size, int *xOut, int *yOut) {
+    auto compOut = 0;
+
+    IMAGE_DEBUG_PRINT("Loading image from memory");
+
+    // Attempt to load file as a PCX first using dr_pcx
+    auto pixels = drpcx_load_memory(data, size, DRPCX_FALSE, xOut, yOut, &compOut, 4);
+    IMAGE_DEBUG_PRINT("Image dimensions (dr_pcx) = (%i, %i)", *xOut, *yOut);
+    if (!pixels) {
+        // If dr_pcx failed to load, then use stb_image
+        pixels = stbi_load_from_memory((stbi_uc const *)data, size, xOut, yOut, &compOut, 4);
+        IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
+        if (!pixels)
+            return nullptr; // Return NULL if all attempts failed
+    }
+
+    IMAGE_DEBUG_CHECK(compOut > 2);
+
+    return pixels;
 }
+
+/// @brief Clamps a color channel to the range 0 - 255
+/// @param n The color component
+/// @return The clamped value
+static inline uint8_t image_clamp_component(int32_t n) { return n < 0 ? 0 : n > 255 ? 255 : n; }
 
 /// <summary>
 /// This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
@@ -180,7 +178,7 @@ static uint8_t *image_convert_8bpp(uint8_t *src, int w, int h, uint32_t *palette
 static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut) {
     IMAGE_DEBUG_PRINT("Extracting 8bpp image (%i, %i) from 32bpp", w, h);
 
-    unordered_map<uint32_t, int> colorMap;
+    std::unordered_map<uint32_t, int> colorMap;
 
     // Allocate memory for new image (8-bit indexed)
     auto pixels = (uint8_t *)malloc(w * h);
@@ -188,29 +186,31 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
         return nullptr;
     }
 
-    auto uniqueColors = 0; // As long as this is <= 256 we will keep going until we are done
-    auto src32bpp = (uint32_t *)src;
+    auto uniqueColors = 0;           // as long as this is < 256 we will keep going until we are done
+    auto src32bpp = (uint32_t *)src; // get a 32-bit int pointer to the image data
     for (auto i = 0; i < w * h; i++) {
-        auto srcColor = src32bpp[i];
+        auto srcColor = src32bpp[i]; // get the 32bpp pixel
 
         // Check if the src color exists in our palette
         if (colorMap.find(srcColor) == colorMap.end()) {
             // If we reached here, then the color is not in our table
-            ++uniqueColors;
-            if (uniqueColors > 256) {
-                IMAGE_DEBUG_PRINT("Image has more than 256 unique colors (%i)", uniqueColors);
+            if (uniqueColors > 255) {
+                IMAGE_DEBUG_PRINT("Image has more than %i unique colors", uniqueColors);
                 free(pixels);
                 return nullptr; // Exit with failure if we have > 256 colors
             }
 
-            paletteOut[uniqueColors - 1] = srcColor; // Store the color as unique
-            colorMap[srcColor] = uniqueColors - 1;   // Add this color to the map
-            pixels[i] = uniqueColors - 1;
+            paletteOut[uniqueColors] = srcColor; // Store the color as unique
+            colorMap[srcColor] = uniqueColors;   // Add this color to the map
+            pixels[i] = uniqueColors;            // set the pixel to the color index
+            ++uniqueColors;                      // increment unique colors
         } else {
             // If we reached here, then the color is in our table
             pixels[i] = colorMap[srcColor]; // Simply fetch the index from the map
         }
     }
+
+    IMAGE_DEBUG_PRINT("Unique colors = %i", uniqueColors);
 
     return pixels;
 }
@@ -250,63 +250,89 @@ static void image_remap_palette(uint8_t *src, int w, int h, uint32_t *src_pal, u
     }
 }
 
-/// <summary>
-/// This function loads an image into memory and returns valid LONG image handle values that are less than -1.
-/// </summary>
-/// <param name="fileName">The filename of the image</param>
-/// <param name="bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp, 256=8bpp or 257=8bpp without palette remap</param>
-/// <param name="passed">How many parameters were passed?</param>
-/// <returns>Valid LONG image handle values that are less than -1 or -1 on failure</returns>
-int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
-    // QB string that we'll need null terminate the filename
-    static qbs *fileNameZ = nullptr;
+/// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
+/// @param fileName The filename or memory buffer (see requirements below) of the image
+/// @param bpp 32 = 32bpp, 33 = 32bpp (hardware acclerated), 256=8bpp or 257=8bpp (without palette remap)
+/// @param requirements A qbs that can contain one or more of: hardware, memory, adaptive
+/// @param passed How many parameters were passed?
+/// @return Valid LONG image handle values that are less than -1 or -1 on failure
+int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t passed) {
+    static qbs *fileNameZ = nullptr; // QB string that we'll need null terminate the filename
+    static qbs *reqs = nullptr;      // QB strign that we'll need to convert requirements to uppercase
 
-    if (new_error)
-        return 0;
+    if (new_error || !fileName->len) // leave if we do not have a file name, data or there was an error
+        return INVALID_IMAGE_HANDLE;
 
     if (!fileNameZ)
         fileNameZ = qbs_new(0, 0);
 
-    auto isHardware = false;
-    auto dontRemapPalette = false;
+    if (!reqs)
+        reqs = qbs_new(0, 0);
 
-    // Handle special cases
-    if (bpp == 33) {
-        bpp = 32;
-        isHardware = true;
-        IMAGE_DEBUG_PRINT("Hardware image requested");
-    } else if (bpp == 257) {
-        bpp = 256;
-        dontRemapPalette = true;
-        IMAGE_DEBUG_PRINT("No palette remap requested");
-    }
+    auto isLoadFromMemory = false; // should the image be loaded from memory?
+    auto isHardwareImage = false;  // should the image be converted to a hardware image?
+    auto isRemapPalette = true;    // should the palette be re-mapped to the QB64 default palette?
 
-    // Validate bpp
-    if (passed) {
-        if ((bpp != 32) && (bpp != 256)) {
+    // Handle special cases and set the above flags if required
+    IMAGE_DEBUG_PRINT("bpp = 0x%X, passed = 0x%X", bpp, passed);
+    if (passed & 1) {
+        if (bpp == 33) { // hardware image?
+            isHardwareImage = true;
+            bpp = 32;
+            IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
+        } else if (bpp == 257) { // adaptive palette?
+            isRemapPalette = false;
+            bpp = 256;
+            IMAGE_DEBUG_PRINT("bpp = 0x%X", bpp);
+        }
+
+        if ((bpp != 32) && (bpp != 256)) { // invalid BPP?
+            IMAGE_DEBUG_PRINT("Invalid bpp (0x%X)", bpp);
             error(5);
-            return 0;
+            return INVALID_IMAGE_HANDLE;
         }
     } else {
-        if (write_page->text) {
-            error(5);
-            return 0;
+        if (write_page->bits_per_pixel < 32) { // default to 8bpp for all legacy screen modes
+            bpp = 256;
+            IMAGE_DEBUG_PRINT("Defaulting to 8bpp");
+        } else { // default to 32bpp for everything else
+            bpp = 32;
+            IMAGE_DEBUG_PRINT("Defaulting to 32bpp");
         }
-        bpp = -1;
-        IMAGE_DEBUG_PRINT("BPP was not spcified. Defaulting to 32bpp");
     }
 
-    qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-    if (fileNameZ->len == 1)
-        return INVALID_IMAGE_HANDLE; // Return invalid handle if null length string
+    // Check requirements string and set appropriate flags
+    if ((passed & 2) && requirements->len) {
+        IMAGE_DEBUG_PRINT("Parsing requirements");
+
+        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && bpp == 32) {
+            isHardwareImage = true;
+            IMAGE_DEBUG_PRINT("Generating hardware image");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_ADAPTIVE), 1) && bpp == 256) {
+            isRemapPalette = false;
+            IMAGE_DEBUG_PRINT("Generating adaptive palette");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1)) {
+            isLoadFromMemory = true;
+            IMAGE_DEBUG_PRINT("Loading image from memory");
+        }
+    }
 
     int x, y;
-    // Try to load the image
-    auto pixels = image_decode((const char *)fileNameZ->chr, &x, &y);
+    uint8_t *pixels;
+
+    if (isLoadFromMemory) {
+        pixels = image_decode_from_memory(fileName->chr, fileName->len, &x, &y);
+    } else {
+        qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
+        pixels = image_decode_from_file((const char *)fileNameZ->chr, &x, &y);
+    }
+
     if (!pixels)
         return INVALID_IMAGE_HANDLE; // Return invalid handle if loading the image failed
-
-    IMAGE_DEBUG_PRINT("'%s' successfully loaded", fileNameZ->chr);
 
     // Convert RGBA to BGRA
     auto cp = pixels;
@@ -316,7 +342,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
             auto b = cp[2];
             cp[0] = b;
             cp[2] = r;
-            cp += 4;
+            cp += sizeof(uint32_t);
         }
     }
 
@@ -327,7 +353,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
         IMAGE_DEBUG_PRINT("Entering 8bpp path");
 
         i = func__newimage(x, y, 256, 1);
-        if (i == -1) {
+        if (i == INVALID_IMAGE_HANDLE) {
             free(pixels);
             return INVALID_IMAGE_HANDLE;
         }
@@ -348,15 +374,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
             }
         }
 
-        if (dontRemapPalette) {
-            // Copy the 8bpp pixel data and then free it
-            memcpy(img[-i].offset, pixels256, x * y);
-            free(pixels256);
-
-            // Copy the palette and then free it
-            memcpy(img[-i].pal, palette, 256 * sizeof(uint32_t));
-            free(palette);
-        } else {
+        if (isRemapPalette) {
             // Remap the image indexes to QB64 default palette and then free our palette
             image_remap_palette(pixels256, x, y, palette, palette_256);
             free(palette);
@@ -367,12 +385,20 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
 
             // Copy the default QB64 palette
             memcpy(img[-i].pal, palette_256, 256 * sizeof(uint32_t));
+        } else {
+            // Copy the 8bpp pixel data and then free it
+            memcpy(img[-i].offset, pixels256, x * y);
+            free(pixels256);
+
+            // Copy the palette and then free it
+            memcpy(img[-i].pal, palette, 256 * sizeof(uint32_t));
+            free(palette);
         }
     } else {
         IMAGE_DEBUG_PRINT("Entering 32bpp path");
 
         i = func__newimage(x, y, 32, 1);
-        if (i == -1) {
+        if (i == INVALID_IMAGE_HANDLE) {
             free(pixels);
             return INVALID_IMAGE_HANDLE;
         }
@@ -383,7 +409,7 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
     free(pixels);
 
     // This only executes if bpp is 32
-    if (isHardware) {
+    if (isHardwareImage) {
         IMAGE_DEBUG_PRINT("Making hardware image");
 
         auto iHardware = func__copyimage(i, 33, 1);
@@ -395,5 +421,3 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, int32_t passed) {
 
     return i;
 }
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
