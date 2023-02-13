@@ -12317,7 +12317,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     END IF
 
     ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
-    IF LEN(outputfile_cmd$) Or OutputIsRelativeToStartDir THEN
+    IF LEN(outputfile_cmd$) OR OutputIsRelativeToStartDir THEN
         IF LEN(outputfile_cmd$) THEN
             'resolve relative path for output file
             path.out$ = getfilepath$(outputfile_cmd$)
@@ -16423,27 +16423,36 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     SetDependency id2.Dependency
 
+    argCount = countFunctionElements(a$)
+    REDIM providedArgs(argCount)
+
     passomit = 0
-    omitarg_first = 0: omitarg_last = 0
+    hasOptionalFirstArg = 0
+    firstOptionalArgument = 0
 
     f$ = RTRIM$(id2.specialformat)
     IF LEN(f$) THEN 'special format given
 
-        'count omittable args
-        sqb = 0
-        a = 0
-        FOR fi = 1 TO LEN(f$)
-            fa = ASC(f$, fi)
-            IF fa = ASC_QUESTIONMARK THEN
-                a = a + 1
-                IF sqb <> 0 AND omitarg_first = 0 THEN omitarg_first = a
-            END IF
-            IF fa = ASC_LEFTSQUAREBRACKET THEN sqb = 1
-            IF fa = ASC_RIGHTSQUAREBRACKET THEN sqb = 0: omitarg_last = a
+        FOR fi = 1 TO argCount
+            providedArgs(fi) = hasFunctionElement(a$, fi)
         NEXT
-        omitargs = omitarg_last - omitarg_first + 1
 
-        IF args <> id2.args - omitargs AND args <> id2.args THEN
+        ' Special case for the INSTR and _INSTRREV format, which have an optional argument at the beginning
+        IF f$ = "[?],?,?" THEN
+            hasOptionalFirstArg = -1
+
+            IF UBOUND(providedArgs) = 2 THEN
+                REDIM _PRESERVE providedArgs(3)
+
+                providedArgs(3) = providedArgs(2)
+                providedArgs(2) = providedArgs(1)
+                providedArgs(1) = 0 ' The first argument was not provided
+
+                skipFirstArg = -1
+            END IF
+        END IF
+
+        IF NOT isValidArgSet(id2.specialformat, providedArgs(), firstOptionalArgument) THEN
             IF LEN(id2.hr_syntax) > 0 THEN
                 Give_Error "Incorrect number of arguments - Reference: " + id2.hr_syntax
             ELSE
@@ -16454,9 +16463,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
         passomit = 1 'pass omit flags param to function
 
-        IF id2.args = args THEN omitarg_first = 0: omitarg_last = 0 'all arguments were passed!
-
     ELSE 'no special format given
+
+        FOR fi = 1 TO argCount
+            providedArgs(fi) = -1
+        NEXT
 
         IF n$ = "ASC" AND args = 2 THEN GOTO skipargnumchk
         IF id2.overloaded = -1 AND (args >= id2.minargs AND args <= id2.args) THEN GOTO skipargnumchk
@@ -16482,29 +16493,28 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         curarg = 1
         firsti = 1
 
+        ' The first optional argument is missing and not included in the
+        ' argument list
+        IF skipFirstArg THEN
+            r$ = r$ + "NULL,"
+            curarg = 2
+        END IF
+
         n = numelements(a$)
-        IF n = 0 THEN i = 0: GOTO noargs
 
         FOR i = 1 TO n
-
-
-
-            IF curarg >= omitarg_first AND curarg <= omitarg_last THEN
-                noargs:
-                targettyp = CVL(MID$(id2.arg, curarg * 4 - 4 + 1, 4))
-
-                'IF (targettyp AND ISSTRING) THEN Give_Error "QB64 doesn't support optional string arguments for functions yet!": EXIT FUNCTION
-
-                FOR fi = 1 TO omitargs - 1: r$ = r$ + "NULL,": NEXT: r$ = r$ + "NULL"
-                curarg = curarg + omitargs
-                IF i = n THEN EXIT FOR
-                r$ = r$ + ","
-            END IF
-
             l$ = getelement(a$, i)
             IF l$ = "(" THEN b = b + 1
             IF l$ = ")" THEN b = b - 1
             IF (l$ = "," AND b = 0) OR (i = n) THEN
+                IF NOT providedArgs(curarg) THEN
+                    IF i = n THEN Give_Error "Last function argument cannot be empty": EXIT FUNCTION
+
+                    r$ = r$ + "NULL,"
+                    firsti = i + 1
+                    curarg = curarg + 1
+                    _CONTINUE
+                END IF
 
                 targettyp = CVL(MID$(id2.arg, curarg * 4 - 4 + 1, 4))
                 nele = ASC(MID$(id2.nele, curarg, 1))
@@ -17640,7 +17650,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF targettyp AND ISSTRING THEN
                     IF (sourcetyp AND ISSTRING) = 0 THEN
                         nth = curarg
-                        IF omitarg_last <> 0 AND nth > omitarg_last THEN nth = nth - 1
+                        IF skipFirstArg THEN nth = nth - 1
                         IF ids(targetid).args = 1 THEN Give_Error "String required for function": EXIT FUNCTION
                         Give_Error str_nth$(nth) + " function argument requires a string": EXIT FUNCTION
                     END IF
@@ -17648,7 +17658,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF (targettyp AND ISSTRING) = 0 THEN
                     IF sourcetyp AND ISSTRING THEN
                         nth = curarg
-                        IF omitarg_last <> 0 AND nth > omitarg_last THEN nth = nth - 1
+                        IF skipFirstArg THEN nth = nth - 1
                         IF ids(targetid).args = 1 THEN Give_Error "Number required for function": EXIT FUNCTION
                         Give_Error str_nth$(nth) + " function argument requires a number": EXIT FUNCTION
                     END IF
@@ -17663,7 +17673,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF explicitreference = 0 THEN
                     IF targettyp AND ISUDT THEN
                         nth = curarg
-                        IF omitarg_last <> 0 AND nth > omitarg_last THEN nth = nth - 1
+                        IF skipFirstArg THEN nth = nth - 1
                         IF qb64prefix_set AND udtxcname(targettyp AND 511) = "_MEM" THEN
                             x$ = "'" + MID$(RTRIM$(udtxcname(targettyp AND 511)), 2) + "'"
                         ELSE
@@ -17770,19 +17780,18 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 firsti = i + 1
                 curarg = curarg + 1
             END IF
-
-            IF (curarg >= omitarg_first AND curarg <= omitarg_last) AND i = n THEN
-                targettyp = CVL(MID$(id2.arg, curarg * 4 - 4 + 1, 4))
-                'IF (targettyp AND ISSTRING) THEN Give_Error "QB64 doesn't support optional string arguments for functions yet!": EXIT FUNCTION
-                FOR fi = 1 TO omitargs: r$ = r$ + ",NULL": NEXT
-                curarg = curarg + omitargs
-            END IF
-
         NEXT
+
+        ' Add on any extra optional arguments that were not provided
+        IF curarg <= id2.args THEN
+            FOR i = curarg TO id2.args
+                IF i = 1 THEN r$ = r$ + "NULL" ELSE r$ = r$ + ",NULL"
+            NEXT
+        END IF
     END IF
 
     IF n$ = "UBOUND" OR n$ = "LBOUND" THEN
-        IF r$ = ",NULL" THEN r$ = ",1"
+        IF r$ = ",NULL" THEN r$ = ",1" ' FIXME: ??????
         IF n$ = "UBOUND" THEN r2$ = "func_ubound(" ELSE r2$ = "func_lbound("
         e$ = refer$(ulboundarray$, sourcetyp, 1)
         IF Error_Happened THEN EXIT FUNCTION
@@ -17797,7 +17806,15 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     END IF
 
     IF passomit THEN
-        IF omitarg_first THEN r$ = r$ + ",0" ELSE r$ = r$ + ",1"
+        r$ = r$ + ",0"
+
+        IF hasOptionalFirstArg THEN
+            IF providedArgs(1) THEN r$ = r$ + "|1"
+        ELSE
+            FOR i = firstOptionalArgument TO UBOUND(providedArgs)
+                IF providedArgs(i) THEN r$ = r$ + "|" + str2$(_SHL(1, i - firstOptionalArgument))
+            NEXT
+        END IF
     END IF
     r$ = r$ + ")"
 
@@ -19628,84 +19645,12 @@ FUNCTION getelementspecial$ (savea$, elenum)
 END FUNCTION
 
 
-
-FUNCTION getelement$ (a$, elenum)
-    IF a$ = "" THEN EXIT FUNCTION 'no elements!
-
-    n = 1
-    p = 1
-    getelementnext:
-    i = INSTR(p, a$, sp)
-
-    IF elenum = n THEN
-        IF i THEN
-            getelement$ = MID$(a$, p, i - p)
-        ELSE
-            getelement$ = RIGHT$(a$, LEN(a$) - p + 1)
-        END IF
-        EXIT FUNCTION
-    END IF
-
-    IF i = 0 THEN EXIT FUNCTION 'no more elements!
-    n = n + 1
-    p = i + 1
-    GOTO getelementnext
-END FUNCTION
-
-FUNCTION getelements$ (a$, i1, i2)
-    IF i2 < i1 THEN getelements$ = "": EXIT FUNCTION
-    n = 1
-    p = 1
-    getelementsnext:
-    i = INSTR(p, a$, sp)
-    IF n = i1 THEN
-        i1pos = p
-    END IF
-    IF n = i2 THEN
-        IF i THEN
-            getelements$ = MID$(a$, i1pos, i - i1pos)
-        ELSE
-            getelements$ = RIGHT$(a$, LEN(a$) - i1pos + 1)
-        END IF
-        EXIT FUNCTION
-    END IF
-    n = n + 1
-    p = i + 1
-    GOTO getelementsnext
-END FUNCTION
-
 SUB getid (i AS LONG)
     IF i = -1 THEN Give_Error "-1 passed to getid!": EXIT SUB
 
     id = ids(i)
 
     currentid = i
-END SUB
-
-SUB insertelements (a$, i, elements$)
-    IF i = 0 THEN
-        IF a$ = "" THEN
-            a$ = elements$
-            EXIT SUB
-        END IF
-        a$ = elements$ + sp + a$
-        EXIT SUB
-    END IF
-
-    a2$ = ""
-    n = numelements(a$)
-
-
-
-
-    FOR i2 = 1 TO n
-        IF i2 > 1 THEN a2$ = a2$ + sp
-        a2$ = a2$ + getelement$(a$, i2)
-        IF i = i2 THEN a2$ = a2$ + sp + elements$
-    NEXT
-
-    a$ = a2$
-
 END SUB
 
 FUNCTION isoperator (a2$)
@@ -20776,18 +20721,6 @@ SUB makeidrefer (ref$, typ AS LONG)
     typ = id.t + ISREFERENCE
 END SUB
 
-FUNCTION numelements (a$)
-    IF a$ = "" THEN EXIT FUNCTION
-    n = 1
-    p = 1
-    numelementsnext:
-    i = INSTR(p, a$, sp)
-    IF i = 0 THEN numelements = n: EXIT FUNCTION
-    n = n + 1
-    p = i + 1
-    GOTO numelementsnext
-END FUNCTION
-
 FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG, result AS LONG)
     lhs = 7: rhs = 7: result = 0
     'return values
@@ -21298,49 +21231,6 @@ SUB regUnstableHttp
     END IF
 
     reginternalsubfunc = 0
-
-END SUB
-
-'this sub is faulty atm!
-'sub replacelement (a$, i, newe$)
-''note: performs no action for out of range values of i
-'e=1
-'s=1
-'do
-'x=instr(s,a$,sp)
-'if x then
-'if e=i then
-'a1$=left$(a$,s-1): a2$=right$(a$,len(a$)-x+1)
-'a$=a1$+sp+newe$+a2$ 'note: a2 includes spacer
-'exit sub
-'end if
-'s=x+1
-'e=e+1
-'end if
-'loop until x=0
-'if e=i then
-'a$=left$(a$,s-1)+sp+newe$
-'end if
-'end sub
-
-
-SUB removeelements (a$, first, last, keepindexing)
-    a2$ = ""
-    'note: first and last MUST be valid
-    '      keepindexing means the number of elements will stay the same
-    '       but some elements will be equal to ""
-
-    n = numelements(a$)
-    FOR i = 1 TO n
-        IF i < first OR i > last THEN
-            a2$ = a2$ + sp + getelement(a$, i)
-        ELSE
-            IF keepindexing THEN a2$ = a2$ + sp
-        END IF
-    NEXT
-    IF LEFT$(a2$, 1) = sp THEN a2$ = RIGHT$(a2$, LEN(a2$) - 1)
-
-    a$ = a2$
 
 END SUB
 
@@ -26113,6 +26003,7 @@ END FUNCTION
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'
 '$INCLUDE:'utilities\build.bas'
+'$INCLUDE:'utilities\elements.bas'
 '$INCLUDE:'subs_functions\extensions\opengl\opengl_methods.bas'
 '$INCLUDE:'utilities\ini-manager\ini.bm'
 '$INCLUDE:'utilities\s-buffer\simplebuffer.bm'
