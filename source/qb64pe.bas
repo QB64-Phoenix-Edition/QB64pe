@@ -17783,7 +17783,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         NEXT
 
         ' Add on any extra optional arguments that were not provided
-        IF curarg <= id2.args THEN
+        '
+        ' Overloaded functions do not require the omited arguments to be provided
+        IF curarg <= id2.args AND NOT id2.overloaded THEN
             FOR i = curarg TO id2.args
                 IF i = 1 THEN r$ = r$ + "NULL" ELSE r$ = r$ + ",NULL"
             NEXT
