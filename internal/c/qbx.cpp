@@ -2073,14 +2073,16 @@ void sub_timer(int32 i, int32 option, int32 passed) {
     // ref: uint8 active;//0=OFF, 1=ON, 2=STOP
     if (option == 1) { // ON
         ontimer[i].active = 1;
+
+        // This is necessary so that if a timer triggered while stopped we will run it now.
+        qbevent = 1;
         return;
     }
     if (option == 2) { // OFF
         ontimer[i].active = 0;
         if (ontimer[i].state == 1)
             ontimer[i].state = 0; // retract event if not in progress
-        ontimer[i].last_time =
-            0; // when ON is next used, event will be triggered immediately
+        ontimer[i].last_time = 0; // when ON is next used, the timer will start over
         return;
     }
     if (option == 3) { // STOP
@@ -2114,34 +2116,25 @@ void TIMERTHREAD(void *unused) {
         if (!ontimerthread_lock) {  // mutex
             time_now = ((double)GetTicks()) * 0.001;
             for (i = 0; i < ontimer_nextfree; i++) {
-                if (ontimer[i].allocated) {
-                    if (ontimer[i].id) {
-                        if (ontimer[i].active) {
-                            if (!ontimer[i].state) {
-                                if (time_now - ontimer[i].last_time >
-                                    ontimer[i].seconds) {
-                                    if (!ontimer[i].last_time) {
-                                        ontimer[i].last_time = time_now;
-                                    } else {
-                                        // keep measured time for accurate
-                                        // number of calls overall
-                                        ontimer[i].last_time +=
-                                            ontimer[i].seconds;
-                                        // if difference between actual time and
-                                        // measured time is beyond 'seconds' set
-                                        // measured to actual
-                                        if (fabs(time_now -
-                                                 ontimer[i].last_time) >=
-                                            ontimer[i].seconds)
-                                            ontimer[i].last_time = time_now;
-                                        ontimer[i].state = 1;
-                                        qbevent = 1;
-                                    }
-                                } // time check
-                            }     // state==0
-                        }         // active
-                    }             // id
-                }                 // allocated
+                if (ontimer[i].allocated && ontimer[i].id && ontimer[i].active && !ontimer[i].state) {
+                    if (!ontimer[i].last_time) {
+                        ontimer[i].last_time = time_now;
+                    } else if (time_now - ontimer[i].last_time > ontimer[i].seconds) {
+                        // keep measured time for accurate
+                        // number of calls overall
+                        ontimer[i].last_time += ontimer[i].seconds;
+
+                        // if difference between actual time and
+                        // measured time is beyond 'seconds' set
+                        // measured to actual
+                        if (fabs(time_now -
+                                 ontimer[i].last_time) >=
+                            ontimer[i].seconds)
+                            ontimer[i].last_time = time_now;
+                        ontimer[i].state = 1;
+                        qbevent = 1;
+                    } // time check
+                }
                 if (ontimerthread_lock == 1)
                     goto quick_lock;
             } // i
