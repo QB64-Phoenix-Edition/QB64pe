@@ -5,11 +5,7 @@
 //   \__\_\___/\___/ |_||_| |___| |___|_|_|_\__,_\__, \___| |____|_|_.__/_| \__,_|_|  \_, |
 //                                               |___/                                |__/
 //
-//  QB64-PE Image Library
 //  Powered by stb_image (https://github.com/nothings/stb) & dr_pcx (https://github.com/mackron/dr_pcx)
-//
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
 //
 //-----------------------------------------------------------------------------------------------------
 
@@ -254,10 +250,10 @@ static void image_remap_palette(uint8_t *src, int w, int h, uint32_t *src_pal, u
     }
 }
 
-/// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1.
-/// @param fileName The filename or memory buffer of the image
-/// @param bpp bpp">Mode: 32=32bpp, 33=hardware acclerated 32bpp, 256=8bpp or 257=8bpp without palette remap
-/// @param requirements A qbs that can contain one or more of: hardware, memory, 32bpp, 8bpp, adaptive
+/// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
+/// @param fileName The filename or memory buffer (see requirements below) of the image
+/// @param bpp 32 = 32bpp, 33 = 32bpp (hardware acclerated), 256=8bpp or 257=8bpp (without palette remap)
+/// @param requirements A qbs that can contain one or more of: hardware, memory, adaptive
 /// @param passed How many parameters were passed?
 /// @return Valid LONG image handle values that are less than -1 or -1 on failure
 int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t passed) {
