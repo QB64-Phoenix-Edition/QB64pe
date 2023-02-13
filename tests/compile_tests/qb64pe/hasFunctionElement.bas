@@ -1,5 +1,7 @@
+Option _Explicit
 DEFLNG A-Z
 $Console:Only
+Dim Debug As Long
 Debug = -1
 
 '$include:'../../../source/global/constants.bas'
@@ -33,12 +35,16 @@ tests(5).results = MKL$(-1) + MKL$(0) + MKL$(-1) + MKL$(0)
 tests(6).args = "2" + sp + "," + sp + ","
 tests(6).results = MKL$(-1) + MKL$(0) + MKL$(0) + MKL$(0)
 
-ReDim provided(10) As Long
+ReDim provided(10) As Long, i As Long
 For i = 1 To UBOUND(tests)
     argStringToArray tests(i).results, provided()
 
     Print "Test"; i; ", Args: "; tests(i).args
+
+    Dim k As Long
     For k = 1 To UBOUND(provided)
+        Dim result As Long
+
         result& = hasFunctionElement(tests(i).args, k)
 
         Print "    Expected:"; provided(k); ", Actual"; result&;
@@ -57,7 +63,7 @@ System
 '$include:'../../../source/utilities/elements.bas'
 
 SUB argStringToArray(argString As String, provided() As Long)
-    ReDim provided(LEN(argString) / 4) As Long
+    ReDim provided(LEN(argString) / 4) As Long, i As Long
 
     for i = 1 to UBOUND(provided)
         provided(i) = CVL(MID$(argString, (i - 1) * 4 + 1, 4))
@@ -65,6 +71,8 @@ SUB argStringToArray(argString As String, provided() As Long)
 END SUB
 
 FUNCTION argStringPrint$(argString As String)
+    Dim res As String, i As Long
+
     res$ = ""
 
     res$ = STR$(CVL(MID$(argString, 1, 4)))

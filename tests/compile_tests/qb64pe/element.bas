@@ -1,5 +1,8 @@
+Option _Explicit
 DEFLNG A-Z
 $Console:Only
+
+Dim Debug As Long
 
 '$include:'../../../source/global/constants.bas'
 sp = "@" ' Makes the output readable
@@ -104,7 +107,11 @@ tests(18).result = -1
 tests(18).firstOptional = 4
 
 ReDim provided(10) As Long
+Dim i As Long
+
 For i = 1 To UBOUND(tests)
+    Dim firstOpt As Long, result As Long
+
     firstOpt& = 0
 
     argStringToArray tests(i).providedArgs, provided()
@@ -126,7 +133,7 @@ System
 '$include:'../../../source/utilities/elements.bas'
 
 SUB argStringToArray(argString As String, provided() As Long)
-    ReDim provided(LEN(argString) / 4) As Long
+    ReDim provided(LEN(argString) / 4) As Long, i As Long
 
     for i = 1 to UBOUND(provided)
         provided(i) = CVL(MID$(argString, (i - 1) * 4 + 1, 4))
@@ -134,6 +141,8 @@ SUB argStringToArray(argString As String, provided() As Long)
 END SUB
 
 FUNCTION argStringPrint$(argString As String)
+    Dim res As String, i As Long
+
     res$ = ""
 
     If argString = "" Then argStringPrint$ = "": Exit Function

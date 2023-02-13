@@ -12317,7 +12317,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     END IF
 
     ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
-    IF LEN(outputfile_cmd$) Or OutputIsRelativeToStartDir THEN
+    IF LEN(outputfile_cmd$) OR OutputIsRelativeToStartDir THEN
         IF LEN(outputfile_cmd$) THEN
             'resolve relative path for output file
             path.out$ = getfilepath$(outputfile_cmd$)
@@ -16424,7 +16424,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     SetDependency id2.Dependency
 
     argCount = countFunctionElements(a$)
-    ReDim providedArgs(argCount)
+    REDIM providedArgs(argCount)
 
     passomit = 0
     hasOptionalFirstArg = 0
@@ -16433,26 +16433,26 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     f$ = RTRIM$(id2.specialformat)
     IF LEN(f$) THEN 'special format given
 
-        For fi = 1 to argCount
+        FOR fi = 1 TO argCount
             providedArgs(fi) = hasFunctionElement(a$, fi)
-        Next
+        NEXT
 
         ' Special case for the INSTR and _INSTRREV format, which have an optional argument at the beginning
-        If f$ = "[?],?,?"  Then
+        IF f$ = "[?],?,?" THEN
             hasOptionalFirstArg = -1
 
-            if UBOUND(providedArgs) = 2 Then
-                ReDim _Preserve providedArgs(3)
+            IF UBOUND(providedArgs) = 2 THEN
+                REDIM _PRESERVE providedArgs(3)
 
                 providedArgs(3) = providedArgs(2)
                 providedArgs(2) = providedArgs(1)
                 providedArgs(1) = 0 ' The first argument was not provided
 
                 skipFirstArg = -1
-            End If
-        End If
+            END IF
+        END IF
 
-        IF Not isValidArgSet(id2.specialformat, providedArgs(), firstOptionalArgument) Then
+        IF NOT isValidArgSet(id2.specialformat, providedArgs(), firstOptionalArgument) THEN
             IF LEN(id2.hr_syntax) > 0 THEN
                 Give_Error "Incorrect number of arguments - Reference: " + id2.hr_syntax
             ELSE
@@ -16465,9 +16465,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     ELSE 'no special format given
 
-        For fi = 1 to argCount
+        FOR fi = 1 TO argCount
             providedArgs(fi) = -1
-        Next
+        NEXT
 
         IF n$ = "ASC" AND args = 2 THEN GOTO skipargnumchk
         IF id2.overloaded = -1 AND (args >= id2.minargs AND args <= id2.args) THEN GOTO skipargnumchk
@@ -16495,10 +16495,10 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
         ' The first optional argument is missing and not included in the
         ' argument list
-        if skipFirstArg Then
+        IF skipFirstArg THEN
             r$ = r$ + "NULL,"
             curarg = 2
-        End If
+        END IF
 
         n = numelements(a$)
 
@@ -16508,12 +16508,12 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
             IF l$ = ")" THEN b = b - 1
             IF (l$ = "," AND b = 0) OR (i = n) THEN
                 IF NOT providedArgs(curarg) THEN
-                    If i = n Then Give_Error "Last function argument cannot be empty": Exit Function
+                    IF i = n THEN Give_Error "Last function argument cannot be empty": EXIT FUNCTION
 
                     r$ = r$ + "NULL,"
                     firsti = i + 1
                     curarg = curarg + 1
-                    _Continue
+                    _CONTINUE
                 END IF
 
                 targettyp = CVL(MID$(id2.arg, curarg * 4 - 4 + 1, 4))
@@ -17650,7 +17650,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF targettyp AND ISSTRING THEN
                     IF (sourcetyp AND ISSTRING) = 0 THEN
                         nth = curarg
-                        if skipFirstArg Then nth = nth - 1
+                        IF skipFirstArg THEN nth = nth - 1
                         IF ids(targetid).args = 1 THEN Give_Error "String required for function": EXIT FUNCTION
                         Give_Error str_nth$(nth) + " function argument requires a string": EXIT FUNCTION
                     END IF
@@ -17658,7 +17658,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF (targettyp AND ISSTRING) = 0 THEN
                     IF sourcetyp AND ISSTRING THEN
                         nth = curarg
-                        if skipFirstArg Then nth = nth - 1
+                        IF skipFirstArg THEN nth = nth - 1
                         IF ids(targetid).args = 1 THEN Give_Error "Number required for function": EXIT FUNCTION
                         Give_Error str_nth$(nth) + " function argument requires a number": EXIT FUNCTION
                     END IF
@@ -17673,7 +17673,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF explicitreference = 0 THEN
                     IF targettyp AND ISUDT THEN
                         nth = curarg
-                        if skipFirstArg Then nth = nth - 1
+                        IF skipFirstArg THEN nth = nth - 1
                         IF qb64prefix_set AND udtxcname(targettyp AND 511) = "_MEM" THEN
                             x$ = "'" + MID$(RTRIM$(udtxcname(targettyp AND 511)), 2) + "'"
                         ELSE
@@ -17783,11 +17783,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         NEXT
 
         ' Add on any extra optional arguments that were not provided
-        If curarg <= id2.args Then
-            For i = curarg To id2.args
-                If i = 1 Then r$ = r$ + "NULL" Else r$ = r$ + ",NULL"
-            Next
-        End If
+        IF curarg <= id2.args THEN
+            FOR i = curarg TO id2.args
+                IF i = 1 THEN r$ = r$ + "NULL" ELSE r$ = r$ + ",NULL"
+            NEXT
+        END IF
     END IF
 
     IF n$ = "UBOUND" OR n$ = "LBOUND" THEN
@@ -17808,13 +17808,13 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     IF passomit THEN
         r$ = r$ + ",0"
 
-        If hasOptionalFirstArg Then
-            If providedArgs(1) Then r$ = r$ + "|1"
-        Else
-            For i = firstOptionalArgument to UBOUND(providedArgs)
-                if providedArgs(i) Then r$ = r$ + "|" + str2$(_SHL(1, i - firstOptionalArgument))
-            Next
-        End If
+        IF hasOptionalFirstArg THEN
+            IF providedArgs(1) THEN r$ = r$ + "|1"
+        ELSE
+            FOR i = firstOptionalArgument TO UBOUND(providedArgs)
+                IF providedArgs(i) THEN r$ = r$ + "|" + str2$(_SHL(1, i - firstOptionalArgument))
+            NEXT
+        END IF
     END IF
     r$ = r$ + ")"
 

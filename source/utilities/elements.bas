@@ -1,5 +1,7 @@
 
 FUNCTION getelement$ (a$, elenum)
+    DIM p AS LONG, n AS LONG, i AS LONG
+
     IF a$ = "" THEN EXIT FUNCTION 'no elements!
 
     n = 1
@@ -23,6 +25,8 @@ FUNCTION getelement$ (a$, elenum)
 END FUNCTION
 
 FUNCTION getelements$ (a$, i1, i2)
+    DIM p AS LONG, n AS LONG, i AS LONG, i1pos AS LONG
+
     IF i2 < i1 THEN getelements$ = "": EXIT FUNCTION
     n = 1
     p = 1
@@ -45,6 +49,8 @@ FUNCTION getelements$ (a$, i1, i2)
 END FUNCTION
 
 SUB insertelements (a$, i, elements$)
+    DIM a2 AS STRING, n AS LONG, i2 AS LONG
+
     IF i = 0 THEN
         IF a$ = "" THEN
             a$ = elements$
@@ -57,9 +63,6 @@ SUB insertelements (a$, i, elements$)
     a2$ = ""
     n = numelements(a$)
 
-
-
-
     FOR i2 = 1 TO n
         IF i2 > 1 THEN a2$ = a2$ + sp
         a2$ = a2$ + getelement$(a$, i2)
@@ -71,6 +74,8 @@ SUB insertelements (a$, i, elements$)
 END SUB
 
 FUNCTION numelements (a$)
+    DIM p AS LONG, n AS LONG, i AS LONG
+
     IF a$ = "" THEN EXIT FUNCTION
     n = 1
     p = 1
@@ -83,6 +88,8 @@ FUNCTION numelements (a$)
 END FUNCTION
 
 SUB removeelements (a$, first, last, keepindexing)
+    DIM n AS LONG, i AS LONG, a2 AS STRING
+
     a2$ = ""
     'note: first and last MUST be valid
     '      keepindexing means the number of elements will stay the same
@@ -105,38 +112,38 @@ END SUB
 ' a$ should be a function argument list
 ' Returns number of function arguments (including empty ones) in the provided list
 FUNCTION countFunctionElements (a$)
-    Dim count As Long, p As Long, lvl As Long
+    DIM count AS LONG, p AS LONG, lvl AS LONG, i AS LONG
     p = 1
     lvl = 1
     i = 0
 
-    if Len(a$) = 0 Then
+    IF LEN(a$) = 0 THEN
         countFunctionElements = 0
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-    Do
-        Select Case Asc(a$, i + 1)
-            Case Asc("("):
+    DO
+        SELECT CASE ASC(a$, i + 1)
+            CASE ASC("("):
                 lvl = lvl + 1
 
-            Case Asc(")"):
+            CASE ASC(")"):
                 lvl = lvl - 1
 
-            Case Asc(","):
-                If lvl = 1 Then
+            CASE ASC(","):
+                IF lvl = 1 THEN
                     count = count + 1
-                End If
+                END IF
 
-        End Select
+        END SELECT
 
         i = INSTR(p, a$, sp)
-        if i = 0 Then
-            Exit Do
-        End If
+        IF i = 0 THEN
+            EXIT DO
+        END IF
 
         p = i + 1
-    Loop
+    LOOP
 
     ' Make sure to count the argument after the last comma
     countFunctionElements = count + 1
@@ -144,87 +151,87 @@ END FUNCTION
 
 ' a$ should be a function argument list
 ' Returns true if the argument was provided in the list
-FUNCTION hasFunctionElement(a$, element)
-    Dim count As Long, p As Long, lvl As Long
+FUNCTION hasFunctionElement (a$, element)
+    DIM count AS LONG, p AS LONG, lvl AS LONG, i AS LONG, start AS LONG
     start = 0
     p = 1
     lvl = 1
     i = 1
 
-    if Len(a$) = 0 Then
+    IF LEN(a$) = 0 THEN
         hasFunctionElement = 0
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     ' Special case for a single provided argument
-    If INSTR(a$, sp) = 0 And Len(a$) <> 0 Then
+    IF INSTR(a$, sp) = 0 AND LEN(a$) <> 0 THEN
         hasFunctionElement = element = 1
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
-    Do
-        If i > Len(a$) Then
-            Exit Do
-        End If
+    DO
+        IF i > LEN(a$) THEN
+            EXIT DO
+        END IF
 
-        Select Case Asc(a$, i)
-            Case Asc("("):
+        SELECT CASE ASC(a$, i)
+            CASE ASC("("):
                 lvl = lvl + 1
 
-            Case Asc(")"):
+            CASE ASC(")"):
                 lvl = lvl - 1
 
-            Case Asc(","):
-                If lvl = 1 Then
+            CASE ASC(","):
+                IF lvl = 1 THEN
                     count = count + 1
 
-                    If element = count Then
+                    IF element = count THEN
                         ' We have a element here if there's any elements
                         ' inbetween the previous comma and this one
-                        hasFunctionElement = (i <> 1) And (i - 2 <> start)
-                        Exit Function
-                    End If
+                        hasFunctionElement = (i <> 1) AND (i - 2 <> start)
+                        EXIT FUNCTION
+                    END IF
 
                     start = i
-                End If
-        End Select
+                END IF
+        END SELECT
 
         p = i
         i = INSTR(i, a$, sp)
 
-        if i = 0 Then
-            Exit Do
-        End If
+        IF i = 0 THEN
+            EXIT DO
+        END IF
 
         i = i + 1
-    Loop
+    LOOP
 
-    If element > count + 1 Then
+    IF element > count + 1 THEN
         hasFunctionElement = 0
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     ' Check if last argument was provided.
     '
     ' Syntax '2,3' has two arguments, the '3' argument is what gets compared here
     ' Syntax '2,' has one argument, the comma is the last element so it fails this check.
-    If p > 0 Then
-        If Asc(a$, p) <> Asc(",") Then
+    IF p > 0 THEN
+        IF ASC(a$, p) <> ASC(",") THEN
             hasFunctionElement = -1
-            Exit Function
-        End If
-    End If
+            EXIT FUNCTION
+        END IF
+    END IF
 
     hasFunctionElement = 0
 END FUNCTION
 
 ' Returns true if the provided arguments are a valid set for the given function format
 ' firstOptionalArgument returns the index of the first argument that is optional
-FUNCTION isValidArgSet(format As String, providedArgs() As Long, firstOptionalArgument As Long)
-    Dim maxArgument As Long, i As Long
-    Dim currentArg As Long, optionLvl As Long
-    Dim wasProvided(0 To 10) As Long
-    Dim As Long ArgProvided , ArgNotProvided, ArgIgnored
+FUNCTION isValidArgSet (format AS STRING, providedArgs() AS LONG, firstOptionalArgument AS LONG)
+    DIM maxArgument AS LONG, i AS LONG
+    DIM currentArg AS LONG, optionLvl AS LONG
+    DIM wasProvided(0 TO 10) AS LONG
+    DIM AS LONG ArgProvided, ArgNotProvided, ArgIgnored
 
     ArgProvided = -1
     ArgNotProvided = 0
@@ -245,61 +252,61 @@ FUNCTION isValidArgSet(format As String, providedArgs() As Long, firstOptionalAr
 
     maxArgument = UBOUND(providedArgs)
 
-    For i = 1 to Len(format)
-        Select Case Asc(format, i)
-            Case Asc("["):
+    FOR i = 1 TO LEN(format)
+        SELECT CASE ASC(format, i)
+            CASE ASC("["):
                 optionLvl = optionLvl + 1
                 wasProvided(optionLvl) = ArgIgnored
 
-            Case Asc("]"):
+            CASE ASC("]"):
                 optionLvl = optionLvl - 1
 
-                If wasProvided(optionLvl) = ArgIgnored Then
+                IF wasProvided(optionLvl) = ArgIgnored THEN
                     ' If not provided, then we stay in the ignored state
                     ' because whether this arg set was provided does not matter
                     ' for the rest of the parsing
-                    If wasProvided(optionLvl + 1) = ArgProvided Then
+                    IF wasProvided(optionLvl + 1) = ArgProvided THEN
                         wasProvided(optionLvl) = ArgProvided
-                    End If
-                Else
+                    END IF
+                ELSE
                     ' If an arg at this level was already not provided, then
                     ' this optional set can't be provided either
-                    if wasProvided(optionLvl) = ArgNotProvided And wasProvided(optionLvl + 1) = ArgProvided Then
+                    IF wasProvided(optionLvl) = ArgNotProvided AND wasProvided(optionLvl + 1) = ArgProvided THEN
                         isValidArgSet = 0
                         EXIT FUNCTION
-                    End If
-                End If
+                    END IF
+                END IF
 
-            Case Asc("?"):
+            CASE ASC("?"):
                 currentArg = currentArg + 1
-                if optionLvl >= 1 And firstOptionalArgument = 0 Then firstOptionalArgument = currentArg
+                IF optionLvl >= 1 AND firstOptionalArgument = 0 THEN firstOptionalArgument = currentArg
 
-                if wasProvided(optionLvl) = ArgIgnored Then
-                    If maxArgument >= currentArg Then
+                IF wasProvided(optionLvl) = ArgIgnored THEN
+                    IF maxArgument >= currentArg THEN
                         wasProvided(optionLvl) = providedArgs(currentArg)
-                    else
+                    ELSE
                         wasProvided(optionLvl) = 0
-                    End If
-                else
-                    if maxArgument < currentArg Then
-                        If wasProvided(optionLvl) <> ArgNotProvided Then
+                    END IF
+                ELSE
+                    IF maxArgument < currentArg THEN
+                        IF wasProvided(optionLvl) <> ArgNotProvided THEN
                             isValidArgSet = 0
-                            Exit Function
-                        End If
-                    Elseif wasProvided(optionLvl) <> providedArgs(currentArg) Then
+                            EXIT FUNCTION
+                        END IF
+                    ELSEIF wasProvided(optionLvl) <> providedArgs(currentArg) THEN
                         isValidArgSet = 0
                         EXIT FUNCTION
-                    End If
-                End If
-        End Select
-    Next
+                    END IF
+                END IF
+        END SELECT
+    NEXT
 
     ' The base level of arguments are required. They can be in the
     ' 'ignored' state though if all arguments are within brackets
-    if currentArg < maxArgument Or wasProvided(0) = ArgNotProvided then
+    IF currentArg < maxArgument OR wasProvided(0) = ArgNotProvided THEN
         isValidArgSet = 0
-        Exit Function
-    End If
+        EXIT FUNCTION
+    END IF
 
     isValidArgSet = -1
 END FUNCTION
