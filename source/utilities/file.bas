@@ -72,6 +72,20 @@ FUNCTION RemoveFileExtension$ (f$)
 END FUNCTION
 
 '
+' Returns the extension on the end of a file name
+'
+' Returns "" if there is no extension
+'
+FUNCTION GetFileExtension$ (f$)
+    FOR i = LEN(f$) TO 1 STEP -1
+        a = ASC(f$, i)
+        IF a = 47 OR a = 92 THEN EXIT FOR
+        IF a = 46 THEN GetFileExtension$ = MID$(f$, i + 1): EXIT FUNCTION
+    NEXT
+    GetFileExtension$ = ""
+END FUNCTION
+
+'
 ' Fixes the provided filename and path to use the correct path separator
 '
 SUB PATH_SLASH_CORRECT (a$)
