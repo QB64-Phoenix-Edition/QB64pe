@@ -75,10 +75,10 @@ ifeq ($(OS),win)
 	EXTENSION := .exe
 
 	# Check bitness by seeing which compiler we have
-	ifeq ($(wildcard $(PATH_INTERNAL_C)\c_compiler\i686-w64-mingw32),)
-		BITS := 64
-	else
+	ifeq "$(filter $(findstring aarch64,$(shell $(CC) -dumpmachine)) $(findstring x86_64,$(shell $(CC) -dumpmachine)),aarch64 x86_64)" ""
 		BITS := 32
+	else
+		BITS := 64
 	endif
 endif
 
