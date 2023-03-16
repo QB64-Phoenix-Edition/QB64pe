@@ -10999,8 +10999,8 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
             if (value4 < value2)
                 value4 = value2; // and don't make that buffer height smaller than the console height
 
-            SMALL_RECT rect = {0, 0, width - 1, height - 1};
-            COORD bufferSize = {value3, value4};
+            SMALL_RECT rect = {0, 0, (SHORT)(width - 1), (SHORT)(height - 1)};
+            COORD bufferSize = {(SHORT)value3, (SHORT)value4};
             SetConsoleScreenBufferSize(hConsole, bufferSize); // set the buffer
             SetConsoleWindowInfo(hConsole, TRUE, &rect);      // set the console itself
             return;
@@ -14929,7 +14929,7 @@ void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 st
             column = cl_bufinfo.dwCursorPosition.X + 1;
         if (row == 0)
             row = cl_bufinfo.dwCursorPosition.Y + 1;
-        COORD pos = {column - 1, row - 1};
+        COORD pos = {(SHORT)(column - 1), (SHORT)(row - 1)};
         HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleCursorPosition(output, pos);
 #else
@@ -20800,7 +20800,7 @@ uint32 func_screen(int32 y, int32 x, int32 returncol, int32 passed) {
     if (read_page->console) {
         SECURITY_ATTRIBUTES SecAttribs = {sizeof(SECURITY_ATTRIBUTES), 0, 1};
         HANDLE cl_conout = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &SecAttribs, OPEN_EXISTING, 0, 0);
-        COORD cp1 = {x - 1, y - 1};
+        COORD cp1 = {(SHORT)(x - 1), (SHORT)(y - 1)};
         DWORD t;
         uint16 a;
         if (returncol) {
@@ -27905,7 +27905,7 @@ void *tcp_host_open(int64 port) {
     // and insert into the port field
     // Bind the socket to our local server address
     static int nret;
-    nret = bind(listeningSocket, (LPSOCKADDR)&serverInfo, sizeof(struct sockaddr));
+    nret = ::bind(listeningSocket, (LPSOCKADDR)&serverInfo, sizeof(struct sockaddr));
     if (nret == SOCKET_ERROR) {
         closesocket(listeningSocket);
         return NULL;
