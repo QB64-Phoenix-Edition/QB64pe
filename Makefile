@@ -195,6 +195,7 @@ include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
 include $(PATH_INTERNAL_C)/parts/video/image/build.mk
 include $(PATH_INTERNAL_C)/parts/gui/build.mk
 include $(PATH_INTERNAL_C)/parts/network/http/build.mk
+include $(PATH_INTERNAL_C)/parts/compression/build.mk
 
 .PHONY: all clean
 
@@ -330,12 +331,8 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_ZLIB)),)
+	EXE_LIBS += $(MINIZ_OBJS) $(COMPRESSION_OBJS)
 	CXXFLAGS += -DDEPENDENCY_ZLIB
-	ifeq ($(OS),osx)
-		CXXLIBS += "-lz"
-	else
-		CXXLIBS += "-l:libz.a"
-	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += zlib

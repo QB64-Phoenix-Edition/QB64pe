@@ -1,10 +1,11 @@
-#include "common.h"
 #include "audio.h"
-#include "image.h"
-#include "gui.h"
-#include "event.h"
-#include "rounding.h"
+#include "common.h"
+#include "compression.h"
 #include "datetime.h"
+#include "event.h"
+#include "gui.h"
+#include "image.h"
+#include "rounding.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -20,12 +21,6 @@ extern int32 func__getconsoleinput();
 
 extern void unlockvWatchHandle();
 extern int32 vWatchHandle();
-
-#ifdef DEPENDENCY_ZLIB
-#include <zlib.h>
-qbs *func__deflate(qbs *text);
-qbs *func__inflate(qbs *text, int64 originalsize, int32 passed);
-#endif
 
 #ifdef QB64_MACOSX
 #include <ApplicationServices/ApplicationServices.h>
