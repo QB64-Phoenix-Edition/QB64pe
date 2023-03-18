@@ -35,8 +35,8 @@ On Windows MinGW-w64 is used to compiled the C++ code produced by QB64-PE, and s
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| MinGW-w64 C and C++ runtime | Various Permissive Licenses | license_mingw-base-runtime.txt | internal/c/c_compiler |
-| libstdc++ | GPLv3 with Exception | license_libstdc++.txt | internal/c/c_compiler |
+| MinGW-w64 C and C++ runtime | Various Permissive Licenses | license_mingw-base-runtime.txt | internal/c/c_compiler/ |
+| libstdc++ | GPLv3 with Exception | license_libstdc++.txt | internal/c/c_compiler/ |
 
 ## Display Support
 
@@ -44,7 +44,7 @@ This is always used unless you use `$CONSOLE:ONLY`. On Mac OS the system's own G
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| FreeGLUT | MIT | license_freeglut.txt | internal/c/parts/core |
+| FreeGLUT | MIT | license_freeglut.txt | internal/c/parts/core/ |
 
 ## Image Support
 
@@ -89,7 +89,7 @@ These libraries are pulled in when using any sound-related functionality.
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
 | stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
-| HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker |
+| HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
 
 ## MIDI Support
 
@@ -106,7 +106,7 @@ This is used by libqb to show alerts and also by the common dialog functions and
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui
+| tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui/ |
 
 ## Legacy OpenAL audio backend
 
