@@ -69,7 +69,7 @@ These libraries are pulled in if `_INFLATE$()` or `_DEFLATE$()` are used.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| ZLib | ZLIB | license_zlib.txt | internal/c/c_compiler (provide by MinGW on Windows, system library otherwise) |
+| miniz | MIT | license_miniz.txt | internal/c/parts/compression/ |
 
 ## Http Support
 
@@ -88,7 +88,7 @@ These libraries are pulled in when using any sound-related functionality.
 | Miniaudio | MIT | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
-| std_vorbis | Public Domain | license_stdvorbis.txt | internal/c/parts/audio/extras/std_vorbis.c |
+| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
 | HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker |
 
 ## MIDI Support
@@ -117,4 +117,4 @@ The below licenses apply when making use of the legacy OpenAL audio backend (can
 | mpg123 | LGPL 2.1 | license_mpg123.txt | internal/c/parts/audio/decode/mp3/ |
 | OpenAL-soft | LGPL 2 | license_openal.txt | internal/c/parts/audio/out/ |
 | Opus Tools | BSD 2-clause | license_opus.txt | internal/c/parts/audio/conversion/ |
-| stb_vorbis | Public Domain | license_stdvorbis.txt | internal/c/parts/audio/decode/ogg/ |
+| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/decode/ogg/ |
