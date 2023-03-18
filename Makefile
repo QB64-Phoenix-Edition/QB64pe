@@ -335,7 +335,7 @@ ifneq ($(filter y,$(DEP_ZLIB)),)
 	CXXFLAGS += -DDEPENDENCY_ZLIB
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
-	LICENSE_IN_USE += zlib
+	LICENSE_IN_USE += miniz
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
