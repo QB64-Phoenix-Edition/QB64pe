@@ -35,8 +35,8 @@ On Windows MinGW-w64 is used to compiled the C++ code produced by QB64-PE, and s
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| MinGW-w64 C and C++ runtime | Various Permissive Licenses | license_mingw-base-runtime.txt | internal/c/c_compiler |
-| libstdc++ | GPLv3 with Exception | license_libstdc++.txt | internal/c/c_compiler |
+| MinGW-w64 C and C++ runtime | Various Permissive Licenses | license_mingw-base-runtime.txt | internal/c/c_compiler/ |
+| libstdc++ | GPLv3 with Exception | license_libstdc++.txt | internal/c/c_compiler/ |
 
 ## Display Support
 
@@ -44,7 +44,7 @@ This is always used unless you use `$CONSOLE:ONLY`. On Mac OS the system's own G
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| FreeGLUT | MIT | license_freeglut.txt | internal/c/parts/core |
+| FreeGLUT | MIT | license_freeglut.txt | internal/c/parts/core/ |
 
 ## Image Support
 
@@ -69,7 +69,7 @@ These libraries are pulled in if `_INFLATE$()` or `_DEFLATE$()` are used.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| ZLib | ZLIB | license_zlib.txt | internal/c/c_compiler (provide by MinGW on Windows, system library otherwise) |
+| miniz | MIT | license_miniz.txt | internal/c/parts/compression/ |
 
 ## Http Support
 
@@ -88,8 +88,8 @@ These libraries are pulled in when using any sound-related functionality.
 | Miniaudio | MIT | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
-| std_vorbis | Public Domain | license_stdvorbis.txt | internal/c/parts/audio/extras/std_vorbis.c |
-| HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker |
+| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
+| HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
 
 ## MIDI Support
 
@@ -106,7 +106,7 @@ This is used by libqb to show alerts and also by the common dialog functions and
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui
+| tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui/ |
 
 ## Legacy OpenAL audio backend
 
@@ -117,4 +117,4 @@ The below licenses apply when making use of the legacy OpenAL audio backend (can
 | mpg123 | LGPL 2.1 | license_mpg123.txt | internal/c/parts/audio/decode/mp3/ |
 | OpenAL-soft | LGPL 2 | license_openal.txt | internal/c/parts/audio/out/ |
 | Opus Tools | BSD 2-clause | license_opus.txt | internal/c/parts/audio/conversion/ |
-| stb_vorbis | Public Domain | license_stdvorbis.txt | internal/c/parts/audio/decode/ogg/ |
+| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/decode/ogg/ |

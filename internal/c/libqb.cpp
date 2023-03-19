@@ -28,6 +28,7 @@
 #include "datetime.h"
 #include "rounding.h"
 #include "event.h"
+#include "compression.h"
 
 int32 disableEvents = 0;
 
@@ -21523,11 +21524,6 @@ double func_sqr(double value) {
 #    include "parts/audio/out/src.c"
 #    include "parts/audio/conversion/src.c"
 #    include "parts/audio/decode/src.c"
-#endif
-
-
-#ifdef DEPENDENCY_ZLIB
-#    include "parts/zlib/src.c"
 #endif
 
 qbs *func_command_str = NULL;

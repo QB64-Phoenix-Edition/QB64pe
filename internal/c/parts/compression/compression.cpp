@@ -1,22 +1,29 @@
-#include <zlib.h>
+//----------------------------------------------------------------------------------------------------
+//  QB64-PE Compression Library
+//  Powered by miniz (https://github.com/richgel999/miniz)
+//-----------------------------------------------------------------------------------------------------
+
+#include "compression.h"
+#include "../../libqb.h"
+#include "miniz.h"
 
 qbs *func__deflate(qbs *text) {
-    uLongf filesize = (uint32)text->len; // length of the text
+    uLongf filesize = (uint32_t)text->len; // length of the text
     uLongf compsize = compressBound(filesize);
     unsigned char *dest = (unsigned char *)malloc(compsize);
-    int32 result = compress(dest, &compsize, text->chr, filesize);
+    int32_t result = compress(dest, &compsize, text->chr, filesize);
     qbs *ret = qbs_new(compsize, 1);
     memcpy(ret->chr, dest, compsize);
     free(dest);
     return ret;
 }
 
-qbs *func__inflate(qbs *text, int64 originalsize, int32 passed) {
-    int32 result = 0;
+qbs *func__inflate(qbs *text, int64_t originalsize, int32_t passed) {
+    int32_t result = 0;
     if (passed == 1) {
         uLongf uncompsize = originalsize;
         unsigned char *dest = (unsigned char *)malloc(originalsize);
-        int32 result = uncompress(dest, &uncompsize, text->chr, text->len);
+        int32_t result = uncompress(dest, &uncompsize, text->chr, text->len);
         qbs *ret = qbs_new(uncompsize, 1);
         memcpy(ret->chr, dest, uncompsize);
         free(dest);
