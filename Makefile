@@ -332,12 +332,8 @@ endif
 
 ifneq ($(filter y,$(DEP_ZLIB)),)
 	EXE_LIBS += $(MINIZ_OBJS) $(COMPRESSION_OBJS)
-	CXXFLAGS += -DDEPENDENCY_ZLIB
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += miniz
-else
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
 ifneq ($(filter y,$(DEP_HTTP)),)
