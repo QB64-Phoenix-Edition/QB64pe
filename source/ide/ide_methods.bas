@@ -20374,7 +20374,7 @@ SUB ExportCodeAs (docFormat$)
     ' color theme is utilized for HTML and Rich Text documents, the Wiki however
     ' has its own fixed blue theme.
     '----------
-    pNam$ = ideprogname$: IF pNam$ = "" THEN pNam$ = "Untitled.bas"
+    pNam$ = ideprogname$: IF pNam$ = "" THEN pNam$ = "Untitled" + tempfolderindexstr$ + ".bas"
     SELECT CASE LCASE$(docFormat$)
         CASE "html": ext$ = ".htm"
         CASE "rich": ext$ = ".rtf"
