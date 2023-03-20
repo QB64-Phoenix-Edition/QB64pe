@@ -62,38 +62,51 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         a$ = "" 'dummy pages (for error display)
     ELSE
         a$ = wikiDLPage$(url$, 15)
+        IF INSTR(a$, "Login required") > 0 THEN a$ = s1$ + s2$ 'continue as empty page
     END IF
 
     'Find wikitext in the downloaded page
     s1 = INSTR(a$, s1$)
     IF s1 > 0 THEN a$ = MID$(a$, s1 + LEN(s1$)): s2 = INSTR(a$, s2$): ELSE s2 = 0
     IF s2 > 0 THEN a$ = LEFT$(a$, s2 - 1)
-    IF s1 > 0 AND s2 > 0 AND a$ <> "" THEN
-        'If wikitext was found, then substitute stuff & save it
-        '--- first HTML specific entities
-        WHILE INSTR(a$, "&amp;") > 0 '         '&amp; must be first and looped until all
-            a$ = StrReplace$(a$, "&amp;", "&") 'multi-escapes are resolved (eg. &amp;lt; &amp;amp;lt; etc.)
-        WEND
-        a$ = StrReplace$(a$, "&lt;", "<")
-        a$ = StrReplace$(a$, "&gt;", ">")
-        a$ = StrReplace$(a$, "&quot;", CHR$(34))
-        '--- wiki redirects & crlf
-        a$ = StrReplace$(a$, "#REDIRECT", "See page")
-        a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
-        WHILE LEFT$(a$, 1) = CHR$(10): a$ = MID$(a$, 2): WEND
-        IF LEN(a$) > 0 AND RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
-        '--- put a download date/time entry
-        a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
-        '--- now save it
-        fh = FREEFILE
-        OPEN outputFile$ FOR OUTPUT AS #fh
-        PRINT #fh, a$;
-        CLOSE #fh
+    IF s1 > 0 AND s2 > 0 THEN
+        IF a$ <> "" THEN
+            'If wikitext was found, then substitute stuff & save it
+            '--- first HTML specific entities
+            WHILE INSTR(a$, "&amp;") > 0 '         '&amp; must be first and looped until all
+                a$ = StrReplace$(a$, "&amp;", "&") 'multi-escapes are resolved (eg. &amp;lt; &amp;amp;lt; etc.)
+            WEND
+            a$ = StrReplace$(a$, "&lt;", "<")
+            a$ = StrReplace$(a$, "&gt;", ">")
+            a$ = StrReplace$(a$, "&quot;", CHR$(34))
+            '--- wiki redirects & crlf
+            a$ = StrReplace$(a$, "#REDIRECT", "See page")
+            a$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
+            WHILE LEFT$(a$, 1) = CHR$(10): a$ = MID$(a$, 2): WEND
+            IF LEN(a$) > 0 AND RIGHT$(a$, 1) <> CHR$(10) THEN a$ = a$ + CHR$(10)
+            '--- put a download date/time entry
+            a$ = "{{QBDLDATE:" + DATE$ + "}}" + CHR$(10) + "{{QBDLTIME:" + TIME$ + "}}" + CHR$(10) + a$
+            '--- now save it
+            fh = FREEFILE
+            OPEN outputFile$ FOR OUTPUT AS #fh
+            PRINT #fh, a$;
+            CLOSE #fh
+        ELSE
+            'if page returns empty, then it's either
+            IF _FILEEXISTS(outputFile$) THEN
+                KILL outputFile$ 'an old no longer existing/needed page
+            ELSE
+                'or a new not yet created page
+                a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10) +_
+                     "* The requested page is not yet available in the Wiki." + CHR$(10) +_
+                     "** If this is a new keyword, which was recently added to the language, then " +_
+                     "please allow some time for the developers to add it and recheck later." + CHR$(10)
+            END IF
+        END IF
     ELSE
-        'Error message, if empty or corrupted (force re-download on next access)
+        'download failure, page corrupted, no text delimiters found
         a$ = CHR$(10) + "{{PageInternalError}}" + CHR$(10) +_
-             "* Either the requested page is not yet available in the Wiki," + CHR$(10) +_
-             "* or the download from Wiki failed and corrupted the page data." + CHR$(10) +_
+             "* For some unknown reason the download of the requested page failed." + CHR$(10) +_
              "** You may try ''Update Current Page'' from the ''Help'' menu." + CHR$(10) +_
              ";Note:This may also just be a temporary server issue. If the problem persists " +_
              "after waiting some time, then please feel free to leave us a message." + CHR$(10)
@@ -488,7 +501,7 @@ SUB WikiParse (a$) 'Wiki page interpret
             END IF
         END IF
         'However, the internal link logic must run always, as it also handles
-        'the template {{Cb| and {{Cl| links used in text/code blocks
+        'the template {{Cb|, {{Cl| and {{Cm| links used in text/code blocks
         IF link = 1 THEN
             IF c$(2) = "]]" OR c$(2) = "}}" THEN
                 i = i + 1
@@ -557,7 +570,7 @@ SUB WikiParse (a$) 'Wiki page interpret
 
         'Wiki templates are handled always, as these are the basic building blocks of all
         'the wiki pages, but look for special conditions inside (Help_LockParse checks)
-        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" THEN 'just nice wrapped links
+        IF c$(5) = "{{Cb|" OR c$(5) = "{{Cl|" OR c$(5) = "{{Cm|" THEN 'just nice wrapped links
             i = i + 4
             link = 1: link$ = "": lcol$ = ""
             Help_LinkTxt = 1: col = Help_Col

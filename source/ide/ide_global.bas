@@ -210,9 +210,9 @@ END TYPE
 '--------------------------------------------------------------------------------
 DIM SHARED idefocusline 'simply stores the location of the line to highlight in red
 DIM SHARED ideautorun, startPaused
-DIM SHARED menu$(1 TO 11, 0 TO 20)
-DIM SHARED menuDesc$(1 TO 11, 0 TO 20)
-DIM SHARED menusize(1 TO 11)
+DIM SHARED menu$(1 TO 12, 0 TO 20)
+DIM SHARED menuDesc$(1 TO 12, 0 TO 20)
+DIM SHARED menusize(1 TO 12)
 DIM SHARED menus AS INTEGER, idecontextualmenuID AS INTEGER
 DIM SHARED ideeditmenuID AS INTEGER, SearchMenuID AS INTEGER
 DIM SHARED OptionsMenuID AS INTEGER, OptionsMenuSwapMouse AS INTEGER, OptionsMenuPasteCursor AS INTEGER
@@ -220,6 +220,7 @@ DIM SHARED OptionsMenuShowErrorsImmediately AS INTEGER, OptionsMenuIgnoreWarning
 DIM SHARED OptionsMenuDisableSyntax AS INTEGER ', OptionsMenuAutoComplete
 DIM SHARED ViewMenuID AS INTEGER, ViewMenuShowLineNumbersSubMenuID AS INTEGER
 DIM SHARED ViewMenuShowSeparatorID AS INTEGER, ViewMenuShowBGID AS INTEGER
+DIM SHARED FileMenuExportAs AS INTEGER, FileMenuExportAsSubMenuID AS INTEGER
 DIM SHARED ViewMenuCompilerWarnings AS INTEGER
 DIM SHARED RunMenuID AS INTEGER, RunMenuSaveExeWithSource AS INTEGER, brackethighlight AS INTEGER
 DIM SHARED GenerateLicenseEnableMenu AS INTEGER
