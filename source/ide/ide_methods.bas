@@ -6327,6 +6327,7 @@ FUNCTION ide2 (ignore)
                     fh = FREEFILE
                     OPEN ".\internal\temp\recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
                     IdeMakeFileMenu
+                    IF ideautolayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                     PCOPY 3, 0: SCREEN , , 3, 0
                     GOTO ideloop
                 END IF
@@ -18300,7 +18301,7 @@ SUB IdeMakeFileMenu
         END IF
     NEXT
     CLOSE #fh
-    IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> "Save #As..." THEN
+    IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> "~#Export As...  " + CHR$(16) THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
     ELSE
