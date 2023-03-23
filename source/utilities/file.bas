@@ -4,19 +4,19 @@
 '
 ' Returns: 0 on success, 1 on error
 FUNCTION CopyFile& (sourceFile$, destFile$)
-    DIM sourcefileNo, destFileNo
+    DIM sourceFileNo, destFileNo
     DIM fileLength AS _INTEGER64
 
     E = 0
     sourceFileNo = FREEFILE
-    OPEN sourceFile$ FOR BINARY as #sourceFileNo
-    if E = 1 THEN GOTO errorCleanup
+    OPEN sourceFile$ FOR BINARY AS #sourceFileNo
+    IF E = 1 THEN GOTO errorCleanup
 
     fileLength = LOF(sourceFileNo)
 
     destFileNo = FREEFILE
-    OPEN destFile$ FOR BINARY as #destFileNo
-    if E = 1 THEN GOTO errorCleanup
+    OPEN destFile$ FOR BINARY AS #destFileNo
+    IF E = 1 THEN GOTO errorCleanup
 
     ' Read the file in one go
     buffer$ = SPACE$(fileLength)
@@ -24,7 +24,7 @@ FUNCTION CopyFile& (sourceFile$, destFile$)
     GET #sourceFileNo, , buffer$
     PUT #destFileNo, , buffer$
 
-errorCleanup:
+    errorCleanup:
     IF sourceFileNo <> 0 THEN CLOSE #sourceFileNo
     IF destFileNo <> 0 THEN CLOSE #destFileNo
 
@@ -99,3 +99,26 @@ SUB PATH_SLASH_CORRECT (a$)
         NEXT
     END IF
 END SUB
+
+' Return a pathname where all "\" are correctly escaped
+FUNCTION GetEscapedPath$ (path_name AS STRING)
+    DIM buf AS STRING, z AS _UNSIGNED LONG, a AS _UNSIGNED _BYTE
+
+    FOR z = 1 TO LEN(path_name)
+        a = ASC(path_name, z)
+        buf = buf + CHR$(a)
+        IF a = 92 THEN buf = buf + "\"
+    NEXT
+
+    GetEscapedPath = buf
+END FUNCTION
+
+' Adds a trailing \ or / if to the name if needed
+FUNCTION FixDirectoryName$ (dir_name AS STRING)
+    IF LEN(dir_name) > 0 AND RIGHT$(dir_name, 1) <> pathsep$ THEN
+        FixDirectoryName = dir_name + pathsep$
+    ELSE
+        FixDirectoryName = dir_name
+    END IF
+END FUNCTION
+

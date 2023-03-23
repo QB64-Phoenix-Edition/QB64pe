@@ -4140,25 +4140,21 @@ DO
                         END IF
                     NEXT
 
+                    og_libpath$ = libpath$ ' save the original libpath
+
                     'Accept ./ and .\ as a reference to the source file
                     'folder, replacing it with the actual full path, if available
                     IF libpath$ = "./" OR libpath$ = ".\" THEN
                         libpath$ = ""
                         IF NoIDEMode THEN
-                            libpath$ = path.source$
-                            IF LEN(libpath$) > 0 AND RIGHT$(libpath$, 1) <> pathsep$ THEN libpath$ = libpath$ + pathsep$
+                            libpath$ = FixDirectoryName(path.source$)
                         ELSE
                             IF LEN(ideprogname) THEN libpath$ = idepath$ + pathsep$
                         END IF
                     END IF
 
                     'Create a path which can be used for inline code (uses \\ instead of \)
-                    libpath_inline$ = ""
-                    FOR z = 1 TO LEN(libpath$)
-                        a = ASC(libpath$, z)
-                        libpath_inline$ = libpath_inline$ + CHR$(a)
-                        IF a = 92 THEN libpath_inline$ = libpath_inline$ + "\"
-                    NEXT
+                    libpath_inline$ = GetEscapedPath(libpath$)
 
                     IF LEN(x$) THEN
                         IF dynamiclibrary = 0 THEN
@@ -4475,6 +4471,21 @@ DO
                                         sfheader = 1
                                         GOTO GotHeader
                                     END IF
+                                    ' a740g: Fallback to source path
+                                    libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                    libpath_inline$ = GetEscapedPath(libpath$)
+                                    IF _FILEEXISTS(libpath$ + x$ + ".h") THEN
+                                        headername$ = libpath_inline$ + x$ + ".h"
+                                        IF customtypelibrary = 0 THEN sfdeclare = 0
+                                        sfheader = 1
+                                        GOTO GotHeader
+                                    END IF
+                                    IF _FILEEXISTS(libpath$ + x$ + ".hpp") THEN
+                                        headername$ = libpath_inline$ + x$ + ".hpp"
+                                        IF customtypelibrary = 0 THEN sfdeclare = 0
+                                        sfheader = 1
+                                        GOTO GotHeader
+                                    END IF
                                 END IF 'Windows
 
                                 IF os$ = "LNX" THEN
@@ -4523,6 +4534,21 @@ DO
                                     END IF
                                     IF _FILEEXISTS("/usr/include/" + x$ + ".hpp") THEN
                                         headername$ = "/usr/include/" + x$ + ".hpp"
+                                        IF customtypelibrary = 0 THEN sfdeclare = 0
+                                        sfheader = 1
+                                        GOTO GotHeader
+                                    END IF
+                                    ' a740g: Fallback to source path
+                                    libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                    libpath_inline$ = GetEscapedPath(libpath$)
+                                    IF _FILEEXISTS(libpath$ + x$ + ".h") THEN
+                                        headername$ = libpath_inline$ + x$ + ".h"
+                                        IF customtypelibrary = 0 THEN sfdeclare = 0
+                                        sfheader = 1
+                                        GOTO GotHeader
+                                    END IF
+                                    IF _FILEEXISTS(libpath$ + x$ + ".hpp") THEN
+                                        headername$ = libpath_inline$ + x$ + ".hpp"
                                         IF customtypelibrary = 0 THEN sfdeclare = 0
                                         sfheader = 1
                                         GOTO GotHeader
