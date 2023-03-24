@@ -4472,7 +4472,11 @@ DO
                                         GOTO GotHeader
                                     END IF
                                     ' a740g: Fallback to source path
-                                    libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                    IF inclevel > 0 THEN
+                                        libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                    ELSE
+                                        libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                    END IF
                                     libpath_inline$ = GetEscapedPath(libpath$)
                                     IF _FILEEXISTS(libpath$ + x$ + ".h") THEN
                                         headername$ = libpath_inline$ + x$ + ".h"
@@ -4539,7 +4543,11 @@ DO
                                         GOTO GotHeader
                                     END IF
                                     ' a740g: Fallback to source path
-                                    libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                    IF inclevel > 0 THEN
+                                        libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                    ELSE
+                                        libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                    END IF
                                     libpath_inline$ = GetEscapedPath(libpath$)
                                     IF _FILEEXISTS(libpath$ + x$ + ".h") THEN
                                         headername$ = libpath_inline$ + x$ + ".h"

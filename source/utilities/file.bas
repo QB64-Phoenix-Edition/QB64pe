@@ -113,7 +113,7 @@ FUNCTION GetEscapedPath$ (path_name AS STRING)
     GetEscapedPath = buf
 END FUNCTION
 
-' Adds a trailing \ or / if to the name if needed
+' Adds a trailing \ or / to a directory name if needed
 FUNCTION FixDirectoryName$ (dir_name AS STRING)
     IF LEN(dir_name) > 0 AND RIGHT$(dir_name, 1) <> pathsep$ THEN
         FixDirectoryName = dir_name + pathsep$
