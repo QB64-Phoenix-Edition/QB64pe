@@ -13,15 +13,10 @@
 //	Soundfont (awe32rom.h) from dos-like
 //	https://github.com/mattiasgustavsson/dos-like (MIT)
 //
-//	Copyright (c) 2022 Samuel Gomes
-//	https://github.com/a740g
-//
 //-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
 #include "libqb-common.h"
+
 #include "audio.h"
 #include "filepath.h"
 
@@ -29,48 +24,49 @@
 
 #include "../miniaudio.h"
 
+#define STB_VORBIS_HEADER_ONLY
+#include "stb_vorbis.c"
 #define TSF_IMPLEMENTATION
 #include "tinysoundfont/tsf.h"
 #define TML_IMPLEMENTATION
 #include "tinysoundfont/tml.h"
+#undef STB_VORBIS_HEADER_ONLY
 
 #include "vtables.h"
 
 extern "C" {
-    // These symbols reference a soundfont compiled into the program
-    //
-    // We provide a macro to expand to the correct symbol name
+// These symbols reference a soundfont compiled into the program
+//
+// We provide a macro to expand to the correct symbol name
 
 #if defined(QB64_WINDOWS) && defined(QB64_32)
-    // On 32-bit Windows, we use objcopy, and the symbols do not have an
-    // underscore prefix
-    extern char binary_soundfont_sf2_start[];
-    extern char binary_soundfont_sf2_end[];
+// On 32-bit Windows, we use objcopy, and the symbols do not have an
+// underscore prefix
+extern char binary_soundfont_sf2_start[];
+extern char binary_soundfont_sf2_end[];
 
-#   define SOUNDFONT_BIN binary_soundfont_sf2_start
-#   define SOUNDFONT_SIZE (binary_soundfont_sf2_end - binary_soundfont_sf2_start)
+#    define SOUNDFONT_BIN binary_soundfont_sf2_start
+#    define SOUNDFONT_SIZE (binary_soundfont_sf2_end - binary_soundfont_sf2_start)
 
 #elif defined(QB64_WINDOWS) || defined(QB64_LINUX)
-    // On Linux and 64-bit Windows, we use objcopy, and the symbols do have an
-    // underscore prefix.
-    extern char _binary_soundfont_sf2_start[];
-    extern char _binary_soundfont_sf2_end[];
+// On Linux and 64-bit Windows, we use objcopy, and the symbols do have an
+// underscore prefix.
+extern char _binary_soundfont_sf2_start[];
+extern char _binary_soundfont_sf2_end[];
 
-#   define SOUNDFONT_BIN _binary_soundfont_sf2_start
-#   define SOUNDFONT_SIZE (_binary_soundfont_sf2_end - _binary_soundfont_sf2_start)
+#    define SOUNDFONT_BIN _binary_soundfont_sf2_start
+#    define SOUNDFONT_SIZE (_binary_soundfont_sf2_end - _binary_soundfont_sf2_start)
 
 #else
-    // On Mac OS we use xxd, which gives an array and size
-    extern unsigned char soundfont_sf2[];
-    extern unsigned int soundfont_sf2_len;
+// On Mac OS we use xxd, which gives an array and size
+extern unsigned char soundfont_sf2[];
+extern unsigned int soundfont_sf2_len;
 
-#   define SOUNDFONT_BIN soundfont_sf2
-#   define SOUNDFONT_SIZE soundfont_sf2_len
+#    define SOUNDFONT_BIN soundfont_sf2
+#    define SOUNDFONT_SIZE soundfont_sf2_len
 
 #endif
 }
-
-//-----------------------------------------------------------------------------------------------------
 
 struct ma_tsf {
     // This part is for miniaudio
@@ -274,8 +270,14 @@ static ma_result ma_tsf_ds_get_length(ma_data_source *pDataSource, ma_uint64 *pL
     return ma_tsf_get_length_in_pcm_frames((ma_tsf *)pDataSource, pLength);
 }
 
-static ma_data_source_vtable ma_data_source_vtable_tsf = {ma_tsf_ds_read, ma_tsf_ds_seek, ma_tsf_ds_get_data_format, ma_tsf_ds_get_cursor,
-                                                          ma_tsf_ds_get_length};
+// clang-format off
+static ma_data_source_vtable ma_data_source_vtable_tsf = {
+    ma_tsf_ds_read, ma_tsf_ds_seek,
+    ma_tsf_ds_get_data_format,
+    ma_tsf_ds_get_cursor,
+    ma_tsf_ds_get_length
+};
+// clang-format on
 
 static int ma_tsf_of_callback__read(void *pUserData, unsigned char *pBufferOut, int bytesToRead) {
     ma_tsf *pTsf = (ma_tsf *)pUserData;
@@ -357,13 +359,12 @@ static ma_result ma_tsf_init_internal(const ma_decoding_backend_config *pConfig,
     return MA_SUCCESS;
 }
 
-ma_result ma_tsf_load_memory(ma_tsf *pTsf)
-{
+ma_result ma_tsf_load_memory(ma_tsf *pTsf) {
     // Attempt to load a SoundFont from memory
     pTsf->tinySoundFont = tsf_load_memory(SOUNDFONT_BIN, SOUNDFONT_SIZE);
 
     // Return failue if loading from memory also failed. This should not happen though
-    return pTsf->tinySoundFont? MA_SUCCESS: MA_OUT_OF_MEMORY;
+    return pTsf->tinySoundFont ? MA_SUCCESS : MA_OUT_OF_MEMORY;
 }
 
 static ma_result ma_tsf_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,
@@ -566,6 +567,7 @@ static void ma_decoding_backend_uninit__tsf(void *pUserData, ma_data_source *pBa
     ma_free(pTsf, pAllocationCallbacks);
 }
 
+// clang-format off
 ma_decoding_backend_vtable ma_vtable_midi = {
     ma_decoding_backend_init__tsf,
     ma_decoding_backend_init_file__tsf,
@@ -573,4 +575,4 @@ ma_decoding_backend_vtable ma_vtable_midi = {
     NULL, /* onInitMemory() */
     ma_decoding_backend_uninit__tsf
 };
-//-----------------------------------------------------------------------------------------------------
+// clang-format on

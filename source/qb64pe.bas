@@ -3493,11 +3493,21 @@ DO
                     ' Verify there are no extra characters after end quote
                     IF INSTR(MidiSoundFont$, CHR$(34)) <> LEN(MidiSoundFont$) THEN a$ = "Unexpected characters after the quoted file name": GOTO errmes
 
+                    ' Strip the trailing quote
                     MidiSoundFont$ = MID$(MidiSoundFont$, 1, LEN(MidiSoundFont$) - 1)
 
                     IF NOT _FILEEXISTS(MidiSoundFont$) THEN
-                        a$ = "Soundfont file " + AddQuotes$(MidiSoundFont$) + " could not be found!"
-                        GOTO errmes
+                        ' Just try to concatenate the path with the source or include path and check if we are able to find the file
+                        IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname(inclevel)) + MidiSoundFont$) THEN
+                            MidiSoundFont$ = getfilepath(incname(inclevel)) + MidiSoundFont$
+                        ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
+                            MidiSoundFont$ = FixDirectoryName(idepath$) + MidiSoundFont$
+                        END IF
+
+                        IF NOT _FILEEXISTS(MidiSoundFont$) THEN
+                            a$ = "Soundfont file " + AddQuotes$(MidiSoundFont$) + " could not be found!"
+                            GOTO errmes
+                        END IF
                     END IF
                 ELSE
                     ' Constant values, only one for now
