@@ -3500,6 +3500,8 @@ DO
                         ' Just try to concatenate the path with the source or include path and check if we are able to find the file
                         IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname(inclevel)) + MidiSoundFont$) THEN
                             MidiSoundFont$ = getfilepath(incname(inclevel)) + MidiSoundFont$
+                        ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) Then
+                            MidiSoundFont$ = FixDirectoryName(path.source$) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
                             MidiSoundFont$ = FixDirectoryName(idepath$) + MidiSoundFont$
                         END IF
