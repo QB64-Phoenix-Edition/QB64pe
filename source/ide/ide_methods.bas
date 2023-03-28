@@ -20469,7 +20469,8 @@ SUB ExportCodeAs (docFormat$)
                 IF me% THEN
                     GOSUB VerifyKeyword: GOSUB WriteLink: me% = 0: le% = 0
                     SELECT CASE UCASE$(me$)
-                        CASE "$LET", "$IF", "$ELSEIF", "$END": pc% = -1
+                        CASE "$LET", "$ELSE", "$END": pc% = -1
+                        CASE "$IF", "$ELSEIF": pc% = -1: bo% = -1
                     END SELECT
                 END IF
                 IF kw% THEN
@@ -20700,7 +20701,7 @@ SUB ExportCodeAs (docFormat$)
         ELSEIF me% AND NOT le% THEN
             IF INSTR("$DYNAMIC$INCLUDE$STATIC", UCASE$(veri$)) > 0 THEN me$ = ""
         END IF
-        IF pc% AND (UCASE$(veri$) = "IF" OR UCASE$(veri$) = "THEN") THEN me$ = veri$
+        IF pc% THEN me$ = veri$
     ELSEIF np% AND kw% THEN
         IF ASC(veri$, 1) > 90 OR INSTR(listOfKeywords$, "@_" + UCASE$(veri$) + "@") = 0 THEN kw$ = ""
     ELSEIF NOT ml% AND INSTR(listOfCustomKeywords$, "@" + UCASE$(removesymbol2$(veri$)) + "@") > 0 THEN
