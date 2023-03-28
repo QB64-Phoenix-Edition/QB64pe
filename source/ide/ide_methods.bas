@@ -20793,8 +20793,8 @@ SUB ExportCodeAs (docFormat$)
     pal% = LEN(page$): lkl% = LEN(lnk$)
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
-            MID$(eTxt$, ePos&, pal% + lkl% + 111) = "<a style=" + CHR$(34) + "text-decoration: none; color: " + lkc$ + ";" + CHR$(34) + " href=" + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + ">" + lnk$ + "</a>"
-            ePos& = ePos& + pal% + lkl% + 111
+            MID$(eTxt$, ePos&, (2 * pal%) + lkl% + 120) = "<a style=" + CHR$(34) + "text-decoration: none; color: " + lkc$ + ";" + CHR$(34) + " href=" + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + " title=" + CHR$(34) + page$ + CHR$(34) + ">" + lnk$ + "</a>"
+            ePos& = ePos& + (2 * pal%) + lkl% + 120
         CASE "rich"
             MID$(eTxt$, ePos&, pal% + lkl% + 108) = "{\field{\*\fldinst HYPERLINK " + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + "}{\fldrslt{" + rtc$ + "\ul0 " + lnk$ + "}}}\cf0 "
             ePos& = ePos& + pal% + lkl% + 108
