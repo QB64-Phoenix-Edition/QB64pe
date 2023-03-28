@@ -20397,6 +20397,10 @@ SUB ExportCodeAs (docFormat$)
         IdeInfo = CHR$(0) + STRING$(3 - LEN(perc$), 32) + perc$ + "% exported..."
         UpdateIdeInfo
     NEXT i&
+    WHILE RIGHT$(sTxt$, LEN(cEol$)) = cEol$ 'normalize line feeds at EOF
+        sTxt$ = LEFT$(sTxt$, LEN(sTxt$) - LEN(cEol$))
+    WEND
+    IF sTxt$ = "" THEN sTxt$ = sTxt$ + cEol$: ELSE sTxt$ = sTxt$ + cEol$ + cEol$
     sLen& = LEN(sTxt$) '     '=> source code length
     sPos& = 1 '              '=> source code read position
     eTxt$ = SPACE$(10000000) '=> export text buffer
@@ -20442,7 +20446,8 @@ SUB ExportCodeAs (docFormat$)
             CASE 10, 13 'line feed
                 IF NOT lb% THEN
                     IF me% THEN
-                        GOSUB VerifyKeyword: GOSUB WriteLink: me% = 0: le% = 0
+                        IF NOT in% THEN GOSUB VerifyKeyword: GOSUB WriteLink: ELSE me$ = "": in% = 0
+                        me% = 0: le% = 0
                         IF UCASE$(me$) = "$NOPREFIX" THEN np% = -1
                     END IF
                     IF kw% THEN
@@ -20464,7 +20469,7 @@ SUB ExportCodeAs (docFormat$)
                 IF me% THEN
                     GOSUB VerifyKeyword: GOSUB WriteLink: me% = 0: le% = 0
                     SELECT CASE UCASE$(me$)
-                        CASE "$IF", "$ELSEIF", "$END": pc% = -1
+                        CASE "$LET", "$IF", "$ELSEIF", "$END": pc% = -1
                     END SELECT
                 END IF
                 IF kw% THEN
@@ -20620,15 +20625,17 @@ SUB ExportCodeAs (docFormat$)
     CloseCodeBlock:
     SELECT CASE LCASE$(docFormat$)
         CASE "html": tmp$ = "</pre></body></html>"
-        CASE "rich": tmp$ = "}"
+        CASE "rich": tmp$ = "}": ePos& = ePos& - 4 'remove final /par
         CASE "wiki": tmp$ = "{{CodeEnd}}"
         CASE ELSE: RETURN
     END SELECT
+    ePos& = ePos& - LEN(cEol$) 'remove final code line feed
     MID$(eTxt$, ePos&, LEN(tmp$)) = tmp$: ePos& = ePos& + LEN(tmp$)
     MID$(eTxt$, ePos&, LEN(cEol$)) = cEol$: ePos& = ePos& + LEN(cEol$)
     RETURN
     '----------
     OpenText:
+    IF ml% AND NOT pc% AND LCASE$(what$) <> "co" THEN RETURN
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
             SELECT CASE LCASE$(what$)
@@ -20656,6 +20663,7 @@ SUB ExportCodeAs (docFormat$)
     RETURN
     '----------
     CloseText:
+    IF ml% AND NOT pc% AND LCASE$(what$) <> "co" THEN RETURN
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
             SELECT CASE LCASE$(what$)
@@ -20721,6 +20729,7 @@ SUB ExportCodeAs (docFormat$)
     ELSE
         la$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " "))
         SELECT EVERYCASE page$
+            CASE "$END": IF UCASE$(LEFT$(la$, 2)) = "IF" THEN me$ = me$ + " " + LEFT$(la$, 2): page$ = "$END IF": in% = -1
             CASE "CALL": IF UCASE$(LEFT$(la$, 8)) = "ABSOLUTE" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "CALL ABSOLUTE": in% = -1
             CASE "DECLARE": IF UCASE$(LEFT$(la$, 7)) = "LIBRARY" THEN kw$ = kw$ + " " + LEFT$(la$, 7): page$ = "DECLARE LIBRARY": in% = -1
             CASE "DEF": IF UCASE$(LEFT$(la$, 3)) = "SEG" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "DEF SEG": in% = -1
@@ -20755,9 +20764,9 @@ SUB ExportCodeAs (docFormat$)
                 IF UCASE$(LEFT$(la$, 5)) = "UNTIL" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
             CASE "ON"
                 IF UCASE$(LEFT$(la$, 5)) = "ERROR" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON ERROR": in% = -1
-                IF UCASE$(LEFT$(la$, 3)) = "KEY" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "ON KEY": in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "STRIG" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON STRIG": in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "TIMER" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON TIMER": in% = -1
+                IF UCASE$(LEFT$(la$, 3)) = "KEY" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "ON KEY(n)": in% = -1
+                IF UCASE$(LEFT$(la$, 5)) = "STRIG" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON STRIG(n)": in% = -1
+                IF UCASE$(LEFT$(la$, 5)) = "TIMER" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON TIMER(n)": in% = -1
             CASE "OPTION": IF UCASE$(LEFT$(la$, 4)) = "BASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "OPTION BASE": in% = -1
             CASE "PALETTE": IF UCASE$(LEFT$(la$, 5)) = "USING" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "PALETTE USING": in% = -1
             CASE "PRINT"
