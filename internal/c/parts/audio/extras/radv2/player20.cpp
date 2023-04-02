@@ -24,19 +24,13 @@
 
 */
 
-
-
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #ifndef RAD_DETECT_REPEATS
-#define RAD_DETECT_REPEATS  0
+#    define RAD_DETECT_REPEATS 0
 #endif
-
-
 
 //==================================================================================================
 // RAD player class.
@@ -45,187 +39,180 @@ class RADPlayer {
 
     // Various constants
     enum {
-        kTracks             = 100,
-        kChannels           = 9,
-        kTrackLines         = 64,
-        kRiffTracks         = 10,
-        kInstruments        = 127,
+        kTracks = 100,
+        kChannels = 9,
+        kTrackLines = 64,
+        kRiffTracks = 10,
+        kInstruments = 127,
 
-        cmPortamentoUp      = 0x1,
-        cmPortamentoDwn     = 0x2,
-        cmToneSlide         = 0x3,
-        cmToneVolSlide      = 0x5,
-        cmVolSlide          = 0xA,
-        cmSetVol            = 0xC,
-        cmJumpToLine        = 0xD,
-        cmSetSpeed          = 0xF,
-        cmIgnore            = ('I' - 55),
-        cmMultiplier        = ('M' - 55),
-        cmRiff              = ('R' - 55),
-        cmTranspose         = ('T' - 55),
-        cmFeedback          = ('U' - 55),
-        cmVolume            = ('V' - 55)
+        cmPortamentoUp = 0x1,
+        cmPortamentoDwn = 0x2,
+        cmToneSlide = 0x3,
+        cmToneVolSlide = 0x5,
+        cmVolSlide = 0xA,
+        cmSetVol = 0xC,
+        cmJumpToLine = 0xD,
+        cmSetSpeed = 0xF,
+        cmIgnore = ('I' - 55),
+        cmMultiplier = ('M' - 55),
+        cmRiff = ('R' - 55),
+        cmTranspose = ('T' - 55),
+        cmFeedback = ('U' - 55),
+        cmVolume = ('V' - 55)
     };
 
-    enum e_Source {
-        SNone, SRiff, SIRiff
-    };
+    enum e_Source { SNone, SRiff, SIRiff };
 
-    enum {
-        fKeyOn              = 1 << 0,
-        fKeyOff             = 1 << 1,
-        fKeyedOn            = 1 << 2
-    };
+    enum { fKeyOn = 1 << 0, fKeyOff = 1 << 1, fKeyedOn = 1 << 2 };
 
     struct CInstrument {
-        uint8_t             Feedback[2];
-        uint8_t             Panning[2];
-        uint8_t             Algorithm;
-        uint8_t             Detune;
-        uint8_t             Volume;
-        uint8_t             RiffSpeed;
-        uint8_t *           Riff;
-        uint8_t             Operators[4][5];
+        uint8_t Feedback[2];
+        uint8_t Panning[2];
+        uint8_t Algorithm;
+        uint8_t Detune;
+        uint8_t Volume;
+        uint8_t RiffSpeed;
+        uint8_t *Riff;
+        uint8_t Operators[4][5];
     };
 
     struct CEffects {
-        int8_t              PortSlide;
-        int8_t              VolSlide;
-        uint16_t            ToneSlideFreq;
-        uint8_t             ToneSlideOct;
-        uint8_t             ToneSlideSpeed;
-        int8_t              ToneSlideDir;
+        int8_t PortSlide;
+        int8_t VolSlide;
+        uint16_t ToneSlideFreq;
+        uint8_t ToneSlideOct;
+        uint8_t ToneSlideSpeed;
+        int8_t ToneSlideDir;
     };
 
     struct CChannel {
-        uint8_t             LastInstrument;
-        CInstrument *       Instrument;
-        uint8_t             Volume;
-        uint8_t             DetuneA;
-        uint8_t             DetuneB;
-        uint8_t             KeyFlags;
-        uint16_t            CurrFreq;
-        int8_t              CurrOctave;
-        CEffects            FX;
+        uint8_t LastInstrument;
+        CInstrument *Instrument;
+        uint8_t Volume;
+        uint8_t DetuneA;
+        uint8_t DetuneB;
+        uint8_t KeyFlags;
+        uint16_t CurrFreq;
+        int8_t CurrOctave;
+        CEffects FX;
         struct CRiff {
-            CEffects        FX;
-            uint8_t *       Track;
-            uint8_t *       TrackStart;
-            uint8_t         Line;
-            uint8_t         Speed;
-            uint8_t         SpeedCnt;
-            int8_t          TransposeOctave;
-            int8_t          TransposeNote;
-            uint8_t         LastInstrument;
+            CEffects FX;
+            uint8_t *Track;
+            uint8_t *TrackStart;
+            uint8_t Line;
+            uint8_t Speed;
+            uint8_t SpeedCnt;
+            int8_t TransposeOctave;
+            int8_t TransposeNote;
+            uint8_t LastInstrument;
         } Riff, IRiff;
     };
 
-    public:
-                            RADPlayer() : Initialised(false) {}
-        void                Init(const void *tune, void (*opl3)(void *, uint16_t, uint8_t), void *arg);
-        void                Stop();
-        bool                Update();
-        int                 GetHertz() const {  return Hertz;  }
-        int                 GetPlayTimeInSeconds() const {  return PlayTime / Hertz;  }
-        int                 GetTunePos() const {  return Order;  }
-        int                 GetTuneLength() const {  return OrderListSize;  }
-        int                 GetTuneLine() const {  return Line;  }
-        void                SetMasterVolume(int vol) {  MasterVol = vol;  }
-        int                 GetMasterVolume() const {  return MasterVol;  }
-        int                 GetSpeed() const {  return Speed;  }
+  public:
+    RADPlayer() : Initialised(false) {}
+    void Init(const void *tune, void (*opl3)(void *, uint16_t, uint8_t), void *arg);
+    void Stop();
+    bool Update();
+    int GetHertz() const { return Hertz; }
+    int GetPlayTimeInSeconds() const { return PlayTime / Hertz; }
+    int GetTunePos() const { return Order; }
+    int GetTuneLength() const { return OrderListSize; }
+    int GetTuneLine() const { return Line; }
+    void SetMasterVolume(int vol) { MasterVol = vol; }
+    int GetMasterVolume() const { return MasterVol; }
+    int GetSpeed() const { return Speed; }
 
-/* BEGIN MEGAZEUX ADDITIONS */
+    /* BEGIN MEGAZEUX ADDITIONS */
 
-        void                SetTunePos(uint32_t order, uint32_t line);
-        int                 GetTuneEffectiveLength();
+    void SetTunePos(uint32_t order, uint32_t line);
+    int GetTuneEffectiveLength();
 
-/* END MEGAZEUX ADDITIONS */
+    /* END MEGAZEUX ADDITIONS */
 
 #if RAD_DETECT_REPEATS
-        uint32_t            ComputeTotalTime();
+    uint32_t ComputeTotalTime();
 #endif
 
-    private:
-        bool                UnpackNote(uint8_t *&s, uint8_t &last_instrument);
-        uint8_t *           GetTrack();
-        uint8_t *           SkipToLine(uint8_t *trk, uint8_t linenum, bool chan_riff = false);
-        void                PlayLine();
-        void                PlayNote(int channum, int8_t notenum, int8_t octave, uint16_t instnum, uint8_t cmd = 0, uint8_t param = 0, e_Source src = SNone, int op = 0);
-        void                LoadInstrumentOPL3(int channum);
-        void                PlayNoteOPL3(int channum, int8_t octave, int8_t note);
-        void                ResetFX(CEffects *fx);
-        void                TickRiff(int channum, CChannel::CRiff &riff, bool chan_riff);
-        void                ContinueFX(int channum, CEffects *fx);
-        void                SetVolume(int channum, uint8_t vol);
-        void                GetSlideDir(int channum, CEffects *fx);
-        void                LoadInstMultiplierOPL3(int channum, int op, uint8_t mult);
-        void                LoadInstVolumeOPL3(int channum, int op, uint8_t vol);
-        void                LoadInstFeedbackOPL3(int channum, int which, uint8_t fb);
-        void                Portamento(uint16_t channum, CEffects *fx, int8_t amount, bool toneslide);
-        void                Transpose(int8_t note, int8_t octave);
-        void                SetOPL3(uint16_t reg, uint8_t val) {
-                                OPL3Regs[reg] = val;
-                                OPL3(OPL3Arg, reg, val);
-                            }
-        uint8_t             GetOPL3(uint16_t reg) const {
-                                return OPL3Regs[reg];
-                            }
+  private:
+    bool UnpackNote(uint8_t *&s, uint8_t &last_instrument);
+    uint8_t *GetTrack();
+    uint8_t *SkipToLine(uint8_t *trk, uint8_t linenum, bool chan_riff = false);
+    void PlayLine();
+    void PlayNote(int channum, int8_t notenum, int8_t octave, uint16_t instnum, uint8_t cmd = 0, uint8_t param = 0, e_Source src = SNone, int op = 0);
+    void LoadInstrumentOPL3(int channum);
+    void PlayNoteOPL3(int channum, int8_t octave, int8_t note);
+    void ResetFX(CEffects *fx);
+    void TickRiff(int channum, CChannel::CRiff &riff, bool chan_riff);
+    void ContinueFX(int channum, CEffects *fx);
+    void SetVolume(int channum, uint8_t vol);
+    void GetSlideDir(int channum, CEffects *fx);
+    void LoadInstMultiplierOPL3(int channum, int op, uint8_t mult);
+    void LoadInstVolumeOPL3(int channum, int op, uint8_t vol);
+    void LoadInstFeedbackOPL3(int channum, int which, uint8_t fb);
+    void Portamento(uint16_t channum, CEffects *fx, int8_t amount, bool toneslide);
+    void Transpose(int8_t note, int8_t octave);
+    void SetOPL3(uint16_t reg, uint8_t val) {
+        OPL3Regs[reg] = val;
+        OPL3(OPL3Arg, reg, val);
+    }
+    uint8_t GetOPL3(uint16_t reg) const { return OPL3Regs[reg]; }
 
-/* BEGIN MEGAZEUX ADDITIONS */
+    /* BEGIN MEGAZEUX ADDITIONS */
 
-        void                Init10(const void *tune);
-        bool                UnpackNote10(uint8_t *&s);
-        uint8_t *           SkipToLine10(uint8_t *trk, uint8_t linenum);
-        int                 LastPatternOrder;
-        bool                Is10;
+    void Init10(const void *tune);
+    bool UnpackNote10(uint8_t *&s);
+    uint8_t *SkipToLine10(uint8_t *trk, uint8_t linenum);
+    int LastPatternOrder;
+    bool Is10;
 
-/* END MEGAZEUX ADDITIONS */
+    /* END MEGAZEUX ADDITIONS */
 
-        void                (*OPL3)(void *, uint16_t, uint8_t);
-        void *              OPL3Arg;
-        CInstrument         Instruments[kInstruments];
-        CChannel            Channels[kChannels];
-        uint32_t            PlayTime;
+    void (*OPL3)(void *, uint16_t, uint8_t);
+    void *OPL3Arg;
+    CInstrument Instruments[kInstruments];
+    CChannel Channels[kChannels];
+    uint32_t PlayTime;
 #if RAD_DETECT_REPEATS
-        uint32_t            OrderMap[4];
-        bool                Repeating;
+    uint32_t OrderMap[4];
+    bool Repeating;
 #endif
-        int16_t             Hertz;
-        uint8_t *           OrderList;
-        uint8_t *           Tracks[kTracks];
-        uint8_t *           Riffs[kRiffTracks][kChannels];
-        uint8_t *           Track;
-        bool                Initialised;
-        uint8_t             Speed;
-        uint8_t             OrderListSize;
-        uint8_t             SpeedCnt;
-        uint8_t             Order;
-        uint8_t             Line;
-        int8_t              Entrances;
-        uint8_t             MasterVol;
-        int8_t              LineJump;
-        uint8_t             OPL3Regs[512];
+    int16_t Hertz;
+    uint8_t *OrderList;
+    uint8_t *Tracks[kTracks];
+    uint8_t *Riffs[kRiffTracks][kChannels];
+    uint8_t *Track;
+    bool Initialised;
+    uint8_t Speed;
+    uint8_t OrderListSize;
+    uint8_t SpeedCnt;
+    uint8_t Order;
+    uint8_t Line;
+    int8_t Entrances;
+    uint8_t MasterVol;
+    int8_t LineJump;
+    uint8_t OPL3Regs[512];
 
-        // Values exported by UnpackNote()
-        int8_t              NoteNum;
-        int8_t              OctaveNum;
-        uint8_t             InstNum;
-        uint8_t             EffectNum;
-        uint8_t             Param;
-        // Unused field, commented out to suppress warnings.
-        //bool                LastNote;
+    // Values exported by UnpackNote()
+    int8_t NoteNum;
+    int8_t OctaveNum;
+    uint8_t InstNum;
+    uint8_t EffectNum;
+    uint8_t Param;
+    // Unused field, commented out to suppress warnings.
+    // bool                LastNote;
 
-        static const int8_t NoteSize[];
-        static const uint16_t ChanOffsets3[9], Chn2Offsets3[9];
-        static const uint16_t NoteFreq[];
-        static const uint16_t OpOffsets3[9][4];
-        static const bool   AlgCarriers[7][4];
+    static const int8_t NoteSize[];
+    static const uint16_t ChanOffsets3[9], Chn2Offsets3[9];
+    static const uint16_t NoteFreq[];
+    static const uint16_t OpOffsets3[9][4];
+    static const bool AlgCarriers[7][4];
 };
 //--------------------------------------------------------------------------------------------------
-const int8_t RADPlayer::NoteSize[] = { 0, 2, 1, 3, 1, 3, 2, 4 };
-const uint16_t RADPlayer::ChanOffsets3[9] = { 0, 1, 2, 0x100, 0x101, 0x102, 6, 7, 8 };              // OPL3 first channel
-const uint16_t RADPlayer::Chn2Offsets3[9] = { 3, 4, 5, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108 };  // OPL3 second channel
-const uint16_t RADPlayer::NoteFreq[] = { 0x16b,0x181,0x198,0x1b0,0x1ca,0x1e5,0x202,0x220,0x241,0x263,0x287,0x2ae };
+const int8_t RADPlayer::NoteSize[] = {0, 2, 1, 3, 1, 3, 2, 4};
+const uint16_t RADPlayer::ChanOffsets3[9] = {0, 1, 2, 0x100, 0x101, 0x102, 6, 7, 8};             // OPL3 first channel
+const uint16_t RADPlayer::Chn2Offsets3[9] = {3, 4, 5, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108}; // OPL3 second channel
+const uint16_t RADPlayer::NoteFreq[] = {0x16b, 0x181, 0x198, 0x1b0, 0x1ca, 0x1e5, 0x202, 0x220, 0x241, 0x263, 0x287, 0x2ae};
+// clang-format off
 const uint16_t RADPlayer::OpOffsets3[9][4] = {
     {  0x00B, 0x008, 0x003, 0x000  },
     {  0x00C, 0x009, 0x004, 0x001  },
@@ -246,8 +233,7 @@ const bool RADPlayer::AlgCarriers[7][4] = {
     {  true, false, true,  true   },  // 5 - 4op - op < op + op + op
     {  true, true,  true,  true   },  // 6 - 4op - op + op + op + op
 };
-
-
+// clang-format on
 
 //==================================================================================================
 // Initialise a RAD tune for playback.  This assumes the tune data is valid and does minimal data
@@ -280,8 +266,7 @@ void RADPlayer::Init(const void *tune, void (*opl3)(void *, uint16_t, uint8_t), 
     // These aren't guaranteed to all be stored in the file...
     memset(&Instruments, 0, sizeof(Instruments));
 
-    if(version == 0x10)
-    {
+    if (version == 0x10) {
         Is10 = true;
         Init10(tune);
         return;
@@ -408,8 +393,6 @@ void RADPlayer::Init(const void *tune, void (*opl3)(void *, uint16_t, uint8_t), 
     Initialised = true;
 }
 
-
-
 //==================================================================================================
 // Stop all sounds and reset the tune.  Tune will play from the beginning again if you continue to
 // Update().
@@ -464,8 +447,6 @@ void RADPlayer::Stop() {
     }
 }
 
-
-
 //==================================================================================================
 // Playback update.  Call BPM * 2 / 5 times a second.  Use GetHertz() for this number after the
 // tune has been initialised.  Returns true if tune is starting to repeat.
@@ -503,21 +484,19 @@ bool RADPlayer::Update() {
 #endif
 }
 
-
-
 //==================================================================================================
 // Unpacks a single RAD note.
 //==================================================================================================
 bool RADPlayer::UnpackNote(uint8_t *&s, uint8_t &last_instrument) {
 
-    if(Is10)
+    if (Is10)
         return UnpackNote10(s);
 
     uint8_t chanid = *s++;
 
-    InstNum   = 0;
+    InstNum = 0;
     EffectNum = 0;
-    Param     = 0;
+    Param = 0;
 
     // Unpack note data
     uint8_t note = 0;
@@ -547,8 +526,6 @@ bool RADPlayer::UnpackNote(uint8_t *&s, uint8_t &last_instrument) {
 
     return ((chanid & 0x80) != 0);
 }
-
-
 
 //==================================================================================================
 // Get current track as indicated by order list.
@@ -583,8 +560,6 @@ uint8_t *RADPlayer::GetTrack() {
     return Tracks[track_num];
 }
 
-
-
 //==================================================================================================
 // Skip through track till we reach the given line or the next higher one.  Returns null if none.
 //==================================================================================================
@@ -612,8 +587,6 @@ uint8_t *RADPlayer::SkipToLine(uint8_t *trk, uint8_t linenum, bool chan_riff) {
 
     return 0;
 }
-
-
 
 //==================================================================================================
 // Plays one line of current track and advances pointers.
@@ -667,12 +640,10 @@ void RADPlayer::PlayLine() {
 
         // NOTE: This fixes a bug where the vanilla copy of this player
         // fails to handle Dxx correctly. See: mindflux.rad order 13. -Lachesis
-        if(Line > 0)
+        if (Line > 0)
             Track = SkipToLine(Track, Line, false);
     }
 }
-
-
 
 //==================================================================================================
 // Play a single note.  Returns the line number in the next pattern to jump to if a jump command was
@@ -722,42 +693,41 @@ void RADPlayer::PlayNote(int channum, int8_t notenum, int8_t octave, uint16_t in
         */
         if (inst->Algorithm < 7) {
 
-        LoadInstrumentOPL3(channum);
+            LoadInstrumentOPL3(channum);
 
-        // Bounce the channel
-        chan.KeyFlags |= fKeyOff | fKeyOn;
+            // Bounce the channel
+            chan.KeyFlags |= fKeyOff | fKeyOn;
 
-        ResetFX(&chan.IRiff.FX);
+            ResetFX(&chan.IRiff.FX);
 
-        if (src != SIRiff || inst != oldinst) {
+            if (src != SIRiff || inst != oldinst) {
 
-            // Instrument riff?
-            if (inst->Riff && inst->RiffSpeed > 0) {
+                // Instrument riff?
+                if (inst->Riff && inst->RiffSpeed > 0) {
 
-                chan.IRiff.Track = chan.IRiff.TrackStart = inst->Riff;
-                chan.IRiff.Line = 0;
-                chan.IRiff.Speed = inst->RiffSpeed;
-                chan.IRiff.LastInstrument = 0;
+                    chan.IRiff.Track = chan.IRiff.TrackStart = inst->Riff;
+                    chan.IRiff.Line = 0;
+                    chan.IRiff.Speed = inst->RiffSpeed;
+                    chan.IRiff.LastInstrument = 0;
 
-                // Note given with riff command is used to transpose the riff
-                if (notenum >= 1 && notenum <= 12) {
-                    chan.IRiff.TransposeOctave = octave;
-                    chan.IRiff.TransposeNote = notenum;
-                    transposing = true;
-                } else {
-                    chan.IRiff.TransposeOctave = 3;
-                    chan.IRiff.TransposeNote = 12;
-                }
+                    // Note given with riff command is used to transpose the riff
+                    if (notenum >= 1 && notenum <= 12) {
+                        chan.IRiff.TransposeOctave = octave;
+                        chan.IRiff.TransposeNote = notenum;
+                        transposing = true;
+                    } else {
+                        chan.IRiff.TransposeOctave = 3;
+                        chan.IRiff.TransposeNote = 12;
+                    }
 
-                // Do first tick of riff
-                chan.IRiff.SpeedCnt = 1;
-                TickRiff(channum, chan.IRiff, false);
+                    // Do first tick of riff
+                    chan.IRiff.SpeedCnt = 1;
+                    TickRiff(channum, chan.IRiff, false);
 
-            } else
-                chan.IRiff.SpeedCnt = 0;
-        }
-        }
-        else
+                } else
+                    chan.IRiff.SpeedCnt = 0;
+            }
+        } else
             chan.Instrument = 0;
     }
 
@@ -808,88 +778,86 @@ void RADPlayer::PlayNote(int channum, int8_t notenum, int8_t octave, uint16_t in
     // Process effect
     switch (cmd) {
 
-        case cmSetVol:
-            SetVolume(channum, param);
-            break;
+    case cmSetVol:
+        SetVolume(channum, param);
+        break;
 
-        case cmSetSpeed:
-            if (src == SNone) {
-                Speed = param;
-                SpeedCnt = param;
-            } else if (src == SRiff) {
-                chan.Riff.Speed = param;
-                chan.Riff.SpeedCnt = param;
-            } else if (src == SIRiff) {
-                chan.IRiff.Speed = param;
-                chan.IRiff.SpeedCnt = param;
-            }
-            break;
-
-        case cmPortamentoUp:
-            fx->PortSlide = param;
-            break;
-
-        case cmPortamentoDwn:
-            fx->PortSlide = -int8_t(param);
-            break;
-
-        case cmToneVolSlide:
-        case cmVolSlide: {
-            int8_t val = param;
-            if (val >= 50)
-                val = -(val - 50);
-            fx->VolSlide = val;
-            if (cmd != cmToneVolSlide)
-                break;
+    case cmSetSpeed:
+        if (src == SNone) {
+            Speed = param;
+            SpeedCnt = param;
+        } else if (src == SRiff) {
+            chan.Riff.Speed = param;
+            chan.Riff.SpeedCnt = param;
+        } else if (src == SIRiff) {
+            chan.IRiff.Speed = param;
+            chan.IRiff.SpeedCnt = param;
         }
+        break;
+
+    case cmPortamentoUp:
+        fx->PortSlide = param;
+        break;
+
+    case cmPortamentoDwn:
+        fx->PortSlide = -int8_t(param);
+        break;
+
+    case cmToneVolSlide:
+    case cmVolSlide: {
+        int8_t val = param;
+        if (val >= 50)
+            val = -(val - 50);
+        fx->VolSlide = val;
+        if (cmd != cmToneVolSlide)
+            break;
+    }
         // Fall through!
 
-        case cmToneSlide: {
-toneslide:
-            uint8_t speed = param;
-            if (speed)
-                fx->ToneSlideSpeed = speed;
-            GetSlideDir(channum, fx);
+    case cmToneSlide: {
+    toneslide:
+        uint8_t speed = param;
+        if (speed)
+            fx->ToneSlideSpeed = speed;
+        GetSlideDir(channum, fx);
+        break;
+    }
+
+    case cmJumpToLine: {
+        if (param >= kTrackLines)
             break;
+
+        // Note: jump commands in riffs are checked for within TickRiff()
+        if (src == SNone)
+            LineJump = param;
+
+        break;
+    }
+
+    case cmMultiplier: {
+        if (src == SIRiff)
+            LoadInstMultiplierOPL3(channum, op, param);
+        break;
+    }
+
+    case cmVolume: {
+        if (src == SIRiff)
+            LoadInstVolumeOPL3(channum, op, param);
+        break;
+    }
+
+    case cmFeedback: {
+        if (src == SIRiff) {
+            uint8_t which = param / 10;
+            uint8_t fb = param % 10;
+            LoadInstFeedbackOPL3(channum, which, fb);
         }
-
-        case cmJumpToLine: {
-            if (param >= kTrackLines)
-                break;
-
-            // Note: jump commands in riffs are checked for within TickRiff()
-            if (src == SNone)
-                LineJump = param;
-
-            break;
-        }
-
-        case cmMultiplier: {
-            if (src == SIRiff)
-                LoadInstMultiplierOPL3(channum, op, param);
-            break;
-        }
-
-        case cmVolume: {
-            if (src == SIRiff)
-                LoadInstVolumeOPL3(channum, op, param);
-            break;
-        }
-
-        case cmFeedback: {
-            if (src == SIRiff) {
-                uint8_t which = param / 10;
-                uint8_t fb = param % 10;
-                LoadInstFeedbackOPL3(channum, which, fb);
-            }
-            break;
-        }
+        break;
+    }
     }
 
     Entrances--;
 }
-
-
 
 //==================================================================================================
 // Sets the OPL3 registers for a given instrument.
@@ -919,7 +887,7 @@ void RADPlayer::LoadInstrumentOPL3(int channum) {
     // Load the operators
     for (int i = 0; i < 4; i++) {
 
-        static const uint8_t blank[] = { 0, 0x3F, 0, 0xF0, 0 };
+        static const uint8_t blank[] = {0, 0x3F, 0, 0xF0, 0};
         const uint8_t *op = (alg < 2 && i >= 2) ? blank : inst->Operators[i];
         uint16_t reg = OpOffsets3[channum][i];
 
@@ -938,8 +906,6 @@ void RADPlayer::LoadInstrumentOPL3(int channum) {
         SetOPL3(reg + 0xE0, op[4]);
     }
 }
-
-
 
 //==================================================================================================
 // Play note on OPL3 hardware.
@@ -987,8 +953,6 @@ void RADPlayer::PlayNoteOPL3(int channum, int8_t octave, int8_t note) {
     SetOPL3(0xB0 + o2, (freq >> 8) | (octave << 2) | ((chan.KeyFlags & fKeyedOn) ? 0x20 : 0));
 }
 
-
-
 //==================================================================================================
 // Prepare FX for new line.
 //==================================================================================================
@@ -997,8 +961,6 @@ void RADPlayer::ResetFX(CEffects *fx) {
     fx->VolSlide = 0;
     fx->ToneSlideDir = 0;
 }
-
-
 
 //==================================================================================================
 // Tick the channel riff.
@@ -1059,15 +1021,13 @@ void RADPlayer::TickRiff(int channum, CChannel::CRiff &riff, bool chan_riff) {
     if (!trk || (*trk++ & 0x7F) != riff.Line)
         return;
 
-    lineid = 0; // silence warning
+    lineid = 0;              // silence warning
     UnpackNote(trk, lineid); // lineid is just a dummy here
     if (EffectNum == cmJumpToLine && Param < kTrackLines) {
         riff.Line = Param;
         riff.Track = SkipToLine(riff.TrackStart, Param, chan_riff);
     }
 }
-
-
 
 //==================================================================================================
 // This continues any effects that operate continuously (eg. slides).
@@ -1089,8 +1049,6 @@ void RADPlayer::ContinueFX(int channum, CEffects *fx) {
     if (fx->ToneSlideDir)
         Portamento(channum, fx, fx->ToneSlideDir, true);
 }
-
-
 
 //==================================================================================================
 // Sets the volume of given channel.
@@ -1126,8 +1084,6 @@ void RADPlayer::SetVolume(int channum, uint8_t vol) {
     }
 }
 
-
-
 //==================================================================================================
 // Starts a tone-slide.
 //==================================================================================================
@@ -1155,8 +1111,6 @@ void RADPlayer::GetSlideDir(int channum, CEffects *fx) {
     fx->ToneSlideDir = speed;
 }
 
-
-
 //==================================================================================================
 // Load multiplier value into operator.
 //==================================================================================================
@@ -1165,8 +1119,6 @@ void RADPlayer::LoadInstMultiplierOPL3(int channum, int op, uint8_t mult) {
     SetOPL3(reg, (GetOPL3(reg) & 0xF0) | (mult & 15));
 }
 
-
-
 //==================================================================================================
 // Load volume value into operator.
 //==================================================================================================
@@ -1174,8 +1126,6 @@ void RADPlayer::LoadInstVolumeOPL3(int channum, int op, uint8_t vol) {
     uint16_t reg = 0x40 + OpOffsets3[channum][op];
     SetOPL3(reg, (GetOPL3(reg) & 0xC0) | ((vol & 0x3F) ^ 0x3F));
 }
-
-
 
 //==================================================================================================
 // Load feedback value into instrument.
@@ -1193,8 +1143,6 @@ void RADPlayer::LoadInstFeedbackOPL3(int channum, int which, uint8_t fb) {
         SetOPL3(reg, (GetOPL3(reg) & 0x31) | ((fb & 7) << 1));
     }
 }
-
-
 
 //==================================================================================================
 // This adjusts the pitch of the given channel's note.  There may also be a limiting value on the
@@ -1260,8 +1208,6 @@ void RADPlayer::Portamento(uint16_t channum, CEffects *fx, int8_t amount, bool t
     SetOPL3(0xB0 + chan_offset, (frq2 >> 8 & 3) | oct << 2 | (GetOPL3(0xB0 + chan_offset) & 0xE0));
 }
 
-
-
 //==================================================================================================
 // Transpose the note returned by UnpackNote().
 // Note: due to RAD's wonky legacy middle C is octave 3 note number 12.
@@ -1293,8 +1239,6 @@ void RADPlayer::Transpose(int8_t note, int8_t octave) {
     }
 }
 
-
-
 //==================================================================================================
 // Compute total time of tune if it didn't repeat.  Note, this stops the tune so should only be done
 // prior to initial playback.
@@ -1319,18 +1263,13 @@ uint32_t RADPlayer::ComputeTotalTime() {
 }
 #endif
 
-
-
 // BEGIN MEGAZEUX ADDITIONS
-
-
 
 //==================================================================================================
 // Initialise a RAD v1 tune for playback.  This assumes the tune data is valid and does minimal data
 // checking. -Lachesis
 //==================================================================================================
-void RADPlayer::Init10(const void *tune)
-{
+void RADPlayer::Init10(const void *tune) {
     uint8_t *pos = (uint8_t *)tune + 0x11;
 
     uint8_t flags = *(pos++);
@@ -1338,16 +1277,16 @@ void RADPlayer::Init10(const void *tune)
     Hertz = 50;
 
     // Slow timer tune?  Return an approximate hz
-    if(flags & 0x40)
+    if (flags & 0x40)
         Hertz = 18;
 
     // Skip any description (only present if flag is set)
-    if(flags & 0x80)
-        while(*(pos++)) {}
+    if (flags & 0x80)
+        while (*(pos++)) {
+        }
 
     // Unpack the instruments
-    while(true)
-    {
+    while (true) {
         // Instrument number, 0 indicates end of list
         uint8_t inst_num = *(pos++);
         if (inst_num == 0)
@@ -1407,17 +1346,16 @@ void RADPlayer::Init10(const void *tune)
     pos += OrderListSize;
 
     // Track offset table
-    for(int i = 0; i < 31; i++)
-    {
+    for (int i = 0; i < 31; i++) {
         int offset = pos[0] | (int(pos[1]) << 8);
         pos += 2;
 
-        if(offset)
+        if (offset)
             Tracks[i] = (uint8_t *)tune + offset;
     }
 
     // Done parsing tune, now set up for play
-    for(int i = 0; i < 512; i++)
+    for (int i = 0; i < 512; i++)
         OPL3Regs[i] = 255;
 
     Stop();
@@ -1425,13 +1363,10 @@ void RADPlayer::Init10(const void *tune)
     Initialised = true;
 }
 
-
-
 //==================================================================================================
 // Unpacks a single RAD note (v1). -Lachesis
 //==================================================================================================
-bool RADPlayer::UnpackNote10(uint8_t *&pos)
-{
+bool RADPlayer::UnpackNote10(uint8_t *&pos) {
     uint8_t chanid = *(pos++);
     uint8_t b1 = *(pos++);
     uint8_t b2 = *(pos++);
@@ -1444,60 +1379,52 @@ bool RADPlayer::UnpackNote10(uint8_t *&pos)
     Param = 0;
 
     // Do we have an effect?
-    if(EffectNum)
+    if (EffectNum)
         Param = *(pos++);
 
     return ((chanid & 0x80) != 0);
 }
 
-
-
 //==================================================================================================
 // Skip through track till we reach the given line or the next higher one (v1).  Returns null if none.
 // -Lachesis
 //==================================================================================================
-uint8_t *RADPlayer::SkipToLine10(uint8_t *trk, uint8_t linenum)
-{
-    while(true)
-    {
+uint8_t *RADPlayer::SkipToLine10(uint8_t *trk, uint8_t linenum) {
+    while (true) {
         uint8_t lineid = *trk;
 
-        if((lineid & 0x7F) >= linenum)
+        if ((lineid & 0x7F) >= linenum)
             return trk;
 
-        if(lineid & 0x80)
+        if (lineid & 0x80)
             break;
 
         trk++;
 
         // Skip channel notes
-        while(true)
-        {
+        while (true) {
             uint8_t chanid = *(trk++);
             trk++;
 
             // Do we have an effect?
-            if(*(trk++) & 0x0F)
+            if (*(trk++) & 0x0F)
                 trk++;
 
-            if(chanid & 0x80)
+            if (chanid & 0x80)
                 break;
         }
     }
     return 0;
 }
 
-
-
 //==================================================================================================
 // Set the current order and line. -Lachesis
 //==================================================================================================
-void RADPlayer::SetTunePos(uint32_t order, uint32_t line)
-{
-    if(line > kTrackLines)
+void RADPlayer::SetTunePos(uint32_t order, uint32_t line) {
+    if (line > kTrackLines)
         line = 0;
 
-    if(order > kTracks || order > OrderListSize)
+    if (order > kTracks || order > OrderListSize)
         order = 0;
 
     Order = order;
@@ -1505,29 +1432,25 @@ void RADPlayer::SetTunePos(uint32_t order, uint32_t line)
 
     Track = GetTrack();
 
-    if(line > 0)
+    if (line > 0)
         Track = SkipToLine(Track, Line, false);
 }
-
-
 
 //==================================================================================================
 // Get the effective length of the tune in orders, i.e., the length minus any jumps at the end.
 // -Lachesis
 //==================================================================================================
-int RADPlayer::GetTuneEffectiveLength()
-{
-    if(LastPatternOrder >= 0)
+int RADPlayer::GetTuneEffectiveLength() {
+    if (LastPatternOrder >= 0)
         return LastPatternOrder + 1;
 
     int i;
-    for(i = OrderListSize - 1; i >= 0; i--)
-    {
-        if(!(OrderList[i] & 0x80))
+    for (i = OrderListSize - 1; i >= 0; i--) {
+        if (!(OrderList[i] & 0x80))
             break;
     }
 
-    if(i < 0)
+    if (i < 0)
         return 0;
 
     LastPatternOrder = i;
