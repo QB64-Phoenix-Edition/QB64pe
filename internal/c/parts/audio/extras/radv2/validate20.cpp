@@ -16,6 +16,10 @@
 
 
 
+const char *RADValidate(const void *data, size_t data_size);
+
+
+
 //==================================================================================================
 // The error strings are all supplied here in case you want to translate them to another language
 // (or supply your own more descriptive error messages).
@@ -40,6 +44,158 @@ const char *g_RADPattBadInstNum = "Pattern contains a bad instrument number.";
 const char *g_RADPattBadEffect = "Pattern contains a bad effect and/or parameter.";
 const char *g_RADBadRiffNum = "Tune file contains a bad riff index.";
 const char *g_RADExtraBytes = "Tune file contains extra bytes.";
+
+
+
+//=============================================================================
+// Validate a RAD V1 file. -Lachesis
+//=============================================================================
+static const char *RADValidate10(const void *data, const uint8_t *end)
+{
+    const uint8_t *start = (const uint8_t *)data;
+    const uint8_t *pos = start;
+    uint16_t pattern_offsets[32];
+    uint32_t i;
+    bool pattern_used[32] = { false };
+    bool last_line;
+    bool last_note;
+
+    // NOTE: an extra byte was allocated and set to null so some extra tracks
+    // would pass this, so bump the end pointer.
+    end++;
+
+    // Description
+    pos += 17;
+    if(*(pos++) & 0x80)
+    {
+        do
+        {
+            if(pos >= end)
+                return g_RADTruncated;
+        }
+        while(*(pos++));
+    }
+
+    // Instruments
+    while(true)
+    {
+        uint8_t num = *(pos++);
+
+        if(num)
+        {
+            pos += 11;
+
+            if(pos >= end)
+                return g_RADTruncated;
+        }
+        else
+            break;
+    }
+
+    // Order list
+    uint8_t num_orders = *(pos++);
+    if(num_orders > 128)
+        return g_RADOrderListTooLarge;
+
+    if(pos + num_orders >= end)
+        return g_RADTruncated;
+
+    for(i = 0; i < num_orders; i++)
+    {
+        uint8_t order = *(pos++);
+
+        // Jump marker
+        if(order & 0x80)
+        {
+            order &= 0x7F;
+            if(order >= num_orders)
+                return g_RADBadJumpMarker;
+        }
+
+        // Pattern number
+        else
+        {
+            if(order >= 32)
+                return g_RADBadOrderEntry;
+
+            // Mark used patterns for validation.
+            // TODO: possibly walk through the order list instead so unreached
+            // orders don't have their patterns marked used.
+            pattern_used[order] = true;
+        }
+    }
+
+    // Pattern offset table
+    if(pos + 64 >= end)
+        return g_RADTruncated;
+
+    for(i = 0; i < 32; i++)
+    {
+        // Ignore offsets to unused patterns- usually they will already be
+        // zero, but "blue_ad.rad" has unused garbage patterns that will fail
+        // validation despite the track otherwise working fine.
+        pattern_offsets[i] = pattern_used[i] ? (pos[0] | (pos[1] << 8)) : 0;
+        pos += 2;
+
+        if(pattern_used[i] && (start + pattern_offsets[i] >= end))
+            return g_RADPattTruncated;
+    }
+
+    // Patterns
+    for(i = 0; i < 32; i++)
+    {
+        if(!pattern_offsets[i])
+            continue;
+
+        pos = start + pattern_offsets[i];
+
+        do
+        {
+            // Line number
+            uint8_t line_num = *(pos++);
+            if((line_num & 0x7F) >= 64)
+                return g_RADPattBadLineNum;
+
+            last_line = (line_num & 0x80) ? true : false;
+
+            do
+            {
+                if(pos + 2 >= end)
+                    return g_RADPattTruncated;
+
+                // Channel
+                uint8_t channel = *(pos++);
+                if((channel & 0x7F) >= 9)
+                    return g_RADPattBadChanNum;
+
+                last_note = (channel & 0x80) ? true : false;
+
+                uint8_t b1 = *(pos++);
+                uint8_t b2 = *(pos++);
+
+                // Note
+                uint8_t note = (b1 & 0x0F);
+                if(note == 13 || note == 14)
+                    return g_RADPattBadNoteNum;
+
+                // Instrument
+                //uint8_t inst = ((b1 & 0x80) >> 4) | ((b2 & 0xF0) >> 1);
+
+                // Effect
+                uint8_t fx = (b2 & 0x0F);
+                if(fx)
+                {
+                    // Parameter
+                    //uint8_t param = *pos;
+                    pos++;
+                }
+            }
+            while(!last_note);
+        }
+        while(!last_line);
+    }
+    return 0;
+}
 
 
 
@@ -86,7 +242,7 @@ static const char *RADCheckPattern(const uint8_t *&s, const uint8_t *e, bool rif
                     return g_RADPattTruncated;
                 uint8_t note = *s++;
                 uint8_t notenum = note & 15;
-                uint8_t octave = (note >> 4) & 7;
+                //uint8_t octave = (note >> 4) & 7;
                 if (notenum == 0 || notenum == 13 || notenum == 14)
                     return g_RADPattBadNoteNum;
             }
@@ -126,9 +282,10 @@ const char *RADValidate(const void *data, size_t data_size) {
 
     const uint8_t *s = (const uint8_t *)data;
     const uint8_t *e = s + data_size;
+    uint8_t version;
 
     // Check header
-    if (data_size < 16)
+    if (data_size < 17)
         return g_RADNotATuneFile;
 
     const char *hdrtxt = "RAD by REALiTY!!";
@@ -137,7 +294,10 @@ const char *RADValidate(const void *data, size_t data_size) {
             return g_RADNotATuneFile;
 
     // Check version
-    if (s >= e || *s++ != 0x21)
+    version = *(s++);
+    if (version == 0x10)
+        return RADValidate10(data, e);
+    if (version != 0x21)
         return g_RADNotAVersion21Tune;
 
     // Check flags
@@ -148,7 +308,8 @@ const char *RADValidate(const void *data, size_t data_size) {
     if (flags & 0x80)
         return g_RADBadFlags; // Bit 7 is unused
 
-    if (flags & 0x40) {
+    // NOTE: the vanilla validator incorrectly checks 0x40 here.
+    if (flags & 0x20) {
         if (s + 2 > e)
             return g_RADTruncated;
         uint16_t bpm = s[0] | (uint16_t(s[1]) << 8);
@@ -201,7 +362,9 @@ const char *RADValidate(const void *data, size_t data_size) {
                 return g_RADTruncated;
             if (s[2] >> 4)
                 return g_RADUnknownMIDIVersion;
-            s += 6;
+            // NOTE the vanilla validator skips 6 bytes here as if the algorithm
+            // byte was already skipped. It wasn't, so skip 7 instead.
+            s += 7;
 
         } else {
 
