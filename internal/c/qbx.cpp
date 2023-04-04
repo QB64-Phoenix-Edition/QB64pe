@@ -3,6 +3,7 @@
 #include "compression.h"
 #include "datetime.h"
 #include "event.h"
+#include "font.h"
 #include "gui.h"
 #include "image.h"
 #include "rounding.h"
@@ -100,18 +101,6 @@ extern void sub__resize(int32 on_off, int32 stretch_smooth);
 extern int32 func__resize();
 extern int32 func__resizewidth();
 extern int32 func__resizeheight();
-
-extern int32 FontLoad(uint8 *content, int32 content_bytes,
-                      int32 default_pixel_height, int32 which_font,
-                      int32 options);
-extern int32 FontRenderTextUTF32(int i, uint32 *codepoint, int32 codepoints,
-                                 int32 options, uint8 **out_data, int32 *out_x,
-                                 int32 *out_y, int32 *out_x_pre_increment,
-                                 int32 *out_x_post_increment);
-extern int32 FontRenderTextASCII(int i, uint8 *codepoint, int32 codepoints,
-                                 int32 options, uint8 **out_data, int32 *out_x,
-                                 int32 *out_y, int32 *out_x_pre_increment,
-                                 int32 *out_x_post_increment);
 
 extern void sub__title(qbs *title);
 extern void sub__echo(qbs *message);
