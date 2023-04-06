@@ -191,7 +191,7 @@ include $(PATH_INTERNAL_C)/parts/audio/extras/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/build.mk
 include $(PATH_INTERNAL_C)/parts/core/build.mk
 include $(PATH_INTERNAL_C)/parts/input/game_controller/build.mk
-include $(PATH_INTERNAL_C)/parts/video/font/ttf/build.mk
+include $(PATH_INTERNAL_C)/parts/video/font/build.mk
 include $(PATH_INTERNAL_C)/parts/video/image/build.mk
 include $(PATH_INTERNAL_C)/parts/gui/build.mk
 include $(PATH_INTERNAL_C)/parts/network/http/build.mk
@@ -265,12 +265,12 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_FONT)),)
-	EXE_LIBS += $(QB_FONT_LIB)
-	CXXFLAGS += -DDEPENDENCY_LOADFONT
+	EXE_LIBS += $(FREETYPE_OBJS) $(FONT_OBJS)
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += freetype_ftl
 else
+	EXE_LIBS += $(FONT_STUB_OBJS)
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
