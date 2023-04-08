@@ -11,8 +11,6 @@
 #include "freetypeamalgam.h"
 #include "rounding.h"
 
-extern uint16_t codepage437_to_unicode16[];
-
 FT_Library ft_library;
 
 struct fonts_struct {

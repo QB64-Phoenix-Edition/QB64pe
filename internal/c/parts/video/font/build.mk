@@ -14,9 +14,9 @@ FONT_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/font/%.o,$(FONT_SRC
 FONT_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/font/%.o,$(FONT_STUB_SRCS))
 
 $(PATH_INTERNAL_C)/parts/video/font/%.o: $(PATH_INTERNAL_C)/parts/video/font/%.c
-	$(CC) -O2 $(CFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+	$(CC) -O2 $(CFLAGS) -Wall $< -c -o $@
 
 $(PATH_INTERNAL_C)/parts/video/font/%.o: $(PATH_INTERNAL_C)/parts/video/font/%.cpp
-	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
 
 CLEAN_LIST += $(FREETYPE_OBJS) $(FONT_OBJS) $(FONT_STUB_OBJS)
