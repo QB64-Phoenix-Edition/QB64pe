@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------------------------------------------------
 // QB64-PE Font Library
-// Powered by stb_truetype (https://github.com/nothings/stb)
+// Powered by FreeType 2.4.12 (https://github.com/vinniefalco/FreeTypeAmalgam)
 //----------------------------------------------------------------------------------------------------------------------
 
 #pragma once

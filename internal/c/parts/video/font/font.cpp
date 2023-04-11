@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------------------------------------------------
-//  QB64-PE Font Library
-//  Powered by FreeType 2.4.12 (https://github.com/vinniefalco/FreeTypeAmalgam)
+// QB64-PE Font Library
+// Powered by FreeType 2.4.12 (https://github.com/vinniefalco/FreeTypeAmalgam)
 //----------------------------------------------------------------------------------------------------------------------
 
 //[ ]what if no glyph index could be found and it returns 0??
