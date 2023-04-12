@@ -37,7 +37,120 @@ struct fonts_render_struct {
     int32_t ox;
 };
 
-// Master rendering routine (to be called by all other functions)
+/// @brief This initializes stb_truetype with the font in memory. The font data is locally copied and is kept alive while in use
+/// @param content_original The original font data in memory that is copied
+/// @param content_bytes The length of the data in bytes
+/// @param default_pixel_height The maximum rendering height of the font
+/// @param which_font The font index in a font collection (< 0 means default)
+/// @param options 1=bold, 2=italic, 4=underline, 8=IGNORED, 16=monospace, 32=unicode (UTF-32), 64=UTF-8
+/// @return A valid font handle (> 0) or 0 on failure
+int32_t FontLoad(uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t options) {
+
+    static int32_t ft_init_called = 0;
+    if (!ft_init_called) {
+        ft_init_called = 1;
+        if (FT_Init_FreeType(&ft_library))
+            exit(5633);
+    }
+
+    if (which_font == -1)
+        which_font = 0;
+
+    // options: 1=bold, 2=italic, 4=underline, 8=IGNORED, 16=monospace, 32=unicode
+
+    // get new index
+    static int32_t i;
+    for (i = 1; i <= fonts_last; i++) {
+        if (!fonts[i].in_use) {
+            goto got_index;
+        }
+    } // i
+    fonts_last++;
+    i = fonts_last;
+    fonts = (fonts_struct *)realloc(fonts, sizeof(fonts_struct) * (fonts_last + 1));
+    fonts[i].in_use = 0;
+got_index:
+
+    memset(&fonts[i], 0, sizeof(fonts_struct));
+
+    // duplicate content
+    static uint8_t *content;
+    content = (uint8_t *)malloc(content_bytes);
+    memcpy(content, content_original, content_bytes);
+    fonts[i].ttf_data = content;
+
+    if (FT_New_Memory_Face(ft_library, content, content_bytes, which_font, &fonts[i].handle))
+        return 0;
+    // Note: "Note that you must not deallocate the memory before calling FT_Done_Face."
+
+    if (FT_Set_Pixel_Sizes(fonts[i].handle, 0, default_pixel_height)) {
+        FT_Done_Face(fonts[i].handle);
+        return 0;
+    }
+    fonts[i].default_pixel_height = default_pixel_height;
+
+    /*
+    static float m_height; m_height=((float)fonts[i].handle->size->metrics.height)/64.0;
+    static float m_up; m_up=((float)fonts[i].handle->size->metrics.ascender)/64.0;
+    static float m_down; m_down=-(((float)fonts[i].handle->size->metrics.descender)/64.0);
+    static float m_char_height; m_char_height=m_up+m_down;
+    static float m_h; m_h=default_pixel_height;
+    fonts[i].baseline= (m_h/m_height) * ((m_height-m_char_height)/2.0+m_up) ;
+    */
+    static float m_height;
+    m_height = ((float)fonts[i].handle->size->metrics.height) / 64.0;
+    static float m_up;
+    m_up = ((float)fonts[i].handle->size->metrics.ascender) / 64.0;
+    static float m_h;
+    m_h = default_pixel_height;
+    fonts[i].baseline = qbr((m_up / m_height) * m_h);
+
+    if (options & 16) {
+        // get the width of capital W
+        static uint32_t cp;
+        cp = 87;
+        static uint8_t *data1;
+        int32_t w1, h1, pre_x, post_x;
+        FontRenderTextUTF32(i, &cp, 1, 1, &data1, &w1, &h1, &pre_x, &post_x);
+        fonts[i].monospace_width = w1;
+        free(data1);
+        fonts[i].monospace = 1;
+    } // monospace
+
+    // Note: DO NOT ADD NEW CONTENT HERE, ADD IT ABOVE MONOSPACE CHECK
+
+    fonts[i].in_use = 1;
+    return i;
+}
+
+/// @brief Frees the font and any locally cached data
+/// @param fh A valid font handle
+void FontFree(int32_t i) {
+    FT_Done_Face(fonts[i].handle);
+    free(fonts[i].ttf_data);
+    fonts[i].in_use = 0;
+}
+
+/// @brief Returns the font width
+/// @param fh A valid font handle
+/// @return The width of the font if the font is monospaced or zero otherwise
+int32_t FontWidth(int32_t i) {
+    if (fonts[i].monospace)
+        return fonts[i].monospace_width;
+    return 0;
+}
+
+/// @brief Master rendering routine (to be called by all other functions). None of the pointer args can be NULL
+/// @param fh A valid font handle
+/// @param codepoint A pointer to an array of UTF-32 codepoints that needs to be rendered
+/// @param codepoints The number of codepoints in the array
+/// @param options 1 = monochrome where black is 0 & white is 255 with nothing in between
+/// @param out_data A pointer to a pointer to the output pixel data (alpha values)
+/// @param out_x A pointer to the output width of the rendered text in pixels
+/// @param out_y A pointer to the output height of the rendered text in pixels
+/// @param out_x_pre_increment A pointer to the amount to move the text horizontally before rendering
+/// @param out_x_post_increment A pointer to the amount to move the text horizontally after rendering
+/// @return success = 1, failure = 0
 int32_t FontRenderTextUTF32(int32_t i, uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y,
                             int32_t *out_x_pre_increment, int32_t *out_x_post_increment) {
     // Notes:
@@ -228,91 +341,17 @@ int32_t FontRenderTextUTF32(int32_t i, uint32_t *codepoint, int32_t codepoints, 
     return 1;
 }
 
-int32_t FontLoad(uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t options) {
-
-    static int32_t ft_init_called = 0;
-    if (!ft_init_called) {
-        ft_init_called = 1;
-        if (FT_Init_FreeType(&ft_library))
-            exit(5633);
-    }
-
-    if (which_font == -1)
-        which_font = 0;
-
-    // options: 1=bold, 2=italic, 4=underline, 8=IGNORED, 16=monospace, 32=unicode
-
-    // get new index
-    static int32_t i;
-    for (i = 1; i <= fonts_last; i++) {
-        if (!fonts[i].in_use) {
-            goto got_index;
-        }
-    } // i
-    fonts_last++;
-    i = fonts_last;
-    fonts = (fonts_struct *)realloc(fonts, sizeof(fonts_struct) * (fonts_last + 1));
-    fonts[i].in_use = 0;
-got_index:
-
-    memset(&fonts[i], 0, sizeof(fonts_struct));
-
-    // duplicate content
-    static uint8_t *content;
-    content = (uint8_t *)malloc(content_bytes);
-    memcpy(content, content_original, content_bytes);
-    fonts[i].ttf_data = content;
-
-    if (FT_New_Memory_Face(ft_library, content, content_bytes, which_font, &fonts[i].handle))
-        return 0;
-    // Note: "Note that you must not deallocate the memory before calling FT_Done_Face."
-
-    if (FT_Set_Pixel_Sizes(fonts[i].handle, 0, default_pixel_height)) {
-        FT_Done_Face(fonts[i].handle);
-        return 0;
-    }
-    fonts[i].default_pixel_height = default_pixel_height;
-
-    /*
-    static float m_height; m_height=((float)fonts[i].handle->size->metrics.height)/64.0;
-    static float m_up; m_up=((float)fonts[i].handle->size->metrics.ascender)/64.0;
-    static float m_down; m_down=-(((float)fonts[i].handle->size->metrics.descender)/64.0);
-    static float m_char_height; m_char_height=m_up+m_down;
-    static float m_h; m_h=default_pixel_height;
-    fonts[i].baseline= (m_h/m_height) * ((m_height-m_char_height)/2.0+m_up) ;
-    */
-    static float m_height;
-    m_height = ((float)fonts[i].handle->size->metrics.height) / 64.0;
-    static float m_up;
-    m_up = ((float)fonts[i].handle->size->metrics.ascender) / 64.0;
-    static float m_h;
-    m_h = default_pixel_height;
-    fonts[i].baseline = qbr((m_up / m_height) * m_h);
-
-    if (options & 16) {
-        // get the width of capital W
-        static uint32_t cp;
-        cp = 87;
-        static uint8_t *data1;
-        int32_t w1, h1, pre_x, post_x;
-        FontRenderTextUTF32(i, &cp, 1, 1, &data1, &w1, &h1, &pre_x, &post_x);
-        fonts[i].monospace_width = w1;
-        free(data1);
-        fonts[i].monospace = 1;
-    } // monospace
-
-    // Note: DO NOT ADD NEW CONTENT HERE, ADD IT ABOVE MONOSPACE CHECK
-
-    fonts[i].in_use = 1;
-    return i;
-}
-
-void FontFree(int32_t i) {
-    FT_Done_Face(fonts[i].handle);
-    free(fonts[i].ttf_data);
-    fonts[i].in_use = 0;
-}
-
+/// @brief This will call FontRenderTextUTF32() after converting the ASCII codepoint array to UTF-32. None of the pointer args can be NULL
+/// @param fh A valid font handle
+/// @param codepoint A pointer to an array of ASCII codepoints that needs to be rendered
+/// @param codepoints The number of codepoints in the array
+/// @param options 1 = monochrome where black is 0 & white is 255 with nothing in between
+/// @param out_data A pointer to a pointer to the output pixel data (alpha values)
+/// @param out_x A pointer to the output width of the rendered text in pixels
+/// @param out_y A pointer to the output height of the rendered text in pixels
+/// @param out_x_pre_increment A pointer to the amount to move the text horizontally before rendering
+/// @param out_x_post_increment A pointer to the amount to move the text horizontally after rendering
+/// @return success = 1, failure = 0
 int32_t FontRenderTextASCII(int32_t i, uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y,
                             int32_t *out_x_pre_increment, int32_t *out_x_post_increment) {
     static uint32_t *utf32_codepoint;
@@ -330,8 +369,9 @@ int32_t FontRenderTextASCII(int32_t i, uint8_t *codepoint, int32_t codepoints, i
     return retval;
 }
 
-int32_t FontWidth(int32_t i) {
-    if (fonts[i].monospace)
-        return fonts[i].monospace_width;
-    return 0;
-}
+/// @brief Returns the length of an ASCII codepoint string in pixels
+/// @param fh A valid font
+/// @param codepoint The ASCII codepoint array
+/// @param codepoints The number of codepoints
+/// @return Length in pixels
+int32_t FontPrintWidthASCII(int32_t fh, uint8_t *codepoint, int32_t codepoints) { return 0; }
