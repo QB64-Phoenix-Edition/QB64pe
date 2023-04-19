@@ -13608,8 +13608,6 @@ void printchr(int32 character) {
             static int32 ok;
             static uint8 *rt_data;
             static int32 rt_w, rt_h;
-            // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-            //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
             ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 1, &rt_data, &rt_w, &rt_h);
             if (!ok)
                 return;
@@ -13664,8 +13662,6 @@ void printchr(int32 character) {
         static int32 ok;
         static uint8 *rt_data;
         static int32 rt_w, rt_h;
-        // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-        //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
         ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 0, &rt_data, &rt_w, &rt_h);
         if (!ok)
             return;
@@ -13791,38 +13787,24 @@ void printchr(int32 character) {
 int32 chrwidth(uint32 character) {
     // Note: Only called by qbs_print()
     //      Supports "UNICODE" _LOADFONT option
-    static int32 w;
-    static img_struct *im;
-    im = write_page;
-    if (w = fontwidth[im->font])
+    auto im = write_page;
+    auto f = im->font;
+    auto w = fontwidth[f];
+    if (w)
         return w;
 
     // Custom font
-    static int32 render_option, f;
-    static int32 ok;
-    static uint8 *rt_data;
-    static int32 rt_w, rt_h;
-
-    f = im->font;
-
-    render_option = 0;
-    // 8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
-    if ((im->bytes_per_pixel == 1) || ((im->bytes_per_pixel == 4) && (im->alpha_disabled)) || (fontflags[f] & 8)) {
-        render_option = 1;
-    }
+    // a740g: No need to render just to find the pixel length
 
     if ((fontflags[f] & 32)) { // UNICODE character
-        ok = FontRenderTextUTF32(font[f], (uint32 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h);
+        w = FontPrintWidthUTF32(font[f], (uint32_t *)&character, 1);
     } else { // ASCII character
         character &= 255;
-        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h);
+        w = FontPrintWidthASCII(font[f], (uint8_t *)&character, 1);
     }
-    if (!ok)
-        return 0;
-    free(rt_data);
-    return rt_w;
 
-} // chrwidth
+    return w;
+}
 
 void newline() {
     static uint32 *lp;
@@ -24678,8 +24660,6 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
             static int32 ok;
             static uint8 *rt_data;
             static int32 rt_w, rt_h;
-            // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-            //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
             ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 1, &rt_data, &rt_w, &rt_h);
             if (!ok)
                 goto printstring_exit;
@@ -24734,8 +24714,6 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
         static int32 ok;
         static uint8 *rt_data;
         static int32 rt_w, rt_h;
-        // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-        //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
         ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 0, &rt_data, &rt_w, &rt_h);
 
         if (!ok)

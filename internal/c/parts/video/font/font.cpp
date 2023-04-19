@@ -124,7 +124,7 @@ struct FontManager {
                         if (size.x < 1) {
                             FONT_DEBUG_PRINT("Failed to get default size for empty glyph");
 
-                            return false; // something went seriously wrong
+                            return false; // something seriously went wrong
                         }
                         size.y = parentFont->defaultHeight;
 
@@ -686,7 +686,7 @@ int32_t FontWidth(int32_t fh) {
 /// @param out_x A pointer to the output width of the rendered text in pixels
 /// @param out_y A pointer to the output height of the rendered text in pixels
 /// @return success = 1, failure = 0
-int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
+bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
     auto font = fontManager.fonts[fh];
@@ -697,14 +697,14 @@ int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
     *out_y = font->defaultHeight;
 
     if (codepoints <= 0)
-        return codepoints < 0 ? 0 : 1;
+        return codepoints == 0; // true if zero, false if -ve
 
     auto isMonochrome = options & FONT_MONOCHROME;                                         // do we need to do monochrome rendering?
     auto outBufW = font->GetStringPixelWidth((FT_ULong *)codepoint, (FT_ULong)codepoints); // get the total buffer width
     auto outBufH = (size_t)font->defaultHeight;                                            // height is always set by the QB64
     auto outBuf = (uint8_t *)calloc(outBufW, outBufH);
     if (!outBuf)
-        return 0;
+        return false;
 
     FONT_DEBUG_PRINT("Allocated %llu x %llu buffer", outBufW, outBufH);
 
@@ -763,7 +763,7 @@ int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
     *out_x = outBufW;
     *out_y = outBufH;
 
-    return 1;
+    return true;
 }
 
 /// @brief This will call FontRenderTextUTF32() after converting the ASCII codepoint array to UTF-32. None of the pointer args can be NULL
@@ -775,7 +775,7 @@ int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
 /// @param out_x A pointer to the output width of the rendered text in pixels
 /// @param out_y A pointer to the output height of the rendered text in pixels
 /// @return success = 1, failure = 0
-int32_t FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
+bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     if (codepoints > 0) {
         FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
@@ -784,6 +784,22 @@ int32_t FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
             // Forward to FontRenderTextUTF32()
             return FontRenderTextUTF32(fh, (uint32_t *)fontManager.fonts[fh]->utf32Codepoint, codepoints, options, out_data, out_x, out_y);
         }
+    }
+
+    return false;
+}
+
+/// @brief Returns the length of an UTF32 codepoint string in pixels
+/// @param fh A valid font
+/// @param codepoint The UTF32 codepoint array
+/// @param codepoints The number of codepoints
+/// @return Length in pixels
+int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints) {
+    if (codepoints > 0) {
+        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+
+        // Get the actual width in pixels
+        return fontManager.fonts[fh]->GetStringPixelWidth((FT_ULong *)codepoint, codepoints);
     }
 
     return 0;
