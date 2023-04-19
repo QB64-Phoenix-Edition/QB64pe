@@ -7,6 +7,7 @@
 #include "font.h"
 #include "freetypeamalgam.h"
 #include "gui.h"
+#include <cmath>
 #include <unordered_map>
 #include <vector>
 
@@ -631,8 +632,8 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
 
     fontManager.fonts[h]->defaultHeight = default_pixel_height; // save default pixel height
     fontManager.fonts[h]->baseline =
-        (((float)fontManager.fonts[h]->face->size->metrics.ascender / 64.0f) / ((float)fontManager.fonts[h]->face->size->metrics.height / 64.0f)) *
-        (float)default_pixel_height;
+        lroundf((((float)fontManager.fonts[h]->face->size->metrics.ascender / 64.0f) / ((float)fontManager.fonts[h]->face->size->metrics.height / 64.0f)) *
+                (float)default_pixel_height);
 
     if (options & FONT_MONOSPACE) {
         // Get the width of upper case W
