@@ -685,11 +685,8 @@ int32_t FontWidth(int32_t fh) {
 /// @param out_data A pointer to a pointer to the output pixel data (alpha values)
 /// @param out_x A pointer to the output width of the rendered text in pixels
 /// @param out_y A pointer to the output height of the rendered text in pixels
-/// @param out_x_pre_increment A pointer to the amount to move the text horizontally before rendering
-/// @param out_x_post_increment A pointer to the amount to move the text horizontally after rendering
 /// @return success = 1, failure = 0
-int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y,
-                            int32_t *out_x_pre_increment, int32_t *out_x_post_increment) {
+int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
     auto font = fontManager.fonts[fh];
@@ -698,8 +695,6 @@ int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
     *out_data = nullptr;
     *out_x = 0;
     *out_y = font->defaultHeight;
-    *out_x_pre_increment = 0;
-    *out_x_post_increment = 0;
 
     if (codepoints <= 0)
         return codepoints < 0 ? 0 : 1;
@@ -779,19 +774,15 @@ int32_t FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
 /// @param out_data A pointer to a pointer to the output pixel data (alpha values)
 /// @param out_x A pointer to the output width of the rendered text in pixels
 /// @param out_y A pointer to the output height of the rendered text in pixels
-/// @param out_x_pre_increment A pointer to the amount to move the text horizontally before rendering
-/// @param out_x_post_increment A pointer to the amount to move the text horizontally after rendering
 /// @return success = 1, failure = 0
-int32_t FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y,
-                            int32_t *out_x_pre_increment, int32_t *out_x_post_increment) {
+int32_t FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     if (codepoints > 0) {
         FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
         // Atempt to convert the string to UTF32
         if (fontManager.fonts[fh]->ConvertASCIIToUTF32(codepoint, codepoints)) {
             // Forward to FontRenderTextUTF32()
-            return FontRenderTextUTF32(fh, (uint32_t *)fontManager.fonts[fh]->utf32Codepoint, codepoints, options, out_data, out_x, out_y, out_x_pre_increment,
-                                       out_x_post_increment);
+            return FontRenderTextUTF32(fh, (uint32_t *)fontManager.fonts[fh]->utf32Codepoint, codepoints, options, out_data, out_x, out_y);
         }
     }
 

@@ -13607,10 +13607,10 @@ void printchr(int32 character) {
             // render character
             static int32 ok;
             static uint8 *rt_data;
-            static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+            static int32 rt_w, rt_h;
             // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
             //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-            ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 1, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+            ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 1, &rt_data, &rt_w, &rt_h);
             if (!ok)
                 return;
 
@@ -13663,10 +13663,10 @@ void printchr(int32 character) {
         // render character
         static int32 ok;
         static uint8 *rt_data;
-        static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+        static int32 rt_w, rt_h;
         // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
         //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 0, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 0, &rt_data, &rt_w, &rt_h);
         if (!ok)
             return;
 
@@ -13801,7 +13801,7 @@ int32 chrwidth(uint32 character) {
     static int32 render_option, f;
     static int32 ok;
     static uint8 *rt_data;
-    static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+    static int32 rt_w, rt_h;
 
     f = im->font;
 
@@ -13812,10 +13812,10 @@ int32 chrwidth(uint32 character) {
     }
 
     if ((fontflags[f] & 32)) { // UNICODE character
-        ok = FontRenderTextUTF32(font[f], (uint32 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        ok = FontRenderTextUTF32(font[f], (uint32 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h);
     } else { // ASCII character
         character &= 255;
-        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h);
     }
     if (!ok)
         return 0;
@@ -24677,10 +24677,10 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
             // render character
             static int32 ok;
             static uint8 *rt_data;
-            static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+            static int32 rt_w, rt_h;
             // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
             //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-            ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 1, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+            ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 1, &rt_data, &rt_w, &rt_h);
             if (!ok)
                 goto printstring_exit;
 
@@ -24733,10 +24733,10 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
         // render character
         static int32 ok;
         static uint8 *rt_data;
-        static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+        static int32 rt_w, rt_h;
         // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
         //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-        ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 0, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 0, &rt_data, &rt_w, &rt_h);
 
         if (!ok)
             goto printstring_exit;
@@ -37633,11 +37633,11 @@ void display() {
                         static int32 render_option;
                         static int32 ok;
                         static uint8 *rt_data;
-                        static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+                        static int32 rt_w, rt_h;
                         render_option = 1;
                         if (rt_data_last)
                             free(rt_data_last);
-                        ok = FontRenderTextUTF32(font[f], &chr_utf32, 1, render_option, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+                        ok = FontRenderTextUTF32(font[f], &chr_utf32, 1, render_option, &rt_data, &rt_w, &rt_h);
                         rt_data_last = rt_data;
                         cp2 = rt_data;
                         f_pitch = 0;
