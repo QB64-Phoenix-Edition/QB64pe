@@ -1379,8 +1379,6 @@ void showvalue(__int64);
 #endif
 void sub_beep();
 
-int32 func__loadfont(qbs *filename, int32 size, qbs *requirements, int32 passed);
-
 int32 lastfont = 48;
 int32 *font = (int32 *)calloc(4 * (48 + 1), 1); // NULL=unused index
 int32 *fontheight = (int32 *)calloc(4 * (48 + 1), 1);
@@ -13784,9 +13782,12 @@ void printchr(int32 character) {
 
 } // printchr
 
-int32 chrwidth(uint32 character) {
-    // Note: Only called by qbs_print()
-    //      Supports "UNICODE" _LOADFONT option
+/// @brief Returns the width of a character in pixels.
+/// Note: Only called by qbs_print().
+/// Supports "UNICODE" _LOADFONT option
+/// @param character The character to return the width for (this can be UTF32)
+/// @return The width in pixels
+int32_t chrwidth(uint32_t character) {
     auto im = write_page;
     auto f = im->font;
     auto w = fontwidth[f];
@@ -13795,7 +13796,6 @@ int32 chrwidth(uint32 character) {
 
     // Custom font
     // a740g: No need to render just to find the pixel length
-
     if ((fontflags[f] & 32)) { // UNICODE character
         w = FontPrintWidthUTF32(font[f], (uint32_t *)&character, 1);
     } else { // ASCII character
@@ -24871,148 +24871,119 @@ int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
         screenhandle = write_page_index;
     }
 
+    if (text->len == 0)
+        return 0; // No point calculating an empty string
+
     if (img[screenhandle].text) { // Return LEN(text) in non-graphic modes
         // error(5);
         return text->len;
     }
 
-    if (text->len == 0)
-        return 0; // No point calculating an empty string
-
-    int32 fonthandle = img[screenhandle].font;     // Get the font used in screenhandle
-    int32 fwidth = func__fontwidth(fonthandle, 1); // Try and get the font width
-    if (fwidth != 0)
-        return fwidth * (text->len); // if it's not a variable width font, return the width * the letter count
+    auto fonthandle = img[screenhandle].font;     // Get the font used in screenhandle
+    auto fwidth = func__fontwidth(fonthandle, 1); // Try and get the font width
+    if (fwidth)
+        return fwidth * text->len; // if it's not a variable width font, return the width * the letter count
 
     // a740g: For variable width fonts
     return FontPrintWidthASCII(font[fonthandle], text->chr, text->len);
 }
 
-int32 func__loadfont(qbs *f, int32 size, qbs *requirements, int32 passed) {
-    // f=_LOADFONT(ttf_filename$,height[,"bold,italic,underline,monospace,dontblend,unicode"])
+/// @brief f = _LOADFONT(ttf_filename$, height[, "monospace,dontblend,unicode,memory"][, index])
+/// @param f The font file path name or a font memory buffer when loading from memory
+/// @param size The size of the font height in pixels
+/// @param requirements This can be monospace, dontblend, unicode, memory
+/// @param font_index The index of the font to load from a font collection
+/// @param passed Which optional arguments were passed
+/// @return Retuns a valid handle on success or zero on failure
+int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t font_index, int32_t passed) {
+    // Some QB strings that we'll need
+    static qbs *fileNameZ = nullptr;
+    static qbs *reqs = nullptr;
 
-    if (new_error)
-        return NULL;
-
-    qbs *s1 = NULL;
-    s1 = qbs_new(0, 0);
-    qbs *req = NULL;
-    req = qbs_new(0, 0);
-    qbs *s3 = NULL;
-    s3 = qbs_new(0, 0);
-    uint8 r[32];
-    int32 i, i2, i3;
-    static int32 recall;
+    if (new_error || !file_name->len)
+        return INVALID_FONT_HANDLE; // return invalid handle for any garbage input
 
     // validate size
     if (size < 1) {
         error(5);
-        return NULL;
+        return INVALID_FONT_HANDLE;
     }
-    if (size > 2048)
-        return -1;
 
-    // load the file
-    if (!f->len)
-        return -1; // return invalid handle if null length string
-    int32 fh, result;
-    int64 bytes;
-    fh = gfs_open(f, 1, 0, 0);
+    if (!fileNameZ)
+        fileNameZ = qbs_new(0, 0);
 
-#ifdef QB64_WINDOWS // rather than just immediately tossing an error, let's try looking in the default OS folder for the font first in case the user left off
-                    // the filepath.
-    if (fh < 0 && recall == 0) {
-        recall = -1; // to set a flag so we don't get trapped endlessly recalling the routine when the font actually doesn't exist
-        i = func__loadfont(qbs_add(qbs_new_txt("C:/Windows/Fonts/"), f), size, requirements, passed); // Look in the default windows font location
-        return i;
-    }
-#endif
-    recall = 0;
-    if (fh < 0)
-        return -1; // If we still can't load the font, then we just can't load the font...  Send an error code back.
+    if (!reqs)
+        reqs = qbs_new(0, 0);
 
-    // check requirements
-    memset(r, 0, 32);
-    if (passed) {
-        if (requirements->len) {
-            i = 1;
-            qbs_set(req, qbs_ucase(requirements)); // convert tmp str to perm str
-        nextrequirement:
-            i2 = func_instr(i, req, qbs_new_txt(","), 1);
-            if (i2) {
-                qbs_set(s1, func_mid(req, i, i2 - i, 1));
-            } else {
-                qbs_set(s1, func_mid(req, i, req->len - i + 1, 1));
-            }
-            qbs_set(s1, qbs_rtrim(qbs_ltrim(s1)));
-            if (qbs_equal(s1, qbs_new_txt("BOLD"))) {
-                r[0]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("ITALIC"))) {
-                r[1]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("UNDERLINE"))) {
-                r[2]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("DONTBLEND"))) {
-                r[3]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("MONOSPACE"))) {
-                r[4]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("UNICODE"))) {
-                r[5]++;
-                goto valid;
-            }
-            error(5);
-            return NULL; // invalid requirements
-        valid:
-            if (i2) {
-                i = i2 + 1;
-                goto nextrequirement;
-            }
-            for (i = 0; i < 32; i++)
-                if (r[i] > 1) {
-                    error(5);
-                    return NULL;
-                } // cannot define requirements twice
-        }         //->len
-    }             // passed
-    int32 options;
-    options = r[0] + (r[1] << 1) + (r[2] << 2) + (r[3] << 3) + (r[4] << 4) + (r[5] << 5);
-    // 1 bold TTF_STYLE_BOLD
-    // 2 italic TTF_STYLE_ITALIC
-    // 4 underline TTF_STYLE_UNDERLINE
+    auto isLoadFromMemory = false; // should the font be loaded from memory?
+    int32_t options = 0;           // font flags that we'll prepare and save to fontflags[]
+
+    FONT_DEBUG_PRINT("passed = %i", passed);
+
+    // Check requirements
     // 8 dontblend (blending is the default in 32-bit alpha-enabled modes)
     // 16 monospace
     // 32 unicode
+    if ((passed & 1) && requirements->len) {
+        FONT_DEBUG_PRINT("Parsing requirements");
 
-    bytes = gfs_lof(fh);
-    static uint8 *content;
-    content = (uint8 *)malloc(bytes);
-    if (!content) {
-        gfs_close(fh);
-        return -1;
+        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+
+        if (func_instr(1, reqs, qbs_new_txt("DONTBLEND"), 1)) {
+            options |= FONT_LOAD_DONTBLEND;
+            FONT_DEBUG_PRINT("DONTBLEND requested");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt("MONOSPACE"), 1)) {
+            options |= FONT_LOAD_MONOSPACE;
+            FONT_DEBUG_PRINT("MONOSPACE requested");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt("UNICODE"), 1)) {
+            options |= FONT_LOAD_UNICODE;
+            FONT_DEBUG_PRINT("UNICODE requested");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt("MEMORY"), 1)) {
+            isLoadFromMemory = true;
+            FONT_DEBUG_PRINT("MEMORY requested");
+        }
     }
-    result = gfs_read(fh, -1, content, bytes);
-    gfs_close(fh);
-    if (result < 0) {
-        free(content);
-        return -1;
+
+    // Check if a font index was requested
+    if (passed & 2) {
+        FONT_DEBUG_PRINT("Loading font index %i", font_index);
+    } else {
+        FONT_DEBUG_PRINT("Loading default font index (0)");
+        font_index = 0;
     }
+
+    uint8_t *content;
+    int32_t bytes;
+
+    if (isLoadFromMemory) {
+        content = file_name->chr; // we should not free this!!!
+        bytes = file_name->len;
+        FONT_DEBUG_PRINT("Loading font from memory. Size = %i", bytes);
+    } else {
+        qbs_set(fileNameZ, qbs_add(file_name, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
+        content = FontLoadFileToMemory((char *)fileNameZ->chr, &bytes);   // this we must free!!!
+        FONT_DEBUG_PRINT("Loading font from file %s", fileNameZ->chr);
+    }
+
+    if (!content)
+        return INVALID_FONT_HANDLE; // Return invalid handle if loading the image failed
 
     // open the font
     // get free font handle
+    int32_t i;
     for (i = 32; i <= lastfont; i++) {
         if (!font[i])
             goto got_font_index;
     }
     // increase handle range
+    // a740g: none of this stuff is safe and ought to be rewritten
+    // We will need to look at how to do this better
     lastfont++;
     font = (int32 *)realloc(font, 4 * (lastfont + 1));
     font[lastfont] = NULL;
@@ -25020,71 +24991,21 @@ int32 func__loadfont(qbs *f, int32 size, qbs *requirements, int32 passed) {
     fontwidth = (int32 *)realloc(fontwidth, 4 * (lastfont + 1));
     fontflags = (int32 *)realloc(fontflags, 4 * (lastfont + 1));
     i = lastfont;
+
 got_font_index:
-    static int32 h;
-    h = FontLoad(content, bytes, size, -1, options);
-    free(content);
+    auto h = FontLoad(content, bytes, size, font_index, options);
+
+    if (!isLoadFromMemory)
+        free(content); // free font memory if it was loaded from a file
+
     if (!h)
-        return -1;
+        return INVALID_FONT_HANDLE;
 
     font[i] = h;
     fontheight[i] = size;
     fontwidth[i] = FontWidth(h);
     fontflags[i] = options;
-    return i;
-}
 
-int32 fontopen(qbs *f, int32 size, int32 options) { // Note: Just a stripped down verions of FUNC__LOADFONT
-
-    static int32 i;
-
-    // load the file
-    if (!f->len)
-        return -1; // return invalid handle if null length string
-    static int32 fh, result;
-    static int64 bytes;
-    fh = gfs_open(f, 1, 0, 0);
-    if (fh < 0)
-        return -1;
-    bytes = gfs_lof(fh);
-    static uint8 *content;
-    content = (uint8 *)malloc(bytes);
-    if (!content) {
-        gfs_close(fh);
-        return -1;
-    }
-    result = gfs_read(fh, -1, content, bytes);
-    gfs_close(fh);
-    if (result < 0) {
-        free(content);
-        return -1;
-    }
-
-    // open the font
-    // get free font handle
-    for (i = 32; i <= lastfont; i++) {
-        if (!font[i])
-            goto got_font_index;
-    }
-    // increase handle range
-    lastfont++;
-    font = (int32 *)realloc(font, 4 * (lastfont + 1));
-    font[lastfont] = NULL;
-    fontheight = (int32 *)realloc(fontheight, 4 * (lastfont + 1));
-    fontwidth = (int32 *)realloc(fontwidth, 4 * (lastfont + 1));
-    fontflags = (int32 *)realloc(fontflags, 4 * (lastfont + 1));
-    i = lastfont;
-got_font_index:
-    static int32 h;
-    h = FontLoad(content, bytes, size, -1, options);
-    free(content);
-    if (!h)
-        return -1;
-
-    font[i] = h;
-    fontheight[i] = size;
-    fontwidth[i] = FontWidth(h);
-    fontflags[i] = options;
     return i;
 }
 

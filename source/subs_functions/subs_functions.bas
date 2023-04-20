@@ -1325,11 +1325,11 @@ clearid
 id.n = qb64prefix$ + "LoadFont": id.Dependency = DEPENDENCY_LOADFONT
 id.subfunc = 1
 id.callname = "func__loadfont"
-id.args = 3
-id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
-id.specialformat = "?,?[,?]"
+id.args = 4
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "?,?[,[?][,[?]]]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_LOADFONT(fileName$, size%[, " + CHR$(34) + "{MONOSPACE|, BOLD|, ITALIC|, UNDERLINE|, UNICODE|, DONTBLEND}" + CHR$(34) + "])"
+id.hr_syntax = "_LOADFONT(fileName$, size&[, " + CHR$(34) + "{MONOSPACE|, UNICODE|, DONTBLEND|, MEMORY}" + CHR$(34) + "][, fontIndex])"
 regid
 
 clearid

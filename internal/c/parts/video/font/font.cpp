@@ -7,16 +7,13 @@
 #include "font.h"
 #include "freetypeamalgam.h"
 #include "gui.h"
+#include "libqb-common.h"
 #include <cmath>
 #include <unordered_map>
 #include <vector>
 
 // QB64 expects invalid font handles to be zero
-#define INVALID_FONT_HANDLE 0
 #define IS_FONT_HANDLE_VALID(_handle_) ((_handle_) > INVALID_FONT_HANDLE && (_handle_) < fontManager.fonts.size() && fontManager.fonts[_handle_]->isUsed)
-// Font options
-#define FONT_MONOSPACE 16
-#define FONT_MONOCHROME 1
 
 // See FontManager::Font::utf8Decode() below for more details
 #define UTF8_ACCEPT 0
@@ -581,6 +578,107 @@ struct FontManager {
 /// @brief Global font manager object
 static FontManager fontManager;
 
+/// @brief Loads a whole font file from disk to memory.
+/// This will search for the file in known places if it is not found in the current directory
+/// @param file_path_name The font file name. This can be a relative path
+/// @param out_bytes The size of the data that was loaded. This cannot be NULL
+/// @return A pointer to a buffer with the data. NULL on failure. The caller is responsible for freeing this memory
+uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes) {
+    // This is simply a list of known locations to look for a font
+    static const char *const FONT_PATHS[][2] = {
+#ifdef QB64_WINDOWS
+        {"%s/Microsoft/Windows/Fonts/%s", "LOCALAPPDATA"}, {"%s/Fonts/%s", "SystemRoot"}
+#elif defined(QB64_MACOSX)
+        {"%s/Library/Fonts/%s", "HOME"}, {"%s/Library/Fonts/%s", nullptr}, {"%s/System/Library/Fonts/%s", nullptr}
+#elif defined(QB64_LINUX)
+        {"%s/.fonts/%s", "HOME"},
+        {"%s/.local/share/fonts/%s", "HOME"},
+        {"%s/usr/local/share/fonts/%s", nullptr},
+        {"%s/usr/share/fonts/%s", nullptr},
+        {"%s/usr/share/fonts/opentype/%s", nullptr},
+        {"%s/usr/share/fonts/truetype/%s", nullptr}
+#endif
+    };
+
+    // Attempt to open the file with the current file pathname
+    auto fontFile = fopen(file_path_name, "rb");
+    if (!fontFile) {
+        FONT_DEBUG_PRINT("Failed to open font file: %s", file_path_name);
+
+        FONT_DEBUG_PRINT("Attempting to load font file using known paths");
+
+        static const auto PATH_BUFFER_SIZE = 4096;
+        auto pathName = (char *)malloc(PATH_BUFFER_SIZE);
+        if (!pathName) {
+            FONT_DEBUG_PRINT("Failed to allocate working buffer");
+            return nullptr;
+        }
+        FONT_DEBUG_PRINT("Allocate working buffer");
+
+        // Go over the known locations and see what works
+        for (auto i = 0; i < (sizeof(FONT_PATHS) / sizeof(uintptr_t) / 2); i++) {
+            memset(pathName, 0, PATH_BUFFER_SIZE);
+
+            if (FONT_PATHS[i][1] && getenv(FONT_PATHS[i][1]))
+                sprintf_s(pathName, PATH_BUFFER_SIZE, FONT_PATHS[i][0], getenv(FONT_PATHS[i][1]), file_path_name);
+            else
+                sprintf_s(pathName, PATH_BUFFER_SIZE, FONT_PATHS[i][0], "", file_path_name);
+
+            FONT_DEBUG_PRINT("Attempting to load %s", pathName);
+
+            fontFile = fopen(pathName, "rb");
+            if (fontFile)
+                break; // exit the loop if something worked
+        }
+
+        free(pathName);
+        FONT_DEBUG_PRINT("Working buffer freed");
+
+        if (!fontFile) {
+            FONT_DEBUG_PRINT("No know locations worked");
+            return nullptr; // return NULL if all attempts failed
+        }
+    }
+
+    if (fseek(fontFile, 0, SEEK_END) != 0) {
+        FONT_DEBUG_PRINT("Failed to seek end of font file: %s", file_path_name);
+        fclose(fontFile);
+        return nullptr;
+    }
+
+    *out_bytes = ftell(fontFile);
+    if (*out_bytes < 0) {
+        FONT_DEBUG_PRINT("Failed to determine size of font file: %s", file_path_name);
+        fclose(fontFile);
+        return nullptr;
+    }
+
+    if (fseek(fontFile, 0, SEEK_SET) != 0) {
+        FONT_DEBUG_PRINT("Failed to seek beginning of font file: %s", file_path_name);
+        fclose(fontFile);
+        return nullptr;
+    }
+
+    auto buffer = (uint8_t *)malloc(*out_bytes);
+    if (!buffer) {
+        FONT_DEBUG_PRINT("Failed to allocate memory for font file: %s", file_path_name);
+        fclose(fontFile);
+        return nullptr;
+    }
+
+    if (fread(buffer, *out_bytes, 1, fontFile) != 1) {
+        FONT_DEBUG_PRINT("Failed to read font file: %s", file_path_name);
+        fclose(fontFile);
+        free(buffer);
+        return nullptr;
+    }
+
+    fclose(fontFile);
+
+    FONT_DEBUG_PRINT("Successfully loaded font file: %s", file_path_name);
+    return buffer;
+}
+
 /// @brief Loads a FreeType font from memory. The font data is locally copied and is kept alive while in use
 /// @param content_original The original font data in memory that is copied
 /// @param content_bytes The length of the data in bytes
@@ -635,7 +733,7 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
         lroundf((((float)fontManager.fonts[h]->face->size->metrics.ascender / 64.0f) / ((float)fontManager.fonts[h]->face->size->metrics.height / 64.0f)) *
                 (float)default_pixel_height);
 
-    if (options & FONT_MONOSPACE) {
+    if (options & FONT_LOAD_MONOSPACE) {
         // Get the width of upper case W
         if (FT_Load_Char(fontManager.fonts[h]->face, 'W', FT_LOAD_DEFAULT)) {
             FONT_DEBUG_PRINT("FT_Load_Char() 'W' failed");
@@ -700,7 +798,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     if (codepoints <= 0)
         return codepoints == 0; // true if zero, false if -ve
 
-    auto isMonochrome = options & FONT_MONOCHROME;                                         // do we need to do monochrome rendering?
+    auto isMonochrome = options & FONT_RENDER_MONOCHROME;                                  // do we need to do monochrome rendering?
     auto outBufW = font->GetStringPixelWidth((FT_ULong *)codepoint, (FT_ULong)codepoints); // get the total buffer width
     auto outBufH = (size_t)font->defaultHeight;                                            // height is always set by the QB64
     auto outBuf = (uint8_t *)calloc(outBufW, outBufH);

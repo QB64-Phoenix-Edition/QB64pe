@@ -26,9 +26,19 @@
 #    define FONT_DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
 
+#define INVALID_FONT_HANDLE 0
+
+// Font load options
+#define FONT_LOAD_DONTBLEND 8
+#define FONT_LOAD_MONOSPACE 16
+#define FONT_LOAD_UNICODE 32
+// Font render options
+#define FONT_RENDER_MONOCHROME 1
+
 /// @brief CP437 to UTF-16 LUT
 extern uint16_t codepage437_to_unicode16[];
 
+uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes);
 int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t options);
 void FontFree(int32_t fh);
 int32_t FontWidth(int32_t fh);
