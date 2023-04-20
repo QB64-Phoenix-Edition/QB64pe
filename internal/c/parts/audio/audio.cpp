@@ -806,25 +806,18 @@ void sub_sound(double frequency, double lengthInClockTicks) {
     SendWaveformToQueue(data, soundwave_bytes, !audioEngine.musicBackground);
 }
 
-/// <summary>
-/// This generates a default 'beep' sound.
-/// </summary>
-void sub_beep() { sub_sound(900, 5); }
+/// @brief This generates a default 'beep' sound
+void sub_beep() {
+    sub_sound(900, 4.5);
+    sub_sound(32767, 0.5); // we'll send a very short silence after the beep so that two successive beeps sound unique
+}
 
-/// <summary>
-/// This was designed to returned the number of notes in the background music queue.
-/// However, here we'll just return the number of sample frame remaining to play when Play(), Sound() or Beep() are used.
-/// This allows programs like the following to compile and work.
-///
-///     Music$ = "MBT180o2P2P8L8GGGL2E-P24P8L8FFFL2D"
-///     PLAY Music$
-///     WHILE PLAY(0) > 5: WEND
-///     PRINT "Just about done!"
-/// </summary>
-/// <param name="ignore">Well, it's ignored</param>
-/// <returns>Returns the number of sample frames left to play for Play(), Sound() & Beep()</returns>
+/// @brief This was designed to returned the number of notes in the background music queue.
+/// However, here we'll just return the number of sample frame remaining to play when Play(), Sound() or Beep() are used
+/// @param ignore Well, it's ignored
+/// @return Returns the number of sample frames left to play for Play(), Sound() & Beep()
 int32_t func_play(int32_t ignore) {
-    if (audioEngine.isInitialized && audioEngine.sndInternal == 0) {
+    if (audioEngine.isInitialized && audioEngine.sndInternal == 0 && audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
         return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining();
     }
 
