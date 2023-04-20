@@ -7,24 +7,21 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
-//
 //-----------------------------------------------------------------------------------------------------
 
+// Set this to 1 if we want to print debug messages to stderr
+#define AUDIO_DEBUG 1
+#include "audio.h"
+// We need 'qbs' and 'mem' stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
+#include "../../libqb.h"
+#define STB_VORBIS_HEADER_ONLY
+#include "extras/stb_vorbis.c"
+#include "miniaudio.h"
+#include "mutex.h"
 #include <algorithm>
 #include <stack>
 #include <unordered_map>
 #include <vector>
-#define STB_VORBIS_HEADER_ONLY
-#include "extras/stb_vorbis.c"
-#include "miniaudio.h"
-// Set this to 1 if we want to print debug messages to stderr
-#define AUDIO_DEBUG 1
-#include "audio.h"
-#include "mutex.h"
-// We need 'qbs' and 'mem' stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
-#include "../../libqb.h"
 
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define INVALID_MEM_LOCK 1073741821
@@ -75,13 +72,6 @@ extern ptrszint dblock;         // Required for Play(). Did not find this declar
 extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
 extern mem_lock *mem_lock_base; // Same as above
 extern mem_lock *mem_lock_tmp;  // Same as above
-
-/// @brief Type of sound
-enum struct SoundType {
-    None,   // No sound or internal sound whose buffer is managed by the QBPE audio engine
-    Static, // Static sounds that are completely managed by miniaudio
-    Raw     // Raw sound stream that is managed by the QBPE audio engine
-};
 
 /// @brief A simple FP32 stereo sample frame
 struct SampleFrame {
@@ -463,8 +453,10 @@ class Waveform {
     /// @param newFrames New sample frames required
     /// @return True if the buffers were allocated correctly
     bool ResizeBuffers(ma_uint64 newFrames) {
-        if (newFrames == 0 || newFrames == frames)
+        if (newFrames <= frames || !newFrames) {
+            frames = newFrames; // no need to re-allocate if we are reducing the buffer size
             return bufferWorking != nullptr && bufferFinal != nullptr;
+        }
 
         auto bufferSize = newFrames * SAMPLE_FRAME_SIZE(float, 1);
 
@@ -1216,8 +1208,14 @@ class MMLPlayer {
 /// This describes every sound the system will ever play (including raw streams).
 /// </summary>
 struct SoundHandle {
+    /// @brief Type of sound.
+    /// NONE: No sound or internal sound whose buffer is managed by the QBPE audio engine.
+    /// STATIC: Static sounds that are completely managed by miniaudio.
+    /// RAW: Raw sound stream that is managed by the QBPE audio engine
+    enum Type { NONE, STATIC, RAW };
+
     bool isUsed;                                // Is this handle in active use?
-    SoundType type;                             // Type of sound (see SoundType enum class)
+    Type type;                                  // Type of sound (see Type enum above)
     bool autoKill;                              // Do we need to auto-clean this sample / stream after playback is done?
     ma_sound maSound;                           // miniaudio sound
     ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
@@ -1243,7 +1241,7 @@ struct SoundHandle {
     /// </summary>
     SoundHandle() {
         isUsed = false;
-        type = SoundType::None;
+        type = Type::NONE;
         autoKill = false;
         ZERO_VARIABLE(maSound);
         maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
@@ -1363,7 +1361,7 @@ struct AudioEngine {
 
         // Initializes a sound handle that was just allocated.
         // This will set it to 'in use' after applying some defaults.
-        soundHandles[h]->type = SoundType::None;
+        soundHandles[h]->type = SoundHandle::Type::NONE;
         soundHandles[h]->autoKill = false;
         ZERO_VARIABLE(soundHandles[h]->maSound);
         // We do not use pitch shifting, so this will give a little performance boost
@@ -1396,18 +1394,18 @@ struct AudioEngine {
         if (isInitialized && handle >= 0 && handle < soundHandles.size() && soundHandles[handle]->isUsed) {
             // Sound type specific cleanup
             switch (soundHandles[handle]->type) {
-            case SoundType::Static:
+            case SoundHandle::Type::STATIC:
                 ma_sound_uninit(&soundHandles[handle]->maSound);
 
                 break;
 
-            case SoundType::Raw:
+            case SoundHandle::Type::RAW:
                 RawStreamDestroy(soundHandles[handle]->rawStream);
                 soundHandles[handle]->rawStream = nullptr;
 
                 break;
 
-            case SoundType::None:
+            case SoundHandle::Type::NONE:
                 if (handle != 0)
                     AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
 
@@ -1443,7 +1441,7 @@ struct AudioEngine {
 
             // Now simply set the 'isUsed' member to false so that the handle can be recycled
             soundHandles[handle]->isUsed = false;
-            soundHandles[handle]->type = SoundType::None;
+            soundHandles[handle]->type = SoundHandle::Type::NONE;
 
             // Save the free hanndle to lowestFreeHandle if it is lower than lowestFreeHandle
             if (handle < lowestFreeHandle)
@@ -1478,7 +1476,7 @@ void sub_sound(double frequency, double lengthInClockTicks) {
             AUDIO_DEBUG_PRINT("Failed to initialize RawStream object");
             return;
         }
-        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // set type of sound
+        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundHandle::Type::RAW; // set type of sound
     }
 
     // Initialize internal Waveform object
@@ -1503,7 +1501,19 @@ void sub_sound(double frequency, double lengthInClockTicks) {
 /// @brief This generates a default 'beep' sound
 void sub_beep() {
     sub_sound(900, 4.5);
-    sub_sound(32767, 0.5); // we'll send a very short silence after the beep so that two successive beeps sound unique
+
+    // We'll send a very short silence after the beep so that two successive beeps sound unique
+    if (audioEngine.waveform) {
+        auto duration = 0.5 / 18.2;
+        auto waveType = audioEngine.waveform->GetType();
+        audioEngine.waveform->SetType(Waveform::Type::SILENCE);
+        audioEngine.waveform->Generate(duration, duration);
+        audioEngine.waveform->Play();
+        audioEngine.waveform->SetType(waveType);
+
+        if (!audioEngine.musicBackground)
+            audioEngine.waveform->AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
+    }
 }
 
 /// @brief This was designed to returned the number of notes in the background music queue.
@@ -1533,7 +1543,7 @@ void sub_play(qbs *str) {
             AUDIO_DEBUG_PRINT("Failed to initialize RawStream object");
             return;
         }
-        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundType::Raw; // set type of sound
+        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundHandle::Type::RAW; // set type of sound
     }
 
     // Initialize internal Waveform object
@@ -1640,7 +1650,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
         return INVALID_SOUND_HANDLE;
 
     // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SoundType::Static;
+    audioEngine.soundHandles[handle]->type = SoundHandle::Type::STATIC;
 
     // Prepare the requirements string
     if (passed && requirements->len)
@@ -1697,7 +1707,7 @@ void sub__sndclose(int32_t handle) {
         // So it is completly safe to call it this way
         sub__sndrawdone(handle, true);
 
-        if (audioEngine.soundHandles[handle]->type == SoundType::Raw)
+        if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)
             audioEngine.soundHandles[handle]->rawStream->stop = true; // Signal miniaudio thread that we are going to end playback
 
         // Simply set the autokill flag to true and let the sound loop handle disposing the sound
@@ -1712,7 +1722,7 @@ void sub__sndclose(int32_t handle) {
 /// <returns>A new sound handle if successful or 0 on failure</returns>
 int32_t func__sndcopy(int32_t src_handle) {
     // Check for all invalid cases
-    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundType::Static)
+    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundHandle::Type::STATIC)
         return INVALID_SOUND_HANDLE;
 
     int32_t dst_handle = INVALID_SOUND_HANDLE;
@@ -1742,7 +1752,7 @@ int32_t func__sndcopy(int32_t src_handle) {
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;
 
-        audioEngine.soundHandles[dst_handle]->type = SoundType::Static;                                               // set some handle properties
+        audioEngine.soundHandles[dst_handle]->type = SoundHandle::Type::STATIC;                                       // set some handle properties
         audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags;                // copy the flags
         audioEngine.soundHandles[dst_handle]->bufferKey = audioEngine.soundHandles[src_handle]->bufferKey;            // copy the BufferMap unique key
         audioEngine.bufferMap.AddRef(audioEngine.soundHandles[dst_handle]->bufferKey);                                // increase the reference count
@@ -1763,7 +1773,7 @@ int32_t func__sndcopy(int32_t src_handle) {
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;
 
-        audioEngine.soundHandles[dst_handle]->type = SoundType::Static;                                // set some handle properties
+        audioEngine.soundHandles[dst_handle]->type = SoundHandle::Type::STATIC;                        // set some handle properties
         audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags; // copy the flags
 
         // Initialize a new copy of the sound
@@ -1787,7 +1797,7 @@ int32_t func__sndcopy(int32_t src_handle) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndplay(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -1884,7 +1894,7 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndpause(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Stop the sound and just leave it at that
         // miniaudio does not reset the play cursor
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
@@ -1898,7 +1908,7 @@ void sub__sndpause(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Return true if the sound is playing. False otherwise</returns>
 int32_t func__sndplaying(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         return ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) ? QB_TRUE : QB_FALSE;
     }
 
@@ -1911,7 +1921,7 @@ int32_t func__sndplaying(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns true if the sound is paused. False otherwise</returns>
 int32_t func__sndpaused(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         return !ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
                        (ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || !ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))
                    ? QB_TRUE
@@ -1929,7 +1939,7 @@ int32_t func__sndpaused(int32_t handle) {
 /// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
 void sub__sndvol(int32_t handle, float volume) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
-        (audioEngine.soundHandles[handle]->type == SoundType::Static || audioEngine.soundHandles[handle]->type == SoundType::Raw)) {
+        (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
         ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
     }
 }
@@ -1939,7 +1949,7 @@ void sub__sndvol(int32_t handle, float volume) {
 /// </summary>
 /// <param name="handle"></param>
 void sub__sndloop(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -1972,7 +1982,7 @@ void sub__sndloop(int32_t handle) {
 /// <param name="passed">How many parameters were passed?</param>
 void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, int32_t passed) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
-        (audioEngine.soundHandles[handle]->type == SoundType::Static || audioEngine.soundHandles[handle]->type == SoundType::Raw)) {
+        (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
@@ -2001,7 +2011,7 @@ void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, 
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns the length of a sound in seconds</returns>
 double func__sndlen(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2017,7 +2027,7 @@ double func__sndlen(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns the current playing position in seconds from an open sound file</returns>
 double func__sndgetpos(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float playCursorSeconds = 0;
         audioEngine.maResult = ma_sound_get_cursor_in_seconds(&audioEngine.soundHandles[handle]->maSound, &playCursorSeconds);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2033,7 +2043,7 @@ double func__sndgetpos(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <param name="seconds">The position to set in seconds</param>
 void sub__sndsetpos(int32_t handle, double seconds) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
         if (audioEngine.maResult != MA_SUCCESS)
@@ -2064,7 +2074,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
 /// <param name="handle">A sound handle</param>
 /// <param name="limit">The number of seconds that the sound will play</param>
 void sub__sndlimit(int32_t handle, double limit) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000);
     }
 }
@@ -2074,7 +2084,7 @@ void sub__sndlimit(int32_t handle, double limit) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndstop(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Static) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Stop the sound first
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2100,7 +2110,7 @@ int32_t func__sndopenraw() {
         return INVALID_SOUND_HANDLE;
 
     // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SoundType::Raw;
+    audioEngine.soundHandles[handle]->type = SoundHandle::Type::RAW;
 
     // Create the raw sound object
     audioEngine.soundHandles[handle]->rawStream = RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[handle]->maSound);
@@ -2128,7 +2138,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
         handle = audioEngine.sndInternalRaw;
     }
 
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
         if (!(passed & 1))
             right = left;
 
@@ -2151,7 +2161,7 @@ void sub__sndrawdone(int32_t handle, int32_t passed) {
     if (!passed)
         handle = audioEngine.sndInternalRaw;
 
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
         // NOP
     }
     */
@@ -2168,7 +2178,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
     if (!passed)
         handle = audioEngine.sndInternalRaw;
 
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundType::Raw) {
+    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
         return audioEngine.soundHandles[handle]->rawStream->GetTimeRemaining();
     }
 
@@ -2202,7 +2212,7 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
         return INVALID_SOUND_HANDLE;
 
     // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SoundType::Static;
+    audioEngine.soundHandles[handle]->type = SoundHandle::Type::STATIC;
 
     // Setup the ma_audio_buffer
     audioEngine.soundHandles[handle]->maAudioBufferConfig = ma_audio_buffer_config_init(
@@ -2263,7 +2273,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     mb.lock_id = INVALID_MEM_LOCK;
 
     // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
-    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundType::Static ||
+    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC ||
         (targetChannel != 0 && targetChannel != 1)) {
         AUDIO_DEBUG_PRINT("Invalid handle (%i), sound type (%i) or channel (%i)", handle, audioEngine.soundHandles[handle]->type, targetChannel);
         return mb;
@@ -2469,8 +2479,8 @@ void snd_mainloop() {
                 // Look for stuff that is set to auto-destruct
                 if (audioEngine.soundHandles[handle]->autoKill) {
                     switch (audioEngine.soundHandles[handle]->type) {
-                    case SoundType::Static:
-                    case SoundType::Raw:
+                    case SoundHandle::Type::STATIC:
+                    case SoundHandle::Type::RAW:
                         // Dispose the sound if it has finished playing
                         // Note that this means that temporary looping sounds will never close
                         // Well thats on the programmer. Probably they want it that way
@@ -2479,7 +2489,7 @@ void snd_mainloop() {
 
                         break;
 
-                    case SoundType::None:
+                    case SoundHandle::Type::NONE:
                         if (handle != 0)
                             AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
 

@@ -7,22 +7,19 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//	This implements a data source that decodes MIDI files using TinySoundFont + TinyMidiLoader
-//	https://github.com/schellingb/TinySoundFont (MIT)
+//  This implements a data source that decodes MIDI files using TinySoundFont + TinyMidiLoader
+//  https://github.com/schellingb/TinySoundFont (MIT)
 //
-//	Soundfont (awe32rom.h) from dos-like
-//	https://github.com/mattiasgustavsson/dos-like (MIT)
+//  Soundfont (awe32rom.h) from dos-like
+//  https://github.com/mattiasgustavsson/dos-like (MIT)
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "libqb-common.h"
-
+#include "../miniaudio.h"
 #include "audio.h"
 #include "filepath.h"
-
+#include "libqb-common.h"
 #include <string.h>
-
-#include "../miniaudio.h"
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"

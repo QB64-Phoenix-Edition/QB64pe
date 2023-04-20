@@ -7,31 +7,22 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//	This implements a data source that decodes MOD, S3M, XM & IT files using libxmp-lite
-//	https://github.com/libxmp/libxmp/tree/master/lite (MIT)
-//
-//	Copyright (c) 2022 Samuel Gomes
-//	https://github.com/a740g
+//  This implements a data source that decodes MOD, S3M, XM & IT files using libxmp-lite
+//  https://github.com/libxmp/libxmp/tree/master/lite (MIT)
 //
 //-----------------------------------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
-#include "libqb-common.h"
-#include "audio.h"
-#include "filepath.h"
-
-#include <stdio.h>
-#include <string.h>
 
 #include "../miniaudio.h"
+#include "audio.h"
+#include "filepath.h"
+#include "libqb-common.h"
+#include <stdio.h>
+#include <string.h>
 
 #define BUILDING_STATIC 1
 #include "libxmp-lite/xmp.h"
 
 #include "vtables.h"
-//-----------------------------------------------------------------------------------------------------
 
 struct ma_modplay {
     // This part is for miniaudio
@@ -199,8 +190,15 @@ static ma_result ma_modplay_ds_get_length(ma_data_source *pDataSource, ma_uint64
     return ma_modplay_get_length_in_pcm_frames((ma_modplay *)pDataSource, pLength);
 }
 
-static ma_data_source_vtable ma_data_source_vtable_modplay = {ma_modplay_ds_read, ma_modplay_ds_seek, ma_modplay_ds_get_data_format, ma_modplay_ds_get_cursor,
-                                                              ma_modplay_ds_get_length};
+// clang-format off
+static ma_data_source_vtable ma_data_source_vtable_modplay = {
+    ma_modplay_ds_read,
+    ma_modplay_ds_seek,
+    ma_modplay_ds_get_data_format,
+    ma_modplay_ds_get_cursor,
+    ma_modplay_ds_get_length
+};
+// clang-format on
 
 static int ma_modplay_of_callback__read(void *pUserData, unsigned char *pBufferOut, int bytesToRead) {
     ma_modplay *pModplay = (ma_modplay *)pUserData;
@@ -506,6 +504,7 @@ static void ma_decoding_backend_uninit__modplay(void *pUserData, ma_data_source 
     ma_free(pModplay, pAllocationCallbacks);
 }
 
+// clang-format off
 ma_decoding_backend_vtable ma_vtable_modplay = {
     ma_decoding_backend_init__modplay,
     ma_decoding_backend_init_file__modplay,
@@ -513,5 +512,4 @@ ma_decoding_backend_vtable ma_vtable_modplay = {
     NULL, /* onInitMemory() */
     ma_decoding_backend_uninit__modplay
 };
-
-//-----------------------------------------------------------------------------------------------------
+// clang-format on
