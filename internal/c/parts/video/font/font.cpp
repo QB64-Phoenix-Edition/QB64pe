@@ -9,6 +9,7 @@
 #include "gui.h"
 #include "libqb-common.h"
 #include <cmath>
+#include <cstdio>
 #include <unordered_map>
 #include <vector>
 
@@ -620,9 +621,9 @@ uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes) {
             memset(pathName, 0, PATH_BUFFER_SIZE);
 
             if (FONT_PATHS[i][1] && getenv(FONT_PATHS[i][1]))
-                sprintf_s(pathName, PATH_BUFFER_SIZE, FONT_PATHS[i][0], getenv(FONT_PATHS[i][1]), file_path_name);
+                std::snprintf(pathName, PATH_BUFFER_SIZE, FONT_PATHS[i][0], getenv(FONT_PATHS[i][1]), file_path_name);
             else
-                sprintf_s(pathName, PATH_BUFFER_SIZE, FONT_PATHS[i][0], "", file_path_name);
+                std::snprintf(pathName, PATH_BUFFER_SIZE, FONT_PATHS[i][0], "", file_path_name);
 
             FONT_DEBUG_PRINT("Attempting to load %s", pathName);
 
