@@ -16,30 +16,6 @@
 // QB64 expects invalid font handles to be zero
 #define IS_FONT_HANDLE_VALID(_handle_) ((_handle_) > INVALID_FONT_HANDLE && (_handle_) < fontManager.fonts.size() && fontManager.fonts[_handle_]->isUsed)
 
-// See FontManager::Font::utf8Decode() below for more details
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 1
-
-// clang-format off
-/// @brief See FontManager::Font::utf8Decode() below for more details
-static const uint8_t utf8d[] = {
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
-    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
-    8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
-    0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
-    0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-    0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
-    1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
-    1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
-    1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
-};
-// clang-format on
-
 /// @brief This class manages all font handles, bitmaps, hashmaps of glyph bitmaps etc.
 struct FontManager {
     FT_Library library;       // FreeType library object
@@ -116,9 +92,11 @@ struct FontManager {
                     bearing.x = parentFont->face->glyph->bitmap_left;       // get the bitmap left side bearing
                     bearing.y = parentFont->face->glyph->bitmap_top;        // get the bitmap top side bearing
 
-                    if (!parentFont->face->glyph->bitmap.buffer || size.x < 1 || size.y < 1) {
+                    if (!parentFont->face->glyph->bitmap.buffer || size.x < 1 || size.y < 1 || (size.x == 1 && size.y == 1)) {
                         // Ok, this means the font does not have a glyph for the codepoint index
                         // Simply make a blank bitmap and update width and height
+                        FONT_DEBUG_PRINT("Entering missing glyph path");
+
                         size.x = std::max(advanceWidth, size.x);
                         if (size.x < 1) {
                             FONT_DEBUG_PRINT("Failed to get default size for empty glyph");
@@ -139,6 +117,8 @@ struct FontManager {
                             }
                         }
                     } else {
+                        FONT_DEBUG_PRINT("(%i x %i) glyph found ", size.x, size.y);
+
                         // Allocate zeroed memory for monochrome and gray bitmaps
                         bitmapGray = (uint8_t *)calloc(size.x, size.y);
                         if (bitmapGray) {
@@ -251,6 +231,11 @@ struct FontManager {
         Font(Font &&) = delete;
         Font &operator=(Font &&) = delete;
 
+        // See FontManager::Font::UTF8Decode() below for more details
+        enum struct UTF8DecodeState { ACCEPT = 0, REJECT = 1 };
+        // See FontManager::Font::UTF16Decode() below for more details
+        enum struct UTF16DecodeState { REJECT = -1, ACCEPT = 0 };
+
         /// @brief Initializes all members
         Font() {
             isUsed = false;
@@ -296,16 +281,74 @@ struct FontManager {
         /// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
         /// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         /// @param state The current state of the decoder
-        /// @param codep The decoded codepoint after state changes to UTF8_ACCEPT
-        /// @param byte The current byte being processed in the UTF-8 string
-        /// @return UTF8_ACCEPT if enough bytes have been read for a character,
-        /// UTF8_REJECT if the byte is not allowed to occur at its position,
+        /// @param codep The decoded codepoint after state changes to UTF8DecodeState::ACCEPT
+        /// @param byte The next UTF-8 byte in the input stream
+        /// @return UTF8DecodeState::ACCEPT if enough bytes have been read for a character,
+        /// UTF8DecodeState::REJECT if the byte is not allowed to occur at its position,
         /// and some other positive value if more bytes have to be read
         uint32_t UTF8Decode(uint32_t *state, uint32_t *codep, uint32_t byte) {
+            // clang-format off
+            static const uint8_t utf8d[] = {
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+                1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+                7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+                8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+                0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+                0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+                0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+                1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+                1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+                1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+                1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+            };
+            // clang-format on
+
             uint32_t type = utf8d[byte];
-            *codep = (*state != UTF8_ACCEPT) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
+            *codep = (*state != (uint32_t)UTF8DecodeState::ACCEPT) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
             *state = utf8d[256 + *state * 16 + type];
+
             return *state;
+        }
+
+        /// @brief Decodes a single UTF-16LE character from a stream
+        /// @param state A pointer to the decoding state variable
+        /// @param codep A pointer to the variable where the decoded code point will be stored
+        /// @param ch The next UTF-16 character in the input stream
+        /// @return UTF16_ACCEPT if a complete Unicode character was decoded and stored in
+        /// the codep parameter, UTF16_REJECT if the input was invalid and the state
+        /// variable should be reset to zero, or a positive value if more input is
+        /// needed to complete the current character
+        int32_t UTF16Decode(uint32_t *state, uint32_t *codep, uint32_t ch) {
+            if (!*state) {
+                // If state is 0, it means we are starting a new sequence
+                if (ch < 0xD800 || ch > 0xDFFF) {
+                    // The codepoint is directly representable in UTF-32
+                    *codep = ch;
+                    return (int32_t)UTF16DecodeState::ACCEPT;
+                } else if (ch >= 0xD800 && ch <= 0xDBFF) {
+                    // The first half of a surrogate pair was found
+                    *state = ch;
+                    return 1;
+                } else {
+                    // Invalid value for the first half of a surrogate pair
+                    return (int32_t)UTF16DecodeState::REJECT;
+                }
+            } else {
+                // We are in the middle of a sequence, expecting the second half of a surrogate pair
+                if (ch >= 0xDC00 && ch <= 0xDFFF) {
+                    // Valid second half of a surrogate pair
+                    *codep = (*state - 0xD800) * 0x400 + (ch - 0xDC00) + 0x10000;
+                    *state = 0;
+                    return (int32_t)UTF16DecodeState::ACCEPT;
+                } else {
+                    // Invalid value for the second half of a surrogate pair
+                    *state = 0;
+                    return (int32_t)UTF16DecodeState::REJECT;
+                }
+            }
         }
 
         /// @brief Resizes the UTF32 conversion buffer
@@ -381,36 +424,29 @@ struct FontManager {
         /// @param codepoint The codepoint array (string)
         /// @param codepoints The number of codepoints in the array
         /// @return The length of the string in pixels
-        size_t GetStringPixelWidth(const FT_ULong *codepoint, FT_ULong codepoints) {
+        FT_Pos GetStringPixelWidth(const FT_ULong *codepoint, FT_ULong codepoints) {
             if (monospaceWidth) // return monospace width simply by multiplying the fixed width by the codepoints
-                return (size_t)monospaceWidth * (size_t)codepoints;
+                return monospaceWidth * codepoints;
 
-            size_t width = 0;                       // the calculated width in pixel
+            FT_Pos width = 0;                       // the calculated width in pixel
             auto hasKerning = FT_HAS_KERNING(face); // set to true if font has kerning info
+            Glyph *glyph = nullptr;
+            Glyph *previousGlyph = nullptr;
 
             for (FT_ULong i = 0; i < codepoints; i++) {
                 auto cp = codepoint[i];
 
+                // Add kerning advance width if kerning table is available
+                if (hasKerning && previousGlyph && glyph) {
+                    FT_Vector delta;
+                    FT_Get_Kerning(face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                    width += delta.x / 64;
+                }
+
                 if (CacheGlyph(cp)) {
-                    auto glyph = glyphs[cp];
-
+                    glyph = glyphs[cp];
                     width += glyph->advanceWidth; // add advance width
-
-                    // Add kerning advance width if kerning table is available
-                    auto j = i + 1;
-                    if (hasKerning && j < codepoints) {
-                        auto cp2 = codepoint[j];
-
-                        if (CacheGlyph(cp2)) {
-                            FT_Vector delta;
-
-                            if (FT_Get_Kerning(face, glyph->index, glyphs[cp2]->index, FT_KERNING_DEFAULT, &delta)) {
-                                FONT_DEBUG_PRINT("Failed to get kerning information for %lu -> %lu", cp, cp2);
-                            }
-
-                            width += delta.x / 64;
-                        }
-                    }
+                    previousGlyph = glyph;        // save the current glyph pointer for use later
                 }
             }
 
@@ -419,7 +455,7 @@ struct FontManager {
 
         /// @brief This returns the length of a recently converted UTF32 codepoint array in pixels
         /// @return The length of the string in pixels
-        size_t GetStringPixelWidth() { return GetStringPixelWidth(utf32Codepoint, utf32Codepoints); }
+        FT_Pos GetStringPixelWidth() { return GetStringPixelWidth(utf32Codepoint, utf32Codepoints); }
     };
 
     std::vector<Font *> fonts; // vector that holds all font objects
@@ -806,7 +842,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     if (!outBuf)
         return false;
 
-    FONT_DEBUG_PRINT("Allocated %llu x %llu buffer", outBufW, outBufH);
+    FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", outBufW, outBufH);
 
     auto outX = 0;
 
@@ -817,42 +853,32 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
             if (font->CacheGlyph(cp)) {
                 auto glyph = font->glyphs[cp];
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-
-                if (glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, outX + glyph->bearing.x + font->monospaceWidth / 2 - glyph->advanceWidth / 2,
-                                            font->baseline - glyph->bearing.y)) {
-                    outX += font->monospaceWidth;
-                }
+                glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, outX + glyph->bearing.x + font->monospaceWidth / 2 - glyph->advanceWidth / 2,
+                                        font->baseline - glyph->bearing.y);
+                outX += font->monospaceWidth;
             }
         }
     } else {
         auto hasKerning = FT_HAS_KERNING(font->face); // set to true if font has kerning info
+        FontManager::Font::Glyph *glyph = nullptr;
+        FontManager::Font::Glyph *previousGlyph = nullptr;
 
         for (auto i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
+            // Add kerning advance width if kerning table is available
+            if (hasKerning && previousGlyph && glyph) {
+                FT_Vector delta;
+                FT_Get_Kerning(font->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                outX += delta.x / 64;
+            }
+
             if (font->CacheGlyph(cp)) {
-                auto glyph = font->glyphs[cp];
+                glyph = font->glyphs[cp];
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-
-                if (glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, outX + glyph->bearing.x, font->baseline - glyph->bearing.y)) {
-                    outX += glyph->advanceWidth; // add advance width
-
-                    // Add kerning advance width if kerning table is available
-                    auto j = i + 1;
-                    if (hasKerning && j < codepoints) {
-                        auto cp2 = codepoint[j];
-
-                        if (font->CacheGlyph(cp2)) {
-                            FT_Vector delta;
-
-                            if (FT_Get_Kerning(font->face, glyph->index, font->glyphs[cp2]->index, FT_KERNING_DEFAULT, &delta)) {
-                                FONT_DEBUG_PRINT("Failed to get kerning information for %lu -> %lu", cp, cp2);
-                            }
-
-                            outX += delta.x / 64;
-                        }
-                    }
-                }
+                glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, outX + glyph->bearing.x, font->baseline - glyph->bearing.y);
+                outX += glyph->advanceWidth; // add advance width
+                previousGlyph = glyph;       // save the current glyph pointer for use later
             }
         }
     }
