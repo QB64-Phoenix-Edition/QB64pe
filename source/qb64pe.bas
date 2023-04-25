@@ -3500,6 +3500,8 @@ DO
                         ' Just try to concatenate the path with the source or include path and check if we are able to find the file
                         IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname(inclevel)) + MidiSoundFont$) THEN
                             MidiSoundFont$ = getfilepath(incname(inclevel)) + MidiSoundFont$
+                        ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) Then
+                            MidiSoundFont$ = FixDirectoryName(path.source$) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
                             MidiSoundFont$ = FixDirectoryName(idepath$) + MidiSoundFont$
                         END IF
@@ -4481,11 +4483,14 @@ DO
                                         sfheader = 1
                                         GOTO GotHeader
                                     END IF
+
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
                                         libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                    ELSEIF NoIDEMode THEN
+                                        libpath$ = FixDirectoryName(path.source$) + og_libpath$
                                     ELSE
-                                        libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                        IF LEN(ideprogname) THEN libpath$ = idepath$ + pathsep$ + og_libpath$
                                     END IF
                                     libpath_inline$ = GetEscapedPath(libpath$)
                                     IF _FILEEXISTS(libpath$ + x$ + ".h") THEN
@@ -4555,8 +4560,10 @@ DO
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
                                         libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                    ELSEIF NoIDEMode THEN
+                                        libpath$ = FixDirectoryName(path.source$) + og_libpath$
                                     ELSE
-                                        libpath$ = FixDirectoryName(idepath$) + og_libpath$
+                                        IF LEN(ideprogname) THEN libpath$ = idepath$ + pathsep$ + og_libpath$
                                     END IF
                                     libpath_inline$ = GetEscapedPath(libpath$)
                                     IF _FILEEXISTS(libpath$ + x$ + ".h") THEN
