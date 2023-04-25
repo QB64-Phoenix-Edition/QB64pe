@@ -20,6 +20,14 @@ produce when attempting to compile that code.
 Tests can also have an optional `*.flags` file. The contents of this file will
 be provide as command line arguments to QB64-PE when compiling the test source.
 
+Tests are compiled from the directory the `.bas` file is in. That is, they are
+compiled as though the user `cd`'d into the directory the `.bas` file is in,
+and then ran the compiler from that starting location to compile the `.bas`. If
+necessary this behavior can be changed by including a `*.compile-from-base`
+file next to the associated `*.bas` test file. This will case the test script
+to compile the `*.bas` file from the directory the compiler is located in
+instead, and the full path to the `*.bas` file will be provided to `-x`.
+
 These tests are run via the `./tests/compile_tests.sh` script. The script
 searches the `./tests/compile_tests` directory for any `*.bas` files, and then
 uses the provide QB64-PE compiler to test them.
