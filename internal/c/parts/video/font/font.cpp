@@ -433,7 +433,7 @@ struct FontManager {
                     for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
                         uint32_t alphaSrc = *(bitmap + size.x * sy + sx); // src alpha from src pointer
                         if (alphaSrc)
-                            pset_and_clip(dx, dy, (alphaSrc << 24) | color);
+                            pset_and_clip(dx, dy, (alphaSrc << 24) | (color & 0xFFFFFF));
                     }
                 }
             }
