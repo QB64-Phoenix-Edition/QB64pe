@@ -1052,7 +1052,7 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
 /// @param passed Optional arguments flag
 /// @return The height in pixels
-int32_t func__UPrintHeight(int32_t qb64_fh, int32_t passed) {
+int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     if (new_error)
         return 0;
 
@@ -1162,7 +1162,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
 /// @param passed Optional arguments flag
 /// @return The vertical spacing in pixels
-int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed) {
+int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     if (new_error)
         return 0;
 
@@ -1196,7 +1196,7 @@ int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed) {
 /// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
 /// @param passed Optional arguments flag
-void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
+void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
     if (new_error || !text->len)
         return;
 

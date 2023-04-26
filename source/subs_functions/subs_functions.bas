@@ -1429,15 +1429,15 @@ regid
 
 ' a740g: Extended Font support
 clearid
-id.n = qb64prefix$ + "UPrintHeight"
+id.n = qb64prefix$ + "UFontHeight"
 id.Dependency = DEPENDENCY_LOADFONT
 id.subfunc = 1
-id.callname = "func__UPrintHeight"
+id.callname = "func__UFontHeight"
 id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_UPRINTHEIGHT&[(fontHandle&)]"
+id.hr_syntax = "_UFONTHEIGHT&[(fontHandle&)]"
 regid
 
 clearid
@@ -1453,27 +1453,27 @@ id.hr_syntax = "_UPRINTWIDTH&(text$[, utfEncoding&][, fontHandle&])"
 regid
 
 clearid
-id.n = qb64prefix$ + "UPrintLineSpacing"
+id.n = qb64prefix$ + "ULineSpacing"
 id.Dependency = DEPENDENCY_LOADFONT
 id.subfunc = 1
-id.callname = "func__UPrintLineSpacing"
+id.callname = "func__ULineSpacing"
 id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_UPRINTLINESPACING&[(fontHandle&)]"
+id.hr_syntax = "_ULINESPACING&[(fontHandle&)]"
 regid
 
 regid
 clearid
-id.n = qb64prefix$ + "UPrint"
+id.n = qb64prefix$ + "UPrintString"
 id.Dependency = DEPENDENCY_LOADFONT
 id.subfunc = 2
-id.callname = "sub__UPrint"
+id.callname = "sub__UPrintString"
 id.args = 6
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "(?,?),?[,[?][,[?][,?]]]"
-id.hr_syntax = "_UPRINT (x&, y&), text$[, maxWidth&][, utfEncoding&][, fontHandle&]"
+id.hr_syntax = "_UPRINTSTRING (x&, y&), text$[, maxWidth&][, utfEncoding&][, fontHandle&]"
 regid
 
 'WORKING WITH COLORS

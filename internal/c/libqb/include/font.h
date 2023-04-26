@@ -49,7 +49,7 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
 int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints);
 int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints);
 
-int32_t func__UPrintHeight(int32_t qb64_fh, int32_t passed);
+int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed);
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
-int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed);
-void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
+int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed);
+void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
