@@ -551,6 +551,17 @@ struct FontManager {
                 }
             }
 
+            // Adjust for the last glyph
+            if (glyph) {
+                auto adjust = glyph->advanceWidth;
+                if (adjust < glyph->size.x)
+                    adjust = glyph->size.x;
+                if (glyph->bearing.x > 0 && (glyph->size.x + glyph->bearing.x) > adjust)
+                    adjust = glyph->size.x + glyph->bearing.x;
+
+                width = (width - glyph->advanceWidth) + adjust;
+            }
+
             return width;
         }
     };
@@ -899,6 +910,41 @@ int32_t FontWidth(int32_t fh) {
     return 0;
 }
 
+/// @brief Returns the length of an UTF32 codepoint string in pixels
+/// @param fh A valid font
+/// @param codepoint The UTF32 codepoint array
+/// @param codepoints The number of codepoints
+/// @return Length in pixels
+int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints) {
+    if (codepoints > 0) {
+        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+
+        // Get the actual width in pixels
+        return fontManager.fonts[fh]->GetStringPixelWidth((FT_ULong *)codepoint, codepoints);
+    }
+
+    return 0;
+}
+
+/// @brief Returns the length of an ASCII codepoint string in pixels
+/// @param fh A valid font
+/// @param codepoint The ASCII codepoint array
+/// @param codepoints The number of codepoints
+/// @return Length in pixels
+int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints) {
+    if (codepoints > 0) {
+        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+
+        // Atempt to convert the string to UTF32
+        if (utf32.ConvertASCII(codepoint, codepoints)) {
+            // Get the actual width in pixels
+            return FontPrintWidthUTF32(fh, (uint32_t *)utf32.codepoint, utf32.codepoints);
+        }
+    }
+
+    return 0;
+}
+
 /// @brief Master rendering routine (to be called by all other functions). None of the pointer args can be NULL
 /// @param fh A valid font handle
 /// @param codepoint A pointer to an array of UTF-32 codepoints that needs to be rendered
@@ -922,7 +968,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
         return codepoints == 0; // true if zero, false if -ve
 
     auto isMonochrome = options & FONT_RENDER_MONOCHROME;                                 // do we need to do monochrome rendering?
-    auto outBufW = fnt->GetStringPixelWidth((FT_ULong *)codepoint, (FT_ULong)codepoints); // get the total buffer width
+    auto outBufW = fnt->GetStringPixelWidth((FT_ULong *)codepoint, codepoints); // get the total buffer width
     auto outBufH = fnt->defaultHeight;                                                    // height is always set by the QB64
     auto outBuf = (uint8_t *)calloc(outBufW, outBufH);
     if (!outBuf)
@@ -1002,57 +1048,6 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
     return false;
 }
 
-/// @brief Returns the length of an UTF32 codepoint string in pixels
-/// @param fh A valid font
-/// @param codepoint The UTF32 codepoint array
-/// @param codepoints The number of codepoints
-/// @return Length in pixels
-int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints) {
-    // If we are just asking for the width of one codepoint then return the true width
-    // This can helps stuff like PRINT that prints one char at a time to avoid text to overlap and clip
-    if (codepoints == 1) {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
-
-        auto fnt = fontManager.fonts[fh];
-
-        if (fnt->monospaceWidth)
-            return fnt->monospaceWidth; // we can avoid the multiplication
-
-        auto cp = codepoint[0];
-
-        if (fnt->CacheGlyph(cp)) {
-            auto glyph = fnt->glyphs[cp];
-            return std::max((glyph->size.x + glyph->bearing.x), std::max(glyph->advanceWidth, glyph->size.x));
-        }
-    } else if (codepoints > 1) {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
-
-        // Get the actual width in pixels
-        return fontManager.fonts[fh]->GetStringPixelWidth((FT_ULong *)codepoint, codepoints);
-    }
-
-    return 0;
-}
-
-/// @brief Returns the length of an ASCII codepoint string in pixels
-/// @param fh A valid font
-/// @param codepoint The ASCII codepoint array
-/// @param codepoints The number of codepoints
-/// @return Length in pixels
-int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints) {
-    if (codepoints > 0) {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
-
-        // Atempt to convert the string to UTF32
-        if (utf32.ConvertASCII(codepoint, codepoints)) {
-            // Get the actual width in pixels
-            return FontPrintWidthUTF32(fh, (uint32_t *)utf32.codepoint, utf32.codepoints);
-        }
-    }
-
-    return 0;
-}
-
 /// @brief Return the true font height in pixel
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
 /// @param passed Optional arguments flag
@@ -1094,7 +1089,7 @@ int32_t func__UPrintHeight(int32_t qb64_fh, int32_t passed) {
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
 
-    return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+    return lroundf((float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight);
 }
 
 /// @brief Returns the text widht in pixels
@@ -1190,7 +1185,7 @@ int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed) {
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
 
-    return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2;
+    return lroundf(((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2.0f);
 }
 
 /// @brief This renders text on an active destination (graphics mode only) using the currently selected color
@@ -1216,7 +1211,7 @@ void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_
         if (max_width < 1)
             return;
     } else {
-        max_width = INT32_MAX;
+        max_width = 0;
     }
 
     // Check UTF argument
@@ -1283,7 +1278,7 @@ void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_
             if (cp > 255)
                 cp = 32; // our built-in fonts only has ASCII glyphs
 
-            if (pen.x + 8 > start_x + max_width)
+            if (max_width && pen.x + 8 > start_x + max_width)
                 break;
 
             switch (qb64_fh) {
@@ -1318,7 +1313,7 @@ void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto isMonochrome = write_page->compatible_mode != 32 || write_page->alpha_disabled; // do we need to do monochrome rendering?
 
-    pen.y += (float)fnt->face->ascender / (float)fnt->face->units_per_EM * (float)fnt->defaultHeight;
+    pen.y += lroundf((float)fnt->face->ascender / (float)fnt->face->units_per_EM * (float)fnt->defaultHeight);
 
     if (fnt->monospaceWidth) {
         for (auto i = 0; i < codepoints; i++) {
@@ -1327,7 +1322,7 @@ void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_
             if (fnt->CacheGlyph(cp)) {
                 auto glyph = fnt->glyphs[cp];
 
-                if (pen.x + fnt->monospaceWidth > start_x + max_width)
+                if (max_width && pen.x + fnt->monospaceWidth > start_x + max_width)
                     break;
 
                 if (isMonochrome) {
@@ -1354,14 +1349,14 @@ void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_
             if (fnt->CacheGlyph(cp)) {
                 glyph = fnt->glyphs[cp];
 
-                if (pen.x + glyph->size.x > start_x + max_width)
+                if (max_width && pen.x + glyph->size.x > start_x + max_width)
                     break;
 
                 // Add kerning advance width if kerning table is available
                 if (hasKerning && previousGlyph && glyph) {
                     FT_Vector delta;
                     FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                    pen.x += (float)delta.x / (float)fnt->face->units_per_EM * (float)fnt->defaultHeight;
+                    pen.x += delta.x / 64;
                 }
 
                 if (isMonochrome) {

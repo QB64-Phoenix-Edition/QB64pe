@@ -1437,7 +1437,7 @@ id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_UPRINTHEIGHT[(fontHandle&)]"
+id.hr_syntax = "_UPRINTHEIGHT&[(fontHandle&)]"
 regid
 
 clearid
@@ -1449,7 +1449,7 @@ id.args = 3
 id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "?[,[?][,[?]]]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_UPRINTWIDTH(text$[, utfEncoding&][, fontHandle&])"
+id.hr_syntax = "_UPRINTWIDTH&(text$[, utfEncoding&][, fontHandle&])"
 regid
 
 clearid
@@ -1461,7 +1461,7 @@ id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_UPRINTLINESPACING[(fontHandle&)]"
+id.hr_syntax = "_UPRINTLINESPACING&[(fontHandle&)]"
 regid
 
 regid
