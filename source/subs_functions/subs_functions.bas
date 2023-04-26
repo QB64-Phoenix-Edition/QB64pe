@@ -1427,6 +1427,55 @@ id.ret = LONGTYPE - ISPOINTER
 id.hr_syntax = "_PRINTMODE[(imageHandle&)]"
 regid
 
+' a740g: Extended Font support
+clearid
+id.n = qb64prefix$ + "UPrintHeight"
+id.Dependency = DEPENDENCY_LOADFONT
+id.subfunc = 1
+id.callname = "func__UPrintHeight"
+id.args = 1
+id.arg = MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "[?]"
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_UPRINTHEIGHT[(fontHandle&)]"
+regid
+
+clearid
+id.n = qb64prefix$ + "UPrintWidth"
+id.Dependency = DEPENDENCY_LOADFONT
+id.subfunc = 1
+id.callname = "func__UPrintWidth"
+id.args = 3
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "?[,[?][,[?]]]"
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_UPRINTWIDTH(text$[, utfEncoding&][, fontHandle&])"
+regid
+
+clearid
+id.n = qb64prefix$ + "UPrintLineSpacing"
+id.Dependency = DEPENDENCY_LOADFONT
+id.subfunc = 1
+id.callname = "func__UPrintLineSpacing"
+id.args = 1
+id.arg = MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "[?]"
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_UPRINTLINESPACING[(fontHandle&)]"
+regid
+
+regid
+clearid
+id.n = qb64prefix$ + "UPrint"
+id.Dependency = DEPENDENCY_LOADFONT
+id.subfunc = 2
+id.callname = "sub__UPrint"
+id.args = 6
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "(?,?),?[,[?][,[?][,?]]]"
+id.hr_syntax = "_UPRINT (x&, y&), text$[, maxWidth&][, utfEncoding&][, fontHandle&]"
+regid
+
 'WORKING WITH COLORS
 
 clearid

@@ -1053,6 +1053,10 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
     return 0;
 }
 
+/// @brief Return the true font height in pixel
+/// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
+/// @param passed Optional arguments flag
+/// @return The height in pixels
 int32_t func__UPrintHeight(int32_t qb64_fh, int32_t passed) {
     if (new_error)
         return 0;
@@ -1093,6 +1097,12 @@ int32_t func__UPrintHeight(int32_t qb64_fh, int32_t passed) {
     return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
 }
 
+/// @brief Returns the text widht in pixels
+/// @param text The text to calculate the width for
+/// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
+/// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
+/// @param passed Optional arguments flag
+/// @return The width in pixels
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
     if (new_error || !text->len)
         return 0;
@@ -1153,6 +1163,10 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     return (int32_t)fontManager.fonts[font[qb64_fh]]->GetStringPixelWidth(str32, codepoints);
 }
 
+/// @brief Returns the vertical line spacing in pixels
+/// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
+/// @param passed Optional arguments flag
+/// @return The vertical spacing in pixels
 int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed) {
     if (new_error)
         return 0;
@@ -1179,6 +1193,14 @@ int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed) {
     return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2;
 }
 
+/// @brief This renders text on an active destination (graphics mode only) using the currently selected color
+/// @param start_x The starting x position
+/// @param start_y The starting y position
+/// @param text The text that needs to be rendered
+/// @param max_width The maximum width of the text (rendering will be clipped beyond width)
+/// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
+/// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
+/// @param passed Optional arguments flag
 void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
     if (new_error || !text->len)
         return;
@@ -1247,7 +1269,7 @@ void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_
 
     FT_Vector pen;
     pen.x = start_x;
-    pen.y = start_x;
+    pen.y = start_y;
 
     // Render using a built-in font
     if (qb64_fh < 32) {
