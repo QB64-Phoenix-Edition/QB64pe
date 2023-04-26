@@ -5,6 +5,7 @@
 
 #define FONT_DEBUG 0
 #include "font.h"
+#include "../../../libqb.h"
 #include "freetypeamalgam.h"
 #include "gui.h"
 #include "libqb-common.h"
@@ -16,6 +17,211 @@
 // QB64 expects invalid font handles to be zero
 #define IS_FONT_HANDLE_VALID(_handle_) ((_handle_) > INVALID_FONT_HANDLE && (_handle_) < fontManager.fonts.size() && fontManager.fonts[_handle_]->isUsed)
 
+// These are from libqb.cpp
+extern const img_struct *write_page;
+extern const int32_t *font;
+extern const int32_t *fontflags;
+extern const int32_t lastfont;
+extern const uint8_t charset8x8[256][8][8];
+extern const uint8_t charset8x16[256][16][8];
+
+void pset_and_clip(int32_t x, int32_t y, uint32_t col);
+
+/// @brief A simple class that manages conversions from various encodings to UTF32
+struct UTF32 {
+    FT_ULong *codepoint; // UTF32 dynamic codepoint buffer used for conversion from ASCII / UTF-8 / UTF-16
+    FT_ULong codepoints; // the number of codepoints in the buffer
+
+    // See DecodeUTF8() below for more details
+    enum UTF8DecoderState { ACCEPT = 0, REJECT = 1 };
+
+    UTF32(const UTF32 &) = delete;
+    UTF32(UTF32 &&) = delete;
+    UTF32 &operator=(const UTF32 &) = delete;
+    UTF32 &operator=(UTF32 &&) = delete;
+
+    /// @brief Initialize some critical stuff
+    UTF32() {
+        codepoint = nullptr;
+        codepoints = 0;
+    }
+
+    /// @brief Frees the UTF32 dynamic buffer if it was allocated
+    ~UTF32() {
+        // Free any UTF32 conversion buffer
+        free(codepoint);
+        FONT_DEBUG_PRINT("UTF32 conversion buffer freed");
+    }
+
+    /// @brief See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
+    /// Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+    /// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+    /// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+    /// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+    /// is furnished to do so, subject to the following conditions:
+    /// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+    /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+    /// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+    /// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+    /// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    /// @param state The current state of the decoder
+    /// @param codep The decoded codepoint after state changes to UTF8DecodeState::ACCEPT
+    /// @param byte The next UTF-8 byte in the input stream
+    /// @return UTF8DecodeState::ACCEPT if enough bytes have been read for a character,
+    /// UTF8DecodeState::REJECT if the byte is not allowed to occur at its position,
+    /// and some other positive value if more bytes have to be read
+    uint32_t DecodeUTF8(uint32_t *state, FT_ULong *codep, uint32_t byte) {
+        // clang-format off
+        static const uint8_t utf8d[] = {
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+            7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+            8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+            0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+            0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+            0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+            1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+            1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+            1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+        };
+        // clang-format on
+
+        uint32_t type = utf8d[byte];
+        *codep = (*state != UTF8DecoderState::ACCEPT) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
+        *state = utf8d[256 + *state * 16 + type];
+
+        return *state;
+    }
+
+    /// @brief Resizes the UTF32 conversion buffer
+    /// @param count New codepoints required
+    /// @return True if the buffer was allocated correctly
+    bool ResizeCodepointBuffer(FT_ULong count) {
+        if (count <= codepoints || !count) {
+            codepoints = count;
+            return codepoint != nullptr;
+        }
+
+        auto *tempBuffer = (FT_ULong *)realloc(codepoint, count * sizeof(FT_ULong));
+        if (!tempBuffer)
+            return false;
+        codepoint = tempBuffer;
+
+        FONT_DEBUG_PRINT("UTF32 conversion buffer resized from %i to %i", codepoints, count);
+
+        codepoints = count;
+
+        return true;
+    }
+
+    /// @brief Converts an ASCII array to UTF-32
+    /// @param str The ASCII array
+    /// @param byte_len The size of the array in bytes
+    /// @return The number of codepoints that were converted
+    FT_ULong ConvertASCII(const FT_Bytes str, FT_ULong byte_len) {
+        // Resize the codepoint buffer
+        if (ResizeCodepointBuffer(byte_len)) {
+            // Convert the ASCII string
+            for (FT_ULong i = 0; i < byte_len; i++)
+                codepoint[i] = codepage437_to_unicode16[str[i]];
+
+            return byte_len;
+        }
+
+        return 0;
+    }
+
+    /// @brief Converts an UTF-8 array to UTF-32. This does not check for BOM
+    /// @param str The UTF-8 array
+    /// @param byte_len The size of the array in bytes
+    /// @return The number of codepoints that were converted
+    FT_ULong ConvertUTF8(const FT_Bytes str, FT_ULong byte_len) {
+        FT_ULong count = 0; // we'll keep a count of the actual codepoints
+
+        // We'll assume the worst case scenario and resize the buffer so that it is byte_len codepoints long
+        if (ResizeCodepointBuffer(byte_len)) {
+            FT_ULong cp;
+            uint32_t prevState = UTF8DecoderState::ACCEPT, currentState = UTF8DecoderState::ACCEPT;
+
+            for (FT_ULong i = 0; i < byte_len; i++, prevState = currentState) {
+                switch (DecodeUTF8(&currentState, &cp, str[i])) {
+                case UTF8DecoderState::ACCEPT:
+                    // Good codepoint
+                    codepoint[count] = cp;
+                    ++count;
+                    break;
+
+                case UTF8DecoderState::REJECT:
+                    // Codepoint would be U+FFFD (replacement character)
+                    cp = 0xFFFD;
+                    currentState = UTF8DecoderState::ACCEPT;
+                    if (prevState != UTF8DecoderState::ACCEPT)
+                        --i;
+                    codepoint[count] = cp;
+                    ++count;
+                    break;
+
+                default:
+                    // Need to read continuation bytes
+                    continue;
+                    break;
+                }
+            }
+
+            // Resize the buffer again. But this time to the correct size
+            ResizeCodepointBuffer(count);
+        }
+
+        return count;
+    }
+
+    /// @brief Converts an UTF-16 array to UTF-32. This does not check for BOM
+    /// @param str The UTF-16 array
+    /// @param byte_len The size of the array in bytes
+    /// @return The number of codepoints that were converted
+    FT_ULong ConvertUTF16(const FT_Bytes str, FT_ULong byte_len) {
+        FT_ULong count = 0; // we keep a count of the actual codepoints
+
+        // We'll assume the worst case scenario and allocate a buffer that is byte_len / 2 codepoints long
+        auto len16 = byte_len / sizeof(uint16_t);
+        if (ResizeCodepointBuffer(len16)) {
+            auto str16 = (const uint16_t *)str;
+            FT_ULong cp;
+
+            for (FT_ULong i = 0; i < len16; i++) {
+                auto ch = str16[i];
+
+                // If the character is a surrogate, we need to combine it with the next character to get the actual codepoint
+                if (ch >= 0xD800 && ch <= 0xDBFF && i + 1 < len16) {
+                    auto ch2 = str16[i + 1];
+                    if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {
+                        cp = ((ch - 0xD800) << 10) + (ch2 - 0xDC00) + 0x10000;
+                        ++i; // skip the second surrogate
+                    } else {
+                        cp = 0xFFFD; // invalid surrogate pair
+                    }
+                } else if (ch >= 0xDC00 && ch <= 0xDFFF) {
+                    cp = 0xFFFD; // invalid surrogate pair
+                } else {
+                    cp = ch;
+                }
+
+                codepoint[count] = cp;
+                ++count;
+            }
+
+            // Resize the buffer again. But this time to the correct size
+            ResizeCodepointBuffer(count);
+        }
+
+        return count;
+    }
+};
+
 /// @brief This class manages all font handles, bitmaps, hashmaps of glyph bitmaps etc.
 struct FontManager {
     FT_Library library;       // FreeType library object
@@ -24,14 +230,12 @@ struct FontManager {
 
     /// @brief Manages a single font
     struct Font {
-        bool isUsed;              // is this handle in use?
-        FT_Byte *fontData;        // raw font data (we always store a copy as long as the font is in use)
-        FT_Face face;             // FreeType face object
-        FT_Pos monospaceWidth;    // the monospace width (if font was loaded as monospace, else zero)
-        FT_Pos defaultHeight;     // default (max) pixel height the user wants
-        FT_Pos baseline;          // font baeline in pixels
-        FT_ULong *utf32Codepoint; // UTF32 dynamic codepoint buffer used for conversion from ASCII / UTF-8
-        FT_ULong utf32Codepoints; // the length of utf32Codepoint
+        bool isUsed;           // is this handle in use?
+        FT_Byte *fontData;     // raw font data (we always store a copy as long as the font is in use)
+        FT_Face face;          // FreeType face object
+        FT_Pos monospaceWidth; // the monospace width (if font was loaded as monospace, else zero)
+        FT_Pos defaultHeight;  // default (max) pixel height the user wants
+        FT_Pos baseline;       // font baeline in pixels
 
         /// @brief Manages a single glyph in a font
         struct Glyph {
@@ -92,7 +296,9 @@ struct FontManager {
                     bearing.x = parentFont->face->glyph->bitmap_left;       // get the bitmap left side bearing
                     bearing.y = parentFont->face->glyph->bitmap_top;        // get the bitmap top side bearing
 
-                    if (!parentFont->face->glyph->bitmap.buffer || size.x < 1 || size.y < 1 || (size.x == 1 && size.y == 1)) {
+                    if (!parentFont->face->glyph->bitmap.buffer || size.x < 1 || size.y < 1 ||
+                        (parentFont->face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_MONO &&
+                         parentFont->face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)) {
                         // Ok, this means the font does not have a glyph for the codepoint index
                         // Simply make a blank bitmap and update width and height
                         FONT_DEBUG_PRINT("Entering missing glyph path");
@@ -100,7 +306,6 @@ struct FontManager {
                         size.x = std::max(advanceWidth, size.x);
                         if (size.x < 1) {
                             FONT_DEBUG_PRINT("Failed to get default size for empty glyph");
-
                             return false; // something seriously went wrong
                         }
                         size.y = parentFont->defaultHeight;
@@ -148,7 +353,6 @@ struct FontManager {
 
                                 // Simply copy the mono one to the gray as a fallback
                                 memcpy(bitmapGray, bitmapMono, size.x * size.y);
-
                                 FONT_DEBUG_PRINT("Using monochrome bitmap for gray");
                             } else {
                                 // Now copy the 8-bit bitmap
@@ -171,31 +375,28 @@ struct FontManager {
                 return bitmap != nullptr;
             }
 
-            /// @brief Renders the glyph bitmap to the target bitmap using alpha blending
+            /// @brief Renders the glyph bitmap to the target bitmap using "alpha blending"
             /// @param dst The target bitmap to render to
             /// @param dstW The width of the target bitmap
             /// @param dstH The height of the target bitmap
             /// @param dstL The x position on the target bitmap where the rendering should start
             /// @param dstT The y position on the target bitmap where the rendering should start
             /// @return True if successful
-            bool RenderBitmapBlend(uint8_t *dst, int dstW, int dstH, int dstL, int dstT) {
-                if (!bitmap || !dst)
-                    return false;
+            void RenderBitmapBlend(uint8_t *dst, FT_Pos dstW, FT_Pos dstH, FT_Pos dstL, FT_Pos dstT) {
+                FONT_DEBUG_CHECK(bitmap && dst);
 
                 auto dstR = dstL + size.x; // right of dst + 1 where we will end
                 auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                for (auto dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
-                    for (auto dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
+                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
+                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
                         if (dx >= 0 && dx < dstW && dy >= 0 && dy < dstH) { // if we are not clipped
                             auto dstP = (dst + dstW * dy + dx);             // dst pointer
-                            int alphaSrc = *(bitmap + size.x * sy + sx);    // src alpha from src pointer
+                            auto alphaSrc = *(bitmap + size.x * sy + sx);   // src alpha from src pointer
                             if (alphaSrc > *dstP)                           // blend both alpha and save to dst pointer
                                 *dstP = alphaSrc;
                         }
                     }
                 }
-
-                return true;
             }
 
             /// @brief Blits the glyph bitmap to the target bitmap
@@ -205,21 +406,54 @@ struct FontManager {
             /// @param dstL The x position on the target bitmap where the rendering should start
             /// @param dstT The y position on the target bitmap where the rendering should start
             /// @return True if successful
-            bool RenderBitmapBlit(uint8_t *dst, int dstW, int dstH, int dstL, int dstT) {
-                if (!bitmap || !dst)
-                    return false;
+            void RenderBitmapBlit(uint8_t *dst, FT_Pos dstW, FT_Pos dstH, FT_Pos dstL, FT_Pos dstT) {
+                FONT_DEBUG_CHECK(bitmap && dst);
 
                 auto dstR = dstL + size.x; // right of dst + 1 where we will end
                 auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                for (auto dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
-                    for (auto dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
+                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
+                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
                         if (dx >= 0 && dx < dstW && dy >= 0 && dy < dstH) {         // if we are not clipped
                             *(dst + dstW * dy + dx) = *(bitmap + size.x * sy + sx); // copy the pixel
                         }
                     }
                 }
+            }
 
-                return true;
+            /// @brief PSets the glyph using it's alpha values
+            /// @param dstL The x position on the target bitmap where the rendering should start
+            /// @param dstT The y position on the target bitmap where the rendering should start
+            /// @param color The color that should be combined with the alpha value
+            void RenderBitmapPSetAlpha(FT_Pos dstL, FT_Pos dstT, uint32_t color) {
+                FONT_DEBUG_CHECK(bitmap);
+
+                auto dstR = dstL + size.x; // right of dst + 1 where we will end
+                auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
+                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
+                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
+                        uint32_t alphaSrc = *(bitmap + size.x * sy + sx); // src alpha from src pointer
+                        if (alphaSrc)
+                            pset_and_clip(dx, dy, (alphaSrc << 24) | color);
+                    }
+                }
+            }
+
+            /// @brief PSets the glyph using a given color
+            /// @param dstL The x position on the target bitmap where the rendering should start
+            /// @param dstT The y position on the target bitmap where the rendering should start
+            /// @param color The color that should be used to plot the pixels
+            void RenderBitmapPSetMono(FT_Pos dstL, FT_Pos dstT, uint32_t color) {
+                FONT_DEBUG_CHECK(bitmap);
+
+                auto dstR = dstL + size.x; // right of dst + 1 where we will end
+                auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
+                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
+                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
+                        uint32_t alphaSrc = *(bitmap + size.x * sy + sx); // src alpha from src pointer
+                        if (alphaSrc)
+                            pset_and_clip(dx, dy, color);
+                    }
+                }
             }
         };
 
@@ -231,18 +465,12 @@ struct FontManager {
         Font(Font &&) = delete;
         Font &operator=(Font &&) = delete;
 
-        // See FontManager::Font::UTF8Decode() below for more details
-        enum struct UTF8DecodeState { ACCEPT = 0, REJECT = 1 };
-        // See FontManager::Font::UTF16Decode() below for more details
-        enum struct UTF16DecodeState { REJECT = -1, ACCEPT = 0 };
-
         /// @brief Initializes all members
         Font() {
             isUsed = false;
             fontData = nullptr;
             face = nullptr;
-            monospaceWidth = defaultHeight = baseline = utf32Codepoints = 0;
-            utf32Codepoint = nullptr;
+            monospaceWidth = defaultHeight = baseline = 0;
         }
 
         /// @brief Frees any cached glyph
@@ -258,135 +486,11 @@ struct FontManager {
             free(fontData);
             FONT_DEBUG_PRINT("Raw font data buffer freed");
 
-            // Free any UTF32 conversion buffer
-            free(utf32Codepoint);
-            FONT_DEBUG_PRINT("UTF32 conversion buffer freed");
-
             FONT_DEBUG_PRINT("Freeing cached glyphs");
             // Free any allocated glyph manager
             // This should also call the glyphs destructor freeing the bitmap data
             for (auto &it : glyphs)
                 delete it.second;
-        }
-
-        /// @brief See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-        /// Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-        /// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-        /// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
-        /// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
-        /// is furnished to do so, subject to the following conditions:
-        /// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-        /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-        /// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-        /// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-        /// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-        /// @param state The current state of the decoder
-        /// @param codep The decoded codepoint after state changes to UTF8DecodeState::ACCEPT
-        /// @param byte The next UTF-8 byte in the input stream
-        /// @return UTF8DecodeState::ACCEPT if enough bytes have been read for a character,
-        /// UTF8DecodeState::REJECT if the byte is not allowed to occur at its position,
-        /// and some other positive value if more bytes have to be read
-        uint32_t UTF8Decode(uint32_t *state, uint32_t *codep, uint32_t byte) {
-            // clang-format off
-            static const uint8_t utf8d[] = {
-                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
-                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
-                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
-                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
-                1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
-                7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
-                8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
-                0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
-                0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-                0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
-                1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
-                1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
-                1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
-                1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
-            };
-            // clang-format on
-
-            uint32_t type = utf8d[byte];
-            *codep = (*state != (uint32_t)UTF8DecodeState::ACCEPT) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
-            *state = utf8d[256 + *state * 16 + type];
-
-            return *state;
-        }
-
-        /// @brief Decodes a single UTF-16LE character from a stream
-        /// @param state A pointer to the decoding state variable
-        /// @param codep A pointer to the variable where the decoded code point will be stored
-        /// @param ch The next UTF-16 character in the input stream
-        /// @return UTF16_ACCEPT if a complete Unicode character was decoded and stored in
-        /// the codep parameter, UTF16_REJECT if the input was invalid and the state
-        /// variable should be reset to zero, or a positive value if more input is
-        /// needed to complete the current character
-        int32_t UTF16Decode(uint32_t *state, uint32_t *codep, uint32_t ch) {
-            if (!*state) {
-                // If state is 0, it means we are starting a new sequence
-                if (ch < 0xD800 || ch > 0xDFFF) {
-                    // The codepoint is directly representable in UTF-32
-                    *codep = ch;
-                    return (int32_t)UTF16DecodeState::ACCEPT;
-                } else if (ch >= 0xD800 && ch <= 0xDBFF) {
-                    // The first half of a surrogate pair was found
-                    *state = ch;
-                    return 1;
-                } else {
-                    // Invalid value for the first half of a surrogate pair
-                    return (int32_t)UTF16DecodeState::REJECT;
-                }
-            } else {
-                // We are in the middle of a sequence, expecting the second half of a surrogate pair
-                if (ch >= 0xDC00 && ch <= 0xDFFF) {
-                    // Valid second half of a surrogate pair
-                    *codep = (*state - 0xD800) * 0x400 + (ch - 0xDC00) + 0x10000;
-                    *state = 0;
-                    return (int32_t)UTF16DecodeState::ACCEPT;
-                } else {
-                    // Invalid value for the second half of a surrogate pair
-                    *state = 0;
-                    return (int32_t)UTF16DecodeState::REJECT;
-                }
-            }
-        }
-
-        /// @brief Resizes the UTF32 conversion buffer
-        /// @param codepoints New codepoints required
-        /// @return True if the buffer was allocated correctly
-        bool ResizeCodepointBuffer(FT_ULong codepoints) {
-            if (codepoints <= utf32Codepoints || !codepoints) {
-                utf32Codepoints = codepoints;
-                return utf32Codepoint != nullptr;
-            }
-
-            auto *tempBuffer = (FT_ULong *)realloc(utf32Codepoint, codepoints * sizeof(FT_ULong));
-            if (!tempBuffer)
-                return false;
-            utf32Codepoint = tempBuffer;
-
-            FONT_DEBUG_PRINT("UTF32 conversion buffer resized from %i to %i", utf32Codepoints, codepoints);
-
-            utf32Codepoints = codepoints;
-
-            return true;
-        }
-
-        /// @brief Converts an ASCII string to UTF-32 to an internal buffer
-        /// @param codepoint The ASCII string
-        /// @param codepoints The number of characters in the string
-        /// @return True if successful
-        bool ConvertASCIIToUTF32(const FT_Bytes codepoint, FT_ULong codepoints) {
-            // Resize the codepoint buffer
-            if (ResizeCodepointBuffer(codepoints)) {
-                // Convert the ASCII string
-                for (FT_ULong i = 0; i < codepoints; i++)
-                    utf32Codepoint[i] = codepage437_to_unicode16[codepoint[i]];
-
-                return true;
-            }
-
-            return false;
         }
 
         /// @brief Creates a glyph belonging to a codepoint, caches its bitmap + info and adds it to the hash map
@@ -398,29 +502,26 @@ struct FontManager {
 
                 if (!newGlyph) {
                     FONT_DEBUG_PRINT("Failed to allocate mmemory");
-
                     return false; // failed to allocate memory
                 }
 
                 // Cache the glyph info and bitmap
                 if (!newGlyph->CacheBitmap(codepoint, this)) {
                     delete newGlyph;
-
                     FONT_DEBUG_PRINT("Failed to cache glyph data");
-
                     return false; // failed to cache bitmap
                 }
 
                 // Ok we are good. Save the Glyph address to the map using the codepoint as key
                 glyphs[codepoint] = newGlyph;
-
                 FONT_DEBUG_PRINT("Glyph data for codepoint %u successfully cached", codepoint);
             }
 
             return true; // we already have the glyph cached or the above went well
         }
 
-        /// @brief This returns the length of a UTF32 codepoint array in pixels
+        /// @brief This returns the length of a UTF32 codepoint array in pixels.
+        /// This does not check for monospace and always accounts for kerning
         /// @param codepoint The codepoint array (string)
         /// @param codepoints The number of codepoints in the array
         /// @return The length of the string in pixels
@@ -435,16 +536,16 @@ struct FontManager {
 
             for (FT_ULong i = 0; i < codepoints; i++) {
                 auto cp = codepoint[i];
-
-                // Add kerning advance width if kerning table is available
-                if (hasKerning && previousGlyph && glyph) {
-                    FT_Vector delta;
-                    FT_Get_Kerning(face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                    width += delta.x / 64;
-                }
-
                 if (CacheGlyph(cp)) {
                     glyph = glyphs[cp];
+
+                    // Add kerning advance width if kerning table is available
+                    if (hasKerning && previousGlyph && glyph) {
+                        FT_Vector delta;
+                        FT_Get_Kerning(face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                        width += delta.x / 64;
+                    }
+
                     width += glyph->advanceWidth; // add advance width
                     previousGlyph = glyph;        // save the current glyph pointer for use later
                 }
@@ -452,10 +553,6 @@ struct FontManager {
 
             return width;
         }
-
-        /// @brief This returns the length of a recently converted UTF32 codepoint array in pixels
-        /// @return The length of the string in pixels
-        FT_Pos GetStringPixelWidth() { return GetStringPixelWidth(utf32Codepoint, utf32Codepoints); }
     };
 
     std::vector<Font *> fonts; // vector that holds all font objects
@@ -557,8 +654,6 @@ struct FontManager {
         fonts[h]->monospaceWidth = 0;
         fonts[h]->defaultHeight = 0;
         fonts[h]->baseline = 0;
-        fonts[h]->utf32Codepoint = nullptr;
-        fonts[h]->utf32Codepoints = 0;
         fonts[h]->isUsed = true;
 
         lowestFreeHandle = h + 1; // set lowestFreeHandle to allocated handle + 1
@@ -585,11 +680,6 @@ struct FontManager {
             fonts[handle]->fontData = nullptr;
             FONT_DEBUG_PRINT("Raw font data buffer freed");
 
-            // Free any UTF32 conversion buffer
-            free(fonts[handle]->utf32Codepoint);
-            fonts[handle]->utf32Codepoint = nullptr;
-            FONT_DEBUG_PRINT("UTF32 conversion buffer freed");
-
             FONT_DEBUG_PRINT("Freeing cached glyphs");
             // Free cached glyph data
             // This should also call the glyphs destructor freeing the bitmap data
@@ -614,6 +704,8 @@ struct FontManager {
 
 /// @brief Global font manager object
 static FontManager fontManager;
+/// @brief Global utf32 object
+static UTF32 utf32;
 
 /// @brief Loads a whole font file from disk to memory.
 /// This will search for the file in known places if it is not found in the current directory
@@ -641,7 +733,6 @@ uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes) {
     auto fontFile = fopen(file_path_name, "rb");
     if (!fontFile) {
         FONT_DEBUG_PRINT("Failed to open font file: %s", file_path_name);
-
         FONT_DEBUG_PRINT("Attempting to load font file using known paths");
 
         static const auto PATH_BUFFER_SIZE = 4096;
@@ -735,9 +826,7 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     // Return invalid handle if memory allocation failed
     if (!fontManager.fonts[h]->fontData) {
         fontManager.ReleaseHandle(h);
-
         FONT_DEBUG_PRINT("Failed to allocate memory");
-
         return INVALID_FONT_HANDLE;
     }
 
@@ -750,18 +839,14 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     // Attempt to initialize the font for use
     if (FT_New_Memory_Face(fontManager.library, fontManager.fonts[h]->fontData, content_bytes, which_font, &fontManager.fonts[h]->face)) {
         fontManager.ReleaseHandle(h); // this will also free the memory allocated above
-
         FONT_DEBUG_PRINT("FT_New_Memory_Face() failed");
-
         return INVALID_FONT_HANDLE;
     }
 
     // Set the font pixel height
     if (FT_Set_Pixel_Sizes(fontManager.fonts[h]->face, 0, default_pixel_height)) {
         fontManager.ReleaseHandle(h); // this will also free the memory allocated above
-
         FONT_DEBUG_PRINT("FT_Set_Pixel_Sizes() failed");
-
         return INVALID_FONT_HANDLE;
     }
 
@@ -775,20 +860,21 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
         if (FT_Load_Char(fontManager.fonts[h]->face, 'W', FT_LOAD_DEFAULT)) {
             FONT_DEBUG_PRINT("FT_Load_Char() 'W' failed");
         }
-        fontManager.fonts[h]->monospaceWidth = fontManager.fonts[h]->face->glyph->advance.x / 64; // save the width
+        fontManager.fonts[h]->monospaceWidth =
+            std::max(fontManager.fonts[h]->face->glyph->advance.x / 64, (FT_Pos)fontManager.fonts[h]->face->glyph->bitmap.width); // save the width
 
         // Get the width of upper case M
         if (FT_Load_Char(fontManager.fonts[h]->face, 'M', FT_LOAD_DEFAULT)) {
             FONT_DEBUG_PRINT("FT_Load_Char() 'M' failed");
         }
         fontManager.fonts[h]->monospaceWidth =
-            std::max(fontManager.fonts[h]->monospaceWidth, fontManager.fonts[h]->face->glyph->advance.x / 64); // save the max of both
+            std::max(fontManager.fonts[h]->monospaceWidth, std::max(fontManager.fonts[h]->face->glyph->advance.x / 64,
+                                                                    (FT_Pos)fontManager.fonts[h]->face->glyph->bitmap.width)); // save the max width
 
         FONT_DEBUG_PRINT("Monospace font (width = %li) requested", fontManager.fonts[h]->monospaceWidth);
     }
 
     FONT_DEBUG_PRINT("Font (height = %i, index = %i) successfully initialized", default_pixel_height, which_font);
-
     return h;
 }
 
@@ -825,19 +911,19 @@ int32_t FontWidth(int32_t fh) {
 bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
-    auto font = fontManager.fonts[fh];
+    auto fnt = fontManager.fonts[fh];
 
     // Safety
     *out_data = nullptr;
     *out_x = 0;
-    *out_y = font->defaultHeight;
+    *out_y = fnt->defaultHeight;
 
     if (codepoints <= 0)
         return codepoints == 0; // true if zero, false if -ve
 
-    auto isMonochrome = options & FONT_RENDER_MONOCHROME;                                  // do we need to do monochrome rendering?
-    auto outBufW = font->GetStringPixelWidth((FT_ULong *)codepoint, (FT_ULong)codepoints); // get the total buffer width
-    auto outBufH = (size_t)font->defaultHeight;                                            // height is always set by the QB64
+    auto isMonochrome = options & FONT_RENDER_MONOCHROME;                                 // do we need to do monochrome rendering?
+    auto outBufW = fnt->GetStringPixelWidth((FT_ULong *)codepoint, (FT_ULong)codepoints); // get the total buffer width
+    auto outBufH = fnt->defaultHeight;                                                    // height is always set by the QB64
     auto outBuf = (uint8_t *)calloc(outBufW, outBufH);
     if (!outBuf)
         return false;
@@ -846,44 +932,45 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
 
     auto outX = 0;
 
-    if (font->monospaceWidth) {
+    if (fnt->monospaceWidth) {
         for (auto i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
-            if (font->CacheGlyph(cp)) {
-                auto glyph = font->glyphs[cp];
+            if (fnt->CacheGlyph(cp)) {
+                auto glyph = fnt->glyphs[cp];
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, outX + glyph->bearing.x + font->monospaceWidth / 2 - glyph->advanceWidth / 2,
-                                        font->baseline - glyph->bearing.y);
-                outX += font->monospaceWidth;
+                glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, outX + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
+                                        fnt->baseline - glyph->bearing.y);
+                outX += fnt->monospaceWidth;
             }
         }
     } else {
-        auto hasKerning = FT_HAS_KERNING(font->face); // set to true if font has kerning info
+        auto hasKerning = FT_HAS_KERNING(fnt->face); // set to true if font has kerning info
         FontManager::Font::Glyph *glyph = nullptr;
         FontManager::Font::Glyph *previousGlyph = nullptr;
 
         for (auto i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
-            // Add kerning advance width if kerning table is available
-            if (hasKerning && previousGlyph && glyph) {
-                FT_Vector delta;
-                FT_Get_Kerning(font->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                outX += delta.x / 64;
-            }
+            if (fnt->CacheGlyph(cp)) {
+                glyph = fnt->glyphs[cp];
 
-            if (font->CacheGlyph(cp)) {
-                glyph = font->glyphs[cp];
+                // Add kerning advance width if kerning table is available
+                if (hasKerning && previousGlyph && glyph) {
+                    FT_Vector delta;
+                    FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                    outX += delta.x / 64;
+                }
+
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, outX + glyph->bearing.x, font->baseline - glyph->bearing.y);
+                glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, outX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
                 outX += glyph->advanceWidth; // add advance width
                 previousGlyph = glyph;       // save the current glyph pointer for use later
             }
         }
     }
 
-    FONT_DEBUG_CHECK(outX == outBufW);
+    FONT_DEBUG_PRINT("Buffer width = %li, render width = %li", outBufW, outX);
 
     *out_data = outBuf;
     *out_x = outBufW;
@@ -906,9 +993,9 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
         FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
         // Atempt to convert the string to UTF32
-        if (fontManager.fonts[fh]->ConvertASCIIToUTF32(codepoint, codepoints)) {
+        if (utf32.ConvertASCII(codepoint, codepoints)) {
             // Forward to FontRenderTextUTF32()
-            return FontRenderTextUTF32(fh, (uint32_t *)fontManager.fonts[fh]->utf32Codepoint, codepoints, options, out_data, out_x, out_y);
+            return FontRenderTextUTF32(fh, (uint32_t *)utf32.codepoint, utf32.codepoints, options, out_data, out_x, out_y);
         }
     }
 
@@ -921,7 +1008,23 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
 /// @param codepoints The number of codepoints
 /// @return Length in pixels
 int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints) {
-    if (codepoints > 0) {
+    // If we are just asking for the width of one codepoint then return the true width
+    // This can helps stuff like PRINT that prints one char at a time to avoid text to overlap and clip
+    if (codepoints == 1) {
+        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+
+        auto fnt = fontManager.fonts[fh];
+
+        if (fnt->monospaceWidth)
+            return fnt->monospaceWidth; // we can avoid the multiplication
+
+        auto cp = codepoint[0];
+
+        if (fnt->CacheGlyph(cp)) {
+            auto glyph = fnt->glyphs[cp];
+            return std::max((glyph->size.x + glyph->bearing.x), std::max(glyph->advanceWidth, glyph->size.x));
+        }
+    } else if (codepoints > 1) {
         FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
         // Get the actual width in pixels
@@ -941,11 +1044,315 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
         FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
 
         // Atempt to convert the string to UTF32
-        if (fontManager.fonts[fh]->ConvertASCIIToUTF32(codepoint, codepoints)) {
+        if (utf32.ConvertASCII(codepoint, codepoints)) {
             // Get the actual width in pixels
-            return fontManager.fonts[fh]->GetStringPixelWidth();
+            return FontPrintWidthUTF32(fh, (uint32_t *)utf32.codepoint, utf32.codepoints);
         }
     }
 
     return 0;
+}
+
+int32_t func__UPrintHeight(int32_t qb64_fh, int32_t passed) {
+    if (new_error)
+        return 0;
+
+    if (passed) {
+        // Check if a valid font handle was passed
+        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+            error(258);
+            return 0;
+        }
+    } else {
+        qb64_fh = write_page->font; // else get the current write page font handle
+    }
+
+    // If the font is one of the built-in ones then simply return a const height
+    if (qb64_fh < 32) {
+        switch (qb64_fh) {
+        case 8:
+            return 9;
+
+        case 14:
+            return 15;
+
+        case 16:
+            return 17;
+
+        default:
+            return qb64_fh;
+        }
+    }
+
+    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+
+    // Else we will return the FreeType font height
+    auto fnt = fontManager.fonts[font[qb64_fh]];
+    auto face = fnt->face;
+
+    return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+}
+
+int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
+    if (new_error || !text->len)
+        return 0;
+
+    // Check UTF argument
+    if (passed & 1) {
+        if (utf_encoding != 0 && utf_encoding != 8 && utf_encoding != 16 && utf_encoding != 32) {
+            error(5);
+            return 0;
+        }
+    } else {
+        utf_encoding = 0;
+    }
+
+    // Check if a valid font handle was passed
+    if (passed & 2) {
+        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+            error(258);
+            return 0;
+        }
+    } else {
+        qb64_fh = write_page->font; // else get the current write page font handle
+    }
+
+    // Convert the string to UTF-32 if needed
+    FT_ULong const *str32 = nullptr;
+    FT_ULong codepoints = 0;
+
+    switch (utf_encoding) {
+    case 32: // UTF-32: no conversion needed
+        str32 = (FT_ULong *)text->chr;
+        codepoints = text->len / sizeof(uint32_t);
+        break;
+
+    case 16: // UTF-16: conversion required
+        codepoints = utf32.ConvertUTF16(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoint;
+        break;
+
+    case 8: // UTF-8: conversion required
+        codepoints = utf32.ConvertUTF8(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoint;
+        break;
+
+    default: // ASCII: conversion required
+        codepoints = utf32.ConvertASCII(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoint;
+    }
+
+    if (qb64_fh < 32)
+        return codepoints * 8; // VGA ROM fonts are 8 pixels wide
+
+    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+
+    return (int32_t)fontManager.fonts[font[qb64_fh]]->GetStringPixelWidth(str32, codepoints);
+}
+
+int32_t func__UPrintLineSpacing(int32_t qb64_fh, int32_t passed) {
+    if (new_error)
+        return 0;
+
+    if (passed) {
+        // Check if a valid font handle was passed
+        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+            error(258);
+            return 0;
+        }
+    } else {
+        qb64_fh = write_page->font; // else get the current write page font handle
+    }
+
+    // For buint-in fonts return the handle value (which is = font height)
+    if (qb64_fh < 32)
+        return qb64_fh;
+
+    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+
+    auto fnt = fontManager.fonts[font[qb64_fh]];
+    auto face = fnt->face;
+
+    return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2;
+}
+
+void sub__UPrint(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
+    if (new_error || !text->len)
+        return;
+
+    // Check if we are in text mode and generate an error if we are
+    if (write_page->text) {
+        error(5);
+        return;
+    }
+
+    // Check max width
+    if (passed & 1) {
+        if (max_width < 1)
+            return;
+    } else {
+        max_width = INT32_MAX;
+    }
+
+    // Check UTF argument
+    if (passed & 2) {
+        if (utf_encoding != 0 && utf_encoding != 8 && utf_encoding != 16 && utf_encoding != 32) {
+            error(5);
+            return;
+        }
+    } else {
+        utf_encoding = 0;
+    }
+
+    // Check if a valid font handle was passed
+    if (passed & 4) {
+        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+            error(258);
+            return;
+        }
+    } else {
+        qb64_fh = write_page->font; // else get the current write page font handle
+    }
+
+    // Convert the string to UTF-32 if needed
+    FT_ULong const *str32 = nullptr;
+    FT_ULong codepoints = 0;
+
+    switch (utf_encoding) {
+    case 32: // UTF-32: no conversion needed
+        str32 = (FT_ULong *)text->chr;
+        codepoints = text->len / sizeof(uint32_t);
+        break;
+
+    case 16: // UTF-16: conversion required
+        codepoints = utf32.ConvertUTF16(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoint;
+        break;
+
+    case 8: // UTF-8: conversion required
+        codepoints = utf32.ConvertUTF8(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoint;
+        break;
+
+    default: // ASCII: conversion required
+        codepoints = utf32.ConvertASCII(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoint;
+    }
+
+    FT_Vector pen;
+    pen.x = start_x;
+    pen.y = start_x;
+
+    // Render using a built-in font
+    if (qb64_fh < 32) {
+        FT_Vector draw, pixmap;
+        uint8_t const *builtinFont = nullptr;
+
+        pen.y += 2;
+
+        for (auto i = 0; i < codepoints; i++) {
+            auto cp = str32[i];
+            if (cp > 255)
+                cp = 32; // our built-in fonts only has ASCII glyphs
+
+            if (pen.x + 8 > start_x + max_width)
+                break;
+
+            switch (qb64_fh) {
+            case 8:
+                builtinFont = &charset8x8[cp][0][0];
+                break;
+
+            case 14:
+                builtinFont = &charset8x16[cp][1][0];
+                break;
+
+            case 16:
+                builtinFont = &charset8x16[cp][0][0];
+                break;
+            }
+
+            for (draw.y = pen.y, pixmap.y = 0; pixmap.y < qb64_fh; draw.y++, pixmap.y++) {
+                for (draw.x = pen.x, pixmap.x = 0; pixmap.x < 8; draw.x++, pixmap.x++) {
+                    if (*builtinFont++)
+                        pset_and_clip(draw.x, draw.y, write_page->color);
+                }
+            }
+
+            pen.x += 8;
+        }
+
+        return;
+    }
+
+    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+
+    auto fnt = fontManager.fonts[font[qb64_fh]];
+    auto isMonochrome = write_page->compatible_mode != 32 || write_page->alpha_disabled; // do we need to do monochrome rendering?
+
+    pen.y += (float)fnt->face->ascender / (float)fnt->face->units_per_EM * (float)fnt->defaultHeight;
+
+    if (fnt->monospaceWidth) {
+        for (auto i = 0; i < codepoints; i++) {
+            auto cp = str32[i];
+
+            if (fnt->CacheGlyph(cp)) {
+                auto glyph = fnt->glyphs[cp];
+
+                if (pen.x + fnt->monospaceWidth > start_x + max_width)
+                    break;
+
+                if (isMonochrome) {
+                    glyph->bitmap = glyph->bitmapMono;
+                    glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
+                                                write_page->color);
+                } else {
+                    glyph->bitmap = glyph->bitmapGray;
+                    glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
+                                                 write_page->color);
+                }
+
+                pen.x += fnt->monospaceWidth;
+            }
+        }
+    } else {
+        auto hasKerning = FT_HAS_KERNING(fnt->face); // set to true if font has kerning info
+        FontManager::Font::Glyph *glyph = nullptr;
+        FontManager::Font::Glyph *previousGlyph = nullptr;
+
+        for (auto i = 0; i < codepoints; i++) {
+            auto cp = str32[i];
+
+            if (fnt->CacheGlyph(cp)) {
+                glyph = fnt->glyphs[cp];
+
+                if (pen.x + glyph->size.x > start_x + max_width)
+                    break;
+
+                // Add kerning advance width if kerning table is available
+                if (hasKerning && previousGlyph && glyph) {
+                    FT_Vector delta;
+                    FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                    pen.x += (float)delta.x / (float)fnt->face->units_per_EM * (float)fnt->defaultHeight;
+                }
+
+                if (isMonochrome) {
+                    glyph->bitmap = glyph->bitmapMono;
+                    glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
+                } else {
+                    glyph->bitmap = glyph->bitmapGray;
+                    glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
+                }
+
+                pen.x += glyph->advanceWidth; // add advance width
+                previousGlyph = glyph;        // save the current glyph pointer for use later
+            }
+        }
+    }
 }

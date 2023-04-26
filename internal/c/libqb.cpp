@@ -24890,7 +24890,7 @@ int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
 
 /// @brief f = _LOADFONT(ttf_filename$, height[, "monospace,dontblend,unicode,memory"][, index])
 /// @param f The font file path name or a font memory buffer when loading from memory
-/// @param size The size of the font height in pixels
+/// @param size The font height in pixels
 /// @param requirements This can be monospace, dontblend, unicode, memory
 /// @param font_index The index of the font to load from a font collection
 /// @param passed Which optional arguments were passed
