@@ -394,8 +394,8 @@ struct FontManager {
                             auto dstP = (dst + dstW * dy + dx);             // dst pointer
                             if (*alphaSrc > *dstP)                          // blend both alpha and save to dst pointer
                                 *dstP = *alphaSrc;
-                            ++alphaSrc;
                         }
+                        ++alphaSrc;
                     }
                 }
             }
