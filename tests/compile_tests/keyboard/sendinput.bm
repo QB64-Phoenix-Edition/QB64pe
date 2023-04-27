@@ -1,0 +1,29 @@
+
+Sub emulateScancode(scancode As Integer, isDown As Long)
+    Dim kbd As KbdInput
+
+    kbd.typ = INPUT_TYPE_KEYBOARD
+    kbd.scancode = scancode And &H7FFF ' Strip off extended flag
+    kbd.flags = KBD_FLAG_SCANCODE
+    If isDown = 0 Then kbd.flags = kbd.flags Or KBD_FLAG_UP
+    If scancode And &H8000 Then kbd.flags = kbd.flags Or KBD_FLAG_EXTENDED
+
+    e& = SendInput~&(1, _Offset(kbd), LEN(kbd))
+
+    If e& <> 1 Then Print "ERROR: e:"; e&; ", GetLastError:"; GetLastError
+    _Delay .05
+End Sub
+
+Sub emulateVirtualKey(vk As Integer, isDown As Long)
+    Dim kbd As KbdInput
+
+    kbd.typ = INPUT_TYPE_KEYBOARD
+    kbd.vk = vk
+    If isDown = 0 Then kbd.flags = kbd.flags Or KBD_FLAG_UP
+
+    e& = SendInput~&(1, _Offset(kbd), LEN(kbd))
+
+    If e& <> 1 Then Print "ERROR: e:"; e&; ", GetLastError:"; GetLastError
+    _Delay .05
+End Sub
+
