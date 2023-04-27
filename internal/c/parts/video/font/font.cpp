@@ -1374,19 +1374,18 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                     d = *alphaSrc++;
                     d = 255 - d;
                     d /= 255.0;
-                    static float r3, g3, b3, alpha3;
-                    alpha3 = alpha1 + da * d;
+
+                    float alpha3 = alpha1 + da * d;
                     d *= cw;
                     if (d > 1.0)
                         d = 1.0;
-                    r3 = r1 + dr * d;
-                    g3 = g1 + dg * d;
-                    b3 = b1 + db * d;
-                    static int32 r4, g4, b4, alpha4;
-                    r4 = lroundf(r3);
-                    g4 = lroundf(g3);
-                    b4 = lroundf(b3);
-                    alpha4 = lroundf(alpha3);
+                    float r3 = r1 + dr * d;
+                    float g3 = g1 + dg * d;
+                    float b3 = b1 + db * d;
+                    int32_t r4 = lroundf(r3);
+                    int32_t g4 = lroundf(g3);
+                    int32_t b4 = lroundf(b3);
+                    int32_t alpha4 = lroundf(alpha3);
                     pset_and_clip(start_x + pen.x, start_y + pen.y, b4 + (g4 << 8) + (r4 << 16) + (alpha4 << 24));
                 }
             }
