@@ -26,6 +26,7 @@ extern const uint8_t charset8x8[256][8][8];
 extern const uint8_t charset8x16[256][16][8];
 
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
+void fast_boxfill(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
 
 /// @brief A simple class that manages conversions from various encodings to UTF32
 struct UTF32 {
@@ -967,9 +968,9 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     if (codepoints <= 0)
         return codepoints == 0; // true if zero, false if -ve
 
-    auto isMonochrome = options & FONT_RENDER_MONOCHROME;                                 // do we need to do monochrome rendering?
+    auto isMonochrome = options & FONT_RENDER_MONOCHROME;                       // do we need to do monochrome rendering?
     auto outBufW = fnt->GetStringPixelWidth((FT_ULong *)codepoint, codepoints); // get the total buffer width
-    auto outBufH = fnt->defaultHeight;                                                    // height is always set by the QB64
+    auto outBufH = fnt->defaultHeight;                                          // height is always set by the QB64
     auto outBuf = (uint8_t *)calloc(outBufW, outBufH);
     if (!outBuf)
         return false;
@@ -1066,22 +1067,9 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
         qb64_fh = write_page->font; // else get the current write page font handle
     }
 
-    // If the font is one of the built-in ones then simply return a const height
-    if (qb64_fh < 32) {
-        switch (qb64_fh) {
-        case 8:
-            return 9;
-
-        case 14:
-            return 15;
-
-        case 16:
-            return 17;
-
-        default:
-            return qb64_fh;
-        }
-    }
+    // For buint-in fonts return the handle value (which is = font height)
+    if (qb64_fh < 32)
+        return qb64_fh;
 
     FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
 
@@ -1158,7 +1146,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     return (int32_t)fontManager.fonts[font[qb64_fh]]->GetStringPixelWidth(str32, codepoints);
 }
 
-/// @brief Returns the vertical line spacing in pixels
+/// @brief Returns the vertical line spacing in pixels (font height + extra pixels if any)
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
 /// @param passed Optional arguments flag
 /// @return The vertical spacing in pixels
@@ -1262,6 +1250,29 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             str32 = utf32.codepoint;
     }
 
+    FontManager::Font *fnt = nullptr;
+    FT_Face face = nullptr;
+
+    FT_Vector strPixSize;
+    if (qb64_fh < 32) {
+        strPixSize.x = codepoints * 8;
+        strPixSize.y = qb64_fh;
+    } else {
+        // Render using custom font
+        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+        fnt = fontManager.fonts[font[qb64_fh]];
+        face = fnt->face;
+        strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
+        strPixSize.y = lroundf((float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight);
+    }
+    
+    if (max_width && max_width < strPixSize.x)
+        strPixSize.x = max_width;
+
+    // _PRINTMODE is set to _FILLBACKGROUND
+    if (write_page->print_mode == 3)
+        fast_boxfill(start_x, start_y, start_x + strPixSize.x - 1, start_y + strPixSize.y - 1, write_page->background_color);
+
     FT_Vector pen;
     pen.x = start_x;
     pen.y = start_y;
@@ -1304,71 +1315,67 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
             pen.x += 8;
         }
-
-        return;
-    }
-
-    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
-
-    auto fnt = fontManager.fonts[font[qb64_fh]];
-    auto isMonochrome = write_page->compatible_mode != 32 || write_page->alpha_disabled; // do we need to do monochrome rendering?
-
-    pen.y += lroundf((float)fnt->face->ascender / (float)fnt->face->units_per_EM * (float)fnt->defaultHeight);
-
-    if (fnt->monospaceWidth) {
-        for (auto i = 0; i < codepoints; i++) {
-            auto cp = str32[i];
-
-            if (fnt->CacheGlyph(cp)) {
-                auto glyph = fnt->glyphs[cp];
-
-                if (max_width && pen.x + fnt->monospaceWidth > start_x + max_width)
-                    break;
-
-                if (isMonochrome) {
-                    glyph->bitmap = glyph->bitmapMono;
-                    glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
-                                                write_page->color);
-                } else {
-                    glyph->bitmap = glyph->bitmapGray;
-                    glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
-                                                 write_page->color);
-                }
-
-                pen.x += fnt->monospaceWidth;
-            }
-        }
     } else {
-        auto hasKerning = FT_HAS_KERNING(fnt->face); // set to true if font has kerning info
-        FontManager::Font::Glyph *glyph = nullptr;
-        FontManager::Font::Glyph *previousGlyph = nullptr;
+        auto isMonochrome = write_page->compatible_mode != 32 || write_page->alpha_disabled; // do we need to do monochrome rendering?
+        pen.y += lroundf((float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight);
 
-        for (auto i = 0; i < codepoints; i++) {
-            auto cp = str32[i];
+        if (fnt->monospaceWidth) {
+            // Monospace rendering
+            for (auto i = 0; i < codepoints; i++) {
+                auto cp = str32[i];
 
-            if (fnt->CacheGlyph(cp)) {
-                glyph = fnt->glyphs[cp];
+                if (fnt->CacheGlyph(cp)) {
+                    auto glyph = fnt->glyphs[cp];
 
-                if (max_width && pen.x + glyph->size.x > start_x + max_width)
-                    break;
+                    if (max_width && pen.x + fnt->monospaceWidth > start_x + max_width)
+                        break;
 
-                // Add kerning advance width if kerning table is available
-                if (hasKerning && previousGlyph && glyph) {
-                    FT_Vector delta;
-                    FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                    pen.x += delta.x / 64;
+                    if (isMonochrome) {
+                        glyph->bitmap = glyph->bitmapMono;
+                        glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
+                                                    write_page->color);
+                    } else {
+                        glyph->bitmap = glyph->bitmapGray;
+                        glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
+                                                     write_page->color);
+                    }
+
+                    pen.x += fnt->monospaceWidth;
                 }
+            }
+        } else {
+            // Variable width rendering
+            auto hasKerning = FT_HAS_KERNING(fnt->face); // set to true if font has kerning info
+            FontManager::Font::Glyph *glyph = nullptr;
+            FontManager::Font::Glyph *previousGlyph = nullptr;
 
-                if (isMonochrome) {
-                    glyph->bitmap = glyph->bitmapMono;
-                    glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
-                } else {
-                    glyph->bitmap = glyph->bitmapGray;
-                    glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
+            for (auto i = 0; i < codepoints; i++) {
+                auto cp = str32[i];
+
+                if (fnt->CacheGlyph(cp)) {
+                    glyph = fnt->glyphs[cp];
+
+                    if (max_width && pen.x + glyph->size.x > start_x + max_width)
+                        break;
+
+                    // Add kerning advance width if kerning table is available
+                    if (hasKerning && previousGlyph && glyph) {
+                        FT_Vector delta;
+                        FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                        pen.x += delta.x / 64;
+                    }
+
+                    if (isMonochrome) {
+                        glyph->bitmap = glyph->bitmapMono;
+                        glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
+                    } else {
+                        glyph->bitmap = glyph->bitmapGray;
+                        glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
+                    }
+
+                    pen.x += glyph->advanceWidth; // add advance width
+                    previousGlyph = glyph;        // save the current glyph pointer for use later
                 }
-
-                pen.x += glyph->advanceWidth; // add advance width
-                previousGlyph = glyph;        // save the current glyph pointer for use later
             }
         }
     }
