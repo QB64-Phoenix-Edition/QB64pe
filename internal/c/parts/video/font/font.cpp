@@ -26,7 +26,7 @@ extern const uint8_t charset8x8[256][8][8];
 extern const uint8_t charset8x16[256][16][8];
 
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
-void fast_boxfill(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
+void qb32_boxfill(float x1f, float y1f, float x2f, float y2f, uint32 col);
 
 /// @brief A simple class that manages conversions from various encodings to UTF32
 struct UTF32 {
@@ -342,8 +342,8 @@ struct FontManager {
                             auto src = parentFont->face->glyph->bitmap.buffer;
                             auto dst = bitmapMono;
 
-                            for (auto y = 0; y < size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += size.x) {
-                                for (auto x = 0; x < size.x; x++) {
+                            for (FT_Pos y = 0; y < size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += size.x) {
+                                for (FT_Pos x = 0; x < size.x; x++) {
                                     dst[x] = (((src[x / 8]) >> (7 - (x & 7))) & 1) * 255; // this looks at each bit and then sets the pixel
                                 }
                             }
@@ -360,7 +360,7 @@ struct FontManager {
                                 auto src = parentFont->face->glyph->bitmap.buffer;
                                 auto dst = bitmapGray;
 
-                                for (auto y = 0; y < size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += size.x) {
+                                for (FT_Pos y = 0; y < size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += size.x) {
                                     memcpy(dst, src, size.x); // simply copy the line
                                 }
                             }
@@ -977,18 +977,18 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
 
     FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", outBufW, outBufH);
 
-    auto outX = 0;
+    FT_Pos penX = 0;
 
     if (fnt->monospaceWidth) {
-        for (auto i = 0; i < codepoints; i++) {
+        for (FT_ULong i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
             if (fnt->CacheGlyph(cp)) {
                 auto glyph = fnt->glyphs[cp];
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, outX + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
+                glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, penX + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
                                         fnt->baseline - glyph->bearing.y);
-                outX += fnt->monospaceWidth;
+                penX += fnt->monospaceWidth;
             }
         }
     } else {
@@ -996,7 +996,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
         FontManager::Font::Glyph *glyph = nullptr;
         FontManager::Font::Glyph *previousGlyph = nullptr;
 
-        for (auto i = 0; i < codepoints; i++) {
+        for (FT_ULong i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
             if (fnt->CacheGlyph(cp)) {
@@ -1006,18 +1006,18 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
                 if (hasKerning && previousGlyph && glyph) {
                     FT_Vector delta;
                     FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                    outX += delta.x / 64;
+                    penX += delta.x / 64;
                 }
 
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, outX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
-                outX += glyph->advanceWidth; // add advance width
+                glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, penX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
+                penX += glyph->advanceWidth; // add advance width
                 previousGlyph = glyph;       // save the current glyph pointer for use later
             }
         }
     }
 
-    FONT_DEBUG_PRINT("Buffer width = %li, render width = %li", outBufW, outX);
+    FONT_DEBUG_PRINT("Buffer width = %li, render width = %li", outBufW, penX);
 
     *out_data = outBuf;
     *out_x = outBufW;
@@ -1271,7 +1271,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     // _PRINTMODE is set to _FILLBACKGROUND
     if (write_page->print_mode == 3)
-        fast_boxfill(start_x, start_y, start_x + strPixSize.x - 1, start_y + strPixSize.y - 1, write_page->background_color);
+        qb32_boxfill(start_x, start_y, start_x + strPixSize.x - 1, start_y + strPixSize.y - 1, write_page->background_color);
 
     FT_Vector pen;
     pen.x = start_x;
@@ -1284,7 +1284,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
         pen.y += 2;
 
-        for (auto i = 0; i < codepoints; i++) {
+        for (FT_ULong i = 0; i < codepoints; i++) {
             auto cp = str32[i];
             if (cp > 255)
                 cp = 32; // our built-in fonts only has ASCII glyphs
@@ -1321,7 +1321,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
         if (fnt->monospaceWidth) {
             // Monospace rendering
-            for (auto i = 0; i < codepoints; i++) {
+            for (FT_ULong i = 0; i < codepoints; i++) {
                 auto cp = str32[i];
 
                 if (fnt->CacheGlyph(cp)) {
@@ -1349,7 +1349,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             FontManager::Font::Glyph *glyph = nullptr;
             FontManager::Font::Glyph *previousGlyph = nullptr;
 
-            for (auto i = 0; i < codepoints; i++) {
+            for (FT_ULong i = 0; i < codepoints; i++) {
                 auto cp = str32[i];
 
                 if (fnt->CacheGlyph(cp)) {
