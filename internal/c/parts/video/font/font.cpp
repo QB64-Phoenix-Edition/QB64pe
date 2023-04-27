@@ -1203,7 +1203,6 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         strPixSize.x = codepoints * 8;
         strPixSize.y = qb64_fh;
     } else {
-        // Render using custom font
         FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
         fnt = fontManager.fonts[font[qb64_fh]];
         face = fnt->face;
@@ -1224,8 +1223,8 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                         (fontflags[qb64_fh] & FONT_LOAD_DONTBLEND); // do we need to do monochrome rendering?
     FT_Vector pen = {0, 0};                                         // set to buffer start
 
-    // Render using a built-in font
     if (qb64_fh < 32) {
+        // Render using a built-in font
         FT_Vector draw, pixmap;
         uint8_t const *builtinFont = nullptr;
 
@@ -1262,6 +1261,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             pen.x += 8;
         }
     } else {
+        // Render using custom font
         pen.y += lroundf((float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight);
 
         if (fnt->monospaceWidth) {
