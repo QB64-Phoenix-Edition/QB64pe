@@ -26,7 +26,6 @@ extern const uint8_t charset8x8[256][8][8];
 extern const uint8_t charset8x16[256][16][8];
 
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
-void qb32_boxfill(float x1f, float y1f, float x2f, float y2f, uint32 col);
 
 /// @brief A simple class that manages conversions from various encodings to UTF32
 struct UTF32 {
@@ -180,8 +179,8 @@ struct UTF32 {
         return count;
     }
 
-    /// @brief Converts an UTF-16 array to UTF-32. This does not check for BOM
-    /// @param str The UTF-16 array
+    /// @brief Converts an UTF-16LE array to UTF-32. This does not check for BOM
+    /// @param str The UTF-16LE array
     /// @param byte_len The size of the array in bytes
     /// @return The number of codepoints that were converted
     FT_ULong ConvertUTF16(const FT_Bytes str, FT_ULong byte_len) {
@@ -383,76 +382,20 @@ struct FontManager {
             /// @param dstL The x position on the target bitmap where the rendering should start
             /// @param dstT The y position on the target bitmap where the rendering should start
             /// @return True if successful
-            void RenderBitmapBlend(uint8_t *dst, FT_Pos dstW, FT_Pos dstH, FT_Pos dstL, FT_Pos dstT) {
+            void RenderBitmap(uint8_t *dst, FT_Pos dstW, FT_Pos dstH, FT_Pos dstL, FT_Pos dstT) {
                 FONT_DEBUG_CHECK(bitmap && dst);
 
                 auto dstR = dstL + size.x; // right of dst + 1 where we will end
                 auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
-                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
+                auto alphaSrc = bitmap;
+                for (FT_Pos dy = dstT; dy < dstB; dy++) {
+                    for (FT_Pos dx = dstL; dx < dstR; dx++) {
                         if (dx >= 0 && dx < dstW && dy >= 0 && dy < dstH) { // if we are not clipped
                             auto dstP = (dst + dstW * dy + dx);             // dst pointer
-                            auto alphaSrc = *(bitmap + size.x * sy + sx);   // src alpha from src pointer
-                            if (alphaSrc > *dstP)                           // blend both alpha and save to dst pointer
-                                *dstP = alphaSrc;
+                            if (*alphaSrc > *dstP)                          // blend both alpha and save to dst pointer
+                                *dstP = *alphaSrc;
+                            ++alphaSrc;
                         }
-                    }
-                }
-            }
-
-            /// @brief Blits the glyph bitmap to the target bitmap
-            /// @param dst The target bitmap to render to
-            /// @param dstW The width of the target bitmap
-            /// @param dstH The height of the target bitmap
-            /// @param dstL The x position on the target bitmap where the rendering should start
-            /// @param dstT The y position on the target bitmap where the rendering should start
-            /// @return True if successful
-            void RenderBitmapBlit(uint8_t *dst, FT_Pos dstW, FT_Pos dstH, FT_Pos dstL, FT_Pos dstT) {
-                FONT_DEBUG_CHECK(bitmap && dst);
-
-                auto dstR = dstL + size.x; // right of dst + 1 where we will end
-                auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
-                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
-                        if (dx >= 0 && dx < dstW && dy >= 0 && dy < dstH) {         // if we are not clipped
-                            *(dst + dstW * dy + dx) = *(bitmap + size.x * sy + sx); // copy the pixel
-                        }
-                    }
-                }
-            }
-
-            /// @brief PSets the glyph using it's alpha values
-            /// @param dstL The x position on the target bitmap where the rendering should start
-            /// @param dstT The y position on the target bitmap where the rendering should start
-            /// @param color The color that should be combined with the alpha value
-            void RenderBitmapPSetAlpha(FT_Pos dstL, FT_Pos dstT, uint32_t color) {
-                FONT_DEBUG_CHECK(bitmap);
-
-                auto dstR = dstL + size.x; // right of dst + 1 where we will end
-                auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
-                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
-                        uint32_t alphaSrc = *(bitmap + size.x * sy + sx); // src alpha from src pointer
-                        if (alphaSrc)
-                            pset_and_clip(dx, dy, (alphaSrc << 24) | (color & 0xFFFFFF));
-                    }
-                }
-            }
-
-            /// @brief PSets the glyph using a given color
-            /// @param dstL The x position on the target bitmap where the rendering should start
-            /// @param dstT The y position on the target bitmap where the rendering should start
-            /// @param color The color that should be used to plot the pixels
-            void RenderBitmapPSetMono(FT_Pos dstL, FT_Pos dstT, uint32_t color) {
-                FONT_DEBUG_CHECK(bitmap);
-
-                auto dstR = dstL + size.x; // right of dst + 1 where we will end
-                auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                for (FT_Pos dy = dstT, sy = 0; dy < dstB; dy++, sy++) {
-                    for (FT_Pos dx = dstL, sx = 0; dx < dstR; dx++, sx++) {
-                        uint32_t alphaSrc = *(bitmap + size.x * sy + sx); // src alpha from src pointer
-                        if (alphaSrc)
-                            pset_and_clip(dx, dy, color);
                     }
                 }
             }
@@ -968,14 +911,16 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     if (codepoints <= 0)
         return codepoints == 0; // true if zero, false if -ve
 
-    auto isMonochrome = options & FONT_RENDER_MONOCHROME;                       // do we need to do monochrome rendering?
-    auto outBufW = fnt->GetStringPixelWidth((FT_ULong *)codepoint, codepoints); // get the total buffer width
-    auto outBufH = fnt->defaultHeight;                                          // height is always set by the QB64
-    auto outBuf = (uint8_t *)calloc(outBufW, outBufH);
+    auto isMonochrome = options & FONT_RENDER_MONOCHROME; // do we need to do monochrome rendering?
+    FT_Vector strPixSize = {
+        fnt->GetStringPixelWidth((FT_ULong *)codepoint, codepoints), // get the total buffer width
+        fnt->defaultHeight                                           // height is always set by the QB64
+    };
+    auto outBuf = (uint8_t *)calloc(strPixSize.x, strPixSize.y);
     if (!outBuf)
         return false;
 
-    FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", outBufW, outBufH);
+    FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", strPixSize.x, strPixSize.y);
 
     FT_Pos penX = 0;
 
@@ -986,8 +931,8 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
             if (fnt->CacheGlyph(cp)) {
                 auto glyph = fnt->glyphs[cp];
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmapBlit(outBuf, outBufW, outBufH, penX + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
-                                        fnt->baseline - glyph->bearing.y);
+                glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
+                                    fnt->baseline - glyph->bearing.y);
                 penX += fnt->monospaceWidth;
             }
         }
@@ -1010,18 +955,18 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
                 }
 
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmapBlend(outBuf, outBufW, outBufH, penX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
+                glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
                 penX += glyph->advanceWidth; // add advance width
                 previousGlyph = glyph;       // save the current glyph pointer for use later
             }
         }
     }
 
-    FONT_DEBUG_PRINT("Buffer width = %li, render width = %li", outBufW, penX);
+    FONT_DEBUG_PRINT("Buffer width = %li, render width = %li", strPixSize.x, penX);
 
     *out_data = outBuf;
-    *out_x = outBufW;
-    *out_y = outBufH;
+    *out_x = strPixSize.x;
+    *out_y = strPixSize.y;
 
     return true;
 }
@@ -1265,17 +1210,19 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
         strPixSize.y = lroundf((float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight);
     }
-    
+
     if (max_width && max_width < strPixSize.x)
         strPixSize.x = max_width;
 
-    // _PRINTMODE is set to _FILLBACKGROUND
-    if (write_page->print_mode == 3)
-        qb32_boxfill(start_x, start_y, start_x + strPixSize.x - 1, start_y + strPixSize.y - 1, write_page->background_color);
+    auto drawBuf = (uint8_t *)calloc(strPixSize.x, strPixSize.y);
+    if (!drawBuf)
+        return;
 
-    FT_Vector pen;
-    pen.x = start_x;
-    pen.y = start_y;
+    FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", strPixSize.x, strPixSize.y);
+
+    auto isMonochrome = (write_page->bytes_per_pixel == 1) || ((write_page->bytes_per_pixel == 4) && (write_page->alpha_disabled)) ||
+                        (fontflags[qb64_fh] & FONT_LOAD_DONTBLEND); // do we need to do monochrome rendering?
+    FT_Vector pen = {0, 0};                                         // set to buffer start
 
     // Render using a built-in font
     if (qb64_fh < 32) {
@@ -1308,15 +1255,13 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
             for (draw.y = pen.y, pixmap.y = 0; pixmap.y < qb64_fh; draw.y++, pixmap.y++) {
                 for (draw.x = pen.x, pixmap.x = 0; pixmap.x < 8; draw.x++, pixmap.x++) {
-                    if (*builtinFont++)
-                        pset_and_clip(draw.x, draw.y, write_page->color);
+                    *(drawBuf + strPixSize.x * draw.y + draw.x) = *builtinFont++;
                 }
             }
 
             pen.x += 8;
         }
     } else {
-        auto isMonochrome = write_page->compatible_mode != 32 || write_page->alpha_disabled; // do we need to do monochrome rendering?
         pen.y += lroundf((float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight);
 
         if (fnt->monospaceWidth) {
@@ -1330,16 +1275,9 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                     if (max_width && pen.x + fnt->monospaceWidth > start_x + max_width)
                         break;
 
-                    if (isMonochrome) {
-                        glyph->bitmap = glyph->bitmapMono;
-                        glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
-                                                    write_page->color);
-                    } else {
-                        glyph->bitmap = glyph->bitmapGray;
-                        glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2, pen.y - glyph->bearing.y,
-                                                     write_page->color);
-                    }
-
+                    glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
+                    glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
+                                        pen.y - glyph->bearing.y);
                     pen.x += fnt->monospaceWidth;
                 }
             }
@@ -1365,18 +1303,115 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                         pen.x += delta.x / 64;
                     }
 
-                    if (isMonochrome) {
-                        glyph->bitmap = glyph->bitmapMono;
-                        glyph->RenderBitmapPSetMono(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
-                    } else {
-                        glyph->bitmap = glyph->bitmapGray;
-                        glyph->RenderBitmapPSetAlpha(pen.x + glyph->bearing.x, pen.y - glyph->bearing.y, write_page->color);
-                    }
-
+                    glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
+                    glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bearing.x, pen.y - glyph->bearing.y);
                     pen.x += glyph->advanceWidth; // add advance width
                     previousGlyph = glyph;        // save the current glyph pointer for use later
                 }
             }
         }
     }
+
+    auto alphaSrc = drawBuf;
+
+    // 8-bit / alpha-disabled 32-bit / dont-blend (alpha may still be applied)
+    if (isMonochrome) {
+        switch (write_page->print_mode) {
+        case 3:
+            for (pen.y = 0; pen.y < strPixSize.y; pen.y++) {
+                for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
+                    if (*alphaSrc++)
+                        pset_and_clip(start_x + pen.x, start_y + pen.y, write_page->color);
+                    else
+                        pset_and_clip(start_x + pen.x, start_y + pen.y, write_page->background_color);
+                }
+            }
+            break;
+
+        case 1:
+            for (pen.y = 0; pen.y < strPixSize.y; pen.y++) {
+                for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
+                    if (*alphaSrc++)
+                        pset_and_clip(start_x + pen.x, start_y + pen.y, write_page->color);
+                }
+            }
+            break;
+
+        case 2:
+            for (pen.y = 0; pen.y < strPixSize.y; pen.y++) {
+                for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
+                    if (!(*alphaSrc++))
+                        pset_and_clip(start_x + pen.x, start_y + pen.y, write_page->background_color);
+                }
+            }
+        }
+    } else {
+        auto a = (write_page->color >> 24) + 1;
+        auto a2 = (write_page->background_color >> 24) + 1;
+        auto z = write_page->color & 0xFFFFFF;
+        auto z2 = write_page->background_color & 0xFFFFFF;
+
+        switch (write_page->print_mode) {
+        case 3: {
+            float alpha1 = (write_page->color >> 24) & 255;
+            float r1 = (write_page->color >> 16) & 255;
+            float g1 = (write_page->color >> 8) & 255;
+            float b1 = write_page->color & 255;
+            float alpha2 = (write_page->background_color >> 24) & 255;
+            float r2 = (write_page->background_color >> 16) & 255;
+            float g2 = (write_page->background_color >> 8) & 255;
+            float b2 = write_page->background_color & 255;
+            float dr = r2 - r1;
+            float dg = g2 - g1;
+            float db = b2 - b1;
+            float da = alpha2 - alpha1;
+            float cw =
+                alpha1 ? alpha2 / alpha1 : 100000; // color weight multiplier, avoids seeing black when transitioning from RGBA(?,?,?,255) to RGBA(0,0,0,0)
+            float d;
+
+            for (pen.y = 0; pen.y < strPixSize.y; pen.y++) {
+                for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
+                    d = *alphaSrc++;
+                    d = 255 - d;
+                    d /= 255.0;
+                    static float r3, g3, b3, alpha3;
+                    alpha3 = alpha1 + da * d;
+                    d *= cw;
+                    if (d > 1.0)
+                        d = 1.0;
+                    r3 = r1 + dr * d;
+                    g3 = g1 + dg * d;
+                    b3 = b1 + db * d;
+                    static int32 r4, g4, b4, alpha4;
+                    r4 = lroundf(r3);
+                    g4 = lroundf(g3);
+                    b4 = lroundf(b3);
+                    alpha4 = lroundf(alpha3);
+                    pset_and_clip(start_x + pen.x, start_y + pen.y, b4 + (g4 << 8) + (r4 << 16) + (alpha4 << 24));
+                }
+            }
+        } break;
+
+        case 1:
+            for (pen.y = 0; pen.y < strPixSize.y; pen.y++) {
+                for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
+                    if (*alphaSrc)
+                        pset_and_clip(start_x + pen.x, start_y + pen.y, ((*alphaSrc * a) >> 8 << 24) + z);
+                    ++alphaSrc;
+                }
+            }
+            break;
+
+        case 2:
+            for (pen.y = 0; pen.y < strPixSize.y; pen.y++) {
+                for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
+                    if (*alphaSrc != 255)
+                        pset_and_clip(start_x + pen.x, start_y + pen.y, (((255 - *alphaSrc) * a2) >> 8 << 24) + z2);
+                    ++alphaSrc;
+                }
+            }
+        }
+    }
+
+    free(drawBuf);
 }
