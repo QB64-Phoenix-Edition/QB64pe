@@ -78,14 +78,28 @@ do
         checkLicense=y
     fi
 
-    pushd . >/dev/null
-    cd "./tests/compile_tests/$category"
+    # If the "compile-from-base" file exists, then this test should be compiled
+    # from the ./qb64pe directory instead of the test directory
+    compileFromBase=
+    if test -f "./tests/compile_tests/$category/$testName.compile-from-base"; then
+        compileFromBase=y
+    fi
 
-    # -m and -q make sure that we get predictable results
-    "../../../$QB64" "-f:OptimizeCppProgram=true" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
-    ERR=$?
+    if [ "$compileFromBase" == "y" ]; then
+        # -m and -q make sure that we get predictable results
+        "$QB64" "-f:OptimizeCppProgram=true" $compilerFlags -q -m -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
+        ERR=$?
+    else
+        pushd . >/dev/null
+        cd "./tests/compile_tests/$category"
 
-    popd >/dev/null
+        # -m and -q make sure that we get predictable results
+        "../../../$QB64" "-f:OptimizeCppProgram=true" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
+        ERR=$?
+
+        popd >/dev/null
+    fi
+
     cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testName-compilelog.txt"
 
     if [ "$testType" == "success" ]; then
@@ -141,4 +155,4 @@ do
         diffResult=$(diff -y "./tests/compile_tests/$category/$testName.err" "$compileResultOutput")
         assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
     fi
-done < <(find ./tests/compile_tests$CATEGORY -name "*.bas" -print)
+done < <(find "./tests/compile_tests$CATEGORY" -name "*.bas" -print)

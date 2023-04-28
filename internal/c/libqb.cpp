@@ -34100,7 +34100,6 @@ void GLUT_KEYBOARD_FUNC(unsigned char key, int x, int y) {
 void GLUT_KEYBOARDUP_FUNC(unsigned char key, int x, int y) { GLUT_key_ascii(key, 0); }
 
 void GLUT_key_special(int32 key, int32 down) {
-
 #ifdef QB64_GLUT
 #    ifndef CORE_FREEGLUT
     /*
@@ -39069,78 +39068,64 @@ void scancodeup(uint8 scancode) {
 #define OS_EVENT_POST_PROCESSING 2
 #define OS_EVENT_RETURN_IMMEDIATELY 3
 
+static void reportKeyState(int code, int down) {
+    static device_struct *d;
+    d = &devices[1]; // keyboard
+
+    // don't add message if state already matches what we're reporting
+    if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != down) {
+        int32 eventIndex = createDeviceEvent(d);
+        setDeviceEventButtonValue(d, eventIndex, code, down);
+        commitDeviceEvent(d);
+    }
+}
+
+
 #ifdef QB64_WINDOWS
+
+// Windows only reports one WM_KEYUP event when both shift keys are held. To
+// fix that somewhat we're manually check on each window message and reporting
+// the keyup ourselves.
+static void checkShiftKeys() {
+    static int rightShift = 0, leftShift = 0;
+
+    // GetAsyncKeyState() indicates the key state in the most significant bit
+    if (rightShift != !!(GetAsyncKeyState(VK_RSHIFT) & 0x8000)) {
+        rightShift = !rightShift;
+        reportKeyState(0x36, rightShift);
+    }
+
+    if (leftShift != !!(GetAsyncKeyState(VK_LSHIFT) & 0x8000)) {
+        leftShift = !leftShift;
+        reportKeyState(0x2A, leftShift);
+    }
+}
+
 extern "C" LRESULT qb64_os_event_windows(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, int *qb64_os_event_info) {
     if (*qb64_os_event_info == OS_EVENT_PRE_PROCESSING) {
-        // example usage
-        /*
-            if (uMsg==WM_CLOSE){
-            alert("goodbye");
-            *qb64_os_event_info=OS_EVENT_RETURN_IMMEDIATELY;
+        if (func__hasfocus())
+            checkShiftKeys();
+
+        if (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) {
+            if (device_last) { // core devices required?
+                /*
+                    16-23        The scan code. The value depends on the OEM.
+                    24        Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key
+                   keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+                */
+                uint32_t code = (lParam >> 16) & 0x1FF;
+
+                reportKeyState(code, 1);
             }
-        */
+        }
 
-        if (uMsg == WM_KEYDOWN) {
-
+        if (uMsg == WM_KEYUP || uMsg == WM_SYSKEYUP) {
             if (device_last) { // core devices required?
+                uint32_t code = (lParam >> 16) & 0x1FF;
 
-                /*
-                    16-23        The scan code. The value depends on the OEM.
-                    24        Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key
-                   keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-                */
-
-                static int32 code, special;
-                special = 0; // set to 2 for keys which we cannot detect a release for
-                code = (lParam >> 16) & 511;
-
-            keydown_special:
-                static device_struct *d;
-                d = &devices[1];                                                     // keyboard
-                if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != 1) { // don't add message if already on
-
-                    int32 eventIndex = createDeviceEvent(d);
-                    setDeviceEventButtonValue(d, eventIndex, code, 1);
-                    if (special == 2) {
-                        special = 1;
-                        commitDeviceEvent(d);
-                        goto keydown_special;
-                    } // jump to ~5 lines above to add a 2nd key event
-                    if (special == 1)
-                        setDeviceEventButtonValue(d, eventIndex, code, 0);
-                    commitDeviceEvent(d);
-
-                } // not 1
-            }     // core devices required
-
-        } // WM_KEYDOWN
-
-        if (uMsg == WM_KEYUP) {
-
-            if (device_last) { // core devices required?
-
-                /*
-                    16-23        The scan code. The value depends on the OEM.
-                    24        Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key
-                   keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-                */
-
-                static int32 code;
-
-                code = (lParam >> 16) & 511;
-
-                static device_struct *d;
-                d = &devices[1];                                                     // keyboard
-                if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != 0) { // don't add message if already off
-
-                    int32 eventIndex = createDeviceEvent(d);
-                    setDeviceEventButtonValue(d, eventIndex, code, 0);
-                    commitDeviceEvent(d);
-
-                } // not 1
-            }     // core devices required
-
-        } // WM_KEYUP
+                reportKeyState(code, 0);
+            }
+        }
     }
     if (*qb64_os_event_info == OS_EVENT_POST_PROCESSING) {
     }
