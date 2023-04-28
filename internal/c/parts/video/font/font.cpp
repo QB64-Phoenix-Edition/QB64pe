@@ -502,8 +502,9 @@ struct FontManager {
                     adjust = glyph->size.x;
                 if (glyph->bearing.x > 0 && (glyph->size.x + glyph->bearing.x) > adjust)
                     adjust = glyph->size.x + glyph->bearing.x;
-
-                width = (width - glyph->advanceWidth) + adjust;
+                if (glyph->bearing.x < 0)
+                    adjust += -glyph->bearing.x;
+                width = width - glyph->advanceWidth + adjust;
             }
 
             return width;
@@ -1373,12 +1374,12 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                 for (pen.x = 0; pen.x < strPixSize.x; pen.x++) {
                     d = *alphaSrc++;
                     d = 255 - d;
-                    d /= 255.0;
+                    d /= 255.0f;
 
                     float alpha3 = alpha1 + da * d;
                     d *= cw;
-                    if (d > 1.0)
-                        d = 1.0;
+                    if (d > 1.0f)
+                        d = 1.0f;
                     float r3 = r1 + dr * d;
                     float g3 = g1 + dg * d;
                     float b3 = b1 + db * d;
