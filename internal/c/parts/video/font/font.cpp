@@ -17,7 +17,9 @@
 #include <vector>
 
 // Note: QB64 expects invalid font handles to be zero
-#define IS_FONT_HANDLE_VALID(_handle_) ((_handle_) > INVALID_FONT_HANDLE && (_handle_) < fontManager.fonts.size() && fontManager.fonts[_handle_]->isUsed)
+#define IS_VALID_FONT_HANDLE(_h_) ((_h_) > INVALID_FONT_HANDLE && (_h_) < fontManager.fonts.size() && fontManager.fonts[_h_]->isUsed)
+#define IS_VALID_QB64_FONT_HANDLE(_h_) ((_h_) == 8 || (_h_) == 14 || (_h_) == 16 || ((_h_) >=32 && (_h_) <= lastfont && font[_h_]))
+#define IS_VALID_UTF_ENCODING(_e_) ((_e_) == 0 || (_e_) == 8 || (_e_) == 16 || (_e_) == 32)
 
 // These are from libqb.cpp
 extern const img_struct *write_page;
@@ -801,7 +803,7 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
 void FontFree(int32_t fh) {
     libqb_mutex_guard lock(fontManager.m);
 
-    if (IS_FONT_HANDLE_VALID(fh))
+    if (IS_VALID_FONT_HANDLE(fh))
         fontManager.ReleaseHandle(fh);
 }
 
@@ -811,7 +813,7 @@ void FontFree(int32_t fh) {
 int32_t FontWidth(int32_t fh) {
     libqb_mutex_guard lock(fontManager.m);
 
-    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+    FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
     if (fontManager.fonts[fh]->monospaceWidth)
         return fontManager.fonts[fh]->monospaceWidth;
@@ -830,7 +832,7 @@ int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
     libqb_mutex_guard lock(fontManager.m);
 
     if (codepoints > 0) {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+        FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Get the actual width in pixels
         return fontManager.fonts[fh]->GetStringPixelWidth(codepoint, codepoints);
@@ -846,7 +848,7 @@ int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
 /// @return Length in pixels
 int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints) {
     if (codepoints > 0) {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+        FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Atempt to convert the string to UTF32 and get the actual width in pixels
         return FontPrintWidthUTF32(fh, utf32.codepoints.data(), utf32.ConvertASCII(codepoint, codepoints));
@@ -867,7 +869,7 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
 bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     libqb_mutex_guard lock(fontManager.m);
 
-    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+    FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
     auto fnt = fontManager.fonts[fh];
 
@@ -949,7 +951,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
 /// @return success = 1, failure = 0
 bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     if (codepoints > 0) {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(fh));
+        FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Atempt to convert the string to UTF32 and forward to FontRenderTextUTF32()
         return FontRenderTextUTF32(fh, utf32.codepoints.data(), utf32.ConvertASCII(codepoint, codepoints), options, out_data, out_x, out_y);
@@ -970,7 +972,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
 
     if (passed) {
         // Check if a valid font handle was passed
-        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+        if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
             error(258);
             return 0;
         }
@@ -982,7 +984,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     if (qb64_fh < 32)
         return qb64_fh;
 
-    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+    FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
 
     // Else we will return the FreeType font height
     auto fnt = fontManager.fonts[font[qb64_fh]];
@@ -1005,7 +1007,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
 
     // Check UTF argument
     if (passed & 1) {
-        if (utf_encoding != 0 && utf_encoding != 8 && utf_encoding != 16 && utf_encoding != 32) {
+        if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
             error(5);
             return 0;
         }
@@ -1015,7 +1017,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
 
     // Check if a valid font handle was passed
     if (passed & 2) {
-        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+        if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
             error(258);
             return 0;
         }
@@ -1054,7 +1056,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     if (qb64_fh < 32)
         return codepoints * 8; // VGA ROM fonts are 8 pixels wide
 
-    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+    FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
 
     return (int32_t)fontManager.fonts[font[qb64_fh]]->GetStringPixelWidth(str32, codepoints);
 }
@@ -1071,7 +1073,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
 
     if (passed) {
         // Check if a valid font handle was passed
-        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+        if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
             error(258);
             return 0;
         }
@@ -1083,7 +1085,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     if (qb64_fh < 32)
         return qb64_fh;
 
-    FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+    FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
 
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
@@ -1121,7 +1123,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     // Check UTF argument
     if (passed & 2) {
-        if (utf_encoding != 0 && utf_encoding != 8 && utf_encoding != 16 && utf_encoding != 32) {
+        if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
             error(5);
             return;
         }
@@ -1131,7 +1133,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     // Check if a valid font handle was passed
     if (passed & 4) {
-        if (qb64_fh != 8 && qb64_fh != 14 && qb64_fh != 16 && !(qb64_fh >= 32 && qb64_fh <= lastfont && font[qb64_fh])) {
+        if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
             error(258);
             return;
         }
@@ -1178,7 +1180,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         strPixSize.x = codepoints * 8;
         strPixSize.y = qb64_fh;
     } else {
-        FONT_DEBUG_CHECK(IS_FONT_HANDLE_VALID(font[qb64_fh]));
+        FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
         fnt = fontManager.fonts[font[qb64_fh]];
         face = fnt->face;
         strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
