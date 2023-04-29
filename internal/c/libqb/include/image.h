@@ -47,9 +47,10 @@
 #define IMAGE_GET_BGRA_RED(c) ((uint8_t)((uint32_t)(c) >> 16 & 0xFF))
 #define IMAGE_GET_BGRA_GREEN(c) ((uint8_t)((uint32_t)(c) >> 8 & 0xFF))
 #define IMAGE_GET_BGRA_BLUE(c) ((uint8_t)((uint32_t)(c) & 0xFF))
-#define IMAGE_GET_BGRA_ALPHA(c) ((uint8_t)(uint32_t(c) >> 24))
+#define IMAGE_GET_BGRA_ALPHA(c) ((uint8_t)((uint32_t)(c) >> 24))
+#define IMAGE_GET_BGRA_BGR(c) ((uint32_t)(c) & 0xFFFFFF)
 #define IMAGE_MAKE_BGRA(r, g, b, a)                                                                                                                            \
-    ((uint32_t)(((uint8_t)(b) | ((uint16_t)((uint8_t)(g)) << 8)) | ((uint32_t)((uint8_t)(r)) << 16) | ((uint32_t)((uint8_t)(a)) << 24)))
+    ((uint32_t)(((uint8_t)(b) | ((uint32_t)((uint8_t)(g)) << 8)) | ((uint32_t)((uint8_t)(r)) << 16) | ((uint32_t)((uint8_t)(a)) << 24)))
 //-----------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------------------------------

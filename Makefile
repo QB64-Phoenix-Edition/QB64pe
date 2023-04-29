@@ -266,12 +266,10 @@ endif
 
 ifneq ($(filter y,$(DEP_FONT)),)
 	EXE_LIBS += $(FREETYPE_OBJS) $(FONT_OBJS)
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += freetype_ftl
 else
 	EXE_LIBS += $(FONT_STUB_OBJS)
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
 ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
