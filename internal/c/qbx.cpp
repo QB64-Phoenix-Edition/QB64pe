@@ -161,7 +161,6 @@ extern void sub__memcopy(void *sblk, ptrszint soff, ptrszint bytes, void *dblk,
                          ptrszint doff);
 extern mem_block func__memnew(ptrszint);
 extern mem_block func__memimage(int32, int32);
-extern mem_block func__memsound(int32 i, int32 targetChannel);
 
 extern int64 func__shellhide(qbs *str);
 extern int64 func_shell(qbs *str);
@@ -200,7 +199,6 @@ extern void sub__maptriangle(int32 cull_options, float sx1, float sy1,
                              float dy3, float dz3, int32 di,
                              int32 smooth_options, int32 passed);
 extern void sub__depthbuffer(int32 options, int32 dst, int32 passed);
-extern int32 func_play(int32 ignore);
 extern void sub_paletteusing(void *element, int32 bits);
 extern int64 func_read_int64(uint8 *data, ptrszint *data_offset,
                              ptrszint data_size);
@@ -260,7 +258,6 @@ extern void sub_draw(qbs *);
 extern void qbs_maketmp(qbs *);
 extern void sub_run(qbs *);
 extern void sub_run_init();
-extern void sndcloseall();
 extern void freeallimages();
 extern void call_interrupt(int32, void *, void *);
 extern void call_interruptx(int32, void *, void *);
@@ -271,12 +268,10 @@ extern int32 freeimg(uint32);
 extern void imgrevert(int32);
 extern int32 imgframe(uint8 *o, int32 x, int32 y, int32 bpp);
 extern int32 imgnew(int32 x, int32 y, int32 bpp);
-extern int32 imgload(char *filename, int32 bpp);
 extern void sub__putimage(double f_dx1, double f_dy1, double f_dx2,
                           double f_dy2, int32 src, int32 dst, double f_sx1,
                           double f_sy1, double f_sx2, double f_sy2,
                           int32 passed);
-extern int32 fontopen(char *name, double d_height, int32 flags);
 extern int32 selectfont(int32 f, img_struct *im);
 extern void sndsetup();
 extern uint32 sib();
@@ -423,8 +418,7 @@ extern double func_point(float x, float y, int32 passed);
 extern void sub_pset(float x, float y, uint32 col, int32 passed);
 extern void sub_preset(float x, float y, uint32 col, int32 passed);
 extern void printchr(int32 character);
-extern int32 printchr2(int32 x, int32 y, uint32 character, int32 i);
-extern int32 chrwidth(int32 character);
+extern int32_t chrwidth(uint32_t character);
 extern void newline();
 extern void makefit(qbs *text);
 extern void lprint_makefit(qbs *text);
@@ -567,8 +561,6 @@ extern void sub__mouseinputpipe(int32 context);
 extern void sub__mousepipeclose(int32 context);
 
 extern void call_absolute(int32 args, uint16 offset);
-extern void call_interrupt(int32 i);
-extern void sub_play(qbs *str);
 extern int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
 extern int32 func__copyimage(int32 i, int32 mode, int32 passed);
 extern void sub__freeimage(int32 i, int32 passed);
@@ -594,8 +586,7 @@ extern void sub__copypalette(int32 i, int32 i2, int32 passed);
 extern void sub__printstring(float x, float y, qbs *text, int32 i,
                              int32 passed);
 extern int32 func__printwidth(qbs *text, int32 i, int32 passed);
-extern int32 func__loadfont(qbs *filename, int32 size, qbs *requirements,
-                            int32 passed);
+extern int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t font_index, int32_t passed);
 extern void sub__font(int32 f, int32 i, int32 passed);
 extern int32 func__fontwidth(int32 f, int32 passed);
 extern int32 func__fontheight(int32 f, int32 passed);

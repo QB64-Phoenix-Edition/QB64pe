@@ -1065,21 +1065,27 @@ hardware_img_struct *get_hardware_img(int32 handle) {
 }
 int32 get_hardware_img_index(int32 handle) { return handle - HARDWARE_IMG_HANDLE_OFFSET; }
 
+// clang-format off
+/// @brief Code page 437 to UTF16 LUT. This is not static because it is shared by other translation units
 uint16_t codepage437_to_unicode16[] = {
-    0x0020, 0x263A, 0x263B, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022, 0x25D8, 0x25CB, 0x25D9, 0x2642, 0x2640, 0x266A, 0x266B, 0x263C, 0x25BA, 0x25C4, 0x2195,
-    0x203C, 0x00B6, 0x00A7, 0x25AC, 0x21A8, 0x2191, 0x2193, 0x2192, 0x2190, 0x221F, 0x2194, 0x25B2, 0x25BC, 0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025,
-    0x0026, 0x0027, 0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F, 0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037, 0x0038,
-    0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F, 0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, 0x0048, 0x0049, 0x004A, 0x004B,
-    0x004C, 0x004D, 0x004E, 0x004F, 0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057, 0x0058, 0x0059, 0x005A, 0x005B, 0x005C, 0x005D, 0x005E,
-    0x005F, 0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067, 0x0068, 0x0069, 0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F, 0x0070, 0x0071,
-    0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077, 0x0078, 0x0079, 0x007A, 0x007B, 0x007C, 0x007D, 0x007E, 0x2302, 0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4,
-    0x00E0, 0x00E5, 0x00E7, 0x00EA, 0x00EB, 0x00E8, 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5, 0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2, 0x00FB, 0x00F9,
-    0x00FF, 0x00D6, 0x00DC, 0x00A2, 0x00A3, 0x00A5, 0x20A7, 0x0192, 0x00E1, 0x00ED, 0x00F3, 0x00FA, 0x00F1, 0x00D1, 0x00AA, 0x00BA, 0x00BF, 0x2310, 0x00AC,
-    0x00BD, 0x00BC, 0x00A1, 0x00AB, 0x00BB, 0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556, 0x2555, 0x2563, 0x2551, 0x2557, 0x255D, 0x255C,
-    0x255B, 0x2510, 0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x255E, 0x255F, 0x255A, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256C, 0x2567, 0x2568,
-    0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B, 0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580, 0x03B1, 0x00DF, 0x0393, 0x03C0,
-    0x03A3, 0x03C3, 0x00B5, 0x03C4, 0x03A6, 0x0398, 0x03A9, 0x03B4, 0x221E, 0x03C6, 0x03B5, 0x2229, 0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7,
-    0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x0020};
+    0x0020, 0x263A, 0x263B, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022, 0x25D8, 0x25CB, 0x25D9, 0x2642, 0x2640, 0x266A, 0x266B, 0x263C,
+    0x25BA, 0x25C4, 0x2195, 0x203C, 0x00B6, 0x00A7, 0x25AC, 0x21A8, 0x2191, 0x2193, 0x2192, 0x2190, 0x221F, 0x2194, 0x25B2, 0x25BC,
+    0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027, 0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F,
+    0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037, 0x0038, 0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F,
+    0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, 0x0048, 0x0049, 0x004A, 0x004B, 0x004C, 0x004D, 0x004E, 0x004F,
+    0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057, 0x0058, 0x0059, 0x005A, 0x005B, 0x005C, 0x005D, 0x005E, 0x005F,
+    0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067, 0x0068, 0x0069, 0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F,
+    0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077, 0x0078, 0x0079, 0x007A, 0x007B, 0x007C, 0x007D, 0x007E, 0x2302,
+    0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4, 0x00E0, 0x00E5, 0x00E7, 0x00EA, 0x00EB, 0x00E8, 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5,
+    0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2, 0x00FB, 0x00F9, 0x00FF, 0x00D6, 0x00DC, 0x00A2, 0x00A3, 0x00A5, 0x20A7, 0x0192,
+    0x00E1, 0x00ED, 0x00F3, 0x00FA, 0x00F1, 0x00D1, 0x00AA, 0x00BA, 0x00BF, 0x2310, 0x00AC, 0x00BD, 0x00BC, 0x00A1, 0x00AB, 0x00BB,
+    0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556, 0x2555, 0x2563, 0x2551, 0x2557, 0x255D, 0x255C, 0x255B, 0x2510,
+    0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x255E, 0x255F, 0x255A, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256C, 0x2567,
+    0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B, 0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580,
+    0x03B1, 0x00DF, 0x0393, 0x03C0, 0x03A3, 0x03C3, 0x00B5, 0x03C4, 0x03A6, 0x0398, 0x03A9, 0x03B4, 0x221E, 0x03C6, 0x03B5, 0x2229,
+    0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x0020
+};
+// clang-format on
 
 /* Restricted Functionality: (Security focused approach, does not include restricting sound etc)
 
@@ -1372,8 +1378,6 @@ int32 convert_unicode(int32 src_fmt, void *src_buf, int32 src_size, int32 dest_f
 void showvalue(__int64);
 #endif
 void sub_beep();
-
-int32 func__loadfont(qbs *filename, int32 size, qbs *requirements, int32 passed);
 
 int32 lastfont = 48;
 int32 *font = (int32 *)calloc(4 * (48 + 1), 1); // NULL=unused index
@@ -13601,10 +13605,8 @@ void printchr(int32 character) {
             // render character
             static int32 ok;
             static uint8 *rt_data;
-            static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
-            // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-            //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-            ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 1, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+            static int32 rt_w, rt_h;
+            ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 1, &rt_data, &rt_w, &rt_h);
             if (!ok)
                 return;
 
@@ -13657,10 +13659,8 @@ void printchr(int32 character) {
         // render character
         static int32 ok;
         static uint8 *rt_data;
-        static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
-        // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-        //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 0, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        static int32 rt_w, rt_h;
+        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, 0, &rt_data, &rt_w, &rt_h);
         if (!ok)
             return;
 
@@ -13782,41 +13782,29 @@ void printchr(int32 character) {
 
 } // printchr
 
-int32 chrwidth(uint32 character) {
-    // Note: Only called by qbs_print()
-    //      Supports "UNICODE" _LOADFONT option
-    static int32 w;
-    static img_struct *im;
-    im = write_page;
-    if (w = fontwidth[im->font])
+/// @brief Returns the width of a character in pixels.
+/// Note: Only called by qbs_print().
+/// Supports "UNICODE" _LOADFONT option
+/// @param character The character to return the width for (this can be UTF32)
+/// @return The width in pixels
+int32_t chrwidth(uint32_t character) {
+    auto im = write_page;
+    auto f = im->font;
+    auto w = fontwidth[f];
+    if (w)
         return w;
 
     // Custom font
-    static int32 render_option, f;
-    static int32 ok;
-    static uint8 *rt_data;
-    static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
-
-    f = im->font;
-
-    render_option = 0;
-    // 8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
-    if ((im->bytes_per_pixel == 1) || ((im->bytes_per_pixel == 4) && (im->alpha_disabled)) || (fontflags[f] & 8)) {
-        render_option = 1;
-    }
-
+    // a740g: No need to render just to find the pixel length
     if ((fontflags[f] & 32)) { // UNICODE character
-        ok = FontRenderTextUTF32(font[f], (uint32 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        w = FontPrintWidthUTF32(font[f], (uint32_t *)&character, 1);
     } else { // ASCII character
         character &= 255;
-        ok = FontRenderTextASCII(font[f], (uint8 *)&character, 1, render_option, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        w = FontPrintWidthASCII(font[f], (uint8_t *)&character, 1);
     }
-    if (!ok)
-        return 0;
-    free(rt_data);
-    return rt_w;
 
-} // chrwidth
+    return w;
+}
 
 void newline() {
     static uint32 *lp;
@@ -24671,10 +24659,8 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
             // render character
             static int32 ok;
             static uint8 *rt_data;
-            static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
-            // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-            //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-            ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 1, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+            static int32 rt_w, rt_h;
+            ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 1, &rt_data, &rt_w, &rt_h);
             if (!ok)
                 goto printstring_exit;
 
@@ -24727,10 +24713,8 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
         // render character
         static int32 ok;
         static uint8 *rt_data;
-        static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
-        // int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-        //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-        ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 0, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+        static int32 rt_w, rt_h;
+        ok = FontRenderTextASCII(font[f], (uint8 *)text->chr, text->len, 0, &rt_data, &rt_w, &rt_h);
 
         if (!ok)
             goto printstring_exit;
@@ -24867,10 +24851,6 @@ int32 func__fontheight(int32 f, int32 passed);
 int32 func__font(int32 f, int32 passed);
 
 int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
-    /* Luke Ceddia <flukiluke@gmail.com>
-     * This routine should be rewritten properly by calling True Type.
-     * This is a temporary implementation
-     */
     // Validate screenhandle (taken from func__font)
     if (passed) {
         if (screenhandle >= 0) {
@@ -24890,217 +24870,120 @@ int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
     } else {
         screenhandle = write_page_index;
     }
+
+    if (text->len == 0)
+        return 0; // No point calculating an empty string
+
     if (img[screenhandle].text) { // Return LEN(text) in non-graphic modes
         // error(5);
         return text->len;
     }
-    if (text->len == 0)
-        return 0;                                  // No point calculating an empty string
-    int32 fonthandle = img[screenhandle].font;     // Get the font used in screenhandle
-    int32 fwidth = func__fontwidth(fonthandle, 1); // Try and get the font width
-    if (fwidth != 0)
-        return fwidth * (text->len);                          // if it's not a variable width font, return the width * the letter count
-    int32 fheight = func__fontheight(fonthandle, 1);          // Height of the font used in screenhandle
-    int32 tempscreen = func__newimage(65535, fheight, 32, 1); // Just like calling _NEWIMAGE
-    int32 oldwritepage = func__dest();
-    sub__dest(tempscreen);
-    int32 oldreadpage = func__source();
-    sub__source(tempscreen);
-    sub__font(fonthandle, NULL, 0); // Set the font on our new screen
-    qbg_sub_color(0xffffffff, 0xffffffff, 0, NULL);
-    qbs_print(text, 0);
-    int xpos = 0;
-    for (int i = 65534; i >= 0; i--)
-        if (point(i, 0) != 0) {
-            xpos = i;
-            break;
-        }
-    sub__freeimage(tempscreen, 1);
-    sub__dest(oldwritepage);
-    sub__source(oldreadpage);
-    if (xpos == 0)
-        return 0;
-    return xpos + 1;
+
+    auto fonthandle = img[screenhandle].font;     // Get the font used in screenhandle
+    auto fwidth = func__fontwidth(fonthandle, 1); // Try and get the font width
+    if (fwidth)
+        return fwidth * text->len; // if it's not a variable width font, return the width * the letter count
+
+    // a740g: For variable width fonts
+    return FontPrintWidthASCII(font[fonthandle], text->chr, text->len);
 }
 
-/*int32 func__printwidth(qbs* text,int32 i,int32 passed){
-    if (new_error) return 0;
+/// @brief f = _LOADFONT(ttf_filename$, height[, "monospace,dontblend,unicode,memory"][, index])
+/// @param f The font file path name or a font memory buffer when loading from memory
+/// @param size The font height in pixels
+/// @param requirements This can be monospace, dontblend, unicode, memory
+/// @param font_index The index of the font to load from a font collection
+/// @param passed Which optional arguments were passed
+/// @return Retuns a valid handle on success or zero on failure
+int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t font_index, int32_t passed) {
+    // Some QB strings that we'll need
+    static qbs *fileNameZ = nullptr;
+    static qbs *reqs = nullptr;
 
-    static int32 f;
-    static img_struct *im;
-
-    if (passed){
-    if (i>=0){//validate i
-    validatepage(i); i=page[i];
-    }else{
-    i=-i; if (i>=nextimg){error(258); return 0;} if (!img[i].valid){error(258); return 0;}
-    }
-    }else{
-    i=write_page_index;
-    }
-    im=&img[i];
-    if (im->text){error(5); return 0;}//graphics modes only
-    if (!text->len) return 0;
-
-    if (f>=32){//custom font
-    //8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
-    if ((im->bytes_per_pixel==1)||((im->bytes_per_pixel==4)&&(im->alpha_disabled))||(fontflags[f]&8)){
-    //render
-    static int32 ok;
-    static uint8 *rt_data;
-    static int32 rt_w,rt_h,rt_pre_x,rt_post_x;
-    //int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-    //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-    ok=FontRenderTextASCII(font[f],(uint8*)text->chr,text->len,1,
-    &rt_data,&rt_w,&rt_h,&rt_pre_x,&rt_post_x);
-    if (!ok) return 0;
-    free(rt_data);
-    return rt_w;
-    }//1-8 bit
-    //assume 32-bit blended
-    //render
-    static int32 ok;
-    static uint8 *rt_data;
-    static int32 rt_w,rt_h,rt_pre_x,rt_post_x;
-    //int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-    //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-    ok=FontRenderTextASCII(font[f],(uint8*)text->chr,text->len,0,
-    &rt_data,&rt_w,&rt_h,&rt_pre_x,&rt_post_x);
-    if (!ok) return 0;
-    free(rt_data);
-    return rt_w;
-    }//custom font
-
-    //default fonts
-    return text->len*8;
-
-}//printwidth*/
-
-int32 func__loadfont(qbs *f, int32 size, qbs *requirements, int32 passed) {
-    // f=_LOADFONT(ttf_filename$,height[,"bold,italic,underline,monospace,dontblend,unicode"])
-
-    if (new_error)
-        return NULL;
-
-    qbs *s1 = NULL;
-    s1 = qbs_new(0, 0);
-    qbs *req = NULL;
-    req = qbs_new(0, 0);
-    qbs *s3 = NULL;
-    s3 = qbs_new(0, 0);
-    uint8 r[32];
-    int32 i, i2, i3;
-    static int32 recall;
+    if (new_error || !file_name->len)
+        return INVALID_FONT_HANDLE; // return invalid handle for any garbage input
 
     // validate size
     if (size < 1) {
         error(5);
-        return NULL;
+        return INVALID_FONT_HANDLE;
     }
-    if (size > 2048)
-        return -1;
 
-    // load the file
-    if (!f->len)
-        return -1; // return invalid handle if null length string
-    int32 fh, result;
-    int64 bytes;
-    fh = gfs_open(f, 1, 0, 0);
+    if (!fileNameZ)
+        fileNameZ = qbs_new(0, 0);
 
-#ifdef QB64_WINDOWS // rather than just immediately tossing an error, let's try looking in the default OS folder for the font first in case the user left off
-                    // the filepath.
-    if (fh < 0 && recall == 0) {
-        recall = -1; // to set a flag so we don't get trapped endlessly recalling the routine when the font actually doesn't exist
-        i = func__loadfont(qbs_add(qbs_new_txt("C:/Windows/Fonts/"), f), size, requirements, passed); // Look in the default windows font location
-        return i;
-    }
-#endif
-    recall = 0;
-    if (fh < 0)
-        return -1; // If we still can't load the font, then we just can't load the font...  Send an error code back.
+    if (!reqs)
+        reqs = qbs_new(0, 0);
 
-    // check requirements
-    memset(r, 0, 32);
-    if (passed) {
-        if (requirements->len) {
-            i = 1;
-            qbs_set(req, qbs_ucase(requirements)); // convert tmp str to perm str
-        nextrequirement:
-            i2 = func_instr(i, req, qbs_new_txt(","), 1);
-            if (i2) {
-                qbs_set(s1, func_mid(req, i, i2 - i, 1));
-            } else {
-                qbs_set(s1, func_mid(req, i, req->len - i + 1, 1));
-            }
-            qbs_set(s1, qbs_rtrim(qbs_ltrim(s1)));
-            if (qbs_equal(s1, qbs_new_txt("BOLD"))) {
-                r[0]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("ITALIC"))) {
-                r[1]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("UNDERLINE"))) {
-                r[2]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("DONTBLEND"))) {
-                r[3]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("MONOSPACE"))) {
-                r[4]++;
-                goto valid;
-            }
-            if (qbs_equal(s1, qbs_new_txt("UNICODE"))) {
-                r[5]++;
-                goto valid;
-            }
-            error(5);
-            return NULL; // invalid requirements
-        valid:
-            if (i2) {
-                i = i2 + 1;
-                goto nextrequirement;
-            }
-            for (i = 0; i < 32; i++)
-                if (r[i] > 1) {
-                    error(5);
-                    return NULL;
-                } // cannot define requirements twice
-        }         //->len
-    }             // passed
-    int32 options;
-    options = r[0] + (r[1] << 1) + (r[2] << 2) + (r[3] << 3) + (r[4] << 4) + (r[5] << 5);
-    // 1 bold TTF_STYLE_BOLD
-    // 2 italic TTF_STYLE_ITALIC
-    // 4 underline TTF_STYLE_UNDERLINE
+    auto isLoadFromMemory = false; // should the font be loaded from memory?
+    int32_t options = 0;           // font flags that we'll prepare and save to fontflags[]
+
+    FONT_DEBUG_PRINT("passed = %i", passed);
+
+    // Check requirements
     // 8 dontblend (blending is the default in 32-bit alpha-enabled modes)
     // 16 monospace
     // 32 unicode
+    if ((passed & 1) && requirements->len) {
+        FONT_DEBUG_PRINT("Parsing requirements");
 
-    bytes = gfs_lof(fh);
-    static uint8 *content;
-    content = (uint8 *)malloc(bytes);
-    if (!content) {
-        gfs_close(fh);
-        return -1;
+        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+
+        if (func_instr(1, reqs, qbs_new_txt("DONTBLEND"), 1)) {
+            options |= FONT_LOAD_DONTBLEND;
+            FONT_DEBUG_PRINT("DONTBLEND requested");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt("MONOSPACE"), 1)) {
+            options |= FONT_LOAD_MONOSPACE;
+            FONT_DEBUG_PRINT("MONOSPACE requested");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt("UNICODE"), 1)) {
+            options |= FONT_LOAD_UNICODE;
+            FONT_DEBUG_PRINT("UNICODE requested");
+        }
+
+        if (func_instr(1, reqs, qbs_new_txt("MEMORY"), 1)) {
+            isLoadFromMemory = true;
+            FONT_DEBUG_PRINT("MEMORY requested");
+        }
     }
-    result = gfs_read(fh, -1, content, bytes);
-    gfs_close(fh);
-    if (result < 0) {
-        free(content);
-        return -1;
+
+    // Check if a font index was requested
+    if (passed & 2) {
+        FONT_DEBUG_PRINT("Loading font index %i", font_index);
+    } else {
+        FONT_DEBUG_PRINT("Loading default font index (0)");
+        font_index = 0;
     }
+
+    uint8_t *content;
+    int32_t bytes;
+
+    if (isLoadFromMemory) {
+        content = file_name->chr; // we should not free this!!!
+        bytes = file_name->len;
+        FONT_DEBUG_PRINT("Loading font from memory. Size = %i", bytes);
+    } else {
+        qbs_set(fileNameZ, qbs_add(file_name, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
+        content = FontLoadFileToMemory((char *)fileNameZ->chr, &bytes);   // this we must free!!!
+        FONT_DEBUG_PRINT("Loading font from file %s", fileNameZ->chr);
+    }
+
+    if (!content)
+        return INVALID_FONT_HANDLE; // Return invalid handle if loading the image failed
 
     // open the font
     // get free font handle
+    int32_t i;
     for (i = 32; i <= lastfont; i++) {
         if (!font[i])
             goto got_font_index;
     }
     // increase handle range
+    // a740g: none of this stuff is safe and ought to be rewritten
+    // We will need to look at how to do this better
     lastfont++;
     font = (int32 *)realloc(font, 4 * (lastfont + 1));
     font[lastfont] = NULL;
@@ -25108,71 +24991,21 @@ int32 func__loadfont(qbs *f, int32 size, qbs *requirements, int32 passed) {
     fontwidth = (int32 *)realloc(fontwidth, 4 * (lastfont + 1));
     fontflags = (int32 *)realloc(fontflags, 4 * (lastfont + 1));
     i = lastfont;
+
 got_font_index:
-    static int32 h;
-    h = FontLoad(content, bytes, size, -1, options);
-    free(content);
+    auto h = FontLoad(content, bytes, size, font_index, options);
+
+    if (!isLoadFromMemory)
+        free(content); // free font memory if it was loaded from a file
+
     if (!h)
-        return -1;
+        return INVALID_FONT_HANDLE;
 
     font[i] = h;
     fontheight[i] = size;
     fontwidth[i] = FontWidth(h);
     fontflags[i] = options;
-    return i;
-}
 
-int32 fontopen(qbs *f, int32 size, int32 options) { // Note: Just a stripped down verions of FUNC__LOADFONT
-
-    static int32 i;
-
-    // load the file
-    if (!f->len)
-        return -1; // return invalid handle if null length string
-    static int32 fh, result;
-    static int64 bytes;
-    fh = gfs_open(f, 1, 0, 0);
-    if (fh < 0)
-        return -1;
-    bytes = gfs_lof(fh);
-    static uint8 *content;
-    content = (uint8 *)malloc(bytes);
-    if (!content) {
-        gfs_close(fh);
-        return -1;
-    }
-    result = gfs_read(fh, -1, content, bytes);
-    gfs_close(fh);
-    if (result < 0) {
-        free(content);
-        return -1;
-    }
-
-    // open the font
-    // get free font handle
-    for (i = 32; i <= lastfont; i++) {
-        if (!font[i])
-            goto got_font_index;
-    }
-    // increase handle range
-    lastfont++;
-    font = (int32 *)realloc(font, 4 * (lastfont + 1));
-    font[lastfont] = NULL;
-    fontheight = (int32 *)realloc(fontheight, 4 * (lastfont + 1));
-    fontwidth = (int32 *)realloc(fontwidth, 4 * (lastfont + 1));
-    fontflags = (int32 *)realloc(fontflags, 4 * (lastfont + 1));
-    i = lastfont;
-got_font_index:
-    static int32 h;
-    h = FontLoad(content, bytes, size, -1, options);
-    free(content);
-    if (!h)
-        return -1;
-
-    font[i] = h;
-    fontheight[i] = size;
-    fontwidth[i] = FontWidth(h);
-    fontflags[i] = options;
     return i;
 }
 
@@ -37698,11 +37531,11 @@ void display() {
                         static int32 render_option;
                         static int32 ok;
                         static uint8 *rt_data;
-                        static int32 rt_w, rt_h, rt_pre_x, rt_post_x;
+                        static int32 rt_w, rt_h;
                         render_option = 1;
                         if (rt_data_last)
                             free(rt_data_last);
-                        ok = FontRenderTextUTF32(font[f], &chr_utf32, 1, render_option, &rt_data, &rt_w, &rt_h, &rt_pre_x, &rt_post_x);
+                        ok = FontRenderTextUTF32(font[f], &chr_utf32, 1, render_option, &rt_data, &rt_w, &rt_h);
                         rt_data_last = rt_data;
                         cp2 = rt_data;
                         f_pitch = 0;
