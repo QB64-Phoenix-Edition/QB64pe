@@ -261,8 +261,8 @@ QB45TOKENS:
 ' followed by a word indicating the length of the token.
 '
 ' The final column is the parse rule itself. A token may have multiple
-' parse rules. Multiple parse rules may be specified on a seperate line
-' (without a PCODE or LENGTH field), or seperated by a pipe ('|') symbol.
+' parse rules. Multiple parse rules may be specified on a separate line
+' (without a PCODE or LENGTH field), or separated by a pipe ('|') symbol.
 '
 ' There is one important difference between the two methods. Some rules
 ' define a symbol which can be used to reference the rule, such as:
@@ -270,8 +270,8 @@ QB45TOKENS:
 '   declmod::=SHARED
 '
 ' If a pipe symbol is used, the next rule will inherit the "declmod" (or
-' whatever symbol), unless it exlicitly defines it's own. Rules defined
-' on seperate lines use the default symbol which, initially, is nothing, but
+' whatever symbol), unless it explicitly defines it's own. Rules defined
+' on separate lines use the default symbol which, initially, is nothing, but
 ' may be overridden using the ".default" directive. This is only really used
 ' in the second half of the rule list, where almost every token is an
 ' expression ('expr').
@@ -291,7 +291,7 @@ QB45TOKENS:
 '  {$-1}
 '  {rulename:$+1}
 '
-' The first type will be substituded for the text located 1 item from the
+' The first type will be substituted for the text located 1 item from the
 ' top of the parse stack. If the stack isn't that deep, it will be replaced
 ' with the null string.
 '
@@ -319,7 +319,7 @@ QB45TOKENS:
 '
 ' Format tokens usually have two '#' symbols, such as {##id(decl)}. The
 ' extra '#' causes the parser to re-scan the tag for other tags once it
-' has been subsituted, allowing these tags to generate stack tags which can
+' has been substituted, allowing these tags to generate stack tags which can
 ' then be parsed.
 '
 ' See the function GetTaggedItem for a list of tag names which can be used.
