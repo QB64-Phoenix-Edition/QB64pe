@@ -8,29 +8,15 @@
 //  QB64-PE GUI Library
 //  Powered by tinyfiledialogs (http://tinyfiledialogs.sourceforge.net)
 //
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
-//
 //-----------------------------------------------------------------------------------------------------
 
 #pragma once
 
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
 #include <stdarg.h>
 #include <stdint.h>
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FORWARD DECLARATIONS
-//-----------------------------------------------------------------------------------------------------
 struct qbs;
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FUNCTIONS
-//-----------------------------------------------------------------------------------------------------
 void sub__guiNotifyPopup(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsIconType, int32_t passed);
 int32_t func__guiMessageBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDialogType, qbs *qbsIconType, int32_t nDefaultButton, int32_t passed);
 void sub__guiMessageBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsIconType, int32_t passed);
@@ -39,8 +25,7 @@ qbs *func__guiSelectFolderDialog(qbs *qbsTitle, qbs *qbsDefaultPath, int32_t pas
 uint32_t func__guiColorChooserDialog(qbs *qbsTitle, uint32_t nDefaultRGB, int32_t passed);
 qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription, int32_t nAllowMultipleSelects,
                              int32_t passed);
-qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription);
+qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription, int32_t passed);
 
 int gui_alert(const char *message, const char *title, const char *type);
 bool gui_alert(const char *fmt, ...);
-//-----------------------------------------------------------------------------------------------------
