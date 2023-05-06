@@ -447,7 +447,7 @@ TYPE HashListItem
     NextItem AS LONG
     PrevItem AS LONG
     LastItem AS LONG 'note: this value is only valid on the first item in the list
-    'note: name is stored in a seperate array of strings
+    'note: name is stored in a separate array of strings
 END TYPE
 DIM SHARED HashFind_NextListItem AS LONG
 DIM SHARED HashFind_Reverse AS LONG
@@ -18510,7 +18510,7 @@ FUNCTION findid& (n2$)
     '(the above should never happen)
     findid& = 2 '2=not finished searching all indexes
 
-    'seperate symbol from name (if a symbol has been added), this is the only way symbols can be passed to findid
+    'separate symbol from name (if a symbol has been added), this is the only way symbols can be passed to findid
     i = 0
     i = INSTR(n$, "~"): IF i THEN GOTO gotsc
     i = INSTR(n$, "`"): IF i THEN GOTO gotsc

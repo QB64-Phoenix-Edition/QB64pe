@@ -3639,7 +3639,7 @@ FUNCTION ide2 (ignore)
                     IF x = 0 THEN x = x2
                     IF x2 = 0 THEN x2 = x
                     IF x2 < x THEN SWAP x, x2
-                    IF x2 > x + 1 THEN x2 = x 'if seperated by more than one character, they are seperate line terminators
+                    IF x2 > x + 1 THEN x2 = x 'if separated by more than one character, they are separate line terminators
                     'x to x2 is the range of the next line terminator (1 or 2 characters)
 
                     IF x THEN
