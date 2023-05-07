@@ -18,7 +18,7 @@
 
 // Note: QB64 expects invalid font handles to be zero
 #define IS_VALID_FONT_HANDLE(_h_) ((_h_) > INVALID_FONT_HANDLE && (_h_) < fontManager.fonts.size() && fontManager.fonts[_h_]->isUsed)
-#define IS_VALID_QB64_FONT_HANDLE(_h_) ((_h_) == 8 || (_h_) == 14 || (_h_) == 16 || ((_h_) >=32 && (_h_) <= lastfont && font[_h_]))
+#define IS_VALID_QB64_FONT_HANDLE(_h_) ((_h_) == 8 || (_h_) == 14 || (_h_) == 16 || ((_h_) >= 32 && (_h_) <= lastfont && font[_h_]))
 #define IS_VALID_UTF_ENCODING(_e_) ((_e_) == 0 || (_e_) == 8 || (_e_) == 16 || (_e_) == 32)
 
 // These are from libqb.cpp
@@ -85,7 +85,7 @@ class UTF32 {
     UTF32 &operator=(const UTF32 &) = delete;
     UTF32 &operator=(UTF32 &&) = delete;
 
-    std::vector<uint32_t> codepoints; // UTF32 codepoint dyanamic array
+    std::vector<uint32_t> codepoints; // UTF32 codepoint dynamic array
 
     /// @brief Converts an ASCII array to UTF-32
     /// @param str The ASCII array
@@ -132,7 +132,6 @@ class UTF32 {
             default:
                 // Need to read continuation bytes
                 continue;
-                break;
             }
         }
 
@@ -160,7 +159,7 @@ class UTF32 {
                 auto ch2 = str16[i + 1];
                 if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {
                     cp = ((ch - 0xD800) << 10) + (ch2 - 0xDC00) + 0x10000;
-                    ++i; // skip the second surrogate
+                    ++i;         // skip the second surrogate
                 } else {
                     cp = 0xFFFD; // invalid surrogate pair
                 }
@@ -879,18 +878,18 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     *out_y = fnt->defaultHeight;
 
     if (codepoints <= 0)
-        return codepoints == 0; // true if zero, false if -ve
+        return codepoints == 0;                           // true if zero, false if -ve
 
     auto isMonochrome = options & FONT_RENDER_MONOCHROME; // do we need to do monochrome rendering?
     FT_Vector strPixSize = {
-        fnt->GetStringPixelWidth(codepoint, codepoints), // get the total buffer width
-        fnt->defaultHeight                               // height is always set by the QB64
+        fnt->GetStringPixelWidth(codepoint, codepoints),  // get the total buffer width
+        fnt->defaultHeight                                // height is always set by the QB64
     };
     auto outBuf = (uint8_t *)calloc(strPixSize.x, strPixSize.y);
     if (!outBuf)
         return false;
 
-    FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", strPixSize.x, strPixSize.y);
+    FONT_DEBUG_PRINT("Allocated (%lu x %lu) buffer", strPixSize.x, strPixSize.y);
 
     FT_Pos penX = 0;
 
@@ -925,8 +924,8 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
 
                 glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
                 glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
-                penX += glyph->advanceWidth; // add advance width
-                previousGlyph = glyph;       // save the current glyph pointer for use later
+                penX += glyph->advanceWidth;                                          // add advance width
+                previousGlyph = glyph;                                                // save the current glyph pointer for use later
             }
         }
     }
@@ -1194,18 +1193,18 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     if (!drawBuf)
         return;
 
-    FONT_DEBUG_PRINT("Allocated (%llu x %llu) buffer", strPixSize.x, strPixSize.y);
+    FONT_DEBUG_PRINT("Allocated (%lu x %lu) buffer", strPixSize.x, strPixSize.y);
 
     auto isMonochrome = (write_page->bytes_per_pixel == 1) || ((write_page->bytes_per_pixel == 4) && (write_page->alpha_disabled)) ||
                         (fontflags[qb64_fh] & FONT_LOAD_DONTBLEND); // do we need to do monochrome rendering?
     FT_Vector pen = {0, 0};                                         // set to buffer start
 
     if (qb64_fh < 32) {
+        FONT_DEBUG_PRINT("Rendering using built-in font");
+
         // Render using a built-in font
         FT_Vector draw, pixmap;
         uint8_t const *builtinFont = nullptr;
-
-        pen.y += 2;
 
         for (size_t i = 0; i < codepoints; i++) {
             auto cp = str32[i];
@@ -1226,7 +1225,6 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
             case 16:
                 builtinFont = &charset8x16[cp][0][0];
-                break;
             }
 
             for (draw.y = pen.y, pixmap.y = 0; pixmap.y < qb64_fh; draw.y++, pixmap.y++) {
@@ -1238,6 +1236,8 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             pen.x += 8;
         }
     } else {
+        FONT_DEBUG_PRINT("Rendering using TrueType font");
+
         // Render using custom font
         pen.y += lroundf((float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight);
 
@@ -1281,8 +1281,8 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
                     glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
                     glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bearing.x, pen.y - glyph->bearing.y);
-                    pen.x += glyph->advanceWidth; // add advance width
-                    previousGlyph = glyph;        // save the current glyph pointer for use later
+                    pen.x += glyph->advanceWidth;                                         // add advance width
+                    previousGlyph = glyph;                                                // save the current glyph pointer for use later
                 }
             }
         }
@@ -1383,4 +1383,140 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     }
 
     free(drawBuf);
+}
+
+/// @brief Calculate the starting pixel positions of each chancter to an array. First one being zero.
+/// This also calculates the pixel position of the last + 1 character.
+/// @param text Text for which the data needs to be calculated. This can be unicode encoded
+/// @param arr A QB64 array. This should be codepoints + 1 long. If the array is shorter additional calculated data is ignored
+/// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
+/// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
+/// @param passed Optional arguments flag
+/// @return Total codepoints in `text`
+int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
+    libqb_mutex_guard lock(fontManager.m);
+
+    if (new_error || !text->len)
+        return 0;
+
+    // Check if have an array to work with
+    // If not then simply return the count of codepoints later
+    if (!(passed & 1)) {
+        FONT_DEBUG_PRINT("Array not passed");
+        arr = nullptr;
+    }
+
+    // Check UTF argument
+    if (passed & 2) {
+        if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
+            error(5);
+            return 0;
+        }
+    } else {
+        utf_encoding = 0;
+    }
+
+    // Check if a valid font handle was passed
+    if (passed & 4) {
+        if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
+            error(258);
+            return 0;
+        }
+    } else {
+        qb64_fh = write_page->font; // else get the current write page font handle
+    }
+
+    // Convert the string to UTF-32 if needed
+    uint32_t const *str32 = nullptr;
+    size_t codepoints = 0;
+
+    switch (utf_encoding) {
+    case 32: // UTF-32: no conversion needed
+        str32 = (uint32_t *)text->chr;
+        codepoints = text->len / sizeof(uint32_t);
+        break;
+
+    case 16: // UTF-16: conversion required
+        codepoints = utf32.ConvertUTF16(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoints.data();
+        break;
+
+    case 8: // UTF-8: conversion required
+        codepoints = utf32.ConvertUTF8(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoints.data();
+        break;
+
+    default: // ASCII: conversion required
+        codepoints = utf32.ConvertASCII(text->chr, text->len);
+        if (codepoints)
+            str32 = utf32.codepoints.data();
+    }
+
+    // Simply return the codepoint count if we do not have any array
+    if (!arr || !codepoints)
+        return codepoints;
+
+    auto element = (uint16_t *)((byte_element_struct *)arr)->offset;
+    auto elements = ((byte_element_struct *)arr)->length / sizeof(uint16_t);
+    FontManager::Font *fnt = nullptr;
+    FT_Pos monospaceWidth;
+
+    if (qb64_fh < 32) {
+        monospaceWidth = 8; // built-in fonts always have a width of 8
+    } else {
+        FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
+        fnt = fontManager.fonts[font[qb64_fh]];
+        monospaceWidth = fnt->monospaceWidth;
+    }
+
+    if (monospaceWidth) {
+        FONT_DEBUG_PRINT("Calculating positions for monospaced font");
+
+        // Fixed width font character positions
+        for (size_t i = 0; i < codepoints; i++) {
+            if (i < elements)
+                element[i] = i * monospaceWidth;
+        }
+
+        // (element[codepoints] - 1) = the end position of the last char in the string
+        if (codepoints < elements)
+            element[codepoints] = codepoints * monospaceWidth;
+    } else {
+        FONT_DEBUG_PRINT("Calculating positions for variable width font");
+
+        // Variable width font character positions
+        auto face = fnt->face;
+        auto hasKerning = FT_HAS_KERNING(fnt->face); // set to true if font has kerning info
+        FontManager::Font::Glyph *glyph = nullptr;
+        FontManager::Font::Glyph *previousGlyph = nullptr;
+        FT_Pos penX = 0;
+
+        for (size_t i = 0; i < codepoints; i++) {
+            auto cp = str32[i];
+
+            glyph = fnt->GetGlyph(cp);
+            if (glyph) {
+                if (i < elements)
+                    element[i] = penX;
+
+                // Add kerning advance width if kerning table is available
+                if (hasKerning && previousGlyph && glyph) {
+                    FT_Vector delta;
+                    FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
+                    penX += delta.x / 64;
+                }
+
+                penX += glyph->advanceWidth; // add advance width
+                previousGlyph = glyph;        // save the current glyph pointer for use later
+            }
+        }
+
+        // (element[codepoints] - 1) = the end position of the last char in the string
+        if (codepoints < elements)
+            element[codepoints] = penX;
+    }
+
+    return codepoints;
 }

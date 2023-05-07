@@ -1464,7 +1464,6 @@ id.ret = LONGTYPE - ISPOINTER
 id.hr_syntax = "_ULINESPACING&[(fontHandle&)]"
 regid
 
-regid
 clearid
 id.n = qb64prefix$ + "UPrintString"
 id.Dependency = DEPENDENCY_LOADFONT
@@ -1474,6 +1473,18 @@ id.args = 6
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "(?,?),?[,[?][,[?][,?]]]"
 id.hr_syntax = "_UPRINTSTRING (x&, y&), text$[, maxWidth&][, utfEncoding&][, fontHandle&]"
+regid
+
+clearid
+id.n = qb64prefix$ + "UCharPos"
+id.Dependency = DEPENDENCY_LOADFONT
+id.subfunc = 1
+id.callname = "func__UCharPos"
+id.args = 4
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(-1) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "?[,[?][,[?][,?]]]"
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_UCHARPOS&(text$[, posArray%()][, utfEncoding&][, fontHandle&])"
 regid
 
 'WORKING WITH COLORS

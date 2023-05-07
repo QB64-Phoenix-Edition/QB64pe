@@ -3500,7 +3500,7 @@ DO
                         ' Just try to concatenate the path with the source or include path and check if we are able to find the file
                         IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname(inclevel)) + MidiSoundFont$) THEN
                             MidiSoundFont$ = getfilepath(incname(inclevel)) + MidiSoundFont$
-                        ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) Then
+                        ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) THEN
                             MidiSoundFont$ = FixDirectoryName(path.source$) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
                             MidiSoundFont$ = FixDirectoryName(idepath$) + MidiSoundFont$
@@ -4557,6 +4557,7 @@ DO
                                         sfheader = 1
                                         GOTO GotHeader
                                     END IF
+
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
                                         libpath$ = getfilepath(incname(inclevel)) + og_libpath$
@@ -16771,6 +16772,27 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF Error_Happened THEN EXIT FUNCTION
                         r$ = r$ + e$ + ")"
                         GOTO evalfuncspecial ' Evaluate now that we have everything
+                    END IF
+                END IF
+
+                ' a740g: UCHARPOS special case for arg 2
+                IF n$ = "_UCHARPOS" OR (n$ = "UCHARPOS" AND qb64prefix_set = 1) THEN
+                    IF curarg = 2 THEN
+                        ' It must be an array
+                        IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
+                            Give_Error "Expected INTEGER array-name"
+                            EXIT FUNCTION
+                        END IF
+
+                        ' Cannot be one of these
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND 511) <> 16 THEN
+                            Give_Error "Expected INTEGER array-name"
+                            EXIT FUNCTION
+                        END IF
+
+                        e$ = evaluatetotyp(e2$, -2) ' get byte_element_struct
+
+                        GOTO dontevaluate
                     END IF
                 END IF
 
