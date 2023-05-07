@@ -49,7 +49,7 @@ int64_t GetTicks() { return ((((int64_t)clock()) * ((int64_t)1000)) / ((int64_t)
 static uint64_t millis_since_midnight() {
     auto currenttime = std::chrono::system_clock::now();
 
-    // Gives us the number of miliseconds past the current second
+    // Gives us the number of milliseconds past the current second
     uint64_t millis_only = std::chrono::duration_cast<std::chrono::milliseconds>(currenttime.time_since_epoch()).count() % 1000;
 
     // Convert to time_t and then hour/min/sec. localtime() takes the current

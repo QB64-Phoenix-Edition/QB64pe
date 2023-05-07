@@ -103,7 +103,7 @@ t64 time_64(t64 *pt) {
             assert(abs((long)(t2 - (int)t)) <= 1);
 
         // the <=1 here is in case the seconds get incremented
-        // betweeen the GetSystemTime(..) call and the time(..) call
+        // between the GetSystemTime(..) call and the time(..) call
     }
 #endif
     if (pt)

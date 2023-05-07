@@ -270,7 +270,7 @@ static void libqb_curl_thread_handler(void *arg) {
 static struct curl_state curl_state;
 static struct libqb_thread *curl_thread;
 
-// This callback services the data recevied from the http connection.
+// This callback services the data received from the http connection.
 static size_t receive_http_block(void *ptr, size_t size, size_t nmemb, void *data) {
     struct handle *handle = (struct handle *)data;
     size_t length = size * nmemb;
@@ -279,7 +279,7 @@ static size_t receive_http_block(void *ptr, size_t size, size_t nmemb, void *dat
 
     libqb_buffer_write(&handle->out, (const char *)ptr, length);
 
-    // The first time this connection starts to recieve data we fill out the
+    // The first time this connection starts to receive data we fill out the
     // connection info.
     __fillout_curl_info(handle);
 
@@ -304,8 +304,8 @@ int libqb_http_get_length(int id, size_t *length) {
     return 0;
 }
 
-// Waits for handle to have valid info, which is availiable after the
-// connection headers have been recieved.
+// Waits for handle to have valid info, which is available after the
+// connection headers have been received.
 static void wait_for_info(struct handle *handle) {
     struct completion comp;
 
