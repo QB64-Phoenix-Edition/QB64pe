@@ -16780,13 +16780,13 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF curarg = 2 THEN
                         ' It must be an array
                         IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
-                            Give_Error "Expected INTEGER array-name"
+                            Give_Error "Expected LONG array-name"
                             EXIT FUNCTION
                         END IF
 
                         ' Cannot be one of these
                         IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND 511) <> 32 THEN
-                            Give_Error "Expected INTEGER array-name"
+                            Give_Error "Expected LONG array-name"
                             EXIT FUNCTION
                         END IF
 
