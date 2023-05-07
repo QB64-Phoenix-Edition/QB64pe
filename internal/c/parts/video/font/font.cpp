@@ -1388,7 +1388,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 /// @brief Calculate the starting pixel positions of each chancter to an array. First one being zero.
 /// This also calculates the pixel position of the last + 1 character.
 /// @param text Text for which the data needs to be calculated. This can be unicode encoded
-/// @param arr A QB64 array. This should be codepoints + 1 long. If the array is shorter additional calculated data is ignored
+/// @param arr A QB64 LONG array. This should be codepoints + 1 long. If the array is shorter additional calculated data is ignored
 /// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
 /// @param passed Optional arguments flag
@@ -1458,8 +1458,8 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
     if (!arr || !codepoints)
         return codepoints;
 
-    auto element = (uint16_t *)((byte_element_struct *)arr)->offset;
-    auto elements = ((byte_element_struct *)arr)->length / sizeof(uint16_t);
+    auto element = (uint32_t *)((byte_element_struct *)arr)->offset;
+    auto elements = ((byte_element_struct *)arr)->length / sizeof(uint32_t);
     FontManager::Font *fnt = nullptr;
     FT_Pos monospaceWidth;
 
@@ -1509,7 +1509,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
                 }
 
                 penX += glyph->advanceWidth; // add advance width
-                previousGlyph = glyph;        // save the current glyph pointer for use later
+                previousGlyph = glyph;       // save the current glyph pointer for use later
             }
         }
 

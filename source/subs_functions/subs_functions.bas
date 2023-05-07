@@ -1481,10 +1481,10 @@ id.Dependency = DEPENDENCY_LOADFONT
 id.subfunc = 1
 id.callname = "func__UCharPos"
 id.args = 4
-id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(-1) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(-1) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arg 2 has special handling code in evaluatefunc()
 id.specialformat = "?[,[?][,[?][,?]]]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_UCHARPOS&(text$[, posArray%()][, utfEncoding&][, fontHandle&])"
+id.hr_syntax = "_UCHARPOS&(text$[, posArray&()][, utfEncoding&][, fontHandle&])"
 regid
 
 'WORKING WITH COLORS
