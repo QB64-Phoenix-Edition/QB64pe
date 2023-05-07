@@ -29,7 +29,7 @@ void test_single_rw() {
     libqb_buffer_clear(&buffer);
 }
 
-// Multple writes and reads of the same size from the buffer
+// Multiple writes and reads of the same size from the buffer
 void test_multiple_rw() {
     int count = 10;
     struct libqb_buffer buffer;

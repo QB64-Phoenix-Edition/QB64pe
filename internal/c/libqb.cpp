@@ -14416,7 +14416,7 @@ void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
     if (write_page->text)
         goto qbg_sub_window_error;
     if ((!(passed & 1)) && (passed & 2))
-        goto qbg_sub_window_error; // SCREEEN passed without any other arguements!
+        goto qbg_sub_window_error; // SCREEN passed without any other arguments!
 
     // backup current qbg_x & qbg_y coordinates relative to viewport, not window
     if (write_page->clipping_or_scaling == 2) {
@@ -23472,7 +23472,7 @@ float func__mousey(int32 context, int32 passed) {
 }
 
 int32 func__mousepipeopen() {
-    // creates a new mouse pipe, routing all mouse input into it before any preceeding pipes receive access to the data
+    // creates a new mouse pipe, routing all mouse input into it before any preceding pipes receive access to the data
 
     // create new queue
     int32 context = list_add(mouse_message_queue_handles);
@@ -28035,7 +28035,7 @@ expand_and_retry:
         if (errno != EAGAIN && errno != EWOULDBLOCK)
             tcp->connected = 0;
 #    endif
-    } else if (bytes == 0) { // graceful shutdown occured
+    } else if (bytes == 0) { // graceful shutdown occurred
         tcp->connected = 0;
     } else {
         stream->in_size += bytes;

@@ -177,7 +177,7 @@ void libqb_start_main_thread(int argc, char **argv) {
 // from that thread (not doing that can result in a segfault due to using GLUT
 // from two threads at the same time).
 //
-// This is acomplished by simply queuing a GLUT message that calls exit() for us.
+// This is accomplished by simply queuing a GLUT message that calls exit() for us.
 void libqb_exit(int exitcode)
 {
     // If GLUT isn't running then we're free to do the exit() call from here
