@@ -65,7 +65,7 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not f
 void new_mem_lock();                                                // This is required for MemSound()
 void free_mem_lock(mem_lock *lock);                                 // Same as above
 #ifndef QB64_WINDOWS
-void Sleep(uint32 milliseconds); // There is a non-Windows implementation. However it is not declared anywhere
+void Sleep(uint32 milliseconds);                                    // There is a non-Windows implementation. However it is not declared anywhere
 #endif
 
 extern ptrszint dblock;         // Required for Play(). Did not find this declared anywhere
@@ -95,7 +95,7 @@ struct RawStream {
     libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
     bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
 
-    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amout what miniaudio actually asks for in frameCount
+    static const size_t DEFAULT_SIZE = 1024;  // this is almost twice the amout what miniaudio actually asks for in frameCount
 
     // Delete default, copy and move constructors and assignments
     RawStream() = delete;
@@ -175,9 +175,9 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     if (!pDataSource)
         return MA_INVALID_ARGS;
 
-    auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
-    auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
-    auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
+    auto pRawStream = (RawStream *)pDataSource;                                                     // cast to RawStream instance pointer
+    auto result = MA_SUCCESS;                                                                       // must be initialized to MA_SUCCESS
+    auto maBuffer = (SampleFrame *)pFramesOut;                                                      // cast to sample frame pointer
 
     ma_uint64 sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
     // Swap buffers if we do not have anything left to play
@@ -185,9 +185,9 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
         pRawStream->SwapBuffers();
         sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
     }
-    sampleFramesCount = std::min(sampleFramesCount, frameCount); // we'll always send lower of what miniaudio wants or what we have
+    sampleFramesCount = std::min(sampleFramesCount, frameCount);                              // we'll always send lower of what miniaudio wants or what we have
 
-    ma_uint64 sampleFramesRead = 0; // sample frame counter
+    ma_uint64 sampleFramesRead = 0;                                                           // sample frame counter
     // Now send the samples to miniaudio
     while (sampleFramesRead < sampleFramesCount) {
         maBuffer[sampleFramesRead] = pRawStream->consumer->data[pRawStream->consumer->cursor];
@@ -326,7 +326,7 @@ static void RawStreamDestroy(RawStream *pRawStream) {
 
         ma_sound_uninit(pRawStream->maSound); // delete the ma_sound object
 
-        delete pRawStream; // delete the raw stream object
+        delete pRawStream;                    // delete the raw stream object
 
         AUDIO_DEBUG_PRINT("Raw sound stream destroyed");
     }
@@ -1310,7 +1310,7 @@ struct AudioEngine {
     /// <returns>Returns a non-negative handle if successful</returns>
     int32_t AllocateSoundHandle() {
         if (!isInitialized)
-            return -1; // We cannot return 0 here. Since 0 is a valid internal handle
+            return -1;                              // We cannot return 0 here. Since 0 is a valid internal handle
 
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
@@ -1569,7 +1569,7 @@ void sub_play(qbs *str) {
     audioEngine.mmlPlayer->Play(str);                                            // playback the string
     audioEngine.musicBackground = audioEngine.mmlPlayer->IsBackgroundPlayback(); // sync the background playback flag
 
-    if (!audioEngine.musicBackground) // await playback to complete if we are in MF mode
+    if (!audioEngine.musicBackground)                                            // await playback to complete if we are in MF mode
         audioEngine.waveform->AwaitPlaybackCompletion();
 }
 
@@ -1986,7 +1986,7 @@ void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, 
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
-            ma_vec3f v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound); // Get the current position in 3D space
+            ma_vec3f v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound);           // Get the current position in 3D space
 
             // Set the previous values of x, y, z if these were not passed
             if (!(passed & 1))
