@@ -190,16 +190,23 @@ struct FontManager {
         FT_Pos monospaceWidth; // the monospace width (if font was loaded as monospace, else zero)
         FT_Pos defaultHeight;  // default (max) pixel height the user wants
         FT_Pos baseline;       // font baeline in pixels
+        int32_t options;       // fonts options that were passed by QB64 while loading the font
 
         /// @brief Manages a single glyph in a font
         struct Glyph {
-            FT_UInt index;       // glyph index
-            uint8_t *bitmapMono; // raw monochrome bitmap in 8-bit format
-            uint8_t *bitmapGray; // raw anti-aliased bitamp in 8-bit format
-            uint8_t *bitmap;     // the current selected bitmap (mono / gray)
-            FT_Vector size;      // bitmap width & height in pixels
-            FT_Pos advanceWidth; // glyph advance width in pixels
-            FT_Vector bearing;   // glyph left and top side bearing in pixels
+            // Usually the bitmap size & metrics returned by FT for mono and gray can be the same
+            // But it's a bad idea to assume that is the case everytime
+            struct Bitmap {
+                uint8_t *data;       // pointer to the raw pixels
+                FT_Vector size;      // bitmap width & height in pixels
+                FT_Pos advanceWidth; // glyph advance width in pixels
+                FT_Vector bearing;   // glyph left and top side bearing in pixels
+            };
+
+            FT_UInt index;  // glyph index
+            Bitmap bmpMono; // monochrome bitmap in 8-bit format
+            Bitmap bmpGray; // anti-aliased bitamp in 8-bit format
+            Bitmap *bitmap; // pointer to the currently selected bitmap (mono / gray)
 
             // Delete copy and move constructors and assignments
             Glyph(const Glyph &) = delete;
@@ -207,18 +214,96 @@ struct FontManager {
             Glyph(Glyph &&) = delete;
             Glyph &operator=(Glyph &&) = delete;
 
-            /// @brief Just initialize everything
+            /// @brief Just initializes everything
             Glyph() {
-                bitmapMono = bitmapGray = bitmap = nullptr;
-                size.x = size.y = index = advanceWidth = bearing.x = bearing.y = 0;
+                index = 0;
+                bmpMono = {};
+                bmpGray = {};
+                bitmap = nullptr;
             }
 
             /// @brief Frees any cached glyph bitmap
             ~Glyph() {
-                FONT_DEBUG_PRINT("Freeing bitmaps %p, %p", bitmapMono, bitmapGray);
+                FONT_DEBUG_PRINT("Freeing bitmaps %p, %p", bmpMono.data, bmpGray.data);
 
-                free(bitmapGray);
-                free(bitmapMono);
+                free(bmpGray.data);
+                free(bmpMono.data);
+            }
+
+            /// @brief Assuming a glyph was previously loaded and rendered by FreeType, this will prepare an internal bitmap struct
+            /// @param bmp A pointer to a bitmap struct to prepare
+            /// @param parentFont The parent font object
+            /// @return True if successful, false otherwise
+            bool PrepareBitmap(Bitmap *bmp, Font *parentFont) {
+                FONT_DEBUG_CHECK(bmp && !bmp->data);
+
+                // First get all needed glyph metrics
+                bmp->size.x = parentFont->face->glyph->bitmap.width;         // get the width of the bitmap
+                bmp->size.y = parentFont->face->glyph->bitmap.rows;          // get the height of the bitmap
+                bmp->advanceWidth = parentFont->face->glyph->advance.x / 64; // get the advance width of the glyph
+                bmp->bearing.x = parentFont->face->glyph->bitmap_left;       // get the bitmap left side bearing
+                bmp->bearing.y = parentFont->face->glyph->bitmap_top;        // get the bitmap top side bearing
+
+                // Check if the glyph has a valid bitmap
+                if (!parentFont->face->glyph->bitmap.buffer || bmp->size.x < 1 || bmp->size.y < 1 ||
+                    (parentFont->face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_MONO && parentFont->face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)) {
+                    // Ok, this means the font does not have a glyph for the codepoint index
+                    // Simply make a blank bitmap and update width and height
+                    FONT_DEBUG_PRINT("Entering missing glyph path");
+
+                    bmp->size.x = std::max(bmp->advanceWidth, bmp->size.x);
+                    if (bmp->size.x < 1) {
+                        FONT_DEBUG_PRINT("Failed to get default width for empty glyph");
+                        *bmp = {};
+                        return false; // something seriously went wrong
+                    }
+                    bmp->size.y = parentFont->defaultHeight;
+
+                    FONT_DEBUG_PRINT("Creating empty (%i x %i) bitmap for missing glyph", bmp->size.x, bmp->size.y);
+
+                    // Allocate zeroed memory for monochrome bitmap
+                    bmp->data = (uint8_t *)calloc(bmp->size.x, bmp->size.y);
+                    if (!bmp->data) {
+                        FONT_DEBUG_PRINT("Failed to allocate memory for empty glyph bitmap");
+                        *bmp = {};
+                        return false; // memory allocation failed
+                    }
+                } else {
+                    // The bitmap rendered successfully
+                    FONT_DEBUG_PRINT("(%i x %i) bitmap found", bmp->size.x, bmp->size.y);
+
+                    // So, we have a valid glyph bitmap. We'll use that
+                    // Allocate zeroed memory for the bitmap
+                    bmp->data = (uint8_t *)calloc(bmp->size.x, bmp->size.y);
+                    if (!bmp->data) {
+                        FONT_DEBUG_PRINT("Failed to allocate memory for glyph bitmap");
+                        *bmp = {};
+                        return false; // memory allocation failed
+                    }
+
+                    auto src = parentFont->face->glyph->bitmap.buffer;
+                    auto dst = bmp->data;
+
+                    // Copy the bitmap based on the pixel mode
+                    if (parentFont->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_MONO) {
+                        for (FT_Pos y = 0; y < bmp->size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += bmp->size.x) {
+                            for (FT_Pos x = 0; x < bmp->size.x; x++) {
+                                dst[x] = (((src[x / 8]) >> (7 - (x & 7))) & 1) * 255; // this looks at each bit and then sets the pixel
+                            }
+                        }
+                    } else if (parentFont->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
+                        for (FT_Pos y = 0; y < bmp->size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += bmp->size.x) {
+                            memcpy(dst, src, bmp->size.x); // simply copy the line
+                        }
+                    } else {
+                        FONT_DEBUG_PRINT("Unknown bitmap pixel mode %i", (int)parentFont->face->glyph->bitmap.pixel_mode); // this should never happen
+                        free(bmp->data);
+                        *bmp = {};
+                        return false;
+                    }
+                }
+
+                return true;
             }
 
             /// @brief Caches a glyph bitmap with a given codepoint and this happens only once
@@ -234,96 +319,45 @@ struct FontManager {
                         FONT_DEBUG_PRINT("Got glyph index zero for codepoint %lu", codepoint);
                     }
 
-                    // Load the glyph to query details and render
+                    // Load the mono glyph to query details and render
                     if (FT_Load_Glyph(parentFont->face, index, FT_LOAD_DEFAULT)) {
-                        FONT_DEBUG_PRINT("Failed to load glyph for codepoint %lu (%u)", codepoint, index);
+                        FONT_DEBUG_PRINT("Failed to load mono glyph for codepoint %lu (%u)", codepoint, index);
                     }
 
-                    // We'll attemot to render the monochrome font first
+                    // We'll attempt to render the monochrome font first
                     if (FT_Render_Glyph(parentFont->face->glyph, FT_RENDER_MODE_MONO)) {
-                        FONT_DEBUG_PRINT("Failed to render glyph for codepoint %lu (%u)", codepoint, index);
+                        FONT_DEBUG_PRINT("Failed to render mono glyph for codepoint %lu (%u)", codepoint, index);
                     }
 
-                    size.x = parentFont->face->glyph->bitmap.width;         // get the width of the bitmap
-                    size.y = parentFont->face->glyph->bitmap.rows;          // get the height of the bitmap
-                    advanceWidth = parentFont->face->glyph->advance.x / 64; // get the advance width of the glyph
-                    bearing.x = parentFont->face->glyph->bitmap_left;       // get the bitmap left side bearing
-                    bearing.y = parentFont->face->glyph->bitmap_top;        // get the bitmap top side bearing
-
-                    if (!parentFont->face->glyph->bitmap.buffer || size.x < 1 || size.y < 1 ||
-                        (parentFont->face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_MONO &&
-                         parentFont->face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)) {
-                        // Ok, this means the font does not have a glyph for the codepoint index
-                        // Simply make a blank bitmap and update width and height
-                        FONT_DEBUG_PRINT("Entering missing glyph path");
-
-                        size.x = std::max(advanceWidth, size.x);
-                        if (size.x < 1) {
-                            FONT_DEBUG_PRINT("Failed to get default size for empty glyph");
-                            return false; // something seriously went wrong
-                        }
-                        size.y = parentFont->defaultHeight;
-
-                        FONT_DEBUG_PRINT("Creating empty %i x %i glyph for missing codepoint %u (%i)", size.x, size.y, codepoint, index);
-
-                        // Allocate zeroed memory for monochrome and gray bitmaps
-                        bitmapGray = (uint8_t *)calloc(size.x, size.y);
-                        if (bitmapGray) {
-                            bitmapMono = (uint8_t *)calloc(size.x, size.y);
-                            if (!bitmapMono) {
-                                free(bitmapGray);
-                                bitmapGray = nullptr;
-                            }
-                        }
-                    } else {
-                        FONT_DEBUG_PRINT("(%i x %i) glyph found ", size.x, size.y);
-
-                        // Allocate zeroed memory for monochrome and gray bitmaps
-                        bitmapGray = (uint8_t *)calloc(size.x, size.y);
-                        if (bitmapGray) {
-                            bitmapMono = (uint8_t *)calloc(size.x, size.y);
-                            if (!bitmapMono) {
-                                free(bitmapGray);
-                                bitmapGray = nullptr;
-                            }
-                        }
-
-                        // Proceed only if both allocations were successful
-                        if (bitmapGray && bitmapMono) {
-                            // We already have the mono bitmap rendered so simply copy that first
-                            // We simply use 255 for 1 and 0 for 0 with nothing in between
-                            auto src = parentFont->face->glyph->bitmap.buffer;
-                            auto dst = bitmapMono;
-
-                            for (FT_Pos y = 0; y < size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += size.x) {
-                                for (FT_Pos x = 0; x < size.x; x++) {
-                                    dst[x] = (((src[x / 8]) >> (7 - (x & 7))) & 1) * 255; // this looks at each bit and then sets the pixel
-                                }
-                            }
-
-                            // Render the bitmap in gray mode
-                            if (FT_Load_Char(parentFont->face, codepoint, FT_LOAD_RENDER) || FT_Render_Glyph(parentFont->face->glyph, FT_RENDER_MODE_NORMAL)) {
-                                FONT_DEBUG_PRINT("Failed to render gray glyph for codepoint %lu (%u)", codepoint, index);
-
-                                // Simply copy the mono one to the gray as a fallback
-                                memcpy(bitmapGray, bitmapMono, size.x * size.y);
-                                FONT_DEBUG_PRINT("Using monochrome bitmap for gray");
-                            } else {
-                                // Now copy the 8-bit bitmap
-                                auto src = parentFont->face->glyph->bitmap.buffer;
-                                auto dst = bitmapGray;
-
-                                for (FT_Pos y = 0; y < size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += size.x) {
-                                    memcpy(dst, src, size.x); // simply copy the line
-                                }
-                            }
-                        }
+                    if (!PrepareBitmap(&bmpMono, parentFont)) {
+                        FONT_DEBUG_PRINT("Failed to prepare mono glyph for codepoint %lu (%u)", codepoint, index);
+                        return false;
                     }
 
-                    FONT_DEBUG_PRINT("Bitmap cached (%p, %p) for codepoint %u", bitmapGray, bitmapMono, codepoint);
-                    FONT_DEBUG_PRINT("I = %i, W = %i, H = %i, AW = %i, BX = %i, BY = %i", index, size.x, size.y, advanceWidth, bearing.x, bearing.y);
+                    // Load the gray glyph to query details and render
+                    if (FT_Load_Char(parentFont->face, codepoint, FT_LOAD_RENDER)) {
+                        FONT_DEBUG_PRINT("Failed to load gray glyph for codepoint %lu (%u)", codepoint, index);
+                    }
 
-                    bitmap = bitmapGray; // set bitmap to gray bitmap by default
+                    // Render the gray bitmap
+                    if (FT_Render_Glyph(parentFont->face->glyph, FT_RENDER_MODE_NORMAL)) {
+                        FONT_DEBUG_PRINT("Failed to render gray glyph for codepoint %lu (%u)", codepoint, index);
+                    }
+
+                    if (!PrepareBitmap(&bmpGray, parentFont)) {
+                        FONT_DEBUG_PRINT("Failed to prepare gray glyph for codepoint %lu (%u)", codepoint, index);
+                        free(bmpMono.data); // free mono bitmap
+                        bmpMono = {};
+                        return false;
+                    }
+
+                    FONT_DEBUG_PRINT("Bitmap cached (%p, %p) for codepoint %u, index %i", bmpMono.data, bmpGray.data, codepoint, index);
+                    FONT_DEBUG_PRINT("Mono: W = %i, H = %i, AW = %i, BX = %i, BY = %i", bmpMono.size.x, bmpMono.size.y, bmpMono.advanceWidth, bmpMono.bearing.x,
+                                     bmpMono.bearing.y);
+                    FONT_DEBUG_PRINT("Gray: W = %i, H = %i, AW = %i, BX = %i, BY = %i", bmpGray.size.x, bmpGray.size.y, bmpGray.advanceWidth, bmpGray.bearing.x,
+                                     bmpGray.bearing.y);
+
+                    bitmap = &bmpGray; // set bitmap to gray bitmap by default
                 }
 
                 return bitmap != nullptr;
@@ -339,9 +373,9 @@ struct FontManager {
             void RenderBitmap(uint8_t *dst, FT_Pos dstW, FT_Pos dstH, FT_Pos dstL, FT_Pos dstT) {
                 FONT_DEBUG_CHECK(bitmap && dst);
 
-                auto dstR = dstL + size.x; // right of dst + 1 where we will end
-                auto dstB = dstT + size.y; // bottom of dst + 1 where we will end
-                auto alphaSrc = bitmap;
+                auto dstR = dstL + bitmap->size.x; // right of dst + 1 where we will end
+                auto dstB = dstT + bitmap->size.y; // bottom of dst + 1 where we will end
+                auto alphaSrc = bitmap->data;
                 for (FT_Pos dy = dstT; dy < dstB; dy++) {
                     for (FT_Pos dx = dstL; dx < dstR; dx++) {
                         if (dx >= 0 && dx < dstW && dy >= 0 && dy < dstH) { // if we are not clipped
@@ -368,7 +402,7 @@ struct FontManager {
             isUsed = false;
             fontData = nullptr;
             face = nullptr;
-            monospaceWidth = defaultHeight = baseline = 0;
+            monospaceWidth = defaultHeight = baseline = options = 0;
         }
 
         /// @brief Frees any cached glyph
@@ -393,8 +427,9 @@ struct FontManager {
 
         /// @brief Creates a glyph belonging to a codepoint, caches its bitmap + info and adds it to the hash map
         /// @param codepoint A valid UTF-32 codepoint
+        /// @param isMono True for mono bitmap and false for gray
         /// @return The glyph pointer if successful or if the glyph is already in the map, nullptr otherwise
-        Glyph *GetGlyph(uint32_t codepoint) {
+        Glyph *GetGlyph(uint32_t codepoint, bool isMono) {
             if (glyphs.count(codepoint) == 0) {
                 // The glyph is not cached yet
                 auto newGlyph = new Glyph;
@@ -411,14 +446,18 @@ struct FontManager {
                     return nullptr; // failed to cache bitmap
                 }
 
-                // Ok we are good. Save the Glyph address to the map using the codepoint as key
-                glyphs[codepoint] = newGlyph;
+                glyphs[codepoint] = newGlyph;                                        // save the Glyph pointer to the map using the codepoint as key
+                newGlyph->bitmap = isMono ? &newGlyph->bmpMono : &newGlyph->bmpGray; // select the correct bitmap
+
                 FONT_DEBUG_PRINT("Glyph data for codepoint %u successfully cached", codepoint);
 
                 return newGlyph; // return the glyph pointer
             }
 
-            return glyphs[codepoint]; // we already have the glyph cached, so simply return the pointer
+            auto glyph = glyphs[codepoint];                             // we already have the glyph cached, so simply return the pointer
+            glyph->bitmap = isMono ? &glyph->bmpMono : &glyph->bmpGray; // select the correct bitmap
+
+            return glyph;
         }
 
         /// @brief This returns the length of a UTF32 codepoint array in pixels
@@ -433,11 +472,13 @@ struct FontManager {
             auto hasKerning = FT_HAS_KERNING(face); // set to true if font has kerning info
             Glyph *glyph = nullptr;
             Glyph *previousGlyph = nullptr;
+            auto isMonochrome = (write_page->bytes_per_pixel == 1) || ((write_page->bytes_per_pixel == 4) && (write_page->alpha_disabled)) ||
+                                (options & FONT_LOAD_DONTBLEND); // monochrome or AA?
 
             for (size_t i = 0; i < codepoints; i++) {
                 auto cp = codepoint[i];
 
-                glyph = GetGlyph(cp);
+                glyph = GetGlyph(cp, isMonochrome);
                 if (glyph) {
                     // Add kerning advance width if kerning table is available
                     if (hasKerning && previousGlyph && glyph) {
@@ -446,21 +487,21 @@ struct FontManager {
                         width += delta.x / 64;
                     }
 
-                    width += glyph->advanceWidth; // add advance width
-                    previousGlyph = glyph;        // save the current glyph pointer for use later
+                    width += glyph->bitmap->advanceWidth; // add advance width
+                    previousGlyph = glyph;                // save the current glyph pointer for use later
                 }
             }
 
             // Adjust for the last glyph
             if (glyph) {
-                auto adjust = glyph->advanceWidth;
-                if (adjust < glyph->size.x)
-                    adjust = glyph->size.x;
-                if (glyph->bearing.x > 0 && (glyph->size.x + glyph->bearing.x) > adjust)
-                    adjust = glyph->size.x + glyph->bearing.x;
-                if (glyph->bearing.x < 0)
-                    adjust += -glyph->bearing.x;
-                width = width - glyph->advanceWidth + adjust;
+                auto adjust = glyph->bitmap->advanceWidth;
+                if (adjust < glyph->bitmap->size.x)
+                    adjust = glyph->bitmap->size.x;
+                if (glyph->bitmap->bearing.x > 0 && (glyph->bitmap->size.x + glyph->bitmap->bearing.x) > adjust)
+                    adjust = glyph->bitmap->size.x + glyph->bitmap->bearing.x;
+                if (glyph->bitmap->bearing.x < 0)
+                    adjust += -glyph->bitmap->bearing.x;
+                width = width - glyph->bitmap->advanceWidth + adjust;
             }
 
             return width;
@@ -571,6 +612,7 @@ struct FontManager {
         fonts[h]->monospaceWidth = 0;
         fonts[h]->defaultHeight = 0;
         fonts[h]->baseline = 0;
+        fonts[h]->options = 0;
         fonts[h]->isUsed = true;
 
         lowestFreeHandle = h + 1; // set lowestFreeHandle to allocated handle + 1
@@ -773,6 +815,7 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     fontManager.fonts[h]->baseline =
         lroundf((((float)fontManager.fonts[h]->face->size->metrics.ascender / 64.0f) / ((float)fontManager.fonts[h]->face->size->metrics.height / 64.0f)) *
                 (float)default_pixel_height);
+    fontManager.fonts[h]->options = options; // save the options for use later
 
     if (options & FONT_LOAD_MONOSPACE) {
         // Get the width of upper case W
@@ -878,12 +921,12 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     *out_y = fnt->defaultHeight;
 
     if (codepoints <= 0)
-        return codepoints == 0;                           // true if zero, false if -ve
+        return codepoints == 0;                                 // true if zero, false if -ve
 
-    auto isMonochrome = options & FONT_RENDER_MONOCHROME; // do we need to do monochrome rendering?
+    auto isMonochrome = bool(options & FONT_RENDER_MONOCHROME); // do we need to do monochrome rendering?
     FT_Vector strPixSize = {
-        fnt->GetStringPixelWidth(codepoint, codepoints),  // get the total buffer width
-        fnt->defaultHeight                                // height is always set by the QB64
+        fnt->GetStringPixelWidth(codepoint, codepoints),        // get the total buffer width
+        fnt->defaultHeight                                      // height is always set by the QB64
     };
     auto outBuf = (uint8_t *)calloc(strPixSize.x, strPixSize.y);
     if (!outBuf)
@@ -897,11 +940,11 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
         for (size_t i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
-            auto glyph = fnt->GetGlyph(cp);
+            auto glyph = fnt->GetGlyph(cp, isMonochrome);
             if (glyph) {
-                glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
-                                    fnt->baseline - glyph->bearing.y);
+                glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y,
+                                    penX + glyph->bitmap->bearing.x + fnt->monospaceWidth / 2 - glyph->bitmap->advanceWidth / 2,
+                                    fnt->baseline - glyph->bitmap->bearing.y);
                 penX += fnt->monospaceWidth;
             }
         }
@@ -913,7 +956,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
         for (size_t i = 0; i < codepoints; i++) {
             auto cp = codepoint[i];
 
-            glyph = fnt->GetGlyph(cp);
+            glyph = fnt->GetGlyph(cp, isMonochrome);
             if (glyph) {
                 // Add kerning advance width if kerning table is available
                 if (hasKerning && previousGlyph && glyph) {
@@ -922,10 +965,9 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
                     penX += delta.x / 64;
                 }
 
-                glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bearing.x, fnt->baseline - glyph->bearing.y);
-                penX += glyph->advanceWidth;                                          // add advance width
-                previousGlyph = glyph;                                                // save the current glyph pointer for use later
+                glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bitmap->bearing.x, fnt->baseline - glyph->bitmap->bearing.y);
+                penX += glyph->bitmap->advanceWidth; // add advance width
+                previousGlyph = glyph;               // save the current glyph pointer for use later
             }
         }
     }
@@ -1246,14 +1288,14 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             for (size_t i = 0; i < codepoints; i++) {
                 auto cp = str32[i];
 
-                auto glyph = fnt->GetGlyph(cp);
+                auto glyph = fnt->GetGlyph(cp, isMonochrome);
                 if (glyph) {
                     if (max_width && pen.x + fnt->monospaceWidth > start_x + max_width)
                         break;
 
-                    glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                    glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bearing.x + fnt->monospaceWidth / 2 - glyph->advanceWidth / 2,
-                                        pen.y - glyph->bearing.y);
+                    glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y,
+                                        pen.x + glyph->bitmap->bearing.x + fnt->monospaceWidth / 2 - glyph->bitmap->advanceWidth / 2,
+                                        pen.y - glyph->bitmap->bearing.y);
                     pen.x += fnt->monospaceWidth;
                 }
             }
@@ -1266,10 +1308,10 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             for (size_t i = 0; i < codepoints; i++) {
                 auto cp = str32[i];
 
-                glyph = fnt->GetGlyph(cp);
+                glyph = fnt->GetGlyph(cp, isMonochrome);
                 if (glyph) {
 
-                    if (max_width && pen.x + glyph->size.x > start_x + max_width)
+                    if (max_width && pen.x + glyph->bitmap->size.x > start_x + max_width)
                         break;
 
                     // Add kerning advance width if kerning table is available
@@ -1279,10 +1321,9 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                         pen.x += delta.x / 64;
                     }
 
-                    glyph->bitmap = isMonochrome ? glyph->bitmapMono : glyph->bitmapGray; // select monochrome or gray bitmap
-                    glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bearing.x, pen.y - glyph->bearing.y);
-                    pen.x += glyph->advanceWidth;                                         // add advance width
-                    previousGlyph = glyph;                                                // save the current glyph pointer for use later
+                    glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bitmap->bearing.x, pen.y - glyph->bitmap->bearing.y);
+                    pen.x += glyph->bitmap->advanceWidth; // add advance width
+                    previousGlyph = glyph;                // save the current glyph pointer for use later
                 }
             }
         }
@@ -1492,11 +1533,13 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
         FontManager::Font::Glyph *glyph = nullptr;
         FontManager::Font::Glyph *previousGlyph = nullptr;
         FT_Pos penX = 0;
+        auto isMonochrome = (write_page->bytes_per_pixel == 1) || ((write_page->bytes_per_pixel == 4) && (write_page->alpha_disabled)) ||
+                            (fontflags[qb64_fh] & FONT_LOAD_DONTBLEND); // monochrome or AA?
 
         for (size_t i = 0; i < codepoints; i++) {
             auto cp = str32[i];
 
-            glyph = fnt->GetGlyph(cp);
+            glyph = fnt->GetGlyph(cp, isMonochrome);
             if (glyph) {
                 if (i < elements)
                     element[i] = penX;
@@ -1508,8 +1551,8 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
                     penX += delta.x / 64;
                 }
 
-                penX += glyph->advanceWidth; // add advance width
-                previousGlyph = glyph;       // save the current glyph pointer for use later
+                penX += glyph->bitmap->advanceWidth; // add advance width
+                previousGlyph = glyph;               // save the current glyph pointer for use later
             }
         }
 
