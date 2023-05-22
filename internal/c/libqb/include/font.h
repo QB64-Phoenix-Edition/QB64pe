@@ -19,11 +19,11 @@
         FONT_DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
 #    ifdef _MSC_VER
-#        define FONT_DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
+#        define FONT_DEBUG_PRINT(_fmt_, ...)       // Don't do anything in release builds
 #    else
 #        define FONT_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
 #    endif
-#    define FONT_DEBUG_CHECK(_exp_) // Don't do anything in release builds
+#    define FONT_DEBUG_CHECK(_exp_)                // Don't do anything in release builds
 #endif
 
 #define INVALID_FONT_HANDLE 0
@@ -53,3 +53,4 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed);
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
 int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed);
 void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
+int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
