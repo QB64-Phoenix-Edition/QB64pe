@@ -796,7 +796,31 @@ class PSG {
 
                 processedChar = toupper(currentChar);
 
-                if (currentChar == '=') { //= (+VARPTR$)
+                if (processedChar == 'X') { // substring
+                    // A minimum of 3 bytes is need to read the address
+                    if (currentState.length < 3) {
+                        error(5);
+                        return;
+                    }
+
+                    // Read type byte
+                    currentChar = *currentState.byte++;
+                    currentState.length--;
+
+                    // Read offset within DBLOCK
+                    auto offset = *(uint16_t *)currentState.byte;
+                    currentState.byte += 2;
+                    currentState.length -= 2;
+
+                    stateStack.push(currentState); // push the current state to the stack
+
+                    // Set new state
+                    auto x = cmem[1280 + offset + 3] * 256 + cmem[1280 + offset + 2];
+                    currentState.byte = &cmem[1280] + x;
+                    currentState.length = cmem[1280 + offset + 1] * 256 + cmem[1280 + offset + 0];
+
+                    continue;
+                } else if (currentChar == '=') { //= (+VARPTR$)
                     if (dots) {
                         error(5);
                         return;
@@ -937,14 +961,7 @@ class PSG {
                 }
 
             follow_up:
-                if (followUp == 11) { // X...
-                    // TODO: Implementation
-
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 10) { // Q...
+                if (followUp == 10) { // Q...
                     if (!numberEntered) {
                         error(5);
                         return;
@@ -1290,9 +1307,6 @@ class PSG {
                 } else if (processedChar == 'Q') { // vol-ramp
                     followUp = 10;
                     continue;
-                } else if (processedChar == 'X') { // substring
-                    followUp = 11;
-                    continue;
                 }
 
                 error(5);
@@ -1310,11 +1324,6 @@ class PSG {
                     AwaitPlaybackCompletion();
             }
         }
-
-        // Flush out whatever samples are left
-        PushBufferForPlayback();
-        if (!background)
-            AwaitPlaybackCompletion();
     }
 };
 
@@ -1635,7 +1644,11 @@ void sub_beep() {
 /// @return Returns the number of sample frames left to play for Play(), Sound() & Beep()
 int32_t func_play(int32_t ignore) {
     if (audioEngine.isInitialized && audioEngine.sndInternal == 0 && audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
-        return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining();
+        if (ignore)
+            return (int32_t)(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining() /
+                             audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->sampleRate);
+        else
+            return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining();
     }
 
     return 0;
