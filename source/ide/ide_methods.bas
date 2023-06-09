@@ -20827,24 +20827,28 @@ SUB ExportCodeAs (docFormat$)
     IF cu% GOTO CustomNoLink
     GOSUB FindWikiPage
     IF me% AND le% AND co% THEN post% = 0: what$ = "co": GOSUB CloseText: co% = 0
-    IF me% OR pc% THEN lnk$ = me$: tmp$ = "{{Cm|": lkc$ = mec$: rtc$ = "\cf2": ELSE lnk$ = kw$: tmp$ = "{{Cl|": lkc$ = kwc$: rtc$ = "\cf3"
+    IF me% OR pc% THEN lnk$ = me$: ELSE lnk$ = kw$
     pal% = LEN(page$): lkl% = LEN(lnk$)
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
+            IF me% OR pc% THEN lkc$ = mec$: ELSE lkc$ = kwc$
             MID$(eTxt$, ePos&, (2 * pal%) + lkl% + 120) = "<a style=" + CHR$(34) + "text-decoration: none; color: " + lkc$ + ";" + CHR$(34) + " href=" + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + " title=" + CHR$(34) + page$ + CHR$(34) + ">" + lnk$ + "</a>"
             ePos& = ePos& + (2 * pal%) + lkl% + 120
         CASE "rich"
-            MID$(eTxt$, ePos&, pal% + lkl% + 108) = "{\field{\*\fldinst HYPERLINK " + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + "}{\fldrslt{" + rtc$ + "\ul0 " + lnk$ + "}}}\cf0 "
+            IF me% OR pc% THEN lkc$ = "\cf2": ELSE lkc$ = "\cf3"
+            MID$(eTxt$, ePos&, pal% + lkl% + 108) = "{\field{\*\fldinst HYPERLINK " + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + "}{\fldrslt{" + lkc$ + "\ul0 " + lnk$ + "}}}\cf0 "
             ePos& = ePos& + pal% + lkl% + 108
         CASE "foru"
-            MID$(eTxt$, ePos&, pal% + lkl% + 84) = "[url=https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + "][color=#4593D8]" + lnk$ + "[/color][/url]"
+            IF me% OR pc% THEN lkc$ = "#55FF55": ELSE lkc$ = "#4593D8"
+            MID$(eTxt$, ePos&, pal% + lkl% + 84) = "[url=https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + "][color=" + lkc$ + "]" + lnk$ + "[/color][/url]"
             ePos& = ePos& + pal% + lkl% + 84
         CASE "wiki"
+            IF me% OR pc% THEN lkc$ = "{{Cm|": ELSE lkc$ = "{{Cl|"
             IF UCASE$(page$) = UCASE$(lnk$) THEN
-                MID$(eTxt$, ePos&, lkl% + 7) = tmp$ + lnk$ + "}}"
+                MID$(eTxt$, ePos&, lkl% + 7) = lkc$ + lnk$ + "}}"
                 ePos& = ePos& + lkl% + 7
             ELSE
-                MID$(eTxt$, ePos&, pal% + lkl% + 8) = tmp$ + page$ + "|" + lnk$ + "}}"
+                MID$(eTxt$, ePos&, pal% + lkl% + 8) = lkc$ + page$ + "|" + lnk$ + "}}"
                 ePos& = ePos& + pal% + lkl% + 8
             END IF
         CASE ELSE: RETURN
