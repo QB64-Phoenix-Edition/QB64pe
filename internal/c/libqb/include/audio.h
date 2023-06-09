@@ -25,11 +25,11 @@
         AUDIO_DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
 #    ifdef _MSC_VER
-#        define AUDIO_DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
+#        define AUDIO_DEBUG_PRINT(_fmt_, ...)       // Don't do anything in release builds
 #    else
 #        define AUDIO_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
 #    endif
-#    define AUDIO_DEBUG_CHECK(_exp_) // Don't do anything in release builds
+#    define AUDIO_DEBUG_CHECK(_exp_)                // Don't do anything in release builds
 #endif
 
 // We always use 48000
@@ -38,7 +38,7 @@
 struct qbs;
 struct mem_block;
 
-void sub_sound(double frequency, double lengthInClockTicks);
+void sub_sound(double frequency, double lengthInClockTicks, double volume, double panning, int32_t waveform, int32_t passed);
 void sub_beep();
 void sub_play(const qbs *str);
 int32_t func_play(int32_t ignore);

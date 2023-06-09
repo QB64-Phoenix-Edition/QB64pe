@@ -439,7 +439,6 @@ extern long double func_val(qbs *s);
 extern void sub_out(int32 port, int32 data);
 extern void sub_randomize(double seed, int32 passed);
 extern float func_rnd(float n, int32 passed);
-extern void sub_sound(double frequency, double lengthinclockticks);
 // following are declared below to allow for inlining
 // extern double func_abs(double d);
 // extern long double func_abs(long double d);
@@ -537,7 +536,6 @@ extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
 extern double func_sqr(double value);
-extern void sub_beep();
 extern void snd_check();
 extern qbs *func_command(int32 index, int32 passed);
 extern int32 func__commandcount();
