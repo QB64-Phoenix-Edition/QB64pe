@@ -531,8 +531,10 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Export program into a Hypertext document"
         menu$(m, i) = "#Rich Text document (.rtf)": i = i + 1
         menuDesc$(m, i - 1) = "Export program into a Rich Text document"
-        menu$(m, i) = "#Wiki prepared sample (.txt)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program into a Wiki code example"
+        menu$(m, i) = "#Forum codebox (to Clipboard)": i = i + 1
+        menuDesc$(m, i - 1) = "Export program as Forum codebox ready to paste in"
+        menu$(m, i) = "#Wiki example (to Clipboard)": i = i + 1
+        menuDesc$(m, i - 1) = "Export program as Wiki example ready to paste in"
         menusize(m) = i - 1
 
         IF os$ = "WIN" THEN
@@ -5634,7 +5636,14 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF menu$(m, s) = "#Wiki prepared sample (.txt)" THEN
+            IF menu$(m, s) = "#Forum codebox (to Clipboard)" THEN
+                PCOPY 2, 0
+                ExportCodeAs "foru"
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "#Wiki example (to Clipboard)" THEN
                 PCOPY 2, 0
                 ExportCodeAs "wiki"
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -20369,21 +20378,28 @@ end sub
 
 SUB ExportCodeAs (docFormat$)
     ' Get the current source code, convert it to the desired document format and
-    ' then write the result into a file (program name or "Untitled" + extension)
-    ' The exported code is highlighted according to the internal keyword lists
-    ' and the keywords are linked to its respective Wiki pages. Also the current
-    ' color theme is utilized for HTML and Rich Text documents, the Wiki however
-    ' has its own fixed blue theme.
+    ' then write the result into a file (program name or "Untitled" + extension).
+    ' Forum and Wiki exports are pushed directly to the Clipboard and can directy
+    ' be pasted into the Forum post or Wiki page. The exported code is highlighted
+    ' according to the internal keyword lists and the keywords are linked to its
+    ' respective Wiki pages. Documents will use the current IDE colors, the Forum
+    ' and Wiki exports use its own fixed blue theme for higlighting. Further in
+    ' documents the extended ASCII codes (>127) are encoded as UTF-8 to get them
+    ' displayed correctly. However, the Forum and Wiki exports keep the original
+    ' codepage encoding. Note that this actually might cause wrong characters in
+    ' the Forum/Wiki, but it is required so that the examples can be copied back
+    ' from the codeboxes into the IDE, which is usually the purpose of examples.
     '----------
     pNam$ = ideprogname$: IF pNam$ = "" THEN pNam$ = "Untitled" + tempfolderindexstr$ + ".bas"
     SELECT CASE LCASE$(docFormat$)
         CASE "html": ext$ = ".htm"
         CASE "rich": ext$ = ".rtf"
-        CASE "wiki": ext$ = ".txt"
         CASE ELSE: ext$ = ""
     END SELECT
-    IF _FILEEXISTS(idepath$ + idepathsep$ + pNam$ + ext$) THEN
-        IF ideyesnobox$("Export As...", "Overwrite file " + pNam$ + ext$) = "N" THEN EXIT SUB
+    IF ext$ <> "" THEN
+        IF _FILEEXISTS(idepath$ + idepathsep$ + pNam$ + ext$) THEN
+            IF ideyesnobox$("Export As...", "Overwrite file " + pNam$ + ext$) = "N" THEN EXIT SUB
+        END IF
     END IF
     GOSUB GetThemeColors
     cEol$ = CHR$(10) '       '=> line break char(s)
@@ -20589,7 +20605,7 @@ SUB ExportCodeAs (docFormat$)
                     END IF
                 END IF
             CASE IS > 127 'ext. ASCII
-                GOSUB EscapeChar 'html, rtf, wiki
+                GOSUB EscapeChar 'html, rtf, forum, wiki
             CASE ELSE 'control, non-semantics, type suffix w/o further meaning
                 nt% = 0
         END SELECT
@@ -20604,29 +20620,38 @@ SUB ExportCodeAs (docFormat$)
     WEND
     GOSUB CloseCodeBlock
     '----------
-    ideerror = 7
-    OPEN idepath$ + idepathsep$ + pNam$ + ext$ FOR OUTPUT AS #151
-    ideerror = 1
-    PRINT #151, LEFT$(eTxt$, ePos& - 1);
-    CLOSE #151
     PCOPY 2, 3
+    SELECT CASE LCASE$(docFormat$)
+        CASE "html", "rich"
+            ideerror = 7
+            OPEN idepath$ + idepathsep$ + pNam$ + ext$ FOR OUTPUT AS #151
+            ideerror = 1
+            PRINT #151, LEFT$(eTxt$, ePos& - 1);
+            CLOSE #151
+            ok% = idemessagebox("Export As...", "Export to " + pNam$ + ext$ + " completed.", "")
+        CASE "foru", "wiki"
+            _CLIPBOARD$ = LEFT$(eTxt$, ePos& - 1)
+            ok% = idemessagebox("Export As...", "Forum/Wiki export to Clipboard completed.", "")
+    END SELECT
     EXIT SUB
     '------------------------------
     OpenCodeBlock:
     SELECT CASE LCASE$(docFormat$)
         CASE "html": tmp$ = "<!DOCTYPE html><html lang=" + CHR$(34) + "en" + CHR$(34) + "><head><meta charset=" + CHR$(34) + "UTF-8" + CHR$(34) + "><title>" + AnsiTextToUtf8Text$(pNam$) + "</title></head><body><pre style=" + CHR$(34) + "font-size: 18px; background-color: " + bgc$ + "; color: " + txc$ + ";" + CHR$(34) + ">"
         CASE "rich": tmp$ = "{\rtf1\ansi\deff0{\fonttbl{\f0 Courier New;}}{\colortbl " + rtc$ + "}\pard\f0\fs32\cbpat6\paperh23811\paperw16838\margl142\margr142\margt142\margb142"
+        CASE "foru": tmp$ = "[qb=export]"
         CASE "wiki": tmp$ = "{{CodeStart}}"
         CASE ELSE: RETURN
     END SELECT
     MID$(eTxt$, ePos&, LEN(tmp$)) = tmp$: ePos& = ePos& + LEN(tmp$)
-    MID$(eTxt$, ePos&, LEN(cEol$)) = cEol$: ePos& = ePos& + LEN(cEol$)
+    IF LCASE$(docFormat$) <> "foru" THEN MID$(eTxt$, ePos&, LEN(cEol$)) = cEol$: ePos& = ePos& + LEN(cEol$)
     RETURN
     '----------
     CloseCodeBlock:
     SELECT CASE LCASE$(docFormat$)
         CASE "html": tmp$ = "</pre></body></html>"
         CASE "rich": tmp$ = "}": ePos& = ePos& - 4 'remove final /par
+        CASE "foru": tmp$ = "[/qb]"
         CASE "wiki": tmp$ = "{{CodeEnd}}"
         CASE ELSE: RETURN
     END SELECT
@@ -20652,6 +20677,13 @@ SUB ExportCodeAs (docFormat$)
                 CASE "qu": tmp$ = "\cf5 "
                 CASE ELSE: RETURN
             END SELECT
+        CASE "foru"
+            SELECT CASE LCASE$(what$)
+                CASE "co": tmp$ = "[color=#919191]"
+                CASE "nu": tmp$ = "[color=#F580B1]"
+                CASE "qu": tmp$ = "[color=#FFB100]"
+                CASE ELSE: RETURN
+            END SELECT
         CASE "wiki"
             SELECT CASE LCASE$(what$)
                 CASE "co", "qu": tmp$ = "{{Text|<nowiki>"
@@ -20674,6 +20706,11 @@ SUB ExportCodeAs (docFormat$)
         CASE "rich"
             SELECT CASE LCASE$(what$)
                 CASE "co", "nu", "qu": tmp$ = "\cf0 "
+                CASE ELSE: RETURN
+            END SELECT
+        CASE "foru"
+            SELECT CASE LCASE$(what$)
+                CASE "co", "nu", "qu": tmp$ = "[/color]"
                 CASE ELSE: RETURN
             END SELECT
         CASE "wiki"
@@ -20790,21 +20827,28 @@ SUB ExportCodeAs (docFormat$)
     IF cu% GOTO CustomNoLink
     GOSUB FindWikiPage
     IF me% AND le% AND co% THEN post% = 0: what$ = "co": GOSUB CloseText: co% = 0
-    IF me% OR pc% THEN lnk$ = me$: tmp$ = "{{Cm|": lkc$ = mec$: rtc$ = "\cf2": ELSE lnk$ = kw$: tmp$ = "{{Cl|": lkc$ = kwc$: rtc$ = "\cf3"
+    IF me% OR pc% THEN lnk$ = me$: ELSE lnk$ = kw$
     pal% = LEN(page$): lkl% = LEN(lnk$)
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
+            IF me% OR pc% THEN lkc$ = mec$: ELSE lkc$ = kwc$
             MID$(eTxt$, ePos&, (2 * pal%) + lkl% + 120) = "<a style=" + CHR$(34) + "text-decoration: none; color: " + lkc$ + ";" + CHR$(34) + " href=" + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + " title=" + CHR$(34) + page$ + CHR$(34) + ">" + lnk$ + "</a>"
             ePos& = ePos& + (2 * pal%) + lkl% + 120
         CASE "rich"
-            MID$(eTxt$, ePos&, pal% + lkl% + 108) = "{\field{\*\fldinst HYPERLINK " + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + "}{\fldrslt{" + rtc$ + "\ul0 " + lnk$ + "}}}\cf0 "
+            IF me% OR pc% THEN lkc$ = "\cf2": ELSE lkc$ = "\cf3"
+            MID$(eTxt$, ePos&, pal% + lkl% + 108) = "{\field{\*\fldinst HYPERLINK " + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + "}{\fldrslt{" + lkc$ + "\ul0 " + lnk$ + "}}}\cf0 "
             ePos& = ePos& + pal% + lkl% + 108
+        CASE "foru"
+            IF me% OR pc% THEN lkc$ = "#55FF55": ELSE lkc$ = "#4593D8"
+            MID$(eTxt$, ePos&, pal% + lkl% + 84) = "[url=https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + "][color=" + lkc$ + "]" + lnk$ + "[/color][/url]"
+            ePos& = ePos& + pal% + lkl% + 84
         CASE "wiki"
+            IF me% OR pc% THEN lkc$ = "{{Cm|": ELSE lkc$ = "{{Cl|"
             IF UCASE$(page$) = UCASE$(lnk$) THEN
-                MID$(eTxt$, ePos&, lkl% + 7) = tmp$ + lnk$ + "}}"
+                MID$(eTxt$, ePos&, lkl% + 7) = lkc$ + lnk$ + "}}"
                 ePos& = ePos& + lkl% + 7
             ELSE
-                MID$(eTxt$, ePos&, pal% + lkl% + 8) = tmp$ + page$ + "|" + lnk$ + "}}"
+                MID$(eTxt$, ePos&, pal% + lkl% + 8) = lkc$ + page$ + "|" + lnk$ + "}}"
                 ePos& = ePos& + pal% + lkl% + 8
             END IF
         CASE ELSE: RETURN
@@ -20821,6 +20865,9 @@ SUB ExportCodeAs (docFormat$)
         CASE "rich"
             MID$(eTxt$, ePos&, kwl% + 10) = "\cf2 " + kw$ + "\cf0 "
             ePos& = ePos& + kwl% + 10
+        CASE "foru"
+            MID$(eTxt$, ePos&, kwl% + 23) = "[color=#55FF55]" + kw$ + "[/color]"
+            ePos& = ePos& + kwl% + 23
         CASE "wiki"
             MID$(eTxt$, ePos&, kwl% + 17) = "{{Text|" + kw$ + "|#55FF55}}"
             ePos& = ePos& + kwl% + 17
@@ -20856,8 +20903,8 @@ SUB ExportCodeAs (docFormat$)
                     ech$ = "\u" + LTRIM$(STR$(uni&)) + "\'bf": sk% = -1
                 CASE ELSE: RETURN
             END SELECT
-        CASE "wiki" '         'Keeps the original encoding, so Wiki examples can be copied
-            SELECT CASE curr% 'back to the IDE. However, chars appear wrong in the Wiki.
+        CASE "foru", "wiki" ' 'Keeps the original encoding, so Forum/Wiki examples can be copied
+            SELECT CASE curr% 'back to the IDE. However, chars appear wrong in the Forum/Wiki.
                 CASE IS > 127: ech$ = "&#" + LTRIM$(STR$(curr%)) + ";": sk% = -1
                 CASE ELSE: RETURN
             END SELECT
