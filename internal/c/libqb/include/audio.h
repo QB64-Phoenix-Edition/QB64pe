@@ -40,7 +40,7 @@ struct mem_block;
 
 void sub_sound(double frequency, double lengthInClockTicks);
 void sub_beep();
-void sub_play(qbs *str);
+void sub_play(const qbs *str);
 int32_t func_play(int32_t ignore);
 
 int32_t func__sndrate();
