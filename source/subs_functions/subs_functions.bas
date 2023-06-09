@@ -3024,7 +3024,7 @@ id.subfunc = 2
 id.callname = "sub_sound"
 id.args = 5
 id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "?,?[,[?][,[?][,[?]]]]"
+id.specialformat = "?,?[,[?][,[?][,?]]]"
 id.hr_syntax = "SOUND frequency#, duration#[, volume#][, panning#][, waveform&]"
 regid
 
