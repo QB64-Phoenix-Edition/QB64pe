@@ -59,9 +59,6 @@ void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 void new_mem_lock();                                                // This is required for MemSound()
 void free_mem_lock(mem_lock *lock);                                 // Same as above
-#ifndef QB64_WINDOWS
-void Sleep(uint32 milliseconds);                                    // There is a non-Windows implementation. However it is not declared anywhere
-#endif
 
 extern ptrszint dblock;         // Required for Play(). Did not find this declared anywhere
 extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
