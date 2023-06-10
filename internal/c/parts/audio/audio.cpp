@@ -132,6 +132,7 @@ struct RawStream {
     /// @brief This pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread
     /// @param buffer The buffer containing the sample frames. This cannot be NULL
     /// @param frames The total number of frames in the buffer
+    /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right))
     void PushMonoSampleFrames(float *buffer, ma_uint64 frames, float panning = 0.0f) {
         libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
         for (ma_uint64 i = 0; i < frames; i++) {
@@ -473,7 +474,7 @@ class PSG {
     static const auto MIN_TEMPO = 32;
     static const auto MAX_TEMPO = 255;
     static const auto DEFAULT_TEMPO = 120;
-    static const auto MAX_OCTAVE = 7;
+    static const auto MAX_OCTAVE = 6;
     static const auto DEFAULT_OCTAVE = 4;
     static const auto MIN_LENGTH = 1;
     static const auto MAX_LENGTH = 64;
