@@ -11,16 +11,16 @@
 //
 //  https://github.com/pete-gordon/hivelytracker (BSD 3-Clause)
 //
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
-//
 //--------------------------------------------------------------------------------------------------
 
 #include "../miniaudio.h"
 #include "audio.h"
 #include "filepath.h"
-#include "hivelytracker/hvl_replay.h"
 #include <cstring>
+
+#include "hivelytracker/hvl_replay.h"
+
+#include "vtables.h"
 
 constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximium *hively* frames before timeout
 
@@ -522,7 +522,12 @@ static void ma_decoding_backend_uninit__hively(void *pUserData, ma_data_source *
     ma_free(pmaHively, pAllocationCallbacks);
 }
 
-ma_decoding_backend_vtable ma_vtable_hively = {ma_decoding_backend_init__hively, ma_decoding_backend_init_file__hively, NULL, /* onInitFileW() */
-                                               NULL,                                                                          /* onInitMemory() */
-                                               ma_decoding_backend_uninit__hively};
-//-----------------------------------------------------------------------------------------------------
+// clang-format off
+ma_decoding_backend_vtable ma_vtable_hively = {
+    ma_decoding_backend_init__hively,
+    ma_decoding_backend_init_file__hively,
+    NULL, /* onInitFileW() */
+    NULL, /* onInitMemory() */
+    ma_decoding_backend_uninit__hively
+};
+// clang-format on

@@ -7,56 +7,24 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//	This implements a data source that decodes Reality Adlib Tracker 2 tunes
-//	https://realityproductions.itch.io/rad (Public Domain)
-//
-//	From:	Willy Reeve <shayde0@gmail.com>
-//	Sent:	Sunday, 7 August, 2022 01:23 PM
-//	To:	Samuel Gomes <v_2samg@hotmail.com>
-//	Cc:	Carl Pettitt <carl@clonestudios.co.uk>
-//	Subject:	Re: Contact from Reality website
-//
-//	Hi Samuel,
-//
-//	The player source code is Public Domain.
-//
-//	Shayde
-//
-//	On Fri, Aug 5, 2022 at 6:33 AM Reality website <rogue@3eality.com> wrote:
-//	Contact from the Reality website:
-//	Name: Samuel Gomes
-//	Email: v_2samg@hotmail.com
-//	Message:
-//
-//	RADv2 - great stuff! I am planning to integrate the included player code in my projects. Can you please
-//	let me know the license type for the player code? If there is one, putting it somewhere on the site or
-//	zip would be fantastic!
-//
-//	Thanks!
-//
-//	Copyright (c) 2022 Samuel Gomes
-//	https://github.com/a740g
+//  This implements a data source that decodes Reality Adlib Tracker 2 tunes
+//  https://realityproductions.itch.io/rad (Public Domain)
 //
 //-----------------------------------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
-#include "libqb-common.h"
-#include "audio.h"
-#include "filepath.h"
-
-#include <string.h>
-#include <stdio.h>
 
 #include "../miniaudio.h"
+#include "audio.h"
+#include "filepath.h"
+#include "libqb-common.h"
+#include <stdio.h>
+#include <string.h>
+
 #include "radv2/opal.cpp"
 #define RAD_DETECT_REPEATS 1
 #include "radv2/player20.cpp"
 #include "radv2/validate20.cpp"
 
 #include "vtables.h"
-//-----------------------------------------------------------------------------------------------------
 
 struct ma_radv2 {
     // This part is for miniaudio
@@ -234,8 +202,15 @@ static ma_result ma_radv2_ds_get_length(ma_data_source *pDataSource, ma_uint64 *
     return ma_radv2_get_length_in_pcm_frames((ma_radv2 *)pDataSource, pLength);
 }
 
-static ma_data_source_vtable ma_data_source_vtable_radv2 = {ma_radv2_ds_read, ma_radv2_ds_seek, ma_radv2_ds_get_data_format, ma_radv2_ds_get_cursor,
-                                                            ma_radv2_ds_get_length};
+// clang-format off
+static ma_data_source_vtable ma_data_source_vtable_radv2 = {
+    ma_radv2_ds_read,
+    ma_radv2_ds_seek,
+    ma_radv2_ds_get_data_format,
+    ma_radv2_ds_get_cursor,
+    ma_radv2_ds_get_length
+};
+// clang-format on
 
 static int ma_radv2_of_callback__read(void *pUserData, unsigned char *pBufferOut, int bytesToRead) {
     ma_radv2 *pRadv2 = (ma_radv2 *)pUserData;
@@ -609,6 +584,7 @@ static void ma_decoding_backend_uninit__radv2(void *pUserData, ma_data_source *p
     ma_free(pRadv2, pAllocationCallbacks);
 }
 
+// clang-format off
 ma_decoding_backend_vtable ma_vtable_radv2 = {
     ma_decoding_backend_init__radv2,
     ma_decoding_backend_init_file__radv2,
@@ -616,4 +592,4 @@ ma_decoding_backend_vtable ma_vtable_radv2 = {
     NULL, /* onInitMemory() */
     ma_decoding_backend_uninit__radv2
 };
-//-----------------------------------------------------------------------------------------------------
+// clang-format on

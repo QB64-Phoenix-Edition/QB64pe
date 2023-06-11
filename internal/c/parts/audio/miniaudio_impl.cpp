@@ -7,9 +7,6 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
-//
 //-----------------------------------------------------------------------------------------------------
 
 // Enable Ogg Vorbis decoding

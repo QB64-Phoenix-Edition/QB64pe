@@ -3022,9 +3022,10 @@ clearid
 id.n = "Sound": id.Dependency = DEPENDENCY_AUDIO_OUT
 id.subfunc = 2
 id.callname = "sub_sound"
-id.args = 2
-id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
-id.hr_syntax = "SOUND frequency, duration"
+id.args = 5
+id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "?,?[,[?][,[?][,?]]]"
+id.hr_syntax = "SOUND frequency#, duration#[, volume#][, panning#][, waveform&]"
 regid
 
 clearid
