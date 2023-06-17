@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@ xmp_context xmp_create_context(void)
 {
 	struct context_data *ctx;
 
-	ctx = calloc(1, sizeof(struct context_data));
+	ctx = (struct context_data *) calloc(1, sizeof(struct context_data));
 	if (ctx == NULL) {
 		return NULL;
 	}
@@ -117,13 +117,9 @@ static void set_position(struct context_data *ctx, int pos, int dir)
 			} else {
 				p->pos = pos;
 			}
-			f->jumpline = 0;
-			f->jump = -1;
-			f->pbreak = 0;
-			f->loop_chn = 0;
-			f->delay = 0;
-			f->rowdelay = 0;
-			f->rowdelay_set = 0;
+			/* Clear flow vars to prevent old pattern jumps and
+			 * other junk from executing in the new position. */
+			libxmp_reset_flow(ctx);
 		}
 	}
 }
@@ -185,16 +181,17 @@ int xmp_set_row(xmp_context opaque, int row)
 	struct xmp_module *mod = &m->mod;
 	struct flow_control *f = &p->flow;
 	int pos = p->pos;
-	int pattern = mod->xxo[pos];
+	int pattern;
 
 	if (pos < 0 || pos >= mod->len) {
 		pos = 0;
 	}
+	pattern = mod->xxo[pos];
 
 	if (ctx->state < XMP_STATE_PLAYING)
 		return -XMP_ERROR_STATE;
 
-	if (row >= mod->xxp[pattern]->rows)
+	if (pattern >= mod->pat || row >= mod->xxp[pattern]->rows)
 		return -XMP_ERROR_INVALID;
 
 	/* See set_position. */
@@ -309,18 +306,22 @@ int xmp_channel_vol(xmp_context opaque, int chn, int vol)
 }
 
 #ifdef USE_VERSIONED_SYMBOLS
-LIBXMP_EXPORT extern int xmp_set_player_v40__(xmp_context, int, int);
-LIBXMP_EXPORT extern int xmp_set_player_v41__(xmp_context, int, int)
-			__attribute__((alias("xmp_set_player_v40__")));
-LIBXMP_EXPORT extern int xmp_set_player_v43__(xmp_context, int, int)
-			__attribute__((alias("xmp_set_player_v40__")));
-LIBXMP_EXPORT extern int xmp_set_player_v44__(xmp_context, int, int)
-			__attribute__((alias("xmp_set_player_v40__")));
+LIBXMP_BEGIN_DECLS /* no name-mangling */
+LIBXMP_EXPORT_VERSIONED extern int xmp_set_player_v40__(xmp_context, int, int) LIBXMP_ATTRIB_SYMVER("xmp_set_player@XMP_4.0");
+LIBXMP_EXPORT_VERSIONED extern int xmp_set_player_v41__(xmp_context, int, int)
+			__attribute__((alias("xmp_set_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_set_player@XMP_4.1");
+LIBXMP_EXPORT_VERSIONED extern int xmp_set_player_v43__(xmp_context, int, int)
+			__attribute__((alias("xmp_set_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_set_player@XMP_4.3");
+LIBXMP_EXPORT_VERSIONED extern int xmp_set_player_v44__(xmp_context, int, int)
+			__attribute__((alias("xmp_set_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_set_player@@XMP_4.4");
 
+#ifndef HAVE_ATTRIBUTE_SYMVER
 asm(".symver xmp_set_player_v40__, xmp_set_player@XMP_4.0");
 asm(".symver xmp_set_player_v41__, xmp_set_player@XMP_4.1");
 asm(".symver xmp_set_player_v43__, xmp_set_player@XMP_4.3");
 asm(".symver xmp_set_player_v44__, xmp_set_player@@XMP_4.4");
+#endif
+LIBXMP_END_DECLS
 
 #define xmp_set_player__ xmp_set_player_v40__
 #else
@@ -427,21 +428,25 @@ int xmp_set_player__(xmp_context opaque, int parm, int val)
 }
 
 #ifdef USE_VERSIONED_SYMBOLS
-LIBXMP_EXPORT extern int xmp_get_player_v40__(xmp_context, int);
-LIBXMP_EXPORT extern int xmp_get_player_v41__(xmp_context, int)
-		__attribute__((alias("xmp_get_player_v40__")));
-LIBXMP_EXPORT extern int xmp_get_player_v42__(xmp_context, int)
-		__attribute__((alias("xmp_get_player_v40__")));
-LIBXMP_EXPORT extern int xmp_get_player_v43__(xmp_context, int)
-		__attribute__((alias("xmp_get_player_v40__")));
-LIBXMP_EXPORT extern int xmp_get_player_v44__(xmp_context, int)
-		__attribute__((alias("xmp_get_player_v40__")));
+LIBXMP_BEGIN_DECLS /* no name-mangling */
+LIBXMP_EXPORT_VERSIONED extern int xmp_get_player_v40__(xmp_context, int) LIBXMP_ATTRIB_SYMVER("xmp_get_player@XMP_4.0");
+LIBXMP_EXPORT_VERSIONED extern int xmp_get_player_v41__(xmp_context, int)
+		__attribute__((alias("xmp_get_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_get_player@XMP_4.1");
+LIBXMP_EXPORT_VERSIONED extern int xmp_get_player_v42__(xmp_context, int)
+		__attribute__((alias("xmp_get_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_get_player@XMP_4.2");
+LIBXMP_EXPORT_VERSIONED extern int xmp_get_player_v43__(xmp_context, int)
+		__attribute__((alias("xmp_get_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_get_player@XMP_4.3");
+LIBXMP_EXPORT_VERSIONED extern int xmp_get_player_v44__(xmp_context, int)
+		__attribute__((alias("xmp_get_player_v40__"))) LIBXMP_ATTRIB_SYMVER("xmp_get_player@@XMP_4.4");
 
+#ifndef HAVE_ATTRIBUTE_SYMVER
 asm(".symver xmp_get_player_v40__, xmp_get_player@XMP_4.0");
 asm(".symver xmp_get_player_v41__, xmp_get_player@XMP_4.1");
 asm(".symver xmp_get_player_v42__, xmp_get_player@XMP_4.2");
 asm(".symver xmp_get_player_v43__, xmp_get_player@XMP_4.3");
 asm(".symver xmp_get_player_v44__, xmp_get_player@@XMP_4.4");
+#endif
+LIBXMP_END_DECLS
 
 #define xmp_get_player__ xmp_get_player_v40__
 #else
@@ -554,7 +559,7 @@ int xmp_set_instrument_path(xmp_context opaque, const char *path)
 	if (m->instrument_path != NULL)
 		free(m->instrument_path);
 
-	m->instrument_path = strdup(path);
+	m->instrument_path = libxmp_strdup(path);
 	if (m->instrument_path == NULL) {
 		return -XMP_ERROR_SYSTEM;
 	}

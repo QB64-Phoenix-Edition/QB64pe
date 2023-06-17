@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BUILDING_STATIC 1
+#define LIBXMP_STATIC 1
 #include "libxmp-lite/xmp.h"
 
 #include "vtables.h"
