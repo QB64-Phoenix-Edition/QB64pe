@@ -11,7 +11,7 @@
 #include "image.h"
 #include "libqb-common.h"
 #include "mutex.h"
-#include <cmath>
+#include "rounding.h"
 #include <cstdio>
 #include <unordered_map>
 #include <vector>
@@ -813,8 +813,8 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
 
     fontManager.fonts[h]->defaultHeight = default_pixel_height; // save default pixel height
     fontManager.fonts[h]->baseline =
-        lroundf((((float)fontManager.fonts[h]->face->size->metrics.ascender / 64.0f) / ((float)fontManager.fonts[h]->face->size->metrics.height / 64.0f)) *
-                (float)default_pixel_height);
+        (FT_Pos)qbr((((double)fontManager.fonts[h]->face->size->metrics.ascender / 64.0) / ((double)fontManager.fonts[h]->face->size->metrics.height / 64.0)) *
+                    (double)default_pixel_height);
     fontManager.fonts[h]->options = options; // save the options for use later
 
     if (options & FONT_LOAD_MONOSPACE) {
@@ -1031,7 +1031,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
 
-    return lroundf((float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight);
+    return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
 }
 
 /// @brief Returns the text widht in pixels
@@ -1131,7 +1131,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
 
-    return lroundf(((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2.0f);
+    return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2.0f;
 }
 
 /// @brief This renders text on an active destination (graphics mode only) using the currently selected color
@@ -1225,7 +1225,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         fnt = fontManager.fonts[font[qb64_fh]];
         face = fnt->face;
         strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
-        strPixSize.y = lroundf((float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight);
+        strPixSize.y = (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
     }
 
     if (max_width && max_width < strPixSize.x)
@@ -1281,7 +1281,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         FONT_DEBUG_PRINT("Rendering using TrueType font");
 
         // Render using custom font
-        pen.y += lroundf((float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight);
+        pen.y += (float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight;
 
         if (fnt->monospaceWidth) {
             // Monospace rendering
@@ -1326,6 +1326,17 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                     previousGlyph = glyph;                // save the current glyph pointer for use later
                 }
             }
+        }
+    }
+
+    // Resolve coordinates based on current viewport settings
+    if (write_page->clipping_or_scaling) {
+        if (write_page->clipping_or_scaling == 2) {
+            start_x = qbr_float_to_long((float)start_x * write_page->scaling_x + write_page->scaling_offset_x) + write_page->view_offset_x;
+            start_y = qbr_float_to_long((float)start_y * write_page->scaling_y + write_page->scaling_offset_y) + write_page->view_offset_y;
+        } else {
+            start_x += write_page->view_offset_x;
+            start_y += write_page->view_offset_y;
         }
     }
 
@@ -1397,7 +1408,8 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                     float r3 = r1 + dr * d;
                     float g3 = g1 + dg * d;
                     float b3 = b1 + db * d;
-                    pset_and_clip(start_x + pen.x, start_y + pen.y, IMAGE_MAKE_BGRA(lroundf(r3), lroundf(g3), lroundf(b3), lroundf(alpha3)));
+                    pset_and_clip(start_x + pen.x, start_y + pen.y,
+                                  IMAGE_MAKE_BGRA(qbr_float_to_long(r3), qbr_float_to_long(g3), qbr_float_to_long(b3), qbr_float_to_long(alpha3)));
                 }
             }
         } break;
