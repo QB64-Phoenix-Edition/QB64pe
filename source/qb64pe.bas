@@ -4605,7 +4605,7 @@ DO
                                 '--------------------------(without path)------------------------------
                                 'check for .dll (direct)
                                 IF LEN(libname$) = 0 THEN
-                                    IF _FILEEXISTS(x$ + ".dll") THEN
+                                    IF _FILEEXISTS(x$ + ".dll") OR _FILEEXISTS(FixDirectoryName(path.source$) + x$ + ".dll") OR _FILEEXISTS(FixDirectoryName(idepath$) + x$ + ".dll") THEN
                                         libname$ = x$ + ".dll"
                                         inlinelibname$ = x$ + ".dll"
                                     END IF
@@ -4703,14 +4703,14 @@ DO
                                 IF MacOSX THEN 'dylib support
                                     'check for .dylib (direct)
                                     IF LEN(libname$) = 0 THEN
-                                        IF _FILEEXISTS("lib" + x$ + "." + libver$ + ".dylib") THEN
+                                        IF _FILEEXISTS("lib" + x$ + "." + libver$ + ".dylib") OR _FILEEXISTS(FixDirectoryName(path.source$) + "lib" + x$ + "." + libver$ + ".dylib") OR _FILEEXISTS(FixDirectoryName(idepath$) + "lib" + x$ + "." + libver$ + ".dylib") THEN
                                             libname$ = "lib" + x$ + "." + libver$ + ".dylib"
                                             inlinelibname$ = "lib" + x$ + "." + libver$ + ".dylib"
                                             libname$ = "./" + libname$: inlinelibname$ = "./" + inlinelibname$
                                         END IF
                                     END IF
                                     IF LEN(libname$) = 0 THEN
-                                        IF _FILEEXISTS("lib" + x$ + ".dylib") THEN
+                                        IF _FILEEXISTS("lib" + x$ + ".dylib") OR _FILEEXISTS(FixDirectoryName(path.source$) + "lib" + x$ + ".dylib") OR _FILEEXISTS(FixDirectoryName(idepath$) + "lib" + x$ + ".dylib") THEN
                                             libname$ = "lib" + x$ + ".dylib"
                                             inlinelibname$ = "lib" + x$ + ".dylib"
                                             libname$ = "./" + libname$: inlinelibname$ = "./" + inlinelibname$
@@ -4720,14 +4720,14 @@ DO
 
                                 'check for .so (direct)
                                 IF LEN(libname$) = 0 THEN
-                                    IF _FILEEXISTS("lib" + x$ + ".so." + libver$) THEN
+                                    IF _FILEEXISTS("lib" + x$ + ".so." + libver$) OR _FILEEXISTS(FixDirectoryName(path.source$) + "lib" + x$ + ".so." + libver$) OR _FILEEXISTS(FixDirectoryName(idepath$) + "lib" + x$ + ".so." + libver$) THEN
                                         libname$ = "lib" + x$ + ".so." + libver$
                                         inlinelibname$ = "lib" + x$ + ".so." + libver$
                                         libname$ = "./" + libname$: inlinelibname$ = "./" + inlinelibname$
                                     END IF
                                 END IF
                                 IF LEN(libname$) = 0 THEN
-                                    IF _FILEEXISTS("lib" + x$ + ".so") THEN
+                                    IF _FILEEXISTS("lib" + x$ + ".so") OR _FILEEXISTS(FixDirectoryName(path.source$) + "lib" + x$ + ".so") OR _FILEEXISTS(FixDirectoryName(idepath$) + "lib" + x$ + ".so") THEN
                                         libname$ = "lib" + x$ + ".so"
                                         inlinelibname$ = "lib" + x$ + ".so"
                                         libname$ = "./" + libname$: inlinelibname$ = "./" + inlinelibname$
