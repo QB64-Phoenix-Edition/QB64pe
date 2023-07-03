@@ -133,7 +133,7 @@ all: $(EXE)
 CLEAN_LIST :=
 CLEAN_DEP_LIST :=
 
-CXXFLAGS += -w -std=gnu++11
+CXXFLAGS += -w -std=gnu++14
 
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
