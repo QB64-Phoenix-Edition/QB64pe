@@ -6401,13 +6401,18 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 IF ideprogname = "" THEN
                     ProposedTitle$ = FindProposedTitle$
-                    IF ProposedTitle$ = "" THEN
-                        a$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                    IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                    IF UseGuiDialogs Then
+                        a$ = Savefile$ (ProposedTitle$ + ".bas")
                     ELSE
                         a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                     END IF
                 ELSE
-                    a$ = idefiledialog$(ideprogname$, 2)
+                    IF UseGuiDialogs Then
+                        a$ = Savefile$ (ideprogname$)
+                    ELSE
+                        a$ = idefiledialog$(ideprogname$, 2)
+                    END IF
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 IF ideerror > 1 THEN GOTO IDEerrorMessage
@@ -20285,6 +20290,31 @@ end sub
 '    IF TIMER > t! + timelimit THEN CLOSE theClient: theClient = 0: Download = MKI$(3): prevUrl$ = "": EXIT FUNCTION
 '    Download = MKI$(0) 'still working
 'END FUNCTION
+
+Function SaveFile$ (IdeOpenFile as string)
+                STATIC Default_StartDir$
+
+                IF Default_StartDir$ = "" THEN
+                    Default_StartDir$ = _STARTDIR$
+                    if Right$(Default_StartDir$, 1) <> idepathsep$ then Default_StartDir$ = Default_StartDir$ + idepathsep$
+                END IF
+
+                f$ = _SaveFileDialog$("Save As", Default_StartDir$ + path$ + IdeOpenFile, ".bas", "QB64PE BAS file")
+                IF RIght$(Ucase$(f$),4) <> ".BAS" THEN f$ = f$ + ".bas"
+
+                ideerror = 3
+                OPEN f$ FOR BINARY AS #150
+                ideerror = 1
+                ideprogname$ = f$: _TITLE ideprogname + " - " + WindowTitle
+                idesave f$
+                idepath$ = path$
+                IdeAddRecent f$
+                IdeSaveBookmarks f$
+                CLOSE #150
+end sub
+
+
+
 
 Function OpenFile$ (IdeOpenFile as string)'load routine copied/pasted from the old IDE file load/save dialog routines
 
