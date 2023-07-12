@@ -6356,10 +6356,11 @@ FUNCTION ide2 (ignore)
                     IF r$ = "Y" THEN
                         IF ideprogname = "" THEN
                             ProposedTitle$ = FindProposedTitle$
-                            IF ProposedTitle$ = "" THEN
-                                r$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                            IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                            IF UseGuiDialogs Then
+                                a$ = Savefile$ (ProposedTitle$ + ".bas")
                             ELSE
-                                r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
+                                a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF
                             IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
                             IF r$ = "C" THEN GOTO ideloop
@@ -6384,14 +6385,14 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 IF ideprogname = "" THEN
                     ProposedTitle$ = FindProposedTitle$
-                    IF ProposedTitle$ = "" THEN
-                        a$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                    IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                    IF UseGuiDialogs Then
+                        a$ = Savefile$ (ProposedTitle$ + ".bas")
                     ELSE
                         a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                     END IF
-                    IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
                 ELSE
-                    idesave idepath$ + idepathsep$ + ideprogname$
+                    idesave idepath$ + idepathsep$ + ideprogname
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0: GOTO ideloop
             END IF
@@ -20300,16 +20301,20 @@ Function SaveFile$ (IdeOpenFile as string)
                 END IF
 
                 f$ = _SaveFileDialog$("Save As", Default_StartDir$ + path$ + IdeOpenFile, ".bas", "QB64PE BAS file")
-                IF RIght$(Ucase$(f$),4) <> ".BAS" THEN f$ = f$ + ".bas"
+                if f$ = "" THEN EXIT FUNCTION 'someone canceled the input.
+                IF FileHasExtension(f$) = 0 THEN f$ = f$ + ".bas"
+                path$ = idezgetfilepath$(ideroot$, f$)
+                pathseppos =  _INSTRREV(f$, idepathsep$)
+                IF pathseppos > 0 THEN f$ = Mid$(f$, pathseppos +1)
 
                 ideerror = 3
-                OPEN f$ FOR BINARY AS #150
+                OPEN path$ + idepathsep$ + f$ FOR BINARY AS #150
                 ideerror = 1
                 ideprogname$ = f$: _TITLE ideprogname + " - " + WindowTitle
-                idesave f$
+                idesave path$ + idepathsep$ + f$
                 idepath$ = path$
-                IdeAddRecent f$
-                IdeSaveBookmarks f$
+                IdeAddRecent path$ + idepathsep$ + f$
+                IdeSaveBookmarks path$ + idepathsep$ + f$
                 CLOSE #150
 end sub
 
