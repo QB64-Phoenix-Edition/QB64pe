@@ -989,31 +989,24 @@ void fgSetWindow ( SFG_Window *window )
  */
 void fghComputeWindowRectFromClientArea_UseStyle( const DWORD windowStyle, RECT *clientRect, BOOL posIsOutside )
 {
-    int xBorderWidth = 0, yBorderWidth = 0;
+    RECT windowRect = {0, 0, 0, 0};
+    DWORD windowExStyle = 0;
+    
+    CopyRect(&windowRect, clientRect);
 
-    /* If window has title bar, correct rect for it */
-    if (windowStyle & WS_SYSMENU) /* Need to query for WS_SYSMENU to see if we have a title bar, the WS_CAPTION query is also true for a WS_DLGFRAME only... */
-        if (posIsOutside)
-            clientRect->bottom += GetSystemMetrics( SM_CYCAPTION );
-        else
-            clientRect->top -= GetSystemMetrics( SM_CYCAPTION );
+    /* Get rect including non-client area */
+    AdjustWindowRectEx(&windowRect, windowStyle, FALSE, windowExStyle);
 
-    /* get width of window's borders (frame), correct rect for it.
-     * Note, borders can be of zero width if style does not specify borders
-     */
-    fghGetBorderWidth(windowStyle, &xBorderWidth, &yBorderWidth);
-    if (posIsOutside)
-    {
-        clientRect->right  += xBorderWidth * 2;
-        clientRect->bottom += yBorderWidth * 2;
+    /* Move window right and down by non-client area extent on left and top, if wanted */
+    if (posIsOutside) {
+        windowRect.right += clientRect->left - windowRect.left;
+        windowRect.bottom += clientRect->top - windowRect.top;
+        windowRect.left = clientRect->left;
+        windowRect.top = clientRect->top;
     }
-    else
-    {
-        clientRect->left   -= xBorderWidth;
-        clientRect->right  += xBorderWidth;
-        clientRect->top    -= yBorderWidth;
-        clientRect->bottom += yBorderWidth;
-    }
+
+    /* done, copy windowRect to output */
+    CopyRect(clientRect, &windowRect);
 }
 
 /* Computes position of corners of window Rect (outer position including
