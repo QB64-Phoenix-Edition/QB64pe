@@ -20300,7 +20300,7 @@ FUNCTION SaveFile$ (IdeOpenFile AS STRING)
         IF RIGHT$(Default_StartDir$, 1) <> idepathsep$ THEN Default_StartDir$ = Default_StartDir$ + idepathsep$
     END IF
 
-    f$ = _SAVEFILEDIALOG$("Save As", Default_StartDir$ + path$ + IdeOpenFile, ".bas", "QB64PE BAS file")
+    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas", "QB64-PE BAS File")
     IF f$ = "" THEN
         SaveFile$ = "C"
         EXIT FUNCTION 'someone canceled the input.
@@ -20310,6 +20310,9 @@ FUNCTION SaveFile$ (IdeOpenFile AS STRING)
     path$ = idezgetfilepath$(ideroot$, f$)
     pathseppos = _INSTRREV(f$, idepathsep$)
     IF pathseppos > 0 THEN f$ = MID$(f$, pathseppos + 1)
+
+    Default_StartDir$ = path$
+    IF RIGHT$(Default_StartDir$, 1) <> idepathsep$ THEN Default_StartDir$ = Default_StartDir$ + idepathsep$
 
     ideerror = 3
     OPEN path$ + idepathsep$ + f$ FOR BINARY AS #150
