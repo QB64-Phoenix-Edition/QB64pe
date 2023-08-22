@@ -20292,33 +20292,36 @@ end sub
 '    Download = MKI$(0) 'still working
 'END FUNCTION
 
-Function SaveFile$ (IdeOpenFile as string)
-                STATIC Default_StartDir$
+FUNCTION SaveFile$ (IdeOpenFile AS STRING)
+    STATIC Default_StartDir$
 
-                IF Default_StartDir$ = "" THEN
-                    Default_StartDir$ = _STARTDIR$
-                    if Right$(Default_StartDir$, 1) <> idepathsep$ then Default_StartDir$ = Default_StartDir$ + idepathsep$
-                END IF
+    IF Default_StartDir$ = "" THEN
+        Default_StartDir$ = _STARTDIR$
+        IF RIGHT$(Default_StartDir$, 1) <> idepathsep$ THEN Default_StartDir$ = Default_StartDir$ + idepathsep$
+    END IF
 
-                f$ = _SaveFileDialog$("Save As", Default_StartDir$ + path$ + IdeOpenFile, ".bas", "QB64PE BAS file")
-                if f$ = "" THEN EXIT FUNCTION 'someone canceled the input.
-                IF FileHasExtension(f$) = 0 THEN f$ = f$ + ".bas"
-                path$ = idezgetfilepath$(ideroot$, f$)
-                pathseppos =  _INSTRREV(f$, idepathsep$)
-                IF pathseppos > 0 THEN f$ = Mid$(f$, pathseppos +1)
+    f$ = _SAVEFILEDIALOG$("Save As", Default_StartDir$ + path$ + IdeOpenFile, ".bas", "QB64PE BAS file")
+    IF f$ = "" THEN
+        SaveFile$ = "C"
+        EXIT FUNCTION 'someone canceled the input.
+    END IF
 
-                ideerror = 3
-                OPEN path$ + idepathsep$ + f$ FOR BINARY AS #150
-                ideerror = 1
-                ideprogname$ = f$: _TITLE ideprogname + " - " + WindowTitle
-                idesave path$ + idepathsep$ + f$
-                idepath$ = path$
-                IdeAddRecent path$ + idepathsep$ + f$
-                IdeSaveBookmarks path$ + idepathsep$ + f$
-                CLOSE #150
-end sub
+    IF FileHasExtension(f$) = 0 THEN f$ = f$ + ".bas"
+    path$ = idezgetfilepath$(ideroot$, f$)
+    pathseppos = _INSTRREV(f$, idepathsep$)
+    IF pathseppos > 0 THEN f$ = MID$(f$, pathseppos + 1)
 
-
+    ideerror = 3
+    OPEN path$ + idepathsep$ + f$ FOR BINARY AS #150
+    ideerror = 1
+    ideprogname$ = f$
+    _TITLE ideprogname$ + " - " + WindowTitle
+    idesave path$ + idepathsep$ + f$
+    idepath$ = path$
+    IdeAddRecent path$ + idepathsep$ + f$
+    IdeSaveBookmarks path$ + idepathsep$ + f$
+    CLOSE #150
+END FUNCTION
 
 
 Function OpenFile$ (IdeOpenFile as string)'load routine copied/pasted from the old IDE file load/save dialog routines
