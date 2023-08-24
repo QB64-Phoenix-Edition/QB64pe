@@ -20301,7 +20301,7 @@ FUNCTION SaveFile$ (IdeOpenFile AS STRING)
         IF RIGHT$(Default_StartDir$, 1) <> idepathsep$ THEN Default_StartDir$ = Default_StartDir$ + idepathsep$
     END IF
 
-    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas", "QB64-PE BAS File")
+    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas|*.BAS|*.Bas", "QB64-PE BAS File")
     IF f$ = "" THEN
         SaveFile$ = "C"
         EXIT FUNCTION 'someone canceled the input.
