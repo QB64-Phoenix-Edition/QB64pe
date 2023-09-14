@@ -159,7 +159,7 @@ class UTF32 {
                 auto ch2 = str16[i + 1];
                 if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {
                     cp = ((ch - 0xD800) << 10) + (ch2 - 0xDC00) + 0x10000;
-                    ++i;         // skip the second surrogate
+                    ++i; // skip the second surrogate
                 } else {
                     cp = 0xFFFD; // invalid surrogate pair
                 }
@@ -876,6 +876,8 @@ int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
     if (codepoints > 0) {
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
+        FONT_DEBUG_PRINT("codepoint = %p, codepoints = %i", codepoint, codepoints);
+
         // Get the actual width in pixels
         return fontManager.fonts[fh]->GetStringPixelWidth(codepoint, codepoints);
     }
@@ -893,7 +895,8 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Atempt to convert the string to UTF32 and get the actual width in pixels
-        return FontPrintWidthUTF32(fh, utf32.codepoints.data(), utf32.ConvertASCII(codepoint, codepoints));
+        auto count = utf32.ConvertASCII(codepoint, codepoints);
+        return FontPrintWidthUTF32(fh, utf32.codepoints.data(), count);
     }
 
     return 0;
@@ -921,12 +924,12 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
     *out_y = fnt->defaultHeight;
 
     if (codepoints <= 0)
-        return codepoints == 0;                                 // true if zero, false if -ve
+        return codepoints == 0; // true if zero, false if -ve
 
     auto isMonochrome = bool(options & FONT_RENDER_MONOCHROME); // do we need to do monochrome rendering?
     FT_Vector strPixSize = {
-        fnt->GetStringPixelWidth(codepoint, codepoints),        // get the total buffer width
-        fnt->defaultHeight                                      // height is always set by the QB64
+        fnt->GetStringPixelWidth(codepoint, codepoints), // get the total buffer width
+        fnt->defaultHeight                               // height is always set by the QB64
     };
     auto outBuf = (uint8_t *)calloc(strPixSize.x, strPixSize.y);
     if (!outBuf)
@@ -995,7 +998,8 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Atempt to convert the string to UTF32 and forward to FontRenderTextUTF32()
-        return FontRenderTextUTF32(fh, utf32.codepoints.data(), utf32.ConvertASCII(codepoint, codepoints), options, out_data, out_x, out_y);
+        auto count = utf32.ConvertASCII(codepoint, codepoints);
+        return FontRenderTextUTF32(fh, utf32.codepoints.data(), count, options, out_data, out_x, out_y);
     }
 
     return false;
@@ -1031,7 +1035,10 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
 
-    return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+    if (FT_IS_SCALABLE(face))
+        return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+
+    return fnt->defaultHeight;
 }
 
 /// @brief Returns the text widht in pixels
@@ -1131,7 +1138,10 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     auto fnt = fontManager.fonts[font[qb64_fh]];
     auto face = fnt->face;
 
-    return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2.0f;
+    if (FT_IS_SCALABLE(face))
+        return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2.0f;
+
+    return fnt->defaultHeight;
 }
 
 /// @brief This renders text on an active destination (graphics mode only) using the currently selected color
@@ -1153,6 +1163,8 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         error(5);
         return;
     }
+
+    FONT_DEBUG_PRINT("Graphics mode set. Proceeding...");
 
     // Check max width
     if (passed & 1) {
@@ -1188,23 +1200,27 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     switch (utf_encoding) {
     case 32: // UTF-32: no conversion needed
+        FONT_DEBUG_PRINT("UTF-32 string. Skipping conversion");
         str32 = (uint32_t *)text->chr;
         codepoints = text->len / sizeof(uint32_t);
         break;
 
     case 16: // UTF-16: conversion required
+        FONT_DEBUG_PRINT("UTF-16 string. Converting to UTF32");
         codepoints = utf32.ConvertUTF16(text->chr, text->len);
         if (codepoints)
             str32 = utf32.codepoints.data();
         break;
 
     case 8: // UTF-8: conversion required
+        FONT_DEBUG_PRINT("UTF-8 string. Converting to UTF32");
         codepoints = utf32.ConvertUTF8(text->chr, text->len);
         if (codepoints)
             str32 = utf32.codepoints.data();
         break;
 
     default: // ASCII: conversion required
+        FONT_DEBUG_PRINT("ASCII string. Converting to UTF32");
         codepoints = utf32.ConvertASCII(text->chr, text->len);
         if (codepoints)
             str32 = utf32.codepoints.data();
@@ -1220,12 +1236,17 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     if (qb64_fh < 32) {
         strPixSize.x = codepoints * 8;
         strPixSize.y = qb64_fh;
+        FONT_DEBUG_PRINT("Using built-in font %i", qb64_fh);
     } else {
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
         fnt = fontManager.fonts[font[qb64_fh]];
         face = fnt->face;
         strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
-        strPixSize.y = (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+        if (FT_IS_SCALABLE(face))
+            strPixSize.y = (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+        else
+            strPixSize.y = fnt->defaultHeight;
+        FONT_DEBUG_PRINT("Using custom font. Scalable = %i", FT_IS_SCALABLE(face));
     }
 
     if (max_width && max_width < strPixSize.x)
@@ -1281,7 +1302,12 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         FONT_DEBUG_PRINT("Rendering using TrueType font");
 
         // Render using custom font
-        pen.y += (float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight;
+        if (FT_IS_SCALABLE(face))
+            pen.y = (float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight;
+        else
+            pen.y = face->glyph->bitmap_top; // for bitmap fonts bitmap_top is the same for all glyph bitmaps
+
+        FONT_DEBUG_PRINT("pen.y = %i", pen.y);
 
         if (fnt->monospaceWidth) {
             // Monospace rendering
