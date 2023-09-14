@@ -876,6 +876,8 @@ int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codep
     if (codepoints > 0) {
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
+        FONT_DEBUG_PRINT("codepoint = %p, codepoints = %i", codepoint, codepoints);
+
         // Get the actual width in pixels
         return fontManager.fonts[fh]->GetStringPixelWidth(codepoint, codepoints);
     }
@@ -893,7 +895,8 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Atempt to convert the string to UTF32 and get the actual width in pixels
-        return FontPrintWidthUTF32(fh, utf32.codepoints.data(), utf32.ConvertASCII(codepoint, codepoints));
+        auto count = utf32.ConvertASCII(codepoint, codepoints);
+        return FontPrintWidthUTF32(fh, utf32.codepoints.data(), count);
     }
 
     return 0;
@@ -995,7 +998,8 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
         // Atempt to convert the string to UTF32 and forward to FontRenderTextUTF32()
-        return FontRenderTextUTF32(fh, utf32.codepoints.data(), utf32.ConvertASCII(codepoint, codepoints), options, out_data, out_x, out_y);
+        auto count = utf32.ConvertASCII(codepoint, codepoints);
+        return FontRenderTextUTF32(fh, utf32.codepoints.data(), count, options, out_data, out_x, out_y);
     }
 
     return false;
