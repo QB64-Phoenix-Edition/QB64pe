@@ -14,8 +14,12 @@
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define XBR_IMPLEMENTATION
+#include "pixelscalers/xbr.hpp"
+#define HQX_IMPLEMENTATION
+#include "pixelscalers/hqx.hpp"
 // Set this to 1 if we want to print debug messages to stderr
-#define IMAGE_DEBUG 0
+#define IMAGE_DEBUG 1
 #include "image.h"
 // We need 'qbs' and 'image' structs stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../../libqb.h"
@@ -26,6 +30,11 @@
 #define REQUIREMENT_STRING_HARDWARE "HARDWARE"
 #define REQUIREMENT_STRING_MEMORY "MEMORY"
 #define REQUIREMENT_STRING_ADAPTIVE "ADAPTIVE"
+#define REQUIREMENT_STRING_SXBR2 "SXBR2"
+#define REQUIREMENT_STRING_HQ2XA "HQ2XA"
+#define REQUIREMENT_STRING_HQ2XB "HQ2XB"
+#define REQUIREMENT_STRING_HQ3XA "HQ3XA"
+#define REQUIREMENT_STRING_HQ3XB "HQ3XB"
 
 // Calculates the RGB distance in the RGB color cube
 #define IMAGE_CALCULATE_RGB_DISTANCE(r1, g1, b1, r2, g2, b2)                                                                                                   \
@@ -46,13 +55,70 @@ extern img_struct *img;        // Required by func__loadimage
 extern img_struct *write_page; // Required by func__loadimage
 extern uint32 palette_256[];   // Required by func__loadimage
 
+/// @brief Pixel scaler algorithms
+enum class ImageScaler : int32_t { NONE = 0, SXBR2, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
+
+/// @brief Runs a pixel scaler algo on raw image pixels
+/// @param data In + Out: The source raw image data in RGBA format
+/// @param xOut In + Out: The image width
+/// @param yOut In + Out: The image height
+/// @param scaler The scaler algorithm to use
+/// @return A pointer to the scaled image
+static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
+    static int32_t scaleFactor[] = {1, 2, 2, 2, 3, 3};
+
+    if (scaler > ImageScaler::NONE) {
+        auto newX = *xOut * scaleFactor[(int)(scaler)];
+        auto newY = *yOut * scaleFactor[(int)(scaler)];
+
+        auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * newX * newY);
+        if (pixels) {
+            IMAGE_DEBUG_PRINT("Scaler %i: (%i x %i) -> (%i x %i)", scaler, *xOut, *yOut, newX, newY);
+
+            switch (scaler) {
+            case ImageScaler::SXBR2:
+                scaleSuperXBR2(data, *xOut, *yOut, pixels);
+                break;
+
+            case ImageScaler::HQ2XA:
+                hq2xA(data, *xOut, *yOut, pixels);
+                break;
+
+            case ImageScaler::HQ2XB:
+                hq2xB(data, *xOut, *yOut, pixels);
+                break;
+
+            case ImageScaler::HQ3XA:
+                hq3xA(data, *xOut, *yOut, pixels);
+                break;
+
+            case ImageScaler::HQ3XB:
+                hq3xB(data, *xOut, *yOut, pixels);
+                break;
+
+            default:
+                IMAGE_DEBUG_PRINT("Unsupported scaler %i", scaler);
+            }
+
+            free(data);
+            data = pixels;
+            *xOut = newX;
+            *yOut = newY;
+        }
+    }
+
+    return data;
+}
+
 /// @brief Decodes an image file freom a file using the dr_pcx & stb_image libraries.
 /// @param fileName A valid filename
 /// @param xOut Out: width in pixels. This cannot be NULL
 /// @param yOut Out: height in pixels. This cannot be NULL
+/// @param scaler An optional pixel scaler to use
 /// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint8_t *image_decode_from_file(const char *fileName, int *xOut, int *yOut) {
+static uint8_t *image_decode_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
     auto compOut = 0;
+    auto isVG = false; // we will not use scalers for vector graphics
 
     IMAGE_DEBUG_PRINT("Loading image from file %s", fileName);
 
@@ -69,6 +135,9 @@ static uint8_t *image_decode_from_file(const char *fileName, int *xOut, int *yOu
 
     IMAGE_DEBUG_CHECK(compOut > 2);
 
+    if (!isVG)
+        pixels = reinterpret_cast<uint8_t *>(image_scale(reinterpret_cast<uint32_t *>(pixels), xOut, yOut, scaler));
+
     return pixels;
 }
 
@@ -77,9 +146,11 @@ static uint8_t *image_decode_from_file(const char *fileName, int *xOut, int *yOu
 /// @param size The size of the file in memory
 /// @param xOut Out: width in pixels. This cannot be NULL
 /// @param yOut Out: height in pixels. This cannot be NULL
+/// @param scaler An optional pixel scaler to use
 /// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint8_t *image_decode_from_memory(const void *data, size_t size, int *xOut, int *yOut) {
+static uint8_t *image_decode_from_memory(const void *data, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
     auto compOut = 0;
+    auto isVG = false; // we will not use scalers for vector graphics
 
     IMAGE_DEBUG_PRINT("Loading image from memory");
 
@@ -95,6 +166,9 @@ static uint8_t *image_decode_from_memory(const void *data, size_t size, int *xOu
     }
 
     IMAGE_DEBUG_CHECK(compOut > 2);
+
+    if (!isVG)
+        pixels = reinterpret_cast<uint8_t *>(image_scale(reinterpret_cast<uint32_t *>(pixels), xOut, yOut, scaler));
 
     return pixels;
 }
@@ -112,7 +186,7 @@ static inline uint8_t image_clamp_component(int32_t n) { return n < 0 ? 0 : n > 
 /// <param name="h">The height of the image in pixels</param>
 /// <param name="paletteOut">A 256 color palette if the operation was successful. This cannot be NULL</param>
 /// <returns>A pointer to a 8bpp raw image or NULL if operation failed</returns>
-static uint8_t *image_convert_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut) {
+static uint8_t *image_convert_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t *paletteOut) {
     static struct {
         uint32_t r, g, b;
         uint32_t count;
@@ -175,7 +249,7 @@ static uint8_t *image_convert_8bpp(uint8_t *src, int w, int h, uint32_t *palette
 /// <param name="h">The height of the image in pixels</param>
 /// <param name="paletteOut">A 256 color palette if the operation was successful. This cannot be NULL</param>
 /// <returns>A pointer to a 8bpp raw image or NULL if operation failed</returns>
-static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut) {
+static uint8_t *image_make_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t *paletteOut) {
     IMAGE_DEBUG_PRINT("Extracting 8bpp image (%i, %i) from 32bpp", w, h);
 
     std::unordered_map<uint32_t, int> colorMap;
@@ -192,7 +266,7 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
         auto srcColor = src32bpp[i]; // get the 32bpp pixel
 
         // Check if the src color exists in our palette
-        if (colorMap.find(srcColor) == colorMap.end()) {
+        if (colorMap.count(srcColor) == 0) {
             // If we reached here, then the color is not in our table
             if (uniqueColors > 255) {
                 IMAGE_DEBUG_PRINT("Image has more than %i unique colors", uniqueColors);
@@ -223,7 +297,7 @@ static uint8_t *image_make_8bpp(uint8_t *src, int w, int h, uint32_t *paletteOut
 /// <param name="h">The height of the image in pixels</param>
 /// <param name="src_pal">The image's original palette. This cannot be NULL</param>
 /// <param name="dst_pal">The destination palette. This cannot be NULL</param>
-static void image_remap_palette(uint8_t *src, int w, int h, uint32_t *src_pal, uint32_t *dst_pal) {
+static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, uint32_t *src_pal, uint32_t *dst_pal) {
     static uint32_t palMap[256];
 
     IMAGE_DEBUG_PRINT("Remapping 8bpp image (%i, %i) palette", w, h);
@@ -272,9 +346,10 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t p
     auto isLoadFromMemory = false; // should the image be loaded from memory?
     auto isHardwareImage = false;  // should the image be converted to a hardware image?
     auto isRemapPalette = true;    // should the palette be re-mapped to the QB64 default palette?
+    auto scaler = ImageScaler::NONE;
 
     // Handle special cases and set the above flags if required
-    IMAGE_DEBUG_PRINT("bpp = 0x%X, passed = 0x%X", bpp, passed);
+    IMAGE_DEBUG_PRINT("bpp = %i, passed = 0x%X", bpp, passed);
     if (passed & 1) {
         if (bpp == 33) { // hardware image?
             isHardwareImage = true;
@@ -319,16 +394,34 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t p
             isLoadFromMemory = true;
             IMAGE_DEBUG_PRINT("Loading image from memory");
         }
+
+        // Parse scaler string
+        if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_SXBR2), 1)) {
+            scaler = ImageScaler::SXBR2;
+            IMAGE_DEBUG_PRINT("SXBR2 scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ3XA), 1)) {
+            scaler = ImageScaler::HQ3XA;
+            IMAGE_DEBUG_PRINT("HQ3XA scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ3XB), 1)) {
+            scaler = ImageScaler::HQ3XB;
+            IMAGE_DEBUG_PRINT("HQ3XB scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ2XA), 1)) {
+            scaler = ImageScaler::HQ2XA;
+            IMAGE_DEBUG_PRINT("HQ2XA scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ2XB), 1)) {
+            scaler = ImageScaler::HQ2XB;
+            IMAGE_DEBUG_PRINT("HQ2XB scaler selected");
+        }
     }
 
-    int x, y;
+    int32_t x, y;
     uint8_t *pixels;
 
     if (isLoadFromMemory) {
-        pixels = image_decode_from_memory(fileName->chr, fileName->len, &x, &y);
+        pixels = image_decode_from_memory(fileName->chr, fileName->len, &x, &y, scaler);
     } else {
         qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-        pixels = image_decode_from_file((const char *)fileNameZ->chr, &x, &y);
+        pixels = image_decode_from_file((const char *)fileNameZ->chr, &x, &y, scaler);
     }
 
     if (!pixels)

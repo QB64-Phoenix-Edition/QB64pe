@@ -31,9 +31,6 @@ void hq3xB(uint32_t *img, int w, int h, uint32_t *out);
 #endif
 
 #ifdef HQX_IMPLEMENTATION
-uint32_t ARGBtoAYUV(uint32_t value);
-bool isDifferentA(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA);
-bool isDifferentB(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA);
 
 #define MASK_RB 0x00FF00FF
 #define MASK_G 0x0000FF00
@@ -155,7 +152,7 @@ static const uint32_t VMASK = 0x000000FF;
 // All hq-related fcts used to be member fcts of otherwise empty classes.
 // Turned into stand-alone fcts.
 
-uint32_t ARGBtoAYUV(uint32_t value) {
+static inline uint32_t ARGBtoAYUV(uint32_t value) {
     uint32_t A, R, G, B, Y, U, V;
 
     A = value >> 24;
@@ -172,7 +169,7 @@ uint32_t ARGBtoAYUV(uint32_t value) {
 /*
  * Use this function for sharper images (good for cartoon style, used by DOSBOX)
  */
-bool isDifferentA(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) {
+static inline bool isDifferentA(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) {
     color1 = ARGBtoAYUV(color1);
     color2 = ARGBtoAYUV(color2);
 
@@ -200,7 +197,7 @@ bool isDifferentA(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, 
 /*
  * Use this function for smoothed images (good for complex graphics)
  */
-bool isDifferentB(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) {
+static inline bool isDifferentB(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) {
     uint32_t yuv1 = ARGBtoAYUV(color1);
     uint32_t yuv2 = ARGBtoAYUV(color2);
 
@@ -208,7 +205,7 @@ bool isDifferentB(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, 
            abs(int(yuv1 & VMASK) - int(yuv2 & VMASK)) > trV || abs(int(yuv1 & AMASK) - int(yuv2 & AMASK)) > trA;
 }
 
-uint32_t *hq2x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t height, uint32_t *output, uint32_t trY, uint32_t trU, uint32_t trV,
+static uint32_t *hq2x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t height, uint32_t *output, uint32_t trY, uint32_t trU, uint32_t trV,
                       uint32_t trA, bool wrapX, bool wrapY) {
     bool (*isDifferent)(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) = &isDifferentA;
     if (mode == 'B') {
@@ -2100,7 +2097,7 @@ uint32_t *hq2x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t
     return output;
 }
 
-uint32_t *hq3x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t height, uint32_t *output, uint32_t trY, uint32_t trU, uint32_t trV,
+static uint32_t *hq3x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t height, uint32_t *output, uint32_t trY, uint32_t trU, uint32_t trV,
                       uint32_t trA, bool wrapX, bool wrapY) {
     bool (*isDifferent)(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) = &isDifferentA;
     if (mode == 'B') {

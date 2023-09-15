@@ -59,11 +59,11 @@ void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out);
 #define w3 (-wgt2)
 #define w4 (wgt2 + 0.5f)
 
-float df(float A, float B) { return abs(A - B); }
+static inline float df(float A, float B) { return abs(A - B); }
 
-float min4(float a, float b, float c, float d) { return std::min(std::min(a, b), std::min(c, d)); }
+static inline float min4(float a, float b, float c, float d) { return std::min(std::min(a, b), std::min(c, d)); }
 
-float max4(float a, float b, float c, float d) { return std::max(std::max(a, b), std::max(c, d)); }
+static inline float max4(float a, float b, float c, float d) { return std::max(std::max(a, b), std::max(c, d)); }
 
 template <class T> T clamp(T x, T floor, T ceil) { return std::max(std::min(x, ceil), floor); }
 
@@ -100,7 +100,7 @@ sx, sy
 
 */
 
-float diagonal_edge(float mat[][4], float *wp) {
+static inline float diagonal_edge(float mat[][4], float *wp) {
     float dw1 = wp[0] * (df(mat[0][2], mat[1][1]) + df(mat[1][1], mat[2][0]) + df(mat[1][3], mat[2][2]) + df(mat[2][2], mat[3][1])) +
                 wp[1] * (df(mat[0][3], mat[1][2]) + df(mat[2][1], mat[3][0])) + wp[2] * (df(mat[0][3], mat[2][1]) + df(mat[1][2], mat[3][0])) +
                 wp[3] * df(mat[1][2], mat[2][1]) + wp[4] * (df(mat[0][2], mat[2][0]) + df(mat[1][3], mat[3][1])) +
@@ -115,7 +115,7 @@ float diagonal_edge(float mat[][4], float *wp) {
 }
 
 // Not used yet...
-float cross_edge(float mat[][4], float *wp) {
+static inline float cross_edge(float mat[][4], float *wp) {
     float hvw1 = wp[3] * (df(mat[1][1], mat[2][1]) + df(mat[1][2], mat[2][2])) +
                  wp[0] * (df(mat[0][1], mat[1][1]) + df(mat[2][1], mat[3][1]) + df(mat[0][2], mat[1][2]) + df(mat[2][2], mat[3][2])) +
                  wp[2] * (df(mat[0][1], mat[2][1]) + df(mat[1][1], mat[3][1]) + df(mat[0][2], mat[2][2]) + df(mat[1][2], mat[3][2]));
@@ -388,11 +388,6 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
 
 //// *** Super-xBR code ends here - MIT LICENSE *** ///
 
-void scaleSuperXBR2(u32 *data, int w, int h, u32 *out) {
-    // void scaleSuperXBR(int factor, u32* data, u32* out, int w, int h) {
-
-    /* Super-xBR upsampling only implemented for factor 2 */
-    scaleSuperXBRT<2>(data, out, w, h);
-}
+void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out) { scaleSuperXBRT<2>(data, out, w, h); }
 
 #endif
