@@ -5,26 +5,20 @@
 //   \__\_\___/\___/ |_||_| |___| |___|_|_|_\__,_\__, \___| |____|_|_.__/_| \__,_|_|  \_, |
 //                                               |___/                                |__/
 //
-//  QB64-PE Image Library
-//  Powered by stb_image (https://github.com/nothings/stb) & dr_pcx (https://github.com/mackron/dr_pcx)
-//
-//  Copyright (c) 2022 Samuel Gomes
-//  https://github.com/a740g
+//  Powered by:
+//      stb_image (https://github.com/nothings/stb)
+//      dr_pcx (https://github.com/mackron/dr_pcx)
+//      nanosvg (https://github.com/memononen/nanosvg)
+//      qoi (https://qoiformat.org)
+//      pixelscalers (https://github.com/janert/pixelscalers)
 //
 //-----------------------------------------------------------------------------------------------------
 
 #pragma once
 
-//-----------------------------------------------------------------------------------------------------
-// HEADER FILES
-//-----------------------------------------------------------------------------------------------------
 #include <stdint.h>
 #include <stdio.h>
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// MACROS
-//-----------------------------------------------------------------------------------------------------
 #if defined(IMAGE_DEBUG) && IMAGE_DEBUG > 0
 #    ifdef _MSC_VER
 #        define IMAGE_DEBUG_PRINT(_fmt_, ...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
@@ -36,11 +30,11 @@
         IMAGE_DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
 #    ifdef _MSC_VER
-#        define IMAGE_DEBUG_PRINT(_fmt_, ...)       // Don't do anything in release builds
+#        define IMAGE_DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
 #    else
 #        define IMAGE_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
 #    endif
-#    define IMAGE_DEBUG_CHECK(_exp_)                // Don't do anything in release builds
+#    define IMAGE_DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
 
 // The byte ordering here are straight from libqb.cpp. So, if libqb.cpp is wrong, then we are wrong! ;)
@@ -51,17 +45,7 @@
 #define IMAGE_GET_BGRA_BGR(c) ((uint32_t)(c) & 0xFFFFFFu)
 #define IMAGE_MAKE_BGRA(r, g, b, a)                                                                                                                            \
     ((uint32_t)((uint8_t)(b) | ((uint32_t)((uint8_t)(g)) << 8) | ((uint32_t)((uint8_t)(r)) << 16) | ((uint32_t)((uint8_t)(a)) << 24)))
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FORWARD DECLARATIONS
-//-----------------------------------------------------------------------------------------------------
 struct qbs;
-//-----------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------
-// FUNCTIONS
-//-----------------------------------------------------------------------------------------------------
 int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t passed);
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------

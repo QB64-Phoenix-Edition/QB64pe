@@ -5,7 +5,12 @@
 //   \__\_\___/\___/ |_||_| |___| |___|_|_|_\__,_\__, \___| |____|_|_.__/_| \__,_|_|  \_, |
 //                                               |___/                                |__/
 //
-//  Powered by stb_image (https://github.com/nothings/stb) & dr_pcx (https://github.com/mackron/dr_pcx)
+//  Powered by:
+//      stb_image (https://github.com/nothings/stb)
+//      dr_pcx (https://github.com/mackron/dr_pcx)
+//      nanosvg (https://github.com/memononen/nanosvg)
+//      qoi (https://qoiformat.org)
+//      pixelscalers (https://github.com/janert/pixelscalers)
 //
 //-----------------------------------------------------------------------------------------------------
 
@@ -14,6 +19,8 @@
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define QOI_IMPLEMENTATION
+#include "qoi.h"
 #define NANOSVG_IMPLEMENTATION
 #include "nanosvg/nanosvg.h"
 #define NANOSVGRAST_IMPLEMENTATION
@@ -23,7 +30,7 @@
 #define HQX_IMPLEMENTATION
 #include "pixelscalers/hqx.hpp"
 // Set this to 1 if we want to print debug messages to stderr
-#define IMAGE_DEBUG 1
+#define IMAGE_DEBUG 0
 #include "image.h"
 // We need 'qbs' and 'image' structs stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../../libqb.h"
@@ -39,11 +46,6 @@
 #define REQUIREMENT_STRING_HQ2XB "HQ2XB"
 #define REQUIREMENT_STRING_HQ3XA "HQ3XA"
 #define REQUIREMENT_STRING_HQ3XB "HQ3XB"
-
-// Calculates the RGB distance in the RGB color cube
-#define IMAGE_CALCULATE_RGB_DISTANCE(r1, g1, b1, r2, g2, b2)                                                                                                   \
-    sqrt(((float(r2) - float(r1)) * (float(r2) - float(r1))) + ((float(g2) - float(g1)) * (float(g2) - float(g1))) +                                           \
-         ((float(b2) - float(b1)) * (float(b2) - float(b1))))
 
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
@@ -61,14 +63,15 @@ extern uint32 palette_256[];   // Required by func__loadimage
 
 /// @brief Pixel scaler algorithms
 enum class ImageScaler : int32_t { NONE = 0, SXBR2, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
+/// @brief This is the scaling factor for ImageScaler enum
 static const int32_t g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 3};
 
-/// @brief Runs a pixel scaler algo on raw image pixels
+/// @brief Runs a pixel scaler algorithm on raw image pixels. It will free 'data' if scaling occurs!
 /// @param data In + Out: The source raw image data in RGBA format
 /// @param xOut In + Out: The image width
 /// @param yOut In + Out: The image height
 /// @param scaler The scaler algorithm to use
-/// @return A pointer to the scaled image
+/// @return A pointer to the scaled image or 'data' if there is no change
 static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
     if (scaler > ImageScaler::NONE) {
         auto newX = *xOut * g_ImageScaleFactor[(int)(scaler)];
@@ -113,6 +116,14 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
     return data;
 }
 
+/// @brief This is internally used by image_svg_load_from_file() and image_svg_load_fron_memory(). It always frees 'image' once done!
+/// @param image nanosvg image object pointer
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @param scaler An optional pixel scaler to use (it just used this to scale internally)
+/// @param components Out: color channels. This cannot be NULL
+/// @param isVG Out: vector graphics? Always set to true
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
 static uint8_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
     auto rast = nsvgCreateRasterizer();
     if (!rast) {
@@ -141,6 +152,14 @@ static uint8_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, I
     return pixels;
 }
 
+/// @brief Loads an SVG image file from disk
+/// @param fileName The file path name to load
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @param scaler An optional pixel scaler to use (it just used this to scale internally)
+/// @param components Out: color channels. This cannot be NULL
+/// @param isVG Out: vector graphics? Always set to true
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
 static uint8_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
     auto image = nsvgParseFromFile(fileName, "px", 96.0f);
     if (!image)
@@ -149,6 +168,15 @@ static uint8_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, in
     return image_svg_load(image, xOut, yOut, scaler, components, isVG);
 }
 
+/// @brief Loads an SVG image file from memory
+/// @param buffer The raw pointer to the file in memory
+/// @param size The size of the file in memory
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @param scaler An optional pixel scaler to use (it just used this to scale internally)
+/// @param components Out: color channels. This cannot be NULL
+/// @param isVG Out: vector graphics? Always set to true
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
 static uint8_t *image_svg_load_fron_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
     auto svgString = (char *)malloc(size + 1);
     if (!svgString)
@@ -157,7 +185,7 @@ static uint8_t *image_svg_load_fron_memory(const uint8_t *buffer, size_t size, i
     memcpy(svgString, buffer, size);
     svgString[size] = '\0';
 
-    auto image = nsvgParse(svgString, "px", 96.0f);
+    auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
     if (!image) {
         free(svgString);
         return nullptr;
@@ -166,6 +194,41 @@ static uint8_t *image_svg_load_fron_memory(const uint8_t *buffer, size_t size, i
     auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG);
     free(svgString);
 
+    return pixels;
+}
+
+/// @brief Loads a QOI image file from disk
+/// @param fileName The file path name to load
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @param components Out: color channels. This cannot be NULL
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
+static uint8_t *image_qoi_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, int *components) {
+    qoi_desc desc;
+    auto pixels = (uint8_t *)qoi_read(fileName, &desc, sizeof(uint32_t));
+    if (pixels) {
+        *xOut = desc.width;
+        *yOut = desc.height;
+        *components = desc.channels;
+    }
+    return pixels;
+}
+
+/// @brief Loads a QOI image file from memory
+/// @param buffer The raw pointer to the file in memory
+/// @param size The size of the file in memory
+/// @param xOut Out: width in pixels. This cannot be NULL
+/// @param yOut Out: height in pixels. This cannot be NULL
+/// @param components Out: color channels. This cannot be NULL
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
+static uint8_t *image_qoi_load_from_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, int *components) {
+    qoi_desc desc;
+    auto pixels = (uint8_t *)qoi_decode(buffer, size, &desc, sizeof(uint32_t));
+    if (pixels) {
+        *xOut = desc.width;
+        *yOut = desc.height;
+        *components = desc.channels;
+    }
     return pixels;
 }
 
@@ -190,11 +253,16 @@ static uint8_t *image_decode_from_file(const char *fileName, int32_t *xOut, int3
         IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
-            pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
-            IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+            pixels = image_qoi_load_from_file(fileName, xOut, yOut, &compOut);
+            IMAGE_DEBUG_PRINT("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
-            if (!pixels)
-                return nullptr; // Return NULL if all attempts failed
+            if (!pixels) {
+                pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
+                IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+
+                if (!pixels)
+                    return nullptr; // Return NULL if all attempts failed
+            }
         }
     }
 
@@ -228,11 +296,16 @@ static uint8_t *image_decode_from_memory(const void *data, size_t size, int32_t 
         IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
-            pixels = image_svg_load_fron_memory(reinterpret_cast<const uint8_t *>(data), size, xOut, yOut, scaler, &compOut, &isVG);
-            IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+            pixels = image_qoi_load_from_memory(reinterpret_cast<const uint8_t *>(data), size, xOut, yOut, &compOut);
+            IMAGE_DEBUG_PRINT("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
-            if (!pixels)
-                return nullptr; // Return NULL if all attempts failed
+            if (!pixels) {
+                pixels = image_svg_load_fron_memory(reinterpret_cast<const uint8_t *>(data), size, xOut, yOut, scaler, &compOut, &isVG);
+                IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+
+                if (!pixels)
+                    return nullptr; // Return NULL if all attempts failed
+            }
         }
     }
 
@@ -249,14 +322,12 @@ static uint8_t *image_decode_from_memory(const void *data, size_t size, int32_t 
 /// @return The clamped value
 static inline uint8_t image_clamp_component(int32_t n) { return n < 0 ? 0 : n > 255 ? 255 : n; }
 
-/// <summary>
-/// This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
-/// </summary>
-/// <param name="src">The source raw image data. This must be in BGRA format and not NULL</param>
-/// <param name="w">The widht of the image in pixels</param>
-/// <param name="h">The height of the image in pixels</param>
-/// <param name="paletteOut">A 256 color palette if the operation was successful. This cannot be NULL</param>
-/// <returns>A pointer to a 8bpp raw image or NULL if operation failed</returns>
+/// @brief This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
+/// @param src The source raw image data. This must be in BGRA format and not NULL
+/// @param w The widht of the image in pixels
+/// @param h The height of the image in pixels
+/// @param paletteOut A 256 color palette if the operation was successful. This cannot be NULL
+/// @return A pointer to a 8bpp raw image or NULL if operation failed
 static uint8_t *image_convert_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t *paletteOut) {
     static struct {
         uint32_t r, g, b;
@@ -264,7 +335,7 @@ static uint8_t *image_convert_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t 
     } cubes[256];
 
     // https://en.wikipedia.org/wiki/Ordered_dithering
-    static uint8_t bayerMatrix[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
+    static const uint8_t bayerMatrix[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
 
     IMAGE_DEBUG_PRINT("Converting 32bpp image (%i, %i) to 8bpp", w, h);
 
@@ -310,16 +381,14 @@ static uint8_t *image_convert_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t 
     return pixels;
 }
 
-/// <summary>
-/// This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
+/// @brief This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
 /// If the number of unique colors in the 32bpp image > 256, then the functions returns a NULL.
 /// Unlike image_convert_8bpp(), no 'real' conversion takes place.
-/// </summary>
-/// <param name="src">The source raw image data. This must be in BGRA format and not NULL</param>
-/// <param name="w">The widht of the image in pixels</param>
-/// <param name="h">The height of the image in pixels</param>
-/// <param name="paletteOut">A 256 color palette if the operation was successful. This cannot be NULL</param>
-/// <returns>A pointer to a 8bpp raw image or NULL if operation failed</returns>
+/// @param src The source raw image data. This must be in BGRA format and not NULL
+/// @param w The widht of the image in pixels
+/// @param h The height of the image in pixels
+/// @param paletteOut A 256 color palette if the operation was successful. This cannot be NULL
+/// @return A pointer to a 8bpp raw image or NULL if operation failed
 static uint8_t *image_make_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t *paletteOut) {
     IMAGE_DEBUG_PRINT("Extracting 8bpp image (%i, %i) from 32bpp", w, h);
 
@@ -360,14 +429,25 @@ static uint8_t *image_make_8bpp(uint8_t *src, int32_t w, int32_t h, uint32_t *pa
     return pixels;
 }
 
-/// <summary>
-/// This modifies an *8bpp* image 'src' to use 'dst_pal' instead of 'src_pal'
-/// </summary>
-/// <param name="src">A pointer to the 8bpp image pixel data. This modifies data 'src' points to and cannot be NULL</param>
-/// <param name="w">The width of the image in pixels</param>
-/// <param name="h">The height of the image in pixels</param>
-/// <param name="src_pal">The image's original palette. This cannot be NULL</param>
-/// <param name="dst_pal">The destination palette. This cannot be NULL</param>
+/// @brief Calculates the distance between 2 RBG points in the RGB color cube
+/// @param r1 R1
+/// @param g1 G1
+/// @param b1 B1
+/// @param r2 R2
+/// @param g2 G2
+/// @param b2 B2
+/// @return The distance in floating point
+static inline float image_calculate_rgb_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    return sqrt(((float(r2) - float(r1)) * (float(r2) - float(r1))) + ((float(g2) - float(g1)) * (float(g2) - float(g1))) +
+                ((float(b2) - float(b1)) * (float(b2) - float(b1))));
+}
+
+/// @brief This modifies an *8bpp* image 'src' to use 'dst_pal' instead of 'src_pal'
+/// @param src A pointer to the 8bpp image pixel data. This modifies data 'src' points to and cannot be NULL
+/// @param w The width of the image in pixels
+/// @param h The height of the image in pixels
+/// @param src_pal The image's original palette. This cannot be NULL
+/// @param dst_pal The destination palette. This cannot be NULL
 static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, uint32_t *src_pal, uint32_t *dst_pal) {
     static uint32_t palMap[256];
 
@@ -377,9 +457,9 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, uint32_t *sr
 
     // Match the palette
     for (auto x = 0; x < 256; x++) {
-        auto oldDist = IMAGE_CALCULATE_RGB_DISTANCE(0, 0, 0, 255, 255, 255); // The farthest we can go in the color cube
+        auto oldDist = image_calculate_rgb_distance(0, 0, 0, 255, 255, 255); // The farthest we can go in the color cube
         for (auto y = 0; y < 256; y++) {
-            auto newDist = IMAGE_CALCULATE_RGB_DISTANCE(IMAGE_GET_BGRA_RED(src_pal[x]), IMAGE_GET_BGRA_GREEN(src_pal[x]), IMAGE_GET_BGRA_BLUE(src_pal[x]),
+            auto newDist = image_calculate_rgb_distance(IMAGE_GET_BGRA_RED(src_pal[x]), IMAGE_GET_BGRA_GREEN(src_pal[x]), IMAGE_GET_BGRA_BLUE(src_pal[x]),
                                                         IMAGE_GET_BGRA_RED(dst_pal[y]), IMAGE_GET_BGRA_GREEN(dst_pal[y]), IMAGE_GET_BGRA_BLUE(dst_pal[y]));
 
             if (oldDist > newDist) {
