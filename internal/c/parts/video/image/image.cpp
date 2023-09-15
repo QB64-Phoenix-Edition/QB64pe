@@ -14,6 +14,10 @@
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define NANOSVG_IMPLEMENTATION
+#include "nanosvg/nanosvg.h"
+#define NANOSVGRAST_IMPLEMENTATION
+#include "nanosvg/nanosvgrast.h"
 #define XBR_IMPLEMENTATION
 #include "pixelscalers/xbr.hpp"
 #define HQX_IMPLEMENTATION
@@ -57,6 +61,7 @@ extern uint32 palette_256[];   // Required by func__loadimage
 
 /// @brief Pixel scaler algorithms
 enum class ImageScaler : int32_t { NONE = 0, SXBR2, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
+static const int32_t g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 3};
 
 /// @brief Runs a pixel scaler algo on raw image pixels
 /// @param data In + Out: The source raw image data in RGBA format
@@ -65,11 +70,9 @@ enum class ImageScaler : int32_t { NONE = 0, SXBR2, HQ2XA, HQ2XB, HQ3XA, HQ3XB, 
 /// @param scaler The scaler algorithm to use
 /// @return A pointer to the scaled image
 static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
-    static int32_t scaleFactor[] = {1, 2, 2, 2, 3, 3};
-
     if (scaler > ImageScaler::NONE) {
-        auto newX = *xOut * scaleFactor[(int)(scaler)];
-        auto newY = *yOut * scaleFactor[(int)(scaler)];
+        auto newX = *xOut * g_ImageScaleFactor[(int)(scaler)];
+        auto newY = *yOut * g_ImageScaleFactor[(int)(scaler)];
 
         auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * newX * newY);
         if (pixels) {
@@ -110,6 +113,62 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
     return data;
 }
 
+static uint8_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
+    auto rast = nsvgCreateRasterizer();
+    if (!rast) {
+        nsvgDelete(image);
+        return nullptr;
+    }
+
+    auto w = (int32_t)image->width * g_ImageScaleFactor[(int)(scaler)];
+    auto h = (int32_t)image->height * g_ImageScaleFactor[(int)(scaler)];
+
+    auto pixels = (uint8_t *)malloc(sizeof(uint32_t) * w * h);
+    if (!pixels) {
+        nsvgDeleteRasterizer(rast);
+        nsvgDelete(image);
+        return nullptr;
+    }
+
+    nsvgRasterize(rast, image, 0, 0, g_ImageScaleFactor[(int)(scaler)], pixels, w, h, sizeof(uint32_t) * w);
+    nsvgDeleteRasterizer(rast);
+    nsvgDelete(image);
+
+    *xOut = w;
+    *yOut = h;
+    *components = sizeof(uint32_t);
+    *isVG = true;
+    return pixels;
+}
+
+static uint8_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
+    auto image = nsvgParseFromFile(fileName, "px", 96.0f);
+    if (!image)
+        return nullptr;
+
+    return image_svg_load(image, xOut, yOut, scaler, components, isVG);
+}
+
+static uint8_t *image_svg_load_fron_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
+    auto svgString = (char *)malloc(size + 1);
+    if (!svgString)
+        return nullptr;
+
+    memcpy(svgString, buffer, size);
+    svgString[size] = '\0';
+
+    auto image = nsvgParse(svgString, "px", 96.0f);
+    if (!image) {
+        free(svgString);
+        return nullptr;
+    }
+
+    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    free(svgString);
+
+    return pixels;
+}
+
 /// @brief Decodes an image file freom a file using the dr_pcx & stb_image libraries.
 /// @param fileName A valid filename
 /// @param xOut Out: width in pixels. This cannot be NULL
@@ -129,8 +188,14 @@ static uint8_t *image_decode_from_file(const char *fileName, int32_t *xOut, int3
         // If dr_pcx failed to load, then use stb_image
         pixels = stbi_load(fileName, xOut, yOut, &compOut, 4);
         IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
-        if (!pixels)
-            return nullptr; // Return NULL if all attempts failed
+
+        if (!pixels) {
+            pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
+            IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+
+            if (!pixels)
+                return nullptr; // Return NULL if all attempts failed
+        }
     }
 
     IMAGE_DEBUG_CHECK(compOut > 2);
@@ -159,10 +224,16 @@ static uint8_t *image_decode_from_memory(const void *data, size_t size, int32_t 
     IMAGE_DEBUG_PRINT("Image dimensions (dr_pcx) = (%i, %i)", *xOut, *yOut);
     if (!pixels) {
         // If dr_pcx failed to load, then use stb_image
-        pixels = stbi_load_from_memory((stbi_uc const *)data, size, xOut, yOut, &compOut, 4);
+        pixels = stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(data), size, xOut, yOut, &compOut, 4);
         IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
-        if (!pixels)
-            return nullptr; // Return NULL if all attempts failed
+
+        if (!pixels) {
+            pixels = image_svg_load_fron_memory(reinterpret_cast<const uint8_t *>(data), size, xOut, yOut, scaler, &compOut, &isVG);
+            IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+
+            if (!pixels)
+                return nullptr; // Return NULL if all attempts failed
+        }
     }
 
     IMAGE_DEBUG_CHECK(compOut > 2);
