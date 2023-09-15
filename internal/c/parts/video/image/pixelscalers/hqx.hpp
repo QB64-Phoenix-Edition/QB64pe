@@ -143,10 +143,10 @@ void hq3xB(uint32_t *img, int w, int h, uint32_t *out);
 #define MIX_22_4_5_7_2_7_7 *(output + lineSize + lineSize + 2) = HQX_MIX_3(w[4], w[5], w[7], 2U, 7U, 7U);
 #define MIX_22_5_7_1_1 *(output + lineSize + lineSize + 2) = HQX_MIX_2(w[5], w[7], 1U, 1U);
 
-static const uint32_t AMASK = 0xFF000000;
-static const uint32_t YMASK = 0x00FF0000;
-static const uint32_t UMASK = 0x0000FF00;
-static const uint32_t VMASK = 0x000000FF;
+static const uint32_t HQX_AMASK = 0xFF000000;
+static const uint32_t HQX_YMASK = 0x00FF0000;
+static const uint32_t HQX_UMASK = 0x0000FF00;
+static const uint32_t HQX_VMASK = 0x000000FF;
 
 // PKJ:
 // All hq-related fcts used to be member fcts of otherwise empty classes.
@@ -175,19 +175,19 @@ static inline bool isDifferentA(uint32_t color1, uint32_t color2, uint32_t trY, 
 
     uint32_t value;
 
-    value = abs(int(color1 & YMASK) - int(color2 & YMASK));
+    value = abs(int(color1 & HQX_YMASK) - int(color2 & HQX_YMASK));
     if (value > trY)
         return true;
 
-    value = abs(int(color1 & UMASK) - int(color2 & UMASK));
+    value = abs(int(color1 & HQX_UMASK) - int(color2 & HQX_UMASK));
     if (value > trU)
         return true;
 
-    value = abs(int(color1 & VMASK) - int(color2 & VMASK));
+    value = abs(int(color1 & HQX_VMASK) - int(color2 & HQX_VMASK));
     if (value > trV)
         return true;
 
-    value = abs(int(color1 & AMASK) - int(color2 & AMASK));
+    value = abs(int(color1 & HQX_AMASK) - int(color2 & HQX_AMASK));
     if (value > trA)
         return true;
 
@@ -201,12 +201,12 @@ static inline bool isDifferentB(uint32_t color1, uint32_t color2, uint32_t trY, 
     uint32_t yuv1 = ARGBtoAYUV(color1);
     uint32_t yuv2 = ARGBtoAYUV(color2);
 
-    return abs(int(yuv1 & YMASK) - int(yuv2 & YMASK)) > trY || abs(int(yuv1 & UMASK) - int(yuv2 & UMASK)) > trU ||
-           abs(int(yuv1 & VMASK) - int(yuv2 & VMASK)) > trV || abs(int(yuv1 & AMASK) - int(yuv2 & AMASK)) > trA;
+    return abs(int(yuv1 & HQX_YMASK) - int(yuv2 & HQX_YMASK)) > trY || abs(int(yuv1 & HQX_UMASK) - int(yuv2 & HQX_UMASK)) > trU ||
+           abs(int(yuv1 & HQX_VMASK) - int(yuv2 & HQX_VMASK)) > trV || abs(int(yuv1 & HQX_AMASK) - int(yuv2 & HQX_AMASK)) > trA;
 }
 
 static uint32_t *hq2x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t height, uint32_t *output, uint32_t trY, uint32_t trU, uint32_t trV,
-                      uint32_t trA, bool wrapX, bool wrapY) {
+                             uint32_t trA, bool wrapX, bool wrapY) {
     bool (*isDifferent)(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) = &isDifferentA;
     if (mode == 'B') {
         isDifferent = &isDifferentB;
@@ -2098,7 +2098,7 @@ static uint32_t *hq2x_resize(char mode, const uint32_t *image, uint32_t width, u
 }
 
 static uint32_t *hq3x_resize(char mode, const uint32_t *image, uint32_t width, uint32_t height, uint32_t *output, uint32_t trY, uint32_t trU, uint32_t trV,
-                      uint32_t trA, bool wrapX, bool wrapY) {
+                             uint32_t trA, bool wrapX, bool wrapY) {
     bool (*isDifferent)(uint32_t color1, uint32_t color2, uint32_t trY, uint32_t trU, uint32_t trV, uint32_t trA) = &isDifferentA;
     if (mode == 'B') {
         isDifferent = &isDifferentB;

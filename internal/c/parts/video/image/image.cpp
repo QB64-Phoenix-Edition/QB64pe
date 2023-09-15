@@ -18,17 +18,23 @@
 #define DR_PCX_IMPLEMENTATION
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb/stb_image.h"
 #define QOI_IMPLEMENTATION
 #include "qoi.h"
 #define NANOSVG_IMPLEMENTATION
 #include "nanosvg/nanosvg.h"
 #define NANOSVGRAST_IMPLEMENTATION
 #include "nanosvg/nanosvgrast.h"
+#define SXBR_IMPLEMENTATION
+#include "pixelscalers/sxbr.hpp"
+#define MMPX_IMPLEMENTATION
+#include "pixelscalers/mmpx.hpp"
 #define XBR_IMPLEMENTATION
 #include "pixelscalers/xbr.hpp"
 #define HQX_IMPLEMENTATION
 #include "pixelscalers/hqx.hpp"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
 // Set this to 1 if we want to print debug messages to stderr
 #define IMAGE_DEBUG 0
 #include "image.h"
@@ -42,6 +48,10 @@
 #define REQUIREMENT_STRING_MEMORY "MEMORY"
 #define REQUIREMENT_STRING_ADAPTIVE "ADAPTIVE"
 #define REQUIREMENT_STRING_SXBR2 "SXBR2"
+#define REQUIREMENT_STRING_MMPX2 "MMPX2"
+#define REQUIREMENT_STRING_XBR2X "XBR2X"
+#define REQUIREMENT_STRING_XBR3X "XBR3X"
+#define REQUIREMENT_STRING_XBR4X "XBR4X"
 #define REQUIREMENT_STRING_HQ2XA "HQ2XA"
 #define REQUIREMENT_STRING_HQ2XB "HQ2XB"
 #define REQUIREMENT_STRING_HQ3XA "HQ3XA"
@@ -62,9 +72,9 @@ extern img_struct *write_page; // Required by func__loadimage
 extern uint32 palette_256[];   // Required by func__loadimage
 
 /// @brief Pixel scaler algorithms
-enum class ImageScaler : int32_t { NONE = 0, SXBR2, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
+enum class ImageScaler : int32_t { NONE = 0, SXBR2, MMPX2, XBR2X, XBR3X, XBR4X, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
 /// @brief This is the scaling factor for ImageScaler enum
-static const int32_t g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 3};
+static const int32_t g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 4, 2, 2, 3, 3};
 
 /// @brief Runs a pixel scaler algorithm on raw image pixels. It will free 'data' if scaling occurs!
 /// @param data In + Out: The source raw image data in RGBA format
@@ -86,6 +96,25 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
                 scaleSuperXBR2(data, *xOut, *yOut, pixels);
                 break;
 
+            case ImageScaler::MMPX2:
+                mmpx_scale2x(data, pixels, *xOut, *yOut);
+                break;
+
+            case ImageScaler::XBR2X:
+                xbr2x_32(reinterpret_cast<unsigned char *>(data), *xOut * sizeof(uint32_t), reinterpret_cast<unsigned char *>(pixels), newX * sizeof(uint32_t),
+                         *xOut, *yOut);
+                break;
+
+            case ImageScaler::XBR3X:
+                xbr3x_32(reinterpret_cast<unsigned char *>(data), *xOut * sizeof(uint32_t), reinterpret_cast<unsigned char *>(pixels), newX * sizeof(uint32_t),
+                         *xOut, *yOut);
+                break;
+
+            case ImageScaler::XBR4X:
+                xbr4x_32(reinterpret_cast<unsigned char *>(data), *xOut * sizeof(uint32_t), reinterpret_cast<unsigned char *>(pixels), newX * sizeof(uint32_t),
+                         *xOut, *yOut);
+                break;
+
             case ImageScaler::HQ2XA:
                 hq2xA(data, *xOut, *yOut, pixels);
                 break;
@@ -104,6 +133,8 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
 
             default:
                 IMAGE_DEBUG_PRINT("Unsupported scaler %i", scaler);
+                free(pixels);
+                return data;
             }
 
             free(data);
@@ -550,18 +581,30 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t p
         if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_SXBR2), 1)) {
             scaler = ImageScaler::SXBR2;
             IMAGE_DEBUG_PRINT("SXBR2 scaler selected");
-        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ3XA), 1)) {
-            scaler = ImageScaler::HQ3XA;
-            IMAGE_DEBUG_PRINT("HQ3XA scaler selected");
-        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ3XB), 1)) {
-            scaler = ImageScaler::HQ3XB;
-            IMAGE_DEBUG_PRINT("HQ3XB scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MMPX2), 1)) {
+            scaler = ImageScaler::MMPX2;
+            IMAGE_DEBUG_PRINT("MMPX2 scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_XBR2X), 1)) {
+            scaler = ImageScaler::XBR2X;
+            IMAGE_DEBUG_PRINT("XBR2X scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_XBR3X), 1)) {
+            scaler = ImageScaler::XBR3X;
+            IMAGE_DEBUG_PRINT("XBR3X scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_XBR4X), 1)) {
+            scaler = ImageScaler::XBR4X;
+            IMAGE_DEBUG_PRINT("XBR4X scaler selected");
         } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ2XA), 1)) {
             scaler = ImageScaler::HQ2XA;
             IMAGE_DEBUG_PRINT("HQ2XA scaler selected");
         } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ2XB), 1)) {
             scaler = ImageScaler::HQ2XB;
             IMAGE_DEBUG_PRINT("HQ2XB scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ3XA), 1)) {
+            scaler = ImageScaler::HQ3XA;
+            IMAGE_DEBUG_PRINT("HQ3XA scaler selected");
+        } else if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HQ3XB), 1)) {
+            scaler = ImageScaler::HQ3XB;
+            IMAGE_DEBUG_PRINT("HQ3XB scaler selected");
         }
     }
 

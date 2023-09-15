@@ -1,393 +1,384 @@
 /*
+   Hyllian's 2xBR v3.3b
 
-Copyright (c) 2016 Hyllian - sergiogdb@gmail.com
+   Copyright (C) 2011, 2012 Hyllian/Jararaca - sergiogdb@gmail.com
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2
+   of the License, or (at your option) any later version.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-
-Adapted from
-    https://pastebin.com/cbH8ZQQT
-and mated to a driver based on
-    https://github.com/brunexgeek/hqx
-by Philipp K. Janert, September 2022
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __JANERT_PIXELSCALERS_XBR__
-#define __JANERT_PIXELSCALERS_XBR__
+#ifndef _XBR_H
+#define _XBR_H
 
-#include <cstdint>
-
-void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out);
+// 32bit
+void xbr2x_32(unsigned char *pIn, unsigned int srcPitch, unsigned char *pOut, unsigned int dstPitch, int Xres, int Yres);
+void xbr3x_32(unsigned char *pIn, unsigned int srcPitch, unsigned char *pOut, unsigned int dstPitch, int Xres, int Yres);
+void xbr4x_32(unsigned char *pIn, unsigned int srcPitch, unsigned char *pOut, unsigned int dstPitch, int Xres, int Yres);
 
 #endif
 
 #ifdef XBR_IMPLEMENTATION
-//// *** Super-xBR code begins here - MIT LICENSE *** ///
 
-// PKJ:
-#include <algorithm>
-#include <cmath>
+#include <cstdint>
+#include <cstring>
 
-#define u32 uint32_t
+#define LB_MASK 0x00FEFEFE
+#define RED_BLUE_MASK 0x00FF00FF
+#define GREEN_MASK 0x0000FF00
+#define PART_MASK 0x00FF00FF
 
-#define R(_col) ((_col >> 0) & 0xFF)
-#define G(_col) ((_col >> 8) & 0xFF)
-#define B(_col) ((_col >> 16) & 0xFF)
-#define A(_col) ((_col >> 24) & 0xFF)
+#define ALPHA_BLEND_BASE(a, b, m, s)                                                                                                                           \
+    ((PART_MASK & (((a)&PART_MASK) + (((((b)&PART_MASK) - ((a)&PART_MASK)) * (m)) >> (s)))) |                                                                  \
+     ((PART_MASK & ((((a) >> 8) & PART_MASK) + ((((((b) >> 8) & PART_MASK) - (((a) >> 8) & PART_MASK)) * (m)) >> (s)))) << 8))
 
-#define wgt1 0.129633f
-#define wgt2 0.175068f
-#define w1 (-wgt1)
-#define w2 (wgt1 + 0.5f)
-#define w3 (-wgt2)
-#define w4 (wgt2 + 0.5f)
+#define ALPHA_BLEND_32_W(a, b) ALPHA_BLEND_BASE(a, b, 1, 3)
+#define ALPHA_BLEND_64_W(a, b) ALPHA_BLEND_BASE(a, b, 1, 2)
+#define ALPHA_BLEND_128_W(a, b) ALPHA_BLEND_BASE(a, b, 1, 1)
+#define ALPHA_BLEND_192_W(a, b) ALPHA_BLEND_BASE(a, b, 3, 2)
+#define ALPHA_BLEND_224_W(a, b) ALPHA_BLEND_BASE(a, b, 7, 3)
 
-static inline float df(float A, float B) { return abs(A - B); }
+static uint32_t pixel_diff(uint32_t x, uint32_t y, const uint32_t *r2y) {
+#define XBR_YMASK 0xff0000
+#define XBR_UMASK 0x00ff00
+#define XBR_VMASK 0x0000ff
 
-static inline float min4(float a, float b, float c, float d) { return std::min(std::min(a, b), std::min(c, d)); }
+    int32_t yuv1 = r2y[x & 0xffffff];
+    int32_t yuv2 = r2y[y & 0xffffff];
 
-static inline float max4(float a, float b, float c, float d) { return std::max(std::max(a, b), std::max(c, d)); }
-
-template <class T> T clamp(T x, T floor, T ceil) { return std::max(std::min(x, ceil), floor); }
-
-/*
-                         P1
-|P0|B |C |P1|         C     F4          |a0|b1|c2|d3|
-|D |E |F |F4|      B     F     I4       |b0|c1|d2|e3|   |e1|i1|i2|e2|
-|G |H |I |I4|   P0    E  A  I     P3    |c0|d1|e2|f3|   |e3|i3|i4|e4|
-|P2|H5|I5|P3|      D     H     I5       |d0|e1|f2|g3|
-                      G     H5
-                         P2
-
-sx, sy
--1  -1 | -2  0   (x+y) (x-y)    -3  1  (x+y-1)  (x-y+1)
--1   0 | -1 -1                  -2  0
--1   1 |  0 -2                  -1 -1
--1   2 |  1 -3                   0 -2
-
- 0  -1 | -1  1   (x+y) (x-y)      ...     ...     ...
- 0   0 |  0  0
- 0   1 |  1 -1
- 0   2 |  2 -2
-
- 1  -1 |  0  2   ...
- 1   0 |  1  1
- 1   1 |  2  0
- 1   2 |  3 -1
-
- 2  -1 |  1  3   ...
- 2   0 |  2  2
- 2   1 |  3  1
- 2   2 |  4  0
-
-
-*/
-
-static inline float diagonal_edge(float mat[][4], float *wp) {
-    float dw1 = wp[0] * (df(mat[0][2], mat[1][1]) + df(mat[1][1], mat[2][0]) + df(mat[1][3], mat[2][2]) + df(mat[2][2], mat[3][1])) +
-                wp[1] * (df(mat[0][3], mat[1][2]) + df(mat[2][1], mat[3][0])) + wp[2] * (df(mat[0][3], mat[2][1]) + df(mat[1][2], mat[3][0])) +
-                wp[3] * df(mat[1][2], mat[2][1]) + wp[4] * (df(mat[0][2], mat[2][0]) + df(mat[1][3], mat[3][1])) +
-                wp[5] * (df(mat[0][1], mat[1][0]) + df(mat[2][3], mat[3][2]));
-
-    float dw2 = wp[0] * (df(mat[0][1], mat[1][2]) + df(mat[1][2], mat[2][3]) + df(mat[1][0], mat[2][1]) + df(mat[2][1], mat[3][2])) +
-                wp[1] * (df(mat[0][0], mat[1][1]) + df(mat[2][2], mat[3][3])) + wp[2] * (df(mat[0][0], mat[2][2]) + df(mat[1][1], mat[3][3])) +
-                wp[3] * df(mat[1][1], mat[2][2]) + wp[4] * (df(mat[1][0], mat[3][2]) + df(mat[0][1], mat[2][3])) +
-                wp[5] * (df(mat[0][2], mat[1][3]) + df(mat[2][0], mat[3][1]));
-
-    return (dw1 - dw2);
+    return (abs((int)(x >> 24) - (int)(y >> 24))) + (abs((int)(yuv1 & XBR_YMASK) - (int)(yuv2 & XBR_YMASK)) >> 16) +
+           (abs((int)(yuv1 & XBR_UMASK) - (int)(yuv2 & XBR_UMASK)) >> 8) + abs((int)(yuv1 & XBR_VMASK) - (int)(yuv2 & XBR_VMASK));
 }
 
-// Not used yet...
-static inline float cross_edge(float mat[][4], float *wp) {
-    float hvw1 = wp[3] * (df(mat[1][1], mat[2][1]) + df(mat[1][2], mat[2][2])) +
-                 wp[0] * (df(mat[0][1], mat[1][1]) + df(mat[2][1], mat[3][1]) + df(mat[0][2], mat[1][2]) + df(mat[2][2], mat[3][2])) +
-                 wp[2] * (df(mat[0][1], mat[2][1]) + df(mat[1][1], mat[3][1]) + df(mat[0][2], mat[2][2]) + df(mat[1][2], mat[3][2]));
+#define xbr32_df(A, B) pixel_diff(A, B, r2y)
+#define xbr32_eq(A, B) (xbr32_df(A, B) < 155)
 
-    float hvw2 = wp[3] * (df(mat[1][1], mat[1][2]) + df(mat[2][1], mat[2][2])) +
-                 wp[0] * (df(mat[1][0], mat[1][1]) + df(mat[2][0], mat[2][1]) + df(mat[1][2], mat[1][3]) + df(mat[2][2], mat[2][3])) +
-                 wp[2] * (df(mat[1][0], mat[1][2]) + df(mat[1][1], mat[1][3]) + df(mat[2][0], mat[2][2]) + df(mat[2][1], mat[2][3]));
+#define FILT2(PE, PI, PH, PF, PG, PC, PD, PB, PA, G5, C4, G0, D0, C1, B1, F4, I4, H5, I5, A0, A1, N0, N1, N2, N3)                                              \
+    do {                                                                                                                                                       \
+        if (PE != PH && PE != PF) {                                                                                                                            \
+            const unsigned e = xbr32_df(PE, PC) + xbr32_df(PE, PG) + xbr32_df(PI, H5) + xbr32_df(PI, F4) + (xbr32_df(PH, PF) << 2);                            \
+            const unsigned i = xbr32_df(PH, PD) + xbr32_df(PH, I5) + xbr32_df(PF, I4) + xbr32_df(PF, PB) + (xbr32_df(PE, PI) << 2);                            \
+            if (e <= i) {                                                                                                                                      \
+                const unsigned px = xbr32_df(PE, PF) <= xbr32_df(PE, PH) ? PF : PH;                                                                            \
+                if (e < i && ((!xbr32_eq(PF, PB) && !xbr32_eq(PH, PD)) || (xbr32_eq(PE, PI) && (!xbr32_eq(PF, I4) && !xbr32_eq(PH, I5))) ||                    \
+                              xbr32_eq(PE, PG) || xbr32_eq(PE, PC))) {                                                                                         \
+                    const unsigned ke = xbr32_df(PF, PG);                                                                                                      \
+                    const unsigned ki = xbr32_df(PH, PC);                                                                                                      \
+                    const int left = ke << 1 <= ki && PE != PG && PD != PG;                                                                                    \
+                    const int up = ke >= ki << 1 && PE != PC && PB != PC;                                                                                      \
+                    if (left && up) {                                                                                                                          \
+                        E[N3] = ALPHA_BLEND_224_W(E[N3], px);                                                                                                  \
+                        E[N2] = ALPHA_BLEND_64_W(E[N2], px);                                                                                                   \
+                        E[N1] = E[N2];                                                                                                                         \
+                    } else if (left) {                                                                                                                         \
+                        E[N3] = ALPHA_BLEND_192_W(E[N3], px);                                                                                                  \
+                        E[N2] = ALPHA_BLEND_64_W(E[N2], px);                                                                                                   \
+                    } else if (up) {                                                                                                                           \
+                        E[N3] = ALPHA_BLEND_192_W(E[N3], px);                                                                                                  \
+                        E[N1] = ALPHA_BLEND_64_W(E[N1], px);                                                                                                   \
+                    } else { /* diagonal */                                                                                                                    \
+                        E[N3] = ALPHA_BLEND_128_W(E[N3], px);                                                                                                  \
+                    }                                                                                                                                          \
+                } else {                                                                                                                                       \
+                    E[N3] = ALPHA_BLEND_128_W(E[N3], px);                                                                                                      \
+                }                                                                                                                                              \
+            }                                                                                                                                                  \
+        }                                                                                                                                                      \
+    } while (0)
 
-    return (hvw1 - hvw2);
-}
+#define FILT3(PE, PI, PH, PF, PG, PC, PD, PB, PA, G5, C4, G0, D0, C1, B1, F4, I4, H5, I5, A0, A1, N0, N1, N2, N3, N4, N5, N6, N7, N8)                          \
+    do {                                                                                                                                                       \
+        if (PE != PH && PE != PF) {                                                                                                                            \
+            const unsigned e = xbr32_df(PE, PC) + xbr32_df(PE, PG) + xbr32_df(PI, H5) + xbr32_df(PI, F4) + (xbr32_df(PH, PF) << 2);                            \
+            const unsigned i = xbr32_df(PH, PD) + xbr32_df(PH, I5) + xbr32_df(PF, I4) + xbr32_df(PF, PB) + (xbr32_df(PE, PI) << 2);                            \
+            if (e <= i) {                                                                                                                                      \
+                const unsigned px = xbr32_df(PE, PF) <= xbr32_df(PE, PH) ? PF : PH;                                                                            \
+                if (e < i && ((!xbr32_eq(PF, PB) && !xbr32_eq(PF, PC)) || (!xbr32_eq(PH, PD) && !xbr32_eq(PH, PG)) ||                                          \
+                              ((xbr32_eq(PE, PI) && (!xbr32_eq(PF, F4) && !xbr32_eq(PF, I4))) || (!xbr32_eq(PH, H5) && !xbr32_eq(PH, I5))) ||                  \
+                              xbr32_eq(PE, PG) || xbr32_eq(PE, PC))) {                                                                                         \
+                    const unsigned ke = xbr32_df(PF, PG);                                                                                                      \
+                    const unsigned ki = xbr32_df(PH, PC);                                                                                                      \
+                    const int left = ke << 1 <= ki && PE != PG && PD != PG;                                                                                    \
+                    const int up = ke >= ki << 1 && PE != PC && PB != PC;                                                                                      \
+                    if (left && up) {                                                                                                                          \
+                        E[N7] = ALPHA_BLEND_192_W(E[N7], px);                                                                                                  \
+                        E[N6] = ALPHA_BLEND_64_W(E[N6], px);                                                                                                   \
+                        E[N5] = E[N7];                                                                                                                         \
+                        E[N2] = E[N6];                                                                                                                         \
+                        E[N8] = px;                                                                                                                            \
+                    } else if (left) {                                                                                                                         \
+                        E[N7] = ALPHA_BLEND_192_W(E[N7], px);                                                                                                  \
+                        E[N5] = ALPHA_BLEND_64_W(E[N5], px);                                                                                                   \
+                        E[N6] = ALPHA_BLEND_64_W(E[N6], px);                                                                                                   \
+                        E[N8] = px;                                                                                                                            \
+                    } else if (up) {                                                                                                                           \
+                        E[N5] = ALPHA_BLEND_192_W(E[N5], px);                                                                                                  \
+                        E[N7] = ALPHA_BLEND_64_W(E[N7], px);                                                                                                   \
+                        E[N2] = ALPHA_BLEND_64_W(E[N2], px);                                                                                                   \
+                        E[N8] = px;                                                                                                                            \
+                    } else { /* diagonal */                                                                                                                    \
+                        E[N8] = ALPHA_BLEND_224_W(E[N8], px);                                                                                                  \
+                        E[N5] = ALPHA_BLEND_32_W(E[N5], px);                                                                                                   \
+                        E[N7] = ALPHA_BLEND_32_W(E[N7], px);                                                                                                   \
+                    }                                                                                                                                          \
+                } else {                                                                                                                                       \
+                    E[N8] = ALPHA_BLEND_128_W(E[N8], px);                                                                                                      \
+                }                                                                                                                                              \
+            }                                                                                                                                                  \
+        }                                                                                                                                                      \
+    } while (0)
 
-///////////////////////// Super-xBR scaling
-// perform super-xbr (fast shader version) scaling by factor f=2 only.
-template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
-    int outw = w * f, outh = h * f;
+#define FILT4(PE, PI, PH, PF, PG, PC, PD, PB, PA, G5, C4, G0, D0, C1, B1, F4, I4, H5, I5, A0, A1, N15, N14, N11, N3, N7, N10, N13, N12, N9, N6, N2, N1, N5,    \
+              N8, N4, N0)                                                                                                                                      \
+    do {                                                                                                                                                       \
+        if (PE != PH && PE != PF) {                                                                                                                            \
+            const unsigned e = xbr32_df(PE, PC) + xbr32_df(PE, PG) + xbr32_df(PI, H5) + xbr32_df(PI, F4) + (xbr32_df(PH, PF) << 2);                            \
+            const unsigned i = xbr32_df(PH, PD) + xbr32_df(PH, I5) + xbr32_df(PF, I4) + xbr32_df(PF, PB) + (xbr32_df(PE, PI) << 2);                            \
+            if (e <= i) {                                                                                                                                      \
+                const unsigned px = xbr32_df(PE, PF) <= xbr32_df(PE, PH) ? PF : PH;                                                                            \
+                if (e < i && ((!xbr32_eq(PF, PB) && !xbr32_eq(PH, PD)) || (xbr32_eq(PE, PI) && (!xbr32_eq(PF, I4) && !xbr32_eq(PH, I5))) ||                    \
+                              xbr32_eq(PE, PG) || xbr32_eq(PE, PC))) {                                                                                         \
+                    const unsigned ke = xbr32_df(PF, PG);                                                                                                      \
+                    const unsigned ki = xbr32_df(PH, PC);                                                                                                      \
+                    const int left = ke << 1 <= ki && PE != PG && PD != PG;                                                                                    \
+                    const int up = ke >= ki << 1 && PE != PC && PB != PC;                                                                                      \
+                    if (left && up) {                                                                                                                          \
+                        E[N13] = ALPHA_BLEND_192_W(E[N13], px);                                                                                                \
+                        E[N12] = ALPHA_BLEND_64_W(E[N12], px);                                                                                                 \
+                        E[N15] = E[N14] = E[N11] = px;                                                                                                         \
+                        E[N10] = E[N3] = E[N12];                                                                                                               \
+                        E[N7] = E[N13];                                                                                                                        \
+                    } else if (left) {                                                                                                                         \
+                        E[N11] = ALPHA_BLEND_192_W(E[N11], px);                                                                                                \
+                        E[N13] = ALPHA_BLEND_192_W(E[N13], px);                                                                                                \
+                        E[N10] = ALPHA_BLEND_64_W(E[N10], px);                                                                                                 \
+                        E[N12] = ALPHA_BLEND_64_W(E[N12], px);                                                                                                 \
+                        E[N14] = px;                                                                                                                           \
+                        E[N15] = px;                                                                                                                           \
+                    } else if (up) {                                                                                                                           \
+                        E[N14] = ALPHA_BLEND_192_W(E[N14], px);                                                                                                \
+                        E[N7] = ALPHA_BLEND_192_W(E[N7], px);                                                                                                  \
+                        E[N10] = ALPHA_BLEND_64_W(E[N10], px);                                                                                                 \
+                        E[N3] = ALPHA_BLEND_64_W(E[N3], px);                                                                                                   \
+                        E[N11] = px;                                                                                                                           \
+                        E[N15] = px;                                                                                                                           \
+                    } else { /* diagonal */                                                                                                                    \
+                        E[N11] = ALPHA_BLEND_128_W(E[N11], px);                                                                                                \
+                        E[N14] = ALPHA_BLEND_128_W(E[N14], px);                                                                                                \
+                        E[N15] = px;                                                                                                                           \
+                    }                                                                                                                                          \
+                } else {                                                                                                                                       \
+                    E[N15] = ALPHA_BLEND_128_W(E[N15], px);                                                                                                    \
+                }                                                                                                                                              \
+            }                                                                                                                                                  \
+        }                                                                                                                                                      \
+    } while (0)
 
-    float wp[6] = {2.0f, 1.0f, -1.0f, 4.0f, -1.0f, 1.0f};
+typedef struct {
+    const uint8_t *input;
+    uint8_t *output;
+    int inWidth, inHeight;
+    int inPitch, outPitch;
+    uint32_t rgbtoyuv[1 << 24];
+} xbr_params;
 
-    // First Pass
-    for (int y = 0; y < outh; ++y) {
-        for (int x = 0; x < outw; ++x) {
-            float r[4][4], g[4][4], b[4][4], a[4][4], Y[4][4];
-            int cx = x / f, cy = y / f; // central pixels on original images
-            // sample supporting pixels in original image
-            for (int sx = -1; sx <= 2; ++sx) {
-                for (int sy = -1; sy <= 2; ++sy) {
-                    // clamp pixel locations
-                    int csy = clamp(sy + cy, 0, h - 1);
-                    int csx = clamp(sx + cx, 0, w - 1);
-                    // sample & add weighted components
-                    u32 sample = data[csy * w + csx];
-                    r[sx + 1][sy + 1] = (float)R(sample);
-                    g[sx + 1][sy + 1] = (float)G(sample);
-                    b[sx + 1][sy + 1] = (float)B(sample);
-                    a[sx + 1][sy + 1] = (float)A(sample);
-                    Y[sx + 1][sy + 1] = (float)(0.2126 * r[sx + 1][sy + 1] + 0.7152 * g[sx + 1][sy + 1] + 0.0722 * b[sx + 1][sy + 1]);
-                }
+static inline void xbr_filter(const xbr_params *params, int n) {
+    int x, y;
+    const uint32_t *r2y = params->rgbtoyuv;
+    const int nl = params->outPitch >> 2;
+    const int nl1 = nl + nl;
+    const int nl2 = nl1 + nl;
+
+    for (y = 0; y < params->inHeight; y++) {
+
+        uint32_t *E = (uint32_t *)(params->output + y * params->outPitch * n);
+        const uint32_t *sa2 = (uint32_t *)(params->input + y * params->inPitch - 8); /* center */
+        const uint32_t *sa1 = sa2 - (params->inPitch >> 2);                          /* up x1 */
+        const uint32_t *sa0 = sa1 - (params->inPitch >> 2);                          /* up x2 */
+        const uint32_t *sa3 = sa2 + (params->inPitch >> 2);                          /* down x1 */
+        const uint32_t *sa4 = sa3 + (params->inPitch >> 2);                          /* down x2 */
+
+        if (y <= 1) {
+            sa0 = sa1;
+            if (y == 0) {
+                sa0 = sa1 = sa2;
             }
-            float min_r_sample = min4(r[1][1], r[2][1], r[1][2], r[2][2]);
-            float min_g_sample = min4(g[1][1], g[2][1], g[1][2], g[2][2]);
-            float min_b_sample = min4(b[1][1], b[2][1], b[1][2], b[2][2]);
-            float min_a_sample = min4(a[1][1], a[2][1], a[1][2], a[2][2]);
-            float max_r_sample = max4(r[1][1], r[2][1], r[1][2], r[2][2]);
-            float max_g_sample = max4(g[1][1], g[2][1], g[1][2], g[2][2]);
-            float max_b_sample = max4(b[1][1], b[2][1], b[1][2], b[2][2]);
-            float max_a_sample = max4(a[1][1], a[2][1], a[1][2], a[2][2]);
-            float d_edge = diagonal_edge(Y, &wp[0]);
-            float r1, g1, b1, a1, r2, g2, b2, a2, rf, gf, bf, af;
-            r1 = (float)w1 * (r[0][3] + r[3][0]) + (float)w2 * (r[1][2] + r[2][1]);
-            g1 = (float)w1 * (g[0][3] + g[3][0]) + (float)w2 * (g[1][2] + g[2][1]);
-            b1 = (float)w1 * (b[0][3] + b[3][0]) + (float)w2 * (b[1][2] + b[2][1]);
-            a1 = (float)w1 * (a[0][3] + a[3][0]) + (float)w2 * (a[1][2] + a[2][1]);
-            r2 = (float)w1 * (r[0][0] + r[3][3]) + (float)w2 * (r[1][1] + r[2][2]);
-            g2 = (float)w1 * (g[0][0] + g[3][3]) + (float)w2 * (g[1][1] + g[2][2]);
-            b2 = (float)w1 * (b[0][0] + b[3][3]) + (float)w2 * (b[1][1] + b[2][2]);
-            a2 = (float)w1 * (a[0][0] + a[3][3]) + (float)w2 * (a[1][1] + a[2][2]);
-            // generate and write result
-            if (d_edge <= 0.0f) {
-                rf = r1;
-                gf = g1;
-                bf = b1;
-                af = a1;
-            } else {
-                rf = r2;
-                gf = g2;
-                bf = b2;
-                af = a2;
-            }
-            // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            int ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            int gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            int bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            int ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
-            out[y * outw + x] = out[y * outw + x + 1] = out[(y + 1) * outw + x] = data[cy * w + cx];
-            out[(y + 1) * outw + x + 1] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
-            ++x;
         }
-        ++y;
-    }
 
-    // Second Pass
-    wp[0] = 2.0f;
-    wp[1] = 0.0f;
-    wp[2] = 0.0f;
-    wp[3] = 0.0f;
-    wp[4] = 0.0f;
-    wp[5] = 0.0f;
-
-    for (int y = 0; y < outh; ++y) {
-        for (int x = 0; x < outw; ++x) {
-            float r[4][4], g[4][4], b[4][4], a[4][4], Y[4][4];
-            // sample supporting pixels in original image
-            for (int sx = -1; sx <= 2; ++sx) {
-                for (int sy = -1; sy <= 2; ++sy) {
-                    // clamp pixel locations
-                    int csy = clamp(sx - sy + y, 0, f * h - 1);
-                    int csx = clamp(sx + sy + x, 0, f * w - 1);
-                    // sample & add weighted components
-                    u32 sample = out[csy * outw + csx];
-                    r[sx + 1][sy + 1] = (float)R(sample);
-                    g[sx + 1][sy + 1] = (float)G(sample);
-                    b[sx + 1][sy + 1] = (float)B(sample);
-                    a[sx + 1][sy + 1] = (float)A(sample);
-                    Y[sx + 1][sy + 1] = (float)(0.2126 * r[sx + 1][sy + 1] + 0.7152 * g[sx + 1][sy + 1] + 0.0722 * b[sx + 1][sy + 1]);
-                }
+        if (y >= params->inHeight - 2) {
+            sa4 = sa3;
+            if (y == params->inHeight - 1) {
+                sa4 = sa3 = sa2;
             }
-            float min_r_sample = min4(r[1][1], r[2][1], r[1][2], r[2][2]);
-            float min_g_sample = min4(g[1][1], g[2][1], g[1][2], g[2][2]);
-            float min_b_sample = min4(b[1][1], b[2][1], b[1][2], b[2][2]);
-            float min_a_sample = min4(a[1][1], a[2][1], a[1][2], a[2][2]);
-            float max_r_sample = max4(r[1][1], r[2][1], r[1][2], r[2][2]);
-            float max_g_sample = max4(g[1][1], g[2][1], g[1][2], g[2][2]);
-            float max_b_sample = max4(b[1][1], b[2][1], b[1][2], b[2][2]);
-            float max_a_sample = max4(a[1][1], a[2][1], a[1][2], a[2][2]);
-            float d_edge = diagonal_edge(Y, &wp[0]);
-            float r1, g1, b1, a1, r2, g2, b2, a2, rf, gf, bf, af;
-            r1 = (float)w3 * (r[0][3] + r[3][0]) + (float)w4 * (r[1][2] + r[2][1]);
-            g1 = (float)w3 * (g[0][3] + g[3][0]) + (float)w4 * (g[1][2] + g[2][1]);
-            b1 = (float)w3 * (b[0][3] + b[3][0]) + (float)w4 * (b[1][2] + b[2][1]);
-            a1 = (float)w3 * (a[0][3] + a[3][0]) + (float)w4 * (a[1][2] + a[2][1]);
-            r2 = (float)w3 * (r[0][0] + r[3][3]) + (float)w4 * (r[1][1] + r[2][2]);
-            g2 = (float)w3 * (g[0][0] + g[3][3]) + (float)w4 * (g[1][1] + g[2][2]);
-            b2 = (float)w3 * (b[0][0] + b[3][3]) + (float)w4 * (b[1][1] + b[2][2]);
-            a2 = (float)w3 * (a[0][0] + a[3][3]) + (float)w4 * (a[1][1] + a[2][2]);
-            // generate and write result
-            if (d_edge <= 0.0f) {
-                rf = r1;
-                gf = g1;
-                bf = b1;
-                af = a1;
-            } else {
-                rf = r2;
-                gf = g2;
-                bf = b2;
-                af = a2;
-            }
-            // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            int ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            int gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            int bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            int ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
-            out[y * outw + x + 1] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
-
-            for (int sx = -1; sx <= 2; ++sx) {
-                for (int sy = -1; sy <= 2; ++sy) {
-                    // clamp pixel locations
-                    int csy = clamp(sx - sy + 1 + y, 0, f * h - 1);
-                    int csx = clamp(sx + sy - 1 + x, 0, f * w - 1);
-                    // sample & add weighted components
-                    u32 sample = out[csy * outw + csx];
-                    r[sx + 1][sy + 1] = (float)R(sample);
-                    g[sx + 1][sy + 1] = (float)G(sample);
-                    b[sx + 1][sy + 1] = (float)B(sample);
-                    a[sx + 1][sy + 1] = (float)A(sample);
-                    Y[sx + 1][sy + 1] = (float)(0.2126 * r[sx + 1][sy + 1] + 0.7152 * g[sx + 1][sy + 1] + 0.0722 * b[sx + 1][sy + 1]);
-                }
-            }
-            d_edge = diagonal_edge(Y, &wp[0]);
-            r1 = (float)w3 * (r[0][3] + r[3][0]) + (float)w4 * (r[1][2] + r[2][1]);
-            g1 = (float)w3 * (g[0][3] + g[3][0]) + (float)w4 * (g[1][2] + g[2][1]);
-            b1 = (float)w3 * (b[0][3] + b[3][0]) + (float)w4 * (b[1][2] + b[2][1]);
-            a1 = (float)w3 * (a[0][3] + a[3][0]) + (float)w4 * (a[1][2] + a[2][1]);
-            r2 = (float)w3 * (r[0][0] + r[3][3]) + (float)w4 * (r[1][1] + r[2][2]);
-            g2 = (float)w3 * (g[0][0] + g[3][3]) + (float)w4 * (g[1][1] + g[2][2]);
-            b2 = (float)w3 * (b[0][0] + b[3][3]) + (float)w4 * (b[1][1] + b[2][2]);
-            a2 = (float)w3 * (a[0][0] + a[3][3]) + (float)w4 * (a[1][1] + a[2][2]);
-            // generate and write result
-            if (d_edge <= 0.0f) {
-                rf = r1;
-                gf = g1;
-                bf = b1;
-                af = a1;
-            } else {
-                rf = r2;
-                gf = g2;
-                bf = b2;
-                af = a2;
-            }
-            // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
-            out[(y + 1) * outw + x] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
-            ++x;
         }
-        ++y;
-    }
 
-    // Third Pass
-    wp[0] = 2.0f;
-    wp[1] = 1.0f;
-    wp[2] = -1.0f;
-    wp[3] = 4.0f;
-    wp[4] = -1.0f;
-    wp[5] = 1.0f;
+        for (x = 0; x < params->inWidth; x++) {
+            const uint32_t B1 = sa0[2];
+            const uint32_t PB = sa1[2];
+            const uint32_t PE = sa2[2];
+            const uint32_t PH = sa3[2];
+            const uint32_t H5 = sa4[2];
 
-    for (int y = outh - 1; y >= 0; --y) {
-        for (int x = outw - 1; x >= 0; --x) {
-            float r[4][4], g[4][4], b[4][4], a[4][4], Y[4][4];
-            for (int sx = -2; sx <= 1; ++sx) {
-                for (int sy = -2; sy <= 1; ++sy) {
-                    // clamp pixel locations
-                    int csy = clamp(sy + y, 0, f * h - 1);
-                    int csx = clamp(sx + x, 0, f * w - 1);
-                    // sample & add weighted components
-                    u32 sample = out[csy * outw + csx];
-                    r[sx + 2][sy + 2] = (float)R(sample);
-                    g[sx + 2][sy + 2] = (float)G(sample);
-                    b[sx + 2][sy + 2] = (float)B(sample);
-                    a[sx + 2][sy + 2] = (float)A(sample);
-                    Y[sx + 2][sy + 2] = (float)(0.2126 * r[sx + 2][sy + 2] + 0.7152 * g[sx + 2][sy + 2] + 0.0722 * b[sx + 2][sy + 2]);
-                }
+            const int pprev = 2 - (x > 0);
+            const uint32_t A1 = sa0[pprev];
+            const uint32_t PA = sa1[pprev];
+            const uint32_t PD = sa2[pprev];
+            const uint32_t PG = sa3[pprev];
+            const uint32_t G5 = sa4[pprev];
+
+            const int pprev2 = pprev - (x > 1);
+            const uint32_t A0 = sa1[pprev2];
+            const uint32_t D0 = sa2[pprev2];
+            const uint32_t G0 = sa3[pprev2];
+
+            const int pnext = 3 - (x == params->inWidth - 1);
+            const uint32_t C1 = sa0[pnext];
+            const uint32_t PC = sa1[pnext];
+            const uint32_t PF = sa2[pnext];
+            const uint32_t PI = sa3[pnext];
+            const uint32_t I5 = sa4[pnext];
+
+            const int pnext2 = pnext + 1 - (x >= params->inWidth - 2);
+            const uint32_t C4 = sa1[pnext2];
+            const uint32_t F4 = sa2[pnext2];
+            const uint32_t I4 = sa3[pnext2];
+
+            if (n == 2) {
+                E[0] = E[1] =               // 0, 1
+                    E[nl] = E[nl + 1] = PE; // 2, 3
+
+                FILT2(PE, PI, PH, PF, PG, PC, PD, PB, PA, G5, C4, G0, D0, C1, B1, F4, I4, H5, I5, A0, A1, 0, 1, nl, nl + 1);
+                FILT2(PE, PC, PF, PB, PI, PA, PH, PD, PG, I4, A1, I5, H5, A0, D0, B1, C1, F4, C4, G5, G0, nl, 0, nl + 1, 1);
+                FILT2(PE, PA, PB, PD, PC, PG, PF, PH, PI, C1, G0, C4, F4, G5, H5, D0, A0, B1, A1, I4, I5, nl + 1, nl, 1, 0);
+                FILT2(PE, PG, PD, PH, PA, PI, PB, PF, PC, A0, I5, A1, B1, I4, F4, H5, G5, D0, G0, C1, C4, 1, nl + 1, 0, nl);
+            } else if (n == 3) {
+                E[0] = E[1] = E[2] =                       // 0, 1, 2
+                    E[nl] = E[nl + 1] = E[nl + 2] =        // 3, 4, 5
+                    E[nl1] = E[nl1 + 1] = E[nl1 + 2] = PE; // 6, 7, 8
+
+                FILT3(PE, PI, PH, PF, PG, PC, PD, PB, PA, G5, C4, G0, D0, C1, B1, F4, I4, H5, I5, A0, A1, 0, 1, 2, nl, nl + 1, nl + 2, nl1, nl1 + 1, nl1 + 2);
+                FILT3(PE, PC, PF, PB, PI, PA, PH, PD, PG, I4, A1, I5, H5, A0, D0, B1, C1, F4, C4, G5, G0, nl1, nl, 0, nl1 + 1, nl + 1, 1, nl1 + 2, nl + 2, 2);
+                FILT3(PE, PA, PB, PD, PC, PG, PF, PH, PI, C1, G0, C4, F4, G5, H5, D0, A0, B1, A1, I4, I5, nl1 + 2, nl1 + 1, nl1, nl + 2, nl + 1, nl, 2, 1, 0);
+                FILT3(PE, PG, PD, PH, PA, PI, PB, PF, PC, A0, I5, A1, B1, I4, F4, H5, G5, D0, G0, C1, C4, 2, nl + 2, nl1 + 2, 1, nl + 1, nl1 + 1, 0, nl, nl1);
+            } else if (n == 4) {
+                E[0] = E[1] = E[2] = E[3] =                             //  0,  1,  2,  3
+                    E[nl] = E[nl + 1] = E[nl + 2] = E[nl + 3] =         //  4,  5,  6,  7
+                    E[nl1] = E[nl1 + 1] = E[nl1 + 2] = E[nl1 + 3] =     //  8,  9, 10, 11
+                    E[nl2] = E[nl2 + 1] = E[nl2 + 2] = E[nl2 + 3] = PE; // 12, 13, 14, 15
+
+                FILT4(PE, PI, PH, PF, PG, PC, PD, PB, PA, G5, C4, G0, D0, C1, B1, F4, I4, H5, I5, A0, A1, nl2 + 3, nl2 + 2, nl1 + 3, 3, nl + 3, nl1 + 2,
+                      nl2 + 1, nl2, nl1 + 1, nl + 2, 2, 1, nl + 1, nl1, nl, 0);
+                FILT4(PE, PC, PF, PB, PI, PA, PH, PD, PG, I4, A1, I5, H5, A0, D0, B1, C1, F4, C4, G5, G0, 3, nl + 3, 2, 0, 1, nl + 2, nl1 + 3, nl2 + 3, nl1 + 2,
+                      nl + 1, nl, nl1, nl1 + 1, nl2 + 2, nl2 + 1, nl2);
+                FILT4(PE, PA, PB, PD, PC, PG, PF, PH, PI, C1, G0, C4, F4, G5, H5, D0, A0, B1, A1, I4, I5, 0, 1, nl, nl2, nl1, nl + 1, 2, 3, nl + 2, nl1 + 1,
+                      nl2 + 1, nl2 + 2, nl1 + 2, nl + 3, nl1 + 3, nl2 + 3);
+                FILT4(PE, PG, PD, PH, PA, PI, PB, PF, PC, A0, I5, A1, B1, I4, F4, H5, G5, D0, G0, C1, C4, nl2, nl1, nl2 + 1, nl2 + 3, nl2 + 2, nl1 + 1, nl, 0,
+                      nl + 1, nl1 + 2, nl1 + 3, nl + 3, nl + 2, 1, 2, 3);
             }
-            float min_r_sample = min4(r[1][1], r[2][1], r[1][2], r[2][2]);
-            float min_g_sample = min4(g[1][1], g[2][1], g[1][2], g[2][2]);
-            float min_b_sample = min4(b[1][1], b[2][1], b[1][2], b[2][2]);
-            float min_a_sample = min4(a[1][1], a[2][1], a[1][2], a[2][2]);
-            float max_r_sample = max4(r[1][1], r[2][1], r[1][2], r[2][2]);
-            float max_g_sample = max4(g[1][1], g[2][1], g[1][2], g[2][2]);
-            float max_b_sample = max4(b[1][1], b[2][1], b[1][2], b[2][2]);
-            float max_a_sample = max4(a[1][1], a[2][1], a[1][2], a[2][2]);
-            float d_edge = diagonal_edge(Y, &wp[0]);
-            float r1, g1, b1, a1, r2, g2, b2, a2, rf, gf, bf, af;
-            r1 = (float)w1 * (r[0][3] + r[3][0]) + (float)w2 * (r[1][2] + r[2][1]);
-            g1 = (float)w1 * (g[0][3] + g[3][0]) + (float)w2 * (g[1][2] + g[2][1]);
-            b1 = (float)w1 * (b[0][3] + b[3][0]) + (float)w2 * (b[1][2] + b[2][1]);
-            a1 = (float)w1 * (a[0][3] + a[3][0]) + (float)w2 * (a[1][2] + a[2][1]);
-            r2 = (float)w1 * (r[0][0] + r[3][3]) + (float)w2 * (r[1][1] + r[2][2]);
-            g2 = (float)w1 * (g[0][0] + g[3][3]) + (float)w2 * (g[1][1] + g[2][2]);
-            b2 = (float)w1 * (b[0][0] + b[3][3]) + (float)w2 * (b[1][1] + b[2][2]);
-            a2 = (float)w1 * (a[0][0] + a[3][3]) + (float)w2 * (a[1][1] + a[2][2]);
-            // generate and write result
-            if (d_edge <= 0.0f) {
-                rf = r1;
-                gf = g1;
-                bf = b1;
-                af = a1;
-            } else {
-                rf = r2;
-                gf = g2;
-                bf = b2;
-                af = a2;
-            }
-            // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            int ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            int gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            int bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            int ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
-            out[y * outw + x] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
+
+            sa0 += 1;
+            sa1 += 1;
+            sa2 += 1;
+            sa3 += 1;
+            sa4 += 1;
+
+            E += n;
         }
     }
 }
 
-//// *** Super-xBR code ends here - MIT LICENSE *** ///
+static inline int _max(int a, int b) { return (a > b) ? a : b; }
 
-void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out) { scaleSuperXBRT<2>(data, out, w, h); }
+static inline int _min(int a, int b) { return (a < b) ? a : b; }
+
+static void xbr_init_data(xbr_params *params) {
+    uint32_t c;
+    int bg, rg, g;
+
+    for (bg = -255; bg < 256; bg++) {
+        for (rg = -255; rg < 256; rg++) {
+            const uint32_t u = (uint32_t)((-169 * rg + 500 * bg) / 1000) + 128;
+            const uint32_t v = (uint32_t)((500 * rg - 81 * bg) / 1000) + 128;
+            int startg = _max(-bg, _max(-rg, 0));
+            int endg = _min(255 - bg, _min(255 - rg, 255));
+            uint32_t y = (uint32_t)((299 * rg + 1000 * startg + 114 * bg) / 1000);
+            c = bg + (rg << 16) + 0x010101 * startg;
+            for (g = startg; g <= endg; g++) {
+                params->rgbtoyuv[c] = ((y++) << 16) + (u << 8) + v;
+                c += 0x010101;
+            }
+        }
+    }
+}
+
+void xbr_filter_xbr2x(const xbr_params *params) { xbr_filter(params, 2); }
+
+void xbr_filter_xbr3x(const xbr_params *params) { xbr_filter(params, 3); }
+
+void xbr_filter_xbr4x(const xbr_params *params) { xbr_filter(params, 4); }
+
+static xbr_params xbrparams;
+
+static void xbr32_init() {
+    static int initialized = 0;
+    if (initialized) {
+        return;
+    }
+    initialized = 1;
+
+    memset(&xbrparams, 0, sizeof(xbrparams));
+
+    xbr_init_data(&xbrparams);
+}
+
+void xbr2x_32(unsigned char *pIn, unsigned int srcPitch, unsigned char *pOut, unsigned int dstPitch, int Xres, int Yres) {
+    xbr32_init();
+
+    xbrparams.input = pIn;
+    xbrparams.output = pOut;
+    xbrparams.inPitch = srcPitch;
+    xbrparams.outPitch = dstPitch;
+    xbrparams.inWidth = Xres;
+    xbrparams.inHeight = Yres;
+
+    xbr_filter_xbr2x(&xbrparams);
+}
+
+void xbr3x_32(unsigned char *pIn, unsigned int srcPitch, unsigned char *pOut, unsigned int dstPitch, int Xres, int Yres) {
+    xbr32_init();
+
+    xbrparams.input = pIn;
+    xbrparams.output = pOut;
+    xbrparams.inPitch = srcPitch;
+    xbrparams.outPitch = dstPitch;
+    xbrparams.inWidth = Xres;
+    xbrparams.inHeight = Yres;
+
+    xbr_filter_xbr3x(&xbrparams);
+}
+
+void xbr4x_32(unsigned char *pIn, unsigned int srcPitch, unsigned char *pOut, unsigned int dstPitch, int Xres, int Yres) {
+    xbr32_init();
+
+    xbrparams.input = pIn;
+    xbrparams.output = pOut;
+    xbrparams.inPitch = srcPitch;
+    xbrparams.outPitch = dstPitch;
+    xbrparams.inWidth = Xres;
+    xbrparams.inHeight = Yres;
+
+    xbr_filter_xbr4x(&xbrparams);
+}
 
 #endif
