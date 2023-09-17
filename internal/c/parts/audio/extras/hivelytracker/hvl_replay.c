@@ -560,7 +560,8 @@ struct hvl_tune *hvl_load_ahx(const uint8 *buf, uint32 buflen, uint32 defstereo,
         return NULL;
     }
 
-    strncpy(ht->ht_Name, (TEXT *)&buf[(buf[4] << 8) | buf[5]], 128);
+    strncpy(ht->ht_Name, (TEXT *)&buf[(buf[4] << 8) | buf[5]], 127);
+    ht->ht_Name[127] = '\0';
     nptr = (TEXT *)&buf[((buf[4] << 8) | buf[5]) + strlen(ht->ht_Name) + 1];
 
     bptr = &buf[14];
@@ -609,7 +610,8 @@ struct hvl_tune *hvl_load_ahx(const uint8 *buf, uint32 buflen, uint32 defstereo,
     // Instruments
     for (i = 1; i <= ht->ht_InstrumentNr; i++) {
         if (nptr < (TEXT *)(buf + buflen)) {
-            strncpy(ht->ht_Instruments[i].ins_Name, nptr, 128);
+            strncpy(ht->ht_Instruments[i].ins_Name, nptr, 127);
+            ht->ht_Instruments[i].ins_Name[127] = '\0';
             nptr += strlen(nptr) + 1;
         } else {
             ht->ht_Instruments[i].ins_Name[0] = 0;
@@ -764,7 +766,8 @@ struct hvl_tune *hvl_load_hvl(const uint8 *buf, uint32 buflen, uint32 defstereo,
         return NULL;
     }
 
-    strncpy(ht->ht_Name, (TEXT *)&buf[(buf[4] << 8) | buf[5]], 128);
+    strncpy(ht->ht_Name, (TEXT *)&buf[(buf[4] << 8) | buf[5]], 127);
+    ht->ht_Name[127] = '\0';
     nptr = (TEXT *)&buf[((buf[4] << 8) | buf[5]) + strlen(ht->ht_Name) + 1];
 
     bptr = &buf[16];
@@ -822,7 +825,8 @@ struct hvl_tune *hvl_load_hvl(const uint8 *buf, uint32 buflen, uint32 defstereo,
     // Instruments
     for (i = 1; i <= ht->ht_InstrumentNr; i++) {
         if (nptr < (TEXT *)(buf + buflen)) {
-            strncpy(ht->ht_Instruments[i].ins_Name, nptr, 128);
+            strncpy(ht->ht_Instruments[i].ins_Name, nptr, 127);
+            ht->ht_Instruments[i].ins_Name[127] = '\0';
             nptr += strlen(nptr) + 1;
         } else {
             ht->ht_Instruments[i].ins_Name[0] = 0;
@@ -1371,7 +1375,7 @@ void hvl_plist_command_parse(const struct hvl_tune *ht, struct hvl_voice *voice,
         voice->vc_RingPlantPeriod = 1;
         break;
 
-        /* New in HivelyTracker 1.4 */
+    /* New in HivelyTracker 1.4 */
     case 9:
         if (FXParam > 127)
             FXParam -= 256;
@@ -1470,15 +1474,18 @@ void hvl_process_frame(struct hvl_tune *ht, struct hvl_voice *voice) {
 
         if (--voice->vc_ADSR.aFrames <= 0)
             voice->vc_ADSRVolume = voice->vc_Instrument->ins_Envelope.aVolume << 8;
+
     } else if (voice->vc_ADSR.dFrames) {
 
         voice->vc_ADSRVolume += voice->vc_ADSR.dVolume;
 
         if (--voice->vc_ADSR.dFrames <= 0)
             voice->vc_ADSRVolume = voice->vc_Instrument->ins_Envelope.dVolume << 8;
+
     } else if (voice->vc_ADSR.sFrames) {
 
         voice->vc_ADSR.sFrames--;
+
     } else if (voice->vc_ADSR.rFrames) {
 
         voice->vc_ADSRVolume += voice->vc_ADSR.rVolume;

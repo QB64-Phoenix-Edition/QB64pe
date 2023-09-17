@@ -323,6 +323,12 @@ static int tml_parsemessage(tml_message** f, struct tml_parser* p)
 
 		switch (meta_type)
 		{
+			case TML_TRACK_NAME:
+				void TML_AddTrackName(const char* str);
+				TML_AddTrackName((const char*)metadata);
+				evt->type = 0;
+				break;
+
 			case TML_EOT:
 				if (buflen != 0) { TML_WARN("Invalid length for EndOfTrack event"); return -1; }
 				if (!deltatime) return TML_EOT; //no need to store this message
