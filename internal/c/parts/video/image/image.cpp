@@ -76,8 +76,6 @@
 #endif
 
 #define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
-#define HI_NIBBLE(_x_) (((uint8_t)(_x_) >> 4) & 0x0F)
-#define LO_NIBBLE(_x_) (((uint8_t)(_x_)&0x0F))
 
 // These should be replaced with appropriate header files when Matt finishes cleaning up libqb
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
@@ -85,9 +83,7 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not f
 extern const img_struct *img;                 // used by func__loadimage
 extern const img_struct *write_page;          // used by func__loadimage
 extern const uint32_t palette_256[];          // used by func__loadimage
-extern const uint32_t palette_64[];           // used by func__saveimage
 extern const int32_t *page;                   // used by func__saveimage
-extern const int32_t pages;                   // used by func__saveimage
 extern const int32_t nextimg;                 // used by func__saveimage
 extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
 extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
@@ -742,8 +738,8 @@ static inline uint32_t image_swap_red_blue(uint32_t clr) { return ((clr & 0xFF00
 /// @param qbsRequirements Optional: Extra format and setting arguments
 /// @param passed Argument bitmask
 void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements, int32_t passed) {
-    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, HDR, JPG };
-    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "hdr", "jpg"};
+    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, JPG };
+    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "jpg"};
 
     if (new_error) // leave if there was an error
         return;
@@ -888,13 +884,13 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
                 }
 
                 ++c; // move to the attribute
-                fc = LO_NIBBLE(*c);
-                bc = HI_NIBBLE(*c);
+                fc = (*c) & 0x0F;
+                bc = (((*c) >> 4) & 7) + ((*c >> 7) << 3);
 
                 // Inner codepoint rendering loop
                 for (auto dy = y, py = 0; py < fontHeight; dy++, py++) {
                     for (auto dx = x, px = 0; px < fontWidth; dx++, px++) {
-                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? palette_64[fc] : palette_64[bc]);
+                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? palette_256[fc] : palette_256[bc]);
                         ++builtinFont;
                     }
                 }
@@ -931,47 +927,46 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
     IMAGE_DEBUG_PRINT("Saving to: %s (%i x %i), %llu pixels", fileName.c_str(), width, height, pixels.size());
 
     switch (format) {
-    case SaveFormat::PNG:
+    case SaveFormat::PNG: {
         if (!stbi_write_png(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 0)) {
             IMAGE_DEBUG_PRINT("stbi_write_png() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
         }
-        break;
+    } break;
 
-    case SaveFormat::QOI:
-        if (!qoi_write(fileName.c_str(), pixels.data(), &(qoi_desc){.width = width, .height = height, .channels = sizeof(uint32_t), .colorspace = QOI_SRGB})) {
+    case SaveFormat::QOI: {
+        qoi_desc desc;
+        desc.width = width;
+        desc.height = height;
+        desc.channels = sizeof(uint32_t);
+        desc.colorspace = QOI_SRGB;
+
+        if (!qoi_write(fileName.c_str(), pixels.data(), &desc)) {
             IMAGE_DEBUG_PRINT("qoi_write() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
         }
-        break;
+    } break;
 
-    case SaveFormat::BMP:
+    case SaveFormat::BMP: {
         if (!stbi_write_bmp(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
             IMAGE_DEBUG_PRINT("stbi_write_bmp() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
         }
-        break;
+    } break;
 
-    case SaveFormat::TGA:
+    case SaveFormat::TGA: {
         if (!stbi_write_tga(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
             IMAGE_DEBUG_PRINT("stbi_write_tga() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
         }
-        break;
+    } break;
 
-    case SaveFormat::HDR:
-        if (!stbi_write_hdr(fileName.c_str(), width, height, sizeof(uint32_t), (const float *)pixels.data())) {
-            IMAGE_DEBUG_PRINT("stbi_write_hdr() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
-        }
-        break;
-
-    case SaveFormat::JPG:
+    case SaveFormat::JPG: {
         if (!stbi_write_jpg(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 100)) {
             IMAGE_DEBUG_PRINT("stbi_write_jpg() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
         }
-        break;
+    } break;
 
     default:
         IMAGE_DEBUG_PRINT("Save handler not implemented");
