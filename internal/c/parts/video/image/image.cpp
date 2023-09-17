@@ -6,21 +6,31 @@
 //                                               |___/                                |__/
 //
 //  Powered by:
-//      stb_image (https://github.com/nothings/stb)
+//      stb_image & stb_image_write (https://github.com/nothings/stb)
 //      dr_pcx (https://github.com/mackron/dr_pcx)
 //      nanosvg (https://github.com/memononen/nanosvg)
 //      qoi (https://qoiformat.org)
 //      pixelscalers (https://github.com/janert/pixelscalers)
+//      mmpx (https://github.com/ITotalJustice/mmpx)
 //
 //-----------------------------------------------------------------------------------------------------
 
+// Set this to 1 if we want to print debug messages to stderr
+#define IMAGE_DEBUG 1
+#include "image.h"
+// We need 'qbs' and 'image' structs stuff from here
+// This should eventually change when things are moved to smaller, logical and self-contained files
+#include "../../../libqb.h"
+#include <string>
 #include <unordered_map>
+#include <vector>
 #define DR_PCX_IMPLEMENTATION
 #include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #define QOI_IMPLEMENTATION
 #include "qoi.h"
+#define NANOSVG_ALL_COLOR_KEYWORDS
 #define NANOSVG_IMPLEMENTATION
 #include "nanosvg/nanosvg.h"
 #define NANOSVGRAST_IMPLEMENTATION
@@ -35,11 +45,6 @@
 #include "pixelscalers/hqx.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
-// Set this to 1 if we want to print debug messages to stderr
-#define IMAGE_DEBUG 0
-#include "image.h"
-// We need 'qbs' and 'image' structs stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
-#include "../../../libqb.h"
 
 // This is returned to the caller if something goes wrong while loading the image
 #define INVALID_IMAGE_HANDLE -1
@@ -57,24 +62,40 @@
 #define REQUIREMENT_STRING_HQ3XA "HQ3XA"
 #define REQUIREMENT_STRING_HQ3XB "HQ3XB"
 
+// TODO: We should have QB64 error code enums in some common place
+// Maybe consolidate error() & friends, and these enums
+#define ERROR_ILLEGAL_FUNCTION_CALL 5
+#define ERROR_INTERNAL_ERROR 51
+#define ERROR_BAD_FILE_NAME 64
+#define ERROR_INVALID_HANDLE 258
+
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
 #else
 #    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #endif
 
+#define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
+#define HI_NIBBLE(_x_) (((uint8_t)(_x_) >> 4) & 0x0F)
+#define LO_NIBBLE(_x_) (((uint8_t)(_x_)&0x0F))
+
 // These should be replaced with appropriate header files when Matt finishes cleaning up libqb
-void sub__freeimage(int32, int32);                                  // Not declared in libqb.h
 int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
 
-extern img_struct *img;        // Required by func__loadimage
-extern img_struct *write_page; // Required by func__loadimage
-extern uint32 palette_256[];   // Required by func__loadimage
+extern const img_struct *img;                 // used by func__loadimage
+extern const img_struct *write_page;          // used by func__loadimage
+extern const uint32_t palette_256[];          // used by func__loadimage
+extern const uint32_t palette_64[];           // used by func__saveimage
+extern const int32_t *page;                   // used by func__saveimage
+extern const int32_t pages;                   // used by func__saveimage
+extern const int32_t nextimg;                 // used by func__saveimage
+extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
+extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
 
 /// @brief Pixel scaler algorithms
-enum class ImageScaler : int32_t { NONE = 0, SXBR2, MMPX2, XBR2X, XBR3X, XBR4X, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
-/// @brief This is the scaling factor for ImageScaler enum
-static const int32_t g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 4, 2, 2, 3, 3};
+enum class ImageScaler { NONE = 0, SXBR2, MMPX2, XBR2X, XBR3X, XBR4X, HQ2XA, HQ2XB, HQ3XA, HQ3XB, COUNT };
+/// @brief This is the scaling factors for ImageScaler enum
+static const int g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 4, 2, 2, 3, 3};
 
 /// @brief Runs a pixel scaler algorithm on raw image pixels. It will free 'data' if scaling occurs!
 /// @param data In + Out: The source raw image data in RGBA format
@@ -208,7 +229,7 @@ static uint8_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, in
 /// @param components Out: color channels. This cannot be NULL
 /// @param isVG Out: vector graphics? Always set to true
 /// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint8_t *image_svg_load_fron_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
+static uint8_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
     auto svgString = (char *)malloc(size + 1);
     if (!svgString)
         return nullptr;
@@ -331,7 +352,7 @@ static uint8_t *image_decode_from_memory(const void *data, size_t size, int32_t 
             IMAGE_DEBUG_PRINT("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
             if (!pixels) {
-                pixels = image_svg_load_fron_memory(reinterpret_cast<const uint8_t *>(data), size, xOut, yOut, scaler, &compOut, &isVG);
+                pixels = image_svg_load_from_memory(reinterpret_cast<const uint8_t *>(data), size, xOut, yOut, scaler, &compOut, &isVG);
                 IMAGE_DEBUG_PRINT("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
 
                 if (!pixels)
@@ -479,16 +500,17 @@ static inline float image_calculate_rgb_distance(uint8_t r1, uint8_t g1, uint8_t
 /// @param h The height of the image in pixels
 /// @param src_pal The image's original palette. This cannot be NULL
 /// @param dst_pal The destination palette. This cannot be NULL
-static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, uint32_t *src_pal, uint32_t *dst_pal) {
+static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32_t *src_pal, const uint32_t *dst_pal) {
+    auto const MAX_RGB_DIST = image_calculate_rgb_distance(0, 0, 0, 255, 255, 255); // The farthest we can go in the color cube
     static uint32_t palMap[256];
+    ZERO_VARIABLE(palMap);
 
     IMAGE_DEBUG_PRINT("Remapping 8bpp image (%i, %i) palette", w, h);
 
-    ZERO_VARIABLE(palMap);
-
     // Match the palette
     for (auto x = 0; x < 256; x++) {
-        auto oldDist = image_calculate_rgb_distance(0, 0, 0, 255, 255, 255); // The farthest we can go in the color cube
+        auto oldDist = MAX_RGB_DIST;
+
         for (auto y = 0; y < 256; y++) {
             auto newDist = image_calculate_rgb_distance(IMAGE_GET_BGRA_RED(src_pal[x]), IMAGE_GET_BGRA_GREEN(src_pal[x]), IMAGE_GET_BGRA_BLUE(src_pal[x]),
                                                         IMAGE_GET_BGRA_RED(dst_pal[y]), IMAGE_GET_BGRA_GREEN(dst_pal[y]), IMAGE_GET_BGRA_BLUE(dst_pal[y]));
@@ -507,16 +529,16 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, uint32_t *sr
 }
 
 /// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
-/// @param fileName The filename or memory buffer (see requirements below) of the image
+/// @param qbsFileName The filename or memory buffer (see requirements below) of the image
 /// @param bpp 32 = 32bpp, 33 = 32bpp (hardware acclerated), 256=8bpp or 257=8bpp (without palette remap)
-/// @param requirements A qbs that can contain one or more of: hardware, memory, adaptive
+/// @param qbsRequirements A qbs that can contain one or more of: hardware, memory, adaptive
 /// @param passed How many parameters were passed?
 /// @return Valid LONG image handle values that are less than -1 or -1 on failure
-int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t passed) {
-    static qbs *fileNameZ = nullptr; // QB string that we'll need null terminate the filename
-    static qbs *reqs = nullptr;      // QB strign that we'll need to convert requirements to uppercase
+int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int32_t passed) {
+    static qbs *fileNameZ = nullptr; // QB string that we'll need to null terminate the filename
+    static qbs *reqs = nullptr;      // QB string that we'll need to convert requirements to uppercase
 
-    if (new_error || !fileName->len) // leave if we do not have a file name, data or there was an error
+    if (new_error || !qbsFileName->len) // leave if we do not have a file name, data or there was an error
         return INVALID_IMAGE_HANDLE;
 
     if (!fileNameZ)
@@ -559,10 +581,10 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t p
     }
 
     // Check requirements string and set appropriate flags
-    if ((passed & 2) && requirements->len) {
+    if ((passed & 2) && qbsRequirements->len) {
         IMAGE_DEBUG_PRINT("Parsing requirements");
 
-        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+        qbs_set(reqs, qbs_ucase(qbsRequirements)); // Convert tmp str to perm str
 
         if (func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_HARDWARE), 1) && bpp == 32) {
             isHardwareImage = true;
@@ -608,13 +630,13 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t p
         }
     }
 
-    int32_t x, y;
+    auto x = 0, y = 0;
     uint8_t *pixels;
 
     if (isLoadFromMemory) {
-        pixels = image_decode_from_memory(fileName->chr, fileName->len, &x, &y, scaler);
+        pixels = image_decode_from_memory(qbsFileName->chr, qbsFileName->len, &x, &y, scaler);
     } else {
-        qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
+        qbs_set(fileNameZ, qbs_add(qbsFileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
         pixels = image_decode_from_file((const char *)fileNameZ->chr, &x, &y, scaler);
     }
 
@@ -707,4 +729,252 @@ int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t p
     IMAGE_DEBUG_PRINT("Returning handle value = %i", i);
 
     return i;
+}
+
+/// @brief Helps convert a BGRA color to an RGBA color and back
+/// @param clr A BGRA color or an RGBA color
+/// @return An RGBA color or a BGRA color
+static inline uint32_t image_swap_red_blue(uint32_t clr) { return ((clr & 0xFF00FF00u) | ((clr & 0x00FF0000u) >> 16) | ((clr & 0x000000FFu) << 16)); }
+
+/// @brief Saves an image to the disk from a QB64-PE image handle
+/// @param qbsFileName The file path name to save to
+/// @param imageHandle Optional: The image handle. If omitted, then this is _DISPLAY()
+/// @param qbsRequirements Optional: Extra format and setting arguments
+/// @param passed Argument bitmask
+void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements, int32_t passed) {
+    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, HDR, JPG };
+    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "hdr", "jpg"};
+
+    if (new_error) // leave if there was an error
+        return;
+
+    if (!qbsFileName->len) { // empty file names not allowed
+        IMAGE_DEBUG_PRINT("Empty file name");
+        error(ERROR_BAD_FILE_NAME);
+        return;
+    }
+
+    if (passed & 1) {
+        // Check and validate image handle
+        IMAGE_DEBUG_PRINT("Validating handle %i", imageHandle);
+
+        if (imageHandle >= 0) {
+            validatepage(imageHandle);
+            imageHandle = page[imageHandle];
+        } else {
+            imageHandle = -imageHandle;
+
+            if (imageHandle >= nextimg) {
+                error(ERROR_INVALID_HANDLE);
+                return;
+            }
+            if (!img[imageHandle].valid) {
+                error(ERROR_INVALID_HANDLE);
+                return;
+            }
+        }
+    } else {
+        // Use default image handle
+        IMAGE_DEBUG_PRINT("Using default handle");
+
+        imageHandle = -func__display();
+
+        // Safety
+        if (imageHandle >= nextimg) {
+            error(ERROR_INVALID_HANDLE);
+            return;
+        }
+        if (!img[imageHandle].valid) {
+            error(ERROR_INVALID_HANDLE);
+            return;
+        }
+    }
+
+    IMAGE_DEBUG_PRINT("Using image handle %i", imageHandle);
+
+    auto format = SaveFormat::PNG; // we always default to PNG
+
+    if ((passed & 2) && qbsRequirements->len) {
+        // Parse the requirements string and setup save settings
+        std::string requirements(reinterpret_cast<char *>(qbsRequirements->chr), qbsRequirements->len);
+        std::transform(requirements.begin(), requirements.end(), requirements.begin(), [](unsigned char c) { return std::tolower(c); });
+
+        IMAGE_DEBUG_PRINT("Parsing requirements string: %s", requirements.c_str());
+
+        for (auto i = 0; i < GET_ARRAY_SIZE(formatName); i++) {
+            IMAGE_DEBUG_PRINT("Checking for: %s", formatName[i]);
+            if (requirements.find(formatName[i]) != std::string::npos) {
+                format = (SaveFormat)i;
+                IMAGE_DEBUG_PRINT("Found: %s", formatName[(int)format]);
+                break;
+            }
+        }
+    }
+
+    IMAGE_DEBUG_PRINT("Format selected: %s", formatName[(int)format]);
+
+    std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
+
+    // Check if fileName has a valid extension and add one if it does not have one
+    if (fileName.length() > 4) { // must be at least n.ext
+        auto fileExtension = fileName.substr(fileName.length() - 4);
+        std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), [](unsigned char c) { return std::tolower(c); });
+
+        IMAGE_DEBUG_PRINT("File extension: %s", fileExtension.c_str());
+
+        int i;
+        for (i = 0; i < GET_ARRAY_SIZE(formatName); i++) {
+            std::string formatExtension;
+
+            formatExtension = ".";
+            formatExtension.append(formatName[i]);
+
+            IMAGE_DEBUG_PRINT("Check extension name: %s", formatExtension.c_str());
+
+            if (fileExtension == formatExtension) {
+                IMAGE_DEBUG_PRINT("Extension (%s) matches with format %i", formatExtension.c_str(), i);
+                break;
+            }
+        }
+
+        if (i >= GET_ARRAY_SIZE(formatName)) { // no matches
+            IMAGE_DEBUG_PRINT("No matching extension. Adding .%s", formatName[(int)format]);
+
+            fileName.append(".");
+            fileName.append(formatName[(int)format]);
+        }
+    } else {
+        // Simply add the selected format's extension
+        IMAGE_DEBUG_PRINT("Adding extension: .%s", formatName[(int)format]);
+
+        fileName.append(".");
+        fileName.append(formatName[(int)format]);
+    }
+
+    // This will hold our raw RGBA pixel data
+    std::vector<uint32_t> pixels;
+    int32_t width, height;
+
+    if (img[imageHandle].text) {
+        IMAGE_DEBUG_PRINT("Rendering text surface to RGBA");
+
+        auto const fontWidth = 8;
+        auto fontHeight = 16;
+        if (img[imageHandle].font == 8 || img[imageHandle].font == 14)
+            fontHeight = img[imageHandle].font;
+
+        width = fontWidth * img[imageHandle].width;
+        height = fontHeight * img[imageHandle].height;
+
+        pixels.resize(width * height);
+
+        uint8_t fc, bc, *c = img[imageHandle].offset; // set to the first codepoint
+        uint8_t const *builtinFont = nullptr;
+
+        // Render all text to the raw pixel array
+        for (auto y = 0; y < height; y += fontHeight) {
+            for (auto x = 0; x < width; x += fontWidth) {
+                switch (fontHeight) {
+                case 8:
+                    builtinFont = &charset8x8[*c][0][0];
+                    break;
+
+                case 14:
+                    builtinFont = &charset8x16[*c][1][0];
+                    break;
+
+                default: // 16
+                    builtinFont = &charset8x16[*c][0][0];
+                }
+
+                ++c; // move to the attribute
+                fc = LO_NIBBLE(*c);
+                bc = HI_NIBBLE(*c);
+
+                // Inner codepoint rendering loop
+                for (auto dy = y, py = 0; py < fontHeight; dy++, py++) {
+                    for (auto dx = x, px = 0; px < fontWidth; dx++, px++) {
+                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? palette_64[fc] : palette_64[bc]);
+                        ++builtinFont;
+                    }
+                }
+
+                ++c; // move to the next codepoint
+            }
+        }
+    } else {
+        width = img[imageHandle].width;
+        height = img[imageHandle].height;
+
+        pixels.resize(width * height);
+
+        if (img[imageHandle].bits_per_pixel == 32) { // BGRA pixels
+            IMAGE_DEBUG_PRINT("Coverting BGRA surface to RGBA");
+
+            auto p = img[imageHandle].offset32;
+
+            for (size_t i = 0; i < pixels.size(); i++) {
+                pixels[i] = image_swap_red_blue(*p);
+                ++p;
+            }
+        } else { // indexed pixels
+            IMAGE_DEBUG_PRINT("Coverting BGRA indexed surface to RGBA");
+            auto p = img[imageHandle].offset;
+
+            for (size_t i = 0; i < pixels.size(); i++) {
+                pixels[i] = image_swap_red_blue(img[imageHandle].pal[*p]);
+                ++p;
+            }
+        }
+    }
+
+    IMAGE_DEBUG_PRINT("Saving to: %s (%i x %i), %llu pixels", fileName.c_str(), width, height, pixels.size());
+
+    switch (format) {
+    case SaveFormat::PNG:
+        if (!stbi_write_png(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 0)) {
+            IMAGE_DEBUG_PRINT("stbi_write_png() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+        break;
+
+    case SaveFormat::QOI:
+        if (!qoi_write(fileName.c_str(), pixels.data(), &(qoi_desc){.width = width, .height = height, .channels = sizeof(uint32_t), .colorspace = QOI_SRGB})) {
+            IMAGE_DEBUG_PRINT("qoi_write() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+        break;
+
+    case SaveFormat::BMP:
+        if (!stbi_write_bmp(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
+            IMAGE_DEBUG_PRINT("stbi_write_bmp() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+        break;
+
+    case SaveFormat::TGA:
+        if (!stbi_write_tga(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
+            IMAGE_DEBUG_PRINT("stbi_write_tga() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+        break;
+
+    case SaveFormat::HDR:
+        if (!stbi_write_hdr(fileName.c_str(), width, height, sizeof(uint32_t), (const float *)pixels.data())) {
+            IMAGE_DEBUG_PRINT("stbi_write_hdr() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+        break;
+
+    case SaveFormat::JPG:
+        if (!stbi_write_jpg(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 100)) {
+            IMAGE_DEBUG_PRINT("stbi_write_jpg() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+        break;
+
+    default:
+        IMAGE_DEBUG_PRINT("Save handler not implemented");
+        error(ERROR_INTERNAL_ERROR);
+    }
 }

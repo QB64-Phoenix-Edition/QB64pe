@@ -15,7 +15,7 @@ void sub_shell4(qbs *, int32); //_DONTWAIT & _HIDE
 int32 func__source();
 int32 func_pos(int32 ignore);
 void sub__printimage(int32 i);
-double func_timer(double accuracy, int32 passed);
+double func_timer(double accuracy, int32_t passed);
 int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
 void display();
 void validatepage(int32);
@@ -25,12 +25,13 @@ int32 func__printwidth(qbs *, int32, int32);
 void sub_cls(int32, uint32, int32);
 void qbs_print(qbs *, int32);
 int32 func__copyimage(int32 i, int32 mode, int32 passed);
+void sub__freeimage(int32 i, int32 passed);
 int32 func__dest();
 int32 func__display();
 void qbg_sub_view_print(int32, int32, int32);
 qbs *qbs_new(int32, uint8);
 qbs *qbs_new_txt(const char *);
-qbs *qbs_new_txt_len(const char *, int32_t);    // a740g: Added this here so that we don't have to declare it ourselves everywhere
+qbs *qbs_new_txt_len(const char *, int32_t);
 qbs *qbs_add(qbs *, qbs *);
 qbs *qbs_set(qbs *, qbs *);
 void qbg_sub_window(float, float, float, float, int32);
@@ -69,5 +70,4 @@ extern int32 no_control_characters2;
 extern qbs *qbs_lcase(qbs *str);
 extern qbs *qbs_ucase(qbs *str);
 
-using namespace std;
 #endif

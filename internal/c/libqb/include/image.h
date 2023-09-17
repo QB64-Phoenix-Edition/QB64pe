@@ -6,11 +6,12 @@
 //                                               |___/                                |__/
 //
 //  Powered by:
-//      stb_image (https://github.com/nothings/stb)
+//      stb_image & stb_image_write (https://github.com/nothings/stb)
 //      dr_pcx (https://github.com/mackron/dr_pcx)
 //      nanosvg (https://github.com/memononen/nanosvg)
 //      qoi (https://qoiformat.org)
 //      pixelscalers (https://github.com/janert/pixelscalers)
+//      mmpx (https://github.com/ITotalJustice/mmpx)
 //
 //-----------------------------------------------------------------------------------------------------
 
@@ -48,4 +49,5 @@
 
 struct qbs;
 
-int32_t func__loadimage(qbs *fileName, int32_t bpp, qbs *requirements, int32_t passed);
+int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int32_t passed);
+void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements, int32_t passed);
