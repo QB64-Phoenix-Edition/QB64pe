@@ -16,7 +16,7 @@
 //-----------------------------------------------------------------------------------------------------
 
 // Set this to 1 if we want to print debug messages to stderr
-#define IMAGE_DEBUG 1
+#define IMAGE_DEBUG 0
 #include "image.h"
 // We need 'qbs' and 'image' structs stuff from here
 // This should eventually change when things are moved to smaller, logical and self-contained files
