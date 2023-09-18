@@ -783,6 +783,8 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
             if (fileExtension == formatExtension) {
                 IMAGE_DEBUG_PRINT("Extension (%s) matches with format %i", formatExtension.c_str(), i);
+                format = (SaveFormat)i;
+                IMAGE_DEBUG_PRINT("Format selected by extension: %s", formatName[(int)format]);
                 break;
             }
         }
@@ -878,10 +880,11 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         }
     }
 
-    IMAGE_DEBUG_PRINT("Saving to: %s (%i x %i), %llu pixels", fileName.c_str(), width, height, pixels.size());
+    IMAGE_DEBUG_PRINT("Saving to: %s (%i x %i), %llu pixels, %s", fileName.c_str(), width, height, pixels.size(), formatName[(int)format]);
 
     switch (format) {
     case SaveFormat::PNG: {
+        stbi_write_png_compression_level = 100;
         if (!stbi_write_png(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 0)) {
             IMAGE_DEBUG_PRINT("stbi_write_png() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
