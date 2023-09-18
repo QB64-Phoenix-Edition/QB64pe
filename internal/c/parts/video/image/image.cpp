@@ -39,8 +39,6 @@
 #include "pixelscalers/sxbr.hpp"
 #define MMPX_IMPLEMENTATION
 #include "pixelscalers/mmpx.hpp"
-#define XBR_IMPLEMENTATION
-#include "pixelscalers/xbr.hpp"
 #define HQX_IMPLEMENTATION
 #include "pixelscalers/hqx.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -73,11 +71,11 @@ extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
 extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
 
 /// @brief Pixel scaler algorithms
-enum class ImageScaler { NONE = 0, SXBR2, MMPX2, XBR2X, XBR3X, XBR4X, HQ2XA, HQ2XB, HQ3XA, HQ3XB };
+enum class ImageScaler { NONE = 0, SXBR2, MMPX2, HQ2XA, HQ2XB, HQ3XA, HQ3XB };
 /// @brief This is the scaling factors for ImageScaler enum
-static const int g_ImageScaleFactor[] = {1, 2, 2, 2, 3, 4, 2, 2, 3, 3};
+static const int g_ImageScaleFactor[] = {1, 2, 2, 2, 2, 3, 3};
 /// @brief Pixel scaler names for ImageScaler enum
-static const char *g_ImageScalerName[] = {"NONE", "SXBR2", "MMPX2", "XBR2X", "XBR3X", "XBR4X", "HQ2XA", "HQ2XB", "HQ3XA", "HQ3XB"};
+static const char *g_ImageScalerName[] = {"NONE", "SXBR2", "MMPX2", "HQ2XA", "HQ2XB", "HQ3XA", "HQ3XB"};
 
 /// @brief Runs a pixel scaler algorithm on raw image pixels. It will free 'data' if scaling occurs!
 /// @param data In + Out: The source raw image data in RGBA format
@@ -101,21 +99,6 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
 
             case ImageScaler::MMPX2:
                 mmpx_scale2x(data, pixels, *xOut, *yOut);
-                break;
-
-            case ImageScaler::XBR2X:
-                xbr2x_32(reinterpret_cast<unsigned char *>(data), *xOut * sizeof(uint32_t), reinterpret_cast<unsigned char *>(pixels), newX * sizeof(uint32_t),
-                         *xOut, *yOut);
-                break;
-
-            case ImageScaler::XBR3X:
-                xbr3x_32(reinterpret_cast<unsigned char *>(data), *xOut * sizeof(uint32_t), reinterpret_cast<unsigned char *>(pixels), newX * sizeof(uint32_t),
-                         *xOut, *yOut);
-                break;
-
-            case ImageScaler::XBR4X:
-                xbr4x_32(reinterpret_cast<unsigned char *>(data), *xOut * sizeof(uint32_t), reinterpret_cast<unsigned char *>(pixels), newX * sizeof(uint32_t),
-                         *xOut, *yOut);
                 break;
 
             case ImageScaler::HQ2XA:
