@@ -43,10 +43,10 @@ struct ma_qoa {
     FILE *file;
     ma_uint64 first_frame_pos;
     ma_uint64 sample_pos;
-    ma_uint64 buffer_len;
+    size_t buffer_len;
     ma_uint8 *buffer;
     ma_uint64 sample_data_pos;
-    ma_uint64 sample_data_len;
+    size_t sample_data_len;
     ma_int16 *sample_data;
 };
 
