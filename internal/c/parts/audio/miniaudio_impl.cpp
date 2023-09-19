@@ -20,17 +20,20 @@
 #include "extras/stb_vorbis.c"
 #include "extras/vtables.h"
 
-// Add custom backend (format) vtables here
-// The order in the array defines the order of priority
-// The vtables will be passed in to the resource manager config
-// ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs which does not have any signatures
-// This can lead to incorrect detection
+// Add custom backend (format) vtables here.
+// The order in the array defines the order of priority.
+// The vtables will be passed in to the resource manager config.
+// ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs
+// which does not have any signatures and can lead to incorrect detection.
+// clang-format off
 static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
     &ma_vtable_radv2,
     &ma_vtable_hively,
     &ma_vtable_midi,
+    &ma_vtable_qoa,
     &ma_vtable_modplay,
 };
+// clang-format on
 
 /// @brief This simply attaches the format decode VTables array to ma_resource_manager_config
 /// @param maDecoderConfig Pointer to a miniaudio resource manager config object. This cannot be NULL

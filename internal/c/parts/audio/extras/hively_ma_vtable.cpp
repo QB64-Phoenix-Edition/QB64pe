@@ -326,7 +326,7 @@ static ma_result ma_hively_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tel
                                 const ma_decoding_backend_config *pConfig, const ma_allocation_callbacks *pAllocationCallbacks, ma_hively *pmaHively) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_hively_init_internal(pConfig, pmaHively);
     if (result != MA_SUCCESS) {
@@ -408,7 +408,7 @@ static ma_result ma_hively_init_file(const char *pFilePath, const ma_decoding_ba
                                      ma_hively *pmaHively) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_hively_init_internal(pConfig, pmaHively);
     if (result != MA_SUCCESS) {

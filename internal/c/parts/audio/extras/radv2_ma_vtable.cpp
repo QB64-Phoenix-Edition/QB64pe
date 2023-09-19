@@ -296,7 +296,7 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
                                const ma_decoding_backend_config *pConfig, const ma_allocation_callbacks *pAllocationCallbacks, ma_radv2 *pRadv2) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_radv2_init_internal(pConfig, pRadv2);
     if (result != MA_SUCCESS) {
@@ -399,7 +399,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
                                     ma_radv2 *pRadv2) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_radv2_init_internal(pConfig, pRadv2);
     if (result != MA_SUCCESS) {
