@@ -675,8 +675,8 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
 /// @param qbsRequirements Optional: Extra format and setting arguments
 /// @param passed Argument bitmask
 void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements, int32_t passed) {
-    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, JPG };
-    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "jpg"};
+    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, JPG, HDR };
+    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "jpg", "hdr"};
 
     if (new_error) // leave if there was an error
         return;
@@ -823,7 +823,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
                 }
 
                 ++c; // move to the attribute
-                fc = (*c) & 0x0F;
+                fc = *c & 0x0F;
                 bc = ((*c >> 4) & 7) + ((*c >> 7) << 3);
 
                 // Inner codepoint rendering loop
@@ -904,6 +904,32 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
     case SaveFormat::JPG: {
         if (!stbi_write_jpg(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 100)) {
             IMAGE_DEBUG_PRINT("stbi_write_jpg() failed");
+            error(ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+    } break;
+
+    case SaveFormat::HDR: {
+        IMAGE_DEBUG_PRINT("Converting RGBA to linear float data");
+
+        const auto HDRComponents = 4;
+
+        std::vector<float> HDRPixels;
+        HDRPixels.resize(pixels.size() * HDRComponents);
+
+        size_t j = 0;
+        for (size_t i = 0; i < pixels.size(); i++) {
+            HDRPixels[j] = pow((pixels[i] & 0xFFu) / 255.0f, 2.2f);
+            ++j;
+            HDRPixels[j] = pow(((pixels[i] >> 8) & 0xFFu) / 255.0f, 2.2f);
+            ++j;
+            HDRPixels[j] = pow(((pixels[i] >> 16) & 0xFFu) / 255.0f, 2.2f);
+            ++j;
+            HDRPixels[j] = (pixels[i] >> 24) / 255.0f;
+            ++j;
+        }
+
+        if (!stbi_write_hdr(fileName.c_str(), width, height, HDRComponents, HDRPixels.data())) {
+            IMAGE_DEBUG_PRINT("stbi_write_hdr() failed");
             error(ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
