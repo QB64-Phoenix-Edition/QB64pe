@@ -916,8 +916,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         std::vector<float> HDRPixels;
         HDRPixels.resize(pixels.size() * HDRComponents);
 
-        size_t j = 0;
-        for (size_t i = 0; i < pixels.size(); i++) {
+        for (size_t j = 0, i = 0; i < pixels.size(); i++) {
             HDRPixels[j] = pow((pixels[i] & 0xFFu) / 255.0f, 2.2f);
             ++j;
             HDRPixels[j] = pow(((pixels[i] >> 8) & 0xFFu) / 255.0f, 2.2f);
