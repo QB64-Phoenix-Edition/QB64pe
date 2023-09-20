@@ -31,6 +31,8 @@
 #include "rounding.h"
 #include "thread.h"
 
+using namespace std; // We should really get rid of this
+
 int32 disableEvents = 0;
 
 // Global console vvalues
@@ -4526,8 +4528,6 @@ int32 imgframe(uint8 *o, int32 x, int32 y, int32 bpp) {
 
     return i;
 }
-
-void sub__freeimage(int32 i, int32 passed); // forward ref
 
 int32 imgnew(int32 x, int32 y, int32 bpp) {
     static int32 i, i2, i3;

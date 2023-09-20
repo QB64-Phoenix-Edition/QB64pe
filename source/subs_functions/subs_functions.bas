@@ -1056,7 +1056,8 @@ id.hr_syntax = "_NEWIMAGE(width&, height&, mode)"
 regid
 
 clearid
-id.n = qb64prefix$ + "LoadImage": id.Dependency = DEPENDENCY_IMAGE_CODEC
+id.n = qb64prefix$ + "LoadImage"
+id.Dependency = DEPENDENCY_IMAGE_CODEC
 id.subfunc = 1
 id.callname = "func__loadimage"
 id.args = 3
@@ -1085,6 +1086,17 @@ id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "?[,?]"
 id.ret = LONGTYPE - ISPOINTER
 id.hr_syntax = "_COPYIMAGE(imageHandle&[, mode])"
+regid
+
+clearid
+id.n = qb64prefix$ + "SaveImage"
+id.Dependency = DEPENDENCY_IMAGE_CODEC
+id.subfunc = 2
+id.callname = "sub__saveimage"
+id.args = 3
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
+id.specialformat = "?[,[?][,?]]"
+id.hr_syntax = "_SAVEIMAGE fileName$[, imageHandle&][, requirements$])"
 regid
 
 'IMAGE SELECTION

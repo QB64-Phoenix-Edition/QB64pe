@@ -214,7 +214,7 @@ ifneq ($(filter y,$(DEP_SCREENIMAGE) $(DEP_IMAGE_CODEC)),)
 	CXXFLAGS += -DDEPENDENCY_IMAGE_CODEC
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
-	LICENSE_IN_USE += dr_pcx stb_image
+	LICENSE_IN_USE += stb_image nanosvg dr_pcx qoi stb_image_write hqx mmpx sxbr
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
