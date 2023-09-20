@@ -286,7 +286,7 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	CXXFLAGS += -DDEPENDENCY_AUDIO_MINIAUDIO
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
-	LICENSE_IN_USE += miniaudio libxmp-lite radv2 stbvorbis hivelytracker
+	LICENSE_IN_USE += miniaudio stbvorbis libxmp-lite radv2 hivelytracker qoa
 
 	ifdef DEP_AUDIO_DECODE_MIDI
 		LICENSE_IN_USE += tinysoundfont tinymidiloader
