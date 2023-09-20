@@ -91,11 +91,12 @@ These libraries are pulled in when using any sound-related functionality.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| Miniaudio | MIT | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
+| miniaudio | MIT/Public Domain | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
+| stb_vorbis | MIT/Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
-| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
 | HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
+| QOA | MIT | license_qoa.txt | internal/c/parts/audio/extras/qoa.h |
 
 ## MIDI Support
 

@@ -284,7 +284,7 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
                                  const ma_decoding_backend_config *pConfig, const ma_allocation_callbacks *pAllocationCallbacks, ma_modplay *pModplay) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_modplay_init_internal(pConfig, pModplay);
     if (result != MA_SUCCESS) {
@@ -379,7 +379,7 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
                                       ma_modplay *pModplay) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_modplay_init_internal(pConfig, pModplay);
     if (result != MA_SUCCESS) {
