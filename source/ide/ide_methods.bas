@@ -3829,15 +3829,9 @@ FUNCTION ide2 (ignore)
 
         IF KB = KEY_HOME THEN
             GOSUB selectcheck
-            IF idecx <> 1 THEN
-                idecx = 1
-            ELSE
-                a$ = idegetline(idecy)
-                idecx = 1
-                FOR x = 1 TO LEN(a$)
-                    IF ASC(a$, x) <> 32 THEN idecx = x: EXIT FOR
-                NEXT
-            END IF
+            a$ = idegetline(idecy): sot% = LEN(a$) 'get current line as is
+            a$ = LTRIM$(a$): sot% = sot% - LEN(a$) + 1 'calc start of text position
+            IF idecx = sot% THEN idecx = 1: ELSE idecx = sot% 'mimic N++ behavior
             GOTO specialchar
         END IF
 
