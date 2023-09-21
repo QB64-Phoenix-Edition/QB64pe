@@ -13934,13 +13934,19 @@ void tab() {
         x2 = (x / 112 + 1) * 112;      // next position
         if (x2 >= write_page->width) { // it doesn't fit on line
             // box fill x to end of line with background color
-            fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], write_page->width - 1,
+            
+            if (write_page->print_mode != 1)    // only draw the box if _PRINTMODE != _KEEPBACKGROUND
+                fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], write_page->width - 1,
                          write_page->cursor_y * fontheight[write_page->font] - 1, write_page->background_color);
+            
             newline();
         } else { // fits on line
             // box fill x to x2-1 with background color
-            fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], x2 - 1, write_page->cursor_y * fontheight[write_page->font] - 1,
+            
+            if (write_page->print_mode != 1)    // only draw the box if _PRINTMODE != _KEEPBACKGROUND
+                fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], x2 - 1, write_page->cursor_y * fontheight[write_page->font] - 1,
                          write_page->background_color);
+            
             write_page->cursor_x = x2;
         }
 
@@ -14200,14 +14206,20 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
                 x2 = (x / 64 + 1) * 64;        // next position
                 if (x2 >= write_page->width) { // it doesn't fit on line
                     // box fill x to end of line with background color
-                    fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], write_page->width - 1,
+
+                    if (write_page->print_mode != 1)    // only draw the box if _PRINTMODE != _KEEPBACKGROUND
+                        fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], write_page->width - 1,
                                  write_page->cursor_y * fontheight[write_page->font] - 1, write_page->background_color);
+                    
                     newline();
                     entered_new_line = 1;
                 } else { // fits on line
                     // box fill x to x2-1 with background color
-                    fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], x2 - 1, write_page->cursor_y * fontheight[write_page->font] - 1,
+                    
+                    if (write_page->print_mode != 1)    // only draw the box if _PRINTMODE != _KEEPBACKGROUND
+                        fast_boxfill(x, (write_page->cursor_y - 1) * fontheight[write_page->font], x2 - 1, write_page->cursor_y * fontheight[write_page->font] - 1,
                                  write_page->background_color);
+                    
                     write_page->cursor_x = x2;
                 }
                 goto skip;
