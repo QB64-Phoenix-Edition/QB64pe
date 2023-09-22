@@ -95,18 +95,16 @@ DIM SHARED Include_GDB_Debugging_Info 'set using "options.bin"
 
 DIM SHARED DEPENDENCY_LAST
 CONST DEPENDENCY_LOADFONT = 1: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_AUDIO_CONVERSION = 2: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_AUDIO_DECODE = 3: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_AUDIO_OUT = 4: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_GL = 5: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_IMAGE_CODEC = 6: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_CONSOLE_ONLY = 7: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 '=2 if via -g switch, =1 if via metacommand $CONSOLE:ONLY
-CONST DEPENDENCY_SOCKETS = 8: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_PRINTER = 9: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_ICON = 10: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_SCREENIMAGE = 11: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_DEVICEINPUT = 12: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'removes support for gamepad input if not present
-CONST DEPENDENCY_ZLIB = 13: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'ZLIB library linkage, if desired, for compression/decompression.
+CONST DEPENDENCY_MINIAUDIO = 2: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_GL = 3: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_IMAGE_CODEC = 4: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_CONSOLE_ONLY = 5: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 '=2 if via -g switch, =1 if via metacommand $CONSOLE:ONLY
+CONST DEPENDENCY_SOCKETS = 6: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_PRINTER = 7: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_ICON = 8: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_SCREENIMAGE = 9: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
+CONST DEPENDENCY_DEVICEINPUT = 10: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'removes support for gamepad input if not present
+CONST DEPENDENCY_ZLIB = 11: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'ZLIB library linkage, if desired, for compression/decompression.
 
 
 
@@ -1924,11 +1922,6 @@ DO
 
             SELECT CASE token$
                 CASE "MIDI"
-                    IF NOT UseMiniaudioBackend THEN
-                        a$ = "Midi is not supported with the old OpenAL audio backend."
-                        GOTO errmes
-                    END IF
-
                     unstableFlags(UNSTABLE_MIDI) = -1
 
                 CASE "HTTP"
@@ -12574,15 +12567,7 @@ IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
 IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
-IF NOT UseMiniaudioBackend THEN
-    IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE=y"
-    IF DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) THEN makedeps$ = makedeps$ + " DEP_AUDIO_CONVERSION=y"
-    IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN makedeps$ = makedeps$ + " DEP_AUDIO_OUT=y"
-ELSE
-    IF DEPENDENCY(DEPENDENCY_AUDIO_DECODE) OR DEPENDENCY(DEPENDENCY_AUDIO_CONVERSION) OR DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
-        makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
-    END IF
-END IF
+IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
 
 IF unstableFlags(UNSTABLE_HTTP) AND DEPENDENCY(DEPENDENCY_SOCKETS) <> 0 THEN
     makedeps$ = makedeps$ + " DEP_HTTP=y"
@@ -13334,9 +13319,6 @@ FUNCTION ParseCMDLineArgs$ ()
                 token$ = MID$(token$, 3)
 
                 SELECT CASE LCASE$(LEFT$(token$, INSTR(token$, "=") - 1))
-                    CASE ":useminiaudio"
-                        IF NOT ParseBooleanSetting&(token$, UseMiniaudioBackend) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
                     CASE ":optimizecppprogram"
                         IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
@@ -13389,7 +13371,6 @@ SUB PrintTemporarySettingsHelpAndExit (errstr$)
     PRINT "Note: Defaults can be changed by IDE settings"
     PRINT
     PRINT "Valid settings:"
-    PRINT "    -f:UseMiniAudio=[true|false]         (Use Miniaudio Audio backend, default true)"
     PRINT "    -f:OptimizeCppProgram=[true|false]   (Use C++ Optimization flag, default false)"
     PRINT "    -f:StripDebugSymbols=[true|false]    (Stirp C++ debug symbols, default true)"
     PRINT "    -f:ExtraCppFlags=[string]            (Extra flags to pass to the C++ compiler)"
