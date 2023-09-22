@@ -114,14 +114,3 @@ This is used by libqb to show alerts and also by the common dialog functions and
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
 | tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui/ |
-
-## Legacy OpenAL audio backend
-
-The below licenses apply when making use of the legacy OpenAL audio backend (can be enabled in `Compiler Settings`). These replace all other sound related libraries:
-
-| Library | License | License file | Location |
-| :------ | :-----: | :----------- | :------- |
-| mpg123 | LGPL 2.1 | license_mpg123.txt | internal/c/parts/audio/decode/mp3/ |
-| OpenAL-soft | LGPL 2 | license_openal.txt | internal/c/parts/audio/out/ |
-| Opus Tools | BSD 2-clause | license_opus.txt | internal/c/parts/audio/conversion/ |
-| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/decode/ogg/ |
