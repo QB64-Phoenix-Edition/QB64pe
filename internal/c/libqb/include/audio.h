@@ -25,11 +25,11 @@
         AUDIO_DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
 #    ifdef _MSC_VER
-#        define AUDIO_DEBUG_PRINT(_fmt_, ...)       // Don't do anything in release builds
+#        define AUDIO_DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
 #    else
 #        define AUDIO_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
 #    endif
-#    define AUDIO_DEBUG_CHECK(_exp_)                // Don't do anything in release builds
+#    define AUDIO_DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
 
 // We always use 48000
@@ -67,7 +67,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed);
 void sub__sndrawdone(int32_t handle, int32_t passed);
 double func__sndrawlen(int32_t handle, int32_t passed);
 
-mem_block func__memsound(int32_t handle, int32_t targetChannel);
+mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
 int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits);
 
 void snd_init();

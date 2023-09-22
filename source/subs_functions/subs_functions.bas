@@ -238,6 +238,7 @@ id.subfunc = 1
 id.callname = "func__memsound"
 id.args = 2
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "?[,?]"
 id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
 id.hr_syntax = "_MEMSOUND(soundHandle)"
 regid
