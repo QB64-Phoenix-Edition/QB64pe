@@ -332,8 +332,9 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0: RunMenuID = m
         menu$(m, i) = "Run": i = i + 1
         menu$(m, i) = "#Start  F5": i = i + 1
-        menu$(m, i) = "Run only (No exe)": i = i + 1
         menuDesc$(m, i - 1) = "Compiles current program and runs it"
+        menu$(m, i) = "Run #Only (No EXE)": i = i + 1
+        menuDesc$(m, i - 1) = "Runs current program without compiling"
         menu$(m, i) = "Modify #COMMAND$...": i = i + 1
         menuDesc$(m, i - 1) = "Sets string returned by COMMAND$ function"
         menu$(m, i) = "-": i = i + 1
@@ -449,7 +450,7 @@ FUNCTION ide2 (ignore)
         IF IgnoreWarnings THEN menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = CHR$(7) + "Ignore #Warnings"
 
         OptionsMenuGuiDialogs = i
-        menu$(m, i) = "GUI Dialogs": i = i + 1
+        menu$(m, i) = "#GUI Dialogs": i = i + 1
         menuDesc$(m, i - 1) = "Uses GUI-based File Dialog Windows"
         IF UseGuiDialogs THEN
             menu$(OptionsMenuID, i - 1) = CHR$(7) + menu$(OptionsMenuID, i - 1)
@@ -5102,9 +5103,9 @@ FUNCTION ide2 (ignore)
                 WriteConfigSetting generalSettingsSection$, "UseGuiDialogs", BoolToTFString$(UseGuiDialogs)
 
                 IF UseGuiDialogs THEN
-                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "GUI Dialogs"
+                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "#GUI Dialogs"
                 ELSE
-                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "GUI Dialogs"
+                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "#GUI Dialogs"
                 END IF
 
                 idechangemade = 1
