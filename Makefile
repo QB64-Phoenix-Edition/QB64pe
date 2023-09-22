@@ -183,10 +183,6 @@ include $(PATH_INTERNAL_C)/libqb/build.mk
 CXXFLAGS += -I$(PATH_LIBQB)/include
 EXE_LIBS += $(libqb-objs-y)
 
-include $(PATH_INTERNAL_C)/parts/audio/conversion/build.mk
-include $(PATH_INTERNAL_C)/parts/audio/decode/mp3_mini/build.mk
-include $(PATH_INTERNAL_C)/parts/audio/decode/ogg/build.mk
-include $(PATH_INTERNAL_C)/parts/audio/out/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/extras/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/build.mk
 include $(PATH_INTERNAL_C)/parts/core/build.mk
@@ -284,6 +280,15 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	EXE_LIBS += $(MINIAUDIO_OBJS)
 
 	CXXFLAGS += -DDEPENDENCY_AUDIO_MINIAUDIO
+	ifeq ($(OS),lnx)
+		CXXLIBS += -lm -lasound
+	endif
+	ifeq ($(OS),win)
+		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
+	endif
+	ifeq ($(OS),osx)
+		CXXLIBS += -framework CoreFoundation -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
+	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += miniaudio stbvorbis libxmp-lite radv2 hivelytracker qoa
@@ -291,39 +296,6 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	ifdef DEP_AUDIO_DECODE_MIDI
 		LICENSE_IN_USE += tinysoundfont tinymidiloader
 	endif
-else
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
-endif
-
-ifneq ($(filter y,$(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE)),)
-	EXE_LIBS += $(QB_AUDIO_CONVERSION_LIB)
-	CXXFLAGS += -DDEPENDENCY_AUDIO_CONVERSION
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
-
-	LICENSE_IN_USE += opus
-else
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
-endif
-
-ifneq ($(filter y,$(DEP_AUDIO_DECODE)),)
-	EXE_LIBS += $(QB_AUDIO_DECODE_MP3_LIB) $(QB_AUDIO_DECODE_OGG_LIB)
-	CXXFLAGS += -DDEPENDENCY_AUDIO_DECODE
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
-
-	LICENSE_IN_USE += mpg123 stbvorbis
-else
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
-endif
-
-ifneq ($(filter y,$(DEP_AUDIO_OUT) $(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE)),)
-	EXE_LIBS += $(QB_AUDIO_OUT_LIB)
-	CXXFLAGS += -DDEPENDENCY_AUDIO_OUT
-	ifeq ($(OS),osx)
-		CXXLIBS += -framework AudioUnit -framework AudioToolbox
-	endif
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
-
-	LICENSE_IN_USE += openal
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -374,10 +346,6 @@ ifeq ($(OS),win)
 
 	ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
 		CXXLIBS += -lwinmm
-	endif
-
-	ifneq ($(filter y,$(DEP_AUDIO_OUT) $(DEP_AUDIO_CONVERSION) $(DEP_AUDIO_DECODE) $(DEP_AUDIO_MINIAUDIO)),)
-		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
 	endif
 
 	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
