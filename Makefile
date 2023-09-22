@@ -297,6 +297,7 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 		LICENSE_IN_USE += tinysoundfont tinymidiloader
 	endif
 else
+	EXE_LIBS += $(MINIAUDIO_STUB_OBJS)
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
