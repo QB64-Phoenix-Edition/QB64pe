@@ -21515,12 +21515,6 @@ double func_sqr(double value) {
     return sqrt(value);
 }
 
-#ifndef DEPENDENCY_AUDIO_MINIAUDIO
-#    include "parts/audio/out/src.c"
-#    include "parts/audio/conversion/src.c"
-#    include "parts/audio/decode/src.c"
-#endif
-
 qbs *func_command_str = NULL;
 char **func_command_array = NULL;
 int32 func_command_count = 0;

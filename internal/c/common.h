@@ -76,7 +76,7 @@
 #        endif
 #        include <csignal>
 #        include <process.h> //required for multi-threading
-#        if defined DEPENDENCY_AUDIO_OUT || defined QB64_GUI
+#        if defined DEPENDENCY_AUDIO_MINIAUDIO || defined QB64_GUI
 #            include <mmsystem.h>
 #        endif
 

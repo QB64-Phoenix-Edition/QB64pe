@@ -233,11 +233,12 @@ id.hr_syntax = "_MEMIMAGE or _MEMIMAGE(imageHandle)"
 regid
 
 clearid
-id.n = qb64prefix$ + "MemSound": id.Dependency = DEPENDENCY_AUDIO_DECODE
+id.n = qb64prefix$ + "MemSound": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__memsound"
 id.args = 2
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "?[,?]"
 id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
 id.hr_syntax = "_MEMSOUND(soundHandle)"
 regid
@@ -1640,7 +1641,7 @@ id.hr_syntax = "DRAW drawString$"
 regid
 
 clearid
-id.n = "Play": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub_play"
 id.args = 1
@@ -1649,7 +1650,7 @@ id.hr_syntax = "PLAY commandString$"
 regid
 
 clearid
-id.n = "Play": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func_play"
 id.args = 1
@@ -1921,7 +1922,7 @@ regid
 'QB64 AUDIO
 
 clearid
-id.n = qb64prefix$ + "SndRate": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndRate": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndrate"
 id.ret = LONGTYPE - ISPOINTER
@@ -1929,7 +1930,7 @@ id.hr_syntax = "_SNDRATE"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndRaw": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndRaw": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndraw"
 id.args = 3
@@ -1939,7 +1940,7 @@ id.hr_syntax = "_SNDRAW leftSample[, rightSample][, pipeHandle&]"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndRawDone": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndRawDone": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndrawdone"
 id.args = 1
@@ -1949,7 +1950,7 @@ id.hr_syntax = "_SNDRAWDONE [pipeHandle&]"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndOpenRaw": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndOpenRaw": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndopenraw"
 id.ret = LONGTYPE - ISPOINTER
@@ -1957,7 +1958,7 @@ id.hr_syntax = "_SNDOPENRAW"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndRawLen": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndRawLen": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndrawlen"
 id.args = 1
@@ -1968,7 +1969,7 @@ id.hr_syntax = "_SNDRAWLEN [pipeHandle&]"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndLen": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndLen": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndlen"
 id.args = 1
@@ -1978,7 +1979,7 @@ id.hr_syntax = "_SNDLEN(handle&)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndPaused": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndPaused": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndpaused"
 id.args = 1
@@ -1988,7 +1989,7 @@ id.hr_syntax = "_SNDPAUSED(handle&)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndPlayFile": id.Dependency = DEPENDENCY_AUDIO_DECODE
+id.n = qb64prefix$ + "SndPlayFile": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndplayfile"
 id.args = 3
@@ -1998,7 +1999,7 @@ id.hr_syntax = "_SNDPLAYFILE fileName$[, , volume!]"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndPlayCopy": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndPlayCopy": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndplaycopy"
 id.args = 5
@@ -2008,7 +2009,7 @@ id.hr_syntax = "_SNDPLAYCOPY handle&[, volume!][, x!][, y!][, z!]"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndStop": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndStop": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndstop"
 id.args = 1
@@ -2017,7 +2018,7 @@ id.hr_syntax = "_SNDSTOP handle&"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndLoop": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndLoop": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndloop"
 id.args = 1
@@ -2026,7 +2027,7 @@ id.hr_syntax = "_SNDLOOP handle&"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndLimit": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndLimit": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndlimit"
 id.args = 2
@@ -2035,7 +2036,7 @@ id.hr_syntax = "_SNDLIMIT handle&, numberOfSeconds!"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndOpen": id.Dependency = DEPENDENCY_AUDIO_DECODE
+id.n = qb64prefix$ + "SndOpen": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndopen"
 id.args = 2
@@ -2046,7 +2047,7 @@ id.hr_syntax = "_SNDOPEN(fileName$[, capabilities$])"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndSetPos": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndSetPos": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndsetpos"
 id.args = 2
@@ -2055,7 +2056,7 @@ id.hr_syntax = "_SNDSETPOS handle&, position!"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndGetPos": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndGetPos": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndgetpos"
 id.args = 1
@@ -2065,7 +2066,7 @@ id.hr_syntax = "_SNDGETPOS(handle&)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndPlaying": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndPlaying": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndplaying"
 id.args = 1
@@ -2075,7 +2076,7 @@ id.hr_syntax = "_SNDPLAYING(handle&)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndPause": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndPause": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndpause"
 id.args = 1
@@ -2084,7 +2085,7 @@ id.hr_syntax = "_SNDPAUSE handle&"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndBal": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndBal": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndbal"
 id.args = 5
@@ -2094,7 +2095,7 @@ id.hr_syntax = "_SNDBAL handle&[, x!][, y!][, z!][, channel&]"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndVol": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndVol": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndvol"
 id.args = 2
@@ -2103,7 +2104,7 @@ id.hr_syntax = "_SNDVOL handle&, volume!"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndPlay": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndPlay": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndplay"
 id.args = 1
@@ -2112,7 +2113,7 @@ id.hr_syntax = "_SNDPLAY handle&"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndCopy": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndCopy": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 1
 id.callname = "func__sndcopy"
 id.args = 1
@@ -2122,7 +2123,7 @@ id.hr_syntax = "_SNDCOPY(handle&)"
 regid
 
 clearid
-id.n = qb64prefix$ + "SndClose": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = qb64prefix$ + "SndClose": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub__sndclose"
 id.args = 1
@@ -2130,18 +2131,16 @@ id.arg = MKL$(ULONGTYPE - ISPOINTER)
 id.hr_syntax = "_SNDCLOSE handle&"
 regid
 
-' a740g: Feature request #28
 clearid
-id.n = qb64prefix$ + "SndNew" ' Name in CaMeL case
-id.Dependency = DEPENDENCY_AUDIO_OUT ' QB64-PE library dependency
-id.subfunc = 1 ' 1 = function, 2 = sub
-id.callname = "func__sndnew" ' C/C++ function name
-id.args = 3 ' number of arguments "passed"
-id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arguments & types
-id.ret = LONGTYPE - ISPOINTER ' return type for functions
-id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)" ' syntax help
+id.n = qb64prefix$ + "SndNew"
+id.Dependency = DEPENDENCY_MINIAUDIO
+id.subfunc = 1
+id.callname = "func__sndnew"
+id.args = 3
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)"
 regid
-' a740g: Feature request #28
 
 clearid
 id.n = "Input"
@@ -3031,7 +3030,7 @@ id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{
 regid
 
 clearid
-id.n = "Sound": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = "Sound": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub_sound"
 id.args = 5
@@ -3041,7 +3040,7 @@ id.hr_syntax = "SOUND frequency#, duration#[, volume#][, panning#][, waveform&]"
 regid
 
 clearid
-id.n = "Beep": id.Dependency = DEPENDENCY_AUDIO_OUT
+id.n = "Beep": id.Dependency = DEPENDENCY_MINIAUDIO
 id.subfunc = 2
 id.callname = "sub_beep"
 id.args = 0
