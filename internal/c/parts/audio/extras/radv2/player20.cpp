@@ -162,6 +162,7 @@ class RADPlayer {
     void Init10(const void *tune);
     bool UnpackNote10(uint8_t *&s);
     uint8_t *SkipToLine10(uint8_t *trk, uint8_t linenum);
+    uint8_t FixRadv21KSLVolume(uint8_t val);
     int LastPatternOrder;
     bool Is10;
 
@@ -326,8 +327,11 @@ void RADPlayer::Init(const void *tune, void (*opl3)(void *, uint16_t, uint8_t), 
 
             for (int i = 0; i < 4; i++) {
                 uint8_t *op = inst.Operators[i];
-                for (int j = 0; j < 5; j++)
-                    op[j] = *s++;
+                op[0] = *s++;
+                op[1] = FixRadv21KSLVolume(*s++);
+                op[2] = *s++;
+                op[3] = *s++;
+                op[4] = *s++;
             }
 
         } else {
@@ -1416,6 +1420,14 @@ uint8_t *RADPlayer::SkipToLine10(uint8_t *trk, uint8_t linenum) {
     }
     return 0;
 }
+
+//==================================================================================================
+// KSL is handled different between RAD v1 / DOS RAD v2.1 and Windows/Mac RAD v2.1.
+// In DOS, since these are passed directly to the OPL3, KSL 1 is 3dB and KSL 2 is 1.5dB.
+// With Opal, these were originally reversed, so flip the KSL bits when loading RAD v2s.
+// -Lachesis
+//==================================================================================================
+uint8_t RADPlayer::FixRadv21KSLVolume(uint8_t val) { return ((val & 0x80) >> 1) | ((val & 0x40) << 1) | (val & 0x3F); }
 
 //==================================================================================================
 // Set the current order and line. -Lachesis
