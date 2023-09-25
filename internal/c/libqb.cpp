@@ -31,8 +31,6 @@
 #include "rounding.h"
 #include "thread.h"
 
-using namespace std; // We should really get rid of this
-
 int32 disableEvents = 0;
 
 // Global console vvalues
@@ -2245,8 +2243,8 @@ struct gfs_file_struct { // info applicable to all files
     int32 field_strings_n; // number of linked strings
     int64 column;          // used by OUTPUT/APPEND to tab correctly (base 0)
     // GFS_C data follows: (unused by custom GFS interfaces)
-    fstream *file_handle;
-    ofstream *file_handle_o;
+    std::fstream *file_handle;
+    std::ofstream *file_handle_o;
     // COM port data follows (*=default)
     uint8 com_port;              // 0=not a com port
     int32 com_baud_rate;         //(bits per second)75,110,150,300*,600,1200,1800,2400,9600,?
@@ -14026,9 +14024,9 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
             strz = qbs_new(0, 0);
         qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
         if (finish_on_new_line)
-            cout << (char *)strz->chr << endl;
+            std::cout << (char *)strz->chr << std::endl;
         else
-            cout << (char *)strz->chr;
+            std::cout << (char *)strz->chr;
 #ifndef QB64_WINDOWS
         std::cout.flush();
 #endif
@@ -14721,7 +14719,7 @@ void sub_cls(int32 method, uint32 use_color, int32 passed) {
 #else
         if (passed & 2)
             qbg_sub_color(0, use_color, 0, 2);
-        cout << "\033[2J";
+        std::cout << "\033[2J";
         qbg_sub_locate(1, 1, 0, 0, 0, 3);
 #endif
         return;
@@ -20900,7 +20898,7 @@ uint32 func_screen(int32 y, int32 x, int32 returncol, int32 passed) {
 void sub_bsave(qbs *filename, int32 offset, int32 size) {
     if (new_error)
         return;
-    static ofstream fh;
+    static std::ofstream fh;
 
     static qbs *tqbs = NULL;
     if (!tqbs)
@@ -20924,7 +20922,7 @@ void sub_bsave(qbs *filename, int32 offset, int32 size) {
     if (size != 65536)
         size &= 0xFFFF;
     qbs_set(tqbs, qbs_add(filename, nullt)); // prepare null-terminated filename
-    fh.open(fixdir(tqbs), ios::binary | ios::out);
+    fh.open(fixdir(tqbs), std::ios::binary | std::ios::out);
     if (fh.is_open() == NULL) {
         error(64);
         return;
@@ -20947,7 +20945,7 @@ void sub_bload(qbs *filename, int32 offset, int32 passed) {
     if (new_error)
         return;
     static uint8 header[7];
-    static ifstream fh;
+    static std::ifstream fh;
     static qbs *tqbs = NULL;
     if (!tqbs)
         tqbs = qbs_new(0, 0);
@@ -20965,7 +20963,7 @@ void sub_bload(qbs *filename, int32 offset, int32 passed) {
         offset &= 0xFFFF;
     }
     qbs_set(tqbs, qbs_add(filename, nullt)); // prepare null-terminated filename
-    fh.open(fixdir(tqbs), ios::binary | ios::in);
+    fh.open(fixdir(tqbs), std::ios::binary | std::ios::in);
     if (fh.is_open() == NULL) {
         error(53);
         return;
@@ -20979,9 +20977,9 @@ void sub_bload(qbs *filename, int32 offset, int32 passed) {
     file_off = header[3] + header[4] * 256;
     file_size = header[5] + header[6] * 256;
     if (file_size == 0) {
-        fh.seekg(0, ios::end);
+        fh.seekg(0, std::ios::end);
         file_size = fh.tellg();
-        fh.seekg(7, ios::beg);
+        fh.seekg(7, std::ios::beg);
         file_size -= 7;
         if (file_size < 65536)
             file_size = 0;
@@ -24198,14 +24196,14 @@ void sub__setalpha(int32 a, uint32 c, uint32 c2, int32 i, int32 passed) {
         r_max = c2 >> 16 & 0xFF;
         a_max = c2 >> 24 & 0xFF;
         if (b_min > b_max)
-            swap(b_min, b_max);
+            std::swap(b_min, b_max);
 
         if (g_min > g_max)
-            swap(g_min, g_max);
+            std::swap(g_min, g_max);
         if (r_min > r_max)
-            swap(r_min, r_max);
+            std::swap(r_min, r_max);
         if (a_min > a_max)
-            swap(a_min, a_max);
+            std::swap(a_min, a_max);
         cp = im->offset;
         z = im->width * im->height;
     setalpha:
@@ -24555,7 +24553,7 @@ void sub__copypalette(int32 i, int32 i2, int32 passed) {
         error(5);
         return;
     }
-    swap(i, i2);
+    std::swap(i, i2);
     if (passed & 2) {
         if (i >= 0) { // validate i
             validatepage(i);
@@ -24578,7 +24576,7 @@ void sub__copypalette(int32 i, int32 i2, int32 passed) {
         error(5);
         return;
     }
-    swap(i, i2);
+    std::swap(i, i2);
     memcpy(img[i2].pal, img[i].pal, 1024);
 }
 
@@ -25629,14 +25627,14 @@ void sub_end() {
         if (console) {
 // screen is hidden, console is visible
 #ifdef QB64_WINDOWS
-            cout << "\nPress any key to continue";
+            std::cout << "\nPress any key to continue";
             int32 junk;
             FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE)); // clear any stray buffer events before we run END.
             do {                                                     // ignore all console input
                 junk = func__getconsoleinput();
             } while (junk != 1); // until we have a key down event
 #else
-            cout << "\nPress enter to continue";
+            std::cout << "\nPress enter to continue";
             static int32 ignore;
             ignore = fgetc(stdin);
 #endif
@@ -29319,14 +29317,14 @@ int64 gfs_lof(int32 i) {
     f->file_handle->clear();
     if (f->read) {
         static int64 bytes;
-        f->file_handle->seekg(0, ios::end);
+        f->file_handle->seekg(0, std::ios::end);
         bytes = f->file_handle->tellg();
         f->file_handle->seekg(f->pos);
         return bytes;
     }
     if (f->write) {
         static int64 bytes;
-        f->file_handle->seekp(0, ios::end);
+        f->file_handle->seekp(0, std::ios::end);
         bytes = f->file_handle->tellp();
         f->file_handle->seekp(f->pos);
         return bytes;
@@ -29739,29 +29737,29 @@ int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
 
 #ifdef GFS_C
     // note: GFS_C ignores restrictions/locking
-    f->file_handle = new fstream();
+    f->file_handle = new std::fstream();
     // attempt as if it exists:
     if (how == 2) {
         // with truncate
         if (access == 1)
-            f->file_handle->open(fixdir(filenamez), ios::in | ios::binary | ios::trunc);
+            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
         if (access == 2)
-            f->file_handle->open(fixdir(filenamez), ios::out | ios::binary | ios::trunc);
+            f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
         if (access == 3)
-            f->file_handle->open(fixdir(filenamez), ios::in | ios::out | ios::binary | ios::trunc);
+            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
     } else {
         // without truncate
         if (access == 1)
-            f->file_handle->open(fixdir(filenamez), ios::in | ios::binary);
+            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary);
         if (access == 2)
-            f->file_handle->open(fixdir(filenamez), ios::out | ios::binary | ios::app);
+            f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::app);
         if (access == 3)
-            f->file_handle->open(fixdir(filenamez), ios::in | ios::out | ios::binary);
+            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary);
     }
     if (how) {
         if (!f->file_handle->is_open()) { // couldn't open file, so attempt creation
-            f->file_handle_o = new ofstream();
-            f->file_handle_o->open(fixdir(filenamez), ios::out);
+            f->file_handle_o = new std::ofstream();
+            f->file_handle_o->open(fixdir(filenamez), std::ios::out);
             if (f->file_handle_o->is_open()) { // created new file
                 f->file_handle_o->close();
                 // retry open
@@ -29769,19 +29767,19 @@ int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
                 if (how == 2) {
                     // with truncate
                     if (access == 1)
-                        f->file_handle->open(fixdir(filenamez), ios::in | ios::binary | ios::trunc);
+                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
                     if (access == 2)
-                        f->file_handle->open(fixdir(filenamez), ios::out | ios::binary | ios::trunc);
+                        f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
                     if (access == 3)
-                        f->file_handle->open(fixdir(filenamez), ios::in | ios::out | ios::binary | ios::trunc);
+                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
                 } else {
                     // without truncate
                     if (access == 1)
-                        f->file_handle->open(fixdir(filenamez), ios::in | ios::binary);
+                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary);
                     if (access == 2)
-                        f->file_handle->open(fixdir(filenamez), ios::out | ios::binary | ios::app);
+                        f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::app);
                     if (access == 3)
-                        f->file_handle->open(fixdir(filenamez), ios::in | ios::out | ios::binary);
+                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary);
                 }
             }
             delete f->file_handle_o;
@@ -29837,7 +29835,7 @@ int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
         ZeroMemory(&ct, sizeof(COMMTIMEOUTS));
         /*dump port state and return "file not found" (used for debugging only)
             if (!GetCommTimeouts(f_w->file_handle,&ct)){CloseHandle(f_w->file_handle); gfs_free(i); return -8;}//device unavailable
-            ofstream mydump("f:\\comdump.bin");
+            std::ofstream mydump("f:\\comdump.bin");
             mydump.write((char*)&cs,sizeof(cs));
             mydump.write((char*)&ct,sizeof(ct));
             mydump.close();
@@ -33013,9 +33011,9 @@ void sub__maptriangle(int32 cull_options, float sx1, float sy1, float sx2, float
     */
 
     /* debugging method
-        ofstream f;
+        std::ofstream f;
         char fn[] = "c:\\qb64\\20c.txt";
-        f.open(fn, ios::app);
+        f.open(fn, std::ios::app);
         f<<"\n";
         f<<variablename;
         f<<"\n";
@@ -33493,13 +33491,13 @@ int32 func__fileexists(qbs *file) {
     return 0;
 #else
     // generic method (not currently used)
-    static ifstream fh;
-    fh.open(fixdir(strz), ios::binary | ios::in);
+    static std::ifstream fh;
+    fh.open(fixdir(strz), std::ios::binary | std::ios::in);
     if (fh.is_open() == NULL) {
-        fh.clear(ios::goodbit);
+        fh.clear(std::ios::goodbit);
         return 0;
     }
-    fh.clear(ios::goodbit);
+    fh.clear(std::ios::goodbit);
     fh.close();
     return -1;
 #endif
@@ -34816,7 +34814,7 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
                     char buffer[128];
                     while (!feof(consoleStream)) {
                         if (fgets(buffer, 128, consoleStream) != NULL) {
-                            string szBuffer(buffer);
+                            std::string szBuffer(buffer);
 
                             if (!b_isRetina)
                                 b_isRetina = (szBuffer.rfind("Retina") != ULONG_MAX);
@@ -34834,7 +34832,7 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
                     size_t size = sizeof(str);
                     int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
 
-                    string sz_osrelease(str);
+                    std::string sz_osrelease(str);
                     if (sz_osrelease.rfind("19.") == 0)
                         scale_factor = 2;
                 }
@@ -36946,7 +36944,7 @@ int main(int argc, char *argv[]) {
     cmem[0x41c] = 30;
     cmem[0x41d] = 0; // tail
 
-    ifstream fh;
+    std::ifstream fh;
 
     // default 256 color palette
     memcpy(&palette_256, &file_qb64_pal[0], file_qb64_pal_len);
