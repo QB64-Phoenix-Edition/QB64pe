@@ -41,7 +41,7 @@ void onButtonDown(struct Gamepad_device *device, unsigned int buttonID, double t
 
     if (verbose) {
         sprintf(verboseMessage, "Button %u down on device %u at %f with context %p\n", buttonID, device->deviceID, timestamp, context);
-        cout << verboseMessage;
+        std::cout << verboseMessage;
     }
 
     int button = buttonID;
@@ -89,7 +89,7 @@ void onButtonDown(struct Gamepad_device *device, unsigned int buttonID, double t
 void onButtonUp(struct Gamepad_device *device, unsigned int buttonID, double timestamp, void *context) {
     if (verbose) {
         sprintf(verboseMessage, "Button %u up on device %u at %f with context %p\n", buttonID, device->deviceID, timestamp, context);
-        cout << verboseMessage;
+        std::cout << verboseMessage;
     }
 
     int button = buttonID;
@@ -116,7 +116,7 @@ void onAxisMoved(struct Gamepad_device *device, unsigned int axisID, float value
     if (verbose) {
         sprintf(verboseMessage, "Axis %u moved from %f to %f on device %u at %f with context %p\n", axisID, lastValue, value, device->deviceID, timestamp,
                 context);
-        cout << verboseMessage;
+        std::cout << verboseMessage;
     }
 
     int axis = axisID;
@@ -155,7 +155,7 @@ void onDeviceAttached(struct Gamepad_device *device, void *context) {
     if (verbose) {
         sprintf(verboseMessage, "Device ID %u attached (vendor = 0x%X; product = 0x%X) with context %p\n", device->deviceID, device->vendorID,
                 device->productID, context);
-        cout << verboseMessage;
+        std::cout << verboseMessage;
     }
 
     int i, x, x2;
@@ -228,7 +228,7 @@ void onDeviceAttached(struct Gamepad_device *device, void *context) {
 void onDeviceRemoved(struct Gamepad_device *device, void *context) {
     if (verbose) {
         sprintf(verboseMessage, "Device ID %u removed with context %p\n", device->deviceID, context);
-        cout << verboseMessage;
+        std::cout << verboseMessage;
     }
 
     int i;
