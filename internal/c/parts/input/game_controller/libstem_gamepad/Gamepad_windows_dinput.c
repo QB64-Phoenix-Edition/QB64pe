@@ -34,8 +34,8 @@
 #define __reserved
 #endif
   
-#include "gamepad/Gamepad.h"
-#include "gamepad/Gamepad_private.h"
+#include "Gamepad.h"
+#include "Gamepad_private.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,6 +43,118 @@
 #include <regstr.h>
 #include <dinput.h>
 #include <XInput.h>
+#include <Dbt.h>
+
+// The following code is from SDL2
+// detects gamepad device remove/attach events without having to poll multiple times per second
+static bool s_bWindowsDeviceChanged = false;
+
+static LRESULT CALLBACK PrivateJoystickDetectProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_DEVICECHANGE:
+		switch (wParam) {
+		case DBT_DEVICEARRIVAL:
+			if (((DEV_BROADCAST_HDR*)lParam)->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE) {
+				s_bWindowsDeviceChanged = true;
+			}
+			break;
+		case DBT_DEVICEREMOVECOMPLETE:
+			if (((DEV_BROADCAST_HDR*)lParam)->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE) {
+				s_bWindowsDeviceChanged = true;
+			}
+			break;
+		}
+		return 0;
+	}
+
+	return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+typedef struct {
+	HRESULT coinitialized;
+	WNDCLASSEX wincl;
+	HWND messageWindow;
+	HDEVNOTIFY hNotify;
+} DeviceNotificationData;
+
+static void CleanupDeviceNotification(DeviceNotificationData *data)
+{
+	if (data->hNotify)
+		UnregisterDeviceNotification(data->hNotify);
+
+	if (data->messageWindow)
+		DestroyWindow(data->messageWindow);
+
+	UnregisterClass(data->wincl.lpszClassName, data->wincl.hInstance);
+
+	if (data->coinitialized == S_OK) {
+		CoUninitialize();
+	}
+}
+
+static int CreateDeviceNotification(DeviceNotificationData *data)
+{
+	DEV_BROADCAST_DEVICEINTERFACE dbh;
+	GUID GUID_DEVINTERFACE_HID = { 0x4D1E55B2L, 0xF16F, 0x11CF, { 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30 } };
+
+	memset(data, 0, sizeof(*data));
+
+	data->coinitialized = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	if (data->coinitialized == RPC_E_CHANGED_MODE) {
+		data->coinitialized = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+  }
+
+	data->wincl.hInstance = GetModuleHandle(NULL);
+	data->wincl.lpszClassName = "Message";
+	data->wincl.lpfnWndProc = PrivateJoystickDetectProc;      /* This function is called by windows */
+	data->wincl.cbSize = sizeof (WNDCLASSEX);
+
+	if (!RegisterClassEx(&data->wincl)) {
+		fprintf(stderr, "Failed to create register class for joystick autodetect");
+		CleanupDeviceNotification(data);
+		return -1;
+	}
+
+	data->messageWindow = (HWND)CreateWindowEx(0, "Message", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+	if (!data->messageWindow) {
+		fprintf(stderr, "Failed to create message window for joystick autodetect");
+		CleanupDeviceNotification(data);
+		return -1;
+	}
+
+	memset(&dbh, 0, sizeof(dbh));
+	dbh.dbcc_size = sizeof(dbh);
+	dbh.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+	dbh.dbcc_classguid = GUID_DEVINTERFACE_HID;
+
+	data->hNotify = RegisterDeviceNotification(data->messageWindow, &dbh, DEVICE_NOTIFY_WINDOW_HANDLE);
+	if (!data->hNotify) {
+		fprintf(stderr, "Failed to create notify device for joystick autodetect");
+		CleanupDeviceNotification(data);
+		return -1;
+	}
+	return 0;
+}
+
+
+static void CheckDeviceNotification(DeviceNotificationData *data)
+{
+	MSG msg;
+
+	if (!data->messageWindow) {
+		return;
+	}
+
+	while (PeekMessage(&msg, data->messageWindow, 0, 0, PM_NOREMOVE)) {
+		if (GetMessage(&msg, data->messageWindow, 0, 0) != 0) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////
 
 // Copy from MinGW-w64 to MinGW, along with wbemcli.h, wbemprov.h, wbemdisp.h, and wbemtran.h
 #ifndef __MINGW_EXTENSION
@@ -94,6 +206,7 @@ struct Gamepad_devicePrivate {
 	unsigned int playerIndex;
 };
 
+static DeviceNotificationData notificationData;
 static struct Gamepad_device ** devices = NULL;
 static unsigned int numDevices = 0;
 static unsigned int nextDeviceID = 0;
@@ -143,10 +256,7 @@ void Gamepad_init() {
 			fprintf(stderr, "Gamepad_init fatal error: Couldn't load DINPUT8.dll\n");
 			abort();
 		}
-		
-
 		DirectInput8Create_proc = (HRESULT (WINAPI *)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN)) GetProcAddress(module, "DirectInput8Create");
-
 		result = DirectInput8Create_proc(GetModuleHandle(NULL), DIRECTINPUT_VERSION, &IID_IDirectInput8, (void **) &directInputInterface, NULL);
 		
 		if (result != DI_OK) {
@@ -154,7 +264,9 @@ void Gamepad_init() {
 		}
 		
 		inited = true;
+		s_bWindowsDeviceChanged = true;
 		Gamepad_detectDevices();
+		CreateDeviceNotification(&notificationData);
 	}
 }
 
@@ -186,6 +298,7 @@ void Gamepad_shutdown() {
 		devices = NULL;
 		numDevices = 0;
 		inited = false;
+		CleanupDeviceNotification(&notificationData);
 	}
 }
 
@@ -745,6 +858,10 @@ static BOOL CALLBACK enumDevicesCallback(const DIDEVICEINSTANCE * instance, LPVO
 	devices = realloc(devices, sizeof(struct Gamepad_device *) * (numDevices + 1));
 	devices[numDevices++] = deviceRecord;
 	
+	if (Gamepad_deviceAttachCallback != NULL) {
+		Gamepad_deviceAttachCallback(deviceRecord, Gamepad_deviceAttachContext);
+	}
+	
 	return DIENUM_CONTINUE;
 }
 
@@ -770,9 +887,13 @@ void Gamepad_detectDevices() {
 		return;
 	}
 	
-	result = IDirectInput_EnumDevices(directInputInterface, DI8DEVCLASS_GAMECTRL, enumDevicesCallback, NULL, DIEDFL_ALLDEVICES);
-	if (result != DI_OK) {
-		fprintf(stderr, "Warning: IDirectInput_EnumDevices returned 0x%X\n", (unsigned int) result);
+	CheckDeviceNotification(&notificationData);
+	if (s_bWindowsDeviceChanged) {
+		result = IDirectInput_EnumDevices(directInputInterface, DI8DEVCLASS_GAMECTRL, enumDevicesCallback, NULL, DIEDFL_ALLDEVICES);
+		if (result != DI_OK) {
+			fprintf(stderr, "Warning: IDirectInput_EnumDevices returned 0x%X\n", (unsigned int) result);
+		}
+		s_bWindowsDeviceChanged = false;
 	}
 	
 	if (xInputAvailable) {
@@ -800,6 +921,9 @@ void Gamepad_detectDevices() {
 				devices = realloc(devices, sizeof(struct Gamepad_device *) * (numDevices + 1));
 				devices[numDevices++] = deviceRecord;
 				registeredXInputDevices[playerIndex] = deviceRecord;
+				if (Gamepad_deviceAttachCallback != NULL) {
+					Gamepad_deviceAttachCallback(deviceRecord, Gamepad_deviceAttachContext);
+				}
 				
 			} else if (xResult != ERROR_SUCCESS && registeredXInputDevices[playerIndex] != NULL) {
 				for (deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
@@ -960,7 +1084,7 @@ void Gamepad_processEvents() {
 					IDirectInputDevice8_Acquire(devicePrivate->deviceInterface);
 					result = IDirectInputDevice8_GetDeviceData(devicePrivate->deviceInterface, sizeof(DIDEVICEOBJECTDATA), events, &eventCount, 0);
 				}
-				if (result != DI_OK) {
+				if (!SUCCEEDED(result)) {
 					removeDevice(deviceIndex);
 					deviceIndex--;
 					continue;

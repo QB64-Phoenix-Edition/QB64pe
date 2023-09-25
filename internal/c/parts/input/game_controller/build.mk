@@ -4,21 +4,27 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
-	GAMEPAD_SRCS := Gamepad_windows_mm.c Gamepad_private.c
+	GAMEPAD_SRCS := Gamepad_windows_dinput.c Gamepad_private.c
 endif
 
 ifeq ($(OS),osx)
 	GAMEPAD_SRCS := Gamepad_macosx.c Gamepad_private.c
 endif
 
-GAMEPAD_OBJS := $(GAMEPAD_SRCS:.c=.o)
-GAMEPAD_OBJS := $(patsubst %,$(PATH_INTERNAL_C)/parts/input/game_controller/src/%,$(GAMEPAD_OBJS))
+GAMECONTROLLER_SRCS := game_controller.cpp
 
-$(PATH_INTERNAL_C)/parts/input/game_controller/src/%.o: $(PATH_INTERNAL_C)/parts/input/game_controller/src/%.c
-	$(CC) -Wall $< -c -o $@
+GAMEPAD_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/input/game_controller/libstem_gamepad/%.o,$(GAMEPAD_SRCS))
 
-QB_DEVICE_INPUT_LIB := $(PATH_INTERNAL_C)/parts/input/game_controller/src.a
+GAMECONTROLLER_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/input/game_controller/%.o,$(GAMECONTROLLER_SRCS))
 
-$(QB_DEVICE_INPUT_LIB): $(GAMEPAD_OBJS)
-	$(AR) rcs $@ $(GAMEPAD_OBJS)
+$(PATH_INTERNAL_C)/parts/input/game_controller/libstem_gamepad/%.o: $(PATH_INTERNAL_C)/parts/input/game_controller/libstem_gamepad/%.c
+	$(CC) -O2 $(CFLAGS) -Wall $< -c -o $@
+
+$(PATH_INTERNAL_C)/parts/input/game_controller/%.o: $(PATH_INTERNAL_C)/parts/input/game_controller/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+QB_DEVICE_INPUT_LIB := $(PATH_INTERNAL_C)/parts/input/game_controller/game_controller.a
+
+$(QB_DEVICE_INPUT_LIB): $(GAMEPAD_OBJS) $(GAMECONTROLLER_OBJS)
+	$(AR) rcs $@ $(GAMEPAD_OBJS) $(GAMECONTROLLER_OBJS)
 
