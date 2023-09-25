@@ -107,6 +107,14 @@ These are used if you make use of MIDI support.
 | TinySoundFont | MIT | license_tinysoundfont.txt | internal/c/parts/audio/extras/tinysoundfont/tsf.h
 | TinyMidiLoader | ZLIB | license_tinymidiloader.txt | internal/c/parts/audio/extras/tinysoundfont.tml.h |
 
+## Game Controller Support
+
+This is used if you make use of game controller related functionality.
+
+| Library | License | License file | Location |
+| :------ | :-----: | :----------- | :------- |
+| libstem Gamepad | MIT | license_libstem_gamepad.txt | internal/c/parts/input/game_controller/libstem_gamepad |
+
 ## Common Dialogs Support
 
 This is used by libqb to show alerts and also by the common dialog functions and subroutines.

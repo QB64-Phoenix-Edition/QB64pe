@@ -4,7 +4,7 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
-	GAMEPAD_SRCS := Gamepad_windows_dinput.c Gamepad_private.c
+	GAMEPAD_SRCS := Gamepad_windows_mm.c Gamepad_private.c
 endif
 
 ifeq ($(OS),osx)
@@ -27,4 +27,6 @@ QB_DEVICE_INPUT_LIB := $(PATH_INTERNAL_C)/parts/input/game_controller/game_contr
 
 $(QB_DEVICE_INPUT_LIB): $(GAMEPAD_OBJS) $(GAMECONTROLLER_OBJS)
 	$(AR) rcs $@ $(GAMEPAD_OBJS) $(GAMECONTROLLER_OBJS)
+
+CLEAN_LIST += $(QB_DEVICE_INPUT_LIB) $(GAMEPAD_OBJS) $(GAMECONTROLLER_OBJS)
 
