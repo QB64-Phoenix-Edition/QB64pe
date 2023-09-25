@@ -3,24 +3,18 @@
 // Powered by libstem Gamepad (https://github.com/ThemsAllTook/libstem_gamepad)
 //----------------------------------------------------------------------------------------------------------------------
 
+// #define GAME_CONTROLLER_DEBUG
 #include "game_controller.h"
 #include "../../../common.h"
 #include "event.h"
 #include "libstem_gamepad/Gamepad.h"
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-
-static bool verbose = false;
-static char verboseMessage[1024];
 
 static void onButtonDown(struct Gamepad_device *device, unsigned int buttonID, double timestamp, void *context) {
     // buttonId is base 0
 
-    if (verbose) {
-        sprintf(verboseMessage, "Button %u down on device %u at %f with context %p\n", buttonID, device->deviceID, timestamp, context);
-        std::cout << verboseMessage;
-    }
+#ifdef GAME_CONTROLLER_DEBUG
+    fprintf(stderr, "Button %u down on device %u at %f with context %p\n", buttonID, device->deviceID, timestamp, context);
+#endif
 
     int button = buttonID;
 
@@ -65,10 +59,9 @@ static void onButtonDown(struct Gamepad_device *device, unsigned int buttonID, d
 }
 
 static void onButtonUp(struct Gamepad_device *device, unsigned int buttonID, double timestamp, void *context) {
-    if (verbose) {
-        sprintf(verboseMessage, "Button %u up on device %u at %f with context %p\n", buttonID, device->deviceID, timestamp, context);
-        std::cout << verboseMessage;
-    }
+#ifdef GAME_CONTROLLER_DEBUG
+    fprintf(stderr, "Button %u up on device %u at %f with context %p\n", buttonID, device->deviceID, timestamp, context);
+#endif
 
     int button = buttonID;
 
@@ -91,11 +84,9 @@ static void onButtonUp(struct Gamepad_device *device, unsigned int buttonID, dou
 }
 
 static void onAxisMoved(struct Gamepad_device *device, unsigned int axisID, float value, float lastValue, double timestamp, void *context) {
-    if (verbose) {
-        sprintf(verboseMessage, "Axis %u moved from %f to %f on device %u at %f with context %p\n", axisID, lastValue, value, device->deviceID, timestamp,
-                context);
-        std::cout << verboseMessage;
-    }
+#ifdef GAME_CONTROLLER_DEBUG
+    fprintf(stderr, "Axis %u moved from %f to %f on device %u at %f with context %p\n", axisID, lastValue, value, device->deviceID, timestamp, context);
+#endif
 
     int axis = axisID;
 
@@ -130,11 +121,9 @@ static void onAxisMoved(struct Gamepad_device *device, unsigned int axisID, floa
 }
 
 static void onDeviceAttached(struct Gamepad_device *device, void *context) {
-    if (verbose) {
-        sprintf(verboseMessage, "Device ID %u attached (vendor = 0x%X; product = 0x%X) with context %p\n", device->deviceID, device->vendorID,
-                device->productID, context);
-        std::cout << verboseMessage;
-    }
+#ifdef GAME_CONTROLLER_DEBUG
+    fprintf(stderr, "Device ID %u attached (vendor = 0x%X; product = 0x%X) with context %p\n", device->deviceID, device->vendorID, device->productID, context);
+#endif
 
     int i, x, x2;
 
@@ -204,10 +193,9 @@ static void onDeviceAttached(struct Gamepad_device *device, void *context) {
 }
 
 static void onDeviceRemoved(struct Gamepad_device *device, void *context) {
-    if (verbose) {
-        sprintf(verboseMessage, "Device ID %u removed with context %p\n", device->deviceID, context);
-        std::cout << verboseMessage;
-    }
+#ifdef GAME_CONTROLLER_DEBUG
+    fprintf(stderr, "Device ID %u removed with context %p\n", device->deviceID, context);
+#endif
 
     int i;
     for (i = 1; i <= device_last; i++) {
