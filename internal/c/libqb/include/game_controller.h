@@ -3,6 +3,8 @@
 // Powered by libstem Gamepad (https://github.com/ThemsAllTook/libstem_gamepad)
 //----------------------------------------------------------------------------------------------------------------------
 
+#pragma once
+
 #include <stdint.h>
 
 struct device_struct;
