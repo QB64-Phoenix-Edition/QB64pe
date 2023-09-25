@@ -34814,7 +34814,7 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
                     char buffer[128];
                     while (!feof(consoleStream)) {
                         if (fgets(buffer, 128, consoleStream) != NULL) {
-                            string szBuffer(buffer);
+                            std::string szBuffer(buffer);
 
                             if (!b_isRetina)
                                 b_isRetina = (szBuffer.rfind("Retina") != ULONG_MAX);
@@ -34832,7 +34832,7 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
                     size_t size = sizeof(str);
                     int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
 
-                    string sz_osrelease(str);
+                    std::string sz_osrelease(str);
                     if (sz_osrelease.rfind("19.") == 0)
                         scale_factor = 2;
                 }
