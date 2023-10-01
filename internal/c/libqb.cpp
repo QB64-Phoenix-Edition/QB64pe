@@ -32199,10 +32199,18 @@ int32 addone(int32 x) { return x + 1; } // for testing purposes only
 qbs *func__os() {
     qbs *tqbs;
 #ifdef QB64_WINDOWS
-#    ifdef QB64_32
+#   ifdef QB64_32
+#       ifdef QB64_ARM
+    tqbs = qbs_new_txt("[WINDOWS][32BIT][ARM]");
+#       else 
     tqbs = qbs_new_txt("[WINDOWS][32BIT]");
+#       endif
 #    else
+#       ifdef QB64_ARM
+    tqbs = qbs_new_txt("[WINDOWS][64BIT][ARM]");
+#       else 
     tqbs = qbs_new_txt("[WINDOWS][64BIT]");
+#       endif
 #    endif
 #elif defined(QB64_LINUX)
 #    ifdef QB64_32

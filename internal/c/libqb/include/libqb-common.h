@@ -20,7 +20,7 @@
 #    define QB64_WINDOWS
 // This supports Windows Vista and up
 #    define _WIN32_WINNT 0x0600
-#    define WINVER       0x0600
+#    define WINVER 0x0600
 
 #    define QB64_BACKSLASH_FILESYSTEM
 #    ifdef _MSC_VER
@@ -50,6 +50,9 @@
 
 #if !defined(i386) && !defined(__x86_64__)
 #    define QB64_NOT_X86
+#    if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)
+#        define QB64_ARM
+#    endif
 #endif
 
 #endif
