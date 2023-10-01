@@ -78,10 +78,11 @@ if "%ARCH%" == "ARM" (
 ) else (
     if %BITS% == 64 (
         set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.1.0-rt_v11-rev1/x86_64-13.1.0-release-win32-seh-msvcrt-rt_v11-rev1.7z"
+        set MINGW_DIR=mingw64
     ) else (
         set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.1.0-rt_v11-rev1/i686-13.1.0-release-win32-dwarf-msvcrt-rt_v11-rev1.7z"
-    )
-    set MINGW_DIR=mingw64
+        set MINGW_DIR=mingw32
+    )    
     set MINGW_TEMP_FILE=temp.7z
 )
 
