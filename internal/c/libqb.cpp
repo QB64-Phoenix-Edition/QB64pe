@@ -32176,33 +32176,36 @@ int32 func__mapunicode(int32 ascii_code) {
 int32 addone(int32 x) { return x + 1; } // for testing purposes only
 
 qbs *func__os() {
-    qbs *tqbs;
 #ifdef QB64_WINDOWS
-#    ifdef QB64_32
-    tqbs = qbs_new_txt("[WINDOWS][32BIT]");
-#    else
-    tqbs = qbs_new_txt("[WINDOWS][64BIT]");
-#    endif
+#    define QB64_OS_SYSTEM_STR "[WINDOWS]"
 #elif defined(QB64_LINUX)
-#    ifdef QB64_32
-    tqbs = qbs_new_txt("[LINUX][32BIT]");
-#    else
-    tqbs = qbs_new_txt("[LINUX][64BIT]");
-#    endif
+#    define QB64_OS_SYSTEM_STR "[LINUX]"
 #elif defined(QB64_MACOSX)
-#    ifdef QB64_32
-    tqbs = qbs_new_txt("[MACOSX][32BIT][LINUX]");
-#    else
-    tqbs = qbs_new_txt("[MACOSX][64BIT][LINUX]");
-#    endif
+#    define QB64_OS_SYSTEM_STR "[MACOSX]"
 #else
-#    ifdef QB64_32
-    tqbs = qbs_new_txt("[32BIT]");
-#    else
-    tqbs = qbs_new_txt("[64BIT]");
-#    endif
+#    define QB64_OS_SYSTEM_STR ""
 #endif
-    return tqbs;
+
+#ifdef QB64_MACOSX
+#    define QB64_OS_SYSTEM_EXTRA_STR "[LINUX]"
+#else
+#    define QB64_OS_SYSTEM_EXTRA_STR ""
+#endif
+
+#ifdef QB64_32
+#    define QB64_OS_BITS_STR "[32BIT]"
+#else
+#    define QB64_OS_BITS_STR "[64BIT]"
+#endif
+
+#ifdef QB64_ARM
+#    define QB64_OS_ARCH_STR "[ARM]"
+#else
+#    define QB64_OS_ARCH_STR ""
+#endif
+
+    // Have the compiler combine all our selections into one string
+    return qbs_new_txt(QB64_OS_SYSTEM_STR QB64_OS_SYSTEM_EXTRA_STR QB64_OS_BITS_STR QB64_OS_ARCH_STR);
 }
 
 int32 func__screenx() {
