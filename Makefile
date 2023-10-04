@@ -270,8 +270,17 @@ endif
 
 ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
 	EXE_LIBS += $(QB_DEVICE_INPUT_LIB)
+
 	CXXFLAGS += -DDEPENDENCY_DEVICEINPUT
+	ifeq ($(OS),win)
+		CXXLIBS += -lwinmm -lxinput -ldinput8 -ldxguid -lwbemuuid -lole32 -loleaut32
+	endif
+	ifeq ($(OS),osx)
+		CXXLIBS += -framework CoreFoundation -framework IOKit
+	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += libstem_gamepad
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -343,10 +352,6 @@ ifeq ($(OS),win)
 
 	ifneq ($(filter y,$(DEP_PRINTER)),)
 		CXXLIBS += -lwinspool
-	endif
-
-	ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
-		CXXLIBS += -lwinmm
 	endif
 
 	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)

@@ -22,6 +22,7 @@
 #include "datetime.h"
 #include "event.h"
 #include "font.h"
+#include "game_controller.h"
 #include "glut-thread.h"
 #include "gui.h"
 #include "http.h"
@@ -1236,31 +1237,9 @@ int32 key_display_state = 0;
 int32 key_display = 0;
 int32 key_display_redraw = 0;
 
-extern int32 device_last;
-extern int32 device_max;
-extern device_struct *devices;
-
-extern uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex);
-extern void setDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex, uint8 value);
-extern float getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex);
-extern void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value);
-extern float getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex);
-extern void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value);
-extern void setupDevice(device_struct *device);
-extern int32 createDeviceEvent(device_struct *device);
-extern void commitDeviceEvent(device_struct *device);
-
 extern ontimer_struct *ontimer;
 extern onkey_struct *onkey;
 extern int32 onkey_inprogress;
-extern onstrig_struct *onstrig;
-extern int32 onstrig_inprogress;
-
-extern uint32 qbevent;
-
-#ifdef DEPENDENCY_DEVICEINPUT
-#    include "parts/input/game_controller/src.c"
-#endif
 
 extern int32 console;
 extern int32 screen_hide_startup;

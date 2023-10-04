@@ -20,8 +20,8 @@
   Alex Diener alex@ludobloom.com
 */
 
-#include "gamepad/Gamepad.h"
-#include "gamepad/Gamepad_private.h"
+#include "Gamepad.h"
+#include "Gamepad_private.h"
 #include <IOKit/hid/IOHIDLib.h>
 #include <limits.h>
 #include <mach/mach.h>
@@ -285,7 +285,7 @@ static void onDeviceMatched(void * context, IOReturn result, void * sender, IOHI
 	
 	cfProductName = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
 	if (cfProductName == NULL || CFGetTypeID(cfProductName) != CFStringGetTypeID()) {
-		description = malloc(strlen("[Unknown]" + 1));
+		description = malloc(strlen("[Unknown]") + 1);
 		strcpy(description, "[Unknown]");
 		
 	} else {
