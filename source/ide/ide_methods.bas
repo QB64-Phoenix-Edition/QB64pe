@@ -5928,7 +5928,7 @@ FUNCTION ide2 (ignore)
                 GOTO idemrun
             END IF
 
-            IF menu$(m, s) = "Run only (No exe)" THEN
+            IF menu$(m, s) = "Run #Only (No EXE)" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 NoExeSaved = -1
                 startPaused = 0
