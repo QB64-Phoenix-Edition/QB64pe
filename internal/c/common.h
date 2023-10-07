@@ -53,12 +53,7 @@
 
 // common includes
 #    include <stdio.h>
-#    ifdef QB64_MACOSX
-#        include <cmath>
-#    else
-//#include <math.h> //<-causes overloading abs conflicts in Windows
-#        include <cmath>
-#    endif
+#    include <cmath>
 #    include <stdint.h>
 #    include <errno.h>
 #    include <fcntl.h>
