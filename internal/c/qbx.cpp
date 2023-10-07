@@ -66,7 +66,7 @@ extern int32 sub_gl_called;
 double pi_as_double = 3.14159265358979;
 void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
     double xmin, xmax, ymin, ymax;
-    ymax = zNear * tan(fovy * pi_as_double / 360.0);
+    ymax = zNear * std::tan(fovy * pi_as_double / 360.0);
     ymin = -ymax;
     xmin = ymin * aspect;
     xmax = ymax * aspect;
@@ -820,18 +820,18 @@ template <typename T> static T qbs_cleanup(uint32 base, T passvalue) {
 
 
 // force abs to return floating point numbers correctly
-inline double func_abs(double d) { return fabs(d); }
-inline long double func_abs(long double d) { return fabs(d); }
-inline float func_abs(float d) { return fabs(d); }
+inline double func_abs(double d) { return std::fabs(d); }
+inline long double func_abs(long double d) { return std::fabs(d); }
+inline float func_abs(float d) { return std::fabs(d); }
 
 inline uint8 func_abs(uint8 d) { return d; }
 inline uint16 func_abs(uint16 d) { return d; }
 inline uint32 func_abs(uint32 d) { return d; }
 inline uint64 func_abs(uint64 d) { return d; }
-inline int8 func_abs(int8 d) { return abs(d); }
-inline int16 func_abs(int16 d) { return abs(d); }
-inline int32 func_abs(int32 d) { return abs(d); }
-inline int64 func_abs(int64 d) { return llabs(d); }
+inline int8 func_abs(int8 d) { return std::abs(d); }
+inline int16 func_abs(int16 d) { return std::abs(d); }
+inline int32 func_abs(int32 d) { return std::abs(d); }
+inline int64 func_abs(int64 d) { return std::llabs(d); }
 
 extern int32 disableEvents;
 
@@ -1412,7 +1412,7 @@ extensions_ready:
     if (TFS == NULL)
         TFS = qbs_new(0, 0);
     TD = func_timer(0.001E+0, 1);
-    TL = qbr(floor(TD));
+    TL = qbr(std::floor(TD));
     TL = qbr((TD - TL) * 999);
     if (TL < 100)
         TL = 100; // ensure value is a 3 digit number
@@ -2100,7 +2100,7 @@ void TIMERTHREAD(void *unused) {
                         // if difference between actual time and
                         // measured time is beyond 'seconds' set
                         // measured to actual
-                        if (fabs(time_now -
+                        if (std::fabs(time_now -
                                  ontimer[i].last_time) >=
                             ontimer[i].seconds)
                             ontimer[i].last_time = time_now;

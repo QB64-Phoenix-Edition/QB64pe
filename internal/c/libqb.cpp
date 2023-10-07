@@ -9677,8 +9677,8 @@ void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin, int32 ymin, in
             return;
         }
 
-    mx = (x2 - x1) / fabs((double)(y2 - y1));
-    my = (y2 - y1) / fabs((double)(x2 - x1));
+    mx = (x2 - x1) / std::fabs((double)(y2 - y1));
+    my = (y2 - y1) / std::fabs((double)(x2 - x1));
     // right wall from right
     if (x1 > xmax) {
         if (mx < 0) {
@@ -9782,8 +9782,8 @@ gotx1y1:
         }
     }
 
-    mx = (x1 - x2) / fabs((double)(y1 - y2));
-    my = (y1 - y2) / fabs((double)(x1 - x2));
+    mx = (x1 - x2) / std::fabs((double)(y1 - y2));
+    my = (y1 - y2) / std::fabs((double)(x1 - x2));
     // right wall from right
     if (x2 > xmax) {
         if (mx < 0) {
@@ -13239,7 +13239,7 @@ void sub_circle(double x, double y, double r, uint32 col, double start, double e
         iy = y - 0.5;
     else
         iy = y + 0.5;
-    r = fabs(r - x); // r is now a radius in pixels
+    r = std::fabs(r - x); // r is now a radius in pixels
 
     // adjust vertical and horizontal span of the circle based on aspect ratio
     xspan = r;
@@ -13305,15 +13305,15 @@ void sub_circle(double x, double y, double r, uint32 col, double start, double e
     arc3 = pi;
     arc4 = pi2;
     arcinc = (pi / 2) / (double)pixels;
-    sinb = sin(arcinc);
-    cosb = cos(arcinc);
+    sinb = std::sin(arcinc);
+    cosb = std::cos(arcinc);
     lastplotted_x2 = -1;
     lastchecked_x2 = -1;
     i = 0;
 
     if (line_to_start) {
-        px = cos(start);
-        py = sin(start);
+        px = std::cos(start);
+        py = std::sin(start);
         x2 = px * xspan + 0.5;
         y2 = py * yspan - 0.5;
         fast_line(ix, iy, ix + x2, iy - y2, col);
@@ -13387,8 +13387,8 @@ drawcircle:
 allplotted:
 
     if (line_from_end) {
-        px = cos(end);
-        py = sin(end);
+        px = std::cos(end);
+        py = std::sin(end);
         x2 = px * xspan + 0.5;
         y2 = py * yspan - 0.5;
         fast_line(ix, iy, ix + x2, iy - y2, col);
@@ -20015,34 +20015,34 @@ double func_log(double value) {
         error(5);
         return 0;
     }
-    return log(value);
+    return std::log(value);
 }
 
 // FIX
 double func_fix_double(double value) {
     if (value < 0)
-        return ceil(value);
+        return std::ceil(value);
     else
-        return floor(value);
+        return std::floor(value);
 }
 long double func_fix_float(long double value) {
     if (value < 0)
-        return ceil(value);
+        return std::ceil(value);
     else
-        return floor(value);
+        return std::floor(value);
 }
 
 // EXP
 double func_exp_single(double value) {
     if (value <= 88.02969) {
-        return exp(value);
+        return std::exp(value);
     }
     error(6);
     return 0;
 }
 long double func_exp_float(long double value) {
     if (value <= 709.782712893) {
-        return exp(value);
+        return std::exp(value);
     }
     error(6);
     return 0;
@@ -21489,7 +21489,7 @@ double func_sqr(double value) {
         error(5);
         return 0;
     }
-    return sqrt(value);
+    return std::sqrt(value);
 }
 
 qbs *func_command_str = NULL;
@@ -23172,12 +23172,12 @@ void sub_rmdir(qbs *str) {
 
 long double pow2(long double x, long double y) {
     if (x < 0) {
-        if (y != floor(y)) {
+        if (y != std::floor(y)) {
             error(5);
             return 0;
         }
     }
-    return pow(x, y);
+    return std::pow(x, y);
 }
 
 int32 func_freefile() { return gfs_fileno_freefile(); }
@@ -23395,7 +23395,7 @@ float func__mousex(int32 context, int32 passed) {
             f -= 0.001f;
         if (x2 < x)
             f += 0.001f;
-        return floor(f + 0.5);
+        return std::floor(f + 0.5);
     }
 
     return x;
@@ -23448,7 +23448,7 @@ float func__mousey(int32 context, int32 passed) {
             f -= 0.001f;
         if (y2 < y)
             f += 0.001f;
-        return floor(f + 0.5);
+        return std::floor(f + 0.5);
     }
 
     return y;
@@ -27116,8 +27116,8 @@ void sub_draw(qbs *s) {
     // rotate vectors by ta?
     if (draw_ta) {
         d = draw_ta * 0.0174532925199433;
-        sin_ta = sin(d);
-        cos_ta = cos(d);
+        sin_ta = std::sin(d);
+        cos_ta = std::cos(d);
         px2 = vx;
         py2 = vy;
         vx = px2 * cos_ta + py2 * sin_ta;
@@ -27274,8 +27274,8 @@ nextchar:
         fy = 1; // reset vectors
         // rotate vectors by ta
         d = draw_ta * 0.0174532925199433;
-        sin_ta = sin(d);
-        cos_ta = cos(d);
+        sin_ta = std::sin(d);
+        cos_ta = std::cos(d);
         px2 = vx;
         py2 = vy;
         vx = px2 * cos_ta + py2 * sin_ta;
@@ -33916,7 +33916,7 @@ double func_arcsec(double num) {
         error(5);
         return 0;
     }
-    return atan(num / sqrt(1 - num * num)) + (sign - 1) * (2 * atan(1));
+    return std::atan(num / std::sqrt(1 - num * num)) + (sign - 1) * (2 * std::atan(1));
 }
 
 double func_arccsc(double num) {
@@ -33925,21 +33925,21 @@ double func_arccsc(double num) {
         error(5);
         return 0;
     }
-    return atan(num / sqrt(1 - num * num)) + (sign - 1) * (2 * atan(1));
+    return std::atan(num / std::sqrt(1 - num * num)) + (sign - 1) * (2 * std::atan(1));
 }
 
-double func_arccot(double num) { return 2 * atan(1) - atan(num); }
+double func_arccot(double num) { return 2 * std::atan(1) - std::atan(num); }
 
 double func_sech(double num) {
     if (num > 88.02969) {
         error(5);
         return 0;
     }
-    if (exp(num) + exp(-num) == 0) {
+    if (std::exp(num) + std::exp(-num) == 0) {
         error(5);
         return 0;
     }
-    return 2 / (exp(num) + exp(-num));
+    return 2 / (std::exp(num) + std::exp(-num));
 }
 
 double func_csch(double num) {
@@ -33947,11 +33947,11 @@ double func_csch(double num) {
         error(5);
         return 0;
     }
-    if (exp(num) - exp(-num) == 0) {
+    if (std::exp(num) - std::exp(-num) == 0) {
         error(5);
         return 0;
     }
-    return 2 / (exp(num) - exp(-num));
+    return 2 / (std::exp(num) - std::exp(-num));
 }
 
 double func_coth(double num) {
@@ -33959,35 +33959,35 @@ double func_coth(double num) {
         error(5);
         return 0;
     }
-    if (2 * exp(num) - 1 == 0) {
+    if (2 * std::exp(num) - 1 == 0) {
         error(5);
         return 0;
     }
-    return 2 * exp(num) - 1;
+    return 2 * std::exp(num) - 1;
 }
 
 double func_sec(double num) {
-    if (cos(num) == 0) {
+    if (std::cos(num) == 0) {
         error(5);
         return 0;
     }
-    return 1 / cos(num);
+    return 1 / std::cos(num);
 }
 
 double func_csc(double num) {
-    if (sin(num) == 0) {
+    if (std::sin(num) == 0) {
         error(5);
         return 0;
     }
-    return 1 / sin(num);
+    return 1 / std::sin(num);
 }
 
 double func_cot(double num) {
-    if (tan(num) == 0) {
+    if (std::tan(num) == 0) {
         error(5);
         return 0;
     }
-    return 1 / tan(num);
+    return 1 / std::tan(num);
 }
 
 void GLUT_key_ascii(int32 key, int32 down) {
@@ -37082,7 +37082,7 @@ main_loop:
     if (!lprint) { // not currently performing an LPRINT operation
         lprint_locked = 1;
         if (lprint_buffered) {
-            if (fabs(func_timer(0.001, 1) - lprint_last) >= 10.0) { // 10 seconds elapsed since last LPRINT operation
+            if (std::fabs(func_timer(0.001, 1) - lprint_last) >= 10.0) { // 10 seconds elapsed since last LPRINT operation
                 sub__printimage(lprint_image);
                 lprint_buffered = 0;
                 static int32 old_dest;
