@@ -16951,7 +16951,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    IF (sourcetyp AND ISFLOAT) THEN e$ = "floor(" + e$ + ")" ELSE e$ = "(" + e$ + ")"
+                    IF (sourcetyp AND ISFLOAT) THEN e$ = "std::floor(" + e$ + ")" ELSE e$ = "(" + e$ + ")"
                     r$ = e$
                     typ& = sourcetyp
                     GOTO evalfuncspecial
