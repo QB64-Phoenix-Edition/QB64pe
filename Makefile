@@ -296,7 +296,7 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
 	endif
 	ifeq ($(OS),osx)
-		CXXLIBS += -framework CoreFoundation -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
+		CXXLIBS += -lpthread -lm -framework CoreFoundation -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
 	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
