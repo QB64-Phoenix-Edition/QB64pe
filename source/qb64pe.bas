@@ -12,14 +12,14 @@ $SCREENHIDE
 
 $EXEICON:'./qb64pe.ico'
 
-$VERSIONINFO:CompanyName=QB64 Phoenix Edition
-$VERSIONINFO:FileDescription=QB64 IDE and Compiler
-$VERSIONINFO:InternalName=qb64pe.bas
-$VERSIONINFO:LegalCopyright=MIT
-$VERSIONINFO:LegalTrademarks=
-$VERSIONINFO:OriginalFilename=qb64pe.exe
-$VERSIONINFO:ProductName=QB64-PE
-$VERSIONINFO:Comments=QB64 is a modern extended BASIC programming language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows, Linux and macOS.
+$VERSIONINFO:CompanyName='QB64 Phoenix Edition'
+$VERSIONINFO:FileDescription='QB64 IDE and Compiler'
+$VERSIONINFO:InternalName='qb64pe.bas'
+$VERSIONINFO:LegalCopyright='MIT'
+$VERSIONINFO:LegalTrademarks=''
+$VERSIONINFO:OriginalFilename='qb64pe.exe'
+$VERSIONINFO:ProductName='QB64-PE'
+$VERSIONINFO:Comments='QB64 is a modern extended BASIC programming language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows, Linux and macOS.'
 
 '$INCLUDE:'global\version.bas'
 '$INCLUDE:'global\settings.bas'
@@ -118,6 +118,8 @@ OS_BITS = 64: IF INSTR(_OS$, "[32BIT]") THEN OS_BITS = 32
 
 IF OS_BITS = 32 THEN WindowTitle = "QB64 Phoenix Edition (x32)" ELSE WindowTitle = "QB64 Phoenix Edition (x64)"
 _TITLE WindowTitle
+
+CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
 
 DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode
 DIM SHARED ShowWarnings AS _BYTE, QuietMode AS _BYTE, CMDLineFile AS STRING
@@ -1866,7 +1868,7 @@ DO
         END IF
 
         IF LEFT$(temp$, 7) = "$ERROR " THEN
-            temp$ = LTRIM$(MID$(temp$, 7))
+            temp$ = RemoveStringEnclosingPair(LTRIM$(MID$(temp$, 7)), METACOMMAND_STRING_ENCLOSING_PAIR)
             a$ = "Compilation check failed: " + temp$
             GOTO errmes
         END IF
@@ -3325,6 +3327,7 @@ DO
 
             VersionInfoKey$ = LTRIM$(RTRIM$(MID$(a3u$, FirstDelimiter + 1, SecondDelimiter - FirstDelimiter - 1)))
             VersionInfoValue$ = StrReplace$(LTRIM$(RTRIM$(MID$(a3$, SecondDelimiter + 1))), CHR$(34), "'")
+            issueWarning = 0 ' only issue warnings if this is true
 
             SELECT CASE VersionInfoKey$
                 CASE "FILEVERSION#"
@@ -3338,42 +3341,60 @@ DO
                     IF viProductVersion$ = "" THEN viProductVersion$ = viProductVersionNum$
                     layout$ = SCase$("$VersionInfo:PRODUCTVERSION#=") + VersionInfoValue$
                 CASE "COMPANYNAME"
-                    viCompanyName$ = VersionInfoValue$
+                    viCompanyName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "CompanyName=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "FILEDESCRIPTION"
-                    viFileDescription$ = VersionInfoValue$
+                    viFileDescription$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "FileDescription=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "FILEVERSION"
-                    viFileVersion$ = VersionInfoValue$
+                    viFileVersion$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "FileVersion=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "INTERNALNAME"
-                    viInternalName$ = VersionInfoValue$
+                    viInternalName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "InternalName=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "LEGALCOPYRIGHT"
-                    viLegalCopyright$ = VersionInfoValue$
+                    viLegalCopyright$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "LegalCopyright=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "LEGALTRADEMARKS"
-                    viLegalTrademarks$ = VersionInfoValue$
+                    viLegalTrademarks$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "LegalTrademarks=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "ORIGINALFILENAME"
-                    viOriginalFilename$ = VersionInfoValue$
+                    viOriginalFilename$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "OriginalFilename=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "PRODUCTNAME"
-                    viProductName$ = VersionInfoValue$
+                    viProductName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "ProductName=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "PRODUCTVERSION"
-                    viProductVersion$ = VersionInfoValue$
+                    viProductVersion$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "ProductVersion=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "COMMENTS"
-                    viComments$ = VersionInfoValue$
+                    viComments$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "Comments=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "WEB"
-                    viWeb$ = VersionInfoValue$
+                    viWeb$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "Web=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE ELSE
                     a$ = "Invalid key. (Use FILEVERSION#, PRODUCTVERSION#, CompanyName, FileDescription, FileVersion, InternalName, LegalCopyright, LegalTrademarks, OriginalFilename, ProductName, ProductVersion, Comments or Web)"
                     GOTO errmes
             END SELECT
+
+            ' Generate warnings if needed
+            IF issueWarning AND NOT IgnoreWarnings THEN
+                IF NOT HasStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR) THEN
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "missing string bracket delimiters (" + METACOMMAND_STRING_ENCLOSING_PAIR + ")", VersionInfoValue$
+                END IF
+            END IF
 
             VersionInfoSet = -1
 
