@@ -24634,20 +24634,17 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                         EXIT FUNCTION
                     END IF
                 CASE "\"
-                    IF FIX(VAL(num(2))) = 0 THEN
+                    IF _ROUND(VAL(num(2))) = 0 THEN
                         EvaluateNumbers$ = "ERROR - Division By Zero"
                         EXIT FUNCTION
                     END IF
-
-                    n1 = VAL(num(1)) \ FIX(VAL(num(2)))
+                    n1 = VAL(num(1)) \ _ROUND(VAL(num(2)))
                 CASE "MOD"
-                    IF FIX(VAL(num(2))) = 0 THEN
+                    IF _ROUND(VAL(num(2))) = 0 THEN
                         EvaluateNumbers$ = "ERROR - Division By Zero"
                         EXIT FUNCTION
                     END IF
-
-                    n1 = VAL(num(1)) MOD FIX(VAL(num(2)))
-
+                    n1 = VAL(num(1)) MOD _ROUND(VAL(num(2)))
                 CASE "+": n1 = VAL(num(1)) + VAL(num(2))
                 CASE "-":
                     n1 = VAL(num(1)) - VAL(num(2))
