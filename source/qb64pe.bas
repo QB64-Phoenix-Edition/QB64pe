@@ -24716,7 +24716,7 @@ SUB PreParse (e$)
                     CASE "0" TO "9"
                     CASE "A" TO "F"
                     CASE ELSE:
-                        PRINT UCASE$(MID$(e$, l1, 1))
+                        'PRINT UCASE$(MID$(e$, l1, 1))
                         EXIT FOR
                 END SELECT
             NEXT
@@ -24920,31 +24920,6 @@ SUB PreParse (e$)
             l = l + 1
         END IF
     LOOP UNTIL l = 0 OR l = LEN(t$) 'last symbol is a bracket
-
-    'Turn all &H (hex) numbers into decimal values for the program to process properly
-    l = 0
-    DO
-        l = INSTR(t$, "&H")
-        IF l THEN
-            E = l + 1: finished = 0
-            DO
-                E = E + 1
-                comp$ = MID$(t$, E, 1)
-                SELECT CASE comp$
-                    CASE "0" TO "9", "A" TO "F" 'All is good, our next digit is a number, continue to add to the hex$
-                    CASE ELSE
-                        good = 0
-                        FOR i = 1 TO UBOUND(OName)
-                            IF MID$(t$, E, LEN(OName(i))) = OName(i) AND PL(i) > 1 AND PL(i) <= 250 THEN good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
-                        NEXT
-                        IF NOT good THEN e$ = "ERROR - Improper &H value. (" + comp$ + ")": EXIT SUB
-                        E = E - 1
-                        finished = -1
-                END SELECT
-            LOOP UNTIL finished OR E = LEN(t$)
-            t$ = LEFT$(t$, l - 1) + LTRIM$(RTRIM$(STR$(VAL(MID$(t$, l, E - l + 1))))) + MID$(t$, E + 1)
-        END IF
-    LOOP UNTIL l = 0
 
     'Turn all &B (binary) numbers into decimal values for the program to process properly
     l = 0
