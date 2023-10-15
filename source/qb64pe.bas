@@ -24708,6 +24708,67 @@ SUB PreParse (e$)
     DIM f AS _FLOAT
     STATIC TotalPrefixedPP_TypeMod AS LONG, TotalPP_TypeMod AS LONG
 
+    DO 'convert &H values to decimal values to prevent errors
+        l = INSTR(l, UCASE$(e$), "&H")
+        IF l THEN
+            FOR l1 = l + 2 TO LEN(e$)
+                SELECT CASE UCASE$(MID$(e$, l1, 1))
+                    CASE "0" TO "9"
+                    CASE "A" TO "F"
+                    CASE ELSE:
+                        PRINT UCASE$(MID$(e$, l1, 1))
+                        EXIT FOR
+                END SELECT
+            NEXT
+            IF l1 <> l + 2 THEN 'hex number found
+                IF l1 > l + 18 THEN EXIT DO
+                l$ = LEFT$(e$, l - 1)
+                r$ = MID$(e$, l1)
+                t~&& = VAL(MID$(e$, l, l1 - l))
+                m$ = _TRIM$(STR$(t~&&))
+                e$ = l$ + m$ + r$
+            ELSE
+                EXIT DO
+            END IF
+        END IF
+    LOOP UNTIL l = 0
+
+    'replace existing CONST values
+    sep$ = "()+-*/\><=^"
+    FOR i2 = 0 TO constlast
+        thisConstName$ = constname(i2)
+        FOR replaceConstPass = 1 TO 2
+            found = 0
+            DO
+                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
+                IF found THEN
+                    IF found > 1 THEN
+                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
+                    END IF
+                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
+                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
+                    END IF
+                    t = consttype(i2)
+                    IF t AND ISSTRING THEN
+                        r$ = conststring(i2)
+                        i4 = _INSTRREV(r$, ",")
+                        r$ = LEFT$(r$, i4 - 1)
+                    ELSE
+                        IF t AND ISFLOAT THEN
+                            r$ = STR$(constfloat(i2))
+                            r$ = N2S(r$)
+                        ELSE
+                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
+                        END IF
+                    END IF
+                    t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
+                END IF
+            LOOP UNTIL found = 0
+            thisConstName$ = constname(i2) + constnamesymbol(i2)
+        NEXT
+    NEXT
+
+
     IF PP_TypeMod(0) = "" THEN
         REDIM PP_TypeMod(100) AS STRING, PP_ConvertedMod(100) AS STRING 'Large enough to hold all values to begin with
         PP_TypeMod(0) = "Initialized" 'Set so we don't do this section over and over, as we keep the values in shared memory.
@@ -24764,41 +24825,6 @@ SUB PreParse (e$)
         l = INSTR(l + 1, t$, ")"): IF l THEN c1 = c1 + 1
     LOOP UNTIL l = 0
     IF c <> c1 THEN e$ = "ERROR -- Bad Parenthesis:" + STR$(c) + "( vs" + STR$(c1) + ")": EXIT SUB
-
-    'replace existing CONST values
-    sep$ = "()+-*/\><=^"
-    FOR i2 = 0 TO constlast
-        thisConstName$ = constname(i2)
-        FOR replaceConstPass = 1 TO 2
-            found = 0
-            DO
-                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
-                IF found THEN
-                    IF found > 1 THEN
-                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
-                    END IF
-                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
-                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
-                    END IF
-                    t = consttype(i2)
-                    IF t AND ISSTRING THEN
-                        r$ = conststring(i2)
-                        i4 = _INSTRREV(r$, ",")
-                        r$ = LEFT$(r$, i4 - 1)
-                    ELSE
-                        IF t AND ISFLOAT THEN
-                            r$ = STR$(constfloat(i2))
-                            r$ = N2S(r$)
-                        ELSE
-                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
-                        END IF
-                    END IF
-                    t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
-                END IF
-            LOOP UNTIL found = 0
-            thisConstName$ = constname(i2) + constnamesymbol(i2)
-        NEXT
-    NEXT
 
     'Modify so that NOT will process properly
     l = 0
