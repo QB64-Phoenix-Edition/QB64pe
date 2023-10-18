@@ -2833,11 +2833,11 @@ regid
 clearid
 id.n = "Cls"
 id.subfunc = 2
-id.callname = "sub_cls"
-id.args = 2
-id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
-id.specialformat = "[?][,?]"
-id.hr_syntax = "CLS [method%] [, bgColor&]"
+id.callname = "sub_clsDest"
+id.args = 3
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
+id.specialformat = "[?][,?][,?]"
+id.hr_syntax = "CLS [method%] [, bgColor&] [, dest&]"
 regid
 
 clearid

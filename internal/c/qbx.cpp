@@ -430,6 +430,7 @@ extern void qbg_sub_window(float x1, float y1, float x2, float y2,
 extern void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed);
 extern void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2,
                          int32 fillcolor, int32 bordercolor, int32 passed);
+extern void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed);
 extern void sub_cls(int32 method, uint32 use_color, int32 passed);
 extern void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start,
                            int32 stop, int32 passed);
