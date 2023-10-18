@@ -14688,10 +14688,12 @@ void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 st
 
 void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
     int32 tempDest;
-    tempDest = func__dest();
-    sub__dest(dest);
-    sub_cls(method, use_color, passed);
-    sub__dest(tempDest);
+    if (passed & 4) {
+        tempDest = func__dest();  // get the old dest
+        sub__dest(dest); //set the new dest
+    }
+    sub_cls(method, use_color, passed & 3); //call this regardless if we change the dest or not, just strip out that value first.
+    if (passed & 4) {sub__dest(tempDest);} //restore the old dest
 }
 
 void sub_cls(int32 method, uint32 use_color, int32 passed) {
