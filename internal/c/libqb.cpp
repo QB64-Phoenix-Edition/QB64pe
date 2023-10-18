@@ -14689,6 +14689,7 @@ void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 st
 void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
     int32 tempDest;
     tempDest = func__dest();
+    sub__dest(dest);
     sub_cls(method, use_color, passed);
     sub__dest(tempDest);
 }
