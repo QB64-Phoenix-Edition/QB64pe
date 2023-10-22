@@ -1195,6 +1195,7 @@ void validatepage(int32);
 void sub__dest(int32);
 void sub__source(int32);
 int32 func__printwidth(qbs *, int32, int32);
+void sub_clsDest(int32, uint32, int32, int32);
 void sub_cls(int32, uint32, int32);
 void qbs_print(qbs *, int32);
 int32 func__copyimage(int32 i, int32 mode, int32 passed);
@@ -14684,6 +14685,17 @@ error:
 }
 
 void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
+
+void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
+    int32 tempDest;
+    if (passed & 4) {
+        tempDest = func__dest();  // get the old dest
+        sub__dest(dest); //set the new dest
+    }
+    sub_cls(method, use_color, passed & 3); //call this regardless if we change the dest or not, just strip out that value first.
+    if (passed & 4) {sub__dest(tempDest);} //restore the old dest
+}
+
 void sub_cls(int32 method, uint32 use_color, int32 passed) {
     if (new_error)
         return;
