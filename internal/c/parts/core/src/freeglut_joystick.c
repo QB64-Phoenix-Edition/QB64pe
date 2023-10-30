@@ -149,13 +149,16 @@
 #                include <usb.h>
 #            endif
 #        elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#	     define HAVE_USBHID_H 1
 #            ifdef HAVE_USBHID_H
 #                include <usbhid.h>
 #            else
 #                include <libusbhid.h>
 #            endif
 #        endif
-#        include <legacy/dev/usb/usb.h>
+#	 if !defined(__FreeBSD__)
+#            include <legacy/dev/usb/usb.h>
+#	 endif
 #        include <dev/usb/usbhid.h>
 
 /* Compatibility with older usb.h revisions */
@@ -202,6 +205,7 @@ struct os_specific_s {
  */
 static char *fghJoystickWalkUSBdev(int f, char *dev, char *out, int outlen)
 {
+#if !defined(__FreeBSD__)
   struct usb_device_info di;
   int i, a;
   char *cp;
@@ -223,6 +227,7 @@ static char *fghJoystickWalkUSBdev(int f, char *dev, char *out, int outlen)
         return out;
       }
   }
+#endif
   return NULL;
 }
 
@@ -278,7 +283,11 @@ static int fghJoystickInitializeHID(struct os_specific_s *os,
     os->hids = NULL;
 
 #   ifdef HAVE_USBHID_H
+#if !defined(__FreeBSD__)
         if( ioctl( os->fd, USB_GET_REPORT_ID, &report_id ) < 0)
+# else
+	if( ioctl( os->fd, UR_GET_REPORT, &report_id ) < 0)
+#endif
         {
             /*** XXX {report_id} may not be the right variable? ***/
 #ifdef HAVE_ERRNO_H
