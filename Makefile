@@ -14,6 +14,8 @@ TEMP_ID ?=
 #
 # This is important for libraries, since they could potentially be referencing
 # things from our dependencies
+CC = /usr/local/bin/gcc11
+CXX = /usr/local/bin/g++11
 CXXFLAGS += $(CXXFLAGS_EXTRA)
 CXXLIBS += $(CXXLIBS_EXTRA)
 
@@ -92,7 +94,7 @@ ifeq ($(OS),osx)
 	PATH_LIBQB := $(PATH_INTERNAL_C)/libqb
 	CP := cp -r
 	RM := rm -fr
-	MKDIR := mkdir -p
+	MKDIR := mkdir -pgc
 	FIXPATH = $1
 	BITS := 64
 	PLATFORM := posix
@@ -100,10 +102,16 @@ ifeq ($(OS),osx)
 endif
 
 ifeq ($(BITS),64)
+	ifeq ($(shell uname -p), powerpc64le)
+	OBJCOPY_FLAGS := -Oelf64-powerpcle -Bpowerpc:common64
+	endif
+	ifeq ($(shell uname -p), x86_64)
 	OBJCOPY_FLAGS := -Oelf64-x86-64 -Bi386:x86-64
+	endif
 else
 	OBJCOPY_FLAGS := -Oelf32-i386 -Bi386
 endif
+
 
 ifdef BUILD_QB64
 	ifeq ($(OS),win)
@@ -133,10 +141,10 @@ all: $(EXE)
 CLEAN_LIST :=
 CLEAN_DEP_LIST :=
 
-CXXFLAGS += -w -std=gnu++14
+CXXFLAGS += -w -std=gnu++14 -L/usr/lib -L/usr/local/lib
 
 ifeq ($(OS),lnx)
-	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
+	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt -lusbhid
 	CXXFLAGS += -DFREEGLUT_STATIC
 endif
 
