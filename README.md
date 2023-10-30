@@ -1,12 +1,11 @@
+# **This repo contains modifications to work in FreeBSD. Uses instructions for Linux installation.**
+
 # QB64 Phoenix Edition
 
 ![QB64-PE](source/peLogo.png)
 
 
 QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows (Vista and up), Linux and macOS. 
-
-**This repo contains modifications to work in FreeBSD. Use instructions for Linux installation.
-**
 
 The Phoenix Edition is one of the new offshoots created when the old project related pages (QB64Team/www.qb64.org) went offline, but it's still the same programming language. For the whole story visit our new [Forum](https://qb64phoenix.com/forum/showthread.php?tid=259).
 
