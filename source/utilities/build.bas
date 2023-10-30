@@ -23,7 +23,7 @@ FUNCTION GetMakeExecutable$ ()
     IF os$ = "WIN" THEN
         GetMakeExecutable$ = "internal\c\c_compiler\bin\mingw32-make.exe"
     ELSE
-        GetMakeExecutable$ = "make"
+        GetMakeExecutable$ = "gmake"
     END IF
 END FUNCTION
 
