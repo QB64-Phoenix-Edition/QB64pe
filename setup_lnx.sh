@@ -24,11 +24,11 @@ pkg_install() {
 
 
 #Make sure we're not running as root
-# if [ $EUID == "0" ]; then
-#  echo "You are trying to run this script as root. This is highly unrecommended."
-#  echo "This script will prompt you for your sudo password if needed to install packages."
-#  exit 1
-# fi
+if [ $EUID == "0" ]; then
+  echo "You are trying to run this script as root. This is highly unrecommended."
+  echo "This script will prompt you for your sudo password if needed to install packages."
+  exit 1
+fi
 
 GET_WGET=
 #Path to Icon
