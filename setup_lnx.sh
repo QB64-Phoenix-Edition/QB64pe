@@ -24,11 +24,11 @@ pkg_install() {
 
 
 #Make sure we're not running as root
-if [ $EUID == "0" ]; then
-  echo "You are trying to run this script as root. This is highly unrecommended."
-  echo "This script will prompt you for your sudo password if needed to install packages."
-  exit 1
-fi
+# if [ $EUID == "0" ]; then
+#  echo "You are trying to run this script as root. This is highly unrecommended."
+#  echo "This script will prompt you for your sudo password if needed to install packages."
+#  exit 1
+# fi
 
 GET_WGET=
 #Path to Icon
@@ -108,8 +108,8 @@ elif [ -z "$DISTRO" ]; then
 fi
 
 echo "Compiling and installing QB64-PE..."
-make clean OS=lnx
-make OS=lnx BUILD_QB64=y -j3
+gmake clean OS=lnx
+gmake OS=lnx BUILD_QB64=y -j3
 
 if [ -e "./qb64pe" ]; then
   echo "Done compiling!!"
