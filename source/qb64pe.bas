@@ -930,9 +930,9 @@ DIM id2 AS idstruct
 
 cleanupstringprocessingcall$ = "qbs_cleanup(qbs_tmp_base,"
 
-DIM SHARED sfidlist(1000) AS LONG
-DIM SHARED sfarglist(1000) AS INTEGER
-DIM SHARED sfelelist(1000) AS INTEGER
+REDIM SHARED sfidlist(1000) AS LONG
+REDIM SHARED sfarglist(1000) AS INTEGER
+REDIM SHARED sfelelist(1000) AS INTEGER
 
 
 
@@ -11767,6 +11767,16 @@ FOR i = 1 TO idn
 
                             unresolved = unresolved + 1
                             sflistn = sflistn + 1
+                            ubound_sf = UBOUND(sfidlist) 'all 3 should have the same limit
+                            IF sflistn > ubound_sf THEN
+                                REDIM _PRESERVE sfidlist(ubound_sf + 1000) AS LONG
+                                REDIM _PRESERVE sfarglist(ubound_sf + 1000) AS INTEGER
+                                REDIM _PRESERVE sfelelist(ubound_sf + 1000) AS INTEGER
+                            END IF
+                            IF ubound_sf > 25000 THEN 'manually set a descriptive error message for the user so they know what's happening.
+                                Error_Message = "ERROR: QB64PE currently limits a program to have a maximum of 25,000 subs and functions, and this limit has been exceeded.  Please reduce Sub/Function count, or else report this issue with sample code that produced it over at the QB64PE forums, so we can look further into this issue."
+                                GOTO errmes
+                            END IF
                             sfidlist(sflistn) = i
                             sfarglist(sflistn) = i2
                             sfelelist(sflistn) = nelereq '0 means still unknown
