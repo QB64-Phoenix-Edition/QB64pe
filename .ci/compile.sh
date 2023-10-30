@@ -15,8 +15,8 @@ mv internal/temp/* internal/source/
 
 
 # Build libqb test executables
-make -j8 OS=$os build-tests
+gmake -j8 OS=$os build-tests
 
-make clean OS=$os
+gmake clean OS=$os
 
 exit $SUCCESS
