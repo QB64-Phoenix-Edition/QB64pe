@@ -62,7 +62,7 @@
 #    include <limits.h>
 #    include <string.h>
 #    include <time.h>
-#if defined(__FreeBSD__)
+#ifdef (__FreeBSD__)
 #    include <signal.h>
 #endif
 
