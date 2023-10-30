@@ -18,7 +18,7 @@ case "$buildPlatform" in
         ./internal/c/c_compiler/bin/mingw32-make.exe OS=win clean
         ;;
     lnx)
-        make OS=lnx clean
+        gmake OS=lnx clean
         ;;
     osx)
         make OS=osx clean
