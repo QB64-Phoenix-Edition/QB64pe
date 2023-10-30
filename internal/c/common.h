@@ -62,6 +62,9 @@
 #    include <limits.h>
 #    include <string.h>
 #    include <time.h>
+#if defined(__FreeBSD__)
+#    include <signal.h>
+#endif
 
 // OS/compiler specific includes
 #    ifdef QB64_WINDOWS
