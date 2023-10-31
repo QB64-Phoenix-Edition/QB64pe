@@ -33924,7 +33924,7 @@ double func_pi(double multiplier, int32 passed) {
 
 double func_arcsec(double num) {
     int sign = (num > 0) - (num < 0);
-    if (num < -1 || num > 1) {
+    if (std::abs(num) < 1) {
         error(5);
         return 0;
     }
@@ -33933,7 +33933,7 @@ double func_arcsec(double num) {
 
 double func_arccsc(double num) {
     int sign = (num > 0) - (num < 0);
-    if (num < -1 || num > 1) {
+    if (std::abs(num) < 1) {
         error(5);
         return 0;
     }
