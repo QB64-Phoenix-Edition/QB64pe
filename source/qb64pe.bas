@@ -24499,8 +24499,12 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     IF num(2) <> "" THEN n1 = n1 * VAL(num(2))
                 CASE "_ACOS": n1 = _ACOS(VAL(num(2)))
                 CASE "_ASIN": n1 = _ASIN(VAL(num(2)))
-                CASE "_ARCSEC": n1 = _ARCSEC(VAL(num(2)))
-                CASE "_ARCCSC": n1 = _ARCCSC(VAL(num(2)))
+                CASE "_ARCSEC"
+                    IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCSEC) value < 1": EXIT FUNCTION
+                    n1 = _ARCSEC(VAL(num(2)))
+                CASE "_ARCCSC"
+                    if abs(val(num(2))) < 1 then EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
+                    n1 = _ARCCSC(VAL(num(2)))
                 CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
                 CASE "_SECH": n1 = _SECH(VAL(num(2)))
                 CASE "_CSCH": n1 = _CSCH(VAL(num(2)))

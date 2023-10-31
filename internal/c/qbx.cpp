@@ -7,6 +7,7 @@
 #include "gui.h"
 #include "image.h"
 #include "rounding.h"
+#include "extended_math.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -362,22 +363,6 @@ extern int32 qbs_greaterthan(qbs *str1, qbs *str2);
 extern int32 qbs_lessthan(qbs *str1, qbs *str2);
 extern int32 qbs_lessorequal(qbs *str1, qbs *str2);
 extern int32 qbs_greaterorequal(qbs *str1, qbs *str2);
-extern double func_deg2rad(double degree);
-extern double func_deg2grad(double degree);
-extern double func_rad2deg(double degree);
-extern double func_rad2grad(double degree);
-extern double func_grad2deg(double degree);
-extern double func_grad2rad(double degree);
-extern double func_arcsec(double num);
-extern double func_arccsc(double num);
-extern double func_arccot(double num);
-extern double func_sech(double num);
-extern double func_csch(double num);
-extern double func_coth(double num);
-extern double func_sec(double num);
-extern double func_csc(double num);
-extern double func_cot(double num);
-extern double func_pi(double multiplier, int32 passed);
 extern int32 qbs_asc(qbs *);
 extern int32 qbs_asc(qbs *, uint32);
 extern int32 qbs_len(qbs *str);
