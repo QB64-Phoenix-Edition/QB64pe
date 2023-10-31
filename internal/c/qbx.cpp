@@ -7,7 +7,7 @@
 #include "gui.h"
 #include "image.h"
 #include "rounding.h"
-#include "math.h"
+#include "extended_math.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
