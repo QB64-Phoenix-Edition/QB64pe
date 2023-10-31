@@ -11,7 +11,7 @@ inline double func_rad2grad(double value) { return (value * 63.66197723675816); 
 
 inline double func_grad2rad(double value) { return (value * .01570796326794896); }
 
-inline double func_pi(double multiplier, int32 passed) {
+inline constexpr double func_pi(double multiplier, int32_t passed) {
     if (passed) {
         return 3.14159265358979323846264338327950288419716939937510582 * multiplier;
     }
