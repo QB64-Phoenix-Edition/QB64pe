@@ -1,4 +1,4 @@
-# **This repo contains modifications to work in FreeBSD. Uses instructions for Linux installation.**
+# **This repo contains modifications to work on FreeBSD. Use install instructions for Linux.**
 
 # QB64 Phoenix Edition
 
