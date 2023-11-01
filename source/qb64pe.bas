@@ -930,9 +930,9 @@ DIM id2 AS idstruct
 
 cleanupstringprocessingcall$ = "qbs_cleanup(qbs_tmp_base,"
 
-DIM SHARED sfidlist(1000) AS LONG
-DIM SHARED sfarglist(1000) AS INTEGER
-DIM SHARED sfelelist(1000) AS INTEGER
+REDIM SHARED sfidlist(1000) AS LONG
+REDIM SHARED sfarglist(1000) AS INTEGER
+REDIM SHARED sfelelist(1000) AS INTEGER
 
 
 
@@ -11767,6 +11767,16 @@ FOR i = 1 TO idn
 
                             unresolved = unresolved + 1
                             sflistn = sflistn + 1
+                            IF sflistn > 25000 THEN 'manually set a descriptive error message for the user so they know what's happening.
+                                Error_Message = "ERROR: QB64PE currently limits a program to have a maximum of 25,000 subs and functions, and this limit has been exceeded.  Please reduce Sub/Function count, or else report this issue with sample code that produced it over at the QB64PE forums, so we can look further into this issue."
+                                GOTO errmes
+                            END IF
+                            ubound_sf = UBOUND(sfidlist) 'all 3 should have the same limit
+                            IF sflistn > ubound_sf THEN
+                                REDIM _PRESERVE sfidlist(ubound_sf + 1000) AS LONG
+                                REDIM _PRESERVE sfarglist(ubound_sf + 1000) AS INTEGER
+                                REDIM _PRESERVE sfelelist(ubound_sf + 1000) AS INTEGER
+                            END IF
                             sfidlist(sflistn) = i
                             sfarglist(sflistn) = i2
                             sfelelist(sflistn) = nelereq '0 means still unknown
@@ -24489,8 +24499,12 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     IF num(2) <> "" THEN n1 = n1 * VAL(num(2))
                 CASE "_ACOS": n1 = _ACOS(VAL(num(2)))
                 CASE "_ASIN": n1 = _ASIN(VAL(num(2)))
-                CASE "_ARCSEC": n1 = _ARCSEC(VAL(num(2)))
-                CASE "_ARCCSC": n1 = _ARCCSC(VAL(num(2)))
+                CASE "_ARCSEC"
+                    IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCSEC) value < 1": EXIT FUNCTION
+                    n1 = _ARCSEC(VAL(num(2)))
+                CASE "_ARCCSC"
+                    if abs(val(num(2))) < 1 then EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
+                    n1 = _ARCCSC(VAL(num(2)))
                 CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
                 CASE "_SECH": n1 = _SECH(VAL(num(2)))
                 CASE "_CSCH": n1 = _CSCH(VAL(num(2)))

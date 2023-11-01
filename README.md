@@ -67,3 +67,5 @@ We have a community forum at: https://qb64phoenix.com/forum
 We don't currently tweet.  Sorry.
 
 Find us on Discord: https://discord.gg/D2M7hepTSx
+
+Join us on Reddit: https://www.reddit.com/r/QB64pe/
