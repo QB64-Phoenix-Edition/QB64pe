@@ -14,8 +14,15 @@ TEMP_ID ?=
 #
 # This is important for libraries, since they could potentially be referencing
 # things from our dependencies
-CC = /usr/local/bin/gcc11
-CXX = /usr/local/bin/g++11
+ifeq (, $(wilcard /usr/local/bin/gcc11))
+	CC = gcc11
+	CXX = g++11
+else ifeq (, $(wilcard /usr/local/bin/gcc12))
+	CC = gcc12
+	CXX = g++12
+else
+	$(error "GNU C Compiler must be installed!")
+endif
 CXXFLAGS += $(CXXFLAGS_EXTRA)
 CXXLIBS += $(CXXLIBS_EXTRA)
 
