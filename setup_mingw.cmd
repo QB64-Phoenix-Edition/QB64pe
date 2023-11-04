@@ -68,19 +68,19 @@ rem MINGW_DIR is actually the internal directory name inside the zip / 7z file
 rem It needs to be updated whenever the toolchains are updated
 if "%ARCH%" == "ARM" (
     if %BITS% == 64 (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20231003/llvm-mingw-20231003-ucrt-aarch64.zip"
-        set MINGW_DIR=llvm-mingw-20231003-ucrt-aarch64
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20231031/llvm-mingw-20231031-ucrt-aarch64.zip"
+        set MINGW_DIR=llvm-mingw-20231031-ucrt-aarch64
     ) else (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20231003/llvm-mingw-20231003-ucrt-armv7.zip"
-        set MINGW_DIR=llvm-mingw-20231003-ucrt-armv7
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20231031/llvm-mingw-20231031-ucrt-armv7.zip"
+        set MINGW_DIR=llvm-mingw-20231031-ucrt-armv7
     )
     set MINGW_TEMP_FILE=temp.zip
 ) else (
     if %BITS% == 64 (
-        set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev0.7z"
+        set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev1/x86_64-13.2.0-release-posix-seh-msvcrt-rt_v11-rev1.7z"
         set MINGW_DIR=mingw64
     ) else (
-        set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/i686-13.2.0-release-win32-dwarf-msvcrt-rt_v11-rev0.7z"
+        set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev1/i686-13.2.0-release-posix-dwarf-msvcrt-rt_v11-rev1.7z"
         set MINGW_DIR=mingw32
     )    
     set MINGW_TEMP_FILE=temp.7z
