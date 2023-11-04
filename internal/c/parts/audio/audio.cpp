@@ -60,10 +60,10 @@ int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not f
 void new_mem_lock();                                                // This is required for MemSound()
 void free_mem_lock(mem_lock *lock);                                 // Same as above
 
-extern ptrszint dblock;                                             // Required for Play(). Did not find this declared anywhere
-extern uint64 mem_lock_id;                                          // Another one that we need for the mem stuff
-extern mem_lock *mem_lock_base;                                     // Same as above
-extern mem_lock *mem_lock_tmp;                                      // Same as above
+extern ptrszint dblock;         // Required for Play(). Did not find this declared anywhere
+extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
+extern mem_lock *mem_lock_base; // Same as above
+extern mem_lock *mem_lock_tmp;  // Same as above
 
 /// @brief A simple FP32 stereo sample frame
 struct SampleFrame {
@@ -87,7 +87,7 @@ struct RawStream {
     libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
     bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
 
-    static const size_t DEFAULT_SIZE = 1024;  // this is almost twice the amout what miniaudio actually asks for in frameCount
+    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amout what miniaudio actually asks for in frameCount
 
     // Delete default, copy and move constructors and assignments
     RawStream() = delete;
@@ -168,9 +168,9 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     if (!pDataSource)
         return MA_INVALID_ARGS;
 
-    auto pRawStream = (RawStream *)pDataSource;                                                     // cast to RawStream instance pointer
-    auto result = MA_SUCCESS;                                                                       // must be initialized to MA_SUCCESS
-    auto maBuffer = (SampleFrame *)pFramesOut;                                                      // cast to sample frame pointer
+    auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
+    auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
+    auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
 
     ma_uint64 sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
     // Swap buffers if we do not have anything left to play
@@ -178,9 +178,9 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
         pRawStream->SwapBuffers();
         sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
     }
-    sampleFramesCount = std::min(sampleFramesCount, frameCount);                              // we'll always send lower of what miniaudio wants or what we have
+    sampleFramesCount = std::min(sampleFramesCount, frameCount); // we'll always send lower of what miniaudio wants or what we have
 
-    ma_uint64 sampleFramesRead = 0;                                                           // sample frame counter
+    ma_uint64 sampleFramesRead = 0; // sample frame counter
     // Now send the samples to miniaudio
     while (sampleFramesRead < sampleFramesCount) {
         maBuffer[sampleFramesRead] = pRawStream->consumer->data[pRawStream->consumer->cursor];
@@ -319,7 +319,7 @@ static void RawStreamDestroy(RawStream *pRawStream) {
 
         ma_sound_uninit(pRawStream->maSound); // delete the ma_sound object
 
-        delete pRawStream;                    // delete the raw stream object
+        delete pRawStream; // delete the raw stream object
 
         AUDIO_DEBUG_PRINT("Raw sound stream destroyed");
     }
@@ -584,7 +584,7 @@ class PSG {
     /// @brief Waits for any playback to complete
     void AwaitPlaybackCompletion() {
         if (background)
-            return;                                                 // no need to wait
+            return; // no need to wait
 
         auto timeSec = rawStream->GetTimeRemaining() * 0.95 - 0.25; // per original QB64 behavior
 
@@ -1059,7 +1059,7 @@ class PSG {
                     case 'S': // staccato
                         pause = 1.0 / 4.0;
                         break;
-                    case 'B':             // background
+                    case 'B': // background
                         if (!background) {
                             if (playIt) { // play pending buffer in foreground before we switch to background
                                 playIt = false;
@@ -1403,7 +1403,7 @@ struct AudioEngine {
     /// <returns>Returns a non-negative handle if successful</returns>
     int32_t CreateHandle() {
         if (!isInitialized)
-            return -1;                              // We cannot return 0 here. Since 0 is a valid internal handle
+            return -1; // We cannot return 0 here. Since 0 is a valid internal handle
 
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
@@ -2064,7 +2064,7 @@ void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, 
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
-            ma_vec3f v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound);           // Get the current position in 3D space
+            ma_vec3f v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound); // Get the current position in 3D space
 
             // Set the previous values of x, y, z if these were not passed
             if (!(passed & 1))
@@ -2328,18 +2328,17 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
     return handle;
 }
 
-/// <summary>
-/// This function returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function.
+/// @brief This function returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function.
 /// miniaudio supports a variety of sample and channel formats. Translating all of that to basic 2 channel 16-bit format that
 /// MemSound was originally supporting would require significant overhead both in terms of system resources and code.
 /// For now we are just exposing the underlying PCM data directly from miniaudio. This fits rather well using the existing mem structure.
 /// Mono sounds should continue to work just as it was before. Stereo and multi-channel sounds however will be required to be handled correctly
 /// by the user by checking the 'elementsize' (for frame size in bytes) and 'type' (for data type) members.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="targetChannel">This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure</param>
-/// <returns>A _MEM value that can be used to access the sound data</returns>
-mem_block func__memsound(int32_t handle, int32_t targetChannel) {
+/// @param handle A sound handle
+/// @param targetChannel This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure
+/// @param passed What arguments were passed?
+/// @return A _MEM value that can be used to access the sound data
+mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) {
     ma_format maFormat = ma_format::ma_format_unknown;
     ma_uint32 channels = 0;
     ma_uint64 sampleFrames = 0;
@@ -2351,9 +2350,14 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel) {
     mb.lock_id = INVALID_MEM_LOCK;
 
     // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
-    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC ||
-        (targetChannel != 0 && targetChannel != 1)) {
-        AUDIO_DEBUG_PRINT("Invalid handle (%i), sound type (%i) or channel (%i)", handle, audioEngine.soundHandles[handle]->type, targetChannel);
+    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC) {
+        AUDIO_DEBUG_PRINT("Invalid handle (%i) or sound type (%i)", handle, audioEngine.soundHandles[handle]->type);
+        return mb;
+    }
+
+    // Simply return an "empty" mem_block if targetChannel is not 0 or 1
+    if (passed && targetChannel != 0 && targetChannel != 1) {
+        AUDIO_DEBUG_PRINT("Invalid channel (%i)", targetChannel);
         return mb;
     }
 

@@ -368,7 +368,7 @@ static ma_result ma_tsf_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
                              const ma_decoding_backend_config *pConfig, const ma_allocation_callbacks *pAllocationCallbacks, ma_tsf *pTsf) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_tsf_init_internal(pConfig, pTsf);
     if (result != MA_SUCCESS) {
@@ -451,7 +451,7 @@ static ma_result ma_tsf_init_file(const char *pFilePath, const ma_decoding_backe
                                   ma_tsf *pTsf) {
     ma_result result;
 
-    (void)pAllocationCallbacks; /* Can't seem to find a way to configure memory allocations in libopus. */
+    (void)pAllocationCallbacks;
 
     result = ma_tsf_init_internal(pConfig, pTsf);
     if (result != MA_SUCCESS) {

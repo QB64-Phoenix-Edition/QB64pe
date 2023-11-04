@@ -12,6 +12,11 @@
 // Enable Ogg Vorbis decoding
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
+// Due to the way miniaudio links to macOS frameworks at runtime, the application may not pass Apple's notarization process :(
+// So, we will avoid runtime linking on macOS. See this discussion for more info: https://github.com/mackron/miniaudio/issues/203
+#ifdef __APPLE__
+#    define MA_NO_RUNTIME_LINKING
+#endif
 // The main miniaudio header
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
@@ -20,17 +25,20 @@
 #include "extras/stb_vorbis.c"
 #include "extras/vtables.h"
 
-// Add custom backend (format) vtables here
-// The order in the array defines the order of priority
-// The vtables will be passed in to the resource manager config
-// ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs which does not have any signatures
-// This can lead to incorrect detection
+// Add custom backend (format) vtables here.
+// The order in the array defines the order of priority.
+// The vtables will be passed in to the resource manager config.
+// ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs
+// which does not have any signatures and can lead to incorrect detection.
+// clang-format off
 static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
     &ma_vtable_radv2,
     &ma_vtable_hively,
     &ma_vtable_midi,
+    &ma_vtable_qoa,
     &ma_vtable_modplay,
 };
+// clang-format on
 
 /// @brief This simply attaches the format decode VTables array to ma_resource_manager_config
 /// @param maDecoderConfig Pointer to a miniaudio resource manager config object. This cannot be NULL

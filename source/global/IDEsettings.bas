@@ -26,7 +26,6 @@ DIM SHARED MaxParallelProcesses AS _UNSIGNED LONG
 DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
 DIM SHARED StripDebugSymbols AS _UNSIGNED LONG
 DIM SHARED OptimizeCppProgram AS _UNSIGNED LONG
-DIM SHARED UseMiniaudioBackend AS _UNSIGNED LONG
 DIM SHARED GenerateLicenseFile AS _UNSIGNED LONG
 DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
 
@@ -548,9 +547,7 @@ MaxParallelProcesses = ReadWriteLongSettingValue&(compilerSettingsSection$, "Max
 ExtraCppFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
 ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
 
-UseMiniaudioBackend = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseMiniaudioBackend", -1)
 GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
-
 
 'End of initial settings ------------------------------------------------------
 

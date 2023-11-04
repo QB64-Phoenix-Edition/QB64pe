@@ -50,7 +50,8 @@ $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o: $(PATH_INTERNAL_C)/part
 MA_VTABLES_SRCS := \
 	mod_ma_vtable.cpp \
 	radv2_ma_vtable.cpp \
-	hively_ma_vtable.cpp
+	hively_ma_vtable.cpp \
+	qoa_ma_vtable.cpp
 
 MA_VTABLES_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(MA_VTABLES_SRCS))
 

@@ -53,12 +53,7 @@
 
 // common includes
 #    include <stdio.h>
-#    ifdef QB64_MACOSX
-#        include <cmath>
-#    else
-//#include <math.h> //<-causes overloading abs conflicts in Windows
-#        include <cmath>
-#    endif
+#    include <cmath>
 #    include <stdint.h>
 #    include <errno.h>
 #    include <fcntl.h>
@@ -76,7 +71,7 @@
 #        endif
 #        include <csignal>
 #        include <process.h> //required for multi-threading
-#        if defined DEPENDENCY_AUDIO_OUT || defined QB64_GUI
+#        if defined DEPENDENCY_AUDIO_MINIAUDIO || defined QB64_GUI
 #            include <mmsystem.h>
 #        endif
 

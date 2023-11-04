@@ -48,12 +48,18 @@ This is always used unless you use `$CONSOLE:ONLY`. On Mac OS the system's own G
 
 ## Image Support
 
-These libraries are pulled in if `_LOADIMAGE()` functionality is used.
+These libraries are pulled in if `_LOADIMAGE()` or `_SAVEIMAGE()` functionality is used.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| PCX image loader | Unlicense/Public Domain | license_dr_pcx.txt | internal/c/parts/video/image/dr_pcx.h |
-| stb_image | MIT | license_stb_image.txt | internal/c/parts/video/image/stb_image.h |
+| stb_image | MIT/Public Domain | license_stb_image.txt | internal/c/parts/video/image/stb/stb_image.h |
+| nanosvg | zlib | license_nanosvg.txt | internal/c/parts/video/image/nanosvg |
+| dr_pcx | Unlicense/Public Domain | license_dr_pcx.txt | internal/c/parts/video/image/dr_pcx.h |
+| QOI | MIT | license_qoi.txt | internal/c/parts/video/image/qoi.h |
+| stb_image_write | MIT/Public Domain | license_stb_image_write.txt | internal/c/parts/video/image/stb/stb_image_write.h |
+| HQx | Apache License v2 | license_hqx.txt | internal/c/parts/video/image/pixelscalers/hqx.hpp |
+| MMPX | MIT | license_mmpx.txt | internal/c/parts/video/image/pixelscalers/mmpx.hpp |
+| Super-xBR | MIT | license_hqx.txt | internal/c/parts/video/image/pixelscalers/sxbr.hpp |
 
 ## Font Support
 
@@ -85,11 +91,12 @@ These libraries are pulled in when using any sound-related functionality.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| Miniaudio | MIT | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
+| miniaudio | MIT/Public Domain | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
+| stb_vorbis | MIT/Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
-| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
 | HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
+| QOA | MIT | license_qoa.txt | internal/c/parts/audio/extras/qoa.h |
 
 ## MIDI Support
 
@@ -100,6 +107,14 @@ These are used if you make use of MIDI support.
 | TinySoundFont | MIT | license_tinysoundfont.txt | internal/c/parts/audio/extras/tinysoundfont/tsf.h
 | TinyMidiLoader | ZLIB | license_tinymidiloader.txt | internal/c/parts/audio/extras/tinysoundfont.tml.h |
 
+## Game Controller Support
+
+This is used if you make use of game controller related functionality.
+
+| Library | License | License file | Location |
+| :------ | :-----: | :----------- | :------- |
+| libstem Gamepad | MIT | license_libstem_gamepad.txt | internal/c/parts/input/game_controller/libstem_gamepad |
+
 ## Common Dialogs Support
 
 This is used by libqb to show alerts and also by the common dialog functions and subroutines.
@@ -107,14 +122,3 @@ This is used by libqb to show alerts and also by the common dialog functions and
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
 | tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui/ |
-
-## Legacy OpenAL audio backend
-
-The below licenses apply when making use of the legacy OpenAL audio backend (can be enabled in `Compiler Settings`). These replace all other sound related libraries:
-
-| Library | License | License file | Location |
-| :------ | :-----: | :----------- | :------- |
-| mpg123 | LGPL 2.1 | license_mpg123.txt | internal/c/parts/audio/decode/mp3/ |
-| OpenAL-soft | LGPL 2 | license_openal.txt | internal/c/parts/audio/out/ |
-| Opus Tools | BSD 2-clause | license_opus.txt | internal/c/parts/audio/conversion/ |
-| stb_vorbis | Public Domain | license_stbvorbis.txt | internal/c/parts/audio/decode/ogg/ |

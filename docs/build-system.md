@@ -127,14 +127,11 @@ These flags controls whether certain dependencies are compiled in or not. All of
 | `DEP_ICON_RC` | Adds `$EXEICON` and `$VERSIONINFO` support, compiles `.rc` file into the executable on Windows |
 | `DEP_FONT` | Enables various `_FONT` related support. |
 | `DEP_DEVICEINPUT` | Enables game controller input support. |
-| `DEP_AUDIO_CONVERSION` | Includes the audio resampler (Only relevant when audio decode or out is enabled) |
-| `DEP_AUDIO_DECODE` | Pulls in sound support for things like `_SNDOPEN` and also support for opening the support sound formats. |
-| `DEP_AUDIO_OUT` | Pulls in sound support for playing sounds via `PLAY`, `_SNDPLAY`, and various other functions that makes sounds. |
 | `DEP_ZLIB` | Adds `_DEFLATE` and `_INFLATE` support. |
 | `DEP_DATA` | Compiles in data produced via `DATA` statements. |
 | `DEP_CONSOLE` | On Windows, this gives the program console support (graphical support is still allowed) |
 | `DEP_CONSOLE_ONLY` | Same as `DEP_CONSOLE`, but also removes GLUT and graphics support. |
-| `DEP_AUDIO_MINIAUDIO` | Enables the miniaudio backend. Should not be used with the other `DEP_AUDIO` switches which enable the old backend. |
+| `DEP_AUDIO_MINIAUDIO` | Pulls in sound support using miniaudio for playing sounds via `PLAY`, `_SNDPLAY`, and various other functions that makes sounds. |
 | `DEP_HTTP` | Enables http support via libcurl. Should only be used if `DEP_SOCKETS` is on. |
 
 Versioning

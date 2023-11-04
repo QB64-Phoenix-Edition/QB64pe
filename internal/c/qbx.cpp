@@ -7,6 +7,7 @@
 #include "gui.h"
 #include "image.h"
 #include "rounding.h"
+#include "extended_math.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -66,7 +67,7 @@ extern int32 sub_gl_called;
 double pi_as_double = 3.14159265358979;
 void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
     double xmin, xmax, ymin, ymax;
-    ymax = zNear * tan(fovy * pi_as_double / 360.0);
+    ymax = zNear * std::tan(fovy * pi_as_double / 360.0);
     ymin = -ymax;
     xmin = ymin * aspect;
     xmax = ymax * aspect;
@@ -362,22 +363,6 @@ extern int32 qbs_greaterthan(qbs *str1, qbs *str2);
 extern int32 qbs_lessthan(qbs *str1, qbs *str2);
 extern int32 qbs_lessorequal(qbs *str1, qbs *str2);
 extern int32 qbs_greaterorequal(qbs *str1, qbs *str2);
-extern double func_deg2rad(double degree);
-extern double func_deg2grad(double degree);
-extern double func_rad2deg(double degree);
-extern double func_rad2grad(double degree);
-extern double func_grad2deg(double degree);
-extern double func_grad2rad(double degree);
-extern double func_arcsec(double num);
-extern double func_arccsc(double num);
-extern double func_arccot(double num);
-extern double func_sech(double num);
-extern double func_csch(double num);
-extern double func_coth(double num);
-extern double func_sec(double num);
-extern double func_csc(double num);
-extern double func_cot(double num);
-extern double func_pi(double multiplier, int32 passed);
 extern int32 qbs_asc(qbs *);
 extern int32 qbs_asc(qbs *, uint32);
 extern int32 qbs_len(qbs *str);
@@ -430,6 +415,7 @@ extern void qbg_sub_window(float x1, float y1, float x2, float y2,
 extern void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed);
 extern void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2,
                          int32 fillcolor, int32 bordercolor, int32 passed);
+extern void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed);
 extern void sub_cls(int32 method, uint32 use_color, int32 passed);
 extern void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start,
                            int32 stop, int32 passed);
@@ -820,18 +806,18 @@ template <typename T> static T qbs_cleanup(uint32 base, T passvalue) {
 
 
 // force abs to return floating point numbers correctly
-inline double func_abs(double d) { return fabs(d); }
-inline long double func_abs(long double d) { return fabs(d); }
-inline float func_abs(float d) { return fabs(d); }
+inline double func_abs(double d) { return std::fabs(d); }
+inline long double func_abs(long double d) { return std::fabs(d); }
+inline float func_abs(float d) { return std::fabs(d); }
 
 inline uint8 func_abs(uint8 d) { return d; }
 inline uint16 func_abs(uint16 d) { return d; }
 inline uint32 func_abs(uint32 d) { return d; }
 inline uint64 func_abs(uint64 d) { return d; }
-inline int8 func_abs(int8 d) { return abs(d); }
-inline int16 func_abs(int16 d) { return abs(d); }
-inline int32 func_abs(int32 d) { return abs(d); }
-inline int64 func_abs(int64 d) { return llabs(d); }
+inline int8 func_abs(int8 d) { return std::abs(d); }
+inline int16 func_abs(int16 d) { return std::abs(d); }
+inline int32 func_abs(int32 d) { return std::abs(d); }
+inline int64 func_abs(int64 d) { return std::llabs(d); }
 
 extern int32 disableEvents;
 
@@ -1412,7 +1398,7 @@ extensions_ready:
     if (TFS == NULL)
         TFS = qbs_new(0, 0);
     TD = func_timer(0.001E+0, 1);
-    TL = qbr(floor(TD));
+    TL = qbr(std::floor(TD));
     TL = qbr((TD - TL) * 999);
     if (TL < 100)
         TL = 100; // ensure value is a 3 digit number
@@ -2100,7 +2086,7 @@ void TIMERTHREAD(void *unused) {
                         // if difference between actual time and
                         // measured time is beyond 'seconds' set
                         // measured to actual
-                        if (fabs(time_now -
+                        if (std::fabs(time_now -
                                  ontimer[i].last_time) >=
                             ontimer[i].seconds)
                             ontimer[i].last_time = time_now;

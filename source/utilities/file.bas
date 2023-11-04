@@ -15,6 +15,7 @@ FUNCTION CopyFile& (sourceFile$, destFile$)
     fileLength = LOF(sourceFileNo)
 
     destFileNo = FREEFILE
+    OPEN destFile$ FOR OUTPUT AS #destFileNo: CLOSE #destFileNo 'create and blank any existing file with the dest name.
     OPEN destFile$ FOR BINARY AS #destFileNo
     IF E = 1 THEN GOTO errorCleanup
 

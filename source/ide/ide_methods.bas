@@ -332,8 +332,9 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0: RunMenuID = m
         menu$(m, i) = "Run": i = i + 1
         menu$(m, i) = "#Start  F5": i = i + 1
-        menu$(m, i) = "Run only (No exe)": i = i + 1
         menuDesc$(m, i - 1) = "Compiles current program and runs it"
+        menu$(m, i) = "Run #Only (No EXE)": i = i + 1
+        menuDesc$(m, i - 1) = "Runs current program without compiling"
         menu$(m, i) = "Modify #COMMAND$...": i = i + 1
         menuDesc$(m, i - 1) = "Sets string returned by COMMAND$ function"
         menu$(m, i) = "-": i = i + 1
@@ -449,7 +450,7 @@ FUNCTION ide2 (ignore)
         IF IgnoreWarnings THEN menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = CHR$(7) + "Ignore #Warnings"
 
         OptionsMenuGuiDialogs = i
-        menu$(m, i) = "GUI Dialogs": i = i + 1
+        menu$(m, i) = "#GUI Dialogs": i = i + 1
         menuDesc$(m, i - 1) = "Uses GUI-based File Dialog Windows"
         IF UseGuiDialogs THEN
             menu$(OptionsMenuID, i - 1) = CHR$(7) + menu$(OptionsMenuID, i - 1)
@@ -3829,15 +3830,9 @@ FUNCTION ide2 (ignore)
 
         IF KB = KEY_HOME THEN
             GOSUB selectcheck
-            IF idecx <> 1 THEN
-                idecx = 1
-            ELSE
-                a$ = idegetline(idecy)
-                idecx = 1
-                FOR x = 1 TO LEN(a$)
-                    IF ASC(a$, x) <> 32 THEN idecx = x: EXIT FOR
-                NEXT
-            END IF
+            a$ = idegetline(idecy): sot% = LEN(a$) 'get current line as is
+            a$ = LTRIM$(a$): sot% = sot% - LEN(a$) + 1 'calc start of text position
+            IF idecx = sot% THEN idecx = 1: ELSE idecx = sot% 'mimic N++ behavior
             GOTO specialchar
         END IF
 
@@ -5108,9 +5103,9 @@ FUNCTION ide2 (ignore)
                 WriteConfigSetting generalSettingsSection$, "UseGuiDialogs", BoolToTFString$(UseGuiDialogs)
 
                 IF UseGuiDialogs THEN
-                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "GUI Dialogs"
+                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "#GUI Dialogs"
                 ELSE
-                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "GUI Dialogs"
+                    menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "#GUI Dialogs"
                 END IF
 
                 idechangemade = 1
@@ -5928,19 +5923,21 @@ FUNCTION ide2 (ignore)
             END IF
 
             IF menu$(m, s) = "#Start  F5" THEN
+               _KeyClear
+                Do: _Limit 15: Loop Until _KeyHit = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
                 startPaused = 0
                 GOTO idemrun
             END IF
 
-            IF menu$(m, s) = "Run only (No exe)" THEN
+            IF menu$(m, s) = "Run #Only (No EXE)" THEN
+               _KeyClear
+                Do: _Limit 15: Loop Until _KeyHit = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
                 NoExeSaved = -1
                 startPaused = 0
                 GOTO idemrun
             END IF
-
-
 
             IF menu$(m, s) = "Modify #COMMAND$..." THEN
                 PCOPY 2, 0
@@ -15269,7 +15266,6 @@ FUNCTION ideCompilerSettingsBox
     DIM maxParallelTextBox AS LONG
     DIM extraCppFlagsTextBox AS LONG
     DIM extraLinkerFlagsTextBox AS LONG
-    DIM useOldAudioBackend AS LONG
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
@@ -15329,15 +15325,6 @@ FUNCTION ideCompilerSettingsBox
     o(i).nam = idenewtxt("#Max C++ Compiler Processes")
     o(i).txt = idenewtxt(str2$(MaxParallelProcesses))
     o(i).v1 = LEN(a2$)
-
-    y = y + 1 ' Blank line
-
-    i = i + 1
-    useOldAudioBackend = i
-    o(i).typ = 4 'check box
-    y = y + 1: o(i).y = y
-    o(i).nam = idenewtxt("#Use old audio backend (LGPL)")
-    o(i).sel = NOT UseMiniaudioBackend
 
     y = y + 1 ' Blank line
 
@@ -15443,12 +15430,6 @@ FUNCTION ideCompilerSettingsBox
             IF Include_GDB_Debugging_Info <> v% THEN
                 Include_GDB_Debugging_Info = v%
                 WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(Include_GDB_Debugging_Info)
-            END IF
-
-            v% = o(useOldAudioBackend).sel: IF v% <> 0 THEN v% = -1
-            IF UseMiniaudioBackend <> NOT v% THEN
-                UseMiniaudioBackend = NOT v%
-                WriteConfigSetting compilerSettingsSection$, "UseMiniaudioBackend", BoolToTFString$(UseMiniaudioBackend)
             END IF
 
             v% = VAL(idetxt(o(maxParallelTextBox).txt))
