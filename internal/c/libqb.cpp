@@ -1195,6 +1195,7 @@ void validatepage(int32);
 void sub__dest(int32);
 void sub__source(int32);
 int32 func__printwidth(qbs *, int32, int32);
+void sub_clsDest(int32, uint32, int32, int32);
 void sub_cls(int32, uint32, int32);
 void qbs_print(qbs *, int32);
 int32 func__copyimage(int32 i, int32 mode, int32 passed);
@@ -14684,6 +14685,17 @@ error:
 }
 
 void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
+
+void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
+    int32 tempDest;
+    if (passed & 4) {
+        tempDest = func__dest();  // get the old dest
+        sub__dest(dest); //set the new dest
+    }
+    sub_cls(method, use_color, passed & 3); //call this regardless if we change the dest or not, just strip out that value first.
+    if (passed & 4) {sub__dest(tempDest);} //restore the old dest
+}
+
 void sub_cls(int32 method, uint32 use_color, int32 passed) {
     if (new_error)
         return;
@@ -33888,106 +33900,6 @@ mem_block func__mem(ptrszint offset, ptrszint size, int32 type, ptrszint element
     b.elementsize = elementsize;
     b.image = -1;
     return b;
-}
-
-/* Extra maths functions - we do what we must because we can */
-double func_deg2rad(double value) { return (value * 0.01745329251994329576923690768489); }
-
-double func_rad2deg(double value) { return (value * 57.29577951308232); }
-
-double func_deg2grad(double value) { return (value * 1.111111111111111); }
-
-double func_grad2deg(double value) { return (value * 0.9); }
-
-double func_rad2grad(double value) { return (value * 63.66197723675816); }
-
-double func_grad2rad(double value) { return (value * .01570796326794896); }
-
-double func_pi(double multiplier, int32 passed) {
-    if (passed) {
-        return 3.14159265358979323846264338327950288419716939937510582 * multiplier;
-    }
-    return (3.14159265358979323846264338327950288419716939937510582);
-}
-
-double func_arcsec(double num) {
-    int sign = (num > 0) - (num < 0);
-    if (num < -1 || num > 1) {
-        error(5);
-        return 0;
-    }
-    return std::atan(num / std::sqrt(1 - num * num)) + (sign - 1) * (2 * std::atan(1));
-}
-
-double func_arccsc(double num) {
-    int sign = (num > 0) - (num < 0);
-    if (num < -1 || num > 1) {
-        error(5);
-        return 0;
-    }
-    return std::atan(num / std::sqrt(1 - num * num)) + (sign - 1) * (2 * std::atan(1));
-}
-
-double func_arccot(double num) { return 2 * std::atan(1) - std::atan(num); }
-
-double func_sech(double num) {
-    if (num > 88.02969) {
-        error(5);
-        return 0;
-    }
-    if (std::exp(num) + std::exp(-num) == 0) {
-        error(5);
-        return 0;
-    }
-    return 2 / (std::exp(num) + std::exp(-num));
-}
-
-double func_csch(double num) {
-    if (num > 88.02969) {
-        error(5);
-        return 0;
-    }
-    if (std::exp(num) - std::exp(-num) == 0) {
-        error(5);
-        return 0;
-    }
-    return 2 / (std::exp(num) - std::exp(-num));
-}
-
-double func_coth(double num) {
-    if (num > 44.014845) {
-        error(5);
-        return 0;
-    }
-    if (2 * std::exp(num) - 1 == 0) {
-        error(5);
-        return 0;
-    }
-    return 2 * std::exp(num) - 1;
-}
-
-double func_sec(double num) {
-    if (std::cos(num) == 0) {
-        error(5);
-        return 0;
-    }
-    return 1 / std::cos(num);
-}
-
-double func_csc(double num) {
-    if (std::sin(num) == 0) {
-        error(5);
-        return 0;
-    }
-    return 1 / std::sin(num);
-}
-
-double func_cot(double num) {
-    if (std::tan(num) == 0) {
-        error(5);
-        return 0;
-    }
-    return 1 / std::tan(num);
 }
 
 void GLUT_key_ascii(int32 key, int32 down) {

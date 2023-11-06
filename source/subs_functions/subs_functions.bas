@@ -2833,11 +2833,11 @@ regid
 clearid
 id.n = "Cls"
 id.subfunc = 2
-id.callname = "sub_cls"
-id.args = 2
-id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
-id.specialformat = "[?][,?]"
-id.hr_syntax = "CLS [method%] [, bgColor&]"
+id.callname = "sub_clsDest"
+id.args = 3
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "[?][,[?][,?]]"
+id.hr_syntax = "CLS [method%] [, bgColor&] [, dest&]"
 regid
 
 clearid
@@ -2935,7 +2935,7 @@ regid
 clearid
 id.n = "Sin"
 id.subfunc = 1
-id.callname = "sin"
+id.callname = "std::sin"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -2945,7 +2945,7 @@ regid
 clearid
 id.n = "Cos"
 id.subfunc = 1
-id.callname = "cos"
+id.callname = "std::cos"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -2955,7 +2955,7 @@ regid
 clearid
 id.n = "Tan"
 id.subfunc = 1
-id.callname = "tan"
+id.callname = "std::tan"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -2965,7 +2965,7 @@ regid
 clearid
 id.n = "Atn"
 id.subfunc = 1
-id.callname = "atan"
+id.callname = "std::atan"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3464,7 +3464,7 @@ regid
 clearid   'Clear the old id info so we set the slate for a new one
 id.n = qb64prefix$ + "Atan2" 'The name of our new one
 id.subfunc = 1 'And this is a function
-id.callname = "atan2" 'The C name of the function
+id.callname = "std::atan2" 'The C name of the function
 id.args = 2 'It takes 2 parameters to work
 id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) 'These simply add up to represent the 2 patameters from what I can tell
 id.ret = FLOATTYPE - ISPOINTER 'we want it to return to us a nice _FLOAT value
@@ -3474,7 +3474,7 @@ regid 'and we're finished with ID registration
 clearid   'Clear the old id info so we set the slate for a new one
 id.n = qb64prefix$ + "Hypot" 'The name of our new one
 id.subfunc = 1 'And this is a function
-id.callname = "hypot" 'The C name of the function
+id.callname = "std::hypot" 'The C name of the function
 id.args = 2 'It takes 2 parameters to work
 id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) 'These simply add up to represent the 2 patameters from what I can tell
 id.ret = FLOATTYPE - ISPOINTER 'we want it to return to us a nice _FLOAT value
@@ -3484,7 +3484,7 @@ regid 'and we're finished with ID registration
 clearid
 id.n = qb64prefix$ + "Asin"
 id.subfunc =  1
-id.callname = "asin"
+id.callname = "std::asin"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3494,7 +3494,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Acos"
 id.subfunc =  1
-id.callname = "acos"
+id.callname = "std::acos"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3504,7 +3504,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Sinh"
 id.subfunc =  1
-id.callname = "sinh"
+id.callname = "std::sinh"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3514,7 +3514,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Cosh"
 id.subfunc =  1
-id.callname = "cosh"
+id.callname = "std::cosh"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3524,7 +3524,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Tanh"
 id.subfunc =  1
-id.callname = "tanh"
+id.callname = "std::tanh"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3534,7 +3534,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Asinh"
 id.subfunc =  1
-id.callname = "asinh"
+id.callname = "std::asinh"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3544,7 +3544,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Acosh"
 id.subfunc =  1
-id.callname = "acosh"
+id.callname = "std::acosh"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3554,7 +3554,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Atanh"
 id.subfunc =  1
-id.callname = "atanh"
+id.callname = "std::atanh"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER
@@ -3564,7 +3564,7 @@ regid
 clearid
 id.n = qb64prefix$ + "Ceil"
 id.subfunc =  1
-id.callname = "ceil"
+id.callname = "std::ceil"
 id.args = 1
 id.arg = MKL$(FLOATTYPE - ISPOINTER)
 id.ret = FLOATTYPE - ISPOINTER

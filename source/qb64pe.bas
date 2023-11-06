@@ -12,14 +12,14 @@ $SCREENHIDE
 
 $EXEICON:'./qb64pe.ico'
 
-$VERSIONINFO:CompanyName=QB64 Phoenix Edition
-$VERSIONINFO:FileDescription=QB64 IDE and Compiler
-$VERSIONINFO:InternalName=qb64pe.bas
-$VERSIONINFO:LegalCopyright=MIT
-$VERSIONINFO:LegalTrademarks=
-$VERSIONINFO:OriginalFilename=qb64pe.exe
-$VERSIONINFO:ProductName=QB64-PE
-$VERSIONINFO:Comments=QB64 is a modern extended BASIC programming language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows, Linux and macOS.
+$VERSIONINFO:CompanyName='QB64 Phoenix Edition'
+$VERSIONINFO:FileDescription='QB64 IDE and Compiler'
+$VERSIONINFO:InternalName='qb64pe.bas'
+$VERSIONINFO:LegalCopyright='MIT'
+$VERSIONINFO:LegalTrademarks=''
+$VERSIONINFO:OriginalFilename='qb64pe.exe'
+$VERSIONINFO:ProductName='QB64-PE'
+$VERSIONINFO:Comments='QB64 is a modern extended BASIC programming language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows, Linux and macOS.'
 
 '$INCLUDE:'global\version.bas'
 '$INCLUDE:'global\settings.bas'
@@ -118,6 +118,8 @@ OS_BITS = 64: IF INSTR(_OS$, "[32BIT]") THEN OS_BITS = 32
 
 IF OS_BITS = 32 THEN WindowTitle = "QB64 Phoenix Edition (x32)" ELSE WindowTitle = "QB64 Phoenix Edition (x64)"
 _TITLE WindowTitle
+
+CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
 
 DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode
 DIM SHARED ShowWarnings AS _BYTE, QuietMode AS _BYTE, CMDLineFile AS STRING
@@ -928,9 +930,9 @@ DIM id2 AS idstruct
 
 cleanupstringprocessingcall$ = "qbs_cleanup(qbs_tmp_base,"
 
-DIM SHARED sfidlist(1000) AS LONG
-DIM SHARED sfarglist(1000) AS INTEGER
-DIM SHARED sfelelist(1000) AS INTEGER
+REDIM SHARED sfidlist(1000) AS LONG
+REDIM SHARED sfarglist(1000) AS INTEGER
+REDIM SHARED sfelelist(1000) AS INTEGER
 
 
 
@@ -1866,7 +1868,7 @@ DO
         END IF
 
         IF LEFT$(temp$, 7) = "$ERROR " THEN
-            temp$ = LTRIM$(MID$(temp$, 7))
+            temp$ = RemoveStringEnclosingPair(LTRIM$(MID$(temp$, 7)), METACOMMAND_STRING_ENCLOSING_PAIR)
             a$ = "Compilation check failed: " + temp$
             GOTO errmes
         END IF
@@ -3325,6 +3327,7 @@ DO
 
             VersionInfoKey$ = LTRIM$(RTRIM$(MID$(a3u$, FirstDelimiter + 1, SecondDelimiter - FirstDelimiter - 1)))
             VersionInfoValue$ = StrReplace$(LTRIM$(RTRIM$(MID$(a3$, SecondDelimiter + 1))), CHR$(34), "'")
+            issueWarning = 0 ' only issue warnings if this is true
 
             SELECT CASE VersionInfoKey$
                 CASE "FILEVERSION#"
@@ -3338,42 +3341,60 @@ DO
                     IF viProductVersion$ = "" THEN viProductVersion$ = viProductVersionNum$
                     layout$ = SCase$("$VersionInfo:PRODUCTVERSION#=") + VersionInfoValue$
                 CASE "COMPANYNAME"
-                    viCompanyName$ = VersionInfoValue$
+                    viCompanyName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "CompanyName=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "FILEDESCRIPTION"
-                    viFileDescription$ = VersionInfoValue$
+                    viFileDescription$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "FileDescription=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "FILEVERSION"
-                    viFileVersion$ = VersionInfoValue$
+                    viFileVersion$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "FileVersion=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "INTERNALNAME"
-                    viInternalName$ = VersionInfoValue$
+                    viInternalName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "InternalName=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "LEGALCOPYRIGHT"
-                    viLegalCopyright$ = VersionInfoValue$
+                    viLegalCopyright$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "LegalCopyright=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "LEGALTRADEMARKS"
-                    viLegalTrademarks$ = VersionInfoValue$
+                    viLegalTrademarks$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "LegalTrademarks=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "ORIGINALFILENAME"
-                    viOriginalFilename$ = VersionInfoValue$
+                    viOriginalFilename$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "OriginalFilename=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "PRODUCTNAME"
-                    viProductName$ = VersionInfoValue$
+                    viProductName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "ProductName=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "PRODUCTVERSION"
-                    viProductVersion$ = VersionInfoValue$
+                    viProductVersion$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "ProductVersion=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "COMMENTS"
-                    viComments$ = VersionInfoValue$
+                    viComments$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "Comments=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE "WEB"
-                    viWeb$ = VersionInfoValue$
+                    viWeb$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "Web=" + VersionInfoValue$
+                    issueWarning = -1
                 CASE ELSE
                     a$ = "Invalid key. (Use FILEVERSION#, PRODUCTVERSION#, CompanyName, FileDescription, FileVersion, InternalName, LegalCopyright, LegalTrademarks, OriginalFilename, ProductName, ProductVersion, Comments or Web)"
                     GOTO errmes
             END SELECT
+
+            ' Generate warnings if needed
+            IF issueWarning AND NOT IgnoreWarnings THEN
+                IF NOT HasStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR) THEN
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "missing string bracket delimiters (" + METACOMMAND_STRING_ENCLOSING_PAIR + ")", VersionInfoValue$
+                END IF
+            END IF
 
             VersionInfoSet = -1
 
@@ -11746,6 +11767,16 @@ FOR i = 1 TO idn
 
                             unresolved = unresolved + 1
                             sflistn = sflistn + 1
+                            IF sflistn > 25000 THEN 'manually set a descriptive error message for the user so they know what's happening.
+                                Error_Message = "ERROR: QB64PE currently limits a program to have a maximum of 25,000 subs and functions, and this limit has been exceeded.  Please reduce Sub/Function count, or else report this issue with sample code that produced it over at the QB64PE forums, so we can look further into this issue."
+                                GOTO errmes
+                            END IF
+                            ubound_sf = UBOUND(sfidlist) 'all 3 should have the same limit
+                            IF sflistn > ubound_sf THEN
+                                REDIM _PRESERVE sfidlist(ubound_sf + 1000) AS LONG
+                                REDIM _PRESERVE sfarglist(ubound_sf + 1000) AS INTEGER
+                                REDIM _PRESERVE sfelelist(ubound_sf + 1000) AS INTEGER
+                            END IF
                             sfidlist(sflistn) = i
                             sfarglist(sflistn) = i2
                             sfelelist(sflistn) = nelereq '0 means still unknown
@@ -16951,7 +16982,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    IF (sourcetyp AND ISFLOAT) THEN e$ = "floor(" + e$ + ")" ELSE e$ = "(" + e$ + ")"
+                    IF (sourcetyp AND ISFLOAT) THEN e$ = "std::floor(" + e$ + ")" ELSE e$ = "(" + e$ + ")"
                     r$ = e$
                     typ& = sourcetyp
                     GOTO evalfuncspecial
@@ -24468,8 +24499,12 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     IF num(2) <> "" THEN n1 = n1 * VAL(num(2))
                 CASE "_ACOS": n1 = _ACOS(VAL(num(2)))
                 CASE "_ASIN": n1 = _ASIN(VAL(num(2)))
-                CASE "_ARCSEC": n1 = _ARCSEC(VAL(num(2)))
-                CASE "_ARCCSC": n1 = _ARCCSC(VAL(num(2)))
+                CASE "_ARCSEC"
+                    IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCSEC) value < 1": EXIT FUNCTION
+                    n1 = _ARCSEC(VAL(num(2)))
+                CASE "_ARCCSC"
+                    if abs(val(num(2))) < 1 then EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
+                    n1 = _ARCCSC(VAL(num(2)))
                 CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
                 CASE "_SECH": n1 = _SECH(VAL(num(2)))
                 CASE "_CSCH": n1 = _CSCH(VAL(num(2)))
@@ -24634,20 +24669,17 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                         EXIT FUNCTION
                     END IF
                 CASE "\"
-                    IF FIX(VAL(num(2))) = 0 THEN
+                    IF _ROUND(VAL(num(2))) = 0 THEN
                         EvaluateNumbers$ = "ERROR - Division By Zero"
                         EXIT FUNCTION
                     END IF
-
-                    n1 = VAL(num(1)) \ FIX(VAL(num(2)))
+                    n1 = VAL(num(1)) \ _ROUND(VAL(num(2)))
                 CASE "MOD"
-                    IF FIX(VAL(num(2))) = 0 THEN
+                    IF _ROUND(VAL(num(2))) = 0 THEN
                         EvaluateNumbers$ = "ERROR - Division By Zero"
                         EXIT FUNCTION
                     END IF
-
-                    n1 = VAL(num(1)) MOD FIX(VAL(num(2)))
-
+                    n1 = VAL(num(1)) MOD _ROUND(VAL(num(2)))
                 CASE "+": n1 = VAL(num(1)) + VAL(num(2))
                 CASE "-":
                     n1 = VAL(num(1)) - VAL(num(2))
@@ -24708,6 +24740,67 @@ SUB PreParse (e$)
     DIM f AS _FLOAT
     STATIC TotalPrefixedPP_TypeMod AS LONG, TotalPP_TypeMod AS LONG
 
+    DO 'convert &H values to decimal values to prevent errors
+        l = INSTR(l, UCASE$(e$), "&H")
+        IF l THEN
+            FOR l1 = l + 2 TO LEN(e$)
+                SELECT CASE UCASE$(MID$(e$, l1, 1))
+                    CASE "0" TO "9"
+                    CASE "A" TO "F"
+                    CASE ELSE:
+                        'PRINT UCASE$(MID$(e$, l1, 1))
+                        EXIT FOR
+                END SELECT
+            NEXT
+            IF l1 <> l + 2 THEN 'hex number found
+                IF l1 > l + 18 THEN EXIT DO
+                l$ = LEFT$(e$, l - 1)
+                r$ = MID$(e$, l1)
+                t~&& = VAL(MID$(e$, l, l1 - l))
+                m$ = _TRIM$(STR$(t~&&))
+                e$ = l$ + m$ + r$
+            ELSE
+                EXIT DO
+            END IF
+        END IF
+    LOOP UNTIL l = 0
+
+    'replace existing CONST values
+    sep$ = "()+-*/\><=^"
+    FOR i2 = 0 TO constlast
+        thisConstName$ = constname(i2)
+        FOR replaceConstPass = 1 TO 2
+            found = 0
+            DO
+                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
+                IF found THEN
+                    IF found > 1 THEN
+                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
+                    END IF
+                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
+                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
+                    END IF
+                    t = consttype(i2)
+                    IF t AND ISSTRING THEN
+                        r$ = conststring(i2)
+                        i4 = _INSTRREV(r$, ",")
+                        r$ = LEFT$(r$, i4 - 1)
+                    ELSE
+                        IF t AND ISFLOAT THEN
+                            r$ = STR$(constfloat(i2))
+                            r$ = N2S(r$)
+                        ELSE
+                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
+                        END IF
+                    END IF
+                    t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
+                END IF
+            LOOP UNTIL found = 0
+            thisConstName$ = constname(i2) + constnamesymbol(i2)
+        NEXT
+    NEXT
+
+
     IF PP_TypeMod(0) = "" THEN
         REDIM PP_TypeMod(100) AS STRING, PP_ConvertedMod(100) AS STRING 'Large enough to hold all values to begin with
         PP_TypeMod(0) = "Initialized" 'Set so we don't do this section over and over, as we keep the values in shared memory.
@@ -24764,41 +24857,6 @@ SUB PreParse (e$)
         l = INSTR(l + 1, t$, ")"): IF l THEN c1 = c1 + 1
     LOOP UNTIL l = 0
     IF c <> c1 THEN e$ = "ERROR -- Bad Parenthesis:" + STR$(c) + "( vs" + STR$(c1) + ")": EXIT SUB
-
-    'replace existing CONST values
-    sep$ = "()+-*/\><=^"
-    FOR i2 = 0 TO constlast
-        thisConstName$ = constname(i2)
-        FOR replaceConstPass = 1 TO 2
-            found = 0
-            DO
-                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
-                IF found THEN
-                    IF found > 1 THEN
-                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
-                    END IF
-                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
-                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
-                    END IF
-                    t = consttype(i2)
-                    IF t AND ISSTRING THEN
-                        r$ = conststring(i2)
-                        i4 = _INSTRREV(r$, ",")
-                        r$ = LEFT$(r$, i4 - 1)
-                    ELSE
-                        IF t AND ISFLOAT THEN
-                            r$ = STR$(constfloat(i2))
-                            r$ = N2S(r$)
-                        ELSE
-                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
-                        END IF
-                    END IF
-                    t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
-                END IF
-            LOOP UNTIL found = 0
-            thisConstName$ = constname(i2) + constnamesymbol(i2)
-        NEXT
-    NEXT
 
     'Modify so that NOT will process properly
     l = 0
@@ -24894,31 +24952,6 @@ SUB PreParse (e$)
             l = l + 1
         END IF
     LOOP UNTIL l = 0 OR l = LEN(t$) 'last symbol is a bracket
-
-    'Turn all &H (hex) numbers into decimal values for the program to process properly
-    l = 0
-    DO
-        l = INSTR(t$, "&H")
-        IF l THEN
-            E = l + 1: finished = 0
-            DO
-                E = E + 1
-                comp$ = MID$(t$, E, 1)
-                SELECT CASE comp$
-                    CASE "0" TO "9", "A" TO "F" 'All is good, our next digit is a number, continue to add to the hex$
-                    CASE ELSE
-                        good = 0
-                        FOR i = 1 TO UBOUND(OName)
-                            IF MID$(t$, E, LEN(OName(i))) = OName(i) AND PL(i) > 1 AND PL(i) <= 250 THEN good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
-                        NEXT
-                        IF NOT good THEN e$ = "ERROR - Improper &H value. (" + comp$ + ")": EXIT SUB
-                        E = E - 1
-                        finished = -1
-                END SELECT
-            LOOP UNTIL finished OR E = LEN(t$)
-            t$ = LEFT$(t$, l - 1) + LTRIM$(RTRIM$(STR$(VAL(MID$(t$, l, E - l + 1))))) + MID$(t$, E + 1)
-        END IF
-    LOOP UNTIL l = 0
 
     'Turn all &B (binary) numbers into decimal values for the program to process properly
     l = 0
