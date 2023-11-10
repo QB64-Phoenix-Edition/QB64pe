@@ -43,7 +43,6 @@ cp -rp ./internal/support $DIST_ROOT/internal/
 cp -rp ./internal/temp    $DIST_ROOT/internal/
 cp ./internal/config.ini  $DIST_ROOT/internal/
 cp ./internal/version.txt $DIST_ROOT/internal/
-cp ./internal/clean.bat   $DIST_ROOT/internal/
 
 cp -rp ./internal/c/libqb $DIST_ROOT/internal/c/
 cp -rp ./internal/c/parts $DIST_ROOT/internal/c/
