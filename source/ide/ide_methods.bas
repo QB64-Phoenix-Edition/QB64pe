@@ -12463,9 +12463,9 @@ SUB idesave (f$)
     ideerror = 1
     IF INSTR(_OS$, "WIN") THEN LineEnding$ = CHR$(13) + CHR$(10) ELSE LineEnding$ = CHR$(10)
     FOR i = 1 TO iden
-        outfile$ = outfile$ + idegetline(i)  + LineEnding$
+        outfile$ =  idegetline(i)  + LineEnding$
+        PUT #151, , outfile$
     NEXT
-    PUT #151, 1, outfile$
     CLOSE #151
     IdeSaveBookmarks f$
     ideunsaved = 0
