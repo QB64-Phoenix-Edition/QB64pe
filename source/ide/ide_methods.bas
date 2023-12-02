@@ -12458,11 +12458,13 @@ END FUNCTION
 
 SUB idesave (f$)
     ideerror = 6
-    OPEN f$ FOR OUTPUT AS #151
+    OPEN f$ FOR OUTPUT AS #151: CLOSE #151
+    OPEN f$ FOR BINARY AS #151
     ideerror = 1
+    IF INSTR(_OS$, "WIN") THEN LineEnding$ = CHR$(13) + CHR$(10) ELSE LineEnding$ = CHR$(10)
     FOR i = 1 TO iden
-        a$ = idegetline(i)
-        PRINT #151, a$
+        outfile$ =  idegetline(i)  + LineEnding$
+        PUT #151, , outfile$
     NEXT
     CLOSE #151
     IdeSaveBookmarks f$
