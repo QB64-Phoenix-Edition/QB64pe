@@ -222,7 +222,7 @@ static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, i
         return nullptr;
     }
 
-    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG); // this is where everything else is freed
     free(svgString);
 
     return pixels;
@@ -259,7 +259,7 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
         return nullptr;
     }
 
-    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG); // this is where everything else is freed
     free(svgString);
 
     return pixels;
