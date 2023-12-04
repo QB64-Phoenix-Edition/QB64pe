@@ -183,11 +183,49 @@ static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, i
     if (!filepath_has_extension(fileName, "svg"))
         return nullptr;
 
-    auto image = nsvgParseFromFile(fileName, "px", 96.0f);
-    if (!image)
+    auto fp = fopen(fileName, "rb");
+    if (!fp)
         return nullptr;
 
-    return image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    fseek(fp, 0, SEEK_END);
+    auto size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    auto svgString = (char *)malloc(size + 1);
+    if (!svgString) {
+        fclose(fp);
+        return nullptr;
+    }
+
+    if (fread(svgString, 1, size, fp) != size) {
+        free(svgString);
+        fclose(fp);
+        return nullptr;
+    }
+
+    fclose(fp);
+
+    // Bail if we have binary data
+    for (size_t i = 0; i < size; i++) {
+        auto c = svgString[i];
+        if (c < 32 && c != '\0' && c != '\t' && c != '\r' && c != '\n') {
+            free(svgString);
+            return nullptr;
+        }
+    }
+
+    svgString[size] = '\0'; // must be null terminated
+
+    auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
+    if (!image) {
+        free(svgString);
+        return nullptr;
+    }
+
+    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    free(svgString);
+
+    return pixels;
 }
 
 /// @brief Loads an SVG image file from memory
@@ -206,12 +244,14 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
 
     // Bail if we have binary data. We'll also copy the data while doing the check to avoid another pass
     for (size_t i = 0; i < size; i++) {
-        if (iscntrl(svgString[i] = buffer[i])) {
+        auto c = svgString[i] = buffer[i];
+        if (c < 32 && c != '\0' && c != '\t' && c != '\r' && c != '\n') {
             free(svgString);
             return nullptr;
         }
     }
-    svgString[size] = '\0';
+
+    svgString[size] = '\0'; // must be null terminated
 
     auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
     if (!image) {
