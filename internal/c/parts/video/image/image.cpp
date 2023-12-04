@@ -21,6 +21,8 @@
 // We need 'qbs' and 'image' structs stuff from here
 // This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../../libqb.h"
+#include "filepath.h"
+#include <cctype>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -178,6 +180,9 @@ static uint32_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, 
 /// @param isVG Out: vector graphics? Always set to true
 /// @return A pointer to the raw pixel data in RGBA format or NULL on failure
 static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
+    if (!filepath_has_extension(fileName, "svg"))
+        return nullptr;
+
     auto image = nsvgParseFromFile(fileName, "px", 96.0f);
     if (!image)
         return nullptr;
@@ -199,7 +204,13 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
     if (!svgString)
         return nullptr;
 
-    memcpy(svgString, buffer, size);
+    // Bail if we have binary data. We'll also copy the data while doing the check to avoid another pass
+    for (size_t i = 0; i < size; i++) {
+        if (iscntrl(svgString[i] = buffer[i])) {
+            free(svgString);
+            return nullptr;
+        }
+    }
     svgString[size] = '\0';
 
     auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
