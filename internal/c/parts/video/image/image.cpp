@@ -202,19 +202,15 @@ static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, i
         fclose(fp);
         return nullptr;
     }
+    svgString[size] = '\0'; // must be null terminated
 
     fclose(fp);
 
-    // Bail if we have binary data
-    for (size_t i = 0; i < size; i++) {
-        uint8_t c = svgString[i];
-        if (c < 32 && c != '\0' && c != '\t' && c != '\r' && c != '\n') {
-            free(svgString);
-            return nullptr;
-        }
+    // Check if it has a valid SVG start tag
+    if (!strstr(svgString, "<svg")) {
+        free(svgString);
+        return nullptr;
     }
-
-    svgString[size] = '\0'; // must be null terminated
 
     auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
     if (!image) {
@@ -242,16 +238,14 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
     if (!svgString)
         return nullptr;
 
-    // Bail if we have binary data. We'll also copy the data while doing the check to avoid another pass
-    for (size_t i = 0; i < size; i++) {
-        uint8_t c = svgString[i] = buffer[i];
-        if (c < 32 && c != '\0' && c != '\t' && c != '\r' && c != '\n') {
-            free(svgString);
-            return nullptr;
-        }
-    }
-
+    memcpy(svgString, buffer, size);
     svgString[size] = '\0'; // must be null terminated
+
+    // Check if it has a valid SVG start tag
+    if (!strstr(svgString, "<svg")) {
+        free(svgString);
+        return nullptr;
+    }
 
     auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
     if (!image) {
