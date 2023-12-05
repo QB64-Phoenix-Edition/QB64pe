@@ -207,7 +207,7 @@ static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, i
 
     // Bail if we have binary data
     for (size_t i = 0; i < size; i++) {
-        auto c = svgString[i];
+        uint8_t c = svgString[i];
         if (c < 32 && c != '\0' && c != '\t' && c != '\r' && c != '\n') {
             free(svgString);
             return nullptr;
@@ -244,7 +244,7 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
 
     // Bail if we have binary data. We'll also copy the data while doing the check to avoid another pass
     for (size_t i = 0; i < size; i++) {
-        auto c = svgString[i] = buffer[i];
+        uint8_t c = svgString[i] = buffer[i];
         if (c < 32 && c != '\0' && c != '\t' && c != '\r' && c != '\n') {
             free(svgString);
             return nullptr;
