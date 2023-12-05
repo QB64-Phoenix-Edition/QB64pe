@@ -5,7 +5,7 @@ DIM fileName AS STRING
 
 READ fileName
 WHILE LEN(fileName) > 0
-    DIM img AS LONG: img = _LOADIMAGE(fileName)
+    DIM img AS LONG: img = _LOADIMAGE("./" + fileName)
 
     IF img < -1 THEN
         PRINT fileName; ": ("; _WIDTH(img); "x"; _HEIGHT(img); ") pixels"
