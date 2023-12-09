@@ -16268,8 +16268,9 @@ FUNCTION idedisplaybox
             IF o(7).sel = 1 AND x = 1 THEN
                 oldhandle = idecustomfonthandle
                 idecustomfonthandle = _LOADFONT(v$, v%, "MONOSPACE")
-                IF idecustomfonthandle = -1 THEN
+                IF idecustomfonthandle < 1 THEN
                     'failed! - revert to default settings
+                    _MessageBox "Font not found!", "ERROR: Font not found, or is invalid format, at specified location.  Reverting back to existing font.", "error"
                     o(7).sel = 0: idetxt(o(8).txt) = "C:\Windows\Fonts\lucon.ttf": idetxt(o(9).txt) = "21": IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
                 ELSE
                     _FONT idecustomfonthandle
