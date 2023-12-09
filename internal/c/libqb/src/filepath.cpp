@@ -5,8 +5,9 @@
 
 #include <string.h>
 
-const char *filepath_get_filename(const char *path)
-{
+#include "../../libqb.h"
+
+const char *filepath_get_filename(const char *path) {
     const char *fileName;
 
     if (path == NULL) {
@@ -32,8 +33,7 @@ const char *filepath_get_filename(const char *path)
     return fileName;
 }
 
-const char *filepath_get_extension(const char *path)
-{
+const char *filepath_get_extension(const char *path) {
     const char *extension;
     const char *lastOccurance;
 
@@ -57,8 +57,7 @@ const char *filepath_get_extension(const char *path)
     return (lastOccurance != NULL) ? lastOccurance : extension;
 }
 
-bool filepath_has_extension(const char *path, const char *extension)
-{
+bool filepath_has_extension(const char *path, const char *extension) {
     const char *ext1;
     const char *ext2;
 
@@ -74,4 +73,19 @@ bool filepath_has_extension(const char *path, const char *extension)
 #else
     return strcasecmp(ext1, ext2) == 0;
 #endif
+}
+
+char *fixdir(qbs *filename) {
+    // note: changes the slashes in a filename to make it compatible with the OS
+    // applied to QB commands: open, bload/bsave, loadfont, loadimage, sndopen/sndplayfile
+    for (auto i = 0; i < filename->len; i++) {
+#ifdef QB64_WINDOWS
+        if (filename->chr[i] == 47)
+            filename->chr[i] = 92;
+#else
+        if (filename->chr[i] == 92)
+            filename->chr[i] = 47;
+#endif
+    }
+    return (char *)filename->chr;
 }
