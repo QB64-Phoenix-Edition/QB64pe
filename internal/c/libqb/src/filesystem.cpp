@@ -56,9 +56,11 @@ qbs *func__cwd() {
 static bool __DirectoryExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
+
     return x != INVALID_FILE_ATTRIBUTES && (x & FILE_ATTRIBUTE_DIRECTORY);
 #else
     struct stat info;
+
     return (stat(path, &info) == 0 && S_ISDIR(info.st_mode));
 #endif
 }
@@ -321,9 +323,11 @@ int32 func__fileexists(qbs *path) {
 
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(filepath_fix_directory(strz));
+
     return (x == INVALID_FILE_ATTRIBUTES || (x & FILE_ATTRIBUTE_DIRECTORY)) ? QB_FALSE : QB_TRUE;
 #else
     struct stat sb;
+
     return (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISREG(sb.st_mode)) ? QB_TRUE : QB_FALSE;
 #endif
 }
@@ -335,25 +339,27 @@ qbs *g_startDir = nullptr;
 /// @return A qbs containing the directory path
 qbs *func__startdir() {
     qbs *temp = qbs_new(0, 1);
+
     qbs_set(temp, g_startDir);
+
     return temp;
 }
 
+/// @brief Changes the current directory
+/// @param str The directory path to change to
 void sub_chdir(qbs *str) {
-
     if (new_error)
         return;
-    static qbs *strz = NULL;
+
+    static qbs *strz = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
-    qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-    if (chdir(filepath_fix_directory(strz)) == -1) {
-        // assume errno==ENOENT
-        error(76); // path not found
-    }
 
-    static int32 tmp_long;
-    static int32 got_ports = 0;
+    qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
+
+    if (chdir(filepath_fix_directory(strz)) == -1)
+        error(76); // assume errno == ENOENT; path not found
 }
 
 void sub_files(qbs *str, int32 passed) {
@@ -559,70 +565,92 @@ void sub_kill(qbs *str) {
 #endif
 }
 
+/// @brief Creates a new directory
+/// @param str The directory path name to create
 void sub_mkdir(qbs *str) {
     if (new_error)
         return;
-    static qbs *strz = NULL;
+
+    static qbs *strz = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
+
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-#ifdef QB64_UNIX
-    if (mkdir(filepath_fix_directory(strz), 0770) == -1) {
-#else
+
+#ifdef QB64_WINDOWS
     if (mkdir(filepath_fix_directory(strz)) == -1) {
+#else
+    if (mkdir(filepath_fix_directory(strz), S_IRWXU | S_IRWXG) == -1) {
 #endif
         if (errno == EEXIST) {
             error(75);
             return;
-        } // path/file access error
-        // assume errno==ENOENT
-        error(76); // path not found
+        } // path / file access error
+
+        error(76); // assume errno == ENOENT; path not found
     }
 }
 
+/// @brief Renames a file or directory
+/// @param oldname The old file / directory name
+/// @param newname The new file / directory name
 void sub_name(qbs *oldname, qbs *newname) {
     if (new_error)
         return;
-    static qbs *strz = NULL;
+
+    static qbs *strz = nullptr, *strz2 = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
-    static qbs *strz2 = NULL;
+
     if (!strz2)
         strz2 = qbs_new(0, 0);
-    static int32 i;
+
     qbs_set(strz, qbs_add(oldname, qbs_new_txt_len("\0", 1)));
     qbs_set(strz2, qbs_add(newname, qbs_new_txt_len("\0", 1)));
+
     if (rename(filepath_fix_directory(strz), filepath_fix_directory(strz2))) {
-        i = errno;
+        auto i = errno;
+
         if (i == ENOENT) {
             error(53);
             return;
         } // file not found
+
         if (i == EINVAL) {
             error(64);
             return;
         } // bad file name
+
         if (i == EACCES) {
             error(75);
             return;
-        }         // path/file access error
-        error(5); // Illegal function call (assumed)
+        } // path / file access error
+
+        error(5); // illegal function call (assumed)
     }
 }
 
+/// @brief Deletes an empty directory
+/// @param str The path name of the directory to delete
 void sub_rmdir(qbs *str) {
     if (new_error)
         return;
-    static qbs *strz = NULL;
+
+    static qbs *strz = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
+
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
+
     if (rmdir(filepath_fix_directory(strz)) == -1) {
         if (errno == ENOTEMPTY) {
             error(75);
             return;
-        } // path/file access error
-        // assume errno==ENOENT
-        error(76); // path not found
+        } // path/file access error; not an empty directory
+
+        error(76); // assume errno == ENOENT; path not found
     }
 }
