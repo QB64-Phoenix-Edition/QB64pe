@@ -217,7 +217,7 @@ int32 func__direxists(qbs *file) {
     qbs_set(strz, qbs_add(file, qbs_new_txt_len("\0", 1)));
 #ifdef QB64_WINDOWS
     static int32 x;
-    x = GetFileAttributes(filepath_fix_directory(strz));
+    x = GetFileAttributesA(filepath_fix_directory(strz));
     if (x == INVALID_FILE_ATTRIBUTES)
         return 0;
     if (x & FILE_ATTRIBUTE_DIRECTORY)
@@ -242,7 +242,7 @@ int32 func__fileexists(qbs *file) {
     qbs_set(strz, qbs_add(file, qbs_new_txt_len("\0", 1)));
 #ifdef QB64_WINDOWS
     static int32 x;
-    x = GetFileAttributes(filepath_fix_directory(strz));
+    x = GetFileAttributesA(filepath_fix_directory(strz));
     if (x == INVALID_FILE_ATTRIBUTES)
         return 0;
     if (x & FILE_ATTRIBUTE_DIRECTORY)
@@ -308,7 +308,7 @@ void sub_files(qbs *str, int32 passed) {
     }
 
 #ifdef QB64_WINDOWS
-    static WIN32_FIND_DATA fd;
+    static WIN32_FIND_DATAA fd;
     static HANDLE hFind;
     static qbs *strpath = NULL;
     if (!strpath)
@@ -343,9 +343,9 @@ void sub_files(qbs *str, int32 passed) {
     // note: for QBASIC compatibility reasons it does not print the directory name of the files being displayed
     static uint8 curdir[4096];
     static uint8 curdir2[4096];
-    i2 = GetCurrentDirectory(4096, (char *)curdir);
+    i2 = GetCurrentDirectoryA(4096, (char *)curdir);
     if (i2) {
-        i2 = GetShortPathName((char *)curdir, (char *)curdir2, 4096);
+        i2 = GetShortPathNameA((char *)curdir, (char *)curdir2, 4096);
         if (i2) {
             qbs_set(strz2, qbs_ucase(qbs_new_txt_len((char *)curdir2, i2)));
             qbs_print(strz2, 1);
@@ -358,7 +358,7 @@ void sub_files(qbs *str, int32 passed) {
         return;
     }
 
-    hFind = FindFirstFile(filepath_fix_directory(strz), &fd);
+    hFind = FindFirstFileA(filepath_fix_directory(strz), &fd);
     if (hFind == INVALID_HANDLE_VALUE) {
         error(53);
         return;
@@ -393,7 +393,7 @@ void sub_files(qbs *str, int32 passed) {
         makefit(strz2);
         qbs_print(strz2, 0);
 
-    } while (FindNextFile(hFind, &fd));
+    } while (FindNextFileA(hFind, &fd));
     FindClose(hFind);
 
     static ULARGE_INTEGER FreeBytesAvailableToCaller;
@@ -405,7 +405,7 @@ void sub_files(qbs *str, int32 passed) {
     cp = (char *)strpath->chr;
     if (strpath->len == 1)
         cp = NULL;
-    if (GetDiskFreeSpaceEx(cp, &FreeBytesAvailableToCaller, &TotalNumberOfBytes, &TotalNumberOfFreeBytes)) {
+    if (GetDiskFreeSpaceExA(cp, &FreeBytesAvailableToCaller, &TotalNumberOfBytes, &TotalNumberOfFreeBytes)) {
         bytes = *(int64 *)(void *)&FreeBytesAvailableToCaller;
     } else {
         bytes = 0;
@@ -431,7 +431,7 @@ void sub_kill(qbs *str) {
         strz = qbs_new(0, 0);
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 #ifdef QB64_WINDOWS
-    static WIN32_FIND_DATA fd;
+    static WIN32_FIND_DATAA fd;
     static HANDLE hFind;
     static qbs *strpath = NULL;
     if (!strpath)
@@ -451,7 +451,7 @@ void sub_kill(qbs *str) {
         strpath->len = 0; // no path specified
     static int32 count;
     count = 0;
-    hFind = FindFirstFile(filepath_fix_directory(strz), &fd);
+    hFind = FindFirstFileA(filepath_fix_directory(strz), &fd);
     if (hFind == INVALID_HANDLE_VALUE) {
         error(53);
         return;
@@ -459,7 +459,7 @@ void sub_kill(qbs *str) {
     do {
         if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
             qbs_set(strfullz, qbs_add(strpath, qbs_new_txt_len(fd.cFileName, strlen(fd.cFileName) + 1)));
-            if (!DeleteFile((char *)strfullz->chr)) {
+            if (!DeleteFileA((char *)strfullz->chr)) {
                 i = GetLastError();
                 if ((i == 5) || (i == 19) || (i == 33) || (i == 32)) {
                     FindClose(hFind);
@@ -472,7 +472,7 @@ void sub_kill(qbs *str) {
             }
             count++;
         } // not a directory
-    } while (FindNextFile(hFind, &fd));
+    } while (FindNextFileA(hFind, &fd));
     FindClose(hFind);
     if (!count) {
         error(53);
