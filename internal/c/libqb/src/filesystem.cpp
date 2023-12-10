@@ -10,16 +10,22 @@
 #include "../../libqb.h"
 
 #include <algorithm>
+#include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #ifdef QB64_WINDOWS
 #    include <shlobj.h>
 #endif
 
 #ifdef QB64_BACKSLASH_FILESYSTEM
-#    define __PATH_SEPARATOR '\\'
+#    define PATH_SEPARATOR '\\'
 #else
-#    define __PATH_SEPARATOR '/'
+#    define PATH_SEPARATOR '/'
 #endif
+
+#define PATHNAME_MAX_LENGTH (FILENAME_MAX << 4)
+
+#define IS_STRING_EMPTY(_s_) ((_s_) == nullptr || (_s_)[0] == 0)
 
 /// @brief Gets the current working directory
 /// @return A qbs containing the current working directory or an empty string on error
@@ -53,7 +59,7 @@ qbs *func__cwd() {
 /// @brief Returns true if the specified directory exists
 /// @param path The directory to check for
 /// @return True if the directory exists
-static bool __DirectoryExists(const char *path) {
+static inline bool DirectoryExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
 
@@ -87,8 +93,8 @@ enum class KnownDirectory {
 /// @brief This populates path with the full path for a known directory
 /// @param kD Is a value from KnownDirectory (above)
 /// @param path Is the string that will receive the directory path. The string may be changed
-void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
-    path.resize(FILENAME_MAX << 2, '\0'); // allocate something that is sufficiently large
+void GetKnownDirectory(KnownDirectory kD, std::string &path) {
+    path.resize(PATHNAME_MAX_LENGTH, '\0'); // allocate something that is sufficiently large
 
     switch (kD) {
     case KnownDirectory::DESKTOP:
@@ -133,7 +139,7 @@ void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
             path.resize(strlen(path.c_str()));
             path.append("\\Downloads");
             mkdir(path.c_str());
-            if (!__DirectoryExists(path.c_str()))
+            if (!DirectoryExists(path.c_str()))
                 path.clear();
         }
 #else
@@ -173,7 +179,7 @@ void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
             path.resize(strlen(path.c_str()));
             path.append("\\Microsoft\\Windows\\Fonts");
-            if (!__DirectoryExists(path.c_str()))
+            if (!DirectoryExists(path.c_str()))
                 path.clear();
         }
 #else
@@ -215,7 +221,7 @@ void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
 
     // Check if we got anything at all
     if (!strlen(path.c_str())) {
-        path.resize(FILENAME_MAX << 2, '\0'); // just in case this was shrunk above
+        path.resize(PATHNAME_MAX_LENGTH, '\0'); // just in case this was shrunk above
 #ifdef QB64_WINDOWS
         if (FAILED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data())))
             path.assign(".");
@@ -226,8 +232,8 @@ void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
 
     // Add the trailing slash
     path.resize(strlen(path.c_str()));
-    if (path.back() != __PATH_SEPARATOR)
-        path.append(1, __PATH_SEPARATOR);
+    if (path.back() != PATH_SEPARATOR)
+        path.append(1, PATH_SEPARATOR);
 }
 
 /// @brief Returns common paths such as My Documents, My Pictures, My Music, Desktop
@@ -240,47 +246,47 @@ qbs *func__dir(qbs *context_in) {
     std::transform(context.begin(), context.end(), context.begin(), [](unsigned char c) { return std::toupper(c); });
 
     if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
-        __GetKnownDirectory(KnownDirectory::DOCUMENTS, path);
+        GetKnownDirectory(KnownDirectory::DOCUMENTS, path);
     } else if (context.compare("MUSIC") == 0 || context.compare("AUDIO") == 0 || context.compare("SOUND") == 0 || context.compare("SOUNDS") == 0 ||
                context.compare("MY MUSIC") == 0) {
-        __GetKnownDirectory(KnownDirectory::MUSIC, path);
+        GetKnownDirectory(KnownDirectory::MUSIC, path);
     } else if (context.compare("PICTURE") == 0 || context.compare("PICTURES") == 0 || context.compare("IMAGE") == 0 || context.compare("IMAGES") == 0 ||
                context.compare("MY PICTURES") == 0 || context.compare("DCIM") == 0 || context.compare("CAMERA") == 0 || context.compare("CAMERA ROLL") == 0 ||
                context.compare("PHOTO") == 0 || context.compare("PHOTOS") == 0) {
-        __GetKnownDirectory(KnownDirectory::PICTURES, path);
+        GetKnownDirectory(KnownDirectory::PICTURES, path);
     } else if (context.compare("MOVIE") == 0 || context.compare("MOVIES") == 0 || context.compare("VIDEO") == 0 || context.compare("VIDEOS") == 0 ||
                context.compare("MY VIDEOS") == 0) {
-        __GetKnownDirectory(KnownDirectory::VIDEOS, path);
+        GetKnownDirectory(KnownDirectory::VIDEOS, path);
     } else if (context.compare("DOWNLOAD") == 0 || context.compare("DOWNLOADS") == 0) {
-        __GetKnownDirectory(KnownDirectory::DOWNLOAD, path);
+        GetKnownDirectory(KnownDirectory::DOWNLOAD, path);
     } else if (context.compare("DESKTOP") == 0) {
-        __GetKnownDirectory(KnownDirectory::DESKTOP, path);
+        GetKnownDirectory(KnownDirectory::DESKTOP, path);
     } else if (context.compare("APPDATA") == 0 || context.compare("APPLICATION DATA") == 0 || context.compare("PROGRAM DATA") == 0 ||
                context.compare("DATA") == 0) {
-        __GetKnownDirectory(KnownDirectory::APP_DATA, path);
+        GetKnownDirectory(KnownDirectory::APP_DATA, path);
     } else if (context.compare("LOCALAPPDATA") == 0 || context.compare("LOCAL APPLICATION DATA") == 0 || context.compare("LOCAL PROGRAM DATA") == 0 ||
                context.compare("LOCAL DATA") == 0) {
-        __GetKnownDirectory(KnownDirectory::LOCAL_APP_DATA, path);
+        GetKnownDirectory(KnownDirectory::LOCAL_APP_DATA, path);
     } else if (context.compare("PROGRAMFILES") == 0 || context.compare("PROGRAM FILES") == 0) {
-        __GetKnownDirectory(KnownDirectory::PROGRAM_FILES, path);
+        GetKnownDirectory(KnownDirectory::PROGRAM_FILES, path);
     } else if (context.compare("PROGRAMFILESX86") == 0 || context.compare("PROGRAMFILES X86") == 0 || context.compare("PROGRAM FILES X86") == 0 ||
                context.compare("PROGRAM FILES 86") == 0 || context.compare("PROGRAM FILES (X86)") == 0 || context.compare("PROGRAMFILES (X86)") == 0 ||
                context.compare("PROGRAM FILES(X86)") == 0) {
-        __GetKnownDirectory(KnownDirectory::PROGRAM_FILES_32, path);
+        GetKnownDirectory(KnownDirectory::PROGRAM_FILES_32, path);
     } else if (context.compare("TMP") == 0 || context.compare("TEMP") == 0 || context.compare("TEMP FILES") == 0) {
-        __GetKnownDirectory(KnownDirectory::TEMP, path);
+        GetKnownDirectory(KnownDirectory::TEMP, path);
     } else if (context.compare("HOME") == 0 || context.compare("USER") == 0 || context.compare("PROFILE") == 0 || context.compare("USERPROFILE") == 0 ||
                context.compare("USER PROFILE") == 0) {
-        __GetKnownDirectory(KnownDirectory::HOME, path);
+        GetKnownDirectory(KnownDirectory::HOME, path);
     } else if (context.compare("FONT") == 0 || context.compare("FONTS") == 0) {
-        __GetKnownDirectory(KnownDirectory::SYSTEM_FONTS, path);
+        GetKnownDirectory(KnownDirectory::SYSTEM_FONTS, path);
     } else if (context.compare("USERFONT") == 0 || context.compare("USER FONT") == 0 || context.compare("USERFONTS") == 0 ||
                context.compare("USER FONTS") == 0) {
-        __GetKnownDirectory(KnownDirectory::USER_FONTS, path);
+        GetKnownDirectory(KnownDirectory::USER_FONTS, path);
     } else if (context.compare("PROGRAMDATA") == 0 || context.compare("COMMON PROGRAM DATA") == 0) {
-        __GetKnownDirectory(KnownDirectory::PROGRAM_DATA, path);
+        GetKnownDirectory(KnownDirectory::PROGRAM_DATA, path);
     } else {
-        __GetKnownDirectory(KnownDirectory::DESKTOP, path); // anything else defaults to the desktop where the user can easily see stuff
+        GetKnownDirectory(KnownDirectory::DESKTOP, path); // anything else defaults to the desktop where the user can easily see stuff
     }
 
     auto size = strlen(path.c_str());
@@ -304,7 +310,7 @@ int32 func__direxists(qbs *path) {
 
     qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
 
-    return __DirectoryExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
+    return DirectoryExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
 }
 
 /// @brief Returns true if a file specified exists
@@ -360,6 +366,120 @@ void sub_chdir(qbs *str) {
 
     if (chdir(filepath_fix_directory(strz)) == -1)
         error(76); // assume errno == ENOENT; path not found
+}
+
+/// @brief This is a basic pattern matching function used by Dir64()
+/// @param fileSpec The pattern to match
+/// @param fileName The filename to match
+/// @return True if it is a match, false otherwise
+static inline bool Dir64_MatchSpec(const char *fileSpec, const char *fileName) {
+    auto spec = fileSpec;
+    auto name = fileName;
+    const char *wildcard = nullptr;
+
+    while (*spec && *name) {
+        switch (*spec) {
+        case '*': // handle wildcard '*' character
+            wildcard = spec;
+            spec++;
+            while (*name && *name != *spec)
+                name++;
+            break;
+
+        case '?': // handle wildcard '?' character
+            spec++;
+            name++;
+            break;
+
+        default: // compare non-wildcard characters
+            if (*spec != *name) {
+                if (wildcard && *name) {
+                    spec = wildcard;
+                    name = fileName + (name - wildcard) + 1; // reset name to the position after '*'
+                } else {
+                    return false;
+                }
+            } else {
+                spec++;
+                name++;
+            }
+        }
+    }
+
+    // If we reached the end of both strings, it's a match
+    return (*spec == '\0' && *name == '\0');
+}
+
+/// @brief A MS BASIC PDS DIR$ style function
+/// @param fileSpec This can be a directory with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
+/// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
+static const char *Dir64(const char *fileSpec) {
+    static DIR *pDir = nullptr;
+    static char pattern[PATHNAME_MAX_LENGTH];
+    static char entry[PATHNAME_MAX_LENGTH];
+
+    entry[0] = '\0'; // set to an empty string
+
+    if (!IS_STRING_EMPTY(fileSpec)) {
+        // We got a filespec. Check if we have one already going and if so, close it
+        if (pDir) {
+            closedir(pDir);
+            pDir = nullptr;
+        }
+
+        char dirName[PATHNAME_MAX_LENGTH]; // we only need this for opendir()
+
+        if (strchr(fileSpec, '*') || strchr(fileSpec, '?')) {
+            // We have a pattern. Check if we have a path in it
+            auto p = strrchr(fileSpec, '/'); // try *nix style separator
+#ifdef QB64_WINDOWS
+            if (!p)
+                p = strrchr(fileSpec, '\\'); // try windows style separator
+#endif
+
+            if (p) {
+                // Split the path and the filespec
+                strncpy(pattern, p + 1, PATHNAME_MAX_LENGTH);
+                pattern[PATHNAME_MAX_LENGTH - 1] = '\0';
+                auto len = std::min<size_t>((p - fileSpec) + 1, PATHNAME_MAX_LENGTH - 1);
+                memcpy(dirName, fileSpec, len);
+                dirName[len] = '\0';
+            } else {
+                // No path. Use the current path
+                strncpy(pattern, fileSpec, PATHNAME_MAX_LENGTH);
+                pattern[PATHNAME_MAX_LENGTH - 1] = '\0';
+                strcpy(dirName, "./");
+            }
+        } else {
+            // No pattern. We'll just assume it's a directory
+            strncpy(dirName, fileSpec, PATHNAME_MAX_LENGTH);
+            dirName[PATHNAME_MAX_LENGTH - 1] = '\0';
+            strcpy(pattern, "*");
+        }
+
+        pDir = opendir(dirName);
+    }
+
+    if (pDir) {
+        for (;;) {
+            auto pDirent = readdir(pDir);
+            if (!pDirent) {
+                closedir(pDir);
+                pDir = nullptr;
+
+                break;
+            }
+
+            if (Dir64_MatchSpec(pattern, pDirent->d_name)) {
+                strncpy(entry, pDirent->d_name, sizeof(entry) - 1);
+                entry[sizeof(entry) - 1] = '\0';
+
+                break;
+            }
+        }
+    }
+
+    return entry;
 }
 
 void sub_files(qbs *str, int32 passed) {
