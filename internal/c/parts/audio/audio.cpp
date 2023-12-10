@@ -28,9 +28,6 @@
 #define INVALID_MEM_LOCK 1073741821
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define MEM_TYPE_SOUND 5
-// In QuickBASIC false means 0 and true means -1 (sad, but true XD)
-#define QB_FALSE MA_FALSE
-#define QB_TRUE -MA_TRUE
 // This is returned to the caller if handle allocation fails with a -1
 // CreateHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case

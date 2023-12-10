@@ -52,14 +52,14 @@
 #    endif
 
 // common includes
-#    include <stdio.h>
 #    include <cmath>
-#    include <stdint.h>
 #    include <errno.h>
 #    include <fcntl.h>
 #    include <fstream>
 #    include <iostream>
 #    include <limits.h>
+#    include <stdint.h>
+#    include <stdio.h>
 #    include <string.h>
 #    include <time.h>
 
@@ -77,13 +77,13 @@
 
 #    else
 
+#        include <dlfcn.h>
 #        include <pthread.h>
 #        include <stdlib.h>
 #        include <sys/stat.h>
 #        include <sys/types.h>
 #        include <sys/wait.h>
 #        include <unistd.h>
-#        include <dlfcn.h>
 
 #    endif
 
@@ -92,6 +92,9 @@
 #            include "parts/core/gl_headers/opengl_org_registery/glext.h"
 #        endif
 #    endif
+
+#    define QB_FALSE 0
+#    define QB_TRUE -1
 
 // QB64 string descriptor structure
 struct qbs_field {

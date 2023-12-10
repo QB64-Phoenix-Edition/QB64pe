@@ -53,9 +53,14 @@ qbs *func__cwd() {
 /// @brief Returns true if the specified directory exists
 /// @param path The directory to check for
 /// @return True if the directory exists
-static bool __DirectoryExists(std::string &path) {
+static bool __DirectoryExists(const char *path) {
+#ifdef QB64_WINDOWS
+    auto x = GetFileAttributesA(path);
+    return x != INVALID_FILE_ATTRIBUTES && (x & FILE_ATTRIBUTE_DIRECTORY);
+#else
     struct stat info;
-    return (stat(path.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
+    return (stat(path, &info) == 0 && S_ISDIR(info.st_mode));
+#endif
 }
 
 /// @brief Known directories (primarily Windows based, but we'll do our best to emulate on other platforms)
@@ -126,7 +131,7 @@ void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
             path.resize(strlen(path.c_str()));
             path.append("\\Downloads");
             mkdir(path.c_str());
-            if (!__DirectoryExists(path))
+            if (!__DirectoryExists(path.c_str()))
                 path.clear();
         }
 #else
@@ -166,7 +171,7 @@ void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
             path.resize(strlen(path.c_str()));
             path.append("\\Microsoft\\Windows\\Fonts");
-            if (!__DirectoryExists(path))
+            if (!__DirectoryExists(path.c_str()))
                 path.clear();
         }
 #else
@@ -283,67 +288,51 @@ qbs *func__dir(qbs *context_in) {
     return final;
 }
 
-int32 func__direxists(qbs *file) {
+/// @brief Returns true if a directory specified exists
+/// @param path The directory path
+/// @return True if the directory exists
+int32 func__direxists(qbs *path) {
     if (new_error)
         return 0;
-    static qbs *strz = NULL;
+
+    static qbs *strz = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
-    qbs_set(strz, qbs_add(file, qbs_new_txt_len("\0", 1)));
-#ifdef QB64_WINDOWS
-    static int32 x;
-    x = GetFileAttributesA(filepath_fix_directory(strz));
-    if (x == INVALID_FILE_ATTRIBUTES)
+
+    qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
+
+    return __DirectoryExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
+}
+
+/// @brief Returns true if a file specified exists
+/// @param path The file patn
+/// @return True if the file exists
+int32 func__fileexists(qbs *path) {
+    if (new_error)
         return 0;
-    if (x & FILE_ATTRIBUTE_DIRECTORY)
-        return -1;
-    return 0;
-#elif defined(QB64_UNIX)
-    struct stat sb;
-    if (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISDIR(sb.st_mode))
-        return -1;
-    return 0;
+
+    static qbs *strz = nullptr;
+
+    if (!strz)
+        strz = qbs_new(0, 0);
+
+    qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
+
+#ifdef QB64_WINDOWS
+    auto x = GetFileAttributesA(filepath_fix_directory(strz));
+    return (x == INVALID_FILE_ATTRIBUTES || (x & FILE_ATTRIBUTE_DIRECTORY)) ? QB_FALSE : QB_TRUE;
 #else
-    return 0; // default response
+    struct stat sb;
+    return (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISREG(sb.st_mode)) ? QB_TRUE : QB_FALSE;
 #endif
 }
 
-int32 func__fileexists(qbs *file) {
-    if (new_error)
-        return 0;
-    static qbs *strz = NULL;
-    if (!strz)
-        strz = qbs_new(0, 0);
-    qbs_set(strz, qbs_add(file, qbs_new_txt_len("\0", 1)));
-#ifdef QB64_WINDOWS
-    static int32 x;
-    x = GetFileAttributesA(filepath_fix_directory(strz));
-    if (x == INVALID_FILE_ATTRIBUTES)
-        return 0;
-    if (x & FILE_ATTRIBUTE_DIRECTORY)
-        return 0;
-    return -1;
-#elif defined(QB64_UNIX)
-    struct stat sb;
-    if (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISREG(sb.st_mode))
-        return -1;
-    return 0;
-#else
-    // generic method (not currently used)
-    static std::ifstream fh;
-    fh.open(filepath_fix_directory(strz), std::ios::binary | std::ios::in);
-    if (fh.is_open() == NULL) {
-        fh.clear(std::ios::goodbit);
-        return 0;
-    }
-    fh.clear(std::ios::goodbit);
-    fh.close();
-    return -1;
-#endif
-}
+/// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
+qbs *g_startDir = nullptr;
 
-qbs *g_startDir = nullptr; // set on startup
-
+/// @brief Return the startup directory
+/// @return A qbs containing the directory path
 qbs *func__startdir() {
     qbs *temp = qbs_new(0, 1);
     qbs_set(temp, g_startDir);

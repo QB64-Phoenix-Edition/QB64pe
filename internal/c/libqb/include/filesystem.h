@@ -7,9 +7,9 @@ struct qbs;
 extern qbs *g_startDir;
 
 qbs *func__cwd();
-qbs *func__dir(qbs *context);
-int32_t func__direxists(qbs *);
-int32_t func__fileexists(qbs *);
+qbs *func__dir(qbs *context_in);
+int32_t func__direxists(qbs *path);
+int32_t func__fileexists(qbs *path);
 qbs *func__startdir();
 void sub_chdir(qbs *str);
 void sub_files(qbs *str, int32_t passed);
