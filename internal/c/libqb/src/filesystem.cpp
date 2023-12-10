@@ -267,11 +267,11 @@ int32 func__fileexists(qbs *file) {
 #endif
 }
 
-qbs *startDir = NULL; // set on startup
+qbs *g_startDir = nullptr; // set on startup
 
 qbs *func__startdir() {
     qbs *temp = qbs_new(0, 1);
-    qbs_set(temp, startDir);
+    qbs_set(temp, g_startDir);
     return temp;
 }
 

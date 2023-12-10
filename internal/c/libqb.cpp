@@ -36143,9 +36143,9 @@ int main(int argc, char *argv[]) {
     singlespace = qbs_new_cmem(1, 0);
     singlespace->chr[0] = 32;
 
-    // store _CWD$ for recall using _STARTDIR$ in startDir
-    startDir = qbs_new(0, 0);
-    qbs_set(startDir, func__cwd());
+    // store _CWD$ for recall using _STARTDIR$ in g_startDir
+    g_startDir = qbs_new(0, 0);
+    qbs_set(g_startDir, func__cwd());
 
 // switch to directory of this EXE file
 // http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe

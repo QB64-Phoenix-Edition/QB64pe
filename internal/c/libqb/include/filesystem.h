@@ -4,7 +4,7 @@
 
 struct qbs;
 
-extern qbs *startDir;
+extern qbs *g_startDir;
 
 qbs *func__cwd();
 qbs *func__dir(qbs *context);
