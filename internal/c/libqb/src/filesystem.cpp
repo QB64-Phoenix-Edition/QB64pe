@@ -9,195 +9,278 @@
 
 #include "../../libqb.h"
 
+#include <algorithm>
+#include <sys/stat.h>
 #ifdef QB64_WINDOWS
-#    define __GetCWD _getcwd
-#else
-#    define __GetCWD getcwd
+#    include <shlobj.h>
 #endif
 
-// Get Current Working Directory
+#ifdef QB64_BACKSLASH_FILESYSTEM
+#    define __PATH_SEPARATOR '\\'
+#else
+#    define __PATH_SEPARATOR '/'
+#endif
+
+/// @brief Gets the current working directory
+/// @return A qbs containing the current working directory or an empty string on error
 qbs *func__cwd() {
+    std::string path;
     qbs *final;
-    size_t size = FILENAME_MAX;
-    auto buffer = (char *)malloc(size);
-    if (!buffer)
-        goto error_handler;
+
+    path.resize(FILENAME_MAX, '\0');
 
     for (;;) {
-        if (__GetCWD(buffer, size)) {
-            size = strlen(buffer);
+        if (getcwd((char *)path.data(), path.size())) {
+            auto size = strlen(path.c_str());
             final = qbs_new(size, 1);
-            memcpy(final->chr, buffer, size);
-            free(buffer);
+            memcpy(final->chr, path.data(), size);
+
             return final;
         } else {
-            free(buffer);
-            if (errno == ERANGE) {
-                // Buffer size was not sufficient; try again with a larger buffer
-                size <<= 1;
-                buffer = (char *)malloc(size);
-                if (!buffer)
-                    goto error_handler;
-            } else {
-                // Some other error occurred
-                goto error_handler;
-            }
+            if (errno == ERANGE)
+                path.resize(path.size() << 1); // buffer size was not sufficient; try again with a larger buffer
+            else
+                break; // some other error occurred
         }
     }
 
-error_handler:
     final = qbs_new(0, 1);
     error(7);
+
     return final;
 }
 
-qbs *func__dir(qbs *context_in) {
+/// @brief Returns true if the specified directory exists
+/// @param path The directory to check for
+/// @return True if the directory exists
+static bool __DirectoryExists(std::string &path) {
+    struct stat info;
+    return (stat(path.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
+}
 
-    static qbs *context = NULL;
-    if (!context) {
-        context = qbs_new(0, 0);
-    }
+/// @brief Known directories (primarily Windows based, but we'll do our best to emulate on other platforms)
+enum class KnownDirectory {
+    HOME = 0,
+    DESKTOP,
+    DOCUMENTS,
+    PICTURES,
+    MUSIC,
+    VIDEOS,
+    DOWNLOAD,
+    APP_DATA,
+    LOCAL_APP_DATA,
+    PROGRAM_DATA,
+    SYSTEM_FONTS,
+    USER_FONTS,
+    TEMP,
+    PROGRAM_FILES,
+    PROGRAM_FILES_32,
+};
 
-    qbs_set(context, qbs_ucase(context_in));
+/// @brief This populates path with the full path for a known directory
+/// @param kD Is a value from KnownDirectory (above)
+/// @param path Is the string that will receive the directory path. The string may be changed
+void __GetKnownDirectory(KnownDirectory kD, std::string &path) {
+    path.resize(FILENAME_MAX << 2, '\0'); // allocate something that is sufficiently large
 
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("TEXT")) || qbs_equal(qbs_ucase(context), qbs_new_txt("DOCUMENT")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("DOCUMENTS")) || qbs_equal(qbs_ucase(context), qbs_new_txt("MY DOCUMENTS"))) {
+    switch (kD) {
+    case KnownDirectory::DESKTOP:
 #ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 5, NULL, 0, osPath))) { // Documents
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("MUSIC")) || qbs_equal(qbs_ucase(context), qbs_new_txt("AUDIO")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("SOUND")) || qbs_equal(qbs_ucase(context), qbs_new_txt("SOUNDS")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("MY MUSIC"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 13, NULL, 0, osPath))) { // Music
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("PICTURE")) || qbs_equal(qbs_ucase(context), qbs_new_txt("PICTURES")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("IMAGE")) || qbs_equal(qbs_ucase(context), qbs_new_txt("IMAGES")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("MY PICTURES"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 39, NULL, 0, osPath))) { // Pictures
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("DCIM")) || qbs_equal(qbs_ucase(context), qbs_new_txt("CAMERA")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("CAMERA ROLL")) || qbs_equal(qbs_ucase(context), qbs_new_txt("PHOTO")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("PHOTOS"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 39, NULL, 0, osPath))) { // Pictures
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("MOVIE")) || qbs_equal(qbs_ucase(context), qbs_new_txt("MOVIES")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("VIDEO")) || qbs_equal(qbs_ucase(context), qbs_new_txt("VIDEOS")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("MY VIDEOS"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 14, NULL, 0, osPath))) { // Videos
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("DOWNLOAD")) || qbs_equal(qbs_ucase(context), qbs_new_txt("DOWNLOADS"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 0x0028, NULL, 0, osPath))) { // user folder
-            // XP & SHGetFolderPathA do not support the concept of a Downloads folder, however it can be constructed
-            mkdir((char *)((qbs_add(qbs_new_txt(osPath), qbs_new_txt_len("\\Downloads\0", 11)))->chr));
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\Downloads\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("DESKTOP"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 0, NULL, 0, osPath))) { // Desktop
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("APPDATA")) || qbs_equal(qbs_ucase(context), qbs_new_txt("APPLICATION DATA")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAM DATA")) || qbs_equal(qbs_ucase(context), qbs_new_txt("DATA"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 0x001a, NULL, 0, osPath))) { // CSIDL_APPDATA (%APPDATA%)
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("LOCALAPPDATA")) || qbs_equal(qbs_ucase(context), qbs_new_txt("LOCAL APPLICATION DATA")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("LOCAL PROGRAM DATA")) || qbs_equal(qbs_ucase(context), qbs_new_txt("LOCAL DATA"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 0x001c, NULL, 0, osPath))) { // CSIDL_LOCAL_APPDATA (%LOCALAPPDATA%)
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAMFILES")) || qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAM FILES"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 0x0026, NULL, 0, osPath))) { // CSIDL_PROGRAM_FILES (%PROGRAMFILES%)
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAMFILESX86")) || qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAMFILES X86")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAM FILES X86")) || qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAM FILES 86")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAM FILES (X86)")) || qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAMFILES (X86)")) ||
-        qbs_equal(qbs_ucase(context), qbs_new_txt("PROGRAM FILES(X86)"))) {
-#ifdef QB64_WINDOWS &&_WIN64
-        CHAR osPath[MAX_PATH];
-        if (SUCCEEDED(SHGetFolderPathA(NULL, 0x002a, NULL, 0, osPath))) { // CSIDL_PROGRAM_FILES (%PROGRAMFILES(X86)%)
-            return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-        }
-#endif
-    }
-
-    if (qbs_equal(qbs_ucase(context), qbs_new_txt("TEMP")) || qbs_equal(qbs_ucase(context), qbs_new_txt("TEMP FILES"))) {
-#ifdef QB64_WINDOWS
-        CHAR osPath[MAX_PATH + 1];
-        DWORD pathlen;
-        pathlen = GetTempPathA(261, osPath); //%TEMP%
-        char path[pathlen];
-        memcpy(path, &osPath, pathlen);
-        if (pathlen > 0) {
-            return qbs_new_txt(path);
-        }
-#endif
-    }
-
-// general fallback location
-#ifdef QB64_WINDOWS
-    CHAR osPath[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPathA(NULL, 0, NULL, 0, osPath))) { // desktop
-        return qbs_add(qbs_new_txt(osPath), qbs_new_txt("\\"));
-    }
-    return qbs_new_txt(".\\"); // current location
+        SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
-    return qbs_new_txt("./"); // current location
 #endif
+        break;
+
+    case KnownDirectory::DOCUMENTS:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::PICTURES:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_MYPICTURES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::MUSIC:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_MYMUSIC | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::VIDEOS:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_MYVIDEO | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::DOWNLOAD:
+#ifdef QB64_WINDOWS
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
+            // XP & SHGetFolderPathA do not support the concept of a Downloads folder, however it can be constructed
+            path.resize(strlen(path.c_str()));
+            path.append("\\Downloads");
+            mkdir(path.c_str());
+            if (!__DirectoryExists(path))
+                path.clear();
+        }
+#else
+#endif
+        break;
+
+    case KnownDirectory::APP_DATA:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::LOCAL_APP_DATA:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::PROGRAM_DATA:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::SYSTEM_FONTS:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::USER_FONTS:
+#ifdef QB64_WINDOWS
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
+            path.resize(strlen(path.c_str()));
+            path.append("\\Microsoft\\Windows\\Fonts");
+            if (!__DirectoryExists(path))
+                path.clear();
+        }
+#else
+#endif
+        break;
+
+    case KnownDirectory::TEMP:
+#ifdef QB64_WINDOWS
+        GetTempPathA(path.size(), (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::PROGRAM_FILES:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+        break;
+
+    case KnownDirectory::PROGRAM_FILES_32:
+#ifdef QB64_WINDOWS
+#    ifdef _WIN64
+        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86 | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#    else
+        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#    endif
+#else
+#endif
+        break;
+
+    case KnownDirectory::HOME:
+    default:
+#ifdef QB64_WINDOWS
+        SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+#else
+#endif
+    }
+
+    // Check if we got anything at all
+    if (!strlen(path.c_str())) {
+        path.resize(FILENAME_MAX << 2, '\0'); // just in case this was shrunk above
+#ifdef QB64_WINDOWS
+        if (FAILED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data())))
+            path.assign(".");
+#else
+        path.assign(getenv("HOME") ? getenv("HOME") : ".");
+#endif
+    }
+
+    // Add the trailing slash
+    path.resize(strlen(path.c_str()));
+    if (path.back() != __PATH_SEPARATOR)
+        path.append(1, __PATH_SEPARATOR);
+}
+
+/// @brief Returns common paths such as My Documents, My Pictures, My Music, Desktop
+/// @param context_in Is the directory type
+/// @return A qbs containing the directory or an empty string on error
+qbs *func__dir(qbs *context_in) {
+    std::string context, path;
+
+    context.assign((const char *)context_in->chr, context_in->len);
+    std::transform(context.begin(), context.end(), context.begin(), [](unsigned char c) { return std::toupper(c); });
+
+    if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
+        __GetKnownDirectory(KnownDirectory::DOCUMENTS, path);
+    } else if (context.compare("MUSIC") == 0 || context.compare("AUDIO") == 0 || context.compare("SOUND") == 0 || context.compare("SOUNDS") == 0 ||
+               context.compare("MY MUSIC") == 0) {
+        __GetKnownDirectory(KnownDirectory::MUSIC, path);
+    } else if (context.compare("PICTURE") == 0 || context.compare("PICTURES") == 0 || context.compare("IMAGE") == 0 || context.compare("IMAGES") == 0 ||
+               context.compare("MY PICTURES") == 0 || context.compare("DCIM") == 0 || context.compare("CAMERA") == 0 || context.compare("CAMERA ROLL") == 0 ||
+               context.compare("PHOTO") == 0 || context.compare("PHOTOS") == 0) {
+        __GetKnownDirectory(KnownDirectory::PICTURES, path);
+    } else if (context.compare("MOVIE") == 0 || context.compare("MOVIES") == 0 || context.compare("VIDEO") == 0 || context.compare("VIDEOS") == 0 ||
+               context.compare("MY VIDEOS") == 0) {
+        __GetKnownDirectory(KnownDirectory::VIDEOS, path);
+    } else if (context.compare("DOWNLOAD") == 0 || context.compare("DOWNLOADS") == 0) {
+        __GetKnownDirectory(KnownDirectory::DOWNLOAD, path);
+    } else if (context.compare("DESKTOP") == 0) {
+        __GetKnownDirectory(KnownDirectory::DESKTOP, path);
+    } else if (context.compare("APPDATA") == 0 || context.compare("APPLICATION DATA") == 0 || context.compare("PROGRAM DATA") == 0 ||
+               context.compare("DATA") == 0) {
+        __GetKnownDirectory(KnownDirectory::APP_DATA, path);
+    } else if (context.compare("LOCALAPPDATA") == 0 || context.compare("LOCAL APPLICATION DATA") == 0 || context.compare("LOCAL PROGRAM DATA") == 0 ||
+               context.compare("LOCAL DATA") == 0) {
+        __GetKnownDirectory(KnownDirectory::LOCAL_APP_DATA, path);
+    } else if (context.compare("PROGRAMFILES") == 0 || context.compare("PROGRAM FILES") == 0) {
+        __GetKnownDirectory(KnownDirectory::PROGRAM_FILES, path);
+    } else if (context.compare("PROGRAMFILESX86") == 0 || context.compare("PROGRAMFILES X86") == 0 || context.compare("PROGRAM FILES X86") == 0 ||
+               context.compare("PROGRAM FILES 86") == 0 || context.compare("PROGRAM FILES (X86)") == 0 || context.compare("PROGRAMFILES (X86)") == 0 ||
+               context.compare("PROGRAM FILES(X86)") == 0) {
+        __GetKnownDirectory(KnownDirectory::PROGRAM_FILES_32, path);
+    } else if (context.compare("TMP") == 0 || context.compare("TEMP") == 0 || context.compare("TEMP FILES") == 0) {
+        __GetKnownDirectory(KnownDirectory::TEMP, path);
+    } else if (context.compare("HOME") == 0 || context.compare("USER") == 0 || context.compare("PROFILE") == 0 || context.compare("USERPROFILE") == 0 ||
+               context.compare("USER PROFILE") == 0) {
+        __GetKnownDirectory(KnownDirectory::HOME, path);
+    } else if (context.compare("FONT") == 0 || context.compare("FONTS") == 0) {
+        __GetKnownDirectory(KnownDirectory::SYSTEM_FONTS, path);
+    } else if (context.compare("USERFONT") == 0 || context.compare("USER FONT") == 0 || context.compare("USERFONTS") == 0 ||
+               context.compare("USER FONTS") == 0) {
+        __GetKnownDirectory(KnownDirectory::USER_FONTS, path);
+    } else if (context.compare("PROGRAMDATA") == 0 || context.compare("COMMON PROGRAM DATA") == 0) {
+        __GetKnownDirectory(KnownDirectory::PROGRAM_DATA, path);
+    } else {
+        __GetKnownDirectory(KnownDirectory::DESKTOP, path); // anything else defaults to the desktop where the user can easily see stuff
+    }
+
+    auto size = strlen(path.c_str());
+    qbs *final = qbs_new(size, 1);
+    memcpy(final->chr, path.data(), size);
+
+    return final;
 }
 
 int32 func__direxists(qbs *file) {
