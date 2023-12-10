@@ -17,10 +17,8 @@ const char *filepath_get_extension(const char *fliename);
 bool filepath_has_extension(const char *path, const char *extension);
 
 // The following overloaded functions changes the path separators in path based on the OS (path is modified)
-char *filepath_fix_directory(char *path);
-char *filepath_fix_directory(std::string &path);
-char *filepath_fix_directory(qbs *path);
-
-char *fixdir(qbs *);
+const char *filepath_fix_directory(char *path);
+const char *filepath_fix_directory(qbs *path);
+const char *filepath_fix_directory(std::string &path);
 
 #endif

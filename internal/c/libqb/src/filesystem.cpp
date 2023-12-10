@@ -217,7 +217,7 @@ int32 func__direxists(qbs *file) {
     qbs_set(strz, qbs_add(file, qbs_new_txt_len("\0", 1)));
 #ifdef QB64_WINDOWS
     static int32 x;
-    x = GetFileAttributes(fixdir(strz));
+    x = GetFileAttributes(filepath_fix_directory(strz));
     if (x == INVALID_FILE_ATTRIBUTES)
         return 0;
     if (x & FILE_ATTRIBUTE_DIRECTORY)
@@ -225,7 +225,7 @@ int32 func__direxists(qbs *file) {
     return 0;
 #elif defined(QB64_UNIX)
     struct stat sb;
-    if (stat(fixdir(strz), &sb) == 0 && S_ISDIR(sb.st_mode))
+    if (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISDIR(sb.st_mode))
         return -1;
     return 0;
 #else
@@ -242,7 +242,7 @@ int32 func__fileexists(qbs *file) {
     qbs_set(strz, qbs_add(file, qbs_new_txt_len("\0", 1)));
 #ifdef QB64_WINDOWS
     static int32 x;
-    x = GetFileAttributes(fixdir(strz));
+    x = GetFileAttributes(filepath_fix_directory(strz));
     if (x == INVALID_FILE_ATTRIBUTES)
         return 0;
     if (x & FILE_ATTRIBUTE_DIRECTORY)
@@ -250,13 +250,13 @@ int32 func__fileexists(qbs *file) {
     return -1;
 #elif defined(QB64_UNIX)
     struct stat sb;
-    if (stat(fixdir(strz), &sb) == 0 && S_ISREG(sb.st_mode))
+    if (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISREG(sb.st_mode))
         return -1;
     return 0;
 #else
     // generic method (not currently used)
     static std::ifstream fh;
-    fh.open(fixdir(strz), std::ios::binary | std::ios::in);
+    fh.open(filepath_fix_directory(strz), std::ios::binary | std::ios::in);
     if (fh.is_open() == NULL) {
         fh.clear(std::ios::goodbit);
         return 0;
@@ -283,7 +283,7 @@ void sub_chdir(qbs *str) {
     if (!strz)
         strz = qbs_new(0, 0);
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-    if (chdir(fixdir(strz)) == -1) {
+    if (chdir(filepath_fix_directory(strz)) == -1) {
         // assume errno==ENOENT
         error(76); // path not found
     }
@@ -358,7 +358,7 @@ void sub_files(qbs *str, int32 passed) {
         return;
     }
 
-    hFind = FindFirstFile(fixdir(strz), &fd);
+    hFind = FindFirstFile(filepath_fix_directory(strz), &fd);
     if (hFind == INVALID_HANDLE_VALUE) {
         error(53);
         return;
@@ -451,7 +451,7 @@ void sub_kill(qbs *str) {
         strpath->len = 0; // no path specified
     static int32 count;
     count = 0;
-    hFind = FindFirstFile(fixdir(strz), &fd);
+    hFind = FindFirstFile(filepath_fix_directory(strz), &fd);
     if (hFind == INVALID_HANDLE_VALUE) {
         error(53);
         return;
@@ -480,7 +480,7 @@ void sub_kill(qbs *str) {
     } // file not found
     return;
 #else
-    if (remove(fixdir(strz))) {
+    if (remove(filepath_fix_directory(strz))) {
         i = errno;
         if (i == ENOENT) {
             error(53);
@@ -503,9 +503,9 @@ void sub_mkdir(qbs *str) {
         strz = qbs_new(0, 0);
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 #ifdef QB64_UNIX
-    if (mkdir(fixdir(strz), 0770) == -1) {
+    if (mkdir(filepath_fix_directory(strz), 0770) == -1) {
 #else
-    if (mkdir(fixdir(strz)) == -1) {
+    if (mkdir(filepath_fix_directory(strz)) == -1) {
 #endif
         if (errno == EEXIST) {
             error(75);
@@ -528,7 +528,7 @@ void sub_name(qbs *oldname, qbs *newname) {
     static int32 i;
     qbs_set(strz, qbs_add(oldname, qbs_new_txt_len("\0", 1)));
     qbs_set(strz2, qbs_add(newname, qbs_new_txt_len("\0", 1)));
-    if (rename(fixdir(strz), fixdir(strz2))) {
+    if (rename(filepath_fix_directory(strz), filepath_fix_directory(strz2))) {
         i = errno;
         if (i == ENOENT) {
             error(53);
@@ -553,7 +553,7 @@ void sub_rmdir(qbs *str) {
     if (!strz)
         strz = qbs_new(0, 0);
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-    if (rmdir(fixdir(strz)) == -1) {
+    if (rmdir(filepath_fix_directory(strz)) == -1) {
         if (errno == ENOTEMPTY) {
             error(75);
             return;

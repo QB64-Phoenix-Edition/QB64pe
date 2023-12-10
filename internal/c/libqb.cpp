@@ -20898,7 +20898,7 @@ void sub_bsave(qbs *filename, int32 offset, int32 size) {
     if (size != 65536)
         size &= 0xFFFF;
     qbs_set(tqbs, qbs_add(filename, nullt)); // prepare null-terminated filename
-    fh.open(fixdir(tqbs), std::ios::binary | std::ios::out);
+    fh.open(filepath_fix_directory(tqbs), std::ios::binary | std::ios::out);
     if (fh.is_open() == NULL) {
         error(64);
         return;
@@ -20939,7 +20939,7 @@ void sub_bload(qbs *filename, int32 offset, int32 passed) {
         offset &= 0xFFFF;
     }
     qbs_set(tqbs, qbs_add(filename, nullt)); // prepare null-terminated filename
-    fh.open(fixdir(tqbs), std::ios::binary | std::ios::in);
+    fh.open(filepath_fix_directory(tqbs), std::ios::binary | std::ios::in);
     if (fh.is_open() == NULL) {
         error(53);
         return;
@@ -26413,7 +26413,7 @@ void sub_run(qbs *f) {
         strz = qbs_new(0, 0);
 
     qbs_set(str, f);
-    fixdir(str);
+    filepath_fix_directory(str);
 
 #ifdef QB64_WINDOWS
 
@@ -29558,24 +29558,24 @@ int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
     if (how == 2) {
         // with truncate
         if (access == 1)
-            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
+            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
         if (access == 2)
-            f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
+            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
         if (access == 3)
-            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
     } else {
         // without truncate
         if (access == 1)
-            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary);
+            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary);
         if (access == 2)
-            f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::app);
+            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::app);
         if (access == 3)
-            f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary);
+            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary);
     }
     if (how) {
         if (!f->file_handle->is_open()) { // couldn't open file, so attempt creation
             f->file_handle_o = new std::ofstream();
-            f->file_handle_o->open(fixdir(filenamez), std::ios::out);
+            f->file_handle_o->open(filepath_fix_directory(filenamez), std::ios::out);
             if (f->file_handle_o->is_open()) { // created new file
                 f->file_handle_o->close();
                 // retry open
@@ -29583,19 +29583,19 @@ int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
                 if (how == 2) {
                     // with truncate
                     if (access == 1)
-                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
+                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
                     if (access == 2)
-                        f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
+                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
                     if (access == 3)
-                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
                 } else {
                     // without truncate
                     if (access == 1)
-                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::binary);
+                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary);
                     if (access == 2)
-                        f->file_handle->open(fixdir(filenamez), std::ios::out | std::ios::binary | std::ios::app);
+                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::app);
                     if (access == 3)
-                        f->file_handle->open(fixdir(filenamez), std::ios::in | std::ios::out | std::ios::binary);
+                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary);
                 }
             }
             delete f->file_handle_o;
@@ -29731,7 +29731,7 @@ int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
     if (how)
         x3 = OPEN_ALWAYS;
 undefined_retry:
-    f_w->file_handle = CreateFile(fixdir(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
+    f_w->file_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
     if (f_w->file_handle == INVALID_HANDLE_VALUE) {
 
         if (how == 3) {
@@ -29775,7 +29775,7 @@ undefined_retry:
         if (GetFileSize_low || GetFileSize_high) {
             CloseHandle(f_w->file_handle);
             x3 = TRUNCATE_EXISTING;
-            f_w->file_handle = CreateFile(fixdir(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
+            f_w->file_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
 
             if (f_w->file_handle == INVALID_HANDLE_VALUE) {
                 gfs_free(i);

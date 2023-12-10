@@ -1311,8 +1311,8 @@ void sub_chain(qbs *f) {
 extensions_ready:
 
     // normalize dir slashes
-    fixdir(f_exe);
-    fixdir(f_bas);
+    filepath_fix_directory(f_exe);
+    filepath_fix_directory(f_bas);
 
     // get path (strip paths from f_exe & f_bas)
     f_path->len = 0;

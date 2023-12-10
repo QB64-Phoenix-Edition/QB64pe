@@ -3,9 +3,10 @@
 
 #include "libqb-common.h"
 
-#include <string.h>
+#include <algorithm>
 
 #include "../../libqb.h"
+#include "filepath.h"
 
 const char *filepath_get_filename(const char *path) {
     const char *fileName;
@@ -75,17 +76,53 @@ bool filepath_has_extension(const char *path, const char *extension) {
 #endif
 }
 
-char *fixdir(qbs *filename) {
-    // note: changes the slashes in a filename to make it compatible with the OS
-    // applied to QB commands: open, bload/bsave, loadfont, loadimage, sndopen/sndplayfile
-    for (auto i = 0; i < filename->len; i++) {
+/// @brief Changes the slashes in a file name / path to make it compatible with the OS
+/// @param path The path to fix (this contents may be changed)
+/// @return Returns the C-string for convenience
+const char *filepath_fix_directory(char *path) {
+    auto len = strlen(path);
+
+    for (size_t i = 0; i < len; i++) {
 #ifdef QB64_WINDOWS
-        if (filename->chr[i] == 47)
-            filename->chr[i] = 92;
+        if (path[i] == '/')
+            path[i] = '\\';
 #else
-        if (filename->chr[i] == 92)
-            filename->chr[i] = 47;
+        if (path[i] == '\\')
+            path[i] = '/';
 #endif
     }
-    return (char *)filename->chr;
+
+    return path;
+}
+
+/// @brief Changes the slashes in a file name / path to make it compatible with the OS
+/// @param path The path to fix (this contents may be changed)
+/// @return Returns the C-string for convenience
+const char *filepath_fix_directory(qbs *path) {
+    for (size_t i = 0; i < path->len; i++) {
+#ifdef QB64_WINDOWS
+        if (path->chr[i] == '/')
+            path->chr[i] = '\\';
+#else
+        if (path->chr[i] == '\\')
+            path->chr[i] = '/';
+#endif
+    }
+
+    return (char *)path->chr;
+}
+
+/// @brief Changes the slashes in a file name / path to make it compatible with the OS
+/// @param path The path to fix (this contents may be changed)
+/// @return Returns the C-string for convenience
+const char *filepath_fix_directory(std::string &path) {
+    std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) {
+#ifdef QB64_WINDOWS
+        return c == '/' ? '\\' : c;
+#else
+        return c == '\\' ? '/' : c;
+#endif
+    });
+
+    return path.c_str();
 }
