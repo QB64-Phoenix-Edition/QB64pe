@@ -96,13 +96,23 @@ enum class KnownDirectory {
 /// @param kD Is a value from KnownDirectory (above)
 /// @param path Is the string that will receive the directory path. The string may be changed
 void GetKnownDirectory(KnownDirectory kD, std::string &path) {
+#ifdef QB64_WINDOWS
     path.resize(PATHNAME_LENGTH_MAX, '\0'); // allocate something that is sufficiently large
+#else
+    auto envVar = getenv("HOME");
+#endif
 
     switch (kD) {
     case KnownDirectory::DESKTOP:
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Desktop");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -110,6 +120,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Documents");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -117,6 +133,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYPICTURES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Pictures");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -124,6 +146,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYMUSIC | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Music");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -131,6 +159,16 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYVIDEO | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Movies");
+            if (!DirectoryExists(path.c_str())) {
+                path.assign(envVar);
+                path.append("/Videos");
+                if (!DirectoryExists(path.c_str()))
+                    path.clear();
+            }
+        }
 #endif
         break;
 
@@ -145,6 +183,16 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
                 path.clear();
         }
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Download");
+            if (!DirectoryExists(path.c_str())) {
+                path.assign(envVar);
+                path.append("/Downloads");
+                if (!DirectoryExists(path.c_str()))
+                    path.clear();
+            }
+        }
 #endif
         break;
 
@@ -152,6 +200,8 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+        }
 #endif
         break;
 
@@ -159,6 +209,8 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+        }
 #endif
         break;
 
@@ -166,6 +218,8 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+        }
 #endif
         break;
 
@@ -173,6 +227,8 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+        }
 #endif
         break;
 
@@ -185,6 +241,8 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
                 path.clear();
         }
 #else
+        if (envVar) {
+        }
 #endif
         break;
 
@@ -192,6 +250,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         GetTempPathA(path.size(), (char *)path.data());
 #else
+        path.assign("/var/tmp");
+        if (!DirectoryExists(path.c_str())) {
+            path.assign("/tmp");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -199,6 +263,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Applications");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -210,6 +280,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #    endif
 #else
+        if (envVar) {
+            path.assign(envVar);
+            path.append("/Applications");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+        }
 #endif
         break;
 
@@ -218,17 +294,22 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
+        if (envVar)
+            path.assign(envVar);
 #endif
     }
 
     // Check if we got anything at all
     if (!strlen(path.c_str())) {
-        path.resize(PATHNAME_LENGTH_MAX, '\0'); // just in case this was shrunk above
 #ifdef QB64_WINDOWS
+        path.resize(PATHNAME_LENGTH_MAX, '\0'); // just in case this was shrunk above
+
         if (FAILED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data())))
             path.assign(".");
 #else
-        path.assign(getenv("HOME") ? getenv("HOME") : ".");
+        envVar = getenv("HOME"); // just in case this contains something other than home
+
+        path.assign(envVar ? envVar : ".");
 #endif
     }
 
