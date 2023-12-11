@@ -25,8 +25,6 @@
 
 #define PATHNAME_LENGTH_MAX (FILENAME_MAX << 4)
 
-#define IS_STRING_EMPTY(_s_) ((_s_) == nullptr || (_s_)[0] == 0)
-
 /// @brief Gets the current working directory
 /// @return A qbs containing the current working directory or an empty string on error
 qbs *func__cwd() {
@@ -375,6 +373,11 @@ void sub_chdir(qbs *str) {
         error(76); // assume errno == ENOENT; path not found
 }
 
+/// @brief Checks if s is an empty string (either NULL or zero length)
+/// @param s A null-terminated string or NULL
+/// @return False is we have a valid string > length 0
+static inline bool IsStringEmpty(const char *s) { return s == nullptr || s[0] == '\0'; }
+
 /// @brief This is a basic pattern matching function used by Dir64()
 /// @param fileSpec The pattern to match
 /// @param fileName The filename to match
@@ -416,6 +419,11 @@ static inline bool Dir64_MatchSpec(const char *fileSpec, const char *fileName) {
     return true;
 }
 
+/// @brief Returns true if fileSpec has any wildcards
+/// @param fileSpec The string to check
+/// @return True if * or ? are found
+static inline bool Dir64_HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
+
 /// @brief An MS BASIC PDS DIR$ style function
 /// @param fileSpec This can be a directory with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
@@ -426,7 +434,7 @@ static const char *Dir64(const char *fileSpec) {
 
     entry[0] = '\0'; // set to an empty string
 
-    if (!IS_STRING_EMPTY(fileSpec)) {
+    if (!IsStringEmpty(fileSpec)) {
         // We got a filespec. Check if we have one already going and if so, close it
         if (pDir) {
             closedir(pDir);
@@ -435,7 +443,7 @@ static const char *Dir64(const char *fileSpec) {
 
         char dirName[PATHNAME_LENGTH_MAX]; // we only need this for opendir()
 
-        if (strchr(fileSpec, '*') || strchr(fileSpec, '?')) {
+        if (Dir64_HasPattern(fileSpec)) {
             // We have a pattern. Check if we have a path in it
             auto p = strrchr(fileSpec, '/'); // try *nix style separator
 #ifdef QB64_WINDOWS
@@ -619,7 +627,7 @@ void sub_files(qbs *str, int32 passed) {
 /// @brief Deletes files from disk
 /// @param str The file(s) to delete (may contain wildcard at the final level)
 void sub_kill(qbs *str) {
-    if (new_error || !str->len)
+    if (new_error)
         return;
 
     static qbs *strz = nullptr;
@@ -629,29 +637,65 @@ void sub_kill(qbs *str) {
 
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 
-    auto entry = Dir64(filepath_fix_directory(strz)); // get the first entry
+    if (Dir64_HasPattern(filepath_fix_directory(strz))) {
+        // We have wildcards. So, we'll deal with it appropriately
+        auto entry = Dir64(reinterpret_cast<char *>(strz->chr)); // get the first entry
 
-    while (!IS_STRING_EMPTY(entry)) {
-        // We'll delete only if it is a file
-        if (FileExists(entry)) {
-            if (remove(entry)) {
-                auto i = errno;
+        // Keep looking through the entries until we file a file matching the spec
+        while (!IsStringEmpty(entry)) {
+            if (FileExists(entry))
+                break;
 
-                if (i == ENOENT) {
-                    error(53);
-                    return;
-                } // file not found
-
-                if (i == EACCES) {
-                    error(75);
-                    return;
-                } // path / file access error
-
-                error(64); // bad file name (assumed)
-            }
+            entry = Dir64(nullptr); // get the next entry
         }
 
-        entry = Dir64(nullptr); // get the next entry
+        // Check if we have exhausted the entries without ever finding a match
+        if (IsStringEmpty(entry)) {
+            // This behavior is per QBasic
+            error(53);
+            return;
+        }
+
+        // Process the remaining matches
+        while (!IsStringEmpty(entry)) {
+            // We'll delete only if it is a file
+            if (FileExists(entry)) {
+                if (remove(entry)) {
+                    auto i = errno;
+
+                    if (i == ENOENT) {
+                        error(53);
+                        return;
+                    } // file not found
+
+                    if (i == EACCES) {
+                        error(75);
+                        return;
+                    } // path / file access error
+
+                    error(64); // bad file name (assumed)
+                }
+            }
+
+            entry = Dir64(nullptr); // get the next entry
+        }
+    } else {
+        // No wildcards
+        if (remove(reinterpret_cast<char *>(strz->chr))) {
+            auto i = errno;
+
+            if (i == ENOENT) {
+                error(53);
+                return;
+            } // file not found
+
+            if (i == EACCES) {
+                error(75);
+                return;
+            } // path / file access error
+
+            error(64); // bad file name (assumed)
+        }
     }
 }
 
