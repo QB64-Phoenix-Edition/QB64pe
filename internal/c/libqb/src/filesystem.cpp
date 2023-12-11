@@ -23,7 +23,7 @@
 #    define PATH_SEPARATOR '/'
 #endif
 
-#define PATHNAME_MAX_LENGTH (FILENAME_MAX << 4)
+#define PATHNAME_LENGTH_MAX (FILENAME_MAX << 4)
 
 #define IS_STRING_EMPTY(_s_) ((_s_) == nullptr || (_s_)[0] == 0)
 
@@ -67,7 +67,7 @@ static inline bool DirectoryExists(const char *path) {
 #else
     struct stat info;
 
-    return (stat(path, &info) == 0 && S_ISDIR(info.st_mode));
+    return stat(path, &info) == 0 && S_ISDIR(info.st_mode);
 #endif
 }
 
@@ -94,7 +94,7 @@ enum class KnownDirectory {
 /// @param kD Is a value from KnownDirectory (above)
 /// @param path Is the string that will receive the directory path. The string may be changed
 void GetKnownDirectory(KnownDirectory kD, std::string &path) {
-    path.resize(PATHNAME_MAX_LENGTH, '\0'); // allocate something that is sufficiently large
+    path.resize(PATHNAME_LENGTH_MAX, '\0'); // allocate something that is sufficiently large
 
     switch (kD) {
     case KnownDirectory::DESKTOP:
@@ -221,7 +221,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 
     // Check if we got anything at all
     if (!strlen(path.c_str())) {
-        path.resize(PATHNAME_MAX_LENGTH, '\0'); // just in case this was shrunk above
+        path.resize(PATHNAME_LENGTH_MAX, '\0'); // just in case this was shrunk above
 #ifdef QB64_WINDOWS
         if (FAILED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data())))
             path.assign(".");
@@ -314,7 +314,22 @@ int32 func__direxists(qbs *path) {
 }
 
 /// @brief Returns true if a file specified exists
-/// @param path The file patn
+/// @param path The file path to check for
+/// @return True if the file exists
+static inline bool FileExists(const char *path) {
+#ifdef QB64_WINDOWS
+    auto x = GetFileAttributesA(path);
+
+    return x != INVALID_FILE_ATTRIBUTES && !(x & FILE_ATTRIBUTE_DIRECTORY);
+#else
+    struct stat info;
+
+    return stat(path, &info) == 0 && S_ISREG(info.st_mode);
+#endif
+}
+
+/// @brief Returns true if a file specified exists
+/// @param path The file path to check for
 /// @return True if the file exists
 int32 func__fileexists(qbs *path) {
     if (new_error)
@@ -327,15 +342,7 @@ int32 func__fileexists(qbs *path) {
 
     qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
 
-#ifdef QB64_WINDOWS
-    auto x = GetFileAttributesA(filepath_fix_directory(strz));
-
-    return (x == INVALID_FILE_ATTRIBUTES || (x & FILE_ATTRIBUTE_DIRECTORY)) ? QB_FALSE : QB_TRUE;
-#else
-    struct stat sb;
-
-    return (stat(filepath_fix_directory(strz), &sb) == 0 && S_ISREG(sb.st_mode)) ? QB_TRUE : QB_FALSE;
-#endif
+    return FileExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
 }
 
 /// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
@@ -375,12 +382,12 @@ void sub_chdir(qbs *str) {
 static inline bool Dir64_MatchSpec(const char *fileSpec, const char *fileName) {
     auto spec = fileSpec;
     auto name = fileName;
-    const char *wildcard = nullptr;
+    const char *any = nullptr;
 
-    while (*spec && *name) {
+    while (*spec || *name) {
         switch (*spec) {
         case '*': // handle wildcard '*' character
-            wildcard = spec;
+            any = spec;
             spec++;
             while (*name && *name != *spec)
                 name++;
@@ -388,35 +395,34 @@ static inline bool Dir64_MatchSpec(const char *fileSpec, const char *fileName) {
 
         case '?': // handle wildcard '?' character
             spec++;
-            name++;
+            if (*name)
+                name++;
             break;
 
         default: // compare non-wildcard characters
             if (*spec != *name) {
-                if (wildcard && *name) {
-                    spec = wildcard;
-                    name = fileName + (name - wildcard) + 1; // reset name to the position after '*'
-                } else {
+                if (any && *name)
+                    spec = any;
+                else
                     return false;
-                }
             } else {
                 spec++;
                 name++;
             }
+            break;
         }
     }
 
-    // If we reached the end of both strings, it's a match
-    return (*spec == '\0' && *name == '\0');
+    return true;
 }
 
-/// @brief A MS BASIC PDS DIR$ style function
+/// @brief An MS BASIC PDS DIR$ style function
 /// @param fileSpec This can be a directory with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
 static const char *Dir64(const char *fileSpec) {
     static DIR *pDir = nullptr;
-    static char pattern[PATHNAME_MAX_LENGTH];
-    static char entry[PATHNAME_MAX_LENGTH];
+    static char pattern[PATHNAME_LENGTH_MAX];
+    static char entry[PATHNAME_LENGTH_MAX];
 
     entry[0] = '\0'; // set to an empty string
 
@@ -427,7 +433,7 @@ static const char *Dir64(const char *fileSpec) {
             pDir = nullptr;
         }
 
-        char dirName[PATHNAME_MAX_LENGTH]; // we only need this for opendir()
+        char dirName[PATHNAME_LENGTH_MAX]; // we only need this for opendir()
 
         if (strchr(fileSpec, '*') || strchr(fileSpec, '?')) {
             // We have a pattern. Check if we have a path in it
@@ -439,21 +445,21 @@ static const char *Dir64(const char *fileSpec) {
 
             if (p) {
                 // Split the path and the filespec
-                strncpy(pattern, p + 1, PATHNAME_MAX_LENGTH);
-                pattern[PATHNAME_MAX_LENGTH - 1] = '\0';
-                auto len = std::min<size_t>((p - fileSpec) + 1, PATHNAME_MAX_LENGTH - 1);
+                strncpy(pattern, p + 1, PATHNAME_LENGTH_MAX);
+                pattern[PATHNAME_LENGTH_MAX - 1] = '\0';
+                auto len = std::min<size_t>((p - fileSpec) + 1, PATHNAME_LENGTH_MAX - 1);
                 memcpy(dirName, fileSpec, len);
                 dirName[len] = '\0';
             } else {
                 // No path. Use the current path
-                strncpy(pattern, fileSpec, PATHNAME_MAX_LENGTH);
-                pattern[PATHNAME_MAX_LENGTH - 1] = '\0';
+                strncpy(pattern, fileSpec, PATHNAME_LENGTH_MAX);
+                pattern[PATHNAME_LENGTH_MAX - 1] = '\0';
                 strcpy(dirName, "./");
             }
         } else {
             // No pattern. We'll just assume it's a directory
-            strncpy(dirName, fileSpec, PATHNAME_MAX_LENGTH);
-            dirName[PATHNAME_MAX_LENGTH - 1] = '\0';
+            strncpy(dirName, fileSpec, PATHNAME_LENGTH_MAX);
+            dirName[PATHNAME_LENGTH_MAX - 1] = '\0';
             strcpy(pattern, "*");
         }
 
@@ -471,8 +477,8 @@ static const char *Dir64(const char *fileSpec) {
             }
 
             if (Dir64_MatchSpec(pattern, pDirent->d_name)) {
-                strncpy(entry, pDirent->d_name, sizeof(entry) - 1);
-                entry[sizeof(entry) - 1] = '\0';
+                strncpy(entry, pDirent->d_name, PATHNAME_LENGTH_MAX);
+                entry[PATHNAME_LENGTH_MAX - 1] = '\0';
 
                 break;
             }
@@ -610,79 +616,43 @@ void sub_files(qbs *str, int32 passed) {
 #endif
 }
 
+/// @brief Deletes files from disk
+/// @param str The file(s) to delete (may contain wildcard at the final level)
 void sub_kill(qbs *str) {
-    // note: file not found returned for non-existant paths too
-    //      file already open returned if access unavailable
-    if (new_error)
+    if (new_error || !str->len)
         return;
-    static int32 i;
-    static qbs *strz = NULL;
+
+    static qbs *strz = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
+
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-#ifdef QB64_WINDOWS
-    static WIN32_FIND_DATAA fd;
-    static HANDLE hFind;
-    static qbs *strpath = NULL;
-    if (!strpath)
-        strpath = qbs_new(0, 0);
-    static qbs *strfullz = NULL;
-    if (!strfullz)
-        strfullz = qbs_new(0, 0);
-    // find path
-    qbs_set(strpath, strz);
-    for (i = strpath->len; i > 0; i--) {
-        if ((strpath->chr[i - 1] == 47) || (strpath->chr[i - 1] == 92)) {
-            strpath->len = i;
-            break;
-        }
-    } // i
-    if (i == 0)
-        strpath->len = 0; // no path specified
-    static int32 count;
-    count = 0;
-    hFind = FindFirstFileA(filepath_fix_directory(strz), &fd);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        error(53);
-        return;
-    } // file not found
-    do {
-        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-            qbs_set(strfullz, qbs_add(strpath, qbs_new_txt_len(fd.cFileName, strlen(fd.cFileName) + 1)));
-            if (!DeleteFileA((char *)strfullz->chr)) {
-                i = GetLastError();
-                if ((i == 5) || (i == 19) || (i == 33) || (i == 32)) {
-                    FindClose(hFind);
-                    error(55);
+
+    auto entry = Dir64(filepath_fix_directory(strz)); // get the first entry
+
+    while (!IS_STRING_EMPTY(entry)) {
+        // We'll delete only if it is a file
+        if (FileExists(entry)) {
+            if (remove(entry)) {
+                auto i = errno;
+
+                if (i == ENOENT) {
+                    error(53);
                     return;
-                } // file already open
-                FindClose(hFind);
-                error(53);
-                return; // file not found
+                } // file not found
+
+                if (i == EACCES) {
+                    error(75);
+                    return;
+                } // path / file access error
+
+                error(64); // bad file name (assumed)
             }
-            count++;
-        } // not a directory
-    } while (FindNextFileA(hFind, &fd));
-    FindClose(hFind);
-    if (!count) {
-        error(53);
-        return;
-    } // file not found
-    return;
-#else
-    if (remove(filepath_fix_directory(strz))) {
-        i = errno;
-        if (i == ENOENT) {
-            error(53);
-            return;
-        } // file not found
-        if (i == EACCES) {
-            error(75);
-            return;
-        }          // path/file access error
-        error(64); // bad file name (assumed)
+        }
+
+        entry = Dir64(nullptr); // get the next entry
     }
-#endif
 }
 
 /// @brief Creates a new directory
