@@ -23,7 +23,11 @@
 #    define PATH_SEPARATOR '/'
 #endif
 
-#define PATHNAME_LENGTH_MAX (FILENAME_MAX << 4)
+#if (FILENAME_MAX > 4096)
+#    define PATHNAME_LENGTH_MAX FILENAME_MAX
+#else
+#    define PATHNAME_LENGTH_MAX 4096
+#endif
 
 /// @brief Gets the current working directory
 /// @return A qbs containing the current working directory or an empty string on error
