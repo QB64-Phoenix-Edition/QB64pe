@@ -12,7 +12,7 @@ struct qbs;
 extern qbs *g_startDir;
 
 qbs *func__cwd();
-qbs *func__dir(qbs *context_in);
+qbs *func__dir(qbs *qbsContext);
 int32_t func__direxists(qbs *path);
 int32_t func__fileexists(qbs *path);
 qbs *func__startdir();

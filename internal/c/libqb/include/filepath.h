@@ -21,4 +21,10 @@ const char *filepath_fix_directory(char *path);
 const char *filepath_fix_directory(qbs *path);
 const char *filepath_fix_directory(std::string &path);
 
+// Splits a file path into directory and file name
+void filepath_split(const std::string &filePath, std::string &directory, std::string &fileName);
+
+// Joins a directory and file name into a file path
+void filepath_join(std::string &filePath, const std::string &directory, const std::string &fileName);
+
 #endif

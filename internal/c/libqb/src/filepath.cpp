@@ -126,3 +126,35 @@ const char *filepath_fix_directory(std::string &path) {
 
     return path.c_str();
 }
+
+// Splits a file path into directory and file name
+void filepath_split(const std::string &filePath, std::string &directory, std::string &fileName) {
+    // Find the last occurrence of either '/' or '\\'
+    size_t lastSlash = filePath.find_last_of("/\\");
+
+    if (lastSlash != std::string::npos) {
+        directory = filePath.substr(0, lastSlash + 1); // include the trailing separator
+        fileName = filePath.substr(lastSlash + 1);
+    } else {
+        // No directory separator found
+        directory.clear();
+        fileName = filePath;
+    }
+}
+
+// Joins a directory and file name into a file path
+void filepath_join(std::string &filePath, const std::string &directory, const std::string &fileName) {
+    // Check if the directory has a trailing separator, and add one if not
+    filePath = directory;
+
+    if (!filePath.empty() && filePath.back() != '/' && filePath.back() != '\\') {
+#ifdef QB64_WINDOWS
+        filePath += '\\';
+#else
+        filePath += '/';
+#endif
+    }
+
+    // Append the file name to the directory
+    filePath += fileName;
+}

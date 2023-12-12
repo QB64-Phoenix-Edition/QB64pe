@@ -29,6 +29,9 @@
 #    define PATHNAME_LENGTH_MAX 4096
 #endif
 
+/// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
+qbs *g_startDir = nullptr;
+
 /// @brief Gets the current working directory
 /// @return A qbs containing the current working directory or an empty string on error
 qbs *func__cwd() {
@@ -320,12 +323,11 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 }
 
 /// @brief Returns common paths such as My Documents, My Pictures, My Music, Desktop
-/// @param context_in Is the directory type
+/// @param qbsContext Is the directory type
 /// @return A qbs containing the directory or an empty string on error
-qbs *func__dir(qbs *context_in) {
-    std::string context, path;
+qbs *func__dir(qbs *qbsContext) {
+    std::string path, context(reinterpret_cast<char *>(qbsContext->chr), qbsContext->len);
 
-    context.assign((const char *)context_in->chr, context_in->len);
     std::transform(context.begin(), context.end(), context.begin(), [](unsigned char c) { return std::toupper(c); });
 
     if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
@@ -382,7 +384,7 @@ qbs *func__dir(qbs *context_in) {
 /// @brief Returns true if a directory specified exists
 /// @param path The directory path
 /// @return True if the directory exists
-int32 func__direxists(qbs *path) {
+int32_t func__direxists(qbs *path) {
     if (new_error)
         return 0;
 
@@ -414,7 +416,7 @@ static inline bool FileExists(const char *path) {
 /// @brief Returns true if a file specified exists
 /// @param path The file path to check for
 /// @return True if the file exists
-int32 func__fileexists(qbs *path) {
+int32_t func__fileexists(qbs *path) {
     if (new_error)
         return 0;
 
@@ -427,9 +429,6 @@ int32 func__fileexists(qbs *path) {
 
     return FileExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
 }
-
-/// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
-qbs *g_startDir = nullptr;
 
 /// @brief Return the startup directory
 /// @return A qbs containing the directory path
@@ -467,7 +466,7 @@ static inline bool IsStringEmpty(const char *s) { return s == nullptr || s[0] ==
 /// @param fileSpec The pattern to match
 /// @param fileName The filename to match
 /// @return True if it is a match, false otherwise
-static inline bool Dir64_MatchSpec(const char *fileSpec, const char *fileName) {
+static inline bool IsPatternMatching(const char *fileSpec, const char *fileName) {
     auto spec = fileSpec;
     auto name = fileName;
     const char *any = nullptr;
@@ -507,12 +506,12 @@ static inline bool Dir64_MatchSpec(const char *fileSpec, const char *fileName) {
 /// @brief Returns true if fileSpec has any wildcards
 /// @param fileSpec The string to check
 /// @return True if * or ? are found
-static inline bool Dir64_HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
+static inline bool HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
 
 /// @brief An MS BASIC PDS DIR$ style function
 /// @param fileSpec This can be a directory with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
-static const char *Dir64(const char *fileSpec) {
+static const char *GetDirectoryEntryName(const char *fileSpec) {
     static DIR *pDir = nullptr;
     static char pattern[PATHNAME_LENGTH_MAX];
     static char entry[PATHNAME_LENGTH_MAX];
@@ -528,7 +527,7 @@ static const char *Dir64(const char *fileSpec) {
 
         char dirName[PATHNAME_LENGTH_MAX]; // we only need this for opendir()
 
-        if (Dir64_HasPattern(fileSpec)) {
+        if (HasPattern(fileSpec)) {
             // We have a pattern. Check if we have a path in it
             auto p = strrchr(fileSpec, '/'); // try *nix style separator
 #ifdef QB64_WINDOWS
@@ -550,7 +549,15 @@ static const char *Dir64(const char *fileSpec) {
                 strcpy(dirName, "./");
             }
         } else {
-            // No pattern. We'll just assume it's a directory
+            // No pattern. Check if this is a file and simply return the name if it exists
+            if (FileExists(fileSpec)) {
+                strncpy(entry, filepath_get_filename(fileSpec), PATHNAME_LENGTH_MAX);
+                entry[PATHNAME_LENGTH_MAX - 1] = '\0';
+
+                return entry;
+            }
+
+            // Else, We'll just assume it's a directory
             strncpy(dirName, fileSpec, PATHNAME_LENGTH_MAX);
             dirName[PATHNAME_LENGTH_MAX - 1] = '\0';
             strcpy(pattern, "*");
@@ -569,7 +576,7 @@ static const char *Dir64(const char *fileSpec) {
                 break;
             }
 
-            if (Dir64_MatchSpec(pattern, pDirent->d_name)) {
+            if (IsPatternMatching(pattern, pDirent->d_name)) {
                 strncpy(entry, pDirent->d_name, PATHNAME_LENGTH_MAX);
                 entry[PATHNAME_LENGTH_MAX - 1] = '\0';
 
@@ -581,11 +588,27 @@ static const char *Dir64(const char *fileSpec) {
     return entry;
 }
 
-void sub_files(qbs *str, int32 passed) {
+/// @brief
+/// @param qbsFileSpec
+/// @param passed
+/// @return
+qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
+    qbs *final;
+
+    // Check if fresh arguments were passed and we need to begin a new session
+    if (passed) {
+        std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
+    }
+}
+
+/// @brief Prints a list of files in the current directory using a file specification
+/// @param str Is a string containing a path (it can include wildcards)
+/// @param passed Optional parameters
+void sub_files(qbs *str, int32_t passed) {
     if (new_error)
         return;
 
-    static int32 i, i2, i3;
+    static int32_t i, i2, i3;
     static qbs *strz = NULL;
     if (!strz)
         strz = qbs_new(0, 0);
@@ -722,65 +745,51 @@ void sub_kill(qbs *str) {
 
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 
-    if (Dir64_HasPattern(filepath_fix_directory(strz))) {
-        // We have wildcards. So, we'll deal with it appropriately
-        auto entry = Dir64(reinterpret_cast<char *>(strz->chr)); // get the first entry
+    std::string directory, fileName;
 
-        // Keep looking through the entries until we file a file matching the spec
-        while (!IsStringEmpty(entry)) {
-            if (FileExists(entry))
-                break;
+    filepath_split(filepath_fix_directory(strz), directory, fileName);       // split the file path
+    auto entry = GetDirectoryEntryName(reinterpret_cast<char *>(strz->chr)); // get the first entry
 
-            entry = Dir64(nullptr); // get the next entry
-        }
+    // Keep looking through the entries until we file a file matching the spec
+    while (!IsStringEmpty(entry)) {
+        filepath_join(fileName, directory, entry);
 
-        // Check if we have exhausted the entries without ever finding a match
-        if (IsStringEmpty(entry)) {
-            // This behavior is per QBasic
-            error(53);
-            return;
-        }
+        if (FileExists(fileName.c_str()))
+            break;
 
-        // Process the remaining matches
-        while (!IsStringEmpty(entry)) {
-            // We'll delete only if it is a file
-            if (FileExists(entry)) {
-                if (remove(entry)) {
-                    auto i = errno;
+        entry = GetDirectoryEntryName(nullptr); // get the next entry
+    }
 
-                    if (i == ENOENT) {
-                        error(53);
-                        return;
-                    } // file not found
+    // Check if we have exhausted the entries without ever finding a match
+    if (IsStringEmpty(entry)) {
+        // This behavior is per QBasic
+        error(53);
+        return;
+    }
 
-                    if (i == EACCES) {
-                        error(75);
-                        return;
-                    } // path / file access error
+    // Process the remaining matches
+    while (!IsStringEmpty(entry)) {
+        // We'll delete only if it is a file
+        if (FileExists(fileName.c_str())) {
+            if (remove(fileName.c_str())) {
+                auto i = errno;
 
-                    error(64); // bad file name (assumed)
-                }
+                if (i == ENOENT) {
+                    error(53);
+                    return;
+                } // file not found
+
+                if (i == EACCES) {
+                    error(75);
+                    return;
+                } // path / file access error
+
+                error(64); // bad file name (assumed)
             }
-
-            entry = Dir64(nullptr); // get the next entry
         }
-    } else {
-        // No wildcards
-        if (remove(reinterpret_cast<char *>(strz->chr))) {
-            auto i = errno;
 
-            if (i == ENOENT) {
-                error(53);
-                return;
-            } // file not found
-
-            if (i == EACCES) {
-                error(75);
-                return;
-            } // path / file access error
-
-            error(64); // bad file name (assumed)
-        }
+        entry = GetDirectoryEntryName(nullptr); // get the next entry
+        filepath_join(fileName, directory, entry);
     }
 }
 
