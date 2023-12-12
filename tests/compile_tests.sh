@@ -141,6 +141,7 @@ do
         if [ "$CI_TESTING" == "y" ] && command -v pulseaudio > /dev/null
         then
             pulseaudio -k
+            sleep .5
             pulseaudio -D
         fi
     else
