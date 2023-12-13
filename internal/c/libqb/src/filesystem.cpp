@@ -164,13 +164,13 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #else
         if (envVar) {
             path.assign(envVar);
+#    ifdef QB64_MACOSX
+            path.append("/Movies");
+#    else
             path.append("/Videos");
-            if (!DirectoryExists(path.c_str())) {
-                path.assign(envVar);
-                path.append("/Movies");
-                if (!DirectoryExists(path.c_str()))
-                    path.clear();
-            }
+#    endif
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
         }
 #endif
         break;
@@ -189,12 +189,8 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         if (envVar) {
             path.assign(envVar);
             path.append("/Downloads");
-            if (!DirectoryExists(path.c_str())) {
-                path.assign(envVar);
-                path.append("/Download");
-                if (!DirectoryExists(path.c_str()))
-                    path.clear();
-            }
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
         }
 #endif
         break;
