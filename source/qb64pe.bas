@@ -105,6 +105,7 @@ CONST DEPENDENCY_ICON = 8: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_SCREENIMAGE = 9: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_DEVICEINPUT = 10: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'removes support for gamepad input if not present
 CONST DEPENDENCY_ZLIB = 11: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 'ZLIB library linkage, if desired, for compression/decompression.
+CONST DEPENDENCY_EMBED = 12: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 '$EMBED stuff, trigger make of internal\temp\embedded.cpp
 
 
 
@@ -143,6 +144,10 @@ DIM SHARED duplicateConstWarning AS _BYTE, warningsissued AS _BYTE
 DIM SHARED emptySCWarning AS _BYTE, maxLineNumber AS LONG
 DIM SHARED ExeIconSet AS LONG, qb64prefix$, qb64prefix_set
 DIM SHARED VersionInfoSet AS _BYTE
+
+'Array to handle $EMBED metacommand:
+REDIM SHARED embedFileList$(3, 10)
+CONST eflLine = 0, eflUsed = 1, eflFile = 2, eflHand = 3 '1st index IDs
 
 'Variables to handle $VERSIONINFO metacommand:
 DIM SHARED viFileVersionNum$, viProductVersionNum$, viCompanyName$
@@ -3413,6 +3418,88 @@ DO
             RETURN
         END IF
 
+        IF LEFT$(a3u$, 6) = "$EMBED" THEN
+            'redim/clear the $EMBED array on each new pass
+            IF linenumber <= eflLastLine THEN eflLastLine = 0: REDIM SHARED embedFileList$(3, 10)
+            '-----
+            a$ = "Expected $EMBED:'filename','handle'"
+            'check for filename
+            bra = INSTR(a3u$, "'"): IF bra = 0 GOTO errmes
+            ket = INSTR(bra + 1, a3u$, "'"): IF ket = 0 GOTO errmes
+            EmbedFile$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
+            IF LEN(EmbedFile$) = 0 GOTO errmes
+            'check for handle
+            bra = INSTR(ket + 1, a3u$, "'"): IF bra = 0 GOTO errmes
+            ket = INSTR(bra + 1, a3u$, "'"): IF ket = 0 GOTO errmes
+            EmbedHandle$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
+            IF LEN(EmbedHandle$) = 0 GOTO errmes
+            'fix layout
+            layout$ = SCase$("$Embed:'") + EmbedFile$ + "','" + EmbedHandle$ + "'" + MID$(a3$, ket + 1)
+            'verify path/file existence
+            EmbedPath$ = ""
+            IF LEFT$(EmbedFile$, 2) = "./" OR LEFT$(EmbedFile$, 2) = ".\" THEN
+                IF NoIDEMode THEN
+                    EmbedPath$ = path.source$
+                    IF LEN(EmbedPath$) > 0 AND RIGHT$(EmbedPath$, 1) <> pathsep$ THEN EmbedPath$ = EmbedPath$ + pathsep$
+                ELSE
+                    IF LEN(ideprogname) THEN EmbedPath$ = idepath$ + pathsep$
+                END IF
+                EmbedFile$ = EmbedPath$ + MID$(EmbedFile$, 3)
+            ELSEIF INSTR(EmbedFile$, "/") OR INSTR(EmbedFile$, "\") THEN
+                FOR i = LEN(EmbedFile$) TO 1 STEP -1
+                    IF MID$(EmbedFile$, i, 1) = "/" OR MID$(EmbedFile$, i, 1) = "\" THEN
+                        EmbedPath$ = LEFT$(EmbedFile$, i)
+                        EmbedFileOnly$ = MID$(EmbedFile$, i + 1)
+                        IF _DIREXISTS(EmbedPath$) = 0 THEN a$ = "File '" + EmbedFileOnly$ + "' not found": GOTO errmes
+                        currentdir$ = _CWD$
+                        CHDIR EmbedPath$
+                        EmbedPath$ = _CWD$
+                        CHDIR currentdir$
+                        EmbedFile$ = EmbedPath$ + pathsep$ + EmbedFileOnly$
+                        EXIT FOR
+                    END IF
+                NEXT
+            END IF
+            IF _FILEEXISTS(EmbedFile$) = 0 THEN a$ = "File '" + EmbedFile$ + "' not found": GOTO errmes
+            'verify handle validity (A-Z/a-z/0-9, begin with letter)
+            i = ASC(EmbedHandle$, 1)
+            IF (i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
+                a$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter": GOTO errmes
+            END IF
+            FOR j = 2 TO LEN(EmbedHandle$)
+                i = ASC(EmbedHandle$, j)
+                IF (i < ASC("0")) OR (i > ASC("9") AND i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
+                    a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use A-Z/a-z/0-9 only": GOTO errmes
+                END IF
+            NEXT j
+            'check for duplicate definitions
+            eflUB = UBOUND(embedFileList$, 2)
+            FOR i = 0 TO eflUB
+                IF embedFileList$(eflFile, i) = EmbedFile$ THEN
+                    a$ = "File '" + EmbedFile$ + "' was already embedded in line"
+                ELSEIF embedFileList$(eflHand, i) = EmbedHandle$ THEN
+                    a$ = "Embed-Handle '" + EmbedHandle$ + "' is already used in line"
+                ELSE
+                    _CONTINUE
+                END IF
+                a$ = a$ + embedFileList$(eflLine, i): GOTO errmes
+            NEXT i
+            'register file for later checks and embedding
+            FOR i = 0 TO eflUB
+                IF embedFileList$(eflFile, i) = "" THEN EXIT FOR
+            NEXT i
+            IF i > eflUB THEN
+                REDIM _PRESERVE embedFileList$(3, eflUB + 10)
+                i = eflUB + 1
+            END IF
+            embedFileList$(eflLine, i) = STR$(linenumber) 'linenumber of this $EMBED
+            embedFileList$(eflUsed, i) = STR$(0) '        'linenumber of 1st referencing _EMBEDDED$()
+            embedFileList$(eflFile, i) = EmbedFile$
+            embedFileList$(eflHand, i) = EmbedHandle$
+            eflLastLine = linenumber
+            GOTO finishednonexec
+        END IF
+
         IF LEFT$(a3u$, 8) = "$EXEICON" THEN
             'Basic syntax check. Multi-platform.
             IF ExeIconSet THEN a$ = "$EXEICON already defined": GOTO errmes
@@ -3547,6 +3634,60 @@ DO
         END IF
 
     END IF 'QB64 Metacommands
+
+    'Check that Embed-Handle is a literal string and follows conventions,
+    'also check if such a handle was defined and mark it as used then.
+    IF INSTR(a3u$, qb64prefix$ + "EMBEDDED$") > 0 THEN
+        spo = INSTR(a3u$, qb64prefix$ + "EMBEDDED$"): ket = 0
+        DO
+            'ignore everything after comment (' or REM)
+            rsq = 0 'quote flag
+            FOR i = ket + 1 TO spo
+                IF ASC(a3u$, i) = 34 THEN rsq = NOT rsq
+                IF ASC(a3u$, i) = 39 AND NOT rsq THEN EXIT DO
+                IF MID$(a3u$, i, 3) = "REM" AND NOT rsq THEN EXIT DO
+            NEXT i
+            'check for handle
+            a$ = "Expected " + qb64prefix$ + "EMBEDDED$(" + AddQuotes$("handle") + ")"
+            bra = INSTR(spo + 1, a3u$, "("): IF bra = 0 GOTO errmes
+            ket = INSTR(bra + 1, a3u$, ")"): IF ket = 0 GOTO errmes
+            EmbedHandle$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
+            IF LEN(EmbedHandle$) = 0 GOTO errmes
+            bra = INSTR(EmbedHandle$, CHR$(34)): ket = INSTR(bra + 1, EmbedHandle$, CHR$(34))
+            IF bra = 0 AND ket = 0 THEN
+                a$ = "Embed-Handle '" + EmbedHandle$ + "' must be a quoted literal string, not a variable": GOTO errmes
+            ELSEIF bra = 0 OR ket = 0 THEN
+                'seems quotes are comming (at least one is already there),
+                'so simply keep the 'Expected...' message and error out directly
+                GOTO errmes
+            END IF
+            EmbedHandle$ = MID$(EmbedHandle$, bra + 1, ket - bra - 1)
+            IF LEN(EmbedHandle$) = 0 GOTO errmes 'if we come to this point, the 'Expected...' message is still valid
+            'verify handle validity (A-Z/a-z/0-9, begin with letter)
+            i = ASC(EmbedHandle$, 1)
+            IF (i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
+                a$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter": GOTO errmes
+            END IF
+            FOR j = 2 TO LEN(EmbedHandle$)
+                i = ASC(EmbedHandle$, j)
+                IF (i < ASC("0")) OR (i > ASC("9") AND i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
+                    a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use A-Z/a-z/0-9 only": GOTO errmes
+                END IF
+            NEXT j
+            'check if a respective file + handle was embedded
+            eflUB = UBOUND(embedFileList$, 2)
+            FOR i = 0 TO eflUB
+                IF embedFileList$(eflHand, i) = EmbedHandle$ THEN EXIT FOR
+            NEXT i
+            IF i > eflUB THEN
+                a$ = "Embed-Handle '" + EmbedHandle$ + "' is undefined (check your $EMBED lines)": GOTO errmes
+            ELSE
+                embedFileList$(eflUsed, i) = STR$(linenumber) 'mark respective handle as used
+            END IF
+            'check for further occurrences
+            spo = INSTR(spo + 2, a3u$, qb64prefix$ + "EMBEDDED$")
+        LOOP WHILE spo > 0
+    END IF
 
     IF ExecLevel(ExecCounter) THEN
         layoutdone = 0
@@ -12553,6 +12694,49 @@ END IF
 'actions are performed on the disk based files
 WriteBuffers ""
 
+'=== BEGIN: embedding files ===
+eflFF = FREEFILE
+OPEN "O", #eflFF, tmpdir$ + "embedded.cpp"
+'write required header stuff
+PRINT #eflFF, "#include <stdint.h>"
+PRINT #eflFF, "#include <string.h>"
+PRINT #eflFF, "#include "; AddQuotes$("..\c\libqb.h")
+PRINT #eflFF, "#include "; AddQuotes$("..\c\libqb\include\compression.h")
+PRINT #eflFF, ""
+CLOSE #eflFF
+'append files converted into arrays
+'> embed only those $EMBED files, which are referenced by at least
+'  one _EMBEDDED$() call to avoid unnecessary bloat
+'> adjust dependency settings according to the process
+eflUB = UBOUND(embedFileList$, 2)
+FOR i = 0 TO eflUB
+    IF embedFileList$(eflFile, i) <> "" AND VAL(embedFileList$(eflUsed, i)) > 0 THEN
+        IF ConvertFileToCArray%(embedFileList$(eflFile, i), embedFileList$(eflHand, i)) THEN
+            SetDependency DEPENDENCY_ZLIB
+        END IF
+        SetDependency DEPENDENCY_EMBED
+    END IF
+NEXT i
+'-----
+eflFF = FREEFILE
+OPEN "A", #eflFF, tmpdir$ + "embedded.cpp"
+'append the internal retrieval function for _EMBEDDED$()
+PRINT #eflFF, "qbs *func__embedded(qbs *handle) {"
+PRINT #eflFF, "    qbs *result = qbs_new_txt("; MKI$(&H2222); ");"
+PRINT #eflFF, ""
+FOR i = 0 TO eflUB
+    IF embedFileList$(eflFile, i) <> "" AND VAL(embedFileList$(eflUsed, i)) > 0 THEN
+        PRINT #eflFF, "    result = GetArrayData_"; embedFileList$(eflHand, i); "(handle);"
+        PRINT #eflFF, "    if (result -> len) {return result;}"
+    END IF
+NEXT i
+PRINT #eflFF, ""
+PRINT #eflFF, "    return result;"
+PRINT #eflFF, "}"
+PRINT #eflFF, ""
+CLOSE #eflFF
+'=== END: embedding files ===
+
 IF MidiSoundFontSet THEN
     linenumber = MidiSoundFontSet
     wholeline = MidiSoundFontLine$
@@ -12595,6 +12779,7 @@ IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN makedeps$ = makedeps$ + " DEP_FONT=y"
 IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
 IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
+IF DEPENDENCY(DEPENDENCY_EMBED) THEN makedeps$ = makedeps$ + " DEP_EMBED=y"
 IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
