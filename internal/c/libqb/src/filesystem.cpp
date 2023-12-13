@@ -769,7 +769,7 @@ void sub_kill(qbs *str) {
     }
 
     // Process all matches
-    while (!IsStringEmpty(entry)) {
+    do {
         // We'll delete only if it is a file
         if (FileExists(fileName.c_str())) {
             if (remove(fileName.c_str())) {
@@ -791,7 +791,7 @@ void sub_kill(qbs *str) {
 
         entry = GetDirectoryEntryName(nullptr); // get the next entry
         filepath_join(fileName, directory, entry);
-    }
+    } while (!IsStringEmpty(entry));
 }
 
 /// @brief Creates a new directory
