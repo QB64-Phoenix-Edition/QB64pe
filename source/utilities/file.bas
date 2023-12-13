@@ -108,7 +108,7 @@ FUNCTION ConvertFileToCArray% (file$, handle$)
     '--- make a read function ---
     PRINT #dff%, "qbs *GetArrayData_"; handle$; "(qbs *handle)"
     PRINT #dff%, "{"
-    PRINT #dff%, "    if (!qbs_equal(handle, qbs_new_txt("; AddQuotes$(handle$); "))) {return qbs_new_txt("; MKI$(&H2222); ");}"
+    PRINT #dff%, "    if (!qbs_equal(handle, qbs_new_txt("; CHR$(34); handle$; CHR$(34); "))) {return qbs_new_txt("; MKI$(&H2222); ");}"
     PRINT #dff%, ""
     PRINT #dff%, "    qbs  *data = qbs_new("; LTRIM$(STR$(fl&)); ", 1);"
     PRINT #dff%, "    void *buff = data -> chr;"

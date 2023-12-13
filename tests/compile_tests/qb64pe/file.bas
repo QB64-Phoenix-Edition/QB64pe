@@ -38,5 +38,4 @@ Next
 
 System
 
-'$include:'../../../source/utilities/string.bas'
 '$include:'../../../source/utilities/file.bas'
