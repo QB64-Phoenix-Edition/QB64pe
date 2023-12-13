@@ -176,6 +176,7 @@ endif
 	DEP_ICON_RC := y
 	DEP_SOCKETS := y
 	DEP_HTTP := y
+	DEP_CONSOLE := y
 endif
 
 include $(PATH_INTERNAL_C)/libqb/build.mk
