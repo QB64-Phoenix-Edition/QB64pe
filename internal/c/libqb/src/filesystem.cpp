@@ -164,10 +164,10 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #else
         if (envVar) {
             path.assign(envVar);
-            path.append("/Movies");
+            path.append("/Videos");
             if (!DirectoryExists(path.c_str())) {
                 path.assign(envVar);
-                path.append("/Videos");
+                path.append("/Movies");
                 if (!DirectoryExists(path.c_str()))
                     path.clear();
             }
@@ -188,10 +188,10 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #else
         if (envVar) {
             path.assign(envVar);
-            path.append("/Download");
+            path.append("/Downloads");
             if (!DirectoryExists(path.c_str())) {
                 path.assign(envVar);
-                path.append("/Downloads");
+                path.append("/Download");
                 if (!DirectoryExists(path.c_str()))
                     path.clear();
             }
@@ -462,7 +462,7 @@ void sub_chdir(qbs *str) {
 /// @return False is we have a valid string > length 0
 static inline bool IsStringEmpty(const char *s) { return s == nullptr || s[0] == '\0'; }
 
-/// @brief This is a basic pattern matching function used by Dir64()
+/// @brief This is a basic pattern matching function used by GetDirectoryEntryName()
 /// @param fileSpec The pattern to match
 /// @param fileName The filename to match
 /// @return True if it is a match, false otherwise
@@ -509,7 +509,7 @@ static inline bool IsPatternMatching(const char *fileSpec, const char *fileName)
 static inline bool HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
 
 /// @brief An MS BASIC PDS DIR$ style function
-/// @param fileSpec This can be a directory with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
+/// @param fileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
 static const char *GetDirectoryEntryName(const char *fileSpec) {
     static DIR *pDir = nullptr;
@@ -609,7 +609,8 @@ void sub_files(qbs *str, int32_t passed) {
         return;
 
     static int32_t i, i2, i3;
-    static qbs *strz = NULL;
+    static qbs *strz = nullptr;
+
     if (!strz)
         strz = qbs_new(0, 0);
 
@@ -750,7 +751,7 @@ void sub_kill(qbs *str) {
     filepath_split(filepath_fix_directory(strz), directory, fileName);       // split the file path
     auto entry = GetDirectoryEntryName(reinterpret_cast<char *>(strz->chr)); // get the first entry
 
-    // Keep looking through the entries until we file a file matching the spec
+    // Keep looking through the entries until we file a file
     while (!IsStringEmpty(entry)) {
         filepath_join(fileName, directory, entry);
 
@@ -760,14 +761,14 @@ void sub_kill(qbs *str) {
         entry = GetDirectoryEntryName(nullptr); // get the next entry
     }
 
-    // Check if we have exhausted the entries without ever finding a match
+    // Check if we have exhausted the entries without ever finding a file
     if (IsStringEmpty(entry)) {
-        // This behavior is per QBasic
+        // This behavior is per QBasic 1.1
         error(53);
         return;
     }
 
-    // Process the remaining matches
+    // Process all matches
     while (!IsStringEmpty(entry)) {
         // We'll delete only if it is a file
         if (FileExists(fileName.c_str())) {
