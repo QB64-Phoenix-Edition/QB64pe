@@ -21,6 +21,8 @@
 // We need 'qbs' and 'image' structs stuff from here
 // This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../../libqb.h"
+#include "filepath.h"
+#include <cctype>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -178,11 +180,48 @@ static uint32_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, 
 /// @param isVG Out: vector graphics? Always set to true
 /// @return A pointer to the raw pixel data in RGBA format or NULL on failure
 static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
-    auto image = nsvgParseFromFile(fileName, "px", 96.0f);
-    if (!image)
+    if (!filepath_has_extension(fileName, "svg"))
         return nullptr;
 
-    return image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    auto fp = fopen(fileName, "rb");
+    if (!fp)
+        return nullptr;
+
+    fseek(fp, 0, SEEK_END);
+    auto size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    auto svgString = (char *)malloc(size + 1);
+    if (!svgString) {
+        fclose(fp);
+        return nullptr;
+    }
+
+    if (fread(svgString, 1, size, fp) != size) {
+        free(svgString);
+        fclose(fp);
+        return nullptr;
+    }
+    svgString[size] = '\0'; // must be null terminated
+
+    fclose(fp);
+
+    // Check if it has a valid SVG start tag
+    if (!strstr(svgString, "<svg")) {
+        free(svgString);
+        return nullptr;
+    }
+
+    auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
+    if (!image) {
+        free(svgString);
+        return nullptr;
+    }
+
+    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG); // this is where everything else is freed
+    free(svgString);
+
+    return pixels;
 }
 
 /// @brief Loads an SVG image file from memory
@@ -200,7 +239,13 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
         return nullptr;
 
     memcpy(svgString, buffer, size);
-    svgString[size] = '\0';
+    svgString[size] = '\0'; // must be null terminated
+
+    // Check if it has a valid SVG start tag
+    if (!strstr(svgString, "<svg")) {
+        free(svgString);
+        return nullptr;
+    }
 
     auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
     if (!image) {
@@ -208,7 +253,7 @@ static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, 
         return nullptr;
     }
 
-    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG);
+    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG); // this is where everything else is freed
     free(svgString);
 
     return pixels;
