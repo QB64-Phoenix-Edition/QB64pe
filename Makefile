@@ -177,6 +177,7 @@ endif
 	DEP_SOCKETS := y
 	DEP_HTTP := y
 	DEP_CONSOLE := y
+	DEP_ZLIB := y
 endif
 
 include $(PATH_INTERNAL_C)/libqb/build.mk
