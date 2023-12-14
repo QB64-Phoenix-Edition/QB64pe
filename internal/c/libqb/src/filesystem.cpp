@@ -200,6 +200,10 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
+            path.assign(envVar);
+            path.append("/.config");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
         }
 #endif
         break;
@@ -209,6 +213,10 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
+            path.assign(envVar);
+            path.append("/.local/share");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
         }
 #endif
         break;
@@ -218,6 +226,10 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
+            path.assign(envVar);
+            path.append("/.local/share");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
         }
 #endif
         break;
@@ -227,6 +239,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
+            path.assign("/usr/share/fonts");
+            if (!DirectoryExists(path.c_str())) {
+                path.assign("/usr/local/share/fonts");
+                if (!DirectoryExists(path.c_str()))
+                    path.clear();
+            }
         }
 #endif
         break;
@@ -241,6 +259,14 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         }
 #else
         if (envVar) {
+            path.assign(envVar);
+            path.append("/.local/share/fonts");
+            if (!DirectoryExists(path.c_str())) {
+                path.assign(envVar);
+                path.append("/.fonts");
+                if (!DirectoryExists(path.c_str()))
+                    path.clear();
+            }
         }
 #endif
         break;
@@ -263,8 +289,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
+#    ifdef QB64_MACOSX
             path.assign(envVar);
             path.append("/Applications");
+#    else
+            path.assign("/opt");
+#    endif
             if (!DirectoryExists(path.c_str()))
                 path.clear();
         }
@@ -280,8 +310,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #    endif
 #else
         if (envVar) {
+#    ifdef QB64_MACOSX
             path.assign(envVar);
             path.append("/Applications");
+#    else
+            path.assign("/opt");
+#    endif
             if (!DirectoryExists(path.c_str()))
                 path.clear();
         }
@@ -326,6 +360,7 @@ qbs *func__dir(qbs *qbsContext) {
 
     std::transform(context.begin(), context.end(), context.begin(), [](unsigned char c) { return std::toupper(c); });
 
+    // The following is largely unchanged from what we previously had
     if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
         GetKnownDirectory(KnownDirectory::DOCUMENTS, path);
     } else if (context.compare("MUSIC") == 0 || context.compare("AUDIO") == 0 || context.compare("SOUND") == 0 || context.compare("SOUNDS") == 0 ||
