@@ -47,7 +47,7 @@ FUNCTION ConvertFileToCArray% (file$, handle$)
     CLOSE #sff%
     '--- try to compress ---
     compdata$ = _DEFLATE$(filedata$)
-    IF LEN(compdata$) < LEN(filedata$) THEN
+    IF LEN(compdata$) < (LEN(filedata$) * 0.8) THEN
         tmpfile$ = tmpdir$ + "embed.bin"
         OPEN "O", #sff%, tmpfile$: CLOSE #sff%
         OPEN "B", #sff%, tmpfile$: PUT #sff%, , compdata$: CLOSE #sff%
@@ -106,12 +106,10 @@ FUNCTION ConvertFileToCArray% (file$, handle$)
         PRINT #dff%, ""
     END IF
     '--- make a read function ---
-    PRINT #dff%, "qbs *GetArrayData_"; handle$; "(qbs *handle)"
+    PRINT #dff%, "qbs *GetArrayData_"; handle$; "(void)"
     PRINT #dff%, "{"
-    PRINT #dff%, "    if (!qbs_equal(handle, qbs_new_txt("; CHR$(34); handle$; CHR$(34); "))) {return qbs_new_txt("; MKI$(&H2222); ");}"
-    PRINT #dff%, ""
     PRINT #dff%, "    qbs  *data = qbs_new("; LTRIM$(STR$(fl&)); ", 1);"
-    PRINT #dff%, "    void *buff = data -> chr;"
+    PRINT #dff%, "    char *buff = (char*) data -> chr;"
     PRINT #dff%, ""
     FOR vc& = 0 TO cntV&
         PRINT #dff%, "    memcpy(buff, &"; handle$; "L"; LTRIM$(STR$(vc&)); "[1], "; handle$; "L"; LTRIM$(STR$(vc&)); "[0] << 2);"

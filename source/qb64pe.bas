@@ -1650,6 +1650,8 @@ MidiSoundFontLine$ = ""
 ' If MidiSoundFont$ is blank, then the default is used
 MidiSoundFont$ = ""
 
+' Reset embedded files tracking list
+REDIM SHARED embedFileList$(3, 10)
 
 
 
@@ -3419,9 +3421,6 @@ DO
         END IF
 
         IF LEFT$(a3u$, 6) = "$EMBED" THEN
-            'redim/clear the $EMBED array on each new pass
-            IF linenumber <= eflLastLine THEN eflLastLine = 0: REDIM SHARED embedFileList$(3, 10)
-            '-----
             a$ = "Expected $EMBED:'filename','handle'"
             'check for filename
             bra = INSTR(a3u$, "'"): IF bra = 0 GOTO errmes
@@ -3496,7 +3495,6 @@ DO
             embedFileList$(eflUsed, i) = STR$(0) '        'linenumber of 1st referencing _EMBEDDED$()
             embedFileList$(eflFile, i) = EmbedFile$
             embedFileList$(eflHand, i) = EmbedHandle$
-            eflLastLine = linenumber
             GOTO finishednonexec
         END IF
 
@@ -12721,17 +12719,14 @@ NEXT i
 eflFF = FREEFILE
 OPEN "A", #eflFF, tmpdir$ + "embedded.cpp"
 'append the internal retrieval function for _EMBEDDED$()
-PRINT #eflFF, "qbs *func__embedded(qbs *handle) {"
-PRINT #eflFF, "    qbs *result = qbs_new_txt("; MKI$(&H2222); ");"
-PRINT #eflFF, ""
+PRINT #eflFF, "qbs *func__embedded(qbs *handle)"
+PRINT #eflFF, "{"
 FOR i = 0 TO eflUB
     IF embedFileList$(eflFile, i) <> "" AND VAL(embedFileList$(eflUsed, i)) > 0 THEN
-        PRINT #eflFF, "    result = GetArrayData_"; embedFileList$(eflHand, i); "(handle);"
-        PRINT #eflFF, "    if (result -> len) {return result;}"
+        PRINT #eflFF, "    if (qbs_equal(handle, qbs_new_txt("; AddQuotes$(embedFileList$(eflHand, i)); "))) {return GetArrayData_"; embedFileList$(eflHand, i); "();}"
     END IF
 NEXT i
-PRINT #eflFF, ""
-PRINT #eflFF, "    return result;"
+PRINT #eflFF, "    return qbs_new_txt("; MKI$(&H2222); ");"
 PRINT #eflFF, "}"
 PRINT #eflFF, ""
 CLOSE #eflFF
