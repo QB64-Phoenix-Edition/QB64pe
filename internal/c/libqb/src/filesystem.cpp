@@ -106,7 +106,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
 
     switch (kD) {
-    case KnownDirectory::DESKTOP:
+    case KnownDirectory::DESKTOP: // %USERPROFILE%\OneDrive\Desktop
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -119,7 +119,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::DOCUMENTS:
+    case KnownDirectory::DOCUMENTS: // %USERPROFILE%\OneDrive\Documents
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -132,7 +132,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::PICTURES:
+    case KnownDirectory::PICTURES: // %USERPROFILE%\OneDrive\Pictures
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYPICTURES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -145,7 +145,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::MUSIC:
+    case KnownDirectory::MUSIC: // %USERPROFILE%\Music
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYMUSIC | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -158,7 +158,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::VIDEOS:
+    case KnownDirectory::VIDEOS: // %USERPROFILE%\Videos
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYVIDEO | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -175,7 +175,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::DOWNLOAD:
+    case KnownDirectory::DOWNLOAD: // %USERPROFILE%\Downloads
 #ifdef QB64_WINDOWS
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
             // XP & SHGetFolderPathA do not support the concept of a Downloads folder, however it can be constructed
@@ -195,7 +195,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::APP_DATA:
+    case KnownDirectory::APP_DATA: // %USERPROFILE%\AppData\Roaming
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -204,7 +204,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::LOCAL_APP_DATA:
+    case KnownDirectory::LOCAL_APP_DATA: // %USERPROFILE%\AppData\Local
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -213,7 +213,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::PROGRAM_DATA:
+    case KnownDirectory::PROGRAM_DATA: // %SystemDrive%\ProgramData
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -222,7 +222,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::SYSTEM_FONTS:
+    case KnownDirectory::SYSTEM_FONTS: // %SystemRoot%\Fonts
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -231,7 +231,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::USER_FONTS:
+    case KnownDirectory::USER_FONTS: // %USERPROFILE%\AppData\Local\Microsoft\Windows\Fonts
 #ifdef QB64_WINDOWS
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
             path.resize(strlen(path.c_str()));
@@ -245,7 +245,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::TEMP:
+    case KnownDirectory::TEMP: // %USERPROFILE%\AppData\Local\Temp
 #ifdef QB64_WINDOWS
         GetTempPathA(path.size(), (char *)path.data());
 #else
@@ -258,7 +258,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::PROGRAM_FILES:
+    case KnownDirectory::PROGRAM_FILES: // %SystemDrive%\Program Files
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -271,7 +271,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::PROGRAM_FILES_32:
+    case KnownDirectory::PROGRAM_FILES_32: // %SystemDrive%\Program Files (x86)
 #ifdef QB64_WINDOWS
 #    ifdef _WIN64
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86 | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
@@ -288,7 +288,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::HOME:
+    case KnownDirectory::HOME: // %USERPROFILE%
     default:
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
