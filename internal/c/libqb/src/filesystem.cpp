@@ -630,6 +630,7 @@ static const char *GetDirectoryEntryName(const char *fileSpec) {
 /// @return Retuns a qbs with the directory entry name or an empty string if there are no more entries
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     const char *entry;
+    qbs *final;
 
     // Check if fresh arguments were passed and we need to begin a new session
     if (passed) {
@@ -639,15 +640,16 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
 
         if (IsStringEmpty(entry)) {
             // This is per MS BASIC PDS 7.1 and VBDOS 1.0 behavior
+            final = qbs_new(0, 1);
             error(53);
-            return;
+            return final;
         }
     } else {
         entry = GetDirectoryEntryName(nullptr);
     }
 
     auto size = strlen(entry);
-    auto final = qbs_new(size, 1);
+    final = qbs_new(size, 1);
     memcpy(final->chr, entry, size);
 
     return final;
