@@ -624,17 +624,33 @@ static const char *GetDirectoryEntryName(const char *fileSpec) {
     return entry;
 }
 
-/// @brief
-/// @param qbsFileSpec
-/// @param passed
-/// @return
+/// @brief This mimics MS BASIC PDS 7.1 & VBDOS 1.0 DIR$() function
+/// @param qbsFileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
+/// @param passed Flags for optional parameters
+/// @return Retuns a qbs with the directory entry name or an empty string if there are no more entries
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
-    qbs *final;
+    const char *entry;
 
     // Check if fresh arguments were passed and we need to begin a new session
     if (passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
+
+        entry = GetDirectoryEntryName(fileSpec.c_str());
+
+        if (IsStringEmpty(entry)) {
+            // This is per MS BASIC PDS 7.1 and VBDOS 1.0 behavior
+            error(53);
+            return;
+        }
+    } else {
+        entry = GetDirectoryEntryName(nullptr);
     }
+
+    auto size = strlen(entry);
+    auto final = qbs_new(size, 1);
+    memcpy(final->chr, entry, size);
+
+    return final;
 }
 
 /// @brief Prints a list of files in the current directory using a file specification
