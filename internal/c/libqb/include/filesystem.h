@@ -17,6 +17,7 @@ int32_t func__direxists(qbs *path);
 int32_t func__fileexists(qbs *path);
 qbs *func__startdir();
 void sub_chdir(qbs *str);
+qbs *func__files(qbs *qbsFileSpec, int32_t passed);
 void sub_files(qbs *str, int32_t passed);
 void sub_kill(qbs *str);
 void sub_mkdir(qbs *str);

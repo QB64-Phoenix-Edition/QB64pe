@@ -649,8 +649,17 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     }
 
     auto size = strlen(entry);
-    final = qbs_new(size, 1);
-    memcpy(final->chr, entry, size);
+
+    // TODO: Need to join the base directory here!
+    if (DirectoryExists(entry)) {
+        // Add a trailing slash if it is a directory
+        final = qbs_new(size + 1, 1);
+        memcpy(final->chr, entry, size);
+        final->chr[size] = PATH_SEPARATOR;
+    } else {
+        final = qbs_new(size, 1);
+        memcpy(final->chr, entry, size);
+    }
 
     return final;
 }
@@ -674,6 +683,7 @@ void sub_files(qbs *str, int32_t passed) {
         qbs_set(strz, qbs_new_txt_len("\0", 1));
     }
 
+// TODO: Cleanup this mess. Eww.
 #ifdef QB64_WINDOWS
     static WIN32_FIND_DATAA fd;
     static HANDLE hFind;

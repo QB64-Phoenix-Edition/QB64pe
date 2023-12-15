@@ -626,6 +626,18 @@ id.hr_syntax = "FILES fileSpec$"
 regid
 
 clearid
+id.n = qb64prefix$ + "Files"
+id.musthave = "$"
+id.subfunc = 1
+id.callname = "func__files"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.specialformat = "[?]"
+id.ret = STRINGTYPE - ISPOINTER
+id.hr_syntax = "_FILES$([fileSpec$])"
+regid
+
+clearid
 id.n = qb64prefix$ + "PrintImage": id.Dependency = DEPENDENCY_PRINTER
 id.subfunc = 2
 id.callname = "sub__printimage"
