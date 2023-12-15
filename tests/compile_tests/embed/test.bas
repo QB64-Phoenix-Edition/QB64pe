@@ -4,7 +4,8 @@ $CONSOLE
 $SCREENHIDE
 _DEST _CONSOLE
 
-PRINT _EMBEDDED$("test");
+dat$ = _EMBEDDED$("test")
+PRINT LEFT$(dat$, LEN(dat$) - 2);
 
 SYSTEM
 
