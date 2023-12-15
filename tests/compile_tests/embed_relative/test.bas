@@ -1,4 +1,4 @@
-$EMBED:'tests/compile_tests/embed/test.output','test'
+$EMBED:'./test.output','test'
 
 $CONSOLE
 $SCREENHIDE
