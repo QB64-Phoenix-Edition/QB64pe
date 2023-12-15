@@ -239,12 +239,21 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
+#    ifdef QB64_MACOSX
+            path.assign("/System/Library/Fonts");
+            if (!DirectoryExists(path.c_str())) {
+                path.assign("/Library/Fonts");
+                if (!DirectoryExists(path.c_str()))
+                    path.clear();
+            }
+#    else
             path.assign("/usr/share/fonts");
             if (!DirectoryExists(path.c_str())) {
                 path.assign("/usr/local/share/fonts");
                 if (!DirectoryExists(path.c_str()))
                     path.clear();
             }
+#    endif
         }
 #endif
         break;
@@ -260,6 +269,11 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #else
         if (envVar) {
             path.assign(envVar);
+#    ifdef QB64_MACOSX
+            path.append("/Library/Fonts");
+            if (!DirectoryExists(path.c_str()))
+                path.clear();
+#    else
             path.append("/.local/share/fonts");
             if (!DirectoryExists(path.c_str())) {
                 path.assign(envVar);
@@ -267,6 +281,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
                 if (!DirectoryExists(path.c_str()))
                     path.clear();
             }
+#    endif
         }
 #endif
         break;
@@ -289,12 +304,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
-#    ifdef QB64_MACOSX
-            path.assign(envVar);
-            path.append("/Applications");
-#    else
             path.assign("/opt");
-#    endif
             if (!DirectoryExists(path.c_str()))
                 path.clear();
         }
@@ -310,12 +320,7 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #    endif
 #else
         if (envVar) {
-#    ifdef QB64_MACOSX
-            path.assign(envVar);
-            path.append("/Applications");
-#    else
             path.assign("/opt");
-#    endif
             if (!DirectoryExists(path.c_str()))
                 path.clear();
         }
