@@ -3637,23 +3637,34 @@ DO
     'also check if such a handle was defined and mark it as used then.
     IF INSTR(a3u$, qb64prefix$ + "EMBEDDED$") > 0 THEN
         spo = INSTR(a3u$, qb64prefix$ + "EMBEDDED$"): ket = 0
+        ppo = INSTR(spo + 1, a3u$, "("): IF ppo = 0 THEN ppo = LEN(a3u$) + 1
+        cle = LEN(qb64prefix$ + "EMBEDDED$")
+        gap$ = _TRIM$(MID$(a3u$, spo + cle, ppo - spo - cle))
+        IF gap$ <> "" GOTO skipEflCheck 'not a function call
         DO
-            'ignore everything after comment (' or REM)
+            'ignore everything in strings or after comment (' or REM)
             rsq = 0 'quote flag
             FOR i = ket + 1 TO spo
                 IF ASC(a3u$, i) = 34 THEN rsq = NOT rsq
                 IF ASC(a3u$, i) = 39 AND NOT rsq THEN EXIT DO
-                IF MID$(a3u$, i, 3) = "REM" AND NOT rsq THEN EXIT DO
+                IF MID$(a3u$, i, 3) = "REM" AND NOT rsq THEN
+                    IF i > 1 THEN rsf = ASC(a3u$, i - 1): ELSE rsf = 32 'front char
+                    rsr = ASC(a3u$, i + 3) 'rear char
+                    IF (rsf = 9 OR rsf = 32 OR rsf = 58) AND (rsr = 9 OR rsr = 32) THEN EXIT DO 'is real REM
+                END IF
             NEXT i
+            IF rsq THEN EXIT DO 'inside a quoted string
             'check for handle
             a$ = "Expected " + qb64prefix$ + "EMBEDDED$(" + AddQuotes$("handle") + ")"
             bra = INSTR(spo + 1, a3u$, "("): IF bra = 0 GOTO errmes
             ket = INSTR(bra + 1, a3u$, ")"): IF ket = 0 GOTO errmes
             EmbedHandle$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
             IF LEN(EmbedHandle$) = 0 GOTO errmes
-            bra = INSTR(EmbedHandle$, CHR$(34)): ket = INSTR(bra + 1, EmbedHandle$, CHR$(34))
+            bra = INSTR(EmbedHandle$, CHR$(34)): ket = _INSTRREV(EmbedHandle$, CHR$(34))
+            IF bra > 1 OR ket < LEN(EmbedHandle$) THEN bra = 0: ket = 0 'disallow anything before/after
+            IF bra = ket THEN ket = 0 'is one quote only
             IF bra = 0 AND ket = 0 THEN
-                a$ = "Embed-Handle '" + EmbedHandle$ + "' must be a quoted literal string, not a variable": GOTO errmes
+                a$ = "Embed-Handle '" + EmbedHandle$ + "' must be a single literal string in quotes, not a variable": GOTO errmes
             ELSEIF bra = 0 OR ket = 0 THEN
                 'seems quotes are comming (at least one is already there),
                 'so simply keep the 'Expected...' message and error out directly
@@ -3685,6 +3696,7 @@ DO
             'check for further occurrences
             spo = INSTR(spo + 2, a3u$, qb64prefix$ + "EMBEDDED$")
         LOOP WHILE spo > 0
+        skipEflCheck:
     END IF
 
     IF ExecLevel(ExecCounter) THEN
