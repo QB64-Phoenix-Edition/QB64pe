@@ -177,6 +177,7 @@ endif
 	DEP_SOCKETS := y
 	DEP_HTTP := y
 	DEP_CONSOLE := y
+	DEP_ZLIB := y
 endif
 
 include $(PATH_INTERNAL_C)/libqb/build.mk
@@ -364,6 +365,10 @@ ifneq ($(filter y,$(DEP_DATA)),)
 	EXE_OBJS += $(PATH_INTERNAL_TEMP)/data.o
 endif
 
+ifneq ($(filter y,$(DEP_EMBED)),)
+	EXE_OBJS += $(PATH_INTERNAL_TEMP)/embedded.o
+endif
+
 
 QBLIB := $(PATH_INTERNAL_C)/$(QBLIB_NAME).o
 
@@ -389,6 +394,9 @@ endif
 
 $(PATH_INTERNAL_TEMP)/data.o: $(PATH_INTERNAL_TEMP)/data.bin
 	$(OBJCOPY) -Ibinary $(OBJCOPY_FLAGS) $< $@
+
+$(PATH_INTERNAL_TEMP)/embedded.o: $(PATH_INTERNAL_TEMP)/embedded.cpp
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 # Clean all files out of ./internal/temp except for temp.bin
 CLEAN_LIST += $(wildcard $(PATH_INTERNAL_TEMP)/*)
