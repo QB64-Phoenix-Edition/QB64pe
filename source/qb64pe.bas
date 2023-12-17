@@ -3461,16 +3461,16 @@ DO
             END IF
             IF _FILEEXISTS(EmbedFile$) = 0 THEN a$ = "File '" + EmbedFile$ + "' not found": GOTO errmes
             'verify handle validity (A-Z/a-z/0-9, begin with letter)
-            i = ASC(EmbedHandle$, 1)
-            IF (i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
-                a$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter": GOTO errmes
-            END IF
-            FOR j = 2 TO LEN(EmbedHandle$)
-                i = ASC(EmbedHandle$, j)
-                IF (i < ASC("0")) OR (i > ASC("9") AND i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
-                    a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use A-Z/a-z/0-9 only": GOTO errmes
-                END IF
-            NEXT j
+            SELECT CASE ASC(EmbedHandle$, 1)
+                CASE 0 TO 64, 91 TO 96, 123 TO 255
+                    a$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter": GOTO errmes
+            END SELECT
+            FOR i = 2 TO LEN(EmbedHandle$)
+                SELECT CASE ASC(EmbedHandle$, i)
+                    CASE 0 TO 47, 58 TO 64, 91 TO 96, 123 TO 255
+                        a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use A-Z/a-z/0-9 only": GOTO errmes
+                END SELECT
+            NEXT i
             'check for duplicate definitions
             eflUB = UBOUND(embedFileList$, 2)
             FOR i = 0 TO eflUB
@@ -3492,7 +3492,7 @@ DO
                 i = eflUB + 1
             END IF
             embedFileList$(eflLine, i) = STR$(linenumber) 'linenumber of this $EMBED
-            embedFileList$(eflUsed, i) = STR$(0) '        'linenumber of 1st referencing _EMBEDDED$()
+            embedFileList$(eflUsed, i) = "no" '           'referenced by _EMBEDDED$()
             embedFileList$(eflFile, i) = EmbedFile$
             embedFileList$(eflHand, i) = EmbedHandle$
             GOTO finishednonexec
@@ -3632,72 +3632,6 @@ DO
         END IF
 
     END IF 'QB64 Metacommands
-
-    'Check that Embed-Handle is a literal string and follows conventions,
-    'also check if such a handle was defined and mark it as used then.
-    IF INSTR(a3u$, qb64prefix$ + "EMBEDDED$") > 0 THEN
-        spo = INSTR(a3u$, qb64prefix$ + "EMBEDDED$"): ket = 0
-        ppo = INSTR(spo + 1, a3u$, "("): IF ppo = 0 THEN ppo = LEN(a3u$) + 1
-        cle = LEN(qb64prefix$ + "EMBEDDED$")
-        gap$ = _TRIM$(MID$(a3u$, spo + cle, ppo - spo - cle))
-        IF gap$ <> "" GOTO skipEflCheck 'not a function call
-        DO
-            'ignore everything in strings or after comment (' or REM)
-            rsq = 0 'quote flag
-            FOR i = ket + 1 TO spo
-                IF ASC(a3u$, i) = 34 THEN rsq = NOT rsq
-                IF ASC(a3u$, i) = 39 AND NOT rsq THEN EXIT DO
-                IF MID$(a3u$, i, 3) = "REM" AND NOT rsq THEN
-                    IF i > 1 THEN rsf = ASC(a3u$, i - 1): ELSE rsf = 32 'front char
-                    rsr = ASC(a3u$, i + 3) 'rear char
-                    IF (rsf = 9 OR rsf = 32 OR rsf = 58) AND (rsr = 9 OR rsr = 32) THEN EXIT DO 'is real REM
-                END IF
-            NEXT i
-            IF rsq THEN EXIT DO 'inside a quoted string
-            'check for handle
-            a$ = "Expected " + qb64prefix$ + "EMBEDDED$(" + AddQuotes$("handle") + ")"
-            bra = INSTR(spo + 1, a3u$, "("): IF bra = 0 GOTO errmes
-            ket = INSTR(bra + 1, a3u$, ")"): IF ket = 0 GOTO errmes
-            EmbedHandle$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
-            IF LEN(EmbedHandle$) = 0 GOTO errmes
-            bra = INSTR(EmbedHandle$, CHR$(34)): ket = _INSTRREV(EmbedHandle$, CHR$(34))
-            IF bra > 1 OR ket < LEN(EmbedHandle$) THEN bra = 0: ket = 0 'disallow anything before/after
-            IF bra = ket THEN ket = 0 'is one quote only
-            IF bra = 0 AND ket = 0 THEN
-                a$ = "Embed-Handle '" + EmbedHandle$ + "' must be a single literal string in quotes, not a variable": GOTO errmes
-            ELSEIF bra = 0 OR ket = 0 THEN
-                'seems quotes are comming (at least one is already there),
-                'so simply keep the 'Expected...' message and error out directly
-                GOTO errmes
-            END IF
-            EmbedHandle$ = MID$(EmbedHandle$, bra + 1, ket - bra - 1)
-            IF LEN(EmbedHandle$) = 0 GOTO errmes 'if we come to this point, the 'Expected...' message is still valid
-            'verify handle validity (A-Z/a-z/0-9, begin with letter)
-            i = ASC(EmbedHandle$, 1)
-            IF (i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
-                a$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter": GOTO errmes
-            END IF
-            FOR j = 2 TO LEN(EmbedHandle$)
-                i = ASC(EmbedHandle$, j)
-                IF (i < ASC("0")) OR (i > ASC("9") AND i < ASC("A")) OR (i > ASC("Z") AND i < ASC("a")) OR (i > ASC("z")) THEN
-                    a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use A-Z/a-z/0-9 only": GOTO errmes
-                END IF
-            NEXT j
-            'check if a respective file + handle was embedded
-            eflUB = UBOUND(embedFileList$, 2)
-            FOR i = 0 TO eflUB
-                IF embedFileList$(eflHand, i) = EmbedHandle$ THEN EXIT FOR
-            NEXT i
-            IF i > eflUB THEN
-                a$ = "Embed-Handle '" + EmbedHandle$ + "' is undefined (check your $EMBED lines)": GOTO errmes
-            ELSE
-                embedFileList$(eflUsed, i) = STR$(linenumber) 'mark respective handle as used
-            END IF
-            'check for further occurrences
-            spo = INSTR(spo + 2, a3u$, qb64prefix$ + "EMBEDDED$")
-        LOOP WHILE spo > 0
-        skipEflCheck:
-    END IF
 
     IF ExecLevel(ExecCounter) THEN
         layoutdone = 0
@@ -12720,7 +12654,7 @@ CLOSE #eflFF
 '> adjust dependency settings according to the process
 eflUB = UBOUND(embedFileList$, 2)
 FOR i = 0 TO eflUB
-    IF embedFileList$(eflFile, i) <> "" AND VAL(embedFileList$(eflUsed, i)) > 0 THEN
+    IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
         IF ConvertFileToCArray%(embedFileList$(eflFile, i), embedFileList$(eflHand, i)) THEN
             SetDependency DEPENDENCY_ZLIB
         END IF
@@ -12734,7 +12668,7 @@ OPEN "A", #eflFF, tmpdir$ + "embedded.cpp"
 PRINT #eflFF, "qbs *func__embedded(qbs *handle)"
 PRINT #eflFF, "{"
 FOR i = 0 TO eflUB
-    IF embedFileList$(eflFile, i) <> "" AND VAL(embedFileList$(eflUsed, i)) > 0 THEN
+    IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
         PRINT #eflFF, "    if (qbs_equal(handle, qbs_new_txt("; AddQuotes$(embedFileList$(eflHand, i)); "))) {return GetArrayData_"; embedFileList$(eflHand, i); "();}"
     END IF
 NEXT i
@@ -16819,6 +16753,46 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END IF
                     END IF
                 END IF
+
+            IF n$ = "_EMBEDDED" OR (n$ = "EMBEDDED" AND qb64prefix_set = 1) THEN
+                IF RTRIM$(id2.musthave) = "$" THEN
+                    IF curarg = 1 THEN
+                        'check handle argument
+                        EmbedHandle$ = e$
+                        rse$ = "Embed-Handle must be a single literal string in quotes, not a variable"
+                        IF INSTR(EmbedHandle$, CHR$(13)) > 0 THEN Give_Error rse$: EXIT FUNCTION
+                        bra = INSTR(EmbedHandle$, CHR$(34)): ket = INSTR(bra + 1, EmbedHandle$, CHR$(34))
+                        IF bra = 0 OR ket = 0 THEN Give_Error rse$: EXIT FUNCTION
+                        EmbedHandle$ = MID$(EmbedHandle$, bra + 1, ket - bra - 1)
+                        rse$ = "Embed-Handle cannot be an empty string"
+                        IF LEN(EmbedHandle$) = 0 THEN Give_Error rse$: EXIT FUNCTION
+                        'verify handle validity (Aa-Zz/0-9, begin with letter)
+                        SELECT CASE ASC(EmbedHandle$, 1)
+                            CASE 0 TO 64, 91 TO 96, 123 TO 255
+                                rse$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter"
+                                Give_Error rse$: EXIT FUNCTION
+                        END SELECT
+                        FOR rsi = 2 TO LEN(EmbedHandle$)
+                            SELECT CASE ASC(EmbedHandle$, rsi)
+                                CASE 0 TO 47, 58 TO 64, 91 TO 96, 123 TO 255
+                                    rse$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use Aa-Zz/0-9 only"
+                                    Give_Error rse$: EXIT FUNCTION
+                            END SELECT
+                        NEXT rsi
+                        'check if a respective file + handle was embedded
+                        eflUB = UBOUND(embedFileList$, 2)
+                        FOR rsi = 0 TO eflUB
+                            IF embedFileList$(eflHand, rsi) = EmbedHandle$ THEN EXIT FOR
+                        NEXT rsi
+                        IF rsi > eflUB THEN
+                            rse$ = "Embed-Handle '" + EmbedHandle$ + "' is undefined (check your $EMBED lines)"
+                            Give_Error rse$: EXIT FUNCTION
+                        ELSE
+                            embedFileList$(eflUsed, rsi) = "yes" 'mark respective handle as used
+                        END IF
+                    END IF
+                END IF
+            END IF
 
                 IF n$ = "UBOUND" OR n$ = "LBOUND" THEN
                     IF curarg = 1 THEN
