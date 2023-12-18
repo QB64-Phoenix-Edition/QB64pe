@@ -129,6 +129,7 @@ These flags controls whether certain dependencies are compiled in or not. All of
 | `DEP_DEVICEINPUT` | Enables game controller input support. |
 | `DEP_ZLIB` | Adds `_DEFLATE` and `_INFLATE` support. |
 | `DEP_DATA` | Compiles in data produced via `DATA` statements. |
+| `DEP_EMBED` | Compiles in data embedded via `$EMBED` statements. |
 | `DEP_CONSOLE` | On Windows, this gives the program console support (graphical support is still allowed) |
 | `DEP_CONSOLE_ONLY` | Same as `DEP_CONSOLE`, but also removes GLUT and graphics support. |
 | `DEP_AUDIO_MINIAUDIO` | Pulls in sound support using miniaudio for playing sounds via `PLAY`, `_SNDPLAY`, and various other functions that makes sounds. |

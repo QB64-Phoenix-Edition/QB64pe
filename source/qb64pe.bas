@@ -3460,7 +3460,7 @@ DO
                 NEXT
             END IF
             IF _FILEEXISTS(EmbedFile$) = 0 THEN a$ = "File '" + EmbedFile$ + "' not found": GOTO errmes
-            'verify handle validity (A-Z/a-z/0-9, begin with letter)
+            'verify handle validity (Aa-Zz/0-9, begin with letter)
             SELECT CASE ASC(EmbedHandle$, 1)
                 CASE 0 TO 64, 91 TO 96, 123 TO 255
                     a$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter": GOTO errmes
