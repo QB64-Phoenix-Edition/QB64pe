@@ -109,6 +109,8 @@ extern void sub__filedrop(int32 on_off = NULL);
 extern int32 func__totaldroppedfiles();
 extern qbs *func__droppedfile(int32 fileIndex, int32 passed);
 
+extern qbs *func__embedded(qbs *handle);
+
 extern void sub__glrender(int32 method);
 extern void sub__displayorder(int32 method1, int32 method2, int32 method3,
                               int32 method4);

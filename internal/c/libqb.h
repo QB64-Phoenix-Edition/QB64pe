@@ -83,5 +83,6 @@ extern int32 no_control_characters2;
 
 extern qbs *qbs_lcase(qbs *str);
 extern qbs *qbs_ucase(qbs *str);
+extern int32 qbs_equal(qbs *str1, qbs *str2);
 
 #endif

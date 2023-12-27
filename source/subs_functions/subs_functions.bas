@@ -3829,6 +3829,18 @@ id.hr_syntax = "_INFLATE$(stringToDecompress$[, originalSize&])"
 regid
 
 clearid
+id.n = qb64prefix$ + "Embedded"
+id.Dependency=DEPENDENCY_EMBED
+id.musthave = "$"
+id.subfunc = 1
+id.callname = "func__embedded"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = STRINGTYPE - ISPOINTER
+id.hr_syntax = "_EMBEDDED$(" + AddQuotes$("handle") + ")"
+regid
+
+clearid
 id.n = qb64prefix$ + "CInp"
 id.subfunc =  1
 id.callname = "func__cinp"
