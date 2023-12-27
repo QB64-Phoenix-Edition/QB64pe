@@ -629,6 +629,8 @@ static const char *GetDirectoryEntryName(const char *fileSpec) {
 /// @param passed Flags for optional parameters
 /// @return Retuns a qbs with the directory entry name or an empty string if there are no more entries
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
+    static std::string directory;
+    std::string pathName;
     const char *entry;
     qbs *final;
 
@@ -636,6 +638,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     if (passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
 
+        filepath_split(fileSpec, directory, pathName); // split the file path
         entry = GetDirectoryEntryName(fileSpec.c_str());
 
         if (IsStringEmpty(entry)) {
@@ -648,10 +651,10 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         entry = GetDirectoryEntryName(nullptr);
     }
 
+    filepath_join(pathName, directory, entry);
     auto size = strlen(entry);
 
-    // TODO: Need to join the base directory here!
-    if (DirectoryExists(entry)) {
+    if (size && DirectoryExists(pathName.c_str())) {
         // Add a trailing slash if it is a directory
         final = qbs_new(size + 1, 1);
         memcpy(final->chr, entry, size);
