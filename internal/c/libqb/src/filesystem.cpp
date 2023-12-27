@@ -64,7 +64,7 @@ qbs *func__cwd() {
 /// @brief Returns true if the specified directory exists
 /// @param path The directory to check for
 /// @return True if the directory exists
-static inline bool DirectoryExists(const char *path) {
+static inline bool FS_DirectoryExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
 
@@ -77,7 +77,7 @@ static inline bool DirectoryExists(const char *path) {
 }
 
 /// @brief Known directories (primarily Windows based, but we'll do our best to emulate on other platforms)
-enum class KnownDirectory {
+enum class FS_KnownDirectory {
     HOME = 0,
     DESKTOP,
     DOCUMENTS,
@@ -96,9 +96,9 @@ enum class KnownDirectory {
 };
 
 /// @brief This populates path with the full path for a known directory
-/// @param kD Is a value from KnownDirectory (above)
+/// @param kD Is a value from FS_KnownDirectory (above)
 /// @param path Is the string that will receive the directory path. The string may be changed
-void GetKnownDirectory(KnownDirectory kD, std::string &path) {
+static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 #ifdef QB64_WINDOWS
     path.resize(PATHNAME_LENGTH_MAX, '\0'); // allocate something that is sufficiently large
 #else
@@ -106,59 +106,59 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
 
     switch (kD) {
-    case KnownDirectory::DESKTOP: // %USERPROFILE%\OneDrive\Desktop
+    case FS_KnownDirectory::DESKTOP: // %USERPROFILE%\OneDrive\Desktop
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/Desktop");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::DOCUMENTS: // %USERPROFILE%\OneDrive\Documents
+    case FS_KnownDirectory::DOCUMENTS: // %USERPROFILE%\OneDrive\Documents
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/Documents");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::PICTURES: // %USERPROFILE%\OneDrive\Pictures
+    case FS_KnownDirectory::PICTURES: // %USERPROFILE%\OneDrive\Pictures
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYPICTURES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/Pictures");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::MUSIC: // %USERPROFILE%\Music
+    case FS_KnownDirectory::MUSIC: // %USERPROFILE%\Music
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYMUSIC | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/Music");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::VIDEOS: // %USERPROFILE%\Videos
+    case FS_KnownDirectory::VIDEOS: // %USERPROFILE%\Videos
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_MYVIDEO | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
@@ -169,88 +169,88 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #    else
             path.append("/Videos");
 #    endif
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::DOWNLOAD: // %USERPROFILE%\Downloads
+    case FS_KnownDirectory::DOWNLOAD: // %USERPROFILE%\Downloads
 #ifdef QB64_WINDOWS
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
             // XP & SHGetFolderPathA do not support the concept of a Downloads folder, however it can be constructed
             path.resize(strlen(path.c_str()));
             path.append("\\Downloads");
             mkdir(path.c_str());
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/Downloads");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::APP_DATA: // %USERPROFILE%\AppData\Roaming
+    case FS_KnownDirectory::APP_DATA: // %USERPROFILE%\AppData\Roaming
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/.config");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::LOCAL_APP_DATA: // %USERPROFILE%\AppData\Local
+    case FS_KnownDirectory::LOCAL_APP_DATA: // %USERPROFILE%\AppData\Local
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/.local/share");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::PROGRAM_DATA: // %SystemDrive%\ProgramData
+    case FS_KnownDirectory::PROGRAM_DATA: // %SystemDrive%\ProgramData
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign(envVar);
             path.append("/.local/share");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::SYSTEM_FONTS: // %SystemRoot%\Fonts
+    case FS_KnownDirectory::SYSTEM_FONTS: // %SystemRoot%\Fonts
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
 #    ifdef QB64_MACOSX
             path.assign("/System/Library/Fonts");
-            if (!DirectoryExists(path.c_str())) {
+            if (!FS_DirectoryExists(path.c_str())) {
                 path.assign("/Library/Fonts");
-                if (!DirectoryExists(path.c_str()))
+                if (!FS_DirectoryExists(path.c_str()))
                     path.clear();
             }
 #    else
             path.assign("/usr/share/fonts");
-            if (!DirectoryExists(path.c_str())) {
+            if (!FS_DirectoryExists(path.c_str())) {
                 path.assign("/usr/local/share/fonts");
-                if (!DirectoryExists(path.c_str()))
+                if (!FS_DirectoryExists(path.c_str()))
                     path.clear();
             }
 #    endif
@@ -258,12 +258,12 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::USER_FONTS: // %USERPROFILE%\AppData\Local\Microsoft\Windows\Fonts
+    case FS_KnownDirectory::USER_FONTS: // %USERPROFILE%\AppData\Local\Microsoft\Windows\Fonts
 #ifdef QB64_WINDOWS
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
             path.resize(strlen(path.c_str()));
             path.append("\\Microsoft\\Windows\\Fonts");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #else
@@ -271,14 +271,14 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
             path.assign(envVar);
 #    ifdef QB64_MACOSX
             path.append("/Library/Fonts");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
 #    else
             path.append("/.local/share/fonts");
-            if (!DirectoryExists(path.c_str())) {
+            if (!FS_DirectoryExists(path.c_str())) {
                 path.assign(envVar);
                 path.append("/.fonts");
-                if (!DirectoryExists(path.c_str()))
+                if (!FS_DirectoryExists(path.c_str()))
                     path.clear();
             }
 #    endif
@@ -286,32 +286,32 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #endif
         break;
 
-    case KnownDirectory::TEMP: // %USERPROFILE%\AppData\Local\Temp
+    case FS_KnownDirectory::TEMP: // %USERPROFILE%\AppData\Local\Temp
 #ifdef QB64_WINDOWS
         GetTempPathA(path.size(), (char *)path.data());
 #else
         path.assign("/var/tmp");
-        if (!DirectoryExists(path.c_str())) {
+        if (!FS_DirectoryExists(path.c_str())) {
             path.assign("/tmp");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::PROGRAM_FILES: // %SystemDrive%\Program Files
+    case FS_KnownDirectory::PROGRAM_FILES: // %SystemDrive%\Program Files
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
 #else
         if (envVar) {
             path.assign("/opt");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::PROGRAM_FILES_32: // %SystemDrive%\Program Files (x86)
+    case FS_KnownDirectory::PROGRAM_FILES_32: // %SystemDrive%\Program Files (x86)
 #ifdef QB64_WINDOWS
 #    ifdef _WIN64
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86 | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
@@ -321,13 +321,13 @@ void GetKnownDirectory(KnownDirectory kD, std::string &path) {
 #else
         if (envVar) {
             path.assign("/opt");
-            if (!DirectoryExists(path.c_str()))
+            if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
 #endif
         break;
 
-    case KnownDirectory::HOME: // %USERPROFILE%
+    case FS_KnownDirectory::HOME: // %USERPROFILE%
     default:
 #ifdef QB64_WINDOWS
         SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
@@ -367,47 +367,47 @@ qbs *func__dir(qbs *qbsContext) {
 
     // The following is largely unchanged from what we previously had
     if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
-        GetKnownDirectory(KnownDirectory::DOCUMENTS, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::DOCUMENTS, path);
     } else if (context.compare("MUSIC") == 0 || context.compare("AUDIO") == 0 || context.compare("SOUND") == 0 || context.compare("SOUNDS") == 0 ||
                context.compare("MY MUSIC") == 0) {
-        GetKnownDirectory(KnownDirectory::MUSIC, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::MUSIC, path);
     } else if (context.compare("PICTURE") == 0 || context.compare("PICTURES") == 0 || context.compare("IMAGE") == 0 || context.compare("IMAGES") == 0 ||
                context.compare("MY PICTURES") == 0 || context.compare("DCIM") == 0 || context.compare("CAMERA") == 0 || context.compare("CAMERA ROLL") == 0 ||
                context.compare("PHOTO") == 0 || context.compare("PHOTOS") == 0) {
-        GetKnownDirectory(KnownDirectory::PICTURES, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::PICTURES, path);
     } else if (context.compare("MOVIE") == 0 || context.compare("MOVIES") == 0 || context.compare("VIDEO") == 0 || context.compare("VIDEOS") == 0 ||
                context.compare("MY VIDEOS") == 0) {
-        GetKnownDirectory(KnownDirectory::VIDEOS, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::VIDEOS, path);
     } else if (context.compare("DOWNLOAD") == 0 || context.compare("DOWNLOADS") == 0) {
-        GetKnownDirectory(KnownDirectory::DOWNLOAD, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::DOWNLOAD, path);
     } else if (context.compare("DESKTOP") == 0) {
-        GetKnownDirectory(KnownDirectory::DESKTOP, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP, path);
     } else if (context.compare("APPDATA") == 0 || context.compare("APPLICATION DATA") == 0 || context.compare("PROGRAM DATA") == 0 ||
                context.compare("DATA") == 0) {
-        GetKnownDirectory(KnownDirectory::APP_DATA, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::APP_DATA, path);
     } else if (context.compare("LOCALAPPDATA") == 0 || context.compare("LOCAL APPLICATION DATA") == 0 || context.compare("LOCAL PROGRAM DATA") == 0 ||
                context.compare("LOCAL DATA") == 0) {
-        GetKnownDirectory(KnownDirectory::LOCAL_APP_DATA, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::LOCAL_APP_DATA, path);
     } else if (context.compare("PROGRAMFILES") == 0 || context.compare("PROGRAM FILES") == 0) {
-        GetKnownDirectory(KnownDirectory::PROGRAM_FILES, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES, path);
     } else if (context.compare("PROGRAMFILESX86") == 0 || context.compare("PROGRAMFILES X86") == 0 || context.compare("PROGRAM FILES X86") == 0 ||
                context.compare("PROGRAM FILES 86") == 0 || context.compare("PROGRAM FILES (X86)") == 0 || context.compare("PROGRAMFILES (X86)") == 0 ||
                context.compare("PROGRAM FILES(X86)") == 0) {
-        GetKnownDirectory(KnownDirectory::PROGRAM_FILES_32, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES_32, path);
     } else if (context.compare("TMP") == 0 || context.compare("TEMP") == 0 || context.compare("TEMP FILES") == 0) {
-        GetKnownDirectory(KnownDirectory::TEMP, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::TEMP, path);
     } else if (context.compare("HOME") == 0 || context.compare("USER") == 0 || context.compare("PROFILE") == 0 || context.compare("USERPROFILE") == 0 ||
                context.compare("USER PROFILE") == 0) {
-        GetKnownDirectory(KnownDirectory::HOME, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::HOME, path);
     } else if (context.compare("FONT") == 0 || context.compare("FONTS") == 0) {
-        GetKnownDirectory(KnownDirectory::SYSTEM_FONTS, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::SYSTEM_FONTS, path);
     } else if (context.compare("USERFONT") == 0 || context.compare("USER FONT") == 0 || context.compare("USERFONTS") == 0 ||
                context.compare("USER FONTS") == 0) {
-        GetKnownDirectory(KnownDirectory::USER_FONTS, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::USER_FONTS, path);
     } else if (context.compare("PROGRAMDATA") == 0 || context.compare("COMMON PROGRAM DATA") == 0) {
-        GetKnownDirectory(KnownDirectory::PROGRAM_DATA, path);
+        FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_DATA, path);
     } else {
-        GetKnownDirectory(KnownDirectory::DESKTOP, path); // anything else defaults to the desktop where the user can easily see stuff
+        FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP, path); // anything else defaults to the desktop where the user can easily see stuff
     }
 
     auto size = strlen(path.c_str());
@@ -431,13 +431,13 @@ int32_t func__direxists(qbs *path) {
 
     qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
 
-    return DirectoryExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
+    return FS_DirectoryExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
 }
 
 /// @brief Returns true if a file specified exists
 /// @param path The file path to check for
 /// @return True if the file exists
-static inline bool FileExists(const char *path) {
+static inline bool FS_FileExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
 
@@ -463,7 +463,7 @@ int32_t func__fileexists(qbs *path) {
 
     qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
 
-    return FileExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
+    return FS_FileExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
 }
 
 /// @brief Return the startup directory
@@ -496,13 +496,13 @@ void sub_chdir(qbs *str) {
 /// @brief Checks if s is an empty string (either NULL or zero length)
 /// @param s A null-terminated string or NULL
 /// @return False is we have a valid string > length 0
-static inline bool IsStringEmpty(const char *s) { return s == nullptr || s[0] == '\0'; }
+static inline bool FS_IsStringEmpty(const char *s) { return s == nullptr || s[0] == '\0'; }
 
-/// @brief This is a basic pattern matching function used by GetDirectoryEntryName()
+/// @brief This is a basic pattern matching function used by FS_GetDirectoryEntryName()
 /// @param fileSpec The pattern to match
 /// @param fileName The filename to match
 /// @return True if it is a match, false otherwise
-static inline bool IsPatternMatching(const char *fileSpec, const char *fileName) {
+static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileName) {
     auto spec = fileSpec;
     auto name = fileName;
     const char *any = nullptr;
@@ -542,19 +542,19 @@ static inline bool IsPatternMatching(const char *fileSpec, const char *fileName)
 /// @brief Returns true if fileSpec has any wildcards
 /// @param fileSpec The string to check
 /// @return True if * or ? are found
-static inline bool HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
+static inline bool FS_HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
 
 /// @brief An MS BASIC PDS DIR$ style function
 /// @param fileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
-static const char *GetDirectoryEntryName(const char *fileSpec) {
+static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
     static DIR *pDir = nullptr;
     static char pattern[PATHNAME_LENGTH_MAX];
     static char entry[PATHNAME_LENGTH_MAX];
 
     entry[0] = '\0'; // set to an empty string
 
-    if (!IsStringEmpty(fileSpec)) {
+    if (!FS_IsStringEmpty(fileSpec)) {
         // We got a filespec. Check if we have one already going and if so, close it
         if (pDir) {
             closedir(pDir);
@@ -563,7 +563,7 @@ static const char *GetDirectoryEntryName(const char *fileSpec) {
 
         char dirName[PATHNAME_LENGTH_MAX]; // we only need this for opendir()
 
-        if (HasPattern(fileSpec)) {
+        if (FS_HasPattern(fileSpec)) {
             // We have a pattern. Check if we have a path in it
             auto p = strrchr(fileSpec, '/'); // try *nix style separator
 #ifdef QB64_WINDOWS
@@ -586,7 +586,7 @@ static const char *GetDirectoryEntryName(const char *fileSpec) {
             }
         } else {
             // No pattern. Check if this is a file and simply return the name if it exists
-            if (FileExists(fileSpec)) {
+            if (FS_FileExists(fileSpec)) {
                 strncpy(entry, filepath_get_filename(fileSpec), PATHNAME_LENGTH_MAX);
                 entry[PATHNAME_LENGTH_MAX - 1] = '\0';
 
@@ -612,7 +612,7 @@ static const char *GetDirectoryEntryName(const char *fileSpec) {
                 break;
             }
 
-            if (IsPatternMatching(pattern, pDirent->d_name)) {
+            if (FS_IsPatternMatching(pattern, pDirent->d_name)) {
                 strncpy(entry, pDirent->d_name, PATHNAME_LENGTH_MAX);
                 entry[PATHNAME_LENGTH_MAX - 1] = '\0';
 
@@ -639,22 +639,22 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
 
         filepath_split(fileSpec, directory, pathName); // split the file path
-        entry = GetDirectoryEntryName(fileSpec.c_str());
+        entry = FS_GetDirectoryEntryName(fileSpec.c_str());
 
-        if (IsStringEmpty(entry)) {
+        if (FS_IsStringEmpty(entry)) {
             // This is per MS BASIC PDS 7.1 and VBDOS 1.0 behavior
             final = qbs_new(0, 1);
             error(53);
             return final;
         }
     } else {
-        entry = GetDirectoryEntryName(nullptr);
+        entry = FS_GetDirectoryEntryName(nullptr);
     }
 
     filepath_join(pathName, directory, entry);
     auto size = strlen(entry);
 
-    if (size && DirectoryExists(pathName.c_str())) {
+    if (size && FS_DirectoryExists(pathName.c_str())) {
         // Add a trailing slash if it is a directory
         final = qbs_new(size + 1, 1);
         memcpy(final->chr, entry, size);
@@ -665,6 +665,27 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     }
 
     return final;
+}
+
+/// @brief Returns the free volume space for a given directory
+/// @param path A directory that resides on the volume we want the free space for
+/// @return The free space in bytes
+static uint64_t FS_GetFreeDiskSpace(const char *path) {
+#ifdef QB64_WINDOWS
+    ULARGE_INTEGER freeBytesAvailable;
+    ULARGE_INTEGER totalNumberOfBytes;
+    ULARGE_INTEGER totalNumberOfFreeBytes;
+
+    if (GetDiskFreeSpaceExA(path, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes))
+        return totalNumberOfFreeBytes.QuadPart;
+#else
+    struct statvfs stat;
+
+    if (statvfs(path, &stat) == 0)
+        return static_cast<uint64_t>(stat.f_bsize) * stat.f_bfree;
+#endif
+
+    return 0;
 }
 
 /// @brief Prints a list of files in the current directory using a file specification
@@ -776,20 +797,15 @@ void sub_files(qbs *str, int32_t passed) {
     } while (FindNextFileA(hFind, &fd));
     FindClose(hFind);
 
-    static ULARGE_INTEGER FreeBytesAvailableToCaller;
-    static ULARGE_INTEGER TotalNumberOfBytes;
-    static ULARGE_INTEGER TotalNumberOfFreeBytes;
     static int64 bytes;
     static char *cp;
     qbs_set(strpath, qbs_add(strpath, qbs_new_txt_len("\0", 1)));
     cp = (char *)strpath->chr;
     if (strpath->len == 1)
         cp = NULL;
-    if (GetDiskFreeSpaceExA(cp, &FreeBytesAvailableToCaller, &TotalNumberOfBytes, &TotalNumberOfFreeBytes)) {
-        bytes = *(int64 *)(void *)&FreeBytesAvailableToCaller;
-    } else {
-        bytes = 0;
-    }
+
+    bytes = FS_GetFreeDiskSpace(cp);
+
     if (func_pos(NULL) > 1) {
         strz2->len = 0;
         qbs_print(strz2, 1);
@@ -815,21 +831,21 @@ void sub_kill(qbs *str) {
 
     std::string directory, fileName;
 
-    filepath_split(filepath_fix_directory(strz), directory, fileName);       // split the file path
-    auto entry = GetDirectoryEntryName(reinterpret_cast<char *>(strz->chr)); // get the first entry
+    filepath_split(filepath_fix_directory(strz), directory, fileName);          // split the file path
+    auto entry = FS_GetDirectoryEntryName(reinterpret_cast<char *>(strz->chr)); // get the first entry
 
     // Keep looking through the entries until we file a file
-    while (!IsStringEmpty(entry)) {
+    while (!FS_IsStringEmpty(entry)) {
         filepath_join(fileName, directory, entry);
 
-        if (FileExists(fileName.c_str()))
+        if (FS_FileExists(fileName.c_str()))
             break;
 
-        entry = GetDirectoryEntryName(nullptr); // get the next entry
+        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
     }
 
     // Check if we have exhausted the entries without ever finding a file
-    if (IsStringEmpty(entry)) {
+    if (FS_IsStringEmpty(entry)) {
         // This behavior is per QBasic 1.1
         error(53);
         return;
@@ -838,7 +854,7 @@ void sub_kill(qbs *str) {
     // Process all matches
     do {
         // We'll delete only if it is a file
-        if (FileExists(fileName.c_str())) {
+        if (FS_FileExists(fileName.c_str())) {
             if (remove(fileName.c_str())) {
                 auto i = errno;
 
@@ -856,9 +872,9 @@ void sub_kill(qbs *str) {
             }
         }
 
-        entry = GetDirectoryEntryName(nullptr); // get the next entry
+        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
         filepath_join(fileName, directory, entry);
-    } while (!IsStringEmpty(entry));
+    } while (!FS_IsStringEmpty(entry));
 }
 
 /// @brief Creates a new directory
