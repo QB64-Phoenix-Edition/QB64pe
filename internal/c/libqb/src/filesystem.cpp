@@ -428,16 +428,11 @@ qbs *func__dir(qbs *qbsContext) {
 /// @return True if the directory exists
 int32_t func__direxists(qbs *path) {
     if (new_error)
-        return 0;
+        return QB_FALSE;
 
-    static qbs *strz = nullptr;
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
-
-    return FS_DirectoryExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
+    return FS_DirectoryExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
 }
 
 /// @brief Returns true if a file specified exists
@@ -460,16 +455,11 @@ static inline bool FS_FileExists(const char *path) {
 /// @return True if the file exists
 int32_t func__fileexists(qbs *path) {
     if (new_error)
-        return 0;
+        return QB_FALSE;
 
-    static qbs *strz = nullptr;
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(path, qbs_new_txt_len("\0", 1)));
-
-    return FS_FileExists(filepath_fix_directory(strz)) ? QB_TRUE : QB_FALSE;
+    return FS_FileExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
 }
 
 /// @brief Return the startup directory
@@ -488,14 +478,9 @@ void sub_chdir(qbs *str) {
     if (new_error)
         return;
 
-    static qbs *strz = nullptr;
+    std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-
-    if (chdir(filepath_fix_directory(strz)) == -1)
+    if (chdir(filepath_fix_directory(pathName)) == -1)
         error(76); // assume errno == ENOENT; path not found
 }
 
@@ -877,17 +862,10 @@ void sub_kill(qbs *str) {
     if (new_error)
         return;
 
-    static qbs *strz = nullptr;
+    std::string directory, pathName, fileSpec(reinterpret_cast<char *>(str->chr), str->len);
 
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-
-    std::string directory, pathName;
-
-    filepath_split(filepath_fix_directory(strz), directory, pathName);          // split the file path
-    auto entry = FS_GetDirectoryEntryName(reinterpret_cast<char *>(strz->chr)); // get the first entry
+    filepath_split(filepath_fix_directory(fileSpec), directory, pathName); // split the file path
+    auto entry = FS_GetDirectoryEntryName(fileSpec.c_str());               // get the first entry
 
     // Keep looking through the entries until we file a file
     while (!FS_IsStringEmpty(entry)) {
@@ -938,17 +916,12 @@ void sub_mkdir(qbs *str) {
     if (new_error)
         return;
 
-    static qbs *strz = nullptr;
-
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
+    std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
 #ifdef QB64_WINDOWS
-    if (mkdir(filepath_fix_directory(strz)) == -1)
+    if (mkdir(filepath_fix_directory(pathName)) == -1)
 #else
-    if (mkdir(filepath_fix_directory(strz), S_IRWXU | S_IRWXG) == -1)
+    if (mkdir(filepath_fix_directory(pathName), S_IRWXU | S_IRWXG) == -1)
 #endif
     {
         if (errno == EEXIST) {
@@ -967,18 +940,9 @@ void sub_name(qbs *oldname, qbs *newname) {
     if (new_error)
         return;
 
-    static qbs *strz = nullptr, *strz2 = nullptr;
+    std::string pathNameOld(reinterpret_cast<char *>(oldname->chr), oldname->len), pathNameNew(reinterpret_cast<char *>(newname->chr), newname->len);
 
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    if (!strz2)
-        strz2 = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(oldname, qbs_new_txt_len("\0", 1)));
-    qbs_set(strz2, qbs_add(newname, qbs_new_txt_len("\0", 1)));
-
-    if (rename(filepath_fix_directory(strz), filepath_fix_directory(strz2))) {
+    if (rename(filepath_fix_directory(pathNameOld), filepath_fix_directory(pathNameNew))) {
         auto i = errno;
 
         if (i == ENOENT) {
@@ -1006,14 +970,9 @@ void sub_rmdir(qbs *str) {
     if (new_error)
         return;
 
-    static qbs *strz = nullptr;
+    std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
-    if (!strz)
-        strz = qbs_new(0, 0);
-
-    qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-
-    if (rmdir(filepath_fix_directory(strz)) == -1) {
+    if (rmdir(filepath_fix_directory(pathName)) == -1) {
         if (errno == ENOTEMPTY) {
             error(75);
             return;
