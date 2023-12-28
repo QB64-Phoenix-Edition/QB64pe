@@ -627,7 +627,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         pixels = image_decode_from_memory(qbsFileName->chr, qbsFileName->len, &x, &y, scaler);
     } else {
         std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
-        pixels = image_decode_from_file(fileName.c_str(), &x, &y, scaler);
+        pixels = image_decode_from_file(filepath_fix_directory(fileName), &x, &y, scaler);
     }
 
     if (!pixels)
@@ -792,6 +792,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
     IMAGE_DEBUG_PRINT("Format selected: %s", formatName[(int)format]);
 
     std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
+    filepath_fix_directory(fileName);
 
     // Check if fileName has a valid extension and add one if it does not have one
     if (fileName.length() > 4) { // must be at least n.ext
