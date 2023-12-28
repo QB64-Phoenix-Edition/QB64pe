@@ -308,7 +308,11 @@ static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
         SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
+#    ifdef QB64_MACOSX
+            path.assign("/Applications");
+#    else
             path.assign("/opt");
+#    endif
             if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
@@ -324,7 +328,11 @@ static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
 #    endif
 #else
         if (envVar) {
+#    ifdef QB64_MACOSX
+            path.assign("/Applications");
+#    else
             path.assign("/opt");
+#    endif
             if (!FS_DirectoryExists(path.c_str()))
                 path.clear();
         }
