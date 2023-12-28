@@ -109,7 +109,7 @@ const char *filepath_fix_directory(qbs *path) {
 #endif
     }
 
-    return (char *)path->chr;
+    return reinterpret_cast<char *>(path->chr);
 }
 
 /// @brief Changes the slashes in a file name / path to make it compatible with the OS

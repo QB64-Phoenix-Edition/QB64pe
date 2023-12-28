@@ -17,6 +17,7 @@
 #define STB_VORBIS_HEADER_ONLY
 #include "datetime.h"
 #include "extras/stb_vorbis.c"
+#include "filepath.h"
 #include "miniaudio.h"
 #include "mutex.h"
 #include <algorithm>
@@ -1754,8 +1755,8 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
         qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
 
         // Forward the request to miniaudio to open the sound file
-        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, (const char *)fileNameZ->chr, audioEngine.soundHandles[handle]->maFlags, NULL,
-                                                       NULL, &audioEngine.soundHandles[handle]->maSound);
+        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, filepath_fix_directory(fileNameZ), audioEngine.soundHandles[handle]->maFlags,
+                                                       NULL, NULL, &audioEngine.soundHandles[handle]->maSound);
     }
 
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
