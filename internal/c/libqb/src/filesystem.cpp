@@ -398,7 +398,7 @@ qbs *func__dir(qbs *qbsContext) {
         path = FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES);
     } else if (context.compare("PROGRAMFILESX86") == 0 || context.compare("PROGRAMFILES X86") == 0 || context.compare("PROGRAM FILES X86") == 0 ||
                context.compare("PROGRAM FILES 86") == 0 || context.compare("PROGRAM FILES (X86)") == 0 || context.compare("PROGRAMFILES (X86)") == 0 ||
-               context.compare("PROGRAM FILES(X86)") == 0) {
+               context.compare("PROGRAM FILES(X86)") == 0 || context.compare("PROGRAMFILES(X86)") == 0) {
         path = FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES_32);
     } else if (context.compare("TMP") == 0 || context.compare("TEMP") == 0 || context.compare("TEMP FILES") == 0) {
         path = FS_GetKnownDirectory(FS_KnownDirectory::TEMP);
