@@ -18,15 +18,15 @@
 #endif
 
 #ifdef QB64_BACKSLASH_FILESYSTEM
-#    define PATH_SEPARATOR '\\'
+#    define FS_PATH_SEPARATOR '\\'
 #else
-#    define PATH_SEPARATOR '/'
+#    define FS_PATH_SEPARATOR '/'
 #endif
 
 #if (FILENAME_MAX > 4096)
-#    define PATHNAME_LENGTH_MAX FILENAME_MAX
+#    define FS_PATHNAME_LENGTH_MAX FILENAME_MAX
 #else
-#    define PATHNAME_LENGTH_MAX 4096
+#    define FS_PATHNAME_LENGTH_MAX 4096
 #endif
 
 /// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
@@ -41,15 +41,15 @@ qbs *func__cwd() {
     path.resize(FILENAME_MAX, '\0');
 
     for (;;) {
-        if (getcwd((char *)path.data(), path.size())) {
+        if (getcwd(&path[0], path.size())) {
             auto size = strlen(path.c_str());
             final = qbs_new(size, 1);
-            memcpy(final->chr, path.data(), size);
+            memcpy(final->chr, &path[0], size);
 
             return final;
         } else {
             if (errno == ERANGE)
-                path.resize(path.size() << 1); // buffer size was not sufficient; try again with a larger buffer
+                path.resize(path.size() << 1, '\0'); // buffer size was not sufficient; try again with a larger buffer
             else
                 break; // some other error occurred
         }
@@ -97,10 +97,12 @@ enum class FS_KnownDirectory {
 
 /// @brief This populates path with the full path for a known directory
 /// @param kD Is a value from FS_KnownDirectory (above)
-/// @param path Is the string that will receive the directory path. The string may be changed
-static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
+/// @return Is the string that will receive the directory path. The string may be changed
+static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
+    std::string path;
+
 #ifdef QB64_WINDOWS
-    path.resize(PATHNAME_LENGTH_MAX, '\0'); // allocate something that is sufficiently large
+    path.resize(FS_PATHNAME_LENGTH_MAX, '\0'); // allocate something that is sufficiently large
 #else
     auto envVar = getenv("HOME");
 #endif
@@ -108,7 +110,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
     switch (kD) {
     case FS_KnownDirectory::DESKTOP: // %USERPROFILE%\OneDrive\Desktop
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -121,7 +123,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::DOCUMENTS: // %USERPROFILE%\OneDrive\Documents
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -134,7 +136,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::PICTURES: // %USERPROFILE%\OneDrive\Pictures
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_MYPICTURES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_MYPICTURES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -147,7 +149,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::MUSIC: // %USERPROFILE%\Music
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_MYMUSIC | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_MYMUSIC | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -160,7 +162,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::VIDEOS: // %USERPROFILE%\Videos
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_MYVIDEO | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_MYVIDEO | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -177,7 +179,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::DOWNLOAD: // %USERPROFILE%\Downloads
 #ifdef QB64_WINDOWS
-        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]))) {
             // XP & SHGetFolderPathA do not support the concept of a Downloads folder, however it can be constructed
             path.resize(strlen(path.c_str()));
             path.append("\\Downloads");
@@ -197,7 +199,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::APP_DATA: // %USERPROFILE%\AppData\Roaming
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -210,7 +212,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::LOCAL_APP_DATA: // %USERPROFILE%\AppData\Local
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -223,7 +225,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::PROGRAM_DATA: // %SystemDrive%\ProgramData
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign(envVar);
@@ -236,7 +238,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::SYSTEM_FONTS: // %SystemRoot%\Fonts
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_FONTS | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
 #    ifdef QB64_MACOSX
@@ -260,7 +262,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::USER_FONTS: // %USERPROFILE%\AppData\Local\Microsoft\Windows\Fonts
 #ifdef QB64_WINDOWS
-        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data()))) {
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]))) {
             path.resize(strlen(path.c_str()));
             path.append("\\Microsoft\\Windows\\Fonts");
             if (!FS_DirectoryExists(path.c_str()))
@@ -288,7 +290,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::TEMP: // %USERPROFILE%\AppData\Local\Temp
 #ifdef QB64_WINDOWS
-        GetTempPathA(path.size(), (char *)path.data());
+        GetTempPathA(path.size(), &path[0]);
 #else
         path.assign("/var/tmp");
         if (!FS_DirectoryExists(path.c_str())) {
@@ -301,7 +303,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
 
     case FS_KnownDirectory::PROGRAM_FILES: // %SystemDrive%\Program Files
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar) {
             path.assign("/opt");
@@ -314,9 +316,9 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
     case FS_KnownDirectory::PROGRAM_FILES_32: // %SystemDrive%\Program Files (x86)
 #ifdef QB64_WINDOWS
 #    ifdef _WIN64
-        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86 | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86 | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #    else
-        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #    endif
 #else
         if (envVar) {
@@ -330,7 +332,7 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
     case FS_KnownDirectory::HOME: // %USERPROFILE%
     default:
 #ifdef QB64_WINDOWS
-        SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data());
+        SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0]);
 #else
         if (envVar)
             path.assign(envVar);
@@ -340,21 +342,23 @@ static void FS_GetKnownDirectory(FS_KnownDirectory kD, std::string &path) {
     // Check if we got anything at all
     if (!strlen(path.c_str())) {
 #ifdef QB64_WINDOWS
-        path.resize(PATHNAME_LENGTH_MAX, '\0'); // just in case this was shrunk above
+        path.resize(FS_PATHNAME_LENGTH_MAX, '\0'); // just in case this was shrunk above
 
-        if (FAILED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, (char *)path.data())))
-            path.assign(".");
+        if (FAILED(SHGetFolderPathA(NULL, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, &path[0])))
+            path.assign(".\\");
 #else
         envVar = getenv("HOME"); // just in case this contains something other than home
 
-        path.assign(envVar ? envVar : ".");
+        path.assign(envVar ? envVar : "./");
 #endif
     }
 
     // Add the trailing slash
     path.resize(strlen(path.c_str()));
-    if (path.back() != PATH_SEPARATOR)
-        path.append(1, PATH_SEPARATOR);
+    if (path.back() != FS_PATH_SEPARATOR)
+        path.append(1, FS_PATH_SEPARATOR);
+
+    return path;
 }
 
 /// @brief Returns common paths such as My Documents, My Pictures, My Music, Desktop
@@ -367,52 +371,52 @@ qbs *func__dir(qbs *qbsContext) {
 
     // The following is largely unchanged from what we previously had
     if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::DOCUMENTS, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::DOCUMENTS);
     } else if (context.compare("MUSIC") == 0 || context.compare("AUDIO") == 0 || context.compare("SOUND") == 0 || context.compare("SOUNDS") == 0 ||
                context.compare("MY MUSIC") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::MUSIC, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::MUSIC);
     } else if (context.compare("PICTURE") == 0 || context.compare("PICTURES") == 0 || context.compare("IMAGE") == 0 || context.compare("IMAGES") == 0 ||
                context.compare("MY PICTURES") == 0 || context.compare("DCIM") == 0 || context.compare("CAMERA") == 0 || context.compare("CAMERA ROLL") == 0 ||
                context.compare("PHOTO") == 0 || context.compare("PHOTOS") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::PICTURES, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::PICTURES);
     } else if (context.compare("MOVIE") == 0 || context.compare("MOVIES") == 0 || context.compare("VIDEO") == 0 || context.compare("VIDEOS") == 0 ||
                context.compare("MY VIDEOS") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::VIDEOS, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::VIDEOS);
     } else if (context.compare("DOWNLOAD") == 0 || context.compare("DOWNLOADS") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::DOWNLOAD, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::DOWNLOAD);
     } else if (context.compare("DESKTOP") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP);
     } else if (context.compare("APPDATA") == 0 || context.compare("APPLICATION DATA") == 0 || context.compare("PROGRAM DATA") == 0 ||
                context.compare("DATA") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::APP_DATA, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::APP_DATA);
     } else if (context.compare("LOCALAPPDATA") == 0 || context.compare("LOCAL APPLICATION DATA") == 0 || context.compare("LOCAL PROGRAM DATA") == 0 ||
                context.compare("LOCAL DATA") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::LOCAL_APP_DATA, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::LOCAL_APP_DATA);
     } else if (context.compare("PROGRAMFILES") == 0 || context.compare("PROGRAM FILES") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES);
     } else if (context.compare("PROGRAMFILESX86") == 0 || context.compare("PROGRAMFILES X86") == 0 || context.compare("PROGRAM FILES X86") == 0 ||
                context.compare("PROGRAM FILES 86") == 0 || context.compare("PROGRAM FILES (X86)") == 0 || context.compare("PROGRAMFILES (X86)") == 0 ||
                context.compare("PROGRAM FILES(X86)") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES_32, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_FILES_32);
     } else if (context.compare("TMP") == 0 || context.compare("TEMP") == 0 || context.compare("TEMP FILES") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::TEMP, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::TEMP);
     } else if (context.compare("HOME") == 0 || context.compare("USER") == 0 || context.compare("PROFILE") == 0 || context.compare("USERPROFILE") == 0 ||
                context.compare("USER PROFILE") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::HOME, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::HOME);
     } else if (context.compare("FONT") == 0 || context.compare("FONTS") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::SYSTEM_FONTS, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::SYSTEM_FONTS);
     } else if (context.compare("USERFONT") == 0 || context.compare("USER FONT") == 0 || context.compare("USERFONTS") == 0 ||
                context.compare("USER FONTS") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::USER_FONTS, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::USER_FONTS);
     } else if (context.compare("PROGRAMDATA") == 0 || context.compare("COMMON PROGRAM DATA") == 0) {
-        FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_DATA, path);
+        path = FS_GetKnownDirectory(FS_KnownDirectory::PROGRAM_DATA);
     } else {
-        FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP, path); // anything else defaults to the desktop where the user can easily see stuff
+        path = FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP); // anything else defaults to the desktop where the user can easily see stuff
     }
 
-    auto size = strlen(path.c_str());
+    auto size = path.size();
     qbs *final = qbs_new(size, 1);
-    memcpy(final->chr, path.data(), size);
+    memcpy(final->chr, &path[0], size);
 
     return final;
 }
@@ -549,8 +553,8 @@ static inline bool FS_HasPattern(const char *fileSpec) { return fileSpec != null
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
 static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
     static DIR *pDir = nullptr;
-    static char pattern[PATHNAME_LENGTH_MAX];
-    static char entry[PATHNAME_LENGTH_MAX];
+    static char pattern[FS_PATHNAME_LENGTH_MAX];
+    static char entry[FS_PATHNAME_LENGTH_MAX];
 
     entry[0] = '\0'; // set to an empty string
 
@@ -561,7 +565,7 @@ static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
             pDir = nullptr;
         }
 
-        char dirName[PATHNAME_LENGTH_MAX]; // we only need this for opendir()
+        char dirName[FS_PATHNAME_LENGTH_MAX]; // we only need this for opendir()
 
         if (FS_HasPattern(fileSpec)) {
             // We have a pattern. Check if we have a path in it
@@ -573,29 +577,29 @@ static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
 
             if (p) {
                 // Split the path and the filespec
-                strncpy(pattern, p + 1, PATHNAME_LENGTH_MAX);
-                pattern[PATHNAME_LENGTH_MAX - 1] = '\0';
-                auto len = std::min<size_t>((p - fileSpec) + 1, PATHNAME_LENGTH_MAX - 1);
+                strncpy(pattern, p + 1, FS_PATHNAME_LENGTH_MAX);
+                pattern[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
+                auto len = std::min<size_t>((p - fileSpec) + 1, FS_PATHNAME_LENGTH_MAX - 1);
                 memcpy(dirName, fileSpec, len);
                 dirName[len] = '\0';
             } else {
                 // No path. Use the current path
-                strncpy(pattern, fileSpec, PATHNAME_LENGTH_MAX);
-                pattern[PATHNAME_LENGTH_MAX - 1] = '\0';
+                strncpy(pattern, fileSpec, FS_PATHNAME_LENGTH_MAX);
+                pattern[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
                 strcpy(dirName, "./");
             }
         } else {
             // No pattern. Check if this is a file and simply return the name if it exists
             if (FS_FileExists(fileSpec)) {
-                strncpy(entry, filepath_get_filename(fileSpec), PATHNAME_LENGTH_MAX);
-                entry[PATHNAME_LENGTH_MAX - 1] = '\0';
+                strncpy(entry, filepath_get_filename(fileSpec), FS_PATHNAME_LENGTH_MAX);
+                entry[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
 
                 return entry;
             }
 
             // Else, We'll just assume it's a directory
-            strncpy(dirName, fileSpec, PATHNAME_LENGTH_MAX);
-            dirName[PATHNAME_LENGTH_MAX - 1] = '\0';
+            strncpy(dirName, fileSpec, FS_PATHNAME_LENGTH_MAX);
+            dirName[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
             strcpy(pattern, "*");
         }
 
@@ -613,8 +617,8 @@ static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
             }
 
             if (FS_IsPatternMatching(pattern, pDirent->d_name)) {
-                strncpy(entry, pDirent->d_name, PATHNAME_LENGTH_MAX);
-                entry[PATHNAME_LENGTH_MAX - 1] = '\0';
+                strncpy(entry, pDirent->d_name, FS_PATHNAME_LENGTH_MAX);
+                entry[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
 
                 break;
             }
@@ -637,7 +641,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     // Check if fresh arguments were passed and we need to begin a new session
     if (passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
-
+        filepath_fix_directory(fileSpec);
         filepath_split(fileSpec, directory, pathName); // split the file path
         entry = FS_GetDirectoryEntryName(fileSpec.c_str());
 
@@ -658,7 +662,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         // Add a trailing slash if it is a directory
         final = qbs_new(size + 1, 1);
         memcpy(final->chr, entry, size);
-        final->chr[size] = PATH_SEPARATOR;
+        final->chr[size] = FS_PATH_SEPARATOR;
     } else {
         final = qbs_new(size, 1);
         memcpy(final->chr, entry, size);
@@ -685,135 +689,146 @@ static uint64_t FS_GetFreeDiskSpace(const char *path) {
         return static_cast<uint64_t>(stat.f_bsize) * stat.f_bfree;
 #endif
 
-    return 0;
+    return 0; // zero if something failed
+}
+
+/// @brief Gets the fully qualified name (FQN)
+/// @param path The path name to get the FQN for
+/// @return The FQN
+static std::string FS_GetFQN(const char *path) {
+    std::string FQN;
+
+#ifdef QB64_WINDOWS
+    DWORD size = GetFullPathNameA(path, 0, nullptr, nullptr); // get the required buffer size
+
+    if (size) {
+        FQN.resize(size);
+        if (GetFullPathNameA(path, size, &FQN[0], nullptr)) {
+            FQN.resize(size - 1); // resize to exclude the null terminator
+            return FQN;
+        }
+    }
+#else
+    char *result = realpath(path, nullptr);
+    if (result) {
+        FQN = result;
+        free(result); // cleanup memory allocated by realpath
+        return FQN;
+    }
+#endif
+
+    return path; // fallback
+}
+
+/// @brief Gets the short name for a file / directory (if possible)
+/// @param path The file / directory to get the short name for
+/// @return The short name
+static std::string FS_GetShortName(const char *path) {
+#ifdef QB64_WINDOWS
+    DWORD size = GetShortPathNameA(path, nullptr, 0); // get the required buffer size
+
+    if (size) {
+        std::string shortPath;
+        shortPath.resize(size);
+        if (GetShortPathNameA(path, &shortPath[0], size)) {
+            shortPath.resize(size - 1); // resize to exclude the null terminator
+            return shortPath;
+        }
+    }
+#endif
+
+    return path; // return the path as-is for *nix or if GetShortPathNameA failed
 }
 
 /// @brief Prints a list of files in the current directory using a file specification
 /// @param str Is a string containing a path (it can include wildcards)
 /// @param passed Optional parameters
 void sub_files(qbs *str, int32_t passed) {
+    static qbs *strz = nullptr;
+
     if (new_error)
         return;
-
-    static int32_t i, i2, i3;
-    static qbs *strz = nullptr;
 
     if (!strz)
         strz = qbs_new(0, 0);
 
-    if (passed) {
-        qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
-    } else {
-        qbs_set(strz, qbs_new_txt_len("\0", 1));
-    }
+    std::string fileSpec, directory, pathName;
 
-// TODO: Cleanup this mess. Eww.
-#ifdef QB64_WINDOWS
-    static WIN32_FIND_DATAA fd;
-    static HANDLE hFind;
-    static qbs *strpath = NULL;
-    if (!strpath)
-        strpath = qbs_new(0, 0);
-    static qbs *strz2 = NULL;
-    if (!strz2)
-        strz2 = qbs_new(0, 0);
+    if (passed && str->len) {
+        fileSpec.assign(reinterpret_cast<char *>(str->chr), str->len);
 
-    i = 0;
-    if (strz->len >= 2) {
-        if (strz->chr[strz->len - 2] == 92)
-            i = 1;
-    } else
-        i = 1;
-    if (i) {                           // add * (and new NULL term.)
-        strz->chr[strz->len - 1] = 42; //"*"
-        qbs_set(strz, qbs_add(strz, qbs_new_txt_len("\0", 1)));
-    }
-
-    qbs_set(strpath, strz);
-
-    for (i = strpath->len; i > 0; i--) {
-        if ((strpath->chr[i - 1] == 47) || (strpath->chr[i - 1] == 92)) {
-            strpath->len = i;
-            break;
-        }
-    } // i
-    if (i == 0)
-        strpath->len = 0; // no path specified
-
-    // print the current path
-    // note: for QBASIC compatibility reasons it does not print the directory name of the files being displayed
-    static uint8 curdir[4096];
-    static uint8 curdir2[4096];
-    i2 = GetCurrentDirectoryA(4096, (char *)curdir);
-    if (i2) {
-        i2 = GetShortPathNameA((char *)curdir, (char *)curdir2, 4096);
-        if (i2) {
-            qbs_set(strz2, qbs_ucase(qbs_new_txt_len((char *)curdir2, i2)));
-            qbs_print(strz2, 1);
+        if (FS_DirectoryExists(filepath_fix_directory(fileSpec))) {
+            directory = FS_GetFQN(fileSpec.c_str());
         } else {
-            error(5);
-            return;
+            std::string d;
+            filepath_split(fileSpec, d, pathName);
+            directory = FS_GetFQN(d.c_str());
         }
     } else {
+        fileSpec = "./";
+        directory = FS_GetFQN(fileSpec.c_str());
+    }
+
+    if (!directory.size()) {
+        // Invalid filespec
         error(5);
         return;
     }
 
-    hFind = FindFirstFileA(filepath_fix_directory(strz), &fd);
-    if (hFind == INVALID_HANDLE_VALUE) {
+    std::string shortName = FS_GetShortName(directory.c_str());
+
+    // Print the path
+    qbs_set(strz, qbs_new_txt_len(shortName.c_str(), shortName.size()));
+    qbs_print(strz, 1);
+
+    auto entry = FS_GetDirectoryEntryName(fileSpec.c_str()); // get the first entry
+    filepath_join(pathName, directory, entry);
+
+    if (FS_IsStringEmpty(entry)) {
+        // File not found
         error(53);
         return;
-    } // file not found
+    }
+
+    // Print directory entries
     do {
+        fileSpec = FS_GetShortName(pathName.c_str()); // we do not need fileSpec anymore
+        filepath_split(fileSpec, directory, shortName);
+        qbs_set(strz, qbs_new_txt_len(shortName.c_str(), shortName.size()));
 
-        if (!fd.cAlternateFileName[0]) { // no alternate filename exists
-            qbs_set(strz2, qbs_ucase(qbs_new_txt_len(fd.cFileName, strlen(fd.cFileName))));
-        } else {
-            qbs_set(strz2, qbs_ucase(qbs_new_txt_len(fd.cAlternateFileName, strlen(fd.cAlternateFileName))));
-        }
-
-        if (strz2->len < 12) { // padding required
-            qbs_set(strz2, qbs_add(strz2, func_space(12 - strz2->len)));
-            i2 = 0;
-            for (i = 0; i < 12; i++) {
-                if (strz2->chr[i] == 46) {
-                    memmove(&strz2->chr[8], &strz2->chr[i], 4);
-                    memset(&strz2->chr[i], 32, 8 - i);
+        if (strz->len < 12) {
+            // Padding required
+            qbs_set(strz, qbs_add(strz, func_space(12 - strz->len)));
+            for (auto i = 0; i < 12; i++) {
+                if (strz->chr[i] == 46) {
+                    memmove(&strz->chr[8], &strz->chr[i], 4);
+                    memset(&strz->chr[i], 32, 8 - i);
                     break;
                 }
-            } // i
-        }     // padding
-
-        // add "      " or "<DIR> "
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            qbs_set(strz2, qbs_add(strz2, qbs_new_txt_len("<DIR> ", 6)));
-        } else {
-            qbs_set(strz2, qbs_add(strz2, func_space(6)));
+            }
         }
 
-        makefit(strz2);
-        qbs_print(strz2, 0);
+        if (FS_DirectoryExists(pathName.c_str()))
+            qbs_set(strz, qbs_add(strz, qbs_new_txt_len("<DIR> ", 6)));
+        else
+            qbs_set(strz, qbs_add(strz, func_space(6)));
 
-    } while (FindNextFileA(hFind, &fd));
-    FindClose(hFind);
+        makefit(strz);
+        qbs_print(strz, 0);
 
-    static int64 bytes;
-    static char *cp;
-    qbs_set(strpath, qbs_add(strpath, qbs_new_txt_len("\0", 1)));
-    cp = (char *)strpath->chr;
-    if (strpath->len == 1)
-        cp = NULL;
+        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
+        filepath_join(pathName, directory, entry);
+    } while (!FS_IsStringEmpty(entry));
 
-    bytes = FS_GetFreeDiskSpace(cp);
+    if (func_pos(0) > 1) {
+        // Move to a new line if necessary
+        strz->len = 0;
+        qbs_print(strz, 1);
+    }
 
-    if (func_pos(NULL) > 1) {
-        strz2->len = 0;
-        qbs_print(strz2, 1);
-    } // new line if necessary
-    qbs_set(strz2, qbs_add(qbs_str(bytes), qbs_new_txt_len(" Bytes free", 11)));
-    qbs_print(strz2, 1);
-
-#endif
+    // Print the free volume space
+    qbs_set(strz, qbs_add(qbs_str(FS_GetFreeDiskSpace(directory.c_str())), qbs_new_txt_len(" Bytes free", 11)));
+    qbs_print(strz, 1);
 }
 
 /// @brief Deletes files from disk
@@ -829,16 +844,16 @@ void sub_kill(qbs *str) {
 
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 
-    std::string directory, fileName;
+    std::string directory, pathName;
 
-    filepath_split(filepath_fix_directory(strz), directory, fileName);          // split the file path
+    filepath_split(filepath_fix_directory(strz), directory, pathName);          // split the file path
     auto entry = FS_GetDirectoryEntryName(reinterpret_cast<char *>(strz->chr)); // get the first entry
 
     // Keep looking through the entries until we file a file
     while (!FS_IsStringEmpty(entry)) {
-        filepath_join(fileName, directory, entry);
+        filepath_join(pathName, directory, entry);
 
-        if (FS_FileExists(fileName.c_str()))
+        if (FS_FileExists(pathName.c_str()))
             break;
 
         entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
@@ -854,8 +869,8 @@ void sub_kill(qbs *str) {
     // Process all matches
     do {
         // We'll delete only if it is a file
-        if (FS_FileExists(fileName.c_str())) {
-            if (remove(fileName.c_str())) {
+        if (FS_FileExists(pathName.c_str())) {
+            if (remove(pathName.c_str())) {
                 auto i = errno;
 
                 if (i == ENOENT) {
@@ -873,7 +888,7 @@ void sub_kill(qbs *str) {
         }
 
         entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
-        filepath_join(fileName, directory, entry);
+        filepath_join(pathName, directory, entry);
     } while (!FS_IsStringEmpty(entry));
 }
 
