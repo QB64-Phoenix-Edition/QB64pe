@@ -717,11 +717,6 @@ static std::string FS_GetFQN(const char *path) {
 qbs *func__FQN(qbs *qbsPathName) {
     qbs *temp;
 
-    if (new_error) {
-        temp = qbs_new(0, 1);
-        return temp;
-    }
-
     if (!qbsPathName->len) {
         error(5);
         temp = qbs_new(0, 1);
