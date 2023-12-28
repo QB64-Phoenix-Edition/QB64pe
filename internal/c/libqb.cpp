@@ -24787,7 +24787,7 @@ int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t 
         FONT_DEBUG_PRINT("Loading font from memory. Size = %i", bytes);
     } else {
         qbs_set(fileNameZ, qbs_add(file_name, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-        content = FontLoadFileToMemory((char *)fileNameZ->chr, &bytes);   // this we must free!!!
+        content = FontLoadFileToMemory(filepath_fix_directory(fileNameZ), &bytes);   // this we must free!!!
         FONT_DEBUG_PRINT("Loading font from file %s", fileNameZ->chr);
     }
 
