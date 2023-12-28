@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
 //  QB64-PE filesystem related functions
 //-----------------------------------------------------------------------------------------------------
 
@@ -15,6 +15,8 @@
 #include <unistd.h>
 #ifdef QB64_WINDOWS
 #    include <shlobj.h>
+#else
+#    include <sys/statvfs.h>
 #endif
 
 #ifdef QB64_BACKSLASH_FILESYSTEM
@@ -696,28 +698,28 @@ static uint64_t FS_GetFreeDiskSpace(const char *path) {
 /// @param path The path name to get the FQN for
 /// @return The FQN
 static std::string FS_GetFQN(const char *path) {
-    std::string FQN;
+    std::string FQN = path; // fallback
 
 #ifdef QB64_WINDOWS
     DWORD size = GetFullPathNameA(path, 0, nullptr, nullptr); // get the required buffer size
 
     if (size) {
         FQN.resize(size);
-        if (GetFullPathNameA(path, size, &FQN[0], nullptr)) {
+        if (GetFullPathNameA(path, size, &FQN[0], nullptr))
             FQN.resize(size - 1); // resize to exclude the null terminator
-            return FQN;
-        }
     }
 #else
     char *result = realpath(path, nullptr);
     if (result) {
         FQN = result;
         free(result); // cleanup memory allocated by realpath
-        return FQN;
     }
 #endif
 
-    return path; // fallback
+    if (FS_DirectoryExists(FQN.c_str()) && FQN.back() != FS_PATH_SEPARATOR)
+        FQN.append(1, FS_PATH_SEPARATOR);
+
+    return FQN;
 }
 
 /// @brief Gets the short name for a file / directory (if possible)
@@ -906,10 +908,11 @@ void sub_mkdir(qbs *str) {
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 
 #ifdef QB64_WINDOWS
-    if (mkdir(filepath_fix_directory(strz)) == -1) {
+    if (mkdir(filepath_fix_directory(strz)) == -1)
 #else
-    if (mkdir(filepath_fix_directory(strz), S_IRWXU | S_IRWXG) == -1) {
+    if (mkdir(filepath_fix_directory(strz), S_IRWXU | S_IRWXG) == -1)
 #endif
+    {
         if (errno == EEXIST) {
             error(75);
             return;
