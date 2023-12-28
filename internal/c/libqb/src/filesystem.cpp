@@ -726,6 +726,40 @@ static std::string FS_GetFQN(const char *path) {
     return FQN;
 }
 
+/// @brief Gets the fully qualified name (FQN)
+/// @param qbsPathName The path name to get the FQN for
+/// @return The FQN
+qbs *func__FQN(qbs *qbsPathName) {
+    qbs *temp;
+
+    if (new_error) {
+        temp = qbs_new(0, 1);
+        return temp;
+    }
+
+    if (!qbsPathName->len) {
+        error(5);
+        temp = qbs_new(0, 1);
+        return temp;
+    }
+
+    std::string pathName(reinterpret_cast<char *>(qbsPathName->chr), qbsPathName->len);
+    filepath_fix_directory(pathName);
+
+    if (!FS_DirectoryExists(pathName.c_str()) && !FS_FileExists(pathName.c_str())) {
+        // Path not found
+        error(76);
+        temp = qbs_new(0, 1);
+        return temp;
+    }
+
+    pathName = FS_GetFQN(pathName.c_str());
+    temp = qbs_new(pathName.size(), 1);
+    memcpy(temp->chr, &pathName[0], pathName.size());
+
+    return temp;
+}
+
 /// @brief Gets the short name for a file / directory (if possible)
 /// @param path The file / directory to get the short name for
 /// @return The short name
