@@ -643,8 +643,12 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     // Check if fresh arguments were passed and we need to begin a new session
     if (passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
-        filepath_fix_directory(fileSpec);
-        filepath_split(fileSpec, directory, pathName); // split the file path
+
+        if (FS_DirectoryExists(filepath_fix_directory(fileSpec)))
+            directory = fileSpec;
+        else
+            filepath_split(fileSpec, directory, pathName); // split the file path
+
         entry = FS_GetDirectoryEntryName(fileSpec.c_str());
 
         if (FS_IsStringEmpty(entry)) {
