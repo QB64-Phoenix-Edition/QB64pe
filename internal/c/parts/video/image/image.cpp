@@ -49,13 +49,6 @@
 // This is returned to the caller if something goes wrong while loading the image
 #define INVALID_IMAGE_HANDLE -1
 
-// TODO: We should have QB64 error code enums in some common place
-// Maybe consolidate error() & friends, and these enums
-#define ERROR_ILLEGAL_FUNCTION_CALL 5
-#define ERROR_INTERNAL_ERROR 51
-#define ERROR_BAD_FILE_NAME 64
-#define ERROR_INVALID_HANDLE 258
-
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
 #else
@@ -573,7 +566,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
 
         if ((bpp != 32) && (bpp != 256)) { // invalid BPP?
             IMAGE_DEBUG_PRINT("Invalid bpp (0x%X)", bpp);
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return INVALID_IMAGE_HANDLE;
         }
     } else {
@@ -726,7 +719,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
     if (!qbsFileName->len) { // empty file names not allowed
         IMAGE_DEBUG_PRINT("Empty file name");
-        error(ERROR_BAD_FILE_NAME);
+        error(QB_ERROR_BAD_FILE_NAME);
         return;
     }
 
@@ -741,11 +734,11 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
             imageHandle = -imageHandle;
 
             if (imageHandle >= nextimg) {
-                error(ERROR_INVALID_HANDLE);
+                error(QB_ERROR_INVALID_HANDLE);
                 return;
             }
             if (!img[imageHandle].valid) {
-                error(ERROR_INVALID_HANDLE);
+                error(QB_ERROR_INVALID_HANDLE);
                 return;
             }
         }
@@ -757,11 +750,11 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         // Safety
         if (imageHandle >= nextimg) {
-            error(ERROR_INVALID_HANDLE);
+            error(QB_ERROR_INVALID_HANDLE);
             return;
         }
         if (!img[imageHandle].valid) {
-            error(ERROR_INVALID_HANDLE);
+            error(QB_ERROR_INVALID_HANDLE);
             return;
         }
     }
@@ -914,7 +907,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         stbi_write_png_compression_level = 100;
         if (!stbi_write_png(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 0)) {
             IMAGE_DEBUG_PRINT("stbi_write_png() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
 
@@ -927,28 +920,28 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         if (!qoi_write(fileName.c_str(), pixels.data(), &desc)) {
             IMAGE_DEBUG_PRINT("qoi_write() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
 
     case SaveFormat::BMP: {
         if (!stbi_write_bmp(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
             IMAGE_DEBUG_PRINT("stbi_write_bmp() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
 
     case SaveFormat::TGA: {
         if (!stbi_write_tga(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
             IMAGE_DEBUG_PRINT("stbi_write_tga() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
 
     case SaveFormat::JPG: {
         if (!stbi_write_jpg(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data(), 100)) {
             IMAGE_DEBUG_PRINT("stbi_write_jpg() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
 
@@ -973,12 +966,12 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         if (!stbi_write_hdr(fileName.c_str(), width, height, HDRComponents, HDRPixels.data())) {
             IMAGE_DEBUG_PRINT("stbi_write_hdr() failed");
-            error(ERROR_ILLEGAL_FUNCTION_CALL);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;
 
     default:
         IMAGE_DEBUG_PRINT("Save handler not implemented");
-        error(ERROR_INTERNAL_ERROR);
+        error(QB_ERROR_INTERNAL_ERROR);
     }
 }

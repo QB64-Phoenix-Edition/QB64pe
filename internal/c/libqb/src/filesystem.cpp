@@ -58,7 +58,7 @@ qbs *func__cwd() {
     }
 
     final = qbs_new(0, 1);
-    error(7);
+    error(QB_ERROR_INTERNAL_ERROR);
 
     return final;
 }
@@ -425,7 +425,7 @@ qbs *func__dir(qbs *qbsContext) {
     }
 
     auto size = path.size();
-    qbs *final = qbs_new(size, 1);
+    auto final = qbs_new(size, 1);
     memcpy(final->chr, &path[0], size);
 
     return final;
@@ -473,7 +473,7 @@ int32_t func__fileexists(qbs *path) {
 /// @brief Return the startup directory
 /// @return A qbs containing the directory path
 qbs *func__startdir() {
-    qbs *temp = qbs_new(0, 1);
+    auto temp = qbs_new(0, 1);
 
     qbs_set(temp, g_startDir);
 
@@ -489,7 +489,7 @@ void sub_chdir(qbs *str) {
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
     if (chdir(filepath_fix_directory(pathName)) == -1)
-        error(76); // assume errno == ENOENT; path not found
+        error(QB_ERROR_PATH_NOT_FOUND); // assume errno == ENOENT; path not found
 }
 
 /// @brief Checks if s is an empty string (either NULL or zero length)
@@ -647,7 +647,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         if (FS_IsStringEmpty(entry)) {
             // This is per MS BASIC PDS 7.1 and VBDOS 1.0 behavior
             final = qbs_new(0, 1);
-            error(53);
+            error(QB_ERROR_FILE_NOT_FOUND);
             return final;
         }
     } else {
@@ -726,7 +726,7 @@ qbs *func__FQN(qbs *qbsPathName) {
     qbs *temp;
 
     if (!qbsPathName->len) {
-        error(5);
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         temp = qbs_new(0, 1);
         return temp;
     }
@@ -736,7 +736,7 @@ qbs *func__FQN(qbs *qbsPathName) {
 
     if (!FS_DirectoryExists(pathName.c_str()) && !FS_FileExists(pathName.c_str())) {
         // Path not found
-        error(76);
+        error(QB_ERROR_PATH_NOT_FOUND);
         temp = qbs_new(0, 1);
         return temp;
     }
@@ -799,7 +799,7 @@ void sub_files(qbs *str, int32_t passed) {
 
     if (!directory.size()) {
         // Invalid filespec
-        error(5);
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
 
@@ -814,7 +814,7 @@ void sub_files(qbs *str, int32_t passed) {
 
     if (FS_IsStringEmpty(entry)) {
         // File not found
-        error(53);
+        error(QB_ERROR_FILE_NOT_FOUND);
         return;
     }
 
@@ -883,7 +883,7 @@ void sub_kill(qbs *str) {
     // Check if we have exhausted the entries without ever finding a file
     if (FS_IsStringEmpty(entry)) {
         // This behavior is per QBasic 1.1
-        error(53);
+        error(QB_ERROR_FILE_NOT_FOUND);
         return;
     }
 
@@ -895,16 +895,16 @@ void sub_kill(qbs *str) {
                 auto i = errno;
 
                 if (i == ENOENT) {
-                    error(53);
+                    error(QB_ERROR_FILE_NOT_FOUND);
                     return;
                 } // file not found
 
                 if (i == EACCES) {
-                    error(75);
+                    error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
                     return;
                 } // path / file access error
 
-                error(64); // bad file name (assumed)
+                error(QB_ERROR_BAD_FILE_NAME); // bad file name (assumed)
             }
         }
 
@@ -928,11 +928,11 @@ void sub_mkdir(qbs *str) {
 #endif
     {
         if (errno == EEXIST) {
-            error(75);
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
             return;
         } // path / file access error
 
-        error(76); // assume errno == ENOENT; path not found
+        error(QB_ERROR_PATH_NOT_FOUND); // assume errno == ENOENT; path not found
     }
 }
 
@@ -949,21 +949,21 @@ void sub_name(qbs *oldname, qbs *newname) {
         auto i = errno;
 
         if (i == ENOENT) {
-            error(53);
+            error(QB_ERROR_FILE_NOT_FOUND);
             return;
         } // file not found
 
         if (i == EINVAL) {
-            error(64);
+            error(QB_ERROR_BAD_FILE_NAME);
             return;
         } // bad file name
 
         if (i == EACCES) {
-            error(75);
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
             return;
         } // path / file access error
 
-        error(5); // illegal function call (assumed)
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // illegal function call (assumed)
     }
 }
 
@@ -977,10 +977,10 @@ void sub_rmdir(qbs *str) {
 
     if (rmdir(filepath_fix_directory(pathName)) == -1) {
         if (errno == ENOTEMPTY) {
-            error(75);
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
             return;
         } // path/file access error; not an empty directory
 
-        error(76); // assume errno == ENOENT; path not found
+        error(QB_ERROR_PATH_NOT_FOUND); // assume errno == ENOENT; path not found
     }
 }

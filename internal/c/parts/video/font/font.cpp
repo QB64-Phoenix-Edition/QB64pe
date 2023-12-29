@@ -1018,7 +1018,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     if (passed) {
         // Check if a valid font handle was passed
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
@@ -1056,7 +1056,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     // Check UTF argument
     if (passed & 1) {
         if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return 0;
         }
     } else {
@@ -1066,7 +1066,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     // Check if a valid font handle was passed
     if (passed & 2) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
@@ -1122,7 +1122,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     if (passed) {
         // Check if a valid font handle was passed
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
@@ -1160,7 +1160,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     // Check if we are in text mode and generate an error if we are
     if (write_page->text) {
-        error(5);
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
 
@@ -1177,7 +1177,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     // Check UTF argument
     if (passed & 2) {
         if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
     } else {
@@ -1187,7 +1187,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     // Check if a valid font handle was passed
     if (passed & 4) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return;
         }
     } else {
@@ -1488,7 +1488,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
     // Check UTF argument
     if (passed & 2) {
         if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return 0;
         }
     } else {
@@ -1498,7 +1498,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
     // Check if a valid font handle was passed
     if (passed & 4) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {

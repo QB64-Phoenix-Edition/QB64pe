@@ -767,7 +767,7 @@ class PSG {
                 if (processedChar == 'X') { // "X" + VARPTR$()
                     // A minimum of 3 bytes is need to read the address
                     if (currentState.length < 3) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -789,12 +789,12 @@ class PSG {
                     continue;
                 } else if (currentChar == '=') { // "=" + VARPTR$()
                     if (dots) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     if (numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -814,7 +814,7 @@ class PSG {
                      */
 
                     if (currentState.length < 3) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -866,14 +866,14 @@ class PSG {
                     default:
                         // bit type?
                         if ((currentChar & 64) == 0) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
                         auto x2 = currentChar & 63;
 
                         if (x2 > 56) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         } // valid number of bits?
 
@@ -895,7 +895,7 @@ class PSG {
                     }
 
                     if (d > 2147483647.0 || d < -2147483648.0) {
-                        error(5); // out of range value!
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // out of range value!
                         return;
                     }
 
@@ -904,7 +904,7 @@ class PSG {
                     continue;
                 } else if (currentChar >= '0' && currentChar <= '9') {
                     if (dots || numberEntered == 2) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -918,7 +918,7 @@ class PSG {
                     continue;
                 } else if (currentChar == '.') {
                     if (followUp != 7 && followUp != 1 && followUp != 4) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -930,14 +930,14 @@ class PSG {
             follow_up:
                 if (followUp == 10) { // Q...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > 100) { // 0 - 100 ms
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -948,14 +948,14 @@ class PSG {
                         break;
                 } else if (followUp == 9) { // @...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if ((WaveformType)number <= WaveformType::NONE || (WaveformType)number >= WaveformType::COUNT) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -967,14 +967,14 @@ class PSG {
                         break;
                 } else if (followUp == 8) { // V...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > MAX_MML_VOLUME) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -988,7 +988,7 @@ class PSG {
                     if (numberEntered) {
                         numberEntered = 0;
                         if (number < 1 || number > 64) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
                         duration = 1.0 / (tempo / 60.0) * (4.0 / ((double)number));
@@ -1025,7 +1025,7 @@ class PSG {
                         break;
                 } else if (followUp == 6) { // T...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1043,7 +1043,7 @@ class PSG {
                         break;
                 } else if (followUp == 5) { // M...
                     if (numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1071,7 +1071,7 @@ class PSG {
                         background = false;
                         break;
                     default:
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1080,14 +1080,14 @@ class PSG {
                     continue;
                 } else if (followUp == 4) { // N...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > 84) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1096,14 +1096,14 @@ class PSG {
                     goto follow_up_1;
                 } else if (followUp == 3) { // O...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > MAX_OCTAVE) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1115,14 +1115,14 @@ class PSG {
                         break;
                 } else if (followUp == 2) { // L...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number < MIN_LENGTH || number > MAX_LENGTH) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1135,7 +1135,7 @@ class PSG {
                 } else if (followUp == 1) { // A-G...
                     if (currentChar == '-') {
                         if (noteShifted || numberEntered) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
@@ -1146,7 +1146,7 @@ class PSG {
                     }
                     if (currentChar == '+' || currentChar == '#') {
                         if (noteShifted || numberEntered) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
@@ -1161,7 +1161,7 @@ class PSG {
                         numberEntered = 0;
 
                         if (number < 0 || number > 64) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
@@ -1274,12 +1274,12 @@ class PSG {
                     continue;
                 }
 
-                error(5);
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                 return;
             }
 
             if (numberEntered || followUp) {
-                error(5); // unhandled data
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // unhandled data
                 return;
             }
 
@@ -1586,13 +1586,13 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
         return;
 
     if ((frequency < 37.0 && frequency != 0) || frequency > 32767.0 || lengthInClockTicks < 0.0 || lengthInClockTicks > 65535.0) {
-        error(5);
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
 
     if (passed & 1) {
         if (volume < PSG::MIN_VOLUME || volume > PSG::MAX_VOLUME) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         audioEngine.psg->SetAmplitude(volume);
@@ -1600,7 +1600,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
 
     if (passed & 2) {
         if (panning < PSG::PAN_LEFT || panning > PSG::PAN_RIGHT) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         audioEngine.psg->SetPanning((float)panning);
@@ -1608,7 +1608,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
 
     if (passed & 4) {
         if ((PSG::WaveformType)waveform <= PSG::WaveformType::NONE || (PSG::WaveformType)waveform >= PSG::WaveformType::COUNT) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         audioEngine.psg->SetWaveformType((PSG::WaveformType)waveform);
