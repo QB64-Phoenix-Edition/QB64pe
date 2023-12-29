@@ -77,7 +77,7 @@ bool filepath_has_extension(const char *path, const char *extension) {
 }
 
 /// @brief Changes the slashes in a file name / path to make it compatible with the OS
-/// @param path The path to fix (this contents may be changed)
+/// @param path The path to fix (contents may be changed)
 /// @return Returns the C-string for convenience
 const char *filepath_fix_directory(char *path) {
     auto len = strlen(path);
@@ -96,7 +96,7 @@ const char *filepath_fix_directory(char *path) {
 }
 
 /// @brief Changes the slashes in a file name / path to make it compatible with the OS
-/// @param path The path to fix (this contents may be changed)
+/// @param path The path to fix (contents may be changed)
 /// @return Returns the C-string for convenience
 const char *filepath_fix_directory(qbs *path) {
     for (size_t i = 0; i < path->len; i++) {
@@ -113,7 +113,7 @@ const char *filepath_fix_directory(qbs *path) {
 }
 
 /// @brief Changes the slashes in a file name / path to make it compatible with the OS
-/// @param path The path to fix (this contents may be changed)
+/// @param path The path to fix (contents may be changed)
 /// @return Returns the C-string for convenience
 const char *filepath_fix_directory(std::string &path) {
     std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) {

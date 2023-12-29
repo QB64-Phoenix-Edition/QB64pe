@@ -294,7 +294,7 @@ static uint32_t *image_qoi_load_from_memory(const uint8_t *buffer, size_t size, 
     return pixels;
 }
 
-/// @brief Decodes an image file freom a file using the dr_pcx & stb_image libraries.
+/// @brief Decodes an image file from a file using the dr_pcx & stb_image libraries.
 /// @param fileName A valid filename
 /// @param xOut Out: width in pixels. This cannot be NULL
 /// @param yOut Out: height in pixels. This cannot be NULL
@@ -386,7 +386,7 @@ static inline uint8_t image_clamp_component(int32_t n) { return n < 0 ? 0 : n > 
 
 /// @brief This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
 /// @param src32 The source raw image data. This must be in BGRA format and not NULL
-/// @param w The widht of the image in pixels
+/// @param w The width of the image in pixels
 /// @param h The height of the image in pixels
 /// @param paletteOut A 256 color palette if the operation was successful. This cannot be NULL
 /// @return A pointer to a 8bpp raw image or NULL if operation failed
@@ -448,7 +448,7 @@ static uint8_t *image_convert_8bpp(const uint32_t *src32, int32_t w, int32_t h, 
 /// If the number of unique colors in the 32bpp image > 256, then the functions returns a NULL.
 /// Unlike image_convert_8bpp(), no 'real' conversion takes place.
 /// @param src The source raw image data. This must be in BGRA format and not NULL
-/// @param w The widht of the image in pixels
+/// @param w The width of the image in pixels
 /// @param h The height of the image in pixels
 /// @param paletteOut A 256 color palette if the operation was successful. This cannot be NULL
 /// @return A pointer to a 8bpp raw image or NULL if operation failed
@@ -545,7 +545,7 @@ static inline uint32_t image_swap_red_blue(uint32_t clr) { return ((clr & 0xFF00
 
 /// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
 /// @param qbsFileName The filename or memory buffer (see requirements below) of the image
-/// @param bpp 32 = 32bpp, 33 = 32bpp (hardware acclerated), 256=8bpp or 257=8bpp (without palette remap)
+/// @param bpp 32 = 32bpp, 33 = 32bpp (hardware accelerated), 256=8bpp or 257=8bpp (without palette remap)
 /// @param qbsRequirements A qbs that can contain one or more of: hardware, memory, adaptive
 /// @param passed How many parameters were passed?
 /// @return Valid LONG image handle values that are less than -1 or -1 on failure
@@ -593,8 +593,6 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         std::transform(requirements.begin(), requirements.end(), requirements.begin(), [](unsigned char c) { return std::toupper(c); });
 
         IMAGE_DEBUG_PRINT("Parsing requirements string: %s", requirements.c_str());
-
-        // requirements.find(REQUIREMENT_STRING_MEMORY) != std::string::npos
 
         if (requirements.find("HARDWARE") != std::string::npos && bpp == 32) {
             isHardwareImage = true;
@@ -718,7 +716,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
 /// @param qbsFileName The file path name to save to
 /// @param imageHandle Optional: The image handle. If omitted, then this is _DISPLAY()
 /// @param qbsRequirements Optional: Extra format and setting arguments
-/// @param passed Argument bitmask
+/// @param passed Optional parameters
 void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements, int32_t passed) {
     enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, JPG, HDR };
     static const char *formatName[] = {"png", "qoi", "bmp", "tga", "jpg", "hdr"};
@@ -890,7 +888,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         pixels.resize(width * height);
 
         if (img[imageHandle].bits_per_pixel == 32) { // BGRA pixels
-            IMAGE_DEBUG_PRINT("Coverting BGRA surface to RGBA");
+            IMAGE_DEBUG_PRINT("Converting BGRA surface to RGBA");
 
             auto p = img[imageHandle].offset32;
 
@@ -899,7 +897,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
                 ++p;
             }
         } else { // indexed pixels
-            IMAGE_DEBUG_PRINT("Coverting BGRA indexed surface to RGBA");
+            IMAGE_DEBUG_PRINT("Converting BGRA indexed surface to RGBA");
             auto p = img[imageHandle].offset;
 
             for (size_t i = 0; i < pixels.size(); i++) {

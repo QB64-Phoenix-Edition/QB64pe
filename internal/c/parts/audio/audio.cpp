@@ -85,7 +85,7 @@ struct RawStream {
     libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
     bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
 
-    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amout what miniaudio actually asks for in frameCount
+    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amount what miniaudio actually asks for in frameCount
 
     // Delete default, copy and move constructors and assignments
     RawStream() = delete;
@@ -116,7 +116,7 @@ struct RawStream {
         libqb_mutex_guard lock(m);     // lock the mutex before accessing the vectors
         consumer->cursor = 0;          // reset the cursor
         consumer->data.clear();        // clear the consumer vector
-        std::swap(consumer, producer); // quicky swap the Buffer pointers
+        std::swap(consumer, producer); // quickly swap the Buffer pointers
     }
 
     /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
@@ -253,7 +253,7 @@ static ma_data_source_vtable rawStreamDataSourceVtable = {
 /// @brief This creates, initializes and sets up a raw stream for playback
 /// @param pmaEngine This should come from the QBPE sound engine
 /// @param pmaSound This should come from a QBPE sound handle
-/// @return Returns a pointer to a data souce if successful, NULL otherwise
+/// @return Returns a pointer to a data source if successful, NULL otherwise
 static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     if (!pmaEngine || !pmaSound) { // these should not be NULL
         AUDIO_DEBUG_PRINT("Invalid arguments");
@@ -285,7 +285,7 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->maDataSource, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
                                             pmaSound); // attach data source to the ma_sound
     if (result != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("Error %i: failed to initalize sound from data source", result);
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound from data source", result);
 
         delete pRawStream;
 
@@ -421,7 +421,7 @@ class BufferMap {
     }
 };
 
-/// @brief This is a PSG class that handles all kinds of sound generatation for BEEP, SOUND and PLAY
+/// @brief This is a PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY
 class PSG {
   public:
     /// @brief Various types of waveform that can be generated
@@ -494,7 +494,7 @@ class PSG {
         auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
 
         if (!neededFrames || maWaveform.config.frequency >= 20000 || mixCursor + neededFrames > waveBuffer.size()) {
-            AUDIO_DEBUG_PRINT("Not generating any wavefrom. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
+            AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
                               mixCursor);
             return; // nothing to do
         }
@@ -1534,7 +1534,7 @@ struct AudioEngine {
             soundHandles[handle]->isUsed = false;
             soundHandles[handle]->type = SoundHandle::Type::NONE;
 
-            // Save the free hanndle to lowestFreeHandle if it is lower than lowestFreeHandle
+            // Save the free handle to lowestFreeHandle if it is lower than lowestFreeHandle
             if (handle < lowestFreeHandle)
                 lowestFreeHandle = handle;
 
@@ -1652,7 +1652,7 @@ void sub_play(const qbs *str) {
 /// <summary>
 /// This returns the sample rate from ma engine if ma is initialized.
 /// </summary>
-/// <returns>miniaudio sample rtate</returns>
+/// <returns>miniaudio sample rate</returns>
 int32_t func__sndrate() { return audioEngine.sampleRate; }
 
 /// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle
@@ -1720,7 +1720,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     if (!reqs)
         reqs = qbs_new(0, 0);
 
-    // Alocate a sound handle
+    // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1) // We are not expected to open files with handle 0
         return INVALID_SOUND_HANDLE;
@@ -1732,7 +1732,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     if (passed && requirements->len)
         qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
 
-    // Set the flags to specifiy how we want the audio file to be opened
+    // Set the flags to specify how we want the audio file to be opened
     if (passed && requirements->len && func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM), 1)) {
         audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM; // Check if the user wants to stream the file
         AUDIO_DEBUG_PRINT("Sound will stream");
@@ -1780,7 +1780,7 @@ void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
         // If we have a raw stream then force it to push all it's data to miniaudio
         // Note that this will take care of checking if the handle is a raw steam and other stuff
-        // So it is completly safe to call it this way
+        // So it is completely safe to call it this way
         sub__sndrawdone(handle, true);
 
         if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)
@@ -1824,7 +1824,7 @@ int32_t func__sndcopy(int32_t src_handle) {
     } else if (audioEngine.soundHandles[src_handle]->maDecoder) {
         AUDIO_DEBUG_PRINT("Doing custom sound copy for ma_decoder");
 
-        dst_handle = audioEngine.CreateHandle(); // alocate a sound handle
+        dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;
 
@@ -1845,7 +1845,7 @@ int32_t func__sndcopy(int32_t src_handle) {
     } else {
         AUDIO_DEBUG_PRINT("Doing regular miniaudio sound copy");
 
-        dst_handle = audioEngine.CreateHandle(); // alocate a sound handle
+        dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;
 
@@ -2180,7 +2180,7 @@ int32_t func__sndopenraw() {
     if (!audioEngine.isInitialized)
         return INVALID_SOUND_HANDLE;
 
-    // Alocate a sound handle
+    // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1)
         return INVALID_SOUND_HANDLE;
@@ -2413,7 +2413,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
     AUDIO_DEBUG_PRINT("Format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
 
     // Setup type: This was not done in the old code
-    // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
+    // But we are doing it here. By examining the type the user can now figure out if they have to use FP32 or integers
     switch (maFormat) {
     case ma_format::ma_format_f32:
         mb.type = 4 + 256; // FP32
@@ -2495,7 +2495,7 @@ void snd_init() {
 
     // Get and save the engine sample rate. We will let miniaudio choose the device sample rate for us
     // This ensures we get the lowest latency
-    // Set the resource manager decorder sample rate to the device sample rate (miniaudio engine bug?)
+    // Set the resource manager decoder sample rate to the device sample rate (miniaudio engine bug?)
     audioEngine.maResourceManager.config.decodedSampleRate = audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
     // Set the initialized flag as true
