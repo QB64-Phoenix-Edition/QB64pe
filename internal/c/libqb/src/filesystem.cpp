@@ -722,7 +722,7 @@ static std::string FS_GetFQN(const char *path) {
 /// @brief Gets the fully qualified name (FQN)
 /// @param qbsPathName The path name to get the FQN for
 /// @return The FQN
-qbs *func__FQN(qbs *qbsPathName) {
+qbs *func__fullpath(qbs *qbsPathName) {
     qbs *temp;
 
     if (!qbsPathName->len) {

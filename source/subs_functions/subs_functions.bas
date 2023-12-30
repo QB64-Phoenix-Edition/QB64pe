@@ -638,14 +638,14 @@ id.hr_syntax = "_FILES$([fileSpec$])"
 regid
 
 clearid
-id.n = qb64prefix$ + "FQN"
+id.n = qb64prefix$ + "FullPath"
 id.musthave = "$"
 id.subfunc = 1
-id.callname = "func__FQN"
+id.callname = "func__fullpath"
 id.args = 1
 id.arg = MKL$(STRINGTYPE - ISPOINTER)
 id.ret = STRINGTYPE - ISPOINTER
-id.hr_syntax = "_FQN$(pathName$)"
+id.hr_syntax = "_FULLPATH$(pathName$)"
 regid
 
 clearid
