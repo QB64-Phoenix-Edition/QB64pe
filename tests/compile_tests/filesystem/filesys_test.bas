@@ -1,6 +1,8 @@
 $CONSOLE:ONLY
 OPTION _EXPLICIT
 
+ON ERROR GOTO test_failed
+
 CHDIR _STARTDIR$
 
 PRINT "Creating directory temp_dir"
@@ -38,12 +40,14 @@ RMDIR "dummy_dir"
 
 SYSTEM
 
+test_failed:
+PRINT "Test failed!"
+SYSTEM 1
+
 FUNCTION CreateDummyFile$ (directory AS STRING)
     DO
-        DIM fileName AS STRING: fileName = LTRIM$(STR$(100! * (TIMER + RND))) + ".tmp"
-    LOOP WHILE _FILEEXISTS(directory + fileName)
-
-    fileName = directory + fileName
+        DIM fileName AS STRING: fileName = directory + LTRIM$(STR$(100! * (TIMER + RND))) + ".tmp"
+    LOOP WHILE _FILEEXISTS(fileName)
 
     DIM h AS LONG: h = FREEFILE
 
