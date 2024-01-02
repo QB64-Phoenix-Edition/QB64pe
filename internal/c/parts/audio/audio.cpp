@@ -17,6 +17,7 @@
 #define STB_VORBIS_HEADER_ONLY
 #include "datetime.h"
 #include "extras/stb_vorbis.c"
+#include "filepath.h"
 #include "miniaudio.h"
 #include "mutex.h"
 #include <algorithm>
@@ -28,9 +29,6 @@
 #define INVALID_MEM_LOCK 1073741821
 // This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
 #define MEM_TYPE_SOUND 5
-// In QuickBASIC false means 0 and true means -1 (sad, but true XD)
-#define QB_FALSE MA_FALSE
-#define QB_TRUE -MA_TRUE
 // This is returned to the caller if handle allocation fails with a -1
 // CreateHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case
@@ -87,7 +85,7 @@ struct RawStream {
     libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
     bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
 
-    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amout what miniaudio actually asks for in frameCount
+    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amount what miniaudio actually asks for in frameCount
 
     // Delete default, copy and move constructors and assignments
     RawStream() = delete;
@@ -118,7 +116,7 @@ struct RawStream {
         libqb_mutex_guard lock(m);     // lock the mutex before accessing the vectors
         consumer->cursor = 0;          // reset the cursor
         consumer->data.clear();        // clear the consumer vector
-        std::swap(consumer, producer); // quicky swap the Buffer pointers
+        std::swap(consumer, producer); // quickly swap the Buffer pointers
     }
 
     /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
@@ -255,7 +253,7 @@ static ma_data_source_vtable rawStreamDataSourceVtable = {
 /// @brief This creates, initializes and sets up a raw stream for playback
 /// @param pmaEngine This should come from the QBPE sound engine
 /// @param pmaSound This should come from a QBPE sound handle
-/// @return Returns a pointer to a data souce if successful, NULL otherwise
+/// @return Returns a pointer to a data source if successful, NULL otherwise
 static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     if (!pmaEngine || !pmaSound) { // these should not be NULL
         AUDIO_DEBUG_PRINT("Invalid arguments");
@@ -287,7 +285,7 @@ static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->maDataSource, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
                                             pmaSound); // attach data source to the ma_sound
     if (result != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("Error %i: failed to initalize sound from data source", result);
+        AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound from data source", result);
 
         delete pRawStream;
 
@@ -423,7 +421,7 @@ class BufferMap {
     }
 };
 
-/// @brief This is a PSG class that handles all kinds of sound generatation for BEEP, SOUND and PLAY
+/// @brief This is a PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY
 class PSG {
   public:
     /// @brief Various types of waveform that can be generated
@@ -496,7 +494,7 @@ class PSG {
         auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
 
         if (!neededFrames || maWaveform.config.frequency >= 20000 || mixCursor + neededFrames > waveBuffer.size()) {
-            AUDIO_DEBUG_PRINT("Not generating any wavefrom. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
+            AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
                               mixCursor);
             return; // nothing to do
         }
@@ -769,7 +767,7 @@ class PSG {
                 if (processedChar == 'X') { // "X" + VARPTR$()
                     // A minimum of 3 bytes is need to read the address
                     if (currentState.length < 3) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -791,12 +789,12 @@ class PSG {
                     continue;
                 } else if (currentChar == '=') { // "=" + VARPTR$()
                     if (dots) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     if (numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -816,7 +814,7 @@ class PSG {
                      */
 
                     if (currentState.length < 3) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -868,14 +866,14 @@ class PSG {
                     default:
                         // bit type?
                         if ((currentChar & 64) == 0) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
                         auto x2 = currentChar & 63;
 
                         if (x2 > 56) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         } // valid number of bits?
 
@@ -897,7 +895,7 @@ class PSG {
                     }
 
                     if (d > 2147483647.0 || d < -2147483648.0) {
-                        error(5); // out of range value!
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // out of range value!
                         return;
                     }
 
@@ -906,7 +904,7 @@ class PSG {
                     continue;
                 } else if (currentChar >= '0' && currentChar <= '9') {
                     if (dots || numberEntered == 2) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -920,7 +918,7 @@ class PSG {
                     continue;
                 } else if (currentChar == '.') {
                     if (followUp != 7 && followUp != 1 && followUp != 4) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -932,14 +930,14 @@ class PSG {
             follow_up:
                 if (followUp == 10) { // Q...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > 100) { // 0 - 100 ms
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -950,14 +948,14 @@ class PSG {
                         break;
                 } else if (followUp == 9) { // @...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if ((WaveformType)number <= WaveformType::NONE || (WaveformType)number >= WaveformType::COUNT) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -969,14 +967,14 @@ class PSG {
                         break;
                 } else if (followUp == 8) { // V...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > MAX_MML_VOLUME) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -990,7 +988,7 @@ class PSG {
                     if (numberEntered) {
                         numberEntered = 0;
                         if (number < 1 || number > 64) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
                         duration = 1.0 / (tempo / 60.0) * (4.0 / ((double)number));
@@ -1027,7 +1025,7 @@ class PSG {
                         break;
                 } else if (followUp == 6) { // T...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1045,7 +1043,7 @@ class PSG {
                         break;
                 } else if (followUp == 5) { // M...
                     if (numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1073,7 +1071,7 @@ class PSG {
                         background = false;
                         break;
                     default:
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1082,14 +1080,14 @@ class PSG {
                     continue;
                 } else if (followUp == 4) { // N...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > 84) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1098,14 +1096,14 @@ class PSG {
                     goto follow_up_1;
                 } else if (followUp == 3) { // O...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number > MAX_OCTAVE) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1117,14 +1115,14 @@ class PSG {
                         break;
                 } else if (followUp == 2) { // L...
                     if (!numberEntered) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
                     numberEntered = 0;
 
                     if (number < MIN_LENGTH || number > MAX_LENGTH) {
-                        error(5);
+                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
 
@@ -1137,7 +1135,7 @@ class PSG {
                 } else if (followUp == 1) { // A-G...
                     if (currentChar == '-') {
                         if (noteShifted || numberEntered) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
@@ -1148,7 +1146,7 @@ class PSG {
                     }
                     if (currentChar == '+' || currentChar == '#') {
                         if (noteShifted || numberEntered) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
@@ -1163,7 +1161,7 @@ class PSG {
                         numberEntered = 0;
 
                         if (number < 0 || number > 64) {
-                            error(5);
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
@@ -1276,12 +1274,12 @@ class PSG {
                     continue;
                 }
 
-                error(5);
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                 return;
             }
 
             if (numberEntered || followUp) {
-                error(5); // unhandled data
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // unhandled data
                 return;
             }
 
@@ -1536,7 +1534,7 @@ struct AudioEngine {
             soundHandles[handle]->isUsed = false;
             soundHandles[handle]->type = SoundHandle::Type::NONE;
 
-            // Save the free hanndle to lowestFreeHandle if it is lower than lowestFreeHandle
+            // Save the free handle to lowestFreeHandle if it is lower than lowestFreeHandle
             if (handle < lowestFreeHandle)
                 lowestFreeHandle = handle;
 
@@ -1588,13 +1586,13 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
         return;
 
     if ((frequency < 37.0 && frequency != 0) || frequency > 32767.0 || lengthInClockTicks < 0.0 || lengthInClockTicks > 65535.0) {
-        error(5);
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
 
     if (passed & 1) {
         if (volume < PSG::MIN_VOLUME || volume > PSG::MAX_VOLUME) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         audioEngine.psg->SetAmplitude(volume);
@@ -1602,7 +1600,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
 
     if (passed & 2) {
         if (panning < PSG::PAN_LEFT || panning > PSG::PAN_RIGHT) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         audioEngine.psg->SetPanning((float)panning);
@@ -1610,7 +1608,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
 
     if (passed & 4) {
         if ((PSG::WaveformType)waveform <= PSG::WaveformType::NONE || (PSG::WaveformType)waveform >= PSG::WaveformType::COUNT) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         audioEngine.psg->SetWaveformType((PSG::WaveformType)waveform);
@@ -1654,7 +1652,7 @@ void sub_play(const qbs *str) {
 /// <summary>
 /// This returns the sample rate from ma engine if ma is initialized.
 /// </summary>
-/// <returns>miniaudio sample rtate</returns>
+/// <returns>miniaudio sample rate</returns>
 int32_t func__sndrate() { return audioEngine.sampleRate; }
 
 /// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle
@@ -1722,7 +1720,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     if (!reqs)
         reqs = qbs_new(0, 0);
 
-    // Alocate a sound handle
+    // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1) // We are not expected to open files with handle 0
         return INVALID_SOUND_HANDLE;
@@ -1734,7 +1732,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     if (passed && requirements->len)
         qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
 
-    // Set the flags to specifiy how we want the audio file to be opened
+    // Set the flags to specify how we want the audio file to be opened
     if (passed && requirements->len && func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM), 1)) {
         audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM; // Check if the user wants to stream the file
         AUDIO_DEBUG_PRINT("Sound will stream");
@@ -1757,8 +1755,8 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
         qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
 
         // Forward the request to miniaudio to open the sound file
-        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, (const char *)fileNameZ->chr, audioEngine.soundHandles[handle]->maFlags, NULL,
-                                                       NULL, &audioEngine.soundHandles[handle]->maSound);
+        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, filepath_fix_directory(fileNameZ), audioEngine.soundHandles[handle]->maFlags,
+                                                       NULL, NULL, &audioEngine.soundHandles[handle]->maSound);
     }
 
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
@@ -1782,7 +1780,7 @@ void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
         // If we have a raw stream then force it to push all it's data to miniaudio
         // Note that this will take care of checking if the handle is a raw steam and other stuff
-        // So it is completly safe to call it this way
+        // So it is completely safe to call it this way
         sub__sndrawdone(handle, true);
 
         if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)
@@ -1826,7 +1824,7 @@ int32_t func__sndcopy(int32_t src_handle) {
     } else if (audioEngine.soundHandles[src_handle]->maDecoder) {
         AUDIO_DEBUG_PRINT("Doing custom sound copy for ma_decoder");
 
-        dst_handle = audioEngine.CreateHandle(); // alocate a sound handle
+        dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;
 
@@ -1847,7 +1845,7 @@ int32_t func__sndcopy(int32_t src_handle) {
     } else {
         AUDIO_DEBUG_PRINT("Doing regular miniaudio sound copy");
 
-        dst_handle = audioEngine.CreateHandle(); // alocate a sound handle
+        dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
         if (dst_handle < 1)
             return INVALID_SOUND_HANDLE;
 
@@ -2182,7 +2180,7 @@ int32_t func__sndopenraw() {
     if (!audioEngine.isInitialized)
         return INVALID_SOUND_HANDLE;
 
-    // Alocate a sound handle
+    // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1)
         return INVALID_SOUND_HANDLE;
@@ -2415,7 +2413,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
     AUDIO_DEBUG_PRINT("Format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
 
     // Setup type: This was not done in the old code
-    // But we are doing it here. By examing the type the user can now figure out if they have to use FP32 or integers
+    // But we are doing it here. By examining the type the user can now figure out if they have to use FP32 or integers
     switch (maFormat) {
     case ma_format::ma_format_f32:
         mb.type = 4 + 256; // FP32
@@ -2497,7 +2495,7 @@ void snd_init() {
 
     // Get and save the engine sample rate. We will let miniaudio choose the device sample rate for us
     // This ensures we get the lowest latency
-    // Set the resource manager decorder sample rate to the device sample rate (miniaudio engine bug?)
+    // Set the resource manager decoder sample rate to the device sample rate (miniaudio engine bug?)
     audioEngine.maResourceManager.config.decodedSampleRate = audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
 
     // Set the initialized flag as true

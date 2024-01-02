@@ -3,11 +3,13 @@
 #include "compression.h"
 #include "datetime.h"
 #include "event.h"
+#include "extended_math.h"
+#include "filepath.h"
+#include "filesystem.h"
 #include "font.h"
 #include "gui.h"
 #include "image.h"
 #include "rounding.h"
-#include "extended_math.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -88,13 +90,8 @@ void requestKeyboardOverlayImage(int32 handle) {
 
 // extern functions
 
-extern qbs *func__dir(qbs *context);
-
 extern int32 func__scaledwidth();
 extern int32 func__scaledheight();
-
-extern qbs *func__cwd();
-extern qbs *func__startdir();
 
 extern void sub__fps(double fps, int32 passed);
 
@@ -178,8 +175,6 @@ extern int32 func_windowexists();
 extern int32 func_screenicon();
 extern int32 func_screenwidth();
 extern int32 func_screenheight();
-extern int32 func__borderwidth();
-extern int32 func__titlebarheight();
 extern void sub_screenicon();
 extern void sub__console(int32);
 extern int32 func__console();
@@ -191,8 +186,6 @@ extern int32 func__hasfocus();
 extern void set_foreground_window(ptrszint i);
 extern qbs *func__title();
 extern int32 func__handle();
-extern int32 func__fileexists(qbs *);
-extern int32 func__direxists(qbs *);
 extern int32 func_stick(int32 i, int32 axis_group, int32 passed);
 extern int32 func_strig(int32 i, int32 controller, int32 passed);
 extern void sub__maptriangle(int32 cull_options, float sx1, float sy1,
@@ -224,7 +217,6 @@ extern void field_get(int32 fileno, int64 seekpos, int32 passed);
 extern void field_put(int32 fileno, int64 seekpos, int32 passed);
 extern int32 func__keydown(int32 x);
 extern int32 func__keyhit();
-extern void sub_files(qbs *str, int32 passed);
 extern int32 func_lpos(int32);
 extern void sub__printimage(int32 i);
 extern float func__mousemovementx(int32 context, int32 passed);
@@ -246,7 +238,6 @@ extern qbs *func__clipboard();
 extern int32 func__clipboardimage();
 extern void sub__clipboardimage(int32 src);
 extern int32 func__exit();
-extern char *fixdir(qbs *);
 extern void revert_input_check();
 extern int32 func__openhost(qbs *);
 extern int32 func__openconnection(int32);
@@ -276,7 +267,6 @@ extern void sub__putimage(double f_dx1, double f_dy1, double f_dx2,
                           double f_sy1, double f_sx2, double f_sy2,
                           int32 passed);
 extern int32 selectfont(int32 f, img_struct *im);
-extern void sndsetup();
 extern uint32 sib();
 extern uint32 sib_mod0();
 extern uint8 *rm8();
@@ -299,10 +289,6 @@ extern void sub_defseg(int32 segment, int32 passed);
 extern int32 func_peek(int32 offset);
 extern void sub_poke(int32 offset, int32 value);
 extern void more_return_points();
-extern void qb64_generatesound(double f, double l, uint8 wait);
-extern uint8 *soundwave(double frequency, double length, double volume,
-                        double fadein, double fadeout);
-extern int32 wavesize(double length);
 extern qbs *qbs_new_descriptor();
 extern void qbs_free_descriptor(qbs *str);
 extern void qbs_free(qbs *str);
@@ -524,14 +510,8 @@ extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
 extern double func_sqr(double value);
-extern void snd_check();
 extern qbs *func_command(int32 index, int32 passed);
 extern int32 func__commandcount();
-extern void sub_kill(qbs *str);
-extern void sub_name(qbs *oldname, qbs *newname);
-extern void sub_chdir(qbs *str);
-extern void sub_mkdir(qbs *str);
-extern void sub_rmdir(qbs *str);
 extern long double pow2(long double x, long double y);
 extern int32 func_freefile();
 extern void sub__mousehide();
@@ -1333,8 +1313,8 @@ void sub_chain(qbs *f) {
 extensions_ready:
 
     // normalize dir slashes
-    fixdir(f_exe);
-    fixdir(f_bas);
+    filepath_fix_directory(f_exe);
+    filepath_fix_directory(f_bas);
 
     // get path (strip paths from f_exe & f_bas)
     f_path->len = 0;
