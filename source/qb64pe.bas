@@ -2283,12 +2283,15 @@ DO
 
                                 e3$ = e2$
                                 IF LEN(e2$) > 1 THEN
+                                    removeComma = _INSTRREV(e2$, ",")
                                     IF ASC(e2$, 1) = 34 THEN
-                                        removeComma = _INSTRREV(e2$, ",")
                                         e3$ = LEFT$(e2$, removeComma - 1)
                                     ELSE
-                                        removeComma = INSTR(e2$, ",")
-                                        e3$ = MID$(e2$, removeComma + 1)
+                                        IF INSTR(e2$, "&H") OR INSTR(e2$, "&B") OR INSTR(e2$, "&O") THEN
+                                            e3$ = LEFT$(e2$, removeComma - 1)
+                                        ELSE
+                                            e3$ = MID$(e2$, removeComma + 1)
+                                        END IF
                                     END IF
                                 END IF
 
@@ -16754,45 +16757,45 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-            IF n$ = "_EMBEDDED" OR (n$ = "EMBEDDED" AND qb64prefix_set = 1) THEN
-                IF RTRIM$(id2.musthave) = "$" THEN
-                    IF curarg = 1 THEN
-                        'check handle argument
-                        EmbedHandle$ = e$
-                        rse$ = "Embed-Handle must be a single literal string in quotes, not a variable"
-                        IF INSTR(EmbedHandle$, CHR$(13)) > 0 THEN Give_Error rse$: EXIT FUNCTION
-                        bra = INSTR(EmbedHandle$, CHR$(34)): ket = INSTR(bra + 1, EmbedHandle$, CHR$(34))
-                        IF bra = 0 OR ket = 0 THEN Give_Error rse$: EXIT FUNCTION
-                        EmbedHandle$ = MID$(EmbedHandle$, bra + 1, ket - bra - 1)
-                        rse$ = "Embed-Handle cannot be an empty string"
-                        IF LEN(EmbedHandle$) = 0 THEN Give_Error rse$: EXIT FUNCTION
-                        'verify handle validity (Aa-Zz/0-9, begin with letter)
-                        SELECT CASE ASC(EmbedHandle$, 1)
-                            CASE 0 TO 64, 91 TO 96, 123 TO 255
-                                rse$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter"
-                                Give_Error rse$: EXIT FUNCTION
-                        END SELECT
-                        FOR rsi = 2 TO LEN(EmbedHandle$)
-                            SELECT CASE ASC(EmbedHandle$, rsi)
-                                CASE 0 TO 47, 58 TO 64, 91 TO 96, 123 TO 255
-                                    rse$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use Aa-Zz/0-9 only"
+                IF n$ = "_EMBEDDED" OR (n$ = "EMBEDDED" AND qb64prefix_set = 1) THEN
+                    IF RTRIM$(id2.musthave) = "$" THEN
+                        IF curarg = 1 THEN
+                            'check handle argument
+                            EmbedHandle$ = e$
+                            rse$ = "Embed-Handle must be a single literal string in quotes, not a variable"
+                            IF INSTR(EmbedHandle$, CHR$(13)) > 0 THEN Give_Error rse$: EXIT FUNCTION
+                            bra = INSTR(EmbedHandle$, CHR$(34)): ket = INSTR(bra + 1, EmbedHandle$, CHR$(34))
+                            IF bra = 0 OR ket = 0 THEN Give_Error rse$: EXIT FUNCTION
+                            EmbedHandle$ = MID$(EmbedHandle$, bra + 1, ket - bra - 1)
+                            rse$ = "Embed-Handle cannot be an empty string"
+                            IF LEN(EmbedHandle$) = 0 THEN Give_Error rse$: EXIT FUNCTION
+                            'verify handle validity (Aa-Zz/0-9, begin with letter)
+                            SELECT CASE ASC(EmbedHandle$, 1)
+                                CASE 0 TO 64, 91 TO 96, 123 TO 255
+                                    rse$ = "First char of Embed-Handle '" + EmbedHandle$ + "' must be a letter"
                                     Give_Error rse$: EXIT FUNCTION
                             END SELECT
-                        NEXT rsi
-                        'check if a respective file + handle was embedded
-                        eflUB = UBOUND(embedFileList$, 2)
-                        FOR rsi = 0 TO eflUB
-                            IF embedFileList$(eflHand, rsi) = EmbedHandle$ THEN EXIT FOR
-                        NEXT rsi
-                        IF rsi > eflUB THEN
-                            rse$ = "Embed-Handle '" + EmbedHandle$ + "' is undefined (check your $EMBED lines)"
-                            Give_Error rse$: EXIT FUNCTION
-                        ELSE
-                            embedFileList$(eflUsed, rsi) = "yes" 'mark respective handle as used
+                            FOR rsi = 2 TO LEN(EmbedHandle$)
+                                SELECT CASE ASC(EmbedHandle$, rsi)
+                                    CASE 0 TO 47, 58 TO 64, 91 TO 96, 123 TO 255
+                                        rse$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use Aa-Zz/0-9 only"
+                                        Give_Error rse$: EXIT FUNCTION
+                                END SELECT
+                            NEXT rsi
+                            'check if a respective file + handle was embedded
+                            eflUB = UBOUND(embedFileList$, 2)
+                            FOR rsi = 0 TO eflUB
+                                IF embedFileList$(eflHand, rsi) = EmbedHandle$ THEN EXIT FOR
+                            NEXT rsi
+                            IF rsi > eflUB THEN
+                                rse$ = "Embed-Handle '" + EmbedHandle$ + "' is undefined (check your $EMBED lines)"
+                                Give_Error rse$: EXIT FUNCTION
+                            ELSE
+                                embedFileList$(eflUsed, rsi) = "yes" 'mark respective handle as used
+                            END IF
                         END IF
                     END IF
                 END IF
-            END IF
 
                 IF n$ = "UBOUND" OR n$ = "LBOUND" THEN
                     IF curarg = 1 THEN
@@ -24366,31 +24369,22 @@ END SUB
 FUNCTION Evaluate_Expression$ (e$)
     t$ = e$ 'So we preserve our original data, we parse a temp copy of it
     PreParse t$
-
-
     IF LEFT$(t$, 5) = "ERROR" THEN Evaluate_Expression$ = t$: EXIT FUNCTION
 
     'Deal with brackets first
     exp$ = "(" + t$ + ")" 'Starting and finishing brackets for our parse routine.
 
+
     DO
         Eval_E = INSTR(exp$, ")")
         IF Eval_E > 0 THEN
-            c = 0
-            DO UNTIL Eval_E - c <= 0
-                c = c + 1
-                IF Eval_E THEN
-                    IF MID$(exp$, Eval_E - c, 1) = "(" THEN EXIT DO
-                END IF
-            LOOP
-            s = Eval_E - c + 1
-            IF s < 1 THEN Evaluate_Expression$ = "ERROR -- BAD () Count": EXIT FUNCTION
-            eval$ = " " + MID$(exp$, s, Eval_E - s) + " " 'pad with a space before and after so the parser can pick up the values properly.
-
+            c = _INSTRREV(Eval_E, exp$, "(")
+            IF c = 0 THEN Evaluate_Expression$ = "ERROR -- BAD () Count": EXIT FUNCTION
+            eval$ = " " + MID$(exp$, c + 1, Eval_E - c - 1) + " " 'pad with a space before and after so the parser can pick up the values properly.
             ParseExpression eval$
             eval$ = LTRIM$(RTRIM$(eval$))
             IF LEFT$(eval$, 5) = "ERROR" THEN Evaluate_Expression$ = eval$: EXIT FUNCTION
-            exp$ = DWD(LEFT$(exp$, s - 2) + eval$ + MID$(exp$, Eval_E + 1))
+            exp$ = LEFT$(exp$, c - 1) + eval$ + MID$(exp$, Eval_E + 1)
             IF MID$(exp$, 1, 1) = "N" THEN MID$(exp$, 1) = "-"
         END IF
     LOOP UNTIL Eval_E = 0
@@ -24413,7 +24407,6 @@ SUB ParseExpression (exp$)
     'PRINT exp$
     exp$ = DWD(exp$)
     'We should now have an expression with no () to deal with
-
     FOR J = 1 TO 250
         lowest = 0
         DO UNTIL lowest = LEN(exp$)
@@ -24488,6 +24481,7 @@ SUB ParseExpression (exp$)
                     END SELECT
                 LOOP UNTIL op - c <= 0
                 s = op - c
+
                 num(1) = MID$(exp$, s + 1, op - s - 1) 'Get our first number
                 num(2) = MID$(exp$, op + LEN(OName(OpOn)), E - op - LEN(OName(OpOn)) + 1) 'Get our second number
                 IF MID$(num(1), 1, 1) = "N" THEN MID$(num(1), 1) = "-"
@@ -24497,6 +24491,7 @@ SUB ParseExpression (exp$)
                 ELSE
                     num(3) = EvaluateNumbers(OpOn, num())
                 END IF
+
                 IF MID$(num(3), 1, 1) = "-" THEN MID$(num(3), 1) = "N"
                 IF LEFT$(num(3), 5) = "ERROR" THEN exp$ = num(3): EXIT SUB
                 exp$ = LTRIM$(N2S(DWD(LEFT$(exp$, s) + RTRIM$(LTRIM$(num(3))) + MID$(exp$, E + 1))))
@@ -24640,22 +24635,23 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
     SELECT CASE PL(p) 'divide up the work so we want do as much case checking
         CASE 5 'Type conversions
             'Note, these are special cases and work with the number BEFORE the command and not after
+            'Since we're not using the 2nd number here, we need to return it back so it can still be processed properly
             SELECT CASE OName(p) 'Depending on our operator..
-                CASE "C_UOF": n1~%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%&)))
-                CASE "C_ULO": n1%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%&)))
-                CASE "C_UBY": n1~%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%%)))
-                CASE "C_UIN": n1~% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%)))
-                CASE "C_BY": n1%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%%)))
-                CASE "C_IN": n1% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%)))
-                CASE "C_UIF": n1~&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&&)))
-                CASE "C_OF": n1~& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&)))
-                CASE "C_IF": n1&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&&)))
-                CASE "C_LO": n1& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&)))
-                CASE "C_UBI": n1~` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~`)))
-                CASE "C_BI": n1` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1`)))
-                CASE "C_FL": n1## = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1##)))
-                CASE "C_DO": n1# = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1#)))
-                CASE "C_SI": n1! = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1!)))
+                CASE "C_UOF": n1~%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%&))) + num(2)
+                CASE "C_ULO": n1%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%&))) + num(2)
+                CASE "C_UBY": n1~%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%%))) + num(2)
+                CASE "C_UIN": n1~% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%))) + num(2)
+                CASE "C_BY": n1%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%%))) + num(2)
+                CASE "C_IN": n1% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%))) + num(2)
+                CASE "C_UIF": n1~&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&&))) + num(2)
+                CASE "C_OF": n1~& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&))) + num(2)
+                CASE "C_IF": n1&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&&))) + num(2)
+                CASE "C_LO": n1& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&))) + num(2)
+                CASE "C_UBI": n1~` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~`))) + num(2)
+                CASE "C_BI": n1` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1`))) + num(2)
+                CASE "C_FL": n1## = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1##))) + num(2)
+                CASE "C_DO": n1# = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1#))) + num(2)
+                CASE "C_SI": n1! = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1!))) + num(2)
             END SELECT
             EXIT FUNCTION
         CASE 10 'functions
@@ -24669,7 +24665,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCSEC) value < 1": EXIT FUNCTION
                     n1 = _ARCSEC(VAL(num(2)))
                 CASE "_ARCCSC"
-                    if abs(val(num(2))) < 1 then EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
+                    IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
                     n1 = _ARCCSC(VAL(num(2)))
                 CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
                 CASE "_SECH": n1 = _SECH(VAL(num(2)))
@@ -24903,33 +24899,8 @@ FUNCTION DWD$ (exp$) 'Deal With Duplicates
 END FUNCTION
 
 SUB PreParse (e$)
-    DIM f AS _FLOAT
     STATIC TotalPrefixedPP_TypeMod AS LONG, TotalPP_TypeMod AS LONG
-
-    DO 'convert &H values to decimal values to prevent errors
-        l = INSTR(l, UCASE$(e$), "&H")
-        IF l THEN
-            FOR l1 = l + 2 TO LEN(e$)
-                SELECT CASE UCASE$(MID$(e$, l1, 1))
-                    CASE "0" TO "9"
-                    CASE "A" TO "F"
-                    CASE ELSE:
-                        'PRINT UCASE$(MID$(e$, l1, 1))
-                        EXIT FOR
-                END SELECT
-            NEXT
-            IF l1 <> l + 2 THEN 'hex number found
-                IF l1 > l + 18 THEN EXIT DO
-                l$ = LEFT$(e$, l - 1)
-                r$ = MID$(e$, l1)
-                t~&& = VAL(MID$(e$, l, l1 - l))
-                m$ = _TRIM$(STR$(t~&&))
-                e$ = l$ + m$ + r$
-            ELSE
-                EXIT DO
-            END IF
-        END IF
-    LOOP UNTIL l = 0
+    t$ = e$ 'preserve the original string
 
     'replace existing CONST values
     sep$ = "()+-*/\><=^"
@@ -25118,36 +25089,6 @@ SUB PreParse (e$)
             l = l + 1
         END IF
     LOOP UNTIL l = 0 OR l = LEN(t$) 'last symbol is a bracket
-
-    'Turn all &B (binary) numbers into decimal values for the program to process properly
-    l = 0
-    DO
-        l = INSTR(t$, "&B")
-        IF l THEN
-            E = l + 1: finished = 0
-            DO
-                E = E + 1
-                comp$ = MID$(t$, E, 1)
-                SELECT CASE comp$
-                    CASE "0", "1" 'All is good, our next digit is a number, continue to add to the hex$
-                    CASE ELSE
-                        good = 0
-                        FOR i = 1 TO UBOUND(OName)
-                            IF MID$(t$, E, LEN(OName(i))) = OName(i) AND PL(i) > 1 AND PL(i) <= 250 THEN good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
-                        NEXT
-                        IF NOT good THEN e$ = "ERROR - Improper &B value. (" + comp$ + ")": EXIT SUB
-                        E = E - 1
-                        finished = -1
-                END SELECT
-            LOOP UNTIL finished OR E = LEN(t$)
-            bin$ = MID$(t$, l + 2, E - l - 1)
-            FOR i = 1 TO LEN(bin$)
-                IF MID$(bin$, i, 1) = "1" THEN f = f + 2 ^ (LEN(bin$) - i)
-            NEXT
-            t$ = LEFT$(t$, l - 1) + LTRIM$(RTRIM$(STR$(f))) + MID$(t$, E + 1)
-        END IF
-    LOOP UNTIL l = 0
-
 
     't$ = N2S(t$)
     VerifyString t$

@@ -189,13 +189,13 @@ struct FontManager {
         FT_Face face;          // FreeType face object
         FT_Pos monospaceWidth; // the monospace width (if font was loaded as monospace, else zero)
         FT_Pos defaultHeight;  // default (max) pixel height the user wants
-        FT_Pos baseline;       // font baeline in pixels
+        FT_Pos baseline;       // font baseline in pixels
         int32_t options;       // fonts options that were passed by QB64 while loading the font
 
         /// @brief Manages a single glyph in a font
         struct Glyph {
             // Usually the bitmap size & metrics returned by FT for mono and gray can be the same
-            // But it's a bad idea to assume that is the case everytime
+            // But it's a bad idea to assume that is the case every time
             struct Bitmap {
                 uint8_t *data;       // pointer to the raw pixels
                 FT_Vector size;      // bitmap width & height in pixels
@@ -205,7 +205,7 @@ struct FontManager {
 
             FT_UInt index;  // glyph index
             Bitmap bmpMono; // monochrome bitmap in 8-bit format
-            Bitmap bmpGray; // anti-aliased bitamp in 8-bit format
+            Bitmap bmpGray; // anti-aliased bitmap in 8-bit format
             Bitmap *bitmap; // pointer to the currently selected bitmap (mono / gray)
 
             // Delete copy and move constructors and assignments
@@ -435,7 +435,7 @@ struct FontManager {
                 auto newGlyph = new Glyph;
 
                 if (!newGlyph) {
-                    FONT_DEBUG_PRINT("Failed to allocate mmemory");
+                    FONT_DEBUG_PRINT("Failed to allocate memory");
                     return nullptr; // failed to allocate memory
                 }
 
@@ -573,7 +573,7 @@ struct FontManager {
 
         if (h >= vectorSize) {
             // Scan through the entire vector and return a slot that is not being used
-            // Ideally this should execute in extremely few (if at all) senarios
+            // Ideally this should execute in extremely few (if at all) scenarios
             // Also, this loop should not execute if size is 0
             for (h = 0; h < vectorSize; h++) {
                 if (!fonts[h]->isUsed) {
@@ -1018,14 +1018,14 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     if (passed) {
         // Check if a valid font handle was passed
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
         qb64_fh = write_page->font; // else get the current write page font handle
     }
 
-    // For buint-in fonts return the handle value (which is = font height)
+    // For built-in fonts return the handle value (which is = font height)
     if (qb64_fh < 32)
         return qb64_fh;
 
@@ -1041,7 +1041,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     return fnt->defaultHeight;
 }
 
-/// @brief Returns the text widht in pixels
+/// @brief Returns the text width in pixels
 /// @param text The text to calculate the width for
 /// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
 /// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
@@ -1056,7 +1056,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     // Check UTF argument
     if (passed & 1) {
         if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return 0;
         }
     } else {
@@ -1066,7 +1066,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     // Check if a valid font handle was passed
     if (passed & 2) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
@@ -1122,14 +1122,14 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     if (passed) {
         // Check if a valid font handle was passed
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
         qb64_fh = write_page->font; // else get the current write page font handle
     }
 
-    // For buint-in fonts return the handle value (which is = font height)
+    // For built-in fonts return the handle value (which is = font height)
     if (qb64_fh < 32)
         return qb64_fh;
 
@@ -1160,7 +1160,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     // Check if we are in text mode and generate an error if we are
     if (write_page->text) {
-        error(5);
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
 
@@ -1177,7 +1177,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     // Check UTF argument
     if (passed & 2) {
         if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
     } else {
@@ -1187,7 +1187,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     // Check if a valid font handle was passed
     if (passed & 4) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return;
         }
     } else {
@@ -1464,7 +1464,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     free(drawBuf);
 }
 
-/// @brief Calculate the starting pixel positions of each chancter to an array. First one being zero.
+/// @brief Calculate the starting pixel positions of each codepoint to an array. First one being zero.
 /// This also calculates the pixel position of the last + 1 character.
 /// @param text Text for which the data needs to be calculated. This can be unicode encoded
 /// @param arr A QB64 LONG array. This should be codepoints + 1 long. If the array is shorter additional calculated data is ignored
@@ -1488,7 +1488,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
     // Check UTF argument
     if (passed & 2) {
         if (!IS_VALID_UTF_ENCODING(utf_encoding)) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return 0;
         }
     } else {
@@ -1498,7 +1498,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
     // Check if a valid font handle was passed
     if (passed & 4) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return 0;
         }
     } else {
