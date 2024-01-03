@@ -625,10 +625,13 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     if (passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
 
-        if (FS_DirectoryExists(filepath_fix_directory(fileSpec)))
+        if (FS_DirectoryExists(filepath_fix_directory(fileSpec))) {
             directory = fileSpec;
-        else
+        } else {
             filepath_split(fileSpec, directory, pathName); // split the file path
+            if (directory.empty())
+                directory = "./";
+        }
 
         entry = FS_GetDirectoryEntryName(fileSpec.c_str());
 
@@ -639,7 +642,15 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
             return qbsFinal;
         }
     } else {
-        entry = FS_GetDirectoryEntryName(nullptr);
+        // Check if we've been called the first time without a filespec
+        if (directory.empty()) {
+            // This is per MS BASIC PDS 7.1 and VBDOS 1.0 behavior
+            qbsFinal = qbs_new(0, 1);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+            return qbsFinal;
+        }
+
+        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
     }
 
     filepath_join(pathName, directory, entry);
@@ -654,6 +665,9 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         qbsFinal = qbs_new(size, 1);
         memcpy(qbsFinal->chr, entry, size);
     }
+
+    if (!size)
+        directory.clear(); // clear the directory string since we are done with the session
 
     return qbsFinal;
 }
@@ -785,7 +799,7 @@ void sub_files(qbs *str, int32_t passed) {
         directory = FS_GetFQN(fileSpec.c_str());
     }
 
-    if (!directory.size()) {
+    if (directory.empty()) {
         // Invalid filespec
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
