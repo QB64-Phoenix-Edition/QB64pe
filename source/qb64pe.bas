@@ -24509,6 +24509,7 @@ SUB Set_OrderOfOperations
     'I used a range here so I could add in new priority levels as needed.
     'OName ended up becoming the name of our commands, as I modified things.... Go figure!  LOL!
     REDIM OName(10000) AS STRING, PL(10000) AS INTEGER
+    SHARED Skip_NoPrefix_Low AS INTEGER, Skip_NoPrefix_Max AS INTEGER 'to skip the no_prefixed functions
     'Constants get evaluated first, with a Priority Level of 1
 
     i = i + 1: OName(i) = "C_UOF": PL(i) = 5 'convert to unsigned offset
@@ -24572,6 +24573,34 @@ SUB Set_OrderOfOperations
     i = i + 1: OName(i) = "_BLUE": PL(i) = 10
     i = i + 1: OName(i) = "_ALPHA": PL(i) = 10
 
+    Skip_NoPrefix_Low = i + 1
+    i = i + 1:: OName(i) = "PI": PL(i) = 10
+    i = i + 1: OName(i) = "ACOS": PL(i) = 10
+    i = i + 1: OName(i) = "ASIN": PL(i) = 10
+    i = i + 1: OName(i) = "ARCSEC": PL(i) = 10
+    i = i + 1: OName(i) = "ARCCSC": PL(i) = 10
+    i = i + 1: OName(i) = "ARCCOT": PL(i) = 10
+    i = i + 1: OName(i) = "SECH": PL(i) = 10
+    i = i + 1: OName(i) = "CSCH": PL(i) = 10
+    i = i + 1: OName(i) = "COTH": PL(i) = 10
+    i = i + 1: OName(i) = "D2R": PL(i) = 10
+    i = i + 1: OName(i) = "D2G": PL(i) = 10
+    i = i + 1: OName(i) = "R2D": PL(i) = 10
+    i = i + 1: OName(i) = "R2G": PL(i) = 10
+    i = i + 1: OName(i) = "G2D": PL(i) = 10
+    i = i + 1: OName(i) = "G2R": PL(i) = 10
+    i = i + 1: OName(i) = "ROUND": PL(i) = 10
+    i = i + 1: OName(i) = "CEIL": PL(i) = 10
+    i = i + 1: OName(i) = "SEC": PL(i) = 10
+    i = i + 1: OName(i) = "CSC": PL(i) = 10
+    i = i + 1: OName(i) = "COT": PL(i) = 10
+    i = i + 1: OName(i) = "RGBA": PL(i) = 10
+    i = i + 1: OName(i) = "RGB": PL(i) = 10
+    i = i + 1: OName(i) = "RED": PL(i) = 10
+    i = i + 1: OName(i) = "GREEN": PL(i) = 10
+    i = i + 1: OName(i) = "BLUE": PL(i) = 10
+    i = i + 1: OName(i) = "ALPHA": PL(i) = 10
+    Skip_NoPrefix_Max = i
     'Exponents with PL 20
     i = i + 1: OName(i) = "^": PL(i) = 20
     i = i + 1: OName(i) = "SQR": PL(i) = 20
@@ -24607,6 +24636,39 @@ SUB Set_OrderOfOperations
     i = i + 1: OName(i) = ",": PL(i) = 1000
 
     REDIM _PRESERVE OName(i) AS STRING, PL(i) AS INTEGER
+
+
+
+    'init the suffix conversions once here and be done with them as well.
+    'and the below is a conversion list so symbols don't get cross confused.
+    REDIM _PRESERVE PP_TypeMod(27) AS STRING, PP_ConvertedMod(27) AS STRING
+    PP_TypeMod(1) = "~`": PP_ConvertedMod(1) = "C_UBI" 'unsigned bit
+    PP_TypeMod(2) = "~%%": PP_ConvertedMod(2) = "C_UBY" 'unsigned byte
+    PP_TypeMod(3) = "~%&": PP_ConvertedMod(3) = "C_UOF" 'unsigned offset
+    PP_TypeMod(4) = "~%": PP_ConvertedMod(4) = "C_UIN" 'unsigned integer
+    PP_TypeMod(5) = "~&&": PP_ConvertedMod(5) = "C_UIF" 'unsigned integer64
+    PP_TypeMod(6) = "~&": PP_ConvertedMod(6) = "C_ULO" 'unsigned long
+    PP_TypeMod(7) = "`": PP_ConvertedMod(7) = "C_BI" 'bit
+    PP_TypeMod(8) = "%%": PP_ConvertedMod(8) = "C_BY" 'byte
+    PP_TypeMod(9) = "%&": PP_ConvertedMod(9) = "C_OF" 'offset
+    PP_TypeMod(10) = "%": PP_ConvertedMod(10) = "C_IN" 'integer
+    PP_TypeMod(11) = "&&": PP_ConvertedMod(11) = "C_IF" 'integer64
+    PP_TypeMod(12) = "&": PP_ConvertedMod(12) = "C_LO" 'long
+    PP_TypeMod(13) = "!": PP_ConvertedMod(13) = "C_SI" 'single
+    PP_TypeMod(14) = "##": PP_ConvertedMod(14) = "C_FL" 'float
+    PP_TypeMod(15) = "#": PP_ConvertedMod(15) = "C_DO" 'double
+    PP_TypeMod(16) = "_RGB32": PP_ConvertedMod(16) = "C_RG" 'rgb32
+    PP_TypeMod(17) = "_RGBA32": PP_ConvertedMod(17) = "C_RA" 'rgba32
+    PP_TypeMod(18) = "_RED32": PP_ConvertedMod(18) = "C_RX" 'red32
+    PP_TypeMod(19) = "_GREEN32": PP_ConvertedMod(19) = "C_GR" 'green32
+    PP_TypeMod(20) = "_BLUE32": PP_ConvertedMod(20) = "C_BL" 'blue32
+    PP_TypeMod(21) = "_ALPHA32": PP_ConvertedMod(21) = "C_AL" 'alpha32
+    PP_TypeMod(22) = "RGB32": PP_ConvertedMod(22) = "C_RG" 'rgb32
+    PP_TypeMod(23) = "RGBA32": PP_ConvertedMod(23) = "C_RA" 'rgba32
+    PP_TypeMod(24) = "RED32": PP_ConvertedMod(24) = "C_RX" 'red32
+    PP_TypeMod(25) = "GREEN32": PP_ConvertedMod(25) = "C_GR" 'green32
+    PP_TypeMod(26) = "BLUE32": PP_ConvertedMod(26) = "C_BL" 'blue32
+    PP_TypeMod(27) = "ALPHA32": PP_ConvertedMod(27) = "C_AL" 'alpha32
 END SUB
 
 FUNCTION EvaluateNumbers$ (p, num() AS STRING)
@@ -24899,7 +24961,7 @@ FUNCTION DWD$ (exp$) 'Deal With Duplicates
 END FUNCTION
 
 SUB PreParse (e$)
-    STATIC TotalPrefixedPP_TypeMod AS LONG, TotalPP_TypeMod AS LONG
+    SHARED Skip_NoPrefix_Low AS INTEGER, Skip_NoPrefix_Max AS INTEGER
     t$ = e$ 'preserve the original string
 
     'replace existing CONST values
@@ -24937,49 +24999,12 @@ SUB PreParse (e$)
         NEXT
     NEXT
 
-
-    IF PP_TypeMod(0) = "" THEN
-        REDIM PP_TypeMod(100) AS STRING, PP_ConvertedMod(100) AS STRING 'Large enough to hold all values to begin with
-        PP_TypeMod(0) = "Initialized" 'Set so we don't do this section over and over, as we keep the values in shared memory.
-        'and the below is a conversion list so symbols don't get cross confused.
-        i = i + 1: PP_TypeMod(i) = "~`": PP_ConvertedMod(i) = "C_UBI" 'unsigned bit
-        i = i + 1: PP_TypeMod(i) = "~%%": PP_ConvertedMod(i) = "C_UBY" 'unsigned byte
-        i = i + 1: PP_TypeMod(i) = "~%&": PP_ConvertedMod(i) = "C_UOF" 'unsigned offset
-        i = i + 1: PP_TypeMod(i) = "~%": PP_ConvertedMod(i) = "C_UIN" 'unsigned integer
-        i = i + 1: PP_TypeMod(i) = "~&&": PP_ConvertedMod(i) = "C_UIF" 'unsigned integer64
-        i = i + 1: PP_TypeMod(i) = "~&": PP_ConvertedMod(i) = "C_ULO" 'unsigned long
-        i = i + 1: PP_TypeMod(i) = "`": PP_ConvertedMod(i) = "C_BI" 'bit
-        i = i + 1: PP_TypeMod(i) = "%%": PP_ConvertedMod(i) = "C_BY" 'byte
-        i = i + 1: PP_TypeMod(i) = "%&": PP_ConvertedMod(i) = "C_OF" 'offset
-        i = i + 1: PP_TypeMod(i) = "%": PP_ConvertedMod(i) = "C_IN" 'integer
-        i = i + 1: PP_TypeMod(i) = "&&": PP_ConvertedMod(i) = "C_IF" 'integer64
-        i = i + 1: PP_TypeMod(i) = "&": PP_ConvertedMod(i) = "C_LO" 'long
-        i = i + 1: PP_TypeMod(i) = "!": PP_ConvertedMod(i) = "C_SI" 'single
-        i = i + 1: PP_TypeMod(i) = "##": PP_ConvertedMod(i) = "C_FL" 'float
-        i = i + 1: PP_TypeMod(i) = "#": PP_ConvertedMod(i) = "C_DO" 'double
-        i = i + 1: PP_TypeMod(i) = "_RGB32": PP_ConvertedMod(i) = "C_RG" 'rgb32
-        i = i + 1: PP_TypeMod(i) = "_RGBA32": PP_ConvertedMod(i) = "C_RA" 'rgba32
-        i = i + 1: PP_TypeMod(i) = "_RED32": PP_ConvertedMod(i) = "C_RX" 'red32
-        i = i + 1: PP_TypeMod(i) = "_GREEN32": PP_ConvertedMod(i) = "C_GR" 'green32
-        i = i + 1: PP_TypeMod(i) = "_BLUE32": PP_ConvertedMod(i) = "C_BL" 'blue32
-        i = i + 1: PP_TypeMod(i) = "_ALPHA32": PP_ConvertedMod(i) = "C_AL" 'alpha32
-        TotalPrefixedPP_TypeMod = i
-        i = i + 1: PP_TypeMod(i) = "RGB32": PP_ConvertedMod(i) = "C_RG" 'rgb32
-        i = i + 1: PP_TypeMod(i) = "RGBA32": PP_ConvertedMod(i) = "C_RA" 'rgba32
-        i = i + 1: PP_TypeMod(i) = "RED32": PP_ConvertedMod(i) = "C_RX" 'red32
-        i = i + 1: PP_TypeMod(i) = "GREEN32": PP_ConvertedMod(i) = "C_GR" 'green32
-        i = i + 1: PP_TypeMod(i) = "BLUE32": PP_ConvertedMod(i) = "C_BL" 'blue32
-        i = i + 1: PP_TypeMod(i) = "ALPHA32": PP_ConvertedMod(i) = "C_AL" 'alpha32
-        TotalPP_TypeMod = i
-        REDIM _PRESERVE PP_TypeMod(i) AS STRING, PP_ConvertedMod(i) AS STRING 'And then resized to just contain the necessary space in memory
-    END IF
-    t$ = e$
-
     'First strip all spaces
-    t$ = ""
-    FOR i = 1 TO LEN(e$)
-        IF MID$(e$, i, 1) <> " " THEN t$ = t$ + MID$(e$, i, 1)
-    NEXT
+    l = 0
+    DO
+        l = INSTR(t$, " ")
+        IF l THEN t$ = LEFT$(t$, l - 1) + MID$(t$, l + 1)
+    LOOP UNTIL l = 0
 
     t$ = UCASE$(t$)
     IF t$ = "" THEN e$ = "ERROR -- NULL string; nothing to evaluate": EXIT SUB
@@ -25015,9 +25040,8 @@ SUB PreParse (e$)
         END IF
     LOOP UNTIL l = 0
 
-    uboundPP_TypeMod = TotalPrefixedPP_TypeMod
-    IF qb64prefix_set = 1 THEN uboundPP_TypeMod = TotalPP_TypeMod
-    FOR j = 1 TO uboundPP_TypeMod
+    FOR j = 1 TO UBOUND(PP_TypeMod)
+        IF qb64prefix_set = 0 AND j > 21 THEN EXIT FOR 'only check the no_prefix junk if necessary
         l = 0
         DO
             l = INSTR(l + 1, t$, PP_TypeMod(j))
@@ -25050,15 +25074,10 @@ SUB PreParse (e$)
         IF l > 0 AND l > 2 THEN 'Don't check the starting bracket; there's nothing before it.
             good = 0
             FOR i = 1 TO UBOUND(OName)
+                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN EXIT FOR 'don't check the no_prefix junk if we don't have to.
                 m$ = MID$(t$, l - LEN(OName(i)), LEN(OName(i)))
                 IF m$ = OName(i) THEN
                     good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
-                ELSE
-                    IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
-                        'try without prefix
-                        m$ = MID$(t$, l - (LEN(OName(i)) - 1), LEN(OName(i)) - 1)
-                        IF m$ = MID$(OName(i), 2) THEN good = -1: EXIT FOR
-                    END IF
                 END IF
             NEXT
             IF NOT good THEN e$ = "ERROR - Improper operations before (.": EXIT SUB
@@ -25073,15 +25092,10 @@ SUB PreParse (e$)
         IF l > 0 AND l < LEN(t$) THEN
             good = 0
             FOR i = 1 TO UBOUND(OName)
+                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN EXIT FOR 'don't check the no_prefix junk if we don't have to.
                 m$ = MID$(t$, l + 1, LEN(OName(i)))
                 IF m$ = OName(i) THEN
                     good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI
-                ELSE
-                    IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
-                        'try without prefix
-                        m$ = MID$(t$, l + 1, LEN(OName(i)) - 1)
-                        IF m$ = MID$(OName(i), 2) THEN good = -1: EXIT FOR
-                    END IF
                 END IF
             NEXT
             IF MID$(t$, l + 1, 1) = ")" THEN good = -1
