@@ -24510,7 +24510,6 @@ SUB Set_OrderOfOperations
     'I used a range here so I could add in new priority levels as needed.
     'OName ended up becoming the name of our commands, as I modified things.... Go figure!  LOL!
     REDIM OName(10000) AS STRING, PL(10000) AS INTEGER
-    SHARED Skip_NoPrefix_Low AS INTEGER, Skip_NoPrefix_Max AS INTEGER 'to skip the no_prefixed functions
     SHARED PP_TypeMod_NoPrefix_Limit AS INTEGER
     'Constants get evaluated first, with a Priority Level of 1
 
@@ -24575,34 +24574,6 @@ SUB Set_OrderOfOperations
     i = i + 1: OName(i) = "_BLUE": PL(i) = 10
     i = i + 1: OName(i) = "_ALPHA": PL(i) = 10
 
-    Skip_NoPrefix_Low = i + 1
-    i = i + 1:: OName(i) = "PI": PL(i) = 10
-    i = i + 1: OName(i) = "ACOS": PL(i) = 10
-    i = i + 1: OName(i) = "ASIN": PL(i) = 10
-    i = i + 1: OName(i) = "ARCSEC": PL(i) = 10
-    i = i + 1: OName(i) = "ARCCSC": PL(i) = 10
-    i = i + 1: OName(i) = "ARCCOT": PL(i) = 10
-    i = i + 1: OName(i) = "SECH": PL(i) = 10
-    i = i + 1: OName(i) = "CSCH": PL(i) = 10
-    i = i + 1: OName(i) = "COTH": PL(i) = 10
-    i = i + 1: OName(i) = "D2R": PL(i) = 10
-    i = i + 1: OName(i) = "D2G": PL(i) = 10
-    i = i + 1: OName(i) = "R2D": PL(i) = 10
-    i = i + 1: OName(i) = "R2G": PL(i) = 10
-    i = i + 1: OName(i) = "G2D": PL(i) = 10
-    i = i + 1: OName(i) = "G2R": PL(i) = 10
-    i = i + 1: OName(i) = "ROUND": PL(i) = 10
-    i = i + 1: OName(i) = "CEIL": PL(i) = 10
-    i = i + 1: OName(i) = "SEC": PL(i) = 10
-    i = i + 1: OName(i) = "CSC": PL(i) = 10
-    i = i + 1: OName(i) = "COT": PL(i) = 10
-    i = i + 1: OName(i) = "RGBA": PL(i) = 10
-    i = i + 1: OName(i) = "RGB": PL(i) = 10
-    i = i + 1: OName(i) = "RED": PL(i) = 10
-    i = i + 1: OName(i) = "GREEN": PL(i) = 10
-    i = i + 1: OName(i) = "BLUE": PL(i) = 10
-    i = i + 1: OName(i) = "ALPHA": PL(i) = 10
-    Skip_NoPrefix_Max = i
     'Exponents with PL 20
     i = i + 1: OName(i) = "^": PL(i) = 20
     i = i + 1: OName(i) = "SQR": PL(i) = 20
@@ -24725,21 +24696,21 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
             EXIT FUNCTION
         CASE 10 'functions
             SELECT CASE OName(p) 'Depending on our operator..
-                CASE "_PI", "PI"
+                CASE "_PI"
                     n1 = 3.14159265358979323846264338327950288## 'Future compatable in case something ever stores extra digits for PI
                     IF num(2) <> "" THEN n1 = n1 * VAL(num(2))
-                CASE "_ACOS", "ACOS": n1 = _ACOS(VAL(num(2)))
-                CASE "_ASIN", "ASIN": n1 = _ASIN(VAL(num(2)))
-                CASE "_ARCSEC", "ARCSEC"
+                CASE "_ACOS": n1 = _ACOS(VAL(num(2)))
+                CASE "_ASIN": n1 = _ASIN(VAL(num(2)))
+                CASE "_ARCSEC"
                     IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCSEC) value < 1": EXIT FUNCTION
                     n1 = _ARCSEC(VAL(num(2)))
-                CASE "_ARCCSC", "ARCCSC"
+                CASE "_ARCCSC"
                     IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
                     n1 = _ARCCSC(VAL(num(2)))
-                CASE "_ARCCOT", "ARCCOT": n1 = _ARCCOT(VAL(num(2)))
-                CASE "_SECH", "SECH": n1 = _SECH(VAL(num(2)))
-                CASE "_CSCH", "CSCH": n1 = _CSCH(VAL(num(2)))
-                CASE "_COTH", "COTH": n1 = _COTH(VAL(num(2)))
+                CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
+                CASE "_SECH": n1 = _SECH(VAL(num(2)))
+                CASE "_CSCH": n1 = _CSCH(VAL(num(2)))
+                CASE "_COTH": n1 = _COTH(VAL(num(2)))
                 CASE "C_RG"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGB32": EXIT FUNCTION
@@ -24782,7 +24753,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     n3 = VAL(MID$(num(2), c2 + 1))
                     n4 = VAL(MID$(num(2), c3 + 1))
                     n1 = _RGBA32(n, n2, n3, n4)
-                CASE "_RGB", "RGB"
+                CASE "_RGB"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGB": EXIT FUNCTION
                     c1 = INSTR(n$, ",")
@@ -24803,7 +24774,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     t = _NEWIMAGE(1, 1, n4)
                     n1 = _RGB(n, n2, n3, t)
                     _FREEIMAGE t
-                CASE "_RGBA", "RGBA"
+                CASE "_RGBA"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGBA": EXIT FUNCTION
                     c1 = INSTR(n$, ",")
@@ -24826,7 +24797,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     t = _NEWIMAGE(1, 1, n5)
                     n1 = _RGBA(n, n2, n3, n4, t)
                     _FREEIMAGE t
-                CASE "_RED", "_GREEN", "_BLUE", "_ALPHA", "RED", "GREEN", "BLUE", "ALPHA"
+                CASE "_RED", "_GREEN", "_BLUE", "_ALPHA"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null " + OName(p): EXIT FUNCTION
                     c1 = INSTR(n$, ",")
@@ -24842,10 +24813,10 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     END SELECT
                     t = _NEWIMAGE(1, 1, n4)
                     SELECT CASE OName(p)
-                        CASE "_RED", "RED": n1 = _RED(n, t)
-                        CASE "_BLUE", "BLUE": n1 = _BLUE(n, t)
-                        CASE "_GREEN", "GREEN": n1 = _GREEN(n, t)
-                        CASE "_ALPHA", "ALPHA": n1 = _ALPHA(n, t)
+                        CASE "_RED": n1 = _RED(n, t)
+                        CASE "_BLUE": n1 = _BLUE(n, t)
+                        CASE "_GREEN": n1 = _GREEN(n, t)
+                        CASE "_ALPHA": n1 = _ALPHA(n, t)
                     END SELECT
                     _FREEIMAGE t
                 CASE "C_RX", "C_GR", "C_BL", "C_AL"
@@ -24864,21 +24835,21 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                 CASE "LOG": n1 = LOG(VAL(num(2)))
                 CASE "EXP": n1 = EXP(VAL(num(2)))
                 CASE "ATN": n1 = ATN(VAL(num(2)))
-                CASE "_D2R", "D2R": n1 = 0.0174532925 * (VAL(num(2)))
-                CASE "_D2G", "D2G": n1 = 1.1111111111 * (VAL(num(2)))
-                CASE "_R2D", "R2D": n1 = 57.2957795 * (VAL(num(2)))
-                CASE "_R2G", "R2G": n1 = 0.015707963 * (VAL(num(2)))
-                CASE "_G2D", "G2D": n1 = 0.9 * (VAL(num(2)))
-                CASE "_G2R", "G2R": n1 = 63.661977237 * (VAL(num(2)))
+                CASE "_D2R": n1 = 0.0174532925 * (VAL(num(2)))
+                CASE "_D2G": n1 = 1.1111111111 * (VAL(num(2)))
+                CASE "_R2D": n1 = 57.2957795 * (VAL(num(2)))
+                CASE "_R2G": n1 = 0.015707963 * (VAL(num(2)))
+                CASE "_G2D": n1 = 0.9 * (VAL(num(2)))
+                CASE "_G2R": n1 = 63.661977237 * (VAL(num(2)))
                 CASE "ABS": n1 = ABS(VAL(num(2)))
                 CASE "SGN": n1 = SGN(VAL(num(2)))
                 CASE "INT": n1 = INT(VAL(num(2)))
-                CASE "_ROUND", "ROUND": n1 = _ROUND(VAL(num(2)))
-                CASE "_CEIL", "CEIL": n1 = _CEIL(VAL(num(2)))
+                CASE "_ROUND": n1 = _ROUND(VAL(num(2)))
+                CASE "_CEIL": n1 = _CEIL(VAL(num(2)))
                 CASE "FIX": n1 = FIX(VAL(num(2)))
-                CASE "_SEC", "SEC": n1 = _SEC(VAL(num(2)))
-                CASE "_CSC", "CSC": n1 = _CSC(VAL(num(2)))
-                CASE "_COT", "COT": n1 = _COT(VAL(num(2)))
+                CASE "_SEC": n1 = _SEC(VAL(num(2)))
+                CASE "_CSC": n1 = _CSC(VAL(num(2)))
+                CASE "_COT": n1 = _COT(VAL(num(2)))
             END SELECT
         CASE 20 TO 60 'Math Operators
             SELECT CASE OName(p) 'Depending on our operator..
@@ -24968,29 +24939,35 @@ FUNCTION DWD$ (exp$) 'Deal With Duplicates
 END FUNCTION
 
 SUB PreParse (e$)
-    SHARED Skip_NoPrefix_Low AS INTEGER, Skip_NoPrefix_Max AS INTEGER
-    t$ = e$ 'preserve the original string
+    SHARED PP_TypeMod_NoPrefix_Limit AS INTEGER
+    t$ = UCASE$(e$) 'preserve the original string
 
     'replace existing CONST values
+    sep$ = "()+-*/\><=^"
     FOR i2 = 0 TO constlast
-        thisConstName$ = constname(i2) + constnamesymbol(i2)
+        thisConstName$ = constname(i2)
         FOR replaceConstPass = 1 TO 2
             found = 0
             DO
-                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
+                found = INSTR(found + 1, t$, thisConstName$)
                 IF found THEN
+                    IF found > 1 THEN
+                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
+                    END IF
+                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
+                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
+                    END IF
                     t = consttype(i2)
                     IF t AND ISSTRING THEN e$ = "ERROR -- Can not evaluate STRING constants in the math evaluator": EXIT SUB
                     IF t AND ISFLOAT THEN
-                        r$ = STR$(constfloat(i2))
-                        r$ = N2S(r$)
+                        r$ = N2S(STR$(constfloat(i2)))
                     ELSE
                         IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
                     END IF
                     t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
                 END IF
             LOOP UNTIL found = 0
-            thisConstName$ = constname(i2) 'name without the symbol on the 2nd pass
+            thisConstName$ = constname(i2) + constnamesymbol(i2)
         NEXT
     NEXT
 
@@ -25001,7 +24978,6 @@ SUB PreParse (e$)
         IF l THEN t$ = LEFT$(t$, l - 1) + MID$(t$, l + 1)
     LOOP UNTIL l = 0
 
-    t$ = UCASE$(t$)
     IF t$ = "" THEN e$ = "ERROR -- NULL string; nothing to evaluate": EXIT SUB
 
     'ERROR CHECK by counting our brackets
@@ -25069,10 +25045,15 @@ SUB PreParse (e$)
         IF l > 0 AND l > 2 THEN 'Don't check the starting bracket; there's nothing before it.
             good = 0
             FOR i = 1 TO UBOUND(OName)
-                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN _CONTINUE 'don't check the no_prefix junk if we don't have to.
                 m$ = MID$(t$, l - LEN(OName(i)), LEN(OName(i)))
                 IF m$ = OName(i) THEN
-                    good = -1: EXIT FOR 'We found an operator after our )
+                    good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
+                ELSE
+                    IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
+                        'try without prefix
+                        m$ = MID$(t$, l - (LEN(OName(i)) - 1), LEN(OName(i)) - 1)
+                        IF m$ = MID$(OName(i), 2) THEN good = -1: EXIT FOR
+                    END IF
                 END IF
             NEXT
             IF NOT good THEN e$ = "ERROR - Improper operations before (.": EXIT SUB
@@ -25087,10 +25068,15 @@ SUB PreParse (e$)
         IF l > 0 AND l < LEN(t$) THEN
             good = 0
             FOR i = 1 TO UBOUND(OName)
-                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN _CONTINUE 'don't check the no_prefix junk if we don't have to.
                 m$ = MID$(t$, l + 1, LEN(OName(i)))
                 IF m$ = OName(i) THEN
                     good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI
+                ELSE
+                    IF LEFT$(OName(i), 1) = "_" AND qb64prefix_set = 1 THEN
+                        'try without prefix
+                        m$ = MID$(t$, l + 1, LEN(OName(i)) - 1)
+                        IF m$ = MID$(OName(i), 2) THEN good = -1: EXIT FOR
+                    END IF
                 END IF
             NEXT
             IF MID$(t$, l + 1, 1) = ")" THEN good = -1
