@@ -24695,6 +24695,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
         END SELECT
     END IF
 
+
     SELECT CASE PL(p) 'divide up the work so we want do as much case checking
         CASE 5 'Type conversions
             'Note, these are special cases and work with the number BEFORE the command and not after
@@ -24720,21 +24721,21 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
             EXIT FUNCTION
         CASE 10 'functions
             SELECT CASE OName(p) 'Depending on our operator..
-                CASE "_PI"
+                CASE "_PI", "PI"
                     n1 = 3.14159265358979323846264338327950288## 'Future compatable in case something ever stores extra digits for PI
                     IF num(2) <> "" THEN n1 = n1 * VAL(num(2))
-                CASE "_ACOS": n1 = _ACOS(VAL(num(2)))
-                CASE "_ASIN": n1 = _ASIN(VAL(num(2)))
-                CASE "_ARCSEC"
+                CASE "_ACOS", "ACOS": n1 = _ACOS(VAL(num(2)))
+                CASE "_ASIN", "ASIN": n1 = _ASIN(VAL(num(2)))
+                CASE "_ARCSEC", "ARCSEC"
                     IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCSEC) value < 1": EXIT FUNCTION
                     n1 = _ARCSEC(VAL(num(2)))
-                CASE "_ARCCSC"
+                CASE "_ARCCSC", "ARCCSC"
                     IF ABS(VAL(num(2))) < 1 THEN EvaluateNumbers$ = "ERROR - ABS(_ARCCSC) value < 1": EXIT FUNCTION
                     n1 = _ARCCSC(VAL(num(2)))
-                CASE "_ARCCOT": n1 = _ARCCOT(VAL(num(2)))
-                CASE "_SECH": n1 = _SECH(VAL(num(2)))
-                CASE "_CSCH": n1 = _CSCH(VAL(num(2)))
-                CASE "_COTH": n1 = _COTH(VAL(num(2)))
+                CASE "_ARCCOT", "ARCCOT": n1 = _ARCCOT(VAL(num(2)))
+                CASE "_SECH", "SECH": n1 = _SECH(VAL(num(2)))
+                CASE "_CSCH", "CSCH": n1 = _CSCH(VAL(num(2)))
+                CASE "_COTH", "COTH": n1 = _COTH(VAL(num(2)))
                 CASE "C_RG"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGB32": EXIT FUNCTION
@@ -24777,7 +24778,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     n3 = VAL(MID$(num(2), c2 + 1))
                     n4 = VAL(MID$(num(2), c3 + 1))
                     n1 = _RGBA32(n, n2, n3, n4)
-                CASE "_RGB"
+                CASE "_RGB", "RGB"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGB": EXIT FUNCTION
                     c1 = INSTR(n$, ",")
@@ -24798,7 +24799,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     t = _NEWIMAGE(1, 1, n4)
                     n1 = _RGB(n, n2, n3, t)
                     _FREEIMAGE t
-                CASE "_RGBA"
+                CASE "_RGBA", "RGBA"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null _RGBA": EXIT FUNCTION
                     c1 = INSTR(n$, ",")
@@ -24821,7 +24822,7 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     t = _NEWIMAGE(1, 1, n5)
                     n1 = _RGBA(n, n2, n3, n4, t)
                     _FREEIMAGE t
-                CASE "_RED", "_GREEN", "_BLUE", "_ALPHA"
+                CASE "_RED", "_GREEN", "_BLUE", "_ALPHA", "RED", "GREEN", "BLUE", "ALPHA"
                     n$ = num(2)
                     IF n$ = "" THEN EvaluateNumbers$ = "ERROR - Invalid null " + OName(p): EXIT FUNCTION
                     c1 = INSTR(n$, ",")
@@ -24837,10 +24838,10 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                     END SELECT
                     t = _NEWIMAGE(1, 1, n4)
                     SELECT CASE OName(p)
-                        CASE "_RED": n1 = _RED(n, t)
-                        CASE "_BLUE": n1 = _BLUE(n, t)
-                        CASE "_GREEN": n1 = _GREEN(n, t)
-                        CASE "_ALPHA": n1 = _ALPHA(n, t)
+                        CASE "_RED", "RED": n1 = _RED(n, t)
+                        CASE "_BLUE", "BLUE": n1 = _BLUE(n, t)
+                        CASE "_GREEN", "GREEN": n1 = _GREEN(n, t)
+                        CASE "_ALPHA", "ALPHA": n1 = _ALPHA(n, t)
                     END SELECT
                     _FREEIMAGE t
                 CASE "C_RX", "C_GR", "C_BL", "C_AL"
@@ -24859,21 +24860,21 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
                 CASE "LOG": n1 = LOG(VAL(num(2)))
                 CASE "EXP": n1 = EXP(VAL(num(2)))
                 CASE "ATN": n1 = ATN(VAL(num(2)))
-                CASE "_D2R": n1 = 0.0174532925 * (VAL(num(2)))
-                CASE "_D2G": n1 = 1.1111111111 * (VAL(num(2)))
-                CASE "_R2D": n1 = 57.2957795 * (VAL(num(2)))
-                CASE "_R2G": n1 = 0.015707963 * (VAL(num(2)))
-                CASE "_G2D": n1 = 0.9 * (VAL(num(2)))
-                CASE "_G2R": n1 = 63.661977237 * (VAL(num(2)))
+                CASE "_D2R", "D2R": n1 = 0.0174532925 * (VAL(num(2)))
+                CASE "_D2G", "D2G": n1 = 1.1111111111 * (VAL(num(2)))
+                CASE "_R2D", "R2D": n1 = 57.2957795 * (VAL(num(2)))
+                CASE "_R2G", "R2G": n1 = 0.015707963 * (VAL(num(2)))
+                CASE "_G2D", "G2D": n1 = 0.9 * (VAL(num(2)))
+                CASE "_G2R", "G2R": n1 = 63.661977237 * (VAL(num(2)))
                 CASE "ABS": n1 = ABS(VAL(num(2)))
                 CASE "SGN": n1 = SGN(VAL(num(2)))
                 CASE "INT": n1 = INT(VAL(num(2)))
-                CASE "_ROUND": n1 = _ROUND(VAL(num(2)))
-                CASE "_CEIL": n1 = _CEIL(VAL(num(2)))
+                CASE "_ROUND", "ROUND": n1 = _ROUND(VAL(num(2)))
+                CASE "_CEIL", "CEIL": n1 = _CEIL(VAL(num(2)))
                 CASE "FIX": n1 = FIX(VAL(num(2)))
-                CASE "_SEC": n1 = _SEC(VAL(num(2)))
-                CASE "_CSC": n1 = _CSC(VAL(num(2)))
-                CASE "_COT": n1 = _COT(VAL(num(2)))
+                CASE "_SEC", "SEC": n1 = _SEC(VAL(num(2)))
+                CASE "_CSC", "CSC": n1 = _CSC(VAL(num(2)))
+                CASE "_COT", "COT": n1 = _COT(VAL(num(2)))
             END SELECT
         CASE 20 TO 60 'Math Operators
             SELECT CASE OName(p) 'Depending on our operator..
