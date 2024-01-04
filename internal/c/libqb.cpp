@@ -29174,7 +29174,7 @@ int32_t gfs_open_com_syntax(qbs *fstr, gfs_file_struct *f) {
     if (fstr->len <= 3 || (fstr->chr[0] & 223) != 67 || (fstr->chr[1] & 223) != 79 || (fstr->chr[2] & 223) != 77)
         return 0; // ! C/c,O/o,M/m
 
-    int32_t c, i, x, z, v = -1;
+    int32_t c, i, v = -1, x = 0;
     for (i = 3; i < fstr->len - 1; i++) {
         c = fstr->chr[i];
         if (c == ':')
@@ -29565,7 +29565,7 @@ comstatment:
 
     if (f->com_op_x == -1) {
         x = f->com_cd_x * 10;
-        z = f->com_ds_x * 10;
+        auto z = f->com_ds_x * 10;
         if (z > x)
             x = z;
 
