@@ -24511,6 +24511,7 @@ SUB Set_OrderOfOperations
     'OName ended up becoming the name of our commands, as I modified things.... Go figure!  LOL!
     REDIM OName(10000) AS STRING, PL(10000) AS INTEGER
     SHARED Skip_NoPrefix_Low AS INTEGER, Skip_NoPrefix_Max AS INTEGER 'to skip the no_prefixed functions
+    SHARED PP_TypeMod_NoPrefix_Limit AS INTEGER
     'Constants get evaluated first, with a Priority Level of 1
 
     i = i + 1: OName(i) = "C_UOF": PL(i) = 5 'convert to unsigned offset
@@ -24664,6 +24665,9 @@ SUB Set_OrderOfOperations
     PP_TypeMod(19) = "_GREEN32": PP_ConvertedMod(19) = "C_GR" 'green32
     PP_TypeMod(20) = "_BLUE32": PP_ConvertedMod(20) = "C_BL" 'blue32
     PP_TypeMod(21) = "_ALPHA32": PP_ConvertedMod(21) = "C_AL" 'alpha32
+
+    PP_TypeMod_NoPrefix_Limit = 21 'Update this value if more underscore values are ever added before this point
+
     PP_TypeMod(22) = "RGB32": PP_ConvertedMod(22) = "C_RG" 'rgb32
     PP_TypeMod(23) = "RGBA32": PP_ConvertedMod(23) = "C_RA" 'rgba32
     PP_TypeMod(24) = "RED32": PP_ConvertedMod(24) = "C_RX" 'red32
@@ -25031,8 +25035,8 @@ SUB PreParse (e$)
         END IF
     LOOP UNTIL l = 0
 
-    FOR j = 1 TO UBOUND(PP_TypeMod)
-        IF qb64prefix_set = 0 AND j > 21 THEN EXIT FOR 'only check the no_prefix junk if necessary
+    IF qb64prefix_set THEN j_limit = UBOUND(PP_TypeMod) ELSE j_limit = PP_TypeMod_NoPrefix_Limit
+    FOR j = 1 TO j_limit
         l = 0
         DO
             l = INSTR(l + 1, t$, PP_TypeMod(j))
