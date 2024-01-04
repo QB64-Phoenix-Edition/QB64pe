@@ -24985,7 +24985,7 @@ SUB PreParse (e$)
                     t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
                 END IF
             LOOP UNTIL found = 0
-            thisConstName$ = LEFT$(constname(i2), LEN(constname(i2)) - LEN(constnamesymbol(i2)))
+            thisConstName$ = constname(i2) 'name without the symbol on the 2nd pass
         NEXT
     NEXT
 
