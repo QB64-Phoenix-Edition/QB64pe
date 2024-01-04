@@ -24369,6 +24369,7 @@ END SUB
 FUNCTION Evaluate_Expression$ (e$)
     t$ = e$ 'So we preserve our original data, we parse a temp copy of it
     PreParse t$
+
     IF LEFT$(t$, 5) = "ERROR" THEN Evaluate_Expression$ = t$: EXIT FUNCTION
 
     'Deal with brackets first
@@ -24699,22 +24700,23 @@ FUNCTION EvaluateNumbers$ (p, num() AS STRING)
             'Note, these are special cases and work with the number BEFORE the command and not after
             'Since we're not using the 2nd number here, we need to return it back so it can still be processed properly
             SELECT CASE OName(p) 'Depending on our operator..
-                CASE "C_UOF": n1~%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%&))) + num(2)
-                CASE "C_ULO": n1%& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%&))) + num(2)
-                CASE "C_UBY": n1~%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%%))) + num(2)
-                CASE "C_UIN": n1~% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~%))) + num(2)
-                CASE "C_BY": n1%% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%%))) + num(2)
-                CASE "C_IN": n1% = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1%))) + num(2)
-                CASE "C_UIF": n1~&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&&))) + num(2)
-                CASE "C_OF": n1~& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~&))) + num(2)
-                CASE "C_IF": n1&& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&&))) + num(2)
-                CASE "C_LO": n1& = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1&))) + num(2)
-                CASE "C_UBI": n1~` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1~`))) + num(2)
-                CASE "C_BI": n1` = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1`))) + num(2)
-                CASE "C_FL": n1## = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1##))) + num(2)
-                CASE "C_DO": n1# = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1#))) + num(2)
-                CASE "C_SI": n1! = VAL(num(1)): EvaluateNumbers$ = RTRIM$(LTRIM$(STR$(n1!))) + num(2)
+                CASE "C_UOF": n1~%& = VAL(num(1)): temp$ = STR$(n1~%&)
+                CASE "C_ULO": n1%& = VAL(num(1)): temp$ = STR$(n1%&)
+                CASE "C_UBY": n1~%% = VAL(num(1)): temp$ = STR$(n1~%%)
+                CASE "C_UIN": n1~% = VAL(num(1)): temp$ = STR$(n1~%)
+                CASE "C_BY": n1%% = VAL(num(1)): temp$ = STR$(n1%%)
+                CASE "C_IN": n1% = VAL(num(1)): temp$ = STR$(n1%)
+                CASE "C_UIF": n1~&& = VAL(num(1)): temp$ = STR$(n1~&&)
+                CASE "C_OF": n1~& = VAL(num(1)): temp$ = STR$(n1~&)
+                CASE "C_IF": n1&& = VAL(num(1)): temp$ = STR$(n1&&)
+                CASE "C_LO": n1& = VAL(num(1)): temp$ = STR$(n1&)
+                CASE "C_UBI": n1~` = VAL(num(1)): temp$ = STR$(n1~`)
+                CASE "C_BI": n1` = VAL(num(1)): temp$ = STR$(n1`)
+                CASE "C_FL": n1## = VAL(num(1)): temp$ = STR$(n1##)
+                CASE "C_DO": n1# = VAL(num(1)): temp$ = STR$(n1#)
+                CASE "C_SI": n1! = VAL(num(1)): temp$ = STR$(n1!)
             END SELECT
+            EvaluateNumbers$ = _TRIM$(temp$) + num(2)
             EXIT FUNCTION
         CASE 10 'functions
             SELECT CASE OName(p) 'Depending on our operator..
@@ -24965,37 +24967,25 @@ SUB PreParse (e$)
     t$ = e$ 'preserve the original string
 
     'replace existing CONST values
-    sep$ = "()+-*/\><=^"
     FOR i2 = 0 TO constlast
-        thisConstName$ = constname(i2)
+        thisConstName$ = constname(i2) + constnamesymbol(i2)
         FOR replaceConstPass = 1 TO 2
             found = 0
             DO
                 found = INSTR(found + 1, UCASE$(t$), thisConstName$)
                 IF found THEN
-                    IF found > 1 THEN
-                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
-                    END IF
-                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
-                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
-                    END IF
                     t = consttype(i2)
-                    IF t AND ISSTRING THEN
-                        r$ = conststring(i2)
-                        i4 = _INSTRREV(r$, ",")
-                        r$ = LEFT$(r$, i4 - 1)
+                    IF t AND ISSTRING THEN e$ = "ERROR -- Can not evaluate STRING constants in the math evaluator": EXIT SUB
+                    IF t AND ISFLOAT THEN
+                        r$ = STR$(constfloat(i2))
+                        r$ = N2S(r$)
                     ELSE
-                        IF t AND ISFLOAT THEN
-                            r$ = STR$(constfloat(i2))
-                            r$ = N2S(r$)
-                        ELSE
-                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
-                        END IF
+                        IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
                     END IF
                     t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
                 END IF
             LOOP UNTIL found = 0
-            thisConstName$ = constname(i2) + constnamesymbol(i2)
+            thisConstName$ = LEFT$(constname(i2), LEN(constname(i2)) - LEN(constnamesymbol(i2)))
         NEXT
     NEXT
 
@@ -25074,10 +25064,10 @@ SUB PreParse (e$)
         IF l > 0 AND l > 2 THEN 'Don't check the starting bracket; there's nothing before it.
             good = 0
             FOR i = 1 TO UBOUND(OName)
-                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN EXIT FOR 'don't check the no_prefix junk if we don't have to.
+                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN _CONTINUE 'don't check the no_prefix junk if we don't have to.
                 m$ = MID$(t$, l - LEN(OName(i)), LEN(OName(i)))
                 IF m$ = OName(i) THEN
-                    good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI)
+                    good = -1: EXIT FOR 'We found an operator after our )
                 END IF
             NEXT
             IF NOT good THEN e$ = "ERROR - Improper operations before (.": EXIT SUB
@@ -25092,7 +25082,7 @@ SUB PreParse (e$)
         IF l > 0 AND l < LEN(t$) THEN
             good = 0
             FOR i = 1 TO UBOUND(OName)
-                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN EXIT FOR 'don't check the no_prefix junk if we don't have to.
+                IF qb64prefix_set = 0 AND i >= Skip_NoPrefix_Low AND i <= Skip_NoPrefix_Max THEN _CONTINUE 'don't check the no_prefix junk if we don't have to.
                 m$ = MID$(t$, l + 1, LEN(OName(i)))
                 IF m$ = OName(i) THEN
                     good = -1: EXIT FOR 'We found an operator after our ), and it's not a CONST (like PI
