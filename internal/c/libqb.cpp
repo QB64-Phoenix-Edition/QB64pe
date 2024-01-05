@@ -29163,46 +29163,46 @@ int64 gfs_lof(int32 i) {
     return -1;
 }
 
-int32 gfs_open_com_syntax(qbs *fstr, gfs_file_struct *f) {
+int32_t gfs_open_com_syntax(qbs *fstr, gfs_file_struct *f) {
     // 0=not an open com statement
     //-1=syntax error
     // 1=valid
     // check if filename is a COM open command
-    static int32 x, i;
-    static int32 v, c, z;
+
     f->com_port = 0;
-    if (fstr->len <= 3)
-        return 0;
-    if ((fstr->chr[0] & 223) != 67)
-        return 0; //"C"/"c"
-    if ((fstr->chr[1] & 223) != 79)
-        return 0; //"O"/"o"
-    if ((fstr->chr[2] & 223) != 77)
-        return 0; //"M"/"m"
-    v = -1;
+
+    if (fstr->len <= 3 || (fstr->chr[0] & 223) != 67 || (fstr->chr[1] & 223) != 79 || (fstr->chr[2] & 223) != 77)
+        return 0; // ! C/c,O/o,M/m
+
+    int32_t c, i, v = -1, x = 0;
     for (i = 3; i < fstr->len - 1; i++) {
         c = fstr->chr[i];
-        if (c == 58)
+        if (c == ':')
             goto comstatment;
-        if ((c < 48) || (c > 57))
+        if ((c < '0') || (c > '9'))
             return 0; // not 0-9
         if (v == -1) {
-            if (c == 48)
+            if (c == '0')
                 return 0; // first digit 0
             v = 0;
         }
-        v = v * 10 + (c - 48);
+        v = v * 10 + (c - '0');
     }
+
     return 0; // no ":"
+
 comstatment:
-    if ((x >= 7) || (v <= 0) || (v > 255))
+    if (x >= 7 || v <= 0 || v > 255)
         return -1; // invalid port number (1-255)
+
     f->com_port = v;
 
     // COM open confirmed
-    static qbs *str = NULL;
+    static qbs *str = nullptr;
+
     if (!str)
         str = qbs_new(0, 0);
+
     qbs_set(str, qbs_ucase(fstr));
     str->len--; // remove null term.
 
@@ -29221,25 +29221,26 @@ comstatment:
     f->com_ds_x = -1;
     f->com_op_x = -1;
 
-    static int32 str_or_num;
-    static int64 strv;
-    static int32 stage;
-    static int32 com_rb_used, com_tb_used;
-    com_rb_used = 0;
-    com_tb_used = 0;
-    stage = 1;
-    str_or_num = 1;
-    strv = 0;
+    int32_t str_or_num = 1;
+    int64_t strv = 0;
+    int32_t stage = 1;
+    int32_t com_rb_used = 0;
+    int32_t com_tb_used = 0;
+
     v = -1;
     for (i = i + 1; i < str->len; i++) {
         c = str->chr[i];
-        if (c != 44) {
-            if ((c < 48) || ((c > 57) && (c < 65)) || (c > 90))
+
+        if (c != ',') {
+            if ((c < '0') || ((c > '9') && (c < 'A')) || (c > 'Z'))
                 return -1; // invalid character
-            if ((str_or_num == 2) && (c >= 65))
+
+            if ((str_or_num == 2) && (c >= 'A'))
                 return -1; // invalid character
-            if (c < 65)
-                str_or_num = 2;                      // ABC->123
+
+            if (c < 'A')
+                str_or_num = 2; // ABC->123
+
             if ((str_or_num == 1) || (stage == 4)) { // note: stage 4 is interpreted as a string
                 if (strv & 0xFF0000)
                     strv = strv | (c << 24);
@@ -29249,20 +29250,26 @@ comstatment:
                     strv = strv | (c << 8);
                 else
                     strv = strv = c;
+
                 if (strv > 16777216)
                     return -1; // string option too long (max 3 characters)
+
             } else {
-                if ((c > 48) && (c <= 57)) {
+                if ((c > '0') && (c <= '9')) {
                     if (v == -2)
                         return -1; // leading 0s are invalid
+
                     if (v == -1)
                         v = 0;
-                    v = v * 10 + (c - 48);
+
+                    v = v * 10 + (c - '0');
                 } else { // 0
                     if (v == -2)
                         return -1; // leading 0s are invalid
+
                     if (v == -1)
                         v = -2; // 0...
+
                     if (v > 0)
                         v = v * 10;
                 }
@@ -29270,76 +29277,104 @@ comstatment:
                     return -1; // numeric value too large (LONG values only)
             }
         } // c!=44
-        if ((c == 44) || (i == str->len - 1)) {
+
+        if ((c == ',') || (i == str->len - 1)) {
             if (v == -2)
                 v = 0;
+
             // note: v==-1 means omit
             if (stage == 1) {
                 if (f->com_baud_rate != -1)
                     return -1;
+
                 if (strv)
                     return -1;
+
                 if (v == 0)
                     return -1;
+
                 if (v == -1)
                     v = 300;
+
                 f->com_baud_rate = v;
                 stage++;
+
                 goto done_stage;
-            }
-            if (stage == 2) {
+            } else if (stage == 2) {
                 if (f->com_parity != -1)
                     return -1;
+
                 if (v != -1)
                     return -1;
+
                 x = -1;
+
                 if (strv == 78)
                     x = 0; // N
+
                 if (strv == 0)
                     x = 1; // E*
+
                 if (strv == 69)
                     x = 1; // E
+
                 if (strv == 79)
                     x = 2; // O
+
                 if (strv == 83)
                     x = 3; // S
+
                 if (strv == 77)
                     x = 4; // M
+
                 if (strv == 17744)
                     x = 5; // PE
+
                 if (x == -1)
                     return -1;
+
                 f->com_parity = x;
                 stage++;
+
                 goto done_stage;
-            }
-            if (stage == 3) {
+            } else if (stage == 3) {
                 if (f->com_data_bits_per_byte != -1)
                     return -1;
+
                 if (strv)
                     return -1;
+
                 x = -1;
+
                 if (v == -1)
                     x = 7;
+
                 if (v == 5)
                     x = 5;
+
                 if (v == 6)
                     x = 6;
+
                 if (v == 7)
                     x = 7;
+
                 if (v == 8)
                     x = 8;
+
                 if (x == -1)
                     return -1;
+
                 f->com_data_bits_per_byte = x;
                 stage++;
+
                 goto done_stage;
-            }
-            if (stage == 4) {
+            } else if (stage == 4) {
                 if (f->com_stop_bits != -1)
                     return -1;
+
                 if (v != -1)
                     return -1;
+
                 x = -1;
                 if (strv == 0) {
                     x = 10;
@@ -29349,98 +29384,134 @@ comstatment:
                             x = 15;
                     }
                 } // 0
+
                 if (strv == 49)
                     x = 10; //"1"
+
                 if (strv == 3485233)
                     x = 15; //"1.5"
+
                 if (strv == 50)
                     x = 20; //"2"
+
                 if (x == -1)
                     return -1;
+
                 f->com_stop_bits = x;
                 stage++;
                 goto done_stage;
             }
-            // stage>4
+
+            // stage > 4
             if (!strv)
                 return -1; // all options after 4 require a string
+
             if (strv == 21330) {
                 if (f->com_rs != -1)
                     return -1; // RS
+
                 f->com_rs = 1;
                 goto done_stage;
             }
+
             if (strv == 5130562) {
                 if (f->com_bin_asc != -1)
                     return -1; // BIN
+
                 f->com_bin_asc = 0;
                 goto done_stage;
             }
+
             if (strv == 4412225) {
                 if (f->com_bin_asc != -1)
                     return -1; // ASC
+
                 f->com_bin_asc = 1;
                 goto done_stage;
             }
+
             if (strv == 16980) {
                 if (com_tb_used)
                     return -1; // TB
+
                 com_tb_used = 1;
                 goto done_stage;
             }
+
             if (strv == 16978) {
                 if (com_rb_used)
                     return -1; // RB
+
                 com_rb_used = 1;
                 goto done_stage;
             }
+
             if (strv == 17996) {
                 if (f->com_asc_lf != -1)
                     return -1; // LF
+
                 f->com_asc_lf = 1;
                 goto done_stage;
             }
+
             if (strv == 17475) {
                 if (f->com_cd_x != -1)
                     return -1; // CD
+
                 if (v == -1)
                     v = 0;
+
                 if (v > 65535)
                     return -1;
+
                 f->com_cd_x = v;
                 goto done_stage;
             }
+
             if (strv == 21315) {
                 if (f->com_cs_x != -1)
                     return -1; // CS
+
                 if (v == -1)
                     v = 1000;
+
                 if (v > 65535)
                     return -1;
+
                 f->com_cs_x = v;
                 goto done_stage;
             }
+
             if (strv == 21316) {
                 if (f->com_ds_x != -1)
                     return -1; // DS
+
                 if (v == -1)
                     v = 1000;
+
                 if (v > 65535)
                     return -1;
+
                 f->com_ds_x = v;
                 goto done_stage;
             }
+
             if (strv == 20559) {
                 if (f->com_op_x != -1)
                     return -1; // OP
+
                 if (v == -1)
                     v = 10000;
+
                 if (v > 65535)
                     return -1;
+
                 f->com_op_x = v;
                 goto done_stage;
             }
+
             return -1; // invalid option
+
         done_stage:
             str_or_num = 1;
             strv = 0;
@@ -29451,10 +29522,13 @@ comstatment:
     // complete omitted options with defaults
     if (f->com_baud_rate == -1)
         f->com_baud_rate = 300;
+
     if (f->com_parity == -1)
         f->com_parity = 1;
+
     if (f->com_data_bits_per_byte == -1)
         f->com_data_bits_per_byte = 7;
+
     if (f->com_stop_bits == -1) {
         x = 10;
         if (f->com_baud_rate <= 110) {
@@ -29462,33 +29536,46 @@ comstatment:
             if (f->com_data_bits_per_byte == 5)
                 x = 15;
         }
+
         f->com_stop_bits = x;
     }
+
     if (f->com_bin_asc == -1)
         f->com_bin_asc = 0;
+
     if (f->com_asc_lf == -1)
         f->com_asc_lf = 0;
+
     if (f->com_asc_lf == 1) {
         if (f->com_bin_asc == 0)
             f->com_asc_lf = 0;
     }
+
     if (f->com_rs == -1)
         f->com_rs = 0;
+
     if (f->com_cd_x == -1)
         f->com_cd_x = 0;
+
     if (f->com_cs_x == -1)
         f->com_cs_x = 1000;
+
     if (f->com_ds_x == -1)
         f->com_ds_x = 1000;
+
     if (f->com_op_x == -1) {
         x = f->com_cd_x * 10;
-        z = f->com_ds_x * 10;
+        auto z = f->com_ds_x * 10;
         if (z > x)
             x = z;
+
         if (x > 65535)
             x = 65535;
+
         f->com_op_x = x;
     }
+
+    return 1; // valid
 }
 
 int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
