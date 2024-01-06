@@ -5461,8 +5461,9 @@ FUNCTION ide2 (ignore)
                     retval$ = ideinputbox$("Math Evaluator", "#Enter expression", mathEvalExpr$, "", 60, 0, 0)
                     result = 0
                     IF LEN(retval$) THEN
+                        Dim num As ParseNum
                         mathEvalExpr$ = retval$
-                        ev0$ = Evaluate_Expression$(retval$)
+                        ev0$ = Evaluate_Expression$(retval$, num)
                         ev$ = ev0$
                         mathEvalError%% = INSTR(ev$, "ERROR") > 0
                         IF mathEvalError%% = 0 AND mathEvalHEX%% THEN ev$ = "&H" + HEX$(VAL(ev$))

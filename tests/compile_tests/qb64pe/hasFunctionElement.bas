@@ -5,6 +5,7 @@ Dim Debug As Long
 Debug = -1
 
 '$include:'../../../source/global/constants.bas'
+'$include:'../../../source/utilities/type.bi'
 sp = "@" ' Makes the output readable
 
 Type TestCase

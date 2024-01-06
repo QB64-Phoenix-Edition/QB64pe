@@ -81,6 +81,15 @@ FUNCTION TFStringToBool% (s AS STRING)
     END IF
 END FUNCTION
 
+SUB WriteConfigSetting (section$, item$, value$)
+    WriteSetting ConfigFile$, section$, item$, value$
+END SUB
+
+FUNCTION ReadConfigSetting (section$, item$, value$)
+    value$ = ReadSetting$(ConfigFile$, section$, item$)
+    ReadConfigSetting = (LEN(value$) > 0)
+END FUNCTION
+
 '
 ' Reads the bool setting at section:setting. If it is not there or invalid, writes the default value to it
 '
@@ -139,3 +148,16 @@ FUNCTION ReadWriteLongSettingValue& (section AS STRING, setting AS STRING, defau
         ReadWriteLongSettingValue& = checkResult
     END IF
 END FUNCTION
+
+FUNCTION str2$ (v AS LONG)
+    str2$ = _TRIM$(STR$(v))
+END FUNCTION
+
+FUNCTION str2u64$ (v~&&)
+    str2u64$ = LTRIM$(RTRIM$(STR$(v~&&)))
+END FUNCTION
+
+FUNCTION str2i64$ (v&&)
+    str2i64$ = LTRIM$(RTRIM$(STR$(v&&)))
+END FUNCTION
+
