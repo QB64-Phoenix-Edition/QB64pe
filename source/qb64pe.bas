@@ -2281,6 +2281,29 @@ DO
                                 END IF
                                 IF LEN(e$) = 0 THEN e$ = e2$ ELSE e$ = e$ + sp + e2$
 
+                                ' search for any matching const names
+                                FOR i3 = 0 TO constlast
+                                    IF UCASE$(e2$) = constname(i3) + constnamesymbol(i3) OR UCASE$(e2$) = constname(i3) THEN
+                                        t = consttype(i3)
+                                        IF t AND ISSTRING THEN
+                                            e2$ = conststring(i3)
+                                        ELSE
+                                            IF t AND ISFLOAT THEN
+                                                e2$ = STR$(constfloat(i3))
+                                                e2$ = N2S(e2$)
+                                            ELSE
+                                                IF t AND ISUNSIGNED THEN
+                                                    e2$ = STR$(constuinteger(i3))
+                                                ELSE
+                                                    e2$ = STR$(constinteger(i3))
+                                                END IF
+                                            END IF
+                                        END IF
+
+                                        EXIT FOR
+                                    END IF
+                                NEXT
+
                                 e3$ = e2$
                                 IF LEN(e2$) > 1 THEN
                                     removeComma = _INSTRREV(e2$, ",")
@@ -24902,42 +24925,6 @@ SUB PreParse (e$)
     STATIC TotalPrefixedPP_TypeMod AS LONG, TotalPP_TypeMod AS LONG
     t$ = e$ 'preserve the original string
 
-    'replace existing CONST values
-    sep$ = "()+-*/\><=^"
-    FOR i2 = 0 TO constlast
-        thisConstName$ = constname(i2)
-        FOR replaceConstPass = 1 TO 2
-            found = 0
-            DO
-                found = INSTR(found + 1, UCASE$(t$), thisConstName$)
-                IF found THEN
-                    IF found > 1 THEN
-                        IF INSTR(sep$, MID$(t$, found - 1, 1)) = 0 THEN _CONTINUE
-                    END IF
-                    IF found + LEN(thisConstName$) <= LEN(t$) THEN
-                        IF INSTR(sep$, MID$(t$, found + LEN(thisConstName$), 1)) = 0 THEN _CONTINUE
-                    END IF
-                    t = consttype(i2)
-                    IF t AND ISSTRING THEN
-                        r$ = conststring(i2)
-                        i4 = _INSTRREV(r$, ",")
-                        r$ = LEFT$(r$, i4 - 1)
-                    ELSE
-                        IF t AND ISFLOAT THEN
-                            r$ = STR$(constfloat(i2))
-                            r$ = N2S(r$)
-                        ELSE
-                            IF t AND ISUNSIGNED THEN r$ = STR$(constuinteger(i2)) ELSE r$ = STR$(constinteger(i2))
-                        END IF
-                    END IF
-                    t$ = LEFT$(t$, found - 1) + _TRIM$(r$) + MID$(t$, found + LEN(thisConstName$))
-                END IF
-            LOOP UNTIL found = 0
-            thisConstName$ = constname(i2) + constnamesymbol(i2)
-        NEXT
-    NEXT
-
-
     IF PP_TypeMod(0) = "" THEN
         REDIM PP_TypeMod(100) AS STRING, PP_ConvertedMod(100) AS STRING 'Large enough to hold all values to begin with
         PP_TypeMod(0) = "Initialized" 'Set so we don't do this section over and over, as we keep the values in shared memory.
@@ -24973,7 +24960,6 @@ SUB PreParse (e$)
         TotalPP_TypeMod = i
         REDIM _PRESERVE PP_TypeMod(i) AS STRING, PP_ConvertedMod(i) AS STRING 'And then resized to just contain the necessary space in memory
     END IF
-    t$ = e$
 
     'First strip all spaces
     t$ = ""
