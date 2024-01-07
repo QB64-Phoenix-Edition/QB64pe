@@ -31,9 +31,9 @@ if [ -z "$(which brew)" ]; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   [ -z "$dont_run" ] && Pause
   exit 1
-else
-  brew install pkg-config freetype libpng
 fi
+
+brew update && brew install pkg-config freetype libpng
 
 echo "Building 'QB64-PE'"
 make OS=osx clean
