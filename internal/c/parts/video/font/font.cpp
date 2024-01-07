@@ -6,13 +6,14 @@
 #define FONT_DEBUG 0
 #include "font.h"
 #include "../../../libqb.h"
-#include "freetypeamalgam.h"
 #include "gui.h"
 #include "image.h"
 #include "libqb-common.h"
 #include "mutex.h"
 #include "rounding.h"
 #include <cstdio>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <unordered_map>
 #include <vector>
 

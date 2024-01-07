@@ -263,8 +263,10 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_FONT)),)
-	EXE_LIBS += $(FREETYPE_OBJS) $(FONT_OBJS)
-
+	EXE_LIBS += $(FONT_OBJS) $(FREETYPE_EXE_LIBS)
+	CXXFLAGS += $(FREETYPE_CXXFLAGS)
+	CXXLIBS += $(FREETYPE_CXXLIBS)
+	
 	LICENSE_IN_USE += freetype_ftl
 else
 	EXE_LIBS += $(FONT_STUB_OBJS)
