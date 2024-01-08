@@ -1,57 +1,39 @@
 
-FONT_SRCS := \
-	font.cpp
+# We use the flat-directory compilation for FreeType as explained in:
+# https://github.com/freetype/freetype/blob/master/docs/INSTALL.ANY
+#
+# When updating the library:
+# 1. Flatten all directories inside "src" except "tools". Omit contents of "tools" entirely.
+# 2. Then only copy all .c & .h files except:
+#       autofit.c, bdf.c, cff.c, ftbase.c, ftcache.c, gxvalid.c, otvalid.c,
+#       pcf.c, pfr.c, pshinter.c, psnames.c, raster.c, sdf.c, sfnt.c, smooth.c,
+#       svg.c, truetype.c, type1.c, type1cid.c, type42.c
+# 2. Copy the FreeType "include" directory *without* flattening!
+# 3. Include <freetype/internal/compiler-macros.h> from "ftzopen.h".
 
-FONT_STUB_SRCS := \
-	stub_font.cpp
+FREETYPE_SRCS := $(wildcard $(PATH_INTERNAL_C)/parts/video/font/freetype/*.c)
+
+FREETYPE_INCLUDE := -I$(PATH_INTERNAL_C)/parts/video/font/freetype/include
+
+FREETYPE_OBJS := $(FREETYPE_SRCS:.c=.o)
+
+FREETYPE_LIB := $(PATH_INTERNAL_C)/parts/video/font/freetype/freetype.a
+
+FONT_SRCS := font.cpp
+FONT_STUB_SRCS := stub_font.cpp
 
 FONT_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/font/%.o,$(FONT_SRCS))
-
 FONT_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/font/%.o,$(FONT_STUB_SRCS))
 
 $(PATH_INTERNAL_C)/parts/video/font/%.o: $(PATH_INTERNAL_C)/parts/video/font/%.cpp
-	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+	$(CXX) -O2 $(CXXFLAGS) $(FREETYPE_INCLUDE) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
-ifeq ($(OS),win)
-# The internal FreeType library is only used for Windows. Linux and macOS uses
-# the one installed by their respective package manager. When updating the
-# FreeType library for Windows, simply download the latest source release,
-# delete the old contents of the freetype directory and move the entire
-# FreeType source tree into it.
+$(PATH_INTERNAL_C)/parts/video/font/freetype/%.o: $(PATH_INTERNAL_C)/parts/video/font/freetype/%.c
+	$(CC) -O3 $(CFLAGS) $(FREETYPE_INCLUDE) -DFT2_BUILD_LIBRARY -Wall $< -c -o $@
 
-FREETYPE_MAKE_FLAGS := OS=Windows_NT
-FREETYPE_MAKE_FLAGS += CC=../../../../c_compiler/bin/gcc.exe
-FREETYPE_MAKE_FLAGS += AR=../../../../c_compiler/bin/ar.exe
-
-FREETYPE_LIB := $(PATH_INTERNAL_C)/parts/video/font/freetype/objs/freetype.a
-
-$(PATH_INTERNAL_C)/parts/video/font/freetype/config.mk:
-	$(MAKE) -C $(PATH_INTERNAL_C)/parts/video/font/freetype -f ./Makefile $(FREETYPE_MAKE_FLAGS)
-
-$(FREETYPE_LIB): $(PATH_INTERNAL_C)/parts/video/font/freetype/config.mk
-	$(MAKE) -C $(PATH_INTERNAL_C)/parts/video/font/freetype -f ./Makefile $(FREETYPE_MAKE_FLAGS)
-
-.PHONY: clean-freetype-lib
-clean-freetype-lib:
-	$(MAKE) -C $(PATH_INTERNAL_C)/parts/video/font/freetype -f ./Makefile $(FREETYPE_MAKE_FLAGS) distclean
-
-CLEAN_DEP_LIST += clean-freetype-lib
-CLEAN_LIST += $(FREETYPE_LIB) $(FONT_OBJS) $(FONT_STUB_OBJS)
+$(FREETYPE_LIB): $(FREETYPE_OBJS)
+	$(AR) rcs $@ $(FREETYPE_OBJS)
 
 FREETYPE_EXE_LIBS := $(FREETYPE_LIB)
 
-FREETYPE_CXXFLAGS := -I$(PATH_INTERNAL_C)/parts/video/font/freetype/include
-
-FREETYPE_CXXLIBS :=
-
-else
-
-CLEAN_LIST += $(FONT_OBJS) $(FONT_STUB_OBJS)
-
-FREETYPE_EXE_LIBS :=
-
-FREETYPE_CXXFLAGS := $(shell pkg-config --cflags freetype2)
-
-FREETYPE_CXXLIBS := $(shell pkg-config --libs freetype2)
-
-endif
+CLEAN_LIST += $(FREETYPE_LIB) $(FREETYPE_OBJS) $(FONT_OBJS) $(FONT_STUB_OBJS)

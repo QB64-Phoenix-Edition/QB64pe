@@ -23,6 +23,7 @@
 #define FTZOPEN_H_
 
 #include <freetype/freetype.h>
+#include <freetype/internal/compiler-macros.h>
 
 FT_BEGIN_HEADER
 

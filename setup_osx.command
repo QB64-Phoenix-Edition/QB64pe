@@ -24,17 +24,6 @@ if [ -z "$(which clang++)" ]; then
   exit 1
 fi
 
-if [ -z "$(which brew)" ]; then
-  echo "Homebrew Package Manager not found."
-  echo "Attempting to install the Homebrew Package Manager..."
-  echo "After installation is finished, run this setup script again."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  [ -z "$dont_run" ] && Pause
-  exit 1
-fi
-
-brew update && brew install pkg-config freetype libpng
-
 echo "Building 'QB64-PE'"
 make OS=osx clean
 make OS=osx BUILD_QB64=y -j3
