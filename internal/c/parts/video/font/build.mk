@@ -5,11 +5,12 @@
 # When updating the library:
 # 1. Flatten all directories inside "src" except "tools". Omit contents of "tools" entirely.
 # 2. Then only copy all .c & .h files except:
-#       autofit.c, bdf.c, cff.c, ftbase.c, ftcache.c, gxvalid.c, otvalid.c,
-#       pcf.c, pfr.c, pshinter.c, psnames.c, raster.c, sdf.c, sfnt.c, smooth.c,
-#       svg.c, truetype.c, type1.c, type1cid.c, type42.c
+#       autofit.c, bdf.c, cff.c, ftbase.c, ftcache.c, gxvalid.c, gxvfgen.c,
+#       otvalid.c, pcf.c, pfr.c, pshinter.c, psnames.c, raster.c, sdf.c, sfnt.c,
+#       smooth.c, svg.c, truetype.c, type1.c, type1cid.c, type42.c
 # 2. Copy the FreeType "include" directory *without* flattening!
-# 3. Include <freetype/internal/compiler-macros.h> from "ftzopen.h".
+# 3. Include <freetype/internal/compiler-macros.h> in "ftzopen.h".
+# 4. Include <freetype/config/ftstdlib.h> in "zutil.h".
 
 FREETYPE_SRCS := $(wildcard $(PATH_INTERNAL_C)/parts/video/font/freetype/*.c)
 
