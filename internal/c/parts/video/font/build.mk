@@ -8,9 +8,9 @@
 #       autofit.c, bdf.c, cff.c, ftbase.c, ftcache.c, gxvalid.c, gxvfgen.c,
 #       otvalid.c, pcf.c, pfr.c, pshinter.c, psnames.c, raster.c, sdf.c, sfnt.c,
 #       smooth.c, svg.c, truetype.c, type1.c, type1cid.c, type42.c
-# 2. Copy the FreeType "include" directory *without* flattening!
-# 3. Include <freetype/internal/compiler-macros.h> in "ftzopen.h".
-# 4. Include <freetype/config/ftstdlib.h> in "zutil.h".
+# 3. Copy the FreeType "include" directory *without* flattening!
+# 4. Include <freetype/internal/compiler-macros.h> in "ftzopen.h".
+# 5. Include <freetype/config/ftstdlib.h> in "zutil.h".
 
 FREETYPE_SRCS := $(wildcard $(PATH_INTERNAL_C)/parts/video/font/freetype/*.c)
 
