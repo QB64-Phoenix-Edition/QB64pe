@@ -10,7 +10,9 @@ END TYPE
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
     t$ = e$ 'So we preserve our original data, we parse a temp copy of it
+
     PreParse t$
+
     IF CONST_EVAL_DEBUG THEN _Echo "t$: " + t$
     IF LEFT$(t$, 5) = "ERROR" THEN Evaluate_Expression$ = t$: EXIT FUNCTION
 
@@ -23,16 +25,10 @@ FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
         FindInnerParens exp$, C, Eval_E
 
         IF Eval_E > 0 THEN
-            IF c = 0 THEN Evaluate_Expression$ = "ERROR -- BAD () Count": EXIT FUNCTION
+            IF c = 0 THEN Evaluate_Expression$ = "ERROR - BAD () Count": EXIT FUNCTION
             eval$ = getelements$(exp$, c + 1, Eval_E - 1)
 
-            IF CONST_EVAL_DEBUG THEN  _Echo "C: " + str$(c) + ", eval_e: " + str$(eval_e)
-            IF CONST_EVAL_DEBUG THEN  _Echo "exp: " + exp$
-            IF CONST_EVAL_DEBUG THEN  _Echo "inner element list: " + eval$
-            IF CONST_EVAL_DEBUG THEN  _Echo "getelements: " + getelements$(exp$, c + 1, Eval_E - 1)
-
             ParseExpression2 eval$
-            IF CONST_EVAL_DEBUG THEN _Echo "orig eval$: " + eval$
 
             eval$ = LTRIM$(RTRIM$(eval$))
             IF LEFT$(eval$, 5) = "ERROR" THEN Evaluate_Expression$ = eval$: EXIT FUNCTION
@@ -41,7 +37,6 @@ FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
             ' If so, evaluate it now using the argument list we have
             funcOp& = IsFunctionIdentifier(getelement$(exp$, c - 1))
             IF funcOp& > 0 THEN
-                IF CONST_EVAL_DEBUG THEN  _Echo "Function evaluate! " + getelement$(exp$, c - 1)
                 eval$ = EvaluateFunction$(funcOp&, eval$)
                 IF LEFT$(eval$, 5) = "ERROR" THEN Evaluate_Expression$ = eval$: EXIT FUNCTION
 
@@ -157,8 +152,8 @@ END SUB
 '
 ' unary := '-' exponent | exponent
 '
-' ' Note: NOT a special case here similar to -, but it is handled in PreParse
-' ' via parenthesis insertion
+' ' Note: NOT is a special case here similar to -, but it is handled in
+' ' PreParse via parenthesis insertion
 ' exponent := numeric '^' unary
 '               | numeric 'ROOT' unary
 '               | numeric 
@@ -500,7 +495,6 @@ FUNCTION Term&(exp$, state AS ParserState)
         IF ele$ = "+" THEN
             ele$ = getnextelement$(exp$, state.index, state.strIndex)
             IF ParseMod&(exp$, state) = 0 THEN FixupErrorMessage state, "+": EXIT FUNCTION
-            IF CONST_EVAL_DEBUG THEN _Echo "term parsing!"
 
             IF (num.typ AND ISFLOAT) OR (state.num.typ AND ISFLOAT) THEN
                 ParseNumSetF num, FLOATTYPE - ISPOINTER, num.f + state.num.f
@@ -521,7 +515,6 @@ FUNCTION Term&(exp$, state AS ParserState)
                 ParseNumSetI num, INTEGER64TYPE - ISPOINTER, num.i - state.num.i
             END IF
         ELSE
-            IF CONST_EVAL_DEBUG THEN _Echo "Term done! ele: " + ele$
             state.num = num
             Term& = -1
             EXIT FUNCTION
@@ -853,7 +846,6 @@ SUB Set_ConstFunctions
     i = i + 1: ConstFuncs(i).nam = "_SEC": ConstFuncs(i).ArgCount = 1
     i = i + 1: ConstFuncs(i).nam = "_CSC": ConstFuncs(i).ArgCount = 1
     i = i + 1: ConstFuncs(i).nam = "_COT": ConstFuncs(i).ArgCount = 1
-    ' i = i + 1: ConstFuncs(i).nam = "ASC": ConstFuncs(i).ArgCount = 1
 
     i = i + 1: ConstFuncs(i).nam = "_RGB32": ConstFuncs(i).ArgCount = -1
     i = i + 1: ConstFuncs(i).nam = "_RGBA32": ConstFuncs(i).ArgCount = 4
@@ -868,6 +860,9 @@ SUB Set_ConstFunctions
     i = i + 1: ConstFuncs(i).nam = "_BLUE": ConstFuncs(i).ArgCount = 2
     i = i + 1: ConstFuncs(i).nam = "_ALPHA": ConstFuncs(i).ArgCount = 2
 
+    i = i + 1: ConstFuncs(i).nam = "CHR$": ConstFuncs(i).ArgCount = 1
+    i = i + 1: ConstFuncs(i).nam = "ASC": ConstFuncs(i).ArgCount = -1
+
     REDIM _PRESERVE ConstFuncs(i) AS ConstFunction
 END SUB
 
@@ -876,7 +871,8 @@ END SUB
 ' Each argument should be a single element
 FUNCTION EvaluateFunction$ (p, args AS STRING)
     DIM n1 AS _FLOAT, nstr AS STRING
-    Dim argCount As Long, args(5) As ParseNum
+    Dim argCount As Long, args(5) As ParseNum, origArgs(5) As String
+
 
     argCount = countFunctionElements(args)
 
@@ -889,16 +885,20 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
 
     FOR i = 1 to argCount
         ele$ = getelement$(args, 1 + (i - 1) * 2)
+        origArgs(i) = ele$
+
+        IF CONST_EVAL_DEBUG THEN _Echo "arg is string: " + STR$(elementIsString(ele$)) + ", argCount: " + STR$(ConstFuncs(p).ArgCount)
+
         IF elementIsNumber(ele$) THEN
             ' skip the commas
             args(i).typ = elementGetNumericValue&(ele$, args(i).f, args(i).i, args(i).ui)
-        ELSEIF elementIsString(ele$) AND ConstFuncs(p).ArgCount > 0 THEN ' positive arg count means arguments are all numbers
+        ELSEIF elementIsString(ele$) AND ConstFuncs(p).ArgCount < 0 THEN ' positive arg count means arguments are all numbers
             args(i).typ = elementGetStringValue&(ele$, args(i).s)
         ELSE
             EvaluateFunction$ = "ERROR - Unexpected argument: " + ele$
             EXIT FUNCTION
         END IF
-        ' args(i) = getelement$(args, 1 + (i - 1) * 2) 
+
         IF CONST_EVAL_DEBUG THEN _Echo "Argument: " + str$(args(i).f) + ", str: " + getelement$(args, 1 + (i - 1) * 2)
     NEXT
 
@@ -1020,9 +1020,31 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
         CASE "_SEC": n1 = _SEC(args(1).f)
         CASE "_CSC": n1 = _CSC(args(1).f)
         CASE "_COT": n1 = _COT(args(1).f)
+
+        CASE "CHR$":
+            IF args(1).ui > 255 THEN EvaluateFunction$ = "ERROR - Invalid argument to CHR$, valid range is 0-255: " + origArgs(1): EXIT FUNCTION
+
+            nstr = CHR$(args(1).ui)
+            typ& = STRINGTYPE
+
+        CASE "ASC":
+            IF argCount < 1 OR argCount > 2 THEN EvaluateNumbers$ = "ERROR - Wrong number of arguments provided to ASC$": EXIT FUNCTION
+            IF (args(1).typ AND ISSTRING) = 0 THEN EvaluateFunction$ = "ERROR - Unexpected argument: '" + origArgs(1) + "'": EXIT FUNCTION
+
+            IF argCount = 1 THEN
+                n1 = ASC(args(1).s)
+            ELSE
+                IF args(2).typ AND ISSTRING THEN EvaluateFunction$ = "ERROR - Expected integer argument: '" + origArgs(2) + "'": EXIT FUNCTION
+
+                n1 = ASC(args(1).s, args(2).i)
+            END IF
+
+            typ& = INTEGER64TYPE - ISPOINTER
     END SELECT
 
-    IF typ& AND ISFLOAT THEN
+    IF typ& AND ISSTRING THEN
+        EvaluateFunction$ = createElementString$(nstr)
+    ELSEIF typ& AND ISFLOAT THEN
         EvaluateFunction$ = _TRIM$(STR$(n1))
     ELSE
         n&& = n1
@@ -1063,7 +1085,7 @@ SUB PreParse (e$)
     t$ = e$ 'preserve the original string
 
     t$ = eleucase$(t$)
-    IF t$ = "" THEN e$ = "ERROR -- NULL string; nothing to evaluate": EXIT SUB
+    IF t$ = "" THEN e$ = "ERROR - NULL string; nothing to evaluate": EXIT SUB
 
     'ERROR CHECK by counting our brackets
     count = numelements(t$)
@@ -1072,9 +1094,9 @@ SUB PreParse (e$)
         IF ele$ = "(" THEN c = c + 1
         IF ele$ = ")" THEN c = c - 1
 
-        IF c < 0 THEN e$ = "ERROR -- Bad Parenthesis, too many )": EXIT SUB
+        IF c < 0 THEN e$ = "ERROR - Bad Parenthesis, too many )": EXIT SUB
     NEXT
-    IF c <> 0 THEN e$ = "ERROR -- Bad Parenthesis": EXIT SUB
+    IF c <> 0 THEN e$ = "ERROR - Bad Parenthesis": EXIT SUB
 
     'Modify so that NOT will process properly
     FOR l = 1 to numelements(t$)

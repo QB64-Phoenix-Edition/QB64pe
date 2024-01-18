@@ -33,7 +33,6 @@ CONST const_FIX = FIX(20.5)
 CONST const_SEC = _SEC(2)
 CONST const_CSC = _CSC(2)
 CONST const_COT = _COT(2)
-' CONST const_ASC = ASC("a") ' Bugged, not implemented
 CONST const__RGB32 = _RGB32(2, 3, 4)
 CONST const__RGBA32 = _RGBA32(2, 3, 4, 5)
 CONST const__RGB32_1 = _RGB32(2)
@@ -51,6 +50,10 @@ CONST const__BLUE = _BLUE(22, 0)
 CONST const__ALPHA = _ALPHA(2222, 0)
 CONST const_SQR = SQR(20)
 CONST const_ROOT = 20 ROOT 3
+
+CONST const_CHR = CHR$(34) + CHR$(9)
+CONST const_ASC = ASC("\")
+CONST const_nested = CHR$(ASC(CHR$(ASC("\"))))
 
 ' The answers have to be within the allowed range, to account for floating point
 ' differences.
@@ -89,7 +92,6 @@ PRINT "INT: "; const_INT
 PRINT "ROUND: "; const_ROUND
 PRINT "CEIL: "; const_CEIL
 PRINT "FIX: "; const_FIX
-PRINT "ASC: "; const_ASC
 PRINT "RGB32: "; HEX$(const__RGB32)
 PRINT "RGBA32: "; HEX$(const__RGBA32)
 PRINT "1: "; HEX$(const__RGB32_1)
@@ -105,5 +107,9 @@ PRINT "RED: "; const__RED
 PRINT "GREEN: "; const__GREEN
 PRINT "BLUE: "; const__BLUE
 PRINT "ALPHA: "; const__ALPHA
+
+PRINT "CHR: "; const_CHR
+PRINT "ASC: "; const_ASC
+PRINT "nested: "; const_nested
 
 SYSTEM

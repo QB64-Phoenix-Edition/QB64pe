@@ -536,7 +536,7 @@ END FUNCTION
 
 FUNCTION elementIsString&(ele$)
     ' String elements are always surounded by quotes
-    elementIsString& = INSTR(ele$, CHR$(34))
+    elementIsString& = INSTR(ele$, CHR$(34)) <> 0
 END FUNCTION
 
 FUNCTION elementGetStringValue&(ele$, value AS STRING)

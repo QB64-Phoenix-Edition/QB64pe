@@ -137,6 +137,8 @@ do
         ERR=$?
         popd > /dev/null
 
+        cat >"$RESULTS_DIR/$category-$testName-run-output.txt" <<<"$testResult"
+
         (exit $ERR)
         assert_success_named "run" "Execution Error:" echo "$testResult"
 
