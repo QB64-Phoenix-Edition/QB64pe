@@ -10,8 +10,14 @@ mkdir -p $RESULTS_DIR
 
 QB64=$1
 
-if [ "$#" -eq 2 ]; then
+if [ "$#" -ge 2 ]; then
     CATEGORY="/$2"
+fi
+
+if [ "$#" -eq 3 ]; then
+    TESTS_TO_RUN="$3"
+else
+    TESTS_TO_RUN='*.bas'
 fi
 
 show_failure()
@@ -131,6 +137,8 @@ do
         ERR=$?
         popd > /dev/null
 
+        cat >"$RESULTS_DIR/$category-$testName-run-output.txt" <<<"$testResult"
+
         (exit $ERR)
         assert_success_named "run" "Execution Error:" echo "$testResult"
 
@@ -156,4 +164,4 @@ do
         diffResult=$(diff -y "./tests/compile_tests/$category/$testName.err" "$compileResultOutput")
         assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
     fi
-done < <(find "./tests/compile_tests$CATEGORY" -name "*.bas" -print)
+done < <(find "./tests/compile_tests$CATEGORY" -name "$TESTS_TO_RUN" -print)

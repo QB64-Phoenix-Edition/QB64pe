@@ -1,0 +1,20 @@
+Test: ( 20 + 40 + ( 60 * 4 AND 50 + NOT 5 + 4 ) - 2 ) 
+PrePass: ( 20 + 40 + ( 60 * 4 AND 50 + ( NOT 5 + 4 ) ) - 2 ) 
+Test: ( 20 + 40% + 60000000&& + _RGB32 ( 20 , 50 , 60 ) + ( 60 * 4 AND 50 + NOT 5 + 4 ) - 2 ) 
+PrePass: ( 20 + 40% + 60000000&& + _RGB32 ( 20 , 50 , 60 ) + ( 60 * 4 AND 50 + ( NOT 5 + 4 ) ) - 2 ) 
+Test: 2 + NOT 5 + 2 * 6 ^ 3 
+PrePass: 2 + ( NOT 5 + 2 * 6 ^ 3 ) 
+Test: 2 + - 2  
+PrePass: 2 + - 2  
+Test: 
+PrePass: ERROR - NULL string; nothing to evaluate 
+Test: ) ( 
+PrePass: ERROR - Bad Parenthesis, too many ) 
+Test: ( ( ) ) ) 
+PrePass: ERROR - Bad Parenthesis, too many ) 
+Test: ( ( ( ) ) 
+PrePass: ERROR - Bad Parenthesis 
+Test: ( 
+PrePass: ERROR - Bad Parenthesis 
+Test: ) 
+PrePass: ERROR - Bad Parenthesis, too many ) 

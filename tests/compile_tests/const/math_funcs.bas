@@ -3,6 +3,7 @@ _DEST _CONSOLE
 
 ' This list comprises all of the math functions usable in CONST
 CONST const_PI = _PI
+CONST const_PIfunc = _PI(2)
 CONST const_ACOS = _ACOS(.2)
 CONST const_ASIN = _ASIN(.2)
 CONST const_ARCSEC = _ARCSEC(1.2)
@@ -32,7 +33,6 @@ CONST const_FIX = FIX(20.5)
 CONST const_SEC = _SEC(2)
 CONST const_CSC = _CSC(2)
 CONST const_COT = _COT(2)
-' CONST const_ASC = ASC("a") ' Bugged, not implemented
 CONST const__RGB32 = _RGB32(2, 3, 4)
 CONST const__RGBA32 = _RGBA32(2, 3, 4, 5)
 CONST const__RGB32_1 = _RGB32(2)
@@ -51,9 +51,14 @@ CONST const__ALPHA = _ALPHA(2222, 0)
 CONST const_SQR = SQR(20)
 CONST const_ROOT = 20 ROOT 3
 
+CONST const_CHR = CHR$(34) + CHR$(9)
+CONST const_ASC = ASC("\")
+CONST const_nested = CHR$(ASC(CHR$(ASC("\"))))
+
 ' The answers have to be within the allowed range, to account for floating point
 ' differences.
 PRINT "PI: "; 3.141592653589793 * .999999 < const_PI; 3.141592653589793 * 1.000001 > const_PI
+PRINT "PI: "; 6.283185307179586 * .999999 < const_PIfunc; 6.283185307179586 * 1.000001 > const_PIfunc
 PRINT "ACOS: "; 1.369438406004566 * .999999 < const_ACOS; 1.369438406004566 * 1.000001 > const_ACOS
 PRINT "ASIN: "; .2013579207903308 * .999999 < const_ASIN; .2013579207903308 * 1.000001 > const_ASIN
 PRINT "ARCSEC: "; .5856855434571508 * .999999 < const_ARCSEC; .5856855434571508 * 1.000001 > const_ARCSEC
@@ -87,7 +92,6 @@ PRINT "INT: "; const_INT
 PRINT "ROUND: "; const_ROUND
 PRINT "CEIL: "; const_CEIL
 PRINT "FIX: "; const_FIX
-PRINT "ASC: "; const_ASC
 PRINT "RGB32: "; HEX$(const__RGB32)
 PRINT "RGBA32: "; HEX$(const__RGBA32)
 PRINT "1: "; HEX$(const__RGB32_1)
@@ -103,5 +107,9 @@ PRINT "RED: "; const__RED
 PRINT "GREEN: "; const__GREEN
 PRINT "BLUE: "; const__BLUE
 PRINT "ALPHA: "; const__ALPHA
+
+PRINT "CHR: "; const_CHR
+PRINT "ASC: "; const_ASC
+PRINT "nested: "; const_nested
 
 SYSTEM
