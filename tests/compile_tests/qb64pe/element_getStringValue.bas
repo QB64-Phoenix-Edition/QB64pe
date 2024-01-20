@@ -14,6 +14,8 @@ typ = elementGetStringValue&(createElementString$("foobar"), value)
 PRINT "foobar element: " + value
 
 FOR i = 1 to 30
+    ' Skip newline characters
+    IF i >= 10 AND i <= 13 THEN _CONTINUE
     typ = elementGetStringValue&(createElementString$("foobar" + CHR$(i) + "baz"), value)
     PRINT "foobar element"; i
     PRINT value
