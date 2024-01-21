@@ -40,7 +40,7 @@
 #                include <OpenGL/glu.h>
 #            else
 #                define CORE_FREEGLUT
-#                include <freeglut.h>
+#                include <GL/freeglut.h>
 #                include <GL/glext.h>
 #            endif
 #        endif

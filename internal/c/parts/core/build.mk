@@ -4,22 +4,26 @@
 # Only copy glew.c in src/ to internal/c/parts/core/glew
 # Copy the include directory to internal/c/parts/core/glew
 # Compile the source using -DGLEW_STATIC
+#
+# FreeGLUT Setup:
+# Although newer version of FreeGLUT (3.x) are available we do not use those.
+# This is because the local version has quite a few custom changes that should be moved out.
 
 FREEGLUT_SRCS := \
-	$(wildcard $(PATH_INTERNAL_C)/parts/core/src/*.c) \
+	$(wildcard $(PATH_INTERNAL_C)/parts/core/freeglut/*.c) \
 	$(wildcard $(PATH_INTERNAL_C)/parts/core/glew/*.c)
 
-FREEGLUT_INCLUDE := -I$(PATH_INTERNAL_C)/parts/core/src/ -I$(PATH_INTERNAL_C)/parts/core/glew/include/
+FREEGLUT_INCLUDE := -I$(PATH_INTERNAL_C)/parts/core/freeglut/include -I$(PATH_INTERNAL_C)/parts/core/glew/include
 
 FREEGLUT_OBJS := $(FREEGLUT_SRCS:.c=.o)
 
-FREEGLUT_LIB := $(PATH_INTERNAL_C)/parts/core/src.a
+FREEGLUT_LIB := $(PATH_INTERNAL_C)/parts/core/freeglut.a
 
 $(PATH_INTERNAL_C)/parts/core/glew/%.o: $(PATH_INTERNAL_C)/parts/core/glew/%.c
 	$(CC) -O3 $(CFLAGS) $(FREEGLUT_INCLUDE) -DGLEW_STATIC -Wall $< -c -o $@
 
-$(PATH_INTERNAL_C)/parts/core/src/%.o: $(PATH_INTERNAL_C)/parts/core/src/%.c
-	$(CC) -O3 $(CFLAGS) $(FREEGLUT_INCLUDE) -Wall $< -c -o $@
+$(PATH_INTERNAL_C)/parts/core/freeglut/%.o: $(PATH_INTERNAL_C)/parts/core/freeglut/%.c
+	$(CC) -O3 $(CFLAGS) $(FREEGLUT_INCLUDE) -DFREEGLUT_STATIC -DHAVE_UNISTD_H -Wall $< -c -o $@
 
 $(FREEGLUT_LIB): $(FREEGLUT_OBJS)
 	$(AR) rcs $@ $(FREEGLUT_OBJS)

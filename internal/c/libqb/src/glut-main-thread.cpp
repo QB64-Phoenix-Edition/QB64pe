@@ -15,7 +15,7 @@
 #    include <GLUT/glut.h>
 #else
 #    define CORE_FREEGLUT
-#    include "freeglut.h"
+#    include <GL/freeglut.h>
 #endif
 
 #include "mutex.h"
