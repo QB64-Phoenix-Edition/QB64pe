@@ -31,8 +31,17 @@
 // core
 #    ifdef QB64_GUI
 #        ifdef QB64_GLUT
-// This file only contains header stuff
-#            include "parts/core/src.c"
+#            include <GL/glew.h>
+#            ifdef QB64_MACOSX
+// note: MacOSX uses Apple's GLUT not FreeGLUT
+#                include <GLUT/glut.h>
+#                include <OpenGL/gl.h>
+#                include <OpenGL/glext.h>
+#                include <OpenGL/glu.h>
+#            else
+#                define CORE_FREEGLUT
+#                include <freeglut.h>
+#            endif
 #        endif
 #    endif
 
