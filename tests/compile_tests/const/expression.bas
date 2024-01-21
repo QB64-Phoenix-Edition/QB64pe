@@ -32,13 +32,18 @@ CONST const__lt = 2 < 3
 CONST const__oporder1 = (2 ^ 2 * 2) = ((2 ^ 2) * 2)
 CONST const__oporder2 = (2 ^ 2 + 2) = ((2 ^ 2) + 2)
 CONST const__oporder3 = (NOT 2 + 3) = (NOT (2 + 3))
-CONST const__oporder4 = (-2 ^ 2) <> (-(2 ^ 2)) ' WRONG, should be equal, negation is applied incorrectly
+CONST const__oporder4 = (-2 ^ 2) = (-(2 ^ 2))
 CONST const__oporder5 = (NOT 2 ^ 3) = (NOT (2 ^ 3))
 CONST const__oporder6 = (3 * 6 / 2) = ((3 * 6) / 2)
 CONST const__oporder7 = (3 * 10 \ 3) = ((3 * 10) \ 3)
 
 ' Many levels of parens
 CONST const__parens = (2 ^ (3 * (4 - (2 - (10 / (20 / 2))))))
+
+CONST const__str = "foobar"
+CONST const__str2 = "foobar" + "foobar2"
+CONST const__str3 = const__str + const__str2
+CONST const__str4 = (const__str + (const__str2))
 
 PRINT const__OR
 PRINT const__AND
@@ -76,5 +81,10 @@ PRINT const__oporder6
 PRINT const__oporder7
 
 PRINT const__parens
+
+PRINT const__str
+PRINT const__str2
+PRINT const__str3
+PRINT const__str4
 
 SYSTEM

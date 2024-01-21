@@ -1,5 +1,14 @@
-int32 *_SUB_CLEARMOUSE_LONG_I=NULL;
-if(_SUB_CLEARMOUSE_LONG_I==NULL){
-_SUB_CLEARMOUSE_LONG_I=(int32*)mem_static_malloc(4);
-*_SUB_CLEARMOUSE_LONG_I=0;
+qbs*oldstr5636=NULL;
+if(_SUB_IDEPAR_STRING_TITLE->tmp||_SUB_IDEPAR_STRING_TITLE->fixed||_SUB_IDEPAR_STRING_TITLE->readonly){
+oldstr5636=_SUB_IDEPAR_STRING_TITLE;
+if (oldstr5636->cmem_descriptor){
+_SUB_IDEPAR_STRING_TITLE=qbs_new_cmem(oldstr5636->len,0);
+}else{
+_SUB_IDEPAR_STRING_TITLE=qbs_new(oldstr5636->len,0);
+}
+memcpy(_SUB_IDEPAR_STRING_TITLE->chr,oldstr5636->chr,oldstr5636->len);
+}
+byte_element_struct *byte_element_5637=NULL;
+if (!byte_element_5637){
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5637=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5637=(byte_element_struct*)mem_static_malloc(12);
 }

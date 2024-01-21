@@ -5,6 +5,7 @@ $Console:Only
 Dim Debug As Long
 
 '$include:'../../../source/global/constants.bas'
+'$include:'../../../source/utilities/type.bi'
 sp = "@" ' Makes the output readable
 
 Type TestCase
