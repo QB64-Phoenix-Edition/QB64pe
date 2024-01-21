@@ -41,6 +41,7 @@
 #            else
 #                define CORE_FREEGLUT
 #                include <freeglut.h>
+#                include <GL/glext.h>
 #            endif
 #        endif
 #    endif
@@ -94,12 +95,6 @@
 #        include <sys/wait.h>
 #        include <unistd.h>
 
-#    endif
-
-#    ifdef QB64_GUI
-#        ifdef QB64_GLUT
-#            include "parts/core/gl_headers/opengl_org_registery/glext.h"
-#        endif
 #    endif
 
 #    define QB_FALSE 0
