@@ -1,6 +1,3 @@
-#ifndef FREEGLUT_STATIC
-#define FREEGLUT_STATIC
-#endif
 /*
  * freeglut_init.c
  *

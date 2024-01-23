@@ -1,6 +1,3 @@
-#ifndef FREEGLUT_STATIC
-#define FREEGLUT_STATIC
-#endif
 /* Spaceball support for Linux.
  * Written by John Tsiombikas <nuclear@member.fsf.org>
  *

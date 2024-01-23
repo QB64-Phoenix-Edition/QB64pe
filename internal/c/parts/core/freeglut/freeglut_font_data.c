@@ -1,6 +1,3 @@
-#ifndef FREEGLUT_STATIC
-#define FREEGLUT_STATIC
-#endif
 /*
     \file  og_font_data.c
     \brief Bitmapped font data for OpenGLUT fonts.

@@ -11,6 +11,7 @@
 # Download the latest 2.x release from https://freeglut.sourceforge.net/
 # Copy all .c files from the src directory into internal/c/parts/core/freeglut (after making QB64-PE specific changes)
 # Copy the include directory to internal/c/parts/core/freeglut
+# Compile the source using -DFREEGLUT_STATIC
 
 FREEGLUT_SRCS := $(wildcard $(PATH_INTERNAL_C)/parts/core/freeglut/*.c)
 GLEW_SRCS := $(PATH_INTERNAL_C)/parts/core/glew/glew.c

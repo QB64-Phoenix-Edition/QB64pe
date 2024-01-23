@@ -1,6 +1,3 @@
-#ifndef FREEGLUT_STATIC
-#define FREEGLUT_STATIC
-#endif
 /* Written for XI1 by Nikolas Doerfler <doerflen@in.tum.de> (c) 2008 *
  * Rewritten for XI2 by Florian Echtler <echtler@in.tum.de> (c) 2009 */
 
