@@ -153,7 +153,7 @@ DIM SHARED viFileDescription$, viFileVersion$, viInternalName$
 DIM SHARED viLegalCopyright$, viLegalTrademarks$, viOriginalFilename$
 DIM SHARED viProductName$, viProductVersion$, viComments$, viWeb$
 
-DIM SHARED NoChecks
+DIM SHARED CheckingOn
 DIM SHARED ConsoleOn
 DIM SHARED ScreenHideOn
 DIM SHARED AssertsOn
@@ -1292,6 +1292,7 @@ HashAdd "WHILE", f, 0
 
 
 'clear/init variables
+CheckingOn = 1
 ConsoleOn = 0
 ScreenHideOn = 0
 AssertsOn = 0
@@ -1315,7 +1316,6 @@ staticarraylist = "": staticarraylistn = 0
 fooindwel = 0
 layout = ""
 layoutok = 0
-NoChecks = 0
 inclevel = 0
 errorLineInInclude = 0
 addmetainclude$ = ""
@@ -3064,7 +3064,7 @@ DO
 
         IF a3u$ = "$CHECKING:OFF" THEN
             layout$ = SCase$("$Checking:Off")
-            NoChecks = 1
+            CheckingOn = 0
             IF vWatchOn <> 0 AND NoIDEMode = 0 AND inclevel = 0 THEN
                 addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$Debug", "$Debug features won't work in $Checking:Off blocks"
             END IF
@@ -3072,7 +3072,7 @@ DO
         END IF
         IF a3u$ = "$CHECKING:ON" THEN
             layout$ = SCase$("$Checking:On")
-            NoChecks = 0
+            CheckingOn = 1
             GOTO finishednonexec
         END IF
 
@@ -3086,7 +3086,7 @@ DO
             DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) OR 1
             ConsoleOn = 1
             IF prepass = 0 THEN
-                IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "do{"
+                IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
                 WriteBufLine MainTxtBuf, "sub__dest(func__console());"
                 WriteBufLine MainTxtBuf, "sub__source(func__console());"
                 GOTO finishedline2
@@ -3361,7 +3361,7 @@ DO
 
             ExeIconSet = linenumber
             SetDependency DEPENDENCY_ICON
-            IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "do{"
+            IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
             WriteBufLine MainTxtBuf, "sub__icon(NULL,NULL,0);"
             GOTO finishedline2
         END IF
@@ -3531,7 +3531,7 @@ DO
                 thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
-            IF NoChecks = 0 THEN
+            IF CheckingOn THEN
                 IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
                 WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");r=0;}"
             END IF
@@ -3592,7 +3592,7 @@ DO
                     thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
                     inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
                 END IF
-                IF NoChecks = 0 THEN
+                IF CheckingOn THEN
                     IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
                     WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");r=0;}"
                 END IF
@@ -5413,7 +5413,7 @@ DO
                 dimstatic = 0
                 WriteBufLine MainTxtBuf, "exit_subfunc:;"
                 IF vWatchOn = 1 THEN
-                    IF NoChecks = 0 AND inclinenumber(inclevel) = 0 THEN
+                    IF CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
                         vWatchAddLabel linenumber, 0
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                         vWatchAddLabel 0, -1
@@ -5682,7 +5682,7 @@ DO
                     IF controltype(controllevel) <> 2 THEN a$ = "NEXT without FOR": GOTO errmes
                     IF n <> 1 AND controlvalue(controllevel) <> currentid THEN a$ = "Incorrect variable after NEXT": GOTO errmes
                     WriteBufLine MainTxtBuf, "fornext_continue_" + str2$(controlid(controllevel)) + ":;"
-                    IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 AND NoChecks = 0 THEN
+                    IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                         vWatchAddLabel linenumber, 0
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                     END IF
@@ -5710,7 +5710,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "WHILE" THEN
-            IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
 
             'prevents code from being placed before 'CASE condition' in a SELECT CASE block
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -5732,7 +5732,7 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "WHILE ERROR! Cannot accept a STRING type.": GOTO errmes
-                IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -5766,7 +5766,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "DO" THEN
-            IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
 
             'prevents code from being placed before 'CASE condition' in a SELECT CASE block
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -5792,14 +5792,14 @@ DO
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "DO ERROR! Cannot accept a STRING type.": GOTO errmes
                 IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "while((" + e$ + ")||new_error){" ELSE WriteBufLine MainTxtBuf, "while((!(" + e$ + "))||new_error){"
-                IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
                 controltype(controllevel) = 4
             ELSE
                 controltype(controllevel) = 3
-                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 AND NoChecks = 0 THEN
+                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 ELSE
@@ -5817,7 +5817,7 @@ DO
             l$ = SCase$("Loop")
             IF controltype(controllevel) <> 3 AND controltype(controllevel) <> 4 THEN a$ = "PROGRAM FLOW ERROR!": GOTO errmes
             IF n >= 2 THEN
-                IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
+                IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
                 IF controltype(controllevel) = 4 THEN a$ = "PROGRAM FLOW ERROR!": GOTO errmes
                 whileuntil = 0
                 IF secondelement$ = "WHILE" THEN whileuntil = 1: l$ = l$ + sp + SCase$("While")
@@ -5834,7 +5834,7 @@ DO
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "LOOP ERROR! Cannot accept a STRING type.": GOTO errmes
                 WriteBufLine MainTxtBuf, "dl_continue_" + str2$(controlid(controllevel)) + ":;"
-                IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -5842,7 +5842,7 @@ DO
             ELSE
                 WriteBufLine MainTxtBuf, "dl_continue_" + str2$(controlid(controllevel)) + ":;"
 
-                IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -5871,7 +5871,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "FOR" THEN
-            IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
 
             l$ = SCase$("For")
 
@@ -5996,7 +5996,7 @@ DO
             e$ = evaluatetotyp(e$, ctyp)
             IF Error_Happened THEN GOTO errmes
 
-            IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
@@ -6082,7 +6082,7 @@ DO
 
     IF n >= 3 THEN
         IF firstelement$ = "ELSEIF" THEN
-            IF NoChecks = 0 THEN
+            IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
                 IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
@@ -6124,7 +6124,7 @@ DO
 
     IF n >= 3 THEN
         IF firstelement$ = "IF" THEN
-            IF NoChecks = 0 THEN
+            IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
                 IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
@@ -6209,7 +6209,7 @@ DO
                 IF LEN(layout$) = 0 THEN layout$ = l$ ELSE layout$ = layout$ + sp + l$
             END IF
 
-            IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
@@ -6228,7 +6228,7 @@ DO
     'SELECT CASE
     IF n >= 1 THEN
         IF firstelement$ = "SELECT" THEN
-            IF NoChecks = 0 THEN
+            IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
                 IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
@@ -6356,7 +6356,7 @@ DO
             WriteBufLine MainTxtBuf, "sc_" + str2$(controlid(controllevel)) + "_end:;"
             IF controltype(controllevel) < 10 OR controltype(controllevel) > 17 THEN a$ = "END SELECT without SELECT CASE": GOTO errmes
 
-            IF NoChecks = 0 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
@@ -6473,7 +6473,7 @@ DO
                 END IF
             END IF
 
-            IF NoChecks = 0 THEN
+            IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
                 IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
@@ -6663,7 +6663,7 @@ DO
 
     'static scope commands:
 
-    IF NoChecks = 0 THEN
+    IF CheckingOn THEN
         IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
             vWatchAddLabel linenumber, 0
             WriteBufLine MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -9009,7 +9009,7 @@ DO
                 thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
-            IF vWatchOn = 1 AND NoChecks = 0 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
+            IF vWatchOn = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
             WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
             WriteBufLine MainTxtBuf, "exit_code=" + e$ + ";"
             l$ = l$ + sp + l2$
@@ -9042,7 +9042,7 @@ DO
                 'note: this value is currently ignored but evaluated for checking reasons
             END IF
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            IF vWatchOn = 1 AND NoChecks = 0 AND inclinenumber(inclevel) = 0 THEN
+            IF vWatchOn = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER=-3; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 vWatchAddLabel linenumber, 0
             ELSE
@@ -9333,7 +9333,7 @@ DO
             IF varsize$ = "4" THEN s = 4: st$ = "int32"
             IF varsize$ = "8" THEN s = 8: st$ = "int64"
 
-            IF NoChecks THEN
+            IF CheckingOn = 0 THEN
                 'fast version:
                 IF s THEN
                     WriteBufLine MainTxtBuf, "*(" + st$ + "*)" + varoffs$ + "=*(" + st$ + "*)(" + offs$ + ");"
@@ -9430,7 +9430,7 @@ DO
                 IF varsize$ = "4" THEN s = 4: st$ = "int32"
                 IF varsize$ = "8" THEN s = 8: st$ = "int64"
 
-                IF NoChecks THEN
+                IF CheckingOn = 0 THEN
                     'fast version:
                     IF s THEN
                         WriteBufLine MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=*(" + st$ + "*)" + varoffs$ + ";"
@@ -9474,7 +9474,7 @@ DO
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
                 st$ = typ2ctyp$(t, "")
                 varsize$ = str2((t AND 511) \ 8)
-                IF NoChecks THEN
+                IF CheckingOn = 0 THEN
                     'fast version:
                     WriteBufLine MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=" + e$ + ";"
                 ELSE
@@ -9564,7 +9564,7 @@ DO
                     varoffs$ = evaluatetotyp(e$, -6): IF Error_Happened THEN GOTO errmes
                 END IF
 
-                IF NoChecks THEN
+                IF CheckingOn = 0 THEN
                     WriteBufLine MainTxtBuf, "sub__memfill_nochecks(" + offs$ + "," + bytes$ + ",(ptrszint)" + varoffs$ + "," + varsize$ + ");"
                 ELSE
                     WriteBufLine MainTxtBuf, "sub__memfill((mem_block*)" + blkoffs$ + "," + offs$ + "," + bytes$ + ",(ptrszint)" + varoffs$ + "," + varsize$ + ");"
@@ -9583,7 +9583,7 @@ DO
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
 
                 c$ = "sub__memfill_"
-                IF NoChecks THEN c$ = "sub__memfill_nochecks_"
+                IF CheckingOn = 0 THEN c$ = "sub__memfill_nochecks_"
                 IF t AND ISOFFSET THEN
                     c$ = c$ + "OFFSET"
                 ELSE
@@ -9596,7 +9596,7 @@ DO
                     END IF
                 END IF
                 c$ = c$ + "("
-                IF NoChecks = 0 THEN c$ = c$ + "(mem_block*)" + blkoffs$ + ","
+                IF CheckingOn THEN c$ = c$ + "(mem_block*)" + blkoffs$ + ","
                 WriteBufLine MainTxtBuf, c$ + offs$ + "," + bytes$ + "," + e$ + ");"
             END IF
 
@@ -11325,7 +11325,7 @@ DO
         thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
         inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
     END IF
-    IF NoChecks = 0 THEN
+    IF CheckingOn THEN
         IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
         IF dynscope THEN
             dynscope = 0
@@ -14020,14 +14020,14 @@ FUNCTION arrayreference$ (indexes$, typ)
             IF e$ = "" THEN Give_Error "Array index missing": EXIT FUNCTION
             argi = (elements - curarg) * 4 + 4
             IF curarg = 1 THEN
-                IF NoChecks = 0 THEN
+                IF CheckingOn THEN
                     r$ = r$ + "array_check((" + e$ + ")-" + n$ + "[" + str2(argi) + "]," + n$ + "[" + str2(argi + 1) + "])+"
                 ELSE
                     r$ = r$ + "(" + e$ + ")-" + n$ + "[" + str2(argi) + "]+"
                 END IF
 
             ELSE
-                IF NoChecks = 0 THEN
+                IF CheckingOn THEN
                     r$ = r$ + "array_check((" + e$ + ")-" + n$ + "[" + str2(argi) + "]," + n$ + "[" + str2(argi + 1) + "])*" + n$ + "[" + str2(argi + 2) + "]+"
                 ELSE
                     r$ = r$ + "((" + e$ + ")-" + n$ + "[" + str2(argi) + "])*" + n$ + "[" + str2(argi + 2) + "]+"
@@ -16695,7 +16695,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         'assume checking off
                         offs$ = evaluatetotyp(memget_offs$, OFFSETTYPE - ISPOINTER)
                         blkoffs$ = evaluatetotyp(memget_blk$, -6)
-                        IF NoChecks = 0 THEN
+                        IF CheckingOn THEN
                             'change offs$ to be the return of the safe version
                             offs$ = "func__memget((mem_block*)" + blkoffs$ + "," + offs$ + "," + str2(memget_size) + ")"
                         END IF
