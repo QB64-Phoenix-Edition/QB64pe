@@ -3025,7 +3025,6 @@ DO
             layoutdone = 1
             GOTO finishednonexec
         END IF
-
         IF a3u$ = "$COLOR:32" THEN
             layout$ = SCase$("$Color:32")
             IF qb64prefix_set THEN
@@ -3049,7 +3048,6 @@ DO
             addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VirtualKeyboard"
             GOTO finishednonexec
         END IF
-
         IF a3u$ = "$VIRTUALKEYBOARD:OFF" THEN
             'Deprecated; does nothing.
             layout$ = SCase$("$VirtualKeyboard:Off")
@@ -3073,7 +3071,6 @@ DO
             END IF
             GOTO finishednonexec
         END IF
-
         IF a3u$ = "$CHECKING:ON" THEN
             layout$ = SCase$("$Checking:On")
             NoChecks = 0
@@ -3085,7 +3082,6 @@ DO
             Console = 1
             GOTO finishednonexec
         END IF
-
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
             DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) OR 1
@@ -3105,7 +3101,6 @@ DO
             Asserts = 1
             GOTO finishednonexec
         END IF
-
         IF a3u$ = "$ASSERTS:CONSOLE" THEN
             layout$ = SCase$("$Asserts:Console")
             Asserts = 1
@@ -3134,7 +3129,6 @@ DO
             Resize = 1: Resize_Scale = 0
             GOTO finishednonexec
         END IF
-
         IF a3u$ = "$RESIZE:STRETCH" THEN
             layout$ = SCase$("$Resize:Stretch")
             Resize = 1: Resize_Scale = 1

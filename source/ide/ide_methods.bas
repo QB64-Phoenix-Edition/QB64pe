@@ -12914,10 +12914,6 @@ SUB ideshowtext
                                     (UCASE$(LEFT$(LTRIM$(a2$), 3)) = "$IF" OR _
                                     UCASE$(LEFT$(LTRIM$(a2$), 7)) = "$ELSEIF") THEN
                                 metacommand = -1
-                            ELSEIF checkKeyword$ = "$ASSERTS" THEN
-                                IF UCASE$(_TRIM$(a2$)) = "$ASSERTS:CONSOLE" THEN
-                                    checkKeyword$ = "$ASSERTS:CONSOLE"
-                                END IF
                             END IF
                             isKeyword = LEN(checkKeyword$)
                         ELSEIF INSTR(listOfCustomKeywords$, "@" + removesymbol2$(checkKeyword$) + "@") > 0 THEN
