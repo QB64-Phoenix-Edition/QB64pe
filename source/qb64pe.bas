@@ -154,10 +154,11 @@ DIM SHARED viLegalCopyright$, viLegalTrademarks$, viOriginalFilename$
 DIM SHARED viProductName$, viProductVersion$, viComments$, viWeb$
 
 DIM SHARED NoChecks
+DIM SHARED ConsoleOn
+DIM SHARED ScreenHideOn
+DIM SHARED AssertsOn
+DIM SHARED ResizeOn, ResizeScale
 
-DIM SHARED Console
-DIM SHARED ScreenHide
-DIM SHARED Asserts
 DIM SHARED OptMax AS LONG
 OptMax = 256
 REDIM SHARED Opt(1 TO OptMax, 1 TO 10) AS STRING * 256
@@ -1142,9 +1143,6 @@ lastLineReturn = 0
 lastLine = 0
 firstLine = 1
 
-Resize = 0
-Resize_Scale = 0
-
 UseGL = 0
 
 Error_Happened = 0
@@ -1294,9 +1292,10 @@ HashAdd "WHILE", f, 0
 
 
 'clear/init variables
-Console = 0
-ScreenHide = 0
-Asserts = 0
+ConsoleOn = 0
+ScreenHideOn = 0
+AssertsOn = 0
+ResizeOn = 0: ResizeScale = 0
 ResolveStaticFunctions = 0
 dynamiclibrary = 0
 dimsfarray = 0
@@ -3079,13 +3078,13 @@ DO
 
         IF a3u$ = "$CONSOLE" THEN
             layout$ = SCase$("$Console")
-            Console = 1
+            ConsoleOn = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
             DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) OR 1
-            Console = 1
+            ConsoleOn = 1
             IF prepass = 0 THEN
                 IF NoChecks = 0 THEN WriteBufLine MainTxtBuf, "do{"
                 WriteBufLine MainTxtBuf, "sub__dest(func__console());"
@@ -3098,45 +3097,45 @@ DO
 
         IF a3u$ = "$ASSERTS" THEN
             layout$ = SCase$("$Asserts")
-            Asserts = 1
+            AssertsOn = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$ASSERTS:CONSOLE" THEN
             layout$ = SCase$("$Asserts:Console")
-            Asserts = 1
-            Console = 1
+            AssertsOn = 1
+            ConsoleOn = 1
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$SCREENHIDE" THEN
             layout$ = SCase$("$ScreenHide")
-            ScreenHide = 1
+            ScreenHideOn = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$SCREENSHOW" THEN
             layout$ = SCase$("$ScreenShow")
-            ScreenHide = 0
+            ScreenHideOn = 0
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$RESIZE:OFF" THEN
             layout$ = SCase$("$Resize:Off")
-            Resize = 0: Resize_Scale = 0
+            ResizeOn = 0: ResizeScale = 0
             GOTO finishednonexec
         END IF
         IF a3u$ = "$RESIZE:ON" THEN
             layout$ = SCase$("$Resize:On")
-            Resize = 1: Resize_Scale = 0
+            ResizeOn = 1: ResizeScale = 0
             GOTO finishednonexec
         END IF
         IF a3u$ = "$RESIZE:STRETCH" THEN
             layout$ = SCase$("$Resize:Stretch")
-            Resize = 1: Resize_Scale = 1
+            ResizeOn = 1: ResizeScale = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$RESIZE:SMOOTH" THEN
             layout$ = SCase$("$Resize:Smooth")
-            Resize = 1: Resize_Scale = 2
+            ResizeOn = 1: ResizeScale = 2
             GOTO finishednonexec
         END IF
 
@@ -7796,7 +7795,7 @@ DO
 
     '_ECHO checking
     IF firstelement$ = "_ECHO" OR (firstelement$ = "ECHO" AND qb64prefix_set = 1) THEN
-        IF Console = 0 THEN
+        IF ConsoleOn = 0 THEN
             a$ = qb64prefix$ + "ECHO requires $CONSOLE or $CONSOLE:ONLY to be set first": GOTO errmes
         END IF
     END IF
@@ -11851,19 +11850,19 @@ defdatahandle = GlobTxtBuf
 DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
 FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
 
-IF Console THEN
+IF ConsoleOn THEN
     WriteBufLine GlobTxtBuf, "int32 console=1;"
 ELSE
     WriteBufLine GlobTxtBuf, "int32 console=0;"
 END IF
 
-IF ScreenHide THEN
+IF ScreenHideOn THEN
     WriteBufLine GlobTxtBuf, "int32 screen_hide_startup=1;"
 ELSE
     WriteBufLine GlobTxtBuf, "int32 screen_hide_startup=0;"
 END IF
 
-IF Asserts THEN
+IF AssertsOn THEN
     WriteBufLine GlobTxtBuf, "int32 asserts=1;"
 ELSE
     WriteBufLine GlobTxtBuf, "int32 asserts=0;"
@@ -11876,11 +11875,11 @@ ELSE
 END IF
 
 bh = OpenBuffer%("A", tmpdir$ + "dyninfo.txt")
-IF Resize THEN
+IF ResizeOn THEN
     WriteBufLine bh, "ScreenResize=1;"
 END IF
-IF Resize_Scale THEN
-    WriteBufLine bh, "ScreenResizeScale=" + str2(Resize_Scale) + ";"
+IF ResizeScale THEN
+    WriteBufLine bh, "ScreenResizeScale=" + str2(ResizeScale) + ";"
 END IF
 
 IF vWatchOn = 1 THEN
@@ -12537,7 +12536,7 @@ IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEI
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
 IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
 IF DEPENDENCY(DEPENDENCY_EMBED) THEN makedeps$ = makedeps$ + " DEP_EMBED=y"
-IF Console THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
+IF ConsoleOn THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
