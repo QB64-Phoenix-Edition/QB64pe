@@ -792,6 +792,9 @@ void sub_files(qbs *str, int32_t passed) {
         } else {
             std::string d;
             filepath_split(fileSpec, d, pathName);
+            if (d.empty())
+                d = "./"; // default to the current directory if one is not specified
+
             directory = FS_GetFQN(d.c_str());
         }
     } else {
