@@ -12914,10 +12914,6 @@ SUB ideshowtext
                                     (UCASE$(LEFT$(LTRIM$(a2$), 3)) = "$IF" OR _
                                     UCASE$(LEFT$(LTRIM$(a2$), 7)) = "$ELSEIF") THEN
                                 metacommand = -1
-                            ELSEIF checkKeyword$ = "$ASSERTS" THEN
-                                IF UCASE$(_TRIM$(a2$)) = "$ASSERTS:CONSOLE" THEN
-                                    checkKeyword$ = "$ASSERTS:CONSOLE"
-                                END IF
                             END IF
                             isKeyword = LEN(checkKeyword$)
                         ELSEIF INSTR(listOfCustomKeywords$, "@" + removesymbol2$(checkKeyword$) + "@") > 0 THEN
@@ -20444,10 +20440,10 @@ SUB ExportCodeAs (docFormat$)
         sTxt$ = LEFT$(sTxt$, LEN(sTxt$) - LEN(cEol$))
     WEND
     IF sTxt$ = "" THEN sTxt$ = sTxt$ + cEol$: ELSE sTxt$ = sTxt$ + cEol$ + cEol$
-    sLen& = LEN(sTxt$) '     '=> source code length
-    sPos& = 1 '              '=> source code read position
-    eTxt$ = SPACE$(10000000) '=> export text buffer
-    ePos& = 1 '              '=> export text buffer write position
+    sLen& = LEN(sTxt$) '    '=> source code length
+    sPos& = 1 '             '=> source code read position
+    eTxt$ = SPACE$(1000000) '=> export text buffer
+    ePos& = 1 '             '=> export text buffer write position
     '----------
     post% = 0 ''=> GOSUB argument = 0/-1 (close pre current / post current char)
     what$ = "" '=> GOSUB argument = command descriptor
@@ -20469,6 +20465,7 @@ SUB ExportCodeAs (docFormat$)
     np% = 0 ''=> $NOPREFIX indicator
     pc% = 0 ''=> pre-compiler indicator
     ml% = 0 ''=> meta line indicator
+    dl% = 0 ''=> data line indicator
     cu% = 0 ''=> custom keyword indicator
     lb% = 0 ''=> line break indicator
     nl% = -1 '=> new line indicator
@@ -20507,7 +20504,7 @@ SUB ExportCodeAs (docFormat$)
                     GOSUB EndLineOps
                     IF curr% = 13 THEN lb% = -1
                 END IF
-                IF curr% = 10 THEN pc% = 0: ml% = 0: lb% = 0: nl% = -1: nt% = -1
+                IF curr% = 10 THEN pc% = 0: ml% = 0: dl% = 0: lb% = 0: nl% = -1: nt% = -1
             CASE 9, 32 'space
                 IF me% THEN
                     GOSUB VerifyKeyword: GOSUB WriteLink: me% = 0: le% = 0
@@ -20521,9 +20518,10 @@ SUB ExportCodeAs (docFormat$)
                     kw% = 0: IF in% THEN sk% = -1
                     SELECT CASE UCASE$(kw$)
                         CASE "REM": IF NOT (co% OR qu%) THEN co% = -1: what$ = "co": GOSUB OpenText
+                        CASE "DATA": dl% = -1
                         CASE "OPEN": op% = -1
                         CASE "IF", "ELSEIF", "UNTIL", "WHILE": fu% = -1: bo% = -1
-                        CASE "THEN": fu% = 0: bo% = 0
+                        CASE "THEN", "ELSE": fu% = 0: bo% = 0
                         CASE ELSE
                             FOR i& = 1 TO idn
                                 IF ids(i&).subfunc = 2 AND ids(i&).args > 0 THEN
@@ -20644,6 +20642,8 @@ SUB ExportCodeAs (docFormat$)
         IF curr% <> 9 AND curr% <> 10 AND curr% <> 32 THEN nl% = 0
         IF NOT sk% THEN ASC(eTxt$, ePos&) = curr%: ePos& = ePos& + 1
         sk% = 0: sPos& = sPos& + 1
+        '----------
+        IF ePos& > LEN(eTxt$) - 10000 THEN eTxt$ = eTxt$ + SPACE$(1000000) 'expand export buffer, if needed
     WEND
     GOSUB CloseCodeBlock
     '----------
@@ -20688,7 +20688,7 @@ SUB ExportCodeAs (docFormat$)
     RETURN
     '----------
     OpenText:
-    IF ml% AND NOT pc% AND LCASE$(what$) <> "co" THEN RETURN
+    IF ml% < -1 AND NOT pc% AND LCASE$(what$) <> "co" THEN RETURN
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
             SELECT CASE LCASE$(what$)
@@ -20723,7 +20723,7 @@ SUB ExportCodeAs (docFormat$)
     RETURN
     '----------
     CloseText:
-    IF ml% AND NOT pc% AND LCASE$(what$) <> "co" THEN RETURN
+    IF ml% < -1 AND NOT pc% AND LCASE$(what$) <> "co" THEN RETURN
     SELECT CASE LCASE$(docFormat$)
         CASE "html"
             SELECT CASE LCASE$(what$)
@@ -20759,22 +20759,23 @@ SUB ExportCodeAs (docFormat$)
     VerifyKeyword:
     IF me% THEN veri$ = me$: ELSE veri$ = kw$
     IF ASC(veri$, 1) <> 95 THEN flp% = 1: ELSE flp% = 2
-    IF (ASC(veri$, flp%) < 91 OR MID$(veri$, flp%, 2) = "gl") AND INSTR(listOfKeywords$, "@" + UCASE$(veri$) + "@") > 0 THEN
+    IF (ASC(veri$, flp%) < 91 OR MID$(veri$, flp%, 2) = "gl") AND (INSTR(listOfKeywords$, "@" + UCASE$(veri$) + "@") > 0 OR (np% AND INSTR(listOfKeywords$, "@_" + UCASE$(veri$) + "@") > 0)) THEN
         IF me% AND le% THEN
             IF INSTR("$DYNAMIC$INCLUDE$STATIC", UCASE$(veri$)) = 0 THEN me$ = ""
         ELSEIF me% AND NOT le% THEN
             IF INSTR("$DYNAMIC$INCLUDE$STATIC", UCASE$(veri$)) > 0 THEN me$ = ""
         END IF
+        IF ((ml% < -1 AND NOT pc%) OR dl%) AND me% THEN me$ = ""
+        IF ((ml% < -1 AND NOT pc%) OR dl%) AND kw% THEN kw$ = ""
         IF pc% THEN me$ = veri$
-    ELSEIF np% AND kw% THEN
-        IF ASC(veri$, 1) > 90 OR INSTR(listOfKeywords$, "@_" + UCASE$(veri$) + "@") = 0 THEN kw$ = ""
-    ELSEIF NOT ml% AND INSTR(listOfCustomKeywords$, "@" + UCASE$(removesymbol2$(veri$)) + "@") > 0 THEN
+    ELSEIF NOT (ml% < 0 OR dl%) AND INSTR(listOfCustomKeywords$, "@" + UCASE$(removesymbol2$(veri$)) + "@") > 0 THEN
         cu% = -1
     ELSEIF pc% AND INSTR(UserDefineList$, "@" + UCASE$(veri$) + "@") > 0 THEN
         cu% = -1
     ELSE
         IF me% THEN me$ = "": ELSE kw$ = ""
     END IF
+    IF ml% < 0 AND curr% <> 58 THEN ml% = -2
     RETURN
     '----------
     FindWikiPage:
@@ -20785,8 +20786,8 @@ SUB ExportCodeAs (docFormat$)
             CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes"
             CASE ELSE: page$ = "OPEN"
         END SELECT
-    ELSEIF fu% AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
-        IF page$ = "SHELL" THEN page$ = page$ + " (QB64 function)": ELSE page$ = page$ + " (function)"
+    ELSEIF (fu% < 0) AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
+        page$ = page$ + " (function)"
     ELSEIF bo% AND INSTR(bo$, "@" + page$ + "@") > 0 THEN 'np% check omitted (legacy words only)
         page$ = page$ + " (boolean)"
     ELSEIF ((INSTR(ma$, "@" + page$ + "@") > 0) OR (np% AND INSTR(ma$, "@_" + page$ + "@") > 0)) THEN

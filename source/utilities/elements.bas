@@ -118,7 +118,7 @@ FUNCTION getelementsbefore$ (a$, i1)
 END FUNCTION
 
 FUNCTION getelementsafter$ (a$, i1)
-    DIM p AS LONG, n AS LONG, i AS LONG, i1pos AS LONG
+    DIM p AS LONG, n AS LONG, i AS LONG
 
     n = 1
     p = 1
