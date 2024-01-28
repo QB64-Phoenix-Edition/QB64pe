@@ -79,7 +79,7 @@ These libraries are pulled in if `_INFLATE$()` or `_DEFLATE$()` are used.
 
 ## Http Support
 
-These libraries are pulled in if `_OPENCLIENT()` and `$Unstable:Http` areused:
+These libraries are pulled in if `_OPENCLIENT()` and `$Unstable:Http` are used:
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |

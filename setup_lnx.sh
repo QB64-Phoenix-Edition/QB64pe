@@ -101,7 +101,7 @@ elif [ "$DISTRO" == "voidlinux" ]; then
 elif [ -z "$DISTRO" ]; then
   echo "Unable to detect distro, skipping package installation"
   echo "Please be aware that for QB64-PE to compile, you will need the following installed:"
-  echo "  OpenGL developement libraries"
+  echo "  OpenGL development libraries"
   echo "  ALSA development libraries"
   echo "  GNU C++ Compiler (g++)"
   echo "  zlib"

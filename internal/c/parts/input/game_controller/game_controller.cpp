@@ -127,7 +127,7 @@ static void onDeviceAttached(struct Gamepad_device *device, void *context) {
 
     int i, x, x2;
 
-    // re-aquire a potentially dropped device in its original index
+    // re-acquire a potentially dropped device in its original index
     for (i = 1; i <= device_last; i++) {
         if (devices[i].used) {
             if (devices[i].type == 1) { // it's a joystick/gamepad
@@ -137,7 +137,7 @@ static void onDeviceAttached(struct Gamepad_device *device, void *context) {
                         if (device->vendorID == devices[i].vendor_id) {
                             if (device->numAxes == devices[i].axes) {
                                 if (device->numButtons == devices[i].buttons) {
-                                    //(sometimes when gamepads are re-plugged they receieve a generic name)
+                                    //(sometimes when gamepads are re-plugged they receive a generic name)
                                     // if (strlen(device->description)==strlen(devices[i].description)){//same name length
                                     // if (strcmp(device->description,devices[i].description)==0){//same name content
                                     // re-acquire device

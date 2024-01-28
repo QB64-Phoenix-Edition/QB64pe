@@ -100,8 +100,8 @@ struct RawStream {
         maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
         buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
-        buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contigious block to account for expansion without reallocation
-        buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contigious block to account for expansion without reallocation
+        buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
+        buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
         consumer = &buffer[0];                            // set default consumer
         producer = &buffer[1];                            // set default producer
         stop = false;                                     // by default we will send silent samples to keep the playback going
@@ -1416,7 +1416,7 @@ struct AudioEngine {
 
         if (h >= vectorSize) {
             // Scan through the entire vector and return a slot that is not being used
-            // Ideally this should execute in extremely few (if at all) senarios
+            // Ideally this should execute in extremely few (if at all) scenarios
             // Also, this loop should not execute if size is 0
             for (h = 0; h < vectorSize; h++) {
                 if (!soundHandles[h]->isUsed) {
@@ -1940,7 +1940,7 @@ void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, dou
 /// Playback starts asynchronously.
 /// </summary>
 /// <param name="fileName">The is the name of the file to be played</param>
-/// <param name="sync">This paramater is ignored</param>
+/// <param name="sync">This parameter is ignored</param>
 /// <param name="volume">This the sound playback volume (0 - silent ... 1 - full)</param>
 /// <param name="passed">How many parameters were passed?</param>
 void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed) {
@@ -2139,7 +2139,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
             return;
 
         audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound,
-                                                          lengthSampleFrames * (seconds / lengthSeconds)); // Set the postion in PCM frames
+                                                          lengthSampleFrames * (seconds / lengthSeconds)); // Set the position in PCM frames
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
     }
 }
@@ -2282,7 +2282,7 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
         return INVALID_SOUND_HANDLE;
     }
 
-    // Alocate a sound handle
+    // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1)
         return INVALID_SOUND_HANDLE;
@@ -2382,10 +2382,10 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
             return mb;
         }
 
-        // Check if the data is one contigious buffer or a link list of decoded pages
+        // Check if the data is one contiguous buffer or a link list of decoded pages
         // We cannot have a mem object for a link list of decoded pages for obvious reasons
         if (ds->pNode->data.type != ma_resource_manager_data_supply_type::ma_resource_manager_data_supply_type_decoded) {
-            AUDIO_DEBUG_PRINT("Data is not a contigious buffer. Type = %u", ds->pNode->data.type);
+            AUDIO_DEBUG_PRINT("Data is not a contiguous buffer. Type = %u", ds->pNode->data.type);
             return mb;
         }
 
@@ -2520,7 +2520,7 @@ void snd_un_init() {
 
         // Free all sound handles here
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
-            audioEngine.ReleaseHandle(handle);       // let ReleaseHandle do it's thing
+            audioEngine.ReleaseHandle(handle);       // let ReleaseHandle do its thing
             delete audioEngine.soundHandles[handle]; // now free the object created by CreateHandle()
         }
 
@@ -2557,7 +2557,7 @@ void snd_mainloop() {
                     case SoundHandle::Type::RAW:
                         // Dispose the sound if it has finished playing
                         // Note that this means that temporary looping sounds will never close
-                        // Well thats on the programmer. Probably they want it that way
+                        // Well that's on the programmer. Probably they want it that way
                         if (!ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound))
                             audioEngine.ReleaseHandle(handle);
 

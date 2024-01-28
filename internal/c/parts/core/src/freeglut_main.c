@@ -1900,7 +1900,7 @@ void FGAPIENTRY glutLeaveMainLoop( void )
 
 #if TARGET_HOST_MS_WINDOWS
 /*
- * Determine a GLUT modifer mask based on MS-WINDOWS system info.
+ * Determine a GLUT modifier mask based on MS-WINDOWS system info.
  */
 static int fghGetWin32Modifiers (void)
 {
@@ -2118,7 +2118,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         }
 
         window->State.NeedToResize = GL_TRUE;
-        /* if we used CW_USEDEFAULT (thats a negative value) for the size
+        /* if we used CW_USEDEFAULT (that's a negative value) for the size
          * of the window, query the window now for the size at which it
          * was created.
          */

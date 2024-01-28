@@ -13674,7 +13674,7 @@ FUNCTION idesubs$
                 SortedSubsFlag = o(3).sel
 
                 IF SortedSubsFlag = 0 THEN
-                    'Replace list contents with unsorted version while mantaining current selection.
+                    'Replace list contents with unsorted version while maintaining current selection.
                     PreviousSelection = -1
                     IF o(1).sel > 0 THEN
                         TargetSourceLine$ = MID$(lySorted$, o(1).sel * 4 - 3, 4)
@@ -13693,7 +13693,7 @@ FUNCTION idesubs$
                     o(1).sel = PreviousSelection
                     focus = 1
                 ELSE
-                    'Replace list contents with sorted version while mantaining current selection.
+                    'Replace list contents with sorted version while maintaining current selection.
                     PreviousSelection = -1
                     IF o(1).sel > 0 THEN
                         TargetSourceLine$ = MID$(ly$, o(1).sel * 4 - 3, 4)
@@ -14935,8 +14935,8 @@ END FUNCTION
 'f$ is altered to only contain the name of the actual file
 'root$ is the path to apply relative paths to
 FUNCTION idezgetfilepath$ (root$, f$)
-    'step #1: seperate file's name from its path (if any)
-    p$ = ideztakepath$(f$) 'note: this is a simple seperation of the string
+    'step #1: separate file's name from its path (if any)
+    p$ = ideztakepath$(f$) 'note: this is a simple separation of the string
 
     'step #2: if path was undefined, set it to root
     IF LEN(p$) = 0 THEN p$ = root$
@@ -14944,7 +14944,7 @@ FUNCTION idezgetfilepath$ (root$, f$)
     'step #3: if path is relative, make it relative to root$
     IF _DIREXISTS(root$ + idepathsep$ + p$) THEN p$ = root$ + idepathsep$ + p$
 
-    'step #4: attempt a CHDIR to the path to (i)  validate its existance
+    'step #4: attempt a CHDIR to the path to (i)  validate its existence
     '                                      & (ii) allow listing the paths full name
     ideerror = 4 'path not found
     p2$ = p$
@@ -19457,7 +19457,7 @@ FUNCTION idef1box$ (lnks$, lnks)
 
 END FUNCTION
 
-'After Cormen, Leiserson, Rivest & Stein "Introduction To Algoritms" via Wikipedia
+'After Cormen, Leiserson, Rivest & Stein "Introduction To Algorithms" via Wikipedia
 SUB sort (arr() AS STRING * 998)
     FOR i& = LBOUND(arr) + 1 TO UBOUND(arr)
         x$ = arr(i&)
@@ -19472,7 +19472,7 @@ SUB sort (arr() AS STRING * 998)
 END SUB
 
 FUNCTION FindProposedTitle$
-    'Finds the first occurence of _TITLE to suggest a file name
+    'Finds the first occurrence of _TITLE to suggest a file name
     'when saving for the first time or saving as.
 
     DIM c AS _BYTE, q AS _BYTE, i
@@ -20402,11 +20402,11 @@ END FUNCTION
 SUB ExportCodeAs (docFormat$)
     ' Get the current source code, convert it to the desired document format and
     ' then write the result into a file (program name or "Untitled" + extension).
-    ' Forum and Wiki exports are pushed directly to the Clipboard and can directy
+    ' Forum and Wiki exports are pushed directly to the Clipboard and can directly
     ' be pasted into the Forum post or Wiki page. The exported code is highlighted
     ' according to the internal keyword lists and the keywords are linked to its
     ' respective Wiki pages. Documents will use the current IDE colors, the Forum
-    ' and Wiki exports use its own fixed blue theme for higlighting. Further in
+    ' and Wiki exports use its own fixed blue theme for highlighting. Further in
     ' documents the extended ASCII codes (>127) are encoded as UTF-8 to get them
     ' displayed correctly. However, the Forum and Wiki exports keep the original
     ' codepage encoding. Note that this actually might cause wrong characters in
@@ -20471,7 +20471,7 @@ SUB ExportCodeAs (docFormat$)
     nl% = -1 '=> new line indicator
     nt% = -1 '=> new token indicator
     '----------
-    nc% = 0 '=> paranthesis nesting counter
+    nc% = 0 '=> parenthesis nesting counter
     in% = 0 '=> ignore next keyword
     sk% = 0 '=> skip copying current char
     '----------

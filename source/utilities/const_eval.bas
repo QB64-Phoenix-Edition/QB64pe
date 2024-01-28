@@ -907,7 +907,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
 
     SELECT CASE ConstFuncs(p).nam 'Depending on our operator..
         CASE "_PI"
-            'Future compatable in case something ever stores extra digits for PI
+            'Future compatible in case something ever stores extra digits for PI
             n1 = 3.14159265358979323846264338327950288## * args(1).f
 
         CASE "_ACOS": n1 = _ACOS(args(1).f)

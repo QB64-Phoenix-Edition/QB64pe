@@ -173,7 +173,7 @@ REDIM SHARED T(1 TO OptMax) AS INTEGER 'The type of the entry
 '   t is 0 for ? opts
 '   ---------- 0 means ? , 1+ means a symbol or {}block ----------
 '   t is 1 for symbol opts
-'   t is the number of rhs opt () index enteries for {READ|WRITE|READ WRITE} like opts
+'   t is the number of rhs opt () index entries for {READ|WRITE|READ WRITE} like opts
 REDIM SHARED Lev(1 TO OptMax) AS INTEGER 'The indwelling level of each opt () element (the lowest is 0)
 REDIM SHARED EntryLev(1 TO OptMax) AS INTEGER 'The level required from which this opt () can be validly be entered/checked-for
 REDIM SHARED DitchLev(1 TO OptMax) AS INTEGER 'The lowest level recorded between the previous Opt and this Opt
@@ -1669,7 +1669,7 @@ DO
             IF a$ <> "" THEN GOTO errmes
             IF result <> 0 THEN
                 ExecLevel(ExecCounter) = ExecLevel(ExecCounter - 1) 'So we inherit the execlevel from above
-                IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and conditon found
+                IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and condition found
             END IF
             GOTO finishedlinepp 'and then we're finished -- and at this point we didn't make a match so we exit with a DONT READ type flag on our code.
         END IF
@@ -1702,7 +1702,7 @@ DO
                 IF a$ <> "" THEN GOTO errmes
                 IF result <> 0 THEN
                     ExecLevel(ExecCounter) = ExecLevel(ExecCounter - 1) 'So we inherit the execlevel from above
-                    IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and conditon found
+                    IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and condition found
                 END IF
                 GOTO finishedlinepp 'and then we're finished -- and at this point we didn't make a match so we exit with a DONT READ type flag on our code.
             END IF
@@ -2934,7 +2934,7 @@ DO
             IF a$ <> "" THEN GOTO errmes
             IF result <> 0 THEN
                 ExecLevel(ExecCounter) = ExecLevel(ExecCounter - 1) 'So we inherit the execlevel from above
-                IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and conditon found
+                IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and condition found
             END IF
 
             controllevel = controllevel + 1
@@ -2974,7 +2974,7 @@ DO
                     IF a$ <> "" THEN GOTO errmes
                     IF result <> 0 THEN
                         ExecLevel(ExecCounter) = ExecLevel(ExecCounter - 1) 'So we inherit the execlevel from above
-                        IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and conditon found
+                        IF ExecLevel(ExecCounter) = 0 THEN DefineElse(ExecCounter) = DefineElse(ExecCounter) OR 4 'Else if used and condition found
                     END IF
                 END IF
 
@@ -7692,7 +7692,7 @@ DO
                 'new dim syntax for SHARED!
                 i = i - 1 'relocate back to "AS"
 
-                'estabilish the data type:
+                'establish the data type:
                 t$ = ""
                 ts$ = ""
                 t3$ = ""
@@ -8228,11 +8228,11 @@ DO
                 dimgottyp:
                 IF d$ <> "" AND d$ <> "," THEN a$ = "DIM: Expected ,": GOTO errmes
 
-                'In QBASIC, if no type info is given it can refer to an expeicit/formally defined array
+                'In QBASIC, if no type info is given it can refer to an explicit/formally defined array
                 IF notype <> 0 AND dimoption <> 3 AND dimoption <> 1 THEN 'not DIM or STATIC which only create new content
                     IF LEN(elements$) THEN 'an array
                         IF FindArray(varname$) THEN
-                            IF LEN(RTRIM$(id.mayhave)) THEN 'explict/formally defined
+                            IF LEN(RTRIM$(id.mayhave)) THEN 'explicit/formally defined
                                 typ$ = id2fulltypename$ 'adopt type
                                 dimmethod = 0 'set as formally defined
                             END IF
@@ -8492,7 +8492,7 @@ DO
 
                             IF x = 0 THEN x = idn + 1
 
-                            'note: the following code only adds include directives, everything else is defered
+                            'note: the following code only adds include directives, everything else is deferred
                             ChainTxtBuf = OpenBuffer%("A", tmpdir$ + "chain.txt")
                             'include directive
                             WriteBufLine ChainTxtBuf, "#include " + CHR$(34) + "chain" + str2$(x) + ".txt" + CHR$(34)
@@ -8696,7 +8696,7 @@ DO
                 i = i + 1 'skip "AS"
                 newDimSyntaxTypePassBack = 0
 
-                'estabilish the data type:
+                'establish the data type:
                 appendname$ = ""
                 appendtype$ = sp + SCase$("As")
                 typ$ = ""
@@ -10610,9 +10610,9 @@ DO
                 IF RTRIM$(id2.callname) = "sub_get" OR RTRIM$(id2.callname) = "sub_put" THEN
                     IF passed AND 2 THEN
                         'regular GET/PUT call with variable provided
-                        passed = passed - 2 'for complience with existing methods, remove 'passed' flag for the passing of a variable
+                        passed = passed - 2 'for compliance with existing methods, remove 'passed' flag for the passing of a variable
                     ELSE
-                        'FIELD GET/PUT call with variable omited
+                        'FIELD GET/PUT call with variable omitted
                         IF RTRIM$(id2.callname) = "sub_get" THEN
                             fieldcall = 1
                             subcall$ = "field_get("
@@ -10877,7 +10877,7 @@ DO
 
                         'pass by reference
                         IF (targettyp AND ISPOINTER) THEN
-                            IF dereference = 0 THEN 'check deferencing wasn't used
+                            IF dereference = 0 THEN 'check dereferencing wasn't used
 
                                 'note: array pointer
                                 IF (targettyp AND ISARRAY) THEN
@@ -10927,7 +10927,7 @@ DO
                                     END IF
 
                                     IF id.linkid = 0 THEN
-                                        'if id.linkid is 0, it means the number of array elements is definietly
+                                        'if id.linkid is 0, it means the number of array elements is definitely
                                         'known of the array being passed, this is not some "fake"/unknown array.
                                         'using the numer of array elements of a fake array would be dangerous!
 
@@ -11041,7 +11041,7 @@ DO
                                         END IF 'similar
                                     END IF 'reference
                                 ELSE 'not a string
-                                    'its a string
+                                    'it's a string
                                     IF (sourcetyp AND ISREFERENCE) THEN
                                         idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1)) 'id# of sourcetyp
                                         IF MID$(sfcmemargs(targetid), i, 1) = CHR$(1) THEN 'cmem required?
@@ -11051,7 +11051,7 @@ DO
                                             END IF
                                         END IF
                                     END IF 'reference
-                                END IF 'its a string
+                                END IF 'it's a string
 
                             END IF 'dereference check
                         END IF 'target is a pointer
@@ -13103,7 +13103,7 @@ IF idemode AND qberrorhappenedvalue >= 0 THEN
 END IF
 
 IF qberrorhappenedvalue >= 0 THEN
-    a$ = "UNEXPECTED INTERNAL COMPILER ERROR!": GOTO errmes 'internal comiler error
+    a$ = "UNEXPECTED INTERNAL COMPILER ERROR!": GOTO errmes 'internal compiler error
 END IF
 
 
@@ -13620,9 +13620,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
         '__ARRAY_SINGLE_A[6]=1;
         IF cmem AND stringarray = 0 THEN
             'Note: A string array's pointers are always stored in 64bit memory
-            '(static)CONVENTINAL memory
+            '(static)CONVENTIONAL memory
             WriteBufLine DataTxtBuf, n$ + "[0]=(ptrszint)cmem_static_pointer;"
-            'alloc mem & check if static memory boundry has oversteped dynamic memory boundry
+            'alloc mem & check if static memory boundary has overstepped dynamic memory boundary
             WriteBufLine DataTxtBuf, "if ((cmem_static_pointer+=((" + sizestr$ + ")+15)&-16)>cmem_dynamic_base) error(257);"
             '64K check
             WriteBufLine DataTxtBuf, "if ((" + sizestr$ + ")>65536) error(257);"
@@ -15904,7 +15904,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
 
 
-    'identify any referencable values
+    'identify any referenceable values
     FOR i = 1 TO blockn
         IF isoperator(block(i)) = 0 THEN
             IF evaledblock(i) = 0 THEN
@@ -17459,7 +17459,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 '------------------------------------------------------------------------------------------------------------
 
                 'note: this comment makes no sense...
-                'any numeric variable, but it must be type-speficied
+                'any numeric variable, but it must be type-specified
 
                 IF targettyp = -2 THEN
                     e$ = evaluatetotyp(e2$, -2)
@@ -17496,7 +17496,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 'pointer?
                 IF (targettyp AND ISPOINTER) THEN
-                    IF dereference = 0 THEN 'check deferencing wasn't used
+                    IF dereference = 0 THEN 'check dereferencing wasn't used
 
 
 
@@ -17552,7 +17552,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
 
                             IF id.linkid = 0 THEN
-                                'if id.linkid is 0, it means the number of array elements is definietly
+                                'if id.linkid is 0, it means the number of array elements is definitely
                                 'known of the array being passed, this is not some "fake"/unknown array.
                                 'using the numer of array elements of a fake array would be dangerous!
 
@@ -17693,7 +17693,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             END IF 'source is a reference
 
                         ELSE 'string
-                            'its a string
+                            'it's a string
 
                             IF (sourcetyp AND ISREFERENCE) THEN
                                 idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1)) 'id# of sourcetyp
@@ -17860,7 +17860,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
         ' Add on any extra optional arguments that were not provided
         '
-        ' Overloaded functions do not require the omited arguments to be provided
+        ' Overloaded functions do not require the omitted arguments to be provided
         IF curarg <= id2.args AND NOT id2.overloaded THEN
             FOR i = curarg TO id2.args
                 IF i = 1 THEN r$ = r$ + "NULL" ELSE r$ = r$ + ",NULL"
@@ -17873,7 +17873,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         IF n$ = "UBOUND" THEN r2$ = "func_ubound(" ELSE r2$ = "func_lbound("
         e$ = refer$(ulboundarray$, sourcetyp, 1)
         IF Error_Happened THEN EXIT FUNCTION
-        'note: ID contins refer'ed array info
+        'note: ID contains refer'ed array info
 
         arrayelements = id.arrayelements '2009
         IF arrayelements = -1 THEN arrayelements = 1 '2009
@@ -19574,7 +19574,7 @@ FUNCTION fixoperationorder$ (savea$)
 
 
     '----------------I. Pass (){}bracketed items (if any) to fixoperationorder & build return----------------
-    'note: items seperated by commas are done seperately
+    'note: items separated by commas are done separately
 
     ff$ = ""
     b = 0
@@ -20389,7 +20389,7 @@ FUNCTION lineformat$ (a$)
     IF c = 38 THEN Give_Error "Expected &H... or &O...": EXIT FUNCTION
 
     '----------------variable/name----------------
-    '*trailing _ is treated as a seperate line extension*
+    '*trailing _ is treated as a separate line extension*
     IF (c >= 65 AND c <= 90) OR c = 95 THEN 'A-Z(a-z) or _
         IF c = 95 THEN p2 = 0 ELSE p2 = i
         FOR i2 = i + 1 TO n

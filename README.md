@@ -24,7 +24,7 @@ Download the appropriate package for your operating system over at https://githu
 
 Make sure to extract the package contents to a folder with full write permissions (failing to do so may result in IDE or compilation errors).
 
-* It is advisable to to whitelist the 'qb64pe' folder in your antivirus/antimalware software *
+* It is advisable to whitelist the 'qb64pe' folder in your antivirus/antimalware software *
 
 <a name="macOS"></a>
 ## macOS

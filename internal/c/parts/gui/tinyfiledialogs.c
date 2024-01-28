@@ -117,7 +117,7 @@ int tinyfd_winUtf8 = 1; /* on windows char strings can be 1:UTF-8(default) or 0:
 int tinyfd_verbose = 0 ; /* on unix: prints the command line calls */
 int tinyfd_silent = 1 ; /* 1 (default) or 0 : on unix, hide errors and warnings from called dialogs */
 
-/* Curses dialogs are difficult to use, on windows they are only ascii and uses the unix backslah */
+/* Curses dialogs are difficult to use, on windows they are only ascii and uses the unix backslash */
 int tinyfd_allowCursesDialogs = 0 ; /* 0 (default) or 1 */
 int tinyfd_forceConsole = 0 ; /* 0 (default) or 1 */
 /* for unix & windows: 0 (graphic mode) or 1 (console mode).
@@ -1008,7 +1008,7 @@ static HWND CreateHiddenWindow()
 
 static HWND windowForDialogs = 0;
 
-// Returns a window handle sutable for displaying dialogs and notifications
+// Returns a window handle suitable for displaying dialogs and notifications
 //
 // We attempt to find a window associated with the program, if none exists then
 // we'll create a hidden one.
@@ -1027,14 +1027,14 @@ static HWND GetDialogWindow()
     if (windowForDialogs)
         return windowForDialogs;
 
-    // No sutable window could be found, create a hidden one for us to use
+    // No suitable window could be found, create a hidden one for us to use
     windowForDialogs = CreateHiddenWindow();
     return windowForDialogs;
 }
 
 #endif /* _WIN32 */
 
-/* source and destination can be the same or ovelap*/
+/* source and destination can be the same or overlap*/
 static char * ensureFilesExist(char * aDestination,
         char const * aSourcePathsAndNames)
 {
@@ -1346,7 +1346,7 @@ static LRESULT displayInputBox(HINSTANCE hinst, HWND hwndOwner, const wchar_t *t
     lpw = (LPWORD)lpwsz;
 
     //-----------------------
-    // Define a edit text control.
+    // Define an edit text control.
     //-----------------------
     lpw = lpwAlignDWORD(lpw);    // Align DLGITEMTEMPLATE on DWORD boundary
     lpdit = (LPDLGITEMTEMPLATE)lpw;
@@ -3907,13 +3907,13 @@ void tinyfd_beep(void)
 }
 
 // Concats the source string to the destination string, and escapes the single
-// quotes in a way sutable for bash
+// quotes in a way suitable for bash
 static void concatAndEscapeSingleQuote(char *dest, const char *source)
 {
     tfd_replaceSubStrConCat(source, "'", "'\\''", dest);
 }
 
-// Concats the source string to the destination string, and escapes sutable for
+// Concats the source string to the destination string, and escapes suitable for
 // osascript run via sh.
 //
 // This is achieved by first escaping double quotes, and then escaping single
@@ -4775,7 +4775,7 @@ int tinyfd_notifyPopup(
         }
         else if ( (tfd_zenity3Present()>=5) )
         {
-                /* zenity 2.32 & 3.14 has the notification but with a bug: it doesnt return from it */
+                /* zenity 2.32 & 3.14 has the notification but with a bug: it doesn't return from it */
                 /* zenity 3.8 show the notification as an alert ok cancel box */
                 if ( tfd_zenity3Present()>=5 )
                 {

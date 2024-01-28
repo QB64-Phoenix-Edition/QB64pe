@@ -14,10 +14,10 @@ void libqb_condvar_free(struct libqb_condvar *);
 // Mutex while checking the Condition Variable
 void libqb_condvar_wait(struct libqb_condvar *, struct libqb_mutex *);
 
-// Singals a single thread waiting on the Condition Variable
+// Signals a single thread waiting on the Condition Variable
 void libqb_condvar_signal(struct libqb_condvar *);
 
-// Signals all threads waiting on the Condtiion Variable
+// Signals all threads waiting on the Condition Variable
 void libqb_condvar_broadcast(struct libqb_condvar *);
 
 #endif

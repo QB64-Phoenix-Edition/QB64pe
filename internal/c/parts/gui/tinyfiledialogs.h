@@ -76,7 +76,7 @@ char * tinyfd_utf16to8(wchar_t const * aUtf16string);
 /******************************************************************************************************/
 /******************************************************************************************************/
 
-/************* 3 funtions for C# (you don't need this in C or C++) : */
+/************* 3 functions for C# (you don't need this in C or C++) : */
 char const * tinyfd_getGlobalChar(char const * aCharVariableName); /* returns NULL on error */
 int tinyfd_getGlobalInt(char const * aIntVariableName); /* returns -1 on error */
 int tinyfd_setGlobalInt(char const * aIntVariableName, int aValue); /* returns -1 on error */
@@ -91,7 +91,7 @@ extern char tinyfd_needs[]; /* info about requirements */
 extern int tinyfd_verbose; /* 0 (default) or 1 : on unix, prints the command line calls */
 extern int tinyfd_silent; /* 1 (default) or 0 : on unix, hide errors and warnings from called dialogs */
 
-/* Curses dialogs are difficult to use, on windows they are only ascii and uses the unix backslah */
+/* Curses dialogs are difficult to use, on windows they are only ascii and uses the unix backslash */
 extern int tinyfd_allowCursesDialogs; /* 0 (default) or 1 */
 
 extern int tinyfd_forceConsole;  /* 0 (default) or 1 */
@@ -291,7 +291,7 @@ wchar_t * tinyfd_colorChooserW(
 - tinyfd_forceConsole=1; at run time, forces dialogs into console mode.
 - On windows, console mode only make sense for console applications.
 - On windows, console mode is not implemented for wchar_T UTF-16.
-- Mutiple selects are not possible in console mode.
+- Multiple selects are not possible in console mode.
 - The package dialog must be installed to run in curses dialogs in console mode.
   It is already installed on most unix systems.
 - On osx, the package dialog can be installed via

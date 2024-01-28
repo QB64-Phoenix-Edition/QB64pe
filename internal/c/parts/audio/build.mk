@@ -7,7 +7,7 @@ MINIAUDIO_STUB_SRCS := \
 	stub_audio.cpp
 
 # We always produce both lists so that `make clean` will clean them up even
-# when not passed a paticular DEP_* flag
+# when not passed a particular DEP_* flag
 MINIAUDIO_REAL_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/%.o,$(MINIAUDIO_REAL_SRCS))
 
 MINIAUDIO_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/%.o,$(MINIAUDIO_STUB_SRCS))

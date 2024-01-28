@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <string>
 
-/// @brief Splits a string delimted by '|' into an array of strings
+/// @brief Splits a string delimited by '|' into an array of strings
 /// @param input The string to be parsed
 /// @param count Point to an integer that will hold the count of tokens. This cannot be NULL
 /// @return Array of string tokens. This must be freed using gui_free_tokens()
@@ -333,7 +333,7 @@ qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
 /// @param message The message the will show inside the dialog box
 /// @param title The dialog box title
 /// @param type The type of dialog box (see tinyfd_messageBox)
-/// @return returns the value retured by tinyfd_messageBox
+/// @return returns the value returned by tinyfd_messageBox
 int gui_alert(const char *message, const char *title, const char *type) { return tinyfd_messageBox(title, message, type, "error", 1); }
 
 /// @brief This is used internally by libqb to show warning and failure messages
