@@ -246,7 +246,7 @@ struct img_struct {
     uint8 print_mode;
     // BEGIN apm ('active page migration')
     // everything between apm points is migrated during active page changes
-    // note: apm data is only relevent to graphics modes
+    // note: apm data is only relevant to graphics modes
     uint8 apm_p1;
     int32 view_x1, view_y1, view_x2, view_y2;
     int32 view_offset_x, view_offset_y;
@@ -316,7 +316,7 @@ struct device_struct {
     int32 type;
     // 0=Unallocated
     // 1=Joystick/Gamepad
-    // 2=Keybaord
+    // 2=Keyboard
     // 3=Mouse
     char *name;
     int32 connected;

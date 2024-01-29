@@ -162,7 +162,7 @@ int32 environment_2d__screen_x1 = 0; // offsets of 'screen' within the window
 int32 environment_2d__screen_y1 = 0;
 int32 environment_2d__screen_x2 = 0;
 int32 environment_2d__screen_y2 = 0;
-int32 environment_2d__screen_scaled_width = 640; // inital values prevent _SCALEDWIDTH/_SCALEDHEIGHT returning 0
+int32 environment_2d__screen_scaled_width = 640; // initial values prevent _SCALEDWIDTH/_SCALEDHEIGHT returning 0
 int32 environment_2d__screen_scaled_height = 400;
 float environment_2d__screen_x_scale = 1.0f;
 float environment_2d__screen_y_scale = 1.0f;
@@ -2174,7 +2174,7 @@ int32 lprint_locked = 0;   // set to 1 to deny access by QB64 program
     multiplatform compatibility. 'Pure' C-based routines may not allow certain functionality,
     such as partial file locking.
     GFS handles/indexes are independent of QB64 handles/indexes to allow for internal files
-    to be open but not intefere with the QB64 file handle numbers.
+    to be open but not interfere with the QB64 file handle numbers.
 
     GFS error codes:
     -1 non-specific fail
@@ -4150,13 +4150,13 @@ void pset(int32 x, int32 y, uint32 col) {
         case 0x0: // 0%(0) alpha, so no pset (very fast)
             return;
             break;
-        case 0x80000000: //~50% alpha (optomized)
+        case 0x80000000: //~50% alpha (optimized)
 
             o32 = write_page->offset32 + (y * write_page->width + x);
             *o32 = (((*o32 & 0xFEFEFE) + (col & 0xFEFEFE)) >> 1) + (ablend128[*o32 >> 24] << 24);
             return;
             break;
-        case 0x7F000000: //~50% alpha (optomized)
+        case 0x7F000000: //~50% alpha (optimized)
             o32 = write_page->offset32 + (y * write_page->width + x);
             *o32 = (((*o32 & 0xFEFEFE) + (col & 0xFEFEFE)) >> 1) + (ablend127[*o32 >> 24] << 24);
             return;
@@ -4524,7 +4524,7 @@ int32 imgnew(int32 x, int32 y, int32 bpp) {
     return i;
 }
 
-void sub__font(int32 f, int32 i, int32 passed); // foward def
+void sub__font(int32 f, int32 i, int32 passed); // forward def
 
 void flush_old_hardware_commands() {
     static int32 old_command;
@@ -5232,7 +5232,7 @@ stretch:
         return;
     if (dy1 > dy2)
         return;
-    // all values are now within the boundries of the source & dest
+    // all values are now within the boundaries of the source & dest
 
 stretch_noreverse_noclip:
     w = dx2 - dx1 + 1;
@@ -5625,7 +5625,7 @@ clip:
         return;
     if (dy1 > dy2)
         return;
-    // all values are now within the boundries of the source & dest
+    // all values are now within the boundaries of the source & dest
 
     // mirror put
     if (mirror) {
@@ -7167,7 +7167,7 @@ int32 asciicode_reading = 0;
 int32 lock_display = 0;
 int32 lock_display_required = 0;
 
-// cost delay, made obselete by managing thread priorities (consider removal)
+// cost delay, made obsolete by managing thread priorities (consider removal)
 #define cost_limit 10000
 #define cost_delay 0
 uint32 cost = 0;
@@ -7190,7 +7190,7 @@ uint64 build_uint64(uint32 val2, uint32 val1) {
     return val;
 }
 
-// nb. abreviations are used in variable names to save typing, here are some of the expansions
+// nb. abbreviations are used in variable names to save typing, here are some of the expansions
 // cmem=conventional memory
 // qbs=qbick basic string (refers to the emulation of quick basic strings)
 // sp=stack pointer
@@ -7613,7 +7613,7 @@ extern uint8 *mem_static_limit;
 
 uint8 *mem_static_malloc(uint32 size) {
     size += 7;
-    size -= (size & 7); // align to 8 byte boundry
+    size -= (size & 7); // align to 8 byte boundary
     if ((mem_static_pointer += size) < mem_static_limit)
         return mem_static_pointer - size;
     mem_static_size = (mem_static_size << 1) + size;
@@ -8204,7 +8204,7 @@ qbs *qbs_set(qbs *deststr, qbs *srcstr) {
     }
     // non-fixed deststr
 
-    // can srcstr be aquired by deststr?
+    // can srcstr be acquired by deststr?
     if (srcstr->tmp) {
         if (srcstr->fixed == 0) {
             if (srcstr->readonly == 0) {
@@ -8279,7 +8279,7 @@ qbs *qbs_set(qbs *deststr, qbs *srcstr) {
         // all next indexes invalid!
         qbs_cmem_list_nexti = deststr->listi + 1;                           // adjust nexti
         if (((ptrszint)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
-            memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes aquiring srcstr's space
+            memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes acquiring srcstr's space
             deststr->len = srcstr->len;
             qbs_cmem_sp = ((ptrszint)deststr->chr) + (ptrszint)deststr->len - dblock;
             goto qbs_set_return;
@@ -8336,7 +8336,7 @@ skippedtmpsrcindex2:
 
     qbs_list_nexti = deststr->listi + 1;                                                  // adjust nexti
     if (((ptrszint)deststr->chr + srcstr->len) <= ((ptrszint)qbs_data + qbs_data_size)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                                  // overlap possible due to sometimes aquiring srcstr's space
+        memmove(deststr->chr, srcstr->chr, srcstr->len);                                  // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
         qbs_sp = ((ptrszint)deststr->chr) + (ptrszint)deststr->len - (ptrszint)qbs_data;
         goto qbs_set_return;
@@ -10962,7 +10962,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
 
         if ((write_page->compatible_mode == 32) || (write_page->compatible_mode == 256)) {
 
-            if (!(passed & 1)) { // width ommited
+            if (!(passed & 1)) { // width omitted
                 width = write_page->width;
             } else {
                 if (width <= 0)
@@ -10973,7 +10973,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                 width *= i;
             }
 
-            if (!(passed & 2)) { // height ommited
+            if (!(passed & 2)) { // height omitted
                 height = write_page->height;
             } else {
                 if (height <= 0)
@@ -11050,7 +11050,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
 
         } // 32/256
 
-        if (!(passed & 1)) { // width ommited
+        if (!(passed & 1)) { // width omitted
             if (height <= 0)
                 goto error;
 
@@ -11659,12 +11659,12 @@ void pset_and_clip(int32 x, int32 y, uint32 col) {
             case 0x0: // 0%(0) alpha, so no pset (very fast)
                 return;
                 break;
-            case 0x80000000: //~50% alpha (optomized)
+            case 0x80000000: //~50% alpha (optimized)
                 o32 = write_page->offset32 + (y * write_page->width + x);
                 *o32 = (((*o32 & 0xFEFEFE) + (col & 0xFEFEFE)) >> 1) + (ablend128[*o32 >> 24] << 24);
                 return;
                 break;
-            case 0x7F000000: //~50% alpha (optomized)
+            case 0x7F000000: //~50% alpha (optimized)
                 o32 = write_page->offset32 + (y * write_page->width + x);
                 *o32 = (((*o32 & 0xFEFEFE) + (col & 0xFEFEFE)) >> 1) + (ablend127[*o32 >> 24] << 24);
                 return;
@@ -11763,7 +11763,7 @@ void qb32_boxfill(float x1f, float y1f, float x2f, float y2f, uint32 col) {
     } // 1
 
     // assume 32-bit
-    // optomized
+    // optimized
     // alpha disabled or full alpha?
     a = col >> 24;
     if ((write_page->alpha_disabled) || (a == 255)) {
@@ -11860,7 +11860,7 @@ void fast_boxfill(int32 x1, int32 y1, int32 x2, int32 y2, uint32 col) {
     } // 1
 
     // assume 32-bit
-    // optomized
+    // optimized
     // alpha disabled or full alpha?
     a = col >> 24;
     if ((write_page->alpha_disabled) || (a == 255)) {
@@ -13191,7 +13191,7 @@ void sub_circle(double x, double y, double r, uint32 col, double start, double e
     write_page->x = x;
     write_page->y = y; // set graphics cursor position to circle's centre
 
-    r = x + r; // the differece between x & x+r in pixels will be the radius in pixels
+    r = x + r; // the difference between x & x+r in pixels will be the radius in pixels
     // resolve coordinates (but keep as floats)
     if (write_page->clipping_or_scaling) {
         if (write_page->clipping_or_scaling == 2) {
@@ -14110,7 +14110,7 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
 
         if (character == 30) {
             // previous row, same column
-            // no change if cursor not within view print boundries
+            // no change if cursor not within view print boundaries
             if ((write_page->cursor_y > write_page->top_row) && (write_page->cursor_y <= write_page->bottom_row)) {
                 write_page->cursor_y--;
             }
@@ -14119,7 +14119,7 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
 
         if (character == 31) {
             // next row, same column
-            // no change if cursor not within view print boundries
+            // no change if cursor not within view print boundaries
             if ((write_page->cursor_y >= write_page->top_row) && (write_page->cursor_y < write_page->bottom_row)) {
                 write_page->cursor_y++;
             }
@@ -14589,7 +14589,7 @@ void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor, int32
         if (!write_page->clipping_or_scaling)
             write_page->clipping_or_scaling = 1;
     } else {
-        // no argurments passed
+        // no arguments passed
         write_page->view_x1 = 0;
         write_page->view_y1 = 0;
         write_page->view_x2 = write_page->width - 1;
@@ -15261,8 +15261,8 @@ qbs_input_sep_arg_done:
     if (toomany)
         goto backspace;
 
-    // validate current arguements
-    // ASSUME LEADING & TRALING SPACES REMOVED!
+    // validate current arguments
+    // ASSUME LEADING & TRAILING SPACES REMOVED!
     uint8 valid;
     uint8 neg;
     int32 completewith;
@@ -17215,7 +17215,7 @@ uint16 n_digits;
 uint8 n_digit[256];
 int64 n_exp; // if 0, there is one digit in front of the decimal place
 uint8 n_neg; // if 1, the number is negative
-uint8 n_hex; // if 1, the digits are in hexidecimal and n_exp should be ignored
+uint8 n_hex; // if 1, the digits are in hexadecimal and n_exp should be ignored
              // if 2, the digits are in octal and n_exp should be ignored
              // if 3, the digits are in binary and n_exp should be ignored
              //(consider revising variable name n_hex)
@@ -19166,7 +19166,7 @@ void sub_graphics_get(float x1f, float y1f, float x2f, float y2f, void *element,
     sx = read_page->width;
     sy = read_page->height;
 
-    // boundry checking (if no mask colour was passed)
+    // boundary checking (if no mask colour was passed)
     if (!(passed & 4)) {
         if ((x1 < 0) || (y1 < 0) || (x2 >= sx) || (y2 >= sy)) {
             error(5);
@@ -19456,7 +19456,7 @@ void sub_graphics_put(float x1f, float y1f, void *element, int32 option, uint32 
     x2 = x1 + w - 1;
     y2 = y1 + h - 1;
 
-    // boundry checking (if CLIP option was not used)
+    // boundary checking (if CLIP option was not used)
     if (!clip) {
         if ((x1 < 0) || (y1 < 0) || (x2 >= sx) || (y2 >= sy)) {
             error(5);
@@ -21051,7 +21051,7 @@ int32 func_eof(int32 i) {
             else if (sh->index == 2)
                 return 0;
 
-            // Only report EOF() if the program had read all incomming data and
+            // Only report EOF() if the program had read all incoming data and
             // the connection is finished.
             if (libqb_http_connected(x))
                 return 0;
@@ -23525,7 +23525,7 @@ void call_int(int32 i) {
                 if (cpu.cx >= (display_page->width * 8))
                     cpu.cx = (display_page->width * 8) - 1;
                 // note: a range from 0 to rows*8-1 is returned regardless of the number of actual pixels
-                // obselete line of code:
+                // obsolete line of code:
                 // cpu.dx=(((float)cpu.dx)/((float)(display_page->height*fontheight[display_page->font])))*((float)(display_page->height*8));//(mouse_y/height_in_pixels)*(rows*8)
                 cpu.dx = (my - 0.5) * 8.0;
                 if (cpu.dx >= (display_page->height * 8))
@@ -24051,7 +24051,7 @@ void sub__setalpha(int32 a, uint32 c, uint32 c2, int32 i, int32 passed) {
     return;
 }
 
-// Finding infomation about an image surface:
+// Finding information about an image surface:
 
 int32 func__width(int32 i, int32 passed) {
     if (new_error)
@@ -24687,7 +24687,7 @@ int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
     }
 
     auto fonthandle = img[screenhandle].font;     // Get the font used in screenhandle
-    auto fwidth = func__fontwidth(fonthandle, 1); // Try and get the font width
+    auto fwidth = func__fontwidth(fonthandle, 1); // Try to get the font width
     if (fwidth)
         return fwidth * text->len; // if it's not a variable width font, return the width * the letter count
 
@@ -25646,7 +25646,7 @@ numeric_spacer:
         return 0;
     }
 
-    // reduce digits before point appropriatly
+    // reduce digits before point appropriately
     extra_sign_space = 0;
     if (exponent_digits) {
         if ((leading_plus == 0) && (trailing_plus == 0) && (trailing_minus == 0)) {
@@ -34062,7 +34062,7 @@ void prepare_environment_2d() { // called prior to rendering 2D content
         can_scale = 1;
         if (full_screen == 2)
             need_square_pixels = 1;
-        // note: 'letter-boxing' is only requred where the size of the window
+        // note: 'letter-boxing' is only required where the size of the window
         // cannot be controlled, and the only place where this is the
         //      case is full screen mode _SQUAREPIXELS
         environment_2d__screen_smooth = fullscreen_smooth;
@@ -35287,7 +35287,7 @@ void GLUT_DISPLAY_REQUEST() {
         glutEnterGameMode();
         fullscreen_width=display_frame[i].w;
        fullscreen_height=display_frame[i].h; reinit_glut_callbacks();
-        full_screen=full_screen_set;//it's currently irrelavent if it is
+        full_screen=full_screen_set;//it's currently irrelevant if it is
        stretched or 1:1 full_screen_set=-1; return; }else{ //native dimensions
        not possible
         //attempt full screen using desktop dimensions
@@ -36618,7 +36618,7 @@ uint8 *pixeldata = (uint8 *)malloc(1);
 int32 pixeldatasize = 1;
 uint32 paldata[256];
 
-// note: temporarily swapping a source palette is far more effecient than converting the resulting image pixels
+// note: temporarily swapping a source palette is far more efficient than converting the resulting image pixels
 void swap_paldata_BGRA_with_RGBA() {
     static uint32 col;
     static uint32 *pos;
@@ -36721,7 +36721,7 @@ void display() {
         z = 0; //?
 
         conversion_required = 0;
-        pixel = display_surface_offset; //<-will be made obselete
+        pixel = display_surface_offset; //<-will be made obsolete
 
         if (!display_page->compatible_mode) { // text
 
@@ -36763,7 +36763,7 @@ void display() {
 
             // Check/Prepare palette-buffer
             if (!check_last) {
-                // set pal_last (no prev pal was avilable to compare to)
+                // set pal_last (no prev pal was available to compare to)
                 memcpy(&paldata, display_page->pal, 256 * 4);
             } else {
                 // if palette has changed, update paldata and draw all characters
@@ -38248,7 +38248,7 @@ void keydown(uint32 x) {
         if (b2 = scancode_lookup[x * 10 + 1]) { // table entry exists
             scancodedown(b2);
 
-            // check for relevent table modifiers
+            // check for relevant table modifiers
             shift = 0;
             if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
                 shift = 1;
@@ -38313,7 +38313,7 @@ void keydown(uint32 x) {
         r = (x >> 8) + 256;
         if (scancode_lookup[r * 10 + 2]) {
             scancodedown(scancode_lookup[r * 10 + 1]);
-            // check relevent modifiers
+            // check relevant modifiers
             shift = 0;
             if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
                 shift = 1;
@@ -38725,7 +38725,7 @@ void sub__consolefont(qbs *FontName, int FontSize) {
     SECURITY_ATTRIBUTES SecAttribs = {sizeof(SECURITY_ATTRIBUTES), 0, 1};
     HANDLE cl_conout = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &SecAttribs, OPEN_EXISTING, 0, 0);
     static int OneTimePause;
-    if (!OneTimePause) { // a slight delay so the console can be properly created and registered with Windows, before we try and change fonts with it.
+    if (!OneTimePause) { // a slight delay so the console can be properly created and registered with Windows, before we try to change fonts with it.
         Sleep(500);
         OneTimePause = 1; // after the first pause, the console should be created, so we don't need any more delays in the future.
     }
