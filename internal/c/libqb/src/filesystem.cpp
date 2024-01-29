@@ -499,7 +499,11 @@ static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileNa
         case '*': // handle wildcard '*' character
             any = spec;
             spec++;
-            while (*name && *name != *spec)
+#ifdef QB64_WINDOWS
+            while (*name && std::toupper(*spec) != std::toupper(*name))
+#else
+            while (*name && *spec != *name)
+#endif
                 name++;
             break;
 
@@ -510,7 +514,12 @@ static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileNa
             break;
 
         default: // compare non-wildcard characters
-            if (*spec != *name) {
+#ifdef QB64_WINDOWS
+            if (std::toupper(*spec) != std::toupper(*name))
+#else
+            if (*spec != *name)
+#endif
+            {
                 if (any && *name)
                     spec = any;
                 else
@@ -625,6 +634,9 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     if (passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
 
+        if (fileSpec.empty())
+            fileSpec = "*.*";
+
         if (FS_DirectoryExists(filepath_fix_directory(fileSpec))) {
             directory = fileSpec;
         } else {
@@ -634,13 +646,6 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         }
 
         entry = FS_GetDirectoryEntryName(fileSpec.c_str());
-
-        if (FS_IsStringEmpty(entry)) {
-            // This is per MS BASIC PDS 7.1 and VBDOS 1.0 behavior
-            qbsFinal = qbs_new(0, 1);
-            error(QB_ERROR_FILE_NOT_FOUND);
-            return qbsFinal;
-        }
     } else {
         // Check if we've been called the first time without a filespec
         if (directory.empty()) {
