@@ -79,7 +79,7 @@ Repository Layout
    - `dist_tests.sh`
      - Verifies the output of `make-dist.sh` is a functioning distribution of QB64-PE
    - `run_dist_tests.sh`
-     - Runs the distribution test collecitons.
+     - Runs the distribution test collections.
    - `run_tests.sh`
      - Runs all individual test collections.
    - `run_c_tests.sh`

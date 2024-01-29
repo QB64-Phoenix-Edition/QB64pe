@@ -876,7 +876,7 @@ if (pixelformat==0) alert("noooo!");
 if (acc2) alert("acc!");
 */
 
-    /* windows hack for multismapling/sRGB */
+    /* windows hack for multisampling/sRGB */
     if ( ( fgState.DisplayMode & GLUT_MULTISAMPLE ) ||
          ( fgState.DisplayMode & GLUT_SRGB ) )
     {        

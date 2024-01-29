@@ -191,7 +191,7 @@ SUB gl_scan_header
                         var_name$ = readchunk(a$, l$)
                         IF LEFT$(var_name$, 1) = "*" THEN var_type$ = var_type$ + "*": var_name$ = RIGHT$(var_name$, LEN(var_name$) - 1)
                         IF LEFT$(var_name$, 1) = "*" THEN var_type$ = var_type$ + "*": var_name$ = RIGHT$(var_name$, LEN(var_name$) - 1)
-                        'Note: could be a poiner to a pointer
+                        'Note: could be a pointer to a pointer
                     ELSE
                         var_name$ = "no_name"
                     END IF

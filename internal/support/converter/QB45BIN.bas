@@ -270,7 +270,7 @@ QB45TOKENS:
 '   declmod::=SHARED
 '
 ' If a pipe symbol is used, the next rule will inherit the "declmod" (or
-' whatever symbol), unless it explicitly defines it's own. Rules defined
+' whatever symbol), unless it explicitly defines its own. Rules defined
 ' on separate lines use the default symbol which, initially, is nothing, but
 ' may be overridden using the ".default" directive. This is only really used
 ' in the second half of the rule list, where almost every token is an
@@ -369,7 +369,7 @@ DATA 0x012,2,"{0}.{#id} = {1}"
 DATA 0x015,4,"astype::={#tabi:2}AS {#type:0}"
 DATA 0x016,4,"astype::={#tabi:2}AS {#type:0}"
 
-' 0x017 - used for unkown type assignments?
+' 0x017 - used for unknown type assignments?
 DATA 0x017,0,""
 
 DATA 0x018,""
@@ -1236,7 +1236,7 @@ END FUNCTION
 '
 ' Reads a literal 64-bit float from the p-code and returns its string
 ' representation. Using the "{dbl}" tag in the SHIFT procedure is a more
-' convienient method to extract literals.
+' convenient method to extract literals.
 '
 ' The IP is passed by reference, and will be incremented to the code
 ' following the literal. There is no radix option for floating point values.
@@ -1264,7 +1264,7 @@ END FUNCTION
 '
 ' Reads a literal 16-bit integer from the code and returns its string
 ' representation. Using the "{int}" tag in ExecuteParseRule is a more
-' convienient method to extract literals.
+' convenient method to extract literals.
 '
 ' The Radix parameter may be 8, 10 or 16 to produce
 ' the desired number format, or use the "{int&o}" and "{int&h}" tags.
@@ -1297,7 +1297,7 @@ END FUNCTION
 '
 ' Reads a literal 32-bit integer from the code and returns its string
 ' representation. Using the "{lng}" tag in ExecuteParseRule is a more
-' convienient method to extract literals.
+' convenient method to extract literals.
 '
 ' The Radix parameter may be 8, 10 or 16 to produce the desired number
 ' format, or use the "{lng&o}" and "{lng&h}" tags.
@@ -1332,7 +1332,7 @@ END FUNCTION
 '
 ' Reads a literal 32-bit float from the p-code and returns its string
 ' representation. Using the "{sng}" tag in the SHIFT procedure is a more
-' convienient method to extract literals.
+' convenient method to extract literals.
 '
 ' The IP is passed by reference, and will be incremented to the code
 ' following the literal. There is no radix option for floating point values.
@@ -1931,7 +1931,7 @@ END SUB
 
 '
 ' Returns the token id of the next unprocessed token without modifying IP.
-' Neccessary for REDIM, which causes an array expression to behave like
+' Necessary for REDIM, which causes an array expression to behave like
 ' an array declaration, for reasons best known to the QB45 dev team.
 '
 FUNCTION LookAhead
@@ -2693,7 +2693,7 @@ FUNCTION ReadToken
     ' soldier on and parse the rest of the file
     '----------------------------------------------------------------------------
     IF ParseRules(PCODE) = "" THEN
-        AOutput "REM ®QB45BIN¯ Unkown token - " + HEX$(PCODE)
+        AOutput "REM ®QB45BIN¯ Unknown token - " + HEX$(PCODE)
         IP = IP + 1
         EXIT FUNCTION
     END IF
@@ -3132,7 +3132,7 @@ FUNCTION SubstTagVERB$
 END FUNCTION
 
 '
-' Splits a {ruletag} into it's constituent components.
+' Splits a {ruletag} into its constituent components.
 '
 FUNCTION TokenizeTag (TagTxt AS STRING, TagParam AS INTEGER)
 

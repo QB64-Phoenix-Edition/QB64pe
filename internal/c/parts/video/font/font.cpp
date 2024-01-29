@@ -895,7 +895,7 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
     if (codepoints > 0) {
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
-        // Atempt to convert the string to UTF32 and get the actual width in pixels
+        // Attempt to convert the string to UTF32 and get the actual width in pixels
         auto count = utf32.ConvertASCII(codepoint, codepoints);
         return FontPrintWidthUTF32(fh, utf32.codepoints.data(), count);
     }
@@ -998,7 +998,7 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
     if (codepoints > 0) {
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
-        // Atempt to convert the string to UTF32 and forward to FontRenderTextUTF32()
+        // Attempt to convert the string to UTF32 and forward to FontRenderTextUTF32()
         auto count = utf32.ConvertASCII(codepoint, codepoints);
         return FontRenderTextUTF32(fh, utf32.codepoints.data(), count, options, out_data, out_x, out_y);
     }

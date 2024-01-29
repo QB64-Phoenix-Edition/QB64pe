@@ -2604,8 +2604,8 @@ id.subfunc = 2
 id.callname = "sub_get"
 id.args = 3
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(-4)
-'id.specialformat = "[#]?,[?],?" 'non field complient definition
-id.specialformat = "[#]?[,[?][,?]]" 'field complient definition
+'id.specialformat = "[#]?,[?],?" 'non field compliant definition
+id.specialformat = "[#]?[,[?][,?]]" 'field compliant definition
 id.hr_syntax = "GET #fileNumber&, [position][, targetVariable|targetArray()}]"
 regid
 
@@ -2615,8 +2615,8 @@ id.subfunc = 2
 id.callname = "sub_put"
 id.args = 3
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(-4)
-'id.specialformat = "[#]?,[?],?" 'non field complient definition
-id.specialformat = "[#]?[,[?][,?]]" 'field complient definition
+'id.specialformat = "[#]?,[?],?" 'non field compliant definition
+id.specialformat = "[#]?[,[?][,?]]" 'field compliant definition
 id.hr_syntax = "PUT #filenumber&, [position][, {holdingvariable|holdingarray()}]"
 regid
 
@@ -3489,7 +3489,7 @@ id.n = qb64prefix$ + "Atan2" 'The name of our new one
 id.subfunc = 1 'And this is a function
 id.callname = "std::atan2" 'The C name of the function
 id.args = 2 'It takes 2 parameters to work
-id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) 'These simply add up to represent the 2 patameters from what I can tell
+id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) 'These simply add up to represent the 2 parameters from what I can tell
 id.ret = FLOATTYPE - ISPOINTER 'we want it to return to us a nice _FLOAT value
 id.hr_syntax = "_ATAN2(y, x)"
 regid 'and we're finished with ID registration
@@ -3499,7 +3499,7 @@ id.n = qb64prefix$ + "Hypot" 'The name of our new one
 id.subfunc = 1 'And this is a function
 id.callname = "std::hypot" 'The C name of the function
 id.args = 2 'It takes 2 parameters to work
-id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) 'These simply add up to represent the 2 patameters from what I can tell
+id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) 'These simply add up to represent the 2 parameters from what I can tell
 id.ret = FLOATTYPE - ISPOINTER 'we want it to return to us a nice _FLOAT value
 id.hr_syntax = "_HYPOT(x, y)"
 regid 'and we're finished with ID registration

@@ -22,7 +22,7 @@ void libqb_process_glut_queue();
 // special care to not seg-fault when exiting the program.
 void libqb_exit(int);
 
-// These functions perform the same actions as their coresponding glut* functions.
+// These functions perform the same actions as their corresponding glut* functions.
 // They tell the GLUT thread to perform the command, returning the result if applicable
 void libqb_glut_set_cursor(int style);
 void libqb_glut_warp_pointer(int x, int y);
@@ -34,7 +34,7 @@ void libqb_glut_hide_window();
 void libqb_glut_set_window_title(const char *title);
 void libqb_glut_exit_program(int exitcode);
 
-// Convinence macros, exists a function depending on the state of GLUT
+// Convenience macros, exists a function depending on the state of GLUT
 #define NEEDS_GLUT(error_result) do { \
         if (!libqb_is_glut_up()) { \
             error(5); \

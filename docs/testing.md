@@ -11,7 +11,7 @@ QB64-based Tests
 The QB64-based tests live in `./tests/compile_tests`. Each folder in that
 directory represents a different category of tests, and within each of those
 category folders are `*.bas` files. Accompanying each `*.bas` file is either an
-`*.output` or `*.err` file with the same base name as a coresponding `.bas`
+`*.output` or `*.err` file with the same base name as a corresponding `.bas`
 file.  For test with an `*.output`, the `*.output` file contains the text that
 the program compiled from the `*.bas` file should produce. For `*.err` tests,
 the `*.err` file contains the text of the error the QB64-PE compiler should

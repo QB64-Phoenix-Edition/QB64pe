@@ -444,14 +444,14 @@ IniSetAddQuotes 0
 IF ReadConfigSetting(windowSettingsSection$, "IDE_TopPosition", value$) THEN
     IDE_TopPosition = VAL(value$)
 ELSE
-    IDE_BypassAutoPosition = -1 'If there's no position saved in the file, then we certainly don't need to try and auto-position to our last setting.
+    IDE_BypassAutoPosition = -1 'If there's no position saved in the file, then we certainly don't need to try to auto-position to our last setting.
     IDE_TopPosition = 0
 END IF
 
 IF ReadConfigSetting(windowSettingsSection$, "IDE_LeftPosition", value$) THEN
     IDE_LeftPosition = VAL(value$)
 ELSE
-    IDE_BypassAutoPosition = -1 'If there's no position saved in the file, then we certainly don't need to try and auto-position to our last setting.
+    IDE_BypassAutoPosition = -1 'If there's no position saved in the file, then we certainly don't need to try to auto-position to our last setting.
     IDE_LeftPosition = 0
 END IF
 

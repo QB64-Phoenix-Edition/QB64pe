@@ -614,7 +614,7 @@ static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
 /// @brief This mimics MS BASIC PDS 7.1 & VBDOS 1.0 DIR$() function
 /// @param qbsFileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @param passed Flags for optional parameters
-/// @return Retuns a qbs with the directory entry name or an empty string if there are no more entries
+/// @return Returns a qbs with the directory entry name or an empty string if there are no more entries
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     static std::string directory;
     std::string pathName;

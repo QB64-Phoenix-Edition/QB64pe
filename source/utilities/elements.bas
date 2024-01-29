@@ -278,8 +278,8 @@ FUNCTION hasFunctionElement (a$, element)
                     count = count + 1
 
                     IF element = count THEN
-                        ' We have a element here if there's any elements
-                        ' inbetween the previous comma and this one
+                        ' We have an element here if there's any elements
+                        ' in-between the previous comma and this one
                         hasFunctionElement = (i <> 1) AND (i - 2 <> start)
                         EXIT FUNCTION
                     END IF

@@ -22,7 +22,7 @@
 
 #include "vtables.h"
 
-constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximium *hively* frames before timeout
+constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximum *hively* frames before timeout
 
 struct ma_hively {
     // This part is for miniaudio
@@ -299,7 +299,7 @@ static ma_result ma_hively_init_internal(const ma_decoding_backend_config *pConf
 }
 
 // This help us calculate the total frame size of the tune
-// Note that this must be called before rendering the tune as it actually "plays" it to a dummy buffer to calulate the length
+// Note that this must be called before rendering the tune as it actually "plays" it to a dummy buffer to calculate the length
 static ma_uint64 ma_hively_get_length_in_pcm_frames_internal(ma_hively *pmaHively) {
     ma_uint64 totalFramesRead = 0;
 

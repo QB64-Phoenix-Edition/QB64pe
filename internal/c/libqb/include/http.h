@@ -17,7 +17,7 @@ int libqb_http_connected(int handle);
 
 // Get length of bytes waiting to be read.
 //
-// Note that more bytes may come in after calling function, but you're guarenteed to at least have this many bytes
+// Note that more bytes may come in after calling function, but you're guaranteed to at least have this many bytes
 int libqb_http_get_length(int handle, size_t *length);
 
 // Gets the value from the Content-Length HTTP header. If none was provided, returns an error
@@ -36,7 +36,7 @@ const char *libqb_http_get_url(int handle);
 // Reads up to length bytes into buf. Length is modified if less bytes than requested are returned
 int libqb_http_get(int handle, char *buf, size_t *length);
 
-// Returns an error if less than length bytes are availiable to read
+// Returns an error if less than length bytes are available to read
 int libqb_http_get_fixed(int handle, char *buf, size_t length);
 
 #endif

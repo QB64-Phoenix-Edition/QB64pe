@@ -360,7 +360,7 @@ ma_result ma_tsf_load_memory(ma_tsf *pTsf) {
     // Attempt to load a SoundFont from memory
     pTsf->tinySoundFont = tsf_load_memory(SOUNDFONT_BIN, SOUNDFONT_SIZE);
 
-    // Return failue if loading from memory also failed. This should not happen though
+    // Return failure if loading from memory also failed. This should not happen though
     return pTsf->tinySoundFont ? MA_SUCCESS : MA_OUT_OF_MEMORY;
 }
 

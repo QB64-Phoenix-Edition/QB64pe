@@ -130,7 +130,7 @@ END FUNCTION
 '
 ' Reads the integer setting at section:setting. If it is not there or invalid, writes the default value to it
 '
-' Verfies the value is positive and non-zero
+' Verifies the value is positive and non-zero
 '
 FUNCTION ReadWriteLongSettingValue& (section AS STRING, setting AS STRING, default AS LONG)
     DIM value AS STRING

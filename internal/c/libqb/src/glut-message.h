@@ -23,9 +23,9 @@ class glut_message {
 
   public:
     // Calling this indicates to the creator of the message that it has been
-    // completed, and any response data is availiable to be read.
+    // completed, and any response data is available to be read.
     //
-    // If `finsihed` is NULL that means nobody is waiting for the response. In
+    // If `finished` is NULL that means nobody is waiting for the response. In
     // that situation we're free to simply delete the object.
     void finish() {
         if (finished)
