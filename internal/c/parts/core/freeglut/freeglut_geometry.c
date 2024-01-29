@@ -391,13 +391,13 @@ void FGAPIENTRY glutSolidCone( GLdouble base, GLdouble height, GLint slices, GLi
 
     glBegin(GL_TRIANGLES);
 
-        glNormal3d(cost[0]*sinn, sint[0]*sinn, cosn);
+        glNormal3d(cost[0]*cosn, sint[0]*cosn, sinn);
 
         for (j=0; j<slices; j++)
         {
             glVertex3d(cost[j+0]*r0,   sint[j+0]*r0,   z0    );
             glVertex3d(0,              0,              height);
-            glNormal3d(cost[j+1]*sinn, sint[j+1]*sinn, cosn  );
+            glNormal3d(cost[j+1]*cosn, sint[j+1]*cosn, sinn  );
             glVertex3d(cost[j+1]*r0,   sint[j+1]*r0,   z0    );
         }
 
@@ -463,7 +463,7 @@ void FGAPIENTRY glutWireCone( GLdouble base, GLdouble height, GLint slices, GLin
 
         for (j=0; j<slices; j++)
         {
-            glNormal3d(cost[j]*sinn, sint[j]*sinn, cosn  );
+            glNormal3d(cost[j]*cosn, sint[j]*cosn, sinn  );
             glVertex3d(cost[j]*r,    sint[j]*r,    0.0   );
             glVertex3d(0.0,          0.0,          height);
         }

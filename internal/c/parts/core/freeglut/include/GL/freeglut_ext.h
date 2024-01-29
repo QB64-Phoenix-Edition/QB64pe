@@ -74,7 +74,8 @@
 #define  GLUT_ACTION_ON_WINDOW_CLOSE        0x01F9
 
 #define  GLUT_WINDOW_BORDER_WIDTH           0x01FA
-#define  GLUT_WINDOW_HEADER_HEIGHT          0x01FB
+#define  GLUT_WINDOW_BORDER_HEIGHT          0x01FB
+#define  GLUT_WINDOW_HEADER_HEIGHT          0x01FB  /* Docs say it should always have been GLUT_WINDOW_BORDER_HEIGHT, keep this for backward compatibility */
 
 #define  GLUT_VERSION                       0x01FC
 
@@ -82,6 +83,8 @@
 #define  GLUT_DIRECT_RENDERING              0x01FE
 
 #define  GLUT_FULL_SCREEN                   0x01FF
+
+#define  GLUT_SKIP_STALE_MOTION_EVENTS      0x0204
 
 /*
  * New tokens for glutInitDisplayMode.

@@ -39,7 +39,7 @@
 #    define VFPRINTF(s,f,a)
 #endif
 
-// QB64-PE Custom Code
+// QB64-PE: custom code begin
 #include "../../../libqb/include/keyhandler.h"
 
 #define QB64_EVENT_CLOSE 1
@@ -53,6 +53,7 @@ void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_os_event_inf
 #else
 LRESULT qb64_os_event_windows(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, int *qb64_os_event_info);
 #endif
+// QB64-PE: custom code end
 
 #ifdef _WIN32_WCE
 
@@ -85,11 +86,23 @@ struct GXKeyList gxKeyList;
 #    define MIN(a,b) (((a)<(b)) ? (a) : (b))
 #endif
 
+#if TARGET_HOST_POSIX_X11
+    /* used in the event handling code to match and discard stale mouse motion events */
+    static Bool match_motion(Display *dpy, XEvent *xev, XPointer arg)
+    {
+        return xev->type == MotionNotify;
+    }
+#endif
+
 #ifdef WM_TOUCH
     typedef BOOL (WINAPI *pGetTouchInputInfo)(HTOUCHINPUT,UINT,PTOUCHINPUT,int);
     typedef BOOL (WINAPI *pCloseTouchInputHandle)(HTOUCHINPUT);
-    static pGetTouchInputInfo fghGetTouchInputInfo = (pGetTouchInputInfo)0xDEADBEEF;
-    static pCloseTouchInputHandle fghCloseTouchInputHandle = (pCloseTouchInputHandle)0xDEADBEEF;
+	static pGetTouchInputInfo fghGetTouchInputInfo = (pGetTouchInputInfo)0xDEADBEEF;
+	static pCloseTouchInputHandle fghCloseTouchInputHandle = (pCloseTouchInputHandle)0xDEADBEEF;
+#endif
+
+#if TARGET_HOST_MS_WINDOWS
+    extern void fgPlatformCheckMenuDeactivate();
 #endif
 
 /*
@@ -130,6 +143,16 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
          * For windowed mode, get the current position of the
          * window and resize taking the size of the frame
          * decorations into account.
+         *
+         * Note on maximizing behavior of Windows: the resize borders are off
+         * the screen such that the client area extends all the way from the
+         * leftmost corner to the rightmost corner to maximize screen real
+         * estate. A caption is still shown however to allow interaction with
+         * the window controls. This is default behavior of Windows that
+         * FreeGLUT sticks with. To alter, one would have to check if
+         * WS_MAXIMIZE style is set when a resize event is triggered, and
+         * then manually correct the windowRect to put the borders back on
+         * screen.
          */
 
         /* "GetWindowRect" returns the pixel coordinates of the outside of the window */
@@ -141,7 +164,7 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
 
         if (window->Parent == NULL)
             /* get the window rect from this to feed to SetWindowPos, correct for window decorations */
-            fghComputeWindowRectFromClientArea_QueryWindow(window,&windowRect,TRUE);
+            fghComputeWindowRectFromClientArea_QueryWindow(&windowRect,window,TRUE);
         else
         {
             /* correct rect for position client area of parent window
@@ -151,11 +174,8 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
              * for them.
              */
             RECT parentRect;
-            parentRect = fghGetClientArea( window->Parent, FALSE );
-            windowRect.left   -= parentRect.left;
-            windowRect.right  -= parentRect.left;
-            windowRect.top    -= parentRect.top;
-            windowRect.bottom -= parentRect.top;
+            fghGetClientArea( &parentRect, window->Parent, FALSE );
+            OffsetRect(&windowRect,-parentRect.left,-parentRect.top);
         }
         
         /* Do the actual resizing */
@@ -184,6 +204,7 @@ static void fghReshapeWindow ( SFG_Window *window, int width, int height )
      * the already-drawn part does not get drawn again and things look funny.
      * But without this we get this bad behaviour whenever we resize the
      * window.
+     * DN: Hmm.. the above sounds like a concern only in single buffered mode...
      */
     window->State.Redisplay = GL_TRUE;
 
@@ -210,13 +231,17 @@ static void fghRedrawWindow ( SFG_Window *window )
 
     if( window->State.NeedToResize )
     {
+        /* Set need to resize to false before calling fghReshapeWindow, otherwise
+           in the case the user's reshape callback calls glutReshapeWindow,
+           his request would get canceled after fghReshapeWindow gets called.
+         */
+        window->State.NeedToResize = GL_FALSE;
+
         fghReshapeWindow(
             window,
             window->State.Width,
             window->State.Height
         );
-
-        window->State.NeedToResize = GL_FALSE;
     }
 
     INVOKE_WCB( *window, Display, ( ) );
@@ -323,16 +348,22 @@ static void fghCheckTimers( void )
  * 32-bit, where the GLUT API return value is also overflowed.
  */  
 unsigned long fgSystemTime(void) {
-#if TARGET_HOST_SOLARIS || HAVE_GETTIMEOFDAY
-    struct timeval now;
-    gettimeofday( &now, NULL );
-    return now.tv_usec/1000 + now.tv_sec*1000;
-#elif TARGET_HOST_MS_WINDOWS
+#if TARGET_HOST_MS_WINDOWS
 #    if defined(_WIN32_WCE)
     return GetTickCount();
 #    else
     return timeGetTime();
 #    endif
+#else
+#   ifdef CLOCK_MONOTONIC
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return now.tv_nsec/1000000 + now.tv_sec*1000;
+#   elif HAVE_GETTIMEOFDAY
+    struct timeval now;
+    gettimeofday( &now, NULL );
+    return now.tv_usec/1000 + now.tv_sec*1000;
+#   endif
 #endif
 }
   
@@ -1006,9 +1037,6 @@ void FGAPIENTRY glutMainLoopEvent( void )
     window->State.MouseX = event.a.x;            \
     window->State.MouseY = event.a.y;
 
-
-
-
     FREEGLUT_EXIT_IF_NOT_INITIALISED ( "glutMainLoopEvent" );
 
     while( XPending( fgDisplay.Display ) )
@@ -1018,24 +1046,33 @@ void FGAPIENTRY glutMainLoopEvent( void )
         fghPrintEvent( &event );
 #endif
 
+        // QB64-PE: custom code begin
         int qb64_os_event_info = 0;
 
         qb64_os_event_info = 1;
         qb64_os_event_linux(&event, fgDisplay.Display, &qb64_os_event_info);
         if (qb64_os_event_info == 3)
             return;
+        // QB64-PE: custom code end
 
-        switch (event.type) {
+        switch( event.type )
+        {
         case ClientMessage:
-            if (fgIsSpaceballXEvent(&event)) {
-                fgSpaceballHandleXEvent(&event);
-                break;
-            }
+            if (fgStructure.CurrentWindow)
+                if(fgIsSpaceballXEvent(&event)) {
+                    fgSpaceballHandleXEvent(&event);
+                    break;
+                }
             /* Destroy the window when the WM_DELETE_WINDOW message arrives */
-            if ((Atom)event.xclient.data.l[0] == fgDisplay.DeleteWindow) {
-                GETWINDOW(xclient);
+            if( (Atom) event.xclient.data.l[ 0 ] == fgDisplay.DeleteWindow )
+            {
+                GETWINDOW( xclient );
+
+                // QB64-PE: custom code begin
                 qb64_custom_event(QB64_EVENT_CLOSE, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL);
-                /*                fgDestroyWindow ( window );
+
+                /*
+                fgDestroyWindow ( window );
 
                 if( fgState.ActionOnWindowClose == GLUT_ACTION_EXIT )
                 {
@@ -1044,8 +1081,10 @@ void FGAPIENTRY glutMainLoopEvent( void )
                 }
                 else if( fgState.ActionOnWindowClose == GLUT_ACTION_GLUTMAINLOOP_RETURNS )
                     fgState.ExecState = GLUT_EXEC_STATE_STOP;
+
                 return;
                 */
+                // QB64-PE: custom code end
             }
             break;
 
@@ -1189,6 +1228,13 @@ void FGAPIENTRY glutMainLoopEvent( void )
 
         case MotionNotify:
         {
+            /* if GLUT_SKIP_STALE_MOTION_EVENTS is true, then discard all but
+             * the last motion event from the queue
+             */
+            if(fgState.SkipStaleMotion) {
+                while(XCheckIfEvent(fgDisplay.Display, &event, match_motion, 0));
+            }
+
             GETWINDOW( xmotion );
             GETMOUSE( xmotion );
 
@@ -1289,8 +1335,8 @@ void FGAPIENTRY glutMainLoopEvent( void )
                  *
                  * XXX Note that {button} has already been decremented
                  * XXX in mapping from X button numbering to GLUT.
-                 *
-                 * XXX Should add support for partial wheel turns as Windows does -- 5/27/11
+				 *
+				 * XXX Should add support for partial wheel turns as Windows does -- 5/27/11
                  */
                 int wheel_number = (button - glutDeviceGet ( GLUT_NUM_MOUSE_BUTTONS )) / 2;
                 int direction = -1;
@@ -1475,10 +1521,12 @@ void FGAPIENTRY glutMainLoopEvent( void )
             break;
         }
 
+        // QB64-PE: custom code begin
         qb64_os_event_info = 2;
         qb64_os_event_linux(&event, fgDisplay.Display, &qb64_os_event_info);
         if (qb64_os_event_info == 3)
             return; //(although we would return anyway)
+        // QB64-PE: custom code end
     }
 
 #elif TARGET_HOST_MS_WINDOWS
@@ -1629,6 +1677,9 @@ static int fghGetWin32Modifiers (void)
 LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                                LPARAM lParam )
 {
+    // QB64-PE: custom code begin
+    static int raw_setup = 0;
+    static RAWINPUTDEVICE Rid[1];
     int qb64_os_event_info = 0;
     LRESULT qb64_os_event_return = 1;
 
@@ -1636,10 +1687,12 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
     qb64_os_event_return = qb64_os_event_windows(hWnd, uMsg, wParam, lParam, &qb64_os_event_info);
     if (qb64_os_event_info == 3)
         return qb64_os_event_return;
+    // QB64-PE: custom code end
 
-    static unsigned char lControl = 0, rControl = 0, lShift = 0, rShift = 0, lAlt = 0, rAlt = 0;
+    static unsigned char lControl = 0, rControl = 0, lShift = 0,
+                         rShift = 0, lAlt = 0, rAlt = 0;
 
-    SFG_Window* window;
+    SFG_Window* window, *child_window = NULL;
     PAINTSTRUCT ps;
     LRESULT lRet = 1;
 
@@ -1653,70 +1706,94 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
     /* printf ( "Window %3d message <%04x> %12d %12d\n", window?window->ID:0,
              uMsg, wParam, lParam ); */
 
+    /* Some events only sent to main window. Check if the current window that
+     * the mouse is over is a child window. Below when handling some messages,
+     * we make sure that we process callbacks on the child window instead.
+     * This mirrors how GLUT does things.
+     */
+    if (window && window->Children.First)
+    {
+        POINT mouse_pos;
+        SFG_WindowHandleType hwnd;
+        SFG_Window* temp_window;
+        
+        GetCursorPos( &mouse_pos );
+        ScreenToClient( window->Window.Handle, &mouse_pos );
+        hwnd = ChildWindowFromPoint(window->Window.Handle, mouse_pos);
+        if (hwnd)   /* can be NULL if mouse outside parent by the time we get here */
+        {
+            temp_window = fgWindowByHandle(hwnd);
+            if (temp_window && temp_window->Parent)    /* Verify we got a child window */
+                child_window = temp_window;
+        }
+    }
+
     if ( window )
     {
+      SFG_Window* temp_window = child_window?child_window:window;
+
+      fgState.Modifiers = fghGetWin32Modifiers( );
+
       /* Checking for CTRL, ALT, and SHIFT key positions:  Key Down! */
-	  if (hWnd == GetForegroundWindow()) {
-		  if ( !lControl && GetAsyncKeyState ( VK_LCONTROL ) )
-		  {
-			  INVOKE_WCB    ( *window, Special,
-							( GLUT_KEY_CTRL_L, window->State.MouseX, window->State.MouseY )
-						  );
+      if ( !lControl && GetAsyncKeyState ( VK_LCONTROL ) )
+      {
+          INVOKE_WCB  ( *temp_window, Special,
+                        ( GLUT_KEY_CTRL_L, temp_window->State.MouseX, temp_window->State.MouseY )
+                      );
 
-			  lControl = 1;
-		  }
+          lControl = 1;
+      }
 
-		  if ( !rControl && GetAsyncKeyState ( VK_RCONTROL ) )
-		  {
-			  INVOKE_WCB ( *window, Special,
-						   ( GLUT_KEY_CTRL_R, window->State.MouseX, window->State.MouseY )
-						 );
+      if ( !rControl && GetAsyncKeyState ( VK_RCONTROL ) )
+      {
+          INVOKE_WCB ( *temp_window, Special,
+                        ( GLUT_KEY_CTRL_R, temp_window->State.MouseX, temp_window->State.MouseY )
+                     );
 
-			  rControl = 1;
-		  }
+          rControl = 1;
+      }
 
-		  if ( !lShift && GetAsyncKeyState ( VK_LSHIFT ) )
-		  {
-			  INVOKE_WCB ( *window, Special,
-						   ( GLUT_KEY_SHIFT_L, window->State.MouseX, window->State.MouseY )
-						 );
+      if ( !lShift && GetAsyncKeyState ( VK_LSHIFT ) )
+      {
+          INVOKE_WCB ( *temp_window, Special,
+                        ( GLUT_KEY_SHIFT_L, temp_window->State.MouseX, temp_window->State.MouseY )
+                     );
 
-			  lShift = 1;
-		  }
+          lShift = 1;
+      }
 
-		  if ( !rShift && GetAsyncKeyState ( VK_RSHIFT ) )
-		  {
-			  INVOKE_WCB ( *window, Special,
-						   ( GLUT_KEY_SHIFT_R, window->State.MouseX, window->State.MouseY )
-						 );
+      if ( !rShift && GetAsyncKeyState ( VK_RSHIFT ) )
+      {
+          INVOKE_WCB ( *temp_window, Special,
+                        ( GLUT_KEY_SHIFT_R, temp_window->State.MouseX, temp_window->State.MouseY )
+                     );
 
-			  rShift = 1;
-		  }
+          rShift = 1;
+      }
 
-		  if ( !lAlt && GetAsyncKeyState ( VK_LMENU ) )
-		  {
-			  INVOKE_WCB ( *window, Special,
-						   ( GLUT_KEY_ALT_L, window->State.MouseX, window->State.MouseY )
-						 );
+      if ( !lAlt && GetAsyncKeyState ( VK_LMENU ) )
+      {
+          INVOKE_WCB ( *temp_window, Special,
+                        ( GLUT_KEY_ALT_L, temp_window->State.MouseX, temp_window->State.MouseY )
+                     );
 
-			  lAlt = 1;
-		  }
+          lAlt = 1;
+      }
 
-		  if ( !rAlt && GetAsyncKeyState ( VK_RMENU ) )
-		  {
-			  INVOKE_WCB ( *window, Special,
-						   ( GLUT_KEY_ALT_R, window->State.MouseX, window->State.MouseY )
-						 );
+      if ( !rAlt && GetAsyncKeyState ( VK_RMENU ) )
+      {
+          INVOKE_WCB ( *temp_window, Special,
+                        ( GLUT_KEY_ALT_R, temp_window->State.MouseX, temp_window->State.MouseY )
+                     );
 
-			  rAlt = 1;
-		  }
-	  }
+          rAlt = 1;
+      }
 
       /* Checking for CTRL, ALT, and SHIFT key positions:  Key Up! */
       if ( lControl && !GetAsyncKeyState ( VK_LCONTROL ) )
       {
-          INVOKE_WCB ( *window, SpecialUp,
-                       ( GLUT_KEY_CTRL_L, window->State.MouseX, window->State.MouseY )
+          INVOKE_WCB ( *temp_window, SpecialUp,
+                        ( GLUT_KEY_CTRL_L, temp_window->State.MouseX, temp_window->State.MouseY )
                      );
 
           lControl = 0;
@@ -1724,8 +1801,8 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
       if ( rControl && !GetAsyncKeyState ( VK_RCONTROL ) )
       {
-          INVOKE_WCB ( *window, SpecialUp,
-                       ( GLUT_KEY_CTRL_R, window->State.MouseX, window->State.MouseY )
+          INVOKE_WCB ( *temp_window, SpecialUp,
+                        ( GLUT_KEY_CTRL_R, temp_window->State.MouseX, temp_window->State.MouseY )
                      );
 
           rControl = 0;
@@ -1733,8 +1810,8 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
       if ( lShift && !GetAsyncKeyState ( VK_LSHIFT ) )
       {
-          INVOKE_WCB ( *window, SpecialUp,
-                       ( GLUT_KEY_SHIFT_L, window->State.MouseX, window->State.MouseY )
+          INVOKE_WCB ( *temp_window, SpecialUp,
+                        ( GLUT_KEY_SHIFT_L, temp_window->State.MouseX, temp_window->State.MouseY )
                      );
 
           lShift = 0;
@@ -1742,8 +1819,8 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
       if ( rShift && !GetAsyncKeyState ( VK_RSHIFT ) )
       {
-          INVOKE_WCB ( *window, SpecialUp,
-                       ( GLUT_KEY_SHIFT_R, window->State.MouseX, window->State.MouseY )
+          INVOKE_WCB ( *temp_window, SpecialUp,
+                        ( GLUT_KEY_SHIFT_R, temp_window->State.MouseX, temp_window->State.MouseY )
                      );
 
           rShift = 0;
@@ -1751,8 +1828,8 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
       if ( lAlt && !GetAsyncKeyState ( VK_LMENU ) )
       {
-          INVOKE_WCB ( *window, SpecialUp,
-                       ( GLUT_KEY_ALT_L, window->State.MouseX, window->State.MouseY )
+          INVOKE_WCB ( *temp_window, SpecialUp,
+                        ( GLUT_KEY_ALT_L, temp_window->State.MouseX, temp_window->State.MouseY )
                      );
 
           lAlt = 0;
@@ -1760,12 +1837,14 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
       if ( rAlt && !GetAsyncKeyState ( VK_RMENU ) )
       {
-          INVOKE_WCB ( *window, SpecialUp,
-                       ( GLUT_KEY_ALT_R, window->State.MouseX, window->State.MouseY )
+          INVOKE_WCB ( *temp_window, SpecialUp,
+                        ( GLUT_KEY_ALT_R, temp_window->State.MouseX, temp_window->State.MouseY )
                      );
 
           rAlt = 0;
       }
+
+      fgState.Modifiers = INVALID_MODIFIERS;
     }
 
     switch( uMsg )
@@ -1882,19 +1961,37 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
     case WM_SETFOCUS:
 /*        printf("WM_SETFOCUS: %p\n", window ); */
+
         lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );
-        INVOKE_WCB( *window, Entry, ( GLUT_ENTERED ) );
+
+        if (child_window)
+        {
+            /* If child should have focus instead, set it here. */
+            SetFocus(child_window->Window.Handle);
+            SetActiveWindow( child_window->Window.Handle );
+            INVOKE_WCB( *child_window, Entry, ( GLUT_ENTERED ) );
+            UpdateWindow ( child_window->Window.Handle );
+        }
+        else
+        {
+            SetActiveWindow( window->Window.Handle );
+            INVOKE_WCB( *window, Entry, ( GLUT_ENTERED ) );
+        }
+        /* Always request update on main window to be safe */
+        UpdateWindow ( hWnd );
         break;
 
     case WM_KILLFOCUS:
-/*        printf("WM_KILLFOCUS: %p\n", window ); */
-        lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );
-        INVOKE_WCB( *window, Entry, ( GLUT_LEFT ) );
+        {
+            SFG_Window* saved_window = fgStructure.CurrentWindow;
+/*            printf("WM_KILLFOCUS: %p\n", window ); */
+            lRet = DefWindowProc( hWnd, uMsg, wParam, lParam );
+            INVOKE_WCB( *window, Entry, ( GLUT_LEFT ) );
+            fgSetWindow(saved_window);
 
-        if( window->IsMenu &&
-            window->ActiveMenu && window->ActiveMenu->IsActive )
-            fgUpdateMenuHighlight( window->ActiveMenu );
-
+            /* Check if there are any open menus that need to be closed */
+            fgPlatformCheckMenuDeactivate();
+        }
         break;
 
 #if 0
@@ -1926,25 +2023,28 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
     case WM_PAINT:
         /* Turn on the visibility in case it was turned off somehow */
         window->State.Visible = GL_TRUE;
+        InvalidateRect( hWnd, NULL, GL_FALSE ); /* Make sure whole window is repainted. Bit of a hack, but a safe one from what google turns up... */
         BeginPaint( hWnd, &ps );
         fghRedrawWindow( window );
         EndPaint( hWnd, &ps );
         break;
 
     case WM_CLOSE:
-        // QB64
-        /*
-                fgDestroyWindow ( window );
-                if ( fgState.ActionOnWindowClose != GLUT_ACTION_CONTINUE_EXECUTION )
-                    PostQuitMessage(0);
-        */
+        // QB64-PE: custom code begin
         qb64_custom_event(QB64_EVENT_CLOSE, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL);
-
+        /*
+        fgDestroyWindow ( window );
+        if ( fgState.ActionOnWindowClose != GLUT_ACTION_CONTINUE_EXECUTION )
+            PostQuitMessage(0);
+        */
+        // QB64-PE: custom code end
         break;
 
+    // QB64-PE: custom code begin
     case WM_DROPFILES:
         qb64_custom_event(QB64_EVENT_FILE_DROP, 0, 0, 0, 0, 0, 0, 0, 0, (void *)wParam, NULL);
         break;
+    // QB64-PE: custom code end
 
     case WM_DESTROY:
         /*
@@ -1952,12 +2052,10 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
          */
         return 0;
 
-        static int raw_setup = 0;
-        static RAWINPUTDEVICE Rid[1];
+    // QB64-PE: custom code begin
     case WM_INPUT: {
         if (raw_setup) {
-            // QB64
-            // adapted from http://msdn.microsoft.com/en-us/library/windows/desktop/ee418864%28v=vs.85%29.aspx#WM_INPUT
+            // Adapted from http://msdn.microsoft.com/en-us/library/windows/desktop/ee418864%28v=vs.85%29.aspx#WM_INPUT
             UINT dwSize = sizeof(RAWINPUT);
             static BYTE lpb[sizeof(RAWINPUT)];
             GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
@@ -1971,9 +2069,11 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         }
         break;
     }
+    // QB64-PE: custom code end
 
-    case WM_MOUSEMOVE: {
-
+    case WM_MOUSEMOVE:
+    {
+	// QB64-PE: custom code begin
         if (!raw_setup) {
             raw_setup = 1;
 #    ifndef HID_USAGE_PAGE_GENERIC
@@ -1988,8 +2088,9 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             Rid[0].hwndTarget = window->Window.Handle;
             RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
         }
+	// QB64-PE: custom code end
 
-#    if defined(_WIN32_WCE)
+#if defined(_WIN32_WCE)
         window->State.MouseX = 320-HIWORD( lParam );
         window->State.MouseY = LOWORD( lParam );
 #else
@@ -2006,7 +2107,6 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             fgUpdateMenuHighlight( window->ActiveMenu );
             break;
         }
-        SetFocus(window->Window.Handle);
 
         fgState.Modifiers = fghGetWin32Modifiers( );
 
@@ -2020,7 +2120,8 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                                             window->State.MouseY ) );
 
         fgState.Modifiers = INVALID_MODIFIERS;
-    } break;
+    }
+    break;
 
     case WM_LBUTTONDOWN:
     case WM_MBUTTONDOWN:
@@ -2132,19 +2233,18 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
     }
     break;
 
-    case 0x020a:
-        /* Should be WM_MOUSEWHEEL but my compiler doesn't recognize it */
+    case WM_MOUSEWHEEL:
     {
         int wheel_number = LOWORD( wParam );
         short ticks = ( short )HIWORD( wParam );
-        fgState.MouseWheelTicks += ticks;
+		fgState.MouseWheelTicks += ticks;
 
         /*
          * XXX Should use WHEEL_DELTA instead of 120
          */
-        if ( abs ( fgState.MouseWheelTicks ) > 120 )
-        {
-            int direction = ( fgState.MouseWheelTicks > 0 ) ? 1 : -1;
+		if ( abs ( fgState.MouseWheelTicks ) >= 120 )
+		{
+			int direction = ( fgState.MouseWheelTicks > 0 ) ? 1 : -1;
 
             if( ! FETCH_WCB( *window, MouseWheel ) &&
                 ! FETCH_WCB( *window, Mouse ) )
@@ -2156,8 +2256,8 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             /*
              * XXX Should use WHEEL_DELTA instead of 120
              */
-            while( abs ( fgState.MouseWheelTicks ) > 120 )
-            {
+            while( abs ( fgState.MouseWheelTicks ) >= 120 )
+			{
                 if( FETCH_WCB( *window, MouseWheel ) )
                     INVOKE_WCB( *window, MouseWheel,
                                 ( wheel_number,
@@ -2167,7 +2267,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                                 )
                     );
                 else  /* No mouse wheel, call the mouse button callback twice */
-                {
+				{
                     /*
                      * Map wheel zero to button 3 and 4; +1 to 3, -1 to 4
                      *  "    "   one                     +1 to 5, -1 to 6, ...
@@ -2186,23 +2286,23 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                                 ( button, GLUT_UP,
                                   window->State.MouseX, window->State.MouseY )
                     );
-                }
+				}
 
                 /*
                  * XXX Should use WHEEL_DELTA instead of 120
                  */
-                fgState.MouseWheelTicks -= 120 * direction;
-            }
+				fgState.MouseWheelTicks -= 120 * direction;
+			}
 
             fgState.Modifiers = INVALID_MODIFIERS;
-        }
+		}
     }
     break ;
 
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
     {
-        // QB64
+        // QB64-PE: custom code begin
         if (wParam == VK_PAUSE) {
             qb64_custom_event(QB64_EVENT_KEY, VK + QBVK_PAUSE, 1, 0, 0, 0, 0, 0, 0, NULL, NULL);
             break;
@@ -2211,9 +2311,13 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             qb64_custom_event(QB64_EVENT_KEY, VK + QBVK_BREAK, 1, 0, 0, 0, 0, 0, 0, NULL, NULL);
             break;
         }
+        // QB64-PE: custom code end
 
         int keypress = -1;
         POINT mouse_pos ;
+
+        if (child_window)
+            window = child_window;
 
         if( ( fgState.KeyRepeat==GLUT_KEY_REPEAT_OFF || window->State.IgnoreKeyRepeat==GL_TRUE ) && (HIWORD(lParam) & KF_REPEAT) )
             break;
@@ -2256,12 +2360,12 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             KEY( VK_RIGHT,  GLUT_KEY_RIGHT     );
             KEY( VK_DOWN,   GLUT_KEY_DOWN      );
             KEY( VK_INSERT, GLUT_KEY_INSERT    );
-            KEY( VK_LCONTROL, GLUT_KEY_CTRL_L  );
-            KEY( VK_RCONTROL, GLUT_KEY_CTRL_R  );
-            KEY( VK_LSHIFT, GLUT_KEY_SHIFT_L   );
-            KEY( VK_RSHIFT, GLUT_KEY_SHIFT_R   );
-            KEY( VK_LMENU,  GLUT_KEY_ALT_L     );
-            KEY( VK_RMENU,  GLUT_KEY_ALT_R     );
+
+        case VK_LCONTROL:  case VK_RCONTROL:  case VK_CONTROL:
+        case VK_LSHIFT:    case VK_RSHIFT:    case VK_SHIFT:
+        case VK_LMENU:     case VK_RMENU:     case VK_MENU:
+            /* These keypresses and releases are handled earlier in the function */
+            break;
 
         case VK_DELETE:
             /* The delete key should be treated as an ASCII keypress: */
@@ -2305,7 +2409,7 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
     case WM_SYSKEYUP:
     case WM_KEYUP:
     {
-        // QB64
+        // QB64-PE: custom code begin
         if (wParam == VK_PAUSE) {
             qb64_custom_event(QB64_EVENT_KEY, VK + QBVK_PAUSE, -1, 0, 0, 0, 0, 0, 0, NULL, NULL);
             break;
@@ -2314,9 +2418,13 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             qb64_custom_event(QB64_EVENT_KEY, VK + QBVK_BREAK, -1, 0, 0, 0, 0, 0, 0, NULL, NULL);
             break;
         }
+        // QB64-PE: custom code end
 
         int keypress = -1;
         POINT mouse_pos;
+
+        if (child_window)
+            window = child_window;
 
         /*
          * Remember the current modifiers state. This is done here in order
@@ -2358,12 +2466,12 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             KEY( VK_RIGHT,  GLUT_KEY_RIGHT     );
             KEY( VK_DOWN,   GLUT_KEY_DOWN      );
             KEY( VK_INSERT, GLUT_KEY_INSERT    );
-            KEY( VK_LCONTROL, GLUT_KEY_CTRL_L  );
-            KEY( VK_RCONTROL, GLUT_KEY_CTRL_R  );
-            KEY( VK_LSHIFT, GLUT_KEY_SHIFT_L   );
-            KEY( VK_RSHIFT, GLUT_KEY_SHIFT_R   );
-            KEY( VK_LMENU,  GLUT_KEY_ALT_L     );
-            KEY( VK_RMENU,  GLUT_KEY_ALT_R     );
+
+          case VK_LCONTROL:  case VK_RCONTROL:  case VK_CONTROL:
+          case VK_LSHIFT:    case VK_RSHIFT:    case VK_SHIFT:
+          case VK_LMENU:     case VK_RMENU:     case VK_MENU:
+            /* These keypresses and releases are handled earlier in the function */
+            break;
 
           case VK_DELETE:
               /* The delete key should be treated as an ASCII keypress: */
@@ -2398,11 +2506,15 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             );
 
         fgState.Modifiers = INVALID_MODIFIERS;
-    } break;
+    }
+    break;
 
     case WM_SYSCHAR:
     case WM_CHAR:
     {
+      if (child_window)
+        window = child_window;
+
       if( (fgState.KeyRepeat==GLUT_KEY_REPEAT_OFF || window->State.IgnoreKeyRepeat==GL_TRUE) && (HIWORD(lParam) & KF_REPEAT) )
             break;
 
@@ -2552,50 +2664,50 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         break;
 
 #ifdef WM_TOUCH
-    /* handle multi-touch messages */
-    case WM_TOUCH:
-    {
-        unsigned int numInputs = (unsigned int)wParam;
-        unsigned int i = 0;
-        TOUCHINPUT* ti = (TOUCHINPUT*)malloc( sizeof(TOUCHINPUT)*numInputs);
+	/* handle multi-touch messages */
+	case WM_TOUCH:
+	{
+		unsigned int numInputs = (unsigned int)wParam;
+		unsigned int i = 0;
+		TOUCHINPUT* ti = (TOUCHINPUT*)malloc( sizeof(TOUCHINPUT)*numInputs);
 
-        if (fghGetTouchInputInfo == (pGetTouchInputInfo)0xDEADBEEF) {
-            fghGetTouchInputInfo = (pGetTouchInputInfo)GetProcAddress(GetModuleHandle("user32"),"GetTouchInputInfo");
-            fghCloseTouchInputHandle = (pCloseTouchInputHandle)GetProcAddress(GetModuleHandle("user32"),"CloseTouchInputHandle");
-        }
+		if (fghGetTouchInputInfo == (pGetTouchInputInfo)0xDEADBEEF) {
+		    fghGetTouchInputInfo = (pGetTouchInputInfo)GetProcAddress(GetModuleHandle("user32"),"GetTouchInputInfo");
+		    fghCloseTouchInputHandle = (pCloseTouchInputHandle)GetProcAddress(GetModuleHandle("user32"),"CloseTouchInputHandle");
+		}
 
-        if (!fghGetTouchInputInfo) { 
-            free( (void*)ti );
-            break;
-        }
+		if (!fghGetTouchInputInfo) { 
+			free( (void*)ti );
+			break;
+		}
 
-        if (fghGetTouchInputInfo( (HTOUCHINPUT)lParam, numInputs, ti, sizeof(TOUCHINPUT) )) {
-            /* Handle each contact point */
-            for (i = 0; i < numInputs; ++i ) {
+		if (fghGetTouchInputInfo( (HTOUCHINPUT)lParam, numInputs, ti, sizeof(TOUCHINPUT) )) {
+			/* Handle each contact point */
+			for (i = 0; i < numInputs; ++i ) {
 
-                POINT tp;
-                tp.x = TOUCH_COORD_TO_PIXEL(ti[i].x);
-                tp.y = TOUCH_COORD_TO_PIXEL(ti[i].y);
-                ScreenToClient( hWnd, &tp );
+				POINT tp;
+				tp.x = TOUCH_COORD_TO_PIXEL(ti[i].x);
+				tp.y = TOUCH_COORD_TO_PIXEL(ti[i].y);
+				ScreenToClient( hWnd, &tp );
 
-                ti[i].dwID = ti[i].dwID * 2;
+				ti[i].dwID = ti[i].dwID * 2;
 
-                if (ti[i].dwFlags & TOUCHEVENTF_DOWN) {
-                    INVOKE_WCB( *window, MultiEntry,  ( ti[i].dwID, GLUT_ENTERED ) );
-                    INVOKE_WCB( *window, MultiButton, ( ti[i].dwID, tp.x, tp.y, 0, GLUT_DOWN ) );
-                } else if (ti[i].dwFlags & TOUCHEVENTF_MOVE) {
-                    INVOKE_WCB( *window, MultiMotion, ( ti[i].dwID, tp.x, tp.y ) );
-                } else if (ti[i].dwFlags & TOUCHEVENTF_UP)   { 
-                    INVOKE_WCB( *window, MultiButton, ( ti[i].dwID, tp.x, tp.y, 0, GLUT_UP ) );
-                    INVOKE_WCB( *window, MultiEntry,  ( ti[i].dwID, GLUT_LEFT ) );
-                }
-            }
-        }
-        fghCloseTouchInputHandle((HTOUCHINPUT)lParam);
-        free( (void*)ti );
-        lRet = 0; /*DefWindowProc( hWnd, uMsg, wParam, lParam );*/
-        break;
-    }
+				if (ti[i].dwFlags & TOUCHEVENTF_DOWN) {
+					INVOKE_WCB( *window, MultiEntry,  ( ti[i].dwID, GLUT_ENTERED ) );
+					INVOKE_WCB( *window, MultiButton, ( ti[i].dwID, tp.x, tp.y, 0, GLUT_DOWN ) );
+				} else if (ti[i].dwFlags & TOUCHEVENTF_MOVE) {
+					INVOKE_WCB( *window, MultiMotion, ( ti[i].dwID, tp.x, tp.y ) );
+				} else if (ti[i].dwFlags & TOUCHEVENTF_UP)   { 
+					INVOKE_WCB( *window, MultiButton, ( ti[i].dwID, tp.x, tp.y, 0, GLUT_UP ) );
+					INVOKE_WCB( *window, MultiEntry,  ( ti[i].dwID, GLUT_LEFT ) );
+				}
+			}
+		}
+		fghCloseTouchInputHandle((HTOUCHINPUT)lParam);
+		free( (void*)ti );
+		lRet = 0; /*DefWindowProc( hWnd, uMsg, wParam, lParam );*/
+		break;
+	}
 #endif
     default:
         /* Handle unhandled messages */
@@ -2603,10 +2715,12 @@ LRESULT CALLBACK fgWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         break;
     }
 
+    // QB64-PE: custom code begin
     qb64_os_event_info = 2;
     qb64_os_event_return = qb64_os_event_windows(hWnd, uMsg, wParam, lParam, &qb64_os_event_info);
     if (qb64_os_event_info == 3)
         return qb64_os_event_return;
+    // QB64-PE: custom code end
 
     return lRet;
 }

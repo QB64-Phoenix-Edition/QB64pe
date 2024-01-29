@@ -48,7 +48,7 @@
 /* -- GLOBAL VARIABLES ----------------------------------------------------- */
 
 /*
- * A structure pointed by g_pDisplay holds all information
+ * A structure fgDisplay holds all information
  * regarding the display, screen, root window etc.
  */
 SFG_Display fgDisplay;
@@ -77,9 +77,9 @@ SFG_State fgState = { { -1, -1, GL_FALSE },  /* Position */
                       0,                      /* ActiveMenus */
                       NULL,                   /* MenuStateCallback */
                       NULL,                   /* MenuStatusCallback */
-                      { 640, 480, GL_TRUE },  /* GameModeSize */
-                      16,                     /* GameModeDepth */
-                      72,                     /* GameModeRefresh */
+                      { -1, -1, GL_TRUE },    /* GameModeSize */
+                      -1,                     /* GameModeDepth */
+                      -1,                     /* GameModeRefresh */
                       GLUT_ACTION_EXIT,       /* ActionOnWindowClose */
                       GLUT_EXEC_STATE_INIT,   /* ExecState */
                       NULL,                   /* ProgramName */
@@ -89,6 +89,7 @@ SFG_State fgState = { { -1, -1, GL_FALSE },  /* Position */
                       0,                      /* MouseWheelTicks */
                       1,                      /* AuxiliaryBufferNumber */
                       4,                      /* SampleNumber */
+                      GL_FALSE,               /* SkipStaleMotion */
                       1,                      /* MajorVersion */
                       0,                      /* MinorVersion */
                       0,                      /* ContextFlags */
@@ -392,7 +393,10 @@ static void fghInitialize( const char* displayName )
     fgState.Initialised = GL_TRUE;
 
     /* Avoid registering atexit callback on Win32 as it results in an access
-     * violation due to calling into a module which has been unloaded. */
+     * violation due to calling into a module which has been unloaded.
+     * Any cleanup isn't needed on Windows anyway, the OS takes care of it.c
+     * see: http://blogs.msdn.com/b/oldnewthing/archive/2012/01/05/10253268.aspx
+     */
 #if ( TARGET_HOST_MS_WINDOWS == 0 )
     atexit(fgDeinitialize);
 #endif
@@ -483,10 +487,10 @@ void fgDeinitialize( void )
     fgState.KeyRepeat       = GLUT_KEY_REPEAT_ON;
     fgState.Modifiers       = INVALID_MODIFIERS;
 
-    fgState.GameModeSize.X  = 640;
-    fgState.GameModeSize.Y  = 480;
-    fgState.GameModeDepth   =  16;
-    fgState.GameModeRefresh =  72;
+    fgState.GameModeSize.X  = -1;
+    fgState.GameModeSize.Y  = -1;
+    fgState.GameModeDepth   = -1;
+    fgState.GameModeRefresh = -1;
 
     fgListInit( &fgState.Timers );
     fgListInit( &fgState.FreeTimers );
@@ -1114,6 +1118,7 @@ void FGAPIENTRY glutInitDisplayString( const char* displayMode )
         case 35 :  /* "borderless":  windows should not have borders */
 #if TARGET_HOST_POSIX_X11
 #endif
+            glut_state_flag |= GLUT_BORDERLESS;
             break ;
 
         case 36 :  /* "aux":  some number of aux buffers */

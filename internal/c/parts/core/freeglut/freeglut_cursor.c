@@ -159,6 +159,22 @@ static void fghWarpPointer ( int x, int y )
     /* Make the warp visible immediately. */
     XFlush( fgDisplay.Display );
 }
+
+void fghGetCursorPos(SFG_XYUse *mouse_pos)
+{
+    /* Get current pointer location in screen coordinates
+    */
+    Window junk_window;
+    unsigned int junk_mask;
+    int junk_pos;
+    
+    XQueryPointer(fgDisplay.Display, fgDisplay.RootWindow,
+            &junk_window, &junk_window,
+            &mouse_pos->X, &mouse_pos->Y,
+            &junk_pos, &junk_pos, &junk_mask);
+    
+    mouse_pos->Use = GL_TRUE;
+}
 #endif
 
 
@@ -205,7 +221,7 @@ static void fghSetCursor ( SFG_Window *window, int cursorID )
     {
         MAP_CURSOR( GLUT_CURSOR_RIGHT_ARROW,         IDC_ARROW     );
         MAP_CURSOR( GLUT_CURSOR_LEFT_ARROW,          IDC_ARROW     );
-        MAP_CURSOR( GLUT_CURSOR_INFO,                IDC_HAND      );
+        MAP_CURSOR( GLUT_CURSOR_INFO,                IDC_HAND      ); // QB64-PE: GLUT_CURSOR_INFO -> IDC_HAND per FreeGLUT 3.4.0
         MAP_CURSOR( GLUT_CURSOR_DESTROY,             IDC_CROSS     );
         MAP_CURSOR( GLUT_CURSOR_HELP,                IDC_HELP      );
         MAP_CURSOR( GLUT_CURSOR_CYCLE,               IDC_SIZEALL   );
@@ -243,6 +259,18 @@ static void fghWarpPointer ( int x, int y )
     /* ClientToScreen() translates {coords} for us. */
     ClientToScreen( fgStructure.CurrentWindow->Window.Handle, &coords );
     SetCursorPos( coords.x, coords.y );
+}
+
+void fghGetCursorPos(SFG_XYUse *mouse_pos)
+{
+    /* Get current pointer location in screen coordinates
+     */
+    POINT pos;
+    GetCursorPos(&pos);
+
+    mouse_pos->X = pos.x;
+    mouse_pos->Y = pos.y;
+    mouse_pos->Use = GL_TRUE;
 }
 #endif
 

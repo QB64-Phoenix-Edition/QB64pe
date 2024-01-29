@@ -58,7 +58,7 @@ static int xrandr_resize(int xsz, int ysz, int rate, int just_checking)
     /* we only heed the rate if we CAN actually use it (Xrandr >= 1.1) and
      * the user actually cares about it (rate > 0)
      */
-    use_rate = ( rate > 0 ) && ( ( ver_major >= 1 ) ||
+    use_rate = ( rate > 0 ) && ( ( ver_major > 1 ) ||
 		                         ( ( ver_major == 1 ) && ( ver_minor >= 1 ) ) );
 
     /* this loop is only so that the whole thing will be repeated if someone
@@ -105,7 +105,7 @@ static int xrandr_resize(int xsz, int ysz, int rate, int just_checking)
         if(res_idx == -1)
             break;  /* no matching resolution */
 
-#if ( RANDR_MAJOR >= 1 ) || ( ( RANDR_MAJOR == 1 ) && ( RANDR_MINOR >= 1 ) )
+#if ( RANDR_MAJOR > 1 ) || ( ( RANDR_MAJOR == 1 ) && ( RANDR_MINOR >= 1 ) )
         if(use_rate) {
             rate = fgState.GameModeRefresh;
 
@@ -130,7 +130,7 @@ static int xrandr_resize(int xsz, int ysz, int rate, int just_checking)
             break;
         }
 
-#if ( RANDR_MAJOR >= 1 ) || ( ( RANDR_MAJOR == 1 ) && ( RANDR_MINOR >= 1 ) )
+#if ( RANDR_MAJOR > 1 ) || ( ( RANDR_MAJOR == 1 ) && ( RANDR_MINOR >= 1 ) )
         if(use_rate)
             result = XRRSetScreenConfigAndRate(fgDisplay.Display, xrr_config,
                     fgDisplay.RootWindow, res_idx, rot, rate, timestamp);
@@ -153,6 +153,96 @@ static int xrandr_resize(int xsz, int ysz, int rate, int just_checking)
     return -1;
 }
 #endif  /* TARGET_HOST_POSIX_X11 */
+
+#if TARGET_HOST_MS_WINDOWS
+/*
+ * Changes to requested devmode, if it doesn't match current mode
+ */
+GLboolean fghPlatformChangeDisplayMode(GLboolean haveToTest, DEVMODE *devModeRequested)
+{
+    GLboolean success = GL_FALSE;
+    DEVMODE  devModeCurrent;
+    char *fggmstr = NULL;
+    char displayMode[300];
+
+    /* Get current display mode */
+    EnumDisplaySettings( fgDisplay.DisplayName, ENUM_CURRENT_SETTINGS, &devModeCurrent );
+    /* Now see if requested matches current mode, then we're done
+     * There's only four fields we touch:
+     * - dmPelsWidth
+     * - dmPelsHeight
+     * - dmBitsPerPel
+     * - dmDisplayFrequency
+     */
+    if (devModeCurrent.dmPelsWidth       ==devModeRequested->dmPelsWidth &&
+        devModeCurrent.dmPelsHeight      ==devModeRequested->dmPelsHeight && 
+        devModeCurrent.dmBitsPerPel      ==devModeRequested->dmBitsPerPel && 
+        devModeCurrent.dmDisplayFrequency==devModeRequested->dmDisplayFrequency)
+    {
+        if (!haveToTest)
+        {
+            /* update vars in case if actual switch was requested */
+            EnumDisplaySettings( fgDisplay.DisplayName, ENUM_CURRENT_SETTINGS, &devModeCurrent );
+            fgState.GameModeSize.X  = devModeCurrent.dmPelsWidth;        
+            fgState.GameModeSize.Y  = devModeCurrent.dmPelsHeight;
+            fgState.GameModeDepth   = devModeCurrent.dmBitsPerPel;
+            fgState.GameModeRefresh = devModeCurrent.dmDisplayFrequency;
+        }
+
+        /* We're done */
+        return GL_TRUE;
+    }
+
+
+    /* Ok, we do have a mode switch to perform/test */
+    switch ( ChangeDisplaySettingsEx(fgDisplay.DisplayName, devModeRequested, NULL, haveToTest ? CDS_TEST : CDS_FULLSCREEN , NULL) )
+    {
+    case DISP_CHANGE_SUCCESSFUL:
+        success = GL_TRUE;
+
+        if (!haveToTest)
+        {
+            /* update vars in case if windows switched to proper mode */
+            EnumDisplaySettings( fgDisplay.DisplayName, ENUM_CURRENT_SETTINGS, &devModeCurrent );
+            fgState.GameModeSize.X  = devModeCurrent.dmPelsWidth;        
+            fgState.GameModeSize.Y  = devModeCurrent.dmPelsHeight;
+            fgState.GameModeDepth   = devModeCurrent.dmBitsPerPel;
+            fgState.GameModeRefresh = devModeCurrent.dmDisplayFrequency;
+        }
+        break;
+    case DISP_CHANGE_RESTART:
+        fggmstr = "The computer must be restarted for the graphics mode to work.";
+        break;
+    case DISP_CHANGE_BADFLAGS:
+        fggmstr = "An invalid set of flags was passed in.";
+        break;
+    case DISP_CHANGE_BADPARAM:
+        fggmstr = "An invalid parameter was passed in. This can include an invalid flag or combination of flags.";
+        break;
+    case DISP_CHANGE_FAILED:
+        fggmstr = "The display driver failed the specified graphics mode.";
+        break;
+    case DISP_CHANGE_BADMODE:
+        fggmstr = "The graphics mode is not supported.";
+        break;
+    default:
+        fggmstr = "Unknown error in graphics mode???"; /* dunno if it is possible, MSDN does not mention any other error */
+        break;
+    }
+
+    if ( !success )
+    {
+        /* I'd rather get info whats going on in my program than wonder about */
+        /* what magic happens behind my back, its lib for devels after all ;) */
+
+        /* append display mode to error to make things more informative */
+        sprintf(displayMode,"%s Problem with requested mode: %lux%lu:%lu@%lu", fggmstr, devModeRequested->dmPelsWidth, devModeRequested->dmPelsHeight, devModeRequested->dmBitsPerPel, devModeRequested->dmDisplayFrequency);
+        fgWarning(displayMode);
+    }
+    
+    return success;
+}
+#endif
 
 /*
  * Remembers the current visual settings, so that
@@ -190,7 +280,7 @@ static void fghRememberState( void )
             fgDisplay.prev_ysz = ssizes[curr].height;
             fgDisplay.prev_refresh = -1;
 
-#       if ( RANDR_MAJOR >= 1 ) || ( ( RANDR_MAJOR == 1 ) && ( RANDR_MINOR >= 1 ) )
+#       if ( RANDR_MAJOR > 1 ) || ( ( RANDR_MAJOR == 1 ) && ( RANDR_MINOR >= 1 ) )
             if(fgState.GameModeRefresh != -1) {
                 fgDisplay.prev_refresh = XRRConfigCurrentRate(xrr_config);
             }
@@ -355,7 +445,7 @@ static void fghRestoreState( void )
 #elif TARGET_HOST_MS_WINDOWS
 
     /* Restore the previously remembered desktop display settings */
-    ChangeDisplaySettingsEx( fgDisplay.DisplayName,&fgDisplay.DisplayMode, 0,0,0 );
+    fghPlatformChangeDisplayMode(GL_FALSE,&fgDisplay.DisplayMode);
 
 #endif
 }
@@ -516,11 +606,10 @@ static GLboolean fghChangeDisplayMode( GLboolean haveToTest )
 #elif TARGET_HOST_MS_WINDOWS
 
     DEVMODE  devMode;
-    char *fggmstr = NULL;
-    char displayMode[300];
 
     success = GL_FALSE;
 
+    /* Get current display mode */
     EnumDisplaySettings( fgDisplay.DisplayName, -1, &devMode ); 
     devMode.dmFields = 0;
 
@@ -545,50 +634,7 @@ static GLboolean fghChangeDisplayMode( GLboolean haveToTest )
         devMode.dmFields |= DM_DISPLAYFREQUENCY;
     }
 
-    switch ( ChangeDisplaySettingsEx(fgDisplay.DisplayName, &devMode, NULL, haveToTest ? CDS_TEST : CDS_FULLSCREEN , NULL) )
-    {
-    case DISP_CHANGE_SUCCESSFUL:
-        success = GL_TRUE;
-
-        if (!haveToTest)
-        {
-            /* update vars in case if windows switched to proper mode */
-            EnumDisplaySettings( fgDisplay.DisplayName, FREEGLUT_ENUM_CURRENT_SETTINGS, &devMode );
-            fgState.GameModeSize.X  = devMode.dmPelsWidth;        
-            fgState.GameModeSize.Y  = devMode.dmPelsHeight;
-            fgState.GameModeDepth   = devMode.dmBitsPerPel;
-            fgState.GameModeRefresh = devMode.dmDisplayFrequency;
-        }
-		break;
-    case DISP_CHANGE_RESTART:
-        fggmstr = "The computer must be restarted for the graphics mode to work.";
-        break;
-    case DISP_CHANGE_BADFLAGS:
-        fggmstr = "An invalid set of flags was passed in.";
-        break;
-    case DISP_CHANGE_BADPARAM:
-        fggmstr = "An invalid parameter was passed in. This can include an invalid flag or combination of flags.";
-        break;
-    case DISP_CHANGE_FAILED:
-        fggmstr = "The display driver failed the specified graphics mode.";
-        break;
-    case DISP_CHANGE_BADMODE:
-        fggmstr = "The graphics mode is not supported.";
-        break;
-    default:
-        fggmstr = "Unknown error in graphics mode???"; /* dunno if it is possible,MSDN does not mention any other error */
-        break;
-    }
-
-    if ( !success )
-    {
-        /* I'd rather get info whats going on in my program than wonder about */
-        /* magic happenings behind my back, its lib for devels at last ;) */
-        
-        /* append display mode to error to make things more informative */
-        sprintf(displayMode,"%s Problem with requested mode: %ix%i:%i@%i", fggmstr, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel, devMode.dmDisplayFrequency);
-        fgWarning(displayMode);
-    }
+    success = fghPlatformChangeDisplayMode(haveToTest, &devMode);
 #endif
 
     return success;

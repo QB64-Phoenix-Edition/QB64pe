@@ -25,16 +25,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// QB64
-void QB64_Window_Handle(void *handle);
-
-int QB64_Resizable();
+// QB64-PE: custom code begin
 /*
-changed:
+Changed:
 WS_OVERLAPPEDWINDOW
 ...to...
-((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
+((WS_OVERLAPPEDWINDOW * QB64_Resizable()) | WS_DLGFRAME | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
 */
+void QB64_Window_Handle(void *handle);
+int QB64_Resizable();
+// QB64-PE: custom code end
 
 #define FREEGLUT_BUILDING_LIB
 #include <GL/freeglut.h>
@@ -102,7 +102,7 @@ WS_OVERLAPPEDWINDOW
 
 #if TARGET_HOST_MS_WINDOWS
 /* The following include file is available from SGI but is not standard:
- *   #include <wglext.h>
+ *   #include <GL/wglext.h>
  * So we copy the necessary parts out of it.
  * XXX: should local definitions for extensions be put in a separate include file?
  */
@@ -153,7 +153,7 @@ typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShar
 #endif  /* TARGET_HOST_MS_WINDOWS */
 
 #ifdef WM_TOUCH
-    typedef BOOL (WINAPI *pRegisterTouchWindow)(HWND,ULONG);
+	typedef BOOL (WINAPI *pRegisterTouchWindow)(HWND,ULONG);
    static pRegisterTouchWindow fghRegisterTouchWindow = (pRegisterTouchWindow)0xDEADBEEF;
 #endif
 
@@ -186,16 +186,9 @@ typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShar
 
 /* -- PRIVATE FUNCTIONS ---------------------------------------------------- */
 
-static int fghIsLegacyContextVersionRequested( void )
-{
-  return fgState.MajorVersion < 2 || (fgState.MajorVersion == 2 && fgState.MinorVersion <= 1);
-}
-
 static int fghIsLegacyContextRequested( void )
 {
-  return fghIsLegacyContextVersionRequested() &&
-         fgState.ContextFlags == 0 &&
-         fgState.ContextProfile == 0;
+  return fgState.MajorVersion < 2 || (fgState.MajorVersion == 2 && fgState.MinorVersion <= 1);
 }
 
 static int fghNumberOfAuxBuffersRequested( void )
@@ -401,8 +394,8 @@ GLXFBConfig* fgChooseFBConfig( int *numcfgs )
            fbconfig = NULL;
         }
 
-    if (numcfgs)
-        *numcfgs = fbconfigArraySize;
+	if (numcfgs)
+		*numcfgs = fbconfigArraySize;
 
         return fbconfig;
     }
@@ -412,10 +405,8 @@ GLXFBConfig* fgChooseFBConfig( int *numcfgs )
 static void fghFillContextAttributes( int *attributes ) {
   int where = 0, contextFlags, contextProfile;
 
-  if ( !fghIsLegacyContextVersionRequested() ) {
-    ATTRIB_VAL( GLX_CONTEXT_MAJOR_VERSION_ARB, fgState.MajorVersion );
-    ATTRIB_VAL( GLX_CONTEXT_MINOR_VERSION_ARB, fgState.MinorVersion );
-  }
+  ATTRIB_VAL( GLX_CONTEXT_MAJOR_VERSION_ARB, fgState.MajorVersion );
+  ATTRIB_VAL( GLX_CONTEXT_MINOR_VERSION_ARB, fgState.MinorVersion );
 
   contextFlags =
     fghMapBit( fgState.ContextFlags, GLUT_DEBUG, GLX_CONTEXT_DEBUG_BIT_ARB ) |
@@ -435,8 +426,8 @@ static void fghFillContextAttributes( int *attributes ) {
 }
 
 typedef GLXContext (*CreateContextAttribsProc)(Display *dpy, GLXFBConfig config,
-                           GLXContext share_list, Bool direct,
-                           const int *attrib_list);
+					       GLXContext share_list, Bool direct,
+					       const int *attrib_list);
 
 static GLXContext fghCreateNewContext( SFG_Window* window )
 {
@@ -459,8 +450,8 @@ static GLXContext fghCreateNewContext( SFG_Window* window )
   /* glXCreateContextAttribsARB not found, yet the user has requested the new context creation */
   if ( !createContextAttribs && !fghIsLegacyContextRequested() ) {
     fgWarning( "OpenGL >2.1 context requested but glXCreateContextAttribsARB is not available! Falling back to legacy context creation" );
-    fgState.MajorVersion = 2;
-    fgState.MinorVersion = 1;
+	fgState.MajorVersion = 2;
+	fgState.MinorVersion = 1;
   }
 
   /* If nothing fancy has been required, simply use the old context creation GLX API entry */
@@ -535,9 +526,9 @@ static int fghEwmhFullscrToggle(void)
     xev.xclient.format = 32;
     xev.xclient.data.l[0] = _NET_WM_STATE_TOGGLE;
     xev.xclient.data.l[1] = fgDisplay.StateFullScreen;
-    xev.xclient.data.l[2] = 0;  /* no second property to toggle */
-    xev.xclient.data.l[3] = 1;  /* source indication: application */
-    xev.xclient.data.l[4] = 0;  /* unused */
+    xev.xclient.data.l[2] = 0;	/* no second property to toggle */
+    xev.xclient.data.l[3] = 1;	/* source indication: application */
+    xev.xclient.data.l[4] = 0;	/* unused */
 
     if(!XSendEvent(fgDisplay.Display, fgDisplay.RootWindow, 0, evmask, &xev)) {
         return -1;
@@ -584,10 +575,8 @@ static wchar_t* fghWstrFromStr(const char* str)
 static void fghFillContextAttributes( int *attributes ) {
   int where = 0, contextFlags, contextProfile;
 
-  if ( !fghIsLegacyContextVersionRequested() ) {
-    ATTRIB_VAL( WGL_CONTEXT_MAJOR_VERSION_ARB, fgState.MajorVersion );
-    ATTRIB_VAL( WGL_CONTEXT_MINOR_VERSION_ARB, fgState.MinorVersion );
-  }
+  ATTRIB_VAL( WGL_CONTEXT_MAJOR_VERSION_ARB, fgState.MajorVersion );
+  ATTRIB_VAL( WGL_CONTEXT_MINOR_VERSION_ARB, fgState.MinorVersion );
 
   contextFlags =
     fghMapBit( fgState.ContextFlags, GLUT_DEBUG, WGL_CONTEXT_DEBUG_BIT_ARB ) |
@@ -634,6 +623,9 @@ void fgNewWGLCreateContext( SFG_Window* window )
 
     if ( !fghIsExtensionSupported( window->Window.Device, "WGL_ARB_create_context" ) )
     {
+        /* wglCreateContextAttribsARB not found, yet the user has requested the new context creation */
+        fgWarning( "OpenGL >2.1 context requested but wglCreateContextAttribsARB is not available! Falling back to legacy context creation" );
+        /* Legacy context already created at this point in WM_CREATE path of fgPlatformWindowProc, just return */
         return;
     }
 
@@ -643,7 +635,10 @@ void fgNewWGLCreateContext( SFG_Window* window )
     wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress( "wglCreateContextAttribsARB" );
     if ( wglCreateContextAttribsARB == NULL )
     {
-        fgError( "wglCreateContextAttribsARB not found" );
+        /* wglCreateContextAttribsARB not found, yet the user has requested the new context creation */
+        fgWarning( "OpenGL >2.1 context requested but wglCreateContextAttribsARB is not available! Falling back to legacy context creation" );
+        /* Legacy context already created at this point in WM_CREATE path of fgPlatformWindowProc, just return */
+        return;
     }
 
     context = wglCreateContextAttribsARB( window->Window.Device, 0, attributes );
@@ -760,14 +755,12 @@ GLboolean fgSetupPixelFormat( SFG_Window* window, GLboolean checkOnly,
       current_hDC = window->Window.Device;
 
     fghFillPFD( ppfd, current_hDC, layer_type );
-
     pixelformat = ChoosePixelFormat( current_hDC, ppfd );
 
     /* windows hack for multismapling/sRGB */
     if ( ( fgState.DisplayMode & GLUT_MULTISAMPLE ) ||
          ( fgState.DisplayMode & GLUT_SRGB ) )
     {        
-
         HGLRC rc, rc_before=wglGetCurrentContext();
         HWND hWnd;
         HDC hDC, hDC_before=wglGetCurrentDC();
@@ -781,7 +774,14 @@ GLboolean fgSetupPixelFormat( SFG_Window* window, GLboolean checkOnly,
         wndCls.lpszClassName = _T("FREEGLUT_dummy");
         RegisterClass( &wndCls );
 
-        hWnd=CreateWindow(_T("FREEGLUT_dummy"), _T(""), WS_CLIPSIBLINGS | WS_CLIPCHILDREN | ((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|(WS_MAXIMIZEBOX*QB64_Resizable())) , 0,0,0,0, 0, 0, fgDisplay.Instance, 0 );
+        // QB64-PE: custom code begin
+        hWnd = CreateWindow(
+            _T("FREEGLUT_dummy"), _T(""),
+            WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
+                ((WS_OVERLAPPEDWINDOW * QB64_Resizable()) | WS_DLGFRAME | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | (WS_MAXIMIZEBOX * QB64_Resizable())),
+            0, 0, 0, 0, 0, 0, fgDisplay.Instance, 0);
+        // hWnd=CreateWindow(_T("FREEGLUT_dummy"), _T(""), WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW , 0,0,0,0, 0, 0, fgDisplay.Instance, 0 );
+        // QB64-PE: custom code end
         hDC=GetDC(hWnd);
         SetPixelFormat( hDC, pixelformat, ppfd );
 
@@ -865,150 +865,133 @@ void fgSetWindow ( SFG_Window *window )
 
 #if TARGET_HOST_MS_WINDOWS
 
-/* Computes position of corners of window Rect (outer position including
- * decorations) based on the provided client rect and based on the style
- * of the window in question.
- * If posIsOutside is set to true, the input client Rect is taken to follow
- * freeGLUT's window specification convention in which the top-left corner
- * is at the outside of the window, while the size
- * (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
- * area.
- */
-void fghComputeWindowRectFromClientArea_UseStyle( const DWORD windowStyle, RECT *clientRect, BOOL posIsOutside )
+void fghGetDefaultWindowStyle(DWORD *flags)
 {
-    RECT windowRect = {0, 0, 0, 0};
-    DWORD windowExStyle = 0;
-    
-    CopyRect(&windowRect, clientRect);
+    if ( fgState.DisplayMode & GLUT_BORDERLESS )
+    {
+        /* no window decorations needed, no-op */
+    }
+    else if ( fgState.DisplayMode & GLUT_CAPTIONLESS )
+        /* only window decoration is a border, no title bar or buttons */
+        (*flags) |= WS_DLGFRAME;
+    else
+        /* window decoration are a border, title bar and buttons. */
+        // QB64-PE: custom code begin
+        (*flags) |= ((WS_OVERLAPPEDWINDOW * QB64_Resizable()) | WS_DLGFRAME | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | (WS_MAXIMIZEBOX * QB64_Resizable()));
+        //(*flags) |= WS_OVERLAPPEDWINDOW;
+        // QB64-PE: custom code end
+}
+
+/* Get window style and extended window style of a FreeGLUT window
+* If the window pointer or the window handle is NULL, a fully
+* decorated window (caption and border) is assumed.
+*/
+void fghGetStyleFromWindow( const SFG_Window *window, DWORD *windowStyle, DWORD *windowExStyle )
+{
+    if (window && window->Window.Handle)
+    {
+        *windowStyle   = GetWindowLong(window->Window.Handle, GWL_STYLE);
+        *windowExStyle = GetWindowLong(window->Window.Handle, GWL_EXSTYLE);
+    }
+    else
+    {
+        *windowStyle   = 0;
+        fghGetDefaultWindowStyle(windowStyle);
+        /* WindowExStyle==0 is fine/default, exStyle is currently only used for menu windows */
+        *windowExStyle = 0;
+    }
+}
+
+
+/* Computes position of corners of window Rect (outer position including
+* decorations) based on the provided client rect and based on the style
+* of the window in question.
+* If posIsOutside is set to true, the input client Rect is taken to follow
+* freeGLUT's window specification convention in which the top-left corner
+* is at the outside of the window, while the size
+* (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
+* area.
+*/
+void fghComputeWindowRectFromClientArea_UseStyle( RECT *clientRect, const DWORD windowStyle, const DWORD windowExStyle, BOOL posIsOutside )
+{
+    RECT windowRect   = {0,0,0,0};
+    CopyRect(&windowRect,clientRect);
 
     /* Get rect including non-client area */
-    AdjustWindowRectEx(&windowRect, windowStyle, FALSE, windowExStyle);
+    AdjustWindowRectEx(&windowRect,windowStyle,FALSE,windowExStyle);
 
     /* Move window right and down by non-client area extent on left and top, if wanted */
-    if (posIsOutside) {
-        windowRect.right += clientRect->left - windowRect.left;
-        windowRect.bottom += clientRect->top - windowRect.top;
-        windowRect.left = clientRect->left;
-        windowRect.top = clientRect->top;
+    if (posIsOutside)
+    {
+        windowRect.right   += clientRect->left-windowRect.left;
+        windowRect.bottom  += clientRect->top -windowRect.top;
+        windowRect.left     = clientRect->left;
+        windowRect.top      = clientRect->top;
     }
 
     /* done, copy windowRect to output */
-    CopyRect(clientRect, &windowRect);
+    CopyRect(clientRect,&windowRect);
 }
 
 /* Computes position of corners of window Rect (outer position including
- * decorations) based on the provided client rect and based on the style
- * of the window in question. If the window pointer or the window handle
- * is NULL, a fully decorated window (caption and border) is assumed.
- * Furthermore, if posIsOutside is set to true, the input client Rect is
- * taken to follow freeGLUT's window specification convention in which the
- * top-left corner is at the outside of the window, while the size
- * (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
- * area.
+* decorations) based on the provided client rect and based on the style
+* of the window in question. If the window pointer or the window handle
+* is NULL, a fully decorated window (caption and border) is assumed.
+* Furthermore, if posIsOutside is set to true, the input client Rect is
+* taken to follow freeGLUT's window specification convention in which the
+* top-left corner is at the outside of the window, while the size
+* (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
+* area.
 */
-void fghComputeWindowRectFromClientArea_QueryWindow( const SFG_Window *window, RECT *clientRect, BOOL posIsOutside )
+void fghComputeWindowRectFromClientArea_QueryWindow( RECT *clientRect, const SFG_Window *window, BOOL posIsOutside )
 {
-    DWORD windowStyle = 0;
+    DWORD windowStyle = 0, windowExStyle = 0;
+    fghGetStyleFromWindow(window,&windowStyle,&windowExStyle);
 
-    if (window && window->Window.Handle)
-        windowStyle = GetWindowLong(window->Window.Handle, GWL_STYLE);
-    else
-        windowStyle = ((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|(WS_MAXIMIZEBOX*QB64_Resizable()));
-
-    fghComputeWindowRectFromClientArea_UseStyle(windowStyle, clientRect, posIsOutside);
+    fghComputeWindowRectFromClientArea_UseStyle(clientRect, windowStyle, windowExStyle, posIsOutside);
 }
 
-/* Computes position of corners of client area (drawable area) of a window
- * based on the provided window Rect (outer position including decorations)
- * and based on the style of the window in question. If the window pointer
- * or the window handle is NULL, a fully decorated window (caption and
- * border) is assumed.
- * Furthermore, if wantPosOutside is set to true, the output client Rect
- * will follow freeGLUT's window specification convention in which the
- * top-left corner is at the outside of the window, the size
- * (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
- * area.
- */
-void fghComputeClientAreaFromWindowRect( const SFG_Window *window, RECT *windowRect, BOOL wantPosOutside )
-{
-    DWORD windowStyle = 0;
-    int xBorderWidth = 0, yBorderWidth = 0;
-
-    if (window && window->Window.Handle)
-        windowStyle = GetWindowLong(window->Window.Handle, GWL_STYLE);
-    else
-        windowStyle = ((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|(WS_MAXIMIZEBOX*QB64_Resizable()));
-
-    /* If window has title bar, correct rect for it */
-    if (windowStyle & WS_SYSMENU) /* Need to query for WS_SYSMENU to see if we have a title bar, the WS_CAPTION query is also true for a WS_DLGFRAME only... */
-        if (wantPosOutside)
-            windowRect->bottom -= GetSystemMetrics( SM_CYCAPTION );
-        else
-            windowRect->top    += GetSystemMetrics( SM_CYCAPTION );
-
-    /* get width of window's borders (frame), correct rect for it.
-     * Note, borders can be of zero width if style does not specify borders
-     */
-    fghGetBorderWidth(windowStyle, &xBorderWidth, &yBorderWidth);
-    if (wantPosOutside)
-    {
-        windowRect->right  -= xBorderWidth * 2;
-        windowRect->bottom -= yBorderWidth * 2;
-    }
-    else
-    {
-        windowRect->left   += xBorderWidth;
-        windowRect->right  -= xBorderWidth;
-        windowRect->top    += yBorderWidth;
-        windowRect->bottom -= yBorderWidth;
-    }
-}
 
 /* Gets the rect describing the client area (drawable area) of the
- * specified window.
- * Returns an empty rect if window pointer or window handle is NULL.
- * If wantPosOutside is set to true, the output client Rect
- * will follow freeGLUT's window specification convention in which the
- * top-left corner is at the outside of the window, while the size
- * (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
- * area.
- */
-RECT fghGetClientArea( const SFG_Window *window, BOOL wantPosOutside )
+* specified window. Output is position of corners of client area (drawable area) on the screen.
+* Returns an empty rect if window pointer or window handle is NULL.
+* If wantPosOutside is set to true, the output client Rect
+* will follow freeGLUT's window specification convention in which the
+* top-left corner is at the outside of the window, while the size
+* (rect.right-rect.left,rect.bottom-rect.top) is the size of the drawable
+* area.
+*/
+void fghGetClientArea( RECT *clientRect, const SFG_Window *window, BOOL wantPosOutside )
 {
-    RECT windowRect = {0,0,0,0};
+    POINT topLeftClient = {0,0};
+    POINT topLeftWindow = {0,0};
 
-    freeglut_return_val_if_fail((window && window->Window.Handle),windowRect);
-    
+    freeglut_return_if_fail((window && window->Window.Handle));
+
     /*
-     * call GetWindowRect()
-     * (this returns the pixel coordinates of the outside of the window)
-     */
-    GetWindowRect( window->Window.Handle, &windowRect );
+    * call GetWindowRect()
+    * (this returns the pixel coordinates of the outside of the window)
+    * cannot use GetClientRect as it returns a rect relative to
+    * the top-left point of the client area (.top and .left are thus always 0)
+    * and is thus only useful for querying the size of the client area, not
+    * its position.
+    */
+    GetWindowRect( window->Window.Handle, clientRect );
+    topLeftWindow.x = clientRect->top;
+    topLeftWindow.y = clientRect->left;
 
-    /* Then correct the results */
-    fghComputeClientAreaFromWindowRect(window, &windowRect, wantPosOutside);
+    /* Get size of client rect */
+    GetClientRect(window->Window.Handle, clientRect);
+    /* Get position of top-left of client area on the screen */
+    ClientToScreen(window->Window.Handle,&topLeftClient);
+    /* Add top-left offset */
+    OffsetRect(clientRect,topLeftClient.x,topLeftClient.y);
 
-    return windowRect;
-}
-
-/* Returns the width of the window borders based on the window's style.
- */
-void fghGetBorderWidth(const DWORD windowStyle, int* xBorderWidth, int* yBorderWidth)
-{
-    if (windowStyle & WS_THICKFRAME)
+    /* replace top and left with top and left of window, if wanted */
+    if (wantPosOutside)
     {
-        *xBorderWidth = GetSystemMetrics(SM_CXSIZEFRAME);
-        *yBorderWidth = GetSystemMetrics(SM_CYSIZEFRAME);
-    }
-    else if (windowStyle & WS_DLGFRAME)
-    {
-        *xBorderWidth = GetSystemMetrics(SM_CXFIXEDFRAME);
-        *yBorderWidth = GetSystemMetrics(SM_CYFIXEDFRAME);
-    }
-    else
-    {
-        *xBorderWidth = 0;
-        *yBorderWidth = 0;
+        clientRect->left = topLeftWindow.x;
+        clientRect->top  = topLeftWindow.y;
     }
 }
 
@@ -1021,9 +1004,9 @@ typedef struct
 } m_proc_t;
 
 static BOOL CALLBACK m_proc(HMONITOR mon,
-                HDC hdc,
-                LPRECT rect,
-                LPARAM data)
+			    HDC hdc,
+			    LPRECT rect,
+			    LPARAM data)
 {
       m_proc_t *dp=(m_proc_t *)data;
       MONITORINFOEX info;
@@ -1109,6 +1092,9 @@ void fgOpenWindow( SFG_Window* window, const char* title,
     unsigned long mask;
     int num_FBConfigs, i;
     unsigned int current_DisplayMode = fgState.DisplayMode ;
+    // QB64-PE: custom code begin
+    // XConfigureEvent fakeEvent = {0};
+    // QB64-PE: custom code end
 
     /* Save the display mode if we are creating a menu window */
     if( window->IsMenu && ( ! fgStructure.MenuContext ) )
@@ -1146,10 +1132,10 @@ void fgOpenWindow( SFG_Window* window, const char* title,
 
     /*  Get the X visual.  */
     for (i = 0; i < num_FBConfigs; i++) {
-        visualInfo = glXGetVisualFromFBConfig( fgDisplay.Display,
-                           window->Window.FBConfig[i] );
-        if (visualInfo)
-        break;
+	    visualInfo = glXGetVisualFromFBConfig( fgDisplay.Display,
+						   window->Window.FBConfig[i] );
+	    if (visualInfo)
+		break;
     }
 
     FREEGLUT_INTERNAL_ERROR_EXIT( visualInfo != NULL,
@@ -1201,6 +1187,22 @@ void fgOpenWindow( SFG_Window* window, const char* title,
         visualInfo->visual, mask,
         &winAttr
     );
+
+    // QB64-PE: custom code begin
+    /* Fake configure event to force viewport setup
+     * even with no window manager.
+     */
+    /*
+    fakeEvent.type = ConfigureNotify;
+    fakeEvent.display = fgDisplay.Display;
+    fakeEvent.window = window->Window.Handle;
+    fakeEvent.x = x;
+    fakeEvent.y = y;
+    fakeEvent.width = w;
+    fakeEvent.height = h;
+    XPutBackEvent(fgDisplay.Display, (XEvent*)&fakeEvent);
+    */
+    // QB64-PE: custom code begin
 
     /*
      * The GLX context creation, possibly trying the direct context rendering
@@ -1350,21 +1352,7 @@ void fgOpenWindow( SFG_Window* window, const char* title,
 #else
         /* if this is not a subwindow (child), set its style based on the requested display mode */
         else if( window->Parent == NULL )
-            if ( fgState.DisplayMode & GLUT_BORDERLESS )
-            {
-                /* no window decorations needed */
-            }
-            else if ( fgState.DisplayMode & GLUT_CAPTIONLESS )
-                /* only window decoration is a border, no title bar or buttons */
-                flags |= WS_DLGFRAME;
-            else
-                /* window decoration are a border, title bar and buttons.
-                 * NB: we later query whether the window has a title bar or
-                 * not by testing for the maximize button, as the test for
-                 * WS_CAPTION can be true without the window having a title
-                 * bar. This style ((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX) gives you a maximize
-                 * button. */
-                flags |= ((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|(WS_MAXIMIZEBOX*QB64_Resizable()));
+            fghGetDefaultWindowStyle(&flags);
 #endif
         else
             /* subwindows always have no decoration, but are marked as a child window to the OS */
@@ -1421,8 +1409,9 @@ void fgOpenWindow( SFG_Window* window, const char* title,
         windowRect.right    = x+w;
         windowRect.bottom   = y+h;
 
-        fghComputeWindowRectFromClientArea_UseStyle(flags,&windowRect,TRUE);
+        fghComputeWindowRectFromClientArea_UseStyle(&windowRect,flags,exFlags,TRUE);
 
+        /* NB: w and h are now width and height of window including non-client area! */
         w = windowRect.right - windowRect.left;
         h = windowRect.bottom- windowRect.top;
     }
@@ -1469,8 +1458,9 @@ void fgOpenWindow( SFG_Window* window, const char* title,
     if( !( window->Window.Handle ) )
         fgError( "Failed to create a window (%s)!", title );
 
-//QB64
-QB64_Window_Handle((void*)window->Window.Handle);
+    // QB64-PE: custom code begin
+    QB64_Window_Handle((void *)window->Window.Handle);
+    // QB64-PE: custom code end
 
 #if !defined(_WIN32_WCE)
     /* Need to set requested style again, apparently Windows doesn't listen when requesting windows without title bar or borders */
@@ -1490,8 +1480,8 @@ QB64_Window_Handle((void*)window->Window.Handle);
     /* Enable multitouch: additional flag TWF_FINETOUCH, TWF_WANTPALM */
     #ifdef WM_TOUCH
         if (fghRegisterTouchWindow == (pRegisterTouchWindow)0xDEADBEEF) 
-            fghRegisterTouchWindow = (pRegisterTouchWindow)GetProcAddress(GetModuleHandle("user32"),"RegisterTouchWindow");
-        if (fghRegisterTouchWindow)
+			fghRegisterTouchWindow = (pRegisterTouchWindow)GetProcAddress(GetModuleHandle("user32"),"RegisterTouchWindow");
+		if (fghRegisterTouchWindow)
              fghRegisterTouchWindow( window->Window.Handle, TWF_FINETOUCH | TWF_WANTPALM );
     #endif
 
@@ -2031,14 +2021,17 @@ void FGAPIENTRY glutFullScreen( void )
         win->State.OldStyle = s = GetWindowLong(win->Window.Handle, GWL_STYLE);
 
         /* remove decorations from style and add popup style*/
-        s &= ~((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|(WS_MAXIMIZEBOX*QB64_Resizable()));
+        // QB64-PE: custom code begin
+        s &= ~((WS_OVERLAPPEDWINDOW * QB64_Resizable()) | WS_DLGFRAME | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | (WS_MAXIMIZEBOX * QB64_Resizable()));
+        // s &= ~WS_OVERLAPPEDWINDOW;
+        //  QB64-PE: custom code end
         s |= WS_POPUP;
         SetWindowLong(win->Window.Handle, GWL_STYLE, s);
         SetWindowPos(win->Window.Handle, HWND_TOP, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
         /* For fullscreen mode, find the monitor that is covered the most
          * by the window and get its rect as the resize target.
-         */
+	     */
         hMonitor= MonitorFromRect(&win->State.OldRect, MONITOR_DEFAULTTONEAREST);
         mi.cbSize = sizeof(mi);
         GetMonitorInfo(hMonitor, &mi);
@@ -2056,8 +2049,13 @@ void FGAPIENTRY glutFullScreen( void )
         rect.right  = fgDisplay.ScreenWidth;
         rect.bottom = fgDisplay.ScreenHeight;
 
-        AdjustWindowRect ( &rect, ((WS_OVERLAPPEDWINDOW*QB64_Resizable())|WS_DLGFRAME|WS_BORDER|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX) | WS_CLIPSIBLINGS |
-                                  WS_CLIPCHILDREN, FALSE );
+        // QB64-PE: custom code begin
+        AdjustWindowRect(&rect,
+                         ((WS_OVERLAPPEDWINDOW * QB64_Resizable()) | WS_DLGFRAME | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX) | WS_CLIPSIBLINGS |
+                             WS_CLIPCHILDREN,
+                         FALSE);
+        // AdjustWindowRect ( &rect, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, FALSE );
+        //  QB64-PE: custom code end
 #endif  /* (WINVER >= 0x0500) */
 
         /*

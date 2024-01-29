@@ -34,8 +34,8 @@
 
 /* XXX Update these for each release! */
 #define  VERSION_MAJOR 2
-#define  VERSION_MINOR 7
-#define  VERSION_PATCH 0
+#define  VERSION_MINOR 8
+#define  VERSION_PATCH 1
 
 /* Freeglut is intended to function under all Unix/X11 and Win32 platforms. */
 /* XXX: Don't all MS-Windows compilers (except Cygwin) have _WIN32 defined?
@@ -109,7 +109,7 @@
 #    include <X11/Xlib.h>
 #    include <X11/Xatom.h>
 #    include <X11/keysym.h>
-#    include <X11/extensions/XI.h>
+#    include <X11/extensions/XI.h>  // QB64-PE: replaced XInput.h with XI.h
 #    ifdef HAVE_X11_EXTENSIONS_XF86VMODE_H
 #        include <X11/extensions/xf86vmode.h>
 #    endif
@@ -138,9 +138,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #    include <sys/types.h>
 #endif
-
-#include <unistd.h>
-
+#ifdef HAVE_UNISTD_H
+#    include <unistd.h>
+#endif
 #ifdef TIME_WITH_SYS_TIME
 #    include <sys/time.h>
 #    include <time.h>
@@ -343,6 +343,8 @@ struct tagSFG_State
 
     int              AuxiliaryBufferNumber;  /* Number of auxiliary buffers */
     int              SampleNumber;         /*  Number of samples per pixel  */
+
+    GLboolean        SkipStaleMotion;      /* skip stale motion events */
 
     int              MajorVersion;         /* Major OpenGL context version  */
     int              MinorVersion;         /* Minor OpenGL context version  */
@@ -729,7 +731,8 @@ struct tagSFG_Enumerator
     GLboolean   found;                          /* Used to terminate search  */
     void*       data;                           /* Custom data pointer       */
 };
-typedef void (* FGCBenumerator  )( SFG_Window *, SFG_Enumerator * );
+typedef void (* FGCBWindowEnumerator  )( SFG_Window *, SFG_Enumerator * );
+typedef void (* FGCBMenuEnumerator  )( SFG_Menu *, SFG_Enumerator * );
 
 /* The bitmap font structure */
 typedef struct tagSFG_Font SFG_Font;
@@ -928,8 +931,8 @@ void fgSetCursor ( SFG_Window *window, int cursorID );
  * and userData is the a custom user-supplied pointer. Functions
  * are defined and exported from freeglut_structure.c file.
  */
-void fgEnumWindows( FGCBenumerator enumCallback, SFG_Enumerator* enumerator );
-void fgEnumSubWindows( SFG_Window* window, FGCBenumerator enumCallback,
+void fgEnumWindows( FGCBWindowEnumerator enumCallback, SFG_Enumerator* enumerator );
+void fgEnumSubWindows( SFG_Window* window, FGCBWindowEnumerator enumCallback,
                        SFG_Enumerator* enumerator );
 
 #if TARGET_HOST_MS_WINDOWS
@@ -938,11 +941,11 @@ void fgEnumSubWindows( SFG_Window* window, FGCBenumerator enumCallback,
  * and the window rect from the client area given the style of the window
  * (or a valid window pointer from which the style can be queried).
  */
-void fghComputeWindowRectFromClientArea_UseStyle   ( const DWORD windowStyle , RECT *clientRect, BOOL posIsOutside );
-void fghComputeWindowRectFromClientArea_QueryWindow( const SFG_Window *window, RECT *clientRect, BOOL posIsOutside );
-void fghComputeClientAreaFromWindowRect            ( const SFG_Window *window, RECT *windowRect, BOOL wantPosOutside );
-RECT fghGetClientArea                              ( const SFG_Window *window,                   BOOL wantPosOutside );
-void fghGetBorderWidth(const DWORD windowStyle, int* xBorderWidth, int* yBorderWidth);
+void fghGetDefaultWindowStyle(DWORD *flags);
+void fghGetStyleFromWindow( const SFG_Window *window, DWORD *windowStyle, DWORD *windowExStyle );
+void fghComputeWindowRectFromClientArea_UseStyle( RECT *clientRect, const DWORD windowStyle, const DWORD windowExStyle, BOOL posIsOutside );
+void fghComputeWindowRectFromClientArea_QueryWindow( RECT *clientRect, const SFG_Window *window, BOOL posIsOutside );
+void fghGetClientArea( RECT *clientRect, const SFG_Window *window, BOOL wantPosOutside );
 #endif
 
 /*
@@ -964,6 +967,12 @@ SFG_Window* fgWindowByID( int windowID );
  * as all menus are placed in a single doubly linked list...
  */
 SFG_Menu* fgMenuByID( int menuID );
+
+/*
+ * Returns active menu, if any. Assumption: only one menu active throughout application at any one time.
+ * This is easier than fgWindowByXXX as all menus are placed in one doubly linked list...
+ */
+SFG_Menu* fgGetActiveMenu( );
 
 /*
  * The menu activation and deactivation the code. This is the meat
@@ -1017,8 +1026,6 @@ SFG_Proc fghGetProcAddress( const char *procName );
 #if TARGET_HOST_MS_WINDOWS
 extern void (__cdecl *__glutExitFunc)( int return_value );
 #endif
-
-#include <fcntl.h>
 
 #endif /* FREEGLUT_INTERNAL_H */
 
