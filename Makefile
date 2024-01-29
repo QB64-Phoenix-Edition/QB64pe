@@ -327,9 +327,11 @@ ifneq ($(filter y,$(DEP_HTTP)),)
 endif
 
 ifneq ($(OS),osx)
-	EXE_LIBS += $(QB_CORE_LIB)
+	EXE_LIBS += $(QB_CORE_LIB) $(GLEW_OBJS)
 
 	LICENSE_IN_USE += freeglut
+else
+	EXE_LIBS += $(GLEW_OBJS)
 endif
 
 ifeq ($(OS),win)
