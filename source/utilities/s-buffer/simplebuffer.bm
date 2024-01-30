@@ -121,6 +121,24 @@ MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
 END SUB
 
 '---------------------------------------------------------------------
+SUB DeleteBufLine (handle%)
+'--- option _explicit requirements ---
+DIM buf&, cur&, cbl&&, brc$, brl%, eol&, chg&
+'--- prepare values ---
+buf& = handle% * 106
+cur& = GetBufPos&(handle%): cbl&& = GetBufLen&(handle%)
+brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+'--- find next line break ---
+eol& = INSTR(cur&, simplebuffer_array$(buf& + 0), brc$)
+IF eol& = 0 OR eol& > cbl&& THEN eol& = cbl&& + 1: brl% = 0
+chg& = (eol& + brl%) - cur&
+'--- delete from buffer ---
+MID$(simplebuffer_array$(buf& + 0), cur&) = MID$(simplebuffer_array$(buf& + 0), eol& + brl%, cbl&& - (eol& + brl%) + 1)
+MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& - chg&)
+IF chg& > 0 THEN MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+END SUB
+
+'---------------------------------------------------------------------
 FUNCTION ReadBufRawData$ (handle%, size&) 'size change intended
 '--- option _explicit requirements ---
 DIM buf&, cur&, eob&

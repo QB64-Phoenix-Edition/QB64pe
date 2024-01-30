@@ -1739,7 +1739,42 @@ FUNCTION ide2 (ignore)
 
                 LOCATE , , 0
                 clearStatusWindow 0
-                If NoExeSaved then idecompiled = 0: GOTO mustGenerateExe
+
+                '=== BEGIN: checking external dependencies ===
+                edFF = FREEFILE: edLD = -1
+                '-----
+                nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
+                IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
+                    nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = 0
+                    FOR i = 0 TO UBOUND(embedFileList$, 2)
+                        IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
+                            WriteBufLine ExtDepBuf, _FULLPATH$(embedFileList$(eflFile, i))
+                        END IF
+                    NEXT i
+                    nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
+                    WriteBufLine ExtDepBuf, "<<< LISTING DONE >>>"
+                END IF
+                '-----
+                WHILE NOT EndOfBuf%(ExtDepBuf)
+                    OPEN "B", #edFF, ReadBufLine$(ExtDepBuf)
+                    edDAT$ = SPACE$(LOF(edFF))
+                    GET #edFF, , edDAT$
+                    CLOSE #edFF
+                    IF edLD THEN DeleteBufLine ExtDepBuf
+                    WriteBufLine ExtDepBuf, RIGHT$("00000000" + HEX$(GetCRC32&(edDAT$)), 8)
+                WEND
+                nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
+                '-----
+                OPEN "B", #edFF, tmpdir$ + "extdep.txt"
+                edDAT$ = SPACE$(LOF(edFF))
+                GET #edFF, , edDAT$
+                CLOSE #edFF
+                IF edDAT$ <> ReadBufRawData$(ExtDepBuf, GetBufLen&(ExtDepBuf)) THEN
+                    idecompiled = 0: GOTO mustGenerateExe
+                END IF
+                '=== END: checking external dependencies ===
+
+                IF NoExeSaved THEN idecompiled = 0: GOTO mustGenerateExe
                 IF idecompiled THEN
 
                     IF iderunmode = 2 AND _FILEEXISTS(lastBinaryGenerated$) THEN

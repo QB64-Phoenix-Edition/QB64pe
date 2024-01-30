@@ -1503,8 +1503,8 @@ MidiSoundFont$ = ""
 ' Reset embedded files tracking list
 REDIM SHARED embedFileList$(3, 10)
 
-
-
+'External dependencies buffer
+DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 
 
 
@@ -2134,7 +2134,7 @@ DO
 
                             'intercept current expression and pass it through Evaluate_Expression$
                             '(unless it is a literal string)
-                            Dim tempNum As ParseNum
+                            DIM tempNum AS ParseNum
                             temp1$ = _TRIM$(Evaluate_Expression$(e$, tempNum))
 
                             IF LEFT$(temp1$, 8) = "ERROR - " THEN
@@ -3361,6 +3361,7 @@ DO
 
             ExeIconSet = linenumber
             SetDependency DEPENDENCY_ICON
+            WriteBufLine ExtDepBuf, _FULLPATH$(ExeIconFile$)
             IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
             WriteBufLine MainTxtBuf, "sub__icon(NULL,NULL,0);"
             GOTO finishedline2
@@ -3425,6 +3426,7 @@ DO
                             GOTO errmes
                         END IF
                     END IF
+                    WriteBufLine ExtDepBuf, _FULLPATH$(MidiSoundFont$)
                 ELSE
                     ' Constant values, only one for now
                     SELECT CASE UCASE$(MidiSoundFont$)
@@ -3433,6 +3435,7 @@ DO
 
                             ' Clear MidiSoundFont$ to indicate the default should be used
                             MidiSoundFont$ = ""
+                            WriteBufLine ExtDepBuf, _FULLPATH$("internal/support/default_soundfont.sf2")
 
                         CASE ELSE
                             a$ = "Unrecognized Soundfont option " + AddQuotes$(MidiSoundFont$)
@@ -11385,6 +11388,7 @@ DO
                 IF try = 2 THEN f$ = a$
                 IF _FILEEXISTS(f$) THEN
                     qberrorhappened = -2 '***
+                    WriteBufLine ExtDepBuf, _FULLPATH$(f$)
                     OPEN f$ FOR BINARY AS #fh
                     qberrorhappened2: '***
                     IF qberrorhappened = -2 THEN EXIT FOR '***
