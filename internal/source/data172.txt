@@ -1,0 +1,10 @@
+qbs*oldstr3995=NULL;
+if(_SUB_PARSENUMSETS_STRING_S->tmp||_SUB_PARSENUMSETS_STRING_S->fixed||_SUB_PARSENUMSETS_STRING_S->readonly){
+oldstr3995=_SUB_PARSENUMSETS_STRING_S;
+if (oldstr3995->cmem_descriptor){
+_SUB_PARSENUMSETS_STRING_S=qbs_new_cmem(oldstr3995->len,0);
+}else{
+_SUB_PARSENUMSETS_STRING_S=qbs_new(oldstr3995->len,0);
+}
+memcpy(_SUB_PARSENUMSETS_STRING_S->chr,oldstr3995->chr,oldstr3995->len);
+}

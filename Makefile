@@ -178,9 +178,6 @@ endif
 	DEP_HTTP := y
 	DEP_CONSOLE := y
 	DEP_ZLIB := y
-ifeq ($(OS),lnx)
-	DEP_DATA := y
-endif
 endif
 
 include $(PATH_INTERNAL_C)/libqb/build.mk
