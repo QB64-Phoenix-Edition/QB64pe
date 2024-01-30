@@ -343,7 +343,7 @@ ifeq ($(OS),win)
 
 	ifneq ($(filter y,$(DEP_CONSOLE_ONLY)),)
 		CXXFLAGS := $(filter-out -DFREEGLUT_STATIC,$(CXXFLAGS))
-		EXE_LIBS := $(filter-out $(QB_CORE_LIB),$(EXE_LIBS))
+		EXE_LIBS := $(filter-out $(QB_CORE_LIB) $(GLEW_OBJS),$(EXE_LIBS))
 
 		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
 	else
