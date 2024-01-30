@@ -176,9 +176,11 @@ endif
 	DEP_ICON_RC := y
 	DEP_SOCKETS := y
 	DEP_HTTP := y
-    DEP_DATA := y
 	DEP_CONSOLE := y
 	DEP_ZLIB := y
+ifeq ($(OS),lnx)
+	DEP_DATA := y
+endif
 endif
 
 include $(PATH_INTERNAL_C)/libqb/build.mk
