@@ -1,10 +1,6 @@
 #include "libqb.h"
 #include "common.h"
 
-#ifdef QB64_GUI
-#    include "parts/core/glew/src/glew.c"
-#endif
-
 #ifdef QB64_WINDOWS
 #    include <fcntl.h>
 #    include <shellapi.h>
@@ -1022,7 +1018,6 @@ void hardware_img_requires_depthbuffer(hardware_img_struct *hardware_img) {
         // inspiration...
         // http://www.opengl.org/wiki/Framebuffer_Object_Examples#Color_texture.2C_Depth_texture
         static GLuint depth_tex;
-#    ifndef QB64_GLES
         glGenTextures(1, &depth_tex);
         glBindTexture(GL_TEXTURE_2D, depth_tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -1034,12 +1029,7 @@ void hardware_img_requires_depthbuffer(hardware_img_struct *hardware_img) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, hardware_img->w, hardware_img->h, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
         glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_tex, 0 /*mipmap level*/);
-#    else
-        glGenRenderbuffers(1, &depth_tex);
-        glBindRenderbuffer(GL_RENDERBUFFER, depth_tex);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, hardware_img->w, hardware_img->h);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_tex);
-#    endif
+
         // NULL means reserve texture memory, but texels are undefined
         glClear(GL_DEPTH_BUFFER_BIT);
         hardware_img->depthbuffer_handle = depth_tex;
@@ -34298,13 +34288,9 @@ void set_alpha(int32 new_mode) {
     if (new_mode == ALPHA_MODE__BLEND) {
         glEnable(GL_BLEND);
         if (framebufferobjects_supported) {
-#    ifndef QB64_GLES
             // glBlendFuncSeparateEXT(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
             // GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             glBlendFuncSeparateEXT(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-#    else
-            glBlendFuncSeparateOES(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-#    endif
         } else {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
