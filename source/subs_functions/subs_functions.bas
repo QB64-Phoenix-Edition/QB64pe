@@ -3815,6 +3815,28 @@ regid
 ' a740g: end of ROR & ROL additions
 
 clearid
+id.n = qb64prefix$ + "Adler32"
+id.Dependency=DEPENDENCY_ZLIB
+id.subfunc = 1
+id.callname = "func__adler32"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_ADLER32(dataString$)"
+regid
+
+clearid
+id.n = qb64prefix$ + "Crc32"
+id.Dependency=DEPENDENCY_ZLIB
+id.subfunc = 1
+id.callname = "func__crc32"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = LONGTYPE - ISPOINTER
+id.hr_syntax = "_CRC32(dataString$)"
+regid
+
+clearid
 id.n = qb64prefix$ + "Deflate"
 id.Dependency=DEPENDENCY_ZLIB
 id.musthave = "$"

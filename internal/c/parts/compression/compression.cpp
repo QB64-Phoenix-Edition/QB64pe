@@ -7,6 +7,16 @@
 #include "../../libqb.h"
 #include "miniz.h"
 
+uint32_t func__adler32(qbs *text) {
+    if (!text->len) return 0;
+    return (uint32) adler32(1, text->chr, text->len);
+}
+
+uint32_t func__crc32(qbs *text) {
+    if (!text->len) return 0;
+    return (uint32) crc32(0, text->chr, text->len);
+}
+
 qbs *func__deflate(qbs *text) {
     uLongf filesize = (uint32_t)text->len; // length of the text
     uLongf compsize = compressBound(filesize);
