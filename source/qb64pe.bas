@@ -7,7 +7,7 @@ DEFLNG A-Z
 'We need console access to support command-line compilation via the -x command line compile option
 $CONSOLE
 
-'Initially the "SCREEN" will be hidden, if the -x option is used it will never be created
+'Initially the "SCREEN" will be hiden, if the -x option is used it will never be created
 $SCREENHIDE
 
 $EXEICON:'./qb64pe.ico'
