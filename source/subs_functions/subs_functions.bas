@@ -1412,6 +1412,18 @@ id.hr_syntax = "_FONT[(imageHandle&)]"
 regid
 
 clearid
+id.n = qb64prefix$ + "Md5"
+id.Dependency=DEPENDENCY_LOADFONT
+id.musthave = "$"
+id.subfunc = 1
+id.callname = "func__md5"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = STRINGTYPE - ISPOINTER
+id.hr_syntax = "_MD5$(dataString$)"
+regid
+
+clearid
 id.n = qb64prefix$ + "PrintString"
 id.subfunc = 2
 id.callname = "sub__printstring"
