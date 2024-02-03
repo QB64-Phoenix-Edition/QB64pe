@@ -1412,6 +1412,18 @@ id.hr_syntax = "_FONT[(imageHandle&)]"
 regid
 
 clearid
+id.n = qb64prefix$ + "Md5"
+id.Dependency=DEPENDENCY_LOADFONT
+id.musthave = "$"
+id.subfunc = 1
+id.callname = "func__md5"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = STRINGTYPE - ISPOINTER
+id.hr_syntax = "_MD5$(dataString$)"
+regid
+
+clearid
 id.n = qb64prefix$ + "PrintString"
 id.subfunc = 2
 id.callname = "sub__printstring"
@@ -3813,6 +3825,28 @@ id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
 id.hr_syntax = "_ROR(numericalVariable, numericalValue)"
 regid
 ' a740g: end of ROR & ROL additions
+
+clearid
+id.n = qb64prefix$ + "Adler32"
+id.Dependency=DEPENDENCY_ZLIB
+id.subfunc = 1
+id.callname = "func__adler32"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = ULONGTYPE - ISPOINTER
+id.hr_syntax = "_ADLER32(dataString$)"
+regid
+
+clearid
+id.n = qb64prefix$ + "Crc32"
+id.Dependency=DEPENDENCY_ZLIB
+id.subfunc = 1
+id.callname = "func__crc32"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = ULONGTYPE - ISPOINTER
+id.hr_syntax = "_CRC32(dataString$)"
+regid
 
 clearid
 id.n = qb64prefix$ + "Deflate"
