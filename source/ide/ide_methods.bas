@@ -1761,7 +1761,7 @@ FUNCTION ide2 (ignore)
                     GET #edFF, , edDAT$
                     CLOSE #edFF
                     IF edLD THEN DeleteBufLine ExtDepBuf
-                    WriteBufLine ExtDepBuf, RIGHT$("00000000" + HEX$(GetCRC32&(edDAT$)), 8)
+                    WriteBufLine ExtDepBuf, _MD5$(edDAT$)
                 WEND
                 nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
                 '-----
