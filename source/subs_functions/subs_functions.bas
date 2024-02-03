@@ -3833,7 +3833,7 @@ id.subfunc = 1
 id.callname = "func__adler32"
 id.args = 1
 id.arg = MKL$(STRINGTYPE - ISPOINTER)
-id.ret = LONGTYPE - ISPOINTER
+id.ret = ULONGTYPE - ISPOINTER
 id.hr_syntax = "_ADLER32(dataString$)"
 regid
 
@@ -3844,7 +3844,7 @@ id.subfunc = 1
 id.callname = "func__crc32"
 id.args = 1
 id.arg = MKL$(STRINGTYPE - ISPOINTER)
-id.ret = LONGTYPE - ISPOINTER
+id.ret = ULONGTYPE - ISPOINTER
 id.hr_syntax = "_CRC32(dataString$)"
 regid
 
