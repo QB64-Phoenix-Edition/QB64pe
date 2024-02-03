@@ -11,12 +11,20 @@ QB64-based Tests
 The QB64-based tests live in `./tests/compile_tests`. Each folder in that
 directory represents a different category of tests, and within each of those
 category folders are `*.bas` files. Accompanying each `*.bas` file is either an
-`*.output` or `*.err` file with the same base name as a corresponding `.bas`
+`*.output` or `*.err` file with the same base name as a corresponding `*.bas`
 file.  For test with an `*.output`, the `*.output` file contains the text that
 the program compiled from the `*.bas` file should produce. For `*.err` tests,
 the `*.err` file contains the text of the error the QB64-PE compiler should
 produce when attempting to compile that code.
 
+To avoid unexpected test failures, you should write the `*.bas` in such a way
+that it at best does not produce lines with trailing spaces. If this is not
+possible e.g. by the use of formatted output, then make sure these trailing
+spaces also exist in the `*.output` and/or `*.err` files respectively, those
+spaces are often overseen or even get stripped by some Editors when saving the
+file. Also the test **can not** produce trailing empty lines, you **must** make
+sure the test output ends with the last meaningful line.
+ 
 Tests can also have an optional `*.flags` file. The contents of this file will
 be provide as command line arguments to QB64-PE when compiling the test source.
 
