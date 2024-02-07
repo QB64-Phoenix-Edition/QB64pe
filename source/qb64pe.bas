@@ -3361,7 +3361,7 @@ DO
 
             ExeIconSet = linenumber
             SetDependency DEPENDENCY_ICON
-            WriteBufLine ExtDepBuf, _FULLPATH$(ExeIconFile$)
+            WriteBufLine ExtDepBuf, "ICON: " + _FULLPATH$(ExeIconFile$)
             IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
             WriteBufLine MainTxtBuf, "sub__icon(NULL,NULL,0);"
             GOTO finishedline2
@@ -3426,7 +3426,7 @@ DO
                             GOTO errmes
                         END IF
                     END IF
-                    WriteBufLine ExtDepBuf, _FULLPATH$(MidiSoundFont$)
+                    WriteBufLine ExtDepBuf, "MIDI: " + _FULLPATH$(MidiSoundFont$)
                 ELSE
                     ' Constant values, only one for now
                     SELECT CASE UCASE$(MidiSoundFont$)
@@ -3435,7 +3435,7 @@ DO
 
                             ' Clear MidiSoundFont$ to indicate the default should be used
                             MidiSoundFont$ = ""
-                            WriteBufLine ExtDepBuf, _FULLPATH$("internal/support/default_soundfont.sf2")
+                            WriteBufLine ExtDepBuf, "MIDI: " + _FULLPATH$("internal/support/default_soundfont.sf2")
 
                         CASE ELSE
                             a$ = "Unrecognized Soundfont option " + AddQuotes$(MidiSoundFont$)
@@ -4721,7 +4721,7 @@ DO
                                         mylib$ = mylib$ + " ../../" + libname$ + " "
                                     END IF
                                 END IF
-
+                                WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
                             END IF
 
                         ELSE
@@ -4746,6 +4746,7 @@ DO
                                     IF ASC(x2$, x2) > 122 THEN ASC(x2$, x2) = 95
                                 NEXT
                                 DLLname$ = x2$
+                                WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
 
                                 IF sfdeclare THEN
 
@@ -4765,7 +4766,6 @@ DO
                                         WriteBufLine f, "}"
                                     END IF
 
-
                                 END IF
 
                             END IF 'no header
@@ -4779,6 +4779,7 @@ DO
                             ELSE
                                 WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
                             END IF
+                            WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(headername$)
                         END IF
 
                     END IF

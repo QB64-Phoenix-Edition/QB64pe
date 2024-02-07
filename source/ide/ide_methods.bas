@@ -1369,6 +1369,7 @@ FUNCTION ide2 (ignore)
 
         change = 0
         waitforinput:
+        IF startPausedPending > 0 THEN startPausedPending = 0: GOTO idemrunspecial
         IF startPausedPending THEN GOTO idemrun
         IF idecurrentlinelayouti THEN
             IF idecy <> idecurrentlinelayouti THEN
@@ -1735,42 +1736,54 @@ FUNCTION ide2 (ignore)
             PCOPY 3, 0: SCREEN , , 3, 0
 
             'run program
-            IF ready <> 0 AND idechangemade = 0 THEN
+            IF (ready <> 0 AND idechangemade = 0) OR (statusarealink = 2) THEN
 
                 LOCATE , , 0
                 clearStatusWindow 0
 
                 '=== BEGIN: checking external dependencies ===
-                edFF = FREEFILE: edLD = -1
-                '-----
-                nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
-                IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
-                    nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = 0
-                    FOR i = 0 TO UBOUND(embedFileList$, 2)
-                        IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
-                            WriteBufLine ExtDepBuf, _FULLPATH$(embedFileList$(eflFile, i))
-                        END IF
-                    NEXT i
+                IF statusarealink <> 2 THEN
+                    '-----
+                    edFF = FREEFILE: edLD = -1: edCHG = 0
+                    '-----
                     nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
-                    WriteBufLine ExtDepBuf, "<<< LISTING DONE >>>"
-                END IF
-                '-----
-                WHILE NOT EndOfBuf%(ExtDepBuf)
-                    OPEN "B", #edFF, ReadBufLine$(ExtDepBuf)
-                    edDAT$ = SPACE$(LOF(edFF))
-                    GET #edFF, , edDAT$
-                    CLOSE #edFF
-                    IF edLD THEN DeleteBufLine ExtDepBuf
-                    WriteBufLine ExtDepBuf, _MD5$(edDAT$)
-                WEND
-                nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
-                '-----
-                OPEN "B", #edFF, tmpdir$ + "extdep.txt"
-                edDAT$ = SPACE$(LOF(edFF))
-                GET #edFF, , edDAT$
-                CLOSE #edFF
-                IF edDAT$ <> ReadBufRawData$(ExtDepBuf, GetBufLen&(ExtDepBuf)) THEN
-                    idecompiled = 0: GOTO mustGenerateExe
+                    IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
+                        nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = 0
+                        FOR i = 0 TO UBOUND(embedFileList$, 2)
+                            IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
+                                WriteBufLine ExtDepBuf, "EMBE: " + _FULLPATH$(embedFileList$(eflFile, i))
+                            END IF
+                        NEXT i
+                        nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
+                        WriteBufLine ExtDepBuf, "<<< LISTING DONE >>>"
+                    END IF
+                    '-----
+                    WHILE NOT EndOfBuf%(ExtDepBuf)
+                        edDAT$ = ReadBufLine$(ExtDepBuf): edID$ = LEFT$(edDAT$, 5)
+                        OPEN "B", #edFF, MID$(edDAT$, 7)
+                        edDAT$ = SPACE$(LOF(edFF)): GET #edFF, , edDAT$: CLOSE #edFF
+                        edMD5$ = _MD5$(edDAT$)
+                        IF edLD THEN
+                            IF edMD5$ <> ReadBufLine$(ExtDepBuf) THEN
+                                'changed declare library or include files require a recompile
+                                IF edID$ = "DECL:" OR edID$ = "INCL:" GOTO edReCompile
+                                'for other changed files we just need to update the MD5 hash
+                                nul& = SeekBuf&(ExtDepBuf, -32 - LEN(BufEolSeq$(ExtDepBuf)), SBM_BufCurrent)
+                                edCHG = -1: DeleteBufLine ExtDepBuf 'old hash
+                            ELSE
+                                _CONTINUE 
+                            END IF
+                        END IF
+                        WriteBufLine ExtDepBuf, edMD5$ 'new hash
+                    WEND
+                    '-----
+                    'for non-include changes we only need to rebuild the EXE
+                    IF edCHG THEN idecompiled = 0: GOTO mustGenerateExe
+                ELSE
+                    edReCompile:
+                    ideautorun = 0: startPausedPending = 1
+                    ideunsaved = -1: idechangemade = 1: statusarealink = 0
+                    GOTO ideloop
                 END IF
                 '=== END: checking external dependencies ===
 
