@@ -1,5 +1,8 @@
 '$COLOR:0
 'Color constants for text mode.
+
+$INCLUDEONCE
+
 CONST Black~%% = 0
 CONST Blue~%% = 1
 CONST Green~%% = 2

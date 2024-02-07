@@ -1,5 +1,8 @@
 '$COLOR:0
-'Color constants for text mode, when using $NOPREFIX
+'Color constants for text mode, when using $NOPREFIX.
+
+$INCLUDEONCE
+
 CONST Black~%% = 0
 CONST NP_Blue~%% = 1
 CONST NP_Green~%% = 2
@@ -17,3 +20,4 @@ CONST LightMagenta~%% = 13
 CONST Yellow~%% = 14
 CONST BrightWhite~%% = 15
 CONST NP_Blink~%% = 16
+
