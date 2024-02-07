@@ -20317,7 +20317,7 @@ FUNCTION SaveFile$ (IdeOpenFile AS STRING)
         IF RIGHT$(Default_StartDir$, 1) <> idepathsep$ THEN Default_StartDir$ = Default_StartDir$ + idepathsep$
     END IF
 
-    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas|*.BAS|*.Bas", "QB64-PE BAS File")
+    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64(PE) Source Files")
     IF f$ = "" THEN
         SaveFile$ = "C"
         EXIT FUNCTION 'someone canceled the input.
@@ -20353,7 +20353,7 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
     END IF
 
     ideopenloop:
-    IF IdeOpenFile = "" THEN f$ = _OPENFILEDIALOG$("Open Source File", Default_StartDir$, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64-PE Source Files", 0) ELSE f$ = IdeOpenFile
+    IF IdeOpenFile = "" THEN f$ = _OPENFILEDIALOG$("Open Source File", Default_StartDir$, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64(PE) Source Files", 0) ELSE f$ = IdeOpenFile
     IF f$ = "" THEN OpenFile$ = "C": EXIT FUNCTION
     path$ = ideztakepath$(f$)
 
