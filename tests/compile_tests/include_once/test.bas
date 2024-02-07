@@ -9,3 +9,5 @@ PRINT "This prints from the test.bas main program."
 '$INCLUDE: 'once.bm'
 '$INCLUDE: 'incl.bm'
 
+SYSTEM
+
