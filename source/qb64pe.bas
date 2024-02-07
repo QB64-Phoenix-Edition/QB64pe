@@ -1506,8 +1506,8 @@ REDIM SHARED embedFileList$(3, 10)
 'External dependencies buffer
 DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 
-
-
+'The $INCLUDEONCE check buffer
+DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
 
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
@@ -2629,12 +2629,37 @@ DO
             END IF
             IF try = 2 THEN f$ = a$
             IF _FILEEXISTS(f$) THEN
-                qberrorhappened = -3
-                'We're using the faster LINE INPUT, which requires a BINARY open.
+                qberrorhappened = -3 '***
                 OPEN f$ FOR BINARY AS #fh
-                'And another line below edited
-                qberrorhappened3:
-                IF qberrorhappened = -3 THEN EXIT FOR
+                qberrorhappened3: '***
+                IF qberrorhappened = -3 THEN
+                    '=== BEGIN: handling $INCLUDEONCE ===
+                    incDAT$ = SPACE$(LOF(fh))
+                    GET #fh, , incDAT$
+                    CLOSE #fh 'as we skip the regular CLOSE when $INCLUDEONCE
+                    incDAT$ = UCASE$(incDAT$)
+                    incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + MKI$(&H0A0D))
+                    IF incPOS& = 0 OR incPOS& > 1 THEN
+                        IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + CHR$(10))
+                        IF incPOS& = 0 OR incPOS& > 1 THEN
+                            incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + MKI$(&H0A0D))
+                            IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + CHR$(10))
+                        END IF
+                    END IF
+                    IF incPOS& > 0 THEN
+                        nul& = SeekBuf&(IncOneBuf, 0, SBM_BufStart)
+                        WHILE NOT EndOfBuf%(IncOneBuf)
+                            IF _FULLPATH$(f$) = ReadBufLine$(IncOneBuf) THEN
+                                qberrorhappened = 0
+                                GOTO skipInc1
+                            END IF
+                        WEND
+                    END IF
+                    WriteBufLine IncOneBuf, _FULLPATH$(f$)
+                    OPEN f$ FOR BINARY AS #fh 'reopen and continue
+                    '=== END: handling $INCLUDEONCE ===
+                    EXIT FOR '***
+                END IF
             END IF
             qberrorhappened = 0
         NEXT
@@ -2679,6 +2704,7 @@ DO
         '3. Close & return control
         CLOSE #fh
         inclevel = inclevel - 1
+        skipInc1:
         IF forceIncludingFile = 1 AND inclevel = 0 THEN
             forceIncludingFile = 0
             GOTO forceIncludeCompleted_prepass
@@ -2712,6 +2738,7 @@ lineinput3index = 1 'reset input line
 ide3:
 
 addmetainclude$ = "" 'reset stray meta-includes
+IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt") 'and $INCLUDEONCE buffer
 
 'reset altered variables
 DataOffset = 0
@@ -3038,6 +3065,12 @@ DO
         IF a3u$ = "$NOPREFIX" THEN
             'already set in prepass
             layout$ = SCase$("$NoPrefix")
+            GOTO finishednonexec
+        END IF
+
+        IF a3u$ = "$INCLUDEONCE" THEN
+            'just to catch it as keyword
+            layout$ = SCase$("$IncludeOnce")
             GOTO finishednonexec
         END IF
 
@@ -11389,10 +11422,37 @@ DO
                 IF try = 2 THEN f$ = a$
                 IF _FILEEXISTS(f$) THEN
                     qberrorhappened = -2 '***
-                    WriteBufLine ExtDepBuf, _FULLPATH$(f$)
                     OPEN f$ FOR BINARY AS #fh
                     qberrorhappened2: '***
-                    IF qberrorhappened = -2 THEN EXIT FOR '***
+                    IF qberrorhappened = -2 THEN
+                        '=== BEGIN: handling $INCLUDEONCE ===
+                        incDAT$ = SPACE$(LOF(fh))
+                        GET #fh, , incDAT$
+                        CLOSE #fh 'as we skip the regular CLOSE when $INCLUDEONCE
+                        incDAT$ = UCASE$(incDAT$)
+                        incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + MKI$(&H0A0D))
+                        IF incPOS& = 0 OR incPOS& > 1 THEN
+                            IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + CHR$(10))
+                            IF incPOS& = 0 OR incPOS& > 1 THEN
+                                incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + MKI$(&H0A0D))
+                                IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + CHR$(10))
+                            END IF
+                        END IF
+                        IF incPOS& > 0 THEN
+                            nul& = SeekBuf&(IncOneBuf, 0, SBM_BufStart)
+                            WHILE NOT EndOfBuf%(IncOneBuf)
+                                IF _FULLPATH$(f$) = ReadBufLine$(IncOneBuf) THEN
+                                    qberrorhappened = 0
+                                    GOTO skipInc2
+                                END IF
+                            WEND
+                        END IF
+                        WriteBufLine IncOneBuf, _FULLPATH$(f$)
+                        WriteBufLine ExtDepBuf, "INCL: " + _FULLPATH$(f$)
+                        OPEN f$ FOR BINARY AS #fh 'reopen and continue
+                        '=== END: handling $INCLUDEONCE ===
+                        EXIT FOR '***
+                    END IF
                 END IF
                 qberrorhappened = 0
             NEXT
@@ -11433,6 +11493,7 @@ DO
             '3. Close & return control
             CLOSE #fh
             inclevel = inclevel - 1
+            skipInc2:
             IF inclevel = 0 THEN
                 IF forceIncludingFile = 1 THEN
                     forceIncludingFile = 0
@@ -20671,7 +20732,7 @@ FUNCTION lineformat$ (a$)
             memmode = 1
         ELSEIF MID$(c$, x, 8) = "$DYNAMIC" THEN
             memmode = 2
-        ELSEIF MID$(c$, x, 8) = "$INCLUDE" THEN
+        ELSEIF MID$(c$, x, 8) = "$INCLUDE" AND MID$(c$, x + 8, 4) <> "ONCE" THEN
             'note: INCLUDE adds the file AFTER the line it is on has been processed
             'skip spaces until :
             FOR xx = x + 8 TO LEN(c$)
