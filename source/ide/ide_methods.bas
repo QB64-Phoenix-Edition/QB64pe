@@ -5959,16 +5959,16 @@ FUNCTION ide2 (ignore)
             END IF
 
             IF menu$(m, s) = "#Start  F5" THEN
-               _KeyClear
-                Do: _Limit 15: Loop Until _KeyHit = 0 'wait for user to remove finger from F5 key before running
+                _KEYCLEAR
+                DO: _LIMIT 15: LOOP UNTIL _KEYHIT = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
                 startPaused = 0
                 GOTO idemrun
             END IF
 
             IF menu$(m, s) = "Run #Only (No EXE)" THEN
-               _KeyClear
-                Do: _Limit 15: Loop Until _KeyHit = 0 'wait for user to remove finger from F5 key before running
+                _KEYCLEAR
+                DO: _LIMIT 15: LOOP UNTIL _KEYHIT = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
                 NoExeSaved = -1
                 startPaused = 0
@@ -6403,7 +6403,7 @@ FUNCTION ide2 (ignore)
                         PCOPY 3, 0: SCREEN , , 3, 0
                     END IF '"Y"
                 END IF 'unsaved
-                IF UseGuiDialogs Then
+                IF UseGuiDialogs THEN
                     r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
                 ELSE
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.

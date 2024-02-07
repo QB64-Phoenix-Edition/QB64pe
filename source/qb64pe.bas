@@ -2623,7 +2623,7 @@ DO
                 IF inclevel = 0 THEN
                     IF idemode THEN p$ = idepath$ + pathsep$ ELSE p$ = getfilepath$(sourcefile$)
                 ELSE
-                    p$ = getfilepath$(incname(inclevel))
+                    p$ = getfilepath$(incname$(inclevel))
                 END IF
                 f$ = p$ + a$
             END IF
@@ -3413,8 +3413,8 @@ DO
 
                     IF NOT _FILEEXISTS(MidiSoundFont$) THEN
                         ' Just try to concatenate the path with the source or include path and check if we are able to find the file
-                        IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname(inclevel)) + MidiSoundFont$) THEN
-                            MidiSoundFont$ = getfilepath(incname(inclevel)) + MidiSoundFont$
+                        IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname$(inclevel)) + MidiSoundFont$) THEN
+                            MidiSoundFont$ = getfilepath(incname$(inclevel)) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) THEN
                             MidiSoundFont$ = FixDirectoryName(path.source$) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
@@ -4403,7 +4403,7 @@ DO
 
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
-                                        libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                        libpath$ = getfilepath(incname$(inclevel)) + og_libpath$
                                     ELSEIF NoIDEMode THEN
                                         libpath$ = FixDirectoryName(path.source$) + og_libpath$
                                     ELSE
@@ -4477,7 +4477,7 @@ DO
 
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
-                                        libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                        libpath$ = getfilepath(incname$(inclevel)) + og_libpath$
                                     ELSEIF NoIDEMode THEN
                                         libpath$ = FixDirectoryName(path.source$) + og_libpath$
                                     ELSE
@@ -11381,7 +11381,7 @@ DO
                     IF inclevel = 0 THEN
                         IF idemode THEN p$ = idepath$ + pathsep$ ELSE p$ = getfilepath$(sourcefile$)
                     ELSE
-                        p$ = getfilepath$(incname(inclevel))
+                        p$ = getfilepath$(incname$(inclevel))
                     END IF
                     f$ = p$ + a$
                 END IF
