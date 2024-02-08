@@ -1610,52 +1610,12 @@ DO
 
     IF LEN(wholeline$) THEN
 
-        IF UCASE$(_TRIM$(wholeline$)) = "$NOPREFIX" THEN
-            qb64prefix_set_desiredState = 1
-            IF qb64prefix_set = 0 THEN
-                IF qb64prefix_set_recompileAttempts = 0 THEN
-                    qb64prefix_set_recompileAttempts = qb64prefix_set_recompileAttempts + 1
-                    GOTO do_recompile
-                END IF
-            END IF
-        END IF
-
         wholeline$ = lineformat(wholeline$)
         IF Error_Happened THEN GOTO errmes
 
 
         temp$ = LTRIM$(RTRIM$(UCASE$(wholestv$)))
 
-        IF temp$ = "$COLOR:0" THEN
-            IF qb64prefix_set THEN
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0_noprefix.bi"
-            ELSE
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            END IF
-            GOTO finishedlinepp
-        END IF
-
-        IF temp$ = "$COLOR:32" THEN
-            IF qb64prefix_set THEN
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32_noprefix.bi"
-            ELSE
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            END IF
-            GOTO finishedlinepp
-        END IF
-
-        IF temp$ = "$DEBUG" THEN
-            vWatchDesiredState = 1
-            IF vWatchOn = 0 THEN
-                IF vWatchRecompileAttempts = 0 THEN
-                    'this is the first time a conflict has occurred, so react immediately with a full recompilation using the desired state
-                    vWatchRecompileAttempts = vWatchRecompileAttempts + 1
-                    GOTO do_recompile
-                ELSE
-                    'continue compilation to retrieve the final state requested and act on that as required
-                END IF
-            END IF
-        END IF
 
         IF LEFT$(temp$, 4) = "$IF " THEN
             IF RIGHT$(temp$, 5) <> " THEN" THEN a$ = "$IF without THEN": GOTO errmes
@@ -1722,6 +1682,47 @@ DO
 
             InValidLine(linenumber) = -1
             GOTO finishedlinepp 'we don't check for anything inside lines that we've marked for skipping
+        END IF
+
+        IF temp$ = "$COLOR:0" THEN
+            IF qb64prefix_set THEN
+                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0_noprefix.bi"
+            ELSE
+                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
+            END IF
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$COLOR:32" THEN
+            IF qb64prefix_set THEN
+                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32_noprefix.bi"
+            ELSE
+                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
+            END IF
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$DEBUG" THEN
+            vWatchDesiredState = 1
+            IF vWatchOn = 0 THEN
+                IF vWatchRecompileAttempts = 0 THEN
+                    'this is the first time a conflict has occurred, so react immediately with a full recompilation using the desired state
+                    vWatchRecompileAttempts = vWatchRecompileAttempts + 1
+                    GOTO do_recompile
+                ELSE
+                    'continue compilation to retrieve the final state requested and act on that as required
+                END IF
+            END IF
+        END IF
+
+        IF temp$ = "$NOPREFIX" THEN
+            qb64prefix_set_desiredState = 1
+            IF qb64prefix_set = 0 THEN
+                IF qb64prefix_set_recompileAttempts = 0 THEN
+                    qb64prefix_set_recompileAttempts = qb64prefix_set_recompileAttempts + 1
+                    GOTO do_recompile
+                END IF
+            END IF
         END IF
 
         IF LEFT$(temp$, 7) = "$ERROR " THEN
