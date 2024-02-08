@@ -1,5 +1,8 @@
 '$COLOR:32
 'Color constants for 32bit mode, based on HTML color names.
+
+$INCLUDEONCE
+
 CONST AliceBlue~& = 4293982463
 CONST Almond~& = 4293910221
 CONST AntiqueBrass~& = 4291663221
@@ -270,3 +273,4 @@ CONST Wisteria~& = 4291667166
 CONST Yellow~& = 4294967040
 CONST YellowGreen~& = 4288335154
 CONST YellowOrange~& = 4294946370
+

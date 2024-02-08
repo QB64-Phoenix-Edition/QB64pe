@@ -1369,6 +1369,7 @@ FUNCTION ide2 (ignore)
 
         change = 0
         waitforinput:
+        IF startPausedPending > 0 THEN startPausedPending = 0: GOTO idemrunspecial
         IF startPausedPending THEN GOTO idemrun
         IF idecurrentlinelayouti THEN
             IF idecy <> idecurrentlinelayouti THEN
@@ -1735,42 +1736,54 @@ FUNCTION ide2 (ignore)
             PCOPY 3, 0: SCREEN , , 3, 0
 
             'run program
-            IF ready <> 0 AND idechangemade = 0 THEN
+            IF (ready <> 0 AND idechangemade = 0) OR (statusarealink = 2) THEN
 
                 LOCATE , , 0
                 clearStatusWindow 0
 
                 '=== BEGIN: checking external dependencies ===
-                edFF = FREEFILE: edLD = -1
-                '-----
-                nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
-                IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
-                    nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = 0
-                    FOR i = 0 TO UBOUND(embedFileList$, 2)
-                        IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
-                            WriteBufLine ExtDepBuf, _FULLPATH$(embedFileList$(eflFile, i))
-                        END IF
-                    NEXT i
+                IF statusarealink <> 2 THEN
+                    '-----
+                    edFF = FREEFILE: edLD = -1: edCHG = 0
+                    '-----
                     nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
-                    WriteBufLine ExtDepBuf, "<<< LISTING DONE >>>"
-                END IF
-                '-----
-                WHILE NOT EndOfBuf%(ExtDepBuf)
-                    OPEN "B", #edFF, ReadBufLine$(ExtDepBuf)
-                    edDAT$ = SPACE$(LOF(edFF))
-                    GET #edFF, , edDAT$
-                    CLOSE #edFF
-                    IF edLD THEN DeleteBufLine ExtDepBuf
-                    WriteBufLine ExtDepBuf, _MD5$(edDAT$)
-                WEND
-                nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
-                '-----
-                OPEN "B", #edFF, tmpdir$ + "extdep.txt"
-                edDAT$ = SPACE$(LOF(edFF))
-                GET #edFF, , edDAT$
-                CLOSE #edFF
-                IF edDAT$ <> ReadBufRawData$(ExtDepBuf, GetBufLen&(ExtDepBuf)) THEN
-                    idecompiled = 0: GOTO mustGenerateExe
+                    IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
+                        nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = 0
+                        FOR i = 0 TO UBOUND(embedFileList$, 2)
+                            IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
+                                WriteBufLine ExtDepBuf, "EMBE: " + _FULLPATH$(embedFileList$(eflFile, i))
+                            END IF
+                        NEXT i
+                        nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
+                        WriteBufLine ExtDepBuf, "<<< LISTING DONE >>>"
+                    END IF
+                    '-----
+                    WHILE NOT EndOfBuf%(ExtDepBuf)
+                        edDAT$ = ReadBufLine$(ExtDepBuf): edID$ = LEFT$(edDAT$, 5)
+                        OPEN "B", #edFF, MID$(edDAT$, 7)
+                        edDAT$ = SPACE$(LOF(edFF)): GET #edFF, , edDAT$: CLOSE #edFF
+                        edMD5$ = _MD5$(edDAT$)
+                        IF edLD THEN
+                            IF edMD5$ <> ReadBufLine$(ExtDepBuf) THEN
+                                'changed declare library or include files require a recompile
+                                IF edID$ = "DECL:" OR edID$ = "INCL:" GOTO edReCompile
+                                'for other changed files we just need to update the MD5 hash
+                                nul& = SeekBuf&(ExtDepBuf, -32 - LEN(BufEolSeq$(ExtDepBuf)), SBM_BufCurrent)
+                                edCHG = -1: DeleteBufLine ExtDepBuf 'old hash
+                            ELSE
+                                _CONTINUE 
+                            END IF
+                        END IF
+                        WriteBufLine ExtDepBuf, edMD5$ 'new hash
+                    WEND
+                    '-----
+                    'for non-include changes we only need to rebuild the EXE
+                    IF edCHG THEN idecompiled = 0: GOTO mustGenerateExe
+                ELSE
+                    edReCompile:
+                    ideautorun = 0: startPausedPending = 1
+                    ideunsaved = -1: idechangemade = 1: statusarealink = 0
+                    GOTO ideloop
                 END IF
                 '=== END: checking external dependencies ===
 
@@ -5959,16 +5972,16 @@ FUNCTION ide2 (ignore)
             END IF
 
             IF menu$(m, s) = "#Start  F5" THEN
-               _KeyClear
-                Do: _Limit 15: Loop Until _KeyHit = 0 'wait for user to remove finger from F5 key before running
+                _KEYCLEAR
+                DO: _LIMIT 15: LOOP UNTIL _KEYHIT = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
                 startPaused = 0
                 GOTO idemrun
             END IF
 
             IF menu$(m, s) = "Run #Only (No EXE)" THEN
-               _KeyClear
-                Do: _Limit 15: Loop Until _KeyHit = 0 'wait for user to remove finger from F5 key before running
+                _KEYCLEAR
+                DO: _LIMIT 15: LOOP UNTIL _KEYHIT = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
                 NoExeSaved = -1
                 startPaused = 0
@@ -6403,7 +6416,7 @@ FUNCTION ide2 (ignore)
                         PCOPY 3, 0: SCREEN , , 3, 0
                     END IF '"Y"
                 END IF 'unsaved
-                IF UseGuiDialogs Then
+                IF UseGuiDialogs THEN
                     r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
                 ELSE
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
@@ -20317,7 +20330,7 @@ FUNCTION SaveFile$ (IdeOpenFile AS STRING)
         IF RIGHT$(Default_StartDir$, 1) <> idepathsep$ THEN Default_StartDir$ = Default_StartDir$ + idepathsep$
     END IF
 
-    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas|*.BAS|*.Bas", "QB64-PE BAS File")
+    f$ = _SAVEFILEDIALOG$("Save Source File", Default_StartDir$ + IdeOpenFile, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64(PE) Source Files")
     IF f$ = "" THEN
         SaveFile$ = "C"
         EXIT FUNCTION 'someone canceled the input.
@@ -20353,7 +20366,7 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
     END IF
 
     ideopenloop:
-    IF IdeOpenFile = "" THEN f$ = _OPENFILEDIALOG$("Open Source File", Default_StartDir$, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64-PE Source Files", 0) ELSE f$ = IdeOpenFile
+    IF IdeOpenFile = "" THEN f$ = _OPENFILEDIALOG$("Open Source File", Default_StartDir$, "*.bas|*.BAS|*.Bas|*.bi|*.BI|*.Bi|*.bm|*.BM|*.Bm", "QB64(PE) Source Files", 0) ELSE f$ = IdeOpenFile
     IF f$ = "" THEN OpenFile$ = "C": EXIT FUNCTION
     path$ = ideztakepath$(f$)
 

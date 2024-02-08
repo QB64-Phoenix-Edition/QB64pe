@@ -1506,8 +1506,8 @@ REDIM SHARED embedFileList$(3, 10)
 'External dependencies buffer
 DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 
-
-
+'The $INCLUDEONCE check buffer
+DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
 
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
@@ -2623,18 +2623,43 @@ DO
                 IF inclevel = 0 THEN
                     IF idemode THEN p$ = idepath$ + pathsep$ ELSE p$ = getfilepath$(sourcefile$)
                 ELSE
-                    p$ = getfilepath$(incname(inclevel))
+                    p$ = getfilepath$(incname$(inclevel))
                 END IF
                 f$ = p$ + a$
             END IF
             IF try = 2 THEN f$ = a$
             IF _FILEEXISTS(f$) THEN
-                qberrorhappened = -3
-                'We're using the faster LINE INPUT, which requires a BINARY open.
+                qberrorhappened = -3 '***
                 OPEN f$ FOR BINARY AS #fh
-                'And another line below edited
-                qberrorhappened3:
-                IF qberrorhappened = -3 THEN EXIT FOR
+                qberrorhappened3: '***
+                IF qberrorhappened = -3 THEN
+                    '=== BEGIN: handling $INCLUDEONCE ===
+                    incDAT$ = SPACE$(LOF(fh))
+                    GET #fh, , incDAT$
+                    CLOSE #fh 'as we skip the regular CLOSE when $INCLUDEONCE
+                    incDAT$ = UCASE$(incDAT$)
+                    incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + MKI$(&H0A0D))
+                    IF incPOS& = 0 OR incPOS& > 1 THEN
+                        IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + CHR$(10))
+                        IF incPOS& = 0 OR incPOS& > 1 THEN
+                            incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + MKI$(&H0A0D))
+                            IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + CHR$(10))
+                        END IF
+                    END IF
+                    IF incPOS& > 0 THEN
+                        nul& = SeekBuf&(IncOneBuf, 0, SBM_BufStart)
+                        WHILE NOT EndOfBuf%(IncOneBuf)
+                            IF _FULLPATH$(f$) = ReadBufLine$(IncOneBuf) THEN
+                                qberrorhappened = 0
+                                GOTO skipInc1
+                            END IF
+                        WEND
+                    END IF
+                    WriteBufLine IncOneBuf, _FULLPATH$(f$)
+                    OPEN f$ FOR BINARY AS #fh 'reopen and continue
+                    '=== END: handling $INCLUDEONCE ===
+                    EXIT FOR '***
+                END IF
             END IF
             qberrorhappened = 0
         NEXT
@@ -2679,6 +2704,7 @@ DO
         '3. Close & return control
         CLOSE #fh
         inclevel = inclevel - 1
+        skipInc1:
         IF forceIncludingFile = 1 AND inclevel = 0 THEN
             forceIncludingFile = 0
             GOTO forceIncludeCompleted_prepass
@@ -2712,6 +2738,7 @@ lineinput3index = 1 'reset input line
 ide3:
 
 addmetainclude$ = "" 'reset stray meta-includes
+IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt") 'and $INCLUDEONCE buffer
 
 'reset altered variables
 DataOffset = 0
@@ -3041,6 +3068,12 @@ DO
             GOTO finishednonexec
         END IF
 
+        IF a3u$ = "$INCLUDEONCE" THEN
+            'just to catch it as keyword
+            layout$ = SCase$("$IncludeOnce")
+            GOTO finishednonexec
+        END IF
+
         IF a3u$ = "$VIRTUALKEYBOARD:ON" THEN
             'Deprecated; does nothing.
             layout$ = SCase$("$VirtualKeyboard:On")
@@ -3361,7 +3394,7 @@ DO
 
             ExeIconSet = linenumber
             SetDependency DEPENDENCY_ICON
-            WriteBufLine ExtDepBuf, _FULLPATH$(ExeIconFile$)
+            WriteBufLine ExtDepBuf, "ICON: " + _FULLPATH$(ExeIconFile$)
             IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
             WriteBufLine MainTxtBuf, "sub__icon(NULL,NULL,0);"
             GOTO finishedline2
@@ -3413,8 +3446,8 @@ DO
 
                     IF NOT _FILEEXISTS(MidiSoundFont$) THEN
                         ' Just try to concatenate the path with the source or include path and check if we are able to find the file
-                        IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname(inclevel)) + MidiSoundFont$) THEN
-                            MidiSoundFont$ = getfilepath(incname(inclevel)) + MidiSoundFont$
+                        IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname$(inclevel)) + MidiSoundFont$) THEN
+                            MidiSoundFont$ = getfilepath(incname$(inclevel)) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) THEN
                             MidiSoundFont$ = FixDirectoryName(path.source$) + MidiSoundFont$
                         ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
@@ -3426,7 +3459,7 @@ DO
                             GOTO errmes
                         END IF
                     END IF
-                    WriteBufLine ExtDepBuf, _FULLPATH$(MidiSoundFont$)
+                    WriteBufLine ExtDepBuf, "MIDI: " + _FULLPATH$(MidiSoundFont$)
                 ELSE
                     ' Constant values, only one for now
                     SELECT CASE UCASE$(MidiSoundFont$)
@@ -3435,7 +3468,7 @@ DO
 
                             ' Clear MidiSoundFont$ to indicate the default should be used
                             MidiSoundFont$ = ""
-                            WriteBufLine ExtDepBuf, _FULLPATH$("internal/support/default_soundfont.sf2")
+                            WriteBufLine ExtDepBuf, "MIDI: " + _FULLPATH$("internal/support/default_soundfont.sf2")
 
                         CASE ELSE
                             a$ = "Unrecognized Soundfont option " + AddQuotes$(MidiSoundFont$)
@@ -4403,7 +4436,7 @@ DO
 
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
-                                        libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                        libpath$ = getfilepath(incname$(inclevel)) + og_libpath$
                                     ELSEIF NoIDEMode THEN
                                         libpath$ = FixDirectoryName(path.source$) + og_libpath$
                                     ELSE
@@ -4477,7 +4510,7 @@ DO
 
                                     ' a740g: Fallback to source path
                                     IF inclevel > 0 THEN
-                                        libpath$ = getfilepath(incname(inclevel)) + og_libpath$
+                                        libpath$ = getfilepath(incname$(inclevel)) + og_libpath$
                                     ELSEIF NoIDEMode THEN
                                         libpath$ = FixDirectoryName(path.source$) + og_libpath$
                                     ELSE
@@ -4721,7 +4754,7 @@ DO
                                         mylib$ = mylib$ + " ../../" + libname$ + " "
                                     END IF
                                 END IF
-
+                                WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
                             END IF
 
                         ELSE
@@ -4746,6 +4779,7 @@ DO
                                     IF ASC(x2$, x2) > 122 THEN ASC(x2$, x2) = 95
                                 NEXT
                                 DLLname$ = x2$
+                                WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
 
                                 IF sfdeclare THEN
 
@@ -4765,7 +4799,6 @@ DO
                                         WriteBufLine f, "}"
                                     END IF
 
-
                                 END IF
 
                             END IF 'no header
@@ -4779,6 +4812,7 @@ DO
                             ELSE
                                 WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
                             END IF
+                            WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(headername$)
                         END IF
 
                     END IF
@@ -11381,17 +11415,44 @@ DO
                     IF inclevel = 0 THEN
                         IF idemode THEN p$ = idepath$ + pathsep$ ELSE p$ = getfilepath$(sourcefile$)
                     ELSE
-                        p$ = getfilepath$(incname(inclevel))
+                        p$ = getfilepath$(incname$(inclevel))
                     END IF
                     f$ = p$ + a$
                 END IF
                 IF try = 2 THEN f$ = a$
                 IF _FILEEXISTS(f$) THEN
                     qberrorhappened = -2 '***
-                    WriteBufLine ExtDepBuf, _FULLPATH$(f$)
                     OPEN f$ FOR BINARY AS #fh
                     qberrorhappened2: '***
-                    IF qberrorhappened = -2 THEN EXIT FOR '***
+                    IF qberrorhappened = -2 THEN
+                        '=== BEGIN: handling $INCLUDEONCE ===
+                        incDAT$ = SPACE$(LOF(fh))
+                        GET #fh, , incDAT$
+                        CLOSE #fh 'as we skip the regular CLOSE when $INCLUDEONCE
+                        incDAT$ = UCASE$(incDAT$)
+                        incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + MKI$(&H0A0D))
+                        IF incPOS& = 0 OR incPOS& > 1 THEN
+                            IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, "$INCLUDEONCE" + CHR$(10))
+                            IF incPOS& = 0 OR incPOS& > 1 THEN
+                                incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + MKI$(&H0A0D))
+                                IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + CHR$(10))
+                            END IF
+                        END IF
+                        IF incPOS& > 0 THEN
+                            nul& = SeekBuf&(IncOneBuf, 0, SBM_BufStart)
+                            WHILE NOT EndOfBuf%(IncOneBuf)
+                                IF _FULLPATH$(f$) = ReadBufLine$(IncOneBuf) THEN
+                                    qberrorhappened = 0
+                                    GOTO skipInc2
+                                END IF
+                            WEND
+                        END IF
+                        WriteBufLine IncOneBuf, _FULLPATH$(f$)
+                        WriteBufLine ExtDepBuf, "INCL: " + _FULLPATH$(f$)
+                        OPEN f$ FOR BINARY AS #fh 'reopen and continue
+                        '=== END: handling $INCLUDEONCE ===
+                        EXIT FOR '***
+                    END IF
                 END IF
                 qberrorhappened = 0
             NEXT
@@ -11432,6 +11493,7 @@ DO
             '3. Close & return control
             CLOSE #fh
             inclevel = inclevel - 1
+            skipInc2:
             IF inclevel = 0 THEN
                 IF forceIncludingFile = 1 THEN
                     forceIncludingFile = 0
@@ -20670,7 +20732,7 @@ FUNCTION lineformat$ (a$)
             memmode = 1
         ELSEIF MID$(c$, x, 8) = "$DYNAMIC" THEN
             memmode = 2
-        ELSEIF MID$(c$, x, 8) = "$INCLUDE" THEN
+        ELSEIF MID$(c$, x, 8) = "$INCLUDE" AND MID$(c$, x + 8, 4) <> "ONCE" THEN
             'note: INCLUDE adds the file AFTER the line it is on has been processed
             'skip spaces until :
             FOR xx = x + 8 TO LEN(c$)
