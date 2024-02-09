@@ -1610,10 +1610,6 @@ DO
 
     IF LEN(wholeline$) THEN
 
-        wholeline$ = lineformat(wholeline$)
-        IF Error_Happened THEN GOTO errmes
-
-
         temp$ = LTRIM$(RTRIM$(UCASE$(wholestv$)))
 
 
@@ -1793,6 +1789,9 @@ DO
                     GOTO errmes
             END SELECT
         END IF
+
+        wholeline$ = lineformat(wholeline$)
+        IF Error_Happened THEN GOTO errmes
 
         cwholeline$ = wholeline$
         wholeline$ = eleucase$(wholeline$) '********REMOVE THIS LINE LATER********
