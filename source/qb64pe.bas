@@ -4754,7 +4754,7 @@ DO
                                         mylib$ = mylib$ + " ../../" + libname$ + " "
                                     END IF
                                 END IF
-                                WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
+                                IF _FILEEXISTS(libname$) THEN WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
                             END IF
 
                         ELSE
@@ -4779,7 +4779,7 @@ DO
                                     IF ASC(x2$, x2) > 122 THEN ASC(x2$, x2) = 95
                                 NEXT
                                 DLLname$ = x2$
-                                WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
+                                IF _FILEEXISTS(libname$) THEN WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(libname$)
 
                                 IF sfdeclare THEN
 
@@ -4812,7 +4812,7 @@ DO
                             ELSE
                                 WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
                             END IF
-                            WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(headername$)
+                            IF _FILEEXISTS(headername$) THEN WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(headername$)
                         END IF
 
                     END IF
