@@ -14,9 +14,11 @@
 
 #include "audio.h"
 #include "completion.h"
+#include "command.h"
 #include "compression.h"
 #include "datetime.h"
 #include "event.h"
+#include "error_handle.h"
 #include "filepath.h"
 #include "filesystem.h"
 #include "font.h"
@@ -27,6 +29,7 @@
 #include "image.h"
 #include "keyhandler.h"
 #include "mutex.h"
+#include "qbs.h"
 #include "rounding.h"
 #include "thread.h"
 
@@ -1194,10 +1197,6 @@ int32 func__copyimage(int32 i, int32 mode, int32 passed);
 int32 func__dest();
 int32 func__display();
 void qbg_sub_view_print(int32, int32, int32);
-qbs *qbs_new(int32, uint8);
-qbs *qbs_new_txt(const char *);
-qbs *qbs_add(qbs *, qbs *);
-qbs *qbs_set(qbs *, qbs *);
 void qbg_sub_window(float, float, float, float, int32);
 int32 autodisplay = 1;
 // GFS forward references
@@ -1214,17 +1213,6 @@ int32 gfs_setpos(int32 i, int64 position);
 int32 gfs_write(int32 i, int64 position, uint8 *data, int64 size);
 int32 gfs_read(int32 i, int64 position, uint8 *data, int64 size);
 int64 gfs_read_bytes();
-extern qbs *qbs_str(int64 value);
-extern qbs *qbs_str(int32 value);
-extern qbs *qbs_str(int16 value);
-extern qbs *qbs_str(int8 value);
-extern qbs *qbs_str(uint64 value);
-extern qbs *qbs_str(uint32 value);
-extern qbs *qbs_str(uint16 value);
-extern qbs *qbs_str(uint8 value);
-extern qbs *qbs_str(float value);
-extern qbs *qbs_str(double value);
-extern qbs *qbs_str(long double value);
 void key_update();
 int32 key_display_state = 0;
 int32 key_display = 0;
@@ -3923,10 +3911,6 @@ void convert_text_to_utf16(int32 fonthandle, void *buf, int32 size) {
 
 qbs *unknown_opcode_mess;
 
-extern uint32 ercl;
-extern uint32 inclercl;
-extern char *includedfilename;
-
 int32 exit_blocked = 0;
 int32 exit_value = 0;
 // 1=X-button
@@ -3935,8 +3919,6 @@ int32 exit_value = 0;
 
 // MLP
 // int32 qbshlp1=0;
-
-void error(int32 error_number); // for forward references
 
 int32 width8050switch = 1; // if set, can automatically switch to WIDTH 80,50 if LOCATE'ing beyond row 26
 
@@ -7200,8 +7182,6 @@ uint8 *cmem_static_base = &cmem[0] + 1280 + 65536;
 extern uint8 *cmem_dynamic_base;
 //[1280][DBLOCK][STATIC-><-DYNAMIC][A000-]
 
-uint32 qbs_cmem_descriptor_space = 256; // enough for 64 strings before expansion
-
 extern uint32 qbs_cmem_sp; //=256;
 extern uint32 cmem_sp;     //=65536;
 extern ptrszint dblock;    // 32bit offset of dblock
@@ -7271,12 +7251,6 @@ extern uint8 stop_program;
 int32 global_counter = 0;
 extern double last_line;
 void end(void);
-extern uint32 error_err; //=0;
-extern double error_erl; //=0;
-extern uint32 error_occurred;
-extern uint32 error_goto_line;
-extern uint32 error_handling;
-extern uint32 error_retry;
 
 void sub__echo(qbs *message);
 
@@ -7300,282 +7274,6 @@ void sub__assert(int32 expression, qbs *assert_message, int32 passed) {
     }
     return;
 }
-
-char *human_error(int32 errorcode) {
-    // clang-format off
-    switch (errorcode) {
-        case 0: return "No error";
-        case 1: return "NEXT without FOR";
-        case 2: return "Syntax error";
-        case 3: return "RETURN without GOSUB";
-        case 4: return "Out of DATA";
-        case 5: return "Illegal function call";
-        case 6: return "Overflow";
-        case 7: return "Out of memory";
-        case 8: return "Label not defined";
-        case 9: return "Subscript out of range";
-        case 10: return "Duplicate definition";
-        case 12: return "Illegal in direct mode";
-        case 13: return "Type mismatch";
-        case 14: return "Out of string space";
-        //error 15 undefined
-        case 16: return "String formula too complex";
-        case 17: return "Cannot continue";
-        case 18: return "Function not defined";
-        case 19: return "No RESUME";
-        case 20: return "RESUME without error";
-        //error 21-23 undefined
-        case 24: return "Device timeout";
-        case 25: return "Device fault";
-        case 26: return "FOR without NEXT";
-        case 27: return "Out of paper";
-        //error 28 undefined
-        case 29: return "WHILE without WEND";
-        case 30: return "WEND without WHILE";
-        //error 31-32 undefined
-        case 33: return "Duplicate label";
-        //error 34 undefined
-        case 35: return "Subprogram not defined";
-        //error 36 undefined
-        case 37: return "Argument-count mismatch";
-        case 38: return "Array not defined";
-        case 40: return "Variable required";
-        case 50: return "FIELD overflow";
-        case 51: return "Internal error";
-        case 52: return "Bad file name or number";
-        case 53: return "File not found";
-        case 54: return "Bad file mode";
-        case 55: return "File already open";
-        case 56: return "FIELD statement active";
-        case 57: return "Device I/O error";
-        case 58: return "File already exists";
-        case 59: return "Bad record length";
-        case 61: return "Disk full";
-        case 62: return "Input past end of file";
-        case 63: return "Bad record number";
-        case 64: return "Bad file name";
-        case 67: return "Too many files";
-        case 68: return "Device unavailable";
-        case 69: return "Communication-buffer overflow";
-        case 70: return "Permission denied";
-        case 71: return "Disk not ready";
-        case 72: return "Disk-media error";
-        case 73: return "Feature unavailable";
-        case 74: return "Rename across disks";
-        case 75: return "Path/File access error";
-        case 76: return "Path not found";
-        case 258: return "Invalid handle";
-        case 300: return "Memory region out of range";
-        case 301: return "Invalid size";
-        case 302: return "Source memory region out of range";
-        case 303: return "Destination memory region out of range";
-        case 304: return "Source and destination memory regions out of range";
-        case 305: return "Source memory has been freed";
-        case 306: return "Destination memory has been freed";
-        case 307: return "Memory already freed";
-        case 308: return "Memory has been freed";
-        case 309: return "Memory not initialized";
-        case 310: return "Source memory not initialized";
-        case 311: return "Destination memory not initialized";
-        case 312: return "Source and destination memory not initialized";
-        case 313: return "Source and destination memory have been freed";
-        case 314: return "_ASSERT failed";
-        case 315: return "_ASSERT failed (check console for description)";
-        default: return "Unprintable error";
-    }
-    // clang-format on
-}
-
-qbs *func_mid(qbs *str, int32 start, int32 l, int32 passed);
-qbs *qbs_new_txt_len(const char *txt, int32 len);
-qbs *func_command(int32 index, int32 passed);
-
-void fix_error() {
-    char *errtitle = NULL, *errmess = NULL, *cp;
-    int prevent_handling = 0, len, v;
-    if ((new_error >= 300) && (new_error <= 315))
-        prevent_handling = 1;
-    if (!error_goto_line || error_handling || prevent_handling) {
-        // strip path from binary name
-        static int32 i;
-        static qbs *binary_name = NULL;
-        if (!binary_name)
-            binary_name = qbs_new(0, 0);
-        qbs_set(binary_name, qbs_add(func_command(0, 1), qbs_new_txt_len("\0", 1)));
-        for (i = binary_name->len; i > 0; i--) {
-            if ((binary_name->chr[i - 1] == 47) || (binary_name->chr[i - 1] == 92)) {
-                qbs_set(binary_name, func_mid(binary_name, i + 1, NULL, 0));
-                break;
-            }
-        }
-
-        cp = human_error(new_error);
-#define FIXERRMSG_TITLE "%s%u - %s"
-#define FIXERRMSG_BODY "Line: %u (in %s)\n%s%s"
-#define FIXERRMSG_MAINFILE "main module"
-#define FIXERRMSG_CONT "\nContinue?"
-#define FIXERRMSG_UNHAND "Unhandled Error #"
-#define FIXERRMSG_CRIT "Critical Error #"
-
-        len = snprintf(errmess, 0, FIXERRMSG_BODY, (inclercl ? inclercl : ercl), (inclercl ? includedfilename : FIXERRMSG_MAINFILE), cp,
-                       (!prevent_handling ? FIXERRMSG_CONT : ""));
-        errmess = (char *)malloc(len + 1);
-        if (!errmess)
-            exit(0); // At this point we just give up
-        snprintf(errmess, len + 1, FIXERRMSG_BODY, (inclercl ? inclercl : ercl), (inclercl ? includedfilename : FIXERRMSG_MAINFILE), cp,
-                 (!prevent_handling ? FIXERRMSG_CONT : ""));
-
-        len = snprintf(errtitle, 0, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
-        errtitle = (char *)malloc(len + 1);
-        if (!errtitle)
-            exit(0); // At this point we just give up
-        snprintf(errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
-
-        if (prevent_handling) {
-            v = gui_alert(errmess, errtitle, "ok");
-            exit(0);
-        } else {
-            v = gui_alert(errmess, errtitle, "yesno");
-        }
-
-        if ((v == 2) || (v == 0)) {
-            close_program = 1;
-            end();
-        }
-        new_error = 0;
-        return;
-    }
-    error_err = new_error;
-    new_error = 0;
-    error_erl = last_line;
-    error_occurred = 1;
-    QBMAIN(NULL);
-    return;
-}
-
-void error(int32 error_number) {
-
-    // critical errors:
-
-    // out of memory errors
-    if (error_number == 257) {
-        gui_alert("Out of memory", "Critical Error #1", "ok");
-        exit(0);
-    } // generic "Out of memory" error
-    // tracable "Out of memory" errors
-    if (error_number == 502) {
-        gui_alert("Out of memory", "Critical Error #2", "ok");
-        exit(0);
-    }
-    if (error_number == 503) {
-        gui_alert("Out of memory", "Critical Error #3", "ok");
-        exit(0);
-    }
-    if (error_number == 504) {
-        gui_alert("Out of memory", "Critical Error #4", "ok");
-        exit(0);
-    }
-    if (error_number == 505) {
-        gui_alert("Out of memory", "Critical Error #5", "ok");
-        exit(0);
-    }
-    if (error_number == 506) {
-        gui_alert("Out of memory", "Critical Error #6", "ok");
-        exit(0);
-    }
-    if (error_number == 507) {
-        gui_alert("Out of memory", "Critical Error #7", "ok");
-        exit(0);
-    }
-    if (error_number == 508) {
-        gui_alert("Out of memory", "Critical Error #8", "ok");
-        exit(0);
-    }
-    if (error_number == 509) {
-        gui_alert("Out of memory", "Critical Error #9", "ok");
-        exit(0);
-    }
-    if (error_number == 510) {
-        gui_alert("Out of memory", "Critical Error #10", "ok");
-        exit(0);
-    }
-    if (error_number == 511) {
-        gui_alert("Out of memory", "Critical Error #11", "ok");
-        exit(0);
-    }
-    if (error_number == 512) {
-        gui_alert("Out of memory", "Critical Error #12", "ok");
-        exit(0);
-    }
-    if (error_number == 513) {
-        gui_alert("Out of memory", "Critical Error #13", "ok");
-        exit(0);
-    }
-    if (error_number == 514) {
-        gui_alert("Out of memory", "Critical Error #14", "ok");
-        exit(0);
-    }
-    if (error_number == 515) {
-        gui_alert("Out of memory", "Critical Error #15", "ok");
-        exit(0);
-    }
-    if (error_number == 516) {
-        gui_alert("Out of memory", "Critical Error #16", "ok");
-        exit(0);
-    }
-    if (error_number == 517) {
-        gui_alert("Out of memory", "Critical Error #17", "ok");
-        exit(0);
-    }
-    if (error_number == 518) {
-        gui_alert("Out of memory", "Critical Error #18", "ok");
-        exit(0);
-    }
-
-    // other critical errors
-    if (error_number == 11) {
-        gui_alert("Division by zero", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 256) {
-        gui_alert("Out of stack space", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 259) {
-        gui_alert("Cannot find dynamic library file", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 260) {
-        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 261) {
-        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
-        exit(0);
-    }
-
-    if (error_number == 270) {
-        gui_alert("_GL command called outside of SUB _GL's scope", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 271) {
-        gui_alert("END/SYSTEM called within SUB _GL's scope", "Critical Error", "ok");
-        exit(0);
-    }
-
-    if (!new_error) {
-        if ((new_error == 256) || (new_error == 257))
-            fix_error(); // critical error!
-        if (error_number <= 0)
-            error_number = 5; // Illegal function call
-        new_error = error_number;
-        qbevent = 1;
-    }
-}
-
-double get_error_erl() { return error_erl; }
-
-uint32 get_error_err() { return error_err; }
 
 void end() {
     dont_call_sub_gl = 1;
@@ -7751,7 +7449,7 @@ check_next:
 uint8 *defseg = &cmem[1280]; // set to base of DBLOCK
 
 void sub_defseg(int32 segment, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (!passed) {
         defseg = &cmem[1280];
@@ -7774,7 +7472,7 @@ int32 func_peek(int32 offset) {
 }
 
 void sub_poke(int32 offset, int32 value) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if ((offset < -65536) || (offset > 65535)) { // same range as QB checks
         error(6);
@@ -7802,655 +7500,6 @@ uint8 keyon[65536];
 
 qbs *singlespace;
 
-qbs *qbs_malloc = (qbs *)calloc(sizeof(qbs) * 65536, 1); //~1MEG
-uint32 qbs_malloc_next = 0;                              // the next idex in qbs_malloc to use
-ptrszint *qbs_malloc_freed = (ptrszint *)malloc(ptrsz * 65536);
-uint32 qbs_malloc_freed_size = 65536;
-uint32 qbs_malloc_freed_num = 0; // number of freed qbs descriptors
-
-/*MLP
-    uint32 *dbglist=(uint32*)malloc(4*10000000);
-    uint32 dbglisti=0;
-    uint32 dbgline=0;
-*/
-
-qbs *qbs_new_descriptor() {
-    // MLP //qbshlp1++;
-    if (qbs_malloc_freed_num) {
-        /*MLP
-            static qbs *s;
-            s=(qbs*)memset((void *)qbs_malloc_freed[--qbs_malloc_freed_num],0,sizeof(qbs));
-            s->dbgl=dbgline;
-            return s;
-        */
-        return (qbs *)memset((void *)qbs_malloc_freed[--qbs_malloc_freed_num], 0, sizeof(qbs));
-    }
-    if (qbs_malloc_next == 65536) {
-        qbs_malloc = (qbs *)calloc(sizeof(qbs) * 65536, 1); //~1MEG
-        qbs_malloc_next = 0;
-    }
-    /*MLP
-        dbglist[dbglisti]=(uint32)&qbs_malloc[qbs_malloc_next];
-        static qbs* s;
-        s=(qbs*)&qbs_malloc[qbs_malloc_next++];
-        s->dbgl=dbgline;
-        dbglisti++;
-        return s;
-    */
-    return &qbs_malloc[qbs_malloc_next++];
-}
-
-void qbs_free_descriptor(qbs *str) {
-    // MLP //qbshlp1--;
-    if (qbs_malloc_freed_num == qbs_malloc_freed_size) {
-        qbs_malloc_freed_size *= 2;
-        qbs_malloc_freed = (ptrszint *)realloc(qbs_malloc_freed, qbs_malloc_freed_size * ptrsz);
-        if (!qbs_malloc_freed)
-            error(508);
-    }
-    qbs_malloc_freed[qbs_malloc_freed_num] = (ptrszint)str;
-    qbs_malloc_freed_num++;
-    return;
-}
-
-// Used to track strings in 16bit memory
-ptrszint *qbs_cmem_list = (ptrszint *)malloc(65536 * ptrsz);
-uint32 qbs_cmem_list_lasti = 65535;
-uint32 qbs_cmem_list_nexti = 0;
-// Used to track strings in 32bit memory
-ptrszint *qbs_list = (ptrszint *)malloc(65536 * ptrsz);
-uint32 qbs_list_lasti = 65535;
-uint32 qbs_list_nexti = 0;
-// Used to track temporary strings for later removal when they fall out of scope
-//*Some string functions delete a temporary string automatically after they have been
-// passed one to save memory. In this case qbstring_templist[?]=0xFFFFFFFF
-ptrszint *qbs_tmp_list = (ptrszint *)calloc(65536 * ptrsz, 1); // first index MUST be 0
-uint32 qbs_tmp_list_lasti = 65535;
-extern uint32 qbs_tmp_list_nexti;
-// entended string memory
-
-uint8 *qbs_data = (uint8 *)malloc(1048576);
-uint32 qbs_data_size = 1048576;
-uint32 qbs_sp = 0;
-
-void field_free(qbs *str);
-
-void qbs_free(qbs *str) {
-
-    if (str->field)
-        field_free(str);
-
-    if (str->tmplisti) {
-        qbs_tmp_list[str->tmplisti] = -1;
-        while (qbs_tmp_list[qbs_tmp_list_nexti - 1] == -1) {
-            qbs_tmp_list_nexti--;
-        }
-    }
-    if (str->fixed || str->readonly) {
-        qbs_free_descriptor(str);
-        return;
-    }
-    if (str->in_cmem) {
-        qbs_cmem_list[str->listi] = -1;
-        if ((qbs_cmem_list_nexti - 1) == str->listi)
-            qbs_cmem_list_nexti--;
-    } else {
-        qbs_list[str->listi] = -1;
-    retry:
-        if (qbs_list[qbs_list_nexti - 1] == -1) {
-            qbs_list_nexti--;
-            if (qbs_list_nexti)
-                goto retry;
-        }
-        if (qbs_list_nexti) {
-            qbs_sp = ((qbs *)qbs_list[qbs_list_nexti - 1])->chr - qbs_data + ((qbs *)qbs_list[qbs_list_nexti - 1])->len + 32;
-            if (qbs_sp > qbs_data_size)
-                qbs_sp = qbs_data_size; // adding 32 could overflow buffer!
-        } else {
-            qbs_sp = 0;
-        }
-    }
-    qbs_free_descriptor(str);
-    return;
-}
-
-void qbs_cmem_concat_list() {
-    uint32 i;
-    uint32 d;
-    qbs *tqbs;
-    d = 0;
-    for (i = 0; i < qbs_cmem_list_nexti; i++) {
-        if (qbs_cmem_list[i] != -1) {
-            if (i != d) {
-                tqbs = (qbs *)qbs_cmem_list[i];
-                tqbs->listi = d;
-                qbs_cmem_list[d] = (ptrszint)tqbs;
-            }
-            d++;
-        }
-    }
-    qbs_cmem_list_nexti = d;
-    // if string listings are taking up more than half of the list array double the list array's size
-    if (qbs_cmem_list_nexti >= (qbs_cmem_list_lasti / 2)) {
-        qbs_cmem_list_lasti *= 2;
-        qbs_cmem_list = (ptrszint *)realloc(qbs_cmem_list, (qbs_cmem_list_lasti + 1) * ptrsz);
-        if (!qbs_cmem_list)
-            error(509);
-    }
-    return;
-}
-
-void qbs_concat_list() {
-    uint32 i;
-    uint32 d;
-    qbs *tqbs;
-    d = 0;
-    for (i = 0; i < qbs_list_nexti; i++) {
-        if (qbs_list[i] != -1) {
-            if (i != d) {
-                tqbs = (qbs *)qbs_list[i];
-                tqbs->listi = d;
-                qbs_list[d] = (ptrszint)tqbs;
-            }
-            d++;
-        }
-    }
-    qbs_list_nexti = d;
-    // if string listings are taking up more than half of the list array double the list array's size
-    if (qbs_list_nexti >= (qbs_list_lasti / 2)) {
-        qbs_list_lasti *= 2;
-        qbs_list = (ptrszint *)realloc(qbs_list, (qbs_list_lasti + 1) * ptrsz);
-        if (!qbs_list)
-            error(510);
-    }
-    return;
-}
-
-void qbs_tmp_concat_list() {
-    if (qbs_tmp_list_nexti >= (qbs_tmp_list_lasti / 2)) {
-        qbs_tmp_list_lasti *= 2;
-        qbs_tmp_list = (ptrszint *)realloc(qbs_tmp_list, (qbs_tmp_list_lasti + 1) * ptrsz);
-        if (!qbs_tmp_list)
-            error(511);
-    }
-    return;
-}
-
-void qbs_concat(uint32 bytesrequired) {
-    // this does not change indexing, only ->chr pointers and the location of their data
-    static int32 i;
-    static uint8 *dest;
-    static qbs *tqbs;
-    dest = (uint8 *)qbs_data;
-    if (qbs_list_nexti) {
-        qbs_sp = 0;
-        for (i = 0; i < qbs_list_nexti; i++) {
-            if (qbs_list[i] != -1) {
-                tqbs = (qbs *)qbs_list[i];
-                if ((tqbs->chr - dest) > 32) {
-                    if (tqbs->len) {
-                        memmove(dest, tqbs->chr, tqbs->len);
-                    }
-                    tqbs->chr = dest;
-                }
-                dest = tqbs->chr + tqbs->len;
-                qbs_sp = dest - qbs_data;
-            }
-        }
-    }
-
-    if (((qbs_sp * 2) + (bytesrequired + 32)) >= qbs_data_size) {
-        static uint8 *oldbase;
-        oldbase = qbs_data;
-        qbs_data_size = qbs_data_size * 2 + bytesrequired;
-        qbs_data = (uint8 *)realloc(qbs_data, qbs_data_size);
-        if (qbs_data == NULL)
-            error(512); // realloc failed!
-        for (i = 0; i < qbs_list_nexti; i++) {
-            if (qbs_list[i] != -1) {
-                tqbs = (qbs *)qbs_list[i];
-                tqbs->chr = tqbs->chr - oldbase + qbs_data;
-            }
-        }
-    }
-    return;
-}
-
-// as the cmem stack has a limit if bytesrequired cannot be met this exits and returns an error
-// the cmem stack cannot after all be extended!
-// so bytesrequired is only passed to possibly generate an error, or not generate one
-void qbs_concat_cmem(uint32 bytesrequired) {
-    // this does not change indexing, only ->chr pointers and the location of their data
-    int32 i;
-    uint8 *dest;
-    qbs *tqbs;
-    dest = (uint8 *)dblock;
-    qbs_cmem_sp = qbs_cmem_descriptor_space;
-    if (qbs_cmem_list_nexti) {
-        for (i = 0; i < qbs_cmem_list_nexti; i++) {
-            if (qbs_cmem_list[i] != -1) {
-                tqbs = (qbs *)qbs_cmem_list[i];
-                if (tqbs->chr != dest) {
-                    if (tqbs->len) {
-                        memmove(dest, tqbs->chr, tqbs->len);
-                    }
-                    tqbs->chr = dest;
-                    // update cmem_descriptor [length][offset]
-                    if (tqbs->cmem_descriptor) {
-                        tqbs->cmem_descriptor[0] = tqbs->len;
-                        tqbs->cmem_descriptor[1] = (uint16)(ptrszint)(tqbs->chr - dblock);
-                    }
-                }
-                dest += tqbs->len;
-                qbs_cmem_sp += tqbs->len;
-            }
-        }
-    }
-    if ((qbs_cmem_sp + bytesrequired) > cmem_sp)
-        error(513);
-    return;
-}
-
-qbs *qbs_new_cmem(int32 size, uint8 tmp) {
-    if ((qbs_cmem_sp + size) > cmem_sp)
-        qbs_concat_cmem(size);
-    qbs *newstr;
-    newstr = qbs_new_descriptor();
-    newstr->len = size;
-    if ((qbs_cmem_sp + size) > cmem_sp)
-        qbs_concat_cmem(size);
-    newstr->chr = (uint8 *)dblock + qbs_cmem_sp;
-    qbs_cmem_sp += size;
-    newstr->in_cmem = 1;
-    if (qbs_cmem_list_nexti > qbs_cmem_list_lasti)
-        qbs_cmem_concat_list();
-    newstr->listi = qbs_cmem_list_nexti;
-    qbs_cmem_list[newstr->listi] = (ptrszint)newstr;
-    qbs_cmem_list_nexti++;
-    if (tmp) {
-        if (qbs_tmp_list_nexti > qbs_tmp_list_lasti)
-            qbs_tmp_concat_list();
-        newstr->tmplisti = qbs_tmp_list_nexti;
-        qbs_tmp_list[newstr->tmplisti] = (ptrszint)newstr;
-        qbs_tmp_list_nexti++;
-        newstr->tmp = 1;
-    } else {
-        // alloc string descriptor in DBLOCK (4 bytes)
-        cmem_sp -= 4;
-        newstr->cmem_descriptor = (uint16 *)(dblock + cmem_sp);
-        if (cmem_sp < qbs_cmem_sp)
-            error(514);
-        newstr->cmem_descriptor_offset = cmem_sp;
-        // update cmem_descriptor [length][offset]
-        newstr->cmem_descriptor[0] = newstr->len;
-        newstr->cmem_descriptor[1] = (uint16)(ptrszint)(newstr->chr - dblock);
-    }
-    return newstr;
-}
-
-qbs *qbs_new(int32, uint8);
-
-qbs *qbs_new_txt(const char *txt) {
-    qbs *newstr;
-    newstr = qbs_new_descriptor();
-    if (!txt) { // NULL pointer is converted to a 0-length string
-        newstr->len = 0;
-    } else {
-        newstr->len = strlen(txt);
-    }
-    newstr->chr = (uint8 *)txt;
-    if (qbs_tmp_list_nexti > qbs_tmp_list_lasti)
-        qbs_tmp_concat_list();
-    newstr->tmplisti = qbs_tmp_list_nexti;
-    qbs_tmp_list[newstr->tmplisti] = (ptrszint)newstr;
-    qbs_tmp_list_nexti++;
-    newstr->tmp = 1;
-    newstr->readonly = 1;
-    return newstr;
-}
-
-qbs *qbs_new_txt_len(const char *txt, int32 len) {
-    qbs *newstr;
-    newstr = qbs_new_descriptor();
-    newstr->len = len;
-    newstr->chr = (uint8 *)txt;
-    if (qbs_tmp_list_nexti > qbs_tmp_list_lasti)
-        qbs_tmp_concat_list();
-    newstr->tmplisti = qbs_tmp_list_nexti;
-    qbs_tmp_list[newstr->tmplisti] = (ptrszint)newstr;
-    qbs_tmp_list_nexti++;
-    newstr->tmp = 1;
-    newstr->readonly = 1;
-    return newstr;
-}
-
-// note: qbs_new_fixed detects if string is in DBLOCK
-qbs *qbs_new_fixed(uint8 *offset, uint32 size, uint8 tmp) {
-    qbs *newstr;
-    newstr = qbs_new_descriptor();
-    newstr->len = size;
-    newstr->chr = offset;
-    newstr->fixed = 1;
-    if (tmp) {
-        if (qbs_tmp_list_nexti > qbs_tmp_list_lasti)
-            qbs_tmp_concat_list();
-        newstr->tmplisti = qbs_tmp_list_nexti;
-        qbs_tmp_list[newstr->tmplisti] = (ptrszint)newstr;
-        qbs_tmp_list_nexti++;
-        newstr->tmp = 1;
-    } else {
-        // is it in DBLOCK?
-        if ((offset > (cmem + 1280)) && (offset < (cmem + 66816))) {
-            // alloc string descriptor in DBLOCK (4 bytes)
-            cmem_sp -= 4;
-            newstr->cmem_descriptor = (uint16 *)(dblock + cmem_sp);
-            if (cmem_sp < qbs_cmem_sp)
-                error(515);
-            newstr->cmem_descriptor_offset = cmem_sp;
-            // update cmem_descriptor [length][offset]
-            newstr->cmem_descriptor[0] = newstr->len;
-            newstr->cmem_descriptor[1] = (uint16)(ptrszint)(newstr->chr - dblock);
-        }
-    }
-    return newstr;
-}
-
-qbs *qbs_new(int32 size, uint8 tmp) {
-    static qbs *newstr;
-    if ((qbs_sp + size + 32) > qbs_data_size)
-        qbs_concat(size + 32);
-    newstr = qbs_new_descriptor();
-    newstr->len = size;
-    newstr->chr = qbs_data + qbs_sp;
-    qbs_sp += size + 32;
-    if (qbs_list_nexti > qbs_list_lasti)
-        qbs_concat_list();
-    newstr->listi = qbs_list_nexti;
-    qbs_list[newstr->listi] = (ptrszint)newstr;
-    qbs_list_nexti++;
-    if (tmp) {
-        if (qbs_tmp_list_nexti > qbs_tmp_list_lasti)
-            qbs_tmp_concat_list();
-        newstr->tmplisti = qbs_tmp_list_nexti;
-        qbs_tmp_list[newstr->tmplisti] = (ptrszint)newstr;
-        qbs_tmp_list_nexti++;
-        newstr->tmp = 1;
-    }
-    return newstr;
-}
-
-void qbs_maketmp(qbs *str) {
-    // WARNING: assumes str is a non-tmp string in non-cmem
-    if (qbs_tmp_list_nexti > qbs_tmp_list_lasti)
-        qbs_tmp_concat_list();
-    str->tmplisti = qbs_tmp_list_nexti;
-    qbs_tmp_list[str->tmplisti] = (ptrszint)str;
-    qbs_tmp_list_nexti++;
-    str->tmp = 1;
-}
-
-qbs *qbs_set(qbs *deststr, qbs *srcstr) {
-    int32 i;
-    qbs *tqbs;
-    // fixed deststr
-    if (deststr->fixed) {
-        if (srcstr->len >= deststr->len) {
-            memcpy(deststr->chr, srcstr->chr, deststr->len);
-        } else {
-            memcpy(deststr->chr, srcstr->chr, srcstr->len);
-            memset(deststr->chr + srcstr->len, 32, deststr->len - srcstr->len); // pad with spaces
-        }
-        goto qbs_set_return;
-    }
-    // non-fixed deststr
-
-    // can srcstr be acquired by deststr?
-    if (srcstr->tmp) {
-        if (srcstr->fixed == 0) {
-            if (srcstr->readonly == 0) {
-                if (srcstr->in_cmem == deststr->in_cmem) {
-                    if (deststr->in_cmem) {
-                        // unlist deststr and acquire srcstr's list index
-                        qbs_cmem_list[deststr->listi] = -1;
-                        qbs_cmem_list[srcstr->listi] = (ptrszint)deststr;
-                        deststr->listi = srcstr->listi;
-                    } else {
-                        // unlist deststr and acquire srcstr's list index
-                        qbs_list[deststr->listi] = -1;
-                        qbs_list[srcstr->listi] = (ptrszint)deststr;
-                        deststr->listi = srcstr->listi;
-                    }
-
-                    qbs_tmp_list[srcstr->tmplisti] = -1;
-                    if (srcstr->tmplisti == (qbs_tmp_list_nexti - 1))
-                        qbs_tmp_list_nexti--; // correct last tmp index for performance
-
-                    deststr->chr = srcstr->chr;
-                    deststr->len = srcstr->len;
-                    qbs_free_descriptor(srcstr);
-                    // update cmem_descriptor [length][offset]
-                    if (deststr->cmem_descriptor) {
-                        deststr->cmem_descriptor[0] = deststr->len;
-                        deststr->cmem_descriptor[1] = (uint16)(ptrszint)(deststr->chr - dblock);
-                    }
-                    return deststr; // nb. This return cannot be changed to a goto qbs_set_return!
-                }
-            }
-        }
-    }
-
-    // srcstr is equal length or shorter
-    if (srcstr->len <= deststr->len) {
-        memcpy(deststr->chr, srcstr->chr, srcstr->len);
-        deststr->len = srcstr->len;
-        goto qbs_set_return;
-    }
-
-    // srcstr is longer
-    if (deststr->in_cmem) {
-        if (deststr->listi == (qbs_cmem_list_nexti - 1)) {                      // last index
-            if (((ptrszint)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
-                memcpy(deststr->chr, srcstr->chr, srcstr->len);
-                deststr->len = srcstr->len;
-                qbs_cmem_sp = ((ptrszint)deststr->chr) + (ptrszint)deststr->len - dblock;
-                goto qbs_set_return;
-            }
-            goto qbs_set_cmem_concat_required;
-        }
-        // deststr is not the last index so locate next valid index
-        i = deststr->listi + 1;
-    qbs_set_nextindex:
-        if (qbs_cmem_list[i] != -1) {
-            tqbs = (qbs *)qbs_cmem_list[i];
-            if (tqbs == srcstr) {
-                if (srcstr->tmp == 1)
-                    goto skippedtmpsrcindex;
-            }
-            if ((deststr->chr + srcstr->len) > tqbs->chr)
-                goto qbs_set_cmem_concat_required;
-            memcpy(deststr->chr, srcstr->chr, srcstr->len);
-            deststr->len = srcstr->len;
-            goto qbs_set_return;
-        }
-    skippedtmpsrcindex:
-        i++;
-        if (i != qbs_cmem_list_nexti)
-            goto qbs_set_nextindex;
-        // all next indexes invalid!
-        qbs_cmem_list_nexti = deststr->listi + 1;                           // adjust nexti
-        if (((ptrszint)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
-            memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes acquiring srcstr's space
-            deststr->len = srcstr->len;
-            qbs_cmem_sp = ((ptrszint)deststr->chr) + (ptrszint)deststr->len - dblock;
-            goto qbs_set_return;
-        }
-    qbs_set_cmem_concat_required:
-        // srcstr could not fit in deststr
-        //"realloc" deststr
-        qbs_cmem_list[deststr->listi] = -1;          // unlist
-        if ((qbs_cmem_sp + srcstr->len) > cmem_sp) { // must concat!
-            qbs_concat_cmem(srcstr->len);
-        }
-        if (qbs_cmem_list_nexti > qbs_cmem_list_lasti)
-            qbs_cmem_concat_list();
-        deststr->listi = qbs_cmem_list_nexti;
-        qbs_cmem_list[qbs_cmem_list_nexti] = (ptrszint)deststr;
-        qbs_cmem_list_nexti++; // relist
-        deststr->chr = (uint8 *)dblock + qbs_cmem_sp;
-        deststr->len = srcstr->len;
-        qbs_cmem_sp += deststr->len;
-        memcpy(deststr->chr, srcstr->chr, srcstr->len);
-        goto qbs_set_return;
-    }
-
-    // not in cmem
-    if (deststr->listi == (qbs_list_nexti - 1)) {                                             // last index
-        if (((ptrszint)deststr->chr + srcstr->len) <= ((ptrszint)qbs_data + qbs_data_size)) { // space available
-            memcpy(deststr->chr, srcstr->chr, srcstr->len);
-            deststr->len = srcstr->len;
-            qbs_sp = ((ptrszint)deststr->chr) + (ptrszint)deststr->len - (ptrszint)qbs_data;
-            goto qbs_set_return;
-        }
-        goto qbs_set_concat_required;
-    }
-    // deststr is not the last index so locate next valid index
-    i = deststr->listi + 1;
-qbs_set_nextindex2:
-    if (qbs_list[i] != -1) {
-        tqbs = (qbs *)qbs_list[i];
-        if (tqbs == srcstr) {
-            if (srcstr->tmp == 1)
-                goto skippedtmpsrcindex2;
-        }
-        if ((deststr->chr + srcstr->len) > tqbs->chr)
-            goto qbs_set_concat_required;
-        memcpy(deststr->chr, srcstr->chr, srcstr->len);
-        deststr->len = srcstr->len;
-        goto qbs_set_return;
-    }
-skippedtmpsrcindex2:
-    i++;
-    if (i != qbs_list_nexti)
-        goto qbs_set_nextindex2;
-    // all next indexes invalid!
-
-    qbs_list_nexti = deststr->listi + 1;                                                  // adjust nexti
-    if (((ptrszint)deststr->chr + srcstr->len) <= ((ptrszint)qbs_data + qbs_data_size)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                                  // overlap possible due to sometimes acquiring srcstr's space
-        deststr->len = srcstr->len;
-        qbs_sp = ((ptrszint)deststr->chr) + (ptrszint)deststr->len - (ptrszint)qbs_data;
-        goto qbs_set_return;
-    }
-
-qbs_set_concat_required:
-    // srcstr could not fit in deststr
-    //"realloc" deststr
-    qbs_list[deststr->listi] = -1;                // unlist
-    if ((qbs_sp + srcstr->len) > qbs_data_size) { // must concat!
-        qbs_concat(srcstr->len);
-    }
-    if (qbs_list_nexti > qbs_list_lasti)
-        qbs_concat_list();
-    deststr->listi = qbs_list_nexti;
-    qbs_list[qbs_list_nexti] = (ptrszint)deststr;
-    qbs_list_nexti++; // relist
-
-    deststr->chr = qbs_data + qbs_sp;
-    deststr->len = srcstr->len;
-    qbs_sp += deststr->len;
-    memcpy(deststr->chr, srcstr->chr, srcstr->len);
-
-//(fall through to qbs_set_return)
-qbs_set_return:
-    if (srcstr->tmp) { // remove srcstr if it is a tmp string
-        qbs_free(srcstr);
-    }
-    // update cmem_descriptor [length][offset]
-    if (deststr->cmem_descriptor) {
-        deststr->cmem_descriptor[0] = deststr->len;
-        deststr->cmem_descriptor[1] = (uint16)(ptrszint)(deststr->chr - dblock);
-    }
-    return deststr;
-}
-
-qbs *qbs_add(qbs *str1, qbs *str2) {
-    qbs *tqbs;
-    if (!str2->len)
-        return str1; // pass on
-    if (!str1->len)
-        return str2; // pass on
-    // may be possible to acquire str1 or str2's space but...
-    // 1. check if dest has enough space (because its data is already in the correct place)
-    // 2. check if source has enough space
-    // 3. give up
-    // nb. they would also have to be a tmp, var. len str in ext memory!
-    // brute force method...
-    tqbs = qbs_new(str1->len + str2->len, 1);
-    memcpy(tqbs->chr, str1->chr, str1->len);
-    memcpy(tqbs->chr + str1->len, str2->chr, str2->len);
-
-    // exit(qbs_sp);
-    if (str1->tmp)
-        qbs_free(str1);
-    if (str2->tmp)
-        qbs_free(str2);
-    return tqbs;
-}
-
-qbs *qbs_ucase(qbs *str) {
-    if (!str->len)
-        return str;
-    qbs *tqbs = NULL;
-    if (str->tmp && !str->fixed && !str->readonly && !str->in_cmem) {
-        tqbs = str;
-    } else {
-        tqbs = qbs_new(str->len, 1);
-        memcpy(tqbs->chr, str->chr, str->len);
-    }
-    unsigned char *c = tqbs->chr;
-    for (int32 i = 0; i < str->len; i++) {
-        if ((*c >= 'a') && (*c <= 'z'))
-            *c = *c & 223;
-        c++;
-    }
-    if (tqbs != str && str->tmp)
-        qbs_free(str);
-    return tqbs;
-}
-
-qbs *qbs_lcase(qbs *str) {
-    if (!str->len)
-        return str;
-    qbs *tqbs = NULL;
-    if (str->tmp && !str->fixed && !str->readonly && !str->in_cmem) {
-        tqbs = str;
-    } else {
-        tqbs = qbs_new(str->len, 1);
-        memcpy(tqbs->chr, str->chr, str->len);
-    }
-    unsigned char *c = tqbs->chr;
-    for (int32 i = 0; i < str->len; i++) {
-        if ((*c >= 'A') && (*c <= 'Z'))
-            *c = *c | 32;
-        c++;
-    }
-    if (tqbs != str && str->tmp)
-        qbs_free(str);
-    return tqbs;
-}
-
-qbs *func_chr(int32 value) {
-    qbs *tqbs;
-    if ((value < 0) || (value > 255)) {
-        tqbs = qbs_new(0, 1);
-        error(5);
-    } else {
-        tqbs = qbs_new(1, 1);
-        tqbs->chr[0] = value;
-    }
-    return tqbs;
-}
-
 qbs *func_varptr_helper(uint8 type, uint16 offset) {
     //*creates a 3 byte string using the values given
     qbs *tqbs;
@@ -8458,60 +7507,6 @@ qbs *func_varptr_helper(uint8 type, uint16 offset) {
     tqbs->chr[0] = type;
     tqbs->chr[1] = offset & 255;
     tqbs->chr[2] = offset >> 8;
-    return tqbs;
-}
-
-qbs *qbs_left(qbs *str, int32 l) {
-    if (l > str->len)
-        l = str->len;
-    if (l < 0)
-        l = 0;
-    if (l == str->len)
-        return str; // pass on
-    if (str->tmp) {
-        if (!str->fixed) {
-            if (!str->readonly) {
-                if (!str->in_cmem) {
-                    str->len = l;
-                    return str;
-                }
-            }
-        }
-    }
-    qbs *tqbs;
-    tqbs = qbs_new(l, 1);
-    if (l)
-        memcpy(tqbs->chr, str->chr, l);
-    if (str->tmp)
-        qbs_free(str);
-    return tqbs;
-}
-
-qbs *qbs_right(qbs *str, int32 l) {
-    if (l > str->len)
-        l = str->len;
-    if (l < 0)
-        l = 0;
-    if (l == str->len)
-        return str; // pass on
-    if (str->tmp) {
-        if (!str->fixed) {
-            if (!str->readonly) {
-                if (!str->in_cmem) {
-                    str->chr = str->chr + (str->len - l);
-                    str->len = l;
-                    return str;
-                }
-            }
-        }
-    }
-    qbs *tqbs;
-    tqbs = qbs_new(l, 1);
-    if (l)
-        memcpy(tqbs->chr, str->chr + str->len - l, l);
-    tqbs->len = l;
-    if (str->tmp)
-        qbs_free(str);
     return tqbs;
 }
 
@@ -8785,365 +7780,8 @@ int64 string2bit(qbs *str, uint32 bsize) {
     return bval64;
 }
 
-void lrset_field(qbs *str);
-
-void sub_lset(qbs *dest, qbs *source) {
-    if (new_error)
-        return;
-    if (source->len >= dest->len) {
-        if (dest->len)
-            memcpy(dest->chr, source->chr, dest->len);
-        goto field_check;
-    }
-    if (source->len)
-        memcpy(dest->chr, source->chr, source->len);
-    memset(dest->chr + source->len, 32, dest->len - source->len);
-field_check:
-    if (dest->field)
-        lrset_field(dest);
-}
-
-void sub_rset(qbs *dest, qbs *source) {
-    if (new_error)
-        return;
-    if (source->len >= dest->len) {
-        if (dest->len)
-            memcpy(dest->chr, source->chr, dest->len);
-        goto field_check;
-    }
-    if (source->len)
-        memcpy(dest->chr + dest->len - source->len, source->chr, source->len);
-    memset(dest->chr, 32, dest->len - source->len);
-field_check:
-    if (dest->field)
-        lrset_field(dest);
-}
-
-qbs *func_space(int32 spaces) {
-    static qbs *tqbs;
-    if (spaces < 0)
-        spaces = 0;
-    tqbs = qbs_new(spaces, 1);
-    if (spaces)
-        memset(tqbs->chr, 32, spaces);
-    return tqbs;
-}
-
-qbs *func_string(int32 characters, int32 asciivalue) {
-    static qbs *tqbs;
-    if (characters < 0)
-        characters = 0;
-    tqbs = qbs_new(characters, 1);
-    if (characters)
-        memset(tqbs->chr, asciivalue & 0xFF, characters);
-    return tqbs;
-}
-
-void set_qbs_size(ptrszint *target_qbs, int32 newlength) {
-    qbs_set((qbs *)(*target_qbs), func_space(newlength));
-    return;
-}
-
-int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed) {
-    // QB64 difference: start can be 0 or negative
-    // justification-start could be larger than the length of string to search in QBASIC
-    static uint8 *limit, *base;
-    static uint8 firstc;
-    if (!passed)
-        start = 1;
-    if (!str->len)
-        return 0;
-    if (start < 1) {
-        start = 1;
-        if (!substr->len)
-            return 0;
-    }
-    if (start > str->len)
-        return 0;
-    if (!substr->len)
-        return start;
-    if ((start + substr->len - 1) > str->len)
-        return 0;
-    limit = str->chr + str->len;
-    firstc = substr->chr[0];
-    base = str->chr + start - 1;
-nextchar:
-    base = (uint8 *)memchr(base, firstc, limit - base);
-    if (!base)
-        return 0;
-    if ((base + substr->len) > limit)
-        return 0;
-    if (!memcmp(base, substr->chr, substr->len))
-        return base - str->chr + 1;
-    base++;
-    if ((base + substr->len) > limit)
-        return 0;
-    goto nextchar;
-}
-
-int32 func__instrrev(int32 start, qbs *str, qbs *substr, int32 passed) {
-    if (!str->len)
-        return 0;
-    if (substr->len > str->len)
-        return 0;
-    if (!passed) {
-        if (substr->len == str->len) {
-            if (!memcmp(str->chr, substr->chr, str->len))
-                return 1;
-        }
-        start = str->len - substr->len + 1;
-    }
-    if (start < 1) {
-        start = str->len - substr->len + 1;
-    }
-    if (start > str->len)
-        start = str->len - substr->len + 1;
-    if (!substr->len)
-        return start - 1;
-    if ((start + substr->len - 1) > str->len)
-        start = str->len - substr->len + 1;
-
-    int32 searchForward = 0, lastFound = 0, result = 0;
-    do {
-        searchForward = func_instr(searchForward + 1, str, substr, 1);
-        if (searchForward > 0) {
-            lastFound = searchForward;
-            if (lastFound <= start)
-                result = lastFound;
-            if (lastFound > start)
-                break;
-        }
-    } while (searchForward > 0);
-
-    return result;
-}
-
-void sub_mid(qbs *dest, int32 start, int32 l, qbs *src, int32 passed) {
-    if (new_error)
-        return;
-    static int32 src_offset;
-    if (!passed)
-        l = src->len;
-    src_offset = 0;
-    if (dest == nothingstring)
-        return; // quiet exit, error has already been reported!
-    if (start < 1) {
-        l = l + start - 1;
-        src_offset = -start + 1; // src_offset is a byte offset with base 0!
-        start = 1;
-    }
-    if (l <= 0)
-        return;
-    if (start > dest->len)
-        return;
-    if ((start + l - 1) > dest->len)
-        l = dest->len - start + 1;
-    // start and l are now reflect a valid region within dest
-    if (src_offset >= src->len)
-        return;
-    if (l > (src->len - src_offset))
-        l = src->len - src_offset;
-    // src_offset and l now reflect a valid region within src
-    if (dest == src) {
-        if ((start - 1) != src_offset)
-            memmove(dest->chr + start - 1, src->chr + src_offset, l);
-    } else {
-        memcpy(dest->chr + start - 1, src->chr + src_offset, l);
-    }
-}
-
-qbs *func_mid(qbs *str, int32 start, int32 l, int32 passed) {
-    static qbs *tqbs;
-    if (passed) {
-        if (start < 1) {
-            l = l - 1 + start;
-            start = 1;
-        }
-        if ((l >= 1) && (start <= str->len)) {
-            if ((start + l) > str->len)
-                l = str->len - start + 1;
-        } else {
-            l = 0;
-            start = 1; // nothing!
-        }
-    } else {
-        if (start < 1)
-            start = 1;
-        l = str->len - start + 1;
-        if (l < 1) {
-            l = 0;
-            start = 1; // nothing!
-        }
-    }
-    if ((start == 1) && (l == str->len))
-        return str; // pass on
-    if (str->tmp) {
-        if (!str->fixed) {
-            if (!str->readonly) {
-                if (!str->in_cmem) { // acquire
-                    str->chr = str->chr + (start - 1);
-                    str->len = l;
-                    return str;
-                }
-            }
-        }
-    }
-    tqbs = qbs_new(l, 1);
-    if (l)
-        memcpy(tqbs->chr, str->chr + start - 1, l);
-    if (str->tmp)
-        qbs_free(str);
-    return tqbs;
-}
-
-qbs *qbs_ltrim(qbs *str) {
-    if (!str->len)
-        return str; // pass on
-    if (*str->chr != 32)
-        return str; // pass on
-    if (str->tmp) {
-        if (!str->fixed) {
-            if (!str->readonly) {
-                if (!str->in_cmem) { // acquire?
-                qbs_ltrim_nextchar:
-                    if (*str->chr == 32) {
-                        str->chr++;
-                        if (--str->len)
-                            goto qbs_ltrim_nextchar;
-                    }
-                    return str;
-                }
-            }
-        }
-    }
-    int32 i;
-    i = 0;
-qbs_ltrim_nextchar2:
-    if (str->chr[i] == 32) {
-        i++;
-        if (i < str->len)
-            goto qbs_ltrim_nextchar2;
-    }
-    qbs *tqbs;
-    tqbs = qbs_new(str->len - i, 1);
-    if (tqbs->len)
-        memcpy(tqbs->chr, str->chr + i, tqbs->len);
-    if (str->tmp)
-        qbs_free(str);
-    return tqbs;
-}
-
-qbs *qbs_rtrim(qbs *str) {
-    if (!str->len)
-        return str; // pass on
-    if (str->chr[str->len - 1] != 32)
-        return str; // pass on
-    if (str->tmp) {
-        if (!str->fixed) {
-            if (!str->readonly) {
-                if (!str->in_cmem) { // acquire?
-                qbs_rtrim_nextchar:
-                    if (str->chr[str->len - 1] == 32) {
-                        if (--str->len)
-                            goto qbs_rtrim_nextchar;
-                    }
-                    return str;
-                }
-            }
-        }
-    }
-    int32 i;
-    i = str->len;
-qbs_rtrim_nextchar2:
-    if (str->chr[i - 1] == 32) {
-        i--;
-        if (i)
-            goto qbs_rtrim_nextchar2;
-    }
-    // i is the number of characters to keep
-    qbs *tqbs;
-    tqbs = qbs_new(i, 1);
-    if (i)
-        memcpy(tqbs->chr, str->chr, i);
-    if (str->tmp)
-        qbs_free(str);
-    return tqbs;
-}
-
-qbs *qbs__trim(qbs *str) { return qbs_rtrim(qbs_ltrim(str)); }
-
-int32 func__str_nc_compare(qbs *s1, qbs *s2) {
-    int32 limit, l1, l2;
-    int32 v1, v2;
-    unsigned char *c1 = s1->chr, *c2 = s2->chr;
-
-    l1 = s1->len;
-    l2 = s2->len; // no need to get the length of these strings multiple times.
-    if (!l1) {
-        if (l2)
-            return -1;
-        else
-            return 0; // if one is a null string we known the answer already.
-    }
-    if (!l2)
-        return 1;
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2; // our limit is going to be the length of the smallest string.
-
-    for (int32 i = 0; i < limit; i++) { // check the length of our string
-        v1 = *c1;
-        v2 = *c2;
-        if ((v1 > 64) && (v1 < 91))
-            v1 = v1 | 32;
-        if ((v2 > 64) && (v2 < 91))
-            v2 = v2 | 32;
-        if (v1 < v2)
-            return -1;
-        if (v1 > v2)
-            return 1;
-        c1++;
-        c2++;
-    }
-
-    if (l1 < l2)
-        return -1;
-    if (l1 > l2)
-        return 1;
-    return 0;
-}
-
-int32 func__str_compare(qbs *s1, qbs *s2) {
-    int32 i, limit, l1, l2;
-    l1 = s1->len;
-    l2 = s2->len; // no need to get the length of these strings multiple times.
-    if (!l1) {
-        if (l2)
-            return -1;
-        else
-            return 0; // if one is a null string we known the answer already.
-    }
-    if (!l2)
-        return 1;
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(s1->chr, s2->chr, limit);
-    if (i < 0)
-        return -1;
-    if (i > 0)
-        return 1;
-    if (l1 < l2)
-        return -1;
-    if (l1 > l2)
-        return 1;
-    return 0;
-}
-
 qbs *qbs_inkey() {
-    if (new_error)
+    if (is_error_pending())
         return qbs_new(0, 1);
     qbs *tqbs;
     // Sleep(0);
@@ -9167,7 +7805,7 @@ qbs *qbs_inkey() {
 }
 
 void sub__keyclear(int32 buf, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed && (buf > 3 || buf < 1))
         error(5);
@@ -9193,373 +7831,6 @@ void sub__keyclear(int32 buf, int32 passed) {
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 #endif
 }
-
-// STR() functions
-// singed integers
-qbs *qbs_str(int64 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(20, 1);
-#ifdef QB64_WINDOWS
-    tqbs->len = sprintf((char *)tqbs->chr, "% I64i", value);
-#else
-    tqbs->len = sprintf((char *)tqbs->chr, "% lli", value);
-#endif
-    return tqbs;
-}
-qbs *qbs_str(int32 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(11, 1);
-    tqbs->len = sprintf((char *)tqbs->chr, "% i", value);
-    return tqbs;
-}
-qbs *qbs_str(int16 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(6, 1);
-    tqbs->len = sprintf((char *)tqbs->chr, "% i", value);
-    return tqbs;
-}
-qbs *qbs_str(int8 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(4, 1);
-    tqbs->len = sprintf((char *)tqbs->chr, "% i", value);
-    return tqbs;
-}
-// unsigned integers
-qbs *qbs_str(uint64 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(21, 1);
-#ifdef QB64_WINDOWS
-    tqbs->len = sprintf((char *)tqbs->chr, " %I64u", value);
-#else
-    tqbs->len = sprintf((char *)tqbs->chr, " %llu", value);
-#endif
-    return tqbs;
-}
-qbs *qbs_str(uint32 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(11, 1);
-    tqbs->len = sprintf((char *)tqbs->chr, " %u", value);
-    return tqbs;
-}
-qbs *qbs_str(uint16 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(6, 1);
-    tqbs->len = sprintf((char *)tqbs->chr, " %u", value);
-    return tqbs;
-}
-qbs *qbs_str(uint8 value) {
-    qbs *tqbs;
-    tqbs = qbs_new(4, 1);
-    tqbs->len = sprintf((char *)tqbs->chr, " %u", value);
-    return tqbs;
-}
-
-uint8 func_str_fmt[7];
-uint8 qbs_str_buffer[32];
-uint8 qbs_str_buffer2[32];
-
-qbs *qbs_str(float value) {
-    static qbs *tqbs;
-    tqbs = qbs_new(16, 1);
-    static int32 l, i, i2, i3, digits, exponent;
-    l = sprintf((char *)&qbs_str_buffer, "% .6E", value);
-    // IMPORTANT: assumed l==14
-    if (l == 13) {
-        memmove(&qbs_str_buffer[12], &qbs_str_buffer[11], 2);
-        qbs_str_buffer[11] = 48;
-        l = 14;
-    }
-
-    digits = 7;
-    for (i = 8; i >= 1; i--) {
-        if (qbs_str_buffer[i] == 48) {
-            digits--;
-        } else {
-            if (qbs_str_buffer[i] != 46)
-                break;
-        }
-    } // i
-    // no significant digits? simply return 0
-    if (digits == 0) {
-        tqbs->len = 2;
-        tqbs->chr[0] = 32;
-        tqbs->chr[1] = 48; // tqbs=[space][0]
-        return tqbs;
-    }
-    // calculate exponent
-    exponent = (qbs_str_buffer[11] - 48) * 100 + (qbs_str_buffer[12] - 48) * 10 + (qbs_str_buffer[13] - 48);
-    if (qbs_str_buffer[10] == 45)
-        exponent = -exponent;
-    if ((exponent <= 6) && ((exponent - digits) >= -8))
-        goto asdecimal;
-    // fix up exponent to conform to QBASIC standards
-    // i. cull trailing 0's after decimal point (use digits to help)
-    // ii. cull leading 0's of exponent
-
-    i3 = 0;
-    i2 = digits + 2;
-    if (digits == 1)
-        i2--; // don't include decimal point
-    for (i = 0; i < i2; i++) {
-        tqbs->chr[i3] = qbs_str_buffer[i];
-        i3++;
-    }
-    for (i = 9; i <= 10; i++) {
-        tqbs->chr[i3] = qbs_str_buffer[i];
-        i3++;
-    }
-    exponent = abs(exponent);
-    // i2=13;
-    // if (exponent>9) i2=12;
-    i2 = 12; // override: if exponent is less than 10 still display a leading 0
-    if (exponent > 99)
-        i2 = 11;
-    for (i = i2; i <= 13; i++) {
-        tqbs->chr[i3] = qbs_str_buffer[i];
-        i3++;
-    }
-    tqbs->len = i3;
-    return tqbs;
-/////////////////////
-asdecimal:
-    // calculate digits after decimal point in var. i
-    i = -(exponent - digits + 1);
-    if (i < 0)
-        i = 0;
-    func_str_fmt[0] = 37; //"%"
-    func_str_fmt[1] = 32; //" "
-    func_str_fmt[2] = 46; //"."
-    func_str_fmt[3] = i + 48;
-    func_str_fmt[4] = 102; //"f"
-    func_str_fmt[5] = 0;
-    tqbs->len = sprintf((char *)tqbs->chr, (const char *)&func_str_fmt, value);
-    if (tqbs->chr[1] == 48) { // must manually cull leading 0
-        memmove(tqbs->chr + 1, tqbs->chr + 2, tqbs->len - 2);
-        tqbs->len--;
-    }
-    return tqbs;
-}
-
-qbs *qbs_str(double value) {
-    static qbs *tqbs;
-    tqbs = qbs_new(32, 1);
-    static int32 l, i, i2, i3, digits, exponent;
-
-    l = sprintf((char *)&qbs_str_buffer, "% .15E", value);
-    // IMPORTANT: assumed l==23
-    if (l == 22) {
-        memmove(&qbs_str_buffer[21], &qbs_str_buffer[20], 2);
-        qbs_str_buffer[20] = 48;
-        l = 23;
-    }
-
-    // check if the 16th significant digit is 9, if it is round to 15 significant digits
-    if (qbs_str_buffer[17] == 57) {
-        sprintf((char *)&qbs_str_buffer2, "% .14E", value);
-        memmove(&qbs_str_buffer, &qbs_str_buffer2, 17);
-        qbs_str_buffer[17] = 48;
-    }
-    qbs_str_buffer[18] = 68; // change E to D (QBASIC standard)
-    digits = 16;
-    for (i = 17; i >= 1; i--) {
-        if (qbs_str_buffer[i] == 48) {
-            digits--;
-        } else {
-            if (qbs_str_buffer[i] != 46)
-                break;
-        }
-    } // i
-    // no significant digits? simply return 0
-    if (digits == 0) {
-        tqbs->len = 2;
-        tqbs->chr[0] = 32;
-        tqbs->chr[1] = 48; // tqbs=[space][0]
-        return tqbs;
-    }
-    // calculate exponent
-    exponent = (qbs_str_buffer[20] - 48) * 100 + (qbs_str_buffer[21] - 48) * 10 + (qbs_str_buffer[22] - 48);
-    if (qbs_str_buffer[19] == 45)
-        exponent = -exponent;
-    // OLD if ((exponent<=15)&&((exponent-digits)>=-16)) goto asdecimal;
-    if ((exponent <= 15) && ((exponent - digits) >= -17))
-        goto asdecimal;
-    // fix up exponent to conform to QBASIC standards
-    // i. cull trailing 0's after decimal point (use digits to help)
-    // ii. cull leading 0's of exponent
-    i3 = 0;
-    i2 = digits + 2;
-    if (digits == 1)
-        i2--; // don't include decimal point
-    for (i = 0; i < i2; i++) {
-        tqbs->chr[i3] = qbs_str_buffer[i];
-        i3++;
-    }
-    for (i = 18; i <= 19; i++) {
-        tqbs->chr[i3] = qbs_str_buffer[i];
-        i3++;
-    }
-    exponent = abs(exponent);
-    // i2=22;
-    // if (exponent>9) i2=21;
-    i2 = 21; // override: if exponent is less than 10 still display a leading 0
-    if (exponent > 99)
-        i2 = 20;
-    for (i = i2; i <= 22; i++) {
-        tqbs->chr[i3] = qbs_str_buffer[i];
-        i3++;
-    }
-    tqbs->len = i3;
-    return tqbs;
-/////////////////////
-asdecimal:
-    // calculate digits after decimal point in var. i
-    i = -(exponent - digits + 1);
-    if (i < 0)
-        i = 0;
-    func_str_fmt[0] = 37; //"%"
-    func_str_fmt[1] = 32; //" "
-    func_str_fmt[2] = 46; //"."
-    if (i > 9) {
-        func_str_fmt[3] = 49; //"1"
-        func_str_fmt[4] = (i - 10) + 48;
-    } else {
-        func_str_fmt[3] = 48; //"0"
-        func_str_fmt[4] = i + 48;
-    }
-    func_str_fmt[5] = 102; //"f"
-    func_str_fmt[6] = 0;
-    tqbs->len = sprintf((char *)tqbs->chr, (const char *)&func_str_fmt, value);
-    if (tqbs->chr[1] == 48) { // must manually cull leading 0
-        memmove(tqbs->chr + 1, tqbs->chr + 2, tqbs->len - 2);
-        tqbs->len--;
-    }
-    return tqbs;
-}
-
-qbs *qbs_str(long double value) {
-    // not fully implemented
-    return qbs_str((double)value);
-}
-
-int32 qbs_equal(qbs *str1, qbs *str2) {
-    if (str1->len != str2->len)
-        return 0;
-    if (memcmp(str1->chr, str2->chr, str1->len) == 0)
-        return -1;
-    return 0;
-}
-int32 qbs_notequal(qbs *str1, qbs *str2) {
-    if (str1->len != str2->len)
-        return -1;
-    if (memcmp(str1->chr, str2->chr, str1->len) == 0)
-        return 0;
-    return -1;
-}
-int32 qbs_greaterthan(qbs *str2, qbs *str1) {
-    // same process as for lessthan; we just reverse the string order
-    int32 i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len;
-    if (!l1)
-        if (l2)
-            return -1;
-        else
-            return 0;
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(str1->chr, str2->chr, limit);
-    if (i < 0)
-        return -1;
-    if (i > 0)
-        return 0;
-    if (l1 < l2)
-        return -1;
-    return 0;
-}
-int32 qbs_lessthan(qbs *str1, qbs *str2) {
-    int32 i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len; // no need to get the length of these strings multiple times.
-    if (!l1)
-        if (l2)
-            return -1;
-        else
-            return 0; // if one is a null string we known the answer already.
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;                          // our limit is going to be the length of the smallest string.
-    i = memcmp(str1->chr, str2->chr, limit); // check only to the length of the shortest string
-    if (i < 0)
-        return -1; // if the number is smaller by this point, say so
-    if (i > 0)
-        return 0; // if it's larger by this point, say so
-    // if the number is the same at this point, compare length.
-    // if the length of the first one is smaller, then the string is smaller. Otherwise the second one is the same string, or longer.
-    if (l1 < l2)
-        return -1;
-    return 0;
-}
-int32 qbs_lessorequal(qbs *str1, qbs *str2) {
-    // same process as lessthan, but we check to see if the lengths are equal here also.
-    int32 i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len;
-    if (!l1)
-        return -1; // if the first string has no length then it HAS to be smaller or equal to the second
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(str1->chr, str2->chr, limit);
-    if (i < 0)
-        return -1;
-    if (i > 0)
-        return 0;
-    if (l1 <= l2)
-        return -1;
-    return 0;
-}
-int32 qbs_greaterorequal(qbs *str2, qbs *str1) {
-    // same process as for lessorequal; we just reverse the string order
-    int32 i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len;
-    if (!l1)
-        return -1;
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(str1->chr, str2->chr, limit);
-    if (i < 0)
-        return -1;
-    if (i > 0)
-        return 0;
-    if (l1 <= l2)
-        return -1;
-    return 0;
-}
-
-int32 qbs_asc(qbs *str, uint32 i) { // uint32 speeds up checking for negative
-    i--;
-    if (i < str->len) {
-        return str->chr[i];
-    }
-    error(5);
-    return 0;
-}
-
-int32 qbs_asc(qbs *str) {
-    if (str->len)
-        return str->chr[0];
-    error(5);
-    return 0;
-}
-
-int32 qbs_len(qbs *str) { return str->len; }
 
 // QBG BLOCK
 int32 qbg_mode = -1; //-1 means not initialized!
@@ -9824,7 +8095,7 @@ singlepoint:
 
 void qbg_palette(uint32 attribute, uint32 col, int32 passed) {
     static int32 r, g, b;
-    if (new_error)
+    if (is_error_pending())
         return;
     if (!passed) {
         restorepalette(write_page);
@@ -9950,7 +8221,7 @@ error:
 }
 
 void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (!passed) {
         // performs no action if nothing passed (as in QBASIC for some modes)
@@ -10238,7 +8509,7 @@ void validatepage(int32 n) {
 } // validate_page
 
 void qbg_screen(int32 mode, int32 color_switch, int32 active_page, int32 visual_page, int32 refresh, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (width8050switch) {
@@ -10844,7 +9115,7 @@ error:
 } // screen (end)
 
 void sub_pcopy(int32 src, int32 dst) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static img_struct *s, *d;
     // validate
@@ -10892,7 +9163,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
     //[{#|LPRINT}][?],[?]
     static int32 i, i2;
 
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (option == 0) { // WIDTH [?][,?]
@@ -12094,7 +10365,7 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
 }
 
 void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint32 style, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (write_page->text) {
         error(5);
@@ -12656,7 +10927,7 @@ nextpass:
 
 // 8-bit (default entry point)
 void sub_paint(float x, float y, uint32 fillcol, uint32 bordercol, qbs *backgroundstr, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (write_page->text) {
         error(5);
@@ -12915,7 +11186,7 @@ uint32 getptcol_8bpp(const qbs *pt, int x, int y) { return pt->chr[y]; }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *backgroundstr, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     // uses 2 buffers, a and b, and swaps between them for reading and creating
@@ -13116,7 +11387,7 @@ void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *background
 void sub_circle(double x, double y, double r, uint32 col, double start, double end, double aspect, int32 passed) {
     //                                                &2         &4           &8         &16
     //[{STEP}](?,?),?[,[?][,[?][,[?][,?]]]]
-    if (new_error)
+    if (is_error_pending())
         return;
 
     // data
@@ -13445,7 +11716,7 @@ double func_point(float x, float y, int32 passed) {
 }
 
 void sub_pset(float x, float y, uint32 col, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 x2, y2;
     if (!write_page->compatible_mode) {
@@ -13498,7 +11769,7 @@ void sub_pset(float x, float y, uint32 col, int32 passed) {
 }
 
 void sub_preset(float x, float y, uint32 col, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (!(passed & 2)) {
         col = write_page->background_color;
@@ -13964,7 +12235,7 @@ void sub__controlchr(int32 onoff) {
 int32 func__controlchr() { return -no_control_characters2; }
 
 void qbs_print(qbs *str, int32 finish_on_new_line) {
-    if (new_error)
+    if (is_error_pending())
         return;
     int32 i, i2, entered_new_line, x, x2, y, y2, z, z2, w;
     entered_new_line = 0;
@@ -14358,19 +12629,10 @@ null_length:
     return;
 }
 
-template <typename T> static T qbs_cleanup(uint32 base, T passvalue) {
-    while (qbs_tmp_list_nexti > base) {
-        qbs_tmp_list_nexti--;
-        if (qbs_tmp_list[qbs_tmp_list_nexti] != -1)
-            qbs_free((qbs *)qbs_tmp_list[qbs_tmp_list_nexti]);
-    } // clear any temp. strings created
-    return passvalue;
-}
-
 void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
     //                  &1
     //(passed&2)->SCREEN
-    if (new_error)
+    if (is_error_pending())
         return;
     static float i;
     static float old_x, old_y;
@@ -14481,7 +12743,7 @@ qbg_sub_window_error:
 }
 
 void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     static int32 maxrows;
@@ -14522,7 +12784,7 @@ error:
 void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor, int32 bordercolor, int32 passed) {
     //   &1                                   &4              &8
     //    (passed&2)->coords_relative_to_screen
-    if (new_error)
+    if (is_error_pending())
         return;
     // format: [{SCREEN}][(?,?)-(?,?)],[?],[?]
     // bordercolor draws a line AROUND THE OUTSIDE of the specified viewport
@@ -14669,7 +12931,7 @@ void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
 }
 
 void sub_cls(int32 method, uint32 use_color, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 characters, i;
     static uint16 *sp;
@@ -14873,7 +13135,7 @@ error:
 
 void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed) {
     static int32 h, w, i;
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (write_page->console) {
@@ -15134,7 +13396,7 @@ qbs *qbs_input_arguements[257];
 int32 cursor_show_last;
 
 void qbs_input(int32 numvariables, uint8 newline) {
-    if (new_error)
+    if (is_error_pending())
         return;
     int32 i, i2, i3, i4, i5, i6, chr;
 
@@ -16493,7 +14755,7 @@ int32 func__hasfocus() {
 }
 
 void sub_out(int32 port, int32 data) {
-    if (new_error)
+    if (is_error_pending())
         return;
     unsupported_port_accessed = 0;
     port = port & 65535;
@@ -16550,7 +14812,7 @@ uint32 rnd_seed = 327680;
 uint32 rnd_seed_first = 327680; // Note: must contain the same value as rnd_seed
 
 void sub_randomize(double seed, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (passed == 3) { // USING
@@ -16586,7 +14848,7 @@ void sub_randomize(double seed, int32 passed) {
 }
 
 float func_rnd(float n, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
 
     static uint32 m;
@@ -16605,7 +14867,7 @@ float func_rnd(float n, int32 passed) {
 void sub__fps(double fps, int32 passed) {
     // passed=1 means _AUTO
     // passed=2 means use fps
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed != 1 && passed != 2) {
         error(5);
@@ -16632,7 +14894,7 @@ int32 generic_put(int32 i, int32 offset, uint8 *cp, int32 bytes) {
     //      generic_put has been kept 32-bit for compatibility
     //      the return value of generic_put is always 0
     //      though errors are handled, generic_put should only be called in error-less situations
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (gfs_fileno_valid(i) != 1) {
         error(52);
@@ -16678,7 +14940,7 @@ int32 generic_get(int32 i, int32 offset, uint8 *cp, int32 bytes) {
     //      the return value of generic_get is always 0
     //      though errors are handled, generic_get should only be called in error-less situations
     generic_get_bytes_read = 0;
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (gfs_fileno_valid(i) != 1) {
         error(52);
@@ -16720,7 +14982,7 @@ int32 generic_get(int32 i, int32 offset, uint8 *cp, int32 bytes) {
 }
 
 void sub_open(qbs *name, int32 type, int32 access, int32 sharing, int32 i, int64 record_length, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     //?[{FOR RANDOM|FOR BINARY|FOR INPUT|FOR OUTPUT|FOR APPEND}]
     // 1 2
@@ -16878,7 +15140,7 @@ void sub_open(qbs *name, int32 type, int32 access, int32 sharing, int32 i, int64
 }
 
 void sub_open_gwbasic(qbs *typestr, int32 i, qbs *name, int64 record_length, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 a, type;
     if (!typestr->len) {
@@ -16909,7 +15171,7 @@ void sub_open_gwbasic(qbs *typestr, int32 i, qbs *name, int64 record_length, int
 }
 
 void sub_close(int32 i2, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     int32 i, x; //<--RECURSIVE function - do not make this static
 
@@ -17064,7 +15326,7 @@ nextchr:
 
 uint8 sub_file_print_spaces[32];
 void sub_file_print(int32 i, qbs *str, int32 extraspace, int32 tab, int32 newline) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 x, x2, x3, x4;
     static int32 e;
@@ -18050,7 +16312,7 @@ error:
 void revert_input_check() {}
 
 void sub_file_input_string(int32 fileno, qbs *deststr) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static qbs *str, *character;
     int32 c, nextc, x, x2, x3, x4;
@@ -18158,7 +16420,7 @@ returnstr:
 }
 
 int64 func_file_input_int64(int32 fileno) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     i = n_inputnumberfromfile(fileno);
@@ -18179,7 +16441,7 @@ int64 func_file_input_int64(int32 fileno) {
 }
 
 uint64 func_file_input_uint64(int32 fileno) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     i = n_inputnumberfromfile(fileno);
@@ -18200,7 +16462,7 @@ uint64 func_file_input_uint64(int32 fileno) {
 }
 
 void sub_read_string(uint8 *data, ptrszint *data_offset, ptrszint data_size, qbs *deststr) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static qbs *str, *character;
     static int32 c, inspeechmarks;
@@ -18257,7 +16519,7 @@ gotstr:
 }
 
 long double func_read_float(uint8 *data, ptrszint *data_offset, ptrszint data_size, int32 typ) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     static int64 maxval, minval;
@@ -18327,7 +16589,7 @@ overflow:
 }
 
 int64 func_read_int64(uint8 *data, ptrszint *data_offset, ptrszint data_size) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     static ptrszint old_data_offset;
@@ -18360,7 +16622,7 @@ overflow:
 }
 
 uint64 func_read_uint64(uint8 *data, ptrszint *data_offset, ptrszint data_size) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     static ptrszint old_data_offset;
@@ -18393,7 +16655,7 @@ overflow:
 }
 
 long double func_file_input_float(int32 fileno, int32 typ) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     static int64 maxval, minval;
@@ -18477,7 +16739,7 @@ void *byte_element(uint64 offset, int32 length, byte_element_struct *info) {
 }
 
 void call_interrupt(int32 intno, void *inregs, void *outregs) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static byte_element_struct *ele;
     static uint16 *sp;
@@ -18538,7 +16800,7 @@ void call_interrupt(int32 intno, void *inregs, void *outregs) {
 }
 
 void call_interruptx(int32 intno, void *inregs, void *outregs) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static byte_element_struct *ele;
     static uint16 *sp;
@@ -18597,7 +16859,7 @@ void call_interruptx(int32 intno, void *inregs, void *outregs) {
 }
 
 void sub_get(int32 i, int64 offset, void *element, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static byte_element_struct *ele;
     static int32 x, x2;
@@ -18744,7 +17006,7 @@ void sub_get(int32 i, int64 offset, void *element, int32 passed) {
 } // get
 
 void sub_get2(int32 i, int64 offset, qbs *str, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 x, x2, x3, x4;
 
@@ -18925,7 +17187,7 @@ void sub_get2(int32 i, int64 offset, qbs *str, int32 passed) {
 }
 
 void sub_put(int32 i, int64 offset, void *element, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static byte_element_struct *ele;
     static int32 x, x2;
@@ -19043,7 +17305,7 @@ void sub_put(int32 i, int64 offset, void *element, int32 passed) {
 // put2 adds a 2-4 byte length descriptor to the data
 //(used to PUT variable length strings in RANDOM mode)
 void sub_put2(int32 i, int64 offset, void *element, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static byte_element_struct *ele;
     static int32 x;
@@ -19106,7 +17368,7 @@ void sub_put2(int32 i, int64 offset, void *element, int32 passed) {
 void sub_graphics_get(float x1f, float y1f, float x2f, float y2f, void *element, uint32 mask, int32 passed) {
     //"[{STEP}](?,?)-[{STEP}](?,?),?[,?]"
     //   &1            &2            &4
-    if (new_error)
+    if (is_error_pending())
         return;
 
     static int32 x1, y1, x2, y2, z, w, h, bits, x, y, bytes, sx, sy, x3, y3, z2;
@@ -19369,7 +17631,7 @@ void sub_graphics_put(float x1f, float y1f, void *element, int32 option, uint32 
     // clip->passed&2
     // mask->passed&4
 
-    if (new_error)
+    if (is_error_pending())
         return;
 
     static int32 step, clip;
@@ -19841,7 +18103,7 @@ void sub_graphics_put(float x1f, float y1f, void *element, int32 option, uint32 
 }
 
 void sub_date(qbs *date) {
-    if (new_error)
+    if (is_error_pending())
         return;
     return; // stub
 }
@@ -19908,7 +18170,7 @@ qbs *func_date() {
 }
 
 void sub_time(qbs *str) {
-    if (new_error)
+    if (is_error_pending())
         return;
     return; // stub
 }
@@ -20035,7 +18297,7 @@ long double func_exp_float(long double value) {
 int32 sleep_break = 0;
 
 void sub_sleep(int32 seconds, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     sleep_break = 0;
@@ -20502,7 +18764,7 @@ int32 func_inp(int32 port) {
 }
 
 void sub_wait(int32 port, int32 andexpression, int32 xorexpression, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     // 1. read value from port
     // 2. value^=xorexpression (if passed!)
@@ -20545,7 +18807,7 @@ extern int32 tab_LPRINT;      // 1=dest is LPRINT image
 extern int32 tab_spc_cr_size; //=1;//default
 extern int32 tab_fileno;
 qbs *func_tab(int32 pos) {
-    if (new_error)
+    if (is_error_pending())
         return qbs_new(0, 1);
 
     static int32 tab_LPRINT_olddest;
@@ -20647,7 +18909,7 @@ qbs *func_tab(int32 pos) {
 }
 
 qbs *func_spc(int32 spaces) {
-    if (new_error)
+    if (is_error_pending())
         return qbs_new(0, 1);
 
     static qbs *tqbs;
@@ -20720,7 +18982,7 @@ qbs *func_spc(int32 spaces) {
 
 float func_pmap(float val, int32 option) {
     static int32 x, y;
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (!write_page->text) {
         // note: for QBASIC/4.5/7.1 compatibility clipping_or_scaling check is skipped
@@ -20859,7 +19121,7 @@ uint32 func_screen(int32 y, int32 x, int32 returncol, int32 passed) {
 }
 
 void sub_bsave(qbs *filename, int32 offset, int32 size) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static std::ofstream fh;
 
@@ -20905,7 +19167,7 @@ void sub_bsave(qbs *filename, int32 offset, int32 size) {
 }
 
 void sub_bload(qbs *filename, int32 offset, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static uint8 header[7];
     static std::ifstream fh;
@@ -21117,7 +19379,7 @@ int32 func__statusCode(int32 handle) {
 }
 
 void sub_seek(int32 i, int64 pos) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (gfs_fileno_valid(i) != 1) {
         error(52);
@@ -21213,7 +19475,7 @@ int64 func_loc(int32 i) {
 }
 
 qbs *func_input(int32 n, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return qbs_new(0, 1);
     static qbs *str, *str2;
     static int32 x, c;
@@ -21444,7 +19706,7 @@ void file_line_input_string_binary(int32 fileno, qbs *deststr) {
 
 void sub_file_line_input_string(int32 fileno, qbs *deststr) {
     int32 filehandle;
-    if (new_error)
+    if (is_error_pending())
         return;
     if (gfs_fileno_valid(fileno) != 1) {
         error(52);
@@ -21475,31 +19737,6 @@ double func_sqr(double value) {
     }
     return std::sqrt(value);
 }
-
-qbs *func_command_str = NULL;
-char **func_command_array = NULL;
-int32 func_command_count = 0;
-
-qbs *func_command(int32 index, int32 passed) {
-    static qbs *tqbs;
-    if (passed) { // Get specific parameter
-        // If out of bounds or error getting cmdline args, return empty string.
-        if (index >= func_command_count || index < 0 || func_command_array == NULL) {
-            tqbs = qbs_new(0, 1);
-            return tqbs;
-        }
-        int len = strlen(func_command_array[index]);
-        // Create new temp qbs and copy data into it.
-        tqbs = qbs_new(len, 1);
-        memcpy(tqbs->chr, func_command_array[index], len);
-    } else { // Legacy support; return whole commandline
-        tqbs = qbs_new(func_command_str->len, 1);
-        memcpy(tqbs->chr, func_command_str->chr, func_command_str->len);
-    }
-    return tqbs;
-}
-
-int32 func__commandcount() { return func_command_count - 1; }
 
 int32 shell_call_in_progress = 0;
 
@@ -21638,7 +19875,7 @@ int32 cmd_command(qbs *str2) {
 }
 
 int64 func_shell(qbs *str) {
-    if (new_error)
+    if (is_error_pending())
         return 1;
 
     int64 return_code;
@@ -21923,7 +20160,7 @@ shell_complete:
 } // func SHELL(...
 
 int64 func__shellhide(qbs *str) { // func _SHELLHIDE(...
-    if (new_error)
+    if (is_error_pending())
         return 1;
 
     static int64 return_code;
@@ -22135,7 +20372,7 @@ shell_complete:;
 } // func _SHELLHIDE(...
 
 void sub_shell(qbs *str, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     // exit full screen mode if necessary
@@ -22411,7 +20648,7 @@ shell_complete:
 }
 
 void sub_shell2(qbs *str, int32 passed) { // HIDE
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (passed & 1) {
@@ -22622,7 +20859,7 @@ shell_complete:;
 
 void sub_shell3(qbs *str, int32 passed) { //_DONTWAIT
     // shell3 launches 'str' but does not wait for it to complete
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (passed & 1) {
@@ -23022,7 +21259,7 @@ int mouse_cursor_style = 1;
 #endif
 
 void sub__mouseshow(qbs *style, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
 #ifdef QB64_GLUT
@@ -23554,7 +21791,7 @@ void call_int(int32 i) {
 
 int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
     static int32 i;
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (x <= 0 || y <= 0) {
         error(5);
@@ -23603,7 +21840,7 @@ int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
 int32 func__copyimage(int32 i, int32 mode, int32 passed) {
     static int32 i2, bytes;
     static img_struct *s, *d;
-    if (new_error)
+    if (is_error_pending())
         return 0;
     // if (passed){
     if (i >= 0) { // validate i
@@ -23674,7 +21911,7 @@ int32 func__copyimage(int32 i, int32 mode, int32 passed) {
 }
 
 void sub__freeimage(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed) {
         if (i >= 0) { // validate i
@@ -23753,7 +21990,7 @@ void freeallimages() {
 // Selecting images:
 
 void sub__source(int32 i) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (i >= 0) { // validate i
         validatepage(i);
@@ -23774,7 +22011,7 @@ void sub__source(int32 i) {
 }
 
 void sub__dest(int32 i) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (i >= 0) { // validate i
         validatepage(i);
@@ -23803,7 +22040,7 @@ int32 func__display() { return -display_page_index; }
 // Changing the settings of an image surface:
 
 void sub__blend(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed) {
         if (i >= 0) { // validate i
@@ -23836,7 +22073,7 @@ void sub__blend(int32 i, int32 passed) {
 }
 
 void sub__dontblend(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed) {
         if (i >= 0) { // validate i
@@ -23869,7 +22106,7 @@ void sub__dontblend(int32 i, int32 passed) {
 void sub__clearcolor(uint32 c, int32 i, int32 passed) {
     //--         _NONE->1       2       4
     // id.specialformat = "[{_NONE}][?][,?]"
-    if (new_error)
+    if (is_error_pending())
         return;
     static img_struct *im;
     static int32 z;
@@ -23957,7 +22194,7 @@ void sub__setalpha(int32 a, uint32 c, uint32 c2, int32 i, int32 passed) {
     static uint32 *lp, *last;
     static uint8 b_max, b_min, g_max, g_min, r_max, r_min, a_max, a_min;
     static uint8 *cp, *clast, v;
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed & 2) {
         if (i >= 0) { // validate i
@@ -24054,7 +22291,7 @@ void sub__setalpha(int32 a, uint32 c, uint32 c2, int32 i, int32 passed) {
 // Finding information about an image surface:
 
 int32 func__width(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
 
 #ifdef QB64_WINDOWS
@@ -24093,7 +22330,7 @@ int32 func__width(int32 i, int32 passed) {
 }
 
 int32 func__height(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
 
 #ifdef QB64_WINDOWS
@@ -24133,7 +22370,7 @@ int32 func__height(int32 i, int32 passed) {
 }
 
 int32 func__pixelsize(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24162,7 +22399,7 @@ int32 func__pixelsize(int32 i, int32 passed) {
 }
 
 int32 func__clearcolor(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24190,7 +22427,7 @@ int32 func__clearcolor(int32 i, int32 passed) {
 }
 
 int32 func__blend(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24218,7 +22455,7 @@ int32 func__blend(int32 i, int32 passed) {
 }
 
 uint32 func__defaultcolor(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24242,7 +22479,7 @@ uint32 func__defaultcolor(int32 i, int32 passed) {
 }
 
 uint32 func__backgroundcolor(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24268,7 +22505,7 @@ uint32 func__backgroundcolor(int32 i, int32 passed) {
 // Working with 256 color palettes:
 
 uint32 func__palettecolor(int32 n, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24300,7 +22537,7 @@ uint32 func__palettecolor(int32 n, int32 i, int32 passed) {
 }
 
 void sub__palettecolor(int32 n, uint32 c, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24332,7 +22569,7 @@ void sub__palettecolor(int32 n, uint32 c, int32 i, int32 passed) {
 }
 
 void sub__copypalette(int32 i, int32 i2, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed & 1) {
         if (i >= 0) { // validate i
@@ -24384,7 +22621,7 @@ void sub__copypalette(int32 i, int32 i2, int32 passed) {
 }
 
 void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     int32 old_dest = func__dest();
@@ -24707,7 +22944,7 @@ int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t 
     static qbs *fileNameZ = nullptr;
     static qbs *reqs = nullptr;
 
-    if (new_error || !file_name->len)
+    if (is_error_pending() || !file_name->len)
         return INVALID_FONT_HANDLE; // return invalid handle for any garbage input
 
     // validate size
@@ -24820,7 +23057,7 @@ void sub__font(int32 f, int32 i, int32 passed) {
     //_FONT "?[,?]"
     int32 i2 = 0; //no need for a static variable here, when we just init it to zero before ever using it.
     static img_struct *im;
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed & 1) {
         if (i >= 0) { // validate i
@@ -24909,7 +23146,7 @@ void sub__font(int32 f, int32 i, int32 passed) {
 
 int32 func__fontwidth(int32 f, int32 passed) {
     static int32 i2;
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         // validate f
@@ -24936,7 +23173,7 @@ int32 func__fontwidth(int32 f, int32 passed) {
 
 int32 func__fontheight(int32 f, int32 passed) {
     static int32 i2;
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         // validate f
@@ -24962,7 +23199,7 @@ int32 func__fontheight(int32 f, int32 passed) {
 }
 
 int32 func__font(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -24986,7 +23223,7 @@ int32 func__font(int32 i, int32 passed) {
 }
 
 void sub__freefont(int32 f) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 i, i2;
     // validate f (cannot remove QBASIC built in fonts!)
@@ -25014,7 +23251,7 @@ void sub__freefont(int32 f) {
 }
 
 void sub__printmode(int32 mode, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (passed) {
         if (i >= 0) { // validate i
@@ -25049,7 +23286,7 @@ void sub__printmode(int32 mode, int32 i, int32 passed) {
 }
 
 int32 func__printmode(int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -25119,7 +23356,7 @@ uint32 matchcol(int32 r, int32 g, int32 b, int32 i) {
 }
 
 uint32 func__rgb(int32 r, int32 g, int32 b, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (r < 0)
         r = 0;
@@ -25163,7 +23400,7 @@ uint32 func__rgb(int32 r, int32 g, int32 b, int32 i, int32 passed) {
 } // rgb
 
 uint32 func__rgba(int32 r, int32 g, int32 b, int32 a, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (r < 0)
         r = 0;
@@ -25217,7 +23454,7 @@ uint32 func__rgba(int32 r, int32 g, int32 b, int32 a, int32 i, int32 passed) {
 } // rgba
 
 int32 func__alpha(uint32 col, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -25263,7 +23500,7 @@ int32 func__alpha(uint32 col, int32 i, int32 passed) {
 }
 
 int32 func__red(uint32 col, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -25303,7 +23540,7 @@ int32 func__red(uint32 col, int32 i, int32 passed) {
 }
 
 int32 func__green(uint32 col, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -25343,7 +23580,7 @@ int32 func__green(uint32 col, int32 i, int32 passed) {
 }
 
 int32 func__blue(uint32 col, int32 i, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (passed) {
         if (i >= 0) { // validate i
@@ -25460,7 +23697,7 @@ uint8 pu_exp_char = 69; //"E"
 
 int32 print_using(qbs *f, int32 s2, qbs *dest, qbs *pu_str) {
     // type: 1=numeric, 2=string
-    if (new_error)
+    if (is_error_pending())
         return 0;
 
     static int32 x, z, z2, z3, z4, ii;
@@ -26060,7 +24297,7 @@ invalid_string_format:
 }
 
 int32 print_using_integer64(qbs *format, int64 value, int32 start, qbs *output) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
 #ifdef QB64_WINDOWS
     pu_ndig = sprintf((char *)pu_buf, "% I64i", value);
@@ -26079,7 +24316,7 @@ int32 print_using_integer64(qbs *format, int64 value, int32 start, qbs *output) 
 }
 
 int32 print_using_uinteger64(qbs *format, uint64 value, int32 start, qbs *output) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
 #ifdef QB64_WINDOWS
     pu_ndig = sprintf((char *)pu_dig, "%I64u", value);
@@ -26093,7 +24330,7 @@ int32 print_using_uinteger64(qbs *format, uint64 value, int32 start, qbs *output
 }
 
 int32 print_using_single(qbs *format, float value, int32 start, qbs *output) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i, len, neg_exp;
     static uint8 c;
@@ -26175,7 +24412,7 @@ getdigits3:
 }
 
 int32 print_using_double(qbs *format, double value, int32 start, qbs *output) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i, len, neg_exp;
     static uint8 c;
@@ -26261,7 +24498,7 @@ getdigits3:
 // WARNING: DUE TO MINGW NOT SUPPORTING PRINTF long double, VALUES ARE CONVERTED TO A DOUBLE
 //         BUT PRINTED AS IF THEY WERE A long double
 int32 print_using_float(qbs *format, long double value, int32 start, qbs *output) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i, len, neg_exp;
     static uint8 c;
@@ -26388,7 +24625,7 @@ void sub_run_init() {
 }
 
 void sub_run(qbs *f) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     // run program
@@ -26434,7 +24671,7 @@ run_exit:
 #ifdef DEPENDENCY_ICON
 void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 
-    if (new_error)
+    if (is_error_pending())
         return;
 #    ifndef DEPENDENCY_CONSOLE_ONLY
     if (!(passed & 2))
@@ -26838,7 +25075,7 @@ nextchar:
 }
 
 void sub_draw(qbs *s) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     /*
@@ -28126,7 +26363,7 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
 // network prototype:
 
 int32 func__openclient(qbs *info) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     i = connection_new(0, info, NULL);
@@ -28140,7 +26377,7 @@ int32 func__openclient(qbs *info) {
 }
 
 int32 func__openhost(qbs *info) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     i = connection_new(1, info, NULL);
@@ -28155,7 +26392,7 @@ int32 func__openhost(qbs *info) {
 
 int32 func__openconnection(int32 i) {
 
-    if (new_error)
+    if (is_error_pending())
         return 0;
     i = -(i + 1);
     i = connection_new(2, NULL, i);
@@ -28171,7 +26408,7 @@ int32 func__openconnection(int32 i) {
 qbs *func__connectionaddress(int32 i) {
     static qbs *tqbs, *tqbs2, *str = NULL, *str2 = NULL;
     static int32 x;
-    if (new_error)
+    if (is_error_pending())
         goto error;
     if (!str)
         str = qbs_new(0, 0);
@@ -28268,7 +26505,7 @@ int32 tcp_connected(void *connection) {
 }
 
 int32 func__connected(int32 i) {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     if (i < 0) {
         static int32 x;
@@ -28514,7 +26751,7 @@ void sub__clipboard(qbs *text) {
 void sub__clipboardimage(int32 src) {
 #    ifdef QB64_WINDOWS
 
-    if (new_error)
+    if (is_error_pending())
         return;
 
     static int32 i, i2, ii, w, h;
@@ -28610,7 +26847,7 @@ void sub__clipboardimage(int32 src) {
 int32 func__clipboardimage() {
 #    ifdef QB64_WINDOWS
 
-    if (new_error)
+    if (is_error_pending())
         return -1;
 
     static HBITMAP bitmap;
@@ -30172,7 +28409,7 @@ int32 gfs_unlock(int32 i, int64 offset_start, int64 offset_end) {
 }
 
 void sub_lock(int32 i, int64 start, int64 end, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (gfs_fileno_valid(i) != 1) {
         error(52);
@@ -30235,7 +28472,7 @@ void sub_lock(int32 i, int64 start, int64 end, int32 passed) {
 }
 
 void sub_unlock(int32 i, int64 start, int64 end, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (gfs_fileno_valid(i) != 1) {
         error(52);
@@ -31604,7 +29841,7 @@ static int32 field_maxsize;
 
 void field_new(int32 fileno) {
     field_failed = 1;
-    if (new_error)
+    if (is_error_pending())
         return;
     // validate file
     static int32 i;
@@ -31739,7 +29976,7 @@ remove:
 void field_add(qbs *str, int64 size) {
     if (field_failed)
         return;
-    if (new_error)
+    if (is_error_pending())
         goto fail;
     if (size < 0) {
         error(5);
@@ -31803,7 +30040,7 @@ fail:
 }
 
 void field_get(int32 fileno, int64 offset, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     // validate file
@@ -31870,7 +30107,7 @@ void field_get(int32 fileno, int64 offset, int32 passed) {
 }
 
 void field_put(int32 fileno, int64 offset, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     // validate file
@@ -31933,7 +30170,7 @@ void field_put(int32 fileno, int64 offset, int32 passed) {
 }
 
 void sub__mapunicode(int32 unicode_code, int32 ascii_code) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if ((unicode_code < 0) || (unicode_code > 65535)) {
         error(5);
@@ -31947,7 +30184,7 @@ void sub__mapunicode(int32 unicode_code, int32 ascii_code) {
 }
 
 int32 func__mapunicode(int32 ascii_code) {
-    if (new_error)
+    if (is_error_pending())
         return NULL;
     if ((ascii_code < 0) || (ascii_code > 255)) {
         error(5);
@@ -32014,7 +30251,7 @@ int32 func__screeny() {
 }
 
 void sub__screenmove(int32 x, int32 y, int32 passed) {
-    if (new_error)
+    if (is_error_pending())
         return;
     if (!passed)
         goto error;
@@ -32376,7 +30613,7 @@ void key_list() {
 }
 
 void key_assign(int32 i, qbs *str) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static int32 x, x2, i2;
 
@@ -32413,7 +30650,7 @@ void key_assign(int32 i, qbs *str) {
 
 void sub_paletteusing(void *element, int32 bits) {
     // note: bits is either 16(INTEGER) or 32(LONG)
-    if (new_error)
+    if (is_error_pending())
         return;
     static byte_element_struct *ele;
     ele = (byte_element_struct *)element;
@@ -32444,7 +30681,7 @@ void sub_paletteusing(void *element, int32 bits) {
             goto error;
         if (c != -1) {
             qbg_palette(i, c, 1);
-            if (new_error)
+            if (is_error_pending())
                 return;
         }
     }
@@ -32457,7 +30694,7 @@ error:
 void sub__depthbuffer(int32 options, int32 dst, int32 passed) {
     //                    {ON|OFF|LOCK|_CLEAR}
 
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if ((passed & 1) == 0)
@@ -32527,7 +30764,7 @@ void sub__maptriangle(int32 cull_options, float sx1, float sy1, float sx2, float
     //[{_CLOCKWISE|_ANTICLOCKWISE}][{_SEAMLESS}](?,?)-(?,?)-(?,?)[,?]{TO}(?,?[,?])-(?,?[,?])-(?,?[,?])[,[?][,{_SMOOTH|_SMOOTHSHRUNK|_SMOOTHSTRETCHED}]]"
     //  (1)       (2)              1                             2           4         8         16    32   (1)     (2)           (3)
 
-    if (new_error)
+    if (is_error_pending())
         return;
 
     static int32 dwidth, dheight, swidth, sheight, swidth2, sheight2;
@@ -33235,7 +31472,7 @@ int32 func_strig(int32 i, int32 controller, int32 passed) {
 }
 
 int32 func__console() {
-    if (new_error)
+    if (is_error_pending())
         return -1;
     return console_image;
 }
@@ -33340,7 +31577,7 @@ extern mem_block func__mem_at_offset(ptrszint offset, ptrszint size) {
     b.type = 16384; //_MEMNEW type
     b.elementsize = 1;
     b.image = -1;
-    if ((size < 0) || new_error) {
+    if ((size < 0) || is_error_pending()) {
         b.type = 0;
         b.size = 0;
         b.offset = 0;
@@ -33358,7 +31595,7 @@ mem_block func__memnew(ptrszint bytes) {
     b.type = 16384; //_MEMNEW type
     b.elementsize = 1;
     b.image = -1;
-    if (new_error) {
+    if (is_error_pending()) {
         b.type = 0;
         b.offset = 0;
         b.size = 0;
@@ -33395,7 +31632,7 @@ mem_block func__memimage(int32 i, int32 passed) {
 
     static mem_block b;
 
-    if (new_error)
+    if (is_error_pending())
         goto error;
 
     static int image_handle;
@@ -35883,7 +34120,7 @@ void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y) {
 #endif
 
 void sub__title(qbs *title) {
-    if (new_error)
+    if (is_error_pending())
         return;
     static qbs *cz = NULL;
     if (!cz) {
@@ -35909,7 +34146,7 @@ void sub__title(qbs *title) {
 } // title
 
 void sub__echo(qbs *message) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     int32 prevDest = func__dest();
@@ -36253,33 +34490,7 @@ int main(int argc, char *argv[]) {
     unknown_opcode_mess = qbs_new(0, 0);
     qbs_set(unknown_opcode_mess, qbs_new_txt_len("Unknown Opcode (  )\0", 20));
 
-    i = argc;
-    if (i > 1) {
-        // calculate required size of COMMAND$ string
-        i2 = 0;
-        for (i = 1; i < argc; i++) {
-            i2 += strlen(argv[i]);
-            if (i != 1)
-                i2++; // for a space
-        }
-        // create COMMAND$ string
-        func_command_str = qbs_new(i2, 0);
-        // build COMMAND$ string
-        i3 = 0;
-        for (i = 1; i < argc; i++) {
-            if (i != 1) {
-                func_command_str->chr[i3] = 32;
-                i3++;
-            }
-            memcpy(&func_command_str->chr[i3], argv[i], strlen(argv[i]));
-            i3 += strlen(argv[i]);
-        }
-    } else {
-        func_command_str = qbs_new(0, 0);
-    }
-
-    func_command_count = argc;
-    func_command_array = argv;
+    command_initialize(argc, argv);
 
 #ifdef QB64_WINDOWS
     // for caps lock, use the state of the lock (=1)
