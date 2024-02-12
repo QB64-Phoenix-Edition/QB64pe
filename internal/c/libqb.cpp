@@ -19308,12 +19308,10 @@ int64 func_loc(int32 i) {
     }
     if (gfs->com_port) {
 #ifdef QB64_WINDOWS
-        static gfs_file_win_struct *f_w;
-        f_w = &gfs_file_win[i];
         static COMSTAT c;
         ZeroMemory(&c, sizeof(COMSTAT));
         static DWORD ignore;
-        if (!ClearCommError(f_w->file_handle, &ignore, &c))
+        if (!ClearCommError(gfs->win_handle, &ignore, &c))
             return 0;
         return c.cbInQue; // bytes in COM input buffer
 #endif

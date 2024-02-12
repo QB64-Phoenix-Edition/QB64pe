@@ -10,6 +10,7 @@
 
 #    include <wtypes.h>
 #endif
+
 #ifndef GFS_WINDOWS
 #    define GFS_C
 #endif
@@ -53,9 +54,14 @@ struct gfs_file_struct { // info applicable to all files
     qbs **field_strings;   // list of qbs pointers linked to this file
     int32_t field_strings_n; // number of linked strings
     int64_t column;          // used by OUTPUT/APPEND to tab correctly (base 0)
+#ifdef GFS_C
     // GFS_C data follows: (unused by custom GFS interfaces)
     std::fstream *file_handle;
     std::ofstream *file_handle_o;
+#endif
+#ifdef GFS_WINDOWS
+    HANDLE win_handle;
+#endif
     // COM port data follows (*=default)
     uint8_t com_port;              // 0=not a com port
     int32_t com_baud_rate;         //(bits per second)75,110,150,300*,600,1200,1800,2400,9600,?
@@ -81,16 +87,6 @@ struct gfs_file_struct { // info applicable to all files
     // SCRN: support follows
     uint8_t scrn; // 0 = not a file opened as "SCRN:"
 };
-
-#ifdef GFS_WINDOWS
-// FIXME: Eww
-struct gfs_file_win_struct { // info applicable to WINDOWS OS files
-    HANDLE file_handle;
-};
-extern gfs_file_win_struct *gfs_file_win;
-#endif
-
-
 
 int32_t gfs_eof_passed(int32_t i);
 int32_t gfs_eof_reached(int32_t i);

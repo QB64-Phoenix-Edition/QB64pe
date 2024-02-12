@@ -10,7 +10,6 @@
 static int64_t gfs_nextid = 1;
 
 static gfs_file_struct *gfs_file = (gfs_file_struct *)malloc(1);
-gfs_file_win_struct *gfs_file_win = (gfs_file_win_struct *)malloc(1);
 
 static int32_t gfs_n = 0;
 static int32_t gfs_freed_n = 0;
@@ -36,21 +35,15 @@ void gfs_close_all_files() {
 }
 
 int32_t gfs_new() {
-    static int32_t i;
+    int32_t i;
     if (gfs_freed_n) {
         i = gfs_freed[--gfs_freed_n];
     } else {
         i = gfs_n;
         gfs_n++;
         gfs_file = (gfs_file_struct *)realloc(gfs_file, gfs_n * sizeof(gfs_file_struct));
-#ifdef GFS_WINDOWS
-        gfs_file_win = (gfs_file_win_struct *)realloc(gfs_file_win, gfs_n * sizeof(gfs_file_win_struct));
-#endif
     }
     memset(&gfs_file[i], 0, sizeof(gfs_file_struct));
-#ifdef GFS_WINDOWS
-    ZeroMemory(&gfs_file_win[i], sizeof(gfs_file_win_struct));
-#endif
     gfs_file[i].id = gfs_nextid++;
     return i;
 }
@@ -86,7 +79,7 @@ int32_t gfs_fileno_valid(int32_t f) {
 
 int32_t gfs_fileno_freefile() { // like FREEFILE
     // note: for QBASIC compatibility the lowest available file number is returned
-    static int32_t x;
+    int32_t x;
     for (x = 1; x <= gfs_fileno_n; x++)
         if (gfs_fileno[x] == -1)
             return x;
@@ -120,7 +113,7 @@ int32_t gfs_free(int32_t i) {
 }
 
 int32_t gfs_close(int32_t i) {
-    static int32_t x;
+    int32_t x;
     if (x = gfs_free(i))
         return x;
 
@@ -136,17 +129,15 @@ int32_t gfs_close(int32_t i) {
     }
 
 #ifdef GFS_C
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
+    gfs_file_struct *f = &gfs_file[i];
     f->file_handle->close();
     delete f->file_handle;
     return 0;
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    CloseHandle(f_w->file_handle);
+    gfs_file_struct *f = &gfs_file[i];
+    CloseHandle(f->win_handle);
     return 0;
 #endif
 
@@ -156,21 +147,20 @@ int32_t gfs_close(int32_t i) {
 int64_t gfs_lof(int32_t i) {
     if (!gfs_validhandle(i))
         return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
+    gfs_file_struct *f = &gfs_file[i];
     if (f->scrn)
         return -4;
 #ifdef GFS_C
     f->file_handle->clear();
     if (f->read) {
-        static int64_t bytes;
+        int64_t bytes;
         f->file_handle->seekg(0, std::ios::end);
         bytes = f->file_handle->tellg();
         f->file_handle->seekg(f->pos);
         return bytes;
     }
     if (f->write) {
-        static int64_t bytes;
+        int64_t bytes;
         f->file_handle->seekp(0, std::ios::end);
         bytes = f->file_handle->tellp();
         f->file_handle->seekp(f->pos);
@@ -180,10 +170,8 @@ int64_t gfs_lof(int32_t i) {
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    static int64_t bytes;
-    *((int32_t *)&bytes) = GetFileSize(f_w->file_handle, (DWORD *)(((int32_t *)&bytes) + 1));
+    int64_t bytes;
+    *((int32_t *)&bytes) = GetFileSize(f->win_handle, (DWORD *)(((int32_t *)&bytes) + 1));
     if ((bytes & 0xFFFFFFFF) == 0xFFFFFFFF) {
         if (GetLastError() != NO_ERROR)
             return -3; // bad/incorrect file mode
@@ -732,8 +720,6 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
     x = 0;
     if (access & 1)
         x |= GENERIC_READ;
@@ -752,30 +738,22 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         qbs_set(portname, qbs_add(qbs_new_txt("CO"), qbs_str(f->com_port)));
         qbs_set(portname, qbs_add(portname, qbs_new_txt_len(":\0", 2)));
         portname->chr[2] = 77; // replace " " with "M"
-        f_w->file_handle = CreateFile((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
-        if (f_w->file_handle == INVALID_HANDLE_VALUE) {
+        f->win_handle= CreateFile((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
+        if (f->win_handle== INVALID_HANDLE_VALUE) {
             gfs_free(i);
             return -8;
         } // device unavailable
         static DCB cs;
         ZeroMemory(&cs, sizeof(DCB));
         cs.DCBlength = sizeof(DCB);
-        if (!GetCommState(f_w->file_handle, &cs)) {
-            CloseHandle(f_w->file_handle);
+        if (!GetCommState(f->win_handle, &cs)) {
+            CloseHandle(f->win_handle);
             gfs_free(i);
             return -8;
         } // device unavailable
         static COMMTIMEOUTS ct;
         ZeroMemory(&ct, sizeof(COMMTIMEOUTS));
-        /*dump port state and return "file not found" (used for debugging only)
-            if (!GetCommTimeouts(f_w->file_handle,&ct)){CloseHandle(f_w->file_handle); gfs_free(i); return -8;}//device unavailable
-            std::ofstream mydump("f:\\comdump.bin");
-            mydump.write((char*)&cs,sizeof(cs));
-            mydump.write((char*)&ct,sizeof(ct));
-            mydump.close();
-            CloseHandle(f_w->file_handle); gfs_free(i);
-            return -4;
-        */
+
         cs.BaudRate = f->com_baud_rate;
         x = f->com_stop_bits;
         if (x == 10)
@@ -811,8 +789,8 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         else
             cs.fBinary = 0;
         cs.EofChar = 26;
-        if (!SetCommState(f_w->file_handle, &cs)) {
-            CloseHandle(f_w->file_handle);
+        if (!SetCommState(f->win_handle, &cs)) {
+            CloseHandle(f->win_handle);
             gfs_free(i);
             return -8;
         } // device unavailable
@@ -829,8 +807,8 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         }
         ct.WriteTotalTimeoutMultiplier = 0;
         ct.WriteTotalTimeoutConstant = f->com_cs_x;
-        if (!SetCommTimeouts(f_w->file_handle, &ct)) {
-            CloseHandle(f_w->file_handle);
+        if (!SetCommTimeouts(f->win_handle, &ct)) {
+            CloseHandle(f->win_handle);
             gfs_free(i);
             return -8;
         } // device unavailable
@@ -849,8 +827,8 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
     if (how)
         x3 = OPEN_ALWAYS;
 undefined_retry:
-    f_w->file_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (f_w->file_handle == INVALID_HANDLE_VALUE) {
+    f->win_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (f->win_handle == INVALID_HANDLE_VALUE) {
 
         if (how == 3) {
             // attempt read access only
@@ -889,13 +867,13 @@ undefined_retry:
     if (how == 2) {
         // truncate file if size is not 0
         static DWORD GetFileSize_low, GetFileSize_high;
-        GetFileSize_low = GetFileSize(f_w->file_handle, &GetFileSize_high);
+        GetFileSize_low = GetFileSize(f->win_handle, &GetFileSize_high);
         if (GetFileSize_low || GetFileSize_high) {
-            CloseHandle(f_w->file_handle);
+            CloseHandle(f->win_handle);
             x3 = TRUNCATE_EXISTING;
-            f_w->file_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
+            f->win_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
 
-            if (f_w->file_handle == INVALID_HANDLE_VALUE) {
+            if (f->win_handle == INVALID_HANDLE_VALUE) {
                 gfs_free(i);
                 e = GetLastError();
                 if (e == 3)
@@ -947,9 +925,7 @@ int32_t gfs_setpos(int32_t i, int64_t position) {
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    if (SetFilePointer(f_w->file_handle, (int32_t)position, (long *)(((int32_t *)&position) + 1), FILE_BEGIN) ==
+    if (SetFilePointer(f->win_handle, (int32_t)position, (long *)(((int32_t *)&position) + 1), FILE_BEGIN) ==
         0xFFFFFFFF) { /*Note that it is not an error to set the file pointer to a position beyond the end of the file. The size of the file does not increase
                          until you call the SetEndOfFile, WriteFile, or WriteFileEx function.*/
         if (GetLastError() != NO_ERROR) {
@@ -1002,8 +978,6 @@ int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
     static uint32_t size2;
     static int64_t written = 0;
     while (size) {
@@ -1014,7 +988,7 @@ int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
             size2 = size;
             size = 0;
         }
-        if (!WriteFile(f_w->file_handle, data, size2, (unsigned long *)&written, NULL)) {
+        if (!WriteFile(f->win_handle, data, size2, (unsigned long *)&written, NULL)) {
             e = GetLastError();
             if ((e == 5) || (e == 33))
                 return -7; // permission denied
@@ -1072,8 +1046,6 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
     static uint32_t size2;
     static int64_t bytesread = 0;
     while (size) {
@@ -1085,7 +1057,7 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
             size = 0;
         }
 
-        if (ReadFile(f_w->file_handle, data, size2, (unsigned long *)&bytesread, NULL)) {
+        if (ReadFile(f->win_handle, data, size2, (unsigned long *)&bytesread, NULL)) {
             data += bytesread;
             f->pos += bytesread;
             gfs_read_bytes_value += bytesread;
@@ -1151,13 +1123,11 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end) {
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
     uint64_t bytes;
     bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
-    if (!LockFile(f_w->file_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
+    if (!LockFile(f->win_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
         // failed
         static int32_t e;
         e = GetLastError();
@@ -1195,13 +1165,11 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
 #endif
 
 #ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
     uint64_t bytes;
     bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
-    if (!UnlockFile(f_w->file_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
+    if (!UnlockFile(f->win_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
         // failed
         static int32_t e;
         e = GetLastError();
