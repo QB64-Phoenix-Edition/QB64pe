@@ -13,6 +13,7 @@
 #endif
 
 #include "audio.h"
+#include "cmem.h"
 #include "completion.h"
 #include "command.h"
 #include "compression.h"
@@ -7149,7 +7150,6 @@ extern uint8 *cmem_dynamic_base;
 
 extern uint32 qbs_cmem_sp; //=256;
 extern uint32 cmem_sp;     //=65536;
-extern ptrszint dblock;    // 32bit offset of dblock
 extern uint64 *nothingvalue;
 
 uint8 wait_needed = 1;

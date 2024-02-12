@@ -564,7 +564,7 @@ uint16 call_absolute_offsets[256];
 uint32 dbgline;
 uint32 qbs_cmem_sp = 256;
 uint32 cmem_sp = 65536;
-ptrszint dblock; // 32bit offset of dblock
+intptr_t dblock; // 32bit offset of dblock
 uint8 close_program = 0;
 int32 tab_spc_cr_size = 1; // 1=PRINT(default), 2=FILE
 int32 tab_fileno = 0;      // only valid if tab_spc_cr_size=2
@@ -576,7 +576,7 @@ qbs *nothingstring;
 uint32 qbevent = 0;
 uint8 suspend_program = 0;
 uint8 stop_program = 0;
-uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword
+uint8_t cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword
                      // in conv memory)
 uint8 *cmem_static_pointer = &cmem[0] + 1280 + 65536;
 uint8 *cmem_dynamic_base = &cmem[0] + 655360;

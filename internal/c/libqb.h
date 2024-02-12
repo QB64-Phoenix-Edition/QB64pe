@@ -2,6 +2,7 @@
 #define INC_LIBQB_H
 #include "common.h"
 
+#include "cmem.h"
 #include "qbs.h"
 
 void sub_shell4(qbs *, int32); //_DONTWAIT & _HIDE
@@ -40,8 +41,6 @@ int32 gfs_setpos(int32 i, int64 position);
 int32 gfs_write(int32 i, int64 position, uint8 *data, int64 size);
 int32 gfs_read(int32 i, int64 position, uint8 *data, int64 size);
 int64 gfs_read_bytes();
-
-extern uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword in conv memory)
 
 // keyhit cyclic buffer
 extern int64 keyhit[8192];

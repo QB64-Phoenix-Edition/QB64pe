@@ -4,14 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cmem.h"
 #include "error_handle.h"
 #include "qbs.h"
 
 // FIXME: conventional memory should be consolidated into libqb soruce and headers
-extern uintptr_t dblock;
 extern uint32_t qbs_cmem_sp; //=256;
 extern uint32_t cmem_sp;     //=65536;
-extern uint8_t cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword in conv memory)
 
 // Used to track strings in 16bit memory
 static intptr_t *qbs_cmem_list = (intptr_t *)malloc(65536 * sizeof(intptr_t));
