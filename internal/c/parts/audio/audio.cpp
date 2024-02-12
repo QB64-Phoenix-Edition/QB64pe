@@ -9,26 +9,31 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
+#include "libqb-common.h"
+
 // Set this to 1 if we want to print debug messages to stderr
 #define AUDIO_DEBUG 0
 #include "audio.h"
-// We need 'qbs' and 'mem' stuff from here. This should eventually change when things are moved to smaller, logical and self-contained files
-#include "../../libqb.h"
+
 #define STB_VORBIS_HEADER_ONLY
 #include "datetime.h"
 #include "extras/stb_vorbis.c"
 #include "filepath.h"
 #include "miniaudio.h"
 #include "mutex.h"
+#include "error_handle.h"
+#include "qbs.h"
+#include "mem.h"
+#include "cmem.h"
+
+#include <string.h>
+#include <math.h>
 #include <algorithm>
 #include <stack>
 #include <unordered_map>
 #include <vector>
+#include <limits.h>
 
-// This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
-#define INVALID_MEM_LOCK 1073741821
-// This should be defined elsewhere (in libqb?). Since it is not, we are doing it here
-#define MEM_TYPE_SOUND 5
 // This is returned to the caller if handle allocation fails with a -1
 // CreateHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case
@@ -45,23 +50,13 @@
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
 // Here we are checking > 0 because this is meant to check user handles only
 #define IS_SOUND_HANDLE_VALID(_handle_)                                                                                                                        \
-    ((_handle_) > 0 && (_handle_) < audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&                                           \
+    ((_handle_) > 0 && (_handle_) < (int32_t)audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&                                           \
      !audioEngine.soundHandles[_handle_]->autoKill)
 
 // These attaches our customer backend (format decoders) VTables to various miniaudio structs
 void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
 void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
 
-// These are stuff that was not declared anywhere else
-// We will wait for Matt to cleanup the C/C++ source file and include header files that declare this stuff
-int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed); // Did not find this declared anywhere
-void new_mem_lock();                                                // This is required for MemSound()
-void free_mem_lock(mem_lock *lock);                                 // Same as above
-
-extern ptrszint dblock;         // Required for Play(). Did not find this declared anywhere
-extern uint64 mem_lock_id;      // Another one that we need for the mem stuff
-extern mem_lock *mem_lock_base; // Same as above
-extern mem_lock *mem_lock_tmp;  // Same as above
 
 /// @brief A simple FP32 stereo sample frame
 struct SampleFrame {
@@ -1314,7 +1309,7 @@ struct SoundHandle {
     ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
     RawStream *rawStream;                       // Raw sample frame queue
     void *memLockOffset;                        // This is a pointer from new_mem_lock()
-    uint64 memLockId;                           // This is mem_lock_id created by new_mem_lock()
+    uint64_t memLockId;                           // This is mem_lock_id created by new_mem_lock()
 
     // Delete copy and move constructors and assignments
     SoundHandle(const SoundHandle &) = delete;
@@ -1582,7 +1577,7 @@ static bool InitializePSG() {
 /// @param frequency Sound frequency
 /// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second
 void sub_sound(double frequency, double lengthInClockTicks, double volume, double panning, int32_t waveform, int32_t passed) {
-    if (new_error || lengthInClockTicks == 0.0 || !InitializePSG())
+    if (is_error_pending() || lengthInClockTicks == 0.0 || !InitializePSG())
         return;
 
     if ((frequency < 37.0 && frequency != 0) || frequency > 32767.0 || lengthInClockTicks < 0.0 || lengthInClockTicks > 65535.0) {
@@ -1619,7 +1614,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
 
 /// @brief This generates a default 'beep' sound
 void sub_beep() {
-    if (new_error || !InitializePSG())
+    if (is_error_pending() || !InitializePSG())
         return;
 
     audioEngine.psg->Beep();
@@ -1643,7 +1638,7 @@ int32_t func_play(int32_t ignore) {
 /// @brief Processes and plays the MML specified in the string
 /// @param str The string to play
 void sub_play(const qbs *str) {
-    if (new_error || !InitializePSG())
+    if (is_error_pending() || !InitializePSG())
         return;
 
     audioEngine.psg->Play(str);
@@ -2340,11 +2335,11 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
     ma_format maFormat = ma_format::ma_format_unknown;
     ma_uint32 channels = 0;
     ma_uint64 sampleFrames = 0;
-    ptrszint data = NULL;
+    intptr_t data = NULL;
 
     // Setup mem_block (assuming failure)
     mem_block mb = {};
-    mb.lock_offset = (ptrszint)mem_lock_base;
+    mb.lock_offset = (intptr_t)mem_lock_base;
     mb.lock_id = INVALID_MEM_LOCK;
 
     // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
@@ -2365,7 +2360,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
         maFormat = audioEngine.soundHandles[handle]->maAudioBuffer->ref.format;
         channels = audioEngine.soundHandles[handle]->maAudioBuffer->ref.channels;
         sampleFrames = audioEngine.soundHandles[handle]->maAudioBuffer->ref.sizeInFrames;
-        data = (ptrszint)audioEngine.soundHandles[handle]->maAudioBuffer->ref.pData;
+        data = (intptr_t)audioEngine.soundHandles[handle]->maAudioBuffer->ref.pData;
     } else { // we are dealing with a sound loaded from file or memory
         AUDIO_DEBUG_PRINT("Entering ma_resource_manager_data_buffer path");
 
@@ -2407,7 +2402,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
             return mb;
         }
 
-        data = (ptrszint)ds->pNode->data.backend.decoded.pData;
+        data = (intptr_t)ds->pNode->data.backend.decoded.pData;
     }
 
     AUDIO_DEBUG_PRINT("Format = %u, channels = %u, frames = %llu", maFormat, channels, sampleFrames);
@@ -2438,13 +2433,13 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
 
     if (audioEngine.soundHandles[handle]->memLockOffset) {
         AUDIO_DEBUG_PRINT("Returning previously created mem_lock");
-        mb.lock_offset = (ptrszint)audioEngine.soundHandles[handle]->memLockOffset;
+        mb.lock_offset = (intptr_t)audioEngine.soundHandles[handle]->memLockOffset;
         mb.lock_id = audioEngine.soundHandles[handle]->memLockId;
     } else {
         AUDIO_DEBUG_PRINT("Returning new mem_lock");
         new_mem_lock();
         mem_lock_tmp->type = MEM_TYPE_SOUND;
-        mb.lock_offset = (ptrszint)mem_lock_tmp;
+        mb.lock_offset = (intptr_t)mem_lock_tmp;
         mb.lock_id = mem_lock_id;
         audioEngine.soundHandles[handle]->memLockOffset = (void *)mem_lock_tmp;
         audioEngine.soundHandles[handle]->memLockId = mem_lock_id;
