@@ -133,7 +133,7 @@ all: $(EXE)
 CLEAN_LIST :=
 CLEAN_DEP_LIST :=
 
-CXXFLAGS += -w -std=gnu++14
+CXXFLAGS += -std=gnu++14
 
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
@@ -154,7 +154,8 @@ ifeq ($(OS),osx)
 	endif
 endif
 
-QB_QBX_OBJ := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).o
+QB_QBX_SRC := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).cpp
+QB_QBX_OBJ := $(patsubst %.cpp,%.o,$(QB_QBX_SRC))
 
 $(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp$(TEMP_ID)/*.txt)
 
@@ -388,6 +389,10 @@ EXE_OBJS := $(QBLIB) $(EXE_OBJS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+# qbx produces thousands of warnings due to passing NULL for every unused parameter
+$(QB_QBX_OBJ): $(QB_QBX_SRC)
+	$(CXX) $(CXXFLAGS) $< -w -c -o $@
 
 ifeq ($(OS),osx)
 %.o: %.mm
