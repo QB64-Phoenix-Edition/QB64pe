@@ -12,6 +12,7 @@
 #include "image.h"
 #include "qbs.h"
 #include "error_handle.h"
+#include "mem.h"
 #include "rounding.h"
 
 extern int32 func__cinp(int32 toggle,
@@ -120,49 +121,6 @@ extern void sub__displayorder(int32 method1, int32 method2, int32 method3,
 
 extern int64 GetTicks();
 
-extern int32 func__memexists(void *blk);
-extern void sub__memfill(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                         ptrszint soff, ptrszint sbytes);
-extern void sub__memfill_nochecks(ptrszint doff, ptrszint dbytes, ptrszint soff,
-                                  ptrszint sbytes);
-extern void sub__memfill_1(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int8 val);
-extern void sub__memfill_nochecks_1(ptrszint doff, ptrszint dbytes, int8 val);
-extern void sub__memfill_2(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int16 val);
-extern void sub__memfill_nochecks_2(ptrszint doff, ptrszint dbytes, int16 val);
-extern void sub__memfill_4(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int32 val);
-extern void sub__memfill_nochecks_4(ptrszint doff, ptrszint dbytes, int32 val);
-extern void sub__memfill_8(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int64 val);
-extern void sub__memfill_nochecks_8(ptrszint doff, ptrszint dbytes, int64 val);
-extern void sub__memfill_SINGLE(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                                float val);
-extern void sub__memfill_nochecks_SINGLE(ptrszint doff, ptrszint dbytes,
-                                         float val);
-extern void sub__memfill_DOUBLE(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                                double val);
-extern void sub__memfill_nochecks_DOUBLE(ptrszint doff, ptrszint dbytes,
-                                         double val);
-extern void sub__memfill_FLOAT(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                               long double val);
-extern void sub__memfill_nochecks_FLOAT(ptrszint doff, ptrszint dbytes,
-                                        long double val);
-extern void sub__memfill_OFFSET(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                                ptrszint val);
-extern void sub__memfill_nochecks_OFFSET(ptrszint doff, ptrszint dbytes,
-                                         ptrszint val);
-extern void *func__memget(mem_block *blk, ptrszint off, ptrszint bytes);
-extern void new_mem_lock();
-extern void free_mem_lock(mem_lock *lock);
-extern mem_block func__mem(ptrszint offset, ptrszint size, int32 type,
-                           ptrszint elementsize, mem_lock *lock);
-extern mem_block func__mem_at_offset(ptrszint offset, ptrszint size);
-extern void sub__memfree(void *);
-extern void sub__memcopy(void *sblk, ptrszint soff, ptrszint bytes, void *dblk,
-                         ptrszint doff);
-extern mem_block func__memnew(ptrszint);
 extern mem_block func__memimage(int32, int32);
 
 extern int64 func__shellhide(qbs *str);
@@ -590,8 +548,6 @@ extern void setbits(uint32 bsize, uint8 *base, ptrszint i, int64 val);
 
 // shared global variables
 extern int32 sleep_break;
-extern uint64 mem_lock_id;
-extern mem_lock *mem_lock_tmp;
 extern int64 exit_code;
 extern int32 lock_mainloop; // 0=unlocked, 1=lock requested, 2=locked
 extern int64 device_event_index;

@@ -233,28 +233,6 @@ struct device_struct {
 #    define DEVICETYPE_KEYBOARD 2
 #    define DEVICETYPE_MOUSE 3
 
-struct mem_block {
-    ptrszint offset;
-    ptrszint size;
-    int64 lock_id;        // 64-bit key, must be present at lock's offset or memory region is invalid
-    ptrszint lock_offset; // pointer to lock
-    ptrszint type;        // https://qb64phoenix.com/qb64wiki/index.php/MEM
-    ptrszint elementsize;
-    int32 image;
-    int32 sound;
-};
-
-struct mem_lock {
-    uint64 id;
-    int32 type; // required to know what action to take (if any) when a request is made to free the block
-    // 0=no security (eg. user defined block from _OFFSET)
-    // 1=C-malloc'ed block
-    // 2=image
-    // 3=sub/function scope block
-    // 4=array
-    // 5=sound
-    //---- type specific variables follow ----
-    void *offset; // used by malloc'ed blocks to free them
-};
+#include "mem.h"
 
 #endif // INC_COMMON_CPP
