@@ -114,7 +114,7 @@ int32_t gfs_free(int32_t i) {
 
 int32_t gfs_close(int32_t i) {
     int32_t x;
-    if (x = gfs_free(i))
+    if ((x = gfs_free(i)))
         return x;
 
     if (gfs_file[i].scrn)
@@ -268,7 +268,7 @@ comstatment:
                 else if (strv & 0x0000FF)
                     strv = strv | (c << 8);
                 else
-                    strv = strv = c;
+                    strv = c;
 
                 if (strv > 16777216)
                     return -1; // string option too long (max 3 characters)
@@ -649,7 +649,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
     f->pos = 0;
 
     // check for OPEN COM syntax
-    if (x = gfs_open_com_syntax(filenamez, f)) {
+    if ((x = gfs_open_com_syntax(filenamez, f))) {
         if (x == -1) {
             gfs_free(i);
             return -11;
@@ -963,7 +963,7 @@ int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
         return -4; // illegal function call
     static int32_t x;
     if (position != -1) {
-        if (x = gfs_setpos(i, position))
+        if ((x = gfs_setpos(i, position)))
             return x; //(pass on error)
     }
 
@@ -1022,7 +1022,7 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
         return -4; // illegal function call
     static int32_t x;
     if (position != -1) {
-        if (x = gfs_setpos(i, position))
+        if ((x = gfs_setpos(i, position)))
             return x; //(pass on error)
     }
 
@@ -1123,7 +1123,7 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end) {
 #endif
 
 #ifdef GFS_WINDOWS
-    uint64_t bytes;
+    int64_t bytes;
     bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
@@ -1165,7 +1165,7 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
 #endif
 
 #ifdef GFS_WINDOWS
-    uint64_t bytes;
+    int64_t bytes;
     bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
