@@ -135,6 +135,10 @@ CLEAN_DEP_LIST :=
 
 CXXFLAGS += -std=gnu++14
 
+# libqb does some illegal type punning, this ensures the compiler will allow it
+# to happen
+CXXFLAGS += -fno-strict-aliasing
+
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
 	CXXFLAGS += -DFREEGLUT_STATIC
