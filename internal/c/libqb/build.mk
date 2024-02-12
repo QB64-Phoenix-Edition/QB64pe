@@ -28,11 +28,11 @@ libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/mac-key-monitor.o
 endif
 
 $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.cpp
-	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+	$(CXX) -O2 $(CXXFLAGS) -Wall -Wextra $< -c -o $@
 
 ifeq ($(OS),osx)
 $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.mm
-	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+	$(CXX) -O2 $(CXXFLAGS) -Wall -Wextra $< -c -o $@
 endif
 
 CLEAN_LIST += $(libqb-objs-y) $(libqb-objs-yy) $(libqb-objs-)
