@@ -97,9 +97,6 @@
 
 #    endif
 
-#    define QB_FALSE 0
-#    define QB_TRUE -1
-
 #include "error_handle.h"
 #include "qbs.h"
 
