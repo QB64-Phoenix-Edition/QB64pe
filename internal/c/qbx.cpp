@@ -11,6 +11,7 @@
 #include "gui.h"
 #include "image.h"
 #include "qbs.h"
+#include "qbs-mk-cv.h"
 #include "error_handle.h"
 #include "mem.h"
 #include "rounding.h"
@@ -250,14 +251,6 @@ extern int32 func_peek(int32 offset);
 extern void sub_poke(int32 offset, int32 value);
 extern void more_return_points();
 extern qbs *func_varptr_helper(uint8 type, uint16 offset);
-extern qbs *func_mksmbf(float val);
-extern qbs *func_mkdmbf(double val);
-extern float func_cvsmbf(qbs *str);
-extern double func_cvdmbf(qbs *str);
-extern qbs *bit2string(uint32 bsize, int64 v);
-extern qbs *ubit2string(uint32 bsize, uint64 v);
-extern uint64 string2ubit(qbs *str, uint32 bsize);
-extern int64 string2bit(qbs *str, uint32 bsize);
 extern void sub_lset(qbs *dest, qbs *source);
 extern void sub_rset(qbs *dest, qbs *source);
 extern qbs *func_space(int32 spaces);
@@ -507,32 +500,6 @@ extern int32 print_using_double(qbs *format, double value, int32 start,
                                 qbs *output);
 extern int32 print_using_float(qbs *format, long double value, int32 start,
                                qbs *output);
-extern qbs *b2string(char v);
-extern qbs *ub2string(char v);
-extern qbs *i2string(int16 v);
-extern qbs *ui2string(int16 v);
-extern qbs *l2string(int32 v);
-extern qbs *ul2string(uint32 v);
-extern qbs *i642string(int64 v);
-extern qbs *ui642string(uint64 v);
-extern qbs *s2string(float v);
-extern qbs *d2string(double v);
-extern qbs *f2string(long double v);
-extern qbs *o2string(ptrszint v);
-extern qbs *uo2string(uptrszint v);
-extern char string2b(qbs *str);
-extern uint8 string2ub(qbs *str);
-extern int16 string2i(qbs *str);
-extern uint16 string2ui(qbs *str);
-extern int32 string2l(qbs *str);
-extern uint32 string2ul(qbs *str);
-extern int64 string2i64(qbs *str);
-extern uint64 string2ui64(qbs *str);
-extern float string2s(qbs *str);
-extern double string2d(qbs *str);
-extern long double string2f(qbs *str);
-extern ptrszint string2o(qbs *str);
-extern uptrszint string2uo(qbs *str);
 // Cobalt(aka Dave) added the next 2 lines
 uint64 func__shr(uint64 a1, int b1);
 uint64 func__shl(uint64 a1, int b1);
