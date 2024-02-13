@@ -370,10 +370,6 @@ extern void sub_graphics_get(float x1f, float y1f, float x2f, float y2f,
                              void *element, uint32 mask, int32 passed);
 extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option,
                              uint32 mask, int32 passed);
-extern void sub_date(qbs *date);
-extern qbs *func_date();
-extern void sub_time(qbs *str);
-extern qbs *func_time();
 extern int32 func_csrlin();
 extern int32 func_pos(int32 ignore);
 extern double func_log(double value);
