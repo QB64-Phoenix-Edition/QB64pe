@@ -139,6 +139,11 @@ CXXFLAGS += -std=gnu++14
 # to happen
 CXXFLAGS += -fno-strict-aliasing
 
+# Significant amounts of the code uses NULL as a placeholder for passing zero
+# for any parameter. This should be fixed, but supressing these warnings makes
+# the warning list actually usable.
+CXXFLAGS += -Wno-conversion-null
+
 ifeq ($(OS),lnx)
 	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
 	CXXFLAGS += -DFREEGLUT_STATIC
@@ -396,7 +401,7 @@ EXE_OBJS := $(QBLIB) $(EXE_OBJS)
 
 # qbx produces thousands of warnings due to passing NULL for every unused parameter
 $(QB_QBX_OBJ): $(QB_QBX_SRC)
-	$(CXX) $(CXXFLAGS) $< -w -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 ifeq ($(OS),osx)
 %.o: %.mm
