@@ -12,6 +12,7 @@
 #include "filesystem.h"
 #include "font.h"
 #include "gui.h"
+#include "hexoctbin.h"
 #include "image.h"
 #include "qbmath.h"
 #include "qbs.h"
@@ -352,12 +353,6 @@ extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option,
 extern int32 func_csrlin();
 extern int32 func_pos(int32 ignore);
 extern void sub_sleep(int32 seconds, int32 passed);
-extern qbs *func__bin(int64 value, int32 neg_bits);
-extern qbs *func__bin_float(long double value);
-extern qbs *func_oct(int64 value, int32 neg_bits);
-extern qbs *func_oct_float(long double value);
-extern qbs *func_hex(int64 value, int32 neg_size);
-extern qbs *func_hex_float(long double value);
 extern ptrszint func_lbound(ptrszint *array, int32 index, int32 num_indexes);
 extern ptrszint func_ubound(ptrszint *array, int32 index, int32 num_indexes);
 
