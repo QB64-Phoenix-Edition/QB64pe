@@ -45,6 +45,8 @@ CONST const__str2 = "foobar" + "foobar2"
 CONST const__str3 = const__str + const__str2
 CONST const__str4 = (const__str + (const__str2))
 
+CONST const__unsignedint = 2~&& * 5~&&
+
 PRINT const__OR
 PRINT const__AND
 PRINT const__NOT
@@ -86,5 +88,7 @@ PRINT const__str
 PRINT const__str2
 PRINT const__str3
 PRINT const__str4
+
+PRINT const__unsignedint
 
 SYSTEM
