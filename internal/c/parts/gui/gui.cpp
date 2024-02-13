@@ -10,12 +10,16 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
+#include "libqb-common.h"
+
+#include "qbs.h"
 #include "gui.h"
-#include "../../libqb.h"
 #include "image.h"
 #include "tinyfiledialogs.h"
 #include <algorithm>
 #include <string>
+#include <string.h>
+#include <limits.h>
 
 /// @brief Splits a string delimited by '|' into an array of strings
 /// @param input The string to be parsed
