@@ -3,8 +3,10 @@
 //  Powered by miniz (https://github.com/richgel999/miniz)
 //-----------------------------------------------------------------------------------------------------
 
+#include "libqb-common.h"
+
 #include "compression.h"
-#include "../../libqb.h"
+#include "qbs.h"
 #include "miniz.h"
 
 uint32_t func__adler32(qbs *text) {
