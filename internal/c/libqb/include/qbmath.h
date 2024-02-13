@@ -10,6 +10,9 @@ long double func_fix_float(long double value);
 double func_exp_single(double value);
 long double func_exp_float(long double value);
 
+double func_sqr(double value);
+long double pow2(long double x, long double y);
+
 // force abs to return floating point numbers correctly
 static inline double func_abs(double d) { return std::fabs(d); }
 static inline long double func_abs(long double d) { return std::fabs(d); }

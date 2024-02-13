@@ -399,8 +399,6 @@ extern int64 func_loc(int32 i);
 extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
-extern double func_sqr(double value);
-extern long double pow2(long double x, long double y);
 extern int32 func_freefile();
 extern void sub__mousehide();
 extern void sub__mouseshow(qbs *style, int32 passed);
@@ -666,86 +664,6 @@ inline ptrszint array_check(uptrszint index, uptrszint limit) {
     return 0;
 }
 
-inline int32 func_sgn(uint8 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int8 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(uint16 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int16 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(uint32 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int32 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(uint64 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int64 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(float v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(double v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(long double v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
 // Working with 32bit colors:
 inline uint32 func__rgb32(int32 r, int32 g, int32 b, int32 a) {
     if (r < 0)

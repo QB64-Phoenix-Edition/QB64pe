@@ -18963,14 +18963,6 @@ void sub_file_line_input_string(int32 fileno, qbs *deststr) {
     return;
 }
 
-double func_sqr(double value) {
-    if (value < 0) {
-        error(5);
-        return 0;
-    }
-    return std::sqrt(value);
-}
-
 int32 shell_call_in_progress = 0;
 
 #ifdef QB64_WINDOWS
@@ -20463,16 +20455,6 @@ void sub_shell4(qbs *str, int32 passed) { //_DONTWAIT & _HIDE
 shell_complete:;
 
 } //_DONTWAIT & _HIDE
-
-long double pow2(long double x, long double y) {
-    if (x < 0) {
-        if (y != std::floor(y)) {
-            error(5);
-            return 0;
-        }
-    }
-    return std::pow(x, y);
-}
 
 int32 func_freefile() { return gfs_fileno_freefile(); }
 

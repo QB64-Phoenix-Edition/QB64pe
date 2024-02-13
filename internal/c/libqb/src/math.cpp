@@ -45,3 +45,22 @@ long double func_exp_float(long double value) {
     error(6);
     return 0;
 }
+
+double func_sqr(double value) {
+    if (value < 0) {
+        error(5);
+        return 0;
+    }
+    return std::sqrt(value);
+}
+
+long double pow2(long double x, long double y) {
+    if (x < 0) {
+        if (y != std::floor(y)) {
+            error(5);
+            return 0;
+        }
+    }
+    return std::pow(x, y);
+}
+
