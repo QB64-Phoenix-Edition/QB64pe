@@ -12776,6 +12776,8 @@ int32 hexoct2uint64(qbs *h) {
         hexoct2uint64_value = result;
         return 3;
     } // type == 3
+
+    return 0;
 }
 
 // input method (complex, calls other qbs functions)
@@ -18535,6 +18537,7 @@ qbs *func_input(int32 n, int32 i, int32 passed) {
 
         // RANDOM (todo)
 
+        return str;
     } else {
         // keyboard/piped
         //      For extended-two-byte character codes, only the first, CHR$(0), is returned and counts a 1 byte
@@ -23709,6 +23712,7 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
 
     } //_OPENCONNECTION
 
+    return -1;
 } // connection_new
 
 // network prototype:
