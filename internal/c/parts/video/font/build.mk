@@ -27,10 +27,10 @@ FONT_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/font/%.o,$(FONT_SRC
 FONT_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/font/%.o,$(FONT_STUB_SRCS))
 
 $(PATH_INTERNAL_C)/parts/video/font/%.o: $(PATH_INTERNAL_C)/parts/video/font/%.cpp
-	$(CXX) -O2 $(CXXFLAGS) $(FREETYPE_INCLUDE) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+	$(CXX) -O2 $(CXXFLAGS) $(FREETYPE_INCLUDE) -DDEPENDENCY_CONSOLE_ONLY -w $< -c -o $@
 
 $(PATH_INTERNAL_C)/parts/video/font/freetype/%.o: $(PATH_INTERNAL_C)/parts/video/font/freetype/%.c
-	$(CC) -O3 $(CFLAGS) $(FREETYPE_INCLUDE) -DFT2_BUILD_LIBRARY -Wall $< -c -o $@
+	$(CC) -O3 $(CFLAGS) $(FREETYPE_INCLUDE) -DFT2_BUILD_LIBRARY -w $< -c -o $@
 
 $(FREETYPE_LIB): $(FREETYPE_OBJS)
 	$(AR) rcs $@ $(FREETYPE_OBJS)
