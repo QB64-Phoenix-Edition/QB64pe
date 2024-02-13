@@ -13,6 +13,7 @@
 #endif
 
 #include "audio.h"
+#include "bitops.h"
 #include "cmem.h"
 #include "completion.h"
 #include "command.h"
@@ -54,30 +55,6 @@ uint32 rotateLeft(uint32 word, uint32 shift) { return (word << shift) | (word >>
 #ifndef QB64_WINDOWS
 void ZeroMemory(void *ptr, int64 bytes) { memset(ptr, 0, bytes); }
 #endif
-// bit-array access functions (note: used to be included through 'bit.cpp')
-uint64 getubits(uint32 bsize, uint8 *base, ptrszint i) {
-    int64 bmask;
-    bmask = ~(-(((int64)1) << bsize));
-    i *= bsize;
-    return ((*(uint64 *)(base + (i >> 3))) >> (i & 7)) & bmask;
-}
-int64 getbits(uint32 bsize, uint8 *base, ptrszint i) {
-    int64 bmask, bval64;
-    bmask = ~(-(((int64)1) << bsize));
-    i *= bsize;
-    bval64 = ((*(uint64 *)(base + (i >> 3))) >> (i & 7)) & bmask;
-    if (bval64 & (((int64)1) << (bsize - 1)))
-        return bval64 | (~bmask);
-    return bval64;
-}
-void setbits(uint32 bsize, uint8 *base, ptrszint i, int64 val) {
-    int64 bmask;
-    uint64 *bptr64;
-    bmask = (((uint64)1) << bsize) - 1;
-    i *= bsize;
-    bptr64 = (uint64 *)(base + (i >> 3));
-    *bptr64 = (*bptr64 & (((bmask << (i & 7)) ^ -1))) | ((val & bmask) << (i & 7));
-}
 
 #ifdef QB64_UNIX
 #    include <libgen.h> //required for dirname()
