@@ -17552,44 +17552,6 @@ int32 func_pos(int32 ignore) {
     return write_page->cursor_x;
 }
 
-double func_log(double value) {
-    if (value <= 0) {
-        error(5);
-        return 0;
-    }
-    return std::log(value);
-}
-
-// FIX
-double func_fix_double(double value) {
-    if (value < 0)
-        return std::ceil(value);
-    else
-        return std::floor(value);
-}
-long double func_fix_float(long double value) {
-    if (value < 0)
-        return std::ceil(value);
-    else
-        return std::floor(value);
-}
-
-// EXP
-double func_exp_single(double value) {
-    if (value <= 88.02969) {
-        return std::exp(value);
-    }
-    error(6);
-    return 0;
-}
-long double func_exp_float(long double value) {
-    if (value <= 709.782712893) {
-        return std::exp(value);
-    }
-    error(6);
-    return 0;
-}
-
 int32 sleep_break = 0;
 
 void sub_sleep(int32 seconds, int32 passed) {

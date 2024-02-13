@@ -9,6 +9,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/error_handle.o
 libqb-objs-y += $(PATH_LIBQB)/src/gfs.o
 libqb-objs-y += $(PATH_LIBQB)/src/qblist.o
 libqb-objs-y += $(PATH_LIBQB)/src/mem.o
+libqb-objs-y += $(PATH_LIBQB)/src/math.o
 libqb-objs-y += $(PATH_LIBQB)/src/rounding.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_str.o

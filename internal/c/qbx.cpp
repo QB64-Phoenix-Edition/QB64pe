@@ -10,6 +10,7 @@
 #include "font.h"
 #include "gui.h"
 #include "image.h"
+#include "qbmath.h"
 #include "qbs.h"
 #include "qbs-mk-cv.h"
 #include "error_handle.h"
@@ -372,11 +373,6 @@ extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option,
                              uint32 mask, int32 passed);
 extern int32 func_csrlin();
 extern int32 func_pos(int32 ignore);
-extern double func_log(double value);
-extern double func_fix_double(double value);
-extern long double func_fix_float(long double value);
-extern double func_exp_single(double value);
-extern long double func_exp_float(long double value);
 extern void sub_sleep(int32 seconds, int32 passed);
 extern qbs *func__bin(int64 value, int32 neg_bits);
 extern qbs *func__bin_float(long double value);
@@ -386,18 +382,6 @@ extern qbs *func_hex(int64 value, int32 neg_size);
 extern qbs *func_hex_float(long double value);
 extern ptrszint func_lbound(ptrszint *array, int32 index, int32 num_indexes);
 extern ptrszint func_ubound(ptrszint *array, int32 index, int32 num_indexes);
-
-extern int32 func_sgn(uint8 v);
-extern int32 func_sgn(int8 v);
-extern int32 func_sgn(uint16 v);
-extern int32 func_sgn(int16 v);
-extern int32 func_sgn(uint32 v);
-extern int32 func_sgn(int32 v);
-extern int32 func_sgn(uint64 v);
-extern int32 func_sgn(int64 v);
-extern int32 func_sgn(float v);
-extern int32 func_sgn(double v);
-extern int32 func_sgn(long double v);
 
 extern int32 func_inp(int32 port);
 extern void sub_wait(int32 port, int32 andexpression, int32 xorexpression,
@@ -645,19 +629,6 @@ void swap_block(void *a, void *b, uint32 bytes) {
 }
 
 
-// force abs to return floating point numbers correctly
-inline double func_abs(double d) { return std::fabs(d); }
-inline long double func_abs(long double d) { return std::fabs(d); }
-inline float func_abs(float d) { return std::fabs(d); }
-
-inline uint8 func_abs(uint8 d) { return d; }
-inline uint16 func_abs(uint16 d) { return d; }
-inline uint32 func_abs(uint32 d) { return d; }
-inline uint64 func_abs(uint64 d) { return d; }
-inline int8 func_abs(int8 d) { return std::abs(d); }
-inline int16 func_abs(int16 d) { return std::abs(d); }
-inline int32 func_abs(int32 d) { return std::abs(d); }
-inline int64 func_abs(int64 d) { return std::llabs(d); }
 
 extern int32 disableEvents;
 
