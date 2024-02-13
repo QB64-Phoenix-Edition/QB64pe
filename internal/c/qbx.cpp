@@ -4,6 +4,7 @@
 #include "compression.h"
 #include "command.h"
 #include "datetime.h"
+#include "environ.h"
 #include "event.h"
 #include "extended_math.h"
 #include "filepath.h"
@@ -210,10 +211,6 @@ extern int32 func__openconnection(int32);
 extern int32 func__openclient(qbs *);
 extern int32 func__connected(int32);
 extern qbs *func__connectionaddress(int32);
-extern int32 func__environcount();
-extern qbs *func_environ(qbs *);
-extern qbs *func_environ(int32);
-extern void sub_environ(qbs *);
 extern void sub_draw(qbs *);
 extern void qbs_maketmp(qbs *);
 extern void sub_run(qbs *);
