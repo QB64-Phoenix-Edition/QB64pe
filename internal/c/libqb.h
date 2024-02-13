@@ -5,7 +5,6 @@
 #include "cmem.h"
 #include "qbs.h"
 
-void sub_shell4(qbs *, int32); //_DONTWAIT & _HIDE
 int32 func__source();
 int32 func_pos(int32 ignore);
 void sub__printimage(int32 i);

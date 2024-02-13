@@ -15,6 +15,7 @@
 #include "qbmath.h"
 #include "qbs.h"
 #include "qbs-mk-cv.h"
+#include "shell.h"
 #include "error_handle.h"
 #include "mem.h"
 #include "rounding.h"
@@ -129,11 +130,6 @@ extern int64 GetTicks();
 
 extern mem_block func__memimage(int32, int32);
 
-extern int64 func__shellhide(qbs *str);
-extern int64 func_shell(qbs *str);
-extern void sub_shell(qbs *str, int32 passed);
-extern void sub_shell2(qbs *str, int32 passed);
-extern void sub_shell3(qbs *str, int32 passed);
 extern void sub__consoletitle(qbs *);
 extern void sub__screenshow();
 extern void sub__screenhide();

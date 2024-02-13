@@ -13,6 +13,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/qblist.o
 libqb-objs-y += $(PATH_LIBQB)/src/mem.o
 libqb-objs-y += $(PATH_LIBQB)/src/math.o
 libqb-objs-y += $(PATH_LIBQB)/src/rounding.o
+libqb-objs-y += $(PATH_LIBQB)/src/shell.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_str.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_cmem.o
