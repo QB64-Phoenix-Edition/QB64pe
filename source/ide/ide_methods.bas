@@ -5511,15 +5511,20 @@ FUNCTION ide2 (ignore)
                     IF LEN(retval$) THEN
                         Dim num As ParseNum
                         mathEvalExpr$ = retval$
+
+                        retval$ = lineformat(retval$)
+                        Error_Happened = 0
+
                         ev0$ = Evaluate_Expression$(retval$, num)
                         ev$ = ev0$
+
                         mathEvalError%% = INSTR(ev$, "ERROR") > 0
-                        IF mathEvalError%% = 0 AND mathEvalHEX%% THEN ev$ = "&H" + HEX$(VAL(ev$))
+                        IF mathEvalError%% = 0 AND mathEvalHEX%% THEN ev$ = "&H" + HEX$(num.ui)
                         DO
                             b1$ = "#Insert;"
                             IF mathEvalHEX%% THEN b2$ = "#Decimal;" ELSE b2$ = "#HEX$;"
                             IF mathEvalError%% = 0 AND mathEvalComment%% THEN
-                                mathMsg$ = ev$ + " '" + retval$
+                                mathMsg$ = ev$ + " '" + mathEvalExpr$
                                 b3$ = "#Uncomment;"
                             ELSE
                                 mathMsg$ = ev$
@@ -5534,7 +5539,7 @@ FUNCTION ide2 (ignore)
                                         EXIT DO
                                     CASE 2
                                         mathEvalHEX%% = NOT mathEvalHEX%%
-                                        IF mathEvalHEX%% THEN ev$ = "&H" + HEX$(VAL(ev$)) ELSE ev$ = ev0$
+                                        IF mathEvalHEX%% THEN ev$ = "&H" + HEX$(num.ui) ELSE ev$ = ev0$
                                     CASE 3
                                         mathEvalComment%% = NOT mathEvalComment%%
                                 END SELECT
