@@ -4,6 +4,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/buffer.o
 libqb-objs-y += $(PATH_LIBQB)/src/bitops.o
 libqb-objs-y += $(PATH_LIBQB)/src/command.o
 libqb-objs-y += $(PATH_LIBQB)/src/environ.o
+libqb-objs-y += $(PATH_LIBQB)/src/file-fields.o
 libqb-objs-y += $(PATH_LIBQB)/src/filepath.o
 libqb-objs-y += $(PATH_LIBQB)/src/filesystem.o
 libqb-objs-y += $(PATH_LIBQB)/src/datetime.o

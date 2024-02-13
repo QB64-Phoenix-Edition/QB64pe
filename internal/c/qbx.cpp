@@ -8,6 +8,7 @@
 #include "event.h"
 #include "extended_math.h"
 #include "filepath.h"
+#include "file-fields.h"
 #include "filesystem.h"
 #include "font.h"
 #include "gui.h"
@@ -174,10 +175,6 @@ extern void sub__mousemove(float x, float y);
 extern qbs *func__os();
 extern void sub__mapunicode(int32 unicode_code, int32 ascii_code);
 extern int32 func__mapunicode(int32 ascii_code);
-extern void field_new(int32 fileno);
-extern void field_add(qbs *str, int64 size);
-extern void field_get(int32 fileno, int64 seekpos, int32 passed);
-extern void field_put(int32 fileno, int64 seekpos, int32 passed);
 extern int32 func__keydown(int32 x);
 extern int32 func__keyhit();
 extern int32 func_lpos(int32);
