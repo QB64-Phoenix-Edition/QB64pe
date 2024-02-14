@@ -590,11 +590,11 @@ FUNCTION Factor&(exp$, state AS ParserState)
             IF Unary&(exp$, state) = 0 THEN FixupErrorMessage state, "*": EXIT FUNCTION
 
             IF (num.typ AND ISFLOAT) OR (state.num.typ AND ISFLOAT) THEN
-                num.f = num.f * state.num.f
-                num.i = num.f
+                ParseNumSetF num, FLOATTYPE - ISPOINTER, num.f * state.num.f
+            ELSEIF (num.typ AND ISUNSIGNED) OR (state.num.typ AND ISUNSIGNED) THEN
+                ParseNumSetUI num, UINTEGER64TYPE - ISPOINTER, num.ui * state.num.ui
             ELSE
-                num.i = num.i * state.num.i
-                num.f = num.i
+                ParseNumSetI num, INTEGER64TYPE - ISPOINTER, num.i * state.num.i
             END IF
         ELSEIF ele$ = "/" THEN
             ele$ = getnextelement$(exp$, state.index, state.strIndex)
