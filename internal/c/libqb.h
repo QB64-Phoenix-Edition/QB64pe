@@ -2,14 +2,8 @@
 #define INC_LIBQB_H
 #include "common.h"
 
-void error(int32 error_number);
-extern uint32 new_error;
-extern uint32 error_err; //=0;
-extern double error_erl; //=0;
-extern uint32 error_occurred;
-extern uint32 error_goto_line;
-extern uint32 error_handling;
-extern uint32 error_retry;
+#include "cmem.h"
+#include "qbs.h"
 
 void sub_shell4(qbs *, int32); //_DONTWAIT & _HIDE
 int32 func__source();
@@ -29,25 +23,8 @@ void sub__freeimage(int32 i, int32 passed);
 int32 func__dest();
 int32 func__display();
 void qbg_sub_view_print(int32, int32, int32);
-qbs *qbs_new(int32, uint8);
-qbs *qbs_new_txt(const char *);
-qbs *qbs_new_txt_len(const char *, int32_t);
-qbs *qbs_add(qbs *, qbs *);
-qbs *qbs_set(qbs *, qbs *);
-int32 qbs_equal(qbs *str1, qbs *str2);
 qbs *func_space(int32 spaces);
 void makefit(qbs *text);
-qbs *qbs_str(int64 value);
-qbs *qbs_str(int32 value);
-qbs *qbs_str(int16 value);
-qbs *qbs_str(int8 value);
-qbs *qbs_str(uint64 value);
-qbs *qbs_str(uint32 value);
-qbs *qbs_str(uint16 value);
-qbs *qbs_str(uint8 value);
-qbs *qbs_str(float value);
-qbs *qbs_str(double value);
-qbs *qbs_str(long double value);
 void qbg_sub_window(float, float, float, float, int32);
 extern int32 autodisplay;
 // GFS forward references
@@ -65,8 +42,6 @@ int32 gfs_write(int32 i, int64 position, uint8 *data, int64 size);
 int32 gfs_read(int32 i, int64 position, uint8 *data, int64 size);
 int64 gfs_read_bytes();
 
-extern uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword in conv memory)
-
 // keyhit cyclic buffer
 extern int64 keyhit[8192];
 //    keyhit specific internal flags: (stored in high 32-bits)
@@ -80,9 +55,5 @@ extern int32 port60h_events;
 
 extern int32 window_exists;
 extern int32 no_control_characters2;
-
-extern qbs *qbs_lcase(qbs *str);
-extern qbs *qbs_ucase(qbs *str);
-extern int32 qbs_equal(qbs *str1, qbs *str2);
 
 #endif

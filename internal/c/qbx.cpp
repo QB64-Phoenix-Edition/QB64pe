@@ -1,6 +1,7 @@
 #include "audio.h"
 #include "common.h"
 #include "compression.h"
+#include "command.h"
 #include "datetime.h"
 #include "event.h"
 #include "extended_math.h"
@@ -9,6 +10,9 @@
 #include "font.h"
 #include "gui.h"
 #include "image.h"
+#include "qbs.h"
+#include "error_handle.h"
+#include "mem.h"
 #include "rounding.h"
 
 extern int32 func__cinp(int32 toggle,
@@ -119,49 +123,6 @@ extern void sub__displayorder(int32 method1, int32 method2, int32 method3,
 
 extern int64 GetTicks();
 
-extern int32 func__memexists(void *blk);
-extern void sub__memfill(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                         ptrszint soff, ptrszint sbytes);
-extern void sub__memfill_nochecks(ptrszint doff, ptrszint dbytes, ptrszint soff,
-                                  ptrszint sbytes);
-extern void sub__memfill_1(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int8 val);
-extern void sub__memfill_nochecks_1(ptrszint doff, ptrszint dbytes, int8 val);
-extern void sub__memfill_2(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int16 val);
-extern void sub__memfill_nochecks_2(ptrszint doff, ptrszint dbytes, int16 val);
-extern void sub__memfill_4(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int32 val);
-extern void sub__memfill_nochecks_4(ptrszint doff, ptrszint dbytes, int32 val);
-extern void sub__memfill_8(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                           int64 val);
-extern void sub__memfill_nochecks_8(ptrszint doff, ptrszint dbytes, int64 val);
-extern void sub__memfill_SINGLE(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                                float val);
-extern void sub__memfill_nochecks_SINGLE(ptrszint doff, ptrszint dbytes,
-                                         float val);
-extern void sub__memfill_DOUBLE(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                                double val);
-extern void sub__memfill_nochecks_DOUBLE(ptrszint doff, ptrszint dbytes,
-                                         double val);
-extern void sub__memfill_FLOAT(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                               long double val);
-extern void sub__memfill_nochecks_FLOAT(ptrszint doff, ptrszint dbytes,
-                                        long double val);
-extern void sub__memfill_OFFSET(mem_block *dblk, ptrszint doff, ptrszint dbytes,
-                                ptrszint val);
-extern void sub__memfill_nochecks_OFFSET(ptrszint doff, ptrszint dbytes,
-                                         ptrszint val);
-extern void *func__memget(mem_block *blk, ptrszint off, ptrszint bytes);
-extern void new_mem_lock();
-extern void free_mem_lock(mem_lock *lock);
-extern mem_block func__mem(ptrszint offset, ptrszint size, int32 type,
-                           ptrszint elementsize, mem_lock *lock);
-extern mem_block func__mem_at_offset(ptrszint offset, ptrszint size);
-extern void sub__memfree(void *);
-extern void sub__memcopy(void *sblk, ptrszint soff, ptrszint bytes, void *dblk,
-                         ptrszint doff);
-extern mem_block func__memnew(ptrszint);
 extern mem_block func__memimage(int32, int32);
 
 extern int64 func__shellhide(qbs *str);
@@ -277,9 +238,6 @@ extern uint32 *rm32();
 extern void cpu_call();
 extern int64 build_int64(uint32 val2, uint32 val1);
 extern uint64 build_uint64(uint32 val2, uint32 val1);
-extern void fix_error();
-extern double get_error_erl();
-extern uint32 get_error_err();
 extern char *human_error(int32 errorcode);
 extern void end();
 extern int32 stop_program_state();
@@ -291,28 +249,7 @@ extern void sub_defseg(int32 segment, int32 passed);
 extern int32 func_peek(int32 offset);
 extern void sub_poke(int32 offset, int32 value);
 extern void more_return_points();
-extern qbs *qbs_new_descriptor();
-extern void qbs_free_descriptor(qbs *str);
-extern void qbs_free(qbs *str);
-extern void qbs_cmem_concat_list();
-extern void qbs_concat_list();
-extern void qbs_tmp_concat_list();
-extern void qbs_concat(uint32 bytesrequired);
-extern void qbs_concat_cmem(uint32 bytesrequired);
-extern qbs *qbs_new_cmem(int32 size, uint8 tmp);
-extern qbs *qbs_new_txt(const char *txt);
-extern qbs *qbs_new_txt_len(const char *txt, int32 len);
-extern qbs *qbs_new_fixed(uint8 *offset, uint32 size, uint8 tmp);
-extern qbs *qbs_new(int32 size, uint8 tmp);
-extern void set_qbs_size(ptrszint *target_qbs, int32 newlength);
-extern qbs *qbs_set(qbs *deststr, qbs *srcstr);
-extern qbs *qbs_add(qbs *str1, qbs *str2);
-extern qbs *qbs_ucase(qbs *str);
-extern qbs *qbs_lcase(qbs *str);
-extern qbs *func_chr(int32 value);
 extern qbs *func_varptr_helper(uint8 type, uint16 offset);
-extern qbs *qbs_left(qbs *str, int32 l);
-extern qbs *qbs_right(qbs *str, int32 l);
 extern qbs *func_mksmbf(float val);
 extern qbs *func_mkdmbf(double val);
 extern float func_cvsmbf(qbs *str);
@@ -336,26 +273,6 @@ extern int32 func__str_nc_compare(qbs *s1, qbs *s2);
 extern int32 func__str_compare(qbs *s1, qbs *s2);
 extern qbs *qbs_inkey();
 extern void sub__keyclear(int32 buf, int32 passed);
-extern qbs *qbs_str(int64 value);
-extern qbs *qbs_str(int32 value);
-extern qbs *qbs_str(int16 value);
-extern qbs *qbs_str(int8 value);
-extern qbs *qbs_str(uint64 value);
-extern qbs *qbs_str(uint32 value);
-extern qbs *qbs_str(uint16 value);
-extern qbs *qbs_str(uint8 value);
-extern qbs *qbs_str(float value);
-extern qbs *qbs_str(double value);
-extern qbs *qbs_str(long double value);
-extern int32 qbs_equal(qbs *str1, qbs *str2);
-extern int32 qbs_notequal(qbs *str1, qbs *str2);
-extern int32 qbs_greaterthan(qbs *str1, qbs *str2);
-extern int32 qbs_lessthan(qbs *str1, qbs *str2);
-extern int32 qbs_lessorequal(qbs *str1, qbs *str2);
-extern int32 qbs_greaterorequal(qbs *str1, qbs *str2);
-extern int32 qbs_asc(qbs *);
-extern int32 qbs_asc(qbs *, uint32);
-extern int32 qbs_len(qbs *str);
 extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin,
                      int32 ymin, int32 xmax, int32 ymax);
 extern void qbg_palette(uint32 attribute, uint32 col, int32 passed);
@@ -512,8 +429,6 @@ extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
 extern double func_sqr(double value);
-extern qbs *func_command(int32 index, int32 passed);
-extern int32 func__commandcount();
 extern long double pow2(long double x, long double y);
 extern int32 func_freefile();
 extern void sub__mousehide();
@@ -635,13 +550,10 @@ extern void setbits(uint32 bsize, uint8 *base, ptrszint i, int64 val);
 
 // shared global variables
 extern int32 sleep_break;
-extern uint64 mem_lock_id;
-extern mem_lock *mem_lock_tmp;
 extern int64 exit_code;
 extern int32 lock_mainloop; // 0=unlocked, 1=lock requested, 2=locked
 extern int64 device_event_index;
 extern int32 exit_ok;
-extern qbs *func_command_str;
 int32 timer_event_occurred = 0; // inc/dec as each GOSUB to QBMAIN ()
                                 // begins/ends
 int32 timer_event_id = 0;
@@ -650,32 +562,23 @@ int32 key_event_id = 0;
 int32 strig_event_occurred = 0; // inc/dec as each GOSUB to QBMAIN ()
                                 // begins/ends
 int32 strig_event_id = 0;
-uint32 ercl;
-uint32 inclercl;
-char *includedfilename;
 uint16 call_absolute_offsets[256];
 uint32 dbgline;
 uint32 qbs_cmem_sp = 256;
 uint32 cmem_sp = 65536;
-ptrszint dblock; // 32bit offset of dblock
+intptr_t dblock; // 32bit offset of dblock
 uint8 close_program = 0;
 int32 tab_spc_cr_size = 1; // 1=PRINT(default), 2=FILE
 int32 tab_fileno = 0;      // only valid if tab_spc_cr_size=2
 int32 tab_LPRINT = 0;      // 1=dest is LPRINT image
 
 uint64 *nothingvalue; // a pointer to 8 empty bytes in dblock
-uint32 error_err = 0;
-double error_erl = 0;
-uint32 qbs_tmp_list_nexti = 1;
-uint32 error_occurred = 0;
-uint32 new_error = 0;
 uint32 bkp_new_error = 0;
 qbs *nothingstring;
 uint32 qbevent = 0;
 uint8 suspend_program = 0;
 uint8 stop_program = 0;
-uint32 error_retry = 0;
-uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword
+uint8_t cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword
                      // in conv memory)
 uint8 *cmem_static_pointer = &cmem[0] + 1280 + 65536;
 uint8 *cmem_dynamic_base = &cmem[0] + 655360;
@@ -683,8 +586,7 @@ uint8 *mem_static;
 uint8 *mem_static_pointer;
 uint8 *mem_static_limit;
 double last_line = 0;
-uint32 error_goto_line = 0;
-uint32 error_handling = 0;
+
 uint32 next_return_point = 0;
 uint32 *return_point = (uint32 *)malloc(4 * 16384);
 uint32 return_points = 16384;
@@ -778,15 +680,6 @@ void swap_block(void *a, void *b, uint32 bytes) {
         *b8++ = c;
     }
 }
-extern ptrszint *qbs_tmp_list;
-template <typename T> static T qbs_cleanup(uint32 base, T passvalue) {
-    while (qbs_tmp_list_nexti > base) {
-        qbs_tmp_list_nexti--;
-        if (qbs_tmp_list[qbs_tmp_list_nexti] != -1)
-            qbs_free((qbs *)qbs_tmp_list[qbs_tmp_list_nexti]);
-    } // clear any temp. strings created
-    return passvalue;
-}
 
 
 // force abs to return floating point numbers correctly
@@ -809,7 +702,7 @@ ptrszint check_lbound(ptrszint *array, int32 index, int32 num_indexes) {
     static ptrszint ret;
     disableEvents = 1;
     ret = func_lbound((ptrszint *)(*array), index, num_indexes);
-    new_error = 0;
+    clear_error();
     disableEvents = 0;
     return ret;
 }
@@ -818,7 +711,7 @@ ptrszint check_ubound(ptrszint *array, int32 index, int32 num_indexes) {
     static ptrszint ret;
     disableEvents = 1;
     ret = func_ubound((ptrszint *)(*array), index, num_indexes);
-    new_error = 0;
+    clear_error();
     disableEvents = 0;
     return ret;
 }
@@ -1146,18 +1039,6 @@ void sub__display();
 void sub__autodisplay();
 int32 func__autodisplay();
 
-int32 func__errorline() { return ercl; }
-
-int32 func__inclerrorline() { return inclercl; }
-
-qbs *func__inclerrorfile() { return qbs_new_txt(includedfilename); }
-
-qbs *func__errormessage(int32 errorcode, int32 passed) {
-    if (!passed)
-        errorcode = get_error_err();
-    return qbs_new_txt(human_error(errorcode));
-}
-
 void chain_input() {
     // note: common data or not, every program must check for chained data,
     //      it could be sharing files or screen state
@@ -1218,7 +1099,7 @@ void chain_input() {
 }
 
 void sub_chain(qbs *f) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
 #ifdef QB64_WINDOWS
@@ -1777,7 +1658,7 @@ int32 onstrig_inprogress = 0;
 void onstrig_setup(int32 i, int32 controller, int32 controller_passed,
                    uint32 id, int64 pass) {
     // note: pass is ignored by ids not requiring a pass value
-    if (new_error)
+    if (is_error_pending())
         return;
     if (i < 0 || i > 65535) {
         error(5);
@@ -1814,7 +1695,7 @@ void onstrig_setup(int32 i, int32 controller, int32 controller_passed,
 
 void sub_strig(int32 i, int32 controller, int32 option, int32 passed) {
     // ref: "[(?[,?])]{ON|OFF|STOP}"
-    if (new_error)
+    if (is_error_pending())
         return;
     // Note: QuickBASIC ignores STRIG ON and STRIG OFF statements--the
     // statements are provided for compatibility with earlier versions,
@@ -1878,7 +1759,7 @@ int32 onkey_inprogress = 0;
 
 void onkey_setup(int32 i, uint32 id, int64 pass) {
     // note: pass is ignored by ids not requiring a pass value
-    if (new_error)
+    if (is_error_pending())
         return;
     if ((i < 1) || (i > 31)) {
         error(5);
@@ -1891,7 +1772,7 @@ void onkey_setup(int32 i, uint32 id, int64 pass) {
 
 void sub_key(int32 i, int32 option) {
     // ref: "(?){ON|OFF|STOP}"
-    if (new_error)
+    if (is_error_pending())
         return;
     if ((i < 0) || (i > 31)) {
         error(5);
@@ -1941,7 +1822,7 @@ void stop_timers() {
 void start_timers() { ontimerthread_lock = 0; }
 
 int32 func__freetimer() {
-    if (new_error)
+    if (is_error_pending())
         return 0;
     static int32 i;
     if (ontimer_freelist_available) {
@@ -1980,7 +1861,7 @@ void freetimer(int32 i) {
 
 void ontimer_setup(int32 i, double sec, uint32 id, int64 pass) {
     // note: pass is ignored by ids not requiring a pass value
-    if (new_error)
+    if (is_error_pending())
         return;
     if ((i < 0) || (i >= ontimer_nextfree)) {
         error(5);
@@ -2001,7 +1882,7 @@ void ontimer_setup(int32 i, double sec, uint32 id, int64 pass) {
 
 void sub_timer(int32 i, int32 option, int32 passed) {
     // ref: "[(?)]{ON|OFF|STOP|FREE}"
-    if (new_error)
+    if (is_error_pending())
         return;
     if (!passed)
         i = 0;
@@ -2223,10 +2104,8 @@ void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
         Sleep(10);
     }
 
-    if (new_error) {
-        ercl = linenumber;
-        inclercl = inclinenumber;
-        includedfilename = (char *)incfilename;
+    if (is_error_pending()) {
+        error_set_line(linenumber, inclinenumber, incfilename);
         fix_error();
         if (error_retry) {
             error_retry = 0;

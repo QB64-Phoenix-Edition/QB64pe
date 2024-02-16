@@ -5320,7 +5320,7 @@ DO
                 END IF
             END IF
 
-            WriteBufLine MainTxtBuf, "if (new_error) goto exit_subfunc;"
+            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto exit_subfunc;"
 
             'statementn = statementn + 1
             'if nochecks=0 then WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;"
@@ -5773,7 +5773,7 @@ DO
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
-                WriteBufLine MainTxtBuf, "while((" + e$ + ")||new_error){"
+                WriteBufLine MainTxtBuf, "while((" + e$ + ")||is_error_pending()){"
             ELSE
                 a$ = "WHILE ERROR! Expected expression after WHILE.": GOTO errmes
             END IF
@@ -5828,7 +5828,7 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "DO ERROR! Cannot accept a STRING type.": GOTO errmes
-                IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "while((" + e$ + ")||new_error){" ELSE WriteBufLine MainTxtBuf, "while((!(" + e$ + "))||new_error){"
+                IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "while((" + e$ + ")||is_error_pending()){" ELSE WriteBufLine MainTxtBuf, "while((!(" + e$ + "))||is_error_pending()){"
                 IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -5875,7 +5875,7 @@ DO
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
-                IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "}while((" + e$ + ")&&(!new_error));" ELSE WriteBufLine MainTxtBuf, "}while((!(" + e$ + "))&&(!new_error));"
+                IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "}while((" + e$ + ")&&(!is_error_pending()));" ELSE WriteBufLine MainTxtBuf, "}while((!(" + e$ + "))&&(!is_error_pending()));"
             ELSE
                 WriteBufLine MainTxtBuf, "dl_continue_" + str2$(controlid(controllevel)) + ":;"
 
@@ -6041,7 +6041,7 @@ DO
             WriteBufLine MainTxtBuf, "fornext_step" + u$ + "=" + e$ + ";"
             WriteBufLine MainTxtBuf, "if (fornext_step" + u$ + "<0) fornext_step_negative" + u$ + "=1; else fornext_step_negative" + u$ + "=0;"
 
-            WriteBufLine MainTxtBuf, "if (new_error) goto fornext_error" + u$ + ";"
+            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto fornext_error" + u$ + ";"
             WriteBufLine MainTxtBuf, "goto fornext_entrylabel" + u$ + ";"
             WriteBufLine MainTxtBuf, "while(1){"
             typbak = typ
@@ -6199,9 +6199,9 @@ DO
             END IF
 
             IF stringprocessinghappened THEN
-                WriteBufLine MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + e$ + "))||new_error){"
+                WriteBufLine MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + e$ + "))||is_error_pending()){"
             ELSE
-                WriteBufLine MainTxtBuf, "if ((" + e$ + ")||new_error){"
+                WriteBufLine MainTxtBuf, "if ((" + e$ + ")||is_error_pending()){"
             END IF
 
             IF iftype = 1 THEN l$ = l$ + sp + SCase$("Then") 'note: 'GOTO' will be added when iftype=2
@@ -6674,9 +6674,9 @@ DO
             NEXT
 
             IF stringprocessinghappened THEN
-                WriteBufLine MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + f12$ + "))||new_error){"
+                WriteBufLine MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + f12$ + "))||is_error_pending()){"
             ELSE
-                WriteBufLine MainTxtBuf, "if ((" + f12$ + ")||new_error){"
+                WriteBufLine MainTxtBuf, "if ((" + f12$ + ")||is_error_pending()){"
             END IF
 
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -7909,31 +7909,31 @@ DO
             IF position$ = "1" THEN
                 IF useposition THEN l$ = l$ + sp2 + "," + sp + "1" + sp2 + ")" + sp + "=" ELSE l$ = l$ + sp2 + ")" + sp + "="
 
-                WriteBufLine MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!new_error){"
+                WriteBufLine MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!is_error_pending()){"
                 e$ = fixoperationorder$(expression$)
                 IF Error_Happened THEN GOTO errmes
                 l$ = l$ + sp + tlayout$
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "tmp_long=" + e$ + "; if (!new_error){"
+                WriteBufLine MainTxtBuf, "tmp_long=" + e$ + "; if (!is_error_pending()){"
                 WriteBufLine MainTxtBuf, "if (tqbs->len){tqbs->chr[0]=tmp_long;}else{error(5);}"
                 WriteBufLine MainTxtBuf, "}}"
 
             ELSE
 
-                WriteBufLine MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!new_error){"
+                WriteBufLine MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!is_error_pending()){"
                 e$ = fixoperationorder$(position$)
                 IF Error_Happened THEN GOTO errmes
                 l$ = l$ + sp2 + "," + sp + tlayout$ + sp2 + ")" + sp + "="
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "tmp_fileno=" + e$ + "; if (!new_error){"
+                WriteBufLine MainTxtBuf, "tmp_fileno=" + e$ + "; if (!is_error_pending()){"
                 e$ = fixoperationorder$(expression$)
                 IF Error_Happened THEN GOTO errmes
                 l$ = l$ + sp + tlayout$
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "tmp_long=" + e$ + "; if (!new_error){"
+                WriteBufLine MainTxtBuf, "tmp_long=" + e$ + "; if (!is_error_pending()){"
                 WriteBufLine MainTxtBuf, "if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}"
                 WriteBufLine MainTxtBuf, "}}}"
 
@@ -10095,7 +10095,7 @@ DO
                             e$ = evaluatetotyp(e$, 64&)
                             IF Error_Happened THEN GOTO errmes
                             WriteBufLine MainTxtBuf, "tmp_fileno=" + e$ + ";"
-                            WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                             i = i + 1
                             IF i > n THEN a$ = "Expected , ...": GOTO errmes
                             a3$ = ""
@@ -10121,10 +10121,10 @@ DO
                                         IF Error_Happened THEN GOTO errmes
                                         IF lineinput THEN
                                             WriteBufLine MainTxtBuf, "sub_file_line_input_string(tmp_fileno," + e$ + ");"
-                                            WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                                            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                                         ELSE
                                             WriteBufLine MainTxtBuf, "sub_file_input_string(tmp_fileno," + e$ + ");"
-                                            WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                                            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                                         END IF
                                         stringprocessinghappened = 1
                                     ELSE
@@ -10149,7 +10149,7 @@ DO
                                             END IF
                                         END IF
 
-                                        WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                                        WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
 
                                     END IF
                                     IF i = n THEN EXIT FOR
@@ -22070,19 +22070,19 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
                 r$ = "qbs_new_fixed(" + offset$ + "," + str2(id.tsize) + ",1)"
                 WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
                 IF method = 0 THEN
-                    l$ = "if (!new_error) qbs_set(" + r$ + "," + evaluatetotyp(e$, typ) + ");"
+                    l$ = "if (!is_error_pending()) qbs_set(" + r$ + "," + evaluatetotyp(e$, typ) + ");"
                     IF Error_Happened THEN EXIT SUB
                 ELSE
-                    l$ = "if (!new_error) qbs_set(" + r$ + "," + e$ + ");"
+                    l$ = "if (!is_error_pending()) qbs_set(" + r$ + "," + e$ + ");"
                 END IF
                 WriteBufLine MainTxtBuf, l$
             ELSE
                 WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
                 IF method = 0 THEN
-                    l$ = "if (!new_error) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
+                    l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
                     IF Error_Happened THEN EXIT SUB
                 ELSE
-                    l$ = "if (!new_error) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
+                    l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
                 END IF
                 WriteBufLine MainTxtBuf, l$
             END IF
@@ -22098,10 +22098,10 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ",tmp_long,"
             WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
             IF method = 0 THEN
-                l$ = "if (!new_error) " + r$ + evaluatetotyp(e$, typ) + ");"
+                l$ = "if (!is_error_pending()) " + r$ + evaluatetotyp(e$, typ) + ");"
                 IF Error_Happened THEN EXIT SUB
             ELSE
-                l$ = "if (!new_error) " + r$ + e$ + ");"
+                l$ = "if (!is_error_pending()) " + r$ + e$ + ");"
             END IF
             WriteBufLine MainTxtBuf, l$
             tlayout$ = tl$
@@ -22131,10 +22131,10 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
         IF t$ = "" THEN Give_Error "Cannot find C type to return array data": EXIT SUB
         WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
         IF method = 0 THEN
-            l$ = "if (!new_error) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + evaluatetotyp(e$, typ) + ";"
+            l$ = "if (!is_error_pending()) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + evaluatetotyp(e$, typ) + ";"
             IF Error_Happened THEN EXIT SUB
         ELSE
-            l$ = "if (!new_error) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + e$ + ";"
+            l$ = "if (!is_error_pending()) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + e$ + ";"
         END IF
 
         WriteBufLine MainTxtBuf, l$
@@ -22397,7 +22397,7 @@ SUB xfileprint (a$, ca$, n)
     e$ = evaluatetotyp(e$, 64&)
     IF Error_Happened THEN EXIT SUB
     WriteBufLine MainTxtBuf, "tab_fileno=tmp_fileno=" + e$ + ";"
-    WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+    WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
     i = i + 1
 
     'PRINT USING? (file)
@@ -22442,7 +22442,7 @@ SUB xfileprint (a$, ca$, n)
                 WriteBufLine DataTxtBuf, "qbs *" + puf$ + ";"
             END IF
             WriteBufLine MainTxtBuf, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
-            WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
             'print expressions
             b = 0
             e$ = ""
@@ -22471,7 +22471,7 @@ SUB xfileprint (a$, ca$, n)
                                 WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
                                 '-print e$
                                 WriteBufLine MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
-                                WriteBufLine MainTxtBuf, "if (new_error) goto skip_pu" + u$ + ";"
+                                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
                                 WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
                                 '-set length of tqbs to 0
                                 WriteBufLine MainTxtBuf, "tqbs->len=0;"
@@ -22496,7 +22496,7 @@ SUB xfileprint (a$, ca$, n)
                                 END IF
                             END IF
                         END IF 'string/not string
-                        WriteBufLine MainTxtBuf, "if (new_error) goto skip_pu" + u$ + ";"
+                        WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
                         e$ = ""
                         IF last THEN EXIT FOR
                         GOTO fprintunext
@@ -22508,7 +22508,7 @@ SUB xfileprint (a$, ca$, n)
             IF e$ <> "" THEN a2$ = "": last = 1: GOTO fprintulast
             WriteBufLine MainTxtBuf, "skip_pu" + u$ + ":"
             'check for errors
-            WriteBufLine MainTxtBuf, "if (new_error){"
+            WriteBufLine MainTxtBuf, "if (is_error_pending()){"
             WriteBufLine MainTxtBuf, "g_tmp_long=new_error; new_error=0; sub_file_print(tmp_fileno,tqbs,0,0,0); new_error=g_tmp_long;"
             WriteBufLine MainTxtBuf, "}else{"
             IF a2$ = "," OR a2$ = ";" THEN nl = 0 ELSE nl = 1 'note: a2$ is set to the last element of a$
@@ -22576,7 +22576,7 @@ SUB xfileprint (a$, ca$, n)
                     END IF
                     IF usetab THEN WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,1,0);"
                 END IF 'len(e$)
-                WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
 
                 e$ = ""
                 IF gotofpu THEN GOTO fpujump
@@ -22620,7 +22620,7 @@ SUB xfilewrite (ca$, n)
     e$ = evaluatetotyp(e$, 64&)
     IF Error_Happened THEN EXIT SUB
     WriteBufLine MainTxtBuf, "tab_fileno=tmp_fileno=" + e$ + ";"
-    WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+    WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
     i = i + 1
     IF i > n THEN
         WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
@@ -22665,7 +22665,7 @@ SUB xfilewrite (ca$, n)
                 IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
                 WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno," + e$ + ",0,0," + STR$(newline) + ");"
-                WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                 e$ = ""
                 IF last THEN EXIT FOR
                 GOTO writefilenext
@@ -22877,7 +22877,7 @@ SUB xprint (a$, ca$, n)
                 WriteBufLine DataTxtBuf, "qbs *" + puf$ + ";"
             END IF
             WriteBufLine MainTxtBuf, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
-            WriteBufLine MainTxtBuf, "if (new_error) goto skip_pu" + u$ + ";"
+            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
 
             'print expressions
             b = 0
@@ -22907,7 +22907,7 @@ SUB xprint (a$, ca$, n)
                                 WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
                                 '-print e$
                                 WriteBufLine MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
-                                WriteBufLine MainTxtBuf, "if (new_error) goto skip_pu" + u$ + ";"
+                                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
                                 IF lp THEN WriteBufLine MainTxtBuf, "lprint_makefit(tqbs);" ELSE WriteBufLine MainTxtBuf, "makefit(tqbs);"
                                 WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
                                 '-set length of tqbs to 0
@@ -22935,7 +22935,7 @@ SUB xprint (a$, ca$, n)
                                 END IF
                             END IF
                         END IF 'string/not string
-                        WriteBufLine MainTxtBuf, "if (new_error) goto skip_pu" + u$ + ";"
+                        WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
                         e$ = ""
                         IF last THEN EXIT FOR
                         GOTO printunext
@@ -22947,7 +22947,7 @@ SUB xprint (a$, ca$, n)
             IF e$ <> "" THEN a2$ = "": last = 1: GOTO printulast
             WriteBufLine MainTxtBuf, "skip_pu" + u$ + ":"
             'check for errors
-            WriteBufLine MainTxtBuf, "if (new_error){"
+            WriteBufLine MainTxtBuf, "if (is_error_pending()){"
             WriteBufLine MainTxtBuf, "g_tmp_long=new_error; new_error=0; qbs_" + lp$ + "print(tqbs,0); new_error=g_tmp_long;"
             WriteBufLine MainTxtBuf, "}else{"
             IF a2$ = "," OR a2$ = ";" THEN nl = 0 ELSE nl = 1 'note: a2$ is set to the last element of a$
@@ -23001,7 +23001,7 @@ SUB xprint (a$, ca$, n)
                     IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                     IF Error_Happened THEN EXIT SUB
                     WriteBufLine MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
-                    WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                    WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                     IF lp THEN WriteBufLine MainTxtBuf, "lprint_makefit(tqbs);" ELSE WriteBufLine MainTxtBuf, "makefit(tqbs);"
                     WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
                 ELSE
@@ -23142,7 +23142,7 @@ SUB xwrite (ca$, n)
                 IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
                 WriteBufLine MainTxtBuf, "qbs_print(" + e$ + "," + STR$(newline) + ");"
-                WriteBufLine MainTxtBuf, "if (new_error) goto skip" + u$ + ";"
+                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                 e$ = ""
                 IF last THEN EXIT FOR
                 GOTO writenext
