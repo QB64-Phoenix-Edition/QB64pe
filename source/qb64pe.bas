@@ -20479,7 +20479,7 @@ FUNCTION lineformat$ (a$)
 
                     'note: In QBASIC 'IF cond THEN REM comment' counts as a single line IF statement, however use of ' instead of REM does not
                     IF UCASE$(RIGHT$(a2$, 5)) = sp + "THEN" THEN a2$ = a2$ + sp + "'" 'add nop
-                    layoutcomment = SCase$("Rem")
+                    layoutcomment$ = SCase$("Rem")
                     GOTO comment
                 END IF
             END IF
@@ -20701,7 +20701,7 @@ FUNCTION lineformat$ (a$)
     IF c <> 39 THEN Give_Error "Unexpected character on line": EXIT FUNCTION 'invalid symbol encountered
 
     '----------------comment(')----------------
-    layoutcomment = "'"
+    layoutcomment$ = "'"
     i = i + 1
     comment:
     IF i >= n THEN GOTO lineformatdone2
@@ -20710,9 +20710,9 @@ FUNCTION lineformat$ (a$)
     IF LEN(c$) = 0 THEN GOTO lineformatdone2
     layoutcomment$ = RTRIM$(layoutcomment$ + cc$)
 
-    c$ = LTRIM$(c$)
+    c$ = _TRIM$(c$)
     IF LEN(c$) = 0 THEN GOTO lineformatdone2
-    ac = ASC(c$)
+    ac = ASC(c$): cdif = LEN(layoutcomment$) - LEN(c$)
     'note: any non-whitespace character between the comment leader and the
     '      first '$' renders this a plain comment
     '    : the leading '$' does NOT have to be part of a valid metacommand.
@@ -20729,10 +20729,13 @@ FUNCTION lineformat$ (a$)
         '      E.g., $STATICanychars$DYNAMIC is valid
 
         IF MID$(c$, x, 7) = "$STATIC" THEN
+            MID$(layoutcomment$, x + cdif, 7) = SCase$("$Static")
             memmode = 1
         ELSEIF MID$(c$, x, 8) = "$DYNAMIC" THEN
+            MID$(layoutcomment$, x + cdif, 8) = SCase$("$Dynamic")
             memmode = 2
         ELSEIF MID$(c$, x, 8) = "$INCLUDE" AND MID$(c$, x + 8, 4) <> "ONCE" THEN
+            MID$(layoutcomment$, x + cdif, 8) = SCase$("$Include")
             'note: INCLUDE adds the file AFTER the line it is on has been processed
             'skip spaces until :
             FOR xx = x + 8 TO LEN(c$)
