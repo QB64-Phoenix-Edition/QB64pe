@@ -35923,6 +35923,48 @@ void sub__echo(qbs *message) {
 
 } // echo
 
+qbs *func__readfile(qbs *filespec)
+{
+    FILE *file; int len;   // file handle; file length;
+    qbs *namez; qbs *cont; // 0-term file name; file contents;
+
+    namez = qbs_add(filespec, func_chr(0)); // add terminator
+    filepath_fix_directory(namez);          // fix separators
+    file = fopen((const char*)namez -> chr, "rb");
+
+    if (file) {
+        fseek(file, 0, SEEK_END); // end pos
+        len = ftell(file);        //   = file length
+        rewind(file);             // rewind to start
+        cont = qbs_new(len, 1);   // get new string for file contents
+        fread(cont -> chr, 1, len, file);
+        fclose(file);
+        return cont;
+    } else {
+        error(QB_ERROR_FILE_NOT_FOUND); // error, we throw most common
+        return qbs_new_txt(""); // return empty on error
+    }
+}
+
+int16_t func__writefile(qbs *filespec, qbs *contents)
+{
+    FILE *file; // file handle;
+    qbs *namez; // 0-term file name;
+
+    namez = qbs_add(filespec, func_chr(0)); // add terminator
+    filepath_fix_directory(namez);          // fix separators
+    file = fopen((const char*)namez -> chr, "wb");
+
+    if (file) {
+        fwrite(contents -> chr, 1, contents -> len, file);
+        fclose(file);
+        return -1; // return "success" flag true
+    } else {
+        error(QB_ERROR_PATH_FILE_ACCESS_ERROR); // error, we throw best fit
+        return 0;  // return "success" flag false
+    }
+}
+
 void sub__filedrop(int32 on_off = NULL) {
 #ifdef QB64_WINDOWS
     HWND win = (HWND)func__handle();

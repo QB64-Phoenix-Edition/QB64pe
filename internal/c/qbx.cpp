@@ -102,6 +102,8 @@ extern int32 func__resizeheight();
 
 extern void sub__title(qbs *title);
 extern void sub__echo(qbs *message);
+extern qbs *func__readfile(qbs *filespec);
+extern int16_t func__writefile(qbs *filespec, qbs *contents);
 extern void sub__assert(int32 expression, qbs *assert_message, int32 passed);
 extern void sub__finishdrop();
 extern int32 func__filedrop();
