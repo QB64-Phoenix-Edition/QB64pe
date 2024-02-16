@@ -33903,7 +33903,7 @@ qbs *func__readfile(qbs *filespec)
     }
 }
 
-int16_t func__writefile(qbs *filespec, qbs *contents)
+void sub__writefile(qbs *filespec, qbs *contents)
 {
     FILE *file; // file handle;
     qbs *namez; // 0-term file name;
@@ -33915,10 +33915,8 @@ int16_t func__writefile(qbs *filespec, qbs *contents)
     if (file) {
         fwrite(contents -> chr, 1, contents -> len, file);
         fclose(file);
-        return -1; // return "success" flag true
     } else {
         error(QB_ERROR_PATH_FILE_ACCESS_ERROR); // error, we throw best fit
-        return 0;  // return "success" flag false
     }
 }
 

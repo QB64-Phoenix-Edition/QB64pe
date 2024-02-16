@@ -1024,11 +1024,10 @@ regid
 
 clearid
 id.n = qb64prefix$ + "WriteFile"
-id.subfunc = 1
-id.callname = "func__writefile"
+id.subfunc = 2
+id.callname = "sub__writefile"
 id.args = 2
 id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
-id.ret = INTEGERTYPE - ISPOINTER
 id.hr_syntax = "_WRITEFILE(fileSpec$, contents$)"
 regid
 
