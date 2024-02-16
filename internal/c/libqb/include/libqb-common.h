@@ -55,4 +55,7 @@
 #    endif
 #endif
 
+#define QB_FALSE 0
+#define QB_TRUE -1
+
 #endif
