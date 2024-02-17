@@ -33887,19 +33887,23 @@ qbs *func__readfile(qbs *filespec)
 
     namez = qbs_add(filespec, func_chr(0)); // add terminator
     filepath_fix_directory(namez);          // fix separators
-    file = fopen((const char*)namez -> chr, "rb");
+    file = fopen((const char*)namez->chr, "rb");
 
     if (file) {
         fseek(file, 0, SEEK_END); // end pos
         len = ftell(file);        //   = file length
         rewind(file);             // rewind to start
         cont = qbs_new(len, 1);   // get new string for file contents
-        fread(cont -> chr, 1, len, file);
+        fread(cont->chr, 1, len, file);
+        if (ferror(file)) {
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR); // something went wrong
+            cont = qbs_new_txt("");                 // return empty on error
+        }
         fclose(file);
         return cont;
     } else {
-        error(QB_ERROR_FILE_NOT_FOUND); // error, we throw most common
-        return qbs_new_txt(""); // return empty on error
+        error(QB_ERROR_FILE_NOT_FOUND); // most common when trying to read
+        return qbs_new_txt("");         // return empty on error
     }
 }
 
@@ -33910,13 +33914,15 @@ void sub__writefile(qbs *filespec, qbs *contents)
 
     namez = qbs_add(filespec, func_chr(0)); // add terminator
     filepath_fix_directory(namez);          // fix separators
-    file = fopen((const char*)namez -> chr, "wb");
+    file = fopen((const char*)namez->chr, "wb");
 
     if (file) {
-        fwrite(contents -> chr, 1, contents -> len, file);
+        fwrite(contents->chr, 1, contents->len, file);
+        if (ferror(file))
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR); // something went wrong
         fclose(file);
     } else {
-        error(QB_ERROR_PATH_FILE_ACCESS_ERROR); // error, we throw best fit
+        error(QB_ERROR_PATH_NOT_FOUND); // most common when making a new file
     }
 }
 
