@@ -1012,6 +1012,26 @@ id.hr_syntax = "_ECHO text$"
 regid
 
 clearid
+id.n = qb64prefix$ + "ReadFile"
+id.musthave = "$"
+id.subfunc = 1
+id.callname = "func__readfile"
+id.args = 1
+id.arg = MKL$(STRINGTYPE - ISPOINTER)
+id.ret = STRINGTYPE - ISPOINTER
+id.hr_syntax = "_READFILE$(fileSpec$)"
+regid
+
+clearid
+id.n = qb64prefix$ + "WriteFile"
+id.subfunc = 2
+id.callname = "sub__writefile"
+id.args = 2
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
+id.hr_syntax = "_WRITEFILE(fileSpec$, contents$)"
+regid
+
+clearid
 id.n = qb64prefix$ + "AcceptFileDrop"
 id.subfunc = 2
 id.callname = "sub__filedrop"
