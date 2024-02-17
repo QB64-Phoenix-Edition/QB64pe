@@ -24,11 +24,13 @@
 #include "filesystem.h"
 #include "font.h"
 #include "game_controller.h"
+#include "gfs.h"
 #include "glut-thread.h"
 #include "gui.h"
 #include "http.h"
 #include "image.h"
 #include "keyhandler.h"
+#include "qblist.h"
 #include "mem.h"
 #include "mutex.h"
 #include "qbs.h"
@@ -424,174 +426,6 @@ int64 display_frame_order_next = 1;
 // and if it does then this variable is used to determine to highest order index to render
 int64 last_rendered_hardware_display_frame_order = 0;
 int64 last_hardware_display_frame_order = 0;
-
-// List Interface
-// Purpose: Unify and optimize the way QB64 references lists of objects (such as handles)
-// Notes: Does not use index 0
-struct list {
-    ptrszint user_structure_size;
-    ptrszint internal_structure_size;
-    uint8 *structure; // block of structures of user-specified size
-    ptrszint structures;
-    ptrszint structures_last;
-    ptrszint *structure_freed;         // quickly re-reference available structures after they have been removed
-    ptrszint *structure_freed_cleanup; // the previous *structure_freed memory block
-    ptrszint structures_freed;
-    ptrszint structures_freed_last;
-    ptrszint structure_base[64]; // every time the 'structure' block is full a new and larger block is allocated
-    // because the list doubles each time, 64 entries will never be exceeded
-    ptrszint structure_bases;
-    ptrszint *index; // pointers to the structures referred to by each index value
-    ptrszint *index_cleanup;
-    ptrszint indexes;
-    ptrszint indexes_last;
-    struct libqb_mutex *lock_add;
-    struct libqb_mutex *lock_remove;
-};
-
-// fwd refs
-void *list_get(list *L, ptrszint i);
-
-list *list_new(ptrszint structure_size) {
-    list *L;
-    L = (list *)calloc(1, sizeof(list));
-    L->structure = (uint8 *)malloc(sizeof(uint8 *));
-    L->structure_base[1] = (ptrszint)L->structure;
-    L->structure_bases = 1;
-    L->structure_freed = (ptrszint *)malloc(sizeof(ptrszint *));
-    L->index = (ptrszint *)malloc(sizeof(ptrszint *));
-    L->user_structure_size = structure_size;
-    L->internal_structure_size = structure_size + sizeof(ptrszint);
-    return L;
-}
-
-list *list_new_threadsafe(ptrszint structure_size) {
-    list *L = list_new(structure_size);
-    L->lock_add = libqb_mutex_new();
-    L->lock_remove = libqb_mutex_new();
-    return L;
-}
-
-ptrszint list_add(list *L) {
-    if (L->lock_add)
-        libqb_mutex_lock(L->lock_add);
-
-    ptrszint i;
-    if (L->structures_freed) { // retrieve index from freed list if possible
-        if (L->lock_remove)
-            libqb_mutex_lock(L->lock_remove);
-
-        i = L->structure_freed[L->structures_freed--];
-        uint8 *structure;
-        structure = (uint8 *)L->index[i];
-        memset(structure, 0, L->user_structure_size);
-        *(ptrszint *)(structure + L->user_structure_size) = i;
-
-        if (L->lock_remove)
-            libqb_mutex_unlock(L->lock_remove);
-    } else {
-        // create new buffer?
-        if ((L->structures + 1) > L->structures_last) {
-            ptrszint new_structures_last;
-            new_structures_last = (L->structures_last * 2) + 1;
-            // note: L->structure is only modified by list_add
-            L->structure = (uint8 *)calloc(1, L->internal_structure_size * (new_structures_last + 1));
-            if (L->structure == NULL) {
-                gui_alert("list_add: failed to allocate new buffer, structure size: %lld", (int64_t)L->internal_structure_size);
-            }
-            L->structures_last = new_structures_last;
-            L->structures = 0;
-            L->structure_base[++L->structure_bases] = (ptrszint)L->structure;
-        }
-        i = ++L->indexes;
-        *(ptrszint *)(L->structure + (L->internal_structure_size * (++L->structures)) + L->user_structure_size) = i;
-        // allocate new index
-        if (L->indexes > L->indexes_last) {
-            if (L->index_cleanup != NULL)
-                free(L->index_cleanup);
-            L->index_cleanup = L->index;
-            int32 new_indexes_last = (L->indexes_last * 2) + 1;
-            ptrszint *temp = (ptrszint *)malloc(sizeof(ptrszint) * (new_indexes_last + 1));
-            memcpy(temp, L->index, sizeof(ptrszint) * (L->indexes_last + 1));
-            L->index = temp;
-            L->index[i] = (ptrszint)(L->structure + (L->internal_structure_size * L->structures));
-            L->indexes_last = new_indexes_last;
-        } else {
-            L->index[i] = (ptrszint)(L->structure + (L->internal_structure_size * L->structures));
-        }
-    }
-
-    if (L->lock_add)
-        libqb_mutex_unlock(L->lock_add);
-
-    return i;
-} // list_add
-
-ptrszint list_remove(list *L, ptrszint i) { // returns -1 on success, 0 on failure
-    if (L->lock_remove)
-        libqb_mutex_lock(L->lock_remove);
-
-    if ((i < 1) || (i > L->indexes)) {
-        if (L->lock_remove)
-            libqb_mutex_unlock(L->lock_remove);
-
-        return 0;
-    }
-    uint8 *structure;
-    structure = (uint8 *)(L->index[i]);
-    if (!*(ptrszint *)(structure + L->user_structure_size)) {
-        if (L->lock_remove)
-            libqb_mutex_unlock(L->lock_remove);
-
-        return 0;
-    }
-    // expand buffer?
-    if ((L->structures_freed + 1) > L->structures_freed_last) {
-        ptrszint new_structures_freed_last;
-        new_structures_freed_last = (L->structures_freed_last * 2) + 1;
-        ptrszint *temp = (ptrszint *)malloc(sizeof(ptrszint) * (new_structures_freed_last + 1));
-        memcpy(temp, L->structure_freed, sizeof(ptrszint) * (L->structures_freed + 1));
-        if (L->structure_freed_cleanup != NULL)
-            free(L->structure_freed_cleanup);
-        L->structure_freed_cleanup = L->structure_freed;
-        L->structure_freed = temp;
-        L->structures_freed_last = new_structures_freed_last;
-    }
-    L->structure_freed[L->structures_freed + 1] = i;
-    *(ptrszint *)(structure + L->user_structure_size) = 0;
-    L->structures_freed++;
-
-    if (L->lock_remove)
-        libqb_mutex_unlock(L->lock_remove);
-
-    return -1;
-};
-
-void list_destroy(list *L) {
-    ptrszint i;
-    for (i = 1; i <= L->structure_bases; i++) {
-        free((void *)L->structure_base[i]);
-    }
-    free(L->structure_base);
-    free(L->structure_freed);
-    free(L);
-}
-
-void *list_get(list *L, ptrszint i) { // Returns a pointer to an index's structure
-    if ((i < 1) || (i > L->indexes)) {
-        return NULL;
-    }
-    uint8 *structure;
-    structure = (uint8 *)(L->index[i]);
-    if (!*(ptrszint *)(structure + L->user_structure_size))
-        return NULL;
-    return (void *)structure;
-}
-
-ptrszint list_get_index(list *L, void *structure) { // Retrieves the index value of a structure
-    ptrszint i = *(ptrszint *)(((uint8 *)structure) + L->user_structure_size);
-    return i;
-}
 
 enum class special_handle_type {
     Invalid,
@@ -1165,20 +999,6 @@ int32 func__display();
 void qbg_sub_view_print(int32, int32, int32);
 void qbg_sub_window(float, float, float, float, int32);
 int32 autodisplay = 1;
-// GFS forward references
-int32 gfs_eof_passed(int32 i);
-int32 gfs_eof_reached(int32 i);
-int64 gfs_getpos(int32 i);
-int32 gfs_fileno_valid(int32 f);
-int32 gfs_fileno_freefile(); // like FREEFILE
-void gfs_fileno_use(int32 f, int32 i);
-int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how);
-int32 gfs_close(int32 i);
-int64 gfs_lof(int32 i);
-int32 gfs_setpos(int32 i, int64 position);
-int32 gfs_write(int32 i, int64 position, uint8 *data, int64 size);
-int32 gfs_read(int32 i, int64 position, uint8 *data, int64 size);
-int64 gfs_read_bytes();
 void key_update();
 int32 key_display_state = 0;
 int32 key_display = 0;
@@ -2122,99 +1942,6 @@ int32 lprint_image = 0;
 double lprint_last = 0;    // TIMER(0.001) value at last time LPRINT was used
 int32 lprint_buffered = 0; // set to 1 if content is pending to print
 int32 lprint_locked = 0;   // set to 1 to deny access by QB64 program
-
-/* Generic File System (GFS)
-    GFS allows OS specific access whilst still maintaining 'pure' C-based routines for
-    multiplatform compatibility. 'Pure' C-based routines may not allow certain functionality,
-    such as partial file locking.
-    GFS handles/indexes are independent of QB64 handles/indexes to allow for internal files
-    to be open but not interfere with the QB64 file handle numbers.
-
-    GFS error codes:
-    -1 non-specific fail
-    -2 invalid handle
-    -3 bad/incorrect file mode
-    -4 illegal function call (input is out of range)
-    -5 file not found (win:2)
-    -6 path not found (win:3)
-    -7 access/permission denied (win:5,19)
-    -8 device unavailable/drive invalid (win:15,21)
-    -9 path/file access error
-    -10 read past eof
-    -11 bad file name
-*/
-
-#ifdef QB64_WINDOWS
-#    define GFS_WINDOWS
-#endif
-#ifndef GFS_WINDOWS
-#    define GFS_C
-#endif
-
-struct gfs_file_struct { // info applicable to all files
-    int64 id;            // a unique ID given to all files (currently only referenced by the FIELD statement to remove old field conditions)
-    uint8 open;
-    uint8 read;
-    uint8 write;
-    uint8 lock_read;
-    uint8 lock_write;
-    int64 pos;           //-1=unknown
-    uint8 eof_reached;   // read last character of file (set/reset by gfs_read only)
-    uint8 eof_passed;    // attempted to read past eof (set/reset by gfs_read only)
-    int32 fileno;        // link to fileno index
-    uint8 type;          // qb access method (1=RANDOM,2=BINARY,3=INPUT,4=OUTPUT)
-    int64 record_length; // used by RANDOM
-    uint8 *field_buffer;
-    qbs **field_strings;   // list of qbs pointers linked to this file
-    int32 field_strings_n; // number of linked strings
-    int64 column;          // used by OUTPUT/APPEND to tab correctly (base 0)
-    // GFS_C data follows: (unused by custom GFS interfaces)
-    std::fstream *file_handle;
-    std::ofstream *file_handle_o;
-    // COM port data follows (*=default)
-    uint8 com_port;              // 0=not a com port
-    int32 com_baud_rate;         //(bits per second)75,110,150,300*,600,1200,1800,2400,9600,?
-    int8 com_parity;             //[0]N,[1]E*,[2]O,[3]S,[4]M,[5]PE(none,even*,odd,space,mark,error-checking)
-    int8 com_data_bits_per_byte; // 5,6,7*,8
-    int8 com_stop_bits;          //[10]1,[15]1.5,[20]2
-    // The default value is 1 for baud rates greater than 110. For
-    // baud rates less than or equal to 110, the default value is
-    // 1.5 when data is 5; otherwise, the value is 2.
-    int8 com_bin_asc; //[0]=BIN*,[1]=ASC
-    int8 com_asc_lf;  //[0]omit*,[1]LF(only valid with ASC)
-    // note: rb_x and tb_x are ignored by QB64 (receive and transmit buffer sizes)
-    int8 com_rs;    //[0]detect*,[1]dont-detect
-    int32 com_cd_x; // 0*-65535
-    int32 com_cs_x; // 1000*,0-65535
-    int32 com_ds_x; // 1000*,0-65535
-    int32 com_op_x;
-    //                 OP not used:          x omitted:     x specified:
-    //                 10 times the CD or    10000 ms       0 - 65,535 milliseconds
-    //                 DS timeout value,
-    //                 whichever is greater
-
-    // SCRN: support follows
-    uint8 scrn; // 0 = not a file opened as "SCRN:"
-};
-
-#ifdef GFS_WINDOWS
-struct gfs_file_win_struct { // info applicable to WINDOWS OS files
-    HANDLE file_handle;
-};
-gfs_file_win_struct *gfs_file_win = (gfs_file_win_struct *)malloc(1);
-#endif
-
-int64 gfs_nextid = 1;
-
-gfs_file_struct *gfs_file = (gfs_file_struct *)malloc(1);
-
-int32 gfs_n = 0;
-int32 gfs_freed_n = 0;
-int32 *gfs_freed = (int32 *)malloc(1);
-int32 gfs_freed_size = 0;
-
-int32 *gfs_fileno = (int32 *)malloc(1);
-int32 gfs_fileno_n = 0;
 
 static int32 file_charset8_raw_len = 16384;
 static const uint8 file_charset8_raw[] = {
@@ -14865,9 +14592,9 @@ int32 generic_put(int32 i, int32 offset, uint8 *cp, int32 bytes) {
         error(52);
         return 0;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (!gfs->write) {
         error(75);
         return 0;
@@ -14911,9 +14638,9 @@ int32 generic_get(int32 i, int32 offset, uint8 *cp, int32 bytes) {
         error(52);
         return 0;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (!gfs->read) {
         error(75);
         return 0;
@@ -15054,7 +14781,7 @@ void sub_open(qbs *name, int32 type, int32 access, int32 sharing, int32 i, int64
     gfs_fileno_use(i, x);
 
     static gfs_file_struct *f;
-    f = &gfs_file[x];
+    f = gfs_get_file_struct(x);
 
     f->type = type;
     if (type == 5)
@@ -15097,7 +14824,7 @@ void sub_open(qbs *name, int32 type, int32 access, int32 sharing, int32 i, int64
                 return; // assume[-9]: path/file access error
             }
             if (c == 26) {
-                gfs_file[x].eof_passed = 1; // set EOF flag
+                gfs_get_file_struct(x)->eof_passed = 1; // set EOF flag
             }
             gfs_setpos(x, 0);
         }
@@ -15173,7 +14900,7 @@ void sub_close(int32 i2, int32 passed) {
         } // special handle
 
         if (gfs_fileno_valid(i2) == 1)
-            gfs_close(gfs_fileno[i2]);
+            gfs_close(gfs_get_fileno(i2));
         return;
 
     } // passed
@@ -15188,11 +14915,7 @@ void sub_close(int32 i2, int32 passed) {
         }
     }
 
-    for (i = 1; i <= gfs_fileno_n; i++) {
-        if (gfs_fileno_valid(i) == 1)
-            gfs_close(gfs_fileno[i]);
-    }
-
+    gfs_close_all_files();
 } // close
 
 int32 file_input_chr(int32 i) {
@@ -15226,7 +14949,7 @@ int32 file_input_chr(int32 i) {
     }
     if (c == 26) { // eof character (go back 1 byte so subsequent reads will re-encounter the eof character)
         gfs_setpos(i, gfs_getpos(i) - 1);
-        gfs_file[i].eof_passed = 1; // also set EOF flag
+        gfs_get_file_struct(i)->eof_passed = 1; // also set EOF flag
         return -1;
     }
     return c;
@@ -15306,9 +15029,9 @@ void sub_file_print(int32 i, qbs *str, int32 extraspace, int32 tab, int32 newlin
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
 
     if (gfs->scrn == 1) {
         qbs_print(str, newline);
@@ -16072,9 +15795,9 @@ int32 n_inputnumberfromfile(int32 fileno) {
             error(52);
             return 3;
         }                            // Bad file name or number
-        fileno = gfs_fileno[fileno]; // convert fileno to gfs index
+        fileno = gfs_get_fileno(fileno); // convert fileno to gfs index
         static gfs_file_struct *gfs;
-        gfs = &gfs_file[fileno];
+        gfs = gfs_get_file_struct(fileno);
         if (gfs->type != 3) {
             error(54);
             return 3;
@@ -16297,10 +16020,10 @@ void sub_file_input_string(int32 fileno, qbs *deststr) {
         error(52);
         return;
     }                            // Bad file name or number
-    fileno = gfs_fileno[fileno]; // convert fileno to gfs index
+    fileno = gfs_get_fileno(fileno); // convert fileno to gfs index
 
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[fileno];
+    gfs = gfs_get_file_struct(fileno);
     if (gfs->type != 3) {
         error(54);
         return;
@@ -16884,9 +16607,9 @@ void sub_get(int32 i, int64 offset, void *element, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->type > 2) {
         error(54);
         return;
@@ -17031,9 +16754,9 @@ void sub_get2(int32 i, int64 offset, qbs *str, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->type > 2) {
         error(54);
         return;
@@ -17187,9 +16910,9 @@ void sub_put(int32 i, int64 offset, void *element, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->type > 2) {
         error(54);
         return;
@@ -17285,9 +17008,9 @@ void sub_put2(int32 i, int64 offset, void *element, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->type > 2) {
         error(54);
         return;
@@ -18802,11 +18525,11 @@ qbs *func_tab(int32 pos) {
             goto invalid_file; // TCP/IP unsupported
         if (gfs_fileno_valid(i) != 1)
             goto invalid_file;       // Bad file name or number
-        i = gfs_fileno[i];           // convert fileno to gfs index
-        if (gfs_file[i].scrn == 1) { // going to screen, change the cr size
+        i = gfs_get_fileno(i);           // convert fileno to gfs index
+        if (gfs_get_file_struct(i)->scrn == 1) { // going to screen, change the cr size
             cr_size = 1;
         } else {
-            cursor = gfs_file[i].column;
+            cursor = gfs_get_file_struct(i)->column;
         }
     invalid_file:;
     }
@@ -19227,7 +18950,7 @@ int64 func_lof(int32 i) {
         error(52);
         return 0;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     size = gfs_lof(i);
     if (size < 0) {
         if (size == -2) {
@@ -19299,9 +19022,9 @@ int32 func_eof(int32 i) {
         error(52);
         return 0;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->scrn) {
         error(5);
         return 0;
@@ -19350,9 +19073,9 @@ void sub_seek(int32 i, int64 pos) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->type == 1) { // RANDOM
         pos--;
         if (pos < 0) {
@@ -19392,9 +19115,9 @@ int64 func_seek(int32 i) {
         error(52);
         return 0;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->scrn)
         return 0;
     if (gfs->type == 1) { // RANDOM
@@ -19408,9 +19131,9 @@ int64 func_loc(int32 i) {
         error(52);
         return 0;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
 
     if (gfs->scrn) {
         error(5);
@@ -19418,12 +19141,10 @@ int64 func_loc(int32 i) {
     }
     if (gfs->com_port) {
 #ifdef QB64_WINDOWS
-        static gfs_file_win_struct *f_w;
-        f_w = &gfs_file_win[i];
         static COMSTAT c;
         ZeroMemory(&c, sizeof(COMSTAT));
         static DWORD ignore;
-        if (!ClearCommError(f_w->file_handle, &ignore, &c))
+        if (!ClearCommError(gfs->win_handle, &ignore, &c))
             return 0;
         return c.cbInQue; // bytes in COM input buffer
 #endif
@@ -19454,9 +19175,9 @@ qbs *func_input(int32 n, int32 i, int32 passed) {
             error(52);
             return str;
         }                  // Bad file name or number
-        i = gfs_fileno[i]; // convert fileno to gfs index
+        i = gfs_get_fileno(i); // convert fileno to gfs index
         static gfs_file_struct *gfs;
-        gfs = &gfs_file[i];
+        gfs = gfs_get_file_struct(i);
         if ((gfs->type < 2) || (gfs->type > 3)) {
             error(62);
             return str;
@@ -19492,9 +19213,9 @@ qbs *func_input(int32 n, int32 i, int32 passed) {
                 } // path/file access error
                 str->chr[x] = c;
 
-                if (gfs_file[i].eof_passed != 1) { // If we haven't declared the End of the File, check to see if the next byte is an EOF byte
+                if (gfs_get_file_struct(i)->eof_passed != 1) { // If we haven't declared the End of the File, check to see if the next byte is an EOF byte
                     c = file_input_chr(i);         // read the next byte
-                    if (gfs_file[i].eof_passed != 1) {
+                    if (gfs_get_file_struct(i)->eof_passed != 1) {
                         gfs_setpos(i, gfs_getpos(i) - 1);
                     } // and if it's not EOF, move our position back to where it should be
                 }
@@ -19624,7 +19345,7 @@ void file_line_input_string_binary(int32 fileno, qbs *deststr) {
     int32 filehandle;
     qbs *eol;
 
-    filehandle = gfs_fileno[fileno]; // convert fileno to gfs index
+    filehandle = gfs_get_fileno(fileno); // convert fileno to gfs index
     eol = qbs_new_txt_len("\n", 1);
 
     int64 start_byte = func_seek(fileno);
@@ -19646,7 +19367,7 @@ void file_line_input_string_binary(int32 fileno, qbs *deststr) {
             if ((start_byte + filebuf_size) >= filelength) {
                 qbs_set(deststr, buffer);
                 gfs_setpos(filehandle, filelength);  // set the position right before the EOF marker
-                gfs_file[filehandle].eof_passed = 1; // also set EOF flag;
+                gfs_get_file_struct(filehandle)->eof_passed = 1; // also set EOF flag;
                 qbs_free(buffer);
                 return;
             }
@@ -19659,7 +19380,7 @@ void file_line_input_string_binary(int32 fileno, qbs *deststr) {
     qbs_free(buffer);
     if (start_byte + deststr->len + 2 >= filelength) { // if we've read to the end of the line
         gfs_setpos(filehandle, filelength);            // set the position right before the EOF marker
-        gfs_file[filehandle].eof_passed = 1;           // also set EOF flag;
+        gfs_get_file_struct(filehandle)->eof_passed = 1;           // also set EOF flag;
         if (deststr->chr[deststr->len - 1] == '\r')
             qbs_set(deststr, qbs_left(deststr, deststr->len - 1));
         return;
@@ -19677,9 +19398,9 @@ void sub_file_line_input_string(int32 fileno, qbs *deststr) {
         error(52);
         return;
     }                                // Bad file name or number
-    filehandle = gfs_fileno[fileno]; // convert fileno to gfs index
+    filehandle = gfs_get_fileno(fileno); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[filehandle];
+    gfs = gfs_get_file_struct(filehandle);
     if (!gfs->read) {
         error(75);
         return;
@@ -27193,1186 +26914,6 @@ void chain_savescreenstate(int32 i) { // adds the screen state to file #i
 
 } // chain_savescreenstate
 
-int32 gfs_new() {
-    static int32 i;
-    if (gfs_freed_n) {
-        i = gfs_freed[--gfs_freed_n];
-    } else {
-        i = gfs_n;
-        gfs_n++;
-        gfs_file = (gfs_file_struct *)realloc(gfs_file, gfs_n * sizeof(gfs_file_struct));
-#ifdef GFS_WINDOWS
-        gfs_file_win = (gfs_file_win_struct *)realloc(gfs_file_win, gfs_n * sizeof(gfs_file_win_struct));
-#endif
-    }
-    memset(&gfs_file[i], 0, sizeof(gfs_file_struct));
-#ifdef GFS_WINDOWS
-    ZeroMemory(&gfs_file_win[i], sizeof(gfs_file_win_struct));
-#endif
-    gfs_file[i].id = gfs_nextid++;
-    return i;
-}
-
-int32 gfs_validhandle(int32 i) {
-    if ((i < 0) || (i >= gfs_n))
-        return 0;
-    if (gfs_file[i].scrn)
-        return 1;
-    if (gfs_file[i].open)
-        return 1;
-    return 0;
-}
-
-int32 gfs_fileno_valid(int32 f) {
-    // returns: -2   invalid handle
-    //          1   in use
-    //          0   unused
-
-    if (f <= 0)
-        return -2;
-    if (f <= gfs_fileno_n) {
-        if (gfs_fileno[f] == -1)
-            return 0;
-        else
-            return 1;
-    }
-    gfs_fileno = (int32 *)realloc(gfs_fileno, (f + 1) * 4);
-    memset(gfs_fileno + gfs_fileno_n + 1, -1, (f - gfs_fileno_n) * 4);
-    gfs_fileno_n = f;
-    return 0;
-}
-
-int32 gfs_fileno_freefile() { // like FREEFILE
-    // note: for QBASIC compatibility the lowest available file number is returned
-    static int32 x;
-    for (x = 1; x <= gfs_fileno_n; x++)
-        if (gfs_fileno[x] == -1)
-            return x;
-    return gfs_fileno_n + 1;
-}
-
-void gfs_fileno_use(int32 f, int32 i) {
-    // assumes valid handles
-    gfs_fileno[f] = i;
-    gfs_file[i].fileno = f;
-}
-
-void gfs_fileno_free(int32 f) { // note: called by gfs_free (DO NOT CALL THIS FUNCTION)
-    gfs_fileno[f] = -1;
-}
-
-int32 gfs_free(int32 i) {
-
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    if (gfs_freed_size <= gfs_freed_n) {
-        gfs_freed_size++;
-        gfs_freed = (int32 *)realloc(gfs_freed, gfs_freed_size * 4);
-    }
-
-    gfs_file[i].open = 0;
-    if (gfs_file[i].fileno)
-        gfs_fileno_free(gfs_file[i].fileno);
-    gfs_freed[gfs_freed_n++] = i;
-    return 0;
-}
-
-int32 gfs_close(int32 i) {
-    static int32 x;
-    if (x = gfs_free(i))
-        return x;
-
-    if (gfs_file[i].scrn)
-        return 0; // No further action needed
-    if (gfs_file[i].field_buffer) {
-        free(gfs_file[i].field_buffer);
-        gfs_file[i].field_buffer = NULL;
-    }
-    if (gfs_file[i].field_strings) {
-        free(gfs_file[i].field_strings);
-        gfs_file[i].field_strings = NULL;
-    }
-
-#ifdef GFS_C
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-    f->file_handle->close();
-    delete f->file_handle;
-    return 0;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    CloseHandle(f_w->file_handle);
-    return 0;
-#endif
-
-    return -1;
-}
-
-int64 gfs_lof(int32 i) {
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-    if (f->scrn)
-        return -4;
-#ifdef GFS_C
-    f->file_handle->clear();
-    if (f->read) {
-        static int64 bytes;
-        f->file_handle->seekg(0, std::ios::end);
-        bytes = f->file_handle->tellg();
-        f->file_handle->seekg(f->pos);
-        return bytes;
-    }
-    if (f->write) {
-        static int64 bytes;
-        f->file_handle->seekp(0, std::ios::end);
-        bytes = f->file_handle->tellp();
-        f->file_handle->seekp(f->pos);
-        return bytes;
-    }
-    return -1;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    static int64 bytes;
-    *((int32 *)&bytes) = GetFileSize(f_w->file_handle, (DWORD *)(((int32 *)&bytes) + 1));
-    if ((bytes & 0xFFFFFFFF) == 0xFFFFFFFF) {
-        if (GetLastError() != NO_ERROR)
-            return -3; // bad/incorrect file mode
-    }
-    return bytes;
-#endif
-
-    return -1;
-}
-
-int32_t gfs_open_com_syntax(qbs *fstr, gfs_file_struct *f) {
-    // 0=not an open com statement
-    //-1=syntax error
-    // 1=valid
-    // check if filename is a COM open command
-
-    f->com_port = 0;
-
-    if (fstr->len <= 3 || (fstr->chr[0] & 223) != 67 || (fstr->chr[1] & 223) != 79 || (fstr->chr[2] & 223) != 77)
-        return 0; // ! C/c,O/o,M/m
-
-    int32_t c, i, v = -1, x = 0;
-    for (i = 3; i < fstr->len - 1; i++) {
-        c = fstr->chr[i];
-        if (c == ':')
-            goto comstatment;
-        if ((c < '0') || (c > '9'))
-            return 0; // not 0-9
-        if (v == -1) {
-            if (c == '0')
-                return 0; // first digit 0
-            v = 0;
-        }
-        v = v * 10 + (c - '0');
-    }
-
-    return 0; // no ":"
-
-comstatment:
-    if (x >= 7 || v <= 0 || v > 255)
-        return -1; // invalid port number (1-255)
-
-    f->com_port = v;
-
-    // COM open confirmed
-    static qbs *str = nullptr;
-
-    if (!str)
-        str = qbs_new(0, 0);
-
-    qbs_set(str, qbs_ucase(fstr));
-    str->len--; // remove null term.
-
-    // set option values to uninitialized
-    //---group 1
-    f->com_baud_rate = -1;
-    f->com_parity = -1;
-    f->com_data_bits_per_byte = -1;
-    f->com_stop_bits = -1;
-    //---group 2
-    f->com_rs = -1;
-    f->com_bin_asc = -1;
-    f->com_asc_lf = -1;
-    f->com_cd_x = -1;
-    f->com_cs_x = -1;
-    f->com_ds_x = -1;
-    f->com_op_x = -1;
-
-    int32_t str_or_num = 1;
-    int64_t strv = 0;
-    int32_t stage = 1;
-    int32_t com_rb_used = 0;
-    int32_t com_tb_used = 0;
-
-    v = -1;
-    for (i = i + 1; i < str->len; i++) {
-        c = str->chr[i];
-
-        if (c != ',') {
-            if ((c < '0') || ((c > '9') && (c < 'A')) || (c > 'Z'))
-                return -1; // invalid character
-
-            if ((str_or_num == 2) && (c >= 'A'))
-                return -1; // invalid character
-
-            if (c < 'A')
-                str_or_num = 2; // ABC->123
-
-            if ((str_or_num == 1) || (stage == 4)) { // note: stage 4 is interpreted as a string
-                if (strv & 0xFF0000)
-                    strv = strv | (c << 24);
-                else if (strv & 0x00FF00)
-                    strv = strv | (c << 16);
-                else if (strv & 0x0000FF)
-                    strv = strv | (c << 8);
-                else
-                    strv = strv = c;
-
-                if (strv > 16777216)
-                    return -1; // string option too long (max 3 characters)
-
-            } else {
-                if ((c > '0') && (c <= '9')) {
-                    if (v == -2)
-                        return -1; // leading 0s are invalid
-
-                    if (v == -1)
-                        v = 0;
-
-                    v = v * 10 + (c - '0');
-                } else { // 0
-                    if (v == -2)
-                        return -1; // leading 0s are invalid
-
-                    if (v == -1)
-                        v = -2; // 0...
-
-                    if (v > 0)
-                        v = v * 10;
-                }
-                if (v > 2147483647)
-                    return -1; // numeric value too large (LONG values only)
-            }
-        } // c!=44
-
-        if ((c == ',') || (i == str->len - 1)) {
-            if (v == -2)
-                v = 0;
-
-            // note: v==-1 means omit
-            if (stage == 1) {
-                if (f->com_baud_rate != -1)
-                    return -1;
-
-                if (strv)
-                    return -1;
-
-                if (v == 0)
-                    return -1;
-
-                if (v == -1)
-                    v = 300;
-
-                f->com_baud_rate = v;
-                stage++;
-
-                goto done_stage;
-            } else if (stage == 2) {
-                if (f->com_parity != -1)
-                    return -1;
-
-                if (v != -1)
-                    return -1;
-
-                x = -1;
-
-                if (strv == 78)
-                    x = 0; // N
-
-                if (strv == 0)
-                    x = 1; // E*
-
-                if (strv == 69)
-                    x = 1; // E
-
-                if (strv == 79)
-                    x = 2; // O
-
-                if (strv == 83)
-                    x = 3; // S
-
-                if (strv == 77)
-                    x = 4; // M
-
-                if (strv == 17744)
-                    x = 5; // PE
-
-                if (x == -1)
-                    return -1;
-
-                f->com_parity = x;
-                stage++;
-
-                goto done_stage;
-            } else if (stage == 3) {
-                if (f->com_data_bits_per_byte != -1)
-                    return -1;
-
-                if (strv)
-                    return -1;
-
-                x = -1;
-
-                if (v == -1)
-                    x = 7;
-
-                if (v == 5)
-                    x = 5;
-
-                if (v == 6)
-                    x = 6;
-
-                if (v == 7)
-                    x = 7;
-
-                if (v == 8)
-                    x = 8;
-
-                if (x == -1)
-                    return -1;
-
-                f->com_data_bits_per_byte = x;
-                stage++;
-
-                goto done_stage;
-            } else if (stage == 4) {
-                if (f->com_stop_bits != -1)
-                    return -1;
-
-                if (v != -1)
-                    return -1;
-
-                x = -1;
-                if (strv == 0) {
-                    x = 10;
-                    if (f->com_baud_rate <= 110) {
-                        x = 20;
-                        if (f->com_data_bits_per_byte == 5)
-                            x = 15;
-                    }
-                } // 0
-
-                if (strv == 49)
-                    x = 10; //"1"
-
-                if (strv == 3485233)
-                    x = 15; //"1.5"
-
-                if (strv == 50)
-                    x = 20; //"2"
-
-                if (x == -1)
-                    return -1;
-
-                f->com_stop_bits = x;
-                stage++;
-                goto done_stage;
-            }
-
-            // stage > 4
-            if (!strv)
-                return -1; // all options after 4 require a string
-
-            if (strv == 21330) {
-                if (f->com_rs != -1)
-                    return -1; // RS
-
-                f->com_rs = 1;
-                goto done_stage;
-            }
-
-            if (strv == 5130562) {
-                if (f->com_bin_asc != -1)
-                    return -1; // BIN
-
-                f->com_bin_asc = 0;
-                goto done_stage;
-            }
-
-            if (strv == 4412225) {
-                if (f->com_bin_asc != -1)
-                    return -1; // ASC
-
-                f->com_bin_asc = 1;
-                goto done_stage;
-            }
-
-            if (strv == 16980) {
-                if (com_tb_used)
-                    return -1; // TB
-
-                com_tb_used = 1;
-                goto done_stage;
-            }
-
-            if (strv == 16978) {
-                if (com_rb_used)
-                    return -1; // RB
-
-                com_rb_used = 1;
-                goto done_stage;
-            }
-
-            if (strv == 17996) {
-                if (f->com_asc_lf != -1)
-                    return -1; // LF
-
-                f->com_asc_lf = 1;
-                goto done_stage;
-            }
-
-            if (strv == 17475) {
-                if (f->com_cd_x != -1)
-                    return -1; // CD
-
-                if (v == -1)
-                    v = 0;
-
-                if (v > 65535)
-                    return -1;
-
-                f->com_cd_x = v;
-                goto done_stage;
-            }
-
-            if (strv == 21315) {
-                if (f->com_cs_x != -1)
-                    return -1; // CS
-
-                if (v == -1)
-                    v = 1000;
-
-                if (v > 65535)
-                    return -1;
-
-                f->com_cs_x = v;
-                goto done_stage;
-            }
-
-            if (strv == 21316) {
-                if (f->com_ds_x != -1)
-                    return -1; // DS
-
-                if (v == -1)
-                    v = 1000;
-
-                if (v > 65535)
-                    return -1;
-
-                f->com_ds_x = v;
-                goto done_stage;
-            }
-
-            if (strv == 20559) {
-                if (f->com_op_x != -1)
-                    return -1; // OP
-
-                if (v == -1)
-                    v = 10000;
-
-                if (v > 65535)
-                    return -1;
-
-                f->com_op_x = v;
-                goto done_stage;
-            }
-
-            return -1; // invalid option
-
-        done_stage:
-            str_or_num = 1;
-            strv = 0;
-            v = -1;
-        }
-    } // i
-
-    // complete omitted options with defaults
-    if (f->com_baud_rate == -1)
-        f->com_baud_rate = 300;
-
-    if (f->com_parity == -1)
-        f->com_parity = 1;
-
-    if (f->com_data_bits_per_byte == -1)
-        f->com_data_bits_per_byte = 7;
-
-    if (f->com_stop_bits == -1) {
-        x = 10;
-        if (f->com_baud_rate <= 110) {
-            x = 20;
-            if (f->com_data_bits_per_byte == 5)
-                x = 15;
-        }
-
-        f->com_stop_bits = x;
-    }
-
-    if (f->com_bin_asc == -1)
-        f->com_bin_asc = 0;
-
-    if (f->com_asc_lf == -1)
-        f->com_asc_lf = 0;
-
-    if (f->com_asc_lf == 1) {
-        if (f->com_bin_asc == 0)
-            f->com_asc_lf = 0;
-    }
-
-    if (f->com_rs == -1)
-        f->com_rs = 0;
-
-    if (f->com_cd_x == -1)
-        f->com_cd_x = 0;
-
-    if (f->com_cs_x == -1)
-        f->com_cs_x = 1000;
-
-    if (f->com_ds_x == -1)
-        f->com_ds_x = 1000;
-
-    if (f->com_op_x == -1) {
-        x = f->com_cd_x * 10;
-        auto z = f->com_ds_x * 10;
-        if (z > x)
-            x = z;
-
-        if (x > 65535)
-            x = 65535;
-
-        f->com_op_x = x;
-    }
-
-    return 1; // valid
-}
-
-int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how) {
-    // filename - an OS compatible filename (doesn't need to be NULL terminated)
-    // access - 1=read, 2=write, 3=read and write
-    // restrictions - 1=others cannot read, 2=others cannot write, 3=others cannot read or write(exclusive access)
-    // how - 1=create(if it doesn't exist), 2=create(if it doesn't exist) & truncate
-    //      3=create(if it doesn't exist)+undefined access[get whatever access is available]
-    static int32 i, x, x2, x3, e;
-    static qbs *filenamez = NULL;
-    static gfs_file_struct *f;
-
-    if (!filenamez)
-        filenamez = qbs_new(0, 0);
-    qbs_set(filenamez, qbs_add(filename, qbs_new_txt_len("\0", 1)));
-
-    i = gfs_new();
-    f = &gfs_file[i];
-
-    int32 v1;
-    unsigned char *c1 = filename->chr;
-    v1 = *c1;
-    if (v1 == 83 || v1 == 115) { // S
-        c1++;
-        v1 = *c1;
-        if (v1 == 67 || v1 == 99) { // C
-            c1++;
-            v1 = *c1;
-            if (v1 == 82 || v1 == 114) { // R
-                c1++;
-                v1 = *c1;
-                if (v1 == 78 || v1 == 110) { // N
-                    c1++;
-                    v1 = *c1;
-                    if (v1 == 58) { //:
-                        f->scrn = 1;
-                        return i;
-                    };
-                };
-            };
-        };
-    };
-
-    if (access & 1)
-        f->read = 1;
-    if (access & 2)
-        f->write = 1;
-    if (restrictions & 1)
-        f->lock_read = 1;
-    if (restrictions & 2)
-        f->lock_write = 1;
-    f->pos = 0;
-
-    // check for OPEN COM syntax
-    if (x = gfs_open_com_syntax(filenamez, f)) {
-        if (x == -1) {
-            gfs_free(i);
-            return -11;
-        } //-11 bad file name
-        // note: each GFS implementation will handle COM communication differently
-    }
-
-#ifdef GFS_C
-    // note: GFS_C ignores restrictions/locking
-    f->file_handle = new std::fstream();
-    // attempt as if it exists:
-    if (how == 2) {
-        // with truncate
-        if (access == 1)
-            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
-        if (access == 2)
-            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
-        if (access == 3)
-            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
-    } else {
-        // without truncate
-        if (access == 1)
-            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary);
-        if (access == 2)
-            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::app);
-        if (access == 3)
-            f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary);
-    }
-    if (how) {
-        if (!f->file_handle->is_open()) { // couldn't open file, so attempt creation
-            f->file_handle_o = new std::ofstream();
-            f->file_handle_o->open(filepath_fix_directory(filenamez), std::ios::out);
-            if (f->file_handle_o->is_open()) { // created new file
-                f->file_handle_o->close();
-                // retry open
-                f->file_handle->clear();
-                if (how == 2) {
-                    // with truncate
-                    if (access == 1)
-                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary | std::ios::trunc);
-                    if (access == 2)
-                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::trunc);
-                    if (access == 3)
-                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
-                } else {
-                    // without truncate
-                    if (access == 1)
-                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::binary);
-                    if (access == 2)
-                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::out | std::ios::binary | std::ios::app);
-                    if (access == 3)
-                        f->file_handle->open(filepath_fix_directory(filenamez), std::ios::in | std::ios::out | std::ios::binary);
-                }
-            }
-            delete f->file_handle_o;
-        }
-    }                                 // how
-    if (!f->file_handle->is_open()) { // couldn't open file
-        delete f->file_handle;
-        gfs_free(i);
-        if (how)
-            return -11; // Bad file name
-        return -5;      // File not found
-    }
-    // file opened successfully
-    f->open = 1;
-    return i;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    x = 0;
-    if (access & 1)
-        x |= GENERIC_READ;
-    if (access & 2)
-        x |= GENERIC_WRITE;
-    x2 = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    if (restrictions & 1)
-        x2 ^= FILE_SHARE_READ;
-    if (restrictions & 2)
-        x2 ^= FILE_SHARE_WRITE;
-
-    if (f->com_port) { // open a com port
-        static qbs *portname = NULL;
-        if (!portname)
-            portname = qbs_new(0, 0);
-        qbs_set(portname, qbs_add(qbs_new_txt("CO"), qbs_str(f->com_port)));
-        qbs_set(portname, qbs_add(portname, qbs_new_txt_len(":\0", 2)));
-        portname->chr[2] = 77; // replace " " with "M"
-        f_w->file_handle = CreateFile((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
-        if (f_w->file_handle == INVALID_HANDLE_VALUE) {
-            gfs_free(i);
-            return -8;
-        } // device unavailable
-        static DCB cs;
-        ZeroMemory(&cs, sizeof(DCB));
-        cs.DCBlength = sizeof(DCB);
-        if (!GetCommState(f_w->file_handle, &cs)) {
-            CloseHandle(f_w->file_handle);
-            gfs_free(i);
-            return -8;
-        } // device unavailable
-        static COMMTIMEOUTS ct;
-        ZeroMemory(&ct, sizeof(COMMTIMEOUTS));
-        /*dump port state and return "file not found" (used for debugging only)
-            if (!GetCommTimeouts(f_w->file_handle,&ct)){CloseHandle(f_w->file_handle); gfs_free(i); return -8;}//device unavailable
-            std::ofstream mydump("f:\\comdump.bin");
-            mydump.write((char*)&cs,sizeof(cs));
-            mydump.write((char*)&ct,sizeof(ct));
-            mydump.close();
-            CloseHandle(f_w->file_handle); gfs_free(i);
-            return -4;
-        */
-        cs.BaudRate = f->com_baud_rate;
-        x = f->com_stop_bits;
-        if (x == 10)
-            x2 = 0;
-        if (x == 15)
-            x2 = 1;
-        if (x == 20)
-            x2 = 2;
-        cs.StopBits = x2;
-        cs.ByteSize = f->com_data_bits_per_byte;
-        x = f->com_parity;
-        if (x == 0)
-            x2 = 0;
-        if (x == 1)
-            x2 = 2;
-        if (x == 2)
-            x2 = 1;
-        if (x == 3)
-            x2 = 4;
-        if (x == 4)
-            x2 = 3;
-        // if (x==5) x2=... ***"PE" will be supported later***
-        // 0-4=None,Odd,Even,Mark,Space
-        cs.Parity = x2;
-        if (x2 == 0)
-            cs.fParity = 0;
-        else
-            cs.fParity = 1;
-        if (f->com_rs)
-            cs.fRtsControl = RTS_CONTROL_DISABLE;
-        if (f->com_bin_asc == 0)
-            cs.fBinary = 1;
-        else
-            cs.fBinary = 0;
-        cs.EofChar = 26;
-        if (!SetCommState(f_w->file_handle, &cs)) {
-            CloseHandle(f_w->file_handle);
-            gfs_free(i);
-            return -8;
-        } // device unavailable
-        if (f->com_ds_x == 0) {
-            // A value of MAXDWORD, combined with zero values for both the ReadTotalTimeoutConstant and ReadTotalTimeoutMultiplier members, specifies that the
-            // read operation is to return immediately with the characters that have already been received, even if no characters have been received.
-            ct.ReadIntervalTimeout = MAXDWORD;
-            ct.ReadTotalTimeoutMultiplier = 0;
-            ct.ReadTotalTimeoutConstant = 0;
-        } else {
-            ct.ReadIntervalTimeout = 0;
-            ct.ReadTotalTimeoutMultiplier = 0;
-            ct.ReadTotalTimeoutConstant = f->com_ds_x;
-        }
-        ct.WriteTotalTimeoutMultiplier = 0;
-        ct.WriteTotalTimeoutConstant = f->com_cs_x;
-        if (!SetCommTimeouts(f_w->file_handle, &ct)) {
-            CloseHandle(f_w->file_handle);
-            gfs_free(i);
-            return -8;
-        } // device unavailable
-        f->open = 1;
-        return i;
-    }
-
-    /*
-        #define CREATE_NEW          1
-        #define CREATE_ALWAYS       2
-        #define OPEN_EXISTING       3
-        #define OPEN_ALWAYS         4
-        #define TRUNCATE_EXISTING   5
-    */
-    x3 = OPEN_EXISTING;
-    if (how)
-        x3 = OPEN_ALWAYS;
-undefined_retry:
-    f_w->file_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (f_w->file_handle == INVALID_HANDLE_VALUE) {
-
-        if (how == 3) {
-            // attempt read access only
-            x = GENERIC_READ;
-            f->read = 1;
-            f->write = 0;
-            how++;
-            goto undefined_retry;
-        }
-
-        if (how == 4) {
-            // attempt write access only
-            x = GENERIC_WRITE;
-            f->read = 0;
-            f->write = 1;
-            how++;
-            goto undefined_retry;
-        }
-
-        gfs_free(i);
-        e = GetLastError();
-        if (e == 3)
-            return -6;
-        if ((e == 4) || (e == 29) || (e == 30))
-            return -9;
-        if ((e == 5) || (e == 19) || (e == 33) || (e == 32))
-            return -7;
-        if ((e == 15) || (e == 21))
-            return -8;
-        if (e == 2)
-            return -5;
-        // showvalue(e);
-        return -5; // assume (2)
-    }              // invalid handle
-
-    if (how == 2) {
-        // truncate file if size is not 0
-        static DWORD GetFileSize_low, GetFileSize_high;
-        GetFileSize_low = GetFileSize(f_w->file_handle, &GetFileSize_high);
-        if (GetFileSize_low || GetFileSize_high) {
-            CloseHandle(f_w->file_handle);
-            x3 = TRUNCATE_EXISTING;
-            f_w->file_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
-
-            if (f_w->file_handle == INVALID_HANDLE_VALUE) {
-                gfs_free(i);
-                e = GetLastError();
-                if (e == 3)
-                    return -6;
-                if ((e == 4) || (e == 29) || (e == 30))
-                    return -9;
-                if ((e == 5) || (e == 19) || (e == 33) || (e == 32))
-                    return -7;
-                if ((e == 15) || (e == 21))
-                    return -8;
-                if (e == 2)
-                    return -5;
-                // showvalue(e);
-                return -5; // assume (2)
-            }              // invalid handle
-        }
-    } // how==2
-    f->open = 1;
-    return i;
-#endif
-
-    return -1; // non-specific fail
-}
-
-int32 gfs_setpos(int32 i, int64 position) {
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    if (position < 0)
-        return -4; // illegal function call
-
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-
-#ifdef GFS_C
-    if (f->read) {
-        f->file_handle->clear();
-        f->file_handle->seekg(position);
-    }
-    if (f->write) {
-        f->file_handle->clear();
-        f->file_handle->seekp(position);
-    }
-    f->pos = position;
-    if (f->pos <= gfs_lof(i)) {
-        f->eof_passed = 0;
-        f->eof_reached = 0;
-    }
-    return 0;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    if (SetFilePointer(f_w->file_handle, (int32)position, (long *)(((int32 *)&position) + 1), FILE_BEGIN) ==
-        0xFFFFFFFF) { /*Note that it is not an error to set the file pointer to a position beyond the end of the file. The size of the file does not increase
-                         until you call the SetEndOfFile, WriteFile, or WriteFileEx function.*/
-        if (GetLastError() != NO_ERROR) {
-            return -3; // bad file mode
-        }
-    }
-    f->pos = position;
-    if (f->pos <= gfs_lof(i)) {
-        f->eof_passed = 0;
-        f->eof_reached = 0;
-    }
-    return 0;
-#endif
-
-    return -1;
-}
-
-int64 gfs_getpos(int32 i) {
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-    return f->pos;
-}
-
-int32 gfs_write(int32 i, int64 position, uint8 *data, int64 size) {
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static int32 e;
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-    if (!f->write)
-        return -3; // bad file mode
-    if (size < 0)
-        return -4; // illegal function call
-    static int32 x;
-    if (position != -1) {
-        if (x = gfs_setpos(i, position))
-            return x; //(pass on error)
-    }
-
-#ifdef GFS_C
-    f->file_handle->clear();
-    f->file_handle->write((char *)data, size);
-    if (f->file_handle->bad()) {
-        return -7; // assume: permission denied
-    }
-    f->pos += size;
-    return 0;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    static uint32 size2;
-    static int64 written = 0;
-    while (size) {
-        if (size > 4294967295) {
-            size2 = 4294967295;
-            size -= 4294967295;
-        } else {
-            size2 = size;
-            size = 0;
-        }
-        if (!WriteFile(f_w->file_handle, data, size2, (unsigned long *)&written, NULL)) {
-            e = GetLastError();
-            if ((e == 5) || (e == 33))
-                return -7; // permission denied
-            return -9;     // assume: path/file access error
-        }
-        data += written;
-        f->pos += written;
-        if (written != size2)
-            return -1;
-    }
-    return 0;
-#endif
-
-    return -1;
-}
-
-int64 gfs_read_bytes_value;
-int64 gfs_read_bytes() { return gfs_read_bytes_value; }
-
-int32 gfs_read(int32 i, int64 position, uint8 *data, int64 size) {
-    gfs_read_bytes_value = 0;
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static int32 e;
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-    if (!f->read)
-        return -3; // bad file mode
-    if (size < 0)
-        return -4; // illegal function call
-    static int32 x;
-    if (position != -1) {
-        if (x = gfs_setpos(i, position))
-            return x; //(pass on error)
-    }
-
-#ifdef GFS_C
-    f->file_handle->clear();
-    f->file_handle->read((char *)data, size);
-    if (f->file_handle->bad()) { // note: 'eof' also sets the 'fail' flag, so only the the 'bad' flag is checked
-        return -7;               // assume: permission denied
-    }
-    static int64 bytesread;
-    bytesread = f->file_handle->gcount();
-    gfs_read_bytes_value = bytesread;
-    f->pos += bytesread;
-    if (bytesread < size) {
-        memset(data + bytesread, 0, size - bytesread);
-        f->eof_passed = 1;
-        return -10;
-    }
-    f->eof_passed = 0;
-    return 0;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    static uint32 size2;
-    static int64 bytesread = 0;
-    while (size) {
-        if (size > 4294967295) {
-            size2 = 4294967295;
-            size -= 4294967295;
-        } else {
-            size2 = size;
-            size = 0;
-        }
-
-        if (ReadFile(f_w->file_handle, data, size2, (unsigned long *)&bytesread, NULL)) {
-            data += bytesread;
-            f->pos += bytesread;
-            gfs_read_bytes_value += bytesread;
-            if (bytesread != size2) {
-                ZeroMemory(data, size + (size2 - bytesread)); // nullify remaining buffer
-                f->eof_passed = 1;
-                return -10;
-            } // eof passed
-        } else {
-            // error
-            e = GetLastError();
-            if ((e == 5) || (e == 33))
-                return -7; // permission denied
-            // showvalue(e);
-            return -9; // assume: path/file access error
-        }
-    }
-    f->eof_passed = 0;
-    return 0;
-#endif
-
-    return -1;
-}
-
-int32 gfs_eof_reached(int32 i) {
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    if (gfs_getpos(i) >= gfs_lof(i))
-        return 1;
-    return 0;
-}
-
-int32 gfs_eof_passed(int32 i) {
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-    if (f->eof_passed)
-        return 1;
-    return 0;
-}
-
-int32 gfs_lock(int32 i, int64 offset_start, int64 offset_end) {
-    // if offset_start==-1, 'from beginning' (typically offset 0) is assumed
-    // if offset_end==-1, 'to end/infinity' is assumed
-    // range is inclusive of start and end
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-
-    if (offset_start == -1)
-        offset_start = 0;
-    if (offset_start < 0)
-        return -4; // illegal function call
-    if (offset_end < -1)
-        return -4; // illegal function call
-        // note: -1 equates to highest uint64 value (infinity)
-        //      All other negative end values are illegal
-
-#ifdef GFS_C
-    return 0;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    uint64 bytes;
-    bytes = offset_end;
-    if (bytes != -1)
-        bytes = bytes - offset_start + 1;
-    if (!LockFile(f_w->file_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
-        // failed
-        static int32 e;
-        e = GetLastError();
-        if ((e == 5) || (e == 33))
-            return -7; // permission denied
-        // showvalue(e);
-        return -9; // assume: path/file access error
-    }
-    return 0;
-#endif
-
-    return -1;
-}
-
-int32 gfs_unlock(int32 i, int64 offset_start, int64 offset_end) {
-    // if offset_start==-1, 'from beginning' (typically offset 0) is assumed
-    // if offset_end==-1, 'to end/infinity' is assumed
-    // range is inclusive of start and end
-    if (!gfs_validhandle(i))
-        return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
-
-    if (offset_start == -1)
-        offset_start = 0;
-    if (offset_start < 0)
-        return -4; // illegal function call
-    if (offset_end < -1)
-        return -4; // illegal function call
-        // note: -1 equates to highest uint64 value (infinity)
-        //      All other negative end values are illegal
-
-#ifdef GFS_C
-    return 0;
-#endif
-
-#ifdef GFS_WINDOWS
-    static gfs_file_win_struct *f_w;
-    f_w = &gfs_file_win[i];
-    uint64 bytes;
-    bytes = offset_end;
-    if (bytes != -1)
-        bytes = bytes - offset_start + 1;
-    if (!UnlockFile(f_w->file_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
-        // failed
-        static int32 e;
-        e = GetLastError();
-        if ((e == 5) || (e == 33) || (e == 158))
-            return -7; // permission denied
-        // showvalue(e);
-        return -9; // assume: path/file access error
-    }
-    return 0;
-#endif
-
-    return -1;
-}
-
 void sub_lock(int32 i, int64 start, int64 end, int32 passed) {
     if (is_error_pending())
         return;
@@ -28380,9 +26921,9 @@ void sub_lock(int32 i, int64 start, int64 end, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
 
     // If the file has been opened for sequential input or output, LOCK and UNLOCK affect the entire file, regardless of the range specified by start& and end&.
     if (gfs->type > 2)
@@ -28443,9 +26984,9 @@ void sub_unlock(int32 i, int64 start, int64 end, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
     static gfs_file_struct *gfs;
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
 
     // If the file has been opened for sequential input or output, LOCK and UNLOCK affect the entire file, regardless of the range specified by start& and end&.
     if (gfs->type > 2)
@@ -29820,8 +28361,8 @@ void field_new(int32 fileno) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
-    gfs = &gfs_file[i];
+    i = gfs_get_fileno(i); // convert fileno to gfs index
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
         error(54);
         return;
@@ -29846,8 +28387,8 @@ void field_update(int32 fileno) {
     if (gfs_fileno_valid(i) != 1) {
         exit(7702);
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
-    gfs = &gfs_file[i];
+    i = gfs_get_fileno(i); // convert fileno to gfs index
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
         exit(7703);
     } // Bad file mode (note: must have RANDOM access)
@@ -29879,9 +28420,9 @@ void lrset_field(qbs *str) {
     i = str->field->fileno;
     if (gfs_fileno_valid(i) != 1)
         goto remove;
-    i = gfs_fileno[i]; // convert fileno to gfs index
+    i = gfs_get_fileno(i); // convert fileno to gfs index
 
-    gfs = &gfs_file[i];
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1)
         goto remove;
     // check file ID
@@ -29914,8 +28455,8 @@ void field_free(qbs *str) {
     i = str->field->fileno;
     if (gfs_fileno_valid(i) != 1)
         goto remove;
-    i = gfs_fileno[i]; // convert fileno to gfs index
-    gfs = &gfs_file[i];
+    i = gfs_get_fileno(i); // convert fileno to gfs index
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1)
         goto remove;
     // check file ID
@@ -29965,8 +28506,8 @@ void field_add(qbs *str, int64 size) {
         error(52);
         goto fail;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
-    gfs = &gfs_file[i];
+    i = gfs_get_fileno(i); // convert fileno to gfs index
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
         error(54);
         goto fail;
@@ -30020,8 +28561,8 @@ void field_get(int32 fileno, int64 offset, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
-    gfs = &gfs_file[i];
+    i = gfs_get_fileno(i); // convert fileno to gfs index
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
         error(54);
         return;
@@ -30087,8 +28628,8 @@ void field_put(int32 fileno, int64 offset, int32 passed) {
         error(52);
         return;
     }                  // Bad file name or number
-    i = gfs_fileno[i]; // convert fileno to gfs index
-    gfs = &gfs_file[i];
+    i = gfs_get_fileno(i); // convert fileno to gfs index
+    gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
         error(54);
         return;

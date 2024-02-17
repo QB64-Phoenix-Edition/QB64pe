@@ -24,7 +24,7 @@ static uint32_t inclercl;
 
 static const char *includedfilename;
 
-static char *human_error(int32_t errorcode) {
+static const char *human_error(int32_t errorcode) {
     // clang-format off
     switch (errorcode) {
         case 0: return "No error";
@@ -159,7 +159,8 @@ void end();
 extern void QBMAIN(void *);
 
 void fix_error() {
-    char *errtitle = NULL, *errmess = NULL, *cp;
+    char *errtitle = NULL, *errmess = NULL;
+    const char *cp;
     int prevent_handling = 0, len, v;
     if ((new_error >= 300) && (new_error <= 315))
         prevent_handling = 1;
@@ -172,7 +173,7 @@ void fix_error() {
         qbs_set(binary_name, qbs_add(func_command(0, 1), qbs_new_txt_len("\0", 1)));
         for (i = binary_name->len; i > 0; i--) {
             if ((binary_name->chr[i - 1] == 47) || (binary_name->chr[i - 1] == 92)) {
-                qbs_set(binary_name, func_mid(binary_name, i + 1, NULL, 0));
+                qbs_set(binary_name, func_mid(binary_name, i + 1, 0, 0));
                 break;
             }
         }

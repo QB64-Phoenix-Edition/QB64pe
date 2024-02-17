@@ -27,20 +27,6 @@ qbs *func_space(int32 spaces);
 void makefit(qbs *text);
 void qbg_sub_window(float, float, float, float, int32);
 extern int32 autodisplay;
-// GFS forward references
-int32 gfs_eof_passed(int32 i);
-int32 gfs_eof_reached(int32 i);
-int64 gfs_getpos(int32 i);
-int32 gfs_fileno_valid(int32 f);
-int32 gfs_fileno_freefile(); // like FREEFILE
-void gfs_fileno_use(int32 f, int32 i);
-int32 gfs_open(qbs *filename, int32 access, int32 restrictions, int32 how);
-int32 gfs_close(int32 i);
-int64 gfs_lof(int32 i);
-int32 gfs_setpos(int32 i, int64 position);
-int32 gfs_write(int32 i, int64 position, uint8 *data, int64 size);
-int32 gfs_read(int32 i, int64 position, uint8 *data, int64 size);
-int64 gfs_read_bytes();
 
 // keyhit cyclic buffer
 extern int64 keyhit[8192];

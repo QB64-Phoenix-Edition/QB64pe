@@ -1,17 +1,17 @@
 // Fill out dependency macros
-#ifndef DEPENDENCY_NO_SOCKETS
+#if !defined(DEPENDENCY_NO_SOCKETS) && !defined(DEPENDENCY_SOCKETS)
 #    define DEPENDENCY_SOCKETS
 #endif
 
-#ifndef DEPENDENCY_NO_PRINTER
+#if !defined(DEPENDENCY_NO_PRINTER) && !defined(DEPENDENCY_PRINTER)
 #    define DEPENDENCY_PRINTER
 #endif
 
-#ifndef DEPENDENCY_NO_ICON
+#if !defined(DEPENDENCY_NO_ICON) && !defined(DEPENDENCY_ICON)
 #    define DEPENDENCY_ICON
 #endif
 
-#ifndef DEPENDENCY_NO_SCREENIMAGE
+#if !defined(DEPENDENCY_NO_SCREENIMAGE) && !defined(DEPENDENCY_SCREENIMAGE)
 #    define DEPENDENCY_SCREENIMAGE
 #endif
 
