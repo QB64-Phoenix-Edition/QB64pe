@@ -4,8 +4,9 @@
 #include "libqb-common.h"
 
 #include <algorithm>
+#include <string.h>
 
-#include "../../libqb.h"
+#include "qbs.h"
 #include "filepath.h"
 
 const char *filepath_get_filename(const char *path) {
