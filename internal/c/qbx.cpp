@@ -8,6 +8,7 @@
 #include "event.h"
 #include "extended_math.h"
 #include "filepath.h"
+#include "file-fields.h"
 #include "filesystem.h"
 #include "font.h"
 #include "gui.h"
@@ -15,6 +16,7 @@
 #include "qbmath.h"
 #include "qbs.h"
 #include "qbs-mk-cv.h"
+#include "shell.h"
 #include "error_handle.h"
 #include "mem.h"
 #include "rounding.h"
@@ -129,11 +131,6 @@ extern int64 GetTicks();
 
 extern mem_block func__memimage(int32, int32);
 
-extern int64 func__shellhide(qbs *str);
-extern int64 func_shell(qbs *str);
-extern void sub_shell(qbs *str, int32 passed);
-extern void sub_shell2(qbs *str, int32 passed);
-extern void sub_shell3(qbs *str, int32 passed);
 extern void sub__consoletitle(qbs *);
 extern void sub__screenshow();
 extern void sub__screenhide();
@@ -178,10 +175,6 @@ extern void sub__mousemove(float x, float y);
 extern qbs *func__os();
 extern void sub__mapunicode(int32 unicode_code, int32 ascii_code);
 extern int32 func__mapunicode(int32 ascii_code);
-extern void field_new(int32 fileno);
-extern void field_add(qbs *str, int64 size);
-extern void field_get(int32 fileno, int64 seekpos, int32 passed);
-extern void field_put(int32 fileno, int64 seekpos, int32 passed);
 extern int32 func__keydown(int32 x);
 extern int32 func__keyhit();
 extern int32 func_lpos(int32);
@@ -250,19 +243,6 @@ extern int32 func_peek(int32 offset);
 extern void sub_poke(int32 offset, int32 value);
 extern void more_return_points();
 extern qbs *func_varptr_helper(uint8 type, uint16 offset);
-extern void sub_lset(qbs *dest, qbs *source);
-extern void sub_rset(qbs *dest, qbs *source);
-extern qbs *func_space(int32 spaces);
-extern qbs *func_string(int32 characters, int32 asciivalue);
-extern int32 func_instr(int32 start, qbs *str, qbs *substr, int32 passed);
-extern int32 func__instrrev(int32 start, qbs *str, qbs *substr, int32 passed);
-extern void sub_mid(qbs *dest, int32 start, int32 l, qbs *src, int32 passed);
-extern qbs *func_mid(qbs *str, int32 start, int32 l, int32 passed);
-extern qbs *qbs_ltrim(qbs *str);
-extern qbs *qbs_rtrim(qbs *str);
-extern qbs *qbs__trim(qbs *str);
-extern int32 func__str_nc_compare(qbs *s1, qbs *s2);
-extern int32 func__str_compare(qbs *s1, qbs *s2);
 extern qbs *qbs_inkey();
 extern void sub__keyclear(int32 buf, int32 passed);
 extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin,

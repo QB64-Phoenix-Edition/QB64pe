@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "error_handle.h"
+#include "file-fields.h"
 #include "qbs.h"
 
 // FIXME: Put in internal header

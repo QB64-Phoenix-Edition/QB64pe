@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "error_handle.h"
+#include "file-fields.h"
 #include "qbs.h"
 
 extern qbs *nothingstring;

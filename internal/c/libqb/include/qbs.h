@@ -103,8 +103,4 @@ qbs *qbs__trim(qbs *str);
 int32_t func__str_nc_compare(qbs *s1, qbs *s2);
 int32_t func__str_compare(qbs *s1, qbs *s2);
 
-// FIXME: Maybe put this in a gfs related header?
-void lrset_field(qbs *str);
-void field_free(qbs *str);
-
 #endif
