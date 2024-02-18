@@ -133,7 +133,7 @@ all: $(EXE)
 CLEAN_LIST :=
 CLEAN_DEP_LIST :=
 
-CXXFLAGS += -std=gnu++14
+CXXFLAGS += -std=gnu++17
 
 # libqb does some illegal type punning, this ensures the compiler will allow it
 # to happen

@@ -24,10 +24,10 @@ GLEW_OBJS := $(GLEW_SRCS:.c=.o)
 FREEGLUT_LIB := $(PATH_INTERNAL_C)/parts/core/freeglut.a
 
 $(PATH_INTERNAL_C)/parts/core/glew/%.o: $(PATH_INTERNAL_C)/parts/core/glew/%.c
-	$(CC) -O1 $(CFLAGS) $(FREEGLUT_INCLUDE) -DGLEW_STATIC -Wall $< -c -o $@
+	$(CC) -O1 $(CFLAGS) $(FREEGLUT_INCLUDE) -DGLEW_STATIC -w $< -c -o $@
 
 $(PATH_INTERNAL_C)/parts/core/freeglut/%.o: $(PATH_INTERNAL_C)/parts/core/freeglut/%.c
-	$(CC) -O3 $(CFLAGS) $(FREEGLUT_INCLUDE) -DFREEGLUT_STATIC -DHAVE_UNISTD_H -DHAVE_FCNTL_H -Wall $< -c -o $@
+	$(CC) -O3 $(CFLAGS) $(FREEGLUT_INCLUDE) -DFREEGLUT_STATIC -DHAVE_UNISTD_H -DHAVE_FCNTL_H -w $< -c -o $@
 
 $(FREEGLUT_LIB): $(FREEGLUT_OBJS)
 	$(AR) rcs $@ $(FREEGLUT_OBJS)

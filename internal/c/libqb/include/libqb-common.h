@@ -18,9 +18,11 @@
  */
 #ifdef WIN32
 #    define QB64_WINDOWS
+#    ifndef _WIN32_WINNT
 // This supports Windows Vista and up
-#    define _WIN32_WINNT 0x0600
-#    define WINVER 0x0600
+#        define _WIN32_WINNT 0x0600
+#        define WINVER 0x0600
+#    endif
 
 #    define QB64_BACKSLASH_FILESYSTEM
 #    ifdef _MSC_VER

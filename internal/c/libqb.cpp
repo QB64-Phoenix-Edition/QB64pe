@@ -13,6 +13,7 @@
 #endif
 
 #include "audio.h"
+#include "bitops.h"
 #include "cmem.h"
 #include "completion.h"
 #include "command.h"
@@ -54,30 +55,6 @@ uint32 rotateLeft(uint32 word, uint32 shift) { return (word << shift) | (word >>
 #ifndef QB64_WINDOWS
 void ZeroMemory(void *ptr, int64 bytes) { memset(ptr, 0, bytes); }
 #endif
-// bit-array access functions (note: used to be included through 'bit.cpp')
-uint64 getubits(uint32 bsize, uint8 *base, ptrszint i) {
-    int64 bmask;
-    bmask = ~(-(((int64)1) << bsize));
-    i *= bsize;
-    return ((*(uint64 *)(base + (i >> 3))) >> (i & 7)) & bmask;
-}
-int64 getbits(uint32 bsize, uint8 *base, ptrszint i) {
-    int64 bmask, bval64;
-    bmask = ~(-(((int64)1) << bsize));
-    i *= bsize;
-    bval64 = ((*(uint64 *)(base + (i >> 3))) >> (i & 7)) & bmask;
-    if (bval64 & (((int64)1) << (bsize - 1)))
-        return bval64 | (~bmask);
-    return bval64;
-}
-void setbits(uint32 bsize, uint8 *base, ptrszint i, int64 val) {
-    int64 bmask;
-    uint64 *bptr64;
-    bmask = (((uint64)1) << bsize) - 1;
-    i *= bsize;
-    bptr64 = (uint64 *)(base + (i >> 3));
-    *bptr64 = (*bptr64 & (((bmask << (i & 7)) ^ -1))) | ((val & bmask) << (i & 7));
-}
 
 #ifdef QB64_UNIX
 #    include <libgen.h> //required for dirname()
@@ -6847,7 +6824,6 @@ int32 lock_display_required = 0;
 #define cost_delay 0
 uint32 cost = 0;
 
-#include "msbin.c"
 
 int64 build_int64(uint32 val2, uint32 val1) {
     static int64 val;
@@ -7200,276 +7176,6 @@ qbs *func_varptr_helper(uint8 type, uint16 offset) {
     tqbs->chr[1] = offset & 255;
     tqbs->chr[2] = offset >> 8;
     return tqbs;
-}
-
-qbs *func_mksmbf(float val) {
-    static qbs *tqbs;
-    tqbs = qbs_new(4, 1);
-    if (_fieeetomsbin(&val, (float *)tqbs->chr) == 1) {
-        error(5);
-        tqbs->len = 0;
-    }
-    return tqbs;
-}
-qbs *func_mkdmbf(double val) {
-    static qbs *tqbs;
-    tqbs = qbs_new(8, 1);
-    if (_dieeetomsbin(&val, (double *)tqbs->chr) == 1) {
-        error(5);
-        tqbs->len = 0;
-    }
-    return tqbs;
-}
-
-float func_cvsmbf(qbs *str) {
-    static float val;
-    if (str->len < 4) {
-        error(5);
-        return 0;
-    }
-    if (_fmsbintoieee((float *)str->chr, &val) == 1) {
-        error(5);
-        return 0;
-    }
-    return val;
-}
-double func_cvdmbf(qbs *str) {
-    static double val;
-    if (str->len < 8) {
-        error(5);
-        return 0;
-    }
-    if (_dmsbintoieee((double *)str->chr, &val) == 1) {
-        error(5);
-        return 0;
-    }
-    return val;
-}
-
-qbs *b2string(char v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(1, 1);
-    *((char *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *ub2string(char v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(1, 1);
-    *((uint8 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *i2string(int16 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(2, 1);
-    *((int16 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *ui2string(int16 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(2, 1);
-    *((uint16 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *l2string(int32 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(4, 1);
-    *((int32 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *ul2string(uint32 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(4, 1);
-    *((uint32 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *i642string(int64 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(8, 1);
-    *((int64 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *ui642string(uint64 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(8, 1);
-    *((uint64 *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *s2string(float v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(4, 1);
-    *((float *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *d2string(double v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(8, 1);
-    *((double *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *f2string(long double v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(32, 1);
-    memset(tqbs->chr, 0, 32);
-    *((long double *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *o2string(ptrszint v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(sizeof(ptrszint), 1);
-    memset(tqbs->chr, 0, sizeof(ptrszint));
-    *((ptrszint *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *uo2string(uptrszint v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(sizeof(uptrszint), 1);
-    memset(tqbs->chr, 0, sizeof(uptrszint));
-    *((uptrszint *)(tqbs->chr)) = v;
-    return tqbs;
-}
-qbs *bit2string(uint32 bsize, int64 v) {
-    static qbs *tqbs;
-    tqbs = qbs_new(8, 1);
-    int64 bmask;
-    bmask = ~(-(((int64)1) << bsize));
-    *((int64 *)(tqbs->chr)) = v & bmask;
-    tqbs->len = (bsize + 7) >> 3;
-    return tqbs;
-}
-qbs *ubit2string(uint32 bsize, uint64 v) {
-    static qbs *tqbs;
-    int64 bmask;
-    tqbs = qbs_new(8, 1);
-    bmask = ~(-(((int64)1) << bsize));
-    *((uint64 *)(tqbs->chr)) = v & bmask;
-    tqbs->len = (bsize + 7) >> 3;
-    return tqbs;
-}
-
-char string2b(qbs *str) {
-    if (str->len < 1) {
-        error(5);
-        return 0;
-    } else {
-        return *((char *)str->chr);
-    }
-}
-uint8 string2ub(qbs *str) {
-    if (str->len < 1) {
-        error(5);
-        return 0;
-    } else {
-        return *((uint8 *)str->chr);
-    }
-}
-int16 string2i(qbs *str) {
-    if (str->len < 2) {
-        error(5);
-        return 0;
-    } else {
-        return *((int16 *)str->chr);
-    }
-}
-uint16 string2ui(qbs *str) {
-    if (str->len < 2) {
-        error(5);
-        return 0;
-    } else {
-        return *((uint16 *)str->chr);
-    }
-}
-int32 string2l(qbs *str) {
-    if (str->len < 4) {
-        error(5);
-        return 0;
-    } else {
-        return *((int32 *)str->chr);
-    }
-}
-uint32 string2ul(qbs *str) {
-    if (str->len < 4) {
-        error(5);
-        return 0;
-    } else {
-        return *((uint32 *)str->chr);
-    }
-}
-int64 string2i64(qbs *str) {
-    if (str->len < 8) {
-        error(5);
-        return 0;
-    } else {
-        return *((int64 *)str->chr);
-    }
-}
-uint64 string2ui64(qbs *str) {
-    if (str->len < 8) {
-        error(5);
-        return 0;
-    } else {
-        return *((uint64 *)str->chr);
-    }
-}
-float string2s(qbs *str) {
-    if (str->len < 4) {
-        error(5);
-        return 0;
-    } else {
-        return *((float *)str->chr);
-    }
-}
-double string2d(qbs *str) {
-    if (str->len < 8) {
-        error(5);
-        return 0;
-    } else {
-        return *((double *)str->chr);
-    }
-}
-long double string2f(qbs *str) {
-    if (str->len < 32) {
-        error(5);
-        return 0;
-    } else {
-        return *((long double *)str->chr);
-    }
-}
-ptrszint string2o(qbs *str) {
-    if (str->len < sizeof(ptrszint)) {
-        error(5);
-        return 0;
-    } else {
-        return *((ptrszint *)str->chr);
-    }
-}
-uptrszint string2uo(qbs *str) {
-    if (str->len < sizeof(uptrszint)) {
-        error(5);
-        return 0;
-    } else {
-        return *((uptrszint *)str->chr);
-    }
-}
-uint64 string2ubit(qbs *str, uint32 bsize) {
-    int64 bmask;
-    if (str->len < ((bsize + 7) >> 3)) {
-        error(5);
-        return 0;
-    }
-    bmask = ~(-(((int64)1) << bsize));
-    return (*(uint64 *)str->chr) & bmask;
-}
-int64 string2bit(qbs *str, uint32 bsize) {
-    int64 bmask, bval64;
-    if (str->len < ((bsize + 7) >> 3)) {
-        error(5);
-        return 0;
-    }
-    bmask = ~(-(((int64)1) << bsize));
-    bval64 = (*(uint64 *)str->chr) & bmask;
-    if (bval64 & (((int64)1) << (bsize - 1)))
-        return (bval64 | (~bmask));
-    return bval64;
 }
 
 qbs *qbs_inkey() {
@@ -17790,127 +17496,6 @@ void sub_graphics_put(float x1f, float y1f, void *element, int32 option, uint32 
     */
 }
 
-void sub_date(qbs *date) {
-    if (is_error_pending())
-        return;
-    return; // stub
-}
-
-qbs *func_date() {
-    // mm-dd-yyyy
-    // 0123456789
-    static time_t qb64_tm_val;
-    static tm *qb64_tm;
-    // struct tm {
-    //        int tm_sec;     /* seconds after the minute - [0,59] */
-    //        int tm_min;     /* minutes after the hour - [0,59] */
-    //        int tm_hour;    /* hours since midnight - [0,23] */
-    //        int tm_mday;    /* day of the month - [1,31] */
-    //        int tm_mon;     /* months since January - [0,11] */
-    //        int tm_year;    /* years since 1900 */
-    //        int tm_wday;    /* days since Sunday - [0,6] */
-    //        int tm_yday;    /* days since January 1 - [0,365] */
-    //        int tm_isdst;   /* daylight savings time flag */
-    //        };
-    static int32 x, x2, i;
-    static qbs *str;
-    str = qbs_new(10, 1);
-    str->chr[2] = 45;
-    str->chr[5] = 45; //-
-    time(&qb64_tm_val);
-    if (qb64_tm_val == -1) {
-        error(5);
-        str->len = 0;
-        return str;
-    }
-    qb64_tm = localtime(&qb64_tm_val);
-    if (qb64_tm == NULL) {
-        error(5);
-        str->len = 0;
-        return str;
-    }
-    x = qb64_tm->tm_mon;
-    x++;
-    i = 0;
-    str->chr[i] = x / 10 + 48;
-    str->chr[i + 1] = x % 10 + 48;
-    x = qb64_tm->tm_mday;
-    i = 3;
-    str->chr[i] = x / 10 + 48;
-    str->chr[i + 1] = x % 10 + 48;
-    x = qb64_tm->tm_year;
-    x += 1900;
-    i = 6;
-    x2 = x / 1000;
-    x = x - x2 * 1000;
-    str->chr[i] = x2 + 48;
-    i++;
-    x2 = x / 100;
-    x = x - x2 * 100;
-    str->chr[i] = x2 + 48;
-    i++;
-    x2 = x / 10;
-    x = x - x2 * 10;
-    str->chr[i] = x2 + 48;
-    i++;
-    str->chr[i] = x + 48;
-    return str;
-}
-
-void sub_time(qbs *str) {
-    if (is_error_pending())
-        return;
-    return; // stub
-}
-
-qbs *func_time() {
-    // 23:59:59 (hh:mm:ss)
-    // 01234567
-    static time_t qb64_tm_val;
-    static tm *qb64_tm;
-    // struct tm {
-    //        int tm_sec;     /* seconds after the minute - [0,59] */
-    //        int tm_min;     /* minutes after the hour - [0,59] */
-    //        int tm_hour;    /* hours since midnight - [0,23] */
-    //        int tm_mday;    /* day of the month - [1,31] */
-    //        int tm_mon;     /* months since January - [0,11] */
-    //        int tm_year;    /* years since 1900 */
-    //        int tm_wday;    /* days since Sunday - [0,6] */
-    //        int tm_yday;    /* days since January 1 - [0,365] */
-    //        int tm_isdst;   /* daylight savings time flag */
-    //        };
-    static int32 x, x2, i;
-    static qbs *str;
-    str = qbs_new(8, 1);
-    str->chr[2] = 58;
-    str->chr[5] = 58; //:
-    time(&qb64_tm_val);
-    if (qb64_tm_val == -1) {
-        error(5);
-        str->len = 0;
-        return str;
-    }
-    qb64_tm = localtime(&qb64_tm_val);
-    if (qb64_tm == NULL) {
-        error(5);
-        str->len = 0;
-        return str;
-    }
-    x = qb64_tm->tm_hour;
-    i = 0;
-    str->chr[i] = x / 10 + 48;
-    str->chr[i + 1] = x % 10 + 48;
-    x = qb64_tm->tm_min;
-    i = 3;
-    str->chr[i] = x / 10 + 48;
-    str->chr[i + 1] = x % 10 + 48;
-    x = qb64_tm->tm_sec;
-    i = 6;
-    str->chr[i] = x / 10 + 48;
-    str->chr[i + 1] = x % 10 + 48;
-    return str;
-}
-
 int32 func_csrlin() {
 #ifdef QB64_WINDOWS // Windows console CSRLIN support
     if (write_page->console) {
@@ -17942,44 +17527,6 @@ int32 func_pos(int32 ignore) {
     if (write_page->holding_cursor)
         return 1;
     return write_page->cursor_x;
-}
-
-double func_log(double value) {
-    if (value <= 0) {
-        error(5);
-        return 0;
-    }
-    return std::log(value);
-}
-
-// FIX
-double func_fix_double(double value) {
-    if (value < 0)
-        return std::ceil(value);
-    else
-        return std::floor(value);
-}
-long double func_fix_float(long double value) {
-    if (value < 0)
-        return std::ceil(value);
-    else
-        return std::floor(value);
-}
-
-// EXP
-double func_exp_single(double value) {
-    if (value <= 88.02969) {
-        return std::exp(value);
-    }
-    error(6);
-    return 0;
-}
-long double func_exp_float(long double value) {
-    if (value <= 709.782712893) {
-        return std::exp(value);
-    }
-    error(6);
-    return 0;
 }
 
 int32 sleep_break = 0;
@@ -19414,14 +18961,6 @@ void sub_file_line_input_string(int32 fileno, qbs *deststr) {
         error(54); // Bad file mode
     }
     return;
-}
-
-double func_sqr(double value) {
-    if (value < 0) {
-        error(5);
-        return 0;
-    }
-    return std::sqrt(value);
 }
 
 int32 shell_call_in_progress = 0;
@@ -20916,16 +20455,6 @@ void sub_shell4(qbs *str, int32 passed) { //_DONTWAIT & _HIDE
 shell_complete:;
 
 } //_DONTWAIT & _HIDE
-
-long double pow2(long double x, long double y) {
-    if (x < 0) {
-        if (y != std::floor(y)) {
-            error(5);
-            return 0;
-        }
-    }
-    return std::pow(x, y);
-}
 
 int32 func_freefile() { return gfs_fileno_freefile(); }
 
@@ -25280,103 +24809,6 @@ udlr:
     prefix_b = 0;
     prefix_n = 0;
     goto nextchar;
-}
-
-#ifdef QB64_WINDOWS
-#    define envp _environ
-#else
-extern char **environ;
-#    define envp environ
-#endif
-
-int32 func__environcount() {
-    // count array bound
-    char **p = envp;
-    while (*++p)
-        ;
-    return p - envp;
-}
-
-qbs *func_environ(qbs *name) {
-    char *query, *result;
-    qbs *tqbs;
-    query = (char *)malloc(name->len + 1);
-    query[name->len] = '\0'; // add NULL terminator
-    memcpy(query, name->chr, name->len);
-    result = getenv(query);
-    if (result) {
-        int result_length = strlen(result);
-        tqbs = qbs_new(result_length, 1);
-        memcpy(tqbs->chr, result, result_length);
-    } else {
-        tqbs = qbs_new(0, 1);
-    }
-    return tqbs;
-}
-
-qbs *func_environ(int32 number) {
-    char *result;
-    qbs *tqbs;
-    int result_length;
-    if (number <= 0) {
-        tqbs = qbs_new(0, 1);
-        error(5);
-        return tqbs;
-    }
-    // Check we do not go beyond array bound
-    char **p = envp;
-    while (*++p)
-        ;
-    if (number > p - envp) {
-        tqbs = qbs_new(0, 1);
-        return tqbs;
-    }
-    result = envp[number - 1];
-    result_length = strlen(result);
-    tqbs = qbs_new(result_length, 1);
-    memcpy(tqbs->chr, result, result_length);
-    return tqbs;
-}
-
-void sub_environ(qbs *str) {
-    char *buf;
-    char *separator;
-    buf = (char *)malloc(str->len + 1);
-    buf[str->len] = '\0';
-    memcpy(buf, str->chr, str->len);
-    // Name and value may be separated by = or space
-    separator = strchr(buf, ' ');
-    if (!separator) {
-        separator = strchr(buf, '=');
-    }
-    if (!separator) {
-        // It is an error is there is no separator
-        error(5);
-        return;
-    }
-    // Split into two separate strings
-    *separator = '\0';
-    if (separator == &buf[str->len] - 1) {
-        // Separator is at end of string, so remove the variable
-#ifdef QB64_WINDOWS
-        *separator = '=';
-        _putenv(buf);
-#else
-        unsetenv(buf);
-#endif
-    } else {
-#ifdef QB64_WINDOWS
-#    if WINVER >= 0x0600
-        _putenv_s(buf, separator + 1);
-#    else
-        *separator = '=';
-        _putenv(buf);
-#    endif
-#else
-        setenv(buf, separator + 1, 1);
-#endif
-    }
-    free(buf);
 }
 
 #ifdef QB64_WINDOWS

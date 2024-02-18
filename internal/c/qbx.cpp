@@ -1,8 +1,10 @@
 #include "audio.h"
+#include "bitops.h"
 #include "common.h"
 #include "compression.h"
 #include "command.h"
 #include "datetime.h"
+#include "environ.h"
 #include "event.h"
 #include "extended_math.h"
 #include "filepath.h"
@@ -10,7 +12,9 @@
 #include "font.h"
 #include "gui.h"
 #include "image.h"
+#include "qbmath.h"
 #include "qbs.h"
+#include "qbs-mk-cv.h"
 #include "error_handle.h"
 #include "mem.h"
 #include "rounding.h"
@@ -207,10 +211,6 @@ extern int32 func__openconnection(int32);
 extern int32 func__openclient(qbs *);
 extern int32 func__connected(int32);
 extern qbs *func__connectionaddress(int32);
-extern int32 func__environcount();
-extern qbs *func_environ(qbs *);
-extern qbs *func_environ(int32);
-extern void sub_environ(qbs *);
 extern void sub_draw(qbs *);
 extern void qbs_maketmp(qbs *);
 extern void sub_run(qbs *);
@@ -250,14 +250,6 @@ extern int32 func_peek(int32 offset);
 extern void sub_poke(int32 offset, int32 value);
 extern void more_return_points();
 extern qbs *func_varptr_helper(uint8 type, uint16 offset);
-extern qbs *func_mksmbf(float val);
-extern qbs *func_mkdmbf(double val);
-extern float func_cvsmbf(qbs *str);
-extern double func_cvdmbf(qbs *str);
-extern qbs *bit2string(uint32 bsize, int64 v);
-extern qbs *ubit2string(uint32 bsize, uint64 v);
-extern uint64 string2ubit(qbs *str, uint32 bsize);
-extern int64 string2bit(qbs *str, uint32 bsize);
 extern void sub_lset(qbs *dest, qbs *source);
 extern void sub_rset(qbs *dest, qbs *source);
 extern qbs *func_space(int32 spaces);
@@ -377,17 +369,8 @@ extern void sub_graphics_get(float x1f, float y1f, float x2f, float y2f,
                              void *element, uint32 mask, int32 passed);
 extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option,
                              uint32 mask, int32 passed);
-extern void sub_date(qbs *date);
-extern qbs *func_date();
-extern void sub_time(qbs *str);
-extern qbs *func_time();
 extern int32 func_csrlin();
 extern int32 func_pos(int32 ignore);
-extern double func_log(double value);
-extern double func_fix_double(double value);
-extern long double func_fix_float(long double value);
-extern double func_exp_single(double value);
-extern long double func_exp_float(long double value);
 extern void sub_sleep(int32 seconds, int32 passed);
 extern qbs *func__bin(int64 value, int32 neg_bits);
 extern qbs *func__bin_float(long double value);
@@ -397,18 +380,6 @@ extern qbs *func_hex(int64 value, int32 neg_size);
 extern qbs *func_hex_float(long double value);
 extern ptrszint func_lbound(ptrszint *array, int32 index, int32 num_indexes);
 extern ptrszint func_ubound(ptrszint *array, int32 index, int32 num_indexes);
-
-extern int32 func_sgn(uint8 v);
-extern int32 func_sgn(int8 v);
-extern int32 func_sgn(uint16 v);
-extern int32 func_sgn(int16 v);
-extern int32 func_sgn(uint32 v);
-extern int32 func_sgn(int32 v);
-extern int32 func_sgn(uint64 v);
-extern int32 func_sgn(int64 v);
-extern int32 func_sgn(float v);
-extern int32 func_sgn(double v);
-extern int32 func_sgn(long double v);
 
 extern int32 func_inp(int32 port);
 extern void sub_wait(int32 port, int32 andexpression, int32 xorexpression,
@@ -428,8 +399,6 @@ extern int64 func_loc(int32 i);
 extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
-extern double func_sqr(double value);
-extern long double pow2(long double x, long double y);
 extern int32 func_freefile();
 extern void sub__mousehide();
 extern void sub__mouseshow(qbs *style, int32 passed);
@@ -507,46 +476,10 @@ extern int32 print_using_double(qbs *format, double value, int32 start,
                                 qbs *output);
 extern int32 print_using_float(qbs *format, long double value, int32 start,
                                qbs *output);
-extern qbs *b2string(char v);
-extern qbs *ub2string(char v);
-extern qbs *i2string(int16 v);
-extern qbs *ui2string(int16 v);
-extern qbs *l2string(int32 v);
-extern qbs *ul2string(uint32 v);
-extern qbs *i642string(int64 v);
-extern qbs *ui642string(uint64 v);
-extern qbs *s2string(float v);
-extern qbs *d2string(double v);
-extern qbs *f2string(long double v);
-extern qbs *o2string(ptrszint v);
-extern qbs *uo2string(uptrszint v);
-extern char string2b(qbs *str);
-extern uint8 string2ub(qbs *str);
-extern int16 string2i(qbs *str);
-extern uint16 string2ui(qbs *str);
-extern int32 string2l(qbs *str);
-extern uint32 string2ul(qbs *str);
-extern int64 string2i64(qbs *str);
-extern uint64 string2ui64(qbs *str);
-extern float string2s(qbs *str);
-extern double string2d(qbs *str);
-extern long double string2f(qbs *str);
-extern ptrszint string2o(qbs *str);
-extern uptrszint string2uo(qbs *str);
-// Cobalt(aka Dave) added the next 2 lines
-uint64 func__shr(uint64 a1, int b1);
-uint64 func__shl(uint64 a1, int b1);
-int64 func__readbit(uint64 a1, int b1);
-uint64 func__setbit(uint64 a1, int b1);
-uint64 func__resetbit(uint64 a1, int b1);
-uint64 func__togglebit(uint64 a1, int b1);
+
 #ifndef QB64_WINDOWS
 extern void ZeroMemory(void *ptr, int64 bytes);
 #endif
-
-extern uint64 getubits(uint32 bsize, uint8 *base, ptrszint i);
-extern int64 getbits(uint32 bsize, uint8 *base, ptrszint i);
-extern void setbits(uint32 bsize, uint8 *base, ptrszint i, int64 val);
 
 // shared global variables
 extern int32 sleep_break;
@@ -682,19 +615,6 @@ void swap_block(void *a, void *b, uint32 bytes) {
 }
 
 
-// force abs to return floating point numbers correctly
-inline double func_abs(double d) { return std::fabs(d); }
-inline long double func_abs(long double d) { return std::fabs(d); }
-inline float func_abs(float d) { return std::fabs(d); }
-
-inline uint8 func_abs(uint8 d) { return d; }
-inline uint16 func_abs(uint16 d) { return d; }
-inline uint32 func_abs(uint32 d) { return d; }
-inline uint64 func_abs(uint64 d) { return d; }
-inline int8 func_abs(int8 d) { return std::abs(d); }
-inline int16 func_abs(int16 d) { return std::abs(d); }
-inline int32 func_abs(int32 d) { return std::abs(d); }
-inline int64 func_abs(int64 d) { return std::llabs(d); }
 
 extern int32 disableEvents;
 
@@ -743,159 +663,6 @@ inline ptrszint array_check(uptrszint index, uptrszint limit) {
     error(9);
     return 0;
 }
-
-inline int32 func_sgn(uint8 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int8 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(uint16 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int16 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(uint32 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int32 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(uint64 v) {
-    if (v)
-        return 1;
-    else
-        return 0;
-}
-inline int32 func_sgn(int64 v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(float v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(double v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-inline int32 func_sgn(long double v) {
-    if (v)
-        if (v > 0)
-            return 1;
-        else
-            return -1;
-    return 0;
-}
-
-// a740g: ROR & ROL additions start
-// The rotation functions below are the way they are for a couple of reasons:
-//  1. They are safer (well folks seem to think so; see https://en.wikipedia.org/wiki/Circular_shift#Implementing_circular_shifts)
-//  2. We are using C library constants and there is just 1 numeric literal - '1'
-//  3. GGC recognizes the 'pattern' and will optimize it out to 'roX' and 3 more instructions when using O2
-inline uint8_t func__rol8(uint8_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value << count) | (value >> (-count & mask));
-}
-
-inline uint8_t func__ror8(uint8_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value >> count) | (value << (-count & mask));
-}
-
-inline uint16_t func__rol16(uint16_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value << count) | (value >> (-count & mask));
-}
-
-inline uint16_t func__ror16(uint16_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value >> count) | (value << (-count & mask));
-}
-
-inline uint32_t func__rol32(uint32_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value << count) | (value >> (-count & mask));
-}
-
-inline uint32_t func__ror32(uint32_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value >> count) | (value << (-count & mask));
-}
-
-inline uint64_t func__rol64(uint64_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value << count) | (value >> (-count & mask));
-}
-
-inline uint64_t func__ror64(uint64_t value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(value) - 1;
-    count &= mask;
-    return (value >> count) | (value << (-count & mask));
-}
-// a740g: ROR & ROL additions end
-
-// bit-shifting
-inline uint64 func__shl(uint64 a1, int b1) { return a1 << b1; }
-
-inline uint64 func__shr(uint64 a1, int b1) { return a1 >> b1; }
-
-inline int64 func__readbit(uint64 a1, int b1) {
-    if (a1 & 1ull << b1)
-        return -1;
-    else
-        return 0;
-}
-
-inline uint64 func__setbit(uint64 a1, int b1) { return a1 | 1ull << b1; }
-
-inline uint64 func__resetbit(uint64 a1, int b1) { return a1 & ~(1ull << b1); }
-
-inline uint64 func__togglebit(uint64 a1, int b1) { return a1 ^ 1ull << b1; }
 
 // Working with 32bit colors:
 inline uint32 func__rgb32(int32 r, int32 g, int32 b, int32 a) {
