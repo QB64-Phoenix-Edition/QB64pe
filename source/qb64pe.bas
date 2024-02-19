@@ -19885,7 +19885,7 @@ FUNCTION lineformat$ (a$)
     '----------------quoted string----------------
     IF c = 34 THEN '"
         endingquote = INSTR(i + 1, ca$, CHR$(34))
-        IF endingquote = 0 THEN endingquote = n - 2
+        IF endingquote = 0 THEN endingquote = n - 1
 
         a2$ = a2$ + sp + createElementString$(MID$(ca$, i + 1, endingquote - 1 - i))
         i = endingquote + 1
