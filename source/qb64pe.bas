@@ -13410,7 +13410,7 @@ SUB PrintTemporarySettingsHelpAndExit (errstr$)
     PRINT
     PRINT "Valid settings:"
     PRINT "    -f:OptimizeCppProgram=[true|false]   (Use C++ Optimization flag, default false)"
-    PRINT "    -f:StripDebugSymbols=[true|false]    (Stirp C++ debug symbols, default true)"
+    PRINT "    -f:StripDebugSymbols=[true|false]    (Strip C++ debug symbols, default true)"
     PRINT "    -f:ExtraCppFlags=[string]            (Extra flags to pass to the C++ compiler)"
     PRINT "    -f:ExtraLinkerFlags=[string]         (Extra flags to pass at link time)"
     PRINT "    -f:MaxCompilerProcesses=[integer]    (Max C++ compiler processes to start in parallel)"
