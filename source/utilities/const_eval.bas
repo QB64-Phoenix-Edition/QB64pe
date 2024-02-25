@@ -600,13 +600,8 @@ FUNCTION Factor&(exp$, state AS ParserState)
             ele$ = getnextelement$(exp$, state.index, state.strIndex)
             IF Unary&(exp$, state) = 0 THEN FixupErrorMessage state, "/": EXIT FUNCTION
 
-            IF (num.typ AND ISFLOAT) OR (state.num.typ AND ISFLOAT) THEN
-                ParseNumSetF num, FLOATTYPE - ISPOINTER, num.f / state.num.f
-            ELSEIF (num.typ AND ISUNSIGNED) OR (state.num.typ AND ISUNSIGNED) THEN
-                ParseNumSetUI num, UINTEGER64TYPE - ISPOINTER, num.ui / state.num.ui
-            ELSE
-                ParseNumSetI num, INTEGER64TYPE - ISPOINTER, num.i / state.num.i
-            END IF
+            ' Regular division is always done as floating-point
+            ParseNumSetF num, FLOATTYPE - ISPOINTER, num.f / state.num.f
         ELSE
             IF CONST_EVAL_DEBUG THEN  _Echo "Factor done!"
             state.num = num

@@ -47,6 +47,8 @@ CONST const__str4 = (const__str + (const__str2))
 
 CONST const__unsignedint = 2~&& * 5~&&
 
+CONST const__division_floating = 1& / 5&
+
 PRINT const__OR
 PRINT const__AND
 PRINT const__NOT
@@ -90,5 +92,7 @@ PRINT const__str3
 PRINT const__str4
 
 PRINT const__unsignedint
+
+PRINT const__division_floating
 
 SYSTEM
