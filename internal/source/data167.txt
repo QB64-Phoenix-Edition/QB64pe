@@ -3,15 +3,15 @@ if(_FUNC_EXPONENT_LONG_EXPONENT==NULL){
 _FUNC_EXPONENT_LONG_EXPONENT=(int32*)mem_static_malloc(4);
 *_FUNC_EXPONENT_LONG_EXPONENT=0;
 }
-qbs*oldstr4010=NULL;
+qbs*oldstr4006=NULL;
 if(_FUNC_EXPONENT_STRING_EXP->tmp||_FUNC_EXPONENT_STRING_EXP->fixed||_FUNC_EXPONENT_STRING_EXP->readonly){
-oldstr4010=_FUNC_EXPONENT_STRING_EXP;
-if (oldstr4010->cmem_descriptor){
-_FUNC_EXPONENT_STRING_EXP=qbs_new_cmem(oldstr4010->len,0);
+oldstr4006=_FUNC_EXPONENT_STRING_EXP;
+if (oldstr4006->cmem_descriptor){
+_FUNC_EXPONENT_STRING_EXP=qbs_new_cmem(oldstr4006->len,0);
 }else{
-_FUNC_EXPONENT_STRING_EXP=qbs_new(oldstr4010->len,0);
+_FUNC_EXPONENT_STRING_EXP=qbs_new(oldstr4006->len,0);
 }
-memcpy(_FUNC_EXPONENT_STRING_EXP->chr,oldstr4010->chr,oldstr4010->len);
+memcpy(_FUNC_EXPONENT_STRING_EXP->chr,oldstr4006->chr,oldstr4006->len);
 }
 void *_FUNC_EXPONENT_UDT_NUM=NULL;
 if(_FUNC_EXPONENT_UDT_NUM==NULL){
@@ -21,12 +21,12 @@ memset(_FUNC_EXPONENT_UDT_NUM,0,60);
 }
 qbs *_FUNC_EXPONENT_STRING_ELE=NULL;
 if (!_FUNC_EXPONENT_STRING_ELE)_FUNC_EXPONENT_STRING_ELE=qbs_new(0,0);
+int32 pass4008;
+long double pass4009;
+int32 pass4010;
+uint64 pass4011;
 int32 pass4012;
-long double pass4013;
-int32 pass4014;
-uint64 pass4015;
-int32 pass4016;
-int64 pass4017;
+int64 pass4013;
 int32 *_FUNC_EXPONENT_LONG_SIG=NULL;
 if(_FUNC_EXPONENT_LONG_SIG==NULL){
 _FUNC_EXPONENT_LONG_SIG=(int32*)mem_static_malloc(4);
@@ -37,5 +37,5 @@ if(_FUNC_EXPONENT_FLOAT_EXPON==NULL){
 _FUNC_EXPONENT_FLOAT_EXPON=(long double*)mem_static_malloc(32);
 *_FUNC_EXPONENT_FLOAT_EXPON=0;
 }
-int32 pass4018;
-long double pass4019;
+int32 pass4014;
+long double pass4015;
