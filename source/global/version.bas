@@ -1,9 +1,9 @@
 DIM SHARED Version AS STRING
 DIM SHARED IsCiVersion AS _BYTE
 
-Version$ = "3.11.0"
-$VERSIONINFO:FILEVERSION#=3,11,0,0
-$VERSIONINFO:PRODUCTVERSION#=3,11,0,0
+Version$ = "3.12.0"
+$VERSIONINFO:FILEVERSION#=3,12,0,0
+$VERSIONINFO:PRODUCTVERSION#=3,12,0,0
 
 ' If ./internal/version.txt exist, then this is some kind of CI build with a label
 IF _FILEEXISTS("internal/version.txt") THEN
