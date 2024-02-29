@@ -3652,7 +3652,7 @@ void init_blend() {
     }
     /*
         "60%+60%=84%" formula
-        imagine a 60% opaque lens, you can see 40% of whats behind
+        imagine a 60% opaque lens, you can see 40% of what's behind
         now put another 60% opaque lens on top of it
         you can now see 40% of the previous lens of which 40% is of the original scene
         40% of 40% is 16%

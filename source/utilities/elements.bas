@@ -535,7 +535,7 @@ FUNCTION elementIsNumber&(oele$)
 END FUNCTION
 
 FUNCTION elementIsString&(ele$)
-    ' String elements are always surounded by quotes
+    ' String elements are always surrounded by quotes
     elementIsString& = INSTR(ele$, CHR$(34)) <> 0
 END FUNCTION
 
