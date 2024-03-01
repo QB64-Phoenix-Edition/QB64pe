@@ -196,7 +196,7 @@ skippedtmpsrcindex:
     // all next indexes invalid!
     qbs_cmem_list_nexti = deststr->listi + 1;                           // adjust nexti
     if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes aquiring srcstr's space
+        memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
         qbs_cmem_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - dblock;
         goto update_cmem_descriptor;

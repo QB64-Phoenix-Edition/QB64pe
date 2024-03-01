@@ -3535,7 +3535,7 @@ DO
                 IF s = subfuncn OR s = -1 THEN 'same scope?
                     IF s = -1 THEN Labels(r).Scope = subfuncn 'acquire scope
                     IF Labels(r).State = 1 THEN a$ = "Duplicate label (" + RTRIM$(Labels(r).cn) + ")": GOTO errmes
-                    'aquire state 0 types
+                    'acquire state 0 types
                     tlayout$ = RTRIM$(Labels(r).cn)
                     GOTO addlabaq100
                 END IF 'same scope
@@ -3600,7 +3600,7 @@ DO
                     IF s = subfuncn OR s = -1 THEN 'same scope?
                         IF s = -1 THEN Labels(r).Scope = subfuncn 'acquire scope
                         IF Labels(r).State = 1 THEN a$ = "Duplicate label (" + RTRIM$(Labels(r).cn) + ")": GOTO errmes
-                        'aquire state 0 types
+                        'acquire state 0 types
                         tlayout$ = RTRIM$(Labels(r).cn)
                         GOTO addlabaq
                     END IF 'same scope
@@ -9283,7 +9283,7 @@ DO
                     r = nLabels
                     Labels(r).State = 0
                     Labels(r).cn = tlayout$
-                    Labels(r).Scope = -1 'modifyable scope
+                    Labels(r).Scope = -1 'modifiable scope
                     Labels(r).Error_Line = linenumber
                     Labels(r).Data_Referenced = 1
                 END IF 'x
@@ -10458,7 +10458,7 @@ DO
                     END IF
 
                     'swap UDT?
-                    'note: entire UDTs, unlike thier elements cannot be swapped like standard variables
+                    'note: entire UDTs, unlike their elements cannot be swapped like standard variables
                     '      as UDT sizes may vary, and to avoid a malloc operation, QB64 should allocate a buffer
                     '      in global.txt for the purpose of swapping each UDT type
 
@@ -10502,7 +10502,7 @@ DO
                         END IF 'i
                     END IF 'isudt
 
-                    'cull irrelavent flags to make comparison possible
+                    'cull irrelevant flags to make comparison possible
                     e1typc = e1typ
                     IF e1typc AND ISPOINTER THEN e1typc = e1typc - ISPOINTER
                     IF e1typc AND ISINCONVENTIONALMEMORY THEN e1typc = e1typc - ISINCONVENTIONALMEMORY
@@ -10672,7 +10672,7 @@ DO
                     nelereq = ASC(MID$(id2.nelereq, i, 1))
 
                     addlayout = 1 'omits option values in layout (eg. BINARY="2")
-                    convertspacing = 0 'if an 'equation' is next, it will be preceeded by a space
+                    convertspacing = 0 'if an 'equation' is next, it will be preceded by a space
                     x$ = separgslayout2$(i)
                     DO WHILE LEN(x$)
                         x = ASC(x$)
@@ -11615,7 +11615,7 @@ FOR i = 1 TO idn
         IF ids(i).arraytype THEN 'an array
             getid i
             IF Error_Happened THEN GOTO errmes
-            IF id.arrayelements = -1 THEN GOTO clearerasereturned 'cannot erase non-existant array
+            IF id.arrayelements = -1 THEN GOTO clearerasereturned 'cannot erase non-existent array
             IF INSTR(vWatchVariableExclusions$, "@" + RTRIM$(id.callname) + "@") > 0 THEN
                 GOTO clearerasereturned
             END IF
@@ -13630,7 +13630,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     staticarray = constdimensions
     IF subfuncn <> 0 AND dimstatic = 0 THEN staticarray = 0 'arrays in SUBS/FUNCTIONS are DYNAMIC
-    IF dimstatic = 3 THEN staticarray = 0 'STATIC arrayname() listed arrays keep thier values but are dynamic in memory
+    IF dimstatic = 3 THEN staticarray = 0 'STATIC arrayname() listed arrays keep their values but are dynamic in memory
     IF DynamicMode THEN staticarray = 0
     IF redimoption THEN staticarray = 0
     IF dimoption = 3 THEN staticarray = 0 'STATIC a(100) arrays are still dynamic
@@ -16235,7 +16235,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                         IF (oldtyp AND ISUNSIGNED) = 0 THEN offsetmode = 1
                     END IF
 
-                    'depending on the operater we may do things differently
+                    'depending on the operate we may do things differently
                     'the default method is convert both sides to integer first
                     'but these operators are different: * / ^
                     IF o$ = "*" OR o$ = "/" OR o$ = "^" THEN
@@ -16308,7 +16308,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                 END IF
 
                 'Reduce floating point values to common base for comparison?
-                IF isop = 7 THEN 'comparitive operator
+                IF isop = 7 THEN 'comparative operator
                     'Corrects problems encountered such as:
                     '    S = 2.1
                     '    IF S = 2.1 THEN PRINT "OK" ELSE PRINT "ERROR S PRINTS AS"; S; "BUT IS SEEN BY QB64 AS..."
@@ -16330,7 +16330,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                             block(i + 1) = "((double)(" + block(i + 1) + "))": newtyp = 64& + ISFLOAT
                         END IF
                     END IF 'both floating point
-                END IF 'comparitive operator
+                END IF 'comparative operator
 
                 typ = newtyp
 
@@ -16799,7 +16799,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 ' a740g: ROR & ROL support
                 IF n$ = "_ROR" OR (n$ = "ROR" AND qb64prefix_set = 1) OR n$ = "_ROL" OR (n$ = "ROL" AND qb64prefix_set = 1) THEN
                     rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' Get the last 3 characters and convert to lower case. We'll need this to construct the C call
-                    IF curarg = 1 THEN ' First paramater
+                    IF curarg = 1 THEN ' First parameter
                         IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN ' Bad parameters types
                             Give_Error "Expected non-floating-point value"
                             EXIT FUNCTION
@@ -21033,7 +21033,7 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
     IF id.t THEN
         r$ = RTRIM$(id.n)
         t = id.t
-        'remove irrelavant flags
+        'remove irrelevant flags
         IF (t AND ISINCONVENTIONALMEMORY) THEN t = t - ISINCONVENTIONALMEMORY
         'string?
         IF (t AND ISSTRING) THEN
@@ -21479,7 +21479,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
 
 
     IF Debug THEN
-        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #1:1--------"
+        PRINT #9, "--------SEPARATE ARGUMENTS REPORT #1:1--------"
         FOR i = 1 TO lastt
             PRINT #9, i, "OPT=" + CHR$(34) + RTRIM$(Opt(i, 1)) + CHR$(34)
             PRINT #9, i, "OPTWORDS="; OptWords(i, 1)
@@ -21502,7 +21502,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
     NEXT
 
     IF Debug THEN
-        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #1:2--------"
+        PRINT #9, "--------SEPARATE ARGUMENTS REPORT #1:2--------"
         FOR i = 1 TO lastt
             PRINT #9, i, "OPT=" + CHR$(34) + RTRIM$(Opt(i, 1)) + CHR$(34)
             PRINT #9, i, "OPTWORDS="; OptWords(i, 1)
@@ -21590,7 +21590,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
                     IF T(x) = 1 THEN
                         'It is a symbol or a {}block with only one option
                         'a {}block with only one option MAY not need to be passed
-                        'depending on if anything else is in this block could make the existance of this opt () assumed
+                        'depending on if anything else is in this block could make the existence of this opt () assumed
                         'Note: Symbols which are not encapsulated inside a {}block never need to be passed
                         '      Symbols already have dontpass() set to 1
                         IF DontPass(x) = 0 THEN templistn = templistn + 1: TempList(templistn) = x: DontPass(x) = 1
@@ -21631,7 +21631,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
     NEXT
 
     IF Debug THEN
-        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #1:3--------"
+        PRINT #9, "--------SEPARATE ARGUMENTS REPORT #1:3--------"
         FOR i = 1 TO lastt
             PRINT #9, i, "OPT=" + CHR$(34) + RTRIM$(Opt(i, 1)) + CHR$(34)
             PRINT #9, i, "OPTWORDS="; OptWords(i, 1)
@@ -21779,7 +21779,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
                                 END IF
                                 IF ASC(c$) = 41 THEN
                                     b = b - 1
-                                    IF b = -1 THEN EXIT FOR 'Exited current bracketting level, making any following match invalid
+                                    IF b = -1 THEN EXIT FOR 'Exited current bracketing level, making any following match invalid
                                 END IF
 
                             END IF 'enough elements exist
@@ -21887,7 +21887,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
     IF i <> n + 1 THEN GOTO Backtrack 'Trailing content?
 
     IF Debug THEN
-        PRINT #9, "--------SEPERATE ARGUMENTS REPORT #2--------"
+        PRINT #9, "--------SEPARATE ARGUMENTS REPORT #2--------"
         FOR i = 1 TO lastt
             PRINT #9, i, separgs(i)
         NEXT
@@ -21929,7 +21929,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
             x = x + 1
 
         ELSE
-            'its gonna be skipped!
+            'it's gonna be skipped!
             'add layout to the next one to be safe
 
             'for syntax such as [{HELLO}] which uses a flag instead of being passed
@@ -22149,7 +22149,7 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
     IF id.t THEN
         r$ = RTRIM$(id.n)
         t = id.t
-        'remove irrelavant flags
+        'remove irrelevant flags
         IF (t AND ISINCONVENTIONALMEMORY) THEN t = t - ISINCONVENTIONALMEMORY
         typ = t
 
@@ -22996,7 +22996,7 @@ SUB xprint (a$, ca$, n)
                     e$ = evaluate(e$, typ)
                     IF Error_Happened THEN EXIT SUB
                     IF (typ AND ISSTRING) = 0 THEN
-                        'not a string expresion!
+                        'not a string expression!
                         e$ = "STR$" + sp + "(" + sp + ebak$ + sp + ")" + sp + "+" + sp + CHR$(34) + " " + CHR$(34)
                         pnrtnum = 1
                         GOTO printnumber

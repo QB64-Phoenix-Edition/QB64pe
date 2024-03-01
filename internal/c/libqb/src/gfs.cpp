@@ -1030,7 +1030,7 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
 #ifdef GFS_C
     f->file_handle->clear();
     f->file_handle->read((char *)data, size);
-    if (f->file_handle->bad()) { // note: 'eof' also sets the 'fail' flag, so only the the 'bad' flag is checked
+    if (f->file_handle->bad()) { // note: 'eof' also sets the 'fail' flag, so only the 'bad' flag is checked
         return -7;               // assume: permission denied
     }
     static int64_t bytesread;
