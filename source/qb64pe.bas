@@ -221,8 +221,6 @@ IF INSTR(_OS$, "[LINUX]") THEN os$ = "LNX"
 DIM SHARED MacOSX AS LONG
 IF INSTR(_OS$, "[MACOSX]") THEN MacOSX = 1
 
-DIM SHARED inline_DATA
-IF MacOSX OR INSTR(_OS$, "[ARM]") THEN inline_DATA = 1
 
 DIM SHARED BATCHFILE_EXTENSION AS STRING
 BATCHFILE_EXTENSION = ".bat"
@@ -440,7 +438,7 @@ END IF
 '255    A qb error happened in the IDE (compiler->ide)
 '   note: detected by the fact that ideerror was not set to 0
 '   [255]
-'$include:'./utilities/hash.bi'
+'$INCLUDE:'./utilities/hash.bi'
 
 TYPE Label_Type
     State AS _UNSIGNED _BYTE '0=label referenced, 1=label created
@@ -11961,42 +11959,18 @@ IF DataOffset = 0 THEN
 
 ELSE
 
-    IF inline_DATA = 0 THEN
-        IF os$ = "WIN" THEN
-            IF OS_BITS = 32 THEN
-                x$ = CHR$(0): WriteBufRawData DataBinBuf, x$
-                WriteBufLine GlobTxtBuf, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                WriteBufLine GlobTxtBuf, "extern char *binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
-                WriteBufLine GlobTxtBuf, "}"
-                WriteBufLine GlobTxtBuf, "uint8 *data=(uint8*)&binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
-            ELSE
-                x$ = CHR$(0): WriteBufRawData DataBinBuf, x$
-                WriteBufLine GlobTxtBuf, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                WriteBufLine GlobTxtBuf, "extern char *_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
-                WriteBufLine GlobTxtBuf, "}"
-                WriteBufLine GlobTxtBuf, "uint8 *data=(uint8*)&_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
-            END IF
-        END IF
-        IF os$ = "LNX" THEN
-            x$ = CHR$(0): WriteBufRawData DataBinBuf, x$
-            WriteBufLine GlobTxtBuf, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-            WriteBufLine GlobTxtBuf, "extern char *_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
-            WriteBufLine GlobTxtBuf, "}"
-            WriteBufLine GlobTxtBuf, "uint8 *data=(uint8*)&_binary_internal_temp" + tempfolderindexstr2$ + "_data_bin_start;"
-        END IF
-    ELSE
-        'inline data
-        ff = OpenBuffer%("B", tmpdir$ + "data.bin")
-        x$ = ReadBufRawData$(ff, GetBufLen&(ff))
-        x2$ = "uint8 inline_data[]={"
-        FOR i = 1 TO LEN(x$)
-            x2$ = x2$ + inlinedatastr$(ASC(x$, i))
-        NEXT
-        x2$ = x2$ + "0};"
-        WriteBufLine GlobTxtBuf, x2$
-        WriteBufLine GlobTxtBuf, "uint8 *data=&inline_data[0];"
-        x$ = "": x2$ = ""
-    END IF
+    'inline data
+    ff = OpenBuffer%("B", tmpdir$ + "data.bin")
+    x$ = ReadBufRawData$(ff, GetBufLen&(ff))
+    x2$ = "uint8 inline_data[]={"
+    FOR i = 1 TO LEN(x$)
+        x2$ = x2$ + inlinedatastr$(ASC(x$, i))
+    NEXT
+    x2$ = x2$ + "0};"
+    WriteBufLine GlobTxtBuf, x2$
+    WriteBufLine GlobTxtBuf, "uint8 *data=&inline_data[0];"
+    x$ = "": x2$ = ""
+
 END IF
 
 IF Debug THEN PRINT #9, "Beginning generation of code for saving/sharing common array data..."
@@ -12600,7 +12574,6 @@ IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENI
 IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN makedeps$ = makedeps$ + " DEP_FONT=y"
 IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
-IF inline_DATA = 0 AND DataOffset THEN makedeps$ = makedeps$ + " DEP_DATA=y"
 IF DEPENDENCY(DEPENDENCY_EMBED) THEN makedeps$ = makedeps$ + " DEP_EMBED=y"
 IF ConsoleOn THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
