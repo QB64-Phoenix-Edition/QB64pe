@@ -34,7 +34,7 @@ libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/glut-msg-queue.o
 libqb-objs-$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/console-only-main-thread.o
 
 ifeq ($(OS),osx)
-libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/mac-key-monitor.o
+libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/mac-key-monitor.o $(PATH_LIBQB)/src/mac-mouse-support.o
 endif
 
 $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.cpp

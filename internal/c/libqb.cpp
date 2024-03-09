@@ -29582,11 +29582,19 @@ void GLUT_MOUSE_FUNC(int glut_button, int state, int x, int y) {
 #    endif
 }
 
+// This is used to save the last mouse position which is then paired with the mouse wheel event on macOS
+int g_MouseX = 0;
+int g_MouseY = 0;
+
 void GLUT_MOTION_FUNC(int x, int y) {
 
     int32 i, last_i;
     int32 handle;
     int32 xrel, yrel;
+
+    g_MouseX = x;
+    g_MouseY = y;
+
     handle = mouse_message_queue_first;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
 
@@ -29601,12 +29609,14 @@ void GLUT_MOTION_FUNC(int x, int y) {
             nextIndex = 0;
         queue->current = nextIndex;
     }
-#    ifdef QB64_WINDOWS
+
+#    if defined(QB64_WINDOWS) || defined(QB64_MACOSX)
     // Windows calculates relative movement by intercepting WM_INPUT events
-    // instead
+    // macOS uses the Quartz Event Services to get relative movements
     xrel = 0;
     yrel = 0;
 #    else
+    // TODO: This needs to be correctly implemented on Linux
     xrel = x - queue->queue[queue->last].x;
     yrel = y - queue->queue[queue->last].y;
 #    endif
