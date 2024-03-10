@@ -228,9 +228,9 @@ IF os$ = "LNX" THEN BATCHFILE_EXTENSION = ".sh"
 IF MacOSX THEN BATCHFILE_EXTENSION = ".command"
 
 
-DIM inlinedatastr(255) AS STRING
+DIM inlinedatastr(0 TO 255) AS STRING
 FOR i = 0 TO 255
-    inlinedatastr(i) = str2$(i) + ","
+    inlinedatastr(i) = "0x" + RIGHT$("0" + HEX$(i), 2) + ","
 NEXT
 
 
@@ -11962,13 +11962,23 @@ ELSE
     'inline data
     ff = OpenBuffer%("B", tmpdir$ + "data.bin")
     x$ = ReadBufRawData$(ff, GetBufLen&(ff))
-    x2$ = "uint8 inline_data[]={"
-    FOR i = 1 TO LEN(x$)
-        x2$ = x2$ + inlinedatastr$(ASC(x$, i))
+
+    idsL = LEN(inlinedatastr(255))
+    xL = LEN(x$)
+
+    x2$ = SPACE$(xL * idsL) ' pre-allocate buffer
+
+    x2Ofs = 1
+    FOR i = 1 TO xL
+        MID$(x2$, x2Ofs, idsL) = inlinedatastr(ASC(x$, i))
+        x2Ofs = x2Ofs + idsL
     NEXT
-    x2$ = x2$ + "0};"
+
+    WriteBufLine GlobTxtBuf, "uint8 inline_data[]={"
     WriteBufLine GlobTxtBuf, x2$
+    WriteBufLine GlobTxtBuf, "0};"
     WriteBufLine GlobTxtBuf, "uint8 *data=&inline_data[0];"
+
     x$ = "": x2$ = ""
 
 END IF
