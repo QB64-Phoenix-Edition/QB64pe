@@ -10,22 +10,20 @@
 #    include <ApplicationServices/ApplicationServices.h>
 
 #    include <mach-o/dyld.h> //required for _NSGetExecutablePath
-
-#    include "mac-mouse-support.h"
 #endif
 
 #include "audio.h"
 #include "bitops.h"
 #include "cmem.h"
-#include "completion.h"
 #include "command.h"
+#include "completion.h"
 #include "compression.h"
 #include "datetime.h"
-#include "event.h"
 #include "error_handle.h"
+#include "event.h"
+#include "file-fields.h"
 #include "filepath.h"
 #include "filesystem.h"
-#include "file-fields.h"
 #include "font.h"
 #include "game_controller.h"
 #include "gfs.h"
@@ -34,9 +32,10 @@
 #include "http.h"
 #include "image.h"
 #include "keyhandler.h"
-#include "qblist.h"
+#include "mac-mouse-support.h"
 #include "mem.h"
 #include "mutex.h"
+#include "qblist.h"
 #include "qbs.h"
 #include "rounding.h"
 #include "shell.h"
