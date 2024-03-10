@@ -15,6 +15,7 @@
 #endif
 
 #include "glut-message.h"
+#include "mac-mouse-support.h"
 
 void glut_message_set_cursor::execute() {
     glutSetCursor(style);
@@ -49,6 +50,6 @@ void glut_message_set_window_title::execute() {
 }
 
 void glut_message_exit_program::execute() {
+    macMouseDone();
     exit(exitCode);
 }
-

@@ -7,22 +7,20 @@
 
 #include <ApplicationServices/ApplicationServices.h>
 #include <GLUT/glut.h>
+#include <atomic>
 #include <unistd.h>
 
-#define QB64_EVENT_CLOSE 1
-#define QB64_EVENT_KEY 2
-#define QB64_EVENT_RELATIVE_MOUSE_MOVEMENT 3
-#define QB64_EVENT_FILE_DROP 4
-
-extern "C" int qb64_custom_event(int event, int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, void *p1, void *p2);
+void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY);
 void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y);
 
-extern int g_MouseX, g_MouseY;
-
+static std::atomic<int> g_MouseX = 0;
+static std::atomic<int> g_MouseY = 0;
 static CFMachPortRef g_EventTap = nullptr;
 static CFRunLoopSourceRef g_RunLoopSource = nullptr;
 
 static CGEventRef macMouseCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *userInfo) {
+    (void)(proxy);
+
     auto appPID = reinterpret_cast<int64_t>(userInfo);
 
     if (CGEventGetIntegerValueField(event, kCGEventTargetUnixProcessID) == appPID) {
@@ -33,7 +31,7 @@ static CGEventRef macMouseCallback(CGEventTapProxy proxy, CGEventType type, CGEv
             auto deltaX = CGEventGetIntegerValueField(event, kCGMouseEventDeltaX);
             auto deltaY = CGEventGetIntegerValueField(event, kCGMouseEventDeltaY);
             if (deltaX || deltaY)
-                qb64_custom_event(QB64_EVENT_RELATIVE_MOUSE_MOVEMENT, deltaX, deltaY, 0, 0, 0, 0, 0, 0, nullptr, nullptr);
+                qb64_custom_event_relative_mouse_movement(deltaX, deltaY);
         }
     }
 
@@ -71,4 +69,9 @@ void macMouseDone() {
         g_RunLoopSource = nullptr;
         g_EventTap = nullptr;
     }
+}
+
+void macMouseUpdatePosition(int x, int y) {
+    g_MouseX = x;
+    g_MouseY = y;
 }

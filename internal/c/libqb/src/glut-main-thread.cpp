@@ -116,9 +116,7 @@ static void initialize_glut(int argc, char **argv) {
     glutMouseWheelFunc(GLUT_MOUSEWHEEL_FUNC);
 #endif
 
-#ifdef QB64_MACOSX
     macMouseInit();
-#endif
 }
 
 static bool glut_is_started;
@@ -182,10 +180,6 @@ void libqb_start_main_thread(int argc, char **argv) {
 //
 // This is accomplished by simply queuing a GLUT message that calls exit() for us.
 void libqb_exit(int exitcode) {
-#ifdef QB64_MACOSX
-    macMouseDone();
-#endif
-
     // If GLUT isn't running then we're free to do the exit() call from here
     if (!libqb_is_glut_up())
         exit(exitcode);
