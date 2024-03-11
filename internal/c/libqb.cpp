@@ -29468,6 +29468,8 @@ int32 func__scaledheight() { return environment_2d__screen_scaled_height; }
 extern void set_dynamic_info();
 
 int main(int argc, char *argv[]) {
+    clock_init();
+
 
 #if defined(QB64_LINUX) && defined(X11)
     XInitThreads();

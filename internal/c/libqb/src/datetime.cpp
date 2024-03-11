@@ -37,10 +37,18 @@ static int64_t orwl_gettime(void) {
 #endif
 
 #ifdef QB64_LINUX
+static int64_t initial_tick = 0;
+
+void clock_init() {
+    // When GetTicks() is called here initial_tick is zero, so as a result
+    // GetTicks() returns the original value of the clock.
+    initial_tick = GetTicks();
+}
+
 int64_t GetTicks() {
     struct timespec tp;
     clock_gettime(CLOCK_MONOTONIC, &tp);
-    return tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
+    return (tp.tv_sec * 1000 + tp.tv_nsec / 1000000) - initial_tick;
 }
 #elif defined QB64_MACOSX
 int64_t GetTicks() { return orwl_gettime(); }
