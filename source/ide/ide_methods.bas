@@ -278,7 +278,7 @@ FUNCTION ide2 (ignore)
         END IF
 
         m = 1: i = 0
-        IdeMakeFileMenu
+        IdeMakeFileMenu 0
 
         m = m + 1: i = 0
         ideeditmenuID = m
@@ -6361,7 +6361,7 @@ FUNCTION ide2 (ignore)
                     IF r$ = "Y" THEN
                         fh = FREEFILE
                         OPEN ".\internal\temp\recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                        IdeMakeFileMenu
+                        IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
                         PCOPY 3, 0: SCREEN , , 3, 0
                         GOTO ideloop
                     ELSE
@@ -6386,8 +6386,7 @@ FUNCTION ide2 (ignore)
                 IF r$ = "Y" THEN
                     fh = FREEFILE
                     OPEN ".\internal\temp\recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                    IdeMakeFileMenu
-                    IF ideautolayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
                     PCOPY 3, 0: SCREEN , , 3, 0
                     GOTO ideloop
                 END IF
@@ -6583,7 +6582,7 @@ FUNCTION ide2 (ignore)
     END IF
 
     ERASE RecentFilesList
-    IdeMakeFileMenu
+    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
     RETURN
 
     redrawItAll:
@@ -18304,7 +18303,7 @@ END FUNCTION
 
 
 
-SUB IdeMakeFileMenu
+SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     m = 1: i = 0
     menu$(m, i) = "File": i = i + 1
     menu$(m, i) = "#New  Ctrl+N": i = i + 1
@@ -18316,8 +18315,8 @@ SUB IdeMakeFileMenu
     menu$(m, i) = "Save #As...": i = i + 1
     menuDesc$(m, i - 1) = "Saves current program with specified name"
     menu$(m, i) = "-": i = i + 1
-    FileMenuExportAs = i
-    menu$(m, i) = "~#Export As...  " + CHR$(16): i = i + 1
+    FileMenuExportAs = i: IF eaa% THEN eaa$ = "": ELSE eaa$ = "~"
+    menu$(m, i) = eaa$ + "#Export As...  " + CHR$(16): i = i + 1
     menuDesc$(m, i - 1) = "Export current program into various formats"
     fh = FREEFILE
     OPEN ".\internal\temp\recent.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$
@@ -18350,7 +18349,7 @@ SUB IdeMakeFileMenu
         END IF
     NEXT
     CLOSE #fh
-    IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> "~#Export As...  " + CHR$(16) THEN
+    IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> eaa$ + "#Export As...  " + CHR$(16) THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
     ELSE
@@ -18803,7 +18802,7 @@ SUB IdeAddRecent (f2$)
     END IF
     PUT #fh, 1, a$
     CLOSE #fh
-    IdeMakeFileMenu
+    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
 END SUB
 
 FUNCTION removeDoubleSlashes$(f$)
