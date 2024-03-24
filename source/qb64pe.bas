@@ -230,7 +230,7 @@ IF MacOSX THEN BATCHFILE_EXTENSION = ".command"
 
 DIM inlinedatastr(0 TO 255) AS STRING
 FOR i = 0 TO 255
-    inlinedatastr(i) = str2(i) + ","
+    inlinedatastr(i) = str2$(i) + ","
 NEXT
 
 
