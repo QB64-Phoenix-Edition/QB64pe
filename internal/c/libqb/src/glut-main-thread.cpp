@@ -1,14 +1,14 @@
 
 #include "libqb-common.h"
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
+#include <GL/glew.h>
 #include <list>
 #include <queue>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <unordered_map>
-#include "GL/glew.h"
 
 // note: MacOSX uses Apple's GLUT not FreeGLUT
 #ifdef QB64_MACOSX
@@ -18,12 +18,13 @@
 #    include <GL/freeglut.h>
 #endif
 
-#include "mutex.h"
-#include "thread.h"
 #include "completion.h"
+#include "glut-thread.h"
 #include "gui.h"
 #include "mac-key-monitor.h"
-#include "glut-thread.h"
+#include "mac-mouse-support.h"
+#include "mutex.h"
+#include "thread.h"
 
 // FIXME: These extern variable and function definitions should probably go
 // somewhere more global so that they can be referenced by libqb.cpp
@@ -58,20 +59,20 @@ static void glutWarning(const char *fmt, va_list lst) {
 
 // Performs all of the FreeGLUT initialization except for calling glutMainLoop()
 static void initialize_glut(int argc, char **argv) {
-#    ifdef CORE_FREEGLUT
+#ifdef CORE_FREEGLUT
     glutInitWarningFunc(glutWarning);
     glutInitErrorFunc(glutWarning);
-#    endif
+#endif
 
     glutInit(&argc, argv);
 
     mac_register_key_handler();
 
-#    ifdef QB64_WINDOWS
+#ifdef QB64_WINDOWS
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
-#    else
+#else
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-#    endif
+#endif
 
     glutInitWindowSize(640, 400); // cannot be changed unless display_x(etc) are modified
 
@@ -96,11 +97,11 @@ static void initialize_glut(int argc, char **argv) {
 
     glutDisplayFunc(GLUT_DISPLAY_REQUEST);
 
-#    ifdef QB64_WINDOWS
+#ifdef QB64_WINDOWS
     glutTimerFunc(8, GLUT_TIMER_EVENT, 0);
-#    else
+#else
     glutIdleFunc(GLUT_IDLEFUNC);
-#    endif
+#endif
 
     glutKeyboardFunc(GLUT_KEYBOARD_FUNC);
     glutKeyboardUpFunc(GLUT_KEYBOARDUP_FUNC);
@@ -111,9 +112,11 @@ static void initialize_glut(int argc, char **argv) {
     glutPassiveMotionFunc(GLUT_PASSIVEMOTION_FUNC);
     glutReshapeFunc(GLUT_RESHAPE_FUNC);
 
-#    ifdef CORE_FREEGLUT
+#ifdef CORE_FREEGLUT
     glutMouseWheelFunc(GLUT_MOUSEWHEEL_FUNC);
-#    endif
+#endif
+
+    macMouseInit();
 }
 
 static bool glut_is_started;
@@ -136,9 +139,7 @@ void libqb_start_glut_thread() {
 }
 
 // Checks whether the GLUT thread is running
-bool libqb_is_glut_up() {
-    return glut_is_started;
-}
+bool libqb_is_glut_up() { return glut_is_started; }
 
 void libqb_glut_presetup(int argc, char **argv) {
     if (!screen_hide) {
@@ -178,8 +179,7 @@ void libqb_start_main_thread(int argc, char **argv) {
 // from two threads at the same time).
 //
 // This is accomplished by simply queuing a GLUT message that calls exit() for us.
-void libqb_exit(int exitcode)
-{
+void libqb_exit(int exitcode) {
     // If GLUT isn't running then we're free to do the exit() call from here
     if (!libqb_is_glut_up())
         exit(exitcode);
