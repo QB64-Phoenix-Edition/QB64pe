@@ -72,6 +72,6 @@ void macMouseDone() {
 }
 
 void macMouseUpdatePosition(int x, int y) {
-    g_MouseX = x;
-    g_MouseY = y;
+    g_MouseX.store(x, std::memory_order_relaxed);
+    g_MouseY.store(y, std::memory_order_relaxed);
 }
