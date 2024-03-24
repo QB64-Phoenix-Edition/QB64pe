@@ -155,7 +155,7 @@ ifeq ($(OS),win)
 endif
 
 ifeq ($(OS),osx)
-	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa
+	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa -framework ApplicationServices
 
 	# OSX doesn't strip using objcopy, so we're using `-s` instead
 	ifneq ($(STRIP_SYMBOLS),n)

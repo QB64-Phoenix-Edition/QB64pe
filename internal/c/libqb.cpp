@@ -15,15 +15,15 @@
 #include "audio.h"
 #include "bitops.h"
 #include "cmem.h"
-#include "completion.h"
 #include "command.h"
+#include "completion.h"
 #include "compression.h"
 #include "datetime.h"
-#include "event.h"
 #include "error_handle.h"
+#include "event.h"
+#include "file-fields.h"
 #include "filepath.h"
 #include "filesystem.h"
-#include "file-fields.h"
 #include "font.h"
 #include "game_controller.h"
 #include "gfs.h"
@@ -32,9 +32,10 @@
 #include "http.h"
 #include "image.h"
 #include "keyhandler.h"
-#include "qblist.h"
+#include "mac-mouse-support.h"
 #include "mem.h"
 #include "mutex.h"
+#include "qblist.h"
 #include "qbs.h"
 #include "rounding.h"
 #include "shell.h"
@@ -29587,6 +29588,10 @@ void GLUT_MOTION_FUNC(int x, int y) {
     int32 i, last_i;
     int32 handle;
     int32 xrel, yrel;
+
+    // This is used to save the last mouse position which is then paired with the mouse wheel event on macOS
+    macMouseUpdatePosition(x, y);
+
     handle = mouse_message_queue_first;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
 
@@ -29601,12 +29606,14 @@ void GLUT_MOTION_FUNC(int x, int y) {
             nextIndex = 0;
         queue->current = nextIndex;
     }
-#    ifdef QB64_WINDOWS
+
+#    if defined(QB64_WINDOWS) || defined(QB64_MACOSX)
     // Windows calculates relative movement by intercepting WM_INPUT events
-    // instead
+    // macOS uses the Quartz Event Services to get relative movements
     xrel = 0;
     yrel = 0;
 #    else
+    // TODO: This needs to be correctly implemented on Linux
     xrel = x - queue->queue[queue->last].x;
     yrel = y - queue->queue[queue->last].y;
 #    endif
@@ -29694,7 +29701,7 @@ void GLUT_MOTION_FUNC(int x, int y) {
 void GLUT_PASSIVEMOTION_FUNC(int x, int y) { GLUT_MOTION_FUNC(x, y); }
 
 void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y) {
-#    ifdef QB64_GLUT
+#ifdef QB64_GLUT
     // Note: freeglut specific, limited documentation existed so the following
     // research was done:
     //  qbs_print(qbs_str(wheel),NULL); <-- was always 0 [could 1 indicate
@@ -29709,7 +29716,7 @@ void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y) {
         GLUT_MouseButton_Down(5, x, y);
         GLUT_MouseButton_Up(5, x, y);
     }
-#    endif
+#endif
 }
 
 #endif
@@ -32409,67 +32416,71 @@ extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_o
 }
 #endif
 
+void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY) {
+    int32_t handle = mouse_message_queue_first;
+    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
+    // message #1
+    int32_t i = queue->last + 1;
+    if (i > queue->lastIndex)
+        i = 0;
+    if (i == queue->current) {
+        int32_t nextIndex = queue->last + 1;
+        if (nextIndex > queue->lastIndex)
+            nextIndex = 0;
+        queue->current = nextIndex;
+    }
+    queue->queue[i].x = queue->queue[queue->last].x;
+    queue->queue[i].y = queue->queue[queue->last].y;
+    queue->queue[i].movementx = deltaX;
+    queue->queue[i].movementy = deltaY;
+    queue->queue[i].buttons = queue->queue[queue->last].buttons;
+    queue->last = i;
+    // message #2 (clears movement values to avoid confusion)
+    i = queue->last + 1;
+    if (i > queue->lastIndex)
+        i = 0;
+    if (i == queue->current) {
+        int32_t nextIndex = queue->last + 1;
+        if (nextIndex > queue->lastIndex)
+            nextIndex = 0;
+        queue->current = nextIndex;
+    }
+    queue->queue[i].x = queue->queue[queue->last].x;
+    queue->queue[i].y = queue->queue[queue->last].y;
+    queue->queue[i].movementx = 0;
+    queue->queue[i].movementy = 0;
+    queue->queue[i].buttons = queue->queue[queue->last].buttons;
+    queue->last = i;
+}
+
 extern "C" int qb64_custom_event(int event, int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, void *p1, void *p2) {
     if (event == QB64_EVENT_CLOSE) {
         exit_value |= 1;
-        return NULL;
+        return 0;
     } // close
+
     if (event == QB64_EVENT_KEY) {
         if (v1 == VK + QBVK_PAUSE) {
             if (v2 > 0)
                 keydown_vk(v1);
             else
                 keyup_vk(v1);
-            return NULL;
+            return 0;
         }
         if (v1 == VK + QBVK_BREAK) {
             if (v2 > 0)
                 keydown_vk(v1);
             else
                 keyup_vk(v1);
-            return NULL;
+            return 0;
         }
         return -1;
     } // key
 
-    if (event == QB64_EVENT_RELATIVE_MOUSE_MOVEMENT) { // qb64_custom_event(QB64_EVENT_RELATIVE_MOUSE_MOVEMENT,xPosRelative,yPosRelative,0,0,0,0,0,0,NULL,NULL);
-        static int32 i;
-        int32 handle;
-        handle = mouse_message_queue_first;
-        mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-        // message #1
-        i = queue->last + 1;
-        if (i > queue->lastIndex)
-            i = 0;
-        if (i == queue->current) {
-            int32 nextIndex = queue->last + 1;
-            if (nextIndex > queue->lastIndex)
-                nextIndex = 0;
-            queue->current = nextIndex;
-        }
-        queue->queue[i].x = queue->queue[queue->last].x;
-        queue->queue[i].y = queue->queue[queue->last].y;
-        queue->queue[i].movementx = v1;
-        queue->queue[i].movementy = v2;
-        queue->queue[i].buttons = queue->queue[queue->last].buttons;
-        queue->last = i;
-        // message #2 (clears movement values to avoid confusion)
-        i = queue->last + 1;
-        if (i > queue->lastIndex)
-            i = 0;
-        if (i == queue->current) {
-            int32 nextIndex = queue->last + 1;
-            if (nextIndex > queue->lastIndex)
-                nextIndex = 0;
-            queue->current = nextIndex;
-        }
-        queue->queue[i].x = queue->queue[queue->last].x;
-        queue->queue[i].y = queue->queue[queue->last].y;
-        queue->queue[i].movementx = 0;
-        queue->queue[i].movementy = 0;
-        queue->queue[i].buttons = queue->queue[queue->last].buttons;
-        queue->last = i;
-        return NULL;
+    // qb64_custom_event(QB64_EVENT_RELATIVE_MOUSE_MOVEMENT,xPosRelative,yPosRelative,0,0,0,0,0,0,NULL,NULL);
+    if (event == QB64_EVENT_RELATIVE_MOUSE_MOVEMENT) {
+        qb64_custom_event_relative_mouse_movement(v1, v2);
+        return 0;
     } // QB64_EVENT_RELATIVE_MOUSE_MOVEMENT
 
     if (event == QB64_EVENT_FILE_DROP) {
@@ -32480,11 +32491,11 @@ extern "C" int qb64_custom_event(int event, int v1, int v2, int v3, int v4, int 
         hdrop = (HDROP)p1;
         totalDroppedFiles = DragQueryFile(hdrop, -1, NULL, 0);
 #endif
-        return NULL;
+        return 0;
     }
 
     return -1; // Unknown command (use for debugging purposes only)
-} // qb64_custom_event
+}
 
 int32 func__capslock() {
 #ifdef QB64_WINDOWS
