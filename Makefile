@@ -373,14 +373,9 @@ ifeq ($(OS),win)
 	endif
 endif
 
-ifneq ($(filter y,$(DEP_DATA)),)
-	EXE_OBJS += $(PATH_INTERNAL_TEMP)/data.o
-endif
-
 ifneq ($(filter y,$(DEP_EMBED)),)
 	EXE_OBJS += $(PATH_INTERNAL_TEMP)/embedded.o
 endif
-
 
 QBLIB := $(PATH_INTERNAL_C)/$(QBLIB_NAME).o
 
@@ -407,9 +402,6 @@ ifeq ($(OS),osx)
 %.o: %.mm
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 endif
-
-$(PATH_INTERNAL_TEMP)/data.o: $(PATH_INTERNAL_TEMP)/data.bin
-	$(OBJCOPY) -Ibinary $(OBJCOPY_FLAGS) $< $@
 
 $(PATH_INTERNAL_TEMP)/embedded.o: $(PATH_INTERNAL_TEMP)/embedded.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
