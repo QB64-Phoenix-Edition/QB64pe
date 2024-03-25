@@ -4,6 +4,14 @@
 #include <stdint.h>
 #include "qbs.h"
 
+#ifdef QB64_LINUX
+// Initializes the clock returned by 'GetTicks()' so that it starts from zero
+// Should be called at the very beginning of the program
+void clock_init();
+#else
+static inline void clock_init() { }
+#endif
+
 int64_t GetTicks();
 
 double func_timer(double accuracy, int32_t passed);

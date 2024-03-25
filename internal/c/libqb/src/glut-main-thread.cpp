@@ -43,11 +43,7 @@ void GLUT_MOTION_FUNC(int x, int y);
 void GLUT_PASSIVEMOTION_FUNC(int x, int y);
 void GLUT_RESHAPE_FUNC(int width, int height);
 
-#ifdef QB64_WINDOWS
-void GLUT_TIMER_EVENT(int ignore);
-#else
 void GLUT_IDLEFUNC();
-#endif
 
 #ifdef CORE_FREEGLUT
 void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y);
@@ -97,11 +93,7 @@ static void initialize_glut(int argc, char **argv) {
 
     glutDisplayFunc(GLUT_DISPLAY_REQUEST);
 
-#ifdef QB64_WINDOWS
-    glutTimerFunc(8, GLUT_TIMER_EVENT, 0);
-#else
     glutIdleFunc(GLUT_IDLEFUNC);
-#endif
 
     glutKeyboardFunc(GLUT_KEYBOARD_FUNC);
     glutKeyboardUpFunc(GLUT_KEYBOARDUP_FUNC);
