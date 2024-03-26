@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
 //    ___  ___   __ _ _  ___ ___   ___                       _    _ _
 //   / _ \| _ ) / /| | || _ \ __| |_ _|_ __  __ _ __ _ ___  | |  (_) |__ _ _ __ _ _ _ _  _
 //  | (_) | _ \/ _ \_  _|  _/ _|   | || '  \/ _` / _` / -_) | |__| | '_ \ '_/ _` | '_| || |
@@ -37,6 +37,9 @@
 #    endif
 #    define IMAGE_DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
+
+// This is returned to the caller if something goes wrong while loading the image
+#define INVALID_IMAGE_HANDLE -1
 
 // The byte ordering here are straight from libqb.cpp. So, if libqb.cpp is wrong, then we are wrong! ;)
 #define IMAGE_GET_BGRA_RED(c) ((uint8_t)((uint32_t)(c) >> 16 & 0xFFu))

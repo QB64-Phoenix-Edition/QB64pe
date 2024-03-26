@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
 //    ___  ___   __ _ _  ___ ___   ___                       _    _ _
 //   / _ \| _ ) / /| | || _ \ __| |_ _|_ __  __ _ __ _ ___  | |  (_) |__ _ _ __ _ _ _ _  _
 //  | (_) | _ \/ _ \_  _|  _/ _|   | || '  \/ _` / _` / -_) | |__| | '_ \ '_/ _` | '_| || |
@@ -45,9 +45,6 @@
 #include "pixelscalers/hqx.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
-
-// This is returned to the caller if something goes wrong while loading the image
-#define INVALID_IMAGE_HANDLE -1
 
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
@@ -866,7 +863,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
                 // Inner codepoint rendering loop
                 for (auto dy = y, py = 0; py < fontHeight; dy++, py++) {
                     for (auto dx = x, px = 0; px < fontWidth; dx++, px++) {
-                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? palette_256[fc] : palette_256[bc]);
+                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? img[imageHandle].pal[fc] : img[imageHandle].pal[bc]);
                         ++builtinFont;
                     }
                 }

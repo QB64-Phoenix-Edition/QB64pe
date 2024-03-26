@@ -145,17 +145,17 @@ CXXFLAGS += -fno-strict-aliasing
 CXXFLAGS += -Wno-conversion-null
 
 ifeq ($(OS),lnx)
-	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt
+	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt -lxcb
 	CXXFLAGS += -DFREEGLUT_STATIC
 endif
 
 ifeq ($(OS),win)
-	CXXLIBS += -static-libgcc -static-libstdc++ -lcomdlg32 -lole32
+	CXXLIBS += -static-libgcc -static-libstdc++ -lcomdlg32 -lole32 -lshlwapi -lwindowscodecs
 	CXXFLAGS += -DGLEW_STATIC -DFREEGLUT_STATIC
 endif
 
 ifeq ($(OS),osx)
-	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa -framework ApplicationServices
+	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa -framework ApplicationServices -framework CoreFoundation
 
 	# OSX doesn't strip using objcopy, so we're using `-s` instead
 	ifneq ($(STRIP_SYMBOLS),n)
@@ -204,6 +204,7 @@ include $(PATH_INTERNAL_C)/parts/video/image/build.mk
 include $(PATH_INTERNAL_C)/parts/gui/build.mk
 include $(PATH_INTERNAL_C)/parts/network/http/build.mk
 include $(PATH_INTERNAL_C)/parts/compression/build.mk
+include $(PATH_INTERNAL_C)/parts/os/clipboard/build.mk
 
 .PHONY: all clean
 
@@ -287,9 +288,7 @@ ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
 	ifeq ($(OS),win)
 		CXXLIBS += -lwinmm -lxinput -ldinput8 -ldxguid -lwbemuuid -lole32 -loleaut32
 	endif
-	ifeq ($(OS),osx)
-		CXXLIBS += -framework CoreFoundation -framework IOKit
-	endif
+
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += libstem_gamepad
@@ -308,7 +307,7 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
 	endif
 	ifeq ($(OS),osx)
-		CXXLIBS += -lpthread -lm -framework CoreFoundation -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
+		CXXLIBS += -lpthread -lm -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
 	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
