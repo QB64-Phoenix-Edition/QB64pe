@@ -18,6 +18,10 @@
 #include "qbs.h"
 #include <vector>
 
+#ifdef QB64_MACOSX
+#    include <ApplicationServices/ApplicationServices.h>
+#endif
+
 extern const img_struct *img;                 // used by sub__clipboardimage()
 extern const img_struct *write_page;          // used by func__clipboardimage()
 extern const int32_t *page;                   // used by sub__clipboardimage()
@@ -31,8 +35,44 @@ static std::string g_InternalClipboard;
 /// @brief Gets text (if present) in the OS clipboard.
 /// @return A qbs string.
 qbs *func__clipboard() {
+#ifdef QB64_MACOSX
+
+    // We'll use our own clipboard get code on macOS since our requirements are different than what clip supports
+    PasteboardRef clipboard = nullptr;
+    OSStatus err = PasteboardCreate(kPasteboardClipboard, &clipboard);
+
+    if (err == noErr) {
+        PasteboardSynchronize(clipboard);
+        ItemCount itemCount = 0;
+
+        err = PasteboardGetItemCount(clipboard, &itemCount);
+        if (err == noErr) {
+            for (ItemCount itemIndex = 1; itemIndex <= itemCount; itemIndex++) {
+                PasteboardItemID itemID = nullptr;
+                err = PasteboardGetItemIdentifier(clipboard, itemIndex, &itemID);
+                if (err != noErr)
+                    continue;
+
+                CFDataRef flavorData = nullptr;
+                err = PasteboardCopyItemFlavorData(clipboard, itemID, CFSTR("public.utf8-plain-text"), &flavorData);
+                if (err == noErr) {
+                    g_InternalClipboard.assign(reinterpret_cast<const char *>(CFDataGetBytePtr(flavorData)), CFDataGetLength(flavorData));
+
+                    CFRelease(flavorData);
+                    break;
+                }
+            }
+        }
+
+        CFRelease(clipboard);
+    }
+
+#else
+
     if (clip::has(clip::text_format()))
         clip::get_text(g_InternalClipboard);
+
+#endif
 
     auto qbsText = qbs_new(g_InternalClipboard.length(), 1);
     if (qbsText->len)
@@ -47,13 +87,31 @@ void sub__clipboard(const qbs *qbsText) {
     g_InternalClipboard.assign(reinterpret_cast<const char *>(qbsText->chr), qbsText->len);
 
     if (qbsText->len) {
+#ifdef QB64_MACOSX
+
+        // We'll use our own clipboard set code on macOS since our requirements are different than what clip supports
+        PasteboardRef clipboard;
+        if (PasteboardCreate(kPasteboardClipboard, &clipboard) == noErr) {
+            if (PasteboardClear(clipboard) == noErr) {
+                CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, qbsText->chr, qbsText->len, kCFAllocatorNull);
+
+                if (data) {
+                    PasteboardPutItemFlavor(clipboard, nullptr, kUTTypeUTF8PlainText, data, 0);
+
+                    CFRelease(data);
+                }
+            }
+
+            CFRelease(clipboard);
+        }
+
+#else
+
         clip::set_text(g_InternalClipboard);
+
+#endif
     }
 }
-
-static constexpr inline int clipboard_scale_5bits_to_8bits(const int v) { return (v << 3) | (v >> 2); }
-
-static constexpr inline int clipboard_scale_6bits_to_8bits(const int v) { return (v << 2) | (v >> 4); }
 
 /// @brief Retuns an image handle of an image from the clipboard (if present).
 /// @return A valid image handle. Returns -1 if clipboard format is not supported or if there is nothing.
@@ -92,7 +150,7 @@ int32_t func__clipboardimage() {
                             auto src = reinterpret_cast<const uint64_t *>(clipImg.data() + spec.bytes_per_row * y);
                             for (uint32_t x = 0; x < spec.width; x++, src++) {
                                 auto c = *src;
-                                *dst = IMAGE_MAKE_BGRA((c & spec.red_mask) >> spec.red_shift >> 8, (c & spec.green_mask) >> spec.green_shift >> 8,
+                                *dst = image_make_bgra((c & spec.red_mask) >> spec.red_shift >> 8, (c & spec.green_mask) >> spec.green_shift >> 8,
                                                        (c & spec.blue_mask) >> spec.blue_shift >> 8, (c & spec.alpha_mask) >> spec.alpha_shift >> 8);
 
                                 ++dst;
@@ -107,7 +165,7 @@ int32_t func__clipboardimage() {
                                 auto src = reinterpret_cast<const uint32_t *>(clipImg.data() + spec.bytes_per_row * y);
                                 for (uint32_t x = 0; x < spec.width; x++, src++) {
                                     auto c = *src;
-                                    *dst = IMAGE_MAKE_BGRA((c & spec.red_mask) >> spec.red_shift, (c & spec.green_mask) >> spec.green_shift,
+                                    *dst = image_make_bgra((c & spec.red_mask) >> spec.red_shift, (c & spec.green_mask) >> spec.green_shift,
                                                            (c & spec.blue_mask) >> spec.blue_shift, (c & spec.alpha_mask) >> spec.alpha_shift);
 
                                     ++dst;
@@ -118,7 +176,7 @@ int32_t func__clipboardimage() {
                                 auto src = reinterpret_cast<const uint32_t *>(clipImg.data() + spec.bytes_per_row * y);
                                 for (uint32_t x = 0; x < spec.width; x++, src++) {
                                     auto c = *src;
-                                    *dst = IMAGE_MAKE_BGRA((c & spec.red_mask) >> spec.red_shift, (c & spec.green_mask) >> spec.green_shift,
+                                    *dst = image_make_bgra((c & spec.red_mask) >> spec.red_shift, (c & spec.green_mask) >> spec.green_shift,
                                                            (c & spec.blue_mask) >> spec.blue_shift, 255u);
 
                                     ++dst;
@@ -132,7 +190,7 @@ int32_t func__clipboardimage() {
                             auto src = reinterpret_cast<const uint8_t *>(clipImg.data() + spec.bytes_per_row * y);
                             for (uint32_t x = 0; x < spec.width; x++, src += 3) {
                                 auto c = *reinterpret_cast<const uint32_t *>(src);
-                                *dst = IMAGE_MAKE_BGRA((c & spec.red_mask) >> spec.red_shift, (c & spec.green_mask) >> spec.green_shift,
+                                *dst = image_make_bgra((c & spec.red_mask) >> spec.red_shift, (c & spec.green_mask) >> spec.green_shift,
                                                        (c & spec.blue_mask) >> spec.blue_shift, 255u);
 
                                 ++dst;
@@ -145,9 +203,9 @@ int32_t func__clipboardimage() {
                             auto src = reinterpret_cast<const uint16_t *>(clipImg.data() + spec.bytes_per_row * y);
                             for (uint32_t x = 0; x < spec.width; x++, src++) {
                                 auto c = *src;
-                                *dst = IMAGE_MAKE_BGRA(clipboard_scale_5bits_to_8bits((c & spec.red_mask) >> spec.red_shift),
-                                                       clipboard_scale_6bits_to_8bits((c & spec.green_mask) >> spec.green_shift),
-                                                       clipboard_scale_5bits_to_8bits((c & spec.blue_mask) >> spec.blue_shift), 255u);
+                                *dst = image_make_bgra(image_scale_5bits_to_8bits((c & spec.red_mask) >> spec.red_shift),
+                                                       image_scale_6bits_to_8bits((c & spec.green_mask) >> spec.green_shift),
+                                                       image_scale_5bits_to_8bits((c & spec.blue_mask) >> spec.blue_shift), 255u);
 
                                 ++dst;
                             }
@@ -186,18 +244,19 @@ void sub__clipboardimage(int32_t src) {
     }
     // End of validation
 
-    // We'll set this up like QB64's 32bpp BGRA to avoid conversions at our end
+    // Even though we have color mask and shift support, clip needs the RGBA order :(
     clip::image_spec spec;
     spec.bits_per_pixel = 32;
-    spec.red_mask = 0xff0000;
-    spec.green_mask = 0xff00;
-    spec.blue_mask = 0xff;
+    spec.red_mask = 0x000000ff;
+    spec.green_mask = 0x0000ff00;
+    spec.blue_mask = 0x00ff0000;
     spec.alpha_mask = 0xff000000;
-    spec.red_shift = 16;
+    spec.red_shift = 0;
     spec.green_shift = 8;
-    spec.blue_shift = 0;
+    spec.blue_shift = 16;
     spec.alpha_shift = 24;
 
+    std::vector<uint32_t> pixels; // this will hold our converted BGRA32 pixel data
     auto srcImg = img[src];
 
     if (srcImg.text) {
@@ -211,9 +270,9 @@ void sub__clipboardimage(int32_t src) {
         spec.width = fontWidth * srcImg.width;
         spec.height = fontHeight * srcImg.height;
         spec.bytes_per_row = spec.width * sizeof(uint32_t);
+        pixels.resize(spec.width * spec.height);
 
-        std::vector<uint32_t> pixels(spec.width * spec.height); // this will hold our converted BGRA pixel data
-        uint8_t fc, bc, *c = srcImg.offset;                     // set to the first codepoint
+        uint8_t fc, bc, *c = srcImg.offset; // set to the first codepoint
         uint8_t const *builtinFont = nullptr;
 
         // Render all text to the raw pixel array
@@ -239,7 +298,7 @@ void sub__clipboardimage(int32_t src) {
                 // Inner codepoint rendering loop
                 for (uint32_t dy = y, py = 0; py < fontHeight; dy++, py++) {
                     for (uint32_t dx = x, px = 0; px < fontWidth; dx++, px++) {
-                        pixels[spec.width * dy + dx] = (*builtinFont ? srcImg.pal[fc] : srcImg.pal[bc]);
+                        pixels[spec.width * dy + dx] = image_swap_red_blue(*builtinFont ? srcImg.pal[fc] : srcImg.pal[bc]);
                         ++builtinFont;
                     }
                 }
@@ -247,36 +306,38 @@ void sub__clipboardimage(int32_t src) {
                 ++c; // move to the next codepoint
             }
         }
-
-        IMAGE_DEBUG_PRINT("Setting clipboard image (rendered)");
-        clip::image clipImg(pixels.data(), spec);
-        clip::set_image(clipImg);
     } else {
         spec.width = srcImg.width;
         spec.height = srcImg.height;
         spec.bytes_per_row = spec.width * sizeof(uint32_t);
+        pixels.resize(spec.width * spec.height);
 
         if (srcImg.bits_per_pixel == 32) {
-            // BGRA pixels
-            IMAGE_DEBUG_PRINT("Setting clipboard image (raw)");
+            // BGRA32 pixels
+            IMAGE_DEBUG_PRINT("Converting BGRA32 image to RGBA32");
 
-            clip::image clipImg(srcImg.offset32, spec);
-            clip::set_image(clipImg);
+            auto p = srcImg.offset32;
+
+            for (size_t i = 0; i < pixels.size(); i++) {
+                pixels[i] = image_swap_red_blue(*p);
+                ++p;
+            }
         } else {
             // Indexed pixels
-            IMAGE_DEBUG_PRINT("Converting BGRA indexed surface to BGRA32");
+            IMAGE_DEBUG_PRINT("Converting BGRA32 indexed image to RGBA32");
 
-            std::vector<uint32_t> pixels(spec.width * spec.height); // this will hold our converted BGRA pixel data
             auto p = srcImg.offset;
 
             for (size_t i = 0; i < pixels.size(); i++) {
-                pixels[i] = srcImg.pal[*p];
+                pixels[i] = image_swap_red_blue(srcImg.pal[*p]);
                 ++p;
             }
-
-            IMAGE_DEBUG_PRINT("Setting clipboard image (converted)");
-            clip::image clipImg(pixels.data(), spec);
-            clip::set_image(clipImg);
         }
     }
+
+    IMAGE_DEBUG_PRINT("Setting clipboard image");
+
+    // Send the image off to the OS clipboard
+    clip::image clipImg(pixels.data(), spec);
+    clip::set_image(clipImg);
 }
