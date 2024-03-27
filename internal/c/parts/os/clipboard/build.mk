@@ -2,7 +2,7 @@
 # clip Setup:
 # Download the latest release from https://github.com/dacap/clip
 # Copy all source files except clip_none.cpp to internal/c/parts/os/clipboard/clip
-# Compile the source using -DCLIP_ENABLE_IMAGE=1 and -DHAVE_XCB_XLIB_H (Linux only)
+# Compile the source using -DCLIP_ENABLE_IMAGE=1, -DHAVE_XCB_XLIB_H (Linux) and DHAVE_PNG_H (Linux)
 
 CLIP_DEFS := -DCLIP_ENABLE_IMAGE=1
 
@@ -12,7 +12,8 @@ CLIP_SRCS := \
 
 ifeq ($(OS),lnx)
 	CLIP_SRCS += clip_x11.cpp
-	CLIP_DEFS += -DHAVE_XCB_XLIB_H
+	CLIP_DEFS += -DHAVE_XCB_XLIB_H -DHAVE_PNG_H
+	CXXLIBS += -lpng
 endif
 
 ifeq ($(OS),win)
@@ -52,3 +53,4 @@ $(CLIPBOARD_LIB): $(CLIP_OBJS) $(CLIPBOARD_OBJS)
 EXE_LIBS += $(CLIPBOARD_LIB)
 
 CLEAN_LIST += $(CLIPBOARD_LIB) $(CLIP_OBJS) $(CLIPBOARD_OBJS)
+
