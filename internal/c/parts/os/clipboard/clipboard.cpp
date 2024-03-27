@@ -31,24 +31,12 @@ static std::string g_InternalClipboard;
 /// @brief Gets text (if present) in the OS clipboard.
 /// @return A qbs string.
 qbs *func__clipboard() {
-    std::string text;
-    qbs *qbsText;
+    if (clip::has(clip::text_format()))
+        clip::get_text(g_InternalClipboard);
 
-    IMAGE_DEBUG_PRINT("Attempting to get OS clipboard text");
-
-    if (clip::has(clip::text_format()) && clip::get_text(text)) {
-        IMAGE_DEBUG_PRINT("Getting OS clipboard text");
-
-        qbsText = qbs_new(text.length(), 1);
-        if (qbsText->len)
-            memcpy(qbsText->chr, text.data(), qbsText->len);
-    } else {
-        IMAGE_DEBUG_PRINT("Falling back to internal clipboard");
-
-        qbsText = qbs_new(g_InternalClipboard.length(), 1);
-        if (qbsText->len)
-            memcpy(qbsText->chr, g_InternalClipboard.data(), qbsText->len);
-    }
+    auto qbsText = qbs_new(g_InternalClipboard.length(), 1);
+    if (qbsText->len)
+        memcpy(qbsText->chr, g_InternalClipboard.data(), qbsText->len);
 
     return qbsText;
 }
@@ -56,11 +44,10 @@ qbs *func__clipboard() {
 /// @brief Sets text to the OS clipboard.
 /// @param qbsText A qbs string.
 void sub__clipboard(const qbs *qbsText) {
-    std::string text(reinterpret_cast<const char *>(qbsText->chr), qbsText->len);
+    g_InternalClipboard.assign(reinterpret_cast<const char *>(qbsText->chr), qbsText->len);
 
     if (qbsText->len) {
-        clip::set_text(text);
-        g_InternalClipboard = text;
+        clip::set_text(g_InternalClipboard);
     }
 }
 
