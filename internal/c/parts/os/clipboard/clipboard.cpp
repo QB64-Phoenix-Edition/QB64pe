@@ -35,7 +35,7 @@ static std::string g_InternalClipboard;
 /// @brief Gets text (if present) in the OS clipboard.
 /// @return A qbs string.
 qbs *func__clipboard() {
-#ifdef QB64_MACOSX
+#if defined(QB64_MACOSX)
 
     // We'll use our own clipboard get code on macOS since our requirements are different than what clip supports
     PasteboardRef clipboard = nullptr;
@@ -67,8 +67,30 @@ qbs *func__clipboard() {
         CFRelease(clipboard);
     }
 
+#elif defined(QB64_WINDOWS)
+
+    // We'll need custom code for Windows because clip does automatic UTF-8 conversions that leads to some undesired behavior when copying extended ASCII
+    if (OpenClipboard(NULL)) {
+        if (IsClipboardFormatAvailable(CF_TEXT)) {
+            HANDLE hClipboardData = GetClipboardData(CF_TEXT);
+
+            if (hClipboardData) {
+                auto pchData = reinterpret_cast<const char *>(GlobalLock(hClipboardData));
+
+                if (pchData) {
+                    g_InternalClipboard.assign(pchData, strlen(pchData));
+
+                    GlobalUnlock(hClipboardData);
+                }
+            }
+        }
+
+        CloseClipboard();
+    }
+
 #else
 
+    // clip works like we want on Linux
     if (clip::has(clip::text_format()))
         clip::get_text(g_InternalClipboard);
 
@@ -87,7 +109,7 @@ void sub__clipboard(const qbs *qbsText) {
     g_InternalClipboard.assign(reinterpret_cast<const char *>(qbsText->chr), qbsText->len);
 
     if (qbsText->len) {
-#ifdef QB64_MACOSX
+#if defined(QB64_MACOSX)
 
         // We'll use our own clipboard set code on macOS since our requirements are different than what clip supports
         PasteboardRef clipboard;
@@ -105,8 +127,35 @@ void sub__clipboard(const qbs *qbsText) {
             CFRelease(clipboard);
         }
 
+#elif defined(QB64_WINDOWS)
+
+        // We'll need custom code for Windows because clip does automatic UTF-8 conversions that leads to some undesired behavior when copying extended ASCII
+        if (OpenClipboard(NULL)) {
+            if (EmptyClipboard()) {
+                HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, qbsText->len + 1);
+
+                if (hClipboardData) {
+                    auto pchData = reinterpret_cast<uint8_t *>(GlobalLock(hClipboardData));
+
+                    if (pchData) {
+                        memcpy(pchData, qbsText->chr, qbsText->len);
+                        pchData[qbsText->len] = '\0'; // null terminate
+
+                        GlobalUnlock(hClipboardData);
+
+                        SetClipboardData(CF_TEXT, hClipboardData);
+                    }
+
+                    GlobalFree(hClipboardData);
+                }
+            }
+
+            CloseClipboard();
+        }
+
 #else
 
+        // clip works like we want on Linux
         clip::set_text(g_InternalClipboard);
 
 #endif
