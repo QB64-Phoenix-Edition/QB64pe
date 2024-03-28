@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
 //    ___  ___   __ _ _  ___ ___   ___                       _    _ _
 //   / _ \| _ ) / /| | || _ \ __| |_ _|_ __  __ _ __ _ ___  | |  (_) |__ _ _ __ _ _ _ _  _
 //  | (_) | _ \/ _ \_  _|  _/ _|   | || '  \/ _` / _` / -_) | |__| | '_ \ '_/ _` | '_| || |
@@ -45,9 +45,6 @@
 #include "pixelscalers/hqx.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
-
-// This is returned to the caller if something goes wrong while loading the image
-#define INVALID_IMAGE_HANDLE -1
 
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
@@ -372,11 +369,6 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
     return pixels;
 }
 
-/// @brief Clamps a color channel to the range 0 - 255
-/// @param n The color component
-/// @return The clamped value
-static inline uint8_t image_clamp_component(int32_t n) { return n < 0 ? 0 : n > 255 ? 255 : n; }
-
 /// @brief This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
 /// @param src32 The source raw image data. This must be in BGRA format and not NULL
 /// @param w The width of the image in pixels
@@ -408,9 +400,9 @@ static uint8_t *image_convert_8bpp(const uint32_t *src32, int32_t w, int32_t h, 
     for (auto y = 0; y < h; y++) {
         for (auto x = 0; x < w; x++) {
             int32_t t = bayerMatrix[((y & 3) << 2) + (x & 3)];
-            int32_t b = image_clamp_component((*src++) + (t << 1));
-            int32_t g = image_clamp_component((*src++) + (t << 1));
-            int32_t r = image_clamp_component((*src++) + (t << 1));
+            int32_t b = image_clamp_color_component((*src++) + (t << 1));
+            int32_t g = image_clamp_color_component((*src++) + (t << 1));
+            int32_t r = image_clamp_color_component((*src++) + (t << 1));
             ++src; // Ignore alpha
 
             // Quantize
@@ -428,9 +420,9 @@ static uint8_t *image_convert_8bpp(const uint32_t *src32, int32_t w, int32_t h, 
     // Generate a uniform CLUT based on the quantized colors
     for (auto i = 0; i < 256; i++) {
         if (cubes[i].count) {
-            paletteOut[i] = IMAGE_MAKE_BGRA(cubes[i].r / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].b / cubes[i].count, 0xFF);
+            paletteOut[i] = image_make_bgra(cubes[i].r / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].b / cubes[i].count, 0xFF);
         } else {
-            paletteOut[i] = IMAGE_MAKE_BGRA(0, 0, 0, 0xFF);
+            paletteOut[i] = image_make_bgra(0, 0, 0, 0xFF);
         }
     }
 
@@ -484,19 +476,6 @@ static uint8_t *image_extract_8bpp(const uint32_t *src, int32_t w, int32_t h, ui
     return pixels;
 }
 
-/// @brief Calculates the distance between 2 RBG points in the RGB color cube
-/// @param r1 R1
-/// @param g1 G1
-/// @param b1 B1
-/// @param r2 R2
-/// @param g2 G2
-/// @param b2 B2
-/// @return The distance in floating point
-static inline float image_calculate_rgb_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    return sqrt(((float(r2) - float(r1)) * (float(r2) - float(r1))) + ((float(g2) - float(g1)) * (float(g2) - float(g1))) +
-                ((float(b2) - float(b1)) * (float(b2) - float(b1))));
-}
-
 /// @brief This modifies an *8bpp* image 'src' to use 'dst_pal' instead of 'src_pal'
 /// @param src A pointer to the 8bpp image pixel data. This modifies data 'src' points to and cannot be NULL
 /// @param w The width of the image in pixels
@@ -515,8 +494,8 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32
         auto oldDist = maxRGBDist;
 
         for (auto y = 0; y < 256; y++) {
-            auto newDist = image_calculate_rgb_distance(IMAGE_GET_BGRA_RED(src_pal[x]), IMAGE_GET_BGRA_GREEN(src_pal[x]), IMAGE_GET_BGRA_BLUE(src_pal[x]),
-                                                        IMAGE_GET_BGRA_RED(dst_pal[y]), IMAGE_GET_BGRA_GREEN(dst_pal[y]), IMAGE_GET_BGRA_BLUE(dst_pal[y]));
+            auto newDist = image_calculate_rgb_distance(image_get_bgra_red(src_pal[x]), image_get_bgra_green(src_pal[x]), image_get_bgra_blue(src_pal[x]),
+                                                        image_get_bgra_red(dst_pal[y]), image_get_bgra_green(dst_pal[y]), image_get_bgra_blue(dst_pal[y]));
 
             if (oldDist > newDist) {
                 oldDist = newDist;
@@ -530,11 +509,6 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32
         src[c] = palMap[src[c]];
     }
 }
-
-/// @brief Helps convert a BGRA color to an RGBA color and back
-/// @param clr A BGRA color or an RGBA color
-/// @return An RGBA color or a BGRA color
-static inline uint32_t image_swap_red_blue(uint32_t clr) { return ((clr & 0xFF00FF00u) | ((clr & 0x00FF0000u) >> 16) | ((clr & 0x000000FFu) << 16)); }
 
 /// @brief This function loads an image into memory and returns valid LONG image handle values that are less than -1
 /// @param qbsFileName The filename or memory buffer (see requirements below) of the image
@@ -866,7 +840,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
                 // Inner codepoint rendering loop
                 for (auto dy = y, py = 0; py < fontHeight; dy++, py++) {
                     for (auto dx = x, px = 0; px < fontWidth; dx++, px++) {
-                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? palette_256[fc] : palette_256[bc]);
+                        pixels[width * dy + dx] = image_swap_red_blue(*builtinFont ? img[imageHandle].pal[fc] : img[imageHandle].pal[bc]);
                         ++builtinFont;
                     }
                 }

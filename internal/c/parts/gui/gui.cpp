@@ -229,10 +229,10 @@ uint32_t func__guiColorChooserDialog(qbs *qbsTitle, uint32_t nDefaultRGB, int32_
         nDefaultRGB = 0;
 
     // Break the color into RGB components
-    uint8_t lRGB[3] = {IMAGE_GET_BGRA_RED(nDefaultRGB), IMAGE_GET_BGRA_GREEN(nDefaultRGB), IMAGE_GET_BGRA_BLUE(nDefaultRGB)};
+    uint8_t lRGB[3] = {image_get_bgra_red(nDefaultRGB), image_get_bgra_green(nDefaultRGB), image_get_bgra_blue(nDefaultRGB)};
 
     // On cancel, return 0 (i.e. no color, no alpha, nothing). Else, return color with alpha set to 255
-    return !tinyfd_colorChooser(aTitle.c_str(), nullptr, lRGB, lRGB) ? 0 : IMAGE_MAKE_BGRA(lRGB[0], lRGB[1], lRGB[2], 0xFF);
+    return !tinyfd_colorChooser(aTitle.c_str(), nullptr, lRGB, lRGB) ? 0 : image_make_bgra(lRGB[0], lRGB[1], lRGB[2], 0xFF);
 }
 
 /// @brief Shows the system file open dialog box

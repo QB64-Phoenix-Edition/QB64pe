@@ -1013,21 +1013,21 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
 /// @param text The message to build the MD5 hash of
 /// @return The generated MD5 hash as hexadecimal string
 qbs *func__md5(qbs *text) {
-    {
-        MD5_CTX       ctx;
-        unsigned char md5[16];
-        qbs          *res;
-        int           i;
+    MD5_CTX ctx;
+    unsigned char md5[16];
+    qbs *res;
+    int i;
 
-        MD5_Init(&ctx);
-        if (text->len) MD5_Update(&ctx, text->chr, text->len);
-        MD5_Final(md5,&ctx);
+    MD5_Init(&ctx);
+    if (text->len)
+        MD5_Update(&ctx, text->chr, text->len);
+    MD5_Final(md5, &ctx);
 
-        res = qbs_new(32, 1);
-        for (i = 0; i < 16; i++) sprintf((char*)&res->chr[i*2], "%02X", md5[i]);
+    res = qbs_new(32, 1);
+    for (i = 0; i < 16; i++)
+        sprintf((char *)&res->chr[i * 2], "%02X", md5[i]);
 
-        return res;
-    }
+    return res;
 }
 
 /// @brief Return the true font height in pixel
@@ -1425,21 +1425,21 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             }
         }
     } else {
-        uint32_t a = IMAGE_GET_BGRA_ALPHA(write_page->color) + 1;
-        uint32_t a2 = IMAGE_GET_BGRA_ALPHA(write_page->background_color) + 1;
-        uint32_t z = IMAGE_GET_BGRA_BGR(write_page->color);
-        uint32_t z2 = IMAGE_GET_BGRA_BGR(write_page->background_color);
+        uint32_t a = image_get_bgra_alpha(write_page->color) + 1;
+        uint32_t a2 = image_get_bgra_alpha(write_page->background_color) + 1;
+        uint32_t z = image_get_bgra_bgr(write_page->color);
+        uint32_t z2 = image_get_bgra_bgr(write_page->background_color);
 
         switch (write_page->print_mode) {
         case 3: {
-            float alpha1 = IMAGE_GET_BGRA_ALPHA(write_page->color);
-            float r1 = IMAGE_GET_BGRA_RED(write_page->color);
-            float g1 = IMAGE_GET_BGRA_GREEN(write_page->color);
-            float b1 = IMAGE_GET_BGRA_BLUE(write_page->color);
-            float alpha2 = IMAGE_GET_BGRA_ALPHA(write_page->background_color);
-            float r2 = IMAGE_GET_BGRA_RED(write_page->background_color);
-            float g2 = IMAGE_GET_BGRA_GREEN(write_page->background_color);
-            float b2 = IMAGE_GET_BGRA_BLUE(write_page->background_color);
+            float alpha1 = image_get_bgra_alpha(write_page->color);
+            float r1 = image_get_bgra_red(write_page->color);
+            float g1 = image_get_bgra_green(write_page->color);
+            float b1 = image_get_bgra_blue(write_page->color);
+            float alpha2 = image_get_bgra_alpha(write_page->background_color);
+            float r2 = image_get_bgra_red(write_page->background_color);
+            float g2 = image_get_bgra_green(write_page->background_color);
+            float b2 = image_get_bgra_blue(write_page->background_color);
             float dr = r2 - r1;
             float dg = g2 - g1;
             float db = b2 - b1;
@@ -1460,7 +1460,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                     float g3 = g1 + dg * d;
                     float b3 = b1 + db * d;
                     pset_and_clip(start_x + pen.x, start_y + pen.y,
-                                  IMAGE_MAKE_BGRA(qbr_float_to_long(r3), qbr_float_to_long(g3), qbr_float_to_long(b3), qbr_float_to_long(alpha3)));
+                                  image_make_bgra(qbr_float_to_long(r3), qbr_float_to_long(g3), qbr_float_to_long(b3), qbr_float_to_long(alpha3)));
                 }
             }
         } break;
