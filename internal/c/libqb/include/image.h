@@ -71,8 +71,7 @@ static inline constexpr uint32_t image_swap_red_blue(const uint32_t clr) {
 
 static inline constexpr uint8_t image_clamp_color_component(const int n) { return n < 0 ? 0 : n > 255 ? 255 : n; }
 
-static inline constexpr float image_calculate_rgb_distance(const uint8_t r1, const uint8_t g1, const uint8_t b1, const uint8_t r2, const uint8_t g2,
-                                                           const uint8_t b2) {
+static inline float image_calculate_rgb_distance(const uint8_t r1, const uint8_t g1, const uint8_t b1, const uint8_t r2, const uint8_t g2, const uint8_t b2) {
     auto delta_r = (float)r2 - (float)r1;
     auto delta_g = (float)g2 - (float)g1;
     auto delta_b = (float)b2 - (float)b1;
