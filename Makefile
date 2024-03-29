@@ -268,6 +268,8 @@ endif
 ifneq ($(filter y,$(DEP_SCREENIMAGE)),)
 	CXXFLAGS += -DDEPENDENCY_SCREENIMAGE
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
+
+	LICENSE_IN_USE += clip
 else
 	CXXFLAGS += -DDEPENDENCY_NO_SCREENIMAGE
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
