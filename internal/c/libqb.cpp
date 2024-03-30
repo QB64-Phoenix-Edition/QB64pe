@@ -27656,6 +27656,11 @@ void GLUT_key_special(int32 key, int32 down) {
 #    endif
 
     if (vk != -1) {
+#    ifdef QB64_WINDOWS
+        if (!func__hasfocus() && !(keyheld(vk) && !down))
+            return;
+#    endif
+
         if (down)
             keydown_vk(vk);
         else
