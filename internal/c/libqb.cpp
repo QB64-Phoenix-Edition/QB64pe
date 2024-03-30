@@ -27544,34 +27544,28 @@ void GLUT_KEYBOARDUP_FUNC(unsigned char key, int x, int y) { GLUT_key_ascii(key,
 
 void GLUT_key_special(int32 key, int32 down) {
 #ifdef QB64_GLUT
-
-#    ifdef QB64_WINDOWS
-    if (!func__hasfocus())
-        return;
-#    endif
-
 #    ifndef CORE_FREEGLUT
-        /*
-            static int32 mod;
-            mod=glutGetModifiers();//shift=1, control=2, alt=4
-            if (mod&GLUT_ACTIVE_SHIFT){
-            keydown_vk(VK+QBVK_LSHIFT);
-            }else{
-            keyup_vk(VK+QBVK_LSHIFT);
-            }
+    /*
+        static int32 mod;
+        mod=glutGetModifiers();//shift=1, control=2, alt=4
+        if (mod&GLUT_ACTIVE_SHIFT){
+        keydown_vk(VK+QBVK_LSHIFT);
+        }else{
+        keyup_vk(VK+QBVK_LSHIFT);
+        }
 
-            if (mod&GLUT_ACTIVE_CTRL){
-            keydown_vk(VK+QBVK_LCTRL);
-            }else{
-            keyup_vk(VK+QBVK_LCTRL);
-            }
+        if (mod&GLUT_ACTIVE_CTRL){
+        keydown_vk(VK+QBVK_LCTRL);
+        }else{
+        keyup_vk(VK+QBVK_LCTRL);
+        }
 
-            if (mod&GLUT_ACTIVE_ALT){
-            keydown_vk(VK+QBVK_LALT);
-            }else{
-            keyup_vk(VK+QBVK_LALT);
-            }
-        */
+        if (mod&GLUT_ACTIVE_ALT){
+        keydown_vk(VK+QBVK_LALT);
+        }else{
+        keyup_vk(VK+QBVK_LALT);
+        }
+    */
 #    endif
 
     static int32 vk;
@@ -27662,6 +27656,11 @@ void GLUT_key_special(int32 key, int32 down) {
 #    endif
 
     if (vk != -1) {
+#    ifdef QB64_WINDOWS
+        if (!func__hasfocus() && !(keyheld(vk) && !down))
+            return;
+#    endif
+
         if (down)
             keydown_vk(vk);
         else
