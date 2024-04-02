@@ -1171,6 +1171,9 @@ HashAdd "AND", f, 0
 HashAdd "OR", f, 0
 HashAdd "XOR", f, 0
 HashAdd "MOD", f, 0
+HashAdd "_NEGATE", f, 0
+HashAdd "_ANDALSO", f, 0
+HashAdd "_ORELSE", f, 0
 
 f = HASHFLAG_RESERVED + HASHFLAG_CUSTOMSYNTAX
 HashAdd "LIST", f, 0
@@ -1548,6 +1551,11 @@ IF qb64prefix_set THEN
 
     f = HASHFLAG_RESERVED + HASHFLAG_CUSTOMSYNTAX
     HashAdd "EXPLICIT", f, 0
+
+    f = HASHFLAG_OPERATOR + HASHFLAG_RESERVED
+    HashAdd "NEGATE", f, 0
+    HashAdd "ANDALSO", f, 0
+    HashAdd "ORELSE", f, 0
 END IF
 
 DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer%("O", tmpdir$ + "global.txt")
@@ -18829,6 +18837,12 @@ FUNCTION fixoperationorder$ (savea$)
             IF temp1$ = "XOR" AND temp2$ = "XOR" THEN Give_Error "Error: XOR XOR": EXIT FUNCTION
             IF temp1$ = "IMP" AND temp2$ = "IMP" THEN Give_Error "Error: IMP IMP": EXIT FUNCTION
             IF temp1$ = "EQV" AND temp2$ = "EQV" THEN Give_Error "Error: EQV EQV": EXIT FUNCTION
+            IF temp1$ = "_ANDALSO" AND temp2$ = "_ANDALSO" THEN Give_Error "Error: _ANDALSO _ANDALSO": EXIT FUNCTION
+            IF temp1$ = "_ORELSE" AND temp2$ = "_ORELSE" THEN Give_Error "Error: _ORELSE _ORELSE": EXIT FUNCTION
+            IF qb64prefix_set THEN
+                IF temp1$ = "ANDALSO" AND temp2$ = "ANDALSO" THEN Give_Error "Error: ANDALSO ANDALSO": EXIT FUNCTION
+                IF temp1$ = "ORELSE" AND temp2$ = "ORELSE" THEN Give_Error "Error: ORELSE ORELSE": EXIT FUNCTION
+            END IF
         NEXT
 
         '----------------A. 'Quick' mismatched brackets check----------------
@@ -19785,11 +19799,14 @@ END SUB
 FUNCTION isoperator (a2$)
     a$ = UCASE$(a2$)
     l = 0
+    l = l + 1: IF a$ = "_ORELSE" OR (qb64prefix_set AND a$ = "ORELSE") THEN GOTO opfound
+    l = l + 1: IF a$ = "_ANDALSO" OR (qb64prefix_set AND a$ = "ANDALSO") THEN GOTO opfound
     l = l + 1: IF a$ = "IMP" THEN GOTO opfound
     l = l + 1: IF a$ = "EQV" THEN GOTO opfound
     l = l + 1: IF a$ = "XOR" THEN GOTO opfound
     l = l + 1: IF a$ = "OR" THEN GOTO opfound
     l = l + 1: IF a$ = "AND" THEN GOTO opfound
+    l = l + 1: IF a$ = "_NEGATE" OR (qb64prefix_set AND a$ = "NEGATE") THEN GOTO opfound
     l = l + 1: IF a$ = "NOT" THEN GOTO opfound
     l = l + 1
     IF a$ = "=" THEN GOTO opfound
@@ -20884,9 +20901,12 @@ FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG,
     IF operator$ = "XOR" THEN info$ = "^": operatorusage = 1: EXIT FUNCTION
     IF operator$ = "OR" THEN info$ = "|": operatorusage = 1: EXIT FUNCTION
     IF operator$ = "AND" THEN info$ = "&": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "_ORELSE" OR (qb64prefix_set AND operator$ = "ORELSE") THEN info$ = "||": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "_ANDALSO" OR (qb64prefix_set AND operator$ = "ANDALSO") THEN info$ = "&&": operatorusage = 1: EXIT FUNCTION
 
     lhs = 7
     IF operator$ = "NOT" THEN info$ = "~": operatorusage = 5: EXIT FUNCTION
+    IF operator$ = "_NEGATE" OR (qb64prefix_set AND operator$ = "NEGATE") THEN info$ = "!": operatorusage = 5: EXIT FUNCTION
 
     IF Debug THEN PRINT #9, "INVALID NUMBERIC OPERATOR!": END
 
