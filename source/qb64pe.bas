@@ -23702,27 +23702,43 @@ FUNCTION SCase2$ (t$)
     IF ideautolayoutkwcapitals THEN
         SCase2$ = UCASE$(t$)
     ELSE
-        newWord = -1
-        temp$ = ""
-        FOR i = 1 TO LEN(t$)
-            s$ = MID$(t$, i, 1)
-            IF newWord THEN
-                IF s$ = "_" OR s$ = separator$ THEN
-                    temp$ = temp$ + s$
-                ELSE
-                    temp$ = temp$ + UCASE$(s$)
-                    newWord = 0
-                END IF
-            ELSE
-                IF s$ = separator$ THEN
-                    temp$ = temp$ + separator$
-                    newWord = -1
-                ELSE
-                    temp$ = temp$ + LCASE$(s$)
-                END IF
-            END IF
-        NEXT
-        SCase2$ = temp$
+        SELECT CASE t$
+            CASE "_ANDALSO"
+                SCase2$ = "_AndAlso"
+
+            CASE "ANDALSO"
+                SCase2$ = "AndAlso"
+
+            CASE "_ORELSE"
+                SCase2$ = "_OrElse"
+
+            CASE "ORELSE"
+                SCase2$ = "OrElse"
+
+            CASE ELSE
+                newWord = -1
+                temp$ = ""
+                FOR i = 1 TO LEN(t$)
+                    s$ = MID$(t$, i, 1)
+                    IF newWord THEN
+                        IF s$ = "_" OR s$ = separator$ THEN
+                            temp$ = temp$ + s$
+                        ELSE
+                            temp$ = temp$ + UCASE$(s$)
+                            newWord = 0
+                        END IF
+                    ELSE
+                        IF s$ = separator$ THEN
+                            temp$ = temp$ + separator$
+                            newWord = -1
+                        ELSE
+                            temp$ = temp$ + LCASE$(s$)
+                        END IF
+                    END IF
+                NEXT
+                SCase2$ = temp$
+
+        END SELECT
     END IF
 END FUNCTION
 
