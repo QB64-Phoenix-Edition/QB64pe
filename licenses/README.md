@@ -122,3 +122,11 @@ This is used by libqb to show alerts and also by the common dialog functions and
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
 | tiny file dialogs | ZLIB | license_tinyfiledialogs.txt | internal/c/parts/gui/ |
+
+## Clipboard Image Support
+
+This is used if you make use of the `_CLIPBOARDIMAGE` function or statement.
+
+| Library | License | License file | Location |
+| :------ | :-----: | :----------- | :------- |
+| Clip Library | MIT | license_clip.txt | internal/c/parts/os/clipboard/clip/ |
