@@ -3463,8 +3463,9 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "S" THEN 'File -> #Save
             IF ideprogname = "" THEN
                 ProposedTitle$ = FindProposedTitle$
-                IF ProposedTitle$ = "" THEN
-                    a$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                IF UseGuiDialogs THEN
+                    a$ = Savefile$(ProposedTitle$ + ".bas")
                 ELSE
                     a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                 END IF

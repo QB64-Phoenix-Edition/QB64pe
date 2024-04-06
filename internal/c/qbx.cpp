@@ -1,26 +1,27 @@
 #include "audio.h"
 #include "bitops.h"
+#include "clipboard.h"
+#include "command.h"
 #include "common.h"
 #include "compression.h"
-#include "command.h"
 #include "datetime.h"
 #include "environ.h"
+#include "error_handle.h"
 #include "event.h"
 #include "extended_math.h"
-#include "filepath.h"
 #include "file-fields.h"
+#include "filepath.h"
 #include "filesystem.h"
 #include "font.h"
 #include "gui.h"
 #include "hexoctbin.h"
 #include "image.h"
-#include "qbmath.h"
-#include "qbs.h"
-#include "qbs-mk-cv.h"
-#include "shell.h"
-#include "error_handle.h"
 #include "mem.h"
+#include "qbmath.h"
+#include "qbs-mk-cv.h"
+#include "qbs.h"
 #include "rounding.h"
+#include "shell.h"
 
 extern int32 func__cinp(int32 toggle,
                         int32 passed); // Console INP scan code reader
@@ -194,10 +195,6 @@ extern void sub__fullscreen(int32 method, int32 passed);
 extern void sub__allowfullscreen(int32 method, int32 smooth);
 extern int32 func__fullscreen();
 extern int32 func__fullscreensmooth();
-extern void sub__clipboard(qbs *);
-extern qbs *func__clipboard();
-extern int32 func__clipboardimage();
-extern void sub__clipboardimage(int32 src);
 extern int32 func__exit();
 extern void revert_input_check();
 extern int32 func__openhost(qbs *);

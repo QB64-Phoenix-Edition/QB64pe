@@ -1047,9 +1047,7 @@ void FGAPIENTRY glutMainLoopEvent( void )
 #endif
 
         // QB64-PE: custom code begin
-        int qb64_os_event_info = 0;
-
-        qb64_os_event_info = 1;
+        int qb64_os_event_info = 1;
         qb64_os_event_linux(&event, fgDisplay.Display, &qb64_os_event_info);
         if (qb64_os_event_info == 3)
             return;
