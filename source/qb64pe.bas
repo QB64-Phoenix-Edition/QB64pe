@@ -20900,8 +20900,8 @@ FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG,
     IF operator$ = "XOR" THEN info$ = "^": operatorusage = 1: EXIT FUNCTION
     IF operator$ = "OR" THEN info$ = "|": operatorusage = 1: EXIT FUNCTION
     IF operator$ = "AND" THEN info$ = "&": operatorusage = 1: EXIT FUNCTION
-    IF operator$ = "_ORELSE" OR (qb64prefix_set AND operator$ = "ORELSE") THEN info$ = "||": operatorusage = 1: EXIT FUNCTION
-    IF operator$ = "_ANDALSO" OR (qb64prefix_set AND operator$ = "ANDALSO") THEN info$ = "&&": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "_ORELSE" OR (qb64prefix_set AND operator$ = "ORELSE") THEN info$ = "||": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = "_ANDALSO" OR (qb64prefix_set AND operator$ = "ANDALSO") THEN info$ = "&&": operatorusage = 3: EXIT FUNCTION
 
     lhs = 7
     IF operator$ = "NOT" THEN info$ = "~": operatorusage = 5: EXIT FUNCTION
