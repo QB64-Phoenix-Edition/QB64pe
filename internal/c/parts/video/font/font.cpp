@@ -324,7 +324,7 @@ struct FontManager {
                     }
 
                     // Load the mono glyph to query details and render
-                    if (FT_Load_Glyph(parentFont->face, index, FT_LOAD_DEFAULT)) {
+                    if (FT_Load_Glyph(parentFont->face, index, FT_LOAD_TARGET_MONO)) {
                         FONT_DEBUG_PRINT("Failed to load mono glyph for codepoint %lu (%u)", codepoint, index);
                     }
 
@@ -821,21 +821,10 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
                     (double)default_pixel_height);
     fontManager.fonts[h]->options = options; // save the options for use later
 
-    if (options & FONT_LOAD_MONOSPACE) {
-        // Get the width of upper case W
-        if (FT_Load_Char(fontManager.fonts[h]->face, 'W', FT_LOAD_DEFAULT)) {
-            FONT_DEBUG_PRINT("FT_Load_Char() 'W' failed");
-        }
-        fontManager.fonts[h]->monospaceWidth =
-            std::max(fontManager.fonts[h]->face->glyph->advance.x / 64, (FT_Pos)fontManager.fonts[h]->face->glyph->bitmap.width); // save the width
+    if ((options & FONT_LOAD_MONOSPACE) || FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face)) {
+        const uint32_t testCP = 'W'; // since W is usually the widest
 
-        // Get the width of upper case M
-        if (FT_Load_Char(fontManager.fonts[h]->face, 'M', FT_LOAD_DEFAULT)) {
-            FONT_DEBUG_PRINT("FT_Load_Char() 'M' failed");
-        }
-        fontManager.fonts[h]->monospaceWidth =
-            std::max(fontManager.fonts[h]->monospaceWidth, std::max(fontManager.fonts[h]->face->glyph->advance.x / 64,
-                                                                    (FT_Pos)fontManager.fonts[h]->face->glyph->bitmap.width)); // save the max width
+        fontManager.fonts[h]->monospaceWidth = fontManager.fonts[h]->GetStringPixelWidth(&testCP, 1);
 
         FONT_DEBUG_PRINT("Monospace font (width = %li) requested", fontManager.fonts[h]->monospaceWidth);
     }
@@ -861,12 +850,7 @@ int32_t FontWidth(int32_t fh) {
 
     FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
-    if (fontManager.fonts[fh]->monospaceWidth)
-        return fontManager.fonts[fh]->monospaceWidth;
-
-    FONT_DEBUG_PRINT("Font width for variable width font %i requested", fh);
-
-    return 0;
+    return fontManager.fonts[fh]->monospaceWidth;
 }
 
 /// @brief Returns the length of an UTF32 codepoint string in pixels
