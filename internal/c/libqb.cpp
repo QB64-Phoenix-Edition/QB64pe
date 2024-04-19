@@ -27227,49 +27227,61 @@ void GLUT_SPECIAL_FUNC(int key, int x, int y) {
 }
 void GLUT_SPECIALUP_FUNC(int key, int x, int y) { GLUT_key_special(key, 0); }
 
-#ifdef QB64_WINDOWS
-void GLUT_TIMER_EVENT(int ignore) {
-    libqb_process_glut_queue();
+static int64_t lastTick = 0;
+static double deltaTick = 0;
 
-#    ifdef QB64_GLUT
-    glutPostRedisplay();
-    int32 msdelay = 1000.0 / max_fps;
-    Sleep(4);
-    msdelay -= 4; // this forces GLUT to relinquish some CPU time to other threads but still allow for _FPS 100+
-    if (msdelay < 1)
-        msdelay = 1;
-    glutTimerFunc(msdelay, GLUT_TIMER_EVENT, 0);
-#    endif
-}
-#else
 void GLUT_IDLEFUNC() {
     libqb_process_glut_queue();
 
-#    ifdef QB64_MACOSX
-#        ifdef DEPENDENCY_DEVICEINPUT
+#ifdef QB64_MACOSX
+#    ifdef DEPENDENCY_DEVICEINPUT
     // must be in same thread as GLUT for OSX
     QB64_GAMEPAD_POLL();
     //[[[[NSApplication sharedApplication] mainWindow] standardWindowButton:NSWindowCloseButton] setEnabled:YES];
-#        endif
 #    endif
+#endif
 
-#    ifdef QB64_GLUT
+#ifdef QB64_GLUT
 
+#    ifdef QB64_LINUX
     if (x11_lock_request) {
         x11_locked = 1;
         x11_lock_request = 0;
         while (x11_locked)
             Sleep(1);
     }
+#    endif
+    int64_t curTime = GetTicks();
+
+    // This is how long the frame took to render
+    int64_t elapsed = curTime - lastTick;
+
+    // Calculate out the error between how long the frame was 'supposed' to take vs. how long it actually took.
+    deltaTick += ((double)1000 / max_fps) - (double)elapsed;
+
+    lastTick = curTime;
+
+    // If the error is positive, we sleep for that period of time.
+    if (deltaTick > 0) {
+        int32 msdelay = deltaTick;
+        Sleep(msdelay);
+
+        int64_t sleepTime = GetTicks();
+
+        // Subtract off the time we spent sleeping. This should leave deltaTick at zero or slightly negative.
+        // If it ends up negative, then we'll sleep less next frame to compensate
+        deltaTick -= sleepTime - lastTick;
+        lastTick = sleepTime;
+    } else {
+        // If we fall behind by a full frame or more, then skip to the next one
+        while (deltaTick < -((double)1000 / max_fps))
+            deltaTick += ((double)1000 / max_fps);
+    }
 
     glutPostRedisplay();
-    int32 msdelay = 1000.0 / max_fps;
-    if (msdelay < 1)
-        msdelay = 1;
-    Sleep(msdelay);
-#    endif
-}
 #endif
+}
+
 
 #ifdef QB64_MACOSX
 #    include <sys/sysctl.h>
@@ -29468,6 +29480,8 @@ int32 func__scaledheight() { return environment_2d__screen_scaled_height; }
 extern void set_dynamic_info();
 
 int main(int argc, char *argv[]) {
+    clock_init();
+
 
 #if defined(QB64_LINUX) && defined(X11)
     XInitThreads();
