@@ -822,24 +822,11 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     fontManager.fonts[h]->options = options; // save the options for use later
 
     if ((options & FONT_LOAD_MONOSPACE) || FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face)) {
-        const auto testCP = 'W'; // since W is usually the widest
+        const uint32_t testCP = 'W'; // since W is usually the widest
 
-        // Load using monochrome rendering
-        if (FT_Load_Char(fontManager.fonts[h]->face, testCP, FT_LOAD_RENDER | FT_LOAD_MONOCHROME | FT_LOAD_TARGET_MONO)) {
-            FONT_DEBUG_PRINT("FT_Load_Char() (monochrome) failed");
+        fontManager.fonts[h]->monospaceWidth = fontManager.fonts[h]->GetStringPixelWidth(&testCP, 1);
 
-            // Retry using gray-level rendering
-            if (FT_Load_Char(fontManager.fonts[h]->face, testCP, FT_LOAD_RENDER)) {
-                FONT_DEBUG_PRINT("FT_Load_Char() (gray) failed");
-            }
-        }
-
-        if (fontManager.fonts[h]->face->glyph) {
-            fontManager.fonts[h]->monospaceWidth =
-                std::max(fontManager.fonts[h]->face->glyph->advance.x / 64, (FT_Pos)fontManager.fonts[h]->face->glyph->bitmap.width); // save the max width
-
-            FONT_DEBUG_PRINT("Monospace font (width = %li) requested", fontManager.fonts[h]->monospaceWidth);
-        }
+        FONT_DEBUG_PRINT("Monospace font (width = %li) requested", fontManager.fonts[h]->monospaceWidth);
     }
 
     FONT_DEBUG_PRINT("Font (height = %i, index = %i) successfully initialized", default_pixel_height, which_font);
@@ -863,12 +850,7 @@ int32_t FontWidth(int32_t fh) {
 
     FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
 
-    if (fontManager.fonts[fh]->monospaceWidth)
-        return fontManager.fonts[fh]->monospaceWidth;
-
-    FONT_DEBUG_PRINT("Font width for variable width font %i requested", fh);
-
-    return 0;
+    return fontManager.fonts[fh]->monospaceWidth;
 }
 
 /// @brief Returns the length of an UTF32 codepoint string in pixels
