@@ -350,6 +350,8 @@ ifeq ($(OS),win)
 
 	ifneq ($(filter y,$(DEP_CONSOLE_ONLY) $(DEP_CONSOLE)),)
 		CXXLIBS += -mconsole
+	else
+		CXXLIBS += -mwindows
 	endif
 
 	ifneq ($(filter y,$(DEP_CONSOLE_ONLY)),)
@@ -358,7 +360,7 @@ ifeq ($(OS),win)
 
 		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
 	else
-		CXXLIBS += -mwindows -lopengl32 -lglu32 -lwinmm
+		CXXLIBS += -lopengl32 -lglu32 -lwinmm
 	endif
 
 	ifneq ($(filter y,$(DEP_SOCKETS)),)
