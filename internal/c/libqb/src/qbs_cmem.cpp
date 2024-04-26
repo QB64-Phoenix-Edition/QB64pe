@@ -8,7 +8,7 @@
 #include "error_handle.h"
 #include "qbs.h"
 
-// FIXME: conventional memory should be consolidated into libqb soruce and headers
+// FIXME: conventional memory should be consolidated into libqb source and headers
 extern uint32_t qbs_cmem_sp; //=256;
 extern uint32_t cmem_sp;     //=65536;
 

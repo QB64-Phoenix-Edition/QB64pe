@@ -10337,7 +10337,7 @@ DO
                                         insertelements a$, i, ";"
                                         insertelements ca$, i, ";"
                                         n = n + 1
-                                        elementon = i + 2 'just a easy way to reduce redundant calls to the routine
+                                        elementon = i + 2 'just an easy way to reduce redundant calls to the routine
                                         GOTO redosemi
                                     END IF
                                 END IF
@@ -10347,7 +10347,7 @@ DO
                                             insertelements a$, i, ";"
                                             insertelements ca$, i, ";"
                                             n = n + 1
-                                            elementon = i + 2 'just a easy way to reduce redundant calls to the routine
+                                            elementon = i + 2 'just an easy way to reduce redundant calls to the routine
                                             GOTO redosemi
                                         END IF
                                     END IF
@@ -21774,7 +21774,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
 
                                 IF ASC(c$) = 44 AND b = 0 THEN
                                     EXIT FOR 'Expressions cannot contain a "," in their base level
-                                    'Because this wasn't interceppted by the above code it isn't the Opt either
+                                    'Because this wasn't intercepted by the above code it isn't the Opt either
                                 END IF
                                 IF ASC(c$) = 40 THEN
                                     b = b + 1

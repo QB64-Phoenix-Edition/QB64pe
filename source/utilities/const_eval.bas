@@ -861,7 +861,7 @@ SUB Set_ConstFunctions
     REDIM _PRESERVE ConstFuncs(i) AS ConstFunction
 END SUB
 
-' args should be a element list of the arguments separated by commas
+' args should be an element list of the arguments separated by commas
 '
 ' Each argument should be a single element
 FUNCTION EvaluateFunction$ (p, args AS STRING)
