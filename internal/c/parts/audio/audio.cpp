@@ -1773,7 +1773,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
 /// <param name="handle">A sound handle</param>
 void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
-        // If we have a raw stream then force it to push all it's data to miniaudio
+        // If we have a raw stream then force it to push all its data to miniaudio
         // Note that this will take care of checking if the handle is a raw steam and other stuff
         // So it is completely safe to call it this way
         sub__sndrawdone(handle, true);

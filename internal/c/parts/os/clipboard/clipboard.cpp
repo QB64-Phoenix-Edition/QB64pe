@@ -162,7 +162,7 @@ void sub__clipboard(const qbs *qbsText) {
     }
 }
 
-/// @brief Retuns an image handle of an image from the clipboard (if present).
+/// @brief Returns an image handle of an image from the clipboard (if present).
 /// @return A valid image handle. Returns -1 if clipboard format is not supported or if there is nothing.
 int32_t func__clipboardimage() {
     int32_t qb64Img = INVALID_IMAGE_HANDLE; // assume failure
