@@ -13030,7 +13030,7 @@ IF os$ = "LNX" THEN
         OPEN path.exe$ + file$ + extension$ + "_start.command" FOR OUTPUT AS #ff
         PRINT #ff, "cd " + CHR$(34) + "$(dirname " + CHR$(34) + "$0" + CHR$(34) + ")" + CHR$(34);
         PRINT #ff, CHR$(10);
-        PRINT #ff, "./" + file$ + extension$ + " &";
+        PRINT #ff, "./" + CHR$(34) + file$ + extension$ + CHR$(34) + " &";
         PRINT #ff, CHR$(10);
         PRINT #ff, "osascript -e 'tell application " + CHR$(34) + "Terminal" + CHR$(34) + " to close (every window whose name contains " + CHR$(34) + file$ + extension$ + "_start.command" + CHR$(34) + ")' &";
         PRINT #ff, CHR$(10);
