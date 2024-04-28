@@ -13030,7 +13030,7 @@ IF os$ = "LNX" THEN
         OPEN path.exe$ + file$ + extension$ + "_start.command" FOR OUTPUT AS #ff
         PRINT #ff, "cd " + CHR$(34) + "$(dirname " + CHR$(34) + "$0" + CHR$(34) + ")" + CHR$(34);
         PRINT #ff, CHR$(10);
-        PRINT #ff, "./" + file$ + extension$ + " &";
+        PRINT #ff, "./" + CHR$(34) + file$ + extension$ + CHR$(34) + " &";
         PRINT #ff, CHR$(10);
         PRINT #ff, "osascript -e 'tell application " + CHR$(34) + "Terminal" + CHR$(34) + " to close (every window whose name contains " + CHR$(34) + file$ + extension$ + "_start.command" + CHR$(34) + ")' &";
         PRINT #ff, CHR$(10);
@@ -16181,7 +16181,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                 o$ = block(i)
                 u = operatorusage(o$, typ, i$, lhstyp, rhstyp, result)
 
-                IF u <> 5 THEN 'not unary
+                IF u <> 5 AND u <> 6 THEN 'not unary
                     nonop = 1
                     IF i = 1 OR evaledblock(i - 1) = 0 THEN
                         IF i = 1 AND blockn = 1 AND o$ = "-" THEN Give_Error "Expected variable/value after '" + UCASE$(o$) + "'": EXIT FUNCTION 'guess - is neg in this case
@@ -16298,7 +16298,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                 END IF
 
                 'Reduce floating point values to common base for comparison?
-                IF isop = 7 THEN 'comparative operator
+                IF isop = 10 THEN 'comparative (=) operator (check the value if isoperator() is changed!)
                     'Corrects problems encountered such as:
                     '    S = 2.1
                     '    IF S = 2.1 THEN PRINT "OK" ELSE PRINT "ERROR S PRINTS AS"; S; "BUT IS SEEN BY QB64 AS..."
@@ -16400,6 +16400,11 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                 END IF 'u=2
 
                 'STEP 3: apply operator appropriately
+
+                IF u = 6 THEN
+                    block(i + 1) = "-(" + i$ + "(" + block(i + 1) + ")" + ")"
+                    block(i) = "": i = i + 1: GOTO operatorapplied
+                END IF
 
                 IF u = 5 THEN
                     block(i + 1) = i$ + "(" + block(i + 1) + ")"
@@ -19055,7 +19060,7 @@ FUNCTION fixoperationorder$ (savea$)
         IF lco <> hco THEN
             'brackets needed
 
-            IF lco = 6 THEN 'NOT exception
+            IF lco = 9 THEN 'NOT exception (check the value if isoperator() is changed!)
                 'Step 1: Add brackets as follows ~~~ ( NOT ( ~~~ NOT ~~~ NOT ~~~ NOT ~~~ ))
                 'Step 2: Recheck line from beginning
                 IF n = 1 THEN Give_Error "Expected NOT ...": EXIT FUNCTION
@@ -20837,6 +20842,7 @@ FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG,
     '3=  bracket left and right side with negation and change operator to info$
     '4=  BINARY NOT l.h.s, then apply operator in info$
     '5=  UNARY, bracket up rhs, apply operator info$ to left, rebracket again
+    '6=  UNARY, bracket up rhs, apply operator info$ to left, rebracket, negate, rebracket again
 
     'lhs & rhs bit-field values
     '1=integeral
@@ -20905,7 +20911,7 @@ FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG,
 
     lhs = 7
     IF operator$ = "NOT" THEN info$ = "~": operatorusage = 5: EXIT FUNCTION
-    IF operator$ = "_NEGATE" OR (qb64prefix_set AND operator$ = "NEGATE") THEN info$ = "!": operatorusage = 5: EXIT FUNCTION
+    IF operator$ = "_NEGATE" OR (qb64prefix_set AND operator$ = "NEGATE") THEN info$ = "!": operatorusage = 6: EXIT FUNCTION
 
     IF Debug THEN PRINT #9, "INVALID NUMBERIC OPERATOR!": END
 
