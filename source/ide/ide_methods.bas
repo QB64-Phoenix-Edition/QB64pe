@@ -20895,8 +20895,8 @@ SUB ExportCodeAs (docFormat$)
                 END IF
             CASE "RANDOMIZE": IF UCASE$(LEFT$(la$, 5)) = "USING" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "RANDOMIZE USING": in% = -1
             CASE "SELECT"
-                IF UCASE$(LEFT$(la$, 4)) = "CASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "SELECT CASE": in% = -1
-                IF UCASE$(LEFT$(la$, 9)) = "EVERYCASE" THEN kw$ = kw$ + " " + LEFT$(la$, 9): page$ = "SELECT CASE": in% = -1
+                IF UCASE$(LEFT$(la$, 4)) = "CASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(LEFT$(la$, 9)) = "EVERYCASE" THEN kw$ = kw$ + " " + LEFT$(la$, 9): page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
             CASE "VIEW": IF UCASE$(LEFT$(la$, 5)) = "PRINT" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "VIEW PRINT": in% = -1
             CASE "INPUT", "PRINT", "WRITE": IF LEFT$(la$, 1) = "#" THEN page$ = page$ + " (file statement)"
         END SELECT

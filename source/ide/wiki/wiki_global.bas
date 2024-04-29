@@ -138,6 +138,7 @@ wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HA280E2): 
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H9897E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(8) 'inverse bullet
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H8B97E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(9) 'circle
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H9997E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(10) 'inverse circle
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H8896E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(219) 'full block
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HBC98E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(15) 'sun with rays
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HBC80E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(19) 'double exclamation
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HAC96E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(22) 'rectangle
