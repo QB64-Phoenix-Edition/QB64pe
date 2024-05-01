@@ -1112,6 +1112,7 @@ FUNCTION ide2 (ignore)
                                 IF MID$(temp$, i, 1) = sp$ THEN MID$(temp$, i, 1) = " "
                             NEXT
                             temp$ = _TRIM$(temp$)
+                            IF UCASE$(LEFT$(temp$,10)) = "SUB VWATCH"  THEN temp$ = "End of Program"
                             IF LEN(temp$) THEN
                                 y = y + 1: x = 1
                                 temp$ = "Caused by (or after): " + CHR$(1) + temp$
