@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "radv2/opal.cpp"
+#include "radv2/opal.h"
 #define RAD_DETECT_REPEATS 1
 #include "radv2/player20.cpp"
 #include "radv2/validate20.cpp"
@@ -372,8 +372,7 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
 
     // Initialize the player
     // We'll use a lambda here and pass the pRadv2 pointer using 'arg'
-    pRadv2->player->Init(
-        pRadv2->tune, [](void *arg, uint16_t reg, uint8_t data) { ((ma_radv2 *)arg)->adlib->Port(reg, data); }, pRadv2);
+    pRadv2->player->Init(pRadv2->tune, [](void *arg, uint16_t reg, uint8_t data) { ((ma_radv2 *)arg)->adlib->Port(reg, data); }, pRadv2);
 
     // Get the playback rate
     if (pRadv2->player->GetHertz() < 0) {
@@ -485,8 +484,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
 
     // Initialize the player
     // We'll use a lambda here and pass the pRadv2 pointer using 'arg'
-    pRadv2->player->Init(
-        pRadv2->tune, [](void *arg, uint16_t reg, uint8_t data) { ((ma_radv2 *)arg)->adlib->Port(reg, data); }, pRadv2);
+    pRadv2->player->Init(pRadv2->tune, [](void *arg, uint16_t reg, uint8_t data) { ((ma_radv2 *)arg)->adlib->Port(reg, data); }, pRadv2);
 
     // Get the playback rate
     if (pRadv2->player->GetHertz() < 0) {
