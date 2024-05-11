@@ -818,15 +818,9 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     fontManager.fonts[h]->defaultHeight = default_pixel_height; // save default pixel height
 
     // Calculate the baseline using font metrics only if it is scalable
-    if (FT_IS_SCALABLE(fontManager.fonts[h]->face)) {
-        if (FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face)) {
-            fontManager.fonts[h]->baseline =
-                (FT_Pos)qbr((double)fontManager.fonts[h]->face->ascender / (double)fontManager.fonts[h]->face->units_per_EM * (double)default_pixel_height);
-        } else {
-            fontManager.fonts[h]->baseline = (FT_Pos)qbr(((double)fontManager.fonts[h]->face->size->metrics.ascender / 64.0) /
-                                                         ((double)fontManager.fonts[h]->face->size->metrics.height / 64.0) * (double)default_pixel_height);
-        }
-    }
+    if (FT_IS_SCALABLE(fontManager.fonts[h]->face))
+        fontManager.fonts[h]->baseline = FT_MulDiv(FT_MulFix(fontManager.fonts[h]->face->ascender, fontManager.fonts[h]->face->size->metrics.y_scale),
+                                                   default_pixel_height, fontManager.fonts[h]->face->size->metrics.height);
 
     // Check if automatic fixed width font detection was requested
     if ((options & FONT_LOAD_AUTOMONO) && FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face))
@@ -846,14 +840,14 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
 
         if (fontManager.fonts[h]->face->glyph) {
             fontManager.fonts[h]->monospaceWidth =
-                std::max(fontManager.fonts[h]->face->glyph->advance.x / 64, (FT_Pos)fontManager.fonts[h]->face->glyph->bitmap.width); // save the max width
+                std::max<FT_Pos>(fontManager.fonts[h]->face->glyph->advance.x >> 6, fontManager.fonts[h]->face->glyph->bitmap.width); // save the max width
 
             FONT_DEBUG_PRINT("Monospace font (width = %li) requested", fontManager.fonts[h]->monospaceWidth);
-        }
 
-        // Set the baseline to bitmap_top if the font is not scalable
-        if (!FT_IS_SCALABLE(fontManager.fonts[h]->face))
-            fontManager.fonts[h]->baseline = fontManager.fonts[h]->face->glyph->bitmap_top; // for bitmap fonts bitmap_top is the same for all glyph bitmaps
+            // Set the baseline to bitmap_top if the font is not scalable
+            if (!FT_IS_SCALABLE(fontManager.fonts[h]->face))
+                fontManager.fonts[h]->baseline = fontManager.fonts[h]->face->glyph->bitmap_top; // for bitmap fonts bitmap_top is the same for all glyph bitmaps
+        }
 
         // Clear the monospace flag is we failed to get the monospace width
         if (!fontManager.fonts[h]->monospaceWidth)
