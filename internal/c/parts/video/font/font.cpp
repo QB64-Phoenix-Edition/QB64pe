@@ -244,7 +244,7 @@ struct FontManager {
                 // First get all needed glyph metrics
                 bmp->size.x = parentFont->face->glyph->bitmap.width;         // get the width of the bitmap
                 bmp->size.y = parentFont->face->glyph->bitmap.rows;          // get the height of the bitmap
-                bmp->advanceWidth = parentFont->face->glyph->advance.x / 64; // get the advance width of the glyph
+                bmp->advanceWidth = parentFont->face->glyph->advance.x >> 6; // get the advance width of the glyph
                 bmp->bearing.x = parentFont->face->glyph->bitmap_left;       // get the bitmap left side bearing
                 bmp->bearing.y = parentFont->face->glyph->bitmap_top;        // get the bitmap top side bearing
 
@@ -488,7 +488,7 @@ struct FontManager {
                     if (hasKerning && previousGlyph && glyph) {
                         FT_Vector delta;
                         FT_Get_Kerning(face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                        width += delta.x / 64;
+                        width += delta.x >> 6;
                     }
 
                     width += glyph->bitmap->advanceWidth; // add advance width
@@ -980,7 +980,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
                 if (hasKerning && previousGlyph && glyph) {
                     FT_Vector delta;
                     FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                    penX += delta.x / 64;
+                    penX += delta.x >> 6;
                 }
 
                 glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y, penX + glyph->bitmap->bearing.x, fnt->baseline - glyph->bitmap->bearing.y);
@@ -1377,7 +1377,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                     if (hasKerning && previousGlyph && glyph) {
                         FT_Vector delta;
                         FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                        pen.x += delta.x / 64;
+                        pen.x += delta.x >> 6;
                     }
 
                     glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y, pen.x + glyph->bitmap->bearing.x, pen.y - glyph->bitmap->bearing.y);
@@ -1619,7 +1619,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
                 if (hasKerning && previousGlyph && glyph) {
                     FT_Vector delta;
                     FT_Get_Kerning(fnt->face, previousGlyph->index, glyph->index, FT_KERNING_DEFAULT, &delta);
-                    penX += delta.x / 64;
+                    penX += delta.x >> 6;
                 }
 
                 penX += glyph->bitmap->advanceWidth; // add advance width
