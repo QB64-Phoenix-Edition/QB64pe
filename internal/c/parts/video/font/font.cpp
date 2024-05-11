@@ -775,9 +775,9 @@ uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes) {
 /// @param content_bytes The length of the data in bytes
 /// @param default_pixel_height The maximum rendering height of the font
 /// @param which_font The font index in a font collection (< 0 means default)
-/// @param options 16=monospace (all old flags are ignored like it always was since forever)
+/// @param options [IN/OUT] 16=monospace (all old flags are ignored like it always was since forever)
 /// @return A valid font handle (> 0) or 0 on failure
-int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t options) {
+int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t &options) {
     libqb_mutex_guard lock(fontManager.m);
 
     // Allocate a font handle
@@ -816,12 +816,23 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     }
 
     fontManager.fonts[h]->defaultHeight = default_pixel_height; // save default pixel height
-    fontManager.fonts[h]->baseline =
-        (FT_Pos)qbr((((double)fontManager.fonts[h]->face->size->metrics.ascender / 64.0) / ((double)fontManager.fonts[h]->face->size->metrics.height / 64.0)) *
-                    (double)default_pixel_height);
-    fontManager.fonts[h]->options = options; // save the options for use later
 
-    if ((options & FONT_LOAD_MONOSPACE) || FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face)) {
+    // Calculate the baseline using font metrics only if it is scalable
+    if (FT_IS_SCALABLE(fontManager.fonts[h]->face)) {
+        if (FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face)) {
+            fontManager.fonts[h]->baseline =
+                (FT_Pos)qbr((double)fontManager.fonts[h]->face->ascender / (double)fontManager.fonts[h]->face->units_per_EM * (double)default_pixel_height);
+        } else {
+            fontManager.fonts[h]->baseline = (FT_Pos)qbr(((double)fontManager.fonts[h]->face->size->metrics.ascender / 64.0) /
+                                                         ((double)fontManager.fonts[h]->face->size->metrics.height / 64.0) * (double)default_pixel_height);
+        }
+    }
+
+    // Check if automatic fixed width font detection was requested
+    if ((options & FONT_LOAD_AUTOMONO) && FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face))
+        options |= FONT_LOAD_MONOSPACE; // force set monospace flag and pass it upstream if the font is fixed width
+
+    if (options & FONT_LOAD_MONOSPACE) {
         const FT_ULong testCP = 'W'; // since W is usually the widest
 
         // Load using monochrome rendering
@@ -839,7 +850,17 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
 
             FONT_DEBUG_PRINT("Monospace font (width = %li) requested", fontManager.fonts[h]->monospaceWidth);
         }
+
+        // Set the baseline to bitmap_top if the font is not scalable
+        if (!FT_IS_SCALABLE(fontManager.fonts[h]->face))
+            fontManager.fonts[h]->baseline = fontManager.fonts[h]->face->glyph->bitmap_top; // for bitmap fonts bitmap_top is the same for all glyph bitmaps
+
+        // Clear the monospace flag is we failed to get the monospace width
+        if (!fontManager.fonts[h]->monospaceWidth)
+            options &= ~FONT_LOAD_MONOSPACE;
     }
+
+    fontManager.fonts[h]->options = options; // save the options for use later
 
     FONT_DEBUG_PRINT("Font (height = %i, index = %i) successfully initialized", default_pixel_height, which_font);
     return h;
@@ -1323,10 +1344,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         FONT_DEBUG_PRINT("Rendering using TrueType font");
 
         // Render using custom font
-        if (FT_IS_SCALABLE(face))
-            pen.y = (float)face->ascender / (float)face->units_per_EM * (float)fnt->defaultHeight;
-        else
-            pen.y = face->glyph->bitmap_top; // for bitmap fonts bitmap_top is the same for all glyph bitmaps
+        pen.y = fnt->baseline;
 
         FONT_DEBUG_PRINT("pen.y = %i", pen.y);
 

@@ -3563,7 +3563,7 @@ void convert_text_to_utf16(int32 fonthandle, void *buf, int32 size) {
         unicode16_buf = (uint16 *)malloc(unicode16_buf_size);
     }
     // convert text
-    if ((fontflags[fonthandle] & 32) && (fonthandle != NULL)) { // unicode font
+    if ((fontflags[fonthandle] & FONT_LOAD_UNICODE) && (fonthandle != NULL)) { // unicode font
         if (size == 1)
             size = 4;
         convert_unicode(32, buf, size, 16, unicode16_buf);
@@ -11202,7 +11202,7 @@ void printchr(int32 character) {
         x = im->cursor_x - 1;
     y = (im->cursor_y - 1) * fontheight[f];
     h = fontheight[f];
-    if ((fontflags[f] & 32) == 0)
+    if ((fontflags[f] & FONT_LOAD_UNICODE) == 0)
         character &= 255; // unicodefontsupport
 
     // if (mode==1) img[i].print_mode=3;//fill
@@ -11212,7 +11212,7 @@ void printchr(int32 character) {
     if (f >= 32) { // custom font
 
         // 8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
-        if ((im->bytes_per_pixel == 1) || ((im->bytes_per_pixel == 4) && (im->alpha_disabled)) || (fontflags[f] & 8)) {
+        if ((im->bytes_per_pixel == 1) || ((im->bytes_per_pixel == 4) && (im->alpha_disabled)) || (fontflags[f] & FONT_LOAD_DONTBLEND)) {
 
             // render character
             static int32 ok;
@@ -11408,7 +11408,7 @@ int32_t chrwidth(uint32_t character) {
 
     // Custom font
     // a740g: No need to render just to find the pixel length
-    if ((fontflags[f] & 32)) { // UNICODE character
+    if ((fontflags[f] & FONT_LOAD_UNICODE)) { // UNICODE character
         w = FontPrintWidthUTF32(font[f], (uint32_t *)&character, 1);
     } else { // ASCII character
         character &= 255;
@@ -11684,7 +11684,7 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
 
         character = str->chr[i];
 
-        if (fontflags[write_page->font] & 32) { // unicode font
+        if (fontflags[write_page->font] & FONT_LOAD_UNICODE) { // unicode font
             if (i > (str->len - 4))
                 break; // not enough data for a utf32 encoding
             character = *((int32 *)(&str->chr[i]));
@@ -20141,7 +20141,7 @@ void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed) {
     if (f >= 32) { // custom font
 
         // 8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
-        if ((im->bytes_per_pixel == 1) || ((im->bytes_per_pixel == 4) && (im->alpha_disabled)) || (fontflags[f] & 8)) {
+        if ((im->bytes_per_pixel == 1) || ((im->bytes_per_pixel == 4) && (im->alpha_disabled)) || (fontflags[f] & FONT_LOAD_DONTBLEND)) {
 
             // render character
             static int32 ok;
@@ -20376,18 +20376,14 @@ int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
 }
 
 /// @brief f = _LOADFONT(ttf_filename$, height[, "monospace,dontblend,unicode,memory"][, index])
-/// @param f The font file path name or a font memory buffer when loading from memory
+/// @param qbsFileName The font file path name or a font memory buffer when loading from memory
 /// @param size The font height in pixels
-/// @param requirements This can be monospace, dontblend, unicode, memory
+/// @param qbsRequirements This can be monospace, dontblend, unicode, memory
 /// @param font_index The index of the font to load from a font collection
 /// @param passed Which optional arguments were passed
 /// @return Returns a valid handle on success or zero on failure
-int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t font_index, int32_t passed) {
-    // Some QB strings that we'll need
-    static qbs *fileNameZ = nullptr;
-    static qbs *reqs = nullptr;
-
-    if (is_error_pending() || !file_name->len)
+int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequirements, int32_t font_index, int32_t passed) {
+    if (is_error_pending() || !qbsFileName->len)
         return INVALID_FONT_HANDLE; // return invalid handle for any garbage input
 
     // validate size
@@ -20395,12 +20391,6 @@ int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t 
         error(5);
         return INVALID_FONT_HANDLE;
     }
-
-    if (!fileNameZ)
-        fileNameZ = qbs_new(0, 0);
-
-    if (!reqs)
-        reqs = qbs_new(0, 0);
 
     auto isLoadFromMemory = false; // should the font be loaded from memory?
     int32_t options = 0;           // font flags that we'll prepare and save to fontflags[]
@@ -20411,29 +20401,35 @@ int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t 
     // 8 dontblend (blending is the default in 32-bit alpha-enabled modes)
     // 16 monospace
     // 32 unicode
-    if ((passed & 1) && requirements->len) {
-        FONT_DEBUG_PRINT("Parsing requirements");
+    if ((passed & 1) && qbsRequirements->len) {
+        std::string requirements(reinterpret_cast<char *>(qbsRequirements->chr), qbsRequirements->len);
+        std::transform(requirements.begin(), requirements.end(), requirements.begin(), [](unsigned char c) { return std::toupper(c); });
 
-        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+        FONT_DEBUG_PRINT("Parsing requirements string: %s", requirements.c_str());
 
-        if (func_instr(1, reqs, qbs_new_txt("DONTBLEND"), 1)) {
+        if (requirements.find("DONTBLEND") != std::string::npos) {
             options |= FONT_LOAD_DONTBLEND;
-            FONT_DEBUG_PRINT("DONTBLEND requested");
+            FONT_DEBUG_PRINT("No alpha blending requested");
         }
 
-        if (func_instr(1, reqs, qbs_new_txt("MONOSPACE"), 1)) {
+        if (requirements.find("MONOSPACE") != std::string::npos) {
             options |= FONT_LOAD_MONOSPACE;
-            FONT_DEBUG_PRINT("MONOSPACE requested");
+            FONT_DEBUG_PRINT("Monospaced font requested");
         }
 
-        if (func_instr(1, reqs, qbs_new_txt("UNICODE"), 1)) {
+        if (requirements.find("UNICODE") != std::string::npos) {
             options |= FONT_LOAD_UNICODE;
-            FONT_DEBUG_PRINT("UNICODE requested");
+            FONT_DEBUG_PRINT("Unicode requested");
         }
 
-        if (func_instr(1, reqs, qbs_new_txt("MEMORY"), 1)) {
+        if (requirements.find("MEMORY") != std::string::npos) {
             isLoadFromMemory = true;
-            FONT_DEBUG_PRINT("MEMORY requested");
+            FONT_DEBUG_PRINT("Loading from memory requested");
+        }
+
+        if (requirements.find("AUTOMONO") != std::string::npos) {
+            options |= FONT_LOAD_AUTOMONO;
+            FONT_DEBUG_PRINT("Automatic monospacing requested");
         }
     }
 
@@ -20449,13 +20445,13 @@ int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t 
     int32_t bytes;
 
     if (isLoadFromMemory) {
-        content = file_name->chr; // we should not free this!!!
-        bytes = file_name->len;
+        content = qbsFileName->chr; // we should not free this!!!
+        bytes = qbsFileName->len;
         FONT_DEBUG_PRINT("Loading font from memory. Size = %i", bytes);
     } else {
-        qbs_set(fileNameZ, qbs_add(file_name, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-        content = FontLoadFileToMemory(filepath_fix_directory(fileNameZ), &bytes);   // this we must free!!!
-        FONT_DEBUG_PRINT("Loading font from file %s", fileNameZ->chr);
+        std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
+        content = FontLoadFileToMemory(filepath_fix_directory(fileName), &bytes); // this we must free!!!
+        FONT_DEBUG_PRINT("Loading font from file %s", fileName.c_str());
     }
 
     if (!content)
@@ -20489,9 +20485,9 @@ got_font_index:
         return INVALID_FONT_HANDLE;
 
     font[i] = h;
+    fontflags[i] = options;
     fontheight[i] = size;
     fontwidth[i] = FontWidth(h);
-    fontflags[i] = options;
 
     return i;
 }
@@ -20537,8 +20533,8 @@ void sub__font(int32 f, int32 i, int32 passed) {
         return;
     }
 
-    if (im->text && ((fontflags[f] & 16) == 0)) { // fontflags[f] & 16 is the bit which we set for MONOSPACE fonts.  If it's a SCREEN 0 screen, and the font
-        error(5);//                                  isn't monospaced, toss and error and return.
+    if (im->text && ((fontflags[f] & FONT_LOAD_MONOSPACE) == 0)) {  // fontflags[f] & 16 is the bit which we set for MONOSPACE fonts.  If it's a SCREEN 0 screen, and the font
+        error(5);                                                   // isn't monospaced, toss an error and return.
         return;
     } 
     // note: font changes to text screen mode images requires:
@@ -29585,18 +29581,18 @@ int main(int argc, char *argv[]) {
     fontheight[8] = 8;
     fontheight[14] = 14;
     fontheight[16] = 16;
-    fontflags[8] = 16;
-    fontflags[14] = 16;
-    fontflags[16] = 16; // monospace flag
+    fontflags[8] = FONT_LOAD_MONOSPACE;
+    fontflags[14] = FONT_LOAD_MONOSPACE;
+    fontflags[16] = FONT_LOAD_MONOSPACE; // monospace flag
     fontwidth[8 + 1] = 8 * 2;
     fontwidth[14 + 1] = 8 * 2;
     fontwidth[16 + 1] = 8 * 2;
     fontheight[8 + 1] = 8;
     fontheight[14 + 1] = 14;
     fontheight[16 + 1] = 16;
-    fontflags[8 + 1] = 16;
-    fontflags[14 + 1] = 16;
-    fontflags[16 + 1] = 16; // monospace flag
+    fontflags[8 + 1] = FONT_LOAD_MONOSPACE;
+    fontflags[14 + 1] = FONT_LOAD_MONOSPACE;
+    fontflags[16 + 1] = FONT_LOAD_MONOSPACE; // monospace flag
 
     memset(img, 0, IMG_BUFFERSIZE * sizeof(img_struct));
     x = newimg(); // reserve index 0

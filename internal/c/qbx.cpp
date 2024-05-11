@@ -410,7 +410,7 @@ extern void sub__copypalette(int32 i, int32 i2, int32 passed);
 extern void sub__printstring(float x, float y, qbs *text, int32 i,
                              int32 passed);
 extern int32 func__printwidth(qbs *text, int32 i, int32 passed);
-extern int32_t func__loadfont(qbs *file_name, int32_t size, qbs *requirements, int32_t font_index, int32_t passed);
+extern int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequirements, int32_t font_index, int32_t passed);
 extern void sub__font(int32 f, int32 i, int32 passed);
 extern int32 func__fontwidth(int32 f, int32 passed);
 extern int32 func__fontheight(int32 f, int32 passed);
