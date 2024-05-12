@@ -6,6 +6,7 @@
 #define FONT_DEBUG 0
 #include "font.h"
 #include "../../../libqb.h"
+#include "error_handle.h"
 #include "gui.h"
 #include "image.h"
 #include "libqb-common.h"
@@ -22,12 +23,14 @@ extern "C" {
 
 // Note: QB64 expects invalid font handles to be zero
 #define IS_VALID_FONT_HANDLE(_h_) ((_h_) > INVALID_FONT_HANDLE && (_h_) < fontManager.fonts.size() && fontManager.fonts[_h_]->isUsed)
-#define IS_VALID_QB64_FONT_HANDLE(_h_) ((_h_) == 8 || (_h_) == 14 || (_h_) == 16 || ((_h_) >= 32 && (_h_) <= lastfont && font[_h_]))
+#define IS_VALID_QB64_FONT_HANDLE(_h_) ((_h_) <= lastfont && ((fontwidth[_h_] && fontheight[_h_]) || ((_h_) >= 32 && font[_h_])))
 #define IS_VALID_UTF_ENCODING(_e_) ((_e_) == 0 || (_e_) == 8 || (_e_) == 16 || (_e_) == 32)
 
 // These are from libqb.cpp
 extern const img_struct *write_page;
 extern const int32_t *font;
+extern const int32_t *fontwidth;
+extern const int32_t *fontheight;
 extern const int32_t *fontflags;
 extern const int32_t lastfont;
 extern const uint8_t charset8x8[256][8][8];
@@ -292,7 +295,7 @@ struct FontManager {
                     if (parentFont->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_MONO) {
                         for (FT_Pos y = 0; y < bmp->size.y; y++, src += parentFont->face->glyph->bitmap.pitch, dst += bmp->size.x) {
                             for (FT_Pos x = 0; x < bmp->size.x; x++) {
-                                dst[x] = (((src[x / 8]) >> (7 - (x & 7))) & 1) * 255; // this looks at each bit and then sets the pixel
+                                dst[x] = (((src[x >> 3]) >> (7 - (x & 7))) & 1) * 255; // this looks at each bit and then sets the pixel
                             }
                         }
                     } else if (parentFont->face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
@@ -1048,7 +1051,7 @@ qbs *func__md5(qbs *text) {
 int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     libqb_mutex_guard lock(fontManager.m);
 
-    if (new_error)
+    if (is_error_pending())
         return 0;
 
     if (passed) {
@@ -1061,9 +1064,8 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
         qb64_fh = write_page->font; // else get the current write page font handle
     }
 
-    // For built-in fonts return the handle value (which is = font height)
     if (qb64_fh < 32)
-        return qb64_fh;
+        return fontheight[qb64_fh];
 
     FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
 
@@ -1072,7 +1074,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     auto face = fnt->face;
 
     if (FT_IS_SCALABLE(face))
-        return (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
+        return (((FT_Pos)face->ascender - (FT_Pos)face->descender) * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
 
     return fnt->defaultHeight;
 }
@@ -1086,7 +1088,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
     libqb_mutex_guard lock(fontManager.m);
 
-    if (new_error || !text->len)
+    if (is_error_pending() || !text->len)
         return 0;
 
     // Check UTF argument
@@ -1138,7 +1140,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     }
 
     if (qb64_fh < 32)
-        return codepoints * 8; // VGA ROM fonts are 8 pixels wide
+        return (int32_t)(codepoints * fontwidth[qb64_fh]);
 
     FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
 
@@ -1152,7 +1154,7 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
 int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     libqb_mutex_guard lock(fontManager.m);
 
-    if (new_error)
+    if (is_error_pending())
         return 0;
 
     if (passed) {
@@ -1165,9 +1167,8 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
         qb64_fh = write_page->font; // else get the current write page font handle
     }
 
-    // For built-in fonts return the handle value (which is = font height)
     if (qb64_fh < 32)
-        return qb64_fh;
+        return fontheight[qb64_fh];
 
     FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
 
@@ -1175,7 +1176,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     auto face = fnt->face;
 
     if (FT_IS_SCALABLE(face))
-        return ((float)(face->height) / (float)face->units_per_EM * (float)fnt->defaultHeight) + 2.0f;
+        return ((FT_Pos)face->height * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
 
     return fnt->defaultHeight;
 }
@@ -1191,7 +1192,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
 void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
     libqb_mutex_guard lock(fontManager.m);
 
-    if (new_error || !text->len)
+    if (is_error_pending() || !text->len)
         return;
 
     // Check if we are in text mode and generate an error if we are
@@ -1267,21 +1268,28 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     FontManager::Font *fnt = nullptr;
     FT_Face face = nullptr;
+    FT_Vector strPixSize, pen;
 
-    FT_Vector strPixSize;
     if (qb64_fh < 32) {
         strPixSize.x = codepoints * 8;
         strPixSize.y = qb64_fh;
+        pen.x = pen.y = 0;
         FONT_DEBUG_PRINT("Using built-in font %i", qb64_fh);
     } else {
         FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(font[qb64_fh]));
         fnt = fontManager.fonts[font[qb64_fh]];
         face = fnt->face;
         strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
-        if (FT_IS_SCALABLE(face))
-            strPixSize.y = (float)(face->ascender - face->descender) / (float)face->units_per_EM * (float)fnt->defaultHeight;
-        else
+        pen.x = 0;
+        if (FT_IS_SCALABLE(face)) {
+            strPixSize.y = (((FT_Pos)face->ascender - (FT_Pos)face->descender) * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
+            pen.y = ((FT_Pos)face->ascender * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
+        } else {
             strPixSize.y = fnt->defaultHeight;
+            pen.y = fnt->baseline;
+        }
+
+        FONT_DEBUG_PRINT("pen.y = %i", pen.y);
         FONT_DEBUG_PRINT("Using custom font. Scalable = %i", FT_IS_SCALABLE(face));
     }
 
@@ -1296,12 +1304,11 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 
     auto isMonochrome = (write_page->bytes_per_pixel == 1) || ((write_page->bytes_per_pixel == 4) && (write_page->alpha_disabled)) ||
                         (fontflags[qb64_fh] & FONT_LOAD_DONTBLEND); // do we need to do monochrome rendering?
-    FT_Vector pen = {0, 0};                                         // set to buffer start
 
     if (qb64_fh < 32) {
+        // Render using a built-in font
         FONT_DEBUG_PRINT("Rendering using built-in font");
 
-        // Render using a built-in font
         FT_Vector draw, pixmap;
         uint8_t const *builtinFont = nullptr;
 
@@ -1335,12 +1342,8 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             pen.x += 8;
         }
     } else {
-        FONT_DEBUG_PRINT("Rendering using TrueType font");
-
         // Render using custom font
-        pen.y = fnt->baseline;
-
-        FONT_DEBUG_PRINT("pen.y = %i", pen.y);
+        FONT_DEBUG_PRINT("Rendering using TrueType font");
 
         if (fnt->monospaceWidth) {
             // Monospace rendering
@@ -1508,7 +1511,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
     libqb_mutex_guard lock(fontManager.m);
 
-    if (new_error || !text->len)
+    if (is_error_pending() || !text->len)
         return 0;
 
     // Check if have an array to work with
@@ -1568,7 +1571,7 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
 
     // Simply return the codepoint count if we do not have any array
     if (!arr || !codepoints)
-        return codepoints;
+        return (int32_t)codepoints;
 
     auto element = (uint32_t *)((byte_element_struct *)arr)->offset;
     auto elements = ((byte_element_struct *)arr)->length / sizeof(uint32_t);
@@ -1632,5 +1635,5 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
             element[codepoints] = penX;
     }
 
-    return codepoints;
+    return (int32_t)codepoints;
 }
