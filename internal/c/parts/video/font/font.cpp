@@ -825,9 +825,17 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
         fontManager.fonts[h]->baseline = FT_MulDiv(FT_MulFix(fontManager.fonts[h]->face->ascender, fontManager.fonts[h]->face->size->metrics.y_scale),
                                                    default_pixel_height, fontManager.fonts[h]->face->size->metrics.height);
 
+    FONT_DEBUG_PRINT("Font baseline = %d", fontManager.fonts[h]->baseline);
+
+    FONT_DEBUG_PRINT("AUTOMONO requested: %s", (options & FONT_LOAD_AUTOMONO) ? "yes" : "no");
+
     // Check if automatic fixed width font detection was requested
-    if ((options & FONT_LOAD_AUTOMONO) && FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face))
-        options |= FONT_LOAD_MONOSPACE; // force set monospace flag and pass it upstream if the font is fixed width
+    if ((options & FONT_LOAD_AUTOMONO) && FT_IS_FIXED_WIDTH(fontManager.fonts[h]->face)) {
+        FONT_DEBUG_PRINT("Fixed-width font detected. Setting MONOSPACE flag");
+
+        // Force set monospace flag and pass it upstream if the font is fixed width
+        options |= FONT_LOAD_MONOSPACE;
+    }
 
     if (options & FONT_LOAD_MONOSPACE) {
         const FT_ULong testCP = 'W'; // since W is usually the widest

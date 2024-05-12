@@ -41,6 +41,10 @@
 #include "shell.h"
 #include "thread.h"
 
+// These are here because they are used in func__loadfont()
+#include <string>
+#include <algorithm>
+
 int32 disableEvents = 0;
 
 // Global console vvalues
