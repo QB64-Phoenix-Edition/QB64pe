@@ -89,7 +89,7 @@ SUB PrintFontDetails (handle AS LONG, testFileName AS STRING)
     _FONT 16
     _DEST _CONSOLE
 
-    AssertImage image, testFileName + "." + TEST_IMAGE_FORMAT
+    AssertImage2 image, testFileName + "." + TEST_IMAGE_FORMAT
 
     _FREEIMAGE image
 
@@ -104,7 +104,7 @@ SUB PrintFontDetails (handle AS LONG, testFileName AS STRING)
     _FONT 16
     _DEST _CONSOLE
 
-    AssertImage image, testFileName + "u." + TEST_IMAGE_FORMAT
+    AssertImage2 image, testFileName + "u." + TEST_IMAGE_FORMAT
 
     _FREEIMAGE image
 
