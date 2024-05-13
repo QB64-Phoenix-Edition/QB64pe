@@ -1,8 +1,3 @@
-// This is the Opal OPL3 emulator from Reality Adlib Tracker v2.0a (http://www.3eality.com/productions/reality-adlib-tracker).
-// It was released by Shayde/Reality into the public domain.
-// Minor modifications to silence some warnings and fix a bug in the envelope generator have been applied.
-// Additional fixes by JP Cimalando.
-
 /*
 
     The Opal OPL3 emulator.
@@ -19,183 +14,14 @@
 
 */
 
-#include <cstdint>
+// This is the Opal OPL3 emulator from Reality Adlib Tracker v2.0a (http://www.3eality.com/productions/reality-adlib-tracker).
+// It was released by Shayde/Reality into the public domain.
+// Minor modifications to silence some warnings and fix a bug in the envelope generator have been applied.
+// Additional fixes by JP Cimalando.
+// Soft panning support by Wohlstand.
 
-//==================================================================================================
-// Opal class.
-//==================================================================================================
-class Opal {
+#include "opal.h"
 
-    class Channel;
-
-    // Various constants
-    enum {
-        OPL3SampleRate = 49716,
-        NumChannels = 18,
-        NumOperators = 36,
-
-        EnvOff = -1,
-        EnvAtt,
-        EnvDec,
-        EnvSus,
-        EnvRel
-    };
-
-    // A single FM operator
-    class Operator {
-
-      public:
-        Operator();
-        void SetMaster(Opal *opal) { Master = opal; }
-        void SetChannel(Channel *chan) { Chan = chan; }
-
-        int16_t Output(uint16_t keyscalenum, uint32_t phase_step, int16_t vibrato, int16_t mod = 0, int16_t fbshift = 0);
-
-        void SetKeyOn(bool on);
-        void SetTremoloEnable(bool on);
-        void SetVibratoEnable(bool on);
-        void SetSustainMode(bool on);
-        void SetEnvelopeScaling(bool on);
-        void SetFrequencyMultiplier(uint16_t scale);
-        void SetKeyScale(uint16_t scale);
-        void SetOutputLevel(uint16_t level);
-        void SetAttackRate(uint16_t rate);
-        void SetDecayRate(uint16_t rate);
-        void SetSustainLevel(uint16_t level);
-        void SetReleaseRate(uint16_t rate);
-        void SetWaveform(uint16_t wave);
-
-        void ComputeRates();
-        void ComputeKeyScaleLevel();
-
-      protected:
-        Opal *Master;            // Master object
-        Channel *Chan;           // Owning channel
-        uint32_t Phase;          // The current offset in the selected waveform
-        uint16_t Waveform;       // The waveform id this operator is using
-        uint16_t FreqMultTimes2; // Frequency multiplier * 2
-        int EnvelopeStage;       // Which stage the envelope is at (see Env* enums above)
-        int16_t EnvelopeLevel;   // 0 - $1FF, 0 being the loudest
-        uint16_t OutputLevel;    // 0 - $FF
-        uint16_t AttackRate;
-        uint16_t DecayRate;
-        uint16_t SustainLevel;
-        uint16_t ReleaseRate;
-        uint16_t AttackShift;
-        uint16_t AttackMask;
-        uint16_t AttackAdd;
-        const uint16_t *AttackTab;
-        uint16_t DecayShift;
-        uint16_t DecayMask;
-        uint16_t DecayAdd;
-        const uint16_t *DecayTab;
-        uint16_t ReleaseShift;
-        uint16_t ReleaseMask;
-        uint16_t ReleaseAdd;
-        const uint16_t *ReleaseTab;
-        uint16_t KeyScaleShift;
-        uint16_t KeyScaleLevel;
-        int16_t Out[2];
-        bool KeyOn;
-        bool KeyScaleRate; // Affects envelope rate scaling
-        bool SustainMode;  // Whether to sustain during the sustain phase, or release instead
-        bool TremoloEnable;
-        bool VibratoEnable;
-    };
-
-    // A single channel, which can contain two or more operators
-    class Channel {
-
-      public:
-        Channel();
-        void SetMaster(Opal *opal) { Master = opal; }
-        void SetOperators(Operator *a, Operator *b, Operator *c, Operator *d) {
-            Op[0] = a;
-            Op[1] = b;
-            Op[2] = c;
-            Op[3] = d;
-            if (a)
-                a->SetChannel(this);
-            if (b)
-                b->SetChannel(this);
-            if (c)
-                c->SetChannel(this);
-            if (d)
-                d->SetChannel(this);
-        }
-
-        void Output(int16_t &left, int16_t &right);
-        void SetEnable(bool on) { Enable = on; }
-        void SetChannelPair(Channel *pair) { ChannelPair = pair; }
-
-        void SetFrequencyLow(uint16_t freq);
-        void SetFrequencyHigh(uint16_t freq);
-        void SetKeyOn(bool on);
-        void SetOctave(uint16_t oct);
-        void SetLeftEnable(bool on);
-        void SetRightEnable(bool on);
-        void SetFeedback(uint16_t val);
-        void SetModulationType(uint16_t type);
-
-        uint16_t GetFreq() const { return Freq; }
-        uint16_t GetOctave() const { return Octave; }
-        uint16_t GetKeyScaleNumber() const { return KeyScaleNumber; }
-        uint16_t GetModulationType() const { return ModulationType; }
-        Channel *GetChannelPair() const { return ChannelPair; }
-
-        void ComputeKeyScaleNumber();
-
-      protected:
-        void ComputePhaseStep();
-
-        Operator *Op[4];
-
-        Opal *Master;    // Master object
-        uint16_t Freq;   // Frequency; actually it's a phase stepping value
-        uint16_t Octave; // Also known as "block" in Yamaha parlance
-        uint32_t PhaseStep;
-        uint16_t KeyScaleNumber;
-        uint16_t FeedbackShift;
-        uint16_t ModulationType;
-        Channel *ChannelPair;
-        bool Enable;
-        bool LeftEnable, RightEnable;
-    };
-
-  public:
-    Opal(int sample_rate);
-    Opal(const Opal &) = delete;
-    Opal(Opal &&) = delete;
-    ~Opal();
-
-    void SetSampleRate(int sample_rate);
-    void Port(uint16_t reg_num, uint8_t val);
-    void Sample(int16_t *left, int16_t *right);
-
-  protected:
-    void Init(int sample_rate);
-    void Output(int16_t &left, int16_t &right);
-
-    int32_t SampleRate;
-    int32_t SampleAccum;
-    int16_t LastOutput[2], CurrOutput[2];
-    Channel Chan[NumChannels];
-    Operator Op[NumOperators];
-    //      uint16_t            ExpTable[256];
-    //      uint16_t            LogSinTable[256];
-    uint16_t Clock;
-    uint16_t TremoloClock;
-    uint16_t TremoloLevel;
-    uint16_t VibratoTick;
-    uint16_t VibratoClock;
-    bool NoteSel;
-    bool TremoloDepth;
-    bool VibratoDepth;
-
-    static const uint16_t RateTables[4][8];
-    static const uint16_t ExpTable[256];
-    static const uint16_t LogSinTable[256];
-};
 // clang-format off
 //--------------------------------------------------------------------------------------------------
 const uint16_t Opal::RateTables[4][8] = {
@@ -241,6 +67,28 @@ const uint16_t Opal::LogSinTable[0x100] = {
       16,   15,   15,   14,   13,   13,   12,   12,   11,   10,   10,    9,    9,    8,    8,    7,
        7,    7,    6,    6,    5,    5,    5,    4,    4,    4,    3,    3,    3,    2,    2,    2,
        2,    1,    1,    1,    1,    1,    1,    1,    0,    0,    0,    0,    0,    0,    0,    0,
+};
+//--------------------------------------------------------------------------------------------------
+const uint16_t Opal::PanLawTable[128] =
+{
+    65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
+    65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
+    64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
+    62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
+    60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
+    57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
+    54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
+    50433, 49912, 49383, 48846, 48302, 47750, 47191,
+    46340, // Center left
+    46340, // Center right
+    45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
+    40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
+    35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
+    29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
+    23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
+    17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
+    11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
+    4858, 4050, 3240, 2431, 1620, 810, 0
 };
 // clang-format on
 
@@ -339,6 +187,13 @@ void Opal::Init(int sample_rate) {
     for (int i = 0; i < NumOperators; i++)
         Op[i].ComputeRates();
 
+    // Initialise channel panning at center.
+    for (int i = 0; i < NumChannels; i++) {
+        Chan[i].SetPan(64);
+        Chan[i].SetLeftEnable(true);
+        Chan[i].SetRightEnable(true);
+    }
+
     SetSampleRate(sample_rate);
 }
 
@@ -392,7 +247,11 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
                 // The 4-op channels are 0, 1, 2, 9, 10, 11
                 uint16_t chan = static_cast<uint16_t>(i < 3 ? i : i + 6);
+                // cppcheck false-positive
+                // cppcheck-suppress arrayIndexOutOfBounds
                 Channel *primary = &Chan[chan];
+                // cppcheck false-positive
+                // cppcheck-suppress arrayIndexOutOfBounds
                 Channel *secondary = &Chan[chan + 3];
 
                 if (val & mask) {
@@ -439,7 +298,7 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
         Channel &chan = Chan[chan_num];
 
-        // Registers Ax and Bx affect both channels
+        // Registers Ax and Cx affect both channels
         Channel *chans[2] = {&chan, chan.GetChannelPair()};
         int numchans = chans[1] ? 2 : 1;
 
@@ -534,6 +393,16 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 }
 
 //==================================================================================================
+// Set panning on the channel designated by the register number.
+// This is extended functionality.
+//==================================================================================================
+void Opal::Pan(uint16_t reg_num, uint8_t pan) {
+    uint8_t high = (reg_num >> 8) & 1;
+    uint8_t regm = reg_num & 0xff;
+    Chan[9 * high + (regm & 0x0f)].SetPan(pan);
+}
+
+//==================================================================================================
 // Generate sample.  Every time you call this you will get two signed 16-bit samples (one for each
 // stereo channel) which will sound correct when played back at the sample rate given when the
 // class was constructed.
@@ -553,8 +422,8 @@ void Opal::Sample(int16_t *left, int16_t *right) {
 
     // Mix with the partial accumulation
     int32_t omblend = SampleRate - SampleAccum;
-    *left = static_cast<uint16_t>((LastOutput[0] * omblend + CurrOutput[0] * SampleAccum) / SampleRate);
-    *right = static_cast<uint16_t>((LastOutput[1] * omblend + CurrOutput[1] * SampleAccum) / SampleRate);
+    *left = static_cast<int16_t>((LastOutput[0] * omblend + CurrOutput[0] * SampleAccum) / SampleRate);
+    *right = static_cast<int16_t>((LastOutput[1] * omblend + CurrOutput[1] * SampleAccum) / SampleRate);
 
     SampleAccum += OPL3SampleRate;
 }
@@ -582,14 +451,14 @@ void Opal::Output(int16_t &left, int16_t &right) {
     else if (leftmix > 0x7FFF)
         left = 0x7FFF;
     else
-        left = static_cast<uint16_t>(leftmix);
+        left = static_cast<int16_t>(leftmix);
 
     if (rightmix < -0x8000)
         right = -0x8000;
     else if (rightmix > 0x7FFF)
         right = 0x7FFF;
     else
-        right = static_cast<uint16_t>(rightmix);
+        right = static_cast<int16_t>(rightmix);
 
     Clock++;
 
@@ -725,6 +594,9 @@ void Opal::Channel::Output(int16_t &left, int16_t &right) {
 
     left = LeftEnable ? out : 0;
     right = RightEnable ? out : 0;
+
+    left = left * LeftPan / 65536;
+    right = right * RightPan / 65536;
 }
 
 //==================================================================================================
@@ -773,6 +645,15 @@ void Opal::Channel::SetLeftEnable(bool on) { LeftEnable = on; }
 // Enable right stereo channel.
 //==================================================================================================
 void Opal::Channel::SetRightEnable(bool on) { RightEnable = on; }
+
+//==================================================================================================
+// Pan the channel to the position given.
+//==================================================================================================
+void Opal::Channel::SetPan(uint8_t pan) {
+    pan &= 127;
+    LeftPan = PanLawTable[pan];
+    RightPan = PanLawTable[127 - pan];
+}
 
 //==================================================================================================
 // Set the channel feedback amount.
@@ -1117,8 +998,8 @@ void Opal::Operator::SetFrequencyMultiplier(uint16_t scale) {
 //==================================================================================================
 void Opal::Operator::SetKeyScale(uint16_t scale) {
 
-    static constexpr uint8_t kslShift[4] = {8, 1, 2, 0};
-    KeyScaleShift = kslShift[scale];
+    static const uint8_t KeyScaleShiftTable[4] = {8, 1, 2, 0};
+    KeyScaleShift = KeyScaleShiftTable[scale & 3];
     ComputeKeyScaleLevel();
 }
 

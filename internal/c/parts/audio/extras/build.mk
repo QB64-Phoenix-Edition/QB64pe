@@ -44,6 +44,10 @@ HIVELY_SRCS := hvl_replay.c
 
 HIVELY_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o,$(HIVELY_SRCS))
 
+OPAL_SRCS := opal.cpp
+
+OPAL_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.o,$(OPAL_SRCS))
+
 $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.c
 	$(CC) -O2 $(CFLAGS) -Wall $< -c -o $@
 
@@ -88,5 +92,5 @@ $(PATH_INTERNAL_TEMP)/soundfont.o: $(PATH_INTERNAL_TEMP)/soundfont.sf2
 endif
 endif
 
-CLEAN_LIST += $(LIBXMP_LIB) $(LIBXMP_OBJS) $(HIVELY_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
+CLEAN_LIST += $(LIBXMP_LIB) $(LIBXMP_OBJS) $(HIVELY_OBJS) $(OPAL_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
 
