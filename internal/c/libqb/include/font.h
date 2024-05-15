@@ -19,11 +19,11 @@
         FONT_DEBUG_PRINT("Condition (%s) failed", #_exp_)
 #else
 #    ifdef _MSC_VER
-#        define FONT_DEBUG_PRINT(_fmt_, ...)       // Don't do anything in release builds
+#        define FONT_DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
 #    else
 #        define FONT_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
 #    endif
-#    define FONT_DEBUG_CHECK(_exp_)                // Don't do anything in release builds
+#    define FONT_DEBUG_CHECK(_exp_) // Don't do anything in release builds
 #endif
 
 #define INVALID_FONT_HANDLE 0
@@ -32,6 +32,7 @@
 #define FONT_LOAD_DONTBLEND 8
 #define FONT_LOAD_MONOSPACE 16
 #define FONT_LOAD_UNICODE 32
+#define FONT_LOAD_AUTOMONO 64
 // Font render options
 #define FONT_RENDER_MONOCHROME 1
 
@@ -41,7 +42,7 @@ struct qbs;
 extern uint16_t codepage437_to_unicode16[];
 
 uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes);
-int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t options);
+int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t &options);
 void FontFree(int32_t fh);
 int32_t FontWidth(int32_t fh);
 bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y);

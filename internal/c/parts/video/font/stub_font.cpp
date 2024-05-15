@@ -8,7 +8,7 @@ uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes) {
     return nullptr;
 }
 
-int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t options) {
+int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t &options) {
     (void)content_original;
     (void)content_bytes;
     (void)default_pixel_height;

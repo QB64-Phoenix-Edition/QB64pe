@@ -6,106 +6,190 @@
 ' We then load the expected image as a 32-bit image, compare file sizes,
 ' width/height, and each pixel.
 '
-SUB AssertImage(originalActualImage As Long, expectedFileName As String)
-    Dim actualImage As Long
-    Dim ResultsDir As String, TestPrefix As String
+SUB AssertImage (originalActualImage AS LONG, expectedFileName AS STRING)
+    DIM actualImage AS LONG
+    DIM ResultsDir AS STRING, TestPrefix AS STRING
 
-    ResultsDir = Command$(1)
-    TestPrefix = Command$(2)
+    ResultsDir = COMMAND$(1)
+    TestPrefix = COMMAND$(2)
 
     ' Make sure the test result will be seen
-    _Dest _Console
+    _DEST _CONSOLE
 
     ' Convert to 32-bit for comparisons
-    actualImage = _NewImage(_Width(originalActualImage), _Height(originalActualImage), 32)
+    actualImage = _NEWIMAGE(_WIDTH(originalActualImage), _HEIGHT(originalActualImage), 32)
     _PUTIMAGE , originalActualImage, actualImage
 
     'First save the result
     SaveImage actualImage, ResultsDir + "/" + TestPrefix + "_result.bmp"
 
     'Compare both images, print whether they are identical
-    Dim expectedImage As Long
+    DIM expectedImage AS LONG
     expectedImage = _LOADIMAGE(expectedFileName, 32)
 
-    If _Width(actualImage) <> _Width(expectedImage) Then
-        Print "Failure! Image width differs, actual:"; _Width(actualImage);", Expected:"; _Width(expectedImage)
-        GoTo freeImages
-    End If
+    IF _WIDTH(actualImage) <> _WIDTH(expectedImage) THEN
+        PRINT "Failure! Image width differs, actual:"; _WIDTH(actualImage); ", Expected:"; _WIDTH(expectedImage)
+        GOTO freeImages
+    END IF
 
-    If _Height(actualImage) <> _Height(expectedImage) Then
-        Print "Failure! Image height differs, actual:"; _Height(actualImage);", Expected:"; _Height(expectedImage)
-        GoTo freeImages
-    End If
+    IF _HEIGHT(actualImage) <> _HEIGHT(expectedImage) THEN
+        PRINT "Failure! Image height differs, actual:"; _HEIGHT(actualImage); ", Expected:"; _HEIGHT(expectedImage)
+        GOTO freeImages
+    END IF
 
-    Dim actual As _Mem, expected As _Mem
+    DIM actual AS _MEM, expected AS _MEM
 
     actual = _MEMIMAGE(actualImage)
     expected = _MEMIMAGE(expectedImage)
 
     IF actual.SIZE <> expected.SIZE THEN
-        Print "Failure! Image sizes differ, Actual:"; actual.SIZE; ", Expected:"; expected.SIZE
-        GoTo freeImages
+        PRINT "Failure! Image sizes differ, Actual:"; actual.SIZE; ", Expected:"; expected.SIZE
+        GOTO freeImages
     END IF
 
-    w& = _Width(expectedImage)
-    h& = _Height(expectedImage)
+    DIM w&: w& = _WIDTH(expectedImage)
+    DIM h&: h& = _HEIGHT(expectedImage)
 
-    For x& = 0 to w& - 1
-        For y& = 0 to h& - 1
+    DIM x&, y&, actualPixel&, expectedPixel&, pixelOffset AS _OFFSET
+    FOR x& = 0 TO w& - 1
+        FOR y& = 0 TO h& - 1
             pixelOffset = (y& * w& + x&) * 4
 
-            actualPixel& = _MemGet(actual, actual.OFFSET + pixelOffset, LONG)
-            expectedPixel& = _MemGet(expected, expected.OFFSET + pixelOffset, LONG)
+            actualPixel& = _MEMGET(actual, actual.OFFSET + pixelOffset, LONG)
+            expectedPixel& = _MEMGET(expected, expected.OFFSET + pixelOffset, LONG)
 
-            If actualPixel& <> expectedPixel& Then
-                Print "Failure! Image pixels at ("; x&; ","; y&; ") differ, actual: 0x"; HEX$(actualPixel&);", expected: 0x"; HEX$(expectedPixel&)
-                GoTo freeImages
-            End If
-        Next
-    Next
+            IF actualPixel& <> expectedPixel& THEN
+                PRINT "Failure! Image pixels at ("; x&; ","; y&; ") differ, actual: 0x"; HEX$(actualPixel&); ", expected: 0x"; HEX$(expectedPixel&)
+                GOTO freeImages
+            END IF
+        NEXT
+    NEXT
 
     PRINT "Success, images are identical!"
 
-freeImages:
+    freeImages:
     _MEMFREE actual
     _MEMFREE expected
-    _FreeImage actualImage
+    _FREEIMAGE actualImage
 END SUB
 
 ' From the QB64-PE Wiki: https://qb64phoenix.com/qb64wiki/index.php/SAVEIMAGE
-Sub SaveImage (image As Long, filename As String)
-    bytesperpixel& = _PixelSize(image&)
-    If bytesperpixel& = 0 Then Print "Text modes unsupported!": End
-    If bytesperpixel& = 1 Then bpp& = 8 Else bpp& = 24
-    x& = _Width(image&)
-    y& = _Height(image&)
-    b$ = "BM????QB64????" + MKL$(40) + MKL$(x&) + MKL$(y&) + MKI$(1) + MKI$(bpp&) + MKL$(0) + "????" + String$(16, 0) 'partial BMP header info(???? to be filled later)
-    If bytesperpixel& = 1 Then
-        For c& = 0 To 255 ' read BGR color settings from JPG image + 1 byte spacer(CHR$(0))
-            cv& = _PaletteColor(c&, image&) ' color attribute to read.
-            b$ = b$ + Chr$(_Blue32(cv&)) + Chr$(_Green32(cv&)) + Chr$(_Red32(cv&)) + Chr$(0) 'spacer byte
-        Next
-    End If
-    Mid$(b$, 11, 4) = MKL$(Len(b$)) ' image pixel data offset(BMP header)
-    lastsource& = _Source
-    _Source image&
-    If ((x& * 3) Mod 4) Then padder$ = String$(4 - ((x& * 3) Mod 4), 0)
-    For py& = y& - 1 To 0 Step -1 ' read JPG image pixel color data
+SUB SaveImage (image AS LONG, filename AS STRING)
+    DIM bytesperpixel&, bpp&
+    bytesperpixel& = _PIXELSIZE(image&)
+    IF bytesperpixel& = 0 THEN PRINT "Text modes unsupported!": END
+    IF bytesperpixel& = 1 THEN bpp& = 8 ELSE bpp& = 24
+    DIM x&: x& = _WIDTH(image&)
+    DIM y&: y& = _HEIGHT(image&)
+    DIM b$: b$ = "BM????QB64????" + MKL$(40) + MKL$(x&) + MKL$(y&) + MKI$(1) + MKI$(bpp&) + MKL$(0) + "????" + STRING$(16, 0) 'partial BMP header info(???? to be filled later)
+    DIM c&, cv&
+    IF bytesperpixel& = 1 THEN
+        FOR c& = 0 TO 255 ' read BGR color settings from JPG image + 1 byte spacer(CHR$(0))
+            cv& = _PALETTECOLOR(c&, image&) ' color attribute to read.
+            b$ = b$ + CHR$(_BLUE32(cv&)) + CHR$(_GREEN32(cv&)) + CHR$(_RED32(cv&)) + CHR$(0) 'spacer byte
+        NEXT
+    END IF
+    MID$(b$, 11, 4) = MKL$(LEN(b$)) ' image pixel data offset(BMP header)
+    DIM lastsource&: lastsource& = _SOURCE
+    _SOURCE image&
+    DIM padder$
+    IF ((x& * 3) MOD 4) THEN padder$ = STRING$(4 - ((x& * 3) MOD 4), 0)
+    DIM px&, py&, r$, d$
+    FOR py& = y& - 1 TO 0 STEP -1 ' read JPG image pixel color data
         r$ = ""
-        For px& = 0 To x& - 1
-            c& = Point(px&, py&) 'POINT 32 bit values are large LONG values
-            If bytesperpixel& = 1 Then r$ = r$ + Chr$(c&) Else r$ = r$ + Left$(MKL$(c&), 3)
-        Next px&
+        FOR px& = 0 TO x& - 1
+            c& = POINT(px&, py&) 'POINT 32 bit values are large LONG values
+            IF bytesperpixel& = 1 THEN r$ = r$ + CHR$(c&) ELSE r$ = r$ + LEFT$(MKL$(c&), 3)
+        NEXT px&
         d$ = d$ + r$ + padder$
-    Next py&
-    _Source lastsource&
-    Mid$(b$, 35, 4) = MKL$(Len(d$)) ' image size(BMP header)
+    NEXT py&
+    _SOURCE lastsource&
+    MID$(b$, 35, 4) = MKL$(LEN(d$)) ' image size(BMP header)
     b$ = b$ + d$ ' total file data bytes to create file
-    Mid$(b$, 3, 4) = MKL$(Len(b$)) ' size of data file(BMP header)
-    If LCase$(Right$(filename$, 4)) <> ".bmp" Then ext$ = ".bmp"
-    f& = FreeFile
-    Open filename$ + ext$ For Output As #f&: Close #f& ' erases an existing file
-    Open filename$ + ext$ For Binary As #f&
-    Put #f&, , b$
-    Close #f&
-End Sub
+    MID$(b$, 3, 4) = MKL$(LEN(b$)) ' size of data file(BMP header)
+    DIM ext$
+    IF LCASE$(RIGHT$(filename$, 4)) <> ".bmp" THEN ext$ = ".bmp"
+    DIM f&: f& = FREEFILE
+    OPEN filename$ + ext$ FOR OUTPUT AS #f&: CLOSE #f& ' erases an existing file
+    OPEN filename$ + ext$ FOR BINARY AS #f&
+    PUT #f&, , b$
+    CLOSE #f&
+END SUB
+
+
+FUNCTION GetColorDelta~& (color1 AS _UNSIGNED LONG, color2 AS _UNSIGNED LONG)
+    GetColorDelta = ABS(_RED32(color1) - _RED32(color2)) + ABS(_GREEN32(color1) - _GREEN32(color2)) + ABS(_BLUE32(color1) - _BLUE32(color2)) + ABS(_ALPHA32(color1) - _ALPHA32(color2))
+END FUNCTION
+
+
+' Same as AssertImage() but is a bit more forgiving
+SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING)
+    CONST TOLERANCE_LIMIT = 4
+
+    DIM actualImage AS LONG
+    DIM ResultsDir AS STRING, TestPrefix AS STRING
+
+    ResultsDir = COMMAND$(1)
+    TestPrefix = COMMAND$(2)
+
+    ' Make sure the test result will be seen
+    _DEST _CONSOLE
+
+    ' Convert to 32-bit for comparisons
+    actualImage = _NEWIMAGE(_WIDTH(originalActualImage), _HEIGHT(originalActualImage), 32)
+    _PUTIMAGE , originalActualImage, actualImage
+
+    'First save the result
+    IF LEN(ResultsDir) THEN _SAVEIMAGE ResultsDir + "/" + TestPrefix + "_" + expectedFileName + "_result.bmp", actualImage
+
+    'Compare both images, print whether they are identical
+    DIM expectedImage AS LONG
+    expectedImage = _LOADIMAGE(expectedFileName, 32)
+
+    DIM actual AS _MEM, expected AS _MEM
+
+    IF _WIDTH(actualImage) <> _WIDTH(expectedImage) THEN
+        PRINT "Failure! Image width differs, actual:"; _WIDTH(actualImage); ", Expected:"; _WIDTH(expectedImage)
+        GOTO freeImages
+    END IF
+
+    IF _HEIGHT(actualImage) <> _HEIGHT(expectedImage) THEN
+        PRINT "Failure! Image height differs, actual:"; _HEIGHT(actualImage); ", Expected:"; _HEIGHT(expectedImage)
+        GOTO freeImages
+    END IF
+
+    actual = _MEMIMAGE(actualImage)
+    expected = _MEMIMAGE(expectedImage)
+
+    IF actual.SIZE <> expected.SIZE THEN
+        PRINT "Failure! Image sizes differ, Actual:"; actual.SIZE; ", Expected:"; expected.SIZE
+        GOTO freeImages
+    END IF
+
+    DIM w&: w& = _WIDTH(expectedImage)
+    DIM h&: h& = _HEIGHT(expectedImage)
+
+    DIM x&, y&, pixelOffset AS _OFFSET
+    DIM AS _UNSIGNED LONG actualPixel, expectedPixel
+
+    FOR x& = 0 TO w& - 1
+        FOR y& = 0 TO h& - 1
+            pixelOffset = (y& * w& + x&) * 4
+
+            actualPixel = _MEMGET(actual, actual.OFFSET + pixelOffset, _UNSIGNED LONG)
+            expectedPixel = _MEMGET(expected, expected.OFFSET + pixelOffset, _UNSIGNED LONG)
+
+            IF actualPixel <> expectedPixel _ANDALSO GetColorDelta(actualPixel, expectedPixel) > TOLERANCE_LIMIT THEN
+                PRINT "Failure! Image pixels at ("; x&; ","; y&; ") differ, actual: 0x"; HEX$(actualPixel); ", expected: 0x"; HEX$(expectedPixel)
+                GOTO freeImages
+            END IF
+        NEXT
+    NEXT
+
+    PRINT "Success, images are identical!"
+
+    freeImages:
+    _MEMFREE actual
+    _MEMFREE expected
+    _FREEIMAGE actualImage
+END SUB
