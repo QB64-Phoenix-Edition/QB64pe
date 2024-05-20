@@ -14,12 +14,6 @@
 
 */
 
-// This is the Opal OPL3 emulator from Reality Adlib Tracker v2.0a (http://www.3eality.com/productions/reality-adlib-tracker).
-// It was released by Shayde/Reality into the public domain.
-// Minor modifications to silence some warnings and fix a bug in the envelope generator have been applied.
-// Additional fixes by JP Cimalando.
-// Soft panning support by Wohlstand.
-
 #pragma once
 
 #include <cstdint>
@@ -137,7 +131,6 @@ class Opal {
         void SetOctave(uint16_t oct);
         void SetLeftEnable(bool on);
         void SetRightEnable(bool on);
-        void SetPan(uint8_t pan);
         void SetFeedback(uint16_t val);
         void SetModulationType(uint16_t type);
 
@@ -164,7 +157,6 @@ class Opal {
         Channel *ChannelPair;
         bool Enable;
         bool LeftEnable, RightEnable;
-        uint16_t LeftPan, RightPan;
     };
 
   public:
@@ -175,7 +167,6 @@ class Opal {
 
     void SetSampleRate(int sample_rate);
     void Port(uint16_t reg_num, uint8_t val);
-    void Pan(uint16_t reg_num, uint8_t pan);
     void Sample(int16_t *left, int16_t *right);
 
   protected:
@@ -201,5 +192,4 @@ class Opal {
     static const uint16_t RateTables[4][8];
     static const uint16_t ExpTable[256];
     static const uint16_t LogSinTable[256];
-    static const uint16_t PanLawTable[128];
 };
