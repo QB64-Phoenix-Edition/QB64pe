@@ -141,7 +141,7 @@ void Opal::Init(int sample_rate) {
 
     // Add the operators to the channels.  Note, some channels can't use all the operators
     // FIXME: put this into a separate routine
-    static const int chan_ops[] = {
+    static constexpr int chan_ops[] = {
         0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20, 24, 25, 26, 30, 31, 32,
     };
 
@@ -182,7 +182,7 @@ void Opal::SetSampleRate(int sample_rate) {
 //==================================================================================================
 void Opal::Port(uint16_t reg_num, uint8_t val) {
     // clang-format off
-    static const int op_lookup[] = {
+    static constexpr int op_lookup[] = {
     //  00  01  02  03  04  05  06  07  08  09  0A  0B  0C  0D  0E  0F
         0,  1,  2,  3,  4,  5,  -1, -1, 6,  7,  8,  9,  10, 11, -1, -1,
     //  10  11  12  13  14  15  16  17  18  19  1A  1B  1C  1D  1E  1F
@@ -922,7 +922,7 @@ void Opal::Operator::SetFrequencyMultiplier(uint16_t scale) {
 
     // Needs to be multiplied by two (and divided by two later when we use it) because the first
     // entry is actually .5
-    static const uint16_t mul_times_2[] = {
+    static constexpr uint16_t mul_times_2[] = {
         1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24, 30, 30,
     };
 
@@ -934,7 +934,7 @@ void Opal::Operator::SetFrequencyMultiplier(uint16_t scale) {
 //==================================================================================================
 void Opal::Operator::SetKeyScale(uint16_t scale) {
 
-    static const unsigned KeyScaleShiftTable[4] = {8, 1, 2, 0};
+    static constexpr unsigned KeyScaleShiftTable[4] = {8, 1, 2, 0};
     KeyScaleShift = KeyScaleShiftTable[scale & 3];
 
     ComputeKeyScaleLevel();
@@ -1042,7 +1042,7 @@ void Opal::Operator::ComputeRates() {
 //==================================================================================================
 void Opal::Operator::ComputeKeyScaleLevel() {
     // clang-format off
-    static const uint16_t levtab[] = {
+    static constexpr uint16_t levtab[] = {
         0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,
         0,      0,      0,      0,      0,      0,      0,      0,      0,      8,      12,     16,     20,     24,     28,     32,
         0,      0,      0,      0,      0,      12,     20,     28,     32,     40,     44,     48,     52,     56,     60,     64,
