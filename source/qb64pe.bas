@@ -13784,6 +13784,10 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)realloc((void*)(" + n$ + "[0]),tmp_long2*" + bytesperelement$ + ");"
                     f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
                     f12$ = f12$ + CRLF + "if (preserved_elements<tmp_long2){"
+                    IF stringarray = 0 THEN
+                        'ensure any numeric udt elements are zeroed
+                        f12$ = f12$ + CRLF + "ZeroMemory(((uint8*)(" + n$ + "[0]))+preserved_elements*" + bytesperelement$ + ",(tmp_long2*" + bytesperelement$ + ")-(preserved_elements*" + bytesperelement$ + "));"
+                    END IF
                     f12$ = f12$ + CRLF + "for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){"
                     IF stringarray THEN
                         f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array is in cmem
@@ -13817,6 +13821,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
                     f12$ = f12$ + CRLF + "}" 'not in cmem
                 ELSE 'initialise udt's
+                    f12$ = f12$ + CRLF + "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
                     f12$ = f12$ + CRLF + "while(tmp_long--){"
                     acc$ = ""
                     initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
