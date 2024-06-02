@@ -8875,10 +8875,7 @@ FUNCTION idevariablewatchbox$(currentScope$, filter$, selectVar, returnAction)
                                 END IF
 
                                 usedVariableList(tempIndex&).arrayElementSize = udtxsize(typ)
-                                IF udtxbytealign(typ) THEN
-                                    IF usedVariableList(tempIndex&).arrayElementSize MOD 8 THEN usedVariableList(tempIndex&).arrayElementSize = usedVariableList(tempIndex&).arrayElementSize + (8 - (usedVariableList(tempIndex&).arrayElementSize MOD 8)) 'round up to nearest byte
-                                    usedVariableList(tempIndex&).arrayElementSize = usedVariableList(tempIndex&).arrayElementSize \ 8
-                                END IF
+                                usedVariableList(tempIndex&).arrayElementSize = usedVariableList(tempIndex&).arrayElementSize \ 8
                             ELSE
                                 usedVariableList(tempIndex&).arrayElementSize = 0
                             END IF
@@ -9400,10 +9397,7 @@ FUNCTION idevariablewatchbox$(currentScope$, filter$, selectVar, returnAction)
                                 END IF
 
                                 usedVariableList(varDlgList(y).index).arrayElementSize = udtxsize(typ)
-                                IF udtxbytealign(typ) THEN
-                                    IF usedVariableList(varDlgList(y).index).arrayElementSize MOD 8 THEN usedVariableList(varDlgList(y).index).arrayElementSize = usedVariableList(varDlgList(y).index).arrayElementSize + (8 - (usedVariableList(varDlgList(y).index).arrayElementSize MOD 8)) 'round up to nearest byte
-                                    usedVariableList(varDlgList(y).index).arrayElementSize = usedVariableList(varDlgList(y).index).arrayElementSize \ 8
-                                END IF
+                                usedVariableList(varDlgList(y).index).arrayElementSize = usedVariableList(varDlgList(y).index).arrayElementSize \ 8
                             ELSE
                                 usedVariableList(varDlgList(y).index).arrayElementSize = 0
                             END IF

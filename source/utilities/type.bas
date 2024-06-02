@@ -615,13 +615,11 @@ SUB increaseUDTArrays
     REDIM _PRESERVE udtxname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtxcname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtxsize(x + 1000) AS LONG
-    REDIM _PRESERVE udtxbytealign(x + 1000) AS INTEGER 'first element MUST be on a byte alignment & size is a multiple of 8
     REDIM _PRESERVE udtxnext(x + 1000) AS LONG
     REDIM _PRESERVE udtxvariable(x + 1000) AS INTEGER 'true if the udt contains variable length elements
     'elements
     REDIM _PRESERVE udtename(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtecname(x + 1000) AS STRING * 256
-    REDIM _PRESERVE udtebytealign(x + 1000) AS INTEGER
     REDIM _PRESERVE udtesize(x + 1000) AS LONG
     REDIM _PRESERVE udtetype(x + 1000) AS LONG
     REDIM _PRESERVE udtetypesize(x + 1000) AS LONG
@@ -693,7 +691,7 @@ SUB initialise_array_udt_varstrings (n$, udt, base_offset, bytesperelement$, acc
     DO WHILE element
         IF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                acc$ = acc$ + CHR$(13) + CHR$(10) + "*(qbs**)(" + n$ + "[0]+(" + bytesperelement$ + "-1)*tmp_long+" + STR$(offset) + ")=qbs_new(0,0);"
+                acc$ = acc$ + CHR$(13) + CHR$(10) + "*(qbs**)(" + n$ + "[0]+" + bytesperelement$ + "*tmp_long+" + STR$(offset) + ")=qbs_new(0,0);"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
             initialise_array_udt_varstrings n$, udtetype(element) AND 511, offset, bytesperelement$, acc$
@@ -710,7 +708,7 @@ SUB free_array_udt_varstrings (n$, udt, base_offset, bytesperelement$, acc$)
     DO WHILE element
         IF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                acc$ = acc$ + CHR$(13) + CHR$(10) + "qbs_free(*(qbs**)(" + n$ + "[0]+(" + bytesperelement$ + "-1)*tmp_long+" + STR$(offset) + "));"
+                acc$ = acc$ + CHR$(13) + CHR$(10) + "qbs_free(*(qbs**)(" + n$ + "[0]+" + bytesperelement$ + "*tmp_long+" + STR$(offset) + "));"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
             free_array_udt_varstrings n$, udtetype(element) AND 511, offset, bytesperelement$, acc$
@@ -743,13 +741,13 @@ END SUB
 SUB dump_udts
     fh = FREEFILE
     OPEN "types.txt" FOR OUTPUT AS #fh
-    PRINT #fh, "Name   Size   Align? Next   Var?"
+    PRINT #fh, "Name   Size   Next   Var?"
     FOR i = 1 TO lasttype
-        PRINT #fh, RTRIM$(udtxname(i)), udtxsize(i), udtxbytealign(i), udtxnext(i), udtxvariable(i)
+        PRINT #fh, RTRIM$(udtxname(i)), udtxsize(i), udtxnext(i), udtxvariable(i)
     NEXT i
-    PRINT #fh, "Name   Size   Align? Next   Type   Tsize  Arr"
+    PRINT #fh, "Name   Size   Next   Type   Tsize  Arr"
     FOR i = 1 TO lasttypeelement
-        PRINT #fh, RTRIM$(udtename(i)), udtesize(i), udtebytealign(i), udtenext(i), udtetype(i), udtetypesize(i), udtearrayelements(i)
+        PRINT #fh, RTRIM$(udtename(i)), udtesize(i), udtenext(i), udtetype(i), udtetypesize(i), udtearrayelements(i)
     NEXT i
     CLOSE #fh
 END SUB
