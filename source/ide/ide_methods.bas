@@ -11856,7 +11856,7 @@ SUB ideinsline (i, text$)
     idegotoline i
     'insert line
     textlen = LEN(text$)
-    idet$ = LEFT$(idet$, ideli - 1) + MKL$(textlen) + text$ + MKL$(textlen) + RIGHT$(idet$, LEN(idet$) - ideli + 1)
+    idet$ = LEFT$(idet$, ideli - 1) + (MKL$(textlen) + text$ + MKL$(textlen)) + RIGHT$(idet$, LEN(idet$) - ideli + 1)
     iden = iden + 1
 END SUB
 
@@ -12536,7 +12536,7 @@ SUB idesetline (i, text$)
 
     IF i <> -1 THEN idegotoline i
     textlen = LEN(text$)
-    idet$ = LEFT$(idet$, ideli - 1) + MKL$(textlen) + text$ + MKL$(textlen) + RIGHT$(idet$, LEN(idet$) - ideli + 1 - CVL(MID$(idet$, ideli, 4)) - 8)
+    idet$ = LEFT$(idet$, ideli - 1) + (MKL$(textlen) + text$ + MKL$(textlen)) + RIGHT$(idet$, LEN(idet$) - ideli + 1 - CVL(MID$(idet$, ideli, 4)) - 8)
 
 END SUB
 
