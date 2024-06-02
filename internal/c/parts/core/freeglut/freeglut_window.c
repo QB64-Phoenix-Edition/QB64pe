@@ -1155,7 +1155,10 @@ void fgOpenWindow( SFG_Window* window, const char* title,
         StructureNotifyMask | SubstructureNotifyMask | ExposureMask |
         ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask |
         VisibilityChangeMask | EnterWindowMask | LeaveWindowMask |
-        PointerMotionMask | ButtonMotionMask;
+        PointerMotionMask | ButtonMotionMask |
+    // QB64-PE: custom code begin
+        FocusChangeMask;
+    // QB64-PE: custom code end
     winAttr.background_pixmap = None;
     winAttr.background_pixel  = 0;
     winAttr.border_pixel      = 0;

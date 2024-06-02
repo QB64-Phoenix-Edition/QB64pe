@@ -1536,16 +1536,14 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF os$ = "WIN" OR MacOSX = 1 THEN
-            IF _WINDOWHASFOCUS THEN
-                LOCATE , , 1
-                _PALETTECOLOR 5, IDEBracketHighlightColor, 0
-                _PALETTECOLOR 6, IDEBackgroundColor2, 0
-            ELSE
-                LOCATE , , 0
-                _PALETTECOLOR 5, IDEBackgroundColor, 0
-                _PALETTECOLOR 6, IDEBackgroundColor, 0
-            END IF
+        IF _WINDOWHASFOCUS THEN
+            LOCATE , , 1
+            _PALETTECOLOR 5, IDEBracketHighlightColor, 0
+            _PALETTECOLOR 6, IDEBackgroundColor2, 0
+        ELSE
+            LOCATE , , 0
+            _PALETTECOLOR 5, IDEBackgroundColor, 0
+            _PALETTECOLOR 6, IDEBackgroundColor, 0
         END IF
 
         IF KALT THEN 'alt held
@@ -1570,7 +1568,7 @@ FUNCTION ide2 (ignore)
                 idealthighlight = 0
                 LOCATE , , 0: COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                 IF ideentermenu = 1 AND KCONTROL = 0 THEN 'alt was pressed then released
-                    IF _WINDOWHASFOCUS OR os$ = "LNX" THEN
+                    IF _WINDOWHASFOCUS THEN
                         LOCATE , , , IDENormalCursorStart, IDENormalCursorEnd
                         skipdisplay = 0
                         ideentermenu = 0
@@ -4421,7 +4419,7 @@ FUNCTION ide2 (ignore)
                 DO
                     _LIMIT 100
                     GetInput
-                    IF _WINDOWHASFOCUS = 0 AND (os$ = "WIN" OR MacOSX = 1) THEN
+                    IF _WINDOWHASFOCUS = 0 THEN
                         COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                         SCREEN , , 3, 0: PCOPY 3, 0
                         GOTO ideloop
@@ -4434,7 +4432,7 @@ FUNCTION ide2 (ignore)
                 KB = KEY_ESC
             END IF
 
-            IF _WINDOWHASFOCUS = 0 AND (os$ = "WIN" OR MacOSX = 1) THEN
+            IF _WINDOWHASFOCUS = 0 THEN
                 COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                 SCREEN , , 3, 0: PCOPY 3, 0
                 GOTO ideloop
@@ -4657,7 +4655,7 @@ FUNCTION ide2 (ignore)
                 DO
                     _LIMIT 100
                     GetInput
-                    IF _WINDOWHASFOCUS = 0 AND (os$ = "WIN" OR MacOSX = 1) THEN
+                    IF _WINDOWHASFOCUS = 0 THEN
                         COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                         PCOPY 3, 0: SCREEN , , 3, 0
                         GOTO ideloop
@@ -4677,7 +4675,7 @@ FUNCTION ide2 (ignore)
                     ideexit = 1: GOTO ideloop
                 END IF
             END IF
-            IF _WINDOWHASFOCUS = 0 AND (os$ = "WIN" OR MacOSX = 1) THEN
+            IF _WINDOWHASFOCUS = 0 THEN
                 COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                 PCOPY 3, 0: SCREEN , , 3, 0
                 IF IdeDebugMode = 2 THEN GOTO EnterDebugMode
