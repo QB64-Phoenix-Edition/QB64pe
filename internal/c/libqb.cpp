@@ -31964,11 +31964,11 @@ extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_o
 
     if (*qb64_os_event_info == OS_EVENT_POST_PROCESSING) {
         switch (event->type) {
-        case EnterNotify:
+        case FocusIn:
             window_focused = -1;
             break;
 
-        case LeaveNotify:
+        case FocusOut:
             window_focused = 0;
             // Iterate over all modifiers
             for (uint32 key = VK + QBVK_RSHIFT; key <= VK + QBVK_MODE; key++) {
