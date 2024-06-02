@@ -1326,13 +1326,11 @@ lasttypeelement = 0
 REDIM SHARED udtxname(1000) AS STRING * 256
 REDIM SHARED udtxcname(1000) AS STRING * 256
 REDIM SHARED udtxsize(1000) AS LONG
-REDIM SHARED udtxbytealign(1000) AS INTEGER 'first element MUST be on a byte alignment & size is a multiple of 8
 REDIM SHARED udtxnext(1000) AS LONG
 REDIM SHARED udtxvariable(1000) AS INTEGER 'true if the udt contains variable length elements
 'elements
 REDIM SHARED udtename(1000) AS STRING * 256
 REDIM SHARED udtecname(1000) AS STRING * 256
-REDIM SHARED udtebytealign(1000) AS INTEGER
 REDIM SHARED udtesize(1000) AS LONG
 REDIM SHARED udtetype(1000) AS LONG
 REDIM SHARED udtetypesize(1000) AS LONG
@@ -1392,27 +1390,6 @@ REDIM SHARED warningIncFiles(1000) AS STRING
 maxLineNumber = 0
 uniquenumbern = 0
 
-
-''create a type for storing memory blocks
-''UDT
-''names
-'DIM SHARED lasttype AS LONG
-'DIM SHARED udtxname(1000) AS STRING * 256
-'DIM SHARED udtxcname(1000) AS STRING * 256
-'DIM SHARED udtxsize(1000) AS LONG
-'DIM SHARED udtxbytealign(1000) AS INTEGER 'first element MUST be on a byte alignment & size is a multiple of 8
-'DIM SHARED udtxnext(1000) AS LONG
-''elements
-'DIM SHARED lasttypeelement AS LONG
-'DIM SHARED udtename(1000) AS STRING * 256
-'DIM SHARED udtecname(1000) AS STRING * 256
-'DIM SHARED udtebytealign(1000) AS INTEGER
-'DIM SHARED udtesize(1000) AS LONG
-'DIM SHARED udtetype(1000) AS LONG
-'DIM SHARED udtetypesize(1000) AS LONG
-'DIM SHARED udtearrayelements(1000) AS LONG
-'DIM SHARED udtenext(1000) AS LONG
-
 'import _MEM type
 ptrsz = OS_BITS \ 8
 
@@ -1420,11 +1397,9 @@ lasttype = lasttype + 1: i = lasttype
 udtxname(i) = "_MEM"
 udtxcname(i) = "_MEM"
 udtxsize(i) = ((ptrsz) * 5 + (4) * 2 + (8) * 1) * 8
-udtxbytealign(i) = 1
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "OFFSET"
 udtecname(i2) = "OFFSET"
-udtebytealign(i2) = 1
 udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
 udtetypesize(i2) = 0 'tsize
 udtxnext(i) = i2
@@ -1432,7 +1407,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "SIZE"
 udtecname(i2) = "SIZE"
-udtebytealign(i2) = 1
 udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1440,7 +1414,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "$_LOCK_ID"
 udtecname(i2) = "$_LOCK_ID"
-udtebytealign(i2) = 1
 udtetype(i2) = INTEGER64TYPE: udtesize(i2) = 64
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1448,7 +1421,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "$_LOCK_OFFSET"
 udtecname(i2) = "$_LOCK_OFFSET"
-udtebytealign(i2) = 1
 udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1456,7 +1428,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "TYPE"
 udtecname(i2) = "TYPE"
-udtebytealign(i2) = 1
 udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1464,7 +1435,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "ELEMENTSIZE"
 udtecname(i2) = "ELEMENTSIZE"
-udtebytealign(i2) = 1
 udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1473,7 +1443,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "IMAGE"
 udtecname(i2) = "IMAGE"
-udtebytealign(i2) = 1
 udtetype(i2) = LONGTYPE: udtesize(i2) = 32
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1482,7 +1451,6 @@ i3 = i2
 lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
 udtename(i2) = "SOUND"
 udtecname(i2) = "SOUND"
-udtebytealign(i2) = 1
 udtetype(i2) = LONGTYPE: udtesize(i2) = 32
 udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
@@ -1882,8 +1850,6 @@ DO
                                     'create global buffer for SWAP space
                                     siz$ = str2$(udtxsize(i) \ 8)
                                     WriteBufLine GlobTxtBuf, "char *g_tmp_udt_" + RTRIM$(udtxname(i)) + "=(char*)malloc(" + siz$ + ");"
-
-                                    'print "END TYPE";udtxsize(i);udtxbytealign(i)
                                     GOTO finishedlinepp
                                 END IF
                             END IF
@@ -1940,29 +1906,21 @@ DO
                                 IF typ AND ISUDT THEN
                                     u = typ AND 511
                                     udtesize(i2) = udtxsize(u)
-                                    IF udtxbytealign(u) THEN udtxbytealign(i) = 1: udtebytealign(i2) = 1
                                     IF udtxvariable(u) THEN udtxvariable(i) = -1
-                                ELSE
-                                    IF (typ AND ISSTRING) THEN
-                                        IF (typ AND ISFIXEDLENGTH) = 0 THEN
-                                            udtesize(i2) = OFFSETTYPE AND 511
-                                            udtxvariable(i) = -1
-                                        ELSE
-                                            udtesize(i2) = typsize * 8
-                                        END IF
-                                        udtxbytealign(i) = 1: udtebytealign(i2) = 1
+                                ELSEIF typ AND ISSTRING THEN
+                                    IF (typ AND ISFIXEDLENGTH) = 0 THEN
+                                        udtesize(i2) = OFFSETTYPE AND 511
+                                        udtxvariable(i) = -1
                                     ELSE
-                                        udtesize(i2) = typ AND 511
-                                        IF (typ AND ISOFFSETINBITS) = 0 THEN udtxbytealign(i) = 1: udtebytealign(i2) = 1
+                                        udtesize(i2) = typsize * 8
                                     END IF
+                                ELSEIF typ AND ISOFFSETINBITS THEN
+                                    a$ = "Cannot use " + qb64prefix$ + "BIT inside user defined types": GOTO errmes
+                                ELSE
+                                    udtesize(i2) = typ AND 511
                                 END IF
 
                                 'Increase block size
-                                IF udtebytealign(i2) THEN
-                                    IF udtxsize(i) MOD 8 THEN
-                                        udtxsize(i) = udtxsize(i) + (8 - (udtxsize(i) MOD 8))
-                                    END IF
-                                END IF
                                 udtxsize(i) = udtxsize(i) + udtesize(i2)
 
                                 'Link element to previous element
@@ -1972,7 +1930,7 @@ DO
                                     udtenext(i2 - 1) = i2
                                 END IF
 
-                                'print "+"+rtrim$(udtename(i2));udtetype(i2);udtesize(i2);udtebytealign(i2);udtxsize(i)
+                                'print "+"+rtrim$(udtename(i2));udtetype(i2);udtesize(i2);udtxsize(i)
                                 IF newAsTypeBlockSyntax THEN RETURN
                                 GOTO finishedlinepp
                             ELSE
@@ -13826,6 +13784,10 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)realloc((void*)(" + n$ + "[0]),tmp_long2*" + bytesperelement$ + ");"
                     f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
                     f12$ = f12$ + CRLF + "if (preserved_elements<tmp_long2){"
+                    IF stringarray = 0 THEN
+                        'ensure any numeric udt elements are zeroed
+                        f12$ = f12$ + CRLF + "ZeroMemory(((uint8*)(" + n$ + "[0]))+preserved_elements*" + bytesperelement$ + ",(tmp_long2*" + bytesperelement$ + ")-(preserved_elements*" + bytesperelement$ + "));"
+                    END IF
                     f12$ = f12$ + CRLF + "for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){"
                     IF stringarray THEN
                         f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array is in cmem
@@ -13859,6 +13821,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
                     f12$ = f12$ + CRLF + "}" 'not in cmem
                 ELSE 'initialise udt's
+                    f12$ = f12$ + CRLF + "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
                     f12$ = f12$ + CRLF + "while(tmp_long--){"
                     acc$ = ""
                     initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
@@ -14372,16 +14335,13 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 END IF
                 n$ = scope2$ + "ARRAY_" + n$
                 bits = udtxsize(i)
-                IF udtxbytealign(i) THEN
-                    IF bits MOD 8 THEN bits = bits + 8 - (bits MOD 8)
-                END IF
 
                 IF f = 1 THEN
 
                     IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
                         E = arrayelementslist(idn + 1): IF E THEN elements$ = elements$ + str2$(E) 'eg. "?3" for a 3 dimensional array
                     END IF
-                    nume = allocarray(n$, elements$, -bits, i)
+                    nume = allocarray(n$, elements$, bits \ 8, i)
                     IF Error_Happened THEN EXIT FUNCTION
                     l$ = l$ + sp + tlayout$
                     IF arraydesc THEN GOTO dim2exitfunc
@@ -15569,9 +15529,6 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
     IF E = 0 THEN E = udtxnext(u) ELSE E = udtenext(E)
     IF E = 0 THEN Give_Error "Element not defined": EXIT FUNCTION
     n2$ = RTRIM$(udtename(E))
-    IF udtebytealign(E) THEN
-        IF o MOD 8 THEN o = o + (8 - (o MOD 8))
-    END IF
 
     IF n$ <> n2$ THEN
         'increment fixed offset
@@ -15609,7 +15566,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 
     r$ = r$ + str2$(u) + sp3 + str2$(E) + sp3
 
-    IF o MOD 8 THEN Give_Error "QB64 cannot handle bit offsets within user defined types": EXIT FUNCTION
+    IF o MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT FUNCTION
     o = o \ 8
 
     IF o$ <> "" THEN
@@ -15727,13 +15684,9 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                             getid arrayid
                                             IF Error_Happened THEN EXIT FUNCTION
                                             o$ = RIGHT$(c$, LEN(c$) - INSTR(c$, sp3))
-                                            'change o$ to a byte offset if necessary
+                                            'change o$ to a byte offset
                                             u = typ2 AND 511
-                                            s = udtxsize(u)
-                                            IF udtxbytealign(u) THEN
-                                                IF s MOD 8 THEN s = s + (8 - (s MOD 8)) 'round up to nearest byte
-                                                s = s \ 8
-                                            END IF
+                                            s = udtxsize(u) \ 8
                                             o$ = "(" + o$ + ")*" + str2$(s)
                                             'print "calling evaludt with o$:"+o$
                                             GOTO evaludt
