@@ -635,7 +635,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
         std::string fileSpec(reinterpret_cast<char *>(qbsFileSpec->chr), qbsFileSpec->len);
 
         if (fileSpec.empty())
-            fileSpec = "*.*";
+            fileSpec = "*";
 
         if (FS_DirectoryExists(filepath_fix_directory(fileSpec))) {
             directory = fileSpec;
