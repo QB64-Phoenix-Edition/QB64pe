@@ -70,13 +70,11 @@ void sub_environ(qbs *str) {
     buf = (char *)malloc(str->len + 1);
     buf[str->len] = '\0';
     memcpy(buf, str->chr, str->len);
-    // Name and value may be separated by = or space
-    separator = strchr(buf, ' ');
-    if (!separator) {
-        separator = strchr(buf, '=');
-    }
-    if (!separator) {
+    // Name and value may be separated by = or space, whichever appears first.
+    separator = buf + strcspn(buf, " =");
+    if (*separator == '\0') {
         // It is an error is there is no separator
+        free(buf);
         error(5);
         return;
     }
