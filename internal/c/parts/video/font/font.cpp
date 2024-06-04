@@ -972,7 +972,7 @@ bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoin
             auto glyph = fnt->GetGlyph(cp, isMonochrome);
             if (glyph) {
                 glyph->RenderBitmap(outBuf, strPixSize.x, strPixSize.y,
-                                    penX + glyph->bitmap->bearing.x + fnt->monospaceWidth / 2 - glyph->bitmap->advanceWidth / 2,
+                                    penX + glyph->bitmap->bearing.x + (fnt->monospaceWidth >> 1) - (glyph->bitmap->advanceWidth >> 1),
                                     fnt->baseline - glyph->bitmap->bearing.y);
                 penX += fnt->monospaceWidth;
             }
@@ -1082,7 +1082,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
     auto face = fnt->face;
 
     if (FT_IS_SCALABLE(face))
-        return (((FT_Pos)face->ascender - (FT_Pos)face->descender) * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
+        return FT_MulDiv(((FT_Long)face->ascender - (FT_Long)face->descender), (FT_Long)fnt->defaultHeight, (FT_Long)face->units_per_EM);
 
     return fnt->defaultHeight;
 }
@@ -1184,7 +1184,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
     auto face = fnt->face;
 
     if (FT_IS_SCALABLE(face))
-        return ((FT_Pos)face->height * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
+        return FT_MulDiv((FT_Long)face->height, (FT_Long)fnt->defaultHeight, (FT_Long)face->units_per_EM);
 
     return fnt->defaultHeight;
 }
@@ -1290,7 +1290,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         strPixSize.x = fnt->GetStringPixelWidth(str32, codepoints);
         pen.x = 0;
         if (FT_IS_SCALABLE(face)) {
-            strPixSize.y = (((FT_Pos)face->ascender - (FT_Pos)face->descender) * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
+            strPixSize.y = FT_MulDiv(((FT_Long)face->ascender - (FT_Long)face->descender), (FT_Long)fnt->defaultHeight, (FT_Long)face->units_per_EM);
             pen.y = ((FT_Pos)face->ascender * fnt->defaultHeight) / (FT_Pos)face->units_per_EM;
         } else {
             strPixSize.y = fnt->defaultHeight;
@@ -1364,7 +1364,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
                         break;
 
                     glyph->RenderBitmap(drawBuf, strPixSize.x, strPixSize.y,
-                                        pen.x + glyph->bitmap->bearing.x + fnt->monospaceWidth / 2 - glyph->bitmap->advanceWidth / 2,
+                                        pen.x + glyph->bitmap->bearing.x + (fnt->monospaceWidth >> 1) - (glyph->bitmap->advanceWidth >> 1),
                                         pen.y - glyph->bitmap->bearing.y);
                     pen.x += fnt->monospaceWidth;
                 }
