@@ -45,9 +45,9 @@ uint8_t *FontLoadFileToMemory(const char *file_path_name, int32_t *out_bytes);
 int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t default_pixel_height, int32_t which_font, int32_t &options);
 void FontFree(int32_t fh);
 int32_t FontWidth(int32_t fh);
-bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y);
+bool FontRenderTextUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y);
 bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y);
-int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints);
+int32_t FontPrintWidthUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints);
 int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints);
 
 qbs *func__md5(qbs *text);

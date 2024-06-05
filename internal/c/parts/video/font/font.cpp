@@ -12,12 +12,14 @@
 #include "libqb-common.h"
 #include "mutex.h"
 #include "rounding.h"
+#include <codecvt>
 #include <cstdio>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 extern "C" {
 #include "freetype/md5.h"
 }
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -39,147 +41,51 @@ extern const uint8_t charset8x16[256][16][8];
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
 
 /// @brief A simple class that manages conversions from various encodings to UTF32
-class UTF32 {
-  private:
-    // See DecodeUTF8() below for more details
-    enum UTF8DecoderState { ACCEPT = 0, REJECT = 1 };
+struct UTF32 {
+    std::u32string string; // UTF32 string
 
-    /// @brief See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-    /// Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-    /// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-    /// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
-    /// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
-    /// is furnished to do so, subject to the following conditions:
-    /// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-    /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-    /// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    /// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-    /// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    /// @param state The current state of the decoder
-    /// @param codep The decoded codepoint after state changes to UTF8DecodeState::ACCEPT
-    /// @param byte The next UTF-8 byte in the input stream
-    /// @return UTF8DecodeState::ACCEPT if enough bytes have been read for a character,
-    /// UTF8DecodeState::REJECT if the byte is not allowed to occur at its position,
-    /// and some other positive value if more bytes have to be read
-    uint32_t DecodeUTF8(uint32_t *state, uint32_t *codep, uint8_t byte) {
-        // clang-format off
-        static const uint8_t utf8d[] = {
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
-            7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
-            8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
-            0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
-            0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-            0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
-            1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
-            1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
-            1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
-        };
-        // clang-format on
-
-        uint32_t type = utf8d[byte];
-        *codep = (*state != UTF8DecoderState::ACCEPT) ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte);
-        *state = utf8d[256 + *state * 16 + type];
-
-        return *state;
-    }
-
-  public:
     UTF32 &operator=(const UTF32 &) = delete;
     UTF32 &operator=(UTF32 &&) = delete;
 
-    std::vector<uint32_t> codepoints; // UTF32 codepoint dynamic array
-
-    /// @brief Converts an ASCII array to UTF-32
-    /// @param str The ASCII array
-    /// @param byte_len The size of the array in bytes
+    /// @brief Converts an ASCII string to UTF-32
+    /// @param str The ASCII string
+    /// @param len The size of the string in bytes
     /// @return The number of codepoints that were converted
-    size_t ConvertASCII(const uint8_t *str, size_t byte_len) {
-        // Clear the codepoint vector
-        codepoints.clear();
+    size_t ConvertASCII(const uint8_t *str, size_t len) {
+        string.resize(len);
 
-        // Convert the ASCII string
-        for (size_t i = 0; i < byte_len; i++)
-            codepoints.push_back(codepage437_to_unicode16[str[i]]);
+        for (size_t i = 0; i < len; i++)
+            string[i] = codepage437_to_unicode16[str[i]];
 
-        return codepoints.size();
+        return string.size();
     }
 
-    /// @brief Converts an UTF-8 array to UTF-32. This does not check for BOM
-    /// @param str The UTF-8 array
-    /// @param byte_len The size of the array in bytes
+    /// @brief Converts an UTF-8 string to UTF-32
+    /// @param str The UTF-8 string
+    /// @param len The size of the string in bytes
     /// @return The number of codepoints that were converted
-    size_t ConvertUTF8(const uint8_t *str, size_t byte_len) {
-        // Clear the codepoint vector
-        codepoints.clear();
-
-        uint32_t prevState = UTF8DecoderState::ACCEPT, currentState = UTF8DecoderState::ACCEPT;
-        uint32_t cp;
-
-        for (size_t i = 0; i < byte_len; i++, prevState = currentState) {
-            switch (DecodeUTF8(&currentState, &cp, str[i])) {
-            case UTF8DecoderState::ACCEPT:
-                // Good codepoint
-                codepoints.push_back(cp);
-                break;
-
-            case UTF8DecoderState::REJECT:
-                // Codepoint would be U+FFFD (replacement character)
-                cp = 0xFFFD;
-                currentState = UTF8DecoderState::ACCEPT;
-                if (prevState != UTF8DecoderState::ACCEPT)
-                    --i;
-                codepoints.push_back(cp);
-                break;
-
-            default:
-                // Need to read continuation bytes
-                continue;
-            }
+    size_t ConvertUTF8(const uint8_t *str, size_t len) {
+        try {
+            string = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>().from_bytes((const char *)str, (const char *)str + len);
+        } catch (...) {
+            string.clear();
         }
 
-        return codepoints.size();
+        return string.size();
     }
 
-    /// @brief Converts an UTF-16LE array to UTF-32. This does not check for BOM
-    /// @param str The UTF-16LE array
-    /// @param byte_len The size of the array in bytes
+    /// @brief Converts an UTF-16 string to UTF-32
+    /// @param str The UTF-16 string
+    /// @param len The size of the string in bytes
     /// @return The number of codepoints that were converted
-    size_t ConvertUTF16(const uint8_t *str, size_t byte_len) {
-        // Clear the codepoint vector
-        codepoints.clear();
-
-        // We'll assume the worst case scenario and allocate a buffer that is byte_len / 2 codepoints long
-        auto len16 = byte_len / sizeof(uint16_t);
-        auto str16 = (const uint16_t *)str;
-        uint32_t cp;
-
-        for (size_t i = 0; i < len16; i++) {
-            auto ch = str16[i];
-
-            // If the character is a surrogate, we need to combine it with the next character to get the actual codepoint
-            if (ch >= 0xD800 && ch <= 0xDBFF && i + 1 < len16) {
-                auto ch2 = str16[i + 1];
-                if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {
-                    cp = ((ch - 0xD800) << 10) + (ch2 - 0xDC00) + 0x10000;
-                    ++i; // skip the second surrogate
-                } else {
-                    cp = 0xFFFD; // invalid surrogate pair
-                }
-            } else if (ch >= 0xDC00 && ch <= 0xDFFF) {
-                cp = 0xFFFD; // invalid surrogate pair
-            } else {
-                cp = ch;
-            }
-
-            codepoints.push_back(cp);
+    size_t ConvertUTF16(const uint8_t *str, size_t len) {
+        try {
+            string = std::wstring_convert<std::codecvt_utf16<char32_t>, char32_t>().from_bytes((const char *)str, (const char *)str + len);
+        } catch (...) {
+            string.clear();
         }
 
-        return codepoints.size();
+        return string.size();
     }
 };
 
@@ -317,7 +223,7 @@ struct FontManager {
             /// @param codepoint A valid UTF-32 codepoint
             /// @param parentFont The parent font object
             /// @return True if successful or if bitmap is already cached
-            bool CacheBitmap(uint32_t codepoint, Font *parentFont) {
+            bool CacheBitmap(char32_t codepoint, Font *parentFont) {
                 if (!bitmap) {
                     // Get the glyph index first and store it
                     // Note that this can return a valid glyph index but the index need not have any glyph bitmap
@@ -396,7 +302,7 @@ struct FontManager {
             }
         };
 
-        std::unordered_map<uint32_t, Glyph *> glyphs; // holds pointers to cached glyph data for codepoints
+        std::unordered_map<char32_t, Glyph *> glyphs; // holds pointers to cached glyph data for codepoints
 
         // Delete copy and move constructors and assignments
         Font(const Font &) = delete;
@@ -436,7 +342,7 @@ struct FontManager {
         /// @param codepoint A valid UTF-32 codepoint
         /// @param isMono True for mono bitmap and false for gray
         /// @return The glyph pointer if successful or if the glyph is already in the map, nullptr otherwise
-        Glyph *GetGlyph(uint32_t codepoint, bool isMono) {
+        Glyph *GetGlyph(char32_t codepoint, bool isMono) {
             if (glyphs.count(codepoint) == 0) {
                 // The glyph is not cached yet
                 auto newGlyph = new Glyph;
@@ -471,7 +377,7 @@ struct FontManager {
         /// @param codepoint The codepoint array (string)
         /// @param codepoints The number of codepoints in the array
         /// @return The length of the string in pixels
-        FT_Pos GetStringPixelWidth(const uint32_t *codepoint, size_t codepoints) {
+        FT_Pos GetStringPixelWidth(const char32_t *codepoint, size_t codepoints) {
             if (monospaceWidth) // return monospace width simply by multiplying the fixed width by the codepoints
                 return monospaceWidth * codepoints;
 
@@ -896,7 +802,7 @@ int32_t FontWidth(int32_t fh) {
 /// @param codepoint The UTF32 codepoint array
 /// @param codepoints The number of codepoints
 /// @return Length in pixels
-int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints) {
+int32_t FontPrintWidthUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints) {
     libqb_mutex_guard lock(fontManager.m);
 
     if (codepoints > 0) {
@@ -922,7 +828,7 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
 
         // Attempt to convert the string to UTF32 and get the actual width in pixels
         auto count = utf32.ConvertASCII(codepoint, codepoints);
-        return FontPrintWidthUTF32(fh, utf32.codepoints.data(), count);
+        return FontPrintWidthUTF32(fh, utf32.string.data(), count);
     }
 
     return 0;
@@ -937,7 +843,7 @@ int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepo
 /// @param out_x A pointer to the output width of the rendered text in pixels
 /// @param out_y A pointer to the output height of the rendered text in pixels
 /// @return success = 1, failure = 0
-bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
+bool FontRenderTextUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     libqb_mutex_guard lock(fontManager.m);
 
     FONT_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
@@ -1025,7 +931,7 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
 
         // Attempt to convert the string to UTF32 and forward to FontRenderTextUTF32()
         auto count = utf32.ConvertASCII(codepoint, codepoints);
-        return FontRenderTextUTF32(fh, utf32.codepoints.data(), count, options, out_data, out_x, out_y);
+        return FontRenderTextUTF32(fh, utf32.string.data(), count, options, out_data, out_x, out_y);
     }
 
     return false;
@@ -1120,31 +1026,31 @@ int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh
     }
 
     // Convert the string to UTF-32 if needed
-    uint32_t const *str32 = nullptr;
+    char32_t const *str32 = nullptr;
     size_t codepoints = 0;
 
     switch (utf_encoding) {
     case 32: // UTF-32: no conversion needed
-        str32 = (uint32_t *)text->chr;
-        codepoints = text->len / sizeof(uint32_t);
+        str32 = (char32_t *)text->chr;
+        codepoints = text->len / sizeof(char32_t);
         break;
 
     case 16: // UTF-16: conversion required
         codepoints = utf32.ConvertUTF16(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
         break;
 
     case 8: // UTF-8: conversion required
         codepoints = utf32.ConvertUTF8(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
         break;
 
     default: // ASCII: conversion required
         codepoints = utf32.ConvertASCII(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
     }
 
     if (qb64_fh < 32)
@@ -1240,35 +1146,35 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     }
 
     // Convert the string to UTF-32 if needed
-    uint32_t const *str32 = nullptr;
+    char32_t const *str32 = nullptr;
     size_t codepoints = 0;
 
     switch (utf_encoding) {
     case 32: // UTF-32: no conversion needed
         FONT_DEBUG_PRINT("UTF-32 string. Skipping conversion");
-        str32 = (uint32_t *)text->chr;
-        codepoints = text->len / sizeof(uint32_t);
+        str32 = (char32_t *)text->chr;
+        codepoints = text->len / sizeof(char32_t);
         break;
 
     case 16: // UTF-16: conversion required
         FONT_DEBUG_PRINT("UTF-16 string. Converting to UTF32");
         codepoints = utf32.ConvertUTF16(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
         break;
 
     case 8: // UTF-8: conversion required
         FONT_DEBUG_PRINT("UTF-8 string. Converting to UTF32");
         codepoints = utf32.ConvertUTF8(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
         break;
 
     default: // ASCII: conversion required
         FONT_DEBUG_PRINT("ASCII string. Converting to UTF32");
         codepoints = utf32.ConvertASCII(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
     }
 
     if (!codepoints)
@@ -1550,31 +1456,31 @@ int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t
     }
 
     // Convert the string to UTF-32 if needed
-    uint32_t const *str32 = nullptr;
+    char32_t const *str32 = nullptr;
     size_t codepoints = 0;
 
     switch (utf_encoding) {
     case 32: // UTF-32: no conversion needed
-        str32 = (uint32_t *)text->chr;
-        codepoints = text->len / sizeof(uint32_t);
+        str32 = (char32_t *)text->chr;
+        codepoints = text->len / sizeof(char32_t);
         break;
 
     case 16: // UTF-16: conversion required
         codepoints = utf32.ConvertUTF16(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
         break;
 
     case 8: // UTF-8: conversion required
         codepoints = utf32.ConvertUTF8(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
         break;
 
     default: // ASCII: conversion required
         codepoints = utf32.ConvertASCII(text->chr, text->len);
         if (codepoints)
-            str32 = utf32.codepoints.data();
+            str32 = utf32.string.data();
     }
 
     // Simply return the codepoint count if we do not have any array
