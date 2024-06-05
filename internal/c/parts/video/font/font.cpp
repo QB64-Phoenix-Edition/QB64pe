@@ -19,6 +19,7 @@
 extern "C" {
 #include "freetype/md5.h"
 }
+#include <locale>
 #include <string>
 #include <unordered_map>
 #include <vector>

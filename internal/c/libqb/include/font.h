@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <uchar.h>
 
 #if defined(FONT_DEBUG) && FONT_DEBUG > 0
 #    ifdef _MSC_VER
