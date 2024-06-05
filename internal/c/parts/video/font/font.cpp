@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------------------------------------------------
 // QB64-PE Font Library
-// Powered by FreeType 2.13.2 (https://freetype.org/)
+// Powered by FreeType (https://freetype.org/)
 //----------------------------------------------------------------------------------------------------------------------
 
 #define FONT_DEBUG 0
@@ -93,7 +93,7 @@ class UTF32 {
                                  char32_t>()
                                  .from_bytes((const char *)str, (const char *)str + len);
                 } else if (str[0] == 0xFE && str[1] == 0xFF) {
-                    // Default is big-endian
+                    // Big-endian (C++ default)
                     string =
                         std::wstring_convert<std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT, std::codecvt_mode::consume_header>, char32_t>().from_bytes(
                             (const char *)str, (const char *)str + len);
