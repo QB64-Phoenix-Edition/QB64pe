@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------------------------------------------------
 // QB64-PE Font Library
-// Powered by FreeType 2.4.12 (https://github.com/vinniefalco/FreeTypeAmalgam)
+// Powered by FreeType 2.13.2 (https://freetype.org/)
 //----------------------------------------------------------------------------------------------------------------------
 
 #define FONT_DEBUG 0
@@ -80,7 +80,8 @@ struct UTF32 {
     /// @return The number of codepoints that were converted
     size_t ConvertUTF16(const uint8_t *str, size_t len) {
         try {
-            string = std::wstring_convert<std::codecvt_utf16<char32_t>, char32_t>().from_bytes((const char *)str, (const char *)str + len);
+            string = std::wstring_convert<std::codecvt_utf16<char32_t, 0x10ffff, std::codecvt_mode::consume_header>, char32_t>().from_bytes(
+                (const char *)str, (const char *)str + len);
         } catch (...) {
             string.clear();
         }
@@ -1099,28 +1100,23 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
 /// @param start_x The starting x position
 /// @param start_y The starting y position
 /// @param text The text that needs to be rendered
-/// @param max_width The maximum width of the text (rendering will be clipped beyond width)
-/// @param utf_encoding The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
-/// @param qb64_fh A QB64 font handle (this can be a builtin font as well)
+/// @param max_width [optional] The maximum width of the text (rendering will be clipped beyond width)
+/// @param utf_encoding [optional] The UTF encoding of the text (0 = ASCII, 8 = UTF-8, 16 - UTF-16, 32 = UTF-32)
+/// @param qb64_fh [optional] A QB64 font handle (this can be a builtin font as well)
+/// @param dst_img [optional] A QB64 image handle (zero designates current SCREEN page)
 /// @param passed Optional arguments flag
-void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
+void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t dst_img,
+                       int32_t passed) {
     libqb_mutex_guard lock(fontManager.m);
 
     if (is_error_pending() || !text->len)
         return;
 
-    // Check if we are in text mode and generate an error if we are
-    if (write_page->text) {
-        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-        return;
-    }
-
-    FONT_DEBUG_PRINT("Graphics mode set. Proceeding...");
-
     // Check max width
     if (passed & 1) {
-        if (max_width < 1)
+        if (max_width < 1) {
             return;
+        }
     } else {
         max_width = 0;
     }
@@ -1135,10 +1131,29 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         utf_encoding = 0;
     }
 
+    int32_t old_dst_img;
+
+    if (passed & 8) {
+        old_dst_img = func__dest();
+        sub__dest(dst_img);
+    }
+
+    // Check if we are in text mode and generate an error if we are
+    if (write_page->text) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        if (passed & 8)
+            sub__dest(old_dst_img);
+        return;
+    }
+
+    FONT_DEBUG_PRINT("Graphics mode set. Proceeding...");
+
     // Check if a valid font handle was passed
     if (passed & 4) {
         if (!IS_VALID_QB64_FONT_HANDLE(qb64_fh)) {
             error(QB_ERROR_INVALID_HANDLE);
+            if (passed & 8)
+                sub__dest(old_dst_img);
             return;
         }
     } else {
@@ -1177,8 +1192,11 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
             str32 = utf32.string.data();
     }
 
-    if (!codepoints)
+    if (!codepoints) {
+        if (passed & 8)
+            sub__dest(old_dst_img);
         return;
+    }
 
     FontManager::Font *fnt = nullptr;
     FT_Face face = nullptr;
@@ -1211,8 +1229,11 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
         strPixSize.x = max_width;
 
     auto drawBuf = (uint8_t *)calloc(strPixSize.x, strPixSize.y);
-    if (!drawBuf)
+    if (!drawBuf) {
+        if (passed & 8)
+            sub__dest(old_dst_img);
         return;
+    }
 
     FONT_DEBUG_PRINT("Allocated (%lu x %lu) buffer", strPixSize.x, strPixSize.y);
 
@@ -1412,6 +1433,9 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
     }
 
     free(drawBuf);
+
+    if (passed & 8)
+        sub__dest(old_dst_img);
 }
 
 /// @brief Calculate the starting pixel positions of each codepoint to an array. First one being zero.

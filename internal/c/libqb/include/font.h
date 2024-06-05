@@ -54,5 +54,6 @@ qbs *func__md5(qbs *text);
 int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed);
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
 int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed);
-void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
+void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t dst_img,
+                       int32_t passed);
 int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
