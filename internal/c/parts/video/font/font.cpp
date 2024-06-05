@@ -41,7 +41,10 @@ extern const uint8_t charset8x16[256][16][8];
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
 
 /// @brief A simple class that manages conversions from various encodings to UTF32
-struct UTF32 {
+class UTF32 {
+    static const uint32_t MAX_UNICODE_CODEPOINT = 0x10FFFFu;
+
+  public:
     std::u32string string; // UTF32 string
 
     UTF32 &operator=(const UTF32 &) = delete;
@@ -74,14 +77,42 @@ struct UTF32 {
         return string.size();
     }
 
-    /// @brief Converts an UTF-16 string to UTF-32
-    /// @param str The UTF-16 string
+    /// @brief Converts an UTF-16 LE/BE string (with BOM or naked) to UTF-32
+    /// @param str The UTF-16 string. If no BOM is present, little-endian is assumed
     /// @param len The size of the string in bytes
     /// @return The number of codepoints that were converted
     size_t ConvertUTF16(const uint8_t *str, size_t len) {
         try {
-            string = std::wstring_convert<std::codecvt_utf16<char32_t, 0x10ffff, std::codecvt_mode::consume_header>, char32_t>().from_bytes(
-                (const char *)str, (const char *)str + len);
+            if (len > 2) {
+                // Detect BOM
+                if (str[0] == 0xFF && str[1] == 0xFE) {
+                    // Little-endian
+                    string = std::wstring_convert<
+                                 std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT,
+                                                    static_cast<std::codecvt_mode>(std::codecvt_mode::consume_header | std::codecvt_mode::little_endian)>,
+                                 char32_t>()
+                                 .from_bytes((const char *)str, (const char *)str + len);
+                } else if (str[0] == 0xFE && str[1] == 0xFF) {
+                    // Default is big-endian
+                    string =
+                        std::wstring_convert<std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT, std::codecvt_mode::consume_header>, char32_t>().from_bytes(
+                            (const char *)str, (const char *)str + len);
+                } else {
+                    // No BOM, assuming little-endian by default
+                    string = std::wstring_convert<
+                                 std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT,
+                                                    static_cast<std::codecvt_mode>(std::codecvt_mode::consume_header | std::codecvt_mode::little_endian)>,
+                                 char32_t>()
+                                 .from_bytes((const char *)str, (const char *)str + len);
+                }
+            } else {
+                // Short string, assuming little-endian by default
+                string = std::wstring_convert<
+                             std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT,
+                                                static_cast<std::codecvt_mode>(std::codecvt_mode::consume_header | std::codecvt_mode::little_endian)>,
+                             char32_t>()
+                             .from_bytes((const char *)str, (const char *)str + len);
+            }
         } catch (...) {
             string.clear();
         }
