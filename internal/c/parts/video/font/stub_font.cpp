@@ -24,7 +24,7 @@ int32_t FontWidth(int32_t fh) {
     return 0;
 }
 
-bool FontRenderTextUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
+bool FontRenderTextUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
     (void)fh;
     (void)codepoint;
     (void)codepoints;
@@ -46,7 +46,7 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
     return 0;
 }
 
-int32_t FontPrintWidthUTF32(int32_t fh, const uint32_t *codepoint, int32_t codepoints) {
+int32_t FontPrintWidthUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints) {
     (void)fh;
     (void)codepoint;
     (void)codepoints;

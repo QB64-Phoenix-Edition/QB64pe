@@ -148,6 +148,9 @@ SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING)
 
     DIM actual AS _MEM, expected AS _MEM
 
+    actual = _MEMIMAGE(actualImage)
+    expected = _MEMIMAGE(expectedImage)
+
     IF _WIDTH(actualImage) <> _WIDTH(expectedImage) THEN
         PRINT "Failure! Image width differs, actual:"; _WIDTH(actualImage); ", Expected:"; _WIDTH(expectedImage)
         GOTO freeImages
@@ -157,9 +160,6 @@ SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING)
         PRINT "Failure! Image height differs, actual:"; _HEIGHT(actualImage); ", Expected:"; _HEIGHT(expectedImage)
         GOTO freeImages
     END IF
-
-    actual = _MEMIMAGE(actualImage)
-    expected = _MEMIMAGE(expectedImage)
 
     IF actual.SIZE <> expected.SIZE THEN
         PRINT "Failure! Image sizes differ, Actual:"; actual.SIZE; ", Expected:"; expected.SIZE

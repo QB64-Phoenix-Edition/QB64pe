@@ -11413,7 +11413,7 @@ int32_t chrwidth(uint32_t character) {
     // Custom font
     // a740g: No need to render just to find the pixel length
     if ((fontflags[f] & FONT_LOAD_UNICODE)) { // UNICODE character
-        w = FontPrintWidthUTF32(font[f], (uint32_t *)&character, 1);
+        w = FontPrintWidthUTF32(font[f], (char32_t *)&character, 1);
     } else { // ASCII character
         character &= 255;
         w = FontPrintWidthASCII(font[f], (uint8_t *)&character, 1);
@@ -30354,7 +30354,7 @@ void display() {
                         render_option = 1;
                         if (rt_data_last)
                             free(rt_data_last);
-                        ok = FontRenderTextUTF32(font[f], &chr_utf32, 1, render_option, &rt_data, &rt_w, &rt_h);
+                        ok = FontRenderTextUTF32(font[f], (char32_t *)&chr_utf32, 1, render_option, &rt_data, &rt_w, &rt_h);
                         rt_data_last = rt_data;
                         cp2 = rt_data;
                         f_pitch = 0;
@@ -31964,11 +31964,11 @@ extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_o
 
     if (*qb64_os_event_info == OS_EVENT_POST_PROCESSING) {
         switch (event->type) {
-        case EnterNotify:
+        case FocusIn:
             window_focused = -1;
             break;
 
-        case LeaveNotify:
+        case FocusOut:
             window_focused = 0;
             // Iterate over all modifiers
             for (uint32 key = VK + QBVK_RSHIFT; key <= VK + QBVK_MODE; key++) {

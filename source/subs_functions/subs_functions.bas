@@ -1537,10 +1537,10 @@ id.n = qb64prefix$ + "UPrintString"
 id.Dependency = DEPENDENCY_LOADFONT
 id.subfunc = 2
 id.callname = "sub__UPrintString"
-id.args = 6
-id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "(?,?),?[,[?][,[?][,?]]]"
-id.hr_syntax = "_UPRINTSTRING (x&, y&), text$[, maxWidth&][, utfEncoding&][, fontHandle&]"
+id.args = 7
+id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+id.specialformat = "(?,?),?[,[?][,[?][,[?][,?]]]]"
+id.hr_syntax = "_UPRINTSTRING (x&, y&), text$[, maxWidth&][, utfEncoding&][, fontHandle&][, imageHandle&]"
 regid
 
 clearid
