@@ -79,7 +79,7 @@ SYSTEM 1
 
 FUNCTION CreateDummyFile$ (directory AS STRING, extension AS STRING)
     DO
-        DIM fileName AS STRING: fileName = directory + LTRIM$(STR$(100! * (TIMER + RND))) + extension
+        DIM fileName AS STRING: fileName = directory + LTRIM$(STR$(INT(100! * (TIMER + RND)))) + extension
     LOOP WHILE _FILEEXISTS(fileName)
 
     DIM h AS LONG: h = FREEFILE
