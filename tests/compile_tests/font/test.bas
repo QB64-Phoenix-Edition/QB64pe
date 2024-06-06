@@ -97,8 +97,8 @@ SUB PrintFontDetails (handle AS LONG, testFileName AS STRING)
     _DEST image
     _FONT handle
     COLOR _RGB32(255)
-    _UPRINTSTRING (0, 0), SAMPLE_TEXT_1
-    _UPRINTSTRING (0, uLineSpacing), SAMPLE_TEXT_2
+    _UPRINTSTRING (0, 0), SAMPLE_TEXT_1, , , handle
+    _UPRINTSTRING (0, uLineSpacing), SAMPLE_TEXT_2, , , , image
     '_SAVEIMAGE testFileName + "u", image, TEST_IMAGE_FORMAT
 
     _FONT 16
