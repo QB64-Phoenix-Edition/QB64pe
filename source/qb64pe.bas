@@ -57,7 +57,7 @@ REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
 REDIM SelectCaseHasCaseBlock(100)
 DIM ExecLevel(255), ExecCounter AS INTEGER
 REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is the string value
-REDIM SHARED InValidLine(10000) AS _BYTE
+REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
 DIM SHARED UserDefineCount AS INTEGER, UserDefineList$
 UserDefineList$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@"
@@ -1577,10 +1577,10 @@ DO
     linenumber = linenumber + 1
     reallinenumber = reallinenumber + 1
 
-    DO UNTIL linenumber < UBOUND(InValidLine) 'color information flag for each line
-        REDIM _PRESERVE InValidLine(UBOUND(InValidLine) + 1000) AS _BYTE
+    DO UNTIL linenumber < UBOUND(InvalidLine) 'color information flag for each line
+        REDIM _PRESERVE InvalidLine(UBOUND(InvalidLine) + 1000) AS _BYTE
     LOOP
-    InValidLine(linenumber) = 0
+    InvalidLine(linenumber) = 0
 
     IF LEN(wholeline$) THEN
 
@@ -1646,11 +1646,11 @@ DO
         END IF
 
         IF ExecLevel(ExecCounter) THEN
-            DO UNTIL linenumber < UBOUND(InValidLine)
-                REDIM _PRESERVE InValidLine(UBOUND(InValidLine) + 1000) AS _BYTE
+            DO UNTIL linenumber < UBOUND(InvalidLine)
+                REDIM _PRESERVE InvalidLine(UBOUND(InvalidLine) + 1000) AS _BYTE
             LOOP
 
-            InValidLine(linenumber) = -1
+            InvalidLine(linenumber) = -1
             GOTO finishedlinepp 'we don't check for anything inside lines that we've marked for skipping
         END IF
 
@@ -2833,7 +2833,7 @@ DO
     linenumber = linenumber + 1
     reallinenumber = reallinenumber + 1
 
-    IF InValidLine(linenumber) THEN
+    IF InvalidLine(linenumber) THEN
         layoutok = 1
         layout$ = SPACE$(controllevel) + LTRIM$(RTRIM$(a3$))
         IF idemode GOTO ideret4 ELSE GOTO skipide4
@@ -2878,10 +2878,6 @@ DO
     IF Debug THEN PRINT #9, "########" + a3$ + "########"
 
     layoutdone = 1 'validates layout of any following goto finishednonexec/finishedline
-
-    'We've already figured out in the prepass which lines are invalidated by the precompiler
-    'No need to go over those lines again.
-    'IF InValidLine(linenumber) THEN goto skipide4 'layoutdone = 0: GOTO finishednonexec
 
     a3u$ = UCASE$(a3$)
 
