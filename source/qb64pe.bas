@@ -120,7 +120,7 @@ _TITLE WindowTitle
 
 CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
 
-DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode
+DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode, FormatMode
 DIM SHARED ShowWarnings AS _BYTE, QuietMode AS _BYTE, CMDLineFile AS STRING
 DIM SHARED MonochromeLoggingMode AS _BYTE
 
@@ -483,7 +483,7 @@ DIM SHARED incname(100) AS STRING 'must be full path as given
 DIM SHARED inclinenumber(100) AS LONG
 DIM SHARED incerror AS STRING
 
-
+'Magic constant used to replace . in elements when it is not a UDT access
 DIM SHARED fix046 AS STRING
 fix046$ = "__" + "ASCII" + "_" + "CHR" + "_" + "046" + "__" 'broken up to avoid detection for layout reversion
 
@@ -491,6 +491,7 @@ DIM SHARED layout AS STRING 'passed to IDE
 DIM SHARED layoutok AS LONG 'tracks status of entire line
 
 DIM SHARED layoutcomment AS STRING
+dim shared layoutcontinuations as string 'Any physical lines logically part of the current line
 
 DIM SHARED tlayout AS STRING 'temporary layout string set by supporting functions
 DIM SHARED layoutdone AS LONG 'tracks status of single command
@@ -1477,6 +1478,10 @@ DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 
 'The $INCLUDEONCE check buffer
 DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
+
+'Output for format mode
+dim shared FormatBuf
+if formatmode then formatbuf = openbuffer%("O", tmpdir$ + "format.out")
 
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
@@ -2866,10 +2871,10 @@ DO
         END IF
     END IF
 
+    layoutoriginal$ = a3$
     a3$ = LTRIM$(RTRIM$(a3$))
     wholeline = a3$
 
-    layoutoriginal$ = a3$
     layoutcomment$ = "" 'clear any previous layout comment
     lhscontrollevel = controllevel
 
@@ -11480,42 +11485,39 @@ DO
         PRINT #9, "[end layout check]"
     END IF
 
+    if idemode _andalso continuelinefrom then goto ide4 'continue processing other commands on line
 
-
-
-    IF idemode THEN
-        IF continuelinefrom <> 0 THEN GOTO ide4 'continue processing other commands on line
-
-        IF LEN(layoutcomment$) THEN
-            IF LEN(layout$) THEN layout$ = layout$ + sp + layoutcomment$ ELSE layout$ = layoutcomment$
-        END IF
-
-        IF layoutok = 0 THEN
-            layout$ = layoutoriginal$
-        ELSE
-
-            'reverse '046' changes present in autolayout
-            'replace fix046$ with .
-            i = INSTR(layout$, fix046$)
-            DO WHILE i
-                layout$ = LEFT$(layout$, i - 1) + "." + RIGHT$(layout$, LEN(layout$) - (i + LEN(fix046$) - 1))
-                i = INSTR(layout$, fix046$)
-            LOOP
-
-        END IF
-        x = lhscontrollevel: IF controllevel < lhscontrollevel THEN x = controllevel
-        IF definingtype = 2 THEN x = x + 1
-        IF definingtype > 0 THEN definingtype = 2
-        IF declaringlibrary = 2 THEN x = x + 1
-        IF declaringlibrary > 0 THEN declaringlibrary = 2
-        layout$ = SPACE$(x) + layout$
-        IF linecontinuation THEN layout$ = ""
-
-        GOTO ideret4 'return control to IDE
+    IF LEN(layoutcomment$) THEN
+        IF LEN(layout$) THEN layout$ = layout$ + sp + layoutcomment$ ELSE layout$ = layoutcomment$
     END IF
 
-    'layout is not currently used by the compiler (as appose to the IDE), if it was it would be used here
+    IF layoutok = 0 THEN
+        layout$ = _trim$(layoutoriginal$)
+    ELSE
+        'reverse '046' changes present in autolayout
+        layout$ = StrReplace$(layout$, fix046$, ".")
+    END IF
+    x = lhscontrollevel: IF controllevel < lhscontrollevel THEN x = controllevel
+    IF definingtype = 2 THEN x = x + 1
+    IF definingtype > 0 THEN definingtype = 2
+    IF declaringlibrary = 2 THEN x = x + 1
+    IF declaringlibrary > 0 THEN declaringlibrary = 2
+    layout$ = SPACE$(x) + layout$
+    IF linecontinuation THEN layout$ = "" else layoutcontinuations = ""
+
+    if idemode then GOTO ideret4 'return control to IDE
+
     skipide4:
+    IF FormatMode _ANDALSO continuelinefrom = 0 THEN
+        IF linecontinuation THEN
+            'This line has a _ for continuation so will not be formatted. Use the original line as read plus
+            'any continued physical lines
+            writebufline FormatBuf, layoutoriginal$ + layoutcontinuations
+        ELSE
+            indented$ = apply_layout_indent$(layoutoriginal$)
+            if len(indented$) then writebufline FormatBuf, indented$ else writebufline FormatBuf, layoutoriginal$
+        END IF
+    END IF
 LOOP
 
 'add final line
@@ -12465,6 +12467,13 @@ END IF
 'actions are performed on the disk based files
 WriteBuffers ""
 
+if formatmode then
+    'Move temp file to final location
+    errNo = copyfile(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
+    if errNo <> 0 then a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: goto errmes
+    goto No_C_Compile
+end if
+
 '=== BEGIN: embedding files ===
 eflFF = FREEFILE
 OPEN "O", #eflFF, tmpdir$ + "embedded.cpp"
@@ -13197,6 +13206,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT "  -s[:switch=true/false]  View/edit compiler settings"
                 PRINT "  -l:<line number>        Start the IDE at the specified line number"
                 PRINT "  -p                      Purge all pre-compiled content first"
+                PRINT "  -y                      Output formatted source file"
                 PRINT "  -z                      Generate C code without compiling to executable"
                 PRINT "  -f[:setting=value]      compiler settings to use"
                 PRINT
@@ -13224,6 +13234,12 @@ FUNCTION ParseCMDLineArgs$ ()
             CASE "-x" 'Use the console
                 ConsoleMode = 1
                 NoIDEMode = 1 'Implies -c
+                cmdlineswitch = -1
+            CASE "-y" 'Format
+                FormatMode = -1
+                ConsoleMode = 1
+                NoIDEMode = 1
+                QuietMode = -1
                 cmdlineswitch = -1
             CASE "-w" 'Show warnings
                 ShowWarnings = -1
@@ -19819,6 +19835,7 @@ END FUNCTION
 FUNCTION lineformat$ (a$)
     a2$ = ""
     linecontinuation = 0
+    layoutcontinuations = ""
 
     continueline:
 
@@ -20753,6 +20770,7 @@ FUNCTION lineformat$ (a$)
             ELSE
                 a$ = lineinput3$
                 IF a$ = CHR$(13) THEN GOTO lineformatdone2
+                layoutcontinuations = layoutcontinuations + chr$(10) + a$
             END IF
 
             linenumber = linenumber + 1
@@ -23735,6 +23753,7 @@ END FUNCTION
 '$INCLUDE:'utilities\hash.bas'
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
+'$INCLUDE:'utilities\format.bas'
 
 DEFLNG A-Z
 

@@ -10,83 +10,8 @@ FUNCTION ide (ignore)
                 IF ideexit = 0 THEN
                     GetInput 'check for new input
                     IF iCHANGED = 0 AND mB = 0 THEN
-
-                        '-------------------- layout considerations --------------------
-                        'previous line was OK, so use layout if available
-                        IF ideautolayout <> 0 OR ideautoindent <> 0 THEN
-                            IF LEN(layout$) THEN
-
-                                'calculate recommended indent level
-                                l = LEN(layout$)
-                                FOR i = 1 TO l
-                                    IF ASC(layout$, i) <> 32 OR i = l THEN
-                                        IF ASC(layout$, i) = 32 THEN
-                                            layout$ = "": indent = i
-                                        ELSE
-                                            indent = i - 1
-                                            layout$ = RIGHT$(layout$, LEN(layout$) - i + 1)
-                                        END IF
-                                        EXIT FOR
-                                    END IF
-                                NEXT
-
-                                IF ideautolayout THEN
-                                    layout2$ = layout$: i2 = 1
-                                    ignoresp = 0
-                                    FOR i = 1 TO LEN(layout$)
-                                        a = ASC(layout$, i)
-                                        IF a = 34 THEN
-                                            ignoresp = ignoresp + 1: IF ignoresp = 2 THEN ignoresp = 0
-                                        END IF
-                                        IF ignoresp = 0 THEN
-                                            IF a = sp_asc THEN ASC(layout2$, i2) = 32: i2 = i2 + 1: GOTO skipchar
-                                            IF a = sp2_asc THEN GOTO skipchar
-                                        END IF
-                                        ASC(layout2$, i2) = a: i2 = i2 + 1
-                                        skipchar:
-                                    NEXT
-                                    layout$ = LEFT$(layout2$, i2 - 1)
-                                END IF
-
-                                IF ideautoindent = 0 THEN
-                                    'note: can assume auto-format
-                                    'calculate old indent (if any)
-                                    indent = 0
-                                    l = LEN(idecompiledline$)
-                                    FOR i = 1 TO l
-                                        IF ASC(idecompiledline$, i) <> 32 OR i = l THEN
-                                            indent = i - 1
-                                            EXIT FOR
-                                        END IF
-                                    NEXT
-                                    indent$ = SPACE$(indent)
-                                ELSE
-                                    indent$ = SPACE$(indent * ideautoindentsize)
-                                END IF
-
-                                IF ideautolayout = 0 THEN
-                                    'note: can assume auto-indent
-                                    l = LEN(idecompiledline$)
-                                    layout$ = ""
-                                    FOR i = 1 TO l
-                                        IF ASC(idecompiledline$, i) <> 32 OR i = l THEN
-                                            layout$ = RIGHT$(idecompiledline$, l - i + 1)
-                                            EXIT FOR
-                                        END IF
-                                    NEXT
-                                END IF
-
-                                IF LEN(layout$) THEN
-                                    layout$ = indent$ + layout$
-                                    IF idecompiledline$ <> layout$ THEN
-                                        idesetline idecompiledline, layout$
-                                    END IF
-                                END IF 'len(layout$) after modification
-
-                            END IF 'len(layout$)
-
-                        END IF 'using layout/indent
-                        '---------------------------------------------------------------
+                        indented$ = apply_layout_indent$(idecompiledline$)
+                        IF len(indented$) _ANDALSO idecompiledline$ <> indented$ THEN idesetline idecompiledline, indented$
 
                         idecompiledline = idecompiledline + 1
                         idecompiledline$ = idegetline(idecompiledline)
