@@ -20770,7 +20770,7 @@ FUNCTION lineformat$ (a$)
             ELSE
                 a$ = lineinput3$
                 IF a$ = CHR$(13) THEN GOTO lineformatdone2
-                layoutcontinuations = layoutcontinuations + chr$(10) + a$
+                layoutcontinuations = layoutcontinuations + NATIVE_LINEENDING + a$
             END IF
 
             linenumber = linenumber + 1
