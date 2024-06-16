@@ -2825,6 +2825,7 @@ DO
     endifs = 0
     lineelseused = 0
     newif = 0
+    layoutcontinuations = ""
 
     'apply metacommands from previous line
     IF addmetadynamic = 1 THEN addmetadynamic = 0: DynamicMode = 1
@@ -11503,7 +11504,7 @@ DO
     IF declaringlibrary = 2 THEN x = x + 1
     IF declaringlibrary > 0 THEN declaringlibrary = 2
     layout$ = SPACE$(x) + layout$
-    IF linecontinuation THEN layout$ = "" else layoutcontinuations = ""
+    IF linecontinuation THEN layout$ = ""
 
     if idemode then GOTO ideret4 'return control to IDE
 
@@ -19835,7 +19836,6 @@ END FUNCTION
 FUNCTION lineformat$ (a$)
     a2$ = ""
     linecontinuation = 0
-    layoutcontinuations = ""
 
     continueline:
 
