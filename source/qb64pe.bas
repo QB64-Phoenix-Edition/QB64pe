@@ -853,7 +853,7 @@ IF C = 4 THEN 'next line
     'assume idepass>1
     a3$ = c$
     continuelinefrom = 0
-    GOTO ide4
+    GOTO compileline 'Will execute compilation of 1 line then come back to ideret4
     ideret4:
     IF lastLineReturn THEN GOTO lastLineReturn
     sendc$ = CHR$(3) 'request next line
@@ -872,7 +872,7 @@ IF C = 5 THEN 'end of program reached
     'idepass>1
     a3$ = ""
     continuelinefrom = 0
-    GOTO ide4 'returns to ideret4, then to lastLinePrepassReturn below
+    GOTO compileline 'Will execute compilation of 1 line then come back to lastLineReturn
     lastLineReturn:
     lastLineReturn = 0
     lastLine = 0
@@ -2787,9 +2787,7 @@ IF UseGL THEN gl_include_content
 IF idemode THEN GOTO ideret3
 
 DO
-    ide4:
-    includeline:
-    mainpassLastLine:
+    compileline:
 
     IF lastLine <> 0 OR firstLine <> 0 THEN
         lineBackup$ = a3$ 'backup the real first line (will be blank when lastline is set)
@@ -11353,6 +11351,7 @@ DO
                 layoutcomment_backup$ = layoutcomment$
                 layoutok_backup = layoutok
                 layout_backup$ = layout$
+                layoutoriginal_backup$ = layoutoriginal$
             END IF
 
             a$ = addmetainclude$: addmetainclude$ = "" 'read/clear message
@@ -11453,7 +11452,7 @@ DO
                 incerror$ = e$
                 linenumber = linenumber - 1 'lower official linenumber to counter later increment
                 IF idemode THEN sendc$ = CHR$(10) + a3$: GOTO sendcommand 'passback
-                GOTO includeline
+                GOTO compileline
             END IF
             '3. Close & return control
             CLOSE #fh
@@ -11468,6 +11467,7 @@ DO
                 layoutok = layoutok_backup
                 layout$ = layout_backup$
                 layoutcomment$ = layoutcomment_backup$
+                layoutoriginal$ = layoutoriginal_backup$
             END IF
         LOOP 'fall through to next section...
         '(end manager)
@@ -11485,7 +11485,7 @@ DO
         PRINT #9, "[end layout check]"
     END IF
 
-    if idemode _andalso continuelinefrom then goto ide4 'continue processing other commands on line
+    if continuelinefrom then goto compileline 'continue processing other commands on line
 
     IF LEN(layoutcomment$) THEN
         IF LEN(layout$) THEN layout$ = layout$ + sp + layoutcomment$ ELSE layout$ = layoutcomment$
@@ -11508,7 +11508,7 @@ DO
     if idemode then GOTO ideret4 'return control to IDE
 
     skipide4:
-    IF FormatMode _ANDALSO continuelinefrom = 0 THEN
+    IF FormatMode THEN
         IF linecontinuation THEN
             'This line has a _ for continuation so will not be formatted. Use the original line as read plus
             'any continued physical lines
@@ -11525,7 +11525,7 @@ IF lastLineReturn = 0 THEN
     lastLineReturn = 1
     lastLine = 1
     wholeline$ = ""
-    GOTO mainpassLastLine
+    GOTO compileline
 END IF
 
 ide5:
