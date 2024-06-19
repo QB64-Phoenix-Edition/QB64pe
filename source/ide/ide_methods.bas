@@ -479,20 +479,24 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0
         menu$(m, i) = "Help": i = i + 1
         menu$(m, i) = "#View  Shift+F1": i = i + 1
-        menuDesc$(m, i - 1) = "Displays help window"
+        menuDesc$(m, i - 1) = "Opens the help window with last viewed article"
         menu$(m, i) = "#Contents Page": i = i + 1
-        menuDesc$(m, i - 1) = "Displays help contents page"
-        menu$(m, i) = "Keyword #Index": i = i + 1
-        menuDesc$(m, i - 1) = "Displays keyword index page"
+        menuDesc$(m, i - 1) = "Displays the help contents page"
+        menu$(m, i) = "Keywords #Index": i = i + 1
+        menuDesc$(m, i - 1) = "Displays the keywords index page (sorted alphabetically)"
         menu$(m, i) = "#Keywords by Usage": i = i + 1
-        menuDesc$(m, i - 1) = "Displays keywords index by usage"
+        menuDesc$(m, i - 1) = "Displays the keywords index page (sorted by usage)"
+        menu$(m, i) = "#Metacommands": i = i + 1
+        menuDesc$(m, i - 1) = "Displays the metacommands overview page"
+        menu$(m, i) = "Variable #Types": i = i + 1
+        menuDesc$(m, i - 1) = "Displays the variable types overview page"
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Update Current Page": i = i + 1
-        menuDesc$(m, i - 1) = "Downloads the latest version of an article from the wiki"
+        menuDesc$(m, i - 1) = "Downloads the latest version of the current article from the Wiki"
         menu$(m, i) = "Update All #Pages...": i = i + 1
-        menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the wiki"
+        menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the Wiki"
         menu$(m, i) = "View Current Page On #Wiki": i = i + 1
-        menuDesc$(m, i - 1) = "Launches the default browser and navigates to the current article on the wiki"
+        menuDesc$(m, i - 1) = "Opens the current article on the Wiki using your standard browser"
         menu$(m, i) = "-": i = i + 1
         'menu$(m, i) = "Check for #Newer Version...": i = i + 1
         'menuDesc$(m, i - 1) = "Displays the current version of QB64-PE"
@@ -5444,7 +5448,7 @@ FUNCTION ide2 (ignore)
                 lnk$ = "QB64 Help Menu"
                 GOTO OpenHelpLink
             END IF
-            IF menu$(m, s) = "Keyword #Index" THEN
+            IF menu$(m, s) = "Keywords #Index" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "Keyword Reference - Alphabetical"
                 GOTO OpenHelpLink
@@ -5452,6 +5456,16 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#Keywords by Usage" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "Keyword Reference - By usage"
+                GOTO OpenHelpLink
+            END IF
+            IF menu$(m, s) = "#Metacommands" THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                lnk$ = "Metacommand"
+                GOTO OpenHelpLink
+            END IF
+            IF menu$(m, s) = "Variable #Types" THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                lnk$ = "Variable Types"
                 GOTO OpenHelpLink
             END IF
 
@@ -18629,18 +18643,22 @@ SUB IdeMakeContextualMenu
             menuDesc$(m, i - 1) = "Selects all contents of current article"
             menu$(m, i) = "-": i = i + 1
             menu$(m, i) = "#Contents Page": i = i + 1
-            menuDesc$(m, i - 1) = "Displays help contents page"
-            menu$(m, i) = "Keyword #Index": i = i + 1
-            menuDesc$(m, i - 1) = "Displays keyword index page"
+            menuDesc$(m, i - 1) = "Displays the help contents page"
+            menu$(m, i) = "Keywords #Index": i = i + 1
+            menuDesc$(m, i - 1) = "Displays the keywords index page (sorted alphabetically)"
             menu$(m, i) = "#Keywords by Usage": i = i + 1
-            menuDesc$(m, i - 1) = "Displays keywords index by usage"
+            menuDesc$(m, i - 1) = "Displays the keywords index page (sorted by usage)"
+            menu$(m, i) = "#Metacommands": i = i + 1
+            menuDesc$(m, i - 1) = "Displays the metacommands overview page"
+            menu$(m, i) = "Variable #Types": i = i + 1
+            menuDesc$(m, i - 1) = "Displays the variable types overview page"
             menu$(m, i) = "-": i = i + 1
             menu$(m, i) = "#Update Current Page": i = i + 1
-            menuDesc$(m, i - 1) = "Downloads the latest version of this article from the wiki"
+            menuDesc$(m, i - 1) = "Downloads the latest version of the current article from the Wiki"
             menu$(m, i) = "Update All #Pages...": i = i + 1
-            menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the wiki"
+            menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the Wiki"
             menu$(m, i) = "View Current Page On #Wiki": i = i + 1
-            menuDesc$(m, i - 1) = "Launches the default browser and navigates to the current article on the wiki"
+            menuDesc$(m, i - 1) = "Opens the current article on the Wiki using your standard browser"
             menu$(m, i) = "-": i = i + 1
             menu$(m, i) = "Clo#se Help  ESC": i = i + 1
             menuDesc$(m, i - 1) = "Closes help window"
