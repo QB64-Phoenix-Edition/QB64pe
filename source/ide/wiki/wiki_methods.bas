@@ -826,8 +826,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF c$(2) = "; " THEN i = i + 1
                 IF ah = 0 AND dl = 0 THEN Help_CheckBlankLine
                 Help_Bold = 1: col = Help_Col: Help_DList = 1
-                IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
                 IF c$(2) = ";*" OR c$(2) = ";#" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
+                IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 1: Help_DList = 3 'list dot belongs to description
                 IF dl < 3 THEN
                     Help_AddTxt "Þ ", 11, 0: dl = 1
                     Help_LIndent$ = Help_LIndent$ + "Þ "

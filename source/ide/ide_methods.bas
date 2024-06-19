@@ -2426,8 +2426,9 @@ FUNCTION ide2 (ignore)
                     Help_Select = 2
                     Help_SelX1 = 1
                     Help_SelY1 = 1
-                    Help_SelX2 = 10000000
+                    Help_SelX2 = help_w
                     Help_SelY2 = help_h
+                    Help_cx1 = 1: Help_cy1 = 1
                     Help_cx = 1: Help_cy = help_h + 1
                     GOTO keep_select
                 END IF
@@ -2781,7 +2782,7 @@ FUNCTION ide2 (ignore)
                         Help_SelX1 = Help_cx: Help_SelX2 = Help_cx1 - 1
                     END IF
                 ELSE
-                    Help_SelX1 = 1: Help_SelX2 = 10000000
+                    Help_SelX1 = 1: Help_SelX2 = help_w
                     IF Help_cy > Help_cy1 THEN
                         Help_SelY1 = Help_cy1: Help_SelY2 = Help_cy
                         IF Help_cx = 1 THEN Help_SelY2 = Help_cy - 1
