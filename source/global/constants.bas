@@ -8,6 +8,8 @@ DIM SHARED sp_asc AS LONG, sp2_asc AS LONG, sp3_asc AS LONG
 sp_asc = ASC(sp): sp2_asc = ASC(sp2): sp3_asc = ASC(sp3)
 IF Debug THEN sp = CHR$(250): sp2 = CHR$(249): sp3 = CHR$(179) 'makes debug output more readable
 
+CONST FALSE = 0, TRUE = NOT FALSE
+
 'ASCII codes
 CONST ASC_BACKSLASH = 92
 CONST ASC_FORWARDSLASH = 47

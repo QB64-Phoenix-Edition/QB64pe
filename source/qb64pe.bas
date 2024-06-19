@@ -4889,7 +4889,7 @@ DO
                 GOTO errmes
             END IF
 
-            IF ideindentsubs THEN
+            IF IDEIndentSubs THEN
                 controllevel = controllevel + 1
                 controltype(controllevel) = 32
                 controlref(controllevel) = linenumber
@@ -5397,7 +5397,7 @@ DO
                     GOTO errmes
                 END IF
 
-                IF controltype(controllevel) = 32 AND ideindentsubs THEN
+                IF controltype(controllevel) = 32 AND IDEIndentSubs THEN
                     controltype(controllevel) = 0
                     controllevel = controllevel - 1
                 END IF
@@ -11552,7 +11552,7 @@ IF controllevel THEN
     GOTO errmes
 END IF
 
-IF ideindentsubs = 0 THEN
+IF IDEIndentSubs = 0 THEN
     IF LEN(subfunc) THEN a$ = "SUB/FUNCTION without END SUB/FUNCTION": GOTO errmes
 END IF
 
@@ -13332,11 +13332,26 @@ FUNCTION ParseCMDLineArgs$ ()
 
                     CASE ":maxcompilerprocesses"
                         IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-                        IF MaxParallelProcesses = 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
+                        IF MaxParallelProcesses <= 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
 
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
+                    case ":autolayout"
+                        if not ParseBooleanSetting&(token$, IDEAutoLayout) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    case ":keywordcapitals"
+                        if not ParseBooleanSetting&(token$, IDEAutoLayoutKwCapitals) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    case ":indentsubs"
+                        if not ParseBooleanSetting&(token$, IDEIndentSubs) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    case ":autoindent"
+                        if not ParseBooleanSetting&(token$, IDEAutoIndent) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    case ":autoindentsize"
+                        if not ParseLongSetting&(token$, IDEAutoIndentSize) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                        if IDEAutoIndentSize < 1 or IDEAutoIndentSize > 64 then PrintTemporarySettingsHelpAndExit "AutoIndentSize must be in range 1-64"
                     CASE ELSE
                         PrintTemporarySettingsHelpAndExit ""
                 END SELECT
@@ -13376,11 +13391,16 @@ SUB PrintTemporarySettingsHelpAndExit (errstr$)
     PRINT "    -f:ExtraLinkerFlags=[string]         (Extra flags to pass at link time)"
     PRINT "    -f:MaxCompilerProcesses=[integer]    (Max C++ compiler processes to start in parallel)"
     PRINT "    -f:GenerateLicenseFile=[true|false]  (Produce a license.txt file for the program)"
+    print "    -f:AutoLayout=[true|false]           (Toggle code spacing and capitalisation)"
+    print "    -f:KeywordCapitals=[true|false]      (Toggle formatting keywords in ALL CAPITALS)"
+    print "    -f:AutoIndent=[true|false]           (Toggle code indentation)"
+    print "    -f:AutoIndentSize=[integer]          (Spaces per indent level)"
+    print "    -f:IndentSubs=[true|false]           (Toggle indenting SUBs & FUNCTIONs)"
 
     SYSTEM
 END SUB
 
-FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
+FUNCTION ParseBooleanSetting& (token$, setting AS LONG)
     DIM equals AS LONG
     DIM value AS STRING
 
@@ -13391,11 +13411,11 @@ FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
 
     SELECT CASE value
         CASE "true", "on", "yes"
-            setting = -1
+            setting = TRUE
             ParseBooleanSetting& = -1
 
         CASE "false", "off", "no"
-            setting = 0
+            setting = FALSE
             ParseBooleanSetting& = -1
 
         CASE ELSE
@@ -13403,7 +13423,7 @@ FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
     END SELECT
 END FUNCTION
 
-FUNCTION ParseLongSetting& (token$, setting AS _UNSIGNED LONG)
+FUNCTION ParseLongSetting& (token$, setting AS LONG)
     DIM equals AS LONG
 
     equals = INSTR(token$, "=")
@@ -23207,7 +23227,7 @@ FUNCTION removecast$ (a$)
 END FUNCTION
 
 FUNCTION converttabs$ (a2$)
-    IF ideautoindent THEN s = ideautoindentsize ELSE s = 4
+    IF IDEAutoIndent THEN s = IDEAutoIndentSize ELSE s = 4
     a$ = a2$
     DO WHILE INSTR(a$, CHR_TAB)
         x = INSTR(a$, CHR_TAB)
@@ -23666,12 +23686,12 @@ SUB addWarning (whichLineNumber AS LONG, includeLevel AS LONG, incLineNumber AS 
 END SUB
 
 FUNCTION SCase$ (t$)
-    IF ideautolayoutkwcapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
+    IF IDEAutoLayoutKwCapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
 END FUNCTION
 
 FUNCTION SCase2$ (t$)
     separator$ = sp
-    IF ideautolayoutkwcapitals THEN
+    IF IDEAutoLayoutKwCapitals THEN
         SCase2$ = UCASE$(t$)
     ELSE
         SELECT CASE t$

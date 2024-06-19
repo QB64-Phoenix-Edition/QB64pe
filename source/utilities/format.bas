@@ -2,7 +2,7 @@
 FUNCTION apply_layout_indent$(original$)
     layout2$ = layout$
     'previous line was OK, so use layout if available
-    IF ideautolayout <> 0 OR ideautoindent <> 0 THEN
+    IF IDEAutoLayout <> 0 OR IDEAutoIndent <> 0 THEN
         IF LEN(layout2$) THEN
 
             'calculate recommended indent level
@@ -19,7 +19,7 @@ FUNCTION apply_layout_indent$(original$)
                 END IF
             NEXT
 
-            IF ideautolayout THEN
+            IF IDEAutoLayout THEN
                 layout3$ = layout2$: i2 = 1
                 ignoresp = 0
                 FOR i = 1 TO LEN(layout2$)
@@ -37,7 +37,7 @@ FUNCTION apply_layout_indent$(original$)
                 layout2$ = LEFT$(layout3$, i2 - 1)
             END IF
 
-            IF ideautoindent = 0 THEN
+            IF IDEAutoIndent = 0 THEN
                 'note: can assume auto-format
                 'calculate old indent (if any)
                 indent = 0
@@ -50,10 +50,10 @@ FUNCTION apply_layout_indent$(original$)
                 NEXT
                 indent$ = SPACE$(indent)
             ELSE
-                indent$ = SPACE$(indent * ideautoindentsize)
+                indent$ = SPACE$(indent * IDEAutoIndentSize)
             END IF
 
-            IF ideautolayout = 0 THEN
+            IF IDEAutoLayout = 0 THEN
                 'note: can assume auto-indent
                 l = LEN(original$)
                 layout2$ = ""
