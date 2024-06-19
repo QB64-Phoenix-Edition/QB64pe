@@ -1,10 +1,27 @@
 FUNCTION Back2BackName$ (a$)
-    IF a$ = "Keyword Reference - Alphabetical" THEN Back2BackName$ = "Alphabetical": EXIT FUNCTION
-    IF a$ = "Keyword Reference - By usage" THEN Back2BackName$ = "By Usage": EXIT FUNCTION
-    IF a$ = "Keywords currently not supported by QB64" THEN Back2BackName$ = "Unsupported": EXIT FUNCTION
-    IF a$ = "QB64 Help Menu" THEN Back2BackName$ = "Help": EXIT FUNCTION
-    IF a$ = "QB64 FAQ" THEN Back2BackName$ = "FAQ": EXIT FUNCTION
-    Back2BackName$ = a$
+    SELECT CASE a$
+        CASE "Base Comparisons": Back2BackName$ = "Base Compare"
+        CASE "Bitwise Operators": Back2BackName$ = "Bitwise OPs"
+        CASE "Downloading Files": Back2BackName$ = "Downloads"
+        CASE "Function (explanatory)": Back2BackName$ = "FUNC expl."
+        CASE "Greater Than Or Equal": Back2BackName$ = "Greater|Equal"
+        CASE "Keyboard scancodes": Back2BackName$ = "KB Scancodes"
+        CASE "Keyword Reference - Alphabetical": Back2BackName$ = "KWs Alphab." 'scan sources for
+        CASE "Keyword Reference - By usage": Back2BackName$ = "KWs by Usage" '  '!!! RS:HCWD:#1 !!!
+        CASE "Keywords currently not supported by QB64": Back2BackName$ = "Unsupp. KWs"
+        CASE "Less Than Or Equal": Back2BackName$ = "Less|Equal"
+        CASE "Mathematical Operations": Back2BackName$ = "Math OPs"
+        CASE "QB64 Help Menu": Back2BackName$ = "QB64 Help"
+        CASE "Quick Reference - Tables": Back2BackName$ = "QRef. Tables"
+        CASE "Relational Operations": Back2BackName$ = "Relational OPs"
+        CASE "Scientific notation": Back2BackName$ = "Sci. Notation"
+        CASE "Sub (explanatory)": Back2BackName$ = "SUB expl."
+        CASE "Windows Environment": Back2BackName$ = "Win Env."
+        CASE "Windows Libraries": Back2BackName$ = "Win Lib."
+        CASE "Windows Printer Settings": Back2BackName$ = "Win Print"
+        CASE "Windows Registry Access": Back2BackName$ = "Win Reg."
+        CASE ELSE: Back2BackName$ = a$
+    END SELECT
 END FUNCTION
 
 FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
@@ -703,7 +720,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
 
                 'Template wrapped plugin
-                IF (cb$ = "PageNavigation" OR RIGHT$(cb$, 6) = "Plugin") AND Help_LockParse = 0 THEN 'no plugins in blocks
+                IF (cb$ = "PageNavigation" OR cb$ = "PageReferences" OR RIGHT$(cb$, 6) = "Plugin") AND Help_LockParse = 0 THEN 'no plugins in blocks
                     pit$ = Wiki$("Template:" + cb$)
                     IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
                         a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)

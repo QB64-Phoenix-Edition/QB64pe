@@ -2559,7 +2559,8 @@ FUNCTION ide2 (ignore)
                                 oldlnk = lnk
                             LOOP
 
-                            IF Back_Name$(Help_Back_Pos) = "Alphabetical" OR Back_Name$(Help_Back_Pos) = "By Usage" THEN
+                            '!!! RS:HCWD:#1 !!! (abbrev. page titles)
+                            IF Back_Name$(Help_Back_Pos) = "KWs Alphab." OR Back_Name$(Help_Back_Pos) = "KWs by Usage" THEN
                                 IF lnkx1 > 3 THEN
                                     cx = px + 1
                                     GOTO helpscanrow
@@ -19008,11 +19009,19 @@ FUNCTION ideupdatehelpbox
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "QB64_Help_Menu.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Data_types.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Variable_Types.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "ERROR_Codes.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Quick_Reference_-_Tables.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "Keywords_currently_not_supported_by_QB64.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "Keyword_Reference_-_By_usage.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Metacommand.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 et# = TIMER(0.001) - st#: IF et# < 0 THEN et# = et# + 86400
                 IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
