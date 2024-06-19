@@ -1,10 +1,27 @@
 FUNCTION Back2BackName$ (a$)
-    IF a$ = "Keyword Reference - Alphabetical" THEN Back2BackName$ = "Alphabetical": EXIT FUNCTION
-    IF a$ = "Keyword Reference - By usage" THEN Back2BackName$ = "By Usage": EXIT FUNCTION
-    IF a$ = "Keywords currently not supported by QB64" THEN Back2BackName$ = "Unsupported": EXIT FUNCTION
-    IF a$ = "QB64 Help Menu" THEN Back2BackName$ = "Help": EXIT FUNCTION
-    IF a$ = "QB64 FAQ" THEN Back2BackName$ = "FAQ": EXIT FUNCTION
-    Back2BackName$ = a$
+    SELECT CASE a$
+        CASE "Base Comparisons": Back2BackName$ = "Base Compare"
+        CASE "Bitwise Operators": Back2BackName$ = "Bitwise OPs"
+        CASE "Downloading Files": Back2BackName$ = "Downloads"
+        CASE "Function (explanatory)": Back2BackName$ = "FUNC expl."
+        CASE "Greater Than Or Equal": Back2BackName$ = "Greater|Equal"
+        CASE "Keyboard scancodes": Back2BackName$ = "KB Scancodes"
+        CASE "Keyword Reference - Alphabetical": Back2BackName$ = "KWs Alphab." 'scan sources for
+        CASE "Keyword Reference - By usage": Back2BackName$ = "KWs by Usage" '  '!!! RS:HCWD:#1 !!!
+        CASE "Keywords currently not supported by QB64": Back2BackName$ = "Unsupp. KWs"
+        CASE "Less Than Or Equal": Back2BackName$ = "Less|Equal"
+        CASE "Mathematical Operations": Back2BackName$ = "Math OPs"
+        CASE "QB64 Help Menu": Back2BackName$ = "QB64 Help"
+        CASE "Quick Reference - Tables": Back2BackName$ = "QRef. Tables"
+        CASE "Relational Operations": Back2BackName$ = "Relational OPs"
+        CASE "Scientific notation": Back2BackName$ = "Sci. Notation"
+        CASE "Sub (explanatory)": Back2BackName$ = "SUB expl."
+        CASE "Windows Environment": Back2BackName$ = "Win Env."
+        CASE "Windows Libraries": Back2BackName$ = "Win Lib."
+        CASE "Windows Printer Settings": Back2BackName$ = "Win Print"
+        CASE "Windows Registry Access": Back2BackName$ = "Win Reg."
+        CASE ELSE: Back2BackName$ = a$
+    END SELECT
 END FUNCTION
 
 FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
@@ -117,7 +134,7 @@ END FUNCTION
 
 SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
     IF t$ = "" THEN EXIT SUB
-    IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine: Help_ChkBlank = 0
+    IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine
 
     FOR i = 1 TO LEN(t$)
         c = ASC(t$, i)
@@ -210,6 +227,7 @@ SUB Help_CheckBlankLine 'Make sure the last help line is a blank line (implies f
         IF ASC(Help_Txt$, Help_Txt_Len - 2) < 128 THEN Help_NewLine
         IF ASC(Help_Txt$, Help_Txt_Len - 6) < 128 THEN Help_NewLine
     END IF
+    Help_ChkBlank = 0
 END SUB
 
 SUB Help_CheckRemoveBlankLine 'If the last help line is blank, then remove it
@@ -703,7 +721,7 @@ SUB WikiParse (a$) 'Wiki page interpret
                 END IF
 
                 'Template wrapped plugin
-                IF (cb$ = "PageNavigation" OR RIGHT$(cb$, 6) = "Plugin") AND Help_LockParse = 0 THEN 'no plugins in blocks
+                IF (cb$ = "PageNavigation" OR cb$ = "PageReferences" OR RIGHT$(cb$, 6) = "Plugin") AND Help_LockParse = 0 THEN 'no plugins in blocks
                     pit$ = Wiki$("Template:" + cb$)
                     IF INSTR(pit$, "{{PageInternalError}}") = 0 THEN
                         a$ = LEFT$(a$, i) + pit$ + RIGHT$(a$, LEN(a$) - i)
@@ -785,17 +803,17 @@ SUB WikiParse (a$) 'Wiki page interpret
             'Rulers
             IF c$(4) = "----" AND nl = 1 THEN
                 i = i + 3
-                Help_CheckBlankLine
+                IF Help_ChkBlank = -1 THEN Help_ChkBlank = 0: ELSE Help_CheckBlankLine
                 Help_AddTxt STRING$(Help_ww, 196), 14, 0
-                Help_ChkBlank = 1
+                Help_ChkBlank = -1
                 GOTO charDone
             END IF
             IF c$(4) = "<hr>" OR c$(6) = "<hr />" THEN
                 IF c$(4) = "<hr>" THEN i = i + 3
                 IF c$(6) = "<hr />" THEN i = i + 5
-                Help_CheckBlankLine
+                IF Help_ChkBlank = -1 THEN Help_ChkBlank = 0: ELSE Help_CheckBlankLine
                 Help_AddTxt STRING$(Help_ww, 196), 14, 0
-                Help_ChkBlank = 1
+                Help_ChkBlank = -1
                 GOTO charDone
             END IF
         END IF
@@ -808,8 +826,8 @@ SUB WikiParse (a$) 'Wiki page interpret
                 IF c$(2) = "; " THEN i = i + 1
                 IF ah = 0 AND dl = 0 THEN Help_CheckBlankLine
                 Help_Bold = 1: col = Help_Col: Help_DList = 1
-                IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 2: Help_DList = 3 'list dot belongs to description
                 IF c$(2) = ";*" OR c$(2) = ";#" THEN i = i + 1: Help_DList = 2 'list dot belongs to description
+                IF c$(3) = ";* " OR c$(3) = ";# " THEN i = i + 1: Help_DList = 3 'list dot belongs to description
                 IF dl < 3 THEN
                     Help_AddTxt "Þ ", 11, 0: dl = 1
                     Help_LIndent$ = Help_LIndent$ + "Þ "

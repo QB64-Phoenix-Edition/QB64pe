@@ -479,20 +479,24 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0
         menu$(m, i) = "Help": i = i + 1
         menu$(m, i) = "#View  Shift+F1": i = i + 1
-        menuDesc$(m, i - 1) = "Displays help window"
+        menuDesc$(m, i - 1) = "Opens the help window with last viewed article"
         menu$(m, i) = "#Contents Page": i = i + 1
-        menuDesc$(m, i - 1) = "Displays help contents page"
-        menu$(m, i) = "Keyword #Index": i = i + 1
-        menuDesc$(m, i - 1) = "Displays keyword index page"
+        menuDesc$(m, i - 1) = "Displays the help contents page"
+        menu$(m, i) = "Keywords #Index": i = i + 1
+        menuDesc$(m, i - 1) = "Displays the keywords index page (sorted alphabetically)"
         menu$(m, i) = "#Keywords by Usage": i = i + 1
-        menuDesc$(m, i - 1) = "Displays keywords index by usage"
+        menuDesc$(m, i - 1) = "Displays the keywords index page (sorted by usage)"
+        menu$(m, i) = "#Metacommands": i = i + 1
+        menuDesc$(m, i - 1) = "Displays the metacommands overview page"
+        menu$(m, i) = "Variable #Types": i = i + 1
+        menuDesc$(m, i - 1) = "Displays the variable types overview page"
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Update Current Page": i = i + 1
-        menuDesc$(m, i - 1) = "Downloads the latest version of an article from the wiki"
+        menuDesc$(m, i - 1) = "Downloads the latest version of the current article from the Wiki"
         menu$(m, i) = "Update All #Pages...": i = i + 1
-        menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the wiki"
+        menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the Wiki"
         menu$(m, i) = "View Current Page On #Wiki": i = i + 1
-        menuDesc$(m, i - 1) = "Launches the default browser and navigates to the current article on the wiki"
+        menuDesc$(m, i - 1) = "Opens the current article on the Wiki using your standard browser"
         menu$(m, i) = "-": i = i + 1
         'menu$(m, i) = "Check for #Newer Version...": i = i + 1
         'menuDesc$(m, i - 1) = "Displays the current version of QB64-PE"
@@ -2422,8 +2426,9 @@ FUNCTION ide2 (ignore)
                     Help_Select = 2
                     Help_SelX1 = 1
                     Help_SelY1 = 1
-                    Help_SelX2 = 10000000
+                    Help_SelX2 = help_w
                     Help_SelY2 = help_h
+                    Help_cx1 = 1: Help_cy1 = 1
                     Help_cx = 1: Help_cy = help_h + 1
                     GOTO keep_select
                 END IF
@@ -2559,7 +2564,8 @@ FUNCTION ide2 (ignore)
                                 oldlnk = lnk
                             LOOP
 
-                            IF Back_Name$(Help_Back_Pos) = "Alphabetical" OR Back_Name$(Help_Back_Pos) = "By Usage" THEN
+                            '!!! RS:HCWD:#1 !!! (abbrev. page titles)
+                            IF Back_Name$(Help_Back_Pos) = "KWs Alphab." OR Back_Name$(Help_Back_Pos) = "KWs by Usage" THEN
                                 IF lnkx1 > 3 THEN
                                     cx = px + 1
                                     GOTO helpscanrow
@@ -2776,7 +2782,7 @@ FUNCTION ide2 (ignore)
                         Help_SelX1 = Help_cx: Help_SelX2 = Help_cx1 - 1
                     END IF
                 ELSE
-                    Help_SelX1 = 1: Help_SelX2 = 10000000
+                    Help_SelX1 = 1: Help_SelX2 = help_w
                     IF Help_cy > Help_cy1 THEN
                         Help_SelY1 = Help_cy1: Help_SelY2 = Help_cy
                         IF Help_cx = 1 THEN Help_SelY2 = Help_cy - 1
@@ -5443,7 +5449,7 @@ FUNCTION ide2 (ignore)
                 lnk$ = "QB64 Help Menu"
                 GOTO OpenHelpLink
             END IF
-            IF menu$(m, s) = "Keyword #Index" THEN
+            IF menu$(m, s) = "Keywords #Index" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "Keyword Reference - Alphabetical"
                 GOTO OpenHelpLink
@@ -5451,6 +5457,16 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#Keywords by Usage" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 lnk$ = "Keyword Reference - By usage"
+                GOTO OpenHelpLink
+            END IF
+            IF menu$(m, s) = "#Metacommands" THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                lnk$ = "Metacommand"
+                GOTO OpenHelpLink
+            END IF
+            IF menu$(m, s) = "Variable #Types" THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                lnk$ = "Variable Types"
                 GOTO OpenHelpLink
             END IF
 
@@ -18628,18 +18644,22 @@ SUB IdeMakeContextualMenu
             menuDesc$(m, i - 1) = "Selects all contents of current article"
             menu$(m, i) = "-": i = i + 1
             menu$(m, i) = "#Contents Page": i = i + 1
-            menuDesc$(m, i - 1) = "Displays help contents page"
-            menu$(m, i) = "Keyword #Index": i = i + 1
-            menuDesc$(m, i - 1) = "Displays keyword index page"
+            menuDesc$(m, i - 1) = "Displays the help contents page"
+            menu$(m, i) = "Keywords #Index": i = i + 1
+            menuDesc$(m, i - 1) = "Displays the keywords index page (sorted alphabetically)"
             menu$(m, i) = "#Keywords by Usage": i = i + 1
-            menuDesc$(m, i - 1) = "Displays keywords index by usage"
+            menuDesc$(m, i - 1) = "Displays the keywords index page (sorted by usage)"
+            menu$(m, i) = "#Metacommands": i = i + 1
+            menuDesc$(m, i - 1) = "Displays the metacommands overview page"
+            menu$(m, i) = "Variable #Types": i = i + 1
+            menuDesc$(m, i - 1) = "Displays the variable types overview page"
             menu$(m, i) = "-": i = i + 1
             menu$(m, i) = "#Update Current Page": i = i + 1
-            menuDesc$(m, i - 1) = "Downloads the latest version of this article from the wiki"
+            menuDesc$(m, i - 1) = "Downloads the latest version of the current article from the Wiki"
             menu$(m, i) = "Update All #Pages...": i = i + 1
-            menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the wiki"
+            menuDesc$(m, i - 1) = "Downloads the latest version of all articles from the Wiki"
             menu$(m, i) = "View Current Page On #Wiki": i = i + 1
-            menuDesc$(m, i - 1) = "Launches the default browser and navigates to the current article on the wiki"
+            menuDesc$(m, i - 1) = "Opens the current article on the Wiki using your standard browser"
             menu$(m, i) = "-": i = i + 1
             menu$(m, i) = "Clo#se Help  ESC": i = i + 1
             menuDesc$(m, i - 1) = "Closes help window"
@@ -19008,11 +19028,19 @@ FUNCTION ideupdatehelpbox
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "QB64_Help_Menu.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Data_types.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Variable_Types.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "ERROR_Codes.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Quick_Reference_-_Tables.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "Keywords_currently_not_supported_by_QB64.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 PageName2$ = "Keyword_Reference_-_By_usage.txt"
+                IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
+                PageName2$ = "Metacommand.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
                 et# = TIMER(0.001) - st#: IF et# < 0 THEN et# = et# + 86400
                 IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
