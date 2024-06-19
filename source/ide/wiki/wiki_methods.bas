@@ -134,7 +134,7 @@ END FUNCTION
 
 SUB Help_AddTxt (t$, col, link) 'Add help text, handle word wrap
     IF t$ = "" THEN EXIT SUB
-    IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine: Help_ChkBlank = 0
+    IF Help_ChkBlank <> 0 THEN Help_CheckBlankLine
 
     FOR i = 1 TO LEN(t$)
         c = ASC(t$, i)
@@ -227,6 +227,7 @@ SUB Help_CheckBlankLine 'Make sure the last help line is a blank line (implies f
         IF ASC(Help_Txt$, Help_Txt_Len - 2) < 128 THEN Help_NewLine
         IF ASC(Help_Txt$, Help_Txt_Len - 6) < 128 THEN Help_NewLine
     END IF
+    Help_ChkBlank = 0
 END SUB
 
 SUB Help_CheckRemoveBlankLine 'If the last help line is blank, then remove it
@@ -802,17 +803,17 @@ SUB WikiParse (a$) 'Wiki page interpret
             'Rulers
             IF c$(4) = "----" AND nl = 1 THEN
                 i = i + 3
-                Help_CheckBlankLine
+                IF Help_ChkBlank = -1 THEN Help_ChkBlank = 0: ELSE Help_CheckBlankLine
                 Help_AddTxt STRING$(Help_ww, 196), 14, 0
-                Help_ChkBlank = 1
+                Help_ChkBlank = -1
                 GOTO charDone
             END IF
             IF c$(4) = "<hr>" OR c$(6) = "<hr />" THEN
                 IF c$(4) = "<hr>" THEN i = i + 3
                 IF c$(6) = "<hr />" THEN i = i + 5
-                Help_CheckBlankLine
+                IF Help_ChkBlank = -1 THEN Help_ChkBlank = 0: ELSE Help_CheckBlankLine
                 Help_AddTxt STRING$(Help_ww, 196), 14, 0
-                Help_ChkBlank = 1
+                Help_ChkBlank = -1
                 GOTO charDone
             END IF
         END IF
