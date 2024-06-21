@@ -2836,20 +2836,10 @@ DO
     IF a3$ = CHR$(13) THEN EXIT DO
     linenumber = linenumber + 1
     reallinenumber = reallinenumber + 1
-
-    IF InvalidLine(linenumber) THEN
-        layoutok = 1
-        layout$ = SPACE$(controllevel) + LTRIM$(RTRIM$(a3$))
-        IF idemode GOTO ideret4 ELSE GOTO skipide4
-    END IF
-
     layout = ""
     layoutok = 1
 
     IF idemode = 0 AND NOT QuietMode THEN
-        'IF LEN(a3$) THEN
-        '    dotlinecount = dotlinecount + 1: IF dotlinecount >= 100 THEN dotlinecount = 0: PRINT ".";
-        'END IF
         maxprogresswidth = 50 'arbitrary
         percentage = INT(reallinenumber / totallinenumber * 100)
         percentagechars = INT(maxprogresswidth * reallinenumber / totallinenumber)
@@ -2873,6 +2863,10 @@ DO
     layoutoriginal$ = a3$
     a3$ = LTRIM$(RTRIM$(a3$))
     wholeline = a3$
+
+    IF InvalidLine(linenumber) THEN
+        IF idemode GOTO ideret4 ELSE GOTO skip_invalidated_line
+    END IF
 
     layoutcomment$ = "" 'clear any previous layout comment
     lhscontrollevel = controllevel
@@ -11508,7 +11502,7 @@ DO
 
     if idemode then GOTO ideret4 'return control to IDE
 
-    skipide4:
+    skip_invalidated_line:
     IF FormatMode THEN
         IF linecontinuation THEN
             'This line has a _ for continuation so will not be formatted. Use the original line as read plus
