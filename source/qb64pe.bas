@@ -491,7 +491,7 @@ DIM SHARED layout AS STRING 'passed to IDE
 DIM SHARED layoutok AS LONG 'tracks status of entire line
 
 DIM SHARED layoutcomment AS STRING
-dim shared layoutcontinuations as string 'Any physical lines logically part of the current line
+DIM SHARED layoutcontinuations AS STRING 'Any physical lines logically part of the current line
 
 DIM SHARED tlayout AS STRING 'temporary layout string set by supporting functions
 DIM SHARED layoutdone AS LONG 'tracks status of single command
@@ -1480,8 +1480,8 @@ DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
 
 'Output for format mode
-dim shared FormatBuf
-if formatmode then formatbuf = openbuffer%("O", tmpdir$ + "format.out")
+DIM SHARED FormatBuf
+IF FormatMode THEN FormatBuf = OpenBuffer%("O", tmpdir$ + "format.out")
 
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
@@ -11480,14 +11480,14 @@ DO
         PRINT #9, "[end layout check]"
     END IF
 
-    if continuelinefrom then goto compileline 'continue processing other commands on line
+    IF continuelinefrom THEN GOTO compileline 'continue processing other commands on line
 
     IF LEN(layoutcomment$) THEN
         IF LEN(layout$) THEN layout$ = layout$ + sp + layoutcomment$ ELSE layout$ = layoutcomment$
     END IF
 
     IF layoutok = 0 THEN
-        layout$ = _trim$(layoutoriginal$)
+        layout$ = _TRIM$(layoutoriginal$)
     ELSE
         'reverse '046' changes present in autolayout
         layout$ = StrReplace$(layout$, fix046$, ".")
@@ -11500,17 +11500,17 @@ DO
     layout$ = SPACE$(x) + layout$
     IF linecontinuation THEN layout$ = ""
 
-    if idemode then GOTO ideret4 'return control to IDE
+    IF idemode THEN GOTO ideret4 'return control to IDE
 
     skip_invalidated_line:
     IF FormatMode THEN
         IF linecontinuation THEN
             'This line has a _ for continuation so will not be formatted. Use the original line as read plus
             'any continued physical lines
-            writebufline FormatBuf, layoutoriginal$ + layoutcontinuations
+            WriteBufLine FormatBuf, layoutoriginal$ + layoutcontinuations
         ELSE
             indented$ = apply_layout_indent$(layoutoriginal$)
-            if len(indented$) then writebufline FormatBuf, indented$ else writebufline FormatBuf, layoutoriginal$
+            IF LEN(indented$) THEN WriteBufLine FormatBuf, indented$ ELSE WriteBufLine FormatBuf, layoutoriginal$
         END IF
     END IF
 LOOP
@@ -12462,12 +12462,12 @@ END IF
 'actions are performed on the disk based files
 WriteBuffers ""
 
-if formatmode then
+IF FormatMode THEN
     'Move temp file to final location
-    errNo = copyfile(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
-    if errNo <> 0 then a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: goto errmes
-    goto No_C_Compile
-end if
+    errNo = CopyFile(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
+    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: GOTO errmes
+    GOTO No_C_Compile
+END IF
 
 '=== BEGIN: embedding files ===
 eflFF = FREEFILE
@@ -13331,21 +13331,21 @@ FUNCTION ParseCMDLineArgs$ ()
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
-                    case ":autolayout"
-                        if not ParseBooleanSetting&(token$, IDEAutoLayout) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                    CASE ":autolayout"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayout) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
-                    case ":keywordcapitals"
-                        if not ParseBooleanSetting&(token$, IDEAutoLayoutKwCapitals) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                    CASE ":keywordcapitals"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayoutKwCapitals) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
-                    case ":indentsubs"
-                        if not ParseBooleanSetting&(token$, IDEIndentSubs) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                    CASE ":indentsubs"
+                        IF NOT ParseBooleanSetting&(token$, IDEIndentSubs) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
-                    case ":autoindent"
-                        if not ParseBooleanSetting&(token$, IDEAutoIndent) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                    CASE ":autoindent"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
-                    case ":autoindentsize"
-                        if not ParseLongSetting&(token$, IDEAutoIndentSize) then PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-                        if IDEAutoIndentSize < 1 or IDEAutoIndentSize > 64 then PrintTemporarySettingsHelpAndExit "AutoIndentSize must be in range 1-64"
+                    CASE ":autoindentsize"
+                        IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                        IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN PrintTemporarySettingsHelpAndExit "AutoIndentSize must be in range 1-64"
                     CASE ELSE
                         PrintTemporarySettingsHelpAndExit ""
                 END SELECT
@@ -13385,11 +13385,11 @@ SUB PrintTemporarySettingsHelpAndExit (errstr$)
     PRINT "    -f:ExtraLinkerFlags=[string]         (Extra flags to pass at link time)"
     PRINT "    -f:MaxCompilerProcesses=[integer]    (Max C++ compiler processes to start in parallel)"
     PRINT "    -f:GenerateLicenseFile=[true|false]  (Produce a license.txt file for the program)"
-    print "    -f:AutoLayout=[true|false]           (Toggle code spacing and capitalisation)"
-    print "    -f:KeywordCapitals=[true|false]      (Toggle formatting keywords in ALL CAPITALS)"
-    print "    -f:AutoIndent=[true|false]           (Toggle code indentation)"
-    print "    -f:AutoIndentSize=[integer]          (Spaces per indent level)"
-    print "    -f:IndentSubs=[true|false]           (Toggle indenting SUBs & FUNCTIONs)"
+    PRINT "    -f:AutoLayout=[true|false]           (Toggle code spacing and capitalisation)"
+    PRINT "    -f:KeywordCapitals=[true|false]      (Toggle formatting keywords in ALL CAPITALS)"
+    PRINT "    -f:AutoIndent=[true|false]           (Toggle code indentation)"
+    PRINT "    -f:AutoIndentSize=[integer]          (Spaces per indent level)"
+    PRINT "    -f:IndentSubs=[true|false]           (Toggle indenting SUBs & FUNCTIONs)"
 
     SYSTEM
 END SUB
