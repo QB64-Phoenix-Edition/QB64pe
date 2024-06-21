@@ -13355,6 +13355,12 @@ FUNCTION ParseCMDLineArgs$ ()
         END SELECT
     NEXT i
 
+    IF FormatMode AND LEN(outputfile_cmd$) = 0 THEN
+        _DEST _CONSOLE
+        PRINT "Formatting requires specifying output file with -o option"
+        SYSTEM 1
+    END IF
+
     IF LEN(PassedFileName$) THEN
         ParseCMDLineArgs$ = PassedFileName$
     ELSE
