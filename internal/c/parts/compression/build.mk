@@ -15,4 +15,11 @@ $(PATH_INTERNAL_C)/parts/compression/%.o: $(PATH_INTERNAL_C)/parts/compression/%
 $(PATH_INTERNAL_C)/parts/compression/%.o: $(PATH_INTERNAL_C)/parts/compression/%.cpp
 	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
-CLEAN_LIST += $(MINIZ_OBJS) $(COMPRESSION_OBJS)
+COMPRESSION_LIB := $(PATH_INTERNAL_C)/parts/compression/compression.a
+
+$(COMPRESSION_LIB): $(MINIZ_OBJS) $(COMPRESSION_OBJS)
+	$(AR) rcs $@ $(MINIZ_OBJS) $(COMPRESSION_OBJS)
+
+EXE_LIBS += $(COMPRESSION_LIB)
+
+CLEAN_LIST += $(COMPRESSION_LIB) $(MINIZ_OBJS) $(COMPRESSION_OBJS)
