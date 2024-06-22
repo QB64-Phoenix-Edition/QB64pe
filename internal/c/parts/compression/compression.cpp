@@ -29,8 +29,7 @@ qbs *func__deflate(qbs *text) {
     auto compSize = compressBound(fileSize);
     auto dest = qbs_new(compSize, 1);                    // compressing directly to the qbs gives us a performance boost
     compress(dest->chr, &compSize, text->chr, fileSize); // discard result because we do not do any error checking
-    qbs_left(dest, compSize);                            // discard the return value because it will return the same tmp qbs anyway
-    return dest;
+    return qbs_left(dest, compSize);
 }
 
 qbs *func__inflate(qbs *text, int64_t originalSize, int32_t passed) {
