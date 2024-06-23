@@ -79,8 +79,7 @@ static inline float image_calculate_rgb_distance(const uint8_t r1, const uint8_t
     return sqrtf(delta_r * delta_r + delta_g * delta_g + delta_b * delta_b);
 }
 
-static inline constexpr uint32_t image_get_color_delta(const uint8_t r1, const uint8_t g1, const uint8_t b1, const uint8_t r2, const uint8_t g2,
-                                                       const uint8_t b2) {
+static inline uint32_t image_get_color_delta(const uint8_t r1, const uint8_t g1, const uint8_t b1, const uint8_t r2, const uint8_t g2, const uint8_t b2) {
     return abs(int32_t(r1) - int32_t(r2)) + abs(int32_t(g1) - int32_t(g2)) + abs(int32_t(b1) - int32_t(b2));
 }
 
