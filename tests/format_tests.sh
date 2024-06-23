@@ -49,17 +49,18 @@ do
     while IFS=' ' read -ra map
     do
         variant="${map[0]}"
+        TESTCASE="$category/$testName/$variant"
         output="$RESULTS_DIR/$category-$testName-$variant-output"
         compileResultOutput="$RESULTS_DIR/$category-$testName-$variant-compile_result.txt"
         expectedResult="$(cat "tests/format_tests/$category/$variant")"
         compilerFlags=("${map[@]:1}")
         pushd . >/dev/null
         cd "tests/format_tests/$category"
-        "../../../$QB64" -y "${compilerFlags[@]}" "$testName.bas" -o "../../../$output" 1>"../../../$compileResultOutput"
+        "../../../$QB64" -y -m "${compilerFlags[@]}" "$testName.bas" -o "../../../$output" 1>"../../../$compileResultOutput"
         ERR=$?
         popd >/dev/null
         (exit $ERR)
-        assert_success_named "Format" "Formatting Error:" show_failure "$category" "$testName - $variant"
+        assert_success_named "Format" "Formatting Error:" show_failure "$category" "$testName" "$variant"
         test -f "$output"
         assert_success_named "output exists" "$test-output does not exist!" show_failure "$category" "$testName" "$variant"
         testResult="$(cat "$output")"
