@@ -277,7 +277,7 @@ class PCXImage {
                 entry.color.tuple.r = colorMap[index++];
                 entry.color.tuple.a = 255;
 
-                SetColor(i, entry);
+                m_palette[i] = entry;
             }
         }
 
