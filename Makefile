@@ -324,8 +324,6 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_ZLIB)),)
-	EXE_LIBS += $(MINIZ_OBJS) $(COMPRESSION_OBJS)
-
 	LICENSE_IN_USE += miniz
 endif
 
