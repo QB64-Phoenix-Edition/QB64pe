@@ -216,6 +216,22 @@ FUNCTION GetEscapedPath$ (path_name AS STRING)
     GetEscapedPath = buf
 END FUNCTION
 
+' Returns a path/file with single slashes only, effectively unescaping "\"
+FUNCTION RemoveDoubleSlashes$(f2$)
+    f$ = f2$ 'avoid arg side effects
+
+    DO 'sp% = 0 at function entry
+        sp% = INSTR(sp% + 1, f$, "//")
+        IF sp% > 0 THEN f$ = LEFT$(f$, sp% - 1) + MID$(f$, sp% + 1)
+    LOOP UNTIL sp% = 0
+    DO 'sp% = 0 again from 1st loop end
+        sp% = INSTR(sp% + 1, f$, "\\")
+        IF sp% > 0 THEN f$ = LEFT$(f$, sp% - 1) + MID$(f$, sp% + 1)
+    LOOP UNTIL sp% = 0
+
+    RemoveDoubleSlashes$ = f$
+END FUNCTION
+
 ' Adds a trailing \ or / to a directory name if needed
 FUNCTION FixDirectoryName$ (dir_name AS STRING)
     IF LEN(dir_name) > 0 AND RIGHT$(dir_name, 1) <> pathsep$ THEN

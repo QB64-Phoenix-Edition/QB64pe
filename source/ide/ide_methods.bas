@@ -12288,7 +12288,7 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
             'create new folder
             newpath$ = idenewfolder(path$)
             IF LEN(newpath$) THEN
-                f$ = removeDoubleSlashes$(newpath$)
+                f$ = RemoveDoubleSlashes$(newpath$)
                 GOTO changepath
             ELSE
                 GOTO ideopenloop
@@ -12308,13 +12308,13 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
 
         IF focus = 3 THEN
             IF (K$ = CHR$(13) OR info = 1) AND o(3).sel >= 1 THEN
-                newpath$ = removeDoubleSlashes$(idetxt(o(3).stx))
+                newpath$ = RemoveDoubleSlashes$(idetxt(o(3).stx))
                 IF newpath$ = "" THEN
                     newpath$ = ".."
                     f$ = newpath$
                     GOTO changepath
                 ELSE
-                    path$ = removeDoubleSlashes$(idezchangepath(path$, newpath$))
+                    path$ = RemoveDoubleSlashes$(idezchangepath(path$, newpath$))
                     idetxt(o(2).txt) = idezfilelist$(path$, AllFiles, "")
                     idetxt(o(3).txt) = idezpathlist$(path$)
 
@@ -12345,7 +12345,7 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
             changepath:
             IF _DIREXISTS(path$ + idepathsep$ + f$) THEN
                 'check/acquire file path
-                path$ = removeDoubleSlashes$(idezgetfilepath$(path$, f$ + idepathsep$)) 'note: path ending with pathsep needn't contain a file
+                path$ = RemoveDoubleSlashes$(idezgetfilepath$(path$, f$ + idepathsep$)) 'note: path ending with pathsep needn't contain a file
                 IF ideerror > 1 THEN EXIT FUNCTION
 
                 IF LEN(newpath$) = 0 THEN
@@ -12365,7 +12365,7 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
             IF INSTR(f$, "?") > 0 OR INSTR(f$, "*") > 0 THEN
                 IF INSTR(f$, "/") > 0 OR INSTR(f$, "\") > 0 THEN
                     'path + wildcards
-                    path$ = removeDoubleSlashes$(idezgetfilepath$(path$, f$)) 'note: path ending with pathsep needn't contain a file
+                    path$ = RemoveDoubleSlashes$(idezgetfilepath$(path$, f$)) 'note: path ending with pathsep needn't contain a file
                     IF ideerror > 1 THEN EXIT FUNCTION
                     idetxt(o(3).txt) = idezpathlist$(path$)
                     o(3).sel = -1
@@ -12385,7 +12385,7 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
             END IF
 
             DirectLoad:
-            path$ = removeDoubleSlashes$(idezgetfilepath$(path$, f$)) 'repeat in case of DirectLoad
+            path$ = RemoveDoubleSlashes$(idezgetfilepath$(path$, f$)) 'repeat in case of DirectLoad
             IF ideerror > 1 THEN EXIT FUNCTION
 
             IF mode = 1 THEN
