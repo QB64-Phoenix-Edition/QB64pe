@@ -20,6 +20,7 @@
 #include <cmath>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined(IMAGE_DEBUG) && IMAGE_DEBUG > 0
 #    ifdef _MSC_VER
@@ -80,7 +81,7 @@ static inline float image_calculate_rgb_distance(const uint8_t r1, const uint8_t
 }
 
 static inline uint32_t image_get_color_delta(const uint8_t r1, const uint8_t g1, const uint8_t b1, const uint8_t r2, const uint8_t g2, const uint8_t b2) {
-    return std::abs(int32_t(r1) - int32_t(r2)) + std::abs(int32_t(g1) - int32_t(g2)) + std::abs(int32_t(b1) - int32_t(b2));
+    return uint32_t(::abs(long(r1) - long(r2)) + ::abs(long(g1) - long(g2)) + ::abs(long(b1) - long(b2)));
 }
 
 // Working with 32bit colors:
