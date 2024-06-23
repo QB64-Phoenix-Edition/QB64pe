@@ -418,15 +418,6 @@ extern int32 func__font(int32 i, int32 passed);
 extern void sub__freefont(int32 f);
 extern void sub__printmode(int32 mode, int32 i, int32 passed);
 extern int32 func__printmode(int32 i, int32 passed);
-uint32 func__rgb32(int32 r, int32 g, int32 b, int32 a);
-uint32 func__rgb32(int32 r, int32 g, int32 b);
-uint32 func__rgb32(int32 i, int32 a);
-uint32 func__rgb32(int32 i);
-uint32 func__rgba32(int32 r, int32 g, int32 b, int32 a);
-int32 func__alpha32(uint32 col);
-int32 func__red32(uint32 col);
-int32 func__green32(uint32 col);
-int32 func__blue32(uint32 col);
 extern uint32 matchcol(int32 r, int32 g, int32 b);
 extern uint32 matchcol(int32 r, int32 g, int32 b, int32 i);
 extern uint32 func__rgb(int32 r, int32 g, int32 b, int32 i, int32 passed);
@@ -635,87 +626,6 @@ inline ptrszint array_check(uptrszint index, uptrszint limit) {
     error(9);
     return 0;
 }
-
-// Working with 32bit colors:
-inline uint32 func__rgb32(int32 r, int32 g, int32 b, int32 a) {
-    if (r < 0)
-        r = 0;
-    if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    if (g > 255)
-        g = 255;
-    if (b < 0)
-        b = 0;
-    if (b > 255)
-        b = 255;
-    if (a < 0)
-        a = 0;
-    if (a > 255)
-        a = 255;
-    return (a << 24) + (r << 16) + (g << 8) + b;
-}
-
-inline uint32 func__rgb32(int32 r, int32 g, int32 b) {
-    if (r < 0)
-        r = 0;
-    if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    if (g > 255)
-        g = 255;
-    if (b < 0)
-        b = 0;
-    if (b > 255)
-        b = 255;
-    return (r << 16) + (g << 8) + b | 0xFF000000;
-}
-
-inline uint32 func__rgb32(int32 i, int32 a) {
-    if (i < 0)
-        i = 0;
-    if (i > 255)
-        i = 255;
-    if (a < 0)
-        a = 0;
-    if (a > 255)
-        a = 255;
-    return (a << 24) + (i << 16) + (i << 8) + i;
-}
-
-inline uint32 func__rgb32(int32 i) {
-    if (i < 0)
-        i = 0;
-    if (i > 255)
-        i = 255;
-    return (i << 16) + (i << 8) + i | 0xFF000000;
-}
-
-inline uint32 func__rgba32(int32 r, int32 g, int32 b, int32 a) {
-    if (r < 0)
-        r = 0;
-    if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    if (g > 255)
-        g = 255;
-    if (b < 0)
-        b = 0;
-    if (b > 255)
-        b = 255;
-    if (a < 0)
-        a = 0;
-    if (a > 255)
-        a = 255;
-    return (a << 24) + (r << 16) + (g << 8) + b;
-}
-inline int32 func__alpha32(uint32 col) { return col >> 24; }
-inline int32 func__red32(uint32 col) { return col >> 16 & 0xFF; }
-inline int32 func__green32(uint32 col) { return col >> 8 & 0xFF; }
-inline int32 func__blue32(uint32 col) { return col & 0xFF; }
 
 inline uint16 varptr_dblock_check(uint8 *off) {
     // note: 66816 is the top of DBLOCK (SEG:80+OFF:65536)

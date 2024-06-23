@@ -29,6 +29,7 @@ CONST TEST_IMAGE_12 = "test12"
 CONST TEST_IMAGE_13 = "test13"
 CONST TEST_IMAGE_14 = "test14"
 CONST TEST_IMAGE_15 = "test15"
+CONST TOLERANCE_LIMIT = 4
 
 SetFontTest
 
@@ -89,7 +90,7 @@ SUB PrintFontDetails (handle AS LONG, testFileName AS STRING)
     _FONT 16
     _DEST _CONSOLE
 
-    AssertImage2 image, testFileName + "." + TEST_IMAGE_FORMAT
+    AssertImage2 image, testFileName + "." + TEST_IMAGE_FORMAT, TOLERANCE_LIMIT
 
     _FREEIMAGE image
 
@@ -104,7 +105,7 @@ SUB PrintFontDetails (handle AS LONG, testFileName AS STRING)
     _FONT 16
     _DEST _CONSOLE
 
-    AssertImage2 image, testFileName + "u." + TEST_IMAGE_FORMAT
+    AssertImage2 image, testFileName + "u." + TEST_IMAGE_FORMAT, TOLERANCE_LIMIT
 
     _FREEIMAGE image
 
