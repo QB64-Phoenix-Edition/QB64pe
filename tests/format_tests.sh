@@ -34,8 +34,7 @@ show_failure()
 
 show_incorrect_result()
 {
-    printf "EXPECTED: '%s'\n" "$1"
-    printf "GOT:      '%s'\n" "$2"
+    diff -u <(echo -n "$1") <(echo -n "$2")
 }
 
 
@@ -52,7 +51,7 @@ do
         TESTCASE="$category/$testName/$variant"
         output="$RESULTS_DIR/$category-$testName-$variant-output"
         compileResultOutput="$RESULTS_DIR/$category-$testName-$variant-compile_result.txt"
-        expectedResult="$(cat "tests/format_tests/$category/$variant")"
+        expectedResult="$(< "tests/format_tests/$category/$variant" tr -d '\r')"
         compilerFlags=("${map[@]:1}")
         pushd . >/dev/null
         cd "tests/format_tests/$category"
