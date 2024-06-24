@@ -44,7 +44,7 @@ do
     category=$(basename "$(dirname "$test")")
     testName=$(basename "$test" .bas)
 
-    FLAGMAP="tests/format_tests/$category/$testName.flagmap"
+    flagmapping="$(< "tests/format_tests/$category/$testName.flagmap" tr -d '\r')"
 
     while IFS=' ' read -ra map
     do
@@ -63,8 +63,8 @@ do
         assert_success_named "Format" "Formatting Error:" show_failure "$category" "$testName" "$variant"
         test -f "$output"
         assert_success_named "output exists" "$test-output does not exist!" show_failure "$category" "$testName" "$variant"
-        testResult="$(cat "$output")"
+        testResult="$(< "$output" tr -d '\r')"
         [ "$testResult" == "$expectedResult" ]
         assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$testResult"
-    done < "$FLAGMAP"
+    done <<< "$flagmapping"
 done < <(find "./tests/format_tests$CATEGORY" -name "$TESTS_TO_RUN" -print)
