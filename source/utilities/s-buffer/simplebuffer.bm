@@ -187,6 +187,29 @@ SELECT CASE mode%
     CASE SBM_BufStart: origin& = 1
     CASE SBM_BufCurrent: origin& = cur&
     CASE SBM_BufEnd: origin& = eob&
+    CASE SBM_LineStart
+        origin& = cur&
+        IF cur& > 1 AND cur& < eob& THEN
+            IF brl% = 2 AND ASC(simplebuffer_array$(buf& + 0), cur& - 1) = 13 AND ASC(simplebuffer_array$(buf& + 0), cur&) = 10 THEN
+                origin& = cur& - 1
+            END IF
+        END IF
+        WHILE origin& > 1
+            IF MID$(simplebuffer_array$(buf& + 0), origin& - 1, brl%) = brc$ THEN
+                IF brl% = 2 THEN origin& = origin& + 1
+                EXIT WHILE
+            END IF
+            origin& = origin& - 1
+        WEND
+    CASE SBM_LineEnd
+        origin& = cur&
+        IF cur& > 1 AND cur& < eob& THEN
+            IF brl% = 2 AND ASC(simplebuffer_array$(buf& + 0), cur& - 1) = 13 AND ASC(simplebuffer_array$(buf& + 0), cur&) = 10 THEN
+                origin& = cur& - 1
+            END IF
+        END IF
+        origin& = INSTR(origin&, simplebuffer_array$(buf& + 0), brc$)
+        IF origin& = 0 THEN origin& = eob&
     CASE ELSE
         SeekBuf& = SBE_UnknownMode
         EXIT FUNCTION
