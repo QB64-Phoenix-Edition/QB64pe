@@ -27,6 +27,8 @@ CONST SBE_OutOfBounds = -12
 CONST SBM_BufStart = -22
 CONST SBM_BufCurrent = -23
 CONST SBM_BufEnd = -24
+CONST SBM_LineStart = -25
+CONST SBM_LineEnd = -26
 
 '$INCLUDE: 'sb_qb64pe_extension.bi'
 
