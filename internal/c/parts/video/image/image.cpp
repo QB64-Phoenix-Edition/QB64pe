@@ -26,8 +26,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#define DR_PCX_IMPLEMENTATION
-#include "dr_pcx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #define QOI_IMPLEMENTATION
@@ -37,6 +35,7 @@
 #include "nanosvg/nanosvg.h"
 #define NANOSVGRAST_IMPLEMENTATION
 #include "nanosvg/nanosvgrast.h"
+#include "sg_pcx.hpp"
 #define SXBR_IMPLEMENTATION
 #include "pixelscalers/sxbr.hpp"
 #define MMPX_IMPLEMENTATION
@@ -82,7 +81,7 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
 
         auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * newX * newY);
         if (pixels) {
-            IMAGE_DEBUG_PRINT("Scaler %i: (%i x %i) -> (%i x %i)", scaler, *xOut, *yOut, newX, newY);
+            IMAGE_DEBUG_PRINT("Scaler %i: (%i x %i) -> (%i x %i)", (int)scaler, *xOut, *yOut, newX, newY);
 
             switch (scaler) {
             case ImageScaler::SXBR2:
@@ -110,7 +109,7 @@ static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, Image
                 break;
 
             default:
-                IMAGE_DEBUG_PRINT("Unsupported scaler %i", scaler);
+                IMAGE_DEBUG_PRINT("Unsupported scaler %i", (int)scaler);
                 free(pixels);
                 return data;
             }
@@ -284,7 +283,7 @@ static uint32_t *image_qoi_load_from_memory(const uint8_t *buffer, size_t size, 
     return pixels;
 }
 
-/// @brief Decodes an image file from a file using the dr_pcx & stb_image libraries.
+/// @brief Decodes an image file from a file using the sg_pcx & stb_image libraries.
 /// @param fileName A valid filename
 /// @param xOut Out: width in pixels. This cannot be NULL
 /// @param yOut Out: height in pixels. This cannot be NULL
@@ -296,11 +295,11 @@ static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int
 
     IMAGE_DEBUG_PRINT("Loading image from file %s", fileName);
 
-    // Attempt to load file as a PCX first using dr_pcx
-    auto pixels = reinterpret_cast<uint32_t *>(drpcx_load_file(fileName, DRPCX_FALSE, xOut, yOut, &compOut, 4));
-    IMAGE_DEBUG_PRINT("Image dimensions (dr_pcx) = (%i, %i)", *xOut, *yOut);
+    // Attempt to load file as a PCX first using sg_pcx
+    auto pixels = pcx_load_file(fileName, xOut, yOut, &compOut);
+    IMAGE_DEBUG_PRINT("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
     if (!pixels) {
-        // If dr_pcx failed to load, then use stb_image
+        // If sg_pcx failed to load, then use stb_image
         pixels = reinterpret_cast<uint32_t *>(stbi_load(fileName, xOut, yOut, &compOut, 4));
         IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
@@ -326,7 +325,7 @@ static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int
     return pixels;
 }
 
-/// @brief Decodes an image file from memory using the dr_pcx & stb_image libraries
+/// @brief Decodes an image file from memory using the sg_pcx & stb_image libraries
 /// @param data The raw pointer to the file in memory
 /// @param size The size of the file in memory
 /// @param xOut Out: width in pixels. This cannot be NULL
@@ -339,11 +338,11 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
 
     IMAGE_DEBUG_PRINT("Loading image from memory");
 
-    // Attempt to load file as a PCX first using dr_pcx
-    auto pixels = reinterpret_cast<uint32_t *>(drpcx_load_memory(data, size, DRPCX_FALSE, xOut, yOut, &compOut, 4));
-    IMAGE_DEBUG_PRINT("Image dimensions (dr_pcx) = (%i, %i)", *xOut, *yOut);
+    // Attempt to load file as a PCX first using sg_pcx
+    auto pixels = pcx_load_memory(data, size, xOut, yOut, &compOut);
+    IMAGE_DEBUG_PRINT("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
     if (!pixels) {
-        // If dr_pcx failed to load, then use stb_image
+        // If sg_pcx failed to load, then use stb_image
         pixels = reinterpret_cast<uint32_t *>(stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(data), size, xOut, yOut, &compOut, 4));
         IMAGE_DEBUG_PRINT("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
@@ -483,7 +482,7 @@ static uint8_t *image_extract_8bpp(const uint32_t *src, int32_t w, int32_t h, ui
 /// @param src_pal The image's original palette. This cannot be NULL
 /// @param dst_pal The destination palette. This cannot be NULL
 static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32_t *src_pal, const uint32_t *dst_pal) {
-    auto const maxRGBDist = image_calculate_rgb_distance(0, 0, 0, 255, 255, 255); // The farthest we can go in the color cube
+    const auto maxRGBDelta = image_get_color_delta(0, 0, 0, 255, 255, 255);
     static uint32_t palMap[256];
     ZERO_VARIABLE(palMap);
 
@@ -491,14 +490,14 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32
 
     // Match the palette
     for (auto x = 0; x < 256; x++) {
-        auto oldDist = maxRGBDist;
+        auto oldDelta = maxRGBDelta;
 
         for (auto y = 0; y < 256; y++) {
-            auto newDist = image_calculate_rgb_distance(image_get_bgra_red(src_pal[x]), image_get_bgra_green(src_pal[x]), image_get_bgra_blue(src_pal[x]),
-                                                        image_get_bgra_red(dst_pal[y]), image_get_bgra_green(dst_pal[y]), image_get_bgra_blue(dst_pal[y]));
+            auto newDelta = image_get_color_delta(image_get_bgra_red(src_pal[x]), image_get_bgra_green(src_pal[x]), image_get_bgra_blue(src_pal[x]),
+                                                  image_get_bgra_red(dst_pal[y]), image_get_bgra_green(dst_pal[y]), image_get_bgra_blue(dst_pal[y]));
 
-            if (oldDist > newDist) {
-                oldDist = newDist;
+            if (oldDelta > newDelta) {
+                oldDelta = newDelta;
                 palMap[x] = y;
             }
         }
