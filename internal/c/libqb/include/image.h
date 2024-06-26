@@ -20,6 +20,7 @@
 #include <cmath>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined(IMAGE_DEBUG) && IMAGE_DEBUG > 0
 #    ifdef _MSC_VER
@@ -78,3 +79,92 @@ static inline float image_calculate_rgb_distance(const uint8_t r1, const uint8_t
 
     return sqrtf(delta_r * delta_r + delta_g * delta_g + delta_b * delta_b);
 }
+
+static inline uint32_t image_get_color_delta(const uint8_t r1, const uint8_t g1, const uint8_t b1, const uint8_t r2, const uint8_t g2, const uint8_t b2) {
+    return uint32_t(::abs(long(r1) - long(r2)) + ::abs(long(g1) - long(g2)) + ::abs(long(b1) - long(b2)));
+}
+
+// Working with 32bit colors:
+static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b, int32_t a) {
+    if (r < 0)
+        r = 0;
+    if (r > 255)
+        r = 255;
+    if (g < 0)
+        g = 0;
+    if (g > 255)
+        g = 255;
+    if (b < 0)
+        b = 0;
+    if (b > 255)
+        b = 255;
+    if (a < 0)
+        a = 0;
+    if (a > 255)
+        a = 255;
+    return (a << 24) + (r << 16) + (g << 8) + b;
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b) {
+    if (r < 0)
+        r = 0;
+    if (r > 255)
+        r = 255;
+    if (g < 0)
+        g = 0;
+    if (g > 255)
+        g = 255;
+    if (b < 0)
+        b = 0;
+    if (b > 255)
+        b = 255;
+    return (r << 16) + (g << 8) + b | 0xFF000000;
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t i, int32_t a) {
+    if (i < 0)
+        i = 0;
+    if (i > 255)
+        i = 255;
+    if (a < 0)
+        a = 0;
+    if (a > 255)
+        a = 255;
+    return (a << 24) + (i << 16) + (i << 8) + i;
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t i) {
+    if (i < 0)
+        i = 0;
+    if (i > 255)
+        i = 255;
+    return (i << 16) + (i << 8) + i | 0xFF000000;
+}
+
+static inline constexpr uint32_t func__rgba32(int32_t r, int32_t g, int32_t b, int32_t a) {
+    if (r < 0)
+        r = 0;
+    if (r > 255)
+        r = 255;
+    if (g < 0)
+        g = 0;
+    if (g > 255)
+        g = 255;
+    if (b < 0)
+        b = 0;
+    if (b > 255)
+        b = 255;
+    if (a < 0)
+        a = 0;
+    if (a > 255)
+        a = 255;
+    return (a << 24) + (r << 16) + (g << 8) + b;
+}
+
+static inline constexpr int32_t func__alpha32(uint32_t col) { return col >> 24; }
+
+static inline constexpr int32_t func__red32(uint32_t col) { return col >> 16 & 0xFF; }
+
+static inline constexpr int32_t func__green32(uint32_t col) { return col >> 8 & 0xFF; }
+
+static inline constexpr int32_t func__blue32(uint32_t col) { return col & 0xFF; }

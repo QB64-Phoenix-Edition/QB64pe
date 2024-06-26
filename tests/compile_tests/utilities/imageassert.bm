@@ -123,8 +123,7 @@ END FUNCTION
 
 
 ' Same as AssertImage() but is a bit more forgiving
-SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING)
-    CONST TOLERANCE_LIMIT = 4
+SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING, toleranceLimit AS LONG)
 
     DIM actualImage AS LONG
     DIM ResultsDir AS STRING, TestPrefix AS STRING
@@ -179,7 +178,7 @@ SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING)
             actualPixel = _MEMGET(actual, actual.OFFSET + pixelOffset, _UNSIGNED LONG)
             expectedPixel = _MEMGET(expected, expected.OFFSET + pixelOffset, _UNSIGNED LONG)
 
-            IF actualPixel <> expectedPixel _ANDALSO GetColorDelta(actualPixel, expectedPixel) > TOLERANCE_LIMIT THEN
+            IF actualPixel <> expectedPixel _ANDALSO GetColorDelta(actualPixel, expectedPixel) > toleranceLimit THEN
                 PRINT "Failure! Image pixels at ("; x&; ","; y&; ") differ, actual: 0x"; HEX$(actualPixel); ", expected: 0x"; HEX$(expectedPixel)
                 GOTO freeImages
             END IF
