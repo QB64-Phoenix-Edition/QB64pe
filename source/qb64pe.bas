@@ -57,7 +57,7 @@ REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
 REDIM SelectCaseHasCaseBlock(100)
 DIM ExecLevel(255), ExecCounter AS INTEGER
 REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is the string value
-REDIM SHARED InValidLine(10000) AS _BYTE
+REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
 DIM SHARED UserDefineCount AS INTEGER, UserDefineList$
 UserDefineList$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@"
@@ -120,7 +120,7 @@ _TITLE WindowTitle
 
 CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
 
-DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode
+DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode, FormatMode
 DIM SHARED ShowWarnings AS _BYTE, QuietMode AS _BYTE, CMDLineFile AS STRING
 DIM SHARED MonochromeLoggingMode AS _BYTE
 
@@ -483,7 +483,7 @@ DIM SHARED incname(100) AS STRING 'must be full path as given
 DIM SHARED inclinenumber(100) AS LONG
 DIM SHARED incerror AS STRING
 
-
+'Magic constant used to replace . in elements when it is not a UDT access
 DIM SHARED fix046 AS STRING
 fix046$ = "__" + "ASCII" + "_" + "CHR" + "_" + "046" + "__" 'broken up to avoid detection for layout reversion
 
@@ -491,6 +491,7 @@ DIM SHARED layout AS STRING 'passed to IDE
 DIM SHARED layoutok AS LONG 'tracks status of entire line
 
 DIM SHARED layoutcomment AS STRING
+DIM SHARED layoutcontinuations AS STRING 'Any physical lines logically part of the current line
 
 DIM SHARED tlayout AS STRING 'temporary layout string set by supporting functions
 DIM SHARED layoutdone AS LONG 'tracks status of single command
@@ -852,7 +853,7 @@ IF C = 4 THEN 'next line
     'assume idepass>1
     a3$ = c$
     continuelinefrom = 0
-    GOTO ide4
+    GOTO compileline 'Will execute compilation of 1 line then come back to ideret4
     ideret4:
     IF lastLineReturn THEN GOTO lastLineReturn
     sendc$ = CHR$(3) 'request next line
@@ -871,7 +872,7 @@ IF C = 5 THEN 'end of program reached
     'idepass>1
     a3$ = ""
     continuelinefrom = 0
-    GOTO ide4 'returns to ideret4, then to lastLinePrepassReturn below
+    GOTO compileline 'Will execute compilation of 1 line then come back to lastLineReturn
     lastLineReturn:
     lastLineReturn = 0
     lastLine = 0
@@ -1478,6 +1479,10 @@ DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 'The $INCLUDEONCE check buffer
 DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
 
+'Output for format mode
+DIM SHARED FormatBuf
+IF FormatMode THEN FormatBuf = OpenBuffer%("O", tmpdir$ + "format.out")
+
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
@@ -1577,10 +1582,10 @@ DO
     linenumber = linenumber + 1
     reallinenumber = reallinenumber + 1
 
-    DO UNTIL linenumber < UBOUND(InValidLine) 'color information flag for each line
-        REDIM _PRESERVE InValidLine(UBOUND(InValidLine) + 1000) AS _BYTE
+    DO UNTIL linenumber < UBOUND(InvalidLine) 'color information flag for each line
+        REDIM _PRESERVE InvalidLine(UBOUND(InvalidLine) + 1000) AS _BYTE
     LOOP
-    InValidLine(linenumber) = 0
+    InvalidLine(linenumber) = 0
 
     IF LEN(wholeline$) THEN
 
@@ -1646,11 +1651,11 @@ DO
         END IF
 
         IF ExecLevel(ExecCounter) THEN
-            DO UNTIL linenumber < UBOUND(InValidLine)
-                REDIM _PRESERVE InValidLine(UBOUND(InValidLine) + 1000) AS _BYTE
+            DO UNTIL linenumber < UBOUND(InvalidLine)
+                REDIM _PRESERVE InvalidLine(UBOUND(InvalidLine) + 1000) AS _BYTE
             LOOP
 
-            InValidLine(linenumber) = -1
+            InvalidLine(linenumber) = -1
             GOTO finishedlinepp 'we don't check for anything inside lines that we've marked for skipping
         END IF
 
@@ -2782,9 +2787,7 @@ IF UseGL THEN gl_include_content
 IF idemode THEN GOTO ideret3
 
 DO
-    ide4:
-    includeline:
-    mainpassLastLine:
+    compileline:
 
     IF lastLine <> 0 OR firstLine <> 0 THEN
         lineBackup$ = a3$ 'backup the real first line (will be blank when lastline is set)
@@ -2822,6 +2825,7 @@ DO
     endifs = 0
     lineelseused = 0
     newif = 0
+    layoutcontinuations = ""
 
     'apply metacommands from previous line
     IF addmetadynamic = 1 THEN addmetadynamic = 0: DynamicMode = 1
@@ -2832,20 +2836,10 @@ DO
     IF a3$ = CHR$(13) THEN EXIT DO
     linenumber = linenumber + 1
     reallinenumber = reallinenumber + 1
-
-    IF InValidLine(linenumber) THEN
-        layoutok = 1
-        layout$ = SPACE$(controllevel) + LTRIM$(RTRIM$(a3$))
-        IF idemode GOTO ideret4 ELSE GOTO skipide4
-    END IF
-
     layout = ""
     layoutok = 1
 
     IF idemode = 0 AND NOT QuietMode THEN
-        'IF LEN(a3$) THEN
-        '    dotlinecount = dotlinecount + 1: IF dotlinecount >= 100 THEN dotlinecount = 0: PRINT ".";
-        'END IF
         maxprogresswidth = 50 'arbitrary
         percentage = INT(reallinenumber / totallinenumber * 100)
         percentagechars = INT(maxprogresswidth * reallinenumber / totallinenumber)
@@ -2866,10 +2860,14 @@ DO
         END IF
     END IF
 
+    layoutoriginal$ = a3$
     a3$ = LTRIM$(RTRIM$(a3$))
     wholeline = a3$
 
-    layoutoriginal$ = a3$
+    IF InvalidLine(linenumber) THEN
+        IF idemode GOTO ideret4 ELSE GOTO skip_invalidated_line
+    END IF
+
     layoutcomment$ = "" 'clear any previous layout comment
     lhscontrollevel = controllevel
 
@@ -2878,10 +2876,6 @@ DO
     IF Debug THEN PRINT #9, "########" + a3$ + "########"
 
     layoutdone = 1 'validates layout of any following goto finishednonexec/finishedline
-
-    'We've already figured out in the prepass which lines are invalidated by the precompiler
-    'No need to go over those lines again.
-    'IF InValidLine(linenumber) THEN goto skipide4 'layoutdone = 0: GOTO finishednonexec
 
     a3u$ = UCASE$(a3$)
 
@@ -4889,7 +4883,7 @@ DO
                 GOTO errmes
             END IF
 
-            IF ideindentsubs THEN
+            IF IDEIndentSubs THEN
                 controllevel = controllevel + 1
                 controltype(controllevel) = 32
                 controlref(controllevel) = linenumber
@@ -5397,7 +5391,7 @@ DO
                     GOTO errmes
                 END IF
 
-                IF controltype(controllevel) = 32 AND ideindentsubs THEN
+                IF controltype(controllevel) = 32 AND IDEIndentSubs THEN
                     controltype(controllevel) = 0
                     controllevel = controllevel - 1
                 END IF
@@ -11352,6 +11346,7 @@ DO
                 layoutcomment_backup$ = layoutcomment$
                 layoutok_backup = layoutok
                 layout_backup$ = layout$
+                layoutoriginal_backup$ = layoutoriginal$
             END IF
 
             a$ = addmetainclude$: addmetainclude$ = "" 'read/clear message
@@ -11452,7 +11447,7 @@ DO
                 incerror$ = e$
                 linenumber = linenumber - 1 'lower official linenumber to counter later increment
                 IF idemode THEN sendc$ = CHR$(10) + a3$: GOTO sendcommand 'passback
-                GOTO includeline
+                GOTO compileline
             END IF
             '3. Close & return control
             CLOSE #fh
@@ -11467,6 +11462,7 @@ DO
                 layoutok = layoutok_backup
                 layout$ = layout_backup$
                 layoutcomment$ = layoutcomment_backup$
+                layoutoriginal$ = layoutoriginal_backup$
             END IF
         LOOP 'fall through to next section...
         '(end manager)
@@ -11484,42 +11480,39 @@ DO
         PRINT #9, "[end layout check]"
     END IF
 
+    IF continuelinefrom THEN GOTO compileline 'continue processing other commands on line
 
-
-
-    IF idemode THEN
-        IF continuelinefrom <> 0 THEN GOTO ide4 'continue processing other commands on line
-
-        IF LEN(layoutcomment$) THEN
-            IF LEN(layout$) THEN layout$ = layout$ + sp + layoutcomment$ ELSE layout$ = layoutcomment$
-        END IF
-
-        IF layoutok = 0 THEN
-            layout$ = layoutoriginal$
-        ELSE
-
-            'reverse '046' changes present in autolayout
-            'replace fix046$ with .
-            i = INSTR(layout$, fix046$)
-            DO WHILE i
-                layout$ = LEFT$(layout$, i - 1) + "." + RIGHT$(layout$, LEN(layout$) - (i + LEN(fix046$) - 1))
-                i = INSTR(layout$, fix046$)
-            LOOP
-
-        END IF
-        x = lhscontrollevel: IF controllevel < lhscontrollevel THEN x = controllevel
-        IF definingtype = 2 THEN x = x + 1
-        IF definingtype > 0 THEN definingtype = 2
-        IF declaringlibrary = 2 THEN x = x + 1
-        IF declaringlibrary > 0 THEN declaringlibrary = 2
-        layout$ = SPACE$(x) + layout$
-        IF linecontinuation THEN layout$ = ""
-
-        GOTO ideret4 'return control to IDE
+    IF LEN(layoutcomment$) THEN
+        IF LEN(layout$) THEN layout$ = layout$ + sp + layoutcomment$ ELSE layout$ = layoutcomment$
     END IF
 
-    'layout is not currently used by the compiler (as appose to the IDE), if it was it would be used here
-    skipide4:
+    IF layoutok = 0 THEN
+        layout$ = _TRIM$(layoutoriginal$)
+    ELSE
+        'reverse '046' changes present in autolayout
+        layout$ = StrReplace$(layout$, fix046$, ".")
+    END IF
+    x = lhscontrollevel: IF controllevel < lhscontrollevel THEN x = controllevel
+    IF definingtype = 2 THEN x = x + 1
+    IF definingtype > 0 THEN definingtype = 2
+    IF declaringlibrary = 2 THEN x = x + 1
+    IF declaringlibrary > 0 THEN declaringlibrary = 2
+    layout$ = SPACE$(x) + layout$
+    IF linecontinuation THEN layout$ = ""
+
+    IF idemode THEN GOTO ideret4 'return control to IDE
+
+    skip_invalidated_line:
+    IF FormatMode THEN
+        IF linecontinuation THEN
+            'This line has a _ for continuation so will not be formatted. Use the original line as read plus
+            'any continued physical lines
+            WriteBufLine FormatBuf, layoutoriginal$ + layoutcontinuations
+        ELSE
+            indented$ = apply_layout_indent$(layoutoriginal$)
+            IF LEN(indented$) THEN WriteBufLine FormatBuf, indented$ ELSE WriteBufLine FormatBuf, layoutoriginal$
+        END IF
+    END IF
 LOOP
 
 'add final line
@@ -11527,7 +11520,7 @@ IF lastLineReturn = 0 THEN
     lastLineReturn = 1
     lastLine = 1
     wholeline$ = ""
-    GOTO mainpassLastLine
+    GOTO compileline
 END IF
 
 ide5:
@@ -11553,7 +11546,7 @@ IF controllevel THEN
     GOTO errmes
 END IF
 
-IF ideindentsubs = 0 THEN
+IF IDEIndentSubs = 0 THEN
     IF LEN(subfunc) THEN a$ = "SUB/FUNCTION without END SUB/FUNCTION": GOTO errmes
 END IF
 
@@ -12469,6 +12462,13 @@ END IF
 'actions are performed on the disk based files
 WriteBuffers ""
 
+IF FormatMode THEN
+    'Move temp file to final location
+    errNo = CopyFile(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
+    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: GOTO errmes
+    GOTO No_C_Compile
+END IF
+
 '=== BEGIN: embedding files ===
 eflFF = FREEFILE
 OPEN "O", #eflFF, tmpdir$ + "embedded.cpp"
@@ -13201,6 +13201,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 PRINT "  -s[:switch=true/false]  View/edit compiler settings"
                 PRINT "  -l:<line number>        Start the IDE at the specified line number"
                 PRINT "  -p                      Purge all pre-compiled content first"
+                PRINT "  -y                      Output formatted source file"
                 PRINT "  -z                      Generate C code without compiling to executable"
                 PRINT "  -f[:setting=value]      compiler settings to use"
                 PRINT
@@ -13228,6 +13229,12 @@ FUNCTION ParseCMDLineArgs$ ()
             CASE "-x" 'Use the console
                 ConsoleMode = 1
                 NoIDEMode = 1 'Implies -c
+                cmdlineswitch = -1
+            CASE "-y" 'Format
+                FormatMode = -1
+                ConsoleMode = 1
+                NoIDEMode = 1
+                QuietMode = -1
                 cmdlineswitch = -1
             CASE "-w" 'Show warnings
                 ShowWarnings = -1
@@ -13319,11 +13326,26 @@ FUNCTION ParseCMDLineArgs$ ()
 
                     CASE ":maxcompilerprocesses"
                         IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-                        IF MaxParallelProcesses = 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
+                        IF MaxParallelProcesses <= 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
 
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
 
+                    CASE ":autolayout"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayout) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":keywordcapitals"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayoutKwCapitals) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":indentsubs"
+                        IF NOT ParseBooleanSetting&(token$, IDEIndentSubs) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":autoindent"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+
+                    CASE ":autoindentsize"
+                        IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
+                        IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN PrintTemporarySettingsHelpAndExit "AutoIndentSize must be in range 1-64"
                     CASE ELSE
                         PrintTemporarySettingsHelpAndExit ""
                 END SELECT
@@ -13332,6 +13354,12 @@ FUNCTION ParseCMDLineArgs$ ()
                 IF PassedFileName$ = "" THEN PassedFileName$ = token$
         END SELECT
     NEXT i
+
+    IF FormatMode AND LEN(outputfile_cmd$) = 0 THEN
+        _DEST _CONSOLE
+        PRINT "Formatting requires specifying output file with -o option"
+        SYSTEM 1
+    END IF
 
     IF LEN(PassedFileName$) THEN
         ParseCMDLineArgs$ = PassedFileName$
@@ -13363,11 +13391,16 @@ SUB PrintTemporarySettingsHelpAndExit (errstr$)
     PRINT "    -f:ExtraLinkerFlags=[string]         (Extra flags to pass at link time)"
     PRINT "    -f:MaxCompilerProcesses=[integer]    (Max C++ compiler processes to start in parallel)"
     PRINT "    -f:GenerateLicenseFile=[true|false]  (Produce a license.txt file for the program)"
+    PRINT "    -f:AutoLayout=[true|false]           (Toggle code spacing and capitalisation)"
+    PRINT "    -f:KeywordCapitals=[true|false]      (Toggle formatting keywords in ALL CAPITALS)"
+    PRINT "    -f:AutoIndent=[true|false]           (Toggle code indentation)"
+    PRINT "    -f:AutoIndentSize=[integer]          (Spaces per indent level)"
+    PRINT "    -f:IndentSubs=[true|false]           (Toggle indenting SUBs & FUNCTIONs)"
 
     SYSTEM
 END SUB
 
-FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
+FUNCTION ParseBooleanSetting& (token$, setting AS LONG)
     DIM equals AS LONG
     DIM value AS STRING
 
@@ -13378,11 +13411,11 @@ FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
 
     SELECT CASE value
         CASE "true", "on", "yes"
-            setting = -1
+            setting = TRUE
             ParseBooleanSetting& = -1
 
         CASE "false", "off", "no"
-            setting = 0
+            setting = FALSE
             ParseBooleanSetting& = -1
 
         CASE ELSE
@@ -13390,7 +13423,7 @@ FUNCTION ParseBooleanSetting& (token$, setting AS _UNSIGNED LONG)
     END SELECT
 END FUNCTION
 
-FUNCTION ParseLongSetting& (token$, setting AS _UNSIGNED LONG)
+FUNCTION ParseLongSetting& (token$, setting AS LONG)
     DIM equals AS LONG
 
     equals = INSTR(token$, "=")
@@ -20757,6 +20790,7 @@ FUNCTION lineformat$ (a$)
             ELSE
                 a$ = lineinput3$
                 IF a$ = CHR$(13) THEN GOTO lineformatdone2
+                layoutcontinuations = layoutcontinuations + NATIVE_LINEENDING + a$
             END IF
 
             linenumber = linenumber + 1
@@ -23193,7 +23227,7 @@ FUNCTION removecast$ (a$)
 END FUNCTION
 
 FUNCTION converttabs$ (a2$)
-    IF ideautoindent THEN s = ideautoindentsize ELSE s = 4
+    IF IDEAutoIndent THEN s = IDEAutoIndentSize ELSE s = 4
     a$ = a2$
     DO WHILE INSTR(a$, CHR_TAB)
         x = INSTR(a$, CHR_TAB)
@@ -23652,12 +23686,12 @@ SUB addWarning (whichLineNumber AS LONG, includeLevel AS LONG, incLineNumber AS 
 END SUB
 
 FUNCTION SCase$ (t$)
-    IF ideautolayoutkwcapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
+    IF IDEAutoLayoutKwCapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
 END FUNCTION
 
 FUNCTION SCase2$ (t$)
     separator$ = sp
-    IF ideautolayoutkwcapitals THEN
+    IF IDEAutoLayoutKwCapitals THEN
         SCase2$ = UCASE$(t$)
     ELSE
         SELECT CASE t$
@@ -23739,6 +23773,7 @@ END FUNCTION
 '$INCLUDE:'utilities\hash.bas'
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
+'$INCLUDE:'utilities\format.bas'
 
 DEFLNG A-Z
 

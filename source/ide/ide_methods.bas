@@ -10,83 +10,8 @@ FUNCTION ide (ignore)
                 IF ideexit = 0 THEN
                     GetInput 'check for new input
                     IF iCHANGED = 0 AND mB = 0 THEN
-
-                        '-------------------- layout considerations --------------------
-                        'previous line was OK, so use layout if available
-                        IF ideautolayout <> 0 OR ideautoindent <> 0 THEN
-                            IF LEN(layout$) THEN
-
-                                'calculate recommended indent level
-                                l = LEN(layout$)
-                                FOR i = 1 TO l
-                                    IF ASC(layout$, i) <> 32 OR i = l THEN
-                                        IF ASC(layout$, i) = 32 THEN
-                                            layout$ = "": indent = i
-                                        ELSE
-                                            indent = i - 1
-                                            layout$ = RIGHT$(layout$, LEN(layout$) - i + 1)
-                                        END IF
-                                        EXIT FOR
-                                    END IF
-                                NEXT
-
-                                IF ideautolayout THEN
-                                    layout2$ = layout$: i2 = 1
-                                    ignoresp = 0
-                                    FOR i = 1 TO LEN(layout$)
-                                        a = ASC(layout$, i)
-                                        IF a = 34 THEN
-                                            ignoresp = ignoresp + 1: IF ignoresp = 2 THEN ignoresp = 0
-                                        END IF
-                                        IF ignoresp = 0 THEN
-                                            IF a = sp_asc THEN ASC(layout2$, i2) = 32: i2 = i2 + 1: GOTO skipchar
-                                            IF a = sp2_asc THEN GOTO skipchar
-                                        END IF
-                                        ASC(layout2$, i2) = a: i2 = i2 + 1
-                                        skipchar:
-                                    NEXT
-                                    layout$ = LEFT$(layout2$, i2 - 1)
-                                END IF
-
-                                IF ideautoindent = 0 THEN
-                                    'note: can assume auto-format
-                                    'calculate old indent (if any)
-                                    indent = 0
-                                    l = LEN(idecompiledline$)
-                                    FOR i = 1 TO l
-                                        IF ASC(idecompiledline$, i) <> 32 OR i = l THEN
-                                            indent = i - 1
-                                            EXIT FOR
-                                        END IF
-                                    NEXT
-                                    indent$ = SPACE$(indent)
-                                ELSE
-                                    indent$ = SPACE$(indent * ideautoindentsize)
-                                END IF
-
-                                IF ideautolayout = 0 THEN
-                                    'note: can assume auto-indent
-                                    l = LEN(idecompiledline$)
-                                    layout$ = ""
-                                    FOR i = 1 TO l
-                                        IF ASC(idecompiledline$, i) <> 32 OR i = l THEN
-                                            layout$ = RIGHT$(idecompiledline$, l - i + 1)
-                                            EXIT FOR
-                                        END IF
-                                    NEXT
-                                END IF
-
-                                IF LEN(layout$) THEN
-                                    layout$ = indent$ + layout$
-                                    IF idecompiledline$ <> layout$ THEN
-                                        idesetline idecompiledline, layout$
-                                    END IF
-                                END IF 'len(layout$) after modification
-
-                            END IF 'len(layout$)
-
-                        END IF 'using layout/indent
-                        '---------------------------------------------------------------
+                        indented$ = apply_layout_indent$(idecompiledline$)
+                        IF len(indented$) _ANDALSO idecompiledline$ <> indented$ THEN idesetline idecompiledline, indented$
 
                         idecompiledline = idecompiledline + 1
                         idecompiledline$ = idegetline(idecompiledline)
@@ -695,7 +620,7 @@ FUNCTION ide2 (ignore)
 
         'previous line was OK, so use layout if available
 
-        IF ideautolayout = 0 AND ideautoindent = 0 THEN
+        IF IDEAutoLayout = 0 AND IDEAutoIndent = 0 THEN
 
             layout$ = ""
             idelayoutallow = 0
@@ -713,7 +638,7 @@ FUNCTION ide2 (ignore)
                     END IF
                 NEXT
 
-                IF ideautolayout THEN
+                IF IDEAutoLayout THEN
                     spacelayout:
                     ignoresp = 0
                     FOR i = 1 TO LEN(layout$)
@@ -727,7 +652,7 @@ FUNCTION ide2 (ignore)
                     NEXT
                 END IF
 
-                IF ideautoindent = 0 THEN
+                IF IDEAutoIndent = 0 THEN
                     'note: can assume auto-format
                     'calculate old indent (if any)
                     a$ = idecompiledline$
@@ -740,10 +665,10 @@ FUNCTION ide2 (ignore)
                     NEXT
                     indent$ = SPACE$(indent)
                 ELSE
-                    indent$ = SPACE$(indent * ideautoindentsize)
+                    indent$ = SPACE$(indent * IDEAutoIndentSize)
                 END IF
 
-                IF ideautolayout = 0 THEN
+                IF IDEAutoLayout = 0 THEN
                     'note: can assume auto-indent
                     a$ = idecompiledline$
                     layout$ = ""
@@ -890,7 +815,7 @@ FUNCTION ide2 (ignore)
             IF ready THEN
                 IF IDEShowErrorsImmediately THEN
                     _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                    IF ideautolayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                     statusarealink = 0
                     IF totalWarnings > 0 AND showexecreated = 0 THEN
                         COLOR 11, 1
@@ -1068,7 +993,7 @@ FUNCTION ide2 (ignore)
                 IF IDEShowErrorsImmediately <> 0 OR IDECompilationRequested <> 0 OR compfailed <> 0 THEN
                     IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
                     UpdateIdeInfo
-                    IF ideautolayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
 
                     clearStatusWindow 0
                     'scrolling unavailable, but may span multiple lines
@@ -3129,7 +3054,7 @@ FUNCTION ide2 (ignore)
                                         menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
                                     ELSE
                                         _PRINTSTRING (2, idewy - 3),  "OK" 'report OK status
-                                        IF ideautolayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                                        IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                                         statusarealink = 0
                                         IF totalWarnings > 0 THEN
                                             COLOR 11, 1
@@ -4133,7 +4058,7 @@ FUNCTION ide2 (ignore)
                 IF LEN(RTRIM$(MID$(a$, 1, idecx - 1))) = 0 THEN
                     'Only spaces behind. If we're on a tab stop, let's go back in tabs.
                     x = 4
-                    IF ideautoindentsize <> 0 THEN x = ideautoindentsize
+                    IF IDEAutoIndentSize <> 0 THEN x = IDEAutoIndentSize
                     check.tabstop! = (idecx - 1) / x
                     IF check.tabstop! = FIX(check.tabstop!) THEN
                         IF idecx - x < 1 THEN x = idecx - 1
@@ -4173,7 +4098,7 @@ FUNCTION ide2 (ignore)
                 IF KSHIFT OR K$ = CHR$(25) THEN
                     IdeBlockDecreaseIndent:
                     BlockIndentLevel = 4
-                    IF ideautoindentsize <> 0 THEN BlockIndentLevel = ideautoindentsize
+                    IF IDEAutoIndentSize <> 0 THEN BlockIndentLevel = IDEAutoIndentSize
                     y1 = idecy
                     y2 = ideselecty1
 
@@ -4226,7 +4151,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     IdeBlockIncreaseIndent:
                     BlockIndentLevel = 4
-                    IF ideautoindentsize <> 0 THEN BlockIndentLevel = ideautoindentsize
+                    IF IDEAutoIndentSize <> 0 THEN BlockIndentLevel = IDEAutoIndentSize
                     y1 = idecy
                     y2 = ideselecty1
 
@@ -4276,7 +4201,7 @@ FUNCTION ide2 (ignore)
                 SkipBlockIndent:
                 IF KSHIFT = 0 THEN
                     x = 4
-                    IF ideautoindentsize <> 0 THEN x = ideautoindentsize
+                    IF IDEAutoIndentSize <> 0 THEN x = IDEAutoIndentSize
                     K$ = SPACE$(x - ((idecx - 1) MOD x))
                 ELSE
                     K$ = ""
@@ -6646,7 +6571,7 @@ FUNCTION ide2 (ignore)
             _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
             menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
         ELSE
-            IF ideautolayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+            IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
             IF idefocusline THEN
                 _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
             ELSE
@@ -15015,7 +14940,7 @@ FUNCTION idelayoutbox
     o(i).typ = 4 'check box
     o(i).y = 2
     o(i).nam = idenewtxt("#Auto Spacing & Upper/Lowercase Formatting")
-    o(i).sel = ideautolayout
+    o(i).sel = -IDEAutoLayout
 
     i = i + 1
     ideautolayoutkwcapitalsid = i
@@ -15023,16 +14948,16 @@ FUNCTION idelayoutbox
     o(i).y = 3
     o(i).x = 6
     o(i).nam = idenewtxt("#Keywords in CAPITALS")
-    o(i).sel = ideautolayoutkwcapitals
+    o(i).sel = -IDEAutoLayoutKwCapitals
 
     i = i + 1
     ideautoindentID = i
     o(i).typ = 4 'check box
     o(i).y = 5
     o(i).nam = idenewtxt("Auto #Indent -")
-    o(i).sel = ideautoindent
+    o(i).sel = -IDEAutoIndent
 
-    a2$ = str2$(ideautoindentsize)
+    a2$ = str2$(IDEAutoIndentSize)
     i = i + 1
     ideautoindentsizeid = i
     o(i).typ = 1
@@ -15048,7 +14973,7 @@ FUNCTION idelayoutbox
     o(i).x = 6
     o(i).y = 7
     o(i).nam = idenewtxt("Indent SUBs and #FUNCTIONs")
-    o(i).sel = ideindentsubs
+    o(i).sel = -IDEIndentSubs
 
     i = i + 1
     buttonsid = i
@@ -15168,44 +15093,44 @@ FUNCTION idelayoutbox
         IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT FUNCTION 'cancel
         IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
             'save changes
-            v% = o(ideautolayoutid).sel: IF v% <> 0 THEN v% = 1 'ideautolayout
-            IF ideautolayout <> v% THEN ideautolayout = v%: idelayoutbox = 1
+            v% = o(ideautolayoutid).sel: IF v% <> 0 THEN v% = TRUE 'IDEAutoLayout
+            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: idelayoutbox = 1
 
-            v% = o(ideautolayoutkwcapitalsid).sel: IF v% <> 0 THEN v% = 1 'ideautolayoutkwcapitals
-            IF ideautolayoutkwcapitals <> v% THEN ideautolayoutkwcapitals = v%: idelayoutbox = 1
+            v% = o(ideautolayoutkwcapitalsid).sel: IF v% <> 0 THEN v% = TRUE 'IDEAutoLayoutKwCapitals
+            IF IDEAutoLayoutKwCapitals <> v% THEN IDEAutoLayoutKwCapitals = v%: idelayoutbox = 1
 
-            v% = o(ideautoindentid).sel: IF v% <> 0 THEN v% = 1 'ideautoindent
-            IF ideautoindent <> v% THEN ideautoindent = v%: idelayoutbox = 1
+            v% = o(ideautoindentid).sel: IF v% <> 0 THEN v% = TRUE 'IDEAutoIndent
+            IF IDEAutoIndent <> v% THEN IDEAutoIndent = v%: idelayoutbox = 1
 
-            v$ = idetxt(o(ideautoindentsizeid).txt) 'ideautoindentsize
+            v$ = idetxt(o(ideautoindentsizeid).txt) 'IDEAutoIndentSize
             IF v$ = "" THEN v$ = "4"
             v% = VAL(v$)
             IF v% < 0 OR v% > 64 THEN v% = 4
-            IF ideautoindentsize <> v% THEN
-                ideautoindentsize = v%
-                IF ideautoindent <> 0 THEN idelayoutbox = 1
+            IF IDEAutoIndentSize <> v% THEN
+                IDEAutoIndentSize = v%
+                IF IDEAutoIndent <> 0 THEN idelayoutbox = 1
             END IF
 
-            v% = o(ideindentsubsid).sel: IF v% <> 0 THEN v% = 1 'ideindentsubs
-            IF ideindentsubs <> v% THEN ideindentsubs = v%: idelayoutbox = 1
+            v% = o(ideindentsubsid).sel: IF v% <> 0 THEN v% = TRUE 'IDEIndentSubs
+            IF IDEIndentSubs <> v% THEN IDEIndentSubs = v%: idelayoutbox = 1
 
-            IF ideautolayout THEN
+            IF IDEAutoLayout THEN
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", "True"
             ELSE
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", "False"
             END IF
-            IF ideautolayoutkwcapitals THEN
+            IF IDEAutoLayoutKwCapitals THEN
                 WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "True"
             ELSE
                 WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
             END IF
-            IF ideautoindent THEN
+            IF IDEAutoIndent THEN
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", "True"
             ELSE
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", "False"
             END IF
-            WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", STR$(ideautoindentsize)
-            IF ideindentsubs THEN
+            WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", STR$(IDEAutoIndentSize)
+            IF IDEIndentSubs THEN
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", "True"
             ELSE
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", "False"
