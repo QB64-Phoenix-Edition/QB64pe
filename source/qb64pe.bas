@@ -18805,7 +18805,7 @@ END FUNCTION
 'Main entry point for fixoperationorder
 FUNCTION fixoperationorder$ (savea$)
     fixoperationorder = fixoperationorder_rec$(savea$, FALSE)
-end function
+END FUNCTION
 
 'Recursive entry point for fixoperationorder
 FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
@@ -19500,7 +19500,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
                             END IF 'nextc "("
 
                             IF nextc <> 40 THEN 'not "(" : simple variable, zero-argument function or bare array
-                                IF (not bare_arrays and id.t <> 0) OR id.subfunc = 1 or (bare_arrays and id.arraytype <> 0) THEN 'simple variable or zero-argument function or bare array
+                                IF (NOT bare_arrays AND id.t <> 0) OR id.subfunc = 1 OR (bare_arrays AND id.arraytype <> 0) THEN 'simple variable or zero-argument function or bare array
 
                                     IF id.t AND ISUDT THEN
                                         'note: it may or may not be followed by a period (eg. if whole udt is being referred to)
@@ -19677,11 +19677,11 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b = 0 THEN
                 foopassit:
                 IF p1 <> i THEN
-                    bare_array_context = false
-                    if p1 > 2 then
+                    bare_array_context = FALSE
+                    IF p1 > 2 THEN
                         token_before_paren$ = getelement(a$, p1 - 2)
-                        bare_array_context = (token_before_paren$ = "UBOUND" or token_before_paren$ = "LBOUND")
-                    end if
+                        bare_array_context = (token_before_paren$ = "UBOUND" OR token_before_paren$ = "LBOUND")
+                    END IF
                     foo$ = fixoperationorder_rec(getelements(a$, p1, i - 1), bare_array_context)
                     IF Error_Happened THEN EXIT FUNCTION
                     IF LEN(foo$) THEN
