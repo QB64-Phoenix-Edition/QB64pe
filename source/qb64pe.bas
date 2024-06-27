@@ -18802,11 +18802,13 @@ END FUNCTION
 
 
 
-
-
+'Main entry point for fixoperationorder
 FUNCTION fixoperationorder$ (savea$)
-    STATIC uboundlbound AS _BYTE
+    fixoperationorder = fixoperationorder_rec$(savea$, FALSE)
+END FUNCTION
 
+'Recursive entry point for fixoperationorder
+FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
     a$ = savea$
     IF Debug THEN PRINT #9, "fixoperationorder:in:" + a$
 
@@ -18815,7 +18817,6 @@ FUNCTION fixoperationorder$ (savea$)
     n = numelements(a$) 'n is maintained throughout function
 
     IF fooindwel = 1 THEN 'actions to take on initial call only
-        uboundlbound = 0
 
         'Quick check for duplicate binary operations
         uppercasea$ = UCASE$(a$) 'capitalize it once to reduce calls to ucase over and over
@@ -19448,12 +19449,15 @@ FUNCTION fixoperationorder$ (savea$)
 
                             IF Debug THEN PRINT #9, "found id matching " + f2$
 
-                            IF nextc = 40 OR uboundlbound <> 0 THEN '(
+                            'Determine whether we are looking at a function, array or simple variable. Most of the time
+                            'a check for nextc = '(' works, but there are exceptional cases such as UBOUND where an array
+                            'can appear without its () suffix. Because an array and simple variable can exist with the same
+                            'name (and so we may have multiple hash table results), bare_arrays flags that we are evaluating
+                            'in this exceptional context. Furthermore, we explicitly ignore simple variables to ensure the
+                            'array version is used.
+                            IF nextc = 40 THEN '(
 
-                                uboundlbound = 0
-
-                                'function or array?
-                                IF id.arraytype <> 0 OR id.subfunc = 1 THEN
+                                IF id.arraytype <> 0 OR id.subfunc = 1 THEN 'array or function with parameters
                                     'note: even if it's an array of UDTs, the bracketted index will follow immediately
 
                                     'correct name
@@ -19462,9 +19466,6 @@ FUNCTION fixoperationorder$ (savea$)
                                     IF Error_Happened THEN EXIT FUNCTION
                                     IF id.internal_subfunc THEN
                                         f2$ = SCase$(RTRIM$(id.cn)) + s$
-                                        IF (UCASE$(f2$) = "UBOUND" OR UCASE$(f2$) = "LBOUND") THEN
-                                            uboundlbound = 2
-                                        END IF
                                     ELSE
                                         f2$ = RTRIM$(id.cn) + s$
                                     END IF
@@ -19498,8 +19499,8 @@ FUNCTION fixoperationorder$ (savea$)
                                 END IF 'id.arraytype
                             END IF 'nextc "("
 
-                            IF nextc <> 40 THEN 'not "(" (this avoids confusing simple variables with arrays)
-                                IF id.t <> 0 OR id.subfunc = 1 THEN 'simple variable or function (without parameters)
+                            IF nextc <> 40 THEN 'not "(" : simple variable, zero-argument function or bare array
+                                IF (NOT bare_arrays AND id.t <> 0) OR id.subfunc = 1 OR (bare_arrays AND id.arraytype <> 0) THEN 'simple variable or zero-argument function or bare array
 
                                     IF id.t AND ISUDT THEN
                                         'note: it may or may not be followed by a period (eg. if whole udt is being referred to)
@@ -19671,13 +19672,17 @@ FUNCTION fixoperationorder$ (savea$)
         END IF
 
         IF c = 41 OR c = 125 THEN ')}
-            IF uboundlbound THEN uboundlbound = uboundlbound - 1
             b = b - 1
 
             IF b = 0 THEN
                 foopassit:
                 IF p1 <> i THEN
-                    foo$ = fixoperationorder(getelements(a$, p1, i - 1))
+                    bare_array_context = FALSE
+                    IF p1 > 2 THEN
+                        token_before_paren$ = getelement(a$, p1 - 2)
+                        bare_array_context = (token_before_paren$ = "UBOUND" OR token_before_paren$ = "LBOUND")
+                    END IF
+                    foo$ = fixoperationorder_rec(getelements(a$, p1, i - 1), bare_array_context)
                     IF Error_Happened THEN EXIT FUNCTION
                     IF LEN(foo$) THEN
                         aa$ = aa$ + foo$ + sp
@@ -19738,7 +19743,7 @@ FUNCTION fixoperationorder$ (savea$)
     IF Debug THEN PRINT #9, "fixoperationorder:return:" + aa$
     IF Debug THEN PRINT #9, "fixoperationorder:layout:" + ff$
     tlayout$ = ff$
-    fixoperationorder$ = aa$
+    fixoperationorder_rec$ = aa$
 
     fooindwel = fooindwel - 1
 END FUNCTION
