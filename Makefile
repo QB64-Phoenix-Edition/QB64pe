@@ -313,11 +313,8 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	endif
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
-	LICENSE_IN_USE += miniaudio stbvorbis libxmp-lite radv2 hivelytracker qoa
+	LICENSE_IN_USE += miniaudio stbvorbis libxmp-lite radv2 hivelytracker qoa foo_midi ymfmidi primesynth tinysoundfont
 
-	ifdef DEP_AUDIO_DECODE_MIDI
-		LICENSE_IN_USE += tinysoundfont tinymidiloader
-	endif
 else
 	EXE_LIBS += $(MINIAUDIO_STUB_OBJS)
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
