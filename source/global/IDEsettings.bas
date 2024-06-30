@@ -1,3 +1,4 @@
+DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwCapitals, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs 
 DIM SHARED IDECommentColor AS _UNSIGNED LONG, IDEMetaCommandColor AS _UNSIGNED LONG
 DIM SHARED IDEQuoteColor AS _UNSIGNED LONG, IDETextColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LONG
@@ -14,7 +15,7 @@ DIM SHARED IDEShowErrorsImmediately AS _BYTE
 DIM SHARED ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
 DIM SHARED IgnoreWarnings AS _BYTE, qb64versionprinted AS _BYTE
 DIM SHARED DisableSyntaxHighlighter AS _BYTE, ExeToSourceFolderFirstTimeMsg AS _BYTE
-DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE, ideautolayoutkwcapitals AS _BYTE
+DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE
 DIM SHARED WatchListToConsole AS _BYTE
 DIM SHARED windowSettingsSection$, colorSettingsSection$, customDictionarySection$
 DIM SHARED mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$
@@ -22,11 +23,11 @@ DIM SHARED colorSchemesSection$, debugSettingsSection$, iniFolderIndex$, ConfigF
 DIM SHARED compilerSettingsSection$
 DIM SHARED idebaseTcpPort AS LONG, AutoAddDebugCommand AS _BYTE
 DIM SHARED wikiBaseAddress$
-DIM SHARED MaxParallelProcesses AS _UNSIGNED LONG
+DIM SHARED MaxParallelProcesses AS LONG
 DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
-DIM SHARED StripDebugSymbols AS _UNSIGNED LONG
-DIM SHARED OptimizeCppProgram AS _UNSIGNED LONG
-DIM SHARED GenerateLicenseFile AS _UNSIGNED LONG
+DIM SHARED StripDebugSymbols AS LONG
+DIM SHARED OptimizeCppProgram AS LONG
+DIM SHARED GenerateLicenseFile AS LONG
 DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
 
 ConfigFile$ = "internal/config.ini"
@@ -286,13 +287,13 @@ END IF
 
 IF ReadConfigSetting(displaySettingsSection$, "IDE_KeywordCapital", value$) THEN
     IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-        ideautolayoutkwcapitals = -1
+        IDEAutoLayoutKwCapitals = TRUE
     ELSE
-        ideautolayoutkwcapitals = 0
+        IDEAutoLayoutKwCapitals = FALSE
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
     END IF
 ELSE
-    ideautolayoutkwcapitals = 0
+    IDEAutoLayoutKwCapitals = FALSE
     WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
 END IF
 
@@ -335,48 +336,48 @@ IF IDENormalCursorEnd < 0 OR IDENormalCursorEnd > 31 OR result = 0 THEN
 END IF
 
 result = ReadConfigSetting(displaySettingsSection$, "IDE_AutoFormat", value$)
-ideautolayout = VAL(value$)
-IF UCASE$(value$) = "TRUE" OR ideautolayout <> 0 THEN
-    ideautolayout = 1
+IDEAutoLayout = VAL(value$)
+IF UCASE$(value$) = "TRUE" OR IDEAutoLayout <> 0 THEN
+    IDEAutoLayout = TRUE
 ELSE
     IF UCASE$(value$) <> "FALSE" AND value$ <> "0" THEN
         WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", "True"
-        ideautolayout = 1
+        IDEAutoLayout = TRUE
     ELSE
-        ideautolayout = 0
+        IDEAutoLayout = FALSE
     END IF
 END IF
 
 result = ReadConfigSetting(displaySettingsSection$, "IDE_AutoIndent", value$)
-ideautoindent = VAL(value$)
-IF UCASE$(value$) = "TRUE" OR ideautoindent <> 0 THEN
-    ideautoindent = 1
+IDEAutoIndent = VAL(value$)
+IF UCASE$(value$) = "TRUE" OR IDEAutoIndent <> 0 THEN
+    IDEAutoIndent = TRUE
 ELSE
     IF UCASE$(value$) <> "FALSE" AND value$ <> "0" THEN
         WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", "True"
-        ideautoindent = 1
+        IDEAutoIndent = TRUE
     ELSE
-        ideautoindent = 0
+        IDEAutoIndent = FALSE
     END IF
 END IF
 
 result = ReadConfigSetting(displaySettingsSection$, "IDE_IndentSUBs", value$)
-ideindentsubs = VAL(value$)
-IF UCASE$(value$) = "TRUE" OR ideindentsubs <> 0 THEN
-    ideindentsubs = 1
+IDEIndentSubs = VAL(value$)
+IF UCASE$(value$) = "TRUE" OR IDEIndentSubs <> 0 THEN
+    IDEIndentSubs = TRUE
 ELSE
     IF UCASE$(value$) <> "FALSE" AND value$ <> "0" THEN
         WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", "True"
-        ideindentsubs = 1
+        IDEIndentSubs = TRUE
     ELSE
-        ideindentsubs = 0
+        IDEIndentSubs = FALSE
     END IF
 END IF
 
 result = ReadConfigSetting(displaySettingsSection$, "IDE_IndentSize", value$)
-ideautoindentsize = VAL(value$)
-IF ideautoindentsize < 1 OR ideautoindentsize > 64 THEN
-    ideautoindentsize = 4
+IDEAutoIndentSize = VAL(value$)
+IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN
+    IDEAutoIndentSize = 4
     WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", "4"
 END IF
 
