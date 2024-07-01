@@ -32,13 +32,8 @@ LIBXMP_SRCS := \
 
 LIBXMP_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o,$(LIBXMP_SRCS))
 
-LIBXMP_LIB := $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite.a
-
 $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.c
 	$(CC) -O2 $(CFLAGS) -Wall -DLIBXMP_CORE_PLAYER -DLIBXMP_STATIC $< -c -o $@
-
-$(LIBXMP_LIB): $(LIBXMP_OBJS)
-	$(AR) rcs $@ $^
 
 HIVELY_SRCS := hvl_replay.c
 
@@ -92,5 +87,5 @@ $(PATH_INTERNAL_TEMP)/soundfont.o: $(PATH_INTERNAL_TEMP)/soundfont.sf2
 endif
 endif
 
-CLEAN_LIST += $(LIBXMP_LIB) $(LIBXMP_OBJS) $(HIVELY_OBJS) $(OPAL_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
+CLEAN_LIST += $(LIBXMP_OBJS) $(HIVELY_OBJS) $(OPAL_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
 

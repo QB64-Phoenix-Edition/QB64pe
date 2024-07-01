@@ -299,7 +299,7 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
-	EXE_LIBS += $(MINIAUDIO_OBJS)
+	EXE_LIBS += $(AUDIO_LIB)
 
 	CXXFLAGS += -DDEPENDENCY_AUDIO_MINIAUDIO
 	ifeq ($(OS),lnx)
@@ -316,7 +316,6 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	LICENSE_IN_USE += miniaudio stb_vorbis libxmp-lite radv2 hivelytracker qoa foo_midi ymfmidi primesynth tinysoundfont
 
 else
-	EXE_LIBS += $(MINIAUDIO_STUB_OBJS)
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 

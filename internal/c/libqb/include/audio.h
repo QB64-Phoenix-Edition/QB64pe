@@ -70,6 +70,12 @@ double func__sndrawlen(int32_t handle, int32_t passed);
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
 int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits);
 
+#ifdef DEPENDENCY_AUDIO_MINIAUDIO
 void snd_init();
 void snd_un_init();
 void snd_mainloop();
+#else
+static inline void snd_mainloop() { return; }
+static inline void snd_init() { return; }
+static inline void snd_un_init() { return; }
+#endif
