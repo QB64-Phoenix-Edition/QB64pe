@@ -119,19 +119,30 @@ TINYSOUNDFONT_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/tin
 $(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.cpp
 	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
 
+# ymfmidi
+
+YMFMIDI_SRCS := \
+	patches.cpp \
+	player.cpp
+
+YMFMIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o,$(YMFMIDI_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
 # ma_vtables
 
 MA_VTABLES_SRCS := \
 	hively_ma_vtable.cpp \
 	midi_ma_vtable.cpp \
 	mod_ma_vtable.cpp \
-	qoa_ma_vtable.cpp
-	radv2_ma_vtable.cpp \
+	qoa_ma_vtable.cpp \
+	radv2_ma_vtable.cpp
 
 MA_VTABLES_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(MA_VTABLES_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/%.cpp
 	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
 
-CLEAN_LIST += $(FOO_MIDI_OBJS) $(HIVELYTRACKER_OBJS) $(LIBMIDI_OBJS) $(LIBXMP_OBJS) $(PRIMESYNTH_OBJS) $(OPAL_OBJS) $(TINYSOUNDFONT_OBJS) $(MA_VTABLES_OBJS)
+CLEAN_LIST += $(FOO_MIDI_OBJS) $(HIVELYTRACKER_OBJS) $(LIBMIDI_OBJS) $(LIBXMP_OBJS) $(PRIMESYNTH_OBJS) $(OPAL_OBJS) $(TINYSOUNDFONT_OBJS) $(YMFMIDI_OBJS) $(MA_VTABLES_OBJS)
 

@@ -14,7 +14,7 @@
 #pragma once
 
 // Uncomment this to to print debug messages to stderr
-// #define AUDIO_DEBUG 1
+#define AUDIO_DEBUG 0
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "miniaudio.h"
