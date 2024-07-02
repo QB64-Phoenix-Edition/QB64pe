@@ -12,17 +12,9 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include "libqb-common.h"
-#include <stdio.h>
-#include <string.h>
-
+#include "../framework.h"
 #define LIBXMP_STATIC 1
 #include "libxmp-lite/xmp.h"
-
-#include "vtables.h"
 
 struct ma_modplay {
     // This part is for miniaudio
@@ -95,11 +87,7 @@ static ma_result ma_modplay_read_pcm_frames(ma_modplay *pModplay, void *pFramesO
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (pModplay == NULL) {
+    if (frameCount == 0 || pFramesOut == NULL || pModplay == NULL) {
         return MA_INVALID_ARGS;
     }
 

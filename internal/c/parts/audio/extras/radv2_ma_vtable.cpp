@@ -12,19 +12,11 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include "libqb-common.h"
-#include <stdio.h>
-#include <string.h>
-
+#include "../framework.h"
 #include "radv2/opal.h"
 #define RAD_DETECT_REPEATS 1
-#include "radv2/player20.cpp"
-#include "radv2/validate20.cpp"
-
-#include "vtables.h"
+#include "radv2/player20.hpp"
+#include "radv2/validate20.hpp"
 
 struct ma_radv2 {
     // This part is for miniaudio
@@ -102,11 +94,7 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (!pRadv2) {
+    if (frameCount == 0 || pFramesOut == NULL || pRadv2 == NULL) {
         return MA_INVALID_ARGS;
     }
 

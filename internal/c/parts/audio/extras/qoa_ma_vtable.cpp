@@ -12,22 +12,13 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include "libqb-common.h"
-#include <algorithm>
-#include <cstdio>
-#include <cstring>
-
+#include "../framework.h"
 // Although, QOA files use lossy compression, they can be quite large (like ADPCM compressed audio)
 // We certainly do not want to load these files in memory in one go
 // So, we'll simply exclude the stdio one-shot read/write APIs
 #define QOA_NO_STDIO
 #define QOA_IMPLEMENTATION
 #include "qoa.h"
-
-#include "vtables.h"
 
 struct ma_qoa {
     // This part is for miniaudio
@@ -120,11 +111,7 @@ static ma_result ma_qoa_read_pcm_frames(ma_qoa *pQOA, void *pFramesOut, ma_uint6
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (pQOA == NULL) {
+    if (frameCount == 0 || pFramesOut == NULL || pQOA == NULL) {
         return MA_INVALID_ARGS;
     }
 

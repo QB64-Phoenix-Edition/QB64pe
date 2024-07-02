@@ -13,14 +13,8 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include <cstring>
-
+#include "../framework.h"
 #include "hivelytracker/hvl_replay.h"
-
-#include "vtables.h"
 
 constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximum *hively* frames before timeout
 
@@ -106,11 +100,7 @@ static ma_result ma_hively_read_pcm_frames(ma_hively *pmaHively, void *pFramesOu
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (pmaHively == NULL) {
+    if (frameCount == 0 || pFramesOut == NULL || pmaHively == NULL) {
         return MA_INVALID_ARGS;
     }
 

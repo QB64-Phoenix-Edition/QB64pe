@@ -23,7 +23,10 @@
 // The stb_vorbis implementation must come after the implementation of miniaudio
 #undef STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
-#include "extras/vtables.h"
+#include "framework.h"
+
+// We just need one of these to manage sound banks
+InstrumentBankManager g_InstrumentBankManager;
 
 // Add custom backend (format) vtables here.
 // The order in the array defines the order of priority.

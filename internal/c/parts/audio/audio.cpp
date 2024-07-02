@@ -9,30 +9,16 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "libqb-common.h"
-
-// Set this to 1 if we want to print debug messages to stderr
-#define AUDIO_DEBUG 0
-#include "audio.h"
-
-#define STB_VORBIS_HEADER_ONLY
+#include "cmem.h"
 #include "datetime.h"
-#include "extras/stb_vorbis.c"
+#include "error_handle.h"
 #include "filepath.h"
+#include "framework.h"
+#include "libqb-common.h"
+#include "mem.h"
 #include "miniaudio.h"
 #include "mutex.h"
-#include "error_handle.h"
 #include "qbs.h"
-#include "mem.h"
-#include "cmem.h"
-
-#include <string.h>
-#include <math.h>
-#include <algorithm>
-#include <stack>
-#include <unordered_map>
-#include <vector>
-#include <limits.h>
 
 // This is returned to the caller if handle allocation fails with a -1
 // CreateHandle() does not return 0 because it is a valid internal handle
@@ -43,26 +29,12 @@
 // This is the string that can be passed in the requirements parameter to load a sound from memory
 #define REQUIREMENT_STRING_MEMORY "MEMORY"
 
-#define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
-#define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
-
 // This basically checks if the handle is within vector limits and 'isUsed' is set to true
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
 // Here we are checking > 0 because this is meant to check user handles only
 #define IS_SOUND_HANDLE_VALID(_handle_)                                                                                                                        \
-    ((_handle_) > 0 && (_handle_) < (int32_t)audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&                                           \
+    ((_handle_) > 0 && (_handle_) < (int32_t)audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&                                  \
      !audioEngine.soundHandles[_handle_]->autoKill)
-
-// These attaches our customer backend (format decoders) VTables to various miniaudio structs
-void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
-void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
-
-
-/// @brief A simple FP32 stereo sample frame
-struct SampleFrame {
-    float l;
-    float r;
-};
 
 /// @brief A miniaudiio raw audio stream datasource
 struct RawStream {
@@ -317,104 +289,6 @@ static void RawStreamDestroy(RawStream *pRawStream) {
         AUDIO_DEBUG_PRINT("Raw sound stream destroyed");
     }
 }
-
-/// @brief A class that can manage a list of buffers using unique keys
-class BufferMap {
-  private:
-    /// @brief A buffer that is made up of a raw pointer, size and reference count
-    struct Buffer {
-        void *data;
-        size_t size;
-        size_t refCount;
-    };
-
-    std::unordered_map<intptr_t, Buffer> buffers;
-
-  public:
-    // Delete assignment operators
-    BufferMap &operator=(const BufferMap &) = delete;
-    BufferMap &operator=(BufferMap &&) = delete;
-
-    /// @brief This will simply free all buffers that were allocated
-    ~BufferMap() {
-        for (auto &it : buffers) {
-            free(it.second.data);
-            AUDIO_DEBUG_PRINT("Buffer freed of size %llu", it.second.size);
-        }
-    }
-
-    /// @brief Adds a buffer to the map using a unique key only if it was not added before
-    /// @param data The raw data pointer. The data is copied
-    /// @param size The size of the data
-    /// @param key The unique key that should be used
-    /// @return True if successful
-    bool AddBuffer(const void *data, size_t size, intptr_t key) {
-        if (data && size && key && buffers.find(key) == buffers.end()) {
-            Buffer buf = {};
-
-            buf.data = malloc(size);
-            if (!buf.data)
-                return false;
-
-            buf.size = size;
-            buf.refCount = 1;
-            memcpy(buf.data, data, size);
-            buffers.emplace(key, std::move(buf));
-
-            AUDIO_DEBUG_PRINT("Added buffer of size %llu to map", size);
-            return true;
-        }
-
-        AUDIO_DEBUG_PRINT("Failed to add buffer of size %llu", size);
-        return false;
-    }
-
-    /// @brief Increments the buffer reference count
-    /// @param key The unique key for the buffer
-    void AddRef(intptr_t key) {
-        const auto it = buffers.find(key);
-        if (it != buffers.end()) {
-            auto &buf = it->second;
-            buf.refCount += 1;
-            AUDIO_DEBUG_PRINT("Increased reference count to %llu", buf.refCount);
-        } else {
-            AUDIO_DEBUG_PRINT("Buffer not found");
-        }
-    }
-
-    /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero
-    /// @param key The unique key for the buffer
-    void Release(intptr_t key) {
-        const auto it = buffers.find(key);
-        if (it != buffers.end()) {
-            auto &buf = it->second;
-            buf.refCount -= 1;
-            AUDIO_DEBUG_PRINT("Decreased reference count to %llu", buf.refCount);
-
-            if (buf.refCount < 1) {
-                free(buf.data);
-                AUDIO_DEBUG_PRINT("Buffer freed of size %llu", buf.size);
-                buffers.erase(key);
-            }
-        } else {
-            AUDIO_DEBUG_PRINT("Buffer not found");
-        }
-    }
-
-    /// @brief Gets the raw pointer and size of the buffer with the given key
-    /// @param key The unique key for the buffer
-    /// @return An std::pair of the buffer raw pointer and size
-    std::pair<const void *, size_t> GetBuffer(intptr_t key) const {
-        const auto it = buffers.find(key);
-        if (it == buffers.end()) {
-            AUDIO_DEBUG_PRINT("Buffer not found");
-            return {nullptr, 0};
-        }
-        const auto &buf = it->second;
-        AUDIO_DEBUG_PRINT("Returning buffer of size %llu", buf.size);
-        return {buf.data, buf.size};
-    }
-};
 
 /// @brief This is a PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY
 class PSG {
@@ -1309,7 +1183,7 @@ struct SoundHandle {
     ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
     RawStream *rawStream;                       // Raw sample frame queue
     void *memLockOffset;                        // This is a pointer from new_mem_lock()
-    uint64_t memLockId;                           // This is mem_lock_id created by new_mem_lock()
+    uint64_t memLockId;                         // This is mem_lock_id created by new_mem_lock()
 
     // Delete copy and move constructors and assignments
     SoundHandle(const SoundHandle &) = delete;

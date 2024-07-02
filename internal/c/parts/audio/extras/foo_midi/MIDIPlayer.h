@@ -36,6 +36,7 @@ class MIDIPlayer {
     void Configure(MIDIFlavor midiFlavor, bool filterEffects);
 
     uint32_t GetPosition() const noexcept { return uint32_t((uint64_t(_Position) * 1000ul) / uint64_t(_SampleRate)); }
+    uint32_t GetFramePosition() const noexcept { return _Position; }
 
     // Should return the block size that the player expects, otherwise 0.
     virtual uint32_t GetSampleBlockSize() const noexcept { return 0; }
