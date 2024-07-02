@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------------------------------------
+// foo_midi: A foobar2000 component to play MIDI files (https://github.com/stuerp/foo_midi)
+// Copyright (c) 2022-2024 Peter Stuer
+//
+// Modified by a740g for QB64-PE
+//----------------------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 #include "../primesynth/primesynth.h"

@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------------------------------------
+// foo_midi: A foobar2000 component to play MIDI files (https://github.com/stuerp/foo_midi)
+// Copyright (c) 2022-2024 Peter Stuer
+//
+// This file was written from scratch for QB64-PE
+//----------------------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 #include "filepath.h"

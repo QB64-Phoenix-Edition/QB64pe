@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 //    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
 //   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
 //  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
@@ -9,12 +9,12 @@
 //
 //  This file has things that is used across multiple parts of the audio library
 //
-//-----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #pragma once
 
 // Uncomment this to to print debug messages to stderr
-#define AUDIO_DEBUG 0
+// #define AUDIO_DEBUG 1
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "miniaudio.h"
@@ -33,6 +33,7 @@
 #define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
 
 #ifndef MA_DEFAULT_SAMPLE_RATE
+// Since this is used by the extended decoder plugins, it does not matter even if miniaudio changes it the future
 #    define MA_DEFAULT_SAMPLE_RATE 48000
 #endif
 
@@ -203,7 +204,7 @@ class DoubleBufferFrameBlock {
         std::memcpy(data, blocks[index].data() + cursor, toCopy * sizeof(SampleFrame)); // copy the data
         cursor += toCopy;                                                               // advance the cursor
 
-        size_t remaining = 0; // we'll set this to zero in case we copy less than requested
+        size_t remaining = 0; // we'll set this to zero in case we copy the exact number of frames requested
 
         if (toCopy < frames) {
             // Switch to the other block since we copied less than requested

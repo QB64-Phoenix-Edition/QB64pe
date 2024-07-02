@@ -1,16 +1,9 @@
-//----------------------------------------------------------------------------------------------------
-//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
-//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                                |___/
-//
+//----------------------------------------------------------------------------------------------------------------------
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //  This implements a data source that decodes MOD, S3M, XM & IT files using libxmp-lite
 //  https://github.com/libxmp/libxmp/tree/master/lite (MIT)
-//
-//-----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #include "../framework.h"
 #define LIBXMP_STATIC 1
@@ -305,43 +298,33 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     }
 
     // Allocate some memory for the tune
-    ma_uint8 *tune = new ma_uint8[file_size];
-    if (tune == nullptr) {
-        return MA_OUT_OF_MEMORY;
-    }
+    std::vector<uint8_t> tune(file_size);
 
     // Read the file
-    if (ma_modplay_of_callback__read(pModplay, tune, (int)file_size) < 1) {
-        delete[] tune;
+    if (ma_modplay_of_callback__read(pModplay, &tune[0], (int)file_size) < 1) {
         return MA_IO_ERROR;
     }
 
     // Check if the file is a valid module music
     xmp_test_info xmpTestInfo;
-    int xmpError = xmp_test_module_from_memory(tune, (long)file_size, &xmpTestInfo);
+    int xmpError = xmp_test_module_from_memory(&tune[0], (long)file_size, &xmpTestInfo);
     if (xmpError != 0) {
-        delete[] tune;
         return MA_INVALID_FILE;
     }
 
     // Initialize the player
     pModplay->xmpContext = xmp_create_context();
     if (!pModplay->xmpContext) {
-        delete[] tune;
         return MA_OUT_OF_MEMORY;
     }
 
     // Load the module file
-    xmpError = xmp_load_module_from_memory(pModplay->xmpContext, tune, (long)file_size);
+    xmpError = xmp_load_module_from_memory(pModplay->xmpContext, &tune[0], (long)file_size);
     if (xmpError != 0) {
         xmp_free_context(pModplay->xmpContext);
         pModplay->xmpContext = nullptr;
-        delete[] tune;
         return MA_INVALID_FILE;
     }
-
-    // Free the memory now that we don't need it anymore
-    delete[] tune;
 
     // Initialize the player
     xmpError = xmp_start_player(pModplay->xmpContext, MA_DEFAULT_SAMPLE_RATE, 0);

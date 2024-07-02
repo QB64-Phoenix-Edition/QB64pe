@@ -1,16 +1,9 @@
-//----------------------------------------------------------------------------------------------------
-//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
-//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                                |___/
-//
+//----------------------------------------------------------------------------------------------------------------------
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //  This implements a data source that decodes QOA files
 //  https://qoaformat.org/
-//
-//-----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #include "../framework.h"
 // Although, QOA files use lossy compression, they can be quite large (like ADPCM compressed audio)
@@ -436,11 +429,15 @@ static void ma_qoa_uninit(ma_qoa *pQOA, const ma_allocation_callbacks *pAllocati
 
     (void)pAllocationCallbacks;
 
-    if (pQOA->file)
+    if (pQOA->file) {
         fclose(pQOA->file);
+        pQOA->file = nullptr;
+    }
 
     free(pQOA->buffer);
+    pQOA->buffer = nullptr;
     free(pQOA->sample_data);
+    pQOA->sample_data = nullptr;
 
     ma_data_source_uninit(&pQOA->ds);
 }

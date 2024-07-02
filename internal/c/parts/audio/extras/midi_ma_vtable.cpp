@@ -1,10 +1,4 @@
-//-----------------------------------------------------------------------------------------------------
-//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
-//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                                |___/
-//
+//----------------------------------------------------------------------------------------------------------------------
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //  This implements a data source that decodes MIDI files using:
@@ -15,8 +9,7 @@
 //  stb_vorbis.c from https://github.com/nothings/stb (Public Domain)
 //  TinySoundFont from https://github.com/schellingb/TinySoundFont (MIT license)
 //  ymfmidi (heavily modified) from https://github.com/devinacker/ymfmidi (BSD-3-Clause license)
-//
-//-----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
 #include "../framework.h"
 #include "foo_midi/InstrumentBankManager.h"
@@ -340,7 +333,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     }
 
     if (!pMIDI->sequencer) {
-        return MA_OUT_OF_MEMORY;
+        return MA_INVALID_FILE; // failure here will be mostly due to bad sound bank
     }
 
     // Set sample rate
@@ -419,7 +412,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     } catch (std::exception &e) {
         AUDIO_DEBUG_PRINT("Exception: %s", e.what());
         ma_midi_uninit_common(pMIDI);
-        return MA_OUT_OF_MEMORY;
+        return MA_INVALID_FILE;
     }
 
     AUDIO_DEBUG_PRINT("MIDI initialized");

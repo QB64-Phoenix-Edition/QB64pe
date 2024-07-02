@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------------------------------------
+// foo_midi: A foobar2000 component to play MIDI files (https://github.com/stuerp/foo_midi)
+// Copyright (c) 2022-2024 Peter Stuer
+//
+// Modified by a740g for QB64-PE
+//----------------------------------------------------------------------------------------------------------------------
+
 #include "VSTiPlayer.h"
 
 VSTiPlayer::VSTiPlayer(InstrumentBankManager *ibm) : MIDIPlayer(), instrumentBankManager(ibm) {
@@ -380,7 +387,7 @@ void VSTiPlayer::Render(audio_sample *sampleData, uint32_t sampleCount) {
 
     if (ReadCode() != 0) {
         Shutdown();
-        ::memset(sampleData, 0, size_t(sampleCount) * 2 * sizeof(audio_sample));
+        ::memset(sampleData, 0, size_t(sampleCount) * sizeof(audio_sample) << 1); // clear buffer for stereo channels only!
 
         return;
     }
@@ -392,10 +399,16 @@ void VSTiPlayer::Render(audio_sample *sampleData, uint32_t sampleCount) {
     while (sampleCount != 0) {
         auto ToDo = std::min(sampleCount, renderFrames);
 
-        ReadBytes(&_Samples[0], uint32_t(ToDo * _ChannelCount * sizeof(float)));
+        ReadBytes(&_Samples[0], uint32_t(ToDo * _ChannelCount * sizeof(float))); // read whatever multichannel data we have
 
         // Convert the format of the rendered output.
         for (uint32_t i = 0; i < ToDo; ++i) {
+            // a740g's rant. Feel free to ignore.
+            // Down-mix to stereo. This is sad and probably not the right way to down-mix, but ok.
+            // I have not seen a VSTi that does more than 2 channels but then my VSTi knowledge is limited.
+            // This plugin was specifically created for the Yamaha S-YXG50 VSTi (https://veg.by/en/projects/syxg50/) and it works well with that.
+            // Even the Roland Sound Canvas VSTi works like a champ. Honestly, I do not care about anything else.
+            // So, this will stay this way until someone starts nagging. xD
             float left = 0.0f;
             float right = 0.0f;
 
@@ -407,11 +420,11 @@ void VSTiPlayer::Render(audio_sample *sampleData, uint32_t sampleCount) {
             }
 
             // Average the samples for each channel
-            sampleData[i * 2] = left;      // left channel
-            sampleData[i * 2 + 1] = right; // right channel
+            sampleData[i << 1] = left;        // left channel
+            sampleData[(i << 1) + 1] = right; // right channel
         }
 
-        sampleData += ToDo * 2;
+        sampleData += ToDo << 1;
         sampleCount -= ToDo;
     }
 }

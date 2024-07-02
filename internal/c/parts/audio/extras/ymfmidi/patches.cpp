@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------------------------------------
+// ymfmidi: OPL3 MIDI player using the ymfm emulation core (https://github.com/devinacker/ymfmidi)
+// Copyright (c) 2021-2022, Devin Acker
+//
+// Modified by a740g for QB64-PE
+//----------------------------------------------------------------------------------------------------------------------
+
 #include "patches.h"
 #include "player.h"
 #include <cstring>

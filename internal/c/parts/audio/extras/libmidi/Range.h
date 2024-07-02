@@ -1,3 +1,4 @@
+
 /** $VER: Range.h (2024.05.11) P. Stuer **/
 
 #pragma once

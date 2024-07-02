@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------------------------------------
+// foo_midi: A foobar2000 component to play MIDI files (https://github.com/stuerp/foo_midi)
+// Copyright (c) 2022-2024 Peter Stuer
+//
+// Modified by a740g for QB64-PE
+//----------------------------------------------------------------------------------------------------------------------
+
 #include "OpalPlayer.h"
 
 OpalPlayer::OpalPlayer(InstrumentBankManager *ibm) : MIDIPlayer(), instrumentBankManager(ibm), synth(nullptr) {}

@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -20,11 +21,10 @@
 #define TOSTRING_IMPL(x) #x
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
-#ifdef _DEBUG
-#    define _RCP_VERBOSE
-#else
-#    undef _RCP_VERBOSE
-#endif
+// Force-disable all trace messages. Enabling this will cause compile and link errors
+#undef _RCP_VERBOSE
+
+// a740g: Microsoft's _countof replacement for *nix
 
 #ifndef _countof
 #    ifndef __cplusplus
@@ -33,6 +33,8 @@
 template <typename T, size_t N> static inline constexpr size_t _countof(T const (&_Array)[N]) { return std::extent<T[N]>::value; }
 #    endif
 #endif
+
+// a740g: Microsoft's strsafe.h replacements (sigh!)
 
 static inline auto strcat_safe(char *dest, size_t destsz, const char *src) {
     if (dest && src && destsz) {
