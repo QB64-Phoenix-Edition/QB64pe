@@ -378,12 +378,9 @@ void VSTiPlayer::Render(audio_sample *sampleData, uint32_t sampleCount) {
     WriteBytes(static_cast<uint32_t>(VSTHostCommand::RenderSamples));
     WriteBytes(sampleCount);
 
-    const uint32_t Code = ReadCode();
-
-    if (Code != 0) {
+    if (ReadCode() != 0) {
         Shutdown();
-
-        ::memset(sampleData, 0, (size_t)sampleCount * _ChannelCount * sizeof(audio_sample));
+        ::memset(sampleData, 0, size_t(sampleCount) * 2 * sizeof(audio_sample));
 
         return;
     }
@@ -393,15 +390,28 @@ void VSTiPlayer::Render(audio_sample *sampleData, uint32_t sampleCount) {
     }
 
     while (sampleCount != 0) {
-        unsigned long ToDo = (sampleCount > renderFrames) ? renderFrames : sampleCount;
+        auto ToDo = std::min(sampleCount, renderFrames);
 
-        ReadBytes(&_Samples[0], (uint32_t)(ToDo * _ChannelCount * sizeof(float)));
+        ReadBytes(&_Samples[0], uint32_t(ToDo * _ChannelCount * sizeof(float)));
 
         // Convert the format of the rendered output.
-        for (size_t i = 0; i < ToDo * _ChannelCount; ++i)
-            sampleData[i] = _Samples[i];
+        for (uint32_t i = 0; i < ToDo; ++i) {
+            float left = 0.0f;
+            float right = 0.0f;
 
-        sampleData += ToDo * _ChannelCount;
+            for (uint32_t j = 0; j < _ChannelCount; ++j) {
+                if (j & 1u)
+                    right += _Samples[i * _ChannelCount + j]; // odd channels go to the right
+                else
+                    left += _Samples[i * _ChannelCount + j]; // even channels go to the left
+            }
+
+            // Average the samples for each channel
+            sampleData[i * 2] = left;      // left channel
+            sampleData[i * 2 + 1] = right; // right channel
+        }
+
+        sampleData += ToDo * 2;
         sampleCount -= ToDo;
     }
 }

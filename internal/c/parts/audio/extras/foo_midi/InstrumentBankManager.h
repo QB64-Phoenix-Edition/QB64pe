@@ -19,7 +19,7 @@ class InstrumentBankManager {
 
     auto GetLocation() { return location; }
 
-    void SetPath(const std::string_view &path);
+    void SetPath(const char *path);
 
     auto GetPath() { return fileName.c_str(); }
 

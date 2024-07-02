@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------------------------------------------------------
-// primesynth: SoundFont-powered MIDI synthesizer
+// primesynth: SoundFont-powered MIDI synthesizer (https://github.com/mosmeh/primesynth)
 // Copyright (c) 2018 mosm
 //
-// Modified and adapted by a740g from https://github.com/mosmeh/primesynth (MIT license)
+// Modified by a740g for QB64-PE
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "primesynth.h"

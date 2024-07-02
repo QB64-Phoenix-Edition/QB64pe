@@ -1,27 +1,27 @@
 #include "InstrumentBankManager.h"
 #include "../../../compression/miniz.h"
 
-void InstrumentBankManager::SetPath(const std::string_view &path) {
-    if (!path.empty()) {
-        if (filepath_has_extension(path.data(), "wopl") || filepath_has_extension(path.data(), "op2") || filepath_has_extension(path.data(), "tmb") ||
-            filepath_has_extension(path.data(), "bnk") || filepath_has_extension(path.data(), "ad") || filepath_has_extension(path.data(), "opl")) {
+void InstrumentBankManager::SetPath(const char *path) {
+    if (path && path[0]) {
+        if (filepath_has_extension(path, "wopl") || filepath_has_extension(path, "op2") || filepath_has_extension(path, "tmb") ||
+            filepath_has_extension(path, "bnk") || filepath_has_extension(path, "ad") || filepath_has_extension(path, "opl")) {
             type = Type::Opal;
             location = Location::File;
             data.clear();
             fileName = path;
-        } else if (filepath_has_extension(path.data(), "sf2")) {
+        } else if (filepath_has_extension(path, "sf2")) {
             type = Type::Primesynth;
             location = Location::File;
             data.clear();
             fileName = path;
-        } else if (filepath_has_extension(path.data(), "sf3") || filepath_has_extension(path.data(), "sfo") || filepath_has_extension(path.data(), "sfogg")) {
+        } else if (filepath_has_extension(path, "sf3") || filepath_has_extension(path, "sfo") || filepath_has_extension(path, "sfogg")) {
             type = Type::TinySoundFont;
             location = Location::File;
             data.clear();
             fileName = path;
         }
 #ifdef _WIN32
-        else if (filepath_has_extension(path.data(), "dll")) {
+        else if (filepath_has_extension(path, "dll")) {
             type = Type::VSTi;
             location = Location::File;
             data.clear();

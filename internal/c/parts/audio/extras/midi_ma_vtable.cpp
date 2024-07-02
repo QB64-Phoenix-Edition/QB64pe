@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
 //    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
 //   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
 //  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
@@ -7,11 +7,14 @@
 //
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
-//  This implements a data source that decodes MIDI files using TinySoundFont + TinyMidiLoader
-//  https://github.com/schellingb/TinySoundFont (MIT)
-//
-//  Soundfont (awe32rom.h) from dos-like
-//  https://github.com/mattiasgustavsson/dos-like (MIT)
+//  This implements a data source that decodes MIDI files using:
+//  foo_midi (heavily modified) from https://github.com/stuerp/foo_midi (MIT license)
+//  libmidi (modified) https://github.com/stuerp/libmidi (MIT license)
+//  Opal (refactored) from https://www.3eality.com/productions/reality-adlib-tracker (Public Domain)
+//  primesynth (heavily modified) from https://github.com/mosmeh/primesynth (MIT license)
+//  stb_vorbis.c from https://github.com/nothings/stb (Public Domain)
+//  TinySoundFont from https://github.com/schellingb/TinySoundFont (MIT license)
+//  ymfmidi (heavily modified) from https://github.com/devinacker/ymfmidi (BSD-3-Clause license)
 //
 //-----------------------------------------------------------------------------------------------------
 
