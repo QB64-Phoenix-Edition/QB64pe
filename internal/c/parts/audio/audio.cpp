@@ -1620,8 +1620,8 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);   // get the buffer pointer and size
         audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, handle);                               // create the ma_sound
     } else {
-        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileNameZ->chr);
         qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
+        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileNameZ->chr);
 
         // Forward the request to miniaudio to open the sound file
         audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, filepath_fix_directory(fileNameZ), audioEngine.soundHandles[handle]->maFlags,

@@ -39,7 +39,7 @@ static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
     &ma_vtable_hively,
     &ma_vtable_midi,
     &ma_vtable_qoa,
-    &ma_vtable_modplay,
+    &ma_vtable_modplay
 };
 // clang-format on
 

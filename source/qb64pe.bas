@@ -1748,7 +1748,7 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     unstableFlags(UNSTABLE_MIDI) = -1
-                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISoundBank instead", "$Unstable:MIDI"
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
@@ -3367,7 +3367,7 @@ DO
 
         IF unstableFlags(UNSTABLE_MIDI) THEN
             IF LEFT$(a3u$, 15) = "$MIDISOUNDFONT:" THEN
-                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISoundBank instead", "$MIDISoundFont"
+                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISOUNDBANK instead", "$MIDISOUNDFONT"
 
                 GOTO finishednonexec
             END IF

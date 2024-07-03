@@ -262,7 +262,7 @@ static ma_result ma_midi_init_internal(const ma_decoding_backend_config *pConfig
         return MA_INVALID_ARGS;
     }
 
-    memset(pMIDI, 0, sizeof(&pMIDI));
+    memset(pMIDI, 0, sizeof(*pMIDI));
     pMIDI->format = ma_format::ma_format_f32; // We'll render 32-bit floating point samples
 
     if (pConfig != NULL && pConfig->preferredFormat == ma_format::ma_format_f32) {
@@ -282,17 +282,32 @@ static ma_result ma_midi_init_internal(const ma_decoding_backend_config *pConfig
     return MA_SUCCESS;
 }
 
-/// @brief Common cleanup routine. Assume pMIDI is valid
+/// @brief Common cleanup routine. Assumes pMIDI is valid
 /// @param pMIDI Valid pointer to a ma_midi object
 static void ma_midi_uninit_common(ma_midi *pMIDI) {
-    delete pMIDI->sequencer;
-    pMIDI->sequencer = nullptr;
-    delete pMIDI->container;
-    pMIDI->container = nullptr;
+    AUDIO_DEBUG_PRINT("Deleting foo_midi objects");
+
+    if (pMIDI->container) {
+        delete pMIDI->container;
+        pMIDI->container = nullptr;
+        AUDIO_DEBUG_PRINT("foo_midi container deleted");
+    }
+
+    if (pMIDI->sequencer) {
+        delete pMIDI->sequencer;
+        pMIDI->sequencer = nullptr;
+        AUDIO_DEBUG_PRINT("foo_midi sequencer deleted");
+    }
+
 #ifdef _WIN32
-    delete pMIDI->frameBlock;
-    pMIDI->frameBlock = nullptr;
+    if (pMIDI->frameBlock) {
+        delete pMIDI->frameBlock;
+        pMIDI->frameBlock = nullptr;
+        AUDIO_DEBUG_PRINT("foo_midi frameBlock deleted");
+    }
 #endif
+
+    AUDIO_DEBUG_PRINT("foo_midi objects deleted");
 }
 
 /// @brief Common init routine for memory and file based MIDI. This does not check any of the parameters and expects them to be valid.
@@ -300,6 +315,9 @@ static void ma_midi_uninit_common(ma_midi *pMIDI) {
 /// @param tune The tune to load
 /// @return Result code (MA_SUCCESS on success)
 static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune, const char *pFilePath) {
+    AUDIO_DEBUG_CHECK(pMIDI != NULL);
+    AUDIO_DEBUG_CHECK(pMIDI->container == nullptr);
+    AUDIO_DEBUG_CHECK(pMIDI->sequencer == nullptr);
     AUDIO_DEBUG_PRINT("Tune size: %llu", tune.size());
 
     // Create the synthesizer based on the sound bank
@@ -347,18 +365,14 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
         return MA_OUT_OF_MEMORY;
     }
 
-    bool success = false;
-
     try {
-        success = midi_processor_t::Process(tune, pFilePath, *pMIDI->container);
-        AUDIO_DEBUG_CHECK(success == true);
+        if (!midi_processor_t::Process(tune, pFilePath, *pMIDI->container)) {
+            ma_midi_uninit_common(pMIDI);
+            AUDIO_DEBUG_PRINT("Not a valid MIDI file");
+            return MA_INVALID_FILE;
+        }
     } catch (std::exception &e) {
         AUDIO_DEBUG_PRINT("Exception: %s", e.what());
-        ma_midi_uninit_common(pMIDI);
-        return MA_INVALID_FILE;
-    }
-
-    if (!success) {
         ma_midi_uninit_common(pMIDI);
         return MA_INVALID_FILE;
     }
