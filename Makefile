@@ -311,12 +311,10 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	ifeq ($(OS),osx)
 		CXXLIBS += -lpthread -lm -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
 	endif
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
 	LICENSE_IN_USE += miniaudio stb_vorbis libxmp-lite radv2 hivelytracker qoa foo_midi ymfmidi primesynth tinysoundfont
-
 else
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
+	EXE_LIBS += $(AUDIO_STUB_OBJS)
 endif
 
 ifneq ($(filter y,$(DEP_ZLIB)),)
