@@ -27810,7 +27810,7 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
                 // lookup for retina/5k output from system_profiler (storing all
                 // outpun in stream)
                 bool b_isRetina, b_is5k;
-                FILE *consoleStream = popen("system_profiler SPDisplaysDataType", "r");
+                FILE *consoleStream = popen("system_profiler SPDisplaysDataType 2>/dev/null", "r");
                 if (consoleStream) {
                     char buffer[128];
                     while (!feof(consoleStream)) {
