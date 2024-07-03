@@ -46,7 +46,7 @@ void InstrumentBankManager::SetData(const uint8_t *data, size_t size, Type type)
         this->type = type;
 
         if (type == Type::Primesynth)
-            type = Type::TinySoundFont; // primesynth cannot load soundfonts from memory
+            this->type = Type::TinySoundFont; // primesynth cannot load soundfonts from memory
     }
 }
 
