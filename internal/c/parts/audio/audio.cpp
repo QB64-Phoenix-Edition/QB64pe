@@ -13,6 +13,7 @@
 #include "datetime.h"
 #include "error_handle.h"
 #include "filepath.h"
+#include "filesystem.h"
 #include "framework.h"
 #include "libqb-common.h"
 #include "mem.h"
@@ -24,10 +25,6 @@
 // CreateHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case
 #define INVALID_SOUND_HANDLE 0
-// This is the string that can be passed in the requirements parameter to stream a sound from storage
-#define REQUIREMENT_STRING_STREAM "STREAM"
-// This is the string that can be passed in the requirements parameter to load a sound from memory
-#define REQUIREMENT_STRING_MEMORY "MEMORY"
 
 // This basically checks if the handle is within vector limits and 'isUsed' is set to true
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
@@ -409,7 +406,7 @@ class PSG {
                 destination[i] += noteBuffer[i] * rampFactor; // apply the ramp factor to the sample and mix it with the destination buffer
             }
 
-            AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames mixed = %llu", waveformType, neededFrames, generatedFrames);
+            AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames mixed = %llu", int(waveformType), neededFrames, generatedFrames);
         } else {
             // Copy the samples to the buffer
             for (size_t i = 0; i < generatedFrames; i++) {
@@ -424,7 +421,7 @@ class PSG {
                 destination[i] = noteBuffer[i] * rampFactor; // apply the ramp factor to the sample
             }
 
-            AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames generated = %llu", waveformType, neededFrames, generatedFrames);
+            AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames generated = %llu", int(waveformType), neededFrames, generatedFrames);
         }
     }
 
@@ -534,7 +531,7 @@ class PSG {
 
         waveformType = waveType;
 
-        AUDIO_DEBUG_PRINT("Waveform type set to %i", waveformType);
+        AUDIO_DEBUG_PRINT("Waveform type set to %i", int(waveformType));
     }
 
     /// @brief Sets the amplitude of the waveform
@@ -1278,7 +1275,7 @@ struct AudioEngine {
         // This will help us quickly allocate a free handle and should be a decent optimization for SndPlayCopy()
         for (h = lowestFreeHandle; h < vectorSize; h++) {
             if (!soundHandles[h]->isUsed) {
-                AUDIO_DEBUG_PRINT("Recent sound handle %i recycled", h);
+                AUDIO_DEBUG_PRINT("Recent sound handle %zu recycled", h);
                 break;
             }
         }
@@ -1289,7 +1286,7 @@ struct AudioEngine {
             // Also, this loop should not execute if size is 0
             for (h = 0; h < vectorSize; h++) {
                 if (!soundHandles[h]->isUsed) {
-                    AUDIO_DEBUG_PRINT("Sound handle %i recycled", h);
+                    AUDIO_DEBUG_PRINT("Sound handle %zu recycled", h);
                     break;
                 }
             }
@@ -1314,7 +1311,7 @@ struct AudioEngine {
 
             h = newVectorSize - 1; // The handle is simply newVectorSize - 1
 
-            AUDIO_DEBUG_PRINT("Sound handle %i created", h);
+            AUDIO_DEBUG_PRINT("Sound handle %zu created", h);
         }
 
         AUDIO_DEBUG_CHECK(soundHandles[h]->isUsed == false);
@@ -1335,7 +1332,7 @@ struct AudioEngine {
         soundHandles[h]->memLockOffset = nullptr;
         soundHandles[h]->isUsed = true;
 
-        AUDIO_DEBUG_PRINT("Sound handle %i returned", h);
+        AUDIO_DEBUG_PRINT("Sound handle %zu returned", h);
 
         lowestFreeHandle = h + 1; // Set lowestFreeHandle to allocated handle + 1
 
@@ -1568,64 +1565,73 @@ static ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int3
     return MA_SUCCESS;
 }
 
-/// <summary>
-/// This loads a sound file into memory and returns a LONG handle value above 0.
-/// </summary>
-/// <param name="fileName">The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports</param>
-/// <param name="requirements">This is leftover from the old QB64-SDL days. But we use this to pass some parameters like 'stream'</param>
-/// <param name="passed">How many parameters were passed?</param>
-/// <returns>Returns a valid sound handle (> 0) if successful or 0 if it fails</returns>
-int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
-    // Some QB strings that we'll need
-    static qbs *fileNameZ = nullptr;
-    static qbs *reqs = nullptr;
-
-    if (!audioEngine.isInitialized || !fileName->len)
+/// @brief This loads a sound file into memory and returns a LONG handle value above 0.
+/// @param qbsFileName The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports.
+/// @param qbsRequirements This is leftover from the old QB64-SDL days. But we use this to pass some parameters like 'stream'
+/// @param passed Optional parameter flag
+/// @return Returns a valid sound handle (> 0) if successful or 0 if it fails
+int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
+    if (!audioEngine.isInitialized || !qbsFileName->len)
         return INVALID_SOUND_HANDLE;
-
-    if (!fileNameZ)
-        fileNameZ = qbs_new(0, 0);
-
-    if (!reqs)
-        reqs = qbs_new(0, 0);
 
     // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
-    if (handle < 1) // We are not expected to open files with handle 0
+    if (handle < 1)
         return INVALID_SOUND_HANDLE;
 
-    // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SoundHandle::Type::STATIC;
+    // Set some sound default properties
+    audioEngine.soundHandles[handle]->type = SoundHandle::Type::STATIC; // set the sound type to static by default
+    audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE;  // set the sound to decode completely first before playing (QB64 default)
+    audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_ASYNC;   // set the sound to decode asynchronously by default
+    bool fromMemory = false;                                            // we'll assume we are loading the sound from disk
 
-    // Prepare the requirements string
-    if (passed && requirements->len)
-        qbs_set(reqs, qbs_ucase(requirements)); // Convert tmp str to perm str
+    AUDIO_DEBUG_PRINT("Sound set to fully decode asynchronously");
 
-    // Set the flags to specify how we want the audio file to be opened
-    if (passed && requirements->len && func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM), 1)) {
-        audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM; // Check if the user wants to stream the file
-        AUDIO_DEBUG_PRINT("Sound will stream");
-    } else {
-        audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE; // Else decode and load the whole sound in memory
-        AUDIO_DEBUG_PRINT("Sound will be fully decoded");
+    if (passed && qbsRequirements->len) {
+        // Parse all flags in one go
+        std::string requirements(reinterpret_cast<char const *>(qbsRequirements->chr), qbsRequirements->len);
+        std::transform(requirements.begin(), requirements.end(), requirements.begin(), ::tolower);
+
+        // Check if user wants to set the stream flag
+        if (requirements.find("stream") != std::string::npos) {
+            audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_STREAM;
+            AUDIO_DEBUG_PRINT("Sound will be streamed");
+        }
+
+        // Check if the user wants to unset the decode flag
+        if (requirements.find("nodecode") != std::string::npos) {
+            audioEngine.soundHandles[handle]->maFlags &= ~MA_SOUND_FLAG_DECODE;
+            AUDIO_DEBUG_PRINT("Sound will not be decoded");
+        }
+
+        // Check if the user wants to unset the async flag
+        if (requirements.find("noasync") != std::string::npos) {
+            audioEngine.soundHandles[handle]->maFlags &= ~MA_SOUND_FLAG_ASYNC;
+            AUDIO_DEBUG_PRINT("Sound will not be decoded asynchronously");
+        }
+
+        // Check for memory flag
+        if (requirements.find("memory") != std::string::npos) {
+            fromMemory = true;
+            AUDIO_DEBUG_PRINT("Sound will be loaded from memory");
+        }
     }
 
     // Load the file from file or memory based on the requirements string
-    if (passed && requirements->len && func_instr(1, reqs, qbs_new_txt(REQUIREMENT_STRING_MEMORY), 1)) {
+    if (fromMemory) {
         // Configure a miniaudio decoder to load the sound from memory
-        AUDIO_DEBUG_PRINT("Loading sound from memory");
-
-        audioEngine.soundHandles[handle]->bufferKey = (intptr_t)fileName->chr;                                      // make a unique key and save it
-        audioEngine.bufferMap.AddBuffer(fileName->chr, fileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
-        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);   // get the buffer pointer and size
-        audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, handle);                               // create the ma_sound
+        audioEngine.soundHandles[handle]->bufferKey = (intptr_t)qbsFileName->chr;                                         // make a unique key and save it
+        audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
+        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
+        audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, handle);                                     // create the ma_sound
     } else {
-        qbs_set(fileNameZ, qbs_add(fileName, qbs_new_txt_len("\0", 1))); // s1 = filename + CHR$(0)
-        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileNameZ->chr);
+        std::string fileName(reinterpret_cast<char const *>(qbsFileName->chr), qbsFileName->len);
+
+        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
 
         // Forward the request to miniaudio to open the sound file
-        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, filepath_fix_directory(fileNameZ), audioEngine.soundHandles[handle]->maFlags,
-                                                       NULL, NULL, &audioEngine.soundHandles[handle]->maSound);
+        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, filepath_fix_directory(fileName), audioEngine.soundHandles[handle]->maFlags, NULL,
+                                                       NULL, &audioEngine.soundHandles[handle]->maSound);
     }
 
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
@@ -1636,6 +1642,7 @@ int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed) {
     }
 
     AUDIO_DEBUG_PRINT("Sound successfully loaded");
+
     return handle;
 }
 
@@ -1819,7 +1826,7 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed
     if (!reqs) {
         // Since this never changes, we can get away by doing this just once
         reqs = qbs_new(0, 0);
-        qbs_set(reqs, qbs_new_txt(REQUIREMENT_STRING_STREAM));
+        qbs_set(reqs, qbs_new_txt("stream, nodecode")); // stream the sound and decode during playback
     }
 
     // We will not wrap this in a 'if initialized' block because SndOpen will take care of that
@@ -2188,9 +2195,9 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
         return INVALID_SOUND_HANDLE;
     }
 
-    AUDIO_DEBUG_PRINT("Frames = %i, channels = %i, bits = %i, ma_format = %i, pointer = %p", audioEngine.soundHandles[handle]->maAudioBuffer->ref.sizeInFrames,
-                      audioEngine.soundHandles[handle]->maAudioBuffer->ref.channels, bits, audioEngine.soundHandles[handle]->maAudioBuffer->ref.format,
-                      audioEngine.soundHandles[handle]->maAudioBuffer->ref.pData);
+    AUDIO_DEBUG_PRINT("Frames = %llu, channels = %i, bits = %i, ma_format = %i, pointer = %p",
+                      audioEngine.soundHandles[handle]->maAudioBuffer->ref.sizeInFrames, audioEngine.soundHandles[handle]->maAudioBuffer->ref.channels, bits,
+                      audioEngine.soundHandles[handle]->maAudioBuffer->ref.format, audioEngine.soundHandles[handle]->maAudioBuffer->ref.pData);
 
     return handle;
 }
@@ -2218,7 +2225,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
 
     // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
     if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC) {
-        AUDIO_DEBUG_PRINT("Invalid handle (%i) or sound type (%i)", handle, audioEngine.soundHandles[handle]->type);
+        AUDIO_DEBUG_PRINT("Invalid handle (%i) or sound type (%i)", handle, int(audioEngine.soundHandles[handle]->type));
         return mb;
     }
 
@@ -2325,9 +2332,82 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
     mb.sound = handle;                                           // Copy the handle
     mb.image = 0;                                                // Not needed. Set to 0
 
-    AUDIO_DEBUG_PRINT("ElementSize = %lli, size = %lli, type = %lli, pointer = %p", mb.elementsize, mb.size, mb.type, mb.offset);
+    AUDIO_DEBUG_PRINT("ElementSize = %lli, size = %lli, type = %lli, pointer = %lld", mb.elementsize, mb.size, mb.type, mb.offset);
 
     return mb;
+}
+
+/// @brief Handles loading different sound bank formats based on the provided filename and requirements.
+/// @param qbsFileName The filename or qbs buffer for the sound bank
+/// @param qbsRequirements The requirements for the sound bank (can be "memory" and one of the allowed formats)
+/// @param passed Optional parameter flag
+void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
+    enum struct SoundBankFormat { WOPL = 0, OP2, TMB, OPL, SF2, SF3, SFO, AD, UNKNOWN };
+    static const char *SoundBankName[] = {"wopl", "op2", "tmb", "opl", "sf2", "sf3", "sfo", "ad", "unknown"};
+
+    if (!audioEngine.isInitialized || !qbsFileName->len) {
+        AUDIO_DEBUG_PRINT("Invalid parameters passed");
+        return;
+    }
+
+    bool fromMemory = false;                           // by default we'll assume we are loading from a file on disk
+    SoundBankFormat format = SoundBankFormat::UNKNOWN; // set to unknown by default
+
+    if (passed && qbsRequirements->len) {
+        // Parse the requirements string
+        std::string requirements(reinterpret_cast<const char *>(qbsRequirements->chr), qbsRequirements->len);
+        std::transform(requirements.begin(), requirements.end(), requirements.begin(), ::tolower);
+
+        AUDIO_DEBUG_PRINT("Parsing requirements string: %s", requirements.c_str());
+
+        if (requirements.find("memory") != std::string::npos) {
+            fromMemory = true;
+            AUDIO_DEBUG_PRINT("Sound bank will be loaded from memory");
+        }
+
+        for (auto i = 0; i < GET_ARRAY_SIZE(SoundBankName); i++) {
+            AUDIO_DEBUG_PRINT("Checking for: %s", SoundBankName[i]);
+            if (requirements.find(SoundBankName[i]) != std::string::npos) {
+                format = SoundBankFormat(i);
+                AUDIO_DEBUG_PRINT("Found: %s", SoundBankName[int(format)]);
+                break;
+            }
+        }
+    }
+
+    if (fromMemory) {
+        // Only bother setting up the format if we are loading from memory
+        switch (format) {
+        case SoundBankFormat::SF2:
+            g_InstrumentBankManager.SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::Primesynth);
+            AUDIO_DEBUG_PRINT("Uncompressed SondFont");
+            break;
+
+        case SoundBankFormat::SF3:
+        case SoundBankFormat::SFO:
+            g_InstrumentBankManager.SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::TinySoundFont);
+            AUDIO_DEBUG_PRINT("Compressed SondFont");
+            break;
+
+        case SoundBankFormat::AD:
+        case SoundBankFormat::OP2:
+        case SoundBankFormat::OPL:
+        case SoundBankFormat::TMB:
+        case SoundBankFormat::WOPL:
+            g_InstrumentBankManager.SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::Opal);
+            AUDIO_DEBUG_PRINT("FM Bank");
+            break;
+
+        default:
+            AUDIO_DEBUG_PRINT("Unknown format");
+            return;
+        }
+    } else {
+        if (func__fileexists(qbsFileName)) {
+            std::string fileName(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len);
+            g_InstrumentBankManager.SetPath(fileName.c_str());
+        }
+    }
 }
 
 /// @brief This initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results

@@ -30,6 +30,7 @@
 #include <vector>
 
 #define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
+#define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
 #define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
 
 #ifndef MA_DEFAULT_SAMPLE_RATE

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "../TinySoundFont/tsf.h"
+#include "../tinysoundfont/tsf.h"
 #include "InstrumentBankManager.h"
 #include "MIDIPlayer.h"
 

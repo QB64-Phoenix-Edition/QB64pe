@@ -287,24 +287,18 @@ static ma_result ma_midi_init_internal(const ma_decoding_backend_config *pConfig
 static void ma_midi_uninit_common(ma_midi *pMIDI) {
     AUDIO_DEBUG_PRINT("Deleting foo_midi objects");
 
-    if (pMIDI->container) {
-        delete pMIDI->container;
-        pMIDI->container = nullptr;
-        AUDIO_DEBUG_PRINT("foo_midi container deleted");
-    }
+    delete pMIDI->container;
+    pMIDI->container = nullptr;
+    AUDIO_DEBUG_PRINT("foo_midi container deleted");
 
-    if (pMIDI->sequencer) {
-        delete pMIDI->sequencer;
-        pMIDI->sequencer = nullptr;
-        AUDIO_DEBUG_PRINT("foo_midi sequencer deleted");
-    }
+    delete pMIDI->sequencer;
+    pMIDI->sequencer = nullptr;
+    AUDIO_DEBUG_PRINT("foo_midi sequencer deleted");
 
 #ifdef _WIN32
-    if (pMIDI->frameBlock) {
-        delete pMIDI->frameBlock;
-        pMIDI->frameBlock = nullptr;
-        AUDIO_DEBUG_PRINT("foo_midi frameBlock deleted");
-    }
+    delete pMIDI->frameBlock;
+    pMIDI->frameBlock = nullptr;
+    AUDIO_DEBUG_PRINT("foo_midi frameBlock deleted");
 #endif
 
     AUDIO_DEBUG_PRINT("foo_midi objects deleted");

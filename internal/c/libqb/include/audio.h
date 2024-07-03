@@ -34,7 +34,7 @@ void sub_play(const qbs *str);
 int32_t func_play(int32_t ignore);
 
 int32_t func__sndrate();
-int32_t func__sndopen(qbs *fileName, qbs *requirements, int32_t passed);
+int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 void sub__sndclose(int32_t handle);
 int32_t func__sndcopy(int32_t src_handle);
 void sub__sndplay(int32_t handle);
@@ -59,6 +59,7 @@ double func__sndrawlen(int32_t handle, int32_t passed);
 
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
 int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits);
+void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 
 #ifdef DEPENDENCY_AUDIO_MINIAUDIO
 void snd_init();

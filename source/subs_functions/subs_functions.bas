@@ -2198,6 +2198,17 @@ id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)"
 regid
 
 clearid
+id.n = qb64prefix$ + "MIDISoundBank"
+id.Dependency = DEPENDENCY_MINIAUDIO
+id.subfunc = 2
+id.callname = "sub__midisoundbank"
+id.args = 2
+id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
+id.specialformat = "?[,?]"
+id.hr_syntax = "_MIDISOUNDBANK fileName$[, capabilities$]"
+regid
+
+clearid
 id.n = "Input"
 id.musthave = "$"
 id.subfunc = 1

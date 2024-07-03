@@ -10,8 +10,8 @@
 
 void InstrumentBankManager::SetPath(const char *path) {
     if (path && path[0]) {
-        if (filepath_has_extension(path, "wopl") || filepath_has_extension(path, "op2") || filepath_has_extension(path, "tmb") ||
-            filepath_has_extension(path, "bnk") || filepath_has_extension(path, "ad") || filepath_has_extension(path, "opl")) {
+        if (filepath_has_extension(path, "ad") || filepath_has_extension(path, "opl") || filepath_has_extension(path, "op2") ||
+            filepath_has_extension(path, "tmb") || filepath_has_extension(path, "wopl")) {
             type = Type::Opal;
             location = Location::File;
             data.clear();
@@ -21,7 +21,7 @@ void InstrumentBankManager::SetPath(const char *path) {
             location = Location::File;
             data.clear();
             fileName = path;
-        } else if (filepath_has_extension(path, "sf3") || filepath_has_extension(path, "sfo") || filepath_has_extension(path, "sfogg")) {
+        } else if (filepath_has_extension(path, "sf3") || filepath_has_extension(path, "sfo")) {
             type = Type::TinySoundFont;
             location = Location::File;
             data.clear();
