@@ -317,7 +317,10 @@ else
 	EXE_LIBS += $(AUDIO_STUB_OBJS)
 endif
 
-ifneq ($(filter y,$(DEP_ZLIB)),)
+# The audio library uses the decompression functions from miniz
+ifneq ($(filter y,$(DEP_ZLIB) $(DEP_AUDIO_MINIAUDIO)),)
+	EXE_LIBS += $(COMPRESSION_LIB)
+
 	LICENSE_IN_USE += miniz
 endif
 
