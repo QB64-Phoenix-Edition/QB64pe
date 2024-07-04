@@ -11,6 +11,9 @@ struct qbs;
 /// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
 extern qbs *g_startDir;
 
+bool FS_DirectoryExists(const char *path);
+bool FS_FileExists(const char *path);
+
 qbs *func__cwd();
 qbs *func__dir(qbs *qbsContext);
 int32_t func__direxists(qbs *path);

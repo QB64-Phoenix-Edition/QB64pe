@@ -2403,10 +2403,10 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
             return;
         }
     } else {
-        if (func__fileexists(qbsFileName)) {
-            std::string fileName(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len);
+        std::string fileName(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len);
+
+        if (FS_FileExists(filepath_fix_directory(fileName)))
             g_InstrumentBankManager.SetPath(fileName.c_str());
-        }
     }
 }
 
