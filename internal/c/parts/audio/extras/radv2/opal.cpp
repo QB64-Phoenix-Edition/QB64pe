@@ -14,12 +14,6 @@
 
 */
 
-// This is the Opal OPL3 emulator from Reality Adlib Tracker v2.0a (http://www.3eality.com/productions/reality-adlib-tracker).
-// It was released by Shayde/Reality into the public domain.
-// Minor modifications to silence some warnings and fix a bug in the envelope generator have been applied.
-// Additional fixes by JP Cimalando.
-// Soft panning support by Wohlstand.
-
 #include "opal.h"
 
 // clang-format off
@@ -68,28 +62,6 @@ const uint16_t Opal::LogSinTable[0x100] = {
        7,    7,    6,    6,    5,    5,    5,    4,    4,    4,    3,    3,    3,    2,    2,    2,
        2,    1,    1,    1,    1,    1,    1,    1,    0,    0,    0,    0,    0,    0,    0,    0,
 };
-//--------------------------------------------------------------------------------------------------
-const uint16_t Opal::PanLawTable[128] =
-{
-    65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
-    65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
-    64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
-    62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
-    60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
-    57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
-    54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
-    50433, 49912, 49383, 48846, 48302, 47750, 47191,
-    46340, // Center left
-    46340, // Center right
-    45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
-    40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
-    35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
-    29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
-    23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
-    17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
-    11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
-    4858, 4050, 3240, 2431, 1620, 810, 0
-};
 // clang-format on
 
 //==================================================================================================
@@ -99,7 +71,7 @@ const uint16_t Opal::PanLawTable[128] =
 // https://docs.google.com/document/d/18IGx18NQY_Q1PJVZ-bHywao9bhsDoAqoIn1rIm42nwo/edit
 //==================================================================================================
 #if 0
-#    include <math.h>
+#    include <cmath>
 
 void GenerateTables() {
 
@@ -169,7 +141,7 @@ void Opal::Init(int sample_rate) {
 
     // Add the operators to the channels.  Note, some channels can't use all the operators
     // FIXME: put this into a separate routine
-    const int chan_ops[] = {
+    static constexpr int chan_ops[] = {
         0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20, 24, 25, 26, 30, 31, 32,
     };
 
@@ -186,13 +158,6 @@ void Opal::Init(int sample_rate) {
     // relies on referencing the master and channel objects
     for (int i = 0; i < NumOperators; i++)
         Op[i].ComputeRates();
-
-    // Initialise channel panning at center.
-    for (int i = 0; i < NumChannels; i++) {
-        Chan[i].SetPan(64);
-        Chan[i].SetLeftEnable(true);
-        Chan[i].SetRightEnable(true);
-    }
 
     SetSampleRate(sample_rate);
 }
@@ -216,9 +181,8 @@ void Opal::SetSampleRate(int sample_rate) {
 // Write a value to an OPL3 register.
 //==================================================================================================
 void Opal::Port(uint16_t reg_num, uint8_t val) {
-
     // clang-format off
-    static constexpr int8_t op_lookup[] = {
+    static constexpr int op_lookup[] = {
     //  00  01  02  03  04  05  06  07  08  09  0A  0B  0C  0D  0E  0F
         0,  1,  2,  3,  4,  5,  -1, -1, 6,  7,  8,  9,  10, 11, -1, -1,
     //  10  11  12  13  14  15  16  17  18  19  1A  1B  1C  1D  1E  1F
@@ -230,8 +194,8 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
     // Is it BD, the one-off register stuck in the middle of the register array?
     if (reg_num == 0xBD) {
-        TremoloDepth = (val & 0x80) != 0;
-        VibratoDepth = (val & 0x40) != 0;
+        TremoloDepth = (val & 0x80);
+        VibratoDepth = (val & 0x40);
         return;
     }
 
@@ -246,12 +210,8 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
             for (int i = 0; i < 6; i++, mask <<= 1) {
 
                 // The 4-op channels are 0, 1, 2, 9, 10, 11
-                uint16_t chan = static_cast<uint16_t>(i < 3 ? i : i + 6);
-                // cppcheck false-positive
-                // cppcheck-suppress arrayIndexOutOfBounds
+                uint16_t chan = i < 3 ? i : i + 6;
                 Channel *primary = &Chan[chan];
-                // cppcheck false-positive
-                // cppcheck-suppress arrayIndexOutOfBounds
                 Channel *secondary = &Chan[chan + 3];
 
                 if (val & mask) {
@@ -275,7 +235,7 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
             // CSW / Note-sel
         } else if (reg_num == 0x08) {
 
-            NoteSel = (val & 0x40) != 0;
+            NoteSel = (val & 0x40);
 
             // Get the channels to recompute the Key Scale No. as this varies based on NoteSel
             for (int i = 0; i < NumChannels; i++)
@@ -298,16 +258,15 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
         Channel &chan = Chan[chan_num];
 
-        // Registers Ax and Cx affect both channels
         Channel *chans[2] = {&chan, chan.GetChannelPair()};
-        int numchans = chans[1] ? 2 : 1;
+        unsigned numchans = chans[1] ? 2 : 1;
 
         // Do specific registers
         switch (reg_num & 0xF0) {
 
         // Frequency low
         case 0xA0: {
-            for (int i = 0; i < numchans; i++) {
+            for (unsigned i = 0; i < numchans; ++i) {
                 chans[i]->SetFrequencyLow(val);
             }
             break;
@@ -315,7 +274,7 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
         // Key-on / Octave / Frequency High
         case 0xB0: {
-            for (int i = 0; i < numchans; i++) {
+            for (unsigned i = 0; i < numchans; ++i) {
                 chans[i]->SetKeyOn((val & 0x20) != 0);
                 chans[i]->SetOctave(val >> 2 & 7);
                 chans[i]->SetFrequencyHigh(val & 3);
@@ -325,8 +284,8 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
         // Right Stereo Channel Enable / Left Stereo Channel Enable / Feedback Factor / Modulation Type
         case 0xC0: {
-            chan.SetRightEnable((val & 0x20) != 0);
-            chan.SetLeftEnable((val & 0x10) != 0);
+            chan.SetRightEnable(val & 0x20);
+            chan.SetLeftEnable(val & 0x10);
             chan.SetFeedback(val >> 1 & 7);
             chan.SetModulationType(val & 1);
             break;
@@ -354,10 +313,10 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 
         // Tremolo Enable / Vibrato Enable / Sustain Mode / Envelope Scaling / Frequency Multiplier
         case 0x20: {
-            op.SetTremoloEnable((val & 0x80) != 0);
-            op.SetVibratoEnable((val & 0x40) != 0);
-            op.SetSustainMode((val & 0x20) != 0);
-            op.SetEnvelopeScaling((val & 0x10) != 0);
+            op.SetTremoloEnable(val & 0x80);
+            op.SetVibratoEnable(val & 0x40);
+            op.SetSustainMode(val & 0x20);
+            op.SetEnvelopeScaling(val & 0x10);
             op.SetFrequencyMultiplier(val & 15);
             break;
         }
@@ -393,16 +352,6 @@ void Opal::Port(uint16_t reg_num, uint8_t val) {
 }
 
 //==================================================================================================
-// Set panning on the channel designated by the register number.
-// This is extended functionality.
-//==================================================================================================
-void Opal::Pan(uint16_t reg_num, uint8_t pan) {
-    uint8_t high = (reg_num >> 8) & 1;
-    uint8_t regm = reg_num & 0xff;
-    Chan[9 * high + (regm & 0x0f)].SetPan(pan);
-}
-
-//==================================================================================================
 // Generate sample.  Every time you call this you will get two signed 16-bit samples (one for each
 // stereo channel) which will sound correct when played back at the sample rate given when the
 // class was constructed.
@@ -422,8 +371,8 @@ void Opal::Sample(int16_t *left, int16_t *right) {
 
     // Mix with the partial accumulation
     int32_t omblend = SampleRate - SampleAccum;
-    *left = static_cast<int16_t>((LastOutput[0] * omblend + CurrOutput[0] * SampleAccum) / SampleRate);
-    *right = static_cast<int16_t>((LastOutput[1] * omblend + CurrOutput[1] * SampleAccum) / SampleRate);
+    *left = (LastOutput[0] * omblend + CurrOutput[0] * SampleAccum) / SampleRate;
+    *right = (LastOutput[1] * omblend + CurrOutput[1] * SampleAccum) / SampleRate;
 
     SampleAccum += OPL3SampleRate;
 }
@@ -451,14 +400,14 @@ void Opal::Output(int16_t &left, int16_t &right) {
     else if (leftmix > 0x7FFF)
         left = 0x7FFF;
     else
-        left = static_cast<int16_t>(leftmix);
+        left = leftmix;
 
     if (rightmix < -0x8000)
         right = -0x8000;
     else if (rightmix > 0x7FFF)
         right = 0x7FFF;
     else
-        right = static_cast<int16_t>(rightmix);
+        right = rightmix;
 
     Clock++;
 
@@ -521,12 +470,11 @@ void Opal::Channel::Output(int16_t &left, int16_t &right) {
     else {
         if (clk & 1)
             vibrato >>= 1; // Odd positions are half the magnitude
-
-        vibrato <<= Octave;
-
         if (clk & 4)
             vibrato = -vibrato; // The second half positions are negative
     }
+
+    vibrato <<= Octave;
 
     // Combine individual operator outputs
     int16_t out, acc;
@@ -594,9 +542,6 @@ void Opal::Channel::Output(int16_t &left, int16_t &right) {
 
     left = LeftEnable ? out : 0;
     right = RightEnable ? out : 0;
-
-    left = left * LeftPan / 65536;
-    right = right * RightPan / 65536;
 }
 
 //==================================================================================================
@@ -645,15 +590,6 @@ void Opal::Channel::SetLeftEnable(bool on) { LeftEnable = on; }
 // Enable right stereo channel.
 //==================================================================================================
 void Opal::Channel::SetRightEnable(bool on) { RightEnable = on; }
-
-//==================================================================================================
-// Pan the channel to the position given.
-//==================================================================================================
-void Opal::Channel::SetPan(uint8_t pan) {
-    pan &= 127;
-    LeftPan = PanLawTable[pan];
-    RightPan = PanLawTable[127 - pan];
-}
 
 //==================================================================================================
 // Set the channel feedback amount.
@@ -723,7 +659,7 @@ Opal::Operator::Operator() {
 //==================================================================================================
 // Produce output from operator.
 //==================================================================================================
-int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, int16_t vibrato, int16_t mod, int16_t fbshift) {
+int16_t Opal::Operator::Output(uint16_t keyscalenum, uint32_t phase_step, int16_t vibrato, int16_t mod, int16_t fbshift) {
 
     // Advance wave phase
     if (VibratoEnable)
@@ -771,7 +707,6 @@ int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, in
             break;
 
         // Note: fall-through!
-        [[fallthrough]];
     }
 
     // Release stage
@@ -801,7 +736,7 @@ int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, in
     if (fbshift)
         mod += (Out[0] + Out[1]) >> fbshift;
 
-    uint16_t phase = static_cast<uint16_t>(Phase >> 10) + mod;
+    uint16_t phase = (Phase >> 10) + mod;
     uint16_t offset = phase & 0xFF;
     uint16_t logsin;
     bool negate = false;
@@ -815,7 +750,7 @@ int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, in
         if (phase & 0x100)
             offset ^= 0xFF;
         logsin = Master->LogSinTable[offset];
-        negate = (phase & 0x200) != 0;
+        negate = (phase & 0x200);
         break;
 
     //------------------------------------
@@ -860,7 +795,7 @@ int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, in
                 offset ^= 0xFF;
 
             offset = (offset + offset) & 0xFF;
-            negate = (phase & 0x100) != 0;
+            negate = (phase & 0x100);
         }
 
         logsin = Master->LogSinTable[offset];
@@ -888,7 +823,7 @@ int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, in
     //------------------------------------
     case 6:
         logsin = 0;
-        negate = (phase & 0x200) != 0;
+        negate = (phase & 0x200);
         break;
 
     //------------------------------------
@@ -913,7 +848,8 @@ int16_t Opal::Operator::Output(uint16_t /*keyscalenum*/, uint32_t phase_step, in
     // position given by the 8 LSB's of the input. The value + 1024 (the hidden bit) is then the
     // significand of the floating point output and the yet unused MSB's of the input are the
     // exponent of the floating point output."
-    int16_t v = (Master->ExpTable[mix & 0xFF] + 1024u) >> (mix >> 8u);
+    int16_t v = Master->ExpTable[mix & 0xFF] + 1024;
+    v >>= mix >> 8;
     v += v;
     if (negate)
         v = ~v;
@@ -986,7 +922,7 @@ void Opal::Operator::SetFrequencyMultiplier(uint16_t scale) {
 
     // Needs to be multiplied by two (and divided by two later when we use it) because the first
     // entry is actually .5
-    const uint16_t mul_times_2[] = {
+    static constexpr uint16_t mul_times_2[] = {
         1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24, 30, 30,
     };
 
@@ -998,8 +934,9 @@ void Opal::Operator::SetFrequencyMultiplier(uint16_t scale) {
 //==================================================================================================
 void Opal::Operator::SetKeyScale(uint16_t scale) {
 
-    static const uint8_t KeyScaleShiftTable[4] = {8, 1, 2, 0};
+    static constexpr unsigned KeyScaleShiftTable[4] = {8, 1, 2, 0};
     KeyScaleShift = KeyScaleShiftTable[scale & 3];
+
     ComputeKeyScaleLevel();
 }
 
@@ -1071,7 +1008,7 @@ void Opal::Operator::ComputeRates() {
     int rate_high = combined_rate >> 2;
     int rate_low = combined_rate & 3;
 
-    AttackShift = static_cast<uint16_t>(rate_high < 12 ? 12 - rate_high : 0);
+    AttackShift = rate_high < 12 ? 12 - rate_high : 0;
     AttackMask = (1 << AttackShift) - 1;
     AttackAdd = (rate_high < 12) ? 1 : 1 << (rate_high - 12);
     AttackTab = Master->RateTables[rate_low];
@@ -1084,7 +1021,7 @@ void Opal::Operator::ComputeRates() {
     rate_high = combined_rate >> 2;
     rate_low = combined_rate & 3;
 
-    DecayShift = static_cast<uint16_t>(rate_high < 12 ? 12 - rate_high : 0);
+    DecayShift = rate_high < 12 ? 12 - rate_high : 0;
     DecayMask = (1 << DecayShift) - 1;
     DecayAdd = (rate_high < 12) ? 1 : 1 << (rate_high - 12);
     DecayTab = Master->RateTables[rate_low];
@@ -1093,7 +1030,7 @@ void Opal::Operator::ComputeRates() {
     rate_high = combined_rate >> 2;
     rate_low = combined_rate & 3;
 
-    ReleaseShift = static_cast<uint16_t>(rate_high < 12 ? 12 - rate_high : 0);
+    ReleaseShift = rate_high < 12 ? 12 - rate_high : 0;
     ReleaseMask = (1 << ReleaseShift) - 1;
     ReleaseAdd = (rate_high < 12) ? 1 : 1 << (rate_high - 12);
     ReleaseTab = Master->RateTables[rate_low];
@@ -1104,9 +1041,8 @@ void Opal::Operator::ComputeRates() {
 // operator key scale value.
 //==================================================================================================
 void Opal::Operator::ComputeKeyScaleLevel() {
-
     // clang-format off
-    static constexpr uint8_t levtab[] = {
+    static constexpr uint16_t levtab[] = {
         0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,
         0,      0,      0,      0,      0,      0,      0,      0,      0,      8,      12,     16,     20,     24,     28,     32,
         0,      0,      0,      0,      0,      12,     20,     28,     32,     40,     44,     48,     52,     56,     60,     64,

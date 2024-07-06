@@ -66,7 +66,7 @@ qbs *func__cwd() {
 /// @brief Returns true if the specified directory exists
 /// @param path The directory to check for
 /// @return True if the directory exists
-static inline bool FS_DirectoryExists(const char *path) {
+bool FS_DirectoryExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
 
@@ -434,7 +434,7 @@ int32_t func__direxists(qbs *path) {
 /// @brief Returns true if a file specified exists
 /// @param path The file path to check for
 /// @return True if the file exists
-static inline bool FS_FileExists(const char *path) {
+bool FS_FileExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
 

@@ -1,30 +1,15 @@
-//----------------------------------------------------------------------------------------------------
-//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
-//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                                |___/
-//
+//----------------------------------------------------------------------------------------------------------------------
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //  This implements a data source that decodes Reality Adlib Tracker 2 tunes
 //  https://realityproductions.itch.io/rad (Public Domain)
-//
-//-----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include "libqb-common.h"
-#include <stdio.h>
-#include <string.h>
-
+#include "../framework.h"
 #include "radv2/opal.h"
 #define RAD_DETECT_REPEATS 1
-#include "radv2/player20.cpp"
-#include "radv2/validate20.cpp"
-
-#include "vtables.h"
+#include "radv2/player20.hpp"
+#include "radv2/validate20.hpp"
 
 struct ma_radv2 {
     // This part is for miniaudio
@@ -102,11 +87,7 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (!pRadv2) {
+    if (frameCount == 0 || pFramesOut == NULL || pRadv2 == NULL) {
         return MA_INVALID_ARGS;
     }
 
@@ -411,7 +392,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     }
 
     // Open the file for reading
-    FILE *fd = fopen(pFilePath, "rb");
+    auto fd = fopen(pFilePath, "rb");
     if (!fd) {
         return MA_INVALID_FILE;
     }
@@ -423,7 +404,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     }
 
     // Calculate the length
-    ma_int64 file_size = ftell(fd);
+    auto file_size = ftell(fd);
     if (file_size < 1) {
         fclose(fd);
         return MA_INVALID_FILE;
@@ -443,7 +424,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     }
 
     // Read the file
-    if (fread(pRadv2->tune, file_size, sizeof(uint8_t), fd) < 1) {
+    if (fread(pRadv2->tune, sizeof(uint8_t), file_size, fd) != file_size || ferror(fd)) {
         delete[] pRadv2->tune;
         pRadv2->tune = nullptr;
         fclose(fd);

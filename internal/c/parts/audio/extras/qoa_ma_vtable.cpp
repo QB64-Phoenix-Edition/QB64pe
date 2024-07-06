@@ -1,33 +1,17 @@
-//----------------------------------------------------------------------------------------------------
-//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
-//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                                |___/
-//
+//----------------------------------------------------------------------------------------------------------------------
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //  This implements a data source that decodes QOA files
 //  https://qoaformat.org/
-//
-//-----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include "libqb-common.h"
-#include <algorithm>
-#include <cstdio>
-#include <cstring>
-
+#include "../framework.h"
 // Although, QOA files use lossy compression, they can be quite large (like ADPCM compressed audio)
 // We certainly do not want to load these files in memory in one go
 // So, we'll simply exclude the stdio one-shot read/write APIs
 #define QOA_NO_STDIO
 #define QOA_IMPLEMENTATION
 #include "qoa.h"
-
-#include "vtables.h"
 
 struct ma_qoa {
     // This part is for miniaudio
@@ -120,11 +104,7 @@ static ma_result ma_qoa_read_pcm_frames(ma_qoa *pQOA, void *pFramesOut, ma_uint6
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (pQOA == NULL) {
+    if (frameCount == 0 || pFramesOut == NULL || pQOA == NULL) {
         return MA_INVALID_ARGS;
     }
 
@@ -449,11 +429,15 @@ static void ma_qoa_uninit(ma_qoa *pQOA, const ma_allocation_callbacks *pAllocati
 
     (void)pAllocationCallbacks;
 
-    if (pQOA->file)
+    if (pQOA->file) {
         fclose(pQOA->file);
+        pQOA->file = nullptr;
+    }
 
     free(pQOA->buffer);
+    pQOA->buffer = nullptr;
     free(pQOA->sample_data);
+    pQOA->sample_data = nullptr;
 
     ma_data_source_uninit(&pQOA->ds);
 }

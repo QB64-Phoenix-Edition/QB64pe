@@ -1460,16 +1460,6 @@ udtenext(i2) = 0
 ' Reset all unstable flags
 FOR i = 1 TO UBOUND(unstableFlags): unstableFlags(i) = 0: NEXT
 
-' Indicates if a MIDI sound font was selected
-'
-' Captures both the line number and line contents for error reporting later-on
-' in the compilation process
-MidiSoundFontSet = 0
-MidiSoundFontLine$ = ""
-
-' If MidiSoundFont$ is blank, then the default is used
-MidiSoundFont$ = ""
-
 ' Reset embedded files tracking list
 REDIM SHARED embedFileList$(3, 10)
 
@@ -1758,6 +1748,7 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     unstableFlags(UNSTABLE_MIDI) = -1
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
@@ -3366,6 +3357,7 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     layout$ = layout$ + SCase$("Midi")
+
                 CASE "HTTP"
                     layout$ = layout$ + SCase$("Http")
             END SELECT
@@ -3375,67 +3367,8 @@ DO
 
         IF unstableFlags(UNSTABLE_MIDI) THEN
             IF LEFT$(a3u$, 15) = "$MIDISOUNDFONT:" THEN
-                IF MidiSoundFontSet THEN
-                    a$ = "$MIDISOUNDFONT already defined"
-                    GOTO errmes
-                END IF
+                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISOUNDBANK instead", "$MIDISOUNDFONT"
 
-                layout$ = SCase$("$MidiSoundFont:")
-
-                MidiSoundFont$ = LTRIM$(RTRIM$(MID$(a3$, 16)))
-
-                IF MID$(MidiSoundFont$, 1, 1) = CHR$(34) THEN
-                    ' We have a quoted filename, verify it is valid
-
-                    ' We don't touch the filename in the formatting
-                    layout$ = layout$ + MidiSoundFont$
-
-                    ' Strip the leading quote
-                    MidiSoundFont$ = MID$(MidiSoundFont$, 2)
-
-                    ' Verify that there is a quote character at the end
-                    IF INSTR(MidiSoundFont$, CHR$(34)) = 0 THEN a$ = "Expected " + CHR$(34) + " character at the end of the file name": GOTO errmes
-
-                    ' Verify there are no extra characters after end quote
-                    IF INSTR(MidiSoundFont$, CHR$(34)) <> LEN(MidiSoundFont$) THEN a$ = "Unexpected characters after the quoted file name": GOTO errmes
-
-                    ' Strip the trailing quote
-                    MidiSoundFont$ = MID$(MidiSoundFont$, 1, LEN(MidiSoundFont$) - 1)
-
-                    IF NOT _FILEEXISTS(MidiSoundFont$) THEN
-                        ' Just try to concatenate the path with the source or include path and check if we are able to find the file
-                        IF inclevel > 0 AND _FILEEXISTS(getfilepath(incname$(inclevel)) + MidiSoundFont$) THEN
-                            MidiSoundFont$ = getfilepath(incname$(inclevel)) + MidiSoundFont$
-                        ELSEIF _FILEEXISTS(FixDirectoryName(path.source$) + MidiSoundFont$) THEN
-                            MidiSoundFont$ = FixDirectoryName(path.source$) + MidiSoundFont$
-                        ELSEIF _FILEEXISTS(FixDirectoryName(idepath$) + MidiSoundFont$) THEN
-                            MidiSoundFont$ = FixDirectoryName(idepath$) + MidiSoundFont$
-                        END IF
-
-                        IF NOT _FILEEXISTS(MidiSoundFont$) THEN
-                            a$ = "Soundfont file " + AddQuotes$(MidiSoundFont$) + " could not be found!"
-                            GOTO errmes
-                        END IF
-                    END IF
-                    WriteBufLine ExtDepBuf, "MIDI: " + _FULLPATH$(MidiSoundFont$)
-                ELSE
-                    ' Constant values, only one for now
-                    SELECT CASE UCASE$(MidiSoundFont$)
-                        CASE "DEFAULT"
-                            layout$ = layout$ + SCase$("Default")
-
-                            ' Clear MidiSoundFont$ to indicate the default should be used
-                            MidiSoundFont$ = ""
-                            WriteBufLine ExtDepBuf, "MIDI: " + _FULLPATH$("internal/support/default_soundfont.sf2")
-
-                        CASE ELSE
-                            a$ = "Unrecognized Soundfont option " + AddQuotes$(MidiSoundFont$)
-                            GOTO errmes
-                    END SELECT
-                END IF
-
-                MidiSoundFontSet = linenumber
-                MidiSoundFontLine$ = layout$
                 GOTO finishednonexec
             END IF
         END IF
@@ -12509,22 +12442,6 @@ PRINT #eflFF, ""
 CLOSE #eflFF
 '=== END: embedding files ===
 
-IF MidiSoundFontSet THEN
-    linenumber = MidiSoundFontSet
-    wholeline = MidiSoundFontLine$
-
-    IF MidiSoundFont$ = "" THEN
-        MidiSoundFont$ = "internal/support/default_soundfont.sf2"
-    END IF
-
-    ON ERROR GOTO qberror_test
-
-    errNo = CopyFile&(MidiSoundFont$, tmpdir$ + "soundfont.sf2")
-    IF errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(MidiSoundFont$) + " to temp directory": GOTO errmes
-
-    ON ERROR GOTO qberror
-END IF
-
 'Update dependencies
 
 o$ = LCASE$(os$)
@@ -12558,8 +12475,6 @@ IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MIN
 IF unstableFlags(UNSTABLE_HTTP) AND DEPENDENCY(DEPENDENCY_SOCKETS) <> 0 THEN
     makedeps$ = makedeps$ + " DEP_HTTP=y"
 END IF
-
-IF MidiSoundFontSet THEN makedeps$ = makedeps$ + " DEP_AUDIO_DECODE_MIDI=y"
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 

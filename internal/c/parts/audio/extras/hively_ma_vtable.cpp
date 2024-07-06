@@ -1,26 +1,13 @@
-//--------------------------------------------------------------------------------------------------
-//    ___  ___   __ _ _  ___ ___     _          _ _       ___           _
-//   / _ \| _ ) / /| | || _ \ __|   /_\ _  _ __| (_)___  | __|_ _  __ _(_)_ _  ___
-//  | (_) | _ \/ _ \_  _|  _/ _|   / _ \ || / _` | / _ \ | _|| ' \/ _` | | ' \/ -_)
-//   \__\_\___/\___/ |_||_| |___| /_/ \_\_,_\__,_|_\___/ |___|_||_\__, |_|_||_\___|
-//                                                                |___/
-//
+//----------------------------------------------------------------------------------------------------------------------
 //  QB64-PE Audio Engine powered by miniaudio (https://miniaud.io/)
 //
 //  This implements a data source that decodes Amiga AHX and HLV formats
 //
 //  https://github.com/pete-gordon/hivelytracker (BSD 3-Clause)
-//
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-#include "../miniaudio.h"
-#include "audio.h"
-#include "filepath.h"
-#include <cstring>
-
+#include "../framework.h"
 #include "hivelytracker/hvl_replay.h"
-
-#include "vtables.h"
 
 constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximum *hively* frames before timeout
 
@@ -106,11 +93,7 @@ static ma_result ma_hively_read_pcm_frames(ma_hively *pmaHively, void *pFramesOu
         *pFramesRead = 0;
     }
 
-    if (frameCount == 0) {
-        return MA_INVALID_ARGS;
-    }
-
-    if (pmaHively == NULL) {
+    if (frameCount == 0 || pFramesOut == NULL || pmaHively == NULL) {
         return MA_INVALID_ARGS;
     }
 
@@ -359,29 +342,22 @@ static ma_result ma_hively_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tel
     }
 
     // Allocate some memory for the tune
-    ma_uint8 *tune = new ma_uint8[file_size];
-    if (tune == nullptr) {
-        return MA_OUT_OF_MEMORY;
-    }
+    std::vector<uint8_t> tune(file_size);
 
     // Read the file
-    if (ma_hively_of_callback__read(pmaHively, tune, (int)file_size) < 1) {
-        delete[] tune;
+    if (ma_hively_of_callback__read(pmaHively, &tune[0], (int)file_size) < 1) {
         return MA_IO_ERROR;
     }
 
     hvl_InitReplayer(); // we'll initialize the re-player here
 
     // Ok, we have the tune in memory, now loads it
-    pmaHively->player = hvl_ParseTune(tune, file_size, MA_DEFAULT_SAMPLE_RATE, 3);
+    pmaHively->player = hvl_ParseTune(&tune[0], file_size, MA_DEFAULT_SAMPLE_RATE, 3);
     if (!pmaHively->player || !hvl_InitSubsong(pmaHively->player, 0)) {
         if (pmaHively->player)
             hvl_FreeTune(pmaHively->player);
         pmaHively->player = nullptr;
     }
-
-    // Free the memory now that we don't need it anymore
-    delete[] tune;
 
     if (pmaHively->player == nullptr) {
         // This means our loader failed

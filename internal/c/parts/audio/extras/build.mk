@@ -1,4 +1,61 @@
 
+# foo_midi
+
+FOO_MIDI_SRCS := \
+	InstrumentBankManager.cpp \
+	MIDIPlayer.cpp \
+	OpalPlayer.cpp \
+	PSPlayer.cpp \
+	TSFPlayer.cpp
+
+ifeq ($(OS),win)
+	FOO_MIDI_SRCS += VSTiPlayer.cpp
+endif
+
+FOO_MIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.o,$(FOO_MIDI_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+# hivelytracker
+
+HIVELYTRACKER_SRCS := hvl_replay.c
+
+HIVELYTRACKER_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o,$(HIVELYTRACKER_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.c
+	$(CC) -O2 $(CFLAGS) -Wall $< -c -o $@
+
+#libmidi
+
+LIBMIDI_SRCS := \
+	MIDIContainer.cpp \
+	MIDIProcessor.cpp \
+	MIDIProcessorGMF.cpp \
+	MIDIProcessorHMI.cpp \
+	MIDIProcessorHMP.cpp \
+	MIDIProcessorLDS.cpp \
+	MIDIProcessorMDS.cpp \
+	MIDIProcessorMUS.cpp \
+	MIDIProcessorRCP.cpp \
+	MIDIProcessorRIFF.cpp \
+	MIDIProcessorSMF.cpp \
+	MIDIProcessorXMI.cpp \
+	Recomposer/CM6File.cpp \
+	Recomposer/GDSFile.cpp \
+	Recomposer/MIDIStream.cpp \
+	Recomposer/RCP.cpp \
+	Recomposer/RCPConverter.cpp \
+	Recomposer/RunningNotes.cpp \
+	Recomposer/Support.cpp
+
+LIBMIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.o,$(LIBMIDI_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+# libxmp-lite
+
 LIBXMP_SRCS := \
 	common.c \
 	control.c \
@@ -32,65 +89,60 @@ LIBXMP_SRCS := \
 
 LIBXMP_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o,$(LIBXMP_SRCS))
 
-LIBXMP_LIB := $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite.a
-
 $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.c
 	$(CC) -O2 $(CFLAGS) -Wall -DLIBXMP_CORE_PLAYER -DLIBXMP_STATIC $< -c -o $@
 
-$(LIBXMP_LIB): $(LIBXMP_OBJS)
-	$(AR) rcs $@ $^
+# primesynth
 
-HIVELY_SRCS := hvl_replay.c
+PRIMESYNTH_SRCS := primesynth.cpp
 
-HIVELY_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o,$(HIVELY_SRCS))
+PRIMESYNTH_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.o,$(PRIMESYNTH_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+# radv2
 
 OPAL_SRCS := opal.cpp
 
 OPAL_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.o,$(OPAL_SRCS))
 
-$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.c
-	$(CC) -O2 $(CFLAGS) -Wall $< -c -o $@
+$(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+# TinySoundFont
+
+TINYSOUNDFONT_SRCS := tsf.cpp
+
+TINYSOUNDFONT_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o,$(TINYSOUNDFONT_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+# ymfmidi
+
+YMFMIDI_SRCS := \
+	patches.cpp \
+	player.cpp
+
+YMFMIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o,$(YMFMIDI_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
+
+# ma_vtables
 
 MA_VTABLES_SRCS := \
-	mod_ma_vtable.cpp \
-	radv2_ma_vtable.cpp \
 	hively_ma_vtable.cpp \
-	qoa_ma_vtable.cpp
+	midi_ma_vtable.cpp \
+	mod_ma_vtable.cpp \
+	qoa_ma_vtable.cpp \
+	radv2_ma_vtable.cpp
 
 MA_VTABLES_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(MA_VTABLES_SRCS))
 
-MIDI_MA_VTABLE_SRCS := midi_ma_vtable.cpp
-MIDI_MA_VTABLE_STUB_SRCS := midi_ma_vtable_stub.cpp
+$(PATH_INTERNAL_C)/parts/audio/extras/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/%.cpp
+	$(CXX) -O2 $(CXXFLAGS) -Wall $< -c -o $@
 
-MIDI_MA_VTABLES_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(MIDI_MA_VTABLE_SRCS))
-MIDI_MA_VTABLES_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(MIDI_MA_VTABLE_STUB_SRCS))
-
-# If we're using MIDI, then there should be a soundfont available to be linked in
-MIDI_MA_VTABLES_OBJS += $(PATH_INTERNAL_TEMP)/soundfont.o
-
-# Turn the soundfont into a linkable object
-ifeq ($(OS),win)
-# Fairly ugly, but we have to get the right relative path to objcopy on Windows
-# to make the whole thing work out
-$(PATH_INTERNAL_TEMP)/soundfont.o: $(PATH_INTERNAL_TEMP)/soundfont.sf2
-	cd $(call FIXPATH,$(PATH_INTERNAL_TEMP)) && ..\..\$(OBJCOPY) -Ibinary $(OBJCOPY_FLAGS) soundfont.sf2 soundfont.o
-else
-ifeq ($(OS),osx)
-# Mac OS does not ship an objcopy implementation for some reason
-# We're instead using xxd to produce a source file, and compiling it
-$(PATH_INTERNAL_TEMP)/soundfont.c: $(PATH_INTERNAL_TEMP)/soundfont.sf2
-	cd $(call FIXPATH,$(PATH_INTERNAL_TEMP)) && xxd --include soundfont.sf2 > soundfont.c
-
-$(PATH_INTERNAL_TEMP)/soundfont.o: $(PATH_INTERNAL_TEMP)/soundfont.c
-	$(CC) $< -c -o $@
-
-else
-# The "cd" is used to make the symbol name predictable and not dependent upon
-# the "PATH_INTERNAL_TEMP" value
-$(PATH_INTERNAL_TEMP)/soundfont.o: $(PATH_INTERNAL_TEMP)/soundfont.sf2
-	cd $(call FIXPATH,$(PATH_INTERNAL_TEMP)) && $(OBJCOPY) -Ibinary $(OBJCOPY_FLAGS) soundfont.sf2 soundfont.o
-endif
-endif
-
-CLEAN_LIST += $(LIBXMP_LIB) $(LIBXMP_OBJS) $(HIVELY_OBJS) $(OPAL_OBJS) $(MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_OBJS) $(MIDI_MA_VTABLES_STUB_OBJS)
+CLEAN_LIST += $(FOO_MIDI_OBJS) $(HIVELYTRACKER_OBJS) $(LIBMIDI_OBJS) $(LIBXMP_OBJS) $(PRIMESYNTH_OBJS) $(OPAL_OBJS) $(TINYSOUNDFONT_OBJS) $(YMFMIDI_OBJS) $(MA_VTABLES_OBJS)
 

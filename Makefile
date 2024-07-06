@@ -299,7 +299,7 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
-	EXE_LIBS += $(MINIAUDIO_OBJS)
+	EXE_LIBS += $(AUDIO_LIB)
 
 	CXXFLAGS += -DDEPENDENCY_AUDIO_MINIAUDIO
 	ifeq ($(OS),lnx)
@@ -311,19 +311,16 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	ifeq ($(OS),osx)
 		CXXLIBS += -lpthread -lm -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
 	endif
-	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
-	LICENSE_IN_USE += miniaudio stbvorbis libxmp-lite radv2 hivelytracker qoa
-
-	ifdef DEP_AUDIO_DECODE_MIDI
-		LICENSE_IN_USE += tinysoundfont tinymidiloader
-	endif
+	LICENSE_IN_USE += miniaudio stb_vorbis libxmp-lite radv2 hivelytracker qoa foo_midi ymfmidi primesynth tinysoundfont
 else
-	EXE_LIBS += $(MINIAUDIO_STUB_OBJS)
-	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
+	EXE_LIBS += $(AUDIO_STUB_OBJS)
 endif
 
-ifneq ($(filter y,$(DEP_ZLIB)),)
+# The audio library uses the decompression functions from miniz
+ifneq ($(filter y,$(DEP_ZLIB) $(DEP_AUDIO_MINIAUDIO)),)
+	EXE_LIBS += $(COMPRESSION_LIB)
+
 	LICENSE_IN_USE += miniz
 endif
 

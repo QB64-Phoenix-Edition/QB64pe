@@ -92,20 +92,15 @@ These libraries are pulled in when using any sound-related functionality.
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
 | miniaudio | MIT/Public Domain | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
-| stb_vorbis | MIT/Public Domain | license_stbvorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
-| libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
-| RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
+| foo_midi | MIT | license_foo_midi.txt | internal/c/parts/audio/extras/foo_midi/ & internal/c/parts/audio/extras/libmidi/ |
 | HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
+| libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
+| primesynth | MIT | license_primesynth.txt | internal/c/parts/audio/extras/primesynth/ |
 | QOA | MIT | license_qoa.txt | internal/c/parts/audio/extras/qoa.h |
-
-## MIDI Support
-
-These are used if you make use of MIDI support.
-
-| Library | License | License file | Location |
-| :------ | :-----: | :----------- | :------- |
-| TinySoundFont | MIT | license_tinysoundfont.txt | internal/c/parts/audio/extras/tinysoundfont/tsf.h
-| TinyMidiLoader | ZLIB | license_tinymidiloader.txt | internal/c/parts/audio/extras/tinysoundfont.tml.h |
+| RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
+| stb_vorbis | MIT/Public Domain | license_stb_vorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
+| TinySoundFont | MIT | license_tinysoundfont.txt | internal/c/parts/audio/extras/tinysoundfont/ |
+| ymfmidi | BSD-3-Clause | license_ymfmidi.txt | internal/c/parts/audio/extras/ymfmidi/ |
 
 ## Game Controller Support
 
