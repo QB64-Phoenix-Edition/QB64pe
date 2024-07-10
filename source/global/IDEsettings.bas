@@ -42,7 +42,8 @@ UndoFile$ = ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin" 'un
 '-----
 IF NOT _DIREXISTS(ConfigFolder$) THEN
     MKDIR ConfigFolder$
-    IF NoIDEMode = 0 THEN
+    stso$ = LCASE$(COMMAND$) 'this method need rethinking, but works for now
+    IF INSTR(stso$, "-?") = 0 AND INSTR(stso$, "-c") = 0 AND INSTR(stso$, "-x") = 0 AND INSTR(stso$, "-y") = 0 AND INSTR(stso$, "-z") = 0 THEN
         IF _MESSAGEBOX("QB64-PE IDE", "No IDE settings found, would you like to copy your settings from another QB64-PE installation? (Click <No> to continue with default settings.)", "yesno", "info" ) = 1 THEN
             sqbfAgain:
             oqbi$ = _SELECTFOLDERDIALOG$("Select another QB64-PE installation...")
