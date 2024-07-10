@@ -1,33 +1,14 @@
-
 '
 ' Duplicates the contents of one file into another
 '
 ' Returns: 0 on success, 1 on error
 FUNCTION CopyFile& (sourceFile$, destFile$)
-    DIM sourceFileNo, destFileNo
-    DIM fileLength AS _INTEGER64
-
     E = 0
-    sourceFileNo = FREEFILE
-    OPEN sourceFile$ FOR BINARY AS #sourceFileNo
-    IF E = 1 THEN GOTO errorCleanup
 
-    fileLength = LOF(sourceFileNo)
-
-    destFileNo = FREEFILE
-    OPEN destFile$ FOR OUTPUT AS #destFileNo: CLOSE #destFileNo 'create and blank any existing file with the dest name.
-    OPEN destFile$ FOR BINARY AS #destFileNo
-    IF E = 1 THEN GOTO errorCleanup
-
-    ' Read the file in one go
-    buffer$ = SPACE$(fileLength)
-
-    GET #sourceFileNo, , buffer$
-    PUT #destFileNo, , buffer$
-
-    errorCleanup:
-    IF sourceFileNo <> 0 THEN CLOSE #sourceFileNo
-    IF destFileNo <> 0 THEN CLOSE #destFileNo
+    ON ERROR GOTO qberror_test
+    dat$ = _READFILE$(sourceFile$)
+    IF E = 0 THEN _WRITEFILE destFile$, dat$
+    ON ERROR GOTO qberror
 
     CopyFile& = E
 END FUNCTION
