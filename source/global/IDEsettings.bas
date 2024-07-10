@@ -42,45 +42,47 @@ UndoFile$ = ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin" 'un
 '-----
 IF NOT _DIREXISTS(ConfigFolder$) THEN
     MKDIR ConfigFolder$
-    IF _MESSAGEBOX("QB64-PE IDE", "No IDE settings found, would you like to copy your settings from another QB64-PE installation? (Click <No> to continue with default settings.)", "yesno", "info" ) = 1 THEN
-        sqbfAgain:
-        oqbi$ = _SELECTFOLDERDIALOG$("Select another QB64-PE installation...")
-        IF oqbi$ <> "" THEN
-            chkname$ = oqbi$ + pathsep$ + "qb64pe"
-            IF _FILEEXISTS(chkname$) OR _FILEEXISTS(chkname$ + ".exe") THEN
-                IF _DIREXISTS(oqbi$ + pathsep$ + ConfigFolder$) THEN
-                    oqbv% = 0 'since v3.14.0
-                    oqbi$ = oqbi$ + pathsep$ + ConfigFolder$ + pathsep$
-                    nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
+    IF NoIDEMode = 0 THEN
+        IF _MESSAGEBOX("QB64-PE IDE", "No IDE settings found, would you like to copy your settings from another QB64-PE installation? (Click <No> to continue with default settings.)", "yesno", "info" ) = 1 THEN
+            sqbfAgain:
+            oqbi$ = _SELECTFOLDERDIALOG$("Select another QB64-PE installation...")
+            IF oqbi$ <> "" THEN
+                chkname$ = oqbi$ + pathsep$ + "qb64pe"
+                IF _FILEEXISTS(chkname$) OR _FILEEXISTS(chkname$ + ".exe") THEN
+                    IF _DIREXISTS(oqbi$ + pathsep$ + ConfigFolder$) THEN
+                        oqbv% = 0 'since v3.14.0
+                        oqbi$ = oqbi$ + pathsep$ + ConfigFolder$ + pathsep$
+                        nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
+                    ELSE
+                        oqbv% = 1 'pre v3.14.0
+                        oqbi$ = oqbi$ + pathsep$ + "internal" + pathsep$
+                        nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
+                        oqbi$ = oqbi$ + "temp" + pathsep$
+                    END IF
+                    nul& = CopyFile&(oqbi$ + "debug.ini", DebugFile$)
+                    nul& = CopyFile&(oqbi$ + "bookmarks.bin", BookmarksFile$)
+                    nul& = CopyFile&(oqbi$ + "recent.bin", RecentFile$)
+                    IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+                        oqbd$ = _READFILE$(RecentFile$)
+                        oqbd$ = StrReplace$(oqbd$, CRLF + CRLF, CRLF) 'remove interleaved empty lines
+                        oqbd$ = MID$(oqbd$, 3) 'remove the leading empty line
+                        oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
+                        _WRITEFILE RecentFile$, oqbd$
+                    END IF
+                    nul& = CopyFile&(oqbi$ + "searched.bin", SearchedFile$)
+                    IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+                        oqbd$ = _READFILE$(SearchedFile$)
+                        oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
+                        _WRITEFILE SearchedFile$, oqbd$
+                    END IF
+                    'copying undo file(s) makes not much sense
                 ELSE
-                    oqbv% = 1 'pre v3.14.0
-                    oqbi$ = oqbi$ + pathsep$ + "internal" + pathsep$
-                    nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
-                    oqbi$ = oqbi$ + "temp" + pathsep$
+                    IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executeable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning" ) = 1 GOTO sqbfAgain
                 END IF
-                nul& = CopyFile&(oqbi$ + "debug.ini", DebugFile$)
-                nul& = CopyFile&(oqbi$ + "bookmarks.bin", BookmarksFile$)
-                nul& = CopyFile&(oqbi$ + "recent.bin", RecentFile$)
-                IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
-                    oqbd$ = _READFILE$(RecentFile$)
-                    oqbd$ = StrReplace$(oqbd$, CRLF + CRLF, CRLF) 'remove interleaved empty lines
-                    oqbd$ = MID$(oqbd$, 3) 'remove the leading empty line
-                    oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
-                    _WRITEFILE RecentFile$, oqbd$
-                END IF
-                nul& = CopyFile&(oqbi$ + "searched.bin", SearchedFile$)
-                IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
-                    oqbd$ = _READFILE$(SearchedFile$)
-                    oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
-                    _WRITEFILE SearchedFile$, oqbd$
-                END IF
-                'copying undo file(s) makes not much sense
-            ELSE
-                IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executeable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning" ) = 1 GOTO sqbfAgain
             END IF
         END IF
+        QB64_uptime! = TIMER 'reinit to avoid startup resize events going wild
     END IF
-    QB64_uptime! = TIMER 'reinit to avoid startup resize events going wild
 END IF
 
 'Define INI sections and standard behavior ------------------------------------
