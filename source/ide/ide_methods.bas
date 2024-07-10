@@ -1706,7 +1706,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     edReCompile:
                     ideautorun = 0: startPausedPending = 1
-                    ideunsaved = -1: idechangemade = 1: statusarealink = 0
+                    idechangemade = 1: statusarealink = 0
                     GOTO ideloop
                 END IF
                 '=== END: checking external dependencies ===
@@ -19540,19 +19540,27 @@ END SUB
 
 SUB LoadColorSchemes
     DIM i AS LONG
-    'Preset built-in schemes
-    PresetColorSchemes = 10
+    'Preset built-in schemes, somewhat orderd by its kind:
+    '1.) blueish bg (Super Dark Blue - Classic QB4.5)
+    '2.) various colored bg (Dark Side - CF Dark)
+    '3.) grayish dark bg (Broadcast - X11 SgiColors)
+    '4.) very bright bg (Light Green - All White)
+    PresetColorSchemes = 14
     REDIM ColorSchemes$(1 TO PresetColorSchemes): i = 0
-    i = i + 1: ColorSchemes$(i) = "Super dark blue|216216216069118147216098078255167000085206085098098098000000039000049078000088108170170170"
-    i = i + 1: ColorSchemes$(i) = "Dark blue|226226226069147216245128177255177000085255085049196196000000069000068108000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "Super Dark Blue|216216216069118147216098078255167000085206085098098098000000039000049078000088108170170170"
+    i = i + 1: ColorSchemes$(i) = "Dark Blue|226226226069147216245128177255177000085255085049196196000000069000068108000147177170170170"
     i = i + 1: ColorSchemes$(i) = "QB64 Original|226226226147196235245128177255255085085255085085255255000000170000108177000147177170170170"
     i = i + 1: ColorSchemes$(i) = "Classic QB4.5|177177177177177177177177177177177177177177177177177177000000170000000170000147177170170170"
-    i = i + 1: ColorSchemes$(i) = "CF Dark|226226226115222227255043138255178034185237049157118137043045037010000020088088088170170170"
-    i = i + 1: ColorSchemes$(i) = "Dark side|255255255206206000245010098000177000085255085049186245011022029100100100000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "Dark Side|255255255206206000245010098000177000085255085049186245011022029100100100000147177170170170"
     i = i + 1: ColorSchemes$(i) = "Camouflage|196196196255255255245128177255177000137177147147137020000039029098069020000147177170170170"
     i = i + 1: ColorSchemes$(i) = "Plum|186186186255255255245128177255108000085186078085186255059000059088088128000147177170170170"
-    i = i + 1: ColorSchemes$(i) = "Light green|051051051000000216245128177255157255147177093206206206234255234206255206000147177170170170"
-    i = i + 1: ColorSchemes$(i) = "All white|051051051000000216245128177206147000059177000206206206255255255245245245000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "Cornfield|255255180065130255255130065065255130255130255190160130100080060110090070170000000200200130"
+    i = i + 1: ColorSchemes$(i) = "CF Dark|226226226115222227255043138255178034185237049157118137043045037010000020088088088170170170"
+    i = i + 1: ColorSchemes$(i) = "Broadcast|228224220034085170221068051238238068221136000051153034024024024036036036034136170170170170"
+    i = i + 1: ColorSchemes$(i) = "VS Code|212212212086156214212099162206145120070201176106153085031031031040040040034136170170170170"
+    i = i + 1: ColorSchemes$(i) = "X11 SgiColors|197193170113113198198113113142142056113198113085085085024024024036036036142056142170170170"
+    i = i + 1: ColorSchemes$(i) = "Light Green|051051051000000216245128177255157255147177093206206206234255234206255206000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "All White|051051051000000216245128177206147000059177000206206206255255255245245245000147177170170170"
     TotalColorSchemes = PresetColorSchemes
     LastValidColorScheme = TotalColorSchemes
 
@@ -19972,8 +19980,6 @@ FUNCTION isnumber (__a$)
     isnumber = 1
 END FUNCTION
 
-'$INCLUDE:'wiki\wiki_methods.bas'
-
 SUB printWrapStatus (x AS INTEGER, y AS INTEGER, initialX AS INTEGER, __text$)
     DIM text$, nextWord$
     DIM AS INTEGER i, findSep, findColorMarker, changeColor, changeColorAfter
@@ -20229,6 +20235,8 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
     IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
 END FUNCTION
 
+'$INCLUDE:'ide_histories.bas'
+'$INCLUDE:'wiki\wiki_methods.bas'
 
 SUB ExportCodeAs (docFormat$)
     ' Get the current source code, convert it to the desired document format and
