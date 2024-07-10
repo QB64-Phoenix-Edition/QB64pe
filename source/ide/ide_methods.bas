@@ -114,9 +114,7 @@ FUNCTION ide2 (ignore)
                 'Offer to cleanup recent file list, removing invalid entries
                 PCOPY 2, 0
                 result = idemessagebox(ideerrormessageTITLE$, errorat$ + "." + CHR$(10) + CHR$(10) + "Remove broken links from recent files?", "#Yes;#No")
-                IF result = 1 THEN
-                    GOSUB CleanUpRecentList
-                END IF
+                IF result = 1 THEN CleanUpRecentList
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO errorReportDone
             END IF
@@ -6311,7 +6309,7 @@ FUNCTION ide2 (ignore)
                         GOTO ideshowrecentbox
                     END IF
                 ELSEIF f$ = "<R>" THEN
-                    GOSUB CleanUpRecentList
+                    CleanUpRecentList
                     PCOPY 3, 0
                     GOTO ideshowrecentbox
                 END IF
@@ -6482,24 +6480,6 @@ FUNCTION ide2 (ignore)
             IF ColorCHAR + tx - 2 >= sx1 AND ColorCHAR + tx - 2 < sx2 THEN COLOR 1, 3 ELSE COLOR 3, 1
             _PRINTSTRING (idewx - (idesystem2.w + 8) + 4 - 1 + ColorCHAR, idewy - 4), MID$(a$, ColorCHAR, 1)
         NEXT
-    END IF
-    RETURN
-
-    CleanUpRecentList:
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
-    allOk% = -1 'let's assume the list is OK
-    WHILE NOT EndOfBuf%(bh%)
-        IF NOT _FILEEXISTS(ReadBufLine$(bh%)) THEN 'accessible?
-            nul& = SeekBuf&(bh%, -LEN(BufEolSeq$(bh%)), SBM_BufCurrent) 'back to prev (just read) line
-            nul& = SeekBuf&(bh%, 0, SBM_LineStart) 'and then ahead to the start of it
-            DeleteBufLine bh% 'cut out the broken file link
-            allOk% = 0 'delete OK status
-        END IF
-    WEND
-    IF allOk% THEN
-        result = idemessagebox("Remove Broken Links", "All files in the list are accessible.", "#OK")
-    ELSE
-        IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
     END IF
     RETURN
 
@@ -18652,59 +18632,6 @@ SUB IdeMakeEditMenu
         menuDesc$(m, i - 1) = "Creates a new function at the end of the current program"
     END IF
     menusize(m) = i - 1
-END SUB
-
-SUB AddToHistory (which$, entry$)
-    SELECT CASE which$
-        CASE "RECENT"
-            e$ = RemoveDoubleSlashes$(entry$)
-            bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
-            GOSUB athProcess
-            IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
-        CASE "SEARCH"
-            e$ = entry$
-            bh% = OpenBuffer%("I", tmpdir$ + "searched.bin") 'load and/or set pos (back) to start
-            GOSUB athProcess
-    END SELECT
-    EXIT SUB
-    '-----
-    athProcess:
-    lc% = 0: ue$ = UCASE$(e$)
-    WHILE NOT EndOfBuf%(bh%)
-        be$ = ReadBufLine$(bh%): lc% = lc% + 1
-        IF UCASE$(be$) = ue$ OR lc% = 100 THEN 'already known or limit reached?
-            nul& = SeekBuf&(bh%, -LEN(BufEolSeq$(bh%)), SBM_BufCurrent) 'back to prev (just read) line
-            nul& = SeekBuf&(bh%, 0, SBM_LineStart) 'and then ahead to the start of it
-            DeleteBufLine bh%
-            EXIT WHILE
-        END IF
-    WEND
-    nul& = SeekBuf&(bh%, 0, SBM_BufStart) 'rewind
-    WriteBufLine bh%, e$ 'put new (or known) in 1st position (again)
-    RETURN
-END SUB
-
-FUNCTION AskClearHistory$ (which$)
-    SELECT CASE which$
-        CASE "RECENT": t$ = "Clear recent files"
-        CASE "SEARCH": t$ = "Clear search history"
-    END SELECT
-    result = idemessagebox(t$, "This cannot be undone. Proceed?", "#Yes;#No")
-    IF result = 1 THEN AskClearHistory$ = "Y" ELSE AskClearHistory$ = "N"
-END FUNCTION
-
-SUB RetrieveSearchHistory (SearchHistory() AS STRING)
-    bh% = OpenBuffer%("I", tmpdir$ + "searched.bin") 'load and/or set pos (back) to start
-    IF GetBufLen&(bh%) THEN
-        REDIM SearchHistory(1 TO 100) AS STRING: lc% = 0
-        WHILE NOT EndOfBuf%(bh%)
-           lc% = lc% + 1: SearchHistory(lc%) = ReadBufLine$(bh%)
-        WEND
-        REDIM _PRESERVE SearchHistory(1 TO lc%) AS STRING
-    ELSE
-       REDIM SearchHistory(1 TO 1) AS STRING
-       SearchHistory(1) = ""
-    END IF
 END SUB
 
 FUNCTION ideupdatehelpbox
