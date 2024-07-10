@@ -90,7 +90,7 @@ IF _DIREXISTS("internal") = 0 THEN
     SYSTEM 1
 END IF
 
-DIM SHARED Include_GDB_Debugging_Info 'set using "options.bin"
+DIM SHARED Include_GDB_Debugging_Info 'set using "config.ini" or "Compiler settings" dialog
 
 DIM SHARED DEPENDENCY_LAST
 CONST DEPENDENCY_LOADFONT = 1: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
