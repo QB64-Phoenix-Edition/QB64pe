@@ -1,4 +1,4 @@
-DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwCapitals, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs 
+DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwCapitals, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs
 DIM SHARED IDECommentColor AS _UNSIGNED LONG, IDEMetaCommandColor AS _UNSIGNED LONG
 DIM SHARED IDEQuoteColor AS _UNSIGNED LONG, IDETextColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LONG
@@ -19,8 +19,8 @@ DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE
 DIM SHARED WatchListToConsole AS _BYTE
 DIM SHARED windowSettingsSection$, colorSettingsSection$, customDictionarySection$
 DIM SHARED mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$
-DIM SHARED colorSchemesSection$, debugSettingsSection$, iniFolderIndex$, ConfigFile$
-DIM SHARED compilerSettingsSection$
+DIM SHARED colorSchemesSection$, debugSettingsSection$, compilerSettingsSection$, vwatchPanelSection$
+DIM SHARED ConfigFolder$, ConfigFile$, DebugFile$, RecentFile$, SearchedFile$, BookmarksFile$, UndoFile$, FlagExt$
 DIM SHARED idebaseTcpPort AS LONG, AutoAddDebugCommand AS _BYTE
 DIM SHARED wikiBaseAddress$
 DIM SHARED MaxParallelProcesses AS LONG
@@ -30,11 +30,63 @@ DIM SHARED OptimizeCppProgram AS LONG
 DIM SHARED GenerateLicenseFile AS LONG
 DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
 
-ConfigFile$ = "internal/config.ini"
-iniFolderIndex$ = STR$(tempfolderindex)
+'Define and check settings location -------------------------------------------
+ConfigFolder$ = "settings" 'relative config location inside the qb64pe main folder
+FlagExt$ = ".flg" 'extra (2nd) extension for signal/flag files between instances
+ConfigFile$ = ConfigFolder$ + pathsep$ + "config.ini" 'main configuration (global, but with instance sensitive sections)
+DebugFile$ = ConfigFolder$ + pathsep$ + "debug.ini" 'debug mode data (global with instance sensitive sections, saved/restored along with basic source files)
+BookmarksFile$ = ConfigFolder$ + pathsep$ + "bookmarks.bin" 'set bokmarks (globally saved/restored along with basic source files)
+RecentFile$ = ConfigFolder$ + pathsep$ + "recent.bin" 'recent file list (globally sync'ed using signal files)
+SearchedFile$ = ConfigFolder$ + pathsep$ + "searched.bin" 'search history (globally sync'ed using signal files)
+UndoFile$ = ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin" 'undo storage (per instance, signal used for crash restore (former autosave.bin))
+'-----
+IF NOT _DIREXISTS(ConfigFolder$) THEN
+    MKDIR ConfigFolder$
+    IF _MESSAGEBOX("QB64-PE IDE", "No IDE settings found, would you like to copy your settings from another QB64-PE installation? (Click <No> to continue with default settings.)", "yesno", "info" ) = 1 THEN
+        sqbfAgain:
+        oqbi$ = _SELECTFOLDERDIALOG$("Select another QB64-PE installation...")
+        IF oqbi$ <> "" THEN
+            chkname$ = oqbi$ + pathsep$ + "qb64pe"
+            IF _FILEEXISTS(chkname$) OR _FILEEXISTS(chkname$ + ".exe") THEN
+                IF _DIREXISTS(oqbi$ + pathsep$ + ConfigFolder$) THEN
+                    oqbv% = 0 'since v3.14.0
+                    oqbi$ = oqbi$ + pathsep$ + ConfigFolder$ + pathsep$
+                    nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
+                ELSE
+                    oqbv% = 1 'pre v3.14.0
+                    oqbi$ = oqbi$ + pathsep$ + "internal" + pathsep$
+                    nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
+                    oqbi$ = oqbi$ + "temp" + pathsep$
+                END IF
+                nul& = CopyFile&(oqbi$ + "debug.ini", DebugFile$)
+                nul& = CopyFile&(oqbi$ + "bookmarks.bin", BookmarksFile$)
+                nul& = CopyFile&(oqbi$ + "recent.bin", RecentFile$)
+                IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+                    oqbd$ = _READFILE$(RecentFile$)
+                    oqbd$ = StrReplace$(oqbd$, CRLF + CRLF, CRLF) 'remove interleaved empty lines
+                    oqbd$ = MID$(oqbd$, 3) 'remove the leading empty line
+                    oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
+                    _WRITEFILE RecentFile$, oqbd$
+                END IF
+                nul& = CopyFile&(oqbi$ + "searched.bin", SearchedFile$)
+                IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+                    oqbd$ = _READFILE$(SearchedFile$)
+                    oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
+                    _WRITEFILE SearchedFile$, oqbd$
+                END IF
+                'copying undo file(s) makes not much sense
+            ELSE
+                IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executeable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning" ) = 1 GOTO sqbfAgain
+            END IF
+        END IF
+    END IF
+    QB64_uptime! = TIMER 'reinit to avoid startup resize events going wild
+END IF
 
-windowSettingsSection$ = "IDE WINDOW" + iniFolderIndex$
-colorSettingsSection$ = "IDE COLOR SETTINGS" + iniFolderIndex$
+'Define INI sections and standard behavior ------------------------------------
+'config.ini
+windowSettingsSection$ = "IDE WINDOW" + STR$(tempfolderindex)
+colorSettingsSection$ = "IDE COLOR SETTINGS" + STR$(tempfolderindex)
 colorSchemesSection$ = "IDE COLOR SCHEMES"
 customDictionarySection$ = "CUSTOM DICTIONARIES"
 mouseSettingsSection$ = "MOUSE SETTINGS"
@@ -42,7 +94,9 @@ generalSettingsSection$ = "GENERAL SETTINGS"
 displaySettingsSection$ = "IDE DISPLAY SETTINGS"
 debugSettingsSection$ = "DEBUG SETTINGS"
 compilerSettingsSection$ = "COMPILER SETTINGS"
-
+'debug.ini
+vwatchPanelSection$ = "VWATCH PANEL" + STR$(tempfolderindex)
+'behavior
 IniSetAddQuotes 0
 IniSetForceReload -1
 IniSetAllowBasicComments -1
