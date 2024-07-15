@@ -233,7 +233,7 @@ DIM SHARED LastValidColorScheme AS INTEGER
 DIM SHARED menubar$, idecontextualSearch$
 DIM SHARED ideundocombo, ideundocombochr, idenoundo, idemergeundo
 DIM SHARED idealthighlight, ideentermenu
-DIM SHARED idebackupsize
+DIM SHARED idebackupsize, ideMaxRecent, ideMaxSearch
 DIM SHARED idewx, idewy, idecustomfont, idecustomfontfile$, idecustomfontheight, idecustomfonthandle
 DIM SHARED iderunmode, IDE_UseFont8 AS _BYTE
 'IDE MODULE SECTION END: shared data & definitions
