@@ -504,9 +504,7 @@ FUNCTION ide2 (ignore)
 
         'restore autosave?
         'undo/redo
-        OPEN tmpdir$ + "autosave.bin" FOR BINARY AS #150
-        IF LOF(150) = 1 THEN
-            CLOSE #150
+        IF _FILEEXISTS(AutosaveFile$) THEN 'test for flag file
             r$ = iderestore$
             PCOPY 3, 0: SCREEN , , 3, 0
             IF r$ = "Y" THEN
@@ -531,8 +529,6 @@ FUNCTION ide2 (ignore)
                 END IF
                 CLOSE #150
             END IF
-        ELSE
-            CLOSE #150
         END IF
 
         IF ideunsaved <> 1 THEN 'no file restored (takes priority over loading file from command line)
@@ -1275,7 +1271,7 @@ FUNCTION ide2 (ignore)
                 'set undo flag once
                 IF ideundoflag = 0 THEN
                     ideundoflag = 1
-                    OPEN tmpdir$ + "autosave.bin" FOR BINARY AS #150: a$ = CHR$(1): PUT #150, , a$: CLOSE #150 'set flag
+                    OPEN AutosaveFile$ FOR OUTPUT AS #150: CLOSE #150 'create flag file
                 END IF
 
             ELSE
@@ -6219,7 +6215,7 @@ FUNCTION ide2 (ignore)
                     END IF
 
                 END IF
-                fh = FREEFILE: OPEN tmpdir$ + "autosave.bin" FOR OUTPUT AS #fh: CLOSE #fh
+                IF _FILEEXISTS(AutosaveFile$) THEN KILL AutosaveFile$ 'remove flag file
                 WriteBuffers tmpdir$ + "recent.bin"
                 WriteBuffers tmpdir$ + "searched.bin"
                 SYSTEM
