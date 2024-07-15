@@ -11135,7 +11135,7 @@ SUB idedrawobj (o AS idedbotype, f)
             IF a2$ = CHR$(0) THEN
                 n = n + 1
             ELSE
-                IF a$ <> "#" THEN c = c + 1
+                IF a2$ <> "#" THEN c = c + 1
             END IF
         NEXT
         w = o.w
@@ -14458,7 +14458,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     IF a2$ = CHR$(0) THEN
                         n = n + 1
                     ELSE
-                        IF a$ <> "#" THEN c = c + 1
+                        IF a2$ <> "#" THEN c = c + 1
                     END IF
                 NEXT
                 w = o.w
@@ -15423,7 +15423,7 @@ FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
     '-------- init --------
     messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
     MessageLines = 1
-    DIM FullMessage$(1 TO 8)
+    DIM FullMessage$(1 TO 9)
     PrevScan = 1
     DO
         NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
@@ -15432,8 +15432,8 @@ FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
             tw = LEN(FullMessage$(MessageLines)) + 2
             IF tw > w THEN w = tw
             PrevScan = NextScan + 1
+            IF MessageLines = UBOUND(FullMessage$) THEN EXIT DO
             MessageLines = MessageLines + 1
-            IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
         ELSE
             FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
             tw = LEN(FullMessage$(MessageLines)) + 2
