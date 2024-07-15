@@ -509,7 +509,7 @@ FUNCTION ide2 (ignore)
             PCOPY 3, 0: SCREEN , , 3, 0
             IF r$ = "Y" THEN
                 'restore
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 IF LOF(150) THEN
                     ideunsaved = 1
                     h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
@@ -1173,7 +1173,7 @@ FUNCTION ide2 (ignore)
 
                 'add undo event
 
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 '[oldest state entry][newest state entry][top-most entry(ignore if no wrapping required)]
                 h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
 
@@ -3425,7 +3425,7 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "Z" THEN 'undo (CTRL+Z)
             idemundo:
             IF ideundopos THEN
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
 
                 'does something exist to undo?
@@ -3510,7 +3510,7 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "Y" THEN 'redo (CTRL+Y)
             idemredo:
             IF ideundopos THEN
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
 
                 'does something exist to redo?
@@ -4426,6 +4426,7 @@ FUNCTION ide2 (ignore)
     '--------------------------------------------------------------------------------
 
     showmenu:
+    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~" 'update recent files
     altheld = 1
     IF IdeSystem = 2 THEN IdeSystem = 1: GOSUB UpdateSearchBar
     PCOPY 0, 2
@@ -5833,8 +5834,7 @@ FUNCTION ide2 (ignore)
                 r$ = AskClearHistory$("SEARCH")
                 IF r$ = "Y" THEN
                     fh = FREEFILE
-                    OPEN tmpdir$ + "searched.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                    ClearBuffers tmpdir$ + "searched.bin"
+                    OPEN SearchedFile$ FOR OUTPUT AS #fh: CLOSE #fh
                     idefindtext = ""
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -6216,8 +6216,6 @@ FUNCTION ide2 (ignore)
 
                 END IF
                 IF _FILEEXISTS(AutosaveFile$) THEN KILL AutosaveFile$ 'remove flag file
-                WriteBuffers tmpdir$ + "recent.bin"
-                WriteBuffers tmpdir$ + "searched.bin"
                 SYSTEM
             END IF
 
@@ -6292,9 +6290,7 @@ FUNCTION ide2 (ignore)
                     r$ = AskClearHistory$("RECENT")
                     IF r$ = "Y" THEN
                         fh = FREEFILE
-                        OPEN tmpdir$ + "recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                        ClearBuffers tmpdir$ + "recent.bin"
-                        IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+                        OPEN RecentFile$ FOR OUTPUT AS #fh: CLOSE #fh
                     ELSE
                         GOTO ideshowrecentbox
                     END IF
@@ -6317,9 +6313,7 @@ FUNCTION ide2 (ignore)
                 r$ = AskClearHistory$("RECENT")
                 IF r$ = "Y" THEN
                     fh = FREEFILE
-                    OPEN tmpdir$ + "recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                    ClearBuffers tmpdir$ + "recent.bin"
-                    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+                    OPEN RecentFile$ FOR OUTPUT AS #fh: CLOSE #fh
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -6474,21 +6468,24 @@ FUNCTION ide2 (ignore)
     RETURN
 
     CleanUpRecentList:
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
+    bh% = FileToBuf%(RecentFile$)
     allOk% = -1 'let's assume the list is OK
     WHILE NOT EndOfBuf%(bh%)
-        IF NOT _FILEEXISTS(ReadBufLine$(bh%)) THEN 'accessible?
-            nul& = SeekBuf&(bh%, -LEN(BufEolSeq$(bh%)), SBM_BufCurrent) 'back to prev (just read) line
-            nul& = SeekBuf&(bh%, 0, SBM_LineStart) 'and then ahead to the start of it
-            DeleteBufLine bh% 'cut out the broken file link
+        bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%)
+        IF NOT _FILEEXISTS(be$) THEN 'accessible?
+            nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
+            DeleteBufLine bh% 'remove that entry
             allOk% = 0 'delete OK status
         END IF
     WEND
     IF allOk% THEN
         result = idemessagebox("Remove Broken Links", "All files in the list are accessible.", "#OK")
     ELSE
-        IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+        BufToFile bh%, RecentFile$
+        IF ideerror > 1 AND AttemptToLoadRecent = -1 THEN PCOPY 3, 0
+        result = idemessagebox("Remove Broken Links", "All broken links have been removed.", "#OK")
     END IF
+    DisposeBuf bh%
     RETURN
 
     redrawItAll:
@@ -6729,16 +6726,16 @@ SUB DebugMode
             vWatchPanel.y = 4
             vWatchPanel.firstVisible = 1
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.w"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.w"))
             IF x THEN vWatchPanel.w = x
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.h"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.h"))
             IF x THEN vWatchPanel.h = x
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.x"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.x"))
             IF x THEN vWatchPanel.x = x
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.y"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.y"))
             IF x THEN vWatchPanel.y = x
 
             GOSUB checkvWatchPanelSize
@@ -7157,13 +7154,13 @@ SUB DebugMode
             END IF
             IF vWatchPanel.draggingPanel THEN
                 vWatchPanel.draggingPanel = 0: mouseDown = 0
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.x", str2$(vWatchPanel.x)
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.y", str2$(vWatchPanel.y)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.x", str2$(vWatchPanel.x)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.y", str2$(vWatchPanel.y)
             END IF
             IF vWatchPanel.resizingPanel THEN
                 vWatchPanel.resizingPanel = 0: mouseDown = 0
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.w", str2$(vWatchPanel.w)
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.h", str2$(vWatchPanel.h)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.w", str2$(vWatchPanel.w)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.h", str2$(vWatchPanel.h)
             END IF
             IF vWatchPanel.closingPanel AND (mX = mouseDownOnX AND mY = mouseDownOnY) THEN
                 vWatchPanel.closingPanel = 0
@@ -7179,10 +7176,10 @@ SUB DebugMode
                     NEXT
 
                     'Reset panel position in debug settings
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.x", "0"
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.y", "0"
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.w", "0"
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.h", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.x", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.y", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.w", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.h", "0"
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 WHILE _MOUSEINPUT: WEND
@@ -18129,19 +18126,19 @@ SUB IdeImportBookmarks (f2$)
     END IF
 
     'at the same time, import breakpoint and skip line data
-    x = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "total breakpoints"))
+    x = VAL(ReadSetting$(DebugFile$, f2$, "total breakpoints"))
     IF x THEN
         FOR i = 1 TO x
-            j = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "breakpoint" + STR$(i)))
+            j = VAL(ReadSetting$(DebugFile$, f2$, "breakpoint" + STR$(i)))
             IF j > UBOUND(IdeBreakpoints) THEN EXIT FOR
             IdeBreakpoints(j) = -1
         NEXT
     END IF
 
-    x = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "total skips"))
+    x = VAL(ReadSetting$(DebugFile$, f2$, "total skips"))
     IF x THEN
         FOR i = 1 TO x
-            j = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "skip" + STR$(i)))
+            j = VAL(ReadSetting$(DebugFile$, f2$, "skip" + STR$(i)))
             IF j > UBOUND(IdeSkipLines) THEN EXIT FOR
             IdeSkipLines(j) = -1
         NEXT
@@ -18168,26 +18165,26 @@ SUB IdeSaveBookmarks (f2$)
 
     'at the same time, save breakpoint and skip line data
     IF vWatchOn THEN
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total breakpoints", "0"
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total skips", "0"
+        WriteSetting DebugFile$, f2$, "total breakpoints", "0"
+        WriteSetting DebugFile$, f2$, "total skips", "0"
 
         x = 0
         FOR i = 1 TO UBOUND(IdeBreakpoints)
             IF IdeBreakpoints(i) THEN
                 x = x + 1
-                WriteSetting ".\internal\temp\debug.ini", f2$, "breakpoint" + STR$(x), str2$(i)
+                WriteSetting DebugFile$, f2$, "breakpoint" + STR$(x), str2$(i)
             END IF
         NEXT
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total breakpoints", str2$(x)
+        WriteSetting DebugFile$, f2$, "total breakpoints", str2$(x)
 
         x = 0
         FOR i = 1 TO UBOUND(IdeSkipLines)
             IF IdeSkipLines(i) THEN
                 x = x + 1
-                WriteSetting ".\internal\temp\debug.ini", f2$, "skip" + STR$(x), str2$(i)
+                WriteSetting DebugFile$, f2$, "skip" + STR$(x), str2$(i)
             END IF
         NEXT
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total skips", str2$(x)
+        WriteSetting DebugFile$, f2$, "total skips", str2$(x)
     END IF
 END SUB
 
@@ -18205,14 +18202,15 @@ FUNCTION iderecentbox$
 
     '-------- init --------
     l$ = "": dialogWidth = 72: numFiles% = 0
-    REDIM tempList$(1 TO 100)
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
-    WHILE NOT EndOfBuf%(bh%)
+    REDIM tempList$(1 TO ideMaxRecent)
+    bh% = FileToBuf%(RecentFile$)
+    WHILE EndOfBuf%(bh%) = 0 AND numFiles% < ideMaxRecent
         f$ = ReadBufLine$(bh%)
         IF LEN(f$) + 6 > dialogWidth THEN dialogWidth = LEN(f$) + 6
         numFiles% = numFiles% + 1: tempList$(numFiles%) = f$
         l$ = l$ + sep + f$
     WEND
+    DisposeBuf nh%
     REDIM _PRESERVE tempList$(1 TO numFiles%)
 
     '72,19
@@ -18347,7 +18345,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     menu$(m, i) = eaa$ + "#Export As...  " + CHR$(16): i = i + 1
     menuDesc$(m, i - 1) = "Export current program into various formats"
 
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
+    bh% = FileToBuf%(RecentFile$)
     maxFiles% = UBOUND(IdeRecentLink, 1): maxLength% = 35
     FOR r% = 1 TO maxFiles% + 1
         IF r% <= maxFiles% THEN IdeRecentLink(r%, 1) = ""
@@ -18368,7 +18366,8 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
             END IF
             i = i + 1
         END IF
-    NEXT
+    NEXT r%
+    DisposeBuf bh%
     IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> eaa$ + "#Export As...  " + CHR$(16) THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
@@ -18811,29 +18810,34 @@ SUB IdeMakeEditMenu
     menusize(m) = i - 1
 END SUB
 
+'Add an entry in the top position of the specified history. If the entry
+'already exists in the history, then it's just moved back to top again.
+'---------------------------------------------------------------------
 SUB AddToHistory (which$, entry$)
     SELECT CASE which$
         CASE "RECENT"
             e$ = RemoveDoubleSlashes$(entry$)
-            bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
-            GOSUB athProcess
-            IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+            bh% = FileToBuf%(RecentFile$)
+            mx% = ideMaxRecent: GOSUB athProcess
+            BufToFile bh%, RecentFile$
         CASE "SEARCH"
             e$ = entry$
-            bh% = OpenBuffer%("I", tmpdir$ + "searched.bin") 'load and/or set pos (back) to start
-            GOSUB athProcess
+            bh% = FileToBuf%(SearchedFile$)
+            mx% = ideMaxSearch: GOSUB athProcess
+            BufToFile bh%, SearchedFile$
     END SELECT
+    DisposeBuf bh%
     EXIT SUB
     '-----
     athProcess:
     lc% = 0: ue$ = UCASE$(e$)
     WHILE NOT EndOfBuf%(bh%)
-        be$ = ReadBufLine$(bh%): lc% = lc% + 1
-        IF UCASE$(be$) = ue$ OR lc% = 100 THEN 'already known or limit reached?
-            nul& = SeekBuf&(bh%, -LEN(BufEolSeq$(bh%)), SBM_BufCurrent) 'back to prev (just read) line
-            nul& = SeekBuf&(bh%, 0, SBM_LineStart) 'and then ahead to the start of it
-            DeleteBufLine bh%
-            EXIT WHILE
+        bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%): lc% = lc% + 1
+        IF UCASE$(be$) = ue$ OR lc% >= mx% THEN 'already known or limit reached?
+            nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
+            DeleteBufLine bh% 'remove that entry
+            'we could EXIT WHILE here, but for auto-removal of over limit
+            'entries (in case the limit was lowered) we continue the loop
         END IF
     WEND
     nul& = SeekBuf&(bh%, 0, SBM_BufStart) 'rewind
@@ -18841,6 +18845,8 @@ SUB AddToHistory (which$, entry$)
     RETURN
 END SUB
 
+'A simple "Are you sure" type yes/no messagebox for cleanup operations.
+'---------------------------------------------------------------------
 FUNCTION AskClearHistory$ (which$)
     SELECT CASE which$
         CASE "RECENT": t$ = "Clear recent files"
@@ -18850,18 +18856,20 @@ FUNCTION AskClearHistory$ (which$)
     IF result = 1 THEN AskClearHistory$ = "Y" ELSE AskClearHistory$ = "N"
 END FUNCTION
 
-SUB RetrieveSearchHistory (SearchHistory() AS STRING)
-    bh% = OpenBuffer%("I", tmpdir$ + "searched.bin") 'load and/or set pos (back) to start
+'Load the search history into the specified array used by the IDE.
+'---------------------------------------------------------------------
+SUB RetrieveSearchHistory (shArr$())
+    bh% = FileToBuf%(SearchedFile$)
     IF GetBufLen&(bh%) THEN
-        REDIM SearchHistory(1 TO 100) AS STRING: lc% = 0
-        WHILE NOT EndOfBuf%(bh%)
-           lc% = lc% + 1: SearchHistory(lc%) = ReadBufLine$(bh%)
+        REDIM shArr$(1 TO ideMaxSearch): lc% = 0
+        WHILE EndOfBuf%(bh%) = 0 AND lc% < ideMaxSearch
+           lc% = lc% + 1: shArr$(lc%) = ReadBufLine$(bh%)
         WEND
-        REDIM _PRESERVE SearchHistory(1 TO lc%) AS STRING
+        REDIM _PRESERVE shArr$(1 TO lc%)
     ELSE
-       REDIM SearchHistory(1 TO 1) AS STRING
-       SearchHistory(1) = ""
+       REDIM shArr$(1 TO 1): shArr$(1) = ""
     END IF
+    DisposeBuf bh%
 END SUB
 
 FUNCTION ideupdatehelpbox
