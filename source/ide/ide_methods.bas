@@ -11241,7 +11241,7 @@ FUNCTION idefind$
 
     '-------- init --------
 
-    'built initial search string
+    'built initial search strings
     IF ideselect THEN
         IF ideselecty1 = idecy THEN 'single line selected
             a$ = idegetline(idecy)
@@ -15723,157 +15723,157 @@ END FUNCTION 'yes/no box
 'END SUB
 
 
-FUNCTION ideactivitybox$ (action$, titlestr$, messagestr$, buttons$) STATIC
+'FUNCTION ideactivitybox$ (action$, titlestr$, messagestr$, buttons$) STATIC
 
-    SELECT CASE LCASE$(action$)
-        CASE "setup"
-            '-------- generic dialog box header --------
-            PCOPY 0, 2
-            PCOPY 0, 1
-            SCREEN , , 1, 0
-            focus = 1
-            REDIM p AS idedbptype
-            REDIM o(1 TO 100) AS idedbotype
-            REDIM sep AS STRING * 1
-            sep = CHR$(0)
-            '-------- end of generic dialog box header --------
+'    SELECT CASE LCASE$(action$)
+'        CASE "setup"
+'            '-------- generic dialog box header --------
+'            PCOPY 0, 2
+'            PCOPY 0, 1
+'            SCREEN , , 1, 0
+'            focus = 1
+'            REDIM p AS idedbptype
+'            REDIM o(1 TO 100) AS idedbotype
+'            REDIM sep AS STRING * 1
+'            sep = CHR$(0)
+'            '-------- end of generic dialog box header --------
 
-            '-------- init --------
-            messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
-            MessageLines = 1
-            REDIM FullMessage$(1 TO 8)
-            PrevScan = 1
-            DO
-                NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
-                IF NextScan > 0 THEN
-                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan, NextScan - PrevScan)
-                    tw = LEN(FullMessage$(MessageLines)) + 2
-                    IF tw > w THEN w = tw
-                    PrevScan = NextScan + 1
-                    MessageLines = MessageLines + 1
-                    IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
-                ELSE
-                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
-                    tw = LEN(FullMessage$(MessageLines)) + 2
-                    IF tw > w THEN w = tw
-                    EXIT DO
-                END IF
-            LOOP
+'            '-------- init --------
+'            messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
+'            MessageLines = 1
+'            REDIM FullMessage$(1 TO 8)
+'            PrevScan = 1
+'            DO
+'                NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
+'                IF NextScan > 0 THEN
+'                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan, NextScan - PrevScan)
+'                    tw = LEN(FullMessage$(MessageLines)) + 2
+'                    IF tw > w THEN w = tw
+'                    PrevScan = NextScan + 1
+'                    MessageLines = MessageLines + 1
+'                    IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
+'                ELSE
+'                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
+'                    tw = LEN(FullMessage$(MessageLines)) + 2
+'                    IF tw > w THEN w = tw
+'                    EXIT DO
+'                END IF
+'            LOOP
 
-            IF buttons$ = "" THEN buttons$ = "#OK"
-            totalButtons = 1
-            FOR i = 1 TO LEN(buttons$)
-                IF ASC(buttons$, i) = 59 THEN totalButtons = totalButtons + 1
-            NEXT
-            buttonsLen = LEN(buttons$) + totalButtons * 6
+'            IF buttons$ = "" THEN buttons$ = "#OK"
+'            totalButtons = 1
+'            FOR i = 1 TO LEN(buttons$)
+'                IF ASC(buttons$, i) = 59 THEN totalButtons = totalButtons + 1
+'            NEXT
+'            buttonsLen = LEN(buttons$) + totalButtons * 6
 
-            i = 0
-            w2 = LEN(titlestr$) + 4
-            IF w < w2 THEN w = w2
-            IF w < buttonsLen THEN w = buttonsLen
-            IF w > idewx - 4 THEN w = idewx - 4
-            idepar p, w, 3 + MessageLines, titlestr$
+'            i = 0
+'            w2 = LEN(titlestr$) + 4
+'            IF w < w2 THEN w = w2
+'            IF w < buttonsLen THEN w = buttonsLen
+'            IF w > idewx - 4 THEN w = idewx - 4
+'            idepar p, w, 3 + MessageLines, titlestr$
 
-            i = i + 1
-            o(i).typ = 3
-            o(i).y = 3 + MessageLines
-            o(i).txt = idenewtxt(StrReplace$(buttons$, ";", sep))
-            o(i).dft = 1
-            '-------- end of init --------
+'            i = i + 1
+'            o(i).typ = 3
+'            o(i).y = 3 + MessageLines
+'            o(i).txt = idenewtxt(StrReplace$(buttons$, ";", sep))
+'            o(i).dft = 1
+'            '-------- end of init --------
 
-            '-------- generic init --------
-            FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
-            '-------- end of generic init --------
-        CASE "update"
-            '-------- generic display dialog box & objects --------
-            idedrawpar p
-            f = 1: cx = 0: cy = 0
-            FOR i = 1 TO 100
-                IF o(i).typ THEN
+'            '-------- generic init --------
+'            FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
+'            '-------- end of generic init --------
+'        CASE "update"
+'            '-------- generic display dialog box & objects --------
+'            idedrawpar p
+'            f = 1: cx = 0: cy = 0
+'            FOR i = 1 TO 100
+'                IF o(i).typ THEN
 
-                    'prepare object
-                    o(i).foc = focus - f 'focus offset
-                    o(i).cx = 0: o(i).cy = 0
-                    idedrawobj o(i), f 'display object
-                    IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
-                END IF
-            NEXT i
-            lastfocus = f - 1
-            '-------- end of generic display dialog box & objects --------
+'                    'prepare object
+'                    o(i).foc = focus - f 'focus offset
+'                    o(i).cx = 0: o(i).cy = 0
+'                    idedrawobj o(i), f 'display object
+'                    IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+'                END IF
+'            NEXT i
+'            lastfocus = f - 1
+'            '-------- end of generic display dialog box & objects --------
 
-            '-------- custom display changes --------
-            COLOR 0, 7
-            FOR i = 1 TO MessageLines
-                IF LEN(FullMessage$(i)) > p.w - 2 THEN
-                    FullMessage$(i) = LEFT$(FullMessage$(i), p.w - 5) + STRING$(3, 250)
-                END IF
-                _PRINTSTRING (p.x + (w \ 2 - LEN(FullMessage$(i)) \ 2) + 1, p.y + 1 + i), FullMessage$(i)
-            NEXT i
-            '-------- end of custom display changes --------
+'            '-------- custom display changes --------
+'            COLOR 0, 7
+'            FOR i = 1 TO MessageLines
+'                IF LEN(FullMessage$(i)) > p.w - 2 THEN
+'                    FullMessage$(i) = LEFT$(FullMessage$(i), p.w - 5) + STRING$(3, 250)
+'                END IF
+'                _PRINTSTRING (p.x + (w \ 2 - LEN(FullMessage$(i)) \ 2) + 1, p.y + 1 + i), FullMessage$(i)
+'            NEXT i
+'            '-------- end of custom display changes --------
 
-            'update visual page and cursor position
-            PCOPY 1, 0
-            IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
+'            'update visual page and cursor position
+'            PCOPY 1, 0
+'            IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
 
-            '-------- read input --------
-            change = 0
-            GetInput
-            IF mWHEEL THEN change = 1
-            IF KB THEN change = 1
-            IF mCLICK THEN mousedown = 1: change = 1
-            IF mRELEASE THEN mouseup = 1: change = 1
-            IF mB THEN change = 1
-            alt = KALT: IF alt <> oldalt THEN change = 1
-            oldalt = alt
-            _LIMIT 100
+'            '-------- read input --------
+'            change = 0
+'            GetInput
+'            IF mWHEEL THEN change = 1
+'            IF KB THEN change = 1
+'            IF mCLICK THEN mousedown = 1: change = 1
+'            IF mRELEASE THEN mouseup = 1: change = 1
+'            IF mB THEN change = 1
+'            alt = KALT: IF alt <> oldalt THEN change = 1
+'            oldalt = alt
+'            _LIMIT 100
 
-            IF change THEN
-                IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
-                'convert "alt+letter" scancode to letter's ASCII character
-                altletter$ = ""
-                IF alt AND NOT KCTRL THEN
-                    IF LEN(K$) = 1 THEN
-                        k = ASC(UCASE$(K$))
-                        IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
-                    END IF
-                END IF
-                SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
-                '-------- end of read input --------
+'            IF change THEN
+'                IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
+'                'convert "alt+letter" scancode to letter's ASCII character
+'                altletter$ = ""
+'                IF alt AND NOT KCTRL THEN
+'                    IF LEN(K$) = 1 THEN
+'                        k = ASC(UCASE$(K$))
+'                        IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
+'                    END IF
+'                END IF
+'                SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
+'                '-------- end of read input --------
 
-                '-------- generic input response --------
-                info = 0
+'                '-------- generic input response --------
+'                info = 0
 
-                IF UCASE$(K$) >= "A" AND UCASE$(K$) <= "Z" THEN altletter$ = UCASE$(K$)
+'                IF UCASE$(K$) >= "A" AND UCASE$(K$) <= "Z" THEN altletter$ = UCASE$(K$)
 
-                IF K$ = "" THEN K$ = CHR$(255)
-                IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
-                IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
-                IF focus < 1 THEN focus = lastfocus
-                IF focus > lastfocus THEN focus = 1
-                f = 1
-                FOR i = 1 TO 100
-                    t = o(i).typ
-                    IF t THEN
-                        focusoffset = focus - f
-                        ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
-                    END IF
-                NEXT
-                '-------- end of generic input response --------
+'                IF K$ = "" THEN K$ = CHR$(255)
+'                IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
+'                IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
+'                IF focus < 1 THEN focus = lastfocus
+'                IF focus > lastfocus THEN focus = 1
+'                f = 1
+'                FOR i = 1 TO 100
+'                    t = o(i).typ
+'                    IF t THEN
+'                        focusoffset = focus - f
+'                        ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
+'                    END IF
+'                NEXT
+'                '-------- end of generic input response --------
 
-                'specific post controls
-                IF K$ = CHR$(27) THEN ideactivitybox$ = MKI$(0)
+'                'specific post controls
+'                IF K$ = CHR$(27) THEN ideactivitybox$ = MKI$(0)
 
-                IF K$ = CHR$(13) OR (info <> 0) THEN
-                    ideactivitybox$ = MKI$(1) + MKL$(focus)
-                    ClearMouse
-                END IF
-                'end of custom controls
+'                IF K$ = CHR$(13) OR (info <> 0) THEN
+'                    ideactivitybox$ = MKI$(1) + MKL$(focus)
+'                    ClearMouse
+'                END IF
+'                'end of custom controls
 
-                mousedown = 0
-                mouseup = 0
-            END IF
-    END SELECT
-END FUNCTION
+'                mousedown = 0
+'                mouseup = 0
+'            END IF
+'    END SELECT
+'END FUNCTION
 
 
 FUNCTION idedisplaybox
@@ -17803,7 +17803,7 @@ FUNCTION idesearchedbox$
     l$ = ""
     REDIM SearchHistory(0) AS STRING
     RetrieveSearchHistory SearchHistory()
-    FOR i = 1 to UBOUND(SearchHistory)
+    FOR i = 1 TO UBOUND(SearchHistory)
         l$ = SearchHistory(i) + sep + l$
     NEXT
     '72,19
