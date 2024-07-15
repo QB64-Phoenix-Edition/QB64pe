@@ -1672,7 +1672,7 @@ FUNCTION ide2 (ignore)
                 '=== BEGIN: checking external dependencies ===
                 IF statusarealink <> 2 THEN
                     '-----
-                    edFF = FREEFILE: edLD = -1: edCHG = 0
+                    edLD = -1: edCHG = 0
                     '-----
                     nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
                     IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
@@ -1688,9 +1688,7 @@ FUNCTION ide2 (ignore)
                     '-----
                     WHILE NOT EndOfBuf%(ExtDepBuf)
                         edDAT$ = ReadBufLine$(ExtDepBuf): edID$ = LEFT$(edDAT$, 5)
-                        OPEN "B", #edFF, MID$(edDAT$, 7)
-                        edDAT$ = SPACE$(LOF(edFF)): GET #edFF, , edDAT$: CLOSE #edFF
-                        edMD5$ = _MD5$(edDAT$)
+                        edMD5$ = _MD5$(_READFILE$(MID$(edDAT$, 7)))
                         IF edLD THEN
                             IF edMD5$ <> ReadBufLine$(ExtDepBuf) THEN
                                 'changed declare library or include files require a recompile
@@ -3017,11 +3015,7 @@ FUNCTION ide2 (ignore)
                         f$ = p$ + ActiveINCLUDELinkFile
                         IF _FILEEXISTS(f$) = 0 THEN f$ = ActiveINCLUDELinkFile
                         IF _FILEEXISTS(f$) THEN
-                            backupIncludeFile = FREEFILE
-                            OPEN f$ FOR BINARY AS #backupIncludeFile
-                            tempInclude1$ = SPACE$(LOF(backupIncludeFile))
-                            GET #backupIncludeFile, 1, tempInclude1$
-                            CLOSE #backupIncludeFile
+                            tempInclude1$ = _READFILE$(f$)
 
                             SCREEN , , 3, 0
                             clearStatusWindow 0
@@ -3039,10 +3033,7 @@ FUNCTION ide2 (ignore)
                             END IF
                             SHELL p$
 
-                            OPEN f$ FOR BINARY AS #backupIncludeFile
-                            tempInclude2$ = SPACE$(LOF(backupIncludeFile))
-                            GET #backupIncludeFile, 1, tempInclude2$
-                            CLOSE #backupIncludeFile
+                            tempInclude2$ = _READFILE$(f$)
 
                             dummy = DarkenFGBG(0)
                             clearStatusWindow 0
@@ -17951,8 +17942,8 @@ END FUNCTION
 
 SUB IdeImportBookmarks (f2$)
     IdeBmkN = 0
-    f$ = CRLF + f2$ + CRLF
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$: CLOSE #fh
+    f$ = CRLF + f2$ + CRLF: a$ = ""
+    IF _FILEEXISTS(BookmarksFile$) THEN a$ = _READFILE$(BookmarksFile$)
     x = INSTR(UCASE$(a$), UCASE$(f$))
     IF x THEN 'retrieve bookmark data
         l = CVL(MID$(a$, x + LEN(f$), 4))
@@ -17993,8 +17984,8 @@ SUB IdeImportBookmarks (f2$)
 END SUB
 
 SUB IdeSaveBookmarks (f2$)
-    f$ = CRLF + f2$ + CRLF
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$: CLOSE #fh
+    f$ = CRLF + f2$ + CRLF: a$ = ""
+    IF _FILEEXISTS(BookmarksFile$) THEN a$ = _READFILE$(BookmarksFile$)
     x = INSTR(UCASE$(a$), UCASE$(f$))
     IF x THEN 'remove any old bookmark data
         l = CVL(MID$(a$, x + LEN(f$), 4))
@@ -18008,8 +17999,7 @@ SUB IdeSaveBookmarks (f2$)
         d$ = d$ + MKL$(IdeBmk(i).y) + MKL$(IdeBmk(i).x) + MKL$(IdeBmk(i).reserved) + MKL$(IdeBmk(i).reserved2)
     NEXT
     a$ = f$ + MKL$(LEN(d$)) + d$ + a$
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR OUTPUT AS #fh: CLOSE #fh
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR BINARY AS #fh: PUT #fh, , a$: CLOSE #fh
+    _WRITEFILE BookmarksFile$, a$
 
     'at the same time, save breakpoint and skip line data
     IF vWatchOn THEN

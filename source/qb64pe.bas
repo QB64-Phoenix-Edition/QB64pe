@@ -12301,13 +12301,8 @@ IF ExeIconSet THEN
 
     ' Copy icon file into temp directory with known name
     ' This solves the problem of the resource file needing an absolute path
-    ON ERROR GOTO qberror_test
-
-    DIM errNo AS LONG
     errNo = CopyFile&(ExeIconFile$, tmpdir$ + "icon.ico")
     IF errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(ExeIconFile$) + " to temp directory": GOTO errmes
-
-    ON ERROR GOTO qberror
 END IF
 
 IF VersionInfoSet THEN
@@ -12397,7 +12392,7 @@ WriteBuffers ""
 
 IF FormatMode THEN
     'Move temp file to final location
-    errNo = CopyFile(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
+    errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
     IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: GOTO errmes
     GOTO No_C_Compile
 END IF
