@@ -1710,7 +1710,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     edReCompile:
                     ideautorun = 0: startPausedPending = 1
-                    ideunsaved = -1: idechangemade = 1: statusarealink = 0
+                    idechangemade = 1: statusarealink = 0
                     GOTO ideloop
                 END IF
                 '=== END: checking external dependencies ===
@@ -5053,7 +5053,8 @@ FUNCTION ide2 (ignore)
                     WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "False"
                     menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = "Syntax Ch#ecker"
                 END IF
-                idechangemade = 1
+                idechangemade = 1 'trigger immediate re-check for syntax errors
+                IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
                 startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -5070,7 +5071,8 @@ FUNCTION ide2 (ignore)
                     WriteConfigSetting generalSettingsSection$, "IgnoreWarnings", "False"
                     menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = "Ignore #Warnings"
                 END IF
-                idechangemade = 1
+                idechangemade = 1 'trigger immediate re-check for warnings
+                IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
                 startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -5080,15 +5082,11 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 UseGuiDialogs = NOT UseGuiDialogs
                 WriteConfigSetting generalSettingsSection$, "UseGuiDialogs", BoolToTFString$(UseGuiDialogs)
-
                 IF UseGuiDialogs THEN
                     menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "#GUI Dialogs"
                 ELSE
                     menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "#GUI Dialogs"
                 END IF
-
-                idechangemade = 1
-                startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5179,7 +5177,11 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "Co#mpiler Settings..." THEN
                 PCOPY 2, 0
                 retval = ideCompilerSettingsBox
-                IF retval THEN idechangemade = 1: idelayoutallow = 2: startPausedPending = 0 'recompile if options changed
+                IF retval THEN
+                    idechangemade = 1 'recompile if options changed
+                    IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
+                    startPausedPending = 0
+                END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
