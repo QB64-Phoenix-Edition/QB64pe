@@ -20224,8 +20224,6 @@ FUNCTION isnumber (__a$)
     isnumber = 1
 END FUNCTION
 
-'$INCLUDE:'wiki\wiki_methods.bas'
-
 SUB printWrapStatus (x AS INTEGER, y AS INTEGER, initialX AS INTEGER, __text$)
     DIM text$, nextWord$
     DIM AS INTEGER i, findSep, findColorMarker, changeColor, changeColorAfter
@@ -20481,6 +20479,7 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
     IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
 END FUNCTION
 
+'$INCLUDE:'wiki\wiki_methods.bas'
 
 SUB ExportCodeAs (docFormat$)
     ' Get the current source code, convert it to the desired document format and

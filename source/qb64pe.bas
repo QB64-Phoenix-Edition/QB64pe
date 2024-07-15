@@ -376,9 +376,10 @@ DIM SHARED warningInInclude AS LONG, warningInIncludeLine AS LONG
 DIM SHARED outputfile_cmd$
 DIM SHARED compilelog$
 
-'$INCLUDE:'global\IDEsettings.bas'
-
 DIM OutputIsRelativeToStartDir AS LONG
+
+'$INCLUDE:'ide\config\cfg_global.bas'
+ReadInitialConfig
 
 CMDLineFile = ParseCMDLineArgs$
 IF CMDLineFile <> "" AND _FILEEXISTS(_STARTDIR$ + "/" + CMDLineFile) THEN
@@ -23792,5 +23793,6 @@ END FUNCTION
 DEFLNG A-Z
 
 '-------- Optional IDE Component (2/2) --------
+'$INCLUDE:'ide\config\cfg_methods.bas'
 '$INCLUDE:'ide\ide_methods.bas'
 
