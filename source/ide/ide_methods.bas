@@ -177,6 +177,7 @@ FUNCTION ide2 (ignore)
         EXIT FUNCTION
     END IF
 
+    reInitIDE:
     IF idelaunched = 0 THEN
         idelaunched = 1
 
@@ -1125,13 +1126,33 @@ FUNCTION ide2 (ignore)
 
         END IF 'skipdisplay
 
+        IF askToCopyOther THEN
+            'This is done first, as copying settings from another QB64-PE installation
+            'may effectively prevent the other "first time" messages from popping up,
+            'if those were already set to "Don't show this again" in the copied settings.
+            result = idemessagebox("Welcome to QB64-PE", "It seems you just started a brand new installation of QB64-PE\n" + _
+                                                      "for the first time, as we couldn't find any IDE configuration.\n\n" + _
+                                                      "If you're already familiar with QB64-PE and maybe still have\n" + _
+                                                      "an older installation around, then we could easily import your\n" + _
+                                                      "old configuration files at this point.\n\n" + _
+                                                      "Would you like to import your old configuration from another\n" + _
+                                                      "QB64-PE installation?", "#Yes, please import;#No, use defaults")
+            PCOPY 3, 0: SCREEN , , 3, 0
+            askToCopyOther = 0
+            IF result = 1 THEN
+                CopyFromOther: ReadInitialConfig
+                IF IDE_AutoPosition AND NOT IDE_BypassAutoPosition THEN _SCREENMOVE IDE_LeftPosition, IDE_TopPosition
+                idelaunched = 0: skipdisplay = 0: GOTO reInitIDE
+            END IF
+        END IF
+
         IF WhiteListQB64FirstTimeMsg = 0 THEN
             IF INSTR(_OS$, "WIN") THEN whiteListProcess$ = "and the process 'qb64pe.exe' " ELSE whiteListProcess$ = ""
-            result = idemessagebox("Welcome to QB64-PE", "QB64-PE is an independently distributed program, and as such" + CHR$(10) + _
-                                                      "both 'qb64pe" + extension$ + "' and the programs you create with it may" + CHR$(10) + _
-                                                      "eventually be flagged as false positives by your" + CHR$(10) + _
-                                                      "antivirus/antimalware software." + CHR$(10) + CHR$(10) + _
-                                                      "It is advisable to whitelist your whole 'qb64pe' folder" + CHR$(10) + _
+            result = idemessagebox("Welcome to QB64-PE", "QB64-PE is an independently distributed program, and as such\n" + _
+                                                      "both 'qb64pe" + extension$ + "' and the programs you create with it may\n" + _
+                                                      "eventually be flagged as false positives by your\n" + _
+                                                      "antivirus/antimalware software.\n\n" + _
+                                                      "It is advisable to whitelist your whole 'qb64pe' folder\n" + _
                                                       whiteListProcess$ + "to avoid operation errors.", "#OK;#Don't show this again")
 
             PCOPY 3, 0: SCREEN , , 3, 0
@@ -1638,12 +1659,12 @@ FUNCTION ide2 (ignore)
 
             IF ExeToSourceFolderFirstTimeMsg = 0 THEN
                 IF SaveExeWithSource THEN
-                    result = idemessagebox("Run", "Your program will be compiled to the same folder where your" + CHR$(10) + _
-                                           "source code is saved. You can change that by unchecking the" + CHR$(10) + _
+                    result = idemessagebox("Run", "Your program will be compiled to the same folder where your\n" + _
+                                           "source code is saved. You can change that by unchecking the\n" + _
                                            "option 'Output EXE to Source Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
                 ELSE
-                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can" + CHR$(10) + _
-                                         "change that by checking the option 'Output EXE to Source" + CHR$(10) + _
+                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can\n" + _
+                                         "change that by checking the option 'Output EXE to Source\n" + _
                                          "Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
                 END IF
                 IF result = 2 THEN
