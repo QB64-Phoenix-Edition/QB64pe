@@ -15243,7 +15243,6 @@ FUNCTION ideCompilerSettingsBox
 
     y = y + 1 ' Blank line
 
-    a2$ = str2$(idewy + idesubwindow)
     i = i + 1
     extraCppFlagsTextBox = i
     o(i).typ = 1
@@ -15251,9 +15250,8 @@ FUNCTION ideCompilerSettingsBox
     y = y + 2: o(i).y = y: y = y + 1
     o(i).nam = idenewtxt("C++ Compiler #Flags")
     o(i).txt = idenewtxt(ExtraCppFlags)
-    o(i).v1 = LEN(a2$)
+    o(i).v1 = LEN(ExtraCppFlags)
 
-    a2$ = str2$(idewy + idesubwindow)
     i = i + 1
     extraLinkerFlagsTextBox = i
     o(i).typ = 1
@@ -15261,16 +15259,16 @@ FUNCTION ideCompilerSettingsBox
     y = y + 2: o(i).y = y: y = y + 1
     o(i).nam = idenewtxt("C++ #Linker Flags")
     o(i).txt = idenewtxt(ExtraLinkerFlags)
-    o(i).v1 = LEN(a2$)
+    o(i).v1 = LEN(ExtraLinkerFlags)
 
-    a2$ = str2$(idewy + idesubwindow)
+    a2$ = str2$(MaxParallelProcesses)
     i = i + 1
     maxParallelTextBox = i
     o(i).typ = 1
     o(i).x = 2
     y = y + 2: o(i).y = y: y = y + 1
     o(i).nam = idenewtxt("#Max C++ Compiler Processes")
-    o(i).txt = idenewtxt(str2$(MaxParallelProcesses))
+    o(i).txt = idenewtxt(a2$)
     o(i).v1 = LEN(a2$)
 
     y = y + 1 ' Blank line
@@ -15358,7 +15356,17 @@ FUNCTION ideCompilerSettingsBox
         '-------- end of generic input response --------
 
         'specific post controls
-        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT FUNCTION 'cancel
+        IF focus <> PrevFocus THEN
+            'Always start with TextBox values selected upon getting focus
+            PrevFocus = focus
+            IF o(focus).typ = 1 THEN
+                o(focus).v1 = LEN(idetxt(o(focus).txt))
+                IF o(focus).v1 > 0 THEN o(focus).issel = -1
+                o(focus).sx1 = 0
+            END IF
+        END IF
+
+        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT DO 'cancel
         IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
             'save changes
             v% = o(optimizeCheckBox).sel: IF v% <> 0 THEN v% = -1
@@ -15393,7 +15401,7 @@ FUNCTION ideCompilerSettingsBox
 
             ' Clean compiled files, since they may change due to the different settings
             PurgeTemporaryBuildFiles (os$), (MacOSX)
-            idechangemade = 1 'force recompilation
+            ideCompilerSettingsBox = -1
 
             EXIT FUNCTION
         END IF
