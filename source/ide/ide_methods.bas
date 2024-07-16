@@ -195,9 +195,12 @@ FUNCTION ide2 (ignore)
 
         IF idecustomfont THEN
             idecustomfonthandle = _LOADFONT(idecustomfontfile$, idecustomfontheight, "MONOSPACE")
-            IF idecustomfonthandle = -1 THEN
-                'failed! - revert to default settings
+            IF idecustomfonthandle < 1 THEN
+                retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location, or is\nof unsupported format. Reverting back to default built-in font.", "#OK")
                 idecustomfont = 0: idecustomfontfile$ = "C:\Windows\Fonts\lucon.ttf": idecustomfontheight = 21
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(idecustomfont)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
             ELSE
                 _FONT idecustomfonthandle
             END IF
@@ -16384,7 +16387,7 @@ FUNCTION idedisplaybox
             IF o(7).sel <> idecustomfont THEN
                 IF o(7).sel = 0 THEN
                     IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
-                    _FREEFONT idecustomfonthandle
+                    IF idecustomfonthandle > 0 THEN _FREEFONT idecustomfonthandle
                 ELSE
                     x = 1
                 END IF
@@ -16397,9 +16400,8 @@ FUNCTION idedisplaybox
                 oldhandle = idecustomfonthandle
                 idecustomfonthandle = _LOADFONT(v$, v%, "MONOSPACE")
                 IF idecustomfonthandle < 1 THEN
-                    'failed! - revert to default settings
-                    _MessageBox "Font not found!", "ERROR: Font not found, or is invalid format, at specified location.  Reverting back to existing font.", "error"
-                    o(7).sel = 0: idetxt(o(8).txt) = "C:\Windows\Fonts\lucon.ttf": idetxt(o(9).txt) = "21": IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
+                    retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location,\nor is of unsupported format. Please check your inputs.", "#OK")
+                    PCOPY 2, 1: _CONTINUE
                 ELSE
                     _FONT idecustomfonthandle
                 END IF
