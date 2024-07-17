@@ -6,9 +6,9 @@
 // https://github.com/mackron/dr_pcx
 //-----------------------------------------------------------------------------------------------------
 
+#include "sg_pcx.h"
 #include "image.h"
 #include <algorithm>
-#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -188,10 +188,10 @@ class PCXImage {
         Color(uint8_t b, uint8_t g, uint8_t r) { SetFromComponents(b, g, r); }
 
         void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 255) {
-            this->color.tuple.b = b;
-            this->color.tuple.g = g;
-            this->color.tuple.r = r;
-            this->color.tuple.a = a;
+            color.tuple.b = b;
+            color.tuple.g = g;
+            color.tuple.r = r;
+            color.tuple.a = a;
         }
     };
 

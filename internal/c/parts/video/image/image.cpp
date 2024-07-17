@@ -12,38 +12,29 @@
 //      qoi (https://qoiformat.org)
 //      pixelscalers (https://github.com/janert/pixelscalers)
 //      mmpx (https://github.com/ITotalJustice/mmpx)
+//      jo_gif (https://www.jonolick.com)
 //
 //-----------------------------------------------------------------------------------------------------
 
-// Set this to 1 if we want to print debug messages to stderr
-#define IMAGE_DEBUG 0
+// Uncomment this to to print debug messages to stderr
+// #define IMAGE_DEBUG 1
 #include "image.h"
-// We need 'qbs' and 'image' structs stuff from here
-// This should eventually change when things are moved to smaller, logical and self-contained files
 #include "../../../libqb.h"
+#include "error_handle.h"
 #include "filepath.h"
+#include "jo_gif/jo_gif.h"
+#include "nanosvg/nanosvg.h"
+#include "nanosvg/nanosvgrast.h"
+#include "pixelscalers/pixelscalers.h"
+#include "qbs.h"
+#include "qoi/qoi.h"
+#include "sg_pcx/sg_pcx.h"
+#include "stb/stb_image.h"
+#include "stb/stb_image_write.h"
 #include <cctype>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
-#define QOI_IMPLEMENTATION
-#include "qoi.h"
-#define NANOSVG_ALL_COLOR_KEYWORDS
-#define NANOSVG_IMPLEMENTATION
-#include "nanosvg/nanosvg.h"
-#define NANOSVGRAST_IMPLEMENTATION
-#include "nanosvg/nanosvgrast.h"
-#include "sg_pcx.hpp"
-#define SXBR_IMPLEMENTATION
-#include "pixelscalers/sxbr.hpp"
-#define MMPX_IMPLEMENTATION
-#include "pixelscalers/mmpx.hpp"
-#define HQX_IMPLEMENTATION
-#include "pixelscalers/hqx.hpp"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb/stb_image_write.h"
 
 #ifdef QB64_WINDOWS
 #    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
@@ -684,8 +675,8 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
 /// @param qbsRequirements Optional: Extra format and setting arguments
 /// @param passed Optional parameters
 void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements, int32_t passed) {
-    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, JPG, HDR };
-    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "jpg", "hdr"};
+    enum struct SaveFormat { PNG = 0, QOI, BMP, TGA, JPG, HDR, GIF };
+    static const char *formatName[] = {"png", "qoi", "bmp", "tga", "jpg", "hdr", "gif"};
 
     if (new_error) // leave if there was an error
         return;
@@ -939,6 +930,17 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         if (!stbi_write_hdr(fileName.c_str(), width, height, HDRComponents, HDRPixels.data())) {
             IMAGE_DEBUG_PRINT("stbi_write_hdr() failed");
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        }
+    } break;
+
+    case SaveFormat::GIF: {
+        auto gif = jo_gif_start(fileName.c_str(), short(width), short(height), 0, 255);
+        if (gif.fp) {
+            jo_gif_frame(&gif, reinterpret_cast<unsigned char *>(pixels.data()), 0, false);
+            jo_gif_end(&gif);
+        } else {
+            IMAGE_DEBUG_PRINT("jo_gif_start() failed");
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
     } break;

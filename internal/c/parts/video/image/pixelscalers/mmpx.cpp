@@ -4,18 +4,8 @@
     https://casual-effects.com/research/McGuire2021PixelArt/index.html
 */
 
-#ifndef __MMPX_H__
-#define __MMPX_H__
-
-#include <cstdint>
-
-void mmpx_scale2x(const uint32_t *srcBuffer, uint32_t *dst, uint32_t srcWidth, uint32_t srcHeight);
-
-#endif
-
-#ifdef MMPX_IMPLEMENTATION
-
 #include <cstdbool>
+#include <cstdint>
 
 static inline uint32_t luma(uint32_t color) {
     const uint32_t alpha = (color & 0xFF000000) >> 24;
@@ -159,7 +149,7 @@ void mmpx_scale2x(const uint32_t *srcBuffer, uint32_t *dst, uint32_t srcWidth, u
                                 M = K;
                         }
                     } // F !== D
-                }     // 2:1 slope
+                } // 2:1 slope
             }
 
             const uint32_t dstIndex = ((srcX + srcX) + (srcY << 2) * srcWidth) >> 0;
@@ -185,7 +175,5 @@ void mmpx_scale2x(const uint32_t *srcBuffer, uint32_t *dst, uint32_t srcWidth, u
             H = I;
             I = src(&meta, srcX + 2, srcY + 1);
         } // X
-    }     // Y
+    } // Y
 }
-
-#endif

@@ -29,21 +29,12 @@ by Philipp K. Janert, September 2022
 
 */
 
-#ifndef __JANERT_PIXELSCALERS_XBR__
-#define __JANERT_PIXELSCALERS_XBR__
-
-#include <cstdint>
-
-void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out);
-
-#endif
-
-#ifdef SXBR_IMPLEMENTATION
 //// *** Super-xBR code begins here - MIT LICENSE *** ///
 
 // PKJ:
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
 #define u32 uint32_t
 
@@ -391,5 +382,3 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
 //// *** Super-xBR code ends here - MIT LICENSE *** ///
 
 void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out) { scaleSuperXBRT<2>(data, out, w, h); }
-
-#endif
