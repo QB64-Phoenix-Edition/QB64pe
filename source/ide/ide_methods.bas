@@ -197,7 +197,13 @@ FUNCTION ide2 (ignore)
             idecustomfonthandle = _LOADFONT(idecustomfontfile$, idecustomfontheight, "MONOSPACE")
             IF idecustomfonthandle < 1 THEN
                 retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location, or is\nof unsupported format. Reverting back to default built-in font.", "#OK")
-                idecustomfont = 0: idecustomfontfile$ = "C:\Windows\Fonts\lucon.ttf": idecustomfontheight = 21
+                idecustomfont = 0: idecustomfontheight = 19
+                IF os$ = "LNX" THEN
+                    idecustomfontfile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
+                    IF MacOSX THEN idecustomfontfile$ = _DIR$("fonts") + "Courier New.ttf"
+                ELSE
+                    idecustomfontfile$ = _DIR$("fonts") + "lucon.ttf"
+                END IF
                 WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(idecustomfont)
                 WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
                 WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
