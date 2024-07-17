@@ -177,6 +177,7 @@ FUNCTION ide2 (ignore)
         EXIT FUNCTION
     END IF
 
+    reInitIDE:
     IF idelaunched = 0 THEN
         idelaunched = 1
 
@@ -194,9 +195,18 @@ FUNCTION ide2 (ignore)
 
         IF idecustomfont THEN
             idecustomfonthandle = _LOADFONT(idecustomfontfile$, idecustomfontheight, "MONOSPACE")
-            IF idecustomfonthandle = -1 THEN
-                'failed! - revert to default settings
-                idecustomfont = 0: idecustomfontfile$ = "C:\Windows\Fonts\lucon.ttf": idecustomfontheight = 21
+            IF idecustomfonthandle < 1 THEN
+                retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location, or is\nof unsupported format. Reverting back to default built-in font.", "#OK")
+                idecustomfont = 0: idecustomfontheight = 19
+                IF os$ = "LNX" THEN
+                    idecustomfontfile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
+                    IF MacOSX THEN idecustomfontfile$ = _DIR$("fonts") + "Courier New.ttf"
+                ELSE
+                    idecustomfontfile$ = _DIR$("fonts") + "lucon.ttf"
+                END IF
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(idecustomfont)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
             ELSE
                 _FONT idecustomfonthandle
             END IF
@@ -337,8 +347,8 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Language...": i = i + 1
         menuDesc$(m, i - 1) = "Changes code page to use with TTF fonts"
-        menu$(m, i) = "#Backup/Undo...": i = i + 1
-        menuDesc$(m, i - 1) = "Sets size of backup/undo buffer"
+        menu$(m, i) = "#Undo/History...": i = i + 1
+        menuDesc$(m, i - 1) = "Sets limits for Backup/Undo, Recent Files and Search String histories"
         menu$(m, i) = "-": i = i + 1
 
         OptionsMenuDisableSyntax = i
@@ -504,14 +514,12 @@ FUNCTION ide2 (ignore)
 
         'restore autosave?
         'undo/redo
-        OPEN tmpdir$ + "autosave.bin" FOR BINARY AS #150
-        IF LOF(150) = 1 THEN
-            CLOSE #150
+        IF _FILEEXISTS(AutosaveFile$) THEN 'test for flag file
             r$ = iderestore$
             PCOPY 3, 0: SCREEN , , 3, 0
             IF r$ = "Y" THEN
                 'restore
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 IF LOF(150) THEN
                     ideunsaved = 1
                     h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
@@ -531,8 +539,6 @@ FUNCTION ide2 (ignore)
                 END IF
                 CLOSE #150
             END IF
-        ELSE
-            CLOSE #150
         END IF
 
         IF ideunsaved <> 1 THEN 'no file restored (takes priority over loading file from command line)
@@ -1129,13 +1135,33 @@ FUNCTION ide2 (ignore)
 
         END IF 'skipdisplay
 
+        IF askToCopyOther THEN
+            'This is done first, as copying settings from another QB64-PE installation
+            'may effectively prevent the other "first time" messages from popping up,
+            'if those were already set to "Don't show this again" in the copied settings.
+            result = idemessagebox("Welcome to QB64-PE", "It seems you just started a brand new installation of QB64-PE\n" + _
+                                                      "for the first time, as we couldn't find any IDE configuration.\n\n" + _
+                                                      "If you're already familiar with QB64-PE and maybe still have\n" + _
+                                                      "an older installation around, then we could easily import your\n" + _
+                                                      "old configuration files at this point.\n\n" + _
+                                                      "Would you like to import your old configuration from another\n" + _
+                                                      "QB64-PE installation?", "#Yes, please import;#No, use defaults")
+            PCOPY 3, 0: SCREEN , , 3, 0
+            askToCopyOther = 0
+            IF result = 1 THEN
+                CopyFromOther: ReadInitialConfig
+                IF IDE_AutoPosition AND NOT IDE_BypassAutoPosition THEN _SCREENMOVE IDE_LeftPosition, IDE_TopPosition
+                idelaunched = 0: skipdisplay = 0: GOTO reInitIDE
+            END IF
+        END IF
+
         IF WhiteListQB64FirstTimeMsg = 0 THEN
             IF INSTR(_OS$, "WIN") THEN whiteListProcess$ = "and the process 'qb64pe.exe' " ELSE whiteListProcess$ = ""
-            result = idemessagebox("Welcome to QB64-PE", "QB64-PE is an independently distributed program, and as such" + CHR$(10) + _
-                                                      "both 'qb64pe" + extension$ + "' and the programs you create with it may" + CHR$(10) + _
-                                                      "eventually be flagged as false positives by your" + CHR$(10) + _
-                                                      "antivirus/antimalware software." + CHR$(10) + CHR$(10) + _
-                                                      "It is advisable to whitelist your whole 'qb64pe' folder" + CHR$(10) + _
+            result = idemessagebox("Welcome to QB64-PE", "QB64-PE is an independently distributed program, and as such\n" + _
+                                                      "both 'qb64pe" + extension$ + "' and the programs you create with it may\n" + _
+                                                      "eventually be flagged as false positives by your\n" + _
+                                                      "antivirus/antimalware software.\n\n" + _
+                                                      "It is advisable to whitelist your whole 'qb64pe' folder\n" + _
                                                       whiteListProcess$ + "to avoid operation errors.", "#OK;#Don't show this again")
 
             PCOPY 3, 0: SCREEN , , 3, 0
@@ -1177,7 +1203,7 @@ FUNCTION ide2 (ignore)
 
                 'add undo event
 
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 '[oldest state entry][newest state entry][top-most entry(ignore if no wrapping required)]
                 h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
 
@@ -1275,7 +1301,7 @@ FUNCTION ide2 (ignore)
                 'set undo flag once
                 IF ideundoflag = 0 THEN
                     ideundoflag = 1
-                    OPEN tmpdir$ + "autosave.bin" FOR BINARY AS #150: a$ = CHR$(1): PUT #150, , a$: CLOSE #150 'set flag
+                    OPEN AutosaveFile$ FOR OUTPUT AS #150: CLOSE #150 'create flag file
                 END IF
 
             ELSE
@@ -1642,12 +1668,12 @@ FUNCTION ide2 (ignore)
 
             IF ExeToSourceFolderFirstTimeMsg = 0 THEN
                 IF SaveExeWithSource THEN
-                    result = idemessagebox("Run", "Your program will be compiled to the same folder where your" + CHR$(10) + _
-                                           "source code is saved. You can change that by unchecking the" + CHR$(10) + _
+                    result = idemessagebox("Run", "Your program will be compiled to the same folder where your\n" + _
+                                           "source code is saved. You can change that by unchecking the\n" + _
                                            "option 'Output EXE to Source Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
                 ELSE
-                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can" + CHR$(10) + _
-                                         "change that by checking the option 'Output EXE to Source" + CHR$(10) + _
+                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can\n" + _
+                                         "change that by checking the option 'Output EXE to Source\n" + _
                                          "Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
                 END IF
                 IF result = 2 THEN
@@ -1672,7 +1698,7 @@ FUNCTION ide2 (ignore)
                 '=== BEGIN: checking external dependencies ===
                 IF statusarealink <> 2 THEN
                     '-----
-                    edFF = FREEFILE: edLD = -1: edCHG = 0
+                    edLD = -1: edCHG = 0
                     '-----
                     nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
                     IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
@@ -1688,9 +1714,7 @@ FUNCTION ide2 (ignore)
                     '-----
                     WHILE NOT EndOfBuf%(ExtDepBuf)
                         edDAT$ = ReadBufLine$(ExtDepBuf): edID$ = LEFT$(edDAT$, 5)
-                        OPEN "B", #edFF, MID$(edDAT$, 7)
-                        edDAT$ = SPACE$(LOF(edFF)): GET #edFF, , edDAT$: CLOSE #edFF
-                        edMD5$ = _MD5$(edDAT$)
+                        edMD5$ = _MD5$(_READFILE$(MID$(edDAT$, 7)))
                         IF edLD THEN
                             IF edMD5$ <> ReadBufLine$(ExtDepBuf) THEN
                                 'changed declare library or include files require a recompile
@@ -1710,7 +1734,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     edReCompile:
                     ideautorun = 0: startPausedPending = 1
-                    ideunsaved = -1: idechangemade = 1: statusarealink = 0
+                    idechangemade = 1: statusarealink = 0
                     GOTO ideloop
                 END IF
                 '=== END: checking external dependencies ===
@@ -3017,11 +3041,7 @@ FUNCTION ide2 (ignore)
                         f$ = p$ + ActiveINCLUDELinkFile
                         IF _FILEEXISTS(f$) = 0 THEN f$ = ActiveINCLUDELinkFile
                         IF _FILEEXISTS(f$) THEN
-                            backupIncludeFile = FREEFILE
-                            OPEN f$ FOR BINARY AS #backupIncludeFile
-                            tempInclude1$ = SPACE$(LOF(backupIncludeFile))
-                            GET #backupIncludeFile, 1, tempInclude1$
-                            CLOSE #backupIncludeFile
+                            tempInclude1$ = _READFILE$(f$)
 
                             SCREEN , , 3, 0
                             clearStatusWindow 0
@@ -3039,10 +3059,7 @@ FUNCTION ide2 (ignore)
                             END IF
                             SHELL p$
 
-                            OPEN f$ FOR BINARY AS #backupIncludeFile
-                            tempInclude2$ = SPACE$(LOF(backupIncludeFile))
-                            GET #backupIncludeFile, 1, tempInclude2$
-                            CLOSE #backupIncludeFile
+                            tempInclude2$ = _READFILE$(f$)
 
                             dummy = DarkenFGBG(0)
                             clearStatusWindow 0
@@ -3438,7 +3455,7 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "Z" THEN 'undo (CTRL+Z)
             idemundo:
             IF ideundopos THEN
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
 
                 'does something exist to undo?
@@ -3523,7 +3540,7 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "Y" THEN 'redo (CTRL+Y)
             idemredo:
             IF ideundopos THEN
-                OPEN tmpdir$ + "undo2.bin" FOR BINARY AS #150
+                OPEN UndoFile$ FOR BINARY AS #150
                 h$ = SPACE$(12): GET #150, , h$: p1 = CVL(MID$(h$, 1, 4)): p2 = CVL(MID$(h$, 5, 4)): plast = CVL(MID$(h$, 9, 4))
 
                 'does something exist to redo?
@@ -4439,6 +4456,7 @@ FUNCTION ide2 (ignore)
     '--------------------------------------------------------------------------------
 
     showmenu:
+    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~" 'update recent files
     altheld = 1
     IF IdeSystem = 2 THEN IdeSystem = 1: GOSUB UpdateSearchBar
     PCOPY 0, 2
@@ -5053,7 +5071,8 @@ FUNCTION ide2 (ignore)
                     WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "False"
                     menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = "Syntax Ch#ecker"
                 END IF
-                idechangemade = 1
+                idechangemade = 1 'trigger immediate re-check for syntax errors
+                IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
                 startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -5070,7 +5089,8 @@ FUNCTION ide2 (ignore)
                     WriteConfigSetting generalSettingsSection$, "IgnoreWarnings", "False"
                     menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = "Ignore #Warnings"
                 END IF
-                idechangemade = 1
+                idechangemade = 1 'trigger immediate re-check for warnings
+                IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
                 startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -5080,15 +5100,11 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 UseGuiDialogs = NOT UseGuiDialogs
                 WriteConfigSetting generalSettingsSection$, "UseGuiDialogs", BoolToTFString$(UseGuiDialogs)
-
                 IF UseGuiDialogs THEN
                     menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "#GUI Dialogs"
                 ELSE
                     menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "#GUI Dialogs"
                 END IF
-
-                idechangemade = 1
-                startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5179,7 +5195,11 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "Co#mpiler Settings..." THEN
                 PCOPY 2, 0
                 retval = ideCompilerSettingsBox
-                IF retval THEN idechangemade = 1: idelayoutallow = 2: startPausedPending = 0 'recompile if options changed
+                IF retval THEN
+                    idechangemade = 1 'recompile if options changed
+                    IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
+                    startPausedPending = 0
+                END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5254,10 +5274,9 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF menu$(m, s) = "#Backup/Undo..." THEN
+            IF menu$(m, s) = "#Undo/History..." THEN
                 PCOPY 2, 0
-                retval = idebackupbox
-                'retval is ignored
+                idelimitsbox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5845,8 +5864,7 @@ FUNCTION ide2 (ignore)
                 r$ = AskClearHistory$("SEARCH")
                 IF r$ = "Y" THEN
                     fh = FREEFILE
-                    OPEN tmpdir$ + "searched.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                    ClearBuffers tmpdir$ + "searched.bin"
+                    OPEN SearchedFile$ FOR OUTPUT AS #fh: CLOSE #fh
                     idefindtext = ""
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -6227,9 +6245,7 @@ FUNCTION ide2 (ignore)
                     END IF
 
                 END IF
-                fh = FREEFILE: OPEN tmpdir$ + "autosave.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                WriteBuffers tmpdir$ + "recent.bin"
-                WriteBuffers tmpdir$ + "searched.bin"
+                IF _FILEEXISTS(AutosaveFile$) THEN KILL AutosaveFile$ 'remove flag file
                 SYSTEM
             END IF
 
@@ -6304,9 +6320,7 @@ FUNCTION ide2 (ignore)
                     r$ = AskClearHistory$("RECENT")
                     IF r$ = "Y" THEN
                         fh = FREEFILE
-                        OPEN tmpdir$ + "recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                        ClearBuffers tmpdir$ + "recent.bin"
-                        IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+                        OPEN RecentFile$ FOR OUTPUT AS #fh: CLOSE #fh
                     ELSE
                         GOTO ideshowrecentbox
                     END IF
@@ -6329,9 +6343,7 @@ FUNCTION ide2 (ignore)
                 r$ = AskClearHistory$("RECENT")
                 IF r$ = "Y" THEN
                     fh = FREEFILE
-                    OPEN tmpdir$ + "recent.bin" FOR OUTPUT AS #fh: CLOSE #fh
-                    ClearBuffers tmpdir$ + "recent.bin"
-                    IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+                    OPEN RecentFile$ FOR OUTPUT AS #fh: CLOSE #fh
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -6486,21 +6498,24 @@ FUNCTION ide2 (ignore)
     RETURN
 
     CleanUpRecentList:
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
+    bh% = FileToBuf%(RecentFile$)
     allOk% = -1 'let's assume the list is OK
     WHILE NOT EndOfBuf%(bh%)
-        IF NOT _FILEEXISTS(ReadBufLine$(bh%)) THEN 'accessible?
-            nul& = SeekBuf&(bh%, -LEN(BufEolSeq$(bh%)), SBM_BufCurrent) 'back to prev (just read) line
-            nul& = SeekBuf&(bh%, 0, SBM_LineStart) 'and then ahead to the start of it
-            DeleteBufLine bh% 'cut out the broken file link
+        bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%)
+        IF NOT _FILEEXISTS(be$) THEN 'accessible?
+            nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
+            DeleteBufLine bh% 'remove that entry
             allOk% = 0 'delete OK status
         END IF
     WEND
     IF allOk% THEN
         result = idemessagebox("Remove Broken Links", "All files in the list are accessible.", "#OK")
     ELSE
-        IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+        BufToFile bh%, RecentFile$
+        IF ideerror > 1 AND AttemptToLoadRecent = -1 THEN PCOPY 3, 0
+        result = idemessagebox("Remove Broken Links", "All broken links have been removed.", "#OK")
     END IF
+    DisposeBuf bh%
     RETURN
 
     redrawItAll:
@@ -6741,16 +6756,16 @@ SUB DebugMode
             vWatchPanel.y = 4
             vWatchPanel.firstVisible = 1
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.w"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.w"))
             IF x THEN vWatchPanel.w = x
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.h"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.h"))
             IF x THEN vWatchPanel.h = x
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.x"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.x"))
             IF x THEN vWatchPanel.x = x
 
-            x = VAL(ReadSetting$(".\internal\temp\debug.ini", "settings", "vWatchPanel.y"))
+            x = VAL(ReadSetting$(DebugFile$, vwatchPanelSection$, "vWatchPanel.y"))
             IF x THEN vWatchPanel.y = x
 
             GOSUB checkvWatchPanelSize
@@ -7169,13 +7184,13 @@ SUB DebugMode
             END IF
             IF vWatchPanel.draggingPanel THEN
                 vWatchPanel.draggingPanel = 0: mouseDown = 0
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.x", str2$(vWatchPanel.x)
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.y", str2$(vWatchPanel.y)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.x", str2$(vWatchPanel.x)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.y", str2$(vWatchPanel.y)
             END IF
             IF vWatchPanel.resizingPanel THEN
                 vWatchPanel.resizingPanel = 0: mouseDown = 0
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.w", str2$(vWatchPanel.w)
-                WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.h", str2$(vWatchPanel.h)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.w", str2$(vWatchPanel.w)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.h", str2$(vWatchPanel.h)
             END IF
             IF vWatchPanel.closingPanel AND (mX = mouseDownOnX AND mY = mouseDownOnY) THEN
                 vWatchPanel.closingPanel = 0
@@ -7191,10 +7206,10 @@ SUB DebugMode
                     NEXT
 
                     'Reset panel position in debug settings
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.x", "0"
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.y", "0"
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.w", "0"
-                    WriteSetting ".\internal\temp\debug.ini", "settings", "vWatchPanel.h", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.x", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.y", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.w", "0"
+                    WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.h", "0"
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 WHILE _MOUSEINPUT: WEND
@@ -11142,7 +11157,7 @@ SUB idedrawobj (o AS idedbotype, f)
             IF a2$ = CHR$(0) THEN
                 n = n + 1
             ELSE
-                IF a$ <> "#" THEN c = c + 1
+                IF a2$ <> "#" THEN c = c + 1
             END IF
         NEXT
         w = o.w
@@ -11241,7 +11256,7 @@ FUNCTION idefind$
 
     '-------- init --------
 
-    'built initial search string
+    'built initial search strings
     IF ideselect THEN
         IF ideselecty1 = idecy THEN 'single line selected
             a$ = idegetline(idecy)
@@ -14465,7 +14480,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     IF a2$ = CHR$(0) THEN
                         n = n + 1
                     ELSE
-                        IF a$ <> "#" THEN c = c + 1
+                        IF a2$ <> "#" THEN c = c + 1
                     END IF
                 NEXT
                 w = o.w
@@ -15145,26 +15160,188 @@ FUNCTION idelayoutbox
     LOOP
 END FUNCTION
 
-FUNCTION idebackupbox
-    a2$ = str2$(idebackupsize)
-    v$ = ideinputbox$("Backup/Undo", "#Undo buffer limit (10-2000MB)", a2$, "0123456789", 50, 4, 0)
-    IF v$ = "" THEN EXIT FUNCTION
+SUB idelimitsbox
 
-    'save changes
-    v& = VAL(v$)
-    IF v& < 10 THEN v& = 10
-    IF v& > 2000 THEN v& = 2000
+    '-------- generic dialog box header --------
+    PCOPY 0, 2
+    PCOPY 0, 1
+    SCREEN , , 1, 0
+    focus = 1
+    DIM p AS idedbptype
+    DIM o(1 TO 100) AS idedbotype
+    DIM sep AS STRING * 1
+    DIM maxBackupBox AS LONG
+    DIM maxRecentBox AS LONG
+    DIM maxSearchBox AS LONG
+    sep = CHR$(0)
+    '-------- end of generic dialog box header --------
 
-    IF v& < idebackupsize THEN
-        OPEN tmpdir$ + "undo2.bin" FOR OUTPUT AS #151: CLOSE #151
-        ideundobase = 0
-        ideundopos = 0
+    '-------- init --------
+    i = 0
+    y = 0
+
+    a2$ = str2(idebackupsize)
+    i = i + 1
+    maxBackupBox = i
+    PrevFocus = 1
+    o(i).typ = 1
+    o(i).x = 2
+    y = y + 2: o(i).y = y: y = y + 1
+    o(i).nam = idenewtxt("Max. #Undo Limit (10-2000MB)")
+    o(i).txt = idenewtxt(a2$)
+    o(i).v1 = LEN(a2$)
+    IF o(i).v1 > 0 THEN
+        o(i).issel = -1
+        o(i).sx1 = 0
     END IF
 
-    idebackupsize = v&
-    WriteConfigSetting generalSettingsSection$, "BackupSize", STR$(v&) + " 'in MB"
-    idebackupbox = 1
-END FUNCTION
+    a2$ = str2(ideMaxRecent)
+    i = i + 1
+    maxRecentBox = i
+    o(i).typ = 1
+    o(i).x = 4
+    y = y + 2: o(i).y = y: y = y + 1
+    o(i).nam = idenewtxt("Max. #Recent Files (5-200)")
+    o(i).txt = idenewtxt(a2$)
+    o(i).v1 = LEN(a2$)
+
+    a2$ = str2(ideMaxSearch)
+    i = i + 1
+    maxSearchBox = i
+    o(i).typ = 1
+    o(i).x = 2
+    y = y + 2: o(i).y = y: y = y + 1
+    o(i).nam = idenewtxt("Max. #Search Strings (5-200)")
+    o(i).txt = idenewtxt(a2$)
+    o(i).v1 = LEN(a2$)
+
+    y = y + 1 ' Blank line
+
+    i = i + 1
+    buttonsid = i
+    o(i).typ = 3
+    y = y + 1: o(i).y = y
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
+    o(i).dft = 1
+
+    idepar p, 46, y, "Backup/Undo & History Limits"
+    '-------- end of init --------
+
+    '-------- generic init --------
+    FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
+    '-------- end of generic init --------
+
+    DO 'main loop
+
+
+        '-------- generic display dialog box & objects --------
+        idedrawpar p
+        f = 1: cx = 0: cy = 0
+        FOR i = 1 TO 100
+            IF o(i).typ THEN
+
+                'prepare object
+                o(i).foc = focus - f 'focus offset
+                o(i).cx = 0: o(i).cy = 0
+                idedrawobj o(i), f 'display object
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+            END IF
+        NEXT i
+        lastfocus = f - 1
+        '-------- end of generic display dialog box & objects --------
+
+        '-------- custom display changes --------
+        '-------- end of custom display changes --------
+
+        'update visual page and cursor position
+        PCOPY 1, 0
+        IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
+
+        '-------- read input --------
+        change = 0
+        DO
+            GetInput
+            IF mWHEEL THEN change = 1
+            IF KB THEN change = 1
+            IF mCLICK THEN mousedown = 1: change = 1
+            IF mRELEASE THEN mouseup = 1: change = 1
+            IF mB THEN change = 1
+            alt = KALT: IF alt <> oldalt THEN change = 1
+            oldalt = alt
+            _LIMIT 100
+        LOOP UNTIL change
+        IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
+        'convert "alt+letter" scancode to letter's ASCII character
+        altletter$ = ""
+        IF alt AND NOT KCTRL THEN
+            IF LEN(K$) = 1 THEN
+                k = ASC(UCASE$(K$))
+                IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
+            END IF
+        END IF
+        SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
+        '-------- end of read input --------
+
+        '-------- generic input response --------
+        info = 0
+        IF K$ = "" THEN K$ = CHR$(255)
+        IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
+        IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
+        IF focus < 1 THEN focus = lastfocus
+        IF focus > lastfocus THEN focus = 1
+        f = 1
+        FOR i = 1 TO 100
+            t = o(i).typ
+            IF t THEN
+                focusoffset = focus - f
+                ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
+            END IF
+        NEXT
+        '-------- end of generic input response --------
+
+        'specific post controls
+        IF focus <> PrevFocus THEN
+            'Always start with TextBox values selected upon getting focus
+            PrevFocus = focus
+            IF o(focus).typ = 1 THEN
+                o(focus).v1 = LEN(idetxt(o(focus).txt))
+                IF o(focus).v1 > 0 THEN o(focus).issel = -1
+                o(focus).sx1 = 0
+            END IF
+        END IF
+
+        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT SUB 'cancel
+        IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
+            'save changes
+            tVal& = VAL(idetxt(o(maxBackupBox).txt))
+            IF tVal& < 10 THEN tVal& = 10
+            IF tVal& > 2000 THEN tVal& = 2000
+            IF tVal& < idebackupsize THEN
+                OPEN UndoFile$ FOR OUTPUT AS #151: CLOSE #151
+                ideundobase = 0: ideundopos = 0
+            END IF
+            idebackupsize = tVal&
+            WriteConfigSetting generalSettingsSection$, "BackupSize", STR$(idebackupsize)
+
+            ideMaxRecent = VAL(idetxt(o(maxRecentBox).txt))
+            IF ideMaxRecent < 5 THEN ideMaxRecent = 5
+            IF ideMaxRecent > 200 THEN ideMaxRecent = 200
+            WriteConfigSetting generalSettingsSection$, "MaxRecentFiles", STR$(ideMaxRecent)
+
+            ideMaxSearch = VAL(idetxt(o(maxSearchBox).txt))
+            IF ideMaxSearch < 5 THEN ideMaxSearch = 5
+            IF ideMaxSearch > 200 THEN ideMaxSearch = 200
+            WriteConfigSetting generalSettingsSection$, "MaxSearchStrings", STR$(ideMaxSearch)
+
+            EXIT SUB
+        END IF
+
+        'end of custom controls
+
+        mousedown = 0
+        mouseup = 0
+    LOOP
+END SUB
 
 SUB idegotobox
     IF idegotobox_LastLineNum > 0 THEN a2$ = str2$(idegotobox_LastLineNum) ELSE a2$ = ""
@@ -15250,7 +15427,6 @@ FUNCTION ideCompilerSettingsBox
 
     y = y + 1 ' Blank line
 
-    a2$ = str2$(idewy + idesubwindow)
     i = i + 1
     extraCppFlagsTextBox = i
     o(i).typ = 1
@@ -15258,9 +15434,8 @@ FUNCTION ideCompilerSettingsBox
     y = y + 2: o(i).y = y: y = y + 1
     o(i).nam = idenewtxt("C++ Compiler #Flags")
     o(i).txt = idenewtxt(ExtraCppFlags)
-    o(i).v1 = LEN(a2$)
+    o(i).v1 = LEN(ExtraCppFlags)
 
-    a2$ = str2$(idewy + idesubwindow)
     i = i + 1
     extraLinkerFlagsTextBox = i
     o(i).typ = 1
@@ -15268,16 +15443,16 @@ FUNCTION ideCompilerSettingsBox
     y = y + 2: o(i).y = y: y = y + 1
     o(i).nam = idenewtxt("C++ #Linker Flags")
     o(i).txt = idenewtxt(ExtraLinkerFlags)
-    o(i).v1 = LEN(a2$)
+    o(i).v1 = LEN(ExtraLinkerFlags)
 
-    a2$ = str2$(idewy + idesubwindow)
+    a2$ = str2$(MaxParallelProcesses)
     i = i + 1
     maxParallelTextBox = i
     o(i).typ = 1
     o(i).x = 2
     y = y + 2: o(i).y = y: y = y + 1
     o(i).nam = idenewtxt("#Max C++ Compiler Processes")
-    o(i).txt = idenewtxt(str2$(MaxParallelProcesses))
+    o(i).txt = idenewtxt(a2$)
     o(i).v1 = LEN(a2$)
 
     y = y + 1 ' Blank line
@@ -15365,7 +15540,17 @@ FUNCTION ideCompilerSettingsBox
         '-------- end of generic input response --------
 
         'specific post controls
-        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT FUNCTION 'cancel
+        IF focus <> PrevFocus THEN
+            'Always start with TextBox values selected upon getting focus
+            PrevFocus = focus
+            IF o(focus).typ = 1 THEN
+                o(focus).v1 = LEN(idetxt(o(focus).txt))
+                IF o(focus).v1 > 0 THEN o(focus).issel = -1
+                o(focus).sx1 = 0
+            END IF
+        END IF
+
+        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT DO 'cancel
         IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
             'save changes
             v% = o(optimizeCheckBox).sel: IF v% <> 0 THEN v% = -1
@@ -15400,7 +15585,7 @@ FUNCTION ideCompilerSettingsBox
 
             ' Clean compiled files, since they may change due to the different settings
             PurgeTemporaryBuildFiles (os$), (MacOSX)
-            idechangemade = 1 'force recompilation
+            ideCompilerSettingsBox = -1
 
             EXIT FUNCTION
         END IF
@@ -15430,7 +15615,7 @@ FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
     '-------- init --------
     messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
     MessageLines = 1
-    DIM FullMessage$(1 TO 8)
+    DIM FullMessage$(1 TO 9)
     PrevScan = 1
     DO
         NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
@@ -15439,8 +15624,8 @@ FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
             tw = LEN(FullMessage$(MessageLines)) + 2
             IF tw > w THEN w = tw
             PrevScan = NextScan + 1
+            IF MessageLines = UBOUND(FullMessage$) THEN EXIT DO
             MessageLines = MessageLines + 1
-            IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
         ELSE
             FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
             tw = LEN(FullMessage$(MessageLines)) + 2
@@ -15723,157 +15908,157 @@ END FUNCTION 'yes/no box
 'END SUB
 
 
-FUNCTION ideactivitybox$ (action$, titlestr$, messagestr$, buttons$) STATIC
+'FUNCTION ideactivitybox$ (action$, titlestr$, messagestr$, buttons$) STATIC
 
-    SELECT CASE LCASE$(action$)
-        CASE "setup"
-            '-------- generic dialog box header --------
-            PCOPY 0, 2
-            PCOPY 0, 1
-            SCREEN , , 1, 0
-            focus = 1
-            REDIM p AS idedbptype
-            REDIM o(1 TO 100) AS idedbotype
-            REDIM sep AS STRING * 1
-            sep = CHR$(0)
-            '-------- end of generic dialog box header --------
+'    SELECT CASE LCASE$(action$)
+'        CASE "setup"
+'            '-------- generic dialog box header --------
+'            PCOPY 0, 2
+'            PCOPY 0, 1
+'            SCREEN , , 1, 0
+'            focus = 1
+'            REDIM p AS idedbptype
+'            REDIM o(1 TO 100) AS idedbotype
+'            REDIM sep AS STRING * 1
+'            sep = CHR$(0)
+'            '-------- end of generic dialog box header --------
 
-            '-------- init --------
-            messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
-            MessageLines = 1
-            REDIM FullMessage$(1 TO 8)
-            PrevScan = 1
-            DO
-                NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
-                IF NextScan > 0 THEN
-                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan, NextScan - PrevScan)
-                    tw = LEN(FullMessage$(MessageLines)) + 2
-                    IF tw > w THEN w = tw
-                    PrevScan = NextScan + 1
-                    MessageLines = MessageLines + 1
-                    IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
-                ELSE
-                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
-                    tw = LEN(FullMessage$(MessageLines)) + 2
-                    IF tw > w THEN w = tw
-                    EXIT DO
-                END IF
-            LOOP
+'            '-------- init --------
+'            messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
+'            MessageLines = 1
+'            REDIM FullMessage$(1 TO 8)
+'            PrevScan = 1
+'            DO
+'                NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
+'                IF NextScan > 0 THEN
+'                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan, NextScan - PrevScan)
+'                    tw = LEN(FullMessage$(MessageLines)) + 2
+'                    IF tw > w THEN w = tw
+'                    PrevScan = NextScan + 1
+'                    MessageLines = MessageLines + 1
+'                    IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
+'                ELSE
+'                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
+'                    tw = LEN(FullMessage$(MessageLines)) + 2
+'                    IF tw > w THEN w = tw
+'                    EXIT DO
+'                END IF
+'            LOOP
 
-            IF buttons$ = "" THEN buttons$ = "#OK"
-            totalButtons = 1
-            FOR i = 1 TO LEN(buttons$)
-                IF ASC(buttons$, i) = 59 THEN totalButtons = totalButtons + 1
-            NEXT
-            buttonsLen = LEN(buttons$) + totalButtons * 6
+'            IF buttons$ = "" THEN buttons$ = "#OK"
+'            totalButtons = 1
+'            FOR i = 1 TO LEN(buttons$)
+'                IF ASC(buttons$, i) = 59 THEN totalButtons = totalButtons + 1
+'            NEXT
+'            buttonsLen = LEN(buttons$) + totalButtons * 6
 
-            i = 0
-            w2 = LEN(titlestr$) + 4
-            IF w < w2 THEN w = w2
-            IF w < buttonsLen THEN w = buttonsLen
-            IF w > idewx - 4 THEN w = idewx - 4
-            idepar p, w, 3 + MessageLines, titlestr$
+'            i = 0
+'            w2 = LEN(titlestr$) + 4
+'            IF w < w2 THEN w = w2
+'            IF w < buttonsLen THEN w = buttonsLen
+'            IF w > idewx - 4 THEN w = idewx - 4
+'            idepar p, w, 3 + MessageLines, titlestr$
 
-            i = i + 1
-            o(i).typ = 3
-            o(i).y = 3 + MessageLines
-            o(i).txt = idenewtxt(StrReplace$(buttons$, ";", sep))
-            o(i).dft = 1
-            '-------- end of init --------
+'            i = i + 1
+'            o(i).typ = 3
+'            o(i).y = 3 + MessageLines
+'            o(i).txt = idenewtxt(StrReplace$(buttons$, ";", sep))
+'            o(i).dft = 1
+'            '-------- end of init --------
 
-            '-------- generic init --------
-            FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
-            '-------- end of generic init --------
-        CASE "update"
-            '-------- generic display dialog box & objects --------
-            idedrawpar p
-            f = 1: cx = 0: cy = 0
-            FOR i = 1 TO 100
-                IF o(i).typ THEN
+'            '-------- generic init --------
+'            FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
+'            '-------- end of generic init --------
+'        CASE "update"
+'            '-------- generic display dialog box & objects --------
+'            idedrawpar p
+'            f = 1: cx = 0: cy = 0
+'            FOR i = 1 TO 100
+'                IF o(i).typ THEN
 
-                    'prepare object
-                    o(i).foc = focus - f 'focus offset
-                    o(i).cx = 0: o(i).cy = 0
-                    idedrawobj o(i), f 'display object
-                    IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
-                END IF
-            NEXT i
-            lastfocus = f - 1
-            '-------- end of generic display dialog box & objects --------
+'                    'prepare object
+'                    o(i).foc = focus - f 'focus offset
+'                    o(i).cx = 0: o(i).cy = 0
+'                    idedrawobj o(i), f 'display object
+'                    IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+'                END IF
+'            NEXT i
+'            lastfocus = f - 1
+'            '-------- end of generic display dialog box & objects --------
 
-            '-------- custom display changes --------
-            COLOR 0, 7
-            FOR i = 1 TO MessageLines
-                IF LEN(FullMessage$(i)) > p.w - 2 THEN
-                    FullMessage$(i) = LEFT$(FullMessage$(i), p.w - 5) + STRING$(3, 250)
-                END IF
-                _PRINTSTRING (p.x + (w \ 2 - LEN(FullMessage$(i)) \ 2) + 1, p.y + 1 + i), FullMessage$(i)
-            NEXT i
-            '-------- end of custom display changes --------
+'            '-------- custom display changes --------
+'            COLOR 0, 7
+'            FOR i = 1 TO MessageLines
+'                IF LEN(FullMessage$(i)) > p.w - 2 THEN
+'                    FullMessage$(i) = LEFT$(FullMessage$(i), p.w - 5) + STRING$(3, 250)
+'                END IF
+'                _PRINTSTRING (p.x + (w \ 2 - LEN(FullMessage$(i)) \ 2) + 1, p.y + 1 + i), FullMessage$(i)
+'            NEXT i
+'            '-------- end of custom display changes --------
 
-            'update visual page and cursor position
-            PCOPY 1, 0
-            IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
+'            'update visual page and cursor position
+'            PCOPY 1, 0
+'            IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
 
-            '-------- read input --------
-            change = 0
-            GetInput
-            IF mWHEEL THEN change = 1
-            IF KB THEN change = 1
-            IF mCLICK THEN mousedown = 1: change = 1
-            IF mRELEASE THEN mouseup = 1: change = 1
-            IF mB THEN change = 1
-            alt = KALT: IF alt <> oldalt THEN change = 1
-            oldalt = alt
-            _LIMIT 100
+'            '-------- read input --------
+'            change = 0
+'            GetInput
+'            IF mWHEEL THEN change = 1
+'            IF KB THEN change = 1
+'            IF mCLICK THEN mousedown = 1: change = 1
+'            IF mRELEASE THEN mouseup = 1: change = 1
+'            IF mB THEN change = 1
+'            alt = KALT: IF alt <> oldalt THEN change = 1
+'            oldalt = alt
+'            _LIMIT 100
 
-            IF change THEN
-                IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
-                'convert "alt+letter" scancode to letter's ASCII character
-                altletter$ = ""
-                IF alt AND NOT KCTRL THEN
-                    IF LEN(K$) = 1 THEN
-                        k = ASC(UCASE$(K$))
-                        IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
-                    END IF
-                END IF
-                SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
-                '-------- end of read input --------
+'            IF change THEN
+'                IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
+'                'convert "alt+letter" scancode to letter's ASCII character
+'                altletter$ = ""
+'                IF alt AND NOT KCTRL THEN
+'                    IF LEN(K$) = 1 THEN
+'                        k = ASC(UCASE$(K$))
+'                        IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
+'                    END IF
+'                END IF
+'                SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
+'                '-------- end of read input --------
 
-                '-------- generic input response --------
-                info = 0
+'                '-------- generic input response --------
+'                info = 0
 
-                IF UCASE$(K$) >= "A" AND UCASE$(K$) <= "Z" THEN altletter$ = UCASE$(K$)
+'                IF UCASE$(K$) >= "A" AND UCASE$(K$) <= "Z" THEN altletter$ = UCASE$(K$)
 
-                IF K$ = "" THEN K$ = CHR$(255)
-                IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
-                IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
-                IF focus < 1 THEN focus = lastfocus
-                IF focus > lastfocus THEN focus = 1
-                f = 1
-                FOR i = 1 TO 100
-                    t = o(i).typ
-                    IF t THEN
-                        focusoffset = focus - f
-                        ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
-                    END IF
-                NEXT
-                '-------- end of generic input response --------
+'                IF K$ = "" THEN K$ = CHR$(255)
+'                IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
+'                IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
+'                IF focus < 1 THEN focus = lastfocus
+'                IF focus > lastfocus THEN focus = 1
+'                f = 1
+'                FOR i = 1 TO 100
+'                    t = o(i).typ
+'                    IF t THEN
+'                        focusoffset = focus - f
+'                        ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
+'                    END IF
+'                NEXT
+'                '-------- end of generic input response --------
 
-                'specific post controls
-                IF K$ = CHR$(27) THEN ideactivitybox$ = MKI$(0)
+'                'specific post controls
+'                IF K$ = CHR$(27) THEN ideactivitybox$ = MKI$(0)
 
-                IF K$ = CHR$(13) OR (info <> 0) THEN
-                    ideactivitybox$ = MKI$(1) + MKL$(focus)
-                    ClearMouse
-                END IF
-                'end of custom controls
+'                IF K$ = CHR$(13) OR (info <> 0) THEN
+'                    ideactivitybox$ = MKI$(1) + MKL$(focus)
+'                    ClearMouse
+'                END IF
+'                'end of custom controls
 
-                mousedown = 0
-                mouseup = 0
-            END IF
-    END SELECT
-END FUNCTION
+'                mousedown = 0
+'                mouseup = 0
+'            END IF
+'    END SELECT
+'END FUNCTION
 
 
 FUNCTION idedisplaybox
@@ -16208,7 +16393,7 @@ FUNCTION idedisplaybox
             IF o(7).sel <> idecustomfont THEN
                 IF o(7).sel = 0 THEN
                     IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
-                    _FREEFONT idecustomfonthandle
+                    IF idecustomfonthandle > 0 THEN _FREEFONT idecustomfonthandle
                 ELSE
                     x = 1
                 END IF
@@ -16221,9 +16406,8 @@ FUNCTION idedisplaybox
                 oldhandle = idecustomfonthandle
                 idecustomfonthandle = _LOADFONT(v$, v%, "MONOSPACE")
                 IF idecustomfonthandle < 1 THEN
-                    'failed! - revert to default settings
-                    _MessageBox "Font not found!", "ERROR: Font not found, or is invalid format, at specified location.  Reverting back to existing font.", "error"
-                    o(7).sel = 0: idetxt(o(8).txt) = "C:\Windows\Fonts\lucon.ttf": idetxt(o(9).txt) = "21": IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
+                    retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location,\nor is of unsupported format. Please check your inputs.", "#OK")
+                    PCOPY 2, 1: _CONTINUE
                 ELSE
                     _FONT idecustomfonthandle
                 END IF
@@ -17803,7 +17987,7 @@ FUNCTION idesearchedbox$
     l$ = ""
     REDIM SearchHistory(0) AS STRING
     RetrieveSearchHistory SearchHistory()
-    FOR i = 1 to UBOUND(SearchHistory)
+    FOR i = 1 TO UBOUND(SearchHistory)
         l$ = SearchHistory(i) + sep + l$
     NEXT
     '72,19
@@ -17949,8 +18133,8 @@ END FUNCTION
 
 SUB IdeImportBookmarks (f2$)
     IdeBmkN = 0
-    f$ = CRLF + f2$ + CRLF
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$: CLOSE #fh
+    f$ = CRLF + f2$ + CRLF: a$ = ""
+    IF _FILEEXISTS(BookmarksFile$) THEN a$ = _READFILE$(BookmarksFile$)
     x = INSTR(UCASE$(a$), UCASE$(f$))
     IF x THEN 'retrieve bookmark data
         l = CVL(MID$(a$, x + LEN(f$), 4))
@@ -17971,19 +18155,19 @@ SUB IdeImportBookmarks (f2$)
     END IF
 
     'at the same time, import breakpoint and skip line data
-    x = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "total breakpoints"))
+    x = VAL(ReadSetting$(DebugFile$, f2$, "total breakpoints"))
     IF x THEN
         FOR i = 1 TO x
-            j = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "breakpoint" + STR$(i)))
+            j = VAL(ReadSetting$(DebugFile$, f2$, "breakpoint" + STR$(i)))
             IF j > UBOUND(IdeBreakpoints) THEN EXIT FOR
             IdeBreakpoints(j) = -1
         NEXT
     END IF
 
-    x = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "total skips"))
+    x = VAL(ReadSetting$(DebugFile$, f2$, "total skips"))
     IF x THEN
         FOR i = 1 TO x
-            j = VAL(ReadSetting$(".\internal\temp\debug.ini", f2$, "skip" + STR$(i)))
+            j = VAL(ReadSetting$(DebugFile$, f2$, "skip" + STR$(i)))
             IF j > UBOUND(IdeSkipLines) THEN EXIT FOR
             IdeSkipLines(j) = -1
         NEXT
@@ -17991,8 +18175,8 @@ SUB IdeImportBookmarks (f2$)
 END SUB
 
 SUB IdeSaveBookmarks (f2$)
-    f$ = CRLF + f2$ + CRLF
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR BINARY AS #fh: a$ = SPACE$(LOF(fh)): GET #fh, , a$: CLOSE #fh
+    f$ = CRLF + f2$ + CRLF: a$ = ""
+    IF _FILEEXISTS(BookmarksFile$) THEN a$ = _READFILE$(BookmarksFile$)
     x = INSTR(UCASE$(a$), UCASE$(f$))
     IF x THEN 'remove any old bookmark data
         l = CVL(MID$(a$, x + LEN(f$), 4))
@@ -18006,31 +18190,30 @@ SUB IdeSaveBookmarks (f2$)
         d$ = d$ + MKL$(IdeBmk(i).y) + MKL$(IdeBmk(i).x) + MKL$(IdeBmk(i).reserved) + MKL$(IdeBmk(i).reserved2)
     NEXT
     a$ = f$ + MKL$(LEN(d$)) + d$ + a$
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR OUTPUT AS #fh: CLOSE #fh
-    fh = FREEFILE: OPEN ".\internal\temp\bookmarks.bin" FOR BINARY AS #fh: PUT #fh, , a$: CLOSE #fh
+    _WRITEFILE BookmarksFile$, a$
 
     'at the same time, save breakpoint and skip line data
     IF vWatchOn THEN
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total breakpoints", "0"
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total skips", "0"
+        WriteSetting DebugFile$, f2$, "total breakpoints", "0"
+        WriteSetting DebugFile$, f2$, "total skips", "0"
 
         x = 0
         FOR i = 1 TO UBOUND(IdeBreakpoints)
             IF IdeBreakpoints(i) THEN
                 x = x + 1
-                WriteSetting ".\internal\temp\debug.ini", f2$, "breakpoint" + STR$(x), str2$(i)
+                WriteSetting DebugFile$, f2$, "breakpoint" + STR$(x), str2$(i)
             END IF
         NEXT
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total breakpoints", str2$(x)
+        WriteSetting DebugFile$, f2$, "total breakpoints", str2$(x)
 
         x = 0
         FOR i = 1 TO UBOUND(IdeSkipLines)
             IF IdeSkipLines(i) THEN
                 x = x + 1
-                WriteSetting ".\internal\temp\debug.ini", f2$, "skip" + STR$(x), str2$(i)
+                WriteSetting DebugFile$, f2$, "skip" + STR$(x), str2$(i)
             END IF
         NEXT
-        WriteSetting ".\internal\temp\debug.ini", f2$, "total skips", str2$(x)
+        WriteSetting DebugFile$, f2$, "total skips", str2$(x)
     END IF
 END SUB
 
@@ -18048,14 +18231,15 @@ FUNCTION iderecentbox$
 
     '-------- init --------
     l$ = "": dialogWidth = 72: numFiles% = 0
-    REDIM tempList$(1 TO 100)
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
-    WHILE NOT EndOfBuf%(bh%)
+    REDIM tempList$(1 TO ideMaxRecent)
+    bh% = FileToBuf%(RecentFile$)
+    WHILE EndOfBuf%(bh%) = 0 AND numFiles% < ideMaxRecent
         f$ = ReadBufLine$(bh%)
         IF LEN(f$) + 6 > dialogWidth THEN dialogWidth = LEN(f$) + 6
         numFiles% = numFiles% + 1: tempList$(numFiles%) = f$
         l$ = l$ + sep + f$
     WEND
+    DisposeBuf nh%
     REDIM _PRESERVE tempList$(1 TO numFiles%)
 
     '72,19
@@ -18190,7 +18374,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     menu$(m, i) = eaa$ + "#Export As...  " + CHR$(16): i = i + 1
     menuDesc$(m, i - 1) = "Export current program into various formats"
 
-    bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
+    bh% = FileToBuf%(RecentFile$)
     maxFiles% = UBOUND(IdeRecentLink, 1): maxLength% = 35
     FOR r% = 1 TO maxFiles% + 1
         IF r% <= maxFiles% THEN IdeRecentLink(r%, 1) = ""
@@ -18211,7 +18395,8 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
             END IF
             i = i + 1
         END IF
-    NEXT
+    NEXT r%
+    DisposeBuf bh%
     IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> eaa$ + "#Export As...  " + CHR$(16) THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
@@ -18654,29 +18839,34 @@ SUB IdeMakeEditMenu
     menusize(m) = i - 1
 END SUB
 
+'Add an entry in the top position of the specified history. If the entry
+'already exists in the history, then it's just moved back to top again.
+'---------------------------------------------------------------------
 SUB AddToHistory (which$, entry$)
     SELECT CASE which$
         CASE "RECENT"
             e$ = RemoveDoubleSlashes$(entry$)
-            bh% = OpenBuffer%("I", tmpdir$ + "recent.bin") 'load and/or set pos (back) to start
-            GOSUB athProcess
-            IdeMakeFileMenu LEFT$(menu$(1, FileMenuExportAs), 1) <> "~"
+            bh% = FileToBuf%(RecentFile$)
+            mx% = ideMaxRecent: GOSUB athProcess
+            BufToFile bh%, RecentFile$
         CASE "SEARCH"
             e$ = entry$
-            bh% = OpenBuffer%("I", tmpdir$ + "searched.bin") 'load and/or set pos (back) to start
-            GOSUB athProcess
+            bh% = FileToBuf%(SearchedFile$)
+            mx% = ideMaxSearch: GOSUB athProcess
+            BufToFile bh%, SearchedFile$
     END SELECT
+    DisposeBuf bh%
     EXIT SUB
     '-----
     athProcess:
     lc% = 0: ue$ = UCASE$(e$)
     WHILE NOT EndOfBuf%(bh%)
-        be$ = ReadBufLine$(bh%): lc% = lc% + 1
-        IF UCASE$(be$) = ue$ OR lc% = 100 THEN 'already known or limit reached?
-            nul& = SeekBuf&(bh%, -LEN(BufEolSeq$(bh%)), SBM_BufCurrent) 'back to prev (just read) line
-            nul& = SeekBuf&(bh%, 0, SBM_LineStart) 'and then ahead to the start of it
-            DeleteBufLine bh%
-            EXIT WHILE
+        bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%): lc% = lc% + 1
+        IF UCASE$(be$) = ue$ OR lc% >= mx% THEN 'already known or limit reached?
+            nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
+            DeleteBufLine bh% 'remove that entry
+            'we could EXIT WHILE here, but for auto-removal of over limit
+            'entries (in case the limit was lowered) we continue the loop
         END IF
     WEND
     nul& = SeekBuf&(bh%, 0, SBM_BufStart) 'rewind
@@ -18684,6 +18874,8 @@ SUB AddToHistory (which$, entry$)
     RETURN
 END SUB
 
+'A simple "Are you sure" type yes/no messagebox for cleanup operations.
+'---------------------------------------------------------------------
 FUNCTION AskClearHistory$ (which$)
     SELECT CASE which$
         CASE "RECENT": t$ = "Clear recent files"
@@ -18693,18 +18885,20 @@ FUNCTION AskClearHistory$ (which$)
     IF result = 1 THEN AskClearHistory$ = "Y" ELSE AskClearHistory$ = "N"
 END FUNCTION
 
-SUB RetrieveSearchHistory (SearchHistory() AS STRING)
-    bh% = OpenBuffer%("I", tmpdir$ + "searched.bin") 'load and/or set pos (back) to start
+'Load the search history into the specified array used by the IDE.
+'---------------------------------------------------------------------
+SUB RetrieveSearchHistory (shArr$())
+    bh% = FileToBuf%(SearchedFile$)
     IF GetBufLen&(bh%) THEN
-        REDIM SearchHistory(1 TO 100) AS STRING: lc% = 0
-        WHILE NOT EndOfBuf%(bh%)
-           lc% = lc% + 1: SearchHistory(lc%) = ReadBufLine$(bh%)
+        REDIM shArr$(1 TO ideMaxSearch): lc% = 0
+        WHILE EndOfBuf%(bh%) = 0 AND lc% < ideMaxSearch
+           lc% = lc% + 1: shArr$(lc%) = ReadBufLine$(bh%)
         WEND
-        REDIM _PRESERVE SearchHistory(1 TO lc%) AS STRING
+        REDIM _PRESERVE shArr$(1 TO lc%)
     ELSE
-       REDIM SearchHistory(1 TO 1) AS STRING
-       SearchHistory(1) = ""
+       REDIM shArr$(1 TO 1): shArr$(1) = ""
     END IF
+    DisposeBuf bh%
 END SUB
 
 FUNCTION ideupdatehelpbox
@@ -19623,19 +19817,27 @@ END SUB
 
 SUB LoadColorSchemes
     DIM i AS LONG
-    'Preset built-in schemes
-    PresetColorSchemes = 10
+    'Preset built-in schemes, somewhat orderd by its kind:
+    '1.) blueish bg (Super Dark Blue - Classic QB4.5)
+    '2.) various colored bg (Dark Side - CF Dark)
+    '3.) grayish dark bg (Broadcast - X11 SgiColors)
+    '4.) very bright bg (Light Green - All White)
+    PresetColorSchemes = 14
     REDIM ColorSchemes$(1 TO PresetColorSchemes): i = 0
-    i = i + 1: ColorSchemes$(i) = "Super dark blue|216216216069118147216098078255167000085206085098098098000000039000049078000088108170170170"
-    i = i + 1: ColorSchemes$(i) = "Dark blue|226226226069147216245128177255177000085255085049196196000000069000068108000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "Super Dark Blue|216216216069118147216098078255167000085206085098098098000000039000049078000088108170170170"
+    i = i + 1: ColorSchemes$(i) = "Dark Blue|226226226069147216245128177255177000085255085049196196000000069000068108000147177170170170"
     i = i + 1: ColorSchemes$(i) = "QB64 Original|226226226147196235245128177255255085085255085085255255000000170000108177000147177170170170"
     i = i + 1: ColorSchemes$(i) = "Classic QB4.5|177177177177177177177177177177177177177177177177177177000000170000000170000147177170170170"
-    i = i + 1: ColorSchemes$(i) = "CF Dark|226226226115222227255043138255178034185237049157118137043045037010000020088088088170170170"
-    i = i + 1: ColorSchemes$(i) = "Dark side|255255255206206000245010098000177000085255085049186245011022029100100100000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "Dark Side|255255255206206000245010098000177000085255085049186245011022029100100100000147177170170170"
     i = i + 1: ColorSchemes$(i) = "Camouflage|196196196255255255245128177255177000137177147147137020000039029098069020000147177170170170"
     i = i + 1: ColorSchemes$(i) = "Plum|186186186255255255245128177255108000085186078085186255059000059088088128000147177170170170"
-    i = i + 1: ColorSchemes$(i) = "Light green|051051051000000216245128177255157255147177093206206206234255234206255206000147177170170170"
-    i = i + 1: ColorSchemes$(i) = "All white|051051051000000216245128177206147000059177000206206206255255255245245245000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "Cornfield|255255180065130255255130065065255130255130255190160130100080060110090070170000000200200130"
+    i = i + 1: ColorSchemes$(i) = "CF Dark|226226226115222227255043138255178034185237049157118137043045037010000020088088088170170170"
+    i = i + 1: ColorSchemes$(i) = "Broadcast|228224220034085170221068051238238068221136000051153034024024024036036036034136170170170170"
+    i = i + 1: ColorSchemes$(i) = "VS Code|212212212086156214212099162206145120070201176106153085031031031040040040034136170170170170"
+    i = i + 1: ColorSchemes$(i) = "X11 SgiColors|197193170113113198198113113142142056113198113085085085024024024036036036142056142170170170"
+    i = i + 1: ColorSchemes$(i) = "Light Green|051051051000000216245128177255157255147177093206206206234255234206255206000147177170170170"
+    i = i + 1: ColorSchemes$(i) = "All White|051051051000000216245128177206147000059177000206206206255255255245245245000147177170170170"
     TotalColorSchemes = PresetColorSchemes
     LastValidColorScheme = TotalColorSchemes
 
@@ -20055,8 +20257,6 @@ FUNCTION isnumber (__a$)
     isnumber = 1
 END FUNCTION
 
-'$INCLUDE:'wiki\wiki_methods.bas'
-
 SUB printWrapStatus (x AS INTEGER, y AS INTEGER, initialX AS INTEGER, __text$)
     DIM text$, nextWord$
     DIM AS INTEGER i, findSep, findColorMarker, changeColor, changeColorAfter
@@ -20312,6 +20512,7 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
     IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
 END FUNCTION
 
+'$INCLUDE:'wiki\wiki_methods.bas'
 
 SUB ExportCodeAs (docFormat$)
     ' Get the current source code, convert it to the desired document format and

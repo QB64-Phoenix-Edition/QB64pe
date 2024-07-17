@@ -1,6 +1,8 @@
 DEFLNG A-Z
 $Console:Only
 
+Dim Shared E
+
 Type TestCase
     file As String
     expectedExtension As String
@@ -36,6 +38,17 @@ For i = 1 To UBOUND(tests)
     End If
 Next
 
+done:
 System
+
+'These error handlers are not used in this progam, but are required
+'for the functions included from file.bas
+qberror:
+Print "      FAIL!"
+Resume done
+
+qberror_test:
+E = 1
+Resume Next
 
 '$include:'../../../source/utilities/file.bas'

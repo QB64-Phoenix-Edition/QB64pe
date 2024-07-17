@@ -1385,7 +1385,7 @@ id.args = 4
 id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "?,?[,[?][,[?]]]"
 id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_LOADFONT(fileName$, size&[, " + CHR$(34) + "{MONOSPACE|, UNICODE|, DONTBLEND|, MEMORY}" + CHR$(34) + "][, fontIndex])"
+id.hr_syntax = "_LOADFONT(fileName$, size&[, " + CHR$(34) + "{MONOSPACE|, UNICODE|, DONTBLEND|, MEMORY|, AUTOMONO}" + CHR$(34) + "][, fontIndex])"
 regid
 
 clearid

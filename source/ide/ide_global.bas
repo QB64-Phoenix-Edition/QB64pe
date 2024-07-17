@@ -204,7 +204,7 @@ TYPE idedbotype
     stx AS LONG 'selected item in string form
     issel AS _BYTE 'selection indicator (for text boxes only)
     sx1 AS LONG 'selection start (for text boxes only)
-    v1 AS LONG
+    v1 AS LONG 'current value/input length (for text boxes only?)
     num AS LONG
 END TYPE
 '--------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ DIM SHARED LastValidColorScheme AS INTEGER
 DIM SHARED menubar$, idecontextualSearch$
 DIM SHARED ideundocombo, ideundocombochr, idenoundo, idemergeundo
 DIM SHARED idealthighlight, ideentermenu
-DIM SHARED idebackupsize
+DIM SHARED idebackupsize, ideMaxRecent, ideMaxSearch
 DIM SHARED idewx, idewy, idecustomfont, idecustomfontfile$, idecustomfontheight, idecustomfonthandle
 DIM SHARED iderunmode, IDE_UseFont8 AS _BYTE
 'IDE MODULE SECTION END: shared data & definitions

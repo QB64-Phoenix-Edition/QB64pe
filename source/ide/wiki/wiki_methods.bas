@@ -45,11 +45,7 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
     'Is this page in the cache?
     IF Help_IgnoreCache = 0 THEN
         IF _FILEEXISTS(Cache_Folder$ + "/" + PageName3$ + ".txt") THEN
-            fh = FREEFILE
-            OPEN Cache_Folder$ + "/" + PageName3$ + ".txt" FOR BINARY AS #fh
-            a$ = SPACE$(LOF(fh))
-            GET #fh, , a$
-            CLOSE #fh
+            a$ = _READFILE$(Cache_Folder$ + "/" + PageName3$ + ".txt")
             Wiki$ = StrReplace$(a$, CHR$(13) + CHR$(10), CHR$(10))
             EXIT FUNCTION
         END IF
@@ -1210,11 +1206,7 @@ FUNCTION wikiDLPage$ (url$, timeout!)
         responseFile$ = Cache_Folder$ + "/curlResponse.txt"
         SHELL _HIDE "curl --silent -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
         '--- read the response ---
-        fh = FREEFILE
-        OPEN responseFile$ FOR BINARY AS #fh
-        res$ = SPACE$(LOF(fh))
-        GET #fh, , res$
-        CLOSE #fh
+        res$ = _READFILE$(responseFile$)
         KILL responseFile$
         '--- set result ---
         wikiDLPage$ = res$
