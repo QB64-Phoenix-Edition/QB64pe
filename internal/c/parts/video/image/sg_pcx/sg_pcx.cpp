@@ -9,6 +9,7 @@
 #include "sg_pcx.h"
 #include "image.h"
 #include <algorithm>
+#include <cstring>
 #include <memory>
 #include <stdexcept>
 #include <string>

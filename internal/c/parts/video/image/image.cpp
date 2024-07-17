@@ -31,6 +31,7 @@
 #include "sg_pcx/sg_pcx.h"
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
+#include <algorithm>
 #include <cctype>
 #include <string>
 #include <unordered_map>
