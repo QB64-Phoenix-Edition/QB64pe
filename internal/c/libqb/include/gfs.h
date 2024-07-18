@@ -37,7 +37,7 @@
     -11 bad file name
 */
 
-
+const int32_t scrn = 2;
 int32_t gfs_eof_passed(int32_t i);
 int32_t gfs_eof_reached(int32_t i);
 int64_t gfs_getpos(int32_t i);
