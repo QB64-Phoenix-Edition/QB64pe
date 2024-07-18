@@ -58,7 +58,6 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end);
 int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end);
 
 int32_t gfs_get_fileno(int file_number);
-gfs_file_struct *gfs_get_file_struct(int fileno);
 
 void gfs_close_all_files();
 
