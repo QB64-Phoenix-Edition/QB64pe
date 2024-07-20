@@ -711,5 +711,7 @@ bool curico_save_file(const char *filename, int x, int y, int components, const 
     // Just write a PNG using the stb_image_writer callback
     CurIcoImage::WriteToFileContext context = {filename, false};
     stbi_write_png_compression_level = 100;
-    return stbi_write_png_to_func(&CurIcoImage::WriteToFileCallback, &context, x, y, components, data, 0) != 0;
+    auto stbiResult = stbi_write_png_to_func(&CurIcoImage::WriteToFileCallback, &context, x, y, components, data, 0) != 0;
+
+    return stbiResult && context.success;
 }
