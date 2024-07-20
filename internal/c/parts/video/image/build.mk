@@ -7,6 +7,7 @@ IMAGE_SRCS := \
 	pixelscalers/mmpx.cpp \
 	pixelscalers/sxbr.cpp \
 	qoi/qoi.cpp \
+	sg_curico/sg_curico.cpp \
 	sg_pcx/sg_pcx.cpp \
 	stb/stb_image.cpp
 

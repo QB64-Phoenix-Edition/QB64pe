@@ -51,7 +51,9 @@ static inline constexpr uint8_t image_get_bgra_alpha(const uint32_t c) { return 
 
 static inline constexpr uint32_t image_get_bgra_bgr(const uint32_t c) { return (uint32_t)(c & 0xFFFFFFu); }
 
-static inline constexpr uint32_t image_make_bgra(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) {
+static inline constexpr uint32_t image_set_bgra_alpha(const uint32_t c, const uint8_t a = 0xFFu) { return uint32_t(c & 0xFFFFFFu) | (uint32_t(a) << 24); }
+
+static inline constexpr uint32_t image_make_bgra(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 0xFFu) {
     return (uint32_t)(b) | ((uint32_t)(g) << 8) | ((uint32_t)(r) << 16) | ((uint32_t)(a) << 24);
 }
 

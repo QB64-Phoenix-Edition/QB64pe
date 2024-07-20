@@ -6,6 +6,9 @@
 // https://github.com/mackron/dr_pcx
 //-----------------------------------------------------------------------------------------------------
 
+// Uncomment this to to print debug messages to stderr
+// #define IMAGE_DEBUG 1
+
 #include "sg_pcx.h"
 #include "image.h"
 #include <algorithm>
@@ -45,6 +48,8 @@ class PCXImage {
         void Seek(size_t position) {
             if (position <= size)
                 cursor = position;
+            else
+                throw std::runtime_error("Failed to seek to position " + std::to_string(position) + " of " + std::to_string(size));
         }
 
         template <typename T> T Read() {
@@ -185,11 +190,9 @@ class PCXImage {
 
         Color(uint32_t value) { color.value = value; }
 
-        Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a) { SetFromComponents(b, g, r, a); }
+        Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) { SetFromComponents(b, g, r, a); }
 
-        Color(uint8_t b, uint8_t g, uint8_t r) { SetFromComponents(b, g, r); }
-
-        void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 255) {
+        void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
             color.tuple.b = b;
             color.tuple.g = g;
             color.tuple.r = r;
@@ -378,11 +381,11 @@ class PCXImage {
     };
 
   public:
-    bool LoadFromMemory(const void *in_data, size_t in_dataSize, uint32_t **out_data, int *out_x, int *out_y) {
+    void LoadFromMemory(const void *in_data, size_t in_dataSize, uint32_t **out_data, int *out_x, int *out_y) {
         if (!in_data || !in_dataSize || !out_x || !out_y) {
             IMAGE_DEBUG_PRINT("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
 
-            return false;
+            return;
         }
 
         // Prepare the memory input stream
@@ -394,20 +397,20 @@ class PCXImage {
         if (header.id != Id::ZSoftPCX) {
             IMAGE_DEBUG_PRINT("Not a PCX file");
 
-            return false;
+            return;
         }
 
         if (header.version != Version::Version3_0 && header.version != Version::Version2_8_Palette && header.version != Version::Version2_8_DefaultPalette &&
             header.version != Version::Version2_5) {
             IMAGE_DEBUG_PRINT("Unsupported PCX version: %d", int(header.version));
 
-            return false;
+            return;
         }
 
         if (header.bitsPerPixel != 1 && header.bitsPerPixel != 2 && header.bitsPerPixel != 4 && header.bitsPerPixel != 8) {
             IMAGE_DEBUG_PRINT("Unsupported PCX bits per pixel: %d", int(header.bitsPerPixel));
 
-            return false;
+            return;
         }
 
         auto width = header.xMax - header.xMin + 1;
@@ -415,7 +418,7 @@ class PCXImage {
         if (width < 0 || height < 0 || width > 0xffff || height > 0xffff) {
             IMAGE_DEBUG_PRINT("Invalid image dimensions: (%d, %d) - (%d, %d)", header.xMin, header.yMin, header.xMax, header.yMax);
 
-            return false;
+            return;
         }
 
         // Pixels per line, including PCX's even-number-of-pixels buffer
@@ -427,7 +430,7 @@ class PCXImage {
         if (bitsPerPixel != 1 && bitsPerPixel != 2 && bitsPerPixel != 4 && bitsPerPixel != 8 && bitsPerPixel != 24) {
             IMAGE_DEBUG_PRINT("Unsupported PCX bit depth: %d", bitsPerPixel);
 
-            return false;
+            return;
         }
 
         // Load the palette
@@ -477,7 +480,7 @@ class PCXImage {
             if (input.Read<uint8_t>() != PaletteMarker) {
                 IMAGE_DEBUG_PRINT("PCX palette marker not present in file");
 
-                return false;
+                return;
             }
 
             palette.LoadFromStream(input, 256);
@@ -494,7 +497,7 @@ class PCXImage {
         if (!(*out_data)) {
             IMAGE_DEBUG_PRINT("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
 
-            return false;
+            return;
         }
 
         memset(*out_data, 0xff, width * height * sizeof(uint32_t));
@@ -545,8 +548,6 @@ class PCXImage {
 
         *out_x = width;
         *out_y = height;
-
-        return true;
     }
 };
 
