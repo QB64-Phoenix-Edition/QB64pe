@@ -118,7 +118,7 @@ END SUB
 
 
 FUNCTION GetColorDelta~& (color1 AS _UNSIGNED LONG, color2 AS _UNSIGNED LONG)
-    GetColorDelta = ABS(_RED32(color1) - _RED32(color2)) + ABS(_GREEN32(color1) - _GREEN32(color2)) + ABS(_BLUE32(color1) - _BLUE32(color2)) + ABS(_ALPHA32(color1) - _ALPHA32(color2))
+    GetColorDelta = ABS(_RED32(color1) - _RED32(color2)) + ABS(_GREEN32(color1) - _GREEN32(color2)) + ABS(_BLUE32(color1) - _BLUE32(color2))
 END FUNCTION
 
 
@@ -178,7 +178,7 @@ SUB AssertImage2 (originalActualImage AS LONG, expectedFileName AS STRING, toler
             actualPixel = _MEMGET(actual, actual.OFFSET + pixelOffset, _UNSIGNED LONG)
             expectedPixel = _MEMGET(expected, expected.OFFSET + pixelOffset, _UNSIGNED LONG)
 
-            IF actualPixel <> expectedPixel _ANDALSO GetColorDelta(actualPixel, expectedPixel) > toleranceLimit THEN
+            IF actualPixel <> expectedPixel _ANDALSO _ALPHA32(actualPixel) <> 0 _ANDALSO _ALPHA32(expectedPixel) <> 0 _ANDALSO GetColorDelta(actualPixel, expectedPixel) > toleranceLimit THEN
                 PRINT "Failure! Image pixels at ("; x&; ","; y&; ") differ, actual: 0x"; HEX$(actualPixel); ", expected: 0x"; HEX$(expectedPixel)
                 GOTO freeImages
             END IF

@@ -91,7 +91,7 @@ class CurIcoImage {
 
         Header(Stream &stream) { ReadFromStream(stream); }
 
-        bool IsValid() { return reserved == 0 && (type == Type::Icon || type == Type::Cursor) && count > 0; }
+        auto IsValid() { return reserved == 0 && (type == Type::Icon || type == Type::Cursor) && count > 0; }
 
         static auto GetStructSize() noexcept { return 6; } // sizeof(Header)
 
@@ -285,7 +285,7 @@ class CurIcoImage {
     /// @param fileName The name of the icon file
     /// @param payloadData A pointer to the PNG payload
     /// @param payloadSize The size of the PNG payload in bytes
-    static bool WriteToFile(const char *fileName, const uint8_t *payloadData, uint32_t payloadSize) {
+    static auto WriteToFile(const char *fileName, const uint8_t *payloadData, uint32_t payloadSize) {
         if (fileName && fileName[0] && payloadData && payloadSize) {
             auto file = fopen(fileName, "wb");
 
@@ -601,9 +601,9 @@ class CurIcoImage {
 
                 auto src = input.GetData();
                 auto dst = *out_data;
-                auto pixels = width * height;
+                size_t pixels = width * height;
 
-                for (auto i = 0; i < pixels; i++) {
+                for (size_t i = 0; i < pixels; i++) {
                     auto r = *src;
                     ++src;
                     auto g = *src;
