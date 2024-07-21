@@ -3,7 +3,6 @@ OPTION _EXPLICIT
 $CONSOLE:ONLY
 CHDIR _STARTDIR$
 
-CONST ICON_DIR = "./icons/"
 CONST TEST_FILE_FORMAT = "bmp"
 CONST TOLERANCE_LIMIT = 0
 
@@ -14,14 +13,24 @@ RESTORE file_list
 DIM fileName AS STRING: READ fileName
 
 DO
-    DoImageFile ICON_DIR + fileName
+    DoImageFile fileName
     READ fileName
 LOOP WHILE LEN(fileName)
 
 SYSTEM
 
 error_handler:
-PRINT "Error: "; _ERRORMESSAGE$; " at line line"; _ERRORLINE
+PRINT "Error: "; _ERRORMESSAGE$; " at line"; _ERRORLINE;
+
+DIM incErrFile AS STRING: incErrFile = _INCLERRORFILE$
+DIM incErrLine AS LONG: incErrLine = _INCLERRORLINE
+
+IF LEN(incErrFile) THEN
+    PRINT "( "; incErrFile + " at line"; incErrLine; ")"
+ELSE
+    PRINT
+END IF
+
 SYSTEM
 
 file_list:
