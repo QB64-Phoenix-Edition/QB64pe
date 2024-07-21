@@ -7,6 +7,8 @@ CONST ICON_DIR = "./icons/"
 CONST TEST_FILE_FORMAT = "bmp"
 CONST TOLERANCE_LIMIT = 0
 
+ON ERROR GOTO error_handler
+
 RESTORE file_list
 
 DIM fileName AS STRING: READ fileName
@@ -18,32 +20,36 @@ LOOP WHILE LEN(fileName)
 
 SYSTEM
 
+error_handler:
+PRINT "Error: "; _ERRORMESSAGE$; " at line line"; _ERRORLINE
+SYSTEM
+
 file_list:
-DATA 1bpp.ico
-DATA 24bpp.ico
-DATA 4bpp.cur
-DATA 4bpp.ico
-DATA 8bpp.ico
-DATA 8bpp.cur
-DATA bard.ico
-DATA broom.ico
-DATA cat.ico
-DATA computer.ico
-DATA dumb1.ico
-DATA dumb2.ico
-DATA pencil.ico
-DATA please_wait.ico
-DATA question.ico
-DATA really_huge_duck.ico
-DATA sample3.ico
-DATA sample4.ico
-DATA soft_drink.ico
-DATA taco.ico
-DATA terra_globe.ico
-DATA thumbs_up.ico
-DATA volme_dialog.ico
-DATA word-icon.ico
-DATA x.ico
+DATA "1bpp.ico"
+DATA "24bpp.ico"
+DATA "4bpp.cur"
+DATA "4bpp.ico"
+DATA "8bpp.ico"
+DATA "8bpp.cur"
+DATA "bard.ico"
+DATA "broom.ico"
+DATA "cat.ico"
+DATA "computer.ico"
+DATA "dumb1.ico"
+DATA "dumb2.ico"
+DATA "pencil.ico"
+DATA "please_wait.ico"
+DATA "question.ico"
+DATA "really_huge_duck.ico"
+DATA "sample3.ico"
+DATA "sample4.ico"
+DATA "soft_drink.ico"
+DATA "taco.ico"
+DATA "terra_globe.ico"
+DATA "thumbs_up.ico"
+DATA "volme_dialog.ico"
+DATA "word-icon.ico"
+DATA "x.ico"
 DATA ""
 
 SUB PrintImageDetails (handle AS LONG, testFileName AS STRING)
