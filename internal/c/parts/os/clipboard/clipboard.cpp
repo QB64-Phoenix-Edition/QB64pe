@@ -8,12 +8,14 @@
 // We need 'qbs' and 'image' structs stuff from here. Stop using this when image and friends are refactored
 #include "../../../libqb.h"
 
+// Uncomment this to to print debug messages to stderr
+// #define IMAGE_DEBUG 1
+
 // This is not strictly needed. But we'll leave it here for VSCode to do it's magic
 #define CLIP_ENABLE_IMAGE 1
 #include "clip/clip.h"
 #include "clipboard.h"
 #include "error_handle.h"
-#define IMAGE_DEBUG 0
 #include "image.h"
 #include "qbs.h"
 #include <vector>
