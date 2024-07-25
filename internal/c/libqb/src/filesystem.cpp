@@ -902,19 +902,18 @@ void sub_kill(qbs *str) {
         // We'll delete only if it is a file
         if (FS_FileExists(pathName.c_str())) {
             if (remove(pathName.c_str())) {
-                auto i = errno;
-
-                if (i == ENOENT) {
+                switch (errno) {
+                case ENOENT:
                     error(QB_ERROR_FILE_NOT_FOUND);
-                    return;
-                } // file not found
+                    break;
 
-                if (i == EACCES) {
+                case EACCES:
                     error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
-                    return;
-                } // path / file access error
+                    break;
 
-                error(QB_ERROR_BAD_FILE_NAME); // bad file name (assumed)
+                default:
+                    error(QB_ERROR_BAD_FILE_NAME);
+                }
             }
         }
 
