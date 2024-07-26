@@ -68,11 +68,11 @@ rem MINGW_DIR is actually the internal directory name inside the zip / 7z file
 rem It needs to be updated whenever the toolchains are updated
 if "%ARCH%" == "ARM" (
     if %BITS% == 64 (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-ucrt-aarch64.zip"
-        set MINGW_DIR=llvm-mingw-20240320-ucrt-aarch64
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-aarch64.zip"
+        set MINGW_DIR=llvm-mingw-20240619-ucrt-aarch64
     ) else (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-ucrt-armv7.zip"
-        set MINGW_DIR=llvm-mingw-20240320-ucrt-armv7
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-armv7.zip"
+        set MINGW_DIR=llvm-mingw-20240619-ucrt-armv7
     )
     set MINGW_TEMP_FILE=temp.zip
 ) else (
