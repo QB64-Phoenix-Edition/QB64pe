@@ -4966,7 +4966,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#Language..." THEN
                 PCOPY 2, 0
-                retval = idelanguagebox
+                retval = ideLanguageBox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -13751,7 +13751,7 @@ FUNCTION idesubs$
 END FUNCTION
 
 
-FUNCTION idelanguagebox
+FUNCTION ideLanguageBox
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -13764,50 +13764,29 @@ FUNCTION idelanguagebox
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
-    '-------- init --------
+    '-------- init dialog box & objects --------
+    i = 0: h = idewy + idesubwindow - 8: IF h > 31 THEN h = 31
+    idepar p, 55, h, "Language Settings"
 
-    'generate list of available code pages
-    l$ = idecpname(1)
-    dialogWidth = LEN(l$)
-    FOR x = 2 TO idecpnum
-        l$ = l$ + sep + idecpname(x)
-        IF LEN(idecpname(x)) > dialogWidth THEN dialogWidth = LEN(idecpname(x))
-    NEXT
-    l$ = UCASE$(l$)
-
-    i = 0
-    dialogHeight = idecpnum + 5
-    IF dialogHeight > idewy + idesubwindow - 6 THEN
-        dialogHeight = idewy + idesubwindow - 6
-    END IF
-    IF dialogWidth < 60 THEN dialogWidth = 60
-    IF dialogWidth > idewx - 8 THEN dialogWidth = idewx - 8
-
-    idepar p, dialogWidth, dialogHeight, "Language"
-
-    i = i + 1
-    o(i).typ = 2
-    o(i).y = 3
-    o(i).w = dialogWidth - 4: o(i).h = dialogheight - 5
-    o(i).txt = idenewtxt(l$)
+    i = i + 1: cpLst = i
+    o(i).typ = 2 'list box
+    o(i).y = 2: o(i).h = h - 4
+    o(i).nam = idenewtxt("Code Pages"): a2$ = idecpname(1): FOR x = 2 TO idecpnum: a2$ = a2$ + sep + idecpname(x): NEXT x
+    o(i).txt = idenewtxt(UCASE$(a2$))
     o(i).sel = 1: IF idecpindex THEN o(i).sel = idecpindex
-    o(i).nam = idenewtxt("Code Pages")
 
-    i = i + 1
-    o(i).typ = 3
-    o(i).y = dialogheight
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-
-
-
-
-
-    '-------- end of init --------
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
+    o(i).y = h
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
+
+    '-------- custom variables init --------
+    '-------- end of custom variables init --------
 
     DO 'main loop
 
@@ -13818,20 +13797,26 @@ FUNCTION idelanguagebox
             IF o(i).typ THEN
                 'prepare object
                 o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
                 idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
             END IF
         NEXT i
         lastfocus = f - 1
         '-------- end of generic display dialog box & objects --------
 
         '-------- custom display changes --------
-        COLOR 0, 7
-        _PRINTSTRING (p.x + 2, p.y + 1), "Code-page for ASCII-UNICODE mapping (Default = CP437):"
-        COLOR 2, 7
-        _PRINTSTRING (p.x + 2, p.y + 2), "(affects the display of TTF fonts set in Options-Display)"
-
+        COLOR 2, 7: LOCATE p.y + 1, p.x + 2
+        PRINT "Codepage for ASCII-UNICODE mapping (Default = CP437):";
         '-------- end of custom display changes --------
 
         'update visual page and cursor position
@@ -13864,7 +13849,7 @@ FUNCTION idelanguagebox
         '-------- end of read input --------
 
         '-------- generic input response --------
-        info = 0
+        info = 0: invdata = 0
         IF K$ = "" THEN K$ = CHR$(255)
         IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
         IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
@@ -13872,43 +13857,49 @@ FUNCTION idelanguagebox
         IF focus > lastfocus THEN focus = 1
         f = 1
         FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
+            IF o(i).typ THEN
                 focusoffset = focus - f
                 ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
             END IF
         NEXT
         '-------- end of generic input response --------
 
-        IF K$ = CHR$(27) OR (focus = 3 AND info <> 0) THEN
-            '        idesubs$ = "C"
+        '-------- custom input response --------
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) OR (focus = cpLst AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
+            END IF
+
+            optChg% = 0 'any options changed
+
+            'adjust runtime variables
+            v% = ABS(o(cpLst).sel)
+            IF idecpindex <> v% THEN idecpindex = v%: optChg% = -1
+
+            IF optChg% THEN
+                'save changes
+                WriteConfigSetting displaySettingsSection$, "IDE_CodePage", str2$(idecpindex)
+
+                'apply new mapping
+                FOR x = 128 TO 255
+                    u = VAL("&H" + MID$(idecp(idecpindex), x * 8 + 1, 8) + "&")
+                    IF u = 0 THEN u = 9744
+                    _MAPUNICODE u TO x
+                NEXT x
+
+                ideLanguageBox = 1
+            END IF
             EXIT FUNCTION
         END IF
+        '-------- end of custom input response --------
 
-        IF K$ = CHR$(13) OR (focus = 2 AND info <> 0) OR (info = 1 AND focus = 1) THEN
-            y = o(1).sel
-            IF y < 1 THEN y = -y
-
-            FOR x = 128 TO 255
-                u = VAL("&H" + MID$(idecp(y), x * 8 + 1, 8) + "&")
-                IF u = 0 THEN u = 9744
-                _MAPUNICODE u TO x
-            NEXT
-
-            'save changes
-            v% = y: idecpindex = v%
-            WriteConfigSetting displaySettingsSection$, "IDE_CodePage", STR$(idecpindex)
-            EXIT FUNCTION
-        END IF
-
-
-        'end of custom controls
         mousedown = 0
         mouseup = 0
     LOOP
-
-    idelanguagebox = 0
-
 END FUNCTION
 
 FUNCTION idewarningbox
