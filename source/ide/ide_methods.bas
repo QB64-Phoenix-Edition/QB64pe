@@ -10965,7 +10965,7 @@ SUB idedrawobj (o AS idedbotype, f)
     IF o.typ = 1 THEN
         IF o.x = 0 THEN o.x = 2
         x = o.par.x + o.x: y = o.par.y + o.y
-        COLOR 0, 7
+        IF o.inv THEN COLOR 4, 7 ELSE COLOR 0, 7
         IF o.nam THEN
             a$ = idetxt(o.nam)
             LOCATE y, x: idehPRINT a$ + ":"
@@ -10973,20 +10973,21 @@ SUB idedrawobj (o AS idedbotype, f)
         END IF
         IF o.w = 0 THEN x2 = o.par.x + o.par.w - 1: o.w = x2 - x - 3
         idebox x, y - 1, o.w + 4, 3
+        COLOR 0, 7
         IF o.txt = 0 THEN o.txt = idenewtxt("")
         a$ = idetxt(o.txt)
         IF o.v1 > LEN(a$) THEN o.v1 = LEN(a$) 'new
         cx = o.v1
 
         tx = 1
-        IF LEN(a$) > o.w THEN
+        IF LEN(a$) > o.w - o.blk THEN
             IF o.foc = 0 THEN
-                tx = o.v1 - o.w + 1
+                tx = o.v1 - (o.w - o.blk) + 1
                 IF tx < 1 THEN tx = 1
-                a$ = MID$(a$, tx, o.w)
+                a$ = MID$(a$, tx, o.w - o.blk)
                 cx = cx - tx + 1
             ELSE
-                a$ = LEFT$(a$, o.w)
+                a$ = LEFT$(a$, o.w - o.blk)
             END IF
         END IF
 
@@ -11214,6 +11215,21 @@ SUB idedrawobj (o AS idedbotype, f)
         IF o.foc = 0 THEN o.cx = x + 1: o.cy = y
         f = f + 1
     END IF '#4
+
+    '#5: SINGLE SYMBOL BUTTON (no spacing, known fix position)
+    IF o.typ = 5 THEN
+        a$ = LEFT$(idetxt(o.txt), 1)
+        x = o.par.x + o.x: y = o.par.y + o.y
+        LOCATE y, x
+        IF o.foc = 0 THEN
+            COLOR 15, 7
+            o.cx = x + 1: o.cy = y
+        ELSE
+            COLOR 0, 7
+        END IF
+        PRINT "("; a$; ")"
+        f = f + 1
+    END IF '#5
 
 END SUB
 
@@ -11741,13 +11757,14 @@ FUNCTION idehlen (a$)
 END FUNCTION
 
 SUB idehPRINT (a$)
-    COLOR 0, 7
+    dc = _DEFAULTCOLOR
+    COLOR dc, 7
     FOR i = 1 TO LEN(a$)
         c$ = MID$(a$, i, 1)
         IF c$ = "#" THEN
             IF idehl THEN COLOR 15, 7
         ELSE
-            PRINT c$;: COLOR 0, 7
+            PRINT c$;: COLOR dc, 7
         END IF
     NEXT
 END SUB
@@ -14617,6 +14634,37 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
         END IF
         f = f + 1
     END IF '4
+
+    IF t = 5 THEN 'single symbol button
+        STATIC firstHitTime#, lastRunTime#, keyInit%
+
+        allowRun = 1
+        IF o.rpt > 0 THEN
+            IF KB = 0 THEN keyInit% = 0
+            IF mousedown <> 0 OR (keyInit% = 0 AND (kk$ = CHR$(13) OR kk$ = " ")) THEN
+                IF mousedown = 0 THEN keyInit% = -1 ELSE keyInit% = 0
+                firstHitTime# = TIMER(0.001)
+            ELSEIF timeElapsedSince#(firstHitTime#) < 0.625# THEN
+                allowRun = 0
+            ELSE
+                IF timeElapsedSince#(lastRunTime#) < (1 / o.rpt) THEN allowRun = 0
+            END IF
+        END IF
+
+        IF allowRun THEN
+            IF mousedown <> 0 OR mb <> 0 THEN
+                IF my = o.par.y + o.y THEN
+                    IF mx >= o.par.x + o.x AND mx < o.par.x + o.x + 3 THEN info = 1: focus = f
+                END IF
+            END IF
+        END IF
+        IF focusoffset = 0 THEN
+            IF kk$ = CHR$(13) OR kk$ = " " THEN info = allowRun: kk$ = ""
+        END IF
+        IF info = 1 THEN lastRunTime# = TIMER(0.001)
+
+        f = f + 1
+    END IF '5
 
     EXIT SUB
     selectcheck:
