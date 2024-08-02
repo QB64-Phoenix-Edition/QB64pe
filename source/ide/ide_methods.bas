@@ -15464,100 +15464,88 @@ FUNCTION ideCompilerSettingsBox
     DIM p AS idedbptype
     DIM o(1 TO 100) AS idedbotype
     DIM sep AS STRING * 1
-    DIM optimizeCheckBox AS LONG
-    DIM stripDebugCheckBox AS LONG
-    DIM addDebugSymbolsCheckBox AS LONG
-    DIM maxParallelTextBox AS LONG
-    DIM extraCppFlagsTextBox AS LONG
-    DIM extraLinkerFlagsTextBox AS LONG
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
-    '-------- init --------
+    '-------- init dialog box & objects --------
     i = 0
-    y = 0
+    idepar p, 48, 15, "Compiler Settings"
 
-    i = i + 1
-    optimizeCheckBox = i
+    i = i + 1: ocpChk = i
     o(i).typ = 4 'check box
-    y = y + 2: o(i).y = y
+    o(i).y = 2
     o(i).nam = idenewtxt("Compile #program with C++ optimization flag")
-    o(i).sel = OptimizeCppProgram
-
-    i = i + 1
-    stripDebugCheckBox = i
+    o(i).sel = ABS(OptimizeCppProgram)
+    i = i + 1: sdsChk = i
     o(i).typ = 4 'check box
-    y = y + 1: o(i).y = y
+    o(i).y = 3
     o(i).nam = idenewtxt("#Strip C++ symbols from executable")
-    o(i).sel = -StripDebugSymbols
-
-    i = i + 1
-    addDebugSymbolsCheckBox = i
+    o(i).sel = ABS(StripDebugSymbols)
+    i = i + 1: idiChk = i
     o(i).typ = 4 'check box
-    y = y + 1: o(i).y = y
+    o(i).y = 4
     o(i).nam = idenewtxt("#Add C++ Debug Information")
-    o(i).sel = Include_GDB_Debugging_Info
+    o(i).sel = ABS(Include_GDB_Debugging_Info)
 
-    y = y + 1 ' Blank line
-
-    i = i + 1
-    extraCppFlagsTextBox = i
-    o(i).typ = 1
-    o(i).x = 2
-    y = y + 2: o(i).y = y: y = y + 1
+    i = i + 1: ecfBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 6
     o(i).nam = idenewtxt("C++ Compiler #Flags")
-    o(i).txt = idenewtxt(ExtraCppFlags)
-    o(i).v1 = LEN(ExtraCppFlags)
-
-    i = i + 1
-    extraLinkerFlagsTextBox = i
-    o(i).typ = 1
-    o(i).x = 2
-    y = y + 2: o(i).y = y: y = y + 1
+    o(i).txt = idenewtxt(ExtraCppFlags): o(i).v1 = LEN(ExtraCppFlags)
+    i = i + 1: elfBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 9
     o(i).nam = idenewtxt("C++ #Linker Flags")
-    o(i).txt = idenewtxt(ExtraLinkerFlags)
-    o(i).v1 = LEN(ExtraLinkerFlags)
+    o(i).txt = idenewtxt(ExtraLinkerFlags): o(i).v1 = LEN(ExtraLinkerFlags)
 
-    a2$ = str2$(MaxParallelProcesses)
-    i = i + 1
-    maxParallelTextBox = i
-    o(i).typ = 1
-    o(i).x = 2
-    y = y + 2: o(i).y = y: y = y + 1
-    o(i).nam = idenewtxt("#Max C++ Compiler Processes")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
+    i = i + 1: mppBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 12
+    o(i).nam = idenewtxt("#Max C++ Compiler Processes"): a2$ = str2$(MaxParallelProcesses)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: mppSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 41: o(i).y = 12
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: mppSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 44: o(i).y = 12
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    y = y + 1 ' Blank line
-
-    i = i + 1
-    buttonsid = i
-    o(i).typ = 3
-    y = y + 1: o(i).y = y
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-
-    idepar p, 60, y, "Compiler Settings"
-    '-------- end of init --------
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
+    o(i).y = 15
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
-    DO 'main loop
+    '-------- custom variables init --------
+    '-------- end of custom variables init --------
 
+    DO 'main loop
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
         f = 1: cx = 0: cy = 0
         FOR i = 1 TO 100
             IF o(i).typ THEN
-
                 'prepare object
                 o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
                 idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
             END IF
         NEXT i
         lastfocus = f - 1
@@ -15596,7 +15584,7 @@ FUNCTION ideCompilerSettingsBox
         '-------- end of read input --------
 
         '-------- generic input response --------
-        info = 0
+        info = 0: invdata = 0
         IF K$ = "" THEN K$ = CHR$(255)
         IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
         IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
@@ -15604,72 +15592,80 @@ FUNCTION ideCompilerSettingsBox
         IF focus > lastfocus THEN focus = 1
         f = 1
         FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
+            IF o(i).typ THEN
                 focusoffset = focus - f
                 ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
             END IF
         NEXT
         '-------- end of generic input response --------
 
-        'specific post controls
-        IF focus <> PrevFocus THEN
-            'Always start with TextBox values selected upon getting focus
-            PrevFocus = focus
-            IF o(focus).typ = 1 THEN
-                o(focus).v1 = LEN(idetxt(o(focus).txt))
-                IF o(focus).v1 > 0 THEN o(focus).issel = -1
-                o(focus).sx1 = 0
-            END IF
+        '-------- custom input response --------
+        'max. processes spinners
+        IF focus = mppSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mppBox).txt)) + 1)
+            IF VAL(a$) > 8 THEN a$ = "8"
+            idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
+        IF focus = mppSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mppBox).txt)) - 1)
+            IF VAL(a$) < 1 THEN a$ = "1"
+            idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
+        END IF
+        'max. processes text box (valid data check)
+        a$ = idetxt(o(mppBox).txt): o(mppBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 1 AND VAL(a$) <= 8) THEN o(mppBox).inv = 0
+        IF o(mppBox).inv THEN invdata = 1 'block confirmation, as long as invalid
 
-        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT DO 'cancel
-        IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
-            'save changes
-            v% = o(optimizeCheckBox).sel: IF v% <> 0 THEN v% = -1
-            IF OptimizeCppProgram <> v% THEN
-                OptimizeCppProgram = v%
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
+            END IF
+
+            optChg% = 0 'any options changed
+
+            'adjust runtime variables
+            v% = o(ocpChk).sel: IF v% <> 0 THEN v% = TRUE
+            IF OptimizeCppProgram <> v% THEN OptimizeCppProgram = v%: optChg% = -1
+            v% = o(sdsChk).sel: IF v% <> 0 THEN v% = TRUE
+            IF StripDebugSymbols <> v% THEN StripDebugSymbols = v%: optChg% = -1
+            v% = o(idiChk).sel: IF v% <> 0 THEN v% = TRUE
+            IF Include_GDB_Debugging_Info <> v% THEN Include_GDB_Debugging_Info = v%: optChg% = -1
+
+            v$ = idetxt(o(ecfBox).txt)
+            IF ExtraCppFlags$ <> v$ THEN ExtraCppFlags$ = v$: optChg% = -1
+            v$ = idetxt(o(elfBox).txt)
+            IF ExtraLinkerFlags$ <> v$ THEN ExtraLinkerFlags$ = v$: optChg% = -1
+
+            v% = VAL(idetxt(o(mppBox).txt))
+            IF MaxParallelProcesses <> v% THEN MaxParallelProcesses = v%: optChg% = -1
+
+            IF optChg% THEN
+                'save changes
                 WriteConfigSetting compilerSettingsSection$, "OptimizeCppProgram", BoolToTFString$(OptimizeCppProgram)
-            END IF
-
-            v% = o(stripDebugCheckBox).sel: IF v% <> 0 THEN v% = -1
-            IF StripDebugSymbols <> v% THEN
-                StripDebugSymbols = v%
                 WriteConfigSetting compilerSettingsSection$, "StripDebugSymbols", BoolToTFString$(StripDebugSymbols)
-            END IF
-
-            v% = o(addDebugSymbolsCheckBox).sel: IF v% <> 0 THEN v% = -1
-            IF Include_GDB_Debugging_Info <> v% THEN
-                Include_GDB_Debugging_Info = v%
                 WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(Include_GDB_Debugging_Info)
-            END IF
 
-            v% = VAL(idetxt(o(maxParallelTextBox).txt))
-            IF v% > 0 AND v% <> MaxParallelProcesses THEN
-                MaxParallelProcesses = v%
+                WriteConfigSetting compilerSettingsSection$, "ExtraCppFlags", ExtraCppFlags$
+                WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
+
                 WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", str2$(MaxParallelProcesses)
+
+                'clean compiled files, since they may change due to the different settings
+                PurgeTemporaryBuildFiles (os$), (MacOSX)
+
+                ideCompilerSettingsBox = 1
             END IF
-
-            ExtraCppFlags$ = idetxt(o(extraCppFlagsTextBox).txt)
-            WriteConfigSetting compilerSettingsSection$, "ExtraCppFlags", ExtraCppFlags$
-
-            ExtraLinkerFlags$ = idetxt(o(extraLinkerFlagsTextBox).txt)
-            WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
-
-            ' Clean compiled files, since they may change due to the different settings
-            PurgeTemporaryBuildFiles (os$), (MacOSX)
-            ideCompilerSettingsBox = -1
-
             EXIT FUNCTION
         END IF
-
-        'end of custom controls
+        '-------- end of custom input response --------
 
         mousedown = 0
         mouseup = 0
     LOOP
-
-    ideCompilerSettingsBox = 0
 END FUNCTION
 
 FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
