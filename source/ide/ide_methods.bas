@@ -1928,12 +1928,12 @@ FUNCTION ide2 (ignore)
                 IF Help_Scrollbar THEN
                     idembmonitor = 1
                     IF Help_Scrollbar_Method = 1 THEN
-                        IF Help_Scrollbar = 1 THEN KB = KEY_LEFT: idewait 'fall through...
-                        IF Help_Scrollbar = 2 THEN KB = KEY_UP: idewait 'fall through...
+                        IF Help_Scrollbar = 1 THEN KB = KEY_LEFT: _DELAY 0.1 'fall through...
+                        IF Help_Scrollbar = 2 THEN KB = KEY_UP: _DELAY 0.1 'fall through...
                     END IF
                     IF Help_Scrollbar_Method = 2 THEN
-                        IF Help_Scrollbar = 1 THEN KB = KEY_RIGHT: idewait 'fall through...
-                        IF Help_Scrollbar = 2 THEN KB = KEY_DOWN: idewait 'fall through...
+                        IF Help_Scrollbar = 1 THEN KB = KEY_RIGHT: _DELAY 0.1 'fall through...
+                        IF Help_Scrollbar = 2 THEN KB = KEY_DOWN: _DELAY 0.1 'fall through...
                     END IF
                     IF Help_Scrollbar_Method = 3 THEN
                         IF Help_Scrollbar = 1 THEN
@@ -1942,18 +1942,18 @@ FUNCTION ide2 (ignore)
                                 Help_cx = Help_cx - 8
                                 IF Help_cx < 1 THEN Help_cx = 1
                                 IF Help_sx > Help_cx THEN Help_sx = Help_cx
-                                idewait
+                                _DELAY 0.1
                             END IF
                             IF mX > v THEN
                                 Help_cx = Help_cx + 8
                                 IF Help_cx > help_w + 1 THEN Help_cx = help_w + 1
-                                idewait
+                                _DELAY 0.1
                             END IF
                         END IF
                         IF Help_Scrollbar = 2 THEN
                             v = idevbar(idewx, idewy + 1, idesubwindow - 2, Help_cy, help_h + 1)
-                            IF mY < v THEN KB = KEY_PAGEUP: idewait 'fall through...
-                            IF mY > v THEN KB = KEY_PAGEDOWN: idewait 'fall through...
+                            IF mY < v THEN KB = KEY_PAGEUP: _DELAY 0.1 'fall through...
+                            IF mY > v THEN KB = KEY_PAGEDOWN: _DELAY 0.1 'fall through...
                         END IF
 
                     END IF
@@ -3258,17 +3258,17 @@ FUNCTION ide2 (ignore)
         IF mB AND idemouseselect = 0 THEN
             IF mX = idewx AND mY > 2 AND mY < idewy - 5 THEN 'inside vbar
                 ideselect = 0
-                IF mY = 3 THEN KB = KEY_UP: idewait: idembmonitor = 1
-                IF mY = idewy - 6 THEN KB = KEY_DOWN: idewait: idembmonitor = 1
+                IF mY = 3 THEN KB = KEY_UP: _DELAY 0.1: idembmonitor = 1
+                IF mY = idewy - 6 THEN KB = KEY_DOWN: _DELAY 0.1: idembmonitor = 1
                 IF mY > 3 AND mY < (idewy - 6) THEN
                     'assume not on slider
                     IF iden > 1 THEN 'take no action if not slider available
                         y = idevbar(idewx, 3, idewy - 8, idecy, iden)
                         IF y <> mY THEN
                             IF mY < y THEN
-                                KB = KEY_PAGEUP: idewait: idembmonitor = 1
+                                KB = KEY_PAGEUP: _DELAY 0.1: idembmonitor = 1
                             ELSE
-                                KB = KEY_PAGEDOWN: idewait: idembmonitor = 1
+                                KB = KEY_PAGEDOWN: _DELAY 0.1: idembmonitor = 1
                             END IF
                         END IF
                     END IF
@@ -3279,8 +3279,8 @@ FUNCTION ide2 (ignore)
         IF mB AND idemouseselect = 0 THEN
             IF mY = idewy - 5 AND mX > 1 AND mX < idewx THEN 'inside hbar
                 ideselect = 0
-                IF mX = 2 THEN KB = KEY_LEFT: idewait: idembmonitor = 1
-                IF mX = idewx - 1 THEN KB = KEY_RIGHT: idewait: idembmonitor = 1
+                IF mX = 2 THEN KB = KEY_LEFT: _DELAY 0.1: idembmonitor = 1
+                IF mX = idewx - 1 THEN KB = KEY_RIGHT: _DELAY 0.1: idembmonitor = 1
                 IF mX > 2 AND mX < idewx - 1 THEN
                     'assume not on slider
                     x = idehbar(2, idewy - 5, idewx - 2, idesx, 608)
@@ -3288,10 +3288,10 @@ FUNCTION ide2 (ignore)
                         IF mX < x THEN
                             idecx = idecx - 8
                             IF idecx < 1 THEN idecx = 1
-                            idewait: idembmonitor = 1
+                            _DELAY 0.1: idembmonitor = 1
                         ELSE
                             idecx = idecx + 8
-                            idewait: idembmonitor = 1
+                            _DELAY 0.1: idembmonitor = 1
                         END IF
                     END IF
 
@@ -3348,7 +3348,7 @@ FUNCTION ide2 (ignore)
                     IF mY <= 2 THEN idecy = idecy - 1: IF idecy < 1 THEN idecy = 1
                     IF ((mX = 1 AND ShowLineNumbers = 0) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) THEN idecx = idecx - 1: IF idecx < 1 THEN idecx = 1
                     IF mX = idewx THEN idecx = idecx + 1
-                    idewait
+                    _DELAY 0.1
                 END IF
             END IF
         END IF
@@ -14323,21 +14323,21 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
 
                         IF my < q THEN
                             kk$ = CHR$(0) + CHR$(73)
-                            idewait
+                            _DELAY 0.1
                         END IF
                         IF my > q THEN
                             kk$ = CHR$(0) + CHR$(81)
-                            idewait
+                            _DELAY 0.1
                         END IF
                     END IF
 
                     IF mx = x2 AND my = y1 + 1 THEN
                         kk$ = CHR$(0) + CHR$(72)
-                        idewait
+                        _DELAY 0.1
                     END IF
                     IF mx = x2 AND my = y2 - 1 THEN
                         kk$ = CHR$(0) + CHR$(80)
-                        idewait
+                        _DELAY 0.1
                     END IF
 
                 END IF
@@ -14678,10 +14678,6 @@ FUNCTION idevbar (x, y, h, i2, n2)
         EXIT FUNCTION
     END IF
 END FUNCTION
-
-SUB idewait
-    _DELAY 0.1
-END SUB
 
 FUNCTION idezchangepath$ (path$, newpath$)
 
