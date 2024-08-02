@@ -4974,7 +4974,7 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#Display..." THEN
                 PCOPY 2, 0
                 IF idehelp = 0 THEN
-                    retval = idedisplaybox
+                    retval = ideDisplayBox
                     IF retval = 1 THEN
                         'screen dimensions have changed and everything must be redrawn/reapplied
                         WIDTH idewx, idewy + idesubwindow
@@ -16124,7 +16124,7 @@ END FUNCTION 'yes/no box
 'END FUNCTION
 
 
-FUNCTION idedisplaybox
+FUNCTION ideDisplayBox
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -16137,42 +16137,40 @@ FUNCTION idedisplaybox
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
-    '-------- init --------
+    '-------- init dialog box & objects --------
     i = 0
+    idepar p, 61, 18, "Display Settings"
+    'manually adjust winpos in case display was set too large by accident
+    p.x = (80 \ 2) - p.w \ 2: p.y = (25 \ 2) - p.h \ 2
 
-    'note: manually set window position in case display is set too large by accident
-    p.w = 60
-    p.h = 18
-    p.x = (80 \ 2) - p.w \ 2
-    p.y = (25 \ 2) - p.h \ 2
-    p.nam = idenewtxt("Display")
+    i = i + 1: wwBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 3: o(i).y = 2: o(i).w = 10
+    o(i).nam = idenewtxt("Window #width"): a2$ = str2$(idewx)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: wwSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 24: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: wwSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 27: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
+    i = i + 1: whBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 2: o(i).y = 5: o(i).w = 10
+    o(i).nam = idenewtxt("Window #height"): a2$ = str2$(idewy + idesubwindow)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: whSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 24: o(i).y = 5
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: whSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 27: o(i).y = 5
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    a2$ = str2$(idewx)
-    i = i + 1
-    PrevFocus = 1
-    o(i).typ = 1
-    o(i).x = 3
-    o(i).y = 2
-    o(i).w = 10
-    o(i).nam = idenewtxt("Window #width")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
-    IF o(i).v1 > 0 THEN
-        o(i).issel = -1
-        o(i).sx1 = 0
-    END IF
-
-    a2$ = str2$(idewy + idesubwindow)
-    i = i + 1
-    o(i).typ = 1
-    o(i).x = 2
-    o(i).y = 5
-    o(i).w = 10
-    o(i).nam = idenewtxt("Window #height")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
-
-    i = i + 1
+    i = i + 1: rpChk = i
     o(i).typ = 4 'check box
     o(i).y = 7
     IF INSTR(_OS$, "WIN") > 0 OR INSTR(_OS$, "MAC") > 0 THEN
@@ -16180,85 +16178,105 @@ FUNCTION idedisplaybox
     ELSE
         o(i).nam = idenewtxt("#Remember size")
     END IF
-    IF IDE_AutoPosition THEN o(i).sel = 1
+    o(i).sel = ABS(IDE_AutoPosition)
 
-    i = i + 1
-    tmpNormalCursorStart = IDENormalCursorStart
-    o(i).typ = 1
-    o(i).x = 33
-    o(i).y = 2
-    o(i).nam = idenewtxt("Cursor #start")
-    o(i).txt = idenewtxt(str2$(IDENormalCursorStart))
-    o(i).v1 = LEN(a2$)
+    i = i + 1: csBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 33: o(i).y = 2
+    o(i).nam = idenewtxt("Cursor #start"): a2$ = str2$(IDENormalCursorStart)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: csSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 54: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: csSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 57: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
+    i = i + 1: ceBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 35: o(i).y = 5
+    o(i).nam = idenewtxt("Cursor #end"): a2$ = str2$(IDENormalCursorEnd)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: ceSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 54: o(i).y = 5
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: ceSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 57: o(i).y = 5
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    i = i + 1
-    tmpNormalCursorEnd = IDENormalCursorEnd
-    o(i).typ = 1
-    o(i).x = 35
-    o(i).y = 5
-    o(i).nam = idenewtxt("Cursor #end")
-    o(i).txt = idenewtxt(str2$(IDENormalCursorEnd))
-    o(i).v1 = LEN(a2$)
-
-    i = i + 1
+    i = i + 1: f8Chk = i
     o(i).typ = 4 'check box
     o(i).y = 9
     o(i).nam = idenewtxt("#Use _FONT 8")
-    o(i).sel = IDE_UseFont8
-    prevFont8Setting = o(i).sel
-
-    i = i + 1
+    o(i).sel = ABS(IDE_UseFont8)
+    i = i + 1: cfChk = i
     o(i).typ = 4 'check box
     o(i).y = 10
-    o(i).nam = idenewtxt("Use monospace #TTF font:")
-    o(i).sel = idecustomfont
-    prevCustomFontSetting = o(i).sel
+    o(i).nam = idenewtxt("Use monospace #TTF, TTC, OTF, FNT, FON, PCF, BDF font:")
+    o(i).sel = ABS(idecustomfont)
 
-    a2$ = idecustomfontfile$
-    prevFontFile$ = a2$
-    i = i + 1
-    o(i).typ = 1
-    o(i).x = 10
-    o(i).y = 12
-    o(i).nam = idenewtxt("#Font file")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
+    i = i + 1: cfBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 7: o(i).y = 12
+    o(i).nam = idenewtxt("#Font file"): a2$ = idecustomfontfile$
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 3
+    i = i + 1: cfSymL = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 57: o(i).y = 12
+    o(i).txt = idenewtxt(CHR$(240))
+    i = i + 1: cfsBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 7: o(i).y = 15
+    o(i).nam = idenewtxt("Font size in #pixels"): a2$ = str2$(idecustomfontheight)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: cfsSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 54: o(i).y = 15
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: cfsSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 57: o(i).y = 15
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    a2$ = str2$(idecustomfontheight)
-    prevFontSize$ = a2$
-    i = i + 1
-    o(i).typ = 1
-    o(i).x = 10
-    o(i).y = 15
-    o(i).nam = idenewtxt("Font size in #pixels")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
-
-    i = i + 1
-    o(i).typ = 3
-    o(i).y = p.h
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-    '-------- end of init --------
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
+    o(i).y = 18
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
-    DO 'main loop
+    '-------- custom variables init --------
+    tmpNormalCursorStart = IDENormalCursorStart
+    tmpNormalCursorEnd = IDENormalCursorEnd
+    '-------- end of custom variables init --------
 
+    DO 'main loop
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
         f = 1: cx = 0: cy = 0
         FOR i = 1 TO 100
             IF o(i).typ THEN
-
                 'prepare object
                 o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
                 idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
             END IF
         NEXT i
         lastfocus = f - 1
@@ -16298,7 +16316,7 @@ FUNCTION idedisplaybox
         '-------- end of read input --------
 
         '-------- generic input response --------
-        info = 0
+        info = 0: invdata = 0
         IF K$ = "" THEN K$ = CHR$(255)
         IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
         IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
@@ -16306,242 +16324,221 @@ FUNCTION idedisplaybox
         IF focus > lastfocus THEN focus = 1
         f = 1
         FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
+            IF o(i).typ THEN
                 focusoffset = focus - f
                 ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
             END IF
         NEXT
         '-------- end of generic input response --------
 
-        'specific post controls
-
-        IF focus <> PrevFocus THEN
-            'Always start with TextBox values selected upon getting focus
-            PrevFocus = focus
-            IF o(focus).typ = 1 THEN
-                o(focus).v1 = LEN(idetxt(o(focus).txt))
-                IF o(focus).v1 > 0 THEN o(focus).issel = -1
-                o(focus).sx1 = 0
-            END IF
+        '-------- custom input response --------
+        'width spinners
+        IF focus = wwSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(wwBox).txt)) + 1)
+            IF VAL(a$) > 999 THEN a$ = "999"
+            idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
-
-        'width
-        a$ = idetxt(o(1).txt)
-        IF LEN(a$) > 3 THEN a$ = LEFT$(a$, 3) '3 character limit
-        FOR i = 1 TO LEN(a$)
-            a = ASC(a$, i)
-            IF a < 48 OR a > 57 THEN a$ = "": EXIT FOR
-            IF i = 2 AND ASC(a$, 1) = 48 THEN a$ = "0": EXIT FOR
-        NEXT
-        IF focus <> 1 THEN
-            IF LEN(a$) THEN a = VAL(a$) ELSE a = 0
-            IF a < 80 THEN a$ = "80"
+        IF focus = wwSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(wwBox).txt)) - 1)
+            IF VAL(a$) < 80 THEN a$ = "80"
+            idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
-        idetxt(o(1).txt) = a$
-
-        'height
-        a$ = idetxt(o(2).txt)
-        IF LEN(a$) > 3 THEN a$ = LEFT$(a$, 3) '3 character limit
-        FOR i = 1 TO LEN(a$)
-            a = ASC(a$, i)
-            IF a < 48 OR a > 57 THEN a$ = "": EXIT FOR
-            IF i = 2 AND ASC(a$, 1) = 48 THEN a$ = "0": EXIT FOR
-        NEXT
-        IF focus <> 2 THEN
-            IF LEN(a$) THEN a = VAL(a$) ELSE a = 0
-            IF a < 25 THEN a$ = "25"
+        'width text box (valid data check)
+        a$ = idetxt(o(wwBox).txt): o(wwBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 80 AND VAL(a$) <= 999) THEN o(wwBox).inv = 0
+        IF o(wwBox).inv THEN invdata = 1 'block confirmation, as long as invalid
+        'height spinners
+        IF focus = whSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(whBox).txt)) + 1)
+            IF VAL(a$) > 999 THEN a$ = "999"
+            idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
-        idetxt(o(2).txt) = a$
+        IF focus = whSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(whBox).txt)) - 1)
+            IF VAL(a$) < 25 THEN a$ = "25"
+            idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
+        END IF
+        'height text box (valid data check)
+        a$ = idetxt(o(whBox).txt): o(whBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 25 AND VAL(a$) <= 999) THEN o(whBox).inv = 0
+        IF o(whBox).inv THEN invdata = 1 'block confirmation, as long as invalid
 
-        'cursor start
-        a$ = idetxt(o(4).txt)
-        IF LEN(a$) > 2 THEN a$ = LEFT$(a$, 2) '2 character limit
-        FOR i = 1 TO LEN(a$)
-            a = ASC(a$, i)
-            IF a < 48 OR a > 57 THEN a$ = "": EXIT FOR
-            IF i = 2 AND ASC(a$, 1) = 48 THEN a$ = "0": EXIT FOR
-        NEXT
-        IF LEN(a$) THEN a = VAL(a$) ELSE a = 0
-        IF focus <> 4 THEN
-            IF a < 0 THEN a$ = "0"
-            IF a > 31 THEN a$ = "31"
+        'cursor start spinners
+        IF focus = csSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(csBox).txt)) + 1)
+            IF VAL(a$) > 31 THEN a$ = "31"
+            idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
+        END IF
+        IF focus = csSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(csBox).txt)) - 1)
+            IF VAL(a$) < 0 THEN a$ = "0"
+            idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
+        END IF
+        'cursor start text box (valid data check)
+        a$ = idetxt(o(csBox).txt): o(csBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 0 AND VAL(a$) <= 31) THEN o(csBox).inv = 0
+        IF o(csBox).inv THEN
+            invdata = 1 'block confirmation, as long as invalid
+        ELSE
             tmpNormalCursorStart = VAL(a$)
-        ELSE
-            IF a < 0 THEN a = 0
-            IF a > 31 THEN a = 31
-            tmpNormalCursorStart = a
         END IF
-        idetxt(o(4).txt) = a$
-
-        'cursor end
-        a$ = idetxt(o(5).txt)
-        IF LEN(a$) > 2 THEN a$ = LEFT$(a$, 2) '2 character limit
-        FOR i = 1 TO LEN(a$)
-            a = ASC(a$, i)
-            IF a < 48 OR a > 57 THEN a$ = "": EXIT FOR
-            IF i = 2 AND ASC(a$, 1) = 48 THEN a$ = "0": EXIT FOR
-        NEXT
-        IF LEN(a$) THEN a = VAL(a$) ELSE a = 0
-        IF focus <> 5 THEN
-            IF a < 0 THEN a$ = "0"
-            IF a > 31 THEN a$ = "31"
+        'cursor end spinners
+        IF focus = ceSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(ceBox).txt)) + 1)
+            IF VAL(a$) > 31 THEN a$ = "31"
+            idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
+        END IF
+        IF focus = ceSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(ceBox).txt)) - 1)
+            IF VAL(a$) < 0 THEN a$ = "0"
+            idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
+        END IF
+        'cursor end text box (valid data check)
+        a$ = idetxt(o(ceBox).txt): o(ceBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 0 AND VAL(a$) <= 31) THEN o(ceBox).inv = 0
+        IF o(ceBox).inv THEN
+            invdata = 1 'block confirmation, as long as invalid
+        ELSE
             tmpNormalCursorEnd = VAL(a$)
-        ELSE
-            IF a < 0 THEN a = 0
-            IF a > 31 THEN a = 31
-            tmpNormalCursorEnd = a
-        END IF
-        idetxt(o(5).txt) = a$
-
-        IF prevFont8Setting <> o(6).sel THEN
-            prevFont8Setting = o(6).sel
-            IF o(6).sel THEN o(7).sel = 0: prevCustomFontSetting = 0
         END IF
 
-        IF prevCustomFontSetting <> o(7).sel THEN
-            prevCustomFontSetting = o(7).sel
-            IF o(7).sel THEN o(6).sel = 0: prevFont8Setting = 0
+        'font 8 check box
+        IF focus = f8Chk AND o(f8Chk).sel = 1 THEN 'goes on?
+            o(cfChk).sel = 0 'implies custom font off
+        END IF
+        'custom font check box
+        IF focus = cfChk AND o(cfChk).sel = 1 THEN 'goes on?
+            o(f8Chk).sel = 0 'implies font 8 off
         END IF
 
-        a$ = idetxt(o(8).txt)
-        IF LEN(a$) > 1024 THEN a$ = LEFT$(a$, 1024)
-        idetxt(o(8).txt) = a$
-        IF a$ <> prevFontFile$ THEN
-            prevFontFile$ = a$
-            IF o(7).sel = 0 THEN
-                o(6).sel = 0: prevFont8Setting = 0
-                o(7).sel = 1: prevCustomFontSetting = 1
+        'custom font selector
+        IF focus = cfSymL AND info <> 0 THEN
+            a$ = idefiledialog$("*.tt*", 3)
+            IF a$ <> "C" THEN idetxt(o(cfBox).txt) = a$: o(cfBox).v1 = LEN(a$)
+            PCOPY 2, 1: K$ = ""
+            o(f8Chk).sel = 0 'implies font 8 off
+            o(cfChk).sel = 1 'and custom font on
+        END IF
+        'custom font text box (valid data check)
+        a$ = idetxt(o(cfBox).txt): o(cfBox).inv = 1
+        IF LEN(a$) >= 1 AND LEN(a$) <= 1024 _ANDALSO _FILEEXISTS(a$) THEN o(cfBox).inv = 0
+        IF o(cfBox).inv THEN invdata = 1 'block confirmation, as long as invalid
+        IF focus = cfBox THEN
+            IF o(cfBox).inv = 0 THEN 'if valid, then
+                o(f8Chk).sel = 0 'manual input implies font 8 off
+                o(cfChk).sel = 1 'and custom font on
+            END IF
+        END IF
+        'custom font size spinners
+        IF focus = cfsSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(cfsBox).txt)) + 1)
+            IF VAL(a$) > 99 THEN a$ = "99"
+            idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
+            o(f8Chk).sel = 0 'implies font 8 off
+            o(cfChk).sel = 1 'and custom font on
+        END IF
+        IF focus = cfsSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(cfsBox).txt)) - 1)
+            IF VAL(a$) < 8 THEN a$ = "8"
+            idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
+            o(f8Chk).sel = 0 'implies font 8 off
+            o(cfChk).sel = 1 'and custom font on
+        END IF
+        'custom font size text box (valid data check)
+        a$ = idetxt(o(cfsBox).txt): o(cfsBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 8 AND VAL(a$) <= 99) THEN o(cfsBox).inv = 0
+        IF o(cfsBox).inv THEN invdata = 1 'block confirmation, as long as invalid
+        IF focus = cfsBox THEN
+            IF o(cfsBox).inv = 0 THEN 'if valid, then
+                o(f8Chk).sel = 0 'manual input implies font 8 off
+                o(cfChk).sel = 1 'and custom font on
             END IF
         END IF
 
-        a$ = idetxt(o(9).txt)
-        IF LEN(a$) > 2 THEN a$ = LEFT$(a$, 2) '2 character limit
-        FOR i = 1 TO LEN(a$)
-            a = ASC(a$, i)
-            IF a < 48 OR a > 57 THEN a$ = "": EXIT FOR
-            IF i = 2 AND ASC(a$, 1) = 48 THEN a$ = "0": EXIT FOR
-        NEXT
-        IF focus <> 9 THEN
-            IF LEN(a$) THEN a = VAL(a$) ELSE a = 0
-            IF a < 8 THEN a$ = "8"
-        END IF
-        idetxt(o(9).txt) = a$
-        IF a$ <> prevFontSize$ THEN
-            prevFontSize$ = a$
-            IF o(7).sel = 0 THEN
-                o(6).sel = 0: prevFont8Setting = 0
-                o(7).sel = 1: prevCustomFontSetting = 1
-            END IF
-        END IF
-
-
-        IF K$ = CHR$(27) OR (focus = 11 AND info <> 0) THEN EXIT FUNCTION
-        IF K$ = CHR$(13) OR (focus = 10 AND info <> 0) THEN
-
-            x = 0 'change to custom font
-
-            'get size in v%
-            v$ = idetxt(o(9).txt): IF v$ = "" THEN v$ = "0"
-            v% = VAL(v$)
-            IF v% < 8 THEN v% = 8
-            IF v% > 99 THEN v% = 99
-            IF v% <> idecustomfontheight THEN x = 1
-
-            IF o(6).sel <> IDE_UseFont8 THEN
-                IDE_UseFont8 = o(6).sel
-                idedisplaybox = 1
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
             END IF
 
-            IF o(7).sel <> idecustomfont THEN
-                IF o(7).sel = 0 THEN
+            optChg% = 0 'any options changed
+            fonChg% = 0 'custom font changed
+
+            'adjust runtime variables
+            v% = VAL(idetxt(o(wwBox).txt))
+            IF idewx <> v% THEN idewx = v%: optChg% = -1
+            v% = VAL(idetxt(o(whBox).txt))
+            IF idewy <> v% - idesubwindow THEN idewy = v% - idesubwindow: optChg% = -1
+
+            v% = o(rpChk).sel: IF v% <> 0 THEN v% = TRUE
+            IF IDE_AutoPosition <> v% THEN IDE_AutoPosition = v%: optChg% = -1
+
+            v% = VAL(idetxt(o(csBox).txt))
+            IF IDENormalCursorStart <> v% THEN IDENormalCursorStart = v%: optChg% = -1
+            v% = VAL(idetxt(o(ceBox).txt))
+            IF IDENormalCursorEnd <> v% THEN IDENormalCursorEnd = v%: optChg% = -1
+
+            v% = o(f8Chk).sel: IF v% <> 0 THEN v% = TRUE
+            IF IDE_UseFont8 <> v% THEN IDE_UseFont8 = v%: optChg% = -1
+            v% = o(cfChk).sel: IF v% <> 0 THEN v% = TRUE
+            IF idecustomfont <> v% THEN idecustomfont = v%: fonChg% = -1: optChg% = -1
+
+            v$ = idetxt(o(cfBox).txt)
+            IF idecustomfontfile$ <> v$ THEN
+                idecustomfontfile$ = v$
+                IF idecustomfont <> 0 THEN fonChg% = -1: optChg% = -1
+            END IF
+            v% = VAL(idetxt(o(cfsBox).txt))
+            IF idecustomfontheight <> v% THEN
+                idecustomfontheight = v%
+                IF idecustomfont <> 0 THEN fonChg% = -1: optChg% = -1
+            END IF
+
+            IF fonChg% THEN
+                IF o(cfChk).sel = 0 THEN 'custom font now off?
                     IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
-                    IF idecustomfonthandle > 0 THEN _FREEFONT idecustomfonthandle
-                ELSE
-                    x = 1
+                    IF idecustomfonthandle > 0 THEN
+                        _FREEFONT idecustomfonthandle
+                        idecustomfonthandle = 0
+                    END IF
+                ELSE 'custom font now on, or changed
+                    oldhandle = idecustomfonthandle
+                    idecustomfonthandle = _LOADFONT(idecustomfontfile$, idecustomfontheight, "MONOSPACE")
+                    IF idecustomfonthandle < 1 THEN
+                        retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified\nlocation, is not usable as monospace or is of\nunsupported format. Please check your inputs.", "#OK")
+                        idecustomfonthandle = oldhandle 'old handle remains active
+                        PCOPY 2, 1: _CONTINUE
+                    ELSE
+                        _FONT idecustomfonthandle
+                        IF oldhandle > 0 THEN _FREEFONT oldhandle
+                    END IF
                 END IF
             END IF
 
+            IF optChg% THEN
+                'save changes
+                WriteConfigSetting windowSettingsSection$, "IDE_Width", str2$(idewx)
+                WriteConfigSetting windowSettingsSection$, "IDE_Height", str2$(idewy)
 
-            v$ = idetxt(o(8).txt): IF v$ <> idecustomfontfile$ THEN x = 1
+                WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", BoolToTFString$(IDE_AutoPosition)
 
-            IF o(7).sel = 1 AND x = 1 THEN
-                oldhandle = idecustomfonthandle
-                idecustomfonthandle = _LOADFONT(v$, v%, "MONOSPACE")
-                IF idecustomfonthandle < 1 THEN
-                    retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location,\nor is of unsupported format. Please check your inputs.", "#OK")
-                    PCOPY 2, 1: _CONTINUE
-                ELSE
-                    _FONT idecustomfonthandle
-                END IF
-                IF idecustomfont = 1 THEN _FREEFONT oldhandle
+                WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorStart", str2$(IDENormalCursorStart)
+                WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorEnd", str2$(IDENormalCursorEnd)
+
+                WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", BoolToTFString$(IDE_UseFont8)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(idecustomfont)
+
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", str2$(idecustomfontheight)
+
+                ideDisplayBox = 1
             END IF
-
-            'save changes
-            v$ = idetxt(o(1).txt): IF v$ = "" THEN v$ = "0"
-            v% = VAL(v$)
-            IF v% < 80 THEN v% = 80
-            IF v% > 999 THEN v% = 999
-            IF v% <> idewx THEN idedisplaybox = 1
-            idewx = v%
-
-
-            v$ = idetxt(o(2).txt): IF v$ = "" THEN v$ = "0"
-            v% = VAL(v$)
-            IF v% < 25 THEN v% = 25
-            IF v% > 999 THEN v% = 999
-            IF v% <> idewy THEN idedisplaybox = 1
-            idewy = v% - idesubwindow
-
-            v% = o(3).sel
-            IF v% <> 0 THEN v% = -1
-            IDE_AutoPosition = v%
-
-            v% = o(7).sel
-            IF v% <> 0 THEN v% = 1
-            idecustomfont = v%
-
-            v$ = idetxt(o(8).txt)
-            IF LEN(v$) > 1024 THEN v$ = LEFT$(v$, 1024)
-            idecustomfontfile$ = v$
-            v$ = v$ + SPACE$(1024 - LEN(v$))
-
-            v$ = idetxt(o(9).txt): IF v$ = "" THEN v$ = "0"
-            v% = VAL(v$)
-            IF v% < 8 THEN v% = 8
-            IF v% > 99 THEN v% = 99
-            idecustomfontheight = v%
-
-
-            WriteConfigSetting windowSettingsSection$, "IDE_Width", STR$(idewx)
-            WriteConfigSetting windowSettingsSection$, "IDE_Height", STR$(idewy)
-            IF idecustomfont THEN
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", "True"
-            ELSE
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", "False"
-            END IF
-            IF IDE_UseFont8 THEN
-                WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", "True"
-            ELSE
-                WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", "False"
-            END IF
-            IF IDE_AutoPosition THEN
-                WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", "True"
-            ELSE
-                WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", "False"
-            END IF
-            WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
-            WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
-
-            IDENormalCursorStart = tmpNormalCursorStart
-            WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorStart", str2$(IDENormalCursorStart)
-
-            IDENormalCursorEnd = tmpNormalCursorEnd
-            WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorEnd", str2$(IDENormalCursorEnd)
             EXIT FUNCTION
         END IF
-
-        'end of custom controls
+        '-------- end of custom input response --------
 
         mousedown = 0
         mouseup = 0
