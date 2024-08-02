@@ -29,9 +29,9 @@ FUNCTION ide (ignore)
                             END IF
                             IdeInfo = CHR$(0) + status.progress$
                         'ELSE
-                        '    STATIC p AS _BYTE, lastUpdateDots AS SINGLE
-                        '    IF TIMER - lastUpdateDots > .5 THEN
-                        '        lastUpdateDots = TIMER
+                        '    STATIC p AS _BYTE, lastUpdateDots#
+                        '    IF TIMER(0.001) - lastUpdateDots# > 0.5# THEN
+                        '        lastUpdateDots# = TIMER(0.001)
                         '        p = p + 1
                         '        temp$ = STRING$(3, 250) '"..."
                         '        IF p > 3 THEN p = 1
@@ -898,7 +898,7 @@ FUNCTION ide2 (ignore)
         idedeltxt 'removes temporary strings (typically created by guibox commands) by setting an index to 0
         IF idesubwindow <> 0 THEN _RESIZE OFF ELSE _RESIZE ON
 
-        IF (_RESIZE OR ForceResize) AND timeElapsedSince(QB64_uptime!) > 1.5 THEN
+        IF (_RESIZE OR ForceResize) AND timeElapsedSince#(QB64_uptime#) > 1.5# THEN
             IF idesubwindow <> 0 THEN 'If there's a subwindow up, don't resize as it screws all sorts of things up.
                 ForceResize = -1
             ELSE
@@ -3028,7 +3028,7 @@ FUNCTION ide2 (ignore)
         IF mCLICK THEN
             IF mX > 1 + maxLineNumberLength AND mX < idewx AND mY > 2 AND mY < (idewy - 5) THEN 'inside text box
                 IF old.mX = mX AND old.mY = mY THEN
-                    IF timeElapsedSince(last.TBclick#) > .5 THEN GOTO regularTextBox_click
+                    IF timeElapsedSince#(last.TBclick#) > 0.5# THEN GOTO regularTextBox_click
                     'Double-click on text box: attempt to select "word" clicked
                     idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                     idecy = mY - 2 + idesy - 1
@@ -3118,7 +3118,7 @@ FUNCTION ide2 (ignore)
                     END IF
                 ELSE
                     regularTextBox_click:
-                    old.mX = mX: old.mY = mY: last.TBclick# = TIMER
+                    old.mX = mX: old.mY = mY: last.TBclick# = TIMER(0.001)
                     ideselect = 1
                     idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                     idecy = mY - 2 + idesy - 1
@@ -6682,7 +6682,7 @@ SUB DebugMode
         SUB set_foreground_window (BYVAL hwnd AS _OFFSET)
     END DECLARE
 
-    timeout = 10
+    timeout# = 10
     _KEYCLEAR
 
     SCREEN , , 3, 0
@@ -6817,13 +6817,13 @@ SUB DebugMode
     END IF
 
     'wait for client to connect
-    start! = TIMER
+    start# = TIMER(0.001)
     DO
         debugClient& = _OPENCONNECTION(host&)
         IF debugClient& THEN EXIT DO
 
         k& = _KEYHIT
-        IF k& = 27 OR TIMER - start! > timeout THEN
+        IF k& = 27 OR TIMER(0.001) - start# > timeout# THEN
             dummy = DarkenFGBG(0)
             clearStatusWindow 0
             setStatusMessage 1, temp$ + "Debug session aborted.", 7
@@ -6842,10 +6842,10 @@ SUB DebugMode
     clearStatusWindow 1
     setStatusMessage 1, "Handshaking...", 15
 
-    start! = TIMER
+    start# = TIMER(0.001)
     DO
         k& = _KEYHIT
-        IF k& = 27 OR TIMER - start! > timeout THEN
+        IF k& = 27 OR TIMER(0.001) - start# > timeout# THEN
             dummy = DarkenFGBG(0)
             clearStatusWindow 0
             setStatusMessage 1, temp$ + "Debug session aborted.", 7
@@ -7048,13 +7048,13 @@ SUB DebugMode
                    (mY >= vWatchPanel.y AND mY <= vWatchPanel.y + vWatchPanel.h) THEN
                     vWatchPanel.draggingPanel = -1
                     vWatchPanel.clicked = 1
-                    IF timeElapsedSince(lastPanelClick!) < .3 THEN
+                    IF timeElapsedSince#(lastPanelClick#) < 0.3# THEN
                         'Double-click on watch list
                         vWatchPanel.draggingPanel = 0
                         mouseDown = 0
                         GOTO requestVariableWatch
                     END IF
-                    lastPanelClick! = TIMER
+                    lastPanelClick# = TIMER(0.001)
                 ELSE
                     vWatchPanel.draggingPanel = 0
                     vWatchPanel.resizingPanel = 0
@@ -7782,7 +7782,7 @@ SUB DebugMode
                     clearStatusWindow 0
                     setStatusMessage 1, "Requesting call stack...", 7
 
-                    start! = TIMER
+                    start# = TIMER(0.001)
                     callStackLength = -1
                     DO
                         GOSUB GetCommand
@@ -7791,7 +7791,7 @@ SUB DebugMode
                             IF callStackLength = 0 THEN EXIT DO
                         END IF
                         _LIMIT 100
-                    LOOP UNTIL cmd$ = "call stack" OR TIMER - start! > timeout
+                    LOOP UNTIL cmd$ = "call stack" OR TIMER(0.001) - start# > timeout#
 
                     IF cmd$ = "call stack" THEN
                         'display call stack
@@ -8047,11 +8047,11 @@ SUB DebugMode
                 'when an error just occurred
                 callStackLength = CVL(value$)
                 IF callStackLength THEN
-                    start! = TIMER
+                    start# = TIMER(0.001)
                     DO
                         GOSUB GetCommand
                         _LIMIT 100
-                    LOOP UNTIL cmd$ = "call stack" OR TIMER - start! > timeout
+                    LOOP UNTIL cmd$ = "call stack" OR TIMER(0.001) - start# > timeout#
 
                     IF cmd$ = "call stack" THEN
                         'store call stack
@@ -9199,7 +9199,7 @@ FUNCTION idevariablewatchbox$(currentScope$, filter$, selectVar, returnAction)
         END IF
 
         IF mCLICK AND focus = 2 THEN 'list click
-            IF timeElapsedSince(lastClick!) < .3 AND clickedItem = o(varListBox).sel THEN
+            IF timeElapsedSince#(lastClick#) < 0.3# AND clickedItem = o(varListBox).sel THEN
                 IF doubleClickThreshold > 0 AND mX >= p.x + doubleClickThreshold AND IdeDebugMode > 0 THEN
                     focus = 5
                     GOTO sendValue
@@ -9220,7 +9220,7 @@ FUNCTION idevariablewatchbox$(currentScope$, filter$, selectVar, returnAction)
                     END IF
                 END IF
             END IF
-            lastClick! = TIMER
+            lastClick# = TIMER(0.001)
             IF o(varListBox).sel > 0 THEN clickedItem = o(varListBox).sel
             _CONTINUE
         END IF
@@ -9913,7 +9913,7 @@ FUNCTION ideelementwatchbox$(currentPath$, elementIndexes$, level, singleElement
         END IF
 
         IF mCLICK AND focus = 1 THEN 'list click
-            IF timeElapsedSince(lastClick!) < .3 AND clickedItem = o(varListBox).sel THEN
+            IF timeElapsedSince#(lastClick#) < 0.3# AND clickedItem = o(varListBox).sel THEN
                 IF singleElementSelection = 0 THEN
                     GOTO toggleWatch
                 ELSE
@@ -9925,7 +9925,7 @@ FUNCTION ideelementwatchbox$(currentPath$, elementIndexes$, level, singleElement
                     END IF
                 END IF
             END IF
-            lastClick! = TIMER
+            lastClick# = TIMER(0.001)
             IF o(varListBox).sel > 0 THEN clickedItem = o(varListBox).sel
             _CONTINUE
         END IF
@@ -10323,10 +10323,10 @@ FUNCTION idecallstackbox
         '-------- end of generic input response --------
 
         IF mCLICK AND focus = 1 THEN 'list click
-            IF timeElapsedSince(lastClick!) < .3 AND clickedItem = o(1).sel THEN
+            IF timeElapsedSince#(lastClick#) < 0.3# AND clickedItem = o(1).sel THEN
                 GOTO setIDEcy
             END IF
-            lastClick! = TIMER
+            lastClick# = TIMER(0.001)
             IF o(1).sel > 0 THEN clickedItem = o(1).sel
             _CONTINUE
         END IF
@@ -12462,9 +12462,10 @@ SUB idesetline (i, text$)
 
 END SUB
 
-FUNCTION timeElapsedSince! (startTime!)
-    IF startTime! > TIMER THEN startTime! = startTime! - 86400
-    timeElapsedSince! = TIMER - startTime!
+FUNCTION timeElapsedSince# (timerValue#)
+    now# = TIMER(0.001)
+    IF timerValue# > now# THEN timerValue# = timerValue# - 86400
+    timeElapsedSince# = now# - timerValue#
 END FUNCTION
 
 SUB ideshowtext
@@ -12492,9 +12493,8 @@ SUB ideshowtext
     DIM ideshowtext_comment AS _BYTE, ideshowtext_quote AS _BYTE
 
     STATIC prevListOfCustomWords$, manualList AS _BYTE
-    DIM startTime AS SINGLE
 
-    startTime = TIMER
+    startTime# = TIMER(0.001)
 
     IF NOT DisableSyntaxHighlighter THEN
         IF idefocusline <> 0 THEN
@@ -12789,7 +12789,7 @@ SUB ideshowtext
             prevBG% = _BACKGROUNDCOLOR
 
             FOR m = 1 TO LEN(a2$) 'print to the screen while checking required color changes
-                IF timeElapsedSince(startTime) > 1 THEN
+                IF timeElapsedSince#(startTime#) > 1.0# THEN
                     result = idemessagebox("Syntax Highlighter Disabled", "Syntax Highlighter has been disabled to avoid slowing down the IDE.\nYou can reenable the Highlighter in the 'Options' menu.", "")
                     DisableSyntaxHighlighter = -1
                     WriteConfigSetting generalSettingsSection$, "DisableSyntaxHighlighter", "True"
@@ -14068,7 +14068,6 @@ FUNCTION idewarningbox
 END FUNCTION
 
 SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, mousedown, mouseup, mx, my, info, mw)
-    STATIC LastKeybInput AS SINGLE
     DIM sep AS STRING * 1
     sep = CHR$(0)
 
@@ -14246,6 +14245,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
     END IF '1
 
     IF t = 2 THEN 'list box
+        STATIC LastKeybInput#, firstClickTime#
         idetxt(o.stx) = ""
 
         'Populate ListBoxITEMS:
@@ -14300,8 +14300,8 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 IF mx > x1 AND mx < x2 AND my > y1 AND my < y2 THEN
                     y = my - y1 - 1
                     y = y + o.v1
-                    IF o.sel = y THEN info = 1
-                    o.sel = y
+                    IF o.sel = y _ANDALSO timeElapsedSince#(firstClickTime#) < 0.3# THEN info = 1
+                    o.sel = y: firstClickTime# = TIMER(0.001)
                     IF o.sel > o.num THEN o.sel = -o.num
                 END IF
             END IF
@@ -14402,8 +14402,8 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
 
             IF LEN(kk$) = 1 THEN
                 ResetKeybTimer = 0
-                IF timeElapsedSince(LastKeybInput) > 1 THEN fileDlgSearchTerm$ = "": ResetKeybTimer = -1
-                LastKeybInput = TIMER
+                IF timeElapsedSince#(LastKeybInput#) > 1.0# THEN fileDlgSearchTerm$ = "": ResetKeybTimer = -1
+                LastKeybInput# = TIMER(0.001)
                 k = ASC(UCASE$(kk$))
                 IF k < 32 OR k > 126 THEN
                     GOTO selected 'Search is not performed if kk$ isn't a printable character
@@ -19270,12 +19270,12 @@ FUNCTION ideASCIIbox$(relaunch)
                 IF mCLICK THEN
                     Selected = i
                     focus = 1
-                    IF timeElapsedSince(lastClick!) <= .3 and lastClickOn = i THEN
+                    IF timeElapsedSince#(lastClick#) <= 0.3# and lastClickOn = i THEN
                         'double click on chart
                         relaunch = -1
                         GOTO insertChar
                     END IF
-                    lastClick! = TIMER
+                    lastClick# = TIMER(0.001)
                     lastClickOn = i
                 END IF
             ELSE
@@ -20343,7 +20343,7 @@ END FUNCTION
 
 '    DIM theClient AS LONG, l AS LONG
 '    DIM prevUrl$, prevUrl2$, url2$, x AS LONG
-'    DIM e$, url3$, x$, t!, a2$, a$, i AS LONG
+'    DIM e$, url3$, x$, t#, a2$, a$, i AS LONG
 '    DIM i2 AS LONG, i3 AS LONG, d$, fh AS LONG
 
 '    IF url$ <> prevUrl$ OR url$ = "" THEN
@@ -20367,7 +20367,7 @@ END FUNCTION
 '        x$ = "GET " + url3$ + " HTTP/1.1" + e$
 '        x$ = x$ + "Host: " + url2$ + e$ + e$
 '        PUT #theClient, , x$
-'        t! = TIMER ' start time
+'        t# = TIMER(0.001) ' start time
 '    END IF
 
 '    GET #theClient, , a2$
@@ -20383,7 +20383,7 @@ END FUNCTION
 '        theClient = 0
 '        EXIT FUNCTION
 '    END IF ' i
-'    IF TIMER > t! + timelimit THEN CLOSE theClient: theClient = 0: Download = MKI$(3): prevUrl$ = "": EXIT FUNCTION
+'    IF TIMER(0.001) > t# + timelimit# THEN CLOSE theClient: theClient = 0: Download = MKI$(3): prevUrl$ = "": EXIT FUNCTION
 '    Download = MKI$(0) 'still working
 'END FUNCTION
 
