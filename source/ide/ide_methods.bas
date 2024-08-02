@@ -5276,7 +5276,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#Undo/History..." THEN
                 PCOPY 2, 0
-                idelimitsbox
+                retval = ideLimitsBox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -15224,7 +15224,7 @@ FUNCTION ideLayoutBox
     LOOP
 END FUNCTION
 
-SUB idelimitsbox
+FUNCTION ideLimitsBox
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -15234,81 +15234,89 @@ SUB idelimitsbox
     DIM p AS idedbptype
     DIM o(1 TO 100) AS idedbotype
     DIM sep AS STRING * 1
-    DIM maxBackupBox AS LONG
-    DIM maxRecentBox AS LONG
-    DIM maxSearchBox AS LONG
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
-    '-------- init --------
+    '-------- init dialog box & objects --------
     i = 0
-    y = 0
+    idepar p, 46, 11, "Backup/Undo & History Limits"
 
-    a2$ = str2(idebackupsize)
-    i = i + 1
-    maxBackupBox = i
-    PrevFocus = 1
-    o(i).typ = 1
-    o(i).x = 2
-    y = y + 2: o(i).y = y: y = y + 1
-    o(i).nam = idenewtxt("Max. #Undo Limit (10-2000MB)")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
-    IF o(i).v1 > 0 THEN
-        o(i).issel = -1
-        o(i).sx1 = 0
-    END IF
+    i = i + 1: mbsBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 2
+    o(i).nam = idenewtxt("Max. #Undo Limit (10-2000MB)"): a2$ = str2(idebackupsize)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: mbsSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 39: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: mbsSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 42: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    a2$ = str2(ideMaxRecent)
-    i = i + 1
-    maxRecentBox = i
-    o(i).typ = 1
-    o(i).x = 4
-    y = y + 2: o(i).y = y: y = y + 1
-    o(i).nam = idenewtxt("Max. #Recent Files (5-200)")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
+    i = i + 1: mrfBox = i
+    o(i).typ = 1 'text box
+    o(i).x = 4: o(i).y = 5
+    o(i).nam = idenewtxt("Max. #Recent Files (5-200)"): a2$ = str2(ideMaxRecent)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: mrfSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 39: o(i).y = 5
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: mrfSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 42: o(i).y = 5
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    a2$ = str2(ideMaxSearch)
-    i = i + 1
-    maxSearchBox = i
-    o(i).typ = 1
-    o(i).x = 2
-    y = y + 2: o(i).y = y: y = y + 1
-    o(i).nam = idenewtxt("Max. #Search Strings (5-200)")
-    o(i).txt = idenewtxt(a2$)
-    o(i).v1 = LEN(a2$)
+    i = i + 1: mssBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 8
+    o(i).nam = idenewtxt("Max. #Search Strings (5-200)"): a2$ = str2(ideMaxSearch)
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: mssSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 39: o(i).y = 8
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
+    i = i + 1: mssSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 42: o(i).y = 8
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
-    y = y + 1 ' Blank line
-
-    i = i + 1
-    buttonsid = i
-    o(i).typ = 3
-    y = y + 1: o(i).y = y
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-
-    idepar p, 46, y, "Backup/Undo & History Limits"
-    '-------- end of init --------
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
+    o(i).y = 11
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
-    DO 'main loop
+    '-------- custom variables init --------
+    '-------- end of custom variables init --------
 
+    DO 'main loop
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
         f = 1: cx = 0: cy = 0
         FOR i = 1 TO 100
             IF o(i).typ THEN
-
                 'prepare object
                 o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
                 idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
             END IF
         NEXT i
         lastfocus = f - 1
@@ -15347,7 +15355,7 @@ SUB idelimitsbox
         '-------- end of read input --------
 
         '-------- generic input response --------
-        info = 0
+        info = 0: invdata = 0
         IF K$ = "" THEN K$ = CHR$(255)
         IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
         IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
@@ -15355,57 +15363,107 @@ SUB idelimitsbox
         IF focus > lastfocus THEN focus = 1
         f = 1
         FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
+            IF o(i).typ THEN
                 focusoffset = focus - f
                 ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
             END IF
         NEXT
         '-------- end of generic input response --------
 
-        'specific post controls
-        IF focus <> PrevFocus THEN
-            'Always start with TextBox values selected upon getting focus
-            PrevFocus = focus
-            IF o(focus).typ = 1 THEN
-                o(focus).v1 = LEN(idetxt(o(focus).txt))
-                IF o(focus).v1 > 0 THEN o(focus).issel = -1
-                o(focus).sx1 = 0
-            END IF
+        '-------- custom input response --------
+        'backupsize spinners
+        IF focus = mbsSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mbsBox).txt)) + 5)
+            IF VAL(a$) > 2000 THEN a$ = "2000"
+            idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
-
-        IF K$ = CHR$(27) OR (focus = buttonsid + 1 AND info <> 0) THEN EXIT SUB 'cancel
-        IF K$ = CHR$(13) OR (focus = buttonsid AND info <> 0) THEN 'ok
-            'save changes
-            tVal& = VAL(idetxt(o(maxBackupBox).txt))
-            IF tVal& < 10 THEN tVal& = 10
-            IF tVal& > 2000 THEN tVal& = 2000
-            IF tVal& < idebackupsize THEN
-                OPEN UndoFile$ FOR OUTPUT AS #151: CLOSE #151
-                ideundobase = 0: ideundopos = 0
-            END IF
-            idebackupsize = tVal&
-            WriteConfigSetting generalSettingsSection$, "BackupSize", STR$(idebackupsize)
-
-            ideMaxRecent = VAL(idetxt(o(maxRecentBox).txt))
-            IF ideMaxRecent < 5 THEN ideMaxRecent = 5
-            IF ideMaxRecent > 200 THEN ideMaxRecent = 200
-            WriteConfigSetting generalSettingsSection$, "MaxRecentFiles", STR$(ideMaxRecent)
-
-            ideMaxSearch = VAL(idetxt(o(maxSearchBox).txt))
-            IF ideMaxSearch < 5 THEN ideMaxSearch = 5
-            IF ideMaxSearch > 200 THEN ideMaxSearch = 200
-            WriteConfigSetting generalSettingsSection$, "MaxSearchStrings", STR$(ideMaxSearch)
-
-            EXIT SUB
+        IF focus = mbsSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mbsBox).txt)) - 5)
+            IF VAL(a$) < 10 THEN a$ = "10"
+            idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
+        'backupsize text box (valid data check)
+        a$ = idetxt(o(mbsBox).txt): o(mbsBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 10 AND VAL(a$) <= 2000) THEN o(mbsBox).inv = 0
+        IF o(mbsBox).inv THEN invdata = 1 'block confirmation, as long as invalid
 
-        'end of custom controls
+        'recent files spinners
+        IF focus = mrfSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mrfBox).txt)) + 1)
+            IF VAL(a$) > 200 THEN a$ = "200"
+            idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
+        END IF
+        IF focus = mrfSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mrfBox).txt)) - 1)
+            IF VAL(a$) < 5 THEN a$ = "5"
+            idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
+        END IF
+        'recent files text box (valid data check)
+        a$ = idetxt(o(mrfBox).txt): o(mrfBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 5 AND VAL(a$) <= 200) THEN o(mrfBox).inv = 0
+        IF o(mrfBox).inv THEN invdata = 1 'block confirmation, as long as invalid
+
+        'search strings spinners
+        IF focus = mssSymUp AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mssBox).txt)) + 1)
+            IF VAL(a$) > 200 THEN a$ = "200"
+            idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
+        END IF
+        IF focus = mssSymDn AND info <> 0 THEN
+            a$ = str2$(VAL(idetxt(o(mssBox).txt)) - 1)
+            IF VAL(a$) < 5 THEN a$ = "5"
+            idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
+        END IF
+        'search strings text box (valid data check)
+        a$ = idetxt(o(mssBox).txt): o(mssBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 5 AND VAL(a$) <= 200) THEN o(mssBox).inv = 0
+        IF o(mssBox).inv THEN invdata = 1 'block confirmation, as long as invalid
+
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
+            END IF
+
+            optChg% = 0 'any options changed
+
+            'adjust runtime variables
+            v% = VAL(idetxt(o(mbsBox).txt))
+            IF idebackupsize <> v% THEN
+                IF idebackupsize > v% THEN
+                    _WRITEFILE UndoFile$, ""
+                    ideundobase = 0: ideundopos = 0
+                END IF
+                idebackupsize = v%: optChg% = -1
+            END IF
+
+            v% = VAL(idetxt(o(mrfBox).txt))
+            IF ideMaxRecent <> v% THEN ideMaxRecent = v%: optChg% = -1
+
+            v% = VAL(idetxt(o(mssBox).txt))
+            IF ideMaxSearch <> v% THEN ideMaxSearch = v%: optChg% = -1
+
+            IF optChg% THEN
+                'save changes
+                WriteConfigSetting generalSettingsSection$, "BackupSize", str2$(idebackupsize)
+
+                WriteConfigSetting generalSettingsSection$, "MaxRecentFiles", str2$(ideMaxRecent)
+
+                WriteConfigSetting generalSettingsSection$, "MaxSearchStrings", str2$(ideMaxSearch)
+
+                ideLimitsBox = 1
+            END IF
+            EXIT FUNCTION
+        END IF
+        '-------- end of custom input response --------
 
         mousedown = 0
         mouseup = 0
     LOOP
-END SUB
+END FUNCTION
 
 SUB idegotobox
     IF idegotobox_LastLineNum > 0 THEN a2$ = str2$(idegotobox_LastLineNum) ELSE a2$ = ""
