@@ -12031,6 +12031,10 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
 
     '-------- init --------
     path$ = idepath$
+    IF mode = 3 THEN 'font select mode
+        path$ = _DIR$("Fonts"): AllFiles = 1
+        path$ = LEFT$(path$, LEN(path$) - 1)
+    END IF
     filelist$ = idezfilelist$(path$, AllFiles, "")
     pathlist$ = idezpathlist$(path$)
 
@@ -12039,13 +12043,15 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
         idepar p, 70, idewy + idesubwindow - 7, "Open"
     ELSEIF mode = 2 THEN
         idepar p, 70, idewy + idesubwindow - 7, "Save As"
+    ELSEIF mode = 3 THEN
+        idepar p, 70, idewy + idesubwindow - 7, "Choose a custom font"
     END IF
     i = i + 1
     PrevFocus = 1
     o(i).typ = 1
     o(i).y = 2
     o(i).nam = idenewtxt("File #Name")
-    IF mode = 2 THEN
+    IF mode > 1 THEN
         o(i).txt = idenewtxt(programname$)
         o(i).issel = -1
         o(i).sx1 = 0
@@ -12088,6 +12094,9 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
     '-------- end of generic init --------
 
     IF mode = 1 AND LEN(IdeOpenFile) > 0 THEN f$ = IdeOpenFile: GOTO DirectLoad
+    IF mode = 3 AND (INSTR(programname$, "?") > 0 OR INSTR(programname$, "*") > 0) THEN
+        f$ = programname$: GOTO wildcardsearch
+    END IF
 
     DO 'main loop
 
@@ -12238,6 +12247,9 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
                     o(2).sel = -1
                     o(3).sel = 1
                     IF info = 1 THEN o(3).sel = -1
+                    IF mode = 3 AND (INSTR(programname$, "?") > 0 OR INSTR(programname$, "*") > 0) THEN
+                        f$ = programname$: GOTO wildcardsearch
+                    END IF
                     GOTO ideopenloop
                 END IF
             END IF
@@ -12275,10 +12287,14 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
                 o(2).sel = -1
                 idetxt(o(3).txt) = idezpathlist$(path$)
                 o(3).sel = -1
+                IF mode = 3 AND (INSTR(programname$, "?") > 0 OR INSTR(programname$, "*") > 0) THEN
+                    f$ = programname$: GOTO wildcardsearch
+                END IF
                 GOTO ideopenloop
             END IF
 
             'wildcards search
+            wildcardsearch:
             IF INSTR(f$, "?") > 0 OR INSTR(f$, "*") > 0 THEN
                 IF INSTR(f$, "/") > 0 OR INSTR(f$, "\") > 0 THEN
                     'path + wildcards
@@ -12397,6 +12413,9 @@ FUNCTION idefiledialog$(programname$, mode AS _BYTE)
                 idepath$ = path$
                 AddToHistory "RECENT", idepath$ + idepathsep$ + ideprogname$
                 IdeSaveBookmarks idepath$ + idepathsep$ + ideprogname$
+                EXIT FUNCTION
+            ELSEIF mode = 3 THEN
+                idefiledialog$ = path$ + idepathsep$ + f$
                 EXIT FUNCTION
             END IF
         END IF
