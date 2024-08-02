@@ -1028,7 +1028,7 @@ id.subfunc = 2
 id.callname = "sub__writefile"
 id.args = 2
 id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
-id.hr_syntax = "_WRITEFILE(fileSpec$, contents$)"
+id.hr_syntax = "_WRITEFILE fileSpec$, contents$"
 regid
 
 clearid
