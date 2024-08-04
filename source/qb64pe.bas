@@ -12393,8 +12393,8 @@ WriteBuffers ""
 
 IF FormatMode THEN
     'Move temp file to final location
-    errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
-    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: GOTO errmes
+    errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$)
+    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$: GOTO errmes
     GOTO No_C_Compile
 END IF
 
