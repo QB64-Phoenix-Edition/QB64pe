@@ -150,14 +150,14 @@ FUNCTION ReadWriteLongSettingValue& (section AS STRING, setting AS STRING, defau
 END FUNCTION
 
 FUNCTION str2$ (v AS LONG)
-    str2$ = _TRIM$(STR$(v))
+    str2$ = LTRIM$(STR$(v))
 END FUNCTION
 
 FUNCTION str2u64$ (v~&&)
-    str2u64$ = LTRIM$(RTRIM$(STR$(v~&&)))
+    str2u64$ = LTRIM$(STR$(v~&&))
 END FUNCTION
 
 FUNCTION str2i64$ (v&&)
-    str2i64$ = LTRIM$(RTRIM$(STR$(v&&)))
+    str2i64$ = LTRIM$(STR$(v&&))
 END FUNCTION
 

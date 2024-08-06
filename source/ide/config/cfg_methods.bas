@@ -13,6 +13,22 @@ SUB CopyFromOther
                 oqbv% = 1 'pre v3.14.0
                 oqbi$ = oqbi$ + pathsep$ + "internal" + pathsep$
                 nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
+                IF nul& = 0 THEN 'we need to convert old to new color scheme order
+                    oqbd$ = _READFILE$(ConfigFile$)
+                    sid% = INSTR(oqbd$, "SchemeID=")
+                    IF sid% > 0 THEN
+                        id% = VAL(MID$(oqbd$, sid% + 9))
+                        IF id% > 10 THEN
+                            'custom user schemes move by 4, as of 4 new built-in schemes in v3.14.0
+                            oqbd$ = LEFT$(oqbd$, sid% + 8) + str2$(id% + 4) + MID$(oqbd$, sid% + 9 + LEN(str2$(id%)))
+                        ELSE
+                            'built-in schemes are reordered according to the lookup string
+                            ncso$ = "12349567de" 'old id = pick position for new id
+                            oqbd$ = LEFT$(oqbd$, sid% + 8) + str2$(VAL("&H" + MID$(ncso$, id%, 1))) + MID$(oqbd$, sid% + 9 + LEN(str2$(id%)))
+                        END IF
+                    END IF
+                    _WRITEFILE ConfigFile$, oqbd$
+                END IF
                 oqbi$ = oqbi$ + "temp" + pathsep$
             END IF
             nul& = CopyFile&(oqbi$ + "debug.ini", DebugFile$)
@@ -40,7 +56,7 @@ SUB CopyFromOther
             IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning" ) = 1 GOTO cfoAgain
         END IF
     END IF
-    QB64_uptime! = TIMER 'reinit to avoid startup resize events going wild
+    QB64_uptime# = TIMER(0.001) 'reinit to avoid startup resize events going wild
 END SUB
 
 '===== Routine to read/set initial config values ==============================
@@ -395,7 +411,7 @@ SUB ReadInitialConfig
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CustomFont", value$)
     idecustomfont = VAL(value$)
     IF UCASE$(value$) = "TRUE" OR idecustomfont <> 0 THEN
-        idecustomfont = 1
+        idecustomfont = -1
     ELSE
         WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", "False"
         idecustomfont = 0
@@ -403,7 +419,7 @@ SUB ReadInitialConfig
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_UseFont8", value$)
     IF UCASE$(value$) = "TRUE" THEN
-        IDE_UseFont8 = 1
+        IDE_UseFont8 = -1
     ELSE
         WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", "False"
         IDE_UseFont8 = 0
@@ -412,13 +428,21 @@ SUB ReadInitialConfig
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CustomFont$", value$)
     idecustomfontfile$ = value$
     IF result = 0 OR idecustomfontfile$ = "" THEN
-        idecustomfontfile$ = "C:\Windows\Fonts\lucon.ttf"
+        IF os$ = "LNX" THEN
+            idecustomfontfile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
+            IF MacOSX THEN idecustomfontfile$ = _DIR$("fonts") + "Courier New.ttf"
+        ELSE
+            idecustomfontfile$ = _DIR$("fonts") + "lucon.ttf"
+        END IF
         WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CustomFontSize", value$)
     idecustomfontheight = VAL(value$)
-    IF idecustomfontheight < 8 OR idecustomfontheight > 100 THEN idecustomfontheight = 21: WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", "21"
+    IF idecustomfontheight < 8 OR idecustomfontheight > 100 THEN
+        idecustomfontheight = 19
+        WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
+    END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CodePage", value$)
     idecpindex = VAL(value$)

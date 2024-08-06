@@ -72,9 +72,9 @@ IF INSTR(_OS$, "MAC") THEN UserDefine(1, 3) = "-1": UserDefine(1, 4) = "-1" ELSE
 IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELSE UserDefine(1, 5) = "0": UserDefine(1, 6) = "-1"
 UserDefine(1, 7) = Version$
 
-DIM SHARED QB64_uptime!
+DIM SHARED QB64_uptime#
 
-QB64_uptime! = TIMER
+QB64_uptime# = TIMER(0.001)
 
 NoInternalFolder:
 IF _DIREXISTS("internal") = 0 THEN
@@ -12393,8 +12393,8 @@ WriteBuffers ""
 
 IF FormatMode THEN
     'Move temp file to final location
-    errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$ + extension$)
-    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$ + extension$: GOTO errmes
+    errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$)
+    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$: GOTO errmes
     GOTO No_C_Compile
 END IF
 
