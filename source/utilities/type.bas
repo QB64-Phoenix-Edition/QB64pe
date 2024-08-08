@@ -630,11 +630,11 @@ END SUB
 SUB initialise_udt_varstrings (n$, udt, buf, base_offset)
     IF NOT udtxvariable(udt) THEN EXIT SUB
     element = udtxnext(udt)
-    offset = 0
+    offset = base_offset
     DO WHILE element
         IF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLine buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(base_offset + offset) + ") = qbs_new(0,0);"
+                WriteBufLine buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ") = qbs_new(0,0);"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
             initialise_udt_varstrings n$, udtetype(element) AND 511, buf, offset
@@ -647,14 +647,14 @@ END SUB
 SUB free_udt_varstrings (n$, udt, buf, base_offset)
     IF NOT udtxvariable(udt) THEN EXIT SUB
     element = udtxnext(udt)
-    offset = 0
+    offset = base_offset
     DO WHILE element
         IF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLine buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(base_offset + offset) + ")));"
+                WriteBufLine buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ")));"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
-            initialise_udt_varstrings n$, udtetype(element) AND 511, buf, offset
+            free_udt_varstrings n$, udtetype(element) AND 511, buf, offset
         END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
@@ -664,19 +664,19 @@ END SUB
 SUB clear_udt_with_varstrings (n$, udt, buf, base_offset)
     IF NOT udtxvariable(udt) THEN EXIT SUB
     element = udtxnext(udt)
-    offset = 0
+    offset = base_offset
     DO WHILE element
         IF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLine buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(base_offset + offset) + "))->len=0;"
+                WriteBufLine buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + "))->len=0;"
             ELSE
-                WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(base_offset + offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+                WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
             END IF
         ELSE
             IF udtetype(element) AND ISUDT THEN
-                clear_udt_with_varstrings n$, udtetype(element) AND 511, buf, base_offset + offset
+                clear_udt_with_varstrings n$, udtetype(element) AND 511, buf, offset
             ELSE
-                WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(base_offset + offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+                WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
             END IF
         END IF
         offset = offset + udtesize(element) \ 8
