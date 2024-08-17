@@ -45,6 +45,9 @@ misrepresented as being the original software.
 Thanks for contributions, bug corrections & thorough testing to:
 - Don Heyse http://ldglite.sf.net for bug corrections & thorough testing!
 - Paul Rouget
+
+This software has been modified by the QB64PE project and has diverged from
+the tinyfiledialogs distribution source.
 */
 
 
@@ -5436,16 +5439,19 @@ char * tinyfd_saveFileDialog(
                 if ( aNumOfFilterPatterns > 0 )
                 {
                         strcat(lDialogString , " '" ) ;
-						strcat( lDialogString , aFilterPatterns[0] ) ;
-                        for ( i = 1 ; i < aNumOfFilterPatterns ; i ++ )
+                        if ( aSingleFilterDescription && strlen(aSingleFilterDescription) )
                         {
-							strcat( lDialogString , " " ) ;
-							concatAndEscapeSingleQuote( lDialogString , aFilterPatterns[i] ) ;
+                            concatAndEscapeSingleQuote( lDialogString , aSingleFilterDescription ) ;
+                            strcat( lDialogString , " (" ) ;
+                        }
+                        for ( i = 0 ; i < aNumOfFilterPatterns ; i ++ )
+                        {
+                            strcat( lDialogString , " " ) ;
+                            concatAndEscapeSingleQuote( lDialogString , aFilterPatterns[i] ) ;
                         }
                         if ( aSingleFilterDescription && strlen(aSingleFilterDescription) )
                         {
-                                strcat( lDialogString , " | " ) ;
-                                concatAndEscapeSingleQuote( lDialogString , aSingleFilterDescription ) ;
+                                strcat( lDialogString , ")" ) ;
                         }
                         strcat( lDialogString , "'" ) ;
                 }
@@ -5831,16 +5837,19 @@ char * tinyfd_openFileDialog(
                 if ( aNumOfFilterPatterns > 0 )
                 {
                         strcat(lDialogString , " '" ) ;
-						strcat( lDialogString , aFilterPatterns[0] ) ;
-                        for ( i = 1 ; i < aNumOfFilterPatterns ; i ++ )
+                        if ( aSingleFilterDescription && strlen(aSingleFilterDescription) )
                         {
-							strcat( lDialogString , " " ) ;
-							concatAndEscapeSingleQuote( lDialogString , aFilterPatterns[i] ) ;
+                            concatAndEscapeSingleQuote( lDialogString , aSingleFilterDescription ) ;
+                            strcat( lDialogString , " (" ) ;
+                        }
+                        for ( i = 0 ; i < aNumOfFilterPatterns ; i ++ )
+                        {
+                            strcat( lDialogString , " " ) ;
+                            concatAndEscapeSingleQuote( lDialogString , aFilterPatterns[i] ) ;
                         }
                         if ( aSingleFilterDescription && strlen(aSingleFilterDescription) )
                         {
-                                strcat( lDialogString , " | " ) ;
-                                concatAndEscapeSingleQuote( lDialogString , aSingleFilterDescription ) ;
+                                strcat( lDialogString , ")" ) ;
                         }
                         strcat( lDialogString , "'" ) ;
                 }
