@@ -2728,6 +2728,7 @@ DIM SHARED ErrTxtBuf: ErrTxtBuf = OpenBuffer%("O", tmpdir$ + "mainerr.txt")
 'i. check the value of error_line
 'ii. jump to the appropriate label
 errorlabels = 0
+WriteBufLine ErrTxtBuf, "if (!error_handler_history) error_handler_history = qbs_new(0, 0);"
 WriteBufLine ErrTxtBuf, "if (error_occurred){ error_occurred=0;"
 
 DIM SHARED ChainTxtBuf: ChainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain.txt")
@@ -9104,7 +9105,16 @@ DO
             lbl$ = getelement$(ca$, 4)
             IF lbl$ = "0" THEN
                 WriteBufLine MainTxtBuf, "error_goto_line=0;"
+                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_new_txt_len(" + MKI$(&H2222) + ", 0));"
+                WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + "0"
+                layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+                GOTO finishedline
+            ELSEIF UCASE$(lbl$) = "_LASTHANDLER" OR (UCASE$(lbl$) = "LASTHANDLER" AND qb64prefix_set = 1) THEN
+                WriteBufLine MainTxtBuf, "error_goto_line = qbr(func_val(error_handler_history));"
+                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
+                WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
+                IF ASC(lbl$, 1) = 95 THEN l$ = l$ + sp + SCase$("_LastHandler") ELSE l$ = l$ + sp + SCase$("LastHandler")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
             END IF
@@ -9142,6 +9152,8 @@ DO
             l$ = l$ + sp + tlayout$
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             errorlabels = errorlabels + 1
+            WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1)), error_handler_history));"
+            WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
             WriteBufLine MainTxtBuf, "error_goto_line=" + str2(errorlabels) + ";"
             WriteBufLine ErrTxtBuf, "if (error_goto_line==" + str2(errorlabels) + "){error_handling=1; goto LABEL_" + lbl$ + ";}"
             GOTO finishedline

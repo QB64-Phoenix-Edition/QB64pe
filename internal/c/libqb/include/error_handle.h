@@ -15,6 +15,7 @@ extern uint32_t new_error;
 extern uint32_t error_err;
 extern uint32_t error_occurred;
 extern uint32_t error_goto_line;
+extern qbs *error_handler_history;
 extern uint32_t error_handling;
 extern uint32_t error_retry;
 
