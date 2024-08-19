@@ -495,11 +495,11 @@ SUB ReadInitialConfig
 
     result = ReadConfigSetting(windowSettingsSection$, "IDE_Width", value$)
     idewx = VAL(value$)
-    IF idewx < 80 OR idewx > 1000 THEN idewx = 120: WriteConfigSetting windowSettingsSection$, "IDE_Width", "120"
+    IF idewx < 80 OR idewx > 999 THEN idewx = 120: WriteConfigSetting windowSettingsSection$, "IDE_Width", "120"
 
     result = ReadConfigSetting(windowSettingsSection$, "IDE_Height", value$)
     idewy = VAL(value$)
-    IF idewy < 25 OR idewy > 1000 THEN idewy = 40: WriteConfigSetting windowSettingsSection$, "IDE_Height", "40"
+    IF idewy < 25 OR idewy > 999 THEN idewy = 40: WriteConfigSetting windowSettingsSection$, "IDE_Height", "40"
 
     '--- Color settings (default = Super Dark Blue scheme, as of v1.5)
     IDETextColor = _RGB32(216, 216, 216)
@@ -579,6 +579,10 @@ SUB ReadInitialConfig
     StripDebugSymbols = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "StripDebugSymbols", -1)
 
     MaxParallelProcesses = ReadWriteLongSettingValue&(compilerSettingsSection$, "MaxParallelProcesses", 3)
+    IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN
+        MaxParallelProcesses = 3
+        WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", "3"
+    END IF
 
     ExtraCppFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
     ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")

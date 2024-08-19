@@ -15652,7 +15652,7 @@ FUNCTION ideCompilerSettingsBox
         'max. processes spinners
         IF focus = mppSymUp AND info <> 0 THEN
             a$ = str2$(VAL(idetxt(o(mppBox).txt)) + 1)
-            IF VAL(a$) > 8 THEN a$ = "8"
+            IF VAL(a$) > 128 THEN a$ = "128"
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         IF focus = mppSymDn AND info <> 0 THEN
@@ -15662,7 +15662,7 @@ FUNCTION ideCompilerSettingsBox
         END IF
         'max. processes text box (valid data check)
         a$ = idetxt(o(mppBox).txt): o(mppBox).inv = 1
-        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 1 AND VAL(a$) <= 8) THEN o(mppBox).inv = 0
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 1 AND VAL(a$) <= 128) THEN o(mppBox).inv = 0
         IF o(mppBox).inv THEN invdata = 1 'block confirmation, as long as invalid
 
         'ok & cancel buttons
