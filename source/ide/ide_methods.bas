@@ -2867,7 +2867,16 @@ FUNCTION ide2 (ignore)
                             IF x THEN
                                 n$ = RTRIM$(LEFT$(a$, x - 1))
                                 args$ = RIGHT$(a$, LEN(a$) - x + 1)
-                                x = INSTR(args$, ")"): IF x THEN args$ = LEFT$(args$, x)
+                                x2 = 0
+                                FOR x = 1 TO LEN(args$)
+                                    IF MID$(args$, x, 1) = "(" AND x2 >= 0 THEN
+                                        x2 = x2 + 1
+                                    ELSEIF MID$(args$, x, 1) = ")" AND x2 > 0 THEN
+                                        x2 = x2 - 1
+                                        IF x2 = 0 THEN EXIT FOR
+                                    END IF
+                                NEXT
+                                args$ = LEFT$(args$, x)
                             ELSE
                                 n$ = a$
                                 args$ = ""
