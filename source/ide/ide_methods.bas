@@ -2867,7 +2867,16 @@ FUNCTION ide2 (ignore)
                             IF x THEN
                                 n$ = RTRIM$(LEFT$(a$, x - 1))
                                 args$ = RIGHT$(a$, LEN(a$) - x + 1)
-                                x = INSTR(args$, ")"): IF x THEN args$ = LEFT$(args$, x)
+                                x2 = 0
+                                FOR x = 1 TO LEN(args$)
+                                    IF MID$(args$, x, 1) = "(" AND x2 >= 0 THEN
+                                        x2 = x2 + 1
+                                    ELSEIF MID$(args$, x, 1) = ")" AND x2 > 0 THEN
+                                        x2 = x2 - 1
+                                        IF x2 = 0 THEN EXIT FOR
+                                    END IF
+                                NEXT
+                                args$ = LEFT$(args$, x)
                             ELSE
                                 n$ = a$
                                 args$ = ""
@@ -15652,7 +15661,7 @@ FUNCTION ideCompilerSettingsBox
         'max. processes spinners
         IF focus = mppSymUp AND info <> 0 THEN
             a$ = str2$(VAL(idetxt(o(mppBox).txt)) + 1)
-            IF VAL(a$) > 8 THEN a$ = "8"
+            IF VAL(a$) > 128 THEN a$ = "128"
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         IF focus = mppSymDn AND info <> 0 THEN
@@ -15662,7 +15671,7 @@ FUNCTION ideCompilerSettingsBox
         END IF
         'max. processes text box (valid data check)
         a$ = idetxt(o(mppBox).txt): o(mppBox).inv = 1
-        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 1 AND VAL(a$) <= 8) THEN o(mppBox).inv = 0
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 1 AND VAL(a$) <= 128) THEN o(mppBox).inv = 0
         IF o(mppBox).inv THEN invdata = 1 'block confirmation, as long as invalid
 
         'ok & cancel buttons

@@ -16,6 +16,7 @@ uint32_t error_occurred;
 uint32_t error_retry;
 uint32_t error_err; //=0;
 uint32_t error_goto_line;
+qbs *error_handler_history;
 uint32_t error_handling;
 
 static double error_erl; //=0;

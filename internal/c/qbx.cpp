@@ -673,6 +673,9 @@ void sub_clear(int32 ignore, int32 ignore2, int32 stack, int32 passed) {
     next_return_point = 0;
     // reset error goto location to 'unhandled'
     error_goto_line = 0;
+    uint32 qbs_tmp_base = qbs_tmp_list_nexti;
+    qbs_set(error_handler_history, qbs_new_txt_len("", 0));
+    qbs_cleanup(qbs_tmp_base, 0);
     // invalidate RESUME
     error_handling = 0;
     return;
