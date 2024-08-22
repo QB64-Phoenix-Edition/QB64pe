@@ -9099,22 +9099,32 @@ DO
         END IF
     END IF
 
-    IF n = 4 THEN
+    IF n = 4 OR n = 5 THEN
         IF getelements(a$, 1, 3) = "ON" + sp + "ERROR" + sp + "GOTO" THEN
             l$ = SCase$("On" + sp + "Error" + sp + "GoTo")
             lbl$ = getelement$(ca$, 4)
-            IF lbl$ = "0" THEN
+            hhc$ = UCASE$(lbl$) '(H)andler(H)istory(C)ommand
+            IF n = 5 THEN
+                IF hhc$ = "_LASTHANDLER" OR (hhc$ = "LASTHANDLER" AND qb64prefix_set = 1) THEN a$ = "No label allowed after _LASTHANDLER": GOTO errmes
+                IF hhc$ <> "_NEWHANDLER" AND (hhc$ <> "NEWHANDLER" AND qb64prefix_set = 1) THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
+                lbl$ = getelement$(ca$, 5)
+                IF lbl$ = "0" THEN a$ = "Zero not allowed after _NEWHANDLER": GOTO errmes
+            END IF
+            IF lbl$ = "0" THEN 'independent from hhc$ (i.e. always clear history)
                 WriteBufLine MainTxtBuf, "error_goto_line=0;"
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_new_txt_len(" + MKI$(&H2222) + ", 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + "0"
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
-            ELSEIF UCASE$(lbl$) = "_LASTHANDLER" OR (UCASE$(lbl$) = "LASTHANDLER" AND qb64prefix_set = 1) THEN
+            ELSEIF hhc$ = "_NEWHANDLER" OR (hhc$ = "NEWHANDLER" AND qb64prefix_set = 1) THEN
+                IF n = 4 THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
+                IF ASC(hhc$, 1) = 95 THEN l$ = l$ + sp + SCase$("_NewHandler") ELSE l$ = l$ + sp + SCase$("NewHandler")
+            ELSEIF hhc$ = "_LASTHANDLER" OR (hhc$ = "LASTHANDLER" AND qb64prefix_set = 1) THEN
                 WriteBufLine MainTxtBuf, "error_goto_line = qbr(func_val(error_handler_history));"
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
-                IF ASC(lbl$, 1) = 95 THEN l$ = l$ + sp + SCase$("_LastHandler") ELSE l$ = l$ + sp + SCase$("LastHandler")
+                IF ASC(hhc$, 1) = 95 THEN l$ = l$ + sp + SCase$("_LastHandler") ELSE l$ = l$ + sp + SCase$("LastHandler")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
             END IF
@@ -9148,12 +9158,13 @@ DO
                 Labels(r).Scope_Restriction = subfuncn
             END IF 'x
 
-
             l$ = l$ + sp + tlayout$
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             errorlabels = errorlabels + 1
-            WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1)), error_handler_history));"
-            WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
+            IF hhc$ = "_NEWHANDLER" OR (hhc$ = "NEWHANDLER" AND qb64prefix_set = 1) THEN
+                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1)), error_handler_history));"
+                WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
+            END IF
             WriteBufLine MainTxtBuf, "error_goto_line=" + str2(errorlabels) + ";"
             WriteBufLine ErrTxtBuf, "if (error_goto_line==" + str2(errorlabels) + "){error_handling=1; goto LABEL_" + lbl$ + ";}"
             GOTO finishedline
