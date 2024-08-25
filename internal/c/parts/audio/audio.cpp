@@ -1175,7 +1175,7 @@ struct SoundHandle {
     ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
     ma_decoder_config maDecoderConfig;          // miniaudio decoder configuration
     ma_decoder *maDecoder;                      // this is used for files that are loaded directly from memory
-    intptr_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
+    uint64_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
     ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
     ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
     RawStream *rawStream;                       // Raw sample frame queue
@@ -1620,7 +1620,8 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     // Load the file from file or memory based on the requirements string
     if (fromMemory) {
         // Configure a miniaudio decoder to load the sound from memory
-        audioEngine.soundHandles[handle]->bufferKey = (intptr_t)qbsFileName->chr;                                         // make a unique key and save it
+        audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
+            std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));                        // make a unique key and save it
         audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
         audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, handle);                                     // create the ma_sound

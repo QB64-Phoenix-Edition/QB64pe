@@ -24,7 +24,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 #include <stack>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -68,7 +70,7 @@ class BufferMap {
         size_t refCount;
     };
 
-    std::unordered_map<intptr_t, Buffer> buffers;
+    std::unordered_map<uint64_t, Buffer> buffers;
 
   public:
     // Delete assignment operators
@@ -88,7 +90,7 @@ class BufferMap {
     /// @param size The size of the data
     /// @param key The unique key that should be used
     /// @return True if successful
-    bool AddBuffer(const void *data, size_t size, intptr_t key) {
+    bool AddBuffer(const void *data, size_t size, uint64_t key) {
         if (data && size && key && buffers.find(key) == buffers.end()) {
             Buffer buf = {};
 
@@ -111,7 +113,7 @@ class BufferMap {
 
     /// @brief Increments the buffer reference count
     /// @param key The unique key for the buffer
-    void AddRef(intptr_t key) {
+    void AddRef(uint64_t key) {
         const auto it = buffers.find(key);
         if (it != buffers.end()) {
             auto &buf = it->second;
@@ -124,7 +126,7 @@ class BufferMap {
 
     /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero
     /// @param key The unique key for the buffer
-    void Release(intptr_t key) {
+    void Release(uint64_t key) {
         const auto it = buffers.find(key);
         if (it != buffers.end()) {
             auto &buf = it->second;
@@ -144,7 +146,7 @@ class BufferMap {
     /// @brief Gets the raw pointer and size of the buffer with the given key
     /// @param key The unique key for the buffer
     /// @return An std::pair of the buffer raw pointer and size
-    std::pair<const void *, size_t> GetBuffer(intptr_t key) const {
+    std::pair<const void *, size_t> GetBuffer(uint64_t key) const {
         const auto it = buffers.find(key);
         if (it == buffers.end()) {
             AUDIO_DEBUG_PRINT("Buffer not found");
