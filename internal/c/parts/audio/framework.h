@@ -24,7 +24,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 #include <stack>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -58,101 +60,101 @@ extern InstrumentBankManager g_InstrumentBankManager;
 void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
 void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
 
-/// @brief A class that can manage a list of buffers using unique keys
+/// @brief A class that can manage a list of buffers using unique keys.
 class BufferMap {
   private:
-    /// @brief A buffer that is made up of a raw pointer, size and reference count
+    /// @brief A buffer that is made up of std::vector of bytes and reference count.
     struct Buffer {
-        void *data;
-        size_t size;
+        std::vector<uint8_t> data;
         size_t refCount;
+
+        Buffer(const void *src, size_t size) : data(size), refCount(1) { std::memcpy(data.data(), src, size); }
     };
 
-    std::unordered_map<intptr_t, Buffer> buffers;
+    std::unordered_map<uint64_t, Buffer> buffers;
 
   public:
     // Delete assignment operators
     BufferMap &operator=(const BufferMap &) = delete;
     BufferMap &operator=(BufferMap &&) = delete;
 
-    /// @brief This will simply free all buffers that were allocated
-    ~BufferMap() {
-        for (auto &it : buffers) {
-            free(it.second.data);
-            AUDIO_DEBUG_PRINT("Buffer freed of size %llu", it.second.size);
-        }
-    }
+    /// @brief Adds a buffer to the map using a unique key only if it was not added before. If the buffer is already present then it increases the reference
+    /// count.
+    /// @param data The raw data pointer. The data is copied.
+    /// @param size The size of the data.
+    /// @param key The unique key that should be used.
+    /// @return True if successful.
+    bool AddBuffer(const void *data, size_t size, uint64_t key) {
+        if (data && size) {
+            auto it = buffers.find(key);
 
-    /// @brief Adds a buffer to the map using a unique key only if it was not added before
-    /// @param data The raw data pointer. The data is copied
-    /// @param size The size of the data
-    /// @param key The unique key that should be used
-    /// @return True if successful
-    bool AddBuffer(const void *data, size_t size, intptr_t key) {
-        if (data && size && key && buffers.find(key) == buffers.end()) {
-            Buffer buf = {};
+            if (it == buffers.end()) {
+                buffers.emplace(std::make_pair(key, Buffer(data, size)));
 
-            buf.data = malloc(size);
-            if (!buf.data)
-                return false;
+                AUDIO_DEBUG_PRINT("Added buffer of size %llu to map", size);
+            } else {
+                it->second.refCount++;
 
-            buf.size = size;
-            buf.refCount = 1;
-            memcpy(buf.data, data, size);
-            buffers.emplace(key, std::move(buf));
+                AUDIO_DEBUG_PRINT("Increased reference count to %llu", it->second.refCount);
+            }
 
-            AUDIO_DEBUG_PRINT("Added buffer of size %llu to map", size);
             return true;
         }
 
-        AUDIO_DEBUG_PRINT("Failed to add buffer of size %llu", size);
+        AUDIO_DEBUG_PRINT("Invalid buffer or size %p, %llu", data, size);
+
         return false;
     }
 
-    /// @brief Increments the buffer reference count
-    /// @param key The unique key for the buffer
-    void AddRef(intptr_t key) {
-        const auto it = buffers.find(key);
+    /// @brief Increments the buffer reference count.
+    /// @param key The unique key for the buffer.
+    void AddRef(uint64_t key) {
+        auto it = buffers.find(key);
+
         if (it != buffers.end()) {
-            auto &buf = it->second;
-            buf.refCount += 1;
-            AUDIO_DEBUG_PRINT("Increased reference count to %llu", buf.refCount);
+            it->second.refCount++;
+
+            AUDIO_DEBUG_PRINT("Increased reference count to %llu", it->second.refCount);
         } else {
             AUDIO_DEBUG_PRINT("Buffer not found");
         }
     }
 
-    /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero
-    /// @param key The unique key for the buffer
-    void Release(intptr_t key) {
-        const auto it = buffers.find(key);
-        if (it != buffers.end()) {
-            auto &buf = it->second;
-            buf.refCount -= 1;
-            AUDIO_DEBUG_PRINT("Decreased reference count to %llu", buf.refCount);
+    /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero.
+    /// @param key The unique key for the buffer.
+    void Release(uint64_t key) {
+        auto it = buffers.find(key);
 
-            if (buf.refCount < 1) {
-                free(buf.data);
-                AUDIO_DEBUG_PRINT("Buffer freed of size %llu", buf.size);
-                buffers.erase(key);
+        if (it != buffers.end()) {
+            it->second.refCount--;
+
+            AUDIO_DEBUG_PRINT("Decreased reference count to %llu", it->second.refCount);
+
+            if (it->second.refCount == 0) {
+                AUDIO_DEBUG_PRINT("Erasing buffer of size %llu", it->second.data.size());
+
+                buffers.erase(it);
             }
         } else {
             AUDIO_DEBUG_PRINT("Buffer not found");
         }
     }
 
-    /// @brief Gets the raw pointer and size of the buffer with the given key
-    /// @param key The unique key for the buffer
-    /// @return An std::pair of the buffer raw pointer and size
-    std::pair<const void *, size_t> GetBuffer(intptr_t key) const {
-        const auto it = buffers.find(key);
-        if (it == buffers.end()) {
-            AUDIO_DEBUG_PRINT("Buffer not found");
-            return {nullptr, 0};
+    /// @brief Gets the raw pointer and size of the buffer with the given key.
+    /// @param key The unique key for the buffer.
+    /// @return An std::pair of the buffer raw pointer and size.
+    std::pair<const void *, size_t> GetBuffer(uint64_t key) const {
+        auto it = buffers.find(key);
+
+        if (it != buffers.end()) {
+            AUDIO_DEBUG_PRINT("Returning buffer of size %llu", it->second.data.size());
+
+            return {it->second.data.data(), it->second.data.size()};
         }
-        const auto &buf = it->second;
-        AUDIO_DEBUG_PRINT("Returning buffer of size %llu", buf.size);
-        return {buf.data, buf.size};
+
+        AUDIO_DEBUG_PRINT("Buffer not found");
+
+        return {nullptr, 0};
     }
 };
 
