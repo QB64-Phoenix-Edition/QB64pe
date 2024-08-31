@@ -35,6 +35,8 @@ void InstrumentBankManager::SetPath(const char *path) {
             fileName = path;
         }
 #endif
+    } else {
+        SetDefaults();
     }
 }
 
@@ -48,6 +50,8 @@ void InstrumentBankManager::SetData(const uint8_t *data, size_t size, Type type)
             this->type = Type::TinySoundFont; // primesynth cannot load soundfonts from memory
         else
             this->type = type;
+    } else {
+        SetDefaults();
     }
 }
 
@@ -326,5 +330,5 @@ void InstrumentBankManager::SetDefaults() {
     uncompress(&data[0], &size_mz, defaultBank, sizeof(defaultBank));
     fileName.clear();
     location = Location::Memory;
-    this->type = Type::Opal;
+    type = Type::Opal;
 }

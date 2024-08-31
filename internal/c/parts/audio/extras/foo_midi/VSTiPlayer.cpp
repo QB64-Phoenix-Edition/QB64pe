@@ -419,7 +419,6 @@ void VSTiPlayer::Render(audio_sample *sampleData, uint32_t sampleCount) {
                     left += _Samples[i * _ChannelCount + j]; // even channels go to the left
             }
 
-            // Average the samples for each channel
             sampleData[i << 1] = left;        // left channel
             sampleData[(i << 1) + 1] = right; // right channel
         }

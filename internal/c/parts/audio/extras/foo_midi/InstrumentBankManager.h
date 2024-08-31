@@ -20,8 +20,6 @@ class InstrumentBankManager {
 
     InstrumentBankManager() { SetDefaults(); };
 
-    void SetDefaults();
-
     auto GetType() { return type; }
 
     auto GetLocation() { return location; }
@@ -44,4 +42,6 @@ class InstrumentBankManager {
     Location location;
     std::string fileName;
     std::vector<uint8_t> data;
+
+    void SetDefaults();
 };

@@ -2346,8 +2346,8 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
     enum struct SoundBankFormat { WOPL = 0, OP2, TMB, OPL, SF2, SF3, SFO, AD, UNKNOWN };
     static const char *SoundBankName[] = {"wopl", "op2", "tmb", "opl", "sf2", "sf3", "sfo", "ad", "unknown"};
 
-    if (!audioEngine.isInitialized || !qbsFileName->len) {
-        AUDIO_DEBUG_PRINT("Invalid parameters passed");
+    if (!audioEngine.isInitialized) {
+        AUDIO_DEBUG_PRINT("Audio engine is not initialized");
         return;
     }
 
@@ -2376,7 +2376,7 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
         }
     }
 
-    if (fromMemory) {
+    if (fromMemory && qbsFileName->len) {
         // Only bother setting up the format if we are loading from memory
         switch (format) {
         case SoundBankFormat::SF2:
@@ -2404,10 +2404,14 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
             return;
         }
     } else {
-        std::string fileName(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len);
+        if (qbsFileName->len) {
+            std::string fileName(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len);
 
-        if (FS_FileExists(filepath_fix_directory(fileName)))
-            g_InstrumentBankManager.SetPath(fileName.c_str());
+            if (FS_FileExists(filepath_fix_directory(fileName)))
+                g_InstrumentBankManager.SetPath(fileName.c_str());
+        } else {
+            g_InstrumentBankManager.SetPath(nullptr); // load the default sound bank
+        }
     }
 }
 

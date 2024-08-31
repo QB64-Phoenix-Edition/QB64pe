@@ -335,7 +335,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
 
     default:
         AUDIO_DEBUG_PRINT("Unknown synth type. Falling back to OpalPlayer");
-        g_InstrumentBankManager.SetDefaults();
+        g_InstrumentBankManager.SetPath(nullptr);
         [[fallthrough]];
 
     case InstrumentBankManager::Type::Opal:
