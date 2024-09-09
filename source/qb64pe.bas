@@ -2326,7 +2326,9 @@ DO
                                     IF LEN(e$) = 0 THEN a$ = "Expected ALIAS name-in-library": GOTO errmes
                                     FOR x = 1 TO LEN(e$)
                                         a = ASC(e$, x)
-                                        IF alphanumeric(a) = 0 AND a <> ASC_FULLSTOP AND a <> ASC_COLON THEN a$ = "Expected ALIAS name-in-library": GOTO errmes
+                                        IF _NEGATE alphanumeric(a) _ANDALSO a <> ASC_LEFTBRACKET _ANDALSO a <> ASC_RIGHTBRACKET _ANDALSO a <> ASC_MINUS _ANDALSO a <> ASC_FULLSTOP _ANDALSO a <> ASC_COLON _ANDALSO a <> ASC_LESSTHAN _ANDALSO a <> ASC_GREATERTHAN _ANDALSO a <> ASC_LEFTSQUAREBRACKET _ANDALSO a <> ASC_RIGHTSQUAREBRACKET THEN
+                                            a$ = "Expected ALIAS name-in-library": GOTO errmes
+                                        END IF
                                     NEXT
                                     aliasname$ = e$
                                     'remove ALIAS section from line
