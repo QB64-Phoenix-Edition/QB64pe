@@ -20668,21 +20668,23 @@ SUB ExportCodeAs (docFormat$)
     IF INSTR(_OS$, "[LINUX]") = 0 THEN cEol$ = CHR$(13) + cEol$
     '------------------------------
     PCOPY 3, 2: SCREEN , , 3, 0
-    sTxt$ = "" '             '=> source code text
-    FOR i& = 1 TO iden
-        sTxt$ = sTxt$ + idegetline(i&) + cEol$
-        perc$ = str2$(INT(30 / iden * i&))
-        IdeInfo = CHR$(0) + STRING$(3 - LEN(perc$), 32) + perc$ + "% exported..."
-        UpdateIdeInfo
-    NEXT i&
-    WHILE RIGHT$(sTxt$, LEN(cEol$)) = cEol$ 'normalize line feeds at EOF
-        sTxt$ = LEFT$(sTxt$, LEN(sTxt$) - LEN(cEol$))
-    WEND
+    sTxt$ = getSelectedText$(-1) '=> source code text (current selection)
+    IF sTxt$ = "" THEN
+        FOR i& = 1 TO iden '     '=> get full source, if no selection was made
+            sTxt$ = sTxt$ + idegetline(i&) + cEol$
+            perc$ = str2$(INT(30 / iden * i&))
+            IdeInfo = CHR$(0) + STRING$(3 - LEN(perc$), 32) + perc$ + "% exported..."
+            UpdateIdeInfo
+        NEXT i&
+        WHILE RIGHT$(sTxt$, LEN(cEol$)) = cEol$ 'normalize line feeds at EOF
+            sTxt$ = LEFT$(sTxt$, LEN(sTxt$) - LEN(cEol$))
+        WEND
+    END IF
     IF sTxt$ = "" THEN sTxt$ = sTxt$ + cEol$: ELSE sTxt$ = sTxt$ + cEol$ + cEol$
-    sLen& = LEN(sTxt$) '    '=> source code length
-    sPos& = 1 '             '=> source code read position
-    eTxt$ = SPACE$(1000000) '=> export text buffer
-    ePos& = 1 '             '=> export text buffer write position
+    sLen& = LEN(sTxt$) '         '=> source code length
+    sPos& = 1 '                  '=> source code read position
+    eTxt$ = SPACE$(1000000) '    '=> export text buffer
+    ePos& = 1 '                  '=> export text buffer write position
     '----------
     post% = 0 ''=> GOSUB argument = 0/-1 (close pre current / post current char)
     what$ = "" '=> GOSUB argument = command descriptor
