@@ -18516,16 +18516,16 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
                 '2 = left&right margin / 7 = Open '' / 3 = dots (char 250)
                 IF cut% > idewx - 2 - 7 THEN cut% = idewx - 2 - 7 - 3: f$ = f$ + STRING$(3, 250)
                 menuDesc$(m, i) = f$ + RIGHT$(IdeRecentLink(r%, 2), cut%) + "'"
+            ELSE
+                menuDesc$(m, i) = "Displays a complete list of recently loaded files"
             END IF
             i = i + 1
         END IF
     NEXT r%
     DisposeBuf bh%
-    IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> eaa$ + "#Export As...  " + CHR$(16) THEN
+    IF LEFT$(menuDesc$(m, i - 1), 4) = "Open" THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
-    ELSE
-        menuDesc$(m, i - 1) = "Displays a complete list of recently loaded files"
     END IF
 
     menu$(m, i) = "-": i = i + 1
