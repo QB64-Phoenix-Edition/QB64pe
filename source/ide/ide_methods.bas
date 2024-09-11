@@ -468,13 +468,13 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0: FileMenuExportAsSubMenuID = m
         menu$(m, i) = "FileMenuExportAsSubMenu": i = i + 1
         menu$(m, i) = "#Hypertext document (.htm)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program into a Hypertext document"
+        menuDesc$(m, i - 1) = "Export code into a Hypertext document"
         menu$(m, i) = "#Rich Text document (.rtf)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program into a Rich Text document"
+        menuDesc$(m, i - 1) = "Export code into a Rich Text document"
         menu$(m, i) = "#Forum codebox (to Clipboard)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program as Forum codebox ready to paste in"
+        menuDesc$(m, i - 1) = "Export code as Forum codebox ready to paste in"
         menu$(m, i) = "#Wiki example (to Clipboard)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program as Wiki example ready to paste in"
+        menuDesc$(m, i - 1) = "Export code as Wiki example ready to paste in"
         menusize(m) = i - 1
 
         IF os$ = "WIN" THEN
@@ -18496,7 +18496,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     menu$(m, i) = "-": i = i + 1
     FileMenuExportAs = i: IF eaa% THEN eaa$ = "": ELSE eaa$ = "~"
     menu$(m, i) = eaa$ + "#Export As...  " + CHR$(16): i = i + 1
-    menuDesc$(m, i - 1) = "Export current program into various formats"
+    menuDesc$(m, i - 1) = "Export current program (or active selection) into various formats"
 
     bh% = FileToBuf%(RecentFile$)
     maxFiles% = UBOUND(IdeRecentLink, 1): maxLength% = 35
