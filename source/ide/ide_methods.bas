@@ -21023,11 +21023,15 @@ SUB ExportCodeAs (docFormat$)
     IF me% THEN page$ = UCASE$(me$): ELSE page$ = UCASE$(kw$) 'Wiki pages are all caps
     IF op% THEN
         SELECT CASE page$
-            CASE "ACCESS", "LOCK", "SHARED", "READ", "WRITE": page$ = "OPEN#File_ACCESS_and_LOCK_Permissions"
-            CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes"
-            CASE ELSE: page$ = "OPEN"
+            CASE "OPEN", "AS": page$ = "OPEN": RETURN
+            CASE "LEN"
+                la$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " "))
+                IF LEFT$(la$, 1) <> "(" THEN page$ = "OPEN": RETURN
+            CASE "ACCESS", "LOCK", "SHARED", "READ", "WRITE": page$ = "OPEN#File_ACCESS_and_LOCK_Permissions": RETURN
+            CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes": RETURN
         END SELECT
-    ELSEIF (fu% < 0) AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
+    END IF
+    IF (fu% < 0) AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
         page$ = page$ + " (function)"
     ELSEIF bo% AND INSTR(bo$, "@" + page$ + "@") > 0 THEN 'np% check omitted (legacy words only)
         page$ = page$ + " (boolean)"
