@@ -468,13 +468,13 @@ FUNCTION ide2 (ignore)
         m = m + 1: i = 0: FileMenuExportAsSubMenuID = m
         menu$(m, i) = "FileMenuExportAsSubMenu": i = i + 1
         menu$(m, i) = "#Hypertext document (.htm)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program into a Hypertext document"
+        menuDesc$(m, i - 1) = "Export code into a Hypertext document"
         menu$(m, i) = "#Rich Text document (.rtf)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program into a Rich Text document"
+        menuDesc$(m, i - 1) = "Export code into a Rich Text document"
         menu$(m, i) = "#Forum codebox (to Clipboard)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program as Forum codebox ready to paste in"
+        menuDesc$(m, i - 1) = "Export code as Forum codebox ready to paste in"
         menu$(m, i) = "#Wiki example (to Clipboard)": i = i + 1
-        menuDesc$(m, i - 1) = "Export program as Wiki example ready to paste in"
+        menuDesc$(m, i - 1) = "Export code as Wiki example ready to paste in"
         menusize(m) = i - 1
 
         IF os$ = "WIN" THEN
@@ -18496,7 +18496,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     menu$(m, i) = "-": i = i + 1
     FileMenuExportAs = i: IF eaa% THEN eaa$ = "": ELSE eaa$ = "~"
     menu$(m, i) = eaa$ + "#Export As...  " + CHR$(16): i = i + 1
-    menuDesc$(m, i - 1) = "Export current program into various formats"
+    menuDesc$(m, i - 1) = "Export current program (or active selection) into various formats"
 
     bh% = FileToBuf%(RecentFile$)
     maxFiles% = UBOUND(IdeRecentLink, 1): maxLength% = 35
@@ -18516,16 +18516,16 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
                 '2 = left&right margin / 7 = Open '' / 3 = dots (char 250)
                 IF cut% > idewx - 2 - 7 THEN cut% = idewx - 2 - 7 - 3: f$ = f$ + STRING$(3, 250)
                 menuDesc$(m, i) = f$ + RIGHT$(IdeRecentLink(r%, 2), cut%) + "'"
+            ELSE
+                menuDesc$(m, i) = "Displays a complete list of recently loaded files"
             END IF
             i = i + 1
         END IF
     NEXT r%
     DisposeBuf bh%
-    IF menu$(m, i - 1) <> "#Recent..." AND menu$(m, i - 1) <> eaa$ + "#Export As...  " + CHR$(16) THEN
+    IF LEFT$(menuDesc$(m, i - 1), 4) = "Open" THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
-    ELSE
-        menuDesc$(m, i - 1) = "Displays a complete list of recently loaded files"
     END IF
 
     menu$(m, i) = "-": i = i + 1
@@ -21023,11 +21023,15 @@ SUB ExportCodeAs (docFormat$)
     IF me% THEN page$ = UCASE$(me$): ELSE page$ = UCASE$(kw$) 'Wiki pages are all caps
     IF op% THEN
         SELECT CASE page$
-            CASE "ACCESS", "LOCK", "SHARED", "READ", "WRITE": page$ = "OPEN#File_ACCESS_and_LOCK_Permissions"
-            CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes"
-            CASE ELSE: page$ = "OPEN"
+            CASE "OPEN", "AS": page$ = "OPEN": RETURN
+            CASE "LEN"
+                la$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " "))
+                IF LEFT$(la$, 1) <> "(" THEN page$ = "OPEN": RETURN
+            CASE "ACCESS", "LOCK", "SHARED", "READ", "WRITE": page$ = "OPEN#File_ACCESS_and_LOCK_Permissions": RETURN
+            CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes": RETURN
         END SELECT
-    ELSEIF (fu% < 0) AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
+    END IF
+    IF (fu% < 0) AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
         page$ = page$ + " (function)"
     ELSEIF bo% AND INSTR(bo$, "@" + page$ + "@") > 0 THEN 'np% check omitted (legacy words only)
         page$ = page$ + " (boolean)"
