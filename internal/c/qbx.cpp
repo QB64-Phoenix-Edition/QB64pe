@@ -71,6 +71,10 @@ extern int32 vWatchHandle();
     #endif
 */
 
+#ifdef QB64_WINDOWS
+extern int _CRT_glob = -1; // enable globbing on llvm-mingw by default
+#endif
+
 extern int32 sub_gl_called;
 
 #ifdef QB64_GUI
