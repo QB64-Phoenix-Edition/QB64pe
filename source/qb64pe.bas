@@ -12597,6 +12597,7 @@ IF os$ = "WIN" THEN
             IF n = 0 THEN 'attempt to locate simple function name without brackets
                 s$ = ResolveStaticFunction_Name(x)
                 fh = OpenBuffer%("I", nm_output_file$)
+                ConvBufToLnxMacEol fh
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -12605,9 +12606,9 @@ IF os$ = "WIN" THEN
                         IF OS_BITS = 32 THEN
                             ' On 32-bit Windows function names are decorated by a leading underscore
                             ' gcc's nm hides the leading underscore in the output, whereas clang's nm does not
-                            x1 = RIGHT$(a$, LEN(s$) + 1) = " " + s$ _ORELSE INSTR(a$, " " + s$ + CHR$(10)) _ORELSE INSTR(a$, " _" + s$ + CHR$(10))
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$) _ORELSE (RIGHT$(a$, LEN(s$) + 2) = " _" + s$)
                         ELSE
-                            x1 = RIGHT$(a$, LEN(s$) + 1) = " " + s$ _ORELSE INSTR(a$, " " + s$ + CHR$(10))
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$)
                         END IF
                         IF x1 THEN
                             fh2 = FREEFILE
@@ -12658,6 +12659,7 @@ IF os$ = "WIN" THEN
             IF n = 0 THEN 'a C dynamic object library?
                 s$ = ResolveStaticFunction_Name(x)
                 fh = OpenBuffer%("I", nm_output_file_dynamic$)
+                ConvBufToLnxMacEol fh
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -12666,9 +12668,9 @@ IF os$ = "WIN" THEN
                         IF OS_BITS = 32 THEN
                             ' On 32-bit Windows function names are decorated by a leading underscore
                             ' gcc's nm hides the leading underscore in the output, whereas clang's nm does not
-                            x1 = RIGHT$(a$, LEN(s$) + 1) = " " + s$ _ORELSE INSTR(a$, " " + s$ + CHR$(10)) _ORELSE INSTR(a$, " _" + s$ + CHR$(10))
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$) _ORELSE (RIGHT$(a$, LEN(s$) + 2) = " _" + s$)
                         ELSE
-                            x1 = RIGHT$(a$, LEN(s$) + 1) = " " + s$ _ORELSE INSTR(a$, " " + s$ + CHR$(10))
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$)
                         END IF
                         IF x1 THEN
                             fh2 = FREEFILE
