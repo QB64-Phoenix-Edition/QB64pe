@@ -12601,8 +12601,8 @@ IF os$ = "WIN" THEN
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
-                        x1 = INSTR(a$, s$)
-                        IF RIGHT$(a$, LEN(s$)) = s$ THEN
+                        x1 = INSTR(a$, s$ + CHR$(10)) ' LLVM MinGW nm.exe outputs LF line endings
+                        IF RIGHT$(a$, LEN(s$)) = s$ _ORELSE x1 THEN
                             fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
@@ -12655,8 +12655,8 @@ IF os$ = "WIN" THEN
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
-                        x1 = INSTR(a$, s$)
-                        IF RIGHT$(a$, LEN(s$)) = s$ THEN
+                        x1 = INSTR(a$, s$ + CHR$(10)) ' LLVM MinGW nm.exe outputs LF line endings
+                        IF RIGHT$(a$, LEN(s$)) = s$ _ORELSE x1 THEN
                             fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
