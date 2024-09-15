@@ -25,7 +25,7 @@ case "$2" in
     win)
         # Verify that the Resource information was correctly applied
         # windres returns an error if the exe has no resource section
-        windresResult=$($ROOT/internal/c/c_compiler/bin/windres.exe -i ./qb64pe.exe)
+        windresResult=$($ROOT/internal/c/c_compiler/bin/llvm-objdump -s -j .rsrc ./qb64pe.exe)
         assert_success_named "Windows Resource Section" printf "\n$windresResult\n"
         ;;
 

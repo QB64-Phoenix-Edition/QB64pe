@@ -1,10 +1,9 @@
-@rem QB64-PE MINGW setup script
+@rem QB64-PE MinGW setup script
 @rem
-@rem This NT command script downloads and extracts the latest copy of MINGW binaries from:
-@rem https://github.com/niXman/mingw-builds-binaries/releases
-@rem So, the filenames in 'URL' variable should be updated to the latest stable builds when those are available
+@rem This NT command script downloads and extracts the latest copy of LLVM MinGW binaries from:
+@rem https://github.com/mstorsjo/llvm-mingw/releases
 @rem
-@rem Specifying 32 for argument 1 on a 64-bit system will force a 32-bit MINGW setup
+@rem Specifying 32 for argument 1 on a 64-bit system will force a 32-bit MinGW setup
 @rem
 @echo off
 
@@ -16,20 +15,17 @@ if errorlevel 1 (
     goto end
 )
 
-rem Change to the correct drive letter
-%~d0
-
-rem Change to the correct path
-cd %~dp0
+rem Change to the correct drive & path
+cd /d %~dp0
 
 rem Check if the C++ compiler is there and skip downloading if it exists
 if exist "internal\c\c_compiler\bin\c++.exe" (
     echo.
-    echo Info: MINGW detected. Skipping setup.
+    echo Info: MinGW detected. Skipping setup.
     goto end
 )
 
-rem Create the c_compiler directory that should contain the MINGW binaries
+rem Create the c_compiler directory that should contain the MinGW binaries
 mkdir internal\c\c_compiler
 
 rem Check if were able to create the directory
@@ -64,7 +60,8 @@ if "%~1" == "32" set BITS=32
 echo %ARCH%-%BITS% platform selected.
 
 rem Set some critical variables before we move to the actual setup part
-rem MINGW_DIR is actually the internal directory name inside the zip / 7z file
+rem The filenames in 'URL' variable should be updated to the latest stable builds when those are available
+rem MINGW_DIR is actually the internal directory name inside the zip file
 rem It needs to be updated whenever the toolchains are updated
 if "%ARCH%" == "ARM" (
     if %BITS% == 64 (
@@ -74,39 +71,27 @@ if "%ARCH%" == "ARM" (
         set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-armv7.zip"
         set MINGW_DIR=llvm-mingw-20240619-ucrt-armv7
     )
-    set MINGW_TEMP_FILE=temp.zip
 ) else (
     if %BITS% == 64 (
-        set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev0.7z"
-        set MINGW_DIR=mingw64
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-x86_64.zip"
+        set MINGW_DIR=llvm-mingw-20240619-ucrt-x86_64
     ) else (
-        set URL="https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/i686-13.2.0-release-win32-dwarf-msvcrt-rt_v11-rev0.7z"
-        set MINGW_DIR=mingw32
-    )    
-    set MINGW_TEMP_FILE=temp.7z
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-msvcrt-i686.zip"
+        set MINGW_DIR=llvm-mingw-20240619-msvcrt-i686
+    )
 )
 
-rem Download MingW files
+rem Download LLVM-MinGW package using curl. curl is available in Windows 10 and above since build 17063
+rem https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/
+set MINGW_TEMP_FILE=temp.zip
 if exist %MINGW_TEMP_FILE% del %MINGW_TEMP_FILE%
 echo Downloading %URL%...
 curl -L %URL% -o %MINGW_TEMP_FILE%
 
-rem Extract MingW files
-if "%ARCH%" == "ARM" (
-    rem Use tar to extract the zip file on Windows on ARM. tar is available in Windows since build 17063
-    rem And this includes all ARM64 Windows versions
-    echo Extracting C++ Compiler...
-    tar -xvf %MINGW_TEMP_FILE%
-) else (
-    rem Download 7zr.exe. We'll need this to extract the MINGW archive
-    echo Downloading 7zr.exe...
-    curl -L https://www.7-zip.org/a/7zr.exe -o 7zr.exe
-
-    rem Extract the MINGW binaries
-    echo Extracting C++ Compiler...
-    7zr.exe x %MINGW_TEMP_FILE% -y
-    del 7zr.exe
-)
+rem Extract LLVM-MinGW files using tar. tar is available in Windows 10 and above since build 17063
+rem https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/
+echo Extracting C++ Compiler...
+tar -xvf %MINGW_TEMP_FILE%
 
 rem Move the binaries to internal\c\c_compiler\
 echo Moving C++ compiler...

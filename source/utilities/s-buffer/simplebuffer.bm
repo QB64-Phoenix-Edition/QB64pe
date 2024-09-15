@@ -7,11 +7,22 @@
 '| ##     ##   # |                            ._.'                   |
 '| ##     ###### |  Sources & Documents placed in the Public Domain. |
 '+---------------+---------------------------------------------------+
+'|                                                                   |
+'| === simplebuffer.bm ===                                           |
+'|                                                                   |
+'| == Simple string array based buffer system for your storage needs.|
+'|                                                                   |
+'+-------------------------------------------------------------------+
+'| Done by RhoSigma, R.Heyder, provided AS IS, use at your own risk. |
+'| Find me in the QB64 Forum or mail to support@rhosigma-cw.net for  |
+'| any questions or suggestions. Thanx for your interest in my work. |
+'+-------------------------------------------------------------------+
 
+'--- docs\CreateBuf.html
 '---------------------------------------------------------------------
 FUNCTION CreateBuf%
 '--- option _explicit requirements ---
-DIM aub&, buf&
+DIM aub&, buf&, idx%
 '--- find next free handle ---
 aub& = UBOUND(simplebuffer_array$)
 buf& = 0: CreateBuf% = SBE_NoMoreBuffers
@@ -21,24 +32,47 @@ WHILE buf& < aub&
     IF buf& >= 3473090 THEN EXIT FUNCTION '=> allow max. 32765 buffers
 WEND
 '--- expand array, if necessary ---
-IF aub& < buf& + 105 THEN REDIM _PRESERVE simplebuffer_array$(0 TO buf& + 10599) 'extend by 100 buffers
+IF aub& < buf& + 105 THEN REDIM _PRESERVE simplebuffer_array$(0 TO buf& + 10599) '=> add 100 more buffers
 '--- init buffer ---
 simplebuffer_array$(buf& + 0) = SPACE$(16384) '                        => the actual buffer (will grow as needed)
 simplebuffer_array$(buf& + 1) = MKL$(1) + MKL$(0) + "EolU" + MKL$(-1) '=> cursor position + buffer length + EOL mode + change state
+simplebuffer_array$(buf& + 2) = "BM|" + SPACE$(404) '                  => space for 100 +1 bookmarks
+simplebuffer_array$(buf& + 3) = "FP|" + SPACE$(404) '                  => space for 100 +1 found at positions
+simplebuffer_array$(buf& + 4) = "FL|" + SPACE$(404) '                  => space for 100 +1 find data lenghts
+FOR idx% = 1 TO 101
+    MID$(simplebuffer_array$(buf& + 2), idx% * 4, 4) = MKL$(&HCAFEBABE)
+    MID$(simplebuffer_array$(buf& + 3), idx% * 4, 4) = MKL$(&HCAFEBABE)
+    MID$(simplebuffer_array$(buf& + 4), idx% * 4, 4) = MKL$(&HCAFEBABE)
+    simplebuffer_array$(buf& + idx% + 4) = "" '        => space for 100 +1 find data copies (5-104/105)
+NEXT idx% '                                            => note the +1/105 is reserved for internal use
 '--- return new handle ---
 CreateBuf% = buf& \ 106
 END FUNCTION
 
+'--- docs\DisposeBuf.html
 '---------------------------------------------------------------------
 SUB DisposeBuf (handle%)
 '--- option _explicit requirements ---
-DIM buf&
-'--- erase buffer data ---
+DIM buf&, idx%, aub&, oub&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
-simplebuffer_array$(buf& + 0) = ""
-simplebuffer_array$(buf& + 1) = ""
+'--- erase buffer data ---
+FOR idx% = 0 TO 105
+    simplebuffer_array$(buf& + idx%) = ""
+NEXT idx%
+'--- shrink array, if worth 10+ buffers ---
+aub& = UBOUND(simplebuffer_array$): oub& = aub&
+buf& = aub& - 105
+WHILE buf& >= 1060
+    IF simplebuffer_array$(buf& + 1) <> "" THEN EXIT WHILE
+    buf& = buf& - 106
+WEND
+WHILE aub& - 1059 > buf& + 105: aub& = aub& - 1060: WEND
+IF aub& < oub& THEN REDIM _PRESERVE simplebuffer_array$(0 TO aub&)
 END SUB
 
+'--- docs\FileToBuf.html
 '---------------------------------------------------------------------
 FUNCTION FileToBuf% (fileSpec$)
 '--- option _explicit requirements ---
@@ -51,28 +85,38 @@ IF han% >= 0 THEN
     ff% = FREEFILE
     OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
     fl&& = LOF(ff%): ext& = fl&& MOD 16384
-    '--- load file into buffer & adjust length ---
-    simplebuffer_array$(buf& + 0) = SPACE$(fl&&)
-    GET ff%, , simplebuffer_array$(buf& + 0)
-    IF ext& > 0 THEN
-        simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(16384 - ext&)
+    '--- check file length ---
+    IF fl&& > &H40000000&& THEN
+        ERROR 7 'buffer overflow (file too big, >1GiB)
+        'If the program is continued from here regardless of the error,
+        'then the returned buffer will be empty, but ready to use.
+    ELSE
+        '--- load file into buffer & adjust length ---
+        simplebuffer_array$(buf& + 0) = SPACE$(fl&&)
+        GET ff%, , simplebuffer_array$(buf& + 0)
+        IF ext& > 0 THEN
+            simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(16384 - ext&)
+        END IF
+        '--- set cursor, buffer length & change state ---
+        MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(1)
+        MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(fl&&)
+        MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(0)
     END IF
-    '--- set cursor, buffer length & change state ---
-    MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(1)
-    MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(fl&&)
-    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(0)
     CLOSE ff%
 END IF
 '--- return new handle ---
 FileToBuf% = han%
 END FUNCTION
 
+'--- docs\BufToFile.html
 '---------------------------------------------------------------------
 SUB BufToFile (handle%, fileSpec$)
 '--- option _explicit requirements ---
 DIM buf&, ff%, dat$
-'--- write file (overwrite existing !!!) ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- write file (overwrite existing !!!) ---
 ff% = FREEFILE: dat$ = LEFT$(simplebuffer_array$(buf& + 0), GetBufLen&(handle%))
 OPEN fileSpec$ FOR OUTPUT LOCK WRITE AS ff%: CLOSE ff%
 OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
@@ -82,12 +126,65 @@ CLOSE ff%
 MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(0)
 END SUB
 
+'--- docs\CloneBuf.html
+'---------------------------------------------------------------------
+FUNCTION CloneBuf% (handle%)
+'--- option _explicit requirements ---
+DIM buf&, dhan%, dbuf&, idx%
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- create a new buffer ---
+dhan% = CreateBuf%
+dbuf& = dhan% * 106
+'--- on success, copy buffer values ---
+IF dhan% >= 0 THEN
+    FOR idx% = 0 TO 105
+        simplebuffer_array$(dbuf& + idx%) = simplebuffer_array$(buf& + idx%)
+    NEXT idx%
+END IF
+'--- return new handle ---
+CloneBuf% = dhan%
+END FUNCTION
+
+'--- docs\BufInsertFile.html
+'---------------------------------------------------------------------
+SUB BufInsertFile (handle%, fileSpec$)
+'--- option _explicit requirements ---
+DIM than%
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'--- load file into a temp buffer ---
+than% = FileToBuf%(fileSpec$)
+'--- on success, insert into buffer ---
+IF than% >= 0 THEN
+    BufInsertBuf handle%, than%
+    DisposeBuf than%
+END IF
+END SUB
+
+'--- docs\BufInsertBuf.html
+'---------------------------------------------------------------------
+SUB BufInsertBuf (handle%, fromHandle%)
+'--- option _explicit requirements ---
+DIM fbuf&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+IF NOT CheckHandle%(fromHandle%) THEN ERROR 258: STOP 'invalid fromHandle
+fbuf& = fromHandle% * 106
+'--- insert data of another buffer ---
+WriteBufRawData handle%, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle%))
+END SUB
+
+'--- docs\ReadBufLine.html
 '---------------------------------------------------------------------
 FUNCTION ReadBufLine$ (handle%)
 '--- option _explicit requirements ---
 DIM buf&, cur&, cbl&&, brc$, brl%, eol&
-'--- prepare values ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- prepare values ---
 cur& = GetBufPos&(handle%): cbl&& = GetBufLen&(handle%)
 brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
 '--- find next line break ---
@@ -98,34 +195,56 @@ ReadBufLine$ = MID$(simplebuffer_array$(buf& + 0), cur&, eol& - cur&)
 MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(eol& + brl%)
 END FUNCTION
 
+'--- docs\WriteBufLine.html
 '---------------------------------------------------------------------
 SUB WriteBufLine (handle%, text$)
 '--- option _explicit requirements ---
 DIM buf&, cur&, txl&, brc$, brl%, cbl&&, chg&, bsz&, ext&
-'--- prepare values ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- prepare values ---
 cur& = GetBufPos&(handle%): txl& = LEN(text$)
 brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
 cbl&& = GetBufLen&(handle%): chg& = txl& + brl%
-'--- adjust buffer length ---
-bsz& = LEN(simplebuffer_array$(buf& + 0)): ext& = 0
-WHILE cbl&& + chg& > bsz& + ext&: ext& = ext& + 16384: WEND
-IF ext& > 0 THEN
-    simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(ext&)
+'--- check buffer length ---
+IF cbl&& + chg& > &H40000000&& THEN
+    ERROR 7 'buffer overflow (text$ too long)
+    'If the program is continued from here regardless of the error,
+    'then the given text was not written into the buffer.
+ELSE
+    '--- adjust buffer length ---
+    bsz& = LEN(simplebuffer_array$(buf& + 0)): ext& = 0
+    WHILE cbl&& + chg& > bsz& + ext&: ext& = ext& + 16384: WEND
+    IF ext& > 0 THEN
+        simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(ext&)
+    END IF
+    '--- write into buffer ---
+    MID$(simplebuffer_array$(buf& + 0), cur&) = text$ + brc$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
+    MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + chg&)
+    MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& + chg&)
+    IF txl& > 0 THEN
+        IF (INSTR(text$, CHR$(10)) > 0) OR (INSTR(text$, CHR$(13)) > 0) THEN
+            'this buffer write could compromise the defined EOL mode
+            MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolU" 'reset to unknown
+        END IF
+    END IF
+    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+    '--- adjust bookmarks & find positions ---
+    RecalcMarks handle%, cur&, chg&
+    RecalcFinds handle%, cur&, chg&
 END IF
-'--- write into buffer ---
-MID$(simplebuffer_array$(buf& + 0), cur&) = text$ + brc$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
-MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + chg&)
-MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& + chg&)
-MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
 END SUB
 
+'--- docs\DeleteBufLine.html
 '---------------------------------------------------------------------
 SUB DeleteBufLine (handle%)
 '--- option _explicit requirements ---
-DIM buf&, cur&, cbl&&, brc$, brl%, eol&, chg&
-'--- prepare values ---
+DIM buf&, cur&, cbl&&, brc$, brl%, eol&, chg&, ext&, fsz&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- prepare values ---
 cur& = GetBufPos&(handle%): cbl&& = GetBufLen&(handle%)
 brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
 '--- find next line break ---
@@ -135,15 +254,29 @@ chg& = (eol& + brl%) - cur&
 '--- delete from buffer ---
 MID$(simplebuffer_array$(buf& + 0), cur&) = MID$(simplebuffer_array$(buf& + 0), eol& + brl%, cbl&& - (eol& + brl%) + 1)
 MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& - chg&)
-IF chg& > 0 THEN MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+IF chg& > 0 THEN
+    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+    '--- shrink buffer, if worth 1/4th+ ---
+    ext& = (((cbl&& - chg& + 1) + 16383) AND -16384) '+1 = avoid zero case
+    fsz& = LEN(simplebuffer_array$(buf& + 0)) - ext&
+    IF fsz& >= LEN(simplebuffer_array$(buf& + 0)) \ 4 THEN
+        simplebuffer_array$(buf& + 0) = LEFT$(simplebuffer_array$(buf& + 0), ext&)
+    END IF
+END IF
+'--- adjust bookmarks & find positions ---
+RecalcMarks handle%, cur&, -chg&
+RecalcFinds handle%, cur&, -chg&
 END SUB
 
+'--- docs\ReadBufRawData.html
 '---------------------------------------------------------------------
 FUNCTION ReadBufRawData$ (handle%, size&) 'size change intended
 '--- option _explicit requirements ---
 DIM buf&, cur&, eob&
-'--- prepare values ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- prepare values ---
 cur& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
 IF size& > eob& - cur& THEN size& = eob& - cur&
 '--- read from buffer ---
@@ -151,35 +284,414 @@ ReadBufRawData$ = MID$(simplebuffer_array$(buf& + 0), cur&, size&)
 MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + size&)
 END FUNCTION
 
+'--- docs\WriteBufRawData.html
 '---------------------------------------------------------------------
 SUB WriteBufRawData (handle%, rawData$)
 '--- option _explicit requirements ---
 DIM buf&, cur&, rdl&, cbl&&, bsz&, ext&
-'--- prepare values ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- prepare values ---
 cur& = GetBufPos&(handle%): rdl& = LEN(rawData$)
 cbl&& = GetBufLen&(handle%)
-'--- adjust buffer length ---
-bsz& = LEN(simplebuffer_array$(buf& + 0)): ext& = 0
-WHILE cbl&& + rdl& > bsz& + ext&: ext& = ext& + 16384: WEND
-IF ext& > 0 THEN
-    simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(ext&)
-END IF
-'--- write into buffer ---
-MID$(simplebuffer_array$(buf& + 0), cur&) = rawData$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
-MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + rdl&)
-MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& + rdl&)
-IF rdl& > 0 THEN
-    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+'--- check buffer length ---
+IF cbl&& + rdl& > &H40000000&& THEN
+    ERROR 7 'buffer overflow (rawData$ too long)
+    'If the program is continued from here regardless of the error,
+    'then the given raw data were not written into the buffer.
+ELSE
+    '--- adjust buffer length ---
+    bsz& = LEN(simplebuffer_array$(buf& + 0)): ext& = 0
+    WHILE cbl&& + rdl& > bsz& + ext&: ext& = ext& + 16384: WEND
+    IF ext& > 0 THEN
+        simplebuffer_array$(buf& + 0) = simplebuffer_array$(buf& + 0) + SPACE$(ext&)
+    END IF
+    '--- write into buffer ---
+    MID$(simplebuffer_array$(buf& + 0), cur&) = rawData$ + MID$(simplebuffer_array$(buf& + 0), cur&, cbl&& - cur& + 1)
+    MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cur& + rdl&)
+    MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& + rdl&)
+    IF rdl& > 0 THEN
+        IF (INSTR(rawData$, CHR$(10)) > 0) OR (INSTR(rawData$, CHR$(13)) > 0) THEN
+            'this buffer write could compromise the defined EOL mode
+            MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolU" 'reset to unknown
+        END IF
+        MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+    END IF
+    '--- adjust bookmarks & find positions ---
+    RecalcMarks handle%, cur&, rdl&
+    RecalcFinds handle%, cur&, rdl&
 END IF
 END SUB
 
+'--- docs\DeleteBufRawData.html
+'---------------------------------------------------------------------
+SUB DeleteBufRawData (handle%, size&) 'size change intended
+'--- option _explicit requirements ---
+DIM buf&, cur&, cbl&&, eob&, ext&, fsz&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- prepare values ---
+cur& = GetBufPos&(handle%)
+cbl&& = GetBufLen&(handle%): eob& = cbl&& + 1
+IF size& > eob& - cur& THEN size& = eob& - cur&
+'--- delete from buffer ---
+MID$(simplebuffer_array$(buf& + 0), cur&) = MID$(simplebuffer_array$(buf& + 0), cur& + size&, cbl&& - (cur& + size&) + 1)
+MID$(simplebuffer_array$(buf& + 1), 5, 4) = MKL$(cbl&& - size&)
+IF size& > 0 THEN
+    MID$(simplebuffer_array$(buf& + 1), 13, 4) = MKL$(-1)
+    '--- shrink buffer, if worth 1/4th+ ---
+    ext& = (((cbl&& - size& + 1) + 16383) AND -16384) '+1 = avoid zero case
+    fsz& = LEN(simplebuffer_array$(buf& + 0)) - ext&
+    IF fsz& >= LEN(simplebuffer_array$(buf& + 0)) \ 4 THEN
+        simplebuffer_array$(buf& + 0) = LEFT$(simplebuffer_array$(buf& + 0), ext&)
+    END IF
+END IF
+'--- adjust bookmarks & find positions ---
+RecalcMarks handle%, cur&, -size&
+RecalcFinds handle%, cur&, -size&
+END SUB
+
+'--- docs\GetBufMemData.html
+'---------------------------------------------------------------------
+SUB GetBufMemData (handle%, memData AS _MEM)
+'--- option _explicit requirements ---
+DIM size&&, temp&, datStr$
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'--- get memory data size ---
+DIM sizeRef AS _MEM
+sizeRef = _MEM(memData.SIZE)
+IF INSTR(_OS$, "[64BIT]") > 0 THEN
+    _MEMGET sizeRef, sizeRef.OFFSET, size&&
+ELSE
+    _MEMGET sizeRef, sizeRef.OFFSET, temp&
+    size&& = temp&
+END IF
+_MEMFREE sizeRef
+'--- read amount of data from buffer ---
+datStr$ = ReadBufRawData$(handle%, size&&)
+'--- then copy into the memory block ---
+_MEMPUT memData, memData.OFFSET, datStr$
+END SUB
+
+'--- docs\PutBufMemData.html
+'---------------------------------------------------------------------
+SUB PutBufMemData (handle%, memData AS _MEM)
+'--- option _explicit requirements ---
+DIM size&&, temp&, datStr$
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'--- get memory data size ---
+DIM sizeRef AS _MEM
+sizeRef = _MEM(memData.SIZE)
+IF INSTR(_OS$, "[64BIT]") > 0 THEN
+    _MEMGET sizeRef, sizeRef.OFFSET, size&&
+ELSE
+    _MEMGET sizeRef, sizeRef.OFFSET, temp&
+    size&& = temp&
+END IF
+_MEMFREE sizeRef
+'--- read out the memory block ---
+datStr$ = SPACE$(size&&)
+_MEMGET memData, memData.OFFSET, datStr$
+'--- then write it into the buffer ---
+WriteBufRawData handle%, datStr$
+END SUB
+
+'--- docs\SetBufMark.html
+'---------------------------------------------------------------------
+FUNCTION SetBufMark% (handle%)
+'--- option _explicit requirements ---
+DIM buf&, fid%
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- get new ID, set bookmark on success ---
+fid% = FreeID%(handle%, 2)
+IF fid% > 0 THEN MID$(simplebuffer_array$(buf& + 2), fid% * 4, 4) = MID$(simplebuffer_array$(buf& + 1), 1, 4)
+'--- return ID ---
+SetBufMark% = fid%
+END FUNCTION
+
+'--- docs\RemoveBufMark.html
+'---------------------------------------------------------------------
+FUNCTION RemoveBufMark% (handle%, markID%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check ID range ---
+RemoveBufMark% = SBE_BadIDNumber
+IF (markID% < 1 OR markID% > 100) AND (LEN(simplebuffer_array$(buf& + 1)) = 16) THEN EXIT FUNCTION
+'--- remove (unset) bookmark ---
+MID$(simplebuffer_array$(buf& + 2), markID% * 4, 4) = MKL$(&HCAFEBABE)
+RemoveBufMark% = 0
+END FUNCTION
+
+'--- docs\GetBufMark.html
+'---------------------------------------------------------------------
+FUNCTION GetBufMark& (handle%, markID%)
+'--- option _explicit requirements ---
+DIM buf&, markPos&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check ID range ---
+GetBufMark& = SBE_BadIDNumber
+IF (markID% < 1 OR markID% > 100) AND (LEN(simplebuffer_array$(buf& + 1)) = 16) THEN EXIT FUNCTION
+'--- return bookmark position, if set ---
+markPos& = CVL(MID$(simplebuffer_array$(buf& + 2), markID% * 4, 4))
+SELECT CASE markPos&
+    CASE &HCAFEBABE: GetBufMark& = SBE_UnusedID
+    CASE &HDEADBEEF: GetBufMark& = SBE_ClearedID
+    CASE ELSE: GetBufMark& = markPos&
+END SELECT
+END FUNCTION
+
+'--- docs\GotoBufMark.html
+'---------------------------------------------------------------------
+FUNCTION GotoBufMark% (handle%, markID%)
+'--- option _explicit requirements ---
+DIM buf&, markPos&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- goto bookmark, if valid ---
+markPos& = GetBufMark&(handle%, markID%)
+IF markPos& > 0 THEN
+    MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(markPos&)
+    GotoBufMark% = 0
+ELSE
+    GotoBufMark% = markPos&
+END IF
+END FUNCTION
+
+'--- docs\SetBufFind.html
+'---------------------------------------------------------------------
+FUNCTION SetBufFind% (handle%, find$)
+'--- option _explicit requirements ---
+DIM buf&, fid%
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check search criteria ---
+SetBufFind% = SBE_EmptyFind: IF find$ = "" THEN EXIT FUNCTION
+'--- get new ID, set find data on success ---
+fid% = FreeID%(handle%, 4)
+IF fid% > 0 THEN
+    MID$(simplebuffer_array$(buf& + 4), fid% * 4, 4) = MKL$(LEN(find$))
+    simplebuffer_array$(buf& + fid% + 4) = find$
+END IF
+'--- return ID ---
+SetBufFind% = fid%
+END FUNCTION
+
+'--- docs\RemoveBufFind.html
+'---------------------------------------------------------------------
+FUNCTION RemoveBufFind% (handle%, sbFindID%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check ID range ---
+RemoveBufFind% = SBE_BadIDNumber
+IF (sbFindID% < 1 OR sbFindID% > 100) AND (LEN(simplebuffer_array$(buf& + 1)) = 16) THEN EXIT FUNCTION
+'--- remove find data ---
+MID$(simplebuffer_array$(buf& + 3), sbFindID% * 4, 4) = MKL$(&HCAFEBABE)
+MID$(simplebuffer_array$(buf& + 4), sbFindID% * 4, 4) = MKL$(&HCAFEBABE)
+simplebuffer_array$(buf& + sbFindID% + 4) = ""
+RemoveBufFind% = 0
+END FUNCTION
+
+'--- docs\FindBufFR.html
+'---------------------------------------------------------------------
+FUNCTION FindBufFwd& (handle%, sbFindID%, method%, treat%)
+'--- option _explicit requirements ---
+DIM buf&, cPos&, eob&, fPos&, fLen&, find$, ch&, bPos&, chv%
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check ID range ---
+FindBufFwd& = SBE_BadIDNumber
+IF (sbFindID% < 1 OR sbFindID% > 100) AND (LEN(simplebuffer_array$(buf& + 1)) = 16) THEN EXIT FUNCTION
+'--- prepare & check values ---
+cPos& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
+fPos& = CVL(MID$(simplebuffer_array$(buf& + 3), sbFindID% * 4, 4))
+fLen& = CVL(MID$(simplebuffer_array$(buf& + 4), sbFindID% * 4, 4))
+IF fPos& > 0 AND fPos& < eob& AND cPos& = fPos& THEN cPos& = cPos& + 1
+FindBufFwd& = SBE_UnusedID: IF fLen& = &HCAFEBABE THEN EXIT FUNCTION
+'--- perform forward search ---
+IF treat% = 0 THEN
+    find$ = simplebuffer_array$(buf& + sbFindID% + 4)
+    WHILE cPos& < eob&
+        SELECT CASE method%
+            CASE IS < 0: IF INSTR(find$, CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&))) = 0 THEN EXIT WHILE
+            CASE IS > 0: IF INSTR(find$, CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&))) > 0 THEN EXIT WHILE
+            CASE ELSE
+                FOR ch& = 1 TO fLen&
+                    bPos& = cPos& + ch& - 1: IF bPos& >= eob& THEN EXIT FOR
+                    IF ASC(simplebuffer_array$(buf& + 0), bPos&) <> ASC(find$, ch&) THEN EXIT FOR
+                NEXT ch&
+                IF ch& > fLen& THEN EXIT WHILE
+        END SELECT
+        cPos& = cPos& + 1
+    WEND
+ELSE
+    find$ = UCASE$(simplebuffer_array$(buf& + sbFindID% + 4))
+    WHILE cPos& < eob&
+        SELECT CASE method%
+            CASE IS < 0: IF INSTR(find$, UCASE$(CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&)))) = 0 THEN EXIT WHILE
+            CASE IS > 0: IF INSTR(find$, UCASE$(CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&)))) > 0 THEN EXIT WHILE
+            CASE ELSE
+                FOR ch& = 1 TO fLen&
+                    bPos& = cPos& + ch& - 1: IF bPos& >= eob& THEN EXIT FOR
+                    chv% = ASC(simplebuffer_array$(buf& + 0), bPos&)
+                    IF chv% >= 97 AND chv% <= 122 THEN chv% = chv% - 32
+                    IF chv% <> ASC(find$, ch&) THEN EXIT FOR
+                NEXT ch&
+                IF ch& > fLen& THEN EXIT WHILE
+        END SELECT
+        cPos& = cPos& + 1
+    WEND
+END IF
+'--- set & return result ---
+IF cPos& < eob& THEN MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cPos&): ELSE cPos& = 0
+MID$(simplebuffer_array$(buf& + 3), sbFindID% * 4, 4) = MKL$(cPos&)
+FindBufFwd& = cPos&
+END FUNCTION
+
+'--- docs\FindBufFR.html
+'---------------------------------------------------------------------
+FUNCTION FindBufRev& (handle%, sbFindID%, method%, treat%)
+'--- option _explicit requirements ---
+DIM buf&, cPos&, eob&, fPos&, fLen&, find$, ch&, bPos&, chv%
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check ID range ---
+FindBufRev& = SBE_BadIDNumber
+IF (sbFindID% < 1 OR sbFindID% > 100) AND (LEN(simplebuffer_array$(buf& + 1)) = 16) THEN EXIT FUNCTION
+'--- prepare & check values ---
+cPos& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
+fPos& = CVL(MID$(simplebuffer_array$(buf& + 3), sbFindID% * 4, 4))
+fLen& = CVL(MID$(simplebuffer_array$(buf& + 4), sbFindID% * 4, 4))
+IF fPos& > 0 AND fPos& < eob& AND cPos& = fPos& THEN cPos& = cPos& - 1
+FindBufRev& = SBE_UnusedID: IF fLen& = &HCAFEBABE THEN EXIT FUNCTION
+'--- perform reverse search ---
+IF treat% = 0 THEN
+    find$ = simplebuffer_array$(buf& + sbFindID% + 4)
+    WHILE cPos& > 0
+        SELECT CASE method%
+            CASE IS < 0: IF INSTR(find$, CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&))) = 0 THEN EXIT WHILE
+            CASE IS > 0: IF INSTR(find$, CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&))) > 0 THEN EXIT WHILE
+            CASE ELSE
+                FOR ch& = 1 TO fLen&
+                    bPos& = cPos& + ch& - 1: IF bPos& >= eob& THEN EXIT FOR
+                    IF ASC(simplebuffer_array$(buf& + 0), bPos&) <> ASC(find$, ch&) THEN EXIT FOR
+                NEXT ch&
+                IF ch& > fLen& THEN EXIT WHILE
+        END SELECT
+        cPos& = cPos& - 1
+    WEND
+ELSE
+    find$ = UCASE$(simplebuffer_array$(buf& + sbFindID% + 4))
+    WHILE cPos& > 0
+        SELECT CASE method%
+            CASE IS < 0: IF INSTR(find$, UCASE$(CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&)))) = 0 THEN EXIT WHILE
+            CASE IS > 0: IF INSTR(find$, UCASE$(CHR$(ASC(simplebuffer_array$(buf& + 0), cPos&)))) > 0 THEN EXIT WHILE
+            CASE ELSE
+                FOR ch& = 1 TO fLen&
+                    bPos& = cPos& + ch& - 1: IF bPos& >= eob& THEN EXIT FOR
+                    chv% = ASC(simplebuffer_array$(buf& + 0), bPos&)
+                    IF chv% >= 97 AND chv% <= 122 THEN chv% = chv% - 32
+                    IF chv% <> ASC(find$, ch&) THEN EXIT FOR
+                NEXT ch&
+                IF ch& > fLen& THEN EXIT WHILE
+        END SELECT
+        cPos& = cPos& - 1
+    WEND
+END IF
+'--- set & return result ---
+IF cPos& > 0 THEN MID$(simplebuffer_array$(buf& + 1), 1, 4) = MKL$(cPos&)
+MID$(simplebuffer_array$(buf& + 3), sbFindID% * 4, 4) = MKL$(cPos&)
+FindBufRev& = cPos&
+END FUNCTION
+
+'--- docs\CopyBufBlock.html
+'---------------------------------------------------------------------
+FUNCTION CopyBufBlock% (handle%, bound&)
+'--- option _explicit requirements ---
+DIM buf&, sPo&, ePo&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- get & check positions ---
+CopyBufBlock% = SBE_OutOfBounds
+IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
+sPo& = bound&: ePo& = GetBufPos&(handle%)
+IF ePo& < sPo& THEN SWAP sPo&, ePo&
+'--- copy block to clip ---
+_CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
+CopyBufBlock% = 0
+END FUNCTION
+
+'--- docs\CutBufBlock.html
+'---------------------------------------------------------------------
+FUNCTION CutBufBlock% (handle%, bound&)
+'--- option _explicit requirements ---
+DIM buf&, sPo&, ePo&, old&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- get & check positions ---
+CutBufBlock% = SBE_OutOfBounds
+IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
+sPo& = bound&: ePo& = GetBufPos&(handle%)
+IF ePo& < sPo& THEN SWAP sPo&, ePo&
+'--- copy block to clip ---
+_CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
+'--- then delete block ---
+old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
+DeleteBufRawData handle%, ePo& - sPo&
+CutBufBlock% = 0
+END FUNCTION
+
+'--- docs\PasteBufBlock.html
+'---------------------------------------------------------------------
+FUNCTION PasteBufBlock% (handle%, bound&)
+'--- option _explicit requirements ---
+DIM sPo&, ePo&, old&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'--- replace check ---
+IF bound& <> 0 THEN
+    '--- get & check positions ---
+    PasteBufBlock% = SBE_OutOfBounds
+    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
+    sPo& = bound&: ePo& = GetBufPos&(handle%)
+    IF ePo& < sPo& THEN SWAP sPo&, ePo&
+    '--- delete old block ---
+    old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
+    DeleteBufRawData handle%, ePo& - sPo&
+END IF
+'--- finally paste block from clip ---
+WriteBufRawData handle%, _CLIPBOARD$
+PasteBufBlock% = 0
+END FUNCTION
+
+'--- docs\SeekBuf.html
 '---------------------------------------------------------------------
 FUNCTION SeekBuf& (handle%, displace&, mode%)
 '--- option _explicit requirements ---
 DIM buf&, cur&, eob&, brc$, brl%, origin&, newPos&
-'--- prepare values ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- prepare values ---
 cur& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
 brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
 '--- select origin ---
@@ -188,6 +700,32 @@ SELECT CASE mode%
     CASE SBM_BufStart: origin& = 1
     CASE SBM_BufCurrent: origin& = cur&
     CASE SBM_BufEnd: origin& = eob&
+    CASE SBM_LineStart
+        origin& = cur&
+        IF cur& > 1 AND cur& < eob& THEN
+            IF brl% = 2 AND ASC(simplebuffer_array$(buf& + 0), cur& - 1) = 13 AND ASC(simplebuffer_array$(buf& + 0), cur&) = 10 THEN
+                origin& = cur& - 1
+            END IF
+        END IF
+        WHILE origin& > 1
+            IF MID$(simplebuffer_array$(buf& + 0), origin& - 1, brl%) = brc$ THEN
+                IF brl% = 2 THEN origin& = origin& + 1
+                EXIT WHILE
+            END IF
+            origin& = origin& - 1
+        WEND
+    CASE SBM_LineEnd
+        origin& = cur&
+        IF cur& > 1 AND cur& < eob& THEN
+            IF brl% = 2 AND ASC(simplebuffer_array$(buf& + 0), cur& - 1) = 13 AND ASC(simplebuffer_array$(buf& + 0), cur&) = 10 THEN
+                origin& = cur& - 1
+            END IF
+        END IF
+        origin& = INSTR(origin&, simplebuffer_array$(buf& + 0), brc$)
+        IF origin& = 0 THEN origin& = eob&
+    CASE IS > 0 'bookmarks mode
+        origin& = GetBufMark&(handle%, mode%)
+        IF origin& < 0 THEN SeekBuf& = origin&: EXIT FUNCTION
     CASE ELSE
         SeekBuf& = SBE_UnknownMode
         EXIT FUNCTION
@@ -202,45 +740,60 @@ ELSE
 END IF
 END FUNCTION
 
+'--- docs\GetBufPos.html
 '---------------------------------------------------------------------
 FUNCTION GetBufPos& (handle%)
 '--- option _explicit requirements ---
 DIM buf&
-'--- return cursor position in buffer ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- return cursor position in buffer ---
 GetBufPos& = CVL(MID$(simplebuffer_array$(buf& + 1), 1, 4))
 END FUNCTION
 
+'--- docs\GetBufLen.html
 '---------------------------------------------------------------------
 FUNCTION GetBufLen& (handle%)
 '--- option _explicit requirements ---
 DIM buf&
-'--- return actual buffer length ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- return actual buffer length ---
 GetBufLen& = CVL(MID$(simplebuffer_array$(buf& + 1), 5, 4))
 END FUNCTION
 
+'--- docs\EndOfBuf.html
 '---------------------------------------------------------------------
 FUNCTION EndOfBuf% (handle%)
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 '--- return EndOfBuffer condition ---
 EndOfBuf% = (GetBufPos&(handle%) > GetBufLen&(handle%))
 END FUNCTION
 
+'--- docs\IsBufChanged.html
 '---------------------------------------------------------------------
 FUNCTION IsBufChanged% (handle%)
 '--- option _explicit requirements ---
 DIM buf&
-'--- return BufChanged condition ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- return BufChanged condition ---
 IsBufChanged% = CVL(MID$(simplebuffer_array$(buf& + 1), 13, 4))
 END FUNCTION
 
+'--- docs\BufEolSeq.html
 '---------------------------------------------------------------------
 FUNCTION BufEolSeq$ (handle%)
 '--- option _explicit requirements ---
 DIM buf&
-'--- return buffer specific EndOfLine sequence ---
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
 buf& = handle% * 106
+'--- return buffer specific EndOfLine sequence ---
 SELECT CASE MID$(simplebuffer_array$(buf& + 1), 9, 4)
     CASE "EolU", "EolN" 'unknown (maybe mixed) or OS-native EOL mode
         BufEolSeq$ = CHR$(13) + CHR$(10) 'default is Windows
@@ -250,6 +803,189 @@ SELECT CASE MID$(simplebuffer_array$(buf& + 1), 9, 4)
     CASE "EolW" 'forced Windows
         BufEolSeq$ = CHR$(13) + CHR$(10)
 END SELECT
+END FUNCTION
+
+'--- docs\ConvBufToAnyEol.html
+'---------------------------------------------------------------------
+SUB ConvBufToNativeEol (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- convert buffer to OS native EndOfLine sequence ---
+IF INSTR(_OS$, "[LINUX]") > 0 THEN 'true for MacOSX too
+    ConvBufToLnxMacEol handle%
+ELSE
+    ConvBufToWinEol handle%
+END IF
+MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN"
+END SUB
+
+'--- docs\ConvBufToAnyEol.html
+'---------------------------------------------------------------------
+SUB ConvBufToLnxMacEol (handle%)
+'--- option _explicit requirements ---
+DIM buf&, res&, po&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check current EndOfLine sequence ---
+IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolL" THEN EXIT SUB
+IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN" AND LEN(BufEolSeq$(handle%)) = 1 THEN EXIT SUB
+'--- prepare values ---
+simplebuffer_array$(buf& + 1) = simplebuffer_array$(buf& + 1) + CHR$(16)
+IF MID$(simplebuffer_array$(buf& + 0), GetBufPos&(handle%), 2) = CHR$(13) + CHR$(10) THEN
+    res& = SeekBuf&(handle%, 1, SBM_BufCurrent)
+END IF
+MID$(simplebuffer_array$(buf& + 2), 101 * 4, 4) = MID$(simplebuffer_array$(buf& + 1), 1, 4) 'SetBufMark 101
+MID$(simplebuffer_array$(buf& + 4), 101 * 4, 4) = MKL$(2): simplebuffer_array$(buf& + 101 + 4) = CHR$(13) + CHR$(10) 'SetBufFind 101
+'--- search & convert ---
+res& = SeekBuf&(handle%, 0, SBM_BufStart)
+DO
+    po& = FindBufFwd&(handle%, 101, SBF_FullData, SBF_AsWritten)
+    IF po& > 0 THEN DeleteBufRawData handle%, 1
+LOOP UNTIL po& = 0
+MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolL"
+'--- restore old position & cleanup ---
+res& = SeekBuf&(handle%, 0, 101)
+res& = RemoveBufFind%(handle%, 101)
+res& = RemoveBufMark%(handle%, 101)
+simplebuffer_array$(buf& + 1) = LEFT$(simplebuffer_array$(buf& + 1), 16)
+END SUB
+
+'--- docs\ConvBufToAnyEol.html
+'---------------------------------------------------------------------
+SUB ConvBufToWinEol (handle%)
+'--- option _explicit requirements ---
+DIM buf&, res&, po&
+'--- check handle ---
+IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+buf& = handle% * 106
+'--- check current EndOfLine sequence ---
+IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolW" THEN EXIT SUB
+IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN" AND LEN(BufEolSeq$(handle%)) = 2 THEN EXIT SUB
+IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolU" THEN ConvBufToLnxMacEol handle% 'safety measure for unknown (maybe mixed) EOL mode
+'--- prepare values ---
+simplebuffer_array$(buf& + 1) = simplebuffer_array$(buf& + 1) + CHR$(16)
+MID$(simplebuffer_array$(buf& + 2), 101 * 4, 4) = MID$(simplebuffer_array$(buf& + 1), 1, 4) 'SetBufMark 101
+MID$(simplebuffer_array$(buf& + 4), 101 * 4, 4) = MKL$(1): simplebuffer_array$(buf& + 101 + 4) = CHR$(10) 'SetBufFind 101
+'--- search & convert ---
+res& = SeekBuf&(handle%, 0, SBM_BufStart)
+DO
+    po& = FindBufFwd&(handle%, 101, SBF_FullData, SBF_AsWritten)
+    IF po& > 0 THEN WriteBufRawData handle%, CHR$(13)
+LOOP UNTIL po& = 0
+MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolW"
+'--- restore old position & cleanup ---
+res& = SeekBuf&(handle%, 0, 101)
+IF MID$(simplebuffer_array$(buf& + 0), GetBufPos&(handle%), 1) = CHR$(10) THEN
+    res& = SeekBuf&(handle%, 0, SBM_LineEnd)
+END IF
+res& = RemoveBufFind%(handle%, 101)
+res& = RemoveBufMark%(handle%, 101)
+simplebuffer_array$(buf& + 1) = LEFT$(simplebuffer_array$(buf& + 1), 16)
+END SUB
+
+'--- undocumented - for internal use only
+'---------------------------------------------------------------------
+FUNCTION CheckHandle% (handle%)
+'--- option _explicit requirements ---
+DIM buf&
+'--- check handle ---
+buf& = handle% * 106: CheckHandle% = 0
+IF buf& < 0 OR buf& > UBOUND(simplebuffer_array$) THEN EXIT FUNCTION
+IF simplebuffer_array$(buf& + 1) = "" THEN EXIT FUNCTION
+CheckHandle% = -1
+END FUNCTION
+
+'--- undocumented - for internal use only
+'---------------------------------------------------------------------
+FUNCTION FreeID% (handle%, slot%)
+'--- option _explicit requirements ---
+DIM buf&, idx%
+'--- find a free ID ---
+buf& = handle% * 106: FreeID% = SBE_NoMoreIDs
+FOR idx% = 1 TO 100
+    IF CVL(MID$(simplebuffer_array$(buf& + slot%), idx% * 4, 4)) = &HCAFEBABE THEN
+        FreeID% = idx%: EXIT FOR
+    END IF
+NEXT idx%
+END FUNCTION
+
+'--- undocumented - for internal use only
+'---------------------------------------------------------------------
+SUB RecalcMarks (handle%, bufPos&, change&)
+'--- option _explicit requirements ---
+DIM buf&, idx%, mark&, absChg&
+'--- check special case (no change) ---
+IF change& = 0 THEN EXIT SUB
+'--- recalc all used bookmarks ---
+buf& = handle% * 106
+FOR idx% = 1 TO 101
+    mark& = CVL(MID$(simplebuffer_array$(buf& + 2), idx% * 4, 4))
+    IF mark& <> &HCAFEBABE AND mark& <> &HDEADBEEF THEN
+        SELECT CASE change&
+            CASE IS > 0
+                IF bufPos& <= mark& THEN mark& = mark& + change&
+            CASE IS < 0
+                IF bufPos& < mark& THEN
+                    absChg& = ABS(change&)
+                    IF absChg& <= (mark& - bufPos&) THEN
+                        mark& = mark& - absChg&
+                    ELSE
+                        mark& = &HDEADBEEF
+                    END IF
+                ELSEIF bufPos& = mark& THEN
+                    mark& = &HDEADBEEF
+                END IF
+        END SELECT
+        MID$(simplebuffer_array$(buf& + 2), idx% * 4, 4) = MKL$(mark&)
+    END IF
+NEXT idx%
+END SUB
+
+'--- undocumented - for internal use only
+'---------------------------------------------------------------------
+SUB RecalcFinds (handle%, bufPos&, change&)
+'--- option _explicit requirements ---
+DIM buf&, idx%, found&, length&, absChg&
+'--- check special case (no change) ---
+IF change& = 0 THEN EXIT SUB
+'--- recalc all used found at positions ---
+buf& = handle% * 106
+FOR idx% = 1 TO 101
+    found& = CVL(MID$(simplebuffer_array$(buf& + 3), idx% * 4, 4))
+    length& = CVL(MID$(simplebuffer_array$(buf& + 4), idx% * 4, 4))
+    IF found& <> &HCAFEBABE AND found& <> &HDEADBEEF THEN
+        SELECT CASE change&
+            CASE IS > 0
+                IF bufPos& <= found& THEN
+                    found& = found& + change&
+                ELSEIF bufPos& > found& AND bufPos& < (found& + length&) THEN
+                    found& = &HDEADBEEF
+                END IF
+            CASE IS < 0
+                IF bufPos& < found& THEN
+                    absChg& = ABS(change&)
+                    IF absChg& <= (found& - bufPos&) THEN
+                        found& = found& - absChg&
+                    ELSE
+                        found& = &HDEADBEEF
+                    END IF
+                ELSEIF bufPos& >= found& AND bufPos& < (found& + length&) THEN
+                    found& = &HDEADBEEF
+                END IF
+        END SELECT
+        MID$(simplebuffer_array$(buf& + 3), idx% * 4, 4) = MKL$(found&)
+    END IF
+NEXT idx%
+END SUB
+
+'--- undocumented - for internal use only
+'---------------------------------------------------------------------
+FUNCTION VersionSimplebuffer$
+VersionSimplebuffer$ = MID$("$VER: simplebuffer.bm 3.2 (18-Oct-2022) by RhoSigma :END$", 7, 45)
 END FUNCTION
 
 '$INCLUDE: 'sb_qb64pe_extension.bm'

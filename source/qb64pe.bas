@@ -12595,14 +12595,22 @@ IF os$ = "WIN" THEN
             IF n > 1 THEN a$ = "Unable to resolve multiple instances of sub/function '" + ResolveStaticFunction_Name(x) + "' in '" + ResolveStaticFunction_File(x) + "'": GOTO errmes
 
             IF n = 0 THEN 'attempt to locate simple function name without brackets
-                s$ = " " + ResolveStaticFunction_Name(x)
+                s$ = ResolveStaticFunction_Name(x)
                 fh = OpenBuffer%("I", nm_output_file$)
+                ConvBufToLnxMacEol fh
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
-                        x1 = INSTR(a$, s$)
-                        IF RIGHT$(a$, LEN(s$)) = s$ THEN
+                        ' clang's nm outputs LF line endings
+                        IF OS_BITS = 32 THEN
+                            ' On 32-bit Windows function names are decorated by a leading underscore
+                            ' gcc's nm hides the leading underscore in the output, whereas clang's nm does not
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$) _ORELSE (RIGHT$(a$, LEN(s$) + 2) = " _" + s$)
+                        ELSE
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$)
+                        END IF
+                        IF x1 THEN
                             fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
@@ -12649,14 +12657,22 @@ IF os$ = "WIN" THEN
             END IF
 
             IF n = 0 THEN 'a C dynamic object library?
-                s$ = " " + ResolveStaticFunction_Name(x)
+                s$ = ResolveStaticFunction_Name(x)
                 fh = OpenBuffer%("I", nm_output_file_dynamic$)
+                ConvBufToLnxMacEol fh
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
-                        x1 = INSTR(a$, s$)
-                        IF RIGHT$(a$, LEN(s$)) = s$ THEN
+                        ' clang's nm outputs LF line endings
+                        IF OS_BITS = 32 THEN
+                            ' On 32-bit Windows function names are decorated by a leading underscore
+                            ' gcc's nm hides the leading underscore in the output, whereas clang's nm does not
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$) _ORELSE (RIGHT$(a$, LEN(s$) + 2) = " _" + s$)
+                        ELSE
+                            x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$)
+                        END IF
+                        IF x1 THEN
                             fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
