@@ -51,6 +51,8 @@ void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y);
 
 static void glutWarning(const char *fmt, va_list lst) {
     // This keeps FreeGlut from dumping warnings to console
+    (void)fmt;
+    (void)lst;
 }
 
 // Performs all of the FreeGLUT initialization except for calling glutMainLoop()

@@ -1186,7 +1186,7 @@ static void setupNotifyIconHandle()
 
     // Use default 'application' icon
     if (!notifyIcon)
-        notifyIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
+        notifyIcon = LoadIcon(NULL, IDI_APPLICATION);
 }
 
 // Creates the notification entry if it does not yet exist

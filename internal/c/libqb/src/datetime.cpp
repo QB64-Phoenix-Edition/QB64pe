@@ -1,18 +1,18 @@
 
 #include "libqb-common.h"
 
-#include <sys/time.h>
 #include <chrono>
+#include <sys/time.h>
 
 #ifdef QB64_WINDOWS
-# include <synchapi.h>
+#    include <synchapi.h>
 #endif
 
-#include "rounding.h"
-#include "event.h"
-#include "error_handle.h"
-#include "qbs.h"
 #include "datetime.h"
+#include "error_handle.h"
+#include "event.h"
+#include "qbs.h"
+#include "rounding.h"
 
 #ifdef QB64_MACOSX
 #    include <mach/mach_time.h>
@@ -204,10 +204,11 @@ recalculate:
         prev = now;
 }
 
-void sub_date(qbs *date) {
+void sub_date(qbs *str) {
     if (is_error_pending())
         return;
-    return; // stub
+    // stub
+    (void)str;
 }
 
 qbs *func_date() {
@@ -274,7 +275,8 @@ qbs *func_date() {
 void sub_time(qbs *str) {
     if (is_error_pending())
         return;
-    return; // stub
+    // stub
+    (void)str;
 }
 
 qbs *func_time() {
@@ -293,7 +295,7 @@ qbs *func_time() {
     //        int tm_yday;    /* days since January 1 - [0,365] */
     //        int tm_isdst;   /* daylight savings time flag */
     //        };
-    static int32_t x, x2, i;
+    static int32_t x, i;
     static qbs *str;
     str = qbs_new(8, 1);
     str->chr[2] = 58;
@@ -324,4 +326,3 @@ qbs *func_time() {
     str->chr[i + 1] = x % 10 + 48;
     return str;
 }
-

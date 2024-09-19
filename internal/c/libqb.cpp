@@ -647,7 +647,7 @@ uint32 *NPO2_texture_generate(int32 *px, int32 *py, uint32 *pixels) {
             ox >>= 1;
             nx <<= 1;
         }
-        nx << 1;
+        // nx << 1;
     }
     while ((oy & 1) == 0) {
         oy >>= 1;
@@ -658,7 +658,7 @@ uint32 *NPO2_texture_generate(int32 *px, int32 *py, uint32 *pixels) {
             oy >>= 1;
             ny <<= 1;
         }
-        ny << 1;
+        // ny << 1;
     }
 
     // reset original values
@@ -1764,12 +1764,13 @@ void keyheld_add(uint32 x) {
         keyheld_size++;
         keyheld_buffer = (uint32 *)realloc(keyheld_buffer, keyheld_size * 4);
         keyheld_bind_buffer = (uint32 *)realloc(keyheld_bind_buffer, keyheld_size * 4);
-    }                              // expand buffer
+    } // expand buffer
     keyheld_buffer[keyheld_n] = x; // add entry
     keyheld_bind_buffer[keyheld_n] = bindkey;
     bindkey = 0; // add binded key (0=none)
     keyheld_n++; // note: inc. must occur after setting entry (threading reasons)
 }
+
 void keyheld_remove(uint32 x) {
     static int32 i;
     for (i = 0; i < keyheld_n; i++) {
@@ -1781,6 +1782,7 @@ void keyheld_remove(uint32 x) {
         }
     }
 }
+
 void keyheld_unbind(uint32 x) {
     static int32 i;
     for (i = 0; i < keyheld_n; i++) {
@@ -1792,6 +1794,7 @@ void keyheld_unbind(uint32 x) {
 }
 
 void keydown_ascii(uint32 x) { keydown(x); }
+
 void keydown_unicode(uint32 x) {
     keydown_glyph = 1;
     // note: UNICODE 0-127 map directly to ASCII 0-127
@@ -1800,8 +1803,8 @@ void keydown_unicode(uint32 x) {
         return;
     }
     // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
-    static uint32 x2;
-    if (x2 = unicode_to_cp437(x)) {
+    auto x2 = unicode_to_cp437(x);
+    if (x2) {
         keydown_ascii(x2);
         return;
     }
@@ -1820,8 +1823,11 @@ void keydown_unicode(uint32 x) {
     x |= UC;
     keydown(x);
 }
+
 void keydown_vk(uint32 x) { keydown(x); }
+
 void keyup_ascii(uint32 x) { keyup(x); }
+
 void keyup_unicode(uint32 x) {
     // note: UNICODE 0-127 map directly to ASCII 0-127
     if (x <= 127) {
@@ -1829,8 +1835,8 @@ void keyup_unicode(uint32 x) {
         return;
     }
     // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
-    static uint32 x2;
-    if (x2 = unicode_to_cp437(x)) {
+    auto x2 = unicode_to_cp437(x);
+    if (x2) {
         keyup_ascii(x2);
         return;
     }
@@ -1849,6 +1855,7 @@ void keyup_unicode(uint32 x) {
     x |= UC;
     keyup(x);
 }
+
 void keyup_vk(uint32 x) { keyup(x); }
 
 int32 exit_ok = 0;
@@ -7039,7 +7046,7 @@ uint8 *cmem_dynamic_malloc(uint32 size) {
     //(if not, memory will be allocated at bottom of heap)
     top = &cmem[0] + 655360; // top is the base of the higher block
     prev_link = NULL;
-    if (link = cmem_dynamic_link_first) {
+    if ((link = cmem_dynamic_link_first)) {
     cmem_dynamic_findspace:
         if ((top - link->top) >= size) { // gpf
             // found free space
@@ -7047,7 +7054,7 @@ uint8 *cmem_dynamic_malloc(uint32 size) {
         }
         prev_link = link;
         top = link->offset; // set top to the base of current block for future comparisons
-        if (link = link->next)
+        if ((link = link->next))
             goto cmem_dynamic_findspace;
     }
     // no space between existing blocks is large enough, alloc below 'top'
@@ -7106,7 +7113,7 @@ check_next:
         return;
     }
     prev_link = link;
-    if (link = link->next)
+    if ((link = link->next))
         goto check_next;
     return;
 }
@@ -8013,7 +8020,7 @@ void qbg_screen(int32 mode, int32 color_switch, int32 active_page, int32 visual_
             // calculate previous width & height if possible
             prev_width_in_characters = 0;
             prev_height_in_characters = 0;
-            if (i = page[0]) { // currently in a screen mode?
+            if ((i = page[0])) { // currently in a screen mode?
                 im = &img[i];
                 if (!im->compatible_mode) {
                     prev_width_in_characters = im->width;
@@ -8031,7 +8038,7 @@ void qbg_screen(int32 mode, int32 color_switch, int32 active_page, int32 visual_
             // free pages in reverse order
             if (page[0]) { // currently in a screen mode?
                 for (i = 1; i < pages; i++) {
-                    if (i2 = page[i]) {
+                    if ((i2 = page[i])) {
                         // manual delete, freeing video pages is usually illegal
                         if (img[i2].flags & IMG_FREEMEM)
                             free(img[i2].offset); // free pixel data
@@ -8655,7 +8662,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
             if (write_page->flags & IMG_SCREEN) {
                 // delete pages 1-?
                 for (i = 1; i < pages; i++) {
-                    if (i2 = page[i]) {
+                    if ((i2 = page[i])) {
                         if (display_page_index == i2) {
                             display_page_index = page[0];
                             display_page = &img[display_page_index];
@@ -8745,7 +8752,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                     if (write_page->flags & IMG_SCREEN) {
                         // delete pages 1-?
                         for (i = 1; i < pages; i++) {
-                            if (i2 = page[i]) {
+                            if ((i2 = page[i])) {
                                 if (display_page_index == i2) {
                                     display_page_index = page[0];
                                     display_page = &img[display_page_index];
@@ -8802,7 +8809,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                     if (write_page->flags & IMG_SCREEN) {
                         // delete pages 1-?
                         for (i = 1; i < pages; i++) {
-                            if (i2 = page[i]) {
+                            if ((i2 = page[i])) {
                                 if (display_page_index == i2) {
                                     display_page_index = page[0];
                                     display_page = &img[display_page_index];
@@ -8851,7 +8858,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                     if (write_page->flags & IMG_SCREEN) {
                         // delete pages 1-?
                         for (i = 1; i < pages; i++) {
-                            if (i2 = page[i]) {
+                            if ((i2 = page[i])) {
                                 if (display_page_index == i2) {
                                     display_page_index = page[0];
                                     display_page = &img[display_page_index];
@@ -8929,7 +8936,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                     if (write_page->flags & IMG_SCREEN) {
                         // delete pages 1-?
                         for (i = 1; i < pages; i++) {
-                            if (i2 = page[i]) {
+                            if ((i2 = page[i])) {
                                 if (display_page_index == i2) {
                                     display_page_index = page[0];
                                     display_page = &img[display_page_index];
@@ -8985,7 +8992,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                     if (write_page->flags & IMG_SCREEN) {
                         // delete pages 1-?
                         for (i = 1; i < pages; i++) {
-                            if (i2 = page[i]) {
+                            if ((i2 = page[i])) {
                                 if (display_page_index == i2) {
                                     display_page_index = page[0];
                                     display_page = &img[display_page_index];
@@ -9035,7 +9042,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                     if (write_page->flags & IMG_SCREEN) {
                         // delete pages 1-?
                         for (i = 1; i < pages; i++) {
-                            if (i2 = page[i]) {
+                            if ((i2 = page[i])) {
                                 if (display_page_index == i2) {
                                     display_page_index = page[0];
                                     display_page = &img[display_page_index];
@@ -9112,7 +9119,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                 if (write_page->flags & IMG_SCREEN) {
                     // delete pages 1-?
                     for (i = 1; i < pages; i++) {
-                        if (i2 = page[i]) {
+                        if ((i2 = page[i])) {
                             if (display_page_index == i2) {
                                 display_page_index = page[0];
                                 display_page = &img[display_page_index];
@@ -9171,7 +9178,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                 if (write_page->flags & IMG_SCREEN) {
                     // delete pages 1-?
                     for (i = 1; i < pages; i++) {
-                        if (i2 = page[i]) {
+                        if ((i2 = page[i])) {
                             if (display_page_index == i2) {
                                 display_page_index = page[0];
                                 display_page = &img[display_page_index];
@@ -9224,7 +9231,7 @@ void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 v
                 if (write_page->flags & IMG_SCREEN) {
                     // delete pages 1-?
                     for (i = 1; i < pages; i++) {
-                        if (i2 = page[i]) {
+                        if ((i2 = page[i])) {
                             if (display_page_index == i2) {
                                 display_page_index = page[0];
                                 display_page = &img[display_page_index];
@@ -12953,7 +12960,7 @@ qbs_input_sep_arg_done:
                 max--;
 
                 // check for hex/oct/bin
-                if (i3 = hexoct2uint64(qbs_input_arguements[argn])) {
+                if ((i3 = hexoct2uint64(qbs_input_arguements[argn]))) {
                     hexvalue = hexoct2uint64_value;
                     if (hexvalue > max) {
                         valid = 0;
@@ -13111,7 +13118,7 @@ qbs_input_sep_arg_done:
                 }
 
                 // check for hex/oct/bin
-                if (i3 = hexoct2uint64(qbs_input_arguements[argn])) {
+                if ((i3 = hexoct2uint64(qbs_input_arguements[argn]))) {
                     hexvalue = hexoct2uint64_value;
                     if (hexvalue > max) {
                         valid = 0;
@@ -13245,7 +13252,7 @@ qbs_input_sep_arg_done:
         }
 
         // check for hex/oct/bin
-        if (i3 = hexoct2uint64(qbs_input_arguements[argn])) {
+        if ((i3 = hexoct2uint64(qbs_input_arguements[argn]))) {
             hexvalue = hexoct2uint64_value;
             // set completewith value (if necessary)
             if (i3 == 1)
@@ -14515,8 +14522,8 @@ void sub_open(qbs *name, int32 type, int32 access, int32 sharing, int32 i, int64
         if (x64) {
             // read first byte
             static uint8 c;
-            static int32 e;
-            if (e = gfs_read(x, -1, &c, 1)) {
+            auto e = gfs_read(x, -1, &c, 1);
+            if (e) {
                 // if (e==-10) return -1;
                 // if (e==-2){error(258); return -2;}//invalid handle
                 // if (e==-3){error(54); return -2;}//bad file mode
@@ -14629,8 +14636,8 @@ int32 file_input_chr(int32 i) {
     // returns -2 for other errors (internally handled), the calling function should abort
 
     static uint8 c;
-    static int32 e;
-    if (e = gfs_read(i, -1, &c, 1)) {
+    auto e = gfs_read(i, -1, &c, 1);
+    if (e) {
         if (e == -10)
             return -1;
         if (e == -2) {
@@ -19366,8 +19373,8 @@ void sub__freeimage(int32 i, int32 passed) {
             return; // The SCREEN's pages cannot be freed!
         } else {
 
-            static hardware_img_struct *himg;
-            if (himg = get_hardware_img(i)) {
+            auto himg = get_hardware_img(i);
+            if (himg) {
                 flush_old_hardware_commands();
                 // add command to free image
                 // create new command handle & structure
@@ -19494,8 +19501,8 @@ void sub__blend(int32 i, int32 passed) {
             validatepage(i);
             i = page[i];
         } else {
-            static hardware_img_struct *himg;
-            if (himg = get_hardware_img(i)) {
+            auto himg = get_hardware_img(i);
+            if (himg) {
                 himg->alpha_disabled = 0;
                 return;
             }
@@ -19527,8 +19534,8 @@ void sub__dontblend(int32 i, int32 passed) {
             validatepage(i);
             i = page[i];
         } else {
-            static hardware_img_struct *himg;
-            if (himg = get_hardware_img(i)) {
+            auto himg = get_hardware_img(i);
+            if (himg) {
                 himg->alpha_disabled = 1;
                 return;
             }
@@ -19756,8 +19763,8 @@ int32 func__width(int32 i, int32 passed) {
             validatepage(i);
             i = page[i];
         } else {
-            static hardware_img_struct *himg;
-            if (himg = get_hardware_img(i)) {
+            auto himg = get_hardware_img(i);
+            if (himg) {
                 return himg->w;
             }
             i = -i;
@@ -19796,8 +19803,8 @@ int32 func__height(int32 i, int32 passed) {
             validatepage(i);
             i = page[i];
         } else {
-            static hardware_img_struct *himg;
-            if (himg = get_hardware_img(i)) {
+            auto himg = get_hardware_img(i);
+            if (himg) {
                 return himg->h;
             }
             i = -i;
@@ -29384,7 +29391,7 @@ void sub__filedrop(int32 on_off = NULL) {
         DragAcceptFiles(win, TRUE);
         acceptFileDrop = -1;
     }
-    if ((on_off == 2)) {
+    if (on_off == 2) {
         DragAcceptFiles(win, FALSE);
         acceptFileDrop = 0;
     }
@@ -31672,7 +31679,7 @@ void keydown(uint32 x) {
     if (x <= 255) {
         static int32 b1, b2, z, o;
         b1 = x;
-        if (b2 = scancode_lookup[x * 10 + 1]) { // table entry exists
+        if ((b2 = scancode_lookup[x * 10 + 1])) { // table entry exists
             scancodedown(b2);
 
             // check for relevant table modifiers
