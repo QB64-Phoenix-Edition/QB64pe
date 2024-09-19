@@ -21,6 +21,7 @@
 #include "datetime.h"
 #include "error_handle.h"
 #include "event.h"
+#include "extended_math.h"
 #include "file-fields.h"
 #include "filepath.h"
 #include "filesystem.h"
@@ -632,40 +633,15 @@ uint32 *NPO2_buffer = (uint32 *)malloc(4);
 int32 NPO2_buffer_size_in_pixels = 1;
 
 uint32 *NPO2_texture_generate(int32 *px, int32 *py, uint32 *pixels) {
-    int32 ox = *px;
-    int32 oy = *py;
-    int32 nx = 1;
-    int32 ny = 1;
+    auto ox = *px;
+    auto oy = *py;
 
     // assume not negative & not 0
-    while ((ox & 1) == 0) {
-        ox >>= 1;
-        nx <<= 1;
-    }
-    if (ox != 1) { // x is not a power of 2
-        while (ox != 0) {
-            ox >>= 1;
-            nx <<= 1;
-        }
-        // nx << 1;
-    }
-    while ((oy & 1) == 0) {
-        oy >>= 1;
-        ny <<= 1;
-    }
-    if (oy != 1) { // y is not a power of 2
-        while (oy != 0) {
-            oy >>= 1;
-            ny <<= 1;
-        }
-        // ny << 1;
-    }
+    int32_t nx = Math_RoundUpToPowerOf2(uint32_t(ox));
+    int32_t ny = Math_RoundUpToPowerOf2(uint32_t(oy));
 
-    // reset original values
-    ox = *px;
-    oy = *py;
-
-    if (nx == ox && ny == oy) { // no action required
+    if (nx == ox && ny == oy) {
+        // no action required
         return pixels;
     }
 
