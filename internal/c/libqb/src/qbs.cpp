@@ -337,8 +337,8 @@ qbs *qbs_set(qbs *deststr, qbs *srcstr) {
     }
 
     // not in cmem
-    if (deststr->listi == (qbs_list_nexti - 1)) {                                             // last index
-        if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + qbs_data_size)) { // space available
+    if (deststr->listi == (qbs_list_nexti - 1)) {                                                       // last index
+        if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + (intptr_t)qbs_data_size)) { // space available
             memcpy(deststr->chr, srcstr->chr, srcstr->len);
             deststr->len = srcstr->len;
             qbs_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - (intptr_t)qbs_data;
@@ -367,9 +367,9 @@ skippedtmpsrcindex2:
         goto qbs_set_nextindex2;
     // all next indexes invalid!
 
-    qbs_list_nexti = deststr->listi + 1;                                                  // adjust nexti
-    if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + qbs_data_size)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                                  // overlap possible due to sometimes acquiring srcstr's space
+    qbs_list_nexti = deststr->listi + 1;                                                            // adjust nexti
+    if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + (intptr_t)qbs_data_size)) { // space available
+        memmove(deststr->chr, srcstr->chr, srcstr->len); // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
         qbs_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - (intptr_t)qbs_data;
         goto qbs_set_return;

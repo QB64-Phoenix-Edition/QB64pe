@@ -97,8 +97,8 @@
 
 #    endif
 
-#include "error_handle.h"
-#include "qbs.h"
+#    include "error_handle.h"
+#    include "qbs.h"
 
 struct img_struct {
     void *lock_offset;
@@ -200,7 +200,7 @@ struct device_struct {
     // 1=Joystick/Gamepad
     // 2=Keyboard
     // 3=Mouse
-    char *name;
+    const char *name;
     int32 connected;
     int32 lastbutton;
     int32 lastaxis;
@@ -213,9 +213,9 @@ struct device_struct {
     //--------------
     uint8 STRIG_button_pressed[256]; // checked and cleared by the STRIG function
     //--------------
-    void *handle_pointer; // handle as pointer
-    int64 handle_int;     // handle as integer
-    char *description;    // description provided by manufacturer
+    void *handle_pointer;    // handle as pointer
+    int64 handle_int;        // handle as integer
+    const char *description; // description provided by manufacturer
     int64 product_id;
     int64 vendor_id;
     int32 buttons;
@@ -230,6 +230,6 @@ struct device_struct {
 #    define DEVICETYPE_KEYBOARD 2
 #    define DEVICETYPE_MOUSE 3
 
-#include "mem.h"
+#    include "mem.h"
 
 #endif // INC_COMMON_CPP

@@ -1,6 +1,7 @@
 
 #include "libqb-common.h"
 
+#include <cstring>
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -25,14 +26,21 @@ int32_t shell_call_in_progress = 0;
 static int32_t cmd_available = -1;
 
 static int32_t cmd_ok() {
+    static const char testCommandLine[] = "cmd.exe /c ver";
+
     if (cmd_available == -1) {
         static STARTUPINFOA si;
         static PROCESS_INFORMATION pi;
         ZeroMemory(&si, sizeof(si));
         si.cb = sizeof(si);
         ZeroMemory(&pi, sizeof(pi));
+
+        // Safety: lpCommandLine should not be a read-only string
+        char commandLine[sizeof(testCommandLine)];
+        std::strcpy(commandLine, testCommandLine);
+
         if (CreateProcessA(NULL,             // No module name (use command line)
-                           "cmd.exe /c ver", // Command line
+                           commandLine,      // Command line
                            NULL,             // Process handle not inheritable
                            NULL,             // Thread handle not inheritable
                            FALSE,            // Set handle inheritance to FALSE

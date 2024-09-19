@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+
 /* Extra maths functions - we do what we must because we can */
 inline constexpr double func_deg2rad(double value) { return (value * 0.01745329251994329576923690768489); }
 

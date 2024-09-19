@@ -5864,6 +5864,8 @@ uint32 sib() {
         return *reg32[i & 7] + (*reg32[i >> 3 & 7] << 3);
         break;
     }
+
+    return 0;
 }
 
 uint32 sib_mod0() {
@@ -5901,6 +5903,8 @@ uint32 sib_mod0() {
         return *reg32[i & 7] + (*reg32[i >> 3 & 7] << 3);
         break;
     }
+
+    return 0;
 }
 
 uint8 *rm8() {
@@ -6084,6 +6088,8 @@ uint8 *rm8() {
         }
         break;
     }
+
+    return nullptr;
 }
 
 uint16 *rm16() {
@@ -6271,6 +6277,8 @@ uint16 *rm16() {
         }
         break;
     }
+
+    return nullptr;
 }
 
 uint32 *rm32() {
@@ -6458,6 +6466,8 @@ uint32 *rm32() {
         }
         break;
     }
+
+    return nullptr;
 }
 
 uint8 *seg_es_ptr;
@@ -9907,7 +9917,7 @@ void sub_paint32(float x, float y, uint32 fillcol, uint32 bordercol, int32 passe
         *doff32 = fillcol;
         break;
     case 0x0:
-        doff32;
+        // doff32;
         break;
     case 0x80000000:
         *doff32 = (((*doff32 & 0xFEFEFE) + (fillcol & 0xFEFEFE)) >> 1) + (ablend128[*doff32 >> 24] << 24);
@@ -9947,7 +9957,7 @@ nextpass:
                             *doff32 = fillcol;
                             break;
                         case 0x0:
-                            doff32;
+                            // doff32;
                             break;
                         case 0x80000000:
                             *doff32 = (((*doff32 & 0xFEFEFE) + (fillcol & 0xFEFEFE)) >> 1) + (ablend128[*doff32 >> 24] << 24);
@@ -9987,7 +9997,7 @@ nextpass:
                             *doff32 = fillcol;
                             break;
                         case 0x0:
-                            doff32;
+                            // doff32;
                             break;
                         case 0x80000000:
                             *doff32 = (((*doff32 & 0xFEFEFE) + (fillcol & 0xFEFEFE)) >> 1) + (ablend128[*doff32 >> 24] << 24);
@@ -10027,7 +10037,7 @@ nextpass:
                             *doff32 = fillcol;
                             break;
                         case 0x0:
-                            doff32;
+                            // doff32;
                             break;
                         case 0x80000000:
                             *doff32 = (((*doff32 & 0xFEFEFE) + (fillcol & 0xFEFEFE)) >> 1) + (ablend128[*doff32 >> 24] << 24);
@@ -10067,7 +10077,7 @@ nextpass:
                             *doff32 = fillcol;
                             break;
                         case 0x0:
-                            doff32;
+                            // doff32;
                             break;
                         case 0x80000000:
                             *doff32 = (((*doff32 & 0xFEFEFE) + (fillcol & 0xFEFEFE)) >> 1) + (ablend128[*doff32 >> 24] << 24);
@@ -14581,6 +14591,10 @@ void sub_close(int32 i2, int32 passed) {
 
             case special_handle_type::Http:
                 libqb_http_close(x);
+                break;
+
+            case special_handle_type::Invalid:
+                // TODO: Check if anything needs to be done here
                 break;
             }
 
@@ -23454,6 +23468,10 @@ void connection_close(ptrszint i) {
         libqb_http_close(i);
         list_remove(special_handles, list_get_index(special_handles, sh));
         break;
+
+    case special_handle_type::Invalid:
+        // TODO: Check if anything needs to be done here
+        break;
     }
 }
 
@@ -23815,6 +23833,12 @@ qbs *func__connectionaddress(int32 i) {
                 qbs_set(str, qbs_add(str, qbs_new_txt("UNKNOWN")));
 
             return str;
+
+            break;
+
+        case special_handle_type::Invalid:
+            // TODO: Check if anything needs to be done here
+            break;
         }
     } // i<0
     error(52);
@@ -23867,6 +23891,11 @@ int32 func__connected(int32 i) {
 
         case special_handle_type::Http:
             return libqb_http_connected(x)? -1: 0;
+            break;
+
+        case special_handle_type::Invalid:
+            // TODO: Check if anything needs to be done here
+            break;
         }
 
     } // i<0

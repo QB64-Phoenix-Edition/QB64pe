@@ -168,8 +168,8 @@ void qbs_copy_cmem(qbs *deststr, qbs *srcstr) {
     uint32_t i;
     qbs *tqbs;
 
-    if (deststr->listi == (qbs_cmem_list_nexti - 1)) {                      // last index
-        if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
+    if (deststr->listi == (qbs_cmem_list_nexti - 1)) {                                // last index
+        if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + (intptr_t)cmem_sp)) { // space available
             memcpy(deststr->chr, srcstr->chr, srcstr->len);
             deststr->len = srcstr->len;
             qbs_cmem_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - dblock;
@@ -197,9 +197,9 @@ skippedtmpsrcindex:
     if (i != qbs_cmem_list_nexti)
         goto qbs_set_nextindex;
     // all next indexes invalid!
-    qbs_cmem_list_nexti = deststr->listi + 1;                           // adjust nexti
-    if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes acquiring srcstr's space
+    qbs_cmem_list_nexti = deststr->listi + 1;                                     // adjust nexti
+    if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + (intptr_t)cmem_sp)) { // space available
+        memmove(deststr->chr, srcstr->chr, srcstr->len);                          // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
         qbs_cmem_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - dblock;
         goto update_cmem_descriptor;
