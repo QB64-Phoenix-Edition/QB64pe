@@ -18363,7 +18363,7 @@ FUNCTION iderecentbox$
         numFiles% = numFiles% + 1: tempList$(numFiles%) = f$
         l$ = l$ + sep + f$
     WEND
-    DisposeBuf nh%
+    DisposeBuf bh%
     REDIM _PRESERVE tempList$(1 TO numFiles%)
 
     '72,19
