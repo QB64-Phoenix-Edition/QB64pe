@@ -13,6 +13,7 @@
 #include "filepath.h"
 #include "filesystem.h"
 #include "font.h"
+#include "game_controller.h"
 #include "gui.h"
 #include "hexoctbin.h"
 #include "image.h"

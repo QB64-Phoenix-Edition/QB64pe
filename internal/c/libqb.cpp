@@ -29825,7 +29825,7 @@ int main(int argc, char *argv[]) {
     // keyboard
     i++;
     devices[i].type = DEVICETYPE_KEYBOARD;
-    devices[i].name = "[KEYBOARD][BUTTON]";
+    devices[i].name = strdup("[KEYBOARD][BUTTON]"); // TODO: when re-writing game_controller.cpp use std::string
     devices[i].lastbutton = 512;
     devices[i].description = "Keyboard";
     setupDevice(&devices[i]);
@@ -29833,7 +29833,7 @@ int main(int argc, char *argv[]) {
     // mouse
     i++;
     devices[i].type = DEVICETYPE_MOUSE;
-    devices[i].name = "[MOUSE][BUTTON][AXIS][WHEEL]";
+    devices[i].name = strdup("[MOUSE][BUTTON][AXIS][WHEEL]"); // TODO: when re-writing game_controller.cpp use std::string
     devices[i].lastbutton = 3;
     devices[i].lastaxis = 2;
     devices[i].lastwheel = 3;

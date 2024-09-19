@@ -5,9 +5,10 @@
 
 // #define GAME_CONTROLLER_DEBUG
 #include "game_controller.h"
-#include "../../../common.h"
 #include "event.h"
 #include "libstem_gamepad/Gamepad.h"
+#include <cstdlib>
+#include <cstring>
 
 static void onButtonDown(struct Gamepad_device *device, unsigned int buttonID, double timestamp, void *context) {
     // buttonId is base 0
@@ -53,9 +54,9 @@ static void onButtonDown(struct Gamepad_device *device, unsigned int buttonID, d
                         d->STRIG_button_pressed[button] = 1;
                     }
                 } // js index
-            }     // type==1
-        }         // used
-    }             // di
+            } // type==1
+        } // used
+    } // di
 }
 
 static void onButtonUp(struct Gamepad_device *device, unsigned int buttonID, double timestamp, void *context) {
@@ -78,9 +79,9 @@ static void onButtonUp(struct Gamepad_device *device, unsigned int buttonID, dou
                     commitDeviceEvent(d);
 
                 } // js index
-            }     // type==1
-        }         // used
-    }             // di
+            } // type==1
+        } // used
+    } // di
 }
 
 static void onAxisMoved(struct Gamepad_device *device, unsigned int axisID, float value, float lastValue, double timestamp, void *context) {
@@ -115,9 +116,9 @@ static void onAxisMoved(struct Gamepad_device *device, unsigned int axisID, floa
                     commitDeviceEvent(d);
 
                 } // js index
-            }     // type==1
-        }         // used
-    }             // di
+            } // type==1
+        } // used
+    } // di
 }
 
 static void onDeviceAttached(struct Gamepad_device *device, void *context) {
@@ -125,7 +126,7 @@ static void onDeviceAttached(struct Gamepad_device *device, void *context) {
     fprintf(stderr, "Device ID %u attached (vendor = 0x%X; product = 0x%X) with context %p\n", device->deviceID, device->vendorID, device->productID, context);
 #endif
 
-    int i, x, x2;
+    int i;
 
     // re-acquire a potentially dropped device in its original index
     for (i = 1; i <= device_last; i++) {
@@ -162,7 +163,7 @@ static void onDeviceAttached(struct Gamepad_device *device, void *context) {
     // add new device
     i = device_last + 1;
     if (i > device_max) {
-        device_struct *devices = (device_struct *)realloc(devices, (device_max * 2 + 1) * sizeof(device_struct));
+        devices = (device_struct *)realloc(devices, (device_max * 2 + 1) * sizeof(device_struct));
         device_max *= 2;
     }
     memset(&devices[i], 0, sizeof(device_struct));
