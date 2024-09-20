@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <string.h>
 
-#include "qbs.h"
 #include "filepath.h"
+#include "qbs.h"
 
 const char *filepath_get_filename(const char *path) {
     const char *fileName;
@@ -100,7 +100,7 @@ const char *filepath_fix_directory(char *path) {
 /// @param path The path to fix (contents may be changed)
 /// @return Returns the C-string for convenience
 const char *filepath_fix_directory(qbs *path) {
-    for (size_t i = 0; i < path->len; i++) {
+    for (size_t i = 0; i < size_t(path->len); i++) {
 #ifdef QB64_WINDOWS
         if (path->chr[i] == '/')
             path->chr[i] = '\\';

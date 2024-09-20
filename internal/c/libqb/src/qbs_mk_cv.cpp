@@ -1,9 +1,9 @@
 
 #include "libqb-common.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #include "error_handle.h"
 #include "qbs-mk-cv.h"
@@ -489,7 +489,7 @@ long double string2f(qbs *str) {
 }
 
 intptr_t string2o(qbs *str) {
-    if (str->len < sizeof(intptr_t)) {
+    if (size_t(str->len) < sizeof(intptr_t)) {
         error(5);
         return 0;
     } else {
@@ -498,7 +498,7 @@ intptr_t string2o(qbs *str) {
 }
 
 uintptr_t string2uo(qbs *str) {
-    if (str->len < sizeof(uintptr_t)) {
+    if (size_t(str->len) < sizeof(uintptr_t)) {
         error(5);
         return 0;
     } else {
@@ -508,7 +508,7 @@ uintptr_t string2uo(qbs *str) {
 
 uint64_t string2ubit(qbs *str, uint32_t bsize) {
     int64_t bmask;
-    if (str->len < ((bsize + 7) >> 3)) {
+    if (uint32_t(str->len) < ((bsize + 7) >> 3)) {
         error(5);
         return 0;
     }
@@ -518,7 +518,7 @@ uint64_t string2ubit(qbs *str, uint32_t bsize) {
 
 int64_t string2bit(qbs *str, uint32_t bsize) {
     int64_t bmask, bval64;
-    if (str->len < ((bsize + 7) >> 3)) {
+    if (uint32_t(str->len) < ((bsize + 7) >> 3)) {
         error(5);
         return 0;
     }

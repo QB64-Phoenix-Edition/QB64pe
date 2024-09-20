@@ -1,6 +1,7 @@
 
 #include "libqb-common.h"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,8 +17,8 @@ void qbs_copy_cmem(qbs *deststr, qbs *srcstr);
 void qbs_create_cmem(int32_t size, uint8_t tmp, qbs *newstr);
 
 static qbs *qbs_malloc = (qbs *)calloc(sizeof(qbs) * 65536, 1); //~1MEG
-static uint32_t qbs_malloc_next = 0;                              // the next idex in qbs_malloc to use
-static intptr_t *qbs_malloc_freed = (intptr_t *)malloc(sizeof (*qbs_malloc_freed) * 65536);
+static uint32_t qbs_malloc_next = 0;                            // the next idex in qbs_malloc to use
+static intptr_t *qbs_malloc_freed = (intptr_t *)malloc(sizeof(*qbs_malloc_freed) * 65536);
 static uint32_t qbs_malloc_freed_size = 65536;
 static uint32_t qbs_malloc_freed_num = 0; // number of freed qbs descriptors
 
@@ -51,7 +52,7 @@ static void qbs_free_descriptor(qbs *str) {
     // MLP //qbshlp1--;
     if (qbs_malloc_freed_num == qbs_malloc_freed_size) {
         qbs_malloc_freed_size *= 2;
-        qbs_malloc_freed = (intptr_t *)realloc(qbs_malloc_freed, qbs_malloc_freed_size * sizeof (*qbs_malloc_freed));
+        qbs_malloc_freed = (intptr_t *)realloc(qbs_malloc_freed, qbs_malloc_freed_size * sizeof(*qbs_malloc_freed));
         if (!qbs_malloc_freed)
             error(508);
     }
@@ -112,7 +113,6 @@ void qbs_free(qbs *str) {
         }
     }
     qbs_free_descriptor(str);
-    return;
 }
 
 static void qbs_concat_list() {
@@ -134,26 +134,24 @@ static void qbs_concat_list() {
     // if string listings are taking up more than half of the list array double the list array's size
     if (qbs_list_nexti >= (qbs_list_lasti / 2)) {
         qbs_list_lasti *= 2;
-        qbs_list = (intptr_t *)realloc(qbs_list, (qbs_list_lasti + 1) * sizeof (*qbs_list));
+        qbs_list = (intptr_t *)realloc(qbs_list, (qbs_list_lasti + 1) * sizeof(*qbs_list));
         if (!qbs_list)
             error(510);
     }
-    return;
 }
 
 static void qbs_tmp_concat_list() {
     if (qbs_tmp_list_nexti >= (qbs_tmp_list_lasti / 2)) {
         qbs_tmp_list_lasti *= 2;
-        qbs_tmp_list = (intptr_t *)realloc(qbs_tmp_list, (qbs_tmp_list_lasti + 1) * sizeof (*qbs_tmp_list));
+        qbs_tmp_list = (intptr_t *)realloc(qbs_tmp_list, (qbs_tmp_list_lasti + 1) * sizeof(*qbs_tmp_list));
         if (!qbs_tmp_list)
             error(511);
     }
-    return;
 }
 
 static void qbs_concat(uint32_t bytesrequired) {
     // this does not change indexing, only ->chr pointers and the location of their data
-    static int32_t i;
+    static uint32_t i;
     static uint8_t *dest;
     static qbs *tqbs;
     dest = (uint8_t *)qbs_data;
@@ -188,9 +186,7 @@ static void qbs_concat(uint32_t bytesrequired) {
             }
         }
     }
-    return;
 }
-
 
 qbs *qbs_new_txt(const char *txt) {
     qbs *newstr;
@@ -291,7 +287,7 @@ void qbs_maketmp(qbs *str) {
 }
 
 qbs *qbs_set(qbs *deststr, qbs *srcstr) {
-    int32_t i;
+    uint32_t i;
     qbs *tqbs;
     // fixed deststr
     if (deststr->fixed) {
@@ -341,8 +337,8 @@ qbs *qbs_set(qbs *deststr, qbs *srcstr) {
     }
 
     // not in cmem
-    if (deststr->listi == (qbs_list_nexti - 1)) {                                             // last index
-        if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + qbs_data_size)) { // space available
+    if (deststr->listi == (qbs_list_nexti - 1)) {                                                       // last index
+        if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + (intptr_t)qbs_data_size)) { // space available
             memcpy(deststr->chr, srcstr->chr, srcstr->len);
             deststr->len = srcstr->len;
             qbs_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - (intptr_t)qbs_data;
@@ -371,9 +367,9 @@ skippedtmpsrcindex2:
         goto qbs_set_nextindex2;
     // all next indexes invalid!
 
-    qbs_list_nexti = deststr->listi + 1;                                                  // adjust nexti
-    if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + qbs_data_size)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                                  // overlap possible due to sometimes acquiring srcstr's space
+    qbs_list_nexti = deststr->listi + 1;                                                            // adjust nexti
+    if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + (intptr_t)qbs_data_size)) { // space available
+        memmove(deststr->chr, srcstr->chr, srcstr->len); // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
         qbs_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - (intptr_t)qbs_data;
         goto qbs_set_return;
@@ -526,121 +522,134 @@ qbs *qbs_right(qbs *str, int32_t l) {
     return tqbs;
 }
 
-void set_qbs_size(intptr_t *target_qbs, int32_t newlength) {
-    qbs_set((qbs *)(*target_qbs), func_space(newlength));
-    return;
-}
-
 int32_t qbs_equal(qbs *str1, qbs *str2) {
     if (str1->len != str2->len)
         return 0;
+
     if (memcmp(str1->chr, str2->chr, str1->len) == 0)
         return -1;
+
     return 0;
 }
 
 int32_t qbs_notequal(qbs *str1, qbs *str2) {
     if (str1->len != str2->len)
         return -1;
+
     if (memcmp(str1->chr, str2->chr, str1->len) == 0)
         return 0;
+
     return -1;
 }
 
 int32_t qbs_greaterthan(qbs *str2, qbs *str1) {
     // same process as for lessthan; we just reverse the string order
-    int32_t i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len;
-    if (!l1)
+    auto l1 = str1->len;
+    auto l2 = str2->len;
+
+    if (!l1) {
         if (l2)
             return -1;
         else
             return 0;
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(str1->chr, str2->chr, limit);
+    }
+
+    auto limit = std::min(l1, l2);
+
+    auto i = memcmp(str1->chr, str2->chr, limit);
+
     if (i < 0)
         return -1;
+
     if (i > 0)
         return 0;
+
     if (l1 < l2)
         return -1;
+
     return 0;
 }
 
 int32_t qbs_lessthan(qbs *str1, qbs *str2) {
-    int32_t i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len; // no need to get the length of these strings multiple times.
-    if (!l1)
+    auto l1 = str1->len;
+    auto l2 = str2->len; // no need to get the length of these strings multiple times.
+
+    if (!l1) {
         if (l2)
             return -1;
         else
             return 0; // if one is a null string we known the answer already.
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;                          // our limit is going to be the length of the smallest string.
-    i = memcmp(str1->chr, str2->chr, limit); // check only to the length of the shortest string
+    }
+
+    auto limit = std::min(l1, l2); // our limit is going to be the length of the smallest string.
+
+    auto i = memcmp(str1->chr, str2->chr, limit); // check only to the length of the shortest string
+
     if (i < 0)
         return -1; // if the number is smaller by this point, say so
+
     if (i > 0)
         return 0; // if it's larger by this point, say so
+
     // if the number is the same at this point, compare length.
     // if the length of the first one is smaller, then the string is smaller. Otherwise the second one is the same string, or longer.
     if (l1 < l2)
         return -1;
+
     return 0;
 }
 
 int32_t qbs_lessorequal(qbs *str1, qbs *str2) {
     // same process as lessthan, but we check to see if the lengths are equal here also.
-    int32_t i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len;
+    auto l1 = str1->len;
+    auto l2 = str2->len;
+
     if (!l1)
         return -1; // if the first string has no length then it HAS to be smaller or equal to the second
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(str1->chr, str2->chr, limit);
+
+    auto limit = std::min(l1, l2);
+
+    auto i = memcmp(str1->chr, str2->chr, limit);
+
     if (i < 0)
         return -1;
+
     if (i > 0)
         return 0;
+
     if (l1 <= l2)
         return -1;
+
     return 0;
 }
 
 int32_t qbs_greaterorequal(qbs *str2, qbs *str1) {
     // same process as for lessorequal; we just reverse the string order
-    int32_t i, limit, l1, l2;
-    l1 = str1->len;
-    l2 = str2->len;
+    auto l1 = str1->len;
+    auto l2 = str2->len;
+
     if (!l1)
         return -1;
-    if (l1 <= l2)
-        limit = l1;
-    else
-        limit = l2;
-    i = memcmp(str1->chr, str2->chr, limit);
+
+    auto limit = std::min(l1, l2);
+
+    auto i = memcmp(str1->chr, str2->chr, limit);
+
     if (i < 0)
         return -1;
+
     if (i > 0)
         return 0;
+
     if (l1 <= l2)
         return -1;
+
     return 0;
 }
 
 int32_t qbs_asc(qbs *str, uint32_t i) { // uint32 speeds up checking for negative
     i--;
-    if (i < str->len) {
+    if (i < uint32_t(str->len)) {
         return str->chr[i];
     }
     error(5);
@@ -654,10 +663,6 @@ int32_t qbs_asc(qbs *str) {
     return 0;
 }
 
-int32_t qbs_len(qbs *str) {
-    return str->len;
-}
-
 qbs *func_chr(int32_t value) {
     qbs *tqbs;
     if ((value < 0) || (value > 255)) {
@@ -669,4 +674,3 @@ qbs *func_chr(int32_t value) {
     }
     return tqbs;
 }
-

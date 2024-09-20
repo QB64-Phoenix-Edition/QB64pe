@@ -47,7 +47,7 @@ void qbs_cmem_concat_list() {
     // if string listings are taking up more than half of the list array double the list array's size
     if (qbs_cmem_list_nexti >= (qbs_cmem_list_lasti / 2)) {
         qbs_cmem_list_lasti *= 2;
-        qbs_cmem_list = (intptr_t *)realloc(qbs_cmem_list, (qbs_cmem_list_lasti + 1) * sizeof (*qbs_cmem_list));
+        qbs_cmem_list = (intptr_t *)realloc(qbs_cmem_list, (qbs_cmem_list_lasti + 1) * sizeof(*qbs_cmem_list));
         if (!qbs_cmem_list)
             error(509);
     }
@@ -59,7 +59,7 @@ void qbs_cmem_concat_list() {
 // so bytesrequired is only passed to possibly generate an error, or not generate one
 void qbs_concat_cmem(uint32_t bytesrequired) {
     // this does not change indexing, only ->chr pointers and the location of their data
-    int32_t i;
+    uint32_t i;
     uint8_t *dest;
     qbs *tqbs;
     dest = (uint8_t *)dblock;
@@ -126,6 +126,9 @@ void qbs_create_cmem(int32_t size, uint8_t tmp, qbs *newstr) {
 //
 // The return indicates whether it was successful
 bool qbs_new_fixed_cmem(uint8_t *offset, uint32_t size, uint8_t tmp, qbs *newstr) {
+    (void)size;
+    (void)tmp;
+
     // is it in DBLOCK?
     if ((offset > (cmem + 1280)) && (offset < (cmem + 66816))) {
         // alloc string descriptor in DBLOCK (4 bytes)
@@ -162,11 +165,11 @@ void qbs_move_cmem(qbs *deststr, qbs *srcstr) {
 }
 
 void qbs_copy_cmem(qbs *deststr, qbs *srcstr) {
-    int32_t i;
+    uint32_t i;
     qbs *tqbs;
 
-    if (deststr->listi == (qbs_cmem_list_nexti - 1)) {                      // last index
-        if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
+    if (deststr->listi == (qbs_cmem_list_nexti - 1)) {                                // last index
+        if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + (intptr_t)cmem_sp)) { // space available
             memcpy(deststr->chr, srcstr->chr, srcstr->len);
             deststr->len = srcstr->len;
             qbs_cmem_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - dblock;
@@ -194,9 +197,9 @@ skippedtmpsrcindex:
     if (i != qbs_cmem_list_nexti)
         goto qbs_set_nextindex;
     // all next indexes invalid!
-    qbs_cmem_list_nexti = deststr->listi + 1;                           // adjust nexti
-    if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + cmem_sp)) { // space available
-        memmove(deststr->chr, srcstr->chr, srcstr->len);                // overlap possible due to sometimes acquiring srcstr's space
+    qbs_cmem_list_nexti = deststr->listi + 1;                                     // adjust nexti
+    if (((intptr_t)deststr->chr + srcstr->len) <= (dblock + (intptr_t)cmem_sp)) { // space available
+        memmove(deststr->chr, srcstr->chr, srcstr->len);                          // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
         qbs_cmem_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - dblock;
         goto update_cmem_descriptor;

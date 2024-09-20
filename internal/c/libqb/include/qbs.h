@@ -12,21 +12,21 @@ struct qbs_field {
 };
 
 struct qbs {
-    uint8_t *chr;    // a 32 bit pointer to the string's data
-    int32_t len;     // must be signed for comparisons against signed int32s
+    uint8_t *chr; // a 32 bit pointer to the string's data
+    int32_t len;  // must be signed for comparisons against signed int32s
 
     uint8_t in_cmem; // set to 1 if in the conventional memory DBLOCK
     uint16_t *cmem_descriptor;
     uint16_t cmem_descriptor_offset;
 
-    uint32_t listi;    // the index in the list of strings that references it
+    uint32_t listi; // the index in the list of strings that references it
 
     uint8_t tmp;       // set to 1 if the string can be deleted immediately after being processed
     uint32_t tmplisti; // the index in the list of strings that references it
 
-    uint8_t fixed;     // fixed length string
-    uint8_t readonly;  // set to 1 if string is read only
-                       //
+    uint8_t fixed;    // fixed length string
+    uint8_t readonly; // set to 1 if string is read only
+
     qbs_field *field;
 };
 
@@ -37,9 +37,6 @@ qbs *qbs_new_txt_len(const char *txt, int32_t len);
 qbs *qbs_new_fixed(uint8_t *offset, uint32_t size, uint8_t tmp);
 qbs *qbs_add(qbs *, qbs *);
 qbs *qbs_set(qbs *, qbs *);
-
-// Called by vWatch
-void set_qbs_size(intptr_t *target_qbs, int32_t newlength);
 
 void qbs_free(qbs *str);
 
@@ -71,7 +68,8 @@ int32_t qbs_greaterorequal(qbs *str2, qbs *str1);
 
 int32_t qbs_asc(qbs *str, uint32_t i);
 int32_t qbs_asc(qbs *str);
-int32_t qbs_len(qbs *str);
+
+inline int32_t qbs_len(qbs *str) { return str->len; }
 
 // FIXME: Usages of these outside of qbx.c (and qbs_cleanup()) need to be removed.
 extern intptr_t *qbs_tmp_list;
@@ -102,5 +100,8 @@ qbs *qbs_rtrim(qbs *str);
 qbs *qbs__trim(qbs *str);
 int32_t func__str_nc_compare(qbs *s1, qbs *s2);
 int32_t func__str_compare(qbs *s1, qbs *s2);
+
+// Called by vWatch
+inline void set_qbs_size(intptr_t *target_qbs, int32_t newlength) { qbs_set((qbs *)(*target_qbs), func_space(newlength)); }
 
 #endif

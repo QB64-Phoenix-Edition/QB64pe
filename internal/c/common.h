@@ -97,8 +97,8 @@
 
 #    endif
 
-#include "error_handle.h"
-#include "qbs.h"
+#    include "error_handle.h"
+#    include "qbs.h"
 
 struct img_struct {
     void *lock_offset;
@@ -181,55 +181,11 @@ struct onkey_struct {
     qbs *text;
 };
 
-struct onstrig_struct {
-    uint32 id;    // the event ID to trigger (0=no event)
-    int64 pass;   // the value to pass to the triggered event (only applicable to ON ... CALL ...(x)
-    uint8 active; // 0=OFF, 1=ON, 2=STOP
-    uint8 state;  // 0=untriggered,1=triggered,2=in progress(TIMER only),2+=multiple events queued(KEY only)
-};
-
 struct byte_element_struct {
     uint64 offset;
     int32 length;
 };
 
-struct device_struct {
-    int32 used;
-    int32 type;
-    // 0=Unallocated
-    // 1=Joystick/Gamepad
-    // 2=Keyboard
-    // 3=Mouse
-    char *name;
-    int32 connected;
-    int32 lastbutton;
-    int32 lastaxis;
-    int32 lastwheel;
-    //--------------
-    int32 max_events;
-    int32 queued_events;
-    uint8 *events; // the structure and size of the events depends greatly on the device and its capabilities
-    int32 event_size;
-    //--------------
-    uint8 STRIG_button_pressed[256]; // checked and cleared by the STRIG function
-    //--------------
-    void *handle_pointer; // handle as pointer
-    int64 handle_int;     // handle as integer
-    char *description;    // description provided by manufacturer
-    int64 product_id;
-    int64 vendor_id;
-    int32 buttons;
-    int32 axes;
-    int32 balls;
-    int32 hats;
-};
-
-// device_struct constants
-#    define QUEUED_EVENTS_LIMIT 1024
-#    define DEVICETYPE_CONTROLLER 1
-#    define DEVICETYPE_KEYBOARD 2
-#    define DEVICETYPE_MOUSE 3
-
-#include "mem.h"
+#    include "mem.h"
 
 #endif // INC_COMMON_CPP
