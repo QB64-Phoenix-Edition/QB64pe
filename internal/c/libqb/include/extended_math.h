@@ -1,5 +1,6 @@
 #pragma once
 
+#include "error_handle.h"
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>

@@ -883,7 +883,7 @@ extensions_ready:
     if (!f_path->len) { // use current path if no path specified
         defaultpath = 1;
         // get current path (add \ if necessary)
-        i = GetCurrentDirectory(4096, (char *)path_data);
+        i = GetCurrentDirectoryA(4096, (char *)path_data);
         qbs_set(f_path, func_space(i + 1));
         memcpy(f_path->chr, path_data, i);
         if ((f_path->chr[i - 1] != 92) && (f_path->chr[i - 1] != 47)) {
@@ -894,7 +894,7 @@ extensions_ready:
     }
 
     // get current program's exe's path (including "\")
-    GetModuleFileName(NULL, (char *)path_data, 4096);
+    GetModuleFileNameA(NULL, (char *)path_data, 4096);
     i = strlen((char *)path_data);
     for (i2 = i - 1; i2 >= 0; i2--) {
         x = path_data[i2];

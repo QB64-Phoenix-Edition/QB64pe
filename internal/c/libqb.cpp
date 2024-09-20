@@ -25450,7 +25450,7 @@ void sub__printimage(int32 i) {
     static LPSTR szPrinterName = NULL;
     DWORD dwNameLen;
     HDC dc;
-    DOCINFO di;
+    DOCINFOA di;
     uint32 w, h;
     int32 x, y;
     int32 i2;
@@ -25477,13 +25477,13 @@ void sub__printimage(int32 i) {
     if (!szPrinterName)
         szPrinterName = (LPSTR)malloc(65536);
     dwNameLen = 65536;
-    GetDefaultPrinter(szPrinterName, &dwNameLen);
-    if ((dc = CreateDC(TEXT("WINSPOOL"), szPrinterName, NULL, NULL)) == NULL)
+    GetDefaultPrinterA(szPrinterName, &dwNameLen);
+    if ((dc = CreateDCA("WINSPOOL", szPrinterName, NULL, NULL)) == NULL)
         goto failed;
     ZeroMemory(&di, sizeof(DOCINFO));
     di.cbSize = sizeof(DOCINFO);
-    di.lpszDocName = TEXT("Document");
-    if (StartDoc(dc, &di) <= 0) {
+    di.lpszDocName = "Document";
+    if (StartDocA(dc, &di) <= 0) {
         DeleteDC(dc);
         goto failed;
     }
@@ -26938,7 +26938,7 @@ void sub__consoletitle(qbs *s) {
     memcpy(title, s->chr, s->len);
     if (console) {
         if (console_active) {
-            SetConsoleTitle(title);
+            SetConsoleTitleA(title);
             Sleep(40);
         }
     }
@@ -29438,7 +29438,7 @@ qbs *func__droppedfile(int32 fileIndex, int32 passed) {
             return qbs_new_txt("");
         }
         // fetch file[index] from hdrop:
-        if (DragQueryFile(hdrop, index, szNextFile, MAX_PATH) > 0) {
+        if (DragQueryFileA(hdrop, index, szNextFile, MAX_PATH) > 0) {
             if ((!passed) && (index == totalDroppedFiles - 1)) {
                 // last file read sequentially
                 sub__finishdrop();
@@ -29686,7 +29686,7 @@ int main(int argc, char *argv[]) {
 // http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 #if defined(QB64_WINDOWS) && !defined(QB64_MICROSOFT)
     static char *exepath = (char *)malloc(65536);
-    GetModuleFileName(NULL, exepath, 65536);
+    GetModuleFileNameA(NULL, exepath, 65536);
     i = strlen(exepath);
     for (i2 = i - 1; i2 >= 0; i2--) {
         x = exepath[i2];
