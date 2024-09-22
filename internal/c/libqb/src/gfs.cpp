@@ -1117,10 +1117,12 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end) {
 #endif
 
 #ifdef GFS_WINDOWS
-    int64_t bytes;
-    bytes = offset_end;
+    auto bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
+
+    auto f = &gfs_file[i];
+
     if (!LockFile(f->win_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
         // failed
         auto e = GetLastError();
@@ -1156,10 +1158,12 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
 #endif
 
 #ifdef GFS_WINDOWS
-    int64_t bytes;
-    bytes = offset_end;
+    auto bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
+
+    auto f = &gfs_file[i];
+
     if (!UnlockFile(f->win_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
         // failed
         auto e = GetLastError();

@@ -1153,7 +1153,7 @@ void sub_shell2(qbs *str, int32_t passed) { // HIDE
 #endif
 
 #ifdef QB64_WINDOWS
-shell_complete:
+shell_complete:;
 #endif
 }
 
@@ -1342,7 +1342,7 @@ void sub_shell3(qbs *str, int32_t passed) { //_DONTWAIT
 #endif
 
 #ifdef QB64_WINDOWS
-shell_complete:
+shell_complete:;
 #endif
 } // SHELL _DONTWAIT
 
@@ -1526,7 +1526,6 @@ void sub_shell4(qbs *str, int32_t passed) { //_DONTWAIT & _HIDE
 #endif
 
 #ifdef QB64_WINDOWS
-shell_complete:
+shell_complete:;
 #endif
-
 } //_DONTWAIT & _HIDE
