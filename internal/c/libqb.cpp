@@ -1854,46 +1854,6 @@ void GLUT_DISPLAY_REQUEST();
 
 extern qbs *WHATISMYIP();
 
-// directory access defines
-#define EPERM 1
-#define ENOENT 2
-#define ESRCH 3
-#define EINTR 4
-#define EIO 5
-#define ENXIO 6
-#define E2BIG 7
-#define ENOEXEC 8
-#define EBADF 9
-#define ECHILD 10
-#define EAGAIN 11
-#define ENOMEM 12
-#define EACCES 13
-#define EFAULT 14
-#define EBUSY 16
-#define EEXIST 17
-#define EXDEV 18
-#define ENODEV 19
-#define ENOTDIR 20
-#define EISDIR 21
-#define EINVAL 22
-#define ENFILE 23
-#define EMFILE 24
-#define ENOTTY 25
-#define EFBIG 27
-#define ENOSPC 28
-#define ESPIPE 29
-#define EROFS 30
-#define EMLINK 31
-#define EPIPE 32
-#define EDOM 33
-#define ERANGE 34
-#define EDEADLK 36
-#define ENAMETOOint32 38
-#define ENOLCK 39
-#define ENOSYS 40
-#define ENOTEMPTY 41
-#define EILSEQ 42
-
 int32 lprint = 0; // set to 1 during LPRINT operations
 int32 lprint_image = 0;
 double lprint_last = 0;    // TIMER(0.001) value at last time LPRINT was used
@@ -3550,7 +3510,7 @@ void convert_text_to_utf16(int32 fonthandle, void *buf, int32 size) {
         unicode16_buf = (uint16 *)malloc(unicode16_buf_size);
     }
     // convert text
-    if ((fontflags[fonthandle] & FONT_LOAD_UNICODE) && (fonthandle != NULL)) { // unicode font
+    if ((fontflags[fonthandle] & FONT_LOAD_UNICODE) && fonthandle) { // unicode font
         if (size == 1)
             size = 4;
         convert_unicode(32, buf, size, 16, unicode16_buf);
@@ -13192,17 +13152,9 @@ qbs_input_sep_arg_done:
                 c->chr[0] = 0;
                 qbs_set(qbs_input_arguements[argn], qbs_add(qbs_input_arguements[argn], c));
                 if (qbs_input_variabletypes[argn] & ISUNSIGNED) {
-#ifdef QB64_WINDOWS
-                    sscanf((char *)qbs_input_arguements[argn]->chr, "%I64u", (uint64 *)qbs_input_variableoffsets[argn]);
-#else
-                    sscanf((char *)qbs_input_arguements[argn]->chr, "%llu", (uint64 *)qbs_input_variableoffsets[argn]);
-#endif
+                    sscanf((char *)qbs_input_arguements[argn]->chr, "%" PRIu64, (uint64_t *)qbs_input_variableoffsets[argn]);
                 } else {
-#ifdef QB64_WINDOWS
-                    sscanf((char *)qbs_input_arguements[argn]->chr, "%I64i", (int64 *)qbs_input_variableoffsets[argn]);
-#else
-                    sscanf((char *)qbs_input_arguements[argn]->chr, "%lli", (int64 *)qbs_input_variableoffsets[argn]);
-#endif
+                    sscanf((char *)qbs_input_arguements[argn]->chr, "%" PRId64, (int64_t *)qbs_input_variableoffsets[argn]);
                 }
                 goto typechecked;
             }
@@ -13987,12 +13939,8 @@ finish:;
         }
         built_number[i] = 69;
         i++; // E
-// add exponent
-#ifdef QB64_WINDOWS
-        i2 = sprintf((char *)&built_number[i], "%I64i", exponent_value);
-#else
-        i2 = sprintf((char *)&built_number[i], "%lli", exponent_value);
-#endif
+             // add exponent
+        i2 = sprintf((char *)&built_number[i], "%" PRId64, exponent_value);
         i = i + i2;
     } else {
         built_number[i] = 48;
@@ -14986,11 +14934,7 @@ int32 n_float() {
     }
     built[i] = 69;
     i++; // E
-#ifdef QB64_WINDOWS
-    i2 = sprintf((char *)&built[i], "%I64i", n_exp);
-#else
-    i2 = sprintf((char *)&built[i], "%lli", n_exp);
-#endif
+    i2 = sprintf((char *)&built[i], "%" PRId64, n_exp);
     i = i + i2;
     built[i] = 0; // NULL terminate for sscanf
 
@@ -18104,7 +18048,7 @@ void sub_bsave(qbs *filename, int32 offset, int32 size) {
         size &= 0xFFFF;
     qbs_set(tqbs, qbs_add(filename, nullt)); // prepare null-terminated filename
     fh.open(filepath_fix_directory(tqbs), std::ios::binary | std::ios::out);
-    if (fh.is_open() == NULL) {
+    if (!fh.is_open()) {
         error(64);
         return;
     } // Bad file name
@@ -18145,7 +18089,7 @@ void sub_bload(qbs *filename, int32 offset, int32 passed) {
     }
     qbs_set(tqbs, qbs_add(filename, nullt)); // prepare null-terminated filename
     fh.open(filepath_fix_directory(tqbs), std::ios::binary | std::ios::in);
-    if (fh.is_open() == NULL) {
+    if (!fh.is_open()) {
         error(53);
         return;
     } // File not found
@@ -21739,11 +21683,7 @@ invalid_string_format:
 int32 print_using_integer64(qbs *format, int64 value, int32 start, qbs *output) {
     if (is_error_pending())
         return 0;
-#ifdef QB64_WINDOWS
-    pu_ndig = sprintf((char *)pu_buf, "% I64i", value);
-#else
-    pu_ndig = sprintf((char *)pu_buf, "% lli", value);
-#endif
+    pu_ndig = sprintf((char *)pu_buf, "% " PRId64, value);
     if (pu_buf[0] == 45)
         pu_neg = 1;
     else
@@ -21758,11 +21698,7 @@ int32 print_using_integer64(qbs *format, int64 value, int32 start, qbs *output) 
 int32 print_using_uinteger64(qbs *format, uint64 value, int32 start, qbs *output) {
     if (is_error_pending())
         return 0;
-#ifdef QB64_WINDOWS
-    pu_ndig = sprintf((char *)pu_dig, "%I64u", value);
-#else
-    pu_ndig = sprintf((char *)pu_dig, "%llu", value);
-#endif
+    pu_ndig = sprintf((char *)pu_dig, "%" PRIu64, value);
     pu_neg = 0;
     pu_dp = 0;
     start = print_using(format, start, output, NULL);
@@ -23141,7 +23077,7 @@ void *tcp_host_open(int64 port) {
     int sockfd;
     char str_port[6];
     int yes = 1;
-    snprintf(str_port, 6, "%d", port);
+    snprintf(str_port, 6, "%" PRId64, port);
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -23231,7 +23167,7 @@ void *tcp_client_open(uint8 *host, int64 port) {
     struct addrinfo hints, *servinfo, *p;
     int sockfd;
     char str_port[6];
-    snprintf(str_port, 6, "%d", port);
+    snprintf(str_port, 6, "%" PRId64, port);
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -23952,13 +23888,13 @@ void sub__allowfullscreen(int32 method, int32 smooth) {
     fullscreen_allowedmode = method;
     if (method == 3 || method == 5)
         fullscreen_allowedmode = -1;
-    if (method == 4 || method == NULL)
+    if (method == 4 || method == 0)
         fullscreen_allowedmode = 0;
 
     fullscreen_allowedsmooth = smooth;
     if (smooth == 2 || smooth == 4)
         fullscreen_allowedsmooth = -1;
-    if (smooth == 3 || smooth == NULL)
+    if (smooth == 3 || smooth == 0)
         fullscreen_allowedsmooth = 0;
 }
 

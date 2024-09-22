@@ -47,14 +47,14 @@ void sub__memfree(void *mem) {
     // 1:malloc: memory will be freed if it still exists
     // 2:images: will not be freed, no action will be taken
     // exists?
-    if (((mem_block *)(mem))->lock_offset == NULL) {
+    if (((mem_block *)(mem))->lock_offset == 0) {
         error(309);
         return;
     }
     if (((mem_lock *)(((mem_block *)(mem))->lock_offset))->id != ((mem_block *)(mem))->lock_id) {
         error(307);
         return;
-    }                                                                   // memory has been freed
+    } // memory has been freed
     if (((mem_lock *)(((mem_block *)(mem))->lock_offset))->type == 0) { // no security
         free_mem_lock((mem_lock *)((mem_block *)(mem))->lock_offset);
     }
@@ -131,7 +131,7 @@ mem_block func__memnew(intptr_t bytes) {
 int32_t func__memexists(void *void_blk) {
     static mem_block *blk;
     blk = (mem_block *)void_blk;
-    if (((mem_block *)(blk))->lock_offset == NULL)
+    if (((mem_block *)(blk))->lock_offset == 0)
         return 0;
     if (((mem_lock *)(((mem_block *)(blk))->lock_offset))->id == ((mem_block *)(blk))->lock_id)
         return -1;
@@ -140,7 +140,7 @@ int32_t func__memexists(void *void_blk) {
 
 void *func__memget(mem_block *blk, intptr_t off, intptr_t bytes) {
     // checking A
-    if (((mem_block *)(blk))->lock_offset == NULL) {
+    if (((mem_block *)(blk))->lock_offset == 0) {
         error(309);
         goto fail;
     }
@@ -180,7 +180,7 @@ void sub__memfill_nochecks(intptr_t doff, intptr_t dbytes, intptr_t soff, intptr
 }
 
 void sub__memfill(mem_block *dblk, intptr_t doff, intptr_t dbytes, intptr_t soff, intptr_t sbytes) {
-    if (((mem_block *)(dblk))->lock_offset == NULL) {
+    if (((mem_block *)(dblk))->lock_offset == 0) {
         error(309);
         return;
     }
@@ -229,13 +229,13 @@ void sub__memfill_nochecks_OFFSET(intptr_t doff, intptr_t dbytes, intptr_t val) 
 
 void sub__memcopy(void *sblk, intptr_t soff, intptr_t bytes, void *dblk, intptr_t doff) {
     // checking A
-    if (((mem_block *)(sblk))->lock_offset == NULL || ((mem_block *)(dblk))->lock_offset == NULL) {
+    if (((mem_block *)(sblk))->lock_offset == 0 || ((mem_block *)(dblk))->lock_offset == 0) {
         // error reporting
-        if (((mem_block *)(sblk))->lock_offset == NULL && ((mem_block *)(dblk))->lock_offset == NULL) {
+        if (((mem_block *)(sblk))->lock_offset == 0 && ((mem_block *)(dblk))->lock_offset == 0) {
             error(312);
             return;
         }
-        if (((mem_block *)(sblk))->lock_offset == NULL) {
+        if (((mem_block *)(sblk))->lock_offset == 0) {
             error(310);
             return;
         }

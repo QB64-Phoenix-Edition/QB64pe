@@ -81,85 +81,33 @@ static inline uint32_t image_get_color_delta(const uint8_t r1, const uint8_t g1,
 
 // Working with 32bit colors:
 static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b, int32_t a) {
-    if (r < 0)
-        r = 0;
-    if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    if (g > 255)
-        g = 255;
-    if (b < 0)
-        b = 0;
-    if (b > 255)
-        b = 255;
-    if (a < 0)
-        a = 0;
-    if (a > 255)
-        a = 255;
-    return (a << 24) + (r << 16) + (g << 8) + b;
+    return (image_clamp_color_component(a) << 24) | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) |
+           image_clamp_color_component(b);
 }
 
 static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b) {
-    if (r < 0)
-        r = 0;
-    if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    if (g > 255)
-        g = 255;
-    if (b < 0)
-        b = 0;
-    if (b > 255)
-        b = 255;
-    return (r << 16) + (g << 8) + b | 0xFF000000;
+    return 0xFF000000u | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) | image_clamp_color_component(b);
 }
 
 static inline constexpr uint32_t func__rgb32(int32_t i, int32_t a) {
-    if (i < 0)
-        i = 0;
-    if (i > 255)
-        i = 255;
-    if (a < 0)
-        a = 0;
-    if (a > 255)
-        a = 255;
-    return (a << 24) + (i << 16) + (i << 8) + i;
+    i = image_clamp_color_component(i);
+    return (image_clamp_color_component(a) << 24) | (uint32_t(i) << 16) | (uint32_t(i) << 8) | uint32_t(i);
 }
 
 static inline constexpr uint32_t func__rgb32(int32_t i) {
-    if (i < 0)
-        i = 0;
-    if (i > 255)
-        i = 255;
-    return (i << 16) + (i << 8) + i | 0xFF000000;
+    i = image_clamp_color_component(i);
+    return 0xFF000000u | (uint32_t(i) << 16) | (uint32_t(i) << 8) | uint32_t(i);
 }
 
 static inline constexpr uint32_t func__rgba32(int32_t r, int32_t g, int32_t b, int32_t a) {
-    if (r < 0)
-        r = 0;
-    if (r > 255)
-        r = 255;
-    if (g < 0)
-        g = 0;
-    if (g > 255)
-        g = 255;
-    if (b < 0)
-        b = 0;
-    if (b > 255)
-        b = 255;
-    if (a < 0)
-        a = 0;
-    if (a > 255)
-        a = 255;
-    return (a << 24) + (r << 16) + (g << 8) + b;
+    return (image_clamp_color_component(a) << 24) | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) |
+           image_clamp_color_component(b);
 }
 
 static inline constexpr int32_t func__alpha32(uint32_t col) { return col >> 24; }
 
-static inline constexpr int32_t func__red32(uint32_t col) { return col >> 16 & 0xFF; }
+static inline constexpr int32_t func__red32(uint32_t col) { return (col >> 16) & 0xFF; }
 
-static inline constexpr int32_t func__green32(uint32_t col) { return col >> 8 & 0xFF; }
+static inline constexpr int32_t func__green32(uint32_t col) { return (col >> 8) & 0xFF; }
 
 static inline constexpr int32_t func__blue32(uint32_t col) { return col & 0xFF; }
