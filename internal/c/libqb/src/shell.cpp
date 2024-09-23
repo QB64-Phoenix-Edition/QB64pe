@@ -60,7 +60,6 @@ static int32_t cmd_ok() {
     } //-1
     return cmd_available;
 }
-#endif
 
 static int32_t cmd_command(qbs *str2) {
     static qbs *str = NULL;
@@ -163,6 +162,7 @@ static int32_t cmd_command(qbs *str2) {
         s = 1;
     return s;
 }
+#endif
 
 // FIXME: Move this elsewhere
 extern int32_t full_screen;
@@ -172,7 +172,7 @@ int64_t func_shell(qbs *str) {
     if (is_error_pending())
         return 1;
 
-    int64_t return_code;
+    int64_t return_code = 0;
 
     // exit full screen mode if necessary
     static int32_t full_screen_mode;
@@ -440,7 +440,10 @@ int64_t func_shell(qbs *str) {
 #endif
     }
 
+#ifdef QB64_WINDOWS
 shell_complete:
+#endif
+
     // reenter full screen mode if necessary
     if (full_screen_mode) {
         full_screen_set = full_screen_mode;
@@ -658,7 +661,9 @@ int64_t func__shellhide(qbs *str) { // func _SHELLHIDE(...
 
 #endif
 
-shell_complete:;
+#ifdef QB64_WINDOWS
+shell_complete:
+#endif
 
     return return_code;
 } // func _SHELLHIDE(...
@@ -928,7 +933,10 @@ void sub_shell(qbs *str, int32_t passed) {
 #endif
     }
 
+#ifdef QB64_WINDOWS
 shell_complete:
+#endif
+
     // reenter full screen mode if necessary
     if (full_screen_mode) {
         full_screen_set = full_screen_mode;
@@ -1144,7 +1152,9 @@ void sub_shell2(qbs *str, int32_t passed) { // HIDE
 
 #endif
 
+#ifdef QB64_WINDOWS
 shell_complete:;
+#endif
 }
 
 void sub_shell3(qbs *str, int32_t passed) { //_DONTWAIT
@@ -1331,7 +1341,9 @@ void sub_shell3(qbs *str, int32_t passed) { //_DONTWAIT
 
 #endif
 
+#ifdef QB64_WINDOWS
 shell_complete:;
+#endif
 } // SHELL _DONTWAIT
 
 void sub_shell4(qbs *str, int32_t passed) { //_DONTWAIT & _HIDE
@@ -1513,6 +1525,7 @@ void sub_shell4(qbs *str, int32_t passed) { //_DONTWAIT & _HIDE
 
 #endif
 
+#ifdef QB64_WINDOWS
 shell_complete:;
-
+#endif
 } //_DONTWAIT & _HIDE

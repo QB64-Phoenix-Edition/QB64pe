@@ -1,9 +1,9 @@
 
 #include "libqb-common.h"
 
+#include <fstream>
 #include <stdlib.h>
 #include <string.h>
-#include <fstream>
 
 #include "filepath.h"
 #include "gfs.h"
@@ -20,13 +20,9 @@ static int32_t gfs_freed_size = 0;
 static int32_t *gfs_fileno = (int32_t *)malloc(1);
 static int32_t gfs_fileno_n = 0;
 
-int32_t gfs_get_fileno(int file_number) {
-    return gfs_fileno[file_number];
-}
+int32_t gfs_get_fileno(int file_number) { return gfs_fileno[file_number]; }
 
-gfs_file_struct *gfs_get_file_struct(int fileno) {
-    return gfs_file + fileno;
-}
+gfs_file_struct *gfs_get_file_struct(int fileno) { return gfs_file + fileno; }
 
 void gfs_close_all_files() {
     for (int32_t i = 1; i <= gfs_fileno_n; i++) {
@@ -604,7 +600,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
     // restrictions - 1=others cannot read, 2=others cannot write, 3=others cannot read or write(exclusive access)
     // how - 1=create(if it doesn't exist), 2=create(if it doesn't exist) & truncate
     //      3=create(if it doesn't exist)+undefined access[get whatever access is available]
-    static int32_t i, x, x2, x3, e;
+    static int32_t i, x;
     static qbs *filenamez = NULL;
     static gfs_file_struct *f;
 
@@ -707,7 +703,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
             }
             delete f->file_handle_o;
         }
-    }                                 // how
+    } // how
     if (!f->file_handle->is_open()) { // couldn't open file
         delete f->file_handle;
         gfs_free(i);
@@ -726,7 +722,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         x |= GENERIC_READ;
     if (access & 2)
         x |= GENERIC_WRITE;
-    x2 = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    int32_t x2 = FILE_SHARE_READ | FILE_SHARE_WRITE;
     if (restrictions & 1)
         x2 ^= FILE_SHARE_READ;
     if (restrictions & 2)
@@ -739,8 +735,8 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         qbs_set(portname, qbs_add(qbs_new_txt("CO"), qbs_str(f->com_port)));
         qbs_set(portname, qbs_add(portname, qbs_new_txt_len(":\0", 2)));
         portname->chr[2] = 77; // replace " " with "M"
-        f->win_handle= CreateFile((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
-        if (f->win_handle== INVALID_HANDLE_VALUE) {
+        f->win_handle = CreateFile((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
+        if (f->win_handle == INVALID_HANDLE_VALUE) {
             gfs_free(i);
             return -8;
         } // device unavailable
@@ -824,7 +820,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         #define OPEN_ALWAYS         4
         #define TRUNCATE_EXISTING   5
     */
-    x3 = OPEN_EXISTING;
+    int32_t x3 = OPEN_EXISTING;
     if (how)
         x3 = OPEN_ALWAYS;
 undefined_retry:
@@ -850,7 +846,7 @@ undefined_retry:
         }
 
         gfs_free(i);
-        e = GetLastError();
+        auto e = GetLastError();
         if (e == 3)
             return -6;
         if ((e == 4) || (e == 29) || (e == 30))
@@ -863,7 +859,7 @@ undefined_retry:
             return -5;
         // showvalue(e);
         return -5; // assume (2)
-    }              // invalid handle
+    } // invalid handle
 
     if (how == 2) {
         // truncate file if size is not 0
@@ -876,7 +872,7 @@ undefined_retry:
 
             if (f->win_handle == INVALID_HANDLE_VALUE) {
                 gfs_free(i);
-                e = GetLastError();
+                auto e = GetLastError();
                 if (e == 3)
                     return -6;
                 if ((e == 4) || (e == 29) || (e == 30))
@@ -889,7 +885,7 @@ undefined_retry:
                     return -5;
                 // showvalue(e);
                 return -5; // assume (2)
-            }              // invalid handle
+            } // invalid handle
         }
     } // how==2
     f->open = 1;
@@ -955,7 +951,7 @@ int64_t gfs_getpos(int32_t i) {
 int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
     if (!gfs_validhandle(i))
         return -2; // invalid handle
-    static int32_t e;
+
     static gfs_file_struct *f;
     f = &gfs_file[i];
     if (!f->write)
@@ -990,7 +986,7 @@ int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
             size = 0;
         }
         if (!WriteFile(f->win_handle, data, size2, (unsigned long *)&written, NULL)) {
-            e = GetLastError();
+            auto e = GetLastError();
             if ((e == 5) || (e == 33))
                 return -7; // permission denied
             return -9;     // assume: path/file access error
@@ -1006,7 +1002,6 @@ int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
     return -1;
 }
 
-
 int64_t gfs_read_bytes_value;
 int64_t gfs_read_bytes() { return gfs_read_bytes_value; }
 
@@ -1014,7 +1009,7 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
     gfs_read_bytes_value = 0;
     if (!gfs_validhandle(i))
         return -2; // invalid handle
-    static int32_t e;
+
     static gfs_file_struct *f;
     f = &gfs_file[i];
     if (!f->read)
@@ -1069,7 +1064,7 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
             } // eof passed
         } else {
             // error
-            e = GetLastError();
+            auto e = GetLastError();
             if ((e == 5) || (e == 33))
                 return -7; // permission denied
             // showvalue(e);
@@ -1107,8 +1102,6 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end) {
     // range is inclusive of start and end
     if (!gfs_validhandle(i))
         return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
 
     if (offset_start == -1)
         offset_start = 0;
@@ -1116,22 +1109,23 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end) {
         return -4; // illegal function call
     if (offset_end < -1)
         return -4; // illegal function call
-        // note: -1 equates to highest uint64 value (infinity)
-        //      All other negative end values are illegal
+                   // note: -1 equates to highest uint64 value (infinity)
+                   //      All other negative end values are illegal
 
 #ifdef GFS_C
     return 0;
 #endif
 
 #ifdef GFS_WINDOWS
-    int64_t bytes;
-    bytes = offset_end;
+    auto bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
+
+    auto f = &gfs_file[i];
+
     if (!LockFile(f->win_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
         // failed
-        static int32_t e;
-        e = GetLastError();
+        auto e = GetLastError();
         if ((e == 5) || (e == 33))
             return -7; // permission denied
         // showvalue(e);
@@ -1149,8 +1143,6 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
     // range is inclusive of start and end
     if (!gfs_validhandle(i))
         return -2; // invalid handle
-    static gfs_file_struct *f;
-    f = &gfs_file[i];
 
     if (offset_start == -1)
         offset_start = 0;
@@ -1158,22 +1150,23 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
         return -4; // illegal function call
     if (offset_end < -1)
         return -4; // illegal function call
-        // note: -1 equates to highest uint64 value (infinity)
-        //      All other negative end values are illegal
+                   // note: -1 equates to highest uint64 value (infinity)
+                   //      All other negative end values are illegal
 
 #ifdef GFS_C
     return 0;
 #endif
 
 #ifdef GFS_WINDOWS
-    int64_t bytes;
-    bytes = offset_end;
+    auto bytes = offset_end;
     if (bytes != -1)
         bytes = bytes - offset_start + 1;
+
+    auto f = &gfs_file[i];
+
     if (!UnlockFile(f->win_handle, *((DWORD *)(&offset_start)), *(((DWORD *)(&offset_start)) + 1), *((DWORD *)(&bytes)), *(((DWORD *)(&bytes)) + 1))) {
         // failed
-        static int32_t e;
-        e = GetLastError();
+        auto e = GetLastError();
         if ((e == 5) || (e == 33) || (e == 158))
             return -7; // permission denied
         // showvalue(e);
@@ -1184,4 +1177,3 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
 
     return -1;
 }
-

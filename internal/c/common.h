@@ -66,6 +66,7 @@
 #    include <errno.h>
 #    include <fcntl.h>
 #    include <fstream>
+#    include <inttypes.h>
 #    include <iostream>
 #    include <limits.h>
 #    include <stdint.h>
