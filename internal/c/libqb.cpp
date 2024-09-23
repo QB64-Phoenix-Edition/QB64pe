@@ -13152,9 +13152,9 @@ qbs_input_sep_arg_done:
                 c->chr[0] = 0;
                 qbs_set(qbs_input_arguements[argn], qbs_add(qbs_input_arguements[argn], c));
                 if (qbs_input_variabletypes[argn] & ISUNSIGNED) {
-                    sscanf((char *)qbs_input_arguements[argn]->chr, "%" PRIu64, (uint64_t *)qbs_input_variableoffsets[argn]);
+                    sscanf((char *)qbs_input_arguements[argn]->chr, "%" SCNu64, (uint64_t *)qbs_input_variableoffsets[argn]);
                 } else {
-                    sscanf((char *)qbs_input_arguements[argn]->chr, "%" PRId64, (int64_t *)qbs_input_variableoffsets[argn]);
+                    sscanf((char *)qbs_input_arguements[argn]->chr, "%" SCNd64, (int64_t *)qbs_input_variableoffsets[argn]);
                 }
                 goto typechecked;
             }
