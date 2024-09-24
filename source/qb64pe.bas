@@ -49,7 +49,6 @@ vWatchVariableExclusions$ = "@__LONG_VWATCH_LINENUMBER@__LONG_VWATCH_SUBLEVEL@__
 DIM SHARED nativeDataTypes$
 nativeDataTypes$ = "@_OFFSET@OFFSET@_UNSIGNED _OFFSET@UNSIGNED OFFSET@_BIT@BIT@_UNSIGNED _BIT@UNSIGNED BIT@_BYTE@_UNSIGNED _BYTE@BYTE@UNSIGNED BYTE@INTEGER@_UNSIGNED INTEGER@UNSIGNED INTEGER@LONG@_UNSIGNED LONG@UNSIGNED LONG@_INTEGER64@INTEGER64@_UNSIGNED _INTEGER64@UNSIGNED INTEGER64@SINGLE@DOUBLE@_FLOAT@FLOAT@STRING@"
 
-DIM SHARED qb64prefix_set_recompileAttempts, qb64prefix_set_desiredState
 DIM SHARED opex_recompileAttempts, opex_desiredState
 DIM SHARED opexarray_recompileAttempts, opexarray_desiredState
 
@@ -140,7 +139,7 @@ DIM SHARED bypassNextVariable AS _BYTE
 DIM SHARED totalWarnings AS LONG, warningListItems AS LONG, lastWarningHeader AS STRING
 DIM SHARED duplicateConstWarning AS _BYTE, warningsissued AS _BYTE
 DIM SHARED emptySCWarning AS _BYTE, maxLineNumber AS LONG
-DIM SHARED ExeIconSet AS LONG, qb64prefix$, qb64prefix_set
+DIM SHARED ExeIconSet AS LONG
 DIM SHARED VersionInfoSet AS _BYTE
 
 'Array to handle $EMBED metacommand:
@@ -1119,9 +1118,6 @@ SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labe
 vWatchDesiredState = 0
 vWatchRecompileAttempts = 0
 
-qb64prefix_set_desiredState = 0
-qb64prefix_set_recompileAttempts = 0
-
 opex_desiredState = 0
 opex_recompileAttempts = 0
 
@@ -1131,9 +1127,6 @@ opexarray_recompileAttempts = 0
 recompile:
 vWatchOn = vWatchDesiredState
 vWatchVariable "", -1 'reset internal variables list
-
-qb64prefix_set = qb64prefix_set_desiredState
-qb64prefix$ = "_"
 
 optionexplicit = opex_desiredState
 IF optionexplicit_cmd = -1 AND NoIDEMode = 1 THEN optionexplicit = -1
@@ -1499,29 +1492,6 @@ END IF
 
 reginternal
 
-IF qb64prefix_set THEN
-    qb64prefix$ = ""
-
-    're-add internal keywords without the "_" prefix
-    reginternal
-
-    f = HASHFLAG_TYPE + HASHFLAG_RESERVED
-    HashAdd "UNSIGNED", f, 0
-    HashAdd "BIT", f, 0
-    HashAdd "BYTE", f, 0
-    HashAdd "INTEGER64", f, 0
-    HashAdd "OFFSET", f, 0
-    HashAdd "FLOAT", f, 0
-
-    f = HASHFLAG_RESERVED + HASHFLAG_CUSTOMSYNTAX
-    HashAdd "EXPLICIT", f, 0
-
-    f = HASHFLAG_OPERATOR + HASHFLAG_RESERVED
-    HashAdd "NEGATE", f, 0
-    HashAdd "ANDALSO", f, 0
-    HashAdd "ORELSE", f, 0
-END IF
-
 DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer%("O", tmpdir$ + "global.txt")
 defdatahandle = GlobTxtBuf
 
@@ -1651,20 +1621,12 @@ DO
         END IF
 
         IF temp$ = "$COLOR:0" THEN
-            IF qb64prefix_set THEN
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0_noprefix.bi"
-            ELSE
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            END IF
+            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
             GOTO finishedlinepp
         END IF
 
         IF temp$ = "$COLOR:32" THEN
-            IF qb64prefix_set THEN
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32_noprefix.bi"
-            ELSE
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            END IF
+            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
             GOTO finishedlinepp
         END IF
 
@@ -1677,16 +1639,6 @@ DO
                     GOTO do_recompile
                 ELSE
                     'continue compilation to retrieve the final state requested and act on that as required
-                END IF
-            END IF
-        END IF
-
-        IF temp$ = "$NOPREFIX" THEN
-            qb64prefix_set_desiredState = 1
-            IF qb64prefix_set = 0 THEN
-                IF qb64prefix_set_recompileAttempts = 0 THEN
-                    qb64prefix_set_recompileAttempts = qb64prefix_set_recompileAttempts + 1
-                    GOTO do_recompile
                 END IF
             END IF
         END IF
@@ -1912,7 +1864,7 @@ DO
                                         udtesize(i2) = typsize * 8
                                     END IF
                                 ELSEIF typ AND ISOFFSETINBITS THEN
-                                    a$ = "Cannot use " + qb64prefix$ + "BIT inside user defined types": GOTO errmes
+                                    a$ = "Cannot use _BIT inside user defined types": GOTO errmes
                                 ELSE
                                     udtesize(i2) = typ AND 511
                                 END IF
@@ -2253,7 +2205,7 @@ DO
                         IF firstelement$ = "DEFSNG" THEN d = 1
                         IF firstelement$ = "DEFDBL" THEN d = 1
                         IF firstelement$ = "DEFSTR" THEN d = 1
-                        IF firstelement$ = "_DEFINE" OR (firstelement$ = "DEFINE" AND qb64prefix_set = 1) THEN d = 1
+                        IF firstelement$ = "_DEFINE" THEN d = 1
                         IF d THEN
                             predefining = 1: GOTO predefine
                             predefined: predefining = 0
@@ -2996,28 +2948,21 @@ DO
 
         IF a3u$ = "$COLOR:0" THEN
             layout$ = SCase$("$Color:0")
-            IF qb64prefix_set THEN
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0_noprefix.bi"
-            ELSE
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            END IF
+            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
             layoutdone = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$COLOR:32" THEN
             layout$ = SCase$("$Color:32")
-            IF qb64prefix_set THEN
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32_noprefix.bi"
-            ELSE
-                addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            END IF
+            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
             layoutdone = 1
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$NOPREFIX" THEN
-            'already set in prepass
+            'Deprecated; does nothing.
             layout$ = SCase$("$NoPrefix")
+            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$NOPREFIX"
             GOTO finishednonexec
         END IF
 
@@ -3815,11 +3760,7 @@ DO
             IF Error_Happened THEN GOTO errmes
             IF typ = 0 THEN a$ = "Undefined type": GOTO errmes
             IF typ AND ISUDT THEN
-                IF UCASE$(RTRIM$(t$)) = "MEM" AND RTRIM$(udtxcname(typ AND 511)) = "_MEM" AND qb64prefix_set = 1 THEN
-                    t$ = MID$(RTRIM$(udtxcname(typ AND 511)), 2)
-                ELSE
-                    t$ = RTRIM$(udtxcname(typ AND 511))
-                END IF
+                t$ = RTRIM$(udtxcname(typ AND 511))
                 l$ = l$ + sp + t$
             ELSE
                 l$ = l$ + sp + SCase2$(t$)
@@ -3842,11 +3783,7 @@ DO
             IF Error_Happened THEN GOTO errmes
             IF typ = 0 THEN a$ = "Undefined type": GOTO errmes
             IF typ AND ISUDT THEN
-                IF UCASE$(RTRIM$(t$)) = "MEM" AND RTRIM$(udtxcname(typ AND 511)) = "_MEM" AND qb64prefix_set = 1 THEN
-                    t$ = MID$(RTRIM$(udtxcname(typ AND 511)), 2)
-                ELSE
-                    t$ = RTRIM$(udtxcname(typ AND 511))
-                END IF
+                t$ = RTRIM$(udtxcname(typ AND 511))
                 l$ = l$ + sp + t$
             ELSE
                 l$ = l$ + sp + SCase2$(t$)
@@ -5040,11 +4977,7 @@ DO
                             IF Error_Happened THEN GOTO errmes
                             IF typ = 0 THEN a$ = "Undefined type": GOTO errmes
                             IF typ AND ISUDT THEN
-                                IF RTRIM$(udtxcname(typ AND 511)) = "_MEM" AND UCASE$(t3$) = "MEM" AND qb64prefix_set = 1 THEN
-                                    t3$ = MID$(RTRIM$(udtxcname(typ AND 511)), 2)
-                                ELSE
-                                    t3$ = RTRIM$(udtxcname(typ AND 511))
-                                END IF
+                                t3$ = RTRIM$(udtxcname(typ AND 511))
                                 l$ = l$ + sp + t3$
                             ELSE
                                 FOR t3i = 1 TO LEN(t3$)
@@ -5099,9 +5032,6 @@ DO
                                 'is it a udt?
                                 FOR xx = 1 TO lasttype
                                     IF t2$ = RTRIM$(udtxname(xx)) THEN
-                                        WriteBufLine RegTxtBuf, "void*"
-                                        GOTO decudt
-                                    ELSEIF RTRIM$(udtxname(xx)) = "_MEM" AND t2$ = "MEM" AND qb64prefix_set = 1 THEN
                                         WriteBufLine RegTxtBuf, "void*"
                                         GOTO decudt
                                     END IF
@@ -5496,9 +5426,9 @@ DO
         IF firstelement$ = "DEFSNG" THEN l$ = SCase$("DefSng"): a$ = a$ + sp + "AS" + sp + "SINGLE": n = n + 2: GOTO definetype
         IF firstelement$ = "DEFDBL" THEN l$ = SCase$("DefDbl"): a$ = a$ + sp + "AS" + sp + "DOUBLE": n = n + 2: GOTO definetype
         IF firstelement$ = "DEFSTR" THEN l$ = SCase$("DefStr"): a$ = a$ + sp + "AS" + sp + "STRING": n = n + 2: GOTO definetype
-        IF firstelement$ = "_DEFINE" OR (firstelement$ = "DEFINE" AND qb64prefix_set = 1) THEN
+        IF firstelement$ = "_DEFINE" THEN
             asreq = 1
-            IF firstelement$ = "_DEFINE" THEN l$ = SCase$("_Define") ELSE l$ = SCase$("Define")
+            l$ = SCase$("_Define")
             definetype:
             'get type from rhs
             typ$ = ""
@@ -5511,8 +5441,8 @@ DO
                 typ2$ = t$ + sp + typ2$
             NEXT
             typ$ = RTRIM$(typ$)
-            IF t$ <> "AS" THEN a$ = qb64prefix$ + "DEFINE: Expected ... AS ...": GOTO errmes
-            IF i = n OR i = 2 THEN a$ = qb64prefix$ + "DEFINE: Expected ... AS ...": GOTO errmes
+            IF t$ <> "AS" THEN a$ = "_DEFINE: Expected ... AS ...": GOTO errmes
+            IF i = n OR i = 2 THEN a$ = "_DEFINE: Expected ... AS ...": GOTO errmes
 
 
             n = i - 1
@@ -5521,8 +5451,8 @@ DO
             definenext:
             'expects an alphabet letter or underscore
             i = i + 1: e$ = getelement$(a$, i): E = ASC(UCASE$(e$))
-            IF LEN(e$) > 1 THEN a$ = qb64prefix$ + "DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
-            IF E <> 95 AND (E > 90 OR E < 65) THEN a$ = qb64prefix$ + "DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
+            IF LEN(e$) > 1 THEN a$ = "_DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
+            IF E <> 95 AND (E > 90 OR E < 65) THEN a$ = "_DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
             IF E = 95 THEN E = 27 ELSE E = E - 64
             defineaz(E) = typ$
             defineextaz(E) = type2symbol(typ$)
@@ -5539,14 +5469,14 @@ DO
 
             'expects "-" or ","
             i = i + 1: e$ = getelement$(a$, i)
-            IF e$ <> "-" AND e$ <> "," THEN a$ = qb64prefix$ + "DEFINE: Expected - or ,": GOTO errmes
+            IF e$ <> "-" AND e$ <> "," THEN a$ = "_DEFINE: Expected - or ,": GOTO errmes
             IF e$ = "-" THEN
                 l$ = l$ + sp2 + "-"
-                IF i = n THEN a$ = qb64prefix$ + "DEFINE: Syntax incomplete": GOTO errmes
+                IF i = n THEN a$ = "_DEFINE: Syntax incomplete": GOTO errmes
                 'expects an alphabet letter or underscore
                 i = i + 1: e$ = getelement$(a$, i): E = ASC(UCASE$(e$))
-                IF LEN(e$) > 1 THEN a$ = qb64prefix$ + "DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
-                IF E <> 95 AND (E > 90 OR E < 65) THEN a$ = qb64prefix$ + "DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
+                IF LEN(e$) > 1 THEN a$ = "_DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
+                IF E <> 95 AND (E > 90 OR E < 65) THEN a$ = "_DEFINE: Expected an alphabet letter or the underscore character (_)": GOTO errmes
                 IF E = 95 THEN E = 27 ELSE E = E - 64
                 IF firste > E THEN SWAP E, firste
                 FOR e2 = firste TO E
@@ -5563,7 +5493,7 @@ DO
                 END IF
                 'expects ","
                 i = i + 1: e$ = getelement$(a$, i)
-                IF e$ <> "," THEN a$ = qb64prefix$ + "DEFINE: Expected ,": GOTO errmes
+                IF e$ <> "," THEN a$ = "_DEFINE: Expected ,": GOTO errmes
             END IF
             l$ = l$ + sp2 + ","
             GOTO definenext
@@ -7510,9 +7440,6 @@ DO
                         l2$ = l2$ + sp + SCase2$(t3$)
                     ELSE
                         t3$ = RTRIM$(udtxcname(t AND 511))
-                        IF RTRIM$(udtxcname(t AND 511)) = "_MEM" AND UCASE$(t$) = "MEM" AND qb64prefix_set = 1 THEN
-                            t3$ = MID$(RTRIM$(udtxcname(t AND 511)), 2)
-                        END IF
                         l2$ = l2$ + sp + t3$
                     END IF
                     IF Error_Happened THEN GOTO errmes
@@ -7660,9 +7587,6 @@ DO
                     l2$ = l2$ + sp + SCase2$(t3$)
                 ELSE
                     t3$ = RTRIM$(udtxcname(t AND 511))
-                    IF RTRIM$(udtxcname(t AND 511)) = "_MEM" AND UCASE$(t$) = "MEM" AND qb64prefix_set = 1 THEN
-                        t3$ = MID$(RTRIM$(udtxcname(t AND 511)), 2)
-                    END IF
                     l2$ = l2$ + sp + t3$
                 END IF
                 IF Error_Happened THEN GOTO errmes
@@ -7726,9 +7650,9 @@ DO
 
 
     '_ECHO checking
-    IF firstelement$ = "_ECHO" OR (firstelement$ = "ECHO" AND qb64prefix_set = 1) THEN
+    IF firstelement$ = "_ECHO" THEN
         IF ConsoleOn = 0 THEN
-            a$ = qb64prefix$ + "ECHO requires $CONSOLE or $CONSOLE:ONLY to be set first": GOTO errmes
+            a$ = "_ECHO requires $CONSOLE or $CONSOLE:ONLY to be set first": GOTO errmes
         END IF
     END IF
 
@@ -8031,14 +7955,10 @@ DO
         IF firstelement$ = "REDIM" THEN
             l$ = SCase$("ReDim")
             dimoption = 2: redimoption = 1
-            IF secondelement$ = "_PRESERVE" OR (secondelement$ = "PRESERVE" AND qb64prefix_set = 1) THEN
+            IF secondelement$ = "_PRESERVE" THEN
                 redimoption = 2
-                IF secondelement$ = "_PRESERVE" THEN
-                    l$ = l$ + sp + SCase$("_Preserve")
-                ELSE
-                    l$ = l$ + sp + SCase$("Preserve")
-                END IF
-                IF n = 2 THEN a$ = "Expected REDIM " + qb64prefix$ + "PRESERVE ...": GOTO errmes
+                l$ = l$ + sp + SCase$("_Preserve")
+                IF n = 2 THEN a$ = "Expected REDIM _PRESERVE ...": GOTO errmes
             END IF
         END IF
         IF firstelement$ = "STATIC" THEN l$ = SCase$("Static"): dimoption = 3
@@ -8402,9 +8322,6 @@ DO
                                         IF dimmethod = 0 THEN
                                             IF t AND ISUDT THEN
                                                 dim2typepassback$ = RTRIM$(udtxcname(t AND 511))
-                                                IF UCASE$(typ$) = "MEM" AND qb64prefix_set = 1 AND RTRIM$(udtxcname(t AND 511)) = "_MEM" THEN
-                                                    dim2typepassback$ = MID$(RTRIM$(udtxcname(t AND 511)), 2)
-                                                END IF
                                             ELSE
                                                 dim2typepassback$ = typ$
                                                 DO WHILE INSTR(dim2typepassback$, " ")
@@ -8792,8 +8709,8 @@ DO
     END IF
 
     IF n = 1 THEN
-        IF firstelement$ = "_CONTINUE" OR (firstelement$ = "CONTINUE" AND qb64prefix_set = 1) THEN
-            IF firstelement$ = "_CONTINUE" THEN l$ = SCase$("_Continue") ELSE l$ = SCase$("Continue")
+        IF firstelement$ = "_CONTINUE" THEN
+            l$ = SCase$("_Continue")
             'scan backwards until previous control level reached
             FOR i = controllevel TO 1 STEP -1
                 t = controltype(i)
@@ -8811,7 +8728,7 @@ DO
                     GOTO finishedline
                 END IF
             NEXT
-            a$ = qb64prefix$ + "CONTINUE outside DO..LOOP/FOR..NEXT/WHILE..WEND block": GOTO errmes
+            a$ = "_CONTINUE outside DO..LOOP/FOR..NEXT/WHILE..WEND block": GOTO errmes
         END IF
     END IF
 
@@ -9107,8 +9024,8 @@ DO
             lbl$ = getelement$(ca$, 4)
             hhc$ = UCASE$(lbl$) '(H)andler(H)istory(C)ommand
             IF n = 5 THEN
-                IF hhc$ = "_LASTHANDLER" OR (hhc$ = "LASTHANDLER" AND qb64prefix_set = 1) THEN a$ = "No label allowed after _LASTHANDLER": GOTO errmes
-                IF hhc$ <> "_NEWHANDLER" AND (hhc$ <> "NEWHANDLER" AND qb64prefix_set = 1) THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
+                IF hhc$ = "_LASTHANDLER" THEN a$ = "No label allowed after _LASTHANDLER": GOTO errmes
+                IF hhc$ <> "_NEWHANDLER" THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
                 lbl$ = getelement$(ca$, 5)
                 IF lbl$ = "0" THEN a$ = "Zero not allowed after _NEWHANDLER": GOTO errmes
             END IF
@@ -9119,14 +9036,14 @@ DO
                 l$ = l$ + sp + "0"
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
-            ELSEIF hhc$ = "_NEWHANDLER" OR (hhc$ = "NEWHANDLER" AND qb64prefix_set = 1) THEN
+            ELSEIF hhc$ = "_NEWHANDLER" THEN
                 IF n = 4 THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
-                IF ASC(hhc$, 1) = 95 THEN l$ = l$ + sp + SCase$("_NewHandler") ELSE l$ = l$ + sp + SCase$("NewHandler")
-            ELSEIF hhc$ = "_LASTHANDLER" OR (hhc$ = "LASTHANDLER" AND qb64prefix_set = 1) THEN
+                l$ = l$ + sp + SCase$("_NewHandler")
+            ELSEIF hhc$ = "_LASTHANDLER" THEN
                 WriteBufLine MainTxtBuf, "error_goto_line = qbr(func_val(error_handler_history));"
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
-                IF ASC(hhc$, 1) = 95 THEN l$ = l$ + sp + SCase$("_LastHandler") ELSE l$ = l$ + sp + SCase$("LastHandler")
+                l$ = l$ + sp + SCase$("_LastHandler")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
             END IF
@@ -9163,7 +9080,7 @@ DO
             l$ = l$ + sp + tlayout$
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             errorlabels = errorlabels + 1
-            IF hhc$ = "_NEWHANDLER" OR (hhc$ = "NEWHANDLER" AND qb64prefix_set = 1) THEN
+            IF hhc$ = "_NEWHANDLER" THEN
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1)), error_handler_history));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
             END IF
@@ -9227,7 +9144,7 @@ DO
 
     '(_MEM) _MEMPUT _MEMGET
     IF n >= 1 THEN
-        IF firstelement$ = "_MEMGET" OR (firstelement$ = "MEMGET" AND qb64prefix_set = 1) THEN
+        IF firstelement$ = "_MEMGET" THEN
             'get expressions
             e$ = ""
             B = 0
@@ -9240,21 +9157,19 @@ DO
                     ne = ne + 1
                     IF ne = 1 THEN blk$ = e$: e$ = ""
                     IF ne = 2 THEN offs$ = e$: e$ = ""
-                    IF ne = 3 THEN a$ = "Syntax error - too many parameters (Expected " + qb64prefix$ + "MEMGET mem-reference, offset, variable)": GOTO errmes
+                    IF ne = 3 THEN a$ = "Syntax error - too many parameters (Expected _MEMGET mem-reference, offset, variable)": GOTO errmes
                 ELSE
                     IF LEN(e$) = 0 THEN e$ = e2$ ELSE e$ = e$ + sp + e2$
                 END IF
             NEXT
             var$ = e$
-            IF e$ = "" OR ne <> 2 THEN a$ = "Expected " + qb64prefix$ + "MEMGET mem-reference, offset, variable": GOTO errmes
-
-            IF firstelement$ = "_MEMGET" THEN l$ = SCase$("_MemGet") + sp ELSE l$ = SCase$("MemGet") + sp
+            IF e$ = "" OR ne <> 2 THEN a$ = "Expected _MEMGET mem-reference, offset, variable": GOTO errmes
 
             e$ = fixoperationorder$(blk$): IF Error_Happened THEN GOTO errmes
-            l$ = l$ + tlayout$
+            l$ = SCase$("_MemGet") + sp + tlayout$
 
             test$ = evaluate(e$, typ): IF Error_Happened THEN GOTO errmes
-            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected " + qb64prefix$ + "MEM type": GOTO errmes
+            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
             '            IF typ AND ISREFERENCE THEN e$ = refer(e$, typ, 0)
@@ -9326,7 +9241,7 @@ DO
 
 
     IF n >= 1 THEN
-        IF firstelement$ = "_MEMPUT" OR (firstelement$ = "MEMPUT" AND qb64prefix_set = 1) THEN
+        IF firstelement$ = "_MEMPUT" THEN
             'get expressions
             typ$ = ""
             e$ = ""
@@ -9346,16 +9261,14 @@ DO
                     IF LEN(e$) = 0 THEN e$ = e2$ ELSE e$ = e$ + sp + e2$
                 END IF
             NEXT
-            IF ne < 2 OR e$ = "" THEN a$ = "Expected " + qb64prefix$ + "MEMPUT mem-reference, offset, variable|value[AS type]": GOTO errmes
+            IF ne < 2 OR e$ = "" THEN a$ = "Expected _MEMPUT mem-reference, offset, variable|value[AS type]": GOTO errmes
             IF ne = 2 THEN var$ = e$ ELSE typ$ = UCASE$(e$)
 
-            IF firstelement$ = "_MEMPUT" THEN l$ = SCase$("_MemPut") + sp ELSE l$ = SCase$("MemPut") + sp
-
             e$ = fixoperationorder$(blk$): IF Error_Happened THEN GOTO errmes
-            l$ = l$ + tlayout$
+            l$ = SCase$("_MemPut") + sp + tlayout$
 
             test$ = evaluate(e$, typ): IF Error_Happened THEN GOTO errmes
-            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected " + qb64prefix$ + "MEM type": GOTO errmes
+            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
             e$ = fixoperationorder$(offs$): IF Error_Happened THEN GOTO errmes
@@ -9420,7 +9333,7 @@ DO
                 'typname2typsize = 0 'the default
                 t = typname2typ(typ$)
                 IF t = 0 THEN a$ = "Invalid type": GOTO errmes
-                IF (t AND ISOFFSETINBITS) <> 0 OR (t AND ISUDT) <> 0 OR (t AND ISSTRING) THEN a$ = qb64prefix$ + "MEMPUT requires numeric type": GOTO errmes
+                IF (t AND ISOFFSETINBITS) <> 0 OR (t AND ISUDT) <> 0 OR (t AND ISSTRING) THEN a$ = "_MEMPUT requires numeric type": GOTO errmes
                 IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                 'attempt conversion...
                 e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
@@ -9462,7 +9375,7 @@ DO
 
 
     IF n >= 1 THEN
-        IF firstelement$ = "_MEMFILL" OR (firstelement$ = "MEMFILL" AND qb64prefix_set = 1) THEN
+        IF firstelement$ = "_MEMFILL" THEN
             'get expressions
             typ$ = ""
             e$ = ""
@@ -9483,16 +9396,14 @@ DO
                     IF LEN(e$) = 0 THEN e$ = e2$ ELSE e$ = e$ + sp + e2$
                 END IF
             NEXT
-            IF ne < 3 OR e$ = "" THEN a$ = "Expected " + qb64prefix$ + "MEMFILL mem-reference, offset, bytes, variable|value[AS type]": GOTO errmes
+            IF ne < 3 OR e$ = "" THEN a$ = "Expected _MEMFILL mem-reference, offset, bytes, variable|value[AS type]": GOTO errmes
             IF ne = 3 THEN var$ = e$ ELSE typ$ = UCASE$(e$)
 
-            IF firstelement$ = "_MEMFILL" THEN l$ = SCase$("_MemFill") + sp ELSE l$ = SCase$("MemFill") + sp
-
             e$ = fixoperationorder$(blk$): IF Error_Happened THEN GOTO errmes
-            l$ = l$ + tlayout$
+            l$ = SCase$("_MemFill") + sp + tlayout$
 
             test$ = evaluate(e$, typ): IF Error_Happened THEN GOTO errmes
-            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected " + qb64prefix$ + "MEM type": GOTO errmes
+            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected " + "_MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
             e$ = fixoperationorder$(offs$): IF Error_Happened THEN GOTO errmes
@@ -9529,7 +9440,7 @@ DO
                 '... AS type method
                 t = typname2typ(typ$)
                 IF t = 0 THEN a$ = "Invalid type": GOTO errmes
-                IF (t AND ISOFFSETINBITS) <> 0 OR (t AND ISUDT) <> 0 OR (t AND ISSTRING) THEN a$ = qb64prefix$ + "MEMFILL requires numeric type": GOTO errmes
+                IF (t AND ISOFFSETINBITS) <> 0 OR (t AND ISUDT) <> 0 OR (t AND ISSTRING) THEN a$ = "_MEMFILL requires numeric type": GOTO errmes
                 IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                 'attempt conversion...
                 e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
@@ -10443,8 +10354,8 @@ DO
                 END IF
 
                 IF firstelement$ = "OPTION" THEN
-                    IF optionexplicit = 0 THEN e$ = " or OPTION " + qb64prefix$ + "EXPLICIT" ELSE e$ = ""
-                    IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION " + qb64prefix$ + "EXPLICITARRAY"
+                    IF optionexplicit = 0 THEN e$ = " or OPTION _EXPLICIT" ELSE e$ = ""
+                    IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
                     IF n = 1 THEN a$ = "Expected OPTION BASE" + e$: GOTO errmes
                     e$ = getelement$(a$, 2)
                     SELECT CASE e$
@@ -10455,13 +10366,7 @@ DO
                             l$ = SCase$("Option" + sp + "Base") + sp + l$
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
-                        CASE "EXPLICIT", "_EXPLICIT"
-                            IF e$ = "EXPLICIT" AND qb64prefix$ = "_" THEN
-                                IF optionexplicit = 0 THEN e$ = " or OPTION " + qb64prefix$ + "EXPLICIT" ELSE e$ = ""
-                                IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION " + qb64prefix$ + "EXPLICITARRAY"
-                                a$ = "Expected OPTION BASE" + e$: GOTO errmes
-                            END IF
-
+                        CASE "_EXPLICIT"
                             opex_desiredState = -1
                             IF optionexplicit = 0 THEN
                                 IF opex_recompileAttempts = 0 THEN
@@ -10469,18 +10374,10 @@ DO
                                     GOTO do_recompile
                                 END IF
                             END IF
-
-                            l$ = SCase$("Option") + sp
-                            IF e$ = "EXPLICIT" THEN l$ = l$ + SCase$("Explicit") ELSE l$ = l$ + SCase$("_Explicit")
+                            l$ = SCase$("Option" + sp + "_Explicit")
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
-                        CASE "EXPLICITARRAY", "_EXPLICITARRAY"
-                            IF e$ = "EXPLICITARRAY" AND qb64prefix$ = "_" THEN
-                                IF optionexplicit = 0 THEN e$ = " or OPTION " + qb64prefix$ + "EXPLICIT" ELSE e$ = ""
-                                IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION " + qb64prefix$ + "EXPLICITARRAY"
-                                a$ = "Expected OPTION BASE" + e$: GOTO errmes
-                            END IF
-
+                        CASE "_EXPLICITARRAY"
                             opexarray_desiredState = -1
                             IF optionexplicitarray = 0 THEN
                                 IF opexarray_recompileAttempts = 0 THEN
@@ -10488,14 +10385,12 @@ DO
                                     GOTO do_recompile
                                 END IF
                             END IF
-
-                            l$ = SCase$("Option") + sp
-                            IF e$ = "EXPLICITARRAY" THEN l$ = l$ + SCase$("ExplicitArray") ELSE l$ = l$ + SCase$("_ExplicitArray")
+                            l$ = SCase$("Option" + sp + "_ExplicitArray")
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
                         CASE ELSE
-                            IF optionexplicit = 0 THEN e$ = " or OPTION " + qb64prefix$ + "EXPLICIT" ELSE e$ = ""
-                            IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION " + qb64prefix$ + "EXPLICITARRAY"
+                            IF optionexplicit = 0 THEN e$ = " or OPTION _EXPLICIT" ELSE e$ = ""
+                            IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
                             a$ = "Expected OPTION BASE" + e$: GOTO errmes
                     END SELECT
                 END IF
@@ -11037,11 +10932,7 @@ DO
                         IF explicitreference = 0 THEN
                             IF targettyp AND ISUDT THEN
                                 nth = i
-                                IF qb64prefix_set AND udtxcname(targettyp AND 511) = "_MEM" THEN
-                                    x$ = "'" + MID$(RTRIM$(udtxcname(targettyp AND 511)), 2) + "'"
-                                ELSE
-                                    x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
-                                END IF
+                                x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
                                 IF ids(targetid).args = 1 THEN a$ = "TYPE " + x$ + " required for sub": GOTO errmes
                                 a$ = str_nth$(nth) + " sub argument requires TYPE " + x$: GOTO errmes
                             END IF
@@ -14294,11 +14185,8 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
     'UDT
     'is it a udt?
     FOR i = 1 TO lasttype
-        IF typ$ = RTRIM$(udtxname(i)) OR (typ$ = "MEM" AND RTRIM$(udtxname(i)) = "_MEM" AND qb64prefix_set = 1) THEN
+        IF typ$ = RTRIM$(udtxname(i)) THEN
             dim2typepassback$ = RTRIM$(udtxcname(i))
-            IF typ$ = "MEM" AND RTRIM$(udtxname(i)) = "_MEM" THEN
-                dim2typepassback$ = MID$(RTRIM$(udtxcname(i)), 2)
-            END IF
 
             n$ = "UDT_" + varname$
 
@@ -14403,10 +14291,10 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
     'check if _UNSIGNED was specified
     unsgn = 0
-    IF LEFT$(typ$, 10) = "_UNSIGNED " OR (LEFT$(typ$, 9) = "UNSIGNED " AND qb64prefix_set = 1) THEN
+    IF LEFT$(typ$, 10) = "_UNSIGNED " THEN
         unsgn = 1
         typ$ = MID$(typ$, INSTR(typ$, CHR$(32)) + 1)
-        IF LEN(typ$) = 0 THEN Give_Error "Expected more type information after " + qb64prefix$ + "UNSIGNED!": EXIT FUNCTION
+        IF LEN(typ$) = 0 THEN Give_Error "Expected more type information after _UNSIGNED!": EXIT FUNCTION
     END IF
 
     n$ = "" 'n$ is assumed to be "" after branching into the code for each type
@@ -14658,9 +14546,9 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         GOTO dim2exitfunc
     END IF
 
-    IF LEFT$(typ$, 4) = "_BIT" OR (LEFT$(typ$, 3) = "BIT" AND qb64prefix_set = 1) THEN
+    IF LEFT$(typ$, 4) = "_BIT" THEN
         IF (LEFT$(typ$, 4) = "_BIT" AND LEN(typ$) > 4) OR (LEFT$(typ$, 3) = "BIT" AND LEN(typ$) > 3) THEN
-            IF LEFT$(typ$, 7) <> "_BIT * " AND LEFT$(typ$, 6) <> "BIT * " THEN Give_Error "Expected " + qb64prefix$ + "BIT * number": EXIT FUNCTION
+            IF LEFT$(typ$, 7) <> "_BIT * " AND LEFT$(typ$, 6) <> "BIT * " THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
             c$ = MID$(typ$, INSTR(typ$, " * ") + 3)
             IF isuinteger(c$) = 0 THEN Give_Error "Number expected after *": EXIT FUNCTION
             IF LEN(c$) > 2 THEN Give_Error "Cannot create a bit variable of size > 64 bits": EXIT FUNCTION
@@ -14765,7 +14653,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         GOTO dim2exitfunc
     END IF
 
-    IF typ$ = "_BYTE" OR (typ$ = "BYTE" AND qb64prefix_set = 1) THEN
+    IF typ$ = "_BYTE" THEN
         ct$ = "int8"
         IF unsgn THEN n$ = "U": ct$ = "u" + ct$
         n$ = n$ + "BYTE_" + varname$
@@ -14943,7 +14831,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
 
 
-    IF typ$ = "_OFFSET" OR (typ$ = "OFFSET" AND qb64prefix_set = 1) THEN
+    IF typ$ = "_OFFSET" THEN
         ct$ = "ptrszint"
         IF unsgn THEN n$ = "U": ct$ = "u" + ct$
         n$ = n$ + "OFFSET_" + varname$
@@ -15111,7 +14999,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         GOTO dim2exitfunc
     END IF
 
-    IF typ$ = "_INTEGER64" OR (typ$ = "INTEGER64" AND qb64prefix_set = 1) THEN
+    IF typ$ = "_INTEGER64" THEN
         ct$ = "int64"
         IF unsgn THEN n$ = "U": ct$ = "u" + ct$
         n$ = n$ + "INTEGER64_" + varname$
@@ -15367,7 +15255,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         GOTO dim2exitfunc
     END IF
 
-    IF typ$ = "_FLOAT" OR (typ$ = "FLOAT" AND qb64prefix_set = 1) THEN
+    IF typ$ = "_FLOAT" THEN
         ct$ = "long double"
         n$ = n$ + "FLOAT_" + varname$
         IF elements$ <> "" THEN
@@ -16545,7 +16433,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
 
                 '*special case CVI,CVL,CVS,CVD,_CV (part #1)
-                IF n$ = "_CV" OR (n$ = "CV" AND qb64prefix_set = 1) THEN
+                IF n$ = "_CV" THEN
                     IF curarg = 1 THEN
                         cvtype$ = type2symbol$(e$)
                         IF Error_Happened THEN EXIT FUNCTION
@@ -16556,7 +16444,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 '*special case MKI,MKL,MKS,MKD,_MK (part #1)
 
-                IF n$ = "_MK" OR (n$ = "MK" AND qb64prefix_set = 1) THEN
+                IF n$ = "_MK" THEN
                     IF RTRIM$(id2.musthave) = "$" THEN
                         IF curarg = 1 THEN
                             mktype$ = type2symbol$(e$)
@@ -16568,7 +16456,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                IF n$ = "_EMBEDDED" OR (n$ = "EMBEDDED" AND qb64prefix_set = 1) THEN
+                IF n$ = "_EMBEDDED" THEN
                     IF RTRIM$(id2.musthave) = "$" THEN
                         IF curarg = 1 THEN
                             'check handle argument
@@ -16654,7 +16542,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 'WriteBufLine MainTxtBuf, "r$="; r$
 
                 '*special case*
-                IF n$ = "_MEMGET" OR (n$ = "MEMGET" AND qb64prefix_set = 1) THEN
+                IF n$ = "_MEMGET" THEN
                     IF curarg = 1 THEN
                         memget_blk$ = e$
                     END IF
@@ -16672,7 +16560,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END IF
                         t = typname2typ(e$)
                         IF t = 0 THEN Give_Error "Invalid TYPE name": EXIT FUNCTION
-                        IF t AND ISOFFSETINBITS THEN Give_Error qb64prefix$ + "BIT TYPE unsupported": EXIT FUNCTION
+                        IF t AND ISOFFSETINBITS THEN Give_Error "_BIT TYPE unsupported": EXIT FUNCTION
                         memget_size = typname2typsize
                         IF t AND ISSTRING THEN
                             IF (t AND ISFIXEDLENGTH) = 0 THEN Give_Error "Expected STRING * ...": EXIT FUNCTION
@@ -16730,7 +16618,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 '------------------------------------------------------------------------------------------------------------
 
                 ' a740g: ROR & ROL support
-                IF n$ = "_ROR" OR (n$ = "ROR" AND qb64prefix_set = 1) OR n$ = "_ROL" OR (n$ = "ROL" AND qb64prefix_set = 1) THEN
+                IF n$ = "_ROR" OR n$ = "_ROL" THEN
                     rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' Get the last 3 characters and convert to lower case. We'll need this to construct the C call
                     IF curarg = 1 THEN ' First parameter
                         IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN ' Bad parameters types
@@ -16768,7 +16656,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF
 
                 ' a740g: UCHARPOS special case for arg 2
-                IF n$ = "_UCHARPOS" OR (n$ = "UCHARPOS" AND qb64prefix_set = 1) THEN
+                IF n$ = "_UCHARPOS" THEN
                     IF curarg = 2 THEN
                         ' It must be an array
                         IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
@@ -16789,7 +16677,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF
 
                 '***special case***
-                IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
+                IF n$ = "_MEM" THEN
                     IF curarg = 1 THEN
                         IF args = 1 THEN
                             targettyp = -7
@@ -16802,12 +16690,12 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF
 
                 '*special case*
-                IF n$ = "_OFFSET" OR (n$ = "OFFSET" AND qb64prefix_set = 1) THEN
+                IF n$ = "_OFFSET" THEN
                     IF (sourcetyp AND ISREFERENCE) = 0 THEN
-                        Give_Error qb64prefix$ + "OFFSET expects the name of a variable/array": EXIT FUNCTION
+                        Give_Error "_OFFSET expects the name of a variable/array": EXIT FUNCTION
                     END IF
                     IF (sourcetyp AND ISARRAY) THEN
-                        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error qb64prefix$ + "OFFSET cannot reference _BIT type arrays": EXIT FUNCTION
+                        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "_OFFSET cannot reference _BIT type arrays": EXIT FUNCTION
                     END IF
                     r$ = "((uptrszint)(" + evaluatetotyp$(e2$, -6) + "))"
                     IF Error_Happened THEN EXIT FUNCTION
@@ -16848,7 +16736,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
 
                 '*special case*
-                IF n$ = "_BIN" OR (n$ = "BIN" AND qb64prefix_set = 1) THEN
+                IF n$ = "_BIN" THEN
                     IF RTRIM$(id2.musthave) = "$" THEN
                         bits = sourcetyp AND 511
 
@@ -16986,7 +16874,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF
 
                 '*special case*
-                IF n$ = "_ROUND" OR (n$ = "ROUND" AND qb64prefix_set = 1) THEN
+                IF n$ = "_ROUND" THEN
                     IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
@@ -17098,10 +16986,10 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "MKL" THEN mktype = 2: mktype$ = "&"
                 IF n$ = "MKS" THEN mktype = 3: mktype$ = "!"
                 IF n$ = "MKD" THEN mktype = 4: mktype$ = "#"
-                IF n$ = "_MK" OR (n$ = "MK" AND qb64prefix_set = 1) THEN mktype = -1
+                IF n$ = "_MK" THEN mktype = -1
                 IF mktype THEN
                     IF mktype <> -1 OR curarg = 2 THEN
-                        'IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert " + qb64prefix$ + "OFFSET type to other types": EXIT FUNCTION
+                        'IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert " + "_OFFSET type to other types": EXIT FUNCTION
                         'both _MK and trad. process the following
                         qtyp& = 0
                         IF mktype$ = "%%" THEN ctype$ = "b": qtyp& = BYTETYPE - ISPOINTER
@@ -17119,7 +17007,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF mktype$ = "~%&" THEN ctype$ = "uo": qtyp& = UOFFSETTYPE - ISPOINTER
                         IF LEFT$(mktype$, 2) = "~`" THEN ctype$ = "ubit": qtyp& = UINTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(mktype$, LEN(mktype$) - 2))
                         IF LEFT$(mktype$, 1) = "`" THEN ctype$ = "bit": qtyp& = INTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(mktype$, LEN(mktype$) - 1))
-                        IF qtyp& = 0 THEN Give_Error qb64prefix$ + "MK only accepts numeric types": EXIT FUNCTION
+                        IF qtyp& = 0 THEN Give_Error "_MK only accepts numeric types": EXIT FUNCTION
                         IF size THEN
                             r$ = ctype$ + "2string(" + str2(size) + ","
                         ELSE
@@ -17136,7 +17024,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "CVL" THEN cvtype = 2: cvtype$ = "&"
                 IF n$ = "CVS" THEN cvtype = 3: cvtype$ = "!"
                 IF n$ = "CVD" THEN cvtype = 4: cvtype$ = "#"
-                IF n$ = "_CV" OR (n$ = "CV" AND qb64prefix_set = 1) THEN cvtype = -1
+                IF n$ = "_CV" THEN cvtype = -1
                 IF cvtype THEN
                     IF cvtype <> -1 OR curarg = 2 THEN
                         IF (sourcetyp AND ISSTRING) = 0 THEN Give_Error n$ + " requires a STRING argument": EXIT FUNCTION
@@ -17158,7 +17046,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF cvtype$ = "~%&" THEN ctype$ = "uo": typ& = UOFFSETTYPE - ISPOINTER
                         IF LEFT$(cvtype$, 2) = "~`" THEN ctype$ = "ubit": typ& = UINTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(cvtype$, LEN(cvtype$) - 2))
                         IF LEFT$(cvtype$, 1) = "`" THEN ctype$ = "bit": typ& = INTEGER64TYPE - ISPOINTER: size = VAL(RIGHT$(cvtype$, LEN(cvtype$) - 1))
-                        IF typ& = 0 THEN Give_Error qb64prefix$ + "CV cannot return STRING type!": EXIT FUNCTION
+                        IF typ& = 0 THEN Give_Error "_CV cannot return STRING type!": EXIT FUNCTION
                         IF ctype$ = "bit" OR ctype$ = "ubit" THEN
                             r$ = "string2" + ctype$ + "(" + e$ + "," + str2(size) + ")"
                         ELSE
@@ -17749,11 +17637,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF targettyp AND ISUDT THEN
                         nth = curarg
                         IF skipFirstArg THEN nth = nth - 1
-                        IF qb64prefix_set AND udtxcname(targettyp AND 511) = "_MEM" THEN
-                            x$ = "'" + MID$(RTRIM$(udtxcname(targettyp AND 511)), 2) + "'"
-                        ELSE
-                            x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
-                        END IF
+                        x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
                         IF ids(targetid).args = 1 THEN Give_Error "TYPE " + x$ + " required for function": EXIT FUNCTION
                         Give_Error str_nth$(nth) + " function argument requires TYPE " + x$: EXIT FUNCTION
                     END IF
@@ -17841,7 +17725,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 r$ = r$ + e$
 
                 '***special case****
-                IF n$ = "_MEM" OR (n$ = "MEM" AND qb64prefix_set = 1) THEN
+                IF n$ = "_MEM" THEN
                     IF args = 1 THEN
                         IF curarg = 1 THEN r$ = r$ + ")": GOTO evalfuncspecial
                     END IF
@@ -18187,7 +18071,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
 
                 ELSE
 
-                    Give_Error qb64prefix$ + "MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
+                    Give_Error "_MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
 
                 END IF
                 EXIT FUNCTION
@@ -18216,7 +18100,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 e$ = refer(e$, sourcetyp, 0)
                 IF Error_Happened THEN EXIT FUNCTION
             ELSE
-                Give_Error qb64prefix$ + "MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
+                Give_Error "_MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
             END IF
 
             'evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
@@ -18293,7 +18177,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         IF (sourcetyp AND ISARRAY) THEN
             IF sourcetyp AND ISSTRING THEN
                 IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
-                    Give_Error qb64prefix$ + "MEM cannot reference variable-length strings": EXIT FUNCTION
+                    Give_Error "_MEM cannot reference variable-length strings": EXIT FUNCTION
                 END IF
             END IF
 
@@ -18335,7 +18219,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
 
         'String
         IF sourcetyp AND ISSTRING THEN
-            IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN Give_Error qb64prefix$ + "MEM cannot reference variable-length strings": EXIT FUNCTION
+            IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN Give_Error "_MEM cannot reference variable-length strings": EXIT FUNCTION
 
             idnumber = VAL(e$)
             getid idnumber: IF Error_Happened THEN EXIT FUNCTION
@@ -18591,14 +18475,12 @@ FUNCTION findid& (n2$)
     IF ids(i).subfunc = 2 THEN
         IF ASC(ids(i).secondargmustbe) <> 32 THEN 'exists?
             IF RTRIM$(secondarg$) = UCASE$(RTRIM$(ids(i).secondargmustbe)) THEN
-            ELSEIF qb64prefix_set = 1 AND LEFT$(ids(i).secondargmustbe, 1) = "_" AND LEFT$(secondarg$, 1) <> "_" AND RTRIM$(secondarg$) = UCASE$(MID$(RTRIM$(ids(i).secondargmustbe), 2)) THEN
             ELSE
                 GOTO findidnomatch
             END IF
         END IF
         IF ASC(ids(i).secondargcantbe) <> 32 THEN 'exists?
             IF RTRIM$(secondarg$) <> UCASE$(RTRIM$(ids(i).secondargcantbe)) THEN
-            ELSEIF qb64prefix_set = 1 AND LEFT$(ids(i).secondargcantbe, 1) = "_" AND LEFT$(secondarg$, 1) <> "_" AND RTRIM$(secondarg$) <> UCASE$(MID$(RTRIM$(ids(i).secondargcantbe), 2)) THEN
             ELSE
                 GOTO findidnomatch
             END IF
@@ -18782,10 +18664,6 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF temp1$ = "EQV" AND temp2$ = "EQV" THEN Give_Error "Error: EQV EQV": EXIT FUNCTION
             IF temp1$ = "_ANDALSO" AND temp2$ = "_ANDALSO" THEN Give_Error "Error: _ANDALSO _ANDALSO": EXIT FUNCTION
             IF temp1$ = "_ORELSE" AND temp2$ = "_ORELSE" THEN Give_Error "Error: _ORELSE _ORELSE": EXIT FUNCTION
-            IF qb64prefix_set THEN
-                IF temp1$ = "ANDALSO" AND temp2$ = "ANDALSO" THEN Give_Error "Error: ANDALSO ANDALSO": EXIT FUNCTION
-                IF temp1$ = "ORELSE" AND temp2$ = "ORELSE" THEN Give_Error "Error: ORELSE ORELSE": EXIT FUNCTION
-            END IF
         NEXT
 
         '----------------A. 'Quick' mismatched brackets check----------------
@@ -19546,16 +19424,16 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
                 f3$ = UCASE$(f2$)
                 internaltype = 0
                 IF f3$ = "STRING" THEN internaltype = 1
-                IF f3$ = "_UNSIGNED" OR (f3$ = "UNSIGNED" AND qb64prefix_set = 1) THEN internaltype = 1
-                IF f3$ = "_BIT" OR (f3$ = "BIT" AND qb64prefix_set = 1) THEN internaltype = 1
-                IF f3$ = "_BYTE" OR (f3$ = "BYTE" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "_UNSIGNED" THEN internaltype = 1
+                IF f3$ = "_BIT" THEN internaltype = 1
+                IF f3$ = "_BYTE" THEN internaltype = 1
                 IF f3$ = "INTEGER" THEN internaltype = 1
                 IF f3$ = "LONG" THEN internaltype = 1
-                IF f3$ = "_INTEGER64" OR (f3$ = "INTEGER64" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "_INTEGER64" THEN internaltype = 1
                 IF f3$ = "SINGLE" THEN internaltype = 1
                 IF f3$ = "DOUBLE" THEN internaltype = 1
-                IF f3$ = "_FLOAT" OR (f3$ = "FLOAT" AND qb64prefix_set = 1) THEN internaltype = 1
-                IF f3$ = "_OFFSET" OR (f3$ = "OFFSET" AND qb64prefix_set = 1) THEN internaltype = 1
+                IF f3$ = "_FLOAT" THEN internaltype = 1
+                IF f3$ = "_OFFSET" THEN internaltype = 1
                 IF internaltype = 1 THEN
                     f2$ = SCase2$(f3$)
                     removeelements a$, i, i, 0
@@ -19746,14 +19624,14 @@ END SUB
 FUNCTION isoperator (a2$)
     a$ = UCASE$(a2$)
     l = 0
-    l = l + 1: IF a$ = "_ORELSE" OR (qb64prefix_set AND a$ = "ORELSE") THEN GOTO opfound
-    l = l + 1: IF a$ = "_ANDALSO" OR (qb64prefix_set AND a$ = "ANDALSO") THEN GOTO opfound
+    l = l + 1: IF a$ = "_ORELSE" THEN GOTO opfound
+    l = l + 1: IF a$ = "_ANDALSO" THEN GOTO opfound
     l = l + 1: IF a$ = "IMP" THEN GOTO opfound
     l = l + 1: IF a$ = "EQV" THEN GOTO opfound
     l = l + 1: IF a$ = "XOR" THEN GOTO opfound
     l = l + 1: IF a$ = "OR" THEN GOTO opfound
     l = l + 1: IF a$ = "AND" THEN GOTO opfound
-    l = l + 1: IF a$ = "_NEGATE" OR (qb64prefix_set AND a$ = "NEGATE") THEN GOTO opfound
+    l = l + 1: IF a$ = "_NEGATE" THEN GOTO opfound
     l = l + 1: IF a$ = "NOT" THEN GOTO opfound
     l = l + 1
     IF a$ = "=" THEN GOTO opfound
@@ -20850,12 +20728,12 @@ FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG,
     IF operator$ = "XOR" THEN info$ = "^": operatorusage = 1: EXIT FUNCTION
     IF operator$ = "OR" THEN info$ = "|": operatorusage = 1: EXIT FUNCTION
     IF operator$ = "AND" THEN info$ = "&": operatorusage = 1: EXIT FUNCTION
-    IF operator$ = "_ORELSE" OR (qb64prefix_set AND operator$ = "ORELSE") THEN info$ = "||": operatorusage = 3: EXIT FUNCTION
-    IF operator$ = "_ANDALSO" OR (qb64prefix_set AND operator$ = "ANDALSO") THEN info$ = "&&": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = "_ORELSE" THEN info$ = "||": operatorusage = 3: EXIT FUNCTION
+    IF operator$ = "_ANDALSO" THEN info$ = "&&": operatorusage = 3: EXIT FUNCTION
 
     lhs = 7
     IF operator$ = "NOT" THEN info$ = "~": operatorusage = 5: EXIT FUNCTION
-    IF operator$ = "_NEGATE" OR (qb64prefix_set AND operator$ = "NEGATE") THEN info$ = "!": operatorusage = 6: EXIT FUNCTION
+    IF operator$ = "_NEGATE" THEN info$ = "!": operatorusage = 6: EXIT FUNCTION
 
     IF Debug THEN PRINT #9, "INVALID NUMBERIC OPERATOR!": END
 
@@ -21275,7 +21153,7 @@ SUB regUnstableHttp
     reginternalsubfunc = 1
 
     clearid
-    id.n = qb64prefix$ + "StatusCode" ' Name in CaMeL case
+    id.n = "_StatusCode" ' Name in CaMeL case
     id.subfunc = 1 ' 1 = function, 2 = sub
     id.callname = "func__statusCode" ' C/C++ function name
     id.args = 1
@@ -21283,12 +21161,6 @@ SUB regUnstableHttp
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_STATUSCODE(httpHandle&)" ' syntax help
     regid
-
-    ' If we're doing $NOPREFIX then we register it again with the underscore
-    IF qb64prefix_set THEN
-        id.n = "_StatusCode"
-        regid
-    END IF
 
     reginternalsubfunc = 0
 
@@ -21695,7 +21567,6 @@ FUNCTION seperateargs (a$, ca$, pass&)
                 OutOfRange = 2147483647
                 position = OutOfRange
                 which = 0
-                removePrefix = 0
                 IF i <= n THEN 'Past end of contect check
                     FOR o = 1 TO t
                         words = OptWords(x, o)
@@ -21709,13 +21580,11 @@ FUNCTION seperateargs (a$, ca$, pass&)
                                         c$ = c$ + " " + getelement$(a$, i3 + w - 1)
                                     NEXT w
                                     'Compare
-                                    noPrefixMatch = LEFT$(Opt(x, o), 1) = "_" AND qb64prefix_set = 1 AND c$ = UCASE$(MID$(RTRIM$(Opt(x, o)), 2))
-                                    IF c$ = UCASE$(RTRIM$(Opt(x, o))) OR noPrefixMatch THEN
+                                    IF c$ = UCASE$(RTRIM$(Opt(x, o))) THEN
                                         'Record Match
                                         IF i3 < position THEN
                                             position = i3
                                             which = o
-                                            IF noPrefixMatch THEN removePrefix = 1
                                             bvalue = b
                                             EXIT FOR 'Exit the i3 loop
                                         END IF 'position check
@@ -21758,7 +21627,7 @@ FUNCTION seperateargs (a$, ca$, pass&)
                         END IF
                     END IF 'Expression
                     i = i + OptWords(x, which)
-                    separgslayout(x) = CHR$(LEN(RTRIM$(Opt(x, which))) - removePrefix) + SCase$(MID$(RTRIM$(Opt(x, which)), removePrefix + 1))
+                    separgslayout(x) = CHR$(LEN(RTRIM$(Opt(x, which)))) + SCase$(MID$(RTRIM$(Opt(x, which)), 1))
                     separgs(x) = CHR$(0) + str2(which)
                 ELSE
                     'Not Found...
