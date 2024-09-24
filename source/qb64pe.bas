@@ -1701,7 +1701,7 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     unstableFlags(UNSTABLE_MIDI) = -1
-                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature, use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
@@ -2141,7 +2141,7 @@ DO
                                         END IF
                                         IF issueWarning THEN
                                             IF NOT IgnoreWarnings THEN
-                                                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "duplicate constant definition", n$ + " =" + thisconstval$
+                                                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Duplicate constant definition", n$ + " =" + thisconstval$
                                             END IF
                                             GOTO constAddDone
                                         ELSE
@@ -2975,20 +2975,20 @@ DO
         IF a3u$ = "$VIRTUALKEYBOARD:ON" THEN
             'Deprecated; does nothing.
             layout$ = SCase$("$VirtualKeyboard:On")
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VirtualKeyboard"
+            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VIRTUALKEYBOARD"
             GOTO finishednonexec
         END IF
         IF a3u$ = "$VIRTUALKEYBOARD:OFF" THEN
             'Deprecated; does nothing.
             layout$ = SCase$("$VirtualKeyboard:Off")
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VirtualKeyboard"
+            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VIRTUALKEYBOARD"
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$DEBUG" THEN
             layout$ = SCase$("$Debug")
             IF NoIDEMode THEN
-                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$Debug", "$Debug features only work from the IDE"
+                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$DEBUG features only work from the IDE", ""
             END IF
             GOTO finishednonexec
         END IF
@@ -2997,7 +2997,7 @@ DO
             layout$ = SCase$("$Checking:Off")
             CheckingOn = 0
             IF vWatchOn <> 0 AND NoIDEMode = 0 AND inclevel = 0 THEN
-                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$Debug", "$Debug features won't work in $Checking:Off blocks"
+                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$DEBUG features won't work in these blocks", "$CHECKING:OFF"
             END IF
             GOTO finishednonexec
         END IF
@@ -3145,7 +3145,7 @@ DO
             ' Generate warnings if needed
             IF issueWarning AND NOT IgnoreWarnings THEN
                 IF NOT HasStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR) THEN
-                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "missing string bracket delimiters (" + METACOMMAND_STRING_ENCLOSING_PAIR + ")", VersionInfoValue$
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Missing string bracket delimiters (" + METACOMMAND_STRING_ENCLOSING_PAIR + ")", VersionInfoValue$
                 END IF
             END IF
 
@@ -3299,7 +3299,7 @@ DO
         END IF
 
         IF LEFT$(a3u$, 10) = "$UNSTABLE:" THEN
-            layout$ = SCase("$Unstable:")
+            layout$ = SCase$("$Unstable:")
 
             token$ = LTRIM$(RTRIM$(MID$(a3u$, 11)))
 
@@ -3316,7 +3316,8 @@ DO
 
         IF unstableFlags(UNSTABLE_MIDI) THEN
             IF LEFT$(a3u$, 15) = "$MIDISOUNDFONT:" THEN
-                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature. Use _MIDISOUNDBANK instead", "$MIDISOUNDFONT"
+                layout$ = SCase$("$MIDISoundFont:") + MID$(a3$, 16)
+                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature, use _MIDISOUNDBANK instead", "$MIDISOUNDFONT"
 
                 GOTO finishednonexec
             END IF
@@ -4924,7 +4925,7 @@ DO
                         IF UCASE$(e$) = "BYVAL" THEN
                             IF declaringlibrary = 0 THEN a$ = "BYVAL can only be used with DECLARE LIBRARY": GOTO errmes
                             byvalue = 1: a2$ = RIGHT$(a2$, LEN(a2$) - 6)
-                            IF RIGHT$(l$, 1) = "(" THEN l$ = l$ + sp2 + SCase$("ByVal") ELSE l$ = l$ + sp + SCase$("Byval")
+                            IF RIGHT$(l$, 1) = "(" THEN l$ = l$ + sp2 + SCase$("ByVal") ELSE l$ = l$ + sp + SCase$("ByVal")
                             n2 = numelements(a2$): e$ = getelement$(a2$, 1)
                         END IF
 
@@ -6226,7 +6227,7 @@ DO
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
                 'warn user of empty SELECT CASE block
                 IF NOT IgnoreWarnings THEN
-                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "empty SELECT CASE block", ""
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Empty SELECT CASE block", ""
                 END IF
             END IF
 
@@ -6582,7 +6583,7 @@ DO
 
     IF firstelement$ = "KEY" THEN
         IF n = 1 THEN a$ = "Expected KEY ...": GOTO errmes
-        l$ = SCase$("KEY") + sp
+        l$ = SCase$("Key") + sp
         IF secondelement$ = "OFF" THEN
             IF n > 2 THEN a$ = "Expected KEY OFF only": GOTO errmes
             l$ = l$ + SCase$("Off"): layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -8734,13 +8735,13 @@ DO
 
     IF firstelement$ = "CHAIN" THEN
         IF vWatchOn THEN
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Feature incompatible with $Debug mode", "CHAIN"
+            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Feature incompatible with $DEBUG mode", "CHAIN"
         END IF
     END IF
 
     IF firstelement$ = "RUN" THEN 'RUN
         IF vWatchOn THEN
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Feature incompatible with $Debug mode", "RUN"
+            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Feature incompatible with $DEBUG mode", "RUN"
         END IF
         l$ = SCase$("Run")
         IF n = 1 THEN
@@ -12129,7 +12130,7 @@ IF NOT IgnoreWarnings THEN
             END IF
         NEXT
 
-        header$ = "unused variable" 's (" + LTRIM$(STR$(totalUnusedVariables)) + ")"
+        header$ = "Unused variable" 's (" + LTRIM$(STR$(totalUnusedVariables)) + ")"
         FOR i = 1 TO totalVariablesCreated
             IF usedVariableList(i).used = 0 THEN
                 addWarning usedVariableList(i).linenumber, usedVariableList(i).includeLevel, usedVariableList(i).includedLine, usedVariableList(i).includedFile, header$, usedVariableList(i).name + SPACE$((maxVarNameLen + 1) - LEN(usedVariableList(i).name)) + "  " + usedVariableList(i).varType
