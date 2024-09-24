@@ -20750,7 +20750,7 @@ SUB ExportCodeAs (docFormat$)
                         CASE "REM": IF NOT (co% OR qu%) THEN co% = -1: what$ = "co": GOSUB OpenText
                         CASE "DATA": dl% = -1
                         CASE "OPEN": op% = -1
-                        CASE "IF", "ELSEIF", "UNTIL", "WHILE": fu% = -1: bo% = -1
+                        CASE "CASE", "IF", "ELSEIF", "UNTIL", "WHILE": fu% = -1: bo% = -1
                         CASE "THEN", "ELSE": fu% = 0: bo% = 0
                         CASE ELSE
                             FOR i& = 1 TO idn
@@ -21031,6 +21031,9 @@ SUB ExportCodeAs (docFormat$)
         SELECT EVERYCASE page$
             CASE "$END": IF UCASE$(LEFT$(la$, 2)) = "IF" THEN me$ = me$ + " " + LEFT$(la$, 2): page$ = "$END IF": in% = -1
             CASE "CALL": IF UCASE$(LEFT$(la$, 8)) = "ABSOLUTE" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "CALL ABSOLUTE": in% = -1
+            CASE "CASE"
+                IF UCASE$(LEFT$(la$, 2)) = "IS" THEN kw$ = kw$ + " " + LEFT$(la$, 2): page$ = "CASE IS": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(LEFT$(la$, 4)) = "ELSE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "CASE ELSE": fu% = 0: bo% = 0: in% = -1
             CASE "DECLARE": IF UCASE$(LEFT$(la$, 7)) = "LIBRARY" THEN kw$ = kw$ + " " + LEFT$(la$, 7): page$ = "DECLARE LIBRARY": in% = -1
             CASE "DEF": IF UCASE$(LEFT$(la$, 3)) = "SEG" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "DEF SEG": in% = -1
             CASE "DO"
