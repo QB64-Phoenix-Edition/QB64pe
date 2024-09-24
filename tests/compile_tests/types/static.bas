@@ -1,62 +1,39 @@
-$NoPrefix
 $CONSOLE:ONLY
 
 test
 
 SYSTEM
 
-Sub test ()
-    Static m As _Mem
+SUB test ()
+    STATIC m AS _MEM
 
-    Static s As String
-    Static s2 As String * 8
+    STATIC s AS STRING
+    STATIC s2 AS STRING * 8
 
-    Static b As _Bit
-    Static b1 As Bit
-    Static b2 As _Unsigned _Bit
-    Static b3 As Unsigned _Bit
-    Static b4 As _Unsigned Bit
-    Static b5 As Unsigned Bit
+    STATIC b AS _BIT
+    STATIC b2 AS _UNSIGNED _BIT
 
-    Static bn As _Bit * 7
-    Static bn1 As Bit * 7
-    Static bn2 As _Unsigned _Bit * 7
-    Static bn3 As Unsigned _Bit * 7
-    Static bn4 As _Unsigned Bit * 7
-    Static bn5 As Unsigned Bit * 7
+    STATIC bn AS _BIT * 7
+    STATIC bn2 AS _UNSIGNED _BIT * 7
 
-    Static byt As _Byte
-    Static byt1 As Byte
-    Static byt2 As _Unsigned _Byte
-    Static byt3 As Unsigned _Byte
-    Static byt4 As _Unsigned Byte
-    Static byt5 As Unsigned Byte
+    STATIC byt AS _BYTE
+    STATIC byt2 AS _UNSIGNED _BYTE
 
-    Static i64 As _Integer64
-    Static i64_1 As Integer64
-    Static i64_2 As _Unsigned _Integer64
-    Static i64_3 As Unsigned _Integer64
-    Static i64_4 As _Unsigned Integer64
-    Static i64_5 As Unsigned Integer64
+    STATIC i64 AS _INTEGER64
+    STATIC i64_2 AS _UNSIGNED _INTEGER64
 
-    Static o As _Offset
-    Static o1 As Offset
-    Static o2 As _Unsigned _Offset
-    Static o3 As Unsigned _Offset
-    Static o4 As _Unsigned Offset
-    Static o5 As Unsigned Offset
+    STATIC o AS _OFFSET
+    STATIC o2 AS _UNSIGNED _OFFSET
 
-    Static i As Integer
-    Static i2 As _Unsigned Integer
-    Static i3 As Unsigned Integer
+    STATIC i AS INTEGER
+    STATIC i2 AS _UNSIGNED INTEGER
 
-    Static l As Long
-    Static l2 As _Unsigned Long
-    Static l3 As Unsigned Long
+    STATIC l AS LONG
+    STATIC l2 AS _UNSIGNED LONG
 
-    Static si As Single
-    Static d As Double
-    Static f As _Float
+    STATIC si AS SINGLE
+    STATIC d AS DOUBLE
+    STATIC f AS _FLOAT
 
     ' Just check a few of them
     s2 = "HI"
@@ -71,4 +48,5 @@ Sub test ()
     f = 2.8
 
     PRINT "TEST: "; s2; b; bn; byt; i64; i; l; si; d; f
-End Sub
+END SUB
+
