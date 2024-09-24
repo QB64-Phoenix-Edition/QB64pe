@@ -1701,7 +1701,6 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     unstableFlags(UNSTABLE_MIDI) = -1
-                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature, use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
@@ -3306,6 +3305,7 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     layout$ = layout$ + SCase$("Midi")
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature, use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
 
                 CASE "HTTP"
                     layout$ = layout$ + SCase$("Http")
