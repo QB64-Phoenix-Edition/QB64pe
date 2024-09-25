@@ -17,7 +17,10 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
-	CLIP_SRCS += clip_win.cpp
+	CLIP_SRCS += \
+		clip_win.cpp \
+		clip_win_bmp.cpp \
+		clip_win_wic.cpp
 endif
 
 ifeq ($(OS),osx)
