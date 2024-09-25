@@ -12782,11 +12782,7 @@ SUB ideshowtext
                         IF (RIGHT$(a2$, 5) = "_RGB(" OR _
                            RIGHT$(a2$, 7) = "_RGB32(" OR _
                            RIGHT$(a2$, 6) = "_RGBA(" OR _
-                           RIGHT$(a2$, 8) = "_RGBA32(") OR _
-                           ((RIGHT$(a2$, 4) = "RGB(" OR _
-                           RIGHT$(a2$, 6) = "RGB32(" OR _
-                           RIGHT$(a2$, 5) = "RGBA(" OR _
-                           RIGHT$(a2$, 7) = "RGBA32(") AND qb64prefix_set = 1) THEN
+                           RIGHT$(a2$, 8) = "_RGBA32(") THEN
                             shiftEnter_idecx = LEN(a$)
                             a$ = a$ + " --> Shift+ENTER to open the RGB mixer"
                             EnteringRGB = -1
@@ -12795,11 +12791,7 @@ SUB ideshowtext
                         IF (MID$(a2$, idecx - 5, 5) = "_RGB(" OR _
                            MID$(a2$, idecx - 7, 7) = "_RGB32(" OR _
                            MID$(a2$, idecx - 6, 6) = "_RGBA(" OR _
-                           MID$(a2$, idecx - 8, 8) = "_RGBA32(") OR _
-                           ((MID$(a2$, idecx - 4, 4) = "RGB(" OR _
-                           MID$(a2$, idecx - 6, 6) = "RGB32(" OR _
-                           MID$(a2$, idecx - 5, 5) = "RGBA(" OR _
-                           MID$(a2$, idecx - 7, 7) = "RGBA32(") AND qb64prefix_set = 1) THEN
+                           MID$(a2$, idecx - 8, 8) = "_RGBA32(") THEN
                             IF INSTR("0123456789", MID$(a2$, idecx, 1)) = 0 THEN EnteringRGB = -1
                         END IF
                     END IF
@@ -12920,8 +12912,7 @@ SUB ideshowtext
                         IF comment = 0 AND LEFT$(checkKeyword$, 1) = "?" THEN isKeyword = 1: GOTO setOldChar
                         keywordAcquired:
                         checkKeyword$ = UCASE$(checkKeyword$)
-                        IF INSTR(listOfKeywords$, "@" + checkKeyword$ + "@") > 0 OR _
-                           (qb64prefix_set = 1 AND INSTR(listOfKeywords$, "@_" + checkKeyword$ + "@") > 0) THEN
+                        IF INSTR(listOfKeywords$, "@" + checkKeyword$ + "@") > 0 THEN
                             'special cases
                             IF checkKeyword$ = "$END" THEN
                                 IF UCASE$(MID$(a2$, m, 7)) = "$END IF" THEN checkKeyword$ = "$END IF"
@@ -20299,7 +20290,7 @@ FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
     DO UNTIL EOF(fh)
         LINE INPUT #fh, l$
         c = INSTR(l$, ","): l1$ = LEFT$(l$, c - 1): l2$ = RIGHT$(l$, LEN(l$) - c)
-        IF a2$ = UCASE$(l1$) OR (qb64prefix_set = 1 AND LEFT$(l1$, 1) = "_" AND a2$ = MID$(l1$, 2)) THEN
+        IF a2$ = UCASE$(l1$) THEN
             IF INSTR(lnks$, CHR$(0) + l2$ + CHR$(0)) = 0 THEN
                 lnks = lnks + 1
                 IF firstOnly THEN findHelpTopic$ = l2$: CLOSE #fh: EXIT FUNCTION
@@ -20703,7 +20694,6 @@ SUB ExportCodeAs (docFormat$)
     bo% = 0 '=> Wiki page +(boolean) check required
     bo$ = "@AND@OR@XOR@"
     '----------
-    np% = 0 ''=> $NOPREFIX indicator
     pc% = 0 ''=> pre-compiler indicator
     ml% = 0 ''=> meta line indicator
     dl% = 0 ''=> data line indicator
@@ -20729,7 +20719,6 @@ SUB ExportCodeAs (docFormat$)
                     IF me% THEN
                         IF NOT in% THEN GOSUB VerifyKeyword: GOSUB WriteLink: ELSE me$ = "": in% = 0
                         me% = 0: le% = 0
-                        IF UCASE$(me$) = "$NOPREFIX" THEN np% = -1
                     END IF
                     IF kw% THEN
                         IF NOT in% THEN GOSUB VerifyKeyword: GOSUB WriteLink: ELSE kw$ = "": in% = 0
@@ -20761,13 +20750,13 @@ SUB ExportCodeAs (docFormat$)
                         CASE "REM": IF NOT (co% OR qu%) THEN co% = -1: what$ = "co": GOSUB OpenText
                         CASE "DATA": dl% = -1
                         CASE "OPEN": op% = -1
-                        CASE "IF", "ELSEIF", "UNTIL", "WHILE": fu% = -1: bo% = -1
+                        CASE "CASE", "IF", "ELSEIF", "UNTIL", "WHILE": fu% = -1: bo% = -1
                         CASE "THEN", "ELSE": fu% = 0: bo% = 0
                         CASE ELSE
                             FOR i& = 1 TO idn
                                 IF ids(i&).subfunc = 2 AND ids(i&).args > 0 THEN
                                     id$ = RTRIM$(ids(i&).n): uw$ = UCASE$(kw$)
-                                    IF (id$ = uw$) OR (np% AND id$ = "_" + uw$) THEN fu% = -2: EXIT FOR
+                                    IF id$ = uw$ THEN fu% = -2: EXIT FOR
                                 END IF
                             NEXT i&
                     END SELECT
@@ -21000,7 +20989,7 @@ SUB ExportCodeAs (docFormat$)
     VerifyKeyword:
     IF me% THEN veri$ = me$: ELSE veri$ = kw$
     IF ASC(veri$, 1) <> 95 THEN flp% = 1: ELSE flp% = 2
-    IF (ASC(veri$, flp%) < 91 OR MID$(veri$, flp%, 2) = "gl") AND (INSTR(listOfKeywords$, "@" + UCASE$(veri$) + "@") > 0 OR (np% AND INSTR(listOfKeywords$, "@_" + UCASE$(veri$) + "@") > 0)) THEN
+    IF (ASC(veri$, flp%) < 91 OR MID$(veri$, flp%, 2) = "gl") AND (INSTR(listOfKeywords$, "@" + UCASE$(veri$) + "@") > 0) THEN
         IF me% AND le% THEN
             IF INSTR("$DYNAMIC$INCLUDE$STATIC", UCASE$(veri$)) = 0 THEN me$ = ""
         ELSEIF me% AND NOT le% THEN
@@ -21031,17 +21020,20 @@ SUB ExportCodeAs (docFormat$)
             CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes": RETURN
         END SELECT
     END IF
-    IF (fu% < 0) AND ((INSTR(fu$, "@" + page$ + "@") > 0) OR (np% AND INSTR(fu$, "@_" + page$ + "@") > 0)) THEN
+    IF fu% < 0 AND INSTR(fu$, "@" + page$ + "@") > 0 THEN
         page$ = page$ + " (function)"
-    ELSEIF bo% AND INSTR(bo$, "@" + page$ + "@") > 0 THEN 'np% check omitted (legacy words only)
+    ELSEIF bo% AND INSTR(bo$, "@" + page$ + "@") > 0 THEN
         page$ = page$ + " (boolean)"
-    ELSEIF ((INSTR(ma$, "@" + page$ + "@") > 0) OR (np% AND INSTR(ma$, "@_" + page$ + "@") > 0)) THEN
+    ELSEIF INSTR(ma$, "@" + page$ + "@") > 0 THEN
         page$ = "Mathematical Operations#Derived_Mathematical_Functions"
     ELSE
         la$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " "))
         SELECT EVERYCASE page$
             CASE "$END": IF UCASE$(LEFT$(la$, 2)) = "IF" THEN me$ = me$ + " " + LEFT$(la$, 2): page$ = "$END IF": in% = -1
             CASE "CALL": IF UCASE$(LEFT$(la$, 8)) = "ABSOLUTE" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "CALL ABSOLUTE": in% = -1
+            CASE "CASE"
+                IF UCASE$(LEFT$(la$, 2)) = "IS" THEN kw$ = kw$ + " " + LEFT$(la$, 2): page$ = "CASE IS": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(LEFT$(la$, 4)) = "ELSE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "CASE ELSE": fu% = 0: bo% = 0: in% = -1
             CASE "DECLARE": IF UCASE$(LEFT$(la$, 7)) = "LIBRARY" THEN kw$ = kw$ + " " + LEFT$(la$, 7): page$ = "DECLARE LIBRARY": in% = -1
             CASE "DEF": IF UCASE$(LEFT$(la$, 3)) = "SEG" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "DEF SEG": in% = -1
             CASE "DO"

@@ -1,62 +1,39 @@
-$NoPrefix
 $CONSOLE:ONLY
 
 test
 
 SYSTEM
 
-Sub test ()
-    Static m(3) As _Mem
+SUB test ()
+    STATIC m(3) AS _MEM
 
-    Static s(3) As String
-    Static s2(3) As String * 8
+    STATIC s(3) AS STRING
+    STATIC s2(3) AS STRING * 8
 
-    Static b(3) As _Bit
-    Static b1(3) As Bit
-    Static b2(3) As _Unsigned _Bit
-    Static b3(3) As Unsigned _Bit
-    Static b4(3) As _Unsigned Bit
-    Static b5(3) As Unsigned Bit
+    STATIC b(3) AS _BIT
+    STATIC b2(3) AS _UNSIGNED _BIT
 
-    Static bn(3) As _Bit * 7
-    Static bn1(3) As Bit * 7
-    Static bn2(3) As _Unsigned _Bit * 7
-    Static bn3(3) As Unsigned _Bit * 7
-    Static bn4(3) As _Unsigned Bit * 7
-    Static bn5(3) As Unsigned Bit * 7
+    STATIC bn(3) AS _BIT * 7
+    STATIC bn2(3) AS _UNSIGNED _BIT * 7
 
-    Static byt(3) As _Byte
-    Static byt1(3) As Byte
-    Static byt2(3) As _Unsigned _Byte
-    Static byt3(3) As Unsigned _Byte
-    Static byt4(3) As _Unsigned Byte
-    Static byt5(3) As Unsigned Byte
+    STATIC byt(3) AS _BYTE
+    STATIC byt2(3) AS _UNSIGNED _BYTE
 
-    Static i64(3) As _Integer64
-    Static i64_1(3) As Integer64
-    Static i64_2(3) As _Unsigned _Integer64
-    Static i64_3(3) As Unsigned _Integer64
-    Static i64_4(3) As _Unsigned Integer64
-    Static i64_5(3) As Unsigned Integer64
+    STATIC i64(3) AS _INTEGER64
+    STATIC i64_2(3) AS _UNSIGNED _INTEGER64
 
-    Static o(3) As _Offset
-    Static o1(3) As Offset
-    Static o2(3) As _Unsigned _Offset
-    Static o3(3) As Unsigned _Offset
-    Static o4(3) As _Unsigned Offset
-    Static o5(3) As Unsigned Offset
+    STATIC o(3) AS _OFFSET
+    STATIC o2(3) AS _UNSIGNED _OFFSET
 
-    Static i(3) As Integer
-    Static i2(3) As _Unsigned Integer
-    Static i3(3) As Unsigned Integer
+    STATIC i(3) AS INTEGER
+    STATIC i2(3) AS _UNSIGNED INTEGER
 
-    Static l(3) As Long
-    Static l2(3) As _Unsigned Long
-    Static l3(3) As Unsigned Long
+    STATIC l(3) AS LONG
+    STATIC l2(3) AS _UNSIGNED LONG
 
-    Static si(3) As Single
-    Static d(3) As Double
-    Static f(3) As _Float
+    STATIC si(3) AS SINGLE
+    STATIC d(3) AS DOUBLE
+    STATIC f(3) AS _FLOAT
 
     ' Just check a few of them
     s2(1) = "HI"
@@ -71,4 +48,5 @@ Sub test ()
     f(1) = 2.8
 
     PRINT "TEST: "; s2(1); b(1); bn(1); byt(1); i64(1); i(1); l(1); si(1); d(1); f(1)
-End Sub
+END SUB
+
