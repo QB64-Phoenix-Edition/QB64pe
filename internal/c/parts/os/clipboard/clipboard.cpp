@@ -11,6 +11,9 @@
 // Uncomment this to to print debug messages to stderr
 // #define IMAGE_DEBUG 1
 
+// Comment the following bypass custom clipboard code in func__clipboard() and sub__clipboard()
+#define QB64_USE_CUSTOM_CLIPBOARD_CODE 1
+
 // This is not strictly needed. But we'll leave it here for VSCode to do it's magic
 #define CLIP_ENABLE_IMAGE 1
 #include "clip/clip.h"
@@ -37,7 +40,7 @@ static std::string g_InternalClipboard;
 /// @brief Gets text (if present) in the OS clipboard.
 /// @return A qbs string.
 qbs *func__clipboard() {
-#if defined(QB64_MACOSX)
+#if defined(QB64_MACOSX) && defined(QB64_USE_CUSTOM_CLIPBOARD_CODE) && QB64_USE_CUSTOM_CLIPBOARD_CODE == 1
 
     // We'll use our own clipboard get code on macOS since our requirements are different than what clip supports
     PasteboardRef clipboard = nullptr;
@@ -69,7 +72,7 @@ qbs *func__clipboard() {
         CFRelease(clipboard);
     }
 
-#elif defined(QB64_WINDOWS)
+#elif defined(QB64_WINDOWS) && defined(QB64_USE_CUSTOM_CLIPBOARD_CODE) && QB64_USE_CUSTOM_CLIPBOARD_CODE == 1
 
     // We'll need custom code for Windows because clip does automatic UTF-8 conversions that leads to some undesired behavior when copying extended ASCII
     if (OpenClipboard(NULL)) {
@@ -110,58 +113,56 @@ qbs *func__clipboard() {
 void sub__clipboard(const qbs *qbsText) {
     g_InternalClipboard.assign(reinterpret_cast<const char *>(qbsText->chr), qbsText->len);
 
-    if (qbsText->len) {
-#if defined(QB64_MACOSX)
+#if defined(QB64_MACOSX) && defined(QB64_USE_CUSTOM_CLIPBOARD_CODE) && QB64_USE_CUSTOM_CLIPBOARD_CODE == 1
 
-        // We'll use our own clipboard set code on macOS since our requirements are different than what clip supports
-        PasteboardRef clipboard;
-        if (PasteboardCreate(kPasteboardClipboard, &clipboard) == noErr) {
-            if (PasteboardClear(clipboard) == noErr) {
-                CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, qbsText->chr, qbsText->len, kCFAllocatorNull);
+    // We'll use our own clipboard set code on macOS since our requirements are different than what clip supports
+    PasteboardRef clipboard;
+    if (PasteboardCreate(kPasteboardClipboard, &clipboard) == noErr) {
+        if (PasteboardClear(clipboard) == noErr) {
+            CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, qbsText->chr, qbsText->len, kCFAllocatorNull);
 
-                if (data) {
-                    PasteboardPutItemFlavor(clipboard, nullptr, kUTTypeUTF8PlainText, data, 0);
+            if (data) {
+                PasteboardPutItemFlavor(clipboard, nullptr, kUTTypeUTF8PlainText, data, 0);
 
-                    CFRelease(data);
-                }
+                CFRelease(data);
             }
-
-            CFRelease(clipboard);
         }
 
-#elif defined(QB64_WINDOWS)
+        CFRelease(clipboard);
+    }
 
-        // We'll need custom code for Windows because clip does automatic UTF-8 conversions that leads to some undesired behavior when copying extended ASCII
-        if (OpenClipboard(NULL)) {
-            if (EmptyClipboard()) {
-                HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, qbsText->len + 1);
+#elif defined(QB64_WINDOWS) && defined(QB64_USE_CUSTOM_CLIPBOARD_CODE) && QB64_USE_CUSTOM_CLIPBOARD_CODE == 1
 
-                if (hClipboardData) {
-                    auto pchData = reinterpret_cast<uint8_t *>(GlobalLock(hClipboardData));
+    // We'll need custom code for Windows because clip does automatic UTF-8 conversions that leads to some undesired behavior when copying extended ASCII
+    if (OpenClipboard(NULL)) {
+        if (EmptyClipboard()) {
+            HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, qbsText->len + 1);
 
-                    if (pchData) {
-                        memcpy(pchData, qbsText->chr, qbsText->len);
-                        pchData[qbsText->len] = '\0'; // null terminate
+            if (hClipboardData) {
+                auto pchData = reinterpret_cast<uint8_t *>(GlobalLock(hClipboardData));
 
-                        GlobalUnlock(hClipboardData);
+                if (pchData) {
+                    memcpy(pchData, qbsText->chr, qbsText->len);
+                    pchData[qbsText->len] = '\0'; // null terminate
 
-                        SetClipboardData(CF_TEXT, hClipboardData);
-                    }
+                    GlobalUnlock(hClipboardData);
 
-                    GlobalFree(hClipboardData);
+                    SetClipboardData(CF_TEXT, hClipboardData);
                 }
-            }
 
-            CloseClipboard();
+                GlobalFree(hClipboardData);
+            }
         }
+
+        CloseClipboard();
+    }
 
 #else
 
-        // clip works like we want on Linux
-        clip::set_text(g_InternalClipboard);
+    // clip works like we want on Linux
+    clip::set_text(g_InternalClipboard);
 
 #endif
-    }
 }
 
 /// @brief Returns an image handle of an image from the clipboard (if present).
