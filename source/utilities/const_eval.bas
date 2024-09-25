@@ -684,7 +684,7 @@ FUNCTION Numeric&(exp$, state AS ParserState)
         state.num.typ = elementGetNumericValue(ele$, state.num.f, state.num.i, state.num.ui)
 
         Numeric& = -1
-    ELSEIF ele$ = "_PI" OR (qb64prefix_set = 1 AND ele$ = "PI") THEN
+    ELSEIF ele$ = "_PI" THEN
         ele$ = getnextelement$(exp$, state.index, state.strIndex)
 
         ParseNumSetF state.num, FLOATTYPE - ISPOINTER, 3.14159265358979323846264338327950288##
@@ -1121,14 +1121,6 @@ FUNCTION IsFunctionIdentifier&(ele$)
         IF ele$ = ConstFuncs(i).nam THEN
             IsFunctionIdentifier& = i
             EXIT FUNCTION
-        ELSE
-            IF LEFT$(ConstFuncs(i).nam, 1) = "_" AND qb64prefix_set = 1 THEN
-                'try without prefix
-                IF ele$ = MID$(ConstFuncs(i).nam, 2) THEN
-                    IsFunctionIdentifier& = i
-                    EXIT FUNCTION
-                END IF
-            END IF
         END IF
     NEXT
 END FUNCTION
