@@ -2960,27 +2960,14 @@ DO
 
         IF a3u$ = "$NOPREFIX" THEN
             'Deprecated; does nothing.
-            layout$ = SCase$("$NoPrefix")
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$NOPREFIX"
-            GOTO finishednonexec
+            idesetline linenumber, SCase$("$NoPrefix") + MID$(a3$, 10) 'immediate layout before error
+            a$ = "$NOPREFIX is a deprecated feature, QB64(PE) specific keywords MUST have the underscore"
+            GOTO errmes
         END IF
 
         IF a3u$ = "$INCLUDEONCE" THEN
             'just to catch it as keyword
             layout$ = SCase$("$IncludeOnce")
-            GOTO finishednonexec
-        END IF
-
-        IF a3u$ = "$VIRTUALKEYBOARD:ON" THEN
-            'Deprecated; does nothing.
-            layout$ = SCase$("$VirtualKeyboard:On")
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VIRTUALKEYBOARD"
-            GOTO finishednonexec
-        END IF
-        IF a3u$ = "$VIRTUALKEYBOARD:OFF" THEN
-            'Deprecated; does nothing.
-            layout$ = SCase$("$VirtualKeyboard:Off")
-            addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature", "$VIRTUALKEYBOARD"
             GOTO finishednonexec
         END IF
 
@@ -3305,7 +3292,7 @@ DO
             SELECT CASE token$
                 CASE "MIDI"
                     layout$ = layout$ + SCase$("Midi")
-                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature, use _MIDISOUNDBANK instead", "$UNSTABLE:MIDI"
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "No longer required, feature is stable now", "$UNSTABLE:MIDI"
 
                 CASE "HTTP"
                     layout$ = layout$ + SCase$("Http")
@@ -3316,10 +3303,10 @@ DO
 
         IF unstableFlags(UNSTABLE_MIDI) THEN
             IF LEFT$(a3u$, 15) = "$MIDISOUNDFONT:" THEN
-                layout$ = SCase$("$MIDISoundFont:") + MID$(a3$, 16)
-                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Deprecated feature, use _MIDISOUNDBANK instead", "$MIDISOUNDFONT"
+                idesetline linenumber, SCase$("$MIDISoundFont:") + MID$(a3$, 16) 'immediate layout before error
+                a$ = "$MIDISOUNDFONT is a deprecated keyword, use _MIDISOUNDBANK instead"
 
-                GOTO finishednonexec
+                GOTO errmes
             END IF
         END IF
 
