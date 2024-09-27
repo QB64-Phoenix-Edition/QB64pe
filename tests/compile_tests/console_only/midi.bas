@@ -2,10 +2,9 @@ $CONSOLE:ONLY
 _DEST _CONSOLE
 CHDIR _STARTDIR$
 
-$Unstable: Midi
-$MidiSoundFont: Default
+_MIDISOUNDBANK "./test-soundfont.sf2"
 
-handle = _SndOpen("./midi.mid")
+handle = _SNDOPEN("./midi.mid")
 
-print handle;
+PRINT handle;
 SYSTEM
