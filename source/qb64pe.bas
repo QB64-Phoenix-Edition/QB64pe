@@ -1643,6 +1643,11 @@ DO
             END IF
         END IF
 
+        IF temp$ = "$NOPREFIX" THEN
+            a$ = "$NOPREFIX is a deprecated feature, QB64(PE) specific keywords MUST have the underscore"
+            GOTO errmes
+        END IF
+
         IF LEFT$(temp$, 7) = "$ERROR " THEN
             temp$ = RemoveStringEnclosingPair(LTRIM$(MID$(temp$, 7)), METACOMMAND_STRING_ENCLOSING_PAIR)
             a$ = "Compilation check failed: " + temp$
@@ -1710,6 +1715,11 @@ DO
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
                     GOTO errmes
             END SELECT
+        END IF
+
+        IF LEFT$(temp$, 15) = "$MIDISOUNDFONT:" THEN
+            a$ = "$MIDISOUNDFONT is a deprecated keyword, use _MIDISOUNDBANK instead"
+            GOTO errmes
         END IF
 
         wholeline$ = lineformat(wholeline$)
@@ -2958,13 +2968,6 @@ DO
             GOTO finishednonexec
         END IF
 
-        IF a3u$ = "$NOPREFIX" THEN
-            'Deprecated; does nothing.
-            idesetline linenumber, SCase$("$NoPrefix") + MID$(a3$, 10) 'immediate layout before error
-            a$ = "$NOPREFIX is a deprecated feature, QB64(PE) specific keywords MUST have the underscore"
-            GOTO errmes
-        END IF
-
         IF a3u$ = "$INCLUDEONCE" THEN
             'just to catch it as keyword
             layout$ = SCase$("$IncludeOnce")
@@ -3200,7 +3203,7 @@ DO
             FOR i = 2 TO LEN(EmbedHandle$)
                 SELECT CASE ASC(EmbedHandle$, i)
                     CASE 0 TO 47, 58 TO 64, 91 TO 96, 123 TO 255
-                        a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use A-Z/a-z/0-9 only": GOTO errmes
+                        a$ = "Embed-Handle '" + EmbedHandle$ + "' has invalid chars, use Aa-Zz/0-9 only": GOTO errmes
                 END SELECT
             NEXT i
             'check for duplicate definitions
@@ -3299,15 +3302,6 @@ DO
             END SELECT
 
             GOTO finishednonexec
-        END IF
-
-        IF unstableFlags(UNSTABLE_MIDI) THEN
-            IF LEFT$(a3u$, 15) = "$MIDISOUNDFONT:" THEN
-                idesetline linenumber, SCase$("$MIDISoundFont:") + MID$(a3$, 16) 'immediate layout before error
-                a$ = "$MIDISOUNDFONT is a deprecated keyword, use _MIDISOUNDBANK instead"
-
-                GOTO errmes
-            END IF
         END IF
 
     END IF 'QB64 Metacommands
