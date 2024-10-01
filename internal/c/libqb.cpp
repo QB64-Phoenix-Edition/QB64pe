@@ -5630,26 +5630,15 @@ struct mouse_message {
     int16 movementy;
 };
 
-/*
-    mouse_message mouse_messages[65536];//a circular buffer of mouse messages
-    int32 last_mouse_message=0;
-    int32 current_mouse_message=0;
-*/
-
-// Mouse message queue system
-//--------------------------
+// Mouse message queue
+//--------------------
 struct mouse_message_queue_struct {
     mouse_message *queue;
     int32 lastIndex;
     int32 current;
-    int32 first;
     int32 last;
-    int32 child;
-    int32 parent;
 };
-list *mouse_message_queue_handles = NULL;
-int32 mouse_message_queue_first;   // the first queue to populate from input source
-int32 mouse_message_queue_default; // the default queue (for int33h and default _MOUSEINPUT operations)
+static mouse_message_queue_struct mouse_message_queue = {NULL, 0, 0, 0};
 
 // x86 Virtual CMEM emulation
 // Note: x86 CPU emulation is still experimental and is not available in QB64 yet.
@@ -18713,23 +18702,11 @@ cursor_valid:
 }
 
 float func__mousemovementx() {
-    int32 handle;
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     return queue->queue[queue->current].movementx;
 }
 float func__mousemovementy() {
-    int32 handle;
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     return queue->queue[queue->current].movementy;
 }
 
@@ -18798,20 +18775,13 @@ float func__mousex() {
     static int32 x, x2;
     static float f;
 
-    int32 handle;
-
 #ifdef QB64_WINDOWS
     if (read_page->console) {
         return consolemousex;
     }
 #endif
 
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     x = queue->queue[queue->current].x;
 
     // calculate pixel offset of mouse within SCREEN using environment variables
@@ -18849,20 +18819,13 @@ float func__mousey() {
     static int32 y, y2;
     static float f;
 
-    int32 handle;
-
 #ifdef QB64_WINDOWS
     if (read_page->console) {
         return consolemousey;
     }
 #endif
 
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     y = queue->queue[queue->current].y;
 
     // calculate pixel offset of mouse within SCREEN using environment variables
@@ -18896,13 +18859,7 @@ float func__mousey() {
 }
 
 int32 func__mouseinput() {
-    int32 handle;
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     if (queue->current == queue->last)
         return 0;
     int32 newIndex = queue->current + 1;
@@ -18942,13 +18899,7 @@ int32 func__mousebutton(int32 i) {
         if (i == 3)
             i = 2;
     }
-    int32 handle;
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     if (queue->queue[queue->current].buttons & (1 << (i - 1)))
         return -1;
     return 0;
@@ -18956,7 +18907,6 @@ int32 func__mousebutton(int32 i) {
 
 int32 func__mousewheel() {
     static uint32 x;
-    int32 handle;
 
 #ifdef QB64_WINDOWS
     if (read_page->console) {
@@ -18968,12 +18918,7 @@ int32 func__mousewheel() {
     }
 #endif
 
-    handle = mouse_message_queue_default;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
-    if (queue == NULL) {
-        error(258);
-        return 0;
-    }
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     x = queue->queue[queue->current].buttons;
     if ((x & (8 + 16)) == (8 + 16))
         return 0; // cancelled out change
@@ -19026,9 +18971,7 @@ void call_int(int32 i) {
             // return the current mouse status
             // buttons
 
-            int32 handle;
-            handle = mouse_message_queue_default;
-            mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
+            mouse_message_queue_struct *queue = &mouse_message_queue;
 
             // buttons
             cpu.bx = queue->queue[queue->last].buttons & 1;
@@ -28898,9 +28841,7 @@ void GLUT_DISPLAY_REQUEST() {
 void GLUT_MouseButton_Up(int button, int x, int y) {
 #    ifdef QB64_GLUT
     int32 i;
-    int32 handle;
-    handle = mouse_message_queue_first;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
+    mouse_message_queue_struct *queue = &mouse_message_queue;
 
     i = queue->last + 1;
     if (i > queue->lastIndex)
@@ -28940,9 +28881,7 @@ void GLUT_MouseButton_Down(int button, int x, int y) {
 #    ifdef QB64_GLUT
 
     int32 i;
-    int32 handle;
-    handle = mouse_message_queue_first;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
+    mouse_message_queue_struct *queue = &mouse_message_queue;
 
     i = queue->last + 1;
     if (i > queue->lastIndex)
@@ -29010,14 +28949,12 @@ void GLUT_MOUSE_FUNC(int glut_button, int state, int x, int y) {
 void GLUT_MOTION_FUNC(int x, int y) {
 
     int32 i, last_i;
-    int32 handle;
     int32 xrel, yrel;
 
     // This is used to save the last mouse position which is then paired with the mouse wheel event on macOS
     macMouseUpdatePosition(x, y);
 
-    handle = mouse_message_queue_first;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
+    mouse_message_queue_struct *queue = &mouse_message_queue;
 
     // message #1
     last_i = queue->last;
@@ -29382,7 +29319,6 @@ int main(int argc, char *argv[]) {
     }
 
     // setup lists
-    mouse_message_queue_handles = list_new(sizeof(mouse_message_queue_struct));
     special_handles = list_new(sizeof(special_handle_struct));
     stream_handles = list_new(sizeof(stream_struct));
     connection_handles = list_new(sizeof(connection_struct));
@@ -29391,11 +29327,9 @@ int main(int argc, char *argv[]) {
     hardware_graphics_command_handles = list_new(sizeof(hardware_graphics_command_struct));
 
     // setup default mouse message queue
-    mouse_message_queue_first = list_add(mouse_message_queue_handles);
-    mouse_message_queue_default = mouse_message_queue_first;
-    mouse_message_queue_struct *this_mouse_message_queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, mouse_message_queue_default);
-    this_mouse_message_queue->lastIndex = 65535;
-    this_mouse_message_queue->queue = (mouse_message *)calloc(1, sizeof(mouse_message) * (this_mouse_message_queue->lastIndex + 1));
+    mouse_message_queue_struct *queue = &mouse_message_queue;
+    queue->lastIndex = 65535;
+    queue->queue = (mouse_message *)calloc(1, sizeof(mouse_message) * (queue->lastIndex + 1));
 
     snd_init();
 
@@ -31841,8 +31775,7 @@ extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_o
 #endif
 
 void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY) {
-    int32_t handle = mouse_message_queue_first;
-    mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
+    mouse_message_queue_struct *queue = &mouse_message_queue;
     // message #1
     int32_t i = queue->last + 1;
     if (i > queue->lastIndex)
