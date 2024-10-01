@@ -1811,32 +1811,6 @@ regid
 
 
 clearid
-id.n = "_MousePipeOpen"
-id.subfunc = 1
-id.callname = "func__mousepipeopen"
-id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_MOUSEPIPEOPEN"
-regid
-
-clearid
-id.n = "_MouseInputPipe"
-id.subfunc = 2
-id.callname = "sub__mouseinputpipe"
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.hr_syntax = "_MOUSEINPUTPIPE(context)"
-regid
-
-clearid
-id.n = "_MousePipeClose"
-id.subfunc = 2
-id.callname = "sub__mousepipeclose"
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.hr_syntax = "_MOUSEPIPECLOSE(context)"
-regid
-
-clearid
 id.n = "FreeFile"
 id.subfunc = 1
 id.callname = "func_freefile"

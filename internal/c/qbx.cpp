@@ -385,10 +385,6 @@ extern int32 func__mouseinput(int32 context, int32 passed);
 extern int32 func__mousebutton(int32 i, int32 context, int32 passed);
 extern int32 func__mousewheel(int32 context, int32 passed);
 
-extern int32 func__mousepipeopen();
-extern void sub__mouseinputpipe(int32 context);
-extern void sub__mousepipeclose(int32 context);
-
 extern void call_absolute(int32 args, uint16 offset);
 extern int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
 extern int32 func__copyimage(int32 i, int32 mode, int32 passed);
