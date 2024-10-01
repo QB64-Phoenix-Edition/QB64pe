@@ -18712,11 +18712,9 @@ cursor_valid:
 #endif
 }
 
-float func__mousemovementx(int32 context, int32 passed) {
+float func__mousemovementx() {
     int32 handle;
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -18724,11 +18722,9 @@ float func__mousemovementx(int32 context, int32 passed) {
     }
     return queue->queue[queue->current].movementx;
 }
-float func__mousemovementy(int32 context, int32 passed) {
+float func__mousemovementy() {
     int32 handle;
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -18797,7 +18793,7 @@ error:
 #endif
 }
 
-float func__mousex(int32 context, int32 passed) {
+float func__mousex() {
 
     static int32 x, x2;
     static float f;
@@ -18811,8 +18807,6 @@ float func__mousex(int32 context, int32 passed) {
 #endif
 
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -18850,7 +18844,7 @@ float func__mousex(int32 context, int32 passed) {
     return x;
 }
 
-float func__mousey(int32 context, int32 passed) {
+float func__mousey() {
 
     static int32 y, y2;
     static float f;
@@ -18864,8 +18858,6 @@ float func__mousey(int32 context, int32 passed) {
 #endif
 
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -18903,11 +18895,9 @@ float func__mousey(int32 context, int32 passed) {
     return y;
 }
 
-int32 func__mouseinput(int32 context, int32 passed) {
+int32 func__mouseinput() {
     int32 handle;
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -18922,7 +18912,7 @@ int32 func__mouseinput(int32 context, int32 passed) {
     return -1;
 }
 
-int32 func__mousebutton(int32 i, int32 context, int32 passed) {
+int32 func__mousebutton(int32 i) {
     if (i < 1) {
         error(5);
         return 0;
@@ -18954,8 +18944,6 @@ int32 func__mousebutton(int32 i, int32 context, int32 passed) {
     }
     int32 handle;
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -18966,7 +18954,7 @@ int32 func__mousebutton(int32 i, int32 context, int32 passed) {
     return 0;
 }
 
-int32 func__mousewheel(int32 context, int32 passed) {
+int32 func__mousewheel() {
     static uint32 x;
     int32 handle;
 
@@ -18981,8 +18969,6 @@ int32 func__mousewheel(int32 context, int32 passed) {
 #endif
 
     handle = mouse_message_queue_default;
-    if (passed)
-        handle = context;
     mouse_message_queue_struct *queue = (mouse_message_queue_struct *)list_get(mouse_message_queue_handles, handle);
     if (queue == NULL) {
         error(258);
@@ -19057,8 +19043,8 @@ void call_int(int32 i) {
             current_mouse_message_backup = queue->current;
             queue->current = queue->last;
 
-            mx = func__mousex(0, 0);
-            my = func__mousey(0, 0);
+            mx = func__mousex();
+            my = func__mousey();
 
             // restore "current" message index
             queue->current = current_mouse_message_backup;
