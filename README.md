@@ -3,7 +3,7 @@
 ![QB64-PE](source/peLogo.png)
 
 
-QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows (Vista and up), Linux and macOS.
+QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows (7 and up), Linux and macOS (Catalina and up).
 
 The Phoenix Edition is one of the new offshoots created when the old project related pages (QB64Team/www.qb64.org) went offline, but it's still the same programming language. For the whole story visit our new [Forum](https://qb64phoenix.com/forum/showthread.php?tid=259).
 
@@ -61,8 +61,6 @@ Replacing `-c` with `-x` will compile without opening a separate compiler window
 More about QB64-PE at our wiki: https://qb64phoenix.com/qb64wiki
 
 We have a community forum at: https://qb64phoenix.com/forum
-
-We don't currently tweet.  Sorry.
 
 Find us on Discord: https://discord.gg/D2M7hepTSx
 
