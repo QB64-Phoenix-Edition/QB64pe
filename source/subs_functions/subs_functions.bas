@@ -1733,13 +1733,20 @@ id.hr_syntax = "_MOUSEHIDE"
 regid
 
 clearid
+id.n = "_MouseHidden"
+id.subfunc = 1
+id.callname = "func__mousehidden"
+id.ret = LONGTYPE - ISPOINTER
+id.args = 0
+id.hr_syntax = "_MOUSEHIDDEN"
+regid
+
+clearid
 id.n = "_MouseInput"
 id.subfunc = 1
 id.callname = "func__mouseinput"
 id.ret = LONGTYPE - ISPOINTER
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "[?]"
+id.args = 0
 id.hr_syntax = "_MOUSEINPUT"
 regid
 
@@ -1748,9 +1755,7 @@ id.n = "_MouseX"
 id.subfunc = 1
 id.callname = "func__mousex"
 id.ret = SINGLETYPE - ISPOINTER
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "[?]"
+id.args = 0
 id.hr_syntax = "_MOUSEX"
 regid
 
@@ -1759,9 +1764,7 @@ id.n = "_MouseY"
 id.subfunc = 1
 id.callname = "func__mousey"
 id.ret = SINGLETYPE - ISPOINTER
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "[?]"
+id.args = 0
 id.hr_syntax = "_MOUSEY"
 regid
 
@@ -1770,9 +1773,7 @@ id.n = "_MouseMovementX"
 id.subfunc = 1
 id.callname = "func__mousemovementx"
 id.ret = SINGLETYPE - ISPOINTER
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "[?]"
+id.args = 0
 id.hr_syntax = "_MOUSEMOVEMENTX"
 regid
 
@@ -1781,9 +1782,7 @@ id.n = "_MouseMovementY"
 id.subfunc = 1
 id.callname = "func__mousemovementy"
 id.ret = SINGLETYPE - ISPOINTER
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "[?]"
+id.args = 0
 id.hr_syntax = "_MOUSEMOVEMENTY"
 regid
 
@@ -1791,10 +1790,9 @@ clearid
 id.n = "_MouseButton"
 id.subfunc = 1
 id.callname = "func__mousebutton"
-id.args = 2
-id.arg = MKL$(LONGTYPE - ISPOINTER)+MKL$(LONGTYPE - ISPOINTER)
+id.args = 1
+id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.ret = LONGTYPE - ISPOINTER
-id.specialformat = "?[,?]"
 id.hr_syntax = "_MOUSEBUTTON(buttonNumber)"
 regid
 
@@ -1803,37 +1801,8 @@ id.n = "_MouseWheel"
 id.subfunc = 1
 id.callname = "func__mousewheel"
 id.ret = LONGTYPE - ISPOINTER
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.specialformat = "[?]"
+id.args = 0
 id.hr_syntax = "_MOUSEWHEEL"
-regid
-
-
-clearid
-id.n = "_MousePipeOpen"
-id.subfunc = 1
-id.callname = "func__mousepipeopen"
-id.ret = LONGTYPE - ISPOINTER
-id.hr_syntax = "_MOUSEPIPEOPEN"
-regid
-
-clearid
-id.n = "_MouseInputPipe"
-id.subfunc = 2
-id.callname = "sub__mouseinputpipe"
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.hr_syntax = "_MOUSEINPUTPIPE(context)"
-regid
-
-clearid
-id.n = "_MousePipeClose"
-id.subfunc = 2
-id.callname = "sub__mousepipeclose"
-id.args = 1
-id.arg = MKL$(LONGTYPE - ISPOINTER)
-id.hr_syntax = "_MOUSEPIPECLOSE(context)"
 regid
 
 clearid
