@@ -3536,19 +3536,10 @@ uint32 pal[256];
 
 extern qbs *nothingstring;
 
-static uint32 sdl_shiftstate = 0;
-
-static uint32 sdl_scroll_lock = 0;
-static uint32 sdl_insert = 0;
-static uint32 sdl_scroll_lock_prepared = 1;
-static uint32 sdl_insert_prepared = 1;
-
 int32 sub_screen_height_in_characters = -1; //-1=undefined
 int32 sub_screen_width_in_characters = -1;  //-1=undefined
 int32 sub_screen_font = -1;                 //-1=undefined
 int32 sub_screen_keep_page0 = 0;
-
-int32 key_repeat_on = 0;
 
 uint32 palette_256[256];
 uint32 palette_64[64];
