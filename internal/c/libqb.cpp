@@ -5611,7 +5611,7 @@ uint32 frame = 0;
 
 extern uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword in conv memory)
 
-int32 mouse_hideshow_called = 0;
+static int32 mouse_hiddden = 0;
 
 struct mouse_message {
     int16 x;
@@ -18618,6 +18618,7 @@ void sub__mousehide() {
     libqb_glut_set_cursor(GLUT_CURSOR_NONE);
 #    endif
 #endif
+    mouse_hiddden = -1;
 }
 
 #ifdef QB64_GLUT
@@ -18630,7 +18631,7 @@ void sub__mouseshow(qbs *style, int32 passed) {
     if (is_error_pending())
         return;
 
-#ifdef QB64_GLUT
+#   ifdef QB64_GLUT
     OPTIONAL_GLUT();
 
     static qbs *str = NULL;
@@ -18688,8 +18689,12 @@ void sub__mouseshow(qbs *style, int32 passed) {
 cursor_valid:
 
     libqb_glut_set_cursor(mouse_cursor_style);
+#   endif
+    mouse_hiddden = 0;
+}
 
-#endif
+int32_t func__mousehidden() {
+    return mouse_hiddden;
 }
 
 float func__mousemovementx() {

@@ -1733,6 +1733,15 @@ id.hr_syntax = "_MOUSEHIDE"
 regid
 
 clearid
+id.n = "_MouseHidden"
+id.subfunc = 1
+id.callname = "func__mousehidden"
+id.ret = LONGTYPE - ISPOINTER
+id.args = 0
+id.hr_syntax = "_MOUSEHIDDEN"
+regid
+
+clearid
 id.n = "_MouseInput"
 id.subfunc = 1
 id.callname = "func__mouseinput"

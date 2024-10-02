@@ -379,6 +379,7 @@ extern int32 func__statusCode(int32 handle);
 extern int32 func_freefile();
 extern void sub__mousehide();
 extern void sub__mouseshow(qbs *style, int32 passed);
+extern int32 func__mousehidden();
 extern float func__mousex();
 extern float func__mousey();
 extern int32 func__mouseinput();
