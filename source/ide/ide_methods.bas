@@ -20490,6 +20490,7 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
         'recheck to see if file exists with bas extension
         ideerror = 2
         IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN EXIT FUNCTION
+    END IF
 
         IdeOpenFile = path$ + idepathsep$ + f$
 
@@ -20499,7 +20500,6 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
                 EXIT FUNCTION
             ELSE
                 info = 0: GOTO ideopenloop 'tried to open a zero length file.  Retry?
-            END IF
         END IF
     END IF
 
