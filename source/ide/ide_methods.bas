@@ -26,6 +26,8 @@
 '11    To IDE: ".EXE file created" message
 '12    To IDE: The name of the exe I'll create is '...'
 '       idecommand$ = [12][exe name without .exe]
+'13    To IDE: $NOPREFIX was found
+'14  From IDE: $NOPREFIX was not removed, please generate a compilation error
 '100   To IDE: Simplified version of command 3; next line of code is immediately set in idereturn$. No status byte returned.
 '254   To IDE: Compilation has finished, launch debug interface (implies command 6)
 '255   To IDE: A qb error happened in the IDE. Command byte actually ignored, this command is detected by ideerror <> 0
@@ -634,6 +636,7 @@ FUNCTION ide2 (ignore)
                 ideprogname = f$: _TITLE ideprogname + " - " + WindowTitle
                 IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
                 AddToHistory "RECENT", idepath$ + idepathsep$ + ideprogname$
+                ideFirstCompileFromDisk = -1
             END IF 'message 1
 
         END IF 'no restore
@@ -745,6 +748,7 @@ FUNCTION ide2 (ignore)
 
     IF c$ = CHR$(6) THEN
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         ready = 1
         IF ideautorun THEN ideautorun = 0: GOTO idemrunspecial
     END IF
@@ -789,6 +793,7 @@ FUNCTION ide2 (ignore)
 
         GOSUB redrawItAll
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         ready = 1
         _RESIZE OFF
         DebugMode
@@ -813,6 +818,7 @@ FUNCTION ide2 (ignore)
 
     IF c$ = CHR$(11) THEN
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         ready = 1
         ideautorun = 0
         showexecreated = 1
@@ -824,8 +830,23 @@ FUNCTION ide2 (ignore)
         sendnextline = 1
     END IF
 
+    IF c$ = CHR$(13) THEN
+        IF ideFirstCompileFromDisk _ANDALSO OfferNoprefixConversion(idepath$ + idepathsep$ + ideprogname$) THEN
+            IF ideerror > 1 THEN GOTO IDEerrorMessage
+            'A new compilation will be triggered
+            ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
+            GOSUB redrawItAll
+            GOTO ideloop
+        ELSE
+            GOSUB redrawItAll
+            ide2 = 14
+            EXIT FUNCTION
+        END IF
+    END IF
+
     IF LEFT$(c$, 1) = CHR$(8) THEN
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         failed = 1
         ideautorun = 0
     END IF
@@ -1589,6 +1610,7 @@ FUNCTION ide2 (ignore)
                         EXIT FUNCTION
                     ELSE
                         'finished compilation
+                        ideFirstCompileFromDisk = 0
                         ide2 = 5 'end of program reached, what next?
                         'could return:
                         'i) 6 code ready for export/run
@@ -6424,7 +6446,7 @@ FUNCTION ide2 (ignore)
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
                 END IF
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
-                IF r$ <> "C" THEN ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
+                IF r$ <> "C" THEN ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOSUB redrawItAll: GOTO ideloop
             END IF
@@ -20492,14 +20514,14 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
         IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN EXIT FUNCTION
     END IF
 
-        IdeOpenFile = path$ + idepathsep$ + f$
+    IdeOpenFile = path$ + idepathsep$ + f$
 
-        IF BinaryFormatCheck%(path$, idepathsep$, f$) > 0 THEN
-            IF LEN(IdeOpenFile) THEN
-                OpenFile$ = "C"
-                EXIT FUNCTION
-            ELSE
-                info = 0: GOTO ideopenloop 'tried to open a zero length file.  Retry?
+    IF BinaryFormatCheck%(path$, idepathsep$, f$) > 0 THEN
+        IF LEN(IdeOpenFile) THEN
+            OpenFile$ = "C"
+            EXIT FUNCTION
+        ELSE
+            info = 0: GOTO ideopenloop 'tried to open a zero length file.  Retry?
         END IF
     END IF
 

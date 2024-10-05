@@ -966,6 +966,11 @@ IF C = 9 THEN 'run
     GOTO sendcommand
 END IF
 
+IF C = 14 THEN
+    a$ = "$NOPREFIX is a deprecated feature, QB64(PE) specific keywords MUST have the underscore"
+    GOTO errmes
+END IF
+
 PRINT "Invalid IDE message": END
 
 ideerror:
@@ -1600,8 +1605,14 @@ DO
         END IF
 
         IF temp$ = "$NOPREFIX" THEN
-            a$ = "$NOPREFIX is a deprecated feature, QB64(PE) specific keywords MUST have the underscore"
-            GOTO errmes
+            IF idemode THEN
+                'Offer to convert the file
+                sendc$ = CHR$(13)
+                GOTO sendcommand
+            ELSE
+                a$ = "$NOPREFIX is a deprecated feature, QB64(PE) specific keywords MUST have the underscore. To convert this program, open it in the IDE."
+                GOTO errmes
+            END IF
         END IF
 
         IF LEFT$(temp$, 7) = "$ERROR " THEN
