@@ -21032,6 +21032,9 @@ SUB ExportCodeAs (docFormat$)
         la$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " "))
         SELECT EVERYCASE page$
             CASE "$END": IF UCASE$(LEFT$(la$, 2)) = "IF" THEN me$ = me$ + " " + LEFT$(la$, 2): page$ = "$END IF": in% = -1
+            CASE "_CONSOLECURSOR"
+                IF UCASE$(LEFT$(la$, 5)) = "_HIDE" THEN kw$ = kw$ + " " + LEFT$(la$, 5): in% = -1
+                IF UCASE$(LEFT$(la$, 5)) = "_SHOW" THEN kw$ = kw$ + " " + LEFT$(la$, 5): in% = -1
             CASE "CALL": IF UCASE$(LEFT$(la$, 8)) = "ABSOLUTE" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "CALL ABSOLUTE": in% = -1
             CASE "CASE"
                 IF UCASE$(LEFT$(la$, 2)) = "IS" THEN kw$ = kw$ + " " + LEFT$(la$, 2): page$ = "CASE IS": fu% = -1: bo% = -1: in% = -1
