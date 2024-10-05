@@ -394,50 +394,6 @@ ELSE
     _ICON
 END IF
 
-'the function ?=ide(?) should always be passed 0, it returns a message code number, any further information
-'is passed back in idereturn
-
-'message code numbers:
-'0  no ide present  (auto defined array ide() return 0)
-
-'1  launch ide & with passed filename (compiler->ide)
-
-'2  begin new compilation with returned line of code (compiler<-ide)
-'   [2][line of code]
-
-'3  request next line (compiler->ide)
-'   [3]
-
-'4  next line of code returned (compiler<-ide)
-'   [4][line of code]
-
-'5  no more lines of code exist (compiler<-ide)
-'   [5]
-
-'6  code is OK/ready (compiler->ide)
-'   [6]
-
-'7  repass the code from the beginning (compiler->ide)
-'   [7]
-
-'8  an error has occurred with 'this' message on 'this' line(compiler->ide)
-'   [8][error message][line as LONG]
-
-'9  C++ compile (if necessary) and run with 'this' name (compiler<-ide)
-'   [9][name(no path, no .bas)]
-
-'10 The line requires more time to process
-'       Pass-back 'line of code' using method [4] when ready
-'   [10][line of code]
-
-'11 ".EXE file created" message
-
-'12     The name of the exe I'll create is '...' (compiler->ide)
-'   [12][exe name without .exe]
-
-'255    A qb error happened in the IDE (compiler->ide)
-'   note: detected by the fact that ideerror was not set to 0
-'   [255]
 '$INCLUDE:'./utilities/hash.bi'
 
 TYPE Label_Type

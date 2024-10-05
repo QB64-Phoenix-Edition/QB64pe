@@ -1,3 +1,35 @@
+'The function ide() is the sole entry point to the IDE from the compiler.
+
+'Commands are sent from the compiler to IDE by setting idecommand$ with a command byte + any extra data,
+'then calling ide(0). The 0 argument causes it to behave as an implicit array if the IDE is not compiled in.
+
+'The ide() function returns a status byte. Any additional information is stored in idereturn$.
+
+'Command/status bytes:
+'0   From IDE: No ide present (auto defined array ide() return 0)
+'1     To IDE: Open file name (only supported on first call)
+'       idecommand$ = [1][file name]
+'2   From IDE: Begin new compilation
+'       idereturn$ = [first line of code]
+'3     To IDE: Request next line to be compiled. Formatted version of previous line may be available in idecompiledline$.
+'4   From IDE: Here is the next line of code as requested
+'       idereturn$ = [next line of code]
+'5   From IDE: No more lines of code exist
+'6     To IDE: Compilation has finished and code is OK, return to ready state
+'7     To IDE: Rewind position to first line for repass
+'8     To IDE: An error has occurred with 'this' message on 'this' line
+'       idecommand$ = [8][error message][line as LONG]
+'9   From IDE: C++ compile (if necessary) and run with 'this' name (compiler<-ide)
+'       idereturn$ = [name(no path, no .bas)]
+'10    To IDE: Like command 3, but return (via status 4) the given line of code instead of the actual next line
+'       idecommand$ = [10][line of code]
+'11    To IDE: ".EXE file created" message
+'12    To IDE: The name of the exe I'll create is '...'
+'       idecommand$ = [12][exe name without .exe]
+'100   To IDE: Simplified version of command 3; next line of code is immediately set in idereturn$. No status byte returned.
+'254   To IDE: Compilation has finished, launch debug interface (implies command 6)
+'255   To IDE: A qb error happened in the IDE. Command byte actually ignored, this command is detected by ideerror <> 0
+
 FUNCTION ide (ignore)
     'Note: ide is a function which optimizes the interaction between the IDE and compiler (ide2)
     '      by avoiding unnecessary bloat associated with entering the main IDE function 'ide2'
