@@ -1031,6 +1031,7 @@ FUNCTION ide2 (ignore)
                             END IF
                         END IF
 
+                        errininc = INSTR(a$, "included")
                         printWrapStatus x, y, x, a$
 
                         IF l <> 0 AND idecy <> l THEN
@@ -1732,6 +1733,7 @@ FUNCTION ide2 (ignore)
                     'for non-include changes we only need to rebuild the EXE
                     IF edCHG THEN idecompiled = 0: GOTO mustGenerateExe
                 ELSE
+                    IF failed = 1 AND errininc = 0 THEN GOTO specialchar
                     edReCompile:
                     ideautorun = 0: startPausedPending = 1
                     idechangemade = 1: statusarealink = 0
