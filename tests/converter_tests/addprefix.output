@@ -1,0 +1,99 @@
+option _explicit
+'$noprefix removed here
+option _explicitarray
+dim explicitarray
+explicitarray = 8
+declare function f(a as unsigned integer, fullscreen, newimage)
+type t
+   fullscreen as _unsigned long
+   a as _integer64
+   instr as _unsigned _byte
+end type
+dim q as t
+print q.fullscreen
+declare library
+   function f
+   function b()
+   function c(byval rgba as _unsigned long)
+   function d%&(rgba as _unsigned long, byval fullscreen&)
+end declare
+dim x, y, s$, clip, a(2), smoothshrunk, ontop, bin(4)
+screen _newimage(640, 480, 32)
+put 1, , x
+put step(x, (y + 1)), clip
+put step(x, (y + 1)), a(2) 
+put step(x, (y + 1)), a(2),_clip 'this is a comment
+put step(x, (y + 1)), a(2),  _clip and, 3
+put step(x, _
+   (y + 1)), _
+   _
+   a(2),  _clip and, 3
+clip = 2
+_screenmove
+_screenmove 1, 4 : _screenmove _middle
+_fullscreen
+_fullscreen _stretch
+_fullscreen _off, _smooth
+_fullscreen , _smooth
+_allowfullscreen
+_allowfullscreen _squarepixels
+_allowfullscreen _all, _all
+_allowfullscreen , _off
+print _smooth
+_resize
+_resize on
+_resize , _stretch
+_resize off, _smooth
+x = _resize
+_glrender _behind
+
+print ontop
+_displayorder
+_displayorder _software rem do displayorder stuff
+_displayorder _software  ,_
+             _hardware,_glrender
+if x then _displayorder _hardware1
+while 0
+exit while
+wend
+print _exit
+print _exit
+_fps _auto
+_fps 30
+_clearcolor
+_clearcolor _none, 2
+_clearcolor , 1
+_maptriangle _anticlockwise _seamless (1, 1)-(2, 2)-(3, 3), 4 to (1, 1, 1)-(2, 2, 2)-(3, 3, 3), 1 + (_height * 2) / 3, _smoothstretched
+_maptriangle _clockwise (1, 1)-(2, _width)-(3, 3) to (1, 1)-(2, 2)-(3, 3), , _smoothshrunk
+_maptriangle (1, 1)-(2, 2)-(3, 3) to (1, 1)-(2, _width)-(3, 3)
+print smoothshrunk
+_depthbuffer lock
+_depthbuffer _clear, 3
+clear x
+width 40
+print _width(x)
+shell
+shell "asdf"
+shell _dontwait
+shell _hide
+shell _dontwait "foo"
+shell _hide "bar"
+shell _dontwait _hide "foo"
+shell _hide _dontwait "bar"
+_capslock _toggle
+_scrolllock _toggle
+_numlock _toggle
+_consolecursor
+_consolecursor _show
+_consolecursor _hide
+_consolecursor , 2
+x = bin(3)
+s$ = _bin$(3)
+$color:32
+dim np_blink~&&
+print _red(100)
+print red
+print blue%
+print GREEN&
+print Np_Blink~&&
+data 1, hello, putimage, 3
