@@ -105,7 +105,7 @@ FUNCTION BinaryFormatCheck% (pathToCheck$, pathSepToCheck$, fileToCheck$)
 END FUNCTION
 
 FUNCTION OfferNoprefixConversion(file$)
-    what$ = ideyesnobox("$NOPREFIX", "This program uses the $NOPREFIX directive which is no longer supported.\nQB64PE can automatically convert this file and any included files to remove $NOPREFIX.\nBackups of all files will be made.\nConvert this program?")
+    what$ = ideyesnobox("$NOPREFIX", "This program uses the $NOPREFIX directive which is unsupported.\n\nQB64PE can automatically convert this file and any included files to\nremove $NOPREFIX. Backups of all files will be made.\n\nConvert this program?")
     IF what$ <> "Y" THEN EXIT FUNCTION
 
     SCREEN , , 3, 0
@@ -114,8 +114,11 @@ FUNCTION OfferNoprefixConversion(file$)
     _PRINTSTRING (2, idewy - 3), "Converting...          "
     PCOPY 3, 0
 
-    convertUtility$ = "internal/utilities/addprefix"
-    IF INSTR(_OS$, "WIN") THEN convertUtility$ = convertUtility$ + ".exe"
+    IF INSTR(_OS$, "WIN") THEN
+        convertUtility$ = "internal\utilities\addprefix.exe"
+    ELSE
+        convertUtility$ = "internal/utilities/addprefix"
+    END IF
     IF NOT _FILEEXISTS(convertUtility$) THEN
         IF _DIREXISTS("./internal/utilities") = 0 THEN MKDIR "./internal/utilities"
         IF INSTR(_OS$, "WIN") THEN
