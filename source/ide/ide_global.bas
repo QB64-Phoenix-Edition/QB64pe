@@ -165,6 +165,7 @@ DIM SHARED idefindonlycomments AS INTEGER, idefindonlystrings AS INTEGER
 DIM SHARED idefindinvert AS INTEGER
 DIM SHARED idechangeto AS STRING
 DIM SHARED idechangemade AS INTEGER
+DIM SHARED ideFirstCompileFromDisk AS INTEGER 'Set true when a file is loaded, false once a compilation is done. Supports one-off actions on loaded programs.
 DIM SHARED ideinsert AS INTEGER
 DIM SHARED idepathsep AS STRING * 1
 DIM SHARED SubFuncLIST(0) AS STRING

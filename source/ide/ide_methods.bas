@@ -1,3 +1,37 @@
+'The function ide() is the sole entry point to the IDE from the compiler.
+
+'Commands are sent from the compiler to IDE by setting idecommand$ with a command byte + any extra data,
+'then calling ide(0). The 0 argument causes it to behave as an implicit array if the IDE is not compiled in.
+
+'The ide() function returns a status byte. Any additional information is stored in idereturn$.
+
+'Command/status bytes:
+'0   From IDE: No ide present (auto defined array ide() return 0)
+'1     To IDE: Open file name (only supported on first call)
+'       idecommand$ = [1][file name]
+'2   From IDE: Begin new compilation
+'       idereturn$ = [first line of code]
+'3     To IDE: Request next line to be compiled. Formatted version of previous line may be available in idecompiledline$.
+'4   From IDE: Here is the next line of code as requested
+'       idereturn$ = [next line of code]
+'5   From IDE: No more lines of code exist
+'6     To IDE: Compilation has finished and code is OK, return to ready state
+'7     To IDE: Rewind position to first line for repass
+'8     To IDE: An error has occurred with 'this' message on 'this' line
+'       idecommand$ = [8][error message][line as LONG]
+'9   From IDE: C++ compile (if necessary) and run with 'this' name (compiler<-ide)
+'       idereturn$ = [name(no path, no .bas)]
+'10    To IDE: Like command 3, but return (via status 4) the given line of code instead of the actual next line
+'       idecommand$ = [10][line of code]
+'11    To IDE: ".EXE file created" message
+'12    To IDE: The name of the exe I'll create is '...'
+'       idecommand$ = [12][exe name without .exe]
+'13    To IDE: $NOPREFIX was found
+'14  From IDE: $NOPREFIX was not removed, please generate a compilation error
+'100   To IDE: Simplified version of command 3; next line of code is immediately set in idereturn$. No status byte returned.
+'254   To IDE: Compilation has finished, launch debug interface (implies command 6)
+'255   To IDE: A qb error happened in the IDE. Command byte actually ignored, this command is detected by ideerror <> 0
+
 FUNCTION ide (ignore)
     'Note: ide is a function which optimizes the interaction between the IDE and compiler (ide2)
     '      by avoiding unnecessary bloat associated with entering the main IDE function 'ide2'
@@ -602,6 +636,7 @@ FUNCTION ide2 (ignore)
                 ideprogname = f$: _TITLE ideprogname + " - " + WindowTitle
                 IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
                 AddToHistory "RECENT", idepath$ + idepathsep$ + ideprogname$
+                ideFirstCompileFromDisk = -1
             END IF 'message 1
 
         END IF 'no restore
@@ -713,6 +748,7 @@ FUNCTION ide2 (ignore)
 
     IF c$ = CHR$(6) THEN
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         ready = 1
         IF ideautorun THEN ideautorun = 0: GOTO idemrunspecial
     END IF
@@ -757,6 +793,7 @@ FUNCTION ide2 (ignore)
 
         GOSUB redrawItAll
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         ready = 1
         _RESIZE OFF
         DebugMode
@@ -781,6 +818,7 @@ FUNCTION ide2 (ignore)
 
     IF c$ = CHR$(11) THEN
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         ready = 1
         ideautorun = 0
         showexecreated = 1
@@ -792,8 +830,23 @@ FUNCTION ide2 (ignore)
         sendnextline = 1
     END IF
 
+    IF c$ = CHR$(13) THEN
+        IF ideFirstCompileFromDisk _ANDALSO OfferNoprefixConversion(idepath$ + idepathsep$ + ideprogname$) THEN
+            IF ideerror > 1 THEN GOTO IDEerrorMessage
+            'A new compilation will be triggered
+            ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
+            GOSUB redrawItAll
+            GOTO ideloop
+        ELSE
+            GOSUB redrawItAll
+            ide2 = 14
+            EXIT FUNCTION
+        END IF
+    END IF
+
     IF LEFT$(c$, 1) = CHR$(8) THEN
         idecompiling = 0
+        ideFirstCompileFromDisk = 0
         failed = 1
         ideautorun = 0
     END IF
@@ -1557,6 +1610,7 @@ FUNCTION ide2 (ignore)
                         EXIT FUNCTION
                     ELSE
                         'finished compilation
+                        ideFirstCompileFromDisk = 0
                         ide2 = 5 'end of program reached, what next?
                         'could return:
                         'i) 6 code ready for export/run
@@ -6392,7 +6446,7 @@ FUNCTION ide2 (ignore)
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
                 END IF
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
-                IF r$ <> "C" THEN ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
+                IF r$ <> "C" THEN ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOSUB redrawItAll: GOTO ideloop
             END IF
@@ -20004,111 +20058,6 @@ SUB LoadColorSchemes
     'End of color schemes
 END SUB
 
-FUNCTION BinaryFormatCheck% (pathToCheck$, pathSepToCheck$, fileToCheck$)
-
-    file$ = pathToCheck$ + pathSepToCheck$ + fileToCheck$
-
-    fh = FREEFILE
-    OPEN file$ FOR BINARY AS #fh
-    a$ = SPACE$(LOF(fh))
-    GET #fh, 1, a$
-    IF INSTR(a$, CHR$(0)) = 0 THEN CLOSE #fh: EXIT FUNCTION 'not a binary file
-    a$ = ""
-    GET #fh, 1, Format%
-    GET #fh, , Version%
-    CLOSE #fh
-
-    SELECT CASE Format%
-        CASE 2300 'VBDOS
-            result = idemessagebox("Invalid format", "VBDOS binary format not supported.", "")
-            BinaryFormatCheck% = 1
-        CASE 764 'QBX 7.1
-            result = idemessagebox("Invalid format", "QBX 7.1 binary format not supported.", "")
-            BinaryFormatCheck% = 1
-        CASE 252 'QuickBASIC 4.5
-            IF INSTR(_OS$, "WIN") THEN
-                convertUtility$ = "internal\utilities\QB45BIN.exe"
-            ELSE
-                convertUtility$ = "./internal/utilities/QB45BIN"
-            END IF
-            IF _FILEEXISTS(convertUtility$) THEN
-                what$ = ideyesnobox("Binary format", "QuickBASIC 4.5 binary format detected. Convert to plain text?")
-                IF what$ = "Y" THEN
-                    ConvertIt:
-                    IF FileHasExtension(file$) THEN
-                        FOR i = LEN(file$) TO 1 STEP -1
-                            IF ASC(file$, i) = 46 THEN
-                                'keep previous extension
-                                ofile$ = LEFT$(file$, i - 1) + " (converted)" + MID$(file$, i)
-                                EXIT FOR
-                            END IF
-                        NEXT
-                    ELSE
-                        ofile$ = file$ + " (converted).bas"
-                    END IF
-
-                    SCREEN , , 3, 0
-                    dummy = DarkenFGBG(1)
-                    clearStatusWindow 0
-                    COLOR 15, 1
-                    _PRINTSTRING (2, idewy - 3), "Converting...          "
-                    PCOPY 3, 0
-
-                    convertLine$ = convertUtility$ + " " + QuotedFilename$(file$) + " -o " + QuotedFilename$(ofile$)
-                    SHELL _HIDE convertLine$
-
-                    clearStatusWindow 0
-                    dummy = DarkenFGBG(0)
-                    PCOPY 3, 0
-
-                    IF _FILEEXISTS(ofile$) = 0 THEN
-                        result = idemessagebox("Binary format", "Conversion failed.", "")
-                        BinaryFormatCheck% = 2 'conversion failed
-                    ELSE
-                        pathToCheck$ = getfilepath$(ofile$)
-                        IF LEN(pathToCheck$) THEN
-                            fileToCheck$ = MID$(ofile$, LEN(pathToCheck$) + 1)
-                            pathToCheck$ = LEFT$(pathToCheck$, LEN(pathToCheck$) - 1) 'remove path separator
-                        ELSE
-                            fileToCheck$ = ofile$
-                        END IF
-                    END IF
-                ELSE
-                    BinaryFormatCheck% = 1
-                END IF
-            ELSE
-                IF _FILEEXISTS("internal/support/converter/QB45BIN.bas") = 0 THEN
-                    result = idemessagebox("Binary format", "Conversion utility not found. Cannot open QuickBASIC 4.5 binary format.", "")
-                    BinaryFormatCheck% = 1
-                    EXIT FUNCTION
-                END IF
-                what$ = ideyesnobox("Binary format", "QuickBASIC 4.5 binary format detected. Convert to plain text?")
-                IF what$ = "Y" THEN
-                    'Compile the utility first, then convert the file
-                    IF _DIREXISTS("./internal/utilities") = 0 THEN MKDIR "./internal/utilities"
-                    PCOPY 3, 0
-                    SCREEN , , 3, 0
-                    dummy = DarkenFGBG(1)
-                    clearStatusWindow 0
-                    COLOR 15, 1
-                    _PRINTSTRING (2, idewy - 3), "Preparing to convert..."
-                    PCOPY 3, 0
-                    IF INSTR(_OS$, "WIN") THEN
-                        SHELL _HIDE "qb64pe -x internal/support/converter/QB45BIN.bas -o internal/utilities/QB45BIN"
-                    ELSE
-                        SHELL _HIDE "./qb64pe -x ./internal/support/converter/QB45BIN.bas -o ./internal/utilities/QB45BIN"
-                    END IF
-                    IF _FILEEXISTS(convertUtility$) THEN GOTO ConvertIt
-                    clearStatusWindow 0
-                    dummy = DarkenFGBG(0)
-                    PCOPY 3, 0
-                    result = idemessagebox("Binary format", "Error launching conversion utility.", "")
-                END IF
-                BinaryFormatCheck% = 1
-            END IF
-    END SELECT
-END FUNCTION
-
 FUNCTION removesymbol2$ (varname$)
     i = INSTR(varname$, "~"): IF i THEN GOTO foundsymbol
     i = INSTR(varname$, "`"): IF i THEN GOTO foundsymbol
@@ -20563,16 +20512,16 @@ FUNCTION OpenFile$ (IdeOpenFile AS STRING) 'load routine copied/pasted from the 
         'recheck to see if file exists with bas extension
         ideerror = 2
         IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN EXIT FUNCTION
+    END IF
 
-        IdeOpenFile = path$ + idepathsep$ + f$
+    IdeOpenFile = path$ + idepathsep$ + f$
 
-        IF BinaryFormatCheck%(path$, idepathsep$, f$) > 0 THEN
-            IF LEN(IdeOpenFile) THEN
-                OpenFile$ = "C"
-                EXIT FUNCTION
-            ELSE
-                info = 0: GOTO ideopenloop 'tried to open a zero length file.  Retry?
-            END IF
+    IF BinaryFormatCheck%(path$, idepathsep$, f$) > 0 THEN
+        IF LEN(IdeOpenFile) THEN
+            OpenFile$ = "C"
+            EXIT FUNCTION
+        ELSE
+            info = 0: GOTO ideopenloop 'tried to open a zero length file.  Retry?
         END IF
     END IF
 
@@ -21249,3 +21198,4 @@ FUNCTION AnsiTextToUtf8Text$ (text$)
     AnsiTextToUtf8Text$ = utf$
 END FUNCTION
 
+'$INCLUDE: 'file_converters.bas'
