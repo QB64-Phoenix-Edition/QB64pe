@@ -1,4 +1,10 @@
-int64 fornext_value6650;
-int64 fornext_finalvalue6650;
-int64 fornext_step6650;
-uint8 fornext_step_negative6650;
+qbs*oldstr6631=NULL;
+if(_SUB_SETSTATUSMESSAGE_STRING_TEXT->tmp||_SUB_SETSTATUSMESSAGE_STRING_TEXT->fixed||_SUB_SETSTATUSMESSAGE_STRING_TEXT->readonly){
+oldstr6631=_SUB_SETSTATUSMESSAGE_STRING_TEXT;
+if (oldstr6631->cmem_descriptor){
+_SUB_SETSTATUSMESSAGE_STRING_TEXT=qbs_new_cmem(oldstr6631->len,0);
+}else{
+_SUB_SETSTATUSMESSAGE_STRING_TEXT=qbs_new(oldstr6631->len,0);
+}
+memcpy(_SUB_SETSTATUSMESSAGE_STRING_TEXT->chr,oldstr6631->chr,oldstr6631->len);
+}
