@@ -67,8 +67,8 @@ END SUB
 FUNCTION getprevelement$ (a$, index AS LONG, strIndex AS LONG)
     DIM i AS LONG
 
-    IF strIndex = 0 THEN strIndex = LEN(a$): Index = numelements(a$) + 1
-    IF strIndex = -1 THEN Index = -1: EXIT FUNCTION
+    IF strIndex = 0 THEN strIndex = LEN(a$): index = numelements(a$) + 1
+    IF strIndex = -1 THEN index = -1: EXIT FUNCTION
 
     IF strIndex > 0 THEN i = _INSTRREV(strIndex, a$, sp)
 
@@ -437,8 +437,8 @@ END FUNCTION
 '
 ' The actual value is given back as floating point, integer, and unsigned integer.
 '
-FUNCTION elementGetNumericValue&(ele$, floating AS _FLOAT, integral AS _INTEGER64, uintegral AS _UNSIGNED _INTEGER64)
-    Dim num$, typ&, e$, x As Long
+FUNCTION elementGetNumericValue& (ele$, floating AS _FLOAT, integral AS _INTEGER64, uintegral AS _UNSIGNED _INTEGER64)
+    DIM num$, typ&, e$, x AS LONG
     num$ = ele$
     typ& = 0
 
@@ -508,7 +508,7 @@ FUNCTION elementGetNumericValue&(ele$, floating AS _FLOAT, integral AS _INTEGER6
     elementGetNumericValue& = INTEGER64TYPE - ISPOINTER
     e$ = ""
 
-handleInteger:
+    handleInteger:
     num$ = LEFT$(num$, LEN(num$) - LEN(e$))
     integral = VAL(num$)
     uintegral = integral
@@ -519,7 +519,7 @@ END FUNCTION
 ' Returns whether the given element is a number
 '
 ' Note that it allows numbers to have a negative sign.
-FUNCTION elementIsNumber&(oele$)
+FUNCTION elementIsNumber& (oele$)
     DIM ele$, res&
     IF oele$ = "" THEN EXIT FUNCTION
     ele$ = oele$
@@ -534,13 +534,13 @@ FUNCTION elementIsNumber&(oele$)
     elementIsNumber& = res&
 END FUNCTION
 
-FUNCTION elementIsString&(ele$)
+FUNCTION elementIsString& (ele$)
     ' String elements are always surrounded by quotes
     elementIsString& = INSTR(ele$, CHR$(34)) <> 0
 END FUNCTION
 
-FUNCTION elementGetStringValue&(ele$, value AS STRING)
-    Dim rawString$, res$, i AS LONG
+FUNCTION elementGetStringValue& (ele$, value AS STRING)
+    DIM rawString$, res$, i AS LONG
     ' We have to invert the escaping done by createElementString
     '
     ' Note this does not handle all possible C escaping, just the specific
@@ -570,8 +570,8 @@ END FUNCTION
 ' s$ should be all the data making up the string, with no quotes around it
 '
 ' The string data will have C escape sequences in it if necessary
-FUNCTION createElementString$(s$)
-    Dim ele$, o$, p1 As Long, c2 As Long, i As Long
+FUNCTION createElementString$ (s$)
+    DIM ele$, o$, p1 AS LONG, c2 AS LONG, i AS LONG
     ele$ = CHR$(34)
 
     p1 = 1
@@ -599,7 +599,7 @@ FUNCTION createElementString$(s$)
     createElementString$ = ele$
 END FUNCTION
 
-FUNCTION elementStringConcat$(os1$, os2$)
+FUNCTION elementStringConcat$ (os1$, os2$)
     DIM s1$, s2$, s1size AS LONG, s2size AS LONG
     'concat strings
     s1$ = MID$(os1$, 2, _INSTRREV(os1$, CHR$(34)) - 2)

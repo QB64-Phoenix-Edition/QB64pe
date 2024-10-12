@@ -562,7 +562,7 @@ FUNCTION removesymbol$ (varname$)
     varname$ = LEFT$(varname$, i - 1)
 END FUNCTION
 
-' 
+'
 ' Does not report an error if the symbol is invalid or varname is blank
 '
 FUNCTION tryRemoveSymbol$ (varname$)

@@ -13,16 +13,16 @@ FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
 
     PreParse t$
 
-    IF CONST_EVAL_DEBUG THEN _Echo "t$: " + t$
+    IF CONST_EVAL_DEBUG THEN _ECHO "t$: " + t$
     IF LEFT$(t$, 5) = "ERROR" THEN Evaluate_Expression$ = t$: EXIT FUNCTION
 
     'Deal with brackets first
     exp$ = "(" + sp + t$ + sp + ")" 'Starting and finishing brackets for our parse routine.
-    IF CONST_EVAL_DEBUG THEN  _Echo "exp$: " + exp$
+    IF CONST_EVAL_DEBUG THEN _ECHO "exp$: " + exp$
 
     DIM Eval_E AS LONG, c AS LONG
     DO
-        FindInnerParens exp$, C, Eval_E
+        FindInnerParens exp$, c, Eval_E
 
         IF Eval_E > 0 THEN
             IF c = 0 THEN Evaluate_Expression$ = "ERROR - BAD () Count": EXIT FUNCTION
@@ -43,7 +43,7 @@ FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
                 c = c - 1
             END IF
 
-            IF CONST_EVAL_DEBUG THEN _Echo "eval$: " + eval$
+            IF CONST_EVAL_DEBUG THEN _ECHO "eval$: " + eval$
             leftele$ = getelements$(exp$, 1, c - 1)
             rightele$ = getelements$(exp$, Eval_E + 1, numelements(exp$))
 
@@ -54,7 +54,7 @@ FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
         END IF
     LOOP UNTIL Eval_E = 0
 
-    IF CONST_EVAL_DEBUG THEN _Echo "resulting exp$: " + exp$ + ", numelements: " + str$(numelements(exp$))
+    IF CONST_EVAL_DEBUG THEN _ECHO "resulting exp$: " + exp$ + ", numelements: " + STR$(numelements(exp$))
     IF numelements(exp$) <> 1 THEN
         Evaluate_Expression$ = "ERROR - Invalid characters in expression": EXIT FUNCTION
     END IF
@@ -156,14 +156,14 @@ END SUB
 ' ' PreParse via parenthesis insertion
 ' exponent := numeric '^' unary
 '               | numeric 'ROOT' unary
-'               | numeric 
+'               | numeric
 '
 ' numeric := NUMBER | CONST_VAR
 '
 ' string := STRING | CONST_VAR
 
-FUNCTION CommaExpression&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "CommaExpression"
+FUNCTION CommaExpression& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "CommaExpression"
     DO
         ele$ = peeknextelement$(exp$, state.index, state.strIndex)
 
@@ -204,7 +204,7 @@ FUNCTION CommaExpression&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION StrExpression&(exp$, state AS ParserState)
+FUNCTION StrExpression& (exp$, state AS ParserState)
     IF ParseString&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM s AS STRING
@@ -225,8 +225,8 @@ FUNCTION StrExpression&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION ParseString&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "ParseString"
+FUNCTION ParseString& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "ParseString"
     ele$ = peeknextelement$(exp$, state.index, state.strIndex)
 
     IF elementIsString(ele$) THEN
@@ -248,12 +248,12 @@ FUNCTION ParseString&(exp$, state AS ParserState)
     END IF
 END FUNCTION
 
-FUNCTION NumericExpression&(exp$, state AS ParserState)
+FUNCTION NumericExpression& (exp$, state AS ParserState)
     NumericExpression& = LogicalImp&(exp$, state)
 END FUNCTION
 
-FUNCTION LogicalImp&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "LogicalImp"
+FUNCTION LogicalImp& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "LogicalImp"
     IF LogicalEqv&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -278,8 +278,8 @@ FUNCTION LogicalImp&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION LogicalEqv&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "LogicalEqv"
+FUNCTION LogicalEqv& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "LogicalEqv"
     IF LogicalXor&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -304,8 +304,8 @@ FUNCTION LogicalEqv&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION LogicalXor&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "LogicalXor"
+FUNCTION LogicalXor& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "LogicalXor"
     IF LogicalOr&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -330,8 +330,8 @@ FUNCTION LogicalXor&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION LogicalOr&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "LogicalOr"
+FUNCTION LogicalOr& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "LogicalOr"
     IF LogicalAnd&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -356,8 +356,8 @@ FUNCTION LogicalOr&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION LogicalAnd&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "LogicalAnd"
+FUNCTION LogicalAnd& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "LogicalAnd"
     IF LogicalNot&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -382,14 +382,14 @@ FUNCTION LogicalAnd&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION LogicalNot&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "LogicalNot"
+FUNCTION LogicalNot& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "LogicalNot"
     ele$ = peeknextelement$(exp$, state.index, state.strIndex)
     IF ele$ = "NOT" THEN ele$ = getnextelement$(exp$, state.index, state.strIndex)
 
     IF Relation&(exp$, state) = 0 THEN FixupErrorMessage state, "NOT": EXIT FUNCTION
 
-    IF ele$ = "NOT" THEN 
+    IF ele$ = "NOT" THEN
         IF (num.typ AND ISUNSIGNED) OR (state.num.typ AND ISUNSIGNED) THEN
             ParseNumSetUI state.num, UINTEGER64TYPE - ISPOINTER, NOT state.num.ui
         ELSE
@@ -400,8 +400,8 @@ FUNCTION LogicalNot&(exp$, state AS ParserState)
     LogicalNot& = -1
 END FUNCTION
 
-FUNCTION Relation&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "Relation"
+FUNCTION Relation& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Relation"
     IF Term&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -483,8 +483,8 @@ FUNCTION Relation&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION Term&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "Term"
+FUNCTION Term& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Term"
     IF ParseMod&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -522,8 +522,8 @@ FUNCTION Term&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION ParseMod&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "ParseMod"
+FUNCTION ParseMod& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "ParseMod"
     IF IntDiv&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -541,16 +541,16 @@ FUNCTION ParseMod&(exp$, state AS ParserState)
                 ParseNumSetI num, INTEGER64TYPE - ISPOINTER, num.i MOD state.num.i
             END IF
         ELSE
-            IF CONST_EVAL_DEBUG THEN _Echo "ParseMod done!"
+            IF CONST_EVAL_DEBUG THEN _ECHO "ParseMod done!"
             state.num = num
             ParseMod& = -1
             EXIT FUNCTION
         END IF
     LOOP
-END FUNCTIOn
+END FUNCTION
 
-FUNCTION IntDiv&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "IntDiv"
+FUNCTION IntDiv& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "IntDiv"
     IF Factor&(exp$, state) = 0 THEN EXIT FUNCTION
 
     DIM num AS ParseNum
@@ -568,7 +568,7 @@ FUNCTION IntDiv&(exp$, state AS ParserState)
                 ParseNumSetI num, INTEGER64TYPE - ISPOINTER, num.i \ state.num.i
             END IF
         ELSE
-            IF CONST_EVAL_DEBUG THEN  _Echo "IntDiv done!"
+            IF CONST_EVAL_DEBUG THEN _ECHO "IntDiv done!"
             state.num = num
             IntDiv& = -1
             EXIT FUNCTION
@@ -576,11 +576,11 @@ FUNCTION IntDiv&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION Factor&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "Factor"
+FUNCTION Factor& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Factor"
     IF Unary&(exp$, state) = 0 THEN EXIT FUNCTION
 
-    DIM num As ParseNum
+    DIM num AS ParseNum
     num = state.num
 
     DO
@@ -603,7 +603,7 @@ FUNCTION Factor&(exp$, state AS ParserState)
             ' Regular division is always done as floating-point
             ParseNumSetF num, FLOATTYPE - ISPOINTER, num.f / state.num.f
         ELSE
-            IF CONST_EVAL_DEBUG THEN  _Echo "Factor done!"
+            IF CONST_EVAL_DEBUG THEN _ECHO "Factor done!"
             state.num = num
             Factor& = -1
             EXIT FUNCTION
@@ -611,8 +611,8 @@ FUNCTION Factor&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION Unary&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "Unary"
+FUNCTION Unary& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Unary"
     ele$ = peeknextelement$(exp$, state.index, state.strIndex)
     IF ele$ = "-" THEN ele$ = getnextelement$(exp$, state.index, state.strIndex)
 
@@ -620,20 +620,20 @@ FUNCTION Unary&(exp$, state AS ParserState)
 
     IF ele$ = "-" THEN ParseNumSetI state.num, INTEGER64TYPE - ISPOINTER, -state.num.i
     Unary& = -1
-    IF CONST_EVAL_DEBUG THEN  _Echo "Unary done!"
+    IF CONST_EVAL_DEBUG THEN _ECHO "Unary done!"
 END FUNCTION
 
-FUNCTION Exponent&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "Exponent"
+FUNCTION Exponent& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Exponent"
     IF Numeric&(exp$, state) = 0 THEN EXIT FUNCTION
-    IF CONST_EVAL_DEBUG THEN _Echo "Check exponent"
+    IF CONST_EVAL_DEBUG THEN _ECHO "Check exponent"
 
     DIM num AS ParseNum
     num = state.num
 
     DO
         ele$ = peeknextelement$(exp$, state.index, state.strIndex)
-        IF CONST_EVAL_DEBUG THEN  _Echo "Exponent ele! " + ele$
+        IF CONST_EVAL_DEBUG THEN _ECHO "Exponent ele! " + ele$
         IF ele$ = "^" THEN
             ele$ = getnextelement$(exp$, state.index, state.strIndex)
 
@@ -665,7 +665,7 @@ FUNCTION Exponent&(exp$, state AS ParserState)
 
             ParseNumSetF num, FLOATTYPE - ISPOINTER, sig * (num.f ^ expon##)
         ELSE
-            IF CONST_EVAL_DEBUG THEN  _Echo "Exponent done!"
+            IF CONST_EVAL_DEBUG THEN _ECHO "Exponent done!"
             state.num = num
             Exponent& = -1
             EXIT FUNCTION
@@ -673,10 +673,10 @@ FUNCTION Exponent&(exp$, state AS ParserState)
     LOOP
 END FUNCTION
 
-FUNCTION Numeric&(exp$, state AS ParserState)
-    IF CONST_EVAL_DEBUG THEN _Echo "Numeric"
+FUNCTION Numeric& (exp$, state AS ParserState)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Numeric"
     ele$ = peeknextelement$(exp$, state.index, state.strIndex)
-    IF CONST_EVAL_DEBUG THEN _Echo "Numeric peek ele: " + ele$
+    IF CONST_EVAL_DEBUG THEN _ECHO "Numeric peek ele: " + ele$
 
     IF elementIsNumber(ele$) THEN
         ele$ = getnextelement$(exp$, state.index, state.strIndex)
@@ -695,7 +695,7 @@ FUNCTION Numeric&(exp$, state AS ParserState)
             IF state.num.typ AND ISSTRING THEN state.errStr = "ERROR - String can not be in numeric operation": EXIT FUNCTION
 
             ele$ = getnextelement$(exp$, state.index, state.strIndex)
-            IF CONST_EVAL_DEBUG THEN _Echo "Consumed ele: " + ele$
+            IF CONST_EVAL_DEBUG THEN _ECHO "Consumed ele: " + ele$
             Numeric& = -1
             EXIT FUNCTION
         END IF
@@ -705,7 +705,7 @@ FUNCTION Numeric&(exp$, state AS ParserState)
     END IF
 END FUNCTION
 
-FUNCTION ParseNumHashLookup&(ele$, state AS ParserState)
+FUNCTION ParseNumHashLookup& (ele$, state AS ParserState)
     ' Attempt hash lookup of existing CONST name
     ' CONST can be global or belong to the current sub/function
     hashfound = 0
@@ -713,8 +713,8 @@ FUNCTION ParseNumHashLookup&(ele$, state AS ParserState)
     hashname$ = ele$
     unusedSymbol$ = tryRemoveSymbol$(hashname$)
 
-    IF CONST_EVAL_DEBUG THEN _Echo "hash lookup: " + hashname$
-    IF CONST_EVAL_DEBUG THEN _Echo "unused symbol: " + hashname$
+    IF CONST_EVAL_DEBUG THEN _ECHO "hash lookup: " + hashname$
+    IF CONST_EVAL_DEBUG THEN _ECHO "unused symbol: " + hashname$
     hashchkflags = HASHFLAG_CONSTANT
     hashres = HashFindRev(hashname$, hashchkflags, hashresflags, hashresref)
     DO WHILE hashres
@@ -727,9 +727,9 @@ FUNCTION ParseNumHashLookup&(ele$, state AS ParserState)
         IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
     LOOP
 
-    IF CONST_EVAL_DEBUG THEN _Echo "Hashfound: " + str$(hashfound)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Hashfound: " + STR$(hashfound)
     IF hashfound THEN
-        IF CONST_EVAL_DEBUG THEN _Echo "is string: " + str$(consttype(hashresref) AND ISSTRING)
+        IF CONST_EVAL_DEBUG THEN _ECHO "is string: " + STR$(consttype(hashresref) AND ISSTRING)
 
         IF consttype(hashresref) AND ISSTRING THEN
             ParseNumSetS state.num, conststring(hashresref)
@@ -739,11 +739,11 @@ FUNCTION ParseNumHashLookup&(ele$, state AS ParserState)
             IF consttype(hashresref) AND ISUNSIGNED THEN
                 ParseNumSetUI state.num, consttype(hashresref), constuinteger(hashresref)
             ELSE
-                ParseNumSetI state.num, consttype(hashresref),  constinteger(hashresref)
+                ParseNumSetI state.num, consttype(hashresref), constinteger(hashresref)
             END IF
         END IF
 
-        IF CONST_EVAL_DEBUG THEN _Echo "Found! value: " + str$(state.num.f) + state.num.s
+        IF CONST_EVAL_DEBUG THEN _ECHO "Found! value: " + STR$(state.num.f) + state.num.s
 
         ParseNumHashLookup& = -1
         EXIT FUNCTION
@@ -795,9 +795,9 @@ SUB ParseExpression2 (exp$)
     state.result = ""
 
     res& = CommaExpression&(exp$, state)
-    IF CONST_EVAL_DEBUG THEN _Echo "res: " + STR$(res&)
-    IF CONST_EVAL_DEBUG THEN _Echo "resulting string: " + state.result
-    IF CONST_EVAL_DEBUG THEN _Echo "resulting err: " + state.errStr
+    IF CONST_EVAL_DEBUG THEN _ECHO "res: " + STR$(res&)
+    IF CONST_EVAL_DEBUG THEN _ECHO "resulting string: " + state.result
+    IF CONST_EVAL_DEBUG THEN _ECHO "resulting err: " + state.errStr
 
     IF res& = 0 THEN
         exp$ = state.errStr
@@ -866,23 +866,23 @@ END SUB
 ' Each argument should be a single element
 FUNCTION EvaluateFunction$ (p, args AS STRING)
     DIM n1 AS _FLOAT, nstr AS STRING
-    Dim argCount As Long, args(5) As ParseNum, origArgs(5) As String
+    DIM argCount AS LONG, args(5) AS ParseNum, origArgs(5) AS STRING
 
 
     argCount = countFunctionElements(args)
 
-    IF CONST_EVAL_DEBUG THEN _Echo "argCount: " + str$(argCount)
+    IF CONST_EVAL_DEBUG THEN _ECHO "argCount: " + STR$(argCount)
 
     IF ConstFuncs(p).ArgCount > 0 AND argCount <> ConstFuncs(p).ArgCount THEN
         EvaluateFunction$ = "ERROR - Wrong number of arguments provided to " + ConstFuncs(p).nam + "!"
         EXIT FUNCTION
     END IF
 
-    FOR i = 1 to argCount
+    FOR i = 1 TO argCount
         ele$ = getelement$(args, 1 + (i - 1) * 2)
         origArgs(i) = ele$
 
-        IF CONST_EVAL_DEBUG THEN _Echo "arg is string: " + STR$(elementIsString(ele$)) + ", argCount: " + STR$(ConstFuncs(p).ArgCount)
+        IF CONST_EVAL_DEBUG THEN _ECHO "arg is string: " + STR$(elementIsString(ele$)) + ", argCount: " + STR$(ConstFuncs(p).ArgCount)
 
         IF elementIsNumber(ele$) THEN
             ' skip the commas
@@ -894,7 +894,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
             EXIT FUNCTION
         END IF
 
-        IF CONST_EVAL_DEBUG THEN _Echo "Argument: " + str$(args(i).f) + ", str: " + getelement$(args, 1 + (i - 1) * 2)
+        IF CONST_EVAL_DEBUG THEN _ECHO "Argument: " + STR$(args(i).f) + ", str: " + getelement$(args, 1 + (i - 1) * 2)
     NEXT
 
     ' Default type, some functions return different types
@@ -1084,7 +1084,7 @@ SUB PreParse (e$)
 
     'ERROR CHECK by counting our brackets
     count = numelements(t$)
-    FOR l = 1 to count
+    FOR l = 1 TO count
         ele$ = getelement$(t$, l)
         IF ele$ = "(" THEN c = c + 1
         IF ele$ = ")" THEN c = c - 1
@@ -1094,10 +1094,10 @@ SUB PreParse (e$)
     IF c <> 0 THEN e$ = "ERROR - Bad Parenthesis": EXIT SUB
 
     'Modify so that NOT will process properly
-    FOR l = 1 to numelements(t$)
+    FOR l = 1 TO numelements(t$)
         'FIXME: This doesn't account for `x ^ NOT y + 2`, where it evaluates as `x ^ (NOT y) + 2`
         IF getelement$(t$, l) = "NOT" THEN
-            FOR l2 = l to numelements(t$)
+            FOR l2 = l TO numelements(t$)
                 ele$ = getelement$(t$, l2)
                 IF ele$ = "AND" OR ele$ = "OR" OR ele$ = "XOR" OR ele$ = "EQV" OR ele$ = "IMP" OR ele$ = ")" THEN
                     EXIT FOR
@@ -1116,7 +1116,7 @@ END SUB
 
 ' Returns 0 if given element is not the name of a function
 ' If it is a function, the ConstFuncs() array index of the function is returned
-FUNCTION IsFunctionIdentifier&(ele$)
+FUNCTION IsFunctionIdentifier& (ele$)
     FOR i = 1 TO UBOUND(ConstFuncs)
         IF ele$ = ConstFuncs(i).nam THEN
             IsFunctionIdentifier& = i

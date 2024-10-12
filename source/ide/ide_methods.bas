@@ -45,7 +45,7 @@ FUNCTION ide (ignore)
                     GetInput 'check for new input
                     IF iCHANGED = 0 AND mB = 0 THEN
                         indented$ = apply_layout_indent$(idecompiledline$)
-                        IF len(indented$) _ANDALSO idecompiledline$ <> indented$ THEN idesetline idecompiledline, indented$
+                        IF LEN(indented$) _ANDALSO idecompiledline$ <> indented$ THEN idesetline idecompiledline, indented$
 
                         idecompiledline = idecompiledline + 1
                         idecompiledline$ = idegetline(idecompiledline)
@@ -62,17 +62,17 @@ FUNCTION ide (ignore)
                                 status.progress$ = STRING$(3 - LEN(status.progress$), 32) + status.progress$ + "%"
                             END IF
                             IdeInfo = CHR$(0) + status.progress$
-                        'ELSE
-                        '    STATIC p AS _BYTE, lastUpdateDots#
-                        '    IF TIMER(0.001) - lastUpdateDots# > 0.5# THEN
-                        '        lastUpdateDots# = TIMER(0.001)
-                        '        p = p + 1
-                        '        temp$ = STRING$(3, 250) '"..."
-                        '        IF p > 3 THEN p = 1
-                        '        ASC(temp$, p) = 254
-                        '        COLOR 7, 1
-                        '        _PRINTSTRING (2, idewy - 3), temp$ 'compilation progress indicator
-                        '    END IF
+                            'ELSE
+                            '    STATIC p AS _BYTE, lastUpdateDots#
+                            '    IF TIMER(0.001) - lastUpdateDots# > 0.5# THEN
+                            '        lastUpdateDots# = TIMER(0.001)
+                            '        p = p + 1
+                            '        temp$ = STRING$(3, 250) '"..."
+                            '        IF p > 3 THEN p = 1
+                            '        ASC(temp$, p) = 254
+                            '        COLOR 7, 1
+                            '        _PRINTSTRING (2, idewy - 3), temp$ 'compilation progress indicator
+                            '    END IF
                         END IF
                         UpdateIdeInfo
 
@@ -189,7 +189,7 @@ FUNCTION ide2 (ignore)
         COLOR 15, 1
 
         IF os$ = "WIN" THEN
-            _PRINTSTRING (2, idewy - 3),  "Creating .EXE file named " + CHR$(34) + f$ + extension$ + CHR$(34) + "..."
+            _PRINTSTRING (2, idewy - 3), "Creating .EXE file named " + CHR$(34) + f$ + extension$ + CHR$(34) + "..."
         ELSE
             _PRINTSTRING (2, idewy - 3), "Creating executable file named " + CHR$(34) + f$ + extension$ + CHR$(34) + "..."
         END IF
@@ -789,7 +789,7 @@ FUNCTION ide2 (ignore)
             skipdisplay = 0
             IdeSystem = 1
             retval = 1
-       END IF
+        END IF
 
         GOSUB redrawItAll
         idecompiling = 0
@@ -799,7 +799,7 @@ FUNCTION ide2 (ignore)
         DebugMode
         ExitDebugMode:
         IF WatchListToConsole THEN _CONSOLE OFF
-        UpdateMenuHelpLine  ""
+        UpdateMenuHelpLine ""
         SELECT CASE IdeDebugMode
             CASE 1 'clean exit
                 IdeDebugMode = 0
@@ -831,7 +831,7 @@ FUNCTION ide2 (ignore)
     END IF
 
     IF c$ = CHR$(13) THEN
-        IF ideFirstCompileFromDisk _ANDALSO OfferNoprefixConversion(idepath$ + idepathsep$ + ideprogname$) THEN
+        IF ideFirstCompileFromDisk _ANDALSO OfferNoprefixConversion%(idepath$ + idepathsep$ + ideprogname$) THEN
             IF ideerror > 1 THEN GOTO IDEerrorMessage
             'A new compilation will be triggered
             ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
@@ -970,7 +970,7 @@ FUNCTION ide2 (ignore)
 
                     _PALETTECOLOR 1, IDEBackgroundColor, 0
                     _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
-                    _PALETTECOLOR 4, IDEErrorColor,0
+                    _PALETTECOLOR 4, IDEErrorColor, 0
                     _PALETTECOLOR 5, IDEBracketHighlightColor, 0
                     _PALETTECOLOR 6, IDEBackgroundColor2, 0
                     _PALETTECOLOR 7, IDEChromaColor, 0
@@ -1101,7 +1101,7 @@ FUNCTION ide2 (ignore)
                                 IF MID$(temp$, i, 1) = sp$ THEN MID$(temp$, i, 1) = " "
                             NEXT
                             temp$ = _TRIM$(temp$)
-                            IF UCASE$(LEFT$(temp$,10)) = "SUB VWATCH"  THEN temp$ = "End of Program"
+                            IF UCASE$(LEFT$(temp$, 10)) = "SUB VWATCH" THEN temp$ = "End of Program"
                             IF LEN(temp$) THEN
                                 y = y + 1: x = 1
                                 temp$ = "Caused by (or after): " + CHR$(1) + temp$
@@ -1521,7 +1521,7 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF mY = idewy + idesubwindow AND mX >= idewx - 20 AND mX =< idewx THEN
+        IF mY = idewy + idesubwindow AND mX >= idewx - 20 AND mX <= idewx THEN
             'Highlight line number
             IF LineNumberHover = 0 THEN
                 COLOR 13, 6
@@ -1778,7 +1778,7 @@ FUNCTION ide2 (ignore)
                                 nul& = SeekBuf&(ExtDepBuf, -32 - LEN(BufEolSeq$(ExtDepBuf)), SBM_BufCurrent)
                                 edCHG = -1: DeleteBufLine ExtDepBuf 'old hash
                             ELSE
-                                _CONTINUE 
+                                _CONTINUE
                             END IF
                         END IF
                         WriteBufLine ExtDepBuf, edMD5$ 'new hash
@@ -2724,7 +2724,7 @@ FUNCTION ide2 (ignore)
                                         Help_Back(Help_Back_Pos).cx = Help_cx
                                         Help_Back(Help_Back_Pos).cy = Help_cy
 
-                                        top = UBOUND(back$)
+                                        top = UBOUND(Back$)
 
                                         IF Help_Back_Pos < top THEN
                                             IF Back$(Help_Back_Pos + 1) = l$ THEN
@@ -2835,7 +2835,7 @@ FUNCTION ide2 (ignore)
                 Help_Back(Help_Back_Pos).cx = Help_cx
                 Help_Back(Help_Back_Pos).cy = Help_cy
 
-                top = UBOUND(back$)
+                top = UBOUND(Back$)
 
 
                 IF Back$(Help_Back_Pos) = lnk$ THEN Help_Back_Pos = Help_Back_Pos - 1: GOTO usenextentry2
@@ -2885,7 +2885,7 @@ FUNCTION ide2 (ignore)
                     IdeSystem = 3
                 END IF
 
-                GOSUB redrawitall
+                GOSUB redrawItAll
                 IF Help_LinkL THEN
                     norep = 1: GOTO searchnext
                 ELSE
@@ -2936,7 +2936,7 @@ FUNCTION ide2 (ignore)
                             ELSE
                                 n$ = a$
                                 args$ = ""
-                                cleanSubName  n$
+                                cleanSubName n$
                             END IF
 
                             backupn$ = n$
@@ -3135,7 +3135,7 @@ FUNCTION ide2 (ignore)
                                         _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
                                         menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
                                     ELSE
-                                        _PRINTSTRING (2, idewy - 3),  "OK" 'report OK status
+                                        _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
                                         IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                                         statusarealink = 0
                                         IF totalWarnings > 0 THEN
@@ -3200,7 +3200,7 @@ FUNCTION ide2 (ignore)
                 IF AutoAddDebugCommand <> 0 OR vWatchOn <> 0 THEN
                     ideselect = 0
                     idecytemp = mY - 2 + idesy - 1
-                    IF idecytemp =< iden THEN
+                    IF idecytemp <= iden THEN
                         idecy = idecytemp
                         IF _KEYDOWN(100304) OR _KEYDOWN(100303) THEN
                             GOTO toggleSkipLine
@@ -3477,7 +3477,7 @@ FUNCTION ide2 (ignore)
                 ProposedTitle$ = FindProposedTitle$
                 IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
                 IF UseGuiDialogs THEN
-                    a$ = Savefile$(ProposedTitle$ + ".bas")
+                    a$ = SaveFile$(ProposedTitle$ + ".bas")
                 ELSE
                     a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                 END IF
@@ -5534,7 +5534,7 @@ FUNCTION ide2 (ignore)
                     retval$ = ideinputbox$("Math Evaluator", "#Enter expression", mathEvalExpr$, "", 60, 0, 0)
                     result = 0
                     IF LEN(retval$) THEN
-                        Dim num As ParseNum
+                        DIM num AS ParseNum
                         mathEvalExpr$ = retval$
 
                         retval$ = lineformat(retval$)
@@ -6427,8 +6427,8 @@ FUNCTION ide2 (ignore)
                         IF ideprogname = "" THEN
                             ProposedTitle$ = FindProposedTitle$
                             IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
-                            IF UseGuiDialogs Then
-                                a$ = Savefile$ (ProposedTitle$ + ".bas")
+                            IF UseGuiDialogs THEN
+                                a$ = SaveFile$(ProposedTitle$ + ".bas")
                             ELSE
                                 a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF
@@ -6441,7 +6441,7 @@ FUNCTION ide2 (ignore)
                     END IF '"Y"
                 END IF 'unsaved
                 IF UseGuiDialogs THEN
-                    r$ = OpenFile$ (IdeOpenFile$) 'for new dialog file open routine.
+                    r$ = OpenFile$(IdeOpenFile$) 'for new dialog file open routine.
                 ELSE
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
                 END IF
@@ -6456,8 +6456,8 @@ FUNCTION ide2 (ignore)
                 IF ideprogname = "" THEN
                     ProposedTitle$ = FindProposedTitle$
                     IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
-                    IF UseGuiDialogs Then
-                        a$ = Savefile$ (ProposedTitle$ + ".bas")
+                    IF UseGuiDialogs THEN
+                        a$ = SaveFile$(ProposedTitle$ + ".bas")
                     ELSE
                         a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                     END IF
@@ -6473,14 +6473,14 @@ FUNCTION ide2 (ignore)
                 IF ideprogname = "" THEN
                     ProposedTitle$ = FindProposedTitle$
                     IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
-                    IF UseGuiDialogs Then
-                        a$ = Savefile$ (ProposedTitle$ + ".bas")
+                    IF UseGuiDialogs THEN
+                        a$ = SaveFile$(ProposedTitle$ + ".bas")
                     ELSE
                         a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                     END IF
                 ELSE
-                    IF UseGuiDialogs Then
-                        a$ = Savefile$ (ideprogname$)
+                    IF UseGuiDialogs THEN
+                        a$ = SaveFile$(ideprogname$)
                     ELSE
                         a$ = idefiledialog$(ideprogname$, 2)
                     END IF
@@ -6674,7 +6674,7 @@ FUNCTION ide2 (ignore)
     HelpAreaShowBackLinks:
     Back_Str$ = STRING$(1000, 0)
     Back_Str_I$ = STRING$(4000, 0)
-    top = UBOUND(back$)
+    top = UBOUND(Back$)
     FOR x = 1 TO top
         n$ = Back_Name$(x)
         IF x = Help_Back_Pos THEN p = LEN(Back_Str$)
@@ -6770,23 +6770,23 @@ SUB DebugMode
     END TYPE
     DIM Button(1 TO 8) AS ui
     i = 0
-    i = i + 1: Button(i).Caption = "<F4 = Add Watch>"
-    i = i + 1: Button(i).Caption = "<F5 = Run>"
-    i = i + 1: Button(i).Caption = "<F6 = Step Out>"
-    i = i + 1: Button(i).Caption = "<F7 = Step Into>"
-    i = i + 1: Button(i).Caption = "<F8 = Step Over>"
-    i = i + 1: Button(i).Caption = "<F9 = Toggle Breakpoint>"
-    i = i + 1: Button(i).Caption = "<F10 = Clear all breakpoints>"
-    i = i + 1: Button(i).Caption = "<F12 = Call Stack>"
+    i = i + 1: Button(i).caption = "<F4 = Add Watch>"
+    i = i + 1: Button(i).caption = "<F5 = Run>"
+    i = i + 1: Button(i).caption = "<F6 = Step Out>"
+    i = i + 1: Button(i).caption = "<F7 = Step Into>"
+    i = i + 1: Button(i).caption = "<F8 = Step Over>"
+    i = i + 1: Button(i).caption = "<F9 = Toggle Breakpoint>"
+    i = i + 1: Button(i).caption = "<F10 = Clear all breakpoints>"
+    i = i + 1: Button(i).caption = "<F12 = Call Stack>"
     y = (idewy - 4) + 2
     x = 2
     FOR i = 1 TO UBOUND(Button)
         Button(i).x = x
         Button(i).y = y
-        Button(i).w = LEN(Button(i).Caption)
+        Button(i).w = LEN(Button(i).caption)
         IF i < UBOUND(Button) THEN
             x = x + Button(i).w + 1
-            IF x + LEN(Button(i + 1).Caption) > idewx - 1 THEN
+            IF x + LEN(Button(i + 1).caption) > idewx - 1 THEN
                 y = y + 1
                 x = 2
             END IF
@@ -8053,7 +8053,7 @@ SUB DebugMode
                     CASE "_FLOAT", "FLOAT": recvData$ = STR$(_CV(_FLOAT, recvData$))
                     CASE "_OFFSET", "OFFSET": recvData$ = STR$(_CV(_OFFSET, recvData$))
                     CASE "_UNSIGNED _OFFSET", "UNSIGNED OFFSET": recvData$ = STR$(_CV(_UNSIGNED _OFFSET, recvData$))
-                    'CASE "STRING": 'no conversion required
+                        'CASE "STRING": 'no conversion required
                 END SELECT
                 vWatchReceivedData$(tempStorage&) = recvData$
                 IF PauseMode THEN GOSUB UpdateDisplay
@@ -8204,7 +8204,7 @@ SUB DebugMode
             COLOR 13, 1
             temp$ = " "
         END IF
-        _PRINTSTRING (Button(i).x, Button(i).y), Button(i).Caption + temp$
+        _PRINTSTRING (Button(i).x, Button(i).y), Button(i).caption + temp$
     NEXT
     PCOPY 3, 0
     RETURN
@@ -8272,11 +8272,11 @@ SUB DebugMode
     RETURN
 END SUB
 
-Function map! (value!, minRange!, maxRange!, newMinRange!, newMaxRange!)
+FUNCTION map! (value!, minRange!, maxRange!, newMinRange!, newMaxRange!)
     map! = ((value! - minRange!) / (maxRange! - minRange!)) * (newMaxRange! - newMinRange!) + newMinRange!
-End Function
+END FUNCTION
 
-SUB showvWatchPanel (this AS vWatchPanelType, currentScope$, action as _BYTE)
+SUB showvWatchPanel (this AS vWatchPanelType, currentScope$, action AS _BYTE)
     STATIC previousVariableWatchList$
     STATIC longestVarName, totalVisibleVariables
 
@@ -8529,7 +8529,7 @@ FUNCTION multiSearch (__fullText$, __searchString$)
     END IF
 END FUNCTION
 
-FUNCTION idevariablewatchbox$(currentScope$, filter$, selectVar, returnAction)
+FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -9760,7 +9760,7 @@ FUNCTION idevariablewatchbox$(currentScope$, filter$, selectVar, returnAction)
     RETURN
 END FUNCTION
 
-FUNCTION ideelementwatchbox$(currentPath$, elementIndexes$, level, singleElementSelection, ok)
+FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElementSelection, ok)
 
     '-------- generic dialog box header --------
     PCOPY 4, 0
@@ -10122,7 +10122,7 @@ FUNCTION ideelementwatchbox$(currentPath$, elementIndexes$, level, singleElement
     RETURN
 END FUNCTION
 
-FUNCTION formatRange$(__text$)
+FUNCTION formatRange$ (__text$)
     '__text$ is a series of MKL$(values) concatenated
     temp$ = __text$
     v1 = -1
@@ -10182,7 +10182,7 @@ FUNCTION expandArray$ (__indexes$, __path$)
     END IF
 END FUNCTION
 
-FUNCTION parseRange$(__text$)
+FUNCTION parseRange$ (__text$)
     '__text$ must contain a valid numeric string (####),
     'a valid interval (####-####) or comma-separated values.
     'Only positive values >= 0 considered.
@@ -10396,7 +10396,7 @@ FUNCTION idecallstackbox
             _CONTINUE
         END IF
 
-        IF (focus = 1 AND K$ = CHR$(13)) OR (focus = 2 AND info <> 0)THEN
+        IF (focus = 1 AND K$ = CHR$(13)) OR (focus = 2 AND info <> 0) THEN
             setIDEcy:
             y = ABS(o(1).sel)
             IF y >= 1 AND y <= callStackLength THEN
@@ -11306,7 +11306,7 @@ SUB idedrawpar (p AS idedbptype)
     END IF
 END SUB
 
-FUNCTION idefileexists$(f$)
+FUNCTION idefileexists$ (f$)
     l = LEN(f$)
     DO
         IF l < LEN(f$) THEN
@@ -11873,7 +11873,7 @@ SUB ideinsline (i, text$)
     iden = iden + 1
 END SUB
 
-FUNCTION ideinputbox$(title$, caption$, initialvalue$, validinput$, boxwidth, maxlength, ok)
+FUNCTION ideinputbox$ (title$, caption$, initialvalue$, validinput$, boxwidth, maxlength, ok)
 
 
     '-------- generic dialog box header --------
@@ -12059,20 +12059,20 @@ SUB idenewsf (sf AS STRING)
     END IF
 END SUB
 
-FUNCTION idenewfolder$(thispath$)
+FUNCTION idenewfolder$ (thispath$)
     newfolder$ = ideinputbox$("New Folder", "#Name", "", "", 60, 0, 0)
 
     IF LEN(newfolder$) THEN
         IF _DIREXISTS(thispath$ + idepathsep$ + newfolder$) THEN
             idenewfolder$ = newfolder$
-            EXIT SUB
+            EXIT FUNCTION
         END IF
         ideerror = 5
         MKDIR thispath$ + idepathsep$ + newfolder$
         ideerror = 1
         idenewfolder$ = newfolder$
     END IF
-END SUB
+END FUNCTION
 
 
 FUNCTION idenewtxt (a$)
@@ -12097,7 +12097,7 @@ SUB idenomatch (showFlags AS _BYTE)
     result = idemessagebox("Search complete", msg$, "")
 END SUB
 
-FUNCTION idefiledialog$(programname$, mode AS _BYTE)
+FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
     STATIC AllFiles
 
     '-------- generic dialog box header --------
@@ -12535,7 +12535,7 @@ SUB idesave (f$)
     ideerror = 1
     IF INSTR(_OS$, "WIN") THEN LineEnding$ = CHR$(13) + CHR$(10) ELSE LineEnding$ = CHR$(10)
     FOR i = 1 TO iden
-        outfile$ =  idegetline(i)  + LineEnding$
+        outfile$ = idegetline(i) + LineEnding$
         PUT #151, , outfile$
     NEXT
     CLOSE #151
@@ -12574,7 +12574,7 @@ SUB ideshowtext
     IF ideshowtextBypassColorRestore = 0 THEN
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
-        _PALETTECOLOR 4, IDEErrorColor,0
+        _PALETTECOLOR 4, IDEErrorColor, 0
         _PALETTECOLOR 5, IDEBracketHighlightColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
@@ -12756,8 +12756,8 @@ SUB ideshowtext
             END IF
 
             IF l <= iden THEN
-                DO UNTIL l < UBOUND(InValidLine) 'make certain we have enough InValidLine elements to cover us in case someone scrolls QB64
-                    REDIM _PRESERVE InValidLine(UBOUND(InValidLine) + 1000) AS _BYTE '   to the end of a program before the IDE has finished
+                DO UNTIL l < UBOUND(InvalidLine) 'make certain we have enough InValidLine elements to cover us in case someone scrolls QB64
+                    REDIM _PRESERVE InvalidLine(UBOUND(InvalidLine) + 1000) AS _BYTE '   to the end of a program before the IDE has finished
                 LOOP '                                                      verifying the code and growing the array during the IDE passes.
 
                 a$ = idegetline(l)
@@ -12926,7 +12926,7 @@ SUB ideshowtext
 
                 COLOR 13
 
-                IF InValidLine(l) THEN COLOR 7: GOTO SkipSyntaxHighlighter
+                IF InvalidLine(l) THEN COLOR 7: GOTO SkipSyntaxHighlighter
 
                 IF (LEN(oldChar$) > 0 OR m = 1) AND inquote = 0 AND isKeyword = 0 THEN
                     IF INSTR(initialNum.char$, thisChar$) > 0 AND oldChar$ <> ")" AND (INSTR(char.sep$, oldChar$) > 0 OR oldChar$ = "?") THEN
@@ -14904,21 +14904,21 @@ END FUNCTION
 FUNCTION idezgetroot$
     'note: does NOT including a trailing / or \ on the right
 
-     IF os$ = "WIN" THEN
-         SHELL _HIDE "cd >.\internal\temp\root.txt"
-         OPEN ".\internal\temp\root.txt" FOR INPUT AS #150
-         LINE INPUT #150, a$
-         idezgetroot$ = a$
-         CLOSE #150
-         EXIT FUNCTION
-     ELSE
-         SHELL _HIDE "pwd >./internal/temp/root.txt"
-         OPEN "./internal/temp/root.txt" FOR INPUT AS #150
-         LINE INPUT #150, a$
-         idezgetroot$ = a$
-         CLOSE #150
-         EXIT FUNCTION
-     END IF
+    IF os$ = "WIN" THEN
+        SHELL _HIDE "cd >.\internal\temp\root.txt"
+        OPEN ".\internal\temp\root.txt" FOR INPUT AS #150
+        LINE INPUT #150, a$
+        idezgetroot$ = a$
+        CLOSE #150
+        EXIT FUNCTION
+    ELSE
+        SHELL _HIDE "pwd >./internal/temp/root.txt"
+        OPEN "./internal/temp/root.txt" FOR INPUT AS #150
+        LINE INPUT #150, a$
+        idezgetroot$ = a$
+        CLOSE #150
+        EXIT FUNCTION
+    END IF
 
 END FUNCTION
 
@@ -15546,7 +15546,7 @@ SUB ideSetTCPPortBox
     WriteConfigSetting debugSettingsSection$, "BaseTCPPort", str2$(idebaseTcpPort)
 END SUB
 
-FUNCTION idegetlinenumberbox(title$, initialValue&)
+FUNCTION idegetlinenumberbox (title$, initialValue&)
     a2$ = str2$(initialValue&)
     IF a2$ = "0" THEN a2$ = ""
     v$ = ideinputbox$(title$, "#Line", a2$, "0123456789", 30, 8, 0)
@@ -16845,7 +16845,7 @@ FUNCTION idechoosecolorsbox
 
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
-        _PALETTECOLOR 4, IDEErrorColor,0
+        _PALETTECOLOR 4, IDEErrorColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
         _PALETTECOLOR 8, IDENumbersColor, 0
@@ -17407,7 +17407,7 @@ FUNCTION idechoosecolorsbox
 END FUNCTION
 
 
-FUNCTION GetCurrentColor~&(Selection AS INTEGER)
+FUNCTION GetCurrentColor~& (Selection AS INTEGER)
     SELECT CASE Selection
         CASE 1: GetCurrentColor = IDETextColor
         CASE 2: GetCurrentColor = IDEKeywordColor
@@ -18054,7 +18054,7 @@ END SUB
 SUB Help_ShowText
 
     STATIC setup
-    IF setup = 0 AND UBOUND(back$) = 1 THEN
+    IF setup = 0 AND UBOUND(Back$) = 1 THEN
         setup = 1
         IF IdeContextHelpSF = 0 THEN
             a$ = Wiki$(Back$(1))
@@ -18172,7 +18172,7 @@ FUNCTION idesearchedbox$
     p.x = idewx - 24
     p.y = idewy - 6 - h
     IF p.y < 3 THEN
-        p.h = p.h - abs(3 - p.y)
+        p.h = p.h - ABS(3 - p.y)
         h = p.h
         p.y = 3
     END IF
@@ -19063,11 +19063,11 @@ SUB RetrieveSearchHistory (shArr$())
     IF GetBufLen&(bh%) THEN
         REDIM shArr$(1 TO ideMaxSearch): lc% = 0
         WHILE EndOfBuf%(bh%) = 0 AND lc% < ideMaxSearch
-           lc% = lc% + 1: shArr$(lc%) = ReadBufLine$(bh%)
+            lc% = lc% + 1: shArr$(lc%) = ReadBufLine$(bh%)
         WEND
         REDIM _PRESERVE shArr$(1 TO lc%)
     ELSE
-       REDIM shArr$(1 TO 1): shArr$(1) = ""
+        REDIM shArr$(1 TO 1): shArr$(1) = ""
     END IF
     DisposeBuf bh%
 END SUB
@@ -19155,7 +19155,7 @@ FUNCTION ideupdatehelpbox
             CASE 4
                 FullMessage$(2) = "Building download queue..."
             CASE 5
-                FullMessage$(1) = "Updating help content file " + str2$(n) + "/" + str2$(c) +"..."
+                FullMessage$(1) = "Updating help content file " + str2$(n) + "/" + str2$(c) + "..."
         END SELECT
 
         FOR i = 1 TO MessageLines
@@ -19349,7 +19349,7 @@ FUNCTION ideupdatehelpbox
     LOOP
 END FUNCTION
 
-FUNCTION ideASCIIbox$(relaunch)
+FUNCTION ideASCIIbox$ (relaunch)
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -19441,7 +19441,7 @@ FUNCTION ideASCIIbox$(relaunch)
                 IF mCLICK THEN
                     Selected = i
                     focus = 1
-                    IF timeElapsedSince#(lastClick#) <= 0.3# and lastClickOn = i THEN
+                    IF timeElapsedSince#(lastClick#) <= 0.3# AND lastClickOn = i THEN
                         'double click on chart
                         relaunch = -1
                         GOTO insertChar
@@ -19938,9 +19938,9 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
         TempDarkerIDEChromaColor~& = _RGB32(_RED32(IDEChromaColor) * .5, _GREEN32(IDEChromaColor) * .5, _BLUE32(IDEChromaColor) * .5)
         TempDarkerMetaColor~& = _RGB32(_RED32(IDEMetaCommandColor) * .5, _GREEN32(IDEMetaCommandColor) * .5, _BLUE32(IDEMetaCommandColor) * .5)
         TempDarkerQuoteColor~& = _RGB32(_RED32(IDEQuoteColor) * .5, _GREEN32(IDEQuoteColor) * .5, _BLUE32(IDEQuoteColor) * .5)
-        TempDarkerErrorColor~& =  _RGB32(_RED32(IDEErrorColor) * .5, _GREEN32(IDEErrroColor) * .5, _BLUE32(IDEErrorColor) * .5)
+        TempDarkerErrorColor~& = _RGB32(_RED32(IDEErrorColor) * .5, _GREEN32(IDEErrroColor) * .5, _BLUE32(IDEErrorColor) * .5)
         _PALETTECOLOR 1, TempDarkerBGColor~&, 0
-        _PALETTECOLOR 4, TempDarkerErrorColor~&,0
+        _PALETTECOLOR 4, TempDarkerErrorColor~&, 0
         _PALETTECOLOR 5, TempDarkerBGColor~&, 0
         _PALETTECOLOR 6, TempDarkerBG2Color~&, 0
         _PALETTECOLOR 7, TempDarkerIDEChromaColor~&, 0
@@ -19952,7 +19952,7 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
         _PALETTECOLOR 14, TempDarkerQuoteColor~&, 0
     ELSE
         _PALETTECOLOR 1, IDEBackgroundColor, 0
-       _PALETTECOLOR 4, IDEErrorColor,0
+        _PALETTECOLOR 4, IDEErrorColor, 0
         _PALETTECOLOR 5, IDEBracketHighlightColor, 0
         _PALETTECOLOR 6, IDEBackgroundColor2, 0
         _PALETTECOLOR 7, IDEChromaColor, 0
@@ -19965,7 +19965,7 @@ FUNCTION DarkenFGBG (Action AS _BYTE)
     END IF
 
     DarkenFGBG = 0
-END SUB
+END FUNCTION
 
 SUB HideBracketHighlight
     'Restore the screen and hide any bracket highlights
@@ -20079,7 +20079,7 @@ SUB cleanSubName (n$)
     x = INSTR(n$, " "): IF x THEN n$ = LEFT$(n$, x - 1)
 END SUB
 
-SUB clearStatusWindow(whichLine)
+SUB clearStatusWindow (whichLine)
     COLOR 7, 1
     IF whichLine = 0 THEN
         FOR whichLine = 1 TO 3
@@ -20090,7 +20090,7 @@ SUB clearStatusWindow(whichLine)
     END IF
 END SUB
 
-SUB setStatusMessage(row, text$, fg)
+SUB setStatusMessage (row, text$, fg)
     COLOR fg
     _PRINTSTRING (2, (idewy - 4) + row), text$
     PCOPY 3, 0
@@ -20137,7 +20137,7 @@ FUNCTION getWordAtCursor$
     END IF
 END FUNCTION
 
-FUNCTION getSelectedText$(multiline AS _BYTE)
+FUNCTION getSelectedText$ (multiline AS _BYTE)
     IF ideselect THEN
         sy1 = ideselecty1
         sy2 = idecy
@@ -20210,7 +20210,7 @@ SUB insertAtCursor (tempk$)
     startPausedPending = 0
 END SUB
 
-FUNCTION findHelpTopic$(topic$, lnks, firstOnly AS _BYTE)
+FUNCTION findHelpTopic$ (topic$, lnks, firstOnly AS _BYTE)
     'check if topic$ is in help links
     '    - returns a list of help links separated by CHR$(0)
     '    - returns the total number of links found by changing 'lnks'
@@ -20388,7 +20388,7 @@ SUB printWrapStatus (x AS INTEGER, y AS INTEGER, initialX AS INTEGER, __text$)
     RETURN
 END SUB
 
-FUNCTION GetBytes$(__value$, numberOfBytes&)
+FUNCTION GetBytes$ (__value$, numberOfBytes&)
     STATIC previousValue$, getBytesPosition&
 
     value$ = __value$

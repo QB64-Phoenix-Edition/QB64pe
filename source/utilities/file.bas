@@ -96,7 +96,7 @@ FUNCTION GetEscapedPath$ (path_name AS STRING)
 END FUNCTION
 
 ' Returns a path/file with single slashes only, effectively unescaping "\"
-FUNCTION RemoveDoubleSlashes$(f2$)
+FUNCTION RemoveDoubleSlashes$ (f2$)
     f$ = f2$ 'avoid arg side effects
 
     DO 'sp% = 0 at function entry

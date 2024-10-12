@@ -104,7 +104,7 @@ FUNCTION BinaryFormatCheck% (pathToCheck$, pathSepToCheck$, fileToCheck$)
     END SELECT
 END FUNCTION
 
-FUNCTION OfferNoprefixConversion(file$)
+FUNCTION OfferNoprefixConversion% (file$)
     what$ = ideyesnobox("$NOPREFIX", "This program uses the $NOPREFIX directive which is unsupported.\n\nQB64PE can automatically convert this file and any included files to\nremove $NOPREFIX. Backups of all files will be made.\n\nConvert this program?")
     IF what$ <> "Y" THEN EXIT FUNCTION
 
@@ -130,7 +130,7 @@ FUNCTION OfferNoprefixConversion(file$)
 
     convertLine$ = convertUtility$ + " " + QuotedFilename$(file$)
     IF _SHELLHIDE(convertLine$) = 0 _ANDALSO OpenFile$(file$) <> "C" THEN
-        OfferNoprefixConversion = -1
+        OfferNoprefixConversion% = -1
     ELSE
         clearStatusWindow 0
         dummy = DarkenFGBG(0)
