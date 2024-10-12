@@ -21092,11 +21092,7 @@ SUB regid
 
 END SUB
 
-SUB reginternal
-    reginternalsubfunc = 1
-    '$INCLUDE:'subs_functions\subs_functions.bas'
-    reginternalsubfunc = 0
-END SUB
+'$INCLUDE:'subs_functions\subs_functions.bas'
 
 SUB regUnstableHttp
     reginternalsubfunc = 1

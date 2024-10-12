@@ -1,7 +1,7 @@
-option _explicit
-$screenhide
-$console
-deflng a-z
+OPTION _EXPLICIT
+$SCREENHIDE
+$CONSOLE
+DEFLNG A-Z
 
 'Removed leading @
 'Line continutation formatting
@@ -51,188 +51,188 @@ const KEYWORDS = "_ACCEPTFILEDROP@_ACOS@_ACOSH@_ADLER32@_ALLOWFULLSCREEN@_ALPHA@
 "_UCHARPOS@_UFONTHEIGHT@_ULINESPACING@_UNSIGNED@_UPRINTSTRING@_UPRINTWIDTH@"+_
 "_WHEEL@_WIDTH@_WINDOWHANDLE@_WINDOWHASFOCUS@_WRITEFILE@"
 
-const FALSE = 0, TRUE = -1
+CONST FALSE = 0, TRUE = -1
 
-const ASCII_TAB = 9
-const ASCII_LF = 10
-const ASCII_VTAB = 11
-const ASCII_FF = 12
-const ASCII_CR = 13
-const ASCII_EOF = 0 'Prefer NUL over ^Z for this purpose as some people embed ^Z in their programs
-const ASCII_QUOTE = 34
+CONST ASCII_TAB = 9
+CONST ASCII_LF = 10
+CONST ASCII_VTAB = 11
+CONST ASCII_FF = 12
+CONST ASCII_CR = 13
+CONST ASCII_EOF = 0 'Prefer NUL over ^Z for this purpose as some people embed ^Z in their programs
+CONST ASCII_QUOTE = 34
 
-const TOK_EOF = 1
-const TOK_NEWLINE = 2
-const TOK_WORD = 3
-const TOK_METACMD = 6
-const TOK_COMMENT = 7
-const TOK_STRING = 8
-const TOK_DATA = 9
-const TOK_PUNCTUATION = 11
-const TOK_COLON = 15
+CONST TOK_EOF = 1
+CONST TOK_NEWLINE = 2
+CONST TOK_WORD = 3
+CONST TOK_METACMD = 6
+CONST TOK_COMMENT = 7
+CONST TOK_STRING = 8
+CONST TOK_DATA = 9
+CONST TOK_PUNCTUATION = 11
+CONST TOK_COLON = 15
 
-const STATE_BEGIN = 1
-const STATE_METACMD = 3
-const STATE_WORD = 4
-const STATE_COMMENT = 5
-const STATE_STRING = 6
-const STATE_DATA = 7
-const STATE_NEWLINE = 12
-const STATE_NEWLINE_WIN = 13
+CONST STATE_BEGIN = 1
+CONST STATE_METACMD = 3
+CONST STATE_WORD = 4
+CONST STATE_COMMENT = 5
+CONST STATE_STRING = 6
+CONST STATE_DATA = 7
+CONST STATE_NEWLINE = 12
+CONST STATE_NEWLINE_WIN = 13
 
-type token_t
-    t as long 'TOK_ type
-    c as string 'Content
-    uc as string 'Content in UPPERCASE for comparisons
-    spaces as string 'Any whitespace characters detected before the content
-end type
-dim shared token as token_t
+TYPE token_t
+    t AS LONG 'TOK_ type
+    c AS STRING 'Content
+    uc AS STRING 'Content in UPPERCASE for comparisons
+    spaces AS STRING 'Any whitespace characters detected before the content
+END TYPE
+DIM SHARED token AS token_t
 
-redim shared prefix_keywords$(1) 'Stored without the prefix
-redim shared prefix_colors$(0)
-redim shared include_queue$(0)
-dim shared exedir$
-dim shared input_content$, current_include
-dim shared line_count, column_count
-dim shared next_chr_idx, tk_state
-dim shared noprefix_detected
-dim shared in_udt, in_declare_library
+REDIM SHARED prefix_keywords$(1) 'Stored without the prefix
+REDIM SHARED prefix_colors$(0)
+REDIM SHARED include_queue$(0)
+DIM SHARED exedir$
+DIM SHARED input_content$, current_include
+DIM SHARED line_count, column_count
+DIM SHARED next_chr_idx, tk_state
+DIM SHARED noprefix_detected
+DIM SHARED in_udt, in_declare_library
 
-exedir$ = _cwd$
-chdir _startdir$
+exedir$ = _CWD$
+CHDIR _STARTDIR$
 
 build_keyword_list
 
-if _commandcount = 0 then
-    _screenshow
-    print "$NOPREFIX remover"
-    print "Files will be backed up before conversion."
-    print "Run this program with a file as a command-line argument or enter a file now"
-    print "File name: ";
-    line input include_queue$(0)
-else
-    _dest _console
-    include_queue$(0) = command$(1)
-end if
+IF _COMMANDCOUNT = 0 THEN
+    _SCREENSHOW
+    PRINT "$NOPREFIX remover"
+    PRINT "Files will be backed up before conversion."
+    PRINT "Run this program with a file as a command-line argument or enter a file now"
+    PRINT "File name: ";
+    LINE INPUT include_queue$(0)
+ELSE
+    _DEST _CONSOLE
+    include_queue$(0) = COMMAND$(1)
+END IF
 
-do
+DO
     load_prepass_file include_queue$(current_include)
     prepass
     current_include = current_include + 1
-loop while current_include <= ubound(include_queue$)
-if not noprefix_detected then
-    print "Program does not use $NOPREFIX, no changes made"
-    if _commandcount = 0 then end else system
-end if
+LOOP WHILE current_include <= UBOUND(include_queue$)
+IF NOT noprefix_detected THEN
+    PRINT "Program does not use $NOPREFIX, no changes made"
+    IF _COMMANDCOUNT = 0 THEN END ELSE SYSTEM
+END IF
 
-print "Found"; ubound(include_queue$); "$INCLUDE file(s)"
+PRINT "Found"; UBOUND(include_queue$); "$INCLUDE file(s)"
 current_include = 0
-do
+DO
     load_file include_queue$(current_include)
-    do
+    DO
         process_logical_line
-    loop while token.t <> TOK_EOF
-    close #2
+    LOOP WHILE token.t <> TOK_EOF
+    CLOSE #2
     current_include = current_include + 1
-loop while current_include <= ubound(include_queue$)
-print "Conversion complete"
-if _commandcount = 0 then end else system
+LOOP WHILE current_include <= UBOUND(include_queue$)
+PRINT "Conversion complete"
+IF _COMMANDCOUNT = 0 THEN END ELSE SYSTEM
 
-sub load_prepass_file (filename$)
-    print "Analysing " + filename$
-    input_content$ = _readfile$(filename$) + chr$(ASCII_EOF)
+SUB load_prepass_file (filename$)
+    PRINT "Analysing " + filename$
+    input_content$ = _READFILE$(filename$) + CHR$(ASCII_EOF)
     rewind
-end sub
+END SUB
 
-sub prepass
-    do
+SUB prepass
+    DO
         next_token_raw
-        select case token.t
-        case TOK_METACMD
-            select case token.uc
-            case "$NOPREFIX"
-                noprefix_detected = TRUE
-            case "$COLOR:0"
-                build_color0_list
-            case "$COLOR:32"
-                build_color32_list
-            end select
-        case TOK_WORD
-            select case token.uc
-            case "DATA"
-                tk_state = STATE_DATA
-            case "REM"
-                tk_state = STATE_COMMENT
-            end select
-        case TOK_COMMENT
-            process_maybe_include
-        case TOK_NEWLINE
-            line_count = line_count + 1
-            column_count = 0
-        case TOK_EOF
-            exit do
-        end select
-    loop
-end sub
+        SELECT CASE token.t
+            CASE TOK_METACMD
+                SELECT CASE token.uc
+                    CASE "$NOPREFIX"
+                        noprefix_detected = TRUE
+                    CASE "$COLOR:0"
+                        build_color0_list
+                    CASE "$COLOR:32"
+                        build_color32_list
+                END SELECT
+            CASE TOK_WORD
+                SELECT CASE token.uc
+                    CASE "DATA"
+                        tk_state = STATE_DATA
+                    CASE "REM"
+                        tk_state = STATE_COMMENT
+                END SELECT
+            CASE TOK_COMMENT
+                process_maybe_include
+            CASE TOK_NEWLINE
+                line_count = line_count + 1
+                column_count = 0
+            CASE TOK_EOF
+                EXIT DO
+        END SELECT
+    LOOP
+END SUB
 
-sub load_file (filename$)
-    dim ext, backup$
-    ext = _instrrev(filename$, ".")
-    if ext > 0 then
-        backup$ = left$(filename$, ext - 1) + "-noprefix" + mid$(filename$, ext)
-    else
+SUB load_file (filename$)
+    DIM ext, backup$
+    ext = _INSTRREV(filename$, ".")
+    IF ext > 0 THEN
+        backup$ = LEFT$(filename$, ext - 1) + "-noprefix" + MID$(filename$, ext)
+    ELSE
         backup$ = filename$ + "-noprefix"
-    end if
-    name filename$ as backup$
-    print "Moved " + filename$ + " to backup " + backup$
-    print "Converting " + filename$
-    input_content$ = _readfile$(backup$) + chr$(ASCII_EOF)
-    open filename$ for binary as #2
+    END IF
+    NAME filename$ AS backup$
+    PRINT "Moved " + filename$ + " to backup " + backup$
+    PRINT "Converting " + filename$
+    input_content$ = _READFILE$(backup$) + CHR$(ASCII_EOF)
+    OPEN filename$ FOR BINARY AS #2
     rewind
-end sub
+END SUB
 
-sub process_maybe_include
-    dim s$, path$, open_quote, close_quote
+SUB process_maybe_include
+    DIM s$, path$, open_quote, close_quote
     s$ = token.c
-    if left$(s$, 1) = "'" then s$ = mid$(s$, 2)
-    s$ = ltrim$(s$)
-    if ucase$(left$(s$, 8)) <> "$INCLUDE" then exit sub
-    open_quote = instr(s$, "'")
-    close_quote = instr(open_quote + 1, s$, "'")
-    path$ = mid$(s$, open_quote + 1, close_quote - open_quote - 1)
+    IF LEFT$(s$, 1) = "'" THEN s$ = MID$(s$, 2)
+    s$ = LTRIM$(s$)
+    IF UCASE$(LEFT$(s$, 8)) <> "$INCLUDE" THEN EXIT SUB
+    open_quote = INSTR(s$, "'")
+    close_quote = INSTR(open_quote + 1, s$, "'")
+    path$ = MID$(s$, open_quote + 1, close_quote - open_quote - 1)
     queue_include path$
-end sub
+END SUB
 
-sub queue_include (given_path$)
-    dim current_path$, path$, i
-    if is_absolute_path(given_path$) then
-        if not _fileexists(given_path$) then
-            print "WARNING: cannot locate included file '" + given_path$ + "'"
-            exit sub
-        end if
+SUB queue_include (given_path$)
+    DIM current_path$, path$, i
+    IF is_absolute_path(given_path$) THEN
+        IF NOT _FILEEXISTS(given_path$) THEN
+            PRINT "WARNING: cannot locate included file '" + given_path$ + "'"
+            EXIT SUB
+        END IF
         path$ = given_path$
-    else
+    ELSE
         current_path$ = dir_name$(include_queue$(current_include))
         'First check relative to path of current file
-        if _fileexists(current_path$ + "/" + given_path$) then
+        IF _FILEEXISTS(current_path$ + "/" + given_path$) THEN
             path$ = current_path$ + "/" + given_path$
-        'Next try relative to converter TODO: Change to relative to compiler
-        elseif _fileexists(exedir$ + "/" + given_path$) then
+            'Next try relative to converter TODO: Change to relative to compiler
+        ELSEIF _FILEEXISTS(exedir$ + "/" + given_path$) THEN
             path$ = exedir$ + "/" + given_path$
-        else
-            print "WARNING: cannot locate included file '" + given_path$ + "'"
-            exit sub
-        end if
-    end if
-    for i = 0 to ubound(include_queue$)
-        if include_queue$(i) = path$ then exit sub
-    next i
-    i = ubound(include_queue$)
-    redim _preserve include_queue$(i + 1)
+        ELSE
+            PRINT "WARNING: cannot locate included file '" + given_path$ + "'"
+            EXIT SUB
+        END IF
+    END IF
+    FOR i = 0 TO UBOUND(include_queue$)
+        IF include_queue$(i) = path$ THEN EXIT SUB
+    NEXT i
+    i = UBOUND(include_queue$)
+    REDIM _PRESERVE include_queue$(i + 1)
     include_queue$(i + 1) = path$
-end sub
+END SUB
 
-sub rewind
+SUB rewind
     line_count = 1
     column_count = 0
     next_chr_idx = 1
@@ -240,546 +240,547 @@ sub rewind
     token.t = 0
     token.c = ""
     token.uc = ""
-end sub
+END SUB
 
-sub build_keyword_list
-    dim i, j, keyword$
+SUB build_keyword_list
+    DIM i, j, keyword$
     i = 1
-    for j = 1 to len(KEYWORDS)
-        if asc(KEYWORDS, j) = asc("@") then
-            if asc(keyword$) = asc("_") then
-                if i > ubound(prefix_keywords$) then redim _preserve prefix_keywords$(ubound(prefix_keywords$) * 2)
-                prefix_keywords$(i) = mid$(keyword$, 2)
-                if i > 1 and _strcmp(prefix_keywords$(i), prefix_keywords$(i - 1)) <> 1 then
-                    print "Internal error: " + keyword$ + " out of order"
-                    end
-                end if
+    FOR j = 1 TO LEN(KEYWORDS)
+        IF ASC(KEYWORDS, j) = ASC("@") THEN
+            IF ASC(keyword$) = ASC("_") THEN
+                IF i > UBOUND(prefix_keywords$) THEN REDIM _PRESERVE prefix_keywords$(UBOUND(prefix_keywords$) * 2)
+                prefix_keywords$(i) = MID$(keyword$, 2)
+                IF i > 1 AND _STRCMP(prefix_keywords$(i), prefix_keywords$(i - 1)) <> 1 THEN
+                    PRINT "Internal error: " + keyword$ + " out of order"
+                    END
+                END IF
                 i = i + 1
-            end if
+            END IF
             keyword$ = ""
-        else
-            keyword$ = keyword$ + mid$(KEYWORDS, j, 1)
-        end if
-    next j
-    redim _preserve prefix_keywords$(i - 1)
-end sub
+        ELSE
+            keyword$ = keyword$ + MID$(KEYWORDS, j, 1)
+        END IF
+    NEXT j
+    REDIM _PRESERVE prefix_keywords$(i - 1)
+END SUB
 
-sub build_color0_list
-    redim prefix_colors$(4)
+SUB build_color0_list
+    REDIM prefix_colors$(4)
     prefix_colors$(1) = "NP_BLUE"
     prefix_colors$(2) = "NP_GREEN"
     prefix_colors$(3) = "NP_RED"
     prefix_colors$(4) = "NP_BLINK"
-end sub
+END SUB
 
-sub build_color32_list
-    redim prefix_colors$(3)
+SUB build_color32_list
+    REDIM prefix_colors$(3)
     prefix_colors$(1) = "NP_BLUE"
     prefix_colors$(2) = "NP_GREEN"
     prefix_colors$(3) = "NP_RED"
-end sub
+END SUB
 
-sub process_logical_line
+SUB process_logical_line
     next_token
-    select case token.t
-    case TOK_METACMD
-        select case token.uc
-        case "$NOPREFIX"
-            'Keep remenant of $noprefix so line numbers are not changed
-            token.c = "'" + token.c + " removed here"
-        end select
-    case TOK_WORD
-        if in_udt and token.uc = "END" then
-            in_udt = FALSE
-            in_declare_library = FALSE
-        elseif in_udt then
-            'In a UDT definition the field name is never a keyword
-            next_token
-        else
-            select case token.uc
-            case "SUB", "FUNCTION"
-                if in_declare_library then process_declare_library_def
-            case "TYPE"
-                in_udt = TRUE
-            case "DATA"
-                tk_state = STATE_DATA
-            case "DECLARE"
-                process_declare
-            case "PUT"
-                process_put
-            case "SCREENMOVE", "_SCREENMOVE"
-                process_screenmove
-            case "OPTION"
-                process_option
-            case "FULLSCREEN", "_FULLSCREEN"
-                process_fullscreen
-            case "ALLOWFULLSCREEN", "_ALLOWFULLSCREEN"
-                process_allowfullscreen
-            case "RESIZE", "_RESIZE"
-                process_resize
-            case "GLRENDER", "_GLRENDER"
-                process_glrender
-            case "DISPLAYORDER", "_DISPLAYORDER"
-                process_displayorder
-            case "EXIT"
-                next_token 'in statement position this is EXIT SUB etc.
-            case "FPS", "_FPS"
-                process_fps
-            case "CLEARCOLOR", "_CLEARCOLOR"
-                process_clearcolor
-            case "MAPTRIANGLE", "_MAPTRIANGLE"
-                process_maptriangle
-            case "DEPTHBUFFER", "_DEPTHBUFFER"
-                process_depthbuffer
-            case "WIDTH"
-                next_token 'in statement position this is the set-columns command
-            case "SHELL"
-                process_shell
-            case "CAPSLOCK", "_CAPSLOCK", "SCROLLLOCK", "_SCROLLLOCK", "NUMLOCK", "_NUMLOCK"
-                process_keylock
-            case "CONSOLECURSOR", "_CONSOLECURSOR"
-                process_consolecursor
-            end select
-        end if
-    end select
+    SELECT CASE token.t
+        CASE TOK_METACMD
+            SELECT CASE token.uc
+                CASE "$NOPREFIX"
+                    'Keep remenant of $noprefix so line numbers are not changed
+                    token.c = "'" + token.c + " removed here"
+            END SELECT
+        CASE TOK_WORD
+            IF in_udt AND token.uc = "END" THEN
+                in_udt = FALSE
+                in_declare_library = FALSE
+            ELSEIF in_udt THEN
+                'In a UDT definition the field name is never a keyword
+                next_token
+            ELSE
+                SELECT CASE token.uc
+                    CASE "SUB", "FUNCTION"
+                        IF in_declare_library THEN process_declare_library_def
+                    CASE "TYPE"
+                        in_udt = TRUE
+                    CASE "DATA"
+                        tk_state = STATE_DATA
+                    CASE "DECLARE"
+                        process_declare
+                    CASE "PUT"
+                        process_put
+                    CASE "SCREENMOVE", "_SCREENMOVE"
+                        process_screenmove
+                    CASE "OPTION"
+                        process_option
+                    CASE "FULLSCREEN", "_FULLSCREEN"
+                        process_fullscreen
+                    CASE "ALLOWFULLSCREEN", "_ALLOWFULLSCREEN"
+                        process_allowfullscreen
+                    CASE "RESIZE", "_RESIZE"
+                        process_resize
+                    CASE "GLRENDER", "_GLRENDER"
+                        process_glrender
+                    CASE "DISPLAYORDER", "_DISPLAYORDER"
+                        process_displayorder
+                    CASE "EXIT"
+                        next_token 'in statement position this is EXIT SUB etc.
+                    CASE "FPS", "_FPS"
+                        process_fps
+                    CASE "CLEARCOLOR", "_CLEARCOLOR"
+                        process_clearcolor
+                    CASE "MAPTRIANGLE", "_MAPTRIANGLE"
+                        process_maptriangle
+                    CASE "DEPTHBUFFER", "_DEPTHBUFFER"
+                        process_depthbuffer
+                    CASE "WIDTH"
+                        next_token 'in statement position this is the set-columns command
+                    CASE "SHELL"
+                        process_shell
+                    CASE "CAPSLOCK", "_CAPSLOCK", "SCROLLLOCK", "_SCROLLLOCK", "NUMLOCK", "_NUMLOCK"
+                        process_keylock
+                    CASE "CONSOLECURSOR", "_CONSOLECURSOR"
+                        process_consolecursor
+                END SELECT
+            END IF
+    END SELECT
     process_rest_of_line
-end sub
+END SUB
 
-sub process_declare
+SUB process_declare
     next_token
-    if token.uc = "SUB" or token.uc = "FUNCTION" then
-        while not line_end
+    IF token.uc = "SUB" OR token.uc = "FUNCTION" THEN
+        WHILE NOT line_end
             next_token
-        wend
-    elseif token.uc = "LIBRARY" then
+        WEND
+    ELSEIF token.uc = "LIBRARY" THEN
         in_declare_library = TRUE
-    end if
-end sub
+    END IF
+END SUB
 
-sub process_declare_library_def
+SUB process_declare_library_def
     next_token
-    while token.uc <> "(" and not line_end
+    WHILE token.uc <> "(" AND NOT line_end
         next_token
-    wend
-    while token.uc <> ")" and not line_end
+    WEND
+    WHILE token.uc <> ")" AND NOT line_end
         next_token
-        if token.uc = "BYVAL" then next_token
+        IF token.uc = "BYVAL" THEN next_token
         next_token 'Skip argument name
         skip_expr
-    wend
-end sub
+    WEND
+END SUB
 
-sub process_put
+SUB process_put
     next_token
-    if token.uc = "STEP" then next_token
-    if token.c = "(" then
+    IF token.uc = "STEP" THEN next_token
+    IF token.c = "(" THEN
         skip_parens 'Coordinates
         next_token ' ,
         next_token 'Array name
-        if line_end then exit sub
+        IF line_end THEN EXIT SUB
         skip_parens 'Array index
-        if line_end then exit sub
+        IF line_end THEN EXIT SUB
         next_token ' ,
-        if line_end then exit sub
-        if token.uc = "CLIP" then add_prefix
-    end if
-end sub
+        IF line_end THEN EXIT SUB
+        IF token.uc = "CLIP" THEN add_prefix
+    END IF
+END SUB
 
-sub process_screenmove
+SUB process_screenmove
     add_prefix
     next_token
-    if line_end then exit sub
-    if token.uc = "MIDDLE" then add_prefix
-end sub
+    IF line_end THEN EXIT SUB
+    IF token.uc = "MIDDLE" THEN add_prefix
+END SUB
 
-sub process_option
+SUB process_option
     next_token
-    if token.uc = "EXPLICITARRAY" then add_prefix
-end sub
+    IF token.uc = "EXPLICITARRAY" THEN add_prefix
+END SUB
 
-sub process_fullscreen
+SUB process_fullscreen
     add_prefix
     next_token
-    if line_end then exit sub
-    if token.c <> "," then
+    IF line_end THEN EXIT SUB
+    IF token.c <> "," THEN
         add_prefix
         next_token
-        if line_end then exit sub
-    end if
+        IF line_end THEN EXIT SUB
+    END IF
     next_token ' ,
     add_prefix
-end sub
+END SUB
 
-sub process_allowfullscreen
+SUB process_allowfullscreen
     add_prefix
     next_token
-    if line_end then exit sub
-    if token.c <> "," then
+    IF line_end THEN EXIT SUB
+    IF token.c <> "," THEN
         add_prefix
         next_token
-        if line_end then exit sub
-    end if
+        IF line_end THEN EXIT SUB
+    END IF
     next_token ' ,
     add_prefix
-end sub
+END SUB
 
-sub process_resize
+SUB process_resize
     add_prefix
     next_token
-    if token.c = "(" or line_end then exit sub
-    if token.c <> "," then next_token
-    if line_end then exit sub
+    IF token.c = "(" OR line_end THEN EXIT SUB
+    IF token.c <> "," THEN next_token
+    IF line_end THEN EXIT SUB
     next_token
     add_prefix
-end sub
+END SUB
 
-sub process_glrender
+SUB process_glrender
     add_prefix
     next_token
     add_prefix
-end sub
+END SUB
 
-sub process_displayorder
+SUB process_displayorder
     add_prefix
     next_token
-    while not line_end
-        if token.c <> "," then add_prefix
+    WHILE NOT line_end
+        IF token.c <> "," THEN add_prefix
         next_token
-    wend
-end sub
+    WEND
+END SUB
 
-sub process_fps
+SUB process_fps
     add_prefix
     next_token
-    if token.uc = "AUTO" then add_prefix
-end sub
+    IF token.uc = "AUTO" THEN add_prefix
+END SUB
 
-sub process_clearcolor
+SUB process_clearcolor
     add_prefix
     next_token
-    if token.uc = "NONE" then add_prefix
-end sub
+    IF token.uc = "NONE" THEN add_prefix
+END SUB
 
-sub process_maptriangle
+SUB process_maptriangle
     add_prefix
     next_token
-    if token.uc = "CLOCKWISE" or token.uc = "ANTICLOCKWISE" then add_prefix
-    if token.uc = "_CLOCKWISE" or token.uc = "_ANTICLOCKWISE" then next_token
-    if token.uc = "SEAMLESS" then add_prefix
-    if token.uc = "_SEAMLESS" then next_token
-    do
+    IF token.uc = "CLOCKWISE" OR token.uc = "ANTICLOCKWISE" THEN add_prefix
+    IF token.uc = "_CLOCKWISE" OR token.uc = "_ANTICLOCKWISE" THEN next_token
+    IF token.uc = "SEAMLESS" THEN add_prefix
+    IF token.uc = "_SEAMLESS" THEN next_token
+    DO
         maybe_add_prefix
         next_token
-    loop while token.uc <> "TO"
+    LOOP WHILE token.uc <> "TO"
     next_token
     skip_parens
     next_token ' -
     skip_parens
     next_token ' -
     skip_parens
-    if line_end then exit sub
+    IF line_end THEN EXIT SUB
     next_token ' ,
     skip_expr
-    if line_end then exit sub
+    IF line_end THEN EXIT SUB
     next_token ' ,
     add_prefix
-end sub
+END SUB
 
-sub process_depthbuffer
+SUB process_depthbuffer
     add_prefix
     next_token
-    if token.uc = "CLEAR" then add_prefix
-end sub
+    IF token.uc = "CLEAR" THEN add_prefix
+END SUB
 
-sub process_shell
+SUB process_shell
     next_token
-    if line_end then exit sub
-    if token.uc = "DONTWAIT" or token.uc = "HIDE" then
+    IF line_end THEN EXIT SUB
+    IF token.uc = "DONTWAIT" OR token.uc = "HIDE" THEN
         add_prefix
         next_token
-    end if
-    if line_end then exit sub
-    if token.uc = "DONTWAIT" or token.uc = "HIDE" then add_prefix
-end sub
+    END IF
+    IF line_end THEN EXIT SUB
+    IF token.uc = "DONTWAIT" OR token.uc = "HIDE" THEN add_prefix
+END SUB
 
-sub process_keylock
+SUB process_keylock
     add_prefix
     next_token
-    if token.uc = "TOGGLE" then add_prefix
-end sub
+    IF token.uc = "TOGGLE" THEN add_prefix
+END SUB
 
-sub process_consolecursor
+SUB process_consolecursor
     add_prefix
     next_token
-    if line_end then exit sub
-    if token.uc = "SHOW" or token.uc = "HIDE" then add_prefix
-end sub
+    IF line_end THEN EXIT SUB
+    IF token.uc = "SHOW" OR token.uc = "HIDE" THEN add_prefix
+END SUB
 
-sub skip_parens
-    dim balance
-    do
-        if token.c = "(" then balance = balance + 1
-        if token.c = ")" then balance = balance - 1
+SUB skip_parens
+    DIM balance
+    DO
+        IF token.c = "(" THEN balance = balance + 1
+        IF token.c = ")" THEN balance = balance - 1
         maybe_add_prefix
         next_token
-    loop until balance = 0
-end sub
+    LOOP UNTIL balance = 0
+END SUB
 
-sub skip_expr
-    dim balance
-    do until balance <= 0 and (token.c = "," or line_end)
-        if token.c = "(" then balance = balance + 1
-        if token.c = ")" then balance = balance - 1
+SUB skip_expr
+    DIM balance
+    DO UNTIL balance <= 0 AND (token.c = "," OR line_end)
+        IF token.c = "(" THEN balance = balance + 1
+        IF token.c = ")" THEN balance = balance - 1
         maybe_add_prefix
         next_token
-    loop
-end sub
+    LOOP
+END SUB
 
-sub add_prefix
-    if asc(token.c) <> asc("_") then
+SUB add_prefix
+    IF ASC(token.c) <> ASC("_") THEN
         token.c = "_" + token.c
         token.uc = "_" + token.uc
-    end if
-end sub
+    END IF
+END SUB
 
-sub maybe_add_prefix
-    if noprefix_detected and token.t = TOK_WORD and asc(token.uc) <> asc("_") _andalso is_underscored(token.c) then add_prefix
-end sub
+SUB maybe_add_prefix
+    IF noprefix_detected AND token.t = TOK_WORD AND ASC(token.uc) <> ASC("_") _ANDALSO is_underscored(token.c) THEN add_prefix
+END SUB
 
-function line_end
-    select case token.t
-        case TOK_WORD
+FUNCTION line_end
+    SELECT CASE token.t
+        CASE TOK_WORD
             line_end = (token.uc = "REM")
-        case TOK_COLON, TOK_COMMENT, TOK_NEWLINE
+        CASE TOK_COLON, TOK_COMMENT, TOK_NEWLINE
             line_end = TRUE
-    end select
-end function
+    END SELECT
+END FUNCTION
 
-function is_underscored(s$)
-    dim i
-    for i = 1 to ubound(prefix_keywords$)
-        if token.uc = prefix_keywords$(i) then
+FUNCTION is_underscored (s$)
+    DIM i
+    FOR i = 1 TO UBOUND(prefix_keywords$)
+        IF token.uc = prefix_keywords$(i) THEN
             is_underscored = TRUE
-            exit function
-        end if
-    next i
-end function
+            EXIT FUNCTION
+        END IF
+    NEXT i
+END FUNCTION
 
-sub process_rest_of_line
-    dim i, base_word$
-    do
-        select case token.t
-        case TOK_WORD
-            select case token.uc
-            case "REM"
-                tk_state = STATE_COMMENT
-            case "THEN"
-                exit sub
-            case else
-                if noprefix_detected and left$(token.uc, 3) = "NP_" then
-                    base_word$ = make_base_word$(token.uc)
-                    for i = 1 to ubound(prefix_colors$)
-                        if base_word$ = prefix_colors$(i) then
-                            token.c = mid$(token.c, 4)
-                            token.uc = mid$(token.uc, 4)
-                            exit for
-                        end if
-                    next i
-                    exit select
-                end if
-                maybe_add_prefix
-            end select
-        case TOK_COLON
-            exit sub
-        case TOK_NEWLINE
-            line_count = line_count + 1
-            column_count = 0
-            exit sub
-        case TOK_EOF
-            put_out
-            exit sub
-        case else
-        end select
+SUB process_rest_of_line
+    DIM i, base_word$
+    DO
+        SELECT CASE token.t
+            CASE TOK_WORD
+                SELECT CASE token.uc
+                    CASE "REM"
+                        tk_state = STATE_COMMENT
+                    CASE "THEN"
+                        EXIT SUB
+                    CASE ELSE
+                        IF noprefix_detected AND LEFT$(token.uc, 3) = "NP_" THEN
+                            base_word$ = make_base_word$(token.uc)
+                            FOR i = 1 TO UBOUND(prefix_colors$)
+                                IF base_word$ = prefix_colors$(i) THEN
+                                    token.c = MID$(token.c, 4)
+                                    token.uc = MID$(token.uc, 4)
+                                    EXIT FOR
+                                END IF
+                            NEXT i
+                            EXIT SELECT
+                        END IF
+                        maybe_add_prefix
+                END SELECT
+            CASE TOK_COLON
+                EXIT SUB
+            CASE TOK_NEWLINE
+                line_count = line_count + 1
+                column_count = 0
+                EXIT SUB
+            CASE TOK_EOF
+                put_out
+                EXIT SUB
+            CASE ELSE
+        END SELECT
         next_token
-    loop
-end sub
+    LOOP
+END SUB
 
-sub put_out
-    put #2, , token.spaces
-    put #2, , token.c
-end sub
+SUB put_out
+    PUT #2, , token.spaces
+    PUT #2, , token.c
+END SUB
 
-function make_base_word$(s$)
-    dim i
-    for i = 1 to len(s$)
-        select case asc(s$, i)
-        case asc("A") to asc("Z"), asc("a") to asc("z"), asc("0") to asc("9"), asc("_")
-        case else
-            exit for
-        end select
-    next i
-    make_base_word$ = left$(s$, i - 1)
-end function
+FUNCTION make_base_word$ (s$)
+    DIM i
+    FOR i = 1 TO LEN(s$)
+        SELECT CASE ASC(s$, i)
+            CASE ASC("A") TO ASC("Z"), ASC("a") TO ASC("z"), ASC("0") TO ASC("9"), ASC("_")
+            CASE ELSE
+                EXIT FOR
+        END SELECT
+    NEXT i
+    make_base_word$ = LEFT$(s$, i - 1)
+END FUNCTION
 
-sub next_token
-    if token.t > 0 then put_out
+SUB next_token
+    IF token.t > 0 THEN put_out
     next_token_raw
-    while token.t = TOK_WORD and token.c = "_"
+    WHILE token.t = TOK_WORD AND token.c = "_"
         put_out
         next_token_raw
-        if token.t <> TOK_NEWLINE then exit sub
+        IF token.t <> TOK_NEWLINE THEN EXIT SUB
         line_count = line_count + 1
         column_count = 0
         put_out
         next_token_raw
-    wend
-end sub
+    WEND
+END SUB
 
-sub next_token_raw
-    dim c, return_token, token_content$, spaces$, unread
-    do
-        c = asc(input_content$, next_chr_idx)
+SUB next_token_raw
+    DIM c, return_token, token_content$, spaces$, unread
+    DO
+        c = ASC(input_content$, next_chr_idx)
         next_chr_idx = next_chr_idx + 1
         column_count = column_count + 1
-        select case tk_state
-        case STATE_BEGIN
-            select case c
+        SELECT CASE tk_state
+            CASE STATE_BEGIN
+                SELECT CASE c
             case asc("A") to asc("Z"), asc("a") to asc("z"), asc("_"), asc("0") to asc("9"), _
                  asc("&"), asc("."), asc("?")
-                tk_state = STATE_WORD
-            case asc("$")
-                tk_state = STATE_METACMD
-            case asc(":")
-                return_token = TOK_COLON
+                        tk_state = STATE_WORD
+                    CASE ASC("$")
+                        tk_state = STATE_METACMD
+                    CASE ASC(":")
+                        return_token = TOK_COLON
             case asc("^"), asc("*"), asc("-"), asc("+"), asc("="), asc("\"), asc("#"), _
                  asc(";"), asc("<"), asc(">"), asc("/"), asc("("), asc(")"), asc(",")
-                return_token = TOK_PUNCTUATION
-            case ASCII_QUOTE
-                tk_state = STATE_STRING
-            case asc("'")
-                tk_state = STATE_COMMENT
-            case asc(" "), ASCII_TAB, ASCII_VTAB
-                spaces$ = spaces$ + chr$(c)
-                _continue
-            case ASCII_CR, ASCII_LF, ASCII_EOF
-                tk_state = STATE_NEWLINE
-                unread = TRUE
-            case else
-                'Likely non-ascii special character
-                syntax_warning chr$(c)
-                tk_state = STATE_WORD
-            end select
-        case STATE_METACMD
-            select case c
-            case ASCII_CR, ASCII_LF, ASCII_EOF
-                tk_state = STATE_NEWLINE
-                return_token = TOK_METACMD
-                unread = TRUE
-            end select
-        case STATE_WORD
-            select case c
+                        return_token = TOK_PUNCTUATION
+                    CASE ASCII_QUOTE
+                        tk_state = STATE_STRING
+                    CASE ASC("'")
+                        tk_state = STATE_COMMENT
+                    CASE ASC(" "), ASCII_TAB, ASCII_VTAB
+                        spaces$ = spaces$ + CHR$(c)
+                        _CONTINUE
+                    CASE ASCII_CR, ASCII_LF, ASCII_EOF
+                        tk_state = STATE_NEWLINE
+                        unread = TRUE
+                    CASE ELSE
+                        'Likely non-ascii special character
+                        syntax_warning CHR$(c)
+                        tk_state = STATE_WORD
+                END SELECT
+            CASE STATE_METACMD
+                SELECT CASE c
+                    CASE ASCII_CR, ASCII_LF, ASCII_EOF
+                        tk_state = STATE_NEWLINE
+                        return_token = TOK_METACMD
+                        unread = TRUE
+                END SELECT
+            CASE STATE_WORD
+                SELECT CASE c
             case asc("A") to asc("Z"), asc("a") to asc("z"), asc("_"), asc("0") to asc("9"), _
                  asc("`"), asc("~"), asc("!"), asc("#"), asc("$"), asc("%"), asc("&"), asc("."), asc("?")
-                'Continue
-            case else
-                tk_state = STATE_BEGIN
-                return_token = TOK_WORD
-                unread = TRUE
-            end select
-        case STATE_COMMENT
-            select case c
-            case ASCII_CR, ASCII_LF, ASCII_EOF
-                tk_state = STATE_NEWLINE
-                return_token = TOK_COMMENT
-                unread = TRUE
-            end select
-        case STATE_STRING
-            select case c
-            case ASCII_QUOTE
-                tk_state = STATE_BEGIN
-                return_token = TOK_STRING
-            case ASCII_CR, ASCII_LF, ASCII_EOF
-                tk_state = STATE_NEWLINE
-                return_token = TOK_STRING
-                unread = TRUE
-            end select
-        case STATE_DATA
-            select case c
-            case ASCII_CR, ASCII_LF, ASCII_EOF
-                tk_state = STATE_NEWLINE
-                return_token = TOK_DATA
-                unread = TRUE
-            end select
-        case STATE_NEWLINE
-            select case c
-            case ASCII_LF
-                tk_state = STATE_BEGIN
-                return_token = TOK_NEWLINE
-            case ASCII_CR
-                tk_state = STATE_NEWLINE_WIN
-            case ASCII_EOF
-                return_token = TOK_EOF
-                unread = TRUE 'Do not insert EOF character
-            case else
-                'Should never happen
-                syntax_warning chr$(c)
-                tk_state = STATE_BEGIN
-                return_token = TOK_NEWLINE
-                unread = TRUE
-            end select
-        case STATE_NEWLINE_WIN
-            select case c
-            case ASCII_LF
-                tk_state = STATE_BEGIN
-                return_token = TOK_NEWLINE
-            case else
-                tk_state = STATE_BEGIN
-                return_token = TOK_NEWLINE
-                unread = TRUE
-            end select
-        end select
+                        'Continue
+                    CASE ELSE
+                        tk_state = STATE_BEGIN
+                        return_token = TOK_WORD
+                        unread = TRUE
+                END SELECT
+            CASE STATE_COMMENT
+                SELECT CASE c
+                    CASE ASCII_CR, ASCII_LF, ASCII_EOF
+                        tk_state = STATE_NEWLINE
+                        return_token = TOK_COMMENT
+                        unread = TRUE
+                END SELECT
+            CASE STATE_STRING
+                SELECT CASE c
+                    CASE ASCII_QUOTE
+                        tk_state = STATE_BEGIN
+                        return_token = TOK_STRING
+                    CASE ASCII_CR, ASCII_LF, ASCII_EOF
+                        tk_state = STATE_NEWLINE
+                        return_token = TOK_STRING
+                        unread = TRUE
+                END SELECT
+            CASE STATE_DATA
+                SELECT CASE c
+                    CASE ASCII_CR, ASCII_LF, ASCII_EOF
+                        tk_state = STATE_NEWLINE
+                        return_token = TOK_DATA
+                        unread = TRUE
+                END SELECT
+            CASE STATE_NEWLINE
+                SELECT CASE c
+                    CASE ASCII_LF
+                        tk_state = STATE_BEGIN
+                        return_token = TOK_NEWLINE
+                    CASE ASCII_CR
+                        tk_state = STATE_NEWLINE_WIN
+                    CASE ASCII_EOF
+                        return_token = TOK_EOF
+                        unread = TRUE 'Do not insert EOF character
+                    CASE ELSE
+                        'Should never happen
+                        syntax_warning CHR$(c)
+                        tk_state = STATE_BEGIN
+                        return_token = TOK_NEWLINE
+                        unread = TRUE
+                END SELECT
+            CASE STATE_NEWLINE_WIN
+                SELECT CASE c
+                    CASE ASCII_LF
+                        tk_state = STATE_BEGIN
+                        return_token = TOK_NEWLINE
+                    CASE ELSE
+                        tk_state = STATE_BEGIN
+                        return_token = TOK_NEWLINE
+                        unread = TRUE
+                END SELECT
+        END SELECT
 
-        if unread then
+        IF unread THEN
             next_chr_idx = next_chr_idx - 1
             unread = FALSE
-        else
-            token_content$ = token_content$ + chr$(c)
-        end if
+        ELSE
+            token_content$ = token_content$ + CHR$(c)
+        END IF
 
-        if return_token then
+        IF return_token THEN
             token.t = return_token
             token.c = token_content$
-            token.uc = ucase$(token_content$)
+            token.uc = UCASE$(token_content$)
             token.spaces = spaces$
-            exit function
-        end if
-    loop
-end function
+            EXIT SUB
+        END IF
+    LOOP
+END SUB
 
-sub syntax_warning(unexpected$)
-    print "WARNING: Line"; line_count; "column"; column_count;
-    print "State"; tk_state;
-    print "Unexpected "; unexpected$
-end sub
+SUB syntax_warning (unexpected$)
+    PRINT "WARNING: Line"; line_count; "column"; column_count;
+    PRINT "State"; tk_state;
+    PRINT "Unexpected "; unexpected$
+END SUB
 
 'Get the directory component of a path
-function dir_name$(path$)
-    dim s1, s2
-    s1 = _instrrev(path$, "/")
-    s2 = _instrrev(path$, "\")
-    if s1 > s2 then
-        dir_name$ = left$(path$, s1 - 1)
-    elseif s2 > s1 then
-        dir_name$ = left$(path$, s2 - 1)
-    else
+FUNCTION dir_name$ (path$)
+    DIM s1, s2
+    s1 = _INSTRREV(path$, "/")
+    s2 = _INSTRREV(path$, "\")
+    IF s1 > s2 THEN
+        dir_name$ = LEFT$(path$, s1 - 1)
+    ELSEIF s2 > s1 THEN
+        dir_name$ = LEFT$(path$, s2 - 1)
+    ELSE
         dir_name$ = "."
-    end if
-end function
+    END IF
+END FUNCTION
 
-function is_absolute_path(path$)
-    if instr(_os$, "WIN") then
-        is_absolute_path = (mid$(path$, 2, 1) = ":" or left$(path$, 1) = "\" or left$(path$, 1) = "/")
-    else
-        is_absolute_path = left$(path$, 1) = "/"
-    end if
-end function
+FUNCTION is_absolute_path (path$)
+    IF INSTR(_OS$, "WIN") THEN
+        is_absolute_path = (MID$(path$, 2, 1) = ":" OR LEFT$(path$, 1) = "\" OR LEFT$(path$, 1) = "/")
+    ELSE
+        is_absolute_path = LEFT$(path$, 1) = "/"
+    END IF
+END FUNCTION
+

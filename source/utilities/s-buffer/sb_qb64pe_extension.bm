@@ -11,43 +11,43 @@
 '--- Modes names can be short, only the first character is checked.
 '---------------------------------------------------------------------
 FUNCTION OpenBuffer% (sbMode$, sbName$)
-'--- option _explicit requirements ---
-DIM buf%, nul&
-'--- buffer already existing? ---
-FOR buf% = 0  TO UBOUND(SBufN)
-    IF SBufN(buf%) = sbName$ THEN EXIT FOR
-NEXT buf%
-'--- simulate file modes ---
-SELECT CASE UCASE$(LEFT$(sbMode$, 1))
-    CASE "A" 'append
-        IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
-        nul& = SeekBuf&(buf%, 0, SBM_BufEnd)
-    CASE "B" 'binary
-        IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
-        nul& = SeekBuf&(buf%, 0, SBM_BufStart)
-    CASE "I" 'input (try to load from file, if yet unknown)
-        IF buf% > UBOUND(SBufN) THEN GOSUB loadBuf
-        nul& = SeekBuf&(buf%, 0, SBM_BufStart)
-    CASE "O" 'output
-        IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufN(buf%) = ""
-        GOSUB newBuf
-    CASE ELSE 'random or unknown mode
-        buf% = SBE_NoMoreBuffers 'not supported
-END SELECT
-OpenBuffer% = buf%
-EXIT FUNCTION
-'----------
-newBuf:
-buf% = CreateBuf%
-IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
-SBufN(buf%) = sbName$
-RETURN
-'----------
-loadBuf:
-buf% = FileToBuf%(sbName$)
-IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
-SBufN(buf%) = sbName$
-RETURN
+    '--- option _explicit requirements ---
+    DIM buf%, nul&
+    '--- buffer already existing? ---
+    FOR buf% = 0 TO UBOUND(SBufN)
+        IF SBufN(buf%) = sbName$ THEN EXIT FOR
+    NEXT buf%
+    '--- simulate file modes ---
+    SELECT CASE UCASE$(LEFT$(sbMode$, 1))
+        CASE "A" 'append
+            IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
+            nul& = SeekBuf&(buf%, 0, SBM_BufEnd)
+        CASE "B" 'binary
+            IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
+            nul& = SeekBuf&(buf%, 0, SBM_BufStart)
+        CASE "I" 'input (try to load from file, if yet unknown)
+            IF buf% > UBOUND(SBufN) THEN GOSUB loadBuf
+            nul& = SeekBuf&(buf%, 0, SBM_BufStart)
+        CASE "O" 'output
+            IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufN(buf%) = ""
+            GOSUB newBuf
+        CASE ELSE 'random or unknown mode
+            buf% = SBE_NoMoreBuffers 'not supported
+    END SELECT
+    OpenBuffer% = buf%
+    EXIT FUNCTION
+    '----------
+    newBuf:
+    buf% = CreateBuf%
+    IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+    SBufN(buf%) = sbName$
+    RETURN
+    '----------
+    loadBuf:
+    buf% = FileToBuf%(sbName$)
+    IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+    SBufN(buf%) = sbName$
+    RETURN
 END FUNCTION
 
 '--- This subroutine will clear the given buffer or ALL buffers, if the
@@ -58,20 +58,20 @@ END FUNCTION
 '--- given at the respective OpenBuffer%() call.
 '---------------------------------------------------------------------
 SUB ClearBuffers (sbName$)
-'--- option _explicit requirements ---
-DIM buf%
-'--- clear/dispose buffer(s) ---
-IF sbName$ <> "" THEN
-    FOR buf% = 0  TO UBOUND(SBufN)
-        IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
-    NEXT buf%
-    IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
-    DisposeBuf buf%: SBufN(buf%) = ""
-ELSE
-    FOR buf% = 0  TO UBOUND(SBufN)
-        IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufN(buf%) = ""
-    NEXT buf%
-END IF
+    '--- option _explicit requirements ---
+    DIM buf%
+    '--- clear/dispose buffer(s) ---
+    IF sbName$ <> "" THEN
+        FOR buf% = 0 TO UBOUND(SBufN)
+            IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
+        NEXT buf%
+        IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
+        DisposeBuf buf%: SBufN(buf%) = ""
+    ELSE
+        FOR buf% = 0 TO UBOUND(SBufN)
+            IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufN(buf%) = ""
+        NEXT buf%
+    END IF
 END SUB
 
 '--- This subroutine will write the current contents of the given buffer
@@ -84,20 +84,20 @@ END SUB
 '--- given at the respective OpenBuffer%() call.
 '---------------------------------------------------------------------
 SUB WriteBuffers (sbName$)
-'--- option _explicit requirements ---
-DIM buf%
-'--- write buffer(s) ---
-IF sbName$ <> "" THEN
-    FOR buf% = 0  TO UBOUND(SBufN)
-        IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
-    NEXT buf%
-    IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
-    IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
-ELSE
-    FOR buf% = 0  TO UBOUND(SBufN)
-        IF SBufN(buf%) <> "" THEN
-            IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
-        END IF
-    NEXT buf%
-END IF
+    '--- option _explicit requirements ---
+    DIM buf%
+    '--- write buffer(s) ---
+    IF sbName$ <> "" THEN
+        FOR buf% = 0 TO UBOUND(SBufN)
+            IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
+        NEXT buf%
+        IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
+        IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
+    ELSE
+        FOR buf% = 0 TO UBOUND(SBufN)
+            IF SBufN(buf%) <> "" THEN
+                IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
+            END IF
+        NEXT buf%
+    END IF
 END SUB

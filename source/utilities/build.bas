@@ -27,8 +27,8 @@ FUNCTION GetMakeExecutable$ ()
     END IF
 END FUNCTION
 
-FUNCTION MakeNMOutputFilename$ (libfile AS STRING, dynamic As Long)
-    If dynamic Then dyn$ = "_dynamic" Else dyn$ = ""
+FUNCTION MakeNMOutputFilename$ (libfile AS STRING, dynamic AS LONG)
+    IF dynamic THEN dyn$ = "_dynamic" ELSE dyn$ = ""
 
     MakeNMOutputFilename$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(libfile, pathsep$, "."), ":", ".") + dyn$ + ".txt"
 END FUNCTION

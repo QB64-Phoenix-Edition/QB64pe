@@ -1,5 +1,5 @@
 'Apply indentation to layout$ as per settings and remove control characters.
-FUNCTION apply_layout_indent$(original$)
+FUNCTION apply_layout_indent$ (original$)
     layout2$ = layout$
     'previous line was OK, so use layout if available
     IF IDEAutoLayout <> 0 OR IDEAutoIndent <> 0 THEN
@@ -70,4 +70,4 @@ FUNCTION apply_layout_indent$(original$)
             END IF
         END IF 'len(layout2$)
     END IF 'using layout/indent
-END SUB
+END FUNCTION

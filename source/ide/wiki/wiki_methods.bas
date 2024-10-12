@@ -1158,8 +1158,8 @@ FUNCTION wikiDLPage$ (url$, timeout#)
         IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
             IF _SHELLHIDE("curl --version >NUL") <> 0 THEN
                 'no external curl available (see notes below)
-                IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning" ) = 1 THEN
-                    IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question" ) = 1 THEN
+                IF _MESSAGEBOX("QB64-PE Help", "Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?", "yesno", "warning") = 1 THEN
+                    IF _MESSAGEBOX("QB64-PE Help", "Do you wanna save your choice permanently for the future?", "yesno", "question") = 1 THEN
                         wikiBaseAddress$ = "http://" + MID$(wikiBaseAddress$, 9)
                         WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
                     END IF
