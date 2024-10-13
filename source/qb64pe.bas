@@ -12437,7 +12437,6 @@ IF os$ = "WIN" THEN
             IF n = 0 THEN 'attempt to locate simple function name without brackets
                 s$ = ResolveStaticFunction_Name(x)
                 fh = OpenBuffer%("I", nm_output_file$)
-                ConvBufToLnxMacEol fh
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -12499,7 +12498,6 @@ IF os$ = "WIN" THEN
             IF n = 0 THEN 'a C dynamic object library?
                 s$ = ResolveStaticFunction_Name(x)
                 fh = OpenBuffer%("I", nm_output_file_dynamic$)
-                ConvBufToLnxMacEol fh
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
