@@ -4,6 +4,7 @@
 
 #include "libqb-common.h"
 
+#include "error_handle.h"
 #include "filepath.h"
 #include "filesystem.h"
 
@@ -11,6 +12,7 @@
 
 #include <algorithm>
 #include <dirent.h>
+#include <memory>
 #include <sys/stat.h>
 #include <unistd.h>
 #ifdef QB64_WINDOWS
@@ -423,7 +425,7 @@ qbs *func__dir(qbs *qbsContext) {
 /// @param path The directory path
 /// @return True if the directory exists
 int32_t func__direxists(qbs *path) {
-    if (new_error)
+    if (is_error_pending())
         return QB_FALSE;
 
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
@@ -450,7 +452,7 @@ bool FS_FileExists(const char *path) {
 /// @param path The file path to check for
 /// @return True if the file exists
 int32_t func__fileexists(qbs *path) {
-    if (new_error)
+    if (is_error_pending())
         return QB_FALSE;
 
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
@@ -471,7 +473,7 @@ qbs *func__startdir() {
 /// @brief Changes the current directory
 /// @param str The directory path to change to
 void sub_chdir(qbs *str) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
@@ -540,21 +542,34 @@ static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileNa
 /// @return True if * or ? are found
 static inline bool FS_HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
 
+struct DirectoryContext {
+    DIR *directory;
+    char pattern[FS_PATHNAME_LENGTH_MAX];
+    char entry[FS_PATHNAME_LENGTH_MAX];
+
+    DirectoryContext() : directory(nullptr) {
+        pattern[0] = '\0';
+        entry[0] = '\0';
+    }
+
+    ~DirectoryContext() {
+        if (directory)
+            closedir(directory);
+    }
+};
+
 /// @brief An MS BASIC PDS DIR$ style function
+/// @param ctx The directory context
 /// @param fileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
 /// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
-static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
-    static DIR *pDir = nullptr;
-    static char pattern[FS_PATHNAME_LENGTH_MAX];
-    static char entry[FS_PATHNAME_LENGTH_MAX];
-
-    entry[0] = '\0'; // set to an empty string
+static const char *FS_GetDirectoryEntryName(DirectoryContext *ctx, const char *fileSpec) {
+    ctx->entry[0] = '\0'; // set to an empty string
 
     if (!FS_IsStringEmpty(fileSpec)) {
         // We got a filespec. Check if we have one already going and if so, close it
-        if (pDir) {
-            closedir(pDir);
-            pDir = nullptr;
+        if (ctx->directory) {
+            closedir(ctx->directory);
+            ctx->directory = nullptr;
         }
 
         char dirName[FS_PATHNAME_LENGTH_MAX]; // we only need this for opendir()
@@ -569,55 +584,55 @@ static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
 
             if (p) {
                 // Split the path and the filespec
-                strncpy(pattern, p + 1, FS_PATHNAME_LENGTH_MAX);
-                pattern[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
+                strncpy(ctx->pattern, p + 1, FS_PATHNAME_LENGTH_MAX);
+                ctx->pattern[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
                 auto len = std::min<size_t>((p - fileSpec) + 1, FS_PATHNAME_LENGTH_MAX - 1);
                 memcpy(dirName, fileSpec, len);
                 dirName[len] = '\0';
             } else {
                 // No path. Use the current path
-                strncpy(pattern, fileSpec, FS_PATHNAME_LENGTH_MAX);
-                pattern[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
+                strncpy(ctx->pattern, fileSpec, FS_PATHNAME_LENGTH_MAX);
+                ctx->pattern[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
                 strcpy(dirName, "./");
             }
         } else {
             // No pattern. Check if this is a file and simply return the name if it exists
             if (FS_FileExists(fileSpec)) {
-                strncpy(entry, filepath_get_filename(fileSpec), FS_PATHNAME_LENGTH_MAX);
-                entry[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
+                strncpy(ctx->entry, filepath_get_filename(fileSpec), FS_PATHNAME_LENGTH_MAX);
+                ctx->entry[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
 
-                return entry;
+                return ctx->entry;
             }
 
             // Else, We'll just assume it's a directory
             strncpy(dirName, fileSpec, FS_PATHNAME_LENGTH_MAX);
             dirName[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
-            strcpy(pattern, "*");
+            strcpy(ctx->pattern, "*");
         }
 
-        pDir = opendir(dirName);
+        ctx->directory = opendir(dirName);
     }
 
-    if (pDir) {
+    if (ctx->directory) {
         for (;;) {
-            auto pDirent = readdir(pDir);
+            auto pDirent = readdir(ctx->directory);
             if (!pDirent) {
-                closedir(pDir);
-                pDir = nullptr;
+                closedir(ctx->directory);
+                ctx->directory = nullptr;
 
                 break;
             }
 
-            if (FS_IsPatternMatching(pattern, pDirent->d_name)) {
-                strncpy(entry, pDirent->d_name, FS_PATHNAME_LENGTH_MAX);
-                entry[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
+            if (FS_IsPatternMatching(ctx->pattern, pDirent->d_name)) {
+                strncpy(ctx->entry, pDirent->d_name, FS_PATHNAME_LENGTH_MAX);
+                ctx->entry[FS_PATHNAME_LENGTH_MAX - 1] = '\0';
 
                 break;
             }
         }
     }
 
-    return entry;
+    return ctx->entry;
 }
 
 /// @brief This mimics MS BASIC PDS 7.1 & VBDOS 1.0 DIR$() function
@@ -625,6 +640,7 @@ static const char *FS_GetDirectoryEntryName(const char *fileSpec) {
 /// @param passed Flags for optional parameters
 /// @return Returns a qbs with the directory entry name or an empty string if there are no more entries
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
+    static DirectoryContext directoryContext;
     static std::string directory;
     std::string pathName;
     const char *entry;
@@ -645,7 +661,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
                 directory = "./";
         }
 
-        entry = FS_GetDirectoryEntryName(fileSpec.c_str());
+        entry = FS_GetDirectoryEntryName(&directoryContext, fileSpec.c_str());
     } else {
         // Check if we've been called the first time without a filespec
         if (directory.empty()) {
@@ -655,7 +671,7 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
             return qbsFinal;
         }
 
-        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
+        entry = FS_GetDirectoryEntryName(&directoryContext, nullptr); // get the next entry
     }
 
     filepath_join(pathName, directory, entry);
@@ -781,7 +797,7 @@ static std::string FS_GetShortName(const char *path) {
 void sub_files(qbs *str, int32_t passed) {
     static qbs *strz = nullptr;
 
-    if (new_error)
+    if (is_error_pending())
         return;
 
     if (!strz)
@@ -819,7 +835,8 @@ void sub_files(qbs *str, int32_t passed) {
     qbs_set(strz, qbs_new_txt_len(shortName.c_str(), shortName.size()));
     qbs_print(strz, 1);
 
-    auto entry = FS_GetDirectoryEntryName(fileSpec.c_str()); // get the first entry
+    auto directoryContext = std::make_unique<DirectoryContext>();
+    auto entry = FS_GetDirectoryEntryName(directoryContext.get(), fileSpec.c_str()); // get the first entry
     filepath_join(pathName, directory, entry);
 
     if (FS_IsStringEmpty(entry)) {
@@ -854,7 +871,7 @@ void sub_files(qbs *str, int32_t passed) {
         makefit(strz);
         qbs_print(strz, 0);
 
-        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
+        entry = FS_GetDirectoryEntryName(directoryContext.get(), nullptr); // get the next entry
         filepath_join(pathName, directory, entry);
     } while (!FS_IsStringEmpty(entry));
 
@@ -872,13 +889,15 @@ void sub_files(qbs *str, int32_t passed) {
 /// @brief Deletes files from disk
 /// @param str The file(s) to delete (may contain wildcard at the final level)
 void sub_kill(qbs *str) {
-    if (new_error)
+
+    if (is_error_pending())
         return;
 
     std::string directory, pathName, fileSpec(reinterpret_cast<char *>(str->chr), str->len);
-
     filepath_split(filepath_fix_directory(fileSpec), directory, pathName); // split the file path
-    auto entry = FS_GetDirectoryEntryName(fileSpec.c_str());               // get the first entry
+
+    auto directoryContext = std::make_unique<DirectoryContext>();
+    auto entry = FS_GetDirectoryEntryName(directoryContext.get(), fileSpec.c_str()); // get the first entry
 
     // Keep looking through the entries until we file a file
     while (!FS_IsStringEmpty(entry)) {
@@ -887,7 +906,7 @@ void sub_kill(qbs *str) {
         if (FS_FileExists(pathName.c_str()))
             break;
 
-        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
+        entry = FS_GetDirectoryEntryName(directoryContext.get(), nullptr); // get the next entry
     }
 
     // Check if we have exhausted the entries without ever finding a file
@@ -917,7 +936,7 @@ void sub_kill(qbs *str) {
             }
         }
 
-        entry = FS_GetDirectoryEntryName(nullptr); // get the next entry
+        entry = FS_GetDirectoryEntryName(directoryContext.get(), nullptr); // get the next entry
         filepath_join(pathName, directory, entry);
     } while (!FS_IsStringEmpty(entry));
 }
@@ -925,7 +944,7 @@ void sub_kill(qbs *str) {
 /// @brief Creates a new directory
 /// @param str The directory path name to create
 void sub_mkdir(qbs *str) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
@@ -949,7 +968,7 @@ void sub_mkdir(qbs *str) {
 /// @param oldname The old file / directory name
 /// @param newname The new file / directory name
 void sub_name(qbs *oldname, qbs *newname) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     std::string pathNameOld(reinterpret_cast<char *>(oldname->chr), oldname->len), pathNameNew(reinterpret_cast<char *>(newname->chr), newname->len);
@@ -979,7 +998,7 @@ void sub_name(qbs *oldname, qbs *newname) {
 /// @brief Deletes an empty directory
 /// @param str The path name of the directory to delete
 void sub_rmdir(qbs *str) {
-    if (new_error)
+    if (is_error_pending())
         return;
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
