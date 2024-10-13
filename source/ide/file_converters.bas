@@ -115,16 +115,16 @@ FUNCTION OfferNoprefixConversion% (file$)
     PCOPY 3, 0
 
     IF INSTR(_OS$, "WIN") THEN
-        convertUtility$ = "internal\utilities\addprefix.exe"
+        convertUtility$ = "internal\utilities\AddPREFIX.exe"
     ELSE
-        convertUtility$ = "internal/utilities/addprefix"
+        convertUtility$ = "./internal/utilities/AddPREFIX"
     END IF
     IF NOT _FILEEXISTS(convertUtility$) THEN
         IF _DIREXISTS("./internal/utilities") = 0 THEN MKDIR "./internal/utilities"
         IF INSTR(_OS$, "WIN") THEN
-            SHELL _HIDE "qb64pe -x internal/support/addprefix/addprefix.bas -o " + convertUtility$
+            SHELL _HIDE "qb64pe -x internal/support/converter/AddPREFIX.bas -o " + convertUtility$
         ELSE
-            SHELL _HIDE "./qb64pe -x ./internal/support/addprefix/addprefix.bas -o " + convertUtility$
+            SHELL _HIDE "./qb64pe -x ./internal/support/converter/AddPREFIX.bas -o " + convertUtility$
         END IF
     END IF
 
