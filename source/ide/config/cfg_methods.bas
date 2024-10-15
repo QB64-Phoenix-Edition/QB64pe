@@ -230,7 +230,7 @@ SUB ReadInitialConfig
     result = ReadConfigSetting(generalSettingsSection$, "BackupSize", value$)
     idebackupsize = VAL(value$)
     IF idebackupsize < 10 OR idebackupsize > 2000 THEN
-        idebackupsize = 100: WriteConfigSetting generalSettingsSection$, "BackupSize", "100"
+        idebackupsize = 500: WriteConfigSetting generalSettingsSection$, "BackupSize", "500"
     END IF
 
     result = ReadConfigSetting(generalSettingsSection$, "MaxRecentFiles", value$)

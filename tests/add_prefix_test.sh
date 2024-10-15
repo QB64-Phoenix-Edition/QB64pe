@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PREFIX="Addprefix"
+PREFIX="addprefix"
 RESULTS_DIR="./tests/results/$PREFIX"
 mkdir -p "$RESULTS_DIR"
 QB64="$1"
@@ -17,7 +17,7 @@ show_incorrect_result()
 }
 
 
-EXE="$RESULTS_DIR/addprefix"
+EXE="$RESULTS_DIR/AddPREFIX"
 if [[ "$OS" == "win" ]]; then
     EXE="$EXE.exe"
 fi
@@ -26,7 +26,7 @@ fi
 rm -fr internal/temp/*
 rm -f "$EXE*"
 compileResultOutput="$RESULTS_DIR/addprefix-compile_result.txt"
-"$QB64" -x internal/support/addprefix/addprefix.bas -o "${EXE}" 1>"$compileResultOutput"
+"$QB64" -x internal/support/converter/AddPREFIX.bas -o "${EXE}" 1>"$compileResultOutput"
 ERR=$?
 cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/addprefix-compilelog.txt"
 (exit $ERR)

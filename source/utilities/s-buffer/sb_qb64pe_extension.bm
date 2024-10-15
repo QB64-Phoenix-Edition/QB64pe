@@ -38,13 +38,13 @@ FUNCTION OpenBuffer% (sbMode$, sbName$)
     EXIT FUNCTION
     '----------
     newBuf:
-    buf% = CreateBuf%
+    buf% = CreateBuf%: ConvBufToNativeEol buf%
     IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
     SBufN(buf%) = sbName$
     RETURN
     '----------
     loadBuf:
-    buf% = FileToBuf%(sbName$)
+    buf% = FileToBuf%(sbName$): ConvBufToNativeEol buf%
     IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
     SBufN(buf%) = sbName$
     RETURN

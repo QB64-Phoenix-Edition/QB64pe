@@ -128,53 +128,53 @@ END SUB
 
 '--- docs\CloneBuf.html
 '---------------------------------------------------------------------
-FUNCTION CloneBuf% (handle%)
-    '--- option _explicit requirements ---
-    DIM buf&, dhan%, dbuf&, idx%
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * 106
-    '--- create a new buffer ---
-    dhan% = CreateBuf%
-    dbuf& = dhan% * 106
-    '--- on success, copy buffer values ---
-    IF dhan% >= 0 THEN
-        FOR idx% = 0 TO 105
-            simplebuffer_array$(dbuf& + idx%) = simplebuffer_array$(buf& + idx%)
-        NEXT idx%
-    END IF
-    '--- return new handle ---
-    CloneBuf% = dhan%
-END FUNCTION
+'FUNCTION CloneBuf% (handle%)
+'    '--- option _explicit requirements ---
+'    DIM buf&, dhan%, dbuf&, idx%
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    buf& = handle% * 106
+'    '--- create a new buffer ---
+'    dhan% = CreateBuf%
+'    dbuf& = dhan% * 106
+'    '--- on success, copy buffer values ---
+'    IF dhan% >= 0 THEN
+'        FOR idx% = 0 TO 105
+'            simplebuffer_array$(dbuf& + idx%) = simplebuffer_array$(buf& + idx%)
+'        NEXT idx%
+'    END IF
+'    '--- return new handle ---
+'    CloneBuf% = dhan%
+'END FUNCTION
 
 '--- docs\BufInsertFile.html
 '---------------------------------------------------------------------
-SUB BufInsertFile (handle%, fileSpec$)
-    '--- option _explicit requirements ---
-    DIM than%
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    '--- load file into a temp buffer ---
-    than% = FileToBuf%(fileSpec$)
-    '--- on success, insert into buffer ---
-    IF than% >= 0 THEN
-        BufInsertBuf handle%, than%
-        DisposeBuf than%
-    END IF
-END SUB
+'SUB BufInsertFile (handle%, fileSpec$)
+'    '--- option _explicit requirements ---
+'    DIM than%
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    '--- load file into a temp buffer ---
+'    than% = FileToBuf%(fileSpec$)
+'    '--- on success, insert into buffer ---
+'    IF than% >= 0 THEN
+'        BufInsertBuf handle%, than%
+'        DisposeBuf than%
+'    END IF
+'END SUB
 
 '--- docs\BufInsertBuf.html
 '---------------------------------------------------------------------
-SUB BufInsertBuf (handle%, fromHandle%)
-    '--- option _explicit requirements ---
-    DIM fbuf&
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    IF NOT CheckHandle%(fromHandle%) THEN ERROR 258: STOP 'invalid fromHandle
-    fbuf& = fromHandle% * 106
-    '--- insert data of another buffer ---
-    WriteBufRawData handle%, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle%))
-END SUB
+'SUB BufInsertBuf (handle%, fromHandle%)
+'    '--- option _explicit requirements ---
+'    DIM fbuf&
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    IF NOT CheckHandle%(fromHandle%) THEN ERROR 258: STOP 'invalid fromHandle
+'    fbuf& = fromHandle% * 106
+'    '--- insert data of another buffer ---
+'    WriteBufRawData handle%, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle%))
+'END SUB
 
 '--- docs\ReadBufLine.html
 '---------------------------------------------------------------------
@@ -355,50 +355,50 @@ END SUB
 
 '--- docs\GetBufMemData.html
 '---------------------------------------------------------------------
-SUB GetBufMemData (handle%, memData AS _MEM)
-    '--- option _explicit requirements ---
-    DIM size&&, temp&, datStr$
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    '--- get memory data size ---
-    DIM sizeRef AS _MEM
-    sizeRef = _MEM(memData.SIZE)
-    IF INSTR(_OS$, "[64BIT]") > 0 THEN
-        _MEMGET sizeRef, sizeRef.OFFSET, size&&
-    ELSE
-        _MEMGET sizeRef, sizeRef.OFFSET, temp&
-        size&& = temp&
-    END IF
-    _MEMFREE sizeRef
-    '--- read amount of data from buffer ---
-    datStr$ = ReadBufRawData$(handle%, size&&)
-    '--- then copy into the memory block ---
-    _MEMPUT memData, memData.OFFSET, datStr$
-END SUB
+'SUB GetBufMemData (handle%, memData AS _MEM)
+'    '--- option _explicit requirements ---
+'    DIM size&&, temp&, datStr$
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    '--- get memory data size ---
+'    DIM sizeRef AS _MEM
+'    sizeRef = _MEM(memData.SIZE)
+'    IF INSTR(_OS$, "[64BIT]") > 0 THEN
+'        _MEMGET sizeRef, sizeRef.OFFSET, size&&
+'    ELSE
+'        _MEMGET sizeRef, sizeRef.OFFSET, temp&
+'        size&& = temp&
+'    END IF
+'    _MEMFREE sizeRef
+'    '--- read amount of data from buffer ---
+'    datStr$ = ReadBufRawData$(handle%, size&&)
+'    '--- then copy into the memory block ---
+'    _MEMPUT memData, memData.OFFSET, datStr$
+'END SUB
 
 '--- docs\PutBufMemData.html
 '---------------------------------------------------------------------
-SUB PutBufMemData (handle%, memData AS _MEM)
-    '--- option _explicit requirements ---
-    DIM size&&, temp&, datStr$
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    '--- get memory data size ---
-    DIM sizeRef AS _MEM
-    sizeRef = _MEM(memData.SIZE)
-    IF INSTR(_OS$, "[64BIT]") > 0 THEN
-        _MEMGET sizeRef, sizeRef.OFFSET, size&&
-    ELSE
-        _MEMGET sizeRef, sizeRef.OFFSET, temp&
-        size&& = temp&
-    END IF
-    _MEMFREE sizeRef
-    '--- read out the memory block ---
-    datStr$ = SPACE$(size&&)
-    _MEMGET memData, memData.OFFSET, datStr$
-    '--- then write it into the buffer ---
-    WriteBufRawData handle%, datStr$
-END SUB
+'SUB PutBufMemData (handle%, memData AS _MEM)
+'    '--- option _explicit requirements ---
+'    DIM size&&, temp&, datStr$
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    '--- get memory data size ---
+'    DIM sizeRef AS _MEM
+'    sizeRef = _MEM(memData.SIZE)
+'    IF INSTR(_OS$, "[64BIT]") > 0 THEN
+'        _MEMGET sizeRef, sizeRef.OFFSET, size&&
+'    ELSE
+'        _MEMGET sizeRef, sizeRef.OFFSET, temp&
+'        size&& = temp&
+'    END IF
+'    _MEMFREE sizeRef
+'    '--- read out the memory block ---
+'    datStr$ = SPACE$(size&&)
+'    _MEMGET memData, memData.OFFSET, datStr$
+'    '--- then write it into the buffer ---
+'    WriteBufRawData handle%, datStr$
+'END SUB
 
 '--- docs\SetBufMark.html
 '---------------------------------------------------------------------
@@ -623,65 +623,65 @@ END FUNCTION
 
 '--- docs\CopyBufBlock.html
 '---------------------------------------------------------------------
-FUNCTION CopyBufBlock% (handle%, bound&)
-    '--- option _explicit requirements ---
-    DIM buf&, sPo&, ePo&
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * 106
-    '--- get & check positions ---
-    CopyBufBlock% = SBE_OutOfBounds
-    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
-    sPo& = bound&: ePo& = GetBufPos&(handle%)
-    IF ePo& < sPo& THEN SWAP sPo&, ePo&
-    '--- copy block to clip ---
-    _CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
-    CopyBufBlock% = 0
-END FUNCTION
+'FUNCTION CopyBufBlock% (handle%, bound&)
+'    '--- option _explicit requirements ---
+'    DIM buf&, sPo&, ePo&
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    buf& = handle% * 106
+'    '--- get & check positions ---
+'    CopyBufBlock% = SBE_OutOfBounds
+'    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
+'    sPo& = bound&: ePo& = GetBufPos&(handle%)
+'    IF ePo& < sPo& THEN SWAP sPo&, ePo&
+'    '--- copy block to clip ---
+'    _CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
+'    CopyBufBlock% = 0
+'END FUNCTION
 
 '--- docs\CutBufBlock.html
 '---------------------------------------------------------------------
-FUNCTION CutBufBlock% (handle%, bound&)
-    '--- option _explicit requirements ---
-    DIM buf&, sPo&, ePo&, old&
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * 106
-    '--- get & check positions ---
-    CutBufBlock% = SBE_OutOfBounds
-    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
-    sPo& = bound&: ePo& = GetBufPos&(handle%)
-    IF ePo& < sPo& THEN SWAP sPo&, ePo&
-    '--- copy block to clip ---
-    _CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
-    '--- then delete block ---
-    old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
-    DeleteBufRawData handle%, ePo& - sPo&
-    CutBufBlock% = 0
-END FUNCTION
+'FUNCTION CutBufBlock% (handle%, bound&)
+'    '--- option _explicit requirements ---
+'    DIM buf&, sPo&, ePo&, old&
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    buf& = handle% * 106
+'    '--- get & check positions ---
+'    CutBufBlock% = SBE_OutOfBounds
+'    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
+'    sPo& = bound&: ePo& = GetBufPos&(handle%)
+'    IF ePo& < sPo& THEN SWAP sPo&, ePo&
+'    '--- copy block to clip ---
+'    _CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
+'    '--- then delete block ---
+'    old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
+'    DeleteBufRawData handle%, ePo& - sPo&
+'    CutBufBlock% = 0
+'END FUNCTION
 
 '--- docs\PasteBufBlock.html
 '---------------------------------------------------------------------
-FUNCTION PasteBufBlock% (handle%, bound&)
-    '--- option _explicit requirements ---
-    DIM sPo&, ePo&, old&
-    '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    '--- replace check ---
-    IF bound& <> 0 THEN
-        '--- get & check positions ---
-        PasteBufBlock% = SBE_OutOfBounds
-        IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
-        sPo& = bound&: ePo& = GetBufPos&(handle%)
-        IF ePo& < sPo& THEN SWAP sPo&, ePo&
-        '--- delete old block ---
-        old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
-        DeleteBufRawData handle%, ePo& - sPo&
-    END IF
-    '--- finally paste block from clip ---
-    WriteBufRawData handle%, _CLIPBOARD$
-    PasteBufBlock% = 0
-END FUNCTION
+'FUNCTION PasteBufBlock% (handle%, bound&)
+'    '--- option _explicit requirements ---
+'    DIM sPo&, ePo&, old&
+'    '--- check handle ---
+'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    '--- replace check ---
+'    IF bound& <> 0 THEN
+'        '--- get & check positions ---
+'        PasteBufBlock% = SBE_OutOfBounds
+'        IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
+'        sPo& = bound&: ePo& = GetBufPos&(handle%)
+'        IF ePo& < sPo& THEN SWAP sPo&, ePo&
+'        '--- delete old block ---
+'        old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
+'        DeleteBufRawData handle%, ePo& - sPo&
+'    END IF
+'    '--- finally paste block from clip ---
+'    WriteBufRawData handle%, _CLIPBOARD$
+'    PasteBufBlock% = 0
+'END FUNCTION
 
 '--- docs\SeekBuf.html
 '---------------------------------------------------------------------
