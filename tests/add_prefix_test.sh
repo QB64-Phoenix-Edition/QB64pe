@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PREFIX="Addprefix"
+PREFIX="addprefix"
 RESULTS_DIR="./tests/results/$PREFIX"
 mkdir -p "$RESULTS_DIR"
 QB64="$1"
@@ -17,7 +17,7 @@ show_incorrect_result()
 }
 
 
-EXE="$RESULTS_DIR/addprefix"
+EXE="$RESULTS_DIR/AddPREFIX"
 if [[ "$OS" == "win" ]]; then
     EXE="$EXE.exe"
 fi
@@ -26,7 +26,7 @@ fi
 rm -fr internal/temp/*
 rm -f "$EXE*"
 compileResultOutput="$RESULTS_DIR/addprefix-compile_result.txt"
-"$QB64" -x internal/support/converter/addprefix.bas -o "${EXE}" 1>"$compileResultOutput"
+"$QB64" -x internal/support/converter/AddPREFIX.bas -o "${EXE}" 1>"$compileResultOutput"
 ERR=$?
 cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/addprefix-compilelog.txt"
 (exit $ERR)
@@ -36,17 +36,17 @@ test -f "$EXE"
 assert_success_named "exe exists" "addprefix-output executable does not exist!" show_failure "compile"
 
 # Copy test case into place so converted result ends up in the results directory
-cp tests/converter_tests/addprefix.bas "$RESULTS_DIR/addprefix.bas"
+cp tests/converter_tests/AddPREFIX.bas "$RESULTS_DIR/AddPREFIX.bas"
 
 # Do conversion
 conversionResultOutput="$RESULTS_DIR/addprefix-convert_result.txt"
-"$EXE" "$RESULTS_DIR/addprefix.bas" 1> "$conversionResultOutput"
+"$EXE" "$RESULTS_DIR/AddPREFIX.bas" 1> "$conversionResultOutput"
 ERR=$?
 (exit $ERR)
 assert_success_named "Convert" "Conversion Error:" show_failure "convert"
 
 # Confirm result is as expected
 expectedResult="$(cat "tests/converter_tests/addprefix.output")"
-actualResult="$(cat "$RESULTS_DIR/addprefix.bas")"
+actualResult="$(cat "$RESULTS_DIR/AddPREFIX.bas")"
 [[ "$expectedResult" == "$actualResult" ]]
 assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$actualResult"
