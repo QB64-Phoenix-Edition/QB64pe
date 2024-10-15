@@ -625,7 +625,7 @@ class PSG {
                 }
 
                 currentChar = *currentState.byte++;
-                if (isspace(currentChar))
+                if (isspace(currentChar) || ';' == currentChar) // #554: skip whitespace and semicolon separator
                     continue;
 
                 processedChar = toupper(currentChar);
@@ -1682,7 +1682,7 @@ int32_t func__sndcopy(int32_t src_handle) {
 
     // Miniaudio will not copy sounds attached to ma_audio_buffers so we'll handle the duplication ourselves
     // Sadly, since this involves a buffer copy there may be a delay before the sound can play (especially if the sound is lengthy)
-    // The delay may be noticeable when _SNDPLAYCOPY is used multiple times on the a _SNDNEW sound
+    // The delay may be noticeable when _SNDPLAYCOPY is used multiple times on a _SNDNEW sound
     if (audioEngine.soundHandles[src_handle]->maAudioBuffer) {
         AUDIO_DEBUG_PRINT("Doing custom sound copy for ma_audio_buffer");
 
@@ -1919,6 +1919,8 @@ void sub__sndloop(int32_t handle) {
         if (!ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound)) {
             ma_sound_set_looping(&audioEngine.soundHandles[handle]->maSound, MA_TRUE);
         }
+
+        AUDIO_DEBUG_PRINT("Looping sound %i", handle);
     }
 }
 
