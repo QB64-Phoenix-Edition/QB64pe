@@ -36,17 +36,17 @@ test -f "$EXE"
 assert_success_named "exe exists" "addprefix-output executable does not exist!" show_failure "compile"
 
 # Copy test case into place so converted result ends up in the results directory
-cp tests/converter_tests/AddPREFIX.bas "$RESULTS_DIR/AddPREFIX.bas"
+cp tests/converter_tests/addprefix.bas "$RESULTS_DIR/addprefix.bas"
 
 # Do conversion
 conversionResultOutput="$RESULTS_DIR/addprefix-convert_result.txt"
-"$EXE" "$RESULTS_DIR/AddPREFIX.bas" 1> "$conversionResultOutput"
+"$EXE" "$RESULTS_DIR/addprefix.bas" 1> "$conversionResultOutput"
 ERR=$?
 (exit $ERR)
 assert_success_named "Convert" "Conversion Error:" show_failure "convert"
 
 # Confirm result is as expected
 expectedResult="$(cat "tests/converter_tests/addprefix.output")"
-actualResult="$(cat "$RESULTS_DIR/AddPREFIX.bas")"
+actualResult="$(cat "$RESULTS_DIR/addprefix.bas")"
 [[ "$expectedResult" == "$actualResult" ]]
 assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$actualResult"
