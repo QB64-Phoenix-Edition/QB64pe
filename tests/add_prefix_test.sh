@@ -26,7 +26,7 @@ fi
 rm -fr internal/temp/*
 rm -f "$EXE*"
 compileResultOutput="$RESULTS_DIR/addprefix-compile_result.txt"
-"$QB64" -x internal/support/addprefix/addprefix.bas -o "${EXE}" 1>"$compileResultOutput"
+"$QB64" -x internal/support/converter/addprefix.bas -o "${EXE}" 1>"$compileResultOutput"
 ERR=$?
 cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/addprefix-compilelog.txt"
 (exit $ERR)
