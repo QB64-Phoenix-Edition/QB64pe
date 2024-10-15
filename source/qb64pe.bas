@@ -59,17 +59,17 @@ REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is t
 REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
 DIM SHARED UserDefineCount AS INTEGER, UserDefineList$
-UserDefineList$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@"
+UserDefineList$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@QB64PE@"
 UserDefine(0, 0) = "WINDOWS": UserDefine(0, 1) = "WIN"
 UserDefine(0, 2) = "LINUX"
 UserDefine(0, 3) = "MAC": UserDefine(0, 4) = "MACOSX"
 UserDefine(0, 5) = "32BIT": UserDefine(0, 6) = "64BIT"
-UserDefine(0, 7) = "VERSION"
+UserDefine(0, 7) = "VERSION": UserDefine(0, 8) = "QB64PE"
 IF INSTR(_OS$, "WIN") THEN UserDefine(1, 0) = "-1": UserDefine(1, 1) = "-1" ELSE UserDefine(1, 0) = "0": UserDefine(1, 1) = "0"
 IF INSTR(_OS$, "LINUX") THEN UserDefine(1, 2) = "-1" ELSE UserDefine(1, 2) = "0"
 IF INSTR(_OS$, "MAC") THEN UserDefine(1, 3) = "-1": UserDefine(1, 4) = "-1" ELSE UserDefine(1, 3) = "0": UserDefine(1, 4) = "0"
 IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELSE UserDefine(1, 5) = "0": UserDefine(1, 6) = "-1"
-UserDefine(1, 7) = Version$
+UserDefine(1, 7) = Version$: UserDefine(1, 8) = "-1"
 
 DIM SHARED QB64_uptime#
 
@@ -1326,7 +1326,7 @@ closedsubfunc = 0
 subfunc = ""
 SelectCaseCounter = 0
 ExecCounter = 0
-UserDefineCount = 7
+UserDefineCount = 8
 totalVariablesCreated = 0
 typeDefinitions$ = ""
 totalMainVariablesCreated = 0
@@ -1652,7 +1652,7 @@ DO
             NEXT
             r$ = r1$
             'First look to see if we have an existing setting like this and if so, update it
-            FOR i = 8 TO UserDefineCount 'UserDefineCount 1-7 are reserved for automatic OS/BIT detection & version
+            FOR i = 9 TO UserDefineCount 'UserDefineCount 0-8 are reserved for OS/BIT/Compiler detection & version
                 IF UserDefine(0, i) = l$ THEN UserDefine(1, i) = r$: GOTO finishedlinepp
             NEXT
             'Otherwise create a new setting and set the initial value for it
@@ -2638,7 +2638,7 @@ subfuncn = 0
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
-UserDefineCount = 7
+UserDefineCount = 8
 
 FOR i = 0 TO constlast: constdefined(i) = 0: NEXT 'undefine constants
 
@@ -2909,7 +2909,7 @@ DO
             l$ = RTRIM$(LEFT$(temp$, temp - 1)): r$ = LTRIM$(MID$(temp$, temp + 1))
             layout$ = SCase$("$Let ") + l$ + " = " + r$
             'First look to see if we have an existing setting like this and if so, update it
-            FOR i = 7 TO UserDefineCount 'UserDefineCount 1-7 are reserved for automatic OS/BIT detection & version
+            FOR i = 9 TO UserDefineCount 'UserDefineCount 0-8 are reserved for OS/BIT/Compiler detection & version
                 IF UserDefine(0, i) = l$ THEN UserDefine(1, i) = r$: GOTO finishednonexec
             NEXT
             'Otherwise create a new setting and set the initial value for it
