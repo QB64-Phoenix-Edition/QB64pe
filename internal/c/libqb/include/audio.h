@@ -54,7 +54,11 @@ void sub__sndstop(int32_t handle);
 
 int32_t func__sndopenraw();
 void sub__sndraw(float left, float right, int32_t handle, int32_t passed);
-void sub__sndrawdone(int32_t handle, int32_t passed);
+static inline void sub__sndrawdone(int32_t handle, int32_t passed) {
+    // Dummy function that does nothing
+    (void)handle;
+    (void)passed;
+}
 double func__sndrawlen(int32_t handle, int32_t passed);
 
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);

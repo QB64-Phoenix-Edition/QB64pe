@@ -2102,27 +2102,6 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
 }
 
 /// <summary>
-/// This ensures that the final buffer portion is played in short sound effects even if it is incomplete.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="passed">How many parameters were passed?</param>
-void sub__sndrawdone(int32_t handle, int32_t passed) {
-    // This is NOP now because miniaudio data source automatically pulls in all the samples without us doing anything
-    // As such, we need to think about the future of this function. Probably just leave it this way?
-    (void)handle;
-    (void)passed;
-    /*
-    // Use the default raw handle if handle was not passed
-    if (!passed)
-        handle = audioEngine.sndInternalRaw;
-
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
-        // NOP
-    }
-    */
-}
-
-/// <summary>
 /// This function returns the length, in seconds, of a _SNDRAW sound currently queued.
 /// </summary>
 /// <param name="handle">A sound handle</param>
