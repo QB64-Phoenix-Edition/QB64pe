@@ -311,12 +311,11 @@ class PSG {
         NoiseGenerator(uint32_t clockRate) : lfsr(0x1FFFF), clockRate(clockRate >> 3), currentSample(0.0f), amplitude(1.0f) {}
 
         void SetFrequency(uint32_t frequency) {
-            // Prevent division by zero or absurdly high frequency
             updateInterval = clockRate / std::max(frequency, 1u);
             counter = 0;
         }
 
-        void SetAmplitude(float newAmplitude) { amplitude = Clamp(newAmplitude, 0.0f, 1.0f); }
+        void SetAmplitude(float newAmplitude) { amplitude = std::clamp(newAmplitude, 0.0f, 1.0f); }
 
         float GenerateSample() {
             if (counter >= updateInterval) {
@@ -342,8 +341,6 @@ class PSG {
             lfsr = (lfsr >> 1) | (bit << 16);
             currentSample = int16_t(lfsr & 0xFFFF) / 32768.0f;
         }
-
-        template <class T> static inline constexpr T Clamp(T x, T lo, T hi) { return std::max(std::min(x, hi), lo); }
     };
 
     /// @brief This struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used)

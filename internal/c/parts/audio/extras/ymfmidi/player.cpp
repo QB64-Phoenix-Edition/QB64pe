@@ -6,6 +6,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "player.h"
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
@@ -94,8 +95,8 @@ void OPLPlayer::updateMIDI() {
     }
 
     // Clamp and update
-    m_output.first = clamp(sample.first, -32768, 32767);
-    m_output.second = clamp(sample.second, -32768, 32767);
+    m_output.first = std::clamp(sample.first, -32768, 32767);
+    m_output.second = std::clamp(sample.second, -32768, 32767);
 }
 
 // ----------------------------------------------------------------------------
@@ -482,7 +483,7 @@ void OPLPlayer::midiNoteOn(uint8_t channel, uint8_t note, uint8_t velocity) {
         voice->channel = &m_channels[channel & 15];
         voice->on = voice->justChanged = true;
         voice->note = note;
-        voice->velocity = clamp((int)velocity + newPatch->velocity, 0, 127);
+        voice->velocity = std::clamp((int)velocity + newPatch->velocity, 0, 127);
         voice->duration = 0;
 
         updateVolume(*voice);

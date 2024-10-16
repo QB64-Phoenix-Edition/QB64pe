@@ -152,8 +152,6 @@ class OPLPlayer {
     // silence a voice immediately
     void silenceVoice(OPLVoice &voice);
 
-    template <class T> static inline constexpr T clamp(T x, T lo, T hi) { return std::max(std::min(x, hi), lo); }
-
     std::vector<Opal *> m_opl3;
     unsigned m_numChips;
 

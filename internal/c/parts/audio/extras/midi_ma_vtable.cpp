@@ -347,7 +347,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     }
 
     if (!pMIDI->sequencer) {
-        AUDIO_DEBUG_PRINT("Failed to create player instance");
+        AUDIO_DEBUG_PRINT("Failed to create sequencer instance");
         return MA_INVALID_FILE; // failure here will be mostly due to bad sound bank
     }
 
