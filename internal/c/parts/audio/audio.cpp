@@ -60,8 +60,8 @@ struct RawStream {
 
     /// @brief This is use to setup the vectors, mutex and set some defaults
     RawStream(ma_engine *pmaEngine, ma_sound *pmaSound) {
-        maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QBPE sound handle)
-        maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QBPE sound engine)
+        maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QB64-PE sound handle)
+        maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
         sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
         buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
         buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
@@ -215,8 +215,8 @@ static ma_data_source_vtable rawStreamDataSourceVtable = {
 };
 
 /// @brief This creates, initializes and sets up a raw stream for playback
-/// @param pmaEngine This should come from the QBPE sound engine
-/// @param pmaSound This should come from a QBPE sound handle
+/// @param pmaEngine This should come from the QB64-PE sound engine
+/// @param pmaSound This should come from a QB64-PE sound handle
 /// @return Returns a pointer to a data source if successful, NULL otherwise
 static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
     if (!pmaEngine || !pmaSound) { // these should not be NULL
@@ -291,15 +291,39 @@ static void RawStreamDestroy(RawStream *pRawStream) {
 class PSG {
   public:
     /// @brief Various types of waveform that can be generated
-    enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE, COUNT };
+    enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, COUNT };
 
     static constexpr auto PAN_LEFT = -1.0f;
     static constexpr auto PAN_RIGHT = 1.0f;
     static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT;
-    static constexpr auto MIN_VOLUME = 0.0;
-    static constexpr auto MAX_VOLUME = 1.0;
+    static constexpr auto MIN_VOLUME = 0.0f;
+    static constexpr auto MAX_VOLUME = 1.0f;
 
   private:
+    // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
+    // These mostly conform to the QBasic and QB64 spec.
+    static const auto DEFAULT_WAVEFORM_TYPE = WaveformType::TRIANGLE;
+    static constexpr auto DEFAULT_FREQUENCY = 440.0;
+    static constexpr auto MAX_MML_VOLUME = 100.0;
+    static constexpr auto DEFAULT_MML_VOLUME = MAX_MML_VOLUME / 2;
+    static const auto QB_FREQUENCY_LIMIT = 20000;
+    static const auto MIN_TEMPO = 32;
+    static const auto MAX_TEMPO = 255;
+    static const auto DEFAULT_TEMPO = 120;
+    static const auto MAX_OCTAVE = 6;
+    static const auto DEFAULT_OCTAVE = 4;
+    static const auto MIN_LENGTH = 1;
+    static const auto MAX_LENGTH = 64;
+    static constexpr auto DEFAULT_LENGTH = 4.0;
+    static constexpr auto DEFAULT_PAUSE = 1.0 / 8.0;
+    static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.001f;
+    static constexpr auto BEEP_FREQUENCY = 900.0;
+    static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
+    static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
+    static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
+    static const auto PLAY_MAX_RAMP_DURATION_MS = 60000;
+    static constexpr auto SILENCE = 0.0f;
+
     class NoiseGenerator {
       public:
         NoiseGenerator() = delete;
@@ -308,14 +332,25 @@ class PSG {
         NoiseGenerator &operator=(NoiseGenerator &&) = delete;
         NoiseGenerator(NoiseGenerator &&) = delete;
 
-        NoiseGenerator(uint32_t clockRate) : lfsr(0x1FFFF), clockRate(clockRate >> 3), currentSample(0.0f), amplitude(1.0f) {}
+        NoiseGenerator(uint32_t clockRate)
+            : lfsr(0x1FFFF), clockRate(clockRate), updateInterval(0), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE),
+              amplitude(MAX_VOLUME) {
+            updateInterval = clockRate / frequency;
+        }
 
-        void SetFrequency(uint32_t frequency) {
-            updateInterval = clockRate / std::max(frequency, 1u);
+        void SetClockRate(uint32_t clockRate) {
+            this->clockRate = clockRate;
+            updateInterval = clockRate / frequency;
             counter = 0;
         }
 
-        void SetAmplitude(float newAmplitude) { amplitude = std::clamp(newAmplitude, 0.0f, 1.0f); }
+        void SetFrequency(uint32_t frequency) {
+            this->frequency = std::max(frequency, 1u);
+            updateInterval = clockRate / this->frequency;
+            counter = 0;
+        }
+
+        void SetAmplitude(float newAmplitude) { amplitude = std::clamp(newAmplitude, MIN_VOLUME, MAX_VOLUME); }
 
         float GenerateSample() {
             if (counter >= updateInterval) {
@@ -329,15 +364,16 @@ class PSG {
         }
 
       private:
-        int lfsr;
+        uint32_t lfsr;
         uint32_t clockRate;
         uint32_t updateInterval;
         uint32_t counter;
+        uint32_t frequency;
         float currentSample;
         float amplitude;
 
         void StepLFSR() {
-            int bit = (lfsr ^ (lfsr >> 3)) & 1;
+            uint32_t bit = (lfsr ^ (lfsr >> 3)) & 1;
             lfsr = (lfsr >> 1) | (bit << 16);
             currentSample = int16_t(lfsr & 0xFFFF) / 32768.0f;
         }
@@ -349,48 +385,35 @@ class PSG {
         int32_t length;      // this needs to be signed
     };
 
-    RawStream *rawStream;                // this is the RawStream where the samples data will be pushed to
-    ma_waveform_config maWaveformConfig; // miniaudio waveform configuration
-    ma_waveform maWaveform;              // miniaudio waveform
-    NoiseGenerator *noise;               // custom noise generator
-    ma_result maResult;                  // result of the last miniaudio operation
-    std::vector<float> noteBuffer;       // note frames are rendered here temporarily before it is mixed to waveBuffer
-    std::vector<float> waveBuffer;       // this is where the waveform is rendered / mixed before being pushed to RawStream
-    ma_uint64 mixCursor;                 // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
-    WaveformType waveformType;           // the currently selected waveform type (applies to MML and sound)
-    float volumeRampDuration;            // the volume ramping duration (this can be changed by the user)
-    bool background;                     // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
-    float panning;                       // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
-    std::stack<State> stateStack;        // this maintains the state stack if we need to process substrings (VARPTR$)
-    State currentState;                  // this is the current state. See State struct
-    int tempo;                           // the tempo of the MML tune (this impacts all lengths)
-    int octave;                          // the current octave that we'll use for MML notes
-    double length;                       // the length of each MML note (1 = full, 4 = quarter etc.)
-    double pause;                        // the duration of silence after an MML note (this eats away from the note length)
-    double duration;                     // the duration of a sound / MML note / silence (in seconds)
-    int dots;                            // the dots after a note or a pause that increases the duration
-    bool playIt;                         // flag that is set when the buffer can be played
-
-    // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
-    // These mostly conform to the QBasic and QB64 spec.
-    static const auto DEFAULT_WAVEFORM_TYPE = WaveformType::TRIANGLE;
-    static constexpr auto DEFAULT_FREQUENCY = 440.0;
-    static constexpr auto MAX_MML_VOLUME = 100.0;
-    static constexpr auto DEFAULT_MML_VOLUME = MAX_MML_VOLUME / 2;
-    static const auto MIN_TEMPO = 32;
-    static const auto MAX_TEMPO = 255;
-    static const auto DEFAULT_TEMPO = 120;
-    static const auto MAX_OCTAVE = 6;
-    static const auto DEFAULT_OCTAVE = 4;
-    static const auto MIN_LENGTH = 1;
-    static const auto MAX_LENGTH = 64;
-    static constexpr auto DEFAULT_LENGTH = 4.0;
-    static constexpr auto DEFAULT_PAUSE = 1.0 / 8.0;
-    static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.01f;
-    static constexpr auto BEEP_FREQUENCY = 900.0;
-    static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
-    static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
-    static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
+    RawStream *rawStream;                  // this is the RawStream where the samples data will be pushed to
+    ma_waveform_config maWaveformConfig;   // miniaudio waveform configuration
+    ma_waveform maWaveform;                // miniaudio waveform
+    ma_noise_config maWhiteNoiseConfig;    // miniaudio white noise configuration
+    ma_noise maWhiteNoise;                 // miniaudio white noise
+    ma_noise_config maPinkNoiseConfig;     // miniaudio pink noise configuration
+    ma_noise maPinkNoise;                  // miniaudio pink noise
+    ma_noise_config maBrownianNoiseConfig; // miniaudio brownian noise configuration
+    ma_noise maBrownianNoise;              // miniaudio brownian noise
+    NoiseGenerator *noise;                 // LFSR noise generator
+    ma_pulsewave_config maPulseWaveConfig; // miniaudio pulse wave configuration
+    ma_pulsewave maPulseWave;              // miniaudio pulse wave
+    ma_result maResult;                    // result of the last miniaudio operation
+    std::vector<float> noteBuffer;         // note frames are rendered here temporarily before it is mixed to waveBuffer
+    std::vector<float> waveBuffer;         // this is where the waveform is rendered / mixed before being pushed to RawStream
+    ma_uint64 mixCursor;                   // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
+    WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
+    float volumeRampDuration;              // the volume ramping duration (this can be changed by the user)
+    bool background;                       // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
+    float panning;                         // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
+    std::stack<State> stateStack;          // this maintains the state stack if we need to process substrings (VARPTR$)
+    State currentState;                    // this is the current state. See State struct
+    int tempo;                             // the tempo of the MML tune (this impacts all lengths)
+    int octave;                            // the current octave that we'll use for MML notes
+    double length;                         // the length of each MML note (1 = full, 4 = quarter etc.)
+    double pause;                          // the duration of silence after an MML note (this eats away from the note length)
+    double duration;                       // the duration of a sound / MML note / silence (in seconds)
+    int dots;                              // the dots after a note or a pause that increases the duration
+    bool playIt;                           // flag that is set when the buffer can be played
 
     /// @brief Generates a waveform to waveBuffer starting at the mixCursor sample location.
     /// The buffer must be resized before calling this. We could have resized waveBuffer inside this.
@@ -401,29 +424,50 @@ class PSG {
     void GenerateWaveform(double waveDuration, bool mix = false) {
         auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
 
-        if (!neededFrames || maWaveform.config.frequency >= 20000 || mixCursor + neededFrames > waveBuffer.size()) {
+        if (!neededFrames || maWaveform.config.frequency >= QB_FREQUENCY_LIMIT || mixCursor + neededFrames > waveBuffer.size()) {
             AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
                               mixCursor);
             return; // nothing to do
         }
 
         maResult = MA_SUCCESS;
-        ma_uint64 generatedFrames = neededFrames;
-        noteBuffer.assign(neededFrames, 0.0f); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
+        ma_uint64 generatedFrames = neededFrames; // assume we'll generate all the frames we need
+        noteBuffer.assign(neededFrames, SILENCE); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
 
         // Generate to the temp buffer and then we'll mix later
         switch (waveformType) {
-        case WaveformType::TRIANGLE:
-        case WaveformType::SAWTOOTH:
-        case WaveformType::SINE:
         case WaveformType::SQUARE:
+        case WaveformType::SAWTOOTH:
+        case WaveformType::TRIANGLE:
+        case WaveformType::SINE:
             maResult = ma_waveform_read_pcm_frames(&maWaveform, noteBuffer.data(), neededFrames, &generatedFrames);
             break;
 
-        case WaveformType::NOISE:
+        case WaveformType::NOISE_WHITE:
+            maResult = ma_noise_read_pcm_frames(&maWhiteNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+            break;
+
+        case WaveformType::NOISE_PINK:
+            maResult = ma_noise_read_pcm_frames(&maPinkNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+            break;
+
+        case WaveformType::NOISE_BROWNIAN:
+            maResult = ma_noise_read_pcm_frames(&maBrownianNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+            break;
+
+        case WaveformType::NOISE_LFSR:
             for (size_t i = 0; i < neededFrames; i++) {
                 noteBuffer[i] = noise->GenerateSample();
             }
+            break;
+
+        case WaveformType::PULSE:
+            maResult = ma_pulsewave_read_pcm_frames(&maPulseWave, noteBuffer.data(), neededFrames, &generatedFrames);
+            break;
+
+        case WaveformType::COUNT:
+        default:
+            // NOP
             break;
         }
 
@@ -474,7 +518,8 @@ class PSG {
     void SetFrequency(double frequency) {
         maResult = ma_waveform_set_frequency(&maWaveform, frequency);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
+        maResult = ma_pulsewave_set_frequency(&maPulseWave, frequency);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
         noise->SetFrequency(uint32_t(frequency));
     }
 
@@ -520,7 +565,7 @@ class PSG {
         rawStream = pRawStream; // save the RawStream object pointer
         mixCursor = 0;
         volumeRampDuration = DEFAULT_VOLUME_RAMP_DURATION;
-        background = playIt = false; // default to foreground playback
+        playIt = background = false; // default to foreground playback
         tempo = DEFAULT_TEMPO;
         octave = DEFAULT_OCTAVE;
         length = DEFAULT_LENGTH;
@@ -534,20 +579,43 @@ class PSG {
                                                    DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
         maResult = ma_waveform_init(&maWaveformConfig, &maWaveform);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        noise = new NoiseGenerator(rawStream->sampleRate);
+
+        maWhiteNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_white, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+        maResult = ma_noise_init(&maWhiteNoiseConfig, NULL, &maWhiteNoise);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+        maPinkNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_pink, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+        maResult = ma_noise_init(&maPinkNoiseConfig, NULL, &maPinkNoise);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+        maBrownianNoiseConfig =
+            ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_brownian, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+        maResult = ma_noise_init(&maBrownianNoiseConfig, NULL, &maBrownianNoise);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+        maPulseWaveConfig =
+            ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, 0.5, DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
+        maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+        noise = new NoiseGenerator(rawStream->sampleRate >> 3);
         AUDIO_DEBUG_CHECK(noise != nullptr);
         noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
         noise->SetFrequency(DEFAULT_FREQUENCY);
 
-        SetWaveformType(DEFAULT_WAVEFORM_TYPE); // this calls the underlying miniaudio API
+        SetWaveformType(DEFAULT_WAVEFORM_TYPE);
 
         AUDIO_DEBUG_PRINT("PSG initialized @ %uHz", maWaveform.config.sampleRate);
     }
 
     /// @brief This just frees the waveform buffer and cleans up the waveform resources
     ~PSG() {
-        delete noise;                    // destroy the noise generator
-        ma_waveform_uninit(&maWaveform); // destroy miniaudio waveform
+        delete noise;
+        ma_pulsewave_uninit(&maPulseWave);
+        ma_noise_uninit(&maBrownianNoise, NULL);
+        ma_noise_uninit(&maPinkNoise, NULL);
+        ma_noise_uninit(&maWhiteNoise, NULL);
+        ma_waveform_uninit(&maWaveform);
 
         AUDIO_DEBUG_PRINT("PSG destroyed");
     }
@@ -556,20 +624,30 @@ class PSG {
     /// @param type The waveform type. See Waveform::Type
     void SetWaveformType(WaveformType waveType) {
         switch (waveType) {
-        case WaveformType::TRIANGLE:
-            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_triangle);
+        case WaveformType::SQUARE:
+            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_square);
             break;
 
         case WaveformType::SAWTOOTH:
             maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_sawtooth);
             break;
 
+        case WaveformType::TRIANGLE:
+            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_triangle);
+            break;
+
         case WaveformType::SINE:
             maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_sine);
             break;
 
-        case WaveformType::SQUARE:
-            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_square);
+        case WaveformType::NOISE_WHITE:
+        case WaveformType::NOISE_PINK:
+        case WaveformType::NOISE_BROWNIAN:
+        case WaveformType::NOISE_LFSR:
+        case WaveformType::PULSE:
+        case WaveformType::COUNT:
+        default:
+            // NOP
             break;
         }
 
@@ -584,6 +662,14 @@ class PSG {
     /// @param amplitude The amplitude of the waveform
     void SetAmplitude(double amplitude) {
         maResult = ma_waveform_set_amplitude(&maWaveform, amplitude);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        maResult = ma_noise_set_amplitude(&maWhiteNoise, amplitude);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        maResult = ma_noise_set_amplitude(&maPinkNoise, amplitude);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        maResult = ma_noise_set_amplitude(&maBrownianNoise, amplitude);
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        maResult = ma_pulsewave_set_amplitude(&maPulseWave, amplitude);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
         noise->SetAmplitude(amplitude);
 
@@ -601,7 +687,7 @@ class PSG {
     /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
     void Beep() {
         SetFrequency(BEEP_FREQUENCY);
-        waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), 0.0f);
+        waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE);
         GenerateWaveform(BEEP_WAVEFORM_DURATION);
         PushBufferForPlayback();
         AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
@@ -611,7 +697,7 @@ class PSG {
     void Sound(double frequency, double lengthInClockTicks) {
         SetFrequency(frequency);
         auto soundDuration = lengthInClockTicks / 18.2;
-        waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), 0.0f);
+        waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), SILENCE);
         GenerateWaveform(soundDuration);
         PushBufferForPlayback();
         AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
@@ -847,7 +933,7 @@ class PSG {
 
                     numberEntered = 0;
 
-                    if (number > 1000) { // 0 - 1000 ms
+                    if (number > PLAY_MAX_RAMP_DURATION_MS) {
                         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
@@ -919,7 +1005,7 @@ class PSG {
                     auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
 
                     if ((mixCursor + noteFrames) > waveBuffer.size()) {
-                        waveBuffer.resize(mixCursor + noteFrames, 0.0f);
+                        waveBuffer.resize(mixCursor + noteFrames, SILENCE);
                     }
 
                     if (currentChar != ',') {
@@ -970,7 +1056,8 @@ class PSG {
                         break;
                     case 'B': // background
                         if (!background) {
-                            if (playIt) { // play pending buffer in foreground before we switch to background
+                            if (playIt) {
+                                // Play pending buffer in foreground before we switch to background
                                 playIt = false;
                                 PushBufferForPlayback();
                                 AwaitPlaybackCompletion();
@@ -1098,7 +1185,7 @@ class PSG {
                     auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
 
                     if (mixCursor + noteFrames > waveBuffer.size()) {
-                        waveBuffer.resize(mixCursor + noteFrames, 0.0f);
+                        waveBuffer.resize(mixCursor + noteFrames, SILENCE);
                     }
 
                     if (noteOffset > -45) // this ensures that we correctly handle N0 as rest
@@ -1208,9 +1295,9 @@ class PSG {
 /// </summary>
 struct SoundHandle {
     /// @brief Type of sound.
-    /// NONE: No sound or internal sound whose buffer is managed by the QBPE audio engine.
+    /// NONE: No sound or internal sound whose buffer is managed by the QB64-PE audio engine.
     /// STATIC: Static sounds that are completely managed by miniaudio.
-    /// RAW: Raw sound stream that is managed by the QBPE audio engine
+    /// RAW: Raw sound stream that is managed by the QB64-PE audio engine
     enum class Type { NONE, STATIC, RAW };
 
     bool isUsed;                                // Is this handle in active use?
