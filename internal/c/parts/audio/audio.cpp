@@ -300,6 +300,52 @@ class PSG {
     static constexpr auto MAX_VOLUME = 1.0;
 
   private:
+    class NoiseGenerator {
+      public:
+        NoiseGenerator() = delete;
+        NoiseGenerator(const NoiseGenerator &) = delete;
+        NoiseGenerator &operator=(const NoiseGenerator &) = delete;
+        NoiseGenerator &operator=(NoiseGenerator &&) = delete;
+        NoiseGenerator(NoiseGenerator &&) = delete;
+
+        NoiseGenerator(uint32_t clockRate) : lfsr(0x1FFFF), clockRate(clockRate >> 3), currentSample(0.0f), amplitude(1.0f) {}
+
+        void SetFrequency(uint32_t frequency) {
+            // Prevent division by zero or absurdly high frequency
+            updateInterval = clockRate / std::max(frequency, 1u);
+            counter = 0;
+        }
+
+        void SetAmplitude(float newAmplitude) { amplitude = Clamp(newAmplitude, 0.0f, 1.0f); }
+
+        float GenerateSample() {
+            if (counter >= updateInterval) {
+                StepLFSR();
+                counter = 0;
+            } else {
+                counter++;
+            }
+
+            return amplitude * currentSample;
+        }
+
+      private:
+        int lfsr;
+        uint32_t clockRate;
+        uint32_t updateInterval;
+        uint32_t counter;
+        float currentSample;
+        float amplitude;
+
+        void StepLFSR() {
+            int bit = (lfsr ^ (lfsr >> 3)) & 1;
+            lfsr = (lfsr >> 1) | (bit << 16);
+            currentSample = int16_t(lfsr & 0xFFFF) / 32768.0f;
+        }
+
+        template <class T> static inline constexpr T Clamp(T x, T lo, T hi) { return std::max(std::min(x, hi), lo); }
+    };
+
     /// @brief This struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used)
     struct State {
         const uint8_t *byte; // pointer to a byte in an MML string
@@ -309,8 +355,7 @@ class PSG {
     RawStream *rawStream;                // this is the RawStream where the samples data will be pushed to
     ma_waveform_config maWaveformConfig; // miniaudio waveform configuration
     ma_waveform maWaveform;              // miniaudio waveform
-    ma_noise_config maNoiseConfig;       // miniaudio noise configuration
-    ma_noise maNoise;                    // miniaudio noise
+    NoiseGenerator *noise;               // custom noise generator
     ma_result maResult;                  // result of the last miniaudio operation
     std::vector<float> noteBuffer;       // note frames are rendered here temporarily before it is mixed to waveBuffer
     std::vector<float> waveBuffer;       // this is where the waveform is rendered / mixed before being pushed to RawStream
@@ -379,7 +424,9 @@ class PSG {
             break;
 
         case WaveformType::NOISE:
-            maResult = ma_noise_read_pcm_frames(&maNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+            for (size_t i = 0; i < neededFrames; i++) {
+                noteBuffer[i] = noise->GenerateSample();
+            }
             break;
         }
 
@@ -429,8 +476,9 @@ class PSG {
     /// @param frequency The frequency of the waveform
     void SetFrequency(double frequency) {
         maResult = ma_waveform_set_frequency(&maWaveform, frequency);
-
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+        noise->SetFrequency(uint32_t(frequency));
     }
 
     /// @brief Sends the buffer for playback
@@ -489,9 +537,10 @@ class PSG {
                                                    DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
         maResult = ma_waveform_init(&maWaveformConfig, &maWaveform);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_white, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
-        maResult = ma_noise_init(&maNoiseConfig, NULL, &maNoise);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        noise = new NoiseGenerator(rawStream->sampleRate);
+        AUDIO_DEBUG_CHECK(noise != nullptr);
+        noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+        noise->SetFrequency(DEFAULT_FREQUENCY);
 
         SetWaveformType(DEFAULT_WAVEFORM_TYPE); // this calls the underlying miniaudio API
 
@@ -500,7 +549,7 @@ class PSG {
 
     /// @brief This just frees the waveform buffer and cleans up the waveform resources
     ~PSG() {
-        ma_noise_uninit(&maNoise, NULL); // destroy miniaudio noise
+        delete noise;                    // destroy the noise generator
         ma_waveform_uninit(&maWaveform); // destroy miniaudio waveform
 
         AUDIO_DEBUG_PRINT("PSG destroyed");
@@ -539,8 +588,7 @@ class PSG {
     void SetAmplitude(double amplitude) {
         maResult = ma_waveform_set_amplitude(&maWaveform, amplitude);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maResult = ma_noise_set_amplitude(&maNoise, amplitude);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        noise->SetAmplitude(amplitude);
 
         AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
     }
@@ -802,7 +850,7 @@ class PSG {
 
                     numberEntered = 0;
 
-                    if (number > 100) { // 0 - 100 ms
+                    if (number > 1000) { // 0 - 1000 ms
                         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
