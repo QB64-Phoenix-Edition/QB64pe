@@ -325,32 +325,36 @@ class PSG {
     static constexpr auto SILENCE = 0.0f;
 
     class NoiseGenerator {
+      private:
+        static const auto BASE_SAMPLE_RATE = 48000;
+
       public:
+        static const auto DEFAULT_CLOCK_RATE = BASE_SAMPLE_RATE >> 2;
+
         NoiseGenerator() = delete;
         NoiseGenerator(const NoiseGenerator &) = delete;
         NoiseGenerator &operator=(const NoiseGenerator &) = delete;
         NoiseGenerator &operator=(NoiseGenerator &&) = delete;
         NoiseGenerator(NoiseGenerator &&) = delete;
 
-        NoiseGenerator(uint32_t clockRate)
-            : lfsr(0x1FFFF), clockRate(clockRate), updateInterval(0), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE),
-              amplitude(MAX_VOLUME) {
-            updateInterval = clockRate / frequency;
+        NoiseGenerator(uint32_t clockRate, uint32_t seed, uint32_t systemSampleRate)
+            : seed(seed), clockRate(clockRate), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE), amplitude(MAX_VOLUME) {
+            resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
+            updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
         }
 
         void SetClockRate(uint32_t clockRate) {
             this->clockRate = clockRate;
-            updateInterval = clockRate / frequency;
-            counter = 0;
+            updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
         }
 
         void SetFrequency(uint32_t frequency) {
             this->frequency = std::max(frequency, 1u);
-            updateInterval = clockRate / this->frequency;
+            updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
             counter = 0;
         }
 
-        void SetAmplitude(float newAmplitude) { amplitude = std::clamp(newAmplitude, MIN_VOLUME, MAX_VOLUME); }
+        void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, MIN_VOLUME, MAX_VOLUME); }
 
         float GenerateSample() {
             if (counter >= updateInterval) {
@@ -363,19 +367,19 @@ class PSG {
             return amplitude * currentSample;
         }
 
-      private:
-        uint32_t lfsr;
+        uint32_t seed;
         uint32_t clockRate;
         uint32_t updateInterval;
         uint32_t counter;
         uint32_t frequency;
         float currentSample;
         float amplitude;
+        float resampleRatio;
 
         void StepLFSR() {
-            uint32_t bit = (lfsr ^ (lfsr >> 3)) & 1;
-            lfsr = (lfsr >> 1) | (bit << 16);
-            currentSample = int16_t(lfsr & 0xFFFF) / 32768.0f;
+            uint32_t temp = (seed ^ (seed >> 2) ^ (seed >> 3) ^ (seed >> 5)) & 1;
+            seed = (seed >> 1) | (temp << 31);
+            currentSample = int32_t(seed) / 2147483648.0f;
         }
     };
 
@@ -436,6 +440,10 @@ class PSG {
 
         // Generate to the temp buffer and then we'll mix later
         switch (waveformType) {
+        case WaveformType::NONE:
+            // NOP
+            break;
+
         case WaveformType::SQUARE:
         case WaveformType::SAWTOOTH:
         case WaveformType::TRIANGLE:
@@ -598,7 +606,7 @@ class PSG {
         maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-        noise = new NoiseGenerator(rawStream->sampleRate >> 3);
+        noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)), rawStream->sampleRate);
         AUDIO_DEBUG_CHECK(noise != nullptr);
         noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
         noise->SetFrequency(DEFAULT_FREQUENCY);
@@ -624,6 +632,10 @@ class PSG {
     /// @param type The waveform type. See Waveform::Type
     void SetWaveformType(WaveformType waveType) {
         switch (waveType) {
+        case WaveformType::NONE:
+            // NOP
+            break;
+
         case WaveformType::SQUARE:
             maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_square);
             break;
@@ -658,6 +670,45 @@ class PSG {
         AUDIO_DEBUG_PRINT("Waveform type set to %i", int(waveformType));
     }
 
+    void SetWaveformParameter(float value) {
+        switch (waveformType) {
+        case WaveformType::NONE:
+        case WaveformType::SQUARE:
+        case WaveformType::SAWTOOTH:
+        case WaveformType::TRIANGLE:
+        case WaveformType::SINE:
+            // NOP
+            break;
+
+        case WaveformType::NOISE_WHITE:
+            maResult = ma_noise_set_seed(&maWhiteNoise, ma_int32(value));
+            break;
+
+        case WaveformType::NOISE_PINK:
+            maResult = ma_noise_set_seed(&maPinkNoise, ma_int32(value));
+            break;
+
+        case WaveformType::NOISE_BROWNIAN:
+            maResult = ma_noise_set_seed(&maBrownianNoise, ma_int32(value));
+            break;
+
+        case WaveformType::NOISE_LFSR:
+            noise->SetClockRate(uint32_t(value));
+            break;
+
+        case WaveformType::PULSE:
+            maResult = ma_pulsewave_set_duty_cycle(&maPulseWave, value);
+            break;
+
+        case WaveformType::COUNT:
+        default:
+            // NOP
+            break;
+        }
+
+        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+    }
+
     /// @brief Sets the amplitude of the waveform
     /// @param amplitude The amplitude of the waveform
     void SetAmplitude(double amplitude) {
@@ -671,7 +722,7 @@ class PSG {
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
         maResult = ma_pulsewave_set_amplitude(&maPulseWave, amplitude);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        noise->SetAmplitude(amplitude);
+        noise->SetAmplitude(float(amplitude));
 
         AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
     }
@@ -1579,7 +1630,12 @@ static bool InitializePSG() {
 /// @brief This generates a sound at the specified frequency for the specified amount of time
 /// @param frequency Sound frequency
 /// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second
-void sub_sound(double frequency, double lengthInClockTicks, double volume, double panning, int32_t waveform, int32_t passed) {
+/// @param volume Volume (0.0 to 1.0)
+/// @param panning Panning (-1.0 to 1.0)
+/// @param waveform Waveform (1=Square, 2=Saw, 3=Triangle, 4=Sine, 5=White Noise, 6=Pink Noise, 7=Brown Noise, 8=LFSR Noise, 9=Pulse)
+/// @param waveformParam Waveform parameter (if applicable)
+/// @param passed Passed parameters
+void sub_sound(double frequency, double lengthInClockTicks, double volume, float panning, int32_t waveform, float waveformParam, int32_t passed) {
     if (is_error_pending() || lengthInClockTicks == 0.0 || !InitializePSG())
         return;
 
@@ -1601,7 +1657,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psg->SetPanning((float)panning);
+        audioEngine.psg->SetPanning(panning);
     }
 
     if (passed & 4) {
@@ -1610,6 +1666,14 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, doubl
             return;
         }
         audioEngine.psg->SetWaveformType((PSG::WaveformType)waveform);
+    }
+
+    if (passed & 8) {
+        if (((PSG::WaveformType)waveform == PSG::WaveformType::PULSE) && (waveformParam < 0.0f || waveformParam > 1.0f)) {
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+            return;
+        }
+        audioEngine.psg->SetWaveformParameter(waveformParam);
     }
 
     audioEngine.psg->Sound(frequency, lengthInClockTicks);
