@@ -327,12 +327,13 @@ class PSG {
     static const auto MAX_LENGTH = 64;
     static constexpr auto DEFAULT_LENGTH = 4.0;
     static constexpr auto DEFAULT_PAUSE = 1.0 / 8.0;
-    static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.001f;
+    static const auto MAX_VOLUME_RAMP_DURATION_MS = 60000;
+    static constexpr auto MAX_VOLUME_RAMP_DURATION = MAX_VOLUME_RAMP_DURATION_MS / 1000.0f;
+    static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.005f;
     static constexpr auto BEEP_FREQUENCY = 900.0;
     static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
     static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
     static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
-    static const auto PLAY_MAX_RAMP_DURATION_MS = 60000;
 
     class NoiseGenerator {
       private:
@@ -995,7 +996,7 @@ class PSG {
 
                     numberEntered = 0;
 
-                    if (number > PLAY_MAX_RAMP_DURATION_MS) {
+                    if (number > MAX_VOLUME_RAMP_DURATION_MS) {
                         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                         return;
                     }
@@ -1408,6 +1409,8 @@ struct SoundHandle {
 ///	Type will help us keep track of the audio engine state
 /// </summary>
 struct AudioEngine {
+    static const auto PSG_COUNT = 4;
+
     bool isInitialized;                                 // this is set to true if we were able to initialize miniaudio and allocated all required resources
     bool initializationFailed;                          // this is set to true if a past initialization attempt failed
     ma_resource_manager_config maResourceManagerConfig; // miniaudio resource manager configuration
@@ -1416,8 +1419,8 @@ struct AudioEngine {
     ma_engine maEngine;                                 // this is the primary miniaudio engine 'context'. Everything happens using this!
     ma_result maResult;                                 // this is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                               // sample rate used by the miniaudio engine
-    int32_t sndInternal;                                // internal sound handle that we will use for Play(), Beep() & Sound()
-    std::array<PSG *, 4> psgs;                          // PSG objects that we will use to generate sound for Play(), Beep() & Sound()
+    std::array<int32_t, PSG_COUNT> psgSnds;             // internal sound handles that we will use for Play(), Beep() & Sound()
+    std::array<PSG *, PSG_COUNT> psgs;                  // PSG objects that we will use to generate sound for Play(), Beep() & Sound()
     int32_t sndInternalRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
@@ -1440,8 +1443,9 @@ struct AudioEngine {
         ZERO_VARIABLE(maEngine);
         maResult = ma_result::MA_SUCCESS;
         sampleRate = 0;
-        sndInternal = sndInternalRaw = -1; // should not use INVALID_SOUND_HANDLE here
+        psgSnds.fill(-1); // should not use INVALID_SOUND_HANDLE here
         psgs.fill(nullptr);
+        sndInternalRaw = -1; // should not use INVALID_SOUND_HANDLE here
         lowestFreeHandle = 0;
     }
 
@@ -1609,33 +1613,37 @@ static AudioEngine audioEngine;
 /// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
 /// @return Returns true if both objects were successfully created
 static bool InitializePSG() {
-    if (!audioEngine.isInitialized || audioEngine.sndInternal != 0)
+    if (!audioEngine.isInitialized || audioEngine.psgSnds[0] != 0)
         return false;
 
     // Kickstart the raw stream and PSG if it is not already
-    if (!audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
-        audioEngine.soundHandles[audioEngine.sndInternal]->rawStream =
-            RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.sndInternal]->maSound);
-        if (!audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
-            AUDIO_DEBUG_PRINT("Failed to create rawStream object for PSG");
+    if (!audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
+        AUDIO_DEBUG_PRINT("Creating rawStream object for primary PSG");
+
+        audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream =
+            RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.psgSnds[0]]->maSound);
+        if (!audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
+            AUDIO_DEBUG_PRINT("Failed to create rawStream object for primary PSG");
             return false;
         }
-        audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundHandle::Type::RAW;
+        audioEngine.soundHandles[audioEngine.psgSnds[0]]->type = SoundHandle::Type::RAW;
 
         if (!audioEngine.psgs[0]) {
-            audioEngine.psgs[0] = new PSG(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
+            AUDIO_DEBUG_PRINT("Creating primary PSG object");
+
+            audioEngine.psgs[0] = new PSG(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream);
             if (!audioEngine.psgs[0]) {
-                AUDIO_DEBUG_PRINT("Failed to create PSG object");
-                RawStreamDestroy(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
-                audioEngine.soundHandles[audioEngine.sndInternal]->rawStream = nullptr;
-                audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundHandle::Type::NONE;
+                AUDIO_DEBUG_PRINT("Failed to create primary PSG object");
+                RawStreamDestroy(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream);
+                audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream = nullptr;
+                audioEngine.soundHandles[audioEngine.psgSnds[0]]->type = SoundHandle::Type::NONE;
 
                 return false;
             }
         }
     }
 
-    return (audioEngine.soundHandles[audioEngine.sndInternal]->rawStream && audioEngine.psgs[0]);
+    return (audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream && audioEngine.psgs[0]);
 }
 
 /// @brief This generates a sound at the specified frequency for the specified amount of time
@@ -1703,11 +1711,11 @@ void sub_beep() {
 /// @param ignore Well, it's ignored
 /// @return Returns the number of sample frames left to play for Play(), Sound() & Beep()
 int32_t func_play(int32_t ignore) {
-    if (audioEngine.isInitialized && audioEngine.sndInternal == 0 && audioEngine.soundHandles[audioEngine.sndInternal]->rawStream) {
+    if (audioEngine.isInitialized && audioEngine.psgSnds[0] == 0 && audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
         if (ignore)
-            return lround(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetTimeRemaining());
+            return lround(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->GetTimeRemaining());
         else
-            return (int32_t)audioEngine.soundHandles[audioEngine.sndInternal]->rawStream->GetSampleFramesRemaining();
+            return (int32_t)audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->GetSampleFramesRemaining();
     }
 
     return 0;
@@ -1860,11 +1868,6 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 /// @param handle A valid sound handle
 void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
-        // If we have a raw stream then force it to push all its data to miniaudio
-        // Note that this will take care of checking if the handle is a raw steam and other stuff
-        // So it is completely safe to call it this way
-        sub__sndrawdone(handle, true);
-
         if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
             audioEngine.soundHandles[handle]->rawStream->pause.store(false, std::memory_order_relaxed); // unpause the stream
             audioEngine.soundHandles[handle]->rawStream->stop = true; // signal miniaudio thread that we are going to end playback
@@ -2646,18 +2649,29 @@ void snd_init() {
     AUDIO_DEBUG_PRINT("Audio engine initialized @ %uHz", audioEngine.sampleRate);
 
     // Reserve sound handle 0 so that nothing else can use it
+    // We'll kickstart it later when we need it
     // We will use this handle internally for Play(), Beep(), Sound() etc.
-    audioEngine.sndInternal = audioEngine.CreateHandle();
-    AUDIO_DEBUG_CHECK(audioEngine.sndInternal == 0); // The first handle must return 0 and this is what is used by Beep and Sound
+    audioEngine.psgSnds[0] = audioEngine.CreateHandle();
+    AUDIO_DEBUG_CHECK(audioEngine.psgSnds[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
 }
 
 /// @brief This shuts down the audio engine and frees any resources used
 void snd_un_init() {
     if (audioEngine.isInitialized) {
         // Free any PSG object if they were created
-        for (PSG *psg : audioEngine.psgs) {
+        for (auto psg : audioEngine.psgs) {
             delete psg;
             psg = nullptr;
+        }
+
+        // Special case for primary PSG
+        if (audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
+            audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->pause.store(false, std::memory_order_relaxed);
+            audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->stop = true;
+        }
+
+        for (auto snd : audioEngine.psgSnds) {
+            sub__sndclose(snd);
         }
 
         // Free all sound handles here
@@ -2670,7 +2684,8 @@ void snd_un_init() {
         audioEngine.soundHandles.clear();
 
         // Invalidate internal handles
-        audioEngine.sndInternal = audioEngine.sndInternalRaw = INVALID_SOUND_HANDLE;
+        audioEngine.psgSnds.fill(-1);
+        audioEngine.sndInternalRaw = -1;
 
         // Shutdown miniaudio
         ma_engine_uninit(&audioEngine.maEngine);
