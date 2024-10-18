@@ -48,6 +48,7 @@ struct RawStream {
     Buffer *producer;                         // this is what the main thread will use to push data to
     libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
     bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
+    std::atomic<bool> pause;                  // set this to true to pause the stream (only silence samples will be sent to miniaudio)
 
     static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amount what miniaudio actually asks for in frameCount
 
@@ -68,7 +69,8 @@ struct RawStream {
         buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
         consumer = &buffer[0];                            // set default consumer
         producer = &buffer[1];                            // set default producer
-        stop = false;                                     // by default we will send silent samples to keep the playback going
+        stop = false;                                     // we will send silent samples to keep the playback going by default
+        pause.store(false, std::memory_order_relaxed);    // the steam will not be paused by default
         m = libqb_mutex_new();
     }
 
@@ -133,28 +135,37 @@ static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, 
     auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
     auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
     auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
+    ma_uint64 sampleFramesRead;
 
-    ma_uint64 sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
-    // Swap buffers if we do not have anything left to play
-    if (!sampleFramesCount) {
-        pRawStream->SwapBuffers();
-        sampleFramesCount = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
-    }
-    sampleFramesCount = std::min(sampleFramesCount, frameCount); // we'll always send lower of what miniaudio wants or what we have
+    if (pRawStream->pause.load(std::memory_order_relaxed)) {
+        // Just play silence if we are paused
+        std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
+        sampleFramesRead = frameCount;
+    } else {
+        sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
+        // Swap buffers if we do not have anything left to play
+        if (!sampleFramesRead) {
+            pRawStream->SwapBuffers();
+            sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
+        }
 
-    ma_uint64 sampleFramesRead = 0; // sample frame counter
-    // Now send the samples to miniaudio
-    while (sampleFramesRead < sampleFramesCount) {
-        maBuffer[sampleFramesRead] = pRawStream->consumer->data[pRawStream->consumer->cursor];
-        ++sampleFramesRead;             // increment the frame counter
-        pRawStream->consumer->cursor++; // increment the read cursor
-    }
+        sampleFramesRead = std::min(sampleFramesRead, frameCount); // we'll always send lower of what miniaudio wants or what we have
 
-    // To keep the stream going, play silence if there are no frames to play
-    if (!sampleFramesRead && !pRawStream->stop) {
-        while (sampleFramesRead < frameCount) {
-            maBuffer[sampleFramesRead] = {};
-            ++sampleFramesRead;
+        if (sampleFramesRead) {
+            // Now send the samples to miniaudio
+            std::copy(pRawStream->consumer->data.data() + pRawStream->consumer->cursor,
+                      pRawStream->consumer->data.data() + pRawStream->consumer->cursor + sampleFramesRead, maBuffer);
+
+            pRawStream->consumer->cursor += sampleFramesRead; // increment the read cursor
+        } else {
+            if (pRawStream->stop) {
+                // End of stream was signalled
+                result = MA_AT_END;
+            } else {
+                // To keep the stream going, play silence if there are no frames to play
+                std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
+                sampleFramesRead = frameCount;
+            }
         }
     }
 
@@ -322,7 +333,6 @@ class PSG {
     static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
     static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
     static const auto PLAY_MAX_RAMP_DURATION_MS = 60000;
-    static constexpr auto SILENCE = 0.0f;
 
     class NoiseGenerator {
       private:
@@ -338,7 +348,8 @@ class PSG {
         NoiseGenerator(NoiseGenerator &&) = delete;
 
         NoiseGenerator(uint32_t clockRate, uint32_t seed, uint32_t systemSampleRate)
-            : seed(seed), clockRate(clockRate), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE), amplitude(MAX_VOLUME) {
+            : seed(seed), clockRate(clockRate), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE_SAMPLE),
+              amplitude(float(DEFAULT_MML_VOLUME / MAX_MML_VOLUME)) {
             resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
             updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
         }
@@ -435,8 +446,8 @@ class PSG {
         }
 
         maResult = MA_SUCCESS;
-        ma_uint64 generatedFrames = neededFrames; // assume we'll generate all the frames we need
-        noteBuffer.assign(neededFrames, SILENCE); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
+        ma_uint64 generatedFrames = neededFrames;        // assume we'll generate all the frames we need
+        noteBuffer.assign(neededFrames, SILENCE_SAMPLE); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
 
         // Generate to the temp buffer and then we'll mix later
         switch (waveformType) {
@@ -738,7 +749,7 @@ class PSG {
     /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
     void Beep() {
         SetFrequency(BEEP_FREQUENCY);
-        waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE);
+        waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE_SAMPLE);
         GenerateWaveform(BEEP_WAVEFORM_DURATION);
         PushBufferForPlayback();
         AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
@@ -748,7 +759,7 @@ class PSG {
     void Sound(double frequency, double lengthInClockTicks) {
         SetFrequency(frequency);
         auto soundDuration = lengthInClockTicks / 18.2;
-        waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), SILENCE);
+        waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), SILENCE_SAMPLE);
         GenerateWaveform(soundDuration);
         PushBufferForPlayback();
         AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
@@ -1056,7 +1067,7 @@ class PSG {
                     auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
 
                     if ((mixCursor + noteFrames) > waveBuffer.size()) {
-                        waveBuffer.resize(mixCursor + noteFrames, SILENCE);
+                        waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
                     }
 
                     if (currentChar != ',') {
@@ -1236,7 +1247,7 @@ class PSG {
                     auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
 
                     if (mixCursor + noteFrames > waveBuffer.size()) {
-                        waveBuffer.resize(mixCursor + noteFrames, SILENCE);
+                        waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
                     }
 
                     if (noteOffset > -45) // this ensures that we correctly handle N0 as rest
@@ -1406,7 +1417,7 @@ struct AudioEngine {
     ma_result maResult;                                 // this is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                               // sample rate used by the miniaudio engine
     int32_t sndInternal;                                // internal sound handle that we will use for Play(), Beep() & Sound()
-    PSG *psg;                                           // PSG object that we will use to generate sound for Play(), Beep() & Sound()
+    std::array<PSG *, 4> psgs;                          // PSG objects that we will use to generate sound for Play(), Beep() & Sound()
     int32_t sndInternalRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
@@ -1430,7 +1441,7 @@ struct AudioEngine {
         maResult = ma_result::MA_SUCCESS;
         sampleRate = 0;
         sndInternal = sndInternalRaw = -1; // should not use INVALID_SOUND_HANDLE here
-        psg = nullptr;
+        psgs.fill(nullptr);
         lowestFreeHandle = 0;
     }
 
@@ -1595,7 +1606,7 @@ struct AudioEngine {
 // This keeps track of the audio engine state
 static AudioEngine audioEngine;
 
-/// @brief Initializes the PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
+/// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
 /// @return Returns true if both objects were successfully created
 static bool InitializePSG() {
     if (!audioEngine.isInitialized || audioEngine.sndInternal != 0)
@@ -1611,9 +1622,9 @@ static bool InitializePSG() {
         }
         audioEngine.soundHandles[audioEngine.sndInternal]->type = SoundHandle::Type::RAW;
 
-        if (!audioEngine.psg) {
-            audioEngine.psg = new PSG(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
-            if (!audioEngine.psg) {
+        if (!audioEngine.psgs[0]) {
+            audioEngine.psgs[0] = new PSG(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
+            if (!audioEngine.psgs[0]) {
                 AUDIO_DEBUG_PRINT("Failed to create PSG object");
                 RawStreamDestroy(audioEngine.soundHandles[audioEngine.sndInternal]->rawStream);
                 audioEngine.soundHandles[audioEngine.sndInternal]->rawStream = nullptr;
@@ -1624,7 +1635,7 @@ static bool InitializePSG() {
         }
     }
 
-    return (audioEngine.soundHandles[audioEngine.sndInternal]->rawStream && audioEngine.psg);
+    return (audioEngine.soundHandles[audioEngine.sndInternal]->rawStream && audioEngine.psgs[0]);
 }
 
 /// @brief This generates a sound at the specified frequency for the specified amount of time
@@ -1649,7 +1660,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, float
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psg->SetAmplitude(volume);
+        audioEngine.psgs[0]->SetAmplitude(volume);
     }
 
     if (passed & 2) {
@@ -1657,7 +1668,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, float
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psg->SetPanning(panning);
+        audioEngine.psgs[0]->SetPanning(panning);
     }
 
     if (passed & 4) {
@@ -1665,7 +1676,7 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, float
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psg->SetWaveformType((PSG::WaveformType)waveform);
+        audioEngine.psgs[0]->SetWaveformType((PSG::WaveformType)waveform);
     }
 
     if (passed & 8) {
@@ -1673,10 +1684,10 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, float
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psg->SetWaveformParameter(waveformParam);
+        audioEngine.psgs[0]->SetWaveformParameter(waveformParam);
     }
 
-    audioEngine.psg->Sound(frequency, lengthInClockTicks);
+    audioEngine.psgs[0]->Sound(frequency, lengthInClockTicks);
 }
 
 /// @brief This generates a default 'beep' sound
@@ -1684,7 +1695,7 @@ void sub_beep() {
     if (is_error_pending() || !InitializePSG())
         return;
 
-    audioEngine.psg->Beep();
+    audioEngine.psgs[0]->Beep();
 }
 
 /// @brief This was designed to returned the number of notes in the background music queue.
@@ -1708,7 +1719,7 @@ void sub_play(const qbs *str) {
     if (is_error_pending() || !InitializePSG())
         return;
 
-    audioEngine.psg->Play(str);
+    audioEngine.psgs[0]->Play(str);
 }
 
 /// <summary>
@@ -1843,12 +1854,10 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     return handle;
 }
 
-/// <summary>
-/// The frees and unloads an open sound.
+/// @brief The frees and unloads an open sound.
 /// If the sound is playing, it'll let it finish. Looping sounds will loop until the program is closed.
 /// If the sound is a stream of raw samples then any remaining samples pending for playback will be sent to miniaudio and then the handle will be freed.
-/// </summary>
-/// <param name="handle">A sound handle</param>
+/// @param handle A valid sound handle
 void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
         // If we have a raw stream then force it to push all its data to miniaudio
@@ -1856,8 +1865,10 @@ void sub__sndclose(int32_t handle) {
         // So it is completely safe to call it this way
         sub__sndrawdone(handle, true);
 
-        if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)
-            audioEngine.soundHandles[handle]->rawStream->stop = true; // Signal miniaudio thread that we are going to end playback
+        if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
+            audioEngine.soundHandles[handle]->rawStream->pause.store(false, std::memory_order_relaxed); // unpause the stream
+            audioEngine.soundHandles[handle]->rawStream->stop = true; // signal miniaudio thread that we are going to end playback
+        }
 
         // Simply set the autokill flag to true and let the sound loop handle disposing the sound
         audioEngine.soundHandles[handle]->autoKill = true;
@@ -2644,9 +2655,9 @@ void snd_init() {
 void snd_un_init() {
     if (audioEngine.isInitialized) {
         // Free any PSG object if they were created
-        if (audioEngine.psg) {
-            delete audioEngine.psg;
-            audioEngine.psg = nullptr;
+        for (PSG *psg : audioEngine.psgs) {
+            delete psg;
+            psg = nullptr;
         }
 
         // Free all sound handles here
