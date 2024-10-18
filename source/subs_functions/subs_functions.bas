@@ -1703,9 +1703,10 @@ SUB reginternal
     id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 2
     id.callname = "sub_play"
-    id.args = 1
-    id.arg = MKL$(STRINGTYPE - ISPOINTER)
-    id.hr_syntax = "PLAY commandString$"
+    id.args = 4
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
+    id.specialformat = "?[,[?][,[?][,?]]]"
+    id.hr_syntax = "PLAY voiceCommands1$[, voiceCommands2$][, voiceCommands3$][, voiceCommands4$]"
     regid
 
     clearid
@@ -1714,8 +1715,9 @@ SUB reginternal
     id.callname = "func_play"
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "PLAY"
+    id.specialformat = "[?]"
+    id.ret = UINTEGER64TYPE - ISPOINTER
+    id.hr_syntax = "PLAY [voice&]"
     regid
 
     'QB64 MOUSE
@@ -1946,9 +1948,6 @@ SUB reginternal
     id.hr_syntax = "_COMMANDCOUNT"
     regid
 
-
-    'QB64 AUDIO
-
     clearid
     id.n = "_SndRate": id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 1
@@ -2001,8 +2000,8 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndlen"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
-    id.ret = SINGLETYPE - ISPOINTER
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = DOUBLETYPE - ISPOINTER
     id.hr_syntax = "_SNDLEN(handle&)"
     regid
 
@@ -2011,7 +2010,7 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndpaused"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SNDPAUSED(handle&)"
     regid
@@ -2021,7 +2020,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndplayfile"
     id.args = 3
-    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
     id.specialformat = "?[,[?][,?]]"
     id.hr_syntax = "_SNDPLAYFILE fileName$[, , volume!]"
     regid
@@ -2031,7 +2030,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndplaycopy"
     id.args = 5
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
     id.specialformat = "?[,[?][,[?][,[?][,[?]]]]]"
     id.hr_syntax = "_SNDPLAYCOPY handle&[, volume!][, x!][, y!][, z!]"
     regid
@@ -2041,7 +2040,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndstop"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.hr_syntax = "_SNDSTOP handle&"
     regid
 
@@ -2050,7 +2049,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndloop"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.hr_syntax = "_SNDLOOP handle&"
     regid
 
@@ -2059,8 +2058,8 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndlimit"
     id.args = 2
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
-    id.hr_syntax = "_SNDLIMIT handle&, numberOfSeconds!"
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
+    id.hr_syntax = "_SNDLIMIT handle&, numberOfSeconds#"
     regid
 
     clearid
@@ -2070,7 +2069,7 @@ SUB reginternal
     id.args = 2
     id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
     id.specialformat = "?[,?]"
-    id.ret = ULONGTYPE - ISPOINTER
+    id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SNDOPEN(fileName$[, capabilities$])"
     regid
 
@@ -2079,8 +2078,8 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndsetpos"
     id.args = 2
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
-    id.hr_syntax = "_SNDSETPOS handle&, position!"
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
+    id.hr_syntax = "_SNDSETPOS handle&, position#"
     regid
 
     clearid
@@ -2088,8 +2087,8 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndgetpos"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
-    id.ret = SINGLETYPE - ISPOINTER
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = DOUBLETYPE - ISPOINTER
     id.hr_syntax = "_SNDGETPOS(handle&)"
     regid
 
@@ -2098,7 +2097,7 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndplaying"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SNDPLAYING(handle&)"
     regid
@@ -2108,7 +2107,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndpause"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.hr_syntax = "_SNDPAUSE handle&"
     regid
 
@@ -2117,9 +2116,9 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndbal"
     id.args = 5
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "?,[?][,[?][,[?][,[?]]]]"
-    id.hr_syntax = "_SNDBAL handle&[, x!][, y!][, z!][, channel&]"
+    id.hr_syntax = "_SNDBAL handle&[, x!][, y!][, z!]"
     regid
 
     clearid
@@ -2127,7 +2126,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndvol"
     id.args = 2
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
     id.hr_syntax = "_SNDVOL handle&, volume!"
     regid
 
@@ -2136,7 +2135,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndplay"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.hr_syntax = "_SNDPLAY handle&"
     regid
 
@@ -2145,8 +2144,8 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndcopy"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
-    id.ret = ULONGTYPE - ISPOINTER
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SNDCOPY(handle&)"
     regid
 
@@ -2155,7 +2154,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__sndclose"
     id.args = 1
-    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.hr_syntax = "_SNDCLOSE handle&"
     regid
 
@@ -2165,7 +2164,7 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndnew"
     id.args = 3
-    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)"
     regid
@@ -3072,10 +3071,10 @@ SUB reginternal
     id.n = "Sound": id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 2
     id.callname = "sub_sound"
-    id.args = 6
-    id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
-    id.specialformat = "?,?[,[?][,[?][,[?][,?]]]]"
-    id.hr_syntax = "SOUND frequency#, duration#[, volume#][, panning!][, waveform&][, waveformParameters!]"
+    id.args = 7
+    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)+ MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "?,?[,[?][,[?][,[?][,[?][,?]]]]]"
+    id.hr_syntax = "SOUND frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]"
     regid
 
     clearid

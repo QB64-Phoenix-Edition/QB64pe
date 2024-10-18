@@ -118,8 +118,6 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
     if (!Startup())
         return 0;
 
-    uint32_t OldPosition = _Position;
-
     const uint32_t BlockSize = GetSampleBlockSize();
 
     uint32_t SampleIndex = 0;

@@ -21,6 +21,9 @@
 #include "mutex.h"
 #include "qbs.h"
 
+// This is what is returned to the caller by CreateHandle() if handle allocation fails
+#define INVALID_SOUND_HANDLE_INTERNAL -1
+
 // This is returned to the caller if handle allocation fails with a -1
 // CreateHandle() does not return 0 because it is a valid internal handle
 // Handle 0 is 'handled' as a special case
@@ -30,7 +33,7 @@
 // We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
 // Here we are checking > 0 because this is meant to check user handles only
 #define IS_SOUND_HANDLE_VALID(_handle_)                                                                                                                        \
-    ((_handle_) > 0 && (_handle_) < (int32_t)audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&                                  \
+    ((_handle_) > INVALID_SOUND_HANDLE && (_handle_) < (int32_t)audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&               \
      !audioEngine.soundHandles[_handle_]->autoKill)
 
 /// @brief A miniaudiio raw audio stream datasource
@@ -307,8 +310,10 @@ class PSG {
     static constexpr auto PAN_LEFT = -1.0f;
     static constexpr auto PAN_RIGHT = 1.0f;
     static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT;
-    static constexpr auto MIN_VOLUME = 0.0f;
-    static constexpr auto MAX_VOLUME = 1.0f;
+    static constexpr auto VOLUME_MIN = 0.0f;
+    static constexpr auto VOLUME_MAX = 1.0f;
+    static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;
+    static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;
 
   private:
     // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
@@ -334,6 +339,7 @@ class PSG {
     static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
     static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
     static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
+    static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;
 
     class NoiseGenerator {
       private:
@@ -366,7 +372,7 @@ class PSG {
             counter = 0;
         }
 
-        void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, MIN_VOLUME, MAX_VOLUME); }
+        void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX); }
 
         float GenerateSample() {
             if (counter >= updateInterval) {
@@ -613,8 +619,8 @@ class PSG {
         maResult = ma_noise_init(&maBrownianNoiseConfig, NULL, &maBrownianNoise);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-        maPulseWaveConfig =
-            ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, 0.5, DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
+        maPulseWaveConfig = ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, PULSE_WAVE_DUTY_CYCLE_DEFAULT,
+                                                     DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
         maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
         AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
@@ -1443,9 +1449,9 @@ struct AudioEngine {
         ZERO_VARIABLE(maEngine);
         maResult = ma_result::MA_SUCCESS;
         sampleRate = 0;
-        psgSnds.fill(-1); // should not use INVALID_SOUND_HANDLE here
+        psgSnds.fill(INVALID_SOUND_HANDLE_INTERNAL); // should not use INVALID_SOUND_HANDLE here
         psgs.fill(nullptr);
-        sndInternalRaw = -1; // should not use INVALID_SOUND_HANDLE here
+        sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
         lowestFreeHandle = 0;
     }
 
@@ -1465,7 +1471,7 @@ struct AudioEngine {
     /// <returns>Returns a non-negative handle if successful</returns>
     int32_t CreateHandle() {
         if (!isInitialized)
-            return -1; // We cannot return 0 here. Since 0 is a valid internal handle
+            return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
 
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
@@ -1496,7 +1502,7 @@ struct AudioEngine {
             SoundHandle *newHandle = new SoundHandle;
 
             if (!newHandle)
-                return -1; // We cannot return 0 here. Since 0 is a valid internal handle
+                return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
 
             soundHandles.push_back(newHandle);
             size_t newVectorSize = soundHandles.size();
@@ -1504,7 +1510,7 @@ struct AudioEngine {
             // If newVectorSize == vectorSize then push_back() failed
             if (newVectorSize <= vectorSize) {
                 delete newHandle;
-                return -1; // We cannot return 0 here. Since 0 is a valid internal handle
+                return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
             }
 
             h = newVectorSize - 1; // The handle is simply newVectorSize - 1
@@ -1646,25 +1652,26 @@ static bool InitializePSG() {
     return (audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream && audioEngine.psgs[0]);
 }
 
-/// @brief This generates a sound at the specified frequency for the specified amount of time
-/// @param frequency Sound frequency
-/// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second
-/// @param volume Volume (0.0 to 1.0)
-/// @param panning Panning (-1.0 to 1.0)
-/// @param waveform Waveform (1=Square, 2=Saw, 3=Triangle, 4=Sine, 5=White Noise, 6=Pink Noise, 7=Brown Noise, 8=LFSR Noise, 9=Pulse)
-/// @param waveformParam Waveform parameter (if applicable)
-/// @param passed Passed parameters
-void sub_sound(double frequency, double lengthInClockTicks, double volume, float panning, int32_t waveform, float waveformParam, int32_t passed) {
-    if (is_error_pending() || lengthInClockTicks == 0.0 || !InitializePSG())
+/// @brief This generates a sound at the specified frequency for the specified amount of time.
+/// @param frequency Sound frequency.
+/// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second.
+/// @param volume Volume (0.0 to 1.0).
+/// @param panning Panning (-1.0 to 1.0).
+/// @param waveform Waveform (1=Square, 2=Saw, 3=Triangle, 4=Sine, 5=White Noise, 6=Pink Noise, 7=Brown Noise, 8=LFSR Noise, 9=Pulse).
+/// @param waveformParam Waveform parameter (if applicable).
+/// @param voice The voice to use (1 - 4 or -4 to -1 if playback needs to be held until the next call).
+/// @param passed Optional parameter flags.
+void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t passed) {
+    if (is_error_pending() || lengthInClockTicks == 0.0f || !InitializePSG())
         return;
 
-    if ((frequency < 37.0 && frequency != 0) || frequency > 32767.0 || lengthInClockTicks < 0.0 || lengthInClockTicks > 65535.0) {
+    if ((frequency < 37.0f && frequency != 0.0f) || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
 
     if (passed & 1) {
-        if (volume < PSG::MIN_VOLUME || volume > PSG::MAX_VOLUME) {
+        if (volume < PSG::VOLUME_MIN || volume > PSG::VOLUME_MAX) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
@@ -1688,7 +1695,8 @@ void sub_sound(double frequency, double lengthInClockTicks, double volume, float
     }
 
     if (passed & 8) {
-        if (((PSG::WaveformType)waveform == PSG::WaveformType::PULSE) && (waveformParam < 0.0f || waveformParam > 1.0f)) {
+        if (((PSG::WaveformType)waveform == PSG::WaveformType::PULSE) &&
+            (waveformParam < PSG::PULSE_WAVE_DUTY_CYCLE_MIN || waveformParam > PSG::PULSE_WAVE_DUTY_CYCLE_MAX)) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
@@ -1706,28 +1714,32 @@ void sub_beep() {
     audioEngine.psgs[0]->Beep();
 }
 
-/// @brief This was designed to returned the number of notes in the background music queue.
-/// However, here we'll just return the number of sample frame remaining to play when Play(), Sound() or Beep() are used
-/// @param ignore Well, it's ignored
-/// @return Returns the number of sample frames left to play for Play(), Sound() & Beep()
-int32_t func_play(int32_t ignore) {
-    if (audioEngine.isInitialized && audioEngine.psgSnds[0] == 0 && audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
-        if (ignore)
-            return lround(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->GetTimeRemaining());
+/// @brief Returns the number of sample frames or seconds left to play.
+/// @param voice The voice to get the information for (1 to 4 for time or -4 to -1 for sample frames; 0 will return sample frames for voice 1).
+/// @param passed Optional parameter flags.
+/// @return Returns the number of sample frames left to play for Play(), Sound() or Beep().
+uint64_t func_play(int32_t voice, int32_t passed) {
+    if (!is_error_pending() && audioEngine.isInitialized && audioEngine.psgSnds[0] == 0 && audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
+        if (voice)
+            return llround(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->GetTimeRemaining());
         else
-            return (int32_t)audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->GetSampleFramesRemaining();
+            return audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->GetSampleFramesRemaining();
     }
 
     return 0;
 }
 
-/// @brief Processes and plays the MML specified in the string
-/// @param str The string to play
-void sub_play(const qbs *str) {
+/// @brief Processes and plays the MML specified in the strings.
+/// @param str1 MML string for voice 1.
+/// @param str2 MML string for voice 2.
+/// @param str3 MML string for voice 3.
+/// @param str4 MML string for voice 4.
+/// @param passed Optional parameter flags.
+void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed) {
     if (is_error_pending() || !InitializePSG())
         return;
 
-    audioEngine.psgs[0]->Play(str);
+    audioEngine.psgs[0]->Play(str1);
 }
 
 /// <summary>
@@ -1982,16 +1994,14 @@ void sub__sndplay(int32_t handle) {
     }
 }
 
-/// <summary>
-/// This copies a sound, plays it, and automatically closes the copy.
-/// </summary>
-/// <param name="handle">A sound handle to copy</param>
-/// <param name="volume">The volume at which the sound should be played (0.0 - 1.0)</param>
-/// <param name="x">x distance values go from left (negative) to right (positive)</param>
-/// <param name="y">y distance values go from below (negative) to above (positive).</param>
-/// <param name="z">z distance values go from behind (negative) to in front (positive).</param>
-/// <param name="passed">How many parameters were passed?</param>
-void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, double z, int32_t passed) {
+/// @brief This copies a sound, plays it, and automatically closes the copy.
+/// @param src_handle A sound handle to copy.
+/// @param volume The volume at which the sound should be played (0.0 - 1.0).
+/// @param x x distance values go from left (negative) to right (positive).
+/// @param y y distance values go from below (negative) to above (positive).
+/// @param z z distance values go from behind (negative) to in front (positive).
+/// @param passed Optional parameter flags.
+void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float z, int32_t passed) {
     // We are simply going to use sndcopy, then setup some stuff like volume and autokill and then use sndplay
     // We are not checking if the audio engine was initialized because if not we'll get an invalid handle anyway
     auto dst_handle = func__sndcopy(src_handle);
@@ -2016,21 +2026,19 @@ void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, dou
         sub__sndplay(dst_handle);                              // Play the sound
         audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
 
-        AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %lf, 3D (%lf, %lf, %lf)", dst_handle, volume, x, y, z);
+        AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %f, 3D (%f, %f, %f)", dst_handle, volume, x, y, z);
     }
 }
 
-/// <summary>
-/// This is a "fire and forget" style of function.
-/// The engine will manage the sound handle internally.
-/// When the sound finishes playing, the handle will be put up for recycling.
-/// Playback starts asynchronously.
-/// </summary>
-/// <param name="fileName">The is the name of the file to be played</param>
-/// <param name="sync">This parameter is ignored</param>
-/// <param name="volume">This the sound playback volume (0 - silent ... 1 - full)</param>
-/// <param name="passed">How many parameters were passed?</param>
-void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed) {
+/// @brief This is a "fire and forget" style of function. The engine will manage the sound handle internally.
+/// When the sound finishes playing, the handle will be put up for recycling. Playback starts asynchronously.
+/// @param fileName The is the name of the file to be played.
+/// @param sync This parameter is ignored.
+/// @param volume This the sound playback volume - 0 (silent) to 1 (full).
+/// @param passed Optional parameter flags.
+void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed) {
+    (void)sync;
+
     // We need this to send requirements to SndOpen
     static qbs *reqs = nullptr;
 
@@ -2094,12 +2102,9 @@ int32_t func__sndpaused(int32_t handle) {
     return QB_FALSE;
 }
 
-/// <summary>
-/// This sets the volume of a sound loaded in memory using a sound handle.
-/// New: This works for both static and raw sounds.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="volume">A float point value with 0 resulting in silence and anything above 1 resulting in amplification</param>
+/// @brief This sets the volume of a sound loaded in memory using a sound handle. This works for both static and raw sounds.
+/// @param handle A sound handle.
+/// @param volume A float point value with 0 resulting in silence and anything above 1 resulting in amplification.
 void sub__sndvol(int32_t handle, float volume) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
         (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
@@ -2134,18 +2139,17 @@ void sub__sndloop(int32_t handle) {
     }
 }
 
-/// <summary>
-/// This will attempt to set the balance or 3D position of a sound.
-/// Note that unlike the OpenAL code, we will do pure stereo panning if y & z are absent.
-/// New: This works for both static and raw sounds.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="x">x distance values go from left (negative) to right (positive)</param>
-/// <param name="y">y distance values go from below (negative) to above (positive).</param>
-/// <param name="z">z distance values go from behind (negative) to in front (positive).</param>
-/// <param name="channel">channel value 1 denotes left (mono) and 2 denotes right (stereo) channel. This has no meaning for miniaudio and is ignored</param>
-/// <param name="passed">How many parameters were passed?</param>
-void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, int32_t passed) {
+/// @brief This will set the balance or 3D position of a sound. This works for both static and raw sounds.
+/// It will do pure stereo panning if y & z are absent.
+/// @param handle A sound handle.
+/// @param x x distance values go from left (negative) to right (positive).
+/// @param y y distance values go from below (negative) to above (positive).
+/// @param z z distance values go from behind (negative) to in front (positive).
+/// @param channel This has no meaning for miniaudio and is ignored.
+/// @param passed Optional parameter flags.
+void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int32_t passed) {
+    (void)channel;
+
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
         (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
@@ -2170,11 +2174,9 @@ void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, 
     }
 }
 
-/// <summary>
-/// This returns the length in seconds of a loaded sound using a sound handle.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <returns>Returns the length of a sound in seconds</returns>
+/// @brief This returns the length in seconds of a loaded sound using a sound handle.
+/// @param handle A sound handle.
+/// @return Returns the length of a sound in seconds.
 double func__sndlen(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float lengthSeconds = 0;
@@ -2183,14 +2185,12 @@ double func__sndlen(int32_t handle) {
         return lengthSeconds;
     }
 
-    return 0;
+    return 0.0;
 }
 
-/// <summary>
-/// This returns the current playing position in seconds using a sound handle.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <returns>Returns the current playing position in seconds from an open sound file</returns>
+/// @brief This returns the current playing position in seconds using a sound handle.
+/// @param handle A sound handle.
+/// @return Returns the current playing position in seconds for a loaded sound.
 double func__sndgetpos(int32_t handle) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float playCursorSeconds = 0;
@@ -2199,16 +2199,15 @@ double func__sndgetpos(int32_t handle) {
         return playCursorSeconds;
     }
 
-    return 0;
+    return 0.0;
 }
 
-/// <summary>
-/// This changes the current/starting playing position in seconds of a sound.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="seconds">The position to set in seconds</param>
+/// @brief This changes the current/starting playing position in seconds of a sound.
+/// @param handle A sound handle.
+/// @param seconds The position to set in seconds.
 void sub__sndsetpos(int32_t handle, double seconds) {
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+        // TODO: Redo the whole thing in sample frames instead of seconds
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
         if (audioEngine.maResult != MA_SUCCESS)
@@ -2233,12 +2232,11 @@ void sub__sndsetpos(int32_t handle, double seconds) {
     }
 }
 
-/// <summary>
-/// This stops playing a sound after it has been playing for a set number of seconds.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="limit">The number of seconds that the sound will play</param>
+/// @brief This stops playing a sound after it has been playing for a set number of seconds.
+/// @param handle A sound handle.
+/// @param limit The number of seconds that the sound will play.
 void sub__sndlimit(int32_t handle, double limit) {
+    // TODO: Get the length in sample frames and then set the stop frame. Redo the whole thing in sample frames instead of seconds
     if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000);
     }
@@ -2311,12 +2309,10 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
     }
 }
 
-/// <summary>
-/// This function returns the length, in seconds, of a _SNDRAW sound currently queued.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <param name="passed">How many parameters were passed?</param>
-/// <returns></returns>
+/// @brief This function returns the length of a raw sound left to be played in seconds.
+/// @param handle A sound handle.
+/// @param passed Optional parameter flags.
+/// @return The length of the sound left to be played in seconds.
 double func__sndrawlen(int32_t handle, int32_t passed) {
     // Use the default raw handle if handle was not passed
     if (!passed)
@@ -2326,27 +2322,20 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
         return audioEngine.soundHandles[handle]->rawStream->GetTimeRemaining();
     }
 
-    return 0;
+    return 0.0;
 }
 
-/// <summary>
-/// This returns a sound handle to a newly created sound's raw data in memory with the given specification.
+/// @brief This returns a sound handle to a newly created sound's raw data in memory with the given specification.
 /// The user can then fill the buffer with whatever they want (using _MEMSOUND) and play it.
 /// This is basically the sound equivalent of _NEWIMAGE.
-/// </summary>
-/// <param name="frames">The number of sample frames required</param>
-/// <param name="channels">The number of sound channels. This can be 1 (mono) or 2 (stereo)/param>
-/// <param name="bits">The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32)</param>
-/// <returns>A new sound handle if successful or 0 on failure</returns>
-int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
-    if (!audioEngine.isInitialized || frames <= 0) {
-        AUDIO_DEBUG_CHECK(frames > 0);
-        return INVALID_SOUND_HANDLE;
-    }
-
+/// @param frames The number of sample frames required.
+/// @param channels The number of sound channels. This can be 1 (mono) or 2 (stereo).
+/// @param bits The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32).
+/// @return A new sound handle if successful or 0 on failure.
+int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits) {
     // Validate all parameters
-    if ((channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
-        AUDIO_DEBUG_PRINT("Invalid channels (%i) or bits (%i)", channels, bits);
+    if (!audioEngine.isInitialized || frames == 0 || (channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
+        AUDIO_DEBUG_PRINT("Invalid parameters: frames = %u, channels = %u, bits = %u", frames, channels, bits);
         return INVALID_SOUND_HANDLE;
     }
 
@@ -2364,8 +2353,7 @@ int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits) {
 
     // This currently has no effect. Sample rate always defaults to engine sample rate
     // Sample rate support for audio buffer is coming in miniaudio version 0.12
-    // Once we have support, we can add sample rate as an optional 4th parameter
-    // audioEngine.soundHandles[handle]->maAudioBufferConfig.sampleRate = audioEngine.sampleRate;
+    // audioEngine.soundHandles[handle]->maAudioBufferConfig.sampleRate = sampleRate;
 
     // Allocate and initialize ma_audio_buffer
     audioEngine.maResult =
@@ -2684,8 +2672,8 @@ void snd_un_init() {
         audioEngine.soundHandles.clear();
 
         // Invalidate internal handles
-        audioEngine.psgSnds.fill(-1);
-        audioEngine.sndInternalRaw = -1;
+        audioEngine.psgSnds.fill(INVALID_SOUND_HANDLE_INTERNAL);
+        audioEngine.sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL;
 
         // Shutdown miniaudio
         ma_engine_uninit(&audioEngine.maEngine);

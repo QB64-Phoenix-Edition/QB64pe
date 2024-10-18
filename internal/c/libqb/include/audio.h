@@ -28,24 +28,24 @@
 struct qbs;
 struct mem_block;
 
-void sub_sound(double frequency, double lengthInClockTicks, double volume, float panning, int32_t waveform, float waveformParam, int32_t passed);
 void sub_beep();
-void sub_play(const qbs *str);
-int32_t func_play(int32_t ignore);
+void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t passed);
+void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed);
+uint64_t func_play(int32_t voice, int32_t passed);
 
 int32_t func__sndrate();
 int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 void sub__sndclose(int32_t handle);
 int32_t func__sndcopy(int32_t src_handle);
 void sub__sndplay(int32_t handle);
-void sub__sndplaycopy(int32_t src_handle, double volume, double x, double y, double z, int32_t passed);
-void sub__sndplayfile(qbs *fileName, int32_t sync, double volume, int32_t passed);
+void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float z, int32_t passed);
+void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed);
 void sub__sndpause(int32_t handle);
 int32_t func__sndplaying(int32_t handle);
 int32_t func__sndpaused(int32_t handle);
 void sub__sndvol(int32_t handle, float volume);
 void sub__sndloop(int32_t handle);
-void sub__sndbal(int32_t handle, double x, double y, double z, int32_t channel, int32_t passed);
+void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int32_t passed);
 double func__sndlen(int32_t handle);
 double func__sndgetpos(int32_t handle);
 void sub__sndsetpos(int32_t handle, double seconds);
@@ -62,7 +62,7 @@ static inline void sub__sndrawdone(int32_t handle, int32_t passed) {
 double func__sndrawlen(int32_t handle, int32_t passed);
 
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
-int32_t func__sndnew(int32_t frames, int32_t channels, int32_t bits);
+int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits);
 void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 
 void snd_init();
