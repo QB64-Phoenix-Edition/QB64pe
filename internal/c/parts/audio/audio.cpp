@@ -542,7 +542,7 @@ struct AudioEngine {
 
         /// @brief Waits for any playback to complete
         void AwaitPlaybackCompletion() {
-            if (background)
+            if (background || rawStream->pause.load(std::memory_order_relaxed))
                 return; // no need to wait
 
             auto timeSec = rawStream->GetTimeRemaining() * 0.95 - 0.25; // per original QB64 behavior
@@ -1853,7 +1853,7 @@ struct AudioEngine {
     }
 };
 
-/// @brief Raw stream data source vtable
+/// @brief Raw stream data source vtable.
 const ma_data_source_vtable AudioEngine::RawStream::rawStreamDataSourceVtable = {
     AudioEngine::RawStream::OnRead,          // Returns a bunch of samples from a raw sample stream queue. The samples being returned is removed from the queue
     AudioEngine::RawStream::OnSeek,          // NOP for raw sample stream
@@ -1864,10 +1864,10 @@ const ma_data_source_vtable AudioEngine::RawStream::rawStreamDataSourceVtable = 
     0                                        // flags
 };
 
-// Global audio engine object
+// Global audio engine object.
 static AudioEngine audioEngine;
 
-/// @brief This generates a default 'beep' sound
+/// @brief This generates a default 'beep' sound using voice 1.
 void sub_beep() {
     if (is_error_pending() || !audioEngine.InitializePSG(0))
         return;
@@ -1885,11 +1885,39 @@ void sub_beep() {
 /// @param voice The voice to use (1 - 4 or -4 to -1 if playback needs to be held until the next call).
 /// @param passed Optional parameter flags.
 void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t passed) {
-    if (is_error_pending() || lengthInClockTicks == 0.0f || !audioEngine.InitializePSG(0))
+    if (is_error_pending() || lengthInClockTicks == 0.0f) {
         return;
+    }
 
+    // Validate mandatory parameters
     if ((frequency < 37.0f && frequency != 0.0f) || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return;
+    }
+
+    int32_t voiceAbs;
+    bool holdUntilNextCall;
+
+    if (passed & 16) {
+        voiceAbs = std::abs(voice);
+
+        if (voiceAbs < 1 || voiceAbs > AudioEngine::PSG_COUNT) {
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+            return;
+        }
+
+        --voiceAbs;                    // make it 0 based
+        holdUntilNextCall = voice < 0; // if this is true then the sound is held until the next call when it is checked again
+    } else {
+        voiceAbs = 0; // use voice 1 by default
+        holdUntilNextCall = false;
+    }
+
+    AUDIO_DEBUG_PRINT("Using voice %d", voiceAbs);
+
+    if (!audioEngine.InitializePSG(voiceAbs)) {
+        AUDIO_DEBUG_PRINT("Failed to initialize PSG for voice %d", voiceAbs);
+
         return;
     }
 
@@ -1898,7 +1926,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psgs[0]->SetAmplitude(volume);
+        audioEngine.psgs[voiceAbs]->SetAmplitude(volume);
     }
 
     if (passed & 2) {
@@ -1906,7 +1934,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psgs[0]->SetPanning(panning);
+        audioEngine.psgs[voiceAbs]->SetPanning(panning);
     }
 
     if (passed & 4) {
@@ -1915,7 +1943,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psgs[0]->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
+        audioEngine.psgs[voiceAbs]->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
     }
 
     if (passed & 8) {
@@ -1924,10 +1952,26 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psgs[0]->SetWaveformParameter(waveformParam);
+        audioEngine.psgs[voiceAbs]->SetWaveformParameter(waveformParam);
     }
 
-    audioEngine.psgs[0]->Sound(frequency, lengthInClockTicks);
+    if (holdUntilNextCall) {
+        AUDIO_DEBUG_PRINT("Holding voice %d until next call", voiceAbs);
+
+        audioEngine.soundHandles[audioEngine.psgSnds[voiceAbs]]->rawStream->pause.store(true, std::memory_order_relaxed);
+    } else {
+        // Let go off the flood gates
+        AUDIO_DEBUG_PRINT("Playing voice %d and all previously held voices", voiceAbs);
+
+        for (size_t i = 0; i < AudioEngine::PSG_COUNT; i++) {
+            if (audioEngine.psgs[i]) {
+                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgSnds[i]);
+                audioEngine.soundHandles[audioEngine.psgSnds[i]]->rawStream->pause.store(false, std::memory_order_relaxed);
+            }
+        }
+    }
+
+    audioEngine.psgs[voiceAbs]->Sound(frequency, lengthInClockTicks);
 }
 
 /// @brief Returns the number of sample frames or seconds left to play.
