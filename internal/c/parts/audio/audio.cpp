@@ -21,1394 +21,1372 @@
 #include "mutex.h"
 #include "qbs.h"
 
-// This is what is returned to the caller by CreateHandle() if handle allocation fails
-#define INVALID_SOUND_HANDLE_INTERNAL -1
+/// @brief This is the top-level class that implements the QB64-PE audio engine.
+struct AudioEngine {
+    /// @brief A miniaudio raw audio stream datasource
+    struct RawStream {
+        ma_data_source_base maDataSource;         // miniaudio data source (this must be the first member of our struct)
+        ma_data_source_config maDataSourceConfig; // config struct for the data source
+        ma_engine *maEngine;                      // pointer to a ma_engine object that was passed while creating the data source
+        ma_sound *maSound;                        // pointer to a ma_sound object that was passed while creating the data source
+        ma_uint32 sampleRate;                     // the sample rate reported by ma_engine
+        struct Buffer {                           // we'll give this a name that we'll use below
+            std::vector<SampleFrame> data;        // this holds the actual sample frames
+            size_t cursor;                        // the read cursor (in frames) in the stream
+        } buffer[2];                              // we need two of these to do a proper ping-pong
+        Buffer *consumer;                         // this is what the miniaudio thread will use to pull data from
+        Buffer *producer;                         // this is what the main thread will use to push data to
+        libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
+        bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
+        std::atomic<bool> pause;                  // set this to true to pause the stream (only silence samples will be sent to miniaudio)
 
-// This is returned to the caller if handle allocation fails with a -1
-// CreateHandle() does not return 0 because it is a valid internal handle
-// Handle 0 is 'handled' as a special case
-#define INVALID_SOUND_HANDLE 0
+        static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amount what miniaudio actually asks for in frameCount
 
-/// @brief A miniaudiio raw audio stream datasource
-struct RawStream {
-    ma_data_source_base maDataSource;         // miniaudio data source (this must be the first member of our struct)
-    ma_data_source_config maDataSourceConfig; // config struct for the data source
-    ma_engine *maEngine;                      // pointer to a ma_engine object that was passed while creating the data source
-    ma_sound *maSound;                        // pointer to a ma_sound object that was passed while creating the data source
-    ma_uint32 sampleRate;                     // the sample rate reported by ma_engine
-    struct Buffer {                           // we'll give this a name that we'll use below
-        std::vector<SampleFrame> data;        // this holds the actual sample frames
-        size_t cursor;                        // the read cursor (in frames) in the stream
-    } buffer[2];                              // we need two of these to do a proper ping-pong
-    Buffer *consumer;                         // this is what the miniaudio thread will use to pull data from
-    Buffer *producer;                         // this is what the main thread will use to push data to
-    libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
-    bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
-    std::atomic<bool> pause;                  // set this to true to pause the stream (only silence samples will be sent to miniaudio)
+        // Delete default, copy and move constructors and assignments
+        RawStream() = delete;
+        RawStream(const RawStream &) = delete;
+        RawStream &operator=(const RawStream &) = delete;
+        RawStream &operator=(RawStream &&) = delete;
+        RawStream(RawStream &&) = delete;
 
-    static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amount what miniaudio actually asks for in frameCount
-
-    // Delete default, copy and move constructors and assignments
-    RawStream() = delete;
-    RawStream(const RawStream &) = delete;
-    RawStream &operator=(const RawStream &) = delete;
-    RawStream &operator=(RawStream &&) = delete;
-    RawStream(RawStream &&) = delete;
-
-    /// @brief This is use to setup the vectors, mutex and set some defaults
-    RawStream(ma_engine *pmaEngine, ma_sound *pmaSound) {
-        maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QB64-PE sound handle)
-        maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
-        sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
-        buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
-        buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
-        buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
-        consumer = &buffer[0];                            // set default consumer
-        producer = &buffer[1];                            // set default producer
-        stop = false;                                     // we will send silent samples to keep the playback going by default
-        pause.store(false, std::memory_order_relaxed);    // the steam will not be paused by default
-        m = libqb_mutex_new();
-    }
-
-    /// @brief We use this to destroy the mutex
-    ~RawStream() { libqb_mutex_free(m); }
-
-    /// @brief This swaps the consumer and producer Buffers. This is mutex protected and called by the miniaudio thread
-    void SwapBuffers() {
-        libqb_mutex_guard lock(m);     // lock the mutex before accessing the vectors
-        consumer->cursor = 0;          // reset the cursor
-        consumer->data.clear();        // clear the consumer vector
-        std::swap(consumer, producer); // quickly swap the Buffer pointers
-    }
-
-    /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
-    /// @param l Sample frame left channel data
-    /// @param r Sample frame right channel data
-    void PushSampleFrame(float l, float r) {
-        libqb_mutex_guard lock(m);        // lock the mutex before accessing the vectors
-        producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
-    }
-
-    /// @brief This pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread
-    /// @param buffer The buffer containing the sample frames. This cannot be NULL
-    /// @param frames The total number of frames in the buffer
-    /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right))
-    void PushMonoSampleFrames(float *buffer, ma_uint64 frames, float panning = 0.0f) {
-        libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
-        for (ma_uint64 i = 0; i < frames; i++) {
-            producer->data.push_back({(buffer[i] * (1.0f - panning)) / 2.0f, (buffer[i] * (1.0f + panning)) / 2.0f});
-        }
-    }
-
-    /// @brief Returns the length, in sample frames of sound queued
-    /// @return The length left to play in sample frames
-    ma_uint64 GetSampleFramesRemaining() {
-        libqb_mutex_guard lock(m);                                                                      // lock the mutex before accessing the vectors
-        return (consumer->data.size() - consumer->cursor) + (producer->data.size() - producer->cursor); // sum of producer and consumer sample frames
-    }
-
-    /// @brief Returns the length, in seconds of sound queued
-    /// @return The length left to play in seconds
-    double GetTimeRemaining() { return (double)GetSampleFramesRemaining() / (double)sampleRate; }
-};
-
-/// @brief This is what is used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue
-/// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
-/// @param pFramesOut The sample frames sent to miniaudio
-/// @param frameCount The sample frame count requested by miniaudio
-/// @param pFramesRead The sample frame count that was actually sent (this must not exceed frameCount)
-/// @return MA_SUCCESS on success or an appropriate MA_FAILED_* value on failure
-static ma_result RawStreamOnRead(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead) {
-    if (pFramesRead)
-        *pFramesRead = 0;
-
-    if (frameCount == 0)
-        return MA_INVALID_ARGS;
-
-    if (!pDataSource)
-        return MA_INVALID_ARGS;
-
-    auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
-    auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
-    auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
-    ma_uint64 sampleFramesRead;
-
-    if (pRawStream->pause.load(std::memory_order_relaxed)) {
-        // Just play silence if we are paused
-        std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
-        sampleFramesRead = frameCount;
-    } else {
-        sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
-        // Swap buffers if we do not have anything left to play
-        if (!sampleFramesRead) {
-            pRawStream->SwapBuffers();
-            sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
+        /// @brief This is use to setup the vectors, mutex and set some defaults
+        RawStream(ma_engine *pmaEngine, ma_sound *pmaSound) {
+            maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QB64-PE sound handle)
+            maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
+            sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
+            buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
+            buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
+            buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
+            consumer = &buffer[0];                            // set default consumer
+            producer = &buffer[1];                            // set default producer
+            stop = false;                                     // we will send silent samples to keep the playback going by default
+            pause.store(false, std::memory_order_relaxed);    // the steam will not be paused by default
+            m = libqb_mutex_new();
         }
 
-        sampleFramesRead = std::min(sampleFramesRead, frameCount); // we'll always send lower of what miniaudio wants or what we have
+        /// @brief We use this to destroy the mutex
+        ~RawStream() { libqb_mutex_free(m); }
 
-        if (sampleFramesRead) {
-            // Now send the samples to miniaudio
-            std::copy(pRawStream->consumer->data.data() + pRawStream->consumer->cursor,
-                      pRawStream->consumer->data.data() + pRawStream->consumer->cursor + sampleFramesRead, maBuffer);
+        /// @brief This swaps the consumer and producer Buffers. This is mutex protected and called by the miniaudio thread
+        void SwapBuffers() {
+            libqb_mutex_guard lock(m);     // lock the mutex before accessing the vectors
+            consumer->cursor = 0;          // reset the cursor
+            consumer->data.clear();        // clear the consumer vector
+            std::swap(consumer, producer); // quickly swap the Buffer pointers
+        }
 
-            pRawStream->consumer->cursor += sampleFramesRead; // increment the read cursor
-        } else {
-            if (pRawStream->stop) {
-                // End of stream was signalled
-                result = MA_AT_END;
-            } else {
-                // To keep the stream going, play silence if there are no frames to play
+        /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
+        /// @param l Sample frame left channel data
+        /// @param r Sample frame right channel data
+        void PushSampleFrame(float l, float r) {
+            libqb_mutex_guard lock(m);        // lock the mutex before accessing the vectors
+            producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
+        }
+
+        /// @brief This pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread
+        /// @param buffer The buffer containing the sample frames. This cannot be NULL
+        /// @param frames The total number of frames in the buffer
+        /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right))
+        void PushMonoSampleFrames(float *buffer, ma_uint64 frames, float panning = 0.0f) {
+            libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+            for (ma_uint64 i = 0; i < frames; i++) {
+                producer->data.push_back({(buffer[i] * (1.0f - panning)) / 2.0f, (buffer[i] * (1.0f + panning)) / 2.0f});
+            }
+        }
+
+        /// @brief Returns the length, in sample frames of sound queued
+        /// @return The length left to play in sample frames
+        ma_uint64 GetSampleFramesRemaining() {
+            libqb_mutex_guard lock(m);                                                                      // lock the mutex before accessing the vectors
+            return (consumer->data.size() - consumer->cursor) + (producer->data.size() - producer->cursor); // sum of producer and consumer sample frames
+        }
+
+        /// @brief Returns the length, in seconds of sound queued
+        /// @return The length left to play in seconds
+        double GetTimeRemaining() { return (double)GetSampleFramesRemaining() / (double)sampleRate; }
+
+        /// @brief This is what is used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue
+        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
+        /// @param pFramesOut The sample frames sent to miniaudio
+        /// @param frameCount The sample frame count requested by miniaudio
+        /// @param pFramesRead The sample frame count that was actually sent (this must not exceed frameCount)
+        /// @return MA_SUCCESS on success or an appropriate MA_FAILED_* value on failure
+        static ma_result OnRead(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead) {
+            if (pFramesRead)
+                *pFramesRead = 0;
+
+            if (frameCount == 0)
+                return MA_INVALID_ARGS;
+
+            if (!pDataSource)
+                return MA_INVALID_ARGS;
+
+            auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
+            auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
+            auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
+            ma_uint64 sampleFramesRead;
+
+            if (pRawStream->pause.load(std::memory_order_relaxed)) {
+                // Just play silence if we are paused
                 std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
                 sampleFramesRead = frameCount;
+            } else {
+                sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
+                // Swap buffers if we do not have anything left to play
+                if (!sampleFramesRead) {
+                    pRawStream->SwapBuffers();
+                    sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
+                }
+
+                sampleFramesRead = std::min(sampleFramesRead, frameCount); // we'll always send lower of what miniaudio wants or what we have
+
+                if (sampleFramesRead) {
+                    // Now send the samples to miniaudio
+                    std::copy(pRawStream->consumer->data.data() + pRawStream->consumer->cursor,
+                              pRawStream->consumer->data.data() + pRawStream->consumer->cursor + sampleFramesRead, maBuffer);
+
+                    pRawStream->consumer->cursor += sampleFramesRead; // increment the read cursor
+                } else {
+                    if (pRawStream->stop) {
+                        // End of stream was signalled
+                        result = MA_AT_END;
+                    } else {
+                        // To keep the stream going, play silence if there are no frames to play
+                        std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
+                        sampleFramesRead = frameCount;
+                    }
+                }
+            }
+
+            if (pFramesRead)
+                *pFramesRead = sampleFramesRead;
+
+            return result;
+        }
+
+        /// @brief This is a dummy callback function which just tells miniaudio that it succeeded
+        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
+        /// @param frameIndex The frame index to seek to (unused)
+        /// @return Always MA_SUCCESS
+        static ma_result OnSeek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
+            // NOP. Just pretend to be successful.
+            (void)pDataSource;
+            (void)frameIndex;
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Returns the audio format to miniaudio
+        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
+        /// @param pFormat The ma_format to use (we always return ma_format_f32 because that is what QB64 uses)
+        /// @param pChannels The number of audio channels (always 2 - stereo)
+        /// @param pSampleRate The sample rate of the stream (we always return the engine sample rate)
+        /// @param pChannelMap Sent to ma_channel_map_init_standard
+        /// @param channelMapCap Sent to ma_channel_map_init_standard
+        /// @return Always MA_SUCCESS
+        static ma_result OnGetDataFormat(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate, ma_channel *pChannelMap,
+                                         size_t channelMapCap) {
+            auto pRawStream = (RawStream *)pDataSource;
+
+            if (pFormat)
+                *pFormat = ma_format::ma_format_f32; // QB64 SndRaw API uses FP32 samples
+
+            if (pChannels)
+                *pChannels = 2; // stereo
+
+            if (pSampleRate)
+                *pSampleRate = pRawStream->sampleRate; // we'll play at the audio engine sampling rate
+
+            if (pChannelMap)
+                ma_channel_map_init_standard(ma_standard_channel_map_default, pChannelMap, channelMapCap, 2); // stereo
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Raw stream data source vtable
+        static const ma_data_source_vtable rawStreamDataSourceVtable;
+
+        /// @brief This creates, initializes and sets up a raw stream for playback
+        /// @param pmaEngine This should come from the QB64-PE sound engine
+        /// @param pmaSound This should come from a QB64-PE sound handle
+        /// @return Returns a pointer to a data source if successful, NULL otherwise
+        static RawStream *Create(ma_engine *pmaEngine, ma_sound *pmaSound) {
+            if (!pmaEngine || !pmaSound) { // these should not be NULL
+                AUDIO_DEBUG_PRINT("Invalid arguments");
+
+                return nullptr;
+            }
+
+            auto pRawStream = new RawStream(pmaEngine, pmaSound); // create the data source object
+            if (!pRawStream) {
+                AUDIO_DEBUG_PRINT("Failed to create data source");
+
+                return nullptr;
+            }
+
+            ZERO_VARIABLE(pRawStream->maDataSource);
+
+            pRawStream->maDataSourceConfig = ma_data_source_config_init();
+            pRawStream->maDataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
+
+            auto result = ma_data_source_init(&pRawStream->maDataSourceConfig, &pRawStream->maDataSource);
+            if (result != MA_SUCCESS) {
+                AUDIO_DEBUG_PRINT("Error %i: failed to initialize data source", result);
+
+                delete pRawStream;
+
+                return nullptr;
+            }
+
+            result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->maDataSource, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
+                                                    pmaSound); // attach data source to the ma_sound
+            if (result != MA_SUCCESS) {
+                AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound from data source", result);
+
+                delete pRawStream;
+
+                return nullptr;
+            }
+
+            result = ma_sound_start(pmaSound); // play the ma_sound
+            if (result != MA_SUCCESS) {
+                AUDIO_DEBUG_PRINT("Error %i: failed to start sound playback", result);
+
+                ma_sound_uninit(pmaSound); // delete the ma_sound object
+
+                delete pRawStream;
+
+                return nullptr;
+            }
+
+            AUDIO_DEBUG_PRINT("Raw sound stream created");
+
+            return pRawStream;
+        }
+
+        /// @brief Stops and then frees a raw stream data source previously created with RawStreamCreate()
+        /// @param pRawStream Pointer to the data source object
+        static void Destroy(RawStream *pRawStream) {
+            if (pRawStream) {
+                auto result = ma_sound_stop(pRawStream->maSound); // stop playback
+                AUDIO_DEBUG_CHECK(result == MA_SUCCESS);
+
+                ma_sound_uninit(pRawStream->maSound); // delete the ma_sound object
+
+                delete pRawStream; // delete the raw stream object
+
+                AUDIO_DEBUG_PRINT("Raw sound stream destroyed");
             }
         }
-    }
+    };
 
-    if (pFramesRead)
-        *pFramesRead = sampleFramesRead;
+    /// @brief This is a PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY
+    class PSG {
+      public:
+        /// @brief Various types of waveform that can be generated
+        enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, COUNT };
 
-    return result;
-}
+        static constexpr auto PAN_LEFT = -1.0f;
+        static constexpr auto PAN_RIGHT = 1.0f;
+        static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT;
+        static constexpr auto VOLUME_MIN = 0.0f;
+        static constexpr auto VOLUME_MAX = 1.0f;
+        static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;
+        static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;
 
-/// @brief This is a dummy callback function which just tells miniaudio that it succeeded
-/// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
-/// @param frameIndex The frame index to seek to (unused)
-/// @return Always MA_SUCCESS
-static ma_result RawStreamOnSeek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
-    // NOP. Just pretend to be successful.
-    (void)pDataSource;
-    (void)frameIndex;
-
-    return MA_SUCCESS;
-}
-
-/// @brief Returns the audio format to miniaudio
-/// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
-/// @param pFormat The ma_format to use (we always return ma_format_f32 because that is what QB64 uses)
-/// @param pChannels The number of audio channels (always 2 - stereo)
-/// @param pSampleRate The sample rate of the stream (we always return the engine sample rate)
-/// @param pChannelMap Sent to ma_channel_map_init_standard
-/// @param channelMapCap Sent to ma_channel_map_init_standard
-/// @return Always MA_SUCCESS
-static ma_result RawStreamOnGetDataFormat(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate,
-                                          ma_channel *pChannelMap, size_t channelMapCap) {
-    auto pRawStream = (RawStream *)pDataSource;
-
-    if (pFormat)
-        *pFormat = ma_format::ma_format_f32; // QB64 SndRaw API uses FP32 samples
-
-    if (pChannels)
-        *pChannels = 2; // stereo
-
-    if (pSampleRate)
-        *pSampleRate = pRawStream->sampleRate; // we'll play at the audio engine sampling rate
-
-    if (pChannelMap)
-        ma_channel_map_init_standard(ma_standard_channel_map_default, pChannelMap, channelMapCap, 2); // stereo
-
-    return MA_SUCCESS;
-}
-
-/// @brief Raw stream data source vtable
-static ma_data_source_vtable rawStreamDataSourceVtable = {
-    RawStreamOnRead,          // Returns a bunch of samples from a raw sample stream queue. The samples being returned is removed from the queue
-    RawStreamOnSeek,          // NOP for raw sample stream
-    RawStreamOnGetDataFormat, // Returns the audio format to miniaudio
-    NULL,                     // No notion of a cursor for raw sample stream
-    NULL,                     // No notion of a length for raw sample stream
-    NULL,                     // Cannot loop raw sample stream
-    0                         // flags
-};
-
-/// @brief This creates, initializes and sets up a raw stream for playback
-/// @param pmaEngine This should come from the QB64-PE sound engine
-/// @param pmaSound This should come from a QB64-PE sound handle
-/// @return Returns a pointer to a data source if successful, NULL otherwise
-static RawStream *RawStreamCreate(ma_engine *pmaEngine, ma_sound *pmaSound) {
-    if (!pmaEngine || !pmaSound) { // these should not be NULL
-        AUDIO_DEBUG_PRINT("Invalid arguments");
-
-        return nullptr;
-    }
-
-    auto pRawStream = new RawStream(pmaEngine, pmaSound); // create the data source object
-    if (!pRawStream) {
-        AUDIO_DEBUG_PRINT("Failed to create data source");
-
-        return nullptr;
-    }
-
-    ZERO_VARIABLE(pRawStream->maDataSource);
-
-    pRawStream->maDataSourceConfig = ma_data_source_config_init();
-    pRawStream->maDataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
-
-    auto result = ma_data_source_init(&pRawStream->maDataSourceConfig, &pRawStream->maDataSource);
-    if (result != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("Error %i: failed to initialize data source", result);
-
-        delete pRawStream;
-
-        return nullptr;
-    }
-
-    result = ma_sound_init_from_data_source(pmaEngine, &pRawStream->maDataSource, MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
-                                            pmaSound); // attach data source to the ma_sound
-    if (result != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound from data source", result);
-
-        delete pRawStream;
-
-        return nullptr;
-    }
-
-    result = ma_sound_start(pmaSound); // play the ma_sound
-    if (result != MA_SUCCESS) {
-        AUDIO_DEBUG_PRINT("Error %i: failed to start sound playback", result);
-
-        ma_sound_uninit(pmaSound); // delete the ma_sound object
-
-        delete pRawStream;
-
-        return nullptr;
-    }
-
-    AUDIO_DEBUG_PRINT("Raw sound stream created");
-
-    return pRawStream;
-}
-
-/// @brief Stops and then frees a raw stream data source previously created with RawStreamCreate()
-/// @param pRawStream Pointer to the data source object
-static void RawStreamDestroy(RawStream *pRawStream) {
-    if (pRawStream) {
-        auto result = ma_sound_stop(pRawStream->maSound); // stop playback
-        AUDIO_DEBUG_CHECK(result == MA_SUCCESS);
-
-        ma_sound_uninit(pRawStream->maSound); // delete the ma_sound object
-
-        delete pRawStream; // delete the raw stream object
-
-        AUDIO_DEBUG_PRINT("Raw sound stream destroyed");
-    }
-}
-
-/// @brief This is a PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY
-class PSG {
-  public:
-    /// @brief Various types of waveform that can be generated
-    enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, COUNT };
-
-    static constexpr auto PAN_LEFT = -1.0f;
-    static constexpr auto PAN_RIGHT = 1.0f;
-    static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT;
-    static constexpr auto VOLUME_MIN = 0.0f;
-    static constexpr auto VOLUME_MAX = 1.0f;
-    static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;
-    static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;
-
-  private:
-    // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
-    // These mostly conform to the QBasic and QB64 spec.
-    static const auto DEFAULT_WAVEFORM_TYPE = WaveformType::TRIANGLE;
-    static constexpr auto DEFAULT_FREQUENCY = 440.0;
-    static constexpr auto MAX_MML_VOLUME = 100.0;
-    static constexpr auto DEFAULT_MML_VOLUME = MAX_MML_VOLUME / 2;
-    static const auto QB_FREQUENCY_LIMIT = 20000;
-    static const auto MIN_TEMPO = 32;
-    static const auto MAX_TEMPO = 255;
-    static const auto DEFAULT_TEMPO = 120;
-    static const auto MAX_OCTAVE = 6;
-    static const auto DEFAULT_OCTAVE = 4;
-    static const auto MIN_LENGTH = 1;
-    static const auto MAX_LENGTH = 64;
-    static constexpr auto DEFAULT_LENGTH = 4.0;
-    static constexpr auto DEFAULT_PAUSE = 1.0 / 8.0;
-    static const auto MAX_VOLUME_RAMP_DURATION_MS = 60000;
-    static constexpr auto MAX_VOLUME_RAMP_DURATION = MAX_VOLUME_RAMP_DURATION_MS / 1000.0f;
-    static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.005f;
-    static constexpr auto BEEP_FREQUENCY = 900.0;
-    static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
-    static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
-    static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
-    static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;
-
-    class NoiseGenerator {
       private:
-        static const auto BASE_SAMPLE_RATE = 48000;
+        // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
+        // These mostly conform to the QBasic and QB64 spec.
+        static const auto DEFAULT_WAVEFORM_TYPE = WaveformType::TRIANGLE;
+        static constexpr auto DEFAULT_FREQUENCY = 440.0;
+        static constexpr auto MAX_MML_VOLUME = 100.0;
+        static constexpr auto DEFAULT_MML_VOLUME = MAX_MML_VOLUME / 2;
+        static const auto QB_FREQUENCY_LIMIT = 20000;
+        static const auto MIN_TEMPO = 32;
+        static const auto MAX_TEMPO = 255;
+        static const auto DEFAULT_TEMPO = 120;
+        static const auto MAX_OCTAVE = 6;
+        static const auto DEFAULT_OCTAVE = 4;
+        static const auto MIN_LENGTH = 1;
+        static const auto MAX_LENGTH = 64;
+        static constexpr auto DEFAULT_LENGTH = 4.0;
+        static constexpr auto DEFAULT_PAUSE = 1.0 / 8.0;
+        static const auto MAX_VOLUME_RAMP_DURATION_MS = 60000;
+        static constexpr auto MAX_VOLUME_RAMP_DURATION = MAX_VOLUME_RAMP_DURATION_MS / 1000.0f;
+        static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.005f;
+        static constexpr auto BEEP_FREQUENCY = 900.0;
+        static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
+        static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
+        static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
+        static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;
+
+        class NoiseGenerator {
+          private:
+            static const auto BASE_SAMPLE_RATE = 48000;
+
+          public:
+            static const auto DEFAULT_CLOCK_RATE = BASE_SAMPLE_RATE >> 2;
+
+            NoiseGenerator() = delete;
+            NoiseGenerator(const NoiseGenerator &) = delete;
+            NoiseGenerator &operator=(const NoiseGenerator &) = delete;
+            NoiseGenerator &operator=(NoiseGenerator &&) = delete;
+            NoiseGenerator(NoiseGenerator &&) = delete;
+
+            NoiseGenerator(uint32_t clockRate, uint32_t seed, uint32_t systemSampleRate)
+                : seed(seed), clockRate(clockRate), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE_SAMPLE),
+                  amplitude(float(DEFAULT_MML_VOLUME / MAX_MML_VOLUME)) {
+                resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
+                updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
+            }
+
+            void SetClockRate(uint32_t clockRate) {
+                this->clockRate = clockRate;
+                updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
+            }
+
+            void SetFrequency(uint32_t frequency) {
+                this->frequency = std::max(frequency, 1u);
+                updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
+                counter = 0;
+            }
+
+            void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX); }
+
+            float GenerateSample() {
+                if (counter >= updateInterval) {
+                    StepLFSR();
+                    counter = 0;
+                } else {
+                    counter++;
+                }
+
+                return amplitude * currentSample;
+            }
+
+            uint32_t seed;
+            uint32_t clockRate;
+            uint32_t updateInterval;
+            uint32_t counter;
+            uint32_t frequency;
+            float currentSample;
+            float amplitude;
+            float resampleRatio;
+
+            void StepLFSR() {
+                uint32_t temp = (seed ^ (seed >> 2) ^ (seed >> 3) ^ (seed >> 5)) & 1;
+                seed = (seed >> 1) | (temp << 31);
+                currentSample = int32_t(seed) / 2147483648.0f;
+            }
+        };
+
+        /// @brief This struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used)
+        struct State {
+            const uint8_t *byte; // pointer to a byte in an MML string
+            int32_t length;      // this needs to be signed
+        };
+
+        RawStream *rawStream;                  // this is the RawStream where the samples data will be pushed to
+        ma_waveform_config maWaveformConfig;   // miniaudio waveform configuration
+        ma_waveform maWaveform;                // miniaudio waveform
+        ma_noise_config maWhiteNoiseConfig;    // miniaudio white noise configuration
+        ma_noise maWhiteNoise;                 // miniaudio white noise
+        ma_noise_config maPinkNoiseConfig;     // miniaudio pink noise configuration
+        ma_noise maPinkNoise;                  // miniaudio pink noise
+        ma_noise_config maBrownianNoiseConfig; // miniaudio brownian noise configuration
+        ma_noise maBrownianNoise;              // miniaudio brownian noise
+        NoiseGenerator *noise;                 // LFSR noise generator
+        ma_pulsewave_config maPulseWaveConfig; // miniaudio pulse wave configuration
+        ma_pulsewave maPulseWave;              // miniaudio pulse wave
+        ma_result maResult;                    // result of the last miniaudio operation
+        std::vector<float> noteBuffer;         // note frames are rendered here temporarily before it is mixed to waveBuffer
+        std::vector<float> waveBuffer;         // this is where the waveform is rendered / mixed before being pushed to RawStream
+        ma_uint64 mixCursor;                   // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
+        WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
+        float volumeRampDuration;              // the volume ramping duration (this can be changed by the user)
+        bool background;                       // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
+        float panning;                         // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
+        std::stack<State> stateStack;          // this maintains the state stack if we need to process substrings (VARPTR$)
+        State currentState;                    // this is the current state. See State struct
+        int tempo;                             // the tempo of the MML tune (this impacts all lengths)
+        int octave;                            // the current octave that we'll use for MML notes
+        double length;                         // the length of each MML note (1 = full, 4 = quarter etc.)
+        double pause;                          // the duration of silence after an MML note (this eats away from the note length)
+        double duration;                       // the duration of a sound / MML note / silence (in seconds)
+        int dots;                              // the dots after a note or a pause that increases the duration
+        bool playIt;                           // flag that is set when the buffer can be played
+
+        /// @brief Generates a waveform to waveBuffer starting at the mixCursor sample location.
+        /// The buffer must be resized before calling this. We could have resized waveBuffer inside this.
+        /// However, PLAY supports stuff like staccato etc. that needs some silence after the waveform.
+        /// So it makes sense for the calling function to do the resize before calling this
+        /// @param waveDuration The duration of the waveform in seconds
+        /// @param mix Mixes the generated waveform to the buffer instead of overwriting it
+        void GenerateWaveform(double waveDuration, bool mix = false) {
+            auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
+
+            if (!neededFrames || maWaveform.config.frequency >= QB_FREQUENCY_LIMIT || mixCursor + neededFrames > waveBuffer.size()) {
+                AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
+                                  mixCursor);
+                return; // nothing to do
+            }
+
+            maResult = MA_SUCCESS;
+            ma_uint64 generatedFrames = neededFrames;        // assume we'll generate all the frames we need
+            noteBuffer.assign(neededFrames, SILENCE_SAMPLE); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
+
+            // Generate to the temp buffer and then we'll mix later
+            switch (waveformType) {
+            case WaveformType::NONE:
+                // NOP
+                break;
+
+            case WaveformType::SQUARE:
+            case WaveformType::SAWTOOTH:
+            case WaveformType::TRIANGLE:
+            case WaveformType::SINE:
+                maResult = ma_waveform_read_pcm_frames(&maWaveform, noteBuffer.data(), neededFrames, &generatedFrames);
+                break;
+
+            case WaveformType::NOISE_WHITE:
+                maResult = ma_noise_read_pcm_frames(&maWhiteNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+                break;
+
+            case WaveformType::NOISE_PINK:
+                maResult = ma_noise_read_pcm_frames(&maPinkNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+                break;
+
+            case WaveformType::NOISE_BROWNIAN:
+                maResult = ma_noise_read_pcm_frames(&maBrownianNoise, noteBuffer.data(), neededFrames, &generatedFrames);
+                break;
+
+            case WaveformType::NOISE_LFSR:
+                for (size_t i = 0; i < neededFrames; i++) {
+                    noteBuffer[i] = noise->GenerateSample();
+                }
+                break;
+
+            case WaveformType::PULSE:
+                maResult = ma_pulsewave_read_pcm_frames(&maPulseWave, noteBuffer.data(), neededFrames, &generatedFrames);
+                break;
+
+            case WaveformType::COUNT:
+            default:
+                // NOP
+                break;
+            }
+
+            if (maResult != MA_SUCCESS) {
+                AUDIO_DEBUG_PRINT("maResult = %i", maResult);
+                return; // something went wrong
+            }
+
+            // Apply volume ramping to the generated waveform to remove click and pops
+            auto rampFrames = volumeRampDuration * rawStream->sampleRate;
+            auto destination = waveBuffer.data() + mixCursor;
+
+            if (mix) {
+                // Mix the samples to the buffer
+                for (size_t i = 0; i < generatedFrames; i++) {
+                    // Calculate the ramp factor based on the current frame position
+                    auto rampFactor = 1.0f;
+                    if (i < rampFrames) {
+                        rampFactor = (float)i / rampFrames;
+                    } else if (i >= generatedFrames - rampFrames) {
+                        rampFactor = (float)(generatedFrames - i) / rampFrames;
+                    }
+
+                    destination[i] += noteBuffer[i] * rampFactor; // apply the ramp factor to the sample and mix it with the destination buffer
+                }
+
+                AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames mixed = %llu", int(waveformType), neededFrames, generatedFrames);
+            } else {
+                // Copy the samples to the buffer
+                for (size_t i = 0; i < generatedFrames; i++) {
+                    // Calculate the ramp factor based on the current frame position
+                    auto rampFactor = 1.0f;
+                    if (i < rampFrames) {
+                        rampFactor = (float)i / rampFrames;
+                    } else if (i >= generatedFrames - rampFrames) {
+                        rampFactor = (float)(generatedFrames - i) / rampFrames;
+                    }
+
+                    destination[i] = noteBuffer[i] * rampFactor; // apply the ramp factor to the sample
+                }
+
+                AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames generated = %llu", int(waveformType), neededFrames, generatedFrames);
+            }
+        }
+
+        /// @brief Sets the frequency of the waveform
+        /// @param frequency The frequency of the waveform
+        void SetFrequency(double frequency) {
+            maResult = ma_waveform_set_frequency(&maWaveform, frequency);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            maResult = ma_pulsewave_set_frequency(&maPulseWave, frequency);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            noise->SetFrequency(uint32_t(frequency));
+        }
+
+        /// @brief Sends the buffer for playback
+        void PushBufferForPlayback() {
+            if (!waveBuffer.empty()) {
+                rawStream->PushMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+
+                AUDIO_DEBUG_PRINT("Sent %llu samples for playback", waveBuffer.size());
+
+                waveBuffer.clear(); // set the buffer size to zero
+                mixCursor = 0;      // reset the cursor
+            }
+        }
+
+        /// @brief Waits for any playback to complete
+        void AwaitPlaybackCompletion() {
+            if (background)
+                return; // no need to wait
+
+            auto timeSec = rawStream->GetTimeRemaining() * 0.95 - 0.25; // per original QB64 behavior
+
+            AUDIO_DEBUG_PRINT("Waiting %f seconds for playback to complete", timeSec);
+
+            if (timeSec > 0)
+                sub__delay(timeSec); // we are using sub_delay() because ON TIMER and other events may need to be called while we are waiting
+
+            AUDIO_DEBUG_PRINT("Playback complete");
+        }
 
       public:
-        static const auto DEFAULT_CLOCK_RATE = BASE_SAMPLE_RATE >> 2;
+        // Delete default, copy and move constructors and assignments
+        PSG() = delete;
+        PSG(const PSG &) = delete;
+        PSG &operator=(const PSG &) = delete;
+        PSG &operator=(PSG &&) = delete;
+        PSG(PSG &&) = delete;
 
-        NoiseGenerator() = delete;
-        NoiseGenerator(const NoiseGenerator &) = delete;
-        NoiseGenerator &operator=(const NoiseGenerator &) = delete;
-        NoiseGenerator &operator=(NoiseGenerator &&) = delete;
-        NoiseGenerator(NoiseGenerator &&) = delete;
+        /// @brief The only constructor
+        /// @param pRawStream A valid RawStream object pointer. This cannot be NULL
+        /// @param pWaveform A valid Waveform object pointer. This cannot be NULL
+        PSG(RawStream *pRawStream) {
+            rawStream = pRawStream; // save the RawStream object pointer
+            mixCursor = 0;
+            volumeRampDuration = DEFAULT_VOLUME_RAMP_DURATION;
+            playIt = background = false; // default to foreground playback
+            tempo = DEFAULT_TEMPO;
+            octave = DEFAULT_OCTAVE;
+            length = DEFAULT_LENGTH;
+            pause = DEFAULT_PAUSE;
+            panning = PAN_CENTER;
+            duration = 0;
+            dots = 0;
+            ZERO_VARIABLE(currentState);
 
-        NoiseGenerator(uint32_t clockRate, uint32_t seed, uint32_t systemSampleRate)
-            : seed(seed), clockRate(clockRate), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE_SAMPLE),
-              amplitude(float(DEFAULT_MML_VOLUME / MAX_MML_VOLUME)) {
-            resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
-            updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
+            maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, ma_waveform_type::ma_waveform_type_square,
+                                                       DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
+            maResult = ma_waveform_init(&maWaveformConfig, &maWaveform);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+            maWhiteNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_white, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            maResult = ma_noise_init(&maWhiteNoiseConfig, NULL, &maWhiteNoise);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+            maPinkNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_pink, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            maResult = ma_noise_init(&maPinkNoiseConfig, NULL, &maPinkNoise);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+            maBrownianNoiseConfig =
+                ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_brownian, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            maResult = ma_noise_init(&maBrownianNoiseConfig, NULL, &maBrownianNoise);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+            maPulseWaveConfig = ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, PULSE_WAVE_DUTY_CYCLE_DEFAULT,
+                                                         DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
+            maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+            noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)), rawStream->sampleRate);
+            AUDIO_DEBUG_CHECK(noise != nullptr);
+            noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            noise->SetFrequency(DEFAULT_FREQUENCY);
+
+            SetWaveformType(DEFAULT_WAVEFORM_TYPE);
+
+            AUDIO_DEBUG_PRINT("PSG initialized @ %uHz", maWaveform.config.sampleRate);
         }
 
-        void SetClockRate(uint32_t clockRate) {
-            this->clockRate = clockRate;
-            updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
+        /// @brief This just frees the waveform buffer and cleans up the waveform resources
+        ~PSG() {
+            delete noise;
+            ma_pulsewave_uninit(&maPulseWave);
+            ma_noise_uninit(&maBrownianNoise, NULL);
+            ma_noise_uninit(&maPinkNoise, NULL);
+            ma_noise_uninit(&maWhiteNoise, NULL);
+            ma_waveform_uninit(&maWaveform);
+
+            AUDIO_DEBUG_PRINT("PSG destroyed");
         }
 
-        void SetFrequency(uint32_t frequency) {
-            this->frequency = std::max(frequency, 1u);
-            updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
-            counter = 0;
-        }
+        /// @brief Sets the waveform type
+        /// @param type The waveform type. See Waveform::Type
+        void SetWaveformType(WaveformType waveType) {
+            switch (waveType) {
+            case WaveformType::NONE:
+                // NOP
+                break;
 
-        void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX); }
+            case WaveformType::SQUARE:
+                maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_square);
+                break;
 
-        float GenerateSample() {
-            if (counter >= updateInterval) {
-                StepLFSR();
-                counter = 0;
-            } else {
-                counter++;
+            case WaveformType::SAWTOOTH:
+                maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_sawtooth);
+                break;
+
+            case WaveformType::TRIANGLE:
+                maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_triangle);
+                break;
+
+            case WaveformType::SINE:
+                maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_sine);
+                break;
+
+            case WaveformType::NOISE_WHITE:
+            case WaveformType::NOISE_PINK:
+            case WaveformType::NOISE_BROWNIAN:
+            case WaveformType::NOISE_LFSR:
+            case WaveformType::PULSE:
+            case WaveformType::COUNT:
+            default:
+                // NOP
+                break;
             }
 
-            return amplitude * currentSample;
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+
+            waveformType = waveType;
+
+            AUDIO_DEBUG_PRINT("Waveform type set to %i", int(waveformType));
         }
 
-        uint32_t seed;
-        uint32_t clockRate;
-        uint32_t updateInterval;
-        uint32_t counter;
-        uint32_t frequency;
-        float currentSample;
-        float amplitude;
-        float resampleRatio;
+        void SetWaveformParameter(float value) {
+            switch (waveformType) {
+            case WaveformType::NONE:
+            case WaveformType::SQUARE:
+            case WaveformType::SAWTOOTH:
+            case WaveformType::TRIANGLE:
+            case WaveformType::SINE:
+                // NOP
+                break;
 
-        void StepLFSR() {
-            uint32_t temp = (seed ^ (seed >> 2) ^ (seed >> 3) ^ (seed >> 5)) & 1;
-            seed = (seed >> 1) | (temp << 31);
-            currentSample = int32_t(seed) / 2147483648.0f;
-        }
-    };
+            case WaveformType::NOISE_WHITE:
+                maResult = ma_noise_set_seed(&maWhiteNoise, ma_int32(value));
+                break;
 
-    /// @brief This struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used)
-    struct State {
-        const uint8_t *byte; // pointer to a byte in an MML string
-        int32_t length;      // this needs to be signed
-    };
+            case WaveformType::NOISE_PINK:
+                maResult = ma_noise_set_seed(&maPinkNoise, ma_int32(value));
+                break;
 
-    RawStream *rawStream;                  // this is the RawStream where the samples data will be pushed to
-    ma_waveform_config maWaveformConfig;   // miniaudio waveform configuration
-    ma_waveform maWaveform;                // miniaudio waveform
-    ma_noise_config maWhiteNoiseConfig;    // miniaudio white noise configuration
-    ma_noise maWhiteNoise;                 // miniaudio white noise
-    ma_noise_config maPinkNoiseConfig;     // miniaudio pink noise configuration
-    ma_noise maPinkNoise;                  // miniaudio pink noise
-    ma_noise_config maBrownianNoiseConfig; // miniaudio brownian noise configuration
-    ma_noise maBrownianNoise;              // miniaudio brownian noise
-    NoiseGenerator *noise;                 // LFSR noise generator
-    ma_pulsewave_config maPulseWaveConfig; // miniaudio pulse wave configuration
-    ma_pulsewave maPulseWave;              // miniaudio pulse wave
-    ma_result maResult;                    // result of the last miniaudio operation
-    std::vector<float> noteBuffer;         // note frames are rendered here temporarily before it is mixed to waveBuffer
-    std::vector<float> waveBuffer;         // this is where the waveform is rendered / mixed before being pushed to RawStream
-    ma_uint64 mixCursor;                   // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
-    WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
-    float volumeRampDuration;              // the volume ramping duration (this can be changed by the user)
-    bool background;                       // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
-    float panning;                         // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
-    std::stack<State> stateStack;          // this maintains the state stack if we need to process substrings (VARPTR$)
-    State currentState;                    // this is the current state. See State struct
-    int tempo;                             // the tempo of the MML tune (this impacts all lengths)
-    int octave;                            // the current octave that we'll use for MML notes
-    double length;                         // the length of each MML note (1 = full, 4 = quarter etc.)
-    double pause;                          // the duration of silence after an MML note (this eats away from the note length)
-    double duration;                       // the duration of a sound / MML note / silence (in seconds)
-    int dots;                              // the dots after a note or a pause that increases the duration
-    bool playIt;                           // flag that is set when the buffer can be played
+            case WaveformType::NOISE_BROWNIAN:
+                maResult = ma_noise_set_seed(&maBrownianNoise, ma_int32(value));
+                break;
 
-    /// @brief Generates a waveform to waveBuffer starting at the mixCursor sample location.
-    /// The buffer must be resized before calling this. We could have resized waveBuffer inside this.
-    /// However, PLAY supports stuff like staccato etc. that needs some silence after the waveform.
-    /// So it makes sense for the calling function to do the resize before calling this
-    /// @param waveDuration The duration of the waveform in seconds
-    /// @param mix Mixes the generated waveform to the buffer instead of overwriting it
-    void GenerateWaveform(double waveDuration, bool mix = false) {
-        auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
+            case WaveformType::NOISE_LFSR:
+                noise->SetClockRate(uint32_t(value));
+                break;
 
-        if (!neededFrames || maWaveform.config.frequency >= QB_FREQUENCY_LIMIT || mixCursor + neededFrames > waveBuffer.size()) {
-            AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
-                              mixCursor);
-            return; // nothing to do
-        }
+            case WaveformType::PULSE:
+                maResult = ma_pulsewave_set_duty_cycle(&maPulseWave, value);
+                break;
 
-        maResult = MA_SUCCESS;
-        ma_uint64 generatedFrames = neededFrames;        // assume we'll generate all the frames we need
-        noteBuffer.assign(neededFrames, SILENCE_SAMPLE); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
-
-        // Generate to the temp buffer and then we'll mix later
-        switch (waveformType) {
-        case WaveformType::NONE:
-            // NOP
-            break;
-
-        case WaveformType::SQUARE:
-        case WaveformType::SAWTOOTH:
-        case WaveformType::TRIANGLE:
-        case WaveformType::SINE:
-            maResult = ma_waveform_read_pcm_frames(&maWaveform, noteBuffer.data(), neededFrames, &generatedFrames);
-            break;
-
-        case WaveformType::NOISE_WHITE:
-            maResult = ma_noise_read_pcm_frames(&maWhiteNoise, noteBuffer.data(), neededFrames, &generatedFrames);
-            break;
-
-        case WaveformType::NOISE_PINK:
-            maResult = ma_noise_read_pcm_frames(&maPinkNoise, noteBuffer.data(), neededFrames, &generatedFrames);
-            break;
-
-        case WaveformType::NOISE_BROWNIAN:
-            maResult = ma_noise_read_pcm_frames(&maBrownianNoise, noteBuffer.data(), neededFrames, &generatedFrames);
-            break;
-
-        case WaveformType::NOISE_LFSR:
-            for (size_t i = 0; i < neededFrames; i++) {
-                noteBuffer[i] = noise->GenerateSample();
-            }
-            break;
-
-        case WaveformType::PULSE:
-            maResult = ma_pulsewave_read_pcm_frames(&maPulseWave, noteBuffer.data(), neededFrames, &generatedFrames);
-            break;
-
-        case WaveformType::COUNT:
-        default:
-            // NOP
-            break;
-        }
-
-        if (maResult != MA_SUCCESS) {
-            AUDIO_DEBUG_PRINT("maResult = %i", maResult);
-            return; // something went wrong
-        }
-
-        // Apply volume ramping to the generated waveform to remove click and pops
-        auto rampFrames = volumeRampDuration * rawStream->sampleRate;
-        auto destination = waveBuffer.data() + mixCursor;
-
-        if (mix) {
-            // Mix the samples to the buffer
-            for (size_t i = 0; i < generatedFrames; i++) {
-                // Calculate the ramp factor based on the current frame position
-                auto rampFactor = 1.0f;
-                if (i < rampFrames) {
-                    rampFactor = (float)i / rampFrames;
-                } else if (i >= generatedFrames - rampFrames) {
-                    rampFactor = (float)(generatedFrames - i) / rampFrames;
-                }
-
-                destination[i] += noteBuffer[i] * rampFactor; // apply the ramp factor to the sample and mix it with the destination buffer
+            case WaveformType::COUNT:
+            default:
+                // NOP
+                break;
             }
 
-            AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames mixed = %llu", int(waveformType), neededFrames, generatedFrames);
-        } else {
-            // Copy the samples to the buffer
-            for (size_t i = 0; i < generatedFrames; i++) {
-                // Calculate the ramp factor based on the current frame position
-                auto rampFactor = 1.0f;
-                if (i < rampFrames) {
-                    rampFactor = (float)i / rampFrames;
-                } else if (i >= generatedFrames - rampFrames) {
-                    rampFactor = (float)(generatedFrames - i) / rampFrames;
-                }
-
-                destination[i] = noteBuffer[i] * rampFactor; // apply the ramp factor to the sample
-            }
-
-            AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames generated = %llu", int(waveformType), neededFrames, generatedFrames);
-        }
-    }
-
-    /// @brief Sets the frequency of the waveform
-    /// @param frequency The frequency of the waveform
-    void SetFrequency(double frequency) {
-        maResult = ma_waveform_set_frequency(&maWaveform, frequency);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maResult = ma_pulsewave_set_frequency(&maPulseWave, frequency);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        noise->SetFrequency(uint32_t(frequency));
-    }
-
-    /// @brief Sends the buffer for playback
-    void PushBufferForPlayback() {
-        if (!waveBuffer.empty()) {
-            rawStream->PushMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
-
-            AUDIO_DEBUG_PRINT("Sent %llu samples for playback", waveBuffer.size());
-
-            waveBuffer.clear(); // set the buffer size to zero
-            mixCursor = 0;      // reset the cursor
-        }
-    }
-
-    /// @brief Waits for any playback to complete
-    void AwaitPlaybackCompletion() {
-        if (background)
-            return; // no need to wait
-
-        auto timeSec = rawStream->GetTimeRemaining() * 0.95 - 0.25; // per original QB64 behavior
-
-        AUDIO_DEBUG_PRINT("Waiting %f seconds for playback to complete", timeSec);
-
-        if (timeSec > 0)
-            sub__delay(timeSec); // we are using sub_delay() because ON TIMER and other events may need to be called while we are waiting
-
-        AUDIO_DEBUG_PRINT("Playback complete");
-    }
-
-  public:
-    // Delete default, copy and move constructors and assignments
-    PSG() = delete;
-    PSG(const PSG &) = delete;
-    PSG &operator=(const PSG &) = delete;
-    PSG &operator=(PSG &&) = delete;
-    PSG(PSG &&) = delete;
-
-    /// @brief The only constructor
-    /// @param pRawStream A valid RawStream object pointer. This cannot be NULL
-    /// @param pWaveform A valid Waveform object pointer. This cannot be NULL
-    PSG(RawStream *pRawStream) {
-        rawStream = pRawStream; // save the RawStream object pointer
-        mixCursor = 0;
-        volumeRampDuration = DEFAULT_VOLUME_RAMP_DURATION;
-        playIt = background = false; // default to foreground playback
-        tempo = DEFAULT_TEMPO;
-        octave = DEFAULT_OCTAVE;
-        length = DEFAULT_LENGTH;
-        pause = DEFAULT_PAUSE;
-        panning = PAN_CENTER;
-        duration = 0;
-        dots = 0;
-        ZERO_VARIABLE(currentState);
-
-        maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, ma_waveform_type::ma_waveform_type_square,
-                                                   DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
-        maResult = ma_waveform_init(&maWaveformConfig, &maWaveform);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-        maWhiteNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_white, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
-        maResult = ma_noise_init(&maWhiteNoiseConfig, NULL, &maWhiteNoise);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-        maPinkNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_pink, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
-        maResult = ma_noise_init(&maPinkNoiseConfig, NULL, &maPinkNoise);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-        maBrownianNoiseConfig =
-            ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_brownian, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
-        maResult = ma_noise_init(&maBrownianNoiseConfig, NULL, &maBrownianNoise);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-        maPulseWaveConfig = ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, PULSE_WAVE_DUTY_CYCLE_DEFAULT,
-                                                     DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
-        maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-
-        noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)), rawStream->sampleRate);
-        AUDIO_DEBUG_CHECK(noise != nullptr);
-        noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
-        noise->SetFrequency(DEFAULT_FREQUENCY);
-
-        SetWaveformType(DEFAULT_WAVEFORM_TYPE);
-
-        AUDIO_DEBUG_PRINT("PSG initialized @ %uHz", maWaveform.config.sampleRate);
-    }
-
-    /// @brief This just frees the waveform buffer and cleans up the waveform resources
-    ~PSG() {
-        delete noise;
-        ma_pulsewave_uninit(&maPulseWave);
-        ma_noise_uninit(&maBrownianNoise, NULL);
-        ma_noise_uninit(&maPinkNoise, NULL);
-        ma_noise_uninit(&maWhiteNoise, NULL);
-        ma_waveform_uninit(&maWaveform);
-
-        AUDIO_DEBUG_PRINT("PSG destroyed");
-    }
-
-    /// @brief Sets the waveform type
-    /// @param type The waveform type. See Waveform::Type
-    void SetWaveformType(WaveformType waveType) {
-        switch (waveType) {
-        case WaveformType::NONE:
-            // NOP
-            break;
-
-        case WaveformType::SQUARE:
-            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_square);
-            break;
-
-        case WaveformType::SAWTOOTH:
-            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_sawtooth);
-            break;
-
-        case WaveformType::TRIANGLE:
-            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_triangle);
-            break;
-
-        case WaveformType::SINE:
-            maResult = ma_waveform_set_type(&maWaveform, ma_waveform_type::ma_waveform_type_sine);
-            break;
-
-        case WaveformType::NOISE_WHITE:
-        case WaveformType::NOISE_PINK:
-        case WaveformType::NOISE_BROWNIAN:
-        case WaveformType::NOISE_LFSR:
-        case WaveformType::PULSE:
-        case WaveformType::COUNT:
-        default:
-            // NOP
-            break;
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
         }
 
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+        /// @brief Sets the amplitude of the waveform
+        /// @param amplitude The amplitude of the waveform
+        void SetAmplitude(double amplitude) {
+            maResult = ma_waveform_set_amplitude(&maWaveform, amplitude);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            maResult = ma_noise_set_amplitude(&maWhiteNoise, amplitude);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            maResult = ma_noise_set_amplitude(&maPinkNoise, amplitude);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            maResult = ma_noise_set_amplitude(&maBrownianNoise, amplitude);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            maResult = ma_pulsewave_set_amplitude(&maPulseWave, amplitude);
+            AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
+            noise->SetAmplitude(float(amplitude));
 
-        waveformType = waveType;
-
-        AUDIO_DEBUG_PRINT("Waveform type set to %i", int(waveformType));
-    }
-
-    void SetWaveformParameter(float value) {
-        switch (waveformType) {
-        case WaveformType::NONE:
-        case WaveformType::SQUARE:
-        case WaveformType::SAWTOOTH:
-        case WaveformType::TRIANGLE:
-        case WaveformType::SINE:
-            // NOP
-            break;
-
-        case WaveformType::NOISE_WHITE:
-            maResult = ma_noise_set_seed(&maWhiteNoise, ma_int32(value));
-            break;
-
-        case WaveformType::NOISE_PINK:
-            maResult = ma_noise_set_seed(&maPinkNoise, ma_int32(value));
-            break;
-
-        case WaveformType::NOISE_BROWNIAN:
-            maResult = ma_noise_set_seed(&maBrownianNoise, ma_int32(value));
-            break;
-
-        case WaveformType::NOISE_LFSR:
-            noise->SetClockRate(uint32_t(value));
-            break;
-
-        case WaveformType::PULSE:
-            maResult = ma_pulsewave_set_duty_cycle(&maPulseWave, value);
-            break;
-
-        case WaveformType::COUNT:
-        default:
-            // NOP
-            break;
+            AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
         }
 
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-    }
+        /// @brief Set the PSG panning value
+        /// @param value A number between -1.0 to 1.0. Where 0.0 is center
+        void SetPanning(float value) {
+            panning = value;
 
-    /// @brief Sets the amplitude of the waveform
-    /// @param amplitude The amplitude of the waveform
-    void SetAmplitude(double amplitude) {
-        maResult = ma_waveform_set_amplitude(&maWaveform, amplitude);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maResult = ma_noise_set_amplitude(&maWhiteNoise, amplitude);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maResult = ma_noise_set_amplitude(&maPinkNoise, amplitude);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maResult = ma_noise_set_amplitude(&maBrownianNoise, amplitude);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        maResult = ma_pulsewave_set_amplitude(&maPulseWave, amplitude);
-        AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
-        noise->SetAmplitude(float(amplitude));
+            AUDIO_DEBUG_PRINT("Panning set to %f", panning);
+        }
 
-        AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
-    }
+        /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
+        void Beep() {
+            SetFrequency(BEEP_FREQUENCY);
+            waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE_SAMPLE);
+            GenerateWaveform(BEEP_WAVEFORM_DURATION);
+            PushBufferForPlayback();
+            AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
+        }
 
-    /// @brief Set the PSG panning value
-    /// @param value A number between -1.0 to 1.0. Where 0.0 is center
-    void SetPanning(float value) {
-        panning = value;
+        /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY
+        void Sound(double frequency, double lengthInClockTicks) {
+            SetFrequency(frequency);
+            auto soundDuration = lengthInClockTicks / 18.2;
+            waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), SILENCE_SAMPLE);
+            GenerateWaveform(soundDuration);
+            PushBufferForPlayback();
+            AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
+        }
 
-        AUDIO_DEBUG_PRINT("Panning set to %f", panning);
-    }
+        /// @brief This is an MML parser that implements the QB64 MML spec and more
+        /// https://qb64phoenix.com/qb64wiki/index.php/PLAY
+        /// http://vgmpf.com/Wiki/index.php?title=Music_Macro_Language
+        /// https://en.wikipedia.org/wiki/Music_Macro_Language
+        /// https://sneslab.net/wiki/Music_Macro_Language
+        /// http://www.mirbsd.org/htman/i386/man4/speaker.htm
+        /// https://www.qbasic.net/en/reference/qb11/Statement/PLAY-006.htm
+        /// https://woolyss.com/chipmusic-mml.php
+        /// frequency = 440.0 * pow(2.0, (note + (octave - 2.0) * 12.0 - 9.0) / 12.0)
+        // const float FREQUENCY_TABLE[] = {
+        //	0,
+        //	//1       2         3         4         5         6         7         8         9         10        11        12
+        //	//C       C#        D         D#        E         F         F#        G         G#        A         A#        B
+        //	16.35f,   17.32f,   18.35f,   19.45f,   20.60f,   21.83f,   23.12f,   24.50f,   25.96f,   27.50f,   29.14f,   30.87f,   // Octave 0
+        //	32.70f,   34.65f,   36.71f,   38.89f,   41.20f,   43.65f,   46.25f,   49.00f,   51.91f,   55.00f,   58.27f,   61.74f,   // Octave 1
+        //	65.41f,   69.30f,   73.42f,   77.78f,   82.41f,   87.31f,   92.50f,   98.00f,   103.83f,  110.00f,  116.54f,  123.47f,  // Octave 2
+        //	130.81f,  138.59f,  146.83f,  155.56f,  164.81f,  174.62f,  185.00f,  196.00f,  207.65f,  220.00f,  233.08f,  246.94f,  // Octave 3
+        //	261.63f,  277.18f,  293.67f,  311.13f,  329.63f,  349.23f,  370.00f,  392.00f,  415.31f,  440.00f,  466.17f,  493.89f,  // Octave 4
+        //	523.25f,  554.37f,  587.33f,  622.26f,  659.26f,  698.46f,  739.99f,  783.99f,  830.61f,  880.00f,  932.33f,  987.77f,  // Octave 5
+        //	1046.51f, 1108.74f, 1174.67f, 1244.51f, 1318.52f, 1396.92f, 1479.99f, 1567.99f, 1661.23f, 1760.01f, 1864.66f, 1975.54f, // Octave 6
+        //	2093.02f, 2217.47f, 2349.33f, 2489.03f, 2637.03f, 2793.84f, 2959.97f, 3135.98f, 3322.45f, 3520.02f, 3729.33f, 3951.09f, // Octave 7
+        // };
+        /// @param mml A string containing the MML tune
+        void Play(const qbs *mml) {
+            if (!mml || !mml->len) // exit if string is empty
+                return;
 
-    /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
-    void Beep() {
-        SetFrequency(BEEP_FREQUENCY);
-        waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE_SAMPLE);
-        GenerateWaveform(BEEP_WAVEFORM_DURATION);
-        PushBufferForPlayback();
-        AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
-    }
+            auto currentChar = 0;
+            auto processedChar = 0;
+            auto numberEntered = 0;
+            int64_t number = 0;
+            bool noteShifted = false;
+            auto noteOffset = 0;
+            auto followUp = 0;
+            auto noDotDuration = 1.0 / (tempo / 60.0) * (4.0 / length);
 
-    /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY
-    void Sound(double frequency, double lengthInClockTicks) {
-        SetFrequency(frequency);
-        auto soundDuration = lengthInClockTicks / 18.2;
-        waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), SILENCE_SAMPLE);
-        GenerateWaveform(soundDuration);
-        PushBufferForPlayback();
-        AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
-    }
+            playIt = false;
 
-    /// @brief This is an MML parser that implements the QB64 MML spec and more
-    /// https://qb64phoenix.com/qb64wiki/index.php/PLAY
-    /// http://vgmpf.com/Wiki/index.php?title=Music_Macro_Language
-    /// https://en.wikipedia.org/wiki/Music_Macro_Language
-    /// https://sneslab.net/wiki/Music_Macro_Language
-    /// http://www.mirbsd.org/htman/i386/man4/speaker.htm
-    /// https://www.qbasic.net/en/reference/qb11/Statement/PLAY-006.htm
-    /// https://woolyss.com/chipmusic-mml.php
-    /// frequency = 440.0 * pow(2.0, (note + (octave - 2.0) * 12.0 - 9.0) / 12.0)
-    // const float FREQUENCY_TABLE[] = {
-    //	0,
-    //	//1       2         3         4         5         6         7         8         9         10        11        12
-    //	//C       C#        D         D#        E         F         F#        G         G#        A         A#        B
-    //	16.35f,   17.32f,   18.35f,   19.45f,   20.60f,   21.83f,   23.12f,   24.50f,   25.96f,   27.50f,   29.14f,   30.87f,   // Octave 0
-    //	32.70f,   34.65f,   36.71f,   38.89f,   41.20f,   43.65f,   46.25f,   49.00f,   51.91f,   55.00f,   58.27f,   61.74f,   // Octave 1
-    //	65.41f,   69.30f,   73.42f,   77.78f,   82.41f,   87.31f,   92.50f,   98.00f,   103.83f,  110.00f,  116.54f,  123.47f,  // Octave 2
-    //	130.81f,  138.59f,  146.83f,  155.56f,  164.81f,  174.62f,  185.00f,  196.00f,  207.65f,  220.00f,  233.08f,  246.94f,  // Octave 3
-    //	261.63f,  277.18f,  293.67f,  311.13f,  329.63f,  349.23f,  370.00f,  392.00f,  415.31f,  440.00f,  466.17f,  493.89f,  // Octave 4
-    //	523.25f,  554.37f,  587.33f,  622.26f,  659.26f,  698.46f,  739.99f,  783.99f,  830.61f,  880.00f,  932.33f,  987.77f,  // Octave 5
-    //	1046.51f, 1108.74f, 1174.67f, 1244.51f, 1318.52f, 1396.92f, 1479.99f, 1567.99f, 1661.23f, 1760.01f, 1864.66f, 1975.54f, // Octave 6
-    //	2093.02f, 2217.47f, 2349.33f, 2489.03f, 2637.03f, 2793.84f, 2959.97f, 3135.98f, 3322.45f, 3520.02f, 3729.33f, 3951.09f, // Octave 7
-    // };
-    /// @param mml A string containing the MML tune
-    void Play(const qbs *mml) {
-        if (!mml || !mml->len) // exit if string is empty
-            return;
+            stateStack.push({mml->chr, mml->len}); // push the string to the state stack
 
-        auto currentChar = 0;
-        auto processedChar = 0;
-        auto numberEntered = 0;
-        int64_t number = 0;
-        bool noteShifted = false;
-        auto noteOffset = 0;
-        auto followUp = 0;
-        auto noDotDuration = 1.0 / (tempo / 60.0) * (4.0 / length);
+            // Process until our state stack is empty
+            while (!stateStack.empty()) {
+                // Pop and use the top item in the state stack
+                currentState = stateStack.top();
+                stateStack.pop();
 
-        playIt = false;
-
-        stateStack.push({mml->chr, mml->len}); // push the string to the state stack
-
-        // Process until our state stack is empty
-        while (!stateStack.empty()) {
-            // Pop and use the top item in the state stack
-            currentState = stateStack.top();
-            stateStack.pop();
-
-            while ((currentState.length--) || followUp) {
-                if (currentState.length < 0) {
-                    currentChar = ' ';
-                    goto follow_up;
-                }
-
-                currentChar = *currentState.byte++;
-                if (isspace(currentChar) || ';' == currentChar) // #554: skip whitespace and semicolon separator
-                    continue;
-
-                processedChar = toupper(currentChar);
-
-                if (processedChar == 'X') { // "X" + VARPTR$()
-                    // A minimum of 3 bytes is need to read the address
-                    if (currentState.length < 3) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
+                while ((currentState.length--) || followUp) {
+                    if (currentState.length < 0) {
+                        currentChar = ' ';
+                        goto follow_up;
                     }
 
-                    // Read type byte
                     currentChar = *currentState.byte++;
-                    currentState.length--;
+                    if (isspace(currentChar) || ';' == currentChar) // #554: skip whitespace and semicolon separator
+                        continue;
 
-                    // Read offset within DBLOCK
-                    auto offset = *(uint16_t *)currentState.byte;
-                    currentState.byte += 2;
-                    currentState.length -= 2;
+                    processedChar = toupper(currentChar);
 
-                    stateStack.push(currentState); // push the current state to the stack
-
-                    // Set new state
-                    currentState.byte = &cmem[1280] + (cmem[1280 + offset + 3] * 256 + cmem[1280 + offset + 2]);
-                    currentState.length = cmem[1280 + offset + 1] * 256 + cmem[1280 + offset + 0];
-
-                    continue;
-                } else if (currentChar == '=') { // "=" + VARPTR$()
-                    if (dots) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    if (numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 2;
-
-                    // VARPTR$ reference
-                    /*
-                       'BYTE=1
-                       'INTEGER=2
-                       'STRING=3 SUB-STRINGS must use "X"+VARPTR$(string$)
-                       'SINGLE=4
-                       'INT64=5
-                       'FLOAT=6
-                       'DOUBLE=8
-                       'LONG=20
-                       'BIT=64+n
-                     */
-
-                    if (currentState.length < 3) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    currentChar = *currentState.byte++; // read type byte
-                    currentState.length--;
-
-                    auto x = *(uint16_t *)currentState.byte; // read offset within DBLOCK
-                    currentState.byte += 2;
-                    currentState.length -= 2;
-
-                    // note: allowable _BIT type variables in VARPTR$ are all at a byte offset and are all
-                    //      padded until the next byte
-                    int64_t d = 0;
-
-                    switch (currentChar) {
-                    case 1:
-                        d = *(char *)(dblock + x);
-                        break;
-                    case (1 + 128):
-                        d = *(uint8_t *)(dblock + x);
-                        break;
-                    case 2:
-                        d = *(int16_t *)(dblock + x);
-                        break;
-                    case (2 + 128):
-                        d = *(uint16_t *)(dblock + x);
-                        break;
-                    case 4:
-                        d = *(float *)(dblock + x);
-                        break;
-                    case 5:
-                        d = *(int64_t *)(dblock + x);
-                        break;
-                    case (5 + 128):
-                        d = *(int64_t *)(dblock + x); // unsigned conversion is unsupported!
-                        break;
-                    case 6:
-                        d = *(long double *)(dblock + x);
-                        break;
-                    case 8:
-                        d = *(double *)(dblock + x);
-                        break;
-                    case 20:
-                        d = *(int32_t *)(dblock + x);
-                        break;
-                    case (20 + 128):
-                        d = *(uint32_t *)(dblock + x);
-                        break;
-                    default:
-                        // bit type?
-                        if ((currentChar & 64) == 0) {
+                    if (processedChar == 'X') { // "X" + VARPTR$()
+                        // A minimum of 3 bytes is need to read the address
+                        if (currentState.length < 3) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
-                        auto x2 = currentChar & 63;
+                        // Read type byte
+                        currentChar = *currentState.byte++;
+                        currentState.length--;
 
-                        if (x2 > 56) {
+                        // Read offset within DBLOCK
+                        auto offset = *(uint16_t *)currentState.byte;
+                        currentState.byte += 2;
+                        currentState.length -= 2;
+
+                        stateStack.push(currentState); // push the current state to the stack
+
+                        // Set new state
+                        currentState.byte = &cmem[1280] + (cmem[1280 + offset + 3] * 256 + cmem[1280 + offset + 2]);
+                        currentState.length = cmem[1280 + offset + 1] * 256 + cmem[1280 + offset + 0];
+
+                        continue;
+                    } else if (currentChar == '=') { // "=" + VARPTR$()
+                        if (dots) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
-                        } // valid number of bits?
+                        }
 
-                        // create a mask
-                        auto mask = (((int64_t)1) << x2) - 1;
-                        auto i64num = (*(int64_t *)(dblock + x)) & mask;
+                        if (numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
 
-                        // signed?
-                        if (currentChar & 128) {
-                            mask = ((int64_t)1) << (x2 - 1);
-                            if (i64num & mask) { // top bit on?
-                                mask = -1;
-                                mask <<= x2;
-                                i64num += mask;
+                        numberEntered = 2;
+
+                        // VARPTR$ reference
+                        /*
+                           'BYTE=1
+                           'INTEGER=2
+                           'STRING=3 SUB-STRINGS must use "X"+VARPTR$(string$)
+                           'SINGLE=4
+                           'INT64=5
+                           'FLOAT=6
+                           'DOUBLE=8
+                           'LONG=20
+                           'BIT=64+n
+                         */
+
+                        if (currentState.length < 3) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        currentChar = *currentState.byte++; // read type byte
+                        currentState.length--;
+
+                        auto x = *(uint16_t *)currentState.byte; // read offset within DBLOCK
+                        currentState.byte += 2;
+                        currentState.length -= 2;
+
+                        // note: allowable _BIT type variables in VARPTR$ are all at a byte offset and are all
+                        //      padded until the next byte
+                        int64_t d = 0;
+
+                        switch (currentChar) {
+                        case 1:
+                            d = *(char *)(dblock + x);
+                            break;
+                        case (1 + 128):
+                            d = *(uint8_t *)(dblock + x);
+                            break;
+                        case 2:
+                            d = *(int16_t *)(dblock + x);
+                            break;
+                        case (2 + 128):
+                            d = *(uint16_t *)(dblock + x);
+                            break;
+                        case 4:
+                            d = *(float *)(dblock + x);
+                            break;
+                        case 5:
+                            d = *(int64_t *)(dblock + x);
+                            break;
+                        case (5 + 128):
+                            d = *(int64_t *)(dblock + x); // unsigned conversion is unsupported!
+                            break;
+                        case 6:
+                            d = *(long double *)(dblock + x);
+                            break;
+                        case 8:
+                            d = *(double *)(dblock + x);
+                            break;
+                        case 20:
+                            d = *(int32_t *)(dblock + x);
+                            break;
+                        case (20 + 128):
+                            d = *(uint32_t *)(dblock + x);
+                            break;
+                        default:
+                            // bit type?
+                            if ((currentChar & 64) == 0) {
+                                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                                return;
                             }
-                        } // signed
 
-                        d = i64num;
-                    }
+                            auto x2 = currentChar & 63;
 
-                    if (d > 2147483647.0 || d < -2147483648.0) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // out of range value!
-                        return;
-                    }
+                            if (x2 > 56) {
+                                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                                return;
+                            } // valid number of bits?
 
-                    number = llround(d);
+                            // create a mask
+                            auto mask = (((int64_t)1) << x2) - 1;
+                            auto i64num = (*(int64_t *)(dblock + x)) & mask;
 
-                    continue;
-                } else if (currentChar >= '0' && currentChar <= '9') {
-                    if (dots || numberEntered == 2) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
+                            // signed?
+                            if (currentChar & 128) {
+                                mask = ((int64_t)1) << (x2 - 1);
+                                if (i64num & mask) { // top bit on?
+                                    mask = -1;
+                                    mask <<= x2;
+                                    i64num += mask;
+                                }
+                            } // signed
 
-                    if (!numberEntered) {
-                        number = 0;
-                        numberEntered = 1;
-                    }
+                            d = i64num;
+                        }
 
-                    number = number * 10 + currentChar - 48;
-
-                    continue;
-                } else if (currentChar == '.') {
-                    if (followUp != 7 && followUp != 1 && followUp != 4) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    dots++;
-
-                    continue;
-                }
-
-            follow_up:
-                if (followUp == 10) { // Q...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if (number > MAX_VOLUME_RAMP_DURATION_MS) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    volumeRampDuration = (float)number / 1000.0f;
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 9) { // @...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if ((WaveformType)number <= WaveformType::NONE || (WaveformType)number >= WaveformType::COUNT) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    SetWaveformType((WaveformType)number);
-
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 8) { // V...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if (number > MAX_MML_VOLUME) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    SetAmplitude(number / MAX_MML_VOLUME);
-
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 7) { // P...
-                    if (numberEntered) {
-                        numberEntered = 0;
-                        if (number < 1 || number > 64) {
-                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                        if (d > 2147483647.0 || d < -2147483648.0) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // out of range value!
                             return;
                         }
-                        duration = 1.0 / (tempo / 60.0) * (4.0 / ((double)number));
-                    } else {
-                        duration = noDotDuration;
-                    }
 
-                    auto dotDuration = duration;
+                        number = llround(d);
 
-                    for (auto i = 0; i < dots; i++) {
-                        dotDuration /= 2.0;
-                        duration += dotDuration;
-                    }
-
-                    dots = 0;
-
-                    auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
-
-                    if ((mixCursor + noteFrames) > waveBuffer.size()) {
-                        waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
-                    }
-
-                    if (currentChar != ',') {
-                        mixCursor += noteFrames;
-                    }
-
-                    playIt = true;
-                    followUp = 0;
-
-                    if (currentChar == ',')
                         continue;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 6) { // T...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if (number < MIN_TEMPO || number > MAX_TEMPO) {
-                        number = 120;
-                    }
-
-                    tempo = number;
-                    noDotDuration = 1.0 / (tempo / 60.0) * (4.0 / length);
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 5) { // M...
-                    if (numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    switch (processedChar) {
-                    case 'L': // legato
-                        pause = 0.0;
-                        break;
-                    case 'N': // normal
-                        pause = 1.0 / 8.0;
-                        break;
-                    case 'S': // staccato
-                        pause = 1.0 / 4.0;
-                        break;
-                    case 'B': // background
-                        if (!background) {
-                            if (playIt) {
-                                // Play pending buffer in foreground before we switch to background
-                                playIt = false;
-                                PushBufferForPlayback();
-                                AwaitPlaybackCompletion();
-                            }
-                            background = true;
-                        }
-                        break;
-                    case 'F': // foreground
-                        background = false;
-                        break;
-                    default:
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    followUp = 0;
-
-                    continue;
-                } else if (followUp == 4) { // N...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if (number > 84) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    noteOffset = -45 + number;
-
-                    goto follow_up_1;
-                } else if (followUp == 3) { // O...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if (number > MAX_OCTAVE) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    octave = number;
-
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 2) { // L...
-                    if (!numberEntered) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    numberEntered = 0;
-
-                    if (number < MIN_LENGTH || number > MAX_LENGTH) {
-                        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                        return;
-                    }
-
-                    length = number;
-                    noDotDuration = 1.0 / (tempo / 60.0) * (4.0 / length);
-                    followUp = 0;
-
-                    if (currentState.length < 0)
-                        break;
-                } else if (followUp == 1) { // A-G...
-                    if (currentChar == '-') {
-                        if (noteShifted || numberEntered) {
+                    } else if (currentChar >= '0' && currentChar <= '9') {
+                        if (dots || numberEntered == 2) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
-                        noteShifted = true;
-                        noteOffset--;
+                        if (!numberEntered) {
+                            number = 0;
+                            numberEntered = 1;
+                        }
+
+                        number = number * 10 + currentChar - 48;
 
                         continue;
-                    }
-                    if (currentChar == '+' || currentChar == '#') {
-                        if (noteShifted || numberEntered) {
+                    } else if (currentChar == '.') {
+                        if (followUp != 7 && followUp != 1 && followUp != 4) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
-                        noteShifted = true;
-                        noteOffset++;
+                        dots++;
 
                         continue;
                     }
 
-                follow_up_1:
-                    if (numberEntered) {
+                follow_up:
+                    if (followUp == 10) { // Q...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
                         numberEntered = 0;
 
-                        if (number < 0 || number > 64) {
+                        if (number > MAX_VOLUME_RAMP_DURATION_MS) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
-                        if (!number)
-                            duration = noDotDuration;
-                        else
+                        volumeRampDuration = (float)number / 1000.0f;
+                        followUp = 0;
+
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 9) { // @...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if ((WaveformType)number <= WaveformType::NONE || (WaveformType)number >= WaveformType::COUNT) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        SetWaveformType((WaveformType)number);
+
+                        followUp = 0;
+
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 8) { // V...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number > MAX_MML_VOLUME) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        SetAmplitude(number / MAX_MML_VOLUME);
+
+                        followUp = 0;
+
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 7) { // P...
+                        if (numberEntered) {
+                            numberEntered = 0;
+                            if (number < 1 || number > 64) {
+                                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                                return;
+                            }
                             duration = 1.0 / (tempo / 60.0) * (4.0 / ((double)number));
-                    } else {
-                        duration = noDotDuration;
-                    }
+                        } else {
+                            duration = noDotDuration;
+                        }
 
-                    auto dotDuration = duration;
+                        auto dotDuration = duration;
 
-                    for (auto i = 0; i < dots; i++) {
-                        dotDuration /= 2.0;
-                        duration += dotDuration;
-                    }
+                        for (auto i = 0; i < dots; i++) {
+                            dotDuration /= 2.0;
+                            duration += dotDuration;
+                        }
 
-                    dots = 0;
+                        dots = 0;
 
-                    SetFrequency(pow(2.0, ((double)noteOffset) / 12.0) * 440.0);
+                        auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
 
-                    auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
+                        if ((mixCursor + noteFrames) > waveBuffer.size()) {
+                            waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
+                        }
 
-                    if (mixCursor + noteFrames > waveBuffer.size()) {
-                        waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
-                    }
+                        if (currentChar != ',') {
+                            mixCursor += noteFrames;
+                        }
 
-                    if (noteOffset > -45) // this ensures that we correctly handle N0 as rest
-                        GenerateWaveform(duration * (1.0 - pause), mixCursor != waveBuffer.size());
+                        playIt = true;
+                        followUp = 0;
 
-                    if (currentChar != ',') {
-                        mixCursor += noteFrames;
-                    }
+                        if (currentChar == ',')
+                            continue;
 
-                    playIt = true;
-                    noteShifted = false;
-                    followUp = 0;
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 6) { // T...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
 
-                    if (currentChar == ',')
+                        numberEntered = 0;
+
+                        if (number < MIN_TEMPO || number > MAX_TEMPO) {
+                            number = 120;
+                        }
+
+                        tempo = number;
+                        noDotDuration = 1.0 / (tempo / 60.0) * (4.0 / length);
+                        followUp = 0;
+
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 5) { // M...
+                        if (numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        switch (processedChar) {
+                        case 'L': // legato
+                            pause = 0.0;
+                            break;
+                        case 'N': // normal
+                            pause = 1.0 / 8.0;
+                            break;
+                        case 'S': // staccato
+                            pause = 1.0 / 4.0;
+                            break;
+                        case 'B': // background
+                            if (!background) {
+                                if (playIt) {
+                                    // Play pending buffer in foreground before we switch to background
+                                    playIt = false;
+                                    PushBufferForPlayback();
+                                    AwaitPlaybackCompletion();
+                                }
+                                background = true;
+                            }
+                            break;
+                        case 'F': // foreground
+                            background = false;
+                            break;
+                        default:
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        followUp = 0;
+
                         continue;
+                    } else if (followUp == 4) { // N...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
 
-                    if (currentState.length < 0)
-                        break;
-                }
+                        numberEntered = 0;
 
-                if (processedChar >= 'A' && processedChar <= 'G') {
-                    switch (processedChar) {
-                    case 'A':
-                        noteOffset = 9;
-                        break;
-                    case 'B':
-                        noteOffset = 11;
-                        break;
-                    case 'C':
-                        noteOffset = 0;
-                        break;
-                    case 'D':
-                        noteOffset = 2;
-                        break;
-                    case 'E':
-                        noteOffset = 4;
-                        break;
-                    case 'F':
-                        noteOffset = 5;
-                        break;
-                    case 'G':
-                        noteOffset = 7;
-                        break;
+                        if (number > 84) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        noteOffset = -45 + number;
+
+                        goto follow_up_1;
+                    } else if (followUp == 3) { // O...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number > MAX_OCTAVE) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        octave = number;
+
+                        followUp = 0;
+
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 2) { // L...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MIN_LENGTH || number > MAX_LENGTH) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        length = number;
+                        noDotDuration = 1.0 / (tempo / 60.0) * (4.0 / length);
+                        followUp = 0;
+
+                        if (currentState.length < 0)
+                            break;
+                    } else if (followUp == 1) { // A-G...
+                        if (currentChar == '-') {
+                            if (noteShifted || numberEntered) {
+                                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                                return;
+                            }
+
+                            noteShifted = true;
+                            noteOffset--;
+
+                            continue;
+                        }
+                        if (currentChar == '+' || currentChar == '#') {
+                            if (noteShifted || numberEntered) {
+                                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                                return;
+                            }
+
+                            noteShifted = true;
+                            noteOffset++;
+
+                            continue;
+                        }
+
+                    follow_up_1:
+                        if (numberEntered) {
+                            numberEntered = 0;
+
+                            if (number < 0 || number > 64) {
+                                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                                return;
+                            }
+
+                            if (!number)
+                                duration = noDotDuration;
+                            else
+                                duration = 1.0 / (tempo / 60.0) * (4.0 / ((double)number));
+                        } else {
+                            duration = noDotDuration;
+                        }
+
+                        auto dotDuration = duration;
+
+                        for (auto i = 0; i < dots; i++) {
+                            dotDuration /= 2.0;
+                            duration += dotDuration;
+                        }
+
+                        dots = 0;
+
+                        SetFrequency(pow(2.0, ((double)noteOffset) / 12.0) * 440.0);
+
+                        auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
+
+                        if (mixCursor + noteFrames > waveBuffer.size()) {
+                            waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
+                        }
+
+                        if (noteOffset > -45) // this ensures that we correctly handle N0 as rest
+                            GenerateWaveform(duration * (1.0 - pause), mixCursor != waveBuffer.size());
+
+                        if (currentChar != ',') {
+                            mixCursor += noteFrames;
+                        }
+
+                        playIt = true;
+                        noteShifted = false;
+                        followUp = 0;
+
+                        if (currentChar == ',')
+                            continue;
+
+                        if (currentState.length < 0)
+                            break;
                     }
-                    noteOffset = noteOffset + (octave - 2) * 12 - 9;
-                    followUp = 1;
-                    continue;
-                } else if (processedChar == 'L') { // length
-                    followUp = 2;
-                    continue;
-                } else if (processedChar == 'M') { // timing
-                    followUp = 5;
-                    continue;
-                } else if (processedChar == 'N') { // note 'n'
-                    followUp = 4;
-                    continue;
-                } else if (processedChar == 'O') { // octave
-                    followUp = 3;
-                    continue;
-                } else if (processedChar == 'T') { // tempo
-                    followUp = 6;
-                    continue;
-                } else if (processedChar == '<') { // octave --
-                    --octave;
-                    if (octave < 0)
-                        octave = 0;
-                    continue;
-                } else if (processedChar == '>') { // octave ++
-                    ++octave;
-                    if (octave > 6)
-                        octave = 6;
-                    continue;
-                } else if (processedChar == 'P' || processedChar == 'R') { // rest
-                    followUp = 7;
-                    continue;
-                } else if (processedChar == 'V') { // volume
-                    followUp = 8;
-                    continue;
-                } else if (processedChar == '@') { // waveform
-                    followUp = 9;
-                    continue;
-                } else if (processedChar == 'Q') { // vol-ramp
-                    followUp = 10;
-                    continue;
+
+                    if (processedChar >= 'A' && processedChar <= 'G') {
+                        switch (processedChar) {
+                        case 'A':
+                            noteOffset = 9;
+                            break;
+                        case 'B':
+                            noteOffset = 11;
+                            break;
+                        case 'C':
+                            noteOffset = 0;
+                            break;
+                        case 'D':
+                            noteOffset = 2;
+                            break;
+                        case 'E':
+                            noteOffset = 4;
+                            break;
+                        case 'F':
+                            noteOffset = 5;
+                            break;
+                        case 'G':
+                            noteOffset = 7;
+                            break;
+                        }
+                        noteOffset = noteOffset + (octave - 2) * 12 - 9;
+                        followUp = 1;
+                        continue;
+                    } else if (processedChar == 'L') { // length
+                        followUp = 2;
+                        continue;
+                    } else if (processedChar == 'M') { // timing
+                        followUp = 5;
+                        continue;
+                    } else if (processedChar == 'N') { // note 'n'
+                        followUp = 4;
+                        continue;
+                    } else if (processedChar == 'O') { // octave
+                        followUp = 3;
+                        continue;
+                    } else if (processedChar == 'T') { // tempo
+                        followUp = 6;
+                        continue;
+                    } else if (processedChar == '<') { // octave --
+                        --octave;
+                        if (octave < 0)
+                            octave = 0;
+                        continue;
+                    } else if (processedChar == '>') { // octave ++
+                        ++octave;
+                        if (octave > 6)
+                            octave = 6;
+                        continue;
+                    } else if (processedChar == 'P' || processedChar == 'R') { // rest
+                        followUp = 7;
+                        continue;
+                    } else if (processedChar == 'V') { // volume
+                        followUp = 8;
+                        continue;
+                    } else if (processedChar == '@') { // waveform
+                        followUp = 9;
+                        continue;
+                    } else if (processedChar == 'Q') { // vol-ramp
+                        followUp = 10;
+                        continue;
+                    }
+
+                    error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                    return;
                 }
 
-                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-                return;
-            }
+                if (numberEntered || followUp) {
+                    error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // unhandled data
+                    return;
+                }
 
-            if (numberEntered || followUp) {
-                error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // unhandled data
-                return;
-            }
-
-            if (playIt) {
-                PushBufferForPlayback();
-                AwaitPlaybackCompletion();
+                if (playIt) {
+                    PushBufferForPlayback();
+                    AwaitPlaybackCompletion();
+                }
             }
         }
-    }
-};
+    };
 
-/// <summary>
-/// Sound handle type
-/// This describes every sound the system will ever play (including raw streams).
-/// </summary>
-struct SoundHandle {
-    /// @brief Type of sound.
-    /// NONE: No sound or internal sound whose buffer is managed by the QB64-PE audio engine.
-    /// STATIC: Static sounds that are completely managed by miniaudio.
-    /// RAW: Raw sound stream that is managed by the QB64-PE audio engine
-    enum class Type { NONE, STATIC, RAW };
+    /// @brief This describes every sound the system will ever play (including raw streams).
+    struct SoundHandle {
+        /// @brief Type of sound.
+        /// NONE: No sound or internal sound whose buffer is managed by the QB64-PE audio engine.
+        /// STATIC: Static sounds that are completely managed by miniaudio.
+        /// RAW: Raw sound stream that is managed by the QB64-PE audio engine
+        enum class Type { NONE, STATIC, RAW };
 
-    bool isUsed;                                // Is this handle in active use?
-    Type type;                                  // Type of sound (see Type enum above)
-    bool autoKill;                              // Do we need to auto-clean this sample / stream after playback is done?
-    ma_sound maSound;                           // miniaudio sound
-    ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
-    ma_decoder_config maDecoderConfig;          // miniaudio decoder configuration
-    ma_decoder *maDecoder;                      // this is used for files that are loaded directly from memory
-    uint64_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
-    ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
-    ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
-    RawStream *rawStream;                       // Raw sample frame queue
-    void *memLockOffset;                        // This is a pointer from new_mem_lock()
-    uint64_t memLockId;                         // This is mem_lock_id created by new_mem_lock()
+        bool isUsed;                                // Is this handle in active use?
+        Type type;                                  // Type of sound (see Type enum above)
+        bool autoKill;                              // Do we need to auto-clean this sample / stream after playback is done?
+        ma_sound maSound;                           // miniaudio sound
+        ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
+        ma_decoder_config maDecoderConfig;          // miniaudio decoder configuration
+        ma_decoder *maDecoder;                      // this is used for files that are loaded directly from memory
+        uint64_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
+        ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
+        ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
+        RawStream *rawStream;                       // Raw sample frame queue
+        void *memLockOffset;                        // This is a pointer from new_mem_lock()
+        uint64_t memLockId;                         // This is mem_lock_id created by new_mem_lock()
 
-    // Delete copy and move constructors and assignments
-    SoundHandle(const SoundHandle &) = delete;
-    SoundHandle &operator=(const SoundHandle &) = delete;
-    SoundHandle(SoundHandle &&) = delete;
-    SoundHandle &operator=(SoundHandle &&) = delete;
+        // Delete copy and move constructors and assignments
+        SoundHandle(const SoundHandle &) = delete;
+        SoundHandle &operator=(const SoundHandle &) = delete;
+        SoundHandle(SoundHandle &&) = delete;
+        SoundHandle &operator=(SoundHandle &&) = delete;
 
-    /// <summary>
-    ///	Just initializes some important members.
-    /// 'inUse' will be set to true by CreateHandle().
-    /// This is done here, as well as slightly differently in CreateHandle() for safety.
-    /// </summary>
-    SoundHandle() {
-        isUsed = false;
-        type = Type::NONE;
-        autoKill = false;
-        ZERO_VARIABLE(maSound);
-        maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
-        ZERO_VARIABLE(maDecoderConfig);
-        maDecoder = nullptr;
-        bufferKey = 0;
-        ZERO_VARIABLE(maAudioBufferConfig);
-        maAudioBuffer = nullptr;
-        rawStream = nullptr;
-        memLockOffset = nullptr;
-        memLockId = INVALID_MEM_LOCK;
-    }
-};
+        /// @brief Just initializes some important members. 'inUse' will be set to true by CreateHandle().
+        /// This is done here, as well as slightly differently in CreateHandle() for safety.
+        SoundHandle() {
+            isUsed = false;
+            type = Type::NONE;
+            autoKill = false;
+            ZERO_VARIABLE(maSound);
+            maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
+            ZERO_VARIABLE(maDecoderConfig);
+            maDecoder = nullptr;
+            bufferKey = 0;
+            ZERO_VARIABLE(maAudioBufferConfig);
+            maAudioBuffer = nullptr;
+            rawStream = nullptr;
+            memLockOffset = nullptr;
+            memLockId = INVALID_MEM_LOCK;
+        }
+    };
 
-/// <summary>
-///	Type will help us keep track of the audio engine state
-/// </summary>
-struct AudioEngine {
-    static const auto PSG_COUNT = 4;
+    static const auto INVALID_SOUND_HANDLE_INTERNAL = -1; // this is what is returned to the caller by CreateHandle() if handle allocation fails
+    static const auto INVALID_SOUND_HANDLE = 0; // this should be returned to the caller by top-level sound APIs if a handle allocation fails with a -1
+    static const auto PSG_COUNT = 4;            // this is the number of PSGs that we will use
 
     bool isInitialized;                                 // this is set to true if we were able to initialize miniaudio and allocated all required resources
     bool initializationFailed;                          // this is set to true if a past initialization attempt failed
@@ -1554,7 +1532,7 @@ struct AudioEngine {
                 break;
 
             case SoundHandle::Type::RAW:
-                RawStreamDestroy(soundHandles[handle]->rawStream);
+                RawStream::Destroy(soundHandles[handle]->rawStream);
                 soundHandles[handle]->rawStream = nullptr;
 
                 break;
@@ -1661,7 +1639,7 @@ struct AudioEngine {
                 // Special case: create and kickstart the primary raw stream and PSG if it is not already
                 AUDIO_DEBUG_PRINT("Creating rawStream object for primary PSG");
 
-                soundHandles[psgSnds[0]]->rawStream = RawStreamCreate(&maEngine, &soundHandles[psgSnds[0]]->maSound);
+                soundHandles[psgSnds[0]]->rawStream = RawStream::Create(&maEngine, &soundHandles[psgSnds[0]]->maSound);
 
                 if (!soundHandles[psgSnds[0]]->rawStream) {
                     AUDIO_DEBUG_PRINT("Failed to create rawStream object for primary PSG");
@@ -1680,7 +1658,7 @@ struct AudioEngine {
                         AUDIO_DEBUG_PRINT("Failed to create primary PSG object");
 
                         // Cleanup
-                        RawStreamDestroy(soundHandles[psgSnds[0]]->rawStream);
+                        RawStream::Destroy(soundHandles[psgSnds[0]]->rawStream);
                         soundHandles[psgSnds[0]]->rawStream = nullptr;
                         soundHandles[psgSnds[0]]->type = SoundHandle::Type::NONE;
 
@@ -1713,10 +1691,189 @@ struct AudioEngine {
             sub__sndclose(snd);
         }
     }
+
+    /// @brief This initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
+    void Initialize() {
+        // Exit if engine is initialize or already initialization was attempted but failed
+        if (isInitialized || initializationFailed)
+            return;
+
+        // Initialize the miniaudio resource manager
+        maResourceManagerConfig = ma_resource_manager_config_init();
+        AudioEngineAttachCustomBackendVTables(&maResourceManagerConfig);
+        maResourceManagerConfig.pCustomDecodingBackendUserData = NULL; // <- pUserData parameter of each function in the decoding backend vtables
+
+        maResult = ma_resource_manager_init(&maResourceManagerConfig, &maResourceManager);
+        if (maResult != MA_SUCCESS) {
+            initializationFailed = true;
+            AUDIO_DEBUG_PRINT("Failed to initialize miniaudio resource manager");
+            return;
+        }
+
+        // Once we have a resource manager we can create the engine
+        maEngineConfig = ma_engine_config_init();
+        maEngineConfig.pResourceManager = &maResourceManager;
+
+        // Attempt to initialize with miniaudio defaults
+        maResult = ma_engine_init(&maEngineConfig, &maEngine);
+        // If failed, then set the global flag so that we don't attempt to initialize again
+        if (maResult != MA_SUCCESS) {
+            ma_resource_manager_uninit(&maResourceManager);
+            initializationFailed = true;
+            AUDIO_DEBUG_PRINT("miniaudio initialization failed");
+            return;
+        }
+
+        // Get and save the engine sample rate. We will let miniaudio choose the device sample rate for us
+        // This ensures we get the lowest latency
+        // Set the resource manager decoder sample rate to the device sample rate (miniaudio engine bug?)
+        maResourceManager.config.decodedSampleRate = sampleRate = ma_engine_get_sample_rate(&maEngine);
+
+        // Set the initialized flag as true
+        isInitialized = true;
+
+        AUDIO_DEBUG_PRINT("Audio engine initialized @ %uHz", sampleRate);
+
+        // Reserve sound handle 0 so that nothing else can use it
+        // We'll kickstart it later when we need it
+        // We will use this handle internally for Play(), Beep(), Sound() etc.
+        psgSnds[0] = CreateHandle();
+        AUDIO_DEBUG_CHECK(psgSnds[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
+    }
+
+    /// @brief This shuts down the audio engine and frees any resources used.
+    void ShutDown() {
+        if (isInitialized) {
+            // Shut down all PSGs
+            ShutDownPSGs();
+
+            // Free all sound handles here
+            for (size_t handle = 0; handle < soundHandles.size(); handle++) {
+                ReleaseHandle(handle);       // let ReleaseHandle do its thing
+                delete soundHandles[handle]; // now free the object created by CreateHandle()
+            }
+
+            // Now that all sounds are closed and SoundHandle objects are freed, clear the vector
+            soundHandles.clear();
+
+            // Invalidate internal handles
+            psgSnds.fill(INVALID_SOUND_HANDLE_INTERNAL);
+            sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL;
+
+            // Shutdown miniaudio
+            ma_engine_uninit(&maEngine);
+
+            // Shutdown the miniaudio resource manager
+            ma_resource_manager_uninit(&maResourceManager);
+
+            // Set engine initialized flag as false
+            isInitialized = false;
+
+            AUDIO_DEBUG_PRINT("Audio engine shutdown");
+        }
+    }
+
+    /// @brief This is called by the QB64-PE internally at ~60Hz. We use this for housekeeping and other stuff.
+    void Update() {
+        if (isInitialized) {
+            // Scan through the whole handle vector to find anything we need to update or close
+            for (size_t handle = 0; handle < soundHandles.size(); handle++) {
+                // Only process handles that are in use
+                if (soundHandles[handle]->isUsed) {
+                    // Look for stuff that is set to auto-destruct
+                    if (soundHandles[handle]->autoKill) {
+                        switch (soundHandles[handle]->type) {
+                        case SoundHandle::Type::STATIC:
+                        case SoundHandle::Type::RAW:
+                            // Dispose the sound if it has finished playing
+                            // Note that this means that temporary looping sounds will never close
+                            // Well that's on the programmer. Probably they want it that way
+                            if (!ma_sound_is_playing(&soundHandles[handle]->maSound))
+                                ReleaseHandle(handle);
+
+                            break;
+
+                        case SoundHandle::Type::NONE:
+                            if (handle != 0)
+                                AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
+
+                            break;
+
+                        default:
+                            AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle
+    /// @param buffer A raw pointer to the sound file in memory
+    /// @param size The size of the file in memory
+    /// @param handle A valid sound handle
+    /// @return MA_SUCCESS if successful. Else, a valid ma_result
+    ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int32_t handle) {
+        if (!IsValidHandle(handle) || soundHandles[handle]->maDecoder || !buffer || !size)
+            return MA_INVALID_ARGS;
+
+        soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
+        if (!soundHandles[handle]->maDecoder) {
+            AUDIO_DEBUG_PRINT("Failed to allocate memory for miniaudio decoder");
+            return MA_OUT_OF_MEMORY;
+        }
+
+        // Setup the decoder & attach the custom backed vtables
+        soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
+        AudioEngineAttachCustomBackendVTables(&soundHandles[handle]->maDecoderConfig);
+        soundHandles[handle]->maDecoderConfig.sampleRate = sampleRate;
+
+        maResult = ma_decoder_init_memory(buffer, size, &soundHandles[handle]->maDecoderConfig,
+                                          soundHandles[handle]->maDecoder); // initialize the decoder
+        if (maResult != MA_SUCCESS) {
+            delete soundHandles[handle]->maDecoder;
+            soundHandles[handle]->maDecoder = nullptr;
+            AUDIO_DEBUG_PRINT("Error %i: failed to initialize miniaudio decoder", maResult);
+            return maResult;
+        }
+
+        // Finally, load the sound as a data source
+        maResult =
+            ma_sound_init_from_data_source(&maEngine, soundHandles[handle]->maDecoder, soundHandles[handle]->maFlags, NULL, &soundHandles[handle]->maSound);
+
+        if (maResult != MA_SUCCESS) {
+            ma_decoder_uninit(soundHandles[handle]->maDecoder);
+            delete soundHandles[handle]->maDecoder;
+            soundHandles[handle]->maDecoder = nullptr;
+            AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound", maResult);
+            return maResult;
+        }
+
+        return MA_SUCCESS;
+    }
 };
 
-// This keeps track of the audio engine state
+/// @brief Raw stream data source vtable
+const ma_data_source_vtable AudioEngine::RawStream::rawStreamDataSourceVtable = {
+    AudioEngine::RawStream::OnRead,          // Returns a bunch of samples from a raw sample stream queue. The samples being returned is removed from the queue
+    AudioEngine::RawStream::OnSeek,          // NOP for raw sample stream
+    AudioEngine::RawStream::OnGetDataFormat, // Returns the audio format to miniaudio
+    NULL,                                    // No notion of a cursor for raw sample stream
+    NULL,                                    // No notion of a length for raw sample stream
+    NULL,                                    // Cannot loop raw sample stream
+    0                                        // flags
+};
+
+// Global audio engine object
 static AudioEngine audioEngine;
+
+/// @brief This generates a default 'beep' sound
+void sub_beep() {
+    if (is_error_pending() || !audioEngine.InitializePSG(0))
+        return;
+
+    audioEngine.psgs[0]->Beep();
+}
 
 /// @brief This generates a sound at the specified frequency for the specified amount of time.
 /// @param frequency Sound frequency.
@@ -1737,7 +1894,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 
     if (passed & 1) {
-        if (volume < PSG::VOLUME_MIN || volume > PSG::VOLUME_MAX) {
+        if (volume < AudioEngine::PSG::VOLUME_MIN || volume > AudioEngine::PSG::VOLUME_MAX) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
@@ -1745,7 +1902,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 
     if (passed & 2) {
-        if (panning < PSG::PAN_LEFT || panning > PSG::PAN_RIGHT) {
+        if (panning < AudioEngine::PSG::PAN_LEFT || panning > AudioEngine::PSG::PAN_RIGHT) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
@@ -1753,16 +1910,17 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 
     if (passed & 4) {
-        if ((PSG::WaveformType)waveform <= PSG::WaveformType::NONE || (PSG::WaveformType)waveform >= PSG::WaveformType::COUNT) {
+        if ((AudioEngine::PSG::WaveformType)waveform <= AudioEngine::PSG::WaveformType::NONE ||
+            (AudioEngine::PSG::WaveformType)waveform >= AudioEngine::PSG::WaveformType::COUNT) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
-        audioEngine.psgs[0]->SetWaveformType((PSG::WaveformType)waveform);
+        audioEngine.psgs[0]->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
     }
 
     if (passed & 8) {
-        if (((PSG::WaveformType)waveform == PSG::WaveformType::PULSE) &&
-            (waveformParam < PSG::PULSE_WAVE_DUTY_CYCLE_MIN || waveformParam > PSG::PULSE_WAVE_DUTY_CYCLE_MAX)) {
+        if (((AudioEngine::PSG::WaveformType)waveform == AudioEngine::PSG::WaveformType::PULSE) &&
+            (waveformParam < AudioEngine::PSG::PULSE_WAVE_DUTY_CYCLE_MIN || waveformParam > AudioEngine::PSG::PULSE_WAVE_DUTY_CYCLE_MAX)) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
@@ -1770,14 +1928,6 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 
     audioEngine.psgs[0]->Sound(frequency, lengthInClockTicks);
-}
-
-/// @brief This generates a default 'beep' sound
-void sub_beep() {
-    if (is_error_pending() || !audioEngine.InitializePSG(0))
-        return;
-
-    audioEngine.psgs[0]->Beep();
 }
 
 /// @brief Returns the number of sample frames or seconds left to play.
@@ -1814,50 +1964,6 @@ void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4
 /// <returns>miniaudio sample rate</returns>
 int32_t func__sndrate() { return audioEngine.sampleRate; }
 
-/// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle
-/// @param buffer A raw pointer to the sound file in memory
-/// @param size The size of the file in memory
-/// @param handle A valid sound handle
-/// @return MA_SUCCESS if successful. Else, a valid ma_result
-static ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int32_t handle) {
-    if (!audioEngine.IsValidHandle(handle) || audioEngine.soundHandles[handle]->maDecoder || !buffer || !size)
-        return MA_INVALID_ARGS;
-
-    audioEngine.soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
-    if (!audioEngine.soundHandles[handle]->maDecoder) {
-        AUDIO_DEBUG_PRINT("Failed to allocate memory for miniaudio decoder");
-        return MA_OUT_OF_MEMORY;
-    }
-
-    // Setup the decoder & attach the custom backed vtables
-    audioEngine.soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
-    AudioEngineAttachCustomBackendVTables(&audioEngine.soundHandles[handle]->maDecoderConfig);
-    audioEngine.soundHandles[handle]->maDecoderConfig.sampleRate = audioEngine.sampleRate;
-
-    audioEngine.maResult = ma_decoder_init_memory(buffer, size, &audioEngine.soundHandles[handle]->maDecoderConfig,
-                                                  audioEngine.soundHandles[handle]->maDecoder); // initialize the decoder
-    if (audioEngine.maResult != MA_SUCCESS) {
-        delete audioEngine.soundHandles[handle]->maDecoder;
-        audioEngine.soundHandles[handle]->maDecoder = nullptr;
-        AUDIO_DEBUG_PRINT("Error %i: failed to initialize miniaudio decoder", audioEngine.maResult);
-        return audioEngine.maResult;
-    }
-
-    // Finally, load the sound as a data source
-    audioEngine.maResult = ma_sound_init_from_data_source(&audioEngine.maEngine, audioEngine.soundHandles[handle]->maDecoder,
-                                                          audioEngine.soundHandles[handle]->maFlags, NULL, &audioEngine.soundHandles[handle]->maSound);
-
-    if (audioEngine.maResult != MA_SUCCESS) {
-        ma_decoder_uninit(audioEngine.soundHandles[handle]->maDecoder);
-        delete audioEngine.soundHandles[handle]->maDecoder;
-        audioEngine.soundHandles[handle]->maDecoder = nullptr;
-        AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound", audioEngine.maResult);
-        return audioEngine.maResult;
-    }
-
-    return MA_SUCCESS;
-}
-
 /// @brief This loads a sound file into memory and returns a LONG handle value above 0.
 /// @param qbsFileName The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports.
 /// @param qbsRequirements This is leftover from the old QB64-SDL days. But we use this to pass some parameters like 'stream'
@@ -1865,18 +1971,18 @@ static ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int3
 /// @return Returns a valid sound handle (> 0) if successful or 0 if it fails
 int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     if (!audioEngine.isInitialized || !qbsFileName->len)
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1)
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Set some sound default properties
-    audioEngine.soundHandles[handle]->type = SoundHandle::Type::STATIC; // set the sound type to static by default
-    audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE;  // set the sound to decode completely first before playing (QB64 default)
-    audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_ASYNC;   // set the sound to decode asynchronously by default
-    bool fromMemory = false;                                            // we'll assume we are loading the sound from disk
+    audioEngine.soundHandles[handle]->type = AudioEngine::SoundHandle::Type::STATIC; // set the sound type to static by default
+    audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE;               // set the sound to decode completely first before playing (QB64 default)
+    audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_ASYNC;                // set the sound to decode asynchronously by default
+    bool fromMemory = false;                                                         // we'll assume we are loading the sound from disk
 
     AUDIO_DEBUG_PRINT("Sound set to fully decode asynchronously");
 
@@ -1917,7 +2023,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
             std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));                        // make a unique key and save it
         audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
-        audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, handle);                                     // create the ma_sound
+        audioEngine.maResult = audioEngine.InitializeSoundFromMemory(buffer, bufferSize, handle);                         // create the ma_sound
     } else {
         std::string fileName(reinterpret_cast<char const *>(qbsFileName->chr), qbsFileName->len);
 
@@ -1932,7 +2038,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     if (audioEngine.maResult != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to open sound", audioEngine.maResult);
         audioEngine.soundHandles[handle]->isUsed = false;
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
     }
 
     AUDIO_DEBUG_PRINT("Sound successfully loaded");
@@ -1946,7 +2052,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 /// @param handle A valid sound handle
 void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle)) {
-        if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
+        if (audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
             audioEngine.soundHandles[handle]->rawStream->pause.store(false, std::memory_order_relaxed); // unpause the stream
             audioEngine.soundHandles[handle]->rawStream->stop = true; // signal miniaudio thread that we are going to end playback
         }
@@ -1963,10 +2069,11 @@ void sub__sndclose(int32_t handle) {
 /// <returns>A new sound handle if successful or 0 on failure</returns>
 int32_t func__sndcopy(int32_t src_handle) {
     // Check for all invalid cases
-    if (!audioEngine.isInitialized || !audioEngine.IsValidHandle(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundHandle::Type::STATIC)
-        return INVALID_SOUND_HANDLE;
+    if (!audioEngine.isInitialized || !audioEngine.IsValidHandle(src_handle) ||
+        audioEngine.soundHandles[src_handle]->type != AudioEngine::SoundHandle::Type::STATIC)
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
-    int32_t dst_handle = INVALID_SOUND_HANDLE;
+    int32_t dst_handle = AudioEngine::INVALID_SOUND_HANDLE;
 
     // Miniaudio will not copy sounds attached to ma_audio_buffers so we'll handle the duplication ourselves
     // Sadly, since this involves a buffer copy there may be a delay before the sound can play (especially if the sound is lengthy)
@@ -1981,7 +2088,7 @@ int32_t func__sndcopy(int32_t src_handle) {
         // First create a new _SNDNEW sound with the same properties at the source
         dst_handle = func__sndnew(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format));
         if (dst_handle < 1)
-            return INVALID_SOUND_HANDLE;
+            return AudioEngine::INVALID_SOUND_HANDLE;
 
         // Next memcopy the samples from the source to the dest
         memcpy((void *)audioEngine.soundHandles[dst_handle]->maAudioBuffer->ref.pData, audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.pData,
@@ -1991,30 +2098,30 @@ int32_t func__sndcopy(int32_t src_handle) {
 
         dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
         if (dst_handle < 1)
-            return INVALID_SOUND_HANDLE;
+            return AudioEngine::INVALID_SOUND_HANDLE;
 
-        audioEngine.soundHandles[dst_handle]->type = SoundHandle::Type::STATIC;                                       // set some handle properties
+        audioEngine.soundHandles[dst_handle]->type = AudioEngine::SoundHandle::Type::STATIC;                          // set some handle properties
         audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags;                // copy the flags
         audioEngine.soundHandles[dst_handle]->bufferKey = audioEngine.soundHandles[src_handle]->bufferKey;            // copy the BufferMap unique key
         audioEngine.bufferMap.AddRef(audioEngine.soundHandles[dst_handle]->bufferKey);                                // increase the reference count
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[dst_handle]->bufferKey); // get the buffer pointer and size
-        audioEngine.maResult = InitializeSoundFromMemory(buffer, bufferSize, dst_handle);                             // create the ma_sound
+        audioEngine.maResult = audioEngine.InitializeSoundFromMemory(buffer, bufferSize, dst_handle);                 // create the ma_sound
 
         if (audioEngine.maResult != MA_SUCCESS) {
             audioEngine.bufferMap.Release(audioEngine.soundHandles[dst_handle]->bufferKey);
             audioEngine.soundHandles[dst_handle]->isUsed = false;
             AUDIO_DEBUG_PRINT("Error %i: failed to copy sound", audioEngine.maResult);
 
-            return INVALID_SOUND_HANDLE;
+            return AudioEngine::INVALID_SOUND_HANDLE;
         }
     } else {
         AUDIO_DEBUG_PRINT("Doing regular miniaudio sound copy");
 
         dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
         if (dst_handle < 1)
-            return INVALID_SOUND_HANDLE;
+            return AudioEngine::INVALID_SOUND_HANDLE;
 
-        audioEngine.soundHandles[dst_handle]->type = SoundHandle::Type::STATIC;                        // set some handle properties
+        audioEngine.soundHandles[dst_handle]->type = AudioEngine::SoundHandle::Type::STATIC;           // set some handle properties
         audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags; // copy the flags
 
         // Initialize a new copy of the sound
@@ -2026,7 +2133,7 @@ int32_t func__sndcopy(int32_t src_handle) {
             audioEngine.soundHandles[dst_handle]->isUsed = false;
             AUDIO_DEBUG_PRINT("Error %i: failed to copy sound", audioEngine.maResult);
 
-            return INVALID_SOUND_HANDLE;
+            return AudioEngine::INVALID_SOUND_HANDLE;
         }
     }
 
@@ -2038,7 +2145,7 @@ int32_t func__sndcopy(int32_t src_handle) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndplay(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -2131,7 +2238,7 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndpause(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Stop the sound and just leave it at that
         // miniaudio does not reset the play cursor
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
@@ -2145,7 +2252,7 @@ void sub__sndpause(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Return true if the sound is playing. False otherwise</returns>
 int32_t func__sndplaying(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         return ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) ? QB_TRUE : QB_FALSE;
     }
 
@@ -2158,7 +2265,7 @@ int32_t func__sndplaying(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns true if the sound is paused. False otherwise</returns>
 int32_t func__sndpaused(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         return !ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
                        (ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || !ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))
                    ? QB_TRUE
@@ -2173,7 +2280,8 @@ int32_t func__sndpaused(int32_t handle) {
 /// @param volume A float point value with 0 resulting in silence and anything above 1 resulting in amplification.
 void sub__sndvol(int32_t handle, float volume) {
     if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) &&
-        (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
+        (audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC ||
+         audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW)) {
         ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
     }
 }
@@ -2183,7 +2291,7 @@ void sub__sndvol(int32_t handle, float volume) {
 /// </summary>
 /// <param name="handle"></param>
 void sub__sndloop(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -2217,7 +2325,8 @@ void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int
     (void)channel;
 
     if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) &&
-        (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
+        (audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC ||
+         audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW)) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
@@ -2244,7 +2353,7 @@ void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int
 /// @param handle A sound handle.
 /// @return Returns the length of a sound in seconds.
 double func__sndlen(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2258,7 +2367,7 @@ double func__sndlen(int32_t handle) {
 /// @param handle A sound handle.
 /// @return Returns the current playing position in seconds for a loaded sound.
 double func__sndgetpos(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         float playCursorSeconds = 0;
         audioEngine.maResult = ma_sound_get_cursor_in_seconds(&audioEngine.soundHandles[handle]->maSound, &playCursorSeconds);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2272,7 +2381,7 @@ double func__sndgetpos(int32_t handle) {
 /// @param handle A sound handle.
 /// @param seconds The position to set in seconds.
 void sub__sndsetpos(int32_t handle, double seconds) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // TODO: Redo the whole thing in sample frames instead of seconds
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
@@ -2303,7 +2412,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
 /// @param limit The number of seconds that the sound will play.
 void sub__sndlimit(int32_t handle, double limit) {
     // TODO: Get the length in sample frames and then set the stop frame. Redo the whole thing in sample frames instead of seconds
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000);
     }
 }
@@ -2313,7 +2422,7 @@ void sub__sndlimit(int32_t handle, double limit) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndstop(int32_t handle) {
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Stop the sound first
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2329,20 +2438,20 @@ void sub__sndstop(int32_t handle) {
 int32_t func__sndopenraw() {
     // Return invalid handle if audio engine is not initialized
     if (!audioEngine.isInitialized)
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1)
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SoundHandle::Type::RAW;
+    audioEngine.soundHandles[handle]->type = AudioEngine::SoundHandle::Type::RAW;
 
     // Create the raw sound object
-    audioEngine.soundHandles[handle]->rawStream = RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[handle]->maSound);
+    audioEngine.soundHandles[handle]->rawStream = AudioEngine::RawStream::Create(&audioEngine.maEngine, &audioEngine.soundHandles[handle]->maSound);
     if (!audioEngine.soundHandles[handle]->rawStream)
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
     return handle;
 }
@@ -2365,7 +2474,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
         handle = audioEngine.sndInternalRaw;
     }
 
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
         if (!(passed & 1))
             right = left;
 
@@ -2382,7 +2491,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
     if (!passed)
         handle = audioEngine.sndInternalRaw;
 
-    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
         return audioEngine.soundHandles[handle]->rawStream->GetTimeRemaining();
     }
 
@@ -2400,16 +2509,16 @@ int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits) {
     // Validate all parameters
     if (!audioEngine.isInitialized || frames == 0 || (channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
         AUDIO_DEBUG_PRINT("Invalid parameters: frames = %u, channels = %u, bits = %u", frames, channels, bits);
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
     }
 
     // Allocate a sound handle
     int32_t handle = audioEngine.CreateHandle();
     if (handle < 1)
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Set some handle properties
-    audioEngine.soundHandles[handle]->type = SoundHandle::Type::STATIC;
+    audioEngine.soundHandles[handle]->type = AudioEngine::SoundHandle::Type::STATIC;
 
     // Setup the ma_audio_buffer
     audioEngine.soundHandles[handle]->maAudioBufferConfig = ma_audio_buffer_config_init(
@@ -2425,7 +2534,7 @@ int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits) {
     if (audioEngine.maResult != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to initialize audio buffer", audioEngine.maResult);
         audioEngine.soundHandles[handle]->isUsed = false;
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
     }
 
     // Create a ma_sound from the ma_audio_buffer
@@ -2436,7 +2545,7 @@ int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits) {
         ma_audio_buffer_uninit_and_free(audioEngine.soundHandles[handle]->maAudioBuffer);
         audioEngine.soundHandles[handle]->maAudioBuffer = nullptr;
         audioEngine.soundHandles[handle]->isUsed = false;
-        return INVALID_SOUND_HANDLE;
+        return AudioEngine::INVALID_SOUND_HANDLE;
     }
 
     AUDIO_DEBUG_PRINT("Frames = %llu, channels = %i, bits = %i, ma_format = %i, pointer = %p",
@@ -2468,7 +2577,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
     mb.lock_id = INVALID_MEM_LOCK;
 
     // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
-    if (!audioEngine.isInitialized || !audioEngine.IsValidHandle(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC) {
+    if (!audioEngine.isInitialized || !audioEngine.IsValidHandle(handle) || audioEngine.soundHandles[handle]->type != AudioEngine::SoundHandle::Type::STATIC) {
         AUDIO_DEBUG_PRINT("Invalid handle (%i) or sound type (%i)", handle, int(audioEngine.soundHandles[handle]->type));
         return mb;
     }
@@ -2658,118 +2767,11 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
     }
 }
 
-/// @brief This initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results
-void snd_init() {
-    // Exit if engine is initialize or already initialization was attempted but failed
-    if (audioEngine.isInitialized || audioEngine.initializationFailed)
-        return;
+/// @brief This initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
+void snd_init() { audioEngine.Initialize(); }
 
-    // Initialize the miniaudio resource manager
-    audioEngine.maResourceManagerConfig = ma_resource_manager_config_init();
-    AudioEngineAttachCustomBackendVTables(&audioEngine.maResourceManagerConfig);
-    audioEngine.maResourceManagerConfig.pCustomDecodingBackendUserData = NULL; // <- pUserData parameter of each function in the decoding backend vtables
-
-    audioEngine.maResult = ma_resource_manager_init(&audioEngine.maResourceManagerConfig, &audioEngine.maResourceManager);
-    if (audioEngine.maResult != MA_SUCCESS) {
-        audioEngine.initializationFailed = true;
-        AUDIO_DEBUG_PRINT("Failed to initialize miniaudio resource manager");
-        return;
-    }
-
-    // Once we have a resource manager we can create the engine
-    audioEngine.maEngineConfig = ma_engine_config_init();
-    audioEngine.maEngineConfig.pResourceManager = &audioEngine.maResourceManager;
-
-    // Attempt to initialize with miniaudio defaults
-    audioEngine.maResult = ma_engine_init(&audioEngine.maEngineConfig, &audioEngine.maEngine);
-    // If failed, then set the global flag so that we don't attempt to initialize again
-    if (audioEngine.maResult != MA_SUCCESS) {
-        ma_resource_manager_uninit(&audioEngine.maResourceManager);
-        audioEngine.initializationFailed = true;
-        AUDIO_DEBUG_PRINT("miniaudio initialization failed");
-        return;
-    }
-
-    // Get and save the engine sample rate. We will let miniaudio choose the device sample rate for us
-    // This ensures we get the lowest latency
-    // Set the resource manager decoder sample rate to the device sample rate (miniaudio engine bug?)
-    audioEngine.maResourceManager.config.decodedSampleRate = audioEngine.sampleRate = ma_engine_get_sample_rate(&audioEngine.maEngine);
-
-    // Set the initialized flag as true
-    audioEngine.isInitialized = true;
-
-    AUDIO_DEBUG_PRINT("Audio engine initialized @ %uHz", audioEngine.sampleRate);
-
-    // Reserve sound handle 0 so that nothing else can use it
-    // We'll kickstart it later when we need it
-    // We will use this handle internally for Play(), Beep(), Sound() etc.
-    audioEngine.psgSnds[0] = audioEngine.CreateHandle();
-    AUDIO_DEBUG_CHECK(audioEngine.psgSnds[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
-}
-
-/// @brief This shuts down the audio engine and frees any resources used
-void snd_un_init() {
-    if (audioEngine.isInitialized) {
-        // Shut down all PSGs
-        audioEngine.ShutDownPSGs();
-
-        // Free all sound handles here
-        for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
-            audioEngine.ReleaseHandle(handle);       // let ReleaseHandle do its thing
-            delete audioEngine.soundHandles[handle]; // now free the object created by CreateHandle()
-        }
-
-        // Now that all sounds are closed and SoundHandle objects are freed, clear the vector
-        audioEngine.soundHandles.clear();
-
-        // Invalidate internal handles
-        audioEngine.psgSnds.fill(INVALID_SOUND_HANDLE_INTERNAL);
-        audioEngine.sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL;
-
-        // Shutdown miniaudio
-        ma_engine_uninit(&audioEngine.maEngine);
-
-        // Shutdown the miniaudio resource manager
-        ma_resource_manager_uninit(&audioEngine.maResourceManager);
-
-        // Set engine initialized flag as false
-        audioEngine.isInitialized = false;
-
-        AUDIO_DEBUG_PRINT("Audio engine shutdown");
-    }
-}
+/// @brief This shuts down the audio engine and frees any resources used.
+void snd_un_init() { audioEngine.ShutDown(); }
 
 /// @brief This is called by the QB64-PE internally at ~60Hz. We use this for housekeeping and other stuff.
-void snd_mainloop() {
-    if (audioEngine.isInitialized) {
-        // Scan through the whole handle vector to find anything we need to update or close
-        for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
-            // Only process handles that are in use
-            if (audioEngine.soundHandles[handle]->isUsed) {
-                // Look for stuff that is set to auto-destruct
-                if (audioEngine.soundHandles[handle]->autoKill) {
-                    switch (audioEngine.soundHandles[handle]->type) {
-                    case SoundHandle::Type::STATIC:
-                    case SoundHandle::Type::RAW:
-                        // Dispose the sound if it has finished playing
-                        // Note that this means that temporary looping sounds will never close
-                        // Well that's on the programmer. Probably they want it that way
-                        if (!ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound))
-                            audioEngine.ReleaseHandle(handle);
-
-                        break;
-
-                    case SoundHandle::Type::NONE:
-                        if (handle != 0)
-                            AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
-
-                        break;
-
-                    default:
-                        AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
-                    }
-                }
-            }
-        }
-    }
-}
+void snd_mainloop() { audioEngine.Update(); }
