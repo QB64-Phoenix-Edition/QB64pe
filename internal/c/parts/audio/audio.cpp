@@ -29,13 +29,6 @@
 // Handle 0 is 'handled' as a special case
 #define INVALID_SOUND_HANDLE 0
 
-// This basically checks if the handle is within vector limits and 'isUsed' is set to true
-// We are relying on C's boolean short-circuit to not evaluate the last 'isUsed' if previous conditions are false
-// Here we are checking > 0 because this is meant to check user handles only
-#define IS_SOUND_HANDLE_VALID(_handle_)                                                                                                                        \
-    ((_handle_) > INVALID_SOUND_HANDLE && (_handle_) < (int32_t)audioEngine.soundHandles.size() && audioEngine.soundHandles[_handle_]->isUsed &&               \
-     !audioEngine.soundHandles[_handle_]->autoKill)
-
 /// @brief A miniaudiio raw audio stream datasource
 struct RawStream {
     ma_data_source_base maDataSource;         // miniaudio data source (this must be the first member of our struct)
@@ -1611,46 +1604,119 @@ struct AudioEngine {
             AUDIO_DEBUG_PRINT("Sound handle %i marked as free", handle);
         }
     }
+
+    /// @brief Checks if a sound handle is valid.
+    /// @param handle A sound handle.
+    /// @return Returns true if the handle is valid.
+    bool IsValidHandle(int32_t handle) {
+        return handle > INVALID_SOUND_HANDLE && handle < (int32_t)soundHandles.size() && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
+    }
+
+    /// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
+    /// @return Returns true if both objects were successfully created
+    bool InitializePSG(size_t voice) {
+        if (!isInitialized || voice >= PSG_COUNT) {
+            return false;
+        }
+
+        if (voice) {
+            if (!IsValidHandle(psgSnds[voice])) {
+                AUDIO_DEBUG_PRINT("Setting up PSG for voice %zu", voice);
+
+                psgSnds[voice] = func__sndopenraw();
+
+                if (!IsValidHandle(psgSnds[voice])) {
+                    AUDIO_DEBUG_PRINT("Failed to create raw sound stream for voice %zu", voice);
+
+                    psgSnds[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
+
+                    return false;
+                }
+
+                if (!psgs[voice]) {
+                    AUDIO_DEBUG_PRINT("Creating PSG object for voice %zu", voice);
+
+                    psgs[voice] = new PSG(soundHandles[psgSnds[voice]]->rawStream);
+
+                    if (!psgs[voice]) {
+                        AUDIO_DEBUG_PRINT("Failed to create PSG object for voice %zu", voice);
+
+                        // Cleanup
+                        sub__sndclose(psgSnds[voice]);
+                        ReleaseHandle(psgSnds[voice]);                  // we'll clean this up ourself
+                        psgSnds[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
+
+                        return false;
+                    }
+                }
+            }
+        } else {
+            if (psgSnds[0] != 0) {
+                AUDIO_DEBUG_PRINT("Primary PSG sound handle not reserved");
+
+                return false;
+            }
+
+            if (!soundHandles[psgSnds[0]]->rawStream) {
+                // Special case: create and kickstart the primary raw stream and PSG if it is not already
+                AUDIO_DEBUG_PRINT("Creating rawStream object for primary PSG");
+
+                soundHandles[psgSnds[0]]->rawStream = RawStreamCreate(&maEngine, &soundHandles[psgSnds[0]]->maSound);
+
+                if (!soundHandles[psgSnds[0]]->rawStream) {
+                    AUDIO_DEBUG_PRINT("Failed to create rawStream object for primary PSG");
+
+                    return false;
+                }
+
+                soundHandles[psgSnds[0]]->type = SoundHandle::Type::RAW;
+
+                if (!psgs[0]) {
+                    AUDIO_DEBUG_PRINT("Creating primary PSG object");
+
+                    psgs[0] = new PSG(soundHandles[psgSnds[0]]->rawStream);
+
+                    if (!psgs[0]) {
+                        AUDIO_DEBUG_PRINT("Failed to create primary PSG object");
+
+                        // Cleanup
+                        RawStreamDestroy(soundHandles[psgSnds[0]]->rawStream);
+                        soundHandles[psgSnds[0]]->rawStream = nullptr;
+                        soundHandles[psgSnds[0]]->type = SoundHandle::Type::NONE;
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return (soundHandles[psgSnds[voice]]->rawStream && psgs[voice]);
+    }
+
+    void ShutDownPSGs() {
+        // Free any PSG object if they were created
+        for (size_t i = 0; i < PSG_COUNT; i++) {
+            if (psgs[i]) {
+                delete psgs[i];
+                psgs[i] = nullptr;
+            }
+        }
+
+        // Special case for primary PSG
+        if (soundHandles[psgSnds[0]]->rawStream) {
+            soundHandles[psgSnds[0]]->rawStream->pause.store(false, std::memory_order_relaxed);
+            soundHandles[psgSnds[0]]->rawStream->stop = true;
+        }
+
+        // Release the sound handles
+        for (auto snd : psgSnds) {
+            sub__sndclose(snd);
+        }
+    }
 };
 
 // This keeps track of the audio engine state
 static AudioEngine audioEngine;
-
-/// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
-/// @return Returns true if both objects were successfully created
-static bool InitializePSG() {
-    if (!audioEngine.isInitialized || audioEngine.psgSnds[0] != 0)
-        return false;
-
-    // Kickstart the raw stream and PSG if it is not already
-    if (!audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
-        AUDIO_DEBUG_PRINT("Creating rawStream object for primary PSG");
-
-        audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream =
-            RawStreamCreate(&audioEngine.maEngine, &audioEngine.soundHandles[audioEngine.psgSnds[0]]->maSound);
-        if (!audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
-            AUDIO_DEBUG_PRINT("Failed to create rawStream object for primary PSG");
-            return false;
-        }
-        audioEngine.soundHandles[audioEngine.psgSnds[0]]->type = SoundHandle::Type::RAW;
-
-        if (!audioEngine.psgs[0]) {
-            AUDIO_DEBUG_PRINT("Creating primary PSG object");
-
-            audioEngine.psgs[0] = new PSG(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream);
-            if (!audioEngine.psgs[0]) {
-                AUDIO_DEBUG_PRINT("Failed to create primary PSG object");
-                RawStreamDestroy(audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream);
-                audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream = nullptr;
-                audioEngine.soundHandles[audioEngine.psgSnds[0]]->type = SoundHandle::Type::NONE;
-
-                return false;
-            }
-        }
-    }
-
-    return (audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream && audioEngine.psgs[0]);
-}
 
 /// @brief This generates a sound at the specified frequency for the specified amount of time.
 /// @param frequency Sound frequency.
@@ -1662,7 +1728,7 @@ static bool InitializePSG() {
 /// @param voice The voice to use (1 - 4 or -4 to -1 if playback needs to be held until the next call).
 /// @param passed Optional parameter flags.
 void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t passed) {
-    if (is_error_pending() || lengthInClockTicks == 0.0f || !InitializePSG())
+    if (is_error_pending() || lengthInClockTicks == 0.0f || !audioEngine.InitializePSG(0))
         return;
 
     if ((frequency < 37.0f && frequency != 0.0f) || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
@@ -1708,7 +1774,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
 
 /// @brief This generates a default 'beep' sound
 void sub_beep() {
-    if (is_error_pending() || !InitializePSG())
+    if (is_error_pending() || !audioEngine.InitializePSG(0))
         return;
 
     audioEngine.psgs[0]->Beep();
@@ -1736,7 +1802,7 @@ uint64_t func_play(int32_t voice, int32_t passed) {
 /// @param str4 MML string for voice 4.
 /// @param passed Optional parameter flags.
 void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed) {
-    if (is_error_pending() || !InitializePSG())
+    if (is_error_pending() || !audioEngine.InitializePSG(0))
         return;
 
     audioEngine.psgs[0]->Play(str1);
@@ -1754,7 +1820,7 @@ int32_t func__sndrate() { return audioEngine.sampleRate; }
 /// @param handle A valid sound handle
 /// @return MA_SUCCESS if successful. Else, a valid ma_result
 static ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int32_t handle) {
-    if (!IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->maDecoder || !buffer || !size)
+    if (!audioEngine.IsValidHandle(handle) || audioEngine.soundHandles[handle]->maDecoder || !buffer || !size)
         return MA_INVALID_ARGS;
 
     audioEngine.soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
@@ -1879,7 +1945,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 /// If the sound is a stream of raw samples then any remaining samples pending for playback will be sent to miniaudio and then the handle will be freed.
 /// @param handle A valid sound handle
 void sub__sndclose(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle)) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle)) {
         if (audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
             audioEngine.soundHandles[handle]->rawStream->pause.store(false, std::memory_order_relaxed); // unpause the stream
             audioEngine.soundHandles[handle]->rawStream->stop = true; // signal miniaudio thread that we are going to end playback
@@ -1897,7 +1963,7 @@ void sub__sndclose(int32_t handle) {
 /// <returns>A new sound handle if successful or 0 on failure</returns>
 int32_t func__sndcopy(int32_t src_handle) {
     // Check for all invalid cases
-    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundHandle::Type::STATIC)
+    if (!audioEngine.isInitialized || !audioEngine.IsValidHandle(src_handle) || audioEngine.soundHandles[src_handle]->type != SoundHandle::Type::STATIC)
         return INVALID_SOUND_HANDLE;
 
     int32_t dst_handle = INVALID_SOUND_HANDLE;
@@ -1972,7 +2038,7 @@ int32_t func__sndcopy(int32_t src_handle) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndplay(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -2065,7 +2131,7 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndpause(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Stop the sound and just leave it at that
         // miniaudio does not reset the play cursor
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
@@ -2079,7 +2145,7 @@ void sub__sndpause(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Return true if the sound is playing. False otherwise</returns>
 int32_t func__sndplaying(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         return ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) ? QB_TRUE : QB_FALSE;
     }
 
@@ -2092,7 +2158,7 @@ int32_t func__sndplaying(int32_t handle) {
 /// <param name="handle">A sound handle</param>
 /// <returns>Returns true if the sound is paused. False otherwise</returns>
 int32_t func__sndpaused(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         return !ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
                        (ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || !ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))
                    ? QB_TRUE
@@ -2106,7 +2172,7 @@ int32_t func__sndpaused(int32_t handle) {
 /// @param handle A sound handle.
 /// @param volume A float point value with 0 resulting in silence and anything above 1 resulting in amplification.
 void sub__sndvol(int32_t handle, float volume) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) &&
         (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
         ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
     }
@@ -2117,7 +2183,7 @@ void sub__sndvol(int32_t handle, float volume) {
 /// </summary>
 /// <param name="handle"></param>
 void sub__sndloop(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
         // This is based on the old OpenAl-soft code behavior
         if (ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -2150,7 +2216,7 @@ void sub__sndloop(int32_t handle) {
 void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int32_t passed) {
     (void)channel;
 
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) &&
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) &&
         (audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC || audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW)) {
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
@@ -2178,7 +2244,7 @@ void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int
 /// @param handle A sound handle.
 /// @return Returns the length of a sound in seconds.
 double func__sndlen(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2192,7 +2258,7 @@ double func__sndlen(int32_t handle) {
 /// @param handle A sound handle.
 /// @return Returns the current playing position in seconds for a loaded sound.
 double func__sndgetpos(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         float playCursorSeconds = 0;
         audioEngine.maResult = ma_sound_get_cursor_in_seconds(&audioEngine.soundHandles[handle]->maSound, &playCursorSeconds);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2206,7 +2272,7 @@ double func__sndgetpos(int32_t handle) {
 /// @param handle A sound handle.
 /// @param seconds The position to set in seconds.
 void sub__sndsetpos(int32_t handle, double seconds) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // TODO: Redo the whole thing in sample frames instead of seconds
         float lengthSeconds = 0;
         audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
@@ -2237,7 +2303,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
 /// @param limit The number of seconds that the sound will play.
 void sub__sndlimit(int32_t handle, double limit) {
     // TODO: Get the length in sample frames and then set the stop frame. Redo the whole thing in sample frames instead of seconds
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000);
     }
 }
@@ -2247,7 +2313,7 @@ void sub__sndlimit(int32_t handle, double limit) {
 /// </summary>
 /// <param name="handle">A sound handle</param>
 void sub__sndstop(int32_t handle) {
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::STATIC) {
         // Stop the sound first
         audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
@@ -2258,10 +2324,8 @@ void sub__sndstop(int32_t handle) {
     }
 }
 
-/// <summary>
-/// This function opens a new channel to fill with _SNDRAW content to manage multiple dynamically generated sounds.
-/// </summary>
-/// <returns>A new sound handle if successful or 0 on failure</returns>
+/// @brief Creates a new raw sound stream and returns a sound handle.
+/// @return A new sound handle if successful or 0 on failure.
 int32_t func__sndopenraw() {
     // Return invalid handle if audio engine is not initialized
     if (!audioEngine.isInitialized)
@@ -2301,7 +2365,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
         handle = audioEngine.sndInternalRaw;
     }
 
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
         if (!(passed & 1))
             right = left;
 
@@ -2318,7 +2382,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
     if (!passed)
         handle = audioEngine.sndInternalRaw;
 
-    if (audioEngine.isInitialized && IS_SOUND_HANDLE_VALID(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
+    if (audioEngine.isInitialized && audioEngine.IsValidHandle(handle) && audioEngine.soundHandles[handle]->type == SoundHandle::Type::RAW) {
         return audioEngine.soundHandles[handle]->rawStream->GetTimeRemaining();
     }
 
@@ -2404,7 +2468,7 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
     mb.lock_id = INVALID_MEM_LOCK;
 
     // Return invalid mem_block if audio is not initialized, handle is invalid or sound type is not static
-    if (!audioEngine.isInitialized || !IS_SOUND_HANDLE_VALID(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC) {
+    if (!audioEngine.isInitialized || !audioEngine.IsValidHandle(handle) || audioEngine.soundHandles[handle]->type != SoundHandle::Type::STATIC) {
         AUDIO_DEBUG_PRINT("Invalid handle (%i) or sound type (%i)", handle, int(audioEngine.soundHandles[handle]->type));
         return mb;
     }
@@ -2646,21 +2710,8 @@ void snd_init() {
 /// @brief This shuts down the audio engine and frees any resources used
 void snd_un_init() {
     if (audioEngine.isInitialized) {
-        // Free any PSG object if they were created
-        for (auto psg : audioEngine.psgs) {
-            delete psg;
-            psg = nullptr;
-        }
-
-        // Special case for primary PSG
-        if (audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream) {
-            audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->pause.store(false, std::memory_order_relaxed);
-            audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->stop = true;
-        }
-
-        for (auto snd : audioEngine.psgSnds) {
-            sub__sndclose(snd);
-        }
+        // Shut down all PSGs
+        audioEngine.ShutDownPSGs();
 
         // Free all sound handles here
         for (size_t handle = 0; handle < audioEngine.soundHandles.size(); handle++) {
