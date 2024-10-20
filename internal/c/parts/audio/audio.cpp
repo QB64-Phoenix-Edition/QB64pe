@@ -542,15 +542,17 @@ struct AudioEngine {
 
         /// @brief Waits for any playback to complete
         void AwaitPlaybackCompletion() {
-            if (background || rawStream->pause.load(std::memory_order_relaxed))
+            if (background || rawStream->pause.load(std::memory_order_relaxed)) {
                 return; // no need to wait
+            }
 
             auto timeSec = rawStream->GetTimeRemaining() * 0.95 - 0.25; // per original QB64 behavior
 
             AUDIO_DEBUG_PRINT("Waiting %f seconds for playback to complete", timeSec);
 
-            if (timeSec > 0)
+            if (timeSec > 0) {
                 sub__delay(timeSec); // we are using sub_delay() because ON TIMER and other events may need to be called while we are waiting
+            }
 
             AUDIO_DEBUG_PRINT("Playback complete");
         }
@@ -731,6 +733,14 @@ struct AudioEngine {
 
             AUDIO_DEBUG_PRINT("Panning set to %f", panning);
         }
+
+        /// @brief Pauses or resumes PSG playback
+        /// @param state true to pause, false to resume
+        void Pause(bool state) { rawStream->pause.store(state, std::memory_order_relaxed); }
+
+        /// @brief Checks if the PSG is paused
+        /// @return true if paused
+        bool IsPaused() { return rawStream->pause.load(std::memory_order_relaxed); }
 
         /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
         void Beep() {
@@ -1356,6 +1366,7 @@ struct AudioEngine {
         ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
         ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
         RawStream *rawStream;                       // Raw sample frame queue
+        PSG *psg;                                   // PSG object (if any) linked to this sound
         void *memLockOffset;                        // This is a pointer from new_mem_lock()
         uint64_t memLockId;                         // This is mem_lock_id created by new_mem_lock()
 
@@ -1379,6 +1390,7 @@ struct AudioEngine {
             ZERO_VARIABLE(maAudioBufferConfig);
             maAudioBuffer = nullptr;
             rawStream = nullptr;
+            psg = nullptr;
             memLockOffset = nullptr;
             memLockId = INVALID_MEM_LOCK;
         }
@@ -1386,7 +1398,7 @@ struct AudioEngine {
 
     static const auto INVALID_SOUND_HANDLE_INTERNAL = -1; // this is what is returned to the caller by CreateHandle() if handle allocation fails
     static const auto INVALID_SOUND_HANDLE = 0; // this should be returned to the caller by top-level sound APIs if a handle allocation fails with a -1
-    static const auto PSG_COUNT = 4;            // this is the number of PSGs that we will use
+    static const auto PSG_VOICES = 4;           // this is the number of PSG objects that we will use
 
     bool isInitialized;                                 // this is set to true if we were able to initialize miniaudio and allocated all required resources
     bool initializationFailed;                          // this is set to true if a past initialization attempt failed
@@ -1396,8 +1408,7 @@ struct AudioEngine {
     ma_engine maEngine;                                 // this is the primary miniaudio engine 'context'. Everything happens using this!
     ma_result maResult;                                 // this is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                               // sample rate used by the miniaudio engine
-    std::array<int32_t, PSG_COUNT> psgSnds;             // internal sound handles that we will use for Play(), Beep() & Sound()
-    std::array<PSG *, PSG_COUNT> psgs;                  // PSG objects that we will use to generate sound for Play(), Beep() & Sound()
+    std::array<int32_t, PSG_VOICES> psgVoices;          // internal sound handles that we will use for Play(), Beep() & Sound()
     int32_t sndInternalRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
@@ -1420,8 +1431,7 @@ struct AudioEngine {
         ZERO_VARIABLE(maEngine);
         maResult = ma_result::MA_SUCCESS;
         sampleRate = 0;
-        psgSnds.fill(INVALID_SOUND_HANDLE_INTERNAL); // should not use INVALID_SOUND_HANDLE here
-        psgs.fill(nullptr);
+        psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);  // should not use INVALID_SOUND_HANDLE here
         sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
         lowestFreeHandle = 0;
     }
@@ -1503,6 +1513,7 @@ struct AudioEngine {
         soundHandles[h]->bufferKey = 0;
         soundHandles[h]->maAudioBuffer = nullptr;
         soundHandles[h]->rawStream = nullptr;
+        soundHandles[h]->psg = nullptr;
         soundHandles[h]->memLockId = INVALID_MEM_LOCK;
         soundHandles[h]->memLockOffset = nullptr;
         soundHandles[h]->isUsed = true;
@@ -1524,28 +1535,19 @@ struct AudioEngine {
     /// <param name="handle">A sound handle</param>
     void ReleaseHandle(int32_t handle) {
         if (isInitialized && handle >= 0 && handle < soundHandles.size() && soundHandles[handle]->isUsed) {
-            // Sound type specific cleanup
-            switch (soundHandles[handle]->type) {
-            case SoundHandle::Type::STATIC:
+            // Free any initialized miniaudio sound
+            if (soundHandles[handle]->type == SoundHandle::Type::STATIC) {
                 ma_sound_uninit(&soundHandles[handle]->maSound);
-
-                break;
-
-            case SoundHandle::Type::RAW:
-                RawStream::Destroy(soundHandles[handle]->rawStream);
-                soundHandles[handle]->rawStream = nullptr;
-
-                break;
-
-            case SoundHandle::Type::NONE:
-                if (handle != 0)
-                    AUDIO_DEBUG_PRINT("Sound type is 'None' when handle value is not 0");
-
-                break;
-
-            default:
-                AUDIO_DEBUG_PRINT("Condition not handled"); // It should not come here
+                AUDIO_DEBUG_PRINT("Sound uninitialized");
             }
+
+            // Free any initialized raw stream
+            RawStream::Destroy(soundHandles[handle]->rawStream);
+            soundHandles[handle]->rawStream = nullptr;
+
+            // Free any initialized PSG
+            delete soundHandles[handle]->psg;
+            soundHandles[handle]->psg = nullptr;
 
             // Free any initialized miniaudio decoder
             if (soundHandles[handle]->maDecoder) {
@@ -1583,84 +1585,86 @@ struct AudioEngine {
         }
     }
 
-    /// @brief Checks if a sound handle is valid.
+    /// @brief Checks if a user sound handle is valid.
     /// @param handle A sound handle.
     /// @return Returns true if the handle is valid.
     bool IsHandleValid(int32_t handle) {
-        return handle > INVALID_SOUND_HANDLE && handle < (int32_t)soundHandles.size() && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
+        return handle > 0 && handle < (int32_t)soundHandles.size() && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
     }
 
     /// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
     /// @return Returns true if both objects were successfully created
     bool InitializePSG(size_t voice) {
-        if (!isInitialized || voice >= PSG_COUNT) {
+        if (!isInitialized || voice >= PSG_VOICES) {
             return false;
         }
 
         if (voice) {
-            if (!IsHandleValid(psgSnds[voice])) {
+            // Create and reserve resources for any non-primary voice
+            if (!IsHandleValid(psgVoices[voice])) {
                 AUDIO_DEBUG_PRINT("Setting up PSG for voice %zu", voice);
 
-                psgSnds[voice] = func__sndopenraw();
+                psgVoices[voice] = func__sndopenraw();
 
-                if (!IsHandleValid(psgSnds[voice])) {
+                if (!IsHandleValid(psgVoices[voice])) {
                     AUDIO_DEBUG_PRINT("Failed to create raw sound stream for voice %zu", voice);
 
-                    psgSnds[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
+                    psgVoices[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
 
                     return false;
                 }
 
-                if (!psgs[voice]) {
+                if (!soundHandles[psgVoices[voice]]->psg) {
                     AUDIO_DEBUG_PRINT("Creating PSG object for voice %zu", voice);
 
-                    psgs[voice] = new PSG(soundHandles[psgSnds[voice]]->rawStream);
+                    soundHandles[psgVoices[voice]]->psg = new PSG(soundHandles[psgVoices[voice]]->rawStream);
 
-                    if (!psgs[voice]) {
+                    if (!soundHandles[psgVoices[voice]]->psg) {
                         AUDIO_DEBUG_PRINT("Failed to create PSG object for voice %zu", voice);
 
                         // Cleanup
-                        sub__sndclose(psgSnds[voice]);
-                        ReleaseHandle(psgSnds[voice]);                  // we'll clean this up ourself
-                        psgSnds[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
+                        sub__sndclose(psgVoices[voice]);
+                        ReleaseHandle(psgVoices[voice]);                  // we'll clean this up ourself
+                        psgVoices[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
 
                         return false;
                     }
                 }
             }
         } else {
-            if (psgSnds[0] != 0) {
+            // Special case handle 0: Create and reserve resources for the primary PSG
+            if (psgVoices[0] != 0) {
                 AUDIO_DEBUG_PRINT("Primary PSG sound handle not reserved");
 
                 return false;
             }
 
-            if (!soundHandles[psgSnds[0]]->rawStream) {
+            if (!soundHandles[psgVoices[0]]->rawStream) {
                 // Special case: create and kickstart the primary raw stream and PSG if it is not already
                 AUDIO_DEBUG_PRINT("Creating rawStream object for primary PSG");
 
-                soundHandles[psgSnds[0]]->rawStream = RawStream::Create(&maEngine, &soundHandles[psgSnds[0]]->maSound);
+                soundHandles[psgVoices[0]]->rawStream = RawStream::Create(&maEngine, &soundHandles[psgVoices[0]]->maSound);
 
-                if (!soundHandles[psgSnds[0]]->rawStream) {
+                if (!soundHandles[psgVoices[0]]->rawStream) {
                     AUDIO_DEBUG_PRINT("Failed to create rawStream object for primary PSG");
 
                     return false;
                 }
 
-                soundHandles[psgSnds[0]]->type = SoundHandle::Type::RAW;
+                soundHandles[psgVoices[0]]->type = SoundHandle::Type::RAW;
 
-                if (!psgs[0]) {
+                if (!soundHandles[psgVoices[0]]->psg) {
                     AUDIO_DEBUG_PRINT("Creating primary PSG object");
 
-                    psgs[0] = new PSG(soundHandles[psgSnds[0]]->rawStream);
+                    soundHandles[psgVoices[0]]->psg = new PSG(soundHandles[psgVoices[0]]->rawStream);
 
-                    if (!psgs[0]) {
+                    if (!soundHandles[psgVoices[0]]->psg) {
                         AUDIO_DEBUG_PRINT("Failed to create primary PSG object");
 
                         // Cleanup
-                        RawStream::Destroy(soundHandles[psgSnds[0]]->rawStream);
-                        soundHandles[psgSnds[0]]->rawStream = nullptr;
-                        soundHandles[psgSnds[0]]->type = SoundHandle::Type::NONE;
+                        RawStream::Destroy(soundHandles[psgVoices[0]]->rawStream);
+                        soundHandles[psgVoices[0]]->rawStream = nullptr;
+                        soundHandles[psgVoices[0]]->type = SoundHandle::Type::NONE;
 
                         return false;
                     }
@@ -1668,26 +1672,18 @@ struct AudioEngine {
             }
         }
 
-        return (soundHandles[psgSnds[voice]]->rawStream && psgs[voice]);
+        return (soundHandles[psgVoices[voice]]->rawStream && soundHandles[psgVoices[voice]]->psg);
     }
 
     void ShutDownPSGs() {
-        // Free any PSG object if they were created
-        for (size_t i = 0; i < PSG_COUNT; i++) {
-            if (psgs[i]) {
-                delete psgs[i];
-                psgs[i] = nullptr;
-            }
-        }
-
         // Special case for primary PSG
-        if (soundHandles[psgSnds[0]]->rawStream) {
-            soundHandles[psgSnds[0]]->rawStream->pause.store(false, std::memory_order_relaxed);
-            soundHandles[psgSnds[0]]->rawStream->stop = true;
+        if (soundHandles[psgVoices[0]]->rawStream) {
+            soundHandles[psgVoices[0]]->psg->Pause(false);
+            soundHandles[psgVoices[0]]->rawStream->stop = true;
         }
 
         // Release the sound handles
-        for (auto snd : psgSnds) {
+        for (auto snd : psgVoices) {
             sub__sndclose(snd);
         }
     }
@@ -1737,8 +1733,8 @@ struct AudioEngine {
         // Reserve sound handle 0 so that nothing else can use it
         // We'll kickstart it later when we need it
         // We will use this handle internally for Play(), Beep(), Sound() etc.
-        psgSnds[0] = CreateHandle();
-        AUDIO_DEBUG_CHECK(psgSnds[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
+        psgVoices[0] = CreateHandle();
+        AUDIO_DEBUG_CHECK(psgVoices[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
     }
 
     /// @brief This shuts down the audio engine and frees any resources used.
@@ -1757,7 +1753,7 @@ struct AudioEngine {
             soundHandles.clear();
 
             // Invalidate internal handles
-            psgSnds.fill(INVALID_SOUND_HANDLE_INTERNAL);
+            psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);
             sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL;
 
             // Shutdown miniaudio
@@ -1873,7 +1869,7 @@ void sub_beep() {
         return;
     }
 
-    audioEngine.psgs[0]->Beep();
+    audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Beep();
 }
 
 /// @brief This generates a sound at the specified frequency for the specified amount of time.
@@ -1898,22 +1894,22 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 
     int32_t voiceAbs;
-    bool holdUntilNextCall;
+    bool playNow;
 
     if (passed & 16) {
         voiceAbs = std::abs(voice);
 
-        if (voiceAbs < 1 || voiceAbs > AudioEngine::PSG_COUNT) {
+        if (voiceAbs < 1 || voiceAbs > AudioEngine::PSG_VOICES) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
             return;
         }
 
-        --voiceAbs;                    // make it 0 based
-        holdUntilNextCall = voice < 0; // if this is true then the sound is held until the next call when it is checked again
+        --voiceAbs;          // make it 0 based
+        playNow = voice > 0; // if this is false then the sound is held until the next call when it is checked again
     } else {
         voiceAbs = 0; // use voice 1 by default
-        holdUntilNextCall = false;
+        playNow = true;
     }
 
     AUDIO_DEBUG_PRINT("Using voice %d", voiceAbs);
@@ -1930,7 +1926,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
 
             return;
         }
-        audioEngine.psgs[voiceAbs]->SetAmplitude(volume);
+        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetAmplitude(volume);
     }
 
     if (passed & 2) {
@@ -1939,7 +1935,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
 
             return;
         }
-        audioEngine.psgs[voiceAbs]->SetPanning(panning);
+        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetPanning(panning);
     }
 
     if (passed & 4) {
@@ -1949,7 +1945,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
 
             return;
         }
-        audioEngine.psgs[voiceAbs]->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
+        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
     }
 
     if (passed & 8) {
@@ -1959,26 +1955,23 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
 
             return;
         }
-        audioEngine.psgs[voiceAbs]->SetWaveformParameter(waveformParam);
+        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetWaveformParameter(waveformParam);
     }
 
-    if (holdUntilNextCall) {
-        AUDIO_DEBUG_PRINT("Holding voice %d until next call", voiceAbs);
+    audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Pause(true);                          // pause the stream first
+    audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Sound(frequency, lengthInClockTicks); // then generate the sound
 
-        audioEngine.soundHandles[audioEngine.psgSnds[voiceAbs]]->rawStream->pause.store(true, std::memory_order_relaxed);
-    } else {
+    if (playNow) {
         AUDIO_DEBUG_PRINT("Playing voice %d and all previously held voices", voiceAbs);
 
-        for (size_t i = 0; i < AudioEngine::PSG_COUNT; i++) {
-            if (audioEngine.psgs[i]) {
+        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
+            if (audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
                 // Only proceed if the underlying PSG is initialized
-                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgSnds[i]);
-                audioEngine.soundHandles[audioEngine.psgSnds[i]]->rawStream->pause.store(false, std::memory_order_relaxed);
+                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgVoices[i]);
+                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
             }
         }
     }
-
-    audioEngine.psgs[voiceAbs]->Sound(frequency, lengthInClockTicks);
 }
 
 /// @brief Returns the number of sample frames or seconds left to play.
@@ -1996,9 +1989,9 @@ uint64_t func_play(int32_t voice, int32_t passed) {
     if (passed) {
         voiceAbs = std::abs(voice);
 
-        if (voiceAbs > AudioEngine::PSG_COUNT) {
+        if (voiceAbs > AudioEngine::PSG_VOICES) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-            
+
             return 0;
         }
 
@@ -2013,12 +2006,12 @@ uint64_t func_play(int32_t voice, int32_t passed) {
         returnFrames = true; // return sample frames by default
     }
 
-    if (audioEngine.isInitialized && audioEngine.psgs[voiceAbs]) {
+    if (audioEngine.isInitialized && audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg) {
         // Only proceed if the underlying PSG is initialized
         if (returnFrames) {
-            return audioEngine.soundHandles[audioEngine.psgSnds[voiceAbs]]->rawStream->GetSampleFramesRemaining();
+            return audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->rawStream->GetSampleFramesRemaining();
         } else {
-            return llround(audioEngine.soundHandles[audioEngine.psgSnds[voiceAbs]]->rawStream->GetTimeRemaining());
+            return llround(audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->rawStream->GetTimeRemaining());
         }
     }
 
@@ -2041,44 +2034,44 @@ void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4
         if ((passed & 4) && audioEngine.InitializePSG(3)) {
             AUDIO_DEBUG_PRINT("Mixing MML voice 4");
 
-            audioEngine.soundHandles[audioEngine.psgSnds[3]]->rawStream->pause.store(true, std::memory_order_relaxed);
-            audioEngine.psgs[3]->Play(str4);
+            audioEngine.soundHandles[audioEngine.psgVoices[3]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[3]]->psg->Play(str4);
         }
 
         if ((passed & 2) && audioEngine.InitializePSG(2)) {
             AUDIO_DEBUG_PRINT("Mixing MML voice 3");
 
-            audioEngine.soundHandles[audioEngine.psgSnds[2]]->rawStream->pause.store(true, std::memory_order_relaxed);
-            audioEngine.psgs[2]->Play(str3);
+            audioEngine.soundHandles[audioEngine.psgVoices[2]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[2]]->psg->Play(str3);
         }
 
         if ((passed & 1) && audioEngine.InitializePSG(1)) {
             AUDIO_DEBUG_PRINT("Mixing MML voice 2");
 
-            audioEngine.soundHandles[audioEngine.psgSnds[1]]->rawStream->pause.store(true, std::memory_order_relaxed);
-            audioEngine.psgs[1]->Play(str2);
+            audioEngine.soundHandles[audioEngine.psgVoices[1]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[1]]->psg->Play(str2);
         }
 
         if (audioEngine.InitializePSG(0)) {
             AUDIO_DEBUG_PRINT("Mixing MML voice 1");
 
-            audioEngine.soundHandles[audioEngine.psgSnds[0]]->rawStream->pause.store(true, std::memory_order_relaxed);
-            audioEngine.psgs[0]->Play(str1);
+            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Play(str1);
         }
 
         AUDIO_DEBUG_PRINT("Starting multi-voice MML playback");
 
-        for (size_t i = 0; i < AudioEngine::PSG_COUNT; i++) {
-            if (audioEngine.psgs[i]) {
+        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
+            if (audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
                 // Only proceed if the underlying PSG is initialized
-                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgSnds[i]);
-                audioEngine.soundHandles[audioEngine.psgSnds[i]]->rawStream->pause.store(false, std::memory_order_relaxed);
+                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgVoices[i]);
+                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
             }
         }
     } else {
         // Legacy single-voice mode
         if (audioEngine.InitializePSG(0)) {
-            audioEngine.psgs[0]->Play(str1);
+            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Play(str1);
         }
     }
 }
