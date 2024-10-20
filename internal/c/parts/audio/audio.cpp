@@ -38,9 +38,6 @@ struct AudioEngine {
         Buffer *producer;                         // this is what the main thread will use to push data to
         libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
         bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
-        std::atomic<bool> pause;                  // set this to true to pause the stream (only silence samples will be sent to miniaudio)
-
-        static const size_t DEFAULT_SIZE = 1024; // this is almost twice the amount what miniaudio actually asks for in frameCount
 
         // Delete default, copy and move constructors and assignments
         RawStream() = delete;
@@ -55,32 +52,31 @@ struct AudioEngine {
             maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
             sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
             buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
-            buffer[0].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
-            buffer[1].data.reserve(DEFAULT_SIZE);             // ensure we have a contiguous block to account for expansion without reallocation
             consumer = &buffer[0];                            // set default consumer
             producer = &buffer[1];                            // set default producer
             stop = false;                                     // we will send silent samples to keep the playback going by default
-            pause.store(false, std::memory_order_relaxed);    // the steam will not be paused by default
             m = libqb_mutex_new();
         }
 
         /// @brief We use this to destroy the mutex
         ~RawStream() { libqb_mutex_free(m); }
 
-        /// @brief This swaps the consumer and producer Buffers. This is mutex protected and called by the miniaudio thread
-        void SwapBuffers() {
-            libqb_mutex_guard lock(m);     // lock the mutex before accessing the vectors
-            consumer->cursor = 0;          // reset the cursor
-            consumer->data.clear();        // clear the consumer vector
-            std::swap(consumer, producer); // quickly swap the Buffer pointers
-        }
-
         /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
         /// @param l Sample frame left channel data
         /// @param r Sample frame right channel data
         void PushSampleFrame(float l, float r) {
-            libqb_mutex_guard lock(m);        // lock the mutex before accessing the vectors
+            libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
             producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
+        }
+
+        /// @brief This pushes a whole buffer of stereo sample frames to the queue. This is mutex protected and called by the main thread
+        /// @param buffer The buffer containing the stereo sample frames. This cannot be NULL
+        /// @param frames The total number of frames in the buffer
+        void PushStereoSampleFrames(SampleFrame *buffer, ma_uint64 frames) {
+            libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
+            std::copy(buffer, buffer + frames, std::back_inserter(producer->data));
         }
 
         /// @brief This pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread
@@ -89,6 +85,7 @@ struct AudioEngine {
         /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right))
         void PushMonoSampleFrames(float *buffer, ma_uint64 frames, float panning = 0.0f) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
             for (ma_uint64 i = 0; i < frames; i++) {
                 producer->data.push_back({(buffer[i] * (1.0f - panning)) / 2.0f, (buffer[i] * (1.0f + panning)) / 2.0f});
             }
@@ -97,13 +94,14 @@ struct AudioEngine {
         /// @brief Returns the length, in sample frames of sound queued
         /// @return The length left to play in sample frames
         ma_uint64 GetSampleFramesRemaining() {
-            libqb_mutex_guard lock(m);                                                                      // lock the mutex before accessing the vectors
+            libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
             return (consumer->data.size() - consumer->cursor) + (producer->data.size() - producer->cursor); // sum of producer and consumer sample frames
         }
 
         /// @brief Returns the length, in seconds of sound queued
         /// @return The length left to play in seconds
-        double GetTimeRemaining() { return (double)GetSampleFramesRemaining() / (double)sampleRate; }
+        double GetTimeRemaining() { return double(GetSampleFramesRemaining()) / double(sampleRate); }
 
         /// @brief This is what is used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue
         /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
@@ -124,37 +122,34 @@ struct AudioEngine {
             auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
             auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
             auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
-            ma_uint64 sampleFramesRead;
 
-            if (pRawStream->pause.load(std::memory_order_relaxed)) {
-                // Just play silence if we are paused
-                std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
-                sampleFramesRead = frameCount;
+            ma_uint64 sampleFramesRead =
+                pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
+
+            // Swap buffers if we do not have anything left to play
+            if (!sampleFramesRead) {
+                pRawStream->consumer->cursor = 0;                                                    // reset the cursor
+                pRawStream->consumer->data.clear();                                                  // clear the consumer vector
+                std::swap(pRawStream->consumer, pRawStream->producer);                               // quickly swap the Buffer pointers
+                sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
+            }
+
+            sampleFramesRead = std::min(sampleFramesRead, frameCount); // we'll always send lower of what miniaudio wants or what we have
+
+            if (sampleFramesRead) {
+                // Now send the samples to miniaudio
+                std::copy(pRawStream->consumer->data.data() + pRawStream->consumer->cursor,
+                          pRawStream->consumer->data.data() + pRawStream->consumer->cursor + sampleFramesRead, maBuffer);
+
+                pRawStream->consumer->cursor += sampleFramesRead; // increment the read cursor
             } else {
-                sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
-                // Swap buffers if we do not have anything left to play
-                if (!sampleFramesRead) {
-                    pRawStream->SwapBuffers();
-                    sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // get the total number of samples again
-                }
-
-                sampleFramesRead = std::min(sampleFramesRead, frameCount); // we'll always send lower of what miniaudio wants or what we have
-
-                if (sampleFramesRead) {
-                    // Now send the samples to miniaudio
-                    std::copy(pRawStream->consumer->data.data() + pRawStream->consumer->cursor,
-                              pRawStream->consumer->data.data() + pRawStream->consumer->cursor + sampleFramesRead, maBuffer);
-
-                    pRawStream->consumer->cursor += sampleFramesRead; // increment the read cursor
+                if (pRawStream->stop) {
+                    // End of stream was signalled
+                    result = MA_AT_END;
                 } else {
-                    if (pRawStream->stop) {
-                        // End of stream was signalled
-                        result = MA_AT_END;
-                    } else {
-                        // To keep the stream going, play silence if there are no frames to play
-                        std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
-                        sampleFramesRead = frameCount;
-                    }
+                    // To keep the stream going, play silence if there are no frames to play
+                    std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
+                    sampleFramesRead = frameCount;
                 }
             }
 
@@ -401,6 +396,8 @@ struct AudioEngine {
         ma_result maResult;                    // result of the last miniaudio operation
         std::vector<float> noteBuffer;         // note frames are rendered here temporarily before it is mixed to waveBuffer
         std::vector<float> waveBuffer;         // this is where the waveform is rendered / mixed before being pushed to RawStream
+        std::vector<SampleFrame> pausedBuffer; // this is where the final waveform is pushed to and accumulated when the PSG is paused
+        bool isPaused;                         // this is true if the PSG is paused
         ma_uint64 mixCursor;                   // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
         WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
         float volumeRampDuration;              // the volume ramping duration (this can be changed by the user)
@@ -528,10 +525,20 @@ struct AudioEngine {
             noise->SetFrequency(uint32_t(frequency));
         }
 
+        void AccumulateMonoSampleFrames(const float *samples, size_t samplesCount, float panning) {
+            for (size_t i = 0; i < samplesCount; i++) {
+                pausedBuffer.push_back({(samples[i] * (1.0f - panning)) / 2.0f, (samples[i] * (1.0f + panning)) / 2.0f});
+            }
+        }
+
         /// @brief Sends the buffer for playback
         void PushBufferForPlayback() {
             if (!waveBuffer.empty()) {
-                rawStream->PushMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                if (isPaused) {
+                    AccumulateMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                } else {
+                    rawStream->PushMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                }
 
                 AUDIO_DEBUG_PRINT("Sent %llu samples for playback", waveBuffer.size());
 
@@ -542,15 +549,15 @@ struct AudioEngine {
 
         /// @brief Waits for any playback to complete
         void AwaitPlaybackCompletion() {
-            if (background || rawStream->pause.load(std::memory_order_relaxed)) {
+            if (background) {
                 return; // no need to wait
             }
 
             auto timeSec = rawStream->GetTimeRemaining() * 0.95 - 0.25; // per original QB64 behavior
 
-            AUDIO_DEBUG_PRINT("Waiting %f seconds for playback to complete", timeSec);
-
             if (timeSec > 0) {
+                AUDIO_DEBUG_PRINT("Waiting %f seconds for playback to complete", timeSec);
+
                 sub__delay(timeSec); // we are using sub_delay() because ON TIMER and other events may need to be called while we are waiting
             }
 
@@ -570,6 +577,7 @@ struct AudioEngine {
         /// @param pWaveform A valid Waveform object pointer. This cannot be NULL
         PSG(RawStream *pRawStream) {
             rawStream = pRawStream; // save the RawStream object pointer
+            isPaused = false;
             mixCursor = 0;
             volumeRampDuration = DEFAULT_VOLUME_RAMP_DURATION;
             playIt = background = false; // default to foreground playback
@@ -736,11 +744,15 @@ struct AudioEngine {
 
         /// @brief Pauses or resumes PSG playback
         /// @param state true to pause, false to resume
-        void Pause(bool state) { rawStream->pause.store(state, std::memory_order_relaxed); }
+        void Pause(bool state) {
+            isPaused = state; // save the state
 
-        /// @brief Checks if the PSG is paused
-        /// @return true if paused
-        bool IsPaused() { return rawStream->pause.load(std::memory_order_relaxed); }
+            if (!isPaused) {
+                // We'll need to push the samples in the paused buffer to RawStream
+                rawStream->PushStereoSampleFrames(pausedBuffer.data(), pausedBuffer.size());
+                pausedBuffer.clear();
+            }
+        }
 
         /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
         void Beep() {
@@ -1677,9 +1689,9 @@ struct AudioEngine {
 
     void ShutDownPSGs() {
         // Special case for primary PSG
-        if (soundHandles[psgVoices[0]]->rawStream) {
+        if (soundHandles[psgVoices[0]]->psg) {
             soundHandles[psgVoices[0]]->psg->Pause(false);
-            soundHandles[psgVoices[0]]->rawStream->stop = true;
+            soundHandles[psgVoices[0]]->rawStream->stop = true; // signal miniaudio thread that we are going to end playback
         }
 
         // Release the sound handles
@@ -1965,7 +1977,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         AUDIO_DEBUG_PRINT("Playing voice %d and all previously held voices", voiceAbs);
 
         for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
-            if (audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
+            if (audioEngine.psgVoices[i] >= 0 && audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
                 // Only proceed if the underlying PSG is initialized
                 AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgVoices[i]);
                 audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
@@ -2006,7 +2018,7 @@ uint64_t func_play(int32_t voice, int32_t passed) {
         returnFrames = true; // return sample frames by default
     }
 
-    if (audioEngine.isInitialized && audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg) {
+    if (audioEngine.isInitialized && audioEngine.psgVoices[voiceAbs] >= 0 && audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg) {
         // Only proceed if the underlying PSG is initialized
         if (returnFrames) {
             return audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->rawStream->GetSampleFramesRemaining();
@@ -2062,7 +2074,7 @@ void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4
         AUDIO_DEBUG_PRINT("Starting multi-voice MML playback");
 
         for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
-            if (audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
+            if (audioEngine.psgVoices[i] >= 0 && audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
                 // Only proceed if the underlying PSG is initialized
                 AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgVoices[i]);
                 audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
@@ -2170,8 +2182,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 /// @param handle A valid sound handle
 void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle)) {
-        if (audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
-            audioEngine.soundHandles[handle]->rawStream->pause.store(false, std::memory_order_relaxed); // unpause the stream
+        if (audioEngine.soundHandles[handle]->rawStream) {
             audioEngine.soundHandles[handle]->rawStream->stop = true; // signal miniaudio thread that we are going to end playback
         }
 

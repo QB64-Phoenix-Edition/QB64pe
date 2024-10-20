@@ -19,7 +19,6 @@
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "miniaudio.h"
 #include <algorithm>
-#include <atomic>
 #include <climits>
 #include <cmath>
 #include <cstdint>
