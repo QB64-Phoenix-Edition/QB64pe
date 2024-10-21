@@ -21,9 +21,9 @@
 #include "mutex.h"
 #include "qbs.h"
 
-/// @brief This is the top-level class that implements the QB64-PE audio engine.
+/// @brief The top-level class that implements the QB64-PE audio engine.
 struct AudioEngine {
-    /// @brief A miniaudio raw audio stream datasource
+    /// @brief A miniaudio raw audio stream datasource.
     struct RawStream {
         ma_data_source_base maDataSource;         // miniaudio data source (this must be the first member of our struct)
         ma_data_source_config maDataSourceConfig; // config struct for the data source
@@ -39,14 +39,14 @@ struct AudioEngine {
         libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
         bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
 
-        // Delete default, copy and move constructors and assignments
+        // Delete default, copy and move constructors and assignments.
         RawStream() = delete;
         RawStream(const RawStream &) = delete;
         RawStream &operator=(const RawStream &) = delete;
         RawStream &operator=(RawStream &&) = delete;
         RawStream(RawStream &&) = delete;
 
-        /// @brief This is use to setup the vectors, mutex and set some defaults
+        /// @brief Sets up the vectors, mutex and set some defaults.
         RawStream(ma_engine *pmaEngine, ma_sound *pmaSound) {
             maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QB64-PE sound handle)
             maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
@@ -58,31 +58,31 @@ struct AudioEngine {
             m = libqb_mutex_new();
         }
 
-        /// @brief We use this to destroy the mutex
+        /// @brief We use this to destroy the mutex.
         ~RawStream() { libqb_mutex_free(m); }
 
-        /// @brief This pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread
-        /// @param l Sample frame left channel data
-        /// @param r Sample frame right channel data
+        /// @brief Pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread.
+        /// @param l Sample frame left channel data.
+        /// @param r Sample frame right channel data.
         void PushSampleFrame(float l, float r) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             producer->data.push_back({l, r}); // push the sample frame to the back of the producer queue
         }
 
-        /// @brief This pushes a whole buffer of stereo sample frames to the queue. This is mutex protected and called by the main thread
-        /// @param buffer The buffer containing the stereo sample frames. This cannot be NULL
-        /// @param frames The total number of frames in the buffer
+        /// @brief Pushes a whole buffer of stereo sample frames to the queue. This is mutex protected and called by the main thread.
+        /// @param buffer The buffer containing the stereo sample frames. This cannot be NULL.
+        /// @param frames The total number of frames in the buffer.
         void PushStereoSampleFrames(SampleFrame *buffer, ma_uint64 frames) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             std::copy(buffer, buffer + frames, std::back_inserter(producer->data));
         }
 
-        /// @brief This pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread
-        /// @param buffer The buffer containing the sample frames. This cannot be NULL
-        /// @param frames The total number of frames in the buffer
-        /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right))
+        /// @brief Pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread.
+        /// @param buffer The buffer containing the sample frames. This cannot be NULL.
+        /// @param frames The total number of frames in the buffer.
+        /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right)).
         void PushMonoSampleFrames(float *buffer, ma_uint64 frames, float panning = 0.0f) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
@@ -91,24 +91,24 @@ struct AudioEngine {
             }
         }
 
-        /// @brief Returns the length, in sample frames of sound queued
-        /// @return The length left to play in sample frames
+        /// @brief Returns the length, in sample frames of sound queued.
+        /// @return The length left to play in sample frames.
         ma_uint64 GetSampleFramesRemaining() {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             return (consumer->data.size() - consumer->cursor) + (producer->data.size() - producer->cursor); // sum of producer and consumer sample frames
         }
 
-        /// @brief Returns the length, in seconds of sound queued
-        /// @return The length left to play in seconds
+        /// @brief Returns the length, in seconds of sound queued.
+        /// @return The length left to play in seconds.
         double GetTimeRemaining() { return double(GetSampleFramesRemaining()) / double(sampleRate); }
 
-        /// @brief This is what is used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue
-        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
-        /// @param pFramesOut The sample frames sent to miniaudio
-        /// @param frameCount The sample frame count requested by miniaudio
-        /// @param pFramesRead The sample frame count that was actually sent (this must not exceed frameCount)
-        /// @return MA_SUCCESS on success or an appropriate MA_FAILED_* value on failure
+        /// @brief Callback function used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue.
+        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type).
+        /// @param pFramesOut The sample frames sent to miniaudio.
+        /// @param frameCount The sample frame count requested by miniaudio.
+        /// @param pFramesRead The sample frame count that was actually sent (this must not exceed frameCount).
+        /// @return MA_SUCCESS on success or an appropriate MA_FAILED_* value on failure.
         static ma_result OnRead(ma_data_source *pDataSource, void *pFramesOut, ma_uint64 frameCount, ma_uint64 *pFramesRead) {
             if (pFramesRead)
                 *pFramesRead = 0;
@@ -159,10 +159,10 @@ struct AudioEngine {
             return result;
         }
 
-        /// @brief This is a dummy callback function which just tells miniaudio that it succeeded
-        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
-        /// @param frameIndex The frame index to seek to (unused)
-        /// @return Always MA_SUCCESS
+        /// @brief A dummy callback function which just tells miniaudio that it succeeded.
+        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type).
+        /// @param frameIndex The frame index to seek to (unused).
+        /// @return Always MA_SUCCESS.
         static ma_result OnSeek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
             // NOP. Just pretend to be successful.
             (void)pDataSource;
@@ -171,14 +171,14 @@ struct AudioEngine {
             return MA_SUCCESS;
         }
 
-        /// @brief Returns the audio format to miniaudio
-        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type)
-        /// @param pFormat The ma_format to use (we always return ma_format_f32 because that is what QB64 uses)
-        /// @param pChannels The number of audio channels (always 2 - stereo)
-        /// @param pSampleRate The sample rate of the stream (we always return the engine sample rate)
-        /// @param pChannelMap Sent to ma_channel_map_init_standard
-        /// @param channelMapCap Sent to ma_channel_map_init_standard
-        /// @return Always MA_SUCCESS
+        /// @brief Returns the audio format to miniaudio.
+        /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type).
+        /// @param pFormat The ma_format to use (we always return ma_format_f32 because that is what QB64 uses).
+        /// @param pChannels The number of audio channels (always 2 - stereo).
+        /// @param pSampleRate The sample rate of the stream (we always return the engine sample rate).
+        /// @param pChannelMap Sent to ma_channel_map_init_standard.
+        /// @param channelMapCap Sent to ma_channel_map_init_standard.
+        /// @return Always MA_SUCCESS.
         static ma_result OnGetDataFormat(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate, ma_channel *pChannelMap,
                                          size_t channelMapCap) {
             auto pRawStream = (RawStream *)pDataSource;
@@ -201,10 +201,10 @@ struct AudioEngine {
         /// @brief Raw stream data source vtable
         static const ma_data_source_vtable rawStreamDataSourceVtable;
 
-        /// @brief This creates, initializes and sets up a raw stream for playback
-        /// @param pmaEngine This should come from the QB64-PE sound engine
-        /// @param pmaSound This should come from a QB64-PE sound handle
-        /// @return Returns a pointer to a data source if successful, NULL otherwise
+        /// @brief Creates, initializes and sets up a raw stream for playback.
+        /// @param pmaEngine A pointer to a QB64-PE sound engine object. This cannot be NULL.
+        /// @param pmaSound A pointer to an ma_sound object from a QB64-PE sound handle. This cannot be NULL.
+        /// @return Returns a pointer to a data source if successful, NULL otherwise.
         static RawStream *Create(ma_engine *pmaEngine, ma_sound *pmaSound) {
             if (!pmaEngine || !pmaSound) { // these should not be NULL
                 AUDIO_DEBUG_PRINT("Invalid arguments");
@@ -259,8 +259,8 @@ struct AudioEngine {
             return pRawStream;
         }
 
-        /// @brief Stops and then frees a raw stream data source previously created with RawStreamCreate()
-        /// @param pRawStream Pointer to the data source object
+        /// @brief Stops and then frees a raw stream data source previously created with RawStreamCreate().
+        /// @param pRawStream Pointer to the data source object.
         static void Destroy(RawStream *pRawStream) {
             if (pRawStream) {
                 auto result = ma_sound_stop(pRawStream->maSound); // stop playback
@@ -275,10 +275,10 @@ struct AudioEngine {
         }
     };
 
-    /// @brief This is a PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY
+    /// @brief A PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY.
     class PSG {
       public:
-        /// @brief Various types of waveform that can be generated
+        /// @brief Various types of waveform that can be generated.
         enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, COUNT };
 
         static constexpr auto PAN_LEFT = -1.0f;
@@ -291,7 +291,7 @@ struct AudioEngine {
         static constexpr auto QB_FREQUENCY_LIMIT = 20000.0f;
 
       private:
-        // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
+        // These are some constants that can be tweaked to change the behavior of the PSG and MML parser.
         // These mostly conform to the QBasic and QB64 spec.
         static const auto DEFAULT_WAVEFORM_TYPE = WaveformType::TRIANGLE;
         static constexpr auto DEFAULT_FREQUENCY = 440.0;
@@ -315,6 +315,7 @@ struct AudioEngine {
         static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;
 
+        /// @brief Simple LFSR noise generator class. Inspirations from AY-3-8910 and SN76489.
         class NoiseGenerator {
           private:
             static const auto BASE_SAMPLE_RATE = 48000;
@@ -368,6 +369,7 @@ struct AudioEngine {
             float amplitude;
             float resampleRatio;
 
+            /// @brief See https://en.wikipedia.org/wiki/Linear-feedback_shift_register.
             void StepLFSR() {
                 uint32_t temp = (seed ^ (seed >> 2) ^ (seed >> 3) ^ (seed >> 5)) & 1;
                 seed = (seed >> 1) | (temp << 31);
@@ -375,7 +377,7 @@ struct AudioEngine {
             }
         };
 
-        /// @brief This struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used)
+        /// @brief A struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used).
         struct State {
             const uint8_t *byte; // pointer to a byte in an MML string
             int32_t length;      // this needs to be signed
@@ -413,12 +415,11 @@ struct AudioEngine {
         int dots;                              // the dots after a note or a pause that increases the duration
         bool playIt;                           // flag that is set when the buffer can be played
 
-        /// @brief Generates a waveform to waveBuffer starting at the mixCursor sample location.
-        /// The buffer must be resized before calling this. We could have resized waveBuffer inside this.
-        /// However, PLAY supports stuff like staccato etc. that needs some silence after the waveform.
-        /// So it makes sense for the calling function to do the resize before calling this
-        /// @param waveDuration The duration of the waveform in seconds
-        /// @param mix Mixes the generated waveform to the buffer instead of overwriting it
+        /// @brief Generates a waveform to waveBuffer starting at the mixCursor sample location. The buffer must be resized before calling this. We could have
+        /// resized waveBuffer inside this. However, PLAY supports stuff like staccato etc. that needs some silence after the waveform. So it makes sense for
+        /// the calling function to do the resize before calling this.
+        /// @param waveDuration The duration of the waveform in seconds.
+        /// @param mix Mixes the generated waveform to the buffer instead of overwriting it.
         void GenerateWaveform(double waveDuration, bool mix = false) {
             auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
 
@@ -515,8 +516,8 @@ struct AudioEngine {
             }
         }
 
-        /// @brief Sets the frequency of the waveform
-        /// @param frequency The frequency of the waveform
+        /// @brief Sets the frequency of the waveform.
+        /// @param frequency The frequency of the waveform.
         void SetFrequency(double frequency) {
             maResult = ma_waveform_set_frequency(&maWaveform, frequency);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
@@ -531,7 +532,7 @@ struct AudioEngine {
             }
         }
 
-        /// @brief Sends the buffer for playback
+        /// @brief Sends the buffer for playback.
         void PushBufferForPlayback() {
             if (!waveBuffer.empty()) {
                 if (isPaused) {
@@ -547,7 +548,7 @@ struct AudioEngine {
             }
         }
 
-        /// @brief Waits for any playback to complete
+        /// @brief Waits for any playback to complete.
         void AwaitPlaybackCompletion() {
             if (background) {
                 return; // no need to wait
@@ -565,16 +566,15 @@ struct AudioEngine {
         }
 
       public:
-        // Delete default, copy and move constructors and assignments
+        // Delete default, copy and move constructors and assignments.
         PSG() = delete;
         PSG(const PSG &) = delete;
         PSG &operator=(const PSG &) = delete;
         PSG &operator=(PSG &&) = delete;
         PSG(PSG &&) = delete;
 
-        /// @brief The only constructor
-        /// @param pRawStream A valid RawStream object pointer. This cannot be NULL
-        /// @param pWaveform A valid Waveform object pointer. This cannot be NULL
+        /// @brief Initializes and allocates required miniaudio resources.
+        /// @param pRawStream A valid RawStream object pointer. This cannot be NULL.
         PSG(RawStream *pRawStream) {
             rawStream = pRawStream; // save the RawStream object pointer
             isPaused = false;
@@ -623,7 +623,7 @@ struct AudioEngine {
             AUDIO_DEBUG_PRINT("PSG initialized @ %uHz", maWaveform.config.sampleRate);
         }
 
-        /// @brief This just frees the waveform buffer and cleans up the waveform resources
+        /// @brief Frees the waveform buffer and cleans up the waveform resources.
         ~PSG() {
             delete noise;
             ma_pulsewave_uninit(&maPulseWave);
@@ -635,8 +635,8 @@ struct AudioEngine {
             AUDIO_DEBUG_PRINT("PSG destroyed");
         }
 
-        /// @brief Sets the waveform type
-        /// @param type The waveform type. See Waveform::Type
+        /// @brief Sets the waveform type.
+        /// @param type The waveform type. See Waveform::Type enum.
         void SetWaveformType(WaveformType waveType) {
             switch (waveType) {
             case WaveformType::NONE:
@@ -677,6 +677,8 @@ struct AudioEngine {
             AUDIO_DEBUG_PRINT("Waveform type set to %i", int(waveformType));
         }
 
+        /// @brief Sets any special waveform parameter (e.g. duty cycle of a pulse wave).
+        /// @param value The parameter value (depending on the waveform type).
         void SetWaveformParameter(float value) {
             switch (waveformType) {
             case WaveformType::NONE:
@@ -716,8 +718,8 @@ struct AudioEngine {
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
         }
 
-        /// @brief Sets the amplitude of the waveform
-        /// @param amplitude The amplitude of the waveform
+        /// @brief Sets the amplitude of the waveform.
+        /// @param amplitude The amplitude of the waveform.
         void SetAmplitude(double amplitude) {
             maResult = ma_waveform_set_amplitude(&maWaveform, amplitude);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
@@ -734,16 +736,17 @@ struct AudioEngine {
             AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
         }
 
-        /// @brief Set the PSG panning value
-        /// @param value A number between -1.0 to 1.0. Where 0.0 is center
+        /// @brief Set the PSG panning value.
+        /// @param value A number between -1.0 to 1.0. Where 0.0 is center.
         void SetPanning(float value) {
             panning = value;
 
             AUDIO_DEBUG_PRINT("Panning set to %f", panning);
         }
 
-        /// @brief Pauses or resumes PSG playback
-        /// @param state true to pause, false to resume
+        /// @brief Pauses or resumes PSG playback. Once paused, the samples for the commands processed are accumulated in pausedBuffer.
+        /// pausedBuffer is pushed and flushed as soon as the state is set to false.
+        /// @param state true to pause, false to resume.
         void Pause(bool state) {
             isPaused = state; // save the state
 
@@ -754,7 +757,7 @@ struct AudioEngine {
             }
         }
 
-        /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY
+        /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY.
         void Beep() {
             SetFrequency(BEEP_FREQUENCY);
             waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE_SAMPLE);
@@ -763,7 +766,7 @@ struct AudioEngine {
             AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
         }
 
-        /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY
+        /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY.
         void Sound(double frequency, double lengthInClockTicks) {
             SetFrequency(frequency);
             auto soundDuration = lengthInClockTicks / 18.2;
@@ -773,7 +776,7 @@ struct AudioEngine {
             AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
         }
 
-        /// @brief This is an MML parser that implements the QB64 MML spec and more
+        /// @brief An MML parser that implements the QB64 MML spec and more.
         /// https://qb64phoenix.com/qb64wiki/index.php/PLAY
         /// http://vgmpf.com/Wiki/index.php?title=Music_Macro_Language
         /// https://en.wikipedia.org/wiki/Music_Macro_Language
@@ -1359,12 +1362,12 @@ struct AudioEngine {
         }
     };
 
-    /// @brief This describes every sound the system will ever play (including raw streams).
+    /// @brief A QB64-PE audio engine sound handle internal struct. Describes every sound the system will ever play (including raw streams).
     struct SoundHandle {
         /// @brief Type of sound.
         /// NONE: No sound or internal sound whose buffer is managed by the QB64-PE audio engine.
         /// STATIC: Static sounds that are completely managed by miniaudio.
-        /// RAW: Raw sound stream that is managed by the QB64-PE audio engine
+        /// RAW: Raw sound stream that is managed by the QB64-PE audio engine.
         enum class Type { NONE, STATIC, RAW };
 
         bool isUsed;                                // Is this handle in active use?
@@ -1388,8 +1391,8 @@ struct AudioEngine {
         SoundHandle(SoundHandle &&) = delete;
         SoundHandle &operator=(SoundHandle &&) = delete;
 
-        /// @brief Just initializes some important members. 'inUse' will be set to true by CreateHandle().
-        /// This is done here, as well as slightly differently in CreateHandle() for safety.
+        /// @brief Just initializes some important members. 'inUse' will be set to true by CreateHandle(). This is done here, as well as slightly differently in
+        /// CreateHandle() for safety.
         SoundHandle() {
             isUsed = false;
             type = Type::NONE;
@@ -1432,9 +1435,7 @@ struct AudioEngine {
     AudioEngine &operator=(AudioEngine &&) = delete;
     AudioEngine(AudioEngine &&) = delete;
 
-    /// <summary>
-    ///	Just initializes some important members.
-    /// </summary>
+    /// @brief Initializes some important members.
     AudioEngine() {
         isInitialized = initializationFailed = false;
         ZERO_VARIABLE(maResourceManagerConfig);
@@ -1448,20 +1449,13 @@ struct AudioEngine {
         lowestFreeHandle = 0;
     }
 
-    /// <summary>
-    /// This allocates a sound handle. It will return -1 on error.
-    /// Handle 0 is used internally for Beep, Sound and Play and thus cannot be used by the user.
-    /// Basically, we go through the vector and find an object pointer were 'isUsed' is set as false and return the index.
-    /// If such an object pointer is not found, then we add a pointer to a new object at the end of the vector and return the index.
-    /// We are using pointers because miniaudio keeps using stuff from ma_sound and these cannot move in memory when the vector is resized.
-    /// The handle is put-up for recycling simply by setting the 'isUsed' member to false.
-    /// Note that this means the vector will keep growing until the largest handle (index) and never shrink.
-    /// The choice of using a vector was simple - performance. Vector performance when using 'indexes' is next to no other.
-    /// The vector will be pruned only when snd_un_init gets called.
-    /// We will however, be good citizens and will also 'delete' the objects when snd_un_init gets called.
-    /// This also increments 'lowestFreeHandle' to allocated handle + 1.
-    /// </summary>
-    /// <returns>Returns a non-negative handle if successful</returns>
+    /// @brief Allocates a sound handle. It will return -1 on error. Handle 0 is used internally for Beep, Sound and Play and thus cannot be used by the user.
+    /// Basically, we go through the vector and find an object pointer were 'isUsed' is set as false and return the index. If such an object pointer is not
+    /// found, then we add a pointer to a new object at the end of the vector and return the index. We are using pointers because miniaudio keeps using stuff
+    /// from ma_sound and these cannot move in memory when the vector is resized. The handle is put-up for recycling simply by setting the 'isUsed' member to
+    /// false. Note that this means the vector will keep growing until the largest handle (index) and never shrink. The vector will be pruned only when
+    /// snd_un_init gets called. This also increments 'lowestFreeHandle' to allocated handle + 1.
+    /// @return Returns a non-negative handle if successful.
     int32_t CreateHandle() {
         if (!isInitialized)
             return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
@@ -1537,14 +1531,10 @@ struct AudioEngine {
         return (int32_t)(h);
     }
 
-    /// <summary>
-    /// The frees and unloads an open sound.
-    /// If the sound is playing or looping, it will be stopped.
-    /// If the sound is a stream of raw samples then it is stopped and freed.
-    /// Finally the handle is invalidated and put-up for recycling.
-    /// If the handle being freed is lower than 'lowestFreeHandle' then this saves the handle to 'lowestFreeHandle'.
-    /// </summary>
-    /// <param name="handle">A sound handle</param>
+    /// @brief Frees and unloads an open sound. If the sound is playing or looping, it will be stopped. If the sound is a stream of raw samples then it is
+    /// stopped and freed. Finally the handle is invalidated and put-up for recycling. If the handle being freed is lower than 'lowestFreeHandle' then this
+    /// saves the handle to 'lowestFreeHandle'.
+    /// @param handle A sound handle.
     void ReleaseHandle(int32_t handle) {
         if (isInitialized && handle >= 0 && handle < soundHandles.size() && soundHandles[handle]->isUsed) {
             // Free any initialized miniaudio sound
@@ -1604,8 +1594,8 @@ struct AudioEngine {
         return handle > 0 && handle < (int32_t)soundHandles.size() && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
     }
 
-    /// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true
-    /// @return Returns true if both objects were successfully created
+    /// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true.
+    /// @return Returns true if both objects were successfully created.
     bool InitializePSG(size_t voice) {
         if (!isInitialized || voice >= PSG_VOICES) {
             return false;
@@ -1687,6 +1677,7 @@ struct AudioEngine {
         return (soundHandles[psgVoices[voice]]->rawStream && soundHandles[psgVoices[voice]]->psg);
     }
 
+    /// @brief Shuts down and frees resources allocated by any running PSG.
     void ShutDownPSGs() {
         // Special case for primary PSG
         if (soundHandles[psgVoices[0]]->psg) {
@@ -1700,7 +1691,7 @@ struct AudioEngine {
         }
     }
 
-    /// @brief This initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
+    /// @brief Initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
     void Initialize() {
         // Exit if engine is initialize or already initialization was attempted but failed
         if (isInitialized || initializationFailed)
@@ -1749,7 +1740,7 @@ struct AudioEngine {
         AUDIO_DEBUG_CHECK(psgVoices[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
     }
 
-    /// @brief This shuts down the audio engine and frees any resources used.
+    /// @brief Shuts down the audio engine and frees any resources used.
     void ShutDown() {
         if (isInitialized) {
             // Shut down all PSGs
@@ -1781,7 +1772,7 @@ struct AudioEngine {
         }
     }
 
-    /// @brief This is called by the QB64-PE internally at ~60Hz. We use this for housekeeping and other stuff.
+    /// @brief Used for housekeeping and other stuff. Called by the QB64-PE internally at ~60Hz.
     void Update() {
         if (isInitialized) {
             // Scan through the whole handle vector to find anything we need to update or close
@@ -1816,11 +1807,11 @@ struct AudioEngine {
         }
     }
 
-    /// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle
-    /// @param buffer A raw pointer to the sound file in memory
-    /// @param size The size of the file in memory
-    /// @param handle A valid sound handle
-    /// @return MA_SUCCESS if successful. Else, a valid ma_result
+    /// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle.
+    /// @param buffer A raw pointer to the sound file in memory.
+    /// @param size The size of the file in memory.
+    /// @param handle A valid sound handle.
+    /// @return MA_SUCCESS if successful. Else, a valid ma_result.
     ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int32_t handle) {
         if (!IsHandleValid(handle) || soundHandles[handle]->maDecoder || !buffer || !size)
             return MA_INVALID_ARGS;
@@ -1875,7 +1866,7 @@ const ma_data_source_vtable AudioEngine::RawStream::rawStreamDataSourceVtable = 
 // Global audio engine object.
 static AudioEngine audioEngine;
 
-/// @brief This generates a default 'beep' sound using voice 1.
+/// @brief Generates a default 'beep' sound using voice 1.
 void sub_beep() {
     if (is_error_pending() || !audioEngine.InitializePSG(0)) {
         return;
@@ -1884,7 +1875,7 @@ void sub_beep() {
     audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Beep();
 }
 
-/// @brief This generates a sound at the specified frequency for the specified amount of time.
+/// @brief Generates a sound at the specified frequency for the specified amount of time.
 /// @param frequency Sound frequency.
 /// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second.
 /// @param volume Volume (0.0 to 1.0).
@@ -2096,17 +2087,15 @@ void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4
     }
 }
 
-/// <summary>
-/// This returns the sample rate from ma engine if ma is initialized.
-/// </summary>
-/// <returns>miniaudio sample rate</returns>
+/// @brief Returns the device sample rate if the audio engine is initialized.
+/// @return The device sample rate.
 int32_t func__sndrate() { return audioEngine.sampleRate; }
 
-/// @brief This loads a sound file into memory and returns a LONG handle value above 0.
+/// @brief Loads a sound file into memory and returns a LONG handle value above 0.
 /// @param qbsFileName The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports.
-/// @param qbsRequirements This is leftover from the old QB64-SDL days. But we use this to pass some parameters like 'stream'
-/// @param passed Optional parameter flag
-/// @return Returns a valid sound handle (> 0) if successful or 0 if it fails
+/// @param qbsRequirements This is leftover from the old QB64-SDL days. But we use this to pass some parameters like 'stream'.
+/// @param passed Optional parameter flags.
+/// @return Returns a valid sound handle (> 0) if successful or 0 if it fails.
 int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     if (!audioEngine.isInitialized || !qbsFileName->len)
         return AudioEngine::INVALID_SOUND_HANDLE;
@@ -2184,10 +2173,10 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     return handle;
 }
 
-/// @brief The frees and unloads an open sound.
+/// @brief Frees and unloads an open sound.
 /// If the sound is playing, it'll let it finish. Looping sounds will loop until the program is closed.
 /// If the sound is a stream of raw samples then any remaining samples pending for playback will be sent to miniaudio and then the handle will be freed.
-/// @param handle A valid sound handle
+/// @param handle A valid sound handle.
 void sub__sndclose(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle)) {
         if (audioEngine.soundHandles[handle]->rawStream) {
@@ -2199,11 +2188,9 @@ void sub__sndclose(int32_t handle) {
     }
 }
 
-/// <summary>
-/// This copies a sound to a new handle so that two or more of the same sound can be played at once.
-/// </summary>
-/// <param name="src_handle">A source sound handle</param>
-/// <returns>A new sound handle if successful or 0 on failure</returns>
+/// @brief Copies a sound to a new handle so that two or more of the same sound can be played at once.
+/// @param src_handle A source sound handle.
+/// @return A new sound handle if successful or 0 on failure.
 int32_t func__sndcopy(int32_t src_handle) {
     // Check for all invalid cases
     if (!audioEngine.isInitialized || !audioEngine.IsHandleValid(src_handle) ||
@@ -2277,10 +2264,8 @@ int32_t func__sndcopy(int32_t src_handle) {
     return dst_handle;
 }
 
-/// <summary>
-/// This plays a sound designated by a sound handle.
-/// </summary>
-/// <param name="handle">A sound handle</param>
+/// @brief Plays a sound.
+/// @param handle A sound handle.
 void sub__sndplay(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
@@ -2304,7 +2289,7 @@ void sub__sndplay(int32_t handle) {
     }
 }
 
-/// @brief This copies a sound, plays it, and automatically closes the copy.
+/// @brief Copies a sound, plays it, and automatically closes the copy.
 /// @param src_handle A sound handle to copy.
 /// @param volume The volume at which the sound should be played (0.0 - 1.0).
 /// @param x x distance values go from left (negative) to right (positive).
@@ -2340,11 +2325,11 @@ void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float 
     }
 }
 
-/// @brief This is a "fire and forget" style of function. The engine will manage the sound handle internally.
+/// @brief A "fire and forget" style of function. The engine will manage the sound handle internally.
 /// When the sound finishes playing, the handle will be put up for recycling. Playback starts asynchronously.
 /// @param fileName The is the name of the file to be played.
 /// @param sync This parameter is ignored.
-/// @param volume This the sound playback volume - 0 (silent) to 1 (full).
+/// @param volume The sound playback volume - 0 (silent) to 1 (full).
 /// @param passed Optional parameter flags.
 void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed) {
     (void)sync;
@@ -2370,10 +2355,8 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
     }
 }
 
-/// <summary>
-/// This pauses a sound using a sound handle.
-/// </summary>
-/// <param name="handle">A sound handle</param>
+/// @brief Pauses a sound.
+/// @param handle A sound handle.
 void sub__sndpause(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Stop the sound and just leave it at that
@@ -2383,11 +2366,9 @@ void sub__sndpause(int32_t handle) {
     }
 }
 
-/// <summary>
-/// This returns whether a sound is being played.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <returns>Return true if the sound is playing. False otherwise</returns>
+/// @brief Returns whether a sound is being played.
+/// @param handle A sound handle.
+/// @return Returns true if the sound is playing. False otherwise.
 int32_t func__sndplaying(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         return ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) ? QB_TRUE : QB_FALSE;
@@ -2396,11 +2377,9 @@ int32_t func__sndplaying(int32_t handle) {
     return QB_FALSE;
 }
 
-/// <summary>
-/// This checks if a sound is paused.
-/// </summary>
-/// <param name="handle">A sound handle</param>
-/// <returns>Returns true if the sound is paused. False otherwise</returns>
+/// @brief Checks if a sound is paused.
+/// @param handle A sound handle.
+/// @return Returns true if the sound is paused. False otherwise.
 int32_t func__sndpaused(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         return !ma_sound_is_playing(&audioEngine.soundHandles[handle]->maSound) &&
@@ -2412,7 +2391,7 @@ int32_t func__sndpaused(int32_t handle) {
     return QB_FALSE;
 }
 
-/// @brief This sets the volume of a sound loaded in memory using a sound handle. This works for both static and raw sounds.
+/// @brief Sets the volume of a sound loaded in memory using a sound handle. This works for both static and raw sounds.
 /// @param handle A sound handle.
 /// @param volume A float point value with 0 resulting in silence and anything above 1 resulting in amplification.
 void sub__sndvol(int32_t handle, float volume) {
@@ -2423,10 +2402,8 @@ void sub__sndvol(int32_t handle, float volume) {
     }
 }
 
-/// <summary>
-/// This is like sub__sndplay but the sound is looped.
-/// </summary>
-/// <param name="handle"></param>
+/// @brief Like sub__sndplay(), but the sound is looped.
+/// @param handle A sound handle.
 void sub__sndloop(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Reset position to zero only if we are playing and (not looping or we've reached the end of the sound)
@@ -2450,7 +2427,7 @@ void sub__sndloop(int32_t handle) {
     }
 }
 
-/// @brief This will set the balance or 3D position of a sound. This works for both static and raw sounds.
+/// @brief Sets the balance or 3D position of a sound. This works for both static and raw sounds.
 /// It will do pure stereo panning if y & z are absent.
 /// @param handle A sound handle.
 /// @param x x distance values go from left (negative) to right (positive).
@@ -2486,7 +2463,7 @@ void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int
     }
 }
 
-/// @brief This returns the length in seconds of a loaded sound using a sound handle.
+/// @brief Returns the length in seconds of a loaded sound using a sound handle.
 /// @param handle A sound handle.
 /// @return Returns the length of a sound in seconds.
 double func__sndlen(int32_t handle) {
@@ -2500,7 +2477,7 @@ double func__sndlen(int32_t handle) {
     return 0.0;
 }
 
-/// @brief This returns the current playing position in seconds using a sound handle.
+/// @brief Returns the current playing position in seconds using a sound handle.
 /// @param handle A sound handle.
 /// @return Returns the current playing position in seconds for a loaded sound.
 double func__sndgetpos(int32_t handle) {
@@ -2514,7 +2491,7 @@ double func__sndgetpos(int32_t handle) {
     return 0.0;
 }
 
-/// @brief This changes the current/starting playing position in seconds of a sound.
+/// @brief Changes the current/starting playing position in seconds of a sound.
 /// @param handle A sound handle.
 /// @param seconds The position to set in seconds.
 void sub__sndsetpos(int32_t handle, double seconds) {
@@ -2544,7 +2521,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
     }
 }
 
-/// @brief This stops playing a sound after it has been playing for a set number of seconds.
+/// @brief Stops playing a sound after it has been playing for a set number of seconds.
 /// @param handle A sound handle.
 /// @param limit The number of seconds that the sound will play.
 void sub__sndlimit(int32_t handle, double limit) {
@@ -2554,10 +2531,8 @@ void sub__sndlimit(int32_t handle, double limit) {
     }
 }
 
-/// <summary>
-/// This stops a playing or paused sound using a sound handle.
-/// </summary>
-/// <param name="handle">A sound handle</param>
+/// @brief Stops a playing or paused sound using a sound handle.
+/// @param handle A sound handle.
 void sub__sndstop(int32_t handle) {
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
         // Stop the sound first
@@ -2593,13 +2568,11 @@ int32_t func__sndopenraw() {
     return handle;
 }
 
-/// <summary>
-/// This plays sound wave sample frequencies created by a program.
-/// </summary>
-/// <param name="left">Left channel sample</param>
-/// <param name="right">Right channel sample</param>
-/// <param name="handle">A sound handle</param>
-/// <param name="passed">How many parameters were passed?</param>
+/// @brief Plays sound wave sample frequencies created by a program.
+/// @param left Left channel sample.
+/// @param right Right channel sample.
+/// @param handle A sound handle.
+/// @param passed Optional parameter flags.
 void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
     // Use the default raw handle if handle was not passed
     if (!(passed & 2)) {
@@ -2619,7 +2592,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
     }
 }
 
-/// @brief This function returns the length of a raw sound left to be played in seconds.
+/// @brief Returns the length of a raw sound left to be played in seconds.
 /// @param handle A sound handle.
 /// @param passed Optional parameter flags.
 /// @return The length of the sound left to be played in seconds.
@@ -2635,9 +2608,8 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
     return 0.0;
 }
 
-/// @brief This returns a sound handle to a newly created sound's raw data in memory with the given specification.
-/// The user can then fill the buffer with whatever they want (using _MEMSOUND) and play it.
-/// This is basically the sound equivalent of _NEWIMAGE.
+/// @brief Returns a sound handle to a newly created sound's raw data in memory with the given specification. The user can then fill the buffer with whatever
+/// they want (using _MEMSOUND) and play it. This is basically the sound equivalent of _NEWIMAGE.
 /// @param frames The number of sample frames required.
 /// @param channels The number of sound channels. This can be 1 (mono) or 2 (stereo).
 /// @param bits The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32).
@@ -2692,16 +2664,15 @@ int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits) {
     return handle;
 }
 
-/// @brief This function returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function.
-/// miniaudio supports a variety of sample and channel formats. Translating all of that to basic 2 channel 16-bit format that
-/// MemSound was originally supporting would require significant overhead both in terms of system resources and code.
-/// For now we are just exposing the underlying PCM data directly from miniaudio. This fits rather well using the existing mem structure.
-/// Mono sounds should continue to work just as it was before. Stereo and multi-channel sounds however will be required to be handled correctly
-/// by the user by checking the 'elementsize' (for frame size in bytes) and 'type' (for data type) members.
-/// @param handle A sound handle
-/// @param targetChannel This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure
-/// @param passed What arguments were passed?
-/// @return A _MEM value that can be used to access the sound data
+/// @brief Returns a _MEM value referring to a sound's raw data in memory using a designated sound handle created by the _SNDOPEN function. miniaudio supports a
+/// variety of sample and channel formats. Translating all of that to basic 2 channel 16-bit format that MemSound was originally supporting would require
+/// significant overhead both in terms of system resources and code. For now we are just exposing the underlying PCM data directly from miniaudio. This fits
+/// rather well using the existing mem structure. Mono sounds should continue to work just as it was before. Stereo and multi-channel sounds however will be
+/// required to be handled correctly by the user by checking the 'elementsize' (for frame size in bytes) and 'type' (for data type) members.
+/// @param handle A sound handle.
+/// @param targetChannel This should be 0 (for interleaved) or 1 (for mono). Anything else will result in failure.
+/// @param passed Optional parameter flags.
+/// @return A _MEM value that can be used to access the sound data.
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) {
     ma_format maFormat = ma_format::ma_format_unknown;
     ma_uint32 channels = 0;
@@ -2828,9 +2799,9 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) 
 }
 
 /// @brief Handles loading different sound bank formats based on the provided filename and requirements.
-/// @param qbsFileName The filename or qbs buffer for the sound bank
-/// @param qbsRequirements The requirements for the sound bank (can be "memory" and one of the allowed formats)
-/// @param passed Optional parameter flag
+/// @param qbsFileName The filename or qbs buffer for the sound bank.
+/// @param qbsRequirements The requirements for the sound bank (can be "memory" and one of the allowed formats).
+/// @param passed Optional parameter flags.
 void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     enum struct SoundBankFormat { WOPL = 0, OP2, TMB, OPL, SF2, SF3, SFO, AD, UNKNOWN };
     static const char *SoundBankName[] = {"wopl", "op2", "tmb", "opl", "sf2", "sf3", "sfo", "ad", "unknown"};
@@ -2904,11 +2875,11 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
     }
 }
 
-/// @brief This initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
+/// @brief Initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
 void snd_init() { audioEngine.Initialize(); }
 
-/// @brief This shuts down the audio engine and frees any resources used.
+/// @brief Shuts down the audio engine and frees any resources used.
 void snd_un_init() { audioEngine.ShutDown(); }
 
-/// @brief This is called by the QB64-PE internally at ~60Hz. We use this for housekeeping and other stuff.
+/// @brief Used for housekeeping and other stuff. This is called by the QB64-PE internally at ~60Hz.
 void snd_mainloop() { audioEngine.Update(); }
