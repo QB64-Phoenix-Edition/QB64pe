@@ -288,6 +288,7 @@ struct AudioEngine {
         static constexpr auto VOLUME_MAX = 1.0f;
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;
+        static constexpr auto QB_FREQUENCY_LIMIT = 20000.0f;
 
       private:
         // These are some constants that can be tweaked to change the behavior of the PSG and MML parser
@@ -296,7 +297,6 @@ struct AudioEngine {
         static constexpr auto DEFAULT_FREQUENCY = 440.0;
         static constexpr auto MAX_MML_VOLUME = 100.0;
         static constexpr auto DEFAULT_MML_VOLUME = MAX_MML_VOLUME / 2;
-        static const auto QB_FREQUENCY_LIMIT = 20000;
         static const auto MIN_TEMPO = 32;
         static const auto MAX_TEMPO = 255;
         static const auto DEFAULT_TEMPO = 120;
@@ -1894,12 +1894,16 @@ void sub_beep() {
 /// @param voice The voice to use (1 - 4 or -4 to -1 if playback needs to be held until the next call).
 /// @param passed Optional parameter flags.
 void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t passed) {
-    if (is_error_pending() || lengthInClockTicks == 0.0f) {
+    if (is_error_pending()) {
         return;
     }
 
+    if (frequency == 0.0f) {
+        frequency = AudioEngine::PSG::QB_FREQUENCY_LIMIT; // this forces a frequency of 0.0 to be treated as a silent sound
+    }
+
     // Validate mandatory parameters
-    if ((frequency < 37.0f && frequency != 0.0f) || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
+    if (frequency < 20.0f || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
         return;
@@ -1970,8 +1974,12 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetWaveformParameter(waveformParam);
     }
 
-    audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Pause(true);                          // pause the stream first
-    audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Sound(frequency, lengthInClockTicks); // then generate the sound
+    audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Pause(true); // pause the stream first
+
+    if (lengthInClockTicks > 0.0f) {
+        // Generate the sound only if we have a positive non-zero duration
+        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Sound(frequency, lengthInClockTicks);
+    }
 
     if (playNow) {
         AUDIO_DEBUG_PRINT("Playing voice %d and all previously held voices", voiceAbs);
