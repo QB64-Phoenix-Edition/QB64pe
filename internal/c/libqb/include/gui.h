@@ -27,5 +27,7 @@ qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
                              int32_t passed);
 qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbsFilterPatterns, qbs *qbsSingleFilterDescription, int32_t passed);
 
+void sub_beep();
+
 int gui_alert(const char *message, const char *title, const char *type);
 bool gui_alert(const char *fmt, ...);

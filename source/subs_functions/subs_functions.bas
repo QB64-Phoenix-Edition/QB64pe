@@ -3078,7 +3078,7 @@ SUB reginternal
     regid
 
     clearid
-    id.n = "Beep": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.n = "Beep"
     id.subfunc = 2
     id.callname = "sub_beep"
     id.args = 0

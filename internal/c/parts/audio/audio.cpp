@@ -275,7 +275,7 @@ struct AudioEngine {
         }
     };
 
-    /// @brief A PSG class that handles all kinds of sound generation for BEEP, SOUND and PLAY.
+    /// @brief A PSG class that handles all kinds of sound generation for SOUND and PLAY.
     class PSG {
       public:
         /// @brief Various types of waveform that can be generated.
@@ -309,10 +309,6 @@ struct AudioEngine {
         static const auto MAX_VOLUME_RAMP_DURATION_MS = 60000;
         static constexpr auto MAX_VOLUME_RAMP_DURATION = MAX_VOLUME_RAMP_DURATION_MS / 1000.0f;
         static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.005f;
-        static constexpr auto BEEP_FREQUENCY = 900.0;
-        static constexpr auto BEEP_WAVEFORM_DURATION = 0.2472527472527473;
-        static constexpr auto BEEP_SILENCE_DURATION = 0.0274725274725275;
-        static constexpr auto BEEP_DURATION = BEEP_WAVEFORM_DURATION + BEEP_SILENCE_DURATION;
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;
 
         /// @brief Simple LFSR noise generator class. Inspirations from AY-3-8910 and SN76489.
@@ -371,8 +367,8 @@ struct AudioEngine {
 
             /// @brief See https://en.wikipedia.org/wiki/Linear-feedback_shift_register.
             void StepLFSR() {
-                uint32_t temp = (seed ^ (seed >> 2) ^ (seed >> 3) ^ (seed >> 5)) & 1;
-                seed = (seed >> 1) | (temp << 31);
+                uint32_t feedback = ((seed >> 0) ^ (seed >> 1) ^ (seed >> 21) ^ (seed >> 31)) & 1;
+                seed = (seed >> 1) | (feedback << 31);
                 currentSample = int32_t(seed) / 2147483648.0f;
             }
         };
@@ -613,7 +609,7 @@ struct AudioEngine {
             maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)), rawStream->sampleRate);
+            noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)) | 1u, rawStream->sampleRate);
             AUDIO_DEBUG_CHECK(noise != nullptr);
             noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
             noise->SetFrequency(DEFAULT_FREQUENCY);
@@ -755,15 +751,6 @@ struct AudioEngine {
                 rawStream->PushStereoSampleFrames(pausedBuffer.data(), pausedBuffer.size());
                 pausedBuffer.clear();
             }
-        }
-
-        /// @brief Plays a typical retro PC speaker BEEP sound. The volume, waveform and background mode can be changed using PLAY.
-        void Beep() {
-            SetFrequency(BEEP_FREQUENCY);
-            waveBuffer.assign((size_t)(BEEP_DURATION * rawStream->sampleRate), SILENCE_SAMPLE);
-            GenerateWaveform(BEEP_WAVEFORM_DURATION);
-            PushBufferForPlayback();
-            AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
         }
 
         /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY.
@@ -1423,7 +1410,7 @@ struct AudioEngine {
     ma_engine maEngine;                                 // this is the primary miniaudio engine 'context'. Everything happens using this!
     ma_result maResult;                                 // this is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                               // sample rate used by the miniaudio engine
-    std::array<int32_t, PSG_VOICES> psgVoices;          // internal sound handles that we will use for Play(), Beep() & Sound()
+    std::array<int32_t, PSG_VOICES> psgVoices;          // internal sound handles that we will use for Play() and Sound()
     int32_t sndInternalRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
@@ -1449,7 +1436,7 @@ struct AudioEngine {
         lowestFreeHandle = 0;
     }
 
-    /// @brief Allocates a sound handle. It will return -1 on error. Handle 0 is used internally for Beep, Sound and Play and thus cannot be used by the user.
+    /// @brief Allocates a sound handle. It will return -1 on error. Handle 0 is used internally for Sound and Play and thus cannot be used by the user.
     /// Basically, we go through the vector and find an object pointer were 'isUsed' is set as false and return the index. If such an object pointer is not
     /// found, then we add a pointer to a new object at the end of the vector and return the index. We are using pointers because miniaudio keeps using stuff
     /// from ma_sound and these cannot move in memory when the vector is resized. The handle is put-up for recycling simply by setting the 'isUsed' member to
@@ -1735,9 +1722,9 @@ struct AudioEngine {
 
         // Reserve sound handle 0 so that nothing else can use it
         // We'll kickstart it later when we need it
-        // We will use this handle internally for Play(), Beep(), Sound() etc.
+        // We will use this handle internally for Play() and Sound() etc.
         psgVoices[0] = CreateHandle();
-        AUDIO_DEBUG_CHECK(psgVoices[0] == 0); // The first handle must return 0 and this is what is used by Beep and Sound
+        AUDIO_DEBUG_CHECK(psgVoices[0] == 0); // The first handle must return 0 and this is what is used by Play and Sound
     }
 
     /// @brief Shuts down the audio engine and frees any resources used.
@@ -1866,15 +1853,6 @@ const ma_data_source_vtable AudioEngine::RawStream::rawStreamDataSourceVtable = 
 // Global audio engine object.
 static AudioEngine audioEngine;
 
-/// @brief Generates a default 'beep' sound using voice 1.
-void sub_beep() {
-    if (is_error_pending() || !audioEngine.InitializePSG(0)) {
-        return;
-    }
-
-    audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Beep();
-}
-
 /// @brief Generates a sound at the specified frequency for the specified amount of time.
 /// @param frequency Sound frequency.
 /// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second.
@@ -1988,7 +1966,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
 /// @brief Returns the number of sample frames or seconds left to play.
 /// @param voice The voice to get the information for (-4 to -1 for time or 1 to 4 for sample frames; 0 will return sample frames for voice 1).
 /// @param passed Optional parameter flags.
-/// @return Returns the number of sample frames left to play for Play(), Sound() or Beep().
+/// @return Returns the number of sample frames left to play for Play() and Sound().
 uint64_t func_play(int32_t voice, int32_t passed) {
     if (is_error_pending()) {
         return 0;

@@ -1073,7 +1073,6 @@ int32 convert_unicode(int32 src_fmt, void *src_buf, int32 src_size, int32 dest_f
 #ifdef QB64_WINDOWS
 void showvalue(__int64);
 #endif
-void sub_beep();
 
 int32 lastfont = 48;
 int32 *font = (int32 *)calloc(4 * (48 + 1), 1); // NULL=unused index
