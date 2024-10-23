@@ -1943,7 +1943,10 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetWaveformParameter(waveformParam);
     }
 
-    audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Pause(true); // pause the stream first
+    if ((passed & 16) && !playNow) {
+        // Only pause the PSG if we are attempting to play multichannel sound
+        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Pause(true);
+    }
 
     if (lengthInClockTicks > 0.0f) {
         // Generate the sound only if we have a positive non-zero duration
@@ -1951,6 +1954,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 
     if (playNow) {
+        // Unpause all PSGs if all voices are ready
         AUDIO_DEBUG_PRINT("Playing voice %d and all previously held voices", voiceAbs);
 
         for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
