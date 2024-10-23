@@ -31,7 +31,7 @@ struct mem_block;
 void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t option,
                int32_t passed);
 void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed);
-uint64_t func_play(int32_t voice, int32_t passed);
+double func_play(int32_t voice, int32_t passed);
 
 int32_t func__sndrate();
 int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);

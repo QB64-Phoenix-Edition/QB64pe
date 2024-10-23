@@ -1869,6 +1869,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         return;
     }
 
+    // Handle SOUND WAIT first if present
     if (option == 1) {
         // WAIT: Pause all PSGs
         AUDIO_DEBUG_PRINT("Pausing all PSGs");
@@ -1880,18 +1881,10 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
                 audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(true);
             }
         }
-    } else if (option == 2) {
-        // RESUME: Unpause all PSGs
-        AUDIO_DEBUG_PRINT("Resuming all PSGs");
+    }
 
-        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
-            if (audioEngine.InitializePSG(i)) {
-                // Only proceed if the underlying PSG is initialized
-                AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
-                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
-            }
-        }
-    } else {
+    // Handle regular sound arguments if they are present
+    if (passed & 1) {
         if (frequency == 0.0f) {
             frequency = AudioEngine::PSG::QB_FREQUENCY_LIMIT; // this forces a frequency of 0.0 to be treated as a silent sound
         }
@@ -1976,22 +1969,36 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
             audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->Sound(frequency, lengthInClockTicks);
         }
     }
+
+    // Handle SOUND RESUME at the end once everything else is processed and we are ready to go
+    if (option == 2) {
+        // RESUME: Unpause all PSGs
+        AUDIO_DEBUG_PRINT("Resuming all PSGs");
+
+        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
+            if (audioEngine.InitializePSG(i)) {
+                // Only proceed if the underlying PSG is initialized
+                AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
+                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
+            }
+        }
+    }
 }
 
-/// @brief Returns the number of sample frames left to play.
+/// @brief Returns the time left to play when Play() and Sound() are used.
 /// @param voice The voice to get the information for (0 to 3).
 /// @param passed Optional parameter flags.
-/// @return Returns the number of sample frames left to play for Play() and Sound().
-uint64_t func_play(int32_t voice, int32_t passed) {
+/// @return Time (in seconds).
+double func_play(int32_t voice, int32_t passed) {
     if (is_error_pending()) {
-        return 0;
+        return 0.0;
     }
 
     if (passed) {
         if (voice < 0 || voice >= AudioEngine::PSG_VOICES) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
-            return 0;
+            return 0.0;
         }
     } else {
         voice = 0; // use voice 0 by default
@@ -1999,10 +2006,10 @@ uint64_t func_play(int32_t voice, int32_t passed) {
 
     if (audioEngine.InitializePSG(voice)) {
         // Only proceed if the underlying PSG is initialized
-        return audioEngine.soundHandles[audioEngine.psgVoices[voice]]->rawStream->GetSampleFramesRemaining();
+        return audioEngine.soundHandles[audioEngine.psgVoices[voice]]->rawStream->GetTimeRemaining();
     }
 
-    return 0;
+    return 0.0;
 }
 
 /// @brief Processes and plays the MML specified in the strings.

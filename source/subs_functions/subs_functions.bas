@@ -1716,7 +1716,7 @@ SUB reginternal
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
-    id.ret = UINTEGER64TYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.hr_syntax = "PLAY [voice&]"
     regid
 
@@ -3074,7 +3074,7 @@ SUB reginternal
     id.args = 8
     id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?,?[,[?][,[?][,[?][,[?][,?]]]]]][{Wait|Resume}]"
-    id.hr_syntax = "SOUND [frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]] {Wait|Resume}"
+    id.hr_syntax = "SOUND [frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]] [{Wait|Resume}]"
     regid
 
     clearid
