@@ -3071,10 +3071,10 @@ SUB reginternal
     id.n = "Sound": id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 2
     id.callname = "sub_sound"
-    id.args = 7
-    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)+ MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "?,?[,[?][,[?][,[?][,[?][,?]]]]]"
-    id.hr_syntax = "SOUND frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]"
+    id.args = 8
+    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?,?[,[?][,[?][,[?][,[?][,?]]]]]][{Wait|Resume}]"
+    id.hr_syntax = "SOUND [frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]] {Wait|Resume}"
     regid
 
     clearid

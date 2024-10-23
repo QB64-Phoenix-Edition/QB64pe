@@ -546,7 +546,7 @@ struct AudioEngine {
 
         /// @brief Waits for any playback to complete.
         void AwaitPlaybackCompletion() {
-            if (background) {
+            if (background || isPaused) {
                 return; // no need to wait
             }
 
@@ -1860,115 +1860,126 @@ static AudioEngine audioEngine;
 /// @param panning Panning (-1.0 to 1.0).
 /// @param waveform Waveform (1=Square, 2=Saw, 3=Triangle, 4=Sine, 5=White Noise, 6=Pink Noise, 7=Brown Noise, 8=LFSR Noise, 9=Pulse).
 /// @param waveformParam Waveform parameter (if applicable).
-/// @param voice The voice to use (1 - 4 or -4 to -1 if playback needs to be held until the next call).
+/// @param voice The voice to use (0 to 3).
+/// @param option WAIT=1 or RESUME=2
 /// @param passed Optional parameter flags.
-void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t passed) {
+void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t option,
+               int32_t passed) {
     if (is_error_pending()) {
         return;
     }
 
-    if (frequency == 0.0f) {
-        frequency = AudioEngine::PSG::QB_FREQUENCY_LIMIT; // this forces a frequency of 0.0 to be treated as a silent sound
-    }
-
-    // Validate mandatory parameters
-    if (frequency < 20.0f || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
-        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-        return;
-    }
-
-    int32_t voiceAbs;
-    bool playNow;
-
-    if (passed & 16) {
-        voiceAbs = std::abs(voice);
-
-        if (voiceAbs < 1 || voiceAbs > AudioEngine::PSG_VOICES) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return;
-        }
-
-        --voiceAbs;          // make it 0 based
-        playNow = voice > 0; // if this is false then the sound is held until the next call when it is checked again
-    } else {
-        voiceAbs = 0; // use voice 1 by default
-        playNow = true;
-    }
-
-    AUDIO_DEBUG_PRINT("Using voice %d", voiceAbs);
-
-    if (!audioEngine.InitializePSG(voiceAbs)) {
-        AUDIO_DEBUG_PRINT("Failed to initialize PSG for voice %d", voiceAbs);
-
-        return;
-    }
-
-    if (passed & 1) {
-        if (volume < AudioEngine::PSG::VOLUME_MIN || volume > AudioEngine::PSG::VOLUME_MAX) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return;
-        }
-        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetAmplitude(volume);
-    }
-
-    if (passed & 2) {
-        if (panning < AudioEngine::PSG::PAN_LEFT || panning > AudioEngine::PSG::PAN_RIGHT) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return;
-        }
-        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetPanning(panning);
-    }
-
-    if (passed & 4) {
-        if ((AudioEngine::PSG::WaveformType)waveform <= AudioEngine::PSG::WaveformType::NONE ||
-            (AudioEngine::PSG::WaveformType)waveform >= AudioEngine::PSG::WaveformType::COUNT) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return;
-        }
-        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
-    }
-
-    if (passed & 8) {
-        if (((AudioEngine::PSG::WaveformType)waveform == AudioEngine::PSG::WaveformType::PULSE) &&
-            (waveformParam < AudioEngine::PSG::PULSE_WAVE_DUTY_CYCLE_MIN || waveformParam > AudioEngine::PSG::PULSE_WAVE_DUTY_CYCLE_MAX)) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return;
-        }
-        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->SetWaveformParameter(waveformParam);
-    }
-
-    if ((passed & 16) && !playNow) {
-        // Only pause the PSG if we are attempting to play multichannel sound
-        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Pause(true);
-    }
-
-    if (lengthInClockTicks > 0.0f) {
-        // Generate the sound only if we have a positive non-zero duration
-        audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg->Sound(frequency, lengthInClockTicks);
-    }
-
-    if (playNow) {
-        // Unpause all PSGs if all voices are ready
-        AUDIO_DEBUG_PRINT("Playing voice %d and all previously held voices", voiceAbs);
+    if (option == 1) {
+        // WAIT: Pause all PSGs
+        AUDIO_DEBUG_PRINT("Pausing all PSGs");
 
         for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
-            if (audioEngine.psgVoices[i] >= 0 && audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
+            if (audioEngine.InitializePSG(i)) {
                 // Only proceed if the underlying PSG is initialized
-                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgVoices[i]);
+                AUDIO_DEBUG_PRINT("Pausing PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
+                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(true);
+            }
+        }
+    } else if (option == 2) {
+        // RESUME: Unpause all PSGs
+        AUDIO_DEBUG_PRINT("Resuming all PSGs");
+
+        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
+            if (audioEngine.InitializePSG(i)) {
+                // Only proceed if the underlying PSG is initialized
+                AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
                 audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
             }
+        }
+    } else {
+        if (frequency == 0.0f) {
+            frequency = AudioEngine::PSG::QB_FREQUENCY_LIMIT; // this forces a frequency of 0.0 to be treated as a silent sound
+        }
+
+        // Validate mandatory parameters
+        if (frequency < 20.0f || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+            return;
+        }
+
+        if (passed & 32) {
+            AUDIO_DEBUG_PRINT("Voice specified (%i)", voice);
+
+            if (voice < 0 || voice >= AudioEngine::PSG_VOICES) {
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+                return;
+            }
+        } else {
+            voice = 0;
+        }
+
+        AUDIO_DEBUG_PRINT("Using voice %d", voice);
+
+        if (!audioEngine.InitializePSG(voice)) {
+            AUDIO_DEBUG_PRINT("Failed to initialize PSG for voice %d", voice);
+
+            return;
+        }
+
+        if (passed & 2) {
+            AUDIO_DEBUG_PRINT("Volume specified (%f)", volume);
+
+            if (volume < AudioEngine::PSG::VOLUME_MIN || volume > AudioEngine::PSG::VOLUME_MAX) {
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+                return;
+            }
+            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetAmplitude(volume);
+        }
+
+        if (passed & 4) {
+            AUDIO_DEBUG_PRINT("Panning specified (%f)", panning);
+
+            if (panning < AudioEngine::PSG::PAN_LEFT || panning > AudioEngine::PSG::PAN_RIGHT) {
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+                return;
+            }
+            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetPanning(panning);
+        }
+
+        if (passed & 8) {
+            AUDIO_DEBUG_PRINT("Waveform specified (%i)", waveform);
+
+            if ((AudioEngine::PSG::WaveformType)waveform <= AudioEngine::PSG::WaveformType::NONE ||
+                (AudioEngine::PSG::WaveformType)waveform >= AudioEngine::PSG::WaveformType::COUNT) {
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+                return;
+            }
+            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetWaveformType((AudioEngine::PSG::WaveformType)waveform);
+        }
+
+        if (passed & 16) {
+            AUDIO_DEBUG_PRINT("Waveform parameter specified (%f)", waveformParam);
+
+            if (((AudioEngine::PSG::WaveformType)waveform == AudioEngine::PSG::WaveformType::PULSE) &&
+                (waveformParam < AudioEngine::PSG::PULSE_WAVE_DUTY_CYCLE_MIN || waveformParam > AudioEngine::PSG::PULSE_WAVE_DUTY_CYCLE_MAX)) {
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+                return;
+            }
+            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetWaveformParameter(waveformParam);
+        }
+
+        if (lengthInClockTicks > 0.0f) {
+            AUDIO_DEBUG_PRINT("Frequency = %f, duration = %f", frequency, lengthInClockTicks);
+
+            // Generate the sound only if we have a positive non-zero duration
+            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->Sound(frequency, lengthInClockTicks);
         }
     }
 }
 
-/// @brief Returns the number of sample frames or seconds left to play.
-/// @param voice The voice to get the information for (-4 to -1 for time or 1 to 4 for sample frames; 0 will return sample frames for voice 1).
+/// @brief Returns the number of sample frames left to play.
+/// @param voice The voice to get the information for (0 to 3).
 /// @param passed Optional parameter flags.
 /// @return Returns the number of sample frames left to play for Play() and Sound().
 uint64_t func_play(int32_t voice, int32_t passed) {
@@ -1976,46 +1987,29 @@ uint64_t func_play(int32_t voice, int32_t passed) {
         return 0;
     }
 
-    int32_t voiceAbs;
-    bool returnFrames;
-
     if (passed) {
-        voiceAbs = std::abs(voice);
-
-        if (voiceAbs > AudioEngine::PSG_VOICES) {
+        if (voice < 0 || voice >= AudioEngine::PSG_VOICES) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
             return 0;
         }
-
-        if (voiceAbs == 0) {
-            voiceAbs = 1; // this is done for backwards compatibility
-        }
-
-        --voiceAbs;                // make it 0 based
-        returnFrames = voice >= 0; // if this is true then the samples frames will be returned, else seconds
     } else {
-        voiceAbs = 0;        // use voice 1 by default
-        returnFrames = true; // return sample frames by default
+        voice = 0; // use voice 0 by default
     }
 
-    if (audioEngine.isInitialized && audioEngine.psgVoices[voiceAbs] >= 0 && audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->psg) {
+    if (audioEngine.InitializePSG(voice)) {
         // Only proceed if the underlying PSG is initialized
-        if (returnFrames) {
-            return audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->rawStream->GetSampleFramesRemaining();
-        } else {
-            return llround(audioEngine.soundHandles[audioEngine.psgVoices[voiceAbs]]->rawStream->GetTimeRemaining());
-        }
+        return audioEngine.soundHandles[audioEngine.psgVoices[voice]]->rawStream->GetSampleFramesRemaining();
     }
 
     return 0;
 }
 
 /// @brief Processes and plays the MML specified in the strings.
-/// @param str1 MML string for voice 1.
-/// @param str2 MML string for voice 2.
-/// @param str3 MML string for voice 3.
-/// @param str4 MML string for voice 4.
+/// @param str1 MML string for voice 0.
+/// @param str2 MML string for voice 1.
+/// @param str3 MML string for voice 2.
+/// @param str4 MML string for voice 3.
 /// @param passed Optional parameter flags.
 void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed) {
     if (is_error_pending()) {
@@ -2055,9 +2049,9 @@ void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4
         AUDIO_DEBUG_PRINT("Starting multi-voice MML playback");
 
         for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
-            if (audioEngine.psgVoices[i] >= 0 && audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg) {
+            if (audioEngine.InitializePSG(i)) {
                 // Only proceed if the underlying PSG is initialized
-                AUDIO_DEBUG_PRINT("Resuming voice %d (handle %d)", i, audioEngine.psgVoices[i]);
+                AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
                 audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
             }
         }
