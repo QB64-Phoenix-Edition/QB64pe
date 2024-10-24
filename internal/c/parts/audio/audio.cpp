@@ -2610,79 +2610,81 @@ uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, 
         handle = audioEngine.internalSndRaw;
     }
 
-    if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
-        if (passed & 1) {
-            if ((channels != 1 && channels != 2)) {
-                AUDIO_DEBUG_PRINT("Invalid number of channels: %i", channels);
+    if (!audioEngine.isInitialized || !audioEngine.IsHandleValid(handle) || audioEngine.soundHandles[handle]->type != AudioEngine::SoundHandle::Type::RAW) {
+        return 0;
+    }
 
-                return 0;
-            }
-        } else {
-            channels = 1; // assume mono
+    if (passed & 1) {
+        if ((channels != 1 && channels != 2)) {
+            AUDIO_DEBUG_PRINT("Invalid number of channels: %i", channels);
+
+            return 0;
         }
+    } else {
+        channels = 1; // assume mono
+    }
 
-        if (channels == 2) {
-            auto audioBuffer = reinterpret_cast<SampleFrame *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
-            auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(SampleFrame);
+    if (channels == 2) {
+        auto audioBuffer = reinterpret_cast<SampleFrame *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
+        auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(SampleFrame);
 
-            if (audioBufferFrames) {
-                if (passed & 4) {
-                    // Check if the start frame is valid
-                    if (startFrame >= audioBufferFrames) {
-                        AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
+        if (audioBufferFrames) {
+            if (passed & 4) {
+                // Check if the start frame is valid
+                if (startFrame >= audioBufferFrames) {
+                    AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
 
-                        return 0;
-                    }
-                } else {
-                    startFrame = 0;
+                    return 0;
                 }
-
-                if (passed & 8) {
-                    // Check if the frame count is valid
-                    if (frameCount > audioBufferFrames - startFrame) {
-                        AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
-
-                        return 0;
-                    }
-                } else {
-                    frameCount = audioBufferFrames - startFrame;
-                }
-
-                audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
-
-                return frameCount;
+            } else {
+                startFrame = 0;
             }
-        } else {
-            auto audioBuffer = reinterpret_cast<float *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
-            auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(float);
 
-            if (audioBufferFrames) {
-                if (passed & 4) {
-                    // Check if the start frame is valid
-                    if (startFrame >= audioBufferFrames) {
-                        AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
+            if (passed & 8) {
+                // Check if the frame count is valid
+                if (frameCount > audioBufferFrames - startFrame) {
+                    AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
 
-                        return 0;
-                    }
-                } else {
-                    startFrame = 0;
+                    return 0;
                 }
-
-                if (passed & 8) {
-                    // Check if the frame count is valid
-                    if (frameCount > audioBufferFrames - startFrame) {
-                        AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
-
-                        return 0;
-                    }
-                } else {
-                    frameCount = audioBufferFrames - startFrame;
-                }
-
-                audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
-
-                return frameCount;
+            } else {
+                frameCount = audioBufferFrames - startFrame;
             }
+
+            audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
+
+            return frameCount;
+        }
+    } else {
+        auto audioBuffer = reinterpret_cast<float *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
+        auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(float);
+
+        if (audioBufferFrames) {
+            if (passed & 4) {
+                // Check if the start frame is valid
+                if (startFrame >= audioBufferFrames) {
+                    AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
+
+                    return 0;
+                }
+            } else {
+                startFrame = 0;
+            }
+
+            if (passed & 8) {
+                // Check if the frame count is valid
+                if (frameCount > audioBufferFrames - startFrame) {
+                    AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
+
+                    return 0;
+                }
+            } else {
+                frameCount = audioBufferFrames - startFrame;
+            }
+
+            audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
+
+            return frameCount;
         }
     }
 }
