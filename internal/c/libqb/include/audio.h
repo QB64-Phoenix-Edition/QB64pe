@@ -54,6 +54,7 @@ void sub__sndstop(int32_t handle);
 
 int32_t func__sndopenraw();
 void sub__sndraw(float left, float right, int32_t handle, int32_t passed);
+uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, uint32_t startFrame, uint32_t frameCount, int32_t passed);
 static inline void sub__sndrawdone(int32_t handle, int32_t passed) {
     // Dummy function that does nothing
     (void)handle;
@@ -62,7 +63,7 @@ static inline void sub__sndrawdone(int32_t handle, int32_t passed) {
 double func__sndrawlen(int32_t handle, int32_t passed);
 
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
-int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits);
+int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits);
 void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 
 void snd_init();

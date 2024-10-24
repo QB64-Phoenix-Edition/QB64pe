@@ -9,6 +9,7 @@
 //
 //----------------------------------------------------------------------------------------------------------------------
 
+#include "../../libqb.h"
 #include "cmem.h"
 #include "datetime.h"
 #include "error_handle.h"
@@ -73,7 +74,7 @@ struct AudioEngine {
         /// @brief Pushes a whole buffer of stereo sample frames to the queue. This is mutex protected and called by the main thread.
         /// @param buffer The buffer containing the stereo sample frames. This cannot be NULL.
         /// @param frames The total number of frames in the buffer.
-        void PushStereoSampleFrames(SampleFrame *buffer, ma_uint64 frames) {
+        void PushSampleFrames(SampleFrame *buffer, ma_uint64 frames) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             std::copy(buffer, buffer + frames, std::back_inserter(producer->data));
@@ -82,12 +83,23 @@ struct AudioEngine {
         /// @brief Pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread.
         /// @param buffer The buffer containing the sample frames. This cannot be NULL.
         /// @param frames The total number of frames in the buffer.
-        /// @param panning An optional argument that controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right)).
-        void PushMonoSampleFrames(float *buffer, ma_uint64 frames, float panning = 0.0f) {
+        /// @param panning Controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right)).
+        void PushSampleFrames(float *buffer, ma_uint64 frames, float panning) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             for (ma_uint64 i = 0; i < frames; i++) {
                 producer->data.push_back({(buffer[i] * (1.0f - panning)) / 2.0f, (buffer[i] * (1.0f + panning)) / 2.0f});
+            }
+        }
+
+        /// @brief Pushes a whole buffer of mono sample frames to the queue (no FP panning math). This is mutex protected and called by the main thread.
+        /// @param buffer The buffer containing the sample frames. This cannot be NULL.
+        /// @param frames The total number of frames in the buffer.
+        void PushSampleFrames(float *buffer, ma_uint64 frames) {
+            libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
+
+            for (ma_uint64 i = 0; i < frames; i++) {
+                producer->data.push_back({buffer[i], buffer[i]});
             }
         }
 
@@ -522,7 +534,11 @@ struct AudioEngine {
             noise->SetFrequency(uint32_t(frequency));
         }
 
-        void AccumulateMonoSampleFrames(const float *samples, size_t samplesCount, float panning) {
+        /// @brief Accumulates the samples into the paused buffer until the PSG is unpaused.
+        /// @param samples The samples to collect.
+        /// @param samplesCount The number of samples to collect.
+        /// @param panning The panning value.
+        void AccumulateSampleFrames(const float *samples, size_t samplesCount, float panning) {
             for (size_t i = 0; i < samplesCount; i++) {
                 pausedBuffer.push_back({(samples[i] * (1.0f - panning)) / 2.0f, (samples[i] * (1.0f + panning)) / 2.0f});
             }
@@ -532,9 +548,9 @@ struct AudioEngine {
         void PushBufferForPlayback() {
             if (!waveBuffer.empty()) {
                 if (isPaused) {
-                    AccumulateMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                    AccumulateSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
                 } else {
-                    rawStream->PushMonoSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                    rawStream->PushSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
                 }
 
                 AUDIO_DEBUG_PRINT("Sent %llu samples for playback", waveBuffer.size());
@@ -748,7 +764,7 @@ struct AudioEngine {
 
             if (!isPaused) {
                 // We'll need to push the samples in the paused buffer to RawStream
-                rawStream->PushStereoSampleFrames(pausedBuffer.data(), pausedBuffer.size());
+                rawStream->PushSampleFrames(pausedBuffer.data(), pausedBuffer.size());
                 pausedBuffer.clear();
             }
         }
@@ -1411,7 +1427,7 @@ struct AudioEngine {
     ma_result maResult;                                 // this is the result of the last miniaudio operation (used for trapping errors)
     ma_uint32 sampleRate;                               // sample rate used by the miniaudio engine
     std::array<int32_t, PSG_VOICES> psgVoices;          // internal sound handles that we will use for Play() and Sound()
-    int32_t sndInternalRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
+    int32_t internalSndRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
     BufferMap bufferMap;                                // this is used to keep track of and manage memory used by 'in-memory' sound files
@@ -1432,7 +1448,7 @@ struct AudioEngine {
         maResult = ma_result::MA_SUCCESS;
         sampleRate = 0;
         psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);  // should not use INVALID_SOUND_HANDLE here
-        sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
+        internalSndRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
         lowestFreeHandle = 0;
     }
 
@@ -1744,7 +1760,7 @@ struct AudioEngine {
 
             // Invalidate internal handles
             psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);
-            sndInternalRaw = INVALID_SOUND_HANDLE_INTERNAL;
+            internalSndRaw = INVALID_SOUND_HANDLE_INTERNAL;
 
             // Shutdown miniaudio
             ma_engine_uninit(&maEngine);
@@ -2560,11 +2576,11 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
     // Use the default raw handle if handle was not passed
     if (!(passed & 2)) {
         // Check if the default handle was created
-        if (audioEngine.sndInternalRaw < 1) {
-            audioEngine.sndInternalRaw = func__sndopenraw();
+        if (audioEngine.internalSndRaw < 1) {
+            audioEngine.internalSndRaw = func__sndopenraw();
         }
 
-        handle = audioEngine.sndInternalRaw;
+        handle = audioEngine.internalSndRaw;
     }
 
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
@@ -2575,6 +2591,102 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
     }
 }
 
+/// @brief Plays sound wave sample frequencies created by a program.
+/// @param sampleFrameArray A QB64 array of sample frames.
+/// @param channels The number of channels (1 or 2).
+/// @param handle A sound handle.
+/// @param startFrame The starting frame to play.
+/// @param frameCount The number of frames to play.
+/// @param passed Optional parameter flags.
+/// @return The number of frames played (0 on failure).
+uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, uint32_t startFrame, uint32_t frameCount, int32_t passed) {
+    // Use the default raw handle if handle was not passed
+    if (!(passed & 2)) {
+        // Check if the default handle was created
+        if (audioEngine.internalSndRaw < 1) {
+            audioEngine.internalSndRaw = func__sndopenraw();
+        }
+
+        handle = audioEngine.internalSndRaw;
+    }
+
+    if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
+        if (passed & 1) {
+            if ((channels != 1 && channels != 2)) {
+                AUDIO_DEBUG_PRINT("Invalid number of channels: %i", channels);
+
+                return 0;
+            }
+        } else {
+            channels = 1; // assume mono
+        }
+
+        if (channels == 2) {
+            auto audioBuffer = reinterpret_cast<SampleFrame *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
+            auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(SampleFrame);
+
+            if (audioBufferFrames) {
+                if (passed & 4) {
+                    // Check if the start frame is valid
+                    if (startFrame >= audioBufferFrames) {
+                        AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
+
+                        return 0;
+                    }
+                } else {
+                    startFrame = 0;
+                }
+
+                if (passed & 8) {
+                    // Check if the frame count is valid
+                    if (frameCount > audioBufferFrames - startFrame) {
+                        AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
+
+                        return 0;
+                    }
+                } else {
+                    frameCount = audioBufferFrames - startFrame;
+                }
+
+                audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
+
+                return frameCount;
+            }
+        } else {
+            auto audioBuffer = reinterpret_cast<float *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
+            auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(float);
+
+            if (audioBufferFrames) {
+                if (passed & 4) {
+                    // Check if the start frame is valid
+                    if (startFrame >= audioBufferFrames) {
+                        AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
+
+                        return 0;
+                    }
+                } else {
+                    startFrame = 0;
+                }
+
+                if (passed & 8) {
+                    // Check if the frame count is valid
+                    if (frameCount > audioBufferFrames - startFrame) {
+                        AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
+
+                        return 0;
+                    }
+                } else {
+                    frameCount = audioBufferFrames - startFrame;
+                }
+
+                audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
+
+                return frameCount;
+            }
+        }
+    }
+}
+
 /// @brief Returns the length of a raw sound left to be played in seconds.
 /// @param handle A sound handle.
 /// @param passed Optional parameter flags.
@@ -2582,7 +2694,7 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
 double func__sndrawlen(int32_t handle, int32_t passed) {
     // Use the default raw handle if handle was not passed
     if (!passed)
-        handle = audioEngine.sndInternalRaw;
+        handle = audioEngine.internalSndRaw;
 
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
         return audioEngine.soundHandles[handle]->rawStream->GetTimeRemaining();
@@ -2597,7 +2709,7 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
 /// @param channels The number of sound channels. This can be 1 (mono) or 2 (stereo).
 /// @param bits The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32).
 /// @return A new sound handle if successful or 0 on failure.
-int32_t func__sndnew(uint32_t frames, uint32_t channels, uint32_t bits) {
+int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits) {
     // Validate all parameters
     if (!audioEngine.isInitialized || frames == 0 || (channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
         AUDIO_DEBUG_PRINT("Invalid parameters: frames = %u, channels = %u, bits = %u", frames, channels, bits);

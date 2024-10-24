@@ -1967,6 +1967,17 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_SndRaw": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.subfunc = 1
+    id.callname = "func__sndraw"
+    id.args = 5
+    id.arg = MKL$(-1) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
+    id.specialformat = "?[,[?][,[?][,[?][,?]]]]"
+    id.ret = ULONGTYPE - ISPOINTER
+    id.hr_syntax = "_SNDRAW(sampleFrameArray!()[, channels&][, pipeHandle&][, startFrame&][, frameCount&])"
+    regid
+
+    clearid
     id.n = "_SndRawDone": id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 2
     id.callname = "sub__sndrawdone"
@@ -2164,7 +2175,7 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__sndnew"
     id.args = 3
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
+    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)"
     regid
