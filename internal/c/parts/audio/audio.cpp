@@ -293,35 +293,127 @@ struct AudioEngine {
         /// @brief Various types of waveform that can be generated.
         enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, COUNT };
 
-        static constexpr auto PAN_LEFT = -1.0f;
-        static constexpr auto PAN_RIGHT = 1.0f;
-        static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT;
-        static constexpr auto VOLUME_MIN = 0.0f;
-        static constexpr auto VOLUME_MAX = 1.0f;
-        static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;
-        static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;
-        static constexpr auto QB_FREQUENCY_LIMIT = 20000.0f;
+        static constexpr auto PAN_LEFT = -1.0f;                  // left-most panning
+        static constexpr auto PAN_RIGHT = 1.0f;                  // right-most panning
+        static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT; // center panning
+        static constexpr auto VOLUME_MIN = 0.0f;                 // minimum volume
+        static constexpr auto VOLUME_MAX = 1.0f;                 // maximum volume
+        static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;  // minimum pulse wave duty cycle
+        static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;  // maximum pulse wave duty cycle
+        static constexpr auto FREQUENCY_LIMIT = 20000.0f;        // anything above this will generate silence
 
       private:
         // These are some constants that can be tweaked to change the behavior of the PSG and MML parser.
         // These mostly conform to the QBasic and QB64 spec.
-        static const auto DEFAULT_WAVEFORM_TYPE = WaveformType::TRIANGLE;
-        static constexpr auto DEFAULT_FREQUENCY = 440.0;
-        static constexpr auto MAX_MML_VOLUME = 100.0;
-        static constexpr auto DEFAULT_MML_VOLUME = MAX_MML_VOLUME / 2;
-        static const auto MIN_TEMPO = 32;
-        static const auto MAX_TEMPO = 255;
-        static const auto DEFAULT_TEMPO = 120;
-        static const auto MAX_OCTAVE = 6;
-        static const auto DEFAULT_OCTAVE = 4;
-        static const auto MIN_LENGTH = 1;
-        static const auto MAX_LENGTH = 64;
-        static constexpr auto DEFAULT_LENGTH = 4.0;
-        static constexpr auto DEFAULT_PAUSE = 1.0 / 8.0;
-        static const auto MAX_VOLUME_RAMP_DURATION_MS = 60000;
-        static constexpr auto MAX_VOLUME_RAMP_DURATION = MAX_VOLUME_RAMP_DURATION_MS / 1000.0f;
-        static constexpr auto DEFAULT_VOLUME_RAMP_DURATION = 0.005f;
-        static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;
+        static const auto WAVEFORM_TYPE_DEFAULT = WaveformType::SQUARE;                                // the PC speaker generates a square wave
+        static const auto FREQUENCY_DEFAULT = 440;                                                     // the default frequency in Hz
+        static const auto MML_VOLUME_MAX = 100;                                                        // maximum volume (percentage)
+        static constexpr auto VOLUME_DEFAULT = (float(MML_VOLUME_MAX) / 2.0f) / float(MML_VOLUME_MAX); // default volume (FP32)
+        static const auto MML_TEMPO_MIN = 32;                                                          // the minimum MML tempo allowed
+        static const auto MML_TEMPO_MAX = 255;                                                         // the maximum MML tempo allowed
+        static const auto MML_TEMPO_DEFAULT = 120;                                                     // the default MML tempo
+        static const auto MML_OCTAVE_MAX = 7;                                                          // the maximum MML octave allowed
+        static const auto MML_OCTAVE_DEFAULT = 4;                                                      // the default MML octave
+        static const auto MML_LENGTH_MIN = 1;                                                          // the minimum MML note length allowed
+        static const auto MML_LENGTH_MAX = 64;                                                         // the maximum MML note length allowed
+        static constexpr auto MML_LENGTH_DEFAULT = 4.0;                                                // the default MML note length
+        static constexpr auto MML_PAUSE_DEFAULT = 1.0 / 8.0;                                           // the default MML pause length
+        static const auto MML_VOLUME_RAMP_MAX = 100;                                                   // the maximum MML volume ramp (percentage)
+        static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;                                    // the default pulse wave duty cycle (square)
+
+        /// @brief A simple ADSR envelope generator.
+        class Envelope {
+          public:
+            Envelope(const Envelope &) = delete;
+            Envelope &operator=(const Envelope &) = delete;
+            Envelope &operator=(Envelope &&) = delete;
+            Envelope(Envelope &&) = delete;
+
+            Envelope() : sampleFrames(0) { SetSimpleRamp(0.0); }
+
+            void SetAttack(double attack) {
+                this->attack = std::clamp(attack, 0.0, 1.0);
+                UpdateEnvelope();
+            }
+
+            void SetDecay(double decay) {
+                this->decay = std::clamp(decay, 0.0, 1.0);
+                UpdateEnvelope();
+            }
+
+            void SetSustain(double sustain) { this->sustain = std::clamp(sustain, 0.0, 1.0); }
+
+            void SetRelease(double release) {
+                this->release = std::clamp(release, 0.0, 1.0);
+                UpdateEnvelope();
+            }
+
+            void SetSimpleRamp(double ramp) {
+                attack = 0.0;  // no attack phase
+                decay = 0.0;   // no decay phase
+                sustain = 1.0; // full volume
+                release = ramp;
+                UpdateEnvelope();
+            }
+
+            double GetVolume(size_t currentFrame) const {
+                if (currentFrame < attackFrames) {
+                    return double(currentFrame) / double(attackFrames);
+                }
+
+                currentFrame -= attackFrames;
+
+                if (currentFrame < decayFrames) {
+                    return 1.0 - (1.0 - sustain) * (double(currentFrame) / double(decayFrames));
+                }
+
+                currentFrame -= decayFrames;
+
+                if (currentFrame < sustainFrames) {
+                    return sustain;
+                }
+
+                currentFrame -= sustainFrames;
+
+                if (currentFrame < releaseFrames) {
+                    return sustain * (1.0 - (double(currentFrame) / double(releaseFrames)));
+                }
+
+                return 0.0; // after the release phase the volume is zero
+            }
+
+            void SetSampleFrames(size_t sampleFrames) {
+                this->sampleFrames = sampleFrames;
+                UpdateEnvelope();
+            }
+
+          private:
+            void UpdateEnvelope() {
+                // Ensure that the sum of attack, decay, and release is not greater than 1.0
+                double total = attack + decay + release;
+
+                if (total > 1.0) {
+                    attack /= total;
+                    decay /= total;
+                    release /= total;
+                }
+
+                attackFrames = attack * sampleFrames;
+                decayFrames = decay * sampleFrames;
+                releaseFrames = release * sampleFrames;
+                sustainFrames = sampleFrames - (attackFrames + decayFrames + releaseFrames);
+            }
+
+            size_t sampleFrames;
+            size_t attackFrames = 0;
+            size_t decayFrames = 0;
+            size_t sustainFrames = 0;
+            size_t releaseFrames = 0;
+            double attack = 0.0;  // time
+            double decay = 0.0;   // time
+            double sustain = 1.0; // volume
+            double release = 0.0; // time
+        };
 
         /// @brief Simple LFSR noise generator class. Inspirations from AY-3-8910 and SN76489.
         class NoiseGenerator {
@@ -338,8 +430,7 @@ struct AudioEngine {
             NoiseGenerator(NoiseGenerator &&) = delete;
 
             NoiseGenerator(uint32_t clockRate, uint32_t seed, uint32_t systemSampleRate)
-                : seed(seed), clockRate(clockRate), counter(0), frequency(uint32_t(DEFAULT_FREQUENCY)), currentSample(SILENCE_SAMPLE),
-                  amplitude(float(DEFAULT_MML_VOLUME / MAX_MML_VOLUME)) {
+                : seed(seed), clockRate(clockRate), counter(0), frequency(FREQUENCY_DEFAULT), currentSample(SILENCE_SAMPLE), amplitude(VOLUME_DEFAULT) {
                 resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
                 updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
             }
@@ -410,7 +501,7 @@ struct AudioEngine {
         bool isPaused;                         // this is true if the PSG is paused
         ma_uint64 mixCursor;                   // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
         WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
-        float volumeRampDuration;              // the volume ramping duration (this can be changed by the user)
+        Envelope envelope;                     // the ADSR envelope (used for sound and MML)
         bool background;                       // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
         float panning;                         // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
         std::stack<State> stateStack;          // this maintains the state stack if we need to process substrings (VARPTR$)
@@ -431,7 +522,7 @@ struct AudioEngine {
         void GenerateWaveform(double waveDuration, bool mix = false) {
             auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
 
-            if (!neededFrames || maWaveform.config.frequency >= QB_FREQUENCY_LIMIT || mixCursor + neededFrames > waveBuffer.size()) {
+            if (!neededFrames || maWaveform.config.frequency >= FREQUENCY_LIMIT || mixCursor + neededFrames > waveBuffer.size()) {
                 AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
                                   mixCursor);
                 return; // nothing to do
@@ -487,37 +578,20 @@ struct AudioEngine {
                 return; // something went wrong
             }
 
-            // Apply volume ramping to the generated waveform to remove click and pops
-            auto rampFrames = volumeRampDuration * rawStream->sampleRate;
+            envelope.SetSampleFrames(generatedFrames);
             auto destination = waveBuffer.data() + mixCursor;
 
             if (mix) {
                 // Mix the samples to the buffer
                 for (size_t i = 0; i < generatedFrames; i++) {
-                    // Calculate the ramp factor based on the current frame position
-                    auto rampFactor = 1.0f;
-                    if (i < rampFrames) {
-                        rampFactor = (float)i / rampFrames;
-                    } else if (i >= generatedFrames - rampFrames) {
-                        rampFactor = (float)(generatedFrames - i) / rampFrames;
-                    }
-
-                    destination[i] += noteBuffer[i] * rampFactor; // apply the ramp factor to the sample and mix it with the destination buffer
+                    destination[i] = std::fmaf(noteBuffer[i], envelope.GetVolume(i), destination[i]);
                 }
 
                 AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames mixed = %llu", int(waveformType), neededFrames, generatedFrames);
             } else {
                 // Copy the samples to the buffer
                 for (size_t i = 0; i < generatedFrames; i++) {
-                    // Calculate the ramp factor based on the current frame position
-                    auto rampFactor = 1.0f;
-                    if (i < rampFrames) {
-                        rampFactor = (float)i / rampFrames;
-                    } else if (i >= generatedFrames - rampFrames) {
-                        rampFactor = (float)(generatedFrames - i) / rampFrames;
-                    }
-
-                    destination[i] = noteBuffer[i] * rampFactor; // apply the ramp factor to the sample
+                    destination[i] = noteBuffer[i] * envelope.GetVolume(i); // apply the envelope volume
                 }
 
                 AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames generated = %llu", int(waveformType), neededFrames, generatedFrames);
@@ -591,46 +665,44 @@ struct AudioEngine {
             rawStream = pRawStream; // save the RawStream object pointer
             isPaused = false;
             mixCursor = 0;
-            volumeRampDuration = DEFAULT_VOLUME_RAMP_DURATION;
             playIt = background = false; // default to foreground playback
-            tempo = DEFAULT_TEMPO;
-            octave = DEFAULT_OCTAVE;
-            length = DEFAULT_LENGTH;
-            pause = DEFAULT_PAUSE;
+            tempo = MML_TEMPO_DEFAULT;
+            octave = MML_OCTAVE_DEFAULT;
+            length = MML_LENGTH_DEFAULT;
+            pause = MML_PAUSE_DEFAULT;
             panning = PAN_CENTER;
             duration = 0;
             dots = 0;
             ZERO_VARIABLE(currentState);
 
             maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, ma_waveform_type::ma_waveform_type_square,
-                                                       DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
+                                                       VOLUME_DEFAULT, FREQUENCY_DEFAULT);
             maResult = ma_waveform_init(&maWaveformConfig, &maWaveform);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            maWhiteNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_white, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            maWhiteNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_white, 0, VOLUME_DEFAULT);
             maResult = ma_noise_init(&maWhiteNoiseConfig, NULL, &maWhiteNoise);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            maPinkNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_pink, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            maPinkNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_pink, 0, VOLUME_DEFAULT);
             maResult = ma_noise_init(&maPinkNoiseConfig, NULL, &maPinkNoise);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            maBrownianNoiseConfig =
-                ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_brownian, 0, DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
+            maBrownianNoiseConfig = ma_noise_config_init(ma_format::ma_format_f32, 1, ma_noise_type::ma_noise_type_brownian, 0, VOLUME_DEFAULT);
             maResult = ma_noise_init(&maBrownianNoiseConfig, NULL, &maBrownianNoise);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            maPulseWaveConfig = ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, PULSE_WAVE_DUTY_CYCLE_DEFAULT,
-                                                         DEFAULT_MML_VOLUME / MAX_MML_VOLUME, DEFAULT_FREQUENCY);
+            maPulseWaveConfig =
+                ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, PULSE_WAVE_DUTY_CYCLE_DEFAULT, VOLUME_DEFAULT, FREQUENCY_DEFAULT);
             maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
             noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)) | 1u, rawStream->sampleRate);
             AUDIO_DEBUG_CHECK(noise != nullptr);
-            noise->SetAmplitude(DEFAULT_MML_VOLUME / MAX_MML_VOLUME);
-            noise->SetFrequency(DEFAULT_FREQUENCY);
+            noise->SetAmplitude(VOLUME_DEFAULT);
+            noise->SetFrequency(FREQUENCY_DEFAULT);
 
-            SetWaveformType(DEFAULT_WAVEFORM_TYPE);
+            SetWaveformType(WAVEFORM_TYPE_DEFAULT);
 
             AUDIO_DEBUG_PRINT("PSG initialized @ %uHz", maWaveform.config.sampleRate);
         }
@@ -967,7 +1039,7 @@ struct AudioEngine {
                             d = i64num;
                         }
 
-                        if (d > 2147483647.0 || d < -2147483648.0) {
+                        if (d > 2147483647ll || d < -2147483648ll) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL); // out of range value!
                             return;
                         }
@@ -1009,12 +1081,12 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number > MAX_VOLUME_RAMP_DURATION_MS) {
+                        if (number > MML_VOLUME_RAMP_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
-                        volumeRampDuration = (float)number / 1000.0f;
+                        envelope.SetSimpleRamp(double(number) / double(MML_VOLUME_RAMP_MAX));
                         followUp = 0;
 
                         if (currentState.length < 0)
@@ -1046,12 +1118,12 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number > MAX_MML_VOLUME) {
+                        if (number > MML_VOLUME_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
-                        SetAmplitude(number / MAX_MML_VOLUME);
+                        SetAmplitude(double(number) / double(MML_VOLUME_MAX));
 
                         followUp = 0;
 
@@ -1104,8 +1176,8 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number < MIN_TEMPO || number > MAX_TEMPO) {
-                            number = 120;
+                        if (number < MML_TEMPO_MIN || number > MML_TEMPO_MAX) {
+                            number = MML_TEMPO_DEFAULT;
                         }
 
                         tempo = number;
@@ -1176,7 +1248,7 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number > MAX_OCTAVE) {
+                        if (number > MML_OCTAVE_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
@@ -1195,7 +1267,7 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number < MIN_LENGTH || number > MAX_LENGTH) {
+                        if (number < MML_LENGTH_MIN || number > MML_LENGTH_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
@@ -1902,7 +1974,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     // Handle regular sound arguments if they are present
     if (passed & 1) {
         if (frequency == 0.0f) {
-            frequency = AudioEngine::PSG::QB_FREQUENCY_LIMIT; // this forces a frequency of 0.0 to be treated as a silent sound
+            frequency = AudioEngine::PSG::FREQUENCY_LIMIT; // this forces a frequency of 0.0 to be treated as a silent sound
         }
 
         // Validate mandatory parameters
@@ -2643,6 +2715,13 @@ uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, 
             if (passed & 8) {
                 // Check if the frame count is valid
                 if (frameCount > audioBufferFrames - startFrame) {
+                    AUDIO_DEBUG_PRINT("Adjusting frame count: %u", frameCount);
+
+                    // Adjust the frame count
+                    frameCount = audioBufferFrames - startFrame;
+                }
+
+                if (frameCount == 0) {
                     AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
 
                     return 0;
@@ -2674,6 +2753,13 @@ uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, 
             if (passed & 8) {
                 // Check if the frame count is valid
                 if (frameCount > audioBufferFrames - startFrame) {
+                    AUDIO_DEBUG_PRINT("Adjusting frame count: %u", frameCount);
+
+                    // Adjust the frame count
+                    frameCount = audioBufferFrames - startFrame;
+                }
+
+                if (frameCount == 0) {
                     AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
 
                     return 0;
