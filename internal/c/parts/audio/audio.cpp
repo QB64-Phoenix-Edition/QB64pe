@@ -307,18 +307,34 @@ struct AudioEngine {
         // These mostly conform to the QBasic and QB64 spec.
         static const auto WAVEFORM_TYPE_DEFAULT = WaveformType::SQUARE;                                // the PC speaker generates a square wave
         static const auto FREQUENCY_DEFAULT = 440;                                                     // the default frequency in Hz
+        static const auto MML_VOLUME_MIN = 0;                                                          // minimum volume (percentage)
         static const auto MML_VOLUME_MAX = 100;                                                        // maximum volume (percentage)
+        static const auto MML_PAN_LEFT = 0;                                                            // left-most panning (percentage)
+        static const auto MML_PAN_RIGHT = 255;                                                         // right-most panning (percentage)
+        static constexpr auto MML_PAN_CENTER = float(MML_PAN_RIGHT) / 2.0f;                            // center panning (percentage)
         static constexpr auto VOLUME_DEFAULT = (float(MML_VOLUME_MAX) / 2.0f) / float(MML_VOLUME_MAX); // default volume (FP32)
         static const auto MML_TEMPO_MIN = 32;                                                          // the minimum MML tempo allowed
         static const auto MML_TEMPO_MAX = 255;                                                         // the maximum MML tempo allowed
         static const auto MML_TEMPO_DEFAULT = 120;                                                     // the default MML tempo
+        static const auto MML_OCTAVE_MIN = 0;                                                          // the minimum MML octave allowed
         static const auto MML_OCTAVE_MAX = 7;                                                          // the maximum MML octave allowed
         static const auto MML_OCTAVE_DEFAULT = 4;                                                      // the default MML octave
         static const auto MML_LENGTH_MIN = 1;                                                          // the minimum MML note length allowed
         static const auto MML_LENGTH_MAX = 64;                                                         // the maximum MML note length allowed
         static constexpr auto MML_LENGTH_DEFAULT = 4.0;                                                // the default MML note length
         static constexpr auto MML_PAUSE_DEFAULT = 1.0 / 8.0;                                           // the default MML pause length
+        static const auto MML_VOLUME_RAMP_MIN = 0;                                                     // the minimum MML volume ramp (percentage)
         static const auto MML_VOLUME_RAMP_MAX = 100;                                                   // the maximum MML volume ramp (percentage)
+        static const auto MML_WAVE_PARAM_MIN = 0;                                                      // the minimum MML wave parameter
+        static const auto MML_WAVE_PARAM_MAX = 100;                                                    // the maximum MML wave parameter
+        static const auto MML_RELEASE_MIN = 0;                                                         // the minimum MML release (percentage)
+        static const auto MML_RELEASE_MAX = 100;                                                       // the maximum MML release (percentage)
+        static const auto MML_SUSTAIN_MIN = 0;                                                         // the minimum MML sustain (percentage)
+        static const auto MML_SUSTAIN_MAX = 100;                                                       // the maximum MML sustain (percentage)
+        static const auto MML_DECAY_MIN = 0;                                                           // the minimum MML decay (percentage)
+        static const auto MML_DECAY_MAX = 100;                                                         // the maximum MML decay (percentage)
+        static const auto MML_ATTACK_MIN = 0;                                                          // the minimum MML attack (percentage)
+        static const auto MML_ATTACK_MAX = 100;                                                        // the maximum MML attack (percentage)
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;                                    // the default pulse wave duty cycle (square)
 
         /// @brief A simple ADSR envelope generator.
@@ -349,14 +365,14 @@ struct AudioEngine {
             }
 
             void SetSimpleRamp(double ramp) {
-                attack = 0.0;  // no attack phase
-                decay = 0.0;   // no decay phase
-                sustain = 1.0; // full volume
-                release = ramp;
+                attack = ramp / 2.0;
+                decay = 0.0;
+                sustain = 1.0;
+                release = ramp / 2.0;
                 UpdateEnvelope();
             }
 
-            double GetVolume(size_t currentFrame) const {
+            double GetVolume(ma_uint64 currentFrame) const {
                 if (currentFrame < attackFrames) {
                     return double(currentFrame) / double(attackFrames);
                 }
@@ -382,7 +398,7 @@ struct AudioEngine {
                 return 0.0; // after the release phase the volume is zero
             }
 
-            void SetSampleFrames(size_t sampleFrames) {
+            void SetSampleFrames(ma_uint64 sampleFrames) {
                 this->sampleFrames = sampleFrames;
                 UpdateEnvelope();
             }
@@ -404,11 +420,11 @@ struct AudioEngine {
                 sustainFrames = sampleFrames - (attackFrames + decayFrames + releaseFrames);
             }
 
-            size_t sampleFrames;
-            size_t attackFrames = 0;
-            size_t decayFrames = 0;
-            size_t sustainFrames = 0;
-            size_t releaseFrames = 0;
+            ma_uint64 sampleFrames;
+            ma_uint64 attackFrames = 0;
+            ma_uint64 decayFrames = 0;
+            ma_uint64 sustainFrames = 0;
+            ma_uint64 releaseFrames = 0;
             double attack = 0.0;  // time
             double decay = 0.0;   // time
             double sustain = 1.0; // volume
@@ -558,7 +574,7 @@ struct AudioEngine {
                 break;
 
             case WaveformType::NOISE_LFSR:
-                for (size_t i = 0; i < neededFrames; i++) {
+                for (ma_uint64 i = 0; i < neededFrames; i++) {
                     noteBuffer[i] = noise->GenerateSample();
                 }
                 break;
@@ -583,14 +599,14 @@ struct AudioEngine {
 
             if (mix) {
                 // Mix the samples to the buffer
-                for (size_t i = 0; i < generatedFrames; i++) {
+                for (ma_uint64 i = 0; i < generatedFrames; i++) {
                     destination[i] = std::fmaf(noteBuffer[i], envelope.GetVolume(i), destination[i]);
                 }
 
                 AUDIO_DEBUG_PRINT("Waveform = %i, frames requested = %llu, frames mixed = %llu", int(waveformType), neededFrames, generatedFrames);
             } else {
                 // Copy the samples to the buffer
-                for (size_t i = 0; i < generatedFrames; i++) {
+                for (ma_uint64 i = 0; i < generatedFrames; i++) {
                     destination[i] = noteBuffer[i] * envelope.GetVolume(i); // apply the envelope volume
                 }
 
@@ -607,6 +623,22 @@ struct AudioEngine {
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
             noise->SetFrequency(uint32_t(frequency));
         }
+
+        /// @brief Sets MML friendly panning value.
+        /// @param panValue A value from 0 to 255.
+        void SetMMLPanning(long panValue) { SetPanning((float(panValue) / MML_PAN_CENTER) - PAN_RIGHT); }
+
+        /// @brief Gets MML friendly panning value.
+        /// @return A value from 0 to 255.
+        long GetMMLPanning() { return std::lroundf((panning + PAN_RIGHT) * MML_PAN_CENTER) - 1; }
+
+        /// @brief Sets MML friendly amplitude value.
+        /// @param amplitude A value from 0 to 100.
+        void SetMMLAmplitude(long amplitude) { SetAmplitude(double(amplitude) / MML_VOLUME_MAX); }
+
+        /// @brief Gets MML friendly amplitude value.
+        /// @return A value from 0 to 100.
+        long GetMMLAmplitude() { return std::lround(maWaveform.config.amplitude * MML_VOLUME_MAX); }
 
         /// @brief Accumulates the samples into the paused buffer until the PSG is unpaused.
         /// @param samples The samples to collect.
@@ -766,11 +798,23 @@ struct AudioEngine {
         void SetWaveformParameter(float value) {
             switch (waveformType) {
             case WaveformType::NONE:
-            case WaveformType::SQUARE:
-            case WaveformType::SAWTOOTH:
-            case WaveformType::TRIANGLE:
-            case WaveformType::SINE:
                 // NOP
+                break;
+
+            case WaveformType::SQUARE:
+                envelope.SetAttack(value);
+                break;
+
+            case WaveformType::SAWTOOTH:
+                envelope.SetDecay(value);
+                break;
+
+            case WaveformType::TRIANGLE:
+                envelope.SetSustain(value);
+                break;
+
+            case WaveformType::SINE:
+                envelope.SetRelease(value);
                 break;
 
             case WaveformType::NOISE_WHITE:
@@ -805,6 +849,8 @@ struct AudioEngine {
         /// @brief Sets the amplitude of the waveform.
         /// @param amplitude The amplitude of the waveform.
         void SetAmplitude(double amplitude) {
+            amplitude = std::clamp<double>(amplitude, VOLUME_MIN, VOLUME_MAX);
+
             maResult = ma_waveform_set_amplitude(&maWaveform, amplitude);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
             maResult = ma_noise_set_amplitude(&maWhiteNoise, amplitude);
@@ -823,7 +869,7 @@ struct AudioEngine {
         /// @brief Set the PSG panning value.
         /// @param value A number between -1.0 to 1.0. Where 0.0 is center.
         void SetPanning(float value) {
-            panning = value;
+            panning = std::clamp(value, PAN_LEFT, PAN_RIGHT); // clamp the value;
 
             AUDIO_DEBUG_PRINT("Panning set to %f", panning);
         }
@@ -1073,7 +1119,21 @@ struct AudioEngine {
                     }
 
                 follow_up:
-                    if (followUp == 10) { // Q...
+                    if (followUp == 16) { // S...
+                        if (currentChar == '-') {
+                            SetMMLPanning(GetMMLPanning() - 1);
+
+                            followUp = 0;
+
+                            continue;
+                        } else if (currentChar == '+') {
+                            SetMMLPanning(GetMMLPanning() + 1);
+
+                            followUp = 0;
+
+                            continue;
+                        }
+
                         if (!numberEntered) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
@@ -1081,12 +1141,133 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number > MML_VOLUME_RAMP_MAX) {
+                        if (number < MML_PAN_LEFT || number > MML_PAN_RIGHT) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        SetMMLPanning(number);
+
+                        followUp = 0;
+
+                        if (currentState.length < 0) {
+                            break;
+                        }
+                    } else if (followUp == 15) { // Y...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MML_WAVE_PARAM_MIN || number > MML_WAVE_PARAM_MAX) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        SetWaveformParameter(float(number) / float(MML_WAVE_PARAM_MAX));
+
+                        followUp = 0;
+
+                        if (currentState.length < 0) {
+                            break;
+                        }
+                    } else if (followUp == 14) { // _...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MML_RELEASE_MIN || number > MML_RELEASE_MAX) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        envelope.SetRelease(double(number) / double(MML_RELEASE_MAX));
+
+                        followUp = 0;
+
+                        if (currentState.length < 0) {
+                            break;
+                        }
+                    } else if (followUp == 13) { // ^...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MML_SUSTAIN_MIN || number > MML_SUSTAIN_MAX) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        envelope.SetSustain(double(number) / double(MML_SUSTAIN_MAX));
+
+                        followUp = 0;
+
+                        if (currentState.length < 0) {
+                            break;
+                        }
+                    } else if (followUp == 12) { // \...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MML_DECAY_MIN || number > MML_DECAY_MAX) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        envelope.SetDecay(double(number) / double(MML_DECAY_MAX));
+
+                        followUp = 0;
+
+                        if (currentState.length < 0) {
+                            break;
+                        }
+                    } else if (followUp == 11) { // /...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MML_ATTACK_MIN || number > MML_ATTACK_MAX) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        envelope.SetAttack(double(number) / double(MML_ATTACK_MAX));
+
+                        followUp = 0;
+
+                        if (currentState.length < 0) {
+                            break;
+                        }
+                    } else if (followUp == 10) { // Q...
+                        if (!numberEntered) {
+                            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                            return;
+                        }
+
+                        numberEntered = 0;
+
+                        if (number < MML_VOLUME_RAMP_MIN || number > MML_VOLUME_RAMP_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
 
                         envelope.SetSimpleRamp(double(number) / double(MML_VOLUME_RAMP_MAX));
+
                         followUp = 0;
 
                         if (currentState.length < 0)
@@ -1111,6 +1292,20 @@ struct AudioEngine {
                         if (currentState.length < 0)
                             break;
                     } else if (followUp == 8) { // V...
+                        if (currentChar == '-') {
+                            SetMMLAmplitude(GetMMLAmplitude() - 1);
+
+                            followUp = 0;
+
+                            continue;
+                        } else if (currentChar == '+') {
+                            SetMMLAmplitude(GetMMLAmplitude() + 1);
+
+                            followUp = 0;
+
+                            continue;
+                        }
+
                         if (!numberEntered) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
@@ -1118,7 +1313,7 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number > MML_VOLUME_MAX) {
+                        if (number < MML_VOLUME_MIN || number > MML_VOLUME_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
@@ -1248,7 +1443,7 @@ struct AudioEngine {
 
                         numberEntered = 0;
 
-                        if (number > MML_OCTAVE_MAX) {
+                        if (number < MML_OCTAVE_MIN || number > MML_OCTAVE_MAX) {
                             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
                             return;
                         }
@@ -1412,11 +1607,29 @@ struct AudioEngine {
                     } else if (processedChar == 'V') { // volume
                         followUp = 8;
                         continue;
-                    } else if (processedChar == '@') { // waveform
+                    } else if (processedChar == '@' || processedChar == 'W') { // waveform
                         followUp = 9;
                         continue;
                     } else if (processedChar == 'Q') { // vol-ramp
                         followUp = 10;
+                        continue;
+                    } else if (processedChar == '/') { // attack
+                        followUp = 11;
+                        continue;
+                    } else if (processedChar == '\\') { // decay
+                        followUp = 12;
+                        continue;
+                    } else if (processedChar == '^') { // sustain
+                        followUp = 13;
+                        continue;
+                    } else if (processedChar == '_') { // release
+                        followUp = 14;
+                        continue;
+                    } else if (processedChar == 'Y') { // waveform parameter
+                        followUp = 15;
+                        continue;
+                    } else if (processedChar == 'S') { // pan position
+                        followUp = 16;
                         continue;
                     }
 
@@ -2330,6 +2543,9 @@ int32_t func__sndcopy(int32_t src_handle) {
 
             return AudioEngine::INVALID_SOUND_HANDLE;
         }
+
+        // Reset any limit
+        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[dst_handle]->maSound, ~(ma_uint64)0);
     }
 
     return dst_handle;
@@ -2345,6 +2561,9 @@ void sub__sndplay(int32_t handle) {
             (!ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))) {
             audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, 0);
             AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+
+            // Reset any limit
+            ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
         }
 
         // Kickstart playback
@@ -2483,6 +2702,9 @@ void sub__sndloop(int32_t handle) {
             (!ma_sound_is_looping(&audioEngine.soundHandles[handle]->maSound) || ma_sound_at_end(&audioEngine.soundHandles[handle]->maSound))) {
             audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, 0);
             AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+
+            // Reset any limit
+            ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
         }
 
         // Kickstart playback
@@ -2566,28 +2788,44 @@ double func__sndgetpos(int32_t handle) {
 /// @param handle A sound handle.
 /// @param seconds The position to set in seconds.
 void sub__sndsetpos(int32_t handle, double seconds) {
-    if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
-        // TODO: Redo the whole thing in sample frames instead of seconds
-        float lengthSeconds = 0;
-        audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds); // Get the length in seconds
-        if (audioEngine.maResult != MA_SUCCESS)
-            return;
+    if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC &&
+        seconds >= 0.0) {
+        // Get the sound sample rate
+        ma_uint32 sampleRate;
+        audioEngine.maResult = ma_sound_get_data_format(&audioEngine.soundHandles[handle]->maSound, NULL, NULL, &sampleRate, NULL, 0);
+        if (audioEngine.maResult != MA_SUCCESS) {
+            AUDIO_DEBUG_PRINT("Failed to get sample rate of sound %i", handle);
 
-        if (seconds > lengthSeconds) // If position is beyond length then simply stop playback and exit
-        {
-            audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
-            AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
             return;
         }
 
-        ma_uint64 lengthSampleFrames;
-        audioEngine.maResult =
-            ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &lengthSampleFrames); // Get the total sample frames
-        if (audioEngine.maResult != MA_SUCCESS)
-            return;
+        // Convert seconds to PCM frames
+        ma_uint64 seekToFrame = seconds * sampleRate;
 
-        audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound,
-                                                          lengthSampleFrames * (seconds / lengthSeconds)); // Set the position in PCM frames
+        // Get the length of the sound
+        ma_uint64 lengthFrames;
+        audioEngine.maResult = ma_sound_get_length_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, &lengthFrames);
+        if (audioEngine.maResult != MA_SUCCESS) {
+            AUDIO_DEBUG_PRINT("Failed to get length of sound %i", handle);
+
+            return;
+        }
+
+        // If position is beyond length then simply stop playback and exit
+        if (seekToFrame >= lengthFrames) {
+            AUDIO_DEBUG_PRINT("Position is beyond length of sound %zu / %zu", seekToFrame, lengthFrames);
+
+            audioEngine.maResult = ma_sound_stop(&audioEngine.soundHandles[handle]->maSound);
+            AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+
+            return;
+        }
+
+        // Reset the limit
+        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
+
+        // Set the position in PCM frames
+        audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, seekToFrame);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
     }
 }
@@ -2596,9 +2834,23 @@ void sub__sndsetpos(int32_t handle, double seconds) {
 /// @param handle A sound handle.
 /// @param limit The number of seconds that the sound will play.
 void sub__sndlimit(int32_t handle, double limit) {
-    // TODO: Get the length in sample frames and then set the stop frame. Redo the whole thing in sample frames instead of seconds
-    if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
-        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000);
+    if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC &&
+        limit >= 0.0) {
+        float lengthSeconds;
+        audioEngine.maResult = ma_sound_get_length_in_seconds(&audioEngine.soundHandles[handle]->maSound, &lengthSeconds);
+        if (audioEngine.maResult != MA_SUCCESS) {
+            AUDIO_DEBUG_PRINT("Failed to get length of sound %i", handle);
+
+            return;
+        }
+
+        if (limit >= lengthSeconds) {
+            AUDIO_DEBUG_PRINT("Limit is beyond length of sound: %f / %f", limit, lengthSeconds);
+
+            return;
+        }
+
+        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, limit * 1000.0);
     }
 }
 
@@ -2613,6 +2865,9 @@ void sub__sndstop(int32_t handle) {
         // Also reset the playback cursor to zero
         audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, 0);
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
+
+        // Reset the limit
+        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
     }
 }
 
