@@ -568,11 +568,8 @@ FUNCTION elementGetStringValue& (ele$, value AS STRING)
 END FUNCTION
 
 ' s$ should be all the data making up the string, with no quotes around it
-'
-' The string data will have C escape sequences in it if necessary
-FUNCTION createElementString$ (s$)
+FUNCTION escapeString$ (s$)
     DIM ele$, o$, p1 AS LONG, c2 AS LONG, i AS LONG
-    ele$ = CHR$(34)
 
     p1 = 1
     FOR i = 1 TO LEN(s$)
@@ -595,7 +592,17 @@ FUNCTION createElementString$ (s$)
         END IF
     NEXT
 
-    ele$ = ele$ + MID$(s$, p1) + CHR$(34) + "," + _TRIM$(STR$(LEN(s$)))
+    escapeString$ = ele$ + MID$(s$, p1)
+END FUNCTION
+
+' The string data will have C escape sequences in it if necessary
+FUNCTION createElementString$ (s$)
+    DIM ele$, o$, p1 AS LONG, c2 AS LONG, i AS LONG
+    ele$ = CHR$(34)
+
+    ele$ = ele$ + escapeString$(s$)
+
+    ele$ = ele$ + CHR$(34) + "," + _TRIM$(STR$(LEN(s$)))
     createElementString$ = ele$
 END FUNCTION
 

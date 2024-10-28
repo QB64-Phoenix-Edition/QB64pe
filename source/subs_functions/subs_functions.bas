@@ -4154,6 +4154,52 @@ SUB reginternal
     id.hr_syntax = "_SAVEFILEDIALOG$([title$][, defaultPathAndFile$][, filterPatterns$][, singleFilterDescription$])"
     regid
 
+    clearid
+    id.n = "_LogTrace"
+    id.subfunc = 2
+    id.callname = "sub__log_trace"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.hr_syntax = "_LOGTRACE msg$"
+    regid
+
+    clearid
+    id.n = "_LogInfo"
+    id.subfunc = 2
+    id.callname = "sub__log_info"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.hr_syntax = "_LOGINFO msg$"
+    regid
+
+    clearid
+    id.n = "_LogWarn"
+    id.subfunc = 2
+    id.callname = "sub__log_warn"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.hr_syntax = "_LOGWARN msg$"
+    regid
+
+    clearid
+    id.n = "_LogError"
+    id.subfunc = 2
+    id.callname = "sub__log_error"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.hr_syntax = "_LOGERROR msg$"
+    regid
+
+    clearid
+    id.n = "_LogMinLevel"
+    id.subfunc = 1
+    id.callname = "func__logminlevel"
+    id.args = 0
+    id.arg = ""
+    ideret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_LOGMINLEVEL"
+    regid
+
     reginternalsubfunc = 0
 END SUB
 

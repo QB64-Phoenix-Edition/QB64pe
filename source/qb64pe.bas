@@ -10411,6 +10411,30 @@ DO
                     END SELECT
                 END IF
 
+                IF firstelement$ = "_LOGTRACE" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "TRACE"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
+                IF firstelement$ = "_LOGINFO" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "INFO"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
+                IF firstelement$ = "_LOGWARN" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "WARN"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
+                IF firstelement$ = "_LOGERROR" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "ERROR"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
                 'any other "unique" subs can be processed above
 
                 id2 = id
@@ -23821,6 +23845,7 @@ END FUNCTION
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
 '$INCLUDE:'utilities\format.bas'
+'$INCLUDE:'emit\logging.bas'
 
 DEFLNG A-Z
 

@@ -35,6 +35,7 @@
 #include "image.h"
 #include "keyhandler.h"
 #include "mac-mouse-support.h"
+#include "logging.h"
 #include "mem.h"
 #include "mutex.h"
 #include "qblist.h"
@@ -29438,6 +29439,9 @@ int main(int argc, char *argv[]) {
         freopen("CONOUT$", "w", stderr);
     }
 #endif
+
+    libqb_log_init();
+    libqb_log_info("Program starting.");
 
 #if defined(QB64_LINUX) && defined(X11)
     XInitThreads();
