@@ -11780,8 +11780,7 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
         } // 9
 
         if (character == 7) {
-            // qb64_generatesound(783.99,0.2,0);
-            Sleep(250);
+            sub_beep();
             goto skip;
         }
 
