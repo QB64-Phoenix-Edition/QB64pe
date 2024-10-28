@@ -32,7 +32,6 @@ struct AudioEngine {
         ma_data_source_config maDataSourceConfig; // config struct for the data source
         ma_engine *maEngine;                      // pointer to a ma_engine object that was passed while creating the data source
         ma_sound *maSound;                        // pointer to a ma_sound object that was passed while creating the data source
-        ma_uint32 sampleRate;                     // the sample rate reported by ma_engine
         struct Buffer {                           // we'll give this a name that we'll use below
             std::vector<SampleFrame> data;        // this holds the actual sample frames
             size_t cursor;                        // the read cursor (in frames) in the stream
@@ -51,13 +50,12 @@ struct AudioEngine {
 
         /// @brief Sets up the vectors, mutex and set some defaults.
         RawStream(ma_engine *pmaEngine, ma_sound *pmaSound) {
-            maSound = pmaSound;                               // Save the pointer to the ma_sound object (this is basically from a QB64-PE sound handle)
-            maEngine = pmaEngine;                             // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
-            sampleRate = ma_engine_get_sample_rate(maEngine); // Save the sample rate
-            buffer[0].cursor = buffer[1].cursor = 0;          // reset the cursors
-            consumer = &buffer[0];                            // set default consumer
-            producer = &buffer[1];                            // set default producer
-            stop = false;                                     // we will send silent samples to keep the playback going by default
+            maSound = pmaSound;                      // Save the pointer to the ma_sound object (this is basically from a QB64-PE sound handle)
+            maEngine = pmaEngine;                    // Save the pointer to the ma_engine object (this should come from the QB64-PE sound engine)
+            buffer[0].cursor = buffer[1].cursor = 0; // reset the cursors
+            consumer = &buffer[0];                   // set default consumer
+            producer = &buffer[1];                   // set default producer
+            stop = false;                            // we will send silent samples to keep the playback going by default
             m = libqb_mutex_new();
         }
 
@@ -115,7 +113,7 @@ struct AudioEngine {
 
         /// @brief Returns the length, in seconds of sound queued.
         /// @return The length left to play in seconds.
-        double GetTimeRemaining() { return double(GetSampleFramesRemaining()) / double(sampleRate); }
+        double GetTimeRemaining() { return double(GetSampleFramesRemaining()) / double(ma_engine_get_sample_rate(maEngine)); }
 
         /// @brief Callback function used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue.
         /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type).
@@ -204,7 +202,7 @@ struct AudioEngine {
                 *pChannels = 2; // stereo
 
             if (pSampleRate)
-                *pSampleRate = pRawStream->sampleRate; // we'll play at the audio engine sampling rate
+                *pSampleRate = ma_engine_get_sample_rate(pRawStream->maEngine); // we'll play at the audio engine sampling rate
 
             if (pChannelMap)
                 ma_channel_map_init_standard(ma_standard_channel_map_default, pChannelMap, channelMapCap, 2); // stereo
@@ -629,7 +627,7 @@ struct AudioEngine {
         /// @param waveDuration The duration of the waveform in seconds.
         /// @param mix Mixes the generated waveform to the buffer instead of overwriting it.
         void GenerateWaveform(double waveDuration, bool mix = false) {
-            auto neededFrames = (ma_uint64)(waveDuration * rawStream->sampleRate);
+            auto neededFrames = ma_uint64(waveDuration * ma_engine_get_sample_rate(rawStream->maEngine));
 
             if (!neededFrames || maWaveform.config.frequency >= FREQUENCY_LIMIT || mixCursor + neededFrames > waveBuffer.size()) {
                 AUDIO_DEBUG_PRINT("Not generating any waveform. Frames = %llu, frequency = %lf, cursor = %llu", neededFrames, maWaveform.config.frequency,
@@ -807,8 +805,8 @@ struct AudioEngine {
             dots = 0;
             ZERO_VARIABLE(currentState);
 
-            maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, ma_waveform_type::ma_waveform_type_square,
-                                                       VOLUME_DEFAULT, FREQUENCY_DEFAULT);
+            maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, ma_engine_get_sample_rate(rawStream->maEngine),
+                                                       ma_waveform_type::ma_waveform_type_square, VOLUME_DEFAULT, FREQUENCY_DEFAULT);
             maResult = ma_waveform_init(&maWaveformConfig, &maWaveform);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
@@ -824,17 +822,17 @@ struct AudioEngine {
             maResult = ma_noise_init(&maBrownianNoiseConfig, NULL, &maBrownianNoise);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            maPulseWaveConfig =
-                ma_pulsewave_config_init(ma_format::ma_format_f32, 1, rawStream->sampleRate, PULSE_WAVE_DUTY_CYCLE_DEFAULT, VOLUME_DEFAULT, FREQUENCY_DEFAULT);
+            maPulseWaveConfig = ma_pulsewave_config_init(ma_format::ma_format_f32, 1, ma_engine_get_sample_rate(rawStream->maEngine),
+                                                         PULSE_WAVE_DUTY_CYCLE_DEFAULT, VOLUME_DEFAULT, FREQUENCY_DEFAULT);
             maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            noise = new NoiseGenerator(rawStream->sampleRate);
+            noise = new NoiseGenerator(ma_engine_get_sample_rate(rawStream->maEngine));
             AUDIO_DEBUG_CHECK(noise != nullptr);
             noise->SetAmplitude(VOLUME_DEFAULT);
             noise->SetFrequency(FREQUENCY_DEFAULT);
 
-            customWaveform = new CustomWaveform(rawStream->sampleRate);
+            customWaveform = new CustomWaveform(ma_engine_get_sample_rate(rawStream->maEngine));
             AUDIO_DEBUG_CHECK(customWaveform != nullptr);
             customWaveform->SetAmplitude(VOLUME_DEFAULT);
             customWaveform->SetFrequency(FREQUENCY_DEFAULT);
@@ -1005,7 +1003,7 @@ struct AudioEngine {
         void Sound(double frequency, double lengthInClockTicks) {
             SetFrequency(frequency);
             auto soundDuration = lengthInClockTicks / 18.2;
-            waveBuffer.assign((size_t)(soundDuration * rawStream->sampleRate), SILENCE_SAMPLE);
+            waveBuffer.assign(size_t(soundDuration * ma_engine_get_sample_rate(rawStream->maEngine)), SILENCE_SAMPLE);
             GenerateWaveform(soundDuration);
             PushBufferForPlayback();
             AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
@@ -1459,7 +1457,7 @@ struct AudioEngine {
 
                         dots = 0;
 
-                        auto noteFrames = ma_uint64(duration * rawStream->sampleRate);
+                        auto noteFrames = ma_uint64(duration * ma_engine_get_sample_rate(rawStream->maEngine));
 
                         if ((mixCursor + noteFrames) > waveBuffer.size()) {
                             waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
@@ -1639,7 +1637,7 @@ struct AudioEngine {
 
                         SetFrequency(pow(2.0, ((double)noteOffset) / 12.0) * 440.0);
 
-                        auto noteFrames = ma_uint64(duration * rawStream->sampleRate);
+                        auto noteFrames = ma_uint64(duration * ma_engine_get_sample_rate(rawStream->maEngine));
 
                         if (mixCursor + noteFrames > waveBuffer.size()) {
                             waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
@@ -1824,7 +1822,6 @@ struct AudioEngine {
     ma_engine_config maEngineConfig;                    // miniaudio engine configuration (will be used to pass in the resource manager)
     ma_engine maEngine;                                 // this is the primary miniaudio engine 'context'. Everything happens using this!
     ma_result maResult;                                 // this is the result of the last miniaudio operation (used for trapping errors)
-    ma_uint32 sampleRate;                               // sample rate used by the miniaudio engine
     std::array<int32_t, PSG_VOICES> psgVoices;          // internal sound handles that we will use for Play() and Sound()
     int32_t internalSndRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
@@ -1845,7 +1842,6 @@ struct AudioEngine {
         ZERO_VARIABLE(maEngineConfig);
         ZERO_VARIABLE(maEngine);
         maResult = ma_result::MA_SUCCESS;
-        sampleRate = 0;
         psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);  // should not use INVALID_SOUND_HANDLE here
         internalSndRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
         lowestFreeHandle = 0;
@@ -1993,7 +1989,7 @@ struct AudioEngine {
     /// @param handle A sound handle.
     /// @return Returns true if the handle is valid.
     bool IsHandleValid(int32_t handle) {
-        return handle > 0 && handle < (int32_t)soundHandles.size() && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
+        return handle > 0 && handle < int32_t(soundHandles.size()) && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
     }
 
     /// @brief Initializes the first PSG object and it's RawStream object. This only happens once. Subsequent calls to this will return true.
@@ -2125,10 +2121,8 @@ struct AudioEngine {
             return;
         }
 
-        // Get and save the engine sample rate. We will let miniaudio choose the device sample rate for us
-        // This ensures we get the lowest latency
         // Set the resource manager decoder sample rate to the device sample rate (miniaudio engine bug?)
-        maResourceManager.config.decodedSampleRate = sampleRate = ma_engine_get_sample_rate(&maEngine);
+        maResourceManager.config.decodedSampleRate = ma_engine_get_sample_rate(&maEngine);
 
         // Set the initialized flag as true
         isInitialized = true;
@@ -2227,7 +2221,7 @@ struct AudioEngine {
         // Setup the decoder & attach the custom backed vtables
         soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
         AudioEngineAttachCustomBackendVTables(&soundHandles[handle]->maDecoderConfig);
-        soundHandles[handle]->maDecoderConfig.sampleRate = sampleRate;
+        soundHandles[handle]->maDecoderConfig.sampleRate = ma_engine_get_sample_rate(&maEngine);
 
         maResult = ma_decoder_init_memory(buffer, size, &soundHandles[handle]->maDecoderConfig,
                                           soundHandles[handle]->maDecoder); // initialize the decoder
@@ -2535,7 +2529,7 @@ void sub__wave(uint32_t voice, void *waveDefinition, uint32_t frameCount, int32_
 
 /// @brief Returns the device sample rate if the audio engine is initialized.
 /// @return The device sample rate.
-int32_t func__sndrate() { return audioEngine.sampleRate; }
+int32_t func__sndrate() { return ma_engine_get_sample_rate(&audioEngine.maEngine); }
 
 /// @brief Loads a sound file into memory and returns a LONG handle value above 0.
 /// @param qbsFileName The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports.
@@ -2770,8 +2764,8 @@ void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float 
             ma_sound_set_pan(&audioEngine.soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
         }
 
-        sub__sndplay(dst_handle);                              // Play the sound
         audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
+        sub__sndplay(dst_handle);                              // Play the sound
 
         AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %f, 3D (%f, %f, %f)", dst_handle, volume, x, y, z);
     }
@@ -2802,8 +2796,8 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
         if (passed & 2)
             ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
 
-        sub__sndplay(handle);                              // Play the sound
         audioEngine.soundHandles[handle]->autoKill = true; // Set to auto kill
+        sub__sndplay(handle);                              // Play the sound
     }
 }
 
