@@ -12,6 +12,7 @@
 #    include <mach-o/dyld.h> //required for _NSGetExecutablePath
 #endif
 
+
 #include "audio.h"
 #include "bitops.h"
 #include "cmem.h"
@@ -45,6 +46,7 @@
 // These are here because they are used in func__loadfont()
 #include <algorithm>
 #include <string>
+#include <vector>
 
 int32 disableEvents = 0;
 
@@ -29387,8 +29389,55 @@ int32 func__scaledheight() {
 
 extern void set_dynamic_info();
 
+#ifdef QB64_WINDOWS
+static bool isValidCygwinPipe(int fd) {
+    HANDLE h = (HANDLE) _get_osfhandle(fd);
+    if (h == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    if (GetFileType(h) != FILE_TYPE_PIPE) {
+        return false;
+    }
+
+    size_t size = 4096;
+    std::vector<char> nameinfoBuf(sizeof(FILE_NAME_INFO) + sizeof(WCHAR) * size);
+    FILE_NAME_INFO *nameinfo = reinterpret_cast<FILE_NAME_INFO *>(nameinfoBuf.data());
+
+    if (GetFileInformationByHandleEx(h, FileNameInfo, nameinfo, size)) {
+        nameinfo->FileName[nameinfo->FileNameLength / sizeof(WCHAR)] = L'\0';
+
+        // When a valid pipe is found, disable buffering so that results are seen immediately
+        if (wcsncmp(nameinfo->FileName, L"\\msys-", 6) == 0) {
+            setbuf(stdout, NULL);
+            setbuf(stderr, NULL);
+            return true;
+        } else if (wcsncmp(nameinfo->FileName, L"\\cygwin-", 8) == 0) {
+            setbuf(stdout, NULL);
+            setbuf(stderr, NULL);
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
+
 int main(int argc, char *argv[]) {
     clock_init();
+
+#ifdef QB64_WINDOWS
+    // `isValidCygwinPipe()` checks for Cygwin-based stdout, which is good
+    // enough to use directly. Otherwise we try to connect to the console we
+    // were started from (if there is one).
+    //
+    // If we're a console program and `AttachConsole()` did not work then we
+    // will end up spawning our own console.
+    if (!isValidCygwinPipe(STDOUT_FILENO) && AttachConsole(ATTACH_PARENT_PROCESS)) {
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+    }
+#endif
 
 #if defined(QB64_LINUX) && defined(X11)
     XInitThreads();
