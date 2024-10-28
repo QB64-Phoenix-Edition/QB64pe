@@ -15,6 +15,7 @@
 
 // Uncomment this to to print debug messages to stderr
 // #define AUDIO_DEBUG 1
+
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "miniaudio.h"
@@ -162,8 +163,8 @@ class BufferMap {
 /// @brief A class that can manage double buffer frame blocks
 class DoubleBufferFrameBlock {
     std::vector<SampleFrame> blocks[2];
-    size_t index = 0;  // current reading block index
-    size_t cursor = 0; // cursor in the active block
+    size_t index;  // current reading block index
+    size_t cursor; // cursor in the active block
 
   public:
     DoubleBufferFrameBlock(const DoubleBufferFrameBlock &) = delete;
@@ -171,7 +172,7 @@ class DoubleBufferFrameBlock {
     DoubleBufferFrameBlock &operator=(const DoubleBufferFrameBlock &) = delete;
     DoubleBufferFrameBlock &operator=(DoubleBufferFrameBlock &&) = delete;
 
-    DoubleBufferFrameBlock() { Reset(); }
+    DoubleBufferFrameBlock() : index(0), cursor(0) {}
 
     void Reset() {
         blocks[0].clear();

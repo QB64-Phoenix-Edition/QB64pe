@@ -87,7 +87,6 @@ SUB reginternal
     clearid
     id.n = "_Continue": id.subfunc = 2: id.callname = "sub_stub": regid
 
-
     clearid
     id.n = "_Resize"
     id.subfunc = 2
@@ -194,8 +193,6 @@ SUB reginternal
     regid
     '---special case---
 
-
-
     clearid
     id.n = "_MemFree"
     id.subfunc = 2
@@ -287,7 +284,6 @@ SUB reginternal
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_SCREENHIDE"
     regid
-
 
     clearid
     id.n = "_Console"
@@ -390,8 +386,6 @@ SUB reginternal
     id.hr_syntax = "STRIG(button%) {On|Off|Stop}"
     regid
 
-
-
     clearid
     id.n = "_Devices": id.Dependency = DEPENDENCY_DEVICEINPUT
     id.subfunc = 1
@@ -489,7 +483,6 @@ SUB reginternal
     id.hr_syntax = "_AXIS(axis_number%)"
     regid
 
-
     clearid
     id.n = "_Wheel": id.Dependency = DEPENDENCY_DEVICEINPUT
     id.subfunc = 1
@@ -500,15 +493,6 @@ SUB reginternal
     id.specialformat = "[?]"
     id.hr_syntax = "_WHEEL(wheelNumber%)"
     regid
-
-
-
-
-
-
-
-
-
 
     clearid
     id.n = "Key"
@@ -695,10 +679,6 @@ SUB reginternal
     id.hr_syntax = "_SCREENIMAGE(column1, row1, column2, row2)"
     regid
 
-
-
-
-
     clearid
     id.n = "Lock"
     id.subfunc = 2
@@ -877,7 +857,6 @@ SUB reginternal
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_OPENCLIENT(" + CHR$(34) + "TCP/IP:port:address" + CHR$(34) + ")"
     regid
-
 
     clearid
     id.n = "_EnvironCount"
@@ -1499,7 +1478,6 @@ SUB reginternal
     id.hr_syntax = "_PRINTMODE[(imageHandle&)]"
     regid
 
-    ' a740g: Extended Font support
     clearid
     id.n = "_UFontHeight"
     id.Dependency = DEPENDENCY_LOADFONT
@@ -1553,7 +1531,7 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__UCharPos"
     id.args = 4
-    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(-1) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arg 2 has special handling code in evaluatefunc()
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(-2) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arg 2 has special handling code in evaluatefunc()
     id.specialformat = "?[,[?][,[?][,?]]]"
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_UCHARPOS&(text$[, posArray&()][, utfEncoding&][, fontHandle&])"
@@ -1689,7 +1667,6 @@ SUB reginternal
     id.hr_syntax = "_ALPHA32(rgbaColor&)"
     regid
 
-
     clearid
     id.n = "Draw"
     id.subfunc = 2
@@ -1699,28 +1676,8 @@ SUB reginternal
     id.hr_syntax = "DRAW drawString$"
     regid
 
-    clearid
-    id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
-    id.subfunc = 2
-    id.callname = "sub_play"
-    id.args = 4
-    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
-    id.specialformat = "?[,[?][,[?][,?]]]"
-    id.hr_syntax = "PLAY voiceCommands1$[, voiceCommands2$][, voiceCommands3$][, voiceCommands4$]"
-    regid
-
-    clearid
-    id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
-    id.subfunc = 1
-    id.callname = "func_play"
-    id.args = 1
-    id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "[?]"
-    id.ret = DOUBLETYPE - ISPOINTER
-    id.hr_syntax = "PLAY [voice&]"
-    regid
-
     'QB64 MOUSE
+
     clearid
     id.n = "_MouseShow"
     id.subfunc = 2
@@ -1874,7 +1831,6 @@ SUB reginternal
     id.hr_syntax = "CHAIN moduleName$"
     regid
 
-
     clearid
     id.n = "Shell"
     id.subfunc = 2
@@ -1948,6 +1904,57 @@ SUB reginternal
     id.hr_syntax = "_COMMANDCOUNT"
     regid
 
+    ' QB64-PE Audio Library
+
+    clearid
+    id.n = "Beep"
+    id.subfunc = 2
+    id.callname = "sub_beep" ' BEEP no longers pulls in miniaudio and other parts of the audio library
+    id.args = 0
+    id.hr_syntax = "BEEP"
+    regid
+
+    clearid
+    id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.subfunc = 2
+    id.callname = "sub_play"
+    id.args = 4
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
+    id.specialformat = "?[,[?][,[?][,?]]]"
+    id.hr_syntax = "PLAY voiceCommands1$[, voiceCommands2$][, voiceCommands3$][, voiceCommands4$]"
+    regid
+
+    clearid
+    id.n = "Play": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.subfunc = 1
+    id.callname = "func_play"
+    id.args = 1
+    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.specialformat = "[?]"
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "PLAY [voice&]"
+    regid
+
+    clearid
+    id.n = "Sound": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.subfunc = 2
+    id.callname = "sub_sound"
+    id.args = 8
+    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?,?[,[?][,[?][,[?][,[?][,?]]]]]][{Wait|Resume}]"
+    id.hr_syntax = "SOUND [frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]] [{Wait|Resume}]"
+    regid
+
+    clearid
+    id.n = "_Wave": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.subfunc = 2
+    id.callname = "sub__wave"
+    id.args = 3
+    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(-3) + MKL$(ULONGTYPE - ISPOINTER)
+    id.specialformat = "?,?[,?]"
+    id.hr_syntax = "_WAVE voice&, waveDefinition%%(), frameCount&"
+    regid
+
     clearid
     id.n = "_SndRate": id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 1
@@ -1967,14 +1974,13 @@ SUB reginternal
     regid
 
     clearid
-    id.n = "_SndRaw": id.Dependency = DEPENDENCY_MINIAUDIO
-    id.subfunc = 1
-    id.callname = "func__sndraw"
-    id.args = 5
-    id.arg = MKL$(-1) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
-    id.specialformat = "?[,[?][,[?][,[?][,?]]]]"
-    id.ret = ULONGTYPE - ISPOINTER
-    id.hr_syntax = "_SNDRAW(sampleFrameArray!()[, channels&][, pipeHandle&][, startFrame&][, frameCount&])"
+    id.n = "_SndRawBatch": id.Dependency = DEPENDENCY_MINIAUDIO
+    id.subfunc = 2
+    id.callname = "sub__sndrawbatch"
+    id.args = 4
+    id.arg = MKL$(-3) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
+    id.specialformat = "?[,[?][,[?][,?]]]"
+    id.hr_syntax = "_SNDRAWBATCH sampleFrameArray!()[, channels&][, pipeHandle&][, frameCount&]"
     regid
 
     clearid
@@ -2253,7 +2259,6 @@ SUB reginternal
     id.hr_syntax = "LOF(fileNumber&)"
     regid
 
-
     clearid
     id.n = "Screen"
     id.subfunc = 1
@@ -2275,7 +2280,6 @@ SUB reginternal
     id.hr_syntax = "PMAP(coordinate, function_number%)"
     regid
 
-
     clearid
     id.n = "Point"
     id.subfunc = 1
@@ -2286,7 +2290,6 @@ SUB reginternal
     id.ret = DOUBLETYPE - ISPOINTER
     id.hr_syntax = "POINT(x, y) or POINT({0|1|2|3})"
     regid
-
 
     clearid
     id.n = "Tab"
@@ -2307,7 +2310,6 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "SPC(count%)"
     regid
-
 
     clearid
     id.n = "Wait"
@@ -2481,8 +2483,6 @@ SUB reginternal
     id.hr_syntax = "CLNG(expression)"
     regid
 
-
-
     clearid
     id.n = "Time"
     id.musthave = "$"
@@ -2502,8 +2502,6 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "TIME$"
     regid
-
-
 
     clearid
     id.n = "Date"
@@ -3076,24 +3074,6 @@ SUB reginternal
     id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF}][,?]]]"
     id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF}], style%]"
-    regid
-
-    clearid
-    id.n = "Sound": id.Dependency = DEPENDENCY_MINIAUDIO
-    id.subfunc = 2
-    id.callname = "sub_sound"
-    id.args = 8
-    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "[?,?[,[?][,[?][,[?][,[?][,?]]]]]][{Wait|Resume}]"
-    id.hr_syntax = "SOUND [frequency!, duration![, volume!][, panning!][, waveform&][, waveformParameters!][, voice&]] [{Wait|Resume}]"
-    regid
-
-    clearid
-    id.n = "Beep"
-    id.subfunc = 2
-    id.callname = "sub_beep"
-    id.args = 0
-    id.hr_syntax = "BEEP"
     regid
 
     clearid
@@ -3801,7 +3781,7 @@ SUB reginternal
     regid
 
     clearid
-    id.n = "_ShR" ' a740g: Changed to camel case
+    id.n = "_ShR"
     id.subfunc = 1
     id.callname = "func__shr"
     id.args = 2
@@ -3811,7 +3791,7 @@ SUB reginternal
     regid
 
     clearid
-    id.n = "_ShL" ' a740g: Changed to camel case
+    id.n = "_ShL"
     id.subfunc = 1
     id.callname = "func__shl"
     id.args = 2
@@ -3820,7 +3800,6 @@ SUB reginternal
     id.hr_syntax = "_SHL(numericalVariable, numericalValue)"
     regid
 
-    ' a740g: ROR & ROL additions
     clearid
     id.n = "_RoL"
     id.subfunc = 1
@@ -3838,7 +3817,6 @@ SUB reginternal
     id.ret = UINTEGER64TYPE - ISPOINTER ' ***overridden by function evaluatefunc***
     id.hr_syntax = "_ROR(numericalVariable, numericalValue)"
     regid
-    ' a740g: end of ROR & ROL additions
 
     clearid
     id.n = "_Adler32"

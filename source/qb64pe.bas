@@ -10587,6 +10587,51 @@ DO
                         IF Error_Happened THEN GOTO errmes
                         IF convertspacing = 1 AND addlayout = 1 THEN l$ = LEFT$(l$, LEN(l$) - 1) + sp
                         IF addlayout THEN l$ = l$ + tlayout$: addedlayout = 1
+
+
+
+                        ' Special handling: _WAVE
+                        IF firstelement$ = "_WAVE" THEN
+                            e2$ = e$ 'backup
+
+                            e$ = evaluate(e$, sourcetyp)
+                            IF Error_Happened THEN GOTO errmes
+
+                            ' It must be an array
+                            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
+                                a$ = "Expected _BYTE array name": GOTO errmes
+                            END IF
+
+                            ' Only _BYTE array is allowed
+                            IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND ISUNSIGNED) OR (sourcetyp AND 511) <> 8 THEN
+                                a$ = "Expected _BYTE array name": GOTO errmes
+                            END IF
+
+                            e$ = e2$ 'restore
+                        END IF
+
+                        ' Special handling: _SNDRAWBATCH
+                        IF firstelement$ = "_SNDRAWBATCH" THEN
+                            e2$ = e$ 'backup
+
+                            e$ = evaluate(e$, sourcetyp)
+                            IF Error_Happened THEN GOTO errmes
+
+                            ' It must be an array
+                            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
+                                a$ = "Expected SINGLE array name": GOTO errmes
+                            END IF
+
+                            ' Only 32-bit floating-point array is allowed
+                            IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND 511) <> 32 THEN
+                                a$ = "Expected SINGLE array name": GOTO errmes
+                            END IF
+
+                            e$ = e2$ 'restore
+                        END IF
+
+
+
                         e$ = evaluatetotyp(e$, -2)
                         IF Error_Happened THEN GOTO errmes
                         GOTO sete
@@ -16614,27 +16659,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         ' Cannot be one of these
                         IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND 511) <> 32 THEN
                             Give_Error "Expected LONG array-name"
-                            EXIT FUNCTION
-                        END IF
-
-                        e$ = evaluatetotyp(e2$, -2) ' get byte_element_struct
-
-                        GOTO dontevaluate
-                    END IF
-                END IF
-
-                ' SNDRAW special case for arg 1
-                IF n$ = "_SNDRAW" THEN
-                    IF curarg = 1 THEN
-                        ' It must be an array
-                        IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
-                            Give_Error "Expected SINGLE array-name"
-                            EXIT FUNCTION
-                        END IF
-
-                        ' Only 32-bit floating-point array is allowed
-                        IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND 511) <> 32 THEN
-                            Give_Error "Expected SINGLE array-name"
                             EXIT FUNCTION
                         END IF
 

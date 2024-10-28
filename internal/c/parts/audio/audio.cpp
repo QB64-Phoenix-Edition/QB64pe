@@ -9,6 +9,8 @@
 //
 //----------------------------------------------------------------------------------------------------------------------
 
+#define _USE_MATH_DEFINES
+
 #include "../../libqb.h"
 #include "cmem.h"
 #include "datetime.h"
@@ -291,7 +293,7 @@ struct AudioEngine {
     class PSG {
       public:
         /// @brief Various types of waveform that can be generated.
-        enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, COUNT };
+        enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, CUSTOM, COUNT };
 
         static constexpr auto PAN_LEFT = -1.0f;                  // left-most panning
         static constexpr auto PAN_RIGHT = 1.0f;                  // right-most panning
@@ -300,6 +302,8 @@ struct AudioEngine {
         static constexpr auto VOLUME_MAX = 1.0f;                 // maximum volume
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;  // minimum pulse wave duty cycle
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;  // maximum pulse wave duty cycle
+        static constexpr auto FREQUENCY_MIN = 20.0f;             // minimum frequency
+        static constexpr auto FREQUENCY_MAX = 32767.0f;          // maximum frequency
         static constexpr auto FREQUENCY_LIMIT = 20000.0f;        // anything above this will generate silence
 
       private:
@@ -406,7 +410,7 @@ struct AudioEngine {
           private:
             void UpdateEnvelope() {
                 // Ensure that the sum of attack, decay, and release is not greater than 1.0
-                double total = attack + decay + release;
+                auto total = attack + decay + release;
 
                 if (total > 1.0) {
                     attack /= total;
@@ -421,32 +425,36 @@ struct AudioEngine {
             }
 
             ma_uint64 sampleFrames;
-            ma_uint64 attackFrames = 0;
-            ma_uint64 decayFrames = 0;
-            ma_uint64 sustainFrames = 0;
-            ma_uint64 releaseFrames = 0;
-            double attack = 0.0;  // time
-            double decay = 0.0;   // time
-            double sustain = 1.0; // volume
-            double release = 0.0; // time
+            ma_uint64 attackFrames;
+            ma_uint64 decayFrames;
+            ma_uint64 sustainFrames;
+            ma_uint64 releaseFrames;
+            double attack;  // time
+            double decay;   // time
+            double sustain; // volume
+            double release; // time
         };
 
         /// @brief Simple LFSR noise generator class. Inspirations from AY-3-8910 and SN76489.
         class NoiseGenerator {
           private:
             static const auto BASE_SAMPLE_RATE = 48000;
-
-          public:
             static const auto DEFAULT_CLOCK_RATE = BASE_SAMPLE_RATE >> 2;
 
+          public:
             NoiseGenerator() = delete;
             NoiseGenerator(const NoiseGenerator &) = delete;
             NoiseGenerator &operator=(const NoiseGenerator &) = delete;
             NoiseGenerator &operator=(NoiseGenerator &&) = delete;
             NoiseGenerator(NoiseGenerator &&) = delete;
 
-            NoiseGenerator(uint32_t clockRate, uint32_t seed, uint32_t systemSampleRate)
-                : seed(seed), clockRate(clockRate), counter(0), frequency(FREQUENCY_DEFAULT), currentSample(SILENCE_SAMPLE), amplitude(VOLUME_DEFAULT) {
+            NoiseGenerator(uint32_t systemSampleRate) {
+                seed = uint32_t(func_timer(0.001, 1)) | 1u;
+                clockRate = DEFAULT_CLOCK_RATE;
+                counter = 0;
+                frequency = FREQUENCY_DEFAULT;
+                currentSample = SILENCE_SAMPLE;
+                amplitude = VOLUME_DEFAULT;
                 resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
                 updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
             }
@@ -475,6 +483,7 @@ struct AudioEngine {
                 return amplitude * currentSample;
             }
 
+          private:
             uint32_t seed;
             uint32_t clockRate;
             uint32_t updateInterval;
@@ -486,10 +495,93 @@ struct AudioEngine {
 
             /// @brief See https://en.wikipedia.org/wiki/Linear-feedback_shift_register.
             void StepLFSR() {
-                uint32_t feedback = ((seed >> 0) ^ (seed >> 1) ^ (seed >> 21) ^ (seed >> 31)) & 1;
+                auto feedback = ((seed >> 0) ^ (seed >> 1) ^ (seed >> 21) ^ (seed >> 31)) & 1;
                 seed = (seed >> 1) | (feedback << 31);
                 currentSample = int32_t(seed) / 2147483648.0f;
             }
+        };
+
+        /// @brief Custom waveform generator class using a user-defined waveform shape.
+        class CustomWaveform {
+          private:
+            static const auto WAVEFORM_SIZE_MIN = 256; // minimum number of samples in the waveform
+
+          public:
+            CustomWaveform() = delete;
+            CustomWaveform(const CustomWaveform &) = delete;
+            CustomWaveform &operator=(const CustomWaveform &) = delete;
+            CustomWaveform &operator=(CustomWaveform &&) = delete;
+            CustomWaveform(CustomWaveform &&) = delete;
+
+            CustomWaveform(ma_uint32 systemSampleRate)
+                : frequency(float(FREQUENCY_DEFAULT)), amplitude(VOLUME_DEFAULT), sampleRate(systemSampleRate), phase(0.0f) {
+
+                // Generate a default sine waveform
+                waveform.resize(WAVEFORM_SIZE_MIN);
+                for (auto i = 0; i < WAVEFORM_SIZE_MIN; i++) {
+                    waveform[i] = std::sin(2.0f * float(M_PI) * float(i) / float(WAVEFORM_SIZE_MIN));
+                }
+
+                UpdatePhaseIncrement();
+            }
+
+            void SetFrequency(float frequency) {
+                this->frequency = std::max(frequency, 0.0f);
+
+                UpdatePhaseIncrement();
+            }
+
+            void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX); }
+
+            /// @brief Update the internal waveform data with a new user-defined waveform.
+            /// @param newWaveform A pointer to the new waveform data.
+            /// @param newWaveformSize The number of samples in the new waveform data.
+            void SetWaveform(const int8_t *newWaveform, size_t newWaveformSize) {
+                auto waveformSize = std::max<size_t>(newWaveformSize, WAVEFORM_SIZE_MIN);
+
+                // Resize and normalize the new waveform data to internal storage
+                waveform.resize(waveformSize, SILENCE_SAMPLE);
+                for (size_t i = 0; i < newWaveformSize; i++) {
+                    waveform[i] = newWaveform[i] / 128.0f;
+                }
+
+                // If the new waveform is smaller than WAVEFORM_SIZE_MIN, repeat it to fill the internal waveform
+                for (size_t i = newWaveformSize; i < waveformSize; ++i) {
+                    waveform[i] = waveform[i % newWaveformSize];
+                }
+
+                phase = 0.0f;
+
+                UpdatePhaseIncrement();
+            }
+
+            // @brief Generate a single sample using the custom waveform.
+            // @return The next sample in the waveform.
+            float GenerateSample() {
+                auto waveformSize = waveform.size();
+                auto index = size_t(phase);
+                auto fraction = phase - float(index);
+                float outputSample = amplitude * ((1.0f - fraction) * waveform[index] + fraction * waveform[(index + 1) % waveformSize]);
+
+                // Increment phase, wrapping around at the end of the waveform
+                phase += phaseIncrement;
+                if (phase >= waveformSize) {
+                    phase -= waveformSize;
+                }
+
+                return outputSample;
+            }
+
+          private:
+            std::vector<float> waveform; // internally stored normalized waveform
+            float frequency;             // frequency of the generated waveform
+            float amplitude;             // amplitude of the generated waveform
+            ma_uint32 sampleRate;        // system sample rate
+            float phaseIncrement;        // phase increment per sample
+            float phase;                 // current phase position in waveform
+
+            /// @brief Update the phase increment based on the frequency, sample rate, and waveform size.
+            void UpdatePhaseIncrement() { phaseIncrement = (frequency * float(waveform.size())) / float(sampleRate); }
         };
 
         /// @brief A struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used).
@@ -508,6 +600,7 @@ struct AudioEngine {
         ma_noise_config maBrownianNoiseConfig; // miniaudio brownian noise configuration
         ma_noise maBrownianNoise;              // miniaudio brownian noise
         NoiseGenerator *noise;                 // LFSR noise generator
+        CustomWaveform *customWaveform;        // custom waveform generator
         ma_pulsewave_config maPulseWaveConfig; // miniaudio pulse wave configuration
         ma_pulsewave maPulseWave;              // miniaudio pulse wave
         ma_result maResult;                    // result of the last miniaudio operation
@@ -583,6 +676,12 @@ struct AudioEngine {
                 maResult = ma_pulsewave_read_pcm_frames(&maPulseWave, noteBuffer.data(), neededFrames, &generatedFrames);
                 break;
 
+            case WaveformType::CUSTOM:
+                for (ma_uint64 i = 0; i < neededFrames; i++) {
+                    noteBuffer[i] = customWaveform->GenerateSample();
+                }
+                break;
+
             case WaveformType::COUNT:
             default:
                 // NOP
@@ -622,6 +721,7 @@ struct AudioEngine {
             maResult = ma_pulsewave_set_frequency(&maPulseWave, frequency);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
             noise->SetFrequency(uint32_t(frequency));
+            customWaveform->SetFrequency(frequency);
         }
 
         /// @brief Sets MML friendly panning value.
@@ -729,10 +829,15 @@ struct AudioEngine {
             maResult = ma_pulsewave_init(&maPulseWaveConfig, &maPulseWave);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
 
-            noise = new NoiseGenerator(NoiseGenerator::DEFAULT_CLOCK_RATE, uint32_t(func_timer(0.001, 1)) | 1u, rawStream->sampleRate);
+            noise = new NoiseGenerator(rawStream->sampleRate);
             AUDIO_DEBUG_CHECK(noise != nullptr);
             noise->SetAmplitude(VOLUME_DEFAULT);
             noise->SetFrequency(FREQUENCY_DEFAULT);
+
+            customWaveform = new CustomWaveform(rawStream->sampleRate);
+            AUDIO_DEBUG_CHECK(customWaveform != nullptr);
+            customWaveform->SetAmplitude(VOLUME_DEFAULT);
+            customWaveform->SetFrequency(FREQUENCY_DEFAULT);
 
             SetWaveformType(WAVEFORM_TYPE_DEFAULT);
 
@@ -741,6 +846,7 @@ struct AudioEngine {
 
         /// @brief Frees the waveform buffer and cleans up the waveform resources.
         ~PSG() {
+            delete customWaveform;
             delete noise;
             ma_pulsewave_uninit(&maPulseWave);
             ma_noise_uninit(&maBrownianNoise, NULL);
@@ -780,6 +886,7 @@ struct AudioEngine {
             case WaveformType::NOISE_BROWNIAN:
             case WaveformType::NOISE_LFSR:
             case WaveformType::PULSE:
+            case WaveformType::CUSTOM:
             case WaveformType::COUNT:
             default:
                 // NOP
@@ -837,6 +944,7 @@ struct AudioEngine {
                 maResult = ma_pulsewave_set_duty_cycle(&maPulseWave, value);
                 break;
 
+            case WaveformType::CUSTOM:
             case WaveformType::COUNT:
             default:
                 // NOP
@@ -862,6 +970,7 @@ struct AudioEngine {
             maResult = ma_pulsewave_set_amplitude(&maPulseWave, amplitude);
             AUDIO_DEBUG_CHECK(maResult == MA_SUCCESS);
             noise->SetAmplitude(float(amplitude));
+            customWaveform->SetAmplitude(float(amplitude));
 
             AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
         }
@@ -886,6 +995,11 @@ struct AudioEngine {
                 pausedBuffer.clear();
             }
         }
+
+        /// @brief Sets a custom mono 8-bit waveform for the PSG.
+        /// @param data A pointer to the waveform data.
+        /// @param length The length of the waveform data in samples.
+        void SetCustomWaveform(int8_t *data, size_t length) { customWaveform->SetWaveform(data, length); }
 
         /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY.
         void Sound(double frequency, double lengthInClockTicks) {
@@ -1090,7 +1204,7 @@ struct AudioEngine {
                             return;
                         }
 
-                        number = llround(d);
+                        number = d;
 
                         continue;
                     } else if (currentChar >= '0' && currentChar <= '9') {
@@ -1345,7 +1459,7 @@ struct AudioEngine {
 
                         dots = 0;
 
-                        auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
+                        auto noteFrames = ma_uint64(duration * rawStream->sampleRate);
 
                         if ((mixCursor + noteFrames) > waveBuffer.size()) {
                             waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
@@ -1525,7 +1639,7 @@ struct AudioEngine {
 
                         SetFrequency(pow(2.0, ((double)noteOffset) / 12.0) * 440.0);
 
-                        auto noteFrames = (ma_uint64)(duration * rawStream->sampleRate);
+                        auto noteFrames = ma_uint64(duration * rawStream->sampleRate);
 
                         if (mixCursor + noteFrames > waveBuffer.size()) {
                             waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
@@ -1774,13 +1888,13 @@ struct AudioEngine {
         if (h >= vectorSize) {
             // If we have reached here then either the vector is empty or there are no empty slots
             // Simply create a new SoundHandle at the back of the vector
-            SoundHandle *newHandle = new SoundHandle;
+            auto newHandle = new SoundHandle;
 
             if (!newHandle)
                 return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
 
             soundHandles.push_back(newHandle);
-            size_t newVectorSize = soundHandles.size();
+            auto newVectorSize = soundHandles.size();
 
             // If newVectorSize == vectorSize then push_back() failed
             if (newVectorSize <= vectorSize) {
@@ -1816,7 +1930,7 @@ struct AudioEngine {
 
         lowestFreeHandle = h + 1; // Set lowestFreeHandle to allocated handle + 1
 
-        return (int32_t)(h);
+        return int32_t(h);
     }
 
     /// @brief Frees and unloads an open sound. If the sound is playing or looping, it will be stopped. If the sound is a stream of raw samples then it is
@@ -2154,6 +2268,91 @@ const ma_data_source_vtable AudioEngine::RawStream::rawStreamDataSourceVtable = 
 // Global audio engine object.
 static AudioEngine audioEngine;
 
+/// @brief Returns the time left to play when Play() and Sound() are used.
+/// @param voice The voice to get the information for (0 to 3).
+/// @param passed Optional parameter flags.
+/// @return Time (in seconds).
+double func_play(uint32_t voice, int32_t passed) {
+    if (is_error_pending()) {
+        return 0.0;
+    }
+
+    if (passed) {
+        if (voice >= AudioEngine::PSG_VOICES) {
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+            return 0.0;
+        }
+    } else {
+        voice = 0; // use voice 0 by default
+    }
+
+    if (audioEngine.InitializePSG(voice)) {
+        // Only proceed if the underlying PSG is initialized
+        return audioEngine.soundHandles[audioEngine.psgVoices[voice]]->rawStream->GetTimeRemaining();
+    }
+
+    return 0.0;
+}
+
+/// @brief Processes and plays the MML specified in the strings.
+/// @param str1 MML string for voice 0.
+/// @param str2 MML string for voice 1.
+/// @param str3 MML string for voice 2.
+/// @param str4 MML string for voice 3.
+/// @param passed Optional parameter flags.
+void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed) {
+    if (is_error_pending()) {
+        return;
+    }
+
+    if (passed) {
+        // Multi-voice mode
+        if ((passed & 4) && audioEngine.InitializePSG(3)) {
+            AUDIO_DEBUG_PRINT("Mixing MML voice 4");
+
+            audioEngine.soundHandles[audioEngine.psgVoices[3]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[3]]->psg->Play(str4);
+        }
+
+        if ((passed & 2) && audioEngine.InitializePSG(2)) {
+            AUDIO_DEBUG_PRINT("Mixing MML voice 3");
+
+            audioEngine.soundHandles[audioEngine.psgVoices[2]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[2]]->psg->Play(str3);
+        }
+
+        if ((passed & 1) && audioEngine.InitializePSG(1)) {
+            AUDIO_DEBUG_PRINT("Mixing MML voice 2");
+
+            audioEngine.soundHandles[audioEngine.psgVoices[1]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[1]]->psg->Play(str2);
+        }
+
+        if (audioEngine.InitializePSG(0)) {
+            AUDIO_DEBUG_PRINT("Mixing MML voice 1");
+
+            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Pause(true);
+            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Play(str1);
+        }
+
+        AUDIO_DEBUG_PRINT("Starting multi-voice MML playback");
+
+        for (auto i = 0; i < AudioEngine::PSG_VOICES; i++) {
+            if (audioEngine.InitializePSG(i)) {
+                // Only proceed if the underlying PSG is initialized
+                AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
+                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
+            }
+        }
+    } else {
+        // Legacy single-voice mode
+        if (audioEngine.InitializePSG(0)) {
+            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Play(str1);
+        }
+    }
+}
+
 /// @brief Generates a sound at the specified frequency for the specified amount of time.
 /// @param frequency Sound frequency.
 /// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second.
@@ -2164,7 +2363,7 @@ static AudioEngine audioEngine;
 /// @param voice The voice to use (0 to 3).
 /// @param option WAIT=1 or RESUME=2
 /// @param passed Optional parameter flags.
-void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, int32_t voice, int32_t option,
+void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, uint32_t voice, int32_t option,
                int32_t passed) {
     if (is_error_pending()) {
         return;
@@ -2175,7 +2374,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         // WAIT: Pause all PSGs
         AUDIO_DEBUG_PRINT("Pausing all PSGs");
 
-        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
+        for (auto i = 0; i < AudioEngine::PSG_VOICES; i++) {
             if (audioEngine.InitializePSG(i)) {
                 // Only proceed if the underlying PSG is initialized
                 AUDIO_DEBUG_PRINT("Pausing PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
@@ -2191,16 +2390,17 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         }
 
         // Validate mandatory parameters
-        if (frequency < 20.0f || frequency > 32767.0f || lengthInClockTicks < 0.0f || lengthInClockTicks > 65535.0f) {
+        if (frequency < AudioEngine::PSG::FREQUENCY_MIN || frequency > AudioEngine::PSG::FREQUENCY_MAX || lengthInClockTicks < 0.0f ||
+            lengthInClockTicks > 65535.0f) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
             return;
         }
 
         if (passed & 32) {
-            AUDIO_DEBUG_PRINT("Voice specified (%i)", voice);
+            AUDIO_DEBUG_PRINT("Voice specified (%u)", voice);
 
-            if (voice < 0 || voice >= AudioEngine::PSG_VOICES) {
+            if (voice >= AudioEngine::PSG_VOICES) {
                 error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
                 return;
@@ -2209,10 +2409,10 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
             voice = 0;
         }
 
-        AUDIO_DEBUG_PRINT("Using voice %d", voice);
+        AUDIO_DEBUG_PRINT("Using voice %u", voice);
 
         if (!audioEngine.InitializePSG(voice)) {
-            AUDIO_DEBUG_PRINT("Failed to initialize PSG for voice %d", voice);
+            AUDIO_DEBUG_PRINT("Failed to initialize PSG for voice %u", voice);
 
             return;
         }
@@ -2276,7 +2476,7 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         // RESUME: Unpause all PSGs
         AUDIO_DEBUG_PRINT("Resuming all PSGs");
 
-        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
+        for (auto i = 0; i < AudioEngine::PSG_VOICES; i++) {
             if (audioEngine.InitializePSG(i)) {
                 // Only proceed if the underlying PSG is initialized
                 AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
@@ -2286,88 +2486,50 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
     }
 }
 
-/// @brief Returns the time left to play when Play() and Sound() are used.
-/// @param voice The voice to get the information for (0 to 3).
+/// @brief Defines the shape of a custom sound wave for a specified SOUND/PLAY voice.
+/// @param voice The voice number (0 to 4).
+/// @param waveDefinition A pointer to a QB64 _BYTE array.
+/// @param frameCount The number of frames to use from the array.
 /// @param passed Optional parameter flags.
-/// @return Time (in seconds).
-double func_play(int32_t voice, int32_t passed) {
-    if (is_error_pending()) {
-        return 0.0;
-    }
-
-    if (passed) {
-        if (voice < 0 || voice >= AudioEngine::PSG_VOICES) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return 0.0;
-        }
-    } else {
-        voice = 0; // use voice 0 by default
-    }
-
-    if (audioEngine.InitializePSG(voice)) {
-        // Only proceed if the underlying PSG is initialized
-        return audioEngine.soundHandles[audioEngine.psgVoices[voice]]->rawStream->GetTimeRemaining();
-    }
-
-    return 0.0;
-}
-
-/// @brief Processes and plays the MML specified in the strings.
-/// @param str1 MML string for voice 0.
-/// @param str2 MML string for voice 1.
-/// @param str3 MML string for voice 2.
-/// @param str4 MML string for voice 3.
-/// @param passed Optional parameter flags.
-void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed) {
+void sub__wave(uint32_t voice, void *waveDefinition, uint32_t frameCount, int32_t passed) {
     if (is_error_pending()) {
         return;
     }
 
+    if (voice >= AudioEngine::PSG_VOICES) {
+        AUDIO_DEBUG_PRINT("Invalid voice = %u", voice);
+
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+        return;
+    }
+
+    auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(waveDefinition))->length);
+
     if (passed) {
-        // Multi-voice mode
-        if ((passed & 4) && audioEngine.InitializePSG(3)) {
-            AUDIO_DEBUG_PRINT("Mixing MML voice 4");
+        if (frameCount > audioBufferFrames) {
+            AUDIO_DEBUG_PRINT("Adjusting frame count from %zu to %zu\n", frameCount, audioBufferFrames);
 
-            audioEngine.soundHandles[audioEngine.psgVoices[3]]->psg->Pause(true);
-            audioEngine.soundHandles[audioEngine.psgVoices[3]]->psg->Play(str4);
-        }
-
-        if ((passed & 2) && audioEngine.InitializePSG(2)) {
-            AUDIO_DEBUG_PRINT("Mixing MML voice 3");
-
-            audioEngine.soundHandles[audioEngine.psgVoices[2]]->psg->Pause(true);
-            audioEngine.soundHandles[audioEngine.psgVoices[2]]->psg->Play(str3);
-        }
-
-        if ((passed & 1) && audioEngine.InitializePSG(1)) {
-            AUDIO_DEBUG_PRINT("Mixing MML voice 2");
-
-            audioEngine.soundHandles[audioEngine.psgVoices[1]]->psg->Pause(true);
-            audioEngine.soundHandles[audioEngine.psgVoices[1]]->psg->Play(str2);
-        }
-
-        if (audioEngine.InitializePSG(0)) {
-            AUDIO_DEBUG_PRINT("Mixing MML voice 1");
-
-            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Pause(true);
-            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Play(str1);
-        }
-
-        AUDIO_DEBUG_PRINT("Starting multi-voice MML playback");
-
-        for (size_t i = 0; i < AudioEngine::PSG_VOICES; i++) {
-            if (audioEngine.InitializePSG(i)) {
-                // Only proceed if the underlying PSG is initialized
-                AUDIO_DEBUG_PRINT("Resuming PSG %d (handle %d)", i, audioEngine.psgVoices[i]);
-                audioEngine.soundHandles[audioEngine.psgVoices[i]]->psg->Pause(false);
-            }
+            frameCount = audioBufferFrames;
         }
     } else {
-        // Legacy single-voice mode
-        if (audioEngine.InitializePSG(0)) {
-            audioEngine.soundHandles[audioEngine.psgVoices[0]]->psg->Play(str1);
-        }
+        frameCount = audioBufferFrames;
+    }
+
+    if (audioBufferFrames < 2 || frameCount < 2) {
+        AUDIO_DEBUG_PRINT("Audio buffer too small. audioBufferFrames = %zu, frameCount = %u", audioBufferFrames, frameCount);
+
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+        return;
+    }
+
+    auto waveBuffer = reinterpret_cast<int8_t *>((reinterpret_cast<byte_element_struct *>(waveDefinition))->offset);
+
+    if (audioEngine.InitializePSG(voice)) {
+        // Only proceed if the underlying PSG is initialized
+        AUDIO_DEBUG_PRINT("Storing waveform in voice %u (handle %d)", voice, audioEngine.psgVoices[voice]);
+        audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetCustomWaveform(waveBuffer, frameCount);
     }
 }
 
@@ -2385,7 +2547,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Allocate a sound handle
-    int32_t handle = audioEngine.CreateHandle();
+    auto handle = audioEngine.CreateHandle();
     if (handle < 1)
         return AudioEngine::INVALID_SOUND_HANDLE;
 
@@ -2393,7 +2555,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     audioEngine.soundHandles[handle]->type = AudioEngine::SoundHandle::Type::STATIC; // set the sound type to static by default
     audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_DECODE;               // set the sound to decode completely first before playing (QB64 default)
     audioEngine.soundHandles[handle]->maFlags |= MA_SOUND_FLAG_ASYNC;                // set the sound to decode asynchronously by default
-    bool fromMemory = false;                                                         // we'll assume we are loading the sound from disk
+    auto fromMemory = false;                                                         // we'll assume we are loading the sound from disk
 
     AUDIO_DEBUG_PRINT("Sound set to fully decode asynchronously");
 
@@ -2545,7 +2707,7 @@ int32_t func__sndcopy(int32_t src_handle) {
         }
 
         // Reset any limit
-        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[dst_handle]->maSound, ~(ma_uint64)0);
+        ma_sound_set_stop_time_in_pcm_frames(&audioEngine.soundHandles[dst_handle]->maSound, ~(ma_uint64)0);
     }
 
     return dst_handle;
@@ -2563,7 +2725,7 @@ void sub__sndplay(int32_t handle) {
             AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
 
             // Reset any limit
-            ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
+            ma_sound_set_stop_time_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
         }
 
         // Kickstart playback
@@ -2634,7 +2796,7 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
     }
 
     // We will not wrap this in a 'if initialized' block because SndOpen will take care of that
-    int32_t handle = func__sndopen(fileName, reqs, 1);
+    auto handle = func__sndopen(fileName, reqs, 1);
 
     if (handle > 0) {
         if (passed & 2)
@@ -2704,7 +2866,7 @@ void sub__sndloop(int32_t handle) {
             AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
 
             // Reset any limit
-            ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
+            ma_sound_set_stop_time_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
         }
 
         // Kickstart playback
@@ -2737,7 +2899,7 @@ void sub__sndbal(int32_t handle, float x, float y, float z, int32_t channel, int
         if (passed & 2 || passed & 4) {                                                               // If y or z or both are passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[handle]->maSound, MA_TRUE); // Enable 3D spatialization
 
-            ma_vec3f v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound); // Get the current position in 3D space
+            auto v = ma_sound_get_position(&audioEngine.soundHandles[handle]->maSound); // Get the current position in 3D space
 
             // Set the previous values of x, y, z if these were not passed
             if (!(passed & 1))
@@ -2822,7 +2984,7 @@ void sub__sndsetpos(int32_t handle, double seconds) {
         }
 
         // Reset the limit
-        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
+        ma_sound_set_stop_time_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
 
         // Set the position in PCM frames
         audioEngine.maResult = ma_sound_seek_to_pcm_frame(&audioEngine.soundHandles[handle]->maSound, seekToFrame);
@@ -2867,7 +3029,7 @@ void sub__sndstop(int32_t handle) {
         AUDIO_DEBUG_CHECK(audioEngine.maResult == MA_SUCCESS);
 
         // Reset the limit
-        ma_sound_set_stop_time_in_milliseconds(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
+        ma_sound_set_stop_time_in_pcm_frames(&audioEngine.soundHandles[handle]->maSound, ~(ma_uint64)0);
     }
 }
 
@@ -2879,7 +3041,7 @@ int32_t func__sndopenraw() {
         return AudioEngine::INVALID_SOUND_HANDLE;
 
     // Allocate a sound handle
-    int32_t handle = audioEngine.CreateHandle();
+    auto handle = audioEngine.CreateHandle();
     if (handle < 1)
         return AudioEngine::INVALID_SOUND_HANDLE;
 
@@ -2911,8 +3073,9 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
     }
 
     if (audioEngine.isInitialized && audioEngine.IsHandleValid(handle) && audioEngine.soundHandles[handle]->type == AudioEngine::SoundHandle::Type::RAW) {
-        if (!(passed & 1))
+        if (!(passed & 1)) {
             right = left;
+        }
 
         audioEngine.soundHandles[handle]->rawStream->PushSampleFrame(left, right);
     }
@@ -2922,11 +3085,9 @@ void sub__sndraw(float left, float right, int32_t handle, int32_t passed) {
 /// @param sampleFrameArray A QB64 array of sample frames.
 /// @param channels The number of channels (1 or 2).
 /// @param handle A sound handle.
-/// @param startFrame The starting frame to play.
 /// @param frameCount The number of frames to play.
 /// @param passed Optional parameter flags.
-/// @return The number of frames played (0 on failure).
-uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, uint32_t startFrame, uint32_t frameCount, int32_t passed) {
+void sub__sndrawbatch(void *sampleFrameArray, int32_t channels, int32_t handle, uint32_t frameCount, int32_t passed) {
     // Use the default raw handle if handle was not passed
     if (!(passed & 2)) {
         // Check if the default handle was created
@@ -2938,14 +3099,14 @@ uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, 
     }
 
     if (!audioEngine.isInitialized || !audioEngine.IsHandleValid(handle) || audioEngine.soundHandles[handle]->type != AudioEngine::SoundHandle::Type::RAW) {
-        return 0;
+        return;
     }
 
     if (passed & 1) {
         if ((channels != 1 && channels != 2)) {
             AUDIO_DEBUG_PRINT("Invalid number of channels: %i", channels);
 
-            return 0;
+            return;
         }
     } else {
         channels = 1; // assume mono
@@ -2955,77 +3116,45 @@ uint32_t func__sndraw(void *sampleFrameArray, int32_t channels, int32_t handle, 
         auto audioBuffer = reinterpret_cast<SampleFrame *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
         auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(SampleFrame);
 
+        AUDIO_DEBUG_PRINT("Audio buffer frames: %zu", audioBufferFrames);
+
         if (audioBufferFrames) {
             if (passed & 4) {
-                // Check if the start frame is valid
-                if (startFrame >= audioBufferFrames) {
-                    AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
-
-                    return 0;
-                }
-            } else {
-                startFrame = 0;
-            }
-
-            if (passed & 8) {
-                // Check if the frame count is valid
-                if (frameCount > audioBufferFrames - startFrame) {
+                // Check if the frame count is more than what we have
+                if (frameCount > audioBufferFrames) {
                     AUDIO_DEBUG_PRINT("Adjusting frame count: %u", frameCount);
 
-                    // Adjust the frame count
-                    frameCount = audioBufferFrames - startFrame;
-                }
-
-                if (frameCount == 0) {
-                    AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
-
-                    return 0;
+                    frameCount = audioBufferFrames;
                 }
             } else {
-                frameCount = audioBufferFrames - startFrame;
+                frameCount = audioBufferFrames;
             }
 
-            audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
-
-            return frameCount;
+            audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer, frameCount);
+        } else {
+            AUDIO_DEBUG_PRINT("Audio buffer empty");
         }
     } else {
         auto audioBuffer = reinterpret_cast<float *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
         auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(float);
 
+        AUDIO_DEBUG_PRINT("Audio buffer frames: %zu", audioBufferFrames);
+
         if (audioBufferFrames) {
             if (passed & 4) {
-                // Check if the start frame is valid
-                if (startFrame >= audioBufferFrames) {
-                    AUDIO_DEBUG_PRINT("Invalid start frame: %u", startFrame);
-
-                    return 0;
-                }
-            } else {
-                startFrame = 0;
-            }
-
-            if (passed & 8) {
-                // Check if the frame count is valid
-                if (frameCount > audioBufferFrames - startFrame) {
+                // Check if the frame count is more than what we have
+                if (frameCount > audioBufferFrames) {
                     AUDIO_DEBUG_PRINT("Adjusting frame count: %u", frameCount);
 
-                    // Adjust the frame count
-                    frameCount = audioBufferFrames - startFrame;
-                }
-
-                if (frameCount == 0) {
-                    AUDIO_DEBUG_PRINT("Invalid frame count: %u", frameCount);
-
-                    return 0;
+                    frameCount = audioBufferFrames;
                 }
             } else {
-                frameCount = audioBufferFrames - startFrame;
+                frameCount = audioBufferFrames;
             }
 
-            audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer + startFrame, frameCount);
-
-            return frameCount;
+            audioEngine.soundHandles[handle]->rawStream->PushSampleFrames(audioBuffer, frameCount);
+        } else {
+            AUDIO_DEBUG_PRINT("Audio buffer empty");
         }
     }
 }
@@ -3060,7 +3189,7 @@ int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits) {
     }
 
     // Allocate a sound handle
-    int32_t handle = audioEngine.CreateHandle();
+    auto handle = audioEngine.CreateHandle();
     if (handle < 1)
         return AudioEngine::INVALID_SOUND_HANDLE;
 
