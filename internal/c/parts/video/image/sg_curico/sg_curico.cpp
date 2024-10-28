@@ -14,8 +14,7 @@
 // https://www.informit.com/articles/article.aspx?p=1186882
 //-----------------------------------------------------------------------------------------------------
 
-// Uncomment this to to print debug messages to stderr
-// #define IMAGE_DEBUG 1
+#include "libqb-common.h"
 
 #include "sg_curico.h"
 #include "../stb/stb_image.h"
@@ -292,7 +291,7 @@ class CurIcoImage {
     static void MaskToAlpha(const uint8_t *mask, uint32_t *dst, int width, int height) {
         auto stride = CalculateStride(width, 1); // stride in bytes for 1bpp DIB mask
 
-        IMAGE_DEBUG_PRINT("Width = %d, height = %d, stride = %d", width, height, stride);
+        image_log_info("Width = %d, height = %d, stride = %d", width, height, stride);
 
         for (auto y = 0; y < height; y++, mask += stride) {
             for (auto x = 0; x < width; x++) {
@@ -306,7 +305,7 @@ class CurIcoImage {
     static void FlipVertically(uint32_t *image, int width, int height) {
         auto halfHeight = height >> 1;
 
-        IMAGE_DEBUG_PRINT("Width = %d, height = %d, halfHeight = %d", width, height, halfHeight);
+        image_log_info("Width = %d, height = %d, halfHeight = %d", width, height, halfHeight);
 
         for (auto y = 0; y < halfHeight; y++) {
             auto topRow = image + y * width;
@@ -336,25 +335,25 @@ class CurIcoImage {
                 DirectoryEntry directoryEntry;
                 directoryEntry.bytesInRes = payloadSize;
                 directoryEntry.imageOffset = Header::GetStructSize() + DirectoryEntry::GetStructSize();
-                IMAGE_DEBUG_PRINT("Writing directory entry: bytesInRes = %u, imageOffset = %u", directoryEntry.bytesInRes, directoryEntry.imageOffset);
+                image_log_info("Writing directory entry: bytesInRes = %u, imageOffset = %u", directoryEntry.bytesInRes, directoryEntry.imageOffset);
                 directoryEntry.WriteToFile(file);
 
-                IMAGE_DEBUG_PRINT("Writing payload: size = %u", payloadSize);
+                image_log_info("Writing payload: size = %u", payloadSize);
 
                 // Write the payload
                 if (fwrite(payloadData, sizeof(uint8_t), payloadSize, file) != payloadSize) {
                     fclose(file);
-                    IMAGE_DEBUG_PRINT("Failed to write payload to %s", fileName);
+                    image_log_error("Failed to write payload to %s", fileName);
                     return false;
                 }
 
                 fclose(file);
-                IMAGE_DEBUG_PRINT("Successfully saved to %s", fileName);
+                image_log_info("Successfully saved to %s", fileName);
                 return true;
             }
         }
 
-        IMAGE_DEBUG_PRINT("Invalid parameters: fileName=%s, payloadData=%p, payloadSize=%u", fileName, payloadData, payloadSize);
+        image_log_error("Invalid parameters: fileName=%s, payloadData=%p, payloadSize=%u", fileName, payloadData, payloadSize);
         return false;
     }
 
@@ -371,7 +370,7 @@ class CurIcoImage {
 
     void LoadFromMemory(const void *in_data, size_t in_dataSize, uint32_t **out_data, int *out_x, int *out_y) {
         if (!in_data || !in_dataSize || !out_x || !out_y) {
-            IMAGE_DEBUG_PRINT("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
+            image_log_error("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
 
             return;
         }
@@ -380,12 +379,12 @@ class CurIcoImage {
 
         Header header(input);
         if (!header.IsValid()) {
-            IMAGE_DEBUG_PRINT("Not an ICO/CUR file");
+            image_log_error("Not an ICO/CUR file");
 
             return;
         }
 
-        IMAGE_DEBUG_PRINT("Type = %u, count = %u", unsigned(header.type), header.count);
+        image_log_info("Type = %u, count = %u", unsigned(header.type), header.count);
 
         std::vector<DirectoryEntry> directory(header.count);
 
@@ -393,7 +392,7 @@ class CurIcoImage {
         for (size_t i = 0; i < header.count; i++) {
             directory[i].ReadFromStream(input); // load the directory entry
 
-            IMAGE_DEBUG_PRINT("Width = %u, height = %u, colorCount = %u, bytesInRes = %u, imageOffset = %u", directory[i].width, directory[i].height,
+            image_log_info("Width = %u, height = %u, colorCount = %u, bytesInRes = %u, imageOffset = %u", directory[i].width, directory[i].height,
                               directory[i].colorCount, directory[i].bytesInRes, directory[i].imageOffset);
         }
 
@@ -406,7 +405,7 @@ class CurIcoImage {
             // Note that this can goof up if the file has mixed 32bpp RGB and PNG images. Not sure why anyone would create such a monstrosity
             if (directory[i].width == 0 && directory[i].height == 0 && directory[i].colorCount == 0 &&
                 directory[i].bytesInRes >= directory[imageIndex].bytesInRes) {
-                IMAGE_DEBUG_PRINT("Attempt 1: entry %llu is better than %llu", i, imageIndex);
+                image_log_info("Attempt 1: entry %llu is better than %llu", i, imageIndex);
                 foundBestImage = true; // set the flag to true if we find the best image
                 imageIndex = i;        // save the index and keep looking
             }
@@ -416,7 +415,7 @@ class CurIcoImage {
             // Try again, but this time just check the color count
             for (size_t i = 0; i < header.count; i++) {
                 if (directory[i].colorCount == 0 && directory[i].bytesInRes >= directory[imageIndex].bytesInRes) {
-                    IMAGE_DEBUG_PRINT("Attempt 2: entry %llu is better than %llu", i, imageIndex);
+                    image_log_info("Attempt 2: entry %llu is better than %llu", i, imageIndex);
                     foundBestImage = true; // set the flag to true if we find the best image
                     imageIndex = i;        // save the index and keep looking
                 }
@@ -424,10 +423,10 @@ class CurIcoImage {
 
             if (!foundBestImage) {
                 // If we still did not find anything then we are probably dealing with a legacy file format. Simply pick one with the largest byte size
-                IMAGE_DEBUG_PRINT("Selecting image with largest bytesInRes");
+                image_log_info("Selecting image with largest bytesInRes");
                 for (size_t i = 0; i < header.count; i++) {
                     if (directory[i].bytesInRes >= directory[imageIndex].bytesInRes) {
-                        IMAGE_DEBUG_PRINT("Attempt 3: entry %llu is better than %llu", i, imageIndex);
+                        image_log_info("Attempt 3: entry %llu is better than %llu", i, imageIndex);
                         foundBestImage = true; // set the flag to true if we find the best image
                         imageIndex = i;        // save the index and keep looking
                     }
@@ -435,7 +434,7 @@ class CurIcoImage {
             }
         }
 
-        IMAGE_DEBUG_PRINT(
+        image_log_info(
             "Selected index = %llu, width = %i, height = %i, colorCount = %u, planes_xHotspot = %u, bitCount_yHotspot = %u, bytesInRes = %u, imageOffset = %u",
             imageIndex, directory[imageIndex].width, directory[imageIndex].height, directory[imageIndex].colorCount, directory[imageIndex].planes_xHotspot,
             directory[imageIndex].bitCount_yHotspot, directory[imageIndex].bytesInRes, directory[imageIndex].imageOffset);
@@ -450,7 +449,7 @@ class CurIcoImage {
             // We have a PNG
             input.Seek(directory[imageIndex].imageOffset); // seek to the start of the image data
 
-            IMAGE_DEBUG_PRINT("Loading PNG image");
+            image_log_info("Loading PNG image");
 
             int compOut;
             *out_data = reinterpret_cast<uint32_t *>(
@@ -459,18 +458,18 @@ class CurIcoImage {
             IMAGE_DEBUG_CHECK(compOut == 4);
 
             if (!*out_data)
-                IMAGE_DEBUG_PRINT("Failed to load PNG: %s", stbi_failure_reason());
+                image_log_info("Failed to load PNG: %s", stbi_failure_reason());
         } else if (imgSig == BmpInfoHeader::GetStructSize()) {
             // We have a Windows DIB
             input.Seek(directory[imageIndex].imageOffset); // seek to the start of the image data
 
-            IMAGE_DEBUG_PRINT("Loading Windows DIB image");
+            image_log_info("Loading Windows DIB image");
 
             // Read the DIB header
             BmpInfoHeader bmpInfoHeader;
             bmpInfoHeader.ReadFromStream(input);
 
-            IMAGE_DEBUG_PRINT("Width = %u, height = %u, bitCount = %u, planes = %u, compression = %u, sizeImage = %u", bmpInfoHeader.width,
+            image_log_info("Width = %u, height = %u, bitCount = %u, planes = %u, compression = %u, sizeImage = %u", bmpInfoHeader.width,
                               bmpInfoHeader.height, bmpInfoHeader.bitCount, bmpInfoHeader.planes, bmpInfoHeader.compression, bmpInfoHeader.sizeImage);
 
             auto width = ::abs(bmpInfoHeader.width);
@@ -478,11 +477,11 @@ class CurIcoImage {
             auto colors = 1llu << bmpInfoHeader.bitCount;                 // get the total number of colors in the image
             auto stride = CalculateStride(width, bmpInfoHeader.bitCount); // calculate the stride
 
-            IMAGE_DEBUG_PRINT("Stride = %d, colors = %llu", stride, colors);
+            image_log_info("Stride = %d, colors = %llu", stride, colors);
 
             // Sanity check
             if (width <= 0 || height <= 0 || !colors) {
-                IMAGE_DEBUG_PRINT("Invalid image properties");
+                image_log_error("Invalid image properties");
 
                 return;
             }
@@ -490,7 +489,7 @@ class CurIcoImage {
             // Allocate memory for the image
             *out_data = reinterpret_cast<uint32_t *>(malloc(width * height * sizeof(uint32_t)));
             if (!(*out_data)) {
-                IMAGE_DEBUG_PRINT("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
+                image_log_error("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
 
                 return;
             }
@@ -501,7 +500,7 @@ class CurIcoImage {
                 // This is a 1bpp (monochrome) image
 
                 Palette palette(input, colors);
-                IMAGE_DEBUG_PRINT("Read %llu colors from palette", colors);
+                image_log_info("Read %llu colors from palette", colors);
 
                 // Read the image
                 auto src = input.GetData();
@@ -523,7 +522,7 @@ class CurIcoImage {
                 // This is a 4bpp (16-color) image
 
                 Palette palette(input, colors);
-                IMAGE_DEBUG_PRINT("Read %llu colors from palette", colors);
+                image_log_info("Read %llu colors from palette", colors);
 
                 // Read the image
                 auto src = input.GetData();
@@ -545,7 +544,7 @@ class CurIcoImage {
                 // This is an 8bpp (256-color) image
 
                 Palette palette(input, colors);
-                IMAGE_DEBUG_PRINT("Read %llu colors from palette", colors);
+                image_log_info("Read %llu colors from palette", colors);
 
                 // Read the image
                 auto src = input.GetData();
@@ -655,7 +654,7 @@ class CurIcoImage {
 
             default:
                 // Unknown pixel format
-                IMAGE_DEBUG_PRINT("Unknown pixel format: %u", bmpInfoHeader.bitCount);
+                image_log_error("Unknown pixel format: %u", bmpInfoHeader.bitCount);
 
                 free(*out_data);
                 *out_data = nullptr;
@@ -670,7 +669,7 @@ class CurIcoImage {
             *out_y = height;
         } else {
             // Unknown image format
-            IMAGE_DEBUG_PRINT("Unknown image format: 0x%08x", imgSig);
+            image_log_error("Unknown image format: 0x%08x", imgSig);
         }
     }
 };
@@ -684,7 +683,7 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, 
         curico->LoadFromMemory(data, dataSize, &out_data, x, y);
         *components = 4; // always 32bpp BGRA
     } catch (const std::exception &e) {
-        IMAGE_DEBUG_PRINT("Failed to load ICO/CUR: %s", e.what());
+        image_log_error("Failed to load ICO/CUR: %s", e.what());
 
         if (out_data) {
             // Just in case this was allocated
@@ -700,25 +699,25 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, 
 
 uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components) {
     if (!filename || !filename[0] || !x || !y || !components) {
-        IMAGE_DEBUG_PRINT("Invalid parameters");
+        image_log_error("Invalid parameters");
         return nullptr;
     }
 
     auto pFile = fopen(filename, "rb");
     if (!pFile) {
-        IMAGE_DEBUG_PRINT("Failed to open %s", filename);
+        image_log_error("Failed to open %s", filename);
         return nullptr;
     }
 
     if (fseek(pFile, 0, SEEK_END)) {
-        IMAGE_DEBUG_PRINT("Failed to seek %s", filename);
+        image_log_error("Failed to seek %s", filename);
         fclose(pFile);
         return nullptr;
     }
 
     auto len = ftell(pFile);
     if (len < 0) {
-        IMAGE_DEBUG_PRINT("Failed to get length of %s", filename);
+        image_log_error("Failed to get length of %s", filename);
         fclose(pFile);
         return nullptr;
     }
@@ -728,7 +727,7 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components
     rewind(pFile);
 
     if (fread(&buffer[0], sizeof(uint8_t), len, pFile) != len || ferror(pFile)) {
-        IMAGE_DEBUG_PRINT("Failed to read %s", filename);
+        image_log_error("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;
     }
@@ -740,7 +739,7 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components
 
 bool curico_save_file(const char *filename, int x, int y, int components, const void *data) {
     if (!filename || !filename[0] || !data || x < 1 || y < 1 || components != sizeof(uint32_t)) {
-        IMAGE_DEBUG_PRINT("Invalid parameters");
+        image_log_error("Invalid parameters");
         return false;
     }
 

@@ -8,12 +8,8 @@
 // We need 'qbs' and 'image' structs stuff from here. Stop using this when image and friends are refactored
 #include "../../../libqb.h"
 
-// Uncomment this to to print debug messages to stderr
-// #define IMAGE_DEBUG 1
-
 // Comment the following bypass custom clipboard code in func__clipboard() and sub__clipboard()
 #define QB64_USE_CUSTOM_CLIPBOARD_CODE 1
-
 // This is not strictly needed. But we'll leave it here for VSCode to do it's magic
 #define CLIP_ENABLE_IMAGE 1
 #include "clip/clip.h"
@@ -176,12 +172,12 @@ int32_t func__clipboardimage() {
     if (clip::has(clip::image_format())) {
         clip::image clipImg;
 
-        IMAGE_DEBUG_PRINT("Clipboard image found");
+        image_log_info("Clipboard image found");
 
         if (clip::get_image(clipImg)) {
             auto spec = clipImg.spec();
 
-            IMAGE_DEBUG_PRINT("Image (%lu x %lu) @ %lubpp", spec.width, spec.height, spec.bits_per_pixel);
+            image_log_info("Image (%lu x %lu) @ %lubpp", spec.width, spec.height, spec.bits_per_pixel);
 
             if (spec.width && spec.height) {
                 auto oldDest = func__dest();
@@ -193,7 +189,7 @@ int32_t func__clipboardimage() {
                     sub__dest(qb64Img);
                     auto dst = write_page->offset32;
 
-                    IMAGE_DEBUG_PRINT("Converting and copying image");
+                    image_log_info("Converting and copying image");
 
                     // Convert and copy the image based on the bpp
                     switch (spec.bits_per_pixel) {
@@ -312,7 +308,7 @@ void sub__clipboardimage(int32_t src) {
     auto srcImg = img[src];
 
     if (srcImg.text) {
-        IMAGE_DEBUG_PRINT("Rendering text surface to BGRA32");
+        image_log_info("Rendering text surface to BGRA32");
 
         uint32_t const fontWidth = 8;
         uint32_t fontHeight = 16;
@@ -366,7 +362,7 @@ void sub__clipboardimage(int32_t src) {
 
         if (srcImg.bits_per_pixel == 32) {
             // BGRA32 pixels
-            IMAGE_DEBUG_PRINT("Converting BGRA32 image to RGBA32");
+            image_log_info("Converting BGRA32 image to RGBA32");
 
             auto p = srcImg.offset32;
 
@@ -376,7 +372,7 @@ void sub__clipboardimage(int32_t src) {
             }
         } else {
             // Indexed pixels
-            IMAGE_DEBUG_PRINT("Converting BGRA32 indexed image to RGBA32");
+            image_log_info("Converting BGRA32 indexed image to RGBA32");
 
             auto p = srcImg.offset;
 
@@ -387,7 +383,7 @@ void sub__clipboardimage(int32_t src) {
         }
     }
 
-    IMAGE_DEBUG_PRINT("Setting clipboard image");
+    image_log_info("Setting clipboard image");
 
     // Send the image off to the OS clipboard
     clip::image clipImg(pixels.data(), spec);
