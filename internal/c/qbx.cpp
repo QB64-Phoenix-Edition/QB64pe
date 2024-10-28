@@ -18,6 +18,7 @@
 #include "hexoctbin.h"
 #include "image.h"
 #include "libqb.h"
+#include "logging.h"
 #include "mem.h"
 #include "qbmath.h"
 #include "qbs-mk-cv.h"
@@ -1729,6 +1730,8 @@ void QBMAIN(void *unused) {
 #include "../temp/onstrigj.txt"
     }
     chain_input();
+    libqb_log_info("QB64 code starting.");
+
 #include "../temp/main.txt"
 
     //} (closed by main.txt)
