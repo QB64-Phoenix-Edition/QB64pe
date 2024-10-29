@@ -1096,6 +1096,7 @@ optionexplicitarray = opexarray_desiredState
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
+autoIncludeBuffer = -1
 
 UseGL = 0
 
@@ -1477,21 +1478,28 @@ DO
     ideprepass:
     prepassLastLine:
 
-    IF lastLine <> 0 OR firstLine <> 0 THEN
+    IF firstLine <> 0 OR lastLine <> 0 THEN
         lineBackup$ = wholeline$ 'backup the real line (will be blank when lastline is set)
-        forceIncludeFromRoot$ = ""
-        IF vWatchOn THEN
-            addingvWatch = 1
-            IF firstLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch.bi"
-            IF lastLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch.bm"
-        ELSE
-            'IF firstLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch_stub.bi"
-            IF lastLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch_stub.bm"
+        autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
+        IF firstLine <> 0 THEN
+            IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
+                IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
+            END IF
+        ELSEIF lastLine <> 0 THEN
+            IF vWatchOn THEN
+                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
+            ELSE
+                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
+            END IF
+            IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
         END IF
         firstLine = 0: lastLine = 0
-        IF LEN(forceIncludeFromRoot$) THEN GOTO forceInclude_prepass
-        forceIncludeCompleted_prepass:
-        addingvWatch = 0
+        IF GetBufLen&(autoIncludeBuffer) > 0 THEN
+            nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart): GOTO autoInclude_prepass
+        END IF
+        autoIncludeCompleted_prepass:
+        ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
         wholeline$ = lineBackup$
     END IF
 
@@ -2493,12 +2501,14 @@ DO
 
         IF inclevel = 0 THEN
             includingFromRoot = 0
-            forceIncludingFile = 0
-            forceInclude_prepass:
-            IF forceIncludeFromRoot$ <> "" THEN
-                a$ = forceIncludeFromRoot$
-                forceIncludeFromRoot$ = ""
-                forceIncludingFile = 1
+            autoIncludingFile = 0
+            autoInclude_prepass:
+            IF autoIncludeBuffer <> -1 THEN
+                a$ = ReadBufLine$(autoIncludeBuffer)
+                autoIncludingFile = 1
+                IF RIGHT$(a$, 18) = "beforefirstline.bi" OR RIGHT$(a$, 16) = "afterlastline.bm" THEN
+                    autoIncludingFile = -1
+                END IF
                 includingFromRoot = 1
             END IF
         END IF
@@ -2569,7 +2579,8 @@ DO
             inclinenumber(inclevel) = inclinenumber(inclevel) + 1
             'create extended error string 'incerror$'
             errorLineInInclude = inclinenumber(inclevel)
-            e$ = " in line " + str2(inclinenumber(inclevel)) + " of " + incname$(inclevel) + " included"
+            e$ = " in line " + str2(inclinenumber(inclevel)) + " of " + incname$(inclevel)
+            IF autoIncludingFile <> 0 THEN e$ = e$ + " auto-included" ELSE e$ = e$ + " included"
             IF inclevel > 1 THEN
                 e$ = e$ + " (through "
                 FOR x = 1 TO inclevel - 1 STEP 1
@@ -2596,9 +2607,10 @@ DO
         CLOSE #fh
         inclevel = inclevel - 1
         skipInc1:
-        IF forceIncludingFile = 1 AND inclevel = 0 THEN
-            forceIncludingFile = 0
-            GOTO forceIncludeCompleted_prepass
+        IF autoIncludingFile <> 0 AND inclevel = 0 THEN
+            IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude_prepass
+            autoIncludingFile = 0
+            GOTO autoIncludeCompleted_prepass
         END IF
     LOOP
     '(end manager)
@@ -2638,6 +2650,7 @@ subfuncn = 0
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
+autoIncludeBuffer = -1
 UserDefineCount = 8
 
 FOR i = 0 TO constlast: constdefined(i) = 0: NEXT 'undefine constants
@@ -2712,21 +2725,28 @@ IF idemode THEN GOTO ideret3
 DO
     compileline:
 
-    IF lastLine <> 0 OR firstLine <> 0 THEN
-        lineBackup$ = a3$ 'backup the real first line (will be blank when lastline is set)
-        forceIncludeFromRoot$ = ""
-        IF vWatchOn THEN
-            addingvWatch = 1
-            IF firstLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch.bi"
-            IF lastLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch.bm"
-        ELSE
-            'IF firstLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch_stub.bi"
-            IF lastLine <> 0 THEN forceIncludeFromRoot$ = "internal\support\vwatch\vwatch_stub.bm"
+    IF firstLine <> 0 OR lastLine <> 0 THEN
+        lineBackup$ = a3$ 'backup the real line (will be blank when lastline is set)
+        autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
+        IF firstLine <> 0 THEN
+            IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
+                IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
+            END IF
+        ELSEIF lastLine <> 0 THEN
+            IF vWatchOn THEN
+                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
+            ELSE
+                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
+            END IF
+            IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
         END IF
         firstLine = 0: lastLine = 0
-        IF LEN(forceIncludeFromRoot$) THEN GOTO forceInclude
-        forceIncludeCompleted:
-        addingvWatch = 0
+        IF GetBufLen&(autoIncludeBuffer) > 0 THEN
+            nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart): GOTO autoInclude
+        END IF
+        autoIncludeCompleted:
+        ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
         a3$ = lineBackup$
     END IF
 
@@ -11152,12 +11172,14 @@ DO
 
             IF inclevel = 0 THEN
                 includingFromRoot = 0
-                forceIncludingFile = 0
-                forceInclude:
-                IF forceIncludeFromRoot$ <> "" THEN
-                    a$ = forceIncludeFromRoot$
-                    forceIncludeFromRoot$ = ""
-                    forceIncludingFile = 1
+                autoIncludingFile = 0
+                autoInclude:
+                IF autoIncludeBuffer <> -1 THEN
+                    a$ = ReadBufLine$(autoIncludeBuffer)
+                    autoIncludingFile = 1
+                    IF RIGHT$(a$, 18) = "beforefirstline.bi" OR RIGHT$(a$, 16) = "afterlastline.bm" THEN
+                        autoIncludingFile = -1
+                    END IF
                     includingFromRoot = 1
                 END IF
             END IF
@@ -11228,7 +11250,8 @@ DO
                 inclinenumber(inclevel) = inclinenumber(inclevel) + 1
                 'create extended error string 'incerror$'
                 errorLineInInclude = inclinenumber(inclevel)
-                e$ = " in line " + str2(inclinenumber(inclevel)) + " of " + incname$(inclevel) + " included"
+                e$ = " in line " + str2(inclinenumber(inclevel)) + " of " + incname$(inclevel)
+                IF autoIncludingFile <> 0 THEN e$ = e$ + " auto-included" ELSE e$ = e$ + " included"
                 IF inclevel > 1 THEN
                     e$ = e$ + " (through "
                     FOR x = 1 TO inclevel - 1 STEP 1
@@ -11253,9 +11276,10 @@ DO
             inclevel = inclevel - 1
             skipInc2:
             IF inclevel = 0 THEN
-                IF forceIncludingFile = 1 THEN
-                    forceIncludingFile = 0
-                    GOTO forceIncludeCompleted
+                IF autoIncludingFile <> 0 THEN
+                    IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude
+                    autoIncludingFile = 0
+                    GOTO autoIncludeCompleted
                 END IF
                 'restore line formatting
                 layoutok = layoutok_backup
@@ -12922,11 +12946,7 @@ errmes: 'set a$ to message
 IF Error_Happened THEN a$ = Error_Message: Error_Happened = 0
 layout$ = "": layoutok = 0 'invalidate layout
 
-IF forceIncludingFile THEN 'If we're to the point where we're adding the automatic QB64 includes, we don't need to report the $INCLUDE information
-    IF INSTR(a$, "END SUB/FUNCTION before") THEN a$ = "SUB without END SUB" 'Just a simple rewrite of the error message to be less confusing for SUB/FUNCTIONs
-ELSE 'We want to let the user know which module the error occurred in
-    IF inclevel > 0 THEN a$ = a$ + incerror$
-END IF
+IF inclevel > 0 THEN a$ = a$ + CHR$(1) + incerror$
 
 IF idemode THEN
     ideerrorline = linenumber
