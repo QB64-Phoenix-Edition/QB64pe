@@ -2450,6 +2450,20 @@ DO
                                 IF id.ret AND ISPOINTER THEN
                                     IF (id.ret AND ISSTRING) = 0 THEN id.ret = id.ret - ISPOINTER
                                 END IF
+
+                                IF declaringlibrary = 0 THEN
+                                    pwl$ = StrReplace$(cwholeline$, CHR$(13), " "): pwl$ = StrReplace$(pwl$, "( ", "(")
+                                    pwl$ = StrReplace$(pwl$, " ,", ","): pwl$ = StrReplace$(pwl$, " )", ")")
+                                    pwl$ = MID$(pwl$, INSTR(UCASE$(pwl$), "FUNCTION") + 9 + LEN(n$))
+                                    pwl$ = LTRIM$(MID$(pwl$, INSTR(pwl$, " ")))
+                                    apo% = INSTR(UCASE$(pwl$), "STATIC")
+                                    IF apo% = 0 THEN apo% = INSTR(pwl$, "'")
+                                    IF apo% = 0 THEN apo% = LEN(pwl$) + 1
+                                    cpo% = INSTR(pwl$, ")")
+                                    IF cpo% = 0 OR cpo% > apo% THEN cpo% = apo% ELSE cpo% = cpo% + 1
+                                    id.hr_syntax = n$ + StrReplace$(RTRIM$(LEFT$(pwl$, cpo% - 1)), "_", "")
+                                END IF
+
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
                                 regid
                                 reginternalsubfunc = 0
@@ -2470,6 +2484,21 @@ DO
                                 id.argsize = paramsize$
                                 id.nele = nele$
                                 id.nelereq = nelereq$
+
+                                IF declaringlibrary = 0 THEN
+                                    pwl$ = StrReplace$(cwholeline$, CHR$(13), " "): pwl$ = StrReplace$(pwl$, "( ", "(")
+                                    pwl$ = StrReplace$(pwl$, " ,", ","): pwl$ = StrReplace$(pwl$, " )", ")")
+                                    pwl$ = MID$(pwl$, INSTR(UCASE$(pwl$), "SUB") + 4 + LEN(n$))
+                                    pwl$ = LTRIM$(MID$(pwl$, INSTR(pwl$, " ")))
+                                    apo% = INSTR(UCASE$(pwl$), "STATIC")
+                                    IF apo% = 0 THEN apo% = INSTR(pwl$, "'")
+                                    IF apo% = 0 THEN apo% = LEN(pwl$) + 1
+                                    cpo% = INSTR(pwl$, ")")
+                                    IF cpo% = 0 OR cpo% > apo% THEN cpo% = apo% ELSE cpo% = cpo% + 1
+                                    pwl$ = n$ + StrReplace$(RTRIM$(LEFT$(pwl$, cpo% - 1)), "_", "")
+                                    pwl$ = StrReplace$(pwl$, "(", " "): pwl$ = StrReplace$(pwl$, ")", "")
+                                    id.hr_syntax = pwl$
+                                END IF
 
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
                                 IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": DEPENDENCY(DEPENDENCY_GL) = 1
