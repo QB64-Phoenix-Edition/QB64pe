@@ -49,7 +49,7 @@ vWatchVariableExclusions$ = "@__LONG_VWATCH_LINENUMBER@__LONG_VWATCH_SUBLEVEL@__
 DIM SHARED nativeDataTypes$
 nativeDataTypes$ = "@_OFFSET@OFFSET@_UNSIGNED _OFFSET@UNSIGNED OFFSET@_BIT@BIT@_UNSIGNED _BIT@UNSIGNED BIT@_BYTE@_UNSIGNED _BYTE@BYTE@UNSIGNED BYTE@INTEGER@_UNSIGNED INTEGER@UNSIGNED INTEGER@LONG@_UNSIGNED LONG@UNSIGNED LONG@_INTEGER64@INTEGER64@_UNSIGNED _INTEGER64@UNSIGNED INTEGER64@SINGLE@DOUBLE@_FLOAT@FLOAT@STRING@"
 
-DIM SHARED opex_recompileAttempts, opex_desiredState
+DIM SHARED opex_recompileAttempts, opex_desiredState, opex_forcedState
 DIM SHARED opexarray_recompileAttempts, opexarray_desiredState
 
 REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
@@ -1089,7 +1089,7 @@ recompile:
 vWatchOn = vWatchDesiredState
 vWatchVariable "", -1 'reset internal variables list
 
-optionexplicit = opex_desiredState
+optionexplicit = opex_desiredState OR opex_forcedState
 IF optionexplicit_cmd = -1 AND NoIDEMode = 1 THEN optionexplicit = -1
 optionexplicitarray = opexarray_desiredState
 
@@ -1938,6 +1938,7 @@ DO
                                 definingtype = lasttype
                                 i = definingtype
                                 WHILE i > UBOUND(udtenext): increaseUDTArrays: WEND
+                                autoIncForceUScore = 1
                                 IF validname(secondelement$) = 0 THEN a$ = "Invalid name": GOTO errmes
                                 typeDefinitions$ = typeDefinitions$ + MKL$(LEN(secondelement$)) + secondelement$
                                 udtxname(i) = secondelement$
@@ -2094,6 +2095,7 @@ DO
                             constsubfunc(i2) = subfuncn
                             'IF subfunc = "" THEN constlastshared = i2
 
+                            autoIncForceUScore = 1
                             IF validname(n$) = 0 THEN a$ = "Invalid name": GOTO errmes
                             constname(i2) = UCASE$(n$)
 
@@ -2448,7 +2450,10 @@ DO
                                 IF id.ret AND ISPOINTER THEN
                                     IF (id.ret AND ISSTRING) = 0 THEN id.ret = id.ret - ISPOINTER
                                 END IF
+                                IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
                                 regid
+                                reginternalsubfunc = 0
+
                                 IF Error_Happened THEN GOTO errmes
                             ELSE
                                 'sub
@@ -2466,6 +2471,7 @@ DO
                                 id.nele = nele$
                                 id.nelereq = nelereq$
 
+                                IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
                                 IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": DEPENDENCY(DEPENDENCY_GL) = 1
                                 regid
                                 reginternalsubfunc = 0
@@ -4656,6 +4662,7 @@ DO
             symbol$ = removesymbol$(e$) '$,%,etc.
             IF Error_Happened THEN GOTO errmes
             IF sf = 2 AND symbol$ <> "" THEN a$ = "Type symbols after a SUB name are invalid": GOTO errmes
+            eOrig$ = e$: IF UCASE$(LEFT$(e$, 5)) = "_IKW_" THEN e$ = MID$(e$, 5)
             try = findid(e$)
             IF Error_Happened THEN GOTO errmes
             DO WHILE try
@@ -4667,9 +4674,9 @@ DO
             createsf:
             IF UCASE$(e$) = "_GL" THEN e$ = "_GL"
             IF firstelement$ = "SUB" THEN
-                l$ = SCase$("Sub") + sp + e$ + symbol$
+                l$ = SCase$("Sub") + sp + eOrig$ + symbol$
             ELSE
-                l$ = SCase$("Function") + sp + e$ + symbol$
+                l$ = SCase$("Function") + sp + eOrig$ + symbol$
             END IF
             id2 = id
             targetid = currentid
@@ -7472,6 +7479,8 @@ DO
                 IF a THEN a$ = "Array '" + n$ + "' not defined": GOTO errmes
                 'create variable
                 IF LEN(s$) THEN typ$ = s$ ELSE typ$ = t$
+                autoIncForceUScore = 1
+                IF validname(n$) = 0 THEN a$ = "Invalid variable name": GOTO errmes
                 IF optionexplicit THEN a$ = "Variable '" + n$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": GOTO errmes
                 bypassNextVariable = -1
                 retval = dim2(n$, typ$, method, "")
@@ -8015,6 +8024,7 @@ DO
                 'does varname have an appended symbol?
                 s$ = removesymbol$(varname$)
                 IF Error_Happened THEN GOTO errmes
+                autoIncForceUScore = 1
                 IF validname(varname$) = 0 THEN a$ = "Invalid variable name": GOTO errmes
 
                 IF s$ <> "" THEN
@@ -8585,6 +8595,7 @@ DO
                 'does varname have an appended symbol?
                 s$ = removesymbol$(varname$)
                 IF Error_Happened THEN GOTO errmes
+                autoIncForceUScore = 1
                 IF validname(varname$) = 0 THEN a$ = "Invalid variable name": GOTO errmes
 
                 IF s$ <> "" THEN
@@ -13941,7 +13952,7 @@ SUB assign (a$, n)
 
             a2$ = evaluate$(a2$, typ): IF Error_Happened THEN EXIT SUB
             assignsimplevariable:
-            IF (typ AND ISREFERENCE) = 0 THEN Give_Error "Expected variable =": EXIT SUB
+            IF (typ AND ISREFERENCE) = 0 THEN Give_Error "Expected variable =, look for conflict with a CONST name": EXIT SUB
             setrefer a2$, typ, getelements$(a$, i + 1, n), 0
             IF Error_Happened THEN EXIT SUB
             tlayout$ = l$ + tlayout$
@@ -15667,6 +15678,8 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                             NEXT
                             fakee$ = "10": FOR i2 = 2 TO nume: fakee$ = fakee$ + sp + "," + sp + "10": NEXT
                             IF Debug THEN PRINT #9, "evaluate:creating undefined array using dim2(" + l$ + "," + dtyp$ + ",1," + fakee$ + ")"
+                            SHARED autoIncForceUScore: autoIncForceUScore = 1
+                            IF validname(l$) = 0 THEN Give_Error "Invalid array name": EXIT FUNCTION
                             IF optionexplicit OR optionexplicitarray THEN Give_Error "Array '" + l$ + "' (" + symbol2fulltypename$(dtyp$) + ") not defined": EXIT FUNCTION
                             IF Error_Happened THEN EXIT FUNCTION
                             olddimstatic = dimstatic
@@ -15889,6 +15902,8 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                     LOOP
 
                     IF Debug THEN PRINT #9, "CREATING VARIABLE:" + x$
+                    SHARED autoIncForceUScore: autoIncForceUScore = 1
+                    IF validname(x$) = 0 THEN Give_Error "Invalid variable name": EXIT FUNCTION
                     IF optionexplicit THEN Give_Error "Variable '" + x$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": EXIT FUNCTION
                     bypassNextVariable = -1
                     retval = dim2(x$, typ$, 1, "")
@@ -20891,6 +20906,7 @@ SUB regid
     n$ = RTRIM$(id.n)
 
     IF reginternalsubfunc = 0 THEN
+        SHARED autoIncForceUScore: autoIncForceUScore = 1
         IF validname(n$) = 0 THEN Give_Error "Invalid name": EXIT SUB
     END IF
 
@@ -23158,10 +23174,24 @@ FUNCTION validname (a$)
         l = LEN(a$)
     END IF
 
-    'check for single, leading underscore
-    IF l >= 2 THEN
-        IF ASC(a$, 1) = 95 AND ASC(a$, 2) <> 95 THEN EXIT FUNCTION
+    SHARED autoIncludingFile, autoIncForceUScore
+    IF ideprogname$ <> "beforefirstline.bi" AND ideprogname$ <> "afterlastline.bm" THEN
+        IF autoIncludingFile <> -1 THEN
+            'check for single, leading underscore
+            IF l >= 2 THEN
+                IF ASC(a$, 1) = 95 AND ASC(a$, 2) <> 95 THEN EXIT FUNCTION
+            END IF
+        END IF
+    ELSE
+        IF autoIncludingFile = 0 AND autoIncForceUScore <> 0 THEN
+            autoIncForceUScore = 0
+            'enforce leading underscore
+            IF l >= 1 THEN
+                IF ASC(a$, 1) <> 95  THEN EXIT FUNCTION
+            END IF
+        END IF
     END IF
+    autoIncForceUScore = 0
 
     FOR i = 1 TO l
         a = ASC(a$, i)
