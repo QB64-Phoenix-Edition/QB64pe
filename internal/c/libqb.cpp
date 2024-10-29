@@ -1852,7 +1852,9 @@ void MAIN_LOOP(void *);
 void GLUT_MAINLOOP_THREAD(void *);
 void GLUT_DISPLAY_REQUEST();
 
-extern qbs *WHATISMYIP();
+extern qbs *FUNC__ENCODEURL(qbs *_FUNC__ENCODEURL_STRING__URL);
+extern qbs *FUNC__DECODEURL(qbs *_FUNC__DECODEURL_STRING__URL);
+extern qbs *FUNC__WHATISMYIP();
 
 int32 lprint = 0; // set to 1 during LPRINT operations
 int32 lprint_image = 0;
@@ -23322,8 +23324,9 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
                 && (qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("HTTP"))
                     || qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("HTTPS")))) {
 
-            // Strings given to curl have to be null terminated
-            qbs_set(str, qbs_add(info, strz));
+            // Strings given to curl have to be ...
+            qbs_set(str, FUNC__ENCODEURL(info)); // properly URL encoded 
+            qbs_set(str, qbs_add(info, strz));   // and null terminated
 
             const char *url = (const char *)str->chr;
             for (; *url && *url != ':'; url++)
@@ -23597,7 +23600,7 @@ qbs *func__connectionaddress(int32 i) {
                 qbs_set(str, qbs_new_txt("TCP/IP:"));                     // network type
                 qbs_set(str, qbs_add(str, qbs_ltrim(qbs_str(cs->port)))); // port
                 qbs_set(str, qbs_add(str, qbs_new_txt(":")));
-                tqbs2 = WHATISMYIP();
+                tqbs2 = FUNC__WHATISMYIP();
                 if (tqbs2->len) {
                     qbs_set(str, qbs_add(str, tqbs2));
                 } else {
@@ -23617,7 +23620,7 @@ qbs *func__connectionaddress(int32 i) {
             else
                 qbs_set(str, qbs_add(str, qbs_new_txt("UNKNOWN")));
 
-            return str;
+            return FUNC__DECODEURL(str);
 
             break;
 
