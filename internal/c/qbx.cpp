@@ -1774,8 +1774,6 @@ void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
 uint8 *redim_preserve_cmem_buffer =
     (uint8 *)malloc(65536); // used for temporary storage only (move to libqbx?)
 
-#include "myip.cpp"
-
 void division_by_zero_handler(int ignore) { error(11); }
 
 // void SIGSEGV_handler(int ignore){

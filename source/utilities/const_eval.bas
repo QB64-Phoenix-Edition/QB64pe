@@ -618,7 +618,13 @@ FUNCTION Unary& (exp$, state AS ParserState)
 
     IF Exponent&(exp$, state) = 0 THEN FixupErrorMessage state, "-": EXIT FUNCTION
 
-    IF ele$ = "-" THEN ParseNumSetI state.num, INTEGER64TYPE - ISPOINTER, -state.num.i
+    IF ele$ = "-" THEN
+        IF state.num.typ AND ISFLOAT THEN
+            ParseNumSetF state.num, FLOATTYPE - ISPOINTER, -state.num.f
+        ELSE
+            ParseNumSetI state.num, INTEGER64TYPE - ISPOINTER, -state.num.i
+        END IF
+    END IF
     Unary& = -1
     IF CONST_EVAL_DEBUG THEN _ECHO "Unary done!"
 END FUNCTION
