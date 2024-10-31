@@ -6352,7 +6352,8 @@ FUNCTION ide2 (ignore)
                 idecx = 1
                 idecy = 1
                 ideselect = 0
-                ideprogname$ = ""
+                idepath$ = _STARTDIR$
+                ideprogname$ = "": opex_forcedState = 0
                 listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
                 QuickNavTotal = 0
                 ModifyCOMMAND$ = ""
@@ -6446,9 +6447,24 @@ FUNCTION ide2 (ignore)
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
                 END IF
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
-                IF r$ <> "C" THEN ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
+                IF r$ <> "C" THEN
+                    IF ideprogname$ = "beforefirstline.bi" OR ideprogname$ = "afterlastline.bm" THEN opex_forcedState = 1 ELSE opex_forcedState = 0
+                    ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
+                END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
-                GOSUB redrawItAll: GOTO ideloop
+                GOSUB redrawItAll
+                IF opex_forcedState = 1 THEN
+                    opex_forcedState = -1
+                    retval = idemessagebox("!! Attention !!",_
+                                           "You just opened one of the QB64-PE auto-includes.\n" +_
+                                           "A special edit mode is now activated to enforce the\n" +_
+                                           "rules applicable in these files.\n\n" +_
+                                           "OPTION _EXPLICIT enabled\n" +_
+                                           "enforcing _Underscore names\n\n" +_
+                                           "This mode ends when loading a regular file or when\n" +_
+                                           "selecting 'New' from the 'File' menu.", "#Got it!")
+                END IF
+                GOTO ideloop
             END IF
 
             IF menu$(m, s) = "#Save  Ctrl+S" THEN
@@ -12607,6 +12623,7 @@ SUB ideshowtext
                 manualList = -1
                 listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
                 FOR y = 1 TO iden
+                    IF InvalidLine(y) <> 0 THEN _CONTINUE
                     a$ = UCASE$(_TRIM$(idegetline(y)))
                     sf = 0
                     IF LEFT$(a$, 4) = "SUB " THEN sf = 1
@@ -12629,7 +12646,9 @@ SUB ideshowtext
                         ELSE
                             cleanSubName a$
                         END IF
-                        listOfCustomKeywords$ = listOfCustomKeywords$ + "@" + removesymbol2$(a$) + "@"
+                        IF LEFT$(a$, 5) <> "_IKW_" THEN
+                            listOfCustomKeywords$ = listOfCustomKeywords$ + "@" + removesymbol2$(a$) + "@"
+                        END IF
                     END IF
                 NEXT
             END IF
