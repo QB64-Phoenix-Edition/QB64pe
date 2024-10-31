@@ -10,7 +10,7 @@ CONST const__double_neg_exp# = 32D-20
 
 CONST const__float## = 32F+0
 CONST const__float_exp## = 32F+2
-CONST const__float_neg_exp## = 32F-10
+CONST const__float_neg_exp## = 32F-30
 
 PRINT const__single!
 PRINT const__single_exp!
