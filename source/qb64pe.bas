@@ -648,6 +648,8 @@ DIM SHARED optionbase AS INTEGER
 DIM SHARED addmetastatic AS INTEGER
 DIM SHARED addmetadynamic AS INTEGER
 DIM SHARED addmetainclude AS STRING
+DIM SHARED autoIncludingFile AS INTEGER
+DIM SHARED autoIncForceUScore AS INTEGER
 
 DIM SHARED closedmain AS INTEGER
 DIM SHARED module AS STRING
@@ -2464,7 +2466,14 @@ DO
                                     id.hr_syntax = n$ + StrReplace$(RTRIM$(LEFT$(pwl$, cpo% - 1)), "_", "")
                                 END IF
 
-                                IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
+                                IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN
+                                    reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "FUNC_" + UCASE$(MID$(n$, 5))
+                                    IF symbol$ = "$" THEN
+                                        id.hr_syntax = UCASE$(MID$(n$, 5)) + "$" + MID$(id.hr_syntax, LEN(n$) + 1)
+                                    ELSE
+                                        id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
+                                    END IF
+                                END IF
                                 regid
                                 reginternalsubfunc = 0
 
@@ -2500,7 +2509,7 @@ DO
                                     id.hr_syntax = pwl$
                                 END IF
 
-                                IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
+                                IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "SUB_" + UCASE$(MID$(n$, 5)): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
                                 IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": DEPENDENCY(DEPENDENCY_GL) = 1
                                 regid
                                 reginternalsubfunc = 0
@@ -12986,10 +12995,16 @@ errmes: 'set a$ to message
 IF Error_Happened THEN a$ = Error_Message: Error_Happened = 0
 layout$ = "": layoutok = 0 'invalidate layout
 
-IF inclevel > 0 THEN a$ = a$ + CHR$(1) + incerror$
+erldiff = 0
+IF autoIncludingFile = 1 THEN 'IMPORTANT: don't omit "= 1" or change to "<> 0" !!
+    'rewrite errors caused by vwatch includes to be less confusing
+    IF INSTR(a$, "END SUB/FUNCTION before") THEN a$ = "Expected END SUB/FUNCTION": incerror$ = ""
+    IF a$ = "Name already in use (vwatch)" THEN a$ = "Syntax Error": incerror$ = "": erldiff = 1
+END IF
+IF inclevel > 0 AND incerror$ <> "" THEN a$ = a$ + CHR$(1) + incerror$
 
 IF idemode THEN
-    ideerrorline = linenumber
+    ideerrorline = linenumber + erldiff
     idemessage$ = a$
     GOTO ideerror 'infinitely preferable to RESUME
 END IF
@@ -15707,7 +15722,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                             NEXT
                             fakee$ = "10": FOR i2 = 2 TO nume: fakee$ = fakee$ + sp + "," + sp + "10": NEXT
                             IF Debug THEN PRINT #9, "evaluate:creating undefined array using dim2(" + l$ + "," + dtyp$ + ",1," + fakee$ + ")"
-                            SHARED autoIncForceUScore: autoIncForceUScore = 1
+                            autoIncForceUScore = 1
                             IF validname(l$) = 0 THEN Give_Error "Invalid array name": EXIT FUNCTION
                             IF optionexplicit OR optionexplicitarray THEN Give_Error "Array '" + l$ + "' (" + symbol2fulltypename$(dtyp$) + ") not defined": EXIT FUNCTION
                             IF Error_Happened THEN EXIT FUNCTION
@@ -15931,7 +15946,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                     LOOP
 
                     IF Debug THEN PRINT #9, "CREATING VARIABLE:" + x$
-                    SHARED autoIncForceUScore: autoIncForceUScore = 1
+                    autoIncForceUScore = 1
                     IF validname(x$) = 0 THEN Give_Error "Invalid variable name": EXIT FUNCTION
                     IF optionexplicit THEN Give_Error "Variable '" + x$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": EXIT FUNCTION
                     bypassNextVariable = -1
@@ -20935,7 +20950,7 @@ SUB regid
     n$ = RTRIM$(id.n)
 
     IF reginternalsubfunc = 0 THEN
-        SHARED autoIncForceUScore: autoIncForceUScore = 1
+        autoIncForceUScore = 1
         IF validname(n$) = 0 THEN Give_Error "Invalid name": EXIT SUB
     END IF
 
@@ -23203,7 +23218,6 @@ FUNCTION validname (a$)
         l = LEN(a$)
     END IF
 
-    SHARED autoIncludingFile, autoIncForceUScore
     IF ideprogname$ <> "beforefirstline.bi" AND ideprogname$ <> "afterlastline.bm" THEN
         IF autoIncludingFile <> -1 THEN
             'check for single, leading underscore

@@ -12645,7 +12645,9 @@ SUB ideshowtext
                         ELSE
                             cleanSubName a$
                         END IF
-                        listOfCustomKeywords$ = listOfCustomKeywords$ + "@" + removesymbol2$(a$) + "@"
+                        IF LEFT$(a$, 5) <> "_IKW_" THEN
+                            listOfCustomKeywords$ = listOfCustomKeywords$ + "@" + removesymbol2$(a$) + "@"
+                        END IF
                     END IF
                 NEXT
             END IF
