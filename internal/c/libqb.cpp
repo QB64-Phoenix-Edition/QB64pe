@@ -1852,7 +1852,6 @@ void MAIN_LOOP(void *);
 void GLUT_MAINLOOP_THREAD(void *);
 void GLUT_DISPLAY_REQUEST();
 
-extern qbs *FUNC__ENCODEURL(qbs *_FUNC__ENCODEURL_STRING__URL);
 extern qbs *FUNC__DECODEURL(qbs *_FUNC__DECODEURL_STRING__URL);
 extern qbs *FUNC__WHATISMYIP();
 
@@ -23324,9 +23323,8 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
                 && (qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("HTTP"))
                     || qbs_equal(qbs_ucase(info_part[1]), qbs_new_txt("HTTPS")))) {
 
-            // Strings given to curl have to be ...
-            qbs_set(str, FUNC__ENCODEURL(info)); // properly URL encoded 
-            qbs_set(str, qbs_add(info, strz));   // and null terminated
+            // Strings given to curl have to be null terminated
+            qbs_set(str, qbs_add(info, strz));
 
             const char *url = (const char *)str->chr;
             for (; *url && *url != ':'; url++)

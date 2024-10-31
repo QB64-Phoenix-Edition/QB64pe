@@ -35,10 +35,18 @@ $INCLUDEONCE
 CONST _TRUE = -1, _FALSE = 0
 'Relations (e.g. SGN and _STRCMP, _STRICMP)
 CONST _LESS = -1, _EQUAL = 0, _GREATER = 1
-'Special values
-CONST _NULL = 0
-CONST _STRING_EMPTY = ""
-CONST _STRING_NULL = CHR$(_NULL)
+'State values (_OPENHOST/CLIENT/CONNECTION, _LOAD/COPYIMAGE, _LOADFONT, _SNDOPEN[RAW])
+CONST _HOST_FAILED = 0, _CLIENT_FAILED = 0, _CONNECTION_FAILED = 0
+CONST _INVALID_IMAGE = -1, _LOADFONT_FAILED = 0, _SNDOPEN_FAILED = 0
+'Some strings (see also _ASC* and _CHR* section below)
+CONST _STR_EMPTY = ""
+CONST _STR_CRLF = CHR$(13) + CHR$(10), _STR_LF = CHR$(10) 'for native use _STR_NAT_EOL below
+$IF WIN THEN
+    CONST _STR_NAT_EOL = CHR$(13) + CHR$(10)
+$ELSE
+    CONST _STR_NAT_EOL = CHR$(10)
+$END IF
+'Some math
 CONST _E## = EXP(1.0##)
 
 'Base time values
@@ -109,40 +117,74 @@ $ELSE
     CONST _UOFFSET_MIN~&& = 0, _UOFFSET_MAX~&& = 18446744073709551615
 $END IF
 
-'ASCII codes
-CONST _ASC_SPACE = 32
-CONST _ASC_EXCLAMATION = 33 '        !
-CONST _ASC_QUOTE = 34 '              "
-CONST _ASC_HASH = 35 '               #
-CONST _ASC_DOLLAR = 36 '             $
-CONST _ASC_PERCENT = 37 '            %
-CONST _ASC_AMPERSAND = 38 '          &
-CONST _ASC_APOSTROPHE = 39 '         '
-CONST _ASC_LEFTBRACKET = 40 '        (
-CONST _ASC_RIGHTBRACKET = 41 '       )
-CONST _ASC_ASTERISK = 42 '           *
-CONST _ASC_PLUS = 43 '               +
-CONST _ASC_COMMA = 44 '              ,
-CONST _ASC_MINUS = 45 '              -
-CONST _ASC_FULLSTOP = 46 '           .
-CONST _ASC_FORWARDSLASH = 47 '       /
-CONST _ASC_COLON = 58 '              :
-CONST _ASC_SEMICOLON = 59 '          ;
-CONST _ASC_LESSTHAN = 60 '           <
-CONST _ASC_EQUAL = 61 '              =
-CONST _ASC_GREATERTHAN = 62 '        >
-CONST _ASC_QUESTION = 63 '           ?
-CONST _ASC_ATSIGN = 64 '             @
-CONST _ASC_LEFTSQUAREBRACKET = 91 '  [
-CONST _ASC_BACKSLASH = 92 '          \
-CONST _ASC_RIGHTSQUAREBRACKET = 93 ' ]
-CONST _ASC_CARET = 94 '              ^
-CONST _ASC_UNDERSCORE = 95 '         _
-CONST _ASC_GRAVE = 96 '              `
-CONST _ASC_LEFTCURLYBRACKET = 123 '  {
-CONST _ASC_VERTICALBAR = 124 '       |
-CONST _ASC_RIGHTCURLYBRACKET = 125 ' }
-CONST _ASC_TILDE = 126 '             ~
+'Control char codes (ASC + CHR$)
+CONST _ASC_NUL = 0, _CHR_NUL = CHR$(0) '     Null
+CONST _ASC_SOH = 1, _CHR_SOH = CHR$(1) '     Start of Heading
+CONST _ASC_STX = 2, _CHR_STX = CHR$(2) '     Start of Text
+CONST _ASC_ETX = 3, _CHR_ETX = CHR$(3) '     End of Text
+CONST _ASC_EOT = 4, _CHR_EOT = CHR$(4) '     End of Transmission
+CONST _ASC_ENQ = 5, _CHR_ENQ = CHR$(5) '     Enquiry
+CONST _ASC_ACK = 6, _CHR_ACK = CHR$(6) '     Acknowledge
+CONST _ASC_BEL = 7, _CHR_BEL = CHR$(7) '     Bell
+CONST _ASC_BS = 8, _CHR_BS = CHR$(8) '       Backspace
+CONST _ASC_HT = 9, _CHR_HT = CHR$(9) '       Horizontal Tab
+CONST _ASC_LF = 10, _CHR_LF = CHR$(10) '     Line Feed
+CONST _ASC_VT = 11, _CHR_VT = CHR$(11) '     Vertical Tab
+CONST _ASC_FF = 12, _CHR_FF = CHR$(12) '     Form Feed
+CONST _ASC_CR = 13, _CHR_CR = CHR$(13) '     Carriage Return
+CONST _ASC_SO = 14, _CHR_SO = CHR$(14) '     Shift Out
+CONST _ASC_SI = 15, _CHR_SI = CHR$(15) '     Shift In
+CONST _ASC_DLE = 16, _CHR_DLE = CHR$(16) '   Data Link Escape
+CONST _ASC_DC1 = 17, _CHR_DC1 = CHR$(17) '   Device Control 1
+CONST _ASC_DC2 = 18, _CHR_DC2 = CHR$(18) '   Device Control 2
+CONST _ASC_DC3 = 19, _CHR_DC3 = CHR$(19) '   Device Control 3
+CONST _ASC_DC4 = 20, _CHR_DC4 = CHR$(20) '   Device Control 4
+CONST _ASC_NAK = 21, _CHR_NAK = CHR$(21) '   Negative Acknowledge
+CONST _ASC_SYN = 22, _CHR_SYN = CHR$(22) '   Synchronous Idle
+CONST _ASC_ETB = 23, _CHR_ETB = CHR$(23) '   End of Transmission Block
+CONST _ASC_CAN = 24, _CHR_CAN = CHR$(24) '   Cancel
+CONST _ASC_EM = 25, _CHR_EM = CHR$(25) '     End of Medium
+CONST _ASC_SUB = 26, _CHR_SUB = CHR$(26) '   Substitute
+CONST _ASC_ESC = 27, _CHR_ESC = CHR$(27) '   Escape
+CONST _ASC_FS = 28, _CHR_FS = CHR$(28) '     File Separator
+CONST _ASC_GS = 29, _CHR_GS = CHR$(29) '     Group Separator
+CONST _ASC_RS = 30, _CHR_RS = CHR$(30) '     Record Separator
+CONST _ASC_US = 31, _CHR_US = CHR$(31) '     Unit Separator
+CONST _ASC_DEL = 127, _CHR_DEL = CHR$(127) ' Delete
+'Normal char codes (exluding 0-9/Aa-Zz)
+CONST _ASC_SPACE = 32, _CHR_SPACE = CHR$(32)
+CONST _ASC_EXCLAMATION = 33, _CHR_EXCLAMATION = CHR$(33) '               !
+CONST _ASC_QUOTE = 34, _CHR_QUOTE = CHR$(34) '                           "
+CONST _ASC_HASH = 35, _CHR_HASH = CHR$(35) '                             #
+CONST _ASC_DOLLAR = 36, _CHR_DOLLAR = CHR$(36) '                         $
+CONST _ASC_PERCENT = 37, _CHR_PERCENT = CHR$(37) '                       %
+CONST _ASC_AMPERSAND = 38, _CHR_AMPERSAND = CHR$(38) '                   &
+CONST _ASC_APOSTROPHE = 39, _CHR_APOSTROPHE = CHR$(39) '                 '
+CONST _ASC_LEFTBRACKET = 40, _CHR_LEFTBRACKET = CHR$(40) '               (
+CONST _ASC_RIGHTBRACKET = 41, _CHR_RIGHTBRACKET = CHR$(41) '             )
+CONST _ASC_ASTERISK = 42, _CHR_ASTERISK = CHR$(42) '                     *
+CONST _ASC_PLUS = 43, _CHR_PLUS = CHR$(43) '                             +
+CONST _ASC_COMMA = 44, _CHR_COMMA = CHR$(44) '                           ,
+CONST _ASC_MINUS = 45, _CHR_MINUS = CHR$(45) '                           -
+CONST _ASC_FULLSTOP = 46, _CHR_FULLSTOP = CHR$(46) '                     .
+CONST _ASC_FORWARDSLASH = 47, _CHR_FORWARDSLASH = CHR$(47) '             /
+CONST _ASC_COLON = 58, _CHR_COLON = CHR$(58) '                           :
+CONST _ASC_SEMICOLON = 59, _CHR_SEMICOLON = CHR$(59) '                   ;
+CONST _ASC_LESSTHAN = 60, _CHR_LESSTHAN = CHR$(60) '                     <
+CONST _ASC_EQUAL = 61, _CHR_EQUAL = CHR$(61) '                           =
+CONST _ASC_GREATERTHAN = 62, _CHR_GREATERTHAN = CHR$(62) '               >
+CONST _ASC_QUESTION = 63, _CHR_QUESTION = CHR$(63) '                     ?
+CONST _ASC_ATSIGN = 64, _CHR_ATSIGN = CHR$(64) '                         @
+CONST _ASC_LEFTSQUAREBRACKET = 91, _CHR_LEFTSQUAREBRACKET = CHR$(91) '   [
+CONST _ASC_BACKSLASH = 92, _CHR_BACKSLASH = CHR$(92) '                   \
+CONST _ASC_RIGHTSQUAREBRACKET = 93, _CHR_RIGHTSQUAREBRACKET = CHR$(93) ' ]
+CONST _ASC_CARET = 94, _CHR_CARET = CHR$(94) '                           ^
+CONST _ASC_UNDERSCORE = 95, _CHR_UNDERSCORE = CHR$(95) '                 _
+CONST _ASC_GRAVE = 96, _CHR_GRAVE = CHR$(96) '                           `
+CONST _ASC_LEFTCURLYBRACKET = 123, _CHR_LEFTCURLYBRACKET = CHR$(123) '   {
+CONST _ASC_VERTICALBAR = 124, _CHR_VERTICALBAR = CHR$(124) '             |
+CONST _ASC_RIGHTCURLYBRACKET = 125, _CHR_RIGHTCURLYBRACKET = CHR$(125) ' }
+CONST _ASC_TILDE = 126, _CHR_TILDE = CHR$(126) '                         ~
 
 '_KEYDOWN/_KEYHIT codes
 CONST _KEY_LSHIFT = 100304, _KEY_RSHIFT = 100303
