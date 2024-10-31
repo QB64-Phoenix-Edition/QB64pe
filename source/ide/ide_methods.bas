@@ -6352,6 +6352,7 @@ FUNCTION ide2 (ignore)
                 idecx = 1
                 idecy = 1
                 ideselect = 0
+                idepath$ = _STARTDIR$
                 ideprogname$ = "": opex_forcedState = 0
                 listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
                 QuickNavTotal = 0

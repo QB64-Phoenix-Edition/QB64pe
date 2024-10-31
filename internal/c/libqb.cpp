@@ -13870,8 +13870,10 @@ long double func_val(qbs *s) {
 
         case 'D':
         case 'E':
+        case 'F':
         case 'd':
         case 'e':
+        case 'f':
             if (step > 2)
                 goto finish;
             step = 3;

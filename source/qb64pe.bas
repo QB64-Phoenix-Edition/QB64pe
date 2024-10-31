@@ -1138,6 +1138,7 @@ f = HASHFLAG_RESERVED + HASHFLAG_CUSTOMSYNTAX
 HashAdd "LIST", f, 0
 HashAdd "BASE", f, 0
 HashAdd "_EXPLICIT", f, 0
+HashAdd "_EXPLICITARRAY", f, 0
 HashAdd "AS", f, 0
 HashAdd "IS", f, 0
 HashAdd "OFF", f, 0
