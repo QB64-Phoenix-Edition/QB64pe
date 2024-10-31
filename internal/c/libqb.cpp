@@ -1852,7 +1852,8 @@ void MAIN_LOOP(void *);
 void GLUT_MAINLOOP_THREAD(void *);
 void GLUT_DISPLAY_REQUEST();
 
-extern qbs *WHATISMYIP();
+extern qbs *FUNC__DECODEURL(qbs *_FUNC__DECODEURL_STRING__URL);
+extern qbs *FUNC__WHATISMYIP();
 
 int32 lprint = 0; // set to 1 during LPRINT operations
 int32 lprint_image = 0;
@@ -13869,8 +13870,10 @@ long double func_val(qbs *s) {
 
         case 'D':
         case 'E':
+        case 'F':
         case 'd':
         case 'e':
+        case 'f':
             if (step > 2)
                 goto finish;
             step = 3;
@@ -23597,7 +23600,7 @@ qbs *func__connectionaddress(int32 i) {
                 qbs_set(str, qbs_new_txt("TCP/IP:"));                     // network type
                 qbs_set(str, qbs_add(str, qbs_ltrim(qbs_str(cs->port)))); // port
                 qbs_set(str, qbs_add(str, qbs_new_txt(":")));
-                tqbs2 = WHATISMYIP();
+                tqbs2 = FUNC__WHATISMYIP();
                 if (tqbs2->len) {
                     qbs_set(str, qbs_add(str, tqbs2));
                 } else {
@@ -23617,7 +23620,7 @@ qbs *func__connectionaddress(int32 i) {
             else
                 qbs_set(str, qbs_add(str, qbs_new_txt("UNKNOWN")));
 
-            return str;
+            return FUNC__DECODEURL(str);
 
             break;
 

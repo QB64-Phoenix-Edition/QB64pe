@@ -1,0 +1,196 @@
+'==========================================================================
+' This file is automatically included in each compiled program right after
+' the last program line, so to say it becomes the final line of each program.
+'----------
+' The purpose of this file is to implement new commands into the language
+' or helper SUBs/FUNCTIONs, which must not necessarily be implemented on
+' the C/C++ level. For this purpose this file allows names beginning with
+' an underscroe, which is usually not possible. However, some rules have
+' to be followed in order to register the functions as part of the language
+' and hence make them follow the active layout/highlighting settings.
+'----------
+' IMPORTANT
+'   The use of this file is exclusively reserved to QB64-PE itself,
+'   do NOT add your own personal SUBs and/or FUNCTIONs here !!
+'----------
+' RULES
+'   1.) Everything must be prepared to work with OPTION _EXPLICIT in effect,
+'       that is because this file is included in every tiny program and we
+'       never know if the user has OPTION _EXPLICIT set or not.
+'   2.) All used CONST, SUB/FUNCTION, TYPE and variable names must begin
+'       with an underscore, that is because those may conflict with CONST
+'       names. E.g. write a simple xyz = 123 here and it will throw an error
+'       as soon as the user defines a CONST xyz = ... in the global scope.
+'   3.) Exceptions from rule #2 are $LET variables, UDT elements and labels
+'       for GOTO/GOSUB etc., just choose unique names for it. However, if
+'       in doubt, a leading underscore can be used here too.
+' It's strongly recommended to edit this file in the QB64-PE editor only.
+' The IDE got adapted to automatically enforce the above rules whenever it
+' detects this file is loaded into the editor. I.e. it automatically enables
+' OPTION _EXPLICIT and it will throw "Invalid name" or "Invalid variable"
+' errors when missing a leading underscore.
+'==========================================================================
+
+$INCLUDEONCE
+
+'Checking disabled to avoid unnecessary bloat. It also makes the routines
+'un-debuggable, but the $DEBUG mode never steps into included code anyway.
+$CHECKING:OFF
+
+'==========================================================================
+' New keywords, which shall be official part of the QB64 language, must begin
+' with the "_IKW_" prefix, for (I)nternal(K)ey(W)ord. But no worries, this
+' is just a hint for the register logic, so it knows to perform some extra
+' steps to make it an internal SUB/FUNCTION, but the keyword is registered
+' without that prefix beginning with the 2nd underscrore, hence the result
+' variables of functions are then as expected without prefix. Names should
+' be written in natural CaMeL case as usual.
+' For correct highlighting it's also required to add the names (w/o prefix)
+' into the list in file source/subs_functions/syntax_highlighter_list.bas.
+' Note the _IKW_Names are not highlighted due to the fact that the routines
+' are registered without the prefix, but the result variables of FUNCTIONs
+' will be highlighted according to the entry in the highlighter list, i.e.
+' numeric results without type suffixes and string results with the $ suffix.
+'==========================================================================
+
+'_MIN() returns the lesser of both given values (returns value1 if equal)
+'----------
+FUNCTION _IKW_Min## (_value1##, _value2##)
+    IF _value1## <= _value2## THEN _MIN = _value1## ELSE _MIN = _value2##
+END FUNCTION
+
+'_MAX() returns the greater of both given values (returns value1 if equal)
+'----------
+FUNCTION _IKW_Max## (_value1##, _value2##)
+    IF _value1## >= _value2## THEN _MAX = _value1## ELSE _MAX = _value2##
+END FUNCTION
+
+'_EncodeURL$() returns the encoded version of the given plain text URL for
+' use with the _OPENCLIENT("HTTP:url") syntax.
+'----------
+FUNCTION _IKW_EncodeURL$ (_url$)
+    '24 OCT 2024: First implementation based on the informations found on the website;
+    '             https://docs.mapp.com/docs/url-encoding-and-what-characters-are-valid-in-a-uri;
+
+    '--- option _explicit requirements ---
+    DIM _tmp$, _inQuery%, _isKey%, _p%, _a%, _valid%
+    '--- init variables ---
+    _tmp$ = _STR_EMPTY: _inQuery% = _FALSE: _isKey% = _FALSE
+    '--- iterate through chars ---
+    FOR _p% = 1 TO LEN(_url$)
+        _a% = ASC(_url$, _p%): _valid% = _FALSE
+        '--- check char validity ---
+        SELECT CASE _a%
+            CASE _ASC_MINUS, _ASC_FULLSTOP, _ASC_UNDERSCORE, _ASC_TILDE, 48 TO 57, 65 TO 90, 97 TO 122 '0-9, Aa-Zz
+                _valid% = _TRUE 'generally valid
+            CASE _ASC_HASH, _ASC_FORWARDSLASH, _ASC_COLON, _ASC_QUESTION, _ASC_ATSIGN, _ASC_LEFTSQUAREBRACKET, _ASC_RIGHTSQUAREBRACKET
+                IF NOT _inQuery% THEN
+                    _valid% = _TRUE 'only valid before query part
+                    IF _a% = _ASC_QUESTION THEN _inQuery% = _TRUE: _isKey% = _TRUE '? starts 1st query key
+                END IF
+            CASE _ASC_EQUAL 'only valid in query key, starts assigning a value
+                IF _inQuery% AND _isKey% THEN _valid% = _TRUE: _isKey% = _FALSE
+            CASE _ASC_AMPERSAND 'only valid in query value, starts a new query key
+                IF _inQuery% AND NOT _isKey% THEN _valid% = _TRUE: _isKey% = _TRUE
+        END SELECT
+        '--- do respective action ---
+        IF _valid% THEN
+            _tmp$ = _tmp$ + CHR$(_a%) 'take char as is
+        ELSE
+            _tmp$ = _tmp$ + "%" + RIGHT$("00" + HEX$(_a%), 2) 'encode char
+        END IF
+    NEXT _p%
+    '--- set result ---
+    _ENCODEURL$ = _tmp$
+END FUNCTION
+
+'_DecodeURL$() returns the plain text version of the given encoded URL.
+'----------
+FUNCTION _IKW_DecodeURL$ (_url$)
+    '24 OCT 2024: First implementation;
+
+    '--- option _explicit requirements ---
+    DIM _tmp$, _p%, _a%
+    '--- init variables ---
+    _tmp$ = _STR_EMPTY
+    '--- iterate through chars ---
+    FOR _p% = 1 TO LEN(_url$)
+        _a% = ASC(_url$, _p%)
+        '--- decoding ---
+        IF _a% <> _ASC_PERCENT THEN
+            _tmp$ = _tmp$ + CHR$(_a%)
+        ELSE
+            _tmp$ = _tmp$ + CHR$(VAL("&H" + MID$(_url$, _p% + 1, 2)) AND &HFF~%%) 'force _UNSIGNED _BYTE for CHR$
+            _p% = _p% + 2
+        END IF
+    NEXT _p%
+    '--- set result ---
+    _DECODEURL$ = _tmp$
+END FUNCTION
+
+'==========================================================================
+' Helper routines doesn't need the "_IKW_" prefix, hence they appear just
+' like all other regular SUBs/FUNCTIONs in the program. However, following
+' rule #2 its names must begin with an underscore.
+'==========================================================================
+
+'_WhatIsMyIP$() is a helper function required by _CONNECTIONADDRESS$
+'----------
+FUNCTION _WhatIsMyIP$
+    '20 OCT 2024: Make it part of this file, i.e. deprecating internal/c/myip.cpp;
+    '             Keep non-cURL based logic, so cURL isn't pulled into every tiny program;
+    '12 AUG 2022: Switched to qb64phoenix.com since www.qb64.org is dead;
+    '23 SEP 2018: Switched to www.qb64.org since www.qb64.net is dead;
+    '             Replaces implementation with download sample code from wiki;
+    '26 MAR 2014: Switched to www.qb64.net to avoid IP changes when QB64 moves servers;
+    '16 JAN 2013: Switched to qb64.net IP service;
+    '15 JUL 2013: Switched to 223.27.25.123 because of DNS issues;
+
+    'Contents of the called file "getip.php":
+    '<?php
+    '   $ip = $_SERVER["REMOTE_ADDR"];
+    '   echo "<pre>".$ip."</pre>";
+    '?>
+
+    '--- option _explicit requirements ---
+    DIM _hst$, _obj$, _tio#, _ch&, _st#
+    DIM _req$, _res$, _rec$, _cl%, _cle%, _das%, _le%
+    '--- set parameters ---
+    _hst$ = "qb64phoenix.com"
+    _obj$ = "/qb64_files/getip.php"
+    _tio# = 10
+    '--- open client ---
+    _ch& = _OPENCLIENT("TCP/IP:80:" + _hst$)
+    IF _ch& = _CLIENT_FAILED THEN EXIT FUNCTION
+    '--- send request ---
+    _req$ = "GET " + _obj$ + " HTTP/1.1" + _STR_CRLF
+    _req$ = _req$ + "Host: " + _hst$ + _STR_CRLF
+    _req$ = _req$ + "User-Agent: QB64-PE/4.0.0+ (Phoenix Edition)" + _STR_CRLF
+    _req$ = _req$ + "Cache-Control: no-cache" + _STR_CRLF
+    _req$ = _req$ + _STR_CRLF
+    PUT _ch&, , _req$
+    '--- read response ---
+    _res$ = _STR_EMPTY: _st# = TIMER(0.001)
+    DO
+        _DELAY 0.1 'check 10 times a second
+        GET _ch&, , _rec$
+        IF LEN(_rec$) > 0 THEN _st# = TIMER(0.001)
+        _res$ = _res$ + _rec$
+        IF LEN(_res$) < 15 OR LEFT$(_res$, 15) = "HTTP/1.1 200 OK" THEN
+            _cl% = INSTR(_res$, "<pre>")
+            IF _cl% > 0 THEN
+                _cle% = INSTR(_cl%, _res$, "</pre>")
+                IF _cle% > 0 THEN
+                    _das% = _cl% + 5: _le% = _cle% - _das%
+                    _WhatIsMyIP$ = MID$(_res$, _das%, _le%)
+                    EXIT DO
+                END IF
+            END IF
+        ELSE
+            EXIT DO
+        END IF
+        IF _st# + _tio# >= _SECS_IN_DAY THEN _st# = _st# - _SECS_IN_DAY
+    LOOP UNTIL TIMER(0.001) > _st# + _tio#
+    CLOSE _ch&
+END FUNCTION
+
