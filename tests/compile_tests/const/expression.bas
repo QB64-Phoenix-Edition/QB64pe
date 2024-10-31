@@ -49,6 +49,8 @@ CONST const__unsignedint = 2~&& * 5~&&
 
 CONST const__division_floating = 1& / 5&
 
+CONST const__negate_floating = -.25!
+
 PRINT const__OR
 PRINT const__AND
 PRINT const__NOT
@@ -94,5 +96,7 @@ PRINT const__str4
 PRINT const__unsignedint
 
 PRINT const__division_floating
+
+PRINT const__negate_floating
 
 SYSTEM
