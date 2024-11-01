@@ -725,12 +725,8 @@ DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
 ' Collection of flags indicating which unstable features should be used during compilation
 '
 REDIM SHARED unstableFlags(1 TO 2) AS _BYTE
-DIM UNSTABLE_MIDI AS LONG
-DIM UNSTABLE_HTTP AS LONG
-
-UNSTABLE_MIDI = 1
-UNSTABLE_HTTP = 2
-
+DIM UNSTABLE_MIDI: UNSTABLE_MIDI = 1
+DIM UNSTABLE_HTTP: UNSTABLE_HTTP = 2
 
 
 
@@ -1684,7 +1680,6 @@ DO
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
-                    regUnstableHttp
 
                 CASE ELSE
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
@@ -3322,6 +3317,7 @@ DO
 
                 CASE "HTTP"
                     layout$ = layout$ + SCase$("Http")
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "No longer required, feature is stable now", "$UNSTABLE:HTTP"
             END SELECT
 
             GOTO finishednonexec
@@ -12385,7 +12381,7 @@ localpath$ = "internal\c\"
 IF DEPENDENCY(DEPENDENCY_GL) THEN makedeps$ = makedeps$ + " DEP_GL=y"
 IF DEPENDENCY(DEPENDENCY_IMAGE_CODEC) THEN makedeps$ = makedeps$ + " DEP_IMAGE_CODEC=y"
 IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN makedeps$ = makedeps$ + " DEP_CONSOLE_ONLY=y"
-IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN makedeps$ = makedeps$ + " DEP_SOCKETS=y"
+IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN makedeps$ = makedeps$ + " DEP_SOCKETS=y DEP_HTTP=y"
 IF DEPENDENCY(DEPENDENCY_PRINTER) THEN makedeps$ = makedeps$ + " DEP_PRINTER=y"
 IF DEPENDENCY(DEPENDENCY_ICON) THEN makedeps$ = makedeps$ + " DEP_ICON=y"
 IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
@@ -12397,10 +12393,6 @@ IF ConsoleOn THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
-
-IF unstableFlags(UNSTABLE_HTTP) AND DEPENDENCY(DEPENDENCY_SOCKETS) <> 0 THEN
-    makedeps$ = makedeps$ + " DEP_HTTP=y"
-END IF
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
@@ -21163,23 +21155,6 @@ SUB regid
 END SUB
 
 '$INCLUDE:'subs_functions\subs_functions.bas'
-
-SUB regUnstableHttp
-    reginternalsubfunc = 1
-
-    clearid
-    id.n = "_StatusCode" ' Name in CaMeL case
-    id.subfunc = 1 ' 1 = function, 2 = sub
-    id.callname = "func__statusCode" ' C/C++ function name
-    id.args = 1
-    id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_STATUSCODE(httpHandle&)" ' syntax help
-    regid
-
-    reginternalsubfunc = 0
-
-END SUB
 
 FUNCTION scope$
     IF id.share THEN scope$ = module$ + "__": EXIT FUNCTION

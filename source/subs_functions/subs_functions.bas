@@ -878,6 +878,15 @@ SUB reginternal
     id.hr_syntax = "_OPENCLIENT(" + CHR$(34) + "TCP/IP:port:address" + CHR$(34) + ")"
     regid
 
+    clearid
+    id.n = "_StatusCode"
+    id.subfunc = 1
+    id.callname = "func__statusCode"
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_STATUSCODE(httpHandle&)"
+    regid
 
     clearid
     id.n = "_EnvironCount"

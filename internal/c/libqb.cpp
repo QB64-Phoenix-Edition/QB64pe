@@ -23631,9 +23631,8 @@ qbs *func__connectionaddress(int32 i) {
             break;
         }
     } // i<0
-    error(52);
-    goto error;
 #endif
+    error(52);
 
 error:
     tqbs = qbs_new(0, 1);

@@ -1146,7 +1146,6 @@ FUNCTION wikiSafeName$ (page$) 'create a unique name for both case sensitive & i
     wikiSafeName$ = page$ + "_" + ext$
 END FUNCTION
 
-$UNSTABLE:HTTP
 FUNCTION wikiDLPage$ (url$, timeout#)
     '--- set default result & avoid side effects ---
     wikiDLPage$ = ""

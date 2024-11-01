@@ -1,4 +1,3 @@
-$Unstable:Http
 $Console:Only
 ON ERROR GOTO errorhand
 
