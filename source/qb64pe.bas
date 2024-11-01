@@ -58,8 +58,8 @@ DIM ExecLevel(255), ExecCounter AS INTEGER
 REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is the string value
 REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
-DIM SHARED UserDefineCount AS INTEGER, UserDefineList$
-UserDefineList$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@QB64PE@"
+DIM SHARED UserDefineCount AS INTEGER, UserDefineCountPresets AS INTEGER, UserDefineList$, UserDefineListPresets$
+UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@QB64PE@"
 UserDefine(0, 0) = "WINDOWS": UserDefine(0, 1) = "WIN"
 UserDefine(0, 2) = "LINUX"
 UserDefine(0, 3) = "MAC": UserDefine(0, 4) = "MACOSX"
@@ -70,6 +70,9 @@ IF INSTR(_OS$, "LINUX") THEN UserDefine(1, 2) = "-1" ELSE UserDefine(1, 2) = "0"
 IF INSTR(_OS$, "MAC") THEN UserDefine(1, 3) = "-1": UserDefine(1, 4) = "-1" ELSE UserDefine(1, 3) = "0": UserDefine(1, 4) = "0"
 IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELSE UserDefine(1, 5) = "0": UserDefine(1, 6) = "-1"
 UserDefine(1, 7) = Version$: UserDefine(1, 8) = "-1"
+'Whatever values get added/changed in the future, make sure to keep
+'the VERSION on index #7 to avoid problems.
+UserDefineCountPresets = 8 'the last index of the defines above
 
 DIM SHARED QB64_uptime#
 
@@ -1330,7 +1333,8 @@ closedsubfunc = 0
 subfunc = ""
 SelectCaseCounter = 0
 ExecCounter = 0
-UserDefineCount = 8
+UserDefineList$ = UserDefineListPresets$
+UserDefineCount = UserDefineCountPresets
 totalVariablesCreated = 0
 typeDefinitions$ = ""
 totalMainVariablesCreated = 0
@@ -1486,6 +1490,7 @@ DO
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
             IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
             END IF
@@ -1495,6 +1500,8 @@ DO
             ELSE
                 IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
             END IF
+            'add more files in between here
+            SetPreLET "SOCKETS_IN_USE", "-1" 'assume true for name registration (overridden in main pass)
             IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
         END IF
         firstLine = 0: lastLine = 0
@@ -1662,17 +1669,7 @@ DO
                 END SELECT
             NEXT
             r$ = r1$
-            'First look to see if we have an existing setting like this and if so, update it
-            FOR i = 9 TO UserDefineCount 'UserDefineCount 0-8 are reserved for OS/BIT/Compiler detection & version
-                IF UserDefine(0, i) = l$ THEN UserDefine(1, i) = r$: GOTO finishedlinepp
-            NEXT
-            'Otherwise create a new setting and set the initial value for it
-            UserDefineCount = UserDefineCount + 1
-            IF UserDefineCount > UBOUND(UserDefine, 2) THEN
-                REDIM _PRESERVE UserDefine(1, UBOUND(UserDefine, 2) + 10) 'Add another 10 elements to the array so it'll expand as the user adds to it
-            END IF
-            UserDefine(0, UserDefineCount) = l$
-            UserDefine(1, UserDefineCount) = r$
+            SetPreLET l$, r$
             GOTO finishedlinepp
         END IF
 
@@ -2696,7 +2693,8 @@ lastLineReturn = 0
 lastLine = 0
 firstLine = 1
 autoIncludeBuffer = -1
-UserDefineCount = 8
+UserDefineList$ = UserDefineListPresets$
+UserDefineCount = UserDefineCountPresets
 
 FOR i = 0 TO constlast: constdefined(i) = 0: NEXT 'undefine constants
 
@@ -2775,6 +2773,7 @@ DO
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
             IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
             END IF
@@ -2784,6 +2783,8 @@ DO
             ELSE
                 IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
             END IF
+            'add more files in between here
+            IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN SetPreLET "SOCKETS_IN_USE", "-1" ELSE SetPreLET "SOCKETS_IN_USE", "0"
             IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
         END IF
         firstLine = 0: lastLine = 0
@@ -2973,17 +2974,7 @@ DO
             temp = INSTR(temp$, "=") 'without an = in there, we can't get a value from the left and right side
             l$ = RTRIM$(LEFT$(temp$, temp - 1)): r$ = LTRIM$(MID$(temp$, temp + 1))
             layout$ = SCase$("$Let ") + l$ + " = " + r$
-            'First look to see if we have an existing setting like this and if so, update it
-            FOR i = 9 TO UserDefineCount 'UserDefineCount 0-8 are reserved for OS/BIT/Compiler detection & version
-                IF UserDefine(0, i) = l$ THEN UserDefine(1, i) = r$: GOTO finishednonexec
-            NEXT
-            'Otherwise create a new setting and set the initial value for it
-            UserDefineCount = UserDefineCount + 1
-            IF UserDefineCount > UBOUND(UserDefine, 2) THEN
-                REDIM _PRESERVE UserDefine(1, UBOUND(UserDefine, 2) + 10) 'Add another 10 elements to the array so it'll expand as the user adds to it
-            END IF
-            UserDefine(0, UserDefineCount) = l$
-            UserDefine(1, UserDefineCount) = r$
+            SetPreLET l$, r$
             GOTO finishednonexec
         END IF
 
@@ -23286,6 +23277,21 @@ END FUNCTION
 FUNCTION rgbs$ (c AS _UNSIGNED LONG)
     rgbs$ = "_RGB32(" + _TRIM$(STR$(_RED32(c))) + ", " + _TRIM$(STR$(_GREEN32(c))) + ", " + _TRIM$(STR$(_BLUE32(c))) + ")"
 END FUNCTION
+
+SUB SetPreLET (flagName$, flagValue$)
+    'First look to see if we have an existing setting like this and if so, update it
+    FOR i = UserDefineCountPresets + 1 TO UserDefineCount 'exclude OS/BIT/Compiler detection & version
+        IF UserDefine(0, i) = flagName$ THEN UserDefine(1, i) = flagValue$: EXIT SUB
+    NEXT
+    'Otherwise create a new setting and set the initial value for it
+    UserDefineCount = UserDefineCount + 1
+    IF UserDefineCount > UBOUND(UserDefine, 2) THEN
+        REDIM _PRESERVE UserDefine(1, UBOUND(UserDefine, 2) + 10) 'Add another 10 elements to the array so it'll expand as the user adds to it
+    END IF
+    UserDefine(0, UserDefineCount) = flagName$
+    UserDefine(1, UserDefineCount) = flagValue$
+    UserDefineList$ = UserDefineList$ + flagName$ + "@" 'for highlighting
+END SUB
 
 FUNCTION EvalPreIF (text$, err$)
     temp$ = text$ 'so we don't corrupt the string sent to us for evaluation
