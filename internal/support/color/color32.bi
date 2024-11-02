@@ -274,3 +274,26 @@ CONST Yellow~& = 4294967040
 CONST YellowGreen~& = 4288335154
 CONST YellowOrange~& = 4294946370
 
+'Color constants for text mode.
+'Just in case someone really needs both color sets in the same program.
+'These are equal to $COLOR:0 constants, but prefixed with "z" (for zero)
+'to avoid conflicts with same named constants in the block above.
+
+CONST zBlack~%% = 0
+CONST zBlue~%% = 1
+CONST zGreen~%% = 2
+CONST zCyan~%% = 3
+CONST zRed~%% = 4
+CONST zMagenta~%% = 5
+CONST zBrown~%% = 6
+CONST zWhite~%% = 7
+CONST zGray~%% = 8
+CONST zLightBlue~%% = 9
+CONST zLightGreen~%% = 10
+CONST zLightCyan~%% = 11
+CONST zLightRed~%% = 12
+CONST zLightMagenta~%% = 13
+CONST zYellow~%% = 14
+CONST zBrightWhite~%% = 15
+CONST zBlink~%% = 16
+

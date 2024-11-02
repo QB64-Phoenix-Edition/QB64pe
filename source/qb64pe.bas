@@ -39,6 +39,8 @@ DEFLNG A-Z
 
 DIM SHARED NoExeSaved AS INTEGER
 
+DIM SHARED ColorSet, colorRecompileAttempts, colorSetDesired
+
 DIM SHARED vWatchOn, vWatchRecompileAttempts, vWatchDesiredState, vWatchErrorCall$
 DIM SHARED vWatchNewVariable$, vWatchVariableExclusions$
 vWatchErrorCall$ = "if (stop_program) {*__LONG_VWATCH_LINENUMBER=0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);};if(new_error){bkp_new_error=new_error;new_error=0;*__LONG_VWATCH_LINENUMBER=-1; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);new_error=bkp_new_error;};"
@@ -1077,6 +1079,9 @@ sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
+colorSetDesired = 0
+colorRecompileAttempts = 0
+
 vWatchDesiredState = 0
 vWatchRecompileAttempts = 0
 
@@ -1087,6 +1092,8 @@ opexarray_desiredState = 0
 opexarray_recompileAttempts = 0
 
 recompile:
+ColorSet = colorSetDesired
+
 vWatchOn = vWatchDesiredState
 vWatchVariable "", -1 'reset internal variables list
 
@@ -1486,6 +1493,11 @@ DO
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
             IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
+            ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
+            END IF
             'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
@@ -1596,13 +1608,23 @@ DO
         END IF
 
         IF temp$ = "$COLOR:0" THEN
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            GOTO finishedlinepp
+            colorSetDesired = 1
+            IF ColorSet <> 1 THEN
+                IF colorRecompileAttempts = 0 THEN
+                    colorRecompileAttempts = colorRecompileAttempts + 1
+                    GOTO do_recompile
+                END IF
+            END IF
         END IF
 
         IF temp$ = "$COLOR:32" THEN
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            GOTO finishedlinepp
+            colorSetDesired = 2
+            IF ColorSet <> 2 THEN
+                IF colorRecompileAttempts = 0 THEN
+                    colorRecompileAttempts = colorRecompileAttempts + 1
+                    GOTO do_recompile
+                END IF
+            END IF
         END IF
 
         IF temp$ = "$DEBUG" THEN
@@ -2768,6 +2790,11 @@ DO
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
             IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
+            ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
+            END IF
             'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
@@ -2975,14 +3002,12 @@ DO
 
         IF a3u$ = "$COLOR:0" THEN
             layout$ = SCase$("$Color:0")
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            layoutdone = 1
+            IF ColorSet = 2 THEN a$ = "$COLOR:32 already set, cannot use both color sets together": GOTO errmes
             GOTO finishednonexec
         END IF
         IF a3u$ = "$COLOR:32" THEN
             layout$ = SCase$("$Color:32")
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            layoutdone = 1
+            IF ColorSet = 1 THEN a$ = "$COLOR:0 already set, cannot use both color sets together": GOTO errmes
             GOTO finishednonexec
         END IF
 
