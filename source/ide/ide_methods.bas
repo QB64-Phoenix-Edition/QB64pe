@@ -6449,7 +6449,7 @@ FUNCTION ide2 (ignore)
                     retval = idemessagebox("!! Attention !!",_
                                            "You just opened one of the QB64-PE auto-includes.\n" +_
                                            "A special edit mode is now activated to enforce the\n" +_
-                                           "rules applicable in these files.\n\n" +_
+                                           "rules applicable in these files (read notes).\n\n" +_
                                            "OPTION _EXPLICIT enabled\n" +_
                                            "enforcing _Underscore names\n\n" +_
                                            "This mode ends when loading a regular file or when\n" +_

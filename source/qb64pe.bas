@@ -101,7 +101,7 @@ CONST DEPENDENCY_LOADFONT = 1: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_MINIAUDIO = 2: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_GL = 3: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_IMAGE_CODEC = 4: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_CONSOLE_ONLY = 5: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 '=2 if via -g switch, =1 if via metacommand $CONSOLE:ONLY
+CONST DEPENDENCY_CONSOLE_ONLY = 5: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_SOCKETS = 6: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_PRINTER = 7: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_ICON = 8: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
@@ -1051,9 +1051,7 @@ IF idemode = 0 AND NOT QuietMode THEN
     PRINT "Beginning C++ output from QB64 code... "
 END IF
 
-BU_DEPENDENCY_CONSOLE_ONLY = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY)
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
-DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = BU_DEPENDENCY_CONSOLE_ONLY AND 2 'Restore -g switch if used
 
 Error_Happened = 0
 
@@ -1492,12 +1490,19 @@ DO
         lineBackup$ = wholeline$ 'backup the real line (will be blank when lastline is set)
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
-            IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            SetPreLET "DEBUG_IS_ACTIVE", "0" 'defaults to false (overridden in vwatch.bi using $LET)
+            SetPreLET "SOCKETS_IN_USE", "-1" 'assume true for pre-pass (allow registration of funtions)
+            IF ideprogname$ <> "beforefirstline.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
             IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
                 WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
             ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
                 WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
             END IF
+            'add more files in between here
             'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
@@ -1509,8 +1514,12 @@ DO
                 IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
             END IF
             'add more files in between here
-            SetPreLET "SOCKETS_IN_USE", "-1" 'assume true for name registration (overridden in main pass)
-            IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            'add more files in between here
+            IF ideprogname$ <> "afterlastline.bm" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
         END IF
         firstLine = 0: lastLine = 0
         IF GetBufLen&(autoIncludeBuffer) > 0 THEN
@@ -2525,7 +2534,7 @@ DO
                                 END IF
 
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "SUB_" + UCASE$(MID$(n$, 5)): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
-                                IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": DEPENDENCY(DEPENDENCY_GL) = 1
+                                IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": SetDependency(DEPENDENCY_GL)
                                 regid
                                 reginternalsubfunc = 0
 
@@ -2789,12 +2798,19 @@ DO
         lineBackup$ = a3$ 'backup the real line (will be blank when lastline is set)
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
-            IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            SetPreLET "DEBUG_IS_ACTIVE", "0" 'defaults to false (overridden in vwatch.bi using $LET)
+            SetPreLET "SOCKETS_IN_USE", str2$(DEPENDENCY(DEPENDENCY_SOCKETS) <> 0) 'get "real" last state from pre-pass
+            IF ideprogname$ <> "beforefirstline.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
             IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
                 WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
             ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
                 WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
             END IF
+            'add more files in between here
             'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
@@ -2806,8 +2822,12 @@ DO
                 IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
             END IF
             'add more files in between here
-            IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN SetPreLET "SOCKETS_IN_USE", "-1" ELSE SetPreLET "SOCKETS_IN_USE", "0"
-            IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            'add more files in between here
+            IF ideprogname$ <> "afterlastline.bm" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
         END IF
         firstLine = 0: lastLine = 0
         IF GetBufLen&(autoIncludeBuffer) > 0 THEN
@@ -3046,7 +3066,7 @@ DO
         END IF
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
-            DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) OR 1
+            SetDependency(DEPENDENCY_CONSOLE_ONLY)
             ConsoleOn = 1
             IF prepass = 0 THEN
                 IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
@@ -6861,7 +6881,7 @@ DO
 
     IF n >= 2 THEN
         IF firstelement$ = "ON" AND secondelement$ = "STRIG" THEN
-            DEPENDENCY(DEPENDENCY_DEVICEINPUT) = 1
+            SetDependency(DEPENDENCY_DEVICEINPUT)
             i = 3
             IF i > n THEN a$ = "Expected (": GOTO errmes
             a2$ = getelement$(ca$, i): i = i + 1
@@ -11351,8 +11371,6 @@ DO
             END IF
         LOOP 'fall through to next section...
         '(end manager)
-
-
 
     END IF 'continuelinefrom=0
 
@@ -22665,7 +22683,7 @@ SUB xprint (a$, ca$, n)
     u$ = str2$(uniquenumber)
 
     l$ = SCase$("Print")
-    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": DEPENDENCY(DEPENDENCY_PRINTER) = 1 '"L"
+    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": SetDependency(DEPENDENCY_PRINTER) '"L"
 
     'PRINT USING?
     IF n >= 2 THEN
@@ -23140,6 +23158,7 @@ END FUNCTION
 SUB SetDependency (requirement)
     IF requirement THEN
         DEPENDENCY(requirement) = 1
+        IF requirement = DEPENDENCY_SOCKETS THEN SetPreLET "SOCKETS_IN_USE", "-1"
     END IF
 END SUB
 
