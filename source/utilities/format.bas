@@ -71,3 +71,4 @@ FUNCTION apply_layout_indent$ (original$)
         END IF 'len(layout2$)
     END IF 'using layout/indent
 END FUNCTION
+

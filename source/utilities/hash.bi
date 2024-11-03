@@ -84,3 +84,4 @@ REDIM SHARED constfloat(constmax) AS _FLOAT
 REDIM SHARED conststring(constmax) AS STRING
 REDIM SHARED constsubfunc(constmax) AS LONG
 REDIM SHARED constdefined(constmax) AS LONG
+

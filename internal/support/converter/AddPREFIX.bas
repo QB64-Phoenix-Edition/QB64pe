@@ -3,6 +3,7 @@ $SCREENHIDE
 $CONSOLE
 DEFLNG A-Z
 
+'Keywords as of v3.14.1, all later added keywords shouldn't appear in old $NOPREFIX code
 'Removed leading @
 'Line continutation formatting
 'Removed all non-underscore items
