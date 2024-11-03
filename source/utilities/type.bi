@@ -72,3 +72,4 @@ REDIM SHARED udtetype(1000) AS LONG
 REDIM SHARED udtetypesize(1000) AS LONG
 REDIM SHARED udtearrayelements(1000) AS LONG
 REDIM SHARED udtenext(1000) AS LONG
+

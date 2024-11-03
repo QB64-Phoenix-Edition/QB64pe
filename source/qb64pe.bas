@@ -2290,7 +2290,7 @@ DO
                                     IF LEN(e$) = 0 THEN a$ = "Expected ALIAS name-in-library": GOTO errmes
                                     FOR x = 1 TO LEN(e$)
                                         a = ASC(e$, x)
-                                        IF _NEGATE alphanumeric(a) _ANDALSO a <> ASC_LEFTBRACKET _ANDALSO a <> ASC_RIGHTBRACKET _ANDALSO a <> ASC_MINUS _ANDALSO a <> ASC_FULLSTOP _ANDALSO a <> ASC_COLON _ANDALSO a <> ASC_LESSTHAN _ANDALSO a <> ASC_GREATERTHAN _ANDALSO a <> ASC_LEFTSQUAREBRACKET _ANDALSO a <> ASC_RIGHTSQUAREBRACKET THEN
+                                        IF _NEGATE alphanumeric(a) _ANDALSO a <> _ASC_LEFTBRACKET _ANDALSO a <> _ASC_RIGHTBRACKET _ANDALSO a <> _ASC_MINUS _ANDALSO a <> _ASC_FULLSTOP _ANDALSO a <> _ASC_COLON _ANDALSO a <> _ASC_LESSTHAN _ANDALSO a <> _ASC_GREATERTHAN _ANDALSO a <> _ASC_LEFTSQUAREBRACKET _ANDALSO a <> _ASC_RIGHTSQUAREBRACKET THEN
                                             a$ = "Expected ALIAS name-in-library": GOTO errmes
                                         END IF
                                     NEXT
@@ -2534,7 +2534,7 @@ DO
                                 END IF
 
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "SUB_" + UCASE$(MID$(n$, 5)): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
-                                IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": SetDependency(DEPENDENCY_GL)
+                                IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": SetDependency DEPENDENCY_GL
                                 regid
                                 reginternalsubfunc = 0
 
@@ -3066,7 +3066,7 @@ DO
         END IF
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
-            SetDependency(DEPENDENCY_CONSOLE_ONLY)
+            SetDependency DEPENDENCY_CONSOLE_ONLY
             ConsoleOn = 1
             IF prepass = 0 THEN
                 IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
@@ -3938,12 +3938,12 @@ DO
                     striplibver:
                     FOR z = LEN(x$) TO 1 STEP -1
                         a = ASC(x$, z)
-                        IF a = ASC_BACKSLASH OR a = ASC_FORWARDSLASH THEN EXIT FOR
-                        IF a = ASC_FULLSTOP OR a = ASC_COLON THEN
+                        IF a = _ASC_BACKSLASH OR a = _ASC_FORWARDSLASH THEN EXIT FOR
+                        IF a = _ASC_FULLSTOP OR a = _ASC_COLON THEN
                             IF isuinteger(RIGHT$(x$, LEN(x$) - z)) THEN
                                 IF LEN(v$) THEN v$ = RIGHT$(x$, LEN(x$) - z) + "." + v$ ELSE v$ = RIGHT$(x$, LEN(x$) - z)
                                 x$ = LEFT$(x$, z - 1)
-                                IF a = ASC_COLON THEN EXIT FOR
+                                IF a = _ASC_COLON THEN EXIT FOR
                                 GOTO striplibver
                             ELSE
                                 EXIT FOR
@@ -6881,7 +6881,7 @@ DO
 
     IF n >= 2 THEN
         IF firstelement$ = "ON" AND secondelement$ = "STRIG" THEN
-            SetDependency(DEPENDENCY_DEVICEINPUT)
+            SetDependency DEPENDENCY_DEVICEINPUT
             i = 3
             IF i > n THEN a$ = "Expected (": GOTO errmes
             a2$ = getelement$(ca$, i): i = i + 1
@@ -13303,11 +13303,11 @@ FUNCTION ParseBooleanSetting& (token$, setting AS LONG)
 
     SELECT CASE value
         CASE "true", "on", "yes"
-            setting = TRUE
+            setting = _TRUE
             ParseBooleanSetting& = -1
 
         CASE "false", "off", "no"
-            setting = FALSE
+            setting = _FALSE
             ParseBooleanSetting& = -1
 
         CASE ELSE
@@ -18691,7 +18691,7 @@ END FUNCTION
 
 'Main entry point for fixoperationorder
 FUNCTION fixoperationorder$ (savea$)
-    fixoperationorder = fixoperationorder_rec$(savea$, FALSE)
+    fixoperationorder = fixoperationorder_rec$(savea$, _FALSE)
 END FUNCTION
 
 'Recursive entry point for fixoperationorder
@@ -19560,7 +19560,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b = 0 THEN
                 foopassit:
                 IF p1 <> i THEN
-                    bare_array_context = FALSE
+                    bare_array_context = _FALSE
                     IF p1 > 2 THEN
                         token_before_paren$ = getelement(a$, p1 - 2)
                         bare_array_context = (token_before_paren$ = "UBOUND" OR token_before_paren$ = "LBOUND")
@@ -22683,7 +22683,7 @@ SUB xprint (a$, ca$, n)
     u$ = str2$(uniquenumber)
 
     l$ = SCase$("Print")
-    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": SetDependency(DEPENDENCY_PRINTER) '"L"
+    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": SetDependency DEPENDENCY_PRINTER '"L"
 
     'PRINT USING?
     IF n >= 2 THEN
@@ -23241,7 +23241,7 @@ FUNCTION validname (a$)
             autoIncForceUScore = 0
             'enforce leading underscore
             IF l >= 1 THEN
-                IF ASC(a$, 1) <> 95  THEN EXIT FUNCTION
+                IF ASC(a$, 1) <> 95 THEN EXIT FUNCTION
             END IF
         END IF
     END IF

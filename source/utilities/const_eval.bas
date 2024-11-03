@@ -1130,3 +1130,4 @@ FUNCTION IsFunctionIdentifier& (ele$)
         END IF
     NEXT
 END FUNCTION
+

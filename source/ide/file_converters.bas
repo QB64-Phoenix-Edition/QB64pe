@@ -139,3 +139,4 @@ FUNCTION OfferNoprefixConversion% (file$)
         result = idemessagebox("$NOPREFIX", "Error running conversion utility.", "")
     END IF
 END FUNCTION
+
