@@ -23546,6 +23546,8 @@ qbs *func__connectionaddress(int32 i) {
     static int32 x;
     if (is_error_pending())
         goto error;
+
+#ifdef DEPENDENCY_SOCKETS
     if (!str)
         str = qbs_new(0, 0);
     if (!str2)
@@ -23629,8 +23631,8 @@ qbs *func__connectionaddress(int32 i) {
             break;
         }
     } // i<0
+#endif
     error(52);
-    goto error;
 
 error:
     tqbs = qbs_new(0, 1);

@@ -1676,15 +1676,15 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF KB = KEY_F7 OR KB = KEY_F8 THEN
+        IF KB = _KEY_F7 OR KB = _KEY_F8 THEN
             GOTO startPausedMenuHandler
         END IF
 
-        IF KB = KEY_F9 THEN 'toggle breakpoint
+        IF KB = _KEY_F9 THEN 'toggle breakpoint
             GOTO toggleBreakpoint
         END IF
 
-        IF KB = KEY_F10 THEN 'clear all breakpoints
+        IF KB = _KEY_F10 THEN 'clear all breakpoints
             IF KCTRL THEN
                 GOTO unskipAllLines
             ELSE
@@ -1692,13 +1692,13 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF KB = KEY_F11 THEN 'make exe only
+        IF KB = _KEY_F11 THEN 'make exe only
             idemexe:
             iderunmode = 2
             GOTO idemrunspecial
         END IF
 
-        IF KB = KEY_F12 THEN 'show call stack
+        IF KB = _KEY_F12 THEN 'show call stack
             IF callStackLength > 0 THEN
                 GOTO showCallStackDialog
             ELSE
@@ -1708,11 +1708,11 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF KB = KEY_F4 THEN 'variable watch
+        IF KB = _KEY_F4 THEN 'variable watch
             GOTO showWatchList
         END IF
 
-        IF KB = KEY_F5 THEN 'Note: F5 or SHIFT+F5 accepted
+        IF KB = _KEY_F5 THEN 'Note: F5 or SHIFT+F5 accepted
             startPaused = 0
             idemrun:
             startPausedPending = 0
@@ -1913,17 +1913,17 @@ FUNCTION ide2 (ignore)
         END IF
 
 
-        IF KCTRL AND KB = KEY_F3 THEN
+        IF KCTRL AND KB = _KEY_F3 THEN
             IF IdeSystem = 3 THEN IdeSystem = 1
             GOTO idefindjmp
         END IF
 
-        IF KALT AND KB = KEY_F3 THEN
+        IF KALT AND KB = _KEY_F3 THEN
             IF IdeSystem = 3 THEN IdeSystem = 1
             GOTO idefindchangejmp
         END IF
 
-        IF KB = KEY_F3 OR K$ = CHR$(28) THEN
+        IF KB = _KEY_F3 OR K$ = CHR$(28) THEN
             IF IdeSystem = 3 THEN IdeSystem = 1
             idemf3:
             IF idefindtext <> "" THEN
@@ -1942,7 +1942,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KSHIFT AND KB = KEY_F1 THEN
+        IF KSHIFT AND KB = _KEY_F1 THEN
             IF idehelp = 0 THEN
                 idesubwindow = idewy \ 2: idewy = idewy - idesubwindow
                 Help_wx1 = 2: Help_wy1 = idewy + 1: Help_wx2 = idewx - 1: Help_wy2 = idewy + idesubwindow - 2: Help_ww = Help_wx2 - Help_wx1 + 1: Help_wh = Help_wy2 - Help_wy1 + 1
@@ -1984,12 +1984,12 @@ FUNCTION ide2 (ignore)
                 IF Help_Scrollbar THEN
                     idembmonitor = 1
                     IF Help_Scrollbar_Method = 1 THEN
-                        IF Help_Scrollbar = 1 THEN KB = KEY_LEFT: _DELAY 0.1 'fall through...
-                        IF Help_Scrollbar = 2 THEN KB = KEY_UP: _DELAY 0.1 'fall through...
+                        IF Help_Scrollbar = 1 THEN KB = _KEY_LEFT: _DELAY 0.1 'fall through...
+                        IF Help_Scrollbar = 2 THEN KB = _KEY_UP: _DELAY 0.1 'fall through...
                     END IF
                     IF Help_Scrollbar_Method = 2 THEN
-                        IF Help_Scrollbar = 1 THEN KB = KEY_RIGHT: _DELAY 0.1 'fall through...
-                        IF Help_Scrollbar = 2 THEN KB = KEY_DOWN: _DELAY 0.1 'fall through...
+                        IF Help_Scrollbar = 1 THEN KB = _KEY_RIGHT: _DELAY 0.1 'fall through...
+                        IF Help_Scrollbar = 2 THEN KB = _KEY_DOWN: _DELAY 0.1 'fall through...
                     END IF
                     IF Help_Scrollbar_Method = 3 THEN
                         IF Help_Scrollbar = 1 THEN
@@ -2008,8 +2008,8 @@ FUNCTION ide2 (ignore)
                         END IF
                         IF Help_Scrollbar = 2 THEN
                             v = idevbar(idewx, idewy + 1, idesubwindow - 2, Help_cy, help_h + 1)
-                            IF mY < v THEN KB = KEY_PAGEUP: _DELAY 0.1 'fall through...
-                            IF mY > v THEN KB = KEY_PAGEDOWN: _DELAY 0.1 'fall through...
+                            IF mY < v THEN KB = _KEY_PAGEUP: _DELAY 0.1 'fall through...
+                            IF mY > v THEN KB = _KEY_PAGEDOWN: _DELAY 0.1 'fall through...
                         END IF
 
                     END IF
@@ -2137,7 +2137,7 @@ FUNCTION ide2 (ignore)
 
         'IdeSystem
 
-        IF KB = KEY_F6 THEN 'switch windows
+        IF KB = _KEY_F6 THEN 'switch windows
             IF idehelp = 1 THEN
                 IF IdeSystem = 3 THEN
                     IdeSystem = 1
@@ -2167,20 +2167,20 @@ FUNCTION ide2 (ignore)
 
         IF IdeSystem = 2 THEN 'certain keys transfer control
             z = 0
-            IF (KALT AND KB = KEY_UP) OR (KALT AND KB = KEY_DOWN) THEN GOTO showrecentlysearchedbox
-            IF KB = KEY_UP THEN z = 1
-            IF KB = KEY_DOWN THEN z = 1
-            IF KB = KEY_PAGEUP THEN z = 1
-            IF KB = KEY_PAGEDOWN THEN z = 1
+            IF (KALT AND KB = _KEY_UP) OR (KALT AND KB = _KEY_DOWN) THEN GOTO showrecentlysearchedbox
+            IF KB = _KEY_UP THEN z = 1
+            IF KB = _KEY_DOWN THEN z = 1
+            IF KB = _KEY_PAGEUP THEN z = 1
+            IF KB = _KEY_PAGEDOWN THEN z = 1
             IF mWHEEL THEN z = 1
             IF z = 1 THEN IdeSystem = 1
         END IF
 
         IF IdeSystem = 2 THEN
             a$ = idefindtext
-            IF LEN(K$) = 1 OR (KB = KEY_INSERT OR KB = KEY_DELETE) THEN
+            IF LEN(K$) = 1 OR (KB = _KEY_INSERT OR KB = _KEY_DELETE) THEN
                 IF LEN(K$) = 1 THEN k = ASC(K$)
-                IF (KSHIFT AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "V") THEN 'paste from clipboard
+                IF (KSHIFT AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "V") THEN 'paste from clipboard
                     pasteIntoSearchField:
                     clip$ = _CLIPBOARD$ 'read clipboard
                     x = INSTR(clip$, CHR$(13))
@@ -2217,7 +2217,7 @@ FUNCTION ide2 (ignore)
                     k = 255
                 END IF
 
-                IF ((KCTRL AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) THEN 'copy to clipboard
+                IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) THEN 'copy to clipboard
                     copysearchterm2clip:
                     IF idesystem2.issel THEN
                         sx1 = idesystem2.sx1: sx2 = idesystem2.v1
@@ -2227,7 +2227,7 @@ FUNCTION ide2 (ignore)
                     k = 255
                 END IF
 
-                IF ((KSHIFT AND KB = KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X")) THEN 'cut to clipboard
+                IF ((KSHIFT AND KB = _KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X")) THEN 'cut to clipboard
                     cutToClipboardSearchField:
                     IF idesystem2.issel THEN
                         sx1 = idesystem2.sx1: sx2 = idesystem2.v1
@@ -2439,7 +2439,7 @@ FUNCTION ide2 (ignore)
                 END IF
             END IF
 
-            IF ((KCTRL AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND Help_Select = 2 THEN 'copy to clipboard
+            IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND Help_Select = 2 THEN 'copy to clipboard
                 copyhelp2clip:
                 ideerror = -1 'if it fails, just carry on
                 clip$ = ""
@@ -2507,7 +2507,7 @@ FUNCTION ide2 (ignore)
             END IF
             keep_select:
 
-            IF KB = KEY_TAB THEN
+            IF KB = _KEY_TAB THEN
                 IF LEN(Help_Search_Str) THEN norep = 1: GOTO searchnext
             END IF
 
@@ -2603,30 +2603,30 @@ FUNCTION ide2 (ignore)
             END IF
             strnotfound:
 
-            IF KB = KEY_HOME AND KCONTROL THEN
+            IF KB = _KEY_HOME AND KCONTROL THEN
                 Help_cx = 1: Help_cy = 1
             END IF
-            IF KB = KEY_END AND KCONTROL THEN
+            IF KB = _KEY_END AND KCONTROL THEN
                 Help_cx = 1: Help_cy = help_h + 1
             END IF
 
-            IF KB = KEY_HOME AND KCONTROL = 0 THEN Help_cx = 1
-            IF KB = KEY_END AND KCONTROL = 0 THEN
+            IF KB = _KEY_HOME AND KCONTROL = 0 THEN Help_cx = 1
+            IF KB = _KEY_END AND KCONTROL = 0 THEN
                 Help_cx = Help_LineLen(Help_cy - Help_sy) + 1
             END IF
 
-            IF KB = KEY_PAGEUP THEN
+            IF KB = _KEY_PAGEUP THEN
                 Help_cy = Help_cy - (Help_wh - 1)
             END IF
 
-            IF KB = KEY_PAGEDOWN THEN
+            IF KB = _KEY_PAGEDOWN THEN
                 Help_cy = Help_cy + (Help_wh - 1)
             END IF
 
-            IF KB = KEY_DOWN THEN Help_cy = Help_cy + 1
-            IF KB = KEY_UP THEN Help_cy = Help_cy - 1
-            IF KB = KEY_LEFT THEN Help_cx = Help_cx - 1
-            IF KB = KEY_RIGHT THEN Help_cx = Help_cx + 1
+            IF KB = _KEY_DOWN THEN Help_cy = Help_cy + 1
+            IF KB = _KEY_UP THEN Help_cy = Help_cy - 1
+            IF KB = _KEY_LEFT THEN Help_cx = Help_cx - 1
+            IF KB = _KEY_RIGHT THEN Help_cx = Help_cx + 1
 
             'move relative to top/bottom
             IF mWHEEL < 0 THEN Help_cy = Help_sy
@@ -2803,7 +2803,7 @@ FUNCTION ide2 (ignore)
 
 
 
-        IF KB = KEY_F1 THEN
+        IF KB = _KEY_F1 THEN
             contextualhelp:
             IdeContextHelpSF = 0
             'identify word or character at current cursor position
@@ -2984,7 +2984,7 @@ FUNCTION ide2 (ignore)
 
 
 
-        IF KALT AND KB = KEY_LEFT THEN
+        IF KALT AND KB = _KEY_LEFT THEN
             bmkremoved = 0
             bmkremove:
             FOR b = 1 TO IdeBmkN
@@ -3009,7 +3009,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KALT AND (KB = KEY_DOWN OR KB = KEY_UP) THEN
+        IF KALT AND (KB = _KEY_DOWN OR KB = _KEY_UP) THEN
             IF IdeBmkN = 0 THEN
                 result = idemessagebox("Bookmarks", "No bookmarks exist (Use Alt+Left to create a bookmark)", "")
                 SCREEN , , 3, 0
@@ -3028,7 +3028,7 @@ FUNCTION ide2 (ignore)
             END IF
             l = idecy
             DO
-                IF KB = KEY_DOWN THEN l = l + 1 ELSE l = l - 1
+                IF KB = _KEY_DOWN THEN l = l + 1 ELSE l = l - 1
                 IF l < 1 THEN l = iden
                 IF l > iden THEN l = 1
                 FOR b = 1 TO IdeBmkN
@@ -3043,7 +3043,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KALT AND KB = KEY_RIGHT THEN
+        IF KALT AND KB = _KEY_RIGHT THEN
             '***RESERVED***
             GOTO specialchar
         END IF
@@ -3323,17 +3323,17 @@ FUNCTION ide2 (ignore)
         IF mB AND idemouseselect = 0 THEN
             IF mX = idewx AND mY > 2 AND mY < idewy - 5 THEN 'inside vbar
                 ideselect = 0
-                IF mY = 3 THEN KB = KEY_UP: _DELAY 0.1: idembmonitor = 1
-                IF mY = idewy - 6 THEN KB = KEY_DOWN: _DELAY 0.1: idembmonitor = 1
+                IF mY = 3 THEN KB = _KEY_UP: _DELAY 0.1: idembmonitor = 1
+                IF mY = idewy - 6 THEN KB = _KEY_DOWN: _DELAY 0.1: idembmonitor = 1
                 IF mY > 3 AND mY < (idewy - 6) THEN
                     'assume not on slider
                     IF iden > 1 THEN 'take no action if not slider available
                         y = idevbar(idewx, 3, idewy - 8, idecy, iden)
                         IF y <> mY THEN
                             IF mY < y THEN
-                                KB = KEY_PAGEUP: _DELAY 0.1: idembmonitor = 1
+                                KB = _KEY_PAGEUP: _DELAY 0.1: idembmonitor = 1
                             ELSE
-                                KB = KEY_PAGEDOWN: _DELAY 0.1: idembmonitor = 1
+                                KB = _KEY_PAGEDOWN: _DELAY 0.1: idembmonitor = 1
                             END IF
                         END IF
                     END IF
@@ -3344,8 +3344,8 @@ FUNCTION ide2 (ignore)
         IF mB AND idemouseselect = 0 THEN
             IF mY = idewy - 5 AND mX > 1 AND mX < idewx THEN 'inside hbar
                 ideselect = 0
-                IF mX = 2 THEN KB = KEY_LEFT: _DELAY 0.1: idembmonitor = 1
-                IF mX = idewx - 1 THEN KB = KEY_RIGHT: _DELAY 0.1: idembmonitor = 1
+                IF mX = 2 THEN KB = _KEY_LEFT: _DELAY 0.1: idembmonitor = 1
+                IF mX = idewx - 1 THEN KB = _KEY_RIGHT: _DELAY 0.1: idembmonitor = 1
                 IF mX > 2 AND mX < idewx - 1 THEN
                     'assume not on slider
                     x = idehbar(2, idewy - 5, idewx - 2, idesx, 608)
@@ -3661,14 +3661,14 @@ FUNCTION ide2 (ignore)
         END IF
 
 
-        IF ((KSHIFT AND KB = KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X")) AND ideselect = 1 THEN 'cut to clipboard
+        IF ((KSHIFT AND KB = _KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X")) AND ideselect = 1 THEN 'cut to clipboard
             idemcut:
             idechangemade = 1
             startPausedPending = 0
             GOTO copy2clip
         END IF
 
-        IF (KB = KEY_DELETE OR KB = 8) AND ideselect = 1 THEN 'delete selection
+        IF (KB = _KEY_DELETE OR KB = 8) AND ideselect = 1 THEN 'delete selection
             IF ideselecty1 <> idecy OR ideselectx1 <> idecx THEN
                 idechangemade = 1
                 startPausedPending = 0
@@ -3680,7 +3680,7 @@ FUNCTION ide2 (ignore)
         END IF
 
 
-        IF (KSHIFT AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "V") THEN 'paste from clipboard
+        IF (KSHIFT AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "V") THEN 'paste from clipboard
             idempaste:
 
             clip$ = _CLIPBOARD$ 'read clipboard
@@ -3738,20 +3738,20 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF ((KCTRL AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND ideselect = 1 THEN 'copy to clipboard
+        IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND ideselect = 1 THEN 'copy to clipboard
             copy2clip:
             clip$ = getSelectedText$(-1)
             IF clip$ <> "" THEN _CLIPBOARD$ = clip$
-            IF (K$ = CHR$(0) + "S") OR (KSHIFT AND KB = KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X") THEN delselect
+            IF (K$ = CHR$(0) + "S") OR (KSHIFT AND KB = _KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X") THEN delselect
             GOTO specialchar
         END IF
 
-        IF KB = KEY_INSERT THEN 'toggle INSERT mode
+        IF KB = _KEY_INSERT THEN 'toggle INSERT mode
             ideinsert = ideinsert + 1
             IF ideinsert = 2 THEN ideinsert = 0
         END IF
 
-        IF KB = KEY_UP THEN
+        IF KB = _KEY_UP THEN
             IF KCONTROL THEN 'scroll the window, instead of moving the cursor
                 idesy = idesy - 1
                 IF idesy < 1 THEN idesy = 1
@@ -3764,7 +3764,7 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF KB = KEY_DOWN THEN
+        IF KB = _KEY_DOWN THEN
             IF KCONTROL THEN 'scroll the window, instead of moving the cursor
                 idesy = idesy + 1
                 IF idesy > iden THEN idesy = iden
@@ -3788,7 +3788,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KB = KEY_LEFT THEN
+        IF KB = _KEY_LEFT THEN
             GOSUB selectcheck
 
             IF KCONTROL THEN 'move forward to next beginning alphanumeric
@@ -3830,7 +3830,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KB = KEY_RIGHT THEN
+        IF KB = _KEY_RIGHT THEN
             GOSUB selectcheck
 
             IF KCONTROL THEN 'move forward to next beginning alphanumeric
@@ -3874,14 +3874,14 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KCONTROL AND KB = KEY_HOME THEN
+        IF KCONTROL AND KB = _KEY_HOME THEN
             GOSUB selectcheck
             idecx = 1
             idecy = 1
             GOTO specialchar
         END IF
 
-        IF KCONTROL AND KB = KEY_END THEN
+        IF KCONTROL AND KB = _KEY_END THEN
             GOSUB selectcheck
             idecy = iden
             a$ = idegetline(idecy)
@@ -3889,7 +3889,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KB = KEY_HOME THEN
+        IF KB = _KEY_HOME THEN
             GOSUB selectcheck
             a$ = idegetline(idecy): sot% = LEN(a$) 'get current line as is
             a$ = LTRIM$(a$): sot% = sot% - LEN(a$) + 1 'calc start of text position
@@ -3897,21 +3897,21 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KB = KEY_END THEN
+        IF KB = _KEY_END THEN
             GOSUB selectcheck
             a$ = idegetline(idecy)
             idecx = LEN(a$) + 1
             GOTO specialchar
         END IF
 
-        IF KB = KEY_PAGEUP THEN
+        IF KB = _KEY_PAGEUP THEN
             GOSUB selectcheck
             idecy = idecy - (idewy - 9)
             IF idecy < 1 THEN idecy = 1
             GOTO specialchar
         END IF
 
-        IF KB = KEY_PAGEDOWN THEN
+        IF KB = _KEY_PAGEDOWN THEN
             GOSUB selectcheck
             idecy = idecy + (idewy - 9)
             IF idecy > iden THEN idecy = iden
@@ -4010,7 +4010,7 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-        IF KB = KEY_DELETE AND KCONTROL = 0 THEN
+        IF KB = _KEY_DELETE AND KCONTROL = 0 THEN
             idechangemade = 1
             startPausedPending = 0
             a$ = idegetline(idecy)
@@ -4442,7 +4442,7 @@ FUNCTION ide2 (ignore)
                         ForceResize = -1: skipdisplay = 0: GOTO ideloop
                     END IF
                 LOOP UNTIL KALT = 0
-                KB = KEY_ESC
+                KB = _KEY_ESC
             END IF
 
             IF _WINDOWHASFOCUS = 0 THEN
@@ -4468,10 +4468,10 @@ FUNCTION ide2 (ignore)
                         END IF
                     NEXT
                 END IF 'my=1
-                KB = KEY_ESC 'exit menu selection
+                KB = _KEY_ESC 'exit menu selection
             END IF
 
-            IF _EXIT THEN ideexit = 1: KB = KEY_ESC
+            IF _EXIT THEN ideexit = 1: KB = _KEY_ESC
         LOOP UNTIL KB
 
         K$ = UCASE$(K$)
@@ -4492,16 +4492,16 @@ FUNCTION ide2 (ignore)
             END IF
         NEXT
 
-        IF KB = KEY_LEFT THEN m = m - 1
-        IF KB = KEY_RIGHT THEN m = m + 1
-        IF KB = KEY_ESC THEN
+        IF KB = _KEY_LEFT THEN m = m - 1
+        IF KB = _KEY_RIGHT THEN m = m + 1
+        IF KB = _KEY_ESC THEN
             COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
             IdeInfo = ""
             GOTO ideloop
         END IF
         IF m < 1 THEN m = menus
         IF m > menus AND idecontextualmenu = 0 THEN m = 1
-        IF KB = KEY_UP OR KB = KEY_DOWN OR KB = KEY_ENTER THEN
+        IF KB = _KEY_UP OR KB = _KEY_DOWN OR KB = _KEY_ENTER THEN
             COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
             PCOPY 3, 0
             GOTO showmenu
@@ -4836,16 +4836,16 @@ FUNCTION ide2 (ignore)
 
         END IF 'mb
 
-        IF KB = KEY_LEFT AND idecontextualmenu = 0 THEN
+        IF KB = _KEY_LEFT AND idecontextualmenu = 0 THEN
             m = m - 1: r = 1
-        ELSEIF KB = KEY_LEFT AND idecontextualmenu > 1 THEN
+        ELSEIF KB = _KEY_LEFT AND idecontextualmenu > 1 THEN
             idecontextualmenu = 0
             PCOPY 3, 2
             m = parentMenu
             r = parentMenuR
             parentMenu = 0
         END IF
-        IF KB = KEY_RIGHT AND idecontextualmenu = 0 THEN
+        IF KB = _KEY_RIGHT AND idecontextualmenu = 0 THEN
             IF RIGHT$(menu$(m, r), 1) = CHR$(16) THEN
                 SELECT CASE LEFT$(menu$(m, r), LEN(menu$(m, r)) - 3)
                     CASE "#Line Numbers"
@@ -4858,7 +4858,7 @@ FUNCTION ide2 (ignore)
             ELSE
                 m = m + 1: r = 1
             END IF
-        ELSEIF KB = KEY_RIGHT AND idecontextualmenu > 1 THEN
+        ELSEIF KB = _KEY_RIGHT AND idecontextualmenu > 1 THEN
             idecontextualmenu = 0
             PCOPY 3, 2
             m = parentMenu + 1
@@ -4866,18 +4866,18 @@ FUNCTION ide2 (ignore)
         END IF
         IF m < 1 THEN m = menus
         IF m > menus AND idecontextualmenu = 0 THEN m = 1
-        IF KB = KEY_ESC THEN
+        IF KB = _KEY_ESC THEN
             PCOPY 3, 0: SCREEN , , 3, 0
             IF IdeDebugMode = 2 THEN GOTO EnterDebugMode
             GOTO ideloop
         END IF
-        IF KB = KEY_DOWN THEN
+        IF KB = _KEY_DOWN THEN
             r = r + 1
             IF menu$(m, r) = "-" THEN r = r + 1
             IF r > menusize(m) THEN r = 1
         END IF
 
-        IF KB = KEY_UP THEN
+        IF KB = _KEY_UP THEN
             r = r - 1
             IF menu$(m, r) = "-" THEN r = r - 1
             IF r < 1 THEN r = menusize(m)
@@ -4886,7 +4886,7 @@ FUNCTION ide2 (ignore)
         'select?
 
         'with enter
-        IF KB = KEY_ENTER THEN
+        IF KB = _KEY_ENTER THEN
             IF LEFT$(menu$(m, r), 1) <> "~" THEN s = r
         END IF
 
@@ -5346,14 +5346,6 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            'IF menu$(m, s) = "Check for #Newer Version..." THEN
-            '    PCOPY 2, 0
-            '    idecheckupdates
-            '    PCOPY 3, 0: SCREEN , , 3, 0
-            '    GOTO ideloop
-            'END IF
-
-
             IF menu$(m, s) = "#About..." THEN
                 helpabout:
                 PCOPY 2, 0
@@ -5363,7 +5355,6 @@ FUNCTION ide2 (ignore)
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
-
 
             IF menu$(m, s) = "#ASCII Chart..." THEN
                 PCOPY 2, 0
@@ -6458,7 +6449,7 @@ FUNCTION ide2 (ignore)
                     retval = idemessagebox("!! Attention !!",_
                                            "You just opened one of the QB64-PE auto-includes.\n" +_
                                            "A special edit mode is now activated to enforce the\n" +_
-                                           "rules applicable in these files.\n\n" +_
+                                           "rules applicable in these files (read notes).\n\n" +_
                                            "OPTION _EXPLICIT enabled\n" +_
                                            "enforcing _Underscore names\n\n" +_
                                            "This mode ends when loading a regular file or when\n" +_
@@ -14208,7 +14199,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
         IF focusoffset = 0 THEN
             IF LEN(kk$) = 1 OR KB <> 0 THEN
                 IF LEN(kk$) = 1 THEN k = ASC(kk$)
-                IF (KSHIFT AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(kk$) = "V") THEN 'paste from clipboard
+                IF (KSHIFT AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(kk$) = "V") THEN 'paste from clipboard
                     clip$ = _CLIPBOARD$ 'read clipboard
                     x = INSTR(clip$, CHR$(13))
                     IF x THEN clip$ = LEFT$(clip$, x - 1)
@@ -14241,7 +14232,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     k = 255
                 END IF
 
-                IF ((KCTRL AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(kk$) = "C")) THEN 'copy to clipboard
+                IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(kk$) = "C")) THEN 'copy to clipboard
                     IF o.issel THEN
                         sx1 = o.sx1: sx2 = o.v1
                         IF sx1 > sx2 THEN SWAP sx1, sx2
@@ -14250,7 +14241,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     k = 255
                 END IF
 
-                IF ((KSHIFT AND KB = KEY_DELETE) OR (KCONTROL AND UCASE$(kk$) = "X")) THEN 'cut to clipboard
+                IF ((KSHIFT AND KB = _KEY_DELETE) OR (KCONTROL AND UCASE$(kk$) = "X")) THEN 'cut to clipboard
                     IF o.issel THEN
                         sx1 = o.sx1: sx2 = o.v1
                         IF sx1 > sx2 THEN SWAP sx1, sx2
@@ -15260,13 +15251,13 @@ FUNCTION ideLayoutBox
             optChg% = 0 'any options changed
 
             'adjust runtime variables
-            v% = o(alChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(alChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = -1
 
-            v% = o(kcChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(kcChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEAutoLayoutKwCapitals <> v% THEN IDEAutoLayoutKwCapitals = v%: optChg% = -1
 
-            v% = o(aiChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(aiChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEAutoIndent <> v% THEN IDEAutoIndent = v%: optChg% = -1
             v% = VAL(idetxt(o(aisBox).txt))
             IF IDEAutoIndentSize <> v% THEN
@@ -15274,7 +15265,7 @@ FUNCTION ideLayoutBox
                 IF IDEAutoIndent <> 0 THEN optChg% = -1
             END IF
 
-            v% = o(isChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(isChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEIndentSubs <> v% THEN IDEIndentSubs = v%: optChg% = -1
 
             IF optChg% THEN
@@ -15752,11 +15743,11 @@ FUNCTION ideCompilerSettingsBox
             optChg% = 0 'any options changed
 
             'adjust runtime variables
-            v% = o(ocpChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(ocpChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF OptimizeCppProgram <> v% THEN OptimizeCppProgram = v%: optChg% = -1
-            v% = o(sdsChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(sdsChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF StripDebugSymbols <> v% THEN StripDebugSymbols = v%: optChg% = -1
-            v% = o(idiChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(idiChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF Include_GDB_Debugging_Info <> v% THEN Include_GDB_Debugging_Info = v%: optChg% = -1
 
             v$ = idetxt(o(ecfBox).txt)
@@ -15945,314 +15936,10 @@ FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
     LOOP
 END FUNCTION
 
-
-
 FUNCTION ideyesnobox$ (titlestr$, messagestr$) 'returns "Y" or "N"
     result = idemessagebox(titlestr$, messagestr$, "#Yes;#No")
     IF result = 1 THEN ideyesnobox$ = "Y" ELSE ideyesnobox$ = "N"
 END FUNCTION 'yes/no box
-
-
-'SUB idecheckupdates
-'    FOR i = 1 TO 3
-'        SELECT CASE i
-'            CASE 1
-'                remoteFile$ = "www.qb64.org/getver.php"
-'                lookFor$ = "Version$ = "
-'                m$ = "Connecting to qb64.org...\n" + STRING$(10, 219) + STRING$(20, 176) + "\n"
-'                m$ = m$ + "Checking stable version (1/3)"
-'                temp$ = ideactivitybox$("setup", "Check for Newer Version", m$, "#Cancel", "")
-'            CASE 2
-'                remoteFile$ = "www.qb64.org/getdevver.php"
-'                lookFor$ = "Version$ = "
-'                m$ = "Connecting to qb64.org...\n" + STRING$(20, 219) + STRING$(10, 176) + "\n"
-'                m$ = m$ + "Checking development version (2/3)"
-'                temp$ = ideactivitybox$("setup", "Check for Newer Version", m$, "#Cancel", "")
-'            CASE 3
-'                remoteFile$ = "www.qb64.org/devbuilds2.php"
-'                lookFor$ = "document.getElementById('gitlink').innerHTML = "
-'                m$ = "Connecting to qb64.org...\n" + STRING$(30, 219) + "\n"
-'                m$ = m$ + "Checking development build (3/3)"
-'                temp$ = ideactivitybox$("setup", "Check for Newer Version", m$, "#Cancel", "")
-'        END SELECT
-
-'        DO
-'            temp$ = ideactivitybox$("update", "", "", "", "")
-'            IF LEN(temp$) THEN
-'                'either ESC or click means "cancel" for this dialog in particular
-'                Result$ = Download$("", "", "", 0)
-'                EXIT SUB
-'            END IF
-
-'            Result$ = Download$(remoteFile$, contents$, lookFor$, 30)
-'            SELECT CASE CVI(LEFT$(Result$, 2))
-'                CASE 1 'Success
-'                    found = CVL(MID$(Result$, 3, 4))
-'                    SELECT CASE i
-'                        CASE 1
-'                            remoteVersion$ = MID$(contents$, found + LEN(lookFor$) + 1)
-'                            remoteVersion$ = LEFT$(remoteVersion$, INSTR(remoteVersion$, CHR$(34)) - 1)
-'                        CASE 2
-'                            remoteDevVersion$ = MID$(contents$, found + LEN(lookFor$) + 1)
-'                            remoteDevVersion$ = LEFT$(remoteDevVersion$, INSTR(remoteDevVersion$, CHR$(34)) - 1)
-'                        CASE 3
-'                            remoteDevBuild$ = MID$(contents$, found + LEN(lookFor$) + 1)
-'                            remoteDevBuild$ = LEFT$(remoteDevBuild$, INSTR(remoteDevBuild$, CHR$(34)) - 1)
-'                    END SELECT
-'                    EXIT DO
-'                CASE 2, 3 'Can't reach server; Timeout
-'                    EXIT DO
-'            END SELECT
-
-'            _LIMIT 100
-'        LOOP
-'        Result$ = Download$("", "", "", 0)
-'    NEXT
-
-'    m$ = "Current version: " + Version$
-'    m$ = m$ + ".\n"
-
-'    DIM button$(1 TO 3)
-'    button$(3) = "#Close"
-'    IF LEN(remoteVersion$) THEN
-'        button$(1) = "Get #Stable Release"
-'        IF INSTR(remoteVersion$, "Cannot") = 0 THEN
-'            IF remoteVersion$ > Version$ THEN
-'                'higher version number in the stable release is newer than current version
-'                'regardless of this being a dev build
-'                m$ = m$ + "\n- A new stable version is available: v" + remoteVersion$ + ";"
-'            ELSE
-'                IF INSTR(DevChannel$, "Development") = 0 THEN
-'                    'if remoteVersion$ is not higher than current and this is not
-'                    'a dev build, we're all good.
-'                    m$ = m$ + "\n- You have the latest stable version: v" + Version$ + ";"
-'                    button$(1) = "#OK"
-'                ELSE
-'                    IF remoteVersion$ = Version$ THEN
-'                        'if this is a dev build and version numbers match, that probably means
-'                        'a stable version based on this dev build was released
-'                        m$ = m$ + "\n- A new stable version is available: v" + remoteVersion$ + ";"
-'                    ELSE
-'                        'if remoteVersion$ is not higher than current and this is not
-'                        'a dev build, we're all good.
-'                        m$ = m$ + "\n- No new stable version available;"
-'                        button$(1) = "#OK"
-'                    END IF
-'                END IF
-'            END IF
-'        END IF
-'    ELSE
-'        m$ = m$ + "\n- Failed to check for updates. Try again later."
-'        button$(1) = "#OK"
-'    END IF
-
-'    IF LEN(remoteDevVersion$) THEN
-'        button$(2) = "Get #Dev Build"
-'        IF INSTR(remoteDevVersion$, "error: ") = 0 THEN
-'            IF INSTR(DevChannel$, "Development") = 0 THEN
-'                'if this is not a dev build, it'll be offered
-'                m$ = m$ + "\n- Development build available: v" + remoteDevVersion$
-'                IF LEN(remoteDevBuild$) THEN m$ = m$ + ", " + remoteDevBuild$
-'                m$ = m$ + ";"
-'            ELSE
-'                IF remoteDevVersion$ >= Version$ THEN
-'                    'this is a dev build and remote version is same or higher
-'                    m$ = m$ + "\n- Latest dev build available: v" + remoteDevVersion$
-'                    IF LEN(remoteDevBuild$) THEN m$ = m$ + ", " + remoteDevBuild$
-'                    m$ = m$ + ";"
-'                END IF
-'            END IF
-'        END IF
-'    ELSE
-'        m$ = m$ + "\n- Failed to check for dev builds. Try again later."
-'        button$(2) = "#Close"
-'        IF button$(1) = "#OK" THEN button$(2) = ""
-'        button$(3) = ""
-'    END IF
-
-'    buttons$ = ""
-'    FOR i = 1 TO 3
-'        IF LEN(button$(i)) THEN
-'            IF LEN(buttons$) THEN buttons$ = buttons$ + ";"
-'            buttons$ = buttons$ + button$(i)
-'        END IF
-'    NEXT
-
-'    result = idemessagebox("Check for Newer Version", m$, buttons$)
-'    IF result = 0 THEN EXIT SUB
-
-'    url$ = ""
-'    SELECT CASE button$(result)
-'        CASE "Get #Dev Build"
-'            url$ = "https://www.qb64.org/portal/development-build/"
-'        CASE "Get #Stable Release"
-'            url$ = "https://github.com/QB64Team/qb64/releases/latest"
-'    END SELECT
-
-'    IF LEN(url$) = 0 THEN EXIT SUB
-
-'    IF INSTR(_OS$, "WIN") THEN
-'        SHELL _HIDE _DONTWAIT "start " + url$
-'    ELSEIF INSTR(_OS$, "MAC") THEN
-'        SHELL _HIDE _DONTWAIT "open " + url$
-'    ELSE
-'        SHELL _HIDE _DONTWAIT "xdg-open " + url$
-'    END IF
-'END SUB
-
-
-'FUNCTION ideactivitybox$ (action$, titlestr$, messagestr$, buttons$) STATIC
-
-'    SELECT CASE LCASE$(action$)
-'        CASE "setup"
-'            '-------- generic dialog box header --------
-'            PCOPY 0, 2
-'            PCOPY 0, 1
-'            SCREEN , , 1, 0
-'            focus = 1
-'            REDIM p AS idedbptype
-'            REDIM o(1 TO 100) AS idedbotype
-'            REDIM sep AS STRING * 1
-'            sep = CHR$(0)
-'            '-------- end of generic dialog box header --------
-
-'            '-------- init --------
-'            messagestr$ = StrReplace$(messagestr$, "\n", CHR$(10))
-'            MessageLines = 1
-'            REDIM FullMessage$(1 TO 8)
-'            PrevScan = 1
-'            DO
-'                NextScan = INSTR(NextScan + 1, messagestr$, CHR$(10))
-'                IF NextScan > 0 THEN
-'                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan, NextScan - PrevScan)
-'                    tw = LEN(FullMessage$(MessageLines)) + 2
-'                    IF tw > w THEN w = tw
-'                    PrevScan = NextScan + 1
-'                    MessageLines = MessageLines + 1
-'                    IF MessageLines > UBOUND(FullMessage$) THEN EXIT DO
-'                ELSE
-'                    FullMessage$(MessageLines) = MID$(messagestr$, PrevScan)
-'                    tw = LEN(FullMessage$(MessageLines)) + 2
-'                    IF tw > w THEN w = tw
-'                    EXIT DO
-'                END IF
-'            LOOP
-
-'            IF buttons$ = "" THEN buttons$ = "#OK"
-'            totalButtons = 1
-'            FOR i = 1 TO LEN(buttons$)
-'                IF ASC(buttons$, i) = 59 THEN totalButtons = totalButtons + 1
-'            NEXT
-'            buttonsLen = LEN(buttons$) + totalButtons * 6
-
-'            i = 0
-'            w2 = LEN(titlestr$) + 4
-'            IF w < w2 THEN w = w2
-'            IF w < buttonsLen THEN w = buttonsLen
-'            IF w > idewx - 4 THEN w = idewx - 4
-'            idepar p, w, 3 + MessageLines, titlestr$
-
-'            i = i + 1
-'            o(i).typ = 3
-'            o(i).y = 3 + MessageLines
-'            o(i).txt = idenewtxt(StrReplace$(buttons$, ";", sep))
-'            o(i).dft = 1
-'            '-------- end of init --------
-
-'            '-------- generic init --------
-'            FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
-'            '-------- end of generic init --------
-'        CASE "update"
-'            '-------- generic display dialog box & objects --------
-'            idedrawpar p
-'            f = 1: cx = 0: cy = 0
-'            FOR i = 1 TO 100
-'                IF o(i).typ THEN
-
-'                    'prepare object
-'                    o(i).foc = focus - f 'focus offset
-'                    o(i).cx = 0: o(i).cy = 0
-'                    idedrawobj o(i), f 'display object
-'                    IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
-'                END IF
-'            NEXT i
-'            lastfocus = f - 1
-'            '-------- end of generic display dialog box & objects --------
-
-'            '-------- custom display changes --------
-'            COLOR 0, 7
-'            FOR i = 1 TO MessageLines
-'                IF LEN(FullMessage$(i)) > p.w - 2 THEN
-'                    FullMessage$(i) = LEFT$(FullMessage$(i), p.w - 5) + STRING$(3, 250)
-'                END IF
-'                _PRINTSTRING (p.x + (w \ 2 - LEN(FullMessage$(i)) \ 2) + 1, p.y + 1 + i), FullMessage$(i)
-'            NEXT i
-'            '-------- end of custom display changes --------
-
-'            'update visual page and cursor position
-'            PCOPY 1, 0
-'            IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
-
-'            '-------- read input --------
-'            change = 0
-'            GetInput
-'            IF mWHEEL THEN change = 1
-'            IF KB THEN change = 1
-'            IF mCLICK THEN mousedown = 1: change = 1
-'            IF mRELEASE THEN mouseup = 1: change = 1
-'            IF mB THEN change = 1
-'            alt = KALT: IF alt <> oldalt THEN change = 1
-'            oldalt = alt
-'            _LIMIT 100
-
-'            IF change THEN
-'                IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
-'                'convert "alt+letter" scancode to letter's ASCII character
-'                altletter$ = ""
-'                IF alt AND NOT KCTRL THEN
-'                    IF LEN(K$) = 1 THEN
-'                        k = ASC(UCASE$(K$))
-'                        IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
-'                    END IF
-'                END IF
-'                SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
-'                '-------- end of read input --------
-
-'                '-------- generic input response --------
-'                info = 0
-
-'                IF UCASE$(K$) >= "A" AND UCASE$(K$) <= "Z" THEN altletter$ = UCASE$(K$)
-
-'                IF K$ = "" THEN K$ = CHR$(255)
-'                IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
-'                IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
-'                IF focus < 1 THEN focus = lastfocus
-'                IF focus > lastfocus THEN focus = 1
-'                f = 1
-'                FOR i = 1 TO 100
-'                    t = o(i).typ
-'                    IF t THEN
-'                        focusoffset = focus - f
-'                        ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
-'                    END IF
-'                NEXT
-'                '-------- end of generic input response --------
-
-'                'specific post controls
-'                IF K$ = CHR$(27) THEN ideactivitybox$ = MKI$(0)
-
-'                IF K$ = CHR$(13) OR (info <> 0) THEN
-'                    ideactivitybox$ = MKI$(1) + MKL$(focus)
-'                    ClearMouse
-'                END IF
-'                'end of custom controls
-
-'                mousedown = 0
-'                mouseup = 0
-'            END IF
-'    END SELECT
-'END FUNCTION
-
 
 FUNCTION ideDisplayBox
 
@@ -16603,7 +16290,7 @@ FUNCTION ideDisplayBox
             v% = VAL(idetxt(o(whBox).txt))
             IF idewy <> v% - idesubwindow THEN idewy = v% - idesubwindow: optChg% = -1
 
-            v% = o(rpChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(rpChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDE_AutoPosition <> v% THEN IDE_AutoPosition = v%: optChg% = -1
 
             v% = VAL(idetxt(o(csBox).txt))
@@ -16611,9 +16298,9 @@ FUNCTION ideDisplayBox
             v% = VAL(idetxt(o(ceBox).txt))
             IF IDENormalCursorEnd <> v% THEN IDENormalCursorEnd = v%: optChg% = -1
 
-            v% = o(f8Chk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(f8Chk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDE_UseFont8 <> v% THEN IDE_UseFont8 = v%: optChg% = -1
-            v% = o(cfChk).sel: IF v% <> 0 THEN v% = TRUE
+            v% = o(cfChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF idecustomfont <> v% THEN idecustomfont = v%: fonChg% = -1: optChg% = -1
 
             v$ = idetxt(o(cfBox).txt)
@@ -18013,11 +17700,11 @@ SUB GetInput
     IF k THEN
         IF k < 0 THEN k = -k: release = 1
         'modifiers
-        IF k = KEY_LSHIFT OR k = KEY_RSHIFT THEN
+        IF k = _KEY_LSHIFT OR k = _KEY_RSHIFT THEN
             IF release = 1 THEN KSHIFT = 0 ELSE KSHIFT = -1
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
-        IF k = KEY_LALT OR k = KEY_RALT THEN
+        IF k = _KEY_LALT OR k = _KEY_RALT THEN
             IF release = 1 THEN
                 KALT = 0: KALTRELEASE = -1
             ELSE
@@ -18025,11 +17712,11 @@ SUB GetInput
             END IF
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
-        IF k = KEY_LCTRL OR k = KEY_RCTRL THEN
+        IF k = _KEY_LCTRL OR k = _KEY_RCTRL THEN
             IF release = 1 THEN KCTRL = 0: KCONTROL = 0 ELSE KCTRL = -1: KCONTROL = -1
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
-        IF k = KEY_LAPPLE OR k = KEY_RAPPLE THEN
+        IF k = _KEY_LAPPLE OR k = _KEY_RAPPLE THEN
             IF release = 1 THEN KCONTROL = 0 ELSE KCONTROL = -1
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
@@ -20422,57 +20109,6 @@ FUNCTION GetBytes$ (__value$, numberOfBytes&)
     getBytesPosition& = getBytesPosition& + numberOfBytes&
 END FUNCTION
 
-'FUNCTION Download$ (url$, outputVar$, lookFor$, timelimit) STATIC
-'    'as seen on http://www.qb64.org/wiki/Downloading_Files
-'    'adapted for use in the IDE
-
-'    DIM theClient AS LONG, l AS LONG
-'    DIM prevUrl$, prevUrl2$, url2$, x AS LONG
-'    DIM e$, url3$, x$, t#, a2$, a$, i AS LONG
-'    DIM i2 AS LONG, i3 AS LONG, d$, fh AS LONG
-
-'    IF url$ <> prevUrl$ OR url$ = "" THEN
-'        prevUrl$ = url$
-'        IF url$ = "" THEN
-'            prevUrl2$ = ""
-'            IF theClient THEN CLOSE theClient: theClient = 0
-'            EXIT FUNCTION
-'        END IF
-'        url2$ = url$
-'        x = INSTR(url2$, "/")
-'        IF x THEN url2$ = LEFT$(url$, x - 1)
-'        IF url2$ <> prevUrl2$ THEN
-'            prevUrl2$ = url2$
-'            IF theClient THEN CLOSE theClient: theClient = 0
-'            theClient = _OPENCLIENT("TCP/IP:80:" + url2$)
-'            IF theClient = 0 THEN Download = MKI$(2): prevUrl$ = "": EXIT FUNCTION
-'        END IF
-'        e$ = CHR$(13) + CHR$(10) ' end of line characters
-'        url3$ = RIGHT$(url$, LEN(url$) - x + 1)
-'        x$ = "GET " + url3$ + " HTTP/1.1" + e$
-'        x$ = x$ + "Host: " + url2$ + e$ + e$
-'        PUT #theClient, , x$
-'        t# = TIMER(0.001) ' start time
-'    END IF
-
-'    GET #theClient, , a2$
-'    a$ = a$ + a2$
-'    i = INSTR(a$, lookFor$)
-'    IF i THEN
-'        outputVar$ = a$
-'        Download = MKI$(1) + MKL$(i) 'indicates download was successful
-'        prevUrl$ = ""
-'        prevUrl2$ = ""
-'        a$ = ""
-'        CLOSE theClient
-'        theClient = 0
-'        EXIT FUNCTION
-'    END IF ' i
-'    IF TIMER(0.001) > t# + timelimit# THEN CLOSE theClient: theClient = 0: Download = MKI$(3): prevUrl$ = "": EXIT FUNCTION
-'    Download = MKI$(0) 'still working
-'END FUNCTION
-
-
 FUNCTION SaveFile$ (IdeOpenFile AS STRING)
     SHARED Default_StartDir$
 
@@ -21218,3 +20854,4 @@ FUNCTION AnsiTextToUtf8Text$ (text$)
 END FUNCTION
 
 '$INCLUDE: 'file_converters.bas'
+

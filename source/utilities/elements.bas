@@ -610,3 +610,4 @@ FUNCTION elementStringConcat$ (os1$, os2$)
 
     elementStringConcat$ = CHR$(34) + s1$ + s2$ + CHR$(34) + "," + _TRIM$(STR$(s1size + s2size))
 END FUNCTION
+

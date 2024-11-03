@@ -314,13 +314,13 @@ SUB ReadInitialConfig
 
     IF ReadConfigSetting(displaySettingsSection$, "IDE_KeywordCapital", value$) THEN
         IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            IDEAutoLayoutKwCapitals = TRUE
+            IDEAutoLayoutKwCapitals = _TRUE
         ELSE
-            IDEAutoLayoutKwCapitals = FALSE
+            IDEAutoLayoutKwCapitals = _FALSE
             WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
         END IF
     ELSE
-        IDEAutoLayoutKwCapitals = FALSE
+        IDEAutoLayoutKwCapitals = _FALSE
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
     END IF
 
@@ -365,39 +365,39 @@ SUB ReadInitialConfig
     result = ReadConfigSetting(displaySettingsSection$, "IDE_AutoFormat", value$)
     IDEAutoLayout = VAL(value$)
     IF UCASE$(value$) = "TRUE" OR IDEAutoLayout <> 0 THEN
-        IDEAutoLayout = TRUE
+        IDEAutoLayout = _TRUE
     ELSE
         IF UCASE$(value$) <> "FALSE" AND value$ <> "0" THEN
             WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", "True"
-            IDEAutoLayout = TRUE
+            IDEAutoLayout = _TRUE
         ELSE
-            IDEAutoLayout = FALSE
+            IDEAutoLayout = _FALSE
         END IF
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_AutoIndent", value$)
     IDEAutoIndent = VAL(value$)
     IF UCASE$(value$) = "TRUE" OR IDEAutoIndent <> 0 THEN
-        IDEAutoIndent = TRUE
+        IDEAutoIndent = _TRUE
     ELSE
         IF UCASE$(value$) <> "FALSE" AND value$ <> "0" THEN
             WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", "True"
-            IDEAutoIndent = TRUE
+            IDEAutoIndent = _TRUE
         ELSE
-            IDEAutoIndent = FALSE
+            IDEAutoIndent = _FALSE
         END IF
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_IndentSUBs", value$)
     IDEIndentSubs = VAL(value$)
     IF UCASE$(value$) = "TRUE" OR IDEIndentSubs <> 0 THEN
-        IDEIndentSubs = TRUE
+        IDEIndentSubs = _TRUE
     ELSE
         IF UCASE$(value$) <> "FALSE" AND value$ <> "0" THEN
             WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", "True"
-            IDEIndentSubs = TRUE
+            IDEIndentSubs = _TRUE
         ELSE
-            IDEIndentSubs = FALSE
+            IDEIndentSubs = _FALSE
         END IF
     END IF
 
