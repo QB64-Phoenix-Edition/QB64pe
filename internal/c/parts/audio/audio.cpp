@@ -2127,7 +2127,7 @@ struct AudioEngine {
         // Set the initialized flag as true
         isInitialized = true;
 
-        AUDIO_DEBUG_PRINT("Audio engine initialized @ %uHz", sampleRate);
+        AUDIO_DEBUG_PRINT("Audio engine initialized @ %uHz", ma_engine_get_sample_rate(&maEngine));
 
         // Reserve sound handle 0 so that nothing else can use it
         // We'll kickstart it later when we need it
@@ -3097,7 +3097,7 @@ void sub__sndrawbatch(void *sampleFrameArray, int32_t channels, int32_t handle, 
     }
 
     if (passed & 1) {
-        if ((channels != 1 && channels != 2)) {
+        if (channels != 1 && channels != 2) {
             AUDIO_DEBUG_PRINT("Invalid number of channels: %i", channels);
 
             return;
@@ -3235,7 +3235,7 @@ int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits) {
 /// @param passed Optional parameter flags.
 /// @return A _MEM value that can be used to access the sound data.
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) {
-    ma_format maFormat = ma_format::ma_format_unknown;
+    auto maFormat = ma_format::ma_format_unknown;
     ma_uint32 channels = 0;
     ma_uint64 sampleFrames = 0;
     intptr_t data = NULL;
@@ -3372,8 +3372,8 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
         return;
     }
 
-    bool fromMemory = false;                           // by default we'll assume we are loading from a file on disk
-    SoundBankFormat format = SoundBankFormat::UNKNOWN; // set to unknown by default
+    auto fromMemory = false;                // by default we'll assume we are loading from a file on disk
+    auto format = SoundBankFormat::UNKNOWN; // set to unknown by default
 
     if (passed && qbsRequirements->len) {
         // Parse the requirements string
