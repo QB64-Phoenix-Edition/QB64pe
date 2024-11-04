@@ -1,0 +1,17 @@
+$CONSOLE:ONLY
+
+PRINT
+PRINT "("; _STR$(_SINGLE_MIN); ")"
+PRINT "("; _STR$(_SINGLE_MAX); ")"
+PRINT
+PRINT "("; _STR$(_DOUBLE_MIN); ")"
+PRINT "("; _STR$(_DOUBLE_MAX); ")"
+PRINT
+PRINT "("; _STR$(_FLOAT_MIN); ")"
+PRINT "("; _STR$(_FLOAT_MAX); ")"
+PRINT
+PRINT "("; STR$(_FLOAT_MIN); ")"
+PRINT "("; STR$(_FLOAT_MAX); ")"
+
+SYSTEM
+

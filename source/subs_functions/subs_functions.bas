@@ -3293,6 +3293,17 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_Str"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "qbs__str"
+    id.args = 1
+    id.arg = MKL$(-1)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_STR$(number)"
+    regid
+
+    clearid
     id.n = "UCase"
     id.musthave = "$"
     id.subfunc = 1

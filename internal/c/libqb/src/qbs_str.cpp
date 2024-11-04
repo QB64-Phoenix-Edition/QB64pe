@@ -243,6 +243,11 @@ asdecimal:
 }
 
 qbs *qbs_str(long double value) {
-    // not fully implemented
-    return qbs_str((double)value);
+    // Not available in QB4.5, so we don't need to care about compatible
+    // rounding and rather forward to the modern _STR$() instead.
+    qbs *tqbs = qbs__str(value);
+    if (tqbs->chr[0] != 45) { // positive?, then just prepend a space
+        return qbs_add(qbs_new_txt(" "), tqbs);
+    }
+    return tqbs;
 }

@@ -40,6 +40,7 @@ qbs *qbs_set(qbs *, qbs *);
 
 void qbs_free(qbs *str);
 
+// legacy STR$ function prototypes
 qbs *qbs_str(int64_t value);
 qbs *qbs_str(int32_t value);
 qbs *qbs_str(int16_t value);
@@ -51,6 +52,19 @@ qbs *qbs_str(uint8_t value);
 qbs *qbs_str(float value);
 qbs *qbs_str(double value);
 qbs *qbs_str(long double value);
+
+// modern _STR$ function prototypes
+qbs *qbs__str(int64_t value);
+qbs *qbs__str(int32_t value);
+qbs *qbs__str(int16_t value);
+qbs *qbs__str(int8_t value);
+qbs *qbs__str(uint64_t value);
+qbs *qbs__str(uint32_t value);
+qbs *qbs__str(uint16_t value);
+qbs *qbs__str(uint8_t value);
+qbs *qbs__str(float value);
+qbs *qbs__str(double value);
+qbs *qbs__str(long double value);
 
 qbs *func_chr(int32_t value);
 
