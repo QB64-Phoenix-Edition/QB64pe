@@ -2811,8 +2811,8 @@ void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float 
             ma_sound_set_pan(&audioEngine.soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
         }
 
-        audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
         sub__sndplay(dst_handle);                              // Play the sound
+        audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
 
         AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %f, 3D (%f, %f, %f)", dst_handle, volume, x, y, z);
     }
@@ -2843,8 +2843,8 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
         if (passed & 2)
             ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
 
-        audioEngine.soundHandles[handle]->autoKill = true; // Set to auto kill
         sub__sndplay(handle);                              // Play the sound
+        audioEngine.soundHandles[handle]->autoKill = true; // Set to auto kill
     }
 }
 
