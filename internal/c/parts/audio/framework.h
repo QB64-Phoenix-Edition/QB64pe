@@ -20,6 +20,7 @@
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "miniaudio.h"
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <climits>
 #include <cmath>

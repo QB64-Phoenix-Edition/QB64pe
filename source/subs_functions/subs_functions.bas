@@ -1544,7 +1544,7 @@ SUB reginternal
     id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(-2) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) ' arg 2 has special handling code in evaluatefunc()
     id.specialformat = "?[,[?][,[?][,?]]]"
     id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_UCHARPOS&(text$[, posArray&()][, utfEncoding&][, fontHandle&])"
+    id.hr_syntax = "_UCHARPOS&(text$[, posArray&([index&])][, utfEncoding&][, fontHandle&])"
     regid
 
     'WORKING WITH COLORS
@@ -1962,7 +1962,7 @@ SUB reginternal
     id.args = 3
     id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(-3) + MKL$(ULONGTYPE - ISPOINTER)
     id.specialformat = "?,?[,?]"
-    id.hr_syntax = "_WAVE voice&, waveDefinition%%(), frameCount&"
+    id.hr_syntax = "_WAVE voice&, waveDefinition%%([index&])[, frameCount&]"
     regid
 
     clearid
@@ -1990,7 +1990,7 @@ SUB reginternal
     id.args = 4
     id.arg = MKL$(-3) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
     id.specialformat = "?[,[?][,[?][,?]]]"
-    id.hr_syntax = "_SNDRAWBATCH sampleFrameArray!()[, channels&][, pipeHandle&][, frameCount&]"
+    id.hr_syntax = "_SNDRAWBATCH sampleFrameArray!([index&])[, channels&][, pipeHandle&][, frameCount&]"
     regid
 
     clearid
