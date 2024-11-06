@@ -39,6 +39,8 @@ DEFLNG A-Z
 
 DIM SHARED NoExeSaved AS INTEGER
 
+DIM SHARED ColorSet, colorRecompileAttempts, colorSetDesired
+
 DIM SHARED vWatchOn, vWatchRecompileAttempts, vWatchDesiredState, vWatchErrorCall$
 DIM SHARED vWatchNewVariable$, vWatchVariableExclusions$
 vWatchErrorCall$ = "if (stop_program) {*__LONG_VWATCH_LINENUMBER=0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);};if(new_error){bkp_new_error=new_error;new_error=0;*__LONG_VWATCH_LINENUMBER=-1; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);new_error=bkp_new_error;};"
@@ -58,8 +60,8 @@ DIM ExecLevel(255), ExecCounter AS INTEGER
 REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is the string value
 REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
-DIM SHARED UserDefineCount AS INTEGER, UserDefineList$
-UserDefineList$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@QB64PE@"
+DIM SHARED UserDefineCount AS INTEGER, UserDefineCountPresets AS INTEGER, UserDefineList$, UserDefineListPresets$
+UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@QB64PE@"
 UserDefine(0, 0) = "WINDOWS": UserDefine(0, 1) = "WIN"
 UserDefine(0, 2) = "LINUX"
 UserDefine(0, 3) = "MAC": UserDefine(0, 4) = "MACOSX"
@@ -70,6 +72,9 @@ IF INSTR(_OS$, "LINUX") THEN UserDefine(1, 2) = "-1" ELSE UserDefine(1, 2) = "0"
 IF INSTR(_OS$, "MAC") THEN UserDefine(1, 3) = "-1": UserDefine(1, 4) = "-1" ELSE UserDefine(1, 3) = "0": UserDefine(1, 4) = "0"
 IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELSE UserDefine(1, 5) = "0": UserDefine(1, 6) = "-1"
 UserDefine(1, 7) = Version$: UserDefine(1, 8) = "-1"
+'Whatever values get added/changed in the future, make sure to keep
+'the VERSION on index #7 to avoid problems.
+UserDefineCountPresets = 8 'the last index of the defines above
 
 DIM SHARED QB64_uptime#
 
@@ -96,7 +101,7 @@ CONST DEPENDENCY_LOADFONT = 1: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_MINIAUDIO = 2: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_GL = 3: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_IMAGE_CODEC = 4: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
-CONST DEPENDENCY_CONSOLE_ONLY = 5: DEPENDENCY_LAST = DEPENDENCY_LAST + 1 '=2 if via -g switch, =1 if via metacommand $CONSOLE:ONLY
+CONST DEPENDENCY_CONSOLE_ONLY = 5: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_SOCKETS = 6: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_PRINTER = 7: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_ICON = 8: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
@@ -722,12 +727,8 @@ DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
 ' Collection of flags indicating which unstable features should be used during compilation
 '
 REDIM SHARED unstableFlags(1 TO 2) AS _BYTE
-DIM UNSTABLE_MIDI AS LONG
-DIM UNSTABLE_HTTP AS LONG
-
-UNSTABLE_MIDI = 1
-UNSTABLE_HTTP = 2
-
+DIM UNSTABLE_MIDI: UNSTABLE_MIDI = 1
+DIM UNSTABLE_HTTP: UNSTABLE_HTTP = 2
 
 
 
@@ -1050,9 +1051,7 @@ IF idemode = 0 AND NOT QuietMode THEN
     PRINT "Beginning C++ output from QB64 code... "
 END IF
 
-BU_DEPENDENCY_CONSOLE_ONLY = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY)
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
-DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = BU_DEPENDENCY_CONSOLE_ONLY AND 2 'Restore -g switch if used
 
 Error_Happened = 0
 
@@ -1078,6 +1077,9 @@ sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
+colorSetDesired = 0
+colorRecompileAttempts = 0
+
 vWatchDesiredState = 0
 vWatchRecompileAttempts = 0
 
@@ -1088,6 +1090,8 @@ opexarray_desiredState = 0
 opexarray_recompileAttempts = 0
 
 recompile:
+ColorSet = colorSetDesired
+
 vWatchOn = vWatchDesiredState
 vWatchVariable "", -1 'reset internal variables list
 
@@ -1330,7 +1334,8 @@ closedsubfunc = 0
 subfunc = ""
 SelectCaseCounter = 0
 ExecCounter = 0
-UserDefineCount = 8
+UserDefineList$ = UserDefineListPresets$
+UserDefineCount = UserDefineCountPresets
 totalVariablesCreated = 0
 typeDefinitions$ = ""
 totalMainVariablesCreated = 0
@@ -1485,7 +1490,20 @@ DO
         lineBackup$ = wholeline$ 'backup the real line (will be blank when lastline is set)
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
-            IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            SetPreLET "DEBUG_IS_ACTIVE", "0" 'defaults to false (overridden in vwatch.bi using $LET)
+            SetPreLET "SOCKETS_IN_USE", "-1" 'assume true for pre-pass (allow registration of funtions)
+            IF ideprogname$ <> "beforefirstline.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
+            IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
+            ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
+            END IF
+            'add more files in between here
+            'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
             END IF
@@ -1495,7 +1513,13 @@ DO
             ELSE
                 IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
             END IF
-            IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            'add more files in between here
+            'add more files in between here
+            IF ideprogname$ <> "afterlastline.bm" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
         END IF
         firstLine = 0: lastLine = 0
         IF GetBufLen&(autoIncludeBuffer) > 0 THEN
@@ -1593,13 +1617,23 @@ DO
         END IF
 
         IF temp$ = "$COLOR:0" THEN
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            GOTO finishedlinepp
+            colorSetDesired = 1
+            IF ColorSet <> 1 THEN
+                IF colorRecompileAttempts = 0 THEN
+                    colorRecompileAttempts = colorRecompileAttempts + 1
+                    GOTO do_recompile
+                END IF
+            END IF
         END IF
 
         IF temp$ = "$COLOR:32" THEN
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            GOTO finishedlinepp
+            colorSetDesired = 2
+            IF ColorSet <> 2 THEN
+                IF colorRecompileAttempts = 0 THEN
+                    colorRecompileAttempts = colorRecompileAttempts + 1
+                    GOTO do_recompile
+                END IF
+            END IF
         END IF
 
         IF temp$ = "$DEBUG" THEN
@@ -1662,17 +1696,7 @@ DO
                 END SELECT
             NEXT
             r$ = r1$
-            'First look to see if we have an existing setting like this and if so, update it
-            FOR i = 9 TO UserDefineCount 'UserDefineCount 0-8 are reserved for OS/BIT/Compiler detection & version
-                IF UserDefine(0, i) = l$ THEN UserDefine(1, i) = r$: GOTO finishedlinepp
-            NEXT
-            'Otherwise create a new setting and set the initial value for it
-            UserDefineCount = UserDefineCount + 1
-            IF UserDefineCount > UBOUND(UserDefine, 2) THEN
-                REDIM _PRESERVE UserDefine(1, UBOUND(UserDefine, 2) + 10) 'Add another 10 elements to the array so it'll expand as the user adds to it
-            END IF
-            UserDefine(0, UserDefineCount) = l$
-            UserDefine(1, UserDefineCount) = r$
+            SetPreLET l$, r$
             GOTO finishedlinepp
         END IF
 
@@ -1687,7 +1711,6 @@ DO
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
-                    regUnstableHttp
 
                 CASE ELSE
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
@@ -2267,7 +2290,7 @@ DO
                                     IF LEN(e$) = 0 THEN a$ = "Expected ALIAS name-in-library": GOTO errmes
                                     FOR x = 1 TO LEN(e$)
                                         a = ASC(e$, x)
-                                        IF _NEGATE alphanumeric(a) _ANDALSO a <> ASC_LEFTBRACKET _ANDALSO a <> ASC_RIGHTBRACKET _ANDALSO a <> ASC_MINUS _ANDALSO a <> ASC_FULLSTOP _ANDALSO a <> ASC_COLON _ANDALSO a <> ASC_LESSTHAN _ANDALSO a <> ASC_GREATERTHAN _ANDALSO a <> ASC_LEFTSQUAREBRACKET _ANDALSO a <> ASC_RIGHTSQUAREBRACKET THEN
+                                        IF _NEGATE alphanumeric(a) _ANDALSO a <> _ASC_LEFTBRACKET _ANDALSO a <> _ASC_RIGHTBRACKET _ANDALSO a <> _ASC_MINUS _ANDALSO a <> _ASC_FULLSTOP _ANDALSO a <> _ASC_COLON _ANDALSO a <> _ASC_LESSTHAN _ANDALSO a <> _ASC_GREATERTHAN _ANDALSO a <> _ASC_LEFTSQUAREBRACKET _ANDALSO a <> _ASC_RIGHTSQUAREBRACKET THEN
                                             a$ = "Expected ALIAS name-in-library": GOTO errmes
                                         END IF
                                     NEXT
@@ -2511,7 +2534,7 @@ DO
                                 END IF
 
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "SUB_" + UCASE$(MID$(n$, 5)): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
-                                IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": DEPENDENCY(DEPENDENCY_GL) = 1
+                                IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": SetDependency DEPENDENCY_GL
                                 regid
                                 reginternalsubfunc = 0
 
@@ -2696,7 +2719,8 @@ lastLineReturn = 0
 lastLine = 0
 firstLine = 1
 autoIncludeBuffer = -1
-UserDefineCount = 8
+UserDefineList$ = UserDefineListPresets$
+UserDefineCount = UserDefineCountPresets
 
 FOR i = 0 TO constlast: constdefined(i) = 0: NEXT 'undefine constants
 
@@ -2774,7 +2798,20 @@ DO
         lineBackup$ = a3$ 'backup the real line (will be blank when lastline is set)
         autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
         IF firstLine <> 0 THEN
-            IF ideprogname$ <> "beforefirstline.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            SetPreLET "DEBUG_IS_ACTIVE", "0" 'defaults to false (overridden in vwatch.bi using $LET)
+            SetPreLET "SOCKETS_IN_USE", str2$(DEPENDENCY(DEPENDENCY_SOCKETS) <> 0) 'get "real" last state from pre-pass
+            IF ideprogname$ <> "beforefirstline.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
+            IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
+            ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
+            END IF
+            'add more files in between here
+            'add more files in between here
             IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
                 IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
             END IF
@@ -2784,7 +2821,13 @@ DO
             ELSE
                 IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
             END IF
-            IF ideprogname$ <> "afterlastline.bm" THEN WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            'add more files in between here
+            'add more files in between here
+            IF ideprogname$ <> "afterlastline.bm" THEN
+                WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+            ELSE
+                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+            END IF
         END IF
         firstLine = 0: lastLine = 0
         IF GetBufLen&(autoIncludeBuffer) > 0 THEN
@@ -2973,30 +3016,18 @@ DO
             temp = INSTR(temp$, "=") 'without an = in there, we can't get a value from the left and right side
             l$ = RTRIM$(LEFT$(temp$, temp - 1)): r$ = LTRIM$(MID$(temp$, temp + 1))
             layout$ = SCase$("$Let ") + l$ + " = " + r$
-            'First look to see if we have an existing setting like this and if so, update it
-            FOR i = 9 TO UserDefineCount 'UserDefineCount 0-8 are reserved for OS/BIT/Compiler detection & version
-                IF UserDefine(0, i) = l$ THEN UserDefine(1, i) = r$: GOTO finishednonexec
-            NEXT
-            'Otherwise create a new setting and set the initial value for it
-            UserDefineCount = UserDefineCount + 1
-            IF UserDefineCount > UBOUND(UserDefine, 2) THEN
-                REDIM _PRESERVE UserDefine(1, UBOUND(UserDefine, 2) + 10) 'Add another 10 elements to the array so it'll expand as the user adds to it
-            END IF
-            UserDefine(0, UserDefineCount) = l$
-            UserDefine(1, UserDefineCount) = r$
+            SetPreLET l$, r$
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$COLOR:0" THEN
             layout$ = SCase$("$Color:0")
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color0.bi"
-            layoutdone = 1
+            IF ColorSet = 2 THEN a$ = "$COLOR:32 already set, cannot use both color sets together": GOTO errmes
             GOTO finishednonexec
         END IF
         IF a3u$ = "$COLOR:32" THEN
             layout$ = SCase$("$Color:32")
-            addmetainclude$ = getfilepath$(COMMAND$(0)) + "internal" + pathsep$ + "support" + pathsep$ + "color" + pathsep$ + "color32.bi"
-            layoutdone = 1
+            IF ColorSet = 1 THEN a$ = "$COLOR:0 already set, cannot use both color sets together": GOTO errmes
             GOTO finishednonexec
         END IF
 
@@ -3035,7 +3066,7 @@ DO
         END IF
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
-            DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) = DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) OR 1
+            SetDependency DEPENDENCY_CONSOLE_ONLY
             ConsoleOn = 1
             IF prepass = 0 THEN
                 IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
@@ -3331,6 +3362,7 @@ DO
 
                 CASE "HTTP"
                     layout$ = layout$ + SCase$("Http")
+                    addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "No longer required, feature is stable now", "$UNSTABLE:HTTP"
             END SELECT
 
             GOTO finishednonexec
@@ -3906,12 +3938,12 @@ DO
                     striplibver:
                     FOR z = LEN(x$) TO 1 STEP -1
                         a = ASC(x$, z)
-                        IF a = ASC_BACKSLASH OR a = ASC_FORWARDSLASH THEN EXIT FOR
-                        IF a = ASC_FULLSTOP OR a = ASC_COLON THEN
+                        IF a = _ASC_BACKSLASH OR a = _ASC_FORWARDSLASH THEN EXIT FOR
+                        IF a = _ASC_FULLSTOP OR a = _ASC_COLON THEN
                             IF isuinteger(RIGHT$(x$, LEN(x$) - z)) THEN
                                 IF LEN(v$) THEN v$ = RIGHT$(x$, LEN(x$) - z) + "." + v$ ELSE v$ = RIGHT$(x$, LEN(x$) - z)
                                 x$ = LEFT$(x$, z - 1)
-                                IF a = ASC_COLON THEN EXIT FOR
+                                IF a = _ASC_COLON THEN EXIT FOR
                                 GOTO striplibver
                             ELSE
                                 EXIT FOR
@@ -6849,7 +6881,7 @@ DO
 
     IF n >= 2 THEN
         IF firstelement$ = "ON" AND secondelement$ = "STRIG" THEN
-            DEPENDENCY(DEPENDENCY_DEVICEINPUT) = 1
+            SetDependency DEPENDENCY_DEVICEINPUT
             i = 3
             IF i > n THEN a$ = "Expected (": GOTO errmes
             a2$ = getelement$(ca$, i): i = i + 1
@@ -11385,8 +11417,6 @@ DO
         LOOP 'fall through to next section...
         '(end manager)
 
-
-
     END IF 'continuelinefrom=0
 
 
@@ -12439,7 +12469,7 @@ localpath$ = "internal\c\"
 IF DEPENDENCY(DEPENDENCY_GL) THEN makedeps$ = makedeps$ + " DEP_GL=y"
 IF DEPENDENCY(DEPENDENCY_IMAGE_CODEC) THEN makedeps$ = makedeps$ + " DEP_IMAGE_CODEC=y"
 IF DEPENDENCY(DEPENDENCY_CONSOLE_ONLY) THEN makedeps$ = makedeps$ + " DEP_CONSOLE_ONLY=y"
-IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN makedeps$ = makedeps$ + " DEP_SOCKETS=y"
+IF DEPENDENCY(DEPENDENCY_SOCKETS) THEN makedeps$ = makedeps$ + " DEP_SOCKETS=y DEP_HTTP=y"
 IF DEPENDENCY(DEPENDENCY_PRINTER) THEN makedeps$ = makedeps$ + " DEP_PRINTER=y"
 IF DEPENDENCY(DEPENDENCY_ICON) THEN makedeps$ = makedeps$ + " DEP_ICON=y"
 IF DEPENDENCY(DEPENDENCY_SCREENIMAGE) THEN makedeps$ = makedeps$ + " DEP_SCREENIMAGE=y"
@@ -12451,10 +12481,6 @@ IF ConsoleOn THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
-
-IF unstableFlags(UNSTABLE_HTTP) AND DEPENDENCY(DEPENDENCY_SOCKETS) <> 0 THEN
-    makedeps$ = makedeps$ + " DEP_HTTP=y"
-END IF
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + str2$(tempfolderindex)
 
@@ -13322,11 +13348,11 @@ FUNCTION ParseBooleanSetting& (token$, setting AS LONG)
 
     SELECT CASE value
         CASE "true", "on", "yes"
-            setting = TRUE
+            setting = _TRUE
             ParseBooleanSetting& = -1
 
         CASE "false", "off", "no"
-            setting = FALSE
+            setting = _FALSE
             ParseBooleanSetting& = -1
 
         CASE ELSE
@@ -18710,7 +18736,7 @@ END FUNCTION
 
 'Main entry point for fixoperationorder
 FUNCTION fixoperationorder$ (savea$)
-    fixoperationorder = fixoperationorder_rec$(savea$, FALSE)
+    fixoperationorder = fixoperationorder_rec$(savea$, _FALSE)
 END FUNCTION
 
 'Recursive entry point for fixoperationorder
@@ -19579,7 +19605,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b = 0 THEN
                 foopassit:
                 IF p1 <> i THEN
-                    bare_array_context = FALSE
+                    bare_array_context = _FALSE
                     IF p1 > 2 THEN
                         token_before_paren$ = getelement(a$, p1 - 2)
                         bare_array_context = (token_before_paren$ = "UBOUND" OR token_before_paren$ = "LBOUND")
@@ -21218,23 +21244,6 @@ END SUB
 
 '$INCLUDE:'subs_functions\subs_functions.bas'
 
-SUB regUnstableHttp
-    reginternalsubfunc = 1
-
-    clearid
-    id.n = "_StatusCode" ' Name in CaMeL case
-    id.subfunc = 1 ' 1 = function, 2 = sub
-    id.callname = "func__statusCode" ' C/C++ function name
-    id.args = 1
-    id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_STATUSCODE(httpHandle&)" ' syntax help
-    regid
-
-    reginternalsubfunc = 0
-
-END SUB
-
 FUNCTION scope$
     IF id.share THEN scope$ = module$ + "__": EXIT FUNCTION
     scope$ = module$ + "_" + subfunc$ + "_"
@@ -22719,7 +22728,7 @@ SUB xprint (a$, ca$, n)
     u$ = str2$(uniquenumber)
 
     l$ = SCase$("Print")
-    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": DEPENDENCY(DEPENDENCY_PRINTER) = 1 '"L"
+    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": SetDependency DEPENDENCY_PRINTER '"L"
 
     'PRINT USING?
     IF n >= 2 THEN
@@ -23194,6 +23203,7 @@ END FUNCTION
 SUB SetDependency (requirement)
     IF requirement THEN
         DEPENDENCY(requirement) = 1
+        IF requirement = DEPENDENCY_SOCKETS THEN SetPreLET "SOCKETS_IN_USE", "-1"
     END IF
 END SUB
 
@@ -23276,7 +23286,7 @@ FUNCTION validname (a$)
             autoIncForceUScore = 0
             'enforce leading underscore
             IF l >= 1 THEN
-                IF ASC(a$, 1) <> 95  THEN EXIT FUNCTION
+                IF ASC(a$, 1) <> 95 THEN EXIT FUNCTION
             END IF
         END IF
     END IF
@@ -23331,6 +23341,21 @@ END FUNCTION
 FUNCTION rgbs$ (c AS _UNSIGNED LONG)
     rgbs$ = "_RGB32(" + _TRIM$(STR$(_RED32(c))) + ", " + _TRIM$(STR$(_GREEN32(c))) + ", " + _TRIM$(STR$(_BLUE32(c))) + ")"
 END FUNCTION
+
+SUB SetPreLET (flagName$, flagValue$)
+    'First look to see if we have an existing setting like this and if so, update it
+    FOR i = UserDefineCountPresets + 1 TO UserDefineCount 'exclude OS/BIT/Compiler detection & version
+        IF UserDefine(0, i) = flagName$ THEN UserDefine(1, i) = flagValue$: EXIT SUB
+    NEXT
+    'Otherwise create a new setting and set the initial value for it
+    UserDefineCount = UserDefineCount + 1
+    IF UserDefineCount > UBOUND(UserDefine, 2) THEN
+        REDIM _PRESERVE UserDefine(1, UBOUND(UserDefine, 2) + 10) 'Add another 10 elements to the array so it'll expand as the user adds to it
+    END IF
+    UserDefine(0, UserDefineCount) = flagName$
+    UserDefine(1, UserDefineCount) = flagValue$
+    UserDefineList$ = UserDefineList$ + flagName$ + "@" 'for highlighting
+END SUB
 
 FUNCTION EvalPreIF (text$, err$)
     temp$ = text$ 'so we don't corrupt the string sent to us for evaluation

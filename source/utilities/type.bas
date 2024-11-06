@@ -732,3 +732,4 @@ FUNCTION isuinteger (i$)
     NEXT
     isuinteger = -1
 END FUNCTION
+

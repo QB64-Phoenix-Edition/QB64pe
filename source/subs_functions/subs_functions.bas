@@ -859,6 +859,16 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_StatusCode"
+    id.subfunc = 1
+    id.callname = "func__statusCode"
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_STATUSCODE(httpHandle&)"
+    regid
+
+    clearid
     id.n = "_EnvironCount"
     id.subfunc = 1
     id.callname = "func__environcount"
@@ -4105,3 +4115,4 @@ SUB reginternal
 
     reginternalsubfunc = 0
 END SUB
+

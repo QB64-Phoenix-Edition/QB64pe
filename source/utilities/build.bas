@@ -32,3 +32,4 @@ FUNCTION MakeNMOutputFilename$ (libfile AS STRING, dynamic AS LONG)
 
     MakeNMOutputFilename$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(libfile, pathsep$, "."), ":", ".") + dyn$ + ".txt"
 END FUNCTION
+

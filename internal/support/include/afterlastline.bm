@@ -134,63 +134,45 @@ END FUNCTION
 ' rule #2 its names must begin with an underscore.
 '==========================================================================
 
-'_WhatIsMyIP$() is a helper function required by _CONNECTIONADDRESS$
-'----------
-FUNCTION _WhatIsMyIP$
-    '20 OCT 2024: Make it part of this file, i.e. deprecating internal/c/myip.cpp;
-    '             Keep non-cURL based logic, so cURL isn't pulled into every tiny program;
-    '12 AUG 2022: Switched to qb64phoenix.com since www.qb64.org is dead;
-    '23 SEP 2018: Switched to www.qb64.org since www.qb64.net is dead;
-    '             Replaces implementation with download sample code from wiki;
-    '26 MAR 2014: Switched to www.qb64.net to avoid IP changes when QB64 moves servers;
-    '16 JAN 2013: Switched to qb64.net IP service;
-    '15 JUL 2013: Switched to 223.27.25.123 because of DNS issues;
+$IF SOCKETS_IN_USE THEN
+    '_WhatIsMyIP$() is a helper function required by _CONNECTIONADDRESS$
+    '----------
+    FUNCTION _WhatIsMyIP$
+        '01 NOV 2024: Make it part of this file, i.e. deprecating internal/c/myip.cpp;
+        '             Replaces implementation with new cURL based logic;
+        '12 AUG 2022: Switched to qb64phoenix.com since www.qb64.org is dead;
+        '23 SEP 2018: Switched to www.qb64.org since www.qb64.net is dead;
+        '             Replaces implementation with download sample code from wiki;
+        '26 MAR 2014: Switched to www.qb64.net to avoid IP changes when QB64 moves servers;
+        '16 JAN 2013: Switched to qb64.net IP service;
+        '15 JUL 2013: Switched to 223.27.25.123 because of DNS issues;
 
-    'Contents of the called file "getip.php":
-    '<?php
-    '   $ip = $_SERVER["REMOTE_ADDR"];
-    '   echo "<pre>".$ip."</pre>";
-    '?>
+        'Contents of the called file "ip.php":
+        '<?php
+        '   $ip = $_SERVER["REMOTE_ADDR"];
+        '   echo $ip;
+        '?>
 
-    '--- option _explicit requirements ---
-    DIM _hst$, _obj$, _tio#, _ch&, _st#
-    DIM _req$, _res$, _rec$, _cl%, _cle%, _das%, _le%
-    '--- set parameters ---
-    _hst$ = "qb64phoenix.com"
-    _obj$ = "/qb64_files/getip.php"
-    _tio# = 10
-    '--- open client ---
-    _ch& = _OPENCLIENT("TCP/IP:80:" + _hst$)
-    IF _ch& = _CLIENT_FAILED THEN EXIT FUNCTION
-    '--- send request ---
-    _req$ = "GET " + _obj$ + " HTTP/1.1" + _STR_CRLF
-    _req$ = _req$ + "Host: " + _hst$ + _STR_CRLF
-    _req$ = _req$ + "User-Agent: QB64-PE/4.0.0+ (Phoenix Edition)" + _STR_CRLF
-    _req$ = _req$ + "Cache-Control: no-cache" + _STR_CRLF
-    _req$ = _req$ + _STR_CRLF
-    PUT _ch&, , _req$
-    '--- read response ---
-    _res$ = _STR_EMPTY: _st# = TIMER(0.001)
-    DO
-        _DELAY 0.1 'check 10 times a second
-        GET _ch&, , _rec$
-        IF LEN(_rec$) > 0 THEN _st# = TIMER(0.001)
-        _res$ = _res$ + _rec$
-        IF LEN(_res$) < 15 OR LEFT$(_res$, 15) = "HTTP/1.1 200 OK" THEN
-            _cl% = INSTR(_res$, "<pre>")
-            IF _cl% > 0 THEN
-                _cle% = INSTR(_cl%, _res$, "</pre>")
-                IF _cle% > 0 THEN
-                    _das% = _cl% + 5: _le% = _cle% - _das%
-                    _WhatIsMyIP$ = MID$(_res$, _das%, _le%)
-                    EXIT DO
+        '--- option _explicit requirements ---
+        DIM _ch&, _st#, _res$, _rec$
+        '--- connect to client ---
+        _ch& = _OPENCLIENT("http://qb64phoenix.com/qb64_files/ip.php")
+        IF _ch& = _CLIENT_FAILED THEN EXIT FUNCTION
+        '--- read the response ---
+        IF _STATUSCODE(_ch&) = 200 THEN
+            _res$ = _STR_EMPTY: _st# = TIMER(0.001)
+            DO
+                _DELAY 0.1
+                GET _ch&, , _rec$
+                IF LEN(_rec$) > 0 THEN _st# = TIMER(0.001)
+                _res$ = _res$ + _rec$
+                IF EOF(_ch&) THEN
+                    _WhatIsMyIP$ = _res$: EXIT DO
                 END IF
-            END IF
-        ELSE
-            EXIT DO
+                IF _st# + 10 >= _SECS_IN_DAY THEN _st# = _st# - _SECS_IN_DAY
+            LOOP UNTIL TIMER(0.001) > _st# + 10 'timeout
         END IF
-        IF _st# + _tio# >= _SECS_IN_DAY THEN _st# = _st# - _SECS_IN_DAY
-    LOOP UNTIL TIMER(0.001) > _st# + _tio#
-    CLOSE _ch&
-END FUNCTION
+        CLOSE _ch&
+    END FUNCTION
+$END IF
 

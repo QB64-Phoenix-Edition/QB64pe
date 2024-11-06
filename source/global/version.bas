@@ -19,3 +19,4 @@ IF _FILEEXISTS("internal/version.txt") THEN
 
     CLOSE #versionfile
 END IF
+

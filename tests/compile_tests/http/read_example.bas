@@ -1,4 +1,3 @@
-$Unstable:Http
 $Console:Only
 
 h& = _OpenClient("https://www.example.com")
