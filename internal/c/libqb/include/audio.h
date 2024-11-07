@@ -31,8 +31,8 @@ struct mem_block;
 void sub_beep();
 double func_play(uint32_t voice, int32_t passed);
 void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4, int32_t passed);
-void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, uint32_t voice, int32_t option,
-               int32_t passed);
+void sub_sound(float frequency, float lengthInClockTicks, float volume, float panPosition, int32_t waveform, float waveformParam, uint32_t voice,
+               int32_t option, int32_t passed);
 void sub__wave(uint32_t voice, void *waveDefinition, uint32_t frameCount, int32_t passed);
 
 int32_t func__sndrate();

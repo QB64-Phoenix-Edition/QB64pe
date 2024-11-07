@@ -89,12 +89,13 @@ struct AudioEngine {
         /// @brief Pushes a whole buffer of mono sample frames to the queue. This is mutex protected and called by the main thread.
         /// @param buffer The buffer containing the sample frames. This cannot be NULL.
         /// @param frames The total number of frames in the buffer.
-        /// @param panning Controls how the buffer should be panned (-1.0 (full left) to 1.0 (full right)).
-        void PushSampleFrames(float *buffer, ma_uint64 frames, float panning) {
+        /// @param gainLeft Left channel gain value (0.0 to 1.0).
+        /// @param gainRight Right channel gain value (0.0 to 1.0).
+        void PushSampleFrames(float *buffer, ma_uint64 frames, float gainLeft, float gainRight) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             for (ma_uint64 i = 0; i < frames; i++) {
-                producer->data.push_back({(buffer[i] * (1.0f - panning)) / 2.0f, (buffer[i] * (1.0f + panning)) / 2.0f});
+                producer->data.push_back({buffer[i] * gainLeft, buffer[i] * gainRight});
             }
         }
 
@@ -310,9 +311,9 @@ struct AudioEngine {
         /// @brief Various types of waveform that can be generated.
         enum class WaveformType { NONE, SQUARE, SAWTOOTH, TRIANGLE, SINE, NOISE_WHITE, NOISE_PINK, NOISE_BROWNIAN, NOISE_LFSR, PULSE, CUSTOM, COUNT };
 
-        static constexpr auto PAN_LEFT = -1.0f;                  // left-most panning
-        static constexpr auto PAN_RIGHT = 1.0f;                  // right-most panning
-        static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT; // center panning
+        static constexpr auto PAN_LEFT = -1.0f;                  // left-most pan position
+        static constexpr auto PAN_RIGHT = 1.0f;                  // right-most pan position
+        static constexpr auto PAN_CENTER = PAN_LEFT + PAN_RIGHT; // center pan position
         static constexpr auto VOLUME_MIN = 0.0f;                 // minimum volume
         static constexpr auto VOLUME_MAX = 1.0f;                 // maximum volume
         static constexpr auto FREQUENCY_MIN = 20.0f;             // minimum frequency
@@ -329,9 +330,9 @@ struct AudioEngine {
         static const auto FREQUENCY_DEFAULT = 440;                                                     // the default frequency in Hz
         static const auto MML_VOLUME_MIN = 0;                                                          // minimum volume (percentage)
         static const auto MML_VOLUME_MAX = 100;                                                        // maximum volume (percentage)
-        static const auto MML_PAN_LEFT = 0;                                                            // left-most panning (percentage)
-        static const auto MML_PAN_RIGHT = 255;                                                         // right-most panning (percentage)
-        static constexpr auto MML_PAN_CENTER = float(MML_PAN_RIGHT) / 2.0f;                            // center panning (percentage)
+        static const auto MML_PAN_LEFT = 0;                                                            // left-most pan position (percentage)
+        static const auto MML_PAN_RIGHT = 255;                                                         // right-most pan position (percentage)
+        static constexpr auto MML_PAN_CENTER = float(MML_PAN_RIGHT) / 2.0f;                            // center pan position (percentage)
         static constexpr auto VOLUME_DEFAULT = (float(MML_VOLUME_MAX) / 2.0f) / float(MML_VOLUME_MAX); // default volume (FP32)
         static const auto MML_TEMPO_MIN = 32;                                                          // the minimum MML tempo allowed
         static const auto MML_TEMPO_MAX = 255;                                                         // the maximum MML tempo allowed
@@ -356,6 +357,7 @@ struct AudioEngine {
         static const auto MML_ATTACK_MIN = 0;                                                          // the minimum MML attack (percentage)
         static const auto MML_ATTACK_MAX = 100;                                                        // the maximum MML attack (percentage)
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;                                    // the default pulse wave duty cycle (square)
+        static constexpr auto QUARTER_PI = float(M_PI) / 4.0f;
 
         /// @brief A simple ADSR envelope generator.
         class Envelope {
@@ -626,7 +628,9 @@ struct AudioEngine {
         WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
         Envelope envelope;                     // the ADSR envelope (used for sound and MML)
         bool background;                       // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
-        float panning;                         // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
+        float panPosition;                     // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
+        float gainLeft;                        // this is calculated from panPosition
+        float gainRight;                       // this is calculated from panPosition
         std::stack<State> stateStack;          // this maintains the state stack if we need to process substrings (VARPTR$)
         State currentState;                    // this is the current state. See State struct
         int tempo;                             // the tempo of the MML tune (this impacts all lengths)
@@ -738,13 +742,13 @@ struct AudioEngine {
             customWaveform->SetFrequency(frequency);
         }
 
-        /// @brief Sets MML friendly panning value.
-        /// @param panValue A value from 0 to 255.
-        void SetMMLPanning(long panValue) { SetPanning((float(panValue) / MML_PAN_CENTER) - PAN_RIGHT); }
+        /// @brief Sets MML friendly pan position value.
+        /// @param value A value from 0 to 255.
+        void SetMMLPanPosition(long value) { SetPanPosition((float(value) / MML_PAN_CENTER) - PAN_RIGHT); }
 
-        /// @brief Gets MML friendly panning value.
+        /// @brief Gets MML friendly pan position value.
         /// @return A value from 0 to 255.
-        long GetMMLPanning() { return std::lroundf((panning + PAN_RIGHT) * MML_PAN_CENTER) - 1; }
+        long GetMMLPanPosition() { return std::lroundf((panPosition + PAN_RIGHT) * MML_PAN_CENTER) - 1; }
 
         /// @brief Sets MML friendly amplitude value.
         /// @param amplitude A value from 0 to 100.
@@ -757,10 +761,11 @@ struct AudioEngine {
         /// @brief Accumulates the samples into the paused buffer until the PSG is unpaused.
         /// @param samples The samples to collect.
         /// @param samplesCount The number of samples to collect.
-        /// @param panning The panning value.
-        void AccumulateSampleFrames(const float *samples, size_t samplesCount, float panning) {
+        /// @param gainLeft Left channel gain value (0.0 to 1.0).
+        /// @param gainRight Right channel gain value (0.0 to 1.0).
+        void AccumulateSampleFrames(const float *samples, size_t samplesCount, float gainLeft, float gainRight) {
             for (size_t i = 0; i < samplesCount; i++) {
-                pausedBuffer.push_back({(samples[i] * (1.0f - panning)) / 2.0f, (samples[i] * (1.0f + panning)) / 2.0f});
+                pausedBuffer.push_back({samples[i] * gainLeft, samples[i] * gainRight});
             }
         }
 
@@ -768,9 +773,9 @@ struct AudioEngine {
         void PushBufferForPlayback() {
             if (!waveBuffer.empty()) {
                 if (isPaused) {
-                    AccumulateSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                    AccumulateSampleFrames(waveBuffer.data(), waveBuffer.size(), gainLeft, gainRight);
                 } else {
-                    rawStream->PushSampleFrames(waveBuffer.data(), waveBuffer.size(), panning);
+                    rawStream->PushSampleFrames(waveBuffer.data(), waveBuffer.size(), gainLeft, gainRight);
                 }
 
                 AUDIO_DEBUG_PRINT("Sent %llu samples for playback", waveBuffer.size());
@@ -816,10 +821,10 @@ struct AudioEngine {
             octave = MML_OCTAVE_DEFAULT;
             length = MML_LENGTH_DEFAULT;
             pause = MML_PAUSE_DEFAULT;
-            panning = PAN_CENTER;
             duration = 0;
             dots = 0;
             ZERO_VARIABLE(currentState);
+            SetPanPosition(PAN_CENTER);
 
             maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, ma_engine_get_sample_rate(rawStream->maEngine),
                                                        ma_waveform_type::ma_waveform_type_square, VOLUME_DEFAULT, FREQUENCY_DEFAULT);
@@ -989,12 +994,17 @@ struct AudioEngine {
             AUDIO_DEBUG_PRINT("Amplitude set to %lf", amplitude);
         }
 
-        /// @brief Set the PSG panning value.
+        /// @brief Set the PSG pan position.
         /// @param value A number between -1.0 to 1.0. Where 0.0 is center.
-        void SetPanning(float value) {
-            panning = std::clamp(value, PAN_LEFT, PAN_RIGHT); // clamp the value;
+        void SetPanPosition(float value) {
+            panPosition = std::clamp(value, PAN_LEFT, PAN_RIGHT); // clamp the value;
 
-            AUDIO_DEBUG_PRINT("Panning set to %f", panning);
+            // Calculate the left and right channel gain values using pan law (-3.0dB pan depth)
+            auto panMapped = (panPosition + 1.0f) * QUARTER_PI;
+            gainLeft = std::cos(panMapped);
+            gainRight = std::sin(panMapped);
+
+            AUDIO_DEBUG_PRINT("Pan position = %f, Left gain = %f, Right gain = %f", panPosition, gainLeft, gainRight);
         }
 
         /// @brief Pauses or resumes PSG playback. Once paused, the samples for the commands processed are accumulated in pausedBuffer.
@@ -1249,13 +1259,13 @@ struct AudioEngine {
                 follow_up:
                     if (followUp == 16) { // S...
                         if (currentChar == '-') {
-                            SetMMLPanning(GetMMLPanning() - 1);
+                            SetMMLPanPosition(GetMMLPanPosition() - 1);
 
                             followUp = 0;
 
                             continue;
                         } else if (currentChar == '+') {
-                            SetMMLPanning(GetMMLPanning() + 1);
+                            SetMMLPanPosition(GetMMLPanPosition() + 1);
 
                             followUp = 0;
 
@@ -1274,7 +1284,7 @@ struct AudioEngine {
                             return;
                         }
 
-                        SetMMLPanning(number);
+                        SetMMLPanPosition(number);
 
                         followUp = 0;
 
@@ -2415,14 +2425,14 @@ void sub_play(const qbs *str1, const qbs *str2, const qbs *str3, const qbs *str4
 /// @param frequency Sound frequency.
 /// @param lengthInClockTicks Duration in clock ticks. There are 18.2 clock ticks per second.
 /// @param volume Volume (0.0 to 1.0).
-/// @param panning Panning (-1.0 to 1.0).
+/// @param panPosition Pan position (-1.0 to 1.0).
 /// @param waveform Waveform (1=Square, 2=Saw, 3=Triangle, 4=Sine, 5=White Noise, 6=Pink Noise, 7=Brown Noise, 8=LFSR Noise, 9=Pulse).
 /// @param waveformParam Waveform parameter (if applicable).
 /// @param voice The voice to use (0 to 3).
 /// @param option WAIT=1 or RESUME=2
 /// @param passed Optional parameter flags.
-void sub_sound(float frequency, float lengthInClockTicks, float volume, float panning, int32_t waveform, float waveformParam, uint32_t voice, int32_t option,
-               int32_t passed) {
+void sub_sound(float frequency, float lengthInClockTicks, float volume, float panPosition, int32_t waveform, float waveformParam, uint32_t voice,
+               int32_t option, int32_t passed) {
     if (is_error_pending()) {
         return;
     }
@@ -2478,14 +2488,14 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         }
 
         if (passed & 4) {
-            AUDIO_DEBUG_PRINT("Panning specified (%f)", panning);
+            AUDIO_DEBUG_PRINT("Pan position specified (%f)", panPosition);
 
-            if (panning < AudioEngine::PSG::PAN_LEFT || panning > AudioEngine::PSG::PAN_RIGHT) {
+            if (panPosition < AudioEngine::PSG::PAN_LEFT || panPosition > AudioEngine::PSG::PAN_RIGHT) {
                 error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
                 return;
             }
-            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetPanning(panning);
+            audioEngine.soundHandles[audioEngine.psgVoices[voice]]->psg->SetPanPosition(panPosition);
         }
 
         if (passed & 8) {
@@ -2807,7 +2817,7 @@ void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float 
             ma_sound_set_position(&audioEngine.soundHandles[dst_handle]->maSound, x, y, z);                // Use full 3D positioning
         } else if (passed & 2) {                                                                           // If x is passed
             ma_sound_set_spatialization_enabled(&audioEngine.soundHandles[dst_handle]->maSound, MA_FALSE); // Disable spatialization for better stereo sound
-            ma_sound_set_pan_mode(&audioEngine.soundHandles[dst_handle]->maSound, ma_pan_mode_pan);        // Set true panning
+            ma_sound_set_pan_mode(&audioEngine.soundHandles[dst_handle]->maSound, ma_pan_mode_pan);        // Set true stereo panning
             ma_sound_set_pan(&audioEngine.soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
         }
 
