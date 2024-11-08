@@ -130,8 +130,10 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     }
 
     // Signal end of stream if we have reached the end
-    if (!pMIDI->isPlaying)
+    if (!pMIDI->isPlaying) {
         result = MA_AT_END;
+        AUDIO_DEBUG_PRINT("Reached end of stream");
+    }
 
     if (pFramesRead != NULL) {
         *pFramesRead = totalFramesRead;
@@ -194,7 +196,7 @@ static ma_result ma_midi_ds_get_length(ma_data_source *pDataSource, ma_uint64 *p
 }
 
 // clang-format off
-static ma_data_source_vtable ma_data_source_vtable_tsf = {
+static ma_data_source_vtable ma_data_source_vtable_midi = {
     ma_midi_ds_read, ma_midi_ds_seek,
     ma_midi_ds_get_data_format,
     ma_midi_ds_get_cursor,
@@ -272,7 +274,7 @@ static ma_result ma_midi_init_internal(const ma_decoding_backend_config *pConfig
     }
 
     dataSourceConfig = ma_data_source_config_init();
-    dataSourceConfig.vtable = &ma_data_source_vtable_tsf;
+    dataSourceConfig.vtable = &ma_data_source_vtable_midi;
 
     result = ma_data_source_init(&dataSourceConfig, &pMIDI->ds);
     if (result != MA_SUCCESS) {
@@ -345,6 +347,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     }
 
     if (!pMIDI->sequencer) {
+        AUDIO_DEBUG_PRINT("Failed to create sequencer instance");
         return MA_INVALID_FILE; // failure here will be mostly due to bad sound bank
     }
 

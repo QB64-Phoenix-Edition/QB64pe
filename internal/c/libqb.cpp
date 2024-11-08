@@ -1073,7 +1073,6 @@ int32 convert_unicode(int32 src_fmt, void *src_buf, int32 src_size, int32 dest_f
 #ifdef QB64_WINDOWS
 void showvalue(__int64);
 #endif
-void sub_beep();
 
 int32 lastfont = 48;
 int32 *font = (int32 *)calloc(4 * (48 + 1), 1); // NULL=unused index
@@ -11782,8 +11781,7 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
         } // 9
 
         if (character == 7) {
-            // qb64_generatesound(783.99,0.2,0);
-            Sleep(250);
+            sub_beep();
             goto skip;
         }
 

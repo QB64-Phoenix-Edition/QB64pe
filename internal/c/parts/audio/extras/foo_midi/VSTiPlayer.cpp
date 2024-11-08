@@ -152,13 +152,25 @@ bool VSTiPlayer::Startup() {
         return false;
 
     if (!_IsCOMInitialized) {
-        if (FAILED(::CoInitialize(NULL)))
-            return false;
+        switch (::CoInitialize(NULL)) {
+        case S_OK:
+            // We initialized COM on this thread first
+            // So, we will set the _IsCOMInitialized flag
+            _IsCOMInitialized = true;
+            break;
 
-        _IsCOMInitialized = true;
+        case RPC_E_CHANGED_MODE:
+        case S_FALSE:
+            // Something else already initialized COM on this thread
+            // So, we will not set the _IsCOMInitialized flag
+            break;
+
+        default:
+            return false;
+        }
     }
 
-    { _hReadEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL); }
+    _hReadEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
 
     SECURITY_ATTRIBUTES sa = {
         sizeof(sa),

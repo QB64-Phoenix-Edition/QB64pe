@@ -13,7 +13,7 @@ AUDIO_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/%.o,$(AUDIO_S
 # DEPENDENCY_CONSOLE_ONLY is added here to keep these .cpp files from including
 # the FreeGLUT headers via `libqb.h`. Ideally this is fixed properly in the future.
 $(PATH_INTERNAL_C)/parts/audio/%.o: $(PATH_INTERNAL_C)/parts/audio/%.cpp
-	$(CXX) -O2 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
+	$(CXX) -O3 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
 AUDIO_LIB := $(PATH_INTERNAL_C)/parts/audio/audio.a
 
