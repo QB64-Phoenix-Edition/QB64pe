@@ -4312,7 +4312,7 @@ DO
                                         GOTO GotHeader
                                     END IF
 
-                                    ' a740g: Fallback to source path
+                                    ' Fallback to source path
                                     IF inclevel > 0 THEN
                                         libpath$ = getfilepath(incname$(inclevel)) + og_libpath$
                                     ELSEIF NoIDEMode THEN
@@ -4386,7 +4386,7 @@ DO
                                         GOTO GotHeader
                                     END IF
 
-                                    ' a740g: Fallback to source path
+                                    ' Fallback to source path
                                     IF inclevel > 0 THEN
                                         libpath$ = getfilepath(incname$(inclevel)) + og_libpath$
                                     ELSEIF NoIDEMode THEN
@@ -10689,6 +10689,51 @@ DO
                         IF Error_Happened THEN GOTO errmes
                         IF convertspacing = 1 AND addlayout = 1 THEN l$ = LEFT$(l$, LEN(l$) - 1) + sp
                         IF addlayout THEN l$ = l$ + tlayout$: addedlayout = 1
+
+
+
+                        ' Special handling: _WAVE
+                        IF firstelement$ = "_WAVE" THEN
+                            e2$ = e$ 'backup
+
+                            e$ = evaluate(e$, sourcetyp)
+                            IF Error_Happened THEN GOTO errmes
+
+                            ' It must be an array
+                            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
+                                a$ = "Expected _BYTE array name": GOTO errmes
+                            END IF
+
+                            ' Only _BYTE array is allowed
+                            IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND ISUNSIGNED) OR (sourcetyp AND 511) <> 8 THEN
+                                a$ = "Expected _BYTE array name": GOTO errmes
+                            END IF
+
+                            e$ = e2$ 'restore
+                        END IF
+
+                        ' Special handling: _SNDRAWBATCH
+                        IF firstelement$ = "_SNDRAWBATCH" THEN
+                            e2$ = e$ 'backup
+
+                            e$ = evaluate(e$, sourcetyp)
+                            IF Error_Happened THEN GOTO errmes
+
+                            ' It must be an array
+                            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
+                                a$ = "Expected SINGLE array name": GOTO errmes
+                            END IF
+
+                            ' Only 32-bit floating-point array is allowed
+                            IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND 511) <> 32 THEN
+                                a$ = "Expected SINGLE array name": GOTO errmes
+                            END IF
+
+                            e$ = e2$ 'restore
+                        END IF
+
+
+
                         e$ = evaluatetotyp(e$, -2)
                         IF Error_Happened THEN GOTO errmes
                         GOTO sete
@@ -16670,7 +16715,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
-                ' a740g: ROR & ROL support
+                ' ROR & ROL support
                 IF n$ = "_ROR" OR n$ = "_ROL" THEN
                     rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' Get the last 3 characters and convert to lower case. We'll need this to construct the C call
                     IF curarg = 1 THEN ' First parameter
@@ -16708,7 +16753,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                ' a740g: UCHARPOS special case for arg 2
+                ' UCHARPOS special case for arg 2
                 IF n$ = "_UCHARPOS" THEN
                     IF curarg = 2 THEN
                         ' It must be an array

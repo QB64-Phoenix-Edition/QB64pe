@@ -12,14 +12,14 @@
 
 #include "libqb-common.h"
 
-#include "qbs.h"
 #include "gui.h"
 #include "image.h"
+#include "qbs.h"
 #include "tinyfiledialogs.h"
 #include <algorithm>
-#include <string>
-#include <string.h>
 #include <limits.h>
+#include <string.h>
+#include <string>
 
 /// @brief Splits a string delimited by '|' into an array of strings
 /// @param input The string to be parsed
@@ -332,6 +332,9 @@ qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
 
     return qbsFileName;
 }
+
+/// @brief Generates a 'beep' using OS APIs. This does not pull in the audio library.
+void sub_beep() { tinyfd_beep(); }
 
 /// @brief This is used internally by libqb to show warning and failure messages
 /// @param message The message the will show inside the dialog box

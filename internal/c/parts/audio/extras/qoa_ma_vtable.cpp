@@ -34,14 +34,12 @@ struct ma_qoa {
     ma_int16 *sample_data;
 };
 
-template <class T> T clamp(T x, T lo, T hi) { return std::max(std::min(x, hi), lo); }
-
 static ma_result ma_qoa_seek_to_pcm_frame(ma_qoa *pQOA, ma_uint64 frameIndex) {
     if (pQOA == NULL) {
         return MA_INVALID_ARGS;
     }
 
-    auto qoaFrame = clamp<ma_uint64>(frameIndex / QOA_FRAME_LEN, 0, pQOA->info.samples / QOA_FRAME_LEN);
+    auto qoaFrame = std::clamp<ma_uint64>(frameIndex / QOA_FRAME_LEN, 0, pQOA->info.samples / QOA_FRAME_LEN);
 
     pQOA->sample_pos = qoaFrame * QOA_FRAME_LEN;
     pQOA->sample_data_len = 0;

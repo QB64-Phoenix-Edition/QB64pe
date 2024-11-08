@@ -15,10 +15,13 @@
 
 // Uncomment this to to print debug messages to stderr
 // #define AUDIO_DEBUG 1
+
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "miniaudio.h"
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <climits>
 #include <cmath>
 #include <cstdint>
@@ -34,6 +37,7 @@
 #define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
 #define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
 #define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
+#define SILENCE_SAMPLE 0.0f
 
 #ifndef MA_DEFAULT_SAMPLE_RATE
 // Since this is used by the extended decoder plugins, it does not matter even if miniaudio changes it the future
@@ -161,8 +165,8 @@ class BufferMap {
 /// @brief A class that can manage double buffer frame blocks
 class DoubleBufferFrameBlock {
     std::vector<SampleFrame> blocks[2];
-    size_t index = 0;  // current reading block index
-    size_t cursor = 0; // cursor in the active block
+    size_t index;  // current reading block index
+    size_t cursor; // cursor in the active block
 
   public:
     DoubleBufferFrameBlock(const DoubleBufferFrameBlock &) = delete;
@@ -170,7 +174,7 @@ class DoubleBufferFrameBlock {
     DoubleBufferFrameBlock &operator=(const DoubleBufferFrameBlock &) = delete;
     DoubleBufferFrameBlock &operator=(DoubleBufferFrameBlock &&) = delete;
 
-    DoubleBufferFrameBlock() { Reset(); }
+    DoubleBufferFrameBlock() : index(0), cursor(0) {}
 
     void Reset() {
         blocks[0].clear();
