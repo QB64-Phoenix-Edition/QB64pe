@@ -321,7 +321,7 @@ struct AudioEngine {
         static constexpr auto FREQUENCY_LIMIT = 20000.0f;        // anything above this will generate silence
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_MIN = 0.0f;  // minimum pulse wave duty cycle
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_MAX = 1.0f;  // maximum pulse wave duty cycle
-        static const auto CUSTOM_WAVEFORM_SIZE_MIN = 2;          // minimum custom waveform size
+        static const auto CUSTOM_WAVEFORM_FRAMES_MIN = 2;        // minimum custom waveform frames
 
       private:
         // These are some constants that can be tweaked to change the behavior of the PSG and MML parser.
@@ -330,9 +330,9 @@ struct AudioEngine {
         static const auto FREQUENCY_DEFAULT = 440;                                                     // the default frequency in Hz
         static const auto MML_VOLUME_MIN = 0;                                                          // minimum volume (percentage)
         static const auto MML_VOLUME_MAX = 100;                                                        // maximum volume (percentage)
-        static const auto MML_PAN_LEFT = 0;                                                            // left-most pan position (percentage)
-        static const auto MML_PAN_RIGHT = 255;                                                         // right-most pan position (percentage)
-        static constexpr auto MML_PAN_CENTER = float(MML_PAN_RIGHT) / 2.0f;                            // center pan position (percentage)
+        static const auto MML_PAN_LEFT = 0;                                                            // left-most pan position
+        static const auto MML_PAN_RIGHT = 100;                                                         // right-most pan position
+        static const auto MML_PAN_CENTER = MML_PAN_RIGHT / 2;                                          // center pan position
         static constexpr auto VOLUME_DEFAULT = (float(MML_VOLUME_MAX) / 2.0f) / float(MML_VOLUME_MAX); // default volume (FP32)
         static const auto MML_TEMPO_MIN = 32;                                                          // the minimum MML tempo allowed
         static const auto MML_TEMPO_MAX = 255;                                                         // the maximum MML tempo allowed
@@ -522,7 +522,7 @@ struct AudioEngine {
         /// @brief Custom waveform generator class using a user-defined waveform shape.
         class CustomWaveform {
           private:
-            static const auto WAVEFORM_SIZE_DEFAULT = 256; // number of samples in the default sine waveform
+            static const auto WAVEFORM_FRAMES_DEFAULT = 256; // number of samples in the default sine waveform
 
           public:
             CustomWaveform() = delete;
@@ -539,9 +539,9 @@ struct AudioEngine {
 
             /// @brief Generates a default sine waveform
             void SetDefaultWaveform() {
-                waveform.resize(WAVEFORM_SIZE_DEFAULT);
-                for (auto i = 0; i < WAVEFORM_SIZE_DEFAULT; i++) {
-                    waveform[i] = std::sin(2.0f * float(M_PI) * float(i) / float(WAVEFORM_SIZE_DEFAULT));
+                waveform.resize(WAVEFORM_FRAMES_DEFAULT);
+                for (auto i = 0; i < WAVEFORM_FRAMES_DEFAULT; i++) {
+                    waveform[i] = std::sin(2.0f * float(M_PI) * float(i) / float(WAVEFORM_FRAMES_DEFAULT));
                 }
 
                 UpdatePhaseIncrement();
@@ -743,12 +743,12 @@ struct AudioEngine {
         }
 
         /// @brief Sets MML friendly pan position value.
-        /// @param value A value from 0 to 255.
-        void SetMMLPanPosition(long value) { SetPanPosition((float(value) / MML_PAN_CENTER) - PAN_RIGHT); }
+        /// @param value A value from 0 to 100.
+        void SetMMLPanPosition(long value) { SetPanPosition((float(value) / float(MML_PAN_CENTER)) - PAN_RIGHT); }
 
         /// @brief Gets MML friendly pan position value.
-        /// @return A value from 0 to 255.
-        long GetMMLPanPosition() { return std::lroundf((panPosition + PAN_RIGHT) * MML_PAN_CENTER) - 1; }
+        /// @return A value from 0 to 100.
+        long GetMMLPanPosition() { return long((panPosition + PAN_RIGHT) * float(MML_PAN_CENTER)); }
 
         /// @brief Sets MML friendly amplitude value.
         /// @param amplitude A value from 0 to 100.
@@ -2437,6 +2437,14 @@ void sub_sound(float frequency, float lengthInClockTicks, float volume, float pa
         return;
     }
 
+    AUDIO_DEBUG_PRINT("option = %d, passed = %d", option, passed);
+
+    if (!option && !passed) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+        return;
+    }
+
     // Handle SOUND WAIT first if present
     if (option == 1) {
         audioEngine.PausePSGs();
@@ -2554,11 +2562,11 @@ void sub__wave(uint32_t voice, void *waveDefinition, uint32_t frameCount, int32_
         return;
     }
 
-    auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(waveDefinition))->length);
+    auto audioBufferFrames = uint32_t((reinterpret_cast<byte_element_struct *>(waveDefinition))->length);
 
     if (passed) {
         if (frameCount > audioBufferFrames) {
-            AUDIO_DEBUG_PRINT("Adjusting frame count from %zu to %zu\n", frameCount, audioBufferFrames);
+            AUDIO_DEBUG_PRINT("Adjusting frame count from %u to %u\n", frameCount, audioBufferFrames);
 
             frameCount = audioBufferFrames;
         }
@@ -2566,8 +2574,8 @@ void sub__wave(uint32_t voice, void *waveDefinition, uint32_t frameCount, int32_
         frameCount = audioBufferFrames;
     }
 
-    if (audioBufferFrames < AudioEngine::PSG::CUSTOM_WAVEFORM_SIZE_MIN || frameCount < AudioEngine::PSG::CUSTOM_WAVEFORM_SIZE_MIN) {
-        AUDIO_DEBUG_PRINT("Audio buffer too small. audioBufferFrames = %zu, frameCount = %u", audioBufferFrames, frameCount);
+    if (audioBufferFrames < AudioEngine::PSG::CUSTOM_WAVEFORM_FRAMES_MIN || frameCount < AudioEngine::PSG::CUSTOM_WAVEFORM_FRAMES_MIN) {
+        AUDIO_DEBUG_PRINT("Audio buffer too small. audioBufferFrames = %u, frameCount = %u", audioBufferFrames, frameCount);
 
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
 
@@ -2821,8 +2829,8 @@ void sub__sndplaycopy(int32_t src_handle, float volume, float x, float y, float 
             ma_sound_set_pan(&audioEngine.soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
         }
 
-        sub__sndplay(dst_handle);                              // Play the sound
-        audioEngine.soundHandles[dst_handle]->autoKill = true; // Set to auto kill
+        sub__sndplay(dst_handle);                              // play the sound
+        audioEngine.soundHandles[dst_handle]->autoKill = true; // must be set after sub__sndplay
 
         AUDIO_DEBUG_PRINT("Playing sound copy %i: volume %f, 3D (%f, %f, %f)", dst_handle, volume, x, y, z);
     }
@@ -2853,8 +2861,8 @@ void sub__sndplayfile(qbs *fileName, int32_t sync, float volume, int32_t passed)
         if (passed & 2)
             ma_sound_set_volume(&audioEngine.soundHandles[handle]->maSound, volume);
 
-        sub__sndplay(handle);                              // Play the sound
-        audioEngine.soundHandles[handle]->autoKill = true; // Set to auto kill
+        sub__sndplay(handle);                              // play the sound
+        audioEngine.soundHandles[handle]->autoKill = true; // must be set after sub__sndplay
     }
 }
 
