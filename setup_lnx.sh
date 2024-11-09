@@ -2,6 +2,9 @@
 # QB64-PE Installer
 # Argument 1: If not blank, qb64pe will not be started after compilation
 
+#Change to the directory where the script is located
+cd "$(dirname "$0")"
+
 dont_run="$1"
 
 #This checks the currently installed packages for the one's QB64-PE needs
@@ -18,10 +21,7 @@ pkg_install() {
     echo "Installing required packages. If prompted to, please enter your password."
     $installer_command $packages_to_install
   fi
-
 }
-
-
 
 #Make sure we're not running as root
 if [ $EUID == "0" ]; then
@@ -92,11 +92,11 @@ elif [ "$DISTRO" == "fedora" ] || [ "$DISTRO" == "redhat" ] || [ "$DISTRO" == "c
   installer_command="sudo yum install "
   pkg_install
 elif [ "$DISTRO" == "voidlinux" ]; then
-   echo "VoidLinux detected."
-   pkg_list="gcc make glu-devel libpng-devel alsa-lib-devel libcurl-devel $GET_WGET"
+  echo "VoidLinux detected."
+  pkg_list="gcc make glu-devel libpng-devel alsa-lib-devel libcurl-devel $GET_WGET"
    installed_packages=`xbps-query -l |grep -v libgcc`
-   installer_command="sudo xbps-install -Sy "
-   pkg_install
+  installer_command="sudo xbps-install -Sy "
+  pkg_install
 
 elif [ -z "$DISTRO" ]; then
   echo "Unable to detect distro, skipping package installation"
@@ -119,7 +119,7 @@ if [ -e "./qb64pe" ]; then
   echo "#!/bin/sh" > ./run_qb64pe.sh
   echo "cd $_pwd" >> ./run_qb64pe.sh
   echo "./qb64pe &" >> ./run_qb64pe.sh
-  
+
   chmod +x ./run_qb64pe.sh
   #chmod -R 777 ./
   echo "Adding QB64-PE menu entry..."
@@ -144,7 +144,7 @@ EOF
   echo "QB64-PE is located in this folder:"
   echo "`pwd`"
   echo "There is a ./run_qb64pe.sh script in this folder that should let you run qb64pe if using the executable directly isn't working."
-  echo 
+  echo
   echo "You should also find a QB64-PE option in the Programming/Development section of your menu you can use."
 else
   ### QB64-PE didn't compile

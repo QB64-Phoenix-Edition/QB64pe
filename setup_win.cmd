@@ -18,11 +18,8 @@ if errorlevel 1 (
 echo QB64-PE Setup
 echo.
 
-rem Change to the correct drive letter
-%~d0
-
-rem Change to the correct path
-cd %~dp0
+rem Change to the correct drive & path
+cd /d %~dp0
 
 rem Check if the C++ compiler is there and skip MINGW setup if it exists
 if exist "internal\c\c_compiler\bin\c++.exe" goto build_qb64pe

@@ -1,15 +1,17 @@
 # Argument 1: If not blank, qb64pe will not be started after compiltaion
 
+# Change to the directory where the script is located
 cd "$(dirname "$0")"
+
 dont_run="$1"
 
-Pause()
-{
-OLDCONFIG=`stty -g`
-stty -icanon -echo min 1 time 0
-dd count=1 2>/dev/null
-stty $OLDCONFIG
+Pause() {
+  OLDCONFIG=`stty -g`
+  stty -icanon -echo min 1 time 0
+  dd count=1 2>/dev/null
+  stty $OLDCONFIG
 }
+
 echo "QB64-PE Setup"
 echo ""
 
