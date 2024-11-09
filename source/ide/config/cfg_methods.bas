@@ -263,6 +263,14 @@ SUB ReadInitialConfig
 
     UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", -1)
 
+    DefaultTerminal = ReadWriteStringSettingValue$(generalSettingsSection$, "DefaultTerminal", "")
+    If DefaultTerminal = "" AND OS$ = "LNX" AND MacOSX = 0 Then
+        DefaultTerminal = findWorkingTerminal$
+        WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
+    End If
+
+    LoggingEnabled = ReadWriteBooleanSettingValue%(generalSettingsSection$, "LoggingEnabled", 0)
+
     '--- Mouse settings
     result = ReadConfigSetting(mouseSettingsSection$, "SwapMouseButton", value$)
     IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
