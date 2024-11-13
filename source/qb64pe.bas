@@ -399,7 +399,7 @@ ELSE
     _ICON
 END IF
 
-'$INCLUDE:'./utilities/hash.bi'
+'$INCLUDE:'utilities\hash.bi'
 
 TYPE Label_Type
     State AS _UNSIGNED _BYTE '0=label referenced, 1=label created
