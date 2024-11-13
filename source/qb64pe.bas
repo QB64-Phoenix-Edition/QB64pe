@@ -1475,7 +1475,65 @@ END IF
 IF idemode THEN GOTO ideret1
 
 lineinput3load sourcefile$
+GOTO startPrepass
 
+'=== BEGIN: pass dependent GOSUB routines ===
+setPrecompFlags:
+SetPreLET "_EXPLICIT_", str2$(GetRCStateVar(OptExpl))
+SetPreLET "_EXPLICITARRAY_", str2$(GetRCStateVar(OptExpl) OR GetRCStateVar(OptExplArr))
+SetPreLET "_ASSERTS_", str2$(GetRCStateVar(AssertsOn))
+SetPreLET "_CONSOLE_", str2$(GetRCStateVar(ConsoleOn))
+SetPreLET "_DEBUG_", str2$(GetRCStateVar(vWatchOn))
+'the next exposes the DEPENDENCY_SOCKETS state mainly for use in the
+'auto-includes beforefirstline.bi and afterlastline.bm to include/exclude
+'network specific code
+SetPreLET "_SOCKETS_", str2$(GetRCStateVar(SockDepOn))
+RETURN
+
+autoIncludeManager:
+autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
+IF firstLine <> 0 THEN
+    IF ideprogname$ <> "beforefirstline.bi" THEN
+        WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
+    ELSE
+        SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+    END IF
+    IF GetRCStateVar(ColorSet) = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+        WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
+    ELSEIF GetRCStateVar(ColorSet) = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
+        WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
+    END IF
+    'add more files in between here
+    'add more files in between here
+    IF GetRCStateVar(vWatchOn) = 1 OR ideprogname$ = "vwatch.bm" THEN
+        IF ideprogname$ <> "vwatch.bi" THEN
+            WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
+        END IF
+    END IF
+ELSEIF lastLine <> 0 THEN
+    IF GetRCStateVar(vWatchOn) THEN
+        IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
+    ELSE
+        IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
+    END IF
+    'add more files in between here
+    'add more files in between here
+    IF ideprogname$ <> "afterlastline.bm" THEN
+        WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
+    ELSE
+        SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
+    END IF
+END IF
+firstLine = 0: lastLine = 0
+IF GetBufLen&(autoIncludeBuffer) > 0 THEN
+    nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart)
+    ON ABS(SGN(prepass)) + 1 GOSUB autoInclude, autoInclude_prepass
+END IF
+ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
+RETURN
+'=== END: pass dependent GOSUB routines ===
+
+startPrepass:
 DO
 
     '### STEVE EDIT FOR CONST EXPANSION 10/11/2013
@@ -1485,54 +1543,17 @@ DO
 
     ideprepass:
     prepassLastLine:
+    prepass = 1
 
     IF firstLine <> 0 OR lastLine <> 0 THEN
         lineBackup$ = wholeline$ 'backup the real line (will be blank when lastline is set)
-        autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
-        IF firstLine <> 0 THEN
-            SetPreLET "DEBUG_IS_ACTIVE", "0" 'defaults to false (overridden in vwatch.bi using $LET)
-            SetPreLET "SOCKETS_IN_USE", "-1" 'assume true for pre-pass (allow registration of funtions)
-            IF ideprogname$ <> "beforefirstline.bi" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
-            ELSE
-                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
-            END IF
-            IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
-            ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
-            END IF
-            'add more files in between here
-            'add more files in between here
-            IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
-                IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
-            END IF
-        ELSEIF lastLine <> 0 THEN
-            IF vWatchOn THEN
-                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
-            ELSE
-                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
-            END IF
-            'add more files in between here
-            'add more files in between here
-            IF ideprogname$ <> "afterlastline.bm" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
-            ELSE
-                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
-            END IF
-        END IF
-        firstLine = 0: lastLine = 0
-        IF GetBufLen&(autoIncludeBuffer) > 0 THEN
-            nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart): GOTO autoInclude_prepass
-        END IF
-        autoIncludeCompleted_prepass:
-        ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
+        GOSUB setPrecompFlags
+        GOSUB autoIncludeManager
         wholeline$ = lineBackup$
     END IF
 
     wholestv$ = wholeline$ '### STEVE EDIT FOR CONST EXPANSION 10/11/2013
 
-    prepass = 1
     layout = ""
     layoutok = 0
 
@@ -2678,7 +2699,7 @@ DO
         IF autoIncludingFile <> 0 AND inclevel = 0 THEN
             IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude_prepass
             autoIncludingFile = 0
-            GOTO autoIncludeCompleted_prepass
+            RETURN 'to auto-include manager
         END IF
     LOOP
     '(end manager)
@@ -2793,52 +2814,15 @@ IF idemode THEN GOTO ideret3
 
 DO
     compileline:
+    prepass = 0
+    IF recompile GOTO do_recompile
 
     IF firstLine <> 0 OR lastLine <> 0 THEN
         lineBackup$ = a3$ 'backup the real line (will be blank when lastline is set)
-        autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
-        IF firstLine <> 0 THEN
-            SetPreLET "DEBUG_IS_ACTIVE", "0" 'defaults to false (overridden in vwatch.bi using $LET)
-            SetPreLET "SOCKETS_IN_USE", str2$(DEPENDENCY(DEPENDENCY_SOCKETS) <> 0) 'get "real" last state from pre-pass
-            IF ideprogname$ <> "beforefirstline.bi" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
-            ELSE
-                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
-            END IF
-            IF ColorSet = 1 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\color\color0.bi"
-            ELSEIF ColorSet = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
-            END IF
-            'add more files in between here
-            'add more files in between here
-            IF vWatchOn <> 0 OR ideprogname$ = "vwatch.bm" THEN
-                IF ideprogname$ <> "vwatch.bi" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
-            END IF
-        ELSEIF lastLine <> 0 THEN
-            IF vWatchOn THEN
-                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
-            ELSE
-                IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
-            END IF
-            'add more files in between here
-            'add more files in between here
-            IF ideprogname$ <> "afterlastline.bm" THEN
-                WriteBufLine autoIncludeBuffer, "internal\support\include\afterlastline.bm"
-            ELSE
-                SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
-            END IF
-        END IF
-        firstLine = 0: lastLine = 0
-        IF GetBufLen&(autoIncludeBuffer) > 0 THEN
-            nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart): GOTO autoInclude
-        END IF
-        autoIncludeCompleted:
-        ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
+        GOSUB setPrecompFlags
+        GOSUB autoIncludeManager
         a3$ = lineBackup$
     END IF
-
-    prepass = 0
 
     stringprocessinghappened = 0
 
@@ -11406,7 +11390,7 @@ DO
                 IF autoIncludingFile <> 0 THEN
                     IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude
                     autoIncludingFile = 0
-                    GOTO autoIncludeCompleted
+                    RETURN 'to auto-include manager
                 END IF
                 'restore line formatting
                 layoutok = layoutok_backup
