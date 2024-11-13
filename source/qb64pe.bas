@@ -2164,7 +2164,7 @@ DO
                                             IF conststring(hashresref) = e$ THEN issueWarning = -1: thisconstval$ = e$
                                         ELSE
                                             IF t AND ISFLOAT THEN
-                                                IF constfloat(hashresref) = constval## THEN issueWarning = -1: thisconstval$ = STR$(constval##)
+                                                IF constfloat(hashresref) = constval## THEN issueWarning = -1: thisconstval$ = _TOSTR$(constval##)
                                             ELSE
                                                 IF t AND ISUNSIGNED THEN
                                                     IF constuinteger(hashresref) = constval~&& THEN issueWarning = -1: thisconstval$ = STR$(constval~&&)
@@ -2175,7 +2175,7 @@ DO
                                         END IF
                                         IF issueWarning THEN
                                             IF NOT IgnoreWarnings THEN
-                                                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Duplicate constant definition", n$ + " =" + thisconstval$
+                                                addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Duplicate constant definition", n$ + " = " + thisconstval$
                                             END IF
                                             GOTO constAddDone
                                         ELSE
@@ -19251,7 +19251,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
                                     '(todo: range checking)
                                     'convert value into string for returning
                                     IF t AND ISFLOAT THEN
-                                        e$ = LTRIM$(RTRIM$(STR$(v##)))
+                                        e$ = LTRIM$(RTRIM$(_TOSTR$(v##)))
                                     ELSE
                                         IF t AND ISUNSIGNED THEN
                                             e$ = LTRIM$(RTRIM$(STR$(v~&&)))

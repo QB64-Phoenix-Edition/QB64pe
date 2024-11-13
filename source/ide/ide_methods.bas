@@ -7616,7 +7616,7 @@ SUB DebugMode
                                 CASE "_FLOAT", "FLOAT"
                                     value$ = _MK$(_FLOAT, VAL(value$))
                                     varSize& = LEN(dummy##)
-                                    result$ = STR$(_CV(_FLOAT, value$))
+                                    result$ = " " + _TOSTR$(_CV(_FLOAT, value$))
                                 CASE "_OFFSET", "_UNSIGNED _OFFSET", "OFFSET", "UNSIGNED OFFSET"
                                     value$ = _MK$(_OFFSET, VAL(value$))
                                     varSize& = LEN(dummy%&)
@@ -7653,6 +7653,7 @@ SUB DebugMode
                             GOSUB SendCommand
 
                             IF tempStorage& > 0 THEN
+                                IF LEN(result$) > 1 _ANDALSO ASC(result$, 2) = 45 THEN result$ = MID$(result$, 2)
                                 vWatchReceivedData$(tempStorage&) = result$
                             END IF
 
@@ -8057,11 +8058,12 @@ SUB DebugMode
                     CASE "_UNSIGNED _INTEGER64", "UNSIGNED INTEGER64": recvData$ = STR$(_CV(_UNSIGNED _INTEGER64, recvData$))
                     CASE "SINGLE": recvData$ = STR$(_CV(SINGLE, recvData$))
                     CASE "DOUBLE": recvData$ = STR$(_CV(DOUBLE, recvData$))
-                    CASE "_FLOAT", "FLOAT": recvData$ = STR$(_CV(_FLOAT, recvData$))
+                    CASE "_FLOAT", "FLOAT": recvData$ = " " + _TOSTR$(_CV(_FLOAT, recvData$))
                     CASE "_OFFSET", "OFFSET": recvData$ = STR$(_CV(_OFFSET, recvData$))
                     CASE "_UNSIGNED _OFFSET", "UNSIGNED OFFSET": recvData$ = STR$(_CV(_UNSIGNED _OFFSET, recvData$))
                         'CASE "STRING": 'no conversion required
                 END SELECT
+                IF LEN(recvData$) > 1 _ANDALSO ASC(recvData$, 2) = 45 THEN recvData$ = MID$(recvData$, 2)
                 vWatchReceivedData$(tempStorage&) = recvData$
                 IF PauseMode THEN GOSUB UpdateDisplay
             CASE "current sub"
