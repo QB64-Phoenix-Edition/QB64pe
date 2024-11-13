@@ -754,7 +754,7 @@ FUNCTION ide2 (ignore)
     END IF
 
     STATIC AS _BYTE attemptToHost, changingTcpPort
-    IF vWatchOn = 1 AND attemptToHost = 0 THEN
+    IF GetRCStateVar(vWatchOn) = 1 AND attemptToHost = 0 THEN
         IF host& = 0 THEN
             hostport$ = _TRIM$(STR$(idebaseTcpPort + tempfolderindex))
             ENVIRON "QB64DEBUGPORT=" + hostport$
@@ -3197,7 +3197,7 @@ FUNCTION ide2 (ignore)
                    (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers = 0) THEN
                 'line numbers are visible and have been clicked or
                 'line numbers are hidden and the left border has been clicked
-                IF AutoAddDebugCommand <> 0 OR vWatchOn <> 0 THEN
+                IF AutoAddDebugCommand <> 0 OR GetRCStateVar(vWatchOn) = 1 THEN
                     ideselect = 0
                     idecytemp = mY - 2 + idesy - 1
                     IF idecytemp <= iden THEN
@@ -6026,7 +6026,7 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "Start #Paused  F7 or F8" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 startPausedMenuHandler:
-                IF vWatchOn = 0 THEN
+                IF GetRCStateVar(vWatchOn) = 0 THEN
                     IF AutoAddDebugCommand = 0 THEN
                         SCREEN , , 3, 0
                         clearStatusWindow 2
@@ -6067,7 +6067,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     PCOPY 2, 0
                     showWatchList:
-                    IF vWatchOn = 0 THEN
+                    IF GetRCStateVar(vWatchOn) = 0 THEN
                         IF AutoAddDebugCommand = 0 THEN
                             SCREEN , , 3, 0
                             clearStatusWindow 2
@@ -6163,7 +6163,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     PCOPY 3, 0: SCREEN , , 3, 0
                     toggleBreakpoint:
-                    IF vWatchOn = 0 THEN
+                    IF GetRCStateVar(vWatchOn) = 0 THEN
                         IF AutoAddDebugCommand = 0 THEN
                             SCREEN , , 3, 0
                             clearStatusWindow 2
@@ -6214,7 +6214,7 @@ FUNCTION ide2 (ignore)
                 ELSE
                     PCOPY 3, 0: SCREEN , , 3, 0
                     toggleSkipLine:
-                    IF vWatchOn = 0 THEN
+                    IF GetRCStateVar(vWatchOn) = 0 THEN
                         IF AutoAddDebugCommand = 0 THEN
                             SCREEN , , 3, 0
                             clearStatusWindow 2
@@ -6344,7 +6344,7 @@ FUNCTION ide2 (ignore)
                 idecy = 1
                 ideselect = 0
                 idepath$ = _STARTDIR$
-                ideprogname$ = "": opex_forcedState = 0
+                ideprogname$ = "": ForceOptExpl = 0
                 listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
                 QuickNavTotal = 0
                 ModifyCOMMAND$ = ""
@@ -6439,13 +6439,13 @@ FUNCTION ide2 (ignore)
                 END IF
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
                 IF r$ <> "C" THEN
-                    IF ideprogname$ = "beforefirstline.bi" OR ideprogname$ = "afterlastline.bm" THEN opex_forcedState = 1 ELSE opex_forcedState = 0
+                    IF ideprogname$ = "beforefirstline.bi" OR ideprogname$ = "afterlastline.bm" THEN ForceOptExpl = -2 ELSE ForceOptExpl = 0
                     ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOSUB redrawItAll
-                IF opex_forcedState = 1 THEN
-                    opex_forcedState = -1
+                IF ForceOptExpl = -2 THEN
+                    ForceOptExpl = -1
                     retval = idemessagebox("!! Attention !!",_
                                            "You just opened one of the QB64-PE auto-includes.\n" +_
                                            "A special edit mode is now activated to enforce the\n" +_
@@ -10999,7 +10999,7 @@ SUB idedelline (i)
         END IF
     NEXT
 
-    IF vWatchOn THEN
+    IF GetRCStateVar(vWatchOn) THEN
         IF iden > UBOUND(IdeBreakpoints) OR iden > UBOUND(IdeSkipLines) THEN
             REDIM _PRESERVE IdeBreakpoints(iden) AS _BYTE
             REDIM _PRESERVE IdeSkipLines(iden) AS _BYTE
@@ -11851,7 +11851,7 @@ SUB ideinsline (i, text$)
         END IF
     NEXT
 
-    IF vWatchOn THEN
+    IF GetRCStateVar(vWatchOn) THEN
         REDIM _PRESERVE IdeBreakpoints(iden + 1) AS _BYTE
         FOR b = iden + 1 TO i STEP -1
             SWAP IdeBreakpoints(b), IdeBreakpoints(b - 1)
@@ -13203,18 +13203,18 @@ SUB ideshowtext
 
     IF ShowLineNumbers THEN
         IF ShowLineNumbersUseBG THEN COLOR , 6
-        IF (searchStringFoundOn > 0 AND searchStringFoundOn = l) OR (l = debugnextline AND vWatchOn = 1) THEN
+        IF (searchStringFoundOn > 0 AND searchStringFoundOn = l) OR (l = debugnextline AND GetRCStateVar(vWatchOn) = 1) THEN
             COLOR 13, 5
             IF searchStringFoundOn > 0 AND searchStringFoundOn = l THEN searchStringFoundOn = 0
         END IF
-        IF vWatchOn = 1 AND IdeBreakpoints(l) <> 0 THEN COLOR , 4
-        IF vWatchOn = 1 AND IdeSkipLines(l) <> 0 THEN COLOR 14
+        IF GetRCStateVar(vWatchOn) = 1 AND IdeBreakpoints(l) <> 0 THEN COLOR , 4
+        IF GetRCStateVar(vWatchOn) = 1 AND IdeSkipLines(l) <> 0 THEN COLOR 14
         _PRINTSTRING (2, y + 3), SPACE$(maxLineNumberLength)
         IF l <= iden THEN
             l2$ = STR$(l)
             IF 2 + maxLineNumberLength - (LEN(l2$) + 1) >= 2 THEN
                 _PRINTSTRING (2 + maxLineNumberLength - (LEN(l2$) + 1), y + 3), l2$
-                IF vWatchOn THEN
+                IF GetRCStateVar(vWatchOn) THEN
                     IF IdeBreakpoints(l) <> 0 THEN
                         _PRINTSTRING (2, y + 3), CHR$(7)
                     ELSEIF IdeSkipLines(l) <> 0 THEN
@@ -13238,7 +13238,7 @@ SUB ideshowtext
         END IF
         COLOR , 1
     ELSE
-        IF vWatchOn = 1 AND (IdeBreakpoints(l) <> 0 OR IdeSkipLines(l) <> 0) THEN
+        IF GetRCStateVar(vWatchOn) = 1 AND (IdeBreakpoints(l) <> 0 OR IdeSkipLines(l) <> 0) THEN
             COLOR 7, 4
             IF l = debugnextline THEN
                 COLOR 10
@@ -13249,7 +13249,7 @@ SUB ideshowtext
             ELSE
                 _PRINTSTRING (1, y + 3), CHR$(7)
             END IF
-        ELSEIF vWatchOn = 1 AND l = debugnextline THEN
+        ELSEIF GetRCStateVar(vWatchOn) = 1 AND l = debugnextline THEN
             COLOR 10
             _PRINTSTRING (1, y + 3), CHR$(16)
         END IF
@@ -18070,7 +18070,7 @@ SUB IdeSaveBookmarks (f2$)
     _WRITEFILE BookmarksFile$, a$
 
     'at the same time, save breakpoint and skip line data
-    IF vWatchOn THEN
+    IF GetRCStateVar(vWatchOn) THEN
         WriteSetting DebugFile$, f2$, "total breakpoints", "0"
         WriteSetting DebugFile$, f2$, "total skips", "0"
 

@@ -29,6 +29,7 @@ $VERSIONINFO:Comments='QB64 is a modern extended BASIC programming language that
 '$INCLUDE:'utilities\s-buffer\simplebuffer.bi'
 '$INCLUDE:'utilities\const_eval.bi'
 '$INCLUDE:'utilities\give_error.bi'
+'$INCLUDE:'utilities\statevars.bi'
 '$INCLUDE:'utilities\type.bi'
 
 DEFLNG A-Z
@@ -39,10 +40,7 @@ DEFLNG A-Z
 
 DIM SHARED NoExeSaved AS INTEGER
 
-DIM SHARED ColorSet, colorRecompileAttempts, colorSetDesired
-
-DIM SHARED vWatchOn, vWatchRecompileAttempts, vWatchDesiredState, vWatchErrorCall$
-DIM SHARED vWatchNewVariable$, vWatchVariableExclusions$
+DIM SHARED vWatchErrorCall$, vWatchNewVariable$, vWatchVariableExclusions$
 vWatchErrorCall$ = "if (stop_program) {*__LONG_VWATCH_LINENUMBER=0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);};if(new_error){bkp_new_error=new_error;new_error=0;*__LONG_VWATCH_LINENUMBER=-1; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);new_error=bkp_new_error;};"
 vWatchVariableExclusions$ = "@__LONG_VWATCH_LINENUMBER@__LONG_VWATCH_SUBLEVEL@__LONG_VWATCH_GOTO@" + _
               "@__STRING_VWATCH_SUBNAME@__STRING_VWATCH_CALLSTACK@__ARRAY_BYTE_VWATCH_BREAKPOINTS" + _
@@ -50,9 +48,6 @@ vWatchVariableExclusions$ = "@__LONG_VWATCH_LINENUMBER@__LONG_VWATCH_SUBLEVEL@__
 
 DIM SHARED nativeDataTypes$
 nativeDataTypes$ = "@_OFFSET@OFFSET@_UNSIGNED _OFFSET@UNSIGNED OFFSET@_BIT@BIT@_UNSIGNED _BIT@UNSIGNED BIT@_BYTE@_UNSIGNED _BYTE@BYTE@UNSIGNED BYTE@INTEGER@_UNSIGNED INTEGER@UNSIGNED INTEGER@LONG@_UNSIGNED LONG@UNSIGNED LONG@_INTEGER64@INTEGER64@_UNSIGNED _INTEGER64@UNSIGNED INTEGER64@SINGLE@DOUBLE@_FLOAT@FLOAT@STRING@"
-
-DIM SHARED opex_recompileAttempts, opex_desiredState, opex_forcedState
-DIM SHARED opexarray_recompileAttempts, opexarray_desiredState
 
 REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
 REDIM SelectCaseHasCaseBlock(100)
@@ -157,10 +152,15 @@ DIM SHARED viFileDescription$, viFileVersion$, viInternalName$
 DIM SHARED viLegalCopyright$, viLegalTrademarks$, viOriginalFilename$
 DIM SHARED viProductName$, viProductVersion$, viComments$, viWeb$
 
+DIM SHARED ColorSet AS RCStateVar
+DIM SHARED OptExpl AS RCStateVar
+DIM SHARED OptExplArr AS RCStateVar
+DIM SHARED AssertsOn AS RCStateVar
+DIM SHARED ConsoleOn AS RCStateVar
+DIM SHARED vWatchOn AS RCStateVar
+DIM SHARED SockDepOn AS RCStateVar
 DIM SHARED CheckingOn
-DIM SHARED ConsoleOn
 DIM SHARED ScreenHideOn
-DIM SHARED AssertsOn
 DIM SHARED ResizeOn, ResizeScale
 
 DIM SHARED OptMax AS LONG
@@ -372,9 +372,9 @@ DIM SHARED ideerrorline AS LONG 'set by qb64-error(...) to the line number it wo
 DIM SHARED idemessage AS STRING 'set by qb64-error(...) to the error message to be reported, this
 'is later passed to the ide in message #8
 
-DIM SHARED optionexplicit AS _BYTE
-DIM SHARED optionexplicitarray AS _BYTE
-DIM SHARED optionexplicit_cmd AS _BYTE
+DIM SHARED ForceOptExpl AS _BYTE
+ForceOptExpl = 0
+
 DIM SHARED ideStartAtLine AS LONG, errorLineInInclude AS LONG
 DIM SHARED warningInInclude AS LONG, warningInIncludeLine AS LONG
 DIM SHARED outputfile_cmd$
@@ -961,7 +961,7 @@ IF C = 9 THEN 'run
         dummy = DarkenFGBG(0)
     END IF
 
-    IF vWatchOn THEN
+    IF GetRCStateVar(vWatchOn) THEN
         sendc$ = CHR$(254) 'launch debug interface
     ELSE
         sendc$ = CHR$(6) 'ready
@@ -1077,27 +1077,27 @@ sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
-colorSetDesired = 0
-colorRecompileAttempts = 0
+'RCStateVars (feature and required recompile tracking)
+ClearRCStateVar ColorSet
+ClearRCStateVar OptExpl: IF ForceOptExpl THEN ForceRCStateVar OptExpl, 1
+ClearRCStateVar OptExplArr
+ClearRCStateVar AssertsOn
+ClearRCStateVar ConsoleOn
+ClearRCStateVar vWatchOn
+ClearRCStateVar SockDepOn
 
-vWatchDesiredState = 0
-vWatchRecompileAttempts = 0
-
-opex_desiredState = 0
-opex_recompileAttempts = 0
-
-opexarray_desiredState = 0
-opexarray_recompileAttempts = 0
-
+'--------------------
 recompile:
-ColorSet = colorSetDesired
+recompile = 0 'reset stray flag
 
-vWatchOn = vWatchDesiredState
+ExecuteRCStateVar ColorSet
+ExecuteRCStateVar OptExpl
+ExecuteRCStateVar OptExplArr
+ExecuteRCStateVar AssertsOn
+ExecuteRCStateVar ConsoleOn
+ExecuteRCStateVar vWatchOn
 vWatchVariable "", -1 'reset internal variables list
-
-optionexplicit = opex_desiredState OR opex_forcedState
-IF optionexplicit_cmd = -1 AND NoIDEMode = 1 THEN optionexplicit = -1
-optionexplicitarray = opexarray_desiredState
+ExecuteRCStateVar SockDepOn
 
 lastLineReturn = 0
 lastLine = 0
@@ -1258,9 +1258,7 @@ HashAdd "WHILE", f, 0
 
 'clear/init variables
 CheckingOn = 1
-ConsoleOn = 0
 ScreenHideOn = 0
-AssertsOn = 0
 ResizeOn = 0: ResizeScale = 0
 ResolveStaticFunctions = 0
 dynamiclibrary = 0
@@ -1638,36 +1636,39 @@ DO
         END IF
 
         IF temp$ = "$COLOR:0" THEN
-            colorSetDesired = 1
-            IF ColorSet <> 1 THEN
-                IF colorRecompileAttempts = 0 THEN
-                    colorRecompileAttempts = colorRecompileAttempts + 1
-                    GOTO do_recompile
-                END IF
-            END IF
+            SetRCStateVar ColorSet, 1
+            GOTO finishedlinepp
         END IF
 
         IF temp$ = "$COLOR:32" THEN
-            colorSetDesired = 2
-            IF ColorSet <> 2 THEN
-                IF colorRecompileAttempts = 0 THEN
-                    colorRecompileAttempts = colorRecompileAttempts + 1
-                    GOTO do_recompile
-                END IF
-            END IF
+            SetRCStateVar ColorSet, 2
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$ASSERTS" THEN
+            SetRCStateVar AssertsOn, 1
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$ASSERTS:CONSOLE" THEN
+            SetRCStateVar AssertsOn, 1
+            SetRCStateVar ConsoleOn, 1
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$CONSOLE" THEN
+            SetRCStateVar ConsoleOn, 1
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$CONSOLE:ONLY" THEN
+            SetRCStateVar ConsoleOn, 2
+            GOTO finishedlinepp
         END IF
 
         IF temp$ = "$DEBUG" THEN
-            vWatchDesiredState = 1
-            IF vWatchOn = 0 THEN
-                IF vWatchRecompileAttempts = 0 THEN
-                    'this is the first time a conflict has occurred, so react immediately with a full recompilation using the desired state
-                    vWatchRecompileAttempts = vWatchRecompileAttempts + 1
-                    GOTO do_recompile
-                ELSE
-                    'continue compilation to retrieve the final state requested and act on that as required
-                END IF
-            END IF
+            SetRCStateVar vWatchOn, 1
+            GOTO finishedlinepp
         END IF
 
         IF temp$ = "$NOPREFIX" THEN
@@ -3006,12 +3007,12 @@ DO
 
         IF a3u$ = "$COLOR:0" THEN
             layout$ = SCase$("$Color:0")
-            IF ColorSet = 2 THEN a$ = "$COLOR:32 already set, cannot use both color sets together": GOTO errmes
+            IF GetRCStateVar(ColorSet) = 2 THEN a$ = "$COLOR:32 already set, cannot use both color sets together": GOTO errmes
             GOTO finishednonexec
         END IF
         IF a3u$ = "$COLOR:32" THEN
             layout$ = SCase$("$Color:32")
-            IF ColorSet = 1 THEN a$ = "$COLOR:0 already set, cannot use both color sets together": GOTO errmes
+            IF GetRCStateVar(ColorSet) = 1 THEN a$ = "$COLOR:0 already set, cannot use both color sets together": GOTO errmes
             GOTO finishednonexec
         END IF
 
@@ -3032,7 +3033,7 @@ DO
         IF a3u$ = "$CHECKING:OFF" THEN
             layout$ = SCase$("$Checking:Off")
             CheckingOn = 0
-            IF vWatchOn <> 0 AND NoIDEMode = 0 AND inclevel = 0 THEN
+            IF GetRCStateVar(vWatchOn) = 1 AND NoIDEMode = 0 AND inclevel = 0 THEN
                 addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$DEBUG features won't work in these blocks", "$CHECKING:OFF"
             END IF
             GOTO finishednonexec
@@ -3044,33 +3045,27 @@ DO
         END IF
 
         IF a3u$ = "$CONSOLE" THEN
+            'just to catch it as keyword
             layout$ = SCase$("$Console")
-            ConsoleOn = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
             SetDependency DEPENDENCY_CONSOLE_ONLY
-            ConsoleOn = 1
-            IF prepass = 0 THEN
-                IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
-                WriteBufLine MainTxtBuf, "sub__dest(func__console());"
-                WriteBufLine MainTxtBuf, "sub__source(func__console());"
-                GOTO finishedline2
-            ELSE
-                GOTO finishednonexec
-            END IF
+            IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
+            WriteBufLine MainTxtBuf, "sub__dest(func__console());"
+            WriteBufLine MainTxtBuf, "sub__source(func__console());"
+            GOTO finishedline2 '!!
         END IF
 
         IF a3u$ = "$ASSERTS" THEN
+            'just to catch it as keyword
             layout$ = SCase$("$Asserts")
-            AssertsOn = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$ASSERTS:CONSOLE" THEN
+            'just to catch it as keyword
             layout$ = SCase$("$Asserts:Console")
-            AssertsOn = 1
-            ConsoleOn = 1
             GOTO finishednonexec
         END IF
 
@@ -3438,7 +3433,7 @@ DO
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
             IF CheckingOn THEN
-                IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
+                IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
                 WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");r=0;}"
             END IF
             IF n = 1 THEN GOTO finishednonexec
@@ -3499,7 +3494,7 @@ DO
                     inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
                 END IF
                 IF CheckingOn THEN
-                    IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
+                    IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
                     WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");r=0;}"
                 END IF
                 entireline$ = RIGHT$(entireline$, LEN(entireline$) - x3): u$ = UCASE$(entireline$)
@@ -5158,7 +5153,7 @@ DO
             WriteBufLine MainTxtBuf, "sf_mem_lock=mem_lock_tmp;"
             WriteBufLine MainTxtBuf, "sf_mem_lock->type=3;"
 
-            IF vWatchOn = 1 THEN
+            IF GetRCStateVar(vWatchOn) = 1 THEN
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL+ 1 ;"
                 IF subfunc <> "SUB_VWATCH" THEN
                     inclinenump$ = ""
@@ -5298,14 +5293,14 @@ DO
                 l$ = SCase$("End") + sp + secondelement$
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
-                IF vWatchOn = 1 THEN
+                IF GetRCStateVar(vWatchOn) = 1 THEN
                     vWatchVariable "", 1
                 END IF
 
                 staticarraylist = "": staticarraylistn = 0 'remove previously listed arrays
                 dimstatic = 0
                 WriteBufLine MainTxtBuf, "exit_subfunc:;"
-                IF vWatchOn = 1 THEN
+                IF GetRCStateVar(vWatchOn) = 1 THEN
                     IF CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
                         vWatchAddLabel linenumber, 0
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -5575,7 +5570,7 @@ DO
                     IF controltype(controllevel) <> 2 THEN a$ = "NEXT without FOR": GOTO errmes
                     IF n <> 1 AND controlvalue(controllevel) <> currentid THEN a$ = "Incorrect variable after NEXT": GOTO errmes
                     WriteBufLine MainTxtBuf, "fornext_continue_" + str2$(controlid(controllevel)) + ":;"
-                    IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
+                    IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                         vWatchAddLabel linenumber, 0
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                     END IF
@@ -5625,7 +5620,7 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "WHILE ERROR! Cannot accept a STRING type.": GOTO errmes
-                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -5685,14 +5680,14 @@ DO
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "DO ERROR! Cannot accept a STRING type.": GOTO errmes
                 IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "while((" + e$ + ")||is_error_pending()){" ELSE WriteBufLine MainTxtBuf, "while((!(" + e$ + "))||is_error_pending()){"
-                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
                 controltype(controllevel) = 4
             ELSE
                 controltype(controllevel) = 3
-                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
+                IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 ELSE
@@ -5727,7 +5722,7 @@ DO
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "LOOP ERROR! Cannot accept a STRING type.": GOTO errmes
                 WriteBufLine MainTxtBuf, "dl_continue_" + str2$(controlid(controllevel)) + ":;"
-                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -5735,7 +5730,7 @@ DO
             ELSE
                 WriteBufLine MainTxtBuf, "dl_continue_" + str2$(controlid(controllevel)) + ":;"
 
-                IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -5889,7 +5884,7 @@ DO
             e$ = evaluatetotyp(e$, ctyp)
             IF Error_Happened THEN GOTO errmes
 
-            IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
@@ -5977,7 +5972,7 @@ DO
         IF firstelement$ = "ELSEIF" THEN
             IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
-                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -6019,7 +6014,7 @@ DO
         IF firstelement$ = "IF" THEN
             IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
-                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -6102,7 +6097,7 @@ DO
                 IF LEN(layout$) = 0 THEN layout$ = l$ ELSE layout$ = layout$ + sp + l$
             END IF
 
-            IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
@@ -6123,7 +6118,7 @@ DO
         IF firstelement$ = "SELECT" THEN
             IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
-                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -6249,7 +6244,7 @@ DO
             WriteBufLine MainTxtBuf, "sc_" + str2$(controlid(controllevel)) + "_end:;"
             IF controltype(controllevel) < 10 OR controltype(controllevel) > 17 THEN a$ = "END SELECT without SELECT CASE": GOTO errmes
 
-            IF CheckingOn = 1 AND vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
@@ -6368,7 +6363,7 @@ DO
 
             IF CheckingOn THEN
                 WriteBufLine MainTxtBuf, "S_" + str2$(statementn) + ":;": dynscope = 1
-                IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+                IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
@@ -6557,7 +6552,7 @@ DO
     'static scope commands:
 
     IF CheckingOn THEN
-        IF vWatchOn = 1 AND inclinenumber(inclevel) = 0 THEN
+        IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
             vWatchAddLabel linenumber, 0
             WriteBufLine MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + str2$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
         ELSE
@@ -7536,7 +7531,7 @@ DO
                 IF LEN(s$) THEN typ$ = s$ ELSE typ$ = t$
                 autoIncForceUScore = 1
                 IF validname(n$) = 0 THEN a$ = "Invalid variable name": GOTO errmes
-                IF optionexplicit THEN a$ = "Variable '" + n$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": GOTO errmes
+                IF GetRCStateVar(OptExpl) THEN a$ = "Variable '" + n$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": GOTO errmes
                 bypassNextVariable = -1
                 retval = dim2(n$, typ$, method, "")
                 manageVariableList "", vWatchNewVariable$, 0, 2
@@ -7684,7 +7679,7 @@ DO
 
     '_ECHO checking
     IF firstelement$ = "_ECHO" THEN
-        IF ConsoleOn = 0 THEN
+        IF GetRCStateVar(ConsoleOn) = 0 THEN
             a$ = "_ECHO requires $CONSOLE or $CONSOLE:ONLY to be set first": GOTO errmes
         END IF
     END IF
@@ -8768,13 +8763,13 @@ DO
     END IF
 
     IF firstelement$ = "CHAIN" THEN
-        IF vWatchOn THEN
+        IF GetRCStateVar(vWatchOn) THEN
             addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Feature incompatible with $DEBUG mode", "CHAIN"
         END IF
     END IF
 
     IF firstelement$ = "RUN" THEN 'RUN
-        IF vWatchOn THEN
+        IF GetRCStateVar(vWatchOn) THEN
             addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "Feature incompatible with $DEBUG mode", "RUN"
         END IF
         l$ = SCase$("Run")
@@ -8869,7 +8864,7 @@ DO
                 thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
-            IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
+            IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
             WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
             WriteBufLine MainTxtBuf, "exit_code=" + e$ + ";"
             l$ = l$ + sp + l2$
@@ -8893,14 +8888,14 @@ DO
                 thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
-            IF vWatchOn = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
+            IF GetRCStateVar(vWatchOn) = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
             WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
             WriteBufLine MainTxtBuf, "exit_code=" + e$ + ";"
             l$ = l$ + sp + l2$
         END IF
 
 
-        IF vWatchOn = 1 THEN
+        IF GetRCStateVar(vWatchOn) = 1 THEN
             IF inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
             END IF
@@ -8926,7 +8921,7 @@ DO
                 'note: this value is currently ignored but evaluated for checking reasons
             END IF
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            IF vWatchOn = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
+            IF GetRCStateVar(vWatchOn) = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER=-3; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 vWatchAddLabel linenumber, 0
             ELSE
@@ -10133,12 +10128,12 @@ DO
                     NEXT
                     IF numvar = 0 THEN a$ = "Syntax error - Reference: INPUT [;] " + CHR$(34) + "[Question or statement text]" + CHR$(34) + "{,|;} variable[, ...] or INPUT ; variable[, ...]": GOTO errmes
                     IF lineinput = 1 AND numvar > 1 THEN a$ = "Too many variables": GOTO errmes
-                    IF vWatchOn = 1 THEN
+                    IF GetRCStateVar(vWatchOn) = 1 THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                     WriteBufLine MainTxtBuf, "qbs_input(" + str2(numvar) + "," + str2$(newline) + ");"
                     WriteBufLine MainTxtBuf, "if (stop_program) end();"
-                    IF vWatchOn = 1 THEN
+                    IF GetRCStateVar(vWatchOn) = 1 THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                     WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
@@ -10389,8 +10384,8 @@ DO
                 END IF
 
                 IF firstelement$ = "OPTION" THEN
-                    IF optionexplicit = 0 THEN e$ = " or OPTION _EXPLICIT" ELSE e$ = ""
-                    IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
+                    IF GetRCStateVar(OptExpl) = 0 THEN e$ = " or OPTION _EXPLICIT" ELSE e$ = ""
+                    IF GetRCStateVar(OptExplArr) = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
                     IF n = 1 THEN a$ = "Expected OPTION BASE" + e$: GOTO errmes
                     e$ = getelement$(a$, 2)
                     SELECT CASE e$
@@ -10402,30 +10397,18 @@ DO
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
                         CASE "_EXPLICIT"
-                            opex_desiredState = -1
-                            IF optionexplicit = 0 THEN
-                                IF opex_recompileAttempts = 0 THEN
-                                    opex_recompileAttempts = opex_recompileAttempts + 1
-                                    GOTO do_recompile
-                                END IF
-                            END IF
+                            SetRCStateVar OptExpl, 1
                             l$ = SCase$("Option" + sp + "_Explicit")
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
                         CASE "_EXPLICITARRAY"
-                            opexarray_desiredState = -1
-                            IF optionexplicitarray = 0 THEN
-                                IF opexarray_recompileAttempts = 0 THEN
-                                    opexarray_recompileAttempts = opexarray_recompileAttempts + 1
-                                    GOTO do_recompile
-                                END IF
-                            END IF
+                            SetRCStateVar OptExplArr, 1
                             l$ = SCase$("Option" + sp + "_ExplicitArray")
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
                         CASE ELSE
-                            IF optionexplicit = 0 THEN e$ = " or OPTION _EXPLICIT" ELSE e$ = ""
-                            IF optionexplicitarray = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
+                            IF GetRCStateVar(OptExpl) = 0 THEN e$ = " or OPTION _EXPLICIT" ELSE e$ = ""
+                            IF GetRCStateVar(OptExplArr) = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
                             a$ = "Expected OPTION BASE" + e$: GOTO errmes
                     END SELECT
                 END IF
@@ -11162,7 +11145,7 @@ DO
                 subcall$ = subcall$ + ");"
 
                 IF firstelement$ = "SLEEP" THEN
-                    IF vWatchOn = 1 THEN
+                    IF GetRCStateVar(vWatchOn) = 1 THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                 END IF
@@ -11170,7 +11153,7 @@ DO
                 WriteBufLine MainTxtBuf, subcall$
 
                 IF firstelement$ = "SLEEP" THEN
-                    IF vWatchOn = 1 THEN
+                    IF GetRCStateVar(vWatchOn) = 1 THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                 END IF
@@ -11236,7 +11219,7 @@ DO
 
     IF inputfunctioncalled THEN
         inputfunctioncalled = 0
-        IF vWatchOn = 1 THEN
+        IF GetRCStateVar(vWatchOn) = 1 THEN
             WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
     END IF
@@ -11251,7 +11234,7 @@ DO
         inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
     END IF
     IF CheckingOn THEN
-        IF vWatchOn AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
+        IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
         IF dynscope THEN
             dynscope = 0
             WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + str2$(linenumber) + inclinenump$ + ");if(r)goto S_" + str2$(statementn) + ";}"
@@ -11724,11 +11707,6 @@ FOR x = 1 TO commonarraylistn
 NEXT
 IF Debug THEN PRINT #9, "Finished COMMON array list check!"
 
-IF vWatchDesiredState <> vWatchOn THEN
-    vWatchRecompileAttempts = vWatchRecompileAttempts + 1
-    recompile = 1
-END IF
-
 IF recompile THEN
     do_recompile:
     IF Debug THEN PRINT #9, "Recompile required!"
@@ -11805,7 +11783,7 @@ defdatahandle = GlobTxtBuf
 DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
 FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
 
-IF ConsoleOn THEN
+IF GetRCStateVar(ConsoleOn) THEN
     WriteBufLine GlobTxtBuf, "int32 console=1;"
 ELSE
     WriteBufLine GlobTxtBuf, "int32 console=0;"
@@ -11817,13 +11795,13 @@ ELSE
     WriteBufLine GlobTxtBuf, "int32 screen_hide_startup=0;"
 END IF
 
-IF AssertsOn THEN
+IF GetRCStateVar(AssertsOn) THEN
     WriteBufLine GlobTxtBuf, "int32 asserts=1;"
 ELSE
     WriteBufLine GlobTxtBuf, "int32 asserts=0;"
 END IF
 
-IF vWatchOn THEN
+IF GetRCStateVar(vWatchOn) THEN
     WriteBufLine GlobTxtBuf, "int32 vwatch=-1;"
 ELSE
     WriteBufLine GlobTxtBuf, "int32 vwatch=0;"
@@ -11837,7 +11815,7 @@ IF ResizeScale THEN
     WriteBufLine bh, "ScreenResizeScale=" + str2(ResizeScale) + ";"
 END IF
 
-IF vWatchOn = 1 THEN
+IF GetRCStateVar(vWatchOn) = 1 THEN
     vWatchVariable "", 1
 END IF
 
@@ -12461,7 +12439,7 @@ IF DEPENDENCY(DEPENDENCY_LOADFONT) THEN makedeps$ = makedeps$ + " DEP_FONT=y"
 IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEINPUT=y"
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
 IF DEPENDENCY(DEPENDENCY_EMBED) THEN makedeps$ = makedeps$ + " DEP_EMBED=y"
-IF ConsoleOn THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
+IF GetRCStateVar(ConsoleOn) THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
 IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
@@ -13167,7 +13145,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 MonochromeLoggingMode = -1
                 cmdlineswitch = -1
             CASE "-e" 'Option Explicit
-                optionexplicit_cmd = -1
+                ForceOptExpl = -1
                 cmdlineswitch = -1
             CASE "-s" 'Settings
                 settingsMode = -1
@@ -13275,6 +13253,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 IF PassedFileName$ = "" THEN PassedFileName$ = token$
         END SELECT
     NEXT i
+    IF NoIDEMode = 0 THEN ForceOptExpl = 0 'don't leak force option into the IDE
 
     IF FormatMode AND LEN(outputfile_cmd$) = 0 THEN
         _DEST _CONSOLE
@@ -14163,7 +14142,7 @@ SUB closemain
 
     WriteBufLine MainTxtBuf, "return;"
 
-    IF vWatchOn AND firstLineNumberLabelvWatch > 0 THEN
+    IF GetRCStateVar(vWatchOn) = 1 AND firstLineNumberLabelvWatch > 0 THEN
         WriteBufLine MainTxtBuf, "VWATCH_SETNEXTLINE:;"
         WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
         FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
@@ -15780,7 +15759,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                             IF Debug THEN PRINT #9, "evaluate:creating undefined array using dim2(" + l$ + "," + dtyp$ + ",1," + fakee$ + ")"
                             autoIncForceUScore = 1
                             IF validname(l$) = 0 THEN Give_Error "Invalid array name": EXIT FUNCTION
-                            IF optionexplicit OR optionexplicitarray THEN Give_Error "Array '" + l$ + "' (" + symbol2fulltypename$(dtyp$) + ") not defined": EXIT FUNCTION
+                            IF GetRCStateVar(OptExpl) OR GetRCStateVar(OptExplArr) THEN Give_Error "Array '" + l$ + "' (" + symbol2fulltypename$(dtyp$) + ") not defined": EXIT FUNCTION
                             IF Error_Happened THEN EXIT FUNCTION
                             olddimstatic = dimstatic
                             method = 1
@@ -16004,7 +15983,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                     IF Debug THEN PRINT #9, "CREATING VARIABLE:" + x$
                     autoIncForceUScore = 1
                     IF validname(x$) = 0 THEN Give_Error "Invalid variable name": EXIT FUNCTION
-                    IF optionexplicit THEN Give_Error "Variable '" + x$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": EXIT FUNCTION
+                    IF GetRCStateVar(OptExpl) THEN Give_Error "Variable '" + x$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": EXIT FUNCTION
                     bypassNextVariable = -1
                     retval = dim2(x$, typ$, 1, "")
                     manageVariableList "", vWatchNewVariable$, 0, 3
@@ -16400,7 +16379,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     IF RTRIM$(id2.callname) = "func_stub" THEN Give_Error "Command not implemented": EXIT FUNCTION
     IF RTRIM$(id2.callname) = "func_input" AND args = 1 AND inputfunctioncalled = 0 THEN
         inputfunctioncalled = -1
-        IF vWatchOn = 1 THEN
+        IF GetRCStateVar(vWatchOn) = 1 THEN
             WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
     END IF
@@ -22251,7 +22230,7 @@ FUNCTION validlabel (LABEL2$)
 END FUNCTION
 
 SUB xend
-    IF vWatchOn = 1 THEN
+    IF GetRCStateVar(vWatchOn) = 1 THEN
         'check if closedmain = 0 in case a main module ends in an include.
         IF (inclinenumber(inclevel) = 0 OR closedmain = 0) THEN vWatchAddLabel 0, -1
         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
@@ -23187,7 +23166,7 @@ END FUNCTION
 SUB SetDependency (requirement)
     IF requirement THEN
         DEPENDENCY(requirement) = 1
-        IF requirement = DEPENDENCY_SOCKETS THEN SetPreLET "SOCKETS_IN_USE", "-1"
+        IF requirement = DEPENDENCY_SOCKETS THEN SetRCStateVar SockDepOn, 1
     END IF
 END SUB
 
@@ -23383,7 +23362,6 @@ FUNCTION EvalPreIF (text$, err$)
             NEXT
             leftside$ = RTRIM$(LEFT$(temp$, i))
             l$ = LTRIM$(RTRIM$(MID$(temp$, i + 1, LEN(l$) - i)))
-            IF validname(l$) = 0 THEN err$ = "Invalid flag name": EXIT FUNCTION
             rightstop = LEN(r$)
             FOR i = 1 TO LEN(r$)
                 IF ASC(r$, i) = 32 THEN EXIT FOR
@@ -23787,6 +23765,7 @@ END FUNCTION
 '$INCLUDE:'utilities\s-buffer\simplebuffer.bm'
 '$INCLUDE:'utilities\const_eval.bas'
 '$INCLUDE:'utilities\hash.bas'
+'$INCLUDE:'utilities\statevars.bas'
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
 '$INCLUDE:'utilities\format.bas'
