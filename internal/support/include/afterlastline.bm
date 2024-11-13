@@ -53,13 +53,13 @@ $CHECKING:OFF
 ' numeric results without type suffixes and string results with the $ suffix.
 '==========================================================================
 
-'_MIN() returns the lesser of both given values (returns value1 if equal)
+'_MIN() returns the lesser of both given values (returns value1 if equal).
 '----------
 FUNCTION _IKW_Min## (_value1##, _value2##)
     IF _value1## <= _value2## THEN _MIN = _value1## ELSE _MIN = _value2##
 END FUNCTION
 
-'_MAX() returns the greater of both given values (returns value1 if equal)
+'_MAX() returns the greater of both given values (returns value1 if equal).
 '----------
 FUNCTION _IKW_Max## (_value1##, _value2##)
     IF _value1## >= _value2## THEN _MAX = _value1## ELSE _MAX = _value2##
@@ -134,8 +134,9 @@ END FUNCTION
 ' rule #2 its names must begin with an underscore.
 '==========================================================================
 
-$IF SOCKETS_IN_USE THEN
-    '_WhatIsMyIP$() is a helper function required by _CONNECTIONADDRESS$
+$IF _SOCKETS_ THEN
+    '_WhatIsMyIP$() is a helper function required by _CONNECTIONADDRESS$,
+    'but only required when network stuff is compiled in (_SOCKETS_).
     '----------
     FUNCTION _WhatIsMyIP$
         '01 NOV 2024: Make it part of this file, i.e. deprecating internal/c/myip.cpp;
