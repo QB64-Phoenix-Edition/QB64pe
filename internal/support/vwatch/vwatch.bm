@@ -873,7 +873,9 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         CASE "_UNSIGNED _INTEGER64", "UNSIGNED INTEGER64": vw_v2$ = STR$(_CV(_UNSIGNED _INTEGER64, vw_buf$))
         CASE "SINGLE": vw_v2$ = STR$(CVS(vw_buf$))
         CASE "DOUBLE": vw_v2$ = STR$(CVD(vw_buf$))
-        CASE "_FLOAT", "FLOAT": vw_v2$ = STR$(_CV(_FLOAT, vw_buf$))
+        CASE "_FLOAT", "FLOAT"
+            vw_v2$ = " " + _TOSTR$(_CV(_FLOAT, vw_buf$))
+            IF LEN(vw_v2$) > 1 _ANDALSO ASC(vw_v2$, 2) = 45 THEN vw_v2$ = MID$(vw_v2$, 2)
         CASE "_OFFSET", "OFFSET": vw_v2$ = STR$(_CV(_OFFSET, vw_buf$))
         CASE "_UNSIGNED _OFFSET", "UNSIGNED OFFSET": vw_v2$ = STR$(_CV(_UNSIGNED _OFFSET, vw_buf$))
     END SELECT
