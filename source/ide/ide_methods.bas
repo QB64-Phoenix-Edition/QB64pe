@@ -7564,8 +7564,8 @@ SUB DebugMode
                                 tempVarType$ = "STRING"
                                 fixedVarSize& = VAL(MID$(varType$, _INSTRREV(varType$, "* ") + 2))
                             END IF
-                            IF INSTR(varType$, "BIT *") THEN tempVarType$ = "_BIT"
-                            IF tempVarType$ = "_BIT" AND INSTR(varType$, "UNSIGNED") > 0 THEN
+                            IF INSTR(varType$, "_BIT *") THEN tempVarType$ = "_BIT"
+                            IF tempVarType$ = "_BIT" AND INSTR(varType$, "_UNSIGNED") > 0 THEN
                                 tempVarType$ = "_UNSIGNED _BIT"
                             END IF
                             SELECT CASE tempVarType$
@@ -7573,34 +7573,34 @@ SUB DebugMode
                                     value$ = MKL$(VAL(value$))
                                     varSize& = LEN(dummy&)
                                     result$ = STR$(CVL(value$))
-                                CASE "_BYTE", "_UNSIGNED _BYTE", "BYTE", "UNSIGNED BYTE"
+                                CASE "_BYTE", "_UNSIGNED _BYTE"
                                     value$ = _MK$(_BYTE, VAL(value$))
                                     varSize& = LEN(dummy%%)
-                                    IF INSTR(tempVarType$, "UNSIGNED") > 0 THEN
+                                    IF INSTR(tempVarType$, "_UNSIGNED") > 0 THEN
                                         result$ = STR$(_CV(_UNSIGNED _BYTE, value$))
                                     ELSE
                                         result$ = STR$(_CV(_BYTE, value$))
                                     END IF
-                                CASE "INTEGER", "_UNSIGNED INTEGER", "UNSIGNED INTEGER"
+                                CASE "INTEGER", "_UNSIGNED INTEGER"
                                     value$ = MKI$(VAL(value$))
                                     varSize& = LEN(dummy%)
-                                    IF INSTR(tempVarType$, "UNSIGNED") > 0 THEN
+                                    IF INSTR(tempVarType$, "_UNSIGNED") > 0 THEN
                                         result$ = STR$(_CV(_UNSIGNED INTEGER, value$))
                                     ELSE
                                         result$ = STR$(_CV(INTEGER, value$))
                                     END IF
-                                CASE "LONG", "_UNSIGNED LONG", "UNSIGNED LONG"
+                                CASE "LONG", "_UNSIGNED LONG"
                                     value$ = MKL$(VAL(value$))
                                     varSize& = LEN(dummy&)
-                                    IF INSTR(tempVarType$, "UNSIGNED") > 0 THEN
+                                    IF INSTR(tempVarType$, "_UNSIGNED") > 0 THEN
                                         result$ = STR$(_CV(_UNSIGNED LONG, value$))
                                     ELSE
                                         result$ = STR$(_CV(LONG, value$))
                                     END IF
-                                CASE "_INTEGER64", "INTEGER64", "_UNSIGNED _INTEGER64", "UNSIGNED INTEGER64"
+                                CASE "_INTEGER64", "_UNSIGNED _INTEGER64"
                                     value$ = _MK$(_INTEGER64, VAL(value$))
                                     varSize& = LEN(dummy&&)
-                                    IF INSTR(tempVarType$, "UNSIGNED") > 0 THEN
+                                    IF INSTR(tempVarType$, "_UNSIGNED") > 0 THEN
                                         result$ = STR$(_CV(_UNSIGNED _INTEGER64, value$))
                                     ELSE
                                         result$ = STR$(_CV(_INTEGER64, value$))
@@ -7613,14 +7613,14 @@ SUB DebugMode
                                     value$ = MKD$(VAL(value$))
                                     varSize& = LEN(dummy#)
                                     result$ = STR$(CVD(value$))
-                                CASE "_FLOAT", "FLOAT"
+                                CASE "_FLOAT"
                                     value$ = _MK$(_FLOAT, VAL(value$))
                                     varSize& = LEN(dummy##)
                                     result$ = " " + _TOSTR$(_CV(_FLOAT, value$))
-                                CASE "_OFFSET", "_UNSIGNED _OFFSET", "OFFSET", "UNSIGNED OFFSET"
+                                CASE "_OFFSET", "_UNSIGNED _OFFSET"
                                     value$ = _MK$(_OFFSET, VAL(value$))
                                     varSize& = LEN(dummy%&)
-                                    IF INSTR(tempVarType$, "UNSIGNED") > 0 THEN
+                                    IF INSTR(tempVarType$, "_UNSIGNED") > 0 THEN
                                         result$ = STR$(_CV(_UNSIGNED _OFFSET, value$))
                                     ELSE
                                         result$ = STR$(_CV(_OFFSET, value$))
@@ -8048,19 +8048,19 @@ SUB DebugMode
                 recvData$ = MID$(value$, 17)
                 GOSUB GetVarSize
                 SELECT CASE tempVarType$
-                    CASE "_BYTE", "BYTE": recvData$ = STR$(_CV(_BYTE, recvData$))
-                    CASE "_UNSIGNED _BYTE", "UNSIGNED BYTE": recvData$ = STR$(_CV(_UNSIGNED _BYTE, recvData$))
+                    CASE "_BYTE": recvData$ = STR$(_CV(_BYTE, recvData$))
+                    CASE "_UNSIGNED _BYTE": recvData$ = STR$(_CV(_UNSIGNED _BYTE, recvData$))
                     CASE "INTEGER": recvData$ = STR$(_CV(INTEGER, recvData$))
-                    CASE "_UNSIGNED INTEGER", "UNSIGNED INTEGER": recvData$ = STR$(_CV(_UNSIGNED INTEGER, recvData$))
+                    CASE "_UNSIGNED INTEGER": recvData$ = STR$(_CV(_UNSIGNED INTEGER, recvData$))
                     CASE "LONG": recvData$ = STR$(_CV(LONG, recvData$))
-                    CASE "_UNSIGNED LONG", "UNSIGNED LONG": recvData$ = STR$(_CV(_UNSIGNED LONG, recvData$))
-                    CASE "_INTEGER64", "INTEGER64": recvData$ = STR$(_CV(_INTEGER64, recvData$))
-                    CASE "_UNSIGNED _INTEGER64", "UNSIGNED INTEGER64": recvData$ = STR$(_CV(_UNSIGNED _INTEGER64, recvData$))
+                    CASE "_UNSIGNED LONG": recvData$ = STR$(_CV(_UNSIGNED LONG, recvData$))
+                    CASE "_INTEGER64": recvData$ = STR$(_CV(_INTEGER64, recvData$))
+                    CASE "_UNSIGNED _INTEGER64": recvData$ = STR$(_CV(_UNSIGNED _INTEGER64, recvData$))
                     CASE "SINGLE": recvData$ = STR$(_CV(SINGLE, recvData$))
                     CASE "DOUBLE": recvData$ = STR$(_CV(DOUBLE, recvData$))
-                    CASE "_FLOAT", "FLOAT": recvData$ = " " + _TOSTR$(_CV(_FLOAT, recvData$))
-                    CASE "_OFFSET", "OFFSET": recvData$ = STR$(_CV(_OFFSET, recvData$))
-                    CASE "_UNSIGNED _OFFSET", "UNSIGNED OFFSET": recvData$ = STR$(_CV(_UNSIGNED _OFFSET, recvData$))
+                    CASE "_FLOAT": recvData$ = " " + _TOSTR$(_CV(_FLOAT, recvData$))
+                    CASE "_OFFSET": recvData$ = STR$(_CV(_OFFSET, recvData$))
+                    CASE "_UNSIGNED _OFFSET": recvData$ = STR$(_CV(_UNSIGNED _OFFSET, recvData$))
                         'CASE "STRING": 'no conversion required
                 END SELECT
                 IF LEN(recvData$) > 1 _ANDALSO ASC(recvData$, 2) = 45 THEN recvData$ = MID$(recvData$, 2)
@@ -8224,27 +8224,27 @@ SUB DebugMode
     checkVarType:
     tempVarType$ = varType$
     IF INSTR(tempVarType$, "STRING *") THEN tempVarType$ = "STRING"
-    IF INSTR(tempVarType$, "BIT *") THEN
+    IF INSTR(tempVarType$, "_BIT *") THEN
         IF VAL(MID$(tempVarType$, _INSTRREV(tempVarType$, " ") + 1)) > 32 THEN
             tempVarType$ = "_INTEGER64"
-            IF INSTR(varType$, "UNSIGNED") THEN tempVarType$ = "_UNSIGNED _INTEGER64"
+            IF INSTR(varType$, "_UNSIGNED") THEN tempVarType$ = "_UNSIGNED _INTEGER64"
         ELSE
             tempVarType$ = "LONG"
-            IF INSTR(varType$, "UNSIGNED") THEN tempVarType$ = "_UNSIGNED LONG"
+            IF INSTR(varType$, "_UNSIGNED") THEN tempVarType$ = "_UNSIGNED LONG"
         END IF
-    ELSEIF INSTR("@_BIT@BIT@_UNSIGNED _BIT@UNSIGNED BIT@", "@" + tempVarType$ + "@") THEN
+    ELSEIF INSTR("@_BIT@_UNSIGNED _BIT@", "@" + tempVarType$ + "@") THEN
         tempVarType$ = "LONG"
-        IF INSTR(varType$, "UNSIGNED") THEN tempVarType$ = "_UNSIGNED LONG"
+        IF INSTR(varType$, "_UNSIGNED") THEN tempVarType$ = "_UNSIGNED LONG"
     END IF
     SELECT CASE tempVarType$
-        CASE "_BYTE", "_UNSIGNED _BYTE", "BYTE", "UNSIGNED BYTE": varSize& = LEN(dummy%%)
-        CASE "INTEGER", "_UNSIGNED INTEGER", "UNSIGNED INTEGER": varSize& = LEN(dummy%)
-        CASE "LONG", "_UNSIGNED LONG", "UNSIGNED LONG": varSize& = LEN(dummy&)
-        CASE "_INTEGER64", "_UNSIGNED _INTEGER64", "INTEGER64", "UNSIGNED INTEGER64": varSize& = LEN(dummy&&)
+        CASE "_BYTE", "_UNSIGNED _BYTE": varSize& = LEN(dummy%%)
+        CASE "INTEGER", "_UNSIGNED INTEGER": varSize& = LEN(dummy%)
+        CASE "LONG", "_UNSIGNED LONG": varSize& = LEN(dummy&)
+        CASE "_INTEGER64", "_UNSIGNED _INTEGER64": varSize& = LEN(dummy&&)
         CASE "SINGLE": varSize& = LEN(dummy!)
         CASE "DOUBLE": varSize& = LEN(dummy#)
-        CASE "_FLOAT", "FLOAT": varSize& = LEN(dummy##)
-        CASE "_OFFSET", "_UNSIGNED _OFFSET", "OFFSET", "UNSIGNED OFFSET": varSize& = LEN(dummy%&)
+        CASE "_FLOAT": varSize& = LEN(dummy##)
+        CASE "_OFFSET", "_UNSIGNED _OFFSET": varSize& = LEN(dummy%&)
         CASE "STRING": varSize& = LEN(dummy%&) + LEN(dummy&)
         CASE ELSE 'UDT?
             varType$ = getelement(usedVariableList(tempIndex&).elementTypes, tempElement&)
@@ -8738,7 +8738,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
             FOR y = 1 TO totalVisibleVariables
                 varType$ = usedVariableList(varDlgList(y).index).varType
                 IF INSTR(varType$, "STRING *") THEN varType$ = "STRING"
-                IF INSTR(varType$, "BIT *") THEN varType$ = "_BIT"
+                IF INSTR(varType$, "_BIT *") THEN varType$ = "_BIT"
                 IF (usedVariableList(varDlgList(y).index).isarray AND LEN(usedVariableList(varDlgList(y).index).watchRange) = 0) OR _
                    INSTR(nativeDataTypes$, varType$) = 0 THEN _CONTINUE
                 usedVariableList(varDlgList(y).index).watch = -1
@@ -8847,7 +8847,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                     varType$ = usedVariableList(tempIndex&).varType
                     tempVarType$ = varType$
                     IF INSTR(varType$, "STRING *") THEN tempVarType$ = "STRING"
-                    IF INSTR(varType$, "BIT *") THEN tempVarType$ = "_BIT"
+                    IF INSTR(varType$, "_BIT *") THEN tempVarType$ = "_BIT"
                     IF INSTR(nativeDataTypes$, tempVarType$) = 0 THEN
                         'It's a UDT
                         tempIsUDT& = -1
@@ -9367,7 +9367,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
 
                     varType$ = usedVariableList(varDlgList(y).index).varType
                     IF INSTR(varType$, "STRING *") THEN varType$ = "STRING"
-                    IF INSTR(varType$, "BIT *") THEN varType$ = "_BIT"
+                    IF INSTR(varType$, "_BIT *") THEN varType$ = "_BIT"
                     IF INSTR(nativeDataTypes$, varType$) = 0 THEN
                         'It's a UDT
                         elementIndexes$ = ""
@@ -9917,7 +9917,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                 FOR y = 1 TO totalElements
                     varType$ = varDlgList(y).varType
                     IF INSTR(varType$, "STRING *") THEN varType$ = "STRING"
-                    IF INSTR(varType$, "BIT *") THEN varType$ = "_BIT"
+                    IF INSTR(varType$, "_BIT *") THEN varType$ = "_BIT"
                     IF INSTR(nativeDataTypes$, varType$) > 0 THEN
                         varDlgList(y).selected = -1
                         ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag) = variableNameColor
@@ -9959,7 +9959,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                     IF varDlgList(y).selected THEN
                         varType$ = varDlgList(y).varType
                         IF INSTR(varType$, "STRING *") THEN varType$ = "STRING"
-                        IF INSTR(varType$, "BIT *") THEN varType$ = "_BIT"
+                        IF INSTR(varType$, "_BIT *") THEN varType$ = "_BIT"
                         IF INSTR(nativeDataTypes$, varType$) > 0 THEN
                             'non-native data types will have already been added to the return list
                             thisName$ = RTRIM$(udtecname(varDlgList(y).index))
@@ -10029,7 +10029,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
 
                     varType$ = varDlgList(y).varType
                     IF INSTR(varType$, "STRING *") THEN varType$ = "STRING"
-                    IF INSTR(varType$, "BIT *") THEN varType$ = "_BIT"
+                    IF INSTR(varType$, "_BIT *") THEN varType$ = "_BIT"
                     IF INSTR(nativeDataTypes$, varType$) = 0 THEN
                         'It's a UDT
                         elementIndexes2$ = ""

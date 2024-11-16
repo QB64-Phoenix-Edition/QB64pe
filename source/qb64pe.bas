@@ -47,7 +47,7 @@ vWatchVariableExclusions$ = "@__LONG_VWATCH_LINENUMBER@__LONG_VWATCH_SUBLEVEL@__
               "@__ARRAY_BYTE_VWATCH_SKIPLINES@__STRING_VWATCH_INTERNALSUBNAME@__ARRAY_STRING_VWATCH_STACK@"
 
 DIM SHARED nativeDataTypes$
-nativeDataTypes$ = "@_OFFSET@OFFSET@_UNSIGNED _OFFSET@UNSIGNED OFFSET@_BIT@BIT@_UNSIGNED _BIT@UNSIGNED BIT@_BYTE@_UNSIGNED _BYTE@BYTE@UNSIGNED BYTE@INTEGER@_UNSIGNED INTEGER@UNSIGNED INTEGER@LONG@_UNSIGNED LONG@UNSIGNED LONG@_INTEGER64@INTEGER64@_UNSIGNED _INTEGER64@UNSIGNED INTEGER64@SINGLE@DOUBLE@_FLOAT@FLOAT@STRING@"
+nativeDataTypes$ = "@_OFFSET@_UNSIGNED _OFFSET@_BIT@_UNSIGNED _BIT@_BYTE@_UNSIGNED _BYTE@INTEGER@_UNSIGNED INTEGER@LONG@_UNSIGNED LONG@_INTEGER64@_UNSIGNED _INTEGER64@SINGLE@DOUBLE@_FLOAT@STRING@"
 
 REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
 REDIM SelectCaseHasCaseBlock(100)
@@ -56,7 +56,7 @@ REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is t
 REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
 DIM SHARED UserDefineCount AS INTEGER, UserDefineCountPresets AS INTEGER, UserDefineList$, UserDefineListPresets$
-UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@QB64PE@"
+UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@_QB64PE_@"
 UserDefine(0, 0) = "WINDOWS": UserDefine(0, 1) = "WIN"
 UserDefine(0, 2) = "LINUX"
 UserDefine(0, 3) = "MAC": UserDefine(0, 4) = "MACOSX"
@@ -639,8 +639,6 @@ DIM SHARED wholeline AS STRING
 DIM SHARED firstLineNumberLabelvWatch AS LONG, lastLineNumberLabelvWatch AS LONG
 DIM SHARED vWatchUsedLabels AS STRING, vWatchUsedSkipLabels AS STRING
 DIM SHARED linefragment AS STRING
-'COMMON SHARED bitmask() AS _INTEGER64
-'COMMON SHARED bitmaskinv() AS _INTEGER64
 
 DIM SHARED arrayprocessinghappened AS INTEGER
 DIM SHARED stringprocessinghappened AS INTEGER
@@ -10097,7 +10095,7 @@ DO
                             IF lineinput THEN a$ = "Expected string variable": GOTO errmes
                             IF (t AND ISARRAY) THEN
                                 IF (t AND ISOFFSETINBITS) THEN
-                                    a$ = "INPUT cannot handle BIT array elements": GOTO errmes
+                                    a$ = "INPUT cannot handle _BIT array elements": GOTO errmes
                                 END IF
                             END IF
                             e$ = "&(" + refer(e$, t, 0) + ")"
@@ -10926,7 +10924,7 @@ DO
                                             ELSE
                                                 'not a udt
                                                 IF arr THEN
-                                                    IF (sourcetyp2 AND ISOFFSETINBITS) THEN a$ = "Cannot pass BIT array offsets": GOTO errmes
+                                                    IF (sourcetyp2 AND ISOFFSETINBITS) THEN a$ = "Cannot pass _BIT array offsets": GOTO errmes
                                                     e$ = "(&(" + refer(e$, sourcetyp, 0) + "))"
                                                     IF Error_Happened THEN GOTO errmes
                                                 ELSE
@@ -14604,14 +14602,14 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
     END IF
 
     IF LEFT$(typ$, 4) = "_BIT" THEN
-        IF (LEFT$(typ$, 4) = "_BIT" AND LEN(typ$) > 4) OR (LEFT$(typ$, 3) = "BIT" AND LEN(typ$) > 3) THEN
-            IF LEFT$(typ$, 7) <> "_BIT * " AND LEFT$(typ$, 6) <> "BIT * " THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
+        IF LEFT$(typ$, 4) = "_BIT" AND LEN(typ$) > 4 THEN
+            IF LEFT$(typ$, 7) <> "_BIT * " THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
             c$ = MID$(typ$, INSTR(typ$, " * ") + 3)
             IF isuinteger(c$) = 0 THEN Give_Error "Number expected after *": EXIT FUNCTION
-            IF LEN(c$) > 2 THEN Give_Error "Cannot create a bit variable of size > 64 bits": EXIT FUNCTION
+            IF LEN(c$) > 2 THEN Give_Error "Cannot create a _BIT variable of size > 64 bits": EXIT FUNCTION
             bits = VAL(c$)
-            IF bits = 0 THEN Give_Error "Cannot create a bit variable of size 0 bits": EXIT FUNCTION
-            IF bits > 64 THEN Give_Error "Cannot create a bit variable of size > 64 bits": EXIT FUNCTION
+            IF bits = 0 THEN Give_Error "Cannot create a _BIT variable of size 0 bits": EXIT FUNCTION
+            IF bits > 64 THEN Give_Error "Cannot create a _BIT variable of size > 64 bits": EXIT FUNCTION
         ELSE
             bits = 1
         END IF
@@ -14621,7 +14619,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
         'array of bit-length variables
         IF elements$ <> "" THEN
-            IF bits > 63 THEN Give_Error "Cannot create a bit array of size > 63 bits": EXIT FUNCTION
+            IF bits > 63 THEN Give_Error "Cannot create a _BIT array of size > 63 bits": EXIT FUNCTION
             arraydesc = 0
             cmps$ = varname$: IF unsgn THEN cmps$ = cmps$ + "~"
             cmps$ = cmps$ + "`" + str2(bits)
@@ -15142,7 +15140,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         GOTO dim2exitfunc
     END IF
 
-    IF unsgn = 1 THEN Give_Error "Type cannot be unsigned": EXIT FUNCTION
+    IF unsgn = 1 THEN Give_Error "Type cannot be _UNSIGNED": EXIT FUNCTION
 
     IF typ$ = "SINGLE" THEN
         ct$ = "float"
@@ -16269,7 +16267,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                             'no change to b
                         ELSE
                             IF b > 16 THEN b = 64 'larger than INTEGER? return DOUBLE
-                            IF b > 32 THEN b = 256 'larger than LONG? return FLOAT
+                            IF b > 32 THEN b = 256 'larger than LONG? return _FLOAT
                             IF b <= 16 THEN b = 32
                         END IF
                         b2 = newtyp AND 511
@@ -16278,7 +16276,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                         ELSE
                             b3 = 32
                             IF b2 > 16 THEN b3 = 64 'larger than INTEGER? return DOUBLE
-                            IF b2 > 32 THEN b3 = 256 'larger than LONG? return FLOAT
+                            IF b2 > 32 THEN b3 = 256 'larger than LONG? return _FLOAT
                             IF b3 > b THEN b = b3
                         END IF
                         typ = ISFLOAT + b
@@ -17601,7 +17599,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                     ELSE
                                         'not a udt
                                         IF arr THEN
-                                            IF (sourcetyp2 AND ISOFFSETINBITS) THEN Give_Error "Cannot pass BIT array offsets": EXIT FUNCTION
+                                            IF (sourcetyp2 AND ISOFFSETINBITS) THEN Give_Error "Cannot pass _BIT array offsets": EXIT FUNCTION
                                             e$ = "(&(" + refer(e$, sourcetyp, 0) + "))"
                                             IF Error_Happened THEN EXIT FUNCTION
                                         ELSE
@@ -17630,7 +17628,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                                 'IF sourcetyp2 = targettyp2 THEN
                                 'IF arr THEN
-                                'IF (sourcetyp2 AND ISOFFSETINBITS) THEN Give_Error "Cannot pass BIT array offsets yet": EXIT FUNCTION
+                                'IF (sourcetyp2 AND ISOFFSETINBITS) THEN Give_Error "Cannot pass _BIT array offsets yet": EXIT FUNCTION
                                 'e$ = "(&(" + refer(e$, sourcetyp, 0) + "))"
                                 'ELSE
                                 'e$ = refer(e$, sourcetyp, 1)
@@ -17931,7 +17929,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     '-6 offset
     IF targettyp = -4 OR targettyp = -5 OR targettyp = -6 THEN '? -> byte_element(offset,element size in bytes)
         IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
-        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
 
         ' print "-4: evaluated as ["+e$+"]":sleep 1
 
@@ -18057,7 +18055,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
 
     IF targettyp = -8 THEN '? -> _MEM structure helper {offset, fullsize, typeval, elementsize, sf_mem_lock|???}
         IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
-        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
 
 
         IF (sourcetyp AND ISUDT) THEN 'User Defined Type -> byte_element(offset,bytes)
@@ -18201,7 +18199,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     IF targettyp = -7 THEN '? -> _MEM structure helper {offset, fullsize, typeval, elementsize, sf_mem_lock|???}
         method2useall__7:
         IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
-        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
 
         'User Defined Type
         IF (sourcetyp AND ISUDT) THEN
@@ -18311,7 +18309,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         ' print "CI: eval2typ detected target type of -2 for ["+a2$+"] evaluated as ["+e$+"]":sleep 1
 
         IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
-        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
+        IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
 
         'User Defined Type -> byte_element(offset,bytes)
         IF (sourcetyp AND ISUDT) THEN
@@ -21879,7 +21877,7 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             'WARNING: u2 may need minor modifications based on e to see if they are the same
 
             'we have now established we have 2 pointers to similar data types!
-            'ASSUME BYTE TYPE!!!
+            'ASSUME _BYTE TYPE!!!
             src$ = "((char*)" + scope$ + n2$ + ")+(" + o2$ + ")"
             directudt:
             IF u <> u2 OR e2 <> 0 THEN Give_Error "Expected = similar user defined type": EXIT SUB
