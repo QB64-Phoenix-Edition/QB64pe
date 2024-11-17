@@ -34,9 +34,14 @@
 #include <utility>
 #include <vector>
 
-#define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
-#define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
-#define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
+#ifndef _countof
+#    ifdef __cplusplus
+template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept { return N; }
+#    else
+#        define _countof(Array_) (sizeof(Array_) / sizeof(Array_[0]))
+#    endif
+#endif
+
 #define SILENCE_SAMPLE 0.0f
 
 #ifndef MA_DEFAULT_SAMPLE_RATE

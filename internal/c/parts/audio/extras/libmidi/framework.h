@@ -27,10 +27,10 @@
 // a740g: Microsoft's _countof replacement for *nix
 
 #ifndef _countof
-#    ifndef __cplusplus
-#        define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#    ifdef __cplusplus
+template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept { return N; }
 #    else
-template <typename T, size_t N> static inline constexpr size_t _countof(T const (&_Array)[N]) { return std::extent<T[N]>::value; }
+#        define _countof(Array_) (sizeof(Array_) / sizeof(Array_[0]))
 #    endif
 #endif
 

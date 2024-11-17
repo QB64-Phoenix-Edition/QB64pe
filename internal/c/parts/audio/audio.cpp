@@ -249,8 +249,7 @@ struct AudioEngine {
                 return nullptr;
             }
 
-            ZERO_VARIABLE(pRawStream->maDataSource);
-
+            pRawStream->maDataSource = {};
             pRawStream->maDataSourceConfig = ma_data_source_config_init();
             pRawStream->maDataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
 
@@ -823,7 +822,7 @@ struct AudioEngine {
             pause = MML_PAUSE_DEFAULT;
             duration = 0;
             dots = 0;
-            ZERO_VARIABLE(currentState);
+            currentState = {};
             SetPanPosition(PAN_CENTER);
 
             maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, ma_engine_get_sample_rate(rawStream->maEngine),
@@ -1823,12 +1822,12 @@ struct AudioEngine {
             isUsed = false;
             type = Type::NONE;
             autoKill = false;
-            ZERO_VARIABLE(maSound);
+            maSound = {};
             maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
-            ZERO_VARIABLE(maDecoderConfig);
+            maDecoderConfig = {};
             maDecoder = nullptr;
             bufferKey = 0;
-            ZERO_VARIABLE(maAudioBufferConfig);
+            maAudioBufferConfig = {};
             maAudioBuffer = nullptr;
             rawStream = nullptr;
             psg = nullptr;
@@ -1863,10 +1862,10 @@ struct AudioEngine {
     /// @brief Initializes some important members.
     AudioEngine() {
         isInitialized = initializationFailed = false;
-        ZERO_VARIABLE(maResourceManagerConfig);
-        ZERO_VARIABLE(maResourceManager);
-        ZERO_VARIABLE(maEngineConfig);
-        ZERO_VARIABLE(maEngine);
+        maResourceManagerConfig = {};
+        maResourceManager = {};
+        maEngineConfig = {};
+        maEngine = {};
         maResult = ma_result::MA_SUCCESS;
         psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);  // should not use INVALID_SOUND_HANDLE here
         internalSndRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
@@ -1935,7 +1934,7 @@ struct AudioEngine {
         // This will set it to 'in use' after applying some defaults.
         soundHandles[h]->type = SoundHandle::Type::NONE;
         soundHandles[h]->autoKill = false;
-        ZERO_VARIABLE(soundHandles[h]->maSound);
+        soundHandles[h]->maSound = {};
         // We do not use pitch shifting, so this will give a little performance boost
         // Spatialization is disabled by default but will be enabled on the fly if required
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
@@ -3452,7 +3451,7 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
             AUDIO_DEBUG_PRINT("Sound bank will be loaded from memory");
         }
 
-        for (auto i = 0; i < GET_ARRAY_SIZE(SoundBankName); i++) {
+        for (auto i = 0; i < _countof(SoundBankName); i++) {
             AUDIO_DEBUG_PRINT("Checking for: %s", SoundBankName[i]);
             if (requirements.find(SoundBankName[i]) != std::string::npos) {
                 format = SoundBankFormat(i);
