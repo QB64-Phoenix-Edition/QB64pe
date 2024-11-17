@@ -112,13 +112,13 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     if (fixedFrames) {
         // Only attempt to render if we are actually playing
         if (pMIDI->isReallyPlaying) {
-            auto dest = pMIDI->frameBlock->Put(fixedFrames);
+            auto dest = pMIDI->frameBlock->GetWriteBlock(fixedFrames);
             if (dest)
                 pMIDI->isReallyPlaying = pMIDI->sequencer->Play(dest, fixedFrames) > 0;
         }
 
         // Get partial data from the frame block
-        totalFramesRead = pMIDI->frameBlock->Get(reinterpret_cast<float *>(pFramesOut), frameCount);
+        totalFramesRead = pMIDI->frameBlock->ReadFrames(reinterpret_cast<float *>(pFramesOut), frameCount);
 
         // Set the isPlaying flag to true if we still have some data in the buffers
         pMIDI->isPlaying = !pMIDI->frameBlock->IsEmpty();

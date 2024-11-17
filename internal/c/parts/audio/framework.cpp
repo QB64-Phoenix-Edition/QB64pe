@@ -50,11 +50,3 @@ void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourc
     maResourceManagerConfig->ppCustomDecodingBackendVTables = maCustomBackendVTables;
     maResourceManagerConfig->customDecodingBackendCount = ma_countof(maCustomBackendVTables);
 }
-
-/// @brief This simply attaches the format decode VTables array to ma_decoder_config
-/// @param maDecoderConfig Pointer to a miniaudio decoder config object. This cannot be NULL
-void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig) {
-    // Attach the VTable
-    maDecoderConfig->ppCustomBackendVTables = maCustomBackendVTables;
-    maDecoderConfig->customBackendCount = ma_countof(maCustomBackendVTables);
-}
