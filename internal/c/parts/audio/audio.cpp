@@ -293,7 +293,7 @@ struct AudioEngine {
                 AUDIO_DEBUG_PRINT("Read %zu bytes from file %llu", *pBytesRead, fd);
             } else {
                 auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
-                auto readSize = std::min(sizeInBytes, bufferSize - state->offset);
+                auto readSize = std::min<ma_uint64>(sizeInBytes, bufferSize - state->offset);
 
                 std::memcpy(pDst, reinterpret_cast<const uint8_t *>(buffer) + state->offset, readSize);
                 *pBytesRead = readSize;
