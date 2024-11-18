@@ -24,6 +24,7 @@
 #include "error_handle.h"
 #include "filepath.h"
 #include "jo_gif/jo_gif.h"
+#include "libqb-common.h"
 #include "nanosvg/nanosvg.h"
 #include "nanosvg/nanosvgrast.h"
 #include "pixelscalers/pixelscalers.h"
@@ -38,14 +39,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#ifndef _countof
-#    ifdef __cplusplus
-template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept { return N; }
-#    else
-#        define _countof(Array_) (sizeof(Array_) / sizeof(Array_[0]))
-#    endif
-#endif
 
 extern const img_struct *img;                 // used by func__loadimage
 extern const img_struct *write_page;          // used by func__loadimage
@@ -404,7 +397,7 @@ static uint8_t *image_convert_8bpp(const uint32_t *src32, int32_t w, int32_t h, 
         return nullptr;
     }
 
-    std::memset(cubes, 0, sizeof(cubes));
+    ::memset(cubes, 0, sizeof(cubes));
 
     // Quantization phase
     auto src = reinterpret_cast<const uint8_t *>(src32);
@@ -499,7 +492,7 @@ static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32
 
     const auto maxRGBDelta = image_get_color_delta(0, 0, 0, 255, 255, 255);
 
-    std::memset(palMap, 0, sizeof(palMap));
+    ::memset(palMap, 0, sizeof(palMap));
 
     IMAGE_DEBUG_PRINT("Remapping 8bpp image (%i, %i) palette", w, h);
 

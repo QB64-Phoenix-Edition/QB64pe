@@ -18,6 +18,7 @@
 
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
+#include "libqb-common.h"
 #include "miniaudio.h"
 #include <algorithm>
 #include <array>
@@ -33,14 +34,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#ifndef _countof
-#    ifdef __cplusplus
-template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept { return N; }
-#    else
-#        define _countof(Array_) (sizeof(Array_) / sizeof(Array_[0]))
-#    endif
-#endif
 
 #define SILENCE_SAMPLE 0.0f
 

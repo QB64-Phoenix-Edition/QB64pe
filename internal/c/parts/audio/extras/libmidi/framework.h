@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "libqb-common.h"
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
@@ -23,16 +24,6 @@
 
 // Force-disable all trace messages. Enabling this will cause compile and link errors
 #undef _RCP_VERBOSE
-
-// a740g: Microsoft's _countof replacement for *nix
-
-#ifndef _countof
-#    ifdef __cplusplus
-template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept { return N; }
-#    else
-#        define _countof(Array_) (sizeof(Array_) / sizeof(Array_[0]))
-#    endif
-#endif
 
 // a740g: Microsoft's strsafe.h replacements (sigh!)
 
