@@ -65,9 +65,59 @@ extern ma_decoding_backend_vtable ma_vtable_qoa;
 // The global instrument bank manager
 extern InstrumentBankManager g_InstrumentBankManager;
 
-// These attaches our customer backend (format decoders) VTables to various miniaudio structs
-void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
-void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
+void AudioEngine_AttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
+
+/// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.
+/// @param fileName The name of the file to load.
+/// @return A container of the same type as the template parameter, containing the contents of the file.
+template <typename Container> Container AudioEngine_LoadFile(const char *fileName) {
+    if (!fileName || !fileName[0]) {
+        AUDIO_DEBUG_PRINT("Invalid parameters");
+
+        return {};
+    }
+
+    auto file = std::fopen(fileName, "rb");
+    if (!file) {
+        AUDIO_DEBUG_PRINT("Failed to open file %s", fileName);
+
+        return {};
+    }
+
+    if (std::fseek(file, 0, SEEK_END)) {
+        AUDIO_DEBUG_PRINT("Failed to seek to the end of file %s", fileName);
+
+        std::fclose(file);
+
+        return {};
+    }
+
+    auto size = std::ftell(file);
+    if (size < 0) {
+        AUDIO_DEBUG_PRINT("Failed to get the size of file %s", fileName);
+
+        std::fclose(file);
+
+        return {};
+    }
+
+    Container buffer;
+    buffer.resize(size);
+
+    std::rewind(file);
+
+    if (std::fread(buffer.data(), 1, size, file) != size_t(size) || std::ferror(file)) {
+        AUDIO_DEBUG_PRINT("Failed to read file %s", fileName);
+
+        std::fclose(file);
+
+        return {};
+    }
+
+    std::fclose(file);
+
+    return buffer;
+}
 
 /// @brief A class that can manage double buffer frame blocks
 class DoubleBufferFrameBlock {

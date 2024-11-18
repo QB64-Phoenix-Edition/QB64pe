@@ -2477,7 +2477,7 @@ struct AudioEngine {
 
         // Initialize the miniaudio resource manager
         maResourceManagerConfig = ma_resource_manager_config_init();
-        AudioEngineAttachCustomBackendVTables(&maResourceManagerConfig);
+        AudioEngine_AttachCustomBackendVTables(&maResourceManagerConfig);
         maResourceManagerConfig.pCustomDecodingBackendUserData = NULL; // <- pUserData parameter of each function in the decoding backend vtables
         maResourceManagerConfig.pVFS = vfs;
 
@@ -2913,6 +2913,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
         auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                         // convert the buffer key to a string
+
         audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
                                                        &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
     } else {
@@ -2920,22 +2921,15 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 
         AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
 
-        auto fp = std::fopen(fileName.c_str(), "rb");
-        if (!fp) {
+        auto contents = AudioEngine_LoadFile<std::string>(fileName.c_str());
+
+        if (contents.empty()) {
             AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
 
             audioEngine.soundHandles[handle]->isUsed = false;
 
             return AudioEngine::INVALID_SOUND_HANDLE;
         }
-
-        std::string contents;
-
-        std::fseek(fp, 0, SEEK_END);
-        contents.resize(std::ftell(fp));
-        std::rewind(fp);
-        std::fread(&contents[0], sizeof(uint8_t), contents.size(), fp);
-        std::fclose(fp);
 
         AUDIO_DEBUG_PRINT("Sound length: %zd", contents.length());
 
@@ -2944,6 +2938,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         audioEngine.bufferMap.AddBuffer(contents.data(), contents.length(), audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
         auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                         // convert the buffer key to a string
+
         audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
                                                        &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
     }
@@ -2951,7 +2946,9 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to open sound", audioEngine.maResult);
+
         audioEngine.soundHandles[handle]->isUsed = false;
+
         return AudioEngine::INVALID_SOUND_HANDLE;
     }
 

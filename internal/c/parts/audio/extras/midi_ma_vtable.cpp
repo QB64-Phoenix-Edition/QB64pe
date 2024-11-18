@@ -499,42 +499,10 @@ static ma_result ma_midi_init_file(const char *pFilePath, const ma_decoding_back
         return MA_INVALID_FILE;
     }
 
-    // Open the file for reading
-    auto pFile = fopen(pFilePath, "rb");
-    if (!pFile) {
+    auto tune = AudioEngine_LoadFile<std::vector<uint8_t>>(pFilePath);
+    if (tune.empty()) {
         return MA_INVALID_FILE;
     }
-
-    // Find the size of the file
-    if (fseek(pFile, 0, SEEK_END) != 0) {
-        fclose(pFile);
-        return MA_BAD_SEEK;
-    }
-
-    // Calculate the length
-    auto file_size = ftell(pFile);
-    if (file_size < 1) {
-        fclose(pFile);
-        return MA_INVALID_FILE;
-    }
-
-    // Seek to the beginning of the file
-    if (fseek(pFile, 0, SEEK_SET) != 0) {
-        fclose(pFile);
-        return MA_BAD_SEEK;
-    }
-
-    // Allocate some memory for the tune
-    std::vector<uint8_t> tune(file_size);
-
-    // Read the file
-    if (fread(&tune[0], sizeof(uint8_t), file_size, pFile) != file_size || ferror(pFile)) {
-        fclose(pFile);
-        return MA_IO_ERROR;
-    }
-
-    // Close the file now that we've read it into memory
-    fclose(pFile);
 
     return ma_midi_init_common(pMIDI, tune, pFilePath);
 }
