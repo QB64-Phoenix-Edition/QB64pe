@@ -106,7 +106,7 @@ template <typename Container> Container AudioEngine_LoadFile(const char *fileNam
 
     std::rewind(file);
 
-    if (std::fread(buffer.data(), 1, size, file) != size_t(size) || std::ferror(file)) {
+    if (std::fread(buffer.data(), sizeof(uint8_t), size, file) != size_t(size) || std::ferror(file)) {
         AUDIO_DEBUG_PRINT("Failed to read file %s", fileName);
 
         std::fclose(file);

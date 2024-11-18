@@ -80,7 +80,7 @@ struct AudioEngine {
             if (it != buffers.end()) {
                 it->second.refCount++;
 
-                AUDIO_DEBUG_PRINT("Increased reference count to %llu", it->second.refCount);
+                AUDIO_DEBUG_PRINT("Increased reference count to %llu, key: %llu", it->second.refCount, key);
             } else {
                 AUDIO_DEBUG_PRINT("Buffer not found");
             }
@@ -132,10 +132,12 @@ struct AudioEngine {
         uint64_t nextFd;
 
         struct FileState {
-            ma_int64 offset;
-            uint64_t key;
+            ma_int64 offset;     // for memory buffers
+            uint64_t key;        // for memory buffers
+            FILE *realFile;      // for real files
+            size_t realFileSize; // for real files
 
-            FileState() : offset(0), key(0) {}
+            FileState() : offset(0), key(0), realFile(nullptr), realFileSize(0) {}
         };
 
         std::unordered_map<uint64_t, FileState> fileMap;
@@ -184,21 +186,54 @@ struct AudioEngine {
             (void)openMode;
 
             auto vfs = reinterpret_cast<VFS *>(pVFS);
-            auto key = strtoull(pFilePath, NULL, 10); // transform pFilePath, look-up in BufferMap
-
-            AUDIO_DEBUG_PRINT("File path: %s, key: %llu", pFilePath, key);
-
+            auto key = std::strtoull(pFilePath, NULL, 10); // transform pFilePath, look-up in BufferMap
             auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(key);
 
-            if (buffer == nullptr) {
-                return MA_DOES_NOT_EXIST;
+            if (buffer) {
+                vfs->nextFd++;
+                vfs->fileMap[vfs->nextFd].key = key;
+                vfs->fileMap[vfs->nextFd].offset = 0;
+                vfs->fileMap[vfs->nextFd].realFile = nullptr;
+                vfs->fileMap[vfs->nextFd].realFileSize = 0;
+
+                AUDIO_DEBUG_PRINT("Opened memory buffer (%llu) %llu", key, vfs->nextFd);
+            } else {
+                auto file = std::fopen(pFilePath, "rb");
+                if (!file) {
+                    AUDIO_DEBUG_PRINT("File / memory buffer not found: %s", pFilePath);
+
+                    return MA_DOES_NOT_EXIST;
+                }
+
+                if (std::fseek(file, 0, SEEK_END)) {
+                    AUDIO_DEBUG_PRINT("Failed to seek to the end of file %s", pFilePath);
+
+                    std::fclose(file);
+
+                    return MA_BAD_SEEK;
+                }
+
+                auto fileSize = std::ftell(file);
+                if (fileSize < 0) {
+                    AUDIO_DEBUG_PRINT("Failed to get the size of file %s", pFilePath);
+
+                    std::fclose(file);
+
+                    return MA_IO_ERROR;
+                }
+
+                std::rewind(file);
+
+                vfs->nextFd++;
+                vfs->fileMap[vfs->nextFd].key = 0;
+                vfs->fileMap[vfs->nextFd].offset = 0;
+                vfs->fileMap[vfs->nextFd].realFile = file;
+                vfs->fileMap[vfs->nextFd].realFileSize = fileSize;
+
+                AUDIO_DEBUG_PRINT("Opened file (%s) %llu", pFilePath, vfs->nextFd);
             }
 
-            vfs->nextFd++;
-            vfs->fileMap[vfs->nextFd].key = key;
             *pFile = reinterpret_cast<ma_vfs_file>(vfs->nextFd);
-
-            AUDIO_DEBUG_PRINT("Open %llu", vfs->nextFd);
 
             return MA_SUCCESS;
         }
@@ -215,10 +250,17 @@ struct AudioEngine {
             auto fd = uint64_t(file);
             auto state = &vfs->fileMap[fd];
 
-            vfs->bufferMap->Release(state->key);
-            vfs->fileMap.erase(fd);
+            if (state->realFile) {
+                std::fclose(state->realFile);
 
-            AUDIO_DEBUG_PRINT("Close %llu", fd);
+                AUDIO_DEBUG_PRINT("Closed file %llu", fd);
+            } else {
+                vfs->bufferMap->Release(state->key);
+
+                AUDIO_DEBUG_PRINT("Closed memory buffer %llu", fd);
+            }
+
+            vfs->fileMap.erase(fd);
 
             return MA_SUCCESS;
         }
@@ -239,14 +281,26 @@ struct AudioEngine {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
             auto fd = uint64_t(file);
             auto state = &vfs->fileMap[fd];
-            auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
-            auto readSize = std::min(sizeInBytes, bufferSize - state->offset);
 
-            std::memcpy(pDst, reinterpret_cast<const uint8_t *>(buffer) + state->offset, readSize);
-            *pBytesRead = readSize;
-            state->offset += readSize;
+            if (state->realFile) {
+                *pBytesRead = std::fread(pDst, sizeof(uint8_t), sizeInBytes, state->realFile);
 
-            AUDIO_DEBUG_PRINT("Read %llu, bytes: %zu, offset: %lld", fd, readSize, state->offset);
+                if (std::ferror(state->realFile)) {
+                    AUDIO_DEBUG_PRINT("Error reading file, fd: %llu", fd);
+                    return MA_IO_ERROR;
+                }
+
+                AUDIO_DEBUG_PRINT("Read %zu bytes from file %llu", *pBytesRead, fd);
+            } else {
+                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+                auto readSize = std::min(sizeInBytes, bufferSize - state->offset);
+
+                std::memcpy(pDst, reinterpret_cast<const uint8_t *>(buffer) + state->offset, readSize);
+                *pBytesRead = readSize;
+                state->offset += readSize;
+
+                AUDIO_DEBUG_PRINT("Read %zu bytes at offset %lld from memory buffer %llu", readSize, state->offset, fd);
+            }
 
             return MA_SUCCESS;
         }
@@ -266,25 +320,60 @@ struct AudioEngine {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
             auto fd = uint64_t(file);
             auto state = &vfs->fileMap[fd];
-            auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
 
-            switch (origin) {
-            case ma_seek_origin::ma_seek_origin_start:
-                state->offset = offset;
-                break;
+            if (state->realFile) {
+                int whence;
+                switch (origin) {
+                case ma_seek_origin::ma_seek_origin_start:
+                    whence = SEEK_SET;
+                    break;
 
-            case ma_seek_origin::ma_seek_origin_current:
-                state->offset = state->offset + offset;
-                break;
+                case ma_seek_origin::ma_seek_origin_current:
+                    whence = SEEK_CUR;
+                    break;
 
-            case ma_seek_origin::ma_seek_origin_end:
-                state->offset = bufferSize + offset;
-                break;
+                case ma_seek_origin::ma_seek_origin_end:
+                    whence = SEEK_END;
+                    break;
+
+                default:
+                    AUDIO_DEBUG_PRINT("Unknown seek origin: %d", origin);
+                    return MA_BAD_SEEK;
+                }
+
+                if (std::fseek(state->realFile, offset, whence) == 0) {
+                    AUDIO_DEBUG_PRINT("Seek file %llu to offset %lld", fd, offset);
+
+                    return MA_SUCCESS;
+                }
+
+                AUDIO_DEBUG_PRINT("Failed to seek file %llu to offset %lld", fd, offset);
+                return MA_BAD_SEEK;
+            } else {
+                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+
+                switch (origin) {
+                case ma_seek_origin::ma_seek_origin_start:
+                    state->offset = offset;
+                    break;
+
+                case ma_seek_origin::ma_seek_origin_current:
+                    state->offset = state->offset + offset;
+                    break;
+
+                case ma_seek_origin::ma_seek_origin_end:
+                    state->offset = bufferSize + offset;
+                    break;
+
+                default:
+                    AUDIO_DEBUG_PRINT("Unknown seek origin: %d", origin);
+                    return MA_BAD_SEEK;
+                }
+
+                state->offset = std::clamp<ma_int64>(state->offset, 0, bufferSize);
+
+                AUDIO_DEBUG_PRINT("Seek memory buffer %llu to offset %lld, kind: %d, result: %lld", fd, offset, origin, state->offset);
             }
-
-            state->offset = std::clamp<ma_int64>(state->offset, 0, bufferSize);
-
-            AUDIO_DEBUG_PRINT("Seek %llu, kind: %d, offset: %lld, result: %lld", fd, origin, offset, state->offset);
 
             return MA_SUCCESS;
         }
@@ -303,9 +392,14 @@ struct AudioEngine {
             auto fd = uint64_t(file);
             auto state = &vfs->fileMap[fd];
 
-            *pCursor = state->offset;
+            if (state->realFile) {
+                *pCursor = std::ftell(state->realFile);
 
-            AUDIO_DEBUG_PRINT("Tell %llu, offset: %lld", fd, state->offset);
+                AUDIO_DEBUG_PRINT("File %llu position: %lld", fd, *pCursor);
+            } else {
+                *pCursor = state->offset;
+                AUDIO_DEBUG_PRINT("Memory buffer %llu position: %lld", fd, state->offset);
+            }
 
             return MA_SUCCESS;
         }
@@ -323,11 +417,18 @@ struct AudioEngine {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
             auto fd = uint64_t(file);
             auto state = &vfs->fileMap[fd];
-            auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
 
-            pInfo->sizeInBytes = bufferSize;
+            if (state->realFile) {
+                pInfo->sizeInBytes = state->realFileSize;
 
-            AUDIO_DEBUG_PRINT("Info %llu, size: %zu", fd, bufferSize);
+                AUDIO_DEBUG_PRINT("File %llu size: %zu", fd, state->realFileSize);
+            } else {
+                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+
+                pInfo->sizeInBytes = bufferSize;
+
+                AUDIO_DEBUG_PRINT("Memory buffer %llu size: %zu", fd, bufferSize);
+            }
 
             return MA_SUCCESS;
         }
@@ -2889,7 +2990,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         // Check if the user wants to unset the decode flag
         if (requirements.find("nodecode") != std::string::npos) {
             audioEngine.soundHandles[handle]->maFlags &= ~MA_SOUND_FLAG_DECODE;
-            AUDIO_DEBUG_PRINT("Sound will not be decoded");
+            AUDIO_DEBUG_PRINT("Sound will not be decoded on load");
         }
 
         // Check if the user wants to unset the async flag
@@ -2919,28 +3020,35 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     } else {
         std::string fileName(reinterpret_cast<char const *>(qbsFileName->chr), qbsFileName->len);
 
-        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
+        if (audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM) {
+            AUDIO_DEBUG_PRINT("Streaming sound from file '%s'", fileName.c_str());
 
-        auto contents = AudioEngine_LoadFile<std::string>(fileName.c_str());
+            audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fileName.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
+                                                           &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
+        } else {
+            AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
 
-        if (contents.empty()) {
-            AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
+            auto contents = AudioEngine_LoadFile<std::string>(fileName.c_str());
 
-            audioEngine.soundHandles[handle]->isUsed = false;
+            if (contents.empty()) {
+                AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
 
-            return AudioEngine::INVALID_SOUND_HANDLE;
+                audioEngine.soundHandles[handle]->isUsed = false;
+
+                return AudioEngine::INVALID_SOUND_HANDLE;
+            }
+
+            AUDIO_DEBUG_PRINT("Sound length: %zd", contents.length());
+
+            // Configure a miniaudio decoder to load the sound from memory
+            audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(contents);                            // make a unique key and save it
+            audioEngine.bufferMap.AddBuffer(contents.data(), contents.length(), audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
+            auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
+            auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey); // convert the buffer key to a string
+
+            audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
+                                                           &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
         }
-
-        AUDIO_DEBUG_PRINT("Sound length: %zd", contents.length());
-
-        // Configure a miniaudio decoder to load the sound from memory
-        audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(contents);                            // make a unique key and save it
-        audioEngine.bufferMap.AddBuffer(contents.data(), contents.length(), audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
-        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
-        auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                         // convert the buffer key to a string
-
-        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
-                                                       &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
     }
 
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
