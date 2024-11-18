@@ -359,18 +359,18 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                         vw_varSize = VAL(MID$(vw_varType$, _INSTRREV(vw_varType$, " ") + 1))
                     ELSEIF vw_varType$ = "STRING" THEN
                         vw_varSize = LEN(vw_dummy%&)
-                    ELSEIF INSTR(vw_varType$, "FLOAT") > 0 THEN
+                    ELSEIF INSTR(vw_varType$, "_FLOAT") > 0 THEN
                         vw_varSize = 16 'long double...
                     END IF
 
-                    IF INSTR(vw_varType$, "BIT") THEN
+                    IF INSTR(vw_varType$, "_BIT") THEN
                         vw_i = INSTR(vw_varType$, "*")
                         IF vw_i > 0 THEN
                             vw_i = VAL(MID$(vw_varType$, vw_i + 1))
                         ELSE
                             vw_i = 1
                         END IF
-                        IF INSTR(vw_varType$, "UNSIGNED") THEN
+                        IF INSTR(vw_varType$, "_UNSIGNED") THEN
                             vw_buf$ = _MK$(_UNSIGNED _INTEGER64, call_getubits~&&(vw_i, vw_address, vw_realArrayIndex))
                         ELSE
                             vw_buf$ = _MK$(_INTEGER64, call_getbits&&(vw_i, vw_address, vw_realArrayIndex))
@@ -436,7 +436,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                     vw_m = _MEM(vw_address, vw_varSize)
                     vw_m2 = _MEM(_OFFSET(vw_buf$), vw_varSize)
                     _MEMCOPY vw_m, vw_m.OFFSET, vw_m.SIZE TO vw_m2, vw_m2.OFFSET
-                ELSEIF INSTR(vw_varType$, "FLOAT") > 0 THEN
+                ELSEIF INSTR(vw_varType$, "_FLOAT") > 0 THEN
                     vw_buf$ = vw_buf$ + STRING$(16, 0) 'pad with zeroes...
                 END IF
 
@@ -515,12 +515,12 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                         vw_varSize = VAL(MID$(vw_varType$, _INSTRREV(vw_varType$, " ") + 1))
                     ELSEIF vw_varType$ = "STRING" THEN
                         vw_varSize = LEN(vw_dummy%&)
-                    ELSEIF INSTR(vw_varType$, "FLOAT") > 0 THEN
+                    ELSEIF INSTR(vw_varType$, "_FLOAT") > 0 THEN
                         vw_varSize = 16 'long double...
                         vw_value$ = LEFT$(vw_value$, vw_varSize)
                     END IF
 
-                    IF INSTR(vw_varType$, "BIT") THEN
+                    IF INSTR(vw_varType$, "_BIT") THEN
                         vw_i = INSTR(vw_varType$, "*")
                         IF vw_i > 0 THEN
                             vw_i = VAL(MID$(vw_varType$, vw_i + 1))
@@ -839,23 +839,23 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
     RETURN
 
     GetV2:
-    IF INSTR(vw_varType$, "BIT *") THEN
+    IF INSTR(vw_varType$, "_BIT *") THEN
         IF VAL(MID$(vw_varType$, _INSTRREV(vw_varType$, " ") + 1)) > 32 THEN
-            IF INSTR(vw_varType$, "UNSIGNED") THEN
+            IF INSTR(vw_varType$, "_UNSIGNED") THEN
                 vw_v2$ = STR$(_CV(_UNSIGNED _INTEGER64, vw_buf$))
             ELSE
                 vw_v2$ = STR$(_CV(_INTEGER64, vw_buf$))
             END IF
         ELSE
-            IF INSTR(vw_varType$, "UNSIGNED") THEN
+            IF INSTR(vw_varType$, "_UNSIGNED") THEN
                 vw_v2$ = STR$(_CV(_UNSIGNED LONG, vw_buf$))
             ELSE
                 vw_v2$ = STR$(_CV(LONG, vw_buf$))
             END IF
         END IF
         RETURN
-    ELSEIF INSTR("@_BIT@BIT@_UNSIGNED _BIT@UNSIGNED BIT@", "@" + vw_varType$ + "@") THEN
-        IF INSTR(vw_varType$, "UNSIGNED") THEN
+    ELSEIF INSTR("@_BIT@_UNSIGNED _BIT@", "@" + vw_varType$ + "@") THEN
+        IF INSTR(vw_varType$, "_UNSIGNED") THEN
             vw_v2$ = STR$(_CV(_UNSIGNED LONG, vw_buf$))
         ELSE
             vw_v2$ = STR$(_CV(LONG, vw_buf$))
@@ -863,19 +863,21 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         RETURN
     END IF
     SELECT CASE vw_varType$
-        CASE "_BYTE", "BYTE": vw_v2$ = STR$(_CV(_BYTE, vw_buf$))
-        CASE "_UNSIGNED _BYTE", "UNSIGNED BYTE": vw_v2$ = STR$(_CV(_UNSIGNED _BYTE, vw_buf$))
+        CASE "_BYTE": vw_v2$ = STR$(_CV(_BYTE, vw_buf$))
+        CASE "_UNSIGNED _BYTE": vw_v2$ = STR$(_CV(_UNSIGNED _BYTE, vw_buf$))
         CASE "INTEGER": vw_v2$ = STR$(_CV(INTEGER, vw_buf$))
-        CASE "_UNSIGNED INTEGER", "UNSIGNED INTEGER": vw_v2$ = STR$(_CV(_UNSIGNED INTEGER, vw_buf$))
+        CASE "_UNSIGNED INTEGER": vw_v2$ = STR$(_CV(_UNSIGNED INTEGER, vw_buf$))
         CASE "LONG": vw_v2$ = STR$(_CV(LONG, vw_buf$))
-        CASE "_UNSIGNED LONG", "UNSIGNED LONG": vw_v2$ = STR$(_CV(_UNSIGNED LONG, vw_buf$))
-        CASE "_INTEGER64", "INTEGER64": vw_v2$ = STR$(_CV(_INTEGER64, vw_buf$))
-        CASE "_UNSIGNED _INTEGER64", "UNSIGNED INTEGER64": vw_v2$ = STR$(_CV(_UNSIGNED _INTEGER64, vw_buf$))
+        CASE "_UNSIGNED LONG": vw_v2$ = STR$(_CV(_UNSIGNED LONG, vw_buf$))
+        CASE "_INTEGER64": vw_v2$ = STR$(_CV(_INTEGER64, vw_buf$))
+        CASE "_UNSIGNED _INTEGER64": vw_v2$ = STR$(_CV(_UNSIGNED _INTEGER64, vw_buf$))
         CASE "SINGLE": vw_v2$ = STR$(CVS(vw_buf$))
         CASE "DOUBLE": vw_v2$ = STR$(CVD(vw_buf$))
-        CASE "_FLOAT", "FLOAT": vw_v2$ = STR$(_CV(_FLOAT, vw_buf$))
-        CASE "_OFFSET", "OFFSET": vw_v2$ = STR$(_CV(_OFFSET, vw_buf$))
-        CASE "_UNSIGNED _OFFSET", "UNSIGNED OFFSET": vw_v2$ = STR$(_CV(_UNSIGNED _OFFSET, vw_buf$))
+        CASE "_FLOAT"
+            vw_v2$ = " " + _TOSTR$(_CV(_FLOAT, vw_buf$))
+            IF LEN(vw_v2$) > 1 _ANDALSO ASC(vw_v2$, 2) = 45 THEN vw_v2$ = MID$(vw_v2$, 2)
+        CASE "_OFFSET": vw_v2$ = STR$(_CV(_OFFSET, vw_buf$))
+        CASE "_UNSIGNED _OFFSET": vw_v2$ = STR$(_CV(_UNSIGNED _OFFSET, vw_buf$))
     END SELECT
     RETURN
 END SUB
