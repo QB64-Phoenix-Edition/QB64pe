@@ -3284,6 +3284,18 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_ToStr"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "qbs__tostr"
+    id.args = 2
+    id.specialformat = "?[,?]"
+    id.arg = MKL$(-1) + MKL$(LONGTYPE - ISPOINTER)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_TOSTR$(number[,digits])"
+    regid
+
+    clearid
     id.n = "UCase"
     id.musthave = "$"
     id.subfunc = 1

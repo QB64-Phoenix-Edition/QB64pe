@@ -133,7 +133,7 @@ DIM SHARED idecurrentlinelayout AS STRING
 DIM SHARED idecurrentlinelayouti AS LONG
 DIM SHARED idelayoutallow AS LONG
 
-'$INCLUDE:'../subs_functions/syntax_highlighter_list.bas'
+'$INCLUDE:'..\subs_functions\syntax_highlighter_list.bas'
 
 'IDE MODULE: shared data & definitions
 '---------------------------------------------------

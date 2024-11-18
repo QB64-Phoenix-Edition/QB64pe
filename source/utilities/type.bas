@@ -505,7 +505,7 @@ FUNCTION typname2typ& (t2$)
             EXIT FUNCTION
         END IF
 
-        IF LEFT$(t$, 7) <> "_BIT * " AND LEFT$(t$, 6) <> "BIT * " THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
+        IF LEFT$(t$, 7) <> "_BIT * " THEN Give_Error "Expected _BIT * number": EXIT FUNCTION
 
         IF LEFT$(t$, 4) = "_BIT" THEN
             n$ = RIGHT$(t$, LEN(t$) - 7)

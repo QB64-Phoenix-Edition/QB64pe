@@ -3,7 +3,7 @@
 $DEBUG
 $CONSOLE:ONLY
 
-$IF DEBUG_IS_ACTIVE THEN
+$IF _DEBUG_ THEN
     PRINT "Compiling with $DEBUG features enabled."
 $ELSE
     PRINT "Compiling without $DEBUG features."

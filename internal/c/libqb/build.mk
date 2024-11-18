@@ -17,6 +17,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/math.o
 libqb-objs-y += $(PATH_LIBQB)/src/shell.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_str.o
+libqb-objs-y += $(PATH_LIBQB)/src/qbs__tostr.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_cmem.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_mk_cv.o
 libqb-objs-y += $(PATH_LIBQB)/src/string_functions.o

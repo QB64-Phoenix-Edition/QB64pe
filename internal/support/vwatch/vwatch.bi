@@ -1,6 +1,4 @@
 $INCLUDEONCE
-'provide a pre-compiler flag indicating the $DEBUG mode is active
-$LET DEBUG_IS_ACTIVE = -1
 $CHECKING:OFF
 DIM SHARED AS LONG vwatch_linenumber, vwatch_sublevel, vwatch_goto
 DIM SHARED AS STRING vwatch_subname, vwatch_internalsubname, vwatch_callstack

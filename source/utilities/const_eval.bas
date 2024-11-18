@@ -181,7 +181,7 @@ FUNCTION CommaExpression& (exp$, state AS ParserState)
         IF (state.num.typ AND ISSTRING) THEN
             pushelement state.result, state.num.s
         ELSEIF (state.num.typ AND ISFLOAT) THEN
-            pushelement state.result, _TRIM$(STR$(state.num.f))
+            pushelement state.result, _TRIM$(_TOSTR$(state.num.f))
         ELSEIF (state.num.typ AND ISUNSIGNED) THEN
             pushelement state.result, _TRIM$(STR$(state.num.ui)) + "~&&"
         ELSE
@@ -749,7 +749,7 @@ FUNCTION ParseNumHashLookup& (ele$, state AS ParserState)
             END IF
         END IF
 
-        IF CONST_EVAL_DEBUG THEN _ECHO "Found! value: " + STR$(state.num.f) + state.num.s
+        IF CONST_EVAL_DEBUG THEN _ECHO "Found! value: " + _TOSTR$(state.num.f) + state.num.s
 
         ParseNumHashLookup& = -1
         EXIT FUNCTION
@@ -900,7 +900,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
             EXIT FUNCTION
         END IF
 
-        IF CONST_EVAL_DEBUG THEN _ECHO "Argument: " + STR$(args(i).f) + ", str: " + getelement$(args, 1 + (i - 1) * 2)
+        IF CONST_EVAL_DEBUG THEN _ECHO "Argument: " + _TOSTR$(args(i).f) + ", str: " + getelement$(args, 1 + (i - 1) * 2)
     NEXT
 
     ' Default type, some functions return different types
@@ -1046,7 +1046,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
     IF typ& AND ISSTRING THEN
         EvaluateFunction$ = createElementString$(nstr)
     ELSEIF typ& AND ISFLOAT THEN
-        EvaluateFunction$ = _TRIM$(STR$(n1))
+        EvaluateFunction$ = _TRIM$(_TOSTR$(n1))
     ELSE
         n&& = n1
         EvaluateFunction$ = _TRIM$(STR$(n&&)) + "&&"
