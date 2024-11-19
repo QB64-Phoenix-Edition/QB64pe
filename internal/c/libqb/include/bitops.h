@@ -75,4 +75,3 @@ static inline int64_t func__readbit(uint64_t a1, int b1) {
 static inline uint64_t func__setbit(uint64_t a1, int b1) { return a1 | 1ull << b1; }
 static inline uint64_t func__resetbit(uint64_t a1, int b1) { return a1 & ~(1ull << b1); }
 static inline uint64_t func__togglebit(uint64_t a1, int b1) { return a1 ^ 1ull << b1; }
-

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include "qbs.h"
+#include <stdint.h>
 
 int32_t func__environcount();
 qbs *func_environ(qbs *name);

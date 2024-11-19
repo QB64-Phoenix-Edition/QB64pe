@@ -29,9 +29,7 @@ qbs *func_command(int32_t index, int32_t passed) {
     return tqbs;
 }
 
-int32_t func__commandcount() {
-    return func_command_count - 1;
-}
+int32_t func__commandcount() { return func_command_count - 1; }
 
 void command_initialize(int argc, char **argv) {
     int i = argc;

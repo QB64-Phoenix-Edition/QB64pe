@@ -91,8 +91,10 @@ qbs *qbs__tostr(float value, int32_t digits, int32_t passed) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return qbs_new_txt("");
         }
-        if (digits < 1) digits = 1;
-        if (digits > 7) digits = 7;
+        if (digits < 1)
+            digits = 1;
+        if (digits > 7)
+            digits = 7;
     } else {
         digits = 7;
     }
@@ -110,8 +112,10 @@ qbs *qbs__tostr(double value, int32_t digits, int32_t passed) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return qbs_new_txt("");
         }
-        if (digits < 1) digits = 1;
-        if (digits > 16) digits = 16;
+        if (digits < 1)
+            digits = 1;
+        if (digits > 16)
+            digits = 16;
     } else {
         digits = 16;
     }
@@ -121,8 +125,9 @@ qbs *qbs__tostr(double value, int32_t digits, int32_t passed) {
         error(QB_ERROR_INTERNAL_ERROR);
         tqbs->len = 0;
     } else {
-        char *ex = strrchr((char*)tqbs->chr, (int)'E');
-        if (ex != NULL) ex[0] = 'D';
+        char *ex = strrchr((char *)tqbs->chr, (int)'E');
+        if (ex != NULL)
+            ex[0] = 'D';
     }
     return tqbs;
 }
@@ -132,8 +137,10 @@ qbs *qbs__tostr(long double value, int32_t digits, int32_t passed) {
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return qbs_new_txt("");
         }
-        if (digits < 1) digits = 1;
-        if (digits > 19) digits = 19;
+        if (digits < 1)
+            digits = 1;
+        if (digits > 19)
+            digits = 19;
     } else {
         digits = 19;
     }
@@ -147,8 +154,9 @@ qbs *qbs__tostr(long double value, int32_t digits, int32_t passed) {
         error(QB_ERROR_INTERNAL_ERROR);
         tqbs->len = 0;
     } else {
-        char *ex = strrchr((char*)tqbs->chr, (int)'E');
-        if (ex != NULL) ex[0] = 'F';
+        char *ex = strrchr((char *)tqbs->chr, (int)'E');
+        if (ex != NULL)
+            ex[0] = 'F';
     }
     return tqbs;
 }

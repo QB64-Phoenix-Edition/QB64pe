@@ -1,15 +1,15 @@
 #ifndef INCLUDE_LIBQB_DATETIME_H
 #define INCLUDE_LIBQB_DATETIME_H
 
-#include <stdint.h>
 #include "qbs.h"
+#include <stdint.h>
 
 #ifdef QB64_LINUX
 // Initializes the clock returned by 'GetTicks()' so that it starts from zero
 // Should be called at the very beginning of the program
 void clock_init();
 #else
-static inline void clock_init() { }
+static inline void clock_init() {}
 #endif
 
 int64_t GetTicks();

@@ -6,9 +6,9 @@
 #include <string.h>
 
 #include "error_handle.h"
-#include "qbs.h"
-#include "gfs.h"
 #include "file-fields.h"
+#include "gfs.h"
+#include "qbs.h"
 
 static int32_t field_failed = 1;
 static int32_t field_fileno;
@@ -30,7 +30,7 @@ void field_new(int32_t fileno) {
     if (gfs_fileno_valid(i) != 1) {
         error(52);
         return;
-    }                  // Bad file name or number
+    } // Bad file name or number
     i = gfs_get_fileno(i); // convert fileno to gfs index
     gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
@@ -56,7 +56,7 @@ void field_update(int32_t fileno) {
     } // bad file mode (TCP/IP exclusion)
     if (gfs_fileno_valid(i) != 1) {
         exit(7702);
-    }                  // Bad file name or number
+    } // Bad file name or number
     i = gfs_get_fileno(i); // convert fileno to gfs index
     gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
@@ -175,7 +175,7 @@ void field_add(qbs *str, int64_t size) {
     if (gfs_fileno_valid(i) != 1) {
         error(52);
         goto fail;
-    }                  // Bad file name or number
+    } // Bad file name or number
     i = gfs_get_fileno(i); // convert fileno to gfs index
     gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
@@ -230,7 +230,7 @@ void field_get(int32_t fileno, int64_t offset, int32_t passed) {
     if (gfs_fileno_valid(i) != 1) {
         error(52);
         return;
-    }                  // Bad file name or number
+    } // Bad file name or number
     i = gfs_get_fileno(i); // convert fileno to gfs index
     gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {
@@ -297,7 +297,7 @@ void field_put(int32_t fileno, int64_t offset, int32_t passed) {
     if (gfs_fileno_valid(i) != 1) {
         error(52);
         return;
-    }                  // Bad file name or number
+    } // Bad file name or number
     i = gfs_get_fileno(i); // convert fileno to gfs index
     gfs = gfs_get_file_struct(i);
     if (gfs->type != 1) {

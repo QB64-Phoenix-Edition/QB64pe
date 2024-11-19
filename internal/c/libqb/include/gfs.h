@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <iostream>
+#include <stdint.h>
 
 #include "qbs.h"
 
@@ -14,7 +14,6 @@
 #ifndef GFS_WINDOWS
 #    define GFS_C
 #endif
-
 
 /* Generic File System (GFS)
     GFS allows OS specific access whilst still maintaining 'pure' C-based routines for
@@ -38,7 +37,7 @@
 */
 
 struct gfs_file_struct { // info applicable to all files
-    int64_t id;            // a unique ID given to all files (currently only referenced by the FIELD statement to remove old field conditions)
+    int64_t id;          // a unique ID given to all files (currently only referenced by the FIELD statement to remove old field conditions)
     uint8_t open;
     uint8_t read;
     uint8_t write;
@@ -51,7 +50,7 @@ struct gfs_file_struct { // info applicable to all files
     uint8_t type;          // qb access method (1=RANDOM,2=BINARY,3=INPUT,4=OUTPUT)
     int64_t record_length; // used by RANDOM
     uint8_t *field_buffer;
-    qbs **field_strings;   // list of qbs pointers linked to this file
+    qbs **field_strings;     // list of qbs pointers linked to this file
     int32_t field_strings_n; // number of linked strings
     int64_t column;          // used by OUTPUT/APPEND to tab correctly (base 0)
 #ifdef GFS_C
@@ -109,4 +108,3 @@ int32_t gfs_get_fileno(int file_number);
 gfs_file_struct *gfs_get_file_struct(int fileno);
 
 void gfs_close_all_files();
-

@@ -1,9 +1,9 @@
 
 #include "libqb-common.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "mutex.h"
 
@@ -30,13 +30,9 @@ void libqb_mutex_free(struct libqb_mutex *mutex) {
     free(mutex);
 }
 
-void libqb_mutex_lock(struct libqb_mutex *m) {
-    pthread_mutex_lock(&m->mtx);
-}
+void libqb_mutex_lock(struct libqb_mutex *m) { pthread_mutex_lock(&m->mtx); }
 
-void libqb_mutex_unlock(struct libqb_mutex *m) {
-    pthread_mutex_unlock(&m->mtx);
-}
+void libqb_mutex_unlock(struct libqb_mutex *m) { pthread_mutex_unlock(&m->mtx); }
 
 struct libqb_condvar *libqb_condvar_new() {
     struct libqb_condvar *c = (struct libqb_condvar *)malloc(sizeof(*c));
@@ -49,17 +45,11 @@ void libqb_condvar_free(struct libqb_condvar *c) {
     free(c);
 }
 
-void libqb_condvar_wait(struct libqb_condvar *condvar, struct libqb_mutex *mutex) {
-    pthread_cond_wait(&condvar->var, &mutex->mtx);
-}
+void libqb_condvar_wait(struct libqb_condvar *condvar, struct libqb_mutex *mutex) { pthread_cond_wait(&condvar->var, &mutex->mtx); }
 
-void libqb_condvar_signal(struct libqb_condvar *condvar) {
-    pthread_cond_signal(&condvar->var);
-}
+void libqb_condvar_signal(struct libqb_condvar *condvar) { pthread_cond_signal(&condvar->var); }
 
-void libqb_condvar_broadcast(struct libqb_condvar *condvar) {
-    pthread_cond_broadcast(&condvar->var);
-}
+void libqb_condvar_broadcast(struct libqb_condvar *condvar) { pthread_cond_broadcast(&condvar->var); }
 
 struct libqb_thread *libqb_thread_new() {
     struct libqb_thread *t = (struct libqb_thread *)malloc(sizeof(*t));
@@ -74,19 +64,19 @@ void libqb_thread_free(struct libqb_thread *t) {
 }
 
 struct thread_wrapper_args {
-    void (*wrapper) (void *);
+    void (*wrapper)(void *);
     void *arg;
 };
 
 static void *thread_wrapper(void *varg) {
     struct thread_wrapper_args *arg = (struct thread_wrapper_args *)varg;
-    (arg->wrapper) (arg->arg);
+    (arg->wrapper)(arg->arg);
     free(arg);
 
     return NULL;
 }
 
-void libqb_thread_start(struct libqb_thread *t, void (*start_func) (void *), void *start_func_arg) {
+void libqb_thread_start(struct libqb_thread *t, void (*start_func)(void *), void *start_func_arg) {
     struct thread_wrapper_args *arg = (struct thread_wrapper_args *)malloc(sizeof(*arg));
     arg->wrapper = start_func;
     arg->arg = start_func_arg;
@@ -94,6 +84,4 @@ void libqb_thread_start(struct libqb_thread *t, void (*start_func) (void *), voi
     pthread_create(&t->thread, NULL, thread_wrapper, (void *)arg);
 }
 
-void libqb_thread_join(struct libqb_thread *t) {
-    pthread_join(t->thread, NULL);
-}
+void libqb_thread_join(struct libqb_thread *t) { pthread_join(t->thread, NULL); }

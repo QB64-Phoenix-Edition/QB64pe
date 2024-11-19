@@ -35,16 +35,18 @@ void libqb_glut_set_window_title(const char *title);
 void libqb_glut_exit_program(int exitcode);
 
 // Convenience macros, exists a function depending on the state of GLUT
-#define NEEDS_GLUT(error_result) do { \
-        if (!libqb_is_glut_up()) { \
-            error(5); \
-            return error_result; \
-        } \
+#define NEEDS_GLUT(error_result)                                                                                                                               \
+    do {                                                                                                                                                       \
+        if (!libqb_is_glut_up()) {                                                                                                                             \
+            error(5);                                                                                                                                          \
+            return error_result;                                                                                                                               \
+        }                                                                                                                                                      \
     } while (0)
 
-#define OPTIONAL_GLUT(result) do { \
-        if (!libqb_is_glut_up()) \
-            return result; \
+#define OPTIONAL_GLUT(result)                                                                                                                                  \
+    do {                                                                                                                                                       \
+        if (!libqb_is_glut_up())                                                                                                                               \
+            return result;                                                                                                                                     \
     } while (0)
 
 #endif

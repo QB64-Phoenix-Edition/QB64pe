@@ -5,7 +5,7 @@
 struct mem_block {
     intptr_t offset;
     intptr_t size;
-    int64_t lock_id;       // 64-bit key, must be present at lock's offset or memory region is invalid
+    int64_t lock_id;      // 64-bit key, must be present at lock's offset or memory region is invalid
     intptr_t lock_offset; // pointer to lock
     intptr_t type;        // https://qb64phoenix.com/qb64wiki/index.php/MEM
     intptr_t elementsize;

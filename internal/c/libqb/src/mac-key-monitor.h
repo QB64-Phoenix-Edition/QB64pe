@@ -4,7 +4,7 @@
 #ifdef QB64_MACOSX
 void mac_register_key_handler();
 #else
-static inline void mac_register_key_handler() { };
+static inline void mac_register_key_handler() {};
 #endif
 
 #endif

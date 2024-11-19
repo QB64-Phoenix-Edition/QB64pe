@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include "qbs.h"
+#include <stdint.h>
 
 extern int32_t shell_call_in_progress;
 

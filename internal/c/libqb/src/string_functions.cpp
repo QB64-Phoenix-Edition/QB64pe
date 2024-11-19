@@ -1,8 +1,8 @@
 
 #include "libqb-common.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "error_handle.h"
 #include "file-fields.h"
@@ -359,4 +359,3 @@ int32_t func__str_compare(qbs *s1, qbs *s2) {
         return 1;
     return 0;
 }
-

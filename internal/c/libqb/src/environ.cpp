@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "environ.h"
 #include "error_handle.h"
 #include "qbs.h"
-#include "environ.h"
 
 #ifdef QB64_WINDOWS
 #    define envp _environ
