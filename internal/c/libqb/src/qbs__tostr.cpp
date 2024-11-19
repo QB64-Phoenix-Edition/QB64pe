@@ -12,6 +12,8 @@
 // modern _TOSTR() functions (no leading space and no QB4.5 compatible rounding)
 // signed integers
 qbs *qbs__tostr(int64_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%" PRId64, value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -20,7 +22,10 @@ qbs *qbs__tostr(int64_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(int32_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%i", value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -29,7 +34,10 @@ qbs *qbs__tostr(int32_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(int16_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%i", value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -38,7 +46,10 @@ qbs *qbs__tostr(int16_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(int8_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%i", value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -47,8 +58,11 @@ qbs *qbs__tostr(int8_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 // unsigned integers
 qbs *qbs__tostr(uint64_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%" PRIu64, value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -57,7 +71,10 @@ qbs *qbs__tostr(uint64_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(uint32_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%u", value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -66,7 +83,10 @@ qbs *qbs__tostr(uint32_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(uint16_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%u", value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -75,7 +95,10 @@ qbs *qbs__tostr(uint16_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(uint8_t value, int32_t digits, int32_t passed) {
+    (void)digits;
+    (void)passed;
     qbs *tqbs = qbs_new(32, 1);
     tqbs->len = snprintf((char *)tqbs->chr, 32, "%u", value);
     if (tqbs->len < 0 || tqbs->len >= 32) {
@@ -84,6 +107,7 @@ qbs *qbs__tostr(uint8_t value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 // floating points
 qbs *qbs__tostr(float value, int32_t digits, int32_t passed) {
     if (passed) {
@@ -106,6 +130,7 @@ qbs *qbs__tostr(float value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(double value, int32_t digits, int32_t passed) {
     if (passed) {
         if (digits < 0) {
@@ -131,6 +156,7 @@ qbs *qbs__tostr(double value, int32_t digits, int32_t passed) {
     }
     return tqbs;
 }
+
 qbs *qbs__tostr(long double value, int32_t digits, int32_t passed) {
     if (passed) {
         if (digits < 0) {

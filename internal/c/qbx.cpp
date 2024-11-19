@@ -17,6 +17,7 @@
 #include "gui.h"
 #include "hexoctbin.h"
 #include "image.h"
+#include "libqb.h"
 #include "mem.h"
 #include "qbmath.h"
 #include "qbs-mk-cv.h"
@@ -175,7 +176,6 @@ extern int32 func__mapunicode(int32 ascii_code);
 extern int32 func__keydown(int32 x);
 extern int32 func__keyhit();
 extern int32 func_lpos(int32);
-extern void sub__printimage(int32 i);
 extern float func__mousemovementx();
 extern float func__mousemovementy();
 extern void sub__screenprint(qbs *txt);
@@ -239,7 +239,6 @@ extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin, int32 y
 extern void qbg_palette(uint32 attribute, uint32 col, int32 passed);
 extern void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed);
 extern void defaultcolors();
-extern void validatepage(int32 n);
 extern void qbg_screen(int32 mode, int32 color_switch, int32 active_page, int32 visual_page, int32 refresh, int32 passed);
 extern void sub_pcopy(int32 src, int32 dst);
 extern void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 value4, int32 passed);
@@ -262,16 +261,10 @@ extern void sub_preset(float x, float y, uint32 col, int32 passed);
 extern void printchr(int32 character);
 extern int32_t chrwidth(uint32_t character);
 extern void newline();
-extern void makefit(qbs *text);
 extern void lprint_makefit(qbs *text);
 extern void tab();
-extern void qbs_print(qbs *str, int32 finish_on_new_line);
 extern void qbs_lprint(qbs *str, int32 finish_on_new_line);
-extern void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed);
-extern void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed);
 extern void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor, int32 bordercolor, int32 passed);
-extern void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed);
-extern void sub_cls(int32 method, uint32 use_color, int32 passed);
 extern void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
 extern int32 hexoct2uint64(qbs *h);
 extern void qbs_input(int32 numvariables, uint8 newline);
@@ -316,7 +309,6 @@ extern void sub_put2(int32 i, int64 offset, void *element, int32 passed);
 extern void sub_graphics_get(float x1f, float y1f, float x2f, float y2f, void *element, uint32 mask, int32 passed);
 extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option, uint32 mask, int32 passed);
 extern int32 func_csrlin();
-extern int32 func_pos(int32 ignore);
 extern void sub_sleep(int32 seconds, int32 passed);
 extern ptrszint func_lbound(ptrszint *array, int32 index, int32 num_indexes);
 extern ptrszint func_ubound(ptrszint *array, int32 index, int32 num_indexes);
@@ -349,14 +341,6 @@ extern int32 func__mousebutton(int32 i);
 extern int32 func__mousewheel();
 
 extern void call_absolute(int32 args, uint16 offset);
-extern int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
-extern int32 func__copyimage(int32 i, int32 mode, int32 passed);
-extern void sub__freeimage(int32 i, int32 passed);
-extern void sub__source(int32 i);
-extern void sub__dest(int32 i);
-extern int32 func__source();
-extern int32 func__dest();
-extern int32 func__display();
 extern void sub__blend(int32 i, int32 passed);
 extern void sub__dontblend(int32 i, int32 passed);
 extern void sub__clearcolor(uint32 c, int32 i, int32 passed);
@@ -372,7 +356,6 @@ extern uint32 func__palettecolor(int32 n, int32 i, int32 passed);
 extern void sub__palettecolor(int32 n, uint32 c, int32 i, int32 passed);
 extern void sub__copypalette(int32 i, int32 i2, int32 passed);
 extern void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed);
-extern int32 func__printwidth(qbs *text, int32 i, int32 passed);
 extern int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequirements, int32_t font_index, int32_t passed);
 extern void sub__font(int32 f, int32 i, int32 passed);
 extern int32 func__fontwidth(int32 f, int32 passed);
@@ -396,10 +379,6 @@ extern int32 print_using_uinteger64(qbs *format, uint64 value, int32 start, qbs 
 extern int32 print_using_single(qbs *format, float value, int32 start, qbs *output);
 extern int32 print_using_double(qbs *format, double value, int32 start, qbs *output);
 extern int32 print_using_float(qbs *format, long double value, int32 start, qbs *output);
-
-#ifndef QB64_WINDOWS
-extern void ZeroMemory(void *ptr, int64 bytes);
-#endif
 
 // shared global variables
 extern int32 sleep_break;

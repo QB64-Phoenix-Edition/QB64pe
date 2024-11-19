@@ -60,10 +60,6 @@ int32 func__getconsoleinput(); // declare here, so we can use with SLEEP and END
 
 uint32 rotateLeft(uint32 word, uint32 shift) { return (word << shift) | (word >> (32 - shift)); }
 
-#ifndef QB64_WINDOWS
-void ZeroMemory(void *ptr, int64 bytes) { memset(ptr, 0, bytes); }
-#endif
-
 #ifdef QB64_UNIX
 #    include <libgen.h> //required for dirname()
 #    include <pthread.h>
@@ -967,23 +963,6 @@ int32 lpos = 1;
 int32 width_lprint = 80;
 
 // forward refs
-int32 func__source();
-int32 func_pos(int32 ignore);
-
-int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
-void display();
-void validatepage(int32);
-void sub__dest(int32);
-void sub__source(int32);
-int32 func__printwidth(qbs *, int32, int32);
-void sub_clsDest(int32, uint32, int32, int32);
-void sub_cls(int32, uint32, int32);
-void qbs_print(qbs *, int32);
-int32 func__copyimage(int32 i, int32 mode, int32 passed);
-int32 func__dest();
-int32 func__display();
-void qbg_sub_view_print(int32, int32, int32);
-void qbg_sub_window(float, float, float, float, int32);
 int32 autodisplay = 1;
 void key_update();
 int32 key_display_state = 0;
