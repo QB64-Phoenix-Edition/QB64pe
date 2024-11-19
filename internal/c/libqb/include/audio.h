@@ -15,8 +15,9 @@
 #include <stdio.h>
 
 #if defined(AUDIO_DEBUG) && AUDIO_DEBUG > 0
+#    define AUDIO_DEBUG_FILENAME (std::strrchr(__FILE__, '/') ? std::strrchr(__FILE__, '/') + 1 : __FILE__)
 #    define AUDIO_DEBUG_PRINT(_fmt_, _args_...)                                                                                                                \
-        fprintf(stderr, "\e[1;37mDEBUG: %s:%d:%s(): \e[1;33m" _fmt_ "\e[1;37m\n", __FILE__, __LINE__, __func__, ##_args_)
+        fprintf(stderr, "\e[1;37mDEBUG: %s:%d:%s: \e[1;33m" _fmt_ "\e[1;37m\n", AUDIO_DEBUG_FILENAME, __LINE__, __PRETTY_FUNCTION__, ##_args_)
 #    define AUDIO_DEBUG_CHECK(_exp_)                                                                                                                           \
         if (!(_exp_))                                                                                                                                          \
         AUDIO_DEBUG_PRINT("\e[0;31mCondition (%s) failed", #_exp_)

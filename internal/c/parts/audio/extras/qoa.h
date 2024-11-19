@@ -394,9 +394,9 @@ unsigned int qoa_encode_frame(const short *sample_data, qoa_desc *qoa, unsigned 
 			#ifdef QOA_RECORD_TOTAL_ERROR
 				qoa_uint64_t best_error = -1;
 			#endif
-			qoa_uint64_t best_slice;
+			qoa_uint64_t best_slice = 0;
 			qoa_lms_t best_lms;
-			int best_scalefactor;
+			int best_scalefactor = 0;
 
 			for (int sfi = 0; sfi < 16; sfi++) {
 				/* There is a strong correlation between the scalefactors of
@@ -626,12 +626,14 @@ unsigned int qoa_decode_frame(const unsigned char *bytes, unsigned int size, qoa
 			qoa_uint64_t slice = qoa_read_u64(bytes, &p);
 
 			int scalefactor = (slice >> 60) & 0xf;
+			slice <<= 4;
+
 			int slice_start = sample_index * channels + c;
 			int slice_end = qoa_clamp(sample_index + QOA_SLICE_LEN, 0, samples) * channels + c;
 
 			for (int si = slice_start; si < slice_end; si += channels) {
 				int predicted = qoa_lms_predict(&qoa->lms[c]);
-				int quantized = (slice >> 57) & 0x7;
+				int quantized = (slice >> 61) & 0x7;
 				int dequantized = qoa_dequant_tab[scalefactor][quantized];
 				int reconstructed = qoa_clamp_s16(predicted + dequantized);
 				

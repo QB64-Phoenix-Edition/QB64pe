@@ -18,6 +18,7 @@
 
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
+#include "libqb-common.h"
 #include "miniaudio.h"
 #include <algorithm>
 #include <array>
@@ -34,9 +35,6 @@
 #include <utility>
 #include <vector>
 
-#define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
-#define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
-#define SAMPLE_FRAME_SIZE(_type_, _channels_) (sizeof(_type_) * (_channels_))
 #define SILENCE_SAMPLE 0.0f
 
 #ifndef MA_DEFAULT_SAMPLE_RATE
@@ -60,107 +58,59 @@ extern ma_decoding_backend_vtable ma_vtable_qoa;
 // The global instrument bank manager
 extern InstrumentBankManager g_InstrumentBankManager;
 
-// These attaches our customer backend (format decoders) VTables to various miniaudio structs
-void AudioEngineAttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
-void AudioEngineAttachCustomBackendVTables(ma_decoder_config *maDecoderConfig);
+void AudioEngine_AttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
 
-/// @brief A class that can manage a list of buffers using unique keys.
-class BufferMap {
-  private:
-    /// @brief A buffer that is made up of std::vector of bytes and reference count.
-    struct Buffer {
-        std::vector<uint8_t> data;
-        size_t refCount;
+/// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.
+/// @param fileName The name of the file to load.
+/// @return A container of the same type as the template parameter, containing the contents of the file.
+template <typename Container> Container AudioEngine_LoadFile(const char *fileName) {
+    if (!fileName || !fileName[0]) {
+        AUDIO_DEBUG_PRINT("Invalid parameters");
 
-        Buffer(const void *src, size_t size) : data(size), refCount(1) { std::memcpy(data.data(), src, size); }
-    };
-
-    std::unordered_map<uint64_t, Buffer> buffers;
-
-  public:
-    // Delete assignment operators
-    BufferMap &operator=(const BufferMap &) = delete;
-    BufferMap &operator=(BufferMap &&) = delete;
-
-    /// @brief Adds a buffer to the map using a unique key only if it was not added before. If the buffer is already present then it increases the reference
-    /// count.
-    /// @param data The raw data pointer. The data is copied.
-    /// @param size The size of the data.
-    /// @param key The unique key that should be used.
-    /// @return True if successful.
-    bool AddBuffer(const void *data, size_t size, uint64_t key) {
-        if (data && size) {
-            auto it = buffers.find(key);
-
-            if (it == buffers.end()) {
-                buffers.emplace(std::make_pair(key, Buffer(data, size)));
-
-                AUDIO_DEBUG_PRINT("Added buffer of size %llu to map", size);
-            } else {
-                it->second.refCount++;
-
-                AUDIO_DEBUG_PRINT("Increased reference count to %llu", it->second.refCount);
-            }
-
-            return true;
-        }
-
-        AUDIO_DEBUG_PRINT("Invalid buffer or size %p, %llu", data, size);
-
-        return false;
+        return {};
     }
 
-    /// @brief Increments the buffer reference count.
-    /// @param key The unique key for the buffer.
-    void AddRef(uint64_t key) {
-        auto it = buffers.find(key);
+    auto file = std::fopen(fileName, "rb");
+    if (!file) {
+        AUDIO_DEBUG_PRINT("Failed to open file %s", fileName);
 
-        if (it != buffers.end()) {
-            it->second.refCount++;
-
-            AUDIO_DEBUG_PRINT("Increased reference count to %llu", it->second.refCount);
-        } else {
-            AUDIO_DEBUG_PRINT("Buffer not found");
-        }
+        return {};
     }
 
-    /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero.
-    /// @param key The unique key for the buffer.
-    void Release(uint64_t key) {
-        auto it = buffers.find(key);
+    if (std::fseek(file, 0, SEEK_END)) {
+        AUDIO_DEBUG_PRINT("Failed to seek to the end of file %s", fileName);
 
-        if (it != buffers.end()) {
-            it->second.refCount--;
+        std::fclose(file);
 
-            AUDIO_DEBUG_PRINT("Decreased reference count to %llu", it->second.refCount);
-
-            if (it->second.refCount == 0) {
-                AUDIO_DEBUG_PRINT("Erasing buffer of size %llu", it->second.data.size());
-
-                buffers.erase(it);
-            }
-        } else {
-            AUDIO_DEBUG_PRINT("Buffer not found");
-        }
+        return {};
     }
 
-    /// @brief Gets the raw pointer and size of the buffer with the given key.
-    /// @param key The unique key for the buffer.
-    /// @return An std::pair of the buffer raw pointer and size.
-    std::pair<const void *, size_t> GetBuffer(uint64_t key) const {
-        auto it = buffers.find(key);
+    auto size = std::ftell(file);
+    if (size < 0) {
+        AUDIO_DEBUG_PRINT("Failed to get the size of file %s", fileName);
 
-        if (it != buffers.end()) {
-            AUDIO_DEBUG_PRINT("Returning buffer of size %llu", it->second.data.size());
+        std::fclose(file);
 
-            return {it->second.data.data(), it->second.data.size()};
-        }
-
-        AUDIO_DEBUG_PRINT("Buffer not found");
-
-        return {nullptr, 0};
+        return {};
     }
-};
+
+    Container buffer;
+    buffer.resize(size);
+
+    std::rewind(file);
+
+    if (std::fread(buffer.data(), sizeof(uint8_t), size, file) != size_t(size) || std::ferror(file)) {
+        AUDIO_DEBUG_PRINT("Failed to read file %s", fileName);
+
+        std::fclose(file);
+
+        return {};
+    }
+
+    std::fclose(file);
+
+    return buffer;
+}
 
 /// @brief A class that can manage double buffer frame blocks
 class DoubleBufferFrameBlock {
@@ -176,6 +126,7 @@ class DoubleBufferFrameBlock {
 
     DoubleBufferFrameBlock() : index(0), cursor(0) {}
 
+    /// @brief Resets the double buffer frame blocks by clearing both blocks and resetting the index and cursor to their initial states.
     void Reset() {
         blocks[0].clear();
         blocks[1].clear();
@@ -183,9 +134,14 @@ class DoubleBufferFrameBlock {
         cursor = 0;
     }
 
+    /// @brief Checks if both blocks are empty.
+    /// @returns true if both blocks are empty, false otherwise.
     bool IsEmpty() const { return blocks[0].empty() && blocks[1].empty(); }
 
-    float *Put(size_t frames) {
+    /// @brief Gets a float pointer to the write block that can be written to.
+    /// @param[in] frames The number of frames to write.
+    /// @return A pointer to the write block, or nullptr if the block is not empty.
+    float *GetWriteBlock(size_t frames) {
         auto writeIndex = 1 - index;
 
         if (blocks[writeIndex].empty()) {
@@ -197,7 +153,11 @@ class DoubleBufferFrameBlock {
         return nullptr; // block is not empty
     }
 
-    size_t Get(float *data, size_t frames) {
+    /// @brief Copies up to `frames` number of frames from the current block to `data`. The cursor is advanced by the number of frames copied.
+    /// @param[in] data The destination buffer to copy to.
+    /// @param[in] frames The number of frames to copy.
+    /// @return The number of frames copied.
+    size_t ReadFrames(float *data, size_t frames) {
         if (blocks[index].empty()) {
             // Switch to the other block
             index = 1 - index;

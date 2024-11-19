@@ -392,47 +392,44 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     }
 
     // Open the file for reading
-    auto fd = fopen(pFilePath, "rb");
+    auto fd = std::fopen(pFilePath, "rb");
     if (!fd) {
         return MA_INVALID_FILE;
     }
 
     // Find the size of the file
-    if (fseek(fd, 0, SEEK_END) != 0) {
-        fclose(fd);
+    if (std::fseek(fd, 0, SEEK_END) != 0) {
+        std::fclose(fd);
         return MA_BAD_SEEK;
     }
 
     // Calculate the length
-    auto file_size = ftell(fd);
+    auto file_size = std::ftell(fd);
     if (file_size < 1) {
-        fclose(fd);
+        std::fclose(fd);
         return MA_INVALID_FILE;
     }
 
     // Seek to the beginning of the file
-    if (fseek(fd, 0, SEEK_SET) != 0) {
-        fclose(fd);
-        return MA_BAD_SEEK;
-    }
+    std::rewind(fd);
 
     // Allocate some memory for the tune
     pRadv2->tune = new uint8_t[file_size];
     if (!pRadv2->tune) {
-        fclose(fd);
+        std::fclose(fd);
         return MA_OUT_OF_MEMORY;
     }
 
     // Read the file
-    if (fread(pRadv2->tune, sizeof(uint8_t), file_size, fd) != file_size || ferror(fd)) {
+    if (std::fread(pRadv2->tune, sizeof(uint8_t), file_size, fd) != file_size || ferror(fd)) {
         delete[] pRadv2->tune;
         pRadv2->tune = nullptr;
-        fclose(fd);
+        std::fclose(fd);
         return MA_IO_ERROR;
     }
 
     // Close the file now that we've read it into memory
-    fclose(fd);
+    std::fclose(fd);
 
     // Create the RADv2 Player objects
     pRadv2->player = new RADPlayer();

@@ -112,13 +112,13 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     if (fixedFrames) {
         // Only attempt to render if we are actually playing
         if (pMIDI->isReallyPlaying) {
-            auto dest = pMIDI->frameBlock->Put(fixedFrames);
+            auto dest = pMIDI->frameBlock->GetWriteBlock(fixedFrames);
             if (dest)
                 pMIDI->isReallyPlaying = pMIDI->sequencer->Play(dest, fixedFrames) > 0;
         }
 
         // Get partial data from the frame block
-        totalFramesRead = pMIDI->frameBlock->Get(reinterpret_cast<float *>(pFramesOut), frameCount);
+        totalFramesRead = pMIDI->frameBlock->ReadFrames(reinterpret_cast<float *>(pFramesOut), frameCount);
 
         // Set the isPlaying flag to true if we still have some data in the buffers
         pMIDI->isPlaying = !pMIDI->frameBlock->IsEmpty();
@@ -499,42 +499,10 @@ static ma_result ma_midi_init_file(const char *pFilePath, const ma_decoding_back
         return MA_INVALID_FILE;
     }
 
-    // Open the file for reading
-    auto pFile = fopen(pFilePath, "rb");
-    if (!pFile) {
+    auto tune = AudioEngine_LoadFile<std::vector<uint8_t>>(pFilePath);
+    if (tune.empty()) {
         return MA_INVALID_FILE;
     }
-
-    // Find the size of the file
-    if (fseek(pFile, 0, SEEK_END) != 0) {
-        fclose(pFile);
-        return MA_BAD_SEEK;
-    }
-
-    // Calculate the length
-    auto file_size = ftell(pFile);
-    if (file_size < 1) {
-        fclose(pFile);
-        return MA_INVALID_FILE;
-    }
-
-    // Seek to the beginning of the file
-    if (fseek(pFile, 0, SEEK_SET) != 0) {
-        fclose(pFile);
-        return MA_BAD_SEEK;
-    }
-
-    // Allocate some memory for the tune
-    std::vector<uint8_t> tune(file_size);
-
-    // Read the file
-    if (fread(&tune[0], sizeof(uint8_t), file_size, pFile) != file_size || ferror(pFile)) {
-        fclose(pFile);
-        return MA_IO_ERROR;
-    }
-
-    // Close the file now that we've read it into memory
-    fclose(pFile);
 
     return ma_midi_init_common(pMIDI, tune, pFilePath);
 }

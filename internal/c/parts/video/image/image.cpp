@@ -24,6 +24,7 @@
 #include "error_handle.h"
 #include "filepath.h"
 #include "jo_gif/jo_gif.h"
+#include "libqb-common.h"
 #include "nanosvg/nanosvg.h"
 #include "nanosvg/nanosvgrast.h"
 #include "pixelscalers/pixelscalers.h"
@@ -38,14 +39,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#ifdef QB64_WINDOWS
-#    define ZERO_VARIABLE(_v_) ZeroMemory(&(_v_), sizeof(_v_))
-#else
-#    define ZERO_VARIABLE(_v_) memset(&(_v_), 0, sizeof(_v_))
-#endif
-
-#define GET_ARRAY_SIZE(_x_) (sizeof(_x_) / sizeof(_x_[0]))
 
 extern const img_struct *img;                 // used by func__loadimage
 extern const img_struct *write_page;          // used by func__loadimage
@@ -404,7 +397,7 @@ static uint8_t *image_convert_8bpp(const uint32_t *src32, int32_t w, int32_t h, 
         return nullptr;
     }
 
-    ZERO_VARIABLE(cubes);
+    ::memset(cubes, 0, sizeof(cubes));
 
     // Quantization phase
     auto src = reinterpret_cast<const uint8_t *>(src32);
@@ -495,9 +488,11 @@ static uint8_t *image_extract_8bpp(const uint32_t *src, int32_t w, int32_t h, ui
 /// @param src_pal The image's original palette. This cannot be NULL
 /// @param dst_pal The destination palette. This cannot be NULL
 static void image_remap_palette(uint8_t *src, int32_t w, int32_t h, const uint32_t *src_pal, const uint32_t *dst_pal) {
-    const auto maxRGBDelta = image_get_color_delta(0, 0, 0, 255, 255, 255);
     static uint32_t palMap[256];
-    ZERO_VARIABLE(palMap);
+
+    const auto maxRGBDelta = image_get_color_delta(0, 0, 0, 255, 255, 255);
+
+    ::memset(palMap, 0, sizeof(palMap));
 
     IMAGE_DEBUG_PRINT("Remapping 8bpp image (%i, %i) palette", w, h);
 
@@ -587,7 +582,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         }
 
         // Parse scaler string
-        for (auto i = 0; i < GET_ARRAY_SIZE(g_ImageScalerName); i++) {
+        for (auto i = 0; i < _countof(g_ImageScalerName); i++) {
             IMAGE_DEBUG_PRINT("Checking for: %s", g_ImageScalerName[i]);
             if (requirements.find(g_ImageScalerName[i]) != std::string::npos) {
                 scaler = (ImageScaler)i;
@@ -756,7 +751,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         IMAGE_DEBUG_PRINT("Parsing requirements string: %s", requirements.c_str());
 
-        for (auto i = 0; i < GET_ARRAY_SIZE(formatName); i++) {
+        for (auto i = 0; i < _countof(formatName); i++) {
             IMAGE_DEBUG_PRINT("Checking for: %s", formatName[i]);
             if (requirements.find(formatName[i]) != std::string::npos) {
                 format = (SaveFormat)i;
@@ -779,7 +774,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         IMAGE_DEBUG_PRINT("File extension: %s", fileExtension.c_str());
 
         int i;
-        for (i = 0; i < GET_ARRAY_SIZE(formatName); i++) {
+        for (i = 0; i < _countof(formatName); i++) {
             std::string formatExtension;
 
             formatExtension = ".";
@@ -795,7 +790,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
             }
         }
 
-        if (i >= GET_ARRAY_SIZE(formatName)) { // no matches
+        if (i >= _countof(formatName)) { // no matches
             IMAGE_DEBUG_PRINT("No matching extension. Adding .%s", formatName[(int)format]);
 
             fileName.append(".");

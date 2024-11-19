@@ -26,6 +26,445 @@
 
 /// @brief The top-level class that implements the QB64-PE audio engine.
 struct AudioEngine {
+    /// @brief A class that can manage a list of buffers using unique keys.
+    class BufferMap {
+      private:
+        /// @brief A buffer that is made up of std::vector of bytes and reference count.
+        struct Buffer {
+            std::vector<uint8_t> data;
+            size_t refCount;
+
+            Buffer() : refCount(0) {}
+
+            Buffer(const void *src, size_t size) : data(size), refCount(1) { std::memcpy(data.data(), src, size); }
+
+            Buffer(std::vector<uint8_t> &&src) : data(std::move(src)), refCount(1) {}
+        };
+
+        std::unordered_map<uint64_t, Buffer> buffers;
+
+      public:
+        // Delete assignment operators
+        BufferMap &operator=(const BufferMap &) = delete;
+        BufferMap &operator=(BufferMap &&) = delete;
+
+        /// @brief Adds a buffer to the map using a unique key only if it was not added before. If the buffer is already present then it increases the reference
+        /// count.
+        /// @param data The raw data pointer. The data is copied.
+        /// @param size The size of the data.
+        /// @param key The unique key that should be used.
+        /// @return True if successful.
+        bool AddBuffer(const void *data, size_t size, uint64_t key) {
+            if (data && size) {
+                auto it = buffers.find(key);
+
+                if (it == buffers.end()) {
+                    buffers.emplace(std::make_pair(key, Buffer(data, size)));
+
+                    AUDIO_DEBUG_PRINT("Copied buffer of size %zu to map, key: %" PRIu64, size, key);
+                } else {
+                    it->second.refCount++;
+
+                    AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
+                }
+
+                return true;
+            }
+
+            AUDIO_DEBUG_PRINT("Invalid buffer or size %p, %zu", data, size);
+
+            return false;
+        }
+
+        /// @brief Adds a buffer to the map using a unique key only if it was not added before. If the buffer is already present then it increases the reference
+        /// count.
+        /// @param buffer The buffer data. The data is moved.
+        /// @param key The unique key that should be used.
+        /// @return True if successful.
+        bool AddBuffer(std::vector<uint8_t> &&buffer, uint64_t key) {
+            if (!buffer.empty()) {
+                auto it = buffers.find(key);
+
+                if (it == buffers.end()) {
+                    buffers.emplace(std::make_pair(key, Buffer(std::move(buffer))));
+
+                    AUDIO_DEBUG_PRINT("Moved buffer of size %zu to map, key: %" PRIu64, buffers[key].data.size(), key);
+                } else {
+                    it->second.refCount++;
+
+                    AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
+                }
+
+                return true;
+            }
+
+            AUDIO_DEBUG_PRINT("Invalid buffer size %zu", buffer.size());
+
+            return false;
+        }
+
+        /// @brief Increments the buffer reference count.
+        /// @param key The unique key for the buffer.
+        void AddRef(uint64_t key) {
+            auto it = buffers.find(key);
+
+            if (it != buffers.end()) {
+                it->second.refCount++;
+
+                AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
+            } else {
+                AUDIO_DEBUG_PRINT("Buffer not found");
+            }
+        }
+
+        /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero.
+        /// @param key The unique key for the buffer.
+        void Release(uint64_t key) {
+            auto it = buffers.find(key);
+
+            if (it != buffers.end()) {
+                it->second.refCount--;
+
+                AUDIO_DEBUG_PRINT("Decreased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
+
+                if (it->second.refCount == 0) {
+                    AUDIO_DEBUG_PRINT("Erasing buffer of size %zu from map, key: %" PRIu64, it->second.data.size(), key);
+
+                    buffers.erase(it);
+                }
+            } else {
+                AUDIO_DEBUG_PRINT("Buffer not found");
+            }
+        }
+
+        /// @brief Gets the raw pointer and size of the buffer with the given key.
+        /// @param key The unique key for the buffer.
+        /// @return An std::pair of the buffer raw pointer and size.
+        std::pair<const void *, size_t> GetBuffer(uint64_t key) const {
+            auto it = buffers.find(key);
+
+            if (it != buffers.end()) {
+                AUDIO_DEBUG_PRINT("Returning buffer of size %zu", it->second.data.size());
+
+                return {it->second.data.data(), it->second.data.size()};
+            }
+
+            AUDIO_DEBUG_PRINT("Buffer not found");
+
+            return {nullptr, 0};
+        }
+    };
+
+    /// @brief miniaudio virtual file system class
+    struct VFS {
+        ma_vfs_callbacks cb; // has to be first entry
+        ma_allocation_callbacks allocCb;
+
+        uint64_t nextFd;
+
+        struct FileState {
+            uint64_t key;        // for memory buffers
+            ma_int64 offset;     // for memory buffers
+            FILE *realFile;      // for real files
+            size_t realFileSize; // for real files
+
+            FileState() : key(0), offset(0), realFile(nullptr), realFileSize(0) {}
+        };
+
+        std::unordered_map<uint64_t, FileState> fileMap;
+
+        BufferMap *bufferMap;
+
+        /// @brief Constructs a new VFS object with empty callbacks and no associated buffer map.
+        VFS() : nextFd(0), bufferMap(nullptr) {
+            cb = {};
+            allocCb = {};
+        }
+
+        /// @brief Creates a new virtual file system (VFS) object with callbacks and associates it with the given buffer map.
+        /// @param bufferMap Pointer to the BufferMap to be used with the VFS.
+        /// @return Returns a pointer to the created ma_vfs object.
+        static ma_vfs *Create(BufferMap *bufferMap) {
+            auto vfs = new VFS();
+            vfs->bufferMap = bufferMap;
+            vfs->cb.onOpen = OnOpen;
+            vfs->cb.onClose = OnClose;
+            vfs->cb.onRead = OnRead;
+            vfs->cb.onSeek = OnSeek;
+            vfs->cb.onTell = OnTell;
+            vfs->cb.onInfo = OnInfo;
+
+            AUDIO_DEBUG_PRINT("VFS created");
+
+            return reinterpret_cast<ma_vfs *>(vfs);
+        }
+
+        /// @brief Frees the memory of a virtual file system object.
+        /// @param vfs Pointer to the virtual file system object.
+        static void Destroy(ma_vfs *vfs) {
+            delete reinterpret_cast<VFS *>(vfs);
+
+            AUDIO_DEBUG_PRINT("VFS destroyed");
+        }
+
+        /// @brief Opens a file in the virtual file system by looking up a buffer using a key.
+        /// @param pVFS Pointer to the virtual file system.
+        /// @param pFilePath String representing the file path, interpreted as a key for buffer lookup.
+        /// @param openMode Mode in which to open the file (unused).
+        /// @param pFile Pointer to where the file handle will be stored.
+        /// @return Returns MA_SUCCESS upon successful opening, or MA_DOES_NOT_EXIST if the buffer is not found.
+        static ma_result OnOpen(ma_vfs *pVFS, const char *pFilePath, ma_uint32 openMode, ma_vfs_file *pFile) {
+            (void)openMode;
+
+            auto vfs = reinterpret_cast<VFS *>(pVFS);
+            auto key = std::strtoull(pFilePath, NULL, 10); // transform pFilePath, look-up in BufferMap
+            auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(key);
+
+            if (buffer) {
+                vfs->nextFd++;
+                vfs->fileMap[vfs->nextFd].key = key;
+                vfs->fileMap[vfs->nextFd].offset = 0;
+                vfs->fileMap[vfs->nextFd].realFile = nullptr;
+                vfs->fileMap[vfs->nextFd].realFileSize = 0;
+
+                AUDIO_DEBUG_PRINT("Opened memory buffer (%llu) %llu", key, vfs->nextFd);
+            } else {
+                auto file = std::fopen(pFilePath, "rb");
+                if (!file) {
+                    AUDIO_DEBUG_PRINT("File / memory buffer not found: %s", pFilePath);
+
+                    return MA_DOES_NOT_EXIST;
+                }
+
+                if (std::fseek(file, 0, SEEK_END)) {
+                    AUDIO_DEBUG_PRINT("Failed to seek to the end of file %s", pFilePath);
+
+                    std::fclose(file);
+
+                    return MA_BAD_SEEK;
+                }
+
+                auto fileSize = std::ftell(file);
+                if (fileSize < 0) {
+                    AUDIO_DEBUG_PRINT("Failed to get the size of file %s", pFilePath);
+
+                    std::fclose(file);
+
+                    return MA_IO_ERROR;
+                }
+
+                std::rewind(file);
+
+                vfs->nextFd++;
+                vfs->fileMap[vfs->nextFd].key = 0;
+                vfs->fileMap[vfs->nextFd].offset = 0;
+                vfs->fileMap[vfs->nextFd].realFile = file;
+                vfs->fileMap[vfs->nextFd].realFileSize = fileSize;
+
+                AUDIO_DEBUG_PRINT("Opened file (%s) %llu", pFilePath, vfs->nextFd);
+            }
+
+            *pFile = reinterpret_cast<ma_vfs_file>(vfs->nextFd);
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Closes a file in the virtual file system.
+        /// @param pVFS Pointer to the virtual file system.
+        /// @param file Handle to the file within the virtual file system.
+        /// @return Returns MA_SUCCESS upon successful closing of the file.
+        static ma_result OnClose(ma_vfs *pVFS, ma_vfs_file file) {
+            AUDIO_DEBUG_CHECK(pVFS != nullptr);
+            AUDIO_DEBUG_CHECK(file != nullptr);
+
+            auto vfs = reinterpret_cast<VFS *>(pVFS);
+            auto fd = uint64_t(file);
+            auto state = &vfs->fileMap[fd];
+
+            if (state->realFile) {
+                std::fclose(state->realFile);
+
+                AUDIO_DEBUG_PRINT("Closed file %llu", fd);
+            } else {
+                vfs->bufferMap->Release(state->key);
+
+                AUDIO_DEBUG_PRINT("Closed memory buffer %llu", fd);
+            }
+
+            vfs->fileMap.erase(fd);
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Reads from a file in the virtual file system.
+        /// @param pVFS Pointer to the virtual file system.
+        /// @param file Handle to the file within the virtual file system.
+        /// @param pDst Pointer to the destination buffer.
+        /// @param sizeInBytes Requested size of the read.
+        /// @param pBytesRead Pointer to a variable where the actual read size is stored.
+        /// @return Returns MA_SUCCESS upon successful read.
+        static ma_result OnRead(ma_vfs *pVFS, ma_vfs_file file, void *pDst, size_t sizeInBytes, size_t *pBytesRead) {
+            AUDIO_DEBUG_CHECK(pVFS != nullptr);
+            AUDIO_DEBUG_CHECK(file != nullptr);
+            AUDIO_DEBUG_CHECK(pDst != nullptr);
+            AUDIO_DEBUG_CHECK(pBytesRead != nullptr);
+
+            auto vfs = reinterpret_cast<VFS *>(pVFS);
+            auto fd = uint64_t(file);
+            auto state = &vfs->fileMap[fd];
+
+            if (state->realFile) {
+                *pBytesRead = std::fread(pDst, sizeof(uint8_t), sizeInBytes, state->realFile);
+
+                if (std::ferror(state->realFile)) {
+                    AUDIO_DEBUG_PRINT("Error reading file, fd: %llu", fd);
+                    return MA_IO_ERROR;
+                }
+
+                AUDIO_DEBUG_PRINT("Read %zu bytes from file %llu", *pBytesRead, fd);
+            } else {
+                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+                auto readSize = std::min<ma_uint64>(sizeInBytes, bufferSize - state->offset);
+
+                std::memcpy(pDst, reinterpret_cast<const uint8_t *>(buffer) + state->offset, readSize);
+                *pBytesRead = readSize;
+                state->offset += readSize;
+
+                AUDIO_DEBUG_PRINT("Read %zu bytes at offset %lld from memory buffer %llu", readSize, state->offset, fd);
+            }
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Seeks to a specified position within a file.
+        /// @param pVFS Pointer to the virtual file system.
+        /// @param file Handle to the file within the virtual file system.
+        /// @param offset Offset from the origin to seek to.
+        /// @param origin Origin of the seek, either start, current, or end of file.
+        /// @return Returns MA_SUCCESS upon successful seeking.
+        static ma_result OnSeek(ma_vfs *pVFS, ma_vfs_file file, ma_int64 offset, ma_seek_origin origin) {
+            AUDIO_DEBUG_CHECK(pVFS != nullptr);
+            AUDIO_DEBUG_CHECK(file != nullptr);
+            AUDIO_DEBUG_CHECK(origin == ma_seek_origin::ma_seek_origin_start || origin == ma_seek_origin::ma_seek_origin_current ||
+                              origin == ma_seek_origin::ma_seek_origin_end);
+
+            auto vfs = reinterpret_cast<VFS *>(pVFS);
+            auto fd = uint64_t(file);
+            auto state = &vfs->fileMap[fd];
+
+            if (state->realFile) {
+                int whence;
+                switch (origin) {
+                case ma_seek_origin::ma_seek_origin_start:
+                    whence = SEEK_SET;
+                    break;
+
+                case ma_seek_origin::ma_seek_origin_current:
+                    whence = SEEK_CUR;
+                    break;
+
+                case ma_seek_origin::ma_seek_origin_end:
+                    whence = SEEK_END;
+                    break;
+
+                default:
+                    AUDIO_DEBUG_PRINT("Unknown seek origin: %d", origin);
+                    return MA_BAD_SEEK;
+                }
+
+                if (std::fseek(state->realFile, offset, whence) == 0) {
+                    AUDIO_DEBUG_PRINT("Seek file %llu to offset %lld", fd, offset);
+
+                    return MA_SUCCESS;
+                }
+
+                AUDIO_DEBUG_PRINT("Failed to seek file %llu to offset %lld", fd, offset);
+                return MA_BAD_SEEK;
+            } else {
+                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+
+                switch (origin) {
+                case ma_seek_origin::ma_seek_origin_start:
+                    state->offset = offset;
+                    break;
+
+                case ma_seek_origin::ma_seek_origin_current:
+                    state->offset = state->offset + offset;
+                    break;
+
+                case ma_seek_origin::ma_seek_origin_end:
+                    state->offset = bufferSize + offset;
+                    break;
+
+                default:
+                    AUDIO_DEBUG_PRINT("Unknown seek origin: %d", origin);
+                    return MA_BAD_SEEK;
+                }
+
+                state->offset = std::clamp<ma_int64>(state->offset, 0, bufferSize);
+
+                AUDIO_DEBUG_PRINT("Seek memory buffer %llu to offset %lld, kind: %d, result: %lld", fd, offset, origin, state->offset);
+            }
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Tells the current cursor position of a file in the virtual file system.
+        /// @param pVFS Pointer to the virtual file system.
+        /// @param file Handle to the file within the virtual file system.
+        /// @param pCursor Pointer to a 64-bit signed integer where the current cursor position is stored.
+        /// @return Returns MA_SUCCESS upon successful retrieval of the cursor position.
+        static ma_result OnTell(ma_vfs *pVFS, ma_vfs_file file, ma_int64 *pCursor) {
+            AUDIO_DEBUG_CHECK(pVFS != nullptr);
+            AUDIO_DEBUG_CHECK(file != nullptr);
+            AUDIO_DEBUG_CHECK(pCursor != nullptr);
+
+            auto vfs = reinterpret_cast<VFS *>(pVFS);
+            auto fd = uint64_t(file);
+            auto state = &vfs->fileMap[fd];
+
+            if (state->realFile) {
+                *pCursor = std::ftell(state->realFile);
+
+                AUDIO_DEBUG_PRINT("File %llu position: %lld", fd, *pCursor);
+            } else {
+                *pCursor = state->offset;
+                AUDIO_DEBUG_PRINT("Memory buffer %llu position: %lld", fd, state->offset);
+            }
+
+            return MA_SUCCESS;
+        }
+
+        /// @brief Retrieves information about a file, specifically its size in bytes.
+        /// @param pVFS Pointer to the virtual file system.
+        /// @param file Handle to the file within the virtual file system.
+        /// @param pInfo Pointer to a structure where file information will be stored, particularly the file size.
+        /// @return Returns MA_SUCCESS upon successful retrieval of file information.
+        static ma_result OnInfo(ma_vfs *pVFS, ma_vfs_file file, ma_file_info *pInfo) {
+            AUDIO_DEBUG_CHECK(pVFS != nullptr);
+            AUDIO_DEBUG_CHECK(file != nullptr);
+            AUDIO_DEBUG_CHECK(pInfo != nullptr);
+
+            auto vfs = reinterpret_cast<VFS *>(pVFS);
+            auto fd = uint64_t(file);
+            auto state = &vfs->fileMap[fd];
+
+            if (state->realFile) {
+                pInfo->sizeInBytes = state->realFileSize;
+
+                AUDIO_DEBUG_PRINT("File %llu size: %zu", fd, state->realFileSize);
+            } else {
+                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+
+                pInfo->sizeInBytes = bufferSize;
+
+                AUDIO_DEBUG_PRINT("Memory buffer %llu size: %zu", fd, bufferSize);
+            }
+
+            return MA_SUCCESS;
+        }
+    };
+
     /// @brief A miniaudio raw audio stream datasource.
     struct RawStream {
         ma_data_source_base maDataSource;         // miniaudio data source (this must be the first member of our struct)
@@ -249,8 +688,7 @@ struct AudioEngine {
                 return nullptr;
             }
 
-            ZERO_VARIABLE(pRawStream->maDataSource);
-
+            pRawStream->maDataSource = {};
             pRawStream->maDataSourceConfig = ma_data_source_config_init();
             pRawStream->maDataSourceConfig.vtable = &rawStreamDataSourceVtable; // attach the vtable to the data source
 
@@ -357,7 +795,6 @@ struct AudioEngine {
         static const auto MML_ATTACK_MIN = 0;                                                          // the minimum MML attack (percentage)
         static const auto MML_ATTACK_MAX = 100;                                                        // the maximum MML attack (percentage)
         static constexpr auto PULSE_WAVE_DUTY_CYCLE_DEFAULT = 0.5f;                                    // the default pulse wave duty cycle (square)
-        static constexpr auto QUARTER_PI = float(M_PI) / 4.0f;
 
         /// @brief A simple ADSR envelope generator.
         class Envelope {
@@ -823,7 +1260,7 @@ struct AudioEngine {
             pause = MML_PAUSE_DEFAULT;
             duration = 0;
             dots = 0;
-            ZERO_VARIABLE(currentState);
+            currentState = {};
             SetPanPosition(PAN_CENTER);
 
             maWaveformConfig = ma_waveform_config_init(ma_format::ma_format_f32, 1, ma_engine_get_sample_rate(rawStream->maEngine),
@@ -997,6 +1434,8 @@ struct AudioEngine {
         /// @brief Set the PSG pan position.
         /// @param value A number between -1.0 to 1.0. Where 0.0 is center.
         void SetPanPosition(float value) {
+            static constexpr auto QUARTER_PI = float(M_PI) / 4.0f;
+
             panPosition = std::clamp(value, PAN_LEFT, PAN_RIGHT); // clamp the value;
 
             // Calculate the left and right channel gain values using pan law (-3.0dB pan depth)
@@ -1801,9 +2240,7 @@ struct AudioEngine {
         bool autoKill;                              // Do we need to auto-clean this sample / stream after playback is done?
         ma_sound maSound;                           // miniaudio sound
         ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
-        ma_decoder_config maDecoderConfig;          // miniaudio decoder configuration
-        ma_decoder *maDecoder;                      // this is used for files that are loaded directly from memory
-        uint64_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
+        uint64_t bufferKey;                         // a key that will uniquely identify the data the sound will use
         ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
         ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
         RawStream *rawStream;                       // Raw sample frame queue
@@ -1823,12 +2260,10 @@ struct AudioEngine {
             isUsed = false;
             type = Type::NONE;
             autoKill = false;
-            ZERO_VARIABLE(maSound);
+            maSound = {};
             maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
-            ZERO_VARIABLE(maDecoderConfig);
-            maDecoder = nullptr;
             bufferKey = 0;
-            ZERO_VARIABLE(maAudioBufferConfig);
+            maAudioBufferConfig = {};
             maAudioBuffer = nullptr;
             rawStream = nullptr;
             psg = nullptr;
@@ -1853,6 +2288,7 @@ struct AudioEngine {
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
     BufferMap bufferMap;                                // this is used to keep track of and manage memory used by 'in-memory' sound files
+    ma_vfs *vfs;                                        // this is an ma_vfs backed by the BufferMap
 
     // Delete copy and move constructors and assignments
     AudioEngine(const AudioEngine &) = delete;
@@ -1863,14 +2299,15 @@ struct AudioEngine {
     /// @brief Initializes some important members.
     AudioEngine() {
         isInitialized = initializationFailed = false;
-        ZERO_VARIABLE(maResourceManagerConfig);
-        ZERO_VARIABLE(maResourceManager);
-        ZERO_VARIABLE(maEngineConfig);
-        ZERO_VARIABLE(maEngine);
+        maResourceManagerConfig = {};
+        maResourceManager = {};
+        maEngineConfig = {};
+        maEngine = {};
         maResult = ma_result::MA_SUCCESS;
         psgVoices.fill(INVALID_SOUND_HANDLE_INTERNAL);  // should not use INVALID_SOUND_HANDLE here
         internalSndRaw = INVALID_SOUND_HANDLE_INTERNAL; // should not use INVALID_SOUND_HANDLE here
         lowestFreeHandle = 0;
+        vfs = nullptr;
     }
 
     /// @brief Allocates a sound handle. It will return -1 on error. Handle 0 is used internally for Sound and Play and thus cannot be used by the user.
@@ -1935,11 +2372,10 @@ struct AudioEngine {
         // This will set it to 'in use' after applying some defaults.
         soundHandles[h]->type = SoundHandle::Type::NONE;
         soundHandles[h]->autoKill = false;
-        ZERO_VARIABLE(soundHandles[h]->maSound);
+        soundHandles[h]->maSound = {};
         // We do not use pitch shifting, so this will give a little performance boost
         // Spatialization is disabled by default but will be enabled on the fly if required
         soundHandles[h]->maFlags = MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_WAIT_INIT;
-        soundHandles[h]->maDecoder = nullptr;
         soundHandles[h]->bufferKey = 0;
         soundHandles[h]->maAudioBuffer = nullptr;
         soundHandles[h]->rawStream = nullptr;
@@ -1974,15 +2410,6 @@ struct AudioEngine {
             // Free any initialized PSG
             delete soundHandles[handle]->psg;
             soundHandles[handle]->psg = nullptr;
-
-            // Free any initialized miniaudio decoder
-            if (soundHandles[handle]->maDecoder) {
-                ma_decoder_uninit(soundHandles[handle]->maDecoder);
-                delete soundHandles[handle]->maDecoder;
-                soundHandles[handle]->maDecoder = nullptr;
-                bufferMap.Release(soundHandles[handle]->bufferKey);
-                AUDIO_DEBUG_PRINT("Decoder uninitialized");
-            }
 
             // Free any initialized audio buffer
             if (soundHandles[handle]->maAudioBuffer) {
@@ -2177,10 +2604,14 @@ struct AudioEngine {
         if (isInitialized || initializationFailed)
             return;
 
+        // Create VFS
+        vfs = VFS::Create(&bufferMap);
+
         // Initialize the miniaudio resource manager
         maResourceManagerConfig = ma_resource_manager_config_init();
-        AudioEngineAttachCustomBackendVTables(&maResourceManagerConfig);
+        AudioEngine_AttachCustomBackendVTables(&maResourceManagerConfig);
         maResourceManagerConfig.pCustomDecodingBackendUserData = NULL; // <- pUserData parameter of each function in the decoding backend vtables
+        maResourceManagerConfig.pVFS = vfs;
 
         maResult = ma_resource_manager_init(&maResourceManagerConfig, &maResourceManager);
         if (maResult != MA_SUCCESS) {
@@ -2243,10 +2674,13 @@ struct AudioEngine {
             // Shutdown the miniaudio resource manager
             ma_resource_manager_uninit(&maResourceManager);
 
+            AUDIO_DEBUG_PRINT("Audio engine shutdown");
+
+            // Destroy VFS
+            VFS::Destroy(vfs);
+
             // Set engine initialized flag as false
             isInitialized = false;
-
-            AUDIO_DEBUG_PRINT("Audio engine shutdown");
         }
     }
 
@@ -2283,50 +2717,6 @@ struct AudioEngine {
                 }
             }
         }
-    }
-
-    /// @brief Creates a ma_decoder and ma_sound from a memory buffer for a valid sound handle.
-    /// @param buffer A raw pointer to the sound file in memory.
-    /// @param size The size of the file in memory.
-    /// @param handle A valid sound handle.
-    /// @return MA_SUCCESS if successful. Else, a valid ma_result.
-    ma_result InitializeSoundFromMemory(const void *buffer, size_t size, int32_t handle) {
-        if (!IsHandleValid(handle) || soundHandles[handle]->maDecoder || !buffer || !size)
-            return MA_INVALID_ARGS;
-
-        soundHandles[handle]->maDecoder = new ma_decoder(); // allocate and zero memory
-        if (!soundHandles[handle]->maDecoder) {
-            AUDIO_DEBUG_PRINT("Failed to allocate memory for miniaudio decoder");
-            return MA_OUT_OF_MEMORY;
-        }
-
-        // Setup the decoder & attach the custom backed vtables
-        soundHandles[handle]->maDecoderConfig = ma_decoder_config_init_default();
-        AudioEngineAttachCustomBackendVTables(&soundHandles[handle]->maDecoderConfig);
-        soundHandles[handle]->maDecoderConfig.sampleRate = ma_engine_get_sample_rate(&maEngine);
-
-        maResult = ma_decoder_init_memory(buffer, size, &soundHandles[handle]->maDecoderConfig,
-                                          soundHandles[handle]->maDecoder); // initialize the decoder
-        if (maResult != MA_SUCCESS) {
-            delete soundHandles[handle]->maDecoder;
-            soundHandles[handle]->maDecoder = nullptr;
-            AUDIO_DEBUG_PRINT("Error %i: failed to initialize miniaudio decoder", maResult);
-            return maResult;
-        }
-
-        // Finally, load the sound as a data source
-        maResult =
-            ma_sound_init_from_data_source(&maEngine, soundHandles[handle]->maDecoder, soundHandles[handle]->maFlags, NULL, &soundHandles[handle]->maSound);
-
-        if (maResult != MA_SUCCESS) {
-            ma_decoder_uninit(soundHandles[handle]->maDecoder);
-            delete soundHandles[handle]->maDecoder;
-            soundHandles[handle]->maDecoder = nullptr;
-            AUDIO_DEBUG_PRINT("Error %i: failed to initialize sound", maResult);
-            return maResult;
-        }
-
-        return MA_SUCCESS;
     }
 };
 
@@ -2631,7 +3021,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         // Check if the user wants to unset the decode flag
         if (requirements.find("nodecode") != std::string::npos) {
             audioEngine.soundHandles[handle]->maFlags &= ~MA_SOUND_FLAG_DECODE;
-            AUDIO_DEBUG_PRINT("Sound will not be decoded");
+            AUDIO_DEBUG_PRINT("Sound will not be decoded on load");
         }
 
         // Check if the user wants to unset the async flag
@@ -2649,26 +3039,56 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 
     // Load the file from file or memory based on the requirements string
     if (fromMemory) {
-        // Configure a miniaudio decoder to load the sound from memory
+        // Configure miniaudio to load the sound from memory
         audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
             std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));                        // make a unique key and save it
         audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
         auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
-        audioEngine.maResult = audioEngine.InitializeSoundFromMemory(buffer, bufferSize, handle);                         // create the ma_sound
+        auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                         // convert the buffer key to a string
+
+        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
+                                                       &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
     } else {
         std::string fileName(reinterpret_cast<char const *>(qbsFileName->chr), qbsFileName->len);
 
-        AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
+        if (audioEngine.soundHandles[handle]->maFlags & MA_SOUND_FLAG_STREAM) {
+            AUDIO_DEBUG_PRINT("Streaming sound from file '%s'", fileName.c_str());
 
-        // Forward the request to miniaudio to open the sound file
-        audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, filepath_fix_directory(fileName), audioEngine.soundHandles[handle]->maFlags, NULL,
-                                                       NULL, &audioEngine.soundHandles[handle]->maSound);
+            audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fileName.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
+                                                           &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
+        } else {
+            AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
+
+            auto contents = AudioEngine_LoadFile<std::vector<uint8_t>>(fileName.c_str());
+
+            if (contents.empty()) {
+                AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
+
+                audioEngine.soundHandles[handle]->isUsed = false;
+
+                return AudioEngine::INVALID_SOUND_HANDLE;
+            }
+
+            AUDIO_DEBUG_PRINT("Sound length: %zu", contents.size());
+
+            // Configure miniaudio to load the sound from memory
+            audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
+                std::string_view(reinterpret_cast<const char *>(contents.data()), contents.size()));                  // make a unique key and save it
+            audioEngine.bufferMap.AddBuffer(std::move(contents), audioEngine.soundHandles[handle]->bufferKey);        // make a copy of the buffer
+            auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey); // get the buffer pointer and size
+            auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                 // convert the buffer key to a string
+
+            audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
+                                                           &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
+        }
     }
 
     // If the sound failed to initialize, then free the handle and return INVALID_SOUND_HANDLE
     if (audioEngine.maResult != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to open sound", audioEngine.maResult);
+
         audioEngine.soundHandles[handle]->isUsed = false;
+
         return AudioEngine::INVALID_SOUND_HANDLE;
     }
 
@@ -2722,27 +3142,6 @@ int32_t func__sndcopy(int32_t src_handle) {
         // Next memcopy the samples from the source to the dest
         memcpy((void *)audioEngine.soundHandles[dst_handle]->maAudioBuffer->ref.pData, audioEngine.soundHandles[src_handle]->maAudioBuffer->ref.pData,
                frames * ma_get_bytes_per_frame(format, channels)); // naughty const void* casting, but should be OK
-    } else if (audioEngine.soundHandles[src_handle]->maDecoder) {
-        AUDIO_DEBUG_PRINT("Doing custom sound copy for ma_decoder");
-
-        dst_handle = audioEngine.CreateHandle(); // allocate a sound handle
-        if (dst_handle < 1)
-            return AudioEngine::INVALID_SOUND_HANDLE;
-
-        audioEngine.soundHandles[dst_handle]->type = AudioEngine::SoundHandle::Type::STATIC;                          // set some handle properties
-        audioEngine.soundHandles[dst_handle]->maFlags = audioEngine.soundHandles[src_handle]->maFlags;                // copy the flags
-        audioEngine.soundHandles[dst_handle]->bufferKey = audioEngine.soundHandles[src_handle]->bufferKey;            // copy the BufferMap unique key
-        audioEngine.bufferMap.AddRef(audioEngine.soundHandles[dst_handle]->bufferKey);                                // increase the reference count
-        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[dst_handle]->bufferKey); // get the buffer pointer and size
-        audioEngine.maResult = audioEngine.InitializeSoundFromMemory(buffer, bufferSize, dst_handle);                 // create the ma_sound
-
-        if (audioEngine.maResult != MA_SUCCESS) {
-            audioEngine.bufferMap.Release(audioEngine.soundHandles[dst_handle]->bufferKey);
-            audioEngine.soundHandles[dst_handle]->isUsed = false;
-            AUDIO_DEBUG_PRINT("Error %i: failed to copy sound", audioEngine.maResult);
-
-            return AudioEngine::INVALID_SOUND_HANDLE;
-        }
     } else {
         AUDIO_DEBUG_PRINT("Doing regular miniaudio sound copy");
 
@@ -3452,7 +3851,7 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
             AUDIO_DEBUG_PRINT("Sound bank will be loaded from memory");
         }
 
-        for (auto i = 0; i < GET_ARRAY_SIZE(SoundBankName); i++) {
+        for (auto i = 0; i < _countof(SoundBankName); i++) {
             AUDIO_DEBUG_PRINT("Checking for: %s", SoundBankName[i]);
             if (requirements.find(SoundBankName[i]) != std::string::npos) {
                 format = SoundBankFormat(i);
