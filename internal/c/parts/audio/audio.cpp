@@ -34,7 +34,11 @@ struct AudioEngine {
             std::vector<uint8_t> data;
             size_t refCount;
 
+            Buffer() : refCount(0) {}
+
             Buffer(const void *src, size_t size) : data(size), refCount(1) { std::memcpy(data.data(), src, size); }
+
+            Buffer(std::vector<uint8_t> &&src) : data(std::move(src)), refCount(1) {}
         };
 
         std::unordered_map<uint64_t, Buffer> buffers;
@@ -57,17 +61,44 @@ struct AudioEngine {
                 if (it == buffers.end()) {
                     buffers.emplace(std::make_pair(key, Buffer(data, size)));
 
-                    AUDIO_DEBUG_PRINT("Added buffer of size %llu to map, key: %llu", size, key);
+                    AUDIO_DEBUG_PRINT("Copied buffer of size %zu to map, key: %" PRIu64, size, key);
                 } else {
                     it->second.refCount++;
 
-                    AUDIO_DEBUG_PRINT("Increased reference count to %llu, key: %llu", it->second.refCount, key);
+                    AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
                 }
 
                 return true;
             }
 
-            AUDIO_DEBUG_PRINT("Invalid buffer or size %p, %llu", data, size);
+            AUDIO_DEBUG_PRINT("Invalid buffer or size %p, %zu", data, size);
+
+            return false;
+        }
+
+        /// @brief Adds a buffer to the map using a unique key only if it was not added before. If the buffer is already present then it increases the reference
+        /// count.
+        /// @param buffer The buffer data. The data is moved.
+        /// @param key The unique key that should be used.
+        /// @return True if successful.
+        bool AddBuffer(std::vector<uint8_t> &&buffer, uint64_t key) {
+            if (!buffer.empty()) {
+                auto it = buffers.find(key);
+
+                if (it == buffers.end()) {
+                    buffers.emplace(std::make_pair(key, Buffer(std::move(buffer))));
+
+                    AUDIO_DEBUG_PRINT("Moved buffer of size %zu to map, key: %" PRIu64, buffers[key].data.size(), key);
+                } else {
+                    it->second.refCount++;
+
+                    AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
+                }
+
+                return true;
+            }
+
+            AUDIO_DEBUG_PRINT("Invalid buffer size %zu", buffer.size());
 
             return false;
         }
@@ -80,7 +111,7 @@ struct AudioEngine {
             if (it != buffers.end()) {
                 it->second.refCount++;
 
-                AUDIO_DEBUG_PRINT("Increased reference count to %llu, key: %llu", it->second.refCount, key);
+                AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
             } else {
                 AUDIO_DEBUG_PRINT("Buffer not found");
             }
@@ -94,10 +125,10 @@ struct AudioEngine {
             if (it != buffers.end()) {
                 it->second.refCount--;
 
-                AUDIO_DEBUG_PRINT("Decreased reference count to %llu, key: %llu", it->second.refCount, key);
+                AUDIO_DEBUG_PRINT("Decreased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
 
                 if (it->second.refCount == 0) {
-                    AUDIO_DEBUG_PRINT("Erasing buffer of size %llu from map, key: %llu", it->second.data.size(), key);
+                    AUDIO_DEBUG_PRINT("Erasing buffer of size %zu from map, key: %" PRIu64, it->second.data.size(), key);
 
                     buffers.erase(it);
                 }
@@ -113,7 +144,7 @@ struct AudioEngine {
             auto it = buffers.find(key);
 
             if (it != buffers.end()) {
-                AUDIO_DEBUG_PRINT("Returning buffer of size %llu", it->second.data.size());
+                AUDIO_DEBUG_PRINT("Returning buffer of size %zu", it->second.data.size());
 
                 return {it->second.data.data(), it->second.data.size()};
             }
@@ -132,12 +163,12 @@ struct AudioEngine {
         uint64_t nextFd;
 
         struct FileState {
-            ma_int64 offset;     // for memory buffers
             uint64_t key;        // for memory buffers
+            ma_int64 offset;     // for memory buffers
             FILE *realFile;      // for real files
             size_t realFileSize; // for real files
 
-            FileState() : offset(0), key(0), realFile(nullptr), realFileSize(0) {}
+            FileState() : key(0), offset(0), realFile(nullptr), realFileSize(0) {}
         };
 
         std::unordered_map<uint64_t, FileState> fileMap;
@@ -2209,7 +2240,7 @@ struct AudioEngine {
         bool autoKill;                              // Do we need to auto-clean this sample / stream after playback is done?
         ma_sound maSound;                           // miniaudio sound
         ma_uint32 maFlags;                          // miniaudio flags that were used when initializing the sound
-        uint64_t bufferKey;                         // a key that will uniquely identify the data the decoder will use
+        uint64_t bufferKey;                         // a key that will uniquely identify the data the sound will use
         ma_audio_buffer_config maAudioBufferConfig; // miniaudio buffer configuration
         ma_audio_buffer *maAudioBuffer;             // this is used for user created audio buffers (memory is managed by miniaudio)
         RawStream *rawStream;                       // Raw sample frame queue
@@ -3008,7 +3039,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 
     // Load the file from file or memory based on the requirements string
     if (fromMemory) {
-        // Configure a miniaudio decoder to load the sound from memory
+        // Configure miniaudio to load the sound from memory
         audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
             std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));                        // make a unique key and save it
         audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
@@ -3028,7 +3059,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         } else {
             AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
 
-            auto contents = AudioEngine_LoadFile<std::string>(fileName.c_str());
+            auto contents = AudioEngine_LoadFile<std::vector<uint8_t>>(fileName.c_str());
 
             if (contents.empty()) {
                 AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
@@ -3038,13 +3069,14 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
                 return AudioEngine::INVALID_SOUND_HANDLE;
             }
 
-            AUDIO_DEBUG_PRINT("Sound length: %zd", contents.length());
+            AUDIO_DEBUG_PRINT("Sound length: %zu", contents.size());
 
-            // Configure a miniaudio decoder to load the sound from memory
-            audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(contents);                            // make a unique key and save it
-            audioEngine.bufferMap.AddBuffer(contents.data(), contents.length(), audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
-            auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
-            auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey); // convert the buffer key to a string
+            // Configure miniaudio to load the sound from memory
+            audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
+                std::string_view(reinterpret_cast<const char *>(contents.data()), contents.size()));                  // make a unique key and save it
+            audioEngine.bufferMap.AddBuffer(std::move(contents), audioEngine.soundHandles[handle]->bufferKey);        // make a copy of the buffer
+            auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey); // get the buffer pointer and size
+            auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                 // convert the buffer key to a string
 
             audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
                                                            &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
