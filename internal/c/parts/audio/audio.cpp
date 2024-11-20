@@ -36,7 +36,9 @@ struct AudioEngine {
 
             Buffer() : refCount(0) {}
 
-            Buffer(const void *src, size_t size) : data(size), refCount(1) { std::memcpy(data.data(), src, size); }
+            Buffer(const void *src, size_t size) : data(size), refCount(1) {
+                std::memcpy(data.data(), src, size);
+            }
 
             Buffer(std::vector<uint8_t> &&src) : data(std::move(src)), refCount(1) {}
         };
@@ -471,15 +473,17 @@ struct AudioEngine {
         ma_data_source_config maDataSourceConfig; // config struct for the data source
         ma_engine *maEngine;                      // pointer to a ma_engine object that was passed while creating the data source
         ma_sound *maSound;                        // pointer to a ma_sound object that was passed while creating the data source
-        struct Buffer {                           // we'll give this a name that we'll use below
-            std::vector<SampleFrame> data;        // this holds the actual sample frames
-            size_t cursor;                        // the read cursor (in frames) in the stream
-        } buffer[2];                              // we need two of these to do a proper ping-pong
-        Buffer *consumer;                         // this is what the miniaudio thread will use to pull data from
-        Buffer *producer;                         // this is what the main thread will use to push data to
-        libqb_mutex *m;                           // we'll use a mutex to give exclusive access to resources used by both threads
-        bool stop;                                // set this to true to stop supply of samples completely (including silent samples)
-        std::atomic_bool pause_;                  // set this to true to pause the stream (only silence samples will be sent to miniaudio)
+
+        struct Buffer {                    // we'll give this a name that we'll use below
+            std::vector<SampleFrame> data; // this holds the actual sample frames
+            size_t cursor;                 // the read cursor (in frames) in the stream
+        } buffer[2];                       // we need two of these to do a proper ping-pong
+
+        Buffer *consumer;        // this is what the miniaudio thread will use to pull data from
+        Buffer *producer;        // this is what the main thread will use to push data to
+        libqb_mutex *m;          // we'll use a mutex to give exclusive access to resources used by both threads
+        bool stop;               // set this to true to stop supply of samples completely (including silent samples)
+        std::atomic_bool pause_; // set this to true to pause the stream (only silence samples will be sent to miniaudio)
 
         // Delete default, copy and move constructors and assignments.
         RawStream() = delete;
@@ -501,11 +505,15 @@ struct AudioEngine {
         }
 
         /// @brief We use this to destroy the mutex.
-        ~RawStream() { libqb_mutex_free(m); }
+        ~RawStream() {
+            libqb_mutex_free(m);
+        }
 
         /// @brief Pauses or resumes the stream.
         /// @param state true to pause, false to resume.
-        void Pause(bool state) { pause_.store(state, std::memory_order_relaxed); }
+        void Pause(bool state) {
+            pause_.store(state, std::memory_order_relaxed);
+        }
 
         /// @brief Pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread.
         /// @param l Sample frame left channel data.
@@ -559,7 +567,9 @@ struct AudioEngine {
 
         /// @brief Returns the length, in seconds of sound queued.
         /// @return The length left to play in seconds.
-        double GetTimeRemaining() { return double(GetSampleFramesRemaining()) / double(ma_engine_get_sample_rate(maEngine)); }
+        double GetTimeRemaining() {
+            return double(GetSampleFramesRemaining()) / double(ma_engine_get_sample_rate(maEngine));
+        }
 
         /// @brief Callback function used by miniaudio to pull a chunk of raw sample frames to play. The samples being read is removed from the queue.
         /// @param pDataSource Pointer to the raw stream data source (cast to RawStream type).
@@ -804,7 +814,9 @@ struct AudioEngine {
             Envelope &operator=(Envelope &&) = delete;
             Envelope(Envelope &&) = delete;
 
-            Envelope() : sampleFrames(0) { SetSimpleRamp(0.0); }
+            Envelope() : sampleFrames(0) {
+                SetSimpleRamp(0.0);
+            }
 
             void SetAttack(double attack) {
                 this->attack = std::clamp(attack, 0.0, 1.0);
@@ -816,7 +828,9 @@ struct AudioEngine {
                 UpdateEnvelope();
             }
 
-            void SetSustain(double sustain) { this->sustain = std::clamp(sustain, 0.0, 1.0); }
+            void SetSustain(double sustain) {
+                this->sustain = std::clamp(sustain, 0.0, 1.0);
+            }
 
             void SetRelease(double release) {
                 this->release = std::clamp(release, 0.0, 1.0);
@@ -925,7 +939,9 @@ struct AudioEngine {
                 counter = 0;
             }
 
-            void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX); }
+            void SetAmplitude(float amplitude) {
+                this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX);
+            }
 
             float GenerateSample() {
                 if (counter >= updateInterval) {
@@ -990,7 +1006,9 @@ struct AudioEngine {
                 UpdatePhaseIncrement();
             }
 
-            void SetAmplitude(float amplitude) { this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX); }
+            void SetAmplitude(float amplitude) {
+                this->amplitude = std::clamp(amplitude, VOLUME_MIN, VOLUME_MAX);
+            }
 
             /// @brief Update the internal waveform data with a new user-defined waveform.
             /// @param newWaveform A pointer to the new waveform data.
@@ -1034,7 +1052,9 @@ struct AudioEngine {
             float phase;                 // current phase position in waveform
 
             /// @brief Update the phase increment based on the frequency, sample rate, and waveform size.
-            void UpdatePhaseIncrement() { phaseIncrement = (frequency * float(waveform.size())) / float(sampleRate); }
+            void UpdatePhaseIncrement() {
+                phaseIncrement = (frequency * float(waveform.size())) / float(sampleRate);
+            }
         };
 
         /// @brief A struct to used to hold the state of the MML player and also used for the state stack (i.e. when VARPTR$ substrings are used).
@@ -1181,19 +1201,27 @@ struct AudioEngine {
 
         /// @brief Sets MML friendly pan position value.
         /// @param value A value from 0 to 100.
-        void SetMMLPanPosition(long value) { SetPanPosition((float(value) / float(MML_PAN_CENTER)) - PAN_RIGHT); }
+        void SetMMLPanPosition(long value) {
+            SetPanPosition((float(value) / float(MML_PAN_CENTER)) - PAN_RIGHT);
+        }
 
         /// @brief Gets MML friendly pan position value.
         /// @return A value from 0 to 100.
-        long GetMMLPanPosition() { return long((panPosition + PAN_RIGHT) * float(MML_PAN_CENTER)); }
+        long GetMMLPanPosition() {
+            return long((panPosition + PAN_RIGHT) * float(MML_PAN_CENTER));
+        }
 
         /// @brief Sets MML friendly amplitude value.
         /// @param amplitude A value from 0 to 100.
-        void SetMMLAmplitude(long amplitude) { SetAmplitude(double(amplitude) / MML_VOLUME_MAX); }
+        void SetMMLAmplitude(long amplitude) {
+            SetAmplitude(double(amplitude) / MML_VOLUME_MAX);
+        }
 
         /// @brief Gets MML friendly amplitude value.
         /// @return A value from 0 to 100.
-        long GetMMLAmplitude() { return std::lround(maWaveform.config.amplitude * MML_VOLUME_MAX); }
+        long GetMMLAmplitude() {
+            return std::lround(maWaveform.config.amplitude * MML_VOLUME_MAX);
+        }
 
         /// @brief Accumulates the samples into the paused buffer until the PSG is unpaused.
         /// @param samples The samples to collect.
@@ -1462,7 +1490,9 @@ struct AudioEngine {
         /// @brief Sets a custom mono 8-bit waveform for the PSG.
         /// @param data A pointer to the waveform data.
         /// @param length The length of the waveform data in samples.
-        void SetCustomWaveform(int8_t *data, size_t length) { customWaveform->SetWaveform(data, length); }
+        void SetCustomWaveform(int8_t *data, size_t length) {
+            customWaveform->SetWaveform(data, length);
+        }
 
         /// @brief Emulates a PC speaker sound. The volume, waveform and background mode can be changed using PLAY.
         void Sound(double frequency, double lengthInClockTicks) {
@@ -2983,7 +3013,9 @@ void sub__wave(uint32_t voice, void *waveDefinition, uint32_t frameCount, int32_
 
 /// @brief Returns the device sample rate if the audio engine is initialized.
 /// @return The device sample rate.
-int32_t func__sndrate() { return ma_engine_get_sample_rate(&audioEngine.maEngine); }
+int32_t func__sndrate() {
+    return ma_engine_get_sample_rate(&audioEngine.maEngine);
+}
 
 /// @brief Loads a sound file into memory and returns a LONG handle value above 0.
 /// @param qbsFileName The is the pathname for the sound file. This can be any format that miniaudio or a miniaudio plugin supports.
@@ -3901,10 +3933,16 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
 }
 
 /// @brief Initializes the audio subsystem. We simply attempt to initialize and then set some globals with the results.
-void snd_init() { audioEngine.Initialize(); }
+void snd_init() {
+    audioEngine.Initialize();
+}
 
 /// @brief Shuts down the audio engine and frees any resources used.
-void snd_un_init() { audioEngine.ShutDown(); }
+void snd_un_init() {
+    audioEngine.ShutDown();
+}
 
 /// @brief Used for housekeeping and other stuff. This is called by the QB64-PE internally at ~60Hz.
-void snd_mainloop() { audioEngine.Update(); }
+void snd_mainloop() {
+    audioEngine.Update();
+}

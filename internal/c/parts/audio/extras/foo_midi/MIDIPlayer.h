@@ -23,7 +23,7 @@ enum class LoopType {
 class MIDIPlayer {
   public:
     MIDIPlayer();
-    virtual ~MIDIPlayer(){};
+    virtual ~MIDIPlayer() {};
 
     enum LoopMode { None = 0x00, Enabled = 0x01, Forced = 0x02 };
 
@@ -35,23 +35,42 @@ class MIDIPlayer {
 
     void Configure(MIDIFlavor midiFlavor, bool filterEffects);
 
-    uint32_t GetPosition() const noexcept { return uint32_t((uint64_t(_Position) * 1000ul) / uint64_t(_SampleRate)); }
-    uint32_t GetFramePosition() const noexcept { return _Position; }
+    uint32_t GetPosition() const noexcept {
+        return uint32_t((uint64_t(_Position) * 1000ul) / uint64_t(_SampleRate));
+    }
+
+    uint32_t GetFramePosition() const noexcept {
+        return _Position;
+    }
 
     // Should return the block size that the player expects, otherwise 0.
-    virtual uint32_t GetSampleBlockSize() const noexcept { return 0; }
+    virtual uint32_t GetSampleBlockSize() const noexcept {
+        return 0;
+    }
 
-    virtual uint32_t GetActiveVoiceCount() const { return 0; }
+    virtual uint32_t GetActiveVoiceCount() const {
+        return 0;
+    }
 
-    virtual bool GetErrorMessage(std::string &) { return false; }
+    virtual bool GetErrorMessage(std::string &) {
+        return false;
+    }
 
   protected:
-    virtual bool Startup() { return false; }
+    virtual bool Startup() {
+        return false;
+    }
+
     virtual void Shutdown() {};
+
     virtual void Render(audio_sample *, uint32_t) {}
-    virtual bool Reset() { return false; }
+
+    virtual bool Reset() {
+        return false;
+    }
 
     virtual void SendEvent(uint32_t) {}
+
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) {};
 
     // Only implemented by Secret Sauce and VSTi-specific
@@ -82,7 +101,9 @@ class MIDIPlayer {
     void SendSysExSetToneMapNumber(uint8_t portNumber, uint32_t time);
     void SendSysExGS(uint8_t *data, size_t size, uint8_t portNumber, uint32_t time);
 
-    static inline constexpr int32_t MulDiv(int32_t val, int32_t mul, int32_t div) { return int32_t((int64_t(val) * mul + (div >> 1)) / div); }
+    static inline constexpr int32_t MulDiv(int32_t val, int32_t mul, int32_t div) {
+        return int32_t((int64_t(val) * mul + (div >> 1)) / div);
+    }
 
   private:
     static const uint32_t DecayTime = 1000;

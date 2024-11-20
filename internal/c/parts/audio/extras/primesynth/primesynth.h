@@ -26,13 +26,21 @@ class FixedPoint {
     explicit FixedPoint(double value)
         : raw_((static_cast<std::uint64_t>(value) << 32) | static_cast<std::uint32_t>((value - static_cast<std::uint32_t>(value)) * (UINT32_MAX + 1.0))) {}
 
-    std::uint32_t getIntegerPart() const { return raw_ >> 32; }
+    std::uint32_t getIntegerPart() const {
+        return raw_ >> 32;
+    }
 
-    double getFractionalPart() const { return (raw_ & UINT32_MAX) / (UINT32_MAX + 1.0); }
+    double getFractionalPart() const {
+        return (raw_ & UINT32_MAX) / (UINT32_MAX + 1.0);
+    }
 
-    double getReal() const { return getIntegerPart() + getFractionalPart(); }
+    double getReal() const {
+        return getIntegerPart() + getFractionalPart();
+    }
 
-    std::uint32_t getRoundedInteger() const { return ((raw_ + INT32_MAX) + 1) >> 32; }
+    std::uint32_t getRoundedInteger() const {
+        return ((raw_ + INT32_MAX) + 1) >> 32;
+    }
 
     FixedPoint &operator+=(const FixedPoint &b) {
         raw_ += b.raw_;
@@ -68,6 +76,7 @@ struct StereoValue {
     double left, right;
 
     StereoValue() = delete;
+
     StereoValue(double l, double r) : left(l), right(r) {}
 
     StereoValue operator*(double b) const;
@@ -170,6 +179,7 @@ struct Modulator {
         GeneralController general;
         std::uint8_t midi;
     } index;
+
     ControllerPalette palette;
     SourceDirection direction;
     SourcePolarity polarity;
@@ -269,6 +279,7 @@ class GeneratorSet {
         bool used;
         std::int16_t amount;
     };
+
     std::array<Generator, NUM_GENERATORS> generators_;
 };
 
@@ -395,11 +406,17 @@ class LFO {
   public:
     LFO(double outputRate, unsigned int interval) : outputRate_(outputRate), interval_(interval), steps_(0), delay_(0), delta_(0.0), value_(0.0), up_(true) {}
 
-    double getValue() const { return value_; }
+    double getValue() const {
+        return value_;
+    }
 
-    void setDelay(double delay) { delay_ = static_cast<unsigned int>(outputRate_ * conv::timecentToSecond(delay)); }
+    void setDelay(double delay) {
+        delay_ = static_cast<unsigned int>(outputRate_ * conv::timecentToSecond(delay));
+    }
 
-    void setFrequency(double freq) { delta_ = 4.0 * interval_ * conv::absoluteCentToHertz(freq) / outputRate_; }
+    void setFrequency(double freq) {
+        delta_ = 4.0 * interval_ * conv::absoluteCentToHertz(freq) / outputRate_;
+    }
 
     void update() {
         if (steps_ <= delay_) {

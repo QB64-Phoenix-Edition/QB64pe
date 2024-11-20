@@ -187,8 +187,12 @@ static inline int32_t func_clng_uint64(uint64_t value) {
 }
 
 //_ROUND (note: round performs no error checking)
-static inline int64_t func_round_double(long double value) { return qbr(value); }
+static inline int64_t func_round_double(long double value) {
+    return qbr(value);
+}
 
-static inline int64_t func_round_float(long double value) { return qbr(value); }
+static inline int64_t func_round_float(long double value) {
+    return qbr(value);
+}
 
 #endif

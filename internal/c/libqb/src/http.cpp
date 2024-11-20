@@ -1,19 +1,19 @@
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
+#include <curl/curl.h>
 #include <list>
 #include <queue>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <unordered_map>
-#include <curl/curl.h>
 
-#include "mutex.h"
-#include "condvar.h"
-#include "thread.h"
-#include "completion.h"
 #include "buffer.h"
+#include "completion.h"
+#include "condvar.h"
 #include "http.h"
+#include "mutex.h"
+#include "thread.h"
 
 struct handle {
     int id = 0;
@@ -164,7 +164,7 @@ static void process_handles(struct curl_state *state) {
         }
     }
 
-    for (CURL * const &con : connectionsToDrop) {
+    for (CURL *const &con : connectionsToDrop) {
         // Removing the connection can trigger the callbacks to get run. Due to
         // that we have to call it without holding the lock, or we could
         // deadlock.
@@ -286,8 +286,7 @@ static size_t receive_http_block(void *ptr, size_t size, size_t nmemb, void *dat
     return length;
 }
 
-static bool is_valid_http_id(int id)
-{
+static bool is_valid_http_id(int id) {
     return curl_state.handle_table.find(id) != curl_state.handle_table.end();
 }
 

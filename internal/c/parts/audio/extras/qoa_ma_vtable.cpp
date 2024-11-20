@@ -187,7 +187,9 @@ static ma_result ma_qoa_ds_read(ma_data_source *pDataSource, void *pFramesOut, m
     return ma_qoa_read_pcm_frames((ma_qoa *)pDataSource, pFramesOut, frameCount, pFramesRead);
 }
 
-static ma_result ma_qoa_ds_seek(ma_data_source *pDataSource, ma_uint64 frameIndex) { return ma_qoa_seek_to_pcm_frame((ma_qoa *)pDataSource, frameIndex); }
+static ma_result ma_qoa_ds_seek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
+    return ma_qoa_seek_to_pcm_frame((ma_qoa *)pDataSource, frameIndex);
+}
 
 static ma_result ma_qoa_ds_get_data_format(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate,
                                            ma_channel *pChannelMap, size_t channelMapCap) {

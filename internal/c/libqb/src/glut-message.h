@@ -1,10 +1,10 @@
 #ifndef INCLUDE_LIBQB_GLUT_MESSAGE_H
 #define INCLUDE_LIBQB_GLUT_MESSAGE_H
 
+#include "completion.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "completion.h"
 
 class glut_message {
   private:
@@ -55,7 +55,7 @@ class glut_message_set_cursor : public glut_message {
     int style;
     void execute();
 
-    glut_message_set_cursor(int _style) : glut_message(false), style(_style) { }
+    glut_message_set_cursor(int _style) : glut_message(false), style(_style) {}
 };
 
 class glut_message_warp_pointer : public glut_message {
@@ -63,7 +63,7 @@ class glut_message_warp_pointer : public glut_message {
     int x, y;
     void execute();
 
-    glut_message_warp_pointer(int _x, int _y) : glut_message(false), x(_x), y(_y) { }
+    glut_message_warp_pointer(int _x, int _y) : glut_message(false), x(_x), y(_y) {}
 };
 
 class glut_message_get : public glut_message {
@@ -72,14 +72,14 @@ class glut_message_get : public glut_message {
     int response_value;
     void execute();
 
-    glut_message_get(int _id) : glut_message(true), id(_id), response_value(0) { }
+    glut_message_get(int _id) : glut_message(true), id(_id), response_value(0) {}
 };
 
 class glut_message_iconify_window : public glut_message {
   public:
     void execute();
 
-    glut_message_iconify_window() : glut_message(false) { }
+    glut_message_iconify_window() : glut_message(false) {}
 };
 
 class glut_message_position_window : public glut_message {
@@ -87,21 +87,21 @@ class glut_message_position_window : public glut_message {
     int x, y;
     void execute();
 
-    glut_message_position_window(int _x, int _y) : glut_message(false), x(_x), y(_y) { }
+    glut_message_position_window(int _x, int _y) : glut_message(false), x(_x), y(_y) {}
 };
 
 class glut_message_show_window : public glut_message {
   public:
     void execute();
 
-    glut_message_show_window() : glut_message(false) { }
+    glut_message_show_window() : glut_message(false) {}
 };
 
 class glut_message_hide_window : public glut_message {
   public:
     void execute();
 
-    glut_message_hide_window() : glut_message(false) { }
+    glut_message_hide_window() : glut_message(false) {}
 };
 
 class glut_message_set_window_title : public glut_message {
@@ -123,7 +123,7 @@ class glut_message_exit_program : public glut_message {
     int exitCode;
     void execute();
 
-    glut_message_exit_program(int _exitCode) : glut_message(true), exitCode(_exitCode) { }
+    glut_message_exit_program(int _exitCode) : glut_message(true), exitCode(_exitCode) {}
 };
 
 // Queues a glut_message to be processed. Returns false if the message was not

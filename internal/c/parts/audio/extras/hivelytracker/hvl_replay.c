@@ -483,7 +483,9 @@ BOOL hvl_InitSubsong(struct hvl_tune *ht, uint32 nr) {
     return TRUE;
 }
 
-void hvl_InitReplayer(void) { hvl_GenTables(); }
+void hvl_InitReplayer(void) {
+    hvl_GenTables();
+}
 
 struct hvl_tune *hvl_load_ahx(const uint8 *buf, uint32 buflen, uint32 defstereo, uint32 freq) {
     const uint8 *bptr;

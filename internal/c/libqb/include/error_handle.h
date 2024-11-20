@@ -1,13 +1,13 @@
 #ifndef INCLUDE_LIBQB_ERROR_HANDLE_H
 #define INCLUDE_LIBQB_ERROR_HANDLE_H
 
-#include <stdint.h>
 #include "qbs.h"
+#include <stdint.h>
 
 void error(int32_t error_number);
 void fix_error();
 
-// FIXME: Should be removed in the future, use `is_error_pending()`. 
+// FIXME: Should be removed in the future, use `is_error_pending()`.
 //
 // Some spots edit this directly to clear/restore an error, those sites should
 // be examined for the best solution.
@@ -19,8 +19,7 @@ extern qbs *error_handler_history;
 extern uint32_t error_handling;
 extern uint32_t error_retry;
 
-static inline bool is_error_pending()
-{
+static inline bool is_error_pending() {
     return new_error != 0;
 }
 

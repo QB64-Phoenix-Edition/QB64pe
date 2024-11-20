@@ -2894,7 +2894,7 @@ SUB reginternal
     id.args = 3
     id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?][,[?][,?]]"
-    id.hr_syntax = "CLS [method%] [, bgColor&] [, dest&]"
+    id.hr_syntax = "CLS [method%][, bgColor&][, dest&]"
     regid
 
     clearid

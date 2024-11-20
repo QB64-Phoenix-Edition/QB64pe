@@ -1,8 +1,8 @@
 
 #include "libqb-common.h"
 
-#include <unistd.h>
 #include <queue>
+#include <unistd.h>
 
 // note: MacOSX uses Apple's GLUT not FreeGLUT
 #ifdef QB64_MACOSX
@@ -12,9 +12,9 @@
 #    include <GL/freeglut.h>
 #endif
 
-#include "mutex.h"
 #include "glut-message.h"
 #include "glut-thread.h"
+#include "mutex.h"
 
 static libqb_mutex *glut_msg_queue_lock = libqb_mutex_new();
 static std::queue<glut_message *> glut_msg_queue;
@@ -71,24 +71,27 @@ void libqb_glut_warp_pointer(int x, int y) {
 }
 
 static bool is_static_glut_value(int id) {
-    return id == GLUT_WINDOW_Y
-        || id == GLUT_WINDOW_X
+    return id == GLUT_WINDOW_Y || id == GLUT_WINDOW_X
 #ifdef CORE_FREEGLUT
-        || id == GLUT_WINDOW_BORDER_WIDTH
-        || id == GLUT_WINDOW_HEADER_HEIGHT
+           || id == GLUT_WINDOW_BORDER_WIDTH || id == GLUT_WINDOW_HEADER_HEIGHT
 #endif
-    ;
+        ;
 }
 
 static int __get_static_glut_value(int id) {
     switch (id) {
-    case GLUT_WINDOW_Y:             return glut_window_y;
-    case GLUT_WINDOW_X:             return glut_window_x;
+    case GLUT_WINDOW_Y:
+        return glut_window_y;
+    case GLUT_WINDOW_X:
+        return glut_window_x;
 #ifdef CORE_FREEGLUT
-    case GLUT_WINDOW_BORDER_WIDTH:  return glut_window_border_width;
-    case GLUT_WINDOW_HEADER_HEIGHT: return glut_window_header_height;
+    case GLUT_WINDOW_BORDER_WIDTH:
+        return glut_window_border_width;
+    case GLUT_WINDOW_HEADER_HEIGHT:
+        return glut_window_header_height;
 #endif
-    default:                        return -1;
+    default:
+        return -1;
     }
 }
 

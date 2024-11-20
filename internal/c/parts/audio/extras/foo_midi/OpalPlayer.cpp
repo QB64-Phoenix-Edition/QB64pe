@@ -9,7 +9,9 @@
 
 OpalPlayer::OpalPlayer(InstrumentBankManager *ibm) : MIDIPlayer(), instrumentBankManager(ibm), synth(nullptr) {}
 
-OpalPlayer::~OpalPlayer() { Shutdown(); }
+OpalPlayer::~OpalPlayer() {
+    Shutdown();
+}
 
 bool OpalPlayer::Startup() {
     if (_IsInitialized)
@@ -52,9 +54,13 @@ void OpalPlayer::Shutdown() {
     _IsInitialized = false;
 }
 
-uint32_t OpalPlayer::GetActiveVoiceCount() const { return synth->activeVoiceCount(); }
+uint32_t OpalPlayer::GetActiveVoiceCount() const {
+    return synth->activeVoiceCount();
+}
 
-void OpalPlayer::Render(audio_sample *buffer, uint32_t frames) { synth->generate(buffer, frames); }
+void OpalPlayer::Render(audio_sample *buffer, uint32_t frames) {
+    synth->generate(buffer, frames);
+}
 
 void OpalPlayer::SendEvent(uint32_t data) {
     auto channel = uint8_t(data & 0x0F);
@@ -85,4 +91,6 @@ void OpalPlayer::SendEvent(uint32_t data) {
     }
 }
 
-void OpalPlayer::SendSysEx(const uint8_t *event, size_t size, uint32_t portNumber) { synth->midiSysEx(event, size); }
+void OpalPlayer::SendSysEx(const uint8_t *event, size_t size, uint32_t portNumber) {
+    synth->midiSysEx(event, size);
+}

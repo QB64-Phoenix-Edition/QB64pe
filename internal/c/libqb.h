@@ -5,6 +5,12 @@
 #include "cmem.h"
 #include "qbs.h"
 
+#ifndef QB64_WINDOWS
+static inline void ZeroMemory(void *ptr, size_t bytes) {
+    ::memset(ptr, 0, bytes);
+}
+#endif
+
 int32 func__source();
 int32 func_pos(int32 ignore);
 void sub__printimage(int32 i);
@@ -15,14 +21,15 @@ void validatepage(int32);
 void sub__dest(int32);
 void sub__source(int32);
 int32 func__printwidth(qbs *, int32, int32);
-void sub_cls(int32, uint32, int32);
+void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed);
+void sub_cls(int32 method, uint32 use_color, int32 passed);
 void qbs_print(qbs *, int32);
 int32 func__copyimage(int32 i, int32 mode, int32 passed);
 void sub__freeimage(int32 i, int32 passed);
 int32 func__dest();
 int32 func__display();
 void qbg_sub_view_print(int32, int32, int32);
-qbs *func_space(int32 spaces);
+qbs *func_space(int32_t spaces);
 void makefit(qbs *text);
 void qbg_sub_window(float, float, float, float, int32);
 extern int32 autodisplay;

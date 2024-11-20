@@ -9,7 +9,9 @@
 
 PSPlayer::PSPlayer(InstrumentBankManager *ibm) : MIDIPlayer(), instrumentBankManager(ibm), synth(nullptr) {}
 
-PSPlayer::~PSPlayer() { Shutdown(); }
+PSPlayer::~PSPlayer() {
+    Shutdown();
+}
 
 uint32_t PSPlayer::GetActiveVoiceCount() const {
     try {

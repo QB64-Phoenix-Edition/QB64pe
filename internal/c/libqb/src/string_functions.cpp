@@ -1,8 +1,8 @@
 
 #include "libqb-common.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "error_handle.h"
 #include "file-fields.h"
@@ -288,7 +288,9 @@ qbs_rtrim_nextchar2:
     return tqbs;
 }
 
-qbs *qbs__trim(qbs *str) { return qbs_rtrim(qbs_ltrim(str)); }
+qbs *qbs__trim(qbs *str) {
+    return qbs_rtrim(qbs_ltrim(str));
+}
 
 int32_t func__str_nc_compare(qbs *s1, qbs *s2) {
     int32_t limit, l1, l2;
@@ -359,4 +361,3 @@ int32_t func__str_compare(qbs *s1, qbs *s2) {
         return 1;
     return 0;
 }
-

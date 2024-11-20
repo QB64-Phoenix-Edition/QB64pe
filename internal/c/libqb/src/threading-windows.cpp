@@ -1,13 +1,13 @@
 
 #include "libqb-common.h"
 
-#include <windows.h>
-#include <synchapi.h>
 #include <process.h>
+#include <synchapi.h>
+#include <windows.h>
 
-#include "thread.h"
-#include "mutex.h"
 #include "condvar.h"
+#include "mutex.h"
+#include "thread.h"
 
 struct libqb_thread {
     HANDLE thread_handle;
@@ -77,20 +77,20 @@ void libqb_thread_free(struct libqb_thread *t) {
 }
 
 struct thread_wrapper_args {
-    void (*wrapper) (void *);
+    void (*wrapper)(void *);
     void *arg;
 };
 
 // This wrapper is so that the caller doesn't need to provide a __stdcall function, which is not portable
 static unsigned int __stdcall stdcall_thread_wrapper(void *varg) {
     struct thread_wrapper_args *arg = (struct thread_wrapper_args *)varg;
-    (arg->wrapper) (arg->arg);
+    (arg->wrapper)(arg->arg);
     free(arg);
 
     return 0;
 }
 
-void libqb_thread_start(struct libqb_thread *t, void (*start_func) (void *), void *start_func_arg) {
+void libqb_thread_start(struct libqb_thread *t, void (*start_func)(void *), void *start_func_arg) {
     struct thread_wrapper_args *arg = (struct thread_wrapper_args *)malloc(sizeof(*arg));
     arg->wrapper = start_func;
     arg->arg = start_func_arg;

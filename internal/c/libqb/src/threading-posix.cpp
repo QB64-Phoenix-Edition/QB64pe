@@ -1,9 +1,9 @@
 
 #include "libqb-common.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "mutex.h"
 
@@ -74,19 +74,19 @@ void libqb_thread_free(struct libqb_thread *t) {
 }
 
 struct thread_wrapper_args {
-    void (*wrapper) (void *);
+    void (*wrapper)(void *);
     void *arg;
 };
 
 static void *thread_wrapper(void *varg) {
     struct thread_wrapper_args *arg = (struct thread_wrapper_args *)varg;
-    (arg->wrapper) (arg->arg);
+    (arg->wrapper)(arg->arg);
     free(arg);
 
     return NULL;
 }
 
-void libqb_thread_start(struct libqb_thread *t, void (*start_func) (void *), void *start_func_arg) {
+void libqb_thread_start(struct libqb_thread *t, void (*start_func)(void *), void *start_func_arg) {
     struct thread_wrapper_args *arg = (struct thread_wrapper_args *)malloc(sizeof(*arg));
     arg->wrapper = start_func;
     arg->arg = start_func_arg;

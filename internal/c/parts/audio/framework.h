@@ -136,7 +136,9 @@ class DoubleBufferFrameBlock {
 
     /// @brief Checks if both blocks are empty.
     /// @returns true if both blocks are empty, false otherwise.
-    bool IsEmpty() const { return blocks[0].empty() && blocks[1].empty(); }
+    bool IsEmpty() const {
+        return blocks[0].empty() && blocks[1].empty();
+    }
 
     /// @brief Gets a float pointer to the write block that can be written to.
     /// @param[in] frames The number of frames to write.

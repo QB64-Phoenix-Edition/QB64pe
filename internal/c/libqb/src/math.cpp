@@ -63,4 +63,3 @@ long double pow2(long double x, long double y) {
     }
     return std::pow(x, y);
 }
-

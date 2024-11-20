@@ -55,7 +55,9 @@ class midi_track_t {
   public:
     midi_track_t() noexcept {}
 
-    midi_track_t(const midi_track_t &track) noexcept { _Events = track._Events; }
+    midi_track_t(const midi_track_t &track) noexcept {
+        _Events = track._Events;
+    }
 
     midi_track_t &operator=(const midi_track_t &track) {
         _Events = track._Events;
@@ -66,11 +68,17 @@ class midi_track_t {
     void AddEvent(const midi_event_t &event);
     void RemoveEvent(size_t index);
 
-    size_t GetLength() const noexcept { return _Events.size(); }
+    size_t GetLength() const noexcept {
+        return _Events.size();
+    }
 
-    const midi_event_t &operator[](size_t index) const noexcept { return _Events[index]; }
+    const midi_event_t &operator[](size_t index) const noexcept {
+        return _Events[index];
+    }
 
-    midi_event_t &operator[](std::size_t index) noexcept { return _Events[index]; }
+    midi_event_t &operator[](std::size_t index) noexcept {
+        return _Events[index];
+    }
 
   public:
     using midi_events_t = std::vector<midi_event_t>;
@@ -78,17 +86,37 @@ class midi_track_t {
     using iterator = midi_events_t::iterator;
     using const_iterator = midi_events_t::const_iterator;
 
-    iterator begin() { return _Events.begin(); }
-    iterator end() { return _Events.end(); }
+    iterator begin() {
+        return _Events.begin();
+    }
 
-    const_iterator begin() const { return _Events.begin(); }
-    const_iterator end() const { return _Events.end(); }
+    iterator end() {
+        return _Events.end();
+    }
 
-    const_iterator cbegin() const { return _Events.cbegin(); }
-    const_iterator cend() const { return _Events.cend(); }
+    const_iterator begin() const {
+        return _Events.begin();
+    }
 
-    const midi_event_t &front() const noexcept { return _Events.front(); }
-    const midi_event_t &back() const noexcept { return _Events.back(); }
+    const_iterator end() const {
+        return _Events.end();
+    }
+
+    const_iterator cbegin() const {
+        return _Events.cbegin();
+    }
+
+    const_iterator cend() const {
+        return _Events.cend();
+    }
+
+    const midi_event_t &front() const noexcept {
+        return _Events.front();
+    }
+
+    const midi_event_t &back() const noexcept {
+        return _Events.back();
+    }
 
   private:
     std::vector<midi_event_t> _Events;
@@ -108,11 +136,17 @@ class tempo_map_t {
     void Add(uint32_t tempo, uint32_t timestamp);
     uint32_t TimestampToMS(uint32_t timestamp, uint32_t division) const;
 
-    size_t Size() const { return _Items.size(); }
+    size_t Size() const {
+        return _Items.size();
+    }
 
-    const tempo_item_t &operator[](std::size_t p_index) const { return _Items[p_index]; }
+    const tempo_item_t &operator[](std::size_t p_index) const {
+        return _Items[p_index];
+    }
 
-    tempo_item_t &operator[](size_t index) { return _Items[index]; }
+    tempo_item_t &operator[](size_t index) {
+        return _Items[index];
+    }
 
   private:
     std::vector<tempo_item_t> _Items;
@@ -124,6 +158,7 @@ struct sysex_item_t {
     uint8_t PortNumber;
 
     sysex_item_t() noexcept : Offset(0), Size(0), PortNumber(0) {}
+
     sysex_item_t(const sysex_item_t &other);
     sysex_item_t(uint8_t portNumber, std::size_t offset, std::size_t size);
 };
@@ -133,7 +168,9 @@ class sysex_table_t {
     size_t AddItem(const uint8_t *data, std::size_t size, uint8_t portNumber);
     bool GetItem(size_t index, const uint8_t *&data, std::size_t &size, uint8_t &portNumber) const;
 
-    size_t Size() const { return _Items.size(); }
+    size_t Size() const {
+        return _Items.size();
+    }
 
   private:
     std::vector<sysex_item_t> _Items;
@@ -147,7 +184,10 @@ struct midi_metadata_item_t {
 
     midi_metadata_item_t() noexcept : Timestamp(0) {}
 
-    midi_metadata_item_t(const midi_metadata_item_t &item) noexcept { operator=(item); };
+    midi_metadata_item_t(const midi_metadata_item_t &item) noexcept {
+        operator=(item);
+    };
+
     midi_metadata_item_t &operator=(const midi_metadata_item_t &other) noexcept {
         Timestamp = other.Timestamp;
         Name = other.Name;
@@ -156,7 +196,10 @@ struct midi_metadata_item_t {
         return *this;
     }
 
-    midi_metadata_item_t(midi_metadata_item_t &&item) { operator=(item); }
+    midi_metadata_item_t(midi_metadata_item_t &&item) {
+        operator=(item);
+    }
+
     midi_metadata_item_t &operator=(midi_metadata_item_t &&other) {
         Timestamp = other.Timestamp;
         Name = std::move(Name);
@@ -192,17 +235,37 @@ class midi_metadata_table_t {
     using iterator = midi_metadata_items_t::iterator;
     using const_iterator = midi_metadata_items_t::const_iterator;
 
-    iterator begin() { return _Items.begin(); }
-    iterator end() { return _Items.end(); }
+    iterator begin() {
+        return _Items.begin();
+    }
 
-    const_iterator begin() const { return _Items.begin(); }
-    const_iterator end() const { return _Items.end(); }
+    iterator end() {
+        return _Items.end();
+    }
 
-    const_iterator cbegin() const { return _Items.cbegin(); }
-    const_iterator cend() const { return _Items.cend(); }
+    const_iterator begin() const {
+        return _Items.begin();
+    }
 
-    const midi_metadata_item_t &front() const noexcept { return _Items.front(); }
-    const midi_metadata_item_t &back() const noexcept { return _Items.back(); }
+    const_iterator end() const {
+        return _Items.end();
+    }
+
+    const_iterator cbegin() const {
+        return _Items.cbegin();
+    }
+
+    const_iterator cend() const {
+        return _Items.cend();
+    }
+
+    const midi_metadata_item_t &front() const noexcept {
+        return _Items.front();
+    }
+
+    const midi_metadata_item_t &back() const noexcept {
+        return _Items.back();
+    }
 
   private:
     std::vector<midi_metadata_item_t> _Items;
@@ -214,12 +277,15 @@ struct midi_item_t {
     uint32_t Data;
 
     midi_item_t() noexcept : Time(0), Data(0) {}
+
     midi_item_t(uint32_t time, uint32_t data) noexcept : Time(time), Data(data) {}
 };
 
 class midi_container_t {
   public:
-    midi_container_t() : _Format(), _TimeDivision(), _ExtraPercussionChannel(~0u) { _DeviceNames.resize(16); }
+    midi_container_t() : _Format(), _TimeDivision(), _ExtraPercussionChannel(~0u) {
+        _DeviceNames.resize(16);
+    }
 
     void Initialize(uint32_t format, uint32_t division);
 
@@ -257,12 +323,19 @@ class midi_container_t {
     uint32_t GetLoopBeginTimestamp(size_t subSongIndex, bool ms = false) const;
     uint32_t GetLoopEndTimestamp(size_t subSongIndex, bool ms = false) const;
 
-    std::vector<midi_track_t> &GetTracks() { return _Tracks; }
+    std::vector<midi_track_t> &GetTracks() {
+        return _Tracks;
+    }
 
     void GetMetaData(size_t subSongIndex, midi_metadata_table_t &data);
 
-    void SetExtraPercussionChannel(uint32_t channelNumber) noexcept { _ExtraPercussionChannel = channelNumber; }
-    uint32_t GetExtraPercussionChannel() const noexcept { return _ExtraPercussionChannel; }
+    void SetExtraPercussionChannel(uint32_t channelNumber) noexcept {
+        _ExtraPercussionChannel = channelNumber;
+    }
+
+    uint32_t GetExtraPercussionChannel() const noexcept {
+        return _ExtraPercussionChannel;
+    }
 
     void DetectLoops(bool detectXMILoops, bool detectMarkerLoops, bool detectRPGMakerLoops, bool detectTouhouLoops, bool detectLeapFrogLoops);
 
@@ -273,13 +346,29 @@ class midi_container_t {
     using iterator = miditracks_t::iterator;
     using const_iterator = miditracks_t::const_iterator;
 
-    iterator begin() { return _Tracks.begin(); }
-    iterator end() { return _Tracks.end(); }
+    iterator begin() {
+        return _Tracks.begin();
+    }
 
-    const_iterator begin() const { return _Tracks.begin(); }
-    const_iterator end() const { return _Tracks.end(); }
-    const_iterator cbegin() const { return _Tracks.cbegin(); }
-    const_iterator cend() const { return _Tracks.cend(); }
+    iterator end() {
+        return _Tracks.end();
+    }
+
+    const_iterator begin() const {
+        return _Tracks.begin();
+    }
+
+    const_iterator end() const {
+        return _Tracks.end();
+    }
+
+    const_iterator cbegin() const {
+        return _Tracks.cbegin();
+    }
+
+    const_iterator cend() const {
+        return _Tracks.cend();
+    }
 
   public:
     enum {
@@ -319,7 +408,9 @@ class midi_container_t {
         }
     }
 
-    void AssignString(const char *src, size_t srcLength, std::string &dst) const { dst.assign(src, src + srcLength); }
+    void AssignString(const char *src, size_t srcLength, std::string &dst) const {
+        dst.assign(src, src + srcLength);
+    }
 
   private:
     uint32_t _Format;

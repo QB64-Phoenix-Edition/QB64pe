@@ -17,6 +17,7 @@
 #include "gui.h"
 #include "hexoctbin.h"
 #include "image.h"
+#include "libqb.h"
 #include "mem.h"
 #include "qbmath.h"
 #include "qbs-mk-cv.h"
@@ -24,8 +25,7 @@
 #include "rounding.h"
 #include "shell.h"
 
-extern int32 func__cinp(int32 toggle,
-                        int32 passed); // Console INP scan code reader
+extern int32 func__cinp(int32 toggle, int32 passed); // Console INP scan code reader
 extern int func__capslock();
 extern int func__scrolllock();
 extern int func__numlock();
@@ -40,7 +40,7 @@ extern void unlockvWatchHandle();
 extern int32 vWatchHandle();
 
 #ifdef QB64_MACOSX
-#include <ApplicationServices/ApplicationServices.h>
+#    include <ApplicationServices/ApplicationServices.h>
 #endif
 
 /* testing only
@@ -79,11 +79,12 @@ int _CRT_glob = -1; // enable globbing on llvm-mingw by default
 extern int32 sub_gl_called;
 
 #ifdef QB64_GUI
-#ifdef DEPENDENCY_GL
+#    ifdef DEPENDENCY_GL
 
-#include "parts/core/gl_header_for_parsing/temp/gl_helper_code.h"
+#        include "parts/core/gl_header_for_parsing/temp/gl_helper_code.h"
 
 double pi_as_double = 3.14159265358979;
+
 void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
     double xmin, xmax, ymin, ymax;
     ymax = zNear * std::tan(fovy * pi_as_double / 360.0);
@@ -93,7 +94,7 @@ void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
     glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
 }
 
-#endif
+#    endif
 #endif
 
 // forward references
@@ -101,6 +102,7 @@ void QBMAIN(void *);
 void TIMERTHREAD(void *);
 
 extern int32 requestedKeyboardOverlayImage;
+
 void requestKeyboardOverlayImage(int32 handle) {
     requestedKeyboardOverlayImage = handle;
 }
@@ -131,8 +133,7 @@ extern qbs *func__droppedfile(int32 fileIndex, int32 passed);
 extern qbs *func__embedded(qbs *handle);
 
 extern void sub__glrender(int32 method);
-extern void sub__displayorder(int32 method1, int32 method2, int32 method3,
-                              int32 method4);
+extern void sub__displayorder(int32 method1, int32 method2, int32 method3, int32 method4);
 
 extern int64 GetTicks();
 
@@ -159,18 +160,12 @@ extern qbs *func__title();
 extern int32 func__handle();
 extern int32 func_stick(int32 i, int32 axis_group, int32 passed);
 extern int32 func_strig(int32 i, int32 controller, int32 passed);
-extern void sub__maptriangle(int32 cull_options, float sx1, float sy1,
-                             float sx2, float sy2, float sx3, float sy3,
-                             int32 si, float dx1, float dy1, float dz1,
-                             float dx2, float dy2, float dz2, float dx3,
-                             float dy3, float dz3, int32 di,
-                             int32 smooth_options, int32 passed);
+extern void sub__maptriangle(int32 cull_options, float sx1, float sy1, float sx2, float sy2, float sx3, float sy3, int32 si, float dx1, float dy1, float dz1,
+                             float dx2, float dy2, float dz2, float dx3, float dy3, float dz3, int32 di, int32 smooth_options, int32 passed);
 extern void sub__depthbuffer(int32 options, int32 dst, int32 passed);
 extern void sub_paletteusing(void *element, int32 bits);
-extern int64 func_read_int64(uint8 *data, ptrszint *data_offset,
-                             ptrszint data_size);
-extern int64 func_read_uint64(uint8 *data, ptrszint *data_offset,
-                              ptrszint data_size);
+extern int64 func_read_int64(uint8 *data, ptrszint *data_offset, ptrszint data_size);
+extern int64 func_read_uint64(uint8 *data, ptrszint *data_offset, ptrszint data_size);
 extern void key_on();
 extern void key_off();
 extern void key_list();
@@ -185,13 +180,11 @@ extern int32 func__mapunicode(int32 ascii_code);
 extern int32 func__keydown(int32 x);
 extern int32 func__keyhit();
 extern int32 func_lpos(int32);
-extern void sub__printimage(int32 i);
 extern float func__mousemovementx();
 extern float func__mousemovementy();
 extern void sub__screenprint(qbs *txt);
 extern void sub__screenclick(int32 x, int32 y, int32 button, int32 passed);
-extern int32 func__screenimage(int32 x1, int32 y1, int32 x2, int32 y2,
-                               int32 passed);
+extern int32 func__screenimage(int32 x1, int32 y1, int32 x2, int32 y2, int32 passed);
 extern void sub_lock(int32 i, int64 start, int64 end, int32 passed);
 extern void sub_unlock(int32 i, int64 start, int64 end, int32 passed);
 void chain_restorescreenstate(int32);
@@ -221,9 +214,7 @@ extern int32 freeimg(uint32);
 extern void imgrevert(int32);
 extern int32 imgframe(uint8 *o, int32 x, int32 y, int32 bpp);
 extern int32 imgnew(int32 x, int32 y, int32 bpp);
-extern void sub__putimage(double f_dx1, double f_dy1, double f_dx2,
-                          double f_dy2, int32 src, int32 dst, double f_sx1,
-                          double f_sy1, double f_sx2, double f_sy2,
+extern void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32 src, int32 dst, double f_sx1, double f_sy1, double f_sx2, double f_sy2,
                           int32 passed);
 extern int32 selectfont(int32 f, img_struct *im);
 extern uint32 sib();
@@ -248,38 +239,25 @@ extern void more_return_points();
 extern qbs *func_varptr_helper(uint8 type, uint16 offset);
 extern qbs *qbs_inkey();
 extern void sub__keyclear(int32 buf, int32 passed);
-extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin,
-                     int32 ymin, int32 xmax, int32 ymax);
+extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin, int32 ymin, int32 xmax, int32 ymax);
 extern void qbg_palette(uint32 attribute, uint32 col, int32 passed);
-extern void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor,
-                          int32 passed);
+extern void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed);
 extern void defaultcolors();
-extern void validatepage(int32 n);
-extern void qbg_screen(int32 mode, int32 color_switch, int32 active_page,
-                       int32 visual_page, int32 refresh, int32 passed);
+extern void qbg_screen(int32 mode, int32 color_switch, int32 active_page, int32 visual_page, int32 refresh, int32 passed);
 extern void sub_pcopy(int32 src, int32 dst);
-extern void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3,
-                        int32 value4, int32 passed);
+extern void qbsub_width(int32 option, int32 value1, int32 value2, int32 value3, int32 value4, int32 passed);
 extern void pset(int32 x, int32 y, uint32 col);
 extern void pset_and_clip(int32 x, int32 y, uint32 col);
-extern void qb32_boxfill(float x1f, float y1f, float x2f, float y2f,
-                         uint32 col);
+extern void qb32_boxfill(float x1f, float y1f, float x2f, float y2f, uint32 col);
 extern void fast_boxfill(int32 x1, int32 y1, int32 x2, int32 y2, uint32 col);
 extern void fast_line(int32 x1, int32 y1, int32 x2, int32 y2, uint32 col);
-extern void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col,
-                      uint32 style);
-extern void sub_line(float x1, float y1, float x2, float y2, uint32 col,
-                     int32 bf, uint32 style, int32 passed);
-extern void sub_paint32(float x, float y, uint32 fillcol, uint32 bordercol,
-                        int32 passed);
-extern void sub_paint32x(float x, float y, uint32 fillcol, uint32 bordercol,
-                         int32 passed);
-extern void sub_paint(float x, float y, uint32 fillcol, uint32 bordercol,
-                      qbs *backgroundstr, int32 passed);
-extern void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol,
-                      qbs *backgroundstr, int32 passed);
-extern void sub_circle(double x, double y, double r, uint32 col, double start,
-                       double end, double aspect, int32 passed);
+extern void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style);
+extern void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint32 style, int32 passed);
+extern void sub_paint32(float x, float y, uint32 fillcol, uint32 bordercol, int32 passed);
+extern void sub_paint32x(float x, float y, uint32 fillcol, uint32 bordercol, int32 passed);
+extern void sub_paint(float x, float y, uint32 fillcol, uint32 bordercol, qbs *backgroundstr, int32 passed);
+extern void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *backgroundstr, int32 passed);
+extern void sub_circle(double x, double y, double r, uint32 col, double start, double end, double aspect, int32 passed);
 extern uint32 point(int32 x, int32 y);
 extern double func_point(float x, float y, int32 passed);
 extern void sub_pset(float x, float y, uint32 col, int32 passed);
@@ -287,20 +265,11 @@ extern void sub_preset(float x, float y, uint32 col, int32 passed);
 extern void printchr(int32 character);
 extern int32_t chrwidth(uint32_t character);
 extern void newline();
-extern void makefit(qbs *text);
 extern void lprint_makefit(qbs *text);
 extern void tab();
-extern void qbs_print(qbs *str, int32 finish_on_new_line);
 extern void qbs_lprint(qbs *str, int32 finish_on_new_line);
-extern void qbg_sub_window(float x1, float y1, float x2, float y2,
-                           int32 passed);
-extern void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed);
-extern void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2,
-                         int32 fillcolor, int32 bordercolor, int32 passed);
-extern void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed);
-extern void sub_cls(int32 method, uint32 use_color, int32 passed);
-extern void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start,
-                           int32 stop, int32 passed);
+extern void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor, int32 bordercolor, int32 passed);
+extern void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
 extern int32 hexoct2uint64(qbs *h);
 extern void qbs_input(int32 numvariables, uint8 newline);
 extern long double func_val(qbs *s);
@@ -314,53 +283,42 @@ extern float func_rnd(float n, int32 passed);
 
 // extern void sub_open(qbs *name,int32 type,int32 access,int32 sharing,int32
 // i,int32 record_length,int32 passed);
-extern void sub_open(qbs *name, int32 type, int32 access, int32 sharing,
-                     int32 i, int64 record_length, int32 passed);
-extern void sub_open_gwbasic(qbs *typestr, int32 i, qbs *name,
-                             int64 record_length, int32 passed);
+extern void sub_open(qbs *name, int32 type, int32 access, int32 sharing, int32 i, int64 record_length, int32 passed);
+extern void sub_open_gwbasic(qbs *typestr, int32 i, qbs *name, int64 record_length, int32 passed);
 
 extern void sub_close(int32 i2, int32 passed);
 extern int32 file_input_chr(int32 i);
 extern void file_input_nextitem(int32 i, int32 lastc);
-extern void sub_file_print(int32 i, qbs *str, int32 extraspace, int32 tab,
-                           int32 newline);
+extern void sub_file_print(int32 i, qbs *str, int32 extraspace, int32 tab, int32 newline);
 extern int32 n_roundincrement();
 extern int32 n_float();
 extern int32 n_int64();
 extern int32 n_uint64();
-extern int32 n_inputnumberfromdata(uint8 *data, ptrszint *data_offset,
-                                   ptrszint data_size);
+extern int32 n_inputnumberfromdata(uint8 *data, ptrszint *data_offset, ptrszint data_size);
 extern int32 n_inputnumberfromfile(int32 fileno);
 extern void sub_file_line_input_string(int32 fileno, qbs *deststr);
 extern void sub_file_input_string(int32 fileno, qbs *deststr);
 extern int64 func_file_input_int64(int32 fileno);
 extern uint64 func_file_input_uint64(int32 fileno);
-extern void sub_read_string(uint8 *data, ptrszint *data_offset,
-                            ptrszint data_size, qbs *deststr);
-extern long double func_read_float(uint8 *data, ptrszint *data_offset,
-                                   ptrszint data_size, int32 typ);
+extern void sub_read_string(uint8 *data, ptrszint *data_offset, ptrszint data_size, qbs *deststr);
+extern long double func_read_float(uint8 *data, ptrszint *data_offset, ptrszint data_size, int32 typ);
 extern long double func_file_input_float(int32 fileno, int32 typ);
 extern void *byte_element(uint64 offset, int32 length);
-extern void *byte_element(uint64 offset, int32 length,
-                          byte_element_struct *info);
+extern void *byte_element(uint64 offset, int32 length, byte_element_struct *info);
 extern void sub_get(int32 i, int64 offset, void *element, int32 passed);
 extern void sub_get2(int32 i, int64 offset, qbs *str, int32 passed);
 
 extern void sub_put(int32 i, int64 offset, void *element, int32 passed);
 extern void sub_put2(int32 i, int64 offset, void *element, int32 passed);
-extern void sub_graphics_get(float x1f, float y1f, float x2f, float y2f,
-                             void *element, uint32 mask, int32 passed);
-extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option,
-                             uint32 mask, int32 passed);
+extern void sub_graphics_get(float x1f, float y1f, float x2f, float y2f, void *element, uint32 mask, int32 passed);
+extern void sub_graphics_put(float x1f, float y1f, void *element, int32 option, uint32 mask, int32 passed);
 extern int32 func_csrlin();
-extern int32 func_pos(int32 ignore);
 extern void sub_sleep(int32 seconds, int32 passed);
 extern ptrszint func_lbound(ptrszint *array, int32 index, int32 num_indexes);
 extern ptrszint func_ubound(ptrszint *array, int32 index, int32 num_indexes);
 
 extern int32 func_inp(int32 port);
-extern void sub_wait(int32 port, int32 andexpression, int32 xorexpression,
-                     int32 passed);
+extern void sub_wait(int32 port, int32 andexpression, int32 xorexpression, int32 passed);
 extern qbs *func_tab(int32 pos);
 extern qbs *func_spc(int32 spaces);
 extern float func_pmap(float val, int32 option);
@@ -387,14 +345,6 @@ extern int32 func__mousebutton(int32 i);
 extern int32 func__mousewheel();
 
 extern void call_absolute(int32 args, uint16 offset);
-extern int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed);
-extern int32 func__copyimage(int32 i, int32 mode, int32 passed);
-extern void sub__freeimage(int32 i, int32 passed);
-extern void sub__source(int32 i);
-extern void sub__dest(int32 i);
-extern int32 func__source();
-extern int32 func__dest();
-extern int32 func__display();
 extern void sub__blend(int32 i, int32 passed);
 extern void sub__dontblend(int32 i, int32 passed);
 extern void sub__clearcolor(uint32 c, int32 i, int32 passed);
@@ -409,9 +359,7 @@ extern uint32 func__backgroundcolor(int32 i, int32 passed);
 extern uint32 func__palettecolor(int32 n, int32 i, int32 passed);
 extern void sub__palettecolor(int32 n, uint32 c, int32 i, int32 passed);
 extern void sub__copypalette(int32 i, int32 i2, int32 passed);
-extern void sub__printstring(float x, float y, qbs *text, int32 i,
-                             int32 passed);
-extern int32 func__printwidth(qbs *text, int32 i, int32 passed);
+extern void sub__printstring(float x, float y, qbs *text, int32 i, int32 passed);
 extern int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequirements, int32_t font_index, int32_t passed);
 extern void sub__font(int32 f, int32 i, int32 passed);
 extern int32 func__fontwidth(int32 f, int32 passed);
@@ -423,28 +371,18 @@ extern int32 func__printmode(int32 i, int32 passed);
 extern uint32 matchcol(int32 r, int32 g, int32 b);
 extern uint32 matchcol(int32 r, int32 g, int32 b, int32 i);
 extern uint32 func__rgb(int32 r, int32 g, int32 b, int32 i, int32 passed);
-extern uint32 func__rgba(int32 r, int32 g, int32 b, int32 a, int32 i,
-                         int32 passed);
+extern uint32 func__rgba(int32 r, int32 g, int32 b, int32 a, int32 i, int32 passed);
 extern int32 func__alpha(uint32 col, int32 i, int32 passed);
 extern int32 func__red(uint32 col, int32 i, int32 passed);
 extern int32 func__green(uint32 col, int32 i, int32 passed);
 extern int32 func__blue(uint32 col, int32 i, int32 passed);
 extern void sub_end();
 extern int32 print_using(qbs *f, int32 s2, qbs *dest, qbs *pu_str);
-extern int32 print_using_integer64(qbs *format, int64 value, int32 start,
-                                   qbs *output);
-extern int32 print_using_uinteger64(qbs *format, uint64 value, int32 start,
-                                    qbs *output);
-extern int32 print_using_single(qbs *format, float value, int32 start,
-                                qbs *output);
-extern int32 print_using_double(qbs *format, double value, int32 start,
-                                qbs *output);
-extern int32 print_using_float(qbs *format, long double value, int32 start,
-                               qbs *output);
-
-#ifndef QB64_WINDOWS
-extern void ZeroMemory(void *ptr, int64 bytes);
-#endif
+extern int32 print_using_integer64(qbs *format, int64 value, int32 start, qbs *output);
+extern int32 print_using_uinteger64(qbs *format, uint64 value, int32 start, qbs *output);
+extern int32 print_using_single(qbs *format, float value, int32 start, qbs *output);
+extern int32 print_using_double(qbs *format, double value, int32 start, qbs *output);
+extern int32 print_using_float(qbs *format, long double value, int32 start, qbs *output);
 
 // shared global variables
 extern int32 sleep_break;
@@ -476,8 +414,7 @@ qbs *nothingstring;
 uint32 qbevent = 0;
 uint8 suspend_program = 0;
 uint8 stop_program = 0;
-uint8_t cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword
-                     // in conv memory)
+uint8_t cmem[1114099]; // 16*65535+65535+3 (enough for highest referenceable dword in conv memory)
 uint8 *cmem_static_pointer = &cmem[0] + 1280 + 65536;
 uint8 *cmem_dynamic_base = &cmem[0] + 655360;
 uint8 *mem_static;
@@ -523,30 +460,35 @@ inline void swap_8(void *a, void *b) {
     *(uint8 *)a = *(uint8 *)b;
     *(uint8 *)b = x;
 }
+
 inline void swap_16(void *a, void *b) {
     uint16 x;
     x = *(uint16 *)a;
     *(uint16 *)a = *(uint16 *)b;
     *(uint16 *)b = x;
 }
+
 inline void swap_32(void *a, void *b) {
     uint32 x;
     x = *(uint32 *)a;
     *(uint32 *)a = *(uint32 *)b;
     *(uint32 *)b = x;
 }
+
 inline void swap_64(void *a, void *b) {
     uint64 x;
     x = *(uint64 *)a;
     *(uint64 *)a = *(uint64 *)b;
     *(uint64 *)b = x;
 }
+
 inline void swap_longdouble(void *a, void *b) {
     long double x;
     x = *(long double *)a;
     *(long double *)a = *(long double *)b;
     *(long double *)b = x;
 }
+
 void swap_string(qbs *a, qbs *b) {
     static qbs *c;
     c = qbs_new(a->len, 0);
@@ -555,6 +497,7 @@ void swap_string(qbs *a, qbs *b) {
     qbs_set(b, c);
     qbs_free(c);
 }
+
 void swap_block(void *a, void *b, uint32 bytes) {
     static uint32 quads;
     quads = bytes >> 2;
@@ -578,8 +521,6 @@ void swap_block(void *a, void *b, uint32 bytes) {
         *b8++ = c;
     }
 }
-
-
 
 extern int32 disableEvents;
 
@@ -701,15 +642,10 @@ void chain_input() {
     int32 FF;
 
     if ((func_command(0, 0))->len >= 32) {
-        if (qbs_equal(qbs_right(func_command(0, 0), 4),
-                      qbs_new_txt_len(".tmp", 4))) {
-            if (qbs_equal(func_mid(func_command(0, 0),
-                                   (func_command(0, 0))->len - 31, 25, 1),
-                          qbs_new_txt_len("(unique-tag:=/@*$+-)chain", 25))) {
+        if (qbs_equal(qbs_right(func_command(0, 0), 4), qbs_new_txt_len(".tmp", 4))) {
+            if (qbs_equal(func_mid(func_command(0, 0), (func_command(0, 0))->len - 31, 25, 1), qbs_new_txt_len("(unique-tag:=/@*$+-)chain", 25))) {
                 FF = func_freefile();
-                sub_open(func_mid(func_command(0, 0),
-                                  (func_command(0, 0))->len - 11, 12, 1),
-                         2, NULL, NULL, FF, NULL, 0);
+                sub_open(func_mid(func_command(0, 0), (func_command(0, 0))->len - 11, 12, 1), 2, NULL, NULL, FF, NULL, 0);
 
                 static int32 int32val, int32val2;
                 static int64 int64val, int64val2;
@@ -737,8 +673,7 @@ void chain_input() {
 
                 sub_close(FF, 1);
 
-                sub_kill(func_mid(func_command(0, 0),
-                                  (func_command(0, 0))->len - 11, 12, 1));
+                sub_kill(func_mid(func_command(0, 0), (func_command(0, 0))->len - 11, 12, 1));
 
                 chdir((char *)chdir_data);
 
@@ -803,8 +738,7 @@ void sub_chain(qbs *f) {
         if (str->chr[i] == 46) {
             //.bas?
             if ((i + 3) < str->len) {
-                if ((str2->chr[i + 1] == 66) && (str2->chr[i + 2] == 65) &&
-                    (str2->chr[i + 3] == 83)) { //"BAS"
+                if ((str2->chr[i + 1] == 66) && (str2->chr[i + 2] == 65) && (str2->chr[i + 3] == 83)) { //"BAS"
                     qbs_set(f_bas, str);
                     f_bas->len = i + 4;  // arguments truncated
                     qbs_set(f_exe, str); // change .bas to .exe
@@ -813,23 +747,21 @@ void sub_chain(qbs *f) {
                     f_exe->chr[i + 3] = 101; //"exe"
                     goto extensions_ready;
                 } //"BAS"
-            }     // bas
+            } // bas
             //.exe?
             if ((i + 3) < str->len) {
-                if ((str2->chr[i + 1] == 69) && (str2->chr[i + 2] == 88) &&
-                    (str2->chr[i + 3] == 69)) { //"EXE"
+                if ((str2->chr[i + 1] == 69) && (str2->chr[i + 2] == 88) && (str2->chr[i + 3] == 69)) { //"EXE"
                     qbs_set(f_bas, str);
-                    f_bas->len =
-                        i + 4; // arguments truncated, change .exe to .bas
+                    f_bas->len = i + 4; // arguments truncated, change .exe to .bas
                     f_bas->chr[i + 1] = 98;
                     f_bas->chr[i + 2] = 97;
                     f_exe->chr[i + 3] = 115; //"bas"
                     qbs_set(f_exe, str);     // note: exe kept as is
                     goto extensions_ready;
-                }  //"EXE"
-            }      // exe
+                } //"EXE"
+            } // exe
             break; // no meaningful extension found
-        }          //"."
+        } //"."
     }
 
     // no extension given!
@@ -856,8 +788,7 @@ extensions_ready:
     // get path (strip paths from f_exe & f_bas)
     f_path->len = 0;
     for (i = f_bas->len - 1; i >= 0; i--) {
-        if ((f_bas->chr[i] == 92) || (f_bas->chr[i] == 47) ||
-            (f_bas->chr[i] == 58)) {
+        if ((f_bas->chr[i] == 92) || (f_bas->chr[i] == 47) || (f_bas->chr[i] == 58)) {
             qbs_set(f_path, f_bas);
             f_path->len = i + 1;
             if (f_bas->chr[i] == 58) {
@@ -922,8 +853,7 @@ extensions_ready:
     if (TL < 100)
         TL = 100; // ensure value is a 3 digit number
     qbs_set(TS, qbs_ltrim(qbs_str((int32)(TL))));
-    qbs_set(TFS, qbs_add(qbs_add(qbs_new_txt_len("chain", 5), TS),
-                         qbs_new_txt_len(".tmp", 4)));
+    qbs_set(TFS, qbs_add(qbs_add(qbs_new_txt_len("chain", 5), TS), qbs_new_txt_len(".tmp", 4)));
     FF = func_freefile();
     sub_open(TFS, 2, NULL, NULL, FF, NULL, 0); // opened in BINARY mode
 
@@ -944,7 +874,7 @@ extensions_ready:
 
     chain_savescreenstate(FF);
 
-#include "../temp/chain.txt"
+#    include "../temp/chain.txt"
     // add "end of commands" value
     int32val = 0;
     sub_put(FF, NULL, byte_element((uint64)&int32val, 4), 0);
@@ -1014,7 +944,7 @@ chain_retry:
     // add NULL terminator
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
 
-#ifdef QB64_WINDOWS
+#    ifdef QB64_WINDOWS
 
     if (WinExec((char *)strz->chr, SW_SHOWDEFAULT) > 31) {
         goto run_exit;
@@ -1022,13 +952,13 @@ chain_retry:
         goto run_failed;
     }
 
-#else
+#    else
 
     system((char *)strz->chr);
     // success?
     goto run_exit;
 
-#endif
+#    endif
 
 // exit this program
 run_exit:
@@ -1059,71 +989,57 @@ run_failed:
 // note: index 0 is unused
 int32 device_last = 0;   // last used device
 int32 device_max = 1000; // number of allocated indexes
-device_struct *devices =
-    (device_struct *)calloc(1000 + 1, sizeof(device_struct));
+device_struct *devices = (device_struct *)calloc(1000 + 1, sizeof(device_struct));
 
 // device_struct helper functions
-uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex,
-                                int32 objectIndex) {
-    return *(device->events + eventIndex * device->event_size +
-             device->lastaxis * 4 + device->lastwheel * 4 + objectIndex);
+uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex);
 }
-void setDeviceEventButtonValue(device_struct *device, int32 eventIndex,
-                               int32 objectIndex, uint8 value) {
-    *(device->events + eventIndex * device->event_size + device->lastaxis * 4 +
-      device->lastwheel * 4 + objectIndex) = value;
+
+void setDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex, uint8 value) {
+    *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex) = value;
 }
-float getDeviceEventAxisValue(device_struct *device, int32 eventIndex,
-                              int32 objectIndex) {
-    return *(float *)(device->events + eventIndex * device->event_size +
-                      objectIndex * 4);
+
+float getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4);
 }
-void setDeviceEventAxisValue(device_struct *device, int32 eventIndex,
-                             int32 objectIndex, float value) {
-    *(float *)(device->events + eventIndex * device->event_size +
-               objectIndex * 4) = value;
+
+void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
+    *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4) = value;
 }
-float getDeviceEventWheelValue(device_struct *device, int32 eventIndex,
-                               int32 objectIndex) {
-    return *(float *)(device->events + eventIndex * device->event_size +
-                      device->lastaxis * 4 + objectIndex * 4);
+
+float getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4);
 }
-void setDeviceEventWheelValue(device_struct *device, int32 eventIndex,
-                              int32 objectIndex, float value) {
-    *(float *)(device->events + eventIndex * device->event_size +
-               device->lastaxis * 4 + objectIndex * 4) = value;
+
+void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
+    *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4) = value;
 }
+
 void setupDevice(device_struct *device) {
-    int32 size =
-        device->lastaxis * 4 + device->lastwheel * 4 + device->lastbutton;
+    int32 size = device->lastaxis * 4 + device->lastwheel * 4 + device->lastbutton;
     size += 8; // for appended ordering index
     size += 7;
     size = size - (size & 7); // align to closest 8-byte boundary
     device->event_size = size;
-    device->events = (uint8 *)calloc(
-        2,
-        device->event_size); // create initial 'current' and 'previous' events
+    device->events = (uint8 *)calloc(2, device->event_size); // create initial 'current' and 'previous' events
     device->max_events = 2;
     device->queued_events = 2;
     device->connected = 1;
     device->used = 1;
 }
+
 int32 createDeviceEvent(device_struct *device) {
     uint8 *cp, *cp2;
-    if (device->queued_events ==
-        device->max_events) { // expand/shift event buffer
+    if (device->queued_events == device->max_events) { // expand/shift event buffer
         if (device->max_events >= QUEUED_EVENTS_LIMIT) {
             // discard base message
-            memmove(device->events, device->events + device->event_size,
-                    (device->queued_events - 1) * device->event_size);
+            memmove(device->events, device->events + device->event_size, (device->queued_events - 1) * device->event_size);
             device->queued_events--;
         } else {
-            cp = (uint8 *)calloc(device->max_events * 2,
-                                 device->event_size); // create new buffer
-            memcpy(cp, device->events,
-                   device->queued_events *
-                       device->event_size); // copy events from old buffer into
-                                            // new buffer
+            cp = (uint8 *)calloc(device->max_events * 2, device->event_size);       // create new buffer
+            memcpy(cp, device->events, device->queued_events * device->event_size); // copy events from old buffer into
+                                                                                    // new buffer
             cp2 = device->events;
             device->events = cp;
             device->max_events *= 2;
@@ -1131,18 +1047,19 @@ int32 createDeviceEvent(device_struct *device) {
         }
     }
     // copy previous event data into new event
-    memmove(device->events + device->queued_events * device->event_size,
-            device->events + (device->queued_events - 1) * device->event_size,
-            device->event_size);
-    *(int64 *)(device->events + (device->queued_events * device->event_size) +
-               (device->event_size - 8)) =
-        device_event_index++; // set global event index
+    memmove(device->events + device->queued_events * device->event_size, device->events + (device->queued_events - 1) * device->event_size, device->event_size);
+    *(int64 *)(device->events + (device->queued_events * device->event_size) + (device->event_size - 8)) = device_event_index++; // set global event index
     int32 eventIndex = device->queued_events;
     return eventIndex;
 }
-void commitDeviceEvent(device_struct *device) { device->queued_events++; }
 
-int32 func__devices() { return device_last; }
+void commitDeviceEvent(device_struct *device) {
+    device->queued_events++;
+}
+
+int32 func__devices() {
+    return device_last;
+}
 
 int32 device_selected = 0;
 
@@ -1170,15 +1087,14 @@ int32 func__deviceinput(int32 i, int32 passed) {
         for (i = 1; i <= device_last; i++) {
             d = &devices[i];
             if (d->queued_events > 2) {
-                index = *(int64 *)((d->events + d->event_size * 2) +
-                                   (d->event_size - 8));
+                index = *(int64 *)((d->events + d->event_size * 2) + (d->event_size - 8));
                 if ((i2 == -1) || (index < lowest_index)) {
                     i2 = i;
                     lowest_index = index;
                     retval = i2;
                 } // first/lower
-            }     // queued_events>2
-        }         // i
+            } // queued_events>2
+        } // i
         if (i2 != -1)
             i = i2;
         else
@@ -1192,8 +1108,7 @@ int32 func__deviceinput(int32 i, int32 passed) {
     device_selected = i;
 
     if (d->queued_events > 2) {
-        memmove(d->events, ((uint8 *)d->events) + d->event_size,
-                (d->queued_events - 1) * d->event_size);
+        memmove(d->events, ((uint8 *)d->events) + d->event_size, (d->queued_events - 1) * d->event_size);
         d->queued_events--;
         return retval;
     }
@@ -1304,13 +1219,11 @@ int32 func__lastwheel(int32 di, int32 passed) {
     return d->lastwheel;
 }
 
-onstrig_struct *onstrig = (onstrig_struct *)calloc(
-    65536, sizeof(onstrig_struct)); // note: up to 256 controllers with up to
-                                    // 256 buttons each supported
+onstrig_struct *onstrig = (onstrig_struct *)calloc(65536, sizeof(onstrig_struct)); // note: up to 256 controllers with up to
+                                                                                   // 256 buttons each supported
 int32 onstrig_inprogress = 0;
 
-void onstrig_setup(int32 i, int32 controller, int32 controller_passed,
-                   uint32 id, int64 pass) {
+void onstrig_setup(int32 i, int32 controller, int32 controller_passed, uint32 id, int64 pass) {
     // note: pass is ignored by ids not requiring a pass value
     if (is_error_pending())
         return;
@@ -1337,7 +1250,7 @@ void onstrig_setup(int32 i, int32 controller, int32 controller_passed,
         return;
     } //'currently down' state cannot be used as an ON STRIG event
     if (controller > 256 || button > 256)
-        return; // error-less exit for (currently) unsupported ranges
+        return;                                // error-less exit for (currently) unsupported ranges
     i = (controller - 1) * 256 + (button - 1); // reindex
     onstrig[i].state = 0;
     onstrig[i].pass = pass;
@@ -1381,7 +1294,7 @@ void sub_strig(int32 i, int32 controller, int32 option, int32 passed) {
             return;
         } //'currently down' state cannot be used as an ON STRIG event
         if (controller > 256 || button > 256)
-            return; // error-less exit for (currently) unsupported ranges
+            return;                                // error-less exit for (currently) unsupported ranges
         i = (controller - 1) * 256 + (button - 1); // reindex
         i1 = i;
         i2 = i;
@@ -1473,7 +1386,9 @@ void stop_timers() {
         ;
 }
 
-void start_timers() { ontimerthread_lock = 0; }
+void start_timers() {
+    ontimerthread_lock = 0;
+}
 
 int32 func__freetimer() {
     if (is_error_pending())
@@ -1485,8 +1400,7 @@ int32 func__freetimer() {
         ontimerthread_lock = 1;
         while (ontimerthread_lock == 1)
             Sleep(0); // mutex
-        ontimer = (ontimer_struct *)realloc(
-            ontimer, sizeof(ontimer_struct) * (ontimer_nextfree + 1));
+        ontimer = (ontimer_struct *)realloc(ontimer, sizeof(ontimer_struct) * (ontimer_nextfree + 1));
         if (!ontimer)
             error(257);         // out of memory
         ontimerthread_lock = 0; // mutex
@@ -1507,8 +1421,7 @@ void freetimer(int32 i) {
     ontimer[i].id = 0;
     if (ontimer_freelist_available == ontimer_freelist_size) {
         ontimer_freelist_size *= 2;
-        ontimer_freelist =
-            (int32 *)realloc(ontimer_freelist, ontimer_freelist_size * 4);
+        ontimer_freelist = (int32 *)realloc(ontimer_freelist, ontimer_freelist_size * 4);
     }
     ontimer_freelist[++ontimer_freelist_available] = i;
 }
@@ -1605,9 +1518,7 @@ void TIMERTHREAD(void *unused) {
                         // if difference between actual time and
                         // measured time is beyond 'seconds' set
                         // measured to actual
-                        if (std::fabs(time_now -
-                                 ontimer[i].last_time) >=
-                            ontimer[i].seconds)
+                        if (std::fabs(time_now - ontimer[i].last_time) >= ontimer[i].seconds)
                             ontimer[i].last_time = time_now;
                         ontimer[i].state = 1;
                         qbevent = 1;
@@ -1616,13 +1527,13 @@ void TIMERTHREAD(void *unused) {
                 if (ontimerthread_lock == 1)
                     goto quick_lock;
             } // i
-        }     // not locked
+        } // not locked
         Sleep(1);
         if (stop_program) {
             exit_ok |= 2;
             return;
         } // close thread #2
-    }     // while(1)
+    } // while(1)
     return;
 }
 
@@ -1639,8 +1550,7 @@ onstrig_recheck:
                 if (di <= 255) {
                     for (i = 0; i <= 255; i++) {
                         if (onstrig[(di << 8) + i].id) {
-                            if (onstrig[(di << 8) + i].active ==
-                                1) { // if STOPped, event will be postponed
+                            if (onstrig[(di << 8) + i].active == 1) { // if STOPped, event will be postponed
                                 if (onstrig[(di << 8) + i].state) {
                                     if (!onstrig_inprogress) {
                                         onstrig_inprogress = 1;
@@ -1659,23 +1569,22 @@ onstrig_recheck:
                                         onstrig_inprogress = 0;
                                         goto onstrig_recheck;
                                     } //! inprogress
-                                }     // state
-                            }         // active==1
-                        }             // id
-                    }                 // i
-                }                     // di<=255
+                                } // state
+                            } // active==1
+                        } // id
+                    } // i
+                } // di<=255
                 di++;
             } // type==1
-        }     // d
-    }         //! error_handling
+        } // d
+    } //! error_handling
 
 // onkey events
 onkey_recheck:
     if (!error_handling) { // no new calls happen whilst error handling
         for (i = 1; i <= 31; i++) {
             if (onkey[i].id) {
-                if (onkey[i].active ==
-                    1) { // if STOPped, event will be postponed
+                if (onkey[i].active == 1) { // if STOPped, event will be postponed
                     if (onkey[i].state) {
                         if (!onkey_inprogress) {
                             onkey_inprogress = 1;
@@ -1694,19 +1603,18 @@ onkey_recheck:
                             onkey_inprogress = 0;
                             goto onkey_recheck;
                         } //! inprogress
-                    }     // state
-                }         // active==1
-            }             // id
-        }                 // i
-    }                     //! error_handling
+                    } // state
+                } // active==1
+            } // id
+        } // i
+    } //! error_handling
 
     // ontimer events
     if (!error_handling) { // no new on timer calls happen whilst error handling
         for (i = 0; i < ontimer_nextfree; i++) {
             if (ontimer[i].allocated) {
                 if (ontimer[i].id) {
-                    if (ontimer[i].active ==
-                        1) { // if timer STOPped, event will be postponed
+                    if (ontimer[i].active == 1) { // if timer STOPped, event will be postponed
                         if (ontimer[i].state == 1) {
                             ontimer[i].state = 2; // event in progress
                             x = ontimer[i].id;
@@ -1719,15 +1627,15 @@ onkey_recheck:
                             // break;
                             default:
                                 break;
-                            }                     // switch
+                            } // switch
                             ontimer[i].state = 0; // event finished
                             sleep_break = 1;
                         } // state==1
-                    }     // active==1
-                }         // id
-            }             // allocated
-        }                 // i
-    }                     //! error_handling
+                    } // active==1
+                } // id
+            } // allocated
+        } // i
+    } //! error_handling
 }
 
 extern int64 display_lock_request;
@@ -1735,6 +1643,7 @@ extern int64 display_lock_confirmed;
 extern int64 display_lock_released;
 
 uint32 r;
+
 void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
     if (disableEvents)
         return;
@@ -1744,8 +1653,7 @@ void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
     if (sub_gl_called == 0) {
         if (display_lock_request > display_lock_confirmed) {
             display_lock_confirmed = display_lock_request;
-            while ((display_lock_released < display_lock_confirmed) &&
-                   (!close_program) && (!suspend_program) && (!stop_program))
+            while ((display_lock_released < display_lock_confirmed) && (!close_program) && (!suspend_program) && (!stop_program))
                 Sleep(1);
         }
     }
@@ -1771,10 +1679,11 @@ void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
     }
 }
 
-uint8 *redim_preserve_cmem_buffer =
-    (uint8 *)malloc(65536); // used for temporary storage only (move to libqbx?)
+uint8 *redim_preserve_cmem_buffer = (uint8 *)malloc(65536); // used for temporary storage only (move to libqbx?)
 
-void division_by_zero_handler(int ignore) { error(11); }
+void division_by_zero_handler(int ignore) {
+    error(11);
+}
 
 // void SIGSEGV_handler(int ignore){
 //    error(256);//assume stack overflow? (the most likely cause)

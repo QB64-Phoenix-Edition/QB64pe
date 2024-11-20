@@ -1,9 +1,9 @@
 
 #include "libqb-common.h"
 
-#include "mutex.h"
-#include "condvar.h"
 #include "completion.h"
+#include "condvar.h"
+#include "mutex.h"
 
 void completion_init(struct completion *comp) {
     comp->finished = 0;

@@ -9,7 +9,9 @@
 
 TSFPlayer::TSFPlayer(InstrumentBankManager *ibm) : MIDIPlayer(), instrumentBankManager(ibm), synth(nullptr) {}
 
-TSFPlayer::~TSFPlayer() { Shutdown(); }
+TSFPlayer::~TSFPlayer() {
+    Shutdown();
+}
 
 bool TSFPlayer::Startup() {
     if (_IsInitialized)
@@ -43,7 +45,9 @@ void TSFPlayer::Shutdown() {
     _IsInitialized = false;
 }
 
-uint32_t TSFPlayer::GetActiveVoiceCount() const { return tsf_active_voice_count(synth); }
+uint32_t TSFPlayer::GetActiveVoiceCount() const {
+    return tsf_active_voice_count(synth);
+}
 
 void TSFPlayer::Render(audio_sample *buffer, uint32_t frames) {
     auto data = buffer;

@@ -168,7 +168,9 @@ static ma_result ma_radv2_ds_read(ma_data_source *pDataSource, void *pFramesOut,
     return ma_radv2_read_pcm_frames((ma_radv2 *)pDataSource, pFramesOut, frameCount, pFramesRead);
 }
 
-static ma_result ma_radv2_ds_seek(ma_data_source *pDataSource, ma_uint64 frameIndex) { return ma_radv2_seek_to_pcm_frame((ma_radv2 *)pDataSource, frameIndex); }
+static ma_result ma_radv2_ds_seek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
+    return ma_radv2_seek_to_pcm_frame((ma_radv2 *)pDataSource, frameIndex);
+}
 
 static ma_result ma_radv2_ds_get_data_format(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate,
                                              ma_channel *pChannelMap, size_t channelMapCap) {

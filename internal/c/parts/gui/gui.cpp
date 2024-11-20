@@ -334,14 +334,18 @@ qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
 }
 
 /// @brief Generates a 'beep' using OS APIs. This does not pull in the audio library.
-void sub_beep() { tinyfd_beep(); }
+void sub_beep() {
+    tinyfd_beep();
+}
 
 /// @brief This is used internally by libqb to show warning and failure messages
 /// @param message The message the will show inside the dialog box
 /// @param title The dialog box title
 /// @param type The type of dialog box (see tinyfd_messageBox)
 /// @return returns the value returned by tinyfd_messageBox
-int gui_alert(const char *message, const char *title, const char *type) { return tinyfd_messageBox(title, message, type, "error", 1); }
+int gui_alert(const char *message, const char *title, const char *type) {
+    return tinyfd_messageBox(title, message, type, "error", 1);
+}
 
 /// @brief This is used internally by libqb to show warning and failure messages
 /// @param fmt A string that contains a printf style format

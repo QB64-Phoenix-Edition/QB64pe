@@ -49,11 +49,17 @@ class CurIcoImage {
       public:
         Stream(const uint8_t *data, size_t dataSize) : buffer(data), size(dataSize), cursor(0) {}
 
-        auto IsEOF() const { return cursor >= size; }
+        auto IsEOF() const {
+            return cursor >= size;
+        }
 
-        auto GetSize() const { return size; }
+        auto GetSize() const {
+            return size;
+        }
 
-        auto GetPosition() const { return cursor; }
+        auto GetPosition() const {
+            return cursor;
+        }
 
         void Seek(size_t position) {
             if (position <= size)
@@ -72,7 +78,9 @@ class CurIcoImage {
             return value;
         }
 
-        auto GetData() { return buffer + cursor; }
+        auto GetData() {
+            return buffer + cursor;
+        }
     };
 
     enum class Type : uint16_t {
@@ -89,11 +97,17 @@ class CurIcoImage {
 
         Header(Type type) : reserved(0), type(type), count(0) {}
 
-        Header(Stream &stream) { ReadFromStream(stream); }
+        Header(Stream &stream) {
+            ReadFromStream(stream);
+        }
 
-        auto IsValid() { return reserved == 0 && (type == Type::Icon || type == Type::Cursor) && count > 0; }
+        auto IsValid() {
+            return reserved == 0 && (type == Type::Icon || type == Type::Cursor) && count > 0;
+        }
 
-        static auto GetStructSize() noexcept { return 6; } // sizeof(Header)
+        static auto GetStructSize() noexcept {
+            return 6;
+        } // sizeof(Header)
 
         void ReadFromStream(Stream &stream) {
             reserved = stream.Read<uint16_t>();
@@ -120,7 +134,9 @@ class CurIcoImage {
 
         DirectoryEntry() : width(0), height(0), colorCount(0), reserved(0), planes_xHotspot(0), bitCount_yHotspot(0), bytesInRes(0), imageOffset(0) {}
 
-        static auto GetStructSize() noexcept { return 16; } // sizeof(DirectoryEntry)
+        static auto GetStructSize() noexcept {
+            return 16;
+        } // sizeof(DirectoryEntry)
 
         void ReadFromStream(Stream &stream) {
             width = stream.Read<uint8_t>();
@@ -166,7 +182,9 @@ class CurIcoImage {
             : structSize(sizeof(BmpInfoHeader)), width(width), height(height), planes(0), bitCount(0), compression(0), sizeImage(width * height * bpp / 8),
               xPelsPerMeter(0), yPelsPerMeter(0), clrUsed(0), clrImportant(0) {}
 
-        static auto GetStructSize() noexcept { return 40; } // sizeof(BmpInfoHeader)
+        static auto GetStructSize() noexcept {
+            return 40;
+        } // sizeof(BmpInfoHeader)
 
         void ReadFromStream(Stream &stream) {
             structSize = stream.Read<uint32_t>();
@@ -196,11 +214,17 @@ class CurIcoImage {
             uint32_t value;
         } color;
 
-        Color() { color.value = 0; }
+        Color() {
+            color.value = 0;
+        }
 
-        Color(uint32_t value) { color.value = value; }
+        Color(uint32_t value) {
+            color.value = value;
+        }
 
-        Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) { SetFromComponents(b, g, r, a); }
+        Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
+            SetFromComponents(b, g, r, a);
+        }
 
         void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
             color.tuple.b = b;
@@ -216,15 +240,25 @@ class CurIcoImage {
       public:
         Palette() = default;
 
-        Palette(size_t size) { Resize(size); }
+        Palette(size_t size) {
+            Resize(size);
+        }
 
-        Palette(Stream &input, size_t size) { ReadFromStream(input, size); }
+        Palette(Stream &input, size_t size) {
+            ReadFromStream(input, size);
+        }
 
-        auto GetSize() { return palette.size(); }
+        auto GetSize() {
+            return palette.size();
+        }
 
-        auto GetColor(size_t index) { return palette[index]; }
+        auto GetColor(size_t index) {
+            return palette[index];
+        }
 
-        void SetColor(size_t index, Color value) { palette[index] = value; }
+        void SetColor(size_t index, Color value) {
+            palette[index] = value;
+        }
 
         void Resize(size_t size) {
             if (size > 256)
@@ -251,7 +285,9 @@ class CurIcoImage {
         }
     };
 
-    static constexpr inline auto CalculateStride(int width, int bpp) { return ((width * bpp + 31) >> 5) << 2; }
+    static constexpr inline auto CalculateStride(int width, int bpp) {
+        return ((width * bpp + 31) >> 5) << 2;
+    }
 
     static void MaskToAlpha(const uint8_t *mask, uint32_t *dst, int width, int height) {
         auto stride = CalculateStride(width, 1); // stride in bytes for 1bpp DIB mask

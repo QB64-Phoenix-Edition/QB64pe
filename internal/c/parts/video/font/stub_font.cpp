@@ -17,7 +17,9 @@ int32_t FontLoad(const uint8_t *content_original, int32_t content_bytes, int32_t
     return 0;
 }
 
-void FontFree(int32_t fh) { (void)fh; }
+void FontFree(int32_t fh) {
+    (void)fh;
+}
 
 int32_t FontWidth(int32_t fh) {
     (void)fh;

@@ -30,6 +30,7 @@ void keyup_vk(uint32_t key);
 #define QBK_SCROLL_LOCK_MODE 11
 #define QBK_INSERT_MODE 12
 #define QBK_CHR0 13
+
 typedef enum {
     QBVK_UNKNOWN = 0,
     QBVK_FIRST = 0,
@@ -275,6 +276,7 @@ typedef enum {
     QBVK_UNDO = 322,  /* Atari keyboard has Undo */
     QBVK_LAST
 } QBVKs;
+
 // Enumeration of valid key mods (possibly OR'd together)
 typedef enum {
     KMOD_NONE = 0x0000,
@@ -291,6 +293,7 @@ typedef enum {
     KMOD_MODE = 0x4000,
     KMOD_RESERVED = 0x8000
 } KMODs;
+
 #define KMOD_CTRL (KMOD_LCTRL | KMOD_RCTRL)
 #define KMOD_SHIFT (KMOD_LSHIFT | KMOD_RSHIFT)
 #define KMOD_ALT (KMOD_LALT | KMOD_RALT)

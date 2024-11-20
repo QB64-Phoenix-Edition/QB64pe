@@ -180,7 +180,9 @@ static ma_result ma_midi_ds_read(ma_data_source *pDataSource, void *pFramesOut, 
     return ma_midi_read_pcm_frames((ma_midi *)pDataSource, pFramesOut, frameCount, pFramesRead);
 }
 
-static ma_result ma_midi_ds_seek(ma_data_source *pDataSource, ma_uint64 frameIndex) { return ma_midi_seek_to_pcm_frame((ma_midi *)pDataSource, frameIndex); }
+static ma_result ma_midi_ds_seek(ma_data_source *pDataSource, ma_uint64 frameIndex) {
+    return ma_midi_seek_to_pcm_frame((ma_midi *)pDataSource, frameIndex);
+}
 
 static ma_result ma_midi_ds_get_data_format(ma_data_source *pDataSource, ma_format *pFormat, ma_uint32 *pChannels, ma_uint32 *pSampleRate,
                                             ma_channel *pChannelMap, size_t channelMapCap) {

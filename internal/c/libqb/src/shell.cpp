@@ -189,6 +189,7 @@ int64_t func_shell(qbs *str) {
     static qbs *str2 = NULL;
     static qbs *str2z = NULL;
 
+#ifdef QB64_WINDOWS
     static int32_t use_console;
     use_console = 0;
     if (console) {
@@ -196,6 +197,7 @@ int64_t func_shell(qbs *str) {
             use_console = 1;
         }
     }
+#endif
 
     if (!strz)
         strz = qbs_new(0, 0);
@@ -687,6 +689,7 @@ void sub_shell(qbs *str, int32_t passed) {
     static qbs *str2 = NULL;
     static qbs *str2z = NULL;
 
+#ifdef QB64_WINDOWS
     static int32_t use_console;
     use_console = 0;
     if (console) {
@@ -694,6 +697,7 @@ void sub_shell(qbs *str, int32_t passed) {
             use_console = 1;
         }
     }
+#endif
 
     if (!strz)
         strz = qbs_new(0, 0);

@@ -14,18 +14,49 @@ double func_sqr(double value);
 long double pow2(long double x, long double y);
 
 // force abs to return floating point numbers correctly
-static inline double func_abs(double d) { return std::fabs(d); }
-static inline long double func_abs(long double d) { return std::fabs(d); }
-static inline float func_abs(float d) { return std::fabs(d); }
+static inline double func_abs(double d) {
+    return std::fabs(d);
+}
 
-static inline uint8_t func_abs(uint8_t d) { return d; }
-static inline uint16_t func_abs(uint16_t d) { return d; }
-static inline uint32_t func_abs(uint32_t d) { return d; }
-static inline uint64_t func_abs(uint64_t d) { return d; }
-static inline int8_t func_abs(int8_t d) { return std::abs(d); }
-static inline int16_t func_abs(int16_t d) { return std::abs(d); }
-static inline int32_t func_abs(int32_t d) { return std::abs(d); }
-static inline int64_t func_abs(int64_t d) { return std::llabs(d); }
+static inline long double func_abs(long double d) {
+    return std::fabs(d);
+}
+
+static inline float func_abs(float d) {
+    return std::fabs(d);
+}
+
+static inline uint8_t func_abs(uint8_t d) {
+    return d;
+}
+
+static inline uint16_t func_abs(uint16_t d) {
+    return d;
+}
+
+static inline uint32_t func_abs(uint32_t d) {
+    return d;
+}
+
+static inline uint64_t func_abs(uint64_t d) {
+    return d;
+}
+
+static inline int8_t func_abs(int8_t d) {
+    return std::abs(d);
+}
+
+static inline int16_t func_abs(int16_t d) {
+    return std::abs(d);
+}
+
+static inline int32_t func_abs(int32_t d) {
+    return std::abs(d);
+}
+
+static inline int64_t func_abs(int64_t d) {
+    return std::llabs(d);
+}
 
 static inline int32_t func_sgn(uint8_t v) {
     if (v)

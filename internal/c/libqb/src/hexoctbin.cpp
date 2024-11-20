@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "rounding.h"
-#include "qbs.h"
 #include "hexoctbin.h"
+#include "qbs.h"
+#include "rounding.h"
 
 qbs *func__bin(int64_t value, int32_t neg_bits) {
     static int32_t i, i2, i3, neg;

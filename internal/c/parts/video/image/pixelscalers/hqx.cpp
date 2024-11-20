@@ -4966,10 +4966,18 @@ static uint32_t *hq3x_resize(char mode, const uint32_t *image, uint32_t width, u
 // The constant values supplied for the trailing arguments were provided
 // as default values in the original impl.
 
-void hq2xA(uint32_t *img, int w, int h, uint32_t *out) { hq2x_resize('A', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false); }
+void hq2xA(uint32_t *img, int w, int h, uint32_t *out) {
+    hq2x_resize('A', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false);
+}
 
-void hq2xB(uint32_t *img, int w, int h, uint32_t *out) { hq2x_resize('B', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false); }
+void hq2xB(uint32_t *img, int w, int h, uint32_t *out) {
+    hq2x_resize('B', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false);
+}
 
-void hq3xA(uint32_t *img, int w, int h, uint32_t *out) { hq3x_resize('A', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false); }
+void hq3xA(uint32_t *img, int w, int h, uint32_t *out) {
+    hq3x_resize('A', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false);
+}
 
-void hq3xB(uint32_t *img, int w, int h, uint32_t *out) { hq3x_resize('B', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false); }
+void hq3xB(uint32_t *img, int w, int h, uint32_t *out) {
+    hq3x_resize('B', img, w, h, out, 0x30, 0x07, 0x06, 0x50, false, false);
+}

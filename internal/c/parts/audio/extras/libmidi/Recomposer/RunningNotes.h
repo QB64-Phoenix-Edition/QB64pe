@@ -25,7 +25,9 @@ struct running_note_t {
 
 class running_notes_t {
   public:
-    running_notes_t() { Reset(); }
+    running_notes_t() {
+        Reset();
+    }
 
     void Reset() {
         _Count = 0;

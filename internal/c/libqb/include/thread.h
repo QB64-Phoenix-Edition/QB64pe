@@ -10,7 +10,7 @@ struct libqb_thread *libqb_thread_new();
 void libqb_thread_free(struct libqb_thread *);
 
 // Configures and starts a thread to begin it's execution.
-void libqb_thread_start(struct libqb_thread *, void (*start_func) (void *), void *arg);
+void libqb_thread_start(struct libqb_thread *, void (*start_func)(void *), void *arg);
 
 // Joins a thread to end its execution
 void libqb_thread_join(struct libqb_thread *);

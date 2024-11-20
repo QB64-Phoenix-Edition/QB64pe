@@ -39,11 +39,17 @@ class PCXImage {
       public:
         Stream(const uint8_t *data, size_t dataSize) : buffer(data), size(dataSize), cursor(0) {}
 
-        auto IsEOF() const { return cursor >= size; }
+        auto IsEOF() const {
+            return cursor >= size;
+        }
 
-        auto GetSize() const { return size; }
+        auto GetSize() const {
+            return size;
+        }
 
-        auto GetPosition() const { return cursor; }
+        auto GetPosition() const {
+            return cursor;
+        }
 
         void Seek(size_t position) {
             if (position <= size)
@@ -144,8 +150,13 @@ class PCXImage {
         std::vector<uint8_t> filler;
 
       private:
-        auto ReadByte(Stream &input) { return input.Read<uint8_t>(); }
-        auto ReadUInt16(Stream &input) { return input.Read<uint16_t>(); }
+        auto ReadByte(Stream &input) {
+            return input.Read<uint8_t>();
+        }
+
+        auto ReadUInt16(Stream &input) {
+            return input.Read<uint16_t>();
+        }
 
       public:
         Header(Stream &input) : colorMap(48), filler(58) {
@@ -186,11 +197,17 @@ class PCXImage {
             uint32_t value;
         } color;
 
-        Color() { color.value = 0; }
+        Color() {
+            color.value = 0;
+        }
 
-        Color(uint32_t value) { color.value = value; }
+        Color(uint32_t value) {
+            color.value = value;
+        }
 
-        Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) { SetFromComponents(b, g, r, a); }
+        Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
+            SetFromComponents(b, g, r, a);
+        }
 
         void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
             color.tuple.b = b;
@@ -218,21 +235,37 @@ class PCXImage {
         std::vector<Color> m_palette;
 
       public:
-        Palette() { LoadFromEGAPalette(EGAPalette::EGA); };
+        Palette() {
+            LoadFromEGAPalette(EGAPalette::EGA);
+        };
 
-        Palette(size_t size) { Resize(size); }
+        Palette(size_t size) {
+            Resize(size);
+        }
 
-        Palette(EGAPalette type) { LoadFromEGAPalette(type); }
+        Palette(EGAPalette type) {
+            LoadFromEGAPalette(type);
+        }
 
-        Palette(const std::vector<uint8_t> &colorMap) { LoadFromColorMap(colorMap); }
+        Palette(const std::vector<uint8_t> &colorMap) {
+            LoadFromColorMap(colorMap);
+        }
 
-        Palette(Stream &input, size_t size) { LoadFromStream(input, size); }
+        Palette(Stream &input, size_t size) {
+            LoadFromStream(input, size);
+        }
 
-        auto GetSize() { return m_palette.size(); }
+        auto GetSize() {
+            return m_palette.size();
+        }
 
-        auto GetColor(size_t index) { return m_palette[index]; }
+        auto GetColor(size_t index) {
+            return m_palette[index];
+        }
 
-        void SetColor(size_t index, Color value) { m_palette[index] = value; }
+        void SetColor(size_t index, Color value) {
+            m_palette[index] = value;
+        }
 
         void Resize(size_t size) {
             if (size != 2 && size != 16 && size != 256)

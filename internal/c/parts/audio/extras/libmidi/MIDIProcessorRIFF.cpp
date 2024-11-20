@@ -39,6 +39,7 @@ bool midi_processor_t::IsRIFF(std::vector<uint8_t> const &data) {
 
     return IsSMF(Data);
 }
+
 /*
 bool MIDIProcessor::GetTrackCountFromRIFF(std::vector<uint8_t> const & data, size_t & trackCount)
 {

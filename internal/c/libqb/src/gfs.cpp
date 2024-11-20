@@ -20,9 +20,13 @@ static int32_t gfs_freed_size = 0;
 static int32_t *gfs_fileno = (int32_t *)malloc(1);
 static int32_t gfs_fileno_n = 0;
 
-int32_t gfs_get_fileno(int file_number) { return gfs_fileno[file_number]; }
+int32_t gfs_get_fileno(int file_number) {
+    return gfs_fileno[file_number];
+}
 
-gfs_file_struct *gfs_get_file_struct(int fileno) { return gfs_file + fileno; }
+gfs_file_struct *gfs_get_file_struct(int fileno) {
+    return gfs_file + fileno;
+}
 
 void gfs_close_all_files() {
     for (int32_t i = 1; i <= gfs_fileno_n; i++) {
@@ -1003,7 +1007,10 @@ int32_t gfs_write(int32_t i, int64_t position, uint8_t *data, int64_t size) {
 }
 
 int64_t gfs_read_bytes_value;
-int64_t gfs_read_bytes() { return gfs_read_bytes_value; }
+
+int64_t gfs_read_bytes() {
+    return gfs_read_bytes_value;
+}
 
 int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
     gfs_read_bytes_value = 0;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include "mutex.h"
+#include <stdint.h>
 
 // List Interface
 // Purpose: Unify and optimize the way QB64 references lists of objects (such as handles)
@@ -32,8 +32,8 @@ list *list_new_threadsafe(intptr_t structure_size);
 void list_destroy(list *L);
 
 intptr_t list_add(list *L);
-intptr_t list_remove(list *L, intptr_t i); // returns -1 on success, 0 on failure
-                                           //
-void *list_get(list *L, intptr_t i); // Returns a pointer to an index's structure
-                                     //
+intptr_t list_remove(list *L, intptr_t i);         // returns -1 on success, 0 on failure
+                                                   //
+void *list_get(list *L, intptr_t i);               // Returns a pointer to an index's structure
+                                                   //
 intptr_t list_get_index(list *L, void *structure); // Retrieves the index value of a structure

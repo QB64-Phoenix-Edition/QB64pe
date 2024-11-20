@@ -1,8 +1,8 @@
 #ifndef INCLUDE_LIBQB_COMPLETION_H
 #define INCLUDE_LIBQB_COMPLETION_H
 
-#include "mutex.h"
 #include "condvar.h"
+#include "mutex.h"
 
 // A completion is a oneshot signal - it waits until finish is called and
 // then never blocks again.

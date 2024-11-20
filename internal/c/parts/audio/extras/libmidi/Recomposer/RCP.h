@@ -191,7 +191,9 @@ class gsd_file_t {
 
 class rcp_converter_t {
   public:
-    void SetFilePath(const char *filePath) noexcept { _FilePath = filePath; }
+    void SetFilePath(const char *filePath) noexcept {
+        _FilePath = filePath;
+    }
 
     void Convert(const buffer_t &srcData, buffer_t &dstData, const char *dstType = "mid");
 

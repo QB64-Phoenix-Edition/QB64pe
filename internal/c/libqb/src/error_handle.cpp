@@ -1,15 +1,15 @@
 
 #include "libqb-common.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "command.h"
+#include "error_handle.h"
 #include "event.h"
 #include "gui.h"
-#include "error_handle.h"
 
 uint32_t new_error;
 uint32_t error_occurred;
@@ -110,38 +110,31 @@ static const char *human_error(int32_t errorcode) {
     // clang-format on
 }
 
-void clear_error()
-{
+void clear_error() {
     new_error = 0;
 }
 
-double get_error_erl()
-{
+double get_error_erl() {
     return error_erl;
 }
 
-uint32_t get_error_err()
-{
+uint32_t get_error_err() {
     return error_err;
 }
 
-int32_t func__errorline()
-{
+int32_t func__errorline() {
     return ercl;
 }
 
-int32_t func__inclerrorline()
-{
+int32_t func__inclerrorline() {
     return inclercl;
 }
 
-qbs *func__inclerrorfile()
-{
+qbs *func__inclerrorfile() {
     return qbs_new_txt(includedfilename);
 }
 
-void error_set_line(uint32_t errorline, uint32_t incerrorline, const char *incfilename)
-{
+void error_set_line(uint32_t errorline, uint32_t incerrorline, const char *incfilename) {
     ercl = errorline;
     inclercl = incerrorline;
     includedfilename = incfilename;
@@ -221,7 +214,7 @@ void fix_error() {
     error_occurred = 1;
 
     // FIXME: EWWWWW, there's no way this is correct
-    QBMAIN(NULL);      
+    QBMAIN(NULL);
     return;
 }
 
@@ -344,4 +337,3 @@ void error(int32_t error_number) {
         qbevent = 1;
     }
 }
-

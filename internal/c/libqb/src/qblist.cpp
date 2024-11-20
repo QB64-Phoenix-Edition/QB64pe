@@ -127,7 +127,6 @@ void list_destroy(list *L) {
     for (i = 1; i <= L->structure_bases; i++) {
         free((void *)L->structure_base[i]);
     }
-    free(L->structure_base);
     free(L->structure_freed);
     free(L);
 }

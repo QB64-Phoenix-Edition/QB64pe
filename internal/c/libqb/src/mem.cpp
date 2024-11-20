@@ -199,18 +199,53 @@ void sub__memfill(mem_block *dblk, intptr_t doff, intptr_t dbytes, intptr_t soff
     sub__memfill_nochecks(doff, dbytes, soff, sbytes);
 }
 
-void sub__memfill_1(mem_block *dblk, intptr_t doff, intptr_t dbytes, int8_t val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 1); }
-void sub__memfill_nochecks_1(intptr_t doff, intptr_t dbytes, int8_t val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 1); }
-void sub__memfill_2(mem_block *dblk, intptr_t doff, intptr_t dbytes, int16_t val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 2); }
-void sub__memfill_nochecks_2(intptr_t doff, intptr_t dbytes, int16_t val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 2); }
-void sub__memfill_4(mem_block *dblk, intptr_t doff, intptr_t dbytes, int32_t val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 4); }
-void sub__memfill_nochecks_4(intptr_t doff, intptr_t dbytes, int32_t val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 4); }
-void sub__memfill_8(mem_block *dblk, intptr_t doff, intptr_t dbytes, int64_t val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 8); }
-void sub__memfill_nochecks_8(intptr_t doff, intptr_t dbytes, int64_t val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 8); }
-void sub__memfill_SINGLE(mem_block *dblk, intptr_t doff, intptr_t dbytes, float val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 4); }
-void sub__memfill_nochecks_SINGLE(intptr_t doff, intptr_t dbytes, float val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 4); }
-void sub__memfill_DOUBLE(mem_block *dblk, intptr_t doff, intptr_t dbytes, double val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 8); }
-void sub__memfill_nochecks_DOUBLE(intptr_t doff, intptr_t dbytes, double val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 8); }
+void sub__memfill_1(mem_block *dblk, intptr_t doff, intptr_t dbytes, int8_t val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 1);
+}
+
+void sub__memfill_nochecks_1(intptr_t doff, intptr_t dbytes, int8_t val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 1);
+}
+
+void sub__memfill_2(mem_block *dblk, intptr_t doff, intptr_t dbytes, int16_t val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 2);
+}
+
+void sub__memfill_nochecks_2(intptr_t doff, intptr_t dbytes, int16_t val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 2);
+}
+
+void sub__memfill_4(mem_block *dblk, intptr_t doff, intptr_t dbytes, int32_t val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 4);
+}
+
+void sub__memfill_nochecks_4(intptr_t doff, intptr_t dbytes, int32_t val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 4);
+}
+
+void sub__memfill_8(mem_block *dblk, intptr_t doff, intptr_t dbytes, int64_t val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 8);
+}
+
+void sub__memfill_nochecks_8(intptr_t doff, intptr_t dbytes, int64_t val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 8);
+}
+
+void sub__memfill_SINGLE(mem_block *dblk, intptr_t doff, intptr_t dbytes, float val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 4);
+}
+
+void sub__memfill_nochecks_SINGLE(intptr_t doff, intptr_t dbytes, float val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 4);
+}
+
+void sub__memfill_DOUBLE(mem_block *dblk, intptr_t doff, intptr_t dbytes, double val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, 8);
+}
+
+void sub__memfill_nochecks_DOUBLE(intptr_t doff, intptr_t dbytes, double val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, 8);
+}
 
 static uint8_t memfill_FLOAT_padding[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 32 null bytes
 
@@ -224,8 +259,13 @@ void sub__memfill_nochecks_FLOAT(intptr_t doff, intptr_t dbytes, long double val
     sub__memfill_nochecks(doff, dbytes, (intptr_t)memfill_FLOAT_padding, 32);
 }
 
-void sub__memfill_OFFSET(mem_block *dblk, intptr_t doff, intptr_t dbytes, intptr_t val) { sub__memfill(dblk, doff, dbytes, (intptr_t)&val, sizeof(intptr_t)); }
-void sub__memfill_nochecks_OFFSET(intptr_t doff, intptr_t dbytes, intptr_t val) { sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, sizeof(intptr_t)); }
+void sub__memfill_OFFSET(mem_block *dblk, intptr_t doff, intptr_t dbytes, intptr_t val) {
+    sub__memfill(dblk, doff, dbytes, (intptr_t)&val, sizeof(intptr_t));
+}
+
+void sub__memfill_nochecks_OFFSET(intptr_t doff, intptr_t dbytes, intptr_t val) {
+    sub__memfill_nochecks(doff, dbytes, (intptr_t)&val, sizeof(intptr_t));
+}
 
 void sub__memcopy(void *sblk, intptr_t soff, intptr_t bytes, void *dblk, intptr_t doff) {
     // checking A

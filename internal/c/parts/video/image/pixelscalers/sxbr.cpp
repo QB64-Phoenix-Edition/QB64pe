@@ -50,13 +50,21 @@ by Philipp K. Janert, September 2022
 #define w3 (-wgt2)
 #define w4 (wgt2 + 0.5f)
 
-static inline float sxbr_df(float A, float B) { return abs(A - B); }
+static inline float sxbr_df(float A, float B) {
+    return abs(A - B);
+}
 
-static inline float min4(float a, float b, float c, float d) { return std::min(std::min(a, b), std::min(c, d)); }
+static inline float min4(float a, float b, float c, float d) {
+    return std::min(std::min(a, b), std::min(c, d));
+}
 
-static inline float max4(float a, float b, float c, float d) { return std::max(std::max(a, b), std::max(c, d)); }
+static inline float max4(float a, float b, float c, float d) {
+    return std::max(std::max(a, b), std::max(c, d));
+}
 
-template <class T> T clamp(T x, T floor, T ceil) { return std::max(std::min(x, ceil), floor); }
+template <class T> T clamp(T x, T floor, T ceil) {
+    return std::max(std::min(x, ceil), floor);
+}
 
 /*
                          P1
@@ -381,4 +389,6 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
 
 //// *** Super-xBR code ends here - MIT LICENSE *** ///
 
-void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out) { scaleSuperXBRT<2>(data, out, w, h); }
+void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out) {
+    scaleSuperXBRT<2>(data, out, w, h);
+}

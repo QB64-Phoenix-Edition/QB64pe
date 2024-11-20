@@ -6,17 +6,29 @@
 #include <cstdlib>
 
 /* Extra maths functions - we do what we must because we can */
-inline constexpr double func_deg2rad(double value) { return (value * 0.01745329251994329576923690768489); }
+inline constexpr double func_deg2rad(double value) {
+    return (value * 0.01745329251994329576923690768489);
+}
 
-inline constexpr double func_rad2deg(double value) { return (value * 57.29577951308232); }
+inline constexpr double func_rad2deg(double value) {
+    return (value * 57.29577951308232);
+}
 
-inline constexpr double func_deg2grad(double value) { return (value * 1.111111111111111); }
+inline constexpr double func_deg2grad(double value) {
+    return (value * 1.111111111111111);
+}
 
-inline constexpr double func_grad2deg(double value) { return (value * 0.9); }
+inline constexpr double func_grad2deg(double value) {
+    return (value * 0.9);
+}
 
-inline constexpr double func_rad2grad(double value) { return (value * 63.66197723675816); }
+inline constexpr double func_rad2grad(double value) {
+    return (value * 63.66197723675816);
+}
 
-inline constexpr double func_grad2rad(double value) { return (value * .01570796326794896); }
+inline constexpr double func_grad2rad(double value) {
+    return (value * .01570796326794896);
+}
 
 inline constexpr double func_pi(double multiplier, int32_t passed) {
     if (passed) {
@@ -43,7 +55,9 @@ inline double func_arccsc(double num) {
     return std::asin(1.0 / num);
 }
 
-inline double func_arccot(double num) { return 2 * std::atan(1) - std::atan(num); }
+inline double func_arccot(double num) {
+    return 2 * std::atan(1) - std::atan(num);
+}
 
 inline double func_sech(double num) {
     if (num > 88.02969) {
@@ -108,12 +122,16 @@ inline double func_cot(double num) {
 /// @brief Check if n is a power of 2
 /// @param n A number
 /// @return True if n is a power of 2
-inline constexpr bool Math_IsPowerOf2(uint32_t n) { return n && !(n & (n - 1)); }
+inline constexpr bool Math_IsPowerOf2(uint32_t n) {
+    return n && !(n & (n - 1));
+}
 
 /// @brief Check if n is a power of 2
 /// @param n A number
 /// @return True if n is a power of 2
-inline constexpr bool Math_IsPowerOf2(uint64_t n) { return n && !(n & (n - 1)); }
+inline constexpr bool Math_IsPowerOf2(uint64_t n) {
+    return n && !(n & (n - 1));
+}
 
 /// @brief Returns the next (ceiling) power of 2 for n. E.g. n = 600 then returns 1024
 /// @param n Any number

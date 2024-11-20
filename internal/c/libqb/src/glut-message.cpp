@@ -1,9 +1,9 @@
 
 #include "libqb-common.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 // note: MacOSX uses Apple's GLUT not FreeGLUT
