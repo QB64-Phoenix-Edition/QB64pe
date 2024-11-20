@@ -711,7 +711,9 @@ static bool IsSysExEqual(const uint8_t *a, const uint8_t *b) {
 }
 
 #ifdef _WIN32
-static uint16_t GetWord(const uint8_t *data) noexcept { return (uint16_t)(data[0] | (((uint16_t)data[1]) << 8)); }
+static uint16_t GetWord(const uint8_t *data) noexcept {
+    return (uint16_t)(data[0] | (((uint16_t)data[1]) << 8));
+}
 
 static uint32_t GetDWord(const uint8_t *data) noexcept {
     return data[0] | (((uint32_t)data[1]) << 8) | (((uint32_t)data[2]) << 16) | (((uint32_t)data[3]) << 24);

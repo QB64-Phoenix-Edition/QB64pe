@@ -13,9 +13,13 @@ class midi_stream_t {
   public:
     typedef uint8_t (*duration_handler_t)(midi_stream_t *fileInfo, uint32_t &duration);
 
-    midi_stream_t() : _Data(), _Size(), _Offs(), _TicksPerQuarter(), _Tempo(500000) { SetDurationHandler(nullptr); }
+    midi_stream_t() : _Data(), _Size(), _Offs(), _TicksPerQuarter(), _Tempo(500000) {
+        SetDurationHandler(nullptr);
+    }
 
-    midi_stream_t(uint32_t size) : _Size(size), _Offs(), _TicksPerQuarter(), _Tempo(500000) { _Data = (uint8_t *)::malloc(_Size); }
+    midi_stream_t(uint32_t size) : _Size(size), _Offs(), _TicksPerQuarter(), _Tempo(500000) {
+        _Data = (uint8_t *)::malloc(_Size);
+    }
 
     virtual ~midi_stream_t() {
         if (_Data != nullptr) {
@@ -27,20 +31,41 @@ class midi_stream_t {
         }
     }
 
-    void Reset() { _Offs = 0; }
+    void Reset() {
+        _Offs = 0;
+    }
 
-    void SetDurationHandler(duration_handler_t durationHandler) { _HandleDuration = durationHandler; }
+    void SetDurationHandler(duration_handler_t durationHandler) {
+        _HandleDuration = durationHandler;
+    }
 
-    uint32_t GetTicksPerQuarter() const noexcept { return _TicksPerQuarter; }
+    uint32_t GetTicksPerQuarter() const noexcept {
+        return _TicksPerQuarter;
+    }
 
-    uint32_t GetTempo() const noexcept { return _Tempo; }
-    void SetTempo(uint32_t tempo) noexcept { _Tempo = tempo; }
+    uint32_t GetTempo() const noexcept {
+        return _Tempo;
+    }
 
-    uint32_t GetDuration() const noexcept { return _State.Duration; }
-    void SetDuration(uint32_t duration) noexcept { _State.Duration = duration; }
+    void SetTempo(uint32_t tempo) noexcept {
+        _Tempo = tempo;
+    }
 
-    uint8_t GetChannel() const noexcept { return _State.Channel; }
-    void SetChannel(uint8_t channel) noexcept { _State.Channel = channel; }
+    uint32_t GetDuration() const noexcept {
+        return _State.Duration;
+    }
+
+    void SetDuration(uint32_t duration) noexcept {
+        _State.Duration = duration;
+    }
+
+    uint8_t GetChannel() const noexcept {
+        return _State.Channel;
+    }
+
+    void SetChannel(uint8_t channel) noexcept {
+        _State.Channel = channel;
+    }
 
     void WriteMIDIHeader(uint16_t format, uint16_t trackCount, uint16_t ticksPerQuarter) {
         Ensure(0x08 + 0x06);
@@ -118,7 +143,9 @@ class midi_stream_t {
         Add((const uint8_t *)data, size);
     }
 
-    void WriteMetaEvent(MetaDataTypes type, const char *text) { WriteMetaEvent(type, text, (uint32_t)::strlen(text)); }
+    void WriteMetaEvent(MetaDataTypes type, const char *text) {
+        WriteMetaEvent(type, text, (uint32_t)::strlen(text));
+    }
 
     void WriteVariableLengthQuantity(uint32_t quantity) {
         uint8_t Size = 0;
@@ -182,10 +209,17 @@ class midi_stream_t {
     void WriteRolandSysEx(const uint8_t *syxHdr, uint32_t address, const uint8_t *data, uint32_t size, uint8_t opts);
     void WriteRolandSysEx(const uint8_t *syxHdr, uint32_t address, const uint8_t *data, uint32_t size, uint8_t opts, uint32_t blockSize);
 
-    void Add(uint8_t value) noexcept { _Data[_Offs++] = value; }
+    void Add(uint8_t value) noexcept {
+        _Data[_Offs++] = value;
+    }
 
-    const uint8_t *GetData() const noexcept { return _Data; }
-    uint32_t GetOffs() const noexcept { return _Offs; }
+    const uint8_t *GetData() const noexcept {
+        return _Data;
+    }
+
+    uint32_t GetOffs() const noexcept {
+        return _Offs;
+    }
 
   private:
     void WriteTimestamp() {

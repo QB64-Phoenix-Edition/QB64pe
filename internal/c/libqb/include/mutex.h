@@ -14,9 +14,13 @@ void libqb_mutex_unlock(struct libqb_mutex *);
 // Locks a mutex when created, and unlocks when the guard goes out of scope
 class libqb_mutex_guard {
   public:
-    libqb_mutex_guard(struct libqb_mutex *mtx) : lock(mtx) { libqb_mutex_lock(lock); }
+    libqb_mutex_guard(struct libqb_mutex *mtx) : lock(mtx) {
+        libqb_mutex_lock(lock);
+    }
 
-    ~libqb_mutex_guard() { libqb_mutex_unlock(lock); }
+    ~libqb_mutex_guard() {
+        libqb_mutex_unlock(lock);
+    }
 
   private:
     struct libqb_mutex *lock;

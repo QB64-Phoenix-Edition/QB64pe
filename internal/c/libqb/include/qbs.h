@@ -83,7 +83,9 @@ int32_t qbs_greaterorequal(qbs *str2, qbs *str1);
 int32_t qbs_asc(qbs *str, uint32_t i);
 int32_t qbs_asc(qbs *str);
 
-static inline int32_t qbs_len(qbs *str) { return str->len; }
+static inline int32_t qbs_len(qbs *str) {
+    return str->len;
+}
 
 // FIXME: Usages of these outside of qbx.c (and qbs_cleanup()) need to be removed.
 extern intptr_t *qbs_tmp_list;
@@ -116,6 +118,8 @@ int32_t func__str_nc_compare(qbs *s1, qbs *s2);
 int32_t func__str_compare(qbs *s1, qbs *s2);
 
 // Called by vWatch
-static inline void set_qbs_size(intptr_t *target_qbs, int32_t newlength) { qbs_set((qbs *)(*target_qbs), func_space(newlength)); }
+static inline void set_qbs_size(intptr_t *target_qbs, int32_t newlength) {
+    qbs_set((qbs *)(*target_qbs), func_space(newlength));
+}
 
 #endif

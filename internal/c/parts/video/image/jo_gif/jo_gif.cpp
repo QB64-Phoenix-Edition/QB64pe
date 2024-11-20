@@ -280,7 +280,9 @@ CONTINUE:
     }
 }
 
-static int jo_gif_clamp(int a, int b, int c) { return a < b ? b : a > c ? c : a; }
+static int jo_gif_clamp(int a, int b, int c) {
+    return a < b ? b : a > c ? c : a;
+}
 
 jo_gif_t jo_gif_start(const char *filename, short width, short height, short repeat, int numColors) {
     numColors = numColors > 255 ? 255 : numColors < 2 ? 2 : numColors;

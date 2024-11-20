@@ -79,7 +79,9 @@ struct curl_state {
     std::queue<struct close_handle *> close_handle_queue;
     int stop_curl;
 
-    curl_state() { lock = libqb_mutex_new(); }
+    curl_state() {
+        lock = libqb_mutex_new();
+    }
 };
 
 // Fills out all of the 'info' fields in the handle, sets the has_info flag,
@@ -217,7 +219,9 @@ static void curl_state_poll(struct curl_state *state) {
     curl_multi_poll(state->multi, NULL, 0, 1000, NULL);
 }
 
-static void curl_state_wakeup(struct curl_state *state) { curl_multi_wakeup(state->multi); }
+static void curl_state_wakeup(struct curl_state *state) {
+    curl_multi_wakeup(state->multi);
+}
 #else
 // This is a workaround for libcurl version lacking the curl_multi_poll() and
 // curl_multi_wakeup() functions.  Unfortunately this old version is on OS X,
@@ -282,7 +286,9 @@ static size_t receive_http_block(void *ptr, size_t size, size_t nmemb, void *dat
     return length;
 }
 
-static bool is_valid_http_id(int id) { return curl_state.handle_table.find(id) != curl_state.handle_table.end(); }
+static bool is_valid_http_id(int id) {
+    return curl_state.handle_table.find(id) != curl_state.handle_table.end();
+}
 
 int libqb_http_get_length(int id, size_t *length) {
     if (!is_valid_http_id(id))

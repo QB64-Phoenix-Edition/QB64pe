@@ -12,19 +12,33 @@ static inline uint32_t luma(uint32_t color) {
     return (((color & 0x00FF0000) >> 16) + ((color & 0x0000FF00) >> 8) + (color & 0x000000FF) + 1) * (256 - alpha);
 }
 
-static inline bool all_eq2(uint32_t B, uint32_t A0, uint32_t A1) { return ((B ^ A0) | (B ^ A1)) == 0; }
+static inline bool all_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
+    return ((B ^ A0) | (B ^ A1)) == 0;
+}
 
-static inline bool all_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) { return ((B ^ A0) | (B ^ A1) | (B ^ A2)) == 0; }
+static inline bool all_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
+    return ((B ^ A0) | (B ^ A1) | (B ^ A2)) == 0;
+}
 
-static inline bool all_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) { return ((B ^ A0) | (B ^ A1) | (B ^ A2) | (B ^ A3)) == 0; }
+static inline bool all_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
+    return ((B ^ A0) | (B ^ A1) | (B ^ A2) | (B ^ A3)) == 0;
+}
 
-static inline bool any_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) { return B == A0 || B == A1 || B == A2; }
+static inline bool any_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
+    return B == A0 || B == A1 || B == A2;
+}
 
-static inline bool none_eq2(uint32_t B, uint32_t A0, uint32_t A1) { return (B != A0) && (B != A1); }
+static inline bool none_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
+    return (B != A0) && (B != A1);
+}
 
-static inline bool none_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) { return B != A0 && B != A1 && B != A2 && B != A3; }
+static inline bool none_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
+    return B != A0 && B != A1 && B != A2 && B != A3;
+}
 
-static inline int mmpx_clamp(int v, int min, int max) { return v < min ? min : min > max ? max : v; }
+static inline int mmpx_clamp(int v, int min, int max) {
+    return v < min ? min : min > max ? max : v;
+}
 
 struct Meta {
     const uint32_t *srcBuffer;

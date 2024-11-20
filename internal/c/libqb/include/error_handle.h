@@ -19,7 +19,9 @@ extern qbs *error_handler_history;
 extern uint32_t error_handling;
 extern uint32_t error_retry;
 
-static inline bool is_error_pending() { return new_error != 0; }
+static inline bool is_error_pending() {
+    return new_error != 0;
+}
 
 void clear_error();
 

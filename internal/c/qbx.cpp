@@ -84,6 +84,7 @@ extern int32 sub_gl_called;
 #        include "parts/core/gl_header_for_parsing/temp/gl_helper_code.h"
 
 double pi_as_double = 3.14159265358979;
+
 void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
     double xmin, xmax, ymin, ymax;
     ymax = zNear * std::tan(fovy * pi_as_double / 360.0);
@@ -101,7 +102,10 @@ void QBMAIN(void *);
 void TIMERTHREAD(void *);
 
 extern int32 requestedKeyboardOverlayImage;
-void requestKeyboardOverlayImage(int32 handle) { requestedKeyboardOverlayImage = handle; }
+
+void requestKeyboardOverlayImage(int32 handle) {
+    requestedKeyboardOverlayImage = handle;
+}
 
 // extern functions
 
@@ -456,30 +460,35 @@ inline void swap_8(void *a, void *b) {
     *(uint8 *)a = *(uint8 *)b;
     *(uint8 *)b = x;
 }
+
 inline void swap_16(void *a, void *b) {
     uint16 x;
     x = *(uint16 *)a;
     *(uint16 *)a = *(uint16 *)b;
     *(uint16 *)b = x;
 }
+
 inline void swap_32(void *a, void *b) {
     uint32 x;
     x = *(uint32 *)a;
     *(uint32 *)a = *(uint32 *)b;
     *(uint32 *)b = x;
 }
+
 inline void swap_64(void *a, void *b) {
     uint64 x;
     x = *(uint64 *)a;
     *(uint64 *)a = *(uint64 *)b;
     *(uint64 *)b = x;
 }
+
 inline void swap_longdouble(void *a, void *b) {
     long double x;
     x = *(long double *)a;
     *(long double *)a = *(long double *)b;
     *(long double *)b = x;
 }
+
 void swap_string(qbs *a, qbs *b) {
     static qbs *c;
     c = qbs_new(a->len, 0);
@@ -488,6 +497,7 @@ void swap_string(qbs *a, qbs *b) {
     qbs_set(b, c);
     qbs_free(c);
 }
+
 void swap_block(void *a, void *b, uint32 bytes) {
     static uint32 quads;
     quads = bytes >> 2;
@@ -532,11 +542,17 @@ ptrszint check_ubound(ptrszint *array, int32 index, int32 num_indexes) {
     return ret;
 }
 
-uint64 call_getubits(uint32 bsize, ptrszint *array, ptrszint i) { return getubits(bsize, (uint8 *)(*array), i); }
+uint64 call_getubits(uint32 bsize, ptrszint *array, ptrszint i) {
+    return getubits(bsize, (uint8 *)(*array), i);
+}
 
-int64 call_getbits(uint32 bsize, ptrszint *array, ptrszint i) { return getbits(bsize, (uint8 *)(*array), i); }
+int64 call_getbits(uint32 bsize, ptrszint *array, ptrszint i) {
+    return getbits(bsize, (uint8 *)(*array), i);
+}
 
-void call_setbits(uint32 bsize, ptrszint *array, ptrszint i, int64 val) { setbits(bsize, (uint8 *)(*array), i, val); }
+void call_setbits(uint32 bsize, ptrszint *array, ptrszint i, int64 val) {
+    setbits(bsize, (uint8 *)(*array), i, val);
+}
 
 int32 logical_drives() {
 #ifdef QB64_WINDOWS
@@ -979,21 +995,27 @@ device_struct *devices = (device_struct *)calloc(1000 + 1, sizeof(device_struct)
 uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
     return *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex);
 }
+
 void setDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex, uint8 value) {
     *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex) = value;
 }
+
 float getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
     return *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4);
 }
+
 void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
     *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4) = value;
 }
+
 float getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
     return *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4);
 }
+
 void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
     *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4) = value;
 }
+
 void setupDevice(device_struct *device) {
     int32 size = device->lastaxis * 4 + device->lastwheel * 4 + device->lastbutton;
     size += 8; // for appended ordering index
@@ -1006,6 +1028,7 @@ void setupDevice(device_struct *device) {
     device->connected = 1;
     device->used = 1;
 }
+
 int32 createDeviceEvent(device_struct *device) {
     uint8 *cp, *cp2;
     if (device->queued_events == device->max_events) { // expand/shift event buffer
@@ -1029,9 +1052,14 @@ int32 createDeviceEvent(device_struct *device) {
     int32 eventIndex = device->queued_events;
     return eventIndex;
 }
-void commitDeviceEvent(device_struct *device) { device->queued_events++; }
 
-int32 func__devices() { return device_last; }
+void commitDeviceEvent(device_struct *device) {
+    device->queued_events++;
+}
+
+int32 func__devices() {
+    return device_last;
+}
 
 int32 device_selected = 0;
 
@@ -1358,7 +1386,9 @@ void stop_timers() {
         ;
 }
 
-void start_timers() { ontimerthread_lock = 0; }
+void start_timers() {
+    ontimerthread_lock = 0;
+}
 
 int32 func__freetimer() {
     if (is_error_pending())
@@ -1613,6 +1643,7 @@ extern int64 display_lock_confirmed;
 extern int64 display_lock_released;
 
 uint32 r;
+
 void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
     if (disableEvents)
         return;
@@ -1650,7 +1681,9 @@ void evnt(uint32 linenumber, uint32 inclinenumber, const char *incfilename) {
 
 uint8 *redim_preserve_cmem_buffer = (uint8 *)malloc(65536); // used for temporary storage only (move to libqbx?)
 
-void division_by_zero_handler(int ignore) { error(11); }
+void division_by_zero_handler(int ignore) {
+    error(11);
+}
 
 // void SIGSEGV_handler(int ignore){
 //    error(256);//assume stack overflow? (the most likely cause)

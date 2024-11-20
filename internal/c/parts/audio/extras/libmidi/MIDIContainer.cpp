@@ -31,7 +31,9 @@ void midi_track_t::AddEvent(const midi_event_t &newEvent) {
     _Events.insert(it, newEvent);
 }
 
-void midi_track_t::RemoveEvent(size_t index) { _Events.erase(_Events.begin() + (int)index); }
+void midi_track_t::RemoveEvent(size_t index) {
+    _Events.erase(_Events.begin() + (int)index);
+}
 
 tempo_item_t::tempo_item_t(uint32_t time, uint32_t tempo) {
     Time = time;
@@ -124,7 +126,9 @@ bool sysex_table_t::GetItem(size_t index, const uint8_t *&data, std::size_t &siz
     return true;
 }
 
-void midi_metadata_table_t::AddItem(const midi_metadata_item_t &item) { _Items.push_back(item); }
+void midi_metadata_table_t::AddItem(const midi_metadata_item_t &item) {
+    _Items.push_back(item);
+}
 
 void midi_metadata_table_t::Append(const midi_metadata_table_t &data) {
     _Items.insert(_Items.end(), data._Items.begin(), data._Items.end());
@@ -154,9 +158,13 @@ void midi_metadata_table_t::AssignBitmap(std::vector<uint8_t>::const_iterator co
     _Bitmap.assign(begin, end);
 }
 
-std::size_t midi_metadata_table_t::GetCount() const { return _Items.size(); }
+std::size_t midi_metadata_table_t::GetCount() const {
+    return _Items.size();
+}
 
-const midi_metadata_item_t &midi_metadata_table_t::operator[](std::size_t p_index) const { return _Items[p_index]; }
+const midi_metadata_item_t &midi_metadata_table_t::operator[](std::size_t p_index) const {
+    return _Items[p_index];
+}
 
 void midi_container_t::Initialize(uint32_t format, uint32_t timeDivision) {
     _Format = format;
@@ -286,9 +294,13 @@ void midi_container_t::MergeTracks(const midi_container_t &source) {
         AddTrack(source._Tracks[i]);
 }
 
-void midi_container_t::SetTrackCount(uint32_t count) { _Tracks.resize(count); }
+void midi_container_t::SetTrackCount(uint32_t count) {
+    _Tracks.resize(count);
+}
 
-void midi_container_t::SetExtraMetaData(const midi_metadata_table_t &data) { _ExtraMetaData = data; }
+void midi_container_t::SetExtraMetaData(const midi_metadata_table_t &data) {
+    _ExtraMetaData = data;
+}
 
 void midi_container_t::ApplyHack(uint32_t hack) {
     switch (hack) {
@@ -676,9 +688,13 @@ uint32_t midi_container_t::GetDuration(size_t subSongIndex, bool ms /* = false *
     return ms ? TimestampToMS(Timestamp, SubSongIndex) : Timestamp;
 }
 
-uint32_t midi_container_t::GetFormat() const { return _Format; }
+uint32_t midi_container_t::GetFormat() const {
+    return _Format;
+}
 
-uint32_t midi_container_t::GetTrackCount() const { return (uint32_t)_Tracks.size(); }
+uint32_t midi_container_t::GetTrackCount() const {
+    return (uint32_t)_Tracks.size();
+}
 
 uint32_t midi_container_t::GetChannelCount(size_t subSongIndex) const {
     uint32_t Count = 0;

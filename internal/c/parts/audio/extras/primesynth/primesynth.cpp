@@ -41,7 +41,9 @@ double attenuationToAmplitude(double atten) {
     }
 }
 
-double amplitudeToAttenuation(double amp) { return -200.0 * std::log10(amp); }
+double amplitudeToAttenuation(double amp) {
+    return -200.0 * std::log10(amp);
+}
 
 double keyToHertz(double key) {
     if (key < 0.0) {
@@ -61,9 +63,13 @@ double keyToHertz(double key) {
     return 1.0;
 }
 
-double timecentToSecond(double tc) { return std::exp2(tc / 1200.0); }
+double timecentToSecond(double tc) {
+    return std::exp2(tc / 1200.0);
+}
 
-double absoluteCentToHertz(double ac) { return 8.176 * std::exp2(ac / 1200.0); }
+double absoluteCentToHertz(double ac) {
+    return 8.176 * std::exp2(ac / 1200.0);
+}
 
 double concave(double x) {
     if (x <= 0.0) {
@@ -86,7 +92,9 @@ double convex(double x) {
 }
 } // namespace conv
 
-StereoValue StereoValue::operator*(double b) const { return {left * b, right * b}; }
+StereoValue StereoValue::operator*(double b) const {
+    return {left * b, right * b};
+}
 
 StereoValue &StereoValue::operator+=(const StereoValue &b) {
     left += b.left;
@@ -94,7 +102,9 @@ StereoValue &StereoValue::operator+=(const StereoValue &b) {
     return *this;
 }
 
-StereoValue operator*(double a, const StereoValue &b) { return {a * b.left, a * b.right}; }
+StereoValue operator*(double a, const StereoValue &b) {
+    return {a * b.left, a * b.right};
+}
 
 std::string achToString(const char ach[20]) {
     std::string achstr;
@@ -197,9 +207,13 @@ GeneratorSet::GeneratorSet() {
     }
 }
 
-std::int16_t GeneratorSet::getOrDefault(sf::Generator type) const { return generators_.at(static_cast<std::size_t>(type)).amount; }
+std::int16_t GeneratorSet::getOrDefault(sf::Generator type) const {
+    return generators_.at(static_cast<std::size_t>(type)).amount;
+}
 
-void GeneratorSet::set(sf::Generator type, std::int16_t amount) { generators_.at(static_cast<std::size_t>(type)) = {true, amount}; }
+void GeneratorSet::set(sf::Generator type, std::int16_t amount) {
+    generators_.at(static_cast<std::size_t>(type)) = {true, amount};
+}
 
 void GeneratorSet::merge(const GeneratorSet &b) {
     for (std::size_t i = 0; i < NUM_GENERATORS; ++i) {
@@ -383,7 +397,9 @@ const ModulatorParameterSet &ModulatorParameterSet::getDefaultParameters() {
     return params;
 }
 
-const std::vector<sf::ModList> &ModulatorParameterSet::getParameters() const { return params_; }
+const std::vector<sf::ModList> &ModulatorParameterSet::getParameters() const {
+    return params_;
+}
 
 bool operator==(const sf::Modulator &a, const sf::Modulator &b) {
     return a.index.midi == b.index.midi && a.palette == b.palette && a.direction == b.direction && a.polarity == b.polarity && a.type == b.type;
@@ -424,9 +440,13 @@ void ModulatorParameterSet::mergeAndAdd(const ModulatorParameterSet &b) {
     }
 }
 
-bool Zone::Range::contains(std::int8_t value) const { return min <= value && value <= max; }
+bool Zone::Range::contains(std::int8_t value) const {
+    return min <= value && value <= max;
+}
 
-bool Zone::isInRange(std::int8_t key, std::int8_t velocity) const { return keyRange.contains(key) && velocityRange.contains(velocity); }
+bool Zone::isInRange(std::int8_t key, std::int8_t velocity) const {
+    return keyRange.contains(key) && velocityRange.contains(velocity);
+}
 
 void readBags(std::vector<Zone> &zones, std::vector<sf::Bag>::const_iterator bagBegin, std::vector<sf::Bag>::const_iterator bagEnd,
               const std::vector<sf::ModList> &mods, const std::vector<sf::GenList> &gens, sf::Generator indexGen) {
@@ -562,13 +582,21 @@ SoundFont::SoundFont(const std::string &filename) {
     }
 }
 
-const std::string &SoundFont::getName() const { return name_; }
+const std::string &SoundFont::getName() const {
+    return name_;
+}
 
-const std::vector<Sample> &SoundFont::getSamples() const { return samples_; }
+const std::vector<Sample> &SoundFont::getSamples() const {
+    return samples_;
+}
 
-const std::vector<Instrument> &SoundFont::getInstruments() const { return instruments_; }
+const std::vector<Instrument> &SoundFont::getInstruments() const {
+    return instruments_;
+}
 
-const std::vector<std::shared_ptr<const Preset>> &SoundFont::getPresetPtrs() const { return presets_; }
+const std::vector<std::shared_ptr<const Preset>> &SoundFont::getPresetPtrs() const {
+    return presets_;
+}
 
 void SoundFont::readInfoChunk(std::ifstream &ifs, std::size_t size) {
     for (std::size_t s = 0; s < size;) {
@@ -726,15 +754,21 @@ void SoundFont::readPdtaChunk(std::ifstream &ifs, std::size_t size) {
 }
 
 namespace midi {
-std::uint16_t joinBytes(std::uint8_t msb, std::uint8_t lsb) { return (static_cast<std::uint16_t>(msb) << 7) + static_cast<std::uint16_t>(lsb); }
+std::uint16_t joinBytes(std::uint8_t msb, std::uint8_t lsb) {
+    return (static_cast<std::uint16_t>(msb) << 7) + static_cast<std::uint16_t>(lsb);
+}
 } // namespace midi
 
 Envelope::Envelope(double outputRate, unsigned int interval)
     : effectiveOutputRate_(outputRate / interval), params_(), phase_(Phase::Delay), phaseSteps_(0), value_(1.0) {}
 
-Envelope::Phase Envelope::getPhase() const { return phase_; }
+Envelope::Phase Envelope::getPhase() const {
+    return phase_;
+}
 
-double Envelope::getValue() const { return value_; }
+double Envelope::getValue() const {
+    return value_;
+}
 
 void Envelope::setParameter(Phase phase, double param) {
     if (phase == Phase::Sustain) {
@@ -805,9 +839,13 @@ void Envelope::changePhase(Phase phase) {
 
 Modulator::Modulator(const sf::ModList &param) : param_(param), source_(0.0), amountSource_(1.0), value_(0.0) {}
 
-sf::Generator Modulator::getDestination() const { return param_.modDestOper; }
+sf::Generator Modulator::getDestination() const {
+    return param_.modDestOper;
+}
 
-std::int16_t Modulator::getAmount() const { return param_.modAmount; }
+std::int16_t Modulator::getAmount() const {
+    return param_.modAmount;
+}
 
 bool Modulator::canBeNegative() const {
     if (param_.modTransOper == sf::Transform::AbsoluteValue || param_.modAmount == 0) {
@@ -830,7 +868,9 @@ bool Modulator::canBeNegative() const {
     return true;
 }
 
-double Modulator::getValue() const { return value_; }
+double Modulator::getValue() const {
+    return value_;
+}
 
 double map(double value, const sf::Modulator &mod) {
     if (mod.palette == sf::ControllerPalette::General && mod.index.general == sf::GeneralController::PitchWheel) {
@@ -913,7 +953,9 @@ double transform(double value, sf::Transform transform) {
     throw std::invalid_argument("unknown transform");
 }
 
-void Modulator::calculateValue() { value_ = transform(param_.modAmount * source_ * amountSource_, param_.modTransOper); }
+void Modulator::calculateValue() {
+    value_ = transform(param_.modAmount * source_ * amountSource_, param_.modTransOper);
+}
 
 static constexpr unsigned int CALC_INTERVAL = 64;
 
@@ -984,13 +1026,21 @@ Voice::Voice(std::size_t noteID, double outputRate, const Sample &sample, const 
     }
 }
 
-std::size_t Voice::getNoteID() const { return noteID_; }
+std::size_t Voice::getNoteID() const {
+    return noteID_;
+}
 
-std::uint8_t Voice::getActualKey() const { return actualKey_; }
+std::uint8_t Voice::getActualKey() const {
+    return actualKey_;
+}
 
-std::int16_t Voice::getExclusiveClass() const { return generators_.getOrDefault(sf::Generator::ExclusiveClass); }
+std::int16_t Voice::getExclusiveClass() const {
+    return generators_.getOrDefault(sf::Generator::ExclusiveClass);
+}
 
-const Voice::State &Voice::getStatus() const { return status_; }
+const Voice::State &Voice::getStatus() const {
+    return status_;
+}
 
 StereoValue Voice::render() const {
     const std::uint32_t i = index_.getIntegerPart();
@@ -999,7 +1049,9 @@ StereoValue Voice::render() const {
     return amp_ * volume_ * (interpolated / INT16_MAX);
 }
 
-void Voice::setPercussion(bool percussion) { percussion_ = percussion; }
+void Voice::setPercussion(bool percussion) {
+    percussion_ = percussion;
+}
 
 void Voice::updateSFController(sf::GeneralController controller, double value) {
     for (auto &mod : modulators_) {
@@ -1105,7 +1157,9 @@ void Voice::update() {
     }
 }
 
-double Voice::getModulatedGenerator(sf::Generator type) const { return modulated_.at(static_cast<std::size_t>(type)); }
+double Voice::getModulatedGenerator(sf::Generator type) const {
+    return modulated_.at(static_cast<std::size_t>(type));
+}
 
 StereoValue calculatePannedVolume(double pan) {
     if (pan <= -500.0) {
@@ -1219,7 +1273,9 @@ midi::Bank Channel::getBank() const {
             controllers_.at(static_cast<std::size_t>(midi::ControlChange::BankSelectLSB))};
 }
 
-bool Channel::hasPreset() const { return static_cast<bool>(preset_); }
+bool Channel::hasPreset() const {
+    return static_cast<bool>(preset_);
+}
 
 void Channel::noteOff(std::uint8_t key) {
     const bool sustained = controllers_.at(static_cast<std::size_t>(midi::ControlChange::Sustain)) >= 64;
@@ -1397,7 +1453,9 @@ void Channel::pitchBend(std::uint16_t value) {
     }
 }
 
-void Channel::setPreset(const std::shared_ptr<const Preset> &preset) { preset_ = preset; }
+void Channel::setPreset(const std::shared_ptr<const Preset> &preset) {
+    preset_ = preset;
+}
 
 StereoValue Channel::render() {
     StereoValue sum{0.0, 0.0};
@@ -1517,9 +1575,13 @@ void Synthesizer::render_s16(int16_t *buffer, size_t samples) {
     }
 }
 
-void Synthesizer::loadSoundFont(const std::string &filename) { soundFonts_.emplace_back(std::make_unique<SoundFont>(filename)); }
+void Synthesizer::loadSoundFont(const std::string &filename) {
+    soundFonts_.emplace_back(std::make_unique<SoundFont>(filename));
+}
 
-void Synthesizer::setVolume(double volume) { volume_ = std::max(0.0, volume); }
+void Synthesizer::setVolume(double volume) {
+    volume_ = std::max(0.0, volume);
+}
 
 void Synthesizer::setMIDIStandard(midi::Standard midiStandard, bool fixed) {
     midiStd_ = midiStandard;

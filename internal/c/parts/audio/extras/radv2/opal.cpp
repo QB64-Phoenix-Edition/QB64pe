@@ -106,7 +106,10 @@ void GenerateTables() {
 //==================================================================================================
 // Constructor/destructor.
 //==================================================================================================
-Opal::Opal(int sample_rate) { Init(sample_rate); }
+Opal::Opal(int sample_rate) {
+    Init(sample_rate);
+}
+
 //--------------------------------------------------------------------------------------------------
 Opal::~Opal() {}
 
@@ -552,6 +555,7 @@ void Opal::Channel::SetFrequencyLow(uint16_t freq) {
     Freq = (Freq & 0x300) | (freq & 0xFF);
     ComputePhaseStep();
 }
+
 //--------------------------------------------------------------------------------------------------
 void Opal::Channel::SetFrequencyHigh(uint16_t freq) {
 
@@ -584,28 +588,38 @@ void Opal::Channel::SetKeyOn(bool on) {
 //==================================================================================================
 // Enable left stereo channel.
 //==================================================================================================
-void Opal::Channel::SetLeftEnable(bool on) { LeftEnable = on; }
+void Opal::Channel::SetLeftEnable(bool on) {
+    LeftEnable = on;
+}
 
 //==================================================================================================
 // Enable right stereo channel.
 //==================================================================================================
-void Opal::Channel::SetRightEnable(bool on) { RightEnable = on; }
+void Opal::Channel::SetRightEnable(bool on) {
+    RightEnable = on;
+}
 
 //==================================================================================================
 // Set the channel feedback amount.
 //==================================================================================================
-void Opal::Channel::SetFeedback(uint16_t val) { FeedbackShift = val ? 9 - val : 0; }
+void Opal::Channel::SetFeedback(uint16_t val) {
+    FeedbackShift = val ? 9 - val : 0;
+}
 
 //==================================================================================================
 // Set frequency modulation/additive modulation
 //==================================================================================================
-void Opal::Channel::SetModulationType(uint16_t type) { ModulationType = type; }
+void Opal::Channel::SetModulationType(uint16_t type) {
+    ModulationType = type;
+}
 
 //==================================================================================================
 // Compute the stepping factor for the operator waveform phase based on the frequency and octave
 // values of the channel.
 //==================================================================================================
-void Opal::Channel::ComputePhaseStep() { PhaseStep = uint32_t(Freq) << Octave; }
+void Opal::Channel::ComputePhaseStep() {
+    PhaseStep = uint32_t(Freq) << Octave;
+}
 
 //==================================================================================================
 // Compute the key scale number and key scale levels.
@@ -893,18 +907,24 @@ void Opal::Operator::SetKeyOn(bool on) {
 //==================================================================================================
 // Enable amplitude vibrato.
 //==================================================================================================
-void Opal::Operator::SetTremoloEnable(bool on) { TremoloEnable = on; }
+void Opal::Operator::SetTremoloEnable(bool on) {
+    TremoloEnable = on;
+}
 
 //==================================================================================================
 // Enable frequency vibrato.
 //==================================================================================================
-void Opal::Operator::SetVibratoEnable(bool on) { VibratoEnable = on; }
+void Opal::Operator::SetVibratoEnable(bool on) {
+    VibratoEnable = on;
+}
 
 //==================================================================================================
 // Sets whether we release or sustain during the sustain phase of the envelope.  'true' is to
 // sustain, otherwise release.
 //==================================================================================================
-void Opal::Operator::SetSustainMode(bool on) { SustainMode = on; }
+void Opal::Operator::SetSustainMode(bool on) {
+    SustainMode = on;
+}
 
 //==================================================================================================
 // Key scale rate.  Sets how much the Key Scaling Number affects the envelope rates.
@@ -943,7 +963,9 @@ void Opal::Operator::SetKeyScale(uint16_t scale) {
 //==================================================================================================
 // Sets the output level (volume) of the operator.
 //==================================================================================================
-void Opal::Operator::SetOutputLevel(uint16_t level) { OutputLevel = level * 4; }
+void Opal::Operator::SetOutputLevel(uint16_t level) {
+    OutputLevel = level * 4;
+}
 
 //==================================================================================================
 // Operator attack rate.
@@ -987,7 +1009,9 @@ void Opal::Operator::SetReleaseRate(uint16_t rate) {
 //==================================================================================================
 // Assign the waveform this operator will use.
 //==================================================================================================
-void Opal::Operator::SetWaveform(uint16_t wave) { Waveform = wave & 7; }
+void Opal::Operator::SetWaveform(uint16_t wave) {
+    Waveform = wave & 7;
+}
 
 //==================================================================================================
 // Compute actual rate from register rate.  From the Yamaha data sheet:

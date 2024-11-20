@@ -63,7 +63,10 @@
 #ifndef _countof
 #    ifdef __cplusplus
 #        include <cstddef>
-template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept { return N; }
+
+template <typename T, size_t N> static inline constexpr size_t _countof(T const (&)[N]) noexcept {
+    return N;
+}
 #    else
 #        define _countof(Array_) (sizeof(Array_) / sizeof(Array_[0]))
 #    endif

@@ -110,17 +110,29 @@ static const char *human_error(int32_t errorcode) {
     // clang-format on
 }
 
-void clear_error() { new_error = 0; }
+void clear_error() {
+    new_error = 0;
+}
 
-double get_error_erl() { return error_erl; }
+double get_error_erl() {
+    return error_erl;
+}
 
-uint32_t get_error_err() { return error_err; }
+uint32_t get_error_err() {
+    return error_err;
+}
 
-int32_t func__errorline() { return ercl; }
+int32_t func__errorline() {
+    return ercl;
+}
 
-int32_t func__inclerrorline() { return inclercl; }
+int32_t func__inclerrorline() {
+    return inclercl;
+}
 
-qbs *func__inclerrorfile() { return qbs_new_txt(includedfilename); }
+qbs *func__inclerrorfile() {
+    return qbs_new_txt(includedfilename);
+}
 
 void error_set_line(uint32_t errorline, uint32_t incerrorline, const char *incfilename) {
     ercl = errorline;

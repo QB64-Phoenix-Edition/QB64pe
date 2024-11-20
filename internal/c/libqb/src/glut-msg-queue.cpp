@@ -62,9 +62,13 @@ void libqb_process_glut_queue() {
     }
 }
 
-void libqb_glut_set_cursor(int style) { libqb_queue_glut_message(new glut_message_set_cursor(style)); }
+void libqb_glut_set_cursor(int style) {
+    libqb_queue_glut_message(new glut_message_set_cursor(style));
+}
 
-void libqb_glut_warp_pointer(int x, int y) { libqb_queue_glut_message(new glut_message_warp_pointer(x, y)); }
+void libqb_glut_warp_pointer(int x, int y) {
+    libqb_queue_glut_message(new glut_message_warp_pointer(x, y));
+}
 
 static bool is_static_glut_value(int id) {
     return id == GLUT_WINDOW_Y || id == GLUT_WINDOW_X
@@ -105,15 +109,25 @@ int libqb_glut_get(int id) {
     return msg.response_value;
 }
 
-void libqb_glut_iconify_window() { libqb_queue_glut_message(new glut_message_iconify_window()); }
+void libqb_glut_iconify_window() {
+    libqb_queue_glut_message(new glut_message_iconify_window());
+}
 
-void libqb_glut_position_window(int x, int y) { libqb_queue_glut_message(new glut_message_position_window(x, y)); }
+void libqb_glut_position_window(int x, int y) {
+    libqb_queue_glut_message(new glut_message_position_window(x, y));
+}
 
-void libqb_glut_show_window() { libqb_queue_glut_message(new glut_message_show_window()); }
+void libqb_glut_show_window() {
+    libqb_queue_glut_message(new glut_message_show_window());
+}
 
-void libqb_glut_hide_window() { libqb_queue_glut_message(new glut_message_hide_window()); }
+void libqb_glut_hide_window() {
+    libqb_queue_glut_message(new glut_message_hide_window());
+}
 
-void libqb_glut_set_window_title(const char *title) { libqb_queue_glut_message(new glut_message_set_window_title(title)); }
+void libqb_glut_set_window_title(const char *title) {
+    libqb_queue_glut_message(new glut_message_set_window_title(title));
+}
 
 void libqb_glut_exit_program(int exitcode) {
     glut_message_exit_program msg(exitcode);

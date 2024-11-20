@@ -29,11 +29,15 @@ void libqb_start_main_thread(int argc, char **argv) {
 
 void libqb_start_glut_thread() {}
 
-bool libqb_is_glut_up() { return false; }
+bool libqb_is_glut_up() {
+    return false;
+}
 
 void libqb_process_glut_queue() {}
 
-void libqb_glut_set_cursor(int style) { (void)style; }
+void libqb_glut_set_cursor(int style) {
+    (void)style;
+}
 
 void libqb_glut_warp_pointer(int x, int y) {
     (void)x;
@@ -56,9 +60,15 @@ void libqb_glut_show_window() {}
 
 void libqb_glut_hide_window() {}
 
-void libqb_glut_set_window_title(const char *title) { (void)title; }
+void libqb_glut_set_window_title(const char *title) {
+    (void)title;
+}
 
-void libqb_glut_exit_program(int exitcode) { libqb_exit(exitcode); }
+void libqb_glut_exit_program(int exitcode) {
+    libqb_exit(exitcode);
+}
 
 // Since there's no GLUT thread to deal with we can just exit() like normal
-void libqb_exit(int code) { exit(code); }
+void libqb_exit(int code) {
+    exit(code);
+}

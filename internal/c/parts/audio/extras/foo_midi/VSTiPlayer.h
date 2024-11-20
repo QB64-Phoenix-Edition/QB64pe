@@ -25,9 +25,13 @@ class VSTiPlayer : public MIDIPlayer {
     VSTiPlayer(InstrumentBankManager *ibm);
     virtual ~VSTiPlayer();
 
-    virtual uint32_t GetActiveVoiceCount() const override { return 128; };
+    virtual uint32_t GetActiveVoiceCount() const override {
+        return 128;
+    };
 
-    virtual uint32_t GetSampleBlockSize() const noexcept override { return renderFrames; }
+    virtual uint32_t GetSampleBlockSize() const noexcept override {
+        return renderFrames;
+    }
 
     // Configuration
     void GetChunk(std::vector<uint8_t> &data);

@@ -25,6 +25,7 @@ struct midi_processor_options_t {
     // a740g: constructor here for the const DefaultOptions below
     midi_processor_options_t(uint16_t loopExpansion, bool writeBarMarkers, bool writeSysExNames)
         : _LoopExpansion(loopExpansion), _WriteBarMarkers(writeBarMarkers), _WriteSysExNames(writeSysExNames) {}
+
     midi_processor_options_t() = default;
 };
 

@@ -32,13 +32,19 @@ OPLPlayer::~OPLPlayer() {
 }
 
 // ----------------------------------------------------------------------------
-bool OPLPlayer::loadPatches(const char *path) { return OPLPatch::load(m_patches, path); }
+bool OPLPlayer::loadPatches(const char *path) {
+    return OPLPatch::load(m_patches, path);
+}
 
 // ----------------------------------------------------------------------------
-bool OPLPlayer::loadPatches(FILE *file, int offset, size_t size) { return OPLPatch::load(m_patches, file, offset, size); }
+bool OPLPlayer::loadPatches(FILE *file, int offset, size_t size) {
+    return OPLPatch::load(m_patches, file, offset, size);
+}
 
 // ----------------------------------------------------------------------------
-bool OPLPlayer::loadPatches(const uint8_t *data, size_t size) { return OPLPatch::load(m_patches, data, size); }
+bool OPLPlayer::loadPatches(const uint8_t *data, size_t size) {
+    return OPLPatch::load(m_patches, data, size);
+}
 
 // ----------------------------------------------------------------------------
 void OPLPlayer::generate(float *data, unsigned numSamples) {
@@ -158,7 +164,9 @@ void OPLPlayer::runSamples(int chip, unsigned count) {
 }
 
 // ----------------------------------------------------------------------------
-void OPLPlayer::write(int chip, uint16_t addr, uint8_t data) { m_opl3[chip]->Port(addr, data); }
+void OPLPlayer::write(int chip, uint16_t addr, uint8_t data) {
+    m_opl3[chip]->Port(addr, data);
+}
 
 // ----------------------------------------------------------------------------
 OPLVoice *OPLPlayer::findVoice(uint8_t channel, const OPLPatch *patch, uint8_t note) {
@@ -259,7 +267,9 @@ const OPLPatch *OPLPlayer::findPatch(uint8_t channel, uint8_t note) const {
 }
 
 // ----------------------------------------------------------------------------
-bool OPLPlayer::useFourOp(const OPLPatch *patch) const { return patch->fourOp; }
+bool OPLPlayer::useFourOp(const OPLPatch *patch) const {
+    return patch->fourOp;
+}
 
 // ----------------------------------------------------------------------------
 std::pair<bool, bool> OPLPlayer::activeCarriers(const OPLVoice &voice) const {
@@ -627,7 +637,9 @@ void OPLPlayer::midiSysEx(const uint8_t *data, uint32_t length) {
 }
 
 // ----------------------------------------------------------------------------
-double OPLPlayer::midiCalcBend(double semitones) { return pow(2, semitones / 12.0); }
+double OPLPlayer::midiCalcBend(double semitones) {
+    return pow(2, semitones / 12.0);
+}
 
 // ----------------------------------------------------------------------------
 int OPLPlayer::activeVoiceCount() const {

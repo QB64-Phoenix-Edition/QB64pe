@@ -32,7 +32,9 @@ void libqb_buffer_clear(struct libqb_buffer *buffer) {
     libqb_buffer_init(buffer);
 }
 
-size_t libqb_buffer_length(struct libqb_buffer *buffer) { return buffer->total_length; }
+size_t libqb_buffer_length(struct libqb_buffer *buffer) {
+    return buffer->total_length;
+}
 
 size_t libqb_buffer_read(struct libqb_buffer *buffer, char *out, size_t length) {
     size_t actual_length = 0;

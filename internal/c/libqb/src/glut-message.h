@@ -34,7 +34,9 @@ class glut_message {
             delete this;
     }
 
-    void wait_for_response() { completion_wait(finished); }
+    void wait_for_response() {
+        completion_wait(finished);
+    }
 
     virtual ~glut_message() {
         if (finished) {
@@ -107,9 +109,13 @@ class glut_message_set_window_title : public glut_message {
     char *newTitle;
     void execute();
 
-    glut_message_set_window_title(const char *title) : glut_message(false) { newTitle = strdup(title); }
+    glut_message_set_window_title(const char *title) : glut_message(false) {
+        newTitle = strdup(title);
+    }
 
-    virtual ~glut_message_set_window_title() { free(newTitle); }
+    virtual ~glut_message_set_window_title() {
+        free(newTitle);
+    }
 };
 
 class glut_message_exit_program : public glut_message {

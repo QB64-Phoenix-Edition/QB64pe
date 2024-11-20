@@ -43,8 +43,14 @@ class Opal {
 
       public:
         Operator();
-        void SetMaster(Opal *opal) { Master = opal; }
-        void SetChannel(Channel *chan) { Chan = chan; }
+
+        void SetMaster(Opal *opal) {
+            Master = opal;
+        }
+
+        void SetChannel(Channel *chan) {
+            Chan = chan;
+        }
 
         int16_t Output(uint16_t keyscalenum, uint32_t phase_step, int16_t vibrato, int16_t mod = 0, int16_t fbshift = 0);
 
@@ -105,7 +111,11 @@ class Opal {
 
       public:
         Channel();
-        void SetMaster(Opal *opal) { Master = opal; }
+
+        void SetMaster(Opal *opal) {
+            Master = opal;
+        }
+
         void SetOperators(Operator *a, Operator *b, Operator *c, Operator *d) {
             Op[0] = a;
             Op[1] = b;
@@ -122,8 +132,14 @@ class Opal {
         }
 
         void Output(int16_t &left, int16_t &right);
-        void SetEnable(bool on) { Enable = on; }
-        void SetChannelPair(Channel *pair) { ChannelPair = pair; }
+
+        void SetEnable(bool on) {
+            Enable = on;
+        }
+
+        void SetChannelPair(Channel *pair) {
+            ChannelPair = pair;
+        }
 
         void SetFrequencyLow(uint16_t freq);
         void SetFrequencyHigh(uint16_t freq);
@@ -134,11 +150,25 @@ class Opal {
         void SetFeedback(uint16_t val);
         void SetModulationType(uint16_t type);
 
-        uint16_t GetFreq() const { return Freq; }
-        uint16_t GetOctave() const { return Octave; }
-        uint16_t GetKeyScaleNumber() const { return KeyScaleNumber; }
-        uint16_t GetModulationType() const { return ModulationType; }
-        Channel *GetChannelPair() const { return ChannelPair; }
+        uint16_t GetFreq() const {
+            return Freq;
+        }
+
+        uint16_t GetOctave() const {
+            return Octave;
+        }
+
+        uint16_t GetKeyScaleNumber() const {
+            return KeyScaleNumber;
+        }
+
+        uint16_t GetModulationType() const {
+            return ModulationType;
+        }
+
+        Channel *GetChannelPair() const {
+            return ChannelPair;
+        }
 
         void ComputeKeyScaleNumber();
 

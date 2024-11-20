@@ -288,7 +288,9 @@ qbs_rtrim_nextchar2:
     return tqbs;
 }
 
-qbs *qbs__trim(qbs *str) { return qbs_rtrim(qbs_ltrim(str)); }
+qbs *qbs__trim(qbs *str) {
+    return qbs_rtrim(qbs_ltrim(str));
+}
 
 int32_t func__str_nc_compare(qbs *s1, qbs *s2) {
     int32_t limit, l1, l2;

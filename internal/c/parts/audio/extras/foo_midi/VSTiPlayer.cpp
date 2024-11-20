@@ -26,7 +26,9 @@ VSTiPlayer::VSTiPlayer(InstrumentBankManager *ibm) : MIDIPlayer(), instrumentBan
     _VendorVersion = 0;
 }
 
-VSTiPlayer::~VSTiPlayer() { Shutdown(); }
+VSTiPlayer::~VSTiPlayer() {
+    Shutdown();
+}
 
 void VSTiPlayer::GetChunk(std::vector<uint8_t> &chunk) {
     WriteBytes(static_cast<uint32_t>(VSTHostCommand::GetChunk));
@@ -557,7 +559,9 @@ uint32_t VSTiPlayer::ReadBytesOverlapped(void *data, uint32_t size) noexcept {
     return 0;
 }
 
-void VSTiPlayer::WriteBytes(uint32_t code) noexcept { WriteBytesOverlapped(&code, sizeof(code)); }
+void VSTiPlayer::WriteBytes(uint32_t code) noexcept {
+    WriteBytesOverlapped(&code, sizeof(code));
+}
 
 void VSTiPlayer::WriteBytesOverlapped(const void *data, uint32_t size) noexcept {
     if ((size == 0) || !IsHostRunning())

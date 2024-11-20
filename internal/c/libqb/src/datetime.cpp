@@ -20,6 +20,7 @@
 #    define ORWL_GIGA UINT64_C(1000000000)
 static double orwl_timebase = 0.0;
 static uint64_t orwl_timestart = 0;
+
 static int64_t orwl_gettime(void) {
     if (!orwl_timestart) {
         mach_timebase_info_data_t tb = {0};
@@ -51,9 +52,13 @@ int64_t GetTicks() {
     return (tp.tv_sec * 1000 + tp.tv_nsec / 1000000) - initial_tick;
 }
 #elif defined QB64_MACOSX
-int64_t GetTicks() { return orwl_gettime(); }
+int64_t GetTicks() {
+    return orwl_gettime();
+}
 #else
-int64_t GetTicks() { return ((((int64_t)clock()) * ((int64_t)1000)) / ((int64_t)CLOCKS_PER_SEC)); }
+int64_t GetTicks() {
+    return ((((int64_t)clock()) * ((int64_t)1000)) / ((int64_t)CLOCKS_PER_SEC));
+}
 #endif
 
 static uint64_t millis_since_midnight() {

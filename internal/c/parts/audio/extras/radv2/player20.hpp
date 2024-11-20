@@ -95,6 +95,7 @@ class RADPlayer {
         uint16_t CurrFreq;
         int8_t CurrOctave;
         CEffects FX;
+
         struct CRiff {
             CEffects FX;
             uint8_t *Track;
@@ -110,17 +111,42 @@ class RADPlayer {
 
   public:
     RADPlayer() : Initialised(false) {}
+
     void Init(const void *tune, void (*opl3)(void *, uint16_t, uint8_t), void *arg);
     void Stop();
     bool Update();
-    int GetHertz() const { return Hertz; }
-    int GetPlayTimeInSeconds() const { return PlayTime / Hertz; }
-    int GetTunePos() const { return Order; }
-    int GetTuneLength() const { return OrderListSize; }
-    int GetTuneLine() const { return Line; }
-    void SetMasterVolume(int vol) { MasterVol = vol; }
-    int GetMasterVolume() const { return MasterVol; }
-    int GetSpeed() const { return Speed; }
+
+    int GetHertz() const {
+        return Hertz;
+    }
+
+    int GetPlayTimeInSeconds() const {
+        return PlayTime / Hertz;
+    }
+
+    int GetTunePos() const {
+        return Order;
+    }
+
+    int GetTuneLength() const {
+        return OrderListSize;
+    }
+
+    int GetTuneLine() const {
+        return Line;
+    }
+
+    void SetMasterVolume(int vol) {
+        MasterVol = vol;
+    }
+
+    int GetMasterVolume() const {
+        return MasterVol;
+    }
+
+    int GetSpeed() const {
+        return Speed;
+    }
 
     /* BEGIN MEGAZEUX ADDITIONS */
 
@@ -151,11 +177,15 @@ class RADPlayer {
     void LoadInstFeedbackOPL3(int channum, int which, uint8_t fb);
     void Portamento(uint16_t channum, CEffects *fx, int8_t amount, bool toneslide);
     void Transpose(int8_t note, int8_t octave);
+
     void SetOPL3(uint16_t reg, uint8_t val) {
         OPL3Regs[reg] = val;
         OPL3(OPL3Arg, reg, val);
     }
-    uint8_t GetOPL3(uint16_t reg) const { return OPL3Regs[reg]; }
+
+    uint8_t GetOPL3(uint16_t reg) const {
+        return OPL3Regs[reg];
+    }
 
     /* BEGIN MEGAZEUX ADDITIONS */
 
@@ -208,6 +238,7 @@ class RADPlayer {
     static const uint16_t OpOffsets3[9][4];
     static const bool AlgCarriers[7][4];
 };
+
 //--------------------------------------------------------------------------------------------------
 const int8_t RADPlayer::NoteSize[] = {0, 2, 1, 3, 1, 3, 2, 4};
 const uint16_t RADPlayer::ChanOffsets3[9] = {0, 1, 2, 0x100, 0x101, 0x102, 6, 7, 8};             // OPL3 first channel
@@ -1249,6 +1280,7 @@ void RADPlayer::Transpose(int8_t note, int8_t octave) {
 //==================================================================================================
 #if RAD_DETECT_REPEATS
 static void RADPlayerDummyOPL3(void *arg, uint16_t reg, uint8_t data) {}
+
 //--------------------------------------------------------------------------------------------------
 uint32_t RADPlayer::ComputeTotalTime() {
 
@@ -1427,7 +1459,9 @@ uint8_t *RADPlayer::SkipToLine10(uint8_t *trk, uint8_t linenum) {
 // With Opal, these were originally reversed, so flip the KSL bits when loading RAD v2s.
 // -Lachesis
 //==================================================================================================
-uint8_t RADPlayer::FixRadv21KSLVolume(uint8_t val) { return ((val & 0x80) >> 1) | ((val & 0x40) << 1) | (val & 0x3F); }
+uint8_t RADPlayer::FixRadv21KSLVolume(uint8_t val) {
+    return ((val & 0x80) >> 1) | ((val & 0x40) << 1) | (val & 0x3F);
+}
 
 //==================================================================================================
 // Set the current order and line. -Lachesis

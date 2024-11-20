@@ -6,7 +6,9 @@
 #include "qbs.h"
 
 #ifndef QB64_WINDOWS
-static inline void ZeroMemory(void *ptr, size_t bytes) { ::memset(ptr, 0, bytes); }
+static inline void ZeroMemory(void *ptr, size_t bytes) {
+    ::memset(ptr, 0, bytes);
+}
 #endif
 
 int32 func__source();

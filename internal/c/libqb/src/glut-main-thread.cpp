@@ -133,7 +133,9 @@ void libqb_start_glut_thread() {
 }
 
 // Checks whether the GLUT thread is running
-bool libqb_is_glut_up() { return glut_is_started; }
+bool libqb_is_glut_up() {
+    return glut_is_started;
+}
 
 void libqb_glut_presetup(int argc, char **argv) {
     if (!screen_hide) {

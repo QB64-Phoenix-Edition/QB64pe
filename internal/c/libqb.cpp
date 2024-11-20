@@ -58,7 +58,9 @@ int32 func__getconsoleinput(); // declare here, so we can use with SLEEP and END
 // This next block used to be in common.cpp; put here until I can find a better
 // place for it (LC, 2018-01-05)
 
-uint32 rotateLeft(uint32 word, uint32 shift) { return (word << shift) | (word >> (32 - shift)); }
+uint32 rotateLeft(uint32 word, uint32 shift) {
+    return (word << shift) | (word >> (32 - shift));
+}
 
 #ifdef QB64_UNIX
 #    include <libgen.h> //required for dirname()
@@ -75,12 +77,16 @@ Window X11_window;
 
 int32 x11_locked = 0;
 int32 x11_lock_request = 0;
+
 void x11_lock() {
     x11_lock_request = 1;
     while (x11_locked == 0)
         Sleep(1);
 }
-void x11_unlock() { x11_locked = 0; }
+
+void x11_unlock() {
+    x11_locked = 0;
+}
 
 /*
     Logging for QB64 developers (when an alert() just isn't enough)
@@ -94,16 +100,19 @@ void x11_unlock() { x11_locked = 0; }
 int32 allow_logging = 1;
 std::ofstream log_file;
 int32 log_file_opened = 0;
+
 void open_log_file() {
     if (log_file_opened == 0) {
         log_file.open("log.txt", std::ios_base::out | std::ios_base::trunc);
         log_file_opened = 1;
     }
 }
+
 void log_event(char *x) {
     open_log_file();
     log_file << x;
 }
+
 void log_event(int32 x) {
     open_log_file();
     char str[1000];
@@ -185,7 +194,10 @@ int32 resize_event_y = 0;
 
 int32 ScreenResizeScale = 0;
 int32 ScreenResize = 0;
-extern "C" int QB64_Resizable() { return ScreenResize; }
+
+extern "C" int QB64_Resizable() {
+    return ScreenResize;
+}
 
 int32 sub_gl_called = 0;
 
@@ -423,6 +435,7 @@ struct display_frame_struct {
     int32 h;
     int32 bytes; // w*h*4
 };
+
 display_frame_struct display_frame[3];
 int64 display_frame_order_next = 1;
 #define DISPLAY_FRAME_STATE__EMPTY 1
@@ -453,6 +466,7 @@ struct special_handle_struct {
     // Http streams use this as an EOF flag
     ptrszint index;
 };
+
 list *special_handles = NULL;
 
 enum class stream_type {
@@ -473,6 +487,7 @@ struct stream_struct {
 
     ptrszint index; // an index or pointer to the type's object
 };
+
 list *stream_handles = NULL;
 
 void stream_free(stream_struct *st) {
@@ -495,12 +510,14 @@ void connection_close(ptrszint i);
 struct RENDER_STATE_DEST { // could be the primary render target or a FBO
     int32 ignore;          // at present no relevant states appear to be FBO specific
 };
+
 struct RENDER_STATE_SOURCE { // texture states
     int32 smooth_stretched;
     int32 smooth_shrunk;
     int32 texture_wrap;
     int32 PO2_fix;
 };
+
 struct RENDER_STATE_GLOBAL { // settings not bound to specific source/target
     RENDER_STATE_DEST *dest;
     RENDER_STATE_SOURCE *source;
@@ -511,6 +528,7 @@ struct RENDER_STATE_GLOBAL { // settings not bound to specific source/target
     int32 depthbuffer_mode;
     int32 cull_mode;
 };
+
 RENDER_STATE_GLOBAL render_state;
 RENDER_STATE_DEST dest_render_state0;
 #define VIEW_MODE__UNKNOWN 0
@@ -563,6 +581,7 @@ struct hardware_img_struct {
     int32 PO2_w; // if PO2_FIX__EXPANDED/MIPMAPPED, these are the texture size
     int32 PO2_h;
 };
+
 list *hardware_img_handles = NULL;
 
 int32 first_hardware_command = 0;          // only set once
@@ -574,15 +593,18 @@ struct hardware_graphics_command_struct {
     int64 order;        // which _DISPLAY event to bind the operation to
     int32 next_command; // the handle of the next hardware_graphics_command of the same display-order, of 0 if last
     int64 command;      // the command type, actually a set of bit flags
+
     // Bit 00: Decimal value 000001: _PUTIMAGE
     union {
         int32 option;
         int32 src_img; // MUST be a hardware handle
     };
+
     union {
         int32 dst_img; // MUST be a hardware handle or 0 for the default 2D rendering context
         int32 target;
     };
+
     float src_x1;
     float src_y1;
     float src_x2;
@@ -604,6 +626,7 @@ struct hardware_graphics_command_struct {
     int32 use_alpha; // 0 or 1 (whether to refer to the alpha component of pixel values)
     int32 remove;
 };
+
 list *hardware_graphics_command_handles = NULL;
 #define HARDWARE_GRAPHICS_COMMAND__PUTIMAGE 1
 #define HARDWARE_GRAPHICS_COMMAND__FREEIMAGE_REQUEST 2
@@ -878,7 +901,10 @@ hardware_img_struct *get_hardware_img(int32 handle) {
         return NULL;
     return img;
 }
-int32 get_hardware_img_index(int32 handle) { return handle - HARDWARE_IMG_HANDLE_OFFSET; }
+
+int32 get_hardware_img_index(int32 handle) {
+    return handle - HARDWARE_IMG_HANDLE_OFFSET;
+}
 
 // clang-format off
 /// @brief Code page 437 to UTF16 LUT. This is not static because it is shared by other translation units
@@ -1783,7 +1809,9 @@ void keyheld_unbind(uint32 x) {
     }
 }
 
-void keydown_ascii(uint32 x) { keydown(x); }
+void keydown_ascii(uint32 x) {
+    keydown(x);
+}
 
 void keydown_unicode(uint32 x) {
     keydown_glyph = 1;
@@ -1814,9 +1842,13 @@ void keydown_unicode(uint32 x) {
     keydown(x);
 }
 
-void keydown_vk(uint32 x) { keydown(x); }
+void keydown_vk(uint32 x) {
+    keydown(x);
+}
 
-void keyup_ascii(uint32 x) { keyup(x); }
+void keyup_ascii(uint32 x) {
+    keyup(x);
+}
 
 void keyup_unicode(uint32 x) {
     // note: UNICODE 0-127 map directly to ASCII 0-127
@@ -1846,14 +1878,21 @@ void keyup_unicode(uint32 x) {
     keyup(x);
 }
 
-void keyup_vk(uint32 x) { keyup(x); }
+void keyup_vk(uint32 x) {
+    keyup(x);
+}
 
 int32 exit_ok = 0;
 
 // substitute Windows functionality
 #ifndef QB64_WINDOWS
-void AllocConsole() { return; }
-void FreeConsole() { return; }
+void AllocConsole() {
+    return;
+}
+
+void FreeConsole() {
+    return;
+}
 #endif
 
 // vc->project->properties->configuration properties->general->configuration type->application(.exe)
@@ -3517,6 +3556,7 @@ static const uint8 file_qb64ega_pal[] = {
 
 uint16 *unicode16_buf = (uint16 *)malloc(1);
 int32 unicode16_buf_size = 1;
+
 void convert_text_to_utf16(int32 fonthandle, void *buf, int32 size) {
     // expand buffer if necessary
     if (unicode16_buf_size < (size * 4 + 4)) {
@@ -3577,6 +3617,7 @@ uint8 *cblend = NULL;
 uint8 *ablend = NULL;
 uint8 *ablend127;
 uint8 *ablend128;
+
 // to save 16MB of RAM, software blend tables are only allocated if a 32-bit image is created
 void init_blend() {
     uint8 *cp;
@@ -5644,6 +5685,7 @@ struct mouse_message_queue_struct {
     int32 current;
     int32 last;
 };
+
 static mouse_message_queue_struct mouse_message_queue = {NULL, 0, 0, 0};
 
 // x86 Virtual CMEM emulation
@@ -5656,16 +5698,19 @@ struct cpu_struct {
                 uint8 al;
                 int8 al_signed;
             };
+
             union {
                 uint8 ah;
                 int8 ah_signed;
             };
         };
+
         uint16 ax;
         int16 ax_signed;
         uint32 eax;
         int32 eax_signed;
     };
+
     // bl,bh,bx,ebx (unsigned & signed)
     union {
         struct {
@@ -5673,16 +5718,19 @@ struct cpu_struct {
                 uint8 bl;
                 int8 bl_signed;
             };
+
             union {
                 uint8 bh;
                 int8 bh_signed;
             };
         };
+
         uint16 bx;
         int16 bx_signed;
         uint32 ebx;
         int32 ebx_signed;
     };
+
     // cl,ch,cx,ecx (unsigned & signed)
     union {
         struct {
@@ -5690,16 +5738,19 @@ struct cpu_struct {
                 uint8 cl;
                 int8 cl_signed;
             };
+
             union {
                 uint8 ch;
                 int8 ch_signed;
             };
         };
+
         uint16 cx;
         int16 cx_signed;
         uint32 ecx;
         int32 ecx_signed;
     };
+
     // dl,dh,dx,edx (unsigned & signed)
     union {
         struct {
@@ -5707,16 +5758,19 @@ struct cpu_struct {
                 uint8 dl;
                 int8 dl_signed;
             };
+
             union {
                 uint8 dh;
                 int8 dh_signed;
             };
         };
+
         uint16 dx;
         int16 dx_signed;
         uint32 edx;
         int32 edx_signed;
     };
+
     // si,esi (unsigned & signed)
     union {
         uint16 si;
@@ -5724,6 +5778,7 @@ struct cpu_struct {
         uint32 esi;
         int32 esi_signed;
     };
+
     // di,edi (unsigned & signed)
     union {
         uint16 di;
@@ -5731,6 +5786,7 @@ struct cpu_struct {
         uint32 edi;
         int32 edi_signed;
     };
+
     // bp,ebp (unsigned & signed)
     union {
         uint16 bp;
@@ -5738,6 +5794,7 @@ struct cpu_struct {
         uint32 ebp;
         int32 ebp_signed;
     };
+
     // sp,esp (unsigned & signed)
     union {
         uint16 sp;
@@ -5745,31 +5802,38 @@ struct cpu_struct {
         uint32 esp;
         int32 esp_signed;
     };
+
     // cs,ss,ds,es,fs,gs (unsigned & signed)
     union {
         uint16 cs;
         uint16 cs_signed;
     };
+
     union {
         uint16 ss;
         uint16 ss_signed;
     };
+
     union {
         uint16 ds;
         uint16 ds_signed;
     };
+
     union {
         uint16 es;
         uint16 es_signed;
     };
+
     union {
         uint16 fs;
         uint16 fs_signed;
     };
+
     union {
         uint16 gs;
         uint16 gs_signed;
     };
+
     // ip,eip (unsigned & signed)
     union {
         uint16 ip;
@@ -5777,6 +5841,7 @@ struct cpu_struct {
         uint32 eip;
         uint32 eip_signed;
     };
+
     // flags
     uint8 overflow_flag;
     uint8 direction_flag;
@@ -5788,6 +5853,7 @@ struct cpu_struct {
     uint8 parity_flag;
     uint8 carry_flag;
 };
+
 cpu_struct cpu;
 
 uint8 *ip;
@@ -6440,6 +6506,7 @@ uint8 *seg_gs_ptr;
 #define seg_gs 5
 
 #define op_r i & 7
+
 void cpu_call() {
 
     static int32 i, i2, i3, x, x2, x3, y, y2, y3;
@@ -6826,7 +6893,9 @@ void unlockvWatchHandle() {
         vwatch = -1;
 }
 
-int32 vWatchHandle() { return vwatch; }
+int32 vWatchHandle() {
+    return vwatch;
+}
 
 void sub__assert(int32 expression, qbs *assert_message, int32 passed) {
     if (asserts == 0)
@@ -6851,7 +6920,9 @@ void end() {
         Sleep(16);
 }
 
-int32 stop_program_state() { return stop_program; }
+int32 stop_program_state() {
+    return stop_program;
+}
 
 // MEM_STATIC memory manager
 /*
@@ -6889,6 +6960,7 @@ uint8 *mem_static_malloc(uint32 size) {
     mem_static_limit = mem_static + mem_static_size;
     return mem_static_pointer - size;
 }
+
 void mem_static_restore(uint8 *restore_point) {
     if ((restore_point >= mem_static) && (restore_point <= mem_static_limit)) {
         mem_static_pointer = restore_point;
@@ -6914,6 +6986,7 @@ struct cmem_dynamic_link_type {
     uint32 i;
     cmem_dynamic_link_type *next;
 };
+
 cmem_dynamic_link_type cmem_dynamic_link[147136 + 1]; //+1 is added because array is used from index 1
 
 // i=cmem_dynamic_next_link++; if (i>=147136) error(257);//not enough blocks
@@ -6923,6 +6996,7 @@ cmem_dynamic_link_type *cmem_dynamic_link_first = NULL;
 int32 cmem_dynamic_next_link = 0;
 int32 cmem_dynamic_free_link = 0;
 uint32 cmem_dynamic_free_list[147136];
+
 uint8 *cmem_dynamic_malloc(uint32 size) {
     static int32 i;
     static uint8 *top;
@@ -7054,6 +7128,7 @@ int32 array_ok = 1; // kept to compile legacy versions
 extern uint32 next_return_point; //=0;
 extern uint32 *return_point;     //=(uint32*)malloc(4*16384);
 extern uint32 return_points;     //=16384;
+
 void more_return_points() {
     if (return_points > 2147483647)
         error(256);
@@ -10440,7 +10515,9 @@ void getptsize_1bpp(const qbs *pt, int32 *sx, int32 *sy) {
     *sy = pt->len;
 }
 
-uint32 getptcol_1bpp(const qbs *pt, int32 x, int32 y) { return (pt->chr[y] >> (7 - x)) & 1; }
+uint32 getptcol_1bpp(const qbs *pt, int32 x, int32 y) {
+    return (pt->chr[y] >> (7 - x)) & 1;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10449,7 +10526,9 @@ void getptsize_2bpp(const qbs *pt, int32 *sx, int32 *sy) {
     *sy = pt->len;
 }
 
-uint32 getptcol_2bpp(const qbs *pt, int32 x, int32 y) { return (pt->chr[y] >> ((3 - x) << 1)) & 0x03; }
+uint32 getptcol_2bpp(const qbs *pt, int32 x, int32 y) {
+    return (pt->chr[y] >> ((3 - x) << 1)) & 0x03;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10478,7 +10557,9 @@ void getptsize_8bpp(const qbs *pt, int32 *sx, int32 *sy) {
     *sy = pt->len;
 }
 
-uint32 getptcol_8bpp(const qbs *pt, int x, int y) { return pt->chr[y]; }
+uint32 getptcol_8bpp(const qbs *pt, int x, int y) {
+    return pt->chr[y];
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11529,7 +11610,9 @@ void sub__controlchr(int32 onoff) {
         no_control_characters2 = 0;
 }
 
-int32 func__controlchr() { return -no_control_characters2; }
+int32 func__controlchr() {
+    return -no_control_characters2;
+}
 
 void qbs_print(qbs *str, int32 finish_on_new_line) {
     if (is_error_pending())
@@ -12586,6 +12669,7 @@ error:
 
 // input helper functions:
 uint64 hexoct2uint64_value;
+
 int32 hexoct2uint64(qbs *h) {
     // returns 0 = failed
     //         1 = HEX value (default if unspecified)
@@ -14000,7 +14084,9 @@ void sub__blink(int32 onoff) {
         H3C0_blink_enable = 0;
 }
 
-int32 func__blink() { return -H3C0_blink_enable; }
+int32 func__blink() {
+    return -H3C0_blink_enable;
+}
 
 int64 func__handle() {
 #ifdef QB64_WINDOWS
@@ -14225,6 +14311,7 @@ int32 generic_put(int32 i, int32 offset, uint8 *cp, int32 bytes) {
 }
 
 int32 generic_get_bytes_read;
+
 int32 generic_get(int32 i, int32 offset, uint8 *cp, int32 bytes) {
     // note: generic_put & generic_get have been made largely redundant by gfs_read & gfs_write
     //      offset is a byte-offset from base 0 (-1=current pos)
@@ -14617,6 +14704,7 @@ nextchr:
 }
 
 uint8 sub_file_print_spaces[32];
+
 void sub_file_print(int32 i, qbs *str, int32 extraspace, int32 tab, int32 newline) {
     if (is_error_pending())
         return;
@@ -14787,6 +14875,7 @@ int32 n_roundincrement() {
 }
 
 long double n_float_value;
+
 int32 n_float() {
     // return value: Bit 0=successful
     // data
@@ -14900,6 +14989,7 @@ int32 n_float() {
 }
 
 int64 n_int64_value;
+
 int32 n_int64() {
     // return value: Bit 0=successful
     // data
@@ -15016,6 +15106,7 @@ int32 n_int64() {
 }
 
 uint64 n_uint64_value;
+
 int32 n_uint64() {
     // return value: Bit 0=successful
     // data
@@ -17408,6 +17499,7 @@ int32 func_csrlin() {
     }
     return write_page->cursor_y;
 }
+
 int32 func_pos(int32 ignore) {
 #ifdef QB64_WINDOWS
     if (write_page->console) { // qb64 console CSRLIN
@@ -17658,6 +17750,7 @@ wait:
 extern int32 tab_LPRINT;      // 1=dest is LPRINT image
 extern int32 tab_spc_cr_size; //=1;//default
 extern int32 tab_fileno;
+
 qbs *func_tab(int32 pos) {
     if (is_error_pending())
         return qbs_new(0, 1);
@@ -18581,7 +18674,9 @@ void sub_file_line_input_string(int32 fileno, qbs *deststr) {
     return;
 }
 
-int32 func_freefile() { return gfs_fileno_freefile(); }
+int32 func_freefile() {
+    return gfs_fileno_freefile();
+}
 
 void sub__mousehide() {
 #ifdef QB64_GUI
@@ -18665,12 +18760,15 @@ cursor_valid:
     mouse_hiddden = 0;
 }
 
-int32_t func__mousehidden() { return mouse_hiddden; }
+int32_t func__mousehidden() {
+    return mouse_hiddden;
+}
 
 float func__mousemovementx() {
     mouse_message_queue_struct *queue = &mouse_message_queue;
     return queue->queue[queue->current].movementx;
 }
+
 float func__mousemovementy() {
     mouse_message_queue_struct *queue = &mouse_message_queue;
     return queue->queue[queue->current].movementy;
@@ -18896,6 +18994,7 @@ int32 func__mousewheel() {
 }
 
 extern uint16 call_absolute_offsets[256];
+
 void call_absolute(int32 args, uint16 offset) {
     memset(&cpu, 0, sizeof(cpu_struct)); // flush cpu
     cpu.cs = ((defseg - cmem) >> 4);
@@ -19238,11 +19337,17 @@ void sub__dest(int32 i) {
     write_page = &img[i];
 }
 
-int32 func__source() { return -read_page_index; }
+int32 func__source() {
+    return -read_page_index;
+}
 
-int32 func__dest() { return -write_page_index; }
+int32 func__dest() {
+    return -write_page_index;
+}
 
-int32 func__display() { return -display_page_index; }
+int32 func__display() {
+    return -display_page_index;
+}
 
 // Changing the settings of an image surface:
 
@@ -22099,7 +22204,10 @@ int32 func__autodisplay() {
     }
     return 0;
 }
-void sub__autodisplay() { autodisplay = 1; }
+
+void sub__autodisplay() {
+    autodisplay = 1;
+}
 
 void sub__display() {
     if (screen_hide)
@@ -22121,6 +22229,7 @@ int32 sub_draw_len;
 
 int32 draw_num_invalid;
 int32 draw_num_undefined;
+
 double draw_num() {
     static int32 c, dp, vptr, x, offset;
     static double d, dp_mult, sgn;
@@ -23128,6 +23237,7 @@ struct connection_struct {
     //---------------------------------
     int32 port;
 };
+
 list *connection_handles = NULL;
 
 void stream_out(stream_struct *st, void *offset, ptrszint bytes) {
@@ -23670,6 +23780,7 @@ int32 func__exit() {
 }
 
 int32 display_called = 0;
+
 void display_now() {
     if (autodisplay) {
         display_called = 0;
@@ -23726,7 +23837,9 @@ int32 func__fullscreen() {
     return full_screen;
 }
 
-int32 func__fullscreensmooth() { return -fullscreen_smooth; }
+int32 func__fullscreensmooth() {
+    return -fullscreen_smooth;
+}
 
 void chain_restorescreenstate(int32 i) {
     static int32 i32, i32b, i32c, x, x2;
@@ -25195,7 +25308,9 @@ void sub__screenprint(qbs *txt) {
 #ifndef DEPENDENCY_PRINTER
 
 // stubs
-void sub__printimage(int32 i) { return; }
+void sub__printimage(int32 i) {
+    return;
+}
 
 #else
 
@@ -25351,7 +25466,9 @@ int32 func__mapunicode(int32 ascii_code) {
     return (codepage437_to_unicode16[ascii_code]);
 }
 
-int32 addone(int32 x) { return x + 1; } // for testing purposes only
+int32 addone(int32 x) {
+    return x + 1;
+} // for testing purposes only
 
 qbs *func__os() {
 #ifdef QB64_WINDOWS
@@ -26148,7 +26265,9 @@ void sub__maptriangle(int32 cull_options, float sx1, float sy1, float sx2, float
         int32 tx;
         int32 ty;
     };
+
     static PointType p[4], *p1, *p2, *tp, *tempp;
+
     struct GradientType {
         int32 x;
         int32 xi;
@@ -26162,6 +26281,7 @@ void sub__maptriangle(int32 cull_options, float sx1, float sy1, float sx2, float
         PointType *p1;
         PointType *p2; // needed for clipping above screen
     };
+
     static GradientType g[4], *tg, *g1, *g2, *g3, *tempg;
     memset(&g, 0, sizeof(GradientType) * 4);
 
@@ -26684,7 +26804,9 @@ void sub__screenhide() {
     screen_hide = 1;
 }
 
-int32 func__screenhide() { return -screen_hide; }
+int32 func__screenhide() {
+    return -screen_hide;
+}
 
 void sub__consoletitle(qbs *s) {
 #ifdef QB64_WINDOWS
@@ -26856,7 +26978,10 @@ void GLUT_KEYBOARD_FUNC(unsigned char key, int x, int y) {
 
     GLUT_key_ascii(key, 1);
 }
-void GLUT_KEYBOARDUP_FUNC(unsigned char key, int x, int y) { GLUT_key_ascii(key, 0); }
+
+void GLUT_KEYBOARDUP_FUNC(unsigned char key, int x, int y) {
+    GLUT_key_ascii(key, 0);
+}
 
 void GLUT_key_special(int32 key, int32 down) {
 #ifdef QB64_GLUT
@@ -26992,7 +27117,10 @@ void GLUT_SPECIAL_FUNC(int key, int x, int y) {
 
     GLUT_key_special(key, 1);
 }
-void GLUT_SPECIALUP_FUNC(int key, int x, int y) { GLUT_key_special(key, 0); }
+
+void GLUT_SPECIALUP_FUNC(int key, int x, int y) {
+    GLUT_key_special(key, 0);
+}
 
 static int64_t lastTick = 0;
 static double deltaTick = 0;
@@ -27322,8 +27450,14 @@ void prepare_environment_2d() { // called prior to rendering 2D content
 
 } // prepare_environment_2d
 
-int32 environment_2d__get_window_x1_coord(int32 x) { return qbr_float_to_long(((float)x) * environment_2d__screen_x_scale) + environment_2d__screen_x1; }
-int32 environment_2d__get_window_y1_coord(int32 y) { return qbr_float_to_long((float)y * environment_2d__screen_y_scale) + environment_2d__screen_y1; }
+int32 environment_2d__get_window_x1_coord(int32 x) {
+    return qbr_float_to_long(((float)x) * environment_2d__screen_x_scale) + environment_2d__screen_x1;
+}
+
+int32 environment_2d__get_window_y1_coord(int32 y) {
+    return qbr_float_to_long((float)y * environment_2d__screen_y_scale) + environment_2d__screen_y1;
+}
+
 int32 environment_2d__get_window_x2_coord(int32 x) {
     return qbr_float_to_long(((float)x + 1.0f) * environment_2d__screen_x_scale - 1.0f) + environment_2d__screen_x1;
 }
@@ -27341,6 +27475,7 @@ struct environment_2d__window_rect_struct {
 
 // this functions returns a constant rect dimensions to stop warping of image
 environment_2d__window_rect_struct tmp_rect;
+
 environment_2d__window_rect_struct *environment_2d__screen_to_window_rect(int32 x1, int32 y1, int32 x2, int32 y2) {
     tmp_rect.x1 = qbr_float_to_long(((float)x1) * environment_2d__screen_x_scale) + environment_2d__screen_x1;
     tmp_rect.y1 = qbr_float_to_long(((float)y1) * environment_2d__screen_y_scale) + environment_2d__screen_y1;
@@ -29023,7 +29158,9 @@ void GLUT_MOTION_FUNC(int x, int y) {
     } // core devices required
 }
 
-void GLUT_PASSIVEMOTION_FUNC(int x, int y) { GLUT_MOTION_FUNC(x, y); }
+void GLUT_PASSIVEMOTION_FUNC(int x, int y) {
+    GLUT_MOTION_FUNC(x, y);
+}
 
 void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y) {
 #    ifdef QB64_GLUT
@@ -29150,7 +29287,9 @@ void sub__filedrop(int32 on_off = NULL) {
 #endif
 }
 
-int32 func__filedrop() { return acceptFileDrop; }
+int32 func__filedrop() {
+    return acceptFileDrop;
+}
 
 void sub__finishdrop() {
 #ifdef QB64_WINDOWS
@@ -29230,11 +29369,21 @@ int32 func__resize() {
     return 0;
 }
 
-int32 func__resizewidth() { return resize_event_x; }
-int32 func__resizeheight() { return resize_event_y; }
+int32 func__resizewidth() {
+    return resize_event_x;
+}
 
-int32 func__scaledwidth() { return environment_2d__screen_scaled_width; }
-int32 func__scaledheight() { return environment_2d__screen_scaled_height; }
+int32 func__resizeheight() {
+    return resize_event_y;
+}
+
+int32 func__scaledwidth() {
+    return environment_2d__screen_scaled_width;
+}
+
+int32 func__scaledheight() {
+    return environment_2d__screen_scaled_height;
+}
 
 extern void set_dynamic_info();
 

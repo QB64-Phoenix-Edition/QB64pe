@@ -16,24 +16,28 @@ qbs *qbs_str(int64_t value) {
     tqbs->len = sprintf((char *)tqbs->chr, "% " PRId64, value);
     return tqbs;
 }
+
 qbs *qbs_str(int32_t value) {
     qbs *tqbs;
     tqbs = qbs_new(11, 1);
     tqbs->len = sprintf((char *)tqbs->chr, "% i", value);
     return tqbs;
 }
+
 qbs *qbs_str(int16_t value) {
     qbs *tqbs;
     tqbs = qbs_new(6, 1);
     tqbs->len = sprintf((char *)tqbs->chr, "% i", value);
     return tqbs;
 }
+
 qbs *qbs_str(int8_t value) {
     qbs *tqbs;
     tqbs = qbs_new(4, 1);
     tqbs->len = sprintf((char *)tqbs->chr, "% i", value);
     return tqbs;
 }
+
 // unsigned integers
 qbs *qbs_str(uint64_t value) {
     qbs *tqbs;
@@ -41,18 +45,21 @@ qbs *qbs_str(uint64_t value) {
     tqbs->len = sprintf((char *)tqbs->chr, " %" PRIu64, value);
     return tqbs;
 }
+
 qbs *qbs_str(uint32_t value) {
     qbs *tqbs;
     tqbs = qbs_new(11, 1);
     tqbs->len = sprintf((char *)tqbs->chr, " %u", value);
     return tqbs;
 }
+
 qbs *qbs_str(uint16_t value) {
     qbs *tqbs;
     tqbs = qbs_new(6, 1);
     tqbs->len = sprintf((char *)tqbs->chr, " %u", value);
     return tqbs;
 }
+
 qbs *qbs_str(uint8_t value) {
     qbs *tqbs;
     tqbs = qbs_new(4, 1);

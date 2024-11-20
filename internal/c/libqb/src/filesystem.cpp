@@ -485,7 +485,9 @@ void sub_chdir(qbs *str) {
 /// @brief Checks if s is an empty string (either NULL or zero length)
 /// @param s A null-terminated string or NULL
 /// @return False is we have a valid string > length 0
-static inline bool FS_IsStringEmpty(const char *s) { return s == nullptr || s[0] == '\0'; }
+static inline bool FS_IsStringEmpty(const char *s) {
+    return s == nullptr || s[0] == '\0';
+}
 
 /// @brief This is a basic pattern matching function used by FS_GetDirectoryEntryName()
 /// @param fileSpec The pattern to match
@@ -540,7 +542,9 @@ static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileNa
 /// @brief Returns true if fileSpec has any wildcards
 /// @param fileSpec The string to check
 /// @return True if * or ? are found
-static inline bool FS_HasPattern(const char *fileSpec) { return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?')); }
+static inline bool FS_HasPattern(const char *fileSpec) {
+    return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?'));
+}
 
 struct DirectoryContext {
     DIR *directory;

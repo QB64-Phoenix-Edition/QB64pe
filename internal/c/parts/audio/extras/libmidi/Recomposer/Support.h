@@ -30,7 +30,9 @@ struct buffer_t {
         return *this;
     }
 
-    virtual ~buffer_t() { Reset(); }
+    virtual ~buffer_t() {
+        Reset();
+    }
 
     void Copy(const void *data, size_t size) {
         if ((data == nullptr) || (size == 0))
@@ -104,19 +106,27 @@ struct buffer_t {
 /// <summary>
 ///
 /// </summary>
-inline uint32_t MulDivCeil(uint32_t val, uint32_t mul, uint32_t div) { return (uint32_t)(((uint64_t)val * mul + div - 1) / div); }
+inline uint32_t MulDivCeil(uint32_t val, uint32_t mul, uint32_t div) {
+    return (uint32_t)(((uint64_t)val * mul + div - 1) / div);
+}
 
 /// <summary>
 ///
 /// </summary>
-inline uint32_t MulDivRound(uint32_t val, uint32_t mul, uint32_t div) { return (uint32_t)(((uint64_t)val * mul + div / 2) / div); }
+inline uint32_t MulDivRound(uint32_t val, uint32_t mul, uint32_t div) {
+    return (uint32_t)(((uint64_t)val * mul + div / 2) / div);
+}
 
 /// <summary>
 ///
 /// </summary>
-inline uint16_t ReadLE16(const uint8_t *data) { return (uint16_t)((data[1] << 8) | (data[0] << 0)); }
+inline uint16_t ReadLE16(const uint8_t *data) {
+    return (uint16_t)((data[1] << 8) | (data[0] << 0));
+}
 
 /// <summary>
 ///
 /// </summary>
-inline uint32_t ReadLE32(const uint8_t *data) { return (uint32_t)((data[3] << 24) | (data[2] << 16) | (data[1] << 8) | (data[0] << 0)); }
+inline uint32_t ReadLE32(const uint8_t *data) {
+    return (uint32_t)((data[3] << 24) | (data[2] << 16) | (data[1] << 8) | (data[0] << 0));
+}

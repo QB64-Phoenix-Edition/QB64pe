@@ -89,8 +89,14 @@ class OPLPlayer {
     static double midiCalcBend(double semitones);
 
     // misc. informational stuff
-    int sampleRate() const { return m_sampleRate; }
-    const std::string &patchName(uint8_t num) { return m_patches[num].name; }
+    int sampleRate() const {
+        return m_sampleRate;
+    }
+
+    const std::string &patchName(uint8_t num) {
+        return m_patches[num].name;
+    }
+
     int activeVoiceCount() const;
 
   private:
