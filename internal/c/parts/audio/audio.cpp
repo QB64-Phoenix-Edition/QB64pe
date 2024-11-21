@@ -2773,15 +2773,8 @@ double func_play(uint32_t voice, int32_t passed) {
         return 0.0;
     }
 
-    if (passed) {
-        if (voice >= AudioEngine::PSG_VOICES) {
-            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-
-            return 0.0;
-        }
-    } else {
-        voice = 0; // use voice 0 by default
-    }
+    // Default to voice 0 if voice is out of range
+    voice = (passed && voice < AudioEngine::PSG_VOICES) ? voice : 0;
 
     if (audioEngine.InitializePSG(voice)) {
         // Only proceed if the underlying PSG is initialized
