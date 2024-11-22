@@ -453,6 +453,9 @@ SUB ExportCodeAs (docFormat$)
             CASE "SELECT"
                 IF UCASE$(LEFT$(la$, 4)) = "CASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
                 IF UCASE$(LEFT$(la$, 9)) = "EVERYCASE" THEN kw$ = kw$ + " " + LEFT$(la$, 9): page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
+            CASE "SOUND"
+                IF UCASE$(LEFT$(la$, 4)) = "WAIT" THEN kw$ = kw$ + " " + LEFT$(la$, 4): in% = -1
+                IF UCASE$(LEFT$(la$, 6)) = "RESUME" THEN kw$ = kw$ + " " + LEFT$(la$, 6): in% = -1
             CASE "VIEW": IF UCASE$(LEFT$(la$, 5)) = "PRINT" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "VIEW PRINT": in% = -1
             CASE "INPUT", "PRINT", "WRITE": IF LEFT$(la$, 1) = "#" THEN page$ = page$ + " (file statement)"
         END SELECT
