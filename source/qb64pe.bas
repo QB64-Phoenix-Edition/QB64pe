@@ -16676,41 +16676,85 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
+                ' IIF support
+                IF n$ = "_IIF" THEN
+                    IF curarg = 1 THEN ' expression
+                        r$ = r$ + "("
+                        nocomma = 1
+                    ELSEIF curarg = 2 THEN ' true part
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        typ& = sourcetyp ' return type is always derived from true part
+                        r$ = r$ + ")?(" + e$ + "):"
+                        e$ = ""
+                        nocomma = 1
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 3 THEN ' false part
+                        nocomma = 0
+
+                        IF (sourcetyp AND ISSTRING) <> (typ& AND ISSTRING) THEN
+                            Give_Error "falsePart and truePart must be of the same type"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = r$ + "(" + e$ + "))"
+
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
                 ' ROR & ROL support
-                IF n$ = "_ROR" OR n$ = "_ROL" THEN
-                    rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' Get the last 3 characters and convert to lower case. We'll need this to construct the C call
-                    IF curarg = 1 THEN ' First parameter
-                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) THEN ' Bad parameters types
+                IF n$ = "_ROR" _ORELSE n$ = "_ROL" THEN
+                    rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' we'll need this to construct the C call
+
+                    IF curarg = 1 THEN ' first parameter
+                        IF (sourcetyp AND ISSTRING) _ORELSE (sourcetyp AND ISFLOAT) THEN
                             Give_Error "Expected non-floating-point value"
                             EXIT FUNCTION
                         END IF
-                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0) ' This gets the C-style dereferencing syntax for an identifier (I think XD)
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
+
                         ' Establish which function (if any!) should be used
                         IF (sourcetyp AND 511) = 8 THEN ' sourcetyp is the type of data (bits can be examined to get more details)
-                            e$ = "func__" + rotlr_n$ + "8(" + e$
-                            typ& = UBYTETYPE - ISPOINTER ' We force the return type here. This is passed back up to the caller
+                            e$ = "func__" + rotlr_n$ + "<uint8_t>(" + e$
+                            typ& = UBYTETYPE - ISPOINTER ' the return type is passed back up to the caller
                         ELSEIF (sourcetyp AND 511) = 16 THEN
-                            e$ = "func__" + rotlr_n$ + "16(" + e$
+                            e$ = "func__" + rotlr_n$ + "<uint16_t>(" + e$
                             typ& = UINTEGERTYPE - ISPOINTER
                         ELSEIF (sourcetyp AND 511) = 32 THEN
-                            e$ = "func__" + rotlr_n$ + "32(" + e$
+                            e$ = "func__" + rotlr_n$ + "<uint32_t>(" + e$
                             typ& = ULONGTYPE - ISPOINTER
                         ELSEIF (sourcetyp AND 511) = 64 THEN
-                            e$ = "func__" + rotlr_n$ + "64(" + e$
+                            e$ = "func__" + rotlr_n$ + "<uint64_t>(" + e$
                             typ& = UINTEGER64TYPE - ISPOINTER
                         ELSE
                             Give_Error "Unknown data size"
                             EXIT FUNCTION
                         END IF
-                        r$ = e$ ' Save whatever syntax he have so far
-                        e$ = "" ' This must be cleared so that it is not repeated when we get to parameter 2
-                        GOTO dontevaluate ' Don't evaluate until we get the second parameter
-                    ELSEIF curarg = 2 THEN ' Second parameter
+
+                        r$ = e$ ' save whatever syntax he have so far
+                        e$ = "" ' this must be cleared so that it is not repeated when we get to parameter 2
+
+                        GOTO dontevaluate ' don't evaluate until we get the second parameter
+                    ELSEIF curarg = 2 THEN ' second parameter
+                        IF (sourcetyp AND ISSTRING) _ORELSE (sourcetyp AND ISFLOAT) THEN
+                            Give_Error "Expected non-floating-point value"
+                            EXIT FUNCTION
+                        END IF
+
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
+
                         r$ = r$ + e$ + ")"
-                        GOTO evalfuncspecial ' Evaluate now that we have everything
+
+                        GOTO evalfuncspecial ' evaluate now that we have everything
                     END IF
                 END IF
 
@@ -23690,14 +23734,8 @@ FUNCTION SCase2$ (t$)
             CASE "_ANDALSO"
                 SCase2$ = "_AndAlso"
 
-            CASE "ANDALSO"
-                SCase2$ = "AndAlso"
-
             CASE "_ORELSE"
                 SCase2$ = "_OrElse"
-
-            CASE "ORELSE"
-                SCase2$ = "OrElse"
 
             CASE ELSE
                 newWord = -1
