@@ -885,6 +885,8 @@ double map(double value, const sf::Modulator &mod) {
         return x >= 0.5 ? 1.0 : off;
     } else if (mod.polarity == sf::SourcePolarity::Unipolar) {
         const double x = mod.direction == sf::SourceDirection::Positive ? value : 1.0 - value;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
         switch (mod.type) {
         case sf::SourceType::Linear:
             return x;
@@ -893,10 +895,13 @@ double map(double value, const sf::Modulator &mod) {
         case sf::SourceType::Convex:
             return conv::convex(x);
         }
+#pragma GCC diagnostic pop
     } else {
         const int dir = mod.direction == sf::SourceDirection::Positive ? 1 : -1;
         const int sign = value > 0.5 ? 1 : -1;
         const double x = 2.0 * value - 1.0;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
         switch (mod.type) {
         case sf::SourceType::Linear:
             return dir * x;
@@ -905,6 +910,7 @@ double map(double value, const sf::Modulator &mod) {
         case sf::SourceType::Convex:
             return sign * dir * conv::convex(sign * x);
         }
+#pragma GCC diagnostic pop
     }
     throw std::runtime_error("unknown modulator controller type");
 }
@@ -964,7 +970,7 @@ static constexpr double ATTEN_FACTOR = 0.4;
 
 Voice::Voice(std::size_t noteID, double outputRate, const Sample &sample, const GeneratorSet &generators, const ModulatorParameterSet &modparams,
              std::uint8_t key, std::uint8_t velocity)
-    : noteID_(noteID), sampleBuffer_(sample.buffer), generators_(generators), actualKey_(key), percussion_(false), fineTuning_(0.0), coarseTuning_(0.0),
+    : noteID_(noteID), actualKey_(key), sampleBuffer_(sample.buffer), generators_(generators), percussion_(false), fineTuning_(0.0), coarseTuning_(0.0),
       steps_(0), status_(State::Playing), index_(sample.start), deltaIndex_(0u), volume_({1.0, 1.0}), amp_(0.0), deltaAmp_(0.0),
       volEnv_(outputRate, CALC_INTERVAL), modEnv_(outputRate, CALC_INTERVAL), vibLFO_(outputRate, CALC_INTERVAL), modLFO_(outputRate, CALC_INTERVAL) {
     rtSample_.mode = static_cast<SampleMode>(0b11 & generators.getOrDefault(sf::Generator::SampleModes));
@@ -1184,6 +1190,8 @@ void Voice::updateModulatedParams(sf::Generator destination) {
         }
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
     switch (destination) {
     case sf::Generator::Pan:
     case sf::Generator::InitialAttenuation:
@@ -1255,6 +1263,7 @@ void Voice::updateModulatedParams(sf::Generator destination) {
                       getModulatedGenerator(sf::Generator::CoarseTune) + 0.01 * (fineTuning_ + getModulatedGenerator(sf::Generator::FineTune));
         break;
     }
+#pragma GCC diagnostic pop
 }
 
 Channel::Channel(double outputRate)
@@ -1511,6 +1520,8 @@ void Channel::addVoice(std::unique_ptr<Voice> voice) {
 void Channel::updateRPN() {
     const std::uint16_t rpn = getSelectedRPN();
     const auto data = static_cast<std::int32_t>(rpns_.at(rpn));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
     switch (static_cast<midi::RPN>(rpn)) {
     case midi::RPN::PitchBendSensitivity:
         pitchBendSensitivity_ = data / 128.0;
@@ -1533,6 +1544,7 @@ void Channel::updateRPN() {
         break;
     }
     }
+#pragma GCC diagnostic pop
 }
 
 // Used when dealing with soundfonts that are missing some expected default presets
@@ -1540,7 +1552,7 @@ static bool no_drums = false;
 static bool no_piano = false;
 
 Synthesizer::Synthesizer(double outputRate, std::size_t numChannels)
-    : volume_(1.0), midiStd_(midi::Standard::GM), defaultMIDIStd_(midi::Standard::GM), stdFixed_(false) {
+    : midiStd_(midi::Standard::GM), defaultMIDIStd_(midi::Standard::GM), stdFixed_(false), volume_(1.0) {
     conv::initialize();
 
     channels_.reserve(numChannels);

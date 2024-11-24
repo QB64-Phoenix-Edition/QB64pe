@@ -30,25 +30,30 @@ struct AudioEngine {
     class BufferMap {
       private:
         /// @brief A buffer that is made up of std::vector of bytes and reference count.
-        struct Buffer {
+        struct ManagedBuffer {
             std::vector<uint8_t> data;
             size_t refCount;
 
-            Buffer() : refCount(0) {}
+            ManagedBuffer() : refCount(0) {}
 
-            Buffer(const void *src, size_t size) : data(size), refCount(1) {
+            ManagedBuffer(const void *src, size_t size) : data(size), refCount(1) {
                 std::memcpy(data.data(), src, size);
             }
 
-            Buffer(std::vector<uint8_t> &&src) : data(std::move(src)), refCount(1) {}
+            ManagedBuffer(std::vector<uint8_t> &&src) : data(std::move(src)), refCount(1) {}
         };
 
-        std::unordered_map<uint64_t, Buffer> buffers;
+        std::unordered_map<uint64_t, ManagedBuffer> buffers;
 
       public:
-        // Delete assignment operators
+        // Delete copy constructor and assignment operators
+        BufferMap(const BufferMap &) = delete;
         BufferMap &operator=(const BufferMap &) = delete;
+        // Delete move constructor and assignment operators
+        BufferMap(BufferMap &&) = delete;
         BufferMap &operator=(BufferMap &&) = delete;
+
+        BufferMap() = default;
 
         /// @brief Adds a buffer to the map using a unique key only if it was not added before. If the buffer is already present then it increases the reference
         /// count.
@@ -61,7 +66,7 @@ struct AudioEngine {
                 auto it = buffers.find(key);
 
                 if (it == buffers.end()) {
-                    buffers.emplace(std::make_pair(key, Buffer(data, size)));
+                    buffers.emplace(key, ManagedBuffer(data, size));
 
                     AUDIO_DEBUG_PRINT("Copied buffer of size %zu to map, key: %" PRIu64, size, key);
                 } else {
@@ -88,7 +93,7 @@ struct AudioEngine {
                 auto it = buffers.find(key);
 
                 if (it == buffers.end()) {
-                    buffers.emplace(std::make_pair(key, Buffer(std::move(buffer))));
+                    buffers.emplace(key, ManagedBuffer(std::move(buffer)));
 
                     AUDIO_DEBUG_PRINT("Moved buffer of size %zu to map, key: %" PRIu64, buffers[key].data.size(), key);
                 } else {
@@ -105,23 +110,9 @@ struct AudioEngine {
             return false;
         }
 
-        /// @brief Increments the buffer reference count.
-        /// @param key The unique key for the buffer.
-        void AddRef(uint64_t key) {
-            auto it = buffers.find(key);
-
-            if (it != buffers.end()) {
-                it->second.refCount++;
-
-                AUDIO_DEBUG_PRINT("Increased reference count to %zu, key: %" PRIu64, it->second.refCount, key);
-            } else {
-                AUDIO_DEBUG_PRINT("Buffer not found");
-            }
-        }
-
         /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero.
         /// @param key The unique key for the buffer.
-        void Release(uint64_t key) {
+        void ReleaseBuffer(uint64_t key) {
             auto it = buffers.find(key);
 
             if (it != buffers.end()) {
@@ -146,7 +137,7 @@ struct AudioEngine {
             auto it = buffers.find(key);
 
             if (it != buffers.end()) {
-                AUDIO_DEBUG_PRINT("Returning buffer of size %zu", it->second.data.size());
+                AUDIO_DEBUG_PRINT("Returning buffer of size %zu, key: %" PRIu64, it->second.data.size(), key);
 
                 return {it->second.data.data(), it->second.data.size()};
             }
@@ -220,16 +211,15 @@ struct AudioEngine {
 
             auto vfs = reinterpret_cast<VFS *>(pVFS);
             auto key = std::strtoull(pFilePath, NULL, 10); // transform pFilePath, look-up in BufferMap
-            auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(key);
 
-            if (buffer) {
+            if (vfs->bufferMap->GetBuffer(key).first) {
                 vfs->nextFd++;
                 vfs->fileMap[vfs->nextFd].key = key;
                 vfs->fileMap[vfs->nextFd].offset = 0;
                 vfs->fileMap[vfs->nextFd].realFile = nullptr;
                 vfs->fileMap[vfs->nextFd].realFileSize = 0;
 
-                AUDIO_DEBUG_PRINT("Opened memory buffer (%llu) %llu", key, vfs->nextFd);
+                AUDIO_DEBUG_PRINT("Using memory buffer (%llu) %llu", key, vfs->nextFd);
             } else {
                 auto file = std::fopen(pFilePath, "rb");
                 if (!file) {
@@ -287,10 +277,6 @@ struct AudioEngine {
                 std::fclose(state->realFile);
 
                 AUDIO_DEBUG_PRINT("Closed file %llu", fd);
-            } else {
-                vfs->bufferMap->Release(state->key);
-
-                AUDIO_DEBUG_PRINT("Closed memory buffer %llu", fd);
             }
 
             vfs->fileMap.erase(fd);
@@ -383,7 +369,7 @@ struct AudioEngine {
                 AUDIO_DEBUG_PRINT("Failed to seek file %llu to offset %lld", fd, offset);
                 return MA_BAD_SEEK;
             } else {
-                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+                auto bufferSize = vfs->bufferMap->GetBuffer(state->key).second;
 
                 switch (origin) {
                 case ma_seek_origin::ma_seek_origin_start:
@@ -456,7 +442,7 @@ struct AudioEngine {
 
                 AUDIO_DEBUG_PRINT("File %llu size: %zu", fd, state->realFileSize);
             } else {
-                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
+                auto bufferSize = vfs->bufferMap->GetBuffer(state->key).second;
 
                 pInfo->sizeInBytes = bufferSize;
 
@@ -2348,8 +2334,9 @@ struct AudioEngine {
     /// snd_un_init gets called. This also increments 'lowestFreeHandle' to allocated handle + 1.
     /// @return Returns a non-negative handle if successful.
     int32_t CreateHandle() {
-        if (!isInitialized)
+        if (!isInitialized) {
             return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
+        }
 
         size_t h, vectorSize = soundHandles.size(); // Save the vector size
 
@@ -2430,6 +2417,7 @@ struct AudioEngine {
             // Free any initialized miniaudio sound
             if (soundHandles[handle]->type == SoundHandle::Type::STATIC) {
                 ma_sound_uninit(&soundHandles[handle]->maSound);
+
                 AUDIO_DEBUG_PRINT("Sound uninitialized");
             }
 
@@ -2445,6 +2433,7 @@ struct AudioEngine {
             if (soundHandles[handle]->maAudioBuffer) {
                 ma_audio_buffer_uninit_and_free(soundHandles[handle]->maAudioBuffer);
                 soundHandles[handle]->maAudioBuffer = nullptr;
+
                 AUDIO_DEBUG_PRINT("Audio buffer uninitialized & freed");
             }
 
@@ -2453,7 +2442,16 @@ struct AudioEngine {
                 free_mem_lock((mem_lock *)soundHandles[handle]->memLockOffset);
                 soundHandles[handle]->memLockId = INVALID_MEM_LOCK;
                 soundHandles[handle]->memLockOffset = nullptr;
+
                 AUDIO_DEBUG_PRINT("MemSound stuff invalidated");
+            }
+
+            // Release buffer added by _SNDOPEN
+            if (soundHandles[handle]->bufferKey) {
+                AUDIO_DEBUG_PRINT("Releasing buffer %llu", soundHandles[handle]->bufferKey);
+
+                bufferMap.ReleaseBuffer(soundHandles[handle]->bufferKey);
+                soundHandles[handle]->bufferKey = 0;
             }
 
             // Now simply set the 'isUsed' member to false so that the handle can be recycled
@@ -2461,8 +2459,9 @@ struct AudioEngine {
             soundHandles[handle]->type = SoundHandle::Type::NONE;
 
             // Save the free handle to lowestFreeHandle if it is lower than lowestFreeHandle
-            if (handle < lowestFreeHandle)
+            if (handle < lowestFreeHandle) {
                 lowestFreeHandle = handle;
+            }
 
             AUDIO_DEBUG_PRINT("Sound handle %i marked as free", handle);
         }
@@ -3064,15 +3063,23 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
 
     // Load the file from file or memory based on the requirements string
     if (fromMemory) {
-        // Configure miniaudio to load the sound from memory
-        audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
-            std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));                        // make a unique key and save it
-        audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey); // make a copy of the buffer
-        auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey);         // get the buffer pointer and size
-        auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                         // convert the buffer key to a string
+        // Make a unique key and save it
+        audioEngine.soundHandles[handle]->bufferKey =
+            std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));
 
+        // Make a copy of the buffer
+        if (!audioEngine.bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, audioEngine.soundHandles[handle]->bufferKey)) {
+            AUDIO_DEBUG_PRINT("Failed to add buffer to buffer map");
+
+            goto handle_cleanup;
+        }
+
+        // Convert the buffer key to a string
+        auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);
+
+        // Create the ma_sound
         audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
-                                                       &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
+                                                       &audioEngine.soundHandles[handle]->maSound);
     } else {
         std::string fileName(reinterpret_cast<char const *>(qbsFileName->chr), qbsFileName->len);
 
@@ -3089,22 +3096,28 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
             if (contents.empty()) {
                 AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
 
-                audioEngine.soundHandles[handle]->isUsed = false;
-
-                return AudioEngine::INVALID_SOUND_HANDLE;
+                goto handle_cleanup;
             }
 
             AUDIO_DEBUG_PRINT("Sound length: %zu", contents.size());
 
-            // Configure miniaudio to load the sound from memory
-            audioEngine.soundHandles[handle]->bufferKey = std::hash<std::string_view>{}(
-                std::string_view(reinterpret_cast<const char *>(contents.data()), contents.size()));                  // make a unique key and save it
-            audioEngine.bufferMap.AddBuffer(std::move(contents), audioEngine.soundHandles[handle]->bufferKey);        // make a copy of the buffer
-            auto [buffer, bufferSize] = audioEngine.bufferMap.GetBuffer(audioEngine.soundHandles[handle]->bufferKey); // get the buffer pointer and size
-            auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);                                 // convert the buffer key to a string
+            // Make a unique key and save it
+            audioEngine.soundHandles[handle]->bufferKey =
+                std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(contents.data()), contents.size()));
 
+            // Make a copy of the buffer
+            if (!audioEngine.bufferMap.AddBuffer(std::move(contents), audioEngine.soundHandles[handle]->bufferKey)) {
+                AUDIO_DEBUG_PRINT("Failed to add buffer to buffer map");
+
+                goto handle_cleanup;
+            }
+
+            // Convert the buffer key to a string
+            auto fname = std::to_string(audioEngine.soundHandles[handle]->bufferKey);
+
+            // Create the ma_sound
             audioEngine.maResult = ma_sound_init_from_file(&audioEngine.maEngine, fname.c_str(), audioEngine.soundHandles[handle]->maFlags, NULL, NULL,
-                                                           &audioEngine.soundHandles[handle]->maSound); // create the ma_sound
+                                                           &audioEngine.soundHandles[handle]->maSound);
         }
     }
 
@@ -3112,14 +3125,17 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
     if (audioEngine.maResult != MA_SUCCESS) {
         AUDIO_DEBUG_PRINT("Error %i: failed to open sound", audioEngine.maResult);
 
-        audioEngine.soundHandles[handle]->isUsed = false;
-
-        return AudioEngine::INVALID_SOUND_HANDLE;
+        goto handle_cleanup;
     }
 
     AUDIO_DEBUG_PRINT("Sound successfully loaded");
 
     return handle;
+
+handle_cleanup:
+    audioEngine.soundHandles[handle]->isUsed = false;
+
+    return AudioEngine::INVALID_SOUND_HANDLE;
 }
 
 /// @brief Frees and unloads an open sound.
