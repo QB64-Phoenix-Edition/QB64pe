@@ -88,6 +88,16 @@ SUB reginternal
     id.n = "_Continue": id.subfunc = 2: id.callname = "sub_stub": regid
 
     clearid
+    id.n = "_IIf"
+    id.subfunc = 1
+    id.args = 3
+    id.arg = MKL$(OFFSETTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' overridden in qb64pe.bas
+    id.specialformat = "?,?,?"
+    id.ret = STRINGTYPE - ISPOINTER ' overridden in qb64pe.bas
+    id.hr_syntax = "_IIF(expression, truePart, falsePart)"
+    regid
+
+    clearid
     id.n = "_Resize"
     id.subfunc = 2
     id.callname = "sub__resize"
