@@ -16485,6 +16485,32 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
 
 
+                ' CAST support
+                IF n$ = "_CAST" THEN
+                    IF curarg = 1 THEN ' data type
+                        castType$ = type2symbol$(e$)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        SELECT CASE castType$
+                            CASE "%%", "~%%", "%", "~%", "&", "~&", "&&", "~&&", "%&", "~%&", "!", "#", "##"
+                                typ& = typname2typ(castType$)
+                                IF Error_Happened THEN EXIT FUNCTION
+
+                                r$ = r$ + "(" + typ2ctyp(typ&, castType$) + ")" ' both args are not really needed. Oh well!
+                                IF Error_Happened THEN EXIT FUNCTION
+
+                            CASE ELSE
+                                Give_Error "_CAST TYPE unsupported"
+                                EXIT FUNCTION
+                        END SELECT
+
+                        e$ = ""
+                        nocomma = 1
+
+                        GOTO dontevaluate
+                    END IF
+                END IF
+
                 '*special case CVI,CVL,CVS,CVD,_CV (part #1)
                 IF n$ = "_CV" THEN
                     IF curarg = 1 THEN
@@ -16669,6 +16695,25 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 e$ = evaluate(e$, sourcetyp)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
+
+                ' CAST support
+                IF n$ = "_CAST" THEN
+                    IF curarg = 2 THEN ' numeric value
+                        nocomma = 0
+
+                        IF sourcetyp AND ISSTRING THEN
+                            Give_Error "Expected numeric value"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = r$ + "(" + e$ + "))"
+
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
 
                 ' IIF support
                 IF n$ = "_IIF" THEN
