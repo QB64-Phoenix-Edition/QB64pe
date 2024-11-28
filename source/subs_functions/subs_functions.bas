@@ -88,15 +88,6 @@ SUB reginternal
     id.n = "_Continue": id.subfunc = 2: id.callname = "sub_stub": regid
 
     clearid
-    id.n = "_CLngPtr"
-    id.subfunc = 1
-    id.args = 1
-    id.arg = MKL$(UOFFSETTYPE - ISPOINTER)
-    id.ret = UINTEGER64TYPE - ISPOINTER
-    id.hr_syntax = "_CLngPtr(offsetValue)"
-    regid
-
-    clearid
     id.n = "_IIf"
     id.subfunc = 1
     id.args = 3

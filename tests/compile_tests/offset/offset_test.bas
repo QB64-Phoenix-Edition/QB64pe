@@ -12,7 +12,7 @@ PrintArray myArray()
 
 DIM arrMem AS _MEM: arrMem = _MEM(myArray())
 
-FOR i = 0 TO (_CLNGPTR(arrMem.SIZE) \ _SIZE_OF_LONG) - 1
+FOR i = 0 TO (arrMem.SIZE \ _SIZE_OF_LONG) - 1
     _MEMPUT arrMem, arrMem.OFFSET + (i * _SIZE_OF_LONG), i + 1 AS LONG
 NEXT i
 

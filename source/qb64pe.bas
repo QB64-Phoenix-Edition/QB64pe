@@ -10769,12 +10769,6 @@ DO
                         e$ = evaluate(e2$, sourcetyp)
                         IF Error_Happened THEN GOTO errmes
 
-                        IF sourcetyp AND ISOFFSET THEN
-                            IF (targettyp AND ISOFFSET) = 0 THEN
-                                IF id2.internal_subfunc = 0 THEN a$ = "Cannot convert _OFFSET type to other types": GOTO errmes
-                            END IF
-                        END IF
-
                         IF RTRIM$(id2.callname) = "sub_paint" THEN
                             IF i = 3 THEN
                                 IF (sourcetyp AND ISSTRING) THEN
@@ -16806,11 +16800,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     GOTO evalfuncspecial
                 END IF '_OFFSET
 
-                '*_OFFSET exceptions*
-                IF sourcetyp AND ISOFFSET THEN
-                    IF n$ = "MKSMBF" AND RTRIM$(id2.musthave) = "$" THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
-                    IF n$ = "MKDMBF" AND RTRIM$(id2.musthave) = "$" THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
-                END IF
 
                 '*special case*
                 IF n$ = "ENVIRON" THEN
@@ -16999,7 +16988,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 '*special case*
                 IF n$ = "CDBL" THEN
-                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
                     IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
@@ -17017,7 +17005,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 '*special case*
                 IF n$ = "CSNG" THEN
-                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
                     IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
@@ -17037,7 +17024,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 '*special case*
                 IF n$ = "CLNG" THEN
-                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
                     IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
@@ -17060,7 +17046,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 '*special case*
                 IF n$ = "CINT" THEN
-                    IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
                     IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
@@ -17092,7 +17077,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "_MK" THEN mktype = -1
                 IF mktype THEN
                     IF mktype <> -1 OR curarg = 2 THEN
-                        'IF (sourcetyp AND ISOFFSET) THEN Give_Error "Cannot convert " + "_OFFSET type to other types": EXIT FUNCTION
                         'both _MK and trad. process the following
                         qtyp& = 0
                         IF mktype$ = "%%" THEN ctype$ = "b": qtyp& = BYTETYPE - ISPOINTER
@@ -17468,12 +17452,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF Error_Happened THEN EXIT FUNCTION
                     GOTO dontevaluate
                 END IF '-8
-
-                IF sourcetyp AND ISOFFSET THEN
-                    IF (targettyp AND ISOFFSET) = 0 THEN
-                        IF id2.internal_subfunc = 0 THEN Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
-                    END IF
-                END IF
 
                 'note: this is used for functions like STR(...) which accept all types...
                 explicitreference = 0
@@ -17961,13 +17939,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     a$ = a2$
     e$ = evaluate(a$, sourcetyp)
     IF Error_Happened THEN EXIT FUNCTION
-
-    'Offset protection:
-    IF sourcetyp AND ISOFFSET THEN
-        IF (targettyp AND ISOFFSET) = 0 AND targettyp >= 0 THEN
-            Give_Error "Cannot convert _OFFSET type to other types": EXIT FUNCTION
-        END IF
-    END IF
 
     '-5 size
     '-6 offset
