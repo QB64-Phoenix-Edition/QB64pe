@@ -16493,7 +16493,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                         SELECT CASE castType$
                             CASE "%%", "~%%", "%", "~%", "&", "~&", "&&", "~&&", "%&", "~%&", "!", "#", "##"
-                                typ& = typname2typ(castType$)
+                                typ& = typname2typ(castType$) - ISPOINTER
                                 IF Error_Happened THEN EXIT FUNCTION
 
                                 r$ = r$ + "(" + typ2ctyp(typ&, castType$) + ")" ' both args are not really needed. Oh well!
