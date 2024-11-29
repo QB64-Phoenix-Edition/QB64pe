@@ -56,13 +56,23 @@ $CHECKING:OFF
 '_MIN() returns the lesser of both given values (returns value1 if equal).
 '----------
 FUNCTION _IKW_Min## (_value1##, _value2##)
-    IF _value1## <= _value2## THEN _MIN = _value1## ELSE _MIN = _value2##
+    _MIN = _IIF(_value1## <= _value2##, _value1##, _value2##)
 END FUNCTION
 
 '_MAX() returns the greater of both given values (returns value1 if equal).
 '----------
 FUNCTION _IKW_Max## (_value1##, _value2##)
-    IF _value1## >= _value2## THEN _MAX = _value1## ELSE _MAX = _value2##
+    _MAX = _IIF(_value1## >= _value2##, _value1##, _value2##)
+END FUNCTION
+
+'_CLAMP() returns the given value or the min/max, if the value is lesser or
+'   greater than that respectively.
+'----------
+FUNCTION _IKW_Clamp## (_value##, _minVal##, _maxVal##)
+    DIM _realMin##, _realMax##
+    _realMin## = _MIN(_minVal##, _maxVal##)
+    _realMax## = _MAX(_minVal##, _maxVal##)
+    _CLAMP = _IIF(_value## < _realMin##, _realMin##, _IIF(_value## > _realMax##, _realMax##, _value##))
 END FUNCTION
 
 '_EncodeURL$() returns the encoded version of the given plain text URL for
@@ -136,7 +146,7 @@ END FUNCTION
 
 $IF _SOCKETS_ THEN
     '_WhatIsMyIP$() is a helper function required by _CONNECTIONADDRESS$,
-    'but only required when network stuff is compiled in (_SOCKETS_).
+    '   but only required when network stuff is compiled in (_SOCKETS_).
     '----------
     FUNCTION _WhatIsMyIP$
         '01 NOV 2024: Make it part of this file, i.e. deprecating internal/c/myip.cpp;
