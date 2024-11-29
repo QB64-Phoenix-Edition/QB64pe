@@ -88,11 +88,19 @@ SUB reginternal
     id.n = "_Continue": id.subfunc = 2: id.callname = "sub_stub": regid
 
     clearid
+    id.n = "_Cast"
+    id.subfunc = 1
+    id.args = 2
+    id.arg = MKL$(-1) + MKL$(-1) ' overridden in qb64pe.bas
+    id.ret = -1 ' overridden in qb64pe.bas
+    id.hr_syntax = "_CAST(numericalType, numericalValue)"
+    regid
+
+    clearid
     id.n = "_IIf"
     id.subfunc = 1
     id.args = 3
     id.arg = MKL$(OFFSETTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' overridden in qb64pe.bas
-    id.specialformat = "?,?,?"
     id.ret = STRINGTYPE - ISPOINTER ' overridden in qb64pe.bas
     id.hr_syntax = "_IIF(expression, truePart, falsePart)"
     regid
@@ -2629,6 +2637,7 @@ SUB reginternal
     id.secondargmustbe = "Step"
     id.hr_syntax = "PUT [STEP](column, row), Array([index])[,] [_CLIP]  [{PSET|PRESET|AND|OR|XOR}]][, omitcolor]"
     regid
+
     clearid
     id.n = "Put"
     id.subfunc = 2
@@ -2704,6 +2713,7 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "MKSMBF$(value!)"
     regid
+
     clearid
     id.n = "MKDMBF"
     id.musthave = "$"
@@ -2725,6 +2735,7 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "MKI$(integerVariableOrLiteral%)"
     regid
+
     clearid
     id.n = "MKL"
     id.musthave = "$"
@@ -2735,6 +2746,7 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "MKL$(longVariableOrLiteral&)"
     regid
+
     clearid
     id.n = "MKS"
     id.musthave = "$"
@@ -2745,6 +2757,7 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "MKS$(singlePrecisionVariableOrLiteral!)"
     regid
+
     clearid
     id.n = "MKD"
     id.musthave = "$"
@@ -2755,6 +2768,7 @@ SUB reginternal
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "MKD$(doublePrecisionVariableOrLiteral#)"
     regid
+
     clearid
     id.n = "_MK"
     id.musthave = "$"
@@ -2775,6 +2789,7 @@ SUB reginternal
     id.ret = SINGLETYPE - ISPOINTER
     id.hr_syntax = "CVSMBF(stringData$)"
     regid
+
     clearid
     id.n = "CVDMBF"
     id.subfunc = 1
@@ -2794,6 +2809,7 @@ SUB reginternal
     id.ret = INTEGERTYPE - ISPOINTER
     id.hr_syntax = "CVI(stringData$)"
     regid
+
     clearid
     id.n = "CVL"
     id.subfunc = 1
@@ -2803,6 +2819,7 @@ SUB reginternal
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "CVL(stringData$)"
     regid
+
     clearid
     id.n = "CVS"
     id.subfunc = 1
@@ -2812,6 +2829,7 @@ SUB reginternal
     id.ret = SINGLETYPE - ISPOINTER
     id.hr_syntax = "CVS(stringData$)"
     regid
+
     clearid
     id.n = "CVD"
     id.subfunc = 1
@@ -2821,6 +2839,7 @@ SUB reginternal
     id.ret = DOUBLETYPE - ISPOINTER
     id.hr_syntax = "CVD(stringData$)"
     regid
+
     clearid
     id.n = "_CV"
     id.subfunc = 1
@@ -4053,8 +4072,8 @@ SUB reginternal
     id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
     id.specialformat = "[?][,[?][,?]]"
     id.hr_syntax = "_NOTIFYPOPUP [title$][, message$][, iconType$]"
-
     regid
+
     clearid
     id.n = "_MessageBox"
     id.subfunc = 2 ' 1 = function, 2 = sub
