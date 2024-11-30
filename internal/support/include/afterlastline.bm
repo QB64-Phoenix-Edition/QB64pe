@@ -238,6 +238,7 @@ SUB _HSBtoRGB (_hu#, _sa#, _br#, _re#, _gr#, _bl#)
         _re# = _br#: _gr# = _br#: _bl# = _br# 'no saturation = grayscale
     ELSE
         _hu# = _hu# / 60 '                   'to sixtant [0,5]
+        IF _hu# >= 6 THEN _hu# = _hu# - 6
         _hi% = INT(_hu#): _hf# = _hu# - _hi% 'int/frac parts of hue
         _pv# = _br# * (1 - _sa#)
         _qv# = _br# * (1 - (_sa# * _hf#))
