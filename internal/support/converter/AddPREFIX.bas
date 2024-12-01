@@ -544,7 +544,7 @@ SUB add_prefix
 END SUB
 
 SUB maybe_add_prefix
-    IF noprefix_detected AND token.t = TOK_WORD AND ASC(token.uc) <> ASC("_") _ANDALSO is_underscored(token.c) THEN add_prefix
+    IF noprefix_detected AND token.t = TOK_WORD AND ASC(token.uc) <> ASC("_") _ANDALSO is_underscored THEN add_prefix
 END SUB
 
 FUNCTION line_end
@@ -556,7 +556,7 @@ FUNCTION line_end
     END SELECT
 END FUNCTION
 
-FUNCTION is_underscored (s$)
+FUNCTION is_underscored
     DIM i
     FOR i = 1 TO UBOUND(prefix_keywords$)
         IF token.uc = prefix_keywords$(i) THEN
