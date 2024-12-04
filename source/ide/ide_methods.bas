@@ -308,6 +308,13 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Sets string returned by COMMAND$ function"
         menu$(m, i) = "-": i = i + 1
 
+        LoggingEnableMenu = i
+        menu$(m, i) = "Display #Logging Output": i = i + 1
+        menuDesc$(m, i - 1) = "Turns on logging output and displays it in a console window"
+        IF LoggingEnabled THEN
+            menu$(RunMenuID, LoggingEnableMenu) = CHR$(7) + menu$(RunMenuID, LoggingEnableMenu)
+        END IF
+
         RunMenuSaveExeWithSource = i
         menu$(m, i) = "Output EXE to Source #Folder": i = i + 1
         menuDesc$(m, i - 1) = "Toggles compiling program to QB64-PE's folder or to source folder"
@@ -319,6 +326,10 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "The license file is placed next to the executable"
         IF GenerateLicenseFile THEN
             menu$(RunMenuID, GenerateLicenseEnableMenu) = CHR$(7) + menu$(RunMenuID, GenerateLicenseEnableMenu)
+        END IF
+        IF os$ = "LNX" AND MacOSX = 0 THEN
+            menu$(m, i) = "Change #Terminal": i = i + 1
+            menuDesc$(m, i - 1) = "Configure the terminal used for $CONSOLE and logging output"
         END IF
         menu$(m, i) = "-": i = i + 1
 
@@ -5177,6 +5188,21 @@ FUNCTION ide2 (ignore)
 
 
 
+            IF MID$(menu$(m, s), 1) = "Display #Logging Output" OR MID$(menu$(m, s), 2) = "Display #Logging Output" THEN
+                PCOPY 2, 0
+                LoggingEnabled = NOT LoggingEnabled
+                WriteConfigSetting generalSettingsSection$, "LoggingEnabled", BoolToTFString$(LoggingEnabled)
+
+                IF LoggingEnabled THEN
+                    menu$(RunMenuID, LoggingEnableMenu) = CHR$(7) + "Display #Logging Output"
+                ELSE
+                    menu$(RunMenuID, LoggingEnableMenu) = "Display #Logging Output"
+                END IF
+
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
             IF RIGHT$(menu$(m, s), 28) = "Output EXE to Source #Folder" THEN
                 PCOPY 2, 0
                 SaveExeWithSource = NOT SaveExeWithSource
@@ -5206,6 +5232,17 @@ FUNCTION ide2 (ignore)
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
+
+            IF menu$(m, s) = "Change #Terminal" THEN
+                PCOPY 2, 0
+
+                ideTerminalBox
+
+                'retval is ignored
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
 
             IF RIGHT$(menu$(m, s), 29) = "#Output Watch List to Console" THEN
                 PCOPY 2, 0
@@ -15784,6 +15821,150 @@ FUNCTION ideCompilerSettingsBox
         mouseup = 0
     LOOP
 END FUNCTION
+
+SUB ideTerminalBox
+
+    '-------- generic dialog box header --------
+    PCOPY 0, 2
+    PCOPY 0, 1
+    SCREEN , , 1, 0
+    focus = 1
+    DIM p AS idedbptype
+    DIM o(1 TO 100) AS idedbotype
+    DIM sep AS STRING * 1
+    sep = CHR$(0)
+    '-------- end of generic dialog box header --------
+
+    '-------- init --------
+
+    i = 0
+
+    idepar p, 60, 7, "Default Terminal"
+
+    i = i + 1
+    PrevFocus = 1
+    o(i).typ = 1
+    o(i).y = 2
+    o(i).nam = idenewtxt("Terminal Command")
+    o(i).txt = idenewtxt(DefaultTerminal)
+    o(i).sx1 = 0
+    o(i).v1 = LEN(DefaultTerminal)
+
+    i = i + 1
+    o(i).typ = 3
+    o(i).y = 7
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
+    o(i).dft = 1
+    '-------- end of init --------
+
+    '-------- generic init --------
+    FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
+    '-------- end of generic init --------
+
+    DO 'main loop
+
+
+        '-------- generic display dialog box & objects --------
+        idedrawpar p
+        f = 1: cx = 0: cy = 0
+        FOR i = 1 TO 100
+            IF o(i).typ THEN
+
+                'prepare object
+                o(i).foc = focus - f 'focus offset
+                o(i).cx = 0: o(i).cy = 0
+                idedrawobj o(i), f 'display object
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+            END IF
+        NEXT i
+        lastfocus = f - 1
+        '-------- end of generic display dialog box & objects --------
+
+        '-------- custom display changes --------
+        LOCATE p.y + 4, p.x + 2
+        PRINT CHR$(34) + "$$" + CHR$(34) + " is replaced with the executable";
+        LOCATE p.y + 5, p.x + 2
+        PRINT CHR$(34) + "$@" + CHR$(34) + " is replaced with the COMMAND$ string";
+        '-------- end of custom display changes --------
+
+        'update visual page and cursor position
+        PCOPY 1, 0
+        IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
+
+        '-------- read input --------
+        change = 0
+        DO
+            GetInput
+            IF mWHEEL THEN change = 1
+            IF KB THEN change = 1
+            IF mCLICK THEN mousedown = 1: change = 1
+            IF mRELEASE THEN mouseup = 1: change = 1
+            IF mB THEN change = 1
+            alt = KALT: IF alt <> oldalt THEN change = 1
+            oldalt = alt
+            _LIMIT 100
+        LOOP UNTIL change
+        IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
+        'convert "alt+letter" scancode to letter's ASCII character
+        altletter$ = ""
+        IF alt AND NOT KCTRL THEN
+            IF LEN(K$) = 1 THEN
+                k = ASC(UCASE$(K$))
+                IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
+            END IF
+        END IF
+        SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
+        '-------- end of read input --------
+
+        '-------- generic input response --------
+        info = 0
+        IF K$ = "" THEN K$ = CHR$(255)
+        IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
+        IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
+        IF focus < 1 THEN focus = lastfocus
+        IF focus > lastfocus THEN focus = 1
+        f = 1
+        FOR i = 1 TO 100
+            t = o(i).typ
+            IF t THEN
+                focusoffset = focus - f
+                ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
+            END IF
+        NEXT
+        '-------- end of generic input response --------
+
+        'specific post controls
+        IF focus <> PrevFocus THEN
+            'Always start with TextBox values selected upon getting focus
+            PrevFocus = focus
+            IF focus = 1 THEN
+                o(focus).v1 = LEN(idetxt(o(focus).txt))
+                IF o(focus).v1 > 0 THEN o(focus).issel = -1
+                o(focus).sx1 = 0
+            END IF
+        END IF
+
+        IF K$ = CHR$(27) OR (focus = 3 AND info <> 0) THEN
+            ClearMouse
+            EXIT SUB
+        END IF
+
+        IF K$ = CHR$(13) OR (focus = 2 AND info <> 0) THEN
+            DefaultTerminal = idetxt(o(1).txt)
+
+            WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
+
+            ClearMouse
+            _KEYCLEAR
+            EXIT SUB
+        END IF
+        'end of custom controls
+
+        mousedown = 0
+        mouseup = 0
+    LOOP
+
+END SUB
 
 FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
 

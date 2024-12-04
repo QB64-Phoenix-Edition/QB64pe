@@ -6,6 +6,7 @@
 
 #ifdef QB64_WINDOWS
 #    include <synchapi.h>
+#    include <profileapi.h>
 #endif
 
 #include "datetime.h"
@@ -37,7 +38,7 @@ static int64_t orwl_gettime(void) {
 }
 #endif
 
-#ifdef QB64_LINUX
+#if defined(QB64_LINUX)
 static int64_t initial_tick = 0;
 
 void clock_init() {
@@ -51,13 +52,31 @@ int64_t GetTicks() {
     clock_gettime(CLOCK_MONOTONIC, &tp);
     return (tp.tv_sec * 1000 + tp.tv_nsec / 1000000) - initial_tick;
 }
+#elif defined QB64_WINDOWS
+static int64_t initial_tick = 0;
+static LARGE_INTEGER tick_freq;
+
+void clock_init() {
+    QueryPerformanceFrequency(&tick_freq);
+
+    // When GetTicks() is called here initial_tick is zero, so as a result
+    // GetTicks() returns the original value of the clock.
+    initial_tick = GetTicks();
+}
+
+int64_t GetTicks() {
+    LARGE_INTEGER count;
+
+    QueryPerformanceCounter(&count);
+
+    uint64_t sec = count.QuadPart / tick_freq.QuadPart;
+    uint64_t milli = ((count.QuadPart % tick_freq.QuadPart) * 1000 + tick_freq.QuadPart / 2) / tick_freq.QuadPart;
+
+    return sec * 1000 + milli - initial_tick;
+}
 #elif defined QB64_MACOSX
 int64_t GetTicks() {
     return orwl_gettime();
-}
-#else
-int64_t GetTicks() {
-    return ((((int64_t)clock()) * ((int64_t)1000)) / ((int64_t)CLOCKS_PER_SEC));
 }
 #endif
 

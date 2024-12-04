@@ -18,6 +18,7 @@
 #    include <GL/freeglut.h>
 #endif
 
+#include "logging.h"
 #include "completion.h"
 #include "glut-thread.h"
 #include "gui.h"
@@ -176,6 +177,7 @@ void libqb_start_main_thread(int argc, char **argv) {
 //
 // This is accomplished by simply queuing a GLUT message that calls exit() for us.
 void libqb_exit(int exitcode) {
+    libqb_log_info("Program exiting with code: %d\n", exitcode);
     // If GLUT isn't running then we're free to do the exit() call from here
     if (!libqb_is_glut_up())
         exit(exitcode);

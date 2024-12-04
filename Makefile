@@ -25,6 +25,7 @@ EXE_LIBS :=
 
 ifeq ($(OS),lnx)
 	lnx := y
+	unix := y
 
 	PATH_INTERNAL := ./internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)/source
@@ -84,6 +85,7 @@ endif
 
 ifeq ($(OS),osx)
 	osx := y
+	unix := y
 
 	PATH_INTERNAL := ./internal
 	PATH_INTERNAL_SRC := $(PATH_INTERNAL)/source
@@ -161,6 +163,14 @@ ifeq ($(OS),osx)
 	ifneq ($(STRIP_SYMBOLS),n)
 		CXXLIBS += -s
 	endif
+endif
+
+# Linux and Mac OS need this to ensure symbols are kept in the symbol table in
+# the executable, which allows dladdr() to work for stacktrace resolution.
+ifeq ($(unix),y)
+ifeq ($(STRIP_SYMBOLS),n)
+	CXXLIBS += -rdynamic
+endif
 endif
 
 QB_QBX_SRC := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).cpp

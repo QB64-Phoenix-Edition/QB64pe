@@ -37,7 +37,6 @@ DEFLNG A-Z
 '-------- Optional IDE Component (1/2) --------
 '$INCLUDE:'ide\ide_global.bas'
 
-
 DIM SHARED NoExeSaved AS INTEGER
 
 DIM SHARED vWatchErrorCall$, vWatchNewVariable$, vWatchVariableExclusions$
@@ -898,8 +897,69 @@ IF C = 9 THEN 'run
 
     'execute program
 
+    IF LoggingEnabled THEN
+        ENVIRON "QB64PE_LOG_HANDLERS=console"
+        ENVIRON "QB64PE_LOG_SCOPES=qb64,libqb,libqb-image,libqb-audio"
+    ELSE
+        ENVIRON "QB64PE_LOG_HANDLERS="
+        ENVIRON "QB64PE_LOG_SCOPES="
+    END IF
 
+    ExecuteLine$ = ""
 
+    IF MacOSX THEN
+        IF path.exe$ = "" THEN path.exe$ = "./"
+
+        IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
+            ExecuteName$ = _FULLPATH$(lastBinaryGenerated$)
+        ELSE
+            ExecuteName$ = _FULLPATH$(path.exe$ + lastBinaryGenerated$)
+        END IF
+
+        IF path.exe$ = "./" THEN path.exe$ = ""
+
+        IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
+            IF LoggingEnabled THEN handler$ = "console" ELSE handler$ = ""
+
+            generateMacOSLogScript ExecuteName$, handler$, "qb64,libqb,libqb-image,libqb-audio", ModifyCOMMAND$, tmpdir$ + "log.command"
+
+            ' Spawning a program in a terminal is done via `open`.
+            ' We have to use a separate script to be able to set environment variables for the program
+            ExecuteLine$ = "open -b com.apple.terminal " + _CHR_QUOTE + tmpdir$ + "log.command" + _CHR_QUOTE
+        ELSE
+            ExecuteLine$ = ExecuteName$
+        END IF
+    ELSEIF os$ = "WIN" THEN
+        IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
+            PrePend$ = "cmd /c"
+        ELSE
+            PrePend$ = ""
+        END IF
+
+        ExecuteLine$ = PrePend$ + QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$
+    ELSEIF os$ = "LNX" THEN
+        IF path.exe$ = "" THEN path.exe$ = "./"
+
+        IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
+            ExecuteLine$ = DefaultTerminal
+
+            IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
+                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(lastBinaryGenerated$))
+            ELSE
+                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(path.exe$ + lastBinaryGenerated$))
+            END IF
+
+            ExecuteLine$ = StrReplace$(ExecuteLine$, "$@", ModifyCOMMAND$)
+        ELSE
+            IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
+                ExecuteLine$ = QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
+            ELSE
+                ExecuteLine$ = QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
+            END IF
+        END IF
+
+        IF path.exe$ = "./" THEN path.exe$ = ""
+    END IF
 
     IF iderunmode = 1 THEN
         IF NoExeSaved THEN
@@ -907,17 +967,16 @@ IF C = 9 THEN 'run
             'saving an EXE file to the disk.
             'We start off by first running the EXE, and then we delete it from the drive.
             'making it a temporary file when all is said and done.
+            SHELL ExecuteLine$
+
             IF os$ = "WIN" THEN
-                SHELL QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$ 'run the newly created program
                 SHELL _HIDE _DONTWAIT "del " + QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) 'kill it
             END IF
             IF path.exe$ = "" THEN path.exe$ = "./"
             IF os$ = "LNX" THEN
                 IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                    SHELL QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
                     KILL lastBinaryGenerated$
                 ELSE
-                    SHELL QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
                     KILL path.exe$ + lastBinaryGenerated$
                 END IF
             END IF
@@ -927,29 +986,10 @@ IF C = 9 THEN 'run
             GOTO sendcommand
         END IF
 
-
-
-        IF os$ = "WIN" THEN SHELL _DONTWAIT QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$
-        IF path.exe$ = "" THEN path.exe$ = "./"
-        IF os$ = "LNX" THEN
-            IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                SHELL _DONTWAIT QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
-            ELSE
-                SHELL _DONTWAIT QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
-            END IF
-        END IF
-        IF path.exe$ = "./" THEN path.exe$ = ""
+        SHELL _DONTWAIT ExecuteLine$
     ELSE
-        IF os$ = "WIN" THEN SHELL QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$
-        IF path.exe$ = "" THEN path.exe$ = "./"
-        IF os$ = "LNX" THEN
-            IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                SHELL QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
-            ELSE
-                SHELL QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
-            END IF
-        END IF
-        IF path.exe$ = "./" THEN path.exe$ = ""
+        SHELL ExecuteLine$
+
         DO: LOOP UNTIL INKEY$ = ""
         DO: LOOP UNTIL _KEYHIT = 0
     END IF
@@ -10409,6 +10449,30 @@ DO
                             IF GetRCStateVar(OptExplArr) = 0 THEN e$ = e$ + " or OPTION _EXPLICITARRAY"
                             a$ = "Expected OPTION BASE" + e$: GOTO errmes
                     END SELECT
+                END IF
+
+                IF firstelement$ = "_LOGTRACE" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "TRACE"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
+                IF firstelement$ = "_LOGINFO" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "INFO"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
+                IF firstelement$ = "_LOGWARN" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "WARN"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
+                END IF
+
+                IF firstelement$ = "_LOGERROR" THEN
+                    EmitLoggingStatement getelements$(ca$, 2, n), "ERROR"
+                    IF Error_Happened THEN GOTO errmes
+                    GOTO finishedline
                 END IF
 
                 'any other "unique" subs can be processed above
@@ -23821,6 +23885,8 @@ END FUNCTION
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
 '$INCLUDE:'utilities\format.bas'
+'$include:'utilities\terminal.bas'
+'$INCLUDE:'emit\logging.bas'
 
 DEFLNG A-Z
 

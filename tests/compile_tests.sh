@@ -93,14 +93,14 @@ do
 
     if [ "$compileFromBase" == "y" ]; then
         # -m and -q make sure that we get predictable results
-        "$QB64" "-f:OptimizeCppProgram=true" $compilerFlags -q -m -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
+        "$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" $compilerFlags -q -m -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
         ERR=$?
     else
         pushd . >/dev/null
         cd "./tests/compile_tests/$category"
 
         # -m and -q make sure that we get predictable results
-        "../../../$QB64" "-f:OptimizeCppProgram=true" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
+        "../../../$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
         ERR=$?
 
         popd >/dev/null
@@ -133,7 +133,11 @@ do
 
         pushd . > /dev/null
         cd "./tests/compile_tests/$category"
-        testResult=$($LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" 2>&1)
+        testResult=$(\
+            QB64PE_LOG_HANDLERS=file \
+            QB64PE_LOG_SCOPES="qb64,libqb,libqb-image,libqb-audio" \
+            QB64PE_LOG_FILE_PATH="../../../$RESULTS_DIR/$category-$testName-log.txt" \
+            $LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" 2>&1)
         ERR=$?
         popd > /dev/null
 

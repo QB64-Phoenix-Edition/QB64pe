@@ -18,6 +18,7 @@
 #include "hexoctbin.h"
 #include "image.h"
 #include "libqb.h"
+#include "logging.h"
 #include "mem.h"
 #include "qbmath.h"
 #include "qbs-mk-cv.h"
@@ -1685,6 +1686,12 @@ void division_by_zero_handler(int ignore) {
     error(11);
 }
 
+void segv_handler(int ignore)
+{
+    libqb_log_error("Recieved SIGSEGV! Review below stacktrace:");
+    exit(1);
+}
+
 // void SIGSEGV_handler(int ignore){
 //    error(256);//assume stack overflow? (the most likely cause)
 //}
@@ -1700,6 +1707,8 @@ void QBMAIN(void *unused) {
     sigemptyset(&(sig_act.sa_mask));
     sig_act.sa_flags = 0;
     sigaction(SIGFPE, &sig_act, NULL);
+
+    signal(SIGSEGV, segv_handler);
 #endif
 
     ptrszint tmp_long;
@@ -1729,6 +1738,8 @@ void QBMAIN(void *unused) {
 #include "../temp/onstrigj.txt"
     }
     chain_input();
+    libqb_log_info("QB64 code starting.");
+
 #include "../temp/main.txt"
 
     //} (closed by main.txt)
