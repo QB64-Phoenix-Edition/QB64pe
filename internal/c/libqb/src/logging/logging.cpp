@@ -36,6 +36,9 @@ static uint8_t enabled_scopes[static_cast<std::size_t>(logscope::Count)] = {
 };
 
 uint32_t func__logminlevel() {
+    if (!logging_enabled)
+        return 5;
+
     switch (minimum_level) {
         case loglevel::Trace: return 1;
         case loglevel::Information: return 2;
@@ -43,7 +46,7 @@ uint32_t func__logminlevel() {
         case loglevel::Error: return 4;
     }
 
-    return 1;
+    return 5;
 }
 
 const char *logLevelName(loglevel lvl) {
