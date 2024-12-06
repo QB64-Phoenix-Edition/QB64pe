@@ -597,7 +597,7 @@ END FUNCTION
 
 ' The string data will have C escape sequences in it if necessary
 FUNCTION createElementString$ (s$)
-    DIM ele$, o$, p1 AS LONG, c2 AS LONG, i AS LONG
+    DIM ele$
     ele$ = CHR$(34)
 
     ele$ = ele$ + escapeString$(s$)
