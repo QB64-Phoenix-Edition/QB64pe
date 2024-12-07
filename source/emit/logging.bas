@@ -1,5 +1,5 @@
 
-SUB EmitLoggingStatement(elements As String, loglevel As String)
+SUB EmitLoggingStatement (elements AS STRING, loglevel AS STRING)
     SELECT CASE loglevel
         CASE "TRACE": func$ = "sub__logtrace": scaseLayout$ = "_LogTrace"
         CASE "INFO": func$ = "sub__loginfo": scaseLayout$ = "_LogInfo"
