@@ -1,10 +1,10 @@
 ' This function finds a usable terminal installed on Linux and provides the
 ' required configuration for it. This allows the terminal to display $CONSOLE
 ' programs and logging if requested.
-' 
+'
 ' The user can replace the result with their own configuration, this is just a
 ' best effort to find a working default.
-FUNCTION findWorkingTerminal$()
+FUNCTION findWorkingTerminal$ ()
     DIM Exes$(7), Formats$(7)
     Exes$(1) = "gnome-terminal": Formats$(1) = "-- $$ $@"
     Exes$(2) = "konsole": Formats$(2) = "-e $$ $@"
@@ -26,7 +26,7 @@ FUNCTION findWorkingTerminal$()
     findWorkingTerminal$ = ""
 END FUNCTION
 
-SUB generateMacOSLogScript(exe AS STRING, handler AS STRING, scopes AS STRING, cmdstr AS STRING, script AS STRING)
+SUB generateMacOSLogScript (exe AS STRING, handler AS STRING, scopes AS STRING, cmdstr AS STRING, script AS STRING)
     ON ERROR GOTO _NEWHANDLER qberror_test
     KILL script
     ON ERROR GOTO _LASTHANDLER

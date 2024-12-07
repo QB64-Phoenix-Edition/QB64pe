@@ -264,10 +264,10 @@ SUB ReadInitialConfig
     UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", -1)
 
     DefaultTerminal = ReadWriteStringSettingValue$(generalSettingsSection$, "DefaultTerminal", "")
-    If DefaultTerminal = "" AND OS$ = "LNX" AND MacOSX = 0 Then
+    IF DefaultTerminal = "" AND os$ = "LNX" AND MacOSX = 0 THEN
         DefaultTerminal = findWorkingTerminal$
         WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
-    End If
+    END IF
 
     LoggingEnabled = ReadWriteBooleanSettingValue%(generalSettingsSection$, "LoggingEnabled", 0)
 

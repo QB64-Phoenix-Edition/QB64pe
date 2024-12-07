@@ -9594,12 +9594,12 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
     IF ideprogname = "" THEN
         ProposedTitle$ = FindProposedTitle$
         IF ProposedTitle$ = "" THEN
-            temp$ = "QB64 - Variable List Report: untitled" + tempfolderindexstr$ + ".bas" + CHR$(10)
+            temp$ = "QB64(PE) - Variable List Report: untitled" + tempfolderindexstr$ + ".bas" + CHR$(10)
         ELSE
-            temp$ = "QB64 - Variable List Report: " + ProposedTitle$ + ".bas" + CHR$(10)
+            temp$ = "QB64(PE) - Variable List Report: " + ProposedTitle$ + ".bas" + CHR$(10)
         END IF
     ELSE
-        temp$ = "QB64 - Variable List Report: " + ideprogname$ + CHR$(10)
+        temp$ = "QB64(PE) - Variable List Report: " + ideprogname$ + CHR$(10)
     END IF
 
     FOR x = 1 TO totalVariablesCreated
