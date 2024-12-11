@@ -1580,7 +1580,6 @@ DO
     ideprepass:
     prepassLastLine:
     prepass = 1
-    IF recompile GOTO do_recompile
 
     IF firstLine <> 0 OR lastLine <> 0 THEN
         lineBackup$ = wholeline$ 'backup the real line (will be blank when lastline is set)
@@ -1676,11 +1675,13 @@ DO
 
         IF temp$ = "$COLOR:0" THEN
             SetRCStateVar ColorSet, 1
+            IF recompile GOTO do_recompile
             GOTO finishedlinepp
         END IF
 
         IF temp$ = "$COLOR:32" THEN
             SetRCStateVar ColorSet, 2
+            IF recompile GOTO do_recompile
             GOTO finishedlinepp
         END IF
 
