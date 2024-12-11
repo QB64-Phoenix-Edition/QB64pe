@@ -16,7 +16,7 @@ END SUB
 SUB SetRCStateVar (stVar AS RCStateVar, setVal%%)
     stVar.wanted = setVal%%
     IF stVar.actual <> stVar.wanted AND stVar.locked = _FALSE THEN
-        recompile = 1 'end of pass recompile trigger
+        recompile = 1 'recompile trigger
     END IF
 END SUB
 
