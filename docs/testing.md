@@ -24,7 +24,7 @@ spaces also exist in the `*.output` and/or `*.err` files respectively, those
 spaces are often overseen or even get stripped by some Editors when saving the
 file. Also the test **can not** produce trailing empty lines, you **must** make
 sure the test output ends with the last meaningful line.
- 
+
 Tests can also have an optional `*.flags` file. The contents of this file will
 be provide as command line arguments to QB64-PE when compiling the test source.
 
