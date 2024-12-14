@@ -9,5 +9,5 @@
 
 struct qbs;
 
-qbs *func__deflate(qbs *text);
+qbs *func__deflate(qbs *src, int32_t level = -1, int32_t passed = 0);
 qbs *func__inflate(qbs *text, int64_t originalsize, int32_t passed);

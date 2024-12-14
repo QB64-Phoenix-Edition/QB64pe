@@ -331,7 +331,7 @@ endif
 ifneq ($(filter y,$(DEP_ZLIB) $(DEP_AUDIO_MINIAUDIO)),)
 	EXE_LIBS += $(DATA_PROCESSING_LIB)
 
-	LICENSE_IN_USE += miniz
+	LICENSE_IN_USE += miniz modp_b64
 endif
 
 ifneq ($(filter y,$(DEP_HTTP)),)

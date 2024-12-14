@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------------------------------
 //  QB64-PE Hashing Library
-//  Powered by FreeType (https://freetype.org/)
+//  Uses the MD5 implementation from libxmp-lite (https://github.com/libxmp/libxmp/tree/master/lite)
 //-----------------------------------------------------------------------------------------------------
 
 #pragma once

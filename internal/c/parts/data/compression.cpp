@@ -11,19 +11,27 @@
 
 /// @brief Compresses a string using the DEFLATE algorithm.
 /// @param text The qbs object containing the string to be compressed.
+/// @param level The compression level (0-10). 10 is the highest level and 0 is no compression.
+/// @param passed Flag indicating if level was passed by the caller.
 /// @return A new qbs object containing the compressed data.
-qbs *func__deflate(qbs *text) {
-    auto fileSize = uLongf(text->len);
+qbs *func__deflate(qbs *src, int32_t level, int32_t passed) {
+    auto fileSize = uLongf(src->len);
     auto compSize = compressBound(fileSize);
-    auto dest = qbs_new(compSize, 1);                    // compressing directly to the qbs gives us a performance boost
-    compress(dest->chr, &compSize, text->chr, fileSize); // discard result because we do not do any error checking
-    return qbs_left(dest, compSize);                     // resize the qbs to the actual compressed size
+    auto dest = qbs_new(compSize, 1); // compressing directly to the qbs gives us a performance boost
+
+    if (!passed) {
+        level = MZ_DEFAULT_COMPRESSION; // set default compression level
+    }
+
+    compress2(dest->chr, &compSize, src->chr, fileSize, level); // discard result because we do not do any error checking
+
+    return qbs_left(dest, compSize); // resize the qbs to the actual compressed size
 }
 
 /// @brief Decompresses a string using the INFLATE algorithm.
 /// @param text The qbs object containing the compressed data.
 /// @param originalSize The expected original size of the uncompressed data.
-/// @param passed Flag indicating if the originalSize should be used directly.
+/// @param passed Flag indicating if originalSize was passed by the caller.
 /// @return A new qbs object containing the uncompressed data.
 qbs *func__inflate(qbs *text, int64_t originalSize, int32_t passed) {
     if (passed) {
