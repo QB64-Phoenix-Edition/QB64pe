@@ -328,7 +328,7 @@ else
 endif
 
 # The audio library uses the decompression functions from miniz
-ifneq ($(filter y,$(DEP_ZLIB) $(DEP_FONT) $(DEP_AUDIO_MINIAUDIO)),)
+ifneq ($(filter y,$(DEP_ZLIB) $(DEP_AUDIO_MINIAUDIO)),)
 	EXE_LIBS += $(DATA_PROCESSING_LIB)
 
 	LICENSE_IN_USE += miniz

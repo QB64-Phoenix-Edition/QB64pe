@@ -7,5 +7,5 @@
 
 struct qbs;
 
-qbs *func_base64encode(qbs *src);
-qbs *func_base64decode(qbs *src);
+qbs *func__base64encode(qbs *src);
+qbs *func__base64decode(qbs *src);

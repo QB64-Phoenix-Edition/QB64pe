@@ -1,36 +1,34 @@
 //-----------------------------------------------------------------------------------------------------
 //  QB64-PE Hashing Library
-//  Powered by FreeType (https://freetype.org/)
+//  Uses the MD5 implementation from libxmp-lite (https://github.com/libxmp/libxmp/tree/master/lite)
 //-----------------------------------------------------------------------------------------------------
 
 #include "hashing.h"
+#include "../audio/extras/libxmp-lite/md5.h"
 #include "libqb-common.h"
 #include "qbs.h"
-extern "C" {
-#include "../video/font/freetype/md5.h"
-}
 #include <cstdio>
 
-/// @brief Expose freetype's MD5 procedure for public use
-/// @param text The message to build the MD5 hash of
-/// @return The generated MD5 hash as hexadecimal string
+/// @brief Computes the MD5 hash of the given text.
+/// @param text Pointer to the qbs structure containing the text data.
+/// @return A new qbs object containing the MD5 hash in hexadecimal format.
 qbs *func__md5(qbs *text) {
     MD5_CTX ctx;
-    unsigned char md5[16];
+    unsigned char md5[MD5_DIGEST_LENGTH];
 
-    MD5_Init(&ctx);
+    MD5Init(&ctx);
 
     if (text->len) {
-        MD5_Update(&ctx, text->chr, text->len);
+        MD5Update(&ctx, text->chr, text->len);
     }
 
-    MD5_Final(md5, &ctx);
+    MD5Final(md5, &ctx);
 
-    auto res = qbs_new(32, 1);
+    auto result = qbs_new(MD5_DIGEST_STRING_LENGTH - 1, 1);
 
-    for (auto i = 0; i < 16; i++) {
-        sprintf((char *)&res->chr[i * 2], "%02X", md5[i]);
+    for (auto i = 0; i < MD5_DIGEST_LENGTH; i++) {
+        sprintf((char *)&result->chr[i << 1], "%02X", md5[i]);
     }
 
-    return res;
+    return result;
 }
