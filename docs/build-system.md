@@ -54,11 +54,11 @@ Repository Layout
 - `internal/`
   - `c/` - Contains everything related to the C/C++ source files for QB64-PE.
     - `c_compiler/`
-      - On Windows, this folder is populated with the MinGW C++ compiler during the CI process (or when using `setup_win.bat`.
+      - On Windows, this folder is populated with the MinGW C++ compiler during the CI process (or when using `setup_win.bat`).
     - `parts/`
       - Contains the sources to many of the dependencies that QB64 uses. Most of the dependencies have a `build.mk` file that is used by the main `Makefile` to build them.
   - `source/`
-    - Contains a copy of the generated C++ source of a previous version of QB64-PE. This is used to build a copy of QB64-PE using only a C++ ccompiler. This is updated automatically via the CI process.
+    - Contains a copy of the generated C++ source of a previous version of QB64-PE. This is used to build a copy of QB64-PE using only a C++ compiler. This is updated automatically via the CI process.
   - `version.txt`
     - QB64-PE checks this file to determine if there is a version tag (`-foobar` on the end of the version) for this version of QB64-PE.
 - `source/`
