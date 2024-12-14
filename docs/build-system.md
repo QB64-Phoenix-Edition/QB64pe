@@ -38,61 +38,60 @@ This describes how QB64-PE itself is built by the CI process to produce a releas
 Repository Layout
 -----------------
 
- - `.ci/` - All files in this folder are related to the CI build process.
-   - `bootstrap.bat`
-     - Windows only, Downloads MinGW compiler, builds the precompiled version of QB64-PE located in `./internal/source` as `qb64pe_bootstrap.exe`.
-   - `bootstrap.sh`
-     - Linux and OSX, builds the precompiled version of QB64-PE located in `./internal/source` as `qb64pe_bootstrap.exe`.
-   - `compile.bat`
-     - Uses `qb64pe_bootstrap.exe` to build `./source/qb64pe.bas`. This compiled QB64-PE is the released `qb64pe.exe`.
-   - `compile.sh`
-     - Uses `qb64pe_bootstrap` to build `./source/qb64pe.bas`. This built QB64-PE is what is used for testing, and the sources from this QB64-PE are placed into `./internal/source`.
-   - `make-dist.sh`
-     - Copies all the relevant parts of QB64-PE into a new folder, which can be distributed as a release.
-   - `push-internal-source.sh`
-     - If `./internal/source` is different after building `./source/qb64pe.bas`, then this will automatically push those changes to the repository to update the sources used to build `qb64pe_bootstrap`.
- - `internal/`
-   - `c/` - Contains everything related to the C/C++ source files for QB64-PE.
-     - `c_compiler/` 
-       - On Windows, this folder is populated with the MinGW C++ compiler during the CI process (or when using `setup_win.bat`.
-     - `parts/`
-       - Contains the sources to many of the dependencies that QB64 uses. Most of the dependencies have a `build.mk` file that is used by the main `Makefile` to build them.
-   - `source/`
-     - Contains a copy of the generated C++ source of a previous version of QB64-PE. This is used to build a copy of QB64-PE using only a C++ ccompiler. This is updated automatically via the CI process.
-   - `version.txt`
-     - QB64-PE checks this file to determine if there is a version tag (`-foobar` on the end of the version) for this version of QB64-PE.
- - `source/`
-   - Contains the QB64 source to QB64-PE itself.
- - `tests/` - Contains the tests run on QB64-PE during CI to verify changes.
-   - `compile_tests/`
-     - Testcases related to specific dependencies that QB64 can pull in. These tests are largely intended to test that QB64-PE and the Makefile correctly pulls in the proper dependencies.
-   - `c`
-     - The source for the C++-based tests.
-   - `qbasic_testcases/`
-     - A variety of collected QB64 sample programs
-   - `dist/`
-     - Test files for distribution tests.
-   - `compile_tests.sh`
-     - Runs the `compile_tests` test cases.
-   - `qbasic_tests.sh`
-     - Compiled all the testcases in `qbasic_testcases` and verifies they compile successfully.
-   - `dist_tests.sh`
-     - Verifies the output of `make-dist.sh` is a functioning distribution of QB64-PE
-   - `run_dist_tests.sh`
-     - Runs the distribution test collections.
-   - `run_tests.sh`
-     - Runs all individual test collections.
-   - `run_c_tests.sh`
-     - Runs all the C++ test cases.
- - `setup_lnx.sh`
-   - Used as part of the Linux release to install dependencies and compile QB64-PE.
- - `setup_osx.command`
-   - Used as part of the OSx release to compile QB64-PE.
- - `setup_win.bat`
-   - Used only for compiled QB64-PE directly from a clone of the repository (not a release, we distribute QB64-PE already compiled in the Windows release)
- - `Makefile`
-   - Used for building QB64 programs.
-
+- `.ci/` - All files in this folder are related to the CI build process.
+  - `bootstrap.bat`
+    - Windows only, Downloads MinGW compiler, builds the precompiled version of QB64-PE located in `./internal/source` as `qb64pe_bootstrap.exe`.
+  - `bootstrap.sh`
+    - Linux and OSX, builds the precompiled version of QB64-PE located in `./internal/source` as `qb64pe_bootstrap.exe`.
+  - `compile.bat`
+    - Uses `qb64pe_bootstrap.exe` to build `./source/qb64pe.bas`. This compiled QB64-PE is the released `qb64pe.exe`.
+  - `compile.sh`
+    - Uses `qb64pe_bootstrap` to build `./source/qb64pe.bas`. This built QB64-PE is what is used for testing, and the sources from this QB64-PE are placed into `./internal/source`.
+  - `make-dist.sh`
+    - Copies all the relevant parts of QB64-PE into a new folder, which can be distributed as a release.
+  - `push-internal-source.sh`
+    - If `./internal/source` is different after building `./source/qb64pe.bas`, then this will automatically push those changes to the repository to update the sources used to build `qb64pe_bootstrap`.
+- `internal/`
+  - `c/` - Contains everything related to the C/C++ source files for QB64-PE.
+    - `c_compiler/`
+      - On Windows, this folder is populated with the MinGW C++ compiler during the CI process (or when using `setup_win.cmd`).
+    - `parts/`
+      - Contains the sources to many of the dependencies that QB64 uses. Most of the dependencies have a `build.mk` file that is used by the main `Makefile` to build them.
+  - `source/`
+    - Contains a copy of the generated C++ source of a previous version of QB64-PE. This is used to build a copy of QB64-PE using only a C++ compiler. This is updated automatically via the CI process.
+  - `version.txt`
+    - QB64-PE checks this file to determine if there is a version tag (`-foobar` on the end of the version) for this version of QB64-PE.
+- `source/`
+  - Contains the QB64 source to QB64-PE itself.
+- `tests/` - Contains the tests run on QB64-PE during CI to verify changes.
+  - `compile_tests/`
+    - Testcases related to specific dependencies that QB64 can pull in. These tests are largely intended to test that QB64-PE and the Makefile correctly pulls in the proper dependencies.
+  - `c`
+    - The source for the C++-based tests.
+  - `qbasic_testcases/`
+    - A variety of collected QB64 sample programs
+  - `dist/`
+    - Test files for distribution tests.
+  - `compile_tests.sh`
+    - Runs the `compile_tests` test cases.
+  - `qbasic_tests.sh`
+    - Compiled all the testcases in `qbasic_testcases` and verifies they compile successfully.
+  - `dist_tests.sh`
+    - Verifies the output of `make-dist.sh` is a functioning distribution of QB64-PE
+  - `run_dist_tests.sh`
+    - Runs the distribution test collections.
+  - `run_tests.sh`
+    - Runs all individual test collections.
+  - `run_c_tests.sh`
+    - Runs all the C++ test cases.
+- `setup_lnx.sh`
+  - Used as part of the Linux release to install dependencies and compile QB64-PE.
+- `setup_osx.command`
+  - Used as part of the OSx release to compile QB64-PE.
+- `setup_win.cmd`
+  - Used only for compiled QB64-PE directly from a clone of the repository (not a release, we distribute QB64-PE already compiled in the Windows release)
+- `Makefile`
+  - Used for building QB64 programs.
 
 Makefile Usage and Parameters
 -----------------------------
@@ -139,9 +138,9 @@ Versioning
 
 QB64 Phoenix Edition follows SemVer, which means that major releases indicate a breaking change, minor releases indicate new features, and patch release indicates bug fixes.
 
- - Release versions of QB64-PE will have just a version number in the form `X.Y.Z`. All other versions of QB64-PE will have some kind of 'tag' at the end of the version, which is arbitrary text after a `-` placed on the end of the version.
- - CI versions get a tag in the form of `-XX-YYYYYYYY`, where `XX` is the number of commits since the last release, and `YYYYYYYY` is the first 8 digits of the commit hash of that build.
- - If you build the repository directly, you would get an `-UNKNOWN` version, which indicates that due to not running through the CI process we do not know what particular version (if any) that you are using.
+- Release versions of QB64-PE will have just a version number in the form `X.Y.Z`. All other versions of QB64-PE will have some kind of 'tag' at the end of the version, which is arbitrary text after a `-` placed on the end of the version.
+- CI versions get a tag in the form of `-XX-YYYYYYYY`, where `XX` is the number of commits since the last release, and `YYYYYYYY` is the first 8 digits of the commit hash of that build.
+- If you build the repository directly, you would get an `-UNKNOWN` version, which indicates that due to not running through the CI process we do not know what particular version (if any) that you are using.
 
 Release Process
 ---------------
