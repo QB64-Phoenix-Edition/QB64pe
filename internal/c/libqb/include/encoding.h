@@ -1,13 +1,11 @@
 //-----------------------------------------------------------------------------------------------------
-//  QB64-PE Compression Library
-//  Powered by miniz (https://github.com/richgel999/miniz)
+//  QB64-PE Encoding Library
+//  Powered by MODP_B64 (https://github.com/client9/stringencoders)
 //-----------------------------------------------------------------------------------------------------
 
 #pragma once
 
-#include <stdint.h>
-
 struct qbs;
 
-qbs *func__deflate(qbs *text);
-qbs *func__inflate(qbs *text, int64_t originalsize, int32_t passed);
+qbs *func_base64encode(qbs *src);
+qbs *func_base64decode(qbs *src);

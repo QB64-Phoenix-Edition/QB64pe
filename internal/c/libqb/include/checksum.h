@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------------------------------
-//  QB64-PE Compression Library
+//  QB64-PE Checksum Library
 //  Powered by miniz (https://github.com/richgel999/miniz)
 //-----------------------------------------------------------------------------------------------------
 
@@ -9,5 +9,5 @@
 
 struct qbs;
 
-qbs *func__deflate(qbs *text);
-qbs *func__inflate(qbs *text, int64_t originalsize, int32_t passed);
+uint32_t func__adler32(qbs *text);
+uint32_t func__crc32(qbs *text);

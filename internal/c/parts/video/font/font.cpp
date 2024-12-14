@@ -16,9 +16,6 @@
 #include <cstdio>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-extern "C" {
-#include "freetype/md5.h"
-}
 #include <locale>
 #include <string>
 #include <unordered_map>
@@ -968,27 +965,6 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
     }
 
     return false;
-}
-
-/// @brief Expose freetype's MD5 procedure for public use
-/// @param text The message to build the MD5 hash of
-/// @return The generated MD5 hash as hexadecimal string
-qbs *func__md5(qbs *text) {
-    MD5_CTX ctx;
-    unsigned char md5[16];
-    qbs *res;
-    int i;
-
-    MD5_Init(&ctx);
-    if (text->len)
-        MD5_Update(&ctx, text->chr, text->len);
-    MD5_Final(md5, &ctx);
-
-    res = qbs_new(32, 1);
-    for (i = 0; i < 16; i++)
-        sprintf((char *)&res->chr[i * 2], "%02X", md5[i]);
-
-    return res;
 }
 
 /// @brief Return the true font height in pixel

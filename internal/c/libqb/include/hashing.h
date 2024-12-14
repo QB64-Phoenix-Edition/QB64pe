@@ -1,13 +1,10 @@
 //-----------------------------------------------------------------------------------------------------
-//  QB64-PE Compression Library
-//  Powered by miniz (https://github.com/richgel999/miniz)
+//  QB64-PE Hashing Library
+//  Powered by FreeType (https://freetype.org/)
 //-----------------------------------------------------------------------------------------------------
 
 #pragma once
 
-#include <stdint.h>
-
 struct qbs;
 
-qbs *func__deflate(qbs *text);
-qbs *func__inflate(qbs *text, int64_t originalsize, int32_t passed);
+qbs *func__md5(qbs *text);

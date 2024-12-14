@@ -1,10 +1,12 @@
 #include "audio.h"
 #include "bitops.h"
+#include "checksum.h"
 #include "clipboard.h"
 #include "command.h"
 #include "common.h"
 #include "compression.h"
 #include "datetime.h"
+#include "encoding.h"
 #include "environ.h"
 #include "error_handle.h"
 #include "event.h"
@@ -15,6 +17,7 @@
 #include "font.h"
 #include "game_controller.h"
 #include "gui.h"
+#include "hashing.h"
 #include "hexoctbin.h"
 #include "image.h"
 #include "libqb.h"
@@ -1686,8 +1689,7 @@ void division_by_zero_handler(int ignore) {
     error(11);
 }
 
-void segv_handler(int ignore)
-{
+void segv_handler(int ignore) {
     libqb_log_error("Recieved SIGSEGV! Review below stacktrace:");
     exit(1);
 }
