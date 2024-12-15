@@ -40,7 +40,7 @@ END IF
 DIM i AS LONG
 
 FOR i = 0 TO 10
-    IF _STRCMP(_INFLATE$(_DEFLATE$(LOREM_IPSUM, i) ), LOREM_IPSUM) = _EQUAL THEN
+    IF _STRCMP(_INFLATE$(_DEFLATE$(LOREM_IPSUM, i)), LOREM_IPSUM) = _EQUAL THEN
         PRINT USING "Deflate round trip test ## passed."; i
     ELSE
         PRINT USING "Deflate round trip test ## failed!"; i
