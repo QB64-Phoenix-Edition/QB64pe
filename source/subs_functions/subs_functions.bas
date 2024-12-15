@@ -3907,7 +3907,7 @@ SUB reginternal
 
     clearid
     id.n = "_Md5"
-    id.Dependency = DEPENDENCY_MINIAUDIO
+    id.Dependency = DEPENDENCY_LOADFONT
     id.musthave = "$"
     id.subfunc = 1
     id.callname = "func__md5"
