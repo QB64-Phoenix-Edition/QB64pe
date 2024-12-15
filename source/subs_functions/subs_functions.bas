@@ -1443,18 +1443,6 @@ SUB reginternal
     regid
 
     clearid
-    id.n = "_Md5"
-    id.Dependency = DEPENDENCY_LOADFONT
-    id.musthave = "$"
-    id.subfunc = 1
-    id.callname = "func__md5"
-    id.args = 1
-    id.arg = MKL$(STRINGTYPE - ISPOINTER)
-    id.ret = STRINGTYPE - ISPOINTER
-    id.hr_syntax = "_MD5$(dataString$)"
-    regid
-
-    clearid
     id.n = "_PrintString"
     id.subfunc = 2
     id.callname = "sub__printstring"
@@ -3897,10 +3885,11 @@ SUB reginternal
     id.musthave = "$"
     id.subfunc = 1
     id.callname = "func__deflate"
-    id.args = 1
-    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.args = 2
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "?[,?]"
     id.ret = STRINGTYPE - ISPOINTER
-    id.hr_syntax = "_DEFLATE$(stringToCompress$)"
+    id.hr_syntax = "_DEFLATE$(stringToCompress$[, compressionLevel&])"
     regid
 
     clearid
@@ -3914,6 +3903,42 @@ SUB reginternal
     id.specialformat = "?[,?]"
     id.ret = STRINGTYPE - ISPOINTER
     id.hr_syntax = "_INFLATE$(stringToDecompress$[, originalSize&])"
+    regid
+
+    clearid
+    id.n = "_Md5"
+    id.Dependency = DEPENDENCY_LOADFONT
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__md5"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_MD5$(dataString$)"
+    regid
+
+    clearid
+    id.n = "_Base64Decode"
+    id.Dependency = DEPENDENCY_ZLIB
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__base64decode"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_BASE64DECODE$(stringToDecode$)"
+    regid
+
+    clearid
+    id.n = "_Base64Encode"
+    id.Dependency = DEPENDENCY_ZLIB
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__base64encode"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_BASE64ENCODE$(stringToEncode$)"
     regid
 
     clearid

@@ -12,7 +12,6 @@
 #    include <mach-o/dyld.h> //required for _NSGetExecutablePath
 #endif
 
-
 #include "audio.h"
 #include "bitops.h"
 #include "cmem.h"
@@ -20,6 +19,7 @@
 #include "completion.h"
 #include "compression.h"
 #include "datetime.h"
+#include "encoding.h"
 #include "error_handle.h"
 #include "event.h"
 #include "extended_math.h"
@@ -31,11 +31,12 @@
 #include "gfs.h"
 #include "glut-thread.h"
 #include "gui.h"
+#include "hashing.h"
 #include "http.h"
 #include "image.h"
 #include "keyhandler.h"
-#include "mac-mouse-support.h"
 #include "logging.h"
+#include "mac-mouse-support.h"
 #include "mem.h"
 #include "mutex.h"
 #include "qblist.h"
@@ -29392,7 +29393,7 @@ extern void set_dynamic_info();
 
 #ifdef QB64_WINDOWS
 static bool isValidCygwinPipe(int fd) {
-    HANDLE h = (HANDLE) _get_osfhandle(fd);
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
     if (h == INVALID_HANDLE_VALUE) {
         return false;
     }

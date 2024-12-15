@@ -23887,7 +23887,7 @@ END FUNCTION
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
 '$INCLUDE:'utilities\format.bas'
-'$include:'utilities\terminal.bas'
+'$INCLUDE:'utilities\terminal.bas'
 '$INCLUDE:'emit\logging.bas'
 
 DEFLNG A-Z

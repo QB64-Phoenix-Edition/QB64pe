@@ -6,7 +6,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "InstrumentBankManager.h"
-#include "../../../compression/miniz.h"
+#include "../../../data/miniz.h"
 
 void InstrumentBankManager::SetPath(const char *path) {
     if (path && path[0]) {

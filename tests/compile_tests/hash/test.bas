@@ -1,5 +1,4 @@
-$CONSOLE
-_DEST _CONSOLE
+$CONSOLE:ONLY
 
 t$ = "QB64 Phoenix Edition"
 PRINT "   Text: "; t$
