@@ -14,7 +14,6 @@
 
 #include "audio.h"
 #include "bitops.h"
-#include "checksum.h"
 #include "cmem.h"
 #include "command.h"
 #include "completion.h"

@@ -1,6 +1,5 @@
 #include "audio.h"
 #include "bitops.h"
-#include "checksum.h"
 #include "clipboard.h"
 #include "command.h"
 #include "common.h"

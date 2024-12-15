@@ -4,6 +4,7 @@
 //-----------------------------------------------------------------------------------------------------
 
 #include "compression.h"
+#include "hashing.h"
 #include "libqb-common.h"
 #include "miniz.h"
 #include "qbs.h"
