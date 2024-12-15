@@ -9,6 +9,28 @@
 #include "qbs.h"
 #include <vector>
 
+/// @brief Computes the Adler-32 checksum of the given text.
+/// @param text Pointer to the qbs structure containing the text data.
+/// @return The Adler-32 checksum as a uint32_t value.
+uint32_t func__adler32(qbs *text) {
+    if (!text->len) {
+        return 1;
+    }
+
+    return adler32(1, text->chr, text->len);
+}
+
+/// @brief Computes the CRC-32 checksum of the given text.
+/// @param text Pointer to the qbs structure containing the text data.
+/// @return The CRC-32 checksum as a uint32_t value.
+uint32_t func__crc32(qbs *text) {
+    if (!text->len) {
+        return 0;
+    }
+
+    return crc32(0, text->chr, text->len);
+}
+
 /// @brief Compresses a string using the DEFLATE algorithm.
 /// @param text The qbs object containing the string to be compressed.
 /// @param level The compression level (0-10). 10 is the highest level and 0 is no compression.

@@ -4,10 +4,8 @@ MINIZ_SRCS := miniz.c
 MODP_B64_SRCS := modp_b64.cpp
 
 DATA_PROCESSING_SRCS := \
-	checksum.cpp \
 	compression.cpp \
-	encoding.cpp \
-	hashing.cpp
+	encoding.cpp
 
 MINIZ_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/data/%.o,$(MINIZ_SRCS))
 

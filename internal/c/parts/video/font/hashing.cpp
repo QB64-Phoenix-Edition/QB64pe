@@ -5,7 +5,7 @@
 
 #include "hashing.h"
 extern "C" {
-#include "../video/font/freetype/md5.h"
+#include "freetype/md5.h"
 }
 #include "libqb-common.h"
 #include "qbs.h"

@@ -285,14 +285,8 @@ else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
 
-ifneq ($(filter y,$(DEP_ZLIB) $(DEP_FONT) $(DEP_AUDIO_MINIAUDIO)),)
-	EXE_LIBS += $(DATA_PROCESSING_LIB)
-
-	LICENSE_IN_USE += miniz modp_b64
-endif
-
 ifneq ($(filter y,$(DEP_FONT)),)
-	EXE_LIBS += $(FONT_OBJS) $(FREETYPE_EXE_LIBS)
+	EXE_LIBS += $(FREETYPE_EXE_LIBS)
 
 	LICENSE_IN_USE += freetype_ftl
 else
@@ -331,6 +325,12 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 	LICENSE_IN_USE += miniaudio stb_vorbis libxmp-lite radv2 hivelytracker qoa foo_midi ymfmidi primesynth tinysoundfont
 else
 	EXE_LIBS += $(AUDIO_STUB_OBJS)
+endif
+
+ifneq ($(filter y,$(DEP_ZLIB) $(DEP_AUDIO_MINIAUDIO)),)
+	EXE_LIBS += $(DATA_PROCESSING_LIB)
+
+	LICENSE_IN_USE += miniz modp_b64
 endif
 
 ifneq ($(filter y,$(DEP_HTTP)),)
