@@ -50,7 +50,6 @@ bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoint
 int32_t FontPrintWidthUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoints);
 int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints);
 
-qbs *func__md5(qbs *text);
 int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed);
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
 int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed);

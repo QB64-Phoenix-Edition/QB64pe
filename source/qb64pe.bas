@@ -9273,7 +9273,7 @@ DO
                 IF s THEN
                     WriteBufLine MainTxtBuf, "*(" + st$ + "*)" + varoffs$ + "=*(" + st$ + "*)(" + offs$ + ");"
                 ELSE
-                    WriteBufLine MainTxtBuf, "memmove(" + varoffs$ + ",(void*)" + offs$ + "," + varsize$ + ");"
+                    WriteBufLine MainTxtBuf, "memmove(" + varoffs$ + ",(uint8_t*)" + offs$ + "," + varsize$ + ");"
                 END IF
             ELSE
                 'safe version:
@@ -9368,7 +9368,7 @@ DO
                     IF s THEN
                         WriteBufLine MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=*(" + st$ + "*)" + varoffs$ + ";"
                     ELSE
-                        WriteBufLine MainTxtBuf, "memmove((void*)" + offs$ + "," + varoffs$ + "," + varsize$ + ");"
+                        WriteBufLine MainTxtBuf, "memmove((uint8_t*)" + offs$ + "," + varoffs$ + "," + varsize$ + ");"
                     END IF
                 ELSE
                     'safe version:
@@ -23883,7 +23883,7 @@ END FUNCTION
 '$INCLUDE:'utilities\type.bas'
 '$INCLUDE:'utilities\give_error.bas'
 '$INCLUDE:'utilities\format.bas'
-'$include:'utilities\terminal.bas'
+'$INCLUDE:'utilities\terminal.bas'
 '$INCLUDE:'emit\logging.bas'
 
 DEFLNG A-Z

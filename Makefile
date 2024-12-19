@@ -213,7 +213,7 @@ include $(PATH_INTERNAL_C)/parts/video/font/build.mk
 include $(PATH_INTERNAL_C)/parts/video/image/build.mk
 include $(PATH_INTERNAL_C)/parts/gui/build.mk
 include $(PATH_INTERNAL_C)/parts/network/http/build.mk
-include $(PATH_INTERNAL_C)/parts/compression/build.mk
+include $(PATH_INTERNAL_C)/parts/data/build.mk
 include $(PATH_INTERNAL_C)/parts/os/clipboard/build.mk
 
 .PHONY: all clean
@@ -286,7 +286,7 @@ else
 endif
 
 ifneq ($(filter y,$(DEP_FONT)),)
-	EXE_LIBS += $(FONT_OBJS) $(FREETYPE_EXE_LIBS)
+	EXE_LIBS += $(FREETYPE_EXE_LIBS)
 
 	LICENSE_IN_USE += freetype_ftl
 else
@@ -327,11 +327,10 @@ else
 	EXE_LIBS += $(AUDIO_STUB_OBJS)
 endif
 
-# The audio library uses the decompression functions from miniz
 ifneq ($(filter y,$(DEP_ZLIB) $(DEP_AUDIO_MINIAUDIO)),)
-	EXE_LIBS += $(COMPRESSION_LIB)
+	EXE_LIBS += $(DATA_PROCESSING_LIB)
 
-	LICENSE_IN_USE += miniz
+	LICENSE_IN_USE += miniz modp_b64
 endif
 
 ifneq ($(filter y,$(DEP_HTTP)),)

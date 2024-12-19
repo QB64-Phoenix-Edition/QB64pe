@@ -1,5 +1,4 @@
-QB64 Phoenix Edition Licensing information
-==========================================
+# QB64 Phoenix Edition Licensing information
 
 QB64-PE makes extensive use of third party libraries to provide
 functionality. These third party libraries have their own licenses that you
@@ -75,11 +74,19 @@ These libraries are pulled in if `_INFLATE$()` or `_DEFLATE$()` are used.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| miniz | MIT | license_miniz.txt | internal/c/parts/compression/ |
+| miniz | MIT | license_miniz.txt | internal/c/parts/data/ |
 
-## Http Support
+## Encoding Support
 
-These libraries are pulled in if `_OPENCLIENT()` and `$Unstable:Http` are used:
+These libraries are pulled in if `_BASE64ENCODE$()` or `_BASE64DECODE$()` are used.
+
+| Library | License | License file | Location |
+| :------ | :-----: | :----------- | :------- |
+| MODP_B64 | MIT | license_modp_b64.txt | internal/c/parts/data/ |
+
+## HTTP Support
+
+These libraries are pulled in if `_OPENCLIENT()` is used:
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
