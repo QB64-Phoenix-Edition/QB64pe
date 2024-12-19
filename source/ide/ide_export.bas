@@ -484,7 +484,7 @@ SUB ExportCodeAs (docFormat$)
             ePos& = ePos& + pal% + lkl% + 84
         CASE "wiki"
             IF me% OR pc% THEN lkc$ = "{{Cm|": ELSE lkc$ = "{{Cl|"
-            IF UCASE$(page$) = UCASE$(lnk$) THEN
+            IF page$ = lnk$ THEN
                 MID$(eTxt$, ePos&, lkl% + 7) = lkc$ + lnk$ + "}}"
                 ePos& = ePos& + lkl% + 7
             ELSE
