@@ -47,13 +47,13 @@ void sub__depthbuffer(int32_t options, int32_t dst, int32_t passed) {
     if (dst < 0) {
         dst_himg = (hardware_img_struct *)list_get(hardware_img_handles, dst - HARDWARE_IMG_HANDLE_OFFSET);
         if (dst_himg == NULL) {
-            error(258);
+            error(QB_ERROR_INVALID_HANDLE);
             return;
         }
         dst -= HARDWARE_IMG_HANDLE_OFFSET;
     } else {
         if (dst > 1) {
-            error(5);
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
             return;
         }
         dst = -dst;
@@ -148,7 +148,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
             if (dst < 0) {
                 dst_himg = (hardware_img_struct *)list_get(hardware_img_handles, dst - HARDWARE_IMG_HANDLE_OFFSET);
                 if (dst_himg == NULL) {
-                    error(258);
+                    error(QB_ERROR_INVALID_HANDLE);
                     return;
                 }
                 dst -= HARDWARE_IMG_HANDLE_OFFSET;
@@ -278,11 +278,11 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
         } else {
             si = -si;
             if (si >= nextimg) {
-                error(258);
+                error(QB_ERROR_INVALID_HANDLE);
                 return;
             }
             if (!img[si].valid) {
-                error(258);
+                error(QB_ERROR_INVALID_HANDLE);
                 return;
             }
         }
@@ -297,11 +297,11 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
         } else {
             di = -di;
             if (di >= nextimg) {
-                error(258);
+                error(QB_ERROR_INVALID_HANDLE);
                 return;
             }
             if (!img[di].valid) {
-                error(258);
+                error(QB_ERROR_INVALID_HANDLE);
                 return;
             }
         }
