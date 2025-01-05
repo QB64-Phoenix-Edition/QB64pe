@@ -21,6 +21,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/qbs__tostr.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_cmem.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_mk_cv.o
 libqb-objs-y += $(PATH_LIBQB)/src/string_functions.o
+libqb-objs-y += $(PATH_LIBQB)/src/graphics.o
 
 libqb-objs-y += $(PATH_LIBQB)/src/logging/logging.o
 libqb-objs-y += $(PATH_LIBQB)/src/logging/qb64pe_symbol.o

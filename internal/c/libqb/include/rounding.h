@@ -29,7 +29,7 @@ static inline int64_t qbr(long double f) {
     int temp = 0;
     if (f > 9223372036854775807.0L) {
         temp = 1;
-        f = f - 9223372036854775808u;
+        f = f - 9223372036854775808ULL;
     } // if it's too large for a signed int64, make it an unsigned int64 and return that value if possible.
     __asm__("fldt %1;"
             "fistpll %0;"
