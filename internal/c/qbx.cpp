@@ -15,6 +15,7 @@
 #include "filesystem.h"
 #include "font.h"
 #include "game_controller.h"
+#include "graphics.h"
 #include "gui.h"
 #include "hashing.h"
 #include "hexoctbin.h"
@@ -163,9 +164,6 @@ extern qbs *func__title();
 extern int32 func__handle();
 extern int32 func_stick(int32 i, int32 axis_group, int32 passed);
 extern int32 func_strig(int32 i, int32 controller, int32 passed);
-extern void sub__maptriangle(int32 cull_options, float sx1, float sy1, float sx2, float sy2, float sx3, float sy3, int32 si, float dx1, float dy1, float dz1,
-                             float dx2, float dy2, float dz2, float dx3, float dy3, float dz3, int32 di, int32 smooth_options, int32 passed);
-extern void sub__depthbuffer(int32 options, int32 dst, int32 passed);
 extern void sub_paletteusing(void *element, int32 bits);
 extern int64 func_read_int64(uint8 *data, ptrszint *data_offset, ptrszint data_size);
 extern int64 func_read_uint64(uint8 *data, ptrszint *data_offset, ptrszint data_size);
