@@ -15307,7 +15307,7 @@ readnextchr:
         goto nextchr;
     }
 
-    if ((c == 68) || (c == 69) || (c == 100) || (c == 101)) { // D,E,d,e
+    if ((c == 68) || (c == 69) || (c == 70) || (c == 100) || (c == 101) || (c == 102)) { // D,E,F,d,e,f
         if (step > 2)
             return 3; // Syntax error (multiple exponents or after type suffix)
         step = 3;
@@ -15538,7 +15538,7 @@ readnextchr:
         goto nextchr;
     }
 
-    if ((c == 68) || (c == 69) || (c == 100) || (c == 101)) { // D,E,d,e
+    if ((c == 68) || (c == 69) || (c == 70) || (c == 100) || (c == 101) || (c == 102)) { // D,E,F,d,e,f
         if (step > 2)
             goto gotnumber;
         step = 3;
