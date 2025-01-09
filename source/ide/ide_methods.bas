@@ -516,6 +516,8 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Export code into a Hypertext document"
         menu$(m, i) = "#Rich Text document (.rtf)": i = i + 1
         menuDesc$(m, i - 1) = "Export code into a Rich Text document"
+        menu$(m, i) = "#Discord codebox (to Clipboard)": i = i + 1
+        menuDesc$(m, i - 1) = "Export code as Discord codebox ready to paste in"
         menu$(m, i) = "#Forum codebox (to Clipboard)": i = i + 1
         menuDesc$(m, i - 1) = "Export code as Forum codebox ready to paste in"
         menu$(m, i) = "#Wiki example (to Clipboard)": i = i + 1
@@ -5734,6 +5736,13 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#Rich Text document (.rtf)" THEN
                 PCOPY 2, 0
                 ExportCodeAs "rich"
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "#Discord codebox (to Clipboard)" THEN
+                PCOPY 2, 0
+                ExportCodeAs "disc"
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF

@@ -255,9 +255,9 @@ SUB ExportCodeAs (docFormat$)
             PRINT #151, LEFT$(eTxt$, ePos& - 1);
             CLOSE #151
             ok% = idemessagebox("Export As...", "Export to " + pNam$ + ext$ + " completed.", "")
-        CASE "foru", "wiki"
+        CASE "disc", "foru", "wiki"
             _CLIPBOARD$ = LEFT$(eTxt$, ePos& - 1)
-            ok% = idemessagebox("Export As...", "Forum/Wiki export to Clipboard completed.", "")
+            ok% = idemessagebox("Export As...", "Discord/Forum/Wiki export to Clipboard completed.", "")
     END SELECT
     EXIT SUB
     '------------------------------
@@ -265,18 +265,22 @@ SUB ExportCodeAs (docFormat$)
     SELECT CASE LCASE$(docFormat$)
         CASE "html": tmp$ = "<!DOCTYPE html><html lang=" + CHR$(34) + "en" + CHR$(34) + "><head><meta charset=" + CHR$(34) + "UTF-8" + CHR$(34) + "><title>" + AnsiTextToUtf8Text$(pNam$) + "</title></head><body><pre style=" + CHR$(34) + "font-size: 18px; background-color: " + bgc$ + "; color: " + txc$ + ";" + CHR$(34) + ">"
         CASE "rich": tmp$ = "{\rtf1\ansi\deff0{\fonttbl{\f0 Courier New;}}{\colortbl " + rtc$ + "}\pard\f0\fs32\cbpat6\paperh23811\paperw16838\margl142\margr142\margt142\margb142"
+        CASE "disc": tmp$ = "```ansi" + cEol$ + CHR$(27) + "[0;0;1;37m"
         CASE "foru": tmp$ = "[qb=export]"
         CASE "wiki": tmp$ = "{{CodeStart}}"
         CASE ELSE: RETURN
     END SELECT
     MID$(eTxt$, ePos&, LEN(tmp$)) = tmp$: ePos& = ePos& + LEN(tmp$)
-    IF LCASE$(docFormat$) <> "foru" THEN MID$(eTxt$, ePos&, LEN(cEol$)) = cEol$: ePos& = ePos& + LEN(cEol$)
+    IF LCASE$(docFormat$) <> "disc" AND LCASE$(docFormat$) <> "foru" THEN
+        MID$(eTxt$, ePos&, LEN(cEol$)) = cEol$: ePos& = ePos& + LEN(cEol$)
+    END IF
     RETURN
     '----------
     CloseCodeBlock:
     SELECT CASE LCASE$(docFormat$)
         CASE "html": tmp$ = "</pre></body></html>"
         CASE "rich": tmp$ = "}": ePos& = ePos& - 4 'remove final /par
+        CASE "disc": tmp$ = "```"
         CASE "foru": tmp$ = "[/qb]"
         CASE "wiki": tmp$ = "{{CodeEnd}}"
         CASE ELSE: RETURN
@@ -301,6 +305,13 @@ SUB ExportCodeAs (docFormat$)
                 CASE "co": tmp$ = "\cf1 "
                 CASE "nu": tmp$ = "\cf4 "
                 CASE "qu": tmp$ = "\cf5 "
+                CASE ELSE: RETURN
+            END SELECT
+        CASE "disc"
+            SELECT CASE LCASE$(what$)
+                CASE "co": tmp$ = CHR$(27) + "[30m"
+                CASE "nu": tmp$ = CHR$(27) + "[31m"
+                CASE "qu": tmp$ = CHR$(27) + "[33m"
                 CASE ELSE: RETURN
             END SELECT
         CASE "foru"
@@ -332,6 +343,11 @@ SUB ExportCodeAs (docFormat$)
         CASE "rich"
             SELECT CASE LCASE$(what$)
                 CASE "co", "nu", "qu": tmp$ = "\cf0 "
+                CASE ELSE: RETURN
+            END SELECT
+        CASE "disc"
+            SELECT CASE LCASE$(what$)
+                CASE "co", "nu", "qu": tmp$ = CHR$(27) + "[37m"
                 CASE ELSE: RETURN
             END SELECT
         CASE "foru"
@@ -478,6 +494,11 @@ SUB ExportCodeAs (docFormat$)
             IF me% OR pc% THEN lkc$ = "\cf2": ELSE lkc$ = "\cf3"
             MID$(eTxt$, ePos&, pal% + lkl% + 108) = "{\field{\*\fldinst HYPERLINK " + CHR$(34) + "https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + CHR$(34) + "}{\fldrslt{" + lkc$ + "\ul0 " + lnk$ + "}}}\cf0 "
             ePos& = ePos& + pal% + lkl% + 108
+        CASE "disc"
+            'linking to wiki not supported in Discord, hence we do coloring only
+            IF me% OR pc% THEN lkc$ = CHR$(27) + "[32m": ELSE lkc$ = CHR$(27) + "[34m"
+            MID$(eTxt$, ePos&, lkl% + 10) = lkc$ + lnk$ + CHR$(27) + "[37m"
+            ePos& = ePos& + lkl% + 10
         CASE "foru"
             IF me% OR pc% THEN lkc$ = "#55FF55": ELSE lkc$ = "#4593D8"
             MID$(eTxt$, ePos&, pal% + lkl% + 84) = "[url=https://qb64phoenix.com/qb64wiki/index.php?title=" + page$ + "][color=" + lkc$ + "]" + lnk$ + "[/color][/url]"
@@ -504,6 +525,9 @@ SUB ExportCodeAs (docFormat$)
             ePos& = ePos& + kwl% + 37
         CASE "rich"
             MID$(eTxt$, ePos&, kwl% + 10) = "\cf2 " + kw$ + "\cf0 "
+            ePos& = ePos& + kwl% + 10
+        CASE "disc"
+            MID$(eTxt$, ePos&, kwl% + 10) = CHR$(27) + "[32m" + kw$ + CHR$(27) + "[37m"
             ePos& = ePos& + kwl% + 10
         CASE "foru"
             MID$(eTxt$, ePos&, kwl% + 23) = "[color=#55FF55]" + kw$ + "[/color]"
