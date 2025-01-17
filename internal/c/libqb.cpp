@@ -31364,22 +31364,26 @@ int32 func__getconsoleinput() {
     fdwMode = dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
     SetConsoleMode(hStdin, fdwMode);
 
-    ReadConsoleInputA(hStdin, &irInputRecord, 1, &dwEventsRead);
-    switch (irInputRecord.EventType) {
-    case KEY_EVENT: // keyboard input
-        consolekey = irInputRecord.Event.KeyEvent.wVirtualScanCode;
-        if (!irInputRecord.Event.KeyEvent.bKeyDown)
-            consolekey = -consolekey; // positive/negative return of scan codes.
-        return 1;
-    case MOUSE_EVENT: // mouse input
-        consolemousex = irInputRecord.Event.MouseEvent.dwMousePosition.X + 1;
-        consolemousey = irInputRecord.Event.MouseEvent.dwMousePosition.Y - cl_bufinfo.srWindow.Top + 1;
-        consolebutton = irInputRecord.Event.MouseEvent.dwButtonState; // button state for all buttons
-        // SetConsoleMode(hStdin, dwMode);
-        return 2;
+    DWORD numEvents = 0;
+    GetNumberOfConsoleInputEvents(hStdin, &numEvents);
+    if (numEvents) {
+        ReadConsoleInputA(hStdin, &irInputRecord, 1, &dwEventsRead);
+        switch (irInputRecord.EventType) {
+        case KEY_EVENT: // keyboard input
+            consolekey = irInputRecord.Event.KeyEvent.wVirtualScanCode;
+            if (!irInputRecord.Event.KeyEvent.bKeyDown)
+                consolekey = -consolekey; // positive/negative return of scan codes.
+            return 1;
+        case MOUSE_EVENT: // mouse input
+            consolemousex = irInputRecord.Event.MouseEvent.dwMousePosition.X + 1;
+            consolemousey = irInputRecord.Event.MouseEvent.dwMousePosition.Y - cl_bufinfo.srWindow.Top + 1;
+            consolebutton = irInputRecord.Event.MouseEvent.dwButtonState; // button state for all buttons
+            // SetConsoleMode(hStdin, dwMode);
+            return 2;
+        }
     }
 #endif
-    return 0; // in case it's some other odd input
+    return 0; // no or unhandled input
 }
 
 int32 func__cinp(int32 toggle, int32 passed) {
