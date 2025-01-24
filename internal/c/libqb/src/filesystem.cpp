@@ -39,8 +39,12 @@ qbs *g_startDir = nullptr;
 /// @brief Gets the current working directory
 /// @return A qbs containing the current working directory or an empty string on error
 qbs *func__cwd() {
-    std::string path;
+    if (is_error_pending()) {
+        return qbs_new(0, 1);
+    }
+
     qbs *qbsFinal;
+    std::string path;
 
     path.resize(FILENAME_MAX, '\0');
 
@@ -425,9 +429,6 @@ qbs *func__dir(qbs *qbsContext) {
 /// @param path The directory path
 /// @return True if the directory exists
 int32_t func__direxists(qbs *path) {
-    if (is_error_pending())
-        return QB_FALSE;
-
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
     return FS_DirectoryExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
@@ -452,9 +453,6 @@ bool FS_FileExists(const char *path) {
 /// @param path The file path to check for
 /// @return True if the file exists
 int32_t func__fileexists(qbs *path) {
-    if (is_error_pending())
-        return QB_FALSE;
-
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
     return FS_FileExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
@@ -463,18 +461,15 @@ int32_t func__fileexists(qbs *path) {
 /// @brief Return the startup directory
 /// @return A qbs containing the directory path
 qbs *func__startdir() {
-    auto temp = qbs_new(0, 1);
-
-    qbs_set(temp, g_startDir);
-
-    return temp;
+    return qbs_set(qbs_new(0, 1), g_startDir);
 }
 
 /// @brief Changes the current directory
 /// @param str The directory path to change to
 void sub_chdir(qbs *str) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
@@ -646,6 +641,11 @@ static const char *FS_GetDirectoryEntryName(DirectoryContext *ctx, const char *f
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     static DirectoryContext directoryContext;
     static std::string directory;
+
+    if (is_error_pending()) {
+        return qbs_new(0, 1);
+    }
+
     std::string pathName;
     const char *entry;
     qbs *qbsFinal;
@@ -750,16 +750,14 @@ static std::string FS_GetFQN(const char *path) {
 /// @param qbsPathName The path name to get the FQN for
 /// @return The FQN
 qbs *func__fullpath(qbs *qbsPathName) {
-    qbs *temp;
-
-    if (!qbsPathName->len) {
-        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-        temp = qbs_new(0, 1);
-        return temp;
+    if (is_error_pending() || !qbsPathName->len) {
+        return qbs_new(0, 1);
     }
 
     std::string pathName(reinterpret_cast<char *>(qbsPathName->chr), qbsPathName->len);
     filepath_fix_directory(pathName);
+
+    qbs *temp;
 
     if (!FS_DirectoryExists(pathName.c_str()) && !FS_FileExists(pathName.c_str())) {
         // Path not found
@@ -801,8 +799,9 @@ static std::string FS_GetShortName(const char *path) {
 void sub_files(qbs *str, int32_t passed) {
     static qbs *strz = nullptr;
 
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     if (!strz)
         strz = qbs_new(0, 0);
@@ -893,9 +892,9 @@ void sub_files(qbs *str, int32_t passed) {
 /// @brief Deletes files from disk
 /// @param str The file(s) to delete (may contain wildcard at the final level)
 void sub_kill(qbs *str) {
-
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string directory, pathName, fileSpec(reinterpret_cast<char *>(str->chr), str->len);
     filepath_split(filepath_fix_directory(fileSpec), directory, pathName); // split the file path
@@ -948,8 +947,9 @@ void sub_kill(qbs *str) {
 /// @brief Creates a new directory
 /// @param str The directory path name to create
 void sub_mkdir(qbs *str) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
@@ -972,8 +972,9 @@ void sub_mkdir(qbs *str) {
 /// @param oldname The old file / directory name
 /// @param newname The new file / directory name
 void sub_name(qbs *oldname, qbs *newname) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathNameOld(reinterpret_cast<char *>(oldname->chr), oldname->len), pathNameNew(reinterpret_cast<char *>(newname->chr), newname->len);
 
@@ -1002,8 +1003,9 @@ void sub_name(qbs *oldname, qbs *newname) {
 /// @brief Deletes an empty directory
 /// @param str The path name of the directory to delete
 void sub_rmdir(qbs *str) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 

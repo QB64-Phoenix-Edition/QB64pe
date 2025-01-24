@@ -75,3 +75,7 @@ void macMouseUpdatePosition(int x, int y) {
     g_MouseX.store(x, std::memory_order_relaxed);
     g_MouseY.store(y, std::memory_order_relaxed);
 }
+
+void macMouseAssociateMouseAndMouseCursorPosition(bool connected) {
+    CGAssociateMouseAndMouseCursorPosition(boolean_t(connected));
+}
