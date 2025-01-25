@@ -2,6 +2,7 @@
 #define INCLUDE_LIBQB_EVENT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define QB64_EVENT_CLOSE 1
 #define QB64_EVENT_KEY 2
