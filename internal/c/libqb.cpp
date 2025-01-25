@@ -206,12 +206,6 @@ extern "C" int QB64_Resizable() {
 
 int32 sub_gl_called = 0;
 
-#define QB64_EVENT_CLOSE 1
-#define QB64_EVENT_KEY 2
-#define QB64_EVENT_RELATIVE_MOUSE_MOVEMENT 3
-#define QB64_EVENT_FILE_DROP 4
-#define QB64_EVENT_KEY_PAUSE 1000
-
 static int32 image_qbicon16_handle;
 static int32 image_qbicon32_handle;
 
@@ -28273,16 +28267,11 @@ void GLUT_MOTION_FUNC(int x, int y) {
         queue->current = nextIndex;
     }
 
-#    if defined(QB64_WINDOWS) || defined(QB64_MACOSX)
     // Windows calculates relative movement by intercepting WM_INPUT events
     // macOS uses the Quartz Event Services to get relative movements
+    // Linux uses XInput2 to get relative movements
     xrel = 0;
     yrel = 0;
-#    else
-    // TODO: This needs to be correctly implemented on Linux
-    xrel = x - queue->queue[queue->last].x;
-    yrel = y - queue->queue[queue->last].y;
-#    endif
 
     queue->queue[i].x = x;
     queue->queue[i].y = y;
@@ -31136,7 +31125,6 @@ extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_o
             break;
         }
     }
-    return;
 }
 #endif
 

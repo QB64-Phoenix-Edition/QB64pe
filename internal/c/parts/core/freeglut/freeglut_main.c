@@ -40,14 +40,9 @@
 #endif
 
 // QB64-PE: custom code begin
+#include "../../../libqb/include/event.h"
 #include "../../../libqb/include/keyhandler.h"
 
-#define QB64_EVENT_CLOSE 1
-#define QB64_EVENT_KEY 2
-#define QB64_EVENT_RELATIVE_MOUSE_MOVEMENT 3
-#define QB64_EVENT_FILE_DROP 4
-
-int qb64_custom_event(int event, int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, void *p1, void *p2);
 #if TARGET_HOST_POSIX_X11
 void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_os_event_info);
 #else
