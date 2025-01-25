@@ -8,9 +8,7 @@
 
 struct qbs;
 
-/// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
-extern qbs *g_startDir;
-
+void FS_SaveStartDirectory();
 bool FS_DirectoryExists(const char *path);
 bool FS_FileExists(const char *path);
 

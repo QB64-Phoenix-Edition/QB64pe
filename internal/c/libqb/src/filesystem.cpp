@@ -34,28 +34,38 @@
 #endif
 
 /// @brief This is a global variable that is set on startup and holds the directory that was current when the program was loaded
-qbs *g_startDir = nullptr;
+static qbs *g_startDir = nullptr;
 
-/// @brief Gets the current working directory
-/// @return A qbs containing the current working directory or an empty string on error
+/// @brief Gets the current working directory.
+/// @return A qbs containing the current working directory or an empty string on error.
 qbs *func__cwd() {
-    std::string path;
+    if (is_error_pending()) {
+        return qbs_new(0, 1);
+    }
+
     qbs *qbsFinal;
+    std::string path;
 
     path.resize(FILENAME_MAX, '\0');
 
     for (;;) {
         if (getcwd(&path[0], path.size())) {
-            auto size = strlen(path.c_str());
-            qbsFinal = qbs_new(size, 1);
-            memcpy(qbsFinal->chr, &path[0], size);
+            path.resize(strlen(path.c_str()));
+
+            if (path.empty() || path.back() != FS_PATH_SEPARATOR) {
+                path.append(1, FS_PATH_SEPARATOR);
+            }
+
+            qbsFinal = qbs_new(path.length(), 1);
+            memcpy(qbsFinal->chr, &path[0], path.length());
 
             return qbsFinal;
         } else {
-            if (errno == ERANGE)
+            if (errno == ERANGE) {
                 path.resize(path.size() << 1, '\0'); // buffer size was not sufficient; try again with a larger buffer
-            else
+            } else {
                 break; // some other error occurred
+            }
         }
     }
 
@@ -65,9 +75,9 @@ qbs *func__cwd() {
     return qbsFinal;
 }
 
-/// @brief Returns true if the specified directory exists
-/// @param path The directory to check for
-/// @return True if the directory exists
+/// @brief Returns true if the specified directory exists.
+/// @param path The directory to check for.
+/// @return True if the directory exists.
 bool FS_DirectoryExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
@@ -100,9 +110,9 @@ enum class FS_KnownDirectory {
 };
 
 #ifdef QB64_WINDOWS
-/// @brief Returns the full path for a known directory
-/// @param kD Is a value from FS_KnownDirectory (above)
-/// @return The full path that ends with the system path separator
+/// @brief Returns the full path for a known directory.
+/// @param kD Is a value from FS_KnownDirectory (above).
+/// @return The full path that ends with the system path separator.
 static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
     std::string path(FS_PATHNAME_LENGTH_MAX, '\0'); // allocate something that is sufficiently large
 
@@ -194,15 +204,16 @@ static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
 
     // Add the trailing slash
     path.resize(strlen(path.c_str()));
-    if (path.back() != FS_PATH_SEPARATOR)
+    if (path.empty() || path.back() != FS_PATH_SEPARATOR) {
         path.append(1, FS_PATH_SEPARATOR);
+    }
 
     return path;
 }
 #else
-/// @brief Returns the full path for a known directory
-/// @param kD Is a value from FS_KnownDirectory (above)
-/// @return The full path that ends with the system path separator
+/// @brief Returns the full path for a known directory.
+/// @param kD Is a value from FS_KnownDirectory (above).
+/// @return The full path that ends with the system path separator.
 static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
     std::string path;
     auto envVar = getenv("HOME");
@@ -354,20 +365,21 @@ static std::string FS_GetKnownDirectory(FS_KnownDirectory kD) {
 
     // Add the trailing slash
     path.resize(strlen(path.c_str()));
-    if (path.back() != FS_PATH_SEPARATOR)
+    if (path.empty() || path.back() != FS_PATH_SEPARATOR) {
         path.append(1, FS_PATH_SEPARATOR);
+    }
 
     return path;
 }
 #endif
 
-/// @brief Returns common paths such as My Documents, My Pictures, My Music, Desktop
-/// @param qbsContext Is the directory type
-/// @return A qbs containing the directory or an empty string on error
+/// @brief Returns common paths such as My Documents, My Pictures, My Music, Desktop.
+/// @param qbsContext Is the directory type.
+/// @return A qbs containing the directory or an empty string on error.
 qbs *func__dir(qbs *qbsContext) {
     std::string path, context(reinterpret_cast<char *>(qbsContext->chr), qbsContext->len);
 
-    std::transform(context.begin(), context.end(), context.begin(), [](unsigned char c) { return std::toupper(c); });
+    std::transform(context.begin(), context.end(), context.begin(), ::toupper);
 
     // The following is largely unchanged from what we previously had
     if (context.compare("TEXT") == 0 || context.compare("DOCUMENT") == 0 || context.compare("DOCUMENTS") == 0 || context.compare("MY DOCUMENTS") == 0) {
@@ -414,28 +426,24 @@ qbs *func__dir(qbs *qbsContext) {
         path = FS_GetKnownDirectory(FS_KnownDirectory::DESKTOP); // anything else defaults to the desktop where the user can easily see stuff
     }
 
-    auto size = path.size();
-    auto qbsFinal = qbs_new(size, 1);
-    memcpy(qbsFinal->chr, &path[0], size);
+    auto qbsFinal = qbs_new(path.length(), 1);
+    memcpy(qbsFinal->chr, &path[0], path.length());
 
     return qbsFinal;
 }
 
-/// @brief Returns true if a directory specified exists
-/// @param path The directory path
-/// @return True if the directory exists
+/// @brief Returns true if a directory specified exists.
+/// @param path The directory path.
+/// @return True if the directory exists.
 int32_t func__direxists(qbs *path) {
-    if (is_error_pending())
-        return QB_FALSE;
-
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
     return FS_DirectoryExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
 }
 
-/// @brief Returns true if a file specified exists
-/// @param path The file path to check for
-/// @return True if the file exists
+/// @brief Returns true if a file specified exists.
+/// @param path The file path to check for.
+/// @return True if the file exists.
 bool FS_FileExists(const char *path) {
 #ifdef QB64_WINDOWS
     auto x = GetFileAttributesA(path);
@@ -448,33 +456,39 @@ bool FS_FileExists(const char *path) {
 #endif
 }
 
-/// @brief Returns true if a file specified exists
-/// @param path The file path to check for
-/// @return True if the file exists
+/// @brief Returns true if a file specified exists.
+/// @param path The file path to check for.
+/// @return True if the file exists.
 int32_t func__fileexists(qbs *path) {
-    if (is_error_pending())
-        return QB_FALSE;
-
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
     return FS_FileExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
 }
 
-/// @brief Return the startup directory
-/// @return A qbs containing the directory path
-qbs *func__startdir() {
-    auto temp = qbs_new(0, 1);
-
-    qbs_set(temp, g_startDir);
-
-    return temp;
+/// @brief Saves the current directory as the startup directory.
+void FS_SaveStartDirectory() {
+    if (!g_startDir) {
+        g_startDir = qbs_new(0, 0);
+        qbs_set(g_startDir, func__cwd());
+    }
 }
 
-/// @brief Changes the current directory
-/// @param str The directory path to change to
+/// @brief Return the startup directory.
+/// @return A qbs containing the directory path.
+qbs *func__startdir() {
+    if (g_startDir) {
+        return qbs_set(qbs_new(0, 1), g_startDir);
+    }
+
+    return qbs_new(0, 1);
+}
+
+/// @brief Changes the current directory.
+/// @param str The directory path to change to.
 void sub_chdir(qbs *str) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
@@ -482,17 +496,17 @@ void sub_chdir(qbs *str) {
         error(QB_ERROR_PATH_NOT_FOUND); // assume errno == ENOENT; path not found
 }
 
-/// @brief Checks if s is an empty string (either NULL or zero length)
-/// @param s A null-terminated string or NULL
-/// @return False is we have a valid string > length 0
+/// @brief Checks if s is an empty string (either NULL or zero length).
+/// @param s A null-terminated string or NULL.
+/// @return False is we have a valid string > length 0.
 static inline bool FS_IsStringEmpty(const char *s) {
     return s == nullptr || s[0] == '\0';
 }
 
-/// @brief This is a basic pattern matching function used by FS_GetDirectoryEntryName()
-/// @param fileSpec The pattern to match
-/// @param fileName The filename to match
-/// @return True if it is a match, false otherwise
+/// @brief This is a basic pattern matching function used by FS_GetDirectoryEntryName().
+/// @param fileSpec The pattern to match.
+/// @param fileName The filename to match.
+/// @return True if it is a match, false otherwise.
 static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileName) {
     auto spec = fileSpec;
     auto name = fileName;
@@ -539,9 +553,9 @@ static inline bool FS_IsPatternMatching(const char *fileSpec, const char *fileNa
     return true;
 }
 
-/// @brief Returns true if fileSpec has any wildcards
-/// @param fileSpec The string to check
-/// @return True if * or ? are found
+/// @brief Returns true if fileSpec has any wildcards.
+/// @param fileSpec The string to check.
+/// @return True if * or ? are found.
 static inline bool FS_HasPattern(const char *fileSpec) {
     return fileSpec != nullptr && (strchr(fileSpec, '*') || strchr(fileSpec, '?'));
 }
@@ -562,10 +576,10 @@ struct DirectoryContext {
     }
 };
 
-/// @brief An MS BASIC PDS DIR$ style function
-/// @param ctx The directory context
-/// @param fileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
-/// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left
+/// @brief An MS BASIC PDS DIR$ style function.
+/// @param ctx The directory context.
+/// @param fileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.).
+/// @return Returns a file or directory name matching fileSpec or an empty string when there is nothing left.
 static const char *FS_GetDirectoryEntryName(DirectoryContext *ctx, const char *fileSpec) {
     ctx->entry[0] = '\0'; // set to an empty string
 
@@ -639,13 +653,18 @@ static const char *FS_GetDirectoryEntryName(DirectoryContext *ctx, const char *f
     return ctx->entry;
 }
 
-/// @brief This mimics MS BASIC PDS 7.1 & VBDOS 1.0 DIR$() function
-/// @param qbsFileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.)
-/// @param passed Flags for optional parameters
-/// @return Returns a qbs with the directory entry name or an empty string if there are no more entries
+/// @brief This mimics MS BASIC PDS 7.1 & VBDOS 1.0 DIR$() function.
+/// @param qbsFileSpec This can be a path with wildcard for the final level (i.e. C:/Windows/*.* or /usr/lib/* etc.).
+/// @param passed Flags for optional parameters.
+/// @return Returns a qbs with the directory entry name or an empty string if there are no more entries.
 qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     static DirectoryContext directoryContext;
     static std::string directory;
+
+    if (is_error_pending()) {
+        return qbs_new(0, 1);
+    }
+
     std::string pathName;
     const char *entry;
     qbs *qbsFinal;
@@ -697,9 +716,9 @@ qbs *func__files(qbs *qbsFileSpec, int32_t passed) {
     return qbsFinal;
 }
 
-/// @brief Returns the free volume space for a given directory
-/// @param path A directory that resides on the volume we want the free space for
-/// @return The free space in bytes
+/// @brief Returns the free volume space for a given directory.
+/// @param path A directory that resides on the volume we want the free space for.
+/// @return The free space in bytes.
 static uint64_t FS_GetFreeDiskSpace(const char *path) {
 #ifdef QB64_WINDOWS
     ULARGE_INTEGER freeBytesAvailable;
@@ -718,9 +737,9 @@ static uint64_t FS_GetFreeDiskSpace(const char *path) {
     return 0; // zero if something failed
 }
 
-/// @brief Gets the fully qualified name (FQN)
-/// @param path The path name to get the FQN for
-/// @return The FQN
+/// @brief Gets the fully qualified name (FQN).
+/// @param path The path name to get the FQN for.
+/// @return The FQN.
 static std::string FS_GetFQN(const char *path) {
     std::string FQN = path; // fallback
 
@@ -746,20 +765,18 @@ static std::string FS_GetFQN(const char *path) {
     return FQN;
 }
 
-/// @brief Gets the fully qualified name (FQN)
-/// @param qbsPathName The path name to get the FQN for
-/// @return The FQN
+/// @brief Gets the fully qualified name (FQN).
+/// @param qbsPathName The path name to get the FQN for.
+/// @return The FQN.
 qbs *func__fullpath(qbs *qbsPathName) {
-    qbs *temp;
-
-    if (!qbsPathName->len) {
-        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-        temp = qbs_new(0, 1);
-        return temp;
+    if (is_error_pending() || !qbsPathName->len) {
+        return qbs_new(0, 1);
     }
 
     std::string pathName(reinterpret_cast<char *>(qbsPathName->chr), qbsPathName->len);
     filepath_fix_directory(pathName);
+
+    qbs *temp;
 
     if (!FS_DirectoryExists(pathName.c_str()) && !FS_FileExists(pathName.c_str())) {
         // Path not found
@@ -775,9 +792,9 @@ qbs *func__fullpath(qbs *qbsPathName) {
     return temp;
 }
 
-/// @brief Gets the short name for a file / directory (if possible)
-/// @param path The file / directory to get the short name for
-/// @return The short name
+/// @brief Gets the short name for a file / directory (if possible).
+/// @param path The file / directory to get the short name for.
+/// @return The short name.
 static std::string FS_GetShortName(const char *path) {
 #ifdef QB64_WINDOWS
     DWORD size = GetShortPathNameA(path, nullptr, 0); // get the required buffer size
@@ -795,17 +812,19 @@ static std::string FS_GetShortName(const char *path) {
     return path; // return the path as-is for *nix or if GetShortPathNameA failed
 }
 
-/// @brief Prints a list of files in the current directory using a file specification
-/// @param str Is a string containing a path (it can include wildcards)
-/// @param passed Optional parameters
+/// @brief Prints a list of files in the current directory using a file specification.
+/// @param str Is a string containing a path (it can include wildcards).
+/// @param passed Optional parameters.
 void sub_files(qbs *str, int32_t passed) {
     static qbs *strz = nullptr;
 
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
-    if (!strz)
+    if (!strz) {
         strz = qbs_new(0, 0);
+    }
 
     std::string fileSpec, directory, pathName;
 
@@ -890,12 +909,12 @@ void sub_files(qbs *str, int32_t passed) {
     qbs_print(strz, 1);
 }
 
-/// @brief Deletes files from disk
-/// @param str The file(s) to delete (may contain wildcard at the final level)
+/// @brief Deletes files from disk.
+/// @param str The file(s) to delete (may contain wildcard at the final level).
 void sub_kill(qbs *str) {
-
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string directory, pathName, fileSpec(reinterpret_cast<char *>(str->chr), str->len);
     filepath_split(filepath_fix_directory(fileSpec), directory, pathName); // split the file path
@@ -945,11 +964,12 @@ void sub_kill(qbs *str) {
     } while (!FS_IsStringEmpty(entry));
 }
 
-/// @brief Creates a new directory
-/// @param str The directory path name to create
+/// @brief Creates a new directory.
+/// @param str The directory path name to create.
 void sub_mkdir(qbs *str) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
@@ -968,12 +988,13 @@ void sub_mkdir(qbs *str) {
     }
 }
 
-/// @brief Renames a file or directory
-/// @param oldname The old file / directory name
-/// @param newname The new file / directory name
+/// @brief Renames a file or directory.
+/// @param oldname The old file / directory name.
+/// @param newname The new file / directory name.
 void sub_name(qbs *oldname, qbs *newname) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathNameOld(reinterpret_cast<char *>(oldname->chr), oldname->len), pathNameNew(reinterpret_cast<char *>(newname->chr), newname->len);
 
@@ -999,11 +1020,12 @@ void sub_name(qbs *oldname, qbs *newname) {
     }
 }
 
-/// @brief Deletes an empty directory
-/// @param str The path name of the directory to delete
+/// @brief Deletes an empty directory.
+/// @param str The path name of the directory to delete.
 void sub_rmdir(qbs *str) {
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
 
     std::string pathName(reinterpret_cast<char *>(str->chr), str->len);
 
