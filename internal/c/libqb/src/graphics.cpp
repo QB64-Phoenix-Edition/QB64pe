@@ -112,7 +112,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
         return;
 
     static int32_t dwidth, dheight, swidth, sheight, swidth2, sheight2;
-    static int32_t lhs, rhs, lhs1, lhs2, top, bottom, temp, flats, flatg, final, tile, no_edge_overlap;
+    static int32_t lhs, rhs, lhs1, lhs2, top, bottom, flats, flatg, final, tile, no_edge_overlap;
     flats = 0;
     final = 0;
     tile = 0;
@@ -127,7 +127,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
     static uint32_t *dst_offset32;
     static uint8_t *src_offset;
     static uint32_t *src_offset32;
-    static uint32_t col, destcol, transparent_color;
+    static uint32_t col, destcol;
     static uint8_t *cp;
 
     // hardware support
@@ -380,49 +380,49 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
 
     // convert texture coords to fixed-point & adjust so 0,0 effectively becomes 0.5,0.5 (ie. 32768,32768)
     v = ((int32_t)(sx1 * 65536.0)) + 32768;
-    if (v < 16 | v >= swidth2 - 16)
+    if (v < 16 || v >= swidth2 - 16)
         tile = 1;
-    if (v<nlimit2 | v> limit2) {
+    if (v < nlimit2 || v > limit2) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
     p[1].tx = v;
     v = ((int32_t)(sx2 * 65536.0)) + 32768;
-    if (v < 16 | v >= swidth2 - 16)
+    if (v < 16 || v >= swidth2 - 16)
         tile = 1;
-    if (v<nlimit2 | v> limit2) {
+    if (v < nlimit2 || v > limit2) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
     p[2].tx = v;
     v = ((int32_t)(sx3 * 65536.0)) + 32768;
-    if (v < 16 | v >= swidth2 - 16)
+    if (v < 16 || v >= swidth2 - 16)
         tile = 1;
-    if (v<nlimit2 | v> limit2) {
+    if (v < nlimit2 || v > limit2) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
     p[3].tx = v;
     v = ((int32_t)(sy1 * 65536.0)) + 32768;
-    if (v < 16 | v >= sheight2 - 16)
+    if (v < 16 || v >= sheight2 - 16)
         tile = 1;
-    if (v<nlimit2 | v> limit2) {
+    if (v < nlimit2 || v > limit2) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
     p[1].ty = v;
     v = ((int32_t)(sy2 * 65536.0)) + 32768;
-    if (v < 16 | v >= sheight2 - 16)
+    if (v < 16 || v >= sheight2 - 16)
         tile = 1;
-    if (v<nlimit2 | v> limit2) {
+    if (v < nlimit2 || v > limit2) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
     p[2].ty = v;
     v = ((int32_t)(sy3 * 65536.0)) + 32768;
-    if (v < 0 | v >= sheight2 - 16)
+    if (v < 0 || v >= sheight2 - 16)
         tile = 1;
-    if (v<nlimit2 | v> limit2) {
+    if (v < nlimit2 || v > limit2) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
@@ -496,12 +496,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
             for (i = 1; i <= 3; i++) {
                 tp = &p[i];
                 v = tp->tx;
-                if (v < 16 | v >= swidth2 - 16) {
+                if (v < 16 || v >= swidth2 - 16) {
                     z = 1;
                     break;
                 }
                 v = tp->ty;
-                if (v < 16 | v >= sheight2 - 16) {
+                if (v < 16 || v >= sheight2 - 16) {
                     z = 1;
                     break;
                 }
@@ -512,27 +512,27 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
     }
 
     // validate dest points
-    if (dx1<nlimit | dx1> limit) {
+    if (dx1 < nlimit || dx1 > limit) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
-    if (dx2<nlimit | dx2> limit) {
+    if (dx2 < nlimit || dx2 > limit) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
-    if (dx3<nlimit | dx3> limit) {
+    if (dx3 < nlimit || dx3 > limit) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
-    if (dy1<nlimit | dy1> limit) {
+    if (dy1 < nlimit || dy1 > limit) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
-    if (dy2<nlimit | dy2> limit) {
+    if (dy2 < nlimit || dy2 > limit) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
-    if (dy3<nlimit | dy3> limit) {
+    if (dy3 < nlimit || dy3 > limit) {
         error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         return;
     }
@@ -567,7 +567,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
             lhs = x;
     }
 
-    if (bottom < 0 | top >= dheight | rhs < 0 | lhs >= dwidth)
+    if (bottom < 0 || top >= dheight || rhs < 0 || lhs >= dwidth)
         return; // clip entire triangle
 
     for (i = 1; i <= 3; i++) {
@@ -786,7 +786,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                     else
                         x2 = g2x / 65536;
 
-                    if (x1 >= dwidth | x2 < 0)
+                    if (x1 >= dwidth || x2 < 0)
                         goto mtri1t_donerow; // crop if(entirely offscreen
 
                     tx = g1tx;
@@ -809,8 +809,8 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                                     // values
                     roff = ((g2x & 65535) - 32768);
 
-                    if (roff < 0) {                               // not enough of rhs pixel exists to use
-                        if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+                    if (roff < 0) {                                // not enough of rhs pixel exists to use
+                        if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                             // draw rhs pixel as is
                             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                             *(dst_offset32 + (y * dwidth + x2)) = src_offset32[((g2ty >> 16) % sheight) * swidth + ((g2tx >> 16) % swidth)];
@@ -818,12 +818,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                         }
                         // move left one position
                         x2--;
-                        if (x1 > x2 | x2 < 0)
+                        if (x1 > x2 || x2 < 0)
                             goto mtri1t_donerow; // no more to do
                     } else {
                         if (no_edge_overlap) {
                             x2 = x2 - 1;
-                            if (x1 > x2 | x2 < 0)
+                            if (x1 > x2 || x2 < 0)
                                 goto mtri1t_donerow; // no more to do
                         }
                     }
@@ -1028,7 +1028,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                 else
                     x2 = g2x / 65536;
 
-                if (x1 >= dwidth | x2 < 0)
+                if (x1 >= dwidth || x2 < 0)
                     goto mtri1_donerow; // crop if(entirely offscreen
 
                 tx = g1tx;
@@ -1051,8 +1051,8 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                                 // values
                 roff = ((g2x & 65535) - 32768);
 
-                if (roff < 0) {                               // not enough of rhs pixel exists to use
-                    if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+                if (roff < 0) {                                // not enough of rhs pixel exists to use
+                    if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                         // draw rhs pixel as is
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         *(dst_offset32 + (y * dwidth + x2)) = src_offset32[(g2ty >> 16) * swidth + (g2tx >> 16)];
@@ -1060,12 +1060,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                     }
                     // move left one position
                     x2--;
-                    if (x1 > x2 | x2 < 0)
+                    if (x1 > x2 || x2 < 0)
                         goto mtri1_donerow; // no more to do
                 } else {
                     if (no_edge_overlap) {
                         x2 = x2 - 1;
-                        if (x1 > x2 | x2 < 0)
+                        if (x1 > x2 || x2 < 0)
                             goto mtri1_donerow; // no more to do
                     }
                 }
@@ -1271,7 +1271,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                     else
                         x2 = g2x / 65536;
 
-                    if (x1 >= dwidth | x2 < 0)
+                    if (x1 >= dwidth || x2 < 0)
                         goto mtri2t_donerow; // crop if(entirely offscreen
 
                     tx = g1tx;
@@ -1294,8 +1294,8 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                                     // values
                     roff = ((g2x & 65535) - 32768);
 
-                    if (roff < 0) {                               // not enough of rhs pixel exists to use
-                        if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+                    if (roff < 0) {                                // not enough of rhs pixel exists to use
+                        if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                             // draw rhs pixel as is
                             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                             pixel_offset32 = dst_offset32 + (y * dwidth + x2);
@@ -1324,12 +1324,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                         }
                         // move left one position
                         x2--;
-                        if (x1 > x2 | x2 < 0)
+                        if (x1 > x2 || x2 < 0)
                             goto mtri2t_donerow; // no more to do
                     } else {
                         if (no_edge_overlap) {
                             x2 = x2 - 1;
-                            if (x1 > x2 | x2 < 0)
+                            if (x1 > x2 || x2 < 0)
                                 goto mtri2t_donerow; // no more to do
                         }
                     }
@@ -1575,7 +1575,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                 else
                     x2 = g2x / 65536;
 
-                if (x1 >= dwidth | x2 < 0)
+                if (x1 >= dwidth || x2 < 0)
                     goto mtri2_donerow; // crop if(entirely offscreen
 
                 tx = g1tx;
@@ -1598,8 +1598,8 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                                 // values
                 roff = ((g2x & 65535) - 32768);
 
-                if (roff < 0) {                               // not enough of rhs pixel exists to use
-                    if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+                if (roff < 0) {                                // not enough of rhs pixel exists to use
+                    if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                         // draw rhs pixel as is
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         pixel_offset32 = dst_offset32 + (y * dwidth + x2);
@@ -1627,12 +1627,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                     }
                     // move left one position
                     x2--;
-                    if (x1 > x2 | x2 < 0)
+                    if (x1 > x2 || x2 < 0)
                         goto mtri2_donerow; // no more to do
                 } else {
                     if (no_edge_overlap) {
                         x2 = x2 - 1;
-                        if (x1 > x2 | x2 < 0)
+                        if (x1 > x2 || x2 < 0)
                             goto mtri2_donerow; // no more to do
                     }
                 }
@@ -1777,7 +1777,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
     // assume 1 byte per pixel
     dst_offset = dst->offset;
     src_offset = src->offset;
-    transparent_color = src->transparent_color;
+    auto transparent_color = src->transparent_color;
     if (transparent_color == -1) {
         if (tile) {
 
@@ -1885,7 +1885,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                 else
                     x2 = g2x / 65536;
 
-                if (x1 >= dwidth | x2 < 0)
+                if (x1 >= dwidth || x2 < 0)
                     goto mtri3t_donerow; // crop if(entirely offscreen
 
                 tx = g1tx;
@@ -1908,8 +1908,8 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                                 // values
                 roff = ((g2x & 65535) - 32768);
 
-                if (roff < 0) {                               // not enough of rhs pixel exists to use
-                    if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+                if (roff < 0) {                                // not enough of rhs pixel exists to use
+                    if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                         // draw rhs pixel as is
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         *(dst_offset + (y * dwidth + x2)) = src_offset[((g2ty >> 16) % sheight) * swidth + ((g2tx >> 16) % swidth)];
@@ -1917,12 +1917,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                     }
                     // move left one position
                     x2--;
-                    if (x1 > x2 | x2 < 0)
+                    if (x1 > x2 || x2 < 0)
                         goto mtri3t_donerow; // no more to do
                 } else {
                     if (no_edge_overlap) {
                         x2 = x2 - 1;
-                        if (x1 > x2 | x2 < 0)
+                        if (x1 > x2 || x2 < 0)
                             goto mtri3t_donerow; // no more to do
                     }
                 }
@@ -2127,7 +2127,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
             else
                 x2 = g2x / 65536;
 
-            if (x1 >= dwidth | x2 < 0)
+            if (x1 >= dwidth || x2 < 0)
                 goto mtri3_donerow; // crop if(entirely offscreen
 
             tx = g1tx;
@@ -2150,8 +2150,8 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                             // values
             roff = ((g2x & 65535) - 32768);
 
-            if (roff < 0) {                               // not enough of rhs pixel exists to use
-                if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+            if (roff < 0) {                                // not enough of rhs pixel exists to use
+                if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                     // draw rhs pixel as is
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     *(dst_offset + (y * dwidth + x2)) = src_offset[(g2ty >> 16) * swidth + (g2tx >> 16)];
@@ -2159,12 +2159,12 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                 }
                 // move left one position
                 x2--;
-                if (x1 > x2 | x2 < 0)
+                if (x1 > x2 || x2 < 0)
                     goto mtri3_donerow; // no more to do
             } else {
                 if (no_edge_overlap) {
                     x2 = x2 - 1;
-                    if (x1 > x2 | x2 < 0)
+                    if (x1 > x2 || x2 < 0)
                         goto mtri3_donerow; // no more to do
                 }
             }
@@ -2370,7 +2370,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                 else
                     x2 = g2x / 65536;
 
-                if (x1 >= dwidth | x2 < 0)
+                if (x1 >= dwidth || x2 < 0)
                     goto mtri4t_donerow; // crop if(entirely offscreen
 
                 tx = g1tx;
@@ -2393,23 +2393,23 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                                 // values
                 roff = ((g2x & 65535) - 32768);
 
-                if (roff < 0) {                               // not enough of rhs pixel exists to use
-                    if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+                if (roff < 0) {                                // not enough of rhs pixel exists to use
+                    if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                         // draw rhs pixel as is
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         col = src_offset[((g2ty >> 16) % sheight) * swidth + ((g2tx >> 16) % swidth)];
-                        if (col != transparent_color)
+                        if (col != uint32_t(transparent_color))
                             *(dst_offset + (y * dwidth + x2)) = col;
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     }
                     // move left one position
                     x2--;
-                    if (x1 > x2 | x2 < 0)
+                    if (x1 > x2 || x2 < 0)
                         goto mtri4t_donerow; // no more to do
                 } else {
                     if (no_edge_overlap) {
                         x2 = x2 - 1;
-                        if (x1 > x2 | x2 < 0)
+                        if (x1 > x2 || x2 < 0)
                             goto mtri4t_donerow; // no more to do
                     }
                 }
@@ -2419,7 +2419,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                     if (x1 >= 0) {
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         col = src_offset[((ty >> 16) % sheight) * swidth + ((tx >> 16) % swidth)];
-                        if (col != transparent_color)
+                        if (col != uint32_t(transparent_color))
                             *(dst_offset + (y * dwidth + x1)) = col;
                         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     }
@@ -2458,7 +2458,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
 
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     col = src_offset[((ty >> 16) % sheight) * swidth + ((tx >> 16) % swidth)];
-                    if (col != transparent_color)
+                    if (col != uint32_t(transparent_color))
                         *pixel_offset = col;
                     pixel_offset++;
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -2619,7 +2619,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
             else
                 x2 = g2x / 65536;
 
-            if (x1 >= dwidth | x2 < 0)
+            if (x1 >= dwidth || x2 < 0)
                 goto mtri4_donerow; // crop if(entirely offscreen
 
             tx = g1tx;
@@ -2642,23 +2642,23 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                                             // values
             roff = ((g2x & 65535) - 32768);
 
-            if (roff < 0) {                               // not enough of rhs pixel exists to use
-                if (x2 < dwidth & no_edge_overlap == 0) { // onscreen check
+            if (roff < 0) {                                // not enough of rhs pixel exists to use
+                if (x2 < dwidth && no_edge_overlap == 0) { // onscreen check
                     // draw rhs pixel as is
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     col = src_offset[(g2ty >> 16) * swidth + (g2tx >> 16)];
-                    if (col != transparent_color)
+                    if (col != uint32_t(transparent_color))
                         *(dst_offset + (y * dwidth + x2)) = col;
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 }
                 // move left one position
                 x2--;
-                if (x1 > x2 | x2 < 0)
+                if (x1 > x2 || x2 < 0)
                     goto mtri4_donerow; // no more to do
             } else {
                 if (no_edge_overlap) {
                     x2 = x2 - 1;
-                    if (x1 > x2 | x2 < 0)
+                    if (x1 > x2 || x2 < 0)
                         goto mtri4_donerow; // no more to do
                 }
             }
@@ -2668,7 +2668,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
                 if (x1 >= 0) {
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                     col = src_offset[(ty >> 16) * swidth + (tx >> 16)];
-                    if (col != transparent_color)
+                    if (col != uint32_t(transparent_color))
                         *(dst_offset + (y * dwidth + x1)) = col;
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 }
@@ -2707,7 +2707,7 @@ void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, flo
 
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 col = src_offset[(ty >> 16) * swidth + (tx >> 16)];
-                if (col != transparent_color)
+                if (col != uint32_t(transparent_color))
                     *pixel_offset = col;
                 pixel_offset++;
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
