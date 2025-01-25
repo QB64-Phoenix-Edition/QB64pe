@@ -28267,11 +28267,16 @@ void GLUT_MOTION_FUNC(int x, int y) {
         queue->current = nextIndex;
     }
 
+#    if defined(QB64_WINDOWS) || defined(QB64_MACOSX)
     // Windows calculates relative movement by intercepting WM_INPUT events
     // macOS uses the Quartz Event Services to get relative movements
-    // Linux uses XInput2 to get relative movements
     xrel = 0;
     yrel = 0;
+#    else
+    // TODO: This needs to be correctly implemented on Linux
+    xrel = x - queue->queue[queue->last].x;
+    yrel = y - queue->queue[queue->last].y;
+#    endif
 
     queue->queue[i].x = x;
     queue->queue[i].y = y;
