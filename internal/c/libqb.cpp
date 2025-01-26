@@ -206,12 +206,6 @@ extern "C" int QB64_Resizable() {
 
 int32 sub_gl_called = 0;
 
-#define QB64_EVENT_CLOSE 1
-#define QB64_EVENT_KEY 2
-#define QB64_EVENT_RELATIVE_MOUSE_MOVEMENT 3
-#define QB64_EVENT_FILE_DROP 4
-#define QB64_EVENT_KEY_PAUSE 1000
-
 static int32 image_qbicon16_handle;
 static int32 image_qbicon32_handle;
 
@@ -31136,7 +31130,6 @@ extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_o
             break;
         }
     }
-    return;
 }
 #endif
 
