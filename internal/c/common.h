@@ -137,6 +137,20 @@ struct onkey_struct {
     qbs *text;
 };
 
+// used by color conversion routines
+struct hsb_color
+{
+    double h; // [0,360] hue
+    double s; // [0,1]   saturation
+    double b; // [0,1]   brightness
+};
+struct rgb_color
+{
+    double r; // [0,1] red
+    double g; // [0,1] green
+    double b; // [0,1] blue
+};
+
 struct byte_element_struct {
     uint64 offset;
     int32 length;
