@@ -1684,6 +1684,56 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_HSB32"
+    id.subfunc = 1
+    id.callname = "func__hsb32"
+    id.args = 3
+    id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
+    id.ret = ULONGTYPE - ISPOINTER
+    id.hr_syntax = "_HSB32(hue#, saturation#, brightness#)"
+    regid
+
+    clearid
+    id.n = "_HSBA32"
+    id.subfunc = 1
+    id.callname = "func__hsba32"
+    id.args = 4
+    id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
+    id.ret = ULONGTYPE - ISPOINTER
+    id.hr_syntax = "_HSBA32(hue#, saturation#, brightness#, alpha#)"
+    regid
+
+    clearid
+    id.n = "_Hue32"
+    id.subfunc = 1
+    id.callname = "func__hue32"
+    id.args = 1
+    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "_HUE32(rgbaColor&)"
+    regid
+
+    clearid
+    id.n = "_Saturation32"
+    id.subfunc = 1
+    id.callname = "func__sat32"
+    id.args = 1
+    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "_SATURATION32(rgbaColor&)"
+    regid
+
+    clearid
+    id.n = "_Brightness32"
+    id.subfunc = 1
+    id.callname = "func__bri32"
+    id.args = 1
+    id.arg = MKL$(ULONGTYPE - ISPOINTER)
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "_BRIGHTNESS32(rgbaColor&)"
+    regid
+
+    clearid
     id.n = "Draw"
     id.subfunc = 2
     id.callname = "sub_draw"

@@ -35,6 +35,118 @@ extern uint8_t *ablend128;
 static int32_t depthbuffer_mode0 = DEPTHBUFFER_MODE__ON;
 static int32_t depthbuffer_mode1 = DEPTHBUFFER_MODE__ON;
 
+void hsb2rgb(hsb_color *hsb, rgb_color *rgb) {
+    double hu, hi, hf, pv, qv, tv;
+
+    if (hsb->s == 0.0) {
+        rgb->r = hsb->b; rgb->g = hsb->b; rgb->b = hsb->b; // no saturation = grayscale
+    } else {
+        hu = hsb->h / 60.0;  // to sixtant [0,5]
+        if (hu >= 6.0) hu = hu - 6.0;
+        hf = modf(hu, &hi);  // int/frac parts of hue
+        pv = hsb->b * (1.0 - hsb->s);
+        qv = hsb->b * (1.0 - (hsb->s * hf));
+        tv = hsb->b * (1.0 - (hsb->s * (1.0 - hf)));
+        switch (lround(hi)) {
+            case 0: {rgb->r = hsb->b; rgb->g = tv; rgb->b = pv; break;} //   0- 60 = Red->Yellow
+            case 1: {rgb->r = qv; rgb->g = hsb->b; rgb->b = pv; break;} //  60-120 = Yellow->Green
+            case 2: {rgb->r = pv; rgb->g = hsb->b; rgb->b = tv; break;} // 120-180 = Green->Cyan
+            case 3: {rgb->r = pv; rgb->g = qv; rgb->b = hsb->b; break;} // 180-240 = Cyan->Blue
+            case 4: {rgb->r = tv; rgb->g = pv; rgb->b = hsb->b; break;} // 240-300 = Blue->Magenta
+            case 5: {rgb->r = hsb->b; rgb->g = pv; rgb->b = qv; break;} // 300-360 = Magenta->Red
+        }
+    }
+}
+
+void rgb2hsb(rgb_color *rgb, hsb_color *hsb) {
+    double mini, maxi, diff, hu;
+    // --- find min/max and difference ---
+    mini = fmin(fmin(rgb->r, rgb->g), rgb->b);
+    maxi = fmax(fmax(rgb->r, rgb->g), rgb->b);
+    diff = maxi - mini;
+    // --- brightness ---
+    hsb->b = maxi;
+    // --- saturation (avoid division by zero) ---
+    maxi != 0.0 ? hsb->s = diff / maxi : hsb->s = 0.0;
+    // --- hue in degrees ---
+    if (hsb->s != 0.0) {
+        if (rgb->r == maxi) {
+            hu = ((rgb->g - rgb->b) / diff);       // between Yellow & Magenta
+            if (hu < 0.0) hu = hu + 6.0;
+        } else if (rgb->g == maxi) {
+            hu = 2.0 + ((rgb->b - rgb->r) / diff); // between Cyan & Yellow
+        } else {
+            hu = 4.0 + ((rgb->r - rgb->g) / diff); // between Magenta & Cyan
+        }
+        hsb->h = hu * 60.0; // to degrees
+    } else {
+        hsb->h = 0.0; // technically there's no hue w/o saturation, commonly used is 0 (red)
+    }
+}
+
+uint32_t func__hsb32(double hue, double sat, double bri) {
+    hsb_color hsb; rgb_color rgb;
+    // --- prepare values for conversion ---
+    (hue < 0.0) ? hsb.h = 0.0 : ((hue > 360.0) ? hsb.h = 360.0 : hsb.h = hue);
+    (sat < 0.0) ? hsb.s = 0.0 : ((sat > 100.0) ? hsb.s = 100.0 : hsb.s = sat);
+    (bri < 0.0) ? hsb.b = 0.0 : ((bri > 100.0) ? hsb.b = 100.0 : hsb.b = bri);
+    hsb.s /= 100.0; hsb.b /= 100.0; // range [0,1]
+    // --- convert colorspace ---
+    hsb2rgb(&hsb, &rgb);
+    // --- build result ---
+    return ((lround(rgb.r * 255.0) << 16) + (lround(rgb.g * 255.0) << 8) + lround(rgb.b * 255.0)) | 0xFF000000;
+}
+
+uint32_t func__hsba32(double hue, double sat, double bri, double alf) {
+    hsb_color hsb; rgb_color rgb; double alpha;
+    // --- prepare values for conversion ---
+    (hue < 0.0) ? hsb.h = 0.0 : ((hue > 360.0) ? hsb.h = 360.0 : hsb.h = hue);
+    (sat < 0.0) ? hsb.s = 0.0 : ((sat > 100.0) ? hsb.s = 100.0 : hsb.s = sat);
+    (bri < 0.0) ? hsb.b = 0.0 : ((bri > 100.0) ? hsb.b = 100.0 : hsb.b = bri);
+    (alf < 0.0) ? alpha = 0.0 : ((alf > 100.0) ? alpha = 100.0 : alpha = alf);
+    hsb.s /= 100.0; hsb.b /= 100.0; alpha /= 100.0; // range [0,1]
+    // --- convert colorspace ---
+    hsb2rgb(&hsb, &rgb);
+    // --- build result ---
+    return (lround(alpha * 255.0) << 24) + (lround(rgb.r * 255.0) << 16) + (lround(rgb.g * 255.0) << 8) + lround(rgb.b * 255.0);
+}
+
+double func__hue32(uint32_t argb) {
+    rgb_color rgb; hsb_color hsb;
+    // --- prepare values for conversion ---
+    rgb.r = ((argb >> 16) & 0xFF) / 255.0;
+    rgb.g = ((argb >> 8) & 0xFF) / 255.0;
+    rgb.b = (argb & 0xFF) / 255.0;
+    // --- convert colorspace ---
+    rgb2hsb(&rgb, &hsb);
+    // --- build result ---
+    return hsb.h;
+}
+
+double func__sat32(uint32_t argb) {
+    rgb_color rgb; hsb_color hsb;
+    // --- prepare values for conversion ---
+    rgb.r = ((argb >> 16) & 0xFF) / 255.0;
+    rgb.g = ((argb >> 8) & 0xFF) / 255.0;
+    rgb.b = (argb & 0xFF) / 255.0;
+    // --- convert colorspace ---
+    rgb2hsb(&rgb, &hsb);
+    // --- build result ---
+    return hsb.s * 100.0;
+}
+
+double func__bri32(uint32_t argb) {
+    rgb_color rgb; hsb_color hsb;
+    // --- prepare values for conversion ---
+    rgb.r = ((argb >> 16) & 0xFF) / 255.0;
+    rgb.g = ((argb >> 8) & 0xFF) / 255.0;
+    rgb.b = (argb & 0xFF) / 255.0;
+    // --- convert colorspace ---
+    rgb2hsb(&rgb, &hsb);
+    // --- build result ---
+    return hsb.b * 100.0;
+}
+
 void sub__depthbuffer(int32_t options, int32_t dst, int32_t passed) {
     //                    {ON|OFF|LOCK|_CLEAR}
 

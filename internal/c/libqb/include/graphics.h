@@ -55,6 +55,20 @@ struct img_struct {
 #define IMG_SCREEN 2  // img is linked to other screen pages
 #define IMG_FREEMEM 4 // if set, it means memory must be freed
 
+// used by HSB/RGB color conversion routines
+struct hsb_color
+{
+    double h; // [0,360] hue
+    double s; // [0,1]   saturation
+    double b; // [0,1]   brightness
+};
+struct rgb_color
+{
+    double r; // [0,1] red
+    double g; // [0,1] green
+    double b; // [0,1] blue
+};
+
 /********** Render State **********/
 /*
     Apart from 'glTexParameter' based settings (with are texture specific)
@@ -175,6 +189,12 @@ struct hardware_graphics_command_struct {
 #define HARDWARE_GRAPHICS_COMMAND__MAPTRIANGLE 4
 #define HARDWARE_GRAPHICS_COMMAND__MAPTRIANGLE3D 5
 #define HARDWARE_GRAPHICS_COMMAND__CLEAR_DEPTHBUFFER 6
+
+uint32_t func__hsb32(double hue, double sat, double bri);
+uint32_t func__hsba32(double hue, double sat, double bri, double alf);
+double func__hue32(uint32_t argb);
+double func__sat32(uint32_t argb);
+double func__bri32(uint32_t argb);
 
 void sub__depthbuffer(int32_t options, int32_t dst, int32_t passed);
 void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, float sy2, float sx3, float sy3, int32_t si, float dx1, float dy1, float dz1,
