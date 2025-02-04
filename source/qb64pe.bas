@@ -927,7 +927,7 @@ IF C = 9 THEN 'run
             ' We have to use a separate script to be able to set environment variables for the program
             ExecuteLine$ = "open -b com.apple.terminal " + _CHR_QUOTE + tmpdir$ + "log.command" + _CHR_QUOTE
         ELSE
-            ExecuteLine$ = ExecuteName$
+            ExecuteLine$ = QuotedFilename$(ExecuteName$) + ModifyCOMMAND$
         END IF
     ELSEIF os$ = "WIN" THEN
         IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
