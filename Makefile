@@ -429,7 +429,7 @@ clean: $(CLEAN_DEP_LIST)
 
 ifeq ($(GENERATE_LICENSE),y)
 LICENSE_FILES := $(patsubst %,licenses/license_%.txt,$(LICENSE_IN_USE))
-LICENSE_DEP := $(LICENSE)
+LICENSE_DEP := license
 endif
 
 # Special care has to be taken for EXE because it is the user-supplied
@@ -444,12 +444,13 @@ ifneq ($(STRIP_SYMBOLS),n)
 endif
 endif
 
-$(LICENSE): $(LICENSE_FILES)
+.PHONY: license
+license: $(LICENSE_FILES)
 ifeq ($(GENERATE_LICENSE),y)
 ifeq ($(OS),win)
-	type $(call FIXPATH,$^) > "$@"
+	type $(call FIXPATH,$^) > $(call ADDQUOTES,$(call ESCAPENAME,$(LICENSE)))
 else
-	cat $^ > "$@"
+	cat $^ > $(call ADDQUOTES,$(call ESCAPENAME,$(LICENSE)))
 endif
 endif
 
