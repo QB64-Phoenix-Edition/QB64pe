@@ -54,16 +54,12 @@ static inline float sxbr_df(float A, float B) {
     return abs(A - B);
 }
 
-static inline float min4(float a, float b, float c, float d) {
+static inline constexpr float min4(float a, float b, float c, float d) {
     return std::min(std::min(a, b), std::min(c, d));
 }
 
-static inline float max4(float a, float b, float c, float d) {
+static inline constexpr float max4(float a, float b, float c, float d) {
     return std::max(std::max(a, b), std::max(c, d));
-}
-
-template <class T> T clamp(T x, T floor, T ceil) {
-    return std::max(std::min(x, ceil), floor);
 }
 
 /*
@@ -130,7 +126,7 @@ static inline float cross_edge(float mat[][4], float *wp) {
 
 ///////////////////////// Super-xBR scaling
 // perform super-xbr (fast shader version) scaling by factor f=2 only.
-template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
+template <int f> static void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
     int outw = w * f, outh = h * f;
 
     float wp[6] = {2.0f, 1.0f, -1.0f, 4.0f, -1.0f, 1.0f};
@@ -144,8 +140,8 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
             for (int sx = -1; sx <= 2; ++sx) {
                 for (int sy = -1; sy <= 2; ++sy) {
                     // clamp pixel locations
-                    int csy = clamp(sy + cy, 0, h - 1);
-                    int csx = clamp(sx + cx, 0, w - 1);
+                    int csy = std::clamp(sy + cy, 0, h - 1);
+                    int csx = std::clamp(sx + cx, 0, w - 1);
                     // sample & add weighted components
                     u32 sample = data[csy * w + csx];
                     r[sx + 1][sy + 1] = (float)R(sample);
@@ -186,14 +182,14 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
                 af = a2;
             }
             // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            int ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            int gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            int bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            int ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
+            rf = std::clamp(rf, min_r_sample, max_r_sample);
+            gf = std::clamp(gf, min_g_sample, max_g_sample);
+            bf = std::clamp(bf, min_b_sample, max_b_sample);
+            af = std::clamp(af, min_a_sample, max_a_sample);
+            int ri = std::clamp(static_cast<int>(ceilf(rf)), 0, 255);
+            int gi = std::clamp(static_cast<int>(ceilf(gf)), 0, 255);
+            int bi = std::clamp(static_cast<int>(ceilf(bf)), 0, 255);
+            int ai = std::clamp(static_cast<int>(ceilf(af)), 0, 255);
             out[y * outw + x] = out[y * outw + x + 1] = out[(y + 1) * outw + x] = data[cy * w + cx];
             out[(y + 1) * outw + x + 1] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
             ++x;
@@ -216,8 +212,8 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
             for (int sx = -1; sx <= 2; ++sx) {
                 for (int sy = -1; sy <= 2; ++sy) {
                     // clamp pixel locations
-                    int csy = clamp(sx - sy + y, 0, f * h - 1);
-                    int csx = clamp(sx + sy + x, 0, f * w - 1);
+                    int csy = std::clamp(sx - sy + y, 0, f * h - 1);
+                    int csx = std::clamp(sx + sy + x, 0, f * w - 1);
                     // sample & add weighted components
                     u32 sample = out[csy * outw + csx];
                     r[sx + 1][sy + 1] = (float)R(sample);
@@ -258,21 +254,21 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
                 af = a2;
             }
             // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            int ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            int gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            int bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            int ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
+            rf = std::clamp(rf, min_r_sample, max_r_sample);
+            gf = std::clamp(gf, min_g_sample, max_g_sample);
+            bf = std::clamp(bf, min_b_sample, max_b_sample);
+            af = std::clamp(af, min_a_sample, max_a_sample);
+            int ri = std::clamp(static_cast<int>(ceilf(rf)), 0, 255);
+            int gi = std::clamp(static_cast<int>(ceilf(gf)), 0, 255);
+            int bi = std::clamp(static_cast<int>(ceilf(bf)), 0, 255);
+            int ai = std::clamp(static_cast<int>(ceilf(af)), 0, 255);
             out[y * outw + x + 1] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
 
             for (int sx = -1; sx <= 2; ++sx) {
                 for (int sy = -1; sy <= 2; ++sy) {
                     // clamp pixel locations
-                    int csy = clamp(sx - sy + 1 + y, 0, f * h - 1);
-                    int csx = clamp(sx + sy - 1 + x, 0, f * w - 1);
+                    int csy = std::clamp(sx - sy + 1 + y, 0, f * h - 1);
+                    int csx = std::clamp(sx + sy - 1 + x, 0, f * w - 1);
                     // sample & add weighted components
                     u32 sample = out[csy * outw + csx];
                     r[sx + 1][sy + 1] = (float)R(sample);
@@ -304,14 +300,14 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
                 af = a2;
             }
             // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
+            rf = std::clamp(rf, min_r_sample, max_r_sample);
+            gf = std::clamp(gf, min_g_sample, max_g_sample);
+            bf = std::clamp(bf, min_b_sample, max_b_sample);
+            af = std::clamp(af, min_a_sample, max_a_sample);
+            ri = std::clamp(static_cast<int>(ceilf(rf)), 0, 255);
+            gi = std::clamp(static_cast<int>(ceilf(gf)), 0, 255);
+            bi = std::clamp(static_cast<int>(ceilf(bf)), 0, 255);
+            ai = std::clamp(static_cast<int>(ceilf(af)), 0, 255);
             out[(y + 1) * outw + x] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
             ++x;
         }
@@ -332,8 +328,8 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
             for (int sx = -2; sx <= 1; ++sx) {
                 for (int sy = -2; sy <= 1; ++sy) {
                     // clamp pixel locations
-                    int csy = clamp(sy + y, 0, f * h - 1);
-                    int csx = clamp(sx + x, 0, f * w - 1);
+                    int csy = std::clamp(sy + y, 0, f * h - 1);
+                    int csx = std::clamp(sx + x, 0, f * w - 1);
                     // sample & add weighted components
                     u32 sample = out[csy * outw + csx];
                     r[sx + 2][sy + 2] = (float)R(sample);
@@ -374,14 +370,14 @@ template <int f> void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
                 af = a2;
             }
             // anti-ringing, clamp.
-            rf = clamp(rf, min_r_sample, max_r_sample);
-            gf = clamp(gf, min_g_sample, max_g_sample);
-            bf = clamp(bf, min_b_sample, max_b_sample);
-            af = clamp(af, min_a_sample, max_a_sample);
-            int ri = clamp(static_cast<int>(ceilf(rf)), 0, 255);
-            int gi = clamp(static_cast<int>(ceilf(gf)), 0, 255);
-            int bi = clamp(static_cast<int>(ceilf(bf)), 0, 255);
-            int ai = clamp(static_cast<int>(ceilf(af)), 0, 255);
+            rf = std::clamp(rf, min_r_sample, max_r_sample);
+            gf = std::clamp(gf, min_g_sample, max_g_sample);
+            bf = std::clamp(bf, min_b_sample, max_b_sample);
+            af = std::clamp(af, min_a_sample, max_a_sample);
+            int ri = std::clamp(static_cast<int>(ceilf(rf)), 0, 255);
+            int gi = std::clamp(static_cast<int>(ceilf(gf)), 0, 255);
+            int bi = std::clamp(static_cast<int>(ceilf(bf)), 0, 255);
+            int ai = std::clamp(static_cast<int>(ceilf(af)), 0, 255);
             out[y * outw + x] = (ai << 24) | (bi << 16) | (gi << 8) | ri;
         }
     }
