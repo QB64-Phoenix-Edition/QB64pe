@@ -388,3 +388,11 @@ template <int f> static void scaleSuperXBRT(u32 *data, u32 *out, int w, int h) {
 void scaleSuperXBR2(uint32_t *data, int w, int h, uint32_t *out) {
     scaleSuperXBRT<2>(data, out, w, h);
 }
+
+void scaleSuperXBR3(uint32_t *data, int w, int h, uint32_t *out) {
+    scaleSuperXBRT<3>(data, out, w, h);
+}
+
+void scaleSuperXBR4(uint32_t *data, int w, int h, uint32_t *out) {
+    scaleSuperXBRT<4>(data, out, w, h);
+}
