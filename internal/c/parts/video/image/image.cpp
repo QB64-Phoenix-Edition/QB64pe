@@ -60,8 +60,8 @@ static const char *g_ImageScalerName[] = {"NONE", "SXBR2", "SXBR3", "SXBR4", "MM
 /// @return A pointer to the scaled image or 'data' if there is no change
 static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
     if (scaler > ImageScaler::NONE) {
-        auto newX = *xOut * g_ImageScaleFactor[(int)(scaler)];
-        auto newY = *yOut * g_ImageScaleFactor[(int)(scaler)];
+        auto newX = *xOut * g_ImageScaleFactor[size_t(scaler)];
+        auto newY = *yOut * g_ImageScaleFactor[size_t(scaler)];
 
         auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * newX * newY);
         if (pixels) {
@@ -131,8 +131,8 @@ static uint32_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, 
         return nullptr;
     }
 
-    auto w = (int32_t)image->width * g_ImageScaleFactor[(int)(scaler)];
-    auto h = (int32_t)image->height * g_ImageScaleFactor[(int)(scaler)];
+    auto w = (int32_t)image->width * g_ImageScaleFactor[size_t(scaler)];
+    auto h = (int32_t)image->height * g_ImageScaleFactor[size_t(scaler)];
 
     auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * w * h);
     if (!pixels) {
@@ -141,7 +141,7 @@ static uint32_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, 
         return nullptr;
     }
 
-    nsvgRasterize(rast, image, 0, 0, g_ImageScaleFactor[(int)(scaler)], reinterpret_cast<unsigned char *>(pixels), w, h, sizeof(uint32_t) * w);
+    nsvgRasterize(rast, image, 0, 0, g_ImageScaleFactor[size_t(scaler)], reinterpret_cast<unsigned char *>(pixels), w, h, sizeof(uint32_t) * w);
     nsvgDeleteRasterizer(rast);
     nsvgDelete(image);
 
@@ -187,7 +187,7 @@ static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, i
         return nullptr;
     }
 
-    if (fread(svgString, 1, size, fp) != size) {
+    if (long(fread(svgString, sizeof(uint8_t), size, fp)) != size) {
         free(svgString);
         fclose(fp);
         return nullptr;
@@ -459,7 +459,7 @@ static uint8_t *image_extract_8bpp(const uint32_t *src, int32_t w, int32_t h, ui
 
     auto uniqueColors = 0; // as long as this is < 256 we will keep going until we are done
     size_t size = w * h;
-    for (auto i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         auto srcColor = src[i]; // get the 32bpp pixel
 
         // Check if the src color exists in our palette
@@ -587,11 +587,11 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         }
 
         // Parse scaler string
-        for (auto i = 0; i < _countof(g_ImageScalerName); i++) {
+        for (size_t i = 0; i < _countof(g_ImageScalerName); i++) {
             image_log_info("Checking for: %s", g_ImageScalerName[i]);
             if (requirements.find(g_ImageScalerName[i]) != std::string::npos) {
                 scaler = (ImageScaler)i;
-                image_log_info("%s scaler selected", g_ImageScalerName[(int)scaler]);
+                image_log_info("%s scaler selected", g_ImageScalerName[size_t(scaler)]);
                 break;
             }
         }
@@ -612,7 +612,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
 
     // Convert RGBA to BGRA
     size_t size = x * y;
-    for (auto i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
         pixels[i] = image_swap_red_blue(pixels[i]);
 
     int32_t i; // Image handle to be returned
@@ -756,17 +756,17 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         image_log_info("Parsing requirements string: %s", requirements.c_str());
 
-        for (auto i = 0; i < _countof(formatName); i++) {
+        for (size_t i = 0; i < _countof(formatName); i++) {
             image_log_info("Checking for: %s", formatName[i]);
             if (requirements.find(formatName[i]) != std::string::npos) {
                 format = (SaveFormat)i;
-                image_log_info("Found: %s", formatName[(int)format]);
+                image_log_info("Found: %s", formatName[size_t(format)]);
                 break;
             }
         }
     }
 
-    image_log_info("Format selected: %s", formatName[(int)format]);
+    image_log_info("Format selected: %s", formatName[size_t(format)]);
 
     std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
     filepath_fix_directory(fileName);
@@ -778,7 +778,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
 
         image_log_info("File extension: %s", fileExtension.c_str());
 
-        int i;
+        size_t i;
         for (i = 0; i < _countof(formatName); i++) {
             std::string formatExtension;
 
@@ -790,23 +790,23 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
             if (fileExtension == formatExtension) {
                 image_log_info("Extension (%s) matches with format %i", formatExtension.c_str(), i);
                 format = (SaveFormat)i;
-                image_log_info("Format selected by extension: %s", formatName[(int)format]);
+                image_log_info("Format selected by extension: %s", formatName[size_t(format)]);
                 break;
             }
         }
 
         if (i >= _countof(formatName)) { // no matches
-            image_log_info("No matching extension. Adding .%s", formatName[(int)format]);
+            image_log_info("No matching extension. Adding .%s", formatName[size_t(format)]);
 
             fileName.append(".");
-            fileName.append(formatName[(int)format]);
+            fileName.append(formatName[size_t(format)]);
         }
     } else {
         // Simply add the selected format's extension
-        image_log_info("Adding extension: .%s", formatName[(int)format]);
+        image_log_info("Adding extension: .%s", formatName[size_t(format)]);
 
         fileName.append(".");
-        fileName.append(formatName[(int)format]);
+        fileName.append(formatName[size_t(format)]);
     }
 
     // This will hold our raw RGBA pixel data
@@ -886,7 +886,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         }
     }
 
-    image_log_info("Saving to: %s (%i x %i), %llu pixels, %s", fileName.c_str(), width, height, pixels.size(), formatName[(int)format]);
+    image_log_info("Saving to: %s (%i x %i), %llu pixels, %s", fileName.c_str(), width, height, pixels.size(), formatName[size_t(format)]);
 
     switch (format) {
     case SaveFormat::PNG: {

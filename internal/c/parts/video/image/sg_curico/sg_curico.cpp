@@ -16,10 +16,10 @@
 
 #include "libqb-common.h"
 
-#include "sg_curico.h"
 #include "../stb/stb_image.h"
 #include "../stb/stb_image_write.h"
 #include "image.h"
+#include "sg_curico.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -182,7 +182,7 @@ class CurIcoImage {
               xPelsPerMeter(0), yPelsPerMeter(0), clrUsed(0), clrImportant(0) {}
 
         static auto GetStructSize() noexcept {
-            return 40;
+            return 40u;
         } // sizeof(BmpInfoHeader)
 
         void ReadFromStream(Stream &stream) {
@@ -393,7 +393,7 @@ class CurIcoImage {
             directory[i].ReadFromStream(input); // load the directory entry
 
             image_log_info("Width = %u, height = %u, colorCount = %u, bytesInRes = %u, imageOffset = %u", directory[i].width, directory[i].height,
-                              directory[i].colorCount, directory[i].bytesInRes, directory[i].imageOffset);
+                           directory[i].colorCount, directory[i].bytesInRes, directory[i].imageOffset);
         }
 
         size_t imageIndex = 0; // use the first image in the directory by default
@@ -469,8 +469,8 @@ class CurIcoImage {
             BmpInfoHeader bmpInfoHeader;
             bmpInfoHeader.ReadFromStream(input);
 
-            image_log_info("Width = %u, height = %u, bitCount = %u, planes = %u, compression = %u, sizeImage = %u", bmpInfoHeader.width,
-                              bmpInfoHeader.height, bmpInfoHeader.bitCount, bmpInfoHeader.planes, bmpInfoHeader.compression, bmpInfoHeader.sizeImage);
+            image_log_info("Width = %u, height = %u, bitCount = %u, planes = %u, compression = %u, sizeImage = %u", bmpInfoHeader.width, bmpInfoHeader.height,
+                           bmpInfoHeader.bitCount, bmpInfoHeader.planes, bmpInfoHeader.compression, bmpInfoHeader.sizeImage);
 
             auto width = ::abs(bmpInfoHeader.width);
             auto height = ::abs(bmpInfoHeader.height) >> 1;               // height is always multiplied by 2 due to the mask
@@ -726,7 +726,7 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components
 
     rewind(pFile);
 
-    if (fread(&buffer[0], sizeof(uint8_t), len, pFile) != len || ferror(pFile)) {
+    if (long(fread(&buffer[0], sizeof(uint8_t), len, pFile)) != len || ferror(pFile)) {
         image_log_error("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;

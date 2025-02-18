@@ -6,8 +6,10 @@
 // https://github.com/mackron/dr_pcx
 //-----------------------------------------------------------------------------------------------------
 
-#include "sg_pcx.h"
+#include "libqb-common.h"
+
 #include "image.h"
+#include "sg_pcx.h"
 #include <algorithm>
 #include <cstring>
 #include <memory>
@@ -633,7 +635,7 @@ uint32_t *pcx_load_file(const char *filename, int *x, int *y, int *components) {
 
     rewind(pFile);
 
-    if (fread(&buffer[0], sizeof(uint8_t), len, pFile) != len || ferror(pFile)) {
+    if (long(fread(&buffer[0], sizeof(uint8_t), len, pFile)) != len || ferror(pFile)) {
         image_log_error("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;
