@@ -686,8 +686,6 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, 
             free(out_data);
             out_data = nullptr;
         }
-
-        return nullptr;
     }
 
     return out_data;

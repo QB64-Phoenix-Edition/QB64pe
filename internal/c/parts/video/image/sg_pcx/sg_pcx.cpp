@@ -605,8 +605,6 @@ uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y, int
             free(out_data);
             out_data = nullptr;
         }
-
-        return nullptr;
     }
 
     return out_data;

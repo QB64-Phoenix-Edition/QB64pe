@@ -118,10 +118,6 @@ static inline double square(double value) {
 }
 
 static inline double distYCbCr(uint32_t pix1, uint32_t pix2, double luminanceWeight) {
-    if (pix1 == pix2) {
-        return 0.0;
-    }
-
     int r_diff = (int)getRed(pix1) - (int)getRed(pix2);
     int g_diff = (int)getGreen(pix1) - (int)getGreen(pix2);
     int b_diff = (int)getBlue(pix1) - (int)getBlue(pix2);
