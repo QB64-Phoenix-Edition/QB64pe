@@ -1,13 +1,18 @@
 //-----------------------------------------------------------------------------------------------------
 // PCX Loader for QB64-PE by a740g
 //
-// Uses code and ideas from:
+// Bibliography:
 // https://github.com/EzArIk/PcxFileType
 // https://github.com/mackron/dr_pcx
+// http://fileformats.archiveteam.org/wiki/PCX
+// https://en.wikipedia.org/wiki/PCX
+// https://moddingwiki.shikadi.net/wiki/PCX_Format
 //-----------------------------------------------------------------------------------------------------
 
-#include "sg_pcx.h"
+#include "libqb-common.h"
+
 #include "image.h"
+#include "sg_pcx.h"
 #include <algorithm>
 #include <cstring>
 #include <memory>
@@ -181,36 +186,31 @@ class PCXImage {
     };
 
     // QB64 BGRA friendly color class
-    class Color {
-      public:
-        union BGRA32 {
-            struct Tuple {
+    struct Color {
+        union {
+            struct {
                 uint8_t b;
                 uint8_t g;
                 uint8_t r;
                 uint8_t a;
-            } tuple;
+            };
 
             uint32_t value;
-        } color;
+        };
 
         Color() {
-            color.value = 0;
+            value = 0;
         }
 
         Color(uint32_t value) {
-            color.value = value;
+            this->value = value;
         }
 
         Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
-            SetFromComponents(b, g, r, a);
-        }
-
-        void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
-            color.tuple.b = b;
-            color.tuple.g = g;
-            color.tuple.r = r;
-            color.tuple.a = a;
+            this->b = b;
+            this->g = g;
+            this->r = r;
+            this->a = a;
         }
     };
 
@@ -288,14 +288,14 @@ class PCXImage {
                 break;
 
             default:
-                throw std::runtime_error("Unsupported EGAPalette type: " + std::to_string(static_cast<uint8_t>(type)));
+                throw std::runtime_error("Unsupported EGAPalette type: " + std::to_string(uint8_t(type)));
             }
 
             m_palette.resize(16);
 
             for (auto i = 0; i < 16; i++)
-                m_palette[i].SetFromComponents((uint8_t)((egaPalette[i] >> 16) & 0xff), (uint8_t)((egaPalette[i] >> 8) & 0xff),
-                                               (uint8_t)((egaPalette[i]) & 0xff)); // NOTE: The color order the array is RGB
+                m_palette[i] = Color(uint8_t((egaPalette[i] >> 16) & 0xff), uint8_t((egaPalette[i] >> 8) & 0xff),
+                                     uint8_t((egaPalette[i]) & 0xff)); // NOTE: The color order the array is RGB
         }
 
         void LoadFromColorMap(const std::vector<uint8_t> &colorMap) {
@@ -304,15 +304,15 @@ class PCXImage {
 
             auto index = 0;
             for (auto i = 0; i < 16; i++) {
-                Color entry;
+                Color color;
 
                 // WARNING: Load order is important
-                entry.color.tuple.b = colorMap[index++];
-                entry.color.tuple.g = colorMap[index++];
-                entry.color.tuple.r = colorMap[index++];
-                entry.color.tuple.a = 255;
+                color.b = colorMap[index++];
+                color.g = colorMap[index++];
+                color.r = colorMap[index++];
+                color.a = 255;
 
-                m_palette[i] = entry;
+                m_palette[i] = color;
             }
         }
 
@@ -323,15 +323,15 @@ class PCXImage {
             m_palette.resize(size);
 
             for (size_t i = 0; i < m_palette.size(); ++i) {
-                Color entry;
+                Color color;
 
                 // WARNING: Read order is important
-                entry.color.tuple.b = input.Read<uint8_t>();
-                entry.color.tuple.g = input.Read<uint8_t>();
-                entry.color.tuple.r = input.Read<uint8_t>();
-                entry.color.tuple.a = 255;
+                color.b = input.Read<uint8_t>();
+                color.g = input.Read<uint8_t>();
+                color.r = input.Read<uint8_t>();
+                color.a = 255;
 
-                m_palette[i] = entry;
+                m_palette[i] = color;
             }
         }
     };
@@ -356,7 +356,7 @@ class PCXImage {
                 auto code = m_stream.Read<uint8_t>();
 
                 if ((code & RLEMask) == RLEMask) {
-                    m_count = static_cast<uint32_t>(code & (RLEMask ^ 0xff));
+                    m_count = uint32_t(code & (RLEMask ^ 0xff));
                     m_rleValue = m_stream.Read<uint8_t>();
 
                     m_count--;
@@ -390,7 +390,7 @@ class PCXImage {
             if (!(bitsPerPixel == 1 || bitsPerPixel == 2 || bitsPerPixel == 4 || bitsPerPixel == 8))
                 throw std::runtime_error("bitsPerPixel must be 1, 2, 4 or 8. Got: " + std::to_string(bitsPerPixel));
 
-            m_bitMask = (uint32_t)((1 << (int)m_bitsPerPixel) - 1);
+            m_bitMask = uint32_t((1 << (int)m_bitsPerPixel) - 1);
         }
 
         uint32_t ReadIndex() {
@@ -402,8 +402,8 @@ class PCXImage {
             }
 
             // NOTE: Reads from the most significant bits
-            uint32_t index = (m_byteRead >> (int)(8 - m_bitsPerPixel)) & m_bitMask;
-            m_byteRead <<= (int)m_bitsPerPixel;
+            uint32_t index = (m_byteRead >> int(8 - m_bitsPerPixel)) & m_bitMask;
+            m_byteRead <<= int(m_bitsPerPixel);
             m_bitsRemaining -= m_bitsPerPixel;
 
             return index;
@@ -455,29 +455,31 @@ class PCXImage {
         auto pixelsPerLine = header.bytesPerLine * 8 /*bitsPerByte*/ / header.bitsPerPixel;
 
         // Bits per pixel, including all bit planes
-        auto bitsPerPixel = header.bitsPerPixel * header.nPlanes;
+        auto bpp = header.bitsPerPixel * header.nPlanes;
 
-        if (bitsPerPixel != 1 && bitsPerPixel != 2 && bitsPerPixel != 4 && bitsPerPixel != 8 && bitsPerPixel != 24) {
-            image_log_error("Unsupported PCX bit depth: %d", bitsPerPixel);
+        if (bpp != 1 && bpp != 2 && bpp != 4 && bpp != 8 && bpp != 24 && bpp != 32) {
+            image_log_error("Unsupported PCX bit depth: %d", bpp);
 
             return;
         }
 
+        image_log_trace("Loading: %i x %i pixels @ %i bpp, %i planes, %i bits / plane", width, height, bpp, int(header.nPlanes), int(header.bitsPerPixel));
+
         // Load the palette
         Palette palette;
 
-        if (bitsPerPixel == 1) {
+        if (bpp == 1) {
             // HACK: Monochrome images don't always include a reasonable palette in v3.0.
             // Default them to black and white in all cases
 
             palette.LoadFromEGAPalette(Palette::EGAPalette::MONO);
-        } else if (bitsPerPixel < 8) {
+        } else if (bpp < 8) {
             // 16-color palette in the ColorMap portion of the header
 
             switch (header.version) {
             case Version::Version2_5:
             case Version::Version2_8_DefaultPalette: {
-                switch (bitsPerPixel) {
+                switch (bpp) {
                 // 4-color CGA palette
                 case 2:
                     palette.LoadFromEGAPalette(Palette::EGAPalette::CGA);
@@ -500,7 +502,7 @@ class PCXImage {
                 break;
             }
             }
-        } else if (bitsPerPixel == 8) {
+        } else if (bpp == 8) {
             // 256-color palette is saved at the end of the file, with one byte marker
 
             auto dataPosition = input.GetPosition();
@@ -517,7 +519,7 @@ class PCXImage {
 
             input.Seek(dataPosition);
         } else {
-            // Dummy palette for 24-bit images
+            // Dummy palette for 32-bit and 24-bit images
 
             palette.Resize(256);
         }
@@ -542,7 +544,7 @@ class PCXImage {
             auto dstRow = &(*out_data)[y * width];
             indexBuffer.assign(width, 0);
 
-            auto offset = 0;
+            size_t offset = 0;
 
             // Decode the RLE byte stream
             byteReader.Reset();
@@ -556,21 +558,27 @@ class PCXImage {
                     auto index = indexReader->ReadIndex();
 
                     // Account for padding bytes
-                    if (x < width)
-                        indexBuffer[x] = indexBuffer[x] | (index << (plane * header.bitsPerPixel));
+                    if (x < width) {
+                        indexBuffer[x] |= (index << (plane * header.bitsPerPixel));
+                    }
                 }
             }
 
             for (int x = 0; x < width; x++) {
                 uint32_t index = indexBuffer[x];
-                Color color;
 
-                if (bitsPerPixel == 24)
-                    color.SetFromComponents(image_get_bgra_blue(index), image_get_bgra_green(index), image_get_bgra_red(index));
-                else
-                    color = palette.GetColor(index);
+                switch (bpp) {
+                case 32:
+                    dstRow[offset] = index;
+                    break;
 
-                dstRow[offset] = color.color.value;
+                case 24:
+                    dstRow[offset] = Color(image_get_bgra_blue(index), image_get_bgra_green(index), image_get_bgra_red(index)).value;
+                    break;
+
+                default:
+                    dstRow[offset] = palette.GetColor(index).value;
+                }
 
                 ++offset;
             }
@@ -597,8 +605,6 @@ uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y, int
             free(out_data);
             out_data = nullptr;
         }
-
-        return nullptr;
     }
 
     return out_data;
@@ -633,7 +639,7 @@ uint32_t *pcx_load_file(const char *filename, int *x, int *y, int *components) {
 
     rewind(pFile);
 
-    if (fread(&buffer[0], sizeof(uint8_t), len, pFile) != len || ferror(pFile)) {
+    if (long(fread(&buffer[0], sizeof(uint8_t), len, pFile)) != len || ferror(pFile)) {
         image_log_error("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;

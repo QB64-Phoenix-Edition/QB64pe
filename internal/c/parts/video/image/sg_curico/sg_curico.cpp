@@ -16,10 +16,10 @@
 
 #include "libqb-common.h"
 
-#include "sg_curico.h"
 #include "../stb/stb_image.h"
 #include "../stb/stb_image_write.h"
 #include "image.h"
+#include "sg_curico.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -182,7 +182,7 @@ class CurIcoImage {
               xPelsPerMeter(0), yPelsPerMeter(0), clrUsed(0), clrImportant(0) {}
 
         static auto GetStructSize() noexcept {
-            return 40;
+            return 40u;
         } // sizeof(BmpInfoHeader)
 
         void ReadFromStream(Stream &stream) {
@@ -200,36 +200,32 @@ class CurIcoImage {
         }
     };
 
-    class Color {
-      public:
-        union BGRA32 {
-            struct Tuple {
+    // QB64 BGRA friendly color class
+    struct Color {
+        union {
+            struct {
                 uint8_t b;
                 uint8_t g;
                 uint8_t r;
                 uint8_t a;
-            } tuple;
+            };
 
             uint32_t value;
-        } color;
+        };
 
         Color() {
-            color.value = 0;
+            value = 0;
         }
 
         Color(uint32_t value) {
-            color.value = value;
+            this->value = value;
         }
 
         Color(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
-            SetFromComponents(b, g, r, a);
-        }
-
-        void SetFromComponents(uint8_t b, uint8_t g, uint8_t r, uint8_t a = 0xFFu) {
-            color.tuple.b = b;
-            color.tuple.g = g;
-            color.tuple.r = r;
-            color.tuple.a = a;
+            this->b = b;
+            this->g = g;
+            this->r = r;
+            this->a = a;
         }
     };
 
@@ -270,16 +266,16 @@ class CurIcoImage {
             Resize(size);
 
             for (size_t i = 0; i < palette.size(); i++) {
-                Color entry;
+                Color color;
 
                 // WARNING: The loading order is important
-                entry.color.tuple.r = input.Read<uint8_t>();
-                entry.color.tuple.g = input.Read<uint8_t>();
-                entry.color.tuple.b = input.Read<uint8_t>();
-                entry.color.tuple.a = input.Read<uint8_t>();
-                entry.color.tuple.a = 0xff;
+                color.r = input.Read<uint8_t>();
+                color.g = input.Read<uint8_t>();
+                color.b = input.Read<uint8_t>();
+                color.a = input.Read<uint8_t>();
+                color.a = 0xff;
 
-                palette[i] = entry;
+                palette[i] = color;
             }
         }
     };
@@ -393,7 +389,7 @@ class CurIcoImage {
             directory[i].ReadFromStream(input); // load the directory entry
 
             image_log_info("Width = %u, height = %u, colorCount = %u, bytesInRes = %u, imageOffset = %u", directory[i].width, directory[i].height,
-                              directory[i].colorCount, directory[i].bytesInRes, directory[i].imageOffset);
+                           directory[i].colorCount, directory[i].bytesInRes, directory[i].imageOffset);
         }
 
         size_t imageIndex = 0; // use the first image in the directory by default
@@ -469,8 +465,8 @@ class CurIcoImage {
             BmpInfoHeader bmpInfoHeader;
             bmpInfoHeader.ReadFromStream(input);
 
-            image_log_info("Width = %u, height = %u, bitCount = %u, planes = %u, compression = %u, sizeImage = %u", bmpInfoHeader.width,
-                              bmpInfoHeader.height, bmpInfoHeader.bitCount, bmpInfoHeader.planes, bmpInfoHeader.compression, bmpInfoHeader.sizeImage);
+            image_log_info("Width = %u, height = %u, bitCount = %u, planes = %u, compression = %u, sizeImage = %u", bmpInfoHeader.width, bmpInfoHeader.height,
+                           bmpInfoHeader.bitCount, bmpInfoHeader.planes, bmpInfoHeader.compression, bmpInfoHeader.sizeImage);
 
             auto width = ::abs(bmpInfoHeader.width);
             auto height = ::abs(bmpInfoHeader.height) >> 1;               // height is always multiplied by 2 due to the mask
@@ -508,7 +504,7 @@ class CurIcoImage {
 
                 for (auto y = 0; y < height; y++) {
                     for (auto x = 0; x < width; x++) {
-                        *dst = palette.GetColor(((src[x >> 3] >> (7 - (x & 7))) & 1)).color.value;
+                        *dst = palette.GetColor(((src[x >> 3] >> (7 - (x & 7))) & 1)).value;
                         ++dst;
                     }
                     src += stride;
@@ -530,7 +526,7 @@ class CurIcoImage {
 
                 for (auto y = 0; y < height; y++) {
                     for (auto x = 0; x < width; x++) {
-                        *dst = palette.GetColor((src[x >> 1] >> ((!(x & 1)) << 2)) & 0xF).color.value;
+                        *dst = palette.GetColor((src[x >> 1] >> ((!(x & 1)) << 2)) & 0xF).value;
                         ++dst;
                     }
                     src += stride;
@@ -552,7 +548,7 @@ class CurIcoImage {
 
                 for (auto y = 0; y < height; y++) {
                     for (auto x = 0; x < width; x++) {
-                        *dst = palette.GetColor(src[x]).color.value;
+                        *dst = palette.GetColor(src[x]).value;
                         ++dst;
                     }
                     src += stride;
@@ -690,8 +686,6 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, 
             free(out_data);
             out_data = nullptr;
         }
-
-        return nullptr;
     }
 
     return out_data;
@@ -726,7 +720,7 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components
 
     rewind(pFile);
 
-    if (fread(&buffer[0], sizeof(uint8_t), len, pFile) != len || ferror(pFile)) {
+    if (long(fread(&buffer[0], sizeof(uint8_t), len, pFile)) != len || ferror(pFile)) {
         image_log_error("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;

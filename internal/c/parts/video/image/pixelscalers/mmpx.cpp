@@ -4,40 +4,37 @@
     https://casual-effects.com/research/McGuire2021PixelArt/index.html
 */
 
+#include <algorithm>
 #include <cstdbool>
 #include <cstdint>
 
-static inline uint32_t luma(uint32_t color) {
+static inline constexpr uint32_t luma(uint32_t color) {
     const uint32_t alpha = (color & 0xFF000000) >> 24;
     return (((color & 0x00FF0000) >> 16) + ((color & 0x0000FF00) >> 8) + (color & 0x000000FF) + 1) * (256 - alpha);
 }
 
-static inline bool all_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
+static inline constexpr bool all_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
     return ((B ^ A0) | (B ^ A1)) == 0;
 }
 
-static inline bool all_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
+static inline constexpr bool all_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
     return ((B ^ A0) | (B ^ A1) | (B ^ A2)) == 0;
 }
 
-static inline bool all_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
+static inline constexpr bool all_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
     return ((B ^ A0) | (B ^ A1) | (B ^ A2) | (B ^ A3)) == 0;
 }
 
-static inline bool any_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
+static inline constexpr bool any_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
     return B == A0 || B == A1 || B == A2;
 }
 
-static inline bool none_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
+static inline constexpr bool none_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
     return (B != A0) && (B != A1);
 }
 
-static inline bool none_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
+static inline constexpr bool none_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
     return B != A0 && B != A1 && B != A2 && B != A3;
-}
-
-static inline int mmpx_clamp(int v, int min, int max) {
-    return v < min ? min : min > max ? max : v;
 }
 
 struct Meta {
@@ -51,8 +48,8 @@ struct Meta {
 static inline uint32_t src(const struct Meta *meta, int x, int y) {
     // Clamp to border
     if ((uint32_t)x > (uint32_t)meta->srcMaxX || (uint32_t)y > (uint32_t)meta->srcMaxY) {
-        x = mmpx_clamp(x, 0, meta->srcMaxX);
-        y = mmpx_clamp(y, 0, meta->srcMaxY);
+        x = std::clamp<int>(x, 0, meta->srcMaxX);
+        y = std::clamp<int>(y, 0, meta->srcMaxY);
     }
 
     return meta->srcBuffer[y * meta->srcWidth + x];

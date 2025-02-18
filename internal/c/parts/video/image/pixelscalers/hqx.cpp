@@ -140,17 +140,15 @@ static const uint32_t HQX_VMASK = 0x000000FF;
 // All hq-related fcts used to be member fcts of otherwise empty classes.
 // Turned into stand-alone fcts.
 
-static inline uint32_t ARGBtoAYUV(uint32_t value) {
-    uint32_t A, R, G, B, Y, U, V;
+static inline constexpr uint32_t ARGBtoAYUV(uint32_t value) {
+    uint32_t A = value >> 24;
+    uint32_t R = (value >> 16) & 0xFF;
+    uint32_t G = (value >> 8) & 0xFF;
+    uint32_t B = value & 0xFF;
 
-    A = value >> 24;
-    R = (value >> 16) & 0xFF;
-    G = (value >> 8) & 0xFF;
-    B = value & 0xFF;
-
-    Y = (uint32_t)(0.299 * R + 0.587 * G + 0.114 * B);
-    U = (uint32_t)(-0.169 * R - 0.331 * G + 0.5 * B) + 128;
-    V = (uint32_t)(0.5 * R - 0.419 * G - 0.081 * B) + 128;
+    uint32_t Y = (uint32_t)(0.299 * R + 0.587 * G + 0.114 * B);
+    uint32_t U = (uint32_t)(-0.169 * R - 0.331 * G + 0.5 * B) + 128;
+    uint32_t V = (uint32_t)(0.5 * R - 0.419 * G - 0.081 * B) + 128;
     return (A << 24) + (Y << 16) + (U << 8) + V;
 }
 
