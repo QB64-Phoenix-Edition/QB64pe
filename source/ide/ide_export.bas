@@ -374,7 +374,7 @@ SUB ExportCodeAs (docFormat$)
     VerifyKeyword:
     IF me% THEN veri$ = me$: ELSE veri$ = kw$
     IF ASC(veri$, 1) <> 95 THEN flp% = 1: ELSE flp% = 2
-    IF (ASC(veri$, flp%) < 91 OR MID$(veri$, flp%, 2) = "gl") AND (INSTR(listOfKeywords$, "@" + UCASE$(veri$) + "@") > 0) THEN
+    IF (isalpha(ASC(veri$, flp%))) AND (INSTR(listOfKeywords$, "@" + UCASE$(veri$) + "@") > 0) THEN
         IF me% AND le% THEN
             IF INSTR("$DYNAMIC$INCLUDE$STATIC", UCASE$(veri$)) = 0 THEN me$ = ""
         ELSEIF me% AND NOT le% THEN

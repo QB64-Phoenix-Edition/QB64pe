@@ -910,7 +910,7 @@ FUNCTION ide2 (ignore)
             IF ready THEN
                 IF IDEShowErrorsImmediately THEN
                     _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                    IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                     statusarealink = 0
                     IF totalWarnings > 0 AND showexecreated = 0 THEN
                         COLOR 11, 1
@@ -1088,7 +1088,7 @@ FUNCTION ide2 (ignore)
                 IF IDEShowErrorsImmediately <> 0 OR IDECompilationRequested <> 0 OR compfailed <> 0 THEN
                     IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
                     UpdateIdeInfo
-                    IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
 
                     clearStatusWindow 0
                     'scrolling unavailable, but may span multiple lines
@@ -3172,7 +3172,7 @@ FUNCTION ide2 (ignore)
                                         menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
                                     ELSE
                                         _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                                        IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                                        menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                                         statusarealink = 0
                                         IF totalWarnings > 0 THEN
                                             COLOR 11, 1
@@ -6727,7 +6727,7 @@ FUNCTION ide2 (ignore)
             _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
             menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
         ELSE
-            IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+            menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
             IF idefocusline THEN
                 _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
             ELSE
