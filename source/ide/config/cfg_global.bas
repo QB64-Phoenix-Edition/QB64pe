@@ -10,7 +10,7 @@ DIM SHARED IDE_BypassAutoPosition AS _BYTE, idesortsubs AS _BYTE, IDESubsLength 
 DIM SHARED IDENormalCursorStart AS LONG, IDENormalCursorEnd AS LONG
 DIM SHARED MouseButtonSwapped AS _BYTE
 DIM SHARED PasteCursorAtEnd AS _BYTE
-DIM SHARED SaveExeWithSource AS _BYTE, EnableQuickNav AS _BYTE
+DIM SHARED SaveExeWithSource AS LONG, EnableQuickNav AS _BYTE
 DIM SHARED IDEShowErrorsImmediately AS _BYTE
 DIM SHARED ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
 DIM SHARED IgnoreWarnings AS _BYTE, qb64versionprinted AS _BYTE
