@@ -674,88 +674,111 @@ FUNCTION ide2 (ignore)
 
         'previous line was OK, so use layout if available
 
-        IF IDEAutoLayout = 0 AND IDEAutoIndent = 0 THEN
+        IF LEN(layout$) THEN
 
-            layout$ = ""
-            idelayoutallow = 0
+            'calculate recommended indent level
+            FOR i = 1 TO LEN(layout$)
+                IF ASC(layout$, i) <> 32 OR i = LEN(layout$) THEN
+                    indent = i - 1
+                    layout$ = RIGHT$(layout$, LEN(layout$) - i + 1)
+                    EXIT FOR
+                END IF
+            NEXT
 
-        ELSE
+            spacelayout:
+            ignoresp = 0
+            FOR i = 1 TO LEN(layout$)
+                IF ASC(layout$, i) = 34 THEN
+                    ignoresp = ignoresp + 1: IF ignoresp = 2 THEN ignoresp = 0
+                END IF
+                IF ignoresp = 0 THEN
+                    IF MID$(layout$, i, 1) = sp THEN MID$(layout$, i, 1) = " "
+                    IF MID$(layout$, i, 1) = sp2 THEN layout$ = LEFT$(layout$, i - 1) + RIGHT$(layout$, LEN(layout$) - i): GOTO spacelayout
+                END IF
+            NEXT
 
-            IF LEN(layout$) THEN
-
-                'calculate recommended indent level
-                FOR i = 1 TO LEN(layout$)
-                    IF ASC(layout$, i) <> 32 OR i = LEN(layout$) THEN
+            IF IDEAutoIndent = 0 THEN
+                'note: can assume auto-format
+                'calculate old indent (if any)
+                a$ = idecompiledline$
+                indent = 0
+                FOR i = 1 TO LEN(a$)
+                    IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
                         indent = i - 1
-                        layout$ = RIGHT$(layout$, LEN(layout$) - i + 1)
                         EXIT FOR
                     END IF
                 NEXT
+                indent$ = SPACE$(indent)
+            ELSE
+                indent$ = SPACE$(indent * IDEAutoIndentSize)
+            END IF
 
-                IF IDEAutoLayout THEN
-                    spacelayout:
-                    ignoresp = 0
-                    FOR i = 1 TO LEN(layout$)
-                        IF ASC(layout$, i) = 34 THEN
-                            ignoresp = ignoresp + 1: IF ignoresp = 2 THEN ignoresp = 0
-                        END IF
-                        IF ignoresp = 0 THEN
-                            IF MID$(layout$, i, 1) = sp THEN MID$(layout$, i, 1) = " "
-                            IF MID$(layout$, i, 1) = sp2 THEN layout$ = LEFT$(layout$, i - 1) + RIGHT$(layout$, LEN(layout$) - i): GOTO spacelayout
-                        END IF
-                    NEXT
-                END IF
-
-                IF IDEAutoIndent = 0 THEN
-                    'note: can assume auto-format
-                    'calculate old indent (if any)
-                    a$ = idecompiledline$
-                    indent = 0
-                    FOR i = 1 TO LEN(a$)
-                        IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
-                            indent = i - 1
-                            EXIT FOR
-                        END IF
-                    NEXT
-                    indent$ = SPACE$(indent)
-                ELSE
-                    indent$ = SPACE$(indent * IDEAutoIndentSize)
-                END IF
-
-                IF IDEAutoLayout = 0 THEN
-                    'note: can assume auto-indent
-                    a$ = idecompiledline$
-                    layout$ = ""
-                    FOR i = 1 TO LEN(a$)
-                        IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
-                            layout$ = RIGHT$(a$, LEN(a$) - i + 1)
-                            EXIT FOR
-                        END IF
-                    NEXT
-                END IF
-
-                layout$ = indent$ + layout$
-
-                IF idecy <> idecompiledline OR idelayoutallow <> 0 THEN
-                    idelayoutallow = 0
-
-                    IF idecompiledline$ <> layout$ THEN
-                        idesetline idecompiledline, layout$
-                        IF idecompiledline >= idesy AND idecompiledline <= (idesy + 16) THEN skipdisplay = 0
+            olay$ = layout$ 'save layouted line
+            IF IDEAutoLayout = 0 THEN
+                'note: can assume auto-indent
+                a$ = idecompiledline$
+                layout$ = ""
+                FOR i = 1 TO LEN(a$)
+                    IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
+                        layout$ = RIGHT$(a$, LEN(a$) - i + 1)
+                        EXIT FOR
                     END IF
+                NEXT
+            END IF
 
-                ELSE
-
-                    IF idecompiledline$ <> layout$ THEN
-                        idecurrentlinelayout = layout$
-                        idecurrentlinelayouti = idecy
+            IF layout$ <> olay$ THEN
+                lcnt = 0: ocnt = 0
+                WHILE lcnt <= LEN(layout$)
+                    lcnt = lcnt + 1: ocnt = ocnt + 1
+                    recheckdiff:
+                    IF lch$ <> "" AND lch$ <> " " THEN llch$ = lch$ 'save last non-space
+                    IF och$ <> "" AND och$ <> " " THEN loch$ = och$
+                    lch$ = MID$(layout$, lcnt, 1) 'get chars
+                    och$ = MID$(olay$, ocnt, 1)
+                    IF lch$ = och$ THEN _CONTINUE 'no diff
+                    IF lch$ = " " THEN 'skip spacing diff
+                        lcnt = lcnt + 1: IF lcnt > LEN(layout$) AND ocnt > LEN(olay$) THEN EXIT WHILE
+                        GOTO recheckdiff
                     END IF
+                    IF och$ = " " THEN 'skip spacing diff
+                        ocnt = ocnt + 1: IF ocnt > LEN(olay$) AND lcnt > LEN(layout$) THEN EXIT WHILE
+                        GOTO recheckdiff
+                    END IF
+                    IF lch$ = "?" AND UCASE$(MID$(olay$, ocnt, 5)) = "PRINT" THEN '? = PRINT special case
+                        ps$ = "print": nlch$ = MID$(layout$, lcnt + 1, 1)
+                        IF nlch$ <> " " AND nlch$ <> "" THEN ps$ = ps$ + " "
+                        layout$ = LEFT$(layout$, lcnt - 1) + ps$ + RIGHT$(layout$, LEN(layout$) - lcnt)
+                        GOTO recheckdiff
+                    END IF
+                    IF och$ = CHR$(34) AND llch$ = loch$ THEN 'auto-add string closing quote special case
+                        layout$ = LEFT$(layout$, lcnt - 1) + CHR$(34) + RIGHT$(layout$, LEN(layout$) - lcnt)
+                        GOTO recheckdiff
+                    END IF
+                    las% = _IIF(LEN(lch$), ASC(lch$), 0): oas% = _IIF(LEN(och$), ASC(och$), 0)
+                    IF isalpha(las%) AND isalpha(oas%) AND ABS(las% - oas%) = 32 THEN MID$(layout$, lcnt, 1) = och$ 'KW case diff
+                WEND
+            END IF
 
+            layout$ = indent$ + layout$
+
+            IF idecy <> idecompiledline OR idelayoutallow <> 0 THEN
+                idelayoutallow = 0
+
+                IF idecompiledline$ <> layout$ THEN
+                    idesetline idecompiledline, layout$
+                    IF idecompiledline >= idesy AND idecompiledline <= (idesy + 16) THEN skipdisplay = 0
                 END IF
 
-            END IF 'len(layout$)
+            ELSE
 
-        END IF 'using layout/indent
+                IF idecompiledline$ <> layout$ THEN
+                    idecurrentlinelayout = layout$
+                    idecurrentlinelayouti = idecy
+                END IF
+
+            END IF
+
+        END IF 'len(layout$)
 
     END IF '3
 

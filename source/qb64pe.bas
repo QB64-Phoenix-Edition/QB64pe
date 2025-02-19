@@ -459,33 +459,24 @@ DIM SHARED layoutdone AS LONG 'tracks status of single command
 
 DIM SHARED fooindwel
 
+DIM SHARED isalpha(255)
+DIM SHARED isnumeric(255)
 DIM SHARED alphanumeric(255)
 FOR i = 48 TO 57
+    isnumeric(i) = -1
     alphanumeric(i) = -1
 NEXT
 FOR i = 65 TO 90
+    isalpha(i) = -1
     alphanumeric(i) = -1
 NEXT
 FOR i = 97 TO 122
+    isalpha(i) = -1
     alphanumeric(i) = -1
-NEXT
-'_ is treated as an alphabet letter
-alphanumeric(95) = -1
-
-DIM SHARED isalpha(255)
-FOR i = 65 TO 90
-    isalpha(i) = -1
-NEXT
-FOR i = 97 TO 122
-    isalpha(i) = -1
 NEXT
 '_ is treated as an alphabet letter
 isalpha(95) = -1
-
-DIM SHARED isnumeric(255)
-FOR i = 48 TO 57
-    isnumeric(i) = -1
-NEXT
+alphanumeric(95) = -1
 
 
 DIM SHARED lfsinglechar(255)
@@ -2859,6 +2850,7 @@ DO
         GOSUB setPrecompFlags
         GOSUB autoIncludeManager
         a3$ = lineBackup$
+        idecompiledline$ = a3$ 'restore 1st/last compiled line for IDE ops
     END IF
 
     stringprocessinghappened = 0
@@ -11314,6 +11306,7 @@ DO
                 layoutok_backup = layoutok
                 layout_backup$ = layout$
                 layoutoriginal_backup$ = layoutoriginal$
+                idecompiledline_backup$ = idecompiledline$
             END IF
 
             a$ = addmetainclude$: addmetainclude$ = "" 'read/clear message
@@ -11426,14 +11419,17 @@ DO
             IF inclevel = 0 THEN
                 IF autoIncludingFile <> 0 THEN
                     IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude
-                    autoIncludingFile = 0
-                    RETURN 'to auto-include manager
                 END IF
                 'restore line formatting
                 layoutok = layoutok_backup
                 layout$ = layout_backup$
                 layoutcomment$ = layoutcomment_backup$
                 layoutoriginal$ = layoutoriginal_backup$
+                idecompiledline$ = idecompiledline_backup$
+                IF autoIncludingFile <> 0 THEN
+                    autoIncludingFile = 0
+                    RETURN 'to auto-include manager
+                END IF
             END IF
         LOOP 'fall through to next section...
         '(end manager)
@@ -23800,46 +23796,46 @@ SUB addWarning (whichLineNumber AS LONG, includeLevel AS LONG, incLineNumber AS 
 END SUB
 
 FUNCTION SCase$ (t$)
-    IF IDEAutoLayoutKwCapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
+    SELECT CASE IDEAutoLayoutKwStyle
+        CASE IS < 0: SCase$ = LCASE$(t$)
+        CASE IS > 0: SCase$ = UCASE$(t$)
+        CASE ELSE: SCase$ = t$
+    END SELECT
 END FUNCTION
 
 FUNCTION SCase2$ (t$)
-    separator$ = sp
-    IF IDEAutoLayoutKwCapitals THEN
-        SCase2$ = UCASE$(t$)
-    ELSE
-        SELECT CASE t$
-            CASE "_ANDALSO"
-                SCase2$ = "_AndAlso"
-
-            CASE "_ORELSE"
-                SCase2$ = "_OrElse"
-
-            CASE ELSE
-                newWord = -1
-                temp$ = ""
-                FOR i = 1 TO LEN(t$)
-                    s$ = MID$(t$, i, 1)
-                    IF newWord THEN
-                        IF s$ = "_" OR s$ = separator$ THEN
-                            temp$ = temp$ + s$
+    'uses global constant "sp" (see source\global\constants.bas)
+    SELECT CASE IDEAutoLayoutKwStyle
+        CASE IS < 0: SCase2$ = LCASE$(t$)
+        CASE IS > 0: SCase2$ = UCASE$(t$)
+        CASE ELSE
+            SELECT CASE UCASE$(t$)
+                CASE "_ANDALSO": SCase2$ = "_AndAlso"
+                CASE "_ORELSE": SCase2$ = "_OrElse"
+                CASE ELSE
+                    newWord = -1
+                    temp$ = ""
+                    FOR i = 1 TO LEN(t$)
+                        s$ = MID$(t$, i, 1)
+                        IF newWord THEN
+                            IF s$ = "_" OR s$ = sp THEN
+                                temp$ = temp$ + s$
+                            ELSE
+                                temp$ = temp$ + UCASE$(s$)
+                                newWord = 0
+                            END IF
                         ELSE
-                            temp$ = temp$ + UCASE$(s$)
-                            newWord = 0
+                            IF s$ = sp THEN
+                                temp$ = temp$ + sp
+                                newWord = -1
+                            ELSE
+                                temp$ = temp$ + LCASE$(s$)
+                            END IF
                         END IF
-                    ELSE
-                        IF s$ = separator$ THEN
-                            temp$ = temp$ + separator$
-                            newWord = -1
-                        ELSE
-                            temp$ = temp$ + LCASE$(s$)
-                        END IF
-                    END IF
-                NEXT
-                SCase2$ = temp$
-
-        END SELECT
-    END IF
+                    NEXT
+                    SCase2$ = temp$
+            END SELECT
+    END SELECT
 END FUNCTION
 
 FUNCTION CompareVersions (v$, v1$)
