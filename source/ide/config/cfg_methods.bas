@@ -320,15 +320,22 @@ SUB ReadInitialConfig
         WriteConfigSetting displaySettingsSection$, "IDE_SortSUBs", "False"
     END IF
 
+    tmpKwCap = _FALSE: tmpKwLow = _FALSE
     IF ReadConfigSetting(displaySettingsSection$, "IDE_KeywordCapital", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            IDEAutoLayoutKwCapitals = _TRUE
-        ELSE
-            IDEAutoLayoutKwCapitals = _FALSE
-            WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
-        END IF
-    ELSE
-        IDEAutoLayoutKwCapitals = _FALSE
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN tmpKwCap = _TRUE ELSE tmpKwCap = _FALSE
+    END IF
+    IF ReadConfigSetting(displaySettingsSection$, "IDE_KeywordLowercase", value$) THEN
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN tmpKwLow = _TRUE ELSE tmpKwLow = _FALSE
+    END IF
+    IF tmpKwCap = tmpKwLow THEN 'both set or unset = CaMeL case
+        IDEAutoLayoutKwStyle = 0
+        WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
+        WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", "False"
+    ELSEIF tmpKwCap = _TRUE THEN '= UPPER case
+        IDEAutoLayoutKwStyle = 1
+        WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", "False"
+    ELSEIF tmpKwLow = _TRUE THEN '= lower case
+        IDEAutoLayoutKwStyle = -1
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
     END IF
 

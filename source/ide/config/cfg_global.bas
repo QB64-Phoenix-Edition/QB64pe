@@ -1,4 +1,4 @@
-DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwCapitals, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs
+DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwStyle, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs
 DIM SHARED IDECommentColor AS _UNSIGNED LONG, IDEMetaCommandColor AS _UNSIGNED LONG
 DIM SHARED IDEQuoteColor AS _UNSIGNED LONG, IDETextColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LONG

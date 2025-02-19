@@ -15139,48 +15139,57 @@ FUNCTION ideLayoutBox
 
     '-------- init dialog box & objects --------
     i = 0
-    idepar p, 47, 9, "Code Layout"
-
-    i = i + 1: alChk = i
-    o(i).typ = 4 'check box
-    o(i).y = 2
-    o(i).nam = idenewtxt("#Auto Spacing & Upper/Lowercase Formatting")
-    o(i).sel = ABS(IDEAutoLayout)
-
-    i = i + 1: kcChk = i
-    o(i).typ = 4 'check box
-    o(i).x = 6: o(i).y = 3
-    o(i).nam = idenewtxt("#Keywords in CAPITALS")
-    o(i).sel = ABS(IDEAutoLayoutKwCapitals)
+    idepar p, 39, 13, "Code Layout"
 
     i = i + 1: aiChk = i
     o(i).typ = 4 'check box
-    o(i).y = 5
-    o(i).nam = idenewtxt("Auto #Indent -")
+    o(i).y = 2
+    o(i).nam = idenewtxt("Auto #Indent lines")
     o(i).sel = ABS(IDEAutoIndent)
     i = i + 1: aisBox = i
     o(i).typ = 1 'text box
-    o(i).x = 20: o(i).y = 5
-    o(i).nam = idenewtxt("#Spacing"): a2$ = str2$(IDEAutoIndentSize)
+    o(i).x = 9: o(i).y = 3
+    o(i).nam = idenewtxt("Indent #Spacing"): a2$ = str2$(IDEAutoIndentSize)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: aisSymUp = i
     o(i).typ = 5 'symbol button
-    o(i).x = 40: o(i).y = 5
+    o(i).x = 32: o(i).y = 3
     o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
     i = i + 1: aisSymDn = i
     o(i).typ = 5 'symbol button
-    o(i).x = 43: o(i).y = 5
+    o(i).x = 35: o(i).y = 3
     o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
-
     i = i + 1: isChk = i
     o(i).typ = 4 'check box
-    o(i).x = 6: o(i).y = 7
+    o(i).x = 6: o(i).y = 5
     o(i).nam = idenewtxt("Indent SUBs and #FUNCTIONs")
     o(i).sel = ABS(IDEIndentSubs)
 
+    i = i + 1: alChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 7
+    o(i).nam = idenewtxt("#Auto Single-spacing code elements")
+    o(i).sel = ABS(IDEAutoLayout)
+
+    i = i + 1: kuChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 4: o(i).y = 11
+    o(i).nam = idenewtxt("#UPPER")
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = 1)
+    i = i + 1: kcChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 16: o(i).y = 11
+    o(i).nam = idenewtxt("Ca#MeL")
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = 0)
+    i = i + 1: klChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 28: o(i).y = 11
+    o(i).nam = idenewtxt("#lower")
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = -1)
+
     i = i + 1: okBut = i: caBut = i + 1
     o(i).typ = 3 'action buttons
-    o(i).y = 9
+    o(i).y = 13
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
     '-------- end of init dialog box & objects --------
 
@@ -15218,6 +15227,8 @@ FUNCTION ideLayoutBox
         '-------- end of generic display dialog box & objects --------
 
         '-------- custom display changes --------
+        _PRINTSTRING (p.x, p.y + 9), CHR$(195) + STRING$(p.w, 196) + CHR$(180)
+        _PRINTSTRING (p.x + 11, p.y + 9), " Show Keywords as "
         '-------- end of custom display changes --------
 
         'update visual page and cursor position
@@ -15266,19 +15277,6 @@ FUNCTION ideLayoutBox
         '-------- end of generic input response --------
 
         '-------- custom input response --------
-        'auto layout check box
-        IF focus = alChk AND o(alChk).sel = 0 THEN 'goes off?
-            o(kcChk).sel = 0 'keyword capitals off
-            o(aiChk).sel = 0 'auto indent off
-            o(isChk).sel = 0 'indent SUBs off
-            idetxt(o(aisBox).txt) = "4": o(aisBox).v1 = 1 'reset indent spacing
-        END IF
-
-        'keyword capitals check box
-        IF focus = kcChk AND o(kcChk).sel = 1 THEN 'goes on?
-            o(alChk).sel = 1 'implies auto layout on
-        END IF
-
         'auto indent check box
         IF focus = aiChk AND o(aiChk).sel = 0 THEN 'goes off?
             o(isChk).sel = 0 'indent SUBs off
@@ -15304,10 +15302,27 @@ FUNCTION ideLayoutBox
         IF focus = aisBox THEN
             IF o(aisBox).inv = 0 THEN o(aiChk).sel = 1 'manual input implies auto indent on, if valid
         END IF
-
         'indent SUBs check box
         IF focus = isChk AND o(isChk).sel = 1 THEN 'goes on?
             o(aiChk).sel = 1 'implies auto indent on
+        END IF
+
+        'auto layout check box (no checks required)
+
+        'keyword UPPER check box
+        IF focus = kuChk AND o(kuChk).sel = 1 THEN 'goes on?
+            o(kcChk).sel = 0 'implies CaMeL case off
+            o(klChk).sel = 0 'implies lower case off
+        END IF
+        'keyword CaMeL check box
+        IF focus = kcChk AND o(kcChk).sel = 1 THEN 'goes on?
+            o(kuChk).sel = 0 'implies UPPER case off
+            o(klChk).sel = 0 'implies lower case off
+        END IF
+        'keyword lower check box
+        IF focus = klChk AND o(klChk).sel = 1 THEN 'goes on?
+            o(kuChk).sel = 0 'implies UPPER case off
+            o(kcChk).sel = 0 'implies CaMeL case off
         END IF
 
         'ok & cancel buttons
@@ -15322,12 +15337,6 @@ FUNCTION ideLayoutBox
             optChg% = 0 'any options changed
 
             'adjust runtime variables
-            v% = o(alChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = -1
-
-            v% = o(kcChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEAutoLayoutKwCapitals <> v% THEN IDEAutoLayoutKwCapitals = v%: optChg% = -1
-
             v% = o(aiChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEAutoIndent <> v% THEN IDEAutoIndent = v%: optChg% = -1
             v% = VAL(idetxt(o(aisBox).txt))
@@ -15335,20 +15344,28 @@ FUNCTION ideLayoutBox
                 IDEAutoIndentSize = v%
                 IF IDEAutoIndent <> 0 THEN optChg% = -1
             END IF
-
             v% = o(isChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEIndentSubs <> v% THEN IDEIndentSubs = v%: optChg% = -1
 
+            v% = o(alChk).sel: IF v% <> 0 THEN v% = _TRUE
+            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = -1
+
+            'only one of these checkboxes can be selected
+            IF o(kuChk).sel <> 0 THEN v% = 1
+            IF o(kcChk).sel <> 0 THEN v% = 0
+            IF o(klChk).sel <> 0 THEN v% = -1
+            IF IDEAutoLayoutKwStyle <> v% THEN IDEAutoLayoutKwStyle = v%: optChg% = -1
+
             IF optChg% THEN
                 'save changes
-                WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", BoolToTFString$(IDEAutoLayout)
-
-                WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", BoolToTFString$(IDEAutoLayoutKwCapitals)
-
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", BoolToTFString$(IDEAutoIndent)
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", str2$(IDEAutoIndentSize)
-
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", BoolToTFString$(IDEIndentSubs)
+
+                WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", BoolToTFString$(IDEAutoLayout)
+
+                WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", BoolToTFString$(IDEAutoLayoutKwStyle = 1)
+                WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", BoolToTFString$(IDEAutoLayoutKwStyle = -1)
 
                 ideLayoutBox = 1
             END IF
