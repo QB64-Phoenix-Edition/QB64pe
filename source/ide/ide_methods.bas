@@ -15357,6 +15357,8 @@ FUNCTION ideLayoutBox
             IF IDEAutoLayoutKwStyle <> v% THEN IDEAutoLayoutKwStyle = v%: optChg% = -1
 
             IF optChg% THEN
+                'update default values for restoring after '$FORMAT:OFF
+                DEFAutoIndent = IDEAutoIndent: DEFAutoLayout = IDEAutoLayout
                 'save changes
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", BoolToTFString$(IDEAutoIndent)
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", str2$(IDEAutoIndentSize)
