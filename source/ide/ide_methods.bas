@@ -674,88 +674,111 @@ FUNCTION ide2 (ignore)
 
         'previous line was OK, so use layout if available
 
-        IF IDEAutoLayout = 0 AND IDEAutoIndent = 0 THEN
+        IF LEN(layout$) THEN
 
-            layout$ = ""
-            idelayoutallow = 0
+            'calculate recommended indent level
+            FOR i = 1 TO LEN(layout$)
+                IF ASC(layout$, i) <> 32 OR i = LEN(layout$) THEN
+                    indent = i - 1
+                    layout$ = RIGHT$(layout$, LEN(layout$) - i + 1)
+                    EXIT FOR
+                END IF
+            NEXT
 
-        ELSE
+            spacelayout:
+            ignoresp = 0
+            FOR i = 1 TO LEN(layout$)
+                IF ASC(layout$, i) = 34 THEN
+                    ignoresp = ignoresp + 1: IF ignoresp = 2 THEN ignoresp = 0
+                END IF
+                IF ignoresp = 0 THEN
+                    IF MID$(layout$, i, 1) = sp THEN MID$(layout$, i, 1) = " "
+                    IF MID$(layout$, i, 1) = sp2 THEN layout$ = LEFT$(layout$, i - 1) + RIGHT$(layout$, LEN(layout$) - i): GOTO spacelayout
+                END IF
+            NEXT
 
-            IF LEN(layout$) THEN
-
-                'calculate recommended indent level
-                FOR i = 1 TO LEN(layout$)
-                    IF ASC(layout$, i) <> 32 OR i = LEN(layout$) THEN
+            IF IDEAutoIndent = 0 THEN
+                'note: can assume auto-format
+                'calculate old indent (if any)
+                a$ = idecompiledline$
+                indent = 0
+                FOR i = 1 TO LEN(a$)
+                    IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
                         indent = i - 1
-                        layout$ = RIGHT$(layout$, LEN(layout$) - i + 1)
                         EXIT FOR
                     END IF
                 NEXT
+                indent$ = SPACE$(indent)
+            ELSE
+                indent$ = SPACE$(indent * IDEAutoIndentSize)
+            END IF
 
-                IF IDEAutoLayout THEN
-                    spacelayout:
-                    ignoresp = 0
-                    FOR i = 1 TO LEN(layout$)
-                        IF ASC(layout$, i) = 34 THEN
-                            ignoresp = ignoresp + 1: IF ignoresp = 2 THEN ignoresp = 0
-                        END IF
-                        IF ignoresp = 0 THEN
-                            IF MID$(layout$, i, 1) = sp THEN MID$(layout$, i, 1) = " "
-                            IF MID$(layout$, i, 1) = sp2 THEN layout$ = LEFT$(layout$, i - 1) + RIGHT$(layout$, LEN(layout$) - i): GOTO spacelayout
-                        END IF
-                    NEXT
-                END IF
-
-                IF IDEAutoIndent = 0 THEN
-                    'note: can assume auto-format
-                    'calculate old indent (if any)
-                    a$ = idecompiledline$
-                    indent = 0
-                    FOR i = 1 TO LEN(a$)
-                        IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
-                            indent = i - 1
-                            EXIT FOR
-                        END IF
-                    NEXT
-                    indent$ = SPACE$(indent)
-                ELSE
-                    indent$ = SPACE$(indent * IDEAutoIndentSize)
-                END IF
-
-                IF IDEAutoLayout = 0 THEN
-                    'note: can assume auto-indent
-                    a$ = idecompiledline$
-                    layout$ = ""
-                    FOR i = 1 TO LEN(a$)
-                        IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
-                            layout$ = RIGHT$(a$, LEN(a$) - i + 1)
-                            EXIT FOR
-                        END IF
-                    NEXT
-                END IF
-
-                layout$ = indent$ + layout$
-
-                IF idecy <> idecompiledline OR idelayoutallow <> 0 THEN
-                    idelayoutallow = 0
-
-                    IF idecompiledline$ <> layout$ THEN
-                        idesetline idecompiledline, layout$
-                        IF idecompiledline >= idesy AND idecompiledline <= (idesy + 16) THEN skipdisplay = 0
+            olay$ = layout$ 'save layouted line
+            IF IDEAutoLayout = 0 THEN
+                'note: can assume auto-indent
+                a$ = idecompiledline$
+                layout$ = ""
+                FOR i = 1 TO LEN(a$)
+                    IF ASC(a$, i) <> 32 OR i = LEN(a$) THEN
+                        layout$ = RIGHT$(a$, LEN(a$) - i + 1)
+                        EXIT FOR
                     END IF
+                NEXT
+            END IF
 
-                ELSE
-
-                    IF idecompiledline$ <> layout$ THEN
-                        idecurrentlinelayout = layout$
-                        idecurrentlinelayouti = idecy
+            IF layout$ <> olay$ THEN
+                lcnt = 0: ocnt = 0
+                WHILE lcnt <= LEN(layout$)
+                    lcnt = lcnt + 1: ocnt = ocnt + 1
+                    recheckdiff:
+                    IF lch$ <> "" AND lch$ <> " " THEN llch$ = lch$ 'save last non-space
+                    IF och$ <> "" AND och$ <> " " THEN loch$ = och$
+                    lch$ = MID$(layout$, lcnt, 1) 'get chars
+                    och$ = MID$(olay$, ocnt, 1)
+                    IF lch$ = och$ THEN _CONTINUE 'no diff
+                    IF lch$ = " " THEN 'skip spacing diff
+                        lcnt = lcnt + 1: IF lcnt > LEN(layout$) AND ocnt > LEN(olay$) THEN EXIT WHILE
+                        GOTO recheckdiff
                     END IF
+                    IF och$ = " " THEN 'skip spacing diff
+                        ocnt = ocnt + 1: IF ocnt > LEN(olay$) AND lcnt > LEN(layout$) THEN EXIT WHILE
+                        GOTO recheckdiff
+                    END IF
+                    IF lch$ = "?" AND UCASE$(MID$(olay$, ocnt, 5)) = "PRINT" THEN '? = PRINT special case
+                        ps$ = "print": nlch$ = MID$(layout$, lcnt + 1, 1)
+                        IF nlch$ <> " " AND nlch$ <> "" THEN ps$ = ps$ + " "
+                        layout$ = LEFT$(layout$, lcnt - 1) + ps$ + RIGHT$(layout$, LEN(layout$) - lcnt)
+                        GOTO recheckdiff
+                    END IF
+                    IF och$ = CHR$(34) AND llch$ = loch$ THEN 'auto-add string closing quote special case
+                        layout$ = LEFT$(layout$, lcnt - 1) + CHR$(34) + RIGHT$(layout$, LEN(layout$) - lcnt)
+                        GOTO recheckdiff
+                    END IF
+                    las% = _IIF(LEN(lch$), ASC(lch$), 0): oas% = _IIF(LEN(och$), ASC(och$), 0)
+                    IF isalpha(las%) AND isalpha(oas%) AND ABS(las% - oas%) = 32 THEN MID$(layout$, lcnt, 1) = och$ 'KW case diff
+                WEND
+            END IF
 
+            layout$ = indent$ + layout$
+
+            IF idecy <> idecompiledline OR idelayoutallow <> 0 THEN
+                idelayoutallow = 0
+
+                IF idecompiledline$ <> layout$ THEN
+                    idesetline idecompiledline, layout$
+                    IF idecompiledline >= idesy AND idecompiledline <= (idesy + 16) THEN skipdisplay = 0
                 END IF
 
-            END IF 'len(layout$)
+            ELSE
 
-        END IF 'using layout/indent
+                IF idecompiledline$ <> layout$ THEN
+                    idecurrentlinelayout = layout$
+                    idecurrentlinelayouti = idecy
+                END IF
+
+            END IF
+
+        END IF 'len(layout$)
 
     END IF '3
 
@@ -887,7 +910,7 @@ FUNCTION ide2 (ignore)
             IF ready THEN
                 IF IDEShowErrorsImmediately THEN
                     _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                    IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                     statusarealink = 0
                     IF totalWarnings > 0 AND showexecreated = 0 THEN
                         COLOR 11, 1
@@ -1065,7 +1088,7 @@ FUNCTION ide2 (ignore)
                 IF IDEShowErrorsImmediately <> 0 OR IDECompilationRequested <> 0 OR compfailed <> 0 THEN
                     IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
                     UpdateIdeInfo
-                    IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
 
                     clearStatusWindow 0
                     'scrolling unavailable, but may span multiple lines
@@ -3149,7 +3172,7 @@ FUNCTION ide2 (ignore)
                                         menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
                                     ELSE
                                         _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                                        IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                                        menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                                         statusarealink = 0
                                         IF totalWarnings > 0 THEN
                                             COLOR 11, 1
@@ -6704,7 +6727,7 @@ FUNCTION ide2 (ignore)
             _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
             menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
         ELSE
-            IF IDEAutoLayout <> 0 THEN menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+            menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
             IF idefocusline THEN
                 _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
             ELSE
@@ -15116,48 +15139,57 @@ FUNCTION ideLayoutBox
 
     '-------- init dialog box & objects --------
     i = 0
-    idepar p, 47, 9, "Code Layout"
-
-    i = i + 1: alChk = i
-    o(i).typ = 4 'check box
-    o(i).y = 2
-    o(i).nam = idenewtxt("#Auto Spacing & Upper/Lowercase Formatting")
-    o(i).sel = ABS(IDEAutoLayout)
-
-    i = i + 1: kcChk = i
-    o(i).typ = 4 'check box
-    o(i).x = 6: o(i).y = 3
-    o(i).nam = idenewtxt("#Keywords in CAPITALS")
-    o(i).sel = ABS(IDEAutoLayoutKwCapitals)
+    idepar p, 39, 13, "Code Layout"
 
     i = i + 1: aiChk = i
     o(i).typ = 4 'check box
-    o(i).y = 5
-    o(i).nam = idenewtxt("Auto #Indent -")
+    o(i).y = 2
+    o(i).nam = idenewtxt("Auto #Indent lines")
     o(i).sel = ABS(IDEAutoIndent)
     i = i + 1: aisBox = i
     o(i).typ = 1 'text box
-    o(i).x = 20: o(i).y = 5
-    o(i).nam = idenewtxt("#Spacing"): a2$ = str2$(IDEAutoIndentSize)
+    o(i).x = 9: o(i).y = 3
+    o(i).nam = idenewtxt("Indent #Spacing"): a2$ = str2$(IDEAutoIndentSize)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: aisSymUp = i
     o(i).typ = 5 'symbol button
-    o(i).x = 40: o(i).y = 5
+    o(i).x = 32: o(i).y = 3
     o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
     i = i + 1: aisSymDn = i
     o(i).typ = 5 'symbol button
-    o(i).x = 43: o(i).y = 5
+    o(i).x = 35: o(i).y = 3
     o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
-
     i = i + 1: isChk = i
     o(i).typ = 4 'check box
-    o(i).x = 6: o(i).y = 7
+    o(i).x = 6: o(i).y = 5
     o(i).nam = idenewtxt("Indent SUBs and #FUNCTIONs")
     o(i).sel = ABS(IDEIndentSubs)
 
+    i = i + 1: alChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 7
+    o(i).nam = idenewtxt("#Auto Single-spacing code elements")
+    o(i).sel = ABS(IDEAutoLayout)
+
+    i = i + 1: kuChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 4: o(i).y = 11
+    o(i).nam = idenewtxt("#UPPER")
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = 1)
+    i = i + 1: kcChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 16: o(i).y = 11
+    o(i).nam = idenewtxt("Ca#MeL")
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = 0)
+    i = i + 1: klChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 28: o(i).y = 11
+    o(i).nam = idenewtxt("#lower")
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = -1)
+
     i = i + 1: okBut = i: caBut = i + 1
     o(i).typ = 3 'action buttons
-    o(i).y = 9
+    o(i).y = 13
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
     '-------- end of init dialog box & objects --------
 
@@ -15195,6 +15227,8 @@ FUNCTION ideLayoutBox
         '-------- end of generic display dialog box & objects --------
 
         '-------- custom display changes --------
+        _PRINTSTRING (p.x, p.y + 9), CHR$(195) + STRING$(p.w, 196) + CHR$(180)
+        _PRINTSTRING (p.x + 11, p.y + 9), " Show Keywords as "
         '-------- end of custom display changes --------
 
         'update visual page and cursor position
@@ -15243,19 +15277,6 @@ FUNCTION ideLayoutBox
         '-------- end of generic input response --------
 
         '-------- custom input response --------
-        'auto layout check box
-        IF focus = alChk AND o(alChk).sel = 0 THEN 'goes off?
-            o(kcChk).sel = 0 'keyword capitals off
-            o(aiChk).sel = 0 'auto indent off
-            o(isChk).sel = 0 'indent SUBs off
-            idetxt(o(aisBox).txt) = "4": o(aisBox).v1 = 1 'reset indent spacing
-        END IF
-
-        'keyword capitals check box
-        IF focus = kcChk AND o(kcChk).sel = 1 THEN 'goes on?
-            o(alChk).sel = 1 'implies auto layout on
-        END IF
-
         'auto indent check box
         IF focus = aiChk AND o(aiChk).sel = 0 THEN 'goes off?
             o(isChk).sel = 0 'indent SUBs off
@@ -15281,10 +15302,27 @@ FUNCTION ideLayoutBox
         IF focus = aisBox THEN
             IF o(aisBox).inv = 0 THEN o(aiChk).sel = 1 'manual input implies auto indent on, if valid
         END IF
-
         'indent SUBs check box
         IF focus = isChk AND o(isChk).sel = 1 THEN 'goes on?
             o(aiChk).sel = 1 'implies auto indent on
+        END IF
+
+        'auto layout check box (no checks required)
+
+        'keyword UPPER check box
+        IF focus = kuChk AND o(kuChk).sel = 1 THEN 'goes on?
+            o(kcChk).sel = 0 'implies CaMeL case off
+            o(klChk).sel = 0 'implies lower case off
+        END IF
+        'keyword CaMeL check box
+        IF focus = kcChk AND o(kcChk).sel = 1 THEN 'goes on?
+            o(kuChk).sel = 0 'implies UPPER case off
+            o(klChk).sel = 0 'implies lower case off
+        END IF
+        'keyword lower check box
+        IF focus = klChk AND o(klChk).sel = 1 THEN 'goes on?
+            o(kuChk).sel = 0 'implies UPPER case off
+            o(kcChk).sel = 0 'implies CaMeL case off
         END IF
 
         'ok & cancel buttons
@@ -15299,12 +15337,6 @@ FUNCTION ideLayoutBox
             optChg% = 0 'any options changed
 
             'adjust runtime variables
-            v% = o(alChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = -1
-
-            v% = o(kcChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEAutoLayoutKwCapitals <> v% THEN IDEAutoLayoutKwCapitals = v%: optChg% = -1
-
             v% = o(aiChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEAutoIndent <> v% THEN IDEAutoIndent = v%: optChg% = -1
             v% = VAL(idetxt(o(aisBox).txt))
@@ -15312,20 +15344,28 @@ FUNCTION ideLayoutBox
                 IDEAutoIndentSize = v%
                 IF IDEAutoIndent <> 0 THEN optChg% = -1
             END IF
-
             v% = o(isChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IDEIndentSubs <> v% THEN IDEIndentSubs = v%: optChg% = -1
 
+            v% = o(alChk).sel: IF v% <> 0 THEN v% = _TRUE
+            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = -1
+
+            'only one of these checkboxes can be selected
+            IF o(kuChk).sel <> 0 THEN v% = 1
+            IF o(kcChk).sel <> 0 THEN v% = 0
+            IF o(klChk).sel <> 0 THEN v% = -1
+            IF IDEAutoLayoutKwStyle <> v% THEN IDEAutoLayoutKwStyle = v%: optChg% = -1
+
             IF optChg% THEN
                 'save changes
-                WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", BoolToTFString$(IDEAutoLayout)
-
-                WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", BoolToTFString$(IDEAutoLayoutKwCapitals)
-
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", BoolToTFString$(IDEAutoIndent)
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", str2$(IDEAutoIndentSize)
-
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", BoolToTFString$(IDEIndentSubs)
+
+                WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", BoolToTFString$(IDEAutoLayout)
+
+                WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", BoolToTFString$(IDEAutoLayoutKwStyle = 1)
+                WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", BoolToTFString$(IDEAutoLayoutKwStyle = -1)
 
                 ideLayoutBox = 1
             END IF

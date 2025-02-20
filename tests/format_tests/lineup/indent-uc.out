@@ -1,0 +1,104 @@
+$LET   WIND  = 0
+$LET   MACO  = 1
+
+$IF    WIND  THEN
+'--------------------------------------------------------------------
+type   test
+x      as   _byte '---
+xx     as   _byte     '----
+xxx    as   _byte   '---
+xxxx   as   _byte
+end    type
+
+'    $inclUDE   :   'included.file'
+    $EmbED   :   '.\included.file'     ,      'test'
+
+scrEEN 13
+for    x=1 to 10
+circle (     x     ,     x     )     ,     x
+nEXt   X
+?"done"
+?      "done"
+?
+if ((las%>=65 and las%<=90) or (las%>=97 and las%<=122)) and _
+   ((oas%>=65 and oas%<=90) or (oas%>=97 and oas%<=122)) and _
+   (abs(las%-oas%)=32) then mid$(layout$,lcnt,1)=och$
+end
+
+data   for,"to",step,   1,2,3,   &H1,&B1,&O1
+
+sub    Hallo
+a=0
+b$="
+c$="xxx
+_delay 0.2
+end    sub
+'--------------------------------------------------------------------
+$ELSE  IF   MACO      THEN
+    '--------------------------------------------------------------------
+    TYPE   test
+        x      AS   _BYTE '---
+        xx     AS   _BYTE     '----
+        xxx    AS   _BYTE   '---
+        xxxx   AS   _BYTE
+    END    TYPE
+
+    '    $INCLUDE   :   'included.file'
+    $EMBED   :   '.\included.file'     ,      'test'
+
+    SCREEN 13
+    FOR    x=1 TO 10
+        CIRCLE (     x     ,     x     )     ,     x
+    NEXT   x
+    PRINT "done"
+    PRINT      "done"
+    PRINT
+if ((las%>=65 and las%<=90) or (las%>=97 and las%<=122)) and _
+   ((oas%>=65 and oas%<=90) or (oas%>=97 and oas%<=122)) and _
+   (abs(las%-oas%)=32) then mid$(layout$,lcnt,1)=och$
+    END
+
+    DATA   for,"to",step,   1,2,3,   &H1,&B1,&O1
+
+    SUB    Hallo
+    a=0
+    b$=""
+    c$="xxx"
+    _DELAY 0.2
+    END    SUB
+    '--------------------------------------------------------------------
+$ELSE
+'--------------------------------------------------------------------
+type   test
+x      as   _byte '---
+xx     as   _byte     '----
+xxx    as   _byte   '---
+xxxx   as   _byte
+end    type
+
+'    $inclUDE   :   'included.file'
+    $EmbED   :   '.\included.file'     ,      'test'
+
+scrEEN 13
+for    x=1 to 10
+circle (     x     ,     x     )     ,     x
+nEXt   X
+?"done"
+?      "done"
+?
+if ((las%>=65 and las%<=90) or (las%>=97 and las%<=122)) and _
+   ((oas%>=65 and oas%<=90) or (oas%>=97 and oas%<=122)) and _
+   (abs(las%-oas%)=32) then mid$(layout$,lcnt,1)=och$
+end
+
+data   for,"to",step,   1,2,3,   &H1,&B1,&O1
+
+sub    Hallo
+a=0
+b$="
+c$="xxx
+_delay 0.2
+end    sub
+'--------------------------------------------------------------------
+$ENDIF
+

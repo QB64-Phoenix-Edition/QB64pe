@@ -459,33 +459,24 @@ DIM SHARED layoutdone AS LONG 'tracks status of single command
 
 DIM SHARED fooindwel
 
+DIM SHARED isalpha(255)
+DIM SHARED isnumeric(255)
 DIM SHARED alphanumeric(255)
 FOR i = 48 TO 57
+    isnumeric(i) = -1
     alphanumeric(i) = -1
 NEXT
 FOR i = 65 TO 90
+    isalpha(i) = -1
     alphanumeric(i) = -1
 NEXT
 FOR i = 97 TO 122
+    isalpha(i) = -1
     alphanumeric(i) = -1
-NEXT
-'_ is treated as an alphabet letter
-alphanumeric(95) = -1
-
-DIM SHARED isalpha(255)
-FOR i = 65 TO 90
-    isalpha(i) = -1
-NEXT
-FOR i = 97 TO 122
-    isalpha(i) = -1
 NEXT
 '_ is treated as an alphabet letter
 isalpha(95) = -1
-
-DIM SHARED isnumeric(255)
-FOR i = 48 TO 57
-    isnumeric(i) = -1
-NEXT
+alphanumeric(95) = -1
 
 
 DIM SHARED lfsinglechar(255)
@@ -2859,6 +2850,7 @@ DO
         GOSUB setPrecompFlags
         GOSUB autoIncludeManager
         a3$ = lineBackup$
+        idecompiledline$ = a3$ 'restore 1st/last compiled line for IDE ops
     END IF
 
     stringprocessinghappened = 0
@@ -11314,6 +11306,7 @@ DO
                 layoutok_backup = layoutok
                 layout_backup$ = layout$
                 layoutoriginal_backup$ = layoutoriginal$
+                idecompiledline_backup$ = idecompiledline$
             END IF
 
             a$ = addmetainclude$: addmetainclude$ = "" 'read/clear message
@@ -11426,14 +11419,17 @@ DO
             IF inclevel = 0 THEN
                 IF autoIncludingFile <> 0 THEN
                     IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude
-                    autoIncludingFile = 0
-                    RETURN 'to auto-include manager
                 END IF
                 'restore line formatting
                 layoutok = layoutok_backup
                 layout$ = layout_backup$
                 layoutcomment$ = layoutcomment_backup$
                 layoutoriginal$ = layoutoriginal_backup$
+                idecompiledline$ = idecompiledline_backup$
+                IF autoIncludingFile <> 0 THEN
+                    autoIncludingFile = 0
+                    RETURN 'to auto-include manager
+                END IF
             END IF
         LOOP 'fall through to next section...
         '(end manager)
@@ -13128,36 +13124,62 @@ FUNCTION ParseCMDLineArgs$ ()
     'Recall that COMMAND$ is a concatenation of argv[] elements, so we don't have
     'to worry about more than one space between things (unless they used quotes,
     'in which case they're simply asking for trouble).
+    tmpKwCap = -5: tmpKwLow = -5 'mutual exclusive options, both invalidated here
     FOR i = 1 TO _COMMANDCOUNT
         token$ = COMMAND$(i)
-        IF LCASE$(token$) = "/?" OR LCASE$(token$) = "--help" OR LCASE$(token$) = "/help" THEN token$ = "-?"
+        IF LCASE$(token$) = "/?" OR LCASE$(token$) = "/h" OR LCASE$(token$) = "--help" OR LCASE$(token$) = "/help" THEN token$ = "-?"
         SELECT CASE LCASE$(LEFT$(token$, 2))
-            CASE "-?" 'Command-line help
+            CASE "-?", "-h" 'Command-line help
                 _DEST _CONSOLE
                 IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
                 PRINT
-                PRINT "Usage: qb64pe [switches] <file>"
+                PRINT "USAGE: qb64pe [options] <source file> [-o <output file>]"
                 PRINT
-                PRINT "Options:"
-                PRINT "  <file>                  Source file to load" '                                '80 columns
-                PRINT "  -v                      Print version"
-                PRINT "  -c                      Compile instead of edit"
-                PRINT "  -o <output file>        Write output executable to <output file>"
-                PRINT "  -x                      Compile instead of edit and output the result to the"
-                PRINT "                             console"
-                PRINT "  -w                      Show warnings"
-                PRINT "  -q                      Quiet mode (does not inhibit warnings or errors)"
-                PRINT "  -m                      Do not colorize compiler output (monochrome mode)"
-                PRINT "  -e                      Enable OPTION _EXPLICIT, making variable declaration"
-                PRINT "                             mandatory (per-compilation; doesn't affect the"
-                PRINT "                             source file or global settings)"
-                PRINT "  -s[:switch=true/false]  View/edit compiler settings"
-                PRINT "  -l:<line number>        Start the IDE at the specified line number"
-                PRINT "  -p                      Purge all pre-compiled content first"
-                PRINT "  -y                      Output formatted source file"
-                PRINT "  -z                      Generate C code without compiling to executable"
-                PRINT "  -f[:setting=value]      compiler settings to use"
+                PRINT "Info Options (no files required):"
+                PRINT "  -?, -h, --help       Show this help text"
+                PRINT "  -v                   Show version information"
                 PRINT
+                PRINT "File specifications:"
+                PRINT "  <source file>        Source file to load into IDE, to format or compile" '    '80 columns
+                PRINT "  -o <output file>     Write result to <output file>"
+                PRINT "                         - optionally override the default executable name"
+                PRINT "                         - is mandatory for code formatting (-y option)"
+                PRINT
+                PRINT "IDE Options:"
+                PRINT "  -l:<line number>     Load <source file> into the IDE and move cursor to"
+                PRINT "                       the given <line number>, if possible"
+                PRINT
+                PRINT "Compiler Options (no IDE):"
+                PRINT "  -c                   Compile <source file> (show progress in own window)"
+                PRINT "  -x                   Like -c, but progress goes to console (no own window)"
+                PRINT "  -y                   Output (re)formatted <source file> to -o <output file>"
+                PRINT "  -z                   Generate C code from <source file> without compiling"
+                PRINT "                       the executable (C code output goes to internal\temp)"
+                PRINT "                         - may be used to quickly check for syntax errors"
+                PRINT
+                PRINT "Extended Compiler Options:"
+                PRINT "  -p                   Purge all pre-compiled content first"
+                PRINT "  -e                   Enforce variable declaration even if no OPTION _EXPLICIT"
+                PRINT "                       was used in the <source file>"
+                PRINT "                         - per compilation, doesn't change the <source file>"
+                PRINT "  -s[:setting=value]   View and/or edit & save compiler settings permanently"
+                PRINT
+                PRINT "Temporary Compiler Options:"
+                PRINT "  -f[:setting=value]   Compiler and/or formatting settings to use"
+                PRINT "                         - per compilation, doesn't change global defaults"
+                PRINT
+                PRINT "Reporting Options:"
+                PRINT "  -w                   Show warnings (such as unused variables etc.)"
+                PRINT "  -q                   Quiet mode (no progress, but warnings/errors, if any)"
+                PRINT "  -m                   Do not colorize compiler outputs (monochrome mode)"
+                PRINT
+                PRINT "     ----------------------------------------------------------------------"
+                PRINT
+                CMDLineSettingsHelp
+                PRINT
+                PRINT "     ----------------------------------------------------------------------"
+                PRINT
+                CMDLineTemporarySettingsHelp
                 SYSTEM
 
             CASE "-v" ' Print version
@@ -13165,7 +13187,136 @@ FUNCTION ParseCMDLineArgs$ ()
                 IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
                 SYSTEM
 
-            CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden build option)
+            CASE "-o" 'Specify an output file
+                IF LEN(COMMAND$(i + 1)) > 0 THEN outputfile_cmd$ = COMMAND$(i + 1): i = i + 1
+                cmdlineswitch = -1
+
+            CASE "-l" 'goto line (ide mode only); -l:<line number>
+                IF MID$(token$, 3, 1) = ":" THEN ideStartAtLine = VAL(MID$(token$, 4))
+                cmdlineswitch = -1
+
+            CASE "-c" 'Compile instead of edit
+                NoIDEMode = -1
+                cmdlineswitch = -1
+
+            CASE "-x" 'Use the console
+                ConsoleMode = -1
+                NoIDEMode = -1
+                cmdlineswitch = -1
+
+            CASE "-y" 'Format
+                FormatMode = -1
+                ConsoleMode = -1
+                NoIDEMode = -1
+                QuietMode = -1
+                cmdlineswitch = -1
+
+            CASE "-z" 'Not compiling C code
+                No_C_Compile_Mode = -1
+                ConsoleMode = -1
+                NoIDEMode = -1
+                cmdlineswitch = -1
+
+            CASE "-p" 'Purge
+                PurgeTemporaryBuildFiles (os$), (MacOSX)
+                cmdlineswitch = -1
+
+            CASE "-e" 'Option Explicit
+                ForceOptExpl = -1
+                cmdlineswitch = -1
+
+            CASE "-s" 'Settings
+                settingsMode = -1
+                setting$ = MID$(token$, 3)
+                _DEST _CONSOLE
+                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$: PRINT
+
+                delim = INSTR(setting$, "="): eos = 0
+                IF delim = 0 THEN delim = LEN(setting$) + 1: eos = -1 'end of string
+                SELECT CASE LCASE$(LEFT$(setting$, delim - 1))
+                    CASE ""
+                        PRINT "DebugInfo     = "; BoolToTFString$(idedebuginfo)
+                        PRINT "ExeWithSource = "; BoolToTFString$(SaveExeWithSource)
+                        SYSTEM
+                    CASE ":"
+                        CMDLineSettingsError "Missing setting specification: " + token$, 0, 0
+                    CASE ":debuginfo"
+                        IF NOT eos THEN
+                            IF NOT ParseBooleanSetting&(token$, idedebuginfo) THEN CMDLineSettingsError token$, 1, 0
+                            WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(idedebuginfo) + DebugInfoIniWarning$
+                            Include_GDB_Debugging_Info = idedebuginfo
+                            PurgeTemporaryBuildFiles (os$), (MacOSX)
+                        END IF
+                        PRINT "DebugInfo = "; BoolToTFString$(idedebuginfo)
+                    CASE ":exewithsource"
+                        IF NOT eos THEN
+                            IF NOT ParseBooleanSetting&(token$, SaveExeWithSource) THEN CMDLineSettingsError token$, 1, 0
+                            WriteConfigSetting generalSettingsSection$, "SaveExeWithSource", BoolToTFString$(SaveExeWithSource)
+                        END IF
+                        PRINT "ExeWithSource = "; BoolToTFString$(SaveExeWithSource)
+                    CASE ELSE
+                        CMDLineSettingsError "Unsupported setting: " + token$, 0, 0
+                END SELECT
+                IF eos THEN SYSTEM 'was just a settings query
+                _DEST 0
+
+            CASE "-f" 'temporary setting
+                settingsMode = -1
+                setting$ = MID$(token$, 3)
+
+                delim = INSTR(setting$, "=")
+                IF delim = 0 THEN delim = LEN(setting$) + 1
+                SELECT CASE LCASE$(LEFT$(setting$, delim - 1))
+                    CASE ""
+                        _DEST _CONSOLE
+                        IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$: PRINT
+                        CMDLineTemporarySettingsHelp
+                        SYSTEM
+                    CASE ":"
+                        CMDLineSettingsError "Missing setting specification: " + token$, 0, 1
+                    CASE ":optimizecppprogram"
+                        IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":stripdebugsymbols"
+                        IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":extracppflags"
+                        IF NOT ParseStringSetting&(token$, ExtraCppFlags) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":extralinkerflags"
+                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":maxcompilerprocesses"
+                        IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN CMDLineSettingsError token$, 1, 1
+                        IF MaxParallelProcesses <= 0 THEN CMDLineSettingsError "MaxCompilerProcesses must be graeter than zero.", 0, 1
+                    CASE ":generatelicensefile"
+                        IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":autoindent"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":autoindentsize"
+                        IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN CMDLineSettingsError token$, 1, 1
+                        IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN CMDLineSettingsError "AutoIndentSize must be in range 1-64.", 0, 1
+                    CASE ":indentsubs"
+                        IF NOT ParseBooleanSetting&(token$, IDEIndentSubs) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":autolayout"
+                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayout) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":keywordcapitals"
+                        IF NOT ParseBooleanSetting&(token$, tmpKwCap) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":keywordlowercase"
+                        IF NOT ParseBooleanSetting&(token$, tmpKwLow) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ELSE
+                        CMDLineSettingsError "Unsupported setting: " + token$, 0, 1
+                END SELECT
+
+            CASE "-w" 'Show warnings
+                ShowWarnings = -1
+                cmdlineswitch = -1
+
+            CASE "-q" 'Quiet mode
+                QuietMode = -1
+                cmdlineswitch = -1
+
+            CASE "-m" 'Monochrome mode
+                MonochromeLoggingMode = -1
+                cmdlineswitch = -1
+
+            CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden CI build option)
                 Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
                     _DEST _CONSOLE
@@ -13173,141 +13324,23 @@ FUNCTION ParseCMDLineArgs$ ()
                     SYSTEM 1
                 END IF
                 SYSTEM
-            CASE "-c" 'Compile instead of edit
-                NoIDEMode = 1
-                cmdlineswitch = -1
-            CASE "-o" 'Specify an output file
-                IF LEN(COMMAND$(i + 1)) > 0 THEN outputfile_cmd$ = COMMAND$(i + 1): i = i + 1
-                cmdlineswitch = -1
-            CASE "-x" 'Use the console
-                ConsoleMode = 1
-                NoIDEMode = 1 'Implies -c
-                cmdlineswitch = -1
-            CASE "-y" 'Format
-                FormatMode = -1
-                ConsoleMode = 1
-                NoIDEMode = 1
-                QuietMode = -1
-                cmdlineswitch = -1
-            CASE "-w" 'Show warnings
-                ShowWarnings = -1
-                cmdlineswitch = -1
-            CASE "-q" 'Quiet mode
-                QuietMode = -1
-                cmdlineswitch = -1
-            CASE "-m" 'Monochrome mode
-                MonochromeLoggingMode = -1
-                cmdlineswitch = -1
-            CASE "-e" 'Option Explicit
-                ForceOptExpl = -1
-                cmdlineswitch = -1
-            CASE "-s" 'Settings
-                settingsMode = -1
-                _DEST _CONSOLE
-                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
-                SELECT CASE LCASE$(MID$(token$, 3))
-                    CASE ""
-                        PRINT "debuginfo     = ";
-                        IF idedebuginfo THEN PRINT "true" ELSE PRINT "false"
-                        PRINT "exewithsource = ";
-                        IF SaveExeWithSource THEN PRINT "true" ELSE PRINT "false"
-                        SYSTEM
-                    CASE ":exewithsource"
-                        PRINT "exewithsource = ";
-                        IF SaveExeWithSource THEN PRINT "true" ELSE PRINT "false"
-                        SYSTEM
-                    CASE ":exewithsource=true"
-                        WriteConfigSetting generalSettingsSection$, "SaveExeWithSource", "True"
-                        PRINT "exewithsource = true"
-                        SaveExeWithSource = -1
-                    CASE ":exewithsource=false"
-                        WriteConfigSetting generalSettingsSection$, "SaveExeWithSource", "False"
-                        PRINT "exewithsource = false"
-                        SaveExeWithSource = 0
-                    CASE ":debuginfo"
-                        PRINT "debuginfo = ";
-                        IF idedebuginfo THEN PRINT "true" ELSE PRINT "false"
-                        SYSTEM
-                    CASE ":debuginfo=true"
-                        PRINT "debuginfo = true"
-                        WriteConfigSetting generalSettingsSection$, "DebugInfo", "True" + DebugInfoIniWarning$
-                        idedebuginfo = -1
-                        Include_GDB_Debugging_Info = idedebuginfo
-                        PurgeTemporaryBuildFiles (os$), (MacOSX)
-                    CASE ":debuginfo=false"
-                        PRINT "debuginfo = false"
-                        WriteConfigSetting generalSettingsSection$, "DebugInfo", "False" + DebugInfoIniWarning$
-                        idedebuginfo = 0
-                        Include_GDB_Debugging_Info = idedebuginfo
-                        PurgeTemporaryBuildFiles (os$), (MacOSX)
-                    CASE ELSE
-                        PRINT "Invalid settings switch: "; token$
-                        PRINT
-                        PRINT "Valid switches:"
-                        PRINT "    -s:debuginfo=true/false     (Embed C++ debug info into .EXE)"
-                        PRINT "    -s:exewithsource=true/false (Save .EXE in the source folder)"
-                        SYSTEM 1
-                END SELECT
-                _DEST 0
-            CASE "-l" 'goto line (ide mode only); -l:<line number>
-                IF MID$(token$, 3, 1) = ":" THEN ideStartAtLine = VAL(MID$(token$, 4))
-                cmdlineswitch = -1
-            CASE "-p" 'Purge
-                PurgeTemporaryBuildFiles (os$), (MacOSX)
-                cmdlineswitch = -1
-            CASE "-z" 'Not compiling C code
-                No_C_Compile_Mode = 1
-                ConsoleMode = 1 'Implies -x
-                NoIDEMode = 1 'Implies -c
-                cmdlineswitch = -1
-
-            CASE "-f" 'temporary setting
-                token$ = MID$(token$, 3)
-
-                SELECT CASE LCASE$(LEFT$(token$, INSTR(token$, "=") - 1))
-                    CASE ":optimizecppprogram"
-                        IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":stripdebugsymbols"
-                        IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":extracppflags"
-                        IF NOT ParseStringSetting&(token$, ExtraCppFlags) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":extralinkerflags"
-                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":maxcompilerprocesses"
-                        IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-                        IF MaxParallelProcesses <= 0 THEN PrintTemporarySettingsHelpAndExit "MaxCompilerProcesses must be more than zero"
-
-                    CASE ":generatelicensefile"
-                        IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":autolayout"
-                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayout) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":keywordcapitals"
-                        IF NOT ParseBooleanSetting&(token$, IDEAutoLayoutKwCapitals) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":indentsubs"
-                        IF NOT ParseBooleanSetting&(token$, IDEIndentSubs) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":autoindent"
-                        IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-
-                    CASE ":autoindentsize"
-                        IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN PrintTemporarySettingsHelpAndExit InvalidSettingError$(token$)
-                        IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN PrintTemporarySettingsHelpAndExit "AutoIndentSize must be in range 1-64"
-                    CASE ELSE
-                        PrintTemporarySettingsHelpAndExit ""
-                END SELECT
 
             CASE ELSE 'Something we don't recognise, assume it's a filename
                 IF PassedFileName$ = "" THEN PassedFileName$ = token$
         END SELECT
     NEXT i
-    IF NoIDEMode = 0 THEN ForceOptExpl = 0 'don't leak force option into the IDE
+    'check if mutual exclusive options were given and accordingly adjust setting
+    IF tmpKwCap > -5 OR tmpKwLow > -5 THEN 'any of it given? - No: stay with default
+        IF tmpKwCap = tmpKwLow THEN 'both set or unset = CaMeL case
+            IDEAutoLayoutKwStyle = 0
+        ELSEIF tmpKwCap = _TRUE THEN '= UPPER case
+            IDEAutoLayoutKwStyle = 1
+        ELSEIF tmpKwLow = _TRUE THEN '= lower case
+            IDEAutoLayoutKwStyle = -1
+        END IF
+    END IF
+     'don't leak force option into the IDE or the code formatter
+    IF NoIDEMode = 0 THEN ForceOptExpl = 0
 
     IF FormatMode AND LEN(outputfile_cmd$) = 0 THEN
         _DEST _CONSOLE
@@ -13322,36 +13355,61 @@ FUNCTION ParseCMDLineArgs$ ()
     END IF
 END FUNCTION
 
-FUNCTION InvalidSettingError$ (token$)
-    InvalidSettingError$ = "Invalid temporary setting switch: " + AddQuotes$(token$)
-END FUNCTION
-
-SUB PrintTemporarySettingsHelpAndExit (errstr$)
+SUB CMDLineSettingsError (errstr$, inv%, tmp%)
+    'inv% <> 0 (invalid bool) / = 0 (any other message)
+    'tmp% <> 0 (-f temp setting) / = 0 (-s permanent setting)
     _DEST _CONSOLE
+    IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$: PRINT
 
-    PRINT "QB64-PE Compiler V" + Version$
-
-    IF errstr$ <> "" THEN
-        PRINT "Error: "; errstr$
+    IF inv% THEN
+        PRINT "Invalid boolean value for "; _IIF(tmp%, "temporary (-f)", "(-s)"); " setting: "; errstr$
+        PRINT "   enable: "; _IIF(tmp%, "-f", "-s"); ":setting= true , on , yes, 1, -1"
+        PRINT "  disable: "; _IIF(tmp%, "-f", "-s"); ":setting= false, off, no , 0"
+    ELSE
+        PRINT errstr$
     END IF
-
     PRINT
-    PRINT "Note: Defaults can be changed by IDE settings"
-    PRINT
-    PRINT "Valid settings:"
-    PRINT "    -f:OptimizeCppProgram=[true|false]   (Use C++ Optimization flag, default false)"
-    PRINT "    -f:StripDebugSymbols=[true|false]    (Strip C++ debug symbols, default true)"
-    PRINT "    -f:ExtraCppFlags=[string]            (Extra flags to pass to the C++ compiler)"
-    PRINT "    -f:ExtraLinkerFlags=[string]         (Extra flags to pass at link time)"
-    PRINT "    -f:MaxCompilerProcesses=[integer]    (Max C++ compiler processes to start in parallel)"
-    PRINT "    -f:GenerateLicenseFile=[true|false]  (Produce a license.txt file for the program)"
-    PRINT "    -f:AutoLayout=[true|false]           (Toggle code spacing and capitalisation)"
-    PRINT "    -f:KeywordCapitals=[true|false]      (Toggle formatting keywords in ALL CAPITALS)"
-    PRINT "    -f:AutoIndent=[true|false]           (Toggle code indentation)"
-    PRINT "    -f:AutoIndentSize=[integer]          (Spaces per indent level)"
-    PRINT "    -f:IndentSubs=[true|false]           (Toggle indenting SUBs & FUNCTIONs)"
 
-    SYSTEM
+    IF tmp% THEN CMDLineTemporarySettingsHelp ELSE CMDLineSettingsHelp
+    SYSTEM 1
+END SUB
+
+SUB CMDLineSettingsHelp
+    PRINT "Supported (-s) Compiler settings:"
+    PRINT "  -s                              Show the current state of all settings"
+    PRINT "  -s:DebugInfo=[true|false]       Embed C++ debug info into executable"
+    PRINT "  -s:ExeWithSource=[true|false]   Save executable in the source folder"
+    PRINT "      You may specify a setting without equal sign and value to"
+    PRINT "      show the current state of that specific setting only."
+END SUB
+
+SUB CMDLineTemporarySettingsHelp
+    PRINT "Note:" '                                                                        '80 columns
+    PRINT "  Defaults for the following settings can be set via the IDE Options menu,"
+    PRINT "  any values given here are just temporary overrides per compilation."
+    PRINT
+    PRINT "Supported (-f) Compiler settings:"
+    PRINT "  -f                                    Show this list of supported settings"
+    PRINT "  -f:OptimizeCppProgram=[true|false]    Compile with C++ Optimization flag"
+    PRINT "  -f:StripDebugSymbols=[true|false]     Strip C++ Symbols from executable"
+    PRINT "  -f:ExtraCppFlags=[string]             Extra flags for the C++ Compiler"
+    PRINT "  -f:ExtraLinkerFlags=[string]          Extra flags for the Linker"
+    PRINT "  -f:MaxCompilerProcesses=[integer]     Max C++ Compiler processes to use"
+    PRINT "  -f:GenerateLicenseFile=[true|false]   Produce a license.txt file for program"
+    PRINT
+    PRINT "Supported (-f) Layout settings:"
+    PRINT "  -f:AutoIndent=[true|false]            Auto Indent lines"
+    PRINT "      The next two also require the above to be enabled or they will have"
+    PRINT "      no effect, unless AutoIndent is enabled per default in the IDE."
+    PRINT "  -f:AutoIndentSize=[integer]           Indent Spacing per indent level"
+    PRINT "  -f:IndentSubs=[true|false]            Indent SUBs and FUNCTIONs"
+    PRINT "  -f:AutoLayout=[true|false]            Auto Single-spacing of code elements"
+    PRINT "      The next two work together, if both are given with the same state"
+    PRINT "      it's CaMeL case, otherwise the enabled one determines the case,"
+    PRINT "      hence no need to specify both if you just want UPPER or lower case."
+    PRINT "      If none is given the default as set in the IDE is used."
+    PRINT "  -f:KeywordCapitals=[true|false]       Make keywords to ALL CAPITALS"
+    PRINT "  -f:KeywordLowercase=[true|false]      Make keywords to ALL lower case"
 END SUB
 
 FUNCTION ParseBooleanSetting& (token$, setting AS LONG)
@@ -13359,16 +13417,16 @@ FUNCTION ParseBooleanSetting& (token$, setting AS LONG)
     DIM value AS STRING
 
     equals = INSTR(token$, "=")
-    IF equals = -1 THEN ParseBooleanSetting& = 0: EXIT FUNCTION
+    IF equals = 0 THEN ParseBooleanSetting& = 0: EXIT FUNCTION
 
     value = LCASE$(MID$(token$, equals + 1))
 
     SELECT CASE value
-        CASE "true", "on", "yes"
+        CASE "true", "on", "yes", "1", "-1"
             setting = _TRUE
             ParseBooleanSetting& = -1
 
-        CASE "false", "off", "no"
+        CASE "false", "off", "no", "0"
             setting = _FALSE
             ParseBooleanSetting& = -1
 
@@ -13381,7 +13439,7 @@ FUNCTION ParseLongSetting& (token$, setting AS LONG)
     DIM equals AS LONG
 
     equals = INSTR(token$, "=")
-    IF equals = -1 THEN ParseLongSetting& = 0: EXIT FUNCTION
+    IF equals = 0 THEN ParseLongSetting& = 0: EXIT FUNCTION
 
     setting = VAL(MID$(token$, equals + 1))
 
@@ -13392,7 +13450,7 @@ FUNCTION ParseStringSetting& (token$, setting AS STRING)
     DIM equals AS LONG
 
     equals = INSTR(token$, "=")
-    IF equals = -1 THEN ParseStringSetting& = 0: EXIT FUNCTION
+    IF equals = 0 THEN ParseStringSetting& = 0: EXIT FUNCTION
 
     setting = MID$(token$, equals + 1)
 
@@ -23800,46 +23858,46 @@ SUB addWarning (whichLineNumber AS LONG, includeLevel AS LONG, incLineNumber AS 
 END SUB
 
 FUNCTION SCase$ (t$)
-    IF IDEAutoLayoutKwCapitals THEN SCase$ = UCASE$(t$) ELSE SCase$ = t$
+    SELECT CASE IDEAutoLayoutKwStyle
+        CASE IS < 0: SCase$ = LCASE$(t$)
+        CASE IS > 0: SCase$ = UCASE$(t$)
+        CASE ELSE: SCase$ = t$
+    END SELECT
 END FUNCTION
 
 FUNCTION SCase2$ (t$)
-    separator$ = sp
-    IF IDEAutoLayoutKwCapitals THEN
-        SCase2$ = UCASE$(t$)
-    ELSE
-        SELECT CASE t$
-            CASE "_ANDALSO"
-                SCase2$ = "_AndAlso"
-
-            CASE "_ORELSE"
-                SCase2$ = "_OrElse"
-
-            CASE ELSE
-                newWord = -1
-                temp$ = ""
-                FOR i = 1 TO LEN(t$)
-                    s$ = MID$(t$, i, 1)
-                    IF newWord THEN
-                        IF s$ = "_" OR s$ = separator$ THEN
-                            temp$ = temp$ + s$
+    'uses global constant "sp" (see source\global\constants.bas)
+    SELECT CASE IDEAutoLayoutKwStyle
+        CASE IS < 0: SCase2$ = LCASE$(t$)
+        CASE IS > 0: SCase2$ = UCASE$(t$)
+        CASE ELSE
+            SELECT CASE UCASE$(t$)
+                CASE "_ANDALSO": SCase2$ = "_AndAlso"
+                CASE "_ORELSE": SCase2$ = "_OrElse"
+                CASE ELSE
+                    newWord = -1
+                    temp$ = ""
+                    FOR i = 1 TO LEN(t$)
+                        s$ = MID$(t$, i, 1)
+                        IF newWord THEN
+                            IF s$ = "_" OR s$ = sp THEN
+                                temp$ = temp$ + s$
+                            ELSE
+                                temp$ = temp$ + UCASE$(s$)
+                                newWord = 0
+                            END IF
                         ELSE
-                            temp$ = temp$ + UCASE$(s$)
-                            newWord = 0
+                            IF s$ = sp THEN
+                                temp$ = temp$ + sp
+                                newWord = -1
+                            ELSE
+                                temp$ = temp$ + LCASE$(s$)
+                            END IF
                         END IF
-                    ELSE
-                        IF s$ = separator$ THEN
-                            temp$ = temp$ + separator$
-                            newWord = -1
-                        ELSE
-                            temp$ = temp$ + LCASE$(s$)
-                        END IF
-                    END IF
-                NEXT
-                SCase2$ = temp$
-
-        END SELECT
-    END IF
+                    NEXT
+                    SCase2$ = temp$
+            END SELECT
+    END SELECT
 END FUNCTION
 
 FUNCTION CompareVersions (v$, v1$)

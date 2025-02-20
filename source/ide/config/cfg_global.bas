@@ -1,4 +1,4 @@
-DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwCapitals, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs
+DIM SHARED AS LONG IDEAutoLayout, IDEAutoLayoutKwStyle, IDEAutoIndent, IDEAutoIndentSize, IDEIndentSubs
 DIM SHARED IDECommentColor AS _UNSIGNED LONG, IDEMetaCommandColor AS _UNSIGNED LONG
 DIM SHARED IDEQuoteColor AS _UNSIGNED LONG, IDETextColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LONG
@@ -10,7 +10,7 @@ DIM SHARED IDE_BypassAutoPosition AS _BYTE, idesortsubs AS _BYTE, IDESubsLength 
 DIM SHARED IDENormalCursorStart AS LONG, IDENormalCursorEnd AS LONG
 DIM SHARED MouseButtonSwapped AS _BYTE
 DIM SHARED PasteCursorAtEnd AS _BYTE
-DIM SHARED SaveExeWithSource AS _BYTE, EnableQuickNav AS _BYTE
+DIM SHARED SaveExeWithSource AS LONG, EnableQuickNav AS _BYTE
 DIM SHARED IDEShowErrorsImmediately AS _BYTE
 DIM SHARED ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
 DIM SHARED IgnoreWarnings AS _BYTE, qb64versionprinted AS _BYTE
