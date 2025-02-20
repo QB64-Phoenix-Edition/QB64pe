@@ -711,7 +711,7 @@ char * tinyfd_mbcsTo8(char const * aMbcsString)
 
 void tinyfd_beep(void)
 {
-    if (windowsVersion() > 5) Beep(440, 300);
+    if (windowsVersion() > 5) Beep(900, 500);
     else MessageBeep(MB_OK);
 }
 
@@ -3901,7 +3901,7 @@ void tinyfd_beep(void)
     {
         signal(SIGINT, sigHandler);
         strcpy( lDialogString ,
-            "thnum=$(pactl load-module module-sine frequency=440);sleep .3;pactl unload-module $thnum" ) ;
+            "thnum=$(pactl load-module module-sine frequency=900);sleep .5;pactl unload-module $thnum" ) ;
     }
     else if ( osascriptPresent() )
     {
@@ -3916,16 +3916,16 @@ void tinyfd_beep(void)
     }
     else if ( speakertestPresent() )
     {
-        /*strcpy( lDialogString , "timeout -k .3 .3 speaker-test --frequency 440 --test sine > /dev/tty" ) ;*/
-        strcpy( lDialogString , "( speaker-test -t sine -f 440 > /dev/tty )& pid=$!;sleep .5; kill -9 $pid" ) ; /*.3 was too short for mac g3*/
+        /*strcpy( lDialogString , "timeout -k .3 .3 speaker-test --frequency 900 --test sine > /dev/tty" ) ;*/
+        strcpy( lDialogString , "( speaker-test -t sine -f 900 > /dev/tty )& pid=$!;sleep .5; kill -9 $pid" ) ; /*.3 was too short for mac g3*/
     }
     else if ( ffplayPresent() )
     {
-        strcpy(lDialogString, "ffplay -f lavfi -i sine=f=440:d=0.15 -autoexit -nodisp" );
+        strcpy(lDialogString, "ffplay -f lavfi -i sine=f=900:d=0.5 -autoexit -nodisp" );
     }
     else if (playPresent()) /* play is part of sox */
     {
-        strcpy(lDialogString, "play -q -n synth .3 sine 440");
+        strcpy(lDialogString, "play -q -n synth .5 sine 900");
     }
     else if ( playsoundPresent() )
     {
@@ -3937,11 +3937,11 @@ void tinyfd_beep(void)
     }
     else if (beepexePresent())
     {
-        strcpy(lDialogString, "beep.exe 440 300");
+        strcpy(lDialogString, "beep.exe 900 500");
     }
     /*else if ( beepPresent() )
     {
-        strcpy( lDialogString , "beep -f 440 -l 300" ) ;
+        strcpy( lDialogString , "beep -f 900 -l 500" ) ;
     }*/
     else
     {
