@@ -770,14 +770,6 @@ qbs_free(__STRING_LAYOUT);
 qbs_free(__STRING_LAYOUTCOMMENT);
 qbs_free(__STRING_LAYOUTCONTINUATIONS);
 qbs_free(__STRING_TLAYOUT);
-if (__ARRAY_LONG_ALPHANUMERIC[2]&1){
-if (__ARRAY_LONG_ALPHANUMERIC[2]&4){
-cmem_dynamic_free((uint8*)(__ARRAY_LONG_ALPHANUMERIC[0]));
-}else{
-free((void*)(__ARRAY_LONG_ALPHANUMERIC[0]));
-}
-}
-free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_ALPHANUMERIC)[8] );
 if (__ARRAY_LONG_ISALPHA[2]&1){
 if (__ARRAY_LONG_ISALPHA[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_LONG_ISALPHA[0]));
@@ -794,6 +786,14 @@ free((void*)(__ARRAY_LONG_ISNUMERIC[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_ISNUMERIC)[8] );
+if (__ARRAY_LONG_ALPHANUMERIC[2]&1){
+if (__ARRAY_LONG_ALPHANUMERIC[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_LONG_ALPHANUMERIC[0]));
+}else{
+free((void*)(__ARRAY_LONG_ALPHANUMERIC[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_ALPHANUMERIC)[8] );
 if (__ARRAY_LONG_LFSINGLECHAR[2]&1){
 if (__ARRAY_LONG_LFSINGLECHAR[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_LONG_LFSINGLECHAR[0]));
@@ -1151,6 +1151,7 @@ qbs_free(__STRING_TRY_STRING);
 qbs_free(__STRING_LAYOUTCOMMENT_BACKUP);
 qbs_free(__STRING_LAYOUT_BACKUP);
 qbs_free(__STRING_LAYOUTORIGINAL_BACKUP);
+qbs_free(__STRING_IDECOMPILEDLINE_BACKUP);
 qbs_free(__STRING_INDENTED);
 qbs_free(__STRING_PUREVARNAME);
 qbs_free(__STRING_X1);
