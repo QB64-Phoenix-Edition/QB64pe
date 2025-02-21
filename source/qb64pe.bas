@@ -2851,6 +2851,8 @@ DO
         GOSUB autoIncludeManager
         a3$ = lineBackup$
         idecompiledline$ = a3$ 'restore 1st/last compiled line for IDE ops
+        'start of pass, reset formatting to defaults after auto-includes
+        IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
     END IF
 
     stringprocessinghappened = 0
@@ -11307,6 +11309,8 @@ DO
                 layout_backup$ = layout$
                 layoutoriginal_backup$ = layoutoriginal$
                 idecompiledline_backup$ = idecompiledline$
+                IDEAutoIndent_backup = IDEAutoIndent
+                IDEAutoLayout_backup = IDEAutoLayout
             END IF
 
             a$ = addmetainclude$: addmetainclude$ = "" 'read/clear message
@@ -11426,6 +11430,8 @@ DO
                 layoutcomment$ = layoutcomment_backup$
                 layoutoriginal$ = layoutoriginal_backup$
                 idecompiledline$ = idecompiledline_backup$
+                IDEAutoIndent = IDEAutoIndent_backup
+                IDEAutoLayout = IDEAutoLayout_backup
                 IF autoIncludingFile <> 0 THEN
                     autoIncludingFile = 0
                     RETURN 'to auto-include manager

@@ -6422,6 +6422,8 @@ FUNCTION ide2 (ignore)
                 idechangemade = 1
                 idefocusline = 0
                 ideundobase = 0 'reset
+                'reset formatting to defaults
+                IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
                 GOTO ideloop
             END IF
 
@@ -6524,6 +6526,8 @@ FUNCTION ide2 (ignore)
                                            "This mode ends when loading a regular file or when\n" +_
                                            "selecting 'New' from the 'File' menu.", "#Got it!")
                 END IF
+                'reset formatting to defaults
+                IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
                 GOTO ideloop
             END IF
 
