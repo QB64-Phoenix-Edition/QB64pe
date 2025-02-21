@@ -12516,11 +12516,21 @@ CxxLibsExtra$ = CxxLibsExtra$ + " " + mylib$ + " " + mylibopt$
 
 ' Make and the shell don't like certain characters in the file name, so we
 ' escape them to get them to handle them properly
-escapedExe$ = StrReplace$(path.exe$ + file$ + extension$, " ", "\ ")
-escapedExe$ = StrReplace$(escapedExe$, CHR$(34), "\" + CHR$(34))
+escapedExe$ = path.exe$ + file$ + extension$
+
+' Make escaping
+escapedExe$ = StrReplace$(escapedExe$, _CHR_QUOTE, "\" + _CHR_QUOTE)
 escapedExe$ = StrReplace$(escapedExe$, "$", "$$")
 
-makeline$ = make$ + makedeps$ + " EXE=" + AddQuotes$(escapedExe$)
+IF os$ = "LNX" THEN
+    ' sh escaping
+    escapedExe$ = StrReplace$(escapedExe$, "'", "'\''")
+    escapedExe$ = "'" + escapedExe$ + "'"
+ELSE
+    escapedExe$ = _CHR_QUOTE + escapedExe$ + _CHR_QUOTE
+END IF
+
+makeline$ = make$ + makedeps$ + " EXE=" + escapedExe$
 makeline$ = makeline$ + " " + AddQuotes$("CXXFLAGS_EXTRA=" + CxxFlagsExtra$)
 makeline$ = makeline$ + " " + AddQuotes$("CFLAGS_EXTRA=" + CxxFlagsExtra$)
 makeline$ = makeline$ + " " + AddQuotes$("CXXLIBS_EXTRA=" + CxxLibsExtra$)
