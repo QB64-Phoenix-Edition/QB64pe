@@ -37,6 +37,8 @@ ifeq ($(OS),lnx)
 	MKDIR := mkdir -p
 	OBJCOPY := objcopy
 	FIXPATH = $1
+	ESCAPENAME = $(subst ','\'',$1)
+	ADDQUOTES = '$1'
 	PLATFORM := posix
 	EXTENSION :=
 
@@ -72,6 +74,8 @@ ifeq ($(OS),win)
 	RM := del /Q
 	MKDIR := mkdir
 	FIXPATH = $(subst /,\,$1)
+	ESCAPENAME = $1
+	ADDQUOTES = "$1"
 	PLATFORM := windows
 	EXTENSION := .exe
 
@@ -96,6 +100,8 @@ ifeq ($(OS),osx)
 	RM := rm -fr
 	MKDIR := mkdir -p
 	FIXPATH = $1
+	ESCAPENAME = $(subst ','\'',$1)
+	ADDQUOTES = '$1'
 	BITS := 64
 	PLATFORM := posix
 	EXTENSION :=
@@ -130,7 +136,8 @@ GENERATE_LICENSE ?= n
 LICENSE ?= $(EXE).license.txt
 LICENSE_IN_USE := qb64 tinyfiledialogs
 
-all: $(EXE)
+.PHONY: exe
+all: exe
 
 CLEAN_LIST :=
 CLEAN_DEP_LIST :=
@@ -422,24 +429,28 @@ clean: $(CLEAN_DEP_LIST)
 
 ifeq ($(GENERATE_LICENSE),y)
 LICENSE_FILES := $(patsubst %,licenses/license_%.txt,$(LICENSE_IN_USE))
-LICENSE_DEP := $(LICENSE)
+LICENSE_DEP := license
 endif
 
-$(EXE): $(EXE_OBJS) $(EXE_LIBS) $(LICENSE_DEP)
-	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o "$@" $(EXE_LIBS) $(CXXLIBS)
+# Special care has to be taken for EXE because it is the user-supplied
+# executable name - it can contain any valid characters. We have to quote it
+# when passing it on the command-line and additionally have to escape the quote
+exe: $(EXE_OBJS) $(EXE_LIBS) $(LICENSE_DEP)
+	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o $(call ADDQUOTES,$(call ESCAPENAME,$(EXE))) $(EXE_LIBS) $(CXXLIBS)
 ifneq ($(filter-out osx,$(OS)),)
 ifneq ($(STRIP_SYMBOLS),n)
-	$(OBJCOPY) --only-keep-debug "$@" "$(PATH_INTERNAL_TEMP)/$(notdir $@).sym"
-	$(OBJCOPY) --strip-unneeded "$@"
+	$(OBJCOPY) --only-keep-debug $(call ADDQUOTES,$(call ESCAPENAME,$(EXE))) $(call ADDQUOTES,$(PATH_INTERNAL_TEMP)/$(notdir $(call ESCAPENAME,$(EXE))).sym)
+	$(OBJCOPY) --strip-unneeded $(call ADDQUOTES,$(call ESCAPENAME,$(EXE)))
 endif
 endif
 
-$(LICENSE): $(LICENSE_FILES)
+.PHONY: license
+license: $(LICENSE_FILES)
 ifeq ($(GENERATE_LICENSE),y)
 ifeq ($(OS),win)
-	type $(call FIXPATH,$^) > "$@"
+	type $(call FIXPATH,$^) > $(call ADDQUOTES,$(call ESCAPENAME,$(LICENSE)))
 else
-	cat $^ > "$@"
+	cat $^ > $(call ADDQUOTES,$(call ESCAPENAME,$(LICENSE)))
 endif
 endif
 
