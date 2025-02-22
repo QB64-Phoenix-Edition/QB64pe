@@ -6422,6 +6422,8 @@ FUNCTION ide2 (ignore)
                 idechangemade = 1
                 idefocusline = 0
                 ideundobase = 0 'reset
+                'reset formatting to defaults
+                IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
                 GOTO ideloop
             END IF
 
@@ -6524,6 +6526,8 @@ FUNCTION ide2 (ignore)
                                            "This mode ends when loading a regular file or when\n" +_
                                            "selecting 'New' from the 'File' menu.", "#Got it!")
                 END IF
+                'reset formatting to defaults
+                IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
                 GOTO ideloop
             END IF
 
@@ -13092,6 +13096,17 @@ SUB ideshowtext
                                 IF INSTR(m + 1, UCASE$(a2$), checkKeyword$) = 0 THEN COLOR 10
                             CASE "$DYNAMIC", "$STATIC"
                                 IF INSTR(m + 1, UCASE$(a2$), "$DYNAMIC") = 0 AND INSTR(m + 1, UCASE$(a2$), "$STATIC") = 0 THEN COLOR 10
+                            CASE "$FORMAT"
+                                IF INSTR(m + 1, UCASE$(a2$), "$FORMAT") = 0 THEN COLOR 10
+                        END SELECT
+                    ELSE
+                        SELECT CASE checkKeyword$
+                            CASE "OFF"
+                                fmt = _INSTRREV(m, UCASE$(a2$), "$FORMAT:")
+                                IF fmt > 0 _ANDALSO m - fmt >= 8 _ANDALSO m - fmt <= 10 THEN COLOR 10
+                            CASE "ON"
+                                fmt = _INSTRREV(m, UCASE$(a2$), "$FORMAT:")
+                                IF fmt > 0 _ANDALSO m - fmt >= 8 _ANDALSO m - fmt <= 9 THEN COLOR 10
                         END SELECT
                     END IF
                 ELSEIF metacommand THEN
@@ -15357,6 +15372,8 @@ FUNCTION ideLayoutBox
             IF IDEAutoLayoutKwStyle <> v% THEN IDEAutoLayoutKwStyle = v%: optChg% = -1
 
             IF optChg% THEN
+                'update default values for restoring after '$FORMAT:OFF
+                DEFAutoIndent = IDEAutoIndent: DEFAutoLayout = IDEAutoLayout
                 'save changes
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", BoolToTFString$(IDEAutoIndent)
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", str2$(IDEAutoIndentSize)

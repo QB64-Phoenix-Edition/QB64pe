@@ -2851,6 +2851,8 @@ DO
         GOSUB autoIncludeManager
         a3$ = lineBackup$
         idecompiledline$ = a3$ 'restore 1st/last compiled line for IDE ops
+        'start of pass, reset formatting to defaults after auto-includes
+        IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
     END IF
 
     stringprocessinghappened = 0
@@ -11307,6 +11309,8 @@ DO
                 layout_backup$ = layout$
                 layoutoriginal_backup$ = layoutoriginal$
                 idecompiledline_backup$ = idecompiledline$
+                IDEAutoIndent_backup = IDEAutoIndent
+                IDEAutoLayout_backup = IDEAutoLayout
             END IF
 
             a$ = addmetainclude$: addmetainclude$ = "" 'read/clear message
@@ -11426,6 +11430,8 @@ DO
                 layoutcomment$ = layoutcomment_backup$
                 layoutoriginal$ = layoutoriginal_backup$
                 idecompiledline$ = idecompiledline_backup$
+                IDEAutoIndent = IDEAutoIndent_backup
+                IDEAutoLayout = IDEAutoLayout_backup
                 IF autoIncludingFile <> 0 THEN
                     autoIncludingFile = 0
                     RETURN 'to auto-include manager
@@ -13299,6 +13305,7 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":autoindent"
                         IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN CMDLineSettingsError token$, 1, 1
+                        DEFAutoIndent = IDEAutoIndent 'for restoring after '$FORMAT:OFF
                     CASE ":autoindentsize"
                         IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN CMDLineSettingsError token$, 1, 1
                         IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN CMDLineSettingsError "AutoIndentSize must be in range 1-64.", 0, 1
@@ -13306,6 +13313,7 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseBooleanSetting&(token$, IDEIndentSubs) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":autolayout"
                         IF NOT ParseBooleanSetting&(token$, IDEAutoLayout) THEN CMDLineSettingsError token$, 1, 1
+                        DEFAutoLayout = IDEAutoLayout 'for restoring after '$FORMAT:OFF
                     CASE ":keywordcapitals"
                         IF NOT ParseBooleanSetting&(token$, tmpKwCap) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":keywordlowercase"
@@ -20802,7 +20810,14 @@ FUNCTION lineformat$ (a$)
         '    : metacommands do not need to be terminated by word boundaries.
         '      E.g., $STATICanychars$DYNAMIC is valid
 
-        IF MID$(c$, x, 7) = "$STATIC" THEN
+        IF MID$(c$, x, 11) = "$FORMAT:OFF" THEN
+            MID$(layoutcomment$, x + cdif, 11) = SCase$("$Format:Off")
+            IDEAutoIndent = 0: IDEAutoLayout = 0
+        ELSEIF MID$(c$, x, 10) = "$FORMAT:ON" THEN
+            MID$(layoutcomment$, x + cdif, 10) = SCase$("$Format:On")
+            IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
+
+        ELSEIF MID$(c$, x, 7) = "$STATIC" THEN
             MID$(layoutcomment$, x + cdif, 7) = SCase$("$Static")
             memmode = 1
         ELSEIF MID$(c$, x, 8) = "$DYNAMIC" THEN
