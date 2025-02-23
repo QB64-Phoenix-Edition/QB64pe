@@ -389,6 +389,7 @@ SUB ReadInitialConfig
             IDEAutoLayout = _FALSE
         END IF
     END IF
+    DEFAutoLayout = IDEAutoLayout 'for restoring after '$FORMAT:OFF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_AutoIndent", value$)
     IDEAutoIndent = VAL(value$)
@@ -402,6 +403,7 @@ SUB ReadInitialConfig
             IDEAutoIndent = _FALSE
         END IF
     END IF
+    DEFAutoIndent = IDEAutoIndent 'for restoring after '$FORMAT:OFF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_IndentSUBs", value$)
     IDEIndentSubs = VAL(value$)

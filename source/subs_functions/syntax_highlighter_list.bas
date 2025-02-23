@@ -3,7 +3,7 @@ DIM SHARED listOfKeywords$, listOfCustomKeywords$, customKeywordsLength AS LONG
 ' Metacommands alphabetical (1st line = QB64, 2nd line = QB4.5, 3rd line = OpenGL)
 listOfKeywords$ = "@" +_
 "$ASSERTS@$CHECKING@$COLOR@$CONSOLE@$DEBUG@$ELSE@$ELSEIF@$EMBED@$END@$ENDIF@$ERROR@$EXEICON@$IF@$INCLUDEONCE@$LET@$MIDISOUNDFONT@$NOPREFIX@$RESIZE@$SCREENHIDE@$SCREENSHOW@$UNSTABLE@$VERSIONINFO@" +_
-"$DYNAMIC@$INCLUDE@$STATIC@" +_
+"$DYNAMIC@$FORMAT@$INCLUDE@$STATIC@" +_
 ""
 
 ' [A] - Keywords alphabetical (1st line = QB64, 2nd line = QB4.5, 3rd line = OpenGL)
