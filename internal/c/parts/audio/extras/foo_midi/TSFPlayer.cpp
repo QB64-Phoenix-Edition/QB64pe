@@ -14,16 +14,19 @@ TSFPlayer::~TSFPlayer() {
 }
 
 bool TSFPlayer::Startup() {
-    if (_IsInitialized)
+    if (_IsInitialized) {
         return true;
+    }
 
-    if (!instrumentBankManager || instrumentBankManager->GetType() != InstrumentBankManager::Type::TinySoundFont)
+    if (!instrumentBankManager || instrumentBankManager->GetType() != InstrumentBankManager::Type::TinySoundFont) {
         return false;
+    }
 
-    if (instrumentBankManager->GetLocation() == InstrumentBankManager::Location::File)
+    if (instrumentBankManager->GetLocation() == InstrumentBankManager::Location::File) {
         synth = tsf_load_filename(instrumentBankManager->GetPath());
-    else
+    } else {
         synth = tsf_load_memory(instrumentBankManager->GetData(), instrumentBankManager->GetDataSize());
+    }
 
     if (synth) {
         tsf_channel_set_bank_preset(synth, 9, 128, 0); // initialize preset on special 10th MIDI channel to use percussion sound bank (128) if available
@@ -57,7 +60,7 @@ void TSFPlayer::Render(audio_sample *buffer, uint32_t frames) {
     while (frames != 0) {
         auto todo = frames > renderFrames ? renderFrames : frames;
 
-        tsf_render_float(synth, data, todo, true);
+        tsf_render_float(synth, data, todo, false);
 
         data += (todo << 1);
         frames -= todo;
@@ -85,7 +88,6 @@ void TSFPlayer::SendEvent(uint32_t data) {
 
     case StatusCodes::ProgramChange:
         tsf_channel_set_presetnumber(synth, channel, param1, channel == 9);
-        tsf_channel_midi_control(synth, channel, 123, 0); // ALL_NOTES_OFF; https://github.com/schellingb/TinySoundFont/issues/59
         break;
 
     case StatusCodes::PitchBendChange:
