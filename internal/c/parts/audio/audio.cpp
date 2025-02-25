@@ -20,7 +20,7 @@
 #include "framework.h"
 #include "libqb-common.h"
 #include "mem.h"
-#include "miniaudio.h"
+#include "miniaudio/miniaudio.h"
 #include "mutex.h"
 #include "qbs.h"
 

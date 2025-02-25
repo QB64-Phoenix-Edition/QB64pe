@@ -11,8 +11,22 @@
 
 #pragma once
 
+#include "logging.h"
 #include <stdint.h>
 #include <stdio.h>
+
+#if 0
+#    define audio_log_trace(...) libqb_log_with_scope_trace(logscope::Audio, __VA_ARGS__)
+#    define audio_log_info(...) libqb_log_with_scope_info(logscope::Audio, __VA_ARGS__)
+#    define audio_log_warn(...) libqb_log_with_scope_warn(logscope::Audio, __VA_ARGS__)
+#    define audio_log_error(...) libqb_log_with_scope_error(logscope::Audio, __VA_ARGS__)
+
+#    define AUDIO_DEBUG_CHECK(_exp_)                                                                                                                           \
+        do {                                                                                                                                                   \
+            if (!(_exp_))                                                                                                                                      \
+                audio_log_warn("Condition (%s) failed", #_exp_);                                                                                               \
+        } while (0)
+#endif
 
 #if defined(AUDIO_DEBUG) && AUDIO_DEBUG > 0
 #    define AUDIO_DEBUG_FILENAME (std::strrchr(__FILE__, '/') ? std::strrchr(__FILE__, '/') + 1 : __FILE__)

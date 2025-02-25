@@ -13,13 +13,11 @@
 
 #pragma once
 
-// Uncomment this to to print debug messages to stderr
-// #define AUDIO_DEBUG 1
-
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
+#include "extras/stb/stb_vorbis.h"
 #include "libqb-common.h"
-#include "miniaudio.h"
+#include "miniaudio/miniaudio.h"
 #include <algorithm>
 #include <array>
 #include <atomic>

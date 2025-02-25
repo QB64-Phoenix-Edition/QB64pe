@@ -9,20 +9,6 @@
 //
 //----------------------------------------------------------------------------------------------------------------------
 
-// Enable Ogg Vorbis decoding.
-#define STB_VORBIS_HEADER_ONLY
-#include "extras/stb_vorbis.c"
-// Due to the way miniaudio links to macOS frameworks at runtime, the application may not pass Apple's notarization process. :(
-// So, we will avoid runtime linking on macOS. See this discussion for more info: https://github.com/mackron/miniaudio/issues/203
-#ifdef __APPLE__
-#    define MA_NO_RUNTIME_LINKING
-#endif
-// The main miniaudio header.
-#define MINIAUDIO_IMPLEMENTATION
-#include "miniaudio.h"
-// The stb_vorbis implementation must come after the implementation of miniaudio.
-#undef STB_VORBIS_HEADER_ONLY
-#include "extras/stb_vorbis.c"
 #include "framework.h"
 
 /// @brief The global instance of the instrument bank manager. We just need one instance to manage sound banks.
@@ -46,5 +32,5 @@ static ma_decoding_backend_vtable *maCustomBackendVTables[] = {
 void AudioEngine_AttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig) {
     // Attach the VTable
     maResourceManagerConfig->ppCustomDecodingBackendVTables = maCustomBackendVTables;
-    maResourceManagerConfig->customDecodingBackendCount = ma_countof(maCustomBackendVTables);
+    maResourceManagerConfig->customDecodingBackendCount = _countof(maCustomBackendVTables);
 }
