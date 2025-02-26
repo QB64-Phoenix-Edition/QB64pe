@@ -516,7 +516,7 @@ void midi_container_t::SerializeAsStream(size_t subSongIndex, std::vector<midi_i
         TrackPositions[SelectedTrack]++;
     }
 
-      loopBegin = (uint32_t)LoopBegin;
+    loopBegin = (uint32_t)LoopBegin;
     loopEnd = (uint32_t)LoopEnd;
 }
 

@@ -53,9 +53,6 @@ extern ma_decoding_backend_vtable ma_vtable_radv2;
 extern ma_decoding_backend_vtable ma_vtable_hively;
 extern ma_decoding_backend_vtable ma_vtable_qoa;
 
-// The global instrument bank manager
-extern InstrumentBankManager g_InstrumentBankManager;
-
 void AudioEngine_AttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
 
 /// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.

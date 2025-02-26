@@ -3906,13 +3906,13 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
         // Only bother setting up the format if we are loading from memory
         switch (format) {
         case SoundBankFormat::SF2:
-            g_InstrumentBankManager.SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::Primesynth);
+            InstrumentBankManager::Instance().SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::Primesynth);
             AUDIO_DEBUG_PRINT("Uncompressed SondFont");
             break;
 
         case SoundBankFormat::SF3:
         case SoundBankFormat::SFO:
-            g_InstrumentBankManager.SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::TinySoundFont);
+            InstrumentBankManager::Instance().SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::TinySoundFont);
             AUDIO_DEBUG_PRINT("Compressed SondFont");
             break;
 
@@ -3921,7 +3921,7 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
         case SoundBankFormat::OPL:
         case SoundBankFormat::TMB:
         case SoundBankFormat::WOPL:
-            g_InstrumentBankManager.SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::Opal);
+            InstrumentBankManager::Instance().SetData(qbsFileName->chr, qbsFileName->len, InstrumentBankManager::Type::Opal);
             AUDIO_DEBUG_PRINT("FM Bank");
             break;
 
@@ -3934,9 +3934,9 @@ void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) 
             std::string fileName(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len);
 
             if (FS_FileExists(filepath_fix_directory(fileName)))
-                g_InstrumentBankManager.SetPath(fileName.c_str());
+                InstrumentBankManager::Instance().SetPath(fileName.c_str());
         } else {
-            g_InstrumentBankManager.SetPath(nullptr); // load the default sound bank
+            InstrumentBankManager::Instance().SetPath(nullptr); // load the default sound bank
         }
     }
 }

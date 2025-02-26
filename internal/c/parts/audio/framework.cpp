@@ -11,9 +11,6 @@
 
 #include "framework.h"
 
-/// @brief The global instance of the instrument bank manager. We just need one instance to manage sound banks.
-InstrumentBankManager g_InstrumentBankManager;
-
 /// @brief The list of custom decoding backends. Add custom backend (format) vtables here. The order in the array defines the order of priority. The vtables
 /// will be passed in to the resource manager config. ma_vtable_modplay should be the last one because libxmp supports 15-channel MODs which does not have any
 /// signatures and can lead to incorrect detection.

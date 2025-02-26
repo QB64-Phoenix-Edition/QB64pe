@@ -319,31 +319,31 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     AUDIO_DEBUG_PRINT("Tune size: %llu", tune.size());
 
     // Create the synthesizer based on the sound bank
-    switch (g_InstrumentBankManager.GetType()) {
+    switch (InstrumentBankManager::Instance().GetType()) {
     case InstrumentBankManager::Type::Primesynth:
-        pMIDI->sequencer = new PSPlayer(&g_InstrumentBankManager);
+        pMIDI->sequencer = new PSPlayer(&InstrumentBankManager::Instance());
         AUDIO_DEBUG_PRINT("Using primesynth");
         break;
 
     case InstrumentBankManager::Type::TinySoundFont:
-        pMIDI->sequencer = new TSFPlayer(&g_InstrumentBankManager);
+        pMIDI->sequencer = new TSFPlayer(&InstrumentBankManager::Instance());
         AUDIO_DEBUG_PRINT("Using TinySoundFont");
         break;
 
 #ifdef _WIN32
     case InstrumentBankManager::Type::VSTi:
-        pMIDI->sequencer = new VSTiPlayer(&g_InstrumentBankManager);
+        pMIDI->sequencer = new VSTiPlayer(&InstrumentBankManager::Instance());
         AUDIO_DEBUG_PRINT("Using VSTi");
         break;
 #endif
 
     default:
         AUDIO_DEBUG_PRINT("Unknown synth type. Falling back to OpalPlayer");
-        g_InstrumentBankManager.SetPath(nullptr);
+        InstrumentBankManager::Instance().SetPath(nullptr);
         [[fallthrough]];
 
     case InstrumentBankManager::Type::Opal:
-        pMIDI->sequencer = new OpalPlayer(&g_InstrumentBankManager);
+        pMIDI->sequencer = new OpalPlayer(&InstrumentBankManager::Instance());
         AUDIO_DEBUG_PRINT("Using OpalPlayer");
         break;
     }
