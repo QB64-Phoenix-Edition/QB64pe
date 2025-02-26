@@ -63,6 +63,7 @@ LIBXMP_SRCS := \
 	effects.c \
 	filetype.c \
 	filter.c \
+	flow.c \
 	format.c \
 	hio.c \
 	it_load.c \
@@ -79,6 +80,7 @@ LIBXMP_SRCS := \
 	period.c \
 	player.c \
 	read_event.c \
+	rng.c \
 	s3m_load.c \
 	sample.c \
 	scan.c \
