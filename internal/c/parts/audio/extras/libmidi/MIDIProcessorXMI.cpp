@@ -31,12 +31,12 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
     const iff_chunk_t &FORMChunk = Stream.FindChunk(FOURCC_FORM);
 
     if (FORMChunk.Type != FOURCC_XDIR)
-        throw MIDIException("FORM XDIR chunk not found");
+        throw midi_exception("FORM XDIR chunk not found");
 
     const iff_chunk_t &CATChunk = Stream.FindChunk(FOURCC_CAT);
 
     if (CATChunk.Type != FOURCC_XMID)
-        throw MIDIException("CAT XMID chunk not found");
+        throw midi_exception("CAT XMID chunk not found");
 
     uint32_t TrackCount = CATChunk.GetChunkCount(FOURCC_FORM);
 
@@ -46,12 +46,12 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
         const iff_chunk_t &SubFORMChunk = CATChunk.FindChunk(FOURCC_FORM, i);
 
         if (SubFORMChunk.Type != FOURCC_XMID)
-            throw MIDIException("FORM XMID chunk not found");
+            throw midi_exception("FORM XMID chunk not found");
 
         const iff_chunk_t &EVNTChunk = SubFORMChunk.FindChunk(FOURCC_EVNT);
 
         if (EVNTChunk.Id != FOURCC_EVNT)
-            throw MIDIException("EVNT chunk not found");
+            throw midi_exception("EVNT chunk not found");
 
         std::vector<uint8_t> const &Data = EVNTChunk._Data;
 
@@ -76,13 +76,13 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
                     LastEventTimestamp = CurrentTimestamp;
 
                 if (it == end)
-                    throw MIDIException("Insufficient data in the stream");
+                    throw midi_exception("Insufficient data in the stream");
 
                 Temp[0] = *it++;
 
                 if (Temp[0] == StatusCodes::MetaData) {
                     if (it == end)
-                        throw MIDIException("Insufficient data in the stream");
+                        throw midi_exception("Insufficient data in the stream");
 
                     Temp[1] = *it++;
 
@@ -95,10 +95,10 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
                         Size = DecodeVariableLengthQuantity(it, end);
 
                         if (Size < 0)
-                            throw MIDIException("Invalid meta data message");
+                            throw midi_exception("Invalid meta data message");
 
                         if (end - it < Size)
-                            throw MIDIException("Insufficient data in the stream");
+                            throw midi_exception("Insufficient data in the stream");
 
                         Temp.resize((size_t)(Size + 2));
                         std::copy(it, it + Size, Temp.begin() + 2);
@@ -127,10 +127,10 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
                     long Size = DecodeVariableLengthQuantity(it, end);
 
                     if (Size < 0)
-                        throw MIDIException("Invalid System Exclusive message");
+                        throw midi_exception("Invalid System Exclusive message");
 
                     if (end - it < Size)
-                        throw MIDIException("Insufficient data in the stream");
+                        throw midi_exception("Insufficient data in the stream");
 
                     Temp.resize((size_t)(Size + 1));
                     std::copy(it, it + Size, Temp.begin() + 1);
@@ -139,7 +139,7 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
                     Track.AddEvent(midi_event_t(CurrentTimestamp, midi_event_t::Extended, 0, &Temp[0], (size_t)(Size + 1)));
                 } else if (Temp[0] >= StatusCodes::NoteOff && Temp[0] <= StatusCodes::ActiveSensing) {
                     if (it == end)
-                        throw MIDIException("Insufficient data in the stream");
+                        throw midi_exception("Insufficient data in the stream");
 
                     Temp.resize(3);
 
@@ -151,7 +151,7 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
 
                     if ((Type != midi_event_t::ProgramChange) && (Type != midi_event_t::ChannelPressure)) {
                         if (it == end)
-                            throw MIDIException("Insufficient data in the stream");
+                            throw midi_exception("Insufficient data in the stream");
 
                         Temp[2] = *it++;
                         BytesRead = 2;
@@ -165,7 +165,7 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
                         int Length = DecodeVariableLengthQuantity(it, end);
 
                         if (Length < 0)
-                            throw MIDIException("Invalid note message");
+                            throw midi_exception("Invalid note message");
 
                         uint32_t Timestamp = CurrentTimestamp + Length;
 
@@ -175,7 +175,7 @@ bool midi_processor_t::ProcessXMI(std::vector<uint8_t> const &data, midi_contain
                         Track.AddEvent(midi_event_t(Timestamp, Type, Channel, &Temp[1], BytesRead));
                     }
                 } else
-                    throw MIDIException("Unknown status code");
+                    throw midi_exception("Unknown status code");
             }
 
             if (!IsTempoSet)

@@ -9,7 +9,7 @@
 #include "../framework.h"
 #include "hivelytracker/hvl_replay.h"
 
-constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximum *hively* frames before timeout
+static constexpr auto MAX_HIVELY_FRAMES = 10 * 60 * 50; // maximum *hively* frames before timeout
 
 struct ma_hively {
     // This part is for miniaudio

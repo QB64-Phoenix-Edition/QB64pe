@@ -4,6 +4,7 @@
 #include "framework.h"
 
 #include "MIDIProcessor.h"
+
 #include "Recomposer/RCP.h"
 
 #include <filesystem>

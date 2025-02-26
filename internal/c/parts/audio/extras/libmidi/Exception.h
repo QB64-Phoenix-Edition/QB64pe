@@ -1,11 +1,11 @@
 
-/** $VER: Exception.h (2024.05.16) P. Stuer **/
+/** $VER: Exception.h (2024.08.20) P. Stuer **/
 
 #pragma once
 
 #include "framework.h"
 
-class MIDIException : public std::runtime_error {
+class midi_exception : public std::runtime_error {
   public:
-    MIDIException(const std::string &errorMessage) : std::runtime_error(errorMessage) {}
+    midi_exception(const std::string &errorMessage) : std::runtime_error(errorMessage) {}
 };

@@ -25,14 +25,14 @@ bool MIDIPlayer::Load(const midi_container_t &midiContainer, uint32_t subsongInd
 
     assert(_Stream.size() == 0);
 
+    _StreamPosition = 0;
+
     midiContainer.SerializeAsStream(subsongIndex, _Stream, _SysExMap, _StreamLoopBegin, _StreamLoopEnd, cleanFlags);
 
     if (_Stream.size() == 0)
         return false;
 
-    _StreamPosition = 0;
     _Position = 0;
-
     _Length = midiContainer.GetDuration(subsongIndex, true);
 
     if (_LoopType == LoopType::NeverLoopAddDecayTime)
@@ -112,7 +112,7 @@ bool MIDIPlayer::Load(const midi_container_t &midiContainer, uint32_t subsongInd
 /// Renders the specified number of samples to an audio sample buffer.
 /// </summary>
 /// <remarks>All calculations are in samples. MIDIStreamEvent::Timestamp gets converted from ms to samples before playing starts.</remarks>
-uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexcept {
+uint32_t MIDIPlayer::Play(audio_sample *data, uint32_t size) noexcept {
     assert(_Stream.size());
 
     if (!Startup())
@@ -123,12 +123,12 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
     uint32_t SampleIndex = 0;
     uint32_t BlockOffset = 0;
 
-    while ((SampleIndex < sampleCount) && (_Remainder > 0)) {
+    while ((SampleIndex < size) && (_Remainder > 0)) {
         uint32_t Remainder = _Remainder;
 
         {
-            if (Remainder > sampleCount - SampleIndex)
-                Remainder = sampleCount - SampleIndex;
+            if (Remainder > size - SampleIndex)
+                Remainder = size - SampleIndex;
 
             if ((BlockSize != 0) && (Remainder > BlockSize))
                 Remainder = BlockSize;
@@ -141,7 +141,7 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
         }
 
         {
-            Render(sampleData + (SampleIndex * 2), Remainder);
+            Render(data + (SampleIndex * 2), Remainder);
 
             SampleIndex += Remainder;
             _Position += Remainder;
@@ -150,20 +150,22 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
         _Remainder -= Remainder;
     }
 
-    while (SampleIndex < sampleCount) {
+    while (SampleIndex < size) {
         uint32_t Remainder = _Length - _Position;
 
-        if (Remainder > sampleCount - SampleIndex)
-            Remainder = sampleCount - SampleIndex;
+        if (Remainder > size - SampleIndex)
+            Remainder = size - SampleIndex;
 
         const uint32_t NewPosition = _Position + Remainder;
 
         {
+            // Determine how many events to process to reach the new position in the sample stream.
             size_t NewStreamPosition = _StreamPosition;
 
             while ((NewStreamPosition < _Stream.size()) && (_Stream[NewStreamPosition].Time < NewPosition))
                 NewStreamPosition++;
 
+            // Process MIDI events until we've generated enough samples to reach the new position in the sample stream.
             if (NewStreamPosition > _StreamPosition) {
                 for (; _StreamPosition < NewStreamPosition; ++_StreamPosition) {
                     const midi_item_t &mse = _Stream[_StreamPosition];
@@ -171,13 +173,13 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
                     int64_t ToDo = (int64_t)mse.Time - (int64_t)_Position - (int64_t)BlockOffset;
 
                     if (ToDo > 0) {
-                        if (ToDo > (int64_t)(sampleCount - SampleIndex)) {
-                            _Remainder = (uint32_t)(ToDo - (int64_t)(sampleCount - SampleIndex));
-                            ToDo = (int64_t)(sampleCount - SampleIndex);
+                        if (ToDo > (int64_t)(size - SampleIndex)) {
+                            _Remainder = (uint32_t)(ToDo - (int64_t)(size - SampleIndex));
+                            ToDo = (int64_t)(size - SampleIndex);
                         }
 
                         if ((ToDo > 0) && (BlockSize == 0)) {
-                            Render(sampleData + (SampleIndex * 2), (uint32_t)ToDo);
+                            Render(data + (SampleIndex * 2), (uint32_t)ToDo);
 
                             SampleIndex += (uint32_t)ToDo;
                             _Position += (uint32_t)ToDo;
@@ -196,7 +198,7 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
                         BlockOffset += (uint32_t)ToDo;
 
                         while (BlockOffset >= BlockSize) {
-                            Render(sampleData + (SampleIndex * 2), BlockSize);
+                            Render(data + (SampleIndex * 2), BlockSize);
 
                             SampleIndex += BlockSize;
                             BlockOffset -= BlockSize;
@@ -209,15 +211,15 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
             }
         }
 
-        if (SampleIndex < sampleCount) {
+        if (SampleIndex < size) {
             Remainder = ((_StreamPosition < _Stream.size()) ? _Stream[_StreamPosition].Time : _Length) - _Position;
 
             if (BlockSize != 0)
                 BlockOffset = Remainder;
 
             {
-                if (Remainder > sampleCount - SampleIndex)
-                    Remainder = sampleCount - SampleIndex;
+                if (Remainder > size - SampleIndex)
+                    Remainder = size - SampleIndex;
 
                 if ((BlockSize != 0) && (Remainder > BlockSize))
                     Remainder = BlockSize;
@@ -225,7 +227,7 @@ uint32_t MIDIPlayer::Play(audio_sample *sampleData, uint32_t sampleCount) noexce
 
             if (Remainder >= BlockSize) {
                 {
-                    Render(sampleData + (SampleIndex * 2), Remainder);
+                    Render(data + (SampleIndex * 2), Remainder);
 
                     SampleIndex += Remainder;
                     _Position += Remainder;

@@ -1,5 +1,4 @@
-
-/** $VER: MIDIPlayer.h (2024.05.11) **/
+/** $VER: Player.h (2024.08.21) **/
 
 #pragma once
 
@@ -28,7 +27,7 @@ class MIDIPlayer {
     enum LoopMode { None = 0x00, Enabled = 0x01, Forced = 0x02 };
 
     bool Load(const midi_container_t &midiContainer, uint32_t subsongIndex, LoopType loopMode, uint32_t cleanFlags);
-    uint32_t Play(audio_sample *samples, uint32_t samplesSize) noexcept;
+    uint32_t Play(audio_sample *samplesData, uint32_t samplesSize) noexcept;
     void Seek(uint32_t seekTime);
 
     void SetSampleRate(uint32_t sampleRate);
@@ -74,7 +73,7 @@ class MIDIPlayer {
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t) {};
 
     // Only implemented by Secret Sauce and VSTi-specific
-    virtual void SendEvent(uint32_t, uint32_t){};
+    virtual void SendEvent(uint32_t, uint32_t) {};
     virtual void SendSysEx(const uint8_t *, size_t, uint32_t, uint32_t) {};
 
     void SendSysExReset(uint8_t portNumber, uint32_t time);
@@ -108,17 +107,17 @@ class MIDIPlayer {
   private:
     static const uint32_t DecayTime = 1000;
 
+    LoopType _LoopType; // Type of looping requested by the user.
+
     std::vector<midi_item_t> _Stream;
-    size_t _StreamPosition; // Current position in the event stream
+    size_t _StreamPosition;    // Current position in the event stream
+    uint32_t _StreamLoopBegin; // Start of the loop in the event stream
+    uint32_t _StreamLoopEnd;   // End of the loop in the event stream
 
     uint32_t _Position;  // Current position in the sample stream
     uint32_t _Length;    // Total length of the sample stream
-    uint32_t _Remainder; // In samples
+    uint32_t _LoopBegin; // Start of the loop in the sample stream
 
-    LoopType _LoopType;
-
-    uint32_t _StreamLoopBegin;
-    uint32_t _StreamLoopEnd;
-
-    uint32_t _LoopBegin; // Position of the start of a loop in the sample stream
+    uint32_t _Remainder; // Remaining number of samples that need to be rendered before the audio chunk is complete (in case the block size of the player is
+    // smaller than the audio chunk size).
 };

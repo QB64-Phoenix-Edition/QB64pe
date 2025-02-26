@@ -16,7 +16,7 @@ bool midi_processor_t::IsGMF(std::vector<uint8_t> const &data) {
 }
 
 bool midi_processor_t::ProcessGMF(std::vector<uint8_t> const &data, midi_container_t &container) {
-    uint8_t Data[10];
+    uint8_t Data[10] = {};
 
     container.Initialize(0, 0xC0);
 
@@ -55,5 +55,5 @@ bool midi_processor_t::ProcessGMF(std::vector<uint8_t> const &data, midi_contain
 
     auto it = data.begin() + 7;
 
-    return ProcessSMFTrack(it, data.end(), container, false);
+    return ProcessSMFTrack(it, data.end(), container);
 }
