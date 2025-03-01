@@ -3091,7 +3091,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         } else {
             AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
 
-            auto contents = AudioEngine_LoadFile<std::vector<uint8_t>>(fileName.c_str());
+            auto contents = AudioFile::Load<std::vector<uint8_t>>(fileName.c_str());
 
             if (contents.empty()) {
                 AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
@@ -3165,7 +3165,7 @@ int32_t func__sndcopy(int32_t src_handle) {
 
     int32_t dst_handle = AudioEngine::INVALID_SOUND_HANDLE;
 
-    // Miniaudio will not copy sounds attached to ma_audio_buffers so we'll handle the duplication ourselves
+    // miniaudio will not copy sounds attached to ma_audio_buffers so we'll handle the duplication ourselves
     // Sadly, since this involves a buffer copy there may be a delay before the sound can play (especially if the sound is lengthy)
     // The delay may be noticeable when _SNDPLAYCOPY is used multiple times on a _SNDNEW sound
     if (audioEngine.soundHandles[src_handle]->maAudioBuffer) {
