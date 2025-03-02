@@ -40,27 +40,27 @@
 #    define MA_DEFAULT_SAMPLE_RATE 48000
 #endif
 
+// External VTables for our custom decoding backend.
+extern ma_decoding_backend_vtable ma_vtable_radv2;
+extern ma_decoding_backend_vtable ma_vtable_hively;
+extern ma_decoding_backend_vtable ma_vtable_midi;
+extern ma_decoding_backend_vtable ma_vtable_qoa;
+extern ma_decoding_backend_vtable ma_vtable_modplay;
+
 /// @brief A simple FP32 stereo sample frame
 struct SampleFrame {
     float l;
     float r;
 };
 
-// VTables for our custom decoding backend
-extern ma_decoding_backend_vtable ma_vtable_midi;
-extern ma_decoding_backend_vtable ma_vtable_modplay;
-extern ma_decoding_backend_vtable ma_vtable_radv2;
-extern ma_decoding_backend_vtable ma_vtable_hively;
-extern ma_decoding_backend_vtable ma_vtable_qoa;
-
-void AudioEngine_AttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
-
-namespace AudioFile {
+bool AudioDecoderBackend_Register(ma_decoding_backend_vtable *vtable);
+void AudioDecoderBackend_Attach(ma_resource_manager_config *maResourceManagerConfig);
 
 /// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.
+/// @tparam Container The type of the container to load the file into.
 /// @param fileName The name of the file to load.
 /// @return A container of the same type as the template parameter, containing the contents of the file.
-template <typename Container> Container Load(const char *fileName) {
+template <typename Container> Container AudioFile_Load(const char *fileName) {
     if (!fileName || !fileName[0]) {
         return {};
     }
@@ -104,7 +104,7 @@ template <typename Container> Container Load(const char *fileName) {
 /// @param fileName The name of the file to save the data to.
 /// @param data The container with data to be saved to the file.
 /// @return True if the data was successfully written to the file, otherwise false.
-template <typename Container> bool Save(const char *fileName, const Container &data) {
+template <typename Container> bool AudioFile_Save(const char *fileName, const Container &data) {
     if (!fileName || !fileName[0] || data.empty()) {
         return false;
     }
@@ -125,5 +125,3 @@ template <typename Container> bool Save(const char *fileName, const Container &d
     std::fclose(file);
     return true;
 }
-
-} // namespace AudioFile

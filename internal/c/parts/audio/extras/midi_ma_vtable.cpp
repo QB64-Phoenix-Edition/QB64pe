@@ -591,7 +591,7 @@ static ma_result ma_midi_init_file(const char *pFilePath, const ma_decoding_back
         return MA_INVALID_FILE;
     }
 
-    auto tune = AudioFile::Load<std::vector<uint8_t>>(pFilePath);
+    auto tune = AudioFile_Load<std::vector<uint8_t>>(pFilePath);
     if (tune.empty()) {
         return MA_INVALID_FILE;
     }

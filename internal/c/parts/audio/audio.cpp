@@ -2638,7 +2638,16 @@ struct AudioEngine {
 
         // Initialize the miniaudio resource manager
         maResourceManagerConfig = ma_resource_manager_config_init();
-        AudioEngine_AttachCustomBackendVTables(&maResourceManagerConfig);
+
+        // Register and attach custom backend vtables. ma_vtable_modplay should be the first one so that it gets pushed to the end. Libxmp supports 15-channel
+        // MODs which does not have any signatures and can lead to incorrect detection.
+        AudioDecoderBackend_Register(&ma_vtable_modplay);
+        AudioDecoderBackend_Register(&ma_vtable_qoa);
+        AudioDecoderBackend_Register(&ma_vtable_midi);
+        AudioDecoderBackend_Register(&ma_vtable_hively);
+        AudioDecoderBackend_Register(&ma_vtable_radv2);
+        AudioDecoderBackend_Attach(&maResourceManagerConfig);
+
         maResourceManagerConfig.pCustomDecodingBackendUserData = NULL; // <- pUserData parameter of each function in the decoding backend vtables
         maResourceManagerConfig.pVFS = vfs;
 
@@ -3091,7 +3100,7 @@ int32_t func__sndopen(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed) {
         } else {
             AUDIO_DEBUG_PRINT("Loading sound from file '%s'", fileName.c_str());
 
-            auto contents = AudioFile::Load<std::vector<uint8_t>>(fileName.c_str());
+            auto contents = AudioFile_Load<std::vector<uint8_t>>(fileName.c_str());
 
             if (contents.empty()) {
                 AUDIO_DEBUG_PRINT("Failed to open sound file '%s'", fileName.c_str());
