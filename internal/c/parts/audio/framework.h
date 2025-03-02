@@ -40,21 +40,11 @@
 #    define MA_DEFAULT_SAMPLE_RATE 48000
 #endif
 
-// External VTables for our custom decoding backend.
-extern ma_decoding_backend_vtable ma_vtable_radv2;
-extern ma_decoding_backend_vtable ma_vtable_hively;
-extern ma_decoding_backend_vtable ma_vtable_midi;
-extern ma_decoding_backend_vtable ma_vtable_qoa;
-extern ma_decoding_backend_vtable ma_vtable_modplay;
-
 /// @brief A simple FP32 stereo sample frame
 struct SampleFrame {
     float l;
     float r;
 };
-
-bool AudioDecoderBackend_Register(ma_decoding_backend_vtable *vtable);
-void AudioDecoderBackend_Attach(ma_resource_manager_config *maResourceManagerConfig);
 
 /// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.
 /// @tparam Container The type of the container to load the file into.

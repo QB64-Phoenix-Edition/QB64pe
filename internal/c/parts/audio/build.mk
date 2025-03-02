@@ -3,9 +3,7 @@ AUDIO_STUB_SRCS := stub_audio.cpp
 
 AUDIO_STUB_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/%.o,$(AUDIO_STUB_SRCS))
 
-AUDIO_SRCS := \
-	audio.cpp \
-	framework.cpp
+AUDIO_SRCS := audio.cpp
 
 AUDIO_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/%.o,$(AUDIO_SRCS))
 

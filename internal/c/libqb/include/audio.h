@@ -15,30 +15,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#if 0
-#    define audio_log_trace(...) libqb_log_with_scope_trace(logscope::Audio, __VA_ARGS__)
-#    define audio_log_info(...) libqb_log_with_scope_info(logscope::Audio, __VA_ARGS__)
-#    define audio_log_warn(...) libqb_log_with_scope_warn(logscope::Audio, __VA_ARGS__)
-#    define audio_log_error(...) libqb_log_with_scope_error(logscope::Audio, __VA_ARGS__)
+#define audio_log_trace(...) libqb_log_with_scope_trace(logscope::Audio, __VA_ARGS__)
+#define audio_log_info(...) libqb_log_with_scope_info(logscope::Audio, __VA_ARGS__)
+#define audio_log_warn(...) libqb_log_with_scope_warn(logscope::Audio, __VA_ARGS__)
+#define audio_log_error(...) libqb_log_with_scope_error(logscope::Audio, __VA_ARGS__)
 
-#    define AUDIO_DEBUG_CHECK(_exp_)                                                                                                                           \
-        do {                                                                                                                                                   \
-            if (!(_exp_))                                                                                                                                      \
-                audio_log_warn("Condition (%s) failed", #_exp_);                                                                                               \
-        } while (0)
-#endif
-
-#if defined(AUDIO_DEBUG) && AUDIO_DEBUG > 0
-#    define AUDIO_DEBUG_FILENAME (std::strrchr(__FILE__, '/') ? std::strrchr(__FILE__, '/') + 1 : __FILE__)
-#    define AUDIO_DEBUG_PRINT(_fmt_, _args_...)                                                                                                                \
-        fprintf(stderr, "\e[1;37mDEBUG: %s:%d:%s: \e[1;33m" _fmt_ "\e[1;37m\n", AUDIO_DEBUG_FILENAME, __LINE__, __PRETTY_FUNCTION__, ##_args_)
-#    define AUDIO_DEBUG_CHECK(_exp_)                                                                                                                           \
+#define AUDIO_DEBUG_CHECK(_exp_)                                                                                                                               \
+    do {                                                                                                                                                       \
         if (!(_exp_))                                                                                                                                          \
-        AUDIO_DEBUG_PRINT("\e[0;31mCondition (%s) failed", #_exp_)
-#else
-#    define AUDIO_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
-#    define AUDIO_DEBUG_CHECK(_exp_)            // Don't do anything in release builds
-#endif
+            audio_log_warn("Condition (%s) failed", #_exp_);                                                                                                   \
+    } while (0)
 
 struct qbs;
 struct mem_block;
