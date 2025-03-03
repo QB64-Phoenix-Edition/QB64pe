@@ -71,6 +71,4 @@ mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
 int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits);
 void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 
-void snd_init();
-void snd_un_init();
-void snd_mainloop();
+void snd_update();
