@@ -21,7 +21,6 @@ struct ma_modplay {
     // This part is format specific
     xmp_context xmpContext;      // The player context
     xmp_frame_info xmpFrameInfo; // LibXMP frameinfo - used to detect loops
-    ma_uint32 loopCount;         // We'll maintain our own loop counter and check this against LibXMP's to detect new loops
 };
 
 static ma_result ma_modplay_seek_to_pcm_frame(ma_modplay *pModplay, ma_uint64 frameIndex) {
@@ -84,22 +83,32 @@ static ma_result ma_modplay_read_pcm_frames(ma_modplay *pModplay, void *pFramesO
         return MA_INVALID_ARGS;
     }
 
-    ma_result result = MA_SUCCESS; // Must be initialized to MA_SUCCESS
+    ma_result result = MA_SUCCESS;
+    ma_uint64 totalFramesRead = 0;
+    auto buffer = (uint8_t *)pFramesOut;
 
-    // Render some 16-bit stereo sample frames
-    int xmpError = xmp_play_buffer(pModplay->xmpContext, pFramesOut, (int)(frameCount * sizeof(ma_int16) * 2), 0);
+    while (totalFramesRead < frameCount) {
+        if (xmp_play_frame(pModplay->xmpContext) != 0) {
+            result = MA_AT_END;
+            break;
+        }
 
-    // Get the frame information to detect if we are looping
-    xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
+        xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
 
-    // Check if we have reached the end or are looping
-    if (pModplay->xmpFrameInfo.loop_count != pModplay->loopCount || xmpError == -XMP_END || xmpError == -XMP_ERROR_STATE) {
-        pModplay->loopCount = pModplay->xmpFrameInfo.loop_count;
-        result = MA_AT_END;
+        if (pModplay->xmpFrameInfo.loop_count > 0) {
+            result = MA_AT_END;
+            break;
+        }
+
+        size_t bufferSize = pModplay->xmpFrameInfo.buffer_size;
+
+        std::memcpy(buffer, pModplay->xmpFrameInfo.buffer, bufferSize);
+        buffer += bufferSize;
+        totalFramesRead += bufferSize >> 2; // 16-bit stereo
     }
 
     if (pFramesRead != NULL) {
-        *pFramesRead = frameCount;
+        *pFramesRead = totalFramesRead;
     }
 
     return result;
@@ -341,7 +350,6 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_DSP, XMP_DSP_ALL);
 
     xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo); // Get the frame information
-    pModplay->loopCount = pModplay->xmpFrameInfo.loop_count;           // Save the loop counter
 
     return MA_SUCCESS;
 }
@@ -399,7 +407,6 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_DSP, XMP_DSP_ALL);
 
     xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo); // Get the frame information
-    pModplay->loopCount = pModplay->xmpFrameInfo.loop_count;           // Save the loop counter
 
     return MA_SUCCESS;
 }
