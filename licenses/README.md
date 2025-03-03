@@ -98,14 +98,14 @@ These libraries are pulled in when using any sound-related functionality.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| miniaudio | MIT/Public Domain | license_miniaudio.txt | internal/c/parts/audio/miniaudio.h |
+| miniaudio | MIT/Public Domain | license_miniaudio.txt | internal/c/parts/audio/miniaudio/ |
 | foo_midi | MIT | license_foo_midi.txt | internal/c/parts/audio/extras/foo_midi/ & internal/c/parts/audio/extras/libmidi/ |
 | HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | primesynth | MIT | license_primesynth.txt | internal/c/parts/audio/extras/primesynth/ |
-| QOA | MIT | license_qoa.txt | internal/c/parts/audio/extras/qoa.h |
+| QOA | MIT | license_qoa.txt | internal/c/parts/audio/extras/qoa/ |
 | RADv2 | Public Domain | license_radv2.txt | internal/c/parts/audio/extras/radv2/ |
-| stb_vorbis | MIT/Public Domain | license_stb_vorbis.txt | internal/c/parts/audio/extras/stb_vorbis.c |
+| stb_vorbis | MIT/Public Domain | license_stb_vorbis.txt | internal/c/parts/audio/extras/stb/ |
 | TinySoundFont | MIT | license_tinysoundfont.txt | internal/c/parts/audio/extras/tinysoundfont/ |
 | ymfmidi | BSD-3-Clause | license_ymfmidi.txt | internal/c/parts/audio/extras/ymfmidi/ |
 

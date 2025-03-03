@@ -3447,8 +3447,7 @@ class AudioEngine {
     }
 
     /// @brief Returns a sound handle to a newly created sound's raw data in memory with the given specification. The user can then fill the buffer with
-    /// whatever
-    /// they want (using _MEMSOUND) and play it. This is basically the sound equivalent of _NEWIMAGE.
+    /// whatever they want (using _MEMSOUND) and play it. This is basically the sound equivalent of _NEWIMAGE.
     /// @param frames The number of sample frames required.
     /// @param channels The number of sound channels. This can be 1 (mono) or 2 (stereo).
     /// @param bits The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32).
@@ -3471,7 +3470,7 @@ class AudioEngine {
         soundHandles[handle]->maAudioBufferConfig = ma_audio_buffer_config_init(
             (bits == 32 ? ma_format::ma_format_f32 : (bits == 16 ? ma_format::ma_format_s16 : ma_format::ma_format_u8)), channels, frames, NULL, NULL);
 
-        // This currently has no effect. Sample rate always defaults to engine sample rate
+        // FIXME: This currently has no effect. Sample rate always defaults to engine sample rate
         // Sample rate support for audio buffer is coming in miniaudio version 0.12
         // soundHandles[handle]->maAudioBufferConfig.sampleRate = sampleRate;
 
