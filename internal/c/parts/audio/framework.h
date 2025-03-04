@@ -35,6 +35,7 @@
 
 #define SILENCE_SAMPLE_F32 0.0f
 #define SILENCE_SAMPLE_I16 0
+#define SILENCE_SAMPLE_I8 0x80u
 
 #ifndef MA_DEFAULT_SAMPLE_RATE
 // Since this is used by the extended decoder plugins, it does not matter even if miniaudio changes it the future
@@ -55,8 +56,8 @@ struct SampleFrameI16 {
 
 /// @brief A simple 8-bit stereo sample frame.
 struct SampleFrameI8 {
-    int8_t l;
-    int8_t r;
+    uint8_t l;
+    uint8_t r;
 };
 
 /// @brief A class that can manage double buffer frame blocks for different sample formats. This is used when decoders cannot do variable frame sizes or when

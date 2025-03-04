@@ -2238,8 +2238,7 @@ class AudioEngine {
     /// Basically, we go through the vector and find an object pointer were 'isUsed' is set as false and return the index. If such an object pointer is not
     /// found, then we add a pointer to a new object at the end of the vector and return the index. We are using pointers because miniaudio keeps using stuff
     /// from ma_sound and these cannot move in memory when the vector is resized. The handle is put-up for recycling simply by setting the 'isUsed' member to
-    /// false. Note that this means the vector will keep growing until the largest handle (index) and never shrink. The vector will be pruned only when
-    /// snd_un_init gets called. This also increments 'lowestFreeHandle' to allocated handle + 1.
+    /// false. Note that this means the vector will keep growing until the largest handle (index) and never shrink.
     /// @return Returns a non-negative handle if successful.
     int32_t CreateHandle() {
         if (!isInitialized) {
@@ -2376,7 +2375,7 @@ class AudioEngine {
             if (!IsHandleValid(psgVoices[voice])) {
                 audio_log_trace("Setting up PSG for voice %zu", voice);
 
-                psgVoices[voice] = func__sndopenraw();
+                psgVoices[voice] = OpenRawSound();
 
                 if (!IsHandleValid(psgVoices[voice])) {
                     audio_log_warn("Failed to create raw sound stream for voice %zu", voice);
@@ -2395,7 +2394,7 @@ class AudioEngine {
                         audio_log_warn("Failed to create PSG object for voice %zu", voice);
 
                         // Cleanup
-                        sub__sndclose(psgVoices[voice]);
+                        CloseSound(psgVoices[voice]);
                         ReleaseHandle(psgVoices[voice]);                  // we'll clean this up ourself
                         psgVoices[voice] = INVALID_SOUND_HANDLE_INTERNAL; // we cannot use INVALID_SOUND_HANDLE here
 
@@ -2458,7 +2457,7 @@ class AudioEngine {
 
         // Release the sound handles
         for (auto snd : psgVoices) {
-            sub__sndclose(snd);
+            CloseSound(snd);
         }
     }
 
@@ -2984,7 +2983,7 @@ class AudioEngine {
 
             // First create a new _SNDNEW sound with the same properties at the source
             dst_handle =
-                func__sndnew(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format), soundHandles[src_handle]->maAudioBuffer->ref.sampleRate, 0b111);
+                CreateSound(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format), soundHandles[src_handle]->maAudioBuffer->ref.sampleRate, 0b111);
             if (dst_handle < 1)
                 return AudioEngine::INVALID_SOUND_HANDLE;
 
@@ -3053,7 +3052,7 @@ class AudioEngine {
     void PlaySoundCopy(int32_t src_handle, float volume, float x, float y, float z, int32_t passed) {
         // We are simply going to use sndcopy, then setup some stuff like volume and autokill and then use sndplay
         // We are not checking if the audio engine was initialized because if not we'll get an invalid handle anyway
-        auto dst_handle = func__sndcopy(src_handle);
+        auto dst_handle = CopySound(src_handle);
 
         // Check if we succeeded and then proceed
         if (dst_handle > 0) {
@@ -3070,8 +3069,8 @@ class AudioEngine {
                 ma_sound_set_pan(&soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
             }
 
-            sub__sndplay(dst_handle);                  // play the sound
-            soundHandles[dst_handle]->autoKill = true; // must be set after sub__sndplay
+            PlaySound(dst_handle);                     // play the sound
+            soundHandles[dst_handle]->autoKill = true; // must be set after PlaySound
         }
     }
 
@@ -3094,14 +3093,14 @@ class AudioEngine {
         }
 
         // We will not wrap this in a 'if initialized' block because SndOpen will take care of that
-        auto handle = func__sndopen(fileName, reqs, 1);
+        auto handle = OpenSound(fileName, reqs, 1);
 
         if (handle > 0) {
             if (passed & 2)
                 ma_sound_set_volume(&soundHandles[handle]->maSound, volume);
 
-            sub__sndplay(handle);                  // play the sound
-            soundHandles[handle]->autoKill = true; // must be set after sub__sndplay
+            PlaySound(handle);                     // play the sound
+            soundHandles[handle]->autoKill = true; // must be set after PlaySound
         }
     }
 
@@ -3150,7 +3149,7 @@ class AudioEngine {
         }
     }
 
-    /// @brief Like sub__sndplay(), but the sound is looped.
+    /// @brief Like PlaySound(), but the sound is looped.
     /// @param handle A sound handle.
     void LoopSound(int32_t handle) {
         if (isInitialized && IsHandleValid(handle) && soundHandles[handle]->type == AudioEngine::SoundHandle::Type::STATIC) {
@@ -3346,7 +3345,7 @@ class AudioEngine {
         if (!(passed & 2)) {
             // Check if the default handle was created
             if (internalSndRaw < 1) {
-                internalSndRaw = func__sndopenraw();
+                internalSndRaw = OpenRawSound();
             }
 
             handle = internalSndRaw;
@@ -3372,7 +3371,7 @@ class AudioEngine {
         if (!(passed & 2)) {
             // Check if the default handle was created
             if (internalSndRaw < 1) {
-                internalSndRaw = func__sndopenraw();
+                internalSndRaw = OpenRawSound();
             }
 
             handle = internalSndRaw;
