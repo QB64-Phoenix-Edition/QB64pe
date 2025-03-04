@@ -19,8 +19,10 @@ struct ma_modplay {
     ma_format format;
 
     // This part is format specific
-    xmp_context xmpContext;      // The player context
-    xmp_frame_info xmpFrameInfo; // LibXMP frameinfo - used to detect loops
+    xmp_context xmpContext;                             // The player context
+    xmp_frame_info xmpFrameInfo;                        // LibXMP frameinfo - used to detect loops
+    DoubleBufferFrameBlock<SampleFrameI16> *frameBlock; // needed because Libxmp buffer_size (frames) can be greater than miniaudio's frameCount
+    bool isReallyPlaying;                               // this holds the real playing state and is needed due to the same reason as above
 };
 
 static ma_result ma_modplay_seek_to_pcm_frame(ma_modplay *pModplay, ma_uint64 frameIndex) {
@@ -85,26 +87,32 @@ static ma_result ma_modplay_read_pcm_frames(ma_modplay *pModplay, void *pFramesO
 
     ma_result result = MA_SUCCESS;
     ma_uint64 totalFramesRead = 0;
-    auto buffer = (uint8_t *)pFramesOut;
 
-    while (totalFramesRead < frameCount) {
-        if (xmp_play_frame(pModplay->xmpContext) != 0) {
-            result = MA_AT_END;
-            break;
+    // Only attempt to render if we are actually playing
+    if (pModplay->isReallyPlaying && pModplay->frameBlock->IsWriteBlockEmpty()) {
+        if (xmp_play_frame(pModplay->xmpContext) == 0) {
+            xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
+
+            if (pModplay->xmpFrameInfo.loop_count == 0 && pModplay->xmpFrameInfo.buffer && pModplay->xmpFrameInfo.buffer_size > 0) {
+                ma_uint64 bufferBytes = pModplay->xmpFrameInfo.buffer_size;
+
+                auto buffer = pModplay->frameBlock->GetWriteBlock(bufferBytes >> 2); // 16-bit stereo
+                if (buffer) {
+                    std::memcpy(buffer, pModplay->xmpFrameInfo.buffer, bufferBytes);
+                }
+            } else {
+                pModplay->isReallyPlaying = false;
+            }
+        } else {
+            pModplay->isReallyPlaying = false;
         }
+    }
 
-        xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo);
+    totalFramesRead = pModplay->frameBlock->ReadFrames(reinterpret_cast<SampleFrameI16 *>(pFramesOut), frameCount);
 
-        if (pModplay->xmpFrameInfo.loop_count > 0) {
-            result = MA_AT_END;
-            break;
-        }
-
-        size_t bufferSize = pModplay->xmpFrameInfo.buffer_size;
-
-        std::memcpy(buffer, pModplay->xmpFrameInfo.buffer, bufferSize);
-        buffer += bufferSize;
-        totalFramesRead += bufferSize >> 2; // 16-bit stereo
+    if (pModplay->frameBlock->IsEmpty() && !pModplay->isReallyPlaying) {
+        result = MA_AT_END;
+        audio_log_info("Finished rendering module music");
     }
 
     if (pFramesRead != NULL) {
@@ -310,15 +318,21 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     std::vector<uint8_t> tune(file_size);
 
     // Read the file
-    if (ma_modplay_of_callback__read(pModplay, &tune[0], (int)file_size) < 1) {
+    if (ma_modplay_of_callback__read(pModplay, tune.data(), (int)file_size) < 1) {
         return MA_IO_ERROR;
     }
 
     // Check if the file is a valid module music
     xmp_test_info xmpTestInfo;
-    int xmpError = xmp_test_module_from_memory(&tune[0], (long)file_size, &xmpTestInfo);
+    int xmpError = xmp_test_module_from_memory(tune.data(), (long)file_size, &xmpTestInfo);
     if (xmpError != 0) {
+        audio_log_warn("Not a valid music module file");
         return MA_INVALID_FILE;
+    }
+
+    pModplay->frameBlock = new DoubleBufferFrameBlock<SampleFrameI16>();
+    if (!pModplay->frameBlock) {
+        return MA_OUT_OF_MEMORY;
     }
 
     // Initialize the player
@@ -328,7 +342,7 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     }
 
     // Load the module file
-    xmpError = xmp_load_module_from_memory(pModplay->xmpContext, &tune[0], (long)file_size);
+    xmpError = xmp_load_module_from_memory(pModplay->xmpContext, tune.data(), (long)file_size);
     if (xmpError != 0) {
         xmp_free_context(pModplay->xmpContext);
         pModplay->xmpContext = nullptr;
@@ -350,6 +364,11 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     xmpError = xmp_set_player(pModplay->xmpContext, XMP_PLAYER_DSP, XMP_DSP_ALL);
 
     xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo); // Get the frame information
+
+    pModplay->isReallyPlaying = true;
+    pModplay->frameBlock->Reset();
+
+    audio_log_info("Loaded module music file from memory (%zu bytes)", tune.size());
 
     return MA_SUCCESS;
 }
@@ -375,7 +394,13 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
     xmp_test_info xmpTestInfo;
     int xmpError = xmp_test_module(pFilePath, &xmpTestInfo);
     if (xmpError != 0) {
+        audio_log_warn("Not a valid music module file");
         return MA_INVALID_FILE;
+    }
+
+    pModplay->frameBlock = new DoubleBufferFrameBlock<SampleFrameI16>();
+    if (!pModplay->frameBlock) {
+        return MA_OUT_OF_MEMORY;
     }
 
     // Initialize the player
@@ -408,6 +433,11 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
 
     xmp_get_frame_info(pModplay->xmpContext, &pModplay->xmpFrameInfo); // Get the frame information
 
+    pModplay->isReallyPlaying = true;
+    pModplay->frameBlock->Reset();
+
+    audio_log_info("Loaded module music file: %s", pFilePath);
+
     return MA_SUCCESS;
 }
 
@@ -423,7 +453,12 @@ static void ma_modplay_uninit(ma_modplay *pModplay, const ma_allocation_callback
     xmp_free_context(pModplay->xmpContext);
     pModplay->xmpContext = nullptr;
 
+    delete pModplay->frameBlock;
+    pModplay->frameBlock = nullptr;
+
     ma_data_source_uninit(&pModplay->ds);
+
+    audio_log_info("Unloaded module music file");
 }
 
 static ma_result ma_decoding_backend_init__modplay(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

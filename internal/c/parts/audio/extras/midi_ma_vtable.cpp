@@ -23,96 +23,6 @@
 #include "libmidi/MIDIContainer.h"
 #include "libmidi/MIDIProcessor.h"
 
-#ifdef _WIN32
-/// @brief A class that can manage double buffer frame blocks. Needed for VSTiPlayer only.
-class DoubleBufferFrameBlock {
-    std::vector<SampleFrame> blocks[2];
-    size_t index;  // current reading block index
-    size_t cursor; // cursor in the active block
-
-  public:
-    DoubleBufferFrameBlock(const DoubleBufferFrameBlock &) = delete;
-    DoubleBufferFrameBlock(DoubleBufferFrameBlock &&) = delete;
-    DoubleBufferFrameBlock &operator=(const DoubleBufferFrameBlock &) = delete;
-    DoubleBufferFrameBlock &operator=(DoubleBufferFrameBlock &&) = delete;
-
-    DoubleBufferFrameBlock() : index(0), cursor(0) {}
-
-    /// @brief Resets the double buffer frame blocks by clearing both blocks and resetting the index and cursor to their initial states.
-    void Reset() {
-        blocks[0].clear();
-        blocks[1].clear();
-        index = 0;
-        cursor = 0;
-    }
-
-    /// @brief Checks if both blocks are empty.
-    /// @returns true if both blocks are empty, false otherwise.
-    bool IsEmpty() const {
-        return blocks[0].empty() && blocks[1].empty();
-    }
-
-    /// @brief Gets a float pointer to the write block that can be written to.
-    /// @param[in] frames The number of frames to write.
-    /// @return A pointer to the write block, or nullptr if the block is not empty.
-    float *GetWriteBlock(size_t frames) {
-        auto writeIndex = 1 - index;
-
-        if (blocks[writeIndex].empty()) {
-            // Only resize and return a pointer if there is no data in the block
-            blocks[writeIndex].resize(frames);
-            return reinterpret_cast<float *>(blocks[writeIndex].data());
-        }
-
-        return nullptr; // block is not empty
-    }
-
-    /// @brief Copies up to `frames` number of frames from the current block to `data`. The cursor is advanced by the number of frames copied.
-    /// @param[in] data The destination buffer to copy to.
-    /// @param[in] frames The number of frames to copy.
-    /// @return The number of frames copied.
-    size_t ReadFrames(float *data, size_t frames) {
-        if (blocks[index].empty()) {
-            // Switch to the other block
-            index = 1 - index;
-            cursor = 0;
-
-            if (blocks[index].empty())
-                return 0; // no data available
-        }
-
-        auto toCopy = std::min(frames, blocks[index].size() - cursor);                  // clip to whatever is left in the block
-        std::memcpy(data, blocks[index].data() + cursor, toCopy * sizeof(SampleFrame)); // copy the data
-        cursor += toCopy;                                                               // advance the cursor
-
-        size_t remaining = 0; // we'll set this to zero in case we copy the exact number of frames requested
-
-        if (toCopy < frames) {
-            // Switch to the other block since we copied less than requested
-            blocks[index].clear();
-            index = 1 - index;
-            cursor = 0;
-
-            if (blocks[index].empty())
-                return toCopy; // return the partial number of frames copied
-
-            remaining = std::min(frames - toCopy, blocks[index].size());                              // clip to block size
-            std::memcpy(data + (toCopy << 1), blocks[index].data(), remaining * sizeof(SampleFrame)); // copy the data
-            cursor += remaining;                                                                      // advance the cursor
-        }
-
-        if (cursor >= blocks[index].size()) {
-            // Switch to the other block if we've reached the end
-            blocks[index].clear();
-            index = 1 - index;
-            cursor = 0;
-        }
-
-        return toCopy + remaining; // return the number of frames copied
-    }
-};
-#endif
-
 struct ma_midi {
     // This part is for miniaudio
     ma_data_source_base ds; /* The decoder can be used independently as a data source. */
@@ -129,8 +39,8 @@ struct ma_midi {
     ma_int64 totalTime;          // total duration of the MIDI song in frames
     bool isPlaying;              // this holds the playing state
 #ifdef _WIN32
-    DoubleBufferFrameBlock *frameBlock; // only needed when a player cannot do variable frame size rendering (e.g. VSTiPlayer)
-    bool isReallyPlaying;               // this holds the real playing state and is needed due to the same reason as above
+    DoubleBufferFrameBlock<SampleFrameF32> *frameBlock; // only needed when a player cannot do variable frame size rendering (e.g. VSTiPlayer)
+    bool isReallyPlaying;                               // this holds the real playing state and is needed due to the same reason as above
 #endif
 };
 
@@ -202,16 +112,17 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     if (fixedFrames) {
         // Only attempt to render if we are actually playing
         if (pMIDI->isReallyPlaying) {
-            auto dest = pMIDI->frameBlock->GetWriteBlock(fixedFrames);
-            if (dest)
+            auto dest = reinterpret_cast<float *>(pMIDI->frameBlock->GetWriteBlock(fixedFrames));
+            if (dest) {
                 pMIDI->isReallyPlaying = pMIDI->sequencer->Play(dest, fixedFrames) > 0;
+            }
         }
 
         // Get partial data from the frame block
-        totalFramesRead = pMIDI->frameBlock->ReadFrames(reinterpret_cast<float *>(pFramesOut), frameCount);
+        totalFramesRead = pMIDI->frameBlock->ReadFrames(reinterpret_cast<SampleFrameF32 *>(pFramesOut), frameCount);
 
         // Set the isPlaying flag to true if we still have some data in the buffers
-        pMIDI->isPlaying = !pMIDI->frameBlock->IsEmpty();
+        pMIDI->isPlaying = !pMIDI->frameBlock->IsEmpty() || pMIDI->isReallyPlaying;
     } else
 #endif
     {
@@ -222,6 +133,7 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     // Signal end of stream if we have reached the end
     if (!pMIDI->isPlaying) {
         result = MA_AT_END;
+        audio_log_info("Finished rendering MIDI music");
     }
 
     if (pFramesRead != NULL) {
@@ -473,7 +385,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     }
 
 #ifdef _WIN32
-    pMIDI->frameBlock = new DoubleBufferFrameBlock();
+    pMIDI->frameBlock = new DoubleBufferFrameBlock<SampleFrameF32>();
     if (!pMIDI->frameBlock) {
         ma_midi_uninit_common(pMIDI);
         return MA_OUT_OF_MEMORY;
@@ -497,6 +409,8 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
         ma_midi_uninit_common(pMIDI);
         return MA_INVALID_FILE;
     }
+
+    audio_log_info("Loaded MIDI music file from memory (%zu bytes)", tune.size());
 
     return MA_SUCCESS;
 }
@@ -586,6 +500,8 @@ static void ma_midi_uninit(ma_midi *pMIDI, const ma_allocation_callbacks *pAlloc
 
     ma_midi_uninit_common(pMIDI);
     ma_data_source_uninit(&pMIDI->ds);
+
+    audio_log_info("Unloaded MIDI music file");
 }
 
 static ma_result ma_decoding_backend_init__midi(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

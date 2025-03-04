@@ -389,10 +389,10 @@ class AudioEngine {
         ma_engine *maEngine;                      // pointer to a ma_engine object that was passed while creating the data source
         ma_sound *maSound;                        // pointer to a ma_sound object that was passed while creating the data source
 
-        struct Buffer {                    // we'll give this a name that we'll use below
-            std::vector<SampleFrame> data; // this holds the actual sample frames
-            size_t cursor;                 // the read cursor (in frames) in the stream
-        } buffer[2];                       // we need two of these to do a proper ping-pong
+        struct Buffer {                       // we'll give this a name that we'll use below
+            std::vector<SampleFrameF32> data; // this holds the actual sample frames
+            size_t cursor;                    // the read cursor (in frames) in the stream
+        } buffer[2];                          // we need two of these to do a proper ping-pong
 
         Buffer *consumer;        // this is what the miniaudio thread will use to pull data from
         Buffer *producer;        // this is what the main thread will use to push data to
@@ -442,7 +442,7 @@ class AudioEngine {
         /// @brief Pushes a whole buffer of stereo sample frames to the queue. This is mutex protected and called by the main thread.
         /// @param buffer The buffer containing the stereo sample frames. This cannot be NULL.
         /// @param frames The total number of frames in the buffer.
-        void PushSampleFrames(SampleFrame *buffer, ma_uint64 frames) {
+        void PushSampleFrames(SampleFrameF32 *buffer, ma_uint64 frames) {
             libqb_mutex_guard lock(m); // lock the mutex before accessing the vectors
 
             std::copy(buffer, buffer + frames, std::back_inserter(producer->data));
@@ -505,15 +505,15 @@ class AudioEngine {
                 return MA_INVALID_ARGS;
             }
 
-            auto pRawStream = (RawStream *)pDataSource; // cast to RawStream instance pointer
-            auto result = MA_SUCCESS;                   // must be initialized to MA_SUCCESS
-            auto maBuffer = (SampleFrame *)pFramesOut;  // cast to sample frame pointer
+            auto pRawStream = (RawStream *)pDataSource;   // cast to RawStream instance pointer
+            auto result = MA_SUCCESS;                     // must be initialized to MA_SUCCESS
+            auto maBuffer = (SampleFrameF32 *)pFramesOut; // cast to sample frame pointer
 
             ma_uint64 sampleFramesRead;
 
             if (pRawStream->pause_.load(std::memory_order_relaxed)) {
                 // Just play silence if we are paused
-                std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
+                std::fill(maBuffer, maBuffer + frameCount, SampleFrameF32{SILENCE_SAMPLE_F32, SILENCE_SAMPLE_F32});
                 sampleFramesRead = frameCount;
             } else {
                 sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
@@ -540,7 +540,7 @@ class AudioEngine {
                         result = MA_AT_END;
                     } else {
                         // To keep the stream going, play silence if there are no frames to play
-                        std::fill(maBuffer, maBuffer + frameCount, SampleFrame{SILENCE_SAMPLE, SILENCE_SAMPLE});
+                        std::fill(maBuffer, maBuffer + frameCount, SampleFrameF32{SILENCE_SAMPLE_F32, SILENCE_SAMPLE_F32});
                         sampleFramesRead = frameCount;
                     }
                 }
@@ -837,7 +837,7 @@ class AudioEngine {
                 clockRate = DEFAULT_CLOCK_RATE;
                 counter = 0;
                 frequency = FREQUENCY_DEFAULT;
-                currentSample = SILENCE_SAMPLE;
+                currentSample = SILENCE_SAMPLE_F32;
                 amplitude = VOLUME_DEFAULT;
                 resampleRatio = float(systemSampleRate) / float(BASE_SAMPLE_RATE);
                 updateInterval = (float(clockRate) / float(frequency)) * resampleRatio;
@@ -978,40 +978,40 @@ class AudioEngine {
             int32_t length;      // this needs to be signed
         };
 
-        RawStream *rawStream;                  // this is the RawStream where the samples data will be pushed to
-        ma_waveform_config maWaveformConfig;   // miniaudio waveform configuration
-        ma_waveform maWaveform;                // miniaudio waveform
-        ma_noise_config maWhiteNoiseConfig;    // miniaudio white noise configuration
-        ma_noise maWhiteNoise;                 // miniaudio white noise
-        ma_noise_config maPinkNoiseConfig;     // miniaudio pink noise configuration
-        ma_noise maPinkNoise;                  // miniaudio pink noise
-        ma_noise_config maBrownianNoiseConfig; // miniaudio brownian noise configuration
-        ma_noise maBrownianNoise;              // miniaudio brownian noise
-        NoiseGenerator *noise;                 // LFSR noise generator
-        CustomWaveform *customWaveform;        // custom waveform generator
-        ma_pulsewave_config maPulseWaveConfig; // miniaudio pulse wave configuration
-        ma_pulsewave maPulseWave;              // miniaudio pulse wave
-        ma_result maResult;                    // result of the last miniaudio operation
-        std::vector<float> noteBuffer;         // note frames are rendered here temporarily before it is mixed to waveBuffer
-        std::vector<float> waveBuffer;         // this is where the waveform is rendered / mixed before being pushed to RawStream
-        std::vector<SampleFrame> pausedBuffer; // this is where the final waveform is pushed to and accumulated when the PSG is paused
-        bool isPaused;                         // this is true if the PSG is paused
-        ma_uint64 mixCursor;                   // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
-        WaveformType waveformType;             // the currently selected waveform type (applies to MML and sound)
-        Envelope envelope;                     // the ADSR envelope (used for sound and MML)
-        bool background;                       // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
-        float panPosition;                     // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
-        float gainLeft;                        // this is calculated from panPosition
-        float gainRight;                       // this is calculated from panPosition
-        std::stack<State> stateStack;          // this maintains the state stack if we need to process substrings (VARPTR$)
-        State currentState;                    // this is the current state. See State struct
-        int tempo;                             // the tempo of the MML tune (this impacts all lengths)
-        int octave;                            // the current octave that we'll use for MML notes
-        double length;                         // the length of each MML note (1 = full, 4 = quarter etc.)
-        double pause;                          // the duration of silence after an MML note (this eats away from the note length)
-        double duration;                       // the duration of a sound / MML note / silence (in seconds)
-        int dots;                              // the dots after a note or a pause that increases the duration
-        bool playIt;                           // flag that is set when the buffer can be played
+        RawStream *rawStream;                     // this is the RawStream where the samples data will be pushed to
+        ma_waveform_config maWaveformConfig;      // miniaudio waveform configuration
+        ma_waveform maWaveform;                   // miniaudio waveform
+        ma_noise_config maWhiteNoiseConfig;       // miniaudio white noise configuration
+        ma_noise maWhiteNoise;                    // miniaudio white noise
+        ma_noise_config maPinkNoiseConfig;        // miniaudio pink noise configuration
+        ma_noise maPinkNoise;                     // miniaudio pink noise
+        ma_noise_config maBrownianNoiseConfig;    // miniaudio brownian noise configuration
+        ma_noise maBrownianNoise;                 // miniaudio brownian noise
+        NoiseGenerator *noise;                    // LFSR noise generator
+        CustomWaveform *customWaveform;           // custom waveform generator
+        ma_pulsewave_config maPulseWaveConfig;    // miniaudio pulse wave configuration
+        ma_pulsewave maPulseWave;                 // miniaudio pulse wave
+        ma_result maResult;                       // result of the last miniaudio operation
+        std::vector<float> noteBuffer;            // note frames are rendered here temporarily before it is mixed to waveBuffer
+        std::vector<float> waveBuffer;            // this is where the waveform is rendered / mixed before being pushed to RawStream
+        std::vector<SampleFrameF32> pausedBuffer; // this is where the final waveform is pushed to and accumulated when the PSG is paused
+        bool isPaused;                            // this is true if the PSG is paused
+        ma_uint64 mixCursor;          // this is the cursor position in waveBuffer where the next mix should happen (this can be < waveBuffer.size())
+        WaveformType waveformType;    // the currently selected waveform type (applies to MML and sound)
+        Envelope envelope;            // the ADSR envelope (used for sound and MML)
+        bool background;              // if this is true, then control will be returned back to the caller as soon as the sound / MML is rendered
+        float panPosition;            // stereo pan setting for SOUND (-1.0f - 0.0f - 1.0f)
+        float gainLeft;               // this is calculated from panPosition
+        float gainRight;              // this is calculated from panPosition
+        std::stack<State> stateStack; // this maintains the state stack if we need to process substrings (VARPTR$)
+        State currentState;           // this is the current state. See State struct
+        int tempo;                    // the tempo of the MML tune (this impacts all lengths)
+        int octave;                   // the current octave that we'll use for MML notes
+        double length;                // the length of each MML note (1 = full, 4 = quarter etc.)
+        double pause;                 // the duration of silence after an MML note (this eats away from the note length)
+        double duration;              // the duration of a sound / MML note / silence (in seconds)
+        int dots;                     // the dots after a note or a pause that increases the duration
+        bool playIt;                  // flag that is set when the buffer can be played
 
         /// @brief Generates a waveform to waveBuffer starting at the mixCursor sample location. The buffer must be resized before calling this. We could have
         /// resized waveBuffer inside this. However, PLAY supports stuff like staccato etc. that needs some silence after the waveform. So it makes sense for
@@ -1026,8 +1026,8 @@ class AudioEngine {
             }
 
             maResult = MA_SUCCESS;
-            ma_uint64 generatedFrames = neededFrames;        // assume we'll generate all the frames we need
-            noteBuffer.assign(neededFrames, SILENCE_SAMPLE); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
+            ma_uint64 generatedFrames = neededFrames;            // assume we'll generate all the frames we need
+            noteBuffer.assign(neededFrames, SILENCE_SAMPLE_F32); // resize the noteBuffer vector to render the waveform and also zero (silence) everything
 
             // Generate to the temp buffer and then we'll mix later
             switch (waveformType) {
@@ -1383,7 +1383,7 @@ class AudioEngine {
         void Sound(double frequency, double lengthInClockTicks) {
             SetFrequency(frequency);
             auto soundDuration = lengthInClockTicks / 18.2;
-            waveBuffer.assign(size_t(soundDuration * ma_engine_get_sample_rate(rawStream->maEngine)), SILENCE_SAMPLE);
+            waveBuffer.assign(size_t(soundDuration * ma_engine_get_sample_rate(rawStream->maEngine)), SILENCE_SAMPLE_F32);
             GenerateWaveform(soundDuration);
             PushBufferForPlayback();
             AwaitPlaybackCompletion(); // await playback to complete if we are in MF mode
@@ -1840,7 +1840,7 @@ class AudioEngine {
                         auto noteFrames = ma_uint64(duration * ma_engine_get_sample_rate(rawStream->maEngine));
 
                         if ((mixCursor + noteFrames) > waveBuffer.size()) {
-                            waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
+                            waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE_F32);
                         }
 
                         if (currentChar != ',') {
@@ -2020,7 +2020,7 @@ class AudioEngine {
                         auto noteFrames = ma_uint64(duration * ma_engine_get_sample_rate(rawStream->maEngine));
 
                         if (mixCursor + noteFrames > waveBuffer.size()) {
-                            waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE);
+                            waveBuffer.resize(mixCursor + noteFrames, SILENCE_SAMPLE_F32);
                         }
 
                         if (noteOffset > -45) // this ensures that we correctly handle N0 as rest
@@ -3392,8 +3392,8 @@ class AudioEngine {
         }
 
         if (channels == 2) {
-            auto audioBuffer = reinterpret_cast<SampleFrame *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
-            auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(SampleFrame);
+            auto audioBuffer = reinterpret_cast<SampleFrameF32 *>((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->offset);
+            auto audioBufferFrames = size_t((reinterpret_cast<byte_element_struct *>(sampleFrameArray))->length) / sizeof(SampleFrameF32);
 
             if (audioBufferFrames) {
                 if (passed & 4) {
