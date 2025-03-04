@@ -2983,7 +2983,8 @@ class AudioEngine {
             auto format = soundHandles[src_handle]->maAudioBuffer->ref.format;
 
             // First create a new _SNDNEW sound with the same properties at the source
-            dst_handle = func__sndnew(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format));
+            dst_handle =
+                func__sndnew(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format), soundHandles[src_handle]->maAudioBuffer->ref.sampleRate, 0b111);
             if (dst_handle < 1)
                 return AudioEngine::INVALID_SOUND_HANDLE;
 
@@ -3451,17 +3452,49 @@ class AudioEngine {
     /// @param frames The number of sample frames required.
     /// @param channels The number of sound channels. This can be 1 (mono) or 2 (stereo).
     /// @param bits The bit depth of the sound. This can be 8 (unsigned 8-bit), 16 (signed 16-bit) or 32 (FP32).
+    /// @param sampleRate The sample rate of the sound.
+    /// @param passed Optional parameter flags.
     /// @return A new sound handle if successful or 0 on failure.
-    int32_t CreateSound(uint32_t frames, int32_t channels, int32_t bits) {
+    int32_t CreateSound(uint32_t frames, int32_t channels, int32_t bits, uint32_t sampleRate, int32_t passed) {
         // Validate all parameters
-        if (!isInitialized || frames == 0 || (channels != 1 && channels != 2) || (bits != 16 && bits != 32 && bits != 8)) {
+        if (!isInitialized || frames == 0) {
+            audio_log_warn("Invalid frame count: %i", frames);
             return AudioEngine::INVALID_SOUND_HANDLE;
+        }
+
+        if (passed & 1) {
+            if (channels != 1 && channels != 2) {
+                audio_log_warn("Invalid number of channels: %i", channels);
+                return AudioEngine::INVALID_SOUND_HANDLE;
+            }
+        } else {
+            channels = 1; // assume mono
+        }
+
+        if (passed & 2) {
+            if (bits != 32 && bits != 16 && bits != 8) {
+                audio_log_warn("Invalid bit depth: %i", bits);
+                return AudioEngine::INVALID_SOUND_HANDLE;
+            }
+        } else {
+            bits = 32; // assume 32-bit
+        }
+
+        if (passed & 4) {
+            if (sampleRate == 0) {
+                audio_log_warn("Invalid sample rate: %i", sampleRate);
+                return AudioEngine::INVALID_SOUND_HANDLE;
+            }
+        } else {
+            sampleRate = ma_engine_get_sample_rate(&maEngine); // assume engine sample rate
         }
 
         // Allocate a sound handle
         auto handle = CreateHandle();
-        if (handle < 1)
+        if (handle < 1) {
+            audio_log_warn("Failed to create sound handle");
             return AudioEngine::INVALID_SOUND_HANDLE;
+        }
 
         // Set some handle properties
         soundHandles[handle]->type = AudioEngine::SoundHandle::Type::STATIC;
@@ -3470,9 +3503,7 @@ class AudioEngine {
         soundHandles[handle]->maAudioBufferConfig = ma_audio_buffer_config_init(
             (bits == 32 ? ma_format::ma_format_f32 : (bits == 16 ? ma_format::ma_format_s16 : ma_format::ma_format_u8)), channels, frames, NULL, NULL);
 
-        // FIXME: This currently has no effect. Sample rate always defaults to engine sample rate
-        // Sample rate support for audio buffer is coming in miniaudio version 0.12
-        // soundHandles[handle]->maAudioBufferConfig.sampleRate = sampleRate;
+        soundHandles[handle]->maAudioBufferConfig.sampleRate = sampleRate;
 
         // Allocate and initialize ma_audio_buffer
         maResult = ma_audio_buffer_alloc_and_init(&soundHandles[handle]->maAudioBufferConfig, &soundHandles[handle]->maAudioBuffer);
@@ -3864,8 +3895,8 @@ double func__sndrawlen(int32_t handle, int32_t passed) {
     return AudioEngine::Instance().GetRawSoundTimeRemaining(handle, passed);
 }
 
-int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits) {
-    return AudioEngine::Instance().CreateSound(frames, channels, bits);
+int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits, uint32_t sampleRate, int32_t passed) {
+    return AudioEngine::Instance().CreateSound(frames, channels, bits, sampleRate, passed);
 }
 
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed) {

@@ -68,7 +68,7 @@ static inline void sub__sndrawdone(int32_t handle, int32_t passed) {
 double func__sndrawlen(int32_t handle, int32_t passed);
 
 mem_block func__memsound(int32_t handle, int32_t targetChannel, int32_t passed);
-int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits);
+int32_t func__sndnew(uint32_t frames, int32_t channels, int32_t bits, uint32_t sampleRate, int32_t passed);
 void sub__midisoundbank(qbs *qbsFileName, qbs *qbsRequirements, int32_t passed);
 
 void snd_update();
