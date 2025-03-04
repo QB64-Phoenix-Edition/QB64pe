@@ -52,7 +52,6 @@ class InstrumentBankManager {
         SetDefaults();
     };
 
-    ~InstrumentBankManager() = default;
     InstrumentBankManager(const InstrumentBankManager &) = delete;
     InstrumentBankManager &operator=(const InstrumentBankManager &) = delete;
     InstrumentBankManager(InstrumentBankManager &&) = delete;
