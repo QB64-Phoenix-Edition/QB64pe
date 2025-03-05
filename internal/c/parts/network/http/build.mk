@@ -6,10 +6,17 @@ CURL_LIB := $(PATH_INTERNAL_C)/parts/network/http/libcurl.a
 
 CURL_MAKE_FLAGS := CFG=-schannel
 CURL_MAKE_FLAGS += "CURL_CFLAG_EXTRAS=-DCURL_STATICLIB -DHTTP_ONLY"
-CURL_MAKE_FLAGS += CC=../../../../c_compiler/bin/gcc.exe
-CURL_MAKE_FLAGS += AR=../../../../c_compiler/bin/ar.exe
-CURL_MAKE_FLAGS += RANLIB=../../../../c_compiler/bin/ranlib.exe
-CURL_MAKE_FLAGS += STRIP=../../../../c_compiler/bin/strip.exe
+ifdef USE_SYSTEM_MINGW
+	CURL_MAKE_FLAGS += CC=gcc.exe
+	CURL_MAKE_FLAGS += AR=ar.exe
+	CURL_MAKE_FLAGS += RANLIB=ranlib.exe
+	CURL_MAKE_FLAGS += STRIP=strip.exe
+else
+	CURL_MAKE_FLAGS += CC=../../../../c_compiler/bin/gcc.exe
+	CURL_MAKE_FLAGS += AR=../../../../c_compiler/bin/ar.exe
+	CURL_MAKE_FLAGS += RANLIB=../../../../c_compiler/bin/ranlib.exe
+	CURL_MAKE_FLAGS += STRIP=../../../../c_compiler/bin/strip.exe
+endif
 CURL_MAKE_FLAGS += libcurl_a_LIBRARY="../libcurl.a"
 CURL_MAKE_FLAGS += ARCH=w$(BITS)
 
