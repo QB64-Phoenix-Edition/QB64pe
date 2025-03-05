@@ -121,7 +121,7 @@ static ma_result ma_qoa_read_pcm_frames(ma_qoa *pQOA, void *pFramesOut, ma_uint6
 
             if (!frame_len) {
                 result = MA_AT_END;
-                audio_log_info("Finished rendering QOA music");
+                audio_log_trace("Finished rendering QOA music");
                 break;
             }
 
@@ -332,7 +332,7 @@ static ma_result ma_qoa_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
 
     pQOA->first_frame_pos = qoa_decode_header(header, QOA_MIN_FILESIZE, &pQOA->info);
     if (!pQOA->first_frame_pos) {
-        audio_log_info("Not a valid QOA file");
+        audio_log_warn("Not a valid QOA file");
         return MA_INVALID_FILE;
     }
 
@@ -354,7 +354,7 @@ static ma_result ma_qoa_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
         return MA_OUT_OF_MEMORY;
     }
 
-    audio_log_info("Loaded QOA music file from memory (%llu bytes)", file_size);
+    audio_log_trace("Loaded QOA music file from memory (%llu bytes)", file_size);
 
     return MA_SUCCESS;
 }
@@ -392,7 +392,7 @@ static ma_result ma_qoa_init_file(const char *pFilePath, const ma_decoding_backe
     if (!pQOA->first_frame_pos) {
         fclose(pQOA->file);
         pQOA->file = nullptr;
-        audio_log_info("Not a valid QOA file");
+        audio_log_warn("Not a valid QOA file");
         return MA_INVALID_FILE;
     }
 
@@ -420,7 +420,7 @@ static ma_result ma_qoa_init_file(const char *pFilePath, const ma_decoding_backe
         return MA_OUT_OF_MEMORY;
     }
 
-    audio_log_info("Loaded QOA music file from disk (%s)", pFilePath);
+    audio_log_trace("Loaded QOA music file from disk (%s)", pFilePath);
 
     return MA_SUCCESS;
 }
@@ -443,7 +443,7 @@ static void ma_qoa_uninit(ma_qoa *pQOA, const ma_allocation_callbacks *pAllocati
 
     ma_data_source_uninit(&pQOA->ds);
 
-    audio_log_info("Unloaded QOA music file");
+    audio_log_trace("Unloaded QOA music file");
 }
 
 static ma_result ma_decoding_backend_init__qoa(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

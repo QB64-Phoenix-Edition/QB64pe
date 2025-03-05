@@ -127,7 +127,7 @@ static ma_result ma_hively_read_pcm_frames(ma_hively *pmaHively, void *pFramesOu
     // Are we done with the tune?
     if (pmaHively->player->ht_SongEndReached) {
         result = MA_AT_END;
-        audio_log_info("Finished rendering HivelyTracker music");
+        audio_log_trace("Finished rendering HivelyTracker music");
     }
 
     if (pFramesRead != NULL) {
@@ -361,7 +361,7 @@ static ma_result ma_hively_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tel
             pmaHively->player = nullptr;
         }
 
-        audio_log_info("Not a valid HivelyTracker file");
+        audio_log_warn("Not a valid HivelyTracker file");
         return MA_INVALID_FILE;
     }
 
@@ -378,7 +378,7 @@ static ma_result ma_hively_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tel
     // Calculate the sample frames
     pmaHively->lengthInSampleFrames = ma_hively_get_length_in_pcm_frames_internal(pmaHively);
 
-    audio_log_info("Loaded HivelyTracker music file from memory (%zu bytes)", tune.size());
+    audio_log_trace("Loaded HivelyTracker music file from memory (%zu bytes)", tune.size());
 
     return MA_SUCCESS;
 }
@@ -405,7 +405,7 @@ static ma_result ma_hively_init_file(const char *pFilePath, const ma_decoding_ba
                 pmaHively->player = nullptr;
             }
 
-            audio_log_info("Not a valid HivelyTracker file");
+            audio_log_warn("Not a valid HivelyTracker file");
             return MA_INVALID_FILE;
         }
 
@@ -425,7 +425,7 @@ static ma_result ma_hively_init_file(const char *pFilePath, const ma_decoding_ba
     // Calculate the sample frames
     pmaHively->lengthInSampleFrames = ma_hively_get_length_in_pcm_frames_internal(pmaHively);
 
-    audio_log_info("Loaded HivelyTracker music file from disk (%s)", pFilePath);
+    audio_log_trace("Loaded HivelyTracker music file from disk (%s)", pFilePath);
 
     return MA_SUCCESS;
 }
@@ -448,7 +448,7 @@ static void ma_hively_uninit(ma_hively *pmaHively, const ma_allocation_callbacks
 
     ma_data_source_uninit(&pmaHively->ds);
 
-    audio_log_info("Unloaded HivelyTracker music file");
+    audio_log_trace("Unloaded HivelyTracker music file");
 }
 
 static ma_result ma_decoding_backend_init__hively(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

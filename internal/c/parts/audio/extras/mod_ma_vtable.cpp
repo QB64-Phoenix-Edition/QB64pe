@@ -112,7 +112,7 @@ static ma_result ma_modplay_read_pcm_frames(ma_modplay *pModplay, void *pFramesO
 
     if (pModplay->frameBlock->IsEmpty() && !pModplay->isReallyPlaying) {
         result = MA_AT_END;
-        audio_log_info("Finished rendering module music");
+        audio_log_trace("Finished rendering module music");
     }
 
     if (pFramesRead != NULL) {
@@ -368,7 +368,7 @@ static ma_result ma_modplay_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_te
     pModplay->isReallyPlaying = true;
     pModplay->frameBlock->Reset();
 
-    audio_log_info("Loaded module music file from memory (%zu bytes)", tune.size());
+    audio_log_trace("Loaded module music file from memory (%zu bytes)", tune.size());
 
     return MA_SUCCESS;
 }
@@ -436,7 +436,7 @@ static ma_result ma_modplay_init_file(const char *pFilePath, const ma_decoding_b
     pModplay->isReallyPlaying = true;
     pModplay->frameBlock->Reset();
 
-    audio_log_info("Loaded module music file: %s", pFilePath);
+    audio_log_trace("Loaded module music file: %s", pFilePath);
 
     return MA_SUCCESS;
 }
@@ -458,7 +458,7 @@ static void ma_modplay_uninit(ma_modplay *pModplay, const ma_allocation_callback
 
     ma_data_source_uninit(&pModplay->ds);
 
-    audio_log_info("Unloaded module music file");
+    audio_log_trace("Unloaded module music file");
 }
 
 static ma_result ma_decoding_backend_init__modplay(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,
