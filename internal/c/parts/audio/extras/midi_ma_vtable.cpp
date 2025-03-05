@@ -133,7 +133,7 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     // Signal end of stream if we have reached the end
     if (!pMIDI->isPlaying) {
         result = MA_AT_END;
-        audio_log_info("Finished rendering MIDI music");
+        audio_log_trace("Finished rendering MIDI music");
     }
 
     if (pFramesRead != NULL) {
@@ -410,7 +410,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
         return MA_INVALID_FILE;
     }
 
-    audio_log_info("Loaded MIDI music file from memory (%zu bytes)", tune.size());
+    audio_log_trace("Loaded MIDI music file from memory (%zu bytes)", tune.size());
 
     return MA_SUCCESS;
 }
@@ -501,7 +501,7 @@ static void ma_midi_uninit(ma_midi *pMIDI, const ma_allocation_callbacks *pAlloc
     ma_midi_uninit_common(pMIDI);
     ma_data_source_uninit(&pMIDI->ds);
 
-    audio_log_info("Unloaded MIDI music file");
+    audio_log_trace("Unloaded MIDI music file");
 }
 
 static ma_result ma_decoding_backend_init__midi(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,
