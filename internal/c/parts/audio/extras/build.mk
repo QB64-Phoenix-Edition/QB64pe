@@ -12,7 +12,7 @@ ifeq ($(OS),win)
 	FOO_MIDI_SRCS += VSTiPlayer.cpp
 endif
 
-FOO_MIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.o,$(FOO_MIDI_SRCS))
+FOO_MIDI_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.o,$(FOO_MIDI_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
@@ -21,7 +21,7 @@ $(PATH_INTERNAL_C)/parts/audio/extras/foo_midi/%.o: $(PATH_INTERNAL_C)/parts/aud
 
 HIVELYTRACKER_SRCS := hvl_replay.c
 
-HIVELYTRACKER_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o,$(HIVELYTRACKER_SRCS))
+HIVELYTRACKER_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o,$(HIVELYTRACKER_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/hivelytracker/%.c
 	$(CC) -O3 $(CFLAGS) -Wall $< -c -o $@
@@ -49,7 +49,7 @@ LIBMIDI_SRCS := \
 	Recomposer/RunningNotes.cpp \
 	Recomposer/Support.cpp
 
-LIBMIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.o,$(LIBMIDI_SRCS))
+LIBMIDI_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.o,$(LIBMIDI_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/libmidi/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
@@ -63,6 +63,7 @@ LIBXMP_SRCS := \
 	effects.c \
 	filetype.c \
 	filter.c \
+	flow.c \
 	format.c \
 	hio.c \
 	it_load.c \
@@ -79,6 +80,7 @@ LIBXMP_SRCS := \
 	period.c \
 	player.c \
 	read_event.c \
+	rng.c \
 	s3m_load.c \
 	sample.c \
 	scan.c \
@@ -87,7 +89,7 @@ LIBXMP_SRCS := \
 	win32.c \
 	xm_load.c
 
-LIBXMP_OBJS += $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o,$(LIBXMP_SRCS))
+LIBXMP_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o,$(LIBXMP_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.c
 	$(CC) -O3 $(CFLAGS) -Wall -DLIBXMP_CORE_PLAYER -DLIBXMP_STATIC $< -c -o $@
@@ -96,28 +98,46 @@ $(PATH_INTERNAL_C)/parts/audio/extras/libxmp-lite/%.o: $(PATH_INTERNAL_C)/parts/
 
 PRIMESYNTH_SRCS := primesynth.cpp
 
-PRIMESYNTH_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.o,$(PRIMESYNTH_SRCS))
+PRIMESYNTH_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.o,$(PRIMESYNTH_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/primesynth/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
+
+# QOA
+
+QOA_SRCS := qoa.c
+
+QOA_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/qoa/%.o,$(QOA_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/qoa/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/qoa/%.c
+	$(CC) -O3 $(CFLAGS) -Wall $< -c -o $@
 
 # radv2
 
 OPAL_SRCS := opal.cpp
 
-OPAL_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.o,$(OPAL_SRCS))
+OPAL_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.o,$(OPAL_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/radv2/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
 
+# stb_vorbis
+
+STB_VORBIS_SRCS := stb_vorbis.c
+
+STB_VORBIS_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/stb/%.o,$(STB_VORBIS_SRCS))
+
+$(PATH_INTERNAL_C)/parts/audio/extras/stb/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/stb/%.c
+	$(CC) -O3 $(CFLAGS) -Wall $< -c -o $@
+
 # TinySoundFont
 
-TINYSOUNDFONT_SRCS := tsf.cpp
+TINYSOUNDFONT_SRCS := tsf.c
 
-TINYSOUNDFONT_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o,$(TINYSOUNDFONT_SRCS))
+TINYSOUNDFONT_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o,$(TINYSOUNDFONT_SRCS))
 
-$(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.cpp
-	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
+$(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/tinysoundfont/%.c
+	$(CC) -O3 $(CFLAGS) -Wall $< -c -o $@
 
 # ymfmidi
 
@@ -125,7 +145,7 @@ YMFMIDI_SRCS := \
 	patches.cpp \
 	player.cpp
 
-YMFMIDI_OBJS += $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o,$(YMFMIDI_SRCS))
+YMFMIDI_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o,$(YMFMIDI_SRCS))
 
 $(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/ymfmidi/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
@@ -144,5 +164,4 @@ MA_VTABLES_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/audio/extras/%.o,$(
 $(PATH_INTERNAL_C)/parts/audio/extras/%.o: $(PATH_INTERNAL_C)/parts/audio/extras/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall $< -c -o $@
 
-CLEAN_LIST += $(FOO_MIDI_OBJS) $(HIVELYTRACKER_OBJS) $(LIBMIDI_OBJS) $(LIBXMP_OBJS) $(PRIMESYNTH_OBJS) $(OPAL_OBJS) $(TINYSOUNDFONT_OBJS) $(YMFMIDI_OBJS) $(MA_VTABLES_OBJS)
-
+CLEAN_LIST += $(FOO_MIDI_OBJS) $(HIVELYTRACKER_OBJS) $(LIBMIDI_OBJS) $(LIBXMP_OBJS) $(PRIMESYNTH_OBJS) $(QOA_OBJS) $(OPAL_OBJS) $(STB_VORBIS_OBJS) $(TINYSOUNDFONT_OBJS) $(YMFMIDI_OBJS) $(MA_VTABLES_OBJS)

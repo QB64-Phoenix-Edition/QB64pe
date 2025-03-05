@@ -13,13 +13,11 @@
 
 #pragma once
 
-// Uncomment this to to print debug messages to stderr
-// #define AUDIO_DEBUG 1
-
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
+#include "extras/stb/stb_vorbis.h"
 #include "libqb-common.h"
-#include "miniaudio.h"
+#include "miniaudio/miniaudio.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -35,85 +33,36 @@
 #include <utility>
 #include <vector>
 
-#define SILENCE_SAMPLE 0.0f
+#define SILENCE_SAMPLE_F32 0.0f
+#define SILENCE_SAMPLE_I16 0
+#define SILENCE_SAMPLE_I8 0x80u
 
 #ifndef MA_DEFAULT_SAMPLE_RATE
 // Since this is used by the extended decoder plugins, it does not matter even if miniaudio changes it the future
 #    define MA_DEFAULT_SAMPLE_RATE 48000
 #endif
 
-/// @brief A simple FP32 stereo sample frame
-struct SampleFrame {
+/// @brief A simple FP32 stereo sample frame.
+struct SampleFrameF32 {
     float l;
     float r;
 };
 
-// VTables for our custom decoding backend
-extern ma_decoding_backend_vtable ma_vtable_midi;
-extern ma_decoding_backend_vtable ma_vtable_modplay;
-extern ma_decoding_backend_vtable ma_vtable_radv2;
-extern ma_decoding_backend_vtable ma_vtable_hively;
-extern ma_decoding_backend_vtable ma_vtable_qoa;
+/// @brief A simple 16-bit stereo sample frame.
+struct SampleFrameI16 {
+    int16_t l;
+    int16_t r;
+};
 
-// The global instrument bank manager
-extern InstrumentBankManager g_InstrumentBankManager;
+/// @brief A simple 8-bit stereo sample frame.
+struct SampleFrameI8 {
+    uint8_t l;
+    uint8_t r;
+};
 
-void AudioEngine_AttachCustomBackendVTables(ma_resource_manager_config *maResourceManagerConfig);
-
-/// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.
-/// @param fileName The name of the file to load.
-/// @return A container of the same type as the template parameter, containing the contents of the file.
-template <typename Container> Container AudioEngine_LoadFile(const char *fileName) {
-    if (!fileName || !fileName[0]) {
-        AUDIO_DEBUG_PRINT("Invalid parameters");
-
-        return {};
-    }
-
-    auto file = std::fopen(fileName, "rb");
-    if (!file) {
-        AUDIO_DEBUG_PRINT("Failed to open file %s", fileName);
-
-        return {};
-    }
-
-    if (std::fseek(file, 0, SEEK_END)) {
-        AUDIO_DEBUG_PRINT("Failed to seek to the end of file %s", fileName);
-
-        std::fclose(file);
-
-        return {};
-    }
-
-    auto size = std::ftell(file);
-    if (size < 0) {
-        AUDIO_DEBUG_PRINT("Failed to get the size of file %s", fileName);
-
-        std::fclose(file);
-
-        return {};
-    }
-
-    Container buffer;
-    buffer.resize(size);
-
-    std::rewind(file);
-
-    if (std::fread(buffer.data(), sizeof(uint8_t), size, file) != size_t(size) || std::ferror(file)) {
-        AUDIO_DEBUG_PRINT("Failed to read file %s", fileName);
-
-        std::fclose(file);
-
-        return {};
-    }
-
-    std::fclose(file);
-
-    return buffer;
-}
-
-/// @brief A class that can manage double buffer frame blocks
-class DoubleBufferFrameBlock {
+/// @brief A class that can manage double buffer frame blocks for different sample formats. This is used when decoders cannot do variable frame sizes or when
+/// the decoder's frame size is greater than miniaudio's frame size.
+template <typename SampleFrame> class DoubleBufferFrameBlock {
     std::vector<SampleFrame> blocks[2];
     size_t index;  // current reading block index
     size_t cursor; // cursor in the active block
@@ -140,62 +89,136 @@ class DoubleBufferFrameBlock {
         return blocks[0].empty() && blocks[1].empty();
     }
 
-    /// @brief Gets a float pointer to the write block that can be written to.
-    /// @param[in] frames The number of frames to write.
-    /// @return A pointer to the write block, or nullptr if the block is not empty.
-    float *GetWriteBlock(size_t frames) {
+    /// @brief Checks if the write block is empty.
+    /// @returns true if the write block is empty, false otherwise.
+    bool IsWriteBlockEmpty() const {
+        return blocks[1 - index].empty();
+    }
+
+    /// @brief Gets a pointer to the write block that can be written to.
+    /// @param frames The number of frames to allocate in the write block.
+    /// @returns A pointer to the write block if it is empty, otherwise nullptr.
+    SampleFrame *GetWriteBlock(size_t frames) {
         auto writeIndex = 1 - index;
 
         if (blocks[writeIndex].empty()) {
-            // Only resize and return a pointer if there is no data in the block
             blocks[writeIndex].resize(frames);
-            return reinterpret_cast<float *>(blocks[writeIndex].data());
+            return blocks[writeIndex].data();
         }
 
-        return nullptr; // block is not empty
+        return nullptr;
     }
 
     /// @brief Copies up to `frames` number of frames from the current block to `data`. The cursor is advanced by the number of frames copied.
-    /// @param[in] data The destination buffer to copy to.
-    /// @param[in] frames The number of frames to copy.
+    /// @param data The destination buffer to copy to.
+    /// @param frames The number of frames to copy.
     /// @return The number of frames copied.
-    size_t ReadFrames(float *data, size_t frames) {
+    size_t ReadFrames(SampleFrame *data, size_t frames) {
         if (blocks[index].empty()) {
-            // Switch to the other block
             index = 1 - index;
             cursor = 0;
 
-            if (blocks[index].empty())
-                return 0; // no data available
+            if (blocks[index].empty()) {
+                return 0;
+            }
         }
 
-        auto toCopy = std::min(frames, blocks[index].size() - cursor);                  // clip to whatever is left in the block
-        std::memcpy(data, blocks[index].data() + cursor, toCopy * sizeof(SampleFrame)); // copy the data
-        cursor += toCopy;                                                               // advance the cursor
+        auto toCopy = std::min(frames, blocks[index].size() - cursor);
+        std::memcpy(data, blocks[index].data() + cursor, toCopy * sizeof(SampleFrame));
+        cursor += toCopy;
 
-        size_t remaining = 0; // we'll set this to zero in case we copy the exact number of frames requested
+        size_t remaining = 0;
 
         if (toCopy < frames) {
-            // Switch to the other block since we copied less than requested
             blocks[index].clear();
             index = 1 - index;
             cursor = 0;
 
-            if (blocks[index].empty())
-                return toCopy; // return the partial number of frames copied
+            if (blocks[index].empty()) {
+                return toCopy;
+            }
 
-            remaining = std::min(frames - toCopy, blocks[index].size());                              // clip to block size
-            std::memcpy(data + (toCopy << 1), blocks[index].data(), remaining * sizeof(SampleFrame)); // copy the data
-            cursor += remaining;                                                                      // advance the cursor
+            remaining = std::min(frames - toCopy, blocks[index].size());
+            std::memcpy(data + toCopy, blocks[index].data(), remaining * sizeof(SampleFrame));
+            cursor += remaining;
         }
 
         if (cursor >= blocks[index].size()) {
-            // Switch to the other block if we've reached the end
             blocks[index].clear();
             index = 1 - index;
             cursor = 0;
         }
 
-        return toCopy + remaining; // return the number of frames copied
+        return toCopy + remaining;
     }
 };
+
+/// @brief Loads a file into memory. If the file cannot be opened or read, an empty container is returned.
+/// @tparam Container The type of the container to load the file into.
+/// @param fileName The name of the file to load.
+/// @return A container of the same type as the template parameter, containing the contents of the file.
+template <typename Container> Container AudioFile_Load(const char *fileName) {
+    if (!fileName || !fileName[0]) {
+        return {};
+    }
+
+    auto file = std::fopen(fileName, "rb");
+    if (!file) {
+        return {};
+    }
+
+    if (std::fseek(file, 0, SEEK_END)) {
+        std::fclose(file);
+        return {};
+    }
+
+    auto size = std::ftell(file);
+    if (size < 0) {
+        std::fclose(file);
+        return {};
+    }
+
+    auto objectSize = sizeof(typename Container::value_type);
+    auto objectCount = size / objectSize;
+
+    Container buffer;
+    buffer.resize(objectCount);
+
+    std::rewind(file);
+
+    if (std::fread(buffer.data(), objectSize, objectCount, file) != objectCount || std::ferror(file)) {
+        std::fclose(file);
+        return {};
+    }
+
+    std::fclose(file);
+
+    return std::move(buffer);
+}
+
+/// @brief Saves a container's data to a file. If the file cannot be opened or written to, the function returns false.
+/// @tparam Container The type of the container holding the data to be saved.
+/// @param fileName The name of the file to save the data to.
+/// @param data The container with data to be saved to the file.
+/// @return True if the data was successfully written to the file, otherwise false.
+template <typename Container> bool AudioFile_Save(const char *fileName, const Container &data) {
+    if (!fileName || !fileName[0] || data.empty()) {
+        return false;
+    }
+
+    auto file = std::fopen(fileName, "wb");
+    if (!file) {
+        return false;
+    }
+
+    auto objectSize = sizeof(typename Container::value_type);
+    auto objectCount = data.size();
+
+    if (std::fwrite(data.data(), objectSize, objectCount, file) != objectCount || std::ferror(file)) {
+        std::fclose(file);
+        return false;
+    }
+
+    std::fclose(file);
+    return true;
+}

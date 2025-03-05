@@ -6,12 +6,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 #include "../framework.h"
-// Although, QOA files use lossy compression, they can be quite large (like ADPCM compressed audio)
-// We certainly do not want to load these files in memory in one go
-// So, we'll simply exclude the stdio one-shot read/write APIs
-#define QOA_NO_STDIO
-#define QOA_IMPLEMENTATION
-#include "qoa.h"
+#include "qoa/qoa.h"
 
 struct ma_qoa {
     // This part is for miniaudio
@@ -126,6 +121,7 @@ static ma_result ma_qoa_read_pcm_frames(ma_qoa *pQOA, void *pFramesOut, ma_uint6
 
             if (!frame_len) {
                 result = MA_AT_END;
+                audio_log_info("Finished rendering QOA music");
                 break;
             }
 
@@ -336,6 +332,7 @@ static ma_result ma_qoa_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
 
     pQOA->first_frame_pos = qoa_decode_header(header, QOA_MIN_FILESIZE, &pQOA->info);
     if (!pQOA->first_frame_pos) {
+        audio_log_info("Not a valid QOA file");
         return MA_INVALID_FILE;
     }
 
@@ -356,6 +353,8 @@ static ma_result ma_qoa_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_p
         pQOA->sample_data = nullptr;
         return MA_OUT_OF_MEMORY;
     }
+
+    audio_log_info("Loaded QOA music file from memory (%llu bytes)", file_size);
 
     return MA_SUCCESS;
 }
@@ -393,6 +392,7 @@ static ma_result ma_qoa_init_file(const char *pFilePath, const ma_decoding_backe
     if (!pQOA->first_frame_pos) {
         fclose(pQOA->file);
         pQOA->file = nullptr;
+        audio_log_info("Not a valid QOA file");
         return MA_INVALID_FILE;
     }
 
@@ -420,6 +420,8 @@ static ma_result ma_qoa_init_file(const char *pFilePath, const ma_decoding_backe
         return MA_OUT_OF_MEMORY;
     }
 
+    audio_log_info("Loaded QOA music file from disk (%s)", pFilePath);
+
     return MA_SUCCESS;
 }
 
@@ -440,6 +442,8 @@ static void ma_qoa_uninit(ma_qoa *pQOA, const ma_allocation_callbacks *pAllocati
     pQOA->sample_data = nullptr;
 
     ma_data_source_uninit(&pQOA->ds);
+
+    audio_log_info("Unloaded QOA music file");
 }
 
 static ma_result ma_decoding_backend_init__qoa(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

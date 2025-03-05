@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.cpp (2024.06.09) **/
+/** $VER: MIDIContainer.cpp (2024.08.12) **/
 
 #include "framework.h"
 
@@ -217,7 +217,7 @@ void midi_container_t::AddTrack(const midi_track_t &track) {
         } else if (Event.Type == midi_event_t::NoteOn || Event.Type == midi_event_t::NoteOff) {
             uint32_t ChannelNumber = Event.ChannelNumber;
 
-            if (DeviceName.length()) {
+            if (DeviceName.length() != 0) {
                 size_t j, k;
 
                 for (j = 0, k = _DeviceNames[ChannelNumber].size(); j < k; ++j) {
@@ -248,6 +248,7 @@ void midi_container_t::AddTrack(const midi_track_t &track) {
         }
     }
 
+    // Determine the file duration as the longest track in the file.
     if ((_Format != 2) && (EventIndex > 0) && (track[EventIndex - 1].Time > _EndTimestamps[0])) {
         _EndTimestamps[0] = track[EventIndex - 1].Time;
     } else if (_Format == 2) {
@@ -441,6 +442,7 @@ void midi_container_t::SerializeAsStream(size_t subSongIndex, std::vector<midi_i
                     LimitPortNumber(PortNumbers[SelectedTrack]);
                 }
 
+                // Pack the event data into 32 bits.
                 uint32_t Message = ((Event.Type + 8) << 4) + Event.ChannelNumber;
 
                 if (Event.Data.size() >= 1)
@@ -473,7 +475,7 @@ void midi_container_t::SerializeAsStream(size_t subSongIndex, std::vector<midi_i
                     Data = Event.Data;
 
                     if (Data[DataSize - 1] == StatusCodes::SysExEnd) {
-                        uint32_t Index = (uint32_t)sysExTable.AddItem(&Data[0], DataSize, PortNumbers[SelectedTrack]) | 0x80000000u;
+                        uint32_t Index = (uint32_t)sysExTable.AddItem(Data.data(), DataSize, PortNumbers[SelectedTrack]) | 0x80000000u;
 
                         midiStream.push_back(midi_item_t(TimestampInMS, Index));
                     }
@@ -505,6 +507,7 @@ void midi_container_t::SerializeAsStream(size_t subSongIndex, std::vector<midi_i
                     uint32_t Message = (uint32_t)(PortNumbers[SelectedTrack] << 24);
 
                     Message += Event.Data[0];
+
                     midiStream.push_back(midi_item_t(TimestampInMS, Message));
                 }
             }

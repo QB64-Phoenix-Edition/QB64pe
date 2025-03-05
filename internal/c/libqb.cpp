@@ -28693,8 +28693,6 @@ int main(int argc, char *argv[]) {
     queue->lastIndex = 65535;
     queue->queue = (mouse_message *)calloc(1, sizeof(mouse_message) * (queue->lastIndex + 1));
 
-    snd_init();
-
     if (screen_hide_startup)
         screen_hide = 1;
 
@@ -29061,7 +29059,7 @@ main_loop:
         goto end_program;
     }
 
-    snd_mainloop();
+    snd_update();
 
     update ^= 1; // toggle update
 
@@ -29187,8 +29185,6 @@ end_program:
 #ifdef DEPENDENCY_DEVICEINPUT
     QB64_GAMEPAD_SHUTDOWN();
 #endif
-
-    snd_un_init();
 
     libqb_exit(exit_code);
 }

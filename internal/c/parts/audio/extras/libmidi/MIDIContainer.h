@@ -1,5 +1,5 @@
 
-/** $VER: MIDIContainer.h (2024.06.09) **/
+/** $VER: MIDIContainer.h (2024.09.08) **/
 
 #pragma once
 
@@ -10,14 +10,14 @@
 
 struct midi_event_t {
     enum event_type_t {
-        NoteOff = 0,     // x080
-        NoteOn,          // x090
-        KeyPressure,     // x0A0
-        ControlChange,   // x0B0
-        ProgramChange,   // x0C0
-        ChannelPressure, // x0D0
-        PitchBendChange, // x0E0
-        Extended         // x0F0
+        NoteOff = 0,     // 0x80
+        NoteOn,          // 0x90
+        KeyPressure,     // 0xA0
+        ControlChange,   // 0xB0
+        ProgramChange,   // 0xC0
+        ChannelPressure, // 0xD0
+        PitchBendChange, // 0xE0
+        Extended         // 0xF0
     };
 
     uint32_t Time; // Absolute time
@@ -279,6 +279,10 @@ struct midi_item_t {
     midi_item_t() noexcept : Time(0), Data(0) {}
 
     midi_item_t(uint32_t time, uint32_t data) noexcept : Time(time), Data(data) {}
+
+    bool IsSysEx() const noexcept {
+        return ((Data & 0x80000000u) == 0x80000000u);
+    }
 };
 
 class midi_container_t {
@@ -399,7 +403,7 @@ class midi_container_t {
     }
 
     template <typename T> void LimitPortNumber(T &number) const {
-        for (size_t i = 0; i < _PortNumbers.size(); i++) {
+        for (size_t i = 0; i < _PortNumbers.size(); ++i) {
             if (_PortNumbers[i] == number) {
                 number = (T)i;
 

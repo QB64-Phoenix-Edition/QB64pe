@@ -2246,10 +2246,11 @@ SUB reginternal
     id.Dependency = DEPENDENCY_MINIAUDIO
     id.subfunc = 1
     id.callname = "func__sndnew"
-    id.args = 3
-    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.args = 4
+    id.arg = MKL$(ULONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER)
+    id.specialformat = "?[,[?][,[?][,?]]]"
     id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_SNDNEW(frames&, channels&, bits&)"
+    id.hr_syntax = "_SNDNEW(frames&[, channels&][, bits&][, sampleRate&])"
     regid
 
     clearid

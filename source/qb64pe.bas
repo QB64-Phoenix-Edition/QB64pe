@@ -9397,7 +9397,7 @@ DO
                 IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                 'attempt conversion...
                 e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
-                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + typ$
+                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase$(typ$)
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
                 st$ = typ2ctyp$(t, "")
                 varsize$ = str2((t AND 511) \ 8)
@@ -9504,7 +9504,7 @@ DO
                 IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                 'attempt conversion...
                 e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
-                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + typ$
+                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase$(typ$)
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
 
                 c$ = "sub__memfill_"
@@ -13357,7 +13357,7 @@ FUNCTION ParseCMDLineArgs$ ()
             IDEAutoLayoutKwStyle = -1
         END IF
     END IF
-     'don't leak force option into the IDE or the code formatter
+    'don't leak force option into the IDE or the code formatter
     IF NoIDEMode = 0 THEN ForceOptExpl = 0
 
     IF FormatMode AND LEN(outputfile_cmd$) = 0 THEN

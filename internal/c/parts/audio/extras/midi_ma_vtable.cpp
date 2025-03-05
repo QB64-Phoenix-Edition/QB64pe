@@ -39,8 +39,8 @@ struct ma_midi {
     ma_int64 totalTime;          // total duration of the MIDI song in frames
     bool isPlaying;              // this holds the playing state
 #ifdef _WIN32
-    DoubleBufferFrameBlock *frameBlock; // only needed when a player cannot do variable frame size rendering (e.g. VSTiPlayer)
-    bool isReallyPlaying;               // this holds the real playing state and is needed due to the same reason as above
+    DoubleBufferFrameBlock<SampleFrameF32> *frameBlock; // only needed when a player cannot do variable frame size rendering (e.g. VSTiPlayer)
+    bool isReallyPlaying;                               // this holds the real playing state and is needed due to the same reason as above
 #endif
 };
 
@@ -112,16 +112,17 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     if (fixedFrames) {
         // Only attempt to render if we are actually playing
         if (pMIDI->isReallyPlaying) {
-            auto dest = pMIDI->frameBlock->GetWriteBlock(fixedFrames);
-            if (dest)
+            auto dest = reinterpret_cast<float *>(pMIDI->frameBlock->GetWriteBlock(fixedFrames));
+            if (dest) {
                 pMIDI->isReallyPlaying = pMIDI->sequencer->Play(dest, fixedFrames) > 0;
+            }
         }
 
         // Get partial data from the frame block
-        totalFramesRead = pMIDI->frameBlock->ReadFrames(reinterpret_cast<float *>(pFramesOut), frameCount);
+        totalFramesRead = pMIDI->frameBlock->ReadFrames(reinterpret_cast<SampleFrameF32 *>(pFramesOut), frameCount);
 
         // Set the isPlaying flag to true if we still have some data in the buffers
-        pMIDI->isPlaying = !pMIDI->frameBlock->IsEmpty();
+        pMIDI->isPlaying = !pMIDI->frameBlock->IsEmpty() || pMIDI->isReallyPlaying;
     } else
 #endif
     {
@@ -132,7 +133,7 @@ static ma_result ma_midi_read_pcm_frames(ma_midi *pMIDI, void *pFramesOut, ma_ui
     // Signal end of stream if we have reached the end
     if (!pMIDI->isPlaying) {
         result = MA_AT_END;
-        AUDIO_DEBUG_PRINT("Reached end of stream");
+        audio_log_info("Finished rendering MIDI music");
     }
 
     if (pFramesRead != NULL) {
@@ -289,23 +290,16 @@ static ma_result ma_midi_init_internal(const ma_decoding_backend_config *pConfig
 /// @brief Common cleanup routine. Assumes pMIDI is valid
 /// @param pMIDI Valid pointer to a ma_midi object
 static void ma_midi_uninit_common(ma_midi *pMIDI) {
-    AUDIO_DEBUG_PRINT("Deleting foo_midi objects");
-
     delete pMIDI->container;
     pMIDI->container = nullptr;
-    AUDIO_DEBUG_PRINT("foo_midi container deleted");
 
     delete pMIDI->sequencer;
     pMIDI->sequencer = nullptr;
-    AUDIO_DEBUG_PRINT("foo_midi sequencer deleted");
 
 #ifdef _WIN32
     delete pMIDI->frameBlock;
     pMIDI->frameBlock = nullptr;
-    AUDIO_DEBUG_PRINT("foo_midi frameBlock deleted");
 #endif
-
-    AUDIO_DEBUG_PRINT("foo_midi objects deleted");
 }
 
 /// @brief Common init routine for memory and file based MIDI. This does not check any of the parameters and expects them to be valid.
@@ -313,49 +307,38 @@ static void ma_midi_uninit_common(ma_midi *pMIDI) {
 /// @param tune The tune to load
 /// @return Result code (MA_SUCCESS on success)
 static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune, const char *pFilePath) {
-    AUDIO_DEBUG_CHECK(pMIDI != NULL);
-    AUDIO_DEBUG_CHECK(pMIDI->container == nullptr);
-    AUDIO_DEBUG_CHECK(pMIDI->sequencer == nullptr);
-    AUDIO_DEBUG_PRINT("Tune size: %llu", tune.size());
-
     // Create the synthesizer based on the sound bank
-    switch (g_InstrumentBankManager.GetType()) {
+    switch (InstrumentBankManager::Instance().GetType()) {
     case InstrumentBankManager::Type::Primesynth:
-        pMIDI->sequencer = new PSPlayer(&g_InstrumentBankManager);
-        AUDIO_DEBUG_PRINT("Using primesynth");
+        pMIDI->sequencer = new PSPlayer(&InstrumentBankManager::Instance());
         break;
 
     case InstrumentBankManager::Type::TinySoundFont:
-        pMIDI->sequencer = new TSFPlayer(&g_InstrumentBankManager);
-        AUDIO_DEBUG_PRINT("Using TinySoundFont");
+        pMIDI->sequencer = new TSFPlayer(&InstrumentBankManager::Instance());
         break;
 
 #ifdef _WIN32
     case InstrumentBankManager::Type::VSTi:
-        pMIDI->sequencer = new VSTiPlayer(&g_InstrumentBankManager);
-        AUDIO_DEBUG_PRINT("Using VSTi");
+        pMIDI->sequencer = new VSTiPlayer(&InstrumentBankManager::Instance());
         break;
 #endif
 
     default:
-        AUDIO_DEBUG_PRINT("Unknown synth type. Falling back to OpalPlayer");
-        g_InstrumentBankManager.SetPath(nullptr);
+        InstrumentBankManager::Instance().SetPath(nullptr);
         [[fallthrough]];
 
     case InstrumentBankManager::Type::Opal:
-        pMIDI->sequencer = new OpalPlayer(&g_InstrumentBankManager);
-        AUDIO_DEBUG_PRINT("Using OpalPlayer");
+        pMIDI->sequencer = new OpalPlayer(&InstrumentBankManager::Instance());
         break;
     }
 
     if (!pMIDI->sequencer) {
-        AUDIO_DEBUG_PRINT("Failed to create sequencer instance");
+        audio_log_warn("Failed to create sequencer instance");
         return MA_INVALID_FILE; // failure here will be mostly due to bad sound bank
     }
 
     // Set sample rate
     pMIDI->sequencer->SetSampleRate(MA_DEFAULT_SAMPLE_RATE);
-    AUDIO_DEBUG_PRINT("Sample rate set to %d", MA_DEFAULT_SAMPLE_RATE);
 
     // Create the MIDI container object
     pMIDI->container = new midi_container_t();
@@ -367,11 +350,11 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     try {
         if (!midi_processor_t::Process(tune, pFilePath, *pMIDI->container)) {
             ma_midi_uninit_common(pMIDI);
-            AUDIO_DEBUG_PRINT("Not a valid MIDI file");
+            audio_log_warn("Not a valid MIDI file");
             return MA_INVALID_FILE;
         }
     } catch (std::exception &e) {
-        AUDIO_DEBUG_PRINT("Exception: %s", e.what());
+        audio_log_warn("Exception: %s", e.what());
         ma_midi_uninit_common(pMIDI);
         return MA_INVALID_FILE;
     }
@@ -388,7 +371,6 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     // Probe and check the track number we can play
     for (uint32_t i = 0; i < trackCount; i++) {
         pMIDI->totalTime = (ma_int64(pMIDI->container->GetDuration(i, true)) * MA_DEFAULT_SAMPLE_RATE) / 1000; // convert this to frames
-        AUDIO_DEBUG_PRINT("MIDI track %u, duration: %lld frames", i, pMIDI->totalTime);
 
         if (pMIDI->totalTime) {
             hasDuration = true;
@@ -403,7 +385,7 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
     }
 
 #ifdef _WIN32
-    pMIDI->frameBlock = new DoubleBufferFrameBlock();
+    pMIDI->frameBlock = new DoubleBufferFrameBlock<SampleFrameF32>();
     if (!pMIDI->frameBlock) {
         ma_midi_uninit_common(pMIDI);
         return MA_OUT_OF_MEMORY;
@@ -423,12 +405,12 @@ static auto ma_midi_init_common(ma_midi *pMIDI, const std::vector<uint8_t> &tune
 #endif
         }
     } catch (std::exception &e) {
-        AUDIO_DEBUG_PRINT("Exception: %s", e.what());
+        audio_log_warn("Exception: %s", e.what());
         ma_midi_uninit_common(pMIDI);
         return MA_INVALID_FILE;
     }
 
-    AUDIO_DEBUG_PRINT("MIDI initialized");
+    audio_log_info("Loaded MIDI music file from memory (%zu bytes)", tune.size());
 
     return MA_SUCCESS;
 }
@@ -501,7 +483,7 @@ static ma_result ma_midi_init_file(const char *pFilePath, const ma_decoding_back
         return MA_INVALID_FILE;
     }
 
-    auto tune = AudioEngine_LoadFile<std::vector<uint8_t>>(pFilePath);
+    auto tune = AudioFile_Load<std::vector<uint8_t>>(pFilePath);
     if (tune.empty()) {
         return MA_INVALID_FILE;
     }
@@ -519,7 +501,7 @@ static void ma_midi_uninit(ma_midi *pMIDI, const ma_allocation_callbacks *pAlloc
     ma_midi_uninit_common(pMIDI);
     ma_data_source_uninit(&pMIDI->ds);
 
-    AUDIO_DEBUG_PRINT("MIDI uninitialized");
+    audio_log_info("Unloaded MIDI music file");
 }
 
 static ma_result ma_decoding_backend_init__midi(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

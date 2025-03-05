@@ -18,10 +18,6 @@ class InstrumentBankManager {
 
     enum class Location : uint32_t { Memory, File };
 
-    InstrumentBankManager() {
-        SetDefaults();
-    };
-
     auto GetType() {
         return type;
     }
@@ -46,9 +42,20 @@ class InstrumentBankManager {
         return data.size();
     }
 
+    static InstrumentBankManager &Instance();
+
   private:
     static const uint8_t defaultBank[];
     static const size_t defaultBankSize = 212069;
+
+    InstrumentBankManager() {
+        SetDefaults();
+    };
+
+    InstrumentBankManager(const InstrumentBankManager &) = delete;
+    InstrumentBankManager &operator=(const InstrumentBankManager &) = delete;
+    InstrumentBankManager(InstrumentBankManager &&) = delete;
+    InstrumentBankManager &operator=(InstrumentBankManager &&) = delete;
 
     Type type;
     Location location;

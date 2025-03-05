@@ -1,5 +1,5 @@
 
-/** $VER: MIDI.h (2024.05.10) **/
+/** $VER: MIDI.h (2024.08.11) **/
 
 #pragma once
 
@@ -34,6 +34,17 @@ enum ControlChangeNumbers {
     BankSelect = 0x00,
 
     LSB = 0x20, // LSB for Control Changes 0 to 31
+};
+
+enum ChannelModeMessages {
+    AllSoundsOff = 120,
+    ResetAllControllers = 121,
+    LocalControl = 122,
+    AllNotesOff = 123,
+    OmniOff = 124,
+    OmniOn = 125,
+    MonoOn = 126,
+    PolyOn = 127,
 };
 
 enum MetaDataTypes {

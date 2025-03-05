@@ -1,5 +1,5 @@
 
-/** $VER: MIDIProcessor.h (2024.05.19) **/
+/** $VER: MIDIProcessor.h (2025.02.24) **/
 
 #pragma once
 
@@ -22,14 +22,19 @@ struct midi_processor_options_t {
     // HMI / HMP
     uint16_t _DefaultTempo = 160; // in bpm
 
-    // a740g: constructor here for the const DefaultOptions below
-    midi_processor_options_t(uint16_t loopExpansion, bool writeBarMarkers, bool writeSysExNames)
-        : _LoopExpansion(loopExpansion), _WriteBarMarkers(writeBarMarkers), _WriteSysExNames(writeSysExNames) {}
+    // SMF
+    bool _IsEndOfTrackRequired = true;
+
+    midi_processor_options_t(uint16_t loopExpansion, bool writeBarMarkers, bool writeSysExNames, bool extendLoops, bool wolfteamLoopMode,
+                             bool keepDummyChannels, bool includeControlData, uint16_t defaultTempo, bool isEndOfTrackRequired)
+        : _LoopExpansion(loopExpansion), _WriteBarMarkers(writeBarMarkers), _WriteSysExNames(writeSysExNames), _ExtendLoops(extendLoops),
+          _WolfteamLoopMode(wolfteamLoopMode), _KeepDummyChannels(keepDummyChannels), _IncludeControlData(includeControlData), _DefaultTempo(defaultTempo),
+          _IsEndOfTrackRequired(isEndOfTrackRequired) {}
 
     midi_processor_options_t() = default;
 };
 
-const midi_processor_options_t DefaultOptions(0, false, 0); // a740g: not sure why this is needed
+const midi_processor_options_t DefaultOptions(0, false, false, true, false, false, true, 160, true);
 
 class midi_processor_t {
   public:
@@ -61,8 +66,7 @@ class midi_processor_t {
     static bool ProcessRCP(std::vector<uint8_t> const &data, const char *filePath, midi_container_t &container);
     static bool ProcessSysEx(std::vector<uint8_t> const &data, midi_container_t &container);
 
-    static bool ProcessSMFTrack(std::vector<uint8_t>::const_iterator &it, std::vector<uint8_t>::const_iterator end, midi_container_t &container,
-                                bool needs_end_marker);
+    static bool ProcessSMFTrack(std::vector<uint8_t>::const_iterator &it, std::vector<uint8_t>::const_iterator end, midi_container_t &container);
     static int DecodeVariableLengthQuantity(std::vector<uint8_t>::const_iterator &it, std::vector<uint8_t>::const_iterator end) noexcept;
 
     static uint32_t DecodeVariableLengthQuantityHMP(std::vector<uint8_t>::const_iterator &it, std::vector<uint8_t>::const_iterator end) noexcept;

@@ -8,6 +8,11 @@
 #include "InstrumentBankManager.h"
 #include "../../../data/miniz.h"
 
+InstrumentBankManager &InstrumentBankManager::Instance() {
+    static InstrumentBankManager instance;
+    return instance;
+}
+
 void InstrumentBankManager::SetPath(const char *path) {
     if (path && path[0]) {
         if (filepath_has_extension(path, "ad") || filepath_has_extension(path, "opl") || filepath_has_extension(path, "op2") ||
