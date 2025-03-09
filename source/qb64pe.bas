@@ -9397,7 +9397,7 @@ DO
                 IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                 'attempt conversion...
                 e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
-                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase$(typ$)
+                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase2$(typ$)
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
                 st$ = typ2ctyp$(t, "")
                 varsize$ = str2((t AND 511) \ 8)
@@ -9504,7 +9504,7 @@ DO
                 IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                 'attempt conversion...
                 e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
-                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase$(typ$)
+                l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase2$(typ$)
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
 
                 c$ = "sub__memfill_"
