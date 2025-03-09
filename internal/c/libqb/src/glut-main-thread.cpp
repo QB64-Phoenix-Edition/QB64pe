@@ -110,8 +110,6 @@ static void initialize_glut(int argc, char **argv) {
 #ifdef CORE_FREEGLUT
     glutMouseWheelFunc(GLUT_MOUSEWHEEL_FUNC);
 #endif
-
-    macMouseInit();
 }
 
 static bool glut_is_started;
