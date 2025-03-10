@@ -28251,7 +28251,7 @@ void GLUT_MOTION_FUNC(int x, int y) {
     int32 xrel, yrel;
 
     // This is used to save the last mouse position which is then paired with the mouse wheel event on macOS
-    macMouseUpdatePosition(x, y);
+    MacMouse_UpdatePosition(x, y);
 
     mouse_message_queue_struct *queue = &mouse_message_queue;
 

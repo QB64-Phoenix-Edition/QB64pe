@@ -110,7 +110,7 @@ static ma_result ma_radv2_read_pcm_frames(ma_radv2 *pRadv2, void *pFramesOut, ma
 
         if (repeat) {
             result = MA_AT_END;
-            audio_log_info("Finished rendering RAD music");
+            audio_log_trace("Finished rendering RAD music");
             break;
         }
     }
@@ -349,7 +349,7 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
         pRadv2->player = nullptr;
         delete[] pRadv2->tune;
         pRadv2->tune = nullptr;
-        audio_log_info("Not a valid RAD file");
+        audio_log_warn("Not a valid RAD file");
         return MA_INVALID_FILE;
     }
 
@@ -374,7 +374,7 @@ static ma_result ma_radv2_init(ma_read_proc onRead, ma_seek_proc onSeek, ma_tell
     pRadv2->sampleCount = 0;
     pRadv2->sampleUpdate = MA_DEFAULT_SAMPLE_RATE / pRadv2->player->GetHertz();
 
-    audio_log_info("Loaded RAD music file from memory (%llu bytes)", file_size);
+    audio_log_trace("Loaded RAD music file from memory (%llu bytes)", file_size);
 
     return MA_SUCCESS;
 }
@@ -461,6 +461,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
         pRadv2->player = nullptr;
         delete[] pRadv2->tune;
         pRadv2->tune = nullptr;
+        audio_log_warn("Not a valid RAD file");
         return MA_INVALID_FILE;
     }
 
@@ -485,7 +486,7 @@ static ma_result ma_radv2_init_file(const char *pFilePath, const ma_decoding_bac
     pRadv2->sampleCount = 0;
     pRadv2->sampleUpdate = MA_DEFAULT_SAMPLE_RATE / pRadv2->player->GetHertz();
 
-    audio_log_info("Loaded RAD music file from disk (%s)", pFilePath);
+    audio_log_trace("Loaded RAD music file from disk (%s)", pFilePath);
 
     return MA_SUCCESS;
 }
@@ -509,7 +510,7 @@ static void ma_radv2_uninit(ma_radv2 *pRadv2, const ma_allocation_callbacks *pAl
 
     ma_data_source_uninit(&pRadv2->ds);
 
-    audio_log_info("Unloaded RAD music file");
+    audio_log_trace("Unloaded RAD music file");
 }
 
 static ma_result ma_decoding_backend_init__radv2(void *pUserData, ma_read_proc onRead, ma_seek_proc onSeek, ma_tell_proc onTell, void *pReadSeekTellUserData,

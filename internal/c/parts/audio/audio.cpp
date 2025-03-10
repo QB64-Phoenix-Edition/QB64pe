@@ -3714,7 +3714,7 @@ class AudioEngine {
                 break;
 
             default:
-                audio_log_trace("Unknown format");
+                audio_log_warn("Unknown format");
                 return;
             }
         } else {
