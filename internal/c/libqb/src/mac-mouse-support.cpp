@@ -1,81 +1,123 @@
 // Mouse support functions for macOS
-// These are required to overcome the limitations of GLUT
+// These hacks are required to overcome the limitations of macOS GLUT
 
 #include "libqb-common.h"
 
+#include "logging.h"
 #include "mac-mouse-support.h"
 
 #include <ApplicationServices/ApplicationServices.h>
-#include <GLUT/glut.h>
-#include <atomic>
 #include <unistd.h>
 
 void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY);
 void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y);
 
-static std::atomic<int> g_MouseX = 0;
-static std::atomic<int> g_MouseY = 0;
-static CFMachPortRef g_EventTap = nullptr;
-static CFRunLoopSourceRef g_RunLoopSource = nullptr;
-
-static CGEventRef macMouseCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *userInfo) {
-    (void)(proxy);
-
-    auto appPID = reinterpret_cast<int64_t>(userInfo);
-
-    if (CGEventGetIntegerValueField(event, kCGEventTargetUnixProcessID) == appPID) {
-        if (type == kCGEventScrollWheel) {
-            auto deltaScroll = CGEventGetIntegerValueField(event, kCGScrollWheelEventPointDeltaAxis1);
-            GLUT_MOUSEWHEEL_FUNC(0, deltaScroll, g_MouseX, g_MouseY);
-        } else {
-            auto deltaX = CGEventGetIntegerValueField(event, kCGMouseEventDeltaX);
-            auto deltaY = CGEventGetIntegerValueField(event, kCGMouseEventDeltaY);
-            if (deltaX || deltaY)
-                qb64_custom_event_relative_mouse_movement(deltaX, deltaY);
-        }
+class MacMouse {
+  public:
+    void UpdatePosition(int x, int y) {
+        this->x = x;
+        this->y = y;
     }
 
-    return event;
-}
+    static MacMouse &Instance() {
+        static MacMouse instance;
+        return instance;
+    }
 
-void macMouseInit() {
-    if (!g_EventTap) {
+  private:
+    MacMouse() : x(0), y(0) {
+        appPID = getpid();
+
+        eventSource = CGEventSourceCreate(CGEventSourceStateID::kCGEventSourceStateCombinedSessionState);
+        if (eventSource) {
+            CGEventSourceSetLocalEventsSuppressionInterval(eventSource, 0.0);
+            libqb_log_trace("Disabled local events suppression interval");
+        } else {
+            libqb_log_warn("Failed to create event source");
+        }
+
         CGEventMask eventMask = CGEventMaskBit(kCGEventLeftMouseDown) | CGEventMaskBit(kCGEventLeftMouseUp) | CGEventMaskBit(kCGEventRightMouseDown) |
                                 CGEventMaskBit(kCGEventRightMouseUp) | CGEventMaskBit(kCGEventMouseMoved) | CGEventMaskBit(kCGEventLeftMouseDragged) |
                                 CGEventMaskBit(kCGEventRightMouseDragged) | CGEventMaskBit(kCGEventScrollWheel) | CGEventMaskBit(kCGEventOtherMouseDown) |
                                 CGEventMaskBit(kCGEventOtherMouseUp) | CGEventMaskBit(kCGEventOtherMouseDragged);
 
-        g_EventTap = CGEventTapCreate(kCGAnnotatedSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionListenOnly, eventMask, macMouseCallback,
-                                      reinterpret_cast<void *>(getpid()));
-        if (g_EventTap) {
-            g_RunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, g_EventTap, 0);
+        eventTap = CGEventTapCreate(kCGAnnotatedSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionListenOnly, eventMask, Callback,
+                                    reinterpret_cast<void *>(this));
+        if (eventTap) {
+            libqb_log_trace("Created event tap");
 
-            if (g_RunLoopSource) {
-                CFRunLoopAddSource(CFRunLoopGetCurrent(), g_RunLoopSource, kCFRunLoopCommonModes);
-                CGEventTapEnable(g_EventTap, true);
+            runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
+
+            if (runLoopSource) {
+                CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
+                CGEventTapEnable(eventTap, true);
+
+                libqb_log_trace("Created run loop source");
             } else {
-                CFRelease(g_EventTap);
+                libqb_log_warn("Failed to create run loop source");
+
+                CFRelease(eventTap);
+                eventTap = nullptr;
+            }
+        } else {
+            libqb_log_warn("Failed to create event tap");
+        }
+
+        libqb_log_info("Initialized Mac mouse hacks");
+    }
+
+    ~MacMouse() {
+        if (eventTap) {
+            CGEventTapEnable(eventTap, false);
+            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
+            CFRelease(runLoopSource);
+            CFRelease(eventTap);
+
+            libqb_log_trace("Released event tap and run loop source");
+        }
+
+        if (eventSource) {
+            CFRelease(eventSource);
+
+            libqb_log_trace("Released event source");
+        }
+
+        libqb_log_info("Shutdown Mac mouse hacks");
+    }
+
+    MacMouse(const MacMouse &) = delete;
+    MacMouse &operator=(const MacMouse &) = delete;
+    MacMouse(MacMouse &&) = delete;
+    MacMouse &operator=(MacMouse &&) = delete;
+
+    static CGEventRef Callback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *userInfo) {
+        (void)(proxy);
+
+        auto macMouse = reinterpret_cast<MacMouse *>(userInfo);
+
+        if (CGEventGetIntegerValueField(event, kCGEventTargetUnixProcessID) == macMouse->appPID) {
+            if (type == kCGEventScrollWheel) {
+                GLUT_MOUSEWHEEL_FUNC(0, CGEventGetIntegerValueField(event, kCGScrollWheelEventPointDeltaAxis1), macMouse->x, macMouse->y);
+            } else {
+                auto deltaX = CGEventGetIntegerValueField(event, kCGMouseEventDeltaX);
+                auto deltaY = CGEventGetIntegerValueField(event, kCGMouseEventDeltaY);
+                if (deltaX || deltaY) {
+                    qb64_custom_event_relative_mouse_movement(deltaX, deltaY);
+                }
             }
         }
+
+        return event;
     }
-}
 
-void macMouseDone() {
-    if (g_EventTap) {
-        CGEventTapEnable(g_EventTap, false);
-        CFRunLoopRemoveSource(CFRunLoopGetCurrent(), g_RunLoopSource, kCFRunLoopCommonModes);
-        CFRelease(g_RunLoopSource);
-        CFRelease(g_EventTap);
-        g_RunLoopSource = nullptr;
-        g_EventTap = nullptr;
-    }
-}
+    CFMachPortRef eventTap;
+    CFRunLoopSourceRef runLoopSource;
+    CGEventSourceRef eventSource;
+    pid_t appPID;
+    int x;
+    int y;
+};
 
-void macMouseUpdatePosition(int x, int y) {
-    g_MouseX.store(x, std::memory_order_relaxed);
-    g_MouseY.store(y, std::memory_order_relaxed);
-}
-
-void macMouseAssociateMouseAndMouseCursorPosition(bool connected) {
-    CGAssociateMouseAndMouseCursorPosition(boolean_t(connected));
+void MacMouse_UpdatePosition(int x, int y) {
+    MacMouse::Instance().UpdatePosition(x, y);
 }
