@@ -33,6 +33,7 @@ DIM SHARED GenerateLicenseFile AS LONG
 DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
 DIM SHARED DefaultTerminal AS STRING
 DIM SHARED LoggingEnabled AS _UNSIGNED LONG
+DIM SHARED UseSystemMinGW AS LONG
 
 '===== Define and check settings location =====================================
 ConfigFolder$ = "settings" 'relative config location inside the qb64pe main folder

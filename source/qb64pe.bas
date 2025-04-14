@@ -89,7 +89,6 @@ IF _DIREXISTS("internal") = 0 THEN
 END IF
 
 DIM SHARED Include_GDB_Debugging_Info 'set using "config.ini" or "Compiler settings" dialog
-DIM SHARED UseSystemMinGW AS _BYTE
 
 DIM SHARED DEPENDENCY_LAST
 CONST DEPENDENCY_LOADFONT = 1: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
@@ -13307,6 +13306,8 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF MaxParallelProcesses <= 0 THEN CMDLineSettingsError "MaxCompilerProcesses must be graeter than zero.", 0, 1
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":usesystemcompiler"
+                        IF NOT ParseBooleanSetting&(token$, UseSystemMinGW) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":autoindent"
                         IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN CMDLineSettingsError token$, 1, 1
                         DEFAutoIndent = IDEAutoIndent 'for restoring after '$FORMAT:OFF
@@ -13418,6 +13419,7 @@ SUB CMDLineTemporarySettingsHelp
     PRINT "  -f:ExtraLinkerFlags=[string]          Extra flags for the Linker"
     PRINT "  -f:MaxCompilerProcesses=[integer]     Max C++ Compiler processes to use"
     PRINT "  -f:GenerateLicenseFile=[true|false]   Produce a license.txt file for program"
+    PRINT "  -f:UseSystemCompiler=[true|false]     Use the system C++ compiler instead of the bundled one (Windows only)"
     PRINT
     PRINT "Supported (-f) Layout settings:"
     PRINT "  -f:AutoIndent=[true|false]            Auto Indent lines"
