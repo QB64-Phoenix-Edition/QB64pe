@@ -605,5 +605,11 @@ SUB ReadInitialConfig
     ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
 
     GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
+
+    IF os$ = "WIN" THEN
+        UseSystemMinGW = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseSystemMinGW", _FALSE)
+    ELSE
+        UseSystemMinGW = _TRUE  ' always use the system compiler on non-Windows platforms
+    END IF
 END SUB
 

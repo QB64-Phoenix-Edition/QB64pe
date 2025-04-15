@@ -65,11 +65,19 @@ ifeq ($(OS),win)
 	PATH_LIBQB := $(PATH_INTERNAL_C)\libqb
 	SHELL := cmd
 	CP := xcopy /E /C /H /R /Y
-	AR := $(PATH_INTERNAL_C)\c_compiler\bin\ar.exe
-	CC := $(PATH_INTERNAL_C)\c_compiler\bin\gcc.exe
-	CXX := $(PATH_INTERNAL_C)\c_compiler\bin\c++.exe
-	OBJCOPY := $(PATH_INTERNAL_C)\c_compiler\bin\objcopy.exe
-	WINDRES := $(PATH_INTERNAL_C)\c_compiler\bin\windres.exe
+	ifdef USE_SYSTEM_MINGW
+		AR := ar.exe
+		CC := gcc.exe
+		CXX := c++.exe
+		OBJCOPY := objcopy.exe
+		WINDRES := windres.exe
+	else
+		AR := $(PATH_INTERNAL_C)\c_compiler\bin\ar.exe
+		CC := $(PATH_INTERNAL_C)\c_compiler\bin\gcc.exe
+		CXX := $(PATH_INTERNAL_C)\c_compiler\bin\c++.exe
+		OBJCOPY := $(PATH_INTERNAL_C)\c_compiler\bin\objcopy.exe
+		WINDRES := $(PATH_INTERNAL_C)\c_compiler\bin\windres.exe
+	endif
 	ICON_OBJ := $(PATH_INTERNAL_TEMP)\icon.o
 	RM := del /Q
 	MKDIR := mkdir

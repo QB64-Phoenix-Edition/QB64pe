@@ -15689,7 +15689,7 @@ FUNCTION ideCompilerSettingsBox
 
     '-------- init dialog box & objects --------
     i = 0
-    idepar p, 48, 15, "Compiler Settings"
+    idepar p, 48, _IIF(os$ = "WIN", 16, 15), "Compiler Settings"
 
     i = i + 1: ocpChk = i
     o(i).typ = 4 'check box
@@ -15732,9 +15732,17 @@ FUNCTION ideCompilerSettingsBox
     o(i).x = 44: o(i).y = 12
     o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
+    IF os$ = "WIN" THEN
+        i = i + 1: uscChk = i
+        o(i).typ = 4 'check box
+        o(i).y = 14
+        o(i).nam = idenewtxt("#Use system compiler")
+        o(i).sel = ABS(UseSystemMinGW)
+    END IF
+
     i = i + 1: okBut = i: caBut = i + 1
     o(i).typ = 3 'action buttons
-    o(i).y = 15
+    o(i).y = _IIF(os$ = "WIN", 16, 15)
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
     '-------- end of init dialog box & objects --------
 
@@ -15863,6 +15871,17 @@ FUNCTION ideCompilerSettingsBox
             v% = VAL(idetxt(o(mppBox).txt))
             IF MaxParallelProcesses <> v% THEN MaxParallelProcesses = v%: optChg% = -1
 
+            IF os$ = "WIN" THEN
+                v% = o(uscChk).sel: IF v% <> 0 THEN v% = _TRUE
+                IF UseSystemMinGW <> v% THEN UseSystemMinGW = v%: optChg% = _TRUE
+
+                ' Show a warning if the user is using the system MinGW compiler
+                IF UseSystemMinGW _ANDALSO optChg% THEN
+                    retval = idemessagebox("Warning", "Using the system MinGW compiler may cause problems.", "#OK")
+                    PCOPY 2, 1
+                END IF
+            END IF
+
             IF optChg% THEN
                 'save changes
                 WriteConfigSetting compilerSettingsSection$, "OptimizeCppProgram", BoolToTFString$(OptimizeCppProgram)
@@ -15873,6 +15892,10 @@ FUNCTION ideCompilerSettingsBox
                 WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
 
                 WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", str2$(MaxParallelProcesses)
+
+                IF os$ = "WIN" THEN
+                    WriteConfigSetting compilerSettingsSection$, "UseSystemMinGW", BoolToTFString$(UseSystemMinGW)
+                END IF
 
                 'clean compiled files, since they may change due to the different settings
                 PurgeTemporaryBuildFiles (os$), (MacOSX)
