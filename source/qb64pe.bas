@@ -13419,7 +13419,8 @@ SUB CMDLineTemporarySettingsHelp
     PRINT "  -f:ExtraLinkerFlags=[string]          Extra flags for the Linker"
     PRINT "  -f:MaxCompilerProcesses=[integer]     Max C++ Compiler processes to use"
     PRINT "  -f:GenerateLicenseFile=[true|false]   Produce a license.txt file for program"
-    PRINT "  -f:UseSystemCompiler=[true|false]     Use the system C++ compiler instead of the bundled one (Windows only)"
+    PRINT "  -f:UseSystemCompiler=[true|false]     Use the system C++ compiler instead of"
+    PRINT "                                        the bundled one (Windows only)"
     PRINT
     PRINT "Supported (-f) Layout settings:"
     PRINT "  -f:AutoIndent=[true|false]            Auto Indent lines"
