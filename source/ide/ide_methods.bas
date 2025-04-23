@@ -12689,6 +12689,10 @@ SUB ideshowtext
                 manualList = -1
                 listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
                 FOR y = 1 TO iden
+                    DO UNTIL y < UBOUND(InvalidLine)
+                        REDIM _PRESERVE InvalidLine(UBOUND(InvalidLine) + 1000) AS _BYTE
+                    LOOP
+
                     IF InvalidLine(y) <> 0 THEN _CONTINUE
                     a$ = UCASE$(_TRIM$(idegetline(y)))
                     sf = 0
