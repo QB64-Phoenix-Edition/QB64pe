@@ -1084,7 +1084,7 @@ FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
 
 Error_Happened = 0
 
-FOR closeall = 1 TO 255: CLOSE closeall: NEXT
+FOR closeall = 1 TO 300: CLOSE closeall: NEXT
 
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
@@ -1465,7 +1465,7 @@ DIM SHARED FormatBuf
 IF FormatMode THEN FormatBuf = OpenBuffer%("O", tmpdir$ + "format.out")
 
 'begin compilation
-FOR closeall = 1 TO 255: CLOSE closeall: NEXT
+FOR closeall = 1 TO 300: CLOSE closeall: NEXT
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
 bh = OpenBuffer%("O", tmpdir$ + "icon.rc")
@@ -2630,9 +2630,13 @@ DO
             END IF
         END IF
 
-        IF inclevel = 100 THEN a$ = "Too many indwelling INCLUDE files": GOTO errmes
+        IF inclevel = 100 THEN
+            FOR fh = 200 TO 299: CLOSE #fh: NEXT fh 'close all includes
+            a$ = "Too many indwelling INCLUDE files": GOTO errmes
+        END IF
         '1. Verify file exists (location is either (a)relative to source file or (b)absolute)
-        fh = 99 + inclevel + 1
+        IF LEFT$(a$, 2) = ".\" OR LEFT$(a$, 2) = "./" THEN a$ = MID$(a$, 3)
+        fh = 199 + inclevel + 1
 
         firstTryMethod = 1
         IF includingFromRoot <> 0 AND inclevel = 0 THEN firstTryMethod = 2
@@ -2687,7 +2691,7 @@ DO
     '--------------------
     DO WHILE inclevel
 
-        fh = 99 + inclevel
+        fh = 199 + inclevel
         '2. Feed next line
         IF EOF(fh) = 0 THEN
             LINE INPUT #fh, x$
@@ -11329,9 +11333,13 @@ DO
                 END IF
             END IF
 
-            IF inclevel = 100 THEN a$ = "Too many indwelling INCLUDE files": GOTO errmes
+            IF inclevel = 100 THEN
+                FOR fh = 200 TO 299: CLOSE #fh: NEXT fh 'close all includes
+                a$ = "Too many indwelling INCLUDE files": GOTO errmes
+            END IF
             '1. Verify file exists (location is either (a)relative to source file or (b)absolute)
-            fh = 99 + inclevel + 1
+            IF LEFT$(a$, 2) = ".\" OR LEFT$(a$, 2) = "./" THEN a$ = MID$(a$, 3)
+            fh = 199 + inclevel + 1
 
             firstTryMethod = 1
             IF includingFromRoot <> 0 AND inclevel = 0 THEN firstTryMethod = 2
@@ -11386,7 +11394,7 @@ DO
         END IF 'fall through to next section...
         '--------------------
         DO WHILE inclevel
-            fh = 99 + inclevel
+            fh = 199 + inclevel
             '2. Feed next line
             IF EOF(fh) = 0 THEN
                 LINE INPUT #fh, x$
@@ -11768,7 +11776,7 @@ IF recompile THEN
     IF Debug THEN PRINT #9, "Recompile required!"
     recompile = 0
     IF idemode THEN iderecompile = 1
-    FOR closeall = 1 TO 255: CLOSE closeall: NEXT
+    FOR closeall = 1 TO 300: CLOSE closeall: NEXT
     OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
     GOTO recompile
 END IF
@@ -12213,7 +12221,7 @@ use_global_byte_elements = 0
 IF Debug THEN PRINT #9, "Finished generation of code for saving/sharing common array data!"
 
 
-FOR closeall = 1 TO 255: CLOSE closeall: NEXT
+FOR closeall = 1 TO 300: CLOSE closeall: NEXT
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
 compilelog$ = tmpdir$ + "compilelog.txt"
@@ -20880,7 +20888,7 @@ FUNCTION lineformat$ (a$)
             a2$ = LEFT$(a2$, LEN(a2$) - 1)
 
             IF inclevel THEN
-                fh = 99 + inclevel
+                fh = 199 + inclevel
                 IF EOF(fh) THEN GOTO lineformatdone2
                 LINE INPUT #fh, a$
                 inclinenumber(inclevel) = inclinenumber(inclevel) + 1
