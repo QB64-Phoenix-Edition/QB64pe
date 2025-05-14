@@ -51,6 +51,12 @@ DIM SHARED Help_Search_Time AS DOUBLE
 DIM SHARED Help_Search_Str AS STRING
 DIM SHARED Help_PageLoaded AS STRING
 DIM SHARED Help_Recaching, Help_IgnoreCache
+'Help_Recaching = 0 >>>> regular help operation, if Help_IgnoreCache = 0 use cached page if available,
+'                        otherwise fetch it from Wiki
+'Help_Recaching = 1 >>>> update cached contents with GUI progress, i.e. re-fetch all pages (except _GL pages) from Wiki
+'Help_Recaching = 2 >>>> update cached contents without any output, i.e. re-fetch all pages (except _GL pages) from Wiki,
+'                        intended for command line based update during CI/Release builds (qb64pe -u)
+'Help_IgnoreCache = 1 >> temporarily ignore cached content, i.e. re-fetch pages directly from the Wiki
 
 'Entity replacements
 '(for non HTML chars only, ie. no &amp; &lt; &gt; &quot; which are handled in SUB Wiki$ directly)
@@ -102,6 +108,7 @@ wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKI$(&HA0C2): wp
 '3-byte sequences
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HA680E2): wpUtfRepl(wpUtfReplCnt).repl = "..." 'ellipsis (hori.)
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HAE8BE2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(240) 'ellipsis (vert.) (ð)
+wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&HAC82E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(238) 'euro currency (î)
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H8C94E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(218) 'single line draw (top/left corner)
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H9094E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(191) 'single line draw (top/right corner)
 wpUtfReplCnt = wpUtfReplCnt + 1: wpUtfRepl(wpUtfReplCnt).utf8 = MKL$(&H9494E2): wpUtfRepl(wpUtfReplCnt).repl = CHR$(192) 'single line draw (bottom/left corner)

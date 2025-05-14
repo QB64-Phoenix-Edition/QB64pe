@@ -14952,7 +14952,10 @@ FUNCTION idezfilelist$ (path$, method, mask$) 'method0=*.bas, method1=*.*, metho
         DO UNTIL EOF(150)
             LINE INPUT #150, a$
             IF LEN(a$) THEN 'skip blank entries
-                IF path$ = "internal/help" THEN a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + ".txt" 'remove spelling label
+                IF path$ = "internal/help" THEN
+                    IF UCASE$(LEFT$(a$, 3)) = "_GL" THEN _CONTINUE 'ignore _gl commands
+                    a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + RIGHT$(a$, 4) 'remove spelling label
+                END IF
                 IF filelist$ = "" THEN filelist$ = a$ ELSE filelist$ = filelist$ + sep + a$
             END IF
         LOOP
@@ -14992,7 +14995,10 @@ FUNCTION idezfilelist$ (path$, method, mask$) 'method0=*.bas, method1=*.*, metho
                     EXIT FOR
                 END IF
             NEXT
-            IF path$ = "internal/help" THEN a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + ".txt" 'remove spelling label
+            IF path$ = "internal/help" THEN
+                IF UCASE$(LEFT$(a$, 3)) = "_GL" THEN _CONTINUE 'ignore _gl commands
+                a$ = LEFT$(a$, (LEN(a$) - 5) \ 2) + RIGHT$(a$, 4) 'remove spelling label
+            END IF
             IF filelist$ = "" THEN filelist$ = a$ ELSE filelist$ = filelist$ + sep + a$
         LOOP
         CLOSE #150
@@ -19269,7 +19275,7 @@ FUNCTION ideupdatehelpbox
                     IF LEN(l$) THEN
                         c = INSTR(l$, ","): l$ = MID$(l$, c + 1) '              'we only need the page name here
                         c = INSTR(l$, "#"): IF c > 0 THEN l$ = LEFT$(l$, c - 1) 'but not the local link target (if any)
-                        IF Help_Recaching < 2 OR LEFT$(l$, 3) <> "_gl" THEN '   'ignore _GL pages for 'qb64pe -u' (build time update)
+                        IF Help_Recaching < 1 OR LEFT$(l$, 3) <> "_gl" THEN '   'ignore _GL pages for "Update All" operations
                             'Escape all invalid and other critical chars in filenames
                             PageName2$ = ""
                             FOR i = 1 TO LEN(l$)
