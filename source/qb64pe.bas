@@ -113,7 +113,12 @@ DIM SHARED UseGL 'declared SUB _GL (no params)
 
 DIM SHARED WindowTitle AS STRING
 
-IF OS_BITS = 32 THEN WindowTitle = "QB64 Phoenix Edition (x32)" ELSE WindowTitle = "QB64 Phoenix Edition (x64)"
+IF INSTR(_OS$, "ARM") THEN
+    WindowTitle = "QB64 Phoenix Edition " + _IIF(OS_BITS = 32, "(ARM)", "(ARM64)")
+ELSE
+    WindowTitle = "QB64 Phoenix Edition " + _IIF(OS_BITS = 32, "(x86)", "(x64)")
+END IF
+
 _TITLE WindowTitle
 
 CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
