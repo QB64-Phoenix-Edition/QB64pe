@@ -8,7 +8,17 @@
 
 #ifdef QB64_NOT_X86
 
-#    define qbr(f) std::llround(f)
+static inline int64_t qbr(long double f) {
+    int temp = 0;
+    if (f > 9223372036854775807.0L) {
+        temp = 1;
+        f = f - 9223372036854775808ULL;
+    }
+    int64_t i = std::llround(f);
+    if (temp)
+        return i | 0x8000000000000000;
+    return i;
+}
 
 #    define qbr_longdouble_to_uint64(f) uint64_t(std::llround(f))
 
