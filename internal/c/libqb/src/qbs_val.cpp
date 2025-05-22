@@ -10,8 +10,8 @@ long double func_val(qbs *s) {
         return 0;
     }
 
-    long double return_value = 0.0L; // used when the input is a float-point number
-    uint64_t value = 0;              // used when the input is an integer
+    long double fp_value = 0.0L; // used when the input is a float-point number
+    uint64_t int_value = 0;      // used when the input is an integer
     auto negate = false;
     auto num_significant_digits = 0;
     auto most_significant_digit_position = 0;
@@ -87,10 +87,10 @@ long double func_val(qbs *s) {
                         num_significant_digits++;
 
                         // Overflow protection for uint64_t
-                        if (value > (UINT64_MAX / 10) || (value == (UINT64_MAX / 10) && (c - '0') > (UINT64_MAX % 10))) {
-                            value = UINT64_MAX;
+                        if (int_value > (UINT64_MAX / 10) || (int_value == (UINT64_MAX / 10) && (c - '0') > (UINT64_MAX % 10))) {
+                            int_value = UINT64_MAX;
                         } else {
-                            value = value * 10 + (c - '0');
+                            int_value = int_value * 10 + (c - '0');
                         }
                     }
                 } else if (step == 2) { // after decimal point
@@ -126,13 +126,13 @@ finish:
 
     // Handle cases where exponent is zero and there is no decimal part
     if (exponent_value == 0 && num_significant_digits == most_significant_digit_position) {
-        if (!negate && value > INT64_MAX) {
+        if (!negate && int_value > INT64_MAX) {
             return INT64_MAX;
-        } else if (negate && value > (uint64_t)INT64_MAX + 1) {
+        } else if (negate && int_value > (uint64_t)INT64_MAX + 1) {
             return INT64_MIN;
         }
 
-        return negate ? -(int64_t)value : (int64_t)value;
+        return negate ? -(int64_t)int_value : (int64_t)int_value;
     }
 
     // Normalise number (change 123.456E2 to 1.23456E4, or 123.456 to 1.23456E2)
@@ -170,12 +170,12 @@ finish:
     built_number[i] = '\0'; // null-terminate
 
 #ifdef QB64_MINGW
-    __mingw_sscanf(built_number, "%Lf", &return_value);
+    __mingw_sscanf(built_number, "%Lf", &fp_value);
 #else
-    sscanf(built_number, "%Lf", &return_value);
+    sscanf(built_number, "%Lf", &fp_value);
 #endif
 
-    return return_value;
+    return fp_value;
 
 non_decimal: // handle hexadecimal, binary, and octal cases
 
@@ -202,7 +202,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
                 break; // exit on invalid character
             }
 
-            value = (value << 4) | c;
+            int_value = (int_value << 4) | c;
 
             if (hex_digits || c) {
                 hex_digits++;
@@ -214,7 +214,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             }
         }
 
-        return value;
+        return int_value;
     } else if ((c == 'B') || (c == 'b')) { // binary
         for (i = i + 2; i < s->len; i++) {
             c = (char)s->chr[i];
@@ -222,7 +222,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             if (c == '0' || c == '1') {
                 c -= '0';
 
-                value = (value << 1) | c;
+                int_value = (int_value << 1) | c;
 
                 if (hex_digits || c) {
                     hex_digits++;
@@ -237,7 +237,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             }
         }
 
-        return value;
+        return int_value;
     } else if ((c == 'O') || (c == 'o')) { // octal
         for (i = i + 2; i < s->len; i++) {
             c = (char)s->chr[i];
@@ -245,7 +245,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             if ((c >= '0') && (c <= '7')) {
                 c -= '0';
 
-                value = (value << 3) | c;
+                int_value = (int_value << 3) | c;
 
                 if (hex_digits || c) {
                     hex_digits++;
@@ -262,7 +262,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             }
         }
 
-        return value;
+        return int_value;
     }
 
     return 0; // & followed by unknown
