@@ -1,17 +1,22 @@
 #include "error_handle.h"
 #include "qbs.h"
 #include <cstdio>
+#include <type_traits>
 
-long double func_val(qbs *s) {
-    static char significant_digits[256];
-    static char built_number[256];
+// Stack-allocating these seems uncomfortable
+static char qbs_val_significant_digits[256];
+static char qbs_val_built_number[256];
 
+template <typename T> T qbs_val(qbs *s) {
     if (!s->len) {
         return 0;
     }
 
-    long double fp_value = 0.0L; // used when the input is a float-point number
-    uint64_t int_value = 0;      // used when the input is an integer
+    union {
+        uint64_t i;    // used when the input is an integer
+        long double f; // used when the input is a float-point number
+    } value{};
+
     auto negate = false;
     auto num_significant_digits = 0;
     auto most_significant_digit_position = 0;
@@ -83,14 +88,14 @@ long double func_val(qbs *s) {
                     step = 1;
                     if (num_significant_digits || c > '0') {
                         most_significant_digit_position++;
-                        significant_digits[num_significant_digits] = c;
+                        qbs_val_significant_digits[num_significant_digits] = c;
                         num_significant_digits++;
 
                         // Overflow protection for uint64_t
-                        if (int_value > (UINT64_MAX / 10) || (int_value == (UINT64_MAX / 10) && (c - '0') > (UINT64_MAX % 10))) {
-                            int_value = UINT64_MAX;
+                        if (value.i > (UINT64_MAX / 10) || (value.i == (UINT64_MAX / 10) && (c - '0') > (UINT64_MAX % 10))) {
+                            value.i = UINT64_MAX;
                         } else {
-                            int_value = int_value * 10 + (c - '0');
+                            value.i = value.i * 10 + (c - '0');
                         }
                     }
                 } else if (step == 2) { // after decimal point
@@ -98,7 +103,7 @@ long double func_val(qbs *s) {
                         most_significant_digit_position--;
                     }
                     if (num_significant_digits || c > '0') {
-                        significant_digits[num_significant_digits] = c;
+                        qbs_val_significant_digits[num_significant_digits] = c;
                         num_significant_digits++;
                     }
                 } else if (step >= 3) { // exponent handling
@@ -126,13 +131,17 @@ finish:
 
     // Handle cases where exponent is zero and there is no decimal part
     if (exponent_value == 0 && num_significant_digits == most_significant_digit_position) {
-        if (!negate && int_value > INT64_MAX) {
-            return INT64_MAX;
-        } else if (negate && int_value > (uint64_t)INT64_MAX + 1) {
-            return INT64_MIN;
-        }
+        if constexpr (std::is_same_v<T, uint64_t>) {
+            return value.i;
+        } else {
+            if (!negate && value.i > INT64_MAX) {
+                return INT64_MAX;
+            } else if (negate && value.i > (uint64_t)INT64_MAX + 1) {
+                return INT64_MIN;
+            }
 
-        return negate ? -(int64_t)int_value : (int64_t)int_value;
+            return negate ? -(int64_t)value.i : (int64_t)value.i;
+        }
     }
 
     // Normalise number (change 123.456E2 to 1.23456E4, or 123.456 to 1.23456E2)
@@ -144,7 +153,7 @@ finish:
     i = 0;
     // Build a floating-point number in ASCII format
     if (negate) {
-        built_number[i] = '-';
+        qbs_val_built_number[i] = '-';
         i++;
     }
 
@@ -152,30 +161,30 @@ finish:
         // Build normalised mantissa
         for (auto i2 = 0; i2 < num_significant_digits; i2++) {
             if (i2 == 1) {
-                built_number[i] = '.';
+                qbs_val_built_number[i] = '.';
                 i++;
             }
-            built_number[i] = significant_digits[i2];
+            qbs_val_built_number[i] = qbs_val_significant_digits[i2];
             i++;
         }
-        built_number[i] = 'E';
+        qbs_val_built_number[i] = 'E';
         i++;
         // Add exponent
-        i += sprintf((char *)&built_number[i], "%i", exponent_value);
+        i += sprintf((char *)&qbs_val_built_number[i], "%i", exponent_value);
     } else {
-        built_number[i] = '0';
+        qbs_val_built_number[i] = '0';
         i++;
     }
 
-    built_number[i] = '\0'; // null-terminate
+    qbs_val_built_number[i] = '\0'; // null-terminate
 
 #ifdef QB64_MINGW
-    __mingw_sscanf(built_number, "%Lf", &fp_value);
+    __mingw_sscanf(qbs_val_built_number, "%Lf", &value.f);
 #else
-    sscanf(built_number, "%Lf", &fp_value);
+    sscanf(qbs_val_built_number, "%Lf", &value.f);
 #endif
 
-    return fp_value;
+    return value.f;
 
 non_decimal: // handle hexadecimal, binary, and octal cases
 
@@ -202,7 +211,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
                 break; // exit on invalid character
             }
 
-            int_value = (int_value << 4) | c;
+            value.i = (value.i << 4) | c;
 
             if (hex_digits || c) {
                 hex_digits++;
@@ -214,7 +223,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             }
         }
 
-        return int_value;
+        return value.i;
     } else if ((c == 'B') || (c == 'b')) { // binary
         for (i = i + 2; i < s->len; i++) {
             c = (char)s->chr[i];
@@ -222,7 +231,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             if (c == '0' || c == '1') {
                 c -= '0';
 
-                int_value = (int_value << 1) | c;
+                value.i = (value.i << 1) | c;
 
                 if (hex_digits || c) {
                     hex_digits++;
@@ -237,7 +246,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             }
         }
 
-        return int_value;
+        return value.i;
     } else if ((c == 'O') || (c == 'o')) { // octal
         for (i = i + 2; i < s->len; i++) {
             c = (char)s->chr[i];
@@ -245,7 +254,7 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             if ((c >= '0') && (c <= '7')) {
                 c -= '0';
 
-                int_value = (int_value << 3) | c;
+                value.i = (value.i << 3) | c;
 
                 if (hex_digits || c) {
                     hex_digits++;
@@ -262,8 +271,13 @@ non_decimal: // handle hexadecimal, binary, and octal cases
             }
         }
 
-        return int_value;
+        return value.i;
     }
 
     return 0; // & followed by unknown
 }
+
+// We only need to instantiate the template for the types we need
+template int64_t qbs_val<int64_t>(qbs *);
+template uint64_t qbs_val<uint64_t>(qbs *);
+template long double qbs_val<long double>(qbs *);
