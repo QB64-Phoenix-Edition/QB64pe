@@ -20,6 +20,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/qbs_str.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs__tostr.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_cmem.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs_mk_cv.o
+libqb-objs-y += $(PATH_LIBQB)/src/qbs_val.o
 libqb-objs-y += $(PATH_LIBQB)/src/string_functions.o
 libqb-objs-y += $(PATH_LIBQB)/src/graphics.o
 
@@ -60,4 +61,9 @@ $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.mm
 	$(CXX) -O2 $(CXXFLAGS) -Wall -Wextra $< -c -o $@
 endif
 
-CLEAN_LIST += $(libqb-objs-y) $(libqb-objs-yy) $(libqb-objs-)
+libqb-lib := $(PATH_LIBQB)/libqb.a
+
+$(libqb-lib): $(libqb-objs-y)
+	$(AR) rcs $@ $(libqb-objs-y)
+
+CLEAN_LIST += $(libqb-objs-y) $(libqb-objs-yy) $(libqb-objs-) $(libqb-lib)
