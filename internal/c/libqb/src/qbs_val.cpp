@@ -94,7 +94,7 @@ template <typename T> T qbs_val(qbs *s) {
                         num_significant_digits++;
 
                         // Overflow protection for uint64_t
-                        if (value.i > (UINT64_MAX / 10) || (value.i == (UINT64_MAX / 10) && digit > (UINT64_MAX % 10))) {
+                        if (value.i > (UINT64_MAX / 10) || (value.i == (UINT64_MAX / 10) && unsigned(digit) > (UINT64_MAX % 10))) {
                             value.i = UINT64_MAX;
                         } else {
                             value.i = value.i * 10 + digit;
@@ -137,9 +137,9 @@ finish:
             return value.i;
         } else {
             if (!negate && value.i > INT64_MAX) {
-                return INT64_MAX;
+                return T(INT64_MAX);
             } else if (negate && value.i > (uint64_t)INT64_MAX + 1) {
-                return INT64_MIN;
+                return T(INT64_MIN);
             }
 
             return negate ? -(int64_t)value.i : (int64_t)value.i;
