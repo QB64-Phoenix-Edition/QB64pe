@@ -12738,14 +12738,14 @@ IF os$ = "WIN" THEN
     PRINT #ffh, "@echo off"
     PRINT #ffh, "cd %0\..\"
     PRINT #ffh, "cd ../.."
-    PRINT #ffh, "echo C++ Debugging: " + file$ + extension$ + " using gdb.exe"
+    PRINT #ffh, "echo C++ Debugging: " + file$ + extension$ + " using lldb.exe"
     PRINT #ffh, "echo Debugger commands:"
     PRINT #ffh, "echo After the debugger launches type 'run' to start your program"
     PRINT #ffh, "echo After your program crashes type 'list' to find where the problem is and fix/report it"
     PRINT #ffh, "echo Type 'quit' to exit"
-    PRINT #ffh, "echo (the GDB debugger has many other useful commands, this advice is for beginners)"
+    PRINT #ffh, "echo (the LLDB debugger has many other useful commands, this advice is for beginners)"
     PRINT #ffh, "pause"
-    PRINT #ffh, GetCompilerPath$ + "gdb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
+    PRINT #ffh, GetCompilerPath$ + "lldb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
     PRINT #ffh, "pause"
     CLOSE ffh
 END IF
