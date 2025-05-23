@@ -218,7 +218,7 @@ endif
 include $(PATH_INTERNAL_C)/libqb/build.mk
 
 CXXFLAGS += -I$(PATH_LIBQB)/include
-EXE_LIBS += $(libqb-lib)
+EXE_LIBS += $(libqb-objs-y)
 
 include $(PATH_INTERNAL_C)/parts/audio/extras/build.mk
 include $(PATH_INTERNAL_C)/parts/audio/build.mk

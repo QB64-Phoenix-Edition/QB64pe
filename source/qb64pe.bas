@@ -16644,6 +16644,36 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF LEFT$(e$, 2) = "(" + sp THEN dereference = 1 ELSE dereference = 0
 
 
+                ' VAL support
+                IF n$ = "VAL" THEN
+                    IF curarg = 2 THEN ' data type
+                        valReturnType$ = type2symbol$(e$)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        SELECT CASE valReturnType$
+                            CASE "%%", "%", "&", "&&", "%&"
+                                typ& = INTEGER64TYPE - ISPOINTER
+                                r$ = "qbs_val<int64_t>" + r$
+
+                            CASE "~%%", "~%", "~&", "~&&", "~%&"
+                                typ& = UINTEGER64TYPE - ISPOINTER
+                                r$ = "qbs_val<uint64_t>" + r$
+
+                            CASE "!", "#", "##"
+                                typ& = FLOATTYPE - ISPOINTER
+                                r$ = "qbs_val<long double>" + r$
+
+                            CASE ELSE
+                                Give_Error "VAL TYPE unsupported"
+                                EXIT FUNCTION
+                        END SELECT
+
+                        r$ = r$ + ")"
+                        noComma = 0
+
+                        GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
+                    END IF
+                END IF
 
                 ' CAST support
                 IF n$ = "_CAST" THEN
@@ -16665,7 +16695,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END SELECT
 
                         e$ = ""
-                        nocomma = 1
+                        noComma = 1
 
                         GOTO dontevaluate
                     END IF
@@ -16856,10 +16886,33 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
+                ' VAL support
+                IF n$ = "VAL" THEN
+                    IF curarg = 1 THEN
+                        IF args = 1 THEN ' fallback to long double if no type (second argument) is specified
+                            IF (sourcetyp AND ISSTRING) = 0 THEN
+                                Give_Error n$ + " requires a STRING argument"
+                                EXIT FUNCTION
+                            END IF
+
+                            IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                            IF Error_Happened THEN EXIT FUNCTION
+
+                            typ& = FLOATTYPE - ISPOINTER
+                            r$ = "qbs_val<long double>" + r$ + e$ + ")"
+
+                            GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
+                        ELSE
+                            ' If we have more than 1 arg then we'll let the existing logic validate and handle arg 1
+                            noComma = 1 ' avoid adding a comma at the end
+                        END IF
+                    END IF
+                END IF
+
                 ' CAST support
                 IF n$ = "_CAST" THEN
                     IF curarg = 2 THEN ' numeric value
-                        nocomma = 0
+                        noComma = 0
 
                         IF sourcetyp AND ISSTRING THEN
                             Give_Error "Expected numeric value"
@@ -16879,7 +16932,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "_IIF" THEN
                     IF curarg = 1 THEN ' expression
                         r$ = r$ + "("
-                        nocomma = 1
+                        noComma = 1
                     ELSEIF curarg = 2 THEN ' true part
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
@@ -16887,11 +16940,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         typ& = sourcetyp ' return type is always derived from true part
                         r$ = r$ + ")?(" + e$ + "):"
                         e$ = ""
-                        nocomma = 1
+                        noComma = 1
 
                         GOTO dontevaluate
                     ELSEIF curarg = 3 THEN ' false part
-                        nocomma = 0
+                        noComma = 0
 
                         IF (sourcetyp AND ISSTRING) <> (typ& AND ISSTRING) THEN
                             Give_Error "falsePart and truePart must be of the same type"
@@ -17305,7 +17358,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         ELSE
                             r$ = ctype$ + "2string("
                         END IF
-                        nocomma = 1
+                        noComma = 1
                         targettyp = qtyp&
                     END IF
                 END IF
@@ -18020,8 +18073,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                IF i <> n AND nocomma = 0 THEN r$ = r$ + ","
-                nocomma = 0
+                IF i <> n AND noComma = 0 THEN r$ = r$ + ","
+                noComma = 0
                 firsti = i + 1
                 curarg = curarg + 1
             END IF

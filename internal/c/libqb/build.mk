@@ -61,9 +61,4 @@ $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.mm
 	$(CXX) -O2 $(CXXFLAGS) -Wall -Wextra $< -c -o $@
 endif
 
-libqb-lib := $(PATH_LIBQB)/libqb.a
-
-$(libqb-lib): $(libqb-objs-y)
-	$(AR) rcs $@ $(libqb-objs-y)
-
-CLEAN_LIST += $(libqb-objs-y) $(libqb-objs-yy) $(libqb-objs-) $(libqb-lib)
+CLEAN_LIST += $(libqb-objs-y) $(libqb-objs-yy) $(libqb-objs-)
