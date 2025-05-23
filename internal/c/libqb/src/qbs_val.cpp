@@ -84,6 +84,8 @@ template <typename T> T qbs_val(qbs *s) {
 
         default:
             if (c >= '0' && c <= '9') {
+                auto digit = c - '0';
+
                 if (step <= 1) { // before decimal point
                     step = 1;
                     if (num_significant_digits || c > '0') {
@@ -92,10 +94,10 @@ template <typename T> T qbs_val(qbs *s) {
                         num_significant_digits++;
 
                         // Overflow protection for uint64_t
-                        if (value.i > (UINT64_MAX / 10) || (value.i == (UINT64_MAX / 10) && (c - '0') > (UINT64_MAX % 10))) {
+                        if (value.i > (UINT64_MAX / 10) || (value.i == (UINT64_MAX / 10) && digit > (UINT64_MAX % 10))) {
                             value.i = UINT64_MAX;
                         } else {
-                            value.i = value.i * 10 + (c - '0');
+                            value.i = value.i * 10 + digit;
                         }
                     }
                 } else if (step == 2) { // after decimal point
@@ -112,7 +114,7 @@ template <typename T> T qbs_val(qbs *s) {
                         if (num_exponent_digits >= 18) {
                             goto finish;
                         }
-                        exponent_value = exponent_value * 10 + (c - '0'); // precalculate
+                        exponent_value = exponent_value * 10 + digit; // precalculate
                         num_exponent_digits++;
                     }
                 }
@@ -144,7 +146,7 @@ finish:
         }
     }
 
-    // Normalise number (change 123.456E2 to 1.23456E4, or 123.456 to 1.23456E2)
+    // Normalize number (change 123.456E2 to 1.23456E4, or 123.456 to 1.23456E2)
     exponent_value += most_significant_digit_position - 1;
     if (negate_exponent) {
         exponent_value = -exponent_value;
@@ -158,7 +160,7 @@ finish:
     }
 
     if (num_significant_digits) {
-        // Build normalised mantissa
+        // Build normalized mantissa
         for (auto i2 = 0; i2 < num_significant_digits; i2++) {
             if (i2 == 1) {
                 qbs_val_built_number[i] = '.';

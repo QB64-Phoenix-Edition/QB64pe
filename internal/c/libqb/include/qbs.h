@@ -41,6 +41,7 @@ qbs *qbs_set(qbs *, qbs *);
 void qbs_free(qbs *str);
 
 template <typename T> T qbs_val(qbs *s);
+// TODO: We should remove func_val() in the future when all references to it are removed.
 #define func_val(s) qbs_val<long double>(s)
 
 // legacy STR$ function prototypes

@@ -23082,7 +23082,7 @@ int32 connection_new(int32 method, qbs *info_in, int32 value) {
             }
         }
 
-        d = func_val(info_part[2]);
+        d = qbs_val<long double>(info_part[2]);
         port = qbr_double_to_long(d); //***assume*** port number is within valid range
 
         if (method == 0) { //_OPENCLIENT

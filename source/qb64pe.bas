@@ -9111,7 +9111,7 @@ DO
                 IF n = 4 THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
                 l$ = l$ + sp + SCase$("_NewHandler")
             ELSEIF hhc$ = "_LASTHANDLER" THEN
-                WriteBufLine MainTxtBuf, "error_goto_line = qbr(func_val(error_handler_history));"
+                WriteBufLine MainTxtBuf, "error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));"
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + SCase$("_LastHandler")
