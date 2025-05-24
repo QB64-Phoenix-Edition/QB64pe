@@ -512,16 +512,14 @@ FUNCTION elementGetNumericValue& (ele$, floating AS _FLOAT, integral AS _INTEGER
 
     handleInteger:
     num$ = LEFT$(num$, LEN(num$) - LEN(e$))
-    
-    SELECT CASE returnValue + ISPOINTER
-        CASE UBYTETYPE, UINTEGERTYPE, ULONGTYPE, UINTEGER64TYPE, UOFFSETTYPE
-            uintegral = VAL(num$, _UNSIGNED _INTEGER64)
-            integral = uintegral
 
-        CASE ELSE
-            integral = VAL(num$, _INTEGER64)
-            uintegral = integral
-    END SELECT
+    IF returnValue AND ISUNSIGNED THEN
+        uintegral = VAL(num$, _UNSIGNED _INTEGER64)
+        integral = uintegral
+    ELSE
+        integral = VAL(num$, _INTEGER64)
+        uintegral = integral
+    END IF
 
     floating = integral
 

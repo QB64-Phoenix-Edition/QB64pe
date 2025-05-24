@@ -1,3 +1,5 @@
+#include "libqb-common.h"
+
 #include "error_handle.h"
 #include "qbs.h"
 #include <cstdio>
