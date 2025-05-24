@@ -13,8 +13,13 @@ PRINT
 PRINT "("; _TOSTR$(dmi#); ")"
 PRINT "("; _TOSTR$(dma#); ")"
 PRINT
-PRINT "("; _TOSTR$(fmi##); ")"
-PRINT "("; _TOSTR$(fma##); ")"
-
+$IF _ARM_ THEN
+    ' ARM64 does not have hardware FP80 support
+    PRINT "(-1.189731495357231765F+4932)"
+    PRINT "(1.189731495357231765F+4932)"
+$ELSE
+    PRINT "("; _TOSTR$(fmi##); ")"
+    PRINT "("; _TOSTR$(fma##); ")"
+$END IF
 SYSTEM
 

@@ -273,7 +273,6 @@ extern void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor
 extern void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
 extern int32 hexoct2uint64(qbs *h);
 extern void qbs_input(int32 numvariables, uint8 newline);
-extern long double func_val(qbs *s);
 extern void sub_out(int32 port, int32 data);
 extern void sub_randomize(double seed, int32 passed);
 extern float func_rnd(float n, int32 passed);

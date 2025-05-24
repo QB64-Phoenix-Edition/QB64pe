@@ -55,20 +55,22 @@ REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is t
 REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
 DIM SHARED UserDefineCount AS INTEGER, UserDefineCountPresets AS INTEGER, UserDefineList$, UserDefineListPresets$
-UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@_QB64PE_@"
+UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@_QB64PE_@_ARM_@"
 UserDefine(0, 0) = "WINDOWS": UserDefine(0, 1) = "WIN"
 UserDefine(0, 2) = "LINUX"
 UserDefine(0, 3) = "MAC": UserDefine(0, 4) = "MACOSX"
 UserDefine(0, 5) = "32BIT": UserDefine(0, 6) = "64BIT"
 UserDefine(0, 7) = "VERSION": UserDefine(0, 8) = "_QB64PE_"
+UserDefine(0, 9) = "_ARM_"
 IF INSTR(_OS$, "WIN") THEN UserDefine(1, 0) = "-1": UserDefine(1, 1) = "-1" ELSE UserDefine(1, 0) = "0": UserDefine(1, 1) = "0"
 IF INSTR(_OS$, "LINUX") THEN UserDefine(1, 2) = "-1" ELSE UserDefine(1, 2) = "0"
 IF INSTR(_OS$, "MAC") THEN UserDefine(1, 3) = "-1": UserDefine(1, 4) = "-1" ELSE UserDefine(1, 3) = "0": UserDefine(1, 4) = "0"
 IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELSE UserDefine(1, 5) = "0": UserDefine(1, 6) = "-1"
 UserDefine(1, 7) = Version$: UserDefine(1, 8) = "-1"
+IF INSTR(_OS$, "ARM") THEN UserDefine(1, 9) = "-1" ELSE UserDefine(1, 9) = "0"
 'Whatever values get added/changed in the future, make sure to keep
 'the VERSION on index #7 to avoid problems.
-UserDefineCountPresets = 8 'the last index of the defines above
+UserDefineCountPresets = 9 'the last index of the defines above
 
 DIM SHARED QB64_uptime#
 
@@ -113,7 +115,12 @@ DIM SHARED UseGL 'declared SUB _GL (no params)
 
 DIM SHARED WindowTitle AS STRING
 
-IF OS_BITS = 32 THEN WindowTitle = "QB64 Phoenix Edition (x32)" ELSE WindowTitle = "QB64 Phoenix Edition (x64)"
+IF INSTR(_OS$, "ARM") THEN
+    WindowTitle = "QB64 Phoenix Edition " + _IIF(OS_BITS = 32, "(ARM)", "(ARM64)")
+ELSE
+    WindowTitle = "QB64 Phoenix Edition " + _IIF(OS_BITS = 32, "(x86)", "(x64)")
+END IF
+
 _TITLE WindowTitle
 
 CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
@@ -9104,7 +9111,7 @@ DO
                 IF n = 4 THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
                 l$ = l$ + sp + SCase$("_NewHandler")
             ELSEIF hhc$ = "_LASTHANDLER" THEN
-                WriteBufLine MainTxtBuf, "error_goto_line = qbr(func_val(error_handler_history));"
+                WriteBufLine MainTxtBuf, "error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));"
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + SCase$("_LastHandler")
@@ -12731,14 +12738,14 @@ IF os$ = "WIN" THEN
     PRINT #ffh, "@echo off"
     PRINT #ffh, "cd %0\..\"
     PRINT #ffh, "cd ../.."
-    PRINT #ffh, "echo C++ Debugging: " + file$ + extension$ + " using gdb.exe"
+    PRINT #ffh, "echo C++ Debugging: " + file$ + extension$ + " using lldb.exe"
     PRINT #ffh, "echo Debugger commands:"
     PRINT #ffh, "echo After the debugger launches type 'run' to start your program"
     PRINT #ffh, "echo After your program crashes type 'list' to find where the problem is and fix/report it"
     PRINT #ffh, "echo Type 'quit' to exit"
-    PRINT #ffh, "echo (the GDB debugger has many other useful commands, this advice is for beginners)"
+    PRINT #ffh, "echo (the LLDB debugger has many other useful commands, this advice is for beginners)"
     PRINT #ffh, "pause"
-    PRINT #ffh, GetCompilerPath$ + "gdb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
+    PRINT #ffh, GetCompilerPath$ + "lldb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
     PRINT #ffh, "pause"
     CLOSE ffh
 END IF
@@ -16637,6 +16644,36 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF LEFT$(e$, 2) = "(" + sp THEN dereference = 1 ELSE dereference = 0
 
 
+                ' VAL support
+                IF n$ = "VAL" THEN
+                    IF curarg = 2 THEN ' data type
+                        valReturnType$ = type2symbol$(e$)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        SELECT CASE valReturnType$
+                            CASE "%%", "%", "&", "&&", "%&"
+                                typ& = INTEGER64TYPE - ISPOINTER
+                                r$ = "qbs_val<int64_t>" + r$
+
+                            CASE "~%%", "~%", "~&", "~&&", "~%&"
+                                typ& = UINTEGER64TYPE - ISPOINTER
+                                r$ = "qbs_val<uint64_t>" + r$
+
+                            CASE "!", "#", "##"
+                                typ& = FLOATTYPE - ISPOINTER
+                                r$ = "qbs_val<long double>" + r$
+
+                            CASE ELSE
+                                Give_Error "VAL TYPE unsupported"
+                                EXIT FUNCTION
+                        END SELECT
+
+                        r$ = r$ + ")"
+                        noComma = 0
+
+                        GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
+                    END IF
+                END IF
 
                 ' CAST support
                 IF n$ = "_CAST" THEN
@@ -16658,7 +16695,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END SELECT
 
                         e$ = ""
-                        nocomma = 1
+                        noComma = 1
 
                         GOTO dontevaluate
                     END IF
@@ -16849,10 +16886,33 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
+                ' VAL support
+                IF n$ = "VAL" THEN
+                    IF curarg = 1 THEN
+                        IF args = 1 THEN ' fallback to long double if no type (second argument) is specified
+                            IF (sourcetyp AND ISSTRING) = 0 THEN
+                                Give_Error n$ + " requires a STRING argument"
+                                EXIT FUNCTION
+                            END IF
+
+                            IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                            IF Error_Happened THEN EXIT FUNCTION
+
+                            typ& = FLOATTYPE - ISPOINTER
+                            r$ = "qbs_val<long double>" + r$ + e$ + ")"
+
+                            GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
+                        ELSE
+                            ' If we have more than 1 arg then we'll let the existing logic validate and handle arg 1
+                            noComma = 1 ' avoid adding a comma at the end
+                        END IF
+                    END IF
+                END IF
+
                 ' CAST support
                 IF n$ = "_CAST" THEN
                     IF curarg = 2 THEN ' numeric value
-                        nocomma = 0
+                        noComma = 0
 
                         IF sourcetyp AND ISSTRING THEN
                             Give_Error "Expected numeric value"
@@ -16872,7 +16932,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "_IIF" THEN
                     IF curarg = 1 THEN ' expression
                         r$ = r$ + "("
-                        nocomma = 1
+                        noComma = 1
                     ELSEIF curarg = 2 THEN ' true part
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
@@ -16880,11 +16940,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         typ& = sourcetyp ' return type is always derived from true part
                         r$ = r$ + ")?(" + e$ + "):"
                         e$ = ""
-                        nocomma = 1
+                        noComma = 1
 
                         GOTO dontevaluate
                     ELSEIF curarg = 3 THEN ' false part
-                        nocomma = 0
+                        noComma = 0
 
                         IF (sourcetyp AND ISSTRING) <> (typ& AND ISSTRING) THEN
                             Give_Error "falsePart and truePart must be of the same type"
@@ -17298,7 +17358,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         ELSE
                             r$ = ctype$ + "2string("
                         END IF
-                        nocomma = 1
+                        noComma = 1
                         targettyp = qtyp&
                     END IF
                 END IF
@@ -18013,8 +18073,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                IF i <> n AND nocomma = 0 THEN r$ = r$ + ","
-                nocomma = 0
+                IF i <> n AND noComma = 0 THEN r$ = r$ + ","
+                noComma = 0
                 firsti = i + 1
                 curarg = curarg + 1
             END IF

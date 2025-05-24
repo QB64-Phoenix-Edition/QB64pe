@@ -689,6 +689,11 @@ FUNCTION Numeric& (exp$, state AS ParserState)
 
         state.num.typ = elementGetNumericValue(ele$, state.num.f, state.num.i, state.num.ui)
 
+        IF CONST_EVAL_DEBUG THEN
+            _ECHO "Numeric ele: " + ele$ + ", num.f: " + _TOSTR$(state.num.f) + ", num.i: " + STR$(state.num.i) + ", num.ui: " + STR$(state.num.ui)
+            _ECHO "float: " + STR$(state.num.typ AND ISFLOAT) + ", unsigned: " + STR$(state.num.typ AND ISUNSIGNED) + ", string: " + STR$(state.num.typ AND ISSTRING)
+        END IF
+
         Numeric& = -1
     ELSEIF ele$ = "_PI" THEN
         ele$ = getnextelement$(exp$, state.index, state.strIndex)

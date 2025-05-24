@@ -1,22 +1,43 @@
 #ifndef INCLUDE_LIBQB_ROUNDING_H
 #define INCLUDE_LIBQB_ROUNDING_H
 
+#include "event.h"
+
 #include <cmath>
 #include <stdint.h>
 
-#include "event.h"
-
 #ifdef QB64_NOT_X86
 
-#    define qbr(f) std::llround(f)
+#    include <cfenv>
 
-#    define qbr_longdouble_to_uint64(f) uint64_t(std::llround(f))
+static inline int64_t qbr(long double f) {
+    int temp = 0;
+    if (f > 9223372036854775807.0L) {
+        temp = 1;
+        f = f - 9223372036854775808ULL;
+    }
+    auto i = int64_t(std::nearbyintl(f));
+    if (temp) {
+        return i | 0x8000000000000000;
+    }
+    return i;
+}
 
-#    define qbr_float_to_long(f) std::lround(f)
+static inline uint64_t qbr_longdouble_to_uint64(long double f) {
+    return uint64_t(std::nearbyintl(f));
+}
 
-#    define qbr_double_to_long(f) std::lround(f)
+static inline int32_t qbr_float_to_long(float f) {
+    return int32_t(std::nearbyintf(f));
+}
 
-static inline void fpu_reinit() { /* do nothing */ }
+static inline int32_t qbr_double_to_long(double f) {
+    return int32_t(std::nearbyint(f));
+}
+
+static inline void fpu_reinit() {
+    std::fesetround(FE_TONEAREST);
+}
 
 #else
 
@@ -35,8 +56,9 @@ static inline int64_t qbr(long double f) {
             "fistpll %0;"
             : "=m"(i)
             : "m"(f));
-    if (temp)
+    if (temp) {
         return i | 0x8000000000000000; // if it's an unsigned int64, manually set the bit flag
+    }
     return i;
 }
 
@@ -119,29 +141,33 @@ static inline int64_t func_cint_float(long double value) {
 }
 
 static inline int16_t func_cint_long(int32_t value) {
-    if ((value >= -32768) && (value <= 32767))
+    if ((value >= -32768) && (value <= 32767)) {
         return value;
+    }
     error(6);
     return 0;
 }
 
 static inline int16_t func_cint_ulong(uint32_t value) {
-    if (value <= 32767)
+    if (value <= 32767) {
         return value;
+    }
     error(6);
     return 0;
 }
 
 static inline int16_t func_cint_int64(int64_t value) {
-    if ((value >= -32768) && (value <= 32767))
+    if ((value >= -32768) && (value <= 32767)) {
         return value;
+    }
     error(6);
     return 0;
 }
 
 static inline int16_t func_cint_uint64(uint64_t value) {
-    if (value <= 32767)
+    if (value <= 32767) {
         return value;
+    }
     error(6);
     return 0;
 }
@@ -166,22 +192,25 @@ static inline int64_t func_clng_float(long double value) {
 }
 
 static inline int32_t func_clng_ulong(uint32_t value) {
-    if (value <= 2147483647)
+    if (value <= 2147483647) {
         return value;
+    }
     error(6);
     return 0;
 }
 
 static inline int32_t func_clng_int64(int64_t value) {
-    if ((value >= -2147483648) && (value <= 2147483647))
+    if ((value >= -2147483648) && (value <= 2147483647)) {
         return value;
+    }
     error(6);
     return 0;
 }
 
 static inline int32_t func_clng_uint64(uint64_t value) {
-    if (value <= 2147483647)
+    if (value <= 2147483647) {
         return value;
+    }
     error(6);
     return 0;
 }

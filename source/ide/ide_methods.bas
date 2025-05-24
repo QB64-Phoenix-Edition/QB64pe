@@ -15746,7 +15746,7 @@ FUNCTION ideCompilerSettingsBox
         i = i + 1: uscChk = i
         o(i).typ = 4 'check box
         o(i).y = 14
-        o(i).nam = idenewtxt("#Use system compiler")
+        o(i).nam = idenewtxt("#Use system C++ compiler")
         o(i).sel = ABS(UseSystemMinGW)
     END IF
 
