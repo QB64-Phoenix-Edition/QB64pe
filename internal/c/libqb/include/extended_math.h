@@ -120,7 +120,7 @@ static inline double func_cot(double num) {
     return 1 / std::tan(num);
 }
 
-template <typename T> inline constexpr bool Math_IsPowerOf2(T n) {
+template <typename T> static inline constexpr bool Math_IsPowerOf2(T n) {
     static_assert(std::is_integral_v<T>, "Math_IsPowerOf2 requires an integral type");
 
     using UT = std::make_unsigned_t<T>;

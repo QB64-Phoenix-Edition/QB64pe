@@ -733,3 +733,96 @@ FUNCTION isuinteger (i$)
     isuinteger = -1
 END FUNCTION
 
+' Helper functions for type checking
+
+FUNCTION Type_GetSizeInBits~& (typeId AS LONG)
+    Type_GetSizeInBits = typeId AND 511
+END FUNCTION
+
+FUNCTION Type_IsString%% (typeId AS LONG)
+    Type_IsString = (typeId AND ISSTRING) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsFixedString%% (typeId AS LONG)
+    Type_IsFixedString = (typeId AND ISSTRING) _ANDALSO (typeId AND ISFIXEDLENGTH)
+END FUNCTION
+
+FUNCTION Type_IsDynamicString%% (typeId AS LONG)
+    Type_IsDynamicString = (typeId AND ISSTRING) _ANDALSO _NEGATE (typeId AND ISFIXEDLENGTH)
+END FUNCTION
+
+FUNCTION Type_IsFloatingPoint%% (typeId AS LONG)
+    Type_IsFloatingPoint = (typeId AND ISFLOAT) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsUnsigned%% (typeId AS LONG)
+    Type_IsUnsigned = (typeId AND ISUNSIGNED) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsIntegral%% (typeId AS LONG)
+    Type_IsIntegral = _NEGATE (typeId AND ISFLOAT) _ANDALSO _NEGATE (typeId AND ISSTRING)
+END FUNCTION
+
+FUNCTION Type_IsArithmetic%% (typeId AS LONG)
+    Type_IsArithmetic = _NEGATE (typeId AND ISSTRING)
+END FUNCTION
+
+FUNCTION Type_IsArrayContainer%% (typeId AS LONG)
+    ' ISPOINTER is always set regardless of an index being used or not. This is probably a bug.
+    'Type_IsArrayContainer = (typeId AND ISARRAY) _ANDALSO _NEGATE (typeId AND ISPOINTER)
+    Type_IsArrayContainer = (typeId AND ISARRAY)
+END FUNCTION
+
+FUNCTION Type_IsArrayElement%% (typeId AS LONG)
+    Type_IsArrayElement = (typeId AND ISARRAY) _ANDALSO (typeId AND ISPOINTER)
+END FUNCTION
+
+FUNCTION Type_IsUDTContainer%% (typeId AS LONG)
+    Type_IsUDTContainer = (typeId AND ISUDT) _ANDALSO _NEGATE (typeId AND ISPOINTER)
+END FUNCTION
+
+FUNCTION Type_IsUDTMember%% (typeId AS LONG)
+    Type_IsUDTMember = (typeId AND ISUDT) _ANDALSO (typeId AND ISPOINTER)
+END FUNCTION
+
+FUNCTION Type_IsOffset%% (typeId AS LONG)
+    Type_IsOffset = (typeId AND ISOFFSET) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsBit%% (typeId AS LONG)
+    Type_IsBit = (typeId AND ISOFFSETINBITS) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsInConventionalMemory%% (typeId AS LONG)
+    Type_IsInConventionalMemory = (typeId AND ISINCONVENTIONALMEMORY) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_GetCppArithmeticType$ (typeId AS LONG)
+    DIM sizeInBits AS _UNSIGNED LONG: sizeInBits = typeId AND 511
+    DIM cType AS STRING
+
+    IF typeId AND ISOFFSETINBITS THEN
+        IF sizeInBits <= 32 THEN cType = "int32_t" ELSE cType = "int64_t"
+        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
+    ELSEIF typeId AND ISFLOAT THEN
+        SELECT CASE sizeInBits
+            CASE 32: cType = "float"
+            CASE 64: cType = "double"
+            CASE 256: cType = "long double"
+            CASE ELSE: Give_Error "Invalid floating point type size"
+        END SELECT
+    ELSEIF typeId AND ISOFFSET THEN
+        IF typeId AND ISUNSIGNED THEN cType = "uintptr_t" ELSE cType = "intptr_t"
+    ELSE
+        SELECT CASE sizeInBits
+            CASE 8: cType = "int8_t"
+            CASE 16: cType = "int16_t"
+            CASE 32: cType = "int32_t"
+            CASE 64: cType = "int64_t"
+            CASE ELSE: Give_Error "Invalid integer type size": EXIT FUNCTION
+        END SELECT
+        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
+    END IF
+
+    Type_GetCppArithmeticType = cType
+END FUNCTION

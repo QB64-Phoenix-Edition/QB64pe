@@ -80,7 +80,7 @@ template <typename T> static inline T func_abs(T v) {
     }
 }
 
-template <typename T> static inline int32_t func_sgn(T v) {
+template <typename T> static inline constexpr int32_t func_sgn(T v) {
     static_assert(std::is_arithmetic_v<T>, "func_sgn requires an arithmetic type");
 
     if constexpr (std::is_unsigned_v<T>) {

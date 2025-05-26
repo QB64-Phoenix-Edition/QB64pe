@@ -16890,15 +16890,15 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "VAL" THEN
                     IF curarg = 1 THEN
                         IF args = 1 THEN ' fallback to long double if no type (second argument) is specified
-                            IF (sourcetyp AND ISSTRING) = 0 THEN
-                                Give_Error n$ + " requires a STRING argument"
+                            IF NOT Type_IsString(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                                Give_Error "Expected STRING argument"
                                 EXIT FUNCTION
                             END IF
 
                             IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                             IF Error_Happened THEN EXIT FUNCTION
 
-                            typ& = FLOATTYPE - ISPOINTER
+                            typ& = FLOATTYPE - ISPOINTER ' default to earlier QB64 behavior
                             r$ = "qbs_val<long double>" + r$ + e$ + ")"
 
                             GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
@@ -16914,8 +16914,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF curarg = 2 THEN ' numeric value
                         noComma = 0
 
-                        IF sourcetyp AND ISSTRING THEN
-                            Give_Error "Expected numeric value"
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
                             EXIT FUNCTION
                         END IF
 
@@ -16946,7 +16946,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     ELSEIF curarg = 3 THEN ' false part
                         noComma = 0
 
-                        IF (sourcetyp AND ISSTRING) <> (typ& AND ISSTRING) THEN
+                        IF Type_IsString(sourcetyp) <> Type_IsString(typ&) THEN
                             Give_Error "falsePart and truePart must be of the same type"
                             EXIT FUNCTION
                         END IF
@@ -16960,44 +16960,129 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                ' ROR & ROL support
-                IF n$ = "_ROR" _ORELSE n$ = "_ROL" THEN
-                    rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' we'll need this to construct the C call
+                ' _MIN & _MAX support
+                IF n$ = "_MIN" _ORELSE n$ = "_MAX" THEN
+                    minmax_n$ = LCASE$(RIGHT$(n$, 3))
 
-                    IF curarg = 1 THEN ' first parameter
-                        IF (sourcetyp AND ISSTRING) _ORELSE (sourcetyp AND ISFLOAT) THEN
-                            Give_Error "Expected non-floating-point value"
+                    IF curarg = 1 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
                             EXIT FUNCTION
                         END IF
 
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        ' Establish which function (if any!) should be used
-                        IF (sourcetyp AND 511) = 8 THEN ' sourcetyp is the type of data (bits can be examined to get more details)
-                            e$ = "func__" + rotlr_n$ + "<uint8_t>(" + e$
-                            typ& = UBYTETYPE - ISPOINTER ' the return type is passed back up to the caller
-                        ELSEIF (sourcetyp AND 511) = 16 THEN
-                            e$ = "func__" + rotlr_n$ + "<uint16_t>(" + e$
-                            typ& = UINTEGERTYPE - ISPOINTER
-                        ELSEIF (sourcetyp AND 511) = 32 THEN
-                            e$ = "func__" + rotlr_n$ + "<uint32_t>(" + e$
-                            typ& = ULONGTYPE - ISPOINTER
-                        ELSEIF (sourcetyp AND 511) = 64 THEN
-                            e$ = "func__" + rotlr_n$ + "<uint64_t>(" + e$
-                            typ& = UINTEGER64TYPE - ISPOINTER
-                        ELSE
-                            Give_Error "Unknown data size"
+                        typ& = sourcetyp ' return type is derived from the type of the first argument
+
+                        e$ = "std::" + minmax_n$ + "<" + Type_GetCppArithmeticType(sourcetyp) + ">(" + e$
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = e$
+                        e$ = ""
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
                             EXIT FUNCTION
                         END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = r$ + e$ + ")"
+
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
+                ' _CLAMP support
+                IF n$ = "_CLAMP" THEN
+                    IF curarg = 1 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        typ& = sourcetyp ' return type is derived from the type of the first argument
+
+                        e$ = "std::clamp<" + Type_GetCppArithmeticType(sourcetyp) + ">(" + e$
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = e$
+                        e$ = ""
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = r$ + e$
+                        e$ = ""
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 3 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        r$ = r$ + e$ + ")"
+
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
+                ' ROR & ROL support
+                IF n$ = "_ROR" _ORELSE n$ = "_ROL" THEN
+                    rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' we'll need this to construct the C call
+
+                    IF curarg = 1 THEN ' first parameter
+                        IF NOT Type_IsIntegral(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected non-floating-point numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        SELECT CASE Type_GetSizeInBits(sourcetyp)
+                            CASE 8
+                                e$ = "func__" + rotlr_n$ + "<uint8_t>(" + e$
+                                typ& = UBYTETYPE - ISPOINTER ' the return type is passed back up to the caller
+                            CASE 16
+                                e$ = "func__" + rotlr_n$ + "<uint16_t>(" + e$
+                                typ& = UINTEGERTYPE - ISPOINTER
+                            CASE 32
+                                e$ = "func__" + rotlr_n$ + "<uint32_t>(" + e$
+                                typ& = ULONGTYPE - ISPOINTER
+                            CASE 64
+                                e$ = "func__" + rotlr_n$ + "<uint64_t>(" + e$
+                                typ& = UINTEGER64TYPE - ISPOINTER
+                            CASE ELSE
+                                Give_Error "Unsupported integral type size"
+                                EXIT FUNCTION
+                        END SELECT
 
                         r$ = e$ ' save whatever syntax he have so far
                         e$ = "" ' this must be cleared so that it is not repeated when we get to parameter 2
 
                         GOTO dontevaluate ' don't evaluate until we get the second parameter
                     ELSEIF curarg = 2 THEN ' second parameter
-                        IF (sourcetyp AND ISSTRING) _ORELSE (sourcetyp AND ISFLOAT) THEN
-                            Give_Error "Expected non-floating-point value"
+                        IF NOT Type_IsIntegral(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected non-floating-point numeric argument"
                             EXIT FUNCTION
                         END IF
 

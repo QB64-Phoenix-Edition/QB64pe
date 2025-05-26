@@ -149,10 +149,11 @@ finish:
     }
 
     // Normalize number (change 123.456E2 to 1.23456E4, or 123.456 to 1.23456E2)
-    exponent_value += most_significant_digit_position - 1;
     if (negate_exponent) {
         exponent_value = -exponent_value;
     }
+
+    exponent_value += most_significant_digit_position - 1;
 
     i = 0;
     // Build a floating-point number in ASCII format
