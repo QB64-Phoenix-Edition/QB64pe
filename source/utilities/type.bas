@@ -733,7 +733,102 @@ FUNCTION isuinteger (i$)
     isuinteger = -1
 END FUNCTION
 
-' Helper functions for type checking
+FUNCTION Type_PromoteArithmeticType& (qbTypA AS LONG, qbTypB AS LONG)
+    DIM typeA AS LONG: typeA = Type_StripContextFlags(qbTypA)
+    DIM typeB AS LONG: typeB = Type_StripContextFlags(qbTypB)
+    DIM isFloatA AS _BYTE: isFloatA = Type_IsFloatingPoint(typeA)
+    DIM isFloatB AS _BYTE: isFloatB = Type_IsFloatingPoint(typeB)
+    DIM isUnsignedA AS _BYTE: isUnsignedA = Type_IsUnsigned(typeA)
+    DIM isUnsignedB AS _BYTE: isUnsignedB = Type_IsUnsigned(typeB)
+    DIM sizeA AS _UNSIGNED LONG: sizeA = Type_GetSizeInBits(typeA)
+    DIM sizeB AS _UNSIGNED LONG: sizeB = Type_GetSizeInBits(typeB)
+
+    IF typeA = typeB THEN ' both are of the same type
+        Type_PromoteArithmeticType = typeA
+    ELSEIF typeA = UOFFSETTYPE _ORELSE typeB = UOFFSETTYPE THEN ' special case UOFFSET
+        Type_PromoteArithmeticType = UOFFSETTYPE
+    ELSEIF typeA = OFFSETTYPE _ORELSE typeB = OFFSETTYPE THEN ' special case OFFSET
+        Type_PromoteArithmeticType = OFFSETTYPE
+    ELSEIF (isFloatA _ANDALSO isFloatB) _ORELSE (isUnsignedA _ANDALSO isUnsignedB) THEN ' both are floating point or both are unsigned
+        Type_PromoteArithmeticType = _IIF(sizeA > sizeB, typeA, typeB)
+    ELSEIF sizeA = sizeB THEN ' both are of the same size
+        IF isFloatA _ANDALSO NOT isFloatB THEN ' one is a floating point
+            Type_PromoteArithmeticType = typeA
+        ELSEIF NOT isFloatA _ANDALSO isFloatB THEN ' one is a floating point
+            Type_PromoteArithmeticType = typeB
+        ELSEIF isUnsignedA _ANDALSO NOT isUnsignedB THEN ' one is an unsigned
+            Type_PromoteArithmeticType = typeA
+        ELSEIF NOT isUnsignedA _ANDALSO isUnsignedB THEN ' one is an unsigned
+            Type_PromoteArithmeticType = typeB
+        ELSE
+            Type_PromoteArithmeticType = typeA ' both are of the same sized signed type
+        END IF
+    ELSEIF sizeA < sizeB THEN ' one is smaller than the other
+        IF isFloatA _ANDALSO NOT isFloatB THEN ' one is a floating point
+            SELECT CASE typeA
+                CASE SINGLETYPE
+                    Type_PromoteArithmeticType = DOUBLETYPE
+                CASE DOUBLETYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE FLOATTYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE ELSE
+                    Type_PromoteArithmeticType = typeA
+            END SELECT
+        ELSE
+            Type_PromoteArithmeticType = typeB ' promote the larger one
+        END IF
+    ELSEIF sizeA > sizeB THEN ' one is smaller than the other
+        IF NOT isFloatA _ANDALSO isFloatB THEN ' one is a floating point
+            SELECT CASE typeB
+                CASE SINGLETYPE
+                    Type_PromoteArithmeticType = DOUBLETYPE
+                CASE DOUBLETYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE FLOATTYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE ELSE
+                    Type_PromoteArithmeticType = typeB
+            END SELECT
+        ELSE
+            Type_PromoteArithmeticType = typeA ' promote the larger one
+        END IF
+    END IF
+END FUNCTION
+
+FUNCTION Type_GetCppArithmeticType$ (typeId AS LONG)
+    DIM sizeInBits AS _UNSIGNED LONG: sizeInBits = Type_GetSizeInBits(typeId)
+    DIM cType AS STRING
+
+    IF typeId AND ISOFFSETINBITS THEN
+        IF sizeInBits <= 32 THEN cType = "int32_t" ELSE cType = "int64_t"
+        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
+    ELSEIF typeId AND ISFLOAT THEN
+        SELECT CASE sizeInBits
+            CASE 32: cType = "float"
+            CASE 64: cType = "double"
+            CASE 256: cType = "long double"
+            CASE ELSE: Give_Error "Invalid floating point type size"
+        END SELECT
+    ELSEIF typeId AND ISOFFSET THEN
+        IF typeId AND ISUNSIGNED THEN cType = "uintptr_t" ELSE cType = "intptr_t"
+    ELSE
+        SELECT CASE sizeInBits
+            CASE 8: cType = "int8_t"
+            CASE 16: cType = "int16_t"
+            CASE 32: cType = "int32_t"
+            CASE 64: cType = "int64_t"
+            CASE ELSE: Give_Error "Invalid integer type size": EXIT FUNCTION
+        END SELECT
+        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
+    END IF
+
+    Type_GetCppArithmeticType = cType
+END FUNCTION
+
+FUNCTION Type_StripContextFlags& (typeId AS LONG)
+    Type_StripContextFlags = typeId AND (NOT (ISARRAY OR ISREFERENCE OR ISUDT OR ISFIXEDLENGTH OR ISINCONVENTIONALMEMORY))
+END FUNCTION
 
 FUNCTION Type_GetSizeInBits~& (typeId AS LONG)
     Type_GetSizeInBits = typeId AND 511
@@ -768,9 +863,9 @@ FUNCTION Type_IsArithmetic%% (typeId AS LONG)
 END FUNCTION
 
 FUNCTION Type_IsArrayContainer%% (typeId AS LONG)
-    ' ISPOINTER is always set regardless of an index being used or not. This is probably a bug.
+    ' ISPOINTER is always set by QB64 regardless of an index being used or not. This is probably a bug.
     'Type_IsArrayContainer = (typeId AND ISARRAY) _ANDALSO _NEGATE (typeId AND ISPOINTER)
-    Type_IsArrayContainer = (typeId AND ISARRAY)
+    Type_IsArrayContainer = (typeId AND ISARRAY) <> _FALSE
 END FUNCTION
 
 FUNCTION Type_IsArrayElement%% (typeId AS LONG)
@@ -797,32 +892,3 @@ FUNCTION Type_IsInConventionalMemory%% (typeId AS LONG)
     Type_IsInConventionalMemory = (typeId AND ISINCONVENTIONALMEMORY) <> _FALSE
 END FUNCTION
 
-FUNCTION Type_GetCppArithmeticType$ (typeId AS LONG)
-    DIM sizeInBits AS _UNSIGNED LONG: sizeInBits = typeId AND 511
-    DIM cType AS STRING
-
-    IF typeId AND ISOFFSETINBITS THEN
-        IF sizeInBits <= 32 THEN cType = "int32_t" ELSE cType = "int64_t"
-        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
-    ELSEIF typeId AND ISFLOAT THEN
-        SELECT CASE sizeInBits
-            CASE 32: cType = "float"
-            CASE 64: cType = "double"
-            CASE 256: cType = "long double"
-            CASE ELSE: Give_Error "Invalid floating point type size"
-        END SELECT
-    ELSEIF typeId AND ISOFFSET THEN
-        IF typeId AND ISUNSIGNED THEN cType = "uintptr_t" ELSE cType = "intptr_t"
-    ELSE
-        SELECT CASE sizeInBits
-            CASE 8: cType = "int8_t"
-            CASE 16: cType = "int16_t"
-            CASE 32: cType = "int32_t"
-            CASE 64: cType = "int64_t"
-            CASE ELSE: Give_Error "Invalid integer type size": EXIT FUNCTION
-        END SELECT
-        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
-    END IF
-
-    Type_GetCppArithmeticType = cType
-END FUNCTION

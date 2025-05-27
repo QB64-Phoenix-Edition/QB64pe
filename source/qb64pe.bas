@@ -16937,16 +16937,17 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        typ& = sourcetyp ' return type is always derived from true part
+                        arg2Typ& = sourcetyp ' save the type of the 2nd argument
+
                         r$ = r$ + ")?(" + e$ + "):"
-                        e$ = ""
+                        e$ = _STR_EMPTY
                         noComma = 1
 
                         GOTO dontevaluate
                     ELSEIF curarg = 3 THEN ' false part
                         noComma = 0
 
-                        IF Type_IsString(sourcetyp) <> Type_IsString(typ&) THEN
+                        IF Type_IsString(sourcetyp) <> Type_IsString(arg2Typ&) THEN
                             Give_Error "falsePart and truePart must be of the same type"
                             EXIT FUNCTION
                         END IF
@@ -16954,6 +16955,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
+                        typ& = _IIF(Type_IsString(arg2Typ&), arg2Typ&, Type_PromoteArithmeticType(arg2Typ&, sourcetyp))
                         r$ = r$ + "(" + e$ + "))"
 
                         GOTO evalfuncspecial
@@ -16973,13 +16975,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        typ& = sourcetyp ' return type is derived from the type of the first argument
-
-                        e$ = "std::" + minmax_n$ + "<" + Type_GetCppArithmeticType(sourcetyp) + ">(" + e$
-                        IF Error_Happened THEN EXIT FUNCTION
-
-                        r$ = e$
-                        e$ = ""
+                        arg1Typ& = sourcetyp ' save the type of the 1st argument
+                        r$ = e$ ' save the partitially generated C code
+                        e$ = _STR_EMPTY
 
                         GOTO dontevaluate
                     ELSEIF curarg = 2 THEN
@@ -16991,7 +16989,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        r$ = r$ + e$ + ")"
+                        typ& = Type_PromoteArithmeticType(arg1Typ&, sourcetyp)
+                        r$ = "std::" + minmax_n$ + "<" + Type_GetCppArithmeticType(typ&) + ">(" + r$ + e$ + ")"
+                        IF Error_Happened THEN EXIT FUNCTION
 
                         GOTO evalfuncspecial
                     END IF
@@ -17008,13 +17008,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        typ& = sourcetyp ' return type is derived from the type of the first argument
-
-                        e$ = "std::clamp<" + Type_GetCppArithmeticType(sourcetyp) + ">(" + e$
-                        IF Error_Happened THEN EXIT FUNCTION
-
-                        r$ = e$
-                        e$ = ""
+                        arg1Typ& = sourcetyp ' save the type of the 1st argument
+                        r$ = e$ ' save the partitially generated C code
+                        e$ = _STR_EMPTY
 
                         GOTO dontevaluate
                     ELSEIF curarg = 2 THEN
@@ -17026,8 +17022,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        r$ = r$ + e$
-                        e$ = ""
+                        arg2Typ& = sourcetyp ' save the type of the 2nd argument
+                        r$ = r$ + e$ ' save the partitially generated C code
+                        e$ = _STR_EMPTY
 
                         GOTO dontevaluate
                     ELSEIF curarg = 3 THEN
@@ -17039,7 +17036,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        r$ = r$ + e$ + ")"
+                        typ& = Type_PromoteArithmeticType(Type_PromoteArithmeticType(arg1Typ&, arg2Typ&), sourcetyp)
+                        r$ = "func_clamp<" + Type_GetCppArithmeticType(typ&) + ">(" + r$ + e$ + ")"
+                        IF Error_Happened THEN EXIT FUNCTION
 
                         GOTO evalfuncspecial
                     END IF
@@ -17077,7 +17076,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END SELECT
 
                         r$ = e$ ' save whatever syntax he have so far
-                        e$ = "" ' this must be cleared so that it is not repeated when we get to parameter 2
+                        e$ = _STR_EMPTY ' this must be cleared so that it is not repeated when we get to parameter 2
 
                         GOTO dontevaluate ' don't evaluate until we get the second parameter
                     ELSEIF curarg = 2 THEN ' second parameter

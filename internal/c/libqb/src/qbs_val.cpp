@@ -16,7 +16,7 @@ template <typename T> T qbs_val(qbs *s) {
 
     union {
         uint64_t i;    // used when the input is an integer
-        long double f; // used when the input is a float-point number
+        long double f; // used when the input is a floating-point number
     } value{};
 
     auto negate = false;

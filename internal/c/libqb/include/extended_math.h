@@ -120,6 +120,19 @@ static inline double func_cot(double num) {
     return 1 / std::tan(num);
 }
 
+/// @brief Clamps a value between two limits. If the limits are reversed, the function handles it safely without requiring them to be ordered.
+/// We use this instead of std::clamp because std::clamp does not handle reversed limits and throws an assertion failure if the limits are reversed.
+/// @tparam T Type of the value and limits. Must be an arithmetic type.
+/// @param value The value to clamp.
+/// @param limit1 One end of the clamping range.
+/// @param limit2 The other end of the clamping range.
+/// @return The clamped value, which will be between limit1 and limit2, regardless of their order.
+template <typename T> static inline constexpr T func_clamp(T value, T limit1, T limit2) {
+    static_assert(std::is_arithmetic_v<T>, "func_clamp requires an arithmetic type");
+
+    return (limit1 > limit2) ? (value < limit2 ? limit2 : (value > limit1 ? limit1 : value)) : (value < limit1 ? limit1 : (value > limit2 ? limit2 : value));
+}
+
 template <typename T> static inline constexpr bool Math_IsPowerOf2(T n) {
     static_assert(std::is_integral_v<T>, "Math_IsPowerOf2 requires an integral type");
 
