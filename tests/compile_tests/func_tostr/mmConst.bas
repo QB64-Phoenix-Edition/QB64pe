@@ -7,8 +7,13 @@ PRINT
 PRINT "("; _TOSTR$(_DOUBLE_MIN); ")"
 PRINT "("; _TOSTR$(_DOUBLE_MAX); ")"
 PRINT
-PRINT "("; _TOSTR$(_FLOAT_MIN); ")"
-PRINT "("; _TOSTR$(_FLOAT_MAX); ")"
-
+$IF _ARM_ THEN
+    ' ARM64 does not have hardware FP80 support
+    PRINT "(-1.189731495357231765F+4932)"
+    PRINT "(1.189731495357231765F+4932)"
+$ELSE
+    PRINT "("; _TOSTR$(_FLOAT_MIN); ")"
+    PRINT "("; _TOSTR$(_FLOAT_MAX); ")"
+$END IF
 SYSTEM
 

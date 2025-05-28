@@ -55,20 +55,22 @@ REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is t
 REDIM SHARED InvalidLine(10000) AS _BYTE 'True for lines to be excluded due to preprocessor commands
 DIM DefineElse(255) AS _BYTE
 DIM SHARED UserDefineCount AS INTEGER, UserDefineCountPresets AS INTEGER, UserDefineList$, UserDefineListPresets$
-UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@_QB64PE_@"
+UserDefineListPresets$ = "@DEFINED@UNDEFINED@WINDOWS@WIN@LINUX@MAC@MACOSX@32BIT@64BIT@VERSION@_QB64PE_@_ARM_@"
 UserDefine(0, 0) = "WINDOWS": UserDefine(0, 1) = "WIN"
 UserDefine(0, 2) = "LINUX"
 UserDefine(0, 3) = "MAC": UserDefine(0, 4) = "MACOSX"
 UserDefine(0, 5) = "32BIT": UserDefine(0, 6) = "64BIT"
 UserDefine(0, 7) = "VERSION": UserDefine(0, 8) = "_QB64PE_"
+UserDefine(0, 9) = "_ARM_"
 IF INSTR(_OS$, "WIN") THEN UserDefine(1, 0) = "-1": UserDefine(1, 1) = "-1" ELSE UserDefine(1, 0) = "0": UserDefine(1, 1) = "0"
 IF INSTR(_OS$, "LINUX") THEN UserDefine(1, 2) = "-1" ELSE UserDefine(1, 2) = "0"
 IF INSTR(_OS$, "MAC") THEN UserDefine(1, 3) = "-1": UserDefine(1, 4) = "-1" ELSE UserDefine(1, 3) = "0": UserDefine(1, 4) = "0"
 IF INSTR(_OS$, "32BIT") THEN UserDefine(1, 5) = "-1": UserDefine(1, 6) = "0" ELSE UserDefine(1, 5) = "0": UserDefine(1, 6) = "-1"
 UserDefine(1, 7) = Version$: UserDefine(1, 8) = "-1"
+IF INSTR(_OS$, "ARM") THEN UserDefine(1, 9) = "-1" ELSE UserDefine(1, 9) = "0"
 'Whatever values get added/changed in the future, make sure to keep
 'the VERSION on index #7 to avoid problems.
-UserDefineCountPresets = 8 'the last index of the defines above
+UserDefineCountPresets = 9 'the last index of the defines above
 
 DIM SHARED QB64_uptime#
 
@@ -113,7 +115,12 @@ DIM SHARED UseGL 'declared SUB _GL (no params)
 
 DIM SHARED WindowTitle AS STRING
 
-IF OS_BITS = 32 THEN WindowTitle = "QB64 Phoenix Edition (x32)" ELSE WindowTitle = "QB64 Phoenix Edition (x64)"
+IF INSTR(_OS$, "ARM") THEN
+    WindowTitle = "QB64 Phoenix Edition " + _IIF(OS_BITS = 32, "(ARM)", "(ARM64)")
+ELSE
+    WindowTitle = "QB64 Phoenix Edition " + _IIF(OS_BITS = 32, "(x86)", "(x64)")
+END IF
+
 _TITLE WindowTitle
 
 CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
@@ -9104,7 +9111,7 @@ DO
                 IF n = 4 THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
                 l$ = l$ + sp + SCase$("_NewHandler")
             ELSEIF hhc$ = "_LASTHANDLER" THEN
-                WriteBufLine MainTxtBuf, "error_goto_line = qbr(func_val(error_handler_history));"
+                WriteBufLine MainTxtBuf, "error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));"
                 WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + SCase$("_LastHandler")
@@ -12731,14 +12738,14 @@ IF os$ = "WIN" THEN
     PRINT #ffh, "@echo off"
     PRINT #ffh, "cd %0\..\"
     PRINT #ffh, "cd ../.."
-    PRINT #ffh, "echo C++ Debugging: " + file$ + extension$ + " using gdb.exe"
+    PRINT #ffh, "echo C++ Debugging: " + file$ + extension$ + " using lldb.exe"
     PRINT #ffh, "echo Debugger commands:"
     PRINT #ffh, "echo After the debugger launches type 'run' to start your program"
     PRINT #ffh, "echo After your program crashes type 'list' to find where the problem is and fix/report it"
     PRINT #ffh, "echo Type 'quit' to exit"
-    PRINT #ffh, "echo (the GDB debugger has many other useful commands, this advice is for beginners)"
+    PRINT #ffh, "echo (the LLDB debugger has many other useful commands, this advice is for beginners)"
     PRINT #ffh, "pause"
-    PRINT #ffh, GetCompilerPath$ + "gdb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
+    PRINT #ffh, GetCompilerPath$ + "lldb.exe " + CHR$(34) + path.exe$ + file$ + extension$ + CHR$(34)
     PRINT #ffh, "pause"
     CLOSE ffh
 END IF
@@ -16637,6 +16644,36 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF LEFT$(e$, 2) = "(" + sp THEN dereference = 1 ELSE dereference = 0
 
 
+                ' VAL support
+                IF n$ = "VAL" THEN
+                    IF curarg = 2 THEN ' data type
+                        valReturnType$ = type2symbol$(e$)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        SELECT CASE valReturnType$
+                            CASE "%%", "%", "&", "&&", "%&"
+                                typ& = INTEGER64TYPE - ISPOINTER
+                                r$ = "qbs_val<int64_t>" + r$
+
+                            CASE "~%%", "~%", "~&", "~&&", "~%&"
+                                typ& = UINTEGER64TYPE - ISPOINTER
+                                r$ = "qbs_val<uint64_t>" + r$
+
+                            CASE "!", "#", "##"
+                                typ& = FLOATTYPE - ISPOINTER
+                                r$ = "qbs_val<long double>" + r$
+
+                            CASE ELSE
+                                Give_Error "VAL TYPE unsupported"
+                                EXIT FUNCTION
+                        END SELECT
+
+                        r$ = r$ + ")"
+                        noComma = 0
+
+                        GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
+                    END IF
+                END IF
 
                 ' CAST support
                 IF n$ = "_CAST" THEN
@@ -16658,7 +16695,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END SELECT
 
                         e$ = ""
-                        nocomma = 1
+                        noComma = 1
 
                         GOTO dontevaluate
                     END IF
@@ -16849,13 +16886,36 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF Error_Happened THEN EXIT FUNCTION
                 '------------------------------------------------------------------------------------------------------------
 
+                ' VAL support
+                IF n$ = "VAL" THEN
+                    IF curarg = 1 THEN
+                        IF args = 1 THEN ' fallback to long double if no type (second argument) is specified
+                            IF NOT Type_IsString(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                                Give_Error "Expected STRING argument"
+                                EXIT FUNCTION
+                            END IF
+
+                            IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
+                            IF Error_Happened THEN EXIT FUNCTION
+
+                            typ& = FLOATTYPE - ISPOINTER ' default to earlier QB64 behavior
+                            r$ = "qbs_val<long double>" + r$ + e$ + ")"
+
+                            GOTO evalfuncspecial ' wrap up early to avoid adding junk at the end of the call
+                        ELSE
+                            ' If we have more than 1 arg then we'll let the existing logic validate and handle arg 1
+                            noComma = 1 ' avoid adding a comma at the end
+                        END IF
+                    END IF
+                END IF
+
                 ' CAST support
                 IF n$ = "_CAST" THEN
                     IF curarg = 2 THEN ' numeric value
-                        nocomma = 0
+                        noComma = 0
 
-                        IF sourcetyp AND ISSTRING THEN
-                            Give_Error "Expected numeric value"
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
                             EXIT FUNCTION
                         END IF
 
@@ -16872,21 +16932,22 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF n$ = "_IIF" THEN
                     IF curarg = 1 THEN ' expression
                         r$ = r$ + "("
-                        nocomma = 1
+                        noComma = 1
                     ELSEIF curarg = 2 THEN ' true part
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        typ& = sourcetyp ' return type is always derived from true part
+                        arg2Typ& = sourcetyp ' save the type of the 2nd argument
+
                         r$ = r$ + ")?(" + e$ + "):"
-                        e$ = ""
-                        nocomma = 1
+                        e$ = _STR_EMPTY
+                        noComma = 1
 
                         GOTO dontevaluate
                     ELSEIF curarg = 3 THEN ' false part
-                        nocomma = 0
+                        noComma = 0
 
-                        IF (sourcetyp AND ISSTRING) <> (typ& AND ISSTRING) THEN
+                        IF Type_IsString(sourcetyp) <> Type_IsString(arg2Typ&) THEN
                             Give_Error "falsePart and truePart must be of the same type"
                             EXIT FUNCTION
                         END IF
@@ -16894,7 +16955,90 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
+                        typ& = _IIF(Type_IsString(arg2Typ&), arg2Typ&, Type_PromoteArithmeticType(arg2Typ&, sourcetyp))
                         r$ = r$ + "(" + e$ + "))"
+
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
+                ' _MIN & _MAX support
+                IF n$ = "_MIN" _ORELSE n$ = "_MAX" THEN
+                    minmax_n$ = LCASE$(RIGHT$(n$, 3))
+
+                    IF curarg = 1 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        arg1Typ& = sourcetyp ' save the type of the 1st argument
+                        r$ = e$ ' save the partitially generated C code
+                        e$ = _STR_EMPTY
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        typ& = Type_PromoteArithmeticType(arg1Typ&, sourcetyp)
+                        r$ = "std::" + minmax_n$ + "<" + Type_GetCppArithmeticType(typ&) + ">(" + r$ + e$ + ")"
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        GOTO evalfuncspecial
+                    END IF
+                END IF
+
+                ' _CLAMP support
+                IF n$ = "_CLAMP" THEN
+                    IF curarg = 1 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        arg1Typ& = sourcetyp ' save the type of the 1st argument
+                        r$ = e$ ' save the partitially generated C code
+                        e$ = _STR_EMPTY
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 2 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        arg2Typ& = sourcetyp ' save the type of the 2nd argument
+                        r$ = r$ + e$ ' save the partitially generated C code
+                        e$ = _STR_EMPTY
+
+                        GOTO dontevaluate
+                    ELSEIF curarg = 3 THEN
+                        IF NOT Type_IsArithmetic(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected numeric argument"
+                            EXIT FUNCTION
+                        END IF
+
+                        IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
+                        IF Error_Happened THEN EXIT FUNCTION
+
+                        typ& = Type_PromoteArithmeticType(Type_PromoteArithmeticType(arg1Typ&, arg2Typ&), sourcetyp)
+                        r$ = "func_clamp<" + Type_GetCppArithmeticType(typ&) + ">(" + r$ + e$ + ")"
+                        IF Error_Happened THEN EXIT FUNCTION
 
                         GOTO evalfuncspecial
                     END IF
@@ -16905,39 +17049,39 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     rotlr_n$ = LCASE$(RIGHT$(n$, 3)) ' we'll need this to construct the C call
 
                     IF curarg = 1 THEN ' first parameter
-                        IF (sourcetyp AND ISSTRING) _ORELSE (sourcetyp AND ISFLOAT) THEN
-                            Give_Error "Expected non-floating-point value"
+                        IF NOT Type_IsIntegral(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected non-floating-point numeric argument"
                             EXIT FUNCTION
                         END IF
 
                         IF sourcetyp AND ISREFERENCE THEN e$ = refer(e$, sourcetyp, 0)
                         IF Error_Happened THEN EXIT FUNCTION
 
-                        ' Establish which function (if any!) should be used
-                        IF (sourcetyp AND 511) = 8 THEN ' sourcetyp is the type of data (bits can be examined to get more details)
-                            e$ = "func__" + rotlr_n$ + "<uint8_t>(" + e$
-                            typ& = UBYTETYPE - ISPOINTER ' the return type is passed back up to the caller
-                        ELSEIF (sourcetyp AND 511) = 16 THEN
-                            e$ = "func__" + rotlr_n$ + "<uint16_t>(" + e$
-                            typ& = UINTEGERTYPE - ISPOINTER
-                        ELSEIF (sourcetyp AND 511) = 32 THEN
-                            e$ = "func__" + rotlr_n$ + "<uint32_t>(" + e$
-                            typ& = ULONGTYPE - ISPOINTER
-                        ELSEIF (sourcetyp AND 511) = 64 THEN
-                            e$ = "func__" + rotlr_n$ + "<uint64_t>(" + e$
-                            typ& = UINTEGER64TYPE - ISPOINTER
-                        ELSE
-                            Give_Error "Unknown data size"
-                            EXIT FUNCTION
-                        END IF
+                        SELECT CASE Type_GetSizeInBits(sourcetyp)
+                            CASE 8
+                                e$ = "func__" + rotlr_n$ + "<uint8_t>(" + e$
+                                typ& = UBYTETYPE - ISPOINTER ' the return type is passed back up to the caller
+                            CASE 16
+                                e$ = "func__" + rotlr_n$ + "<uint16_t>(" + e$
+                                typ& = UINTEGERTYPE - ISPOINTER
+                            CASE 32
+                                e$ = "func__" + rotlr_n$ + "<uint32_t>(" + e$
+                                typ& = ULONGTYPE - ISPOINTER
+                            CASE 64
+                                e$ = "func__" + rotlr_n$ + "<uint64_t>(" + e$
+                                typ& = UINTEGER64TYPE - ISPOINTER
+                            CASE ELSE
+                                Give_Error "Unsupported integral type size"
+                                EXIT FUNCTION
+                        END SELECT
 
                         r$ = e$ ' save whatever syntax he have so far
-                        e$ = "" ' this must be cleared so that it is not repeated when we get to parameter 2
+                        e$ = _STR_EMPTY ' this must be cleared so that it is not repeated when we get to parameter 2
 
                         GOTO dontevaluate ' don't evaluate until we get the second parameter
                     ELSEIF curarg = 2 THEN ' second parameter
-                        IF (sourcetyp AND ISSTRING) _ORELSE (sourcetyp AND ISFLOAT) THEN
-                            Give_Error "Expected non-floating-point value"
+                        IF NOT Type_IsIntegral(sourcetyp) _ORELSE Type_IsUDTContainer(sourcetyp) THEN
+                            Give_Error "Expected non-floating-point numeric argument"
                             EXIT FUNCTION
                         END IF
 
@@ -17298,7 +17442,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         ELSE
                             r$ = ctype$ + "2string("
                         END IF
-                        nocomma = 1
+                        noComma = 1
                         targettyp = qtyp&
                     END IF
                 END IF
@@ -18013,8 +18157,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     END IF
                 END IF
 
-                IF i <> n AND nocomma = 0 THEN r$ = r$ + ","
-                nocomma = 0
+                IF i <> n AND noComma = 0 THEN r$ = r$ + ","
+                noComma = 0
                 firsti = i + 1
                 curarg = curarg + 1
             END IF

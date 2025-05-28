@@ -21,6 +21,9 @@ jobs:
           - os: windows-2022
             platform: x86
             prefix: win
+          - os: windows-11-arm
+            platform: arm64
+            prefix: win
 
     runs-on: ${{ matrix.os }}
 
@@ -118,6 +121,7 @@ jobs:
           tests/results/
           qb64pe_win-x86*.7z
           qb64pe_win-x64*.7z
+          qb64pe_win-arm64*.7z
           qb64pe_lnx*.tar.gz
           qb64pe_osx*.tar.gz
 
@@ -129,6 +133,7 @@ jobs:
         files: |
           qb64pe_win-x86*.7z
           qb64pe_win-x64*.7z
+          qb64pe_win-arm64*.7z
           qb64pe_lnx*.tar.gz
           qb64pe_osx*.tar.gz
       env:
