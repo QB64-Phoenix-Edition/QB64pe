@@ -1,0 +1,10 @@
+qbs*oldstr4141=NULL;
+if(_SUB_FIXUPERRORMESSAGE_STRING_OP->tmp||_SUB_FIXUPERRORMESSAGE_STRING_OP->fixed||_SUB_FIXUPERRORMESSAGE_STRING_OP->readonly){
+oldstr4141=_SUB_FIXUPERRORMESSAGE_STRING_OP;
+if (oldstr4141->cmem_descriptor){
+_SUB_FIXUPERRORMESSAGE_STRING_OP=qbs_new_cmem(oldstr4141->len,0);
+}else{
+_SUB_FIXUPERRORMESSAGE_STRING_OP=qbs_new(oldstr4141->len,0);
+}
+memcpy(_SUB_FIXUPERRORMESSAGE_STRING_OP->chr,oldstr4141->chr,oldstr4141->len);
+}
