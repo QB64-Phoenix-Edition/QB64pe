@@ -270,17 +270,17 @@ SUB HashDump 'used for debugging purposes
 
             PRINT #fh, "  HashList("; i; ").LastItem="; HashList(i).LastItem
             hashdumpnextitem:
-            x$ = "  [" + STR$(i) + "]" + HashListName(i)
+            x$ = "  [" + _TOSTR$(i) + "]" + HashListName(i)
 
             f = HashList(i).Flags
-            x$ = x$ + ",.Flags=" + STR$(f) + "{"
+            x$ = x$ + ",.Flags=" + _TOSTR$(f) + "{"
             FOR z = 1 TO 32
                 ASC(b$, z) = (f AND 1) + 48
                 f = f \ 2
             NEXT
             x$ = x$ + b$
 
-            x$ = x$ + ",.Reference=" + STR$(HashList(i).Reference)
+            x$ = x$ + ",.Reference=" + _TOSTR$(HashList(i).Reference)
 
             PRINT #fh, x$
 

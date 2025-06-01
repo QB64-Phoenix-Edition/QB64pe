@@ -20,11 +20,11 @@ SUB CopyFromOther
                         id% = VAL(MID$(oqbd$, sid% + 9))
                         IF id% > 10 THEN
                             'custom user schemes move by 4, as of 4 new built-in schemes in v3.14.0
-                            oqbd$ = LEFT$(oqbd$, sid% + 8) + str2$(id% + 4) + MID$(oqbd$, sid% + 9 + LEN(str2$(id%)))
+                            oqbd$ = LEFT$(oqbd$, sid% + 8) + _TOSTR$(id% + 4) + MID$(oqbd$, sid% + 9 + LEN(_TOSTR$(id%)))
                         ELSE
                             'built-in schemes are reordered according to the lookup string
                             ncso$ = "12349567de" 'old id = pick position for new id
-                            oqbd$ = LEFT$(oqbd$, sid% + 8) + str2$(VAL("&H" + MID$(ncso$, id%, 1))) + MID$(oqbd$, sid% + 9 + LEN(str2$(id%)))
+                            oqbd$ = LEFT$(oqbd$, sid% + 8) + _TOSTR$(VAL("&H" + MID$(ncso$, id%, 1))) + MID$(oqbd$, sid% + 9 + LEN(_TOSTR$(id%)))
                         END IF
                     END IF
                     _WRITEFILE ConfigFile$, oqbd$
@@ -458,7 +458,7 @@ SUB ReadInitialConfig
     idecustomfontheight = VAL(value$)
     IF idecustomfontheight < 8 OR idecustomfontheight > 100 THEN
         idecustomfontheight = 19
-        WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
+        WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", _TOSTR$(idecustomfontheight)
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CodePage", value$)

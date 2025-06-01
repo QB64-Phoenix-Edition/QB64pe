@@ -14,7 +14,7 @@ FUNCTION typevalue2symbol$ (t)
     b = t AND 511
 
     IF t AND ISOFFSETINBITS THEN
-        IF b > 1 THEN s$ = s$ + "`" + str2$(b) ELSE s$ = s$ + "`"
+        IF b > 1 THEN s$ = s$ + "`" + _TOSTR$(b) ELSE s$ = s$ + "`"
         typevalue2symbol$ = s$
         EXIT FUNCTION
     END IF
@@ -45,11 +45,11 @@ FUNCTION id2fulltypename$
         id2fulltypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISSTRING THEN
-        IF t AND ISFIXEDLENGTH THEN a$ = "STRING * " + str2(size) ELSE a$ = "STRING"
+        IF t AND ISFIXEDLENGTH THEN a$ = "STRING * " + _TOSTR$(size) ELSE a$ = "STRING"
         id2fulltypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISOFFSETINBITS THEN
-        IF bits > 1 THEN a$ = "_BIT * " + str2(bits) ELSE a$ = "_BIT"
+        IF bits > 1 THEN a$ = "_BIT * " + _TOSTR$(bits) ELSE a$ = "_BIT"
         IF t AND ISUNSIGNED THEN a$ = "_UNSIGNED " + a$
         id2fulltypename$ = a$: EXIT FUNCTION
     END IF
@@ -81,12 +81,12 @@ FUNCTION id2shorttypename$
         id2shorttypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISSTRING THEN
-        IF t AND ISFIXEDLENGTH THEN a$ = "STRING" + str2(size) ELSE a$ = "STRING"
+        IF t AND ISFIXEDLENGTH THEN a$ = "STRING" + _TOSTR$(size) ELSE a$ = "STRING"
         id2shorttypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISOFFSETINBITS THEN
         IF t AND ISUNSIGNED THEN a$ = "_U" ELSE a$ = "_"
-        IF bits > 1 THEN a$ = a$ + "BIT" + str2(bits) ELSE a$ = a$ + "BIT1"
+        IF bits > 1 THEN a$ = a$ + "BIT" + _TOSTR$(bits) ELSE a$ = a$ + "BIT1"
         id2shorttypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISFLOAT THEN
@@ -367,9 +367,9 @@ FUNCTION type2symbol$ (typ$)
         IF v = 0 THEN Give_Error e$: EXIT FUNCTION
         IF s$ <> "$" AND v > 64 THEN Give_Error e$: EXIT FUNCTION
         IF s$ = "$" THEN
-            s$ = s$ + str2$(v)
+            s$ = s$ + _TOSTR$(v)
         ELSE
-            s$ = LEFT$(s$, LEN(s$) - 1) + str2$(v)
+            s$ = LEFT$(s$, LEN(s$) - 1) + _TOSTR$(v)
         END IF
         type2symbol$ = s$
     END IF
