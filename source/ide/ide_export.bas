@@ -32,7 +32,7 @@ SUB ExportCodeAs (docFormat$)
     IF sTxt$ = "" THEN
         FOR i& = 1 TO iden '     '=> get full source, if no selection was made
             sTxt$ = sTxt$ + idegetline(i&) + cEol$
-            perc$ = str2$(INT(30 / iden * i&))
+            perc$ = _TOSTR$(INT(30 / iden * i&))
             IdeInfo = CHR$(0) + STRING$(3 - LEN(perc$), 32) + perc$ + "% exported..."
             UpdateIdeInfo
         NEXT i&
@@ -77,7 +77,7 @@ SUB ExportCodeAs (docFormat$)
     '----------
     GOSUB OpenCodeBlock
     WHILE sPos& <= sLen&
-        perc$ = str2$(30 + INT(70 / sLen& * sPos&))
+        perc$ = _TOSTR$(30 + INT(70 / sLen& * sPos&))
         IdeInfo = CHR$(0) + STRING$(3 - LEN(perc$), 32) + perc$ + "% exported..."
         UpdateIdeInfo
         '----------
@@ -564,12 +564,12 @@ SUB ExportCodeAs (docFormat$)
                 CASE IS > 127
                     uni& = _MAPUNICODE(curr%)
                     IF uni& = 0 THEN uni& = 65533 'replacement character
-                    ech$ = "\u" + LTRIM$(STR$(uni&)) + "\'bf": sk% = -1
+                    ech$ = "\u" + _TOSTR$(uni&) + "\'bf": sk% = -1
                 CASE ELSE: RETURN
             END SELECT
         CASE "foru" '         'Keeps the original encoding, so Forum/Wiki examples can be copied
             SELECT CASE curr% 'back to the IDE. However, chars appear wrong in the Forum/Wiki.
-                CASE IS > 127: ech$ = "&#" + LTRIM$(STR$(curr%)) + ";": sk% = -1
+                CASE IS > 127: ech$ = "&#" + _TOSTR$(curr%) + ";": sk% = -1
                 CASE ELSE: RETURN
             END SELECT
         CASE "wiki" '         'Keeps the original encoding, so Forum/Wiki examples can be copied
@@ -577,7 +577,7 @@ SUB ExportCodeAs (docFormat$)
                 CASE 38: ech$ = "&amp;": sk% = -1
                 CASE 60: ech$ = "&lt;": sk% = -1
                 CASE 62: ech$ = "&gt;": sk% = -1
-                CASE IS > 127: ech$ = "&#" + LTRIM$(STR$(curr%)) + ";": sk% = -1
+                CASE IS > 127: ech$ = "&#" + _TOSTR$(curr%) + ";": sk% = -1
                 CASE ELSE: RETURN
             END SELECT
         CASE ELSE: RETURN
@@ -595,19 +595,19 @@ SUB ExportCodeAs (docFormat$)
     '----------
     GetThemeColors:
     txc$ = "#" + RIGHT$(HEX$(IDETextColor), 6)
-    rtc$ = "\red" + LTRIM$(STR$(_RED32(IDETextColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDETextColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDETextColor))) + ";"
+    rtc$ = "\red" + _TOSTR$(_RED32(IDETextColor)) + "\green" + _TOSTR$(_GREEN32(IDETextColor)) + "\blue" + _TOSTR$(_BLUE32(IDETextColor)) + ";"
     coc$ = "#" + RIGHT$(HEX$(IDECommentColor), 6)
-    rtc$ = rtc$ + "\red" + LTRIM$(STR$(_RED32(IDECommentColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDECommentColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDECommentColor))) + ";"
+    rtc$ = rtc$ + "\red" + _TOSTR$(_RED32(IDECommentColor)) + "\green" + _TOSTR$(_GREEN32(IDECommentColor)) + "\blue" + _TOSTR$(_BLUE32(IDECommentColor)) + ";"
     mec$ = "#" + RIGHT$(HEX$(IDEMetaCommandColor), 6)
-    rtc$ = rtc$ + "\red" + LTRIM$(STR$(_RED32(IDEMetaCommandColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDEMetaCommandColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDEMetaCommandColor))) + ";"
+    rtc$ = rtc$ + "\red" + _TOSTR$(_RED32(IDEMetaCommandColor)) + "\green" + _TOSTR$(_GREEN32(IDEMetaCommandColor)) + "\blue" + _TOSTR$(_BLUE32(IDEMetaCommandColor)) + ";"
     kwc$ = "#" + RIGHT$(HEX$(IDEKeywordColor), 6)
-    rtc$ = rtc$ + "\red" + LTRIM$(STR$(_RED32(IDEKeywordColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDEKeywordColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDEKeywordColor))) + ";"
+    rtc$ = rtc$ + "\red" + _TOSTR$(_RED32(IDEKeywordColor)) + "\green" + _TOSTR$(_GREEN32(IDEKeywordColor)) + "\blue" + _TOSTR$(_BLUE32(IDEKeywordColor)) + ";"
     nuc$ = "#" + RIGHT$(HEX$(IDENumbersColor), 6)
-    rtc$ = rtc$ + "\red" + LTRIM$(STR$(_RED32(IDENumbersColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDENumbersColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDENumbersColor))) + ";"
+    rtc$ = rtc$ + "\red" + _TOSTR$(_RED32(IDENumbersColor)) + "\green" + _TOSTR$(_GREEN32(IDENumbersColor)) + "\blue" + _TOSTR$(_BLUE32(IDENumbersColor)) + ";"
     quc$ = "#" + RIGHT$(HEX$(IDEQuoteColor), 6)
-    rtc$ = rtc$ + "\red" + LTRIM$(STR$(_RED32(IDEQuoteColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDEQuoteColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDEQuoteColor))) + ";"
+    rtc$ = rtc$ + "\red" + _TOSTR$(_RED32(IDEQuoteColor)) + "\green" + _TOSTR$(_GREEN32(IDEQuoteColor)) + "\blue" + _TOSTR$(_BLUE32(IDEQuoteColor)) + ";"
     bgc$ = "#" + RIGHT$(HEX$(IDEBackgroundColor), 6)
-    rtc$ = rtc$ + "\red" + LTRIM$(STR$(_RED32(IDEBackgroundColor))) + "\green" + LTRIM$(STR$(_GREEN32(IDEBackgroundColor))) + "\blue" + LTRIM$(STR$(_BLUE32(IDEBackgroundColor))) + ";"
+    rtc$ = rtc$ + "\red" + _TOSTR$(_RED32(IDEBackgroundColor)) + "\green" + _TOSTR$(_GREEN32(IDEBackgroundColor)) + "\blue" + _TOSTR$(_BLUE32(IDEBackgroundColor)) + ";"
     RETURN
 END SUB
 

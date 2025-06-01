@@ -22,12 +22,12 @@ SUB EmitLoggingStatement (elements AS STRING, loglevel AS STRING)
 
     IF inclevel = 0 THEN
         IF NoIDEMode THEN
-            WriteBufLine MainTxtBuf, func$ + "(" + AddQuotes$(escapeString$(sourcefile$)) + ", " + AddQuotes$(escapeString$(subfuncname$)) + ", " + _TRIM$(STR$(linenumber)) + ", " + e$ + ");"
+            WriteBufLine MainTxtBuf, func$ + "(" + AddQuotes$(escapeString$(sourcefile$)) + ", " + AddQuotes$(escapeString$(subfuncname$)) + ", " + _TOSTR$(linenumber) + ", " + e$ + ");"
         ELSE
-            WriteBufLine MainTxtBuf, func$ + "(" + AddQuotes$(escapeString$(ideprogname$)) + ", " + AddQuotes$(escapeString$(subfuncname$)) + ", " + _TRIM$(STR$(linenumber)) + ", " + e$ + ");"
+            WriteBufLine MainTxtBuf, func$ + "(" + AddQuotes$(escapeString$(ideprogname$)) + ", " + AddQuotes$(escapeString$(subfuncname$)) + ", " + _TOSTR$(linenumber) + ", " + e$ + ");"
         END IF
     ELSE
-        WriteBufLine MainTxtBuf, func$ + "(" + AddQuotes$(escapeString$(incname$(inclevel))) + ", " + AddQuotes$(escapeString$(subfuncname$)) + ", " + _TRIM$(STR$(inclinenumber(inclevel))) + ", " + e$ + ");"
+        WriteBufLine MainTxtBuf, func$ + "(" + AddQuotes$(escapeString$(incname$(inclevel))) + ", " + AddQuotes$(escapeString$(subfuncname$)) + ", " + _TOSTR$(inclinenumber(inclevel)) + ", " + e$ + ");"
     END IF
 
 END SUB

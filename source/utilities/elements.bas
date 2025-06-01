@@ -612,7 +612,7 @@ FUNCTION createElementString$ (s$)
 
     ele$ = ele$ + escapeString$(s$)
 
-    ele$ = ele$ + CHR$(34) + "," + _TRIM$(STR$(LEN(s$)))
+    ele$ = ele$ + CHR$(34) + "," + _TOSTR$(LEN(s$))
     createElementString$ = ele$
 END FUNCTION
 
@@ -625,6 +625,6 @@ FUNCTION elementStringConcat$ (os1$, os2$)
     s2$ = MID$(os2$, 2, _INSTRREV(os2$, CHR$(34)) - 2)
     s2size = VAL(RIGHT$(os2$, LEN(os2$) - LEN(s2$) - 3))
 
-    elementStringConcat$ = CHR$(34) + s1$ + s2$ + CHR$(34) + "," + _TRIM$(STR$(s1size + s2size))
+    elementStringConcat$ = CHR$(34) + s1$ + s2$ + CHR$(34) + "," + _TOSTR$(s1size + s2size)
 END FUNCTION
 
