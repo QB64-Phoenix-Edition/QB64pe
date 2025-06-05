@@ -173,7 +173,7 @@ DIM SHARED ModifyCOMMAND$
 DIM SHARED EnteringRGB AS _BYTE
 DIM SHARED ActiveINCLUDELink AS LONG
 DIM SHARED ActiveINCLUDELinkFile AS STRING
-DIM SHARED HideCurrentLineHighlight AS _BYTE, ShowLineNumbers AS _BYTE
+DIM SHARED HideCurrentLineHighlight AS _BYTE
 DIM SHARED SearchMenuEnableQuickNav AS INTEGER, searchStringFoundOn AS LONG
 DIM SHARED idegotobox_LastLineNum AS LONG, maxLineNumberLength AS LONG
 DIM SHARED versionStringStatus$, lineNumberStatus$, ideshowtextBypassColorRestore AS _BYTE
@@ -226,20 +226,18 @@ DIM SHARED ViewMenuID AS INTEGER, ViewMenuShowLineNumbersSubMenuID AS INTEGER
 DIM SHARED ViewMenuShowSeparatorID AS INTEGER, ViewMenuShowBGID AS INTEGER
 DIM SHARED FileMenuExportAs AS INTEGER, FileMenuExportAsSubMenuID AS INTEGER
 DIM SHARED ViewMenuCompilerWarnings AS INTEGER
-DIM SHARED RunMenuID AS INTEGER, RunMenuSaveExeWithSource AS INTEGER, brackethighlight AS INTEGER
+DIM SHARED RunMenuID AS INTEGER, RunMenuSaveExeWithSource AS INTEGER
 DIM SHARED GenerateLicenseEnableMenu AS INTEGER
 DIM SHARED LoggingEnableMenu AS INTEGER
 DIM SHARED OptionsMenuGuiDialogs AS INTEGER
 DIM SHARED DebugMenuID AS INTEGER, DebugMenuCallStack AS INTEGER, DebugMenuWatchListToConsole AS INTEGER
 DIM SHARED DebugMenuAutoAddCommand AS INTEGER
-DIM SHARED multihighlight AS INTEGER, keywordHighlight AS INTEGER
 DIM SHARED PresetColorSchemes AS INTEGER, TotalColorSchemes AS INTEGER, ColorSchemes$(0)
 DIM SHARED LastValidColorScheme AS INTEGER
 DIM SHARED menubar$, idecontextualSearch$
 DIM SHARED ideundocombo, ideundocombochr, idenoundo, idemergeundo
 DIM SHARED idealthighlight, ideentermenu
 DIM SHARED idebackupsize, ideMaxRecent, ideMaxSearch
-DIM SHARED idewx, idewy, idecustomfont, idecustomfontfile$, idecustomfontheight, idecustomfonthandle
-DIM SHARED iderunmode, IDE_UseFont8 AS _BYTE
+DIM SHARED idewx, idewy, iderunmode
 'IDE MODULE SECTION END: shared data & definitions
 

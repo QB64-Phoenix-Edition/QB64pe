@@ -46,7 +46,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         vw_cmd$ = "me:" + COMMAND$(0)
         GOSUB SendCommand
         IF _WINDOWHANDLE THEN
-            vw_hwndSent = -1
+            vw_hwndSent = _TRUE
             vw_cmd$ = "hwnd:" + _MK$(_OFFSET, _WINDOWHANDLE)
             GOSUB SendCommand
         END IF
@@ -57,7 +57,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                 CASE "vwatch"
                     IF vw_value$ <> "ok" THEN
                         unlockvWatchHandle: CLOSE #vw_ideHost
-                        vw_bypass = -1
+                        vw_bypass = _TRUE
                         EXIT SUB
                     END IF
                 CASE "line count"
@@ -70,7 +70,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                         vw_cmd$ = "quit:Communication error."
                         GOSUB SendCommand
                         unlockvWatchHandle: CLOSE #vw_ideHost
-                        vw_bypass = -1
+                        vw_bypass = _TRUE
                         EXIT SUB
                     END IF
                     FOR vw_i = 1 TO vw_breakpointCount
@@ -86,7 +86,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                         vw_cmd$ = "quit:Communication error."
                         GOSUB SendCommand
                         unlockvWatchHandle: CLOSE #vw_ideHost
-                        vw_bypass = -1
+                        vw_bypass = _TRUE
                         EXIT SUB
                     END IF
                     FOR vw_i = 1 TO vw_skipCount
@@ -95,18 +95,18 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                     NEXT
                 CASE "run"
                     IF vwatch_breakpoints(vwatch_linenumber) THEN EXIT DO
-                    vw_pauseMode = 0
+                    vw_pauseMode = _FALSE
                     EXIT SUB
                 CASE "break"
-                    vw_pauseMode = -1
+                    vw_pauseMode = _TRUE
                     EXIT DO
             END SELECT
         LOOP
     END IF
 
-    IF vw_hwndSent = 0 THEN
+    IF NOT vw_hwndSent THEN
         IF _WINDOWHANDLE > 0 THEN
-            vw_hwndSent = -1
+            vw_hwndSent = _TRUE
             vw_cmd$ = "hwnd:" + _MK$(_OFFSET, _WINDOWHANDLE)
             GOSUB SendCommand
         END IF
@@ -117,7 +117,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         vw_cmd$ = "quit:Program ended."
         GOSUB SendCommand
         unlockvWatchHandle: CLOSE #vw_ideHost
-        vw_bypass = -1
+        vw_bypass = _TRUE
         vw_ideHost = 0
         EXIT SUB
     ELSEIF vwatch_linenumber = -1 THEN
@@ -136,8 +136,8 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         EXIT SUB
     ELSEIF vwatch_linenumber = -3 THEN
         'handle STOP - instead of quitting, pause execution
-        vw_pauseMode = -1
-        vw_stepOver = 0
+        vw_pauseMode = _TRUE
+        vw_stepOver = _FALSE
         EXIT SUB
     ELSEIF vwatch_linenumber = -4 THEN
         'handle INPUT/LINE INPUT - tell the IDE we'll be hanging for a while
@@ -151,15 +151,15 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         EXIT SUB
     END IF
 
-    IF vwatch_linenumber = vw_lastLine AND vw_setNextLine = 0 THEN EXIT SUB
-    vw_setNextLine = 0
+    IF vwatch_linenumber = vw_lastLine AND NOT vw_setNextLine THEN EXIT SUB
+    vw_setNextLine = _FALSE
     vw_lastLine = vwatch_linenumber
 
     GOSUB GetCommand
     SELECT CASE vw_cmd$
         CASE "break"
-            vw_pauseMode = -1
-            vw_stepOver = 0
+            vw_pauseMode = _TRUE
+            vw_stepOver = _FALSE
             vw_runToLine = 0
             vw_cmd$ = ""
         CASE "set breakpoint"
@@ -183,8 +183,8 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         GOSUB CheckWatchpoints
         IF vw_checkingWatchpoints = 2 THEN
             vw_checkingWatchpoints = 0
-            vw_pauseMode = -1
-            vw_stepOver = 0
+            vw_pauseMode = _TRUE
+            vw_stepOver = _FALSE
             vw_runToLine = 0
             vw_cmd$ = "watchpoint:" + MKL$(vw_tempIndex) + MKL$(LEN(vw_arrayIndexes$)) + vw_arrayIndexes$ + MKL$(vw_elementOffset) + MKI$(LEN(vw_wpExpression$)) + vw_wpExpression$
             GOTO breakReached
@@ -194,21 +194,21 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
 
     IF vwatch_skiplines(vwatch_linenumber) THEN vwatch_goto = -vwatch_linenumber: EXIT SUB
 
-    IF vw_stepOver = -1 AND vwatch_sublevel > vw_startLevel AND vwatch_breakpoints(vwatch_linenumber) = 0 THEN
+    IF vw_stepOver AND vwatch_sublevel > vw_startLevel AND vwatch_breakpoints(vwatch_linenumber) = 0 THEN
         EXIT SUB
-    ELSEIF vw_stepOver = -1 AND vwatch_sublevel = vw_startLevel THEN
-        vw_stepOver = 0
-        vw_pauseMode = -1
+    ELSEIF vw_stepOver AND vwatch_sublevel = vw_startLevel THEN
+        vw_stepOver = _FALSE
+        vw_pauseMode = _TRUE
     END IF
 
     IF vw_runToLine > 0 AND vw_runToLine <> vwatch_linenumber THEN
         EXIT SUB
     ELSEIF vw_runToLine > 0 AND vw_runToLine = vwatch_linenumber THEN
-        vw_pauseMode = -1
+        vw_pauseMode = _TRUE
         vw_runToLine = 0
     END IF
 
-    IF vwatch_breakpoints(vwatch_linenumber) = 0 AND vw_pauseMode = 0 THEN
+    IF vwatch_breakpoints(vwatch_linenumber) = 0 AND NOT vw_pauseMode THEN
         EXIT SUB
     END IF
 
@@ -224,39 +224,39 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
     set_fg vw_ideHwnd
 
     DO 'main loop
-        IF stop_program_state& THEN vw_bypass = -1: EXIT DO
+        IF stop_program_state& THEN vw_bypass = _TRUE: EXIT DO
         SELECT CASE vw_cmd$
             CASE "run"
-                vw_pauseMode = 0
-                vw_stepOver = 0
+                vw_pauseMode = _FALSE
+                vw_stepOver = _FALSE
                 _KEYCLEAR: vwatch_starttimers
                 EXIT SUB
             CASE "run to line"
-                vw_pauseMode = 0
-                vw_stepOver = 0
+                vw_pauseMode = _FALSE
+                vw_stepOver = _FALSE
                 vw_runToLine = CVL(vw_value$)
                 _KEYCLEAR: vwatch_starttimers
                 EXIT SUB
             CASE "step"
-                vw_pauseMode = -1
-                vw_stepOver = 0
+                vw_pauseMode = _TRUE
+                vw_stepOver = _FALSE
                 EXIT SUB
             CASE "step over"
-                vw_pauseMode = -1
-                vw_stepOver = -1
+                vw_pauseMode = _TRUE
+                vw_stepOver = _TRUE
                 vw_startLevel = vwatch_sublevel
                 _KEYCLEAR: vwatch_starttimers
                 EXIT SUB
             CASE "step out"
-                vw_pauseMode = -1
-                vw_stepOver = -1
+                vw_pauseMode = _TRUE
+                vw_stepOver = _TRUE
                 vw_startLevel = vwatch_sublevel - 1
                 _KEYCLEAR: vwatch_starttimers
                 EXIT SUB
             CASE "free"
                 unlockvWatchHandle: CLOSE #vw_ideHost
                 vw_ideHost = 0
-                vw_bypass = -1
+                vw_bypass = _TRUE
                 _KEYCLEAR: vwatch_starttimers
                 EXIT SUB
             CASE "set breakpoint"
@@ -660,9 +660,9 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
                 vw_cmd$ = "current sub:" + LEFT$(vwatch_stack(vwatch_sublevel), INSTR(vwatch_stack(vwatch_sublevel), ",") - 1)
                 GOSUB SendCommand
             CASE "set next line"
-                vw_pauseMode = -1
-                vw_stepOver = 0
-                vw_setNextLine = -1
+                vw_pauseMode = _TRUE
+                vw_stepOver = _FALSE
+                vw_setNextLine = _TRUE
                 vwatch_goto = CVL(vw_value$)
                 EXIT SUB
             CASE "set skip line"
@@ -684,7 +684,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
     Connect:
     DIM vw_ideport$
     vw_ideport$ = ENVIRON$("QB64DEBUGPORT")
-    IF vw_ideport$ = "" THEN vw_bypass = -1: EXIT SUB
+    IF vw_ideport$ = "" THEN vw_bypass = _TRUE: EXIT SUB
 
     vw_start! = TIMER
     DO
@@ -692,7 +692,7 @@ SUB vwatch (globalVariables AS _OFFSET, localVariables AS _OFFSET)
         vw_ideHost = _OPENCLIENT("QB64IDE:" + vw_ideport$ + ":localhost")
         _LIMIT 30
     LOOP UNTIL vw_k& = 27 OR vw_ideHost <> 0 OR TIMER - vw_start! > vw_timeout
-    IF vw_ideHost = 0 THEN vw_bypass = -1: EXIT SUB
+    IF vw_ideHost = 0 THEN vw_bypass = _TRUE: EXIT SUB
     RETURN
 
     GetCommand:

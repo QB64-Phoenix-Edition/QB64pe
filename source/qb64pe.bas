@@ -37,7 +37,7 @@ DEFLNG A-Z
 '-------- Optional IDE Component (1/2) --------
 '$INCLUDE:'ide\ide_global.bas'
 
-DIM SHARED NoExeSaved AS INTEGER
+DIM SHARED NoExeSaved AS _BYTE
 
 DIM SHARED vWatchErrorCall$, vWatchNewVariable$, vWatchVariableExclusions$
 vWatchErrorCall$ = "if (stop_program) {*__LONG_VWATCH_LINENUMBER=0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);};if(new_error){bkp_new_error=new_error;new_error=0;*__LONG_VWATCH_LINENUMBER=-1; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);new_error=bkp_new_error;};"
@@ -90,8 +90,6 @@ IF _DIREXISTS("internal") = 0 THEN
     SYSTEM 1
 END IF
 
-DIM SHARED Include_GDB_Debugging_Info 'set using "config.ini" or "Compiler settings" dialog
-
 DIM SHARED DEPENDENCY_LAST
 CONST DEPENDENCY_LOADFONT = 1: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
 CONST DEPENDENCY_MINIAUDIO = 2: DEPENDENCY_LAST = DEPENDENCY_LAST + 1
@@ -125,9 +123,9 @@ _TITLE WindowTitle
 
 CONST METACOMMAND_STRING_ENCLOSING_PAIR = "''"
 
-DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode, FormatMode
-DIM SHARED ShowWarnings AS _BYTE, QuietMode AS _BYTE, CMDLineFile AS STRING
-DIM SHARED MonochromeLoggingMode AS _BYTE
+DIM SHARED AS _BYTE NoIDEMode, ConsoleMode, FormatMode, NoCCompileMode, QuietMode
+DIM SHARED AS _BYTE MonochromeLoggingMode, ShowWarnings, ForceOptExpl
+DIM SHARED CMDLineSrcFile$, CMDLineOutFile$
 
 TYPE usedVarList
     AS LONG id, linenumber, includeLevel, includedLine, scope, localIndex
@@ -141,7 +139,6 @@ END TYPE
 REDIM SHARED backupUsedVariableList(1000) AS usedVarList
 DIM SHARED typeDefinitions$, backupTypeDefinitions$
 DIM SHARED totalVariablesCreated AS LONG, totalMainVariablesCreated AS LONG
-DIM SHARED bypassNextVariable AS _BYTE
 DIM SHARED totalWarnings AS LONG, warningListItems AS LONG, lastWarningHeader AS STRING
 DIM SHARED duplicateConstWarning AS _BYTE, warningsissued AS _BYTE
 DIM SHARED emptySCWarning AS _BYTE, maxLineNumber AS LONG
@@ -349,7 +346,6 @@ DIM SHARED tempfolderindexstr AS STRING 'appended to "Untitled"
 IF tempfolderindex <> 1 THEN tempfolderindexstr$ = "(" + _TOSTR$(tempfolderindex) + ")"
 
 
-DIM SHARED idedebuginfo
 DIM SHARED seperateargs_error
 DIM SHARED seperateargs_error_message AS STRING
 
@@ -377,23 +373,19 @@ DIM SHARED ideerrorline AS LONG 'set by qb64-error(...) to the line number it wo
 DIM SHARED idemessage AS STRING 'set by qb64-error(...) to the error message to be reported, this
 'is later passed to the ide in message #8
 
-DIM SHARED ForceOptExpl AS _BYTE
-ForceOptExpl = 0
-
-DIM SHARED ideStartAtLine AS LONG, errorLineInInclude AS LONG
+DIM SHARED IDEStartAtLine AS LONG, errorLineInInclude AS LONG
 DIM SHARED warningInInclude AS LONG, warningInIncludeLine AS LONG
-DIM SHARED outputfile_cmd$
 DIM SHARED compilelog$
 
-DIM OutputIsRelativeToStartDir AS LONG
+DIM OutputIsRelativeToStartDir AS _BYTE
 
 '$INCLUDE:'ide\config\cfg_global.bas'
 ReadInitialConfig
 
-CMDLineFile = ParseCMDLineArgs$
-IF CMDLineFile <> "" AND _FILEEXISTS(_STARTDIR$ + "/" + CMDLineFile) THEN
-    CMDLineFile = _STARTDIR$ + "/" + CMDLineFile
-    OutputIsRelativeToStartDir = -1
+CMDLineSrcFile$ = ParseCMDLineArgs$
+IF CMDLineSrcFile$ <> "" AND _FILEEXISTS(_STARTDIR$ + "/" + CMDLineSrcFile$) THEN
+    CMDLineSrcFile$ = _STARTDIR$ + "/" + CMDLineSrcFile$
+    OutputIsRelativeToStartDir = _TRUE
 END IF
 
 IF ConsoleMode THEN
@@ -469,20 +461,20 @@ DIM SHARED isalpha(255)
 DIM SHARED isnumeric(255)
 DIM SHARED alphanumeric(255)
 FOR i = 48 TO 57
-    isnumeric(i) = -1
-    alphanumeric(i) = -1
+    isnumeric(i) = _TRUE
+    alphanumeric(i) = _TRUE
 NEXT
 FOR i = 65 TO 90
-    isalpha(i) = -1
-    alphanumeric(i) = -1
+    isalpha(i) = _TRUE
+    alphanumeric(i) = _TRUE
 NEXT
 FOR i = 97 TO 122
-    isalpha(i) = -1
-    alphanumeric(i) = -1
+    isalpha(i) = _TRUE
+    alphanumeric(i) = _TRUE
 NEXT
 '_ is treated as an alphabet letter
-isalpha(95) = -1
-alphanumeric(95) = -1
+isalpha(95) = _TRUE
+alphanumeric(95) = _TRUE
 
 
 DIM SHARED lfsinglechar(255)
@@ -769,14 +761,14 @@ gl_scan_header
 
 '-----------------------QB64 COMPILER ONCE ONLY SETUP CODE ENDS HERE---------------------------------------
 
-IF NoIDEMode THEN IDE_AutoPosition = 0: GOTO noide
+IF NoIDEMode THEN IDEAutoPosition = _FALSE: GOTO noide
 DIM FileDropEnabled AS _BYTE
-IF FileDropEnabled = 0 THEN FileDropEnabled = -1: _ACCEPTFILEDROP
+IF NOT FileDropEnabled THEN FileDropEnabled = _TRUE: _ACCEPTFILEDROP
 
-IF IDE_AutoPosition AND NOT IDE_BypassAutoPosition THEN _SCREENMOVE IDE_LeftPosition, IDE_TopPosition
+IF IDEAutoPosition AND NOT IDEBypassAutoPosition THEN _SCREENMOVE IDELeftPosition, IDETopPosition
 idemode = 1
 sendc$ = "" 'no initial message
-IF CMDLineFile <> "" THEN sendc$ = CHR$(1) + CMDLineFile
+IF CMDLineSrcFile$ <> "" THEN sendc$ = CHR$(1) + CMDLineSrcFile$
 sendcommand:
 idecommand$ = sendc$
 C = ide(0)
@@ -978,7 +970,7 @@ IF C = 9 THEN 'run
                 END IF
             END IF
             IF path.exe$ = "./" THEN path.exe$ = ""
-            NoExeSaved = 0 'reset the flag for a temp EXE
+            NoExeSaved = _FALSE 'reset the flag for a temp EXE
             sendc$ = CHR$(6) 'ready
             GOTO sendcommand
         END IF
@@ -1030,15 +1022,15 @@ GOTO sendcommand
 
 
 noide:
-IF (qb64versionprinted = 0 OR ConsoleMode = 0) AND NOT QuietMode THEN
-    qb64versionprinted = -1
+IF (NOT QB64VersionPrinted OR NOT ConsoleMode) AND NOT QuietMode THEN
+    QB64VersionPrinted = _TRUE
     PRINT "QB64-PE Compiler V" + Version$
 END IF
 
-IF CMDLineFile = "" THEN
+IF CMDLineSrcFile$ = "" THEN
     LINE INPUT ; "COMPILE (.bas)>", f$
 ELSE
-    f$ = CMDLineFile
+    f$ = CMDLineSrcFile$
 END IF
 
 f$ = LTRIM$(RTRIM$(f$))
@@ -1046,7 +1038,7 @@ f$ = LTRIM$(RTRIM$(f$))
 IF FileHasExtension(f$) = 0 THEN f$ = f$ + ".bas"
 
 sourcefile$ = f$
-CMDLineFile = sourcefile$
+CMDLineSrcFile$ = sourcefile$
 'derive name from sourcefile
 f$ = RemoveFileExtension$(f$)
 
@@ -1336,14 +1328,13 @@ REDIM SHARED udtenext(1000) AS LONG
 definingtype = 0
 definingtypeerror = 0
 constlast = -1
-'constlastshared = -1
 closedmain = 0
 addmetastatic = 0
 addmetadynamic = 0
 DynamicMode = 0
 optionbase = 0
-ExeIconSet = 0
-VersionInfoSet = 0
+ExeIconSet = 0 '!!! If set, then this is the respective source line number. !!!
+VersionInfoSet = _FALSE
 viFileVersionNum$ = "": viProductVersionNum$ = "": viCompanyName$ = ""
 viFileDescription$ = "": viFileVersion$ = "": viInternalName$ = ""
 viLegalCopyright$ = "": viLegalTrademarks$ = "": viOriginalFilename$ = ""
@@ -1467,8 +1458,7 @@ DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
 DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
 
 'Output for format mode
-DIM SHARED FormatBuf
-IF FormatMode THEN FormatBuf = OpenBuffer%("O", tmpdir$ + "format.out")
+DIM SHARED FormatBuf: FormatBuf = OpenBuffer%("O", tmpdir$ + "format.out")
 
 'begin compilation
 FOR closeall = 1 TO 300: CLOSE closeall: NEXT
@@ -2178,7 +2168,6 @@ DO
                             i2 = constlast
 
                             constsubfunc(i2) = subfuncn
-                            'IF subfunc = "" THEN constlastshared = i2
 
                             autoIncForceUScore = 1
                             IF validname(n$) = 0 THEN a$ = "Invalid name": GOTO errmes
@@ -2196,17 +2185,17 @@ DO
                                     IF constsubfunc(hashresref) = subfuncn THEN
                                         'If merely redefining a CONST with same value
                                         'just issue a warning instead of an error
-                                        issueWarning = 0
+                                        issueWarning = _FALSE
                                         IF t AND ISSTRING THEN
-                                            IF conststring(hashresref) = e$ THEN issueWarning = -1: thisconstval$ = e$
+                                            IF conststring(hashresref) = e$ THEN issueWarning = _TRUE: thisconstval$ = e$
                                         ELSE
                                             IF t AND ISFLOAT THEN
-                                                IF constfloat(hashresref) = constval## THEN issueWarning = -1: thisconstval$ = _TOSTR$(constval##)
+                                                IF constfloat(hashresref) = constval## THEN issueWarning = _TRUE: thisconstval$ = _TOSTR$(constval##)
                                             ELSE
                                                 IF t AND ISUNSIGNED THEN
-                                                    IF constuinteger(hashresref) = constval~&& THEN issueWarning = -1: thisconstval$ = _TOSTR$(constval~&&)
+                                                    IF constuinteger(hashresref) = constval~&& THEN issueWarning = _TRUE: thisconstval$ = _TOSTR$(constval~&&)
                                                 ELSE
-                                                    IF constinteger(hashresref) = constval&& THEN issueWarning = -1: thisconstval$ = _TOSTR$(constval&&)
+                                                    IF constinteger(hashresref) = constval&& THEN issueWarning = _TRUE: thisconstval$ = _TOSTR$(constval&&)
                                                 END IF
                                             END IF
                                         END IF
@@ -2758,8 +2747,6 @@ IF declaringlibrary THEN declaringlibrary = 0 'ignore this error so that auto-fo
 
 totallinenumber = reallinenumber
 
-'IF idemode = 0 AND NOT QuietMode THEN PRINT "first pass finished.": PRINT "Translating code... "
-
 'prepass finished
 
 lineinput3index = 1 'reset input line
@@ -3073,7 +3060,7 @@ DO
         IF a3u$ = "$CHECKING:OFF" THEN
             layout$ = SCase$("$Checking:Off")
             CheckingOn = 0
-            IF GetRCStateVar(vWatchOn) = 1 AND NoIDEMode = 0 AND inclevel = 0 THEN
+            IF GetRCStateVar(vWatchOn) = 1 AND NOT NoIDEMode AND inclevel = 0 THEN
                 addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "$DEBUG features won't work in these blocks", "$CHECKING:OFF"
             END IF
             GOTO finishednonexec
@@ -3151,7 +3138,7 @@ DO
 
             VersionInfoKey$ = LTRIM$(RTRIM$(MID$(a3u$, FirstDelimiter + 1, SecondDelimiter - FirstDelimiter - 1)))
             VersionInfoValue$ = StrReplace$(LTRIM$(RTRIM$(MID$(a3$, SecondDelimiter + 1))), CHR$(34), "'")
-            issueWarning = 0 ' only issue warnings if this is true
+            issueWarning = _FALSE ' only issue warnings if this is true
 
             SELECT CASE VersionInfoKey$
                 CASE "FILEVERSION#"
@@ -3167,47 +3154,47 @@ DO
                 CASE "COMPANYNAME"
                     viCompanyName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "CompanyName=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "FILEDESCRIPTION"
                     viFileDescription$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "FileDescription=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "FILEVERSION"
                     viFileVersion$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "FileVersion=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "INTERNALNAME"
                     viInternalName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "InternalName=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "LEGALCOPYRIGHT"
                     viLegalCopyright$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "LegalCopyright=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "LEGALTRADEMARKS"
                     viLegalTrademarks$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "LegalTrademarks=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "ORIGINALFILENAME"
                     viOriginalFilename$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "OriginalFilename=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "PRODUCTNAME"
                     viProductName$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "ProductName=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "PRODUCTVERSION"
                     viProductVersion$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "ProductVersion=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "COMMENTS"
                     viComments$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "Comments=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE "WEB"
                     viWeb$ = RemoveStringEnclosingPair(VersionInfoValue$, METACOMMAND_STRING_ENCLOSING_PAIR)
                     layout$ = SCase$("$VersionInfo:") + "Web=" + VersionInfoValue$
-                    issueWarning = -1
+                    issueWarning = _TRUE
                 CASE ELSE
                     a$ = "Invalid key. (Use FILEVERSION#, PRODUCTVERSION#, CompanyName, FileDescription, FileVersion, InternalName, LegalCopyright, LegalTrademarks, OriginalFilename, ProductName, ProductVersion, Comments or Web)"
                     GOTO errmes
@@ -3220,7 +3207,7 @@ DO
                 END IF
             END IF
 
-            VersionInfoSet = -1
+            VersionInfoSet = _TRUE
 
             GOTO finishednonexec
 
@@ -3317,7 +3304,7 @@ DO
 
         IF LEFT$(a3u$, 8) = "$EXEICON" THEN
             'Basic syntax check. Multi-platform.
-            IF ExeIconSet THEN a$ = "$EXEICON already defined": GOTO errmes
+            IF ExeIconSet <> 0 THEN a$ = "$EXEICON already defined in line" + STR$(ExeIconSet): GOTO errmes
             FirstDelimiter = INSTR(a3u$, "'")
             IF FirstDelimiter = 0 THEN
                 a$ = "Expected $EXEICON:'filename'": GOTO errmes
@@ -5410,9 +5397,6 @@ DO
                     SWAP ids(x).musthave, ids(x).mayhave
                 NEXT
                 revertmaymusthaven = 0
-
-                'undeclare constants in sub/function's scope
-                'constlast = constlastshared
                 GOTO finishednonexec
 
             END IF
@@ -5967,11 +5951,9 @@ DO
             'END IF
             'Notice the ELSE with the SELECT CASE?  Before this patch, commands like those were considered valid QB64 code.
             temp$ = UCASE$(LTRIM$(RTRIM$(wholeline)))
-            'IF NoIDEMode THEN
             DO WHILE INSTR(temp$, CHR$(9))
                 ASC(temp$, INSTR(temp$, CHR$(9))) = 32
             LOOP
-            'END IF
             goodelse = 0 'a check to see if it's a good else
             IF LEFT$(temp$, 2) = "IF" THEN goodelse = -1: GOTO skipelsecheck 'If we have an IF, the else is probably good
             IF LEFT$(temp$, 4) = "ELSE" THEN goodelse = -1: GOTO skipelsecheck 'If it's an else by itself,then we'll call it good too at this point and let the rest of the syntax checking check for us
@@ -7572,7 +7554,6 @@ DO
                 autoIncForceUScore = 1
                 IF validname(n$) = 0 THEN a$ = "Invalid variable name": GOTO errmes
                 IF GetRCStateVar(OptExpl) THEN a$ = "Variable '" + n$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": GOTO errmes
-                bypassNextVariable = -1
                 retval = dim2(n$, typ$, method, "")
                 manageVariableList "", vWatchNewVariable$, 0, 2
                 IF Error_Happened THEN GOTO errmes
@@ -12271,7 +12252,7 @@ END IF
 IF idemode THEN GOTO ideret5
 ide6:
 
-IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
+IF idemode = 0 AND NOT NoCCompileMode THEN
     IF NOT QuietMode THEN
         PRINT
         IF os$ = "LNX" THEN
@@ -12282,11 +12263,11 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     END IF
 
     ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
-    IF LEN(outputfile_cmd$) OR OutputIsRelativeToStartDir THEN
-        IF LEN(outputfile_cmd$) THEN
+    IF LEN(CMDLineOutFile$) > 0 OR OutputIsRelativeToStartDir THEN
+        IF LEN(CMDLineOutFile$) THEN
             'resolve relative path for output file
-            path.out$ = getfilepath$(outputfile_cmd$)
-            f$ = MID$(outputfile_cmd$, LEN(path.out$) + 1)
+            path.out$ = getfilepath$(CMDLineOutFile$)
+            f$ = MID$(CMDLineOutFile$, LEN(path.out$) + 1)
 
             IF UCASE$(GetFileExtension$(f$)) = "EXE" THEN
                 file$ = RemoveFileExtension$(f$)
@@ -12295,7 +12276,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
             END IF
         END IF
 
-        IF LEN(path.out$) OR OutputIsRelativeToStartDir THEN
+        IF LEN(path.out$) > 0 OR OutputIsRelativeToStartDir THEN
             currentdir$ = _CWD$
 
             IF OutputIsRelativeToStartDir THEN
@@ -12326,7 +12307,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
             IF RIGHT$(path.out$, 1) <> pathsep$ THEN path.out$ = path.out$ + pathsep$
             path.exe$ = path.out$
 
-            SaveExeWithSource = -1 'Override the global setting if an output file was specified
+            SaveExeWithSource = _TRUE 'Override the global setting if an output file was specified
         END IF
     END IF
     t.path.exe$ = path.exe$
@@ -12342,7 +12323,7 @@ IF idemode = 0 AND No_C_Compile_Mode = 0 THEN
     path.exe$ = t.path.exe$
 END IF
 
-IF ExeIconSet THEN
+IF ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
     linenumber = ExeIconSet 'on error, this allows reporting the linenumber where $EXEICON was used
     wholeline = " $EXEICON:'" + ExeIconFile$ + "'"
 
@@ -12391,10 +12372,10 @@ IF VersionInfoSet THEN
     WriteBufLine ManiBuf, "#define RT_MANIFEST                       24"
 END IF
 
-IF VersionInfoSet OR ExeIconSet THEN
+IF VersionInfoSet OR ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
     IconRcBuf = OpenBuffer%("O", tmpdir$ + "icon.rc")
 
-    IF ExeIconSet THEN
+    IF ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
         WriteBufLine IconRcBuf, "0 ICON " + AddQuotes$("icon.ico")
     END IF
 
@@ -12441,7 +12422,7 @@ IF FormatMode THEN
     'Move temp file to final location
     errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$)
     IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$: GOTO errmes
-    GOTO No_C_Compile
+    GOTO NoCCompile
 END IF
 
 '=== BEGIN: embedding files ===
@@ -12509,7 +12490,8 @@ IF DEPENDENCY(DEPENDENCY_DEVICEINPUT) THEN makedeps$ = makedeps$ + " DEP_DEVICEI
 IF DEPENDENCY(DEPENDENCY_ZLIB) THEN makedeps$ = makedeps$ + " DEP_ZLIB=y"
 IF DEPENDENCY(DEPENDENCY_EMBED) THEN makedeps$ = makedeps$ + " DEP_EMBED=y"
 IF GetRCStateVar(ConsoleOn) THEN makedeps$ = makedeps$ + " DEP_CONSOLE=y"
-IF ExeIconSet OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
+'ExeIconSet is not boolean, but a line number
+IF ExeIconSet <> 0 OR VersionInfoSet THEN makedeps$ = makedeps$ + " DEP_ICON_RC=y"
 
 IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MINIAUDIO=y"
 
@@ -12520,13 +12502,13 @@ CxxLibsExtra$ = ExtraLinkerFlags
 
 ' If debugging then use `-Og` rather than `-O2`
 IF OptimizeCppProgram THEN
-    IF Include_GDB_Debugging_Info THEN
+    IF IncludeDebugInfo THEN
         CxxFlagsExtra$ = CxxFlagsExtra$ + " -Og"
     ELSE
         CxxFlagsExtra$ = CxxFlagsExtra$ + " -O2"
     END IF
 ELSE
-    IF Include_GDB_Debugging_Info THEN
+    IF IncludeDebugInfo THEN
         CxxFlagsExtra$ = CxxFlagsExtra$ + " -g"
     END IF
 END IF
@@ -12723,7 +12705,7 @@ IF os$ = "WIN" THEN
         END IF
     NEXT
 
-    IF No_C_Compile_Mode = 0 THEN
+    IF NOT NoCCompileMode THEN
         SHELL _HIDE "cmd /c " + makeline$ + " 1>> " + compilelog$ + " 2>&1"
 
         IF idemode THEN
@@ -12954,7 +12936,7 @@ IF os$ = "LNX" THEN
 
     END IF
 
-    IF No_C_Compile_Mode = 0 THEN
+    IF NOT NoCCompileMode THEN
         SHELL _HIDE makeline$ + " 1>> " + compilelog$ + " 2>&1"
         IF idemode THEN
             'Restore fg/bg colors
@@ -12982,7 +12964,7 @@ IF os$ = "LNX" THEN
 
 END IF
 
-IF No_C_Compile_Mode THEN compfailed = 0: GOTO No_C_Compile
+IF NoCCompileMode THEN compfailed = 0: GOTO NoCCompile
 IF path.exe$ = "../../" OR path.exe$ = "..\..\" THEN path.exe$ = ""
 IF _FILEEXISTS(path.exe$ + file$ + extension$) THEN
     compfailed = 0
@@ -13010,9 +12992,9 @@ Skip_Build:
 
 IF idemode THEN GOTO ideret6
 
-No_C_Compile:
+NoCCompile:
 
-IF (compfailed <> 0 OR warningsissued <> 0) AND ConsoleMode = 0 THEN END 1
+IF (compfailed <> 0 OR warningsissued <> 0) AND NOT ConsoleMode THEN END 1
 IF compfailed <> 0 THEN SYSTEM 1
 SYSTEM 0
 
@@ -13148,7 +13130,7 @@ FUNCTION ParseCMDLineArgs$ ()
         SELECT CASE LCASE$(LEFT$(token$, 2))
             CASE "-?", "-h" 'Command-line help
                 _DEST _CONSOLE
-                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
+                IF NOT QB64VersionPrinted THEN QB64VersionPrinted = _TRUE: PRINT "QB64-PE Compiler V" + Version$
                 PRINT
                 PRINT "USAGE: qb64pe [options] <source file> [-o <output file>]"
                 PRINT
@@ -13201,70 +13183,69 @@ FUNCTION ParseCMDLineArgs$ ()
 
             CASE "-v" ' Print version
                 _DEST _CONSOLE
-                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$
+                IF NOT QB64VersionPrinted THEN QB64VersionPrinted = _TRUE: PRINT "QB64-PE Compiler V" + Version$
                 SYSTEM
 
             CASE "-o" 'Specify an output file
-                IF LEN(COMMAND$(i + 1)) > 0 THEN outputfile_cmd$ = COMMAND$(i + 1): i = i + 1
-                cmdlineswitch = -1
+                IF LEN(COMMAND$(i + 1)) > 0 THEN CMDLineOutFile$ = COMMAND$(i + 1): i = i + 1
+                CMDLineSwitch = _TRUE
 
             CASE "-l" 'goto line (ide mode only); -l:<line number>
-                IF MID$(token$, 3, 1) = ":" THEN ideStartAtLine = VAL(MID$(token$, 4))
-                cmdlineswitch = -1
+                IF MID$(token$, 3, 1) = ":" THEN IDEStartAtLine = VAL(MID$(token$, 4))
+                CMDLineSwitch = _TRUE
 
             CASE "-c" 'Compile instead of edit
-                NoIDEMode = -1
-                cmdlineswitch = -1
+                NoIDEMode = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-x" 'Use the console
-                ConsoleMode = -1
-                NoIDEMode = -1
-                cmdlineswitch = -1
+                ConsoleMode = _TRUE
+                NoIDEMode = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-y" 'Format
-                FormatMode = -1
-                ConsoleMode = -1
-                NoIDEMode = -1
-                QuietMode = -1
-                cmdlineswitch = -1
+                FormatMode = _TRUE
+                ConsoleMode = _TRUE
+                NoIDEMode = _TRUE
+                QuietMode = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-z" 'Not compiling C code
-                No_C_Compile_Mode = -1
-                ConsoleMode = -1
-                NoIDEMode = -1
-                cmdlineswitch = -1
+                NoCCompileMode = _TRUE
+                ConsoleMode = _TRUE
+                NoIDEMode = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-p" 'Purge
                 PurgeTemporaryBuildFiles (os$), (MacOSX)
-                cmdlineswitch = -1
+                CMDLineSwitch = _TRUE
 
             CASE "-e" 'Option Explicit
-                ForceOptExpl = -1
-                cmdlineswitch = -1
+                ForceOptExpl = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-s" 'Settings
-                settingsMode = -1
+                SettingsMode = _TRUE
                 setting$ = MID$(token$, 3)
                 _DEST _CONSOLE
-                IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$: PRINT
+                IF NOT QB64VersionPrinted THEN QB64VersionPrinted = _TRUE: PRINT "QB64-PE Compiler V" + Version$: PRINT
 
                 delim = INSTR(setting$, "="): eos = 0
                 IF delim = 0 THEN delim = LEN(setting$) + 1: eos = -1 'end of string
                 SELECT CASE LCASE$(LEFT$(setting$, delim - 1))
                     CASE ""
-                        PRINT "DebugInfo     = "; BoolToTFString$(idedebuginfo)
+                        PRINT "DebugInfo     = "; BoolToTFString$(IncludeDebugInfo)
                         PRINT "ExeWithSource = "; BoolToTFString$(SaveExeWithSource)
                         SYSTEM
                     CASE ":"
                         CMDLineSettingsError "Missing setting specification: " + token$, 0, 0
                     CASE ":debuginfo"
                         IF NOT eos THEN
-                            IF NOT ParseBooleanSetting&(token$, idedebuginfo) THEN CMDLineSettingsError token$, 1, 0
-                            WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(idedebuginfo) + DebugInfoIniWarning$
-                            Include_GDB_Debugging_Info = idedebuginfo
+                            IF NOT ParseBooleanSetting&(token$, IncludeDebugInfo) THEN CMDLineSettingsError token$, 1, 0
+                            WriteConfigSetting compilerSettingsSection$, "IncludeDebugInfo", BoolToTFString$(IncludeDebugInfo)
                             PurgeTemporaryBuildFiles (os$), (MacOSX)
                         END IF
-                        PRINT "DebugInfo = "; BoolToTFString$(idedebuginfo)
+                        PRINT "DebugInfo = "; BoolToTFString$(IncludeDebugInfo)
                     CASE ":exewithsource"
                         IF NOT eos THEN
                             IF NOT ParseBooleanSetting&(token$, SaveExeWithSource) THEN CMDLineSettingsError token$, 1, 0
@@ -13278,7 +13259,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 _DEST 0
 
             CASE "-f" 'temporary setting
-                settingsMode = -1
+                SettingsMode = _TRUE
                 setting$ = MID$(token$, 3)
 
                 delim = INSTR(setting$, "=")
@@ -13286,7 +13267,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 SELECT CASE LCASE$(LEFT$(setting$, delim - 1))
                     CASE ""
                         _DEST _CONSOLE
-                        IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$: PRINT
+                        IF NOT QB64VersionPrinted THEN QB64VersionPrinted = _TRUE: PRINT "QB64-PE Compiler V" + Version$: PRINT
                         CMDLineTemporarySettingsHelp
                         SYSTEM
                     CASE ":"
@@ -13301,7 +13282,7 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseStringSetting&(token$, ExtraLinkerFlags) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":maxcompilerprocesses"
                         IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN CMDLineSettingsError token$, 1, 1
-                        IF MaxParallelProcesses <= 0 THEN CMDLineSettingsError "MaxCompilerProcesses must be graeter than zero.", 0, 1
+                        IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN CMDLineSettingsError "MaxCompilerProcesses must be in range 1-128.", 0, 1
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":usesystemcompiler"
@@ -13326,16 +13307,16 @@ FUNCTION ParseCMDLineArgs$ ()
                 END SELECT
 
             CASE "-w" 'Show warnings
-                ShowWarnings = -1
-                cmdlineswitch = -1
+                ShowWarnings = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-q" 'Quiet mode
-                QuietMode = -1
-                cmdlineswitch = -1
+                QuietMode = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-m" 'Monochrome mode
-                MonochromeLoggingMode = -1
-                cmdlineswitch = -1
+                MonochromeLoggingMode = _TRUE
+                CMDLineSwitch = _TRUE
 
             CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden CI build option)
                 Help_Recaching = 2: Help_IgnoreCache = 1
@@ -13353,17 +13334,17 @@ FUNCTION ParseCMDLineArgs$ ()
     'check if mutual exclusive options were given and accordingly adjust setting
     IF tmpKwCap > -5 OR tmpKwLow > -5 THEN 'any of it given? - No: stay with default
         IF tmpKwCap = tmpKwLow THEN 'both set or unset = CaMeL case
-            IDEAutoLayoutKwStyle = 0
+            IDEAutoLayoutKwStyle = _EQUAL
         ELSEIF tmpKwCap = _TRUE THEN '= UPPER case
-            IDEAutoLayoutKwStyle = 1
+            IDEAutoLayoutKwStyle = _GREATER
         ELSEIF tmpKwLow = _TRUE THEN '= lower case
-            IDEAutoLayoutKwStyle = -1
+            IDEAutoLayoutKwStyle = _LESS
         END IF
     END IF
     'don't leak force option into the IDE or the code formatter
-    IF NoIDEMode = 0 THEN ForceOptExpl = 0
+    IF NOT NoIDEMode THEN ForceOptExpl = _FALSE
 
-    IF FormatMode AND LEN(outputfile_cmd$) = 0 THEN
+    IF FormatMode AND LEN(CMDLineOutFile$) = 0 THEN
         _DEST _CONSOLE
         PRINT "Formatting requires specifying output file with -o option"
         SYSTEM 1
@@ -13372,7 +13353,7 @@ FUNCTION ParseCMDLineArgs$ ()
     IF LEN(PassedFileName$) THEN
         ParseCMDLineArgs$ = PassedFileName$
     ELSE
-        IF cmdlineswitch = 0 AND settingsMode = -1 THEN SYSTEM
+        IF NOT CMDLineSwitch AND SettingsMode THEN SYSTEM
     END IF
 END FUNCTION
 
@@ -13380,7 +13361,7 @@ SUB CMDLineSettingsError (errstr$, inv%, tmp%)
     'inv% <> 0 (invalid bool) / = 0 (any other message)
     'tmp% <> 0 (-f temp setting) / = 0 (-s permanent setting)
     _DEST _CONSOLE
-    IF qb64versionprinted = 0 THEN qb64versionprinted = -1: PRINT "QB64-PE Compiler V" + Version$: PRINT
+    IF NOT QB64VersionPrinted THEN QB64VersionPrinted = _TRUE: PRINT "QB64-PE Compiler V" + Version$: PRINT
 
     IF inv% THEN
         PRINT "Invalid boolean value for "; _IIF(tmp%, "temporary (-f)", "(-s)"); " setting: "; errstr$
@@ -15534,8 +15515,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
     Give_Error "Unknown type": EXIT FUNCTION
     dim2exitfunc:
 
-    bypassNextVariable = 0
-
     IF dimsfarray THEN
         ids(idn).sfid = glinkid
         ids(idn).sfarg = glinkarg
@@ -15922,7 +15901,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                     END IF 'varname
                                 NEXT
                             END IF 'subfuncn
-                            bypassNextVariable = -1
                             ignore = dim2(l$, dtyp$, method, fakee$)
                             IF Error_Happened THEN EXIT FUNCTION
                             dimstatic = olddimstatic
@@ -16119,7 +16097,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                     autoIncForceUScore = 1
                     IF validname(x$) = 0 THEN Give_Error "Invalid variable name": EXIT FUNCTION
                     IF GetRCStateVar(OptExpl) THEN Give_Error "Variable '" + x$ + "' (" + symbol2fulltypename$(typ$) + ") not defined": EXIT FUNCTION
-                    bypassNextVariable = -1
                     retval = dim2(x$, typ$, 1, "")
                     manageVariableList "", vWatchNewVariable$, 0, 3
                     IF Error_Happened THEN EXIT FUNCTION
@@ -23964,8 +23941,8 @@ SUB addWarning (whichLineNumber AS LONG, includeLevel AS LONG, incLineNumber AS 
     totalWarnings = totalWarnings + 1
 
     IF idemode = 0 AND ShowWarnings THEN
-        thissource$ = getfilepath$(CMDLineFile)
-        thissource$ = MID$(CMDLineFile, LEN(thissource$) + 1)
+        thissource$ = getfilepath$(CMDLineSrcFile$)
+        thissource$ = MID$(CMDLineSrcFile$, LEN(thissource$) + 1)
         thisincname$ = getfilepath$(incFileName$)
         thisincname$ = MID$(incFileName$, LEN(thisincname$) + 1)
 

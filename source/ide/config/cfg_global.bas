@@ -6,15 +6,18 @@ DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG, IDEChromaColor AS _UNSIGNED LON
 DIM SHARED IDEBackgroundColor2 AS _UNSIGNED LONG, IDEBracketHighlightColor AS _UNSIGNED LONG
 DIM SHARED IDEKeywordColor AS _UNSIGNED LONG, IDENumbersColor AS _UNSIGNED LONG
 DIM SHARED IDEErrorColor AS _UNSIGNED LONG
-DIM SHARED IDE_AutoPosition AS _BYTE, IDE_TopPosition AS INTEGER, IDE_LeftPosition AS INTEGER
-DIM SHARED IDE_BypassAutoPosition AS _BYTE, idesortsubs AS _BYTE, IDESubsLength AS _BYTE
+DIM SHARED BracketHighlight AS _BYTE, MultiHighlight AS _BYTE, KeywordHighlight AS _BYTE
+DIM SHARED IDEAutoPosition AS _BYTE, IDETopPosition AS INTEGER, IDELeftPosition AS INTEGER
+DIM SHARED IDEBypassAutoPosition AS _BYTE, IDESortSubs AS _BYTE, IDESubsLength AS _BYTE
 DIM SHARED IDENormalCursorStart AS LONG, IDENormalCursorEnd AS LONG
+DIM SHARED IDEUseFont8 AS _BYTE, IDECustomFont AS _BYTE
+DIM SHARED IDECustomFontFile$, IDECustomFontHeight AS _BYTE, IDECustomFontHandle AS LONG
 DIM SHARED MouseButtonSwapped AS _BYTE
 DIM SHARED PasteCursorAtEnd AS _BYTE
 DIM SHARED SaveExeWithSource AS LONG, EnableQuickNav AS _BYTE
 DIM SHARED IDEShowErrorsImmediately AS _BYTE
-DIM SHARED ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
-DIM SHARED IgnoreWarnings AS _BYTE, qb64versionprinted AS _BYTE
+DIM SHARED ShowLineNumbers AS _BYTE, ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
+DIM SHARED IgnoreWarnings AS _BYTE, QB64VersionPrinted AS _BYTE
 DIM SHARED DisableSyntaxHighlighter AS _BYTE, ExeToSourceFolderFirstTimeMsg AS _BYTE
 DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE
 DIM SHARED WatchListToConsole AS _BYTE
@@ -29,6 +32,7 @@ DIM SHARED MaxParallelProcesses AS LONG
 DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
 DIM SHARED StripDebugSymbols AS LONG
 DIM SHARED OptimizeCppProgram AS LONG
+DIM SHARED IncludeDebugInfo AS LONG
 DIM SHARED GenerateLicenseFile AS LONG
 DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
 DIM SHARED DefaultTerminal AS STRING
@@ -45,8 +49,8 @@ SearchedFile$ = ConfigFolder$ + pathsep$ + "searched.bin" 'search history (globa
 AutosaveFile$ = ConfigFolder$ + pathsep$ + "autosave" + tempfolderindexstr$ + ".bin" 'autosave flag (per instance)
 UndoFile$ = ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin" 'undo storage (per instance)
 '---
-askToCopyOther = 0 'shall we ask the user to copy settings from another QB64-PE installation
-IF NOT _DIREXISTS(ConfigFolder$) THEN MKDIR ConfigFolder$: askToCopyOther = -1
+askToCopyOther = _FALSE 'shall we ask the user to copy settings from another QB64-PE installation
+IF NOT _DIREXISTS(ConfigFolder$) THEN MKDIR ConfigFolder$: askToCopyOther = _TRUE
 
 '===== Define sections and standard behavior ==================================
 '--- config.ini
@@ -62,8 +66,8 @@ compilerSettingsSection$ = "COMPILER SETTINGS"
 '--- debug.ini
 vwatchPanelSection$ = "VWATCH PANEL" + STR$(tempfolderindex)
 '--- behavior
-IniSetAddQuotes 0
-IniSetForceReload -1
-IniSetAllowBasicComments -1
-IniSetAutoCommit -1
+IniSetAddQuotes _FALSE
+IniSetForceReload _TRUE
+IniSetAllowBasicComments _TRUE
+IniSetAutoCommit _TRUE
 

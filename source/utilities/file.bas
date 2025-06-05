@@ -5,10 +5,10 @@
 FUNCTION CopyFile& (sourceFile$, destFile$)
     E = 0
 
-    ON ERROR GOTO qberror_test
+    ON ERROR GOTO _NEWHANDLER qberror_test
     dat$ = _READFILE$(sourceFile$)
     IF E = 0 THEN _WRITEFILE destFile$, dat$
-    ON ERROR GOTO qberror
+    ON ERROR GOTO _LASTHANDLER
 
     CopyFile& = E
 END FUNCTION

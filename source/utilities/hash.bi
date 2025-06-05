@@ -74,8 +74,6 @@ REDIM SHARED constname(constmax) AS STRING
 REDIM SHARED constcname(constmax) AS STRING
 REDIM SHARED constnamesymbol(constmax) AS STRING 'optional name symbol
 ' `1 and `no-number must be handled correctly
-'DIM SHARED constlastshared AS LONG 'so any defined inside a sub/function after this index can be "forgotten" when sub/function exits
-'constlastshared = -1
 REDIM SHARED consttype(constmax) AS LONG 'variable type number
 'consttype determines storage
 REDIM SHARED constinteger(constmax) AS _INTEGER64
