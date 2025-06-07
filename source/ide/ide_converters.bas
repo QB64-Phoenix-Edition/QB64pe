@@ -130,7 +130,7 @@ FUNCTION OfferNoprefixConversion% (file$)
 
     convertLine$ = convertUtility$ + " " + QuotedFilename$(file$)
     IF _SHELLHIDE(convertLine$) = 0 _ANDALSO OpenFile$(file$) <> "C" THEN
-        OfferNoprefixConversion% = -1
+        OfferNoprefixConversion% = _TRUE
     ELSE
         clearStatusWindow 0
         dummy = DarkenFGBG(0)
