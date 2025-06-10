@@ -14,7 +14,7 @@ FUNCTION typevalue2symbol$ (t)
     b = t AND 511
 
     IF t AND ISOFFSETINBITS THEN
-        IF b > 1 THEN s$ = s$ + "`" + str2$(b) ELSE s$ = s$ + "`"
+        IF b > 1 THEN s$ = s$ + "`" + _TOSTR$(b) ELSE s$ = s$ + "`"
         typevalue2symbol$ = s$
         EXIT FUNCTION
     END IF
@@ -45,11 +45,11 @@ FUNCTION id2fulltypename$
         id2fulltypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISSTRING THEN
-        IF t AND ISFIXEDLENGTH THEN a$ = "STRING * " + str2(size) ELSE a$ = "STRING"
+        IF t AND ISFIXEDLENGTH THEN a$ = "STRING * " + _TOSTR$(size) ELSE a$ = "STRING"
         id2fulltypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISOFFSETINBITS THEN
-        IF bits > 1 THEN a$ = "_BIT * " + str2(bits) ELSE a$ = "_BIT"
+        IF bits > 1 THEN a$ = "_BIT * " + _TOSTR$(bits) ELSE a$ = "_BIT"
         IF t AND ISUNSIGNED THEN a$ = "_UNSIGNED " + a$
         id2fulltypename$ = a$: EXIT FUNCTION
     END IF
@@ -81,12 +81,12 @@ FUNCTION id2shorttypename$
         id2shorttypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISSTRING THEN
-        IF t AND ISFIXEDLENGTH THEN a$ = "STRING" + str2(size) ELSE a$ = "STRING"
+        IF t AND ISFIXEDLENGTH THEN a$ = "STRING" + _TOSTR$(size) ELSE a$ = "STRING"
         id2shorttypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISOFFSETINBITS THEN
         IF t AND ISUNSIGNED THEN a$ = "_U" ELSE a$ = "_"
-        IF bits > 1 THEN a$ = a$ + "BIT" + str2(bits) ELSE a$ = a$ + "BIT1"
+        IF bits > 1 THEN a$ = a$ + "BIT" + _TOSTR$(bits) ELSE a$ = a$ + "BIT1"
         id2shorttypename$ = a$: EXIT FUNCTION
     END IF
     IF t AND ISFLOAT THEN
@@ -367,9 +367,9 @@ FUNCTION type2symbol$ (typ$)
         IF v = 0 THEN Give_Error e$: EXIT FUNCTION
         IF s$ <> "$" AND v > 64 THEN Give_Error e$: EXIT FUNCTION
         IF s$ = "$" THEN
-            s$ = s$ + str2$(v)
+            s$ = s$ + _TOSTR$(v)
         ELSE
-            s$ = LEFT$(s$, LEN(s$) - 1) + str2$(v)
+            s$ = LEFT$(s$, LEN(s$) - 1) + _TOSTR$(v)
         END IF
         type2symbol$ = s$
     END IF
@@ -731,5 +731,164 @@ FUNCTION isuinteger (i$)
         IF v < 48 OR v > 57 THEN EXIT FUNCTION
     NEXT
     isuinteger = -1
+END FUNCTION
+
+FUNCTION Type_PromoteArithmeticType& (qbTypA AS LONG, qbTypB AS LONG)
+    DIM typeA AS LONG: typeA = Type_StripContextFlags(qbTypA)
+    DIM typeB AS LONG: typeB = Type_StripContextFlags(qbTypB)
+    DIM isFloatA AS _BYTE: isFloatA = Type_IsFloatingPoint(typeA)
+    DIM isFloatB AS _BYTE: isFloatB = Type_IsFloatingPoint(typeB)
+    DIM isUnsignedA AS _BYTE: isUnsignedA = Type_IsUnsigned(typeA)
+    DIM isUnsignedB AS _BYTE: isUnsignedB = Type_IsUnsigned(typeB)
+    DIM sizeA AS _UNSIGNED LONG: sizeA = Type_GetSizeInBits(typeA)
+    DIM sizeB AS _UNSIGNED LONG: sizeB = Type_GetSizeInBits(typeB)
+
+    IF typeA = typeB THEN ' both are of the same type
+        Type_PromoteArithmeticType = typeA
+    ELSEIF typeA = UOFFSETTYPE _ORELSE typeB = UOFFSETTYPE THEN ' special case UOFFSET
+        Type_PromoteArithmeticType = UOFFSETTYPE
+    ELSEIF typeA = OFFSETTYPE _ORELSE typeB = OFFSETTYPE THEN ' special case OFFSET
+        Type_PromoteArithmeticType = OFFSETTYPE
+    ELSEIF (isFloatA _ANDALSO isFloatB) _ORELSE (isUnsignedA _ANDALSO isUnsignedB) THEN ' both are floating point or both are unsigned
+        Type_PromoteArithmeticType = _IIF(sizeA > sizeB, typeA, typeB)
+    ELSEIF sizeA = sizeB THEN ' both are of the same size
+        IF isFloatA _ANDALSO NOT isFloatB THEN ' one is a floating point
+            Type_PromoteArithmeticType = typeA
+        ELSEIF NOT isFloatA _ANDALSO isFloatB THEN ' one is a floating point
+            Type_PromoteArithmeticType = typeB
+        ELSEIF isUnsignedA _ANDALSO NOT isUnsignedB THEN ' one is an unsigned
+            Type_PromoteArithmeticType = typeA
+        ELSEIF NOT isUnsignedA _ANDALSO isUnsignedB THEN ' one is an unsigned
+            Type_PromoteArithmeticType = typeB
+        ELSE
+            Type_PromoteArithmeticType = typeA ' both are of the same sized signed type
+        END IF
+    ELSEIF sizeA < sizeB THEN ' one is smaller than the other
+        IF isFloatA _ANDALSO NOT isFloatB THEN ' one is a floating point
+            SELECT CASE typeA
+                CASE SINGLETYPE
+                    Type_PromoteArithmeticType = DOUBLETYPE
+                CASE DOUBLETYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE FLOATTYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE ELSE
+                    Type_PromoteArithmeticType = typeA
+            END SELECT
+        ELSE
+            Type_PromoteArithmeticType = typeB ' promote the larger one
+        END IF
+    ELSEIF sizeA > sizeB THEN ' one is smaller than the other
+        IF NOT isFloatA _ANDALSO isFloatB THEN ' one is a floating point
+            SELECT CASE typeB
+                CASE SINGLETYPE
+                    Type_PromoteArithmeticType = DOUBLETYPE
+                CASE DOUBLETYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE FLOATTYPE
+                    Type_PromoteArithmeticType = FLOATTYPE
+                CASE ELSE
+                    Type_PromoteArithmeticType = typeB
+            END SELECT
+        ELSE
+            Type_PromoteArithmeticType = typeA ' promote the larger one
+        END IF
+    END IF
+END FUNCTION
+
+FUNCTION Type_GetCppArithmeticType$ (typeId AS LONG)
+    DIM sizeInBits AS _UNSIGNED LONG: sizeInBits = Type_GetSizeInBits(typeId)
+    DIM cType AS STRING
+
+    IF typeId AND ISOFFSETINBITS THEN
+        IF sizeInBits <= 32 THEN cType = "int32_t" ELSE cType = "int64_t"
+        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
+    ELSEIF typeId AND ISFLOAT THEN
+        SELECT CASE sizeInBits
+            CASE 32: cType = "float"
+            CASE 64: cType = "double"
+            CASE 256: cType = "long double"
+            CASE ELSE: Give_Error "Invalid floating point type size"
+        END SELECT
+    ELSEIF typeId AND ISOFFSET THEN
+        IF typeId AND ISUNSIGNED THEN cType = "uintptr_t" ELSE cType = "intptr_t"
+    ELSE
+        SELECT CASE sizeInBits
+            CASE 8: cType = "int8_t"
+            CASE 16: cType = "int16_t"
+            CASE 32: cType = "int32_t"
+            CASE 64: cType = "int64_t"
+            CASE ELSE: Give_Error "Invalid integer type size": EXIT FUNCTION
+        END SELECT
+        IF typeId AND ISUNSIGNED THEN cType = "u" + cType
+    END IF
+
+    Type_GetCppArithmeticType = cType
+END FUNCTION
+
+FUNCTION Type_StripContextFlags& (typeId AS LONG)
+    Type_StripContextFlags = typeId AND (NOT (ISARRAY OR ISREFERENCE OR ISUDT OR ISFIXEDLENGTH OR ISINCONVENTIONALMEMORY))
+END FUNCTION
+
+FUNCTION Type_GetSizeInBits~& (typeId AS LONG)
+    Type_GetSizeInBits = typeId AND 511
+END FUNCTION
+
+FUNCTION Type_IsString%% (typeId AS LONG)
+    Type_IsString = (typeId AND ISSTRING) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsFixedString%% (typeId AS LONG)
+    Type_IsFixedString = (typeId AND ISSTRING) _ANDALSO (typeId AND ISFIXEDLENGTH)
+END FUNCTION
+
+FUNCTION Type_IsDynamicString%% (typeId AS LONG)
+    Type_IsDynamicString = (typeId AND ISSTRING) _ANDALSO _NEGATE (typeId AND ISFIXEDLENGTH)
+END FUNCTION
+
+FUNCTION Type_IsFloatingPoint%% (typeId AS LONG)
+    Type_IsFloatingPoint = (typeId AND ISFLOAT) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsUnsigned%% (typeId AS LONG)
+    Type_IsUnsigned = (typeId AND ISUNSIGNED) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsIntegral%% (typeId AS LONG)
+    Type_IsIntegral = _NEGATE (typeId AND ISFLOAT) _ANDALSO _NEGATE (typeId AND ISSTRING)
+END FUNCTION
+
+FUNCTION Type_IsArithmetic%% (typeId AS LONG)
+    Type_IsArithmetic = _NEGATE (typeId AND ISSTRING)
+END FUNCTION
+
+FUNCTION Type_IsArrayContainer%% (typeId AS LONG)
+    ' ISPOINTER is always set by QB64 regardless of an index being used or not. This is probably a bug.
+    'Type_IsArrayContainer = (typeId AND ISARRAY) _ANDALSO _NEGATE (typeId AND ISPOINTER)
+    Type_IsArrayContainer = (typeId AND ISARRAY) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsArrayElement%% (typeId AS LONG)
+    Type_IsArrayElement = (typeId AND ISARRAY) _ANDALSO (typeId AND ISPOINTER)
+END FUNCTION
+
+FUNCTION Type_IsUDTContainer%% (typeId AS LONG)
+    Type_IsUDTContainer = (typeId AND ISUDT) _ANDALSO _NEGATE (typeId AND ISPOINTER)
+END FUNCTION
+
+FUNCTION Type_IsUDTMember%% (typeId AS LONG)
+    Type_IsUDTMember = (typeId AND ISUDT) _ANDALSO (typeId AND ISPOINTER)
+END FUNCTION
+
+FUNCTION Type_IsOffset%% (typeId AS LONG)
+    Type_IsOffset = (typeId AND ISOFFSET) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsBit%% (typeId AS LONG)
+    Type_IsBit = (typeId AND ISOFFSETINBITS) <> _FALSE
+END FUNCTION
+
+FUNCTION Type_IsInConventionalMemory%% (typeId AS LONG)
+    Type_IsInConventionalMemory = (typeId AND ISINCONVENTIONALMEMORY) <> _FALSE
 END FUNCTION
 

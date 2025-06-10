@@ -6,11 +6,11 @@ SUB CopyFromOther
         chkname$ = oqbi$ + pathsep$ + "qb64pe"
         IF _FILEEXISTS(chkname$) OR _FILEEXISTS(chkname$ + ".exe") THEN
             IF _DIREXISTS(oqbi$ + pathsep$ + ConfigFolder$) THEN
-                oqbv% = 0 'since v3.14.0
+                oqbv% = _FALSE 'since v3.14.0
                 oqbi$ = oqbi$ + pathsep$ + ConfigFolder$ + pathsep$
                 nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
             ELSE
-                oqbv% = 1 'pre v3.14.0
+                oqbv% = _TRUE 'pre v3.14.0
                 oqbi$ = oqbi$ + pathsep$ + "internal" + pathsep$
                 nul& = CopyFile&(oqbi$ + "config.ini", ConfigFile$)
                 IF nul& = 0 THEN 'we need to convert old to new color scheme order
@@ -20,11 +20,11 @@ SUB CopyFromOther
                         id% = VAL(MID$(oqbd$, sid% + 9))
                         IF id% > 10 THEN
                             'custom user schemes move by 4, as of 4 new built-in schemes in v3.14.0
-                            oqbd$ = LEFT$(oqbd$, sid% + 8) + str2$(id% + 4) + MID$(oqbd$, sid% + 9 + LEN(str2$(id%)))
+                            oqbd$ = LEFT$(oqbd$, sid% + 8) + _TOSTR$(id% + 4) + MID$(oqbd$, sid% + 9 + LEN(_TOSTR$(id%)))
                         ELSE
                             'built-in schemes are reordered according to the lookup string
                             ncso$ = "12349567de" 'old id = pick position for new id
-                            oqbd$ = LEFT$(oqbd$, sid% + 8) + str2$(VAL("&H" + MID$(ncso$, id%, 1))) + MID$(oqbd$, sid% + 9 + LEN(str2$(id%)))
+                            oqbd$ = LEFT$(oqbd$, sid% + 8) + _TOSTR$(VAL("&H" + MID$(ncso$, id%, 1))) + MID$(oqbd$, sid% + 9 + LEN(_TOSTR$(id%)))
                         END IF
                     END IF
                     _WRITEFILE ConfigFile$, oqbd$
@@ -32,21 +32,21 @@ SUB CopyFromOther
                 oqbi$ = oqbi$ + "temp" + pathsep$
             END IF
             nul& = CopyFile&(oqbi$ + "debug.ini", DebugFile$)
-            IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+            IF nul& = 0 _ANDALSO oqbv% THEN 'we need to convert, if pre v3.14.0
                 oqbd$ = _READFILE$(DebugFile$)
                 oqbd$ = StrReplace$(oqbd$, "[settings]", "[VWATCH PANEL 1]") 'new instance section name
                 _WRITEFILE DebugFile$, oqbd$
             END IF
             nul& = CopyFile&(oqbi$ + "bookmarks.bin", BookmarksFile$)
             nul& = CopyFile&(oqbi$ + "recent.bin", RecentFile$)
-            IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+            IF nul& = 0 _ANDALSO oqbv% THEN 'we need to convert, if pre v3.14.0
                 oqbd$ = _READFILE$(RecentFile$)
                 oqbd$ = MID$(StrReplace$(oqbd$, CRLF + CRLF, CRLF), 3) 'remove empty lines
                 oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
                 _WRITEFILE RecentFile$, oqbd$
             END IF
             nul& = CopyFile&(oqbi$ + "searched.bin", SearchedFile$)
-            IF nul& = 0 AND oqbv% = 1 THEN 'we need to convert, if pre v3.14.0
+            IF nul& = 0 _ANDALSO oqbv% THEN 'we need to convert, if pre v3.14.0
                 oqbd$ = _READFILE$(SearchedFile$)
                 oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
                 _WRITEFILE SearchedFile$, oqbd$
@@ -63,167 +63,167 @@ END SUB
 SUB ReadInitialConfig
     '--- General settings
     result = ReadConfigSetting(generalSettingsSection$, "DisableSyntaxHighlighter", value$)
-    IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-        DisableSyntaxHighlighter = -1
+    IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+        DisableSyntaxHighlighter = _TRUE
         WriteConfigSetting generalSettingsSection$, "DisableSyntaxHighlighter", "True"
     ELSE
-        DisableSyntaxHighlighter = 0
+        DisableSyntaxHighlighter = _FALSE
         WriteConfigSetting generalSettingsSection$, "DisableSyntaxHighlighter", "False"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "PasteCursorAtEnd", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            PasteCursorAtEnd = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            PasteCursorAtEnd = _TRUE
         ELSE
-            PasteCursorAtEnd = 0
+            PasteCursorAtEnd = _FALSE
             WriteConfigSetting generalSettingsSection$, "PasteCursorAtEnd", "False"
         END IF
     ELSE
-        PasteCursorAtEnd = -1
+        PasteCursorAtEnd = _TRUE
         WriteConfigSetting generalSettingsSection$, "PasteCursorAtEnd", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            ExeToSourceFolderFirstTimeMsg = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            ExeToSourceFolderFirstTimeMsg = _TRUE
         ELSE
-            ExeToSourceFolderFirstTimeMsg = 0
+            ExeToSourceFolderFirstTimeMsg = _FALSE
             WriteConfigSetting generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", "False"
         END IF
     ELSE
-        ExeToSourceFolderFirstTimeMsg = 0
+        ExeToSourceFolderFirstTimeMsg = _FALSE
         WriteConfigSetting generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", "False"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "WhiteListQB64FirstTimeMsg", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            WhiteListQB64FirstTimeMsg = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            WhiteListQB64FirstTimeMsg = _TRUE
         ELSE
-            WhiteListQB64FirstTimeMsg = 0
+            WhiteListQB64FirstTimeMsg = _FALSE
             WriteConfigSetting generalSettingsSection$, "WhiteListQB64FirstTimeMsg", "False"
         END IF
     ELSE
-        WhiteListQB64FirstTimeMsg = 0
+        WhiteListQB64FirstTimeMsg = _FALSE
         WriteConfigSetting generalSettingsSection$, "WhiteListQB64FirstTimeMsg", "False"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "SaveExeWithSource", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            SaveExeWithSource = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            SaveExeWithSource = _TRUE
         ELSE
-            SaveExeWithSource = 0
+            SaveExeWithSource = _FALSE
             WriteConfigSetting generalSettingsSection$, "SaveExeWithSource", "False"
         END IF
     ELSE
-        SaveExeWithSource = 0
+        SaveExeWithSource = _FALSE
         WriteConfigSetting generalSettingsSection$, "SaveExeWithSource", "False"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "EnableQuickNav", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            EnableQuickNav = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            EnableQuickNav = _TRUE
         ELSE
-            EnableQuickNav = 0
+            EnableQuickNav = _FALSE
             WriteConfigSetting generalSettingsSection$, "EnableQuickNav", "False"
         END IF
     ELSE
-        EnableQuickNav = -1
+        EnableQuickNav = _TRUE
         WriteConfigSetting generalSettingsSection$, "EnableQuickNav", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ShowErrorsImmediately", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            IDEShowErrorsImmediately = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            IDEShowErrorsImmediately = _TRUE
         ELSE
-            IDEShowErrorsImmediately = 0
+            IDEShowErrorsImmediately = _FALSE
             WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "False"
         END IF
     ELSE
-        IDEShowErrorsImmediately = -1
+        IDEShowErrorsImmediately = _TRUE
         WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ShowLineNumbers", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            ShowLineNumbers = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            ShowLineNumbers = _TRUE
         ELSE
-            ShowLineNumbers = 0
+            ShowLineNumbers = _FALSE
             WriteConfigSetting generalSettingsSection$, "ShowLineNumbers", "False"
         END IF
     ELSE
-        ShowLineNumbers = -1
+        ShowLineNumbers = _TRUE
         WriteConfigSetting generalSettingsSection$, "ShowLineNumbers", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ShowLineNumbersSeparator", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            ShowLineNumbersSeparator = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            ShowLineNumbersSeparator = _TRUE
         ELSE
-            ShowLineNumbersSeparator = 0
+            ShowLineNumbersSeparator = _FALSE
             WriteConfigSetting generalSettingsSection$, "ShowLineNumbersSeparator", "False"
         END IF
     ELSE
-        ShowLineNumbersSeparator = -1
+        ShowLineNumbersSeparator = _TRUE
         WriteConfigSetting generalSettingsSection$, "ShowLineNumbersSeparator", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ShowLineNumbersUseBG", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            ShowLineNumbersUseBG = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            ShowLineNumbersUseBG = _TRUE
         ELSE
-            ShowLineNumbersUseBG = 0
+            ShowLineNumbersUseBG = _FALSE
             WriteConfigSetting generalSettingsSection$, "ShowLineNumbersUseBG", "False"
         END IF
     ELSE
-        ShowLineNumbersUseBG = -1
+        ShowLineNumbersUseBG = _TRUE
         WriteConfigSetting generalSettingsSection$, "ShowLineNumbersUseBG", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "BracketHighlight", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            brackethighlight = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            BracketHighlight = _TRUE
         ELSE
-            brackethighlight = 0
+            BracketHighlight = _FALSE
             WriteConfigSetting generalSettingsSection$, "BracketHighlight", "False"
         END IF
     ELSE
-        brackethighlight = -1
+        BracketHighlight = _TRUE
         WriteConfigSetting generalSettingsSection$, "BracketHighlight", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "KeywordHighlight", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            keywordHighlight = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            KeywordHighlight = _TRUE
         ELSE
-            keywordHighlight = 0
+            KeywordHighlight = _FALSE
             WriteConfigSetting generalSettingsSection$, "KeywordHighlight", "False"
         END IF
     ELSE
-        keywordHighlight = -1
+        KeywordHighlight = _TRUE
         WriteConfigSetting generalSettingsSection$, "KeywordHighlight", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "MultiHighlight", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            multihighlight = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            MultiHighlight = _TRUE
         ELSE
-            multihighlight = 0
+            MultiHighlight = _FALSE
             WriteConfigSetting generalSettingsSection$, "MultiHighlight", "False"
         END IF
     ELSE
-        multihighlight = -1
+        MultiHighlight = _TRUE
         WriteConfigSetting generalSettingsSection$, "MultiHighlight", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "IgnoreWarnings", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR ABS(VAL(value$)) = 1 THEN
-            IgnoreWarnings = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            IgnoreWarnings = _TRUE
         ELSE
-            IgnoreWarnings = 0
+            IgnoreWarnings = _FALSE
             WriteConfigSetting generalSettingsSection$, "IgnoreWarnings", "False"
         END IF
     ELSE
-        IgnoreWarnings = 0
+        IgnoreWarnings = _FALSE
         WriteConfigSetting generalSettingsSection$, "IgnoreWarnings", "False"
     END IF
 
@@ -245,15 +245,6 @@ SUB ReadInitialConfig
         ideMaxSearch = 50: WriteConfigSetting generalSettingsSection$, "MaxSearchStrings", "50"
     END IF
 
-    result = ReadConfigSetting(generalSettingsSection$, "DebugInfo", value$)
-    idedebuginfo = VAL(value$)
-    IF UCASE$(LEFT$(value$, 4)) = "TRUE" THEN idedebuginfo = -1
-    IF result = 0 OR idedebuginfo <> -1 THEN
-        WriteConfigSetting generalSettingsSection$, "DebugInfo", "False"
-        idedebuginfo = 0
-    END IF
-    Include_GDB_Debugging_Info = idedebuginfo
-
     wikiBaseAddress$ = "https://qb64phoenix.com/qb64wiki"
     IF ReadConfigSetting(generalSettingsSection$, "WikiBaseAddress", value$) THEN
         wikiBaseAddress$ = value$
@@ -273,11 +264,11 @@ SUB ReadInitialConfig
 
     '--- Mouse settings
     result = ReadConfigSetting(mouseSettingsSection$, "SwapMouseButton", value$)
-    IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-        MouseButtonSwapped = -1
+    IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+        MouseButtonSwapped = _TRUE
         WriteConfigSetting mouseSettingsSection$, "SwapMouseButton", "True"
     ELSE
-        MouseButtonSwapped = 0
+        MouseButtonSwapped = _FALSE
         WriteConfigSetting mouseSettingsSection$, "SwapMouseButton", "False"
     END IF
 
@@ -287,79 +278,79 @@ SUB ReadInitialConfig
     IF idebaseTcpPort = 0 THEN idebaseTcpPort = 9000: WriteConfigSetting debugSettingsSection$, "BaseTCPPort", "9000"
 
     result = ReadConfigSetting(debugSettingsSection$, "WatchListToConsole", value$)
-    IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-        WatchListToConsole = -1
+    IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+        WatchListToConsole = _TRUE
         WriteConfigSetting debugSettingsSection$, "WatchListToConsole", "True"
     ELSE
-        WatchListToConsole = 0
+        WatchListToConsole = _FALSE
         WriteConfigSetting debugSettingsSection$, "WatchListToConsole", "False"
     END IF
 
     IF ReadConfigSetting(debugSettingsSection$, "AutoAddDebugCommand", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            AutoAddDebugCommand = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            AutoAddDebugCommand = _TRUE
         ELSE
-            AutoAddDebugCommand = 0
+            AutoAddDebugCommand = _FALSE
             WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "False"
         END IF
     ELSE
-        AutoAddDebugCommand = -1
+        AutoAddDebugCommand = _TRUE
         WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "True"
     END IF
 
     '--- Display settings
     IF ReadConfigSetting(displaySettingsSection$, "IDE_SortSUBs", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            idesortsubs = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            IDESortSubs = _TRUE
         ELSE
-            idesortsubs = 0
+            IDESortSubs = _FALSE
             WriteConfigSetting displaySettingsSection$, "IDE_SortSUBs", "False"
         END IF
     ELSE
-        idesortsubs = 0
+        IDESortSubs = _FALSE
         WriteConfigSetting displaySettingsSection$, "IDE_SortSUBs", "False"
     END IF
 
     tmpKwCap = _FALSE: tmpKwLow = _FALSE
     IF ReadConfigSetting(displaySettingsSection$, "IDE_KeywordCapital", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN tmpKwCap = _TRUE ELSE tmpKwCap = _FALSE
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN tmpKwCap = _TRUE ELSE tmpKwCap = _FALSE
     END IF
     IF ReadConfigSetting(displaySettingsSection$, "IDE_KeywordLowercase", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN tmpKwLow = _TRUE ELSE tmpKwLow = _FALSE
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN tmpKwLow = _TRUE ELSE tmpKwLow = _FALSE
     END IF
     IF tmpKwCap = tmpKwLow THEN 'both set or unset = CaMeL case
-        IDEAutoLayoutKwStyle = 0
+        IDEAutoLayoutKwStyle = _EQUAL
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", "False"
     ELSEIF tmpKwCap = _TRUE THEN '= UPPER case
-        IDEAutoLayoutKwStyle = 1
+        IDEAutoLayoutKwStyle = _GREATER
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", "False"
     ELSEIF tmpKwLow = _TRUE THEN '= lower case
-        IDEAutoLayoutKwStyle = -1
+        IDEAutoLayoutKwStyle = _LESS
         WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", "False"
     END IF
 
     IF ReadConfigSetting(displaySettingsSection$, "IDE_SUBsLength", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR VAL(value$) = -1 THEN
-            IDESubsLength = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            IDESubsLength = _TRUE
         ELSE
-            IDESubsLength = 0
+            IDESubsLength = _FALSE
             WriteConfigSetting displaySettingsSection$, "IDE_SUBsLength", "False"
         END IF
     ELSE
-        IDESubsLength = -1
+        IDESubsLength = _TRUE
         WriteConfigSetting displaySettingsSection$, "IDE_SUBsLength", "True"
     END IF
 
     IF ReadConfigSetting(displaySettingsSection$, "IDE_AutoPosition", value$) THEN
-        IF UCASE$(value$) = "TRUE" OR ABS(VAL(value$)) = 1 THEN
-            IDE_AutoPosition = -1
+        IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+            IDEAutoPosition = _TRUE
         ELSE
-            IDE_AutoPosition = 0
+            IDEAutoPosition = _FALSE
             WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", "False"
         END IF
     ELSE
-        IDE_AutoPosition = -1
+        IDEAutoPosition = _TRUE
         WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", "True"
     END IF
 
@@ -426,39 +417,38 @@ SUB ReadInitialConfig
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CustomFont", value$)
-    idecustomfont = VAL(value$)
-    IF UCASE$(value$) = "TRUE" OR idecustomfont <> 0 THEN
-        idecustomfont = -1
+    IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+        IDECustomFont = _TRUE
     ELSE
         WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", "False"
-        idecustomfont = 0
+        IDECustomFont = _FALSE
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_UseFont8", value$)
-    IF UCASE$(value$) = "TRUE" THEN
-        IDE_UseFont8 = -1
+    IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
+        IDEUseFont8 = _TRUE
     ELSE
         WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", "False"
-        IDE_UseFont8 = 0
+        IDEUseFont8 = _FALSE
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CustomFont$", value$)
-    idecustomfontfile$ = value$
-    IF result = 0 OR idecustomfontfile$ = "" THEN
+    IDECustomFontFile$ = value$
+    IF result = 0 OR IDECustomFontFile$ = "" THEN
         IF os$ = "LNX" THEN
-            idecustomfontfile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
-            IF MacOSX THEN idecustomfontfile$ = _DIR$("fonts") + "Courier New.ttf"
+            IDECustomFontFile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
+            IF MacOSX THEN IDECustomFontFile$ = _DIR$("fonts") + "Courier New.ttf"
         ELSE
-            idecustomfontfile$ = _DIR$("fonts") + "lucon.ttf"
+            IDECustomFontFile$ = _DIR$("fonts") + "lucon.ttf"
         END IF
-        WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
+        WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", IDECustomFontFile$
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CustomFontSize", value$)
-    idecustomfontheight = VAL(value$)
-    IF idecustomfontheight < 8 OR idecustomfontheight > 100 THEN
-        idecustomfontheight = 19
-        WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
+    IDECustomFontHeight = VAL(value$)
+    IF IDECustomFontHeight < 8 OR IDECustomFontHeight > 99 THEN
+        IDECustomFontHeight = 19
+        WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", _TOSTR$(IDECustomFontHeight)
     END IF
 
     result = ReadConfigSetting(displaySettingsSection$, "IDE_CodePage", value$)
@@ -495,19 +485,19 @@ SUB ReadInitialConfig
 
     '--- Individual window settings (per instance)
     IF ReadConfigSetting(windowSettingsSection$, "IDE_TopPosition", value$) THEN
-        IDE_TopPosition = VAL(value$)
-        IDE_BypassAutoPosition = 0 'reset bypass, if positions become available
+        IDETopPosition = VAL(value$)
+        IDEBypassAutoPosition = _FALSE 'reset bypass, if positions become available
     ELSE
-        IDE_BypassAutoPosition = -1 'if there's no position, then we don't need to auto-position
-        IDE_TopPosition = 0
+        IDEBypassAutoPosition = _TRUE 'if there's no position, then we don't need to auto-position
+        IDETopPosition = 0
     END IF
 
     IF ReadConfigSetting(windowSettingsSection$, "IDE_LeftPosition", value$) THEN
-        IDE_LeftPosition = VAL(value$)
-        IDE_BypassAutoPosition = 0 'reset bypass, if positions become available
+        IDELeftPosition = VAL(value$)
+        IDEBypassAutoPosition = _FALSE 'reset bypass, if positions become available
     ELSE
-        IDE_BypassAutoPosition = -1 'if there's no position, then we don't need to auto-position
-        IDE_LeftPosition = 0
+        IDEBypassAutoPosition = _TRUE 'if there's no position, then we don't need to auto-position
+        IDELeftPosition = 0
     END IF
 
     result = ReadConfigSetting(windowSettingsSection$, "IDE_Width", value$)
@@ -594,6 +584,7 @@ SUB ReadInitialConfig
     '--- Compiler Settings
     OptimizeCppProgram = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "OptimizeCppProgram", 0)
     StripDebugSymbols = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "StripDebugSymbols", -1)
+    IncludeDebugInfo = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "IncludeDebugInfo", 0)
 
     MaxParallelProcesses = ReadWriteLongSettingValue&(compilerSettingsSection$, "MaxParallelProcesses", 3)
     IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN

@@ -438,7 +438,7 @@ END FUNCTION
 ' The actual value is given back as floating point, integer, and unsigned integer.
 '
 FUNCTION elementGetNumericValue& (ele$, floating AS _FLOAT, integral AS _INTEGER64, uintegral AS _UNSIGNED _INTEGER64)
-    DIM num$, typ&, e$, x AS LONG
+    DIM num$, typ&, e$, x AS LONG, returnValue AS LONG
     num$ = ele$
     typ& = 0
 
@@ -447,16 +447,18 @@ FUNCTION elementGetNumericValue& (ele$, floating AS _FLOAT, integral AS _INTEGER
 
     ' integer suffixes
     e$ = RIGHT$(num$, 3)
-    IF e$ = "~&&" THEN elementGetNumericValue& = UINTEGER64TYPE - ISPOINTER: GOTO handleInteger
-    IF e$ = "~%%" THEN elementGetNumericValue& = UBYTETYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "~&&" THEN returnValue = UINTEGER64TYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "~%%" THEN returnValue = UBYTETYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "~%&" THEN returnValue = UOFFSETTYPE - ISPOINTER: GOTO handleInteger
     e$ = RIGHT$(num$, 2)
-    IF e$ = "&&" THEN elementGetNumericValue& = INTEGER64TYPE - ISPOINTER: GOTO handleInteger
-    IF e$ = "%%" THEN elementGetNumericValue& = BYTETYPE - ISPOINTER: GOTO handleInteger
-    IF e$ = "~%" THEN elementGetNumericValue& = UINTEGERTYPE - ISPOINTER: GOTO handleInteger
-    IF e$ = "~&" THEN elementGetNumericValue& = ULONGTYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "&&" THEN returnValue = INTEGER64TYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "%%" THEN returnValue = BYTETYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "%&" THEN returnValue = OFFSETTYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "~%" THEN returnValue = UINTEGERTYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "~&" THEN returnValue = ULONGTYPE - ISPOINTER: GOTO handleInteger
     e$ = RIGHT$(num$, 1)
-    IF e$ = "%" THEN elementGetNumericValue& = INTEGERTYPE - ISPOINTER: GOTO handleInteger
-    IF e$ = "&" THEN elementGetNumericValue& = LONGTYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "%" THEN returnValue = INTEGERTYPE - ISPOINTER: GOTO handleInteger
+    IF e$ = "&" THEN returnValue = LONGTYPE - ISPOINTER: GOTO handleInteger
 
     'ubit-type?
     IF INSTR(num$, "~`") THEN
@@ -505,15 +507,23 @@ FUNCTION elementGetNumericValue& (ele$, floating AS _FLOAT, integral AS _INTEGER
     END IF
 
     ' No mentioned type, assume int64
-    elementGetNumericValue& = INTEGER64TYPE - ISPOINTER
+    returnValue = INTEGER64TYPE - ISPOINTER
     e$ = ""
 
     handleInteger:
     num$ = LEFT$(num$, LEN(num$) - LEN(e$))
-    integral = VAL(num$)
-    uintegral = integral
+
+    IF returnValue AND ISUNSIGNED THEN
+        uintegral = VAL(num$, _UNSIGNED _INTEGER64)
+        integral = uintegral
+    ELSE
+        integral = VAL(num$, _INTEGER64)
+        uintegral = integral
+    END IF
+
     floating = integral
 
+    elementGetNumericValue& = returnValue
 END FUNCTION
 
 ' Returns whether the given element is a number
@@ -602,7 +612,7 @@ FUNCTION createElementString$ (s$)
 
     ele$ = ele$ + escapeString$(s$)
 
-    ele$ = ele$ + CHR$(34) + "," + _TRIM$(STR$(LEN(s$)))
+    ele$ = ele$ + CHR$(34) + "," + _TOSTR$(LEN(s$))
     createElementString$ = ele$
 END FUNCTION
 
@@ -615,6 +625,6 @@ FUNCTION elementStringConcat$ (os1$, os2$)
     s2$ = MID$(os2$, 2, _INSTRREV(os2$, CHR$(34)) - 2)
     s2size = VAL(RIGHT$(os2$, LEN(os2$) - LEN(s2$) - 3))
 
-    elementStringConcat$ = CHR$(34) + s1$ + s2$ + CHR$(34) + "," + _TRIM$(STR$(s1size + s2size))
+    elementStringConcat$ = CHR$(34) + s1$ + s2$ + CHR$(34) + "," + _TOSTR$(s1size + s2size)
 END FUNCTION
 

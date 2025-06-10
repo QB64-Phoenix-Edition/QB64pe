@@ -55,10 +55,10 @@ FUNCTION ide (ignore)
                         'Update compilation progress on the status bar
                         IF ideautorun <> 0 THEN
                             IF prepass THEN
-                                status.progress$ = str2$(INT((idecompiledline * 100) / (iden * 2)))
+                                status.progress$ = _TOSTR$(INT((idecompiledline * 100) / (iden * 2)))
                                 status.progress$ = STRING$(3 - LEN(status.progress$), 32) + status.progress$ + "%"
                             ELSE
-                                status.progress$ = str2$(INT(((iden + idecompiledline) * 100) / (iden * 2)))
+                                status.progress$ = _TOSTR$(INT(((iden + idecompiledline) * 100) / (iden * 2)))
                                 status.progress$ = STRING$(3 - LEN(status.progress$), 32) + status.progress$ + "%"
                             END IF
                             IdeInfo = CHR$(0) + status.progress$
@@ -100,7 +100,7 @@ FUNCTION ide2 (ignore)
     STATIC last.TBclick#, wholeword.select AS _BYTE
     STATIC wholeword.selectx1, wholeword.idecx
     STATIC wholeword.selecty1, wholeword.idecy
-    STATIC ForceResize, IDECompilationRequested AS _BYTE
+    STATIC ForceResize AS _BYTE, IDECompilationRequested AS _BYTE
     STATIC QuickNavHover AS _BYTE, FindFieldHover AS _BYTE
     STATIC VersionInfoHover AS _BYTE, LineNumberHover AS _BYTE
     STATIC waitingForVarList AS _BYTE
@@ -118,7 +118,7 @@ FUNCTION ide2 (ignore)
         IF IdeDebugMode THEN
             COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
         END IF
-        mustdisplay = 1
+        mustdisplay = _TRUE
         IF ideerror = 1 THEN errorat$ = "Internal IDE error"
         IF ideerror = 2 THEN errorat$ = "File not found"
         IF ideerror = 3 THEN errorat$ = "File access error": CLOSE #150
@@ -130,7 +130,7 @@ FUNCTION ide2 (ignore)
 
         qberrorcode = ERR
         IF qberrorcode THEN
-            ideerrormessageTITLE$ = "Error " + str2$(qberrorcode)
+            ideerrormessageTITLE$ = "Error " + _TOSTR$(qberrorcode)
         ELSE
             ideerrormessageTITLE$ = "Error"
         END IF
@@ -139,12 +139,12 @@ FUNCTION ide2 (ignore)
             'Don't show too much detail if user just tried loading an invalid file
             ideerrormessageTITLE$ = ideerrormessageTITLE$ + " ("
             IF _ERRORLINE > 0 OR _INCLERRORLINE > 0 THEN
-                ideerrormessageTITLE$ = ideerrormessageTITLE$ + str2$(_ERRORLINE) + "-" + str2$(_INCLERRORLINE)
+                ideerrormessageTITLE$ = ideerrormessageTITLE$ + _TOSTR$(_ERRORLINE) + "-" + _TOSTR$(_INCLERRORLINE)
             END IF
             IF IsCiVersion THEN ideerrormessageTITLE$ = ideerrormessageTITLE$ + "-" + Version$
             ideerrormessageTITLE$ = ideerrormessageTITLE$ + ")"
             IF ideerrormessageTITLE$ = "Error ()" THEN ideerrormessageTITLE$ = "Error"
-            IF AttemptToLoadRecent = -1 THEN
+            IF AttemptToLoadRecent THEN
                 'Offer to cleanup recent file list, removing invalid entries
                 PCOPY 2, 0
                 result = idemessagebox(ideerrormessageTITLE$, errorat$ + "." + CHR$(10) + CHR$(10) + "Remove broken links from recent files?", "#Yes;#No")
@@ -160,11 +160,11 @@ FUNCTION ide2 (ignore)
             IF inclerrorline THEN
                 errorat$ = errorat$ + CHR$(10) + " " + CHR$(10) + "(module: " + _
                            RemoveFileExtension$(LEFT$(_INCLERRORFILE$, 60))
-                errorat$ = errorat$ + ", on line: " + str2$(inclerrorline)
+                errorat$ = errorat$ + ", on line: " + _TOSTR$(inclerrorline)
                 IF IsCiVersion THEN errorat$ = errorat$ + ", " + Version$
                 errorat$ = errorat$ + ")"
             ELSE
-                errorat$ = errorat$ + CHR$(10) + " " + CHR$(10) + "(on line: " + str2$(_ERRORLINE)
+                errorat$ = errorat$ + CHR$(10) + " " + CHR$(10) + "(on line: " + _TOSTR$(_ERRORLINE)
                 IF IsCiVersion THEN errorat$ = errorat$ + ", " + Version$
                 errorat$ = errorat$ + ")"
             END IF
@@ -176,7 +176,7 @@ FUNCTION ide2 (ignore)
     END IF
 
     ideerror = 1 'unknown IDE error
-    AttemptToLoadRecent = 0
+    AttemptToLoadRecent = _FALSE
 
     IF LEFT$(c$, 1) = CHR$(12) THEN
         f$ = RIGHT$(c$, LEN(c$) - 1)
@@ -216,7 +216,7 @@ FUNCTION ide2 (ignore)
         idelaunched = 1
 
         WIDTH idewx, idewy
-        IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
+        IF IDEUseFont8 THEN _FONT 8 ELSE _FONT 16
 
         'change codepage
         IF idecpindex THEN
@@ -227,22 +227,22 @@ FUNCTION ide2 (ignore)
             NEXT
         END IF
 
-        IF idecustomfont THEN
-            idecustomfonthandle = _LOADFONT(idecustomfontfile$, idecustomfontheight, "MONOSPACE")
-            IF idecustomfonthandle < 1 THEN
+        IF IDECustomFont THEN
+            IDECustomFontHandle = _LOADFONT(IDECustomFontFile$, IDECustomFontHeight, "MONOSPACE")
+            IF IDECustomFontHandle < 1 THEN
                 retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified location, or is\nof unsupported format. Reverting back to default built-in font.", "#OK")
-                idecustomfont = 0: idecustomfontheight = 19
+                IDECustomFont = _FALSE: IDECustomFontHeight = 19
                 IF os$ = "LNX" THEN
-                    idecustomfontfile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
-                    IF MacOSX THEN idecustomfontfile$ = _DIR$("fonts") + "Courier New.ttf"
+                    IDECustomFontFile$ = _DIR$("fonts") + "truetype/liberation/LiberationMono-Regular.ttf"
+                    IF MacOSX THEN IDECustomFontFile$ = _DIR$("fonts") + "Courier New.ttf"
                 ELSE
-                    idecustomfontfile$ = _DIR$("fonts") + "lucon.ttf"
+                    IDECustomFontFile$ = _DIR$("fonts") + "lucon.ttf"
                 END IF
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(idecustomfont)
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", STR$(idecustomfontheight)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(IDECustomFont)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", IDECustomFontFile$
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", _TOSTR$(IDECustomFontHeight)
             ELSE
-                _FONT idecustomfonthandle
+                _FONT IDECustomFontHandle
             END IF
         END IF
 
@@ -500,12 +500,12 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "#Background Color": IF ShowLineNumbersUseBG THEN menu$(m, i) = CHR$(7) + menu$(m, i)
         menuDesc$(m, i) = "Toggles displaying a different background (side bar)"
         ViewMenuShowBGID = i
-        IF ShowLineNumbers = 0 THEN menu$(m, i) = "~" + menu$(m, i)
+        IF NOT ShowLineNumbers THEN menu$(m, i) = "~" + menu$(m, i)
         i = i + 1
         menu$(m, i) = "Sho#w Separator": IF ShowLineNumbersSeparator THEN menu$(m, i) = CHR$(7) + menu$(m, i)
         menuDesc$(m, i) = "Toggles showing a separator line (side bar)"
         ViewMenuShowSeparatorID = i
-        IF ShowLineNumbers = 0 THEN menu$(m, i) = "~" + menu$(m, i)
+        IF NOT ShowLineNumbers THEN menu$(m, i) = "~" + menu$(m, i)
         i = i + 1
         menusize(m) = i - 1
 
@@ -638,11 +638,11 @@ FUNCTION ide2 (ignore)
                 backupTypeDefinitions$ = ""
                 watchpointList$ = ""
                 callstacklist$ = "": callStackLength = 0
-                IF ideStartAtLine > 0 AND ideStartAtLine <= iden THEN
-                    idecy = ideStartAtLine
+                IF IDEStartAtLine > 0 AND IDEStartAtLine <= iden THEN
+                    idecy = IDEStartAtLine
                     IF idecy - 10 >= 1 THEN idesy = idecy - 10
-                    idegotobox_LastLineNum = ideStartAtLine
-                    ideStartAtLine = 0
+                    idegotobox_LastLineNum = IDEStartAtLine
+                    IDEStartAtLine = 0
                 END IF
                 IdeBmkN = 0
                 ideerror = 1
@@ -669,7 +669,7 @@ FUNCTION ide2 (ignore)
     END IF 'idelaunched
 
     IF c$ = CHR$(3) THEN
-        skipdisplay = 1 'assume .../starting already displayed
+        skipdisplay = _TRUE 'assume .../starting already displayed
         sendnextline = 1
 
         'previous line was OK, so use layout if available
@@ -766,7 +766,7 @@ FUNCTION ide2 (ignore)
 
                 IF idecompiledline$ <> layout$ THEN
                     idesetline idecompiledline, layout$
-                    IF idecompiledline >= idesy AND idecompiledline <= (idesy + 16) THEN skipdisplay = 0
+                    IF idecompiledline >= idesy AND idecompiledline <= (idesy + 16) THEN skipdisplay = _FALSE
                 END IF
 
             ELSE
@@ -790,18 +790,18 @@ FUNCTION ide2 (ignore)
     END IF
 
     STATIC AS _BYTE attemptToHost, changingTcpPort
-    IF GetRCStateVar(vWatchOn) = 1 AND attemptToHost = 0 THEN
+    IF GetRCStateVar(vWatchOn) = 1 AND NOT attemptToHost THEN
         IF host& = 0 THEN
-            hostport$ = _TRIM$(STR$(idebaseTcpPort + tempfolderindex))
+            hostport$ = _TOSTR$(idebaseTcpPort + tempfolderindex)
             ENVIRON "QB64DEBUGPORT=" + hostport$
             host& = _OPENHOST("TCP/IP:" + hostport$)
-            attemptToHost = -1
+            attemptToHost = _TRUE
         END IF
         IF changingTcpPort AND (host& = 0) THEN
             result = idemessagebox("$DEBUG MODE", "Cannot receive connections on port" + STR$(idebaseTcpPort) + ".\nCheck your firewall permissions.", "")
             PCOPY 3, 0: SCREEN , , 3, 0
         END IF
-        changingTcpPort = 0
+        changingTcpPort = _FALSE
     END IF
 
     IF IdeDebugMode THEN
@@ -822,7 +822,7 @@ FUNCTION ide2 (ignore)
             idewy = idewy + idesubwindow
             idehelp = 0
             idesubwindow = 0
-            skipdisplay = 0
+            skipdisplay = _FALSE
             IdeSystem = 1
             retval = 1
         END IF
@@ -861,7 +861,7 @@ FUNCTION ide2 (ignore)
     END IF
 
     IF c$ = CHR$(7) THEN
-        skipdisplay = 1 'assume .../starting already displayed
+        skipdisplay = _TRUE 'assume .../starting already displayed
         idecompiledline = 0
         sendnextline = 1
     END IF
@@ -889,16 +889,16 @@ FUNCTION ide2 (ignore)
 
     passback = 0
     IF LEFT$(c$, 1) = CHR$(10) THEN 'passback
-        skipdisplay = 1 'assume .../starting already displayed
+        skipdisplay = _TRUE 'assume .../starting already displayed
         sendnextline = 1
         idecompiledline = idecompiledline - 1
         passback = 1
         passback$ = RIGHT$(c$, LEN(c$) - 1)
     END IF
 
-    IF mustdisplay THEN skipdisplay = 0
+    IF mustdisplay THEN skipdisplay = _FALSE
 
-    IF skipdisplay = 0 THEN
+    IF NOT skipdisplay THEN
 
         LOCATE , , 0
 
@@ -914,7 +914,7 @@ FUNCTION ide2 (ignore)
                     statusarealink = 0
                     IF totalWarnings > 0 AND showexecreated = 0 THEN
                         COLOR 11, 1
-                        msg$ = " (" + LTRIM$(STR$(totalWarnings)) + " warning"
+                        msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
                         IF totalWarnings > 1 THEN msg$ = msg$ + "s"
                         msg$ = msg$ + " - click here or Ctrl+W to view)"
                         _PRINTSTRING (4, idewy - 3), msg$
@@ -989,15 +989,15 @@ FUNCTION ide2 (ignore)
 
         IF (_RESIZE OR ForceResize) AND timeElapsedSince#(QB64_uptime#) > 1.5# THEN
             IF idesubwindow <> 0 THEN 'If there's a subwindow up, don't resize as it screws all sorts of things up.
-                ForceResize = -1
+                ForceResize = _TRUE
             ELSE
                 retval = 0
-                ForceResize = 0
+                ForceResize = _FALSE
                 DO
-                    tooSmall%% = 0
-                    v% = _RESIZEWIDTH \ _FONTWIDTH: IF v% < 80 OR v% > 1000 THEN v% = 80: tooSmall%% = -1
+                    tooSmall%% = _FALSE
+                    v% = _RESIZEWIDTH \ _FONTWIDTH: IF v% < 80 OR v% > 1000 THEN v% = 80: tooSmall%% = _TRUE
                     IF v% <> idewx THEN retval = 1: idewx = v%
-                    v% = _RESIZEHEIGHT \ _FONTHEIGHT: IF v% < 25 OR v% > 1000 THEN v% = 25: tooSmall%% = -1
+                    v% = _RESIZEHEIGHT \ _FONTHEIGHT: IF v% < 25 OR v% > 1000 THEN v% = 25: tooSmall%% = _TRUE
                     IF v% <> idewy THEN retval = 1: idewy = v%
 
                     tempf& = _FONT
@@ -1055,8 +1055,8 @@ FUNCTION ide2 (ignore)
                 LOOP WHILE _RESIZE
 
                 IF retval = 1 THEN 'screen dimensions have changed and everything must be redrawn/reapplied
-                    WriteConfigSetting windowSettingsSection$, "IDE_Width", STR$(idewx)
-                    WriteConfigSetting windowSettingsSection$, "IDE_Height", STR$(idewy)
+                    WriteConfigSetting windowSettingsSection$, "IDE_Width", _TOSTR$(idewx)
+                    WriteConfigSetting windowSettingsSection$, "IDE_Height", _TOSTR$(idewy)
                 END IF
 
                 retval = 1
@@ -1067,7 +1067,7 @@ FUNCTION ide2 (ignore)
             _AUTODISPLAY
         END IF
 
-        IF skipdisplay = 0 THEN
+        IF NOT skipdisplay THEN
 
             LOCATE , , 0
 
@@ -1085,7 +1085,7 @@ FUNCTION ide2 (ignore)
 
             'display error message (if necessary)
             IF failed THEN
-                IF IDEShowErrorsImmediately <> 0 OR IDECompilationRequested <> 0 OR compfailed <> 0 THEN
+                IF IDEShowErrorsImmediately OR IDECompilationRequested OR compfailed <> 0 THEN
                     IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
                     UpdateIdeInfo
                     menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
@@ -1237,15 +1237,15 @@ FUNCTION ide2 (ignore)
                                                       "Would you like to import your old configuration from another\n" + _
                                                       "QB64-PE installation?", "#Yes, please import;#No, use defaults")
             PCOPY 3, 0: SCREEN , , 3, 0
-            askToCopyOther = 0
+            askToCopyOther = _FALSE
             IF result = 1 THEN
                 CopyFromOther: ReadInitialConfig
-                IF IDE_AutoPosition AND NOT IDE_BypassAutoPosition THEN _SCREENMOVE IDE_LeftPosition, IDE_TopPosition
-                idelaunched = 0: skipdisplay = 0: GOTO reInitIDE
+                IF IDEAutoPosition AND NOT IDEBypassAutoPosition THEN _SCREENMOVE IDELeftPosition, IDETopPosition
+                idelaunched = 0: skipdisplay = _FALSE: GOTO reInitIDE
             END IF
         END IF
 
-        IF WhiteListQB64FirstTimeMsg = 0 THEN
+        IF NOT WhiteListQB64FirstTimeMsg THEN
             IF INSTR(_OS$, "WIN") THEN whiteListProcess$ = "and the process 'qb64pe.exe' " ELSE whiteListProcess$ = ""
             result = idemessagebox("Welcome to QB64-PE", "QB64-PE is an independently distributed program, and as such\n" + _
                                                       "both 'qb64pe" + extension$ + "' and the programs you create with it may\n" + _
@@ -1258,7 +1258,7 @@ FUNCTION ide2 (ignore)
             IF result = 2 THEN
                 WriteConfigSetting generalSettingsSection$, "WhiteListQB64FirstTimeMsg", "True"
             END IF
-            WhiteListQB64FirstTimeMsg = -1
+            WhiteListQB64FirstTimeMsg = _TRUE
         END IF
 
         IF idechangemade THEN
@@ -1269,7 +1269,7 @@ FUNCTION ide2 (ignore)
             idecurrentlinelayouti = 0 'invalidate
             idefocusline = 0
             idechangemade = 0
-            IDECompilationRequested = 0
+            IDECompilationRequested = _FALSE
             compfailed = 0
             IF ideunsaved = -1 THEN ideunsaved = 0 ELSE ideunsaved = 1
 
@@ -1447,15 +1447,15 @@ FUNCTION ide2 (ignore)
         IF mB = 0 THEN idemouseselect = 0: idembmonitor = 0: wholeword.select = 0
 
         IF _RESIZE THEN
-            ForceResize = -1: skipdisplay = 0: GOTO ideloop
+            ForceResize = _TRUE: skipdisplay = _FALSE: GOTO ideloop
         END IF
 
-        IF IDE_AutoPosition THEN
-            IF IDE_TopPosition <> _SCREENY OR IDE_LeftPosition <> _SCREENX THEN
+        IF IDEAutoPosition THEN
+            IF IDETopPosition <> _SCREENY OR IDELeftPosition <> _SCREENX THEN
                 IF _SCREENY >= -_HEIGHT * _FONTHEIGHT AND _SCREENX >= -_WIDTH * _FONTWIDTH THEN 'Don't record the position if it's off the screen, past the point where we can drag it back into a different position.
-                    WriteConfigSetting windowSettingsSection$, "IDE_TopPosition", STR$(_SCREENY)
-                    WriteConfigSetting windowSettingsSection$, "IDE_LeftPosition", STR$(_SCREENX)
-                    IDE_TopPosition = _SCREENY: IDE_LeftPosition = _SCREENX
+                    WriteConfigSetting windowSettingsSection$, "IDE_TopPosition", _TOSTR$(_SCREENY)
+                    WriteConfigSetting windowSettingsSection$, "IDE_LeftPosition", _TOSTR$(_SCREENX)
+                    IDETopPosition = _SCREENY: IDELeftPosition = _SCREENX
                 END IF
             END IF
         END IF
@@ -1470,7 +1470,7 @@ FUNCTION ide2 (ignore)
         END IF
 
         'Hover/click (QuickNav, "Find" field, version number, line number)
-        updateHover = 0
+        updateHover = _FALSE
         IF QuickNavTotal > 0 THEN
             DO UNTIL QuickNavHistory(QuickNavTotal).idecy <= iden
                 'make sure that the line number in history still exists
@@ -1482,10 +1482,10 @@ FUNCTION ide2 (ignore)
         IF IdeSystem = 1 AND QuickNavTotal > 0 AND EnableQuickNav THEN
             IF mY = 2 THEN
                 IF mX >= 4 AND mX <= 6 THEN
-                    IF QuickNavHover = 0 THEN
-                        QuickNavHover = -1
+                    IF NOT QuickNavHover THEN
+                        QuickNavHover = _TRUE
                         COLOR 15, 3
-                        popup$ = " " + CHR$(17) + " back to line " + str2$(QuickNavHistory(QuickNavTotal).idecy) + " "
+                        popup$ = " " + CHR$(17) + " back to line " + _TOSTR$(QuickNavHistory(QuickNavTotal).idecy) + " "
                         _PRINTSTRING (4, 2), popup$
 
                         'shadow
@@ -1493,7 +1493,7 @@ FUNCTION ide2 (ignore)
                         FOR x2 = 6 TO 4 + LEN(popup$)
                             _PRINTSTRING (x2, 3), CHR$(SCREEN(3, x2))
                         NEXT
-                        updateHover = -1
+                        updateHover = _TRUE
                     END IF
 
                     IF mCLICK THEN
@@ -1510,60 +1510,60 @@ FUNCTION ide2 (ignore)
                 END IF
             ELSE
                 RestoreBGQuickNav:
-                IF QuickNavHover = -1 THEN
-                    QuickNavHover = 0
+                IF QuickNavHover THEN
+                    QuickNavHover = _FALSE
                     UpdateTitleOfMainWindow
                     GOSUB DrawQuickNav
                     ideshowtext
-                    updateHover = -1
+                    updateHover = _TRUE
                 END IF
             END IF
         END IF
 
         IF mY = idewy - 4 AND mX > idewx - (idesystem2.w + 10) AND mX <= idewx - (idesystem2.w + 8) + 2 THEN '"Find" button
-            IF FindFieldHover = 0 THEN
+            IF NOT FindFieldHover THEN
                 'Highlight "Find"
                 COLOR 1, 3
                 _PRINTSTRING (idewx - (idesystem2.w + 9), idewy - 4), "Find"
-                updateHover = -1
-                FindFieldHover = -1
+                updateHover = _TRUE
+                FindFieldHover = _TRUE
             END IF
         ELSE
-            IF FindFieldHover = -1 THEN
+            IF FindFieldHover THEN
                 'Restore "Find" bg
-                FindFieldHover = 0
+                FindFieldHover = _FALSE
                 COLOR 3, 1
                 _PRINTSTRING (idewx - (idesystem2.w + 9), idewy - 4), "Find"
-                updateHover = -1
+                updateHover = _TRUE
             END IF
         END IF
 
         IF mY = idewy + idesubwindow AND mX >= idewx - 21 - LEN(versionStringStatus$) AND mX < idewx - 21 THEN
             'Highlight Version Number
-            IF VersionInfoHover = 0 THEN
+            IF NOT VersionInfoHover THEN
                 COLOR 13, 6
                 _PRINTSTRING (idewx - 21 - LEN(versionStringStatus$), idewy + idesubwindow), versionStringStatus$
-                updateHover = -1
-                VersionInfoHover = -1
+                updateHover = _TRUE
+                VersionInfoHover = _TRUE
             END IF
             IF mCLICK THEN PCOPY 0, 2: GOTO helpabout
         ELSE
-            IF VersionInfoHover = -1 THEN
+            IF VersionInfoHover THEN
                 'Restore "Find" bg
-                VersionInfoHover = 0
+                VersionInfoHover = _FALSE
                 COLOR 2, 3
                 _PRINTSTRING (idewx - 21 - LEN(versionStringStatus$), idewy + idesubwindow), versionStringStatus$
-                updateHover = -1
+                updateHover = _TRUE
             END IF
         END IF
 
         IF mY = idewy + idesubwindow AND mX >= idewx - 20 AND mX <= idewx THEN
             'Highlight line number
-            IF LineNumberHover = 0 THEN
+            IF NOT LineNumberHover THEN
                 COLOR 13, 6
                 _PRINTSTRING (idewx - 20, idewy + idesubwindow), lineNumberStatus$
-                LineNumberHover = -1
-                updateHover = -1
+                LineNumberHover = _TRUE
+                updateHover = _TRUE
             END IF
             IF mCLICK THEN
                 PCOPY 0, 2
@@ -1572,12 +1572,12 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
         ELSE
-            IF LineNumberHover = -1 THEN
+            IF LineNumberHover THEN
                 'Restore "Find" bg
-                LineNumberHover = 0
+                LineNumberHover = _FALSE
                 COLOR 0, 3
                 _PRINTSTRING (idewx - 20, idewy + idesubwindow), lineNumberStatus$
-                updateHover = -1
+                updateHover = _TRUE
             END IF
         END IF
 
@@ -1593,30 +1593,30 @@ FUNCTION ide2 (ignore)
 
         IF KALT THEN 'alt held
 
-            IF idealthighlight = 0 AND KALTPRESS = -1 AND NOT KCTRL THEN
+            IF NOT idealthighlight AND KALTPRESS = -1 AND NOT KCTRL THEN
                 'highlist first letter of each menu item
-                idealthighlight = 1
+                idealthighlight = _TRUE
                 LOCATE , , 0: COLOR 15, 7: x = 4
                 FOR i = 1 TO menus
                     _PRINTSTRING (x, 1), LEFT$(menu$(i, 0), 1)
                     x = x + LEN(menu$(i, 0)) + 2
                     IF i = menus - 1 THEN x = idewx - LEN(menu$(menus, 0)) - 1
                 NEXT
-                ideentermenu = 1 'alt has just been pressed, so any next keystroke could enter a menu)
+                ideentermenu = _TRUE 'alt has just been pressed, so any next keystroke could enter a menu)
                 'IF change = 0 THEN
-                skipdisplay = 0: GOTO ideloop 'force update so cursor will be restored to correct position
+                skipdisplay = _FALSE: GOTO ideloop 'force update so cursor will be restored to correct position
             END IF
 
         ELSE 'alt not held
-            IF idealthighlight = 1 THEN
+            IF idealthighlight THEN
                 'remove highlight
-                idealthighlight = 0
+                idealthighlight = _FALSE
                 LOCATE , , 0: COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
-                IF ideentermenu = 1 AND KCONTROL = 0 THEN 'alt was pressed then released
+                IF ideentermenu AND KCONTROL = 0 THEN 'alt was pressed then released
                     IF _WINDOWHASFOCUS THEN
                         LOCATE , , , IDENormalCursorStart, IDENormalCursorEnd
-                        skipdisplay = 0
-                        ideentermenu = 0
+                        skipdisplay = _FALSE
+                        ideentermenu = _FALSE
                         GOTO startmenu
                     ELSE
                         GOTO ideloop
@@ -1660,12 +1660,12 @@ FUNCTION ide2 (ignore)
             GOTO waitforinput
         END IF 'change=0
 
-        ideentermenu = 0
+        ideentermenu = _FALSE
 
         ideundocombo = ideundocombo - 1
         IF ideundocombo < 0 THEN ideundocombo = 0
 
-        skipdisplay = 0
+        skipdisplay = _FALSE
 
         'IdeSystem independent routines
 
@@ -1755,9 +1755,9 @@ FUNCTION ide2 (ignore)
             iderunmode = 1 'run detached; = 0 'standard run
             idemrunspecial:
 
-            IDECompilationRequested = -1
+            IDECompilationRequested = _TRUE
 
-            IF ExeToSourceFolderFirstTimeMsg = 0 THEN
+            IF NOT ExeToSourceFolderFirstTimeMsg THEN
                 IF SaveExeWithSource THEN
                     result = idemessagebox("Run", "Your program will be compiled to the same folder where your\n" + _
                                            "source code is saved. You can change that by unchecking the\n" + _
@@ -1769,7 +1769,7 @@ FUNCTION ide2 (ignore)
                 END IF
                 IF result = 2 THEN
                     WriteConfigSetting generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", "True"
-                    ExeToSourceFolderFirstTimeMsg = -1
+                    ExeToSourceFolderFirstTimeMsg = _TRUE
                 ELSEIF result = 3 THEN
                     PCOPY 3, 0: SCREEN , , 3, 0
                     LOCATE , , 0
@@ -1789,11 +1789,11 @@ FUNCTION ide2 (ignore)
                 '=== BEGIN: checking external dependencies ===
                 IF statusarealink <> 2 THEN
                     '-----
-                    edLD = -1: edCHG = 0
+                    edLD = _TRUE: edCHG = _FALSE
                     '-----
                     nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufStart)
                     IF ReadBufLine$(ExtDepBuf) <> "<<< LISTING DONE >>>" THEN
-                        nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = 0
+                        nul& = SeekBuf&(ExtDepBuf, 0, SBM_BufEnd): edLD = _FALSE
                         FOR i = 0 TO UBOUND(embedFileList$, 2)
                             IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
                                 WriteBufLine ExtDepBuf, "EMBE: " + _FULLPATH$(embedFileList$(eflFile, i))
@@ -1812,7 +1812,7 @@ FUNCTION ide2 (ignore)
                                 IF edID$ = "DECL:" OR edID$ = "INCL:" GOTO edReCompile
                                 'for other changed files we just need to update the MD5 hash
                                 nul& = SeekBuf&(ExtDepBuf, -32 - LEN(BufEolSeq$(ExtDepBuf)), SBM_BufCurrent)
-                                edCHG = -1: DeleteBufLine ExtDepBuf 'old hash
+                                edCHG = _TRUE: DeleteBufLine ExtDepBuf 'old hash
                             ELSE
                                 _CONTINUE
                             END IF
@@ -1983,7 +1983,7 @@ FUNCTION ide2 (ignore)
                 idesubwindow = idewy \ 2: idewy = idewy - idesubwindow
                 Help_wx1 = 2: Help_wy1 = idewy + 1: Help_wx2 = idewx - 1: Help_wy2 = idewy + idesubwindow - 2: Help_ww = Help_wx2 - Help_wx1 + 1: Help_wh = Help_wy2 - Help_wy1 + 1
                 idehelp = 1
-                skipdisplay = 0
+                skipdisplay = _FALSE
                 IdeSystem = 3
                 retval = 1: GOSUB redrawItAll
             END IF
@@ -2144,7 +2144,7 @@ FUNCTION ide2 (ignore)
                         f$ = idesearchedbox
                         IF LEN(f$) THEN idefindtext = f$
                         PCOPY 3, 0: SCREEN , , 3, 0
-                        idealthighlight = 0
+                        idealthighlight = _FALSE
                         LOCATE , , 0: COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                         IdeSystem = 1
                         IF LEN(f$) THEN GOTO idemf3 'F3 functionality
@@ -2386,7 +2386,7 @@ FUNCTION ide2 (ignore)
                     idewy = idewy + idesubwindow
                     idehelp = 0
                     idesubwindow = 0
-                    skipdisplay = 0
+                    skipdisplay = _FALSE
                     IdeSystem = 1
                     retval = 1: GOSUB redrawItAll
                 END IF
@@ -2635,7 +2635,7 @@ FUNCTION ide2 (ignore)
             foundsstr:
             IF Help_LinkL THEN
                 Help_Select = 0: Help_sy = cy - 3
-                Help_Search_Str = "": Help_LinkL = 0
+                Help_Search_Str = "": Help_LinkL = _FALSE
             END IF
             strnotfound:
 
@@ -2750,7 +2750,7 @@ FUNCTION ide2 (ignore)
                                     l2 = INSTR(l$, "#") 'local link?
                                     IF l2 > 0 THEN
                                         Help_Search_Str = StrReplace$(MID$(l$, l2 + 1), "_", " ")
-                                        l$ = LEFT$(l$, l2 - 1): Help_LinkL = -1
+                                        l$ = LEFT$(l$, l2 - 1): Help_LinkL = _TRUE
                                     END IF
                                     IF Back$(Help_Back_Pos) <> l$ THEN
                                         Help_Select = 0: Help_MSelect = 0
@@ -2841,7 +2841,7 @@ FUNCTION ide2 (ignore)
 
         IF KB = _KEY_F1 THEN
             contextualhelp:
-            IdeContextHelpSF = 0
+            IdeContextHelpSF = _FALSE
             'identify word or character at current cursor position
             a2$ = UCASE$(getWordAtCursor$)
             lnks = 0
@@ -2862,7 +2862,7 @@ FUNCTION ide2 (ignore)
                 l2 = INSTR(lnk$, "#") 'local link?
                 IF l2 > 0 THEN
                     Help_Search_Str = StrReplace$(MID$(lnk$, l2 + 1), "_", " ")
-                    lnk$ = LEFT$(lnk$, l2 - 1): Help_LinkL = -1
+                    lnk$ = LEFT$(lnk$, l2 - 1): Help_LinkL = _TRUE
                 END IF
 
 
@@ -2913,7 +2913,7 @@ FUNCTION ide2 (ignore)
                     Help_wx1 = 2: Help_wy1 = idewy + 1: Help_wx2 = idewx - 1: Help_wy2 = idewy + idesubwindow - 2: Help_ww = Help_wx2 - Help_wx1 + 1: Help_wh = Help_wy2 - Help_wy1 + 1
                     WikiParse a$
                     idehelp = 1
-                    skipdisplay = 0
+                    skipdisplay = _FALSE
                     IdeSystem = 3
                     retval = 1
                 ELSE
@@ -2990,7 +2990,7 @@ FUNCTION ide2 (ignore)
                                 a$ = a$ + "* [[Sub (explanatory)]]" + CHR$(10)
                                 a$ = a$ + "* [[Function (explanatory)]]" + CHR$(10)
 
-                                IdeContextHelpSF = -1
+                                IdeContextHelpSF = _TRUE
 
                                 IF idehelp = 0 THEN
                                     IF idesubwindow THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO ideloop
@@ -2998,7 +2998,7 @@ FUNCTION ide2 (ignore)
                                     Help_wx1 = 2: Help_wy1 = idewy + 1: Help_wx2 = idewx - 1: Help_wy2 = idewy + idesubwindow - 2: Help_ww = Help_wx2 - Help_wx1 + 1: Help_wh = Help_wy2 - Help_wy1 + 1
                                     WikiParse a$
                                     idehelp = 1
-                                    skipdisplay = 0
+                                    skipdisplay = _FALSE
                                     IdeSystem = 3
                                     retval = 1
                                 END IF
@@ -3049,7 +3049,7 @@ FUNCTION ide2 (ignore)
             IF IdeBmkN = 0 THEN
                 result = idemessagebox("Bookmarks", "No bookmarks exist (Use Alt+Left to create a bookmark)", "")
                 SCREEN , , 3, 0
-                idealthighlight = 0
+                idealthighlight = _FALSE
                 LOCATE , , 0: COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                 GOTO specialchar
             END IF
@@ -3057,7 +3057,7 @@ FUNCTION ide2 (ignore)
                 IF idecy = IdeBmk(1).y THEN
                     result = idemessagebox("Bookmarks", "No other bookmarks exist", "")
                     SCREEN , , 3, 0
-                    idealthighlight = 0
+                    idealthighlight = _FALSE
                     LOCATE , , 0: COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                     GOTO specialchar
                 END IF
@@ -3154,9 +3154,9 @@ FUNCTION ide2 (ignore)
                             _DELAY .2
                             p$ = QuotedFilename$(COMMAND$(0)) + " " + QuotedFilename$(f$)
                             IF errorLineInInclude > 0 AND idefocusline = idecy THEN
-                                p$ = p$ + " -l:" + str2$(errorLineInInclude)
+                                p$ = p$ + " -l:" + _TOSTR$(errorLineInInclude)
                             ELSEIF warningInIncludeLine > 0 AND warningInInclude = idecy THEN
-                                p$ = p$ + " -l:" + str2$(warningInIncludeLine)
+                                p$ = p$ + " -l:" + _TOSTR$(warningInIncludeLine)
                             END IF
                             SHELL p$
 
@@ -3176,7 +3176,7 @@ FUNCTION ide2 (ignore)
                                         statusarealink = 0
                                         IF totalWarnings > 0 THEN
                                             COLOR 11, 1
-                                            msg$ = " (" + LTRIM$(STR$(totalWarnings)) + " warning"
+                                            msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
                                             IF totalWarnings > 1 THEN msg$ = msg$ + "s"
                                             msg$ = msg$ + " - click here or Ctrl+W to view)"
                                             _PRINTSTRING (4, idewy - 3), msg$
@@ -3230,10 +3230,10 @@ FUNCTION ide2 (ignore)
                     wholeword.select = 0
                 END IF
             ELSEIF (mX > 1 AND mX <= 1 + maxLineNumberLength AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers) OR _
-                   (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers = 0) THEN
+                   (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND NOT ShowLineNumbers) THEN
                 'line numbers are visible and have been clicked or
                 'line numbers are hidden and the left border has been clicked
-                IF AutoAddDebugCommand <> 0 OR GetRCStateVar(vWatchOn) = 1 THEN
+                IF AutoAddDebugCommand OR GetRCStateVar(vWatchOn) = 1 THEN
                     ideselect = 0
                     idecytemp = mY - 2 + idesy - 1
                     IF idecytemp <= iden THEN
@@ -3441,13 +3441,13 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF mB THEN
-            IF ((mX = 1 AND ShowLineNumbers = 0) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) OR mX = idewx OR mY <= 2 OR mY >= idewy - 5 THEN 'off text window area
+            IF ((mX = 1 AND NOT ShowLineNumbers) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) OR mX = idewx OR mY <= 2 OR mY >= idewy - 5 THEN 'off text window area
                 IF idemouseselect = 1 THEN
 
                     'scroll window
                     IF mY >= idewy - 5 THEN idecy = idecy + 1: IF idecy > iden THEN idecy = iden
                     IF mY <= 2 THEN idecy = idecy - 1: IF idecy < 1 THEN idecy = 1
-                    IF ((mX = 1 AND ShowLineNumbers = 0) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) THEN idecx = idecx - 1: IF idecx < 1 THEN idecx = 1
+                    IF ((mX = 1 AND NOT ShowLineNumbers) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) THEN idecx = idecx - 1: IF idecx < 1 THEN idecx = 1
                     IF mX = idewx THEN idecx = idecx + 1
                     _DELAY 0.1
                 END IF
@@ -3973,10 +3973,10 @@ FUNCTION ide2 (ignore)
                 retval$ = ""
                 a$ = idegetline(idecy)
                 IF EnteringRGB THEN 'The "Shift+ENTER" message is being shown
-                    oldkeywordHighlight = keywordHighlight
-                    keywordHighlight = 0
+                    oldKeywordHighlight = KeywordHighlight
+                    KeywordHighlight = _FALSE
                     HideBracketHighlight
-                    keywordHighlight = oldkeywordHighlight
+                    KeywordHighlight = oldKeywordHighlight
                     retval$ = idergbmixer$(0)
                 ELSE
                     IF ideselect THEN
@@ -3989,10 +3989,10 @@ FUNCTION ide2 (ignore)
                     Found_RGB = Found_RGB + INSTR(UCASE$(a$), "RGBA(")
                     Found_RGB = Found_RGB + INSTR(UCASE$(a$), "RGBA32(")
                     IF Found_RGB THEN
-                        oldkeywordHighlight = keywordHighlight
-                        keywordHighlight = 0
+                        oldKeywordHighlight = KeywordHighlight
+                        KeywordHighlight = _FALSE
                         HideBracketHighlight
-                        keywordHighlight = oldkeywordHighlight
+                        KeywordHighlight = oldKeywordHighlight
                         retval$ = idergbmixer$(-1)
                     ELSE
                         GOTO RegularEnter
@@ -4388,7 +4388,7 @@ FUNCTION ide2 (ignore)
                             END IF
                         NEXT i
                     END IF
-                    IdeInfo = "Selection length = " + str2$(sx2 - sx1) + " character" + LEFT$("s", ABS(sx2 - sx1 > 1))
+                    IdeInfo = "Selection length = " + _TOSTR$(sx2 - sx1) + " character" + LEFT$("s", ABS(sx2 - sx1 > 1))
                     UpdateIdeInfo
                 ELSE
                     IdeInfo = ""
@@ -4400,9 +4400,9 @@ FUNCTION ide2 (ignore)
                     sy1 = ideselecty1
                     sy2 = idecy
                     IF sy1 > sy2 OR idecx > 1 THEN
-                        IdeInfo = "Selection length = " + str2$(ABS(sy2 - sy1) + 1) + " line" + LEFT$("s", ABS((ABS(sy2 - sy1) + 1) > 1))
+                        IdeInfo = "Selection length = " + _TOSTR$(ABS(sy2 - sy1) + 1) + " line" + LEFT$("s", ABS((ABS(sy2 - sy1) + 1) > 1))
                     ELSE
-                        IdeInfo = "Selection length = " + str2$(sy2 - sy1) + " line" + LEFT$("s", ABS(sy2 - sy1 > 1))
+                        IdeInfo = "Selection length = " + _TOSTR$(sy2 - sy1) + " line" + LEFT$("s", ABS(sy2 - sy1 > 1))
                     END IF
                 ELSE
                     IdeInfo = ""
@@ -4413,8 +4413,8 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF AltSpecial THEN
-            AltSpecial = 0
-            ideentermenu = 0
+            AltSpecial = _FALSE
+            ideentermenu = _FALSE
             KALT = 0
             COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
         END IF
@@ -4475,7 +4475,7 @@ FUNCTION ide2 (ignore)
                     END IF
 
                     IF _RESIZE THEN
-                        ForceResize = -1: skipdisplay = 0: GOTO ideloop
+                        ForceResize = _TRUE: skipdisplay = _FALSE: GOTO ideloop
                     END IF
                 LOOP UNTIL KALT = 0
                 KB = _KEY_ESC
@@ -4488,7 +4488,7 @@ FUNCTION ide2 (ignore)
             END IF
 
             IF _RESIZE THEN
-                ForceResize = -1: skipdisplay = 0: GOTO ideloop
+                ForceResize = _TRUE: skipdisplay = _FALSE: GOTO ideloop
             END IF
 
             IF mCLICK OR mCLICK2 THEN
@@ -4566,7 +4566,7 @@ FUNCTION ide2 (ignore)
     r = 1
     s = 0
     parentMenu = 0
-    parentMenuSetup%% = 0
+    parentMenuSetup%% = _FALSE
     SELECT CASE idecontextualmenu
         CASE 1
             'right-click on text area
@@ -4612,8 +4612,8 @@ FUNCTION ide2 (ignore)
             NEXT: xx = x
             COLOR 7, 0: _PRINTSTRING (xx - 1, 1), " " + menu$(m, 0) + " "
         ELSE
-            IF parentMenu > 0 AND parentMenuSetup%% = 0 THEN
-                parentMenuSetup%% = -1
+            IF parentMenu > 0 AND NOT parentMenuSetup%% THEN
+                parentMenuSetup%% = _TRUE
                 backToParent.x1 = xx - 1
                 backToParent.x2 = xx + w
                 backToParent.y1 = 3
@@ -4684,7 +4684,7 @@ FUNCTION ide2 (ignore)
 
         IF s THEN GOTO menuChoiceMade
 
-        updateMenuPanel%% = 0
+        updateMenuPanel%% = _FALSE
         change = 0
         DO
             mousedown = 0: mouseup = 0
@@ -4712,7 +4712,7 @@ FUNCTION ide2 (ignore)
                     END IF
 
                     IF (_RESIZE <> 0) AND IdeDebugMode <> 2 THEN
-                        ForceResize = -1: skipdisplay = 0: GOTO ideloop
+                        ForceResize = _TRUE: skipdisplay = _FALSE: GOTO ideloop
                     END IF
                 LOOP UNTIL KALT = 0 'wait till alt is released
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -4732,7 +4732,7 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
             IF (_RESIZE <> 0) AND IdeDebugMode <> 2 THEN
-                ForceResize = -1: skipdisplay = 0: GOTO ideloop
+                ForceResize = _TRUE: skipdisplay = _FALSE: GOTO ideloop
             END IF
             _LIMIT 100
         LOOP UNTIL change
@@ -4935,10 +4935,10 @@ FUNCTION ide2 (ignore)
                     a$ = UCASE$(MID$(menu$(m, r2), x + 1, 1))
                     IF K$ = a$ AND LEFT$(menu$(m, r2), 1) <> "~" THEN
                         s = r2
-                        updateMenuPanel%% = -1
+                        updateMenuPanel%% = _TRUE
                         EXIT FOR
                     ELSEIF K$ = a$ AND LEFT$(menu$(m, r2), 1) = "~" THEN
-                        updateMenuPanel%% = -1
+                        updateMenuPanel%% = _TRUE
                         EXIT FOR
                     END IF
                 END IF
@@ -5079,12 +5079,12 @@ FUNCTION ide2 (ignore)
                     IF retval = 1 THEN
                         'screen dimensions have changed and everything must be redrawn/reapplied
                         WIDTH idewx, idewy + idesubwindow
-                        IF idecustomfont THEN
-                            _FONT idecustomfonthandle
+                        IF IDECustomFont THEN
+                            _FONT IDECustomFontHandle
                         ELSE
-                            IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
+                            IF IDEUseFont8 THEN _FONT 8 ELSE _FONT 16
                         END IF
-                        skipdisplay = 0
+                        skipdisplay = _FALSE
                         GOSUB redrawItAll
                     END IF
                 END IF
@@ -5102,10 +5102,10 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#RGB Color Mixer..." THEN
                 PCOPY 2, 0
-                oldkeywordHighlight = keywordHighlight
-                keywordHighlight = 0
+                oldKeywordHighlight = KeywordHighlight
+                KeywordHighlight = _FALSE
                 HideBracketHighlight
-                keywordHighlight = oldkeywordHighlight
+                KeywordHighlight = oldKeywordHighlight
                 retval$ = idergbmixer$(-1) 'retval is ignored
                 IF LEN(retval$) THEN insertAtCursor retval$
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -5181,12 +5181,11 @@ FUNCTION ide2 (ignore)
 
             IF RIGHT$(menu$(m, s), 16) = "Ignore #Warnings" THEN
                 PCOPY 2, 0
-                IF IgnoreWarnings = 0 THEN
-                    IgnoreWarnings = -1
+                IgnoreWarnings = NOT IgnoreWarnings
+                IF IgnoreWarnings THEN
                     WriteConfigSetting generalSettingsSection$, "IgnoreWarnings", "True"
                     menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = CHR$(7) + "Ignore #Warnings"
                 ELSE
-                    IgnoreWarnings = 0
                     WriteConfigSetting generalSettingsSection$, "IgnoreWarnings", "False"
                     menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = "Ignore #Warnings"
                 END IF
@@ -5539,7 +5538,7 @@ FUNCTION ide2 (ignore)
                     idesubwindow = idewy \ 2: idewy = idewy - idesubwindow
                     Help_wx1 = 2: Help_wy1 = idewy + 1: Help_wx2 = idewx - 1: Help_wy2 = idewy + idesubwindow - 2: Help_ww = Help_wx2 - Help_wx1 + 1: Help_wh = Help_wy2 - Help_wy1 + 1
                     idehelp = 1
-                    skipdisplay = 0
+                    skipdisplay = _FALSE
                     IdeSystem = 3
                     retval = 1: GOSUB redrawItAll
                 END IF
@@ -5692,7 +5691,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#Show Line Numbers" THEN
                 PCOPY 2, 0
-                ShowLineNumbers = -1
+                ShowLineNumbers = _TRUE
                 WriteConfigSetting generalSettingsSection$, "ShowLineNumbers", "True"
                 menu$(m, s) = "#Hide Line Numbers"
                 menu$(m, ViewMenuShowBGID) = MID$(menu$(m, ViewMenuShowBGID), 2)
@@ -5703,7 +5702,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#Hide Line Numbers" THEN
                 PCOPY 2, 0
-                ShowLineNumbers = 0
+                ShowLineNumbers = _FALSE
                 WriteConfigSetting generalSettingsSection$, "ShowLineNumbers", "False"
                 menu$(m, s) = "#Show Line Numbers"
                 menu$(m, ViewMenuShowBGID) = "~" + menu$(m, ViewMenuShowBGID)
@@ -5813,7 +5812,7 @@ FUNCTION ide2 (ignore)
                 idefindchangejmp:
                 r$ = idechange
                 PCOPY 3, 0: SCREEN , , 3, 0
-                idealthighlight = 0
+                idealthighlight = _FALSE
                 LOCATE , , 0: COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
                 IF r$ = "C" OR r$ = "" THEN GOTO ideloop
                 'assume "V", verify changes
@@ -6073,7 +6072,7 @@ FUNCTION ide2 (ignore)
                 _KEYCLEAR
                 DO: _LIMIT 15: LOOP UNTIL _KEYHIT = 0 'wait for user to remove finger from F5 key before running
                 PCOPY 3, 0: SCREEN , , 3, 0
-                NoExeSaved = -1
+                NoExeSaved = _TRUE
                 startPaused = 0
                 GOTO idemrun
             END IF
@@ -6096,7 +6095,7 @@ FUNCTION ide2 (ignore)
                 PCOPY 3, 0: SCREEN , , 3, 0
                 startPausedMenuHandler:
                 IF GetRCStateVar(vWatchOn) = 0 THEN
-                    IF AutoAddDebugCommand = 0 THEN
+                    IF NOT AutoAddDebugCommand THEN
                         SCREEN , , 3, 0
                         clearStatusWindow 2
                         COLOR 14, 1
@@ -6117,7 +6116,7 @@ FUNCTION ide2 (ignore)
                         GOTO specialchar
                     ELSEIF result = 3 THEN
                         result = idemessagebox("Debug", "You can reenable the 'Auto-add $Debug Metacommand' feature\nin the Debug menu.", "#OK")
-                        AutoAddDebugCommand = 0
+                        AutoAddDebugCommand = _FALSE
                         WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "False"
                         menu$(DebugMenuID, DebugMenuAutoAddCommand) = "Auto-add $#Debug Metacommand"
                     END IF
@@ -6137,7 +6136,7 @@ FUNCTION ide2 (ignore)
                     PCOPY 2, 0
                     showWatchList:
                     IF GetRCStateVar(vWatchOn) = 0 THEN
-                        IF AutoAddDebugCommand = 0 THEN
+                        IF NOT AutoAddDebugCommand THEN
                             SCREEN , , 3, 0
                             clearStatusWindow 2
                             COLOR 14, 1
@@ -6155,7 +6154,7 @@ FUNCTION ide2 (ignore)
                             idechangemade = 1
                         ELSEIF result = 3 THEN
                             result = idemessagebox("Debug", "You can reenable the 'Auto-add $Debug Metacommand' feature\nin the Debug menu.", "#OK")
-                            AutoAddDebugCommand = 0
+                            AutoAddDebugCommand = _FALSE
                             WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "False"
                             menu$(DebugMenuID, DebugMenuAutoAddCommand) = "Auto-add $#Debug Metacommand"
                         END IF
@@ -6233,7 +6232,7 @@ FUNCTION ide2 (ignore)
                     PCOPY 3, 0: SCREEN , , 3, 0
                     toggleBreakpoint:
                     IF GetRCStateVar(vWatchOn) = 0 THEN
-                        IF AutoAddDebugCommand = 0 THEN
+                        IF NOT AutoAddDebugCommand THEN
                             SCREEN , , 3, 0
                             clearStatusWindow 2
                             COLOR 14, 1
@@ -6252,7 +6251,7 @@ FUNCTION ide2 (ignore)
                             IdeBreakpoints(idecy) = NOT IdeBreakpoints(idecy)
                         ELSEIF result = 3 THEN
                             result = idemessagebox("Debug", "You can reenable the 'Auto-add $Debug Metacommand' feature\nin the Debug menu.", "#OK")
-                            AutoAddDebugCommand = 0
+                            AutoAddDebugCommand = _FALSE
                             WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "False"
                             menu$(DebugMenuID, DebugMenuAutoAddCommand) = "Auto-add $#Debug Metacommand"
                         END IF
@@ -6284,7 +6283,7 @@ FUNCTION ide2 (ignore)
                     PCOPY 3, 0: SCREEN , , 3, 0
                     toggleSkipLine:
                     IF GetRCStateVar(vWatchOn) = 0 THEN
-                        IF AutoAddDebugCommand = 0 THEN
+                        IF NOT AutoAddDebugCommand THEN
                             SCREEN , , 3, 0
                             clearStatusWindow 2
                             COLOR 14, 1
@@ -6303,7 +6302,7 @@ FUNCTION ide2 (ignore)
                             IdeSkipLines(idecy) = NOT IdeSkipLines(idecy)
                         ELSEIF result = 3 THEN
                             result = idemessagebox("Debug", "You can reenable the 'Auto-add $Debug Metacommand' feature\nin the Debug menu.", "#OK")
-                            AutoAddDebugCommand = 0
+                            AutoAddDebugCommand = _FALSE
                             WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "False"
                             menu$(DebugMenuID, DebugMenuAutoAddCommand) = "Auto-add $#Debug Metacommand"
                         END IF
@@ -6333,8 +6332,8 @@ FUNCTION ide2 (ignore)
                 ideSetTCPPortBox
                 IF bkpidebaseTcpPort <> idebaseTcpPort THEN
                     IF host& <> 0 THEN CLOSE host&: host& = 0
-                    attemptToHost = 0
-                    changingTcpPort = -1
+                    attemptToHost = _FALSE
+                    changingTcpPort = _TRUE
                     idechangemade = 1
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -6413,7 +6412,7 @@ FUNCTION ide2 (ignore)
                 idecy = 1
                 ideselect = 0
                 idepath$ = _STARTDIR$
-                ideprogname$ = "": ForceOptExpl = 0
+                ideprogname$ = "": ForceOptExpl = _FALSE
                 listOfCustomKeywords$ = LEFT$(listOfCustomKeywords$, customKeywordsLength)
                 QuickNavTotal = 0
                 ModifyCOMMAND$ = ""
@@ -6427,12 +6426,12 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            AttemptToLoadRecent = 0
+            AttemptToLoadRecent = _FALSE
             FOR ml = 1 TO UBOUND(IdeRecentLink, 1)
                 IF LEN(IdeRecentLink(ml, 1)) THEN
                     IF menu$(m, s) = IdeRecentLink(ml, 1) THEN
                         IdeOpenFile$ = IdeRecentLink(ml, 2)
-                        AttemptToLoadRecent = -1
+                        AttemptToLoadRecent = _TRUE
                         GOTO directopen
                     END IF
                 END IF
@@ -6459,7 +6458,7 @@ FUNCTION ide2 (ignore)
                 END IF
                 IF LEN(f$) THEN
                     IdeOpenFile$ = f$
-                    AttemptToLoadRecent = -1
+                    AttemptToLoadRecent = _TRUE
                     GOTO directopen
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
@@ -6510,13 +6509,13 @@ FUNCTION ide2 (ignore)
                 END IF
                 IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
                 IF r$ <> "C" THEN
-                    IF ideprogname$ = "beforefirstline.bi" OR ideprogname$ = "afterlastline.bm" THEN ForceOptExpl = -2 ELSE ForceOptExpl = 0
+                    IF ideprogname$ = "beforefirstline.bi" OR ideprogname$ = "afterlastline.bm" THEN ForceOptExpl = -2 ELSE ForceOptExpl = _FALSE
                     ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOSUB redrawItAll
                 IF ForceOptExpl = -2 THEN
-                    ForceOptExpl = -1
+                    ForceOptExpl = _TRUE
                     retval = idemessagebox("!! Attention !!",_
                                            "You just opened one of the QB64-PE auto-includes.\n" +_
                                            "A special edit mode is now activated to enforce the\n" +_
@@ -6644,20 +6643,20 @@ FUNCTION ide2 (ignore)
 
     CleanUpRecentList:
     bh% = FileToBuf%(RecentFile$)
-    allOk% = -1 'let's assume the list is OK
+    allOk% = _TRUE 'let's assume the list is OK
     WHILE NOT EndOfBuf%(bh%)
         bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%)
         IF NOT _FILEEXISTS(be$) THEN 'accessible?
             nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
             DeleteBufLine bh% 'remove that entry
-            allOk% = 0 'delete OK status
+            allOk% = _FALSE 'delete OK status
         END IF
     WEND
     IF allOk% THEN
         result = idemessagebox("Remove Broken Links", "All files in the list are accessible.", "#OK")
     ELSE
         BufToFile bh%, RecentFile$
-        IF ideerror > 1 AND AttemptToLoadRecent = -1 THEN PCOPY 3, 0
+        IF ideerror > 1 _ANDALSO AttemptToLoadRecent THEN PCOPY 3, 0
         result = idemessagebox("Remove Broken Links", "All broken links have been removed.", "#OK")
     END IF
     DisposeBuf bh%
@@ -6740,7 +6739,7 @@ FUNCTION ide2 (ignore)
             statusarealink = 0
             IF totalWarnings > 0 THEN
                 COLOR 11, 1
-                msg$ = " (" + LTRIM$(STR$(totalWarnings)) + " warning"
+                msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
                 IF totalWarnings > 1 THEN msg$ = msg$ + "s"
                 msg$ = msg$ + " - click here or Ctrl+W to view)"
                 _PRINTSTRING (4, idewy - 3), msg$
@@ -6875,14 +6874,14 @@ SUB DebugMode
 
     SELECT EVERYCASE IdeDebugMode
         CASE 1
-            PauseMode = 0
+            PauseMode = _FALSE
             callStackLength = 0
             callstacklist$ = ""
             buffer$ = ""
             debugClient& = 0
             debuggeepid = 0
 
-            panelActive = -1
+            panelActive = _TRUE
             showvWatchPanel vWatchPanel, "", 1
 
             IF LEN(variableWatchList$) = 0 THEN
@@ -7066,11 +7065,11 @@ SUB DebugMode
     clearStatusWindow 1
     IF startPaused THEN
         cmd$ = "break"
-        PauseMode = -1
+        PauseMode = _TRUE
         setStatusMessage 1, "Paused.", 2
     ELSE
         cmd$ = "run"
-        PauseMode = 0
+        PauseMode = _FALSE
         setStatusMessage 1, "Running...", 10
     END IF
     GOSUB SendCommand
@@ -7078,7 +7077,7 @@ SUB DebugMode
     clearStatusWindow 2
     setStatusMessage 2, "$DEBUG MODE: Set focus to the IDE to control execution", 15
 
-    noFocusMessage = -1
+    noFocusMessage = _TRUE
 
     DO 'main loop
         IF _EXIT THEN ideexit = 1: GOTO requestQuit
@@ -7116,8 +7115,8 @@ SUB DebugMode
         mB2 = _MOUSEBUTTON(2)
 
         IF mB2 THEN
-            IF mouseDown2 = 0 THEN
-                mouseDown2 = -1
+            IF NOT mouseDown2 THEN
+                mouseDown2 = _TRUE
                 mouseDownOnX2 = mX
                 mouseDownOnY2 = mY
             ELSE
@@ -7134,32 +7133,32 @@ SUB DebugMode
 
                     'right-click on code area?
                     IF (mX > 1 AND mX <= 1 + maxLineNumberLength AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers) OR _
-                       (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers = 0) OR _
+                       (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND NOT ShowLineNumbers) OR _
                        (mX > 1 + maxLineNumberLength AND mX < idewx AND mY > 2 AND mY < (idewy - 5)) THEN
                         bkpidecy = idecy
                         idecy = mY - 2 + idesy - 1
                         IF idecy > iden THEN idecy = iden
                         IF bkpidecy <> idecy THEN ideselect = 0: GOSUB UpdateDisplay
                         IdeDebugMode = 2
-                        IF PauseMode = 0 THEN GOSUB requestPause: dummy = DarkenFGBG(0)
+                        IF NOT PauseMode THEN GOSUB requestPause: dummy = DarkenFGBG(0)
                         EXIT SUB
                         returnFromContextMenu:
                         GOSUB UpdateDisplay
                     END IF
                 END IF
             END IF
-            mouseDown2 = 0
+            mouseDown2 = _FALSE
         END IF
 
         IF mB THEN
-            IF mouseDown = 0 THEN
-                mouseDown = -1
+            IF NOT mouseDown THEN
+                mouseDown = _TRUE
                 mouseDownOnX = mX
                 mouseDownOnY = mY
                 IF LEN(variableWatchList$) > 0 AND _
                    (mX >= vWatchPanel.x + vWatchPanel.w - 3) AND (mX <= vWatchPanel.x + vWatchPanel.w - 1) AND _
                    (mY = vWatchPanel.y) THEN
-                    vWatchPanel.closingPanel = -1
+                    vWatchPanel.closingPanel = _TRUE
                 ELSEIF LEN(variableWatchList$) > 0 AND vWatchPanel.vBarThumb > 0 AND _
                    (mX = vWatchPanel.x + vWatchPanel.w - 1) AND _
                    (mY = vWatchPanel.vBarThumb) THEN
@@ -7187,23 +7186,23 @@ SUB DebugMode
                 ELSEIF LEN(variableWatchList$) > 0 AND _
                    (mX = vWatchPanel.x + vWatchPanel.w - 1) AND _
                    (mY = vWatchPanel.y + vWatchPanel.h - 1) THEN
-                    vWatchPanel.resizingPanel = -1
+                    vWatchPanel.resizingPanel = _TRUE
                 ELSEIF LEN(variableWatchList$) > 0 AND _
                    (mX >= vWatchPanel.x AND mX <= vWatchPanel.x + vWatchPanel.w) AND _
                    (mY >= vWatchPanel.y AND mY <= vWatchPanel.y + vWatchPanel.h) THEN
-                    vWatchPanel.draggingPanel = -1
+                    vWatchPanel.draggingPanel = _TRUE
                     vWatchPanel.clicked = 1
                     IF timeElapsedSince#(lastPanelClick#) < 0.3# THEN
                         'Double-click on watch list
-                        vWatchPanel.draggingPanel = 0
-                        mouseDown = 0
+                        vWatchPanel.draggingPanel = _FALSE
+                        mouseDown = _FALSE
                         GOTO requestVariableWatch
                     END IF
                     lastPanelClick# = TIMER(0.001)
                 ELSE
-                    vWatchPanel.draggingPanel = 0
-                    vWatchPanel.resizingPanel = 0
-                    vWatchPanel.closingPanel = 0
+                    vWatchPanel.draggingPanel = _FALSE
+                    vWatchPanel.resizingPanel = _FALSE
+                    vWatchPanel.closingPanel = _FALSE
                     vWatchPanel.draggingVBar = 0
                     vWatchPanel.draggingHBar = 0
                     vWatchPanel.clicked = 0
@@ -7211,35 +7210,35 @@ SUB DebugMode
 
                 IF mX = idewx THEN
                     IF mY = idevbar(idewx, 3, idewy - 8, idecy, iden) THEN
-                        draggingVThumb = -1
+                        draggingVThumb = _TRUE
                     ELSE
-                        draggingVThumb = 0
+                        draggingVThumb = _FALSE
                     END IF
                 ELSE
-                    draggingVThumb = 0
+                    draggingVThumb = _FALSE
                 END IF
 
                 IF mY = idewy - 5 THEN
                     IF mX = idehbar(2, idewy - 5, idewx - 2, idesx, 608) THEN
-                        draggingHThumb = -1
+                        draggingHThumb = _TRUE
                     ELSE
-                        draggingHThumb = 0
+                        draggingHThumb = _FALSE
                     END IF
                 ELSE
-                    draggingHThumb = 0
+                    draggingHThumb = _FALSE
                 END IF
 
                 mouseDownOnButton = 0
                 FOR i = 1 TO UBOUND(Button)
                     IF mY = Button(i).y AND mX >= Button(i).x AND mX <= Button(i).x + Button(i).w AND _
-                       vWatchPanel.draggingPanel = 0 AND vWatchPanel.resizingPanel = 0 THEN
+                       NOT vWatchPanel.draggingPanel AND NOT vWatchPanel.resizingPanel THEN
                         mouseDownOnButton = i
                         EXIT FOR
                     END IF
                 NEXT
             ELSE
                 'drag
-                IF draggingVThumb = -1 THEN
+                IF draggingVThumb THEN
                     IF mouseDownOnY <> mY THEN
                         mouseDownOnY = mY
                         IF iden > 1 THEN
@@ -7257,7 +7256,7 @@ SUB DebugMode
                     END IF
                 END IF
 
-                IF draggingHThumb = -1 THEN
+                IF draggingHThumb THEN
                     IF mouseDownOnX <> mX THEN
                         mouseDownOnX = mX
                         IF mX <= 3 THEN idesx = 1: idecx = idesx
@@ -7328,19 +7327,19 @@ SUB DebugMode
                 'which will be handled by showvWatchPanel()
             END IF
             IF vWatchPanel.draggingPanel THEN
-                vWatchPanel.draggingPanel = 0: mouseDown = 0
-                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.x", str2$(vWatchPanel.x)
-                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.y", str2$(vWatchPanel.y)
+                vWatchPanel.draggingPanel = _FALSE: mouseDown = _FALSE
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.x", _TOSTR$(vWatchPanel.x)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.y", _TOSTR$(vWatchPanel.y)
             END IF
             IF vWatchPanel.resizingPanel THEN
-                vWatchPanel.resizingPanel = 0: mouseDown = 0
-                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.w", str2$(vWatchPanel.w)
-                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.h", str2$(vWatchPanel.h)
+                vWatchPanel.resizingPanel = _FALSE: mouseDown = _FALSE
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.w", _TOSTR$(vWatchPanel.w)
+                WriteSetting DebugFile$, vwatchPanelSection$, "vWatchPanel.h", _TOSTR$(vWatchPanel.h)
             END IF
             IF vWatchPanel.closingPanel AND (mX = mouseDownOnX AND mY = mouseDownOnY) THEN
-                vWatchPanel.closingPanel = 0
-                mouseDown = 0
-                panelActive = 0
+                vWatchPanel.closingPanel = _FALSE
+                mouseDown = _FALSE
+                panelActive = _FALSE
                 result = idemessagebox("$DEBUG MODE", "Close Watch Panel", "#Keep Variables;#Clear List")
                 IF result = 2 THEN
                     variableWatchList$ = ""
@@ -7373,7 +7372,7 @@ SUB DebugMode
                     END IF
                     GOSUB UpdateDisplay
                 END IF
-                vWatchPanel.draggingVBar = 0: mouseDown = 0
+                vWatchPanel.draggingVBar = 0: mouseDown = _FALSE
             END IF
             IF vWatchPanel.draggingHBar THEN
                 IF vWatchPanel.draggingHBar = 2 THEN
@@ -7387,28 +7386,28 @@ SUB DebugMode
                     END IF
                     GOSUB UpdateDisplay
                 END IF
-                vWatchPanel.draggingHBar = 0: mouseDown = 0
+                vWatchPanel.draggingHBar = 0: mouseDown = _FALSE
             END IF
             IF mouseDown THEN
-                mouseDown = 0
-                draggingVThumb = 0
-                draggingHThumb = 0
+                mouseDown = _FALSE
+                draggingVThumb = _FALSE
+                draggingHThumb = _FALSE
 
                 IF mouseDownOnButton > 0 AND mX = mouseDownOnX AND mY = mouseDownOnY THEN
                     SELECT CASE mouseDownOnButton
-                        CASE 1: mouseDownOnButton = 0: mouseDown = 0: GOTO F4
-                        CASE 2: mouseDownOnButton = 0: mouseDown = 0: GOTO F5
-                        CASE 3: mouseDownOnButton = 0: mouseDown = 0: GOTO F6
-                        CASE 4: mouseDownOnButton = 0: mouseDown = 0: GOTO F7
-                        CASE 5: mouseDownOnButton = 0: mouseDown = 0: GOTO F8
-                        CASE 6: mouseDownOnButton = 0: mouseDown = 0: GOTO F9
-                        CASE 7: mouseDownOnButton = 0: mouseDown = 0: GOTO F10
-                        CASE 8: mouseDownOnButton = 0: mouseDown = 0: GOTO F12
+                        CASE 1: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F4
+                        CASE 2: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F5
+                        CASE 3: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F6
+                        CASE 4: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F7
+                        CASE 5: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F8
+                        CASE 6: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F9
+                        CASE 7: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F10
+                        CASE 8: mouseDownOnButton = 0: mouseDown = _FALSE: GOTO F12
                     END SELECT
                 END IF
 
                 IF (mX > 1 AND mX <= 1 + maxLineNumberLength AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers) OR _
-                   (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers = 0) THEN
+                   (mX = 1 AND mY > 2 AND mY < (idewy - 5) AND NOT ShowLineNumbers) THEN
                     'Inside the editor/line numbers
                     IF mouseDownOnX = mX AND mouseDownOnY = mY THEN
                         ideselect = 0
@@ -7468,12 +7467,12 @@ SUB DebugMode
                     GOTO findjmp
                 END IF
             ELSE
-                mouseDown = 0
-                draggingVThumb = 0
-                draggingHThumb = 0
-                vWatchPanel.draggingPanel = 0
-                vWatchPanel.resizingPanel = 0
-                vWatchPanel.closingPanel = 0
+                mouseDown = _FALSE
+                draggingVThumb = _FALSE
+                draggingHThumb = _FALSE
+                vWatchPanel.draggingPanel = _FALSE
+                vWatchPanel.resizingPanel = _FALSE
+                vWatchPanel.closingPanel = _FALSE
                 vWatchPanel.draggingVBar = 0
                 vWatchPanel.draggingHBar = 0
             END IF
@@ -7486,14 +7485,14 @@ SUB DebugMode
                 UpdateMenuHelpLine "Right-click for options; ESC to abort."
                 GOSUB printVersion
                 GOSUB UpdateButtons
-                noFocusMessage = 0
+                noFocusMessage = _FALSE
             END IF
         ELSE
-            IF noFocusMessage = 0 THEN
+            IF NOT noFocusMessage THEN
                 clearStatusWindow 2
                 clearStatusWindow 3
                 setStatusMessage 2, "Set focus to the IDE to control execution", 15
-                noFocusMessage = -1
+                noFocusMessage = _TRUE
             END IF
         END IF
         IF IdeDebugMode > 1 THEN RETURN
@@ -7589,14 +7588,14 @@ SUB DebugMode
                 GOSUB UpdateDisplay
             CASE 15872 'F4
                 F4:
-                IF PauseMode = 0 THEN
+                IF NOT PauseMode THEN
                     cmd$ = "break"
-                    PauseMode = -1
+                    PauseMode = _TRUE
                     GOSUB SendCommand
-                    estabilishingScope = -1
+                    estabilishingScope = _TRUE
                 ELSE
                     requestVariableWatch:
-                    hidePanel = -1
+                    hidePanel = _TRUE
                     GOSUB UpdateDisplay
                     selectVar = 1
                     filter$ = ""
@@ -7732,7 +7731,7 @@ SUB DebugMode
 
                             PCOPY 3, 0: SCREEN , , 3, 0
                             WHILE _MOUSEINPUT: WEND
-                            hidePanel = -1
+                            hidePanel = _TRUE
                             GOSUB UpdateDisplay
                         ELSEIF returnAction = 2 OR returnAction = 3 THEN
                             'send watchpoint data
@@ -7797,13 +7796,13 @@ SUB DebugMode
 
                             PCOPY 3, 0: SCREEN , , 3, 0
                             WHILE _MOUSEINPUT: WEND
-                            hidePanel = -1
+                            hidePanel = _TRUE
                             GOSUB UpdateDisplay
                             _CONTINUE
                         ELSEIF returnAction = -1 THEN
                             PCOPY 3, 0: SCREEN , , 3, 0
                             WHILE _MOUSEINPUT: WEND
-                            hidePanel = -1
+                            hidePanel = _TRUE
                             GOSUB UpdateDisplay
                             _CONTINUE
                         ELSE
@@ -7814,14 +7813,14 @@ SUB DebugMode
                     WHILE _MOUSEINPUT: WEND
                     GOSUB UpdateDisplay
                     IF LEN(variableWatchList$) THEN
-                        panelActive = -1
+                        panelActive = _TRUE
                         GOTO requestVariableValues
                     END IF
                 END IF
             CASE 16128 'F5
                 F5:
                 requestContinue:
-                PauseMode = 0
+                PauseMode = _FALSE
                 debugnextline = 0
                 cmd$ = "run"
                 GOSUB SendCommand
@@ -7835,7 +7834,7 @@ SUB DebugMode
                 requestStepOut:
                 IF PauseMode THEN
                     IF LEN(currentSub$) > 0 THEN
-                        PauseMode = 0
+                        PauseMode = _FALSE
                         cmd$ = "step out"
                         GOSUB SendCommand
                         clearStatusWindow 1
@@ -7851,13 +7850,13 @@ SUB DebugMode
             CASE 16640 'F7
                 F7:
                 requestStepInto:
-                IF PauseMode = 0 THEN
+                IF NOT PauseMode THEN
                     cmd$ = "break"
-                    PauseMode = -1
+                    PauseMode = _TRUE
                     GOSUB SendCommand
                 ELSE
                     cmd$ = "step"
-                    PauseMode = -1
+                    PauseMode = _TRUE
                     GOSUB SendCommand
                 END IF
                 clearStatusWindow 1
@@ -7873,7 +7872,7 @@ SUB DebugMode
                 requestStepOver:
                 IF PauseMode THEN
                     cmd$ = "step over"
-                    PauseMode = 0
+                    PauseMode = _FALSE
                     GOSUB SendCommand
                     clearStatusWindow 1
                     setStatusMessage 1, "Running...", 10
@@ -7881,7 +7880,7 @@ SUB DebugMode
                 ELSE
                     requestPause:
                     cmd$ = "break"
-                    PauseMode = -1
+                    PauseMode = _TRUE
                     GOSUB SendCommand
                     clearStatusWindow 1
                     setStatusMessage 1, "Paused.", 2
@@ -7969,7 +7968,7 @@ SUB DebugMode
                         WHILE _MOUSEINPUT: WEND
                         requestRunToThisLine:
                         IF result > 0 AND result <= iden THEN
-                            PauseMode = 0
+                            PauseMode = _FALSE
                             debugnextline = 0
                             cmd$ = "run to line:" + MKL$(result)
                             GOSUB SendCommand
@@ -8010,7 +8009,7 @@ SUB DebugMode
 
         SELECT CASE cmd$
             CASE "breakpoint", "line number", "watchpoint"
-                BypassRequestCallStack = 0
+                BypassRequestCallStack = _FALSE
                 IF cmd$ = "watchpoint" THEN
                     temp$ = GetBytes$("", 0) 'reset buffer
                     tempIndex& = CVL(GetBytes$(value$, 4))
@@ -8060,7 +8059,7 @@ SUB DebugMode
                 ELSE
                     setStatusMessage 1, "Paused.", 2
                 END IF
-                PauseMode = -1
+                PauseMode = _TRUE
                 GOSUB UpdateDisplay
 
                 'request variables addresses
@@ -8142,7 +8141,7 @@ SUB DebugMode
             CASE "current sub"
                 currentSub$ = value$
                 IF estabilishingScope THEN
-                    estabilishingScope = 0
+                    estabilishingScope = _FALSE
                     GOSUB UpdateDisplay
                     GOTO requestVariableWatch
                 END IF
@@ -8166,10 +8165,10 @@ SUB DebugMode
                 clearStatusWindow 1
                 COLOR , 4
                 setStatusMessage 1, "Error occurred on line" + STR$(l), 15
-                BypassRequestCallStack = -1
-                PauseMode = -1
+                BypassRequestCallStack = _TRUE
+                PauseMode = _TRUE
             CASE "enter input"
-                EnteredInput = -1
+                EnteredInput = _TRUE
                 l = CVL(value$)
                 idecy = l
                 debugnextline = l
@@ -8180,7 +8179,7 @@ SUB DebugMode
                 setStatusMessage 1, "SLEEP/INPUT/LINE INPUT active in your program...", 10
                 set_foreground_window debuggeehwnd
             CASE "leave input"
-                EnteredInput = 0
+                EnteredInput = _FALSE
                 clearStatusWindow 1
                 IF PauseMode THEN
                     setStatusMessage 1, "Paused.", 2
@@ -8260,17 +8259,17 @@ SUB DebugMode
     RETURN
 
     UpdateDisplay:
-    IF PauseMode = 0 THEN ideshowtextBypassColorRestore = -1
+    IF NOT PauseMode THEN ideshowtextBypassColorRestore = _TRUE
     ideshowtext
     UpdateTitleOfMainWindow
 
     GOSUB printVersion
 
-    IF PauseMode <> 0 AND LEN(variableWatchList$) > 0 THEN
+    IF PauseMode AND LEN(variableWatchList$) > 0 THEN
         IF WatchListToConsole THEN _CONSOLE ON
         totalVisibleVariables = CVL(MID$(variableWatchList$, 5, 4))
-        IF hidePanel = 0 AND panelActive = -1 THEN showvWatchPanel vWatchPanel, currentSub$, 0
-        hidePanel = 0
+        IF NOT hidePanel AND panelActive THEN showvWatchPanel vWatchPanel, currentSub$, 0
+        hidePanel = _FALSE
     END IF
 
     PCOPY 3, 0
@@ -8279,7 +8278,7 @@ SUB DebugMode
     UpdateButtons:
     FOR i = 1 TO UBOUND(Button)
         IF mY = Button(i).y AND mX >= Button(i).x AND mX <= Button(i).x + Button(i).w AND _
-           vWatchPanel.draggingPanel = 0 AND vWatchPanel.resizingPanel = 0 THEN
+           NOT vWatchPanel.draggingPanel AND NOT vWatchPanel.resizingPanel THEN
             COLOR 0, 7
             temp$ = ""
         ELSE
@@ -8383,7 +8382,7 @@ SUB showvWatchPanel (this AS vWatchPanelType, currentScope$, action AS _BYTE)
         IF this.x + this.w + 2 > idewx THEN this.x = idewx - (this.w + 2)
     END IF
 
-    IF WatchListToConsole = 0 THEN
+    IF NOT WatchListToConsole THEN
         vWatchPanelLimit = idewy - 6
 
         IF this.x < 2 THEN this.x = 2
@@ -8439,16 +8438,16 @@ SUB showvWatchPanel (this AS vWatchPanelType, currentScope$, action AS _BYTE)
         tempStorage& = CVL(GetBytes$(temp$, 4))
 
         i = i + 1
-        IF this.firstVisible > i AND WatchListToConsole = 0 THEN _CONTINUE
+        IF this.firstVisible > i AND NOT WatchListToConsole THEN _CONTINUE
         y = y + 1
-        IF y > this.h - 2 AND WatchListToConsole = 0 THEN EXIT DO
+        IF y > this.h - 2 AND NOT WatchListToConsole THEN EXIT DO
 
         thisName$ = usedVariableList(tempIndex&).name
         IF usedVariableList(tempIndex&).isarray THEN
             thisName$ = LEFT$(thisName$, LEN(thisName$) - 1)
             tempTotalArrayIndexes& = tempTotalArrayIndexes& \ 4
             FOR j = 1 TO tempTotalArrayIndexes&
-                thisName$ = thisName$ + LTRIM$(STR$(CVL(MID$(tempArrayIndexes$, j * 4 - 3, 4))))
+                thisName$ = thisName$ + _TOSTR$(CVL(MID$(tempArrayIndexes$, j * 4 - 3, 4)))
                 IF j < tempTotalArrayIndexes& THEN thisName$ = thisName$ + ", "
             NEXT
             thisName$ = thisName$ + ")"
@@ -8485,10 +8484,10 @@ SUB showvWatchPanel (this AS vWatchPanelType, currentScope$, action AS _BYTE)
             COLOR fg
         ELSE
             item$ = item$ + "<out of scope>"
-            IF WatchListToConsole = 0 THEN COLOR 2
+            IF NOT WatchListToConsole THEN COLOR 2
         END IF
         IF LEN(item$) > this.contentWidth THEN this.contentWidth = LEN(item$)
-        IF WatchListToConsole = 0 THEN
+        IF NOT WatchListToConsole THEN
             temp2$ = MID$(item$, this.hPos)
             _PRINTSTRING (this.x + 2, this.y + y), LEFT$(temp2$, this.w - 4)
             IF this.x + 2 + LEN(temp2$) > this.x + this.w - 2 THEN
@@ -8554,7 +8553,7 @@ SUB showvWatchPanel (this AS vWatchPanelType, currentScope$, action AS _BYTE)
     LOOP
     longestVarName = actualLongestVarName 'if these are different, next time it'll be fixed
 
-    IF WatchListToConsole = 0 THEN
+    IF NOT WatchListToConsole THEN
         IF shadowLength THEN
             'shadow for watchpoint popup
             COLOR 2, 0
@@ -8653,9 +8652,9 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
     NEXT
 
     searchTerm$ = filter$
-    firstRun = -1
+    firstRun = _TRUE
     GOSUB buildList
-    firstRun = 0
+    firstRun = _FALSE
     dialogHeight = (totalMainVariablesCreated) + 7
     listBuilt:
     IF selectVar = -1 THEN GOTO generateVariableWatchList
@@ -8690,7 +8689,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
     o(varListBox).sel = selectVar
 
     IF LEN(searchTerm$) THEN temp$ = ", filtered" ELSE temp$ = ""
-    idetxt(p.nam) = "Add Watch - Variable List (" + LTRIM$(STR$(totalVisibleVariables)) + temp$ + ")"
+    idetxt(p.nam) = "Add Watch - Variable List (" + _TOSTR$(totalVisibleVariables) + temp$ + ")"
 
     i = i + 1: buttonSet = i
     o(buttonSet).typ = 3
@@ -9131,7 +9130,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                             IF thisReturnAction <> 3 THEN
                                 IF INSTR(varType$, "STRING") = 0 THEN
                                     v$ = op$ + actualValue$
-                                    IF v$ <> op$ + LTRIM$(STR$(VAL(actualValue$))) THEN
+                                    IF v$ <> op$ + _TOSTR$(VAL(actualValue$)) THEN
                                         result = idemessagebox(dlgTitle$, "Invalid expression.\nYou can use =, <>, >, >=, <, <=, and a literal value\n(scientific notation not allowed).", "#OK")
                                         _KEYCLEAR
                                         GOTO getNewValueInput
@@ -9613,7 +9612,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
             idetxt(o(varListBox).txt) = l$
             o(varListBox).sel = 0 'reset visible list to the first item
             IF LEN(searchTerm$) THEN temp$ = ", filtered" ELSE temp$ = ""
-            idetxt(p.nam) = "Add Watch - Variable List (" + LTRIM$(STR$(totalVisibleVariables)) + temp$ + ")"
+            idetxt(p.nam) = "Add Watch - Variable List (" + _TOSTR$(totalVisibleVariables) + temp$ + ")"
         END IF
 
         dlgLoop:
@@ -10218,18 +10217,18 @@ FUNCTION formatRange$ (__text$)
                 v2 = v
             ELSE
                 IF v2 = -1 THEN
-                    a2$ = a2$ + LTRIM$(STR$(v1)) + ";"
+                    a2$ = a2$ + _TOSTR$(v1) + ";"
                     v1 = v
                 ELSE
-                    a2$ = a2$ + LTRIM$(STR$(v1)) + "-" + LTRIM$(STR$(v2)) + ";"
+                    a2$ = a2$ + _TOSTR$(v1) + "-" + _TOSTR$(v2) + ";"
                     v1 = v
                     v2 = -1
                 END IF
             END IF
         END IF
     NEXT
-    IF v1 <> -1 AND v2 = -1 THEN a2$ = a2$ + LTRIM$(STR$(v1))
-    IF v1 <> -1 AND v2 <> -1 THEN a2$ = a2$ + LTRIM$(STR$(v1)) + "-" + LTRIM$(STR$(v2))
+    IF v1 <> -1 AND v2 = -1 THEN a2$ = a2$ + _TOSTR$(v1)
+    IF v1 <> -1 AND v2 <> -1 THEN a2$ = a2$ + _TOSTR$(v1) + "-" + _TOSTR$(v2)
     formatRange$ = a2$
 END FUNCTION
 
@@ -10939,7 +10938,7 @@ END SUB
 
 SUB idechanged (totalChanges AS LONG)
     IF totalChanges > 1 THEN pl$ = "s"
-    result = idemessagebox("Change Complete", LTRIM$(STR$(totalChanges)) + " substitution" + pl$ + ".", "")
+    result = idemessagebox("Change Complete", _TOSTR$(totalChanges) + " substitution" + pl$ + ".", "")
 END SUB
 
 FUNCTION idechangeit$
@@ -12653,7 +12652,7 @@ END FUNCTION
 
 SUB ideshowtext
 
-    IF ideshowtextBypassColorRestore = 0 THEN
+    IF NOT ideshowtextBypassColorRestore THEN
         _PALETTECOLOR 1, IDEBackgroundColor, 0
         _PALETTECOLOR 2, _RGB32(84, 84, 84), 0 'dark gray - help system and interface details
         _PALETTECOLOR 4, IDEErrorColor, 0
@@ -12667,7 +12666,7 @@ SUB ideshowtext
         _PALETTECOLOR 13, IDETextColor, 0
         _PALETTECOLOR 14, IDEQuoteColor, 0
     END IF
-    ideshowtextBypassColorRestore = 0
+    ideshowtextBypassColorRestore = _FALSE
 
     char.sep$ = CHR$(34) + " =<>+-/\^:;,*()'"
     initialNum.char$ = "0123456789-.&"
@@ -12870,7 +12869,7 @@ SUB ideshowtext
                     brackets = 0
                     bracket1 = 0
                     bracket2 = 0
-                    IF idecx_comment + idecx_quote = 0 AND brackethighlight = -1 THEN
+                    IF idecx_comment + idecx_quote = 0 AND BracketHighlight THEN
                         inquote = 0
                         comment = 0
                         IF MID$(a$, idecx, 1) = "(" THEN
@@ -12973,13 +12972,13 @@ SUB ideshowtext
             FOR m = 1 TO LEN(a2$) 'print to the screen while checking required color changes
                 IF timeElapsedSince#(startTime#) > 1.0# THEN
                     result = idemessagebox("Syntax Highlighter Disabled", "Syntax Highlighter has been disabled to avoid slowing down the IDE.\nYou can reenable the Highlighter in the 'Options' menu.", "")
-                    DisableSyntaxHighlighter = -1
+                    DisableSyntaxHighlighter = _TRUE
                     WriteConfigSetting generalSettingsSection$, "DisableSyntaxHighlighter", "True"
                     menu$(OptionsMenuID, OptionsMenuDisableSyntax) = "Syntax #Highlighter"
                     GOTO noSyntaxHighlighting
                 END IF
                 IF m > idesx + idewx - 2 THEN EXIT FOR 'stop printing when off screen
-                IF ideselect = 1 AND LEN(ideCurrentSingleLineSelection) > 0 AND multiHighlightLength = 0 AND multihighlight = -1 THEN
+                IF ideselect = 1 AND LEN(ideCurrentSingleLineSelection) > 0 AND multiHighlightLength = 0 AND MultiHighlight THEN
                     IF LCASE$(MID$(a2$, m, LEN(ideCurrentSingleLineSelection))) = LCASE$(ideCurrentSingleLineSelection) THEN
                         'the current selection was found at this spot. Multi-highlight takes place:
                         IF m > 1 THEN
@@ -13081,7 +13080,7 @@ SUB ideshowtext
                 setOldChar:
                 oldChar$ = thisChar$
 
-                IF isKeyword > 0 AND keywordHighlight THEN
+                IF isKeyword > 0 AND KeywordHighlight THEN
                     IF is_Number THEN
                         COLOR 8
                     ELSEIF isCustomKeyword THEN
@@ -13126,7 +13125,7 @@ SUB ideshowtext
 
                 IF l = idecy AND (m = bracket1 OR m = bracket2) THEN
                     COLOR , 5
-                ELSEIF multiHighlightLength > 0 AND multihighlight = -1 THEN
+                ELSEIF multiHighlightLength > 0 AND MultiHighlight THEN
                     multiHighlightLength = multiHighlightLength - 1
                     COLOR , 5
                 ELSE
@@ -13268,11 +13267,11 @@ SUB ideshowtext
     COLOR 0, 3
     a$ = SPACE$(10)
     b$ = ""
-    RSET a$ = LTRIM$(STR$(idecy))
+    RSET a$ = _TOSTR$(idecy)
     IF idecx < 100000 THEN
         b$ = SPACE$(10)
-        c$ = LTRIM$(STR$(idecx))
-        IF cc <> -1 THEN c$ = c$ + "(" + str2$(cc) + ")"
+        c$ = _TOSTR$(idecx)
+        IF cc <> -1 THEN c$ = c$ + "(" + _TOSTR$(cc) + ")"
         LSET b$ = c$
     END IF
     lineNumberStatus$ = a$ + ":" + b$
@@ -13407,12 +13406,12 @@ FUNCTION idesubs$
 
     TotalSUBs = 0
     ModuleSize = 0 'in lines
-    SortedSubsFlag = idesortsubs
-    SubClosed = 0
+    SortedSubsFlag = IDESortSubs
+    SubClosed = _FALSE
 
     FOR y = 1 TO iden
         a$ = idegetline(y)
-        IF SubClosed = 0 THEN ModuleSize = ModuleSize + 1
+        IF NOT SubClosed THEN ModuleSize = ModuleSize + 1
         a$ = LTRIM$(RTRIM$(a$))
         sf = 0
         nca$ = UCASE$(a$)
@@ -13488,8 +13487,8 @@ FUNCTION idesubs$
                 n$ = "*" + n$
                 FoundExternalSUBFUNC = -1
             ELSE
-                IF SubClosed = 0 THEN ModuleSize = 0: GOSUB AddLineCount
-                SubClosed = 0
+                IF NOT SubClosed THEN ModuleSize = 0: GOSUB AddLineCount
+                SubClosed = _FALSE
                 ModuleSize = 0
             END IF
 
@@ -13519,7 +13518,7 @@ FUNCTION idesubs$
         END IF
     NEXT
 
-    IF SubClosed = 0 THEN GOSUB AddLineCount
+    IF NOT SubClosed THEN GOSUB AddLineCount
 
     'fix arrays to remove empty items
     IF TotalSUBs > 0 AND TotalSUBs < UBOUND(SortedSubsList) THEN
@@ -13534,12 +13533,12 @@ FUNCTION idesubs$
 
     'build headers (normal, sorted, normal with line count, sorted with line count)
     IF TotalSUBs > 0 THEN
-        IF LEN(LTRIM$(STR$(maxLineCount))) <= 10 THEN
+        IF LEN(_TOSTR$(maxLineCount)) <= 10 THEN
             maxLineCountSpace = 10
             linesHeader$ = "Line count"
             external$ = "external"
         END IF
-        IF LEN(LTRIM$(STR$(maxLineCount))) <= 5 THEN
+        IF LEN(_TOSTR$(maxLineCount)) <= 5 THEN
             maxLineCountSpace = 5
             linesHeader$ = "Lines"
             external$ = CHR$(196)
@@ -13583,7 +13582,7 @@ FUNCTION idesubs$
         l$ = l$ + sep + CHR$(195) + CHR$(196) + n$ + "  " + CHR$(16) + CHR$(2) + _
              sf$ + CHR$(16) + CHR$(16) + args$
 
-        IF TotalLines(x) = 0 THEN num$ = external$ ELSE num$ = LTRIM$(STR$(TotalLines(x)))
+        IF TotalLines(x) = 0 THEN num$ = external$ ELSE num$ = _TOSTR$(TotalLines(x))
         lSized$ = lSized$ + CHR$(195) + CHR$(196) + n$ + "  " + _
                   CHR$(16) + CHR$(2) + SPACE$(maxLineCountSpace - LEN(num$)) + num$ + "  " _
                   + sf$ + CHR$(16) + CHR$(16) + args$ + sep
@@ -13612,7 +13611,7 @@ FUNCTION idesubs$
                     lSorted$ = lSorted$ + LEFT$(temp$, INSTR(temp$, CHR$(1)) - 1) + _
                                MID$(temp$, INSTR(temp$, CHR$(1)) + 1)
 
-                    num$ = LTRIM$(STR$(TotalLines(RestoreCaseBkp)))
+                    num$ = _TOSTR$(TotalLines(RestoreCaseBkp))
                     IF LEFT$(temp$, 1) = "*" THEN num$ = external$
                     lSortedSized$ = lSortedSized$ + sep + CHR$(195) + CHR$(196)
                     lSortedSized$ = lSortedSized$ + LEFT$(temp$, INSTR(temp$, CHR$(1)) - 1) + _
@@ -13625,9 +13624,9 @@ FUNCTION idesubs$
 
         MID$(lSorted$, _INSTRREV(lSorted$, CHR$(195)), 1) = CHR$(192)
         MID$(lSortedSized$, _INSTRREV(lSortedSized$, CHR$(195)), 1) = CHR$(192)
-        SortedSubsFlag = idesortsubs
+        SortedSubsFlag = IDESortSubs
     ELSE
-        SortedSubsFlag = 0 'Override idesortsubs if the current program doesn't have more than 1 subprocedure
+        SortedSubsFlag = 0 'Override IDESortSubs if the current program doesn't have more than 1 subprocedure
     END IF
 
     '72,19
@@ -13884,8 +13883,8 @@ FUNCTION idesubs$
 
     EXIT FUNCTION
     SaveSortSettings:
-    idesortsubs = SortedSubsFlag
-    IF idesortsubs THEN
+    IDESortSubs = SortedSubsFlag
+    IF IDESortSubs THEN
         WriteConfigSetting displaySettingsSection$, "IDE_SortSUBs", "True"
     ELSE
         WriteConfigSetting displaySettingsSection$, "IDE_SortSUBs", "False"
@@ -13902,7 +13901,7 @@ FUNCTION idesubs$
     ModuleSize = ModuleSize + 1
     TotalLines(LastOpenSUB) = ModuleSize
     IF ModuleSize > maxLineCount THEN maxLineCount = ModuleSize
-    SubClosed = -1
+    SubClosed = _TRUE
     RETURN
 END FUNCTION
 
@@ -14030,15 +14029,15 @@ FUNCTION ideLanguageBox
                 PCOPY 2, 1: _CONTINUE
             END IF
 
-            optChg% = 0 'any options changed
+            optChg% = _FALSE 'reset changed options indicator
 
             'adjust runtime variables
             v% = ABS(o(cpLst).sel)
-            IF idecpindex <> v% THEN idecpindex = v%: optChg% = -1
+            IF idecpindex <> v% THEN idecpindex = v%: optChg% = _TRUE
 
             IF optChg% THEN
                 'save changes
-                WriteConfigSetting displaySettingsSection$, "IDE_CodePage", str2$(idecpindex)
+                WriteConfigSetting displaySettingsSection$, "IDE_CodePage", _TOSTR$(idecpindex)
 
                 'apply new mapping
                 FOR x = 128 TO 255
@@ -14097,11 +14096,11 @@ FUNCTION idewarningbox
             l3$ = CHR$(16) + CHR$(2) 'dark grey
             IF warningIncLines(x) > 0 THEN
                 num$ = SPACE$(LEN(STR$(maxLineNumber)) + 1)
-                RSET num$ = str2$(warningIncLines(x))
+                RSET num$ = _TOSTR$(warningIncLines(x))
                 l3$ = l3$ + warningIncFiles(x) + SPACE$(maxModuleNameLen - LEN(warningIncFiles(x))) + ":" + CHR$(16) + CHR$(16) + num$
             ELSE
                 num$ = SPACE$(LEN(STR$(maxLineNumber)) + 1)
-                RSET num$ = str2$(warningLines(x))
+                RSET num$ = _TOSTR$(warningLines(x))
                 l3$ = l3$ + thisprog$ + SPACE$(maxModuleNameLen - LEN(thisprog$)) + ":" + CHR$(16) + CHR$(16) + num$
             END IF
             treeConnection = LEN(l$) + 1
@@ -14136,7 +14135,7 @@ FUNCTION idewarningbox
     o(i).w = dialogWidth - 4: o(i).h = dialogHeight - 4
     o(i).txt = idenewtxt(l$)
     o(i).sel = 1
-    o(i).nam = idenewtxt("Warnings (" + LTRIM$(STR$(totalWarnings)) + ")")
+    o(i).nam = idenewtxt("Warnings (" + _TOSTR$(totalWarnings) + ")")
 
     i = i + 1
     o(i).typ = 3
@@ -14415,6 +14414,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
             IF o.v1 > LEN(a$) THEN o.v1 = LEN(a$)
             IF o.v1 = o.sx1 THEN o.issel = 0
         END IF
+
         'hot-key focus
         IF LEN(altletter$) THEN
             IF o.nam THEN
@@ -14499,7 +14499,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 IF mx >= x1 AND mx <= x2 AND my >= y1 AND my <= y2 THEN
 
                     IF mx = x2 AND my > y1 + 1 AND my < y2 - 1 THEN
-
                         tsel = ABS(o.sel)
                         tnum = o.num
                         q = idevbar(x2, y1 + 1, o.h, tsel, tnum)
@@ -14513,7 +14512,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                             _DELAY 0.1
                         END IF
                     END IF
-
                     IF mx = x2 AND my = y1 + 1 THEN
                         kk$ = CHR$(0) + CHR$(72)
                         _DELAY 0.1
@@ -14527,7 +14525,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
             END IF
         END IF 'mb
 
-
         IF focusoffset = 0 THEN
             IF mw THEN
                 'move to top or bottom
@@ -14540,7 +14537,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 IF o.sel < 1 THEN o.sel = 1
                 IF o.sel > o.num THEN o.sel = o.num
             END IF
-
             IF kk$ = CHR$(0) + CHR$(72) THEN
                 IF o.sel < 0 THEN
                     o.sel = -o.sel
@@ -14549,7 +14545,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     IF o.sel < 1 THEN o.sel = 1
                 END IF
             END IF
-
             IF kk$ = CHR$(0) + CHR$(80) THEN
                 IF o.sel < 0 THEN
                     o.sel = -o.sel
@@ -14558,7 +14553,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     IF o.sel > o.num THEN o.sel = o.num
                 END IF
             END IF
-
             IF kk$ = CHR$(0) + CHR$(73) THEN
                 IF o.sel < 0 THEN
                     o.sel = -o.sel
@@ -14566,7 +14560,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 o.sel = o.sel - o.h + 1
                 IF o.sel < 1 THEN o.sel = 1
             END IF
-
             IF kk$ = CHR$(0) + CHR$(81) THEN
                 IF o.sel < 0 THEN
                     o.sel = -o.sel
@@ -14574,11 +14567,9 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 o.sel = o.sel + o.h - 1
                 IF o.sel > o.num THEN o.sel = o.num
             END IF
-
             IF kk$ = CHR$(0) + "w" THEN
                 o.sel = 1
             END IF
-
             IF kk$ = CHR$(0) + "u" THEN
                 o.sel = o.num
             END IF
@@ -14631,11 +14622,11 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 END IF
             END IF
         END IF
+
         f = f + 1
     END IF '2
 
     IF t = 3 THEN 'buttons (eg. OK, Cancel)
-
         'count buttons & check for hotkey(s)
         a$ = idetxt(o.txt)
         n = 1
@@ -14670,34 +14661,16 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 c = c + n * 4 'add characters for bracing < > buttons
                 whitespace = w - c
                 spacing = whitespace \ (n + 1)
-                'f2 = o.foc + 1
-                'IF f2 < 1 OR f2 > n THEN
-                'IF o.dft THEN f2 = o.dft
-                'END IF
                 n2 = 1
                 a3$ = ""
-                'LOCATE o.par.y + o.y, o.par.x + o.x
                 x = o.par.x + o.x
-                'COLOR 0, 7
                 FOR i2 = 1 TO LEN(a$)
                     a2$ = MID$(a$, i2, 1)
                     IF a2$ <> CHR$(0) THEN a3$ = a3$ + a2$
                     IF a2$ = CHR$(0) OR i2 = LEN(a$) THEN
-                        'PRINT SPACE$(spacing);
                         x = x + spacing
-                        'IF f2 = n2 THEN COLOR 15, 7 ELSE COLOR 0, 7
-                        'PRINT "< ";
-                        'COLOR 0, 7: idehPRINT a3$
-                        'IF f2 = n2 THEN COLOR 15, 7 ELSE COLOR 0, 7
-                        'IF n2 = o.foc + 1 THEN
-                        'o.cx = x + 2: o.cy = o.par.y + o.y
-                        'END IF
-                        'PRINT " >";
-                        'COLOR 0, 7
                         x2 = idehlen(a3$) + 4
                         IF mx >= x AND mx < x + x2 THEN info = n2: focus = f + n2 - 1
-
-
                         x = x + x2
                         a3$ = ""
                         n2 = n2 + 1
@@ -14718,7 +14691,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
     END IF '3
 
     IF t = 4 THEN 'checkbox
-
         IF mousedown THEN
             y = o.par.y + o.y
             x1 = o.par.x + o.x: x2 = x1 + 2
@@ -14732,44 +14704,15 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 END IF
             END IF
         END IF 'mousedown
+
         IF focusoffset = 0 THEN
-
-            'a$ = idetxt(o.txt)
-            'IF LEN(kk$) = 1 THEN
-            'k = ASC(kk$)
-            'IF k = 8 AND o.v1 > 0 THEN
-            'a1$ = LEFT$(a$, o.v1 - 1)
-            'IF o.v1 <= LEN(a$) THEN a2$ = RIGHT$(a$, LEN(a$) - o.v1) ELSE a2$ = ""
-            'a$ = a1$ + a2$: o.v1 = o.v1 - 1
-            'END IF
-            'IF k >= 32 AND k <= 126 THEN
-            'IF o.v1 > 0 THEN a1$ = LEFT$(a$, o.v1) ELSE a1$ = ""
-            'IF o.v1 <= LEN(a$) THEN a2$ = RIGHT$(a$, LEN(a$) - o.v1) ELSE a2$ = ""
-            'a$ = a1$ + kk$ + a2$: o.v1 = o.v1 + 1
-            'END IF
-            'idetxt(o.txt) = a$
-            'END IF
-            'IF kk$ = CHR$(0) + "S" THEN 'DEL
-            'IF o.v1 > 0 THEN a1$ = LEFT$(a$, o.v1) ELSE a1$ = ""
-            'IF o.v1 < LEN(a$) THEN a2$ = RIGHT$(a$, LEN(a$) - o.v1 - 1) ELSE a2$ = ""
-            'a$ = a1$ + a2$
-            'idetxt(o.txt) = a$
-            'END IF
-            ''cursor control
-            'IF kk$ = CHR$(0) + "K" THEN o.v1 = o.v1 - 1
-            'IF kk$ = CHR$(0) + "M" THEN o.v1 = o.v1 + 1
-            'IF kk$ = CHR$(0) + "G" THEN o.v1 = 0
-            'IF kk$ = CHR$(0) + "O" THEN o.v1 = LEN(a$)
-            'IF o.v1 < 0 THEN o.v1 = 0
-            'IF o.v1 > LEN(a$) THEN o.v1 = LEN(a$)
-
             IF kk$ = CHR$(0) + "H" THEN o.sel = 1
             IF kk$ = CHR$(0) + "P" THEN o.sel = 0
             IF kk$ = " " THEN
                 o.sel = o.sel + 1: IF o.sel > 1 THEN o.sel = 0 'toggle
             END IF
-
         END IF 'in focus
+
         'hot-key focus
         IF LEN(altletter$) THEN
             IF o.nam THEN
@@ -14779,6 +14722,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 END IF
             END IF
         END IF
+
         f = f + 1
     END IF '4
 
@@ -15174,7 +15118,7 @@ FUNCTION ideLayoutBox
     i = i + 1: aisBox = i
     o(i).typ = 1 'text box
     o(i).x = 9: o(i).y = 3
-    o(i).nam = idenewtxt("Indent #Spacing"): a2$ = str2$(IDEAutoIndentSize)
+    o(i).nam = idenewtxt("Indent #Spacing"): a2$ = _TOSTR$(IDEAutoIndentSize)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: aisSymUp = i
     o(i).typ = 5 'symbol button
@@ -15200,17 +15144,17 @@ FUNCTION ideLayoutBox
     o(i).typ = 4 'check box
     o(i).x = 4: o(i).y = 11
     o(i).nam = idenewtxt("#UPPER")
-    o(i).sel = ABS(IDEAutoLayoutKwStyle = 1)
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = _GREATER)
     i = i + 1: kcChk = i
     o(i).typ = 4 'check box
     o(i).x = 16: o(i).y = 11
     o(i).nam = idenewtxt("Ca#MeL")
-    o(i).sel = ABS(IDEAutoLayoutKwStyle = 0)
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = _EQUAL)
     i = i + 1: klChk = i
     o(i).typ = 4 'check box
     o(i).x = 28: o(i).y = 11
     o(i).nam = idenewtxt("#lower")
-    o(i).sel = ABS(IDEAutoLayoutKwStyle = -1)
+    o(i).sel = ABS(IDEAutoLayoutKwStyle = _LESS)
 
     i = i + 1: okBut = i: caBut = i + 1
     o(i).typ = 3 'action buttons
@@ -15309,13 +15253,13 @@ FUNCTION ideLayoutBox
         END IF
         'auto indent size spinners
         IF focus = aisSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(aisBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(aisBox).txt)) + 1)
             IF VAL(a$) > 64 THEN a$ = "64"
             idetxt(o(aisBox).txt) = a$: o(aisBox).v1 = LEN(a$)
             o(aiChk).sel = 1 'implies auto indent on
         END IF
         IF focus = aisSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(aisBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(aisBox).txt)) - 1)
             IF VAL(a$) < 1 THEN a$ = "1"
             idetxt(o(aisBox).txt) = a$: o(aisBox).v1 = LEN(a$)
             o(aiChk).sel = 1 'implies auto indent on
@@ -15359,40 +15303,40 @@ FUNCTION ideLayoutBox
                 PCOPY 2, 1: _CONTINUE
             END IF
 
-            optChg% = 0 'any options changed
+            optChg% = _FALSE 'reset changed options indicator
 
             'adjust runtime variables
             v% = o(aiChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEAutoIndent <> v% THEN IDEAutoIndent = v%: optChg% = -1
+            IF IDEAutoIndent <> v% THEN IDEAutoIndent = v%: optChg% = _TRUE
             v% = VAL(idetxt(o(aisBox).txt))
             IF IDEAutoIndentSize <> v% THEN
                 IDEAutoIndentSize = v%
-                IF IDEAutoIndent <> 0 THEN optChg% = -1
+                IF IDEAutoIndent <> 0 THEN optChg% = _TRUE
             END IF
             v% = o(isChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEIndentSubs <> v% THEN IDEIndentSubs = v%: optChg% = -1
+            IF IDEIndentSubs <> v% THEN IDEIndentSubs = v%: optChg% = _TRUE
 
             v% = o(alChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = -1
+            IF IDEAutoLayout <> v% THEN IDEAutoLayout = v%: optChg% = _TRUE
 
             'only one of these checkboxes can be selected
             IF o(kuChk).sel <> 0 THEN v% = 1
             IF o(kcChk).sel <> 0 THEN v% = 0
             IF o(klChk).sel <> 0 THEN v% = -1
-            IF IDEAutoLayoutKwStyle <> v% THEN IDEAutoLayoutKwStyle = v%: optChg% = -1
+            IF IDEAutoLayoutKwStyle <> v% THEN IDEAutoLayoutKwStyle = v%: optChg% = _TRUE
 
             IF optChg% THEN
                 'update default values for restoring after '$FORMAT:OFF
                 DEFAutoIndent = IDEAutoIndent: DEFAutoLayout = IDEAutoLayout
                 'save changes
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoIndent", BoolToTFString$(IDEAutoIndent)
-                WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", str2$(IDEAutoIndentSize)
+                WriteConfigSetting displaySettingsSection$, "IDE_IndentSize", _TOSTR$(IDEAutoIndentSize)
                 WriteConfigSetting displaySettingsSection$, "IDE_IndentSUBs", BoolToTFString$(IDEIndentSubs)
 
                 WriteConfigSetting displaySettingsSection$, "IDE_AutoFormat", BoolToTFString$(IDEAutoLayout)
 
-                WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", BoolToTFString$(IDEAutoLayoutKwStyle = 1)
-                WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", BoolToTFString$(IDEAutoLayoutKwStyle = -1)
+                WriteConfigSetting displaySettingsSection$, "IDE_KeywordCapital", BoolToTFString$(IDEAutoLayoutKwStyle = _GREATER)
+                WriteConfigSetting displaySettingsSection$, "IDE_KeywordLowercase", BoolToTFString$(IDEAutoLayoutKwStyle = _LESS)
 
                 ideLayoutBox = 1
             END IF
@@ -15425,7 +15369,7 @@ FUNCTION ideLimitsBox
     i = i + 1: mbsBox = i
     o(i).typ = 1 'text box
     o(i).y = 2
-    o(i).nam = idenewtxt("Max. #Undo Limit (10-2000MB)"): a2$ = str2(idebackupsize)
+    o(i).nam = idenewtxt("Max. #Undo Limit (10-2000MB)"): a2$ = _TOSTR$(idebackupsize)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: mbsSymUp = i
     o(i).typ = 5 'symbol button
@@ -15439,7 +15383,7 @@ FUNCTION ideLimitsBox
     i = i + 1: mrfBox = i
     o(i).typ = 1 'text box
     o(i).x = 4: o(i).y = 5
-    o(i).nam = idenewtxt("Max. #Recent Files (5-200)"): a2$ = str2(ideMaxRecent)
+    o(i).nam = idenewtxt("Max. #Recent Files (5-200)"): a2$ = _TOSTR$(ideMaxRecent)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: mrfSymUp = i
     o(i).typ = 5 'symbol button
@@ -15453,7 +15397,7 @@ FUNCTION ideLimitsBox
     i = i + 1: mssBox = i
     o(i).typ = 1 'text box
     o(i).y = 8
-    o(i).nam = idenewtxt("Max. #Search Strings (5-200)"): a2$ = str2(ideMaxSearch)
+    o(i).nam = idenewtxt("Max. #Search Strings (5-200)"): a2$ = _TOSTR$(ideMaxSearch)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: mssSymUp = i
     o(i).typ = 5 'symbol button
@@ -15554,12 +15498,12 @@ FUNCTION ideLimitsBox
         '-------- custom input response --------
         'backupsize spinners
         IF focus = mbsSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mbsBox).txt)) + 5)
+            a$ = _TOSTR$(VAL(idetxt(o(mbsBox).txt)) + 5)
             IF VAL(a$) > 2000 THEN a$ = "2000"
             idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
         IF focus = mbsSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mbsBox).txt)) - 5)
+            a$ = _TOSTR$(VAL(idetxt(o(mbsBox).txt)) - 5)
             IF VAL(a$) < 10 THEN a$ = "10"
             idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
@@ -15570,12 +15514,12 @@ FUNCTION ideLimitsBox
 
         'recent files spinners
         IF focus = mrfSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mrfBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(mrfBox).txt)) + 1)
             IF VAL(a$) > 200 THEN a$ = "200"
             idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
         END IF
         IF focus = mrfSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mrfBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(mrfBox).txt)) - 1)
             IF VAL(a$) < 5 THEN a$ = "5"
             idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
         END IF
@@ -15586,12 +15530,12 @@ FUNCTION ideLimitsBox
 
         'search strings spinners
         IF focus = mssSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mssBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(mssBox).txt)) + 1)
             IF VAL(a$) > 200 THEN a$ = "200"
             idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
         END IF
         IF focus = mssSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mssBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(mssBox).txt)) - 1)
             IF VAL(a$) < 5 THEN a$ = "5"
             idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
         END IF
@@ -15609,7 +15553,7 @@ FUNCTION ideLimitsBox
                 PCOPY 2, 1: _CONTINUE
             END IF
 
-            optChg% = 0 'any options changed
+            optChg% = _FALSE 'reset changed options indicator
 
             'adjust runtime variables
             v% = VAL(idetxt(o(mbsBox).txt))
@@ -15618,22 +15562,22 @@ FUNCTION ideLimitsBox
                     _WRITEFILE UndoFile$, ""
                     ideundobase = 0: ideundopos = 0
                 END IF
-                idebackupsize = v%: optChg% = -1
+                idebackupsize = v%: optChg% = _TRUE
             END IF
 
             v% = VAL(idetxt(o(mrfBox).txt))
-            IF ideMaxRecent <> v% THEN ideMaxRecent = v%: optChg% = -1
+            IF ideMaxRecent <> v% THEN ideMaxRecent = v%: optChg% = _TRUE
 
             v% = VAL(idetxt(o(mssBox).txt))
-            IF ideMaxSearch <> v% THEN ideMaxSearch = v%: optChg% = -1
+            IF ideMaxSearch <> v% THEN ideMaxSearch = v%: optChg% = _TRUE
 
             IF optChg% THEN
                 'save changes
-                WriteConfigSetting generalSettingsSection$, "BackupSize", str2$(idebackupsize)
+                WriteConfigSetting generalSettingsSection$, "BackupSize", _TOSTR$(idebackupsize)
 
-                WriteConfigSetting generalSettingsSection$, "MaxRecentFiles", str2$(ideMaxRecent)
+                WriteConfigSetting generalSettingsSection$, "MaxRecentFiles", _TOSTR$(ideMaxRecent)
 
-                WriteConfigSetting generalSettingsSection$, "MaxSearchStrings", str2$(ideMaxSearch)
+                WriteConfigSetting generalSettingsSection$, "MaxSearchStrings", _TOSTR$(ideMaxSearch)
 
                 ideLimitsBox = 1
             END IF
@@ -15647,7 +15591,7 @@ FUNCTION ideLimitsBox
 END FUNCTION
 
 SUB idegotobox
-    IF idegotobox_LastLineNum > 0 THEN a2$ = str2$(idegotobox_LastLineNum) ELSE a2$ = ""
+    IF idegotobox_LastLineNum > 0 THEN a2$ = _TOSTR$(idegotobox_LastLineNum) ELSE a2$ = ""
     v$ = ideinputbox$("Go To Line", "#Line", a2$, "0123456789", 30, 8, 0)
     IF v$ = "" THEN EXIT SUB
 
@@ -15662,17 +15606,17 @@ SUB idegotobox
 END SUB
 
 SUB ideSetTCPPortBox
-    a2$ = str2$(idebaseTcpPort)
+    a2$ = _TOSTR$(idebaseTcpPort)
     v$ = ideinputbox$("Base TCP/IP Port Number", "#Port number for $DEBUG mode", a2$, "0123456789", 45, 5, 0)
     IF v$ = "" THEN EXIT SUB
 
     idebaseTcpPort = VAL(v$)
     IF idebaseTcpPort = 0 THEN idebaseTcpPort = 9000
-    WriteConfigSetting debugSettingsSection$, "BaseTCPPort", str2$(idebaseTcpPort)
+    WriteConfigSetting debugSettingsSection$, "BaseTCPPort", _TOSTR$(idebaseTcpPort)
 END SUB
 
 FUNCTION idegetlinenumberbox (title$, initialValue&)
-    a2$ = str2$(initialValue&)
+    a2$ = _TOSTR$(initialValue&)
     IF a2$ = "0" THEN a2$ = ""
     v$ = ideinputbox$(title$, "#Line", a2$, "0123456789", 30, 8, 0)
     IF v$ = "" THEN EXIT FUNCTION
@@ -15715,7 +15659,7 @@ FUNCTION ideCompilerSettingsBox
     o(i).typ = 4 'check box
     o(i).y = 4
     o(i).nam = idenewtxt("#Add C++ Debug Information")
-    o(i).sel = ABS(Include_GDB_Debugging_Info)
+    o(i).sel = ABS(IncludeDebugInfo)
 
     i = i + 1: ecfBox = i
     o(i).typ = 1 'text box
@@ -15731,7 +15675,7 @@ FUNCTION ideCompilerSettingsBox
     i = i + 1: mppBox = i
     o(i).typ = 1 'text box
     o(i).y = 12
-    o(i).nam = idenewtxt("#Max C++ Compiler Processes"): a2$ = str2$(MaxParallelProcesses)
+    o(i).nam = idenewtxt("#Max C++ Compiler Processes"): a2$ = _TOSTR$(MaxParallelProcesses)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: mppSymUp = i
     o(i).typ = 5 'symbol button
@@ -15746,7 +15690,7 @@ FUNCTION ideCompilerSettingsBox
         i = i + 1: uscChk = i
         o(i).typ = 4 'check box
         o(i).y = 14
-        o(i).nam = idenewtxt("#Use system compiler")
+        o(i).nam = idenewtxt("#Use system C++ compiler")
         o(i).sel = ABS(UseSystemMinGW)
     END IF
 
@@ -15840,12 +15784,12 @@ FUNCTION ideCompilerSettingsBox
         '-------- custom input response --------
         'max. processes spinners
         IF focus = mppSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mppBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(mppBox).txt)) + 1)
             IF VAL(a$) > 128 THEN a$ = "128"
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         IF focus = mppSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(mppBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(mppBox).txt)) - 1)
             IF VAL(a$) < 1 THEN a$ = "1"
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
@@ -15863,23 +15807,23 @@ FUNCTION ideCompilerSettingsBox
                 PCOPY 2, 1: _CONTINUE
             END IF
 
-            optChg% = 0 'any options changed
+            optChg% = _FALSE 'reset changed options indicator
 
             'adjust runtime variables
             v% = o(ocpChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF OptimizeCppProgram <> v% THEN OptimizeCppProgram = v%: optChg% = -1
+            IF OptimizeCppProgram <> v% THEN OptimizeCppProgram = v%: optChg% = _TRUE
             v% = o(sdsChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF StripDebugSymbols <> v% THEN StripDebugSymbols = v%: optChg% = -1
+            IF StripDebugSymbols <> v% THEN StripDebugSymbols = v%: optChg% = _TRUE
             v% = o(idiChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF Include_GDB_Debugging_Info <> v% THEN Include_GDB_Debugging_Info = v%: optChg% = -1
+            IF IncludeDebugInfo <> v% THEN IncludeDebugInfo = v%: optChg% = _TRUE
 
             v$ = idetxt(o(ecfBox).txt)
-            IF ExtraCppFlags$ <> v$ THEN ExtraCppFlags$ = v$: optChg% = -1
+            IF ExtraCppFlags$ <> v$ THEN ExtraCppFlags$ = v$: optChg% = _TRUE
             v$ = idetxt(o(elfBox).txt)
-            IF ExtraLinkerFlags$ <> v$ THEN ExtraLinkerFlags$ = v$: optChg% = -1
+            IF ExtraLinkerFlags$ <> v$ THEN ExtraLinkerFlags$ = v$: optChg% = _TRUE
 
             v% = VAL(idetxt(o(mppBox).txt))
-            IF MaxParallelProcesses <> v% THEN MaxParallelProcesses = v%: optChg% = -1
+            IF MaxParallelProcesses <> v% THEN MaxParallelProcesses = v%: optChg% = _TRUE
 
             IF os$ = "WIN" THEN
                 v% = o(uscChk).sel: IF v% <> 0 THEN v% = _TRUE
@@ -15896,12 +15840,12 @@ FUNCTION ideCompilerSettingsBox
                 'save changes
                 WriteConfigSetting compilerSettingsSection$, "OptimizeCppProgram", BoolToTFString$(OptimizeCppProgram)
                 WriteConfigSetting compilerSettingsSection$, "StripDebugSymbols", BoolToTFString$(StripDebugSymbols)
-                WriteConfigSetting generalSettingsSection$, "DebugInfo", BoolToTFString$(Include_GDB_Debugging_Info)
+                WriteConfigSetting compilerSettingsSection$, "IncludeDebugInfo", BoolToTFString$(IncludeDebugInfo)
 
                 WriteConfigSetting compilerSettingsSection$, "ExtraCppFlags", ExtraCppFlags$
                 WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
 
-                WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", str2$(MaxParallelProcesses)
+                WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", _TOSTR$(MaxParallelProcesses)
 
                 IF os$ = "WIN" THEN
                     WriteConfigSetting compilerSettingsSection$, "UseSystemMinGW", BoolToTFString$(UseSystemMinGW)
@@ -16245,7 +16189,7 @@ FUNCTION ideDisplayBox
     i = i + 1: wwBox = i
     o(i).typ = 1 'text box
     o(i).x = 3: o(i).y = 2: o(i).w = 10
-    o(i).nam = idenewtxt("Window #width"): a2$ = str2$(idewx)
+    o(i).nam = idenewtxt("Window #width"): a2$ = _TOSTR$(idewx)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: wwSymUp = i
     o(i).typ = 5 'symbol button
@@ -16258,7 +16202,7 @@ FUNCTION ideDisplayBox
     i = i + 1: whBox = i
     o(i).typ = 1 'text box
     o(i).x = 2: o(i).y = 5: o(i).w = 10
-    o(i).nam = idenewtxt("Window #height"): a2$ = str2$(idewy + idesubwindow)
+    o(i).nam = idenewtxt("Window #height"): a2$ = _TOSTR$(idewy + idesubwindow)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: whSymUp = i
     o(i).typ = 5 'symbol button
@@ -16277,12 +16221,12 @@ FUNCTION ideDisplayBox
     ELSE
         o(i).nam = idenewtxt("#Remember size")
     END IF
-    o(i).sel = ABS(IDE_AutoPosition)
+    o(i).sel = ABS(IDEAutoPosition)
 
     i = i + 1: csBox = i
     o(i).typ = 1 'text box
     o(i).x = 33: o(i).y = 2
-    o(i).nam = idenewtxt("Cursor #start"): a2$ = str2$(IDENormalCursorStart)
+    o(i).nam = idenewtxt("Cursor #start"): a2$ = _TOSTR$(IDENormalCursorStart)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: csSymUp = i
     o(i).typ = 5 'symbol button
@@ -16295,7 +16239,7 @@ FUNCTION ideDisplayBox
     i = i + 1: ceBox = i
     o(i).typ = 1 'text box
     o(i).x = 35: o(i).y = 5
-    o(i).nam = idenewtxt("Cursor #end"): a2$ = str2$(IDENormalCursorEnd)
+    o(i).nam = idenewtxt("Cursor #end"): a2$ = _TOSTR$(IDENormalCursorEnd)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: ceSymUp = i
     o(i).typ = 5 'symbol button
@@ -16310,17 +16254,17 @@ FUNCTION ideDisplayBox
     o(i).typ = 4 'check box
     o(i).y = 9
     o(i).nam = idenewtxt("#Use _FONT 8")
-    o(i).sel = ABS(IDE_UseFont8)
+    o(i).sel = ABS(IDEUseFont8)
     i = i + 1: cfChk = i
     o(i).typ = 4 'check box
     o(i).y = 10
     o(i).nam = idenewtxt("Use monospace #TTF, TTC, OTF, FNT, FON, PCF, BDF font:")
-    o(i).sel = ABS(idecustomfont)
+    o(i).sel = ABS(IDECustomFont)
 
     i = i + 1: cfBox = i
     o(i).typ = 1 'text box
     o(i).x = 7: o(i).y = 12
-    o(i).nam = idenewtxt("#Font file"): a2$ = idecustomfontfile$
+    o(i).nam = idenewtxt("#Font file"): a2$ = IDECustomFontFile$
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 3
     i = i + 1: cfSymL = i
     o(i).typ = 5 'symbol button
@@ -16329,7 +16273,7 @@ FUNCTION ideDisplayBox
     i = i + 1: cfsBox = i
     o(i).typ = 1 'text box
     o(i).x = 7: o(i).y = 15
-    o(i).nam = idenewtxt("Font size in #pixels"): a2$ = str2$(idecustomfontheight)
+    o(i).nam = idenewtxt("Font size in #pixels"): a2$ = _TOSTR$(IDECustomFontHeight)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: cfsSymUp = i
     o(i).typ = 5 'symbol button
@@ -16433,12 +16377,12 @@ FUNCTION ideDisplayBox
         '-------- custom input response --------
         'width spinners
         IF focus = wwSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(wwBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(wwBox).txt)) + 1)
             IF VAL(a$) > 999 THEN a$ = "999"
             idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
         IF focus = wwSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(wwBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(wwBox).txt)) - 1)
             IF VAL(a$) < 80 THEN a$ = "80"
             idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
@@ -16448,12 +16392,12 @@ FUNCTION ideDisplayBox
         IF o(wwBox).inv THEN invdata = 1 'block confirmation, as long as invalid
         'height spinners
         IF focus = whSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(whBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(whBox).txt)) + 1)
             IF VAL(a$) > 999 THEN a$ = "999"
             idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
         IF focus = whSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(whBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(whBox).txt)) - 1)
             IF VAL(a$) < 25 THEN a$ = "25"
             idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
@@ -16464,12 +16408,12 @@ FUNCTION ideDisplayBox
 
         'cursor start spinners
         IF focus = csSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(csBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(csBox).txt)) + 1)
             IF VAL(a$) > 31 THEN a$ = "31"
             idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
         END IF
         IF focus = csSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(csBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(csBox).txt)) - 1)
             IF VAL(a$) < 0 THEN a$ = "0"
             idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
         END IF
@@ -16483,12 +16427,12 @@ FUNCTION ideDisplayBox
         END IF
         'cursor end spinners
         IF focus = ceSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(ceBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(ceBox).txt)) + 1)
             IF VAL(a$) > 31 THEN a$ = "31"
             idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
         END IF
         IF focus = ceSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(ceBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(ceBox).txt)) - 1)
             IF VAL(a$) < 0 THEN a$ = "0"
             idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
         END IF
@@ -16530,14 +16474,14 @@ FUNCTION ideDisplayBox
         END IF
         'custom font size spinners
         IF focus = cfsSymUp AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(cfsBox).txt)) + 1)
+            a$ = _TOSTR$(VAL(idetxt(o(cfsBox).txt)) + 1)
             IF VAL(a$) > 99 THEN a$ = "99"
             idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
         END IF
         IF focus = cfsSymDn AND info <> 0 THEN
-            a$ = str2$(VAL(idetxt(o(cfsBox).txt)) - 1)
+            a$ = _TOSTR$(VAL(idetxt(o(cfsBox).txt)) - 1)
             IF VAL(a$) < 8 THEN a$ = "8"
             idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
             o(f8Chk).sel = 0 'implies font 8 off
@@ -16563,55 +16507,55 @@ FUNCTION ideDisplayBox
                 PCOPY 2, 1: _CONTINUE
             END IF
 
-            optChg% = 0 'any options changed
-            fonChg% = 0 'custom font changed
+            optChg% = _FALSE 'reset changed options indicator
+            fonChg% = _FALSE 'reset changed custom font indicator
 
             'adjust runtime variables
             v% = VAL(idetxt(o(wwBox).txt))
-            IF idewx <> v% THEN idewx = v%: optChg% = -1
+            IF idewx <> v% THEN idewx = v%: optChg% = _TRUE
             v% = VAL(idetxt(o(whBox).txt))
-            IF idewy <> v% - idesubwindow THEN idewy = v% - idesubwindow: optChg% = -1
+            IF idewy <> v% - idesubwindow THEN idewy = v% - idesubwindow: optChg% = _TRUE
 
             v% = o(rpChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDE_AutoPosition <> v% THEN IDE_AutoPosition = v%: optChg% = -1
+            IF IDEAutoPosition <> v% THEN IDEAutoPosition = v%: optChg% = _TRUE
 
             v% = VAL(idetxt(o(csBox).txt))
-            IF IDENormalCursorStart <> v% THEN IDENormalCursorStart = v%: optChg% = -1
+            IF IDENormalCursorStart <> v% THEN IDENormalCursorStart = v%: optChg% = _TRUE
             v% = VAL(idetxt(o(ceBox).txt))
-            IF IDENormalCursorEnd <> v% THEN IDENormalCursorEnd = v%: optChg% = -1
+            IF IDENormalCursorEnd <> v% THEN IDENormalCursorEnd = v%: optChg% = _TRUE
 
             v% = o(f8Chk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF IDE_UseFont8 <> v% THEN IDE_UseFont8 = v%: optChg% = -1
+            IF IDEUseFont8 <> v% THEN IDEUseFont8 = v%: optChg% = _TRUE
             v% = o(cfChk).sel: IF v% <> 0 THEN v% = _TRUE
-            IF idecustomfont <> v% THEN idecustomfont = v%: fonChg% = -1: optChg% = -1
+            IF IDECustomFont <> v% THEN IDECustomFont = v%: fonChg% = _TRUE: optChg% = _TRUE
 
             v$ = idetxt(o(cfBox).txt)
-            IF idecustomfontfile$ <> v$ THEN
-                idecustomfontfile$ = v$
-                IF idecustomfont <> 0 THEN fonChg% = -1: optChg% = -1
+            IF IDECustomFontFile$ <> v$ THEN
+                IDECustomFontFile$ = v$
+                IF IDECustomFont THEN fonChg% = _TRUE: optChg% = _TRUE
             END IF
             v% = VAL(idetxt(o(cfsBox).txt))
-            IF idecustomfontheight <> v% THEN
-                idecustomfontheight = v%
-                IF idecustomfont <> 0 THEN fonChg% = -1: optChg% = -1
+            IF IDECustomFontHeight <> v% THEN
+                IDECustomFontHeight = v%
+                IF IDECustomFont THEN fonChg% = _TRUE: optChg% = _TRUE
             END IF
 
             IF fonChg% THEN
                 IF o(cfChk).sel = 0 THEN 'custom font now off?
-                    IF IDE_UseFont8 THEN _FONT 8 ELSE _FONT 16
-                    IF idecustomfonthandle > 0 THEN
-                        _FREEFONT idecustomfonthandle
-                        idecustomfonthandle = 0
+                    IF IDEUseFont8 THEN _FONT 8 ELSE _FONT 16
+                    IF IDECustomFontHandle > 0 THEN
+                        _FREEFONT IDECustomFontHandle
+                        IDECustomFontHandle = 0
                     END IF
                 ELSE 'custom font now on, or changed
-                    oldhandle = idecustomfonthandle
-                    idecustomfonthandle = _LOADFONT(idecustomfontfile$, idecustomfontheight, "MONOSPACE")
-                    IF idecustomfonthandle < 1 THEN
+                    oldhandle = IDECustomFontHandle
+                    IDECustomFontHandle = _LOADFONT(IDECustomFontFile$, IDECustomFontHeight, "MONOSPACE")
+                    IF IDECustomFontHandle < 1 THEN
                         retval = idemessagebox("Custom font not found!", "Your desired font was not found at the specified\nlocation, is not usable as monospace or is of\nunsupported format. Please check your inputs.", "#OK")
-                        idecustomfonthandle = oldhandle 'old handle remains active
+                        IDECustomFontHandle = oldhandle 'old handle remains active
                         PCOPY 2, 1: _CONTINUE
                     ELSE
-                        _FONT idecustomfonthandle
+                        _FONT IDECustomFontHandle
                         IF oldhandle > 0 THEN _FREEFONT oldhandle
                     END IF
                 END IF
@@ -16619,19 +16563,19 @@ FUNCTION ideDisplayBox
 
             IF optChg% THEN
                 'save changes
-                WriteConfigSetting windowSettingsSection$, "IDE_Width", str2$(idewx)
-                WriteConfigSetting windowSettingsSection$, "IDE_Height", str2$(idewy)
+                WriteConfigSetting windowSettingsSection$, "IDE_Width", _TOSTR$(idewx)
+                WriteConfigSetting windowSettingsSection$, "IDE_Height", _TOSTR$(idewy)
 
-                WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", BoolToTFString$(IDE_AutoPosition)
+                WriteConfigSetting displaySettingsSection$, "IDE_AutoPosition", BoolToTFString$(IDEAutoPosition)
 
-                WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorStart", str2$(IDENormalCursorStart)
-                WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorEnd", str2$(IDENormalCursorEnd)
+                WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorStart", _TOSTR$(IDENormalCursorStart)
+                WriteConfigSetting displaySettingsSection$, "IDE_NormalCursorEnd", _TOSTR$(IDENormalCursorEnd)
 
-                WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", BoolToTFString$(IDE_UseFont8)
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(idecustomfont)
+                WriteConfigSetting displaySettingsSection$, "IDE_UseFont8", BoolToTFString$(IDEUseFont8)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont", BoolToTFString$(IDECustomFont)
 
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", idecustomfontfile$
-                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", str2$(idecustomfontheight)
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFont$", IDECustomFontFile$
+                WriteConfigSetting displaySettingsSection$, "IDE_CustomFontSize", _TOSTR$(IDECustomFontHeight)
 
                 ideDisplayBox = 1
             END IF
@@ -16702,7 +16646,7 @@ FUNCTION idechoosecolorsbox
     PrevFocus = 1
     o(i).nam = idenewtxt("#Item:")
 
-    a2$ = str2$(_RED32(IDETextColor))
+    a2$ = _TOSTR$(_RED32(IDETextColor))
     i = i + 1
     o(i).typ = 1
     o(i).x = 66
@@ -16712,7 +16656,7 @@ FUNCTION idechoosecolorsbox
     o(i).issel = -1
     o(i).sx1 = 0
 
-    a2$ = str2$(_GREEN32(IDETextColor))
+    a2$ = _TOSTR$(_GREEN32(IDETextColor))
     i = i + 1
     o(i).typ = 1
     o(i).x = 66
@@ -16722,7 +16666,7 @@ FUNCTION idechoosecolorsbox
     o(i).issel = -1
     o(i).sx1 = 0
 
-    a2$ = str2$(_BLUE32(IDETextColor))
+    a2$ = _TOSTR$(_BLUE32(IDETextColor))
     i = i + 1
     o(i).typ = 1
     o(i).x = 66
@@ -16736,19 +16680,19 @@ FUNCTION idechoosecolorsbox
     o(i).typ = 4 'check box
     o(i).y = 16
     o(i).nam = idenewtxt("#Highlight brackets")
-    IF brackethighlight THEN o(i).sel = 1
+    IF BracketHighlight THEN o(i).sel = 1
 
     i = i + 1
     o(i).typ = 4 'check box
     o(i).y = 17
     o(i).nam = idenewtxt("#Multi-highlight (selection)")
-    IF multihighlight THEN o(i).sel = 1
+    IF MultiHighlight THEN o(i).sel = 1
 
     i = i + 1
     o(i).typ = 4 'check box
     o(i).y = 18
     o(i).nam = idenewtxt("Highlight #keywords and numbers")
-    IF keywordHighlight THEN o(i).sel = 1
+    IF KeywordHighlight THEN o(i).sel = 1
 
     i = i + 1
     o(i).typ = 3
@@ -16999,7 +16943,7 @@ FUNCTION idechoosecolorsbox
                     i = 0
                     DO
                         i = i + 1
-                        result = ReadConfigSetting(colorSchemesSection$, "Scheme" + str2$(i) + "$", value$)
+                        result = ReadConfigSetting(colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", value$)
                         IF value$ = "" OR value$ = "0" THEN EXIT DO
                     LOOP
 
@@ -17007,17 +16951,17 @@ FUNCTION idechoosecolorsbox
                     SchemeString$ = SchemeString$ + "|"
                     FOR j = 1 TO 10
                         CurrentColor~& = GetCurrentColor(j)
-                        r$ = str2$(_RED32(CurrentColor~&)): r$ = STRING$(3 - LEN(r$), "0") + r$
-                        g$ = str2$(_GREEN32(CurrentColor~&)): g$ = STRING$(3 - LEN(g$), "0") + g$
-                        b$ = str2$(_BLUE32(CurrentColor~&)): b$ = STRING$(3 - LEN(b$), "0") + b$
+                        r$ = _TOSTR$(_RED32(CurrentColor~&)): r$ = STRING$(3 - LEN(r$), "0") + r$
+                        g$ = _TOSTR$(_GREEN32(CurrentColor~&)): g$ = STRING$(3 - LEN(g$), "0") + g$
+                        b$ = _TOSTR$(_BLUE32(CurrentColor~&)): b$ = STRING$(3 - LEN(b$), "0") + b$
                         SchemeString$ = SchemeString$ + r$ + g$ + b$
                     NEXT j
 
                     'Save user scheme
-                    WriteConfigSetting colorSchemesSection$, "Scheme" + str2$(i) + "$", SchemeString$
+                    WriteConfigSetting colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", SchemeString$
                     LoadColorSchemes
                     SchemeID = PresetColorSchemes + i
-                    ChangedScheme = -1
+                    ChangedScheme = _TRUE
                     GOTO ApplyScheme
                 ELSE
                     FoundPipe = INSTR(ColorSchemes$(SchemeID), "|")
@@ -17034,17 +16978,17 @@ FUNCTION idechoosecolorsbox
                     'Build scheme string
                     FOR j = 1 TO 10
                         CurrentColor~& = GetCurrentColor(j)
-                        r$ = str2$(_RED32(CurrentColor~&)): r$ = STRING$(3 - LEN(r$), "0") + r$
-                        g$ = str2$(_GREEN32(CurrentColor~&)): g$ = STRING$(3 - LEN(g$), "0") + g$
-                        b$ = str2$(_BLUE32(CurrentColor~&)): b$ = STRING$(3 - LEN(b$), "0") + b$
+                        r$ = _TOSTR$(_RED32(CurrentColor~&)): r$ = STRING$(3 - LEN(r$), "0") + r$
+                        g$ = _TOSTR$(_GREEN32(CurrentColor~&)): g$ = STRING$(3 - LEN(g$), "0") + g$
+                        b$ = _TOSTR$(_BLUE32(CurrentColor~&)): b$ = STRING$(3 - LEN(b$), "0") + b$
                         SchemeString$ = SchemeString$ + r$ + g$ + b$
                     NEXT j
 
                     'Save user scheme
-                    WriteConfigSetting colorSchemesSection$, "Scheme" + str2$(i) + "$", SchemeString$
+                    WriteConfigSetting colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", SchemeString$
                     LoadColorSchemes
                     SchemeID = PresetColorSchemes + i
-                    ChangedScheme = -1
+                    ChangedScheme = _TRUE
                     GOTO ApplyScheme
                 END IF
                 o(9).v1 = LEN(idetxt(o(9).txt))
@@ -17057,10 +17001,10 @@ FUNCTION idechoosecolorsbox
                     K$ = ""
                     IF what$ = "Y" THEN
                         i = SchemeID - PresetColorSchemes
-                        WriteConfigSetting colorSchemesSection$, "Scheme" + str2$(i) + "$", "0"
+                        WriteConfigSetting colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", "0"
                         LoadColorSchemes
                         SchemeID = SchemeID - 1
-                        ChangedScheme = -1
+                        ChangedScheme = _TRUE
                         SchemeArrow = -1
                         GOTO ValidateScheme
                     END IF
@@ -17069,25 +17013,25 @@ FUNCTION idechoosecolorsbox
         END IF
 
         'Scheme selection arrows:
-        ChangedScheme = 0
+        ChangedScheme = _FALSE
         SchemeArrow = 0
         IF (mCLICK AND mY = p.y + 2 AND mX >= p.x + 2 AND mX <= p.x + 4) OR _
            (K$ = CHR$(0) + CHR$(75) AND (focus = 1)) THEN
             SchemeArrow = -1
             IF SchemeID = 0 THEN
-                ChangedScheme = -1
+                ChangedScheme = _TRUE
                 GOTO LoadDefaultScheme
             ELSE
-                IF SchemeID > 1 THEN SchemeID = SchemeID - 1: ChangedScheme = -1
+                IF SchemeID > 1 THEN SchemeID = SchemeID - 1: ChangedScheme = _TRUE
             END IF
         ELSEIF (mCLICK AND mY = p.y + 2 AND mX >= p.x + 5 AND mX <= p.x + 7) OR _
                (K$ = CHR$(0) + CHR$(77) AND (focus = 1)) THEN
             SchemeArrow = 1
             IF SchemeID = 0 THEN
-                ChangedScheme = -1
+                ChangedScheme = _TRUE
                 GOTO LoadDefaultScheme
             ELSE
-                IF SchemeID < TotalColorSchemes THEN SchemeID = SchemeID + 1: ChangedScheme = -1
+                IF SchemeID < TotalColorSchemes THEN SchemeID = SchemeID + 1: ChangedScheme = _TRUE
             END IF
         END IF
 
@@ -17144,10 +17088,10 @@ FUNCTION idechoosecolorsbox
 
         IF mB AND mY = p.y + 5 AND mX >= p.x + 39 AND mX <= p.x + 39 + 26 THEN
             newValue = (mX - p.x - 39) * (255 / 26)
-            idetxt(o(2).txt) = str2$(newValue)
+            idetxt(o(2).txt) = _TOSTR$(newValue)
             IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
-                idetxt(o(3).txt) = str2$(newValue)
-                idetxt(o(4).txt) = str2$(newValue)
+                idetxt(o(3).txt) = _TOSTR$(newValue)
+                idetxt(o(4).txt) = _TOSTR$(newValue)
             END IF
             focus = 2
             o(focus).v1 = LEN(idetxt(o(focus).txt))
@@ -17158,10 +17102,10 @@ FUNCTION idechoosecolorsbox
 
         IF mB AND mY = p.y + 8 AND mX >= p.x + 39 AND mX <= p.x + 39 + 26 THEN
             newValue = (mX - p.x - 39) * (255 / 26)
-            idetxt(o(3).txt) = str2$(newValue)
+            idetxt(o(3).txt) = _TOSTR$(newValue)
             IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
-                idetxt(o(2).txt) = str2$(newValue)
-                idetxt(o(4).txt) = str2$(newValue)
+                idetxt(o(2).txt) = _TOSTR$(newValue)
+                idetxt(o(4).txt) = _TOSTR$(newValue)
             END IF
             focus = 3
             o(focus).v1 = LEN(idetxt(o(focus).txt))
@@ -17172,10 +17116,10 @@ FUNCTION idechoosecolorsbox
 
         IF mB AND mY = p.y + 11 AND mX >= p.x + 39 AND mX <= p.x + 39 + 26 THEN
             newValue = (mX - p.x - 39) * (255 / 26)
-            idetxt(o(4).txt) = str2$(newValue)
+            idetxt(o(4).txt) = _TOSTR$(newValue)
             IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
-                idetxt(o(2).txt) = str2$(newValue)
-                idetxt(o(3).txt) = str2$(newValue)
+                idetxt(o(2).txt) = _TOSTR$(newValue)
+                idetxt(o(3).txt) = _TOSTR$(newValue)
             END IF
             focus = 4
             o(focus).v1 = LEN(idetxt(o(focus).txt))
@@ -17186,14 +17130,14 @@ FUNCTION idechoosecolorsbox
 
         ChangedWithKeys = 0
         IF K$ = CHR$(0) + CHR$(72) AND (focus = 2 OR focus = 3 OR focus = 4) THEN 'Up
-            idetxt(o(focus).txt) = str2$(VAL(idetxt(o(focus).txt)) + 1)
+            idetxt(o(focus).txt) = _TOSTR$(VAL(idetxt(o(focus).txt)) + 1)
             o(focus).issel = -1: o(focus).sx1 = 0: o(focus).v1 = LEN(idetxt(o(focus).txt))
             ChangedWithKeys = -1
             GOSUB NewUserScheme
         END IF
 
         IF K$ = CHR$(0) + CHR$(80) AND (focus = 2 OR focus = 3 OR focus = 4) THEN 'Down
-            idetxt(o(focus).txt) = str2$(VAL(idetxt(o(focus).txt)) - 1)
+            idetxt(o(focus).txt) = _TOSTR$(VAL(idetxt(o(focus).txt)) - 1)
             o(focus).issel = -1: o(focus).sx1 = 0: o(focus).v1 = LEN(idetxt(o(focus).txt))
             ChangedWithKeys = -1
             GOSUB NewUserScheme
@@ -17219,9 +17163,9 @@ FUNCTION idechoosecolorsbox
 
             ChangeTextBoxes:
             CurrentColor~& = GetCurrentColor(SelectedITEM)
-            idetxt(o(2).txt) = str2$(_RED32(CurrentColor~&))
-            idetxt(o(3).txt) = str2$(_GREEN32(CurrentColor~&))
-            idetxt(o(4).txt) = str2$(_BLUE32(CurrentColor~&))
+            idetxt(o(2).txt) = _TOSTR$(_RED32(CurrentColor~&))
+            idetxt(o(3).txt) = _TOSTR$(_GREEN32(CurrentColor~&))
+            idetxt(o(4).txt) = _TOSTR$(_BLUE32(CurrentColor~&))
             IF focus >= 2 AND focus <= 4 AND ChangedScheme THEN
                 prevTB.value$ = idetxt(o(focus).txt)
             END IF
@@ -17313,7 +17257,7 @@ FUNCTION idechoosecolorsbox
             'save changes
             GOSUB enableHighlighter
 
-            WriteConfigSetting colorSettingsSection$, "SchemeID", str2$(SchemeID)
+            WriteConfigSetting colorSettingsSection$, "SchemeID", _TOSTR$(SchemeID)
             FOR i = 1 TO 10
                 CurrentColor~& = GetCurrentColor(i)
                 SELECT CASE i
@@ -17335,9 +17279,9 @@ FUNCTION idechoosecolorsbox
 
             v% = o(5).sel
             IF v% <> 0 THEN v% = -1
-            brackethighlight = v%
+            BracketHighlight = v%
 
-            IF brackethighlight THEN
+            IF BracketHighlight THEN
                 WriteConfigSetting generalSettingsSection$, "BracketHighlight", "True"
             ELSE
                 WriteConfigSetting generalSettingsSection$, "BracketHighlight", "False"
@@ -17345,9 +17289,9 @@ FUNCTION idechoosecolorsbox
 
             v% = o(6).sel
             IF v% <> 0 THEN v% = -1
-            multihighlight = v%
+            MultiHighlight = v%
 
-            IF multihighlight THEN
+            IF MultiHighlight THEN
                 WriteConfigSetting generalSettingsSection$, "MultiHighlight", "True"
             ELSE
                 WriteConfigSetting generalSettingsSection$, "MultiHighlight", "False"
@@ -17355,9 +17299,9 @@ FUNCTION idechoosecolorsbox
 
             v% = o(7).sel
             IF v% <> 0 THEN v% = -1
-            keywordHighlight = v%
+            KeywordHighlight = v%
 
-            IF keywordHighlight THEN
+            IF KeywordHighlight THEN
                 WriteConfigSetting generalSettingsSection$, "KeywordHighlight", "True"
             ELSE
                 WriteConfigSetting generalSettingsSection$, "KeywordHighlight", "False"
@@ -17387,7 +17331,7 @@ FUNCTION idechoosecolorsbox
 
     enableHighlighter:
     IF DisableSyntaxHighlighter THEN
-        DisableSyntaxHighlighter = 0
+        DisableSyntaxHighlighter = _FALSE
         WriteConfigSetting generalSettingsSection$, "DisableSyntaxHighlighter", "False"
         menu$(OptionsMenuID, OptionsMenuDisableSyntax) = CHR$(7) + "Syntax #Highlighter"
     END IF
@@ -17566,9 +17510,9 @@ FUNCTION idergbmixer$ (editing)
                     b = VAL(b$): IF b < 0 THEN b = 0
                     IF b > 255 THEN b = 255
 
-                    idetxt(o(1).txt) = str2$(r)
-                    idetxt(o(2).txt) = str2$(g)
-                    idetxt(o(3).txt) = str2$(b)
+                    idetxt(o(1).txt) = _TOSTR$(r)
+                    idetxt(o(2).txt) = _TOSTR$(g)
+                    idetxt(o(3).txt) = _TOSTR$(b)
 
                     FOR i = 1 TO 3
                         o(i).sx1 = 0
@@ -17590,9 +17534,9 @@ FUNCTION idergbmixer$ (editing)
                     g = r
                     b = r
 
-                    idetxt(o(1).txt) = str2$(r)
-                    idetxt(o(2).txt) = str2$(g)
-                    idetxt(o(3).txt) = str2$(b)
+                    idetxt(o(1).txt) = _TOSTR$(r)
+                    idetxt(o(2).txt) = _TOSTR$(g)
+                    idetxt(o(3).txt) = _TOSTR$(b)
 
                     FOR i = 1 TO 3
                         o(i).sx1 = 0
@@ -17618,9 +17562,9 @@ FUNCTION idergbmixer$ (editing)
                     g = r
                     b = r
 
-                    idetxt(o(1).txt) = str2$(r)
-                    idetxt(o(2).txt) = str2$(g)
-                    idetxt(o(3).txt) = str2$(b)
+                    idetxt(o(1).txt) = _TOSTR$(r)
+                    idetxt(o(2).txt) = _TOSTR$(g)
+                    idetxt(o(3).txt) = _TOSTR$(b)
 
                     FOR i = 1 TO 3
                         o(i).sx1 = 0
@@ -17758,10 +17702,10 @@ FUNCTION idergbmixer$ (editing)
 
         IF mB AND mY = p.y + 2 AND mX >= p.x + 15 AND mX <= p.x + 15 + 46 THEN
             newValue = (mX - p.x - 15) * (255 / 46)
-            idetxt(o(1).txt) = str2$(newValue)
+            idetxt(o(1).txt) = _TOSTR$(newValue)
             IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
-                idetxt(o(2).txt) = str2$(newValue)
-                idetxt(o(3).txt) = str2$(newValue)
+                idetxt(o(2).txt) = _TOSTR$(newValue)
+                idetxt(o(3).txt) = _TOSTR$(newValue)
             END IF
             focus = 1
             o(focus).v1 = LEN(idetxt(o(focus).txt))
@@ -17771,10 +17715,10 @@ FUNCTION idergbmixer$ (editing)
 
         IF mB AND mY = p.y + 5 AND mX >= p.x + 15 AND mX <= p.x + 15 + 46 THEN
             newValue = (mX - p.x - 15) * (255 / 46)
-            idetxt(o(2).txt) = str2$(newValue)
+            idetxt(o(2).txt) = _TOSTR$(newValue)
             IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
-                idetxt(o(1).txt) = str2$(newValue)
-                idetxt(o(3).txt) = str2$(newValue)
+                idetxt(o(1).txt) = _TOSTR$(newValue)
+                idetxt(o(3).txt) = _TOSTR$(newValue)
             END IF
             focus = 2
             o(focus).v1 = LEN(idetxt(o(focus).txt))
@@ -17784,10 +17728,10 @@ FUNCTION idergbmixer$ (editing)
 
         IF mB AND mY = p.y + 8 AND mX >= p.x + 15 AND mX <= p.x + 15 + 46 THEN
             newValue = (mX - p.x - 15) * (255 / 46)
-            idetxt(o(3).txt) = str2$(newValue)
+            idetxt(o(3).txt) = _TOSTR$(newValue)
             IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
-                idetxt(o(1).txt) = str2$(newValue)
-                idetxt(o(2).txt) = str2$(newValue)
+                idetxt(o(1).txt) = _TOSTR$(newValue)
+                idetxt(o(2).txt) = _TOSTR$(newValue)
             END IF
             focus = 3
             o(focus).v1 = LEN(idetxt(o(focus).txt))
@@ -17797,13 +17741,13 @@ FUNCTION idergbmixer$ (editing)
 
         ChangedWithKeys = 0
         IF K$ = CHR$(0) + CHR$(72) AND (focus = 1 OR focus = 2 OR focus = 3) THEN 'Up
-            idetxt(o(focus).txt) = str2$(VAL(idetxt(o(focus).txt)) + 1)
+            idetxt(o(focus).txt) = _TOSTR$(VAL(idetxt(o(focus).txt)) + 1)
             o(focus).issel = -1: o(focus).sx1 = 0: o(focus).v1 = LEN(idetxt(o(focus).txt))
             ChangedWithKeys = -1
         END IF
 
         IF K$ = CHR$(0) + CHR$(80) AND (focus = 1 OR focus = 2 OR focus = 3) THEN 'Down
-            idetxt(o(focus).txt) = str2$(VAL(idetxt(o(focus).txt)) - 1)
+            idetxt(o(focus).txt) = _TOSTR$(VAL(idetxt(o(focus).txt)) - 1)
             o(focus).issel = -1: o(focus).sx1 = 0: o(focus).v1 = LEN(idetxt(o(focus).txt))
             ChangedWithKeys = -1
         END IF
@@ -17971,7 +17915,7 @@ SUB GetInput
                 K$ = CHR$(KB)
                 k = KB
                 iCHANGED = -1
-                AltSpecial = -1
+                AltSpecial = _TRUE
             END IF
             ASCvalue$ = ""
             EXIT SUB
@@ -18044,7 +17988,7 @@ SUB Help_ShowText
     STATIC setup
     IF setup = 0 AND UBOUND(Back$) = 1 THEN
         setup = 1
-        IF IdeContextHelpSF = 0 THEN
+        IF NOT IdeContextHelpSF THEN
             a$ = Wiki$(Back$(1))
             WikiParse a$
         END IF
@@ -18360,19 +18304,19 @@ SUB IdeSaveBookmarks (f2$)
         FOR i = 1 TO UBOUND(IdeBreakpoints)
             IF IdeBreakpoints(i) THEN
                 x = x + 1
-                WriteSetting DebugFile$, f2$, "breakpoint" + STR$(x), str2$(i)
+                WriteSetting DebugFile$, f2$, "breakpoint" + STR$(x), _TOSTR$(i)
             END IF
         NEXT
-        WriteSetting DebugFile$, f2$, "total breakpoints", str2$(x)
+        WriteSetting DebugFile$, f2$, "total breakpoints", _TOSTR$(x)
 
         x = 0
         FOR i = 1 TO UBOUND(IdeSkipLines)
             IF IdeSkipLines(i) THEN
                 x = x + 1
-                WriteSetting DebugFile$, f2$, "skip" + STR$(x), str2$(i)
+                WriteSetting DebugFile$, f2$, "skip" + STR$(x), _TOSTR$(i)
             END IF
         NEXT
-        WriteSetting DebugFile$, f2$, "total skips", str2$(x)
+        WriteSetting DebugFile$, f2$, "total skips", _TOSTR$(x)
     END IF
 END SUB
 
@@ -18542,7 +18486,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
             IF r% = 1 THEN menu$(m, i) = "-": i = i + 1
             IF r% <= maxFiles% THEN IdeRecentLink(r%, 2) = f$
             IF LEN(f$) > maxLength% THEN f$ = STRING$(3, 250) + RIGHT$(f$, maxLength% - 3)
-            f$ = "#" + str2$(r%) + " " + f$
+            f$ = "#" + _TOSTR$(r%) + " " + f$
             IF r% = maxFiles% + 1 THEN f$ = "#Recent..."
             menu$(m, i) = f$
             IF r% <= maxFiles% THEN
@@ -19143,7 +19087,7 @@ FUNCTION ideupdatehelpbox
             CASE 4
                 FullMessage$(2) = "Building download queue..."
             CASE 5
-                FullMessage$(1) = "Updating help content file " + str2$(n) + "/" + str2$(c) + "..."
+                FullMessage$(1) = "Updating help content file " + _TOSTR$(n) + "/" + _TOSTR$(c) + "..."
         END SELECT
 
         FOR i = 1 TO MessageLines
@@ -19535,7 +19479,7 @@ FUNCTION ideASCIIbox$ (relaunch)
         END IF
 
         IF (focus = 3 AND (info <> 0 OR K$ = CHR$(13))) THEN
-            ideASCIIbox$ = "CHR$(" + str2$(Selected) + ")"
+            ideASCIIbox$ = "CHR$(" + _TOSTR$(Selected) + ")"
             EXIT FUNCTION
         END IF
 
@@ -19959,18 +19903,18 @@ SUB HideBracketHighlight
     'Restore the screen and hide any bracket highlights
     'as we're limited to 16 colors and the highlight
     'color will be used differently in this dialog.
-    oldBracketHighlightSetting = brackethighlight
-    oldMultiHighlightSetting = multihighlight
+    oldBracketHighlightSetting = BracketHighlight
+    oldMultiHighlightSetting = MultiHighlight
     oldShowLineNumbersUseBG = ShowLineNumbersUseBG
-    brackethighlight = 0
-    multihighlight = 0
-    ShowLineNumbersUseBG = 0
+    BracketHighlight = _FALSE
+    MultiHighlight = _FALSE
+    ShowLineNumbersUseBG = _FALSE
     SCREEN , , 0
     HideCurrentLineHighlight = -1
     ideshowtext
     HideCurrentLineHighlight = 0
-    brackethighlight = oldBracketHighlightSetting
-    multihighlight = oldMultiHighlightSetting
+    BracketHighlight = oldBracketHighlightSetting
+    MultiHighlight = oldMultiHighlightSetting
     ShowLineNumbersUseBG = oldShowLineNumbersUseBG
 END SUB
 
@@ -20004,7 +19948,7 @@ SUB LoadColorSchemes
     i = 0
     DO
         i = i + 1
-        result = ReadConfigSetting(colorSchemesSection$, "Scheme" + str2$(i) + "$", value$)
+        result = ReadConfigSetting(colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", value$)
         IF result THEN
             TotalColorSchemes = TotalColorSchemes + 1
             IF TotalColorSchemes > UBOUND(ColorSchemes$) THEN
@@ -20017,7 +19961,7 @@ SUB LoadColorSchemes
                     'Extended schemes (9 colors):
                     LastValidColorScheme = TotalColorSchemes
                     value$ = value$ + "170170170"
-                    WriteConfigSetting colorSchemesSection$, "Scheme" + str2$(i) + "$", value$
+                    WriteConfigSetting colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", value$
                     ColorSchemes$(TotalColorSchemes) = value$
                 ELSEIF LEN(MID$(value$, FoundPipe + 1)) = 90 THEN
                     'Extended schemes (10 colors):
@@ -20029,7 +19973,7 @@ SUB LoadColorSchemes
                     temp$ = temp$ + MID$(value$, FoundPipe + 1, 9) + "069147216245128177"
                     temp$ = temp$ + MID$(value$, FoundPipe + 10) + "000147177170170170"
                     ColorSchemes$(TotalColorSchemes) = temp$
-                    WriteConfigSetting colorSchemesSection$, "Scheme" + str2$(i) + "$", temp$
+                    WriteConfigSetting colorSchemesSection$, "Scheme" + _TOSTR$(i) + "$", temp$
                     LastValidColorScheme = TotalColorSchemes
                 ELSE
                     GOTO DiscardInvalid

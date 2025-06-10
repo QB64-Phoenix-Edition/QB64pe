@@ -54,7 +54,7 @@ FUNCTION Evaluate_Expression$ (e$, num AS ParseNum)
         END IF
     LOOP UNTIL Eval_E = 0
 
-    IF CONST_EVAL_DEBUG THEN _ECHO "resulting exp$: " + exp$ + ", numelements: " + STR$(numelements(exp$))
+    IF CONST_EVAL_DEBUG THEN _ECHO "resulting exp$: " + exp$ + ", numelements:" + STR$(numelements(exp$))
     IF numelements(exp$) <> 1 THEN
         Evaluate_Expression$ = "ERROR - Invalid characters in expression": EXIT FUNCTION
     END IF
@@ -181,11 +181,11 @@ FUNCTION CommaExpression& (exp$, state AS ParserState)
         IF (state.num.typ AND ISSTRING) THEN
             pushelement state.result, state.num.s
         ELSEIF (state.num.typ AND ISFLOAT) THEN
-            pushelement state.result, _TRIM$(_TOSTR$(state.num.f))
+            pushelement state.result, _TOSTR$(state.num.f)
         ELSEIF (state.num.typ AND ISUNSIGNED) THEN
-            pushelement state.result, _TRIM$(STR$(state.num.ui)) + "~&&"
+            pushelement state.result, _TOSTR$(state.num.ui) + "~&&"
         ELSE
-            pushelement state.result, _TRIM$(STR$(state.num.i)) + "&&"
+            pushelement state.result, _TOSTR$(state.num.i) + "&&"
         END IF
 
         ele$ = getnextelement$(exp$, state.index, state.strIndex)
@@ -733,9 +733,9 @@ FUNCTION ParseNumHashLookup& (ele$, state AS ParserState)
         IF hashres <> 1 THEN hashres = HashFindCont(hashresflags, hashresref) ELSE hashres = 0
     LOOP
 
-    IF CONST_EVAL_DEBUG THEN _ECHO "Hashfound: " + STR$(hashfound)
+    IF CONST_EVAL_DEBUG THEN _ECHO "Hashfound:" + STR$(hashfound)
     IF hashfound THEN
-        IF CONST_EVAL_DEBUG THEN _ECHO "is string: " + STR$(consttype(hashresref) AND ISSTRING)
+        IF CONST_EVAL_DEBUG THEN _ECHO "is string:" + STR$(consttype(hashresref) AND ISSTRING)
 
         IF consttype(hashresref) AND ISSTRING THEN
             ParseNumSetS state.num, conststring(hashresref)
@@ -801,7 +801,7 @@ SUB ParseExpression2 (exp$)
     state.result = ""
 
     res& = CommaExpression&(exp$, state)
-    IF CONST_EVAL_DEBUG THEN _ECHO "res: " + STR$(res&)
+    IF CONST_EVAL_DEBUG THEN _ECHO "res:" + STR$(res&)
     IF CONST_EVAL_DEBUG THEN _ECHO "resulting string: " + state.result
     IF CONST_EVAL_DEBUG THEN _ECHO "resulting err: " + state.errStr
 
@@ -877,7 +877,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
 
     argCount = countFunctionElements(args)
 
-    IF CONST_EVAL_DEBUG THEN _ECHO "argCount: " + STR$(argCount)
+    IF CONST_EVAL_DEBUG THEN _ECHO "argCount:" + STR$(argCount)
 
     IF ConstFuncs(p).ArgCount > 0 AND argCount <> ConstFuncs(p).ArgCount THEN
         EvaluateFunction$ = "ERROR - Wrong number of arguments provided to " + ConstFuncs(p).nam + "!"
@@ -888,7 +888,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
         ele$ = getelement$(args, 1 + (i - 1) * 2)
         origArgs(i) = ele$
 
-        IF CONST_EVAL_DEBUG THEN _ECHO "arg is string: " + STR$(elementIsString(ele$)) + ", argCount: " + STR$(ConstFuncs(p).ArgCount)
+        IF CONST_EVAL_DEBUG THEN _ECHO "arg is string:" + STR$(elementIsString(ele$)) + ", argCount:" + STR$(ConstFuncs(p).ArgCount)
 
         IF elementIsNumber(ele$) THEN
             ' skip the commas
@@ -956,7 +956,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
             SELECT CASE args(4).ui
                 CASE 0 TO 2, 7 TO 13, 256, 32 'these are the good screen values
                 CASE ELSE
-                    EvaluateFunction$ = "ERROR - Invalid Screen Mode (" + STR$(args(4).ui) + ")": EXIT FUNCTION
+                    EvaluateFunction$ = "ERROR - Invalid Screen Mode (" + _TOSTR$(args(4).ui) + ")": EXIT FUNCTION
             END SELECT
             t = _NEWIMAGE(1, 1, args(4).ui)
             n1 = _RGB(args(1).ui, args(2).ui, args(3).ui, t)
@@ -968,7 +968,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
             SELECT CASE args(5).ui
                 CASE 0 TO 2, 7 TO 13, 256, 32 'these are the good screen values
                 CASE ELSE
-                    EvaluateFunction$ = "ERROR - Invalid Screen Mode (" + STR$(args(5).ui) + ")": EXIT FUNCTION
+                    EvaluateFunction$ = "ERROR - Invalid Screen Mode (" + _TOSTR$(args(5).ui) + ")": EXIT FUNCTION
             END SELECT
             t = _NEWIMAGE(1, 1, args(5).ui)
             n1 = _RGBA(args(1).ui, args(2).ui, args(3).ui, args(4).ui, t)
@@ -979,7 +979,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
             SELECT CASE args(2).i
                 CASE 0 TO 2, 7 TO 13, 256, 32 'these are the good screen values
                 CASE ELSE
-                    EvaluateNumbers$ = "ERROR - Invalid Screen Mode (" + STR$(args(2).i) + ")": EXIT FUNCTION
+                    EvaluateFunction$ = "ERROR - Invalid Screen Mode (" + _TOSTR$(args(2).i) + ")": EXIT FUNCTION
             END SELECT
             t = _NEWIMAGE(1, 1, args(2).i)
             SELECT CASE ConstFuncs(p).nam
@@ -1029,7 +1029,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
             typ& = STRINGTYPE
 
         CASE "ASC":
-            IF argCount < 1 OR argCount > 2 THEN EvaluateNumbers$ = "ERROR - Wrong number of arguments provided to ASC$": EXIT FUNCTION
+            IF argCount < 1 OR argCount > 2 THEN EvaluateFunction$ = "ERROR - Wrong number of arguments provided to ASC$": EXIT FUNCTION
             IF (args(1).typ AND ISSTRING) = 0 THEN EvaluateFunction$ = "ERROR - Unexpected argument: '" + origArgs(1) + "'": EXIT FUNCTION
 
             IF argCount = 1 THEN
@@ -1046,10 +1046,10 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
     IF typ& AND ISSTRING THEN
         EvaluateFunction$ = createElementString$(nstr)
     ELSEIF typ& AND ISFLOAT THEN
-        EvaluateFunction$ = _TRIM$(_TOSTR$(n1))
+        EvaluateFunction$ = _TOSTR$(n1)
     ELSE
         n&& = n1
-        EvaluateFunction$ = _TRIM$(STR$(n&&)) + "&&"
+        EvaluateFunction$ = _TOSTR$(n&&) + "&&"
     END IF
 END FUNCTION
 

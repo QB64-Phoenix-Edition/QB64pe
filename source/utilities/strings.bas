@@ -142,22 +142,10 @@ FUNCTION ReadWriteLongSettingValue& (section AS STRING, setting AS STRING, defau
     checkResult = VAL(value)
 
     IF result = 0 OR checkResult <= 0 THEN
-        WriteConfigSetting section, setting, str2$(default)
+        WriteConfigSetting section, setting, _TOSTR$(default)
         ReadWriteLongSettingValue& = default
     ELSE
         ReadWriteLongSettingValue& = checkResult
     END IF
-END FUNCTION
-
-FUNCTION str2$ (v AS LONG)
-    str2$ = LTRIM$(STR$(v))
-END FUNCTION
-
-FUNCTION str2u64$ (v~&&)
-    str2u64$ = LTRIM$(STR$(v~&&))
-END FUNCTION
-
-FUNCTION str2i64$ (v&&)
-    str2i64$ = LTRIM$(STR$(v&&))
 END FUNCTION
 

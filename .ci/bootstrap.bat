@@ -2,11 +2,15 @@
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 pushd .
+
 IF "%PLATFORM%"=="x64" (
     call setup_mingw.cmd 64
-) else (
+) ELSE IF "%PLATFORM%"=="arm64" (
+    call setup_mingw.cmd 64
+) ELSE (
     call setup_mingw.cmd 32
 )
+
 popd
 
 echo Bootstrapping QB64-PE

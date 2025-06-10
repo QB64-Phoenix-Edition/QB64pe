@@ -40,6 +40,8 @@ qbs *qbs_set(qbs *, qbs *);
 
 void qbs_free(qbs *str);
 
+template <typename T> T qbs_val(qbs *s);
+
 // legacy STR$ function prototypes
 qbs *qbs_str(int64_t value);
 qbs *qbs_str(int32_t value);

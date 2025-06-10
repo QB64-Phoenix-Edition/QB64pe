@@ -106,6 +106,33 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_Min"
+    id.subfunc = 1
+    id.args = 2
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' overridden in qb64pe.bas
+    id.ret = STRINGTYPE - ISPOINTER ' overridden in qb64pe.bas
+    id.hr_syntax = "_Min(value1, value2)"
+    regid
+
+    clearid
+    id.n = "_Max"
+    id.subfunc = 1
+    id.args = 2
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' overridden in qb64pe.bas
+    id.ret = STRINGTYPE - ISPOINTER ' overridden in qb64pe.bas
+    id.hr_syntax = "_Max(value1, value2)"
+    regid
+
+    clearid
+    id.n = "_Clamp"
+    id.subfunc = 1
+    id.args = 3
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' overridden in qb64pe.bas
+    id.ret = STRINGTYPE - ISPOINTER ' overridden in qb64pe.bas
+    id.hr_syntax = "_Clamp(value, minimum, maximum)"
+    regid
+
+    clearid
     id.n = "_Resize"
     id.subfunc = 2
     id.callname = "sub__resize"
@@ -2735,11 +2762,12 @@ SUB reginternal
     clearid
     id.n = "Val"
     id.subfunc = 1
-    id.callname = "func_val"
-    id.args = 1
-    id.arg = MKL$(STRINGTYPE - ISPOINTER)
-    id.ret = FLOATTYPE - ISPOINTER
-    id.hr_syntax = "VAL(string_value$)"
+    ' Appropriate id.callname is set in qb64pe.bas
+    id.args = 2
+    id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER) ' 2nd argument type is overridden in qb64pe.bas
+    id.specialformat = "?[,?]"
+    id.ret = STRINGTYPE - ISPOINTER ' overridden in qb64pe.bas
+    id.hr_syntax = "VAL(stringValue$[, numericalType])"
     regid
 
     clearid

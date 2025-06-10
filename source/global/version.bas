@@ -14,7 +14,7 @@ IF _FILEEXISTS("internal/version.txt") THEN
     Version$ = Version$ + VersionLabel$
 
     IF VersionLabel$ <> "" AND VersionLabel$ <> "-UNKNOWN" THEN
-        IsCiVersion = -1
+        IsCiVersion = _TRUE
     END IF
 
     CLOSE #versionfile

@@ -5,7 +5,7 @@
 ' The purpose of this file is to implement new commands into the language
 ' or helper SUBs/FUNCTIONs, which must not necessarily be implemented on
 ' the C/C++ level. For this purpose this file allows names beginning with
-' an underscroe, which is usually not possible. However, some rules have
+' an underscore, which is usually not possible. However, some rules have
 ' to be followed in order to register the functions as part of the language
 ' and hence make them follow the active layout/highlighting settings.
 '----------
@@ -42,7 +42,7 @@ $CHECKING:OFF
 ' with the "_IKW_" prefix, for (I)nternal(K)ey(W)ord. But no worries, this
 ' is just a hint for the register logic, so it knows to perform some extra
 ' steps to make it an internal SUB/FUNCTION, but the keyword is registered
-' without that prefix beginning with the 2nd underscrore, hence the result
+' without that prefix beginning with the 2nd underscore, hence the result
 ' variables of functions are then as expected without prefix. Names should
 ' be written in natural CaMeL case as usual.
 ' For correct highlighting it's also required to add the names (w/o prefix)
@@ -52,28 +52,6 @@ $CHECKING:OFF
 ' will be highlighted according to the entry in the highlighter list, i.e.
 ' numeric results without type suffixes and string results with the $ suffix.
 '==========================================================================
-
-'_MIN() returns the lesser of both given values (returns value1 if equal).
-'----------
-FUNCTION _IKW_Min## (_value1##, _value2##)
-    _MIN = _IIF(_value1## <= _value2##, _value1##, _value2##)
-END FUNCTION
-
-'_MAX() returns the greater of both given values (returns value1 if equal).
-'----------
-FUNCTION _IKW_Max## (_value1##, _value2##)
-    _MAX = _IIF(_value1## >= _value2##, _value1##, _value2##)
-END FUNCTION
-
-'_CLAMP() returns the given value or the min/max, if the value is lesser or
-'   greater than that respectively.
-'----------
-FUNCTION _IKW_Clamp## (_value##, _minVal##, _maxVal##)
-    DIM _realMin##, _realMax##
-    _realMin## = _MIN(_minVal##, _maxVal##)
-    _realMax## = _MAX(_minVal##, _maxVal##)
-    _CLAMP = _IIF(_value## < _realMin##, _realMin##, _IIF(_value## > _realMax##, _realMax##, _value##))
-END FUNCTION
 
 '_EncodeURL$() returns the percent encoded version of the given plain text
 '   URL for use with the _OPENCLIENT("HTTP:url") syntax.
