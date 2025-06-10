@@ -196,8 +196,8 @@ TYPE idedbotype
     typ AS LONG
     nam AS LONG
     txt AS LONG
-    inv AS LONG 'invalid data detected, eg. text in number fields (text boxes)
-    blk AS LONG 'blocked space at right in chars (text boxes)
+    inv AS LONG 'invalid data detected, eg. text in number fields (text/check boxes)
+    blk AS LONG 'blocked space at right in chars eg. to place symbol buttons (text boxes)
     rpt AS LONG 'repeat selection while mousebutten is held down (single symbol buttons)
     dft AS LONG
     cx AS LONG

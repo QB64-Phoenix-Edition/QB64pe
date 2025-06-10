@@ -29,14 +29,14 @@ DIM SHARED ConfigFile$, DebugFile$, AutosaveFile$, RecentFile$, SearchedFile$, B
 DIM SHARED idebaseTcpPort AS LONG, AutoAddDebugCommand AS _BYTE
 DIM SHARED wikiBaseAddress$
 DIM SHARED MaxParallelProcesses AS LONG
-DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
+DIM SHARED ExtraCppFlags$, ExtraLinkerFlags$
 DIM SHARED StripDebugSymbols AS LONG
 DIM SHARED OptimizeCppProgram AS LONG
 DIM SHARED IncludeDebugInfo AS LONG
 DIM SHARED GenerateLicenseFile AS LONG
-DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
-DIM SHARED DefaultTerminal AS STRING
-DIM SHARED LoggingEnabled AS _UNSIGNED LONG
+DIM SHARED UseGuiDialogs AS _BYTE
+DIM SHARED DefaultTerminal$
+DIM SHARED LoggingEnabled AS _BYTE
 DIM SHARED UseSystemMinGW AS LONG
 
 '===== Define and check settings location =====================================

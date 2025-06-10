@@ -37,7 +37,9 @@ SUB ExecuteRCStateVar (stVar AS RCStateVar)
     IF stVar.forced <> 0 THEN stVar.actual = stVar.forced
 END SUB
 
-'Return the actual value of the given state variable.
+'Return the actual value of the given state variable. The returned value
+'depends on the variable and must not necessarily be a boolean, hence you
+'should use a relational operator to check for =0 or <>0 if required.
 '>> to be used whenever the value needs to be checked/retrieved
 FUNCTION GetRCStateVar%% (stVar AS RCStateVar)
     GetRCStateVar%% = stVar.actual

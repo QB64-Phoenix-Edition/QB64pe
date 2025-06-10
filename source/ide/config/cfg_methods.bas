@@ -252,15 +252,17 @@ SUB ReadInitialConfig
         WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
     END IF
 
-    UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", -1)
+    UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", _TRUE)
 
-    DefaultTerminal = ReadWriteStringSettingValue$(generalSettingsSection$, "DefaultTerminal", "")
-    IF DefaultTerminal = "" AND os$ = "LNX" AND MacOSX = 0 THEN
-        DefaultTerminal = findWorkingTerminal$
-        WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
+    IF os$ = "LNX" AND MacOSX = 0 THEN
+        DefaultTerminal$ = ReadWriteStringSettingValue$(generalSettingsSection$, "DefaultTerminal", "")
+        IF DefaultTerminal$ = "" THEN
+            DefaultTerminal$ = findWorkingTerminal$
+            WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal$
+        END IF
     END IF
 
-    LoggingEnabled = ReadWriteBooleanSettingValue%(generalSettingsSection$, "LoggingEnabled", 0)
+    LoggingEnabled = ReadWriteBooleanSettingValue%(generalSettingsSection$, "LoggingEnabled", _FALSE)
 
     '--- Mouse settings
     result = ReadConfigSetting(mouseSettingsSection$, "SwapMouseButton", value$)
@@ -592,15 +594,15 @@ SUB ReadInitialConfig
         WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", "3"
     END IF
 
-    ExtraCppFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
-    ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
+    ExtraCppFlags$ = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
+    ExtraLinkerFlags$ = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
 
     GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
 
     IF os$ = "WIN" THEN
         UseSystemMinGW = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseSystemMinGW", _FALSE)
     ELSE
-        UseSystemMinGW = _TRUE  ' always use the system compiler on non-Windows platforms
+        UseSystemMinGW = _TRUE 'always use the system compiler on non-Windows platforms
     END IF
 END SUB
 
