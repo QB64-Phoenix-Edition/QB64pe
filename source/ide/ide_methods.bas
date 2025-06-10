@@ -1704,7 +1704,6 @@ FUNCTION ide2 (ignore)
                         CASE 4
                             '4- Link to Warnings dialog:
                             retval = idewarningbox
-                            'retval is ignored
                             PCOPY 3, 0: SCREEN , , 3, 0
                             GOTO specialchar
                     END SELECT
@@ -3477,7 +3476,6 @@ FUNCTION ide2 (ignore)
                 ideselect = 0
             ELSE
                 idegotobox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
             END IF
             GOTO specialchar
@@ -3543,7 +3541,6 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "W" THEN 'goto line
             IF totalWarnings > 0 THEN
                 retval = idewarningbox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO specialchar
             ELSE
@@ -5095,7 +5092,7 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "IDE C#olors..." THEN
                 PCOPY 2, 0
                 HideBracketHighlight
-                retval = idechoosecolorsbox 'retval is ignored
+                retval = idechoosecolorsbox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5106,7 +5103,7 @@ FUNCTION ide2 (ignore)
                 KeywordHighlight = _FALSE
                 HideBracketHighlight
                 KeywordHighlight = oldKeywordHighlight
-                retval$ = idergbmixer$(-1) 'retval is ignored
+                retval$ = idergbmixer$(-1)
                 IF LEN(retval$) THEN insertAtCursor retval$
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -5259,10 +5256,7 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "Change #Terminal" THEN
                 PCOPY 2, 0
-
-                ideTerminalBox
-
-                'retval is ignored
+                retval = ideTerminalBox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5786,7 +5780,6 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "Compiler #Warnings...  Ctrl+W" THEN
                 PCOPY 2, 0
                 retval = idewarningbox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -6081,7 +6074,6 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 ModifyCOMMAND$ = " " + ideinputbox$("Modify COMMAND$", "#Enter text for COMMAND$", _TRIM$(ModifyCOMMAND$), "", 60, 0, 0)
                 IF _TRIM$(ModifyCOMMAND$) = "" THEN ModifyCOMMAND$ = ""
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -6188,7 +6180,6 @@ FUNCTION ide2 (ignore)
                     PCOPY 2, 0
                     showCallStackDialog:
                     retval = idecallstackbox
-                    'retval is ignored
                     PCOPY 3, 0: SCREEN , , 3, 0
                     GOTO ideloop
                 END IF
@@ -11347,8 +11338,8 @@ SUB idedrawobj (o AS idedbotype, f)
     IF o.typ = 4 THEN
         IF o.x = 0 THEN o.x = 2
         x = o.par.x + o.x: y = o.par.y + o.y
+        IF o.inv THEN COLOR 4, 7 ELSE COLOR 0, 7
         LOCATE y, x
-        COLOR 0, 7
         IF o.sel THEN
             PRINT "[X] ";
         ELSE
@@ -15253,14 +15244,12 @@ FUNCTION ideLayoutBox
         END IF
         'auto indent size spinners
         IF focus = aisSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(aisBox).txt)) + 1)
-            IF VAL(a$) > 64 THEN a$ = "64"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(aisBox).txt)) + 1, 1, 64))
             idetxt(o(aisBox).txt) = a$: o(aisBox).v1 = LEN(a$)
             o(aiChk).sel = 1 'implies auto indent on
         END IF
         IF focus = aisSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(aisBox).txt)) - 1)
-            IF VAL(a$) < 1 THEN a$ = "1"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(aisBox).txt)) - 1, 1, 64))
             idetxt(o(aisBox).txt) = a$: o(aisBox).v1 = LEN(a$)
             o(aiChk).sel = 1 'implies auto indent on
         END IF
@@ -15498,13 +15487,11 @@ FUNCTION ideLimitsBox
         '-------- custom input response --------
         'backupsize spinners
         IF focus = mbsSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mbsBox).txt)) + 5)
-            IF VAL(a$) > 2000 THEN a$ = "2000"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mbsBox).txt)) + 5, 10, 2000))
             idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
         IF focus = mbsSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mbsBox).txt)) - 5)
-            IF VAL(a$) < 10 THEN a$ = "10"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mbsBox).txt)) - 5, 10, 2000))
             idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
         'backupsize text box (valid data check)
@@ -15514,13 +15501,11 @@ FUNCTION ideLimitsBox
 
         'recent files spinners
         IF focus = mrfSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mrfBox).txt)) + 1)
-            IF VAL(a$) > 200 THEN a$ = "200"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mrfBox).txt)) + 1, 5, 200))
             idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
         END IF
         IF focus = mrfSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mrfBox).txt)) - 1)
-            IF VAL(a$) < 5 THEN a$ = "5"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mrfBox).txt)) - 1, 5, 200))
             idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
         END IF
         'recent files text box (valid data check)
@@ -15530,13 +15515,11 @@ FUNCTION ideLimitsBox
 
         'search strings spinners
         IF focus = mssSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mssBox).txt)) + 1)
-            IF VAL(a$) > 200 THEN a$ = "200"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mssBox).txt)) + 1, 5, 200))
             idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
         END IF
         IF focus = mssSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mssBox).txt)) - 1)
-            IF VAL(a$) < 5 THEN a$ = "5"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mssBox).txt)) - 1, 5, 200))
             idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
         END IF
         'search strings text box (valid data check)
@@ -15665,12 +15648,12 @@ FUNCTION ideCompilerSettingsBox
     o(i).typ = 1 'text box
     o(i).y = 6
     o(i).nam = idenewtxt("C++ Compiler #Flags")
-    o(i).txt = idenewtxt(ExtraCppFlags): o(i).v1 = LEN(ExtraCppFlags)
+    o(i).txt = idenewtxt(ExtraCppFlags$): o(i).v1 = LEN(ExtraCppFlags$)
     i = i + 1: elfBox = i
     o(i).typ = 1 'text box
     o(i).y = 9
     o(i).nam = idenewtxt("C++ #Linker Flags")
-    o(i).txt = idenewtxt(ExtraLinkerFlags): o(i).v1 = LEN(ExtraLinkerFlags)
+    o(i).txt = idenewtxt(ExtraLinkerFlags$): o(i).v1 = LEN(ExtraLinkerFlags$)
 
     i = i + 1: mppBox = i
     o(i).typ = 1 'text box
@@ -15784,13 +15767,11 @@ FUNCTION ideCompilerSettingsBox
         '-------- custom input response --------
         'max. processes spinners
         IF focus = mppSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mppBox).txt)) + 1)
-            IF VAL(a$) > 128 THEN a$ = "128"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mppBox).txt)) + 1, 1, 128))
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         IF focus = mppSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mppBox).txt)) - 1)
-            IF VAL(a$) < 1 THEN a$ = "1"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mppBox).txt)) - 1, 1, 128))
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         'max. processes text box (valid data check)
@@ -15865,7 +15846,7 @@ FUNCTION ideCompilerSettingsBox
     LOOP
 END FUNCTION
 
-SUB ideTerminalBox
+FUNCTION ideTerminalBox
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -15878,56 +15859,58 @@ SUB ideTerminalBox
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
-    '-------- init --------
-
+    '-------- init dialog box & objects --------
     i = 0
-
     idepar p, 60, 7, "Default Terminal"
 
-    i = i + 1
-    PrevFocus = 1
-    o(i).typ = 1
+    i = i + 1: dttBox = i
+    o(i).typ = 1 'text box
     o(i).y = 2
     o(i).nam = idenewtxt("Terminal Command")
-    o(i).txt = idenewtxt(DefaultTerminal)
-    o(i).sx1 = 0
-    o(i).v1 = LEN(DefaultTerminal)
+    o(i).txt = idenewtxt(DefaultTerminal$): o(i).v1 = LEN(DefaultTerminal$)
 
-    i = i + 1
-    o(i).typ = 3
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
     o(i).y = 7
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-    '-------- end of init --------
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
-    DO 'main loop
+    '-------- custom variables init --------
+    '-------- end of custom variables init --------
 
+    DO 'main loop
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
         f = 1: cx = 0: cy = 0
         FOR i = 1 TO 100
             IF o(i).typ THEN
-
                 'prepare object
                 o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
                 idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
             END IF
         NEXT i
         lastfocus = f - 1
         '-------- end of generic display dialog box & objects --------
 
         '-------- custom display changes --------
-        LOCATE p.y + 4, p.x + 2
-        PRINT CHR$(34) + "$$" + CHR$(34) + " is replaced with the executable";
-        LOCATE p.y + 5, p.x + 2
-        PRINT CHR$(34) + "$@" + CHR$(34) + " is replaced with the COMMAND$ string";
+        _PRINTSTRING (p.x + 2, p.y + 4), AddQuotes$("$$") + " will be replaced with the executable"
+        _PRINTSTRING (p.x + 2, p.y + 5), AddQuotes$("$@") + " will be replaced with the COMMAND$ string"
         '-------- end of custom display changes --------
 
         'update visual page and cursor position
@@ -15960,7 +15943,7 @@ SUB ideTerminalBox
         '-------- end of read input --------
 
         '-------- generic input response --------
-        info = 0
+        info = 0: invdata = 0
         IF K$ = "" THEN K$ = CHR$(255)
         IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
         IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
@@ -15968,46 +15951,43 @@ SUB ideTerminalBox
         IF focus > lastfocus THEN focus = 1
         f = 1
         FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
+            IF o(i).typ THEN
                 focusoffset = focus - f
                 ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
             END IF
         NEXT
         '-------- end of generic input response --------
 
-        'specific post controls
-        IF focus <> PrevFocus THEN
-            'Always start with TextBox values selected upon getting focus
-            PrevFocus = focus
-            IF focus = 1 THEN
-                o(focus).v1 = LEN(idetxt(o(focus).txt))
-                IF o(focus).v1 > 0 THEN o(focus).issel = -1
-                o(focus).sx1 = 0
+        '-------- custom input response --------
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
             END IF
+
+            optChg% = _FALSE 'reset changed options indicator
+
+            'adjust runtime variables
+            v$ = idetxt(o(dttBox).txt)
+            IF DefaultTerminal$ <> v$ THEN DefaultTerminal$ = v$: optChg% = _TRUE
+
+            IF optChg% THEN
+                'save changes
+                WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal$
+
+                ideTerminalBox = 1
+            END IF
+            EXIT FUNCTION
         END IF
-
-        IF K$ = CHR$(27) OR (focus = 3 AND info <> 0) THEN
-            ClearMouse
-            EXIT SUB
-        END IF
-
-        IF K$ = CHR$(13) OR (focus = 2 AND info <> 0) THEN
-            DefaultTerminal = idetxt(o(1).txt)
-
-            WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
-
-            ClearMouse
-            _KEYCLEAR
-            EXIT SUB
-        END IF
-        'end of custom controls
+        '-------- end of custom input response --------
 
         mousedown = 0
         mouseup = 0
     LOOP
-
-END SUB
+END FUNCTION
 
 FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
 
@@ -16377,13 +16357,11 @@ FUNCTION ideDisplayBox
         '-------- custom input response --------
         'width spinners
         IF focus = wwSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(wwBox).txt)) + 1)
-            IF VAL(a$) > 999 THEN a$ = "999"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(wwBox).txt)) + 1, 80, 999))
             idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
         IF focus = wwSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(wwBox).txt)) - 1)
-            IF VAL(a$) < 80 THEN a$ = "80"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(wwBox).txt)) - 1, 80, 999))
             idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
         'width text box (valid data check)
@@ -16392,13 +16370,11 @@ FUNCTION ideDisplayBox
         IF o(wwBox).inv THEN invdata = 1 'block confirmation, as long as invalid
         'height spinners
         IF focus = whSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(whBox).txt)) + 1)
-            IF VAL(a$) > 999 THEN a$ = "999"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(whBox).txt)) + 1, 25, 999))
             idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
         IF focus = whSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(whBox).txt)) - 1)
-            IF VAL(a$) < 25 THEN a$ = "25"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(whBox).txt)) - 1, 25, 999))
             idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
         'height text box (valid data check)
@@ -16408,13 +16384,11 @@ FUNCTION ideDisplayBox
 
         'cursor start spinners
         IF focus = csSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(csBox).txt)) + 1)
-            IF VAL(a$) > 31 THEN a$ = "31"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(csBox).txt)) + 1, 0, 31))
             idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
         END IF
         IF focus = csSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(csBox).txt)) - 1)
-            IF VAL(a$) < 0 THEN a$ = "0"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(csBox).txt)) - 1, 0, 31))
             idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
         END IF
         'cursor start text box (valid data check)
@@ -16427,13 +16401,11 @@ FUNCTION ideDisplayBox
         END IF
         'cursor end spinners
         IF focus = ceSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(ceBox).txt)) + 1)
-            IF VAL(a$) > 31 THEN a$ = "31"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(ceBox).txt)) + 1, 0, 31))
             idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
         END IF
         IF focus = ceSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(ceBox).txt)) - 1)
-            IF VAL(a$) < 0 THEN a$ = "0"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(ceBox).txt)) - 1, 0, 31))
             idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
         END IF
         'cursor end text box (valid data check)
@@ -16457,7 +16429,10 @@ FUNCTION ideDisplayBox
         'custom font selector
         IF focus = cfSymL AND info <> 0 THEN
             a$ = idefiledialog$("*.tt*", 3)
-            IF a$ <> "C" THEN idetxt(o(cfBox).txt) = a$: o(cfBox).v1 = LEN(a$)
+            IF a$ <> "C" THEN
+                a$ = RemoveDoubleSlashes$(a$)
+                idetxt(o(cfBox).txt) = a$: o(cfBox).v1 = LEN(a$)
+            END IF
             PCOPY 2, 1: K$ = ""
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
@@ -16474,15 +16449,13 @@ FUNCTION ideDisplayBox
         END IF
         'custom font size spinners
         IF focus = cfsSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(cfsBox).txt)) + 1)
-            IF VAL(a$) > 99 THEN a$ = "99"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(cfsBox).txt)) + 1, 8, 99))
             idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
         END IF
         IF focus = cfsSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(cfsBox).txt)) - 1)
-            IF VAL(a$) < 8 THEN a$ = "8"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(cfsBox).txt)) - 1, 8, 99))
             idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
