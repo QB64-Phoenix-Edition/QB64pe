@@ -1724,7 +1724,8 @@ static void next_order(struct context_data *ctx)
 		p->ord++;
 
 		/* Restart module */
-		mark = HAS_QUIRK(QUIRK_MARKER) && p->ord < mod->len && mod->xxo[p->ord] == 0xff;
+		mark = HAS_QUIRK(QUIRK_MARKER) && p->ord < mod->len &&
+		       mod->xxo[p->ord] == XMP_MARK_END;
 		if (p->ord >= mod->len || mark) {
 			if (mod->rst > mod->len ||
 			    mod->xxo[mod->rst] >= mod->pat ||
@@ -1796,6 +1797,7 @@ static void next_row(struct context_data *ctx)
 
 	if (f->pbreak) {
 		f->pbreak = 0;
+		f->loop_dest = -1;
 
 		if (f->jump != -1) {
 			p->ord = f->jump - 1;
@@ -1846,6 +1848,18 @@ void libxmp_player_set_fadeout(struct context_data *ctx, int chn)
 
 #endif
 
+/* Get frame time for calculation of the current playback time
+ * based on the most recent scan. This value should be used for
+ * playback time calculation ONLY. */
+static double libxmp_get_frame_time(struct context_data *ctx)
+{
+	struct player_data *p = &ctx->p;
+	struct module_data *m = &ctx->m;
+	if (p->bpm == 0)
+		return 0.0;
+	return p->scan_time_factor * m->rrate / p->bpm;
+}
+
 static void update_from_ord_info(struct context_data *ctx)
 {
 	struct player_data *p = &ctx->p;
@@ -1857,7 +1871,6 @@ static void update_from_ord_info(struct context_data *ctx)
 	p->bpm = oinfo->bpm;
 	p->gvol = oinfo->gvl;
 	p->current_time = oinfo->time;
-	p->frame_time = m->time_factor * m->rrate / p->bpm;
 
 #ifndef LIBXMP_CORE_PLAYER
 	p->st26_speed = oinfo->st26_speed;
@@ -2035,7 +2048,7 @@ int xmp_play_frame(xmp_context opaque)
 		return -XMP_END;
 	}
 
-	if (HAS_QUIRK(QUIRK_MARKER) && mod->xxo[p->ord] == 0xff) {
+	if (HAS_QUIRK(QUIRK_MARKER) && mod->xxo[p->ord] == XMP_MARK_END) {
 		return -XMP_END;
 	}
 
@@ -2126,8 +2139,7 @@ int xmp_play_frame(xmp_context opaque)
 
 	f->rowdelay_set &= ~ROWDELAY_FIRST_FRAME;
 
-	p->frame_time = m->time_factor * m->rrate / p->bpm;
-	p->current_time += p->frame_time;
+	p->current_time += libxmp_get_frame_time(ctx);
 
 	libxmp_mixer_softmixer(ctx);
 
@@ -2275,7 +2287,7 @@ void xmp_get_frame_info(xmp_context opaque, struct xmp_frame_info *info)
 	info->speed = p->speed;
 	info->bpm = p->bpm;
 	info->total_time = p->scan[p->sequence].time;
-	info->frame_time = p->frame_time * 1000;
+	info->frame_time = (int)(libxmp_get_frame_time(ctx) * 1000.0);
 	info->time = p->current_time;
 	info->buffer = s->buffer;
 
