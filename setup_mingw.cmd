@@ -50,7 +50,7 @@ if "%ARCH%" == "" (
 )
 
 rem Check the processor type and then set the BITS variable
-powershell -c "(Get-WmiObject Win32_Processor).OsArchitecture" | find /i "64-bit" > nul && set BITS=64 || set BITS=32
+powershell -c "(Get-WmiObject Win32_OperatingSystem).OsArchitecture" | find /i "64-bit" > nul && set BITS=64 || set BITS=32
 
 echo %ARCH%-%BITS% platform detected.
 
