@@ -25,7 +25,7 @@ rem Check if the C++ compiler is there and skip MINGW setup if it exists
 if exist "internal\c\c_compiler\bin\c++.exe" goto build_qb64pe
 
 rem Check the processor type and then set the BITS variable
-wmic os get osarchitecture | find /i "64-bit" > nul && set BITS=64 || set BITS=32
+powershell -c "(Get-WmiObject Win32_OperatingSystem).OsArchitecture" | find /i "64-bit" > nul && set BITS=64 || set BITS=32
 
 rem If the OS is 32-bit then proceed to download right away
 if %BITS% == 32 goto setup_mingw
