@@ -889,11 +889,15 @@ IF C = 9 THEN 'run
     'execute program
 
     IF LoggingEnabled THEN
-        ENVIRON "QB64PE_LOG_HANDLERS=console"
-        ENVIRON "QB64PE_LOG_SCOPES=qb64,libqb,libqb-image,libqb-audio"
+        ENVIRON "QB64PE_LOG_LEVEL=" + LogMinLevel$
+        ENVIRON "QB64PE_LOG_SCOPES=" + LogScopes$
+        ENVIRON "QB64PE_LOG_HANDLERS=" + LogHandlers$
+        ENVIRON "QB64PE_LOG_FILE_PATH=" + LogFileName$
     ELSE
-        ENVIRON "QB64PE_LOG_HANDLERS="
+        ENVIRON "QB64PE_LOG_LEVEL="
         ENVIRON "QB64PE_LOG_SCOPES="
+        ENVIRON "QB64PE_LOG_HANDLERS="
+        ENVIRON "QB64PE_LOG_FILE_PATH="
     END IF
 
     ExecuteLine$ = ""
@@ -909,10 +913,9 @@ IF C = 9 THEN 'run
 
         IF path.exe$ = "./" THEN path.exe$ = ""
 
-        IF GetRCStateVar(ConsoleOn) > 0 OR LoggingEnabled THEN
-            IF LoggingEnabled THEN handler$ = "console" ELSE handler$ = ""
+        IF GetRCStateVar(ConsoleOn) > 0 OR LoggingEnabled THEN 'needed for all handlers, hence LoggingEnabled instead LogToConsole
 
-            generateMacOSLogScript ExecuteName$, handler$, "qb64,libqb,libqb-image,libqb-audio", ModifyCOMMAND$, tmpdir$ + "log.command"
+            generateMacOSLogScript ExecuteName$, ModifyCOMMAND$, tmpdir$ + "log.command"
 
             ' Spawning a program in a terminal is done via `open`.
             ' We have to use a separate script to be able to set environment variables for the program
@@ -921,7 +924,7 @@ IF C = 9 THEN 'run
             ExecuteLine$ = QuotedFilename$(ExecuteName$) + ModifyCOMMAND$
         END IF
     ELSEIF os$ = "WIN" THEN
-        IF GetRCStateVar(ConsoleOn) > 0 OR LoggingEnabled THEN
+        IF GetRCStateVar(ConsoleOn) > 0 OR LogToConsole THEN
             PrePend$ = "cmd /c"
         ELSE
             PrePend$ = ""
@@ -931,7 +934,7 @@ IF C = 9 THEN 'run
     ELSEIF os$ = "LNX" THEN
         IF path.exe$ = "" THEN path.exe$ = "./"
 
-        IF GetRCStateVar(ConsoleOn) > 0 OR LoggingEnabled THEN
+        IF GetRCStateVar(ConsoleOn) > 0 OR LogToConsole THEN
             ExecuteLine$ = DefaultTerminal$
 
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN

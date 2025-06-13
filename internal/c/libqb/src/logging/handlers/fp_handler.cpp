@@ -38,6 +38,9 @@ void fp_log_writer::write(struct log_entry *entry) {
 
     if (entry->stacktrace != "")
         fprintf(fp, "%s", entry->stacktrace.c_str());
+
+    // Make sure buffers are written out immediately
+    fflush(fp);
 }
 
 console_log_handler::console_log_handler() {

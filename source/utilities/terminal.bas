@@ -26,18 +26,27 @@ FUNCTION findWorkingTerminal$ ()
     findWorkingTerminal$ = ""
 END FUNCTION
 
-SUB generateMacOSLogScript (exe AS STRING, handler AS STRING, scopes AS STRING, cmdstr AS STRING, script AS STRING)
+SUB generateMacOSLogScript (exe AS STRING, cmdstr AS STRING, script AS STRING)
     ON ERROR GOTO _NEWHANDLER qberror_test
     KILL script
     ON ERROR GOTO _LASTHANDLER
 
-    _DELAY .01
+    _DELAY .05
 
     ff = FREEFILE
     OPEN script FOR OUTPUT AS #ff
 
-    PRINT #ff, "export QB64PE_LOG_HANDLERS="; handler; _CHR_LF;
-    PRINT #ff, "export QB64PE_LOG_SCOPES="; _CHR_QUOTE; scopes; _CHR_QUOTE; _CHR_LF;
+    IF LoggingEnabled THEN
+        PRINT #ff, "export QB64PE_LOG_LEVEL="; _CHR_QUOTE; LogMinLevel$; _CHR_QUOTE; _CHR_LF;
+        PRINT #ff, "export QB64PE_LOG_SCOPES="; _CHR_QUOTE; LogScopes$; _CHR_QUOTE; _CHR_LF;
+        PRINT #ff, "export QB64PE_LOG_HANDLERS="; _CHR_QUOTE; LogHandlers$; _CHR_QUOTE; _CHR_LF;
+        PRINT #ff, "export QB64PE_LOG_FILE_PATH="; _CHR_QUOTE; LogFileName$; _CHR_QUOTE; _CHR_LF;
+    ELSE
+        PRINT #ff, "export QB64PE_LOG_LEVEL="; _CHR_LF;
+        PRINT #ff, "export QB64PE_LOG_SCOPES="; _CHR_LF;
+        PRINT #ff, "export QB64PE_LOG_HANDLERS="; _CHR_LF;
+        PRINT #ff, "export QB64PE_LOG_FILE_PATH="; _CHR_LF;
+    END IF
     PRINT #ff, _CHR_QUOTE; exe; _CHR_QUOTE; " "; cmdstr; _CHR_LF;
 
     CLOSE #ff

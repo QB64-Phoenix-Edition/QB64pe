@@ -51,7 +51,23 @@ SUB CopyFromOther
                 oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
                 _WRITEFILE SearchedFile$, oqbd$
             END IF
-            'copying autosave & undo file(s) makes not much sense
+            'apply changes in v4.2.0
+            nul& = ReadConfigSetting(generalSettingsSection$, "DebugInfo", temp$)
+            IniDeleteKey ConfigFile$, generalSettingsSection$, "DebugInfo"
+            IF TFStringToBool%(temp$) = -2 THEN temp$ = "False"
+            WriteConfigSetting compilerSettingsSection$, "IncludeDebugInfo", temp$
+            '-----
+            IF os$ = "WIN" THEN IniDeleteKey ConfigFile$, generalSettingsSection$, "DefaultTerminal"
+            '-----
+            nul& = ReadConfigSetting(generalSettingsSection$, "LoggingEnabled", temp$)
+            IniDeleteKey ConfigFile$, generalSettingsSection$, "LoggingEnabled"
+            IF TFStringToBool%(temp$) <> -1 THEN
+                WriteConfigSetting loggingSettingsSection$, "LogMinLevel", "None"
+            ELSE
+                WriteConfigSetting loggingSettingsSection$, "LogMinLevel", "Information"
+                WriteConfigSetting loggingSettingsSection$, "LogScopes", "qb64,libqb,libqb-image,libqb-audio"
+                WriteConfigSetting loggingSettingsSection$, "LogHandlers", "console"
+            END IF
         ELSE
             IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning") = 1 GOTO cfoAgain
         END IF
@@ -262,8 +278,6 @@ SUB ReadInitialConfig
         END IF
     END IF
 
-    LoggingEnabled = ReadWriteBooleanSettingValue%(generalSettingsSection$, "LoggingEnabled", _FALSE)
-
     '--- Mouse settings
     result = ReadConfigSetting(mouseSettingsSection$, "SwapMouseButton", value$)
     IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
@@ -299,6 +313,15 @@ SUB ReadInitialConfig
         AutoAddDebugCommand = _TRUE
         WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "True"
     END IF
+
+    '--- Logging settings
+    LogMinLevel$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogMinLevel", "None")
+    LogScopes$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogScopes", "qb64")
+    LogHandlers$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogHandlers", "console")
+    LogFileName$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogFileName", _STARTDIR$ + "qb64pe-log.txt")
+    'update global enable states
+    LoggingEnabled = (LogMinLevel$ <> "None")
+    LogToConsole = LoggingEnabled AND (INSTR("," + LogHandlers$ + ",", ",console,") > 0)
 
     '--- Display settings
     IF ReadConfigSetting(displaySettingsSection$, "IDE_SortSUBs", value$) THEN
