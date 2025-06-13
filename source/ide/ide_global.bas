@@ -196,8 +196,8 @@ TYPE idedbotype
     typ AS LONG
     nam AS LONG
     txt AS LONG
-    inv AS LONG 'invalid data detected, eg. text in number fields (text boxes)
-    blk AS LONG 'blocked space at right in chars (text boxes)
+    inv AS LONG 'invalid data detected, eg. text in number fields (text/check boxes)
+    blk AS LONG 'blocked space at right in chars eg. to place symbol buttons (text boxes)
     rpt AS LONG 'repeat selection while mousebutten is held down (single symbol buttons)
     dft AS LONG
     cx AS LONG
@@ -228,7 +228,6 @@ DIM SHARED FileMenuExportAs AS INTEGER, FileMenuExportAsSubMenuID AS INTEGER
 DIM SHARED ViewMenuCompilerWarnings AS INTEGER
 DIM SHARED RunMenuID AS INTEGER, RunMenuSaveExeWithSource AS INTEGER
 DIM SHARED GenerateLicenseEnableMenu AS INTEGER
-DIM SHARED LoggingEnableMenu AS INTEGER
 DIM SHARED OptionsMenuGuiDialogs AS INTEGER
 DIM SHARED DebugMenuID AS INTEGER, DebugMenuCallStack AS INTEGER, DebugMenuWatchListToConsole AS INTEGER
 DIM SHARED DebugMenuAutoAddCommand AS INTEGER

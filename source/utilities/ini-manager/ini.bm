@@ -1,6 +1,41 @@
 'INI Manager v1.01
 'Fellippe Heitor, 2017-2021 - fellippe@qb64.org - @fellippeheitor
 
+SUB IniDeleteKey (file$, __section$, __key$)
+    SHARED IniPosition AS _UNSIGNED LONG, IniCODE
+    SHARED IniLF$, IniWholeFile$, IniSectionData$
+    SHARED IniLastSection$, IniLastKey$, IniNewFile$
+
+    DIM tempValue$
+    DIM section$, key$
+    DIM FoundLF AS _UNSIGNED LONG
+
+    IniCODE = 0
+
+    'prepare variables for the write operation
+    section$ = IniFormatSection$(__section$)
+    IF IniCODE THEN EXIT SUB
+
+    key$ = LTRIM$(RTRIM$(__key$))
+    IF key$ = "" THEN IniCODE = 12: EXIT SUB
+    IniLastKey$ = key$
+
+    'Read the existing key to fill IniPosition
+    tempValue$ = ReadSetting$(file$, section$, key$)
+    IF IniCODE > 0 AND IniCODE <> 2 THEN EXIT SUB 'key not found
+
+    'map IniPosition (set in the section block) to the global file position
+    IniPosition = INSTR(IniWholeFile$, IniSectionData$) + IniPosition - 1
+
+    FoundLF = INSTR(IniPosition, IniWholeFile$, IniLF$)
+    IF FoundLF = 0 THEN FoundLF = LEN(IniWholeFile$)
+
+    IniNewFile$ = LEFT$(IniWholeFile$, IniPosition - 1) + MID$(IniWholeFile$, FoundLF + LEN(IniLF$))
+
+    IniCommit
+    IniCODE = 19
+END SUB
+
 SUB IniCommit
     SHARED currentIniFileName$, IniWholeFile$, currentIniFileLOF AS _UNSIGNED LONG
     SHARED IniNewFile$, IniDisableAutoCommit, IniCODE

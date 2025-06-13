@@ -22,22 +22,22 @@ DIM SHARED DisableSyntaxHighlighter AS _BYTE, ExeToSourceFolderFirstTimeMsg AS _
 DIM SHARED WhiteListQB64FirstTimeMsg AS _BYTE
 DIM SHARED WatchListToConsole AS _BYTE
 DIM SHARED windowSettingsSection$, colorSettingsSection$, customDictionarySection$
-DIM SHARED mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$
+DIM SHARED mouseSettingsSection$, generalSettingsSection$, displaySettingsSection$, loggingSettingsSection$
 DIM SHARED colorSchemesSection$, debugSettingsSection$, compilerSettingsSection$, vwatchPanelSection$
 DIM SHARED ConfigFolder$, askToCopyOther AS _BYTE
 DIM SHARED ConfigFile$, DebugFile$, AutosaveFile$, RecentFile$, SearchedFile$, BookmarksFile$, UndoFile$
 DIM SHARED idebaseTcpPort AS LONG, AutoAddDebugCommand AS _BYTE
-DIM SHARED wikiBaseAddress$
+DIM SHARED wikiBaseAddress$, DefaultTerminal$
+DIM SHARED GenerateLicenseFile AS LONG
 DIM SHARED MaxParallelProcesses AS LONG
-DIM SHARED ExtraCppFlags AS STRING, ExtraLinkerFlags AS STRING
+DIM SHARED ExtraCppFlags$, ExtraLinkerFlags$
 DIM SHARED StripDebugSymbols AS LONG
 DIM SHARED OptimizeCppProgram AS LONG
 DIM SHARED IncludeDebugInfo AS LONG
-DIM SHARED GenerateLicenseFile AS LONG
-DIM SHARED UseGuiDialogs AS _UNSIGNED LONG
-DIM SHARED DefaultTerminal AS STRING
-DIM SHARED LoggingEnabled AS _UNSIGNED LONG
 DIM SHARED UseSystemMinGW AS LONG
+DIM SHARED UseGuiDialogs AS _BYTE
+DIM SHARED LoggingEnabled AS _BYTE, LogToConsole AS _BYTE
+DIM SHARED LogMinLevel$, LogScopes$, LogHandlers$, LogFileName$
 
 '===== Define and check settings location =====================================
 ConfigFolder$ = "settings" 'relative config location inside the qb64pe main folder
@@ -63,6 +63,7 @@ generalSettingsSection$ = "GENERAL SETTINGS"
 displaySettingsSection$ = "IDE DISPLAY SETTINGS"
 debugSettingsSection$ = "DEBUG SETTINGS"
 compilerSettingsSection$ = "COMPILER SETTINGS"
+loggingSettingsSection$ = "LOGGING SETTINGS"
 '--- debug.ini
 vwatchPanelSection$ = "VWATCH PANEL" + STR$(tempfolderindex)
 '--- behavior
