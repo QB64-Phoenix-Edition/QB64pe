@@ -38,10 +38,10 @@ if not exist "internal\c\c_compiler\" (
 rem Check the processor type and then set the ARCH variable to the processor type
 rem These values are from https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-processor#properties
 set "ARCH="
-wmic cpu get architecture | find "0" > nul && set ARCH=X86
-wmic cpu get architecture | find "5" > nul && set ARCH=ARM
-wmic cpu get architecture | find "9" > nul && set ARCH=X86
-wmic cpu get architecture | find "12" > nul && set ARCH=ARM
+powershell -c "(Get-WmiObject Win32_Processor).Architecture" | find "0" > nul && set ARCH=X86
+powershell -c "(Get-WmiObject Win32_Processor).Architecture" | find "5" > nul && set ARCH=ARM
+powershell -c "(Get-WmiObject Win32_Processor).Architecture" | find "9" > nul && set ARCH=X86
+powershell -c "(Get-WmiObject Win32_Processor).Architecture" | find "12" > nul && set ARCH=ARM
 
 rem Check if this is an alien processor
 if "%ARCH%" == "" (
@@ -50,7 +50,7 @@ if "%ARCH%" == "" (
 )
 
 rem Check the processor type and then set the BITS variable
-wmic os get osarchitecture | find /i "64-bit" > nul && set BITS=64 || set BITS=32
+powershell -c "(Get-WmiObject Win32_OperatingSystem).OsArchitecture" | find /i "64-bit" > nul && set BITS=64 || set BITS=32
 
 echo %ARCH%-%BITS% platform detected.
 
