@@ -19413,7 +19413,7 @@ FUNCTION ideupdatehelpbox
                 IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 2
-                'Prepend core pages to list (if not already in list)
+                'Place core pages in front of the list (if not already in list)
                 st# = TIMER(0.001)
                 PageName2$ = "QB64_FAQ.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
@@ -19437,7 +19437,7 @@ FUNCTION ideupdatehelpbox
                 IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 3
-                'Download and PARSE alphabetical index to build required F1 help links
+                'Download and parse alphabetical index to build required F1 help links
                 st# = TIMER(0.001)
                 a$ = Wiki$("Keyword Reference - Alphabetical")
                 IF INSTR(a$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO

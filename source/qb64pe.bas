@@ -925,12 +925,12 @@ IF C = 9 THEN 'run
         END IF
     ELSEIF os$ = "WIN" THEN
         IF GetRCStateVar(ConsoleOn) > 0 OR LogToConsole THEN
-            PrePend$ = "cmd /c"
+            prefix$ = "cmd /c " + _CHR_QUOTE: suffix$ = _IIF(LogToConsole, _CHR_QUOTE + " & pause", _CHR_QUOTE)
         ELSE
-            PrePend$ = ""
+            prefix$ = "": suffix$ = ""
         END IF
 
-        ExecuteLine$ = PrePend$ + QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$
+        ExecuteLine$ = prefix$ + QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$ + suffix$
     ELSEIF os$ = "LNX" THEN
         IF path.exe$ = "" THEN path.exe$ = "./"
 
