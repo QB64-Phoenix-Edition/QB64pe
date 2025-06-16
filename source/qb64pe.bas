@@ -920,6 +920,7 @@ IF C = 9 THEN 'run
             ' Spawning a program in a terminal is done via `open`.
             ' We have to use a separate script to be able to set environment variables for the program
             ExecuteLine$ = "open -b com.apple.terminal " + _CHR_QUOTE + tmpdir$ + "log.command" + _CHR_QUOTE
+            ExecuteLine$ = ExecuteLine$ + _IIF(LogToConsole, " && read -rsn1 -p 'Press any key...'; echo", "")
         ELSE
             ExecuteLine$ = QuotedFilename$(ExecuteName$) + ModifyCOMMAND$
         END IF
@@ -944,6 +945,7 @@ IF C = 9 THEN 'run
             END IF
 
             ExecuteLine$ = StrReplace$(ExecuteLine$, "$@", ModifyCOMMAND$)
+            ExecuteLine$ = ExecuteLine$ + _IIF(LogToConsole, " && read -rsn1 -p 'Press any key...'; echo", "")
         ELSE
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
                 ExecuteLine$ = QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
