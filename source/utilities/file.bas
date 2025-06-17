@@ -1,13 +1,13 @@
 '
 ' Duplicates the contents of one file into another
 '
-' Returns: 0 on success, 1 on error
+' Returns: 0 on success, -1 error reading source
+'                         1 error writing destination
 FUNCTION CopyFile& (sourceFile$, destFile$)
-    E = 0
 
     ON ERROR GOTO _NEWHANDLER qberror_test
-    dat$ = _READFILE$(sourceFile$)
-    IF E = 0 THEN _WRITEFILE destFile$, dat$
+    E = 0: dat$ = _READFILE$(sourceFile$)
+    IF E = 0 THEN _WRITEFILE destFile$, dat$ ELSE E = -1
     ON ERROR GOTO _LASTHANDLER
 
     CopyFile& = E
@@ -16,7 +16,7 @@ END FUNCTION
 '
 ' Splits the filename from its path, and returns the path
 '
-' Returns: The path, or empty if no path
+' Returns: The path + trailing separator, or empty if no path
 FUNCTION getfilepath$ (f$)
     FOR i = LEN(f$) TO 1 STEP -1
         a$ = MID$(f$, i, 1)

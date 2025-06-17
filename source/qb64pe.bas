@@ -200,7 +200,9 @@ REDIM SHARED separgslayout2(OptMax + 1) AS STRING
 
 
 
-
+'E is used with the 'qberror_test' handler. If the handler is called (i.e. when an error
+'occures), then E is simply set to 1. Properly resetting E to 0 prior error testing is
+'up to the code which uses the 'qberror_test' handler for checking.
 DIM SHARED E
 
 
@@ -887,11 +889,15 @@ IF C = 9 THEN 'run
     'execute program
 
     IF LoggingEnabled THEN
-        ENVIRON "QB64PE_LOG_HANDLERS=console"
-        ENVIRON "QB64PE_LOG_SCOPES=qb64,libqb,libqb-image,libqb-audio"
+        ENVIRON "QB64PE_LOG_LEVEL=" + LogMinLevel$
+        ENVIRON "QB64PE_LOG_SCOPES=" + LogScopes$
+        ENVIRON "QB64PE_LOG_HANDLERS=" + LogHandlers$
+        ENVIRON "QB64PE_LOG_FILE_PATH=" + LogFileName$
     ELSE
-        ENVIRON "QB64PE_LOG_HANDLERS="
+        ENVIRON "QB64PE_LOG_LEVEL="
         ENVIRON "QB64PE_LOG_SCOPES="
+        ENVIRON "QB64PE_LOG_HANDLERS="
+        ENVIRON "QB64PE_LOG_FILE_PATH="
     END IF
 
     ExecuteLine$ = ""
@@ -907,30 +913,30 @@ IF C = 9 THEN 'run
 
         IF path.exe$ = "./" THEN path.exe$ = ""
 
-        IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
-            IF LoggingEnabled THEN handler$ = "console" ELSE handler$ = ""
+        IF GetRCStateVar(ConsoleOn) > 0 OR LoggingEnabled THEN 'needed for all handlers, hence LoggingEnabled instead LogToConsole
 
-            generateMacOSLogScript ExecuteName$, handler$, "qb64,libqb,libqb-image,libqb-audio", ModifyCOMMAND$, tmpdir$ + "log.command"
+            generateMacOSLogScript ExecuteName$, ModifyCOMMAND$, tmpdir$ + "log.command"
 
             ' Spawning a program in a terminal is done via `open`.
             ' We have to use a separate script to be able to set environment variables for the program
             ExecuteLine$ = "open -b com.apple.terminal " + _CHR_QUOTE + tmpdir$ + "log.command" + _CHR_QUOTE
+            ExecuteLine$ = ExecuteLine$ + _IIF(LogToConsole, " && read -rsn1 -p 'Press any key...'; echo", "")
         ELSE
             ExecuteLine$ = QuotedFilename$(ExecuteName$) + ModifyCOMMAND$
         END IF
     ELSEIF os$ = "WIN" THEN
-        IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
-            PrePend$ = "cmd /c"
+        IF GetRCStateVar(ConsoleOn) > 0 OR LogToConsole THEN
+            prefix$ = "cmd /c " + _CHR_QUOTE: suffix$ = _IIF(LogToConsole, _CHR_QUOTE + " & pause", _CHR_QUOTE)
         ELSE
-            PrePend$ = ""
+            prefix$ = "": suffix$ = ""
         END IF
 
-        ExecuteLine$ = PrePend$ + QuotedFilename$(CHR$(34) + lastBinaryGenerated$ + CHR$(34)) + ModifyCOMMAND$
+        ExecuteLine$ = prefix$ + QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$ + suffix$
     ELSEIF os$ = "LNX" THEN
         IF path.exe$ = "" THEN path.exe$ = "./"
 
-        IF GetRCStateVar(ConsoleOn) OR LoggingEnabled THEN
-            ExecuteLine$ = DefaultTerminal
+        IF GetRCStateVar(ConsoleOn) > 0 OR LogToConsole THEN
+            ExecuteLine$ = DefaultTerminal$
 
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
                 ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(lastBinaryGenerated$))
@@ -939,6 +945,7 @@ IF C = 9 THEN 'run
             END IF
 
             ExecuteLine$ = StrReplace$(ExecuteLine$, "$@", ModifyCOMMAND$)
+            ExecuteLine$ = ExecuteLine$ + _IIF(LogToConsole, " && read -rsn1 -p 'Press any key...'; echo", "")
         ELSE
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
                 ExecuteLine$ = QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
@@ -5180,7 +5187,7 @@ DO
             WriteBufLine MainTxtBuf, "sf_mem_lock=mem_lock_tmp;"
             WriteBufLine MainTxtBuf, "sf_mem_lock->type=3;"
 
-            IF GetRCStateVar(vWatchOn) = 1 THEN
+            IF GetRCStateVar(vWatchOn) THEN
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL+ 1 ;"
                 IF subfunc <> "SUB_VWATCH" THEN
                     inclinenump$ = ""
@@ -5320,14 +5327,14 @@ DO
                 l$ = SCase$("End") + sp + secondelement$
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
-                IF GetRCStateVar(vWatchOn) = 1 THEN
+                IF GetRCStateVar(vWatchOn) THEN
                     vWatchVariable "", 1
                 END IF
 
                 staticarraylist = "": staticarraylistn = 0 'remove previously listed arrays
                 dimstatic = 0
                 WriteBufLine MainTxtBuf, "exit_subfunc:;"
-                IF GetRCStateVar(vWatchOn) = 1 THEN
+                IF GetRCStateVar(vWatchOn) THEN
                     IF CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
                         vWatchAddLabel linenumber, 0
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -8916,7 +8923,7 @@ DO
         END IF
 
 
-        IF GetRCStateVar(vWatchOn) = 1 THEN
+        IF GetRCStateVar(vWatchOn) THEN
             IF inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
             END IF
@@ -10149,12 +10156,12 @@ DO
                     NEXT
                     IF numvar = 0 THEN a$ = "Syntax error - Reference: INPUT [;] " + CHR$(34) + "[Question or statement text]" + CHR$(34) + "{,|;} variable[, ...] or INPUT ; variable[, ...]": GOTO errmes
                     IF lineinput = 1 AND numvar > 1 THEN a$ = "Too many variables": GOTO errmes
-                    IF GetRCStateVar(vWatchOn) = 1 THEN
+                    IF GetRCStateVar(vWatchOn) THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                     WriteBufLine MainTxtBuf, "qbs_input(" + _TOSTR$(numvar) + "," + _TOSTR$(newline) + ");"
                     WriteBufLine MainTxtBuf, "if (stop_program) end();"
-                    IF GetRCStateVar(vWatchOn) = 1 THEN
+                    IF GetRCStateVar(vWatchOn) THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                     WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
@@ -11184,7 +11191,7 @@ DO
                 subcall$ = subcall$ + ");"
 
                 IF firstelement$ = "SLEEP" THEN
-                    IF GetRCStateVar(vWatchOn) = 1 THEN
+                    IF GetRCStateVar(vWatchOn) THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                 END IF
@@ -11192,7 +11199,7 @@ DO
                 WriteBufLine MainTxtBuf, subcall$
 
                 IF firstelement$ = "SLEEP" THEN
-                    IF GetRCStateVar(vWatchOn) = 1 THEN
+                    IF GetRCStateVar(vWatchOn) THEN
                         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                 END IF
@@ -11258,7 +11265,7 @@ DO
 
     IF inputfunctioncalled THEN
         inputfunctioncalled = 0
-        IF GetRCStateVar(vWatchOn) = 1 THEN
+        IF GetRCStateVar(vWatchOn) THEN
             WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
     END IF
@@ -11866,7 +11873,7 @@ IF ResizeScale THEN
     WriteBufLine bh, "ScreenResizeScale=" + _TOSTR$(ResizeScale) + ";"
 END IF
 
-IF GetRCStateVar(vWatchOn) = 1 THEN
+IF GetRCStateVar(vWatchOn) THEN
     vWatchVariable "", 1
 END IF
 
@@ -12329,8 +12336,8 @@ IF ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
 
     ' Copy icon file into temp directory with known name
     ' This solves the problem of the resource file needing an absolute path
-    errNo = CopyFile&(ExeIconFile$, tmpdir$ + "icon.ico")
-    IF errNo <> 0 THEN a$ = "Error copying " + QuotedFilename$(ExeIconFile$) + " to temp directory": GOTO errmes
+    fail = CopyFile&(ExeIconFile$, tmpdir$ + "icon.ico")
+    IF fail THEN a$ = "Error copying " + QuotedFilename$(ExeIconFile$) + " to temp directory": GOTO errmes
 END IF
 
 IF VersionInfoSet THEN
@@ -12420,8 +12427,8 @@ WriteBuffers ""
 
 IF FormatMode THEN
     'Move temp file to final location
-    errNo = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$)
-    IF errNo <> 0 THEN a$ = "Error saving formatted output to " + path.exe$ + file$: GOTO errmes
+    fail = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$)
+    IF fail THEN a$ = "Error saving formatted output to " + path.exe$ + file$: GOTO errmes
     GOTO NoCCompile
 END IF
 
@@ -12497,8 +12504,8 @@ IF DEPENDENCY(DEPENDENCY_MINIAUDIO) THEN makedeps$ = makedeps$ + " DEP_AUDIO_MIN
 
 IF tempfolderindex > 1 THEN makedeps$ = makedeps$ + " TEMP_ID=" + _TOSTR$(tempfolderindex)
 
-CxxFlagsExtra$ = ExtraCppFlags
-CxxLibsExtra$ = ExtraLinkerFlags
+CxxFlagsExtra$ = ExtraCppFlags$
+CxxLibsExtra$ = ExtraLinkerFlags$
 
 ' If debugging then use `-Og` rather than `-O2`
 IF OptimizeCppProgram THEN
@@ -13277,9 +13284,9 @@ FUNCTION ParseCMDLineArgs$ ()
                     CASE ":stripdebugsymbols"
                         IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":extracppflags"
-                        IF NOT ParseStringSetting&(token$, ExtraCppFlags) THEN CMDLineSettingsError token$, 1, 1
+                        IF NOT ParseStringSetting&(token$, ExtraCppFlags$) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":extralinkerflags"
-                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags) THEN CMDLineSettingsError token$, 1, 1
+                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags$) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":maxcompilerprocesses"
                         IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN CMDLineSettingsError token$, 1, 1
                         IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN CMDLineSettingsError "MaxCompilerProcesses must be in range 1-128.", 0, 1
@@ -16491,7 +16498,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     IF RTRIM$(id2.callname) = "func_stub" THEN Give_Error "Command not implemented": EXIT FUNCTION
     IF RTRIM$(id2.callname) = "func_input" AND args = 1 AND inputfunctioncalled = 0 THEN
         inputfunctioncalled = -1
-        IF GetRCStateVar(vWatchOn) = 1 THEN
+        IF GetRCStateVar(vWatchOn) THEN
             WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
     END IF
@@ -22552,7 +22559,7 @@ FUNCTION validlabel (LABEL2$)
 END FUNCTION
 
 SUB xend
-    IF GetRCStateVar(vWatchOn) = 1 THEN
+    IF GetRCStateVar(vWatchOn) THEN
         'check if closedmain = 0 in case a main module ends in an include.
         IF (inclinenumber(inclevel) = 0 OR closedmain = 0) THEN vWatchAddLabel 0, -1
         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"

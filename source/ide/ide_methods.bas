@@ -260,7 +260,6 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "#Line Numbers  " + CHR$(16): i = i + 1
         menuDesc$(m, i - 1) = "Toggles and customizes line numbers (side bar)"
         menu$(m, i) = "-": i = i + 1
-
         ViewMenuCompilerWarnings = i
         menu$(ViewMenuID, ViewMenuCompilerWarnings) = "Compiler #Warnings...  Ctrl+W": i = i + 1
         menuDesc$(m, i - 1) = "Displays a list of recent code warnings"
@@ -278,7 +277,6 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "Clear Search #History...": i = i + 1
         menuDesc$(m, i - 1) = "Clears history of searched text items"
         menu$(m, i) = "-": i = i + 1
-
         SearchMenuEnableQuickNav = i
         menu$(m, i) = "#Quick Navigation": i = i + 1
         menuDesc$(m, i - 1) = "Toggles Quick Navigation (back arrow)"
@@ -295,26 +293,21 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "#Go To Line...  Ctrl+G": i = i + 1
         menuDesc$(m, i - 1) = "Jumps to the specified line number"
-
         menusize(m) = i - 1
 
         m = m + 1: i = 0: RunMenuID = m
         menu$(m, i) = "Run": i = i + 1
         menu$(m, i) = "#Start  F5": i = i + 1
-        menuDesc$(m, i - 1) = "Compiles current program and runs it"
+        menuDesc$(m, i - 1) = "Compile program, save the executable and run it"
         menu$(m, i) = "Run #Only (No EXE)": i = i + 1
-        menuDesc$(m, i - 1) = "Runs current program without compiling"
-        menu$(m, i) = "Modify #COMMAND$...": i = i + 1
-        menuDesc$(m, i - 1) = "Sets string returned by COMMAND$ function"
-        menu$(m, i) = "-": i = i + 1
-
-        LoggingEnableMenu = i
-        menu$(m, i) = "Display #Logging Output": i = i + 1
-        menuDesc$(m, i - 1) = "Turns on logging output and displays it in a console window"
-        IF LoggingEnabled THEN
-            menu$(RunMenuID, LoggingEnableMenu) = CHR$(7) + menu$(RunMenuID, LoggingEnableMenu)
+        menuDesc$(m, i - 1) = "Compile and run program without saving an executable"
+        IF os$ = "LNX" THEN
+            menu$(m, i) = "Make E#xecutable Only  F11": i = i + 1
+        ELSE
+            menu$(m, i) = "Make E#XE Only  F11": i = i + 1
         END IF
-
+        menuDesc$(m, i - 1) = "Compile program, save the executable but don't run it"
+        menu$(m, i) = "-": i = i + 1
         RunMenuSaveExeWithSource = i
         menu$(m, i) = "Output EXE to Source #Folder": i = i + 1
         menuDesc$(m, i - 1) = "Toggles compiling program to QB64-PE's folder or to source folder"
@@ -327,18 +320,15 @@ FUNCTION ide2 (ignore)
         IF GenerateLicenseFile THEN
             menu$(RunMenuID, GenerateLicenseEnableMenu) = CHR$(7) + menu$(RunMenuID, GenerateLicenseEnableMenu)
         END IF
+        menu$(m, i) = "-": i = i + 1
+        menu$(m, i) = "Modify #COMMAND$...": i = i + 1
+        menuDesc$(m, i - 1) = "Sets string returned by COMMAND$ function"
         IF os$ = "LNX" AND MacOSX = 0 THEN
-            menu$(m, i) = "Change #Terminal": i = i + 1
+            menu$(m, i) = "Change #Terminal...": i = i + 1
             menuDesc$(m, i - 1) = "Configure the terminal used for $CONSOLE and logging output"
         END IF
-        menu$(m, i) = "-": i = i + 1
-
-        IF os$ = "LNX" THEN
-            menu$(m, i) = "Make E#xecutable Only  F11": i = i + 1
-        ELSE
-            menu$(m, i) = "Make E#XE Only  F11": i = i + 1
-        END IF
-        menuDesc$(m, i - 1) = "Compiles current program without running it"
+        menu$(m, i) = "Configure #Logging...": i = i + 1
+        menuDesc$(m, i - 1) = "Configure logging options used when running a program from the IDE"
         menusize(m) = i - 1
 
         m = m + 1: i = 0: DebugMenuID = m
@@ -395,53 +385,40 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "#Undo/History...": i = i + 1
         menuDesc$(m, i - 1) = "Sets limits for Backup/Undo, Recent Files and Search String histories"
         menu$(m, i) = "-": i = i + 1
-
         OptionsMenuDisableSyntax = i
         menu$(m, i) = "Syntax #Highlighter": i = i + 1
         menuDesc$(m, i - 1) = "Toggles syntax highlighter"
         IF NOT DisableSyntaxHighlighter THEN
             menu$(OptionsMenuID, OptionsMenuDisableSyntax) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuDisableSyntax)
         END IF
-
         OptionsMenuSwapMouse = i
         menu$(m, i) = "#Swap Mouse Buttons": i = i + 1
         menuDesc$(m, i - 1) = "Swaps functionality of left/right mouse buttons"
         IF MouseButtonSwapped THEN
             menu$(OptionsMenuID, OptionsMenuSwapMouse) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuSwapMouse)
         END IF
-
         OptionsMenuPasteCursor = i
         menu$(m, i) = "Cursor After #Paste": i = i + 1
         menuDesc$(m, i - 1) = "Toggles placing the cursor before/after the pasted content"
         IF PasteCursorAtEnd THEN
             menu$(OptionsMenuID, OptionsMenuPasteCursor) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuPasteCursor)
         END IF
-
         OptionsMenuShowErrorsImmediately = i
         menu$(m, i) = "Syntax Ch#ecker": i = i + 1
         menuDesc$(m, i - 1) = "Toggles instant syntax checker (status area)"
         IF IDEShowErrorsImmediately THEN
             menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately)
         END IF
-
         OptionsMenuIgnoreWarnings = i
         menu$(m, i) = "Ignore #Warnings": i = i + 1
         menuDesc$(m, i - 1) = "Toggles display of warning messages (unused variables, etc)"
         IF IgnoreWarnings THEN menu$(OptionsMenuID, OptionsMenuIgnoreWarnings) = CHR$(7) + "Ignore #Warnings"
-
         OptionsMenuGuiDialogs = i
         menu$(m, i) = "#GUI Dialogs": i = i + 1
         menuDesc$(m, i - 1) = "Uses GUI-based File Dialog Windows"
         IF UseGuiDialogs THEN
             menu$(OptionsMenuID, i - 1) = CHR$(7) + menu$(OptionsMenuID, i - 1)
         END IF
-
-
-        'OptionsMenuAutoComplete = i
-        'menu$(m, i) = "Code Suggest#ions": i = i + 1
-        'menuDesc$(m, i - 1) = "Toggles code suggestions/auto-complete"
-        'IF IdeAutoComplete THEN menu$(OptionsMenuID, OptionsMenuAutoComplete) = CHR$(7) + "Code Suggest#ions"
-
         menusize(m) = i - 1
 
         m = m + 1: i = 0
@@ -478,8 +455,6 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "View Current Page On #Wiki": i = i + 1
         menuDesc$(m, i - 1) = "Opens the current article on the Wiki using your standard browser"
         menu$(m, i) = "-": i = i + 1
-        'menu$(m, i) = "Check for #Newer Version...": i = i + 1
-        'menuDesc$(m, i - 1) = "Displays the current version of QB64-PE"
         menu$(m, i) = "#About...": i = i + 1
         menuDesc$(m, i - 1) = "Displays the current version of QB64-PE"
         menusize(m) = i - 1
@@ -935,7 +910,7 @@ FUNCTION ide2 (ignore)
                 IF SaveExeWithSource THEN
                     COLOR 11, 1
                     location$ = lastBinaryGenerated$
-                    IF path.exe$ = "" THEN location$ = _STARTDIR$ + pathsep$ + location$
+                    IF path.exe$ = "" THEN location$ = _STARTDIR$ + location$
                     msg$ = "Location: " + location$
                     IF 2 + LEN(msg$) > idewx THEN
                         msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
@@ -1704,7 +1679,6 @@ FUNCTION ide2 (ignore)
                         CASE 4
                             '4- Link to Warnings dialog:
                             retval = idewarningbox
-                            'retval is ignored
                             PCOPY 3, 0: SCREEN , , 3, 0
                             GOTO specialchar
                     END SELECT
@@ -1843,7 +1817,7 @@ FUNCTION ide2 (ignore)
 
                         COLOR 11, 1
                         location$ = lastBinaryGenerated$
-                        IF path.exe$ = "" THEN location$ = _STARTDIR$ + pathsep$ + location$
+                        IF path.exe$ = "" THEN location$ = _STARTDIR$ + location$
                         msg$ = "Location: " + location$
                         IF 2 + LEN(msg$) > idewx THEN
                             msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
@@ -3477,7 +3451,6 @@ FUNCTION ide2 (ignore)
                 ideselect = 0
             ELSE
                 idegotobox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
             END IF
             GOTO specialchar
@@ -3543,7 +3516,6 @@ FUNCTION ide2 (ignore)
         IF KCONTROL AND UCASE$(K$) = "W" THEN 'goto line
             IF totalWarnings > 0 THEN
                 retval = idewarningbox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO specialchar
             ELSE
@@ -5095,7 +5067,7 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "IDE C#olors..." THEN
                 PCOPY 2, 0
                 HideBracketHighlight
-                retval = idechoosecolorsbox 'retval is ignored
+                retval = idechoosecolorsbox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5106,7 +5078,7 @@ FUNCTION ide2 (ignore)
                 KeywordHighlight = _FALSE
                 HideBracketHighlight
                 KeywordHighlight = oldKeywordHighlight
-                retval$ = idergbmixer$(-1) 'retval is ignored
+                retval$ = idergbmixer$(-1)
                 IF LEN(retval$) THEN insertAtCursor retval$
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -5210,23 +5182,6 @@ FUNCTION ide2 (ignore)
             END IF
 
 
-
-
-            IF MID$(menu$(m, s), 1) = "Display #Logging Output" OR MID$(menu$(m, s), 2) = "Display #Logging Output" THEN
-                PCOPY 2, 0
-                LoggingEnabled = NOT LoggingEnabled
-                WriteConfigSetting generalSettingsSection$, "LoggingEnabled", BoolToTFString$(LoggingEnabled)
-
-                IF LoggingEnabled THEN
-                    menu$(RunMenuID, LoggingEnableMenu) = CHR$(7) + "Display #Logging Output"
-                ELSE
-                    menu$(RunMenuID, LoggingEnableMenu) = "Display #Logging Output"
-                END IF
-
-                PCOPY 3, 0: SCREEN , , 3, 0
-                GOTO ideloop
-            END IF
-
             IF RIGHT$(menu$(m, s), 28) = "Output EXE to Source #Folder" THEN
                 PCOPY 2, 0
                 SaveExeWithSource = NOT SaveExeWithSource
@@ -5257,12 +5212,16 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF menu$(m, s) = "Change #Terminal" THEN
+            IF menu$(m, s) = "Change #Terminal..." THEN
                 PCOPY 2, 0
+                retval = ideTerminalBox
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
 
-                ideTerminalBox
-
-                'retval is ignored
+            IF menu$(m, s) = "Configure #Logging..." THEN
+                PCOPY 2, 0
+                retval = ideLoggingBox
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -5786,7 +5745,6 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "Compiler #Warnings...  Ctrl+W" THEN
                 PCOPY 2, 0
                 retval = idewarningbox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -6081,7 +6039,6 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 ModifyCOMMAND$ = " " + ideinputbox$("Modify COMMAND$", "#Enter text for COMMAND$", _TRIM$(ModifyCOMMAND$), "", 60, 0, 0)
                 IF _TRIM$(ModifyCOMMAND$) = "" THEN ModifyCOMMAND$ = ""
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
@@ -6188,7 +6145,6 @@ FUNCTION ide2 (ignore)
                     PCOPY 2, 0
                     showCallStackDialog:
                     retval = idecallstackbox
-                    'retval is ignored
                     PCOPY 3, 0: SCREEN , , 3, 0
                     GOTO ideloop
                 END IF
@@ -11347,8 +11303,8 @@ SUB idedrawobj (o AS idedbotype, f)
     IF o.typ = 4 THEN
         IF o.x = 0 THEN o.x = 2
         x = o.par.x + o.x: y = o.par.y + o.y
+        IF o.inv THEN COLOR 4, 7 ELSE COLOR 0, 7
         LOCATE y, x
-        COLOR 0, 7
         IF o.sel THEN
             PRINT "[X] ";
         ELSE
@@ -12194,8 +12150,14 @@ FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
 
     '-------- init --------
     path$ = idepath$
-    IF mode = 3 THEN 'font select mode
+    IF mode = 3 THEN 'font selector
         path$ = _DIR$("Fonts"): AllFiles = 1
+        path$ = LEFT$(path$, LEN(path$) - 1)
+    ELSEIF mode = 4 THEN 'logfile selector
+        oprg$ = programname$: AllFiles = 1
+        path$ = ideztakepath$(programname$)
+    END IF
+    IF RIGHT$(path$, 1) = "/" OR RIGHT$(path$, 1) = "\" THEN
         path$ = LEFT$(path$, LEN(path$) - 1)
     END IF
     filelist$ = idezfilelist$(path$, AllFiles, "")
@@ -12208,6 +12170,8 @@ FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
         idepar p, 70, idewy + idesubwindow - 7, "Save As"
     ELSEIF mode = 3 THEN
         idepar p, 70, idewy + idesubwindow - 7, "Choose a custom font"
+    ELSEIF mode = 4 THEN
+        idepar p, 70, idewy + idesubwindow - 7, "Save logging to"
     END IF
     i = i + 1
     PrevFocus = 1
@@ -12386,6 +12350,9 @@ FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
 
         IF K$ = CHR$(27) OR (focus = 7 AND info <> 0) THEN
             idefiledialog$ = "C"
+            IF mode = 4 THEN 'logfile mode
+                programname$ = oprg$ 'restore to avoid argument side effect
+            END IF
             EXIT FUNCTION
         END IF
 
@@ -12484,7 +12451,7 @@ FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
             path$ = RemoveDoubleSlashes$(idezgetfilepath$(path$, f$)) 'repeat in case of DirectLoad
             IF ideerror > 1 THEN EXIT FUNCTION
 
-            IF mode = 1 THEN
+            IF mode = 1 THEN 'load mode
                 IF _FILEEXISTS(path$ + idepathsep$ + f$) = 0 THEN
                     'add .bas if not given
                     IF (LCASE$(RIGHT$(f$, 4)) <> ".bas") AND AllFiles = 0 THEN f$ = f$ + ".bas"
@@ -12555,7 +12522,7 @@ FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
                 AddToHistory "RECENT", idepath$ + idepathsep$ + ideprogname$
                 IdeImportBookmarks idepath$ + idepathsep$ + ideprogname$
                 EXIT FUNCTION
-            ELSEIF mode = 2 THEN
+            ELSEIF mode = 2 THEN 'save mode
                 IF FileHasExtension(f$) = 0 THEN f$ = f$ + ".bas"
 
                 ideerror = 3
@@ -12577,8 +12544,12 @@ FUNCTION idefiledialog$ (programname$, mode AS _BYTE)
                 AddToHistory "RECENT", idepath$ + idepathsep$ + ideprogname$
                 IdeSaveBookmarks idepath$ + idepathsep$ + ideprogname$
                 EXIT FUNCTION
-            ELSEIF mode = 3 THEN
+            ELSEIF mode = 3 THEN 'font mode
                 idefiledialog$ = path$ + idepathsep$ + f$
+                EXIT FUNCTION
+            ELSEIF mode = 4 THEN 'logfile mode
+                idefiledialog$ = path$ + idepathsep$ + f$
+                programname$ = oprg$ 'restore to avoid argument side effect
                 EXIT FUNCTION
             END IF
         END IF
@@ -15253,14 +15224,12 @@ FUNCTION ideLayoutBox
         END IF
         'auto indent size spinners
         IF focus = aisSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(aisBox).txt)) + 1)
-            IF VAL(a$) > 64 THEN a$ = "64"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(aisBox).txt)) + 1, 1, 64))
             idetxt(o(aisBox).txt) = a$: o(aisBox).v1 = LEN(a$)
             o(aiChk).sel = 1 'implies auto indent on
         END IF
         IF focus = aisSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(aisBox).txt)) - 1)
-            IF VAL(a$) < 1 THEN a$ = "1"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(aisBox).txt)) - 1, 1, 64))
             idetxt(o(aisBox).txt) = a$: o(aisBox).v1 = LEN(a$)
             o(aiChk).sel = 1 'implies auto indent on
         END IF
@@ -15498,13 +15467,11 @@ FUNCTION ideLimitsBox
         '-------- custom input response --------
         'backupsize spinners
         IF focus = mbsSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mbsBox).txt)) + 5)
-            IF VAL(a$) > 2000 THEN a$ = "2000"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mbsBox).txt)) + 5, 10, 2000))
             idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
         IF focus = mbsSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mbsBox).txt)) - 5)
-            IF VAL(a$) < 10 THEN a$ = "10"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mbsBox).txt)) - 5, 10, 2000))
             idetxt(o(mbsBox).txt) = a$: o(mbsBox).v1 = LEN(a$)
         END IF
         'backupsize text box (valid data check)
@@ -15514,13 +15481,11 @@ FUNCTION ideLimitsBox
 
         'recent files spinners
         IF focus = mrfSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mrfBox).txt)) + 1)
-            IF VAL(a$) > 200 THEN a$ = "200"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mrfBox).txt)) + 1, 5, 200))
             idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
         END IF
         IF focus = mrfSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mrfBox).txt)) - 1)
-            IF VAL(a$) < 5 THEN a$ = "5"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mrfBox).txt)) - 1, 5, 200))
             idetxt(o(mrfBox).txt) = a$: o(mrfBox).v1 = LEN(a$)
         END IF
         'recent files text box (valid data check)
@@ -15530,13 +15495,11 @@ FUNCTION ideLimitsBox
 
         'search strings spinners
         IF focus = mssSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mssBox).txt)) + 1)
-            IF VAL(a$) > 200 THEN a$ = "200"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mssBox).txt)) + 1, 5, 200))
             idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
         END IF
         IF focus = mssSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mssBox).txt)) - 1)
-            IF VAL(a$) < 5 THEN a$ = "5"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mssBox).txt)) - 1, 5, 200))
             idetxt(o(mssBox).txt) = a$: o(mssBox).v1 = LEN(a$)
         END IF
         'search strings text box (valid data check)
@@ -15664,13 +15627,13 @@ FUNCTION ideCompilerSettingsBox
     i = i + 1: ecfBox = i
     o(i).typ = 1 'text box
     o(i).y = 6
-    o(i).nam = idenewtxt("C++ Compiler #Flags")
-    o(i).txt = idenewtxt(ExtraCppFlags): o(i).v1 = LEN(ExtraCppFlags)
+    o(i).nam = idenewtxt("C++ Compiler #Flags"): a2$ = ExtraCppFlags$
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
     i = i + 1: elfBox = i
     o(i).typ = 1 'text box
     o(i).y = 9
-    o(i).nam = idenewtxt("C++ #Linker Flags")
-    o(i).txt = idenewtxt(ExtraLinkerFlags): o(i).v1 = LEN(ExtraLinkerFlags)
+    o(i).nam = idenewtxt("C++ #Linker Flags"): a2$ = ExtraLinkerFlags$
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
 
     i = i + 1: mppBox = i
     o(i).typ = 1 'text box
@@ -15784,13 +15747,11 @@ FUNCTION ideCompilerSettingsBox
         '-------- custom input response --------
         'max. processes spinners
         IF focus = mppSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mppBox).txt)) + 1)
-            IF VAL(a$) > 128 THEN a$ = "128"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mppBox).txt)) + 1, 1, 128))
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         IF focus = mppSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(mppBox).txt)) - 1)
-            IF VAL(a$) < 1 THEN a$ = "1"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(mppBox).txt)) - 1, 1, 128))
             idetxt(o(mppBox).txt) = a$: o(mppBox).v1 = LEN(a$)
         END IF
         'max. processes text box (valid data check)
@@ -15828,12 +15789,6 @@ FUNCTION ideCompilerSettingsBox
             IF os$ = "WIN" THEN
                 v% = o(uscChk).sel: IF v% <> 0 THEN v% = _TRUE
                 IF UseSystemMinGW <> v% THEN UseSystemMinGW = v%: optChg% = _TRUE
-
-                ' Show a warning if the user is using the system MinGW compiler
-                IF UseSystemMinGW _ANDALSO optChg% THEN
-                    retval = idemessagebox("Warning", "Using the system MinGW compiler may cause problems.", "#OK")
-                    PCOPY 2, 1
-                END IF
             END IF
 
             IF optChg% THEN
@@ -15849,6 +15804,10 @@ FUNCTION ideCompilerSettingsBox
 
                 IF os$ = "WIN" THEN
                     WriteConfigSetting compilerSettingsSection$, "UseSystemMinGW", BoolToTFString$(UseSystemMinGW)
+                    IF UseSystemMinGW THEN
+                        retval = idemessagebox("Warning", "Using the system MinGW compiler may cause problems.", "#OK")
+                        PCOPY 2, 1
+                    END IF
                 END IF
 
                 'clean compiled files, since they may change due to the different settings
@@ -15865,7 +15824,7 @@ FUNCTION ideCompilerSettingsBox
     LOOP
 END FUNCTION
 
-SUB ideTerminalBox
+FUNCTION ideLoggingBox
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -15878,56 +15837,124 @@ SUB ideTerminalBox
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
-    '-------- init --------
-
+    '-------- init dialog box & objects --------
     i = 0
+    idepar p, 55, 17, "Logging Configuration"
 
-    idepar p, 60, 7, "Default Terminal"
+    i = i + 1: lvlBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 2: o(i).w = 9
+    o(i).nam = idenewtxt("#Level"): a2$ = _IIF(LogMinLevel$ = "Trace", "1", _
+                                          _IIF(LogMinLevel$ = "Information", "2", _
+                                          _IIF(LogMinLevel$ = "Warning", "3", _
+                                          _IIF(LogMinLevel$ = "Error", "4", "5"))))
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
+    i = i + 1: lvlSymUp = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 15: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 5
+    i = i + 1: lvlSymDn = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 18: o(i).y = 2
+    o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 5
 
-    i = i + 1
-    PrevFocus = 1
-    o(i).typ = 1
-    o(i).y = 2
-    o(i).nam = idenewtxt("Terminal Command")
-    o(i).txt = idenewtxt(DefaultTerminal)
-    o(i).sx1 = 0
-    o(i).v1 = LEN(DefaultTerminal)
-
-    i = i + 1
-    o(i).typ = 3
+    i = i + 1: prgChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 6
+    o(i).nam = idenewtxt("QB64 user #program _LOG.. statements (qb64)")
+    o(i).sel = ABS(INSTR("," + LogScopes$ + ",", ",qb64,") > 0)
+    i = i + 1: libChk = i
+    o(i).typ = 4 'check box
     o(i).y = 7
-    o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    o(i).dft = 1
-    '-------- end of init --------
+    o(i).nam = idenewtxt("QB64 C++ #general runtime internals  (libqb)")
+    o(i).sel = ABS(INSTR("," + LogScopes$ + ",", ",libqb,") > 0)
+    i = i + 1: audChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 8
+    o(i).nam = idenewtxt("QB64 C++ #audio subsystem internals  (libqb-audio)")
+    o(i).sel = ABS(INSTR("," + LogScopes$ + ",", ",libqb-audio,") > 0)
+    i = i + 1: imgChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 9
+    o(i).nam = idenewtxt("QB64 C++ #image subsystem internals  (libqb-image)")
+    o(i).sel = ABS(INSTR("," + LogScopes$ + ",", ",libqb-image,") > 0)
+
+    i = i + 1: conChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 4: o(i).y = 13
+    o(i).nam = idenewtxt("Console #Window")
+    o(i).sel = ABS(INSTR("," + LogHandlers$ + ",", ",console,") > 0)
+    i = i + 1: filChk = i
+    o(i).typ = 4 'check box
+    o(i).x = 26: o(i).y = 13
+    o(i).nam = idenewtxt("Log#file (specify below)")
+    o(i).sel = ABS(INSTR("," + LogHandlers$ + ",", ",file,") > 0)
+    i = i + 1: filBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 15
+    o(i).nam = idenewtxt("Logf#ile"): a2$ = LogFileName$
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 3
+    i = i + 1: filSymL = i
+    o(i).typ = 5 'symbol button
+    o(i).x = 51: o(i).y = 15
+    o(i).txt = idenewtxt(CHR$(240))
+
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
+    o(i).y = 17
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
 
     '-------- generic init --------
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
-    DO 'main loop
+    '-------- custom variables init --------
+    DIM what$(0 TO 5)
+    what$(0) = "=> Invalid logging level input"
+    what$(1) = "=> Trace, Info, Warnings, Errors"
+    what$(2) = "=> Information, Warnings, Errors"
+    what$(3) = "=> Warnings and Errors"
+    what$(4) = "=> Errors only"
+    what$(5) = "=> None (logging disabled)"
+    '-------- end of custom variables init --------
 
+    DO 'main loop
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
         f = 1: cx = 0: cy = 0
         FOR i = 1 TO 100
             IF o(i).typ THEN
-
                 'prepare object
                 o(i).foc = focus - f 'focus offset
-                o(i).cx = 0: o(i).cy = 0
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
                 idedrawobj o(i), f 'display object
-                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
             END IF
         NEXT i
         lastfocus = f - 1
         '-------- end of generic display dialog box & objects --------
 
         '-------- custom display changes --------
-        LOCATE p.y + 4, p.x + 2
-        PRINT CHR$(34) + "$$" + CHR$(34) + " is replaced with the executable";
-        LOCATE p.y + 5, p.x + 2
-        PRINT CHR$(34) + "$@" + CHR$(34) + " is replaced with the COMMAND$ string";
+        IF o(lvlBox).inv THEN
+            COLOR 4: _PRINTSTRING (p.x + 23, p.y + 2), what$(0): COLOR 0
+        ELSE
+            _PRINTSTRING (p.x + 23, p.y + 2), what$(VAL(idetxt(o(lvlBox).txt)))
+        END IF
+        _PRINTSTRING (p.x, p.y + 4), CHR$(195) + STRING$(p.w, 196) + CHR$(180)
+        _PRINTSTRING (p.x + 15, p.y + 4), " Show logging from (Scope) "
+        _PRINTSTRING (p.x, p.y + 11), CHR$(195) + STRING$(p.w, 196) + CHR$(180)
+        _PRINTSTRING (p.x + 14, p.y + 11), " Output logging to (Handler) "
         '-------- end of custom display changes --------
 
         'update visual page and cursor position
@@ -15960,7 +15987,7 @@ SUB ideTerminalBox
         '-------- end of read input --------
 
         '-------- generic input response --------
-        info = 0
+        info = 0: invdata = 0
         IF K$ = "" THEN K$ = CHR$(255)
         IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
         IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
@@ -15968,46 +15995,262 @@ SUB ideTerminalBox
         IF focus > lastfocus THEN focus = 1
         f = 1
         FOR i = 1 TO 100
-            t = o(i).typ
-            IF t THEN
+            IF o(i).typ THEN
                 focusoffset = focus - f
                 ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
             END IF
         NEXT
         '-------- end of generic input response --------
 
-        'specific post controls
-        IF focus <> PrevFocus THEN
-            'Always start with TextBox values selected upon getting focus
-            PrevFocus = focus
-            IF focus = 1 THEN
-                o(focus).v1 = LEN(idetxt(o(focus).txt))
-                IF o(focus).v1 > 0 THEN o(focus).issel = -1
-                o(focus).sx1 = 0
+        '-------- custom input response --------
+        'logging level spinners
+        IF focus = lvlSymUp AND info <> 0 THEN
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(lvlBox).txt)) + 1, 1, 5))
+            idetxt(o(lvlBox).txt) = a$: o(lvlBox).v1 = LEN(a$)
+        END IF
+        IF focus = lvlSymDn AND info <> 0 THEN
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(lvlBox).txt)) - 1, 1, 5))
+            idetxt(o(lvlBox).txt) = a$: o(lvlBox).v1 = LEN(a$)
+        END IF
+        'logfile selector
+        IF focus = filSymL AND info <> 0 THEN
+            a$ = idefiledialog$(idetxt(o(filBox).txt), 4)
+            IF a$ <> "C" THEN
+                a$ = RemoveDoubleSlashes$(a$)
+                idetxt(o(filBox).txt) = a$: o(filBox).v1 = LEN(a$)
+            END IF
+            PCOPY 2, 1: K$ = ""
+        END IF
+        'logging level text box (valid data check)
+        a$ = idetxt(o(lvlBox).txt): o(lvlBox).inv = 1
+        IF isuinteger(a$) _ANDALSO (VAL(a$) >= 1 AND VAL(a$) <= 5) THEN o(lvlBox).inv = 0 'level IS valid
+        'scope/handler check/text boxes (valid data check)
+        o(prgChk).inv = 0: o(libChk).inv = 0: o(audChk).inv = 0: o(imgChk).inv = 0 'assume valid scope options
+        o(conChk).inv = 0: o(filChk).inv = 0: o(filBox).inv = 0 'assume valid handler options
+        IF o(lvlBox).inv THEN
+            invdata = 1 'block confirmation, level invalid
+        ELSE
+            IF VAL(a$) < 5 THEN
+                IF o(prgChk).sel = 0 AND o(libChk).sel = 0 AND o(audChk).sel = 0 AND o(imgChk).sel = 0 THEN
+                    invdata = 1 'block confirmation, no scope selected
+                    o(prgChk).inv = 1: o(libChk).inv = 1: o(audChk).inv = 1: o(imgChk).inv = 1
+                END IF
+                IF o(conChk).sel = 0 AND o(filChk).sel = 0 THEN
+                    invdata = 1 'block confirmation, no handler selected
+                    o(conChk).inv = 1: o(filChk).inv = 1
+                ELSEIF o(filChk).sel = 1 THEN
+                    IF NOT _FILEEXISTS(idetxt(o(filBox).txt)) THEN
+                        ON ERROR GOTO _NEWHANDLER qberror_test
+                        E = 0: _WRITEFILE idetxt(o(filBox).txt), ""
+                        _DELAY 0.05: KILL idetxt(o(filBox).txt)
+                        ON ERROR GOTO _LASTHANDLER
+                        IF E <> 0 THEN
+                            invdata = 1 'block confirmation, logfile not usable
+                            o(filBox).inv = 1
+                        END IF
+                    END IF
+                END IF
             END IF
         END IF
 
-        IF K$ = CHR$(27) OR (focus = 3 AND info <> 0) THEN
-            ClearMouse
-            EXIT SUB
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
+            END IF
+
+            optChg% = _FALSE 'reset changed options indicator
+
+            'adjust runtime variables
+            v% = (VAL(idetxt(o(lvlBox).txt)) * 13) - 12
+            s$ = _TRIM$(MID$("    Trace     Information    Warning       Error        None     ", v%, 13))
+            IF LogMinLevel$ <> s$ THEN LogMinLevel$ = s$: optChg% = _TRUE
+
+            temp$ = _STR_EMPTY
+            temp$ = temp$ + _IIF(o(prgChk).sel <> 0, ",qb64,", "")
+            temp$ = temp$ + _IIF(o(libChk).sel <> 0, ",libqb,", "")
+            temp$ = temp$ + _IIF(o(audChk).sel <> 0, ",libqb-audio,", "")
+            temp$ = temp$ + _IIF(o(imgChk).sel <> 0, ",libqb-image,", "")
+            temp$ = StrReplace$(temp$, ",,", ",")
+            v% = LEN(temp$): temp$ = MID$(temp$, 2, v% - 2)
+            IF LogScopes$ <> temp$ THEN LogScopes$ = temp$: optChg% = _TRUE
+
+            temp$ = _STR_EMPTY
+            temp$ = temp$ + _IIF(o(conChk).sel <> 0, ",console,", "")
+            temp$ = temp$ + _IIF(o(filChk).sel <> 0, ",file,", "")
+            temp$ = StrReplace$(temp$, ",,", ",")
+            v% = LEN(temp$): temp$ = MID$(temp$, 2, v% - 2)
+            IF LogHandlers$ <> temp$ THEN LogHandlers$ = temp$: optChg% = _TRUE
+
+            s$ = idetxt(o(filBox).txt)
+            IF LogFileName$ <> s$ THEN LogFileName$ = s$: optChg% = _TRUE
+
+            IF optChg% THEN
+                'update global enable states
+                LoggingEnabled = (LogMinLevel$ <> "None")
+                LogToConsole = LoggingEnabled AND (INSTR("," + LogHandlers$ + ",", ",console,") > 0)
+                'save changes
+                WriteConfigSetting loggingSettingsSection$, "LogMinLevel", LogMinLevel$
+                WriteConfigSetting loggingSettingsSection$, "LogScopes", LogScopes$
+                WriteConfigSetting loggingSettingsSection$, "LogHandlers", LogHandlers$
+                WriteConfigSetting loggingSettingsSection$, "LogFileName", LogFileName$
+
+                ideLoggingBox = 1
+            END IF
+            EXIT FUNCTION
         END IF
-
-        IF K$ = CHR$(13) OR (focus = 2 AND info <> 0) THEN
-            DefaultTerminal = idetxt(o(1).txt)
-
-            WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
-
-            ClearMouse
-            _KEYCLEAR
-            EXIT SUB
-        END IF
-        'end of custom controls
+        '-------- end of custom input response --------
 
         mousedown = 0
         mouseup = 0
     LOOP
+END FUNCTION
 
-END SUB
+FUNCTION ideTerminalBox
+
+    '-------- generic dialog box header --------
+    PCOPY 0, 2
+    PCOPY 0, 1
+    SCREEN , , 1, 0
+    focus = 1
+    DIM p AS idedbptype
+    DIM o(1 TO 100) AS idedbotype
+    DIM sep AS STRING * 1
+    sep = CHR$(0)
+    '-------- end of generic dialog box header --------
+
+    '-------- init dialog box & objects --------
+    i = 0
+    idepar p, 60, 7, "Default Terminal"
+
+    i = i + 1: dttBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 2
+    o(i).nam = idenewtxt("Terminal Command"): a2$ = DefaultTerminal$
+    o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
+
+    i = i + 1: okBut = i: caBut = i + 1
+    o(i).typ = 3 'action buttons
+    o(i).y = 7
+    o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
+    '-------- end of init dialog box & objects --------
+
+    '-------- generic init --------
+    FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
+    '-------- end of generic init --------
+
+    '-------- custom variables init --------
+    '-------- end of custom variables init --------
+
+    DO 'main loop
+
+        '-------- generic display dialog box & objects --------
+        idedrawpar p
+        f = 1: cx = 0: cy = 0
+        FOR i = 1 TO 100
+            IF o(i).typ THEN
+                'prepare object
+                o(i).foc = focus - f 'focus offset
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
+                idedrawobj o(i), f 'display object
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
+            END IF
+        NEXT i
+        lastfocus = f - 1
+        '-------- end of generic display dialog box & objects --------
+
+        '-------- custom display changes --------
+        _PRINTSTRING (p.x + 3, p.y + 4), "Placeholder $$ will be replaced with the executable name."
+        _PRINTSTRING (p.x + 3, p.y + 5), "Placeholder $@ will be replaced with the COMMAND$ string."
+        '-------- end of custom display changes --------
+
+        'update visual page and cursor position
+        PCOPY 1, 0
+        IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
+
+        '-------- read input --------
+        change = 0
+        DO
+            GetInput
+            IF mWHEEL THEN change = 1
+            IF KB THEN change = 1
+            IF mCLICK THEN mousedown = 1: change = 1
+            IF mRELEASE THEN mouseup = 1: change = 1
+            IF mB THEN change = 1
+            alt = KALT: IF alt <> oldalt THEN change = 1
+            oldalt = alt
+            _LIMIT 100
+        LOOP UNTIL change
+        IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
+        'convert "alt+letter" scancode to letter's ASCII character
+        altletter$ = ""
+        IF alt AND NOT KCTRL THEN
+            IF LEN(K$) = 1 THEN
+                k = ASC(UCASE$(K$))
+                IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
+            END IF
+        END IF
+        SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
+        '-------- end of read input --------
+
+        '-------- generic input response --------
+        info = 0: invdata = 0
+        IF K$ = "" THEN K$ = CHR$(255)
+        IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
+        IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
+        IF focus < 1 THEN focus = lastfocus
+        IF focus > lastfocus THEN focus = 1
+        f = 1
+        FOR i = 1 TO 100
+            IF o(i).typ THEN
+                focusoffset = focus - f
+                ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
+            END IF
+        NEXT
+        '-------- end of generic input response --------
+
+        '-------- custom input response --------
+        'ok & cancel buttons
+        IF K$ = CHR$(27) OR (focus = caBut AND info <> 0) THEN EXIT FUNCTION
+        IF K$ = CHR$(13) OR (focus = okBut AND info <> 0) THEN
+            'blocked?
+            IF invdata THEN
+                retval = idemessagebox("Warning", "Confirmation has been blocked due to invalid settings.\nPlease check your inputs, look for highlighted boxes.", "#OK")
+                PCOPY 2, 1: _CONTINUE
+            END IF
+
+            optChg% = _FALSE 'reset changed options indicator
+
+            'adjust runtime variables
+            v$ = idetxt(o(dttBox).txt)
+            IF DefaultTerminal$ <> v$ THEN DefaultTerminal$ = v$: optChg% = _TRUE
+
+            IF optChg% THEN
+                'save changes
+                WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal$
+
+                ideTerminalBox = 1
+            END IF
+            EXIT FUNCTION
+        END IF
+        '-------- end of custom input response --------
+
+        mousedown = 0
+        mouseup = 0
+    LOOP
+END FUNCTION
 
 FUNCTION idemessagebox (titlestr$, messagestr$, buttons$)
 
@@ -16377,13 +16620,11 @@ FUNCTION ideDisplayBox
         '-------- custom input response --------
         'width spinners
         IF focus = wwSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(wwBox).txt)) + 1)
-            IF VAL(a$) > 999 THEN a$ = "999"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(wwBox).txt)) + 1, 80, 999))
             idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
         IF focus = wwSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(wwBox).txt)) - 1)
-            IF VAL(a$) < 80 THEN a$ = "80"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(wwBox).txt)) - 1, 80, 999))
             idetxt(o(wwBox).txt) = a$: o(wwBox).v1 = LEN(a$)
         END IF
         'width text box (valid data check)
@@ -16392,13 +16633,11 @@ FUNCTION ideDisplayBox
         IF o(wwBox).inv THEN invdata = 1 'block confirmation, as long as invalid
         'height spinners
         IF focus = whSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(whBox).txt)) + 1)
-            IF VAL(a$) > 999 THEN a$ = "999"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(whBox).txt)) + 1, 25, 999))
             idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
         IF focus = whSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(whBox).txt)) - 1)
-            IF VAL(a$) < 25 THEN a$ = "25"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(whBox).txt)) - 1, 25, 999))
             idetxt(o(whBox).txt) = a$: o(whBox).v1 = LEN(a$)
         END IF
         'height text box (valid data check)
@@ -16408,13 +16647,11 @@ FUNCTION ideDisplayBox
 
         'cursor start spinners
         IF focus = csSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(csBox).txt)) + 1)
-            IF VAL(a$) > 31 THEN a$ = "31"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(csBox).txt)) + 1, 0, 31))
             idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
         END IF
         IF focus = csSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(csBox).txt)) - 1)
-            IF VAL(a$) < 0 THEN a$ = "0"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(csBox).txt)) - 1, 0, 31))
             idetxt(o(csBox).txt) = a$: o(csBox).v1 = LEN(a$)
         END IF
         'cursor start text box (valid data check)
@@ -16427,13 +16664,11 @@ FUNCTION ideDisplayBox
         END IF
         'cursor end spinners
         IF focus = ceSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(ceBox).txt)) + 1)
-            IF VAL(a$) > 31 THEN a$ = "31"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(ceBox).txt)) + 1, 0, 31))
             idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
         END IF
         IF focus = ceSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(ceBox).txt)) - 1)
-            IF VAL(a$) < 0 THEN a$ = "0"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(ceBox).txt)) - 1, 0, 31))
             idetxt(o(ceBox).txt) = a$: o(ceBox).v1 = LEN(a$)
         END IF
         'cursor end text box (valid data check)
@@ -16457,7 +16692,10 @@ FUNCTION ideDisplayBox
         'custom font selector
         IF focus = cfSymL AND info <> 0 THEN
             a$ = idefiledialog$("*.tt*", 3)
-            IF a$ <> "C" THEN idetxt(o(cfBox).txt) = a$: o(cfBox).v1 = LEN(a$)
+            IF a$ <> "C" THEN
+                a$ = RemoveDoubleSlashes$(a$)
+                idetxt(o(cfBox).txt) = a$: o(cfBox).v1 = LEN(a$)
+            END IF
             PCOPY 2, 1: K$ = ""
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
@@ -16474,15 +16712,13 @@ FUNCTION ideDisplayBox
         END IF
         'custom font size spinners
         IF focus = cfsSymUp AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(cfsBox).txt)) + 1)
-            IF VAL(a$) > 99 THEN a$ = "99"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(cfsBox).txt)) + 1, 8, 99))
             idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
         END IF
         IF focus = cfsSymDn AND info <> 0 THEN
-            a$ = _TOSTR$(VAL(idetxt(o(cfsBox).txt)) - 1)
-            IF VAL(a$) < 8 THEN a$ = "8"
+            a$ = _TOSTR$(_CLAMP(VAL(idetxt(o(cfsBox).txt)) - 1, 8, 99))
             idetxt(o(cfsBox).txt) = a$: o(cfsBox).v1 = LEN(a$)
             o(f8Chk).sel = 0 'implies font 8 off
             o(cfChk).sel = 1 'and custom font on
@@ -19177,7 +19413,7 @@ FUNCTION ideupdatehelpbox
                 IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 2
-                'Prepend core pages to list (if not already in list)
+                'Place core pages in front of the list (if not already in list)
                 st# = TIMER(0.001)
                 PageName2$ = "QB64_FAQ.txt"
                 IF INSTR(f$, CHR$(0) + PageName2$ + CHR$(0)) = 0 THEN f$ = CHR$(0) + PageName2$ + f$
@@ -19201,7 +19437,7 @@ FUNCTION ideupdatehelpbox
                 IF 1.25 - et# > 0 THEN _DELAY 1.25 - et#
                 UpdateStep = UpdateStep + 1
             CASE 3
-                'Download and PARSE alphabetical index to build required F1 help links
+                'Download and parse alphabetical index to build required F1 help links
                 st# = TIMER(0.001)
                 a$ = Wiki$("Keyword Reference - Alphabetical")
                 IF INSTR(a$, "{{PageInternalError}}") > 0 THEN ideupdatehelpbox = 1: EXIT DO

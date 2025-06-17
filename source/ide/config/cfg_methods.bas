@@ -51,7 +51,23 @@ SUB CopyFromOther
                 oqbd$ = StrReplace$(oqbd$, CRLF, NATIVE_LINEENDING) 'make line endings native
                 _WRITEFILE SearchedFile$, oqbd$
             END IF
-            'copying autosave & undo file(s) makes not much sense
+            'apply changes in v4.2.0
+            nul& = ReadConfigSetting(generalSettingsSection$, "DebugInfo", temp$)
+            IniDeleteKey ConfigFile$, generalSettingsSection$, "DebugInfo"
+            IF TFStringToBool%(temp$) = -2 THEN temp$ = "False"
+            WriteConfigSetting compilerSettingsSection$, "IncludeDebugInfo", temp$
+            '-----
+            IF os$ = "WIN" THEN IniDeleteKey ConfigFile$, generalSettingsSection$, "DefaultTerminal"
+            '-----
+            nul& = ReadConfigSetting(generalSettingsSection$, "LoggingEnabled", temp$)
+            IniDeleteKey ConfigFile$, generalSettingsSection$, "LoggingEnabled"
+            IF TFStringToBool%(temp$) <> -1 THEN
+                WriteConfigSetting loggingSettingsSection$, "LogMinLevel", "None"
+            ELSE
+                WriteConfigSetting loggingSettingsSection$, "LogMinLevel", "Information"
+                WriteConfigSetting loggingSettingsSection$, "LogScopes", "qb64,libqb,libqb-image,libqb-audio"
+                WriteConfigSetting loggingSettingsSection$, "LogHandlers", "console"
+            END IF
         ELSE
             IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning") = 1 GOTO cfoAgain
         END IF
@@ -252,15 +268,15 @@ SUB ReadInitialConfig
         WriteConfigSetting generalSettingsSection$, "WikiBaseAddress", wikiBaseAddress$
     END IF
 
-    UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", -1)
+    UseGuiDialogs = ReadWriteBooleanSettingValue%(generalSettingsSection$, "UseGuiDialogs", _TRUE)
 
-    DefaultTerminal = ReadWriteStringSettingValue$(generalSettingsSection$, "DefaultTerminal", "")
-    IF DefaultTerminal = "" AND os$ = "LNX" AND MacOSX = 0 THEN
-        DefaultTerminal = findWorkingTerminal$
-        WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal
+    IF os$ = "LNX" AND MacOSX = 0 THEN
+        DefaultTerminal$ = ReadWriteStringSettingValue$(generalSettingsSection$, "DefaultTerminal", "")
+        IF DefaultTerminal$ = "" THEN
+            DefaultTerminal$ = findWorkingTerminal$
+            WriteConfigSetting generalSettingsSection$, "DefaultTerminal", DefaultTerminal$
+        END IF
     END IF
-
-    LoggingEnabled = ReadWriteBooleanSettingValue%(generalSettingsSection$, "LoggingEnabled", 0)
 
     '--- Mouse settings
     result = ReadConfigSetting(mouseSettingsSection$, "SwapMouseButton", value$)
@@ -297,6 +313,15 @@ SUB ReadInitialConfig
         AutoAddDebugCommand = _TRUE
         WriteConfigSetting debugSettingsSection$, "AutoAddDebugCommand", "True"
     END IF
+
+    '--- Logging settings
+    LogMinLevel$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogMinLevel", "None")
+    LogScopes$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogScopes", "qb64")
+    LogHandlers$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogHandlers", "console")
+    LogFileName$ = ReadWriteStringSettingValue$(loggingSettingsSection$, "LogFileName", _STARTDIR$ + "qb64pe-log.txt")
+    'update global enable states
+    LoggingEnabled = (LogMinLevel$ <> "None")
+    LogToConsole = LoggingEnabled AND (INSTR("," + LogHandlers$ + ",", ",console,") > 0)
 
     '--- Display settings
     IF ReadConfigSetting(displaySettingsSection$, "IDE_SortSUBs", value$) THEN
@@ -592,15 +617,15 @@ SUB ReadInitialConfig
         WriteConfigSetting compilerSettingsSection$, "MaxParallelProcesses", "3"
     END IF
 
-    ExtraCppFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
-    ExtraLinkerFlags = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
+    ExtraCppFlags$ = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraCppFlags", "")
+    ExtraLinkerFlags$ = ReadWriteStringSettingValue$(compilerSettingsSection$, "ExtraLinkerFlags", "")
 
     GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
 
     IF os$ = "WIN" THEN
         UseSystemMinGW = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseSystemMinGW", _FALSE)
     ELSE
-        UseSystemMinGW = _TRUE  ' always use the system compiler on non-Windows platforms
+        UseSystemMinGW = _TRUE 'always use the system compiler on non-Windows platforms
     END IF
 END SUB
 
