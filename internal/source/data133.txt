@@ -1,24 +1,19 @@
-int16 *_FUNC_CREATEBUF_INTEGER_CREATEBUF=NULL;
-if(_FUNC_CREATEBUF_INTEGER_CREATEBUF==NULL){
-_FUNC_CREATEBUF_INTEGER_CREATEBUF=(int16*)mem_static_malloc(2);
-*_FUNC_CREATEBUF_INTEGER_CREATEBUF=0;
+qbs*oldstr3883=NULL;
+if(_SUB_INILOAD_STRING_FILE->tmp||_SUB_INILOAD_STRING_FILE->fixed||_SUB_INILOAD_STRING_FILE->readonly){
+oldstr3883=_SUB_INILOAD_STRING_FILE;
+if (oldstr3883->cmem_descriptor){
+_SUB_INILOAD_STRING_FILE=qbs_new_cmem(oldstr3883->len,0);
+}else{
+_SUB_INILOAD_STRING_FILE=qbs_new(oldstr3883->len,0);
 }
-int32 *_FUNC_CREATEBUF_LONG_AUB=NULL;
-if(_FUNC_CREATEBUF_LONG_AUB==NULL){
-_FUNC_CREATEBUF_LONG_AUB=(int32*)mem_static_malloc(4);
-*_FUNC_CREATEBUF_LONG_AUB=0;
+memcpy(_SUB_INILOAD_STRING_FILE->chr,oldstr3883->chr,oldstr3883->len);
 }
-int32 *_FUNC_CREATEBUF_LONG_BUF=NULL;
-if(_FUNC_CREATEBUF_LONG_BUF==NULL){
-_FUNC_CREATEBUF_LONG_BUF=(int32*)mem_static_malloc(4);
-*_FUNC_CREATEBUF_LONG_BUF=0;
+int16 *_SUB_INILOAD_INTEGER_FILENUM=NULL;
+if(_SUB_INILOAD_INTEGER_FILENUM==NULL){
+_SUB_INILOAD_INTEGER_FILENUM=(int16*)mem_static_malloc(2);
+*_SUB_INILOAD_INTEGER_FILENUM=0;
 }
-int16 *_FUNC_CREATEBUF_INTEGER_IDX=NULL;
-if(_FUNC_CREATEBUF_INTEGER_IDX==NULL){
-_FUNC_CREATEBUF_INTEGER_IDX=(int16*)mem_static_malloc(2);
-*_FUNC_CREATEBUF_INTEGER_IDX=0;
+byte_element_struct *byte_element_3884=NULL;
+if (!byte_element_3884){
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_3884=(byte_element_struct*)(mem_static_pointer-12); else byte_element_3884=(byte_element_struct*)mem_static_malloc(12);
 }
-int32 fornext_value3882;
-int32 fornext_finalvalue3882;
-int32 fornext_step3882;
-uint8 fornext_step_negative3882;

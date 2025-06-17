@@ -1291,10 +1291,6 @@ if(__INTEGER_GENERATELICENSEENABLEMENU==NULL){
 __INTEGER_GENERATELICENSEENABLEMENU=(int16*)mem_static_malloc(2);
 *__INTEGER_GENERATELICENSEENABLEMENU=0;
 }
-if(__INTEGER_LOGGINGENABLEMENU==NULL){
-__INTEGER_LOGGINGENABLEMENU=(int16*)mem_static_malloc(2);
-*__INTEGER_LOGGINGENABLEMENU=0;
-}
 if(__INTEGER_OPTIONSMENUGUIDIALOGS==NULL){
 __INTEGER_OPTIONSMENUGUIDIALOGS=(int16*)mem_static_malloc(2);
 *__INTEGER_OPTIONSMENUGUIDIALOGS=0;
@@ -2233,6 +2229,7 @@ if (!__STRING_CUSTOMDICTIONARYSECTION)__STRING_CUSTOMDICTIONARYSECTION=qbs_new(0
 if (!__STRING_MOUSESETTINGSSECTION)__STRING_MOUSESETTINGSSECTION=qbs_new(0,0);
 if (!__STRING_GENERALSETTINGSSECTION)__STRING_GENERALSETTINGSSECTION=qbs_new(0,0);
 if (!__STRING_DISPLAYSETTINGSSECTION)__STRING_DISPLAYSETTINGSSECTION=qbs_new(0,0);
+if (!__STRING_LOGGINGSETTINGSSECTION)__STRING_LOGGINGSETTINGSSECTION=qbs_new(0,0);
 if (!__STRING_COLORSCHEMESSECTION)__STRING_COLORSCHEMESSECTION=qbs_new(0,0);
 if (!__STRING_DEBUGSETTINGSSECTION)__STRING_DEBUGSETTINGSSECTION=qbs_new(0,0);
 if (!__STRING_COMPILERSETTINGSSECTION)__STRING_COMPILERSETTINGSSECTION=qbs_new(0,0);
@@ -2258,6 +2255,11 @@ __BYTE_AUTOADDDEBUGCOMMAND=(int8*)mem_static_malloc(1);
 *__BYTE_AUTOADDDEBUGCOMMAND=0;
 }
 if (!__STRING_WIKIBASEADDRESS)__STRING_WIKIBASEADDRESS=qbs_new(0,0);
+if (!__STRING_DEFAULTTERMINAL)__STRING_DEFAULTTERMINAL=qbs_new(0,0);
+if(__LONG_GENERATELICENSEFILE==NULL){
+__LONG_GENERATELICENSEFILE=(int32*)mem_static_malloc(4);
+*__LONG_GENERATELICENSEFILE=0;
+}
 if(__LONG_MAXPARALLELPROCESSES==NULL){
 __LONG_MAXPARALLELPROCESSES=(int32*)mem_static_malloc(4);
 *__LONG_MAXPARALLELPROCESSES=0;
@@ -2276,23 +2278,26 @@ if(__LONG_INCLUDEDEBUGINFO==NULL){
 __LONG_INCLUDEDEBUGINFO=(int32*)mem_static_malloc(4);
 *__LONG_INCLUDEDEBUGINFO=0;
 }
-if(__LONG_GENERATELICENSEFILE==NULL){
-__LONG_GENERATELICENSEFILE=(int32*)mem_static_malloc(4);
-*__LONG_GENERATELICENSEFILE=0;
-}
-if(__ULONG_USEGUIDIALOGS==NULL){
-__ULONG_USEGUIDIALOGS=(uint32*)mem_static_malloc(4);
-*__ULONG_USEGUIDIALOGS=0;
-}
-if (!__STRING_DEFAULTTERMINAL)__STRING_DEFAULTTERMINAL=qbs_new(0,0);
-if(__ULONG_LOGGINGENABLED==NULL){
-__ULONG_LOGGINGENABLED=(uint32*)mem_static_malloc(4);
-*__ULONG_LOGGINGENABLED=0;
-}
 if(__LONG_USESYSTEMMINGW==NULL){
 __LONG_USESYSTEMMINGW=(int32*)mem_static_malloc(4);
 *__LONG_USESYSTEMMINGW=0;
 }
+if(__BYTE_USEGUIDIALOGS==NULL){
+__BYTE_USEGUIDIALOGS=(int8*)mem_static_malloc(1);
+*__BYTE_USEGUIDIALOGS=0;
+}
+if(__BYTE_LOGGINGENABLED==NULL){
+__BYTE_LOGGINGENABLED=(int8*)mem_static_malloc(1);
+*__BYTE_LOGGINGENABLED=0;
+}
+if(__BYTE_LOGTOCONSOLE==NULL){
+__BYTE_LOGTOCONSOLE=(int8*)mem_static_malloc(1);
+*__BYTE_LOGTOCONSOLE=0;
+}
+if (!__STRING_LOGMINLEVEL)__STRING_LOGMINLEVEL=qbs_new(0,0);
+if (!__STRING_LOGSCOPES)__STRING_LOGSCOPES=qbs_new(0,0);
+if (!__STRING_LOGHANDLERS)__STRING_LOGHANDLERS=qbs_new(0,0);
+if (!__STRING_LOGFILENAME)__STRING_LOGFILENAME=qbs_new(0,0);
 int8 pass26;
 int8 pass27;
 int8 pass28;
@@ -3194,8 +3199,8 @@ if (!byte_element_46){
 if ((mem_static_pointer+=12)<mem_static_limit) byte_element_46=(byte_element_struct*)(mem_static_pointer-12); else byte_element_46=(byte_element_struct*)mem_static_malloc(12);
 }
 if (!__STRING_EXECUTENAME)__STRING_EXECUTENAME=qbs_new(0,0);
-if (!__STRING_HANDLER)__STRING_HANDLER=qbs_new(0,0);
-if (!__STRING_PREPEND)__STRING_PREPEND=qbs_new(0,0);
+if (!__STRING_PREFIX)__STRING_PREFIX=qbs_new(0,0);
+if (!__STRING_SUFFIX)__STRING_SUFFIX=qbs_new(0,0);
 byte_element_struct *byte_element_47=NULL;
 if (!byte_element_47){
 if ((mem_static_pointer+=12)<mem_static_limit) byte_element_47=(byte_element_struct*)(mem_static_pointer-12); else byte_element_47=(byte_element_struct*)mem_static_malloc(12);
@@ -7444,9 +7449,9 @@ if (!byte_element_1897){
 if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1897=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1897=(byte_element_struct*)mem_static_malloc(12);
 }
 if (!__STRING_T__ASCII_CHR_046__PATH__ASCII_CHR_046__EXE)__STRING_T__ASCII_CHR_046__PATH__ASCII_CHR_046__EXE=qbs_new(0,0);
-if(__LONG_ERRNO==NULL){
-__LONG_ERRNO=(int32*)mem_static_malloc(4);
-*__LONG_ERRNO=0;
+if(__LONG_FAIL==NULL){
+__LONG_FAIL=(int32*)mem_static_malloc(4);
+*__LONG_FAIL=0;
 }
 if(__LONG_MANIBUF==NULL){
 __LONG_MANIBUF=(int32*)mem_static_malloc(4);
