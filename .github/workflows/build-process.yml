@@ -29,6 +29,7 @@ jobs:
 
     env:
       PLATFORM: ${{ matrix.platform }}
+      LIBASOUND_DEBUG: ${{ matrix.prefix == 'lnx' && '' || null }}
 
     steps:
     - uses: actions/checkout@v4
