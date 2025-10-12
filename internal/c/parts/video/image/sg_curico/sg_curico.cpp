@@ -339,7 +339,7 @@ class CurIcoImage {
                 // Write the payload
                 if (fwrite(payloadData, sizeof(uint8_t), payloadSize, file) != payloadSize) {
                     fclose(file);
-                    image_log_error("Failed to write payload to %s", fileName);
+                    image_log_warn("Failed to write payload to %s", fileName);
                     return false;
                 }
 
@@ -349,7 +349,7 @@ class CurIcoImage {
             }
         }
 
-        image_log_error("Invalid parameters: fileName=%s, payloadData=%p, payloadSize=%u", fileName, payloadData, payloadSize);
+        image_log_warn("Invalid parameters: fileName=%s, payloadData=%p, payloadSize=%u", fileName, payloadData, payloadSize);
         return false;
     }
 
@@ -366,7 +366,7 @@ class CurIcoImage {
 
     void LoadFromMemory(const void *in_data, size_t in_dataSize, uint32_t **out_data, int *out_x, int *out_y) {
         if (!in_data || !in_dataSize || !out_x || !out_y) {
-            image_log_error("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
+            image_log_warn("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
 
             return;
         }
@@ -375,7 +375,7 @@ class CurIcoImage {
 
         Header header(input);
         if (!header.IsValid()) {
-            image_log_error("Not an ICO/CUR file");
+            image_log_warn("Not an ICO/CUR file");
 
             return;
         }
@@ -477,7 +477,7 @@ class CurIcoImage {
 
             // Sanity check
             if (width <= 0 || height <= 0 || !colors) {
-                image_log_error("Invalid image properties");
+                image_log_warn("Invalid image properties");
 
                 return;
             }
@@ -485,7 +485,7 @@ class CurIcoImage {
             // Allocate memory for the image
             *out_data = reinterpret_cast<uint32_t *>(malloc(width * height * sizeof(uint32_t)));
             if (!(*out_data)) {
-                image_log_error("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
+                image_log_warn("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
 
                 return;
             }
@@ -650,7 +650,7 @@ class CurIcoImage {
 
             default:
                 // Unknown pixel format
-                image_log_error("Unknown pixel format: %u", bmpInfoHeader.bitCount);
+                image_log_warn("Unknown pixel format: %u", bmpInfoHeader.bitCount);
 
                 free(*out_data);
                 *out_data = nullptr;
@@ -665,7 +665,7 @@ class CurIcoImage {
             *out_y = height;
         } else {
             // Unknown image format
-            image_log_error("Unknown image format: 0x%08x", imgSig);
+            image_log_warn("Unknown image format: 0x%08x", imgSig);
         }
     }
 };
@@ -679,7 +679,7 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, 
         curico->LoadFromMemory(data, dataSize, &out_data, x, y);
         *components = 4; // always 32bpp BGRA
     } catch (const std::exception &e) {
-        image_log_error("Failed to load ICO/CUR: %s", e.what());
+        image_log_warn("Failed to load ICO/CUR: %s", e.what());
 
         if (out_data) {
             // Just in case this was allocated
@@ -693,25 +693,25 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, 
 
 uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components) {
     if (!filename || !filename[0] || !x || !y || !components) {
-        image_log_error("Invalid parameters");
+        image_log_warn("Invalid parameters");
         return nullptr;
     }
 
     auto pFile = fopen(filename, "rb");
     if (!pFile) {
-        image_log_error("Failed to open %s", filename);
+        image_log_warn("Failed to open %s", filename);
         return nullptr;
     }
 
     if (fseek(pFile, 0, SEEK_END)) {
-        image_log_error("Failed to seek %s", filename);
+        image_log_warn("Failed to seek %s", filename);
         fclose(pFile);
         return nullptr;
     }
 
     auto len = ftell(pFile);
     if (len < 0) {
-        image_log_error("Failed to get length of %s", filename);
+        image_log_warn("Failed to get length of %s", filename);
         fclose(pFile);
         return nullptr;
     }
@@ -721,7 +721,7 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components
     rewind(pFile);
 
     if (long(fread(&buffer[0], sizeof(uint8_t), len, pFile)) != len || ferror(pFile)) {
-        image_log_error("Failed to read %s", filename);
+        image_log_warn("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;
     }
@@ -733,7 +733,7 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components
 
 bool curico_save_file(const char *filename, int x, int y, int components, const void *data) {
     if (!filename || !filename[0] || !data || x < 1 || y < 1 || components != sizeof(uint32_t)) {
-        image_log_error("Invalid parameters");
+        image_log_warn("Invalid parameters");
         return false;
     }
 
