@@ -8,7 +8,7 @@ FOR x = LBOUND(handles&) TO UBOUND(handles&)
     ' The math here "randomizes" the order of the handles in the array, while
     ' still keeping the result predictable. The numbers are picked so that
     ' every entry 0 to 99 still gets filled in.
-    handles&((x * 3) MOD (UBOUND(handles&) + 1)) = _OPENCLIENT("https://www.example.com")
+    handles&((x * 3) MOD (UBOUND(handles&) + 1)) = _OPENCLIENT("https://www.example.org")
 NEXT
 
 ' Read from all the connections in parallel
