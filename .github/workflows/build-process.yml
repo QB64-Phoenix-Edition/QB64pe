@@ -29,7 +29,6 @@ jobs:
 
     env:
       PLATFORM: ${{ matrix.platform }}
-      LIBASOUND_DEBUG: ${{ matrix.prefix == 'lnx' && '' || null }}
 
     steps:
     - uses: actions/checkout@v4
@@ -94,7 +93,7 @@ jobs:
       env:
         CI_TESTING: y
         CI_OS: ${{ matrix.prefix }}
-      run: tests/run_tests.sh
+      run: tests/run_tests.sh 2> /dev/null
 
     - name: Create QB64-PE Artifact
       shell: bash
