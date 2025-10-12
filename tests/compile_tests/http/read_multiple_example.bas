@@ -8,7 +8,7 @@ FOR x = LBOUND(handles&) TO UBOUND(handles&)
     ' The math here "randomizes" the order of the handles in the array, while
     ' still keeping the result predictable. The numbers are picked so that
     ' every entry 0 to 99 still gets filled in.
-    handles&((x * 3) MOD (UBOUND(handles&) + 1)) = _OPENCLIENT("https://www.example.net")
+    handles&((x * 3) MOD (UBOUND(handles&) + 1)) = _OPENCLIENT("https://www.qb64phoenix.com")
 NEXT
 
 ' Read from all the connections in parallel
@@ -26,7 +26,7 @@ WHILE NOT Done&
 WEND
 
 FOR x = LBOUND(handles&) TO UBOUND(handles&)
-    PRINT "Handle:"; handles&(x); ", LOF:"; LOF(handles&(x)); ", Content length:"; LEN(Content$(x)); ", Status Code: "; _STATUSCODE(handles&(x))
+    PRINT "Handle: "; handles&(x); ", Match: "; _IIF(LOF(handles&(x)) = LEN(Content$(x)), "yes", "no"); ", Status Code: "; _STATUSCODE(handles&(x))
 
     CLOSE #handles&(x)
 NEXT
