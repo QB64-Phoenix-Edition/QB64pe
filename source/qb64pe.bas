@@ -792,6 +792,10 @@ IF C = 2 THEN 'begin
 END IF
 
 IF C = 4 THEN 'next line
+    IF declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
+        a3$ = UCASE$(LEFT$(LTRIM$(c$), 9)) 'a3$ is reset below, so we can use it as temp here
+        IF a3$ = "FUNCTION " _ORELSE LEFT$(a3$, 4) = "SUB " THEN mainEndLine = 1
+    END IF
     IF idepass = 1 THEN
         wholeline$ = c$
         GOTO ideprepass
@@ -808,7 +812,7 @@ IF C = 4 THEN 'next line
 END IF
 
 IF C = 5 THEN 'end of program reached
-
+    IF mainEndLine = 0 THEN mainEndLine = 1
     lastLine = 1
     lastLineReturn = 1
     IF idepass = 1 THEN
@@ -823,6 +827,7 @@ IF C = 5 THEN 'end of program reached
     lastLineReturn:
     lastLineReturn = 0
     lastLine = 0
+    mainEndLine = 0
 
     IF idepass = 1 THEN
         'prepass complete
@@ -1136,6 +1141,7 @@ ExecuteRCStateVar SockDepOn
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
+mainEndLine = 0
 autoIncludeBuffer = -1
 
 UseGL = 0
@@ -1522,7 +1528,8 @@ RETURN
 
 autoIncludeManager:
 autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
-IF firstLine <> 0 THEN
+'following IF blocks must be independent, don't connect them using ELSEIF
+IF firstLine = 1 THEN
     IF ideprogname$ <> "beforefirstline.bi" THEN
         WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
     ELSE
@@ -1540,7 +1547,18 @@ IF firstLine <> 0 THEN
             WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
         END IF
     END IF
-ELSEIF lastLine <> 0 THEN
+    firstLine = 2 'change state to "in progress"
+END IF
+IF mainEndLine = 1 THEN
+    WriteBufLine autoIncludeBuffer, "internal\support\include\aftermain.bas"
+    'add more files in between here
+    'add more files in between here
+    mainEndLine = 2 'change state to "in progress"
+END IF
+IF lastLine = 1 THEN
+    'for SUB/FUNC-less main code "AfterMain" and "AtBottom" are triggered at the same time, hence we first
+    'need a marker in the buffer to know when "AfterMain" files are done and the "AtBottom" files start
+    WriteBufLine autoIncludeBuffer, "-----" 'a simple bar will do that for us (see Include Managers #1/#2)
     IF GetRCStateVar(vWatchOn) THEN
         IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
     ELSE
@@ -1553,12 +1571,16 @@ ELSEIF lastLine <> 0 THEN
     ELSE
         SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
     END IF
+    lastLine = 2 'change state to "in progress"
 END IF
-firstLine = 0: lastLine = 0
 IF GetBufLen&(autoIncludeBuffer) > 0 THEN
     nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart)
     ON ABS(SGN(prepass)) + 1 GOSUB autoInclude, autoInclude_prepass
 END IF
+'change states from "in progress" to "done"
+IF firstLine = 2 THEN firstLine = 3
+IF mainEndLine = 2 THEN mainEndLine = 3
+IF lastLine = 2 THEN lastLine = 3
 ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
 RETURN
 '=== END: pass dependent GOSUB routines ===
@@ -1575,7 +1597,7 @@ DO
     prepassLastLine:
     prepass = 1
 
-    IF firstLine <> 0 OR lastLine <> 0 THEN
+    IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
         lineBackup$ = wholeline$ 'backup the real line
         GOSUB setPrecompFlags
         GOSUB autoIncludeManager
@@ -2594,7 +2616,6 @@ DO
 
                         '========================================
                         finishedlinepp:
-                        firstLine = 0
                     END IF
                     a$ = ""
                     ca$ = ""
@@ -2621,6 +2642,7 @@ DO
             autoInclude_prepass:
             IF autoIncludeBuffer <> -1 THEN
                 a$ = ReadBufLine$(autoIncludeBuffer)
+                IF a$ = "-----" THEN mainEndLine = 3: GOTO autoInclude_prepass '"AfterMain" is done
                 autoIncludingFile = 1
                 IF RIGHT$(a$, 18) = "beforefirstline.bi" OR RIGHT$(a$, 16) = "afterlastline.bm" THEN
                     autoIncludingFile = -1
@@ -2727,7 +2749,7 @@ DO
         CLOSE #fh
         inclevel = inclevel - 1
         skipInc1:
-        IF autoIncludingFile <> 0 AND inclevel = 0 THEN
+        IF autoIncludingFile <> 0 AND (inclevel = 0 OR mainEndLine = 2) THEN
             IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude_prepass
             autoIncludingFile = 0
             RETURN 'to auto-include manager
@@ -2768,6 +2790,7 @@ subfuncn = 0
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
+mainEndLine = 0
 autoIncludeBuffer = -1
 UserDefineList$ = UserDefineListPresets$
 UserDefineCount = UserDefineCountPresets
@@ -2846,7 +2869,7 @@ DO
     prepass = 0
     IF recompile GOTO do_recompile
 
-    IF firstLine <> 0 OR lastLine <> 0 THEN
+    IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
         lineBackup$ = a3$ 'backup the real line
         GOSUB setPrecompFlags
         GOSUB autoIncludeManager
@@ -11266,8 +11289,6 @@ DO
 
     finishednonexec:
 
-    firstLine = 0
-
     IF layoutdone = 0 THEN layoutok = 0 'invalidate layout if not handled
 
     IF continuelinefrom = 0 THEN 'note: manager #2 requires this condition
@@ -11294,6 +11315,7 @@ DO
                 autoInclude:
                 IF autoIncludeBuffer <> -1 THEN
                     a$ = ReadBufLine$(autoIncludeBuffer)
+                    IF a$ = "-----" THEN mainEndLine = 3: GOTO autoInclude '"AfterMain" is done
                     autoIncludingFile = 1
                     IF RIGHT$(a$, 18) = "beforefirstline.bi" OR RIGHT$(a$, 16) = "afterlastline.bm" THEN
                         autoIncludingFile = -1
@@ -11397,18 +11419,20 @@ DO
             CLOSE #fh
             inclevel = inclevel - 1
             skipInc2:
-            IF inclevel = 0 THEN
+            IF (inclevel = 0 OR mainEndLine = 2) THEN
                 IF autoIncludingFile <> 0 THEN
                     IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude
                 END IF
-                'restore line formatting
-                layoutok = layoutok_backup
-                layout$ = layout_backup$
-                layoutcomment$ = layoutcomment_backup$
-                layoutoriginal$ = layoutoriginal_backup$
-                idecompiledline$ = idecompiledline_backup$
-                IDEAutoIndent = IDEAutoIndent_backup
-                IDEAutoLayout = IDEAutoLayout_backup
+                IF inclevel = 0 THEN
+                    'restore line formatting
+                    layoutok = layoutok_backup
+                    layout$ = layout_backup$
+                    layoutcomment$ = layoutcomment_backup$
+                    layoutoriginal$ = layoutoriginal_backup$
+                    idecompiledline$ = idecompiledline_backup$
+                    IDEAutoIndent = IDEAutoIndent_backup
+                    IDEAutoLayout = IDEAutoLayout_backup
+                END IF
                 IF autoIncludingFile <> 0 THEN
                     autoIncludingFile = 0
                     RETURN 'to auto-include manager
