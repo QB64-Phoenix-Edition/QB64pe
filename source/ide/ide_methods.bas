@@ -427,6 +427,10 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Displays ASCII characters and allows inserting in current program"
         menu$(m, i) = "Insert Quick #Keycode  Ctrl+K": i = i + 1
         menuDesc$(m, i - 1) = "Captures key codes and inserts in current program"
+        IF LEN(LibExplorer$) > 0 THEN
+            menu$(m, i) = "#Library Explorer...  Ctrl+L": i = i + 1
+            menuDesc$(m, i - 1) = "Starts the Library Explorer from the Libraries Pack add-on"
+        END IF
         menu$(m, i) = "#Math Evaluator...": i = i + 1
         menuDesc$(m, i - 1) = "Displays the math evaluator dialog"
         menu$(m, i) = "#RGB Color Mixer...": i = i + 1
@@ -3456,6 +3460,17 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
+        IF LEN(LibExplorer$) > 0 THEN
+            IF KCONTROL AND UCASE$(K$) = "L" THEN 'Tools -> #Library Explorer
+                'Somehow Windows console (at least Win7) prevents the launched
+                'app from opening its window if CTRL is down while SHELL'ing.
+                'After that TaskManager must be used to to kill the app, so we
+                'better wait until CTRL is released.
+                WHILE _KEYDOWN(_KEY_LCTRL) OR _KEYDOWN(_KEY_RCTRL): _LIMIT 20: WEND
+                GOTO ctrlLibExpl
+            END IF
+        END IF
+
         IF KCONTROL AND UCASE$(K$) = "N" THEN 'File -> #New
             GOTO ctrlNew
         END IF
@@ -5435,6 +5450,14 @@ FUNCTION ide2 (ignore)
                 KCTRL = 0: KCONTROL = 0
                 GOSUB redrawItAll
                 GOTO ideloop
+            END IF
+
+            IF LEN(LibExplorer$) > 0 THEN
+                IF menu$(m, s) = "#Library Explorer...  Ctrl+L" THEN
+                    ctrlLibExpl:
+                    SHELL _HIDE _DONTWAIT QuotedFilename$(LibExplorer$)
+                    GOTO ideloop
+                END IF
             END IF
 
             IF LEFT$(menu$(m, s), 10) = "#Help On '" THEN 'Contextual menu Help

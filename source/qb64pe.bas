@@ -149,6 +149,10 @@ DIM SHARED VersionInfoSet AS _BYTE
 REDIM SHARED embedFileList$(3, 10)
 CONST eflLine = 0, eflUsed = 1, eflFile = 2, eflHand = 3 '1st index IDs
 
+'Array to handle $USELIBRARY metacommand:
+REDIM SHARED useLibList$(3, 10)
+CONST ullName = 0, ullTop = 1, ullMain = 2, ullBottom = 3 '1st index IDs
+
 'Variables to handle $VERSIONINFO metacommand:
 DIM SHARED viFileVersionNum$, viProductVersionNum$, viCompanyName$
 DIM SHARED viFileDescription$, viFileVersion$, viInternalName$
@@ -339,6 +343,16 @@ IF i > 1 THEN
 END IF
 
 IF Debug THEN OPEN tmpdir$ + "debug.txt" FOR OUTPUT AS #9
+
+'look if the Libraries Pack add-on is available,
+'and if so, find the Library Explorer executable
+LibExplorer$ = ""
+IF _DIREXISTS("libraries") _ORELSE _DIREXISTS("./libraries") THEN
+   IF _FILEEXISTS("LibraryExplorer.exe") THEN LibExplorer$ = "LibraryExplorer.exe"
+   IF _FILEEXISTS("./LibraryExplorer") THEN LibExplorer$ = "./LibraryExplorer"
+   IF _FILEEXISTS("libraries\LibraryExplorer.exe") THEN LibExplorer$ = "libraries\LibraryExplorer.exe"
+   IF _FILEEXISTS("./libraries/LibraryExplorer") THEN LibExplorer$ = "./libraries/LibraryExplorer"
+END IF
 
 ON ERROR GOTO qberror
 
@@ -1116,6 +1130,9 @@ sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
+'Reset used libraries tracking list (fullrecompile only)
+REDIM SHARED useLibList$(3, 10)
+
 'RCStateVars (feature and required recompile tracking)
 ClearRCStateVar ColorSet
 ClearRCStateVar OptExpl: IF ForceOptExpl THEN ForceRCStateVar OptExpl, 1
@@ -1540,6 +1557,12 @@ IF firstLine = 1 THEN
     ELSEIF GetRCStateVar(ColorSet) = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
         WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
     END IF
+    'add "AtTop" files of used libraries
+    ullUB = UBOUND(useLibList$, 2)
+    FOR i = ullUB TO 0 STEP -1 'in reversed order to pull dependencies before they're needed
+        ull$ = useLibList$(ullTop, i)
+        IF LEN(ull$) > 0 THEN WriteBufLine autoIncludeBuffer, ull$
+    NEXT i
     'add more files in between here
     'add more files in between here
     IF GetRCStateVar(vWatchOn) = 1 OR ideprogname$ = "vwatch.bm" THEN
@@ -1551,6 +1574,12 @@ IF firstLine = 1 THEN
 END IF
 IF mainEndLine = 1 THEN
     WriteBufLine autoIncludeBuffer, "internal\support\include\aftermain.bas"
+    'add "AfterMain" files of used libraries
+    ullUB = UBOUND(useLibList$, 2)
+    FOR i = 0 TO ullUB 'in order of appearance
+        ull$ = useLibList$(ullMain, i)
+        IF LEN(ull$) > 0 THEN WriteBufLine autoIncludeBuffer, ull$
+    NEXT i
     'add more files in between here
     'add more files in between here
     mainEndLine = 2 'change state to "in progress"
@@ -1564,6 +1593,12 @@ IF lastLine = 1 THEN
     ELSE
         IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
     END IF
+    'add "AtBottom" files of used libraries
+    ullUB = UBOUND(useLibList$, 2)
+    FOR i = 0 TO ullUB 'in order of appearance
+        ull$ = useLibList$(ullBottom, i)
+        IF LEN(ull$) > 0 THEN WriteBufLine autoIncludeBuffer, ull$
+    NEXT i
     'add more files in between here
     'add more files in between here
     IF ideprogname$ <> "afterlastline.bm" THEN
@@ -2316,6 +2351,12 @@ DO
                         IF firstelement$ = "FUNCTION" THEN sf = 1
                         IF firstelement$ = "SUB" THEN sf = 2
                         IF sf THEN
+
+                            IF firstLine = 2 THEN '"AtTop" auto-including in progress
+                                a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AtTop' files": GOTO errmes
+                            ELSEIF mainEndLine = 2 THEN '"AfterMain" auto-including in progress
+                                a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AfterMain' files": GOTO errmes
+                            END IF
 
                             subfuncn = subfuncn + 1
                             closedsubfunc = 0
@@ -3326,6 +3367,58 @@ DO
             embedFileList$(eflUsed, i) = "no" '           'referenced by _EMBEDDED$()
             embedFileList$(eflFile, i) = EmbedFile$
             embedFileList$(eflHand, i) = EmbedHandle$
+            GOTO finishednonexec
+        END IF
+
+        IF LEFT$(a3u$, 11) = "$USELIBRARY" THEN
+            a$ = "Expected $USELIBRARY:'author/library'"
+            'check for lib-spec
+            bra = INSTR(a3u$, "'"): IF bra = 0 GOTO errmes
+            ket = INSTR(bra + 1, a3u$, "'"): IF ket = 0 GOTO errmes
+            UseLib$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
+            IF LEN(UseLib$) = 0 GOTO errmes
+            'fix layout
+            layout$ = SCase$("$UseLibrary:'") + UseLib$ + "'" + MID$(a3$, ket + 1)
+            'verify library existence
+            a$ = "Library descriptor for '" + UseLib$ + "' not found"
+            UseLibFile$ = "libraries/descriptors/" + UseLib$ + ".ini"
+            IF _FILEEXISTS(UseLibFile$) = 0 GOTO errmes
+            '-----
+            a$ = "Library source for '" + UseLib$ + "' not found ("
+            UseLibSrc$ = "libraries/includes/" + UseLib$ + "/": UseLibSect$ = "[LIBRARY INCLUDES]"
+            UseLibEntr$ = "IncAtTop": UseLibTop$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibTop$) > 0 THEN
+                UseLibTop$ = UseLibSrc$ + UseLibTop$
+                IF _FILEEXISTS(UseLibTop$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            UseLibEntr$ = "IncAfterMain": UseLibMain$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibMain$) > 0 THEN
+                UseLibMain$ = UseLibSrc$ + UseLibMain$
+                IF _FILEEXISTS(UseLibMain$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            UseLibEntr$ = "IncAtBottom": UseLibBottom$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibBottom$) > 0 THEN
+                UseLibBottom$ = UseLibSrc$ + UseLibBottom$
+                IF _FILEEXISTS(UseLibBottom$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            'avoid duplicate definitions
+            ullUB = UBOUND(useLibList$, 2)
+            FOR i = 0 TO ullUB
+                IF useLibList$(ullName, i) = UseLib$ GOTO finishednonexec
+            NEXT i
+            'register library for auto-including
+            FOR i = 0 TO ullUB
+                IF useLibList$(ullName, i) = "" THEN EXIT FOR
+            NEXT i
+            IF i > ullUB THEN
+                REDIM _PRESERVE useLibList$(3, ullUB + 10)
+                i = ullUB + 1
+            END IF
+            useLibList$(ullName, i) = UseLib$
+            useLibList$(ullTop, i) = UseLibTop$
+            useLibList$(ullMain, i) = UseLibMain$
+            useLibList$(ullBottom, i) = UseLibBottom$
+            recompile = 1
             GOTO finishednonexec
         END IF
 
@@ -13089,6 +13182,7 @@ IF autoIncludingFile = 1 THEN 'IMPORTANT: don't omit "= 1" or change to "<> 0" !
     'rewrite errors caused by vwatch/library auto-includes to be less confusing
     IF INSTR(a$, "END SUB/FUNCTION before") THEN a$ = "Expected END SUB/FUNCTION": incerror$ = ""
     IF a$ = "Name already in use (vwatch)" THEN a$ = "Syntax Error": incerror$ = "": erldiff = 1
+    IF INSTR(a$, "SUB/FUNCTION not allowed") THEN erldiff = 1
 END IF
 IF inclevel > 0 AND incerror$ <> "" THEN a$ = a$ + CHR$(1) + incerror$
 
