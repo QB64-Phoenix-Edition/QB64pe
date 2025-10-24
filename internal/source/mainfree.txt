@@ -308,6 +308,7 @@ qbs_free(__STRING_MODIFYCOMMAND);
 qbs_free(__STRING_ACTIVEINCLUDELINKFILE);
 qbs_free(__STRING_VERSIONSTRINGSTATUS);
 qbs_free(__STRING_LINENUMBERSTATUS);
+qbs_free(__STRING_LIBEXPLORER);
 if (__ARRAY_STRING_MENU[2]&1){
 tmp_long=__ARRAY_STRING_MENU[5]*__ARRAY_STRING_MENU[9];
 while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_MENU[0]))[tmp_long]);
@@ -426,6 +427,12 @@ while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_EMBEDFILELIST[0]))[tm
 free((void*)(__ARRAY_STRING_EMBEDFILELIST[0]));
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_EMBEDFILELIST)[12] );
+if (__ARRAY_STRING_USELIBLIST[2]&1){
+tmp_long=__ARRAY_STRING_USELIBLIST[5]*__ARRAY_STRING_USELIBLIST[9];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_USELIBLIST[0]))[tmp_long]);
+free((void*)(__ARRAY_STRING_USELIBLIST[0]));
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_USELIBLIST)[12] );
 qbs_free(__STRING_VIFILEVERSIONNUM);
 qbs_free(__STRING_VIPRODUCTVERSIONNUM);
 qbs_free(__STRING_VICOMPANYNAME);
@@ -1013,8 +1020,8 @@ while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_WARNINGINCFILES[0]))[
 free((void*)(__ARRAY_STRING_WARNINGINCFILES[0]));
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_WARNINGINCFILES)[8] );
+qbs_free(__STRING_ULL);
 qbs_free(__STRING_LINEBACKUP);
-qbs_free(__STRING_WHOLESTV);
 qbs_free(__STRING_TEMP);
 qbs_free(__STRING_L);
 qbs_free(__STRING_R);
@@ -1063,6 +1070,14 @@ qbs_free(__STRING_EMBEDFILE);
 qbs_free(__STRING_EMBEDHANDLE);
 qbs_free(__STRING_EMBEDPATH);
 qbs_free(__STRING_EMBEDFILEONLY);
+qbs_free(__STRING_USELIB);
+qbs_free(__STRING_USELIBFILE);
+qbs_free(__STRING_USELIBSRC);
+qbs_free(__STRING_USELIBSECT);
+qbs_free(__STRING_USELIBENTR);
+qbs_free(__STRING_USELIBTOP);
+qbs_free(__STRING_USELIBMAIN);
+qbs_free(__STRING_USELIBBOTTOM);
 qbs_free(__STRING_EXEICONFILE);
 qbs_free(__STRING_ICONPATH);
 qbs_free(__STRING_EXEICONFILEONLY);
