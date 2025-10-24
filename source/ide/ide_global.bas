@@ -177,6 +177,7 @@ DIM SHARED HideCurrentLineHighlight AS _BYTE
 DIM SHARED SearchMenuEnableQuickNav AS INTEGER, searchStringFoundOn AS LONG
 DIM SHARED idegotobox_LastLineNum AS LONG, maxLineNumberLength AS LONG
 DIM SHARED versionStringStatus$, lineNumberStatus$, ideshowtextBypassColorRestore AS _BYTE
+DIM SHARED LibExplorer AS STRING
 
 '--------------------------------------------------------------------------------
 TYPE idedbptype

@@ -495,18 +495,18 @@ SUB ReadInitialConfig
         listOfCustomKeywords$ = tempList$
         customKeywordsLength = LEN(listOfCustomKeywords$)
     ELSE
-        IniSetAddQuotes -1
+        IniSetAddQuotes _TRUE
         WriteConfigSetting customDictionarySection$, "Instructions1", "Add custom keywords separated by the 'at' sign."
         WriteConfigSetting customDictionarySection$, "Instructions2", "Useful to colorize constants (eg @true@false@)."
-        IniSetAddQuotes 0
+        IniSetAddQuotes _FALSE
         WriteConfigSetting customDictionarySection$, "CustomKeywords$", "@"
     END IF
 
     '--- Color schemes
-    IniSetAddQuotes -1
+    IniSetAddQuotes _TRUE
     WriteConfigSetting colorSchemesSection$, "Instructions1", "Create custom color schemes in the IDE (Options->IDE Colors)."
     WriteConfigSetting colorSchemesSection$, "Instructions2", "Custom color schemes will be stored in this section."
-    IniSetAddQuotes 0
+    IniSetAddQuotes _FALSE
 
     '--- Individual window settings (per instance)
     IF ReadConfigSetting(windowSettingsSection$, "IDE_TopPosition", value$) THEN

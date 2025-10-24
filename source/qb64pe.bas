@@ -149,6 +149,10 @@ DIM SHARED VersionInfoSet AS _BYTE
 REDIM SHARED embedFileList$(3, 10)
 CONST eflLine = 0, eflUsed = 1, eflFile = 2, eflHand = 3 '1st index IDs
 
+'Array to handle $USELIBRARY metacommand:
+REDIM SHARED useLibList$(3, 10)
+CONST ullName = 0, ullTop = 1, ullMain = 2, ullBottom = 3 '1st index IDs
+
 'Variables to handle $VERSIONINFO metacommand:
 DIM SHARED viFileVersionNum$, viProductVersionNum$, viCompanyName$
 DIM SHARED viFileDescription$, viFileVersion$, viInternalName$
@@ -339,6 +343,16 @@ IF i > 1 THEN
 END IF
 
 IF Debug THEN OPEN tmpdir$ + "debug.txt" FOR OUTPUT AS #9
+
+'look if the Libraries Pack add-on is available,
+'and if so, find the Library Explorer executable
+LibExplorer$ = ""
+IF _DIREXISTS("libraries") _ORELSE _DIREXISTS("./libraries") THEN
+   IF _FILEEXISTS("LibraryExplorer.exe") THEN LibExplorer$ = "LibraryExplorer.exe"
+   IF _FILEEXISTS("./LibraryExplorer") THEN LibExplorer$ = "./LibraryExplorer"
+   IF _FILEEXISTS("libraries\LibraryExplorer.exe") THEN LibExplorer$ = "libraries\LibraryExplorer.exe"
+   IF _FILEEXISTS("./libraries/LibraryExplorer") THEN LibExplorer$ = "./libraries/LibraryExplorer"
+END IF
 
 ON ERROR GOTO qberror
 
@@ -792,6 +806,10 @@ IF C = 2 THEN 'begin
 END IF
 
 IF C = 4 THEN 'next line
+    IF declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
+        a3$ = UCASE$(LEFT$(LTRIM$(c$), 9)) 'a3$ is reset below, so we can use it as temp here
+        IF a3$ = "FUNCTION " _ORELSE LEFT$(a3$, 4) = "SUB " THEN mainEndLine = 1
+    END IF
     IF idepass = 1 THEN
         wholeline$ = c$
         GOTO ideprepass
@@ -808,13 +826,13 @@ IF C = 4 THEN 'next line
 END IF
 
 IF C = 5 THEN 'end of program reached
-
+    IF mainEndLine = 0 THEN mainEndLine = 1
     lastLine = 1
     lastLineReturn = 1
     IF idepass = 1 THEN
         wholeline$ = ""
         GOTO ideprepass
-        '(returns to ideret2: above, then to lastLinePrepassReturn below)
+        '(returns to ideret2: above, then to lastLineReturn below)
     END IF
     'idepass>1
     a3$ = ""
@@ -823,6 +841,7 @@ IF C = 5 THEN 'end of program reached
     lastLineReturn:
     lastLineReturn = 0
     lastLine = 0
+    mainEndLine = 0
 
     IF idepass = 1 THEN
         'prepass complete
@@ -1111,6 +1130,9 @@ sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
+'Reset used libraries tracking list (fullrecompile only)
+REDIM SHARED useLibList$(3, 10)
+
 'RCStateVars (feature and required recompile tracking)
 ClearRCStateVar ColorSet
 ClearRCStateVar OptExpl: IF ForceOptExpl THEN ForceRCStateVar OptExpl, 1
@@ -1136,6 +1158,7 @@ ExecuteRCStateVar SockDepOn
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
+mainEndLine = 0
 autoIncludeBuffer = -1
 
 UseGL = 0
@@ -1452,10 +1475,10 @@ udtetypesize(i2) = 0 'tsize
 udtenext(i3) = i2
 udtenext(i2) = 0
 
-' Reset all unstable flags
+'Reset all unstable flags
 FOR i = 1 TO UBOUND(unstableFlags): unstableFlags(i) = 0: NEXT
 
-' Reset embedded files tracking list
+'Reset embedded files tracking list
 REDIM SHARED embedFileList$(3, 10)
 
 'External dependencies buffer
@@ -1522,7 +1545,8 @@ RETURN
 
 autoIncludeManager:
 autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
-IF firstLine <> 0 THEN
+'following IF blocks must be independent, don't connect them using ELSEIF
+IF firstLine = 1 THEN
     IF ideprogname$ <> "beforefirstline.bi" THEN
         WriteBufLine autoIncludeBuffer, "internal\support\include\beforefirstline.bi"
     ELSE
@@ -1533,6 +1557,12 @@ IF firstLine <> 0 THEN
     ELSEIF GetRCStateVar(ColorSet) = 2 AND ideprogname$ <> "color0.bi" AND ideprogname$ <> "color32.bi" THEN
         WriteBufLine autoIncludeBuffer, "internal\support\color\color32.bi"
     END IF
+    'add "AtTop" files of used libraries
+    ullUB = UBOUND(useLibList$, 2)
+    FOR i = ullUB TO 0 STEP -1 'in reversed order to pull dependencies before they're needed
+        ull$ = useLibList$(ullTop, i)
+        IF LEN(ull$) > 0 THEN WriteBufLine autoIncludeBuffer, ull$
+    NEXT i
     'add more files in between here
     'add more files in between here
     IF GetRCStateVar(vWatchOn) = 1 OR ideprogname$ = "vwatch.bm" THEN
@@ -1540,12 +1570,35 @@ IF firstLine <> 0 THEN
             WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bi"
         END IF
     END IF
-ELSEIF lastLine <> 0 THEN
+    firstLine = 2 'change state to "in progress"
+END IF
+IF mainEndLine = 1 THEN
+    WriteBufLine autoIncludeBuffer, "internal\support\include\aftermain.bas"
+    'add "AfterMain" files of used libraries
+    ullUB = UBOUND(useLibList$, 2)
+    FOR i = 0 TO ullUB 'in order of appearance
+        ull$ = useLibList$(ullMain, i)
+        IF LEN(ull$) > 0 THEN WriteBufLine autoIncludeBuffer, ull$
+    NEXT i
+    'add more files in between here
+    'add more files in between here
+    mainEndLine = 2 'change state to "in progress"
+END IF
+IF lastLine = 1 THEN
+    'for SUB/FUNC-less main code "AfterMain" and "AtBottom" are triggered at the same time, hence we first
+    'need a marker in the buffer to know when "AfterMain" files are done and the "AtBottom" files start
+    WriteBufLine autoIncludeBuffer, "-----" 'a simple bar will do that for us (see Include Managers #1/#2)
     IF GetRCStateVar(vWatchOn) THEN
         IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch.bm"
     ELSE
         IF LEFT$(ideprogname$, 6) <> "vwatch" THEN WriteBufLine autoIncludeBuffer, "internal\support\vwatch\vwatch_stub.bm"
     END IF
+    'add "AtBottom" files of used libraries
+    ullUB = UBOUND(useLibList$, 2)
+    FOR i = 0 TO ullUB 'in order of appearance
+        ull$ = useLibList$(ullBottom, i)
+        IF LEN(ull$) > 0 THEN WriteBufLine autoIncludeBuffer, ull$
+    NEXT i
     'add more files in between here
     'add more files in between here
     IF ideprogname$ <> "afterlastline.bm" THEN
@@ -1553,12 +1606,16 @@ ELSEIF lastLine <> 0 THEN
     ELSE
         SetDependency DEPENDENCY_SOCKETS 'force dependency for direct editing
     END IF
+    lastLine = 2 'change state to "in progress"
 END IF
-firstLine = 0: lastLine = 0
 IF GetBufLen&(autoIncludeBuffer) > 0 THEN
     nul& = SeekBuf&(autoIncludeBuffer, 0, SBM_BufStart)
     ON ABS(SGN(prepass)) + 1 GOSUB autoInclude, autoInclude_prepass
 END IF
+'change states from "in progress" to "done"
+IF firstLine = 2 THEN firstLine = 3
+IF mainEndLine = 2 THEN mainEndLine = 3
+IF lastLine = 2 THEN lastLine = 3
 ClearBuffers tmpdir$ + "autoinc.txt": autoIncludeBuffer = -1 'invalidate buffer
 RETURN
 '=== END: pass dependent GOSUB routines ===
@@ -1575,14 +1632,12 @@ DO
     prepassLastLine:
     prepass = 1
 
-    IF firstLine <> 0 OR lastLine <> 0 THEN
-        lineBackup$ = wholeline$ 'backup the real line (will be blank when lastline is set)
+    IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
+        lineBackup$ = wholeline$ 'backup the real line
         GOSUB setPrecompFlags
         GOSUB autoIncludeManager
         wholeline$ = lineBackup$
     END IF
-
-    wholestv$ = wholeline$ '### STEVE EDIT FOR CONST EXPANSION 10/11/2013
 
     layout = ""
     layoutok = 0
@@ -1597,8 +1652,7 @@ DO
 
     IF LEN(wholeline$) THEN
 
-        temp$ = LTRIM$(RTRIM$(UCASE$(wholestv$)))
-
+        temp$ = LTRIM$(RTRIM$(UCASE$(wholeline$)))
 
         IF LEFT$(temp$, 4) = "$IF " THEN
             IF RIGHT$(temp$, 5) <> " THEN" THEN a$ = "$IF without THEN": GOTO errmes
@@ -2298,6 +2352,12 @@ DO
                         IF firstelement$ = "SUB" THEN sf = 2
                         IF sf THEN
 
+                            IF firstLine = 2 THEN '"AtTop" auto-including in progress
+                                a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AtTop' files": GOTO errmes
+                            ELSEIF mainEndLine = 2 THEN '"AfterMain" auto-including in progress
+                                a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AfterMain' files": GOTO errmes
+                            END IF
+
                             subfuncn = subfuncn + 1
                             closedsubfunc = 0
 
@@ -2597,7 +2657,6 @@ DO
 
                         '========================================
                         finishedlinepp:
-                        firstLine = 0
                     END IF
                     a$ = ""
                     ca$ = ""
@@ -2624,6 +2683,7 @@ DO
             autoInclude_prepass:
             IF autoIncludeBuffer <> -1 THEN
                 a$ = ReadBufLine$(autoIncludeBuffer)
+                IF a$ = "-----" THEN mainEndLine = 3: GOTO autoInclude_prepass '"AfterMain" is done
                 autoIncludingFile = 1
                 IF RIGHT$(a$, 18) = "beforefirstline.bi" OR RIGHT$(a$, 16) = "afterlastline.bm" THEN
                     autoIncludingFile = -1
@@ -2730,7 +2790,7 @@ DO
         CLOSE #fh
         inclevel = inclevel - 1
         skipInc1:
-        IF autoIncludingFile <> 0 AND inclevel = 0 THEN
+        IF autoIncludingFile <> 0 AND (inclevel = 0 OR mainEndLine = 2) THEN
             IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude_prepass
             autoIncludingFile = 0
             RETURN 'to auto-include manager
@@ -2771,6 +2831,7 @@ subfuncn = 0
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
+mainEndLine = 0
 autoIncludeBuffer = -1
 UserDefineList$ = UserDefineListPresets$
 UserDefineCount = UserDefineCountPresets
@@ -2849,12 +2910,12 @@ DO
     prepass = 0
     IF recompile GOTO do_recompile
 
-    IF firstLine <> 0 OR lastLine <> 0 THEN
-        lineBackup$ = a3$ 'backup the real line (will be blank when lastline is set)
+    IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
+        lineBackup$ = a3$ 'backup the real line
         GOSUB setPrecompFlags
         GOSUB autoIncludeManager
         a3$ = lineBackup$
-        idecompiledline$ = a3$ 'restore 1st/last compiled line for IDE ops
+        idecompiledline$ = a3$ 'also restore compiled line for IDE ops
         'start of pass, reset formatting to defaults after auto-includes
         IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
     END IF
@@ -3306,6 +3367,58 @@ DO
             embedFileList$(eflUsed, i) = "no" '           'referenced by _EMBEDDED$()
             embedFileList$(eflFile, i) = EmbedFile$
             embedFileList$(eflHand, i) = EmbedHandle$
+            GOTO finishednonexec
+        END IF
+
+        IF LEFT$(a3u$, 11) = "$USELIBRARY" THEN
+            a$ = "Expected $USELIBRARY:'author/library'"
+            'check for lib-spec
+            bra = INSTR(a3u$, "'"): IF bra = 0 GOTO errmes
+            ket = INSTR(bra + 1, a3u$, "'"): IF ket = 0 GOTO errmes
+            UseLib$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
+            IF LEN(UseLib$) = 0 GOTO errmes
+            'fix layout
+            layout$ = SCase$("$UseLibrary:'") + UseLib$ + "'" + MID$(a3$, ket + 1)
+            'verify library existence
+            a$ = "Library descriptor for '" + UseLib$ + "' not found"
+            UseLibFile$ = "libraries/descriptors/" + UseLib$ + ".ini"
+            IF _FILEEXISTS(UseLibFile$) = 0 GOTO errmes
+            '-----
+            a$ = "Library source for '" + UseLib$ + "' not found ("
+            UseLibSrc$ = "libraries/includes/" + UseLib$ + "/": UseLibSect$ = "[LIBRARY INCLUDES]"
+            UseLibEntr$ = "IncAtTop": UseLibTop$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibTop$) > 0 THEN
+                UseLibTop$ = UseLibSrc$ + UseLibTop$
+                IF _FILEEXISTS(UseLibTop$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            UseLibEntr$ = "IncAfterMain": UseLibMain$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibMain$) > 0 THEN
+                UseLibMain$ = UseLibSrc$ + UseLibMain$
+                IF _FILEEXISTS(UseLibMain$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            UseLibEntr$ = "IncAtBottom": UseLibBottom$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibBottom$) > 0 THEN
+                UseLibBottom$ = UseLibSrc$ + UseLibBottom$
+                IF _FILEEXISTS(UseLibBottom$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            'avoid duplicate definitions
+            ullUB = UBOUND(useLibList$, 2)
+            FOR i = 0 TO ullUB
+                IF useLibList$(ullName, i) = UseLib$ GOTO finishednonexec
+            NEXT i
+            'register library for auto-including
+            FOR i = 0 TO ullUB
+                IF useLibList$(ullName, i) = "" THEN EXIT FOR
+            NEXT i
+            IF i > ullUB THEN
+                REDIM _PRESERVE useLibList$(3, ullUB + 10)
+                i = ullUB + 1
+            END IF
+            useLibList$(ullName, i) = UseLib$
+            useLibList$(ullTop, i) = UseLibTop$
+            useLibList$(ullMain, i) = UseLibMain$
+            useLibList$(ullBottom, i) = UseLibBottom$
+            recompile = 1
             GOTO finishednonexec
         END IF
 
@@ -7410,28 +7523,6 @@ DO
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     'SHARED (SUB)
     IF n >= 1 THEN
         IF firstelement$ = "SHARED" THEN
@@ -11291,8 +11382,6 @@ DO
 
     finishednonexec:
 
-    firstLine = 0
-
     IF layoutdone = 0 THEN layoutok = 0 'invalidate layout if not handled
 
     IF continuelinefrom = 0 THEN 'note: manager #2 requires this condition
@@ -11319,6 +11408,7 @@ DO
                 autoInclude:
                 IF autoIncludeBuffer <> -1 THEN
                     a$ = ReadBufLine$(autoIncludeBuffer)
+                    IF a$ = "-----" THEN mainEndLine = 3: GOTO autoInclude '"AfterMain" is done
                     autoIncludingFile = 1
                     IF RIGHT$(a$, 18) = "beforefirstline.bi" OR RIGHT$(a$, 16) = "afterlastline.bm" THEN
                         autoIncludingFile = -1
@@ -11422,18 +11512,20 @@ DO
             CLOSE #fh
             inclevel = inclevel - 1
             skipInc2:
-            IF inclevel = 0 THEN
+            IF (inclevel = 0 OR mainEndLine = 2) THEN
                 IF autoIncludingFile <> 0 THEN
                     IF NOT EndOfBuf%(autoIncludeBuffer) GOTO autoInclude
                 END IF
-                'restore line formatting
-                layoutok = layoutok_backup
-                layout$ = layout_backup$
-                layoutcomment$ = layoutcomment_backup$
-                layoutoriginal$ = layoutoriginal_backup$
-                idecompiledline$ = idecompiledline_backup$
-                IDEAutoIndent = IDEAutoIndent_backup
-                IDEAutoLayout = IDEAutoLayout_backup
+                IF inclevel = 0 THEN
+                    'restore line formatting
+                    layoutok = layoutok_backup
+                    layout$ = layout_backup$
+                    layoutcomment$ = layoutcomment_backup$
+                    layoutoriginal$ = layoutoriginal_backup$
+                    idecompiledline$ = idecompiledline_backup$
+                    IDEAutoIndent = IDEAutoIndent_backup
+                    IDEAutoLayout = IDEAutoLayout_backup
+                END IF
                 IF autoIncludingFile <> 0 THEN
                     autoIncludingFile = 0
                     RETURN 'to auto-include manager
@@ -13087,9 +13179,10 @@ layout$ = "": layoutok = 0 'invalidate layout
 
 erldiff = 0
 IF autoIncludingFile = 1 THEN 'IMPORTANT: don't omit "= 1" or change to "<> 0" !!
-    'rewrite errors caused by vwatch includes to be less confusing
+    'rewrite errors caused by vwatch/library auto-includes to be less confusing
     IF INSTR(a$, "END SUB/FUNCTION before") THEN a$ = "Expected END SUB/FUNCTION": incerror$ = ""
     IF a$ = "Name already in use (vwatch)" THEN a$ = "Syntax Error": incerror$ = "": erldiff = 1
+    IF INSTR(a$, "SUB/FUNCTION not allowed") THEN erldiff = 1
 END IF
 IF inclevel > 0 AND incerror$ <> "" THEN a$ = a$ + CHR$(1) + incerror$
 
