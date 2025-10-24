@@ -1,34 +1,34 @@
-$Console:Only
-Option Base 0
+$CONSOLE:ONLY
+OPTION BASE 0
 
-Dim handles&(99)
-Dim Content$(LBound(handles&) To UBound(handles&))
+DIM handles&(99)
+DIM Content$(LBOUND(handles&) TO UBOUND(handles&))
 
-For x = LBound(handles&) TO UBound(handles&)
+FOR x = LBOUND(handles&) TO UBOUND(handles&)
     ' The math here "randomizes" the order of the handles in the array, while
     ' still keeping the result predictable. The numbers are picked so that
     ' every entry 0 to 99 still gets filled in.
-    handles&((x * 3) Mod (UBound(handles&) + 1)) = _OpenClient("https://www.example.com")
-Next
+    handles&((x * 3) MOD (UBOUND(handles&) + 1)) = _OPENCLIENT("https://www.qb64phoenix.com")
+NEXT
 
 ' Read from all the connections in parallel
 Done& = 0
-While Not Done&
+WHILE NOT Done&
     _LIMIT 100
     Done& = -1
 
-    For x = LBound(handles&) To UBound(handles&)
-        Get #handles&(x), , s$
-        content$(x) = content$(x) + s$
+    FOR x = LBOUND(handles&) TO UBOUND(handles&)
+        GET #handles&(x), , s$
+        Content$(x) = Content$(x) + s$
 
-        Done& = Done& And Eof(handles&(x))
-    Next
-Wend
+        Done& = Done& AND EOF(handles&(x))
+    NEXT
+WEND
 
-For x = LBound(handles&) TO UBound(handles&)
-    Print "Handle:"; handles&(x); ", LOF:"; Lof(handles&(x)); ", Content length:"; Len(content$(x)); ", Status Code: "; _StatusCode(handles&(x))
+FOR x = LBOUND(handles&) TO UBOUND(handles&)
+    PRINT "Handle: "; handles&(x); ", Match: "; _IIF(LOF(handles&(x)) = LEN(Content$(x)), "yes", "no"); ", Status Code: "; _STATUSCODE(handles&(x))
 
-    Close #handles&(x)
-Next
+    CLOSE #handles&(x)
+NEXT
 
-System
+SYSTEM

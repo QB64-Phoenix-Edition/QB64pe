@@ -296,25 +296,24 @@ static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int
 
     image_log_info("Loading image from file %s", fileName);
 
-    // Attempt to load file as a PCX first using sg_pcx
-    auto pixels = pcx_load_file(fileName, xOut, yOut, &compOut);
-    image_log_info("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
+    auto pixels = reinterpret_cast<uint32_t *>(stbi_load(fileName, xOut, yOut, &compOut, 4));
+    image_log_info("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
+
     if (!pixels) {
-        // If sg_pcx failed to load, then use stb_image
-        pixels = reinterpret_cast<uint32_t *>(stbi_load(fileName, xOut, yOut, &compOut, 4));
-        image_log_info("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
+        pixels = pcx_load_file(fileName, xOut, yOut, &compOut);
+        image_log_info("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
             pixels = image_qoi_load_from_file(fileName, xOut, yOut, &compOut);
             image_log_info("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
             if (!pixels) {
-                pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
-                image_log_info("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+                pixels = curico_load_file(fileName, xOut, yOut, &compOut);
+                image_log_info("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
 
                 if (!pixels) {
-                    pixels = curico_load_file(fileName, xOut, yOut, &compOut);
-                    image_log_info("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
+                    pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
+                    image_log_info("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
 
                     if (!pixels)
                         return nullptr; // Return NULL if all attempts failed
@@ -344,25 +343,24 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
 
     image_log_info("Loading image from memory");
 
-    // Attempt to load file as a PCX first using sg_pcx
-    auto pixels = pcx_load_memory(data, size, xOut, yOut, &compOut);
-    image_log_info("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
+    auto pixels = reinterpret_cast<uint32_t *>(stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(data), size, xOut, yOut, &compOut, 4));
+    image_log_info("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
+
     if (!pixels) {
-        // If sg_pcx failed to load, then use stb_image
-        pixels = reinterpret_cast<uint32_t *>(stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(data), size, xOut, yOut, &compOut, 4));
-        image_log_info("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
+        pixels = pcx_load_memory(data, size, xOut, yOut, &compOut);
+        image_log_info("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
             pixels = image_qoi_load_from_memory(data, size, xOut, yOut, &compOut);
             image_log_info("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
             if (!pixels) {
-                pixels = image_svg_load_from_memory(data, size, xOut, yOut, scaler, &compOut, &isVG);
-                image_log_info("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+                pixels = curico_load_memory(data, size, xOut, yOut, &compOut);
+                image_log_info("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
 
                 if (!pixels) {
-                    pixels = curico_load_memory(data, size, xOut, yOut, &compOut);
-                    image_log_info("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
+                    pixels = image_svg_load_from_memory(data, size, xOut, yOut, scaler, &compOut, &isVG);
+                    image_log_info("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
 
                     if (!pixels)
                         return nullptr; // Return NULL if all attempts failed
@@ -466,7 +464,7 @@ static uint8_t *image_extract_8bpp(const uint32_t *src, int32_t w, int32_t h, ui
         if (colorMap.count(srcColor) == 0) {
             // If we reached here, then the color is not in our table
             if (uniqueColors > 255) {
-                image_log_error("Image has more than %i unique colors", uniqueColors);
+                image_log_trace("Image has more than %i unique colors", uniqueColors);
                 free(pixels);
                 return nullptr; // Exit with failure if we have > 256 colors
             }

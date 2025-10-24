@@ -413,7 +413,7 @@ class PCXImage {
   public:
     void LoadFromMemory(const void *in_data, size_t in_dataSize, uint32_t **out_data, int *out_x, int *out_y) {
         if (!in_data || !in_dataSize || !out_x || !out_y) {
-            image_log_error("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
+            image_log_warn("Invalid parameters: in_data=%p, in_dataSize=%llu, out_x=%p, out_y=%p", in_data, in_dataSize, out_x, out_y);
 
             return;
         }
@@ -425,20 +425,20 @@ class PCXImage {
         Header header(input);
 
         if (header.id != Id::ZSoftPCX) {
-            image_log_error("Not a PCX file");
+            image_log_warn("Not a PCX file");
 
             return;
         }
 
         if (header.version != Version::Version3_0 && header.version != Version::Version2_8_Palette && header.version != Version::Version2_8_DefaultPalette &&
             header.version != Version::Version2_5) {
-            image_log_error("Unsupported PCX version: %d", int(header.version));
+            image_log_warn("Unsupported PCX version: %d", int(header.version));
 
             return;
         }
 
         if (header.bitsPerPixel != 1 && header.bitsPerPixel != 2 && header.bitsPerPixel != 4 && header.bitsPerPixel != 8) {
-            image_log_error("Unsupported PCX bits per pixel: %d", int(header.bitsPerPixel));
+            image_log_warn("Unsupported PCX bits per pixel: %d", int(header.bitsPerPixel));
 
             return;
         }
@@ -446,7 +446,7 @@ class PCXImage {
         auto width = header.xMax - header.xMin + 1;
         auto height = header.yMax - header.yMin + 1;
         if (width < 0 || height < 0 || width > 0xffff || height > 0xffff) {
-            image_log_error("Invalid image dimensions: (%d, %d) - (%d, %d)", header.xMin, header.yMin, header.xMax, header.yMax);
+            image_log_warn("Invalid image dimensions: (%d, %d) - (%d, %d)", header.xMin, header.yMin, header.xMax, header.yMax);
 
             return;
         }
@@ -458,7 +458,7 @@ class PCXImage {
         auto bpp = header.bitsPerPixel * header.nPlanes;
 
         if (bpp != 1 && bpp != 2 && bpp != 4 && bpp != 8 && bpp != 24 && bpp != 32) {
-            image_log_error("Unsupported PCX bit depth: %d", bpp);
+            image_log_warn("Unsupported PCX bit depth: %d", bpp);
 
             return;
         }
@@ -510,7 +510,7 @@ class PCXImage {
             input.Seek(input.GetSize() - (1 + (256 * 3)));
 
             if (input.Read<uint8_t>() != PaletteMarker) {
-                image_log_error("PCX palette marker not present in file");
+                image_log_warn("PCX palette marker not present in file");
 
                 return;
             }
@@ -527,7 +527,7 @@ class PCXImage {
         // Load the pixel data
         *out_data = reinterpret_cast<uint32_t *>(malloc(width * height * sizeof(uint32_t)));
         if (!(*out_data)) {
-            image_log_error("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
+            image_log_warn("Failed to allocate %lld bytes", width * height * sizeof(uint32_t));
 
             return;
         }
@@ -598,7 +598,7 @@ uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y, int
         pcx->LoadFromMemory(data, dataSize, &out_data, x, y);
         *components = 4; // always 32bpp BGRA
     } catch (const std::exception &e) {
-        image_log_error("Failed to load PCX: %s", e.what());
+        image_log_warn("Failed to load PCX: %s", e.what());
 
         if (out_data) {
             // Just in case this was allocated
@@ -612,25 +612,25 @@ uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y, int
 
 uint32_t *pcx_load_file(const char *filename, int *x, int *y, int *components) {
     if (!filename || !filename[0] || !x || !y || !components) {
-        image_log_error("Invalid parameters");
+        image_log_warn("Invalid parameters");
         return nullptr;
     }
 
     auto pFile = fopen(filename, "rb");
     if (!pFile) {
-        image_log_error("Failed to open %s", filename);
+        image_log_warn("Failed to open %s", filename);
         return nullptr;
     }
 
     if (fseek(pFile, 0, SEEK_END)) {
-        image_log_error("Failed to seek %s", filename);
+        image_log_warn("Failed to seek %s", filename);
         fclose(pFile);
         return nullptr;
     }
 
     auto len = ftell(pFile);
     if (len < 0) {
-        image_log_error("Failed to get length of %s", filename);
+        image_log_warn("Failed to get length of %s", filename);
         fclose(pFile);
         return nullptr;
     }
@@ -640,7 +640,7 @@ uint32_t *pcx_load_file(const char *filename, int *x, int *y, int *components) {
     rewind(pFile);
 
     if (long(fread(&buffer[0], sizeof(uint8_t), len, pFile)) != len || ferror(pFile)) {
-        image_log_error("Failed to read %s", filename);
+        image_log_warn("Failed to read %s", filename);
         fclose(pFile);
         return nullptr;
     }
