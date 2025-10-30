@@ -806,7 +806,7 @@ IF C = 2 THEN 'begin
 END IF
 
 IF C = 4 THEN 'next line
-    IF declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
+    IF ExecLevel(ExecCounter) = 0 _ANDALSO declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
         a3$ = UCASE$(LEFT$(LTRIM$(c$), 9)) 'a3$ is reset below, so we can use it as temp here
         IF a3$ = "FUNCTION " _ORELSE LEFT$(a3$, 4) = "SUB " THEN mainEndLine = 1
     END IF
