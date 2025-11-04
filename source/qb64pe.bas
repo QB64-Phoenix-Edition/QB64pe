@@ -2352,10 +2352,12 @@ DO
                         IF firstelement$ = "SUB" THEN sf = 2
                         IF sf THEN
 
-                            IF firstLine = 2 THEN '"AtTop" auto-including in progress
-                                a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AtTop' files": GOTO errmes
-                            ELSEIF mainEndLine = 2 THEN '"AfterMain" auto-including in progress
-                                a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AfterMain' files": GOTO errmes
+                            IF declaringlibrary = 0 THEN
+                                IF firstLine = 2 THEN '"AtTop" auto-including in progress
+                                    a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AtTop' files": GOTO errmes
+                                ELSEIF mainEndLine = 2 THEN '"AfterMain" auto-including in progress
+                                    a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AfterMain' files": GOTO errmes
+                                END IF
                             END IF
 
                             subfuncn = subfuncn + 1
