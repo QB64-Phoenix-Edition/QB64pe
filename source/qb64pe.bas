@@ -1733,6 +1733,55 @@ DO
             GOTO finishedlinepp
         END IF
 
+        IF LEFT$(temp$, 11) = "$USELIBRARY" THEN
+            a$ = "Expected $USELIBRARY:'author/library'"
+            'check for lib-spec
+            bra = INSTR(temp$, "'"): IF bra = 0 GOTO errmes
+            ket = INSTR(bra + 1, temp$, "'"): IF ket = 0 GOTO errmes
+            UseLib$ = _TRIM$(MID$(_TRIM$(wholeline$), bra + 1, ket - bra - 1))
+            IF LEN(UseLib$) = 0 GOTO errmes
+            'verify library existence
+            a$ = "Library descriptor for '" + UseLib$ + "' not found"
+            UseLibFile$ = "libraries/descriptors/" + UseLib$ + ".ini"
+            IF _FILEEXISTS(UseLibFile$) = 0 GOTO errmes
+            '-----
+            a$ = "Library source for '" + UseLib$ + "' not found ("
+            UseLibSrc$ = "libraries/includes/" + UseLib$ + "/": UseLibSect$ = "[LIBRARY INCLUDES]"
+            UseLibEntr$ = "IncAtTop": UseLibTop$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibTop$) > 0 THEN
+                UseLibTop$ = UseLibSrc$ + UseLibTop$
+                IF _FILEEXISTS(UseLibTop$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            UseLibEntr$ = "IncAfterMain": UseLibMain$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibMain$) > 0 THEN
+                UseLibMain$ = UseLibSrc$ + UseLibMain$
+                IF _FILEEXISTS(UseLibMain$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            UseLibEntr$ = "IncAtBottom": UseLibBottom$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
+            IF LEN(UseLibBottom$) > 0 THEN
+                UseLibBottom$ = UseLibSrc$ + UseLibBottom$
+                IF _FILEEXISTS(UseLibBottom$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
+            END IF
+            'avoid duplicate definitions
+            ullUB = UBOUND(useLibList$, 2)
+            FOR i = 0 TO ullUB
+                IF useLibList$(ullName, i) = UseLib$ GOTO finishedlinepp
+            NEXT i
+            'register library for auto-including
+            FOR i = 0 TO ullUB
+                IF useLibList$(ullName, i) = "" THEN EXIT FOR
+            NEXT i
+            IF i > ullUB THEN
+                REDIM _PRESERVE useLibList$(3, ullUB + 10)
+                i = ullUB + 1
+            END IF
+            useLibList$(ullName, i) = UseLib$
+            useLibList$(ullTop, i) = UseLibTop$
+            useLibList$(ullMain, i) = UseLibMain$
+            useLibList$(ullBottom, i) = UseLibBottom$
+            GOTO do_recompile
+        END IF
+
         IF temp$ = "$ASSERTS" THEN
             SetRCStateVar AssertsOn, 1
             GOTO finishedlinepp
@@ -3373,54 +3422,10 @@ DO
         END IF
 
         IF LEFT$(a3u$, 11) = "$USELIBRARY" THEN
-            a$ = "Expected $USELIBRARY:'author/library'"
-            'check for lib-spec
-            bra = INSTR(a3u$, "'"): IF bra = 0 GOTO errmes
-            ket = INSTR(bra + 1, a3u$, "'"): IF ket = 0 GOTO errmes
-            UseLib$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
-            IF LEN(UseLib$) = 0 GOTO errmes
             'fix layout
+            bra = INSTR(a3u$, "'"): ket = INSTR(bra + 1, a3u$, "'")
+            UseLib$ = _TRIM$(MID$(a3$, bra + 1, ket - bra - 1))
             layout$ = SCase$("$UseLibrary:'") + UseLib$ + "'" + MID$(a3$, ket + 1)
-            'verify library existence
-            a$ = "Library descriptor for '" + UseLib$ + "' not found"
-            UseLibFile$ = "libraries/descriptors/" + UseLib$ + ".ini"
-            IF _FILEEXISTS(UseLibFile$) = 0 GOTO errmes
-            '-----
-            a$ = "Library source for '" + UseLib$ + "' not found ("
-            UseLibSrc$ = "libraries/includes/" + UseLib$ + "/": UseLibSect$ = "[LIBRARY INCLUDES]"
-            UseLibEntr$ = "IncAtTop": UseLibTop$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
-            IF LEN(UseLibTop$) > 0 THEN
-                UseLibTop$ = UseLibSrc$ + UseLibTop$
-                IF _FILEEXISTS(UseLibTop$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
-            END IF
-            UseLibEntr$ = "IncAfterMain": UseLibMain$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
-            IF LEN(UseLibMain$) > 0 THEN
-                UseLibMain$ = UseLibSrc$ + UseLibMain$
-                IF _FILEEXISTS(UseLibMain$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
-            END IF
-            UseLibEntr$ = "IncAtBottom": UseLibBottom$ = ReadSetting$(UseLibFile$, UseLibSect$, UseLibEntr$)
-            IF LEN(UseLibBottom$) > 0 THEN
-                UseLibBottom$ = UseLibSrc$ + UseLibBottom$
-                IF _FILEEXISTS(UseLibBottom$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
-            END IF
-            'avoid duplicate definitions
-            ullUB = UBOUND(useLibList$, 2)
-            FOR i = 0 TO ullUB
-                IF useLibList$(ullName, i) = UseLib$ GOTO finishednonexec
-            NEXT i
-            'register library for auto-including
-            FOR i = 0 TO ullUB
-                IF useLibList$(ullName, i) = "" THEN EXIT FOR
-            NEXT i
-            IF i > ullUB THEN
-                REDIM _PRESERVE useLibList$(3, ullUB + 10)
-                i = ullUB + 1
-            END IF
-            useLibList$(ullName, i) = UseLib$
-            useLibList$(ullTop, i) = UseLibTop$
-            useLibList$(ullMain, i) = UseLibMain$
-            useLibList$(ullBottom, i) = UseLibBottom$
-            recompile = 1
             GOTO finishednonexec
         END IF
 
