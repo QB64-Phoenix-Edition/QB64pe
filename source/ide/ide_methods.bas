@@ -403,6 +403,12 @@ FUNCTION ide2 (ignore)
         IF PasteCursorAtEnd THEN
             menu$(OptionsMenuID, OptionsMenuPasteCursor) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuPasteCursor)
         END IF
+        OptionsMenuAutoCloseBrackets = i
+        menu$(m, i) = "Auto-Close #Brackets": i = i + 1
+        menuDesc$(m, i - 1) = "Toggles auto-closing of brackets and quotes"
+        IF AutoCloseBrackets THEN
+            menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets)
+        END IF
         OptionsMenuShowErrorsImmediately = i
         menu$(m, i) = "Syntax Ch#ecker": i = i + 1
         menuDesc$(m, i - 1) = "Toggles instant syntax checker (status area)"
@@ -4344,15 +4350,44 @@ FUNCTION ide2 (ignore)
         a$ = idegetline(idecy)
         IF LEN(a$) < idecx - 1 THEN a$ = a$ + SPACE$(idecx - 1 - LEN(a$))
 
-        IF ideinsert THEN
-            a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
-            IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
-            a$ = LEFT$(a$, idecx - 1) + K$ + a2$
-        ELSE
-            a$ = LEFT$(a$, idecx - 1) + K$ + RIGHT$(a$, LEN(a$) - idecx + 1)
+        skipInsert = 0
+        IF ideinsert = 0 THEN 'Insert mode
+            nextChar$ = MID$(a$, idecx, 1)
+            IF (K$ = ")" AND nextChar$ = ")") OR _
+               (K$ = "]" AND nextChar$ = "]") OR _
+               (K$ = "}" AND nextChar$ = "}") OR _
+               (K$ = CHR$(34) AND nextChar$ = CHR$(34)) THEN
+                skipInsert = 1
+            END IF
         END IF
 
-        idesetline idecy, a$
+        IF skipInsert = 0 THEN
+            IF ideinsert THEN
+                a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
+                IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
+                a$ = LEFT$(a$, idecx - 1) + K$ + a2$
+            ELSE
+                extraChar$ = ""
+                IF AutoCloseBrackets THEN
+                    IF K$ = "(" THEN extraChar$ = ")"
+                    IF K$ = "[" THEN extraChar$ = "]"
+                    IF K$ = "{" THEN extraChar$ = "}"
+                    IF K$ = CHR$(34) THEN
+                        'Check if we are inside a string (odd number of quotes before cursor)
+                        quoteCount = 0
+                        tempStr$ = LEFT$(a$, idecx - 1)
+                        FOR i = 1 TO LEN(tempStr$)
+                            IF MID$(tempStr$, i, 1) = CHR$(34) THEN quoteCount = quoteCount + 1
+                        NEXT
+                        IF (quoteCount MOD 2) = 0 THEN extraChar$ = CHR$(34)
+                    END IF
+                END IF
+
+                a$ = LEFT$(a$, idecx - 1) + K$ + extraChar$ + RIGHT$(a$, LEN(a$) - idecx + 1)
+            END IF
+            idesetline idecy, a$
+        END IF
+
         idecx = idecx + LEN(K$)
         specialchar:
         'In case there is a selection, let's show the number of
@@ -5144,6 +5179,20 @@ FUNCTION ide2 (ignore)
                 ELSE
                     WriteConfigSetting generalSettingsSection$, "PasteCursorAtEnd", "False"
                     menu$(OptionsMenuID, OptionsMenuPasteCursor) = "Cursor After #Paste"
+                END IF
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF RIGHT$(menu$(m, s), 20) = "Auto-Close #Brackets" THEN
+                PCOPY 2, 0
+                AutoCloseBrackets = NOT AutoCloseBrackets
+                IF AutoCloseBrackets THEN
+                    WriteConfigSetting generalSettingsSection$, "AutoCloseBrackets", "True"
+                    menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = CHR$(7) + "Auto-Close #Brackets"
+                ELSE
+                    WriteConfigSetting generalSettingsSection$, "AutoCloseBrackets", "False"
+                    menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = "Auto-Close #Brackets"
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop

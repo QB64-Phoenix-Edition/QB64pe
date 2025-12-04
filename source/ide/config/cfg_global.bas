@@ -14,6 +14,7 @@ DIM SHARED IDEUseFont8 AS _BYTE, IDECustomFont AS _BYTE
 DIM SHARED IDECustomFontFile$, IDECustomFontHeight AS _BYTE, IDECustomFontHandle AS LONG
 DIM SHARED MouseButtonSwapped AS _BYTE
 DIM SHARED PasteCursorAtEnd AS _BYTE
+DIM SHARED AutoCloseBrackets AS _BYTE
 DIM SHARED SaveExeWithSource AS LONG, EnableQuickNav AS _BYTE
 DIM SHARED IDEShowErrorsImmediately AS _BYTE
 DIM SHARED ShowLineNumbers AS _BYTE, ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
