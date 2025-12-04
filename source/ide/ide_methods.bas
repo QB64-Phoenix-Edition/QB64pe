@@ -3029,7 +3029,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF KALT AND (KB = _KEY_DOWN OR KB = _KEY_UP) THEN
+        IF KALT AND KSHIFT = 0 AND (KB = _KEY_DOWN OR KB = _KEY_UP) THEN
             IF IdeBmkN = 0 THEN
                 result = idemessagebox("Bookmarks", "No bookmarks exist (Use Alt+Left to create a bookmark)", "")
                 SCREEN , , 3, 0
@@ -3785,6 +3785,25 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF KB = _KEY_UP THEN
+            IF KALT AND KSHIFT THEN
+                y1 = idecy: y2 = idecy
+                IF ideselect THEN
+                    y1 = ideselecty1
+                    IF y1 > y2 THEN SWAP y1, y2
+                END IF
+                IF y1 > 1 THEN
+                    lineAbove$ = idegetline$(y1 - 1)
+                    FOR i = y1 TO y2
+                        idesetline i - 1, idegetline$(i)
+                    NEXT
+                    idesetline y2, lineAbove$
+                    idecy = idecy - 1
+                    IF ideselect THEN ideselecty1 = ideselecty1 - 1
+                    idechangemade = 1
+                    startPausedPending = 0
+                END IF
+                GOTO specialchar
+            END IF
             IF KCONTROL THEN 'scroll the window, instead of moving the cursor
                 idesy = idesy - 1
                 IF idesy < 1 THEN idesy = 1
@@ -3798,6 +3817,25 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF KB = _KEY_DOWN THEN
+            IF KALT AND KSHIFT THEN
+                y1 = idecy: y2 = idecy
+                IF ideselect THEN
+                    y1 = ideselecty1
+                    IF y1 > y2 THEN SWAP y1, y2
+                END IF
+                IF y2 < iden THEN
+                    lineBelow$ = idegetline$(y2 + 1)
+                    FOR i = y2 TO y1 STEP -1
+                        idesetline i + 1, idegetline$(i)
+                    NEXT
+                    idesetline y1, lineBelow$
+                    idecy = idecy + 1
+                    IF ideselect THEN ideselecty1 = ideselecty1 + 1
+                    idechangemade = 1
+                    startPausedPending = 0
+                END IF
+                GOTO specialchar
+            END IF
             IF KCONTROL THEN 'scroll the window, instead of moving the cursor
                 idesy = idesy + 1
                 IF idesy > iden THEN idesy = iden
@@ -5012,9 +5050,22 @@ FUNCTION ide2 (ignore)
                 ctrlDuplicateLine:
                 idechangemade = 1
                 startPausedPending = 0
-                a$ = idegetline(idecy)
-                ideinsline idecy + 1, a$
-                idecy = idecy + 1
+                IF ideselect THEN
+                    y1 = ideselecty1: y2 = idecy
+                    IF y1 > y2 THEN SWAP y1, y2
+                    count = y2 - y1 + 1
+                    FOR i = 1 TO count
+                        a$ = idegetline$(y1 + i - 1)
+                        ideinsline y2 + i, a$
+                    NEXT
+                    idecy = y2 + count
+                    ideselecty1 = y2 + 1
+                    ideselect = 1
+                ELSE
+                    a$ = idegetline$(idecy)
+                    ideinsline idecy + 1, a$
+                    idecy = idecy + 1
+                END IF
                 GOTO specialchar
             END IF
 
