@@ -1252,6 +1252,10 @@ if(__INTEGER_OPTIONSMENUDISABLESYNTAX==NULL){
 __INTEGER_OPTIONSMENUDISABLESYNTAX=(int16*)mem_static_malloc(2);
 *__INTEGER_OPTIONSMENUDISABLESYNTAX=0;
 }
+if(__INTEGER_OPTIONSMENUAUTOCLOSEBRACKETS==NULL){
+__INTEGER_OPTIONSMENUAUTOCLOSEBRACKETS=(int16*)mem_static_malloc(2);
+*__INTEGER_OPTIONSMENUAUTOCLOSEBRACKETS=0;
+}
 if(__INTEGER_VIEWMENUID==NULL){
 __INTEGER_VIEWMENUID=(int16*)mem_static_malloc(2);
 *__INTEGER_VIEWMENUID=0;
@@ -2189,6 +2193,10 @@ __BYTE_MOUSEBUTTONSWAPPED=(int8*)mem_static_malloc(1);
 if(__BYTE_PASTECURSORATEND==NULL){
 __BYTE_PASTECURSORATEND=(int8*)mem_static_malloc(1);
 *__BYTE_PASTECURSORATEND=0;
+}
+if(__BYTE_AUTOCLOSEBRACKETS==NULL){
+__BYTE_AUTOCLOSEBRACKETS=(int8*)mem_static_malloc(1);
+*__BYTE_AUTOCLOSEBRACKETS=0;
 }
 if(__LONG_SAVEEXEWITHSOURCE==NULL){
 __LONG_SAVEEXEWITHSOURCE=(int32*)mem_static_malloc(4);
@@ -3190,14 +3198,6 @@ if(__LONG_LASTLINERETURN==NULL){
 __LONG_LASTLINERETURN=(int32*)mem_static_malloc(4);
 *__LONG_LASTLINERETURN=0;
 }
-if(__LONG_DECLARINGLIBRARY==NULL){
-__LONG_DECLARINGLIBRARY=(int32*)mem_static_malloc(4);
-*__LONG_DECLARINGLIBRARY=0;
-}
-if(__LONG_MAINENDLINE==NULL){
-__LONG_MAINENDLINE=(int32*)mem_static_malloc(4);
-*__LONG_MAINENDLINE=0;
-}
 if (!__STRING_A3)__STRING_A3=qbs_new(0,0);
 if(__LONG_CONTINUELINEFROM==NULL){
 __LONG_CONTINUELINEFROM=(int32*)mem_static_malloc(4);
@@ -3285,6 +3285,10 @@ __LONG_LASTUNRESOLVED=(int32*)mem_static_malloc(4);
 }
 int8 pass70;
 int8 pass71;
+if(__LONG_MAINENDLINE==NULL){
+__LONG_MAINENDLINE=(int32*)mem_static_malloc(4);
+*__LONG_MAINENDLINE=0;
+}
 if(__LONG_AUTOINCLUDEBUFFER==NULL){
 __LONG_AUTOINCLUDEBUFFER=(int32*)mem_static_malloc(4);
 *__LONG_AUTOINCLUDEBUFFER=0;
@@ -3428,6 +3432,10 @@ __LONG_COMMONOPTION=(int32*)mem_static_malloc(4);
 }
 if (!__STRING_MYLIB)__STRING_MYLIB=qbs_new(0,0);
 if (!__STRING_MYLIBOPT)__STRING_MYLIBOPT=qbs_new(0,0);
+if(__LONG_DECLARINGLIBRARY==NULL){
+__LONG_DECLARINGLIBRARY=(int32*)mem_static_malloc(4);
+*__LONG_DECLARINGLIBRARY=0;
+}
 if(__LONG_DYNSCOPE==NULL){
 __LONG_DYNSCOPE=(int32*)mem_static_malloc(4);
 *__LONG_DYNSCOPE=0;
@@ -3591,6 +3599,7 @@ int16 pass225;
 int32 pass226;
 int16 pass227;
 static int32 ongo_228=0;
+if (!__STRING_TMP)__STRING_TMP=qbs_new(0,0);
 if (!__STRING_LINEBACKUP)__STRING_LINEBACKUP=qbs_new(0,0);
 byte_element_struct *byte_element_231=NULL;
 if (!byte_element_231){
@@ -3646,6 +3655,11 @@ if (!__STRING_USELIBBOTTOM)__STRING_USELIBBOTTOM=qbs_new(0,0);
 byte_element_struct *byte_element_240=NULL;
 if (!byte_element_240){
 if ((mem_static_pointer+=12)<mem_static_limit) byte_element_240=(byte_element_struct*)(mem_static_pointer-12); else byte_element_240=(byte_element_struct*)mem_static_malloc(12);
+}
+if (!__STRING_USELIBNEEDY)__STRING_USELIBNEEDY=qbs_new(0,0);
+if(__LONG_ULLND==NULL){
+__LONG_ULLND=(int32*)mem_static_malloc(4);
+*__LONG_ULLND=0;
 }
 static int64 fornext_value242;
 static int64 fornext_finalvalue242;
