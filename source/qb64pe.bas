@@ -150,8 +150,8 @@ REDIM SHARED embedFileList$(3, 10)
 CONST eflLine = 0, eflUsed = 1, eflFile = 2, eflHand = 3 '1st index IDs
 
 'Array to handle $USELIBRARY metacommand:
-REDIM SHARED useLibList$(3, 10)
-CONST ullName = 0, ullTop = 1, ullMain = 2, ullBottom = 3 '1st index IDs
+REDIM SHARED useLibList$(4, 10)
+CONST ullName = 0, ullNeedy = 1, ullTop = 2, ullMain = 3, ullBottom = 4 '1st index IDs
 
 'Variables to handle $VERSIONINFO metacommand:
 DIM SHARED viFileVersionNum$, viProductVersionNum$, viCompanyName$
@@ -806,10 +806,6 @@ IF C = 2 THEN 'begin
 END IF
 
 IF C = 4 THEN 'next line
-    IF ExecLevel(ExecCounter) = 0 _ANDALSO declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
-        a3$ = UCASE$(LEFT$(LTRIM$(c$), 9)) 'a3$ is reset below, so we can use it as temp here
-        IF a3$ = "FUNCTION " _ORELSE LEFT$(a3$, 4) = "SUB " THEN mainEndLine = 1
-    END IF
     IF idepass = 1 THEN
         wholeline$ = c$
         GOTO ideprepass
@@ -826,7 +822,6 @@ IF C = 4 THEN 'next line
 END IF
 
 IF C = 5 THEN 'end of program reached
-    IF mainEndLine = 0 THEN mainEndLine = 1
     lastLine = 1
     lastLineReturn = 1
     IF idepass = 1 THEN
@@ -841,7 +836,6 @@ IF C = 5 THEN 'end of program reached
     lastLineReturn:
     lastLineReturn = 0
     lastLine = 0
-    mainEndLine = 0
 
     IF idepass = 1 THEN
         'prepass complete
@@ -1131,7 +1125,7 @@ sflistn = -1 'no entries
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
 'Reset used libraries tracking list (fullrecompile only)
-REDIM SHARED useLibList$(3, 10)
+REDIM SHARED useLibList$(4, 10)
 
 'RCStateVars (feature and required recompile tracking)
 ClearRCStateVar ColorSet
@@ -1622,16 +1616,21 @@ RETURN
 
 startPrepass:
 DO
-
-    '### STEVE EDIT FOR CONST EXPANSION 10/11/2013
-
-    wholeline$ = lineinput3$
-    IF wholeline$ = CHR$(13) THEN EXIT DO
-
     ideprepass:
-    prepassLastLine:
     prepass = 1
 
+    'wholeline$ is passed in idemode, from $include and CLI lastLine trigger
+    IF idemode = 0 AND inclevel = 0 AND lastLine = 0 THEN
+        wholeline$ = lineinput3$ 'otherwise read from source
+        IF wholeline$ = CHR$(13) THEN EXIT DO 'check for end
+    END IF
+    'detection of main end (implicit by 1st SUB/FUNC or explicit by lastLine = 1)
+    IF ExecLevel(ExecCounter) = 0 _ANDALSO declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
+        tmp$ = UCASE$(LEFT$(LTRIM$(wholeline$), 9))
+        IF tmp$ = "FUNCTION " _ORELSE LEFT$(tmp$, 4) = "SUB " THEN mainEndLine = 1
+    END IF
+    IF lastLine = 1 AND mainEndLine = 0 THEN mainEndLine = 1
+    'perform auto-including according to code position
     IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
         lineBackup$ = wholeline$ 'backup the real line
         GOSUB setPrecompFlags
@@ -1762,20 +1761,34 @@ DO
                 UseLibBottom$ = UseLibSrc$ + UseLibBottom$
                 IF _FILEEXISTS(UseLibBottom$) = 0 THEN a$ = a$ + UseLibEntr$ + ")": GOTO errmes
             END IF
-            'avoid duplicate definitions
-            ullUB = UBOUND(useLibList$, 2)
+            'who's the referrer (in need of this library)
+            IF inclevel = 0 THEN
+                IF NoIDEMode THEN
+                    UseLibNeedy$ = sourcefile$ + STR$(linenumber)
+                ELSE
+                    UseLibNeedy$ = ideprogname$ + STR$(linenumber)
+                END IF
+            ELSE
+                UseLibNeedy$ = incname$(inclevel) + STR$(inclinenumber(inclevel))
+            END IF
+            'avoid duplicate definitions but maintain new dependencies
+            ullUB = UBOUND(useLibList$, 2): ullND = -1
             FOR i = 0 TO ullUB
-                IF useLibList$(ullName, i) = UseLib$ GOTO finishedlinepp
+                IF useLibList$(ullName, i) = UseLib$ THEN
+                    IF useLibList$(ullNeedy, i) = UseLibNeedy$ THEN ullND = 0
+                END IF
             NEXT i
-            'register library for auto-including
+            IF NOT ullND GOTO finishedlinepp
+            'register new library (or dependency) for auto-including
             FOR i = 0 TO ullUB
                 IF useLibList$(ullName, i) = "" THEN EXIT FOR
             NEXT i
             IF i > ullUB THEN
-                REDIM _PRESERVE useLibList$(3, ullUB + 10)
+                REDIM _PRESERVE useLibList$(4, ullUB + 10)
                 i = ullUB + 1
             END IF
             useLibList$(ullName, i) = UseLib$
+            useLibList$(ullNeedy, i) = UseLibNeedy$
             useLibList$(ullTop, i) = UseLibTop$
             useLibList$(ullMain, i) = UseLibMain$
             useLibList$(ullBottom, i) = UseLibBottom$
@@ -1784,27 +1797,33 @@ DO
 
         IF temp$ = "$ASSERTS" THEN
             SetRCStateVar AssertsOn, 1
+            SetPreLET "_ASSERTS_", "1"
             GOTO finishedlinepp
         END IF
 
         IF temp$ = "$ASSERTS:CONSOLE" THEN
             SetRCStateVar AssertsOn, 1
             SetRCStateVar ConsoleOn, 1
+            SetPreLET "_ASSERTS_", "1"
+            SetPreLET "_CONSOLE_", "1"
             GOTO finishedlinepp
         END IF
 
         IF temp$ = "$CONSOLE" THEN
             SetRCStateVar ConsoleOn, 1
+            SetPreLET "_CONSOLE_", "1"
             GOTO finishedlinepp
         END IF
 
         IF temp$ = "$CONSOLE:ONLY" THEN
             SetRCStateVar ConsoleOn, 2
+            SetPreLET "_CONSOLE_", "2"
             GOTO finishedlinepp
         END IF
 
         IF temp$ = "$DEBUG" THEN
             SetRCStateVar vWatchOn, 1
+            SetPreLET "_DEBUG_", "1"
             GOTO finishedlinepp
         END IF
 
@@ -2850,6 +2869,7 @@ DO
     '(end manager)
 
     IF idemode THEN GOTO ideret2
+    IF lastLineReturn = 1 THEN EXIT DO
 LOOP
 
 'add final line
@@ -2857,7 +2877,7 @@ IF lastLineReturn = 0 THEN
     lastLineReturn = 1
     lastLine = 1
     wholeline$ = ""
-    GOTO prepassLastLine
+    GOTO ideprepass
 END IF
 
 IF definingtype THEN definingtype = 0 'ignore this error so that auto-formatting can be performed and catch it again later
@@ -2961,16 +2981,6 @@ DO
     prepass = 0
     IF recompile GOTO do_recompile
 
-    IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
-        lineBackup$ = a3$ 'backup the real line
-        GOSUB setPrecompFlags
-        GOSUB autoIncludeManager
-        a3$ = lineBackup$
-        idecompiledline$ = a3$ 'also restore compiled line for IDE ops
-        'start of pass, reset formatting to defaults after auto-includes
-        IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
-    END IF
-
     stringprocessinghappened = 0
 
     IF continuelinefrom THEN
@@ -2993,9 +3003,28 @@ DO
     IF addmetadynamic = 1 THEN addmetadynamic = 0: DynamicMode = 1
     IF addmetastatic = 1 THEN addmetastatic = 0: DynamicMode = 0
 
-    'a3$ is passed in idemode and when using $include
-    IF idemode = 0 AND inclevel = 0 THEN a3$ = lineinput3$
-    IF a3$ = CHR$(13) THEN EXIT DO
+    'a3$ is passed in idemode, from $include and CLI lastLine trigger
+    IF idemode = 0 AND inclevel = 0 AND lastLine = 0 THEN
+        a3$ = lineinput3$ 'otherwise read from source
+        IF a3$ = CHR$(13) THEN EXIT DO 'check for end
+    END IF
+    'detection of main end (implicit by 1st SUB/FUNC or explicit by lastLine = 1)
+    IF ExecLevel(ExecCounter) = 0 _ANDALSO declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
+        tmp$ = UCASE$(LEFT$(LTRIM$(a3$), 9))
+        IF tmp$ = "FUNCTION " _ORELSE LEFT$(tmp$, 4) = "SUB " THEN mainEndLine = 1
+    END IF
+    IF lastLine = 1 AND mainEndLine = 0 THEN mainEndLine = 1
+    'perform auto-including according to code position
+    IF firstLine = 1 OR (mainEndLine = 1 AND firstLine = 3) OR lastLine = 1 THEN
+        lineBackup$ = a3$ 'backup the real line
+        GOSUB setPrecompFlags
+        GOSUB autoIncludeManager
+        a3$ = lineBackup$
+        idecompiledline$ = a3$ 'also restore compiled line for IDE ops
+        'start of pass, reset formatting to defaults after auto-includes
+        IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
+    END IF
+
     linenumber = linenumber + 1
     reallinenumber = reallinenumber + 1
     layout = ""
@@ -11573,6 +11602,7 @@ DO
     IF linecontinuation THEN layout$ = ""
 
     IF idemode THEN GOTO ideret4 'return control to IDE
+    IF lastLineReturn = 1 THEN EXIT DO
 
     skip_invalidated_line:
     IF FormatMode THEN
@@ -11591,7 +11621,7 @@ LOOP
 IF lastLineReturn = 0 THEN
     lastLineReturn = 1
     lastLine = 1
-    wholeline$ = ""
+    a3$ = ""
     GOTO compileline
 END IF
 
