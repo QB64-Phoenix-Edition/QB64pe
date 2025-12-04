@@ -3502,6 +3502,10 @@ FUNCTION ide2 (ignore)
             GOTO ctrlRemoveComment
         END IF
 
+        IF KCONTROL AND UCASE$(K$) = "D" THEN 'Duplicate Line
+            GOTO ctrlDuplicateLine
+        END IF
+
         IF KCONTROL AND UCASE$(K$) = "S" THEN 'File -> #Save
             IF ideprogname = "" THEN
                 ProposedTitle$ = FindProposedTitle$
@@ -5002,6 +5006,16 @@ FUNCTION ide2 (ignore)
                 NEXT
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "#Duplicate Line  Ctrl+D" THEN
+                ctrlDuplicateLine:
+                idechangemade = 1
+                startPausedPending = 0
+                a$ = idegetline(idecy)
+                ideinsline idecy + 1, a$
+                idecy = idecy + 1
+                GOTO specialchar
             END IF
 
             IF menu$(m, s) = "Remove Comme#nt (')  Ctrl+Shift+R" THEN
@@ -19173,6 +19187,8 @@ SUB IdeMakeEditMenu
     menuDesc$(m, i - 1) = "Selects all contents of current program"
 
     IF IdeSystem = 1 THEN
+        menu$(m, i) = "#Duplicate Line  Ctrl+D": i = i + 1
+        menuDesc$(m, i - 1) = "Duplicates the current line"
         menu$(m, i) = "-": i = i + 1
         menu$(m, i) = "To#ggle Comment  Ctrl+T": i = i + 1
         menuDesc$(m, i - 1) = "Toggles comment (') on the current selection"
