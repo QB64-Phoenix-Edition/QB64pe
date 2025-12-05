@@ -12,8 +12,8 @@ jobs:
           - os: ubuntu-22.04
             platform: x64
             prefix: lnx
-          - os: macos-14
-            platform: arm64
+          - os: macos-15-intel
+            platform: x64
             prefix: osx
           - os: windows-2022
             platform: x64
@@ -38,7 +38,7 @@ jobs:
     - uses: maxim-lobanov/setup-xcode@v1
       if: ${{ matrix.prefix == 'osx' }}
       with:
-        xcode-version: '15.4' # macOS 14 default
+        xcode-version: '16.4' # macOS 15 default
 
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
