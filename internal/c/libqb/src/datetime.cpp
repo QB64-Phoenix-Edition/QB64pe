@@ -5,8 +5,8 @@
 #include <sys/time.h>
 
 #ifdef QB64_WINDOWS
-#    include <synchapi.h>
 #    include <profileapi.h>
+#    include <synchapi.h>
 #endif
 
 #include "datetime.h"
@@ -24,7 +24,7 @@ static uint64_t orwl_timestart = 0;
 
 static int64_t orwl_gettime(void) {
     if (!orwl_timestart) {
-        mach_timebase_info_data_t tb = {0};
+        mach_timebase_info_data_t tb{};
         mach_timebase_info(&tb);
         orwl_timebase = tb.numer;
         orwl_timebase /= tb.denom;

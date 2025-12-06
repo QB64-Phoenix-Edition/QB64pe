@@ -1,5 +1,5 @@
-#ifndef HEADER_CURL_VQUIC_CURL_MSH3_H
-#define HEADER_CURL_VQUIC_CURL_MSH3_H
+#ifndef HEADER_CURL_FOPEN_H
+#define HEADER_CURL_FOPEN_H
 /***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
@@ -24,23 +24,9 @@
  *
  ***************************************************************************/
 
-#include "../curl_setup.h"
+#include "curlx/fopen.h"
 
-#ifdef USE_MSH3
+CURLcode Curl_fopen(struct Curl_easy *data, const char *filename,
+                    FILE **fh, char **tempname);
 
-#include <msh3.h>
-
-void Curl_msh3_ver(char *p, size_t len);
-
-CURLcode Curl_cf_msh3_create(struct Curl_cfilter **pcf,
-                             struct Curl_easy *data,
-                             struct connectdata *conn,
-                             const struct Curl_addrinfo *ai);
-
-bool Curl_conn_is_msh3(const struct Curl_easy *data,
-                       const struct connectdata *conn,
-                       int sockindex);
-
-#endif /* USE_MSQUIC */
-
-#endif /* HEADER_CURL_VQUIC_CURL_MSH3_H */
+#endif

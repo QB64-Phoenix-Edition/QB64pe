@@ -93,39 +93,6 @@ void x11_unlock() {
     x11_locked = 0;
 }
 
-/*
-    Logging for QB64 developers (when an alert() just isn't enough)
-    1) Temporarily set allow_logging=1
-    2) Call log with a string or number:
-    log_event("this is a char* string");
-    log_event(12345);
-    3) 'log.txt' is created in the same folder as your executable
-    * 'log.txt' is truncated every time your program runs on the first call to log_event(...)
-*/
-int32 allow_logging = 1;
-std::ofstream log_file;
-int32 log_file_opened = 0;
-
-void open_log_file() {
-    if (log_file_opened == 0) {
-        log_file.open("log.txt", std::ios_base::out | std::ios_base::trunc);
-        log_file_opened = 1;
-    }
-}
-
-void log_event(char *x) {
-    open_log_file();
-    log_file << x;
-}
-
-void log_event(int32 x) {
-    open_log_file();
-    char str[1000];
-    memset(&str[0], 0, 1000);
-    sprintf(str, "%d", x);
-    log_file << &str[0];
-}
-
 // forward references
 void sub__printimage(int32 i);
 

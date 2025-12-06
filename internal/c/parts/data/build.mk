@@ -14,7 +14,7 @@ MODP_B64_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/data/%.o,$(MODP_B64_S
 DATA_PROCESSING_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/data/%.o,$(DATA_PROCESSING_SRCS))
 
 $(PATH_INTERNAL_C)/parts/data/%.o: $(PATH_INTERNAL_C)/parts/data/%.c
-	$(CC) -O3 $(CFLAGS) -DDEPENDENCY_CONSOLE_ONLY -DMINIZ_NO_STDIO -DMINIZ_NO_TIME -DMINIZ_NO_ARCHIVE_APIS -DMINIZ_NO_ARCHIVE_WRITING_APIS -Wall $< -c -o $@
+	$(CC) -O3 $(CFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 
 $(PATH_INTERNAL_C)/parts/data/%.o: $(PATH_INTERNAL_C)/parts/data/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
