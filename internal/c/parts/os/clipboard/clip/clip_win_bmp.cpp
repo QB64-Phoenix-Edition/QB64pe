@@ -1,5 +1,5 @@
 // Clip Library
-// Copyright (c) 2015-2024  David Capello
+// Copyright (c) 2015-2025  David Capello
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
@@ -8,7 +8,9 @@
 
 #include "clip.h"
 #include "clip_common.h"
+#include "clip_win_hglobal.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace clip {
@@ -41,6 +43,20 @@ BitmapInfo::BitmapInfo() {
   }
 }
 
+void BitmapInfo::calc_stride() {
+  // From:
+  //
+  //   https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapinfoheader#calculating-surface-stride
+  //
+  // The stride (bytes per row) must be always the image width in
+  // bytes rounded up to the nearest DWORD.
+  //
+  // Some programs (e.g. Steam client, in its screenshots section)
+  // create an misaligned stride, this is just wrong. Not even MS
+  // Paint is able to paste these images.
+  stride = GDI_WIDTHBYTES(width * bit_count);
+}
+
 bool BitmapInfo::load_from(BITMAPV5HEADER* b5) {
   if (b5 &&
       b5->bV5BitCount == 32 &&
@@ -52,6 +68,8 @@ bool BitmapInfo::load_from(BITMAPV5HEADER* b5) {
     height      = b5->bV5Height;
     bit_count   = b5->bV5BitCount;
     compression = b5->bV5Compression;
+    calc_stride();
+
     if (compression == BI_BITFIELDS) {
       red_mask    = b5->bV5RedMask;
       green_mask  = b5->bV5GreenMask;
@@ -77,6 +95,7 @@ bool BitmapInfo::load_from(BITMAPINFO* bi) {
   height      = bi->bmiHeader.biHeight;
   bit_count   = bi->bmiHeader.biBitCount;
   compression = bi->bmiHeader.biCompression;
+  calc_stride();
 
   if (compression == BI_BITFIELDS) {
     red_mask   = *((uint32_t*)&bi->bmiColors[0]);
@@ -95,7 +114,9 @@ bool BitmapInfo::load_from(BITMAPINFO* bi) {
         alpha_mask = 0xff000000;
         break;
       case 24:
-      case 8: // We return 8bpp images as 24bpp
+      case 8: // We return 8bpp, 4bpp and 1bpp images as 24bpp
+      case 4:
+      case 1:
         red_mask   = 0xff0000;
         green_mask = 0xff00;
         blue_mask  = 0xff;
@@ -128,7 +149,7 @@ void BitmapInfo::fill_spec(image_spec& spec) const {
   spec.bits_per_pixel = bit_count;
   if (spec.bits_per_pixel <= 8)
     spec.bits_per_pixel = 24;
-  spec.bytes_per_row = width*((spec.bits_per_pixel+7)/8);
+  spec.bytes_per_row = width * ((spec.bits_per_pixel+7)/8);
   spec.red_mask   = red_mask;
   spec.green_mask = green_mask;
   spec.blue_mask  = blue_mask;
@@ -156,6 +177,7 @@ void BitmapInfo::fill_spec(image_spec& spec) const {
       break;
     }
   }
+  spec.bytes_per_row = std::max<unsigned long>(spec.bytes_per_row, stride);
 
   unsigned long* masks = &spec.red_mask;
   unsigned long* shifts = &spec.red_shift;
@@ -178,6 +200,15 @@ bool BitmapInfo::to_image(image& output_img) const {
   fill_spec(spec);
   image img(spec);
 
+  int direction = -1;
+  int topY = spec.height - 1;
+  // If the DIB is a top-down bitmap, then we must reverse the writing.
+  if ((b5 && b5->bV5Height < 0) ||
+      (bi && bi->bmiHeader.biHeight < 0)) {
+    topY = 0;
+    direction = 1;
+  }
+
   switch (bit_count) {
 
     case 32:
@@ -196,12 +227,9 @@ bool BitmapInfo::to_image(image& output_img) const {
       }
 
       if (src) {
-        const int src_bytes_per_row = spec.width*((bit_count+7)/8);
-        const int padding = (4-(src_bytes_per_row&3))&3;
-
-        for (long y=spec.height-1; y>=0; --y, src+=src_bytes_per_row+padding) {
-          char* dst = img.data()+y*spec.bytes_per_row;
-          std::copy(src, src+src_bytes_per_row, dst);
+        for (long y = 0; y < spec.height; ++y, src += stride) {
+          char* dst = img.data() + (topY + direction * y) * spec.bytes_per_row;
+          std::copy(src, src + stride, dst);
         }
       }
 
@@ -226,10 +254,10 @@ bool BitmapInfo::to_image(image& output_img) const {
       }
 
       const uint8_t* src = (((uint8_t*)bi) + bi->bmiHeader.biSize + sizeof(RGBQUAD)*colors);
-      const int padding = (4-(spec.width&3))&3;
+      const uint8_t* srcY = src;
 
-      for (long y=spec.height-1; y>=0; --y, src+=padding) {
-        char* dst = img.data()+y*spec.bytes_per_row;
+      for (long y = 0; y < spec.height; ++y, srcY += stride, src = srcY) {
+        char* dst = img.data() + (topY + direction * y) * spec.bytes_per_row;
 
         for (unsigned long x=0; x<spec.width; ++x, ++src, dst+=3) {
           int idx = *src;
@@ -243,6 +271,70 @@ bool BitmapInfo::to_image(image& output_img) const {
       }
       break;
     }
+
+    case 4: {
+      assert(bi);
+
+      const int colors = 16;
+      std::vector<uint32_t> palette(colors);
+      for (int c=0; c<colors; ++c) {
+        palette[c] =
+          (bi->bmiColors[c].rgbRed   << spec.red_shift) |
+          (bi->bmiColors[c].rgbGreen << spec.green_shift) |
+          (bi->bmiColors[c].rgbBlue  << spec.blue_shift);
+      }
+
+      const uint8_t* src = (((uint8_t*)bi) + bi->bmiHeader.biSize + sizeof(RGBQUAD)*colors);
+      const uint8_t* srcY = src;
+
+      for (long y = 0; y < spec.height; ++y, srcY += stride, src = srcY) {
+        char* dst = img.data() + (topY + direction * y) * spec.bytes_per_row;
+
+        for (unsigned long x=0; x<spec.width; ++x, dst+=3) {
+          int idx = src[x / 2];
+          if (x & 1)
+            idx &= 0x0f;
+          else
+            idx >>= 4;
+
+          if (idx < 0)
+            idx = 0;
+          else if (idx >= colors)
+            idx = colors-1;
+
+          *((uint32_t*)dst) = palette[idx];
+        }
+      }
+      break;
+    }
+
+    case 1: {
+      assert(bi);
+
+      const int colors = 2;
+      std::vector<uint32_t> palette(colors);
+      for (int c=0; c<colors; ++c) {
+        palette[c] =
+          (bi->bmiColors[c].rgbRed   << spec.red_shift) |
+          (bi->bmiColors[c].rgbGreen << spec.green_shift) |
+          (bi->bmiColors[c].rgbBlue  << spec.blue_shift);
+      }
+
+      const uint8_t* src = (((uint8_t*)bi) + bi->bmiHeader.biSize + sizeof(RGBQUAD)*colors);
+      const uint8_t* srcY = src;
+
+      for (long y = 0; y < spec.height; ++y, srcY += stride, src = srcY) {
+        char* dst = img.data() + (topY + direction * y) * spec.bytes_per_row;
+
+        for (unsigned long x=0; x<spec.width; ++x, dst+=3) {
+          const int idx = (src[x / 8] & (128 >> (x & 7)) ? 1 : 0);
+
+          *((uint32_t*)dst) = palette[idx];
+        }
+      }
+      break;
+    }
+
   }
 
   std::swap(output_img, img);
@@ -263,9 +355,7 @@ HGLOBAL create_dibv5(const image& image) {
   out_spec.bytes_per_row += padding;
 
   // Create the BITMAPV5HEADER structure
-  HGLOBAL hmem =
-    GlobalAlloc(
-      GHND,
+  Hglobal hmem(
       sizeof(BITMAPV5HEADER)
       + palette_colors*sizeof(RGBQUAD)
       + out_spec.bytes_per_row*out_spec.height);
@@ -281,7 +371,11 @@ HGLOBAL create_dibv5(const image& image) {
   out_spec.blue_shift  = 0;
   out_spec.alpha_shift = 24;
 
-  BITMAPV5HEADER* bi = (BITMAPV5HEADER*)GlobalLock(hmem);
+  HglobalLock hlock(hmem);
+  if (!hlock)
+    return nullptr;
+
+  BITMAPV5HEADER* bi = hlock.data<BITMAPV5HEADER*>();
   bi->bV5Size = sizeof(BITMAPV5HEADER);
   bi->bV5Width = out_spec.width;
   bi->bV5Height = out_spec.height;
@@ -330,17 +424,13 @@ HGLOBAL create_dibv5(const image& image) {
       break;
     }
     default:
-      GlobalUnlock(hmem);
-      GlobalFree(hmem);
-
       error_handler e = get_error_handler();
       if (e)
         e(ErrorCode::ImageNotSupported);
       return nullptr;
   }
 
-  GlobalUnlock(hmem);
-  return hmem;
+  return hmem.release();
 }
 
 } // namespace win

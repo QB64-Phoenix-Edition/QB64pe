@@ -1,5 +1,3 @@
-#ifndef HEADER_CURL_KRB5_H
-#define HEADER_CURL_KRB5_H
 /***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
@@ -24,31 +22,16 @@
  *
  ***************************************************************************/
 
-struct Curl_sec_client_mech {
-  const char *name;
-  size_t size;
-  int (*init)(void *);
-  int (*auth)(void *, struct Curl_easy *data, struct connectdata *);
-  void (*end)(void *);
-  int (*check_prot)(void *, int);
-  int (*encode)(void *, const void *, int, int, void **);
-  int (*decode)(void *, void *, int, int, struct connectdata *);
-};
+/* Unset redefined system symbols. */
 
-#define AUTH_OK         0
-#define AUTH_CONTINUE   1
-#define AUTH_ERROR      2
-
-#if defined(HAVE_GSSAPI) && !defined(CURL_DISABLE_FTP)
-void Curl_sec_conn_init(struct connectdata *);
-void Curl_sec_conn_destroy(struct connectdata *);
-int Curl_sec_read_msg(struct Curl_easy *data, struct connectdata *conn, char *,
-                      enum protection_level);
-CURLcode Curl_sec_login(struct Curl_easy *, struct connectdata *);
-int Curl_sec_request_prot(struct connectdata *conn, const char *level);
-#else
-#define Curl_sec_conn_init(x)     Curl_nop_stmt
-#define Curl_sec_conn_destroy(x)  Curl_nop_stmt
+#undef strdup
+#undef malloc
+#undef calloc
+#undef realloc
+#undef free
+#ifdef _WIN32
+#undef Curl_tcsdup
 #endif
 
-#endif /* HEADER_CURL_KRB5_H */
+#undef HEADER_CURL_MEMORY_H
+#undef HEADER_CURL_MEMDEBUG_H
