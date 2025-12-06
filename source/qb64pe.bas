@@ -348,10 +348,10 @@ IF Debug THEN OPEN tmpdir$ + "debug.txt" FOR OUTPUT AS #9
 'and if so, find the Library Explorer executable
 LibExplorer$ = ""
 IF _DIREXISTS("libraries") _ORELSE _DIREXISTS("./libraries") THEN
-   IF _FILEEXISTS("LibraryExplorer.exe") THEN LibExplorer$ = "LibraryExplorer.exe"
-   IF _FILEEXISTS("./LibraryExplorer") THEN LibExplorer$ = "./LibraryExplorer"
-   IF _FILEEXISTS("libraries\LibraryExplorer.exe") THEN LibExplorer$ = "libraries\LibraryExplorer.exe"
-   IF _FILEEXISTS("./libraries/LibraryExplorer") THEN LibExplorer$ = "./libraries/LibraryExplorer"
+    IF _FILEEXISTS("LibraryExplorer.exe") THEN LibExplorer$ = "LibraryExplorer.exe"
+    IF _FILEEXISTS("./LibraryExplorer") THEN LibExplorer$ = "./LibraryExplorer"
+    IF _FILEEXISTS("libraries\LibraryExplorer.exe") THEN LibExplorer$ = "libraries\LibraryExplorer.exe"
+    IF _FILEEXISTS("./libraries/LibraryExplorer") THEN LibExplorer$ = "./libraries/LibraryExplorer"
 END IF
 
 ON ERROR GOTO qberror
@@ -2475,7 +2475,7 @@ DO
                                     IF LEN(e$) = 0 THEN a$ = "Expected ALIAS name-in-library": GOTO errmes
                                     FOR x = 1 TO LEN(e$)
                                         a = ASC(e$, x)
-                                        IF _NEGATE alphanumeric(a) _ANDALSO a <> _ASC_LEFTBRACKET _ANDALSO a <> _ASC_RIGHTBRACKET _ANDALSO a <> _ASC_MINUS _ANDALSO a <> _ASC_FULLSTOP _ANDALSO a <> _ASC_COLON _ANDALSO a <> _ASC_LESSTHAN _ANDALSO a <> _ASC_GREATERTHAN _ANDALSO a <> _ASC_LEFTSQUAREBRACKET _ANDALSO a <> _ASC_RIGHTSQUAREBRACKET THEN
+                                        IF alphanumeric(a) = 0 _ANDALSO INSTR(" !%&()*+,-./:;<=>?[]^{|}~", CHR$(a)) = 0 THEN
                                             a$ = "Expected ALIAS name-in-library": GOTO errmes
                                         END IF
                                     NEXT
