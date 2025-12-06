@@ -13122,7 +13122,7 @@ SUB ideshowtext
 
                 COLOR 13
 
-                IF InvalidLine(l) THEN COLOR 7: GOTO SkipSyntaxHighlighter
+                IF l > iden _ORELSE InvalidLine(l) THEN COLOR 7: GOTO SkipSyntaxHighlighter
 
                 IF (LEN(oldChar$) > 0 OR m = 1) AND inquote = 0 AND isKeyword = 0 THEN
                     IF INSTR(initialNum.char$, thisChar$) > 0 AND oldChar$ <> ")" AND (INSTR(char.sep$, oldChar$) > 0 OR oldChar$ = "?") THEN
