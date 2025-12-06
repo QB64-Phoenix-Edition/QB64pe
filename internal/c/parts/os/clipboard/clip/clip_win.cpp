@@ -8,6 +8,7 @@
 
 #include "clip.h"
 #include "clip_lock_impl.h"
+#include "clip_win_hglobal.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -18,6 +19,8 @@
 
 namespace clip {
 
+using namespace win;
+
 namespace {
 
 // Data type used as header for custom formats to indicate the exact
@@ -25,34 +28,6 @@ namespace {
 // like GlobalSize() might not return the exact size, but a greater
 // value.
 typedef uint64_t CustomSizeT;
-
-class Hglobal {
-public:
-  Hglobal() : m_handle(nullptr) {
-  }
-
-  explicit Hglobal(HGLOBAL handle) : m_handle(handle) {
-  }
-
-  explicit Hglobal(size_t len) : m_handle(GlobalAlloc(GHND, len)) {
-  }
-
-  ~Hglobal() {
-    if (m_handle)
-      GlobalFree(m_handle);
-  }
-
-  void release() {
-    m_handle = nullptr;
-  }
-
-  operator HGLOBAL() {
-    return m_handle;
-  }
-
-private:
-  HGLOBAL m_handle;
-};
 
 // From: https://issues.chromium.org/issues/40080988#comment8
 //
@@ -135,28 +110,22 @@ bool lock::impl::set_data(format f, const char* buf, size_t len) {
         ++reqsize;
 
         Hglobal hglobal(sizeof(WCHAR)*reqsize);
-        LPWSTR lpstr = static_cast<LPWSTR>(GlobalLock(hglobal));
-        MultiByteToWideChar(CP_UTF8, 0, buf, len, lpstr, reqsize);
-        GlobalUnlock(hglobal);
+        if (auto hlock = HglobalLock(hglobal)) {
+          LPWSTR lpstr = hlock.data<LPWSTR>();
+          MultiByteToWideChar(CP_UTF8, 0, buf, len, lpstr, reqsize);
+        }
 
-        result = (SetClipboardData(CF_UNICODETEXT, hglobal)) ? true: false;
-        if (result)
-          hglobal.release();
+        result = hglobal.set_clipboard_data(CF_UNICODETEXT);
       }
     }
   }
   else {
     Hglobal hglobal(len+sizeof(CustomSizeT));
-    if (hglobal) {
-      auto dst = (uint8_t*)GlobalLock(hglobal);
-      if (dst) {
-        *((CustomSizeT*)dst) = len;
-        memcpy(dst+sizeof(CustomSizeT), buf, len);
-        GlobalUnlock(hglobal);
-        result = (SetClipboardData(f, hglobal) ? true: false);
-        if (result)
-          hglobal.release();
-      }
+    if (auto hlock = HglobalLock(hglobal)) {
+      auto dst = hlock.data<uint8_t*>();
+      *((CustomSizeT*)dst) = len;
+      memcpy(dst+sizeof(CustomSizeT), buf, len);
+      result = hglobal.set_clipboard_data(f);
     }
   }
 
@@ -174,58 +143,48 @@ bool lock::impl::get_data(format f, char* buf, size_t len) const {
   if (f == text_format()) {
     if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
       HGLOBAL hglobal = GetClipboardData(CF_UNICODETEXT);
-      if (hglobal) {
-        LPWSTR lpstr = static_cast<LPWSTR>(GlobalLock(hglobal));
-        if (lpstr) {
-          size_t reqsize =
-            WideCharToMultiByte(CP_UTF8, 0, lpstr, -1,
-                                nullptr, 0, nullptr, nullptr);
+      if (auto hlock = HglobalLock(hglobal)) {
+        LPWSTR lpstr = hlock.data<LPWSTR>();
+        size_t reqsize = WideCharToMultiByte(CP_UTF8, 0, lpstr, -1,
+                                             nullptr, 0, nullptr, nullptr);
 
-          assert(reqsize <= len);
-          if (reqsize <= len) {
-            WideCharToMultiByte(CP_UTF8, 0, lpstr, -1,
-                                buf, reqsize, nullptr, nullptr);
-            result = true;
-          }
-          GlobalUnlock(hglobal);
+        assert(reqsize <= len);
+        if (reqsize <= len) {
+          WideCharToMultiByte(CP_UTF8, 0, lpstr, -1,
+                              buf, reqsize, nullptr, nullptr);
+          result = true;
         }
       }
     }
     else if (IsClipboardFormatAvailable(CF_TEXT)) {
       HGLOBAL hglobal = GetClipboardData(CF_TEXT);
-      if (hglobal) {
-        LPSTR lpstr = static_cast<LPSTR>(GlobalLock(hglobal));
-        if (lpstr) {
-          // TODO check length
-          memcpy(buf, lpstr, len);
-          result = true;
-          GlobalUnlock(hglobal);
-        }
+      if (auto hlock = HglobalLock(hglobal)) {
+        LPSTR lpstr = hlock.data<LPSTR>();
+        // TODO check length
+        memcpy(buf, lpstr, len);
+        result = true;
       }
     }
   }
   else {
     if (IsClipboardFormatAvailable(f)) {
       HGLOBAL hglobal = GetClipboardData(f);
-      if (hglobal) {
-        const SIZE_T total_size = GlobalSize(hglobal);
-        auto ptr = (const uint8_t*)GlobalLock(hglobal);
-        if (ptr) {
-          CustomSizeT reqsize = *((CustomSizeT*)ptr);
+      if (auto hlock = HglobalLock(hglobal)) {
+        const size_t total_size = GlobalSize(hglobal);
+        auto ptr = hlock.data<const uint8_t*>();
+        CustomSizeT reqsize = *((CustomSizeT*)ptr);
 
-          // If the registered length of data in the first CustomSizeT
-          // number of bytes of the hglobal data is greater than the
-          // GlobalSize(hglobal), something is wrong, it should not
-          // happen.
-          assert(reqsize <= total_size);
-          if (reqsize > total_size)
-            reqsize = total_size - sizeof(CustomSizeT);
+        // If the registered length of data in the first CustomSizeT
+        // number of bytes of the hglobal data is greater than the
+        // GlobalSize(hglobal), something is wrong, it should not
+        // happen.
+        assert(reqsize <= total_size);
+        if (reqsize > total_size)
+          reqsize = total_size - sizeof(CustomSizeT);
 
-          if (reqsize <= len) {
-            memcpy(buf, ptr+sizeof(CustomSizeT), reqsize);
-            result = true;
-          }
-          GlobalUnlock(hglobal);
+        if (reqsize <= len) {
+          memcpy(buf, ptr+sizeof(CustomSizeT), reqsize);
+          result = true;
         }
       }
     }
@@ -240,42 +199,31 @@ size_t lock::impl::get_data_length(format f) const {
   if (f == text_format()) {
     if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
       HGLOBAL hglobal = GetClipboardData(CF_UNICODETEXT);
-      if (hglobal) {
-        LPWSTR lpstr = static_cast<LPWSTR>(GlobalLock(hglobal));
-        if (lpstr) {
-          len =
-            WideCharToMultiByte(CP_UTF8, 0, lpstr, -1,
-                                nullptr, 0, nullptr, nullptr);
-          GlobalUnlock(hglobal);
-        }
+      if (auto hlock = HglobalLock(hglobal)) {
+        LPWSTR lpstr = hlock.data<LPWSTR>();
+        len = WideCharToMultiByte(CP_UTF8, 0, lpstr, -1,
+                                  nullptr, 0, nullptr, nullptr);
       }
     }
     else if (IsClipboardFormatAvailable(CF_TEXT)) {
       HGLOBAL hglobal = GetClipboardData(CF_TEXT);
-      if (hglobal) {
-        LPSTR lpstr = (LPSTR)GlobalLock(hglobal);
-        if (lpstr) {
-          len = strlen(lpstr) + 1;
-          GlobalUnlock(hglobal);
-        }
+      if (auto hlock = HglobalLock(hglobal)) {
+        LPSTR lpstr = hlock.data<LPSTR>();
+        len = std::strlen(lpstr) + 1;
       }
     }
   }
   else if (f != empty_format()) {
     if (IsClipboardFormatAvailable(f)) {
       HGLOBAL hglobal = GetClipboardData(f);
-      if (hglobal) {
+      if (auto hlock = HglobalLock(hglobal)) {
         const SIZE_T total_size = GlobalSize(hglobal);
-        auto ptr = (const uint8_t*)GlobalLock(hglobal);
-        if (ptr) {
-          len = *((CustomSizeT*)ptr);
+        auto ptr = hlock.data<const uint8_t*>();
+        len = *((CustomSizeT*)ptr);
 
-          assert(len <= total_size);
-          if (len > total_size)
-            len = total_size - sizeof(CustomSizeT);
-
-          GlobalUnlock(hglobal);
-        }
+        assert(len <= total_size);
+        if (len > total_size)
+          len = total_size - sizeof(CustomSizeT);
       }
     }
   }
@@ -337,7 +285,7 @@ bool lock::impl::set_image(const image& image) {
     if (png_format) {
       Hglobal png_handle(win::write_png(image));
       if (png_handle)
-        SetClipboardData(png_format, png_handle);
+        png_handle.set_clipboard_data(png_format);
     }
   }
 
@@ -345,7 +293,7 @@ bool lock::impl::set_image(const image& image) {
   if (!hmem)
     return false;
 
-  SetClipboardData(CF_DIBV5, hmem);
+  hmem.set_clipboard_data(CF_DIBV5);
   return true;
 }
 
@@ -355,11 +303,10 @@ bool lock::impl::get_image(image& output_img) const {
   UINT cbformat;
   if (auto read_img = win::wic_image_format_available(&cbformat)) {
     HANDLE handle = GetClipboardData(cbformat);
-    if (handle) {
+    if (auto hlock = HglobalLock(handle)) {
       size_t size = GlobalSize(handle);
-      uint8_t* data = (uint8_t*)GlobalLock(handle);
+      uint8_t* data = hlock.data<uint8_t*>();
       bool result = read_img(data, size, &output_img, nullptr);
-      GlobalUnlock(handle);
       if (result)
         return true;
     }
@@ -374,11 +321,10 @@ bool lock::impl::get_image_spec(image_spec& spec) const {
   UINT cbformat;
   if (auto read_img = win::wic_image_format_available(&cbformat)) {
     HANDLE handle = GetClipboardData(cbformat);
-    if (handle) {
+    if (auto hlock = HglobalLock(handle)) {
       size_t size = GlobalSize(handle);
-      uint8_t* data = (uint8_t*)GlobalLock(handle);
+      uint8_t* data = hlock.data<uint8_t*>();
       bool result = read_img(data, size, nullptr, &spec);
-      GlobalUnlock(handle);
       if (result)
         return true;
     }

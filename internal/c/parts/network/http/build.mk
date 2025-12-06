@@ -47,7 +47,7 @@ CURL_EXE_LIBS := $(CURL_LIB)
 CURL_CXXFLAGS += $(CURL_CFLAGS)
 CURL_CXXFLAGS += $(CURL_INCLUDES)
 
-CURL_CXXLIBS += -lcrypt32 -lbcrypt -lwldap32 -lws2_32
+CURL_CXXLIBS += -lcrypt32 -lbcrypt -lwldap32 -lws2_32 -lsecur32
 
 else
 
