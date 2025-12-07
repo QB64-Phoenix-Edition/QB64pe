@@ -19857,7 +19857,7 @@ int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequi
     auto isLoadFromMemory = false; // should the font be loaded from memory?
     int32_t options = 0;           // font flags that we'll prepare and save to fontflags[]
 
-    FONT_DEBUG_PRINT("passed = %i", passed);
+    // image_log_trace("passed = %i", passed);
 
     // Check requirements
     // 8 dontblend (blending is the default in 32-bit alpha-enabled modes)
@@ -19867,39 +19867,39 @@ int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequi
         std::string requirements(reinterpret_cast<char *>(qbsRequirements->chr), qbsRequirements->len);
         std::transform(requirements.begin(), requirements.end(), requirements.begin(), [](unsigned char c) { return std::toupper(c); });
 
-        FONT_DEBUG_PRINT("Parsing requirements string: %s", requirements.c_str());
+        image_log_trace("Parsing requirements string: %s", requirements.c_str());
 
         if (requirements.find("DONTBLEND") != std::string::npos) {
             options |= FONT_LOAD_DONTBLEND;
-            FONT_DEBUG_PRINT("No alpha blending requested");
+            image_log_trace("No alpha blending requested");
         }
 
         if (requirements.find("MONOSPACE") != std::string::npos) {
             options |= FONT_LOAD_MONOSPACE;
-            FONT_DEBUG_PRINT("Monospaced font requested");
+            image_log_trace("Monospaced font requested");
         }
 
         if (requirements.find("UNICODE") != std::string::npos) {
             options |= FONT_LOAD_UNICODE;
-            FONT_DEBUG_PRINT("Unicode requested");
+            image_log_trace("Unicode requested");
         }
 
         if (requirements.find("MEMORY") != std::string::npos) {
             isLoadFromMemory = true;
-            FONT_DEBUG_PRINT("Loading from memory requested");
+            image_log_trace("Loading from memory requested");
         }
 
         if (requirements.find("AUTOMONO") != std::string::npos) {
             options |= FONT_LOAD_AUTOMONO;
-            FONT_DEBUG_PRINT("Automatic monospacing requested");
+            image_log_trace("Automatic monospacing requested");
         }
     }
 
     // Check if a font index was requested
     if (passed & 2) {
-        FONT_DEBUG_PRINT("Loading font index %i", font_index);
+        image_log_trace("Loading font index %i", font_index);
     } else {
-        FONT_DEBUG_PRINT("Loading default font index (0)");
+        image_log_trace("Loading default font index (0)");
         font_index = 0;
     }
 
@@ -19909,11 +19909,11 @@ int32_t func__loadfont(const qbs *qbsFileName, int32_t size, const qbs *qbsRequi
     if (isLoadFromMemory) {
         content = qbsFileName->chr; // we should not free this!!!
         bytes = qbsFileName->len;
-        FONT_DEBUG_PRINT("Loading font from memory. Size = %i", bytes);
+        image_log_trace("Loading font from memory. Size = %i", bytes);
     } else {
         std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
         content = FontLoadFileToMemory(filepath_fix_directory(fileName), &bytes); // this we must free!!!
-        FONT_DEBUG_PRINT("Loading font from file %s", fileName.c_str());
+        image_log_trace("Loading font from file %s", fileName.c_str());
     }
 
     if (!content)

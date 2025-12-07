@@ -8,24 +8,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#if defined(FONT_DEBUG) && FONT_DEBUG > 0
-#    ifdef _MSC_VER
-#        define FONT_DEBUG_PRINT(_fmt_, ...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
-#    else
-#        define FONT_DEBUG_PRINT(_fmt_, _args_...) fprintf(stderr, "DEBUG: %s:%d:%s(): " _fmt_ "\n", __FILE__, __LINE__, __func__, ##_args_)
-#    endif
-#    define FONT_DEBUG_CHECK(_exp_)                                                                                                                            \
-        if (!(_exp_))                                                                                                                                          \
-        FONT_DEBUG_PRINT("Condition (%s) failed", #_exp_)
-#else
-#    ifdef _MSC_VER
-#        define FONT_DEBUG_PRINT(_fmt_, ...) // Don't do anything in release builds
-#    else
-#        define FONT_DEBUG_PRINT(_fmt_, _args_...) // Don't do anything in release builds
-#    endif
-#    define FONT_DEBUG_CHECK(_exp_) // Don't do anything in release builds
-#endif
-
 #define INVALID_FONT_HANDLE 0
 
 // Font load options
