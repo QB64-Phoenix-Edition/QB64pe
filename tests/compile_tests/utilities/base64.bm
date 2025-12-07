@@ -1,119 +1,15 @@
-'-----------------------------------------------------------------------------------------------------------------------
-' Base64 Encoder and Decoder library
-' a740g
-'-----------------------------------------------------------------------------------------------------------------------
-
-' Converts a normal string or binary data to a base64 string
-Function Base64_Encode$ (s As String)
-    Const BASE64_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-
-    Dim srcSize As _Unsigned Long: srcSize = Len(s)
-    Dim srcSize3rem As _Unsigned Long: srcSize3rem = srcSize Mod 3
-    Dim srcSize3mul As _Unsigned Long: srcSize3mul = srcSize - srcSize3rem
-    Dim buffer As String: buffer = Space$(((srcSize + 2) \ 3) * 4) ' preallocate complete buffer
-    Dim j As _Unsigned Long: j = 1
-
-    Dim i As _Unsigned Long: For i = 1 To srcSize3mul Step 3
-        Dim char1 As _Unsigned _Byte: char1 = Asc(s, i)
-        Dim char2 As _Unsigned _Byte: char2 = Asc(s, i + 1)
-        Dim char3 As _Unsigned _Byte: char3 = Asc(s, i + 2)
-
-        Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShR(char1, 2)))
-        j = j + 1
-        Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShL((char1 And 3), 4) Or _ShR(char2, 4)))
-        j = j + 1
-        Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShL((char2 And 15), 2) Or _ShR(char3, 6)))
-        j = j + 1
-        Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (char3 And 63))
-        j = j + 1
-    Next i
-
-    ' Add padding
-    If srcSize3rem > 0 Then
-        char1 = Asc(s, i)
-
-        Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShR(char1, 2)))
-        j = j + 1
-
-        If srcSize3rem = 1 Then
-            Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShL(char1 And 3, 4)))
-            j = j + 1
-            Asc(buffer, j) = 61 ' "="
-            j = j + 1
-            Asc(buffer, j) = 61 ' "="
-        Else ' srcSize3rem = 2
-            char2 = Asc(s, i + 1)
-
-            Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShL((char1 And 3), 4) Or _ShR(char2, 4)))
-            j = j + 1
-            Asc(buffer, j) = Asc(BASE64_CHARACTERS, 1 + (_ShL(char2 And 15, 2)))
-            j = j + 1
-            Asc(buffer, j) = 61 ' "="
-        End If
-    End If
-
-    Base64_Encode = buffer
-End Function
-
-
-' Converts a base64 string to a normal string or binary data
-Function Base64_Decode$ (s As String)
-    Dim srcSize As _Unsigned Long: srcSize = Len(s)
-    Dim buffer As String: buffer = Space$((srcSize \ 4) * 3) ' preallocate complete buffer
-    Dim j As _Unsigned Long: j = 1
-    Dim As _Unsigned _Byte index, char1, char2, char3, char4
-
-    Dim i As _Unsigned Long: For i = 1 To srcSize Step 4
-        index = Asc(s, i): GoSub find_index: char1 = index
-        index = Asc(s, i + 1): GoSub find_index: char2 = index
-        index = Asc(s, i + 2): GoSub find_index: char3 = index
-        index = Asc(s, i + 3): GoSub find_index: char4 = index
-
-        Asc(buffer, j) = _ShL(char1, 2) Or _ShR(char2, 4)
-        j = j + 1
-        Asc(buffer, j) = _ShL(char2 And 15, 4) Or _ShR(char3, 2)
-        j = j + 1
-        Asc(buffer, j) = _ShL(char3 And 3, 6) Or char4
-        j = j + 1
-    Next i
-
-    ' Remove padding
-    If Right$(s, 2) = "==" Then
-        buffer = Left$(buffer, Len(buffer) - 2)
-    ElseIf Right$(s, 1) = "=" Then
-        buffer = Left$(buffer, Len(buffer) - 1)
-    End If
-
-    Base64_Decode = buffer
-    Exit Function
-
-    find_index:
-    If index >= 65 And index <= 90 Then
-        index = index - 65
-    ElseIf index >= 97 And index <= 122 Then
-        index = index - 97 + 26
-    ElseIf index >= 48 And index <= 57 Then
-        index = index - 48 + 52
-    ElseIf index = 43 Then
-        index = 62
-    ElseIf index = 47 Then
-        index = 63
-    End If
-    Return
-End Function
-
+$INCLUDEONCE
 
 ' This function loads a resource directly from a string variable or constant (like the ones made by Bin2Data)
-Function Base64_LoadResourceString$ (src As String, ogSize As _Unsigned Long, isComp As _Byte)
+FUNCTION Base64_LoadResourceString$ (src AS STRING, ogSize AS _UNSIGNED LONG, isComp AS _BYTE)
     ' Decode the data
-    Dim buffer As String: buffer = Base64_Decode(src)
+    DIM buffer AS STRING: buffer = _BASE64DECODE$(src)
 
     ' Expand the data if needed
-    If isComp Then buffer = _Inflate$(buffer, ogSize)
+    IF isComp THEN buffer = _INFLATE$(buffer, ogSize)
 
     Base64_LoadResourceString = buffer
-End Function
-
+END FUNCTION
 
 ' Loads a binary file encoded with Bin2Data
 ' Usage:
@@ -123,24 +19,24 @@ End Function
 '       Restore label_generated_by_bin2data
 '       Dim buffer As String
 '       buffer = Base64_LoadResourceData   ' buffer will now hold the contents of the file
-Function Base64_LoadResourceData$
-    Dim ogSize As _Unsigned Long, resize As _Unsigned Long, isComp As _Byte
-    Read ogSize, resize, isComp ' read the header
+FUNCTION Base64_LoadResourceData$
+    DIM ogSize AS _UNSIGNED LONG, resize AS _UNSIGNED LONG, isComp AS _BYTE
+    READ ogSize, resize, isComp ' read the header
 
-    Dim buffer As String: buffer = Space$(resize) ' preallocate complete buffer
+    DIM buffer AS STRING: buffer = SPACE$(resize) ' preallocate complete buffer
 
     ' Read the whole resource data
-    Dim i As _Unsigned Long: Do While i < resize
-        Dim chunk As String: Read chunk
-        Mid$(buffer, i + 1) = chunk
-        i = i + Len(chunk)
-    Loop
+    DIM i AS _UNSIGNED LONG: DO WHILE i < resize
+        DIM chunk AS STRING: READ chunk
+        MID$(buffer, i + 1) = chunk
+        i = i + LEN(chunk)
+    LOOP
 
     ' Decode the data
-    buffer = Base64_Decode(buffer)
+    buffer = _BASE64DECODE$(buffer)
 
     ' Expand the data if needed
-    If isComp Then buffer = _Inflate$(buffer, ogSize)
+    IF isComp THEN buffer = _INFLATE$(buffer, ogSize)
 
     Base64_LoadResourceData = buffer
-End Function
+END FUNCTION
