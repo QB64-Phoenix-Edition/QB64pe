@@ -393,15 +393,15 @@ DIM SHARED IDEStartAtLine AS LONG, errorLineInInclude AS LONG
 DIM SHARED warningInInclude AS LONG, warningInIncludeLine AS LONG
 DIM SHARED compilelog$
 
-DIM OutputIsRelativeToStartDir AS _BYTE
-
 '$INCLUDE:'ide\config\cfg_global.bas'
 ReadInitialConfig
 
 CMDLineSrcFile$ = ParseCMDLineArgs$
-IF CMDLineSrcFile$ <> "" AND _FILEEXISTS(_STARTDIR$ + "/" + CMDLineSrcFile$) THEN
-    CMDLineSrcFile$ = _STARTDIR$ + "/" + CMDLineSrcFile$
-    OutputIsRelativeToStartDir = _TRUE
+IF LEN(CMDLineSrcFile$) > 0 _ANDALSO _FILEEXISTS(_STARTDIR$ + CMDLineSrcFile$) THEN
+    CMDLineSrcFile$ = _STARTDIR$ + CMDLineSrcFile$
+END IF
+IF LEN(CMDLineOutFile$) > 0 _ANDALSO _DIREXISTS(_STARTDIR$ + getfilepath$(CMDLineOutFile$)) THEN
+    CMDLineOutFile$ = _STARTDIR$ + CMDLineOutFile$
 END IF
 
 IF ConsoleMode THEN
@@ -863,7 +863,7 @@ IF C = 9 THEN 'run
         'locate accessible file and truncate
         f$ = file$
 
-        path.exe$ = ""
+        path.exe$ = DefaultExeSaveFolder$
         IF SaveExeWithSource THEN
             IF LEN(ideprogname) THEN path.exe$ = idepath$ + pathsep$
         END IF
@@ -1062,7 +1062,7 @@ CMDLineSrcFile$ = sourcefile$
 'derive name from sourcefile
 f$ = RemoveFileExtension$(f$)
 
-path.exe$ = ""
+path.exe$ = DefaultExeSaveFolder$
 currentdir$ = _CWD$
 path.source$ = getfilepath$(sourcefile$)
 IF LEN(path.source$) THEN
@@ -12398,8 +12398,8 @@ IF idemode = 0 AND NOT NoCCompileMode THEN
         END IF
     END IF
 
-    ' Fixup the output path if either we got an `-o` argument, or we're relative to `_StartDir$`
-    IF LEN(CMDLineOutFile$) > 0 OR OutputIsRelativeToStartDir THEN
+    ' Fixup the output path if we got an `-o` argument
+    IF LEN(CMDLineOutFile$) > 0 THEN
         IF LEN(CMDLineOutFile$) THEN
             'resolve relative path for output file
             path.out$ = getfilepath$(CMDLineOutFile$)
@@ -12412,22 +12412,8 @@ IF idemode = 0 AND NOT NoCCompileMode THEN
             END IF
         END IF
 
-        IF LEN(path.out$) > 0 OR OutputIsRelativeToStartDir THEN
+        IF LEN(path.out$) > 0 THEN
             currentdir$ = _CWD$
-
-            IF OutputIsRelativeToStartDir THEN
-                ' This CHDIR makes the next CHDIR relative to _STARTDIR$
-                ' We do this if the provided source file was also relative to _STARTDIR$
-                CHDIR _STARTDIR$
-
-                ' If there was no provided path then that is the same as the
-                ' output file being directly in _STARTDIR$. Assigning it here
-                ' is perfectly fine and avoids failing the error check below
-                ' with a blank string.
-                IF LEN(path.out$) = 0 THEN
-                    path.out$ = _STARTDIR$
-                END IF
-            END IF
 
             IF _DIREXISTS(path.out$) = 0 THEN
                 PRINT
@@ -13082,7 +13068,7 @@ IF os$ = "LNX" THEN
 
     IF INSTR(_OS$, "[MACOSX]") THEN
         ff = FREEFILE
-        IF path.exe$ = "./" OR path.exe$ = "../../" OR path.exe$ = "..\..\" THEN path.exe$ = ""
+        IF path.exe$ = "./" OR path.exe$ = "../../" OR path.exe$ = "..\..\" THEN path.exe$ = DefaultExeSaveFolder$
         OPEN path.exe$ + file$ + extension$ + "_start.command" FOR OUTPUT AS #ff
         PRINT #ff, "cd " + CHR$(34) + "$(dirname " + CHR$(34) + "$0" + CHR$(34) + ")" + CHR$(34);
         PRINT #ff, CHR$(10);
@@ -13101,7 +13087,7 @@ IF os$ = "LNX" THEN
 END IF
 
 IF NoCCompileMode THEN compfailed = 0: GOTO NoCCompile
-IF path.exe$ = "../../" OR path.exe$ = "..\..\" THEN path.exe$ = ""
+IF path.exe$ = "../../" OR path.exe$ = "..\..\" THEN path.exe$ = DefaultExeSaveFolder$
 IF _FILEEXISTS(path.exe$ + file$ + extension$) THEN
     compfailed = 0
     lastBinaryGenerated$ = path.exe$ + file$ + extension$
@@ -13119,7 +13105,11 @@ IF compfailed THEN
         PRINT "Check " + compilelog$ + " for details."
     END IF
 ELSE
-    IF idemode = 0 AND NOT QuietMode THEN PRINT "Output: "; lastBinaryGenerated$
+    IF idemode = 0 AND NOT QuietMode THEN
+        location$ = lastBinaryGenerated$
+        IF path.exe$ = "" THEN location$ = _CWD$ + location$
+        PRINT "Output: "; RemoveDoubleSlashes$(location$)
+    END IF
 END IF
 
 Skip_Build:

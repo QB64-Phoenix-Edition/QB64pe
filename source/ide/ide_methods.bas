@@ -917,17 +917,15 @@ FUNCTION ide2 (ignore)
                     _PRINTSTRING (2, idewy - 3), ".EXE file created"
                 END IF
 
-                IF SaveExeWithSource THEN
-                    COLOR 11, 1
-                    location$ = lastBinaryGenerated$
-                    IF path.exe$ = "" THEN location$ = _STARTDIR$ + location$
-                    msg$ = "Location: " + location$
-                    IF 2 + LEN(msg$) > idewx THEN
-                        msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
-                    END IF
-                    _PRINTSTRING (2, idewy - 2), msg$
-                    statusarealink = 3
+                COLOR 11, 1
+                location$ = lastBinaryGenerated$
+                IF path.exe$ = "" THEN location$ = _CWD$ + location$
+                msg$ = "Location: " + RemoveDoubleSlashes$(location$)
+                IF 2 + LEN(msg$) > idewx THEN
+                    msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
                 END IF
+                _PRINTSTRING (2, idewy - 2), msg$
+                statusarealink = 3
 
             END IF
         END IF
@@ -1743,13 +1741,20 @@ FUNCTION ide2 (ignore)
 
             IF NOT ExeToSourceFolderFirstTimeMsg THEN
                 IF SaveExeWithSource THEN
-                    result = idemessagebox("Run", "Your program will be compiled to the same folder where your\n" + _
-                                           "source code is saved. You can change that by unchecking the\n" + _
-                                           "option 'Output EXE to Source Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
+                    result = idemessagebox("Run", _
+                                           "Your program will be compiled to the same folder where your\n" + _
+                                           "source code is saved. To compile into a default location\n" + _
+                                           "instead, uncheck the option 'Output EXE to Source Folder'\n" + _
+                                           "in the Run menu and set the desired location via the entry\n" + _
+                                           "'Set Default EXE Folder' (the 'qb64pe' folder if unset).", _
+                                           "#OK;#Don't show this again;#Cancel")
                 ELSE
-                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can\n" + _
-                                         "change that by checking the option 'Output EXE to Source\n" + _
-                                         "Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
+                    result = idemessagebox("Run", _
+                                           "Your program will be compiled to your set default location\n" + _
+                                           "for EXEs (the 'qb64pe' folder if yet unset). You can set it\n" + _
+                                           "via the 'Set Default EXE Folder' entry in the Run menu.\n" + _
+                                           "In alternative check the option 'Output EXE to Source Folder'.", _
+                                           "#OK;#Don't show this again;#Cancel")
                 END IF
                 IF result = 2 THEN
                     WriteConfigSetting generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", "True"
@@ -1827,8 +1832,8 @@ FUNCTION ide2 (ignore)
 
                         COLOR 11, 1
                         location$ = lastBinaryGenerated$
-                        IF path.exe$ = "" THEN location$ = _STARTDIR$ + location$
-                        msg$ = "Location: " + location$
+                        IF path.exe$ = "" THEN location$ = _CWD$ + location$
+                        msg$ = "Location: " + RemoveDoubleSlashes$(location$)
                         IF 2 + LEN(msg$) > idewx THEN
                             msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
                         END IF
