@@ -327,6 +327,8 @@ FUNCTION ide2 (ignore)
             menu$(m, i) = "Change #Terminal...": i = i + 1
             menuDesc$(m, i - 1) = "Configure the terminal used for $CONSOLE and logging output"
         END IF
+        menu$(m, i) = "Set #Default EXE Folder...": i = i + 1
+        menuDesc$(m, i - 1) = "Set default EXE output folder used if 'Output EXE to Source Folder' is off"
         menu$(m, i) = "Configure #Logging...": i = i + 1
         menuDesc$(m, i - 1) = "Configure logging options used when running a program from the IDE"
         menusize(m) = i - 1
@@ -6181,6 +6183,28 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 ModifyCOMMAND$ = " " + ideinputbox$("Modify COMMAND$", "#Enter text for COMMAND$", _TRIM$(ModifyCOMMAND$), "", 60, 0, 0)
                 IF _TRIM$(ModifyCOMMAND$) = "" THEN ModifyCOMMAND$ = ""
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "Set #Default EXE Folder..." THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                clearStatusWindow 0
+                _PRINTSTRING (2, idewy - 3), "Default EXE output folder (cancel request to keep)..."
+                COLOR 11, 1: msg$ = "No folder set yet, hence it defaults to the 'qb64pe' folder"
+                IF LEN(DefaultExeSaveFolder$) THEN msg$ = DefaultExeSaveFolder$
+                IF 2 + LEN(msg$) > idewx THEN msg$ = STRING$(3, 250) + RIGHT$(msg$, idewx - 5)
+                _PRINTSTRING (2, idewy - 2), msg$
+                PCOPY 3, 0
+                dexf$ = _SELECTFOLDERDIALOG$("Select your desired EXE output folder...")
+                IF LEN(dexf$) THEN
+                    WriteConfigSetting generalSettingsSection$, "DefaultExeSaveFolder", dexf$
+                    IF RIGHT$(dexf$, 1) <> pathsep$ THEN dexf$ = dexf$ + pathsep$
+                    DefaultExeSaveFolder$ = dexf$
+                    lastBinaryGenerated$ = "" 'invalidate EXE in old location
+                END IF
+                clearStatusWindow 0
+                _PRINTSTRING (2, idewy - 3), "Ok"
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
