@@ -3,11 +3,11 @@ $CONSOLE:ONLY
 h& = _OPENCLIENT("https://www.example.com")
 PRINT h&
 
-length~& = LOF(h&)
+length&& = LOF(h&)
 
 result$ = ""
 WHILE NOT EOF(h&)
-    _LIMIT 100
+    _LIMIT 20
     GET #h&, , s$
     result$ = result$ + s$
 WEND
@@ -19,7 +19,7 @@ IF MID$(url$, LEN(url$), 1) = "/" THEN
     url$ = LEFT$(url$, LEN(url$) - 1)
 END IF
 
-PRINT "Content-Length: "; length~&
+PRINT "Content-Length: "; _IIF(length&& >= 0, length&&, LEN(result$))
 PRINT "Url: "; url$
 PRINT "Status Code: "; _STATUSCODE(h&)
 PRINT

@@ -1,17 +1,18 @@
-$Console:Only
+$CONSOLE:ONLY
 ON ERROR GOTO errorhand
 
 ' This domain isn't valid at all, an error is triggered
-h& = _OpenClient("https://thisisabaddomain")
-Print h&
+h& = _OPENCLIENT("https://thisisabaddomain")
+PRINT h&
 
 ' This gives back a 404, but the connection is still successful in that
 ' situation.
-h& = _OpenClient("https://qb64phoenix.com/fake")
-Print h&
-Print _StatusCode(h&)
+h& = _OPENCLIENT("https://qb64phoenix.com/fake")
+PRINT h&
+PRINT _STATUSCODE(h&)
 
-System
+CLOSE h&
+SYSTEM
 
 errorhand:
 PRINT "Error:"; ERR; ", Line:"; _ERRORLINE
