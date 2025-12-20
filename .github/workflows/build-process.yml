@@ -93,6 +93,7 @@ jobs:
       env:
         CI_TESTING: y
         CI_OS: ${{ matrix.prefix }}
+        LIBASOUND_DEBUG: "0"  # Disables ALSA debug printing to stderr
       run: tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
