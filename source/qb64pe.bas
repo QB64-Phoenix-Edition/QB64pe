@@ -13363,6 +13363,7 @@ FUNCTION ParseCMDLineArgs$ ()
                     CASE ""
                         PRINT "DebugInfo     = "; BoolToTFString$(IncludeDebugInfo)
                         PRINT "ExeWithSource = "; BoolToTFString$(SaveExeWithSource)
+                        PRINT "ExeDefaultDir = "; _IIF(LEN(DefaultExeSaveFolder$), DefaultExeSaveFolder$, "unset (= qb64pe folder)")
                         SYSTEM
                     CASE ":"
                         CMDLineSettingsError "Missing setting specification: " + token$, 0, 0
@@ -13379,6 +13380,21 @@ FUNCTION ParseCMDLineArgs$ ()
                             WriteConfigSetting generalSettingsSection$, "SaveExeWithSource", BoolToTFString$(SaveExeWithSource)
                         END IF
                         PRINT "ExeWithSource = "; BoolToTFString$(SaveExeWithSource)
+                    CASE ":exedefaultdir"
+                        IF NOT eos THEN
+                            IF NOT ParseStringSetting&(token$, dexf$) THEN CMDLineSettingsError token$, 3, 0
+                            IF LEN(dexf$) THEN
+                                IF _DIREXISTS(_STARTDIR$ + dexf$) THEN dexf$ = _STARTDIR$ + dexf$
+                                IF _DIREXISTS(dexf$) THEN
+                                    dexf$ = _FULLPATH$(dexf$)
+                                    WriteConfigSetting generalSettingsSection$, "DefaultExeSaveFolder", dexf$
+                                    IF RIGHT$(dexf$, 1) <> pathsep$ THEN dexf$ = dexf$ + pathsep$
+                                    DefaultExeSaveFolder$ = dexf$: dexf$ = "-1"
+                                END IF
+                            END IF
+                            IF dexf$ <> "-1" THEN CMDLineSettingsError "Path not found: " + token$, 0, 0
+                        END IF
+                        PRINT "ExeDefaultDir = "; _IIF(LEN(DefaultExeSaveFolder$), DefaultExeSaveFolder$, "unset (= qb64pe folder)")
                     CASE ELSE
                         CMDLineSettingsError "Unsupported setting: " + token$, 0, 0
                 END SELECT
@@ -13404,11 +13420,11 @@ FUNCTION ParseCMDLineArgs$ ()
                     CASE ":stripdebugsymbols"
                         IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":extracppflags"
-                        IF NOT ParseStringSetting&(token$, ExtraCppFlags$) THEN CMDLineSettingsError token$, 1, 1
+                        IF NOT ParseStringSetting&(token$, ExtraCppFlags$) THEN CMDLineSettingsError token$, 3, 1
                     CASE ":extralinkerflags"
-                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags$) THEN CMDLineSettingsError token$, 1, 1
+                        IF NOT ParseStringSetting&(token$, ExtraLinkerFlags$) THEN CMDLineSettingsError token$, 3, 1
                     CASE ":maxcompilerprocesses"
-                        IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN CMDLineSettingsError token$, 1, 1
+                        IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN CMDLineSettingsError token$, 2, 1
                         IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN CMDLineSettingsError "MaxCompilerProcesses must be in range 1-128.", 0, 1
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN CMDLineSettingsError token$, 1, 1
@@ -13418,7 +13434,7 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseBooleanSetting&(token$, IDEAutoIndent) THEN CMDLineSettingsError token$, 1, 1
                         DEFAutoIndent = IDEAutoIndent 'for restoring after '$FORMAT:OFF
                     CASE ":autoindentsize"
-                        IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN CMDLineSettingsError token$, 1, 1
+                        IF NOT ParseLongSetting&(token$, IDEAutoIndentSize) THEN CMDLineSettingsError token$, 2, 1
                         IF IDEAutoIndentSize < 1 OR IDEAutoIndentSize > 64 THEN CMDLineSettingsError "AutoIndentSize must be in range 1-64.", 0, 1
                     CASE ":indentsubs"
                         IF NOT ParseBooleanSetting&(token$, IDEIndentSubs) THEN CMDLineSettingsError token$, 1, 1
@@ -13484,19 +13500,24 @@ FUNCTION ParseCMDLineArgs$ ()
     END IF
 END FUNCTION
 
-SUB CMDLineSettingsError (errstr$, inv%, tmp%)
-    'inv% <> 0 (invalid bool) / = 0 (any other message)
+SUB CMDLineSettingsError (errstr$, typ%, tmp%)
+    'errstr$ = the token$ only for types 1-3, else any custom message
+    'typ% = 1 (invalid bool) / = 2 (missing integer) / = 3 (missing string) / else (custom message)
     'tmp% <> 0 (-f temp setting) / = 0 (-s permanent setting)
     _DEST _CONSOLE
     IF NOT QB64VersionPrinted THEN QB64VersionPrinted = _TRUE: PRINT "QB64-PE Compiler V" + Version$: PRINT
 
-    IF inv% THEN
-        PRINT "Invalid boolean value for "; _IIF(tmp%, "temporary (-f)", "(-s)"); " setting: "; errstr$
-        PRINT "   enable: "; _IIF(tmp%, "-f", "-s"); ":setting= true , on , yes, 1, -1"
-        PRINT "  disable: "; _IIF(tmp%, "-f", "-s"); ":setting= false, off, no , 0"
-    ELSE
-        PRINT errstr$
-    END IF
+    SELECT CASE typ%
+        CASE 1
+            PRINT "Invalid boolean value for "; _IIF(tmp%, "temporary (-f)", "(-s)"); " setting: "; errstr$
+            PRINT "   enable: "; _IIF(tmp%, "-f", "-s"); ":setting=[true|on|yes|1|-1]"
+            PRINT "  disable: "; _IIF(tmp%, "-f", "-s"); ":setting=[false|off|no|0]"
+        CASE 2, 3
+            PRINT "Missing value for "; _IIF(tmp%, "temporary (-f)", "(-s)"); " setting: "; errstr$
+            PRINT "  expected: "; _IIF(tmp%, "-f", "-s"); ":setting=["; _IIF(typ% = 2, "number", "string"); "]"
+        CASE ELSE
+            PRINT errstr$
+    END SELECT
     PRINT
 
     IF tmp% THEN CMDLineTemporarySettingsHelp ELSE CMDLineSettingsHelp
@@ -13508,6 +13529,8 @@ SUB CMDLineSettingsHelp
     PRINT "  -s                              Show the current state of all settings"
     PRINT "  -s:DebugInfo=[true|false]       Embed C++ debug info into executable"
     PRINT "  -s:ExeWithSource=[true|false]   Save executable in the source folder"
+    PRINT "  -s:ExeDefaultDir=[string]       Save executables here per default,"
+    PRINT "                                  if not saving with source"
     PRINT "      You may specify a setting without equal sign and value to"
     PRINT "      show the current state of that specific setting only."
 END SUB
