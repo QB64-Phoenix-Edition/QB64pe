@@ -65,19 +65,19 @@ rem MINGW_DIR is actually the internal directory name inside the zip file
 rem It needs to be updated whenever the toolchains are updated
 if "%ARCH%" == "ARM" (
     if %BITS% == 64 (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251202/llvm-mingw-20251202-ucrt-aarch64.zip"
-        set MINGW_DIR=llvm-mingw-20251202-ucrt-aarch64
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-aarch64.zip"
+        set MINGW_DIR=llvm-mingw-20251216-ucrt-aarch64
     ) else (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251202/llvm-mingw-20251202-ucrt-armv7.zip"
-        set MINGW_DIR=llvm-mingw-20251202-ucrt-armv7
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-armv7.zip"
+        set MINGW_DIR=llvm-mingw-20251216-ucrt-armv7
     )
 ) else (
     if %BITS% == 64 (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251202/llvm-mingw-20251202-ucrt-x86_64.zip"
-        set MINGW_DIR=llvm-mingw-20251202-ucrt-x86_64
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip"
+        set MINGW_DIR=llvm-mingw-20251216-ucrt-x86_64
     ) else (
-        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251202/llvm-mingw-20251202-ucrt-i686.zip"
-        set MINGW_DIR=llvm-mingw-20251202-ucrt-i686
+        set URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-i686.zip"
+        set MINGW_DIR=llvm-mingw-20251216-ucrt-i686
     )
 )
 
