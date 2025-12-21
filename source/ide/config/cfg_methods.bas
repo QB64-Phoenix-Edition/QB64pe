@@ -135,6 +135,14 @@ SUB ReadInitialConfig
         WriteConfigSetting generalSettingsSection$, "WhiteListQB64FirstTimeMsg", "False"
     END IF
 
+    DefaultExeSaveFolder$ = "" 'means QB64pe folder
+    IF ReadConfigSetting(generalSettingsSection$, "DefaultExeSaveFolder", value$) THEN
+        IF _DIREXISTS(value$) THEN
+            IF RIGHT$(value$, 1) <> pathsep$ THEN value$ = value$ + pathsep$
+            DefaultExeSaveFolder$ = value$
+        END IF
+    END IF
+
     IF ReadConfigSetting(generalSettingsSection$, "SaveExeWithSource", value$) THEN
         IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
             SaveExeWithSource = _TRUE

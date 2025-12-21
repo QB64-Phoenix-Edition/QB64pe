@@ -93,7 +93,10 @@ jobs:
       env:
         CI_TESTING: y
         CI_OS: ${{ matrix.prefix }}
-      run: tests/run_tests.sh
+      run: |
+        echo "pcm.!default { type null }" > $GITHUB_WORKSPACE/silence-alsa.conf
+        export ALSA_CONFIG_PATH=$GITHUB_WORKSPACE/silence-alsa.conf
+        tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
       shell: bash

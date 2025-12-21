@@ -327,6 +327,8 @@ FUNCTION ide2 (ignore)
             menu$(m, i) = "Change #Terminal...": i = i + 1
             menuDesc$(m, i - 1) = "Configure the terminal used for $CONSOLE and logging output"
         END IF
+        menu$(m, i) = "Set #Default EXE Folder...": i = i + 1
+        menuDesc$(m, i - 1) = "Set default EXE output folder used if 'Output EXE to Source Folder' is off"
         menu$(m, i) = "Configure #Logging...": i = i + 1
         menuDesc$(m, i - 1) = "Configure logging options used when running a program from the IDE"
         menusize(m) = i - 1
@@ -917,17 +919,15 @@ FUNCTION ide2 (ignore)
                     _PRINTSTRING (2, idewy - 3), ".EXE file created"
                 END IF
 
-                IF SaveExeWithSource THEN
-                    COLOR 11, 1
-                    location$ = lastBinaryGenerated$
-                    IF path.exe$ = "" THEN location$ = _STARTDIR$ + location$
-                    msg$ = "Location: " + location$
-                    IF 2 + LEN(msg$) > idewx THEN
-                        msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
-                    END IF
-                    _PRINTSTRING (2, idewy - 2), msg$
-                    statusarealink = 3
+                COLOR 11, 1
+                location$ = lastBinaryGenerated$
+                IF path.exe$ = "" THEN location$ = _CWD$ + location$
+                msg$ = "Location: " + RemoveDoubleSlashes$(location$)
+                IF 2 + LEN(msg$) > idewx THEN
+                    msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
                 END IF
+                _PRINTSTRING (2, idewy - 2), msg$
+                statusarealink = 3
 
             END IF
         END IF
@@ -1743,13 +1743,20 @@ FUNCTION ide2 (ignore)
 
             IF NOT ExeToSourceFolderFirstTimeMsg THEN
                 IF SaveExeWithSource THEN
-                    result = idemessagebox("Run", "Your program will be compiled to the same folder where your\n" + _
-                                           "source code is saved. You can change that by unchecking the\n" + _
-                                           "option 'Output EXE to Source Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
+                    result = idemessagebox("Run", _
+                                           "Your program will be compiled to the same folder where your\n" + _
+                                           "source code is saved. To compile into a default location\n" + _
+                                           "instead, uncheck the option 'Output EXE to Source Folder'\n" + _
+                                           "in the Run menu and set the desired location via the entry\n" + _
+                                           "'Set Default EXE Folder' (the 'qb64pe' folder if unset).", _
+                                           "#OK;#Don't show this again;#Cancel")
                 ELSE
-                    result = idemessagebox("Run", "Your program will be compiled to your 'qb64pe' folder. You can\n" + _
-                                         "change that by checking the option 'Output EXE to Source\n" + _
-                                         "Folder' in the Run menu.", "#OK;#Don't show this again;#Cancel")
+                    result = idemessagebox("Run", _
+                                           "Your program will be compiled to your set default location\n" + _
+                                           "for EXEs (the 'qb64pe' folder if yet unset). You can set it\n" + _
+                                           "via the 'Set Default EXE Folder' entry in the Run menu.\n" + _
+                                           "In alternative check the option 'Output EXE to Source Folder'.", _
+                                           "#OK;#Don't show this again;#Cancel")
                 END IF
                 IF result = 2 THEN
                     WriteConfigSetting generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", "True"
@@ -1827,8 +1834,8 @@ FUNCTION ide2 (ignore)
 
                         COLOR 11, 1
                         location$ = lastBinaryGenerated$
-                        IF path.exe$ = "" THEN location$ = _STARTDIR$ + location$
-                        msg$ = "Location: " + location$
+                        IF path.exe$ = "" THEN location$ = _CWD$ + location$
+                        msg$ = "Location: " + RemoveDoubleSlashes$(location$)
                         IF 2 + LEN(msg$) > idewx THEN
                             msg$ = "Location: " + STRING$(3, 250) + RIGHT$(location$, idewx - 15)
                         END IF
@@ -6176,6 +6183,28 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 ModifyCOMMAND$ = " " + ideinputbox$("Modify COMMAND$", "#Enter text for COMMAND$", _TRIM$(ModifyCOMMAND$), "", 60, 0, 0)
                 IF _TRIM$(ModifyCOMMAND$) = "" THEN ModifyCOMMAND$ = ""
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "Set #Default EXE Folder..." THEN
+                PCOPY 3, 0: SCREEN , , 3, 0
+                clearStatusWindow 0
+                _PRINTSTRING (2, idewy - 3), "Default EXE output folder (cancel request to keep)..."
+                COLOR 11, 1: msg$ = "No folder set yet, hence it defaults to the 'qb64pe' folder"
+                IF LEN(DefaultExeSaveFolder$) THEN msg$ = DefaultExeSaveFolder$
+                IF 2 + LEN(msg$) > idewx THEN msg$ = STRING$(3, 250) + RIGHT$(msg$, idewx - 5)
+                _PRINTSTRING (2, idewy - 2), msg$
+                PCOPY 3, 0
+                dexf$ = _SELECTFOLDERDIALOG$("Select your desired EXE output folder...")
+                IF LEN(dexf$) THEN
+                    WriteConfigSetting generalSettingsSection$, "DefaultExeSaveFolder", dexf$
+                    IF RIGHT$(dexf$, 1) <> pathsep$ THEN dexf$ = dexf$ + pathsep$
+                    DefaultExeSaveFolder$ = dexf$
+                    lastBinaryGenerated$ = "" 'invalidate EXE in old location
+                END IF
+                clearStatusWindow 0
+                _PRINTSTRING (2, idewy - 3), "Ok"
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
