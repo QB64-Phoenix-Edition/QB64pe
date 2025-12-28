@@ -389,91 +389,58 @@ static uint8_t *image_convert_8bpp(const uint32_t *src32, int32_t w, int32_t h, 
         uint32_t count;
     } cubes[256];
 
+    static const uint8_t bayerMatrix[64] = {0,  32, 8,  40, 2,  34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4,  36, 14, 46,
+                                            6,  38, 60, 28, 52, 20, 62, 30, 54, 22, 3,  35, 11, 43, 1,  33, 9,  41, 51, 19, 59, 27,
+                                            49, 17, 57, 25, 15, 47, 7,  39, 13, 45, 5,  37, 63, 31, 55, 23, 61, 29, 53, 21};
+
     image_log_info("Converting 32bpp image (%i, %i) to 8bpp", w, h);
 
-    size_t size = w * h;
-
-    // Allocate memory for new image (8-bit indexed)
-    auto pixels = (uint8_t *)malloc(size);
+    auto pixels = (uint8_t *)malloc(w * h);
     if (!pixels) {
         return nullptr;
     }
 
-    // Create a floating point copy of the image for error diffusion
-    std::vector<float> f_pixels(size * 3);
-
-    for (int i = 0; i < size; ++i) {
-        f_pixels[i * 3 + 2] = image_get_bgra_blue(src32[i]);  // B
-        f_pixels[i * 3 + 1] = image_get_bgra_green(src32[i]); // G
-        f_pixels[i * 3 + 0] = image_get_bgra_red(src32[i]);   // R
-    }
-
     ::memset(cubes, 0, sizeof(cubes));
 
-    // Dithering and Quantization phase
+    auto src = reinterpret_cast<const uint8_t *>(src32);
+    auto dst = pixels;
     for (auto y = 0; y < h; y++) {
         for (auto x = 0; x < w; x++) {
-            int index = (y * w + x) * 3;
-            float old_r = f_pixels[index + 0];
-            float old_g = f_pixels[index + 1];
-            float old_b = f_pixels[index + 2];
+            int32_t t = bayerMatrix[((y & 7) << 3) + (x & 7)];
+            float threshold_r = (t / 64.0f - 0.5f) * 32.0f;
+            float threshold_g = (t / 64.0f - 0.5f) * 32.0f;
+            float threshold_b = (t / 64.0f - 0.5f) * 64.0f;
 
-            int r = image_clamp_color_component(old_r);
-            int g = image_clamp_color_component(old_g);
-            int b = image_clamp_color_component(old_b);
+            int32_t b_val = *src++;
+            int32_t g_val = *src++;
+            int32_t r_val = *src++;
+            ++src; // Ignore alpha
 
-            // Quantize to 8-bit R3G3B2
+            int32_t r = ((r_val + threshold_r) / 32) * 32;
+            int32_t g = ((g_val + threshold_g) / 32) * 32;
+            int32_t b = ((b_val + threshold_b) / 64) * 64;
+
+            r = image_clamp_color_component(r);
+            g = image_clamp_color_component(g);
+            b = image_clamp_color_component(b);
+
             uint8_t k = ((r >> 5) << 5) | ((g >> 5) << 2) | (b >> 6);
-            pixels[y * w + x] = k;
+            (*dst++) = k;
 
-            // Get the new color from the center of the color cube
-            int new_r = ((k >> 5) * 36);
-            int new_g = (((k >> 2) & 0x07) * 36);
-            int new_b = ((k & 0x03) * 85);
-
-            float err_r = old_r - new_r;
-            float err_g = old_g - new_g;
-            float err_b = old_b - new_b;
-
-            // Distribute the error
-            if (x + 1 < w) {
-                f_pixels[(y * w + x + 1) * 3 + 0] += err_r * 7.0f / 16.0f;
-                f_pixels[(y * w + x + 1) * 3 + 1] += err_g * 7.0f / 16.0f;
-                f_pixels[(y * w + x + 1) * 3 + 2] += err_b * 7.0f / 16.0f;
-            }
-            if ((x > 0) && (y + 1 < h)) {
-                f_pixels[((y + 1) * w + x - 1) * 3 + 0] += err_r * 3.0f / 16.0f;
-                f_pixels[((y + 1) * w + x - 1) * 3 + 1] += err_g * 3.0f / 16.0f;
-                f_pixels[((y + 1) * w + x - 1) * 3 + 2] += err_b * 3.0f / 16.0f;
-            }
-            if (y + 1 < h) {
-                f_pixels[((y + 1) * w + x) * 3 + 0] += err_r * 5.0f / 16.0f;
-                f_pixels[((y + 1) * w + x) * 3 + 1] += err_g * 5.0f / 16.0f;
-                f_pixels[((y + 1) * w + x) * 3 + 2] += err_b * 5.0f / 16.0f;
-            }
-            if ((x + 1 < w) && (y + 1 < h)) {
-                f_pixels[((y + 1) * w + x + 1) * 3 + 0] += err_r * 1.0f / 16.0f;
-                f_pixels[((y + 1) * w + x + 1) * 3 + 1] += err_g * 1.0f / 16.0f;
-                f_pixels[((y + 1) * w + x + 1) * 3 + 2] += err_b * 1.0f / 16.0f;
-            }
-
-            // Prepare RGB cubes for CLUT
-            cubes[k].r += r;
-            cubes[k].g += g;
-            cubes[k].b += b;
+            cubes[k].r += r_val;
+            cubes[k].g += g_val;
+            cubes[k].b += b_val;
             cubes[k].count++;
         }
     }
 
-    // Generate a uniform CLUT based on the quantized colors
     for (auto i = 0; i < 256; i++) {
         if (cubes[i].count) {
             paletteOut[i] = image_make_bgra(cubes[i].r / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].b / cubes[i].count, 0xFF);
         } else {
-            // Generate palette for empty cubes from the center of the color cube
-            int r = ((i >> 5) * 36);
-            int g = (((i >> 2) & 0x07) * 36);
-            int b = ((i & 0x03) * 85);
+            int r = ((i >> 5) * 32) + 16;
+            int g = (((i >> 2) & 0x07) * 32) + 16;
+            int b = ((i & 0x03) * 64) + 32;
             paletteOut[i] = image_make_bgra(r, g, b, 0xFF);
         }
     }
