@@ -11,6 +11,7 @@
 
 #include "libqb-common.h"
 
+#include "graphics.h"
 #include "image.h"
 #include "sg_pcx.h"
 #include <algorithm>

@@ -6,6 +6,7 @@
 #include "font.h"
 #include "../../../libqb.h"
 #include "error_handle.h"
+#include "graphics.h"
 #include "gui.h"
 #include "image.h"
 #include "libqb-common.h"

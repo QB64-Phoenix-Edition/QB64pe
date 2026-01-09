@@ -18,6 +18,7 @@
 
 #include "../stb/stb_image.h"
 #include "../stb/stb_image_write.h"
+#include "graphics.h"
 #include "image.h"
 #include "sg_curico.h"
 #include <algorithm>

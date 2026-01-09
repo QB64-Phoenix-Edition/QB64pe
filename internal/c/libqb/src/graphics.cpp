@@ -8,6 +8,7 @@
 #include "qblist.h"
 #include "rounding.h"
 #include <cstring>
+#include <limits>
 
 // External functions. These should be moved here in the future.
 void flush_old_hardware_commands();
@@ -35,25 +36,86 @@ extern uint8_t *ablend128;
 static int32_t depthbuffer_mode0 = DEPTHBUFFER_MODE__ON;
 static int32_t depthbuffer_mode1 = DEPTHBUFFER_MODE__ON;
 
+/// @brief Finds the closest color index in the palette.
+/// @param r The red color component.
+/// @param g The green color component.
+/// @param b The blue color component.
+/// @param palette The palette to search (an array of 32-bit colors).
+/// @param paletteColors The number of colors in the palette.
+/// @return The index of the closest color in the palette.
+uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, uint8_t b, const uint32_t *palette, uint32_t paletteColors) {
+    auto minDistance = std::numeric_limits<uint32_t>::max();
+    uint32_t closestIndex = 0;
+
+    for (auto i = 0u; i < paletteColors; i++) {
+        auto distance =
+            image_get_rgb_manhattan_distance(r, g, b, image_get_bgra_red(palette[i]), image_get_bgra_green(palette[i]), image_get_bgra_blue(palette[i]));
+
+        if (distance < minDistance) {
+            if (distance == 0) {
+                return i; // Exact match
+            }
+
+            closestIndex = i;
+            minDistance = distance;
+        }
+    }
+
+    return closestIndex;
+}
+
 void hsb2rgb(hsb_color *hsb, rgb_color *rgb) {
     double hu, hi, hf, pv, qv, tv;
 
     if (hsb->s == 0.0) {
-        rgb->r = hsb->b; rgb->g = hsb->b; rgb->b = hsb->b; // no saturation = grayscale
+        rgb->r = hsb->b;
+        rgb->g = hsb->b;
+        rgb->b = hsb->b; // no saturation = grayscale
     } else {
-        hu = hsb->h / 60.0;  // to sixtant [0,5]
-        if (hu >= 6.0) hu = hu - 6.0;
-        hf = modf(hu, &hi);  // int/frac parts of hue
+        hu = hsb->h / 60.0; // to sixtant [0,5]
+        if (hu >= 6.0)
+            hu = hu - 6.0;
+        hf = modf(hu, &hi); // int/frac parts of hue
         pv = hsb->b * (1.0 - hsb->s);
         qv = hsb->b * (1.0 - (hsb->s * hf));
         tv = hsb->b * (1.0 - (hsb->s * (1.0 - hf)));
         switch (lround(hi)) {
-            case 0: {rgb->r = hsb->b; rgb->g = tv; rgb->b = pv; break;} //   0- 60 = Red->Yellow
-            case 1: {rgb->r = qv; rgb->g = hsb->b; rgb->b = pv; break;} //  60-120 = Yellow->Green
-            case 2: {rgb->r = pv; rgb->g = hsb->b; rgb->b = tv; break;} // 120-180 = Green->Cyan
-            case 3: {rgb->r = pv; rgb->g = qv; rgb->b = hsb->b; break;} // 180-240 = Cyan->Blue
-            case 4: {rgb->r = tv; rgb->g = pv; rgb->b = hsb->b; break;} // 240-300 = Blue->Magenta
-            case 5: {rgb->r = hsb->b; rgb->g = pv; rgb->b = qv; break;} // 300-360 = Magenta->Red
+        case 0: {
+            rgb->r = hsb->b;
+            rgb->g = tv;
+            rgb->b = pv;
+            break;
+        } //   0- 60 = Red->Yellow
+        case 1: {
+            rgb->r = qv;
+            rgb->g = hsb->b;
+            rgb->b = pv;
+            break;
+        } //  60-120 = Yellow->Green
+        case 2: {
+            rgb->r = pv;
+            rgb->g = hsb->b;
+            rgb->b = tv;
+            break;
+        } // 120-180 = Green->Cyan
+        case 3: {
+            rgb->r = pv;
+            rgb->g = qv;
+            rgb->b = hsb->b;
+            break;
+        } // 180-240 = Cyan->Blue
+        case 4: {
+            rgb->r = tv;
+            rgb->g = pv;
+            rgb->b = hsb->b;
+            break;
+        } // 240-300 = Blue->Magenta
+        case 5: {
+            rgb->r = hsb->b;
+            rgb->g = pv;
+            rgb->b = qv;
+            break;
+        } // 300-360 = Magenta->Red
         }
     }
 }
@@ -71,8 +133,9 @@ void rgb2hsb(rgb_color *rgb, hsb_color *hsb) {
     // --- hue in degrees ---
     if (hsb->s != 0.0) {
         if (rgb->r == maxi) {
-            hu = ((rgb->g - rgb->b) / diff);       // between Yellow & Magenta
-            if (hu < 0.0) hu = hu + 6.0;
+            hu = ((rgb->g - rgb->b) / diff); // between Yellow & Magenta
+            if (hu < 0.0)
+                hu = hu + 6.0;
         } else if (rgb->g == maxi) {
             hu = 2.0 + ((rgb->b - rgb->r) / diff); // between Cyan & Yellow
         } else {
@@ -85,12 +148,14 @@ void rgb2hsb(rgb_color *rgb, hsb_color *hsb) {
 }
 
 uint32_t func__hsb32(double hue, double sat, double bri) {
-    hsb_color hsb; rgb_color rgb;
+    hsb_color hsb;
+    rgb_color rgb;
     // --- prepare values for conversion ---
     (hue < 0.0) ? hsb.h = 0.0 : ((hue > 360.0) ? hsb.h = 360.0 : hsb.h = hue);
     (sat < 0.0) ? hsb.s = 0.0 : ((sat > 100.0) ? hsb.s = 100.0 : hsb.s = sat);
     (bri < 0.0) ? hsb.b = 0.0 : ((bri > 100.0) ? hsb.b = 100.0 : hsb.b = bri);
-    hsb.s /= 100.0; hsb.b /= 100.0; // range [0,1]
+    hsb.s /= 100.0;
+    hsb.b /= 100.0; // range [0,1]
     // --- convert colorspace ---
     hsb2rgb(&hsb, &rgb);
     // --- build result ---
@@ -98,13 +163,17 @@ uint32_t func__hsb32(double hue, double sat, double bri) {
 }
 
 uint32_t func__hsba32(double hue, double sat, double bri, double alf) {
-    hsb_color hsb; rgb_color rgb; double alpha;
+    hsb_color hsb;
+    rgb_color rgb;
+    double alpha;
     // --- prepare values for conversion ---
     (hue < 0.0) ? hsb.h = 0.0 : ((hue > 360.0) ? hsb.h = 360.0 : hsb.h = hue);
     (sat < 0.0) ? hsb.s = 0.0 : ((sat > 100.0) ? hsb.s = 100.0 : hsb.s = sat);
     (bri < 0.0) ? hsb.b = 0.0 : ((bri > 100.0) ? hsb.b = 100.0 : hsb.b = bri);
     (alf < 0.0) ? alpha = 0.0 : ((alf > 100.0) ? alpha = 100.0 : alpha = alf);
-    hsb.s /= 100.0; hsb.b /= 100.0; alpha /= 100.0; // range [0,1]
+    hsb.s /= 100.0;
+    hsb.b /= 100.0;
+    alpha /= 100.0; // range [0,1]
     // --- convert colorspace ---
     hsb2rgb(&hsb, &rgb);
     // --- build result ---
@@ -112,7 +181,8 @@ uint32_t func__hsba32(double hue, double sat, double bri, double alf) {
 }
 
 double func__hue32(uint32_t argb) {
-    rgb_color rgb; hsb_color hsb;
+    rgb_color rgb;
+    hsb_color hsb;
     // --- prepare values for conversion ---
     rgb.r = ((argb >> 16) & 0xFF) / 255.0;
     rgb.g = ((argb >> 8) & 0xFF) / 255.0;
@@ -124,7 +194,8 @@ double func__hue32(uint32_t argb) {
 }
 
 double func__sat32(uint32_t argb) {
-    rgb_color rgb; hsb_color hsb;
+    rgb_color rgb;
+    hsb_color hsb;
     // --- prepare values for conversion ---
     rgb.r = ((argb >> 16) & 0xFF) / 255.0;
     rgb.g = ((argb >> 8) & 0xFF) / 255.0;
@@ -136,7 +207,8 @@ double func__sat32(uint32_t argb) {
 }
 
 double func__bri32(uint32_t argb) {
-    rgb_color rgb; hsb_color hsb;
+    rgb_color rgb;
+    hsb_color hsb;
     // --- prepare values for conversion ---
     rgb.r = ((argb >> 16) & 0xFF) / 255.0;
     rgb.g = ((argb >> 8) & 0xFF) / 255.0;

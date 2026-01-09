@@ -46,6 +46,7 @@ extern void jo_gif_frame(jo_gif_t *gif, unsigned char *rgba, short delayCsec, bo
 // gif          | the state (returned from jo_gif_start)
 extern void jo_gif_end(jo_gif_t *gif);
 
+extern void jo_gif_quantize(unsigned char *rgba, int rgbaSize, int sample, unsigned char *map, int numColors);
 #endif
 
 #ifndef JO_GIF_HEADER_FILE_ONLY
@@ -59,7 +60,7 @@ extern void jo_gif_end(jo_gif_t *gif);
 #include <stdlib.h>
 
 // Based on NeuQuant algorithm
-static void jo_gif_quantize(unsigned char *rgba, int rgbaSize, int sample, unsigned char *map, int numColors) {
+void jo_gif_quantize(unsigned char *rgba, int rgbaSize, int sample, unsigned char *map, int numColors) {
     // defs for freq and bias
     const int intbiasshift = 16; /* bias for fractions */
     const int intbias = (((int)1) << intbiasshift);

@@ -12,11 +12,12 @@
 
 #include "libqb-common.h"
 
+#include "graphics.h"
 #include "gui.h"
-#include "image.h"
 #include "qbs.h"
 #include "tinyfiledialogs.h"
 #include <algorithm>
+#include <cstdlib>
 #include <limits.h>
 #include <string.h>
 #include <string>

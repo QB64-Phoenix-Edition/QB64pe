@@ -15,6 +15,7 @@
 #include "clip/clip.h"
 #include "clipboard.h"
 #include "error_handle.h"
+#include "graphics.h"
 #include "image.h"
 #include "qbs.h"
 #include <vector>

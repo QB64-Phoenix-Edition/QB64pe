@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <stdint.h>
 
 struct img_struct {
@@ -56,14 +58,13 @@ struct img_struct {
 #define IMG_FREEMEM 4 // if set, it means memory must be freed
 
 // used by HSB/RGB color conversion routines
-struct hsb_color
-{
+struct hsb_color {
     double h; // [0,360] hue
     double s; // [0,1]   saturation
     double b; // [0,1]   brightness
 };
-struct rgb_color
-{
+
+struct rgb_color {
     double r; // [0,1] red
     double g; // [0,1] green
     double b; // [0,1] blue
@@ -199,3 +200,111 @@ double func__bri32(uint32_t argb);
 void sub__depthbuffer(int32_t options, int32_t dst, int32_t passed);
 void sub__maptriangle(int32_t cull_options, float sx1, float sy1, float sx2, float sy2, float sx3, float sy3, int32_t si, float dx1, float dy1, float dz1,
                       float dx2, float dy2, float dz2, float dx3, float dy3, float dz3, int32_t di, int32_t smooth_options, int32_t passed);
+
+static inline constexpr uint8_t image_get_bgra_red(uint32_t c) {
+    return uint8_t((c >> 16) & 0xFFu);
+}
+
+static inline constexpr uint8_t image_get_bgra_green(uint32_t c) {
+    return uint8_t((c >> 8) & 0xFFu);
+}
+
+static inline constexpr uint8_t image_get_bgra_blue(uint32_t c) {
+    return uint8_t(c & 0xFFu);
+}
+
+static inline constexpr uint8_t image_get_bgra_alpha(uint32_t c) {
+    return uint8_t(c >> 24);
+}
+
+static inline constexpr uint32_t image_get_bgra_bgr(uint32_t c) {
+    return c & 0xFFFFFFu;
+}
+
+static inline constexpr uint32_t image_set_bgra_alpha(uint32_t c, uint8_t a = 0xFFu) {
+    return (c & 0xFFFFFFu) | (uint32_t(a) << 24);
+}
+
+static inline constexpr uint32_t image_make_bgra(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFFu) {
+    return uint32_t(b) | (uint32_t(g) << 8) | (uint32_t(r) << 16) | (uint32_t(a) << 24);
+}
+
+static inline constexpr int image_scale_5bits_to_8bits(int v) {
+    return (v << 3) | (v >> 2);
+}
+
+static inline constexpr int image_scale_6bits_to_8bits(int v) {
+    return (v << 2) | (v >> 4);
+}
+
+static inline constexpr uint32_t image_swap_red_blue(uint32_t clr) {
+    return ((clr & 0xFF00FF00u) | ((clr & 0x00FF0000u) >> 16) | ((clr & 0x000000FFu) << 16));
+}
+
+static inline constexpr uint8_t image_clamp_color_component(int n) {
+    return uint8_t(std::clamp(n, 0, 255));
+}
+
+static inline uint32_t image_get_rgb_manhattan_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    return uint32_t(::abs(long(r1) - long(r2)) + ::abs(long(g1) - long(g2)) + ::abs(long(b1) - long(b2)));
+}
+
+static inline constexpr uint32_t image_get_rgb_squared_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = int(r1) - int(r2);
+    auto dg = int(g1) - int(g2);
+    auto db = int(b1) - int(b2);
+    return uint32_t(dr * dr + dg * dg + db * db);
+}
+
+static inline float image_get_rgb_euclidean_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto delta_r = float(r2) - float(r1);
+    auto delta_g = float(g2) - float(g1);
+    auto delta_b = float(b2) - float(b1);
+    return sqrtf(delta_r * delta_r + delta_g * delta_g + delta_b * delta_b);
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b, int32_t a) {
+    return (image_clamp_color_component(a) << 24) | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) |
+           image_clamp_color_component(b);
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b) {
+    return 0xFF000000u | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) | image_clamp_color_component(b);
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t i, int32_t a) {
+    i = image_clamp_color_component(i);
+    return (image_clamp_color_component(a) << 24) | (uint32_t(i) << 16) | (uint32_t(i) << 8) | uint32_t(i);
+}
+
+static inline constexpr uint32_t func__rgb32(int32_t i) {
+    i = image_clamp_color_component(i);
+    return 0xFF000000u | (uint32_t(i) << 16) | (uint32_t(i) << 8) | uint32_t(i);
+}
+
+static inline constexpr uint32_t func__rgba32(int32_t r, int32_t g, int32_t b, int32_t a) {
+    return (image_clamp_color_component(a) << 24) | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) |
+           image_clamp_color_component(b);
+}
+
+static inline constexpr int32_t func__alpha32(uint32_t col) {
+    return col >> 24;
+}
+
+static inline constexpr int32_t func__red32(uint32_t col) {
+    return (col >> 16) & 0xFF;
+}
+
+static inline constexpr int32_t func__green32(uint32_t col) {
+    return (col >> 8) & 0xFF;
+}
+
+static inline constexpr int32_t func__blue32(uint32_t col) {
+    return col & 0xFF;
+}
+
+uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, uint8_t b, const uint32_t *palette, uint32_t paletteColors = 256);
+
+static inline uint32_t image_find_closest_palette_color(uint32_t color, const uint32_t *palette, uint32_t paletteColors = 256) {
+    return image_find_closest_palette_color(image_get_bgra_red(color), image_get_bgra_green(color), image_get_bgra_blue(color), palette, paletteColors);
+}
