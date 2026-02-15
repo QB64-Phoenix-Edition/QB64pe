@@ -1,0 +1,39 @@
+int32 FUNC_VERIFYNUMBER(qbs*_FUNC_VERIFYNUMBER_STRING_TEXT){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data65.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_VERIFYNUMBER_STRING_T,qbs_ltrim(qbs_rtrim(_FUNC_VERIFYNUMBER_STRING_TEXT)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23972);}while(r);
+do{
+*_FUNC_VERIFYNUMBER_LONG_V=qbr(qbs_val<long double>(_FUNC_VERIFYNUMBER_STRING_T));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23973);}while(r);
+do{
+qbs_set(_FUNC_VERIFYNUMBER_STRING_T1,qbs__tostr((int32)(*_FUNC_VERIFYNUMBER_LONG_V),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23974);}while(r);
+S_32158:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_VERIFYNUMBER_STRING_T,_FUNC_VERIFYNUMBER_STRING_T1)))||is_error_pending()){
+if(qbevent){evnt(23975);if(r)goto S_32158;}
+do{
+*_FUNC_VERIFYNUMBER_LONG_VERIFYNUMBER= -1 ;
+if(!qbevent)break;evnt(23975);}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free65.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_VERIFYNUMBER_LONG_VERIFYNUMBER;
+}

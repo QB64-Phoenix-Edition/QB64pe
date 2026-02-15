@@ -1,0 +1,30 @@
+void SUB_HELP_CHECKFINISHLINE(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data377.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_61561:;
+if ((-(*__LONG_HELP_TXT_LEN>= 4 ))||is_error_pending()){
+if(qbevent){evnt(24235,216,"wiki_methods.bas");if(r)goto S_61561;}
+S_61562:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_HELP_TXT,*__LONG_HELP_TXT_LEN- 2 )< 128 )))||is_error_pending()){
+if(qbevent){evnt(24235,217,"wiki_methods.bas");if(r)goto S_61562;}
+do{
+SUB_HELP_NEWLINE();
+if(!qbevent)break;evnt(24235,217,"wiki_methods.bas");}while(r);
+}
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free377.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

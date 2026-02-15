@@ -94,6 +94,10 @@ SUB ExportCodeAs (docFormat$)
                         kw% = 0
                     END IF
                     IF co% THEN post% = 0: what$ = "co": GOSUB CloseText: co% = 0
+                    IF qu% THEN
+                        ASC(eTxt$, ePos&) = 34: ePos& = ePos& + 1
+                        post% = 0: what$ = "qu": GOSUB CloseText: qu% = 0
+                    END IF
                     IF nu% THEN post% = 0: what$ = "nu": GOSUB CloseText: nu% = 0
                     IF sPos& > 1 THEN
                         IF ASC(sTxt$, sPos& - 1) <> 95 THEN op% = 0: fu% = 0: bo% = 0
@@ -412,68 +416,74 @@ SUB ExportCodeAs (docFormat$)
     ELSEIF INSTR(ma$, "@" + page$ + "@") > 0 THEN
         page$ = "Mathematical Operations#Derived_Mathematical_Functions"
     ELSE
-        la$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " "))
+        ola$ = LTRIM$(StrReplace$(MID$(sTxt$, sPos&, 100), CHR$(9), " ")): sp% = LEN(ola$)
+        sep% = INSTR(ola$, " "): IF sep% > 0 _ANDALSO sep% < sp% THEN sp% = sep%
+        sep% = INSTR(ola$, "("): IF sep% > 0 _ANDALSO sep% < sp% THEN sp% = sep%
+        sep% = INSTR(ola$, ":"): IF sep% > 0 _ANDALSO sep% < sp% THEN sp% = sep%
+        sep% = INSTR(ola$, CHR$(13)): IF sep% > 0 _ANDALSO sep% < sp% THEN sp% = sep%
+        sep% = INSTR(ola$, CHR$(10)): IF sep% > 0 _ANDALSO sep% < sp% THEN sp% = sep%
+        la$ = RTRIM$(LEFT$(ola$, sp% - 1))
         SELECT EVERYCASE page$
-            CASE "$END": IF UCASE$(LEFT$(la$, 2)) = "IF" THEN me$ = me$ + " " + LEFT$(la$, 2): page$ = "$END IF": in% = -1
+            CASE "$END": IF UCASE$(la$) = "IF" THEN me$ = me$ + " " + la$: page$ = "$END IF": in% = -1
             CASE "_CONSOLECURSOR"
-                IF UCASE$(LEFT$(la$, 5)) = "_HIDE" THEN kw$ = kw$ + " " + LEFT$(la$, 5): in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "_SHOW" THEN kw$ = kw$ + " " + LEFT$(la$, 5): in% = -1
-            CASE "CALL": IF UCASE$(LEFT$(la$, 8)) = "ABSOLUTE" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "CALL ABSOLUTE": in% = -1
+                IF UCASE$(la$) = "_HIDE" THEN kw$ = kw$ + " " + la$: in% = -1
+                IF UCASE$(la$) = "_SHOW" THEN kw$ = kw$ + " " + la$: in% = -1
+            CASE "CALL": IF UCASE$(la$) = "ABSOLUTE" THEN kw$ = kw$ + " " + la$: page$ = "CALL ABSOLUTE": in% = -1
             CASE "CASE"
-                IF UCASE$(LEFT$(la$, 2)) = "IS" THEN kw$ = kw$ + " " + LEFT$(la$, 2): page$ = "CASE IS": fu% = -1: bo% = -1: in% = -1
-                IF UCASE$(LEFT$(la$, 4)) = "ELSE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "CASE ELSE": fu% = 0: bo% = 0: in% = -1
-            CASE "DECLARE": IF UCASE$(LEFT$(la$, 7)) = "LIBRARY" THEN kw$ = kw$ + " " + LEFT$(la$, 7): page$ = "DECLARE LIBRARY": in% = -1
-            CASE "DEF": IF UCASE$(LEFT$(la$, 3)) = "SEG" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "DEF SEG": in% = -1
+                IF UCASE$(la$) = "IS" THEN kw$ = kw$ + " " + la$: page$ = "CASE IS": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "ELSE" THEN kw$ = kw$ + " " + la$: page$ = "CASE ELSE": fu% = 0: bo% = 0: in% = -1
+            CASE "DECLARE": IF UCASE$(la$) = "LIBRARY" THEN kw$ = kw$ + " " + la$: page$ = "DECLARE LIBRARY": in% = -1
+            CASE "DEF": IF UCASE$(la$) = "SEG" THEN kw$ = kw$ + " " + la$: page$ = "DEF SEG": in% = -1
             CASE "DO"
-                IF UCASE$(LEFT$(la$, 5)) = "WHILE" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "UNTIL" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "WHILE" THEN kw$ = kw$ + " " + la$: page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "UNTIL" THEN kw$ = kw$ + " " + la$: page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
             CASE "END"
-                IF UCASE$(LEFT$(la$, 7)) = "DECLARE" THEN kw$ = kw$ + " " + LEFT$(la$, 7): page$ = "END DECLARE": in% = -1
-                IF UCASE$(LEFT$(la$, 8)) = "FUNCTION" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "END FUNCTION": in% = -1
-                IF UCASE$(LEFT$(la$, 2)) = "IF" THEN kw$ = kw$ + " " + LEFT$(la$, 2): page$ = "END IF": in% = -1
-                IF UCASE$(LEFT$(la$, 6)) = "SELECT" THEN kw$ = kw$ + " " + LEFT$(la$, 6): page$ = "END SELECT": in% = -1
-                IF UCASE$(LEFT$(la$, 3)) = "SUB" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "END SUB": in% = -1
-                IF UCASE$(LEFT$(la$, 4)) = "TYPE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "END TYPE": in% = -1
+                IF UCASE$(la$) = "DECLARE" THEN kw$ = kw$ + " " + la$: page$ = "END DECLARE": in% = -1
+                IF UCASE$(la$) = "FUNCTION" THEN kw$ = kw$ + " " + la$: page$ = "END FUNCTION": in% = -1
+                IF UCASE$(la$) = "IF" THEN kw$ = kw$ + " " + la$: page$ = "END IF": in% = -1
+                IF UCASE$(la$) = "SELECT" THEN kw$ = kw$ + " " + la$: page$ = "END SELECT": in% = -1
+                IF UCASE$(la$) = "SUB" THEN kw$ = kw$ + " " + la$: page$ = "END SUB": in% = -1
+                IF UCASE$(la$) = "TYPE" THEN kw$ = kw$ + " " + la$: page$ = "END TYPE": in% = -1
             CASE "EXIT"
-                IF UCASE$(LEFT$(la$, 4)) = "CASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "EXIT CASE": in% = -1
-                IF UCASE$(LEFT$(la$, 2)) = "DO" THEN kw$ = kw$ + " " + LEFT$(la$, 2): page$ = "EXIT DO": in% = -1
-                IF UCASE$(LEFT$(la$, 3)) = "FOR" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "EXIT FOR": in% = -1
-                IF UCASE$(LEFT$(la$, 8)) = "FUNCTION" THEN kw$ = kw$ + " " + LEFT$(la$, 8): page$ = "EXIT FUNCTION": in% = -1
-                IF UCASE$(LEFT$(la$, 6)) = "SELECT" THEN kw$ = kw$ + " " + LEFT$(la$, 6): page$ = "EXIT SELECT": in% = -1
-                IF UCASE$(LEFT$(la$, 3)) = "SUB" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "EXIT SUB": in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "WHILE" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "EXIT WHILE": in% = -1
-            CASE "GET", "PUT": IF LEFT$(la$, 1) <> "#" THEN page$ = page$ + " (general)"
-            CASE "KEY": IF UCASE$(LEFT$(la$, 4)) = "LIST" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "KEY LIST": in% = -1
-            CASE "LPRINT": IF UCASE$(LEFT$(la$, 5)) = "USING" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "LPRINT USING": in% = -1
+                IF UCASE$(la$) = "CASE" THEN kw$ = kw$ + " " + la$: page$ = "EXIT CASE": in% = -1
+                IF UCASE$(la$) = "DO" THEN kw$ = kw$ + " " + la$: page$ = "EXIT DO": in% = -1
+                IF UCASE$(la$) = "FOR" THEN kw$ = kw$ + " " + la$: page$ = "EXIT FOR": in% = -1
+                IF UCASE$(la$) = "FUNCTION" THEN kw$ = kw$ + " " + la$: page$ = "EXIT FUNCTION": in% = -1
+                IF UCASE$(la$) = "SELECT" THEN kw$ = kw$ + " " + la$: page$ = "EXIT SELECT": in% = -1
+                IF UCASE$(la$) = "SUB" THEN kw$ = kw$ + " " + la$: page$ = "EXIT SUB": in% = -1
+                IF UCASE$(la$) = "WHILE" THEN kw$ = kw$ + " " + la$: page$ = "EXIT WHILE": in% = -1
+            CASE "GET", "PUT": IF LEFT$(ola$, 1) <> "#" THEN page$ = page$ + " (general)"
+            CASE "KEY": IF UCASE$(la$) = "LIST" THEN kw$ = kw$ + " " + la$: page$ = "KEY LIST": in% = -1
+            CASE "LPRINT": IF UCASE$(la$) = "USING" THEN kw$ = kw$ + " " + la$: page$ = "LPRINT USING": in% = -1
             CASE "LINE"
-                IF UCASE$(LEFT$(la$, 5)) = "INPUT" THEN
-                    kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "LINE INPUT": in% = -1
-                    IF LEFT$(LTRIM$(MID$(la$, 6)), 1) = "#" THEN page$ = page$ + " (file statement)"
+                IF UCASE$(la$) = "INPUT" THEN
+                    kw$ = kw$ + " " + la$: page$ = "LINE INPUT": in% = -1
+                    IF LEFT$(LTRIM$(MID$(ola$, 6)), 1) = "#" THEN page$ = page$ + " (file statement)"
                 END IF
             CASE "LOOP"
-                IF UCASE$(LEFT$(la$, 5)) = "WHILE" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "UNTIL" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "WHILE" THEN kw$ = kw$ + " " + la$: page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "UNTIL" THEN kw$ = kw$ + " " + la$: page$ = "DO...LOOP": fu% = -1: bo% = -1: in% = -1
             CASE "ON"
-                IF UCASE$(LEFT$(la$, 5)) = "ERROR" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON ERROR": in% = -1
-                IF UCASE$(LEFT$(la$, 3)) = "KEY" THEN kw$ = kw$ + " " + LEFT$(la$, 3): page$ = "ON KEY(n)": in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "STRIG" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON STRIG(n)": in% = -1
-                IF UCASE$(LEFT$(la$, 5)) = "TIMER" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "ON TIMER(n)": in% = -1
-            CASE "OPTION": IF UCASE$(LEFT$(la$, 4)) = "BASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "OPTION BASE": in% = -1
-            CASE "PALETTE": IF UCASE$(LEFT$(la$, 5)) = "USING" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "PALETTE USING": in% = -1
+                IF UCASE$(la$) = "ERROR" THEN kw$ = kw$ + " " + la$: page$ = "ON ERROR": in% = -1
+                IF UCASE$(la$) = "KEY" THEN kw$ = kw$ + " " + la$: page$ = "ON KEY(n)": in% = -1
+                IF UCASE$(la$) = "STRIG" THEN kw$ = kw$ + " " + la$: page$ = "ON STRIG(n)": in% = -1
+                IF UCASE$(la$) = "TIMER" THEN kw$ = kw$ + " " + la$: page$ = "ON TIMER(n)": in% = -1
+            CASE "OPTION": IF UCASE$(la$) = "BASE" THEN kw$ = kw$ + " " + la$: page$ = "OPTION BASE": in% = -1
+            CASE "PALETTE": IF UCASE$(la$) = "USING" THEN kw$ = kw$ + " " + la$: page$ = "PALETTE USING": in% = -1
             CASE "PRINT"
-                IF UCASE$(LEFT$(la$, 5)) = "USING" THEN
-                    kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "PRINT USING": in% = -1
-                    IF LEFT$(LTRIM$(MID$(la$, 6)), 1) = "#" THEN page$ = page$ + " (file statement)"
+                IF UCASE$(la$) = "USING" THEN
+                    kw$ = kw$ + " " + la$: page$ = "PRINT USING": in% = -1
+                    IF LEFT$(LTRIM$(MID$(ola$, 6)), 1) = "#" THEN page$ = page$ + " (file statement)"
                 END IF
-            CASE "RANDOMIZE": IF UCASE$(LEFT$(la$, 5)) = "USING" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "RANDOMIZE USING": in% = -1
+            CASE "RANDOMIZE": IF UCASE$(la$) = "USING" THEN kw$ = kw$ + " " + la$: page$ = "RANDOMIZE USING": in% = -1
             CASE "SELECT"
-                IF UCASE$(LEFT$(la$, 4)) = "CASE" THEN kw$ = kw$ + " " + LEFT$(la$, 4): page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
-                IF UCASE$(LEFT$(la$, 9)) = "EVERYCASE" THEN kw$ = kw$ + " " + LEFT$(la$, 9): page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "CASE" THEN kw$ = kw$ + " " + la$: page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
+                IF UCASE$(la$) = "EVERYCASE" THEN kw$ = kw$ + " " + la$: page$ = "SELECT CASE": fu% = -1: bo% = -1: in% = -1
             CASE "SOUND"
-                IF UCASE$(LEFT$(la$, 4)) = "WAIT" THEN kw$ = kw$ + " " + LEFT$(la$, 4): in% = -1
-                IF UCASE$(LEFT$(la$, 6)) = "RESUME" THEN kw$ = kw$ + " " + LEFT$(la$, 6): in% = -1
-            CASE "VIEW": IF UCASE$(LEFT$(la$, 5)) = "PRINT" THEN kw$ = kw$ + " " + LEFT$(la$, 5): page$ = "VIEW PRINT": in% = -1
-            CASE "INPUT", "PRINT", "WRITE": IF LEFT$(la$, 1) = "#" THEN page$ = page$ + " (file statement)"
+                IF UCASE$(la$) = "WAIT" THEN kw$ = kw$ + " " + la$: in% = -1
+                IF UCASE$(la$) = "RESUME" THEN kw$ = kw$ + " " + la$: in% = -1
+            CASE "VIEW": IF UCASE$(la$) = "PRINT" THEN kw$ = kw$ + " " + la$: page$ = "VIEW PRINT": in% = -1
+            CASE "INPUT", "PRINT", "WRITE": IF LEFT$(ola$, 1) = "#" THEN page$ = page$ + " (file statement)"
         END SELECT
     END IF
     RETURN

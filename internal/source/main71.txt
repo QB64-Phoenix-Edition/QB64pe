@@ -1,0 +1,54 @@
+qbs* FUNC_STRREMOVE(qbs*_FUNC_STRREMOVE_STRING_MYSTRING,qbs*_FUNC_STRREMOVE_STRING_WHATTOREMOVE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data71.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24215,5,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(24215,6,"strings.bas");}while(r);
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_MYSTRING);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,8,"strings.bas");}while(r);
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_B,qbs_lcase(_FUNC_STRREMOVE_STRING_WHATTOREMOVE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,9,"strings.bas");}while(r);
+do{
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,10,"strings.bas");}while(r);
+S_32411:;
+while((*_FUNC_STRREMOVE_LONG_I)||is_error_pending()){
+if(qbevent){evnt(24215,11,"strings.bas");if(r)goto S_32411;}
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_A,qbs_add(qbs_left(_FUNC_STRREMOVE_STRING_A,*_FUNC_STRREMOVE_LONG_I- 1 ),qbs_right(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_A->len-*_FUNC_STRREMOVE_LONG_I-_FUNC_STRREMOVE_STRING_B->len+ 1 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,12,"strings.bas");}while(r);
+do{
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,13,"strings.bas");}while(r);
+dl_continue_3678:;
+}
+dl_exit_3678:;
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_STRREMOVE,_FUNC_STRREMOVE_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,15,"strings.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free71.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_STRREMOVE_STRING_STRREMOVE);return _FUNC_STRREMOVE_STRING_STRREMOVE;
+}

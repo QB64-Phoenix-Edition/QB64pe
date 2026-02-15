@@ -1,0 +1,42 @@
+qbs* FUNC_QUOTEDFILENAME(qbs*_FUNC_QUOTEDFILENAME_STRING_F){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data55.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_31759:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(23639);if(r)goto S_31759;}
+do{
+qbs_set(_FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME,qbs_add(qbs_add(func_chr( 34 ),_FUNC_QUOTEDFILENAME_STRING_F),func_chr( 34 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23640);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(23641);}while(r);
+}
+S_31763:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("LNX",3))))||is_error_pending()){
+if(qbevent){evnt(23644);if(r)goto S_31763;}
+do{
+qbs_set(_FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME,qbs_add(qbs_add(qbs_new_txt_len("'",1),_FUNC_QUOTEDFILENAME_STRING_F),qbs_new_txt_len("'",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23645);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(23646);}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free55.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME);return _FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME;
+}

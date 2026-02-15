@@ -1,0 +1,97 @@
+qbs* FUNC_ESCAPESTRING(qbs*_FUNC_ESCAPESTRING_STRING_S){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data116.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24218,582,"elements.bas");}while(r);
+do{
+*_FUNC_ESCAPESTRING_LONG_P1= 1 ;
+if(!qbevent)break;evnt(24218,584,"elements.bas");}while(r);
+S_33052:;
+fornext_value3814= 1 ;
+fornext_finalvalue3814=_FUNC_ESCAPESTRING_STRING_S->len;
+fornext_step3814= 1 ;
+if (fornext_step3814<0) fornext_step_negative3814=1; else fornext_step_negative3814=0;
+if (is_error_pending()) goto fornext_error3814;
+goto fornext_entrylabel3814;
+while(1){
+fornext_value3814=fornext_step3814+(*_FUNC_ESCAPESTRING_LONG_I);
+fornext_entrylabel3814:
+*_FUNC_ESCAPESTRING_LONG_I=fornext_value3814;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative3814){
+if (fornext_value3814<fornext_finalvalue3814) break;
+}else{
+if (fornext_value3814>fornext_finalvalue3814) break;
+}
+fornext_error3814:;
+if(qbevent){evnt(24218,585,"elements.bas");if(r)goto S_33052;}
+do{
+*_FUNC_ESCAPESTRING_LONG_C2=qbs_asc(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_I);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,586,"elements.bas");}while(r);
+S_33054:;
+if ((-(*_FUNC_ESCAPESTRING_LONG_C2== 92 ))||is_error_pending()){
+if(qbevent){evnt(24218,588,"elements.bas");if(r)goto S_33054;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_ELE,qbs_add(qbs_add(_FUNC_ESCAPESTRING_STRING_ELE,func_mid(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_P1,*_FUNC_ESCAPESTRING_LONG_I-*_FUNC_ESCAPESTRING_LONG_P1,0|1)),qbs_new_txt_len("\\\\",2)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,589,"elements.bas");}while(r);
+do{
+*_FUNC_ESCAPESTRING_LONG_P1=*_FUNC_ESCAPESTRING_LONG_I+ 1 ;
+if(!qbevent)break;evnt(24218,590,"elements.bas");}while(r);
+}
+S_33058:;
+if (((-(*_FUNC_ESCAPESTRING_LONG_C2< 32 ))|(-(*_FUNC_ESCAPESTRING_LONG_C2== 34 ))|(-(*_FUNC_ESCAPESTRING_LONG_C2> 126 )))||is_error_pending()){
+if(qbevent){evnt(24218,593,"elements.bas");if(r)goto S_33058;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_O,func_oct(*_FUNC_ESCAPESTRING_LONG_C2,32));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,594,"elements.bas");}while(r);
+S_33060:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ESCAPESTRING_STRING_O->len< 3 )))||is_error_pending()){
+if(qbevent){evnt(24218,595,"elements.bas");if(r)goto S_33060;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_O,qbs_add(qbs_new_txt_len("0",1),_FUNC_ESCAPESTRING_STRING_O));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,596,"elements.bas");}while(r);
+S_33062:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ESCAPESTRING_STRING_O->len< 3 )))||is_error_pending()){
+if(qbevent){evnt(24218,597,"elements.bas");if(r)goto S_33062;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_O,qbs_add(qbs_new_txt_len("0",1),_FUNC_ESCAPESTRING_STRING_O));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,597,"elements.bas");}while(r);
+}
+}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_ESCAPESTRING_STRING_ELE,func_mid(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_P1,*_FUNC_ESCAPESTRING_LONG_I-*_FUNC_ESCAPESTRING_LONG_P1,0|1)),qbs_new_txt_len("\\",1)),_FUNC_ESCAPESTRING_STRING_O));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,599,"elements.bas");}while(r);
+do{
+*_FUNC_ESCAPESTRING_LONG_P1=*_FUNC_ESCAPESTRING_LONG_I+ 1 ;
+if(!qbevent)break;evnt(24218,601,"elements.bas");}while(r);
+}
+fornext_continue_3813:;
+}
+fornext_exit_3813:;
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_ESCAPESTRING,qbs_add(_FUNC_ESCAPESTRING_STRING_ELE,func_mid(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_P1,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,605,"elements.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free116.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_ESCAPESTRING_STRING_ESCAPESTRING);return _FUNC_ESCAPESTRING_STRING_ESCAPESTRING;
+}

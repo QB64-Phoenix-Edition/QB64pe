@@ -1,0 +1,111 @@
+void SUB_RECALCMARKS(int16*_SUB_RECALCMARKS_INTEGER_HANDLE,int32*_SUB_RECALCMARKS_LONG_BUFPOS,int32*_SUB_RECALCMARKS_LONG_CHANGE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data164.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24221,920,"simplebuffer.bm");}while(r);
+S_34676:;
+if ((-(*_SUB_RECALCMARKS_LONG_CHANGE== 0 ))||is_error_pending()){
+if(qbevent){evnt(24221,922,"simplebuffer.bm");if(r)goto S_34676;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24221,922,"simplebuffer.bm");}while(r);
+}
+do{
+*_SUB_RECALCMARKS_LONG_BUF=*_SUB_RECALCMARKS_INTEGER_HANDLE* 106 ;
+if(!qbevent)break;evnt(24221,924,"simplebuffer.bm");}while(r);
+S_34680:;
+fornext_value4015= 1 ;
+fornext_finalvalue4015= 101 ;
+fornext_step4015= 1 ;
+if (fornext_step4015<0) fornext_step_negative4015=1; else fornext_step_negative4015=0;
+if (is_error_pending()) goto fornext_error4015;
+goto fornext_entrylabel4015;
+while(1){
+fornext_value4015=fornext_step4015+(*_SUB_RECALCMARKS_INTEGER_IDX);
+fornext_entrylabel4015:
+*_SUB_RECALCMARKS_INTEGER_IDX=fornext_value4015;
+if (fornext_step_negative4015){
+if (fornext_value4015<fornext_finalvalue4015) break;
+}else{
+if (fornext_value4015>fornext_finalvalue4015) break;
+}
+fornext_error4015:;
+if(qbevent){evnt(24221,925,"simplebuffer.bm");if(r)goto S_34680;}
+do{
+*_SUB_RECALCMARKS_LONG_MARK=string2l(func_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_RECALCMARKS_LONG_BUF+ 2 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_SUB_RECALCMARKS_INTEGER_IDX* 4 , 4 ,0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24221,926,"simplebuffer.bm");}while(r);
+S_34682:;
+if (((-(*_SUB_RECALCMARKS_LONG_MARK!= -889275714 ))&(-(*_SUB_RECALCMARKS_LONG_MARK!= -559038737 )))||is_error_pending()){
+if(qbevent){evnt(24221,927,"simplebuffer.bm");if(r)goto S_34682;}
+S_34683:;
+if(qbevent){evnt(24221,928,"simplebuffer.bm");if(r)goto S_34683;}
+S_34684:;
+if (((*_SUB_RECALCMARKS_LONG_CHANGE>( 0 )))||is_error_pending()){
+if(qbevent){evnt(24221,929,"simplebuffer.bm");if(r)goto S_34684;}
+S_34685:;
+if ((-(*_SUB_RECALCMARKS_LONG_BUFPOS<=*_SUB_RECALCMARKS_LONG_MARK))||is_error_pending()){
+if(qbevent){evnt(24221,930,"simplebuffer.bm");if(r)goto S_34685;}
+do{
+*_SUB_RECALCMARKS_LONG_MARK=*_SUB_RECALCMARKS_LONG_MARK+*_SUB_RECALCMARKS_LONG_CHANGE;
+if(!qbevent)break;evnt(24221,930,"simplebuffer.bm");}while(r);
+}
+sc_ec_138_end:;
+goto sc_4016_end;
+}
+S_34688:;
+if (((*_SUB_RECALCMARKS_LONG_CHANGE<( 0 )))||is_error_pending()){
+if(qbevent){evnt(24221,931,"simplebuffer.bm");if(r)goto S_34688;}
+S_34689:;
+if ((-(*_SUB_RECALCMARKS_LONG_BUFPOS<*_SUB_RECALCMARKS_LONG_MARK))||is_error_pending()){
+if(qbevent){evnt(24221,932,"simplebuffer.bm");if(r)goto S_34689;}
+do{
+*_SUB_RECALCMARKS_LONG_ABSCHG=func_abs((int32)(*_SUB_RECALCMARKS_LONG_CHANGE));
+if(!qbevent)break;evnt(24221,933,"simplebuffer.bm");}while(r);
+S_34691:;
+if ((-(*_SUB_RECALCMARKS_LONG_ABSCHG<=(*_SUB_RECALCMARKS_LONG_MARK-*_SUB_RECALCMARKS_LONG_BUFPOS)))||is_error_pending()){
+if(qbevent){evnt(24221,934,"simplebuffer.bm");if(r)goto S_34691;}
+do{
+*_SUB_RECALCMARKS_LONG_MARK=*_SUB_RECALCMARKS_LONG_MARK-*_SUB_RECALCMARKS_LONG_ABSCHG;
+if(!qbevent)break;evnt(24221,935,"simplebuffer.bm");}while(r);
+}else{
+do{
+*_SUB_RECALCMARKS_LONG_MARK= -559038737 ;
+if(!qbevent)break;evnt(24221,937,"simplebuffer.bm");}while(r);
+}
+S_34696:;
+}else{
+if (-(*_SUB_RECALCMARKS_LONG_BUFPOS==*_SUB_RECALCMARKS_LONG_MARK)){
+if(qbevent){evnt(24221,939,"simplebuffer.bm");if(r)goto S_34696;}
+do{
+*_SUB_RECALCMARKS_LONG_MARK= -559038737 ;
+if(!qbevent)break;evnt(24221,940,"simplebuffer.bm");}while(r);
+}
+}
+sc_ec_139_end:;
+goto sc_4016_end;
+}
+sc_4016_end:;
+do{
+sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_RECALCMARKS_LONG_BUF+ 2 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_SUB_RECALCMARKS_INTEGER_IDX* 4 , 4 ,l2string(*_SUB_RECALCMARKS_LONG_MARK),1);
+if(!qbevent)break;evnt(24221,943,"simplebuffer.bm");}while(r);
+}
+fornext_continue_4014:;
+}
+fornext_exit_4014:;
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free164.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

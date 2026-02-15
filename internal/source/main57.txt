@@ -1,0 +1,53 @@
+qbs* FUNC_CONVERTTABS(qbs*_FUNC_CONVERTTABS_STRING_A2){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data57.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_31771:;
+if ((*__LONG_IDEAUTOINDENT)||is_error_pending()){
+if(qbevent){evnt(23659);if(r)goto S_31771;}
+do{
+*_FUNC_CONVERTTABS_LONG_S=*__LONG_IDEAUTOINDENTSIZE;
+if(!qbevent)break;evnt(23659);}while(r);
+}else{
+do{
+*_FUNC_CONVERTTABS_LONG_S= 4 ;
+if(!qbevent)break;evnt(23659);}while(r);
+}
+do{
+qbs_set(_FUNC_CONVERTTABS_STRING_A,_FUNC_CONVERTTABS_STRING_A2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23660);}while(r);
+S_31777:;
+while((qbs_cleanup(qbs_tmp_base,func_instr(NULL,_FUNC_CONVERTTABS_STRING_A,__STRING1_CHR_TAB,0)))||is_error_pending()){
+if(qbevent){evnt(23661);if(r)goto S_31777;}
+do{
+*_FUNC_CONVERTTABS_LONG_X=func_instr(NULL,_FUNC_CONVERTTABS_STRING_A,__STRING1_CHR_TAB,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23662);}while(r);
+do{
+qbs_set(_FUNC_CONVERTTABS_STRING_A,qbs_add(qbs_add(qbs_left(_FUNC_CONVERTTABS_STRING_A,*_FUNC_CONVERTTABS_LONG_X- 1 ),func_space(*_FUNC_CONVERTTABS_LONG_S-((*_FUNC_CONVERTTABS_LONG_X- 1 )%*_FUNC_CONVERTTABS_LONG_S))),qbs_right(_FUNC_CONVERTTABS_STRING_A,_FUNC_CONVERTTABS_STRING_A->len-*_FUNC_CONVERTTABS_LONG_X)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23663);}while(r);
+dl_continue_3580:;
+}
+dl_exit_3580:;
+do{
+qbs_set(_FUNC_CONVERTTABS_STRING_CONVERTTABS,_FUNC_CONVERTTABS_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23665);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free57.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_CONVERTTABS_STRING_CONVERTTABS);return _FUNC_CONVERTTABS_STRING_CONVERTTABS;
+}

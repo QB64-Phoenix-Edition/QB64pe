@@ -1,0 +1,53 @@
+qbs* FUNC_NEWBYTEELEMENT(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data58.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_NEWBYTEELEMENT_STRING_A,qbs_add(qbs_new_txt_len("byte_element_",13),qbs__tostr((int32)(FUNC_UNIQUENUMBER()),NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23670);}while(r);
+do{
+qbs_set(_FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT,_FUNC_NEWBYTEELEMENT_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23671);}while(r);
+S_31784:;
+if ((*__LONG_USE_GLOBAL_BYTE_ELEMENTS)||is_error_pending()){
+if(qbevent){evnt(23672);if(r)goto S_31784;}
+do{
+SUB_WRITEBUFLINE(&(pass3582=*__LONG_GLOBTXTBUF),qbs_add(qbs_add(qbs_new_txt_len("byte_element_struct *",21),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)malloc(12);",34)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23673);}while(r);
+}else{
+do{
+SUB_WRITEBUFLINE(&(pass3583=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_new_txt_len("byte_element_struct *",21),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=NULL;",6)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23675);}while(r);
+do{
+SUB_WRITEBUFLINE(&(pass3584=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_new_txt_len("if (!",5),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("){",2)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23676);}while(r);
+do{
+SUB_WRITEBUFLINE(&(pass3585=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("if ((mem_static_pointer+=12)<mem_static_limit) ",47),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)(mem_static_pointer-12); else ",53)),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)mem_static_malloc(12);",45)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23677);}while(r);
+do{
+SUB_WRITEBUFLINE(&(pass3586=*__LONG_DATATXTBUF),qbs_new_txt_len("}",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23678);}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free58.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT);return _FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT;
+}

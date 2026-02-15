@@ -1,0 +1,31 @@
+void SUB_CLEARRCSTATEVAR(void*_SUB_CLEARRCSTATEVAR_UDT_STVAR){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data210.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*(int8*)(((char*)_SUB_CLEARRCSTATEVAR_UDT_STVAR)+(0))= 0 ;
+if(!qbevent)break;evnt(24224,9,"statevars.bas");}while(r);
+do{
+*(int8*)(((char*)_SUB_CLEARRCSTATEVAR_UDT_STVAR)+(1))= 0 ;
+if(!qbevent)break;evnt(24224,9,"statevars.bas");}while(r);
+do{
+*(int8*)(((char*)_SUB_CLEARRCSTATEVAR_UDT_STVAR)+(2))= 0 ;
+if(!qbevent)break;evnt(24224,10,"statevars.bas");}while(r);
+do{
+*(int8*)(((char*)_SUB_CLEARRCSTATEVAR_UDT_STVAR)+(3))= 0 ;
+if(!qbevent)break;evnt(24224,10,"statevars.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free210.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

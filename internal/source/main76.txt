@@ -1,0 +1,33 @@
+qbs* FUNC_BOOLTOTFSTRING(int32*_FUNC_BOOLTOTFSTRING_LONG_B){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data76.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_32440:;
+if ((*_FUNC_BOOLTOTFSTRING_LONG_B)||is_error_pending()){
+if(qbevent){evnt(24215,59,"strings.bas");if(r)goto S_32440;}
+do{
+qbs_set(_FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING,qbs_new_txt_len("True",4));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,60,"strings.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING,qbs_new_txt_len("False",5));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,62,"strings.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free76.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING);return _FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING;
+}

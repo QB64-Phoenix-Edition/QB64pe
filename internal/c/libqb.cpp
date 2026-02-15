@@ -7436,12 +7436,34 @@ error:
     return;
 }
 
-void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
+void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 passed) {
     if (is_error_pending())
         return;
     if (!passed) {
         // performs no action if nothing passed (as in QBASIC for some modes)
         return;
+    }
+
+    int32 opi = -1;         // originally passed image
+    int32 sod = -1;         // saved old destination
+    if (passed & 8) {
+        opi = i;
+        if (i >= 0) {       // validate i
+            validatepage(i);
+        }
+        else {
+            i = -i;
+            if (i >= nextimg) {
+                error(258); return;
+            }
+            if (!img[i].valid){
+                error(258); return;
+            }
+        }
+    }
+    if (opi != -1) {        // set given image as destination
+        sod = func__dest();
+        sub__dest(opi);
     }
 
     if (write_page->console) {
@@ -7464,9 +7486,8 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
         if (passed & 2)
             printf("\033[48;5;%dm", col2);
 #endif
-        return;
+        goto done;
     }
-
     if (write_page->compatible_mode == 32) {
         if (passed & 4)
             goto error;
@@ -7474,7 +7495,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->background_color = col2;
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 256) {
         if (passed & 4)
@@ -7489,7 +7510,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->background_color = col2;
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 13) {
         // if (passed&6) goto error;
@@ -7507,7 +7528,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->background_color = col2;
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 12) {
         // if (passed&6) goto error;
@@ -7525,7 +7546,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->background_color = col2;
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 11) {
         // if (passed&6) goto error;
@@ -7543,7 +7564,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->background_color = col2;
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 10) {
         if (passed & 4)
@@ -7559,7 +7580,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
         // if (passed&2) ..._color_assign[0]=col2;
         if (passed & 2)
             write_page->pal[4] = col2;
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 9) {
         if (passed & 4)
@@ -7574,7 +7595,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->pal[0] = palette_64[col2];
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 8) {
         if (passed & 4)
@@ -7589,7 +7610,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->pal[0] = palette_256[col2];
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 7) {
         if (passed & 4)
@@ -7604,7 +7625,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->pal[0] = palette_256[col2];
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 2) {
         if (passed & 4)
@@ -7619,7 +7640,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->pal[0] = palette_256[col2];
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 1) {
         if (passed & 4)
@@ -7640,7 +7661,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
                 write_page->pal[3] = palette_256[6];
             }
         }
-        return;
+        goto done;
     }
     if (write_page->compatible_mode == 0) {
         if (passed & 1)
@@ -7653,10 +7674,12 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed) {
             write_page->color = col1;
         if (passed & 2)
             write_page->background_color = col2 & 7;
-        return;
+        goto done;
     }
 error:
     error(5);
+done:
+    if (opi != -1) sub__dest(sod);  // reset old destination, if required
     return;
 }
 
@@ -11432,7 +11455,7 @@ void qbs_lprint(qbs *str, int32 finish_on_new_line) {
         sub__dest(lprint_image);
         sub_cls(NULL, 15, 2);
         sub__font(16, NULL, 0);
-        qbg_sub_color(0, 15, NULL, 3);
+        qbg_sub_color(0, 15, NULL, NULL, 3);
         qbg_sub_view_print(1, 60, 1);
     } else {
         sub__dest(lprint_image);
@@ -12170,7 +12193,7 @@ void sub_cls(int32 method, uint32 use_color, int32 passed) {
         qbg_sub_locate(1, 1, 0, 0, 0, 3); // is this really necessary?
 #else
         if (passed & 2)
-            qbg_sub_color(0, use_color, 0, 2);
+            qbg_sub_color(0, use_color, 0, 0, 2);
         std::cout << "\033[2J";
         qbg_sub_locate(1, 1, 0, 0, 0, 3);
 #endif

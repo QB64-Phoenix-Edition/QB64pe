@@ -1,0 +1,61 @@
+qbs* FUNC_IDESAVENOW(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data302.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_IDESAVENOW_STRING_M,qbs_new_txt_len("Program is not saved. Save it now?",34));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12781,"ide_methods.bas");}while(r);
+do{
+*_FUNC_IDESAVENOW_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("",0),_FUNC_IDESAVENOW_STRING_M,qbs_new_txt_len("#Yes;#No;#Cancel",16));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12782,"ide_methods.bas");}while(r);
+S_52154:;
+if(qbevent){evnt(24235,12783,"ide_methods.bas");if(r)goto S_52154;}
+S_52155:;
+if (((*_FUNC_IDESAVENOW_LONG_RESULT==( 1 )))||is_error_pending()){
+if(qbevent){evnt(24235,12784,"ide_methods.bas");if(r)goto S_52155;}
+do{
+qbs_set(_FUNC_IDESAVENOW_STRING_IDESAVENOW,qbs_new_txt_len("Y",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12784,"ide_methods.bas");}while(r);
+sc_ec_374_end:;
+goto sc_5938_end;
+}
+S_52157:;
+if (((*_FUNC_IDESAVENOW_LONG_RESULT==( 2 )))||is_error_pending()){
+if(qbevent){evnt(24235,12785,"ide_methods.bas");if(r)goto S_52157;}
+do{
+qbs_set(_FUNC_IDESAVENOW_STRING_IDESAVENOW,qbs_new_txt_len("N",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12785,"ide_methods.bas");}while(r);
+sc_ec_375_end:;
+goto sc_5938_end;
+}
+S_52159:;
+if (((*_FUNC_IDESAVENOW_LONG_RESULT==( 0 ))||(*_FUNC_IDESAVENOW_LONG_RESULT==( 3 )))||is_error_pending()){
+if(qbevent){evnt(24235,12786,"ide_methods.bas");if(r)goto S_52159;}
+do{
+qbs_set(_FUNC_IDESAVENOW_STRING_IDESAVENOW,qbs_new_txt_len("C",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12786,"ide_methods.bas");}while(r);
+sc_ec_376_end:;
+goto sc_5938_end;
+}
+sc_5938_end:;
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free302.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_IDESAVENOW_STRING_IDESAVENOW);return _FUNC_IDESAVENOW_STRING_IDESAVENOW;
+}

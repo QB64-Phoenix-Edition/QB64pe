@@ -1,0 +1,213 @@
+qbs* FUNC_ID2SHORTTYPENAME(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data217.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*_FUNC_ID2SHORTTYPENAME_LONG_T=*(int32*)(((char*)__UDT_ID)+(536));
+if(!qbevent)break;evnt(24225,75,"type.bas");}while(r);
+S_36411:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_T== 0 ))||is_error_pending()){
+if(qbevent){evnt(24225,76,"type.bas");if(r)goto S_36411;}
+do{
+*_FUNC_ID2SHORTTYPENAME_LONG_T=*(int32*)(((char*)__UDT_ID)+(512));
+if(!qbevent)break;evnt(24225,76,"type.bas");}while(r);
+}
+do{
+*_FUNC_ID2SHORTTYPENAME_LONG_SIZE=*(int32*)(((char*)__UDT_ID)+(540));
+if(!qbevent)break;evnt(24225,77,"type.bas");}while(r);
+do{
+*_FUNC_ID2SHORTTYPENAME_LONG_BITS=*_FUNC_ID2SHORTTYPENAME_LONG_T& 511 ;
+if(!qbevent)break;evnt(24225,78,"type.bas");}while(r);
+S_36416:;
+if ((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISUDT)||is_error_pending()){
+if(qbevent){evnt(24225,79,"type.bas");if(r)goto S_36416;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_rtrim(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_UDTXCNAME[0]))[(array_check((*_FUNC_ID2SHORTTYPENAME_LONG_T& 511 )-__ARRAY_STRING256_UDTXCNAME[4],__ARRAY_STRING256_UDTXCNAME[5]))*256],256,1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,80,"type.bas");}while(r);
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_ID2SHORTTYPENAME,_FUNC_ID2SHORTTYPENAME_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,81,"type.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24225,81,"type.bas");}while(r);
+}
+S_36421:;
+if ((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISSTRING)||is_error_pending()){
+if(qbevent){evnt(24225,83,"type.bas");if(r)goto S_36421;}
+S_36422:;
+if ((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISFIXEDLENGTH)||is_error_pending()){
+if(qbevent){evnt(24225,84,"type.bas");if(r)goto S_36422;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_add(qbs_new_txt_len("STRING",6),qbs__tostr((int32)(*_FUNC_ID2SHORTTYPENAME_LONG_SIZE),NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,84,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("STRING",6));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,84,"type.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_ID2SHORTTYPENAME,_FUNC_ID2SHORTTYPENAME_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,85,"type.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24225,85,"type.bas");}while(r);
+}
+S_36430:;
+if ((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISOFFSETINBITS)||is_error_pending()){
+if(qbevent){evnt(24225,87,"type.bas");if(r)goto S_36430;}
+S_36431:;
+if ((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISUNSIGNED)||is_error_pending()){
+if(qbevent){evnt(24225,88,"type.bas");if(r)goto S_36431;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_U",2));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,88,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,88,"type.bas");}while(r);
+}
+S_36436:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS> 1 ))||is_error_pending()){
+if(qbevent){evnt(24225,89,"type.bas");if(r)goto S_36436;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_add(qbs_add(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("BIT",3)),qbs__tostr((int32)(*_FUNC_ID2SHORTTYPENAME_LONG_BITS),NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,89,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_add(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("BIT1",4)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,89,"type.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_ID2SHORTTYPENAME,_FUNC_ID2SHORTTYPENAME_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,90,"type.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24225,90,"type.bas");}while(r);
+}
+S_36444:;
+if ((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISFLOAT)||is_error_pending()){
+if(qbevent){evnt(24225,92,"type.bas");if(r)goto S_36444;}
+S_36445:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 32 ))||is_error_pending()){
+if(qbevent){evnt(24225,93,"type.bas");if(r)goto S_36445;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("SINGLE",6));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,93,"type.bas");}while(r);
+}
+S_36448:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 64 ))||is_error_pending()){
+if(qbevent){evnt(24225,94,"type.bas");if(r)goto S_36448;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("DOUBLE",6));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,94,"type.bas");}while(r);
+}
+S_36451:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 256 ))||is_error_pending()){
+if(qbevent){evnt(24225,95,"type.bas");if(r)goto S_36451;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_FLOAT",6));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,95,"type.bas");}while(r);
+}
+}else{
+S_36455:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 8 ))||is_error_pending()){
+if(qbevent){evnt(24225,97,"type.bas");if(r)goto S_36455;}
+S_36456:;
+if (((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISUNSIGNED))||is_error_pending()){
+if(qbevent){evnt(24225,98,"type.bas");if(r)goto S_36456;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_UBYTE",6));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,98,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_BYTE",5));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,98,"type.bas");}while(r);
+}
+}
+S_36462:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 16 ))||is_error_pending()){
+if(qbevent){evnt(24225,100,"type.bas");if(r)goto S_36462;}
+S_36463:;
+if (((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISUNSIGNED))||is_error_pending()){
+if(qbevent){evnt(24225,101,"type.bas");if(r)goto S_36463;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("UINTEGER",8));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,101,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("INTEGER",7));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,101,"type.bas");}while(r);
+}
+}
+S_36469:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 32 ))||is_error_pending()){
+if(qbevent){evnt(24225,103,"type.bas");if(r)goto S_36469;}
+S_36470:;
+if (((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISUNSIGNED))||is_error_pending()){
+if(qbevent){evnt(24225,104,"type.bas");if(r)goto S_36470;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("ULONG",5));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,104,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("LONG",4));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,104,"type.bas");}while(r);
+}
+}
+S_36476:;
+if ((-(*_FUNC_ID2SHORTTYPENAME_LONG_BITS== 64 ))||is_error_pending()){
+if(qbevent){evnt(24225,106,"type.bas");if(r)goto S_36476;}
+S_36477:;
+if (((*_FUNC_ID2SHORTTYPENAME_LONG_T&*__LONG_ISUNSIGNED))||is_error_pending()){
+if(qbevent){evnt(24225,107,"type.bas");if(r)goto S_36477;}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_UINTEGER64",11));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,107,"type.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_A,qbs_new_txt_len("_INTEGER64",10));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,107,"type.bas");}while(r);
+}
+}
+}
+do{
+qbs_set(_FUNC_ID2SHORTTYPENAME_STRING_ID2SHORTTYPENAME,_FUNC_ID2SHORTTYPENAME_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24225,110,"type.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free217.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_ID2SHORTTYPENAME_STRING_ID2SHORTTYPENAME);return _FUNC_ID2SHORTTYPENAME_STRING_ID2SHORTTYPENAME;
+}

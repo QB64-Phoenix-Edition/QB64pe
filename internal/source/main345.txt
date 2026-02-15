@@ -1,0 +1,60 @@
+qbs* FUNC_ASKCLEARHISTORY(qbs*_FUNC_ASKCLEARHISTORY_STRING_WHICH){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data345.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_59647:;
+if(qbevent){evnt(24235,19403,"ide_methods.bas");if(r)goto S_59647;}
+S_59648:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_ASKCLEARHISTORY_STRING_WHICH,qbs_new_txt_len("RECENT",6))))||is_error_pending()){
+if(qbevent){evnt(24235,19404,"ide_methods.bas");if(r)goto S_59648;}
+do{
+qbs_set(_FUNC_ASKCLEARHISTORY_STRING_T,qbs_new_txt_len("Clear recent files",18));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,19404,"ide_methods.bas");}while(r);
+sc_ec_430_end:;
+goto sc_6662_end;
+}
+S_59650:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_ASKCLEARHISTORY_STRING_WHICH,qbs_new_txt_len("SEARCH",6))))||is_error_pending()){
+if(qbevent){evnt(24235,19405,"ide_methods.bas");if(r)goto S_59650;}
+do{
+qbs_set(_FUNC_ASKCLEARHISTORY_STRING_T,qbs_new_txt_len("Clear search history",20));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,19405,"ide_methods.bas");}while(r);
+sc_ec_431_end:;
+goto sc_6662_end;
+}
+sc_6662_end:;
+do{
+*_FUNC_ASKCLEARHISTORY_LONG_RESULT=FUNC_IDEMESSAGEBOX(_FUNC_ASKCLEARHISTORY_STRING_T,qbs_new_txt_len("This cannot be undone. Proceed?",31),qbs_new_txt_len("#Yes;#No",8));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,19407,"ide_methods.bas");}while(r);
+S_59654:;
+if ((-(*_FUNC_ASKCLEARHISTORY_LONG_RESULT== 1 ))||is_error_pending()){
+if(qbevent){evnt(24235,19408,"ide_methods.bas");if(r)goto S_59654;}
+do{
+qbs_set(_FUNC_ASKCLEARHISTORY_STRING_ASKCLEARHISTORY,qbs_new_txt_len("Y",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,19408,"ide_methods.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ASKCLEARHISTORY_STRING_ASKCLEARHISTORY,qbs_new_txt_len("N",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,19408,"ide_methods.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free345.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_ASKCLEARHISTORY_STRING_ASKCLEARHISTORY);return _FUNC_ASKCLEARHISTORY_STRING_ASKCLEARHISTORY;
+}

@@ -3278,10 +3278,10 @@ SUB reginternal
     id.n = "Color"
     id.subfunc = 2
     id.callname = "qbg_sub_color"
-    id.args = 3
-    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "[?][,[?][,?]]"
-    id.hr_syntax = "COLOR [foreground&][, background&]"
+    id.args = 4
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?][,[?][,[?][,?]]]"
+    id.hr_syntax = "COLOR [foreground&][, background&][, , destHandle&]"
     regid
 
     clearid

@@ -1,0 +1,49 @@
+void SUB_CONVBUFTONATIVEEOL(int16*_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data159.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24221,812,"simplebuffer.bm");}while(r);
+S_34580:;
+if ((~(FUNC_CHECKHANDLE(_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE)))||is_error_pending()){
+if(qbevent){evnt(24221,814,"simplebuffer.bm");if(r)goto S_34580;}
+do{
+error( 258 );
+if(!qbevent)break;evnt(24221,814,"simplebuffer.bm");}while(r);
+do{
+close_program=1;
+end();
+if(!qbevent)break;evnt(24221,814,"simplebuffer.bm");}while(r);
+}
+do{
+*_SUB_CONVBUFTONATIVEEOL_LONG_BUF=*_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE* 106 ;
+if(!qbevent)break;evnt(24221,815,"simplebuffer.bm");}while(r);
+S_34585:;
+if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,func__os(),qbs_new_txt_len("[LINUX]",7),0)> 0 )))||is_error_pending()){
+if(qbevent){evnt(24221,817,"simplebuffer.bm");if(r)goto S_34585;}
+do{
+SUB_CONVBUFTOLNXMACEOL(_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE);
+if(!qbevent)break;evnt(24221,818,"simplebuffer.bm");}while(r);
+}else{
+do{
+SUB_CONVBUFTOWINEOL(_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE);
+if(!qbevent)break;evnt(24221,820,"simplebuffer.bm");}while(r);
+}
+do{
+sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_CONVBUFTONATIVEEOL_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 9 , 4 ,qbs_new_txt_len("EolN",4),1);
+if(!qbevent)break;evnt(24221,822,"simplebuffer.bm");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free159.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

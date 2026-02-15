@@ -1,0 +1,72 @@
+int32 FUNC_PARSEBOOLEANSETTING(qbs*_FUNC_PARSEBOOLEANSETTING_STRING_TOKEN,int32*_FUNC_PARSEBOOLEANSETTING_LONG_SETTING){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data5.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(13555);}while(r);
+do{
+if(!qbevent)break;evnt(13556);}while(r);
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_EQUALS=func_instr(NULL,_FUNC_PARSEBOOLEANSETTING_STRING_TOKEN,qbs_new_txt_len("=",1),0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(13558);}while(r);
+S_16158:;
+if ((-(*_FUNC_PARSEBOOLEANSETTING_LONG_EQUALS== 0 ))||is_error_pending()){
+if(qbevent){evnt(13559);if(r)goto S_16158;}
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_PARSEBOOLEANSETTING= 0 ;
+if(!qbevent)break;evnt(13559);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(13559);}while(r);
+}
+do{
+qbs_set(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_lcase(func_mid(_FUNC_PARSEBOOLEANSETTING_STRING_TOKEN,*_FUNC_PARSEBOOLEANSETTING_LONG_EQUALS+ 1 ,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(13561);}while(r);
+S_16163:;
+if(qbevent){evnt(13563);if(r)goto S_16163;}
+S_16164:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("true",4))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("on",2))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("yes",3))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("1",1))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("-1",2))))||is_error_pending()){
+if(qbevent){evnt(13564);if(r)goto S_16164;}
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_SETTING= -1ll ;
+if(!qbevent)break;evnt(13565);}while(r);
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_PARSEBOOLEANSETTING= -1 ;
+if(!qbevent)break;evnt(13566);}while(r);
+sc_ec_82_end:;
+goto sc_2360_end;
+}
+S_16167:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("false",5))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("off",3))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("no",2))||qbs_equal(_FUNC_PARSEBOOLEANSETTING_STRING_VALUE,qbs_new_txt_len("0",1))))||is_error_pending()){
+if(qbevent){evnt(13568);if(r)goto S_16167;}
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_SETTING= 0ll ;
+if(!qbevent)break;evnt(13569);}while(r);
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_PARSEBOOLEANSETTING= -1 ;
+if(!qbevent)break;evnt(13570);}while(r);
+sc_ec_83_end:;
+goto sc_2360_end;
+}
+do{
+*_FUNC_PARSEBOOLEANSETTING_LONG_PARSEBOOLEANSETTING= 0 ;
+if(!qbevent)break;evnt(13573);}while(r);
+sc_2360_end:;
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free5.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_PARSEBOOLEANSETTING_LONG_PARSEBOOLEANSETTING;
+}

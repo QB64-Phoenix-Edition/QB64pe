@@ -1,0 +1,76 @@
+void SUB_IDEHPRINT(qbs*_SUB_IDEHPRINT_STRING_A){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data291.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*_SUB_IDEHPRINT_LONG_DC=func__defaultcolor(NULL,0);
+if(!qbevent)break;evnt(24235,12044,"ide_methods.bas");}while(r);
+do{
+qbg_sub_color(*_SUB_IDEHPRINT_LONG_DC, 7 ,NULL,NULL,3);
+if(!qbevent)break;evnt(24235,12045,"ide_methods.bas");}while(r);
+S_51353:;
+fornext_value5851= 1 ;
+fornext_finalvalue5851=_SUB_IDEHPRINT_STRING_A->len;
+fornext_step5851= 1 ;
+if (fornext_step5851<0) fornext_step_negative5851=1; else fornext_step_negative5851=0;
+if (is_error_pending()) goto fornext_error5851;
+goto fornext_entrylabel5851;
+while(1){
+fornext_value5851=fornext_step5851+(*_SUB_IDEHPRINT_LONG_I);
+fornext_entrylabel5851:
+*_SUB_IDEHPRINT_LONG_I=fornext_value5851;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative5851){
+if (fornext_value5851<fornext_finalvalue5851) break;
+}else{
+if (fornext_value5851>fornext_finalvalue5851) break;
+}
+fornext_error5851:;
+if(qbevent){evnt(24235,12046,"ide_methods.bas");if(r)goto S_51353;}
+do{
+qbs_set(_SUB_IDEHPRINT_STRING_C,func_mid(_SUB_IDEHPRINT_STRING_A,*_SUB_IDEHPRINT_LONG_I, 1 ,0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12047,"ide_methods.bas");}while(r);
+S_51355:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDEHPRINT_STRING_C,qbs_new_txt_len("#",1))))||is_error_pending()){
+if(qbevent){evnt(24235,12048,"ide_methods.bas");if(r)goto S_51355;}
+S_51356:;
+if ((*__LONG_IDEHL)||is_error_pending()){
+if(qbevent){evnt(24235,12049,"ide_methods.bas");if(r)goto S_51356;}
+do{
+qbg_sub_color( 15 , 7 ,NULL,NULL,3);
+if(!qbevent)break;evnt(24235,12049,"ide_methods.bas");}while(r);
+}
+}else{
+do{
+tqbs=qbs_new(0,0);
+qbs_set(tqbs,_SUB_IDEHPRINT_STRING_C);
+if (is_error_pending()) goto skip5853;
+makefit(tqbs);
+qbs_print(tqbs,0);
+skip5853:
+qbs_free(tqbs);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12051,"ide_methods.bas");}while(r);
+do{
+qbg_sub_color(*_SUB_IDEHPRINT_LONG_DC, 7 ,NULL,NULL,3);
+if(!qbevent)break;evnt(24235,12051,"ide_methods.bas");}while(r);
+}
+fornext_continue_5850:;
+}
+fornext_exit_5850:;
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free291.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

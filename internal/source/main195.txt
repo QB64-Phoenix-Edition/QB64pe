@@ -1,0 +1,27 @@
+void SUB_FIXUPERRORMESSAGE(void*_SUB_FIXUPERRORMESSAGE_UDT_STATE,qbs*_SUB_FIXUPERRORMESSAGE_STRING_OP){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data195.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_35567:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(*((qbs**)((char*)_SUB_FIXUPERRORMESSAGE_UDT_STATE+(56))),qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(24222,788,"const_eval.bas");if(r)goto S_35567;}
+do{
+qbs_set(*((qbs**)((char*)(_SUB_FIXUPERRORMESSAGE_UDT_STATE)+(68))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Expected variable/value after '",39),_SUB_FIXUPERRORMESSAGE_STRING_OP),qbs_new_txt_len("'",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,788,"const_eval.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free195.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

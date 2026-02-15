@@ -4399,6 +4399,8 @@ FUNCTION ide2 (ignore)
         a$ = idegetline(idecy)
         IF LEN(a$) < idecx - 1 THEN a$ = a$ + SPACE$(idecx - 1 - LEN(a$))
 
+
+     IF AutoCloseBrackets THEN 'enable new behavior if autoclosebrackets is in use
         skipInsert = 0
         IF ideinsert = 0 THEN 'Insert mode
             nextChar$ = MID$(a$, idecx, 1)
@@ -4436,6 +4438,20 @@ FUNCTION ide2 (ignore)
             END IF
             idesetline idecy, a$
         END IF
+      ELSE 'otherwise go back to the old behavior
+        'Replace old code back
+
+        IF ideinsert THEN
+            a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
+            IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
+            a$ = LEFT$(a$, idecx - 1) + K$ + a2$
+        ELSE
+            a$ = LEFT$(a$, idecx - 1) + K$ + RIGHT$(a$, LEN(a$) - idecx + 1)
+        END IF
+
+        idesetline idecy, a$
+        'end of old code
+       END IF
 
         idecx = idecx + LEN(K$)
         specialchar:

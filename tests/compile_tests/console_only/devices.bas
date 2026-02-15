@@ -1,5 +1,4 @@
 $CONSOLE:ONLY
-_DEST _CONSOLE
 
 print _DEVICES > 1;
 _DELAY 1

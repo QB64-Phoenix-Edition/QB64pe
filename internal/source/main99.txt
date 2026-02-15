@@ -1,0 +1,32 @@
+void SUB_PUSHELEMENT(qbs*_SUB_PUSHELEMENT_STRING_A,qbs*_SUB_PUSHELEMENT_STRING_B){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data99.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_32638:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_SUB_PUSHELEMENT_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(24218,58,"elements.bas");if(r)goto S_32638;}
+do{
+qbs_set(_SUB_PUSHELEMENT_STRING_A,qbs_add(qbs_add(_SUB_PUSHELEMENT_STRING_A,__STRING1_SP),_SUB_PUSHELEMENT_STRING_B));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,58,"elements.bas");}while(r);
+}else{
+do{
+qbs_set(_SUB_PUSHELEMENT_STRING_A,_SUB_PUSHELEMENT_STRING_B);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,58,"elements.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free99.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

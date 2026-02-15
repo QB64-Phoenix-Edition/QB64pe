@@ -1,0 +1,24 @@
+qbs* FUNC_PEEKNEXTELEMENT(qbs*_FUNC_PEEKNEXTELEMENT_STRING_A,int32*_FUNC_PEEKNEXTELEMENT_LONG_INDEX,int32*_FUNC_PEEKNEXTELEMENT_LONG_STRINDEX){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data98.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_PEEKNEXTELEMENT_STRING_PEEKNEXTELEMENT,FUNC_GETNEXTELEMENT(_FUNC_PEEKNEXTELEMENT_STRING_A,&(pass3756=*_FUNC_PEEKNEXTELEMENT_LONG_INDEX),&(pass3757=*_FUNC_PEEKNEXTELEMENT_LONG_STRINDEX)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,54,"elements.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free98.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_PEEKNEXTELEMENT_STRING_PEEKNEXTELEMENT);return _FUNC_PEEKNEXTELEMENT_STRING_PEEKNEXTELEMENT;
+}

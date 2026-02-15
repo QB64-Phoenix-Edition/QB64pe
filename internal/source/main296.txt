@@ -1,0 +1,31 @@
+int32 FUNC_IDENEWTXT(qbs*_FUNC_IDENEWTXT_STRING_A){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data296.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*__INTEGER_IDETXTLAST=*__INTEGER_IDETXTLAST+ 1 ;
+if(!qbevent)break;evnt(24235,12298,"ide_methods.bas");}while(r);
+do{
+tmp_long=array_check((*__INTEGER_IDETXTLAST)-__ARRAY_STRING_IDETXT[4],__ARRAY_STRING_IDETXT[5]);
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_IDETXT[0]))[tmp_long])),_FUNC_IDENEWTXT_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12299,"ide_methods.bas");}while(r);
+do{
+*_FUNC_IDENEWTXT_LONG_IDENEWTXT=*__INTEGER_IDETXTLAST;
+if(!qbevent)break;evnt(24235,12300,"ide_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free296.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_IDENEWTXT_LONG_IDENEWTXT;
+}

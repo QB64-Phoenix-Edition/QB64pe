@@ -1,0 +1,51 @@
+qbs* FUNC__WHATISMYIP(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data394.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+*_FUNC__WHATISMYIP_LONG__CH=func__openclient(qbs_new_txt_len("http://qb64phoenix.com/qb64_files/ip.php",40));
+qbs_cleanup(qbs_tmp_base,0);
+if ((-(*_FUNC__WHATISMYIP_LONG__CH== 0ll ))||is_error_pending()){
+goto exit_subfunc;
+}
+if ((-(func__statusCode(*_FUNC__WHATISMYIP_LONG__CH)== 200 ))||is_error_pending()){
+qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
+do{
+sub__delay( 0.1E+0 );
+sub_get2(*_FUNC__WHATISMYIP_LONG__CH,NULL,_FUNC__WHATISMYIP_STRING__REC,0);
+qbs_cleanup(qbs_tmp_base,0);
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC__WHATISMYIP_STRING__REC->len> 0 )))||is_error_pending()){
+*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
+}
+qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_add(_FUNC__WHATISMYIP_STRING__RES,_FUNC__WHATISMYIP_STRING__REC));
+qbs_cleanup(qbs_tmp_base,0);
+if ((func_eof(*_FUNC__WHATISMYIP_LONG__CH))||is_error_pending()){
+qbs_set(_FUNC__WHATISMYIP_STRING__WHATISMYIP,_FUNC__WHATISMYIP_STRING__RES);
+qbs_cleanup(qbs_tmp_base,0);
+goto dl_exit_7251;
+}
+if ((-((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 )>=( 86400ll )))||is_error_pending()){
+*_FUNC__WHATISMYIP_DOUBLE__ST=*_FUNC__WHATISMYIP_DOUBLE__ST- 86400ll ;
+}
+dl_continue_7251:;
+}while((!(-(((float)((func_timer( 0.001E+0 ,0|1))))>((float)((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 ))))))&&(!is_error_pending()));
+dl_exit_7251:;
+}
+sub_close(*_FUNC__WHATISMYIP_LONG__CH,1);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free394.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC__WHATISMYIP_STRING__WHATISMYIP);return _FUNC__WHATISMYIP_STRING__WHATISMYIP;
+}

@@ -242,7 +242,7 @@ extern qbs *qbs_inkey();
 extern void sub__keyclear(int32 buf, int32 passed);
 extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin, int32 ymin, int32 xmax, int32 ymax);
 extern void qbg_palette(uint32 attribute, uint32 col, int32 passed);
-extern void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 passed);
+extern void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 passed);
 extern void defaultcolors();
 extern void qbg_screen(int32 mode, int32 color_switch, int32 active_page, int32 visual_page, int32 refresh, int32 passed);
 extern void sub_pcopy(int32 src, int32 dst);

@@ -1,0 +1,48 @@
+qbs* FUNC_WIKILOOKAHEAD(qbs*_FUNC_WIKILOOKAHEAD_STRING_A,int32*_FUNC_WIKILOOKAHEAD_LONG_I,qbs*_FUNC_WIKILOOKAHEAD_STRING_TOKEN){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data384.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,1222,"wiki_methods.bas");}while(r);
+S_62872:;
+if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_WIKILOOKAHEAD_LONG_I>=_FUNC_WIKILOOKAHEAD_STRING_A->len)))||is_error_pending()){
+if(qbevent){evnt(24235,1222,"wiki_methods.bas");if(r)goto S_62872;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24235,1222,"wiki_methods.bas");}while(r);
+}
+do{
+*_FUNC_WIKILOOKAHEAD_LONG_J=func_instr(*_FUNC_WIKILOOKAHEAD_LONG_I,_FUNC_WIKILOOKAHEAD_STRING_A,_FUNC_WIKILOOKAHEAD_STRING_TOKEN,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,1223,"wiki_methods.bas");}while(r);
+S_62876:;
+if ((-(*_FUNC_WIKILOOKAHEAD_LONG_J== 0 ))||is_error_pending()){
+if(qbevent){evnt(24235,1224,"wiki_methods.bas");if(r)goto S_62876;}
+do{
+qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,func_mid(_FUNC_WIKILOOKAHEAD_STRING_A,*_FUNC_WIKILOOKAHEAD_LONG_I,NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,1225,"wiki_methods.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,func_mid(_FUNC_WIKILOOKAHEAD_STRING_A,*_FUNC_WIKILOOKAHEAD_LONG_I,*_FUNC_WIKILOOKAHEAD_LONG_J-*_FUNC_WIKILOOKAHEAD_LONG_I,0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,1227,"wiki_methods.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free384.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD);return _FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD;
+}

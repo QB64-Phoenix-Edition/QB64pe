@@ -1,0 +1,87 @@
+int32 FUNC_COUNTELEMENTS(qbs*_FUNC_COUNTELEMENTS_STRING_A){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data17.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*_FUNC_COUNTELEMENTS_LONG_N=FUNC_NUMELEMENTS(_FUNC_COUNTELEMENTS_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(14441);}while(r);
+do{
+*_FUNC_COUNTELEMENTS_LONG_C= 1 ;
+if(!qbevent)break;evnt(14442);}while(r);
+S_16959:;
+fornext_value2508= 1 ;
+fornext_finalvalue2508=*_FUNC_COUNTELEMENTS_LONG_N;
+fornext_step2508= 1 ;
+if (fornext_step2508<0) fornext_step_negative2508=1; else fornext_step_negative2508=0;
+if (is_error_pending()) goto fornext_error2508;
+goto fornext_entrylabel2508;
+while(1){
+fornext_value2508=fornext_step2508+(*_FUNC_COUNTELEMENTS_LONG_I);
+fornext_entrylabel2508:
+*_FUNC_COUNTELEMENTS_LONG_I=fornext_value2508;
+if (fornext_step_negative2508){
+if (fornext_value2508<fornext_finalvalue2508) break;
+}else{
+if (fornext_value2508>fornext_finalvalue2508) break;
+}
+fornext_error2508:;
+if(qbevent){evnt(14443);if(r)goto S_16959;}
+do{
+qbs_set(_FUNC_COUNTELEMENTS_STRING_E,FUNC_GETELEMENT(_FUNC_COUNTELEMENTS_STRING_A,_FUNC_COUNTELEMENTS_LONG_I));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(14444);}while(r);
+S_16961:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_COUNTELEMENTS_STRING_E,qbs_new_txt_len("(",1))))||is_error_pending()){
+if(qbevent){evnt(14445);if(r)goto S_16961;}
+do{
+*_FUNC_COUNTELEMENTS_LONG_B=*_FUNC_COUNTELEMENTS_LONG_B+ 1 ;
+if(!qbevent)break;evnt(14445);}while(r);
+}
+S_16964:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_COUNTELEMENTS_STRING_E,qbs_new_txt_len(")",1))))||is_error_pending()){
+if(qbevent){evnt(14446);if(r)goto S_16964;}
+do{
+*_FUNC_COUNTELEMENTS_LONG_B=*_FUNC_COUNTELEMENTS_LONG_B- 1 ;
+if(!qbevent)break;evnt(14446);}while(r);
+}
+S_16967:;
+if ((-(*_FUNC_COUNTELEMENTS_LONG_B< 0 ))||is_error_pending()){
+if(qbevent){evnt(14447);if(r)goto S_16967;}
+do{
+SUB_GIVE_ERROR(qbs_new_txt_len("Unexpected ) encountered",24));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(14447);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(14447);}while(r);
+}
+S_16971:;
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_COUNTELEMENTS_STRING_E,qbs_new_txt_len(",",1)))&(-(*_FUNC_COUNTELEMENTS_LONG_B== 0 ))))||is_error_pending()){
+if(qbevent){evnt(14448);if(r)goto S_16971;}
+do{
+*_FUNC_COUNTELEMENTS_LONG_C=*_FUNC_COUNTELEMENTS_LONG_C+ 1 ;
+if(!qbevent)break;evnt(14448);}while(r);
+}
+fornext_continue_2507:;
+}
+fornext_exit_2507:;
+do{
+*_FUNC_COUNTELEMENTS_LONG_COUNTELEMENTS=*_FUNC_COUNTELEMENTS_LONG_C;
+if(!qbevent)break;evnt(14450);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free17.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_COUNTELEMENTS_LONG_COUNTELEMENTS;
+}

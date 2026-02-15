@@ -1,0 +1,77 @@
+int32 FUNC_PARSESTRING(qbs*_FUNC_PARSESTRING_STRING_EXP,void*_FUNC_PARSESTRING_UDT_STATE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data174.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_34983:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(24222,229,"const_eval.bas");if(r)goto S_34983;}
+do{
+sub__echo(qbs_new_txt_len("ParseString",11));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,229,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,230,"const_eval.bas");}while(r);
+S_34987:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_ELEMENTISSTRING(_FUNC_PARSESTRING_STRING_ELE)))||is_error_pending()){
+if(qbevent){evnt(24222,232,"const_eval.bas");if(r)goto S_34987;}
+do{
+qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,233,"const_eval.bas");}while(r);
+do{
+SUB_PARSENUMSETS((void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (8) ),_FUNC_PARSESTRING_STRING_ELE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,235,"const_eval.bas");}while(r);
+do{
+*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
+if(!qbevent)break;evnt(24222,237,"const_eval.bas");}while(r);
+}else{
+S_34992:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_PARSENUMHASHLOOKUP(_FUNC_PARSESTRING_STRING_ELE,(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ))))||is_error_pending()){
+if(qbevent){evnt(24222,239,"const_eval.bas");if(r)goto S_34992;}
+S_34993:;
+if ((-((*(int32*)(((char*)_FUNC_PARSESTRING_UDT_STATE)+(64))&*__LONG_ISSTRING)== 0 ))||is_error_pending()){
+if(qbevent){evnt(24222,240,"const_eval.bas");if(r)goto S_34993;}
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+(68))),qbs_new_txt_len("ERROR - Expecting a string value",32));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,240,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24222,240,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,242,"const_eval.bas");}while(r);
+do{
+*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
+if(!qbevent)break;evnt(24222,243,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24222,244,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+(68))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Unexpected element '",28),_FUNC_PARSESTRING_STRING_ELE),qbs_new_txt_len("'",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,247,"const_eval.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free174.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_PARSESTRING_LONG_PARSESTRING;
+}

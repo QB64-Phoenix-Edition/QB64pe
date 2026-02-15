@@ -1,0 +1,114 @@
+int32 FUNC_NUMERIC(qbs*_FUNC_NUMERIC_STRING_EXP,void*_FUNC_NUMERIC_UDT_STATE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data189.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_35471:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(24222,683,"const_eval.bas");if(r)goto S_35471;}
+do{
+sub__echo(qbs_new_txt_len("Numeric",7));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,683,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_NUMERIC_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_NUMERIC_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,684,"const_eval.bas");}while(r);
+S_35475:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(24222,685,"const_eval.bas");if(r)goto S_35475;}
+do{
+sub__echo(qbs_add(qbs_new_txt_len("Numeric peek ele: ",18),_FUNC_NUMERIC_STRING_ELE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,685,"const_eval.bas");}while(r);
+}
+S_35478:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_ELEMENTISNUMBER(_FUNC_NUMERIC_STRING_ELE)))||is_error_pending()){
+if(qbevent){evnt(24222,687,"const_eval.bas");if(r)goto S_35478;}
+do{
+qbs_set(_FUNC_NUMERIC_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_NUMERIC_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,688,"const_eval.bas");}while(r);
+do{
+*(int32*)(((char*)_FUNC_NUMERIC_UDT_STATE)+(64))=FUNC_ELEMENTGETNUMERICVALUE(_FUNC_NUMERIC_STRING_ELE,(long double*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (8) ),(int64*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (40) ),(uint64*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (48) ));
+if(!qbevent)break;evnt(24222,690,"const_eval.bas");}while(r);
+do{
+*_FUNC_NUMERIC_LONG_NUMERIC= -1 ;
+if(!qbevent)break;evnt(24222,692,"const_eval.bas");}while(r);
+S_35482:;
+}else{
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_NUMERIC_STRING_ELE,qbs_new_txt_len("_PI",3)))){
+if(qbevent){evnt(24222,693,"const_eval.bas");if(r)goto S_35482;}
+do{
+qbs_set(_FUNC_NUMERIC_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_NUMERIC_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,694,"const_eval.bas");}while(r);
+do{
+SUB_PARSENUMSETF((void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (8) ),&(pass4184=*__LONG_FLOATTYPE-*__LONG_ISPOINTER),&(pass4185= 3.14159265358979323846264338327950288E+0L ));
+if(!qbevent)break;evnt(24222,696,"const_eval.bas");}while(r);
+do{
+*_FUNC_NUMERIC_LONG_NUMERIC= -1 ;
+if(!qbevent)break;evnt(24222,697,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24222,698,"const_eval.bas");}while(r);
+}else{
+S_35488:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_PARSENUMHASHLOOKUP(_FUNC_NUMERIC_STRING_ELE,(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (0) ))))||is_error_pending()){
+if(qbevent){evnt(24222,700,"const_eval.bas");if(r)goto S_35488;}
+S_35489:;
+if ((*(int32*)(((char*)_FUNC_NUMERIC_UDT_STATE)+(64))&*__LONG_ISSTRING)||is_error_pending()){
+if(qbevent){evnt(24222,701,"const_eval.bas");if(r)goto S_35489;}
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_NUMERIC_UDT_STATE)+(68))),qbs_new_txt_len("ERROR - String can not be in numeric operation",46));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,701,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24222,701,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_NUMERIC_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_NUMERIC_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_NUMERIC_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,703,"const_eval.bas");}while(r);
+S_35494:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(24222,704,"const_eval.bas");if(r)goto S_35494;}
+do{
+sub__echo(qbs_add(qbs_new_txt_len("Consumed ele: ",14),_FUNC_NUMERIC_STRING_ELE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,704,"const_eval.bas");}while(r);
+}
+do{
+*_FUNC_NUMERIC_LONG_NUMERIC= -1 ;
+if(!qbevent)break;evnt(24222,705,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24222,706,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_NUMERIC_UDT_STATE)+(68))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Unexpected element '",28),_FUNC_NUMERIC_STRING_ELE),qbs_new_txt_len("'",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,709,"const_eval.bas");}while(r);
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_NUMERIC_UDT_STATE)+(56))),_FUNC_NUMERIC_STRING_ELE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,710,"const_eval.bas");}while(r);
+}
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free189.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_NUMERIC_LONG_NUMERIC;
+}

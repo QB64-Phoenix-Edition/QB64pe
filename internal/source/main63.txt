@@ -1,0 +1,121 @@
+void SUB_SETPRELET(qbs*_SUB_SETPRELET_STRING_FLAGNAME,qbs*_SUB_SETPRELET_STRING_FLAGVALUE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data63.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_31875:;
+fornext_value3598=*__INTEGER_USERDEFINECOUNTPRESETS+ 1 ;
+fornext_finalvalue3598=*__INTEGER_USERDEFINECOUNT;
+fornext_step3598= 1 ;
+if (fornext_step3598<0) fornext_step_negative3598=1; else fornext_step_negative3598=0;
+if (is_error_pending()) goto fornext_error3598;
+goto fornext_entrylabel3598;
+while(1){
+fornext_value3598=fornext_step3598+(*_SUB_SETPRELET_LONG_I);
+fornext_entrylabel3598:
+*_SUB_SETPRELET_LONG_I=fornext_value3598;
+if (fornext_step_negative3598){
+if (fornext_value3598<fornext_finalvalue3598) break;
+}else{
+if (fornext_value3598>fornext_finalvalue3598) break;
+}
+fornext_error3598:;
+if(qbevent){evnt(23772);if(r)goto S_31875;}
+S_31876:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[array_check(( 0 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*_SUB_SETPRELET_LONG_I)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6]])),_SUB_SETPRELET_STRING_FLAGNAME)))||is_error_pending()){
+if(qbevent){evnt(23773);if(r)goto S_31876;}
+do{
+tmp_long=array_check(( 1 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*_SUB_SETPRELET_LONG_I)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGVALUE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23773);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(23773);}while(r);
+}
+fornext_continue_3597:;
+}
+fornext_exit_3597:;
+do{
+*__INTEGER_USERDEFINECOUNT=*__INTEGER_USERDEFINECOUNT+ 1 ;
+if(!qbevent)break;evnt(23776);}while(r);
+S_31882:;
+if ((qbs_cleanup(qbs_tmp_base,-(*__INTEGER_USERDEFINECOUNT>func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2))))||is_error_pending()){
+if(qbevent){evnt(23777);if(r)goto S_31882;}
+do{
+
+if (__ARRAY_STRING_USERDEFINE[2]&2){
+error(10);
+}else{
+((mem_lock*)((ptrszint*)__ARRAY_STRING_USERDEFINE)[12])->id=(++mem_lock_id);
+static int32 preserved_elements;
+if (__ARRAY_STRING_USERDEFINE[2]&1){
+preserved_elements=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
+}
+else preserved_elements=0;
+__ARRAY_STRING_USERDEFINE[8]= 0 ;
+__ARRAY_STRING_USERDEFINE[9]=( 1 )-__ARRAY_STRING_USERDEFINE[8]+1;
+__ARRAY_STRING_USERDEFINE[10]=1;
+__ARRAY_STRING_USERDEFINE[4]= 0 ;
+__ARRAY_STRING_USERDEFINE[5]=(func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2)+ 10 )-__ARRAY_STRING_USERDEFINE[4]+1;
+__ARRAY_STRING_USERDEFINE[6]=__ARRAY_STRING_USERDEFINE[10]*__ARRAY_STRING_USERDEFINE[9];
+if (preserved_elements){
+static ptrszint tmp_long2;
+tmp_long2=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
+if (tmp_long2<preserved_elements){
+for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {
+qbs_free((qbs*)((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]);
+}}
+__ARRAY_STRING_USERDEFINE[0]=(ptrszint)realloc((void*)(__ARRAY_STRING_USERDEFINE[0]),tmp_long2*8);
+if (!__ARRAY_STRING_USERDEFINE[0]) error(257);
+if (preserved_elements<tmp_long2){
+for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){
+if (__ARRAY_STRING_USERDEFINE[2]&4){
+((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+}
+}else{
+__ARRAY_STRING_USERDEFINE[0]=(ptrszint)malloc(__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9]*8);
+if (!__ARRAY_STRING_USERDEFINE[0]) error(257);
+__ARRAY_STRING_USERDEFINE[2]|=1;
+tmp_long=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
+if (__ARRAY_STRING_USERDEFINE[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+}
+if(!qbevent)break;evnt(23778);}while(r);
+}
+do{
+tmp_long=array_check(( 0 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*__INTEGER_USERDEFINECOUNT)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGNAME);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23780);}while(r);
+do{
+tmp_long=array_check(( 1 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*__INTEGER_USERDEFINECOUNT)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGVALUE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23781);}while(r);
+do{
+qbs_set(__STRING_USERDEFINELIST,qbs_add(qbs_add(__STRING_USERDEFINELIST,_SUB_SETPRELET_STRING_FLAGNAME),qbs_new_txt_len("@",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23782);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free63.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

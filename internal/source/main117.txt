@@ -1,0 +1,38 @@
+qbs* FUNC_CREATEELEMENTSTRING(qbs*_FUNC_CREATEELEMENTSTRING_STRING_S){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data117.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24218,610,"elements.bas");}while(r);
+do{
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,611,"elements.bas");}while(r);
+do{
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,FUNC_ESCAPESTRING(_FUNC_CREATEELEMENTSTRING_STRING_S)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,613,"elements.bas");}while(r);
+do{
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 )),qbs_new_txt_len(",",1)),qbs__tostr((int32)(_FUNC_CREATEELEMENTSTRING_STRING_S->len),NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,615,"elements.bas");}while(r);
+do{
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING,_FUNC_CREATEELEMENTSTRING_STRING_ELE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,616,"elements.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free117.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING);return _FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING;
+}

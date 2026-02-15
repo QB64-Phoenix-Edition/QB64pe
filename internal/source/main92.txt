@@ -1,0 +1,45 @@
+void SUB_PURGETEMPORARYBUILDFILES(qbs*_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,int32*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data92.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_32579:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(24217,6,"build.bas");if(r)goto S_32579;}
+do{
+sub_shell2(qbs_add(qbs_add(qbs_new_txt_len("cmd /c ",7),FUNC_GETMAKEEXECUTABLE()),qbs_new_txt_len(" OS=win clean",13)),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24217,7,"build.bas");}while(r);
+S_32581:;
+}else{
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("LNX",3)))){
+if(qbevent){evnt(24217,8,"build.bas");if(r)goto S_32581;}
+S_32582:;
+if ((*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC)||is_error_pending()){
+if(qbevent){evnt(24217,9,"build.bas");if(r)goto S_32582;}
+do{
+sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=osx clean",13)),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24217,10,"build.bas");}while(r);
+}else{
+do{
+sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=lnx clean",13)),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24217,12,"build.bas");}while(r);
+}
+}
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free92.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

@@ -1,0 +1,68 @@
+qbs* FUNC_REMOVEFILEEXTENSION(qbs*_FUNC_REMOVEFILEEXTENSION_STRING_F){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data86.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_32516:;
+fornext_value3726=_FUNC_REMOVEFILEEXTENSION_STRING_F->len;
+fornext_finalvalue3726= 1 ;
+fornext_step3726= -1 ;
+if (fornext_step3726<0) fornext_step_negative3726=1; else fornext_step_negative3726=0;
+if (is_error_pending()) goto fornext_error3726;
+goto fornext_entrylabel3726;
+while(1){
+fornext_value3726=fornext_step3726+(*_FUNC_REMOVEFILEEXTENSION_LONG_I);
+fornext_entrylabel3726:
+*_FUNC_REMOVEFILEEXTENSION_LONG_I=fornext_value3726;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative3726){
+if (fornext_value3726<fornext_finalvalue3726) break;
+}else{
+if (fornext_value3726>fornext_finalvalue3726) break;
+}
+fornext_error3726:;
+if(qbevent){evnt(24216,48,"file.bas");if(r)goto S_32516;}
+do{
+*_FUNC_REMOVEFILEEXTENSION_LONG_A=qbs_asc(_FUNC_REMOVEFILEEXTENSION_STRING_F,*_FUNC_REMOVEFILEEXTENSION_LONG_I);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,49,"file.bas");}while(r);
+S_32518:;
+if (((-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 47 ))|(-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 92 )))||is_error_pending()){
+if(qbevent){evnt(24216,50,"file.bas");if(r)goto S_32518;}
+do{
+goto fornext_exit_3725;
+if(!qbevent)break;evnt(24216,50,"file.bas");}while(r);
+}
+S_32521:;
+if ((-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 46 ))||is_error_pending()){
+if(qbevent){evnt(24216,51,"file.bas");if(r)goto S_32521;}
+do{
+qbs_set(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION,qbs_left(_FUNC_REMOVEFILEEXTENSION_STRING_F,*_FUNC_REMOVEFILEEXTENSION_LONG_I- 1 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,51,"file.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24216,51,"file.bas");}while(r);
+}
+fornext_continue_3725:;
+}
+fornext_exit_3725:;
+do{
+qbs_set(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION,_FUNC_REMOVEFILEEXTENSION_STRING_F);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,53,"file.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free86.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION);return _FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION;
+}

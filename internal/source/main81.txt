@@ -1,0 +1,45 @@
+qbs* FUNC_READWRITESTRINGSETTINGVALUE(qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data81.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24215,117,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(24215,118,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITESTRINGSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_VALUE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,120,"strings.bas");}while(r);
+S_32471:;
+if ((-(*_FUNC_READWRITESTRINGSETTINGVALUE_INTEGER_RESULT== 0 ))||is_error_pending()){
+if(qbevent){evnt(24215,122,"strings.bas");if(r)goto S_32471;}
+do{
+SUB_WRITECONFIGSETTING(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,123,"strings.bas");}while(r);
+do{
+qbs_set(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,124,"strings.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_VALUE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,126,"strings.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free81.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE);return _FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE;
+}

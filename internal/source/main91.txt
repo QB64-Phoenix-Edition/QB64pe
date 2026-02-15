@@ -1,0 +1,33 @@
+qbs* FUNC_FIXDIRECTORYNAME(qbs*_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data91.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_32574:;
+if ((qbs_cleanup(qbs_tmp_base,(-(_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME->len> 0 ))&(qbs_notequal(qbs_right(_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME, 1 ),__STRING1_PATHSEP))))||is_error_pending()){
+if(qbevent){evnt(24216,116,"file.bas");if(r)goto S_32574;}
+do{
+qbs_set(_FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME,qbs_add(_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME,__STRING1_PATHSEP));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,117,"file.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME,_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,119,"file.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free91.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME);return _FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME;
+}

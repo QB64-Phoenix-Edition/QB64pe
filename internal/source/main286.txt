@@ -1,0 +1,31 @@
+qbs* FUNC_IDEGETLINE(int32*_FUNC_IDEGETLINE_LONG_I){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data286.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_51249:;
+if ((-(*_FUNC_IDEGETLINE_LONG_I!= -1 ))||is_error_pending()){
+if(qbevent){evnt(24235,11922,"ide_methods.bas");if(r)goto S_51249;}
+do{
+SUB_IDEGOTOLINE(_FUNC_IDEGETLINE_LONG_I);
+if(!qbevent)break;evnt(24235,11922,"ide_methods.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_IDEGETLINE_STRING_IDEGETLINE,func_mid(__STRING_IDET,*__LONG_IDELI+ 4 ,string2l(func_mid(__STRING_IDET,*__LONG_IDELI, 4 ,0|1)),0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,11923,"ide_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free286.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_IDEGETLINE_STRING_IDEGETLINE);return _FUNC_IDEGETLINE_STRING_IDEGETLINE;
+}

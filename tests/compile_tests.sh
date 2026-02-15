@@ -1,5 +1,5 @@
 #!/bin/bash
-# Arg 1: qb54 location
+# Arg 1: qb64 location
 # Arg 2: Optional category to test
 
 PREFIX="Compilation"

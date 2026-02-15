@@ -1,0 +1,26 @@
+void SUB_MAKEIDREFER(qbs*_SUB_MAKEIDREFER_STRING_REF,int32*_SUB_MAKEIDREFER_LONG_TYP){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data33.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_SUB_MAKEIDREFER_STRING_REF,qbs__tostr((int32)(*__LONG_CURRENTID),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(21179);}while(r);
+do{
+*_SUB_MAKEIDREFER_LONG_TYP=*(int32*)(((char*)__UDT_ID)+(536))+*__LONG_ISREFERENCE;
+if(!qbevent)break;evnt(21180);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free33.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

@@ -1,9 +1,27 @@
-qbs *_FUNC_IDESAVENOW_STRING_IDESAVENOW=NULL;
-if (!_FUNC_IDESAVENOW_STRING_IDESAVENOW)_FUNC_IDESAVENOW_STRING_IDESAVENOW=qbs_new(0,0);
-qbs *_FUNC_IDESAVENOW_STRING_M=NULL;
-if (!_FUNC_IDESAVENOW_STRING_M)_FUNC_IDESAVENOW_STRING_M=qbs_new(0,0);
-int32 *_FUNC_IDESAVENOW_LONG_RESULT=NULL;
-if(_FUNC_IDESAVENOW_LONG_RESULT==NULL){
-_FUNC_IDESAVENOW_LONG_RESULT=(int32*)mem_static_malloc(4);
-*_FUNC_IDESAVENOW_LONG_RESULT=0;
+qbs*oldstr5934=NULL;
+if(_SUB_IDESAVE_STRING_F->tmp||_SUB_IDESAVE_STRING_F->fixed||_SUB_IDESAVE_STRING_F->readonly){
+oldstr5934=_SUB_IDESAVE_STRING_F;
+if (oldstr5934->cmem_descriptor){
+_SUB_IDESAVE_STRING_F=qbs_new_cmem(oldstr5934->len,0);
+}else{
+_SUB_IDESAVE_STRING_F=qbs_new(oldstr5934->len,0);
+}
+memcpy(_SUB_IDESAVE_STRING_F->chr,oldstr5934->chr,oldstr5934->len);
+}
+qbs *_SUB_IDESAVE_STRING_LINEENDING=NULL;
+if (!_SUB_IDESAVE_STRING_LINEENDING)_SUB_IDESAVE_STRING_LINEENDING=qbs_new(0,0);
+int32 *_SUB_IDESAVE_LONG_I=NULL;
+if(_SUB_IDESAVE_LONG_I==NULL){
+_SUB_IDESAVE_LONG_I=(int32*)mem_static_malloc(4);
+*_SUB_IDESAVE_LONG_I=0;
+}
+int64 fornext_value5936;
+int64 fornext_finalvalue5936;
+int64 fornext_step5936;
+uint8 fornext_step_negative5936;
+qbs *_SUB_IDESAVE_STRING_OUTFILE=NULL;
+if (!_SUB_IDESAVE_STRING_OUTFILE)_SUB_IDESAVE_STRING_OUTFILE=qbs_new(0,0);
+byte_element_struct *byte_element_5937=NULL;
+if (!byte_element_5937){
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5937=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5937=(byte_element_struct*)mem_static_malloc(12);
 }

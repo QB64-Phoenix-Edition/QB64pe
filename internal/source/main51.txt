@@ -1,0 +1,52 @@
+void SUB_LINEINPUT3LOAD(qbs*_SUB_LINEINPUT3LOAD_STRING_F){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data51.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+sub_open(_SUB_LINEINPUT3LOAD_STRING_F, 2 ,NULL,NULL, 1 ,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23489);}while(r);
+do{
+*_SUB_LINEINPUT3LOAD_LONG_L=func_lof( 1 );
+if(!qbevent)break;evnt(23490);}while(r);
+do{
+qbs_set(__STRING_LINEINPUT3BUFFER,func_space(*_SUB_LINEINPUT3LOAD_LONG_L));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23491);}while(r);
+do{
+sub_get2( 1 ,NULL,__STRING_LINEINPUT3BUFFER,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23492);}while(r);
+S_31617:;
+if ((qbs_cleanup(qbs_tmp_base,__STRING_LINEINPUT3BUFFER->len))||is_error_pending()){
+if(qbevent){evnt(23493);if(r)goto S_31617;}
+S_31618:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(__STRING_LINEINPUT3BUFFER, 1 ),func_chr( 26 ))))||is_error_pending()){
+if(qbevent){evnt(23493);if(r)goto S_31618;}
+do{
+qbs_set(__STRING_LINEINPUT3BUFFER,qbs_left(__STRING_LINEINPUT3BUFFER,__STRING_LINEINPUT3BUFFER->len- 1 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23493);}while(r);
+}
+}
+do{
+sub_close( 1 ,1);
+if(!qbevent)break;evnt(23494);}while(r);
+do{
+*__LONG_LINEINPUT3INDEX= 1 ;
+if(!qbevent)break;evnt(23495);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free51.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

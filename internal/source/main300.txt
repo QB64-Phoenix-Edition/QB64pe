@@ -1,0 +1,49 @@
+qbs* FUNC_IDERESTORE(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data300.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(24235,12757,"ide_methods.bas");}while(r);
+do{
+sub_pcopy( 0 , 2 );
+if(!qbevent)break;evnt(24235,12758,"ide_methods.bas");}while(r);
+do{
+sub_pcopy( 0 , 1 );
+if(!qbevent)break;evnt(24235,12759,"ide_methods.bas");}while(r);
+do{
+qbg_screen(NULL,NULL, 1 , 0 ,NULL,12);
+if(!qbevent)break;evnt(24235,12760,"ide_methods.bas");}while(r);
+do{
+*_FUNC_IDERESTORE_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Backup found",12),qbs_new_txt_len("Recover program from auto-saved backup?",39),qbs_new_txt_len("#Yes;#No",8));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12761,"ide_methods.bas");}while(r);
+S_52130:;
+if ((-(*_FUNC_IDERESTORE_LONG_RESULT== 1 ))||is_error_pending()){
+if(qbevent){evnt(24235,12762,"ide_methods.bas");if(r)goto S_52130;}
+do{
+qbs_set(_FUNC_IDERESTORE_STRING_IDERESTORE,qbs_new_txt_len("Y",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12762,"ide_methods.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_IDERESTORE_STRING_IDERESTORE,qbs_new_txt_len("N",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,12762,"ide_methods.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free300.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_IDERESTORE_STRING_IDERESTORE);return _FUNC_IDERESTORE_STRING_IDERESTORE;
+}

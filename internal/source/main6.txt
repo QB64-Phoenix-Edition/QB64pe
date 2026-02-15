@@ -1,0 +1,43 @@
+int32 FUNC_PARSELONGSETTING(qbs*_FUNC_PARSELONGSETTING_STRING_TOKEN,int32*_FUNC_PARSELONGSETTING_LONG_SETTING){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data6.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(13578);}while(r);
+do{
+*_FUNC_PARSELONGSETTING_LONG_EQUALS=func_instr(NULL,_FUNC_PARSELONGSETTING_STRING_TOKEN,qbs_new_txt_len("=",1),0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(13580);}while(r);
+S_16175:;
+if ((-(*_FUNC_PARSELONGSETTING_LONG_EQUALS== 0 ))||is_error_pending()){
+if(qbevent){evnt(13581);if(r)goto S_16175;}
+do{
+*_FUNC_PARSELONGSETTING_LONG_PARSELONGSETTING= 0 ;
+if(!qbevent)break;evnt(13581);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(13581);}while(r);
+}
+do{
+*_FUNC_PARSELONGSETTING_LONG_SETTING=qbr(qbs_val<long double>(func_mid(_FUNC_PARSELONGSETTING_STRING_TOKEN,*_FUNC_PARSELONGSETTING_LONG_EQUALS+ 1 ,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(13583);}while(r);
+do{
+*_FUNC_PARSELONGSETTING_LONG_PARSELONGSETTING= -1 ;
+if(!qbevent)break;evnt(13585);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free6.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_PARSELONGSETTING_LONG_PARSELONGSETTING;
+}

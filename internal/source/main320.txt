@@ -1,0 +1,49 @@
+void SUB_IDESETTCPPORTBOX(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data320.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,15754,"ide_methods.bas");}while(r);
+do{
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6297= 45 ),&(pass6298= 5 ),&(pass6299= 0 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,15755,"ide_methods.bas");}while(r);
+S_55389:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(24235,15756,"ide_methods.bas");if(r)goto S_55389;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24235,15756,"ide_methods.bas");}while(r);
+}
+do{
+*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,15758,"ide_methods.bas");}while(r);
+S_55393:;
+if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+if(qbevent){evnt(24235,15759,"ide_methods.bas");if(r)goto S_55393;}
+do{
+*__LONG_IDEBASETCPPORT= 9000 ;
+if(!qbevent)break;evnt(24235,15759,"ide_methods.bas");}while(r);
+}
+do{
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,15760,"ide_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free320.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

@@ -1,0 +1,43 @@
+void SUB_CLEARMOUSE(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data335.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*__LONG_ICHANGED= 0 ;
+if(!qbevent)break;evnt(24235,18393,"ide_methods.bas");}while(r);
+do{
+*__LONG_MB= 0 ;
+if(!qbevent)break;evnt(24235,18394,"ide_methods.bas");}while(r);
+do{
+*__LONG_MB2= 0 ;
+if(!qbevent)break;evnt(24235,18395,"ide_methods.bas");}while(r);
+do{
+*__LONG_MCLICK= 0 ;
+if(!qbevent)break;evnt(24235,18396,"ide_methods.bas");}while(r);
+do{
+*__LONG_MRELEASE= 0 ;
+if(!qbevent)break;evnt(24235,18397,"ide_methods.bas");}while(r);
+S_58529:;
+while((func__mousebutton( 1 )|func__mousebutton( 2 ))||is_error_pending()){
+if(qbevent){evnt(24235,18398,"ide_methods.bas");if(r)goto S_58529;}
+do{
+*_SUB_CLEARMOUSE_LONG_I=func__mouseinput();
+if(!qbevent)break;evnt(24235,18399,"ide_methods.bas");}while(r);
+dl_continue_6559:;
+}
+dl_exit_6559:;
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free335.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

@@ -658,12 +658,11 @@ DIM SHARED addmetainclude AS STRING
 DIM SHARED autoIncludingFile AS INTEGER
 DIM SHARED autoIncForceUScore AS INTEGER
 
-DIM SHARED closedmain AS INTEGER
 DIM SHARED module AS STRING
 
 DIM SHARED subfunc AS STRING
 DIM SHARED subfuncn AS LONG
-DIM SHARED closedsubfunc AS _BYTE
+DIM SHARED subfuncnlast AS LONG
 DIM SHARED subfuncid AS LONG
 
 DIM SHARED defdatahandle AS INTEGER
@@ -944,7 +943,7 @@ IF C = 9 THEN 'run
             prefix$ = "": suffix$ = ""
         END IF
 
-        ExecuteLine$ = prefix$ + QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$ + suffix$
+        ExecuteLine$ = prefix$ + QuotedFilename$(_FULLPATH$(lastBinaryGenerated$)) + ModifyCOMMAND$ + suffix$
     ELSEIF os$ = "LNX" THEN
         IF path.exe$ = "" THEN path.exe$ = "./"
 
@@ -952,18 +951,18 @@ IF C = 9 THEN 'run
             ExecuteLine$ = DefaultTerminal$
 
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(lastBinaryGenerated$))
+                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(_FULLPATH$(lastBinaryGenerated$)))
             ELSE
-                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(path.exe$ + lastBinaryGenerated$))
+                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(_FULLPATH$(path.exe$ + lastBinaryGenerated$)))
             END IF
 
             ExecuteLine$ = StrReplace$(ExecuteLine$, "$@", ModifyCOMMAND$)
             ExecuteLine$ = ExecuteLine$ + _IIF(LogToConsole, " && read -rsn1 -p 'Press any key...'; echo", "")
         ELSE
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                ExecuteLine$ = QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
+                ExecuteLine$ = QuotedFilename$(_FULLPATH$(lastBinaryGenerated$)) + ModifyCOMMAND$
             ELSE
-                ExecuteLine$ = QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
+                ExecuteLine$ = QuotedFilename$(_FULLPATH$(path.exe$ + lastBinaryGenerated$)) + ModifyCOMMAND$
             END IF
         END IF
 
@@ -1352,7 +1351,6 @@ REDIM SHARED udtenext(1000) AS LONG
 definingtype = 0
 definingtypeerror = 0
 constlast = -1
-closedmain = 0
 addmetastatic = 0
 addmetadynamic = 0
 DynamicMode = 0
@@ -1378,7 +1376,7 @@ arrayprocessinghappened = 0
 stringprocessinghappened = 0
 inputfunctioncalled = 0
 subfuncn = 0
-closedsubfunc = 0
+subfuncnlast = 0
 subfunc = ""
 SelectCaseCounter = 0
 ExecCounter = 0
@@ -1623,11 +1621,6 @@ DO
     IF idemode = 0 AND inclevel = 0 AND lastLine = 0 THEN
         wholeline$ = lineinput3$ 'otherwise read from source
         IF wholeline$ = CHR$(13) THEN EXIT DO 'check for end
-    END IF
-    'detection of main end (implicit by 1st SUB/FUNC or explicit by lastLine = 1)
-    IF ExecLevel(ExecCounter) = 0 _ANDALSO declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
-        tmp$ = UCASE$(LEFT$(LTRIM$(wholeline$), 9))
-        IF tmp$ = "FUNCTION " _ORELSE LEFT$(tmp$, 4) = "SUB " THEN mainEndLine = 1
     END IF
     IF lastLine = 1 AND mainEndLine = 0 THEN mainEndLine = 1
     'perform auto-including according to code position
@@ -1955,7 +1948,7 @@ DO
                         '========================================
 
                         IF n = 2 AND firstelement$ = "END" AND (secondelement$ = "SUB" OR secondelement$ = "FUNCTION") THEN
-                            closedsubfunc = -1
+                            subfuncn = 0
                         END IF
 
                         'declare library
@@ -1969,7 +1962,7 @@ DO
 
                             declaringlibrary = 2
 
-                            IF firstelement$ = "SUB" OR firstelement$ = "FUNCTION" THEN subfuncn = subfuncn - 1: GOTO declaresubfunc
+                            IF firstelement$ = "SUB" OR firstelement$ = "FUNCTION" THEN GOTO declaresubfunc
 
                             a$ = "Expected SUB/FUNCTION definition or END DECLARE (#2)": GOTO errmes
                         END IF
@@ -2183,8 +2176,6 @@ DO
                             'l$ = "CONST"
                             'DEF... do not change type, the expression is stored in a suitable type
                             'based on its value if type isn't forced/specified
-
-                            IF subfuncn > 0 AND closedsubfunc <> 0 THEN a$ = "Statement cannot be placed between SUB/FUNCTIONs": GOTO errmes
 
                             'convert periods to _046_
                             i2 = INSTR(a$, sp + "." + sp)
@@ -2421,15 +2412,9 @@ DO
                         IF sf THEN
 
                             IF declaringlibrary = 0 THEN
-                                IF firstLine = 2 THEN '"AtTop" auto-including in progress
-                                    a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AtTop' files": GOTO errmes
-                                ELSEIF mainEndLine = 2 THEN '"AfterMain" auto-including in progress
-                                    a$ = "SUB/FUNCTION not allowed in $USELIBRARY its 'AfterMain' files": GOTO errmes
-                                END IF
+                                subfuncnlast = subfuncnlast + 1
+                                subfuncn = subfuncnlast
                             END IF
-
-                            subfuncn = subfuncn + 1
-                            closedsubfunc = 0
 
                             IF n = 1 THEN a$ = "Expected name after SUB/FUNCTION": GOTO errmes
 
@@ -2899,6 +2884,7 @@ IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt") 'and $INCLUDEONCE buffer
 DataOffset = 0
 inclevel = 0
 subfuncn = 0
+subfuncnlast = 0
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
@@ -2913,8 +2899,10 @@ FOR i = 1 TO 27: defineaz(i) = "SINGLE": defineextaz(i) = "!": NEXT
 
 DIM SHARED DataBinBuf: DataBinBuf = OpenBuffer%("O", tmpdir$ + "data.bin")
 
-DIM SHARED MainTxtBuf: MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main.txt")
+DIM SHARED MainTxtBuf: MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main0.txt")
 DIM SHARED DataTxtBuf: DataTxtBuf = OpenBuffer%("O", tmpdir$ + "maindata.txt")
+DIM SHARED VWatchMainDispatchBuf: VWatchMainDispatchBuf = OpenBuffer%("O", tmpdir$ + "vw_main_dispatch.txt")
+DIM SHARED VWatchMainSkipBuf: VWatchMainSkipBuf = OpenBuffer%("O", tmpdir$ + "vw_main_skip.txt")
 
 DIM SHARED RegTxtBuf: RegTxtBuf = OpenBuffer%("O", tmpdir$ + "regsf.txt")
 
@@ -3007,11 +2995,6 @@ DO
     IF idemode = 0 AND inclevel = 0 AND lastLine = 0 THEN
         a3$ = lineinput3$ 'otherwise read from source
         IF a3$ = CHR$(13) THEN EXIT DO 'check for end
-    END IF
-    'detection of main end (implicit by 1st SUB/FUNC or explicit by lastLine = 1)
-    IF ExecLevel(ExecCounter) = 0 _ANDALSO declaringlibrary = 0 _ANDALSO mainEndLine = 0 THEN
-        tmp$ = UCASE$(LEFT$(LTRIM$(a3$), 9))
-        IF tmp$ = "FUNCTION " _ORELSE LEFT$(tmp$, 4) = "SUB " THEN mainEndLine = 1
     END IF
     IF lastLine = 1 AND mainEndLine = 0 THEN mainEndLine = 1
     'perform auto-including according to code position
@@ -3574,8 +3557,6 @@ DO
         label$ = getelement(entireline$, 1)
         IF validlabel(label$) THEN
 
-            IF closedmain <> 0 AND subfunc = "" THEN a$ = "Labels cannot be placed between SUB/FUNCTIONs": GOTO errmes
-
             v = HashFind(label$, HASHFLAG_LABEL, ignore, r)
             addlabchk100:
             IF v THEN
@@ -3638,8 +3619,6 @@ DO
             IF validlabel(a$) THEN
 
                 IF validname(a$) = 0 THEN a$ = "Invalid name": GOTO errmes
-
-                IF closedmain <> 0 AND subfunc = "" THEN a$ = "Labels cannot be placed between SUB/FUNCTIONs": GOTO errmes
 
                 v = HashFind(a$, HASHFLAG_LABEL, ignore, r)
                 addlabchk:
@@ -4949,9 +4928,6 @@ DO
 
             IF declaringlibrary THEN GOTO declibjmp1
 
-
-            IF closedmain = 0 THEN closemain
-
             'check for open controls (copy #2)
             IF controllevel <> 0 AND controltype(controllevel) <> 6 THEN 'It's OK for subs to be inside $IF blocks
                 a$ = "Unidentified open control block"
@@ -4975,12 +4951,18 @@ DO
             subfunc = RTRIM$(id.callname) 'SUB_..."
             IF id.subfunc = 1 THEN subfuncoriginalname$ = "FUNCTION " ELSE subfuncoriginalname$ = "SUB "
             subfuncoriginalname$ = subfuncoriginalname$ + RTRIM$(id.cn)
-            subfuncn = subfuncn + 1
-            closedsubfunc = 0
+            subfuncnlast = subfuncnlast + 1
+            subfuncn = subfuncnlast
             subfuncid = targetid
 
             subfuncret$ = ""
+            IF GetRCStateVar(vWatchOn) = 1 AND firstLineNumberLabelvWatch > 0 THEN
+                vWatchAddLabel linenumber, -1
+                closeMainVwatchSection
+                firstLineNumberLabelvWatch = 0
+            END IF
 
+            MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main" + _TOSTR$(subfuncn) + ".txt")
             DataTxtBuf = OpenBuffer%("O", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
             FreeTxtBuf = OpenBuffer%("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
             RetTxtBuf = OpenBuffer%("O", tmpdir$ + "ret" + _TOSTR$(subfuncn) + ".txt")
@@ -5541,7 +5523,12 @@ DO
                 WriteBufLine RetTxtBuf, "}"
                 WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
                 subfunc = ""
-                closedsubfunc = -1
+                subfuncn = 0
+                MainTxtBuf = OpenBuffer%("A", tmpdir$ + "main0.txt")
+                DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
+                defdatahandle = GlobTxtBuf
+                FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
+                RetTxtBuf = OpenBuffer%("A", tmpdir$ + "ret0.txt")
 
                 'unshare temp. shared variables
                 FOR i = 1 TO idn
@@ -5706,8 +5693,6 @@ DO
         END IF '_DEFINE
     END IF '2
     IF predefining = 1 THEN GOTO predefined
-
-    IF closedmain <> 0 AND subfunc = "" THEN a$ = "Statement cannot be placed between SUB/FUNCTIONs": GOTO errmes
 
     'executable section:
 
@@ -8592,7 +8577,8 @@ DO
 
                         use_global_byte_elements = 1
 
-                        'switch output from main.txt to chain.txt
+                        'switch output from main to chain.txt
+                        maintxtbufprev = MainTxtBuf
                         MainTxtBuf = OpenBuffer%("A", tmpdir$ + "chain.txt")
                         l2$ = tlayout$
 
@@ -8633,13 +8619,10 @@ DO
                         WriteBufLine MainTxtBuf, "sub_put(FF,NULL," + e$ + ",0);"
 
                         tlayout$ = l2$
-                        'revert output to main.txt
-                        MainTxtBuf = OpenBuffer%("A", tmpdir$ + "main.txt")
-
 
                         'INPCHAIN.TXT (load)
 
-                        'switch output from main.txt to chain.txt
+                        'switch output from chain.txt to inpchain.txt
                         MainTxtBuf = OpenBuffer%("A", tmpdir$ + "inpchain.txt")
                         l2$ = tlayout$
 
@@ -8676,8 +8659,8 @@ DO
                         WriteBufLine MainTxtBuf, "}"
 
                         tlayout$ = l2$
-                        'revert output to main.txt
-                        MainTxtBuf = OpenBuffer%("A", tmpdir$ + "main.txt")
+                        'revert output to main
+                        MainTxtBuf = maintxtbufprev
 
                         use_global_byte_elements = 0
 
@@ -10332,7 +10315,9 @@ DO
                         redosemi:
                         FOR i = elementon TO n - 1
                             nextchar$ = getelement$(a$, i + 1)
-                            IF nextchar$ <> ";" AND nextchar$ <> "," AND nextchar$ <> "+" AND nextchar$ <> ")" THEN
+                            'Only insert ; if next char cannot continue an expression from a string literal.
+                            'The cute pattern is a match for all the less-equal-greater than operators.
+                            IF INSTR(";,+)<=>=<>", nextchar$) = 0 THEN
                                 temp1$ = getelement$(a$, i)
                                 beginpoint = INSTR(beginpoint, temp1$, CHR$(34))
                                 endpoint = INSTR(beginpoint + 1, temp1$, CHR$(34) + ",")
@@ -10350,7 +10335,8 @@ DO
                                 END IF
                                 IF temp1$ <> "USING" THEN
                                     IF LEFT$(LTRIM$(nextchar$), 1) = CHR$(34) THEN
-                                        IF temp1$ <> ";" AND temp1$ <> "," AND temp1$ <> "+" AND temp1$ <> "(" THEN
+                                        IF INSTR(";,+(<=>=<>", temp1$) = 0 THEN
+                                            'Current element can't appear before a string literal in an expression
                                             insertelements a$, i, ";"
                                             insertelements ca$, i, ";"
                                             n = n + 1
@@ -11627,8 +11613,7 @@ END IF
 
 ide5:
 linenumber = 0
-
-IF closedmain = 0 THEN closemain
+closemain
 
 IF definingtype THEN linenumber = definingtypeerror: a$ = "TYPE without END TYPE": GOTO errmes
 
@@ -13465,7 +13450,7 @@ FUNCTION ParseCMDLineArgs$ ()
                 Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
                     _DEST _CONSOLE
-                    PRINT "Update failed: Can't make connection to Wiki."
+                    PRINT "Help update failed: Can't make connection to Wiki."
                     SYSTEM 1
                 END IF
                 SYSTEM
@@ -14403,21 +14388,31 @@ SUB vWatchAddLabel (this AS LONG, lastLine AS _BYTE)
     END IF
 END SUB
 
+SUB closeMainVwatchSection
+    FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
+        IF ASC(vWatchUsedLabels, i) = 1 THEN
+            WriteBufLine VWatchMainDispatchBuf, "    case " + _TOSTR$(i) + ":"
+            WriteBufLine VWatchMainDispatchBuf, "        goto VWATCH_LABEL_" + _TOSTR$(i) + ";"
+            WriteBufLine VWatchMainDispatchBuf, "        break;"
+        END IF
+    NEXT
+    FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
+        IF ASC(vWatchUsedSkipLabels, i) = 1 THEN
+            WriteBufLine VWatchMainSkipBuf, "    case -" + _TOSTR$(i) + ":"
+            WriteBufLine VWatchMainSkipBuf, "        goto VWATCH_SKIPLABEL_" + _TOSTR$(i) + ";"
+            WriteBufLine VWatchMainSkipBuf, "        break;"
+        END IF
+    NEXT
+END SUB
+
 SUB closemain
+    IF GetRCStateVar(vWatchOn) = 1 THEN vWatchAddLabel 0, -1
     xend
-
     WriteBufLine MainTxtBuf, "return;"
-
-    IF GetRCStateVar(vWatchOn) = 1 AND firstLineNumberLabelvWatch > 0 THEN
+    IF GetRCStateVar(vWatchOn) = 1 THEN
         WriteBufLine MainTxtBuf, "VWATCH_SETNEXTLINE:;"
         WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
-        FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
-            IF ASC(vWatchUsedLabels, i) = 1 THEN
-                WriteBufLine MainTxtBuf, "    case " + _TOSTR$(i) + ":"
-                WriteBufLine MainTxtBuf, "        goto VWATCH_LABEL_" + _TOSTR$(i) + ";"
-                WriteBufLine MainTxtBuf, "        break;"
-            END IF
-        NEXT
+        WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "vw_main_dispatch.txt" + CHR$(34)
         WriteBufLine MainTxtBuf, "    default:"
         WriteBufLine MainTxtBuf, "        *__LONG_VWATCH_GOTO=*__LONG_VWATCH_LINENUMBER;"
         WriteBufLine MainTxtBuf, "        goto VWATCH_SETNEXTLINE;"
@@ -14425,15 +14420,8 @@ SUB closemain
 
         WriteBufLine MainTxtBuf, "VWATCH_SKIPLINE:;"
         WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
-        FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
-            IF ASC(vWatchUsedSkipLabels, i) = 1 THEN
-                WriteBufLine MainTxtBuf, "    case -" + _TOSTR$(i) + ":"
-                WriteBufLine MainTxtBuf, "        goto VWATCH_SKIPLABEL_" + _TOSTR$(i) + ";"
-                WriteBufLine MainTxtBuf, "        break;"
-            END IF
-        NEXT
+        WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "vw_main_skip.txt" + CHR$(34)
         WriteBufLine MainTxtBuf, "}"
-
     END IF
 
     WriteBufLine MainTxtBuf, "}"
@@ -14441,7 +14429,11 @@ SUB closemain
     WriteBufLine RetTxtBuf, "}"
     WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
 
-    closedmain = 1
+    mainincbuf = OpenBuffer%("O", tmpdir$ + "main.txt")
+    FOR i = 0 TO subfuncnlast
+        WriteBufLine mainincbuf, "#include " + CHR$(34) + "main" + _TOSTR$(i) + ".txt" + CHR$(34)
+    NEXT i
+
     firstLineNumberLabelvWatch = 0
 END SUB
 
@@ -18832,7 +18824,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             ELSE
                 bytes = (sourcetyp AND 511) \ 8
             END IF
-            bytes$ = bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + "))"
+            bytes$ = "(" + bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + ")))"
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
             IF targettyp = -5 THEN evaluatetotyp$ = bytes$
             IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -22703,8 +22695,6 @@ END FUNCTION
 
 SUB xend
     IF GetRCStateVar(vWatchOn) THEN
-        'check if closedmain = 0 in case a main module ends in an include.
-        IF (inclinenumber(inclevel) = 0 OR closedmain = 0) THEN vWatchAddLabel 0, -1
         WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
     END IF
     WriteBufLine MainTxtBuf, "sub_end();"

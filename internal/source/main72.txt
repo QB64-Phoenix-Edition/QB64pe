@@ -1,0 +1,68 @@
+qbs* FUNC_STRREPLACE(qbs*_FUNC_STRREPLACE_STRING_MYSTRING,qbs*_FUNC_STRREPLACE_STRING_FIND,qbs*_FUNC_STRREPLACE_STRING_REPLACEWITH){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data72.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24215,19,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(24215,20,"strings.bas");}while(r);
+S_32418:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_STRREPLACE_STRING_MYSTRING->len== 0 )))||is_error_pending()){
+if(qbevent){evnt(24215,21,"strings.bas");if(r)goto S_32418;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24215,21,"strings.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_MYSTRING);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,22,"strings.bas");}while(r);
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_B,qbs_lcase(_FUNC_STRREPLACE_STRING_FIND));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,23,"strings.bas");}while(r);
+do{
+*_FUNC_STRREPLACE_LONG_BASEI= 1 ;
+if(!qbevent)break;evnt(24215,24,"strings.bas");}while(r);
+do{
+*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,25,"strings.bas");}while(r);
+S_32425:;
+while((*_FUNC_STRREPLACE_LONG_I)||is_error_pending()){
+if(qbevent){evnt(24215,26,"strings.bas");if(r)goto S_32425;}
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_A,qbs_add(qbs_add(qbs_left(_FUNC_STRREPLACE_STRING_A,*_FUNC_STRREPLACE_LONG_I- 1 ),_FUNC_STRREPLACE_STRING_REPLACEWITH),qbs_right(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_A->len-*_FUNC_STRREPLACE_LONG_I-_FUNC_STRREPLACE_STRING_B->len+ 1 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,27,"strings.bas");}while(r);
+do{
+*_FUNC_STRREPLACE_LONG_BASEI=*_FUNC_STRREPLACE_LONG_I+_FUNC_STRREPLACE_STRING_REPLACEWITH->len;
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,28,"strings.bas");}while(r);
+do{
+*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,29,"strings.bas");}while(r);
+dl_continue_3685:;
+}
+dl_exit_3685:;
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_STRREPLACE,_FUNC_STRREPLACE_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24215,31,"strings.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free72.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_STRREPLACE_STRING_STRREPLACE);return _FUNC_STRREPLACE_STRING_STRREPLACE;
+}

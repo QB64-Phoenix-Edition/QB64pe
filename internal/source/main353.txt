@@ -1,0 +1,85 @@
+void SUB_ADDQUICKNAVHISTORY(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data353.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_60566:;
+if ((-(*__LONG_QUICKNAVTOTAL> 0 ))||is_error_pending()){
+if(qbevent){evnt(24235,20232,"ide_methods.bas");if(r)goto S_60566;}
+S_60567:;
+if ((-(*(int32*)(((char*)__ARRAY_UDT_QUICKNAVHISTORY[0])+((array_check((*__LONG_QUICKNAVTOTAL)-__ARRAY_UDT_QUICKNAVHISTORY[4],__ARRAY_UDT_QUICKNAVHISTORY[5]))*16+12))==*__LONG_IDECY))||is_error_pending()){
+if(qbevent){evnt(24235,20233,"ide_methods.bas");if(r)goto S_60567;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24235,20233,"ide_methods.bas");}while(r);
+}
+}
+do{
+*__LONG_QUICKNAVTOTAL=*__LONG_QUICKNAVTOTAL+ 1 ;
+if(!qbevent)break;evnt(24235,20236,"ide_methods.bas");}while(r);
+do{
+
+if (__ARRAY_UDT_QUICKNAVHISTORY[2]&2){
+error(10);
+}else{
+((mem_lock*)((ptrszint*)__ARRAY_UDT_QUICKNAVHISTORY)[8])->id=(++mem_lock_id);
+static int32 preserved_elements;
+if (__ARRAY_UDT_QUICKNAVHISTORY[2]&1){
+preserved_elements=__ARRAY_UDT_QUICKNAVHISTORY[5];
+}
+else preserved_elements=0;
+__ARRAY_UDT_QUICKNAVHISTORY[4]= 1 ;
+__ARRAY_UDT_QUICKNAVHISTORY[5]=(*__LONG_QUICKNAVTOTAL)-__ARRAY_UDT_QUICKNAVHISTORY[4]+1;
+__ARRAY_UDT_QUICKNAVHISTORY[6]=1;
+if (__ARRAY_UDT_QUICKNAVHISTORY[2]&4){
+if (preserved_elements){
+memcpy(redim_preserve_cmem_buffer,(void*)(__ARRAY_UDT_QUICKNAVHISTORY[0]),preserved_elements*16);
+cmem_dynamic_free((uint8*)(__ARRAY_UDT_QUICKNAVHISTORY[0]));
+tmp_long=__ARRAY_UDT_QUICKNAVHISTORY[5];
+__ARRAY_UDT_QUICKNAVHISTORY[0]=(ptrszint)cmem_dynamic_malloc(tmp_long*16);
+memcpy((void*)(__ARRAY_UDT_QUICKNAVHISTORY[0]),redim_preserve_cmem_buffer,preserved_elements*16);
+if (preserved_elements<tmp_long) ZeroMemory(((uint8*)(__ARRAY_UDT_QUICKNAVHISTORY[0]))+preserved_elements*16,(tmp_long*16)-(preserved_elements*16));
+}else{
+__ARRAY_UDT_QUICKNAVHISTORY[0]=(ptrszint)cmem_dynamic_malloc(__ARRAY_UDT_QUICKNAVHISTORY[5]*16);
+memset((void*)(__ARRAY_UDT_QUICKNAVHISTORY[0]),0,__ARRAY_UDT_QUICKNAVHISTORY[5]*16);
+}
+}else{
+if (preserved_elements){
+tmp_long=__ARRAY_UDT_QUICKNAVHISTORY[5];
+__ARRAY_UDT_QUICKNAVHISTORY[0]=(ptrszint)realloc((void*)(__ARRAY_UDT_QUICKNAVHISTORY[0]),tmp_long*16);
+if (!__ARRAY_UDT_QUICKNAVHISTORY[0]) error(257);
+if (preserved_elements<tmp_long) ZeroMemory(((uint8*)(__ARRAY_UDT_QUICKNAVHISTORY[0]))+preserved_elements*16,(tmp_long*16)-(preserved_elements*16));
+}else{
+__ARRAY_UDT_QUICKNAVHISTORY[0]=(ptrszint)calloc(__ARRAY_UDT_QUICKNAVHISTORY[5]*16,1);
+if (!__ARRAY_UDT_QUICKNAVHISTORY[0]) error(257);
+}
+}
+__ARRAY_UDT_QUICKNAVHISTORY[2]|=1;
+}
+if(!qbevent)break;evnt(24235,20237,"ide_methods.bas");}while(r);
+do{
+*(int32*)(((char*)__ARRAY_UDT_QUICKNAVHISTORY[0])+((array_check((*__LONG_QUICKNAVTOTAL)-__ARRAY_UDT_QUICKNAVHISTORY[4],__ARRAY_UDT_QUICKNAVHISTORY[5]))*16+12))=*__LONG_IDECY;
+if(!qbevent)break;evnt(24235,20239,"ide_methods.bas");}while(r);
+do{
+*(int32*)(((char*)__ARRAY_UDT_QUICKNAVHISTORY[0])+((array_check((*__LONG_QUICKNAVTOTAL)-__ARRAY_UDT_QUICKNAVHISTORY[4],__ARRAY_UDT_QUICKNAVHISTORY[5]))*16+8))=*__LONG_IDECX;
+if(!qbevent)break;evnt(24235,20240,"ide_methods.bas");}while(r);
+do{
+*(int32*)(((char*)__ARRAY_UDT_QUICKNAVHISTORY[0])+((array_check((*__LONG_QUICKNAVTOTAL)-__ARRAY_UDT_QUICKNAVHISTORY[4],__ARRAY_UDT_QUICKNAVHISTORY[5]))*16+4))=*__LONG_IDESY;
+if(!qbevent)break;evnt(24235,20241,"ide_methods.bas");}while(r);
+do{
+*(int32*)(((char*)__ARRAY_UDT_QUICKNAVHISTORY[0])+((array_check((*__LONG_QUICKNAVTOTAL)-__ARRAY_UDT_QUICKNAVHISTORY[4],__ARRAY_UDT_QUICKNAVHISTORY[5]))*16))=*__LONG_IDESX;
+if(!qbevent)break;evnt(24235,20242,"ide_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free353.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

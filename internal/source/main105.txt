@@ -1,0 +1,60 @@
+int32 FUNC_NUMELEMENTS(qbs*_FUNC_NUMELEMENTS_STRING_A){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data105.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24218,165,"elements.bas");}while(r);
+S_32725:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_NUMELEMENTS_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(24218,167,"elements.bas");if(r)goto S_32725;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24218,167,"elements.bas");}while(r);
+}
+do{
+*_FUNC_NUMELEMENTS_LONG_N= 1 ;
+if(!qbevent)break;evnt(24218,168,"elements.bas");}while(r);
+do{
+*_FUNC_NUMELEMENTS_LONG_P= 1 ;
+if(!qbevent)break;evnt(24218,169,"elements.bas");}while(r);
+LABEL_NUMELEMENTSNEXT:;
+if(qbevent){evnt(24218,170,"elements.bas");r=0;}
+do{
+*_FUNC_NUMELEMENTS_LONG_I=func_instr(*_FUNC_NUMELEMENTS_LONG_P,_FUNC_NUMELEMENTS_STRING_A,__STRING1_SP,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24218,171,"elements.bas");}while(r);
+S_32731:;
+if ((-(*_FUNC_NUMELEMENTS_LONG_I== 0 ))||is_error_pending()){
+if(qbevent){evnt(24218,172,"elements.bas");if(r)goto S_32731;}
+do{
+*_FUNC_NUMELEMENTS_LONG_NUMELEMENTS=*_FUNC_NUMELEMENTS_LONG_N;
+if(!qbevent)break;evnt(24218,172,"elements.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24218,172,"elements.bas");}while(r);
+}
+do{
+*_FUNC_NUMELEMENTS_LONG_N=*_FUNC_NUMELEMENTS_LONG_N+ 1 ;
+if(!qbevent)break;evnt(24218,173,"elements.bas");}while(r);
+do{
+*_FUNC_NUMELEMENTS_LONG_P=*_FUNC_NUMELEMENTS_LONG_I+ 1 ;
+if(!qbevent)break;evnt(24218,174,"elements.bas");}while(r);
+do{
+goto LABEL_NUMELEMENTSNEXT;
+if(!qbevent)break;evnt(24218,175,"elements.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free105.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_NUMELEMENTS_LONG_NUMELEMENTS;
+}

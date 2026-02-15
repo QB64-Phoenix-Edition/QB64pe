@@ -1,0 +1,62 @@
+int32 FUNC_HELP_COL(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data380.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_NORMAL;
+if(!qbevent)break;evnt(24235,246,"wiki_methods.bas");}while(r);
+S_61592:;
+if ((*__LONG_HELP_ITALIC)||is_error_pending()){
+if(qbevent){evnt(24235,247,"wiki_methods.bas");if(r)goto S_61592;}
+do{
+*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_ITALIC;
+if(!qbevent)break;evnt(24235,247,"wiki_methods.bas");}while(r);
+}
+S_61595:;
+if ((*__LONG_HELP_BOLD)||is_error_pending()){
+if(qbevent){evnt(24235,248,"wiki_methods.bas");if(r)goto S_61595;}
+do{
+*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_BOLD;
+if(!qbevent)break;evnt(24235,248,"wiki_methods.bas");}while(r);
+}
+S_61598:;
+if ((*__LONG_HELP_HEADING)||is_error_pending()){
+if(qbevent){evnt(24235,249,"wiki_methods.bas");if(r)goto S_61598;}
+do{
+*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_SECTION;
+if(!qbevent)break;evnt(24235,249,"wiki_methods.bas");}while(r);
+}
+S_61601:;
+if ((*__LONG_HELP_LINKTXT)||is_error_pending()){
+if(qbevent){evnt(24235,250,"wiki_methods.bas");if(r)goto S_61601;}
+S_61602:;
+if ((-(*__LONG_HELP_LOCKPARSE== 0 ))||is_error_pending()){
+if(qbevent){evnt(24235,252,"wiki_methods.bas");if(r)goto S_61602;}
+do{
+*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_LINK;
+if(!qbevent)break;evnt(24235,252,"wiki_methods.bas");}while(r);
+}else{
+do{
+*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_ITALIC;
+if(!qbevent)break;evnt(24235,252,"wiki_methods.bas");}while(r);
+}
+}
+do{
+*_FUNC_HELP_COL_LONG_HELP_COL=*_FUNC_HELP_COL_LONG_COL;
+if(!qbevent)break;evnt(24235,254,"wiki_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free380.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_HELP_COL_LONG_HELP_COL;
+}

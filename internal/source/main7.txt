@@ -1,0 +1,43 @@
+int32 FUNC_PARSESTRINGSETTING(qbs*_FUNC_PARSESTRINGSETTING_STRING_TOKEN,qbs*_FUNC_PARSESTRINGSETTING_STRING_SETTING){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data7.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(13589);}while(r);
+do{
+*_FUNC_PARSESTRINGSETTING_LONG_EQUALS=func_instr(NULL,_FUNC_PARSESTRINGSETTING_STRING_TOKEN,qbs_new_txt_len("=",1),0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(13591);}while(r);
+S_16183:;
+if ((-(*_FUNC_PARSESTRINGSETTING_LONG_EQUALS== 0 ))||is_error_pending()){
+if(qbevent){evnt(13592);if(r)goto S_16183;}
+do{
+*_FUNC_PARSESTRINGSETTING_LONG_PARSESTRINGSETTING= 0 ;
+if(!qbevent)break;evnt(13592);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(13592);}while(r);
+}
+do{
+qbs_set(_FUNC_PARSESTRINGSETTING_STRING_SETTING,func_mid(_FUNC_PARSESTRINGSETTING_STRING_TOKEN,*_FUNC_PARSESTRINGSETTING_LONG_EQUALS+ 1 ,NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(13594);}while(r);
+do{
+*_FUNC_PARSESTRINGSETTING_LONG_PARSESTRINGSETTING= -1 ;
+if(!qbevent)break;evnt(13596);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free7.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_PARSESTRINGSETTING_LONG_PARSESTRINGSETTING;
+}

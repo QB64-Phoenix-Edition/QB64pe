@@ -1,0 +1,58 @@
+uint32 FUNC_VRGBS(qbs*_FUNC_VRGBS_STRING_TEXT,uint32*_FUNC_VRGBS_ULONG_DEFAULTCOLOR){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data61.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*_FUNC_VRGBS_ULONG_VRGBS=*_FUNC_VRGBS_ULONG_DEFAULTCOLOR;
+if(!qbevent)break;evnt(23752);}while(r);
+S_31863:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_ucase(qbs_left(_FUNC_VRGBS_STRING_TEXT, 4 )),qbs_new_txt_len("_RGB",4))))||is_error_pending()){
+if(qbevent){evnt(23753);if(r)goto S_31863;}
+do{
+*_FUNC_VRGBS_LONG_RPOS=func_instr(NULL,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len("(",1),0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23754);}while(r);
+do{
+*_FUNC_VRGBS_LONG_GPOS=func_instr(*_FUNC_VRGBS_LONG_RPOS,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23755);}while(r);
+do{
+*_FUNC_VRGBS_LONG_BPOS=func_instr(*_FUNC_VRGBS_LONG_GPOS+ 1 ,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23756);}while(r);
+S_31867:;
+if (((-(*_FUNC_VRGBS_LONG_RPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_BPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_GPOS!= 0 )))||is_error_pending()){
+if(qbevent){evnt(23757);if(r)goto S_31867;}
+do{
+*_FUNC_VRGBS_LONG_RED=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_RPOS+ 1 ,NULL,0))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23758);}while(r);
+do{
+*_FUNC_VRGBS_LONG_GREEN=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_GPOS+ 1 ,NULL,0))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23759);}while(r);
+do{
+*_FUNC_VRGBS_LONG_BLUE=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_BPOS+ 1 ,NULL,0))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(23760);}while(r);
+do{
+*_FUNC_VRGBS_ULONG_VRGBS=func__rgb32(*_FUNC_VRGBS_LONG_RED,*_FUNC_VRGBS_LONG_GREEN,*_FUNC_VRGBS_LONG_BLUE);
+if(!qbevent)break;evnt(23761);}while(r);
+}
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free61.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_VRGBS_ULONG_VRGBS;
+}

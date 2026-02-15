@@ -1,0 +1,89 @@
+qbs* FUNC__ENCODEURL(qbs*_FUNC__ENCODEURL_STRING__URL){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data392.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+qbs_set(_FUNC__ENCODEURL_STRING__TMP,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+*_FUNC__ENCODEURL_INTEGER__INQUERY= 0ll ;
+*_FUNC__ENCODEURL_INTEGER__ISKEY= 0ll ;
+fornext_value7244= 1 ;
+fornext_finalvalue7244=_FUNC__ENCODEURL_STRING__URL->len;
+fornext_step7244= 1 ;
+if (fornext_step7244<0) fornext_step_negative7244=1; else fornext_step_negative7244=0;
+if (is_error_pending()) goto fornext_error7244;
+goto fornext_entrylabel7244;
+while(1){
+fornext_value7244=fornext_step7244+(*_FUNC__ENCODEURL_INTEGER__P);
+fornext_entrylabel7244:
+*_FUNC__ENCODEURL_INTEGER__P=fornext_value7244;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative7244){
+if (fornext_value7244<fornext_finalvalue7244) break;
+}else{
+if (fornext_value7244>fornext_finalvalue7244) break;
+}
+fornext_error7244:;
+*_FUNC__ENCODEURL_INTEGER__A=qbs_asc(_FUNC__ENCODEURL_STRING__URL,*_FUNC__ENCODEURL_INTEGER__P);
+qbs_cleanup(qbs_tmp_base,0);
+*_FUNC__ENCODEURL_INTEGER__VALID= 0ll ;
+if (((*_FUNC__ENCODEURL_INTEGER__A==( 45ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 46ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 95ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 126ll ))||((*_FUNC__ENCODEURL_INTEGER__A>=( 48 ))&&(*_FUNC__ENCODEURL_INTEGER__A<=( 57 )))||((*_FUNC__ENCODEURL_INTEGER__A>=( 65 ))&&(*_FUNC__ENCODEURL_INTEGER__A<=( 90 )))||((*_FUNC__ENCODEURL_INTEGER__A>=( 97 ))&&(*_FUNC__ENCODEURL_INTEGER__A<=( 122 ))))||is_error_pending()){
+*_FUNC__ENCODEURL_INTEGER__VALID= -1ll ;
+sc_ec_605_end:;
+goto sc_7246_end;
+}
+if (((*_FUNC__ENCODEURL_INTEGER__A==( 35ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 47ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 58ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 63ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 64ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 91ll ))||(*_FUNC__ENCODEURL_INTEGER__A==( 93ll )))||is_error_pending()){
+if ((~(*_FUNC__ENCODEURL_INTEGER__INQUERY))||is_error_pending()){
+*_FUNC__ENCODEURL_INTEGER__VALID= -1ll ;
+if ((-(*_FUNC__ENCODEURL_INTEGER__A== 63ll ))||is_error_pending()){
+*_FUNC__ENCODEURL_INTEGER__INQUERY= -1ll ;
+*_FUNC__ENCODEURL_INTEGER__ISKEY= -1ll ;
+}
+}
+sc_ec_606_end:;
+goto sc_7246_end;
+}
+if (((*_FUNC__ENCODEURL_INTEGER__A==( 61ll )))||is_error_pending()){
+if ((*_FUNC__ENCODEURL_INTEGER__INQUERY&*_FUNC__ENCODEURL_INTEGER__ISKEY)||is_error_pending()){
+*_FUNC__ENCODEURL_INTEGER__VALID= -1ll ;
+*_FUNC__ENCODEURL_INTEGER__ISKEY= 0ll ;
+}
+sc_ec_607_end:;
+goto sc_7246_end;
+}
+if (((*_FUNC__ENCODEURL_INTEGER__A==( 38ll )))||is_error_pending()){
+if ((*_FUNC__ENCODEURL_INTEGER__INQUERY&(~(*_FUNC__ENCODEURL_INTEGER__ISKEY)))||is_error_pending()){
+*_FUNC__ENCODEURL_INTEGER__VALID= -1ll ;
+*_FUNC__ENCODEURL_INTEGER__ISKEY= -1ll ;
+}
+sc_ec_608_end:;
+goto sc_7246_end;
+}
+sc_7246_end:;
+if ((*_FUNC__ENCODEURL_INTEGER__VALID)||is_error_pending()){
+qbs_set(_FUNC__ENCODEURL_STRING__TMP,qbs_add(_FUNC__ENCODEURL_STRING__TMP,func_chr(*_FUNC__ENCODEURL_INTEGER__A)));
+qbs_cleanup(qbs_tmp_base,0);
+}else{
+qbs_set(_FUNC__ENCODEURL_STRING__TMP,qbs_add(qbs_add(_FUNC__ENCODEURL_STRING__TMP,qbs_new_txt_len("%",1)),qbs_right(qbs_add(qbs_new_txt_len("00",2),func_hex(*_FUNC__ENCODEURL_INTEGER__A,4)), 2 )));
+qbs_cleanup(qbs_tmp_base,0);
+}
+fornext_continue_7243:;
+}
+fornext_exit_7243:;
+qbs_set(_FUNC__ENCODEURL_STRING__ENCODEURL,_FUNC__ENCODEURL_STRING__TMP);
+qbs_cleanup(qbs_tmp_base,0);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free392.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC__ENCODEURL_STRING__ENCODEURL);return _FUNC__ENCODEURL_STRING__ENCODEURL;
+}

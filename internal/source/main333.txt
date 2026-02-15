@@ -1,0 +1,38 @@
+int32 FUNC_CTRL2(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data333.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_58390:;
+if ((*__LONG_MACOSX)||is_error_pending()){
+if(qbevent){evnt(24235,18300,"ide_methods.bas");if(r)goto S_58390;}
+S_58391:;
+if ((func__keydown( 100309 ))||is_error_pending()){
+if(qbevent){evnt(24235,18301,"ide_methods.bas");if(r)goto S_58391;}
+do{
+*_FUNC_CTRL2_LONG_CTRL2= 1 ;
+if(!qbevent)break;evnt(24235,18301,"ide_methods.bas");}while(r);
+}
+S_58394:;
+if ((func__keydown( 100310 ))||is_error_pending()){
+if(qbevent){evnt(24235,18302,"ide_methods.bas");if(r)goto S_58394;}
+do{
+*_FUNC_CTRL2_LONG_CTRL2= 1 ;
+if(!qbevent)break;evnt(24235,18302,"ide_methods.bas");}while(r);
+}
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free333.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_CTRL2_LONG_CTRL2;
+}

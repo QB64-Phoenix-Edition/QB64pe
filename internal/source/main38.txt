@@ -1,0 +1,35 @@
+qbs* FUNC_SCOPE(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data38.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_29441:;
+if ((*(int16*)(((char*)__UDT_ID)+(2645)))||is_error_pending()){
+if(qbevent){evnt(21675);if(r)goto S_29441;}
+do{
+qbs_set(_FUNC_SCOPE_STRING_SCOPE,qbs_add(__STRING_MODULE,qbs_new_txt_len("__",2)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(21675);}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(21675);}while(r);
+}
+do{
+qbs_set(_FUNC_SCOPE_STRING_SCOPE,qbs_add(qbs_add(qbs_add(__STRING_MODULE,qbs_new_txt_len("_",1)),__STRING_SUBFUNC),qbs_new_txt_len("_",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(21676);}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free38.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_SCOPE_STRING_SCOPE);return _FUNC_SCOPE_STRING_SCOPE;
+}

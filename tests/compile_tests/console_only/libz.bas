@@ -1,5 +1,4 @@
 $CONSOLE:ONLY
-_DEST _CONSOLE
 
 PRINT HexString$(_DEFLATE$("this is a test"))
 SYSTEM

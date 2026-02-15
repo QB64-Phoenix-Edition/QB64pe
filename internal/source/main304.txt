@@ -1,0 +1,33 @@
+double FUNC_TIMEELAPSEDSINCE(double*_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMERVALUE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data304.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+*_FUNC_TIMEELAPSEDSINCE_DOUBLE_NOW=func_timer( 0.001E+0 ,0|1);
+if(!qbevent)break;evnt(24235,12801,"ide_methods.bas");}while(r);
+S_52169:;
+if ((-(((double)(*_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMERVALUE))>((double)(*_FUNC_TIMEELAPSEDSINCE_DOUBLE_NOW))))||is_error_pending()){
+if(qbevent){evnt(24235,12802,"ide_methods.bas");if(r)goto S_52169;}
+do{
+*_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMERVALUE=*_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMERVALUE- 86400 ;
+if(!qbevent)break;evnt(24235,12802,"ide_methods.bas");}while(r);
+}
+do{
+*_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMEELAPSEDSINCE=*_FUNC_TIMEELAPSEDSINCE_DOUBLE_NOW-*_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMERVALUE;
+if(!qbevent)break;evnt(24235,12803,"ide_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free304.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_TIMEELAPSEDSINCE_DOUBLE_TIMEELAPSEDSINCE;
+}

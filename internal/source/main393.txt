@@ -1,0 +1,54 @@
+qbs* FUNC__DECODEURL(qbs*_FUNC__DECODEURL_STRING__URL){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data393.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+fornext_value7249= 1 ;
+fornext_finalvalue7249=_FUNC__DECODEURL_STRING__URL->len;
+fornext_step7249= 1 ;
+if (fornext_step7249<0) fornext_step_negative7249=1; else fornext_step_negative7249=0;
+if (is_error_pending()) goto fornext_error7249;
+goto fornext_entrylabel7249;
+while(1){
+fornext_value7249=fornext_step7249+(*_FUNC__DECODEURL_INTEGER__P);
+fornext_entrylabel7249:
+*_FUNC__DECODEURL_INTEGER__P=fornext_value7249;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative7249){
+if (fornext_value7249<fornext_finalvalue7249) break;
+}else{
+if (fornext_value7249>fornext_finalvalue7249) break;
+}
+fornext_error7249:;
+*_FUNC__DECODEURL_INTEGER__A=qbs_asc(_FUNC__DECODEURL_STRING__URL,*_FUNC__DECODEURL_INTEGER__P);
+qbs_cleanup(qbs_tmp_base,0);
+if ((-(*_FUNC__DECODEURL_INTEGER__A!= 37ll ))||is_error_pending()){
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_add(_FUNC__DECODEURL_STRING__TMP,func_chr(*_FUNC__DECODEURL_INTEGER__A)));
+qbs_cleanup(qbs_tmp_base,0);
+}else{
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_add(_FUNC__DECODEURL_STRING__TMP,func_chr(qbr(qbs_val<long double>(qbs_add(qbs_new_txt_len("&H",2),func_mid(_FUNC__DECODEURL_STRING__URL,*_FUNC__DECODEURL_INTEGER__P+ 1 , 2 ,0|1))))& 255 )));
+qbs_cleanup(qbs_tmp_base,0);
+*_FUNC__DECODEURL_INTEGER__P=*_FUNC__DECODEURL_INTEGER__P+ 2 ;
+}
+fornext_continue_7248:;
+}
+fornext_exit_7248:;
+qbs_set(_FUNC__DECODEURL_STRING__DECODEURL,_FUNC__DECODEURL_STRING__TMP);
+qbs_cleanup(qbs_tmp_base,0);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free393.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC__DECODEURL_STRING__DECODEURL);return _FUNC__DECODEURL_STRING__DECODEURL;
+}

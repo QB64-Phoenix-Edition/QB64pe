@@ -1,0 +1,53 @@
+int16 FUNC_GOTOBUFMARK(int16*_FUNC_GOTOBUFMARK_INTEGER_HANDLE,int16*_FUNC_GOTOBUFMARK_INTEGER_MARKID){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data148.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24221,458,"simplebuffer.bm");}while(r);
+S_34255:;
+if ((~(FUNC_CHECKHANDLE(_FUNC_GOTOBUFMARK_INTEGER_HANDLE)))||is_error_pending()){
+if(qbevent){evnt(24221,460,"simplebuffer.bm");if(r)goto S_34255;}
+do{
+error( 258 );
+if(!qbevent)break;evnt(24221,460,"simplebuffer.bm");}while(r);
+do{
+close_program=1;
+end();
+if(!qbevent)break;evnt(24221,460,"simplebuffer.bm");}while(r);
+}
+do{
+*_FUNC_GOTOBUFMARK_LONG_BUF=*_FUNC_GOTOBUFMARK_INTEGER_HANDLE* 106 ;
+if(!qbevent)break;evnt(24221,461,"simplebuffer.bm");}while(r);
+do{
+*_FUNC_GOTOBUFMARK_LONG_MARKPOS=FUNC_GETBUFMARK(_FUNC_GOTOBUFMARK_INTEGER_HANDLE,_FUNC_GOTOBUFMARK_INTEGER_MARKID);
+if(!qbevent)break;evnt(24221,463,"simplebuffer.bm");}while(r);
+S_34261:;
+if ((-(*_FUNC_GOTOBUFMARK_LONG_MARKPOS> 0 ))||is_error_pending()){
+if(qbevent){evnt(24221,464,"simplebuffer.bm");if(r)goto S_34261;}
+do{
+sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_GOTOBUFMARK_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 1 , 4 ,l2string(*_FUNC_GOTOBUFMARK_LONG_MARKPOS),1);
+if(!qbevent)break;evnt(24221,465,"simplebuffer.bm");}while(r);
+do{
+*_FUNC_GOTOBUFMARK_INTEGER_GOTOBUFMARK= 0 ;
+if(!qbevent)break;evnt(24221,466,"simplebuffer.bm");}while(r);
+}else{
+do{
+*_FUNC_GOTOBUFMARK_INTEGER_GOTOBUFMARK=*_FUNC_GOTOBUFMARK_LONG_MARKPOS;
+if(!qbevent)break;evnt(24221,468,"simplebuffer.bm");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free148.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_GOTOBUFMARK_INTEGER_GOTOBUFMARK;
+}

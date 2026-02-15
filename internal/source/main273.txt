@@ -1,0 +1,52 @@
+void SUB_IDEBOX(int32*_SUB_IDEBOX_LONG_X,int32*_SUB_IDEBOX_LONG_Y,int32*_SUB_IDEBOX_LONG_W,int32*_SUB_IDEBOX_LONG_H){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data273.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+sub__printstring(*_SUB_IDEBOX_LONG_X,*_SUB_IDEBOX_LONG_Y,qbs_add(qbs_add(func_chr( 218 ),func_string(*_SUB_IDEBOX_LONG_W- 2 , 196 )),func_chr( 191 )),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,10654,"ide_methods.bas");}while(r);
+S_49847:;
+fornext_value5688=*_SUB_IDEBOX_LONG_Y+ 1 ;
+fornext_finalvalue5688=*_SUB_IDEBOX_LONG_Y+*_SUB_IDEBOX_LONG_H- 2 ;
+fornext_step5688= 1 ;
+if (fornext_step5688<0) fornext_step_negative5688=1; else fornext_step_negative5688=0;
+if (is_error_pending()) goto fornext_error5688;
+goto fornext_entrylabel5688;
+while(1){
+fornext_value5688=fornext_step5688+(*_SUB_IDEBOX_LONG_Y2);
+fornext_entrylabel5688:
+*_SUB_IDEBOX_LONG_Y2=fornext_value5688;
+if (fornext_step_negative5688){
+if (fornext_value5688<fornext_finalvalue5688) break;
+}else{
+if (fornext_value5688>fornext_finalvalue5688) break;
+}
+fornext_error5688:;
+if(qbevent){evnt(24235,10655,"ide_methods.bas");if(r)goto S_49847;}
+do{
+sub__printstring(*_SUB_IDEBOX_LONG_X,*_SUB_IDEBOX_LONG_Y2,qbs_add(qbs_add(func_chr( 179 ),func_space(*_SUB_IDEBOX_LONG_W- 2 )),func_chr( 179 )),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,10656,"ide_methods.bas");}while(r);
+fornext_continue_5687:;
+}
+fornext_exit_5687:;
+do{
+sub__printstring(*_SUB_IDEBOX_LONG_X,*_SUB_IDEBOX_LONG_Y+*_SUB_IDEBOX_LONG_H- 1 ,qbs_add(qbs_add(func_chr( 192 ),func_string(*_SUB_IDEBOX_LONG_W- 2 , 196 )),func_chr( 217 )),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24235,10658,"ide_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free273.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}

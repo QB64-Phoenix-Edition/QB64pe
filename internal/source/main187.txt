@@ -1,0 +1,77 @@
+int32 FUNC_UNARY(qbs*_FUNC_UNARY_STRING_EXP,void*_FUNC_UNARY_UDT_STATE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data187.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+S_35393:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(24222,615,"const_eval.bas");if(r)goto S_35393;}
+do{
+sub__echo(qbs_new_txt_len("Unary",5));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,615,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_UNARY_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_UNARY_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,616,"const_eval.bas");}while(r);
+S_35397:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_UNARY_STRING_ELE,qbs_new_txt_len("-",1))))||is_error_pending()){
+if(qbevent){evnt(24222,617,"const_eval.bas");if(r)goto S_35397;}
+do{
+qbs_set(_FUNC_UNARY_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_UNARY_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,617,"const_eval.bas");}while(r);
+}
+S_35400:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_EXPONENT(_FUNC_UNARY_STRING_EXP,(void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(24222,619,"const_eval.bas");if(r)goto S_35400;}
+do{
+SUB_FIXUPERRORMESSAGE((void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (0) ),qbs_new_txt_len("-",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,619,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(24222,619,"const_eval.bas");}while(r);
+}
+S_35404:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_UNARY_STRING_ELE,qbs_new_txt_len("-",1))))||is_error_pending()){
+if(qbevent){evnt(24222,621,"const_eval.bas");if(r)goto S_35404;}
+S_35405:;
+if ((*(int32*)(((char*)_FUNC_UNARY_UDT_STATE)+(64))&*__LONG_ISFLOAT)||is_error_pending()){
+if(qbevent){evnt(24222,622,"const_eval.bas");if(r)goto S_35405;}
+do{
+SUB_PARSENUMSETF((void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (8) ),&(pass4169=*__LONG_FLOATTYPE-*__LONG_ISPOINTER),&(pass4170=-(*(long double*)(((char*)_FUNC_UNARY_UDT_STATE)+(8)))));
+if(!qbevent)break;evnt(24222,623,"const_eval.bas");}while(r);
+}else{
+do{
+SUB_PARSENUMSETI((void*)( ((char*)(_FUNC_UNARY_UDT_STATE)) + (8) ),&(pass4171=*__LONG_INTEGER64TYPE-*__LONG_ISPOINTER),&(pass4172=-(*(int64*)(((char*)_FUNC_UNARY_UDT_STATE)+(40)))));
+if(!qbevent)break;evnt(24222,625,"const_eval.bas");}while(r);
+}
+}
+do{
+*_FUNC_UNARY_LONG_UNARY= -1 ;
+if(!qbevent)break;evnt(24222,628,"const_eval.bas");}while(r);
+S_35412:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(24222,629,"const_eval.bas");if(r)goto S_35412;}
+do{
+sub__echo(qbs_new_txt_len("Unary done!",11));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24222,629,"const_eval.bas");}while(r);
+}
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free187.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+return *_FUNC_UNARY_LONG_UNARY;
+}

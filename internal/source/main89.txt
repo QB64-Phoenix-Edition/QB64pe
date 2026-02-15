@@ -1,0 +1,64 @@
+qbs* FUNC_GETESCAPEDPATH(qbs*_FUNC_GETESCAPEDPATH_STRING_PATH_NAME){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data89.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+if(!qbevent)break;evnt(24216,87,"file.bas");}while(r);
+S_32552:;
+fornext_value3741= 1 ;
+fornext_finalvalue3741=_FUNC_GETESCAPEDPATH_STRING_PATH_NAME->len;
+fornext_step3741= 1 ;
+if (fornext_step3741<0) fornext_step_negative3741=1; else fornext_step_negative3741=0;
+if (is_error_pending()) goto fornext_error3741;
+goto fornext_entrylabel3741;
+while(1){
+fornext_value3741=fornext_step3741+(*_FUNC_GETESCAPEDPATH_ULONG_Z);
+fornext_entrylabel3741:
+*_FUNC_GETESCAPEDPATH_ULONG_Z=fornext_value3741;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative3741){
+if (fornext_value3741<fornext_finalvalue3741) break;
+}else{
+if (fornext_value3741>fornext_finalvalue3741) break;
+}
+fornext_error3741:;
+if(qbevent){evnt(24216,89,"file.bas");if(r)goto S_32552;}
+do{
+*_FUNC_GETESCAPEDPATH_UBYTE_A=qbs_asc(_FUNC_GETESCAPEDPATH_STRING_PATH_NAME,*_FUNC_GETESCAPEDPATH_ULONG_Z);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,90,"file.bas");}while(r);
+do{
+qbs_set(_FUNC_GETESCAPEDPATH_STRING_BUF,qbs_add(_FUNC_GETESCAPEDPATH_STRING_BUF,func_chr(*_FUNC_GETESCAPEDPATH_UBYTE_A)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,91,"file.bas");}while(r);
+S_32555:;
+if ((-(*_FUNC_GETESCAPEDPATH_UBYTE_A== 92 ))||is_error_pending()){
+if(qbevent){evnt(24216,92,"file.bas");if(r)goto S_32555;}
+do{
+qbs_set(_FUNC_GETESCAPEDPATH_STRING_BUF,qbs_add(_FUNC_GETESCAPEDPATH_STRING_BUF,qbs_new_txt_len("\\",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,92,"file.bas");}while(r);
+}
+fornext_continue_3740:;
+}
+fornext_exit_3740:;
+do{
+qbs_set(_FUNC_GETESCAPEDPATH_STRING_GETESCAPEDPATH,_FUNC_GETESCAPEDPATH_STRING_BUF);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24216,95,"file.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free89.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_GETESCAPEDPATH_STRING_GETESCAPEDPATH);return _FUNC_GETESCAPEDPATH_STRING_GETESCAPEDPATH;
+}

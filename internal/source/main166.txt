@@ -1,0 +1,24 @@
+qbs* FUNC_VERSIONSIMPLEBUFFER(){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data166.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_VERSIONSIMPLEBUFFER_STRING_VERSIONSIMPLEBUFFER,func_mid(qbs_new_txt_len("$VER: simplebuffer.bm 3.2 (18-Oct-2022) by RhoSigma :END$",57), 7 , 45 ,0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(24221,988,"simplebuffer.bm");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free166.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_VERSIONSIMPLEBUFFER_STRING_VERSIONSIMPLEBUFFER);return _FUNC_VERSIONSIMPLEBUFFER_STRING_VERSIONSIMPLEBUFFER;
+}
