@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------------------------------
 // Windows Cursor & Icon Loader for QB64-PE by a740g
 //
-// Bibliography:
+// References:
 // https://en.wikipedia.org/wiki/ICO_(file_format)
 // https://learn.microsoft.com/en-us/previous-versions/ms997538(v=msdn.10)
 // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapinfoheader

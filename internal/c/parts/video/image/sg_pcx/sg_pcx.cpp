@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------------------------------
 // PCX Loader for QB64-PE by a740g
 //
-// Bibliography:
+// References:
 // https://github.com/EzArIk/PcxFileType
 // https://github.com/mackron/dr_pcx
 // http://fileformats.archiveteam.org/wiki/PCX

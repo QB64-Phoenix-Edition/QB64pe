@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <stdint.h>
+#include <cstdint>
 
 struct img_struct {
     void *lock_offset;
@@ -260,7 +260,7 @@ static inline float image_get_rgb_euclidean_distance(uint8_t r1, uint8_t g1, uin
     auto delta_r = float(r2) - float(r1);
     auto delta_g = float(g2) - float(g1);
     auto delta_b = float(b2) - float(b1);
-    return sqrtf(delta_r * delta_r + delta_g * delta_g + delta_b * delta_b);
+    return std::sqrt(delta_r * delta_r + delta_g * delta_g + delta_b * delta_b);
 }
 
 static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b, int32_t a) {
@@ -303,8 +303,48 @@ static inline constexpr int32_t func__blue32(uint32_t col) {
     return col & 0xFF;
 }
 
-uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, uint8_t b, const uint32_t *palette, uint32_t paletteColors = 256);
+/// @brief Finds the closest color index in the palette.
+/// @tparam DistFunc The distance function to use.
+/// @param r The red color component.
+/// @param g The green color component.
+/// @param b The blue color component.
+/// @param palette The palette to search (an array of 32-bit colors).
+/// @param distanceFunction The distance function to use.
+/// @param paletteColors The number of colors in the palette.
+/// @return The index of the closest color in the palette.
+template <typename DistFunc>
+static inline uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, uint8_t b, const uint32_t *palette, DistFunc distanceFunction,
+                                                        uint32_t paletteColors = 256) {
+    using DistT = decltype(distanceFunction(uint8_t{}, uint8_t{}, uint8_t{}, uint8_t{}, uint8_t{}, uint8_t{}));
 
-static inline uint32_t image_find_closest_palette_color(uint32_t color, const uint32_t *palette, uint32_t paletteColors = 256) {
-    return image_find_closest_palette_color(image_get_bgra_red(color), image_get_bgra_green(color), image_get_bgra_blue(color), palette, paletteColors);
+    DistT minDistance = std::numeric_limits<DistT>::max();
+    uint32_t closestIndex = 0;
+
+    for (uint32_t i = 0; i < paletteColors; i++) {
+        auto distance = distanceFunction(r, g, b, image_get_bgra_red(palette[i]), image_get_bgra_green(palette[i]), image_get_bgra_blue(palette[i]));
+
+        if (distance < minDistance) {
+            if (distance == DistT{}) {
+                return i; // exact match
+            }
+
+            closestIndex = i;
+            minDistance = distance;
+        }
+    }
+
+    return closestIndex;
+}
+
+/// @brief Finds the closest color index in the palette.
+/// @tparam DistFunc The distance function to use.
+/// @param color The color to search (32-bit BGRA).
+/// @param palette The palette to search (an array of 32-bit colors).
+/// @param distanceFunction The distance function to use.
+/// @param paletteColors The number of colors in the palette.
+/// @return The index of the closest color in the palette.
+template <typename DistFunc>
+static inline uint32_t image_find_closest_palette_color(uint32_t color, const uint32_t *palette, DistFunc distanceFunction, uint32_t paletteColors = 256) {
+    return image_find_closest_palette_color(image_get_bgra_red(color), image_get_bgra_green(color), image_get_bgra_blue(color), palette, distanceFunction,
+                                            paletteColors);
 }

@@ -423,7 +423,8 @@ static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette
             float g = std::clamp(static_cast<float>(image_get_bgra_green(srcPixel)) + errG[i], 0.0f, 255.0f);
             float b = std::clamp(static_cast<float>(image_get_bgra_blue(srcPixel)) + errB[i], 0.0f, 255.0f);
 
-            size_t closestIndex = image_find_closest_palette_color(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), dstPalette);
+            size_t closestIndex = image_find_closest_palette_color(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), dstPalette,
+                                                                   image_get_rgb_euclidean_distance);
 
             dst[i] = static_cast<uint8_t>(closestIndex);
 
@@ -505,7 +506,7 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
 
         // Build palette index remap
         for (size_t i = 0; i < 256; i++) {
-            palMap[i] = static_cast<uint8_t>(image_find_closest_palette_color(dstPalette[i], srcPalette));
+            palMap[i] = static_cast<uint8_t>(image_find_closest_palette_color(dstPalette[i], srcPalette, image_get_rgb_euclidean_distance));
         }
 
         // Remap pixels in-place

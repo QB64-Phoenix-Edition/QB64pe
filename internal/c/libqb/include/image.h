@@ -7,11 +7,12 @@
 //
 //  Powered by:
 //      stb_image & stb_image_write (https://github.com/nothings/stb)
-//      dr_pcx (https://github.com/mackron/dr_pcx)
+//      jo_gif (https://www.jonolick.com/code)
 //      nanosvg (https://github.com/memononen/nanosvg)
 //      qoi (https://qoiformat.org)
 //      pixelscalers (https://github.com/janert/pixelscalers)
 //      mmpx (https://github.com/ITotalJustice/mmpx)
+//      sg_curico & sg_pcx (https://github.com/a740g)
 //
 //-----------------------------------------------------------------------------------------------------
 

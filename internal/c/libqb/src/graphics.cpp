@@ -36,34 +36,6 @@ extern uint8_t *ablend128;
 static int32_t depthbuffer_mode0 = DEPTHBUFFER_MODE__ON;
 static int32_t depthbuffer_mode1 = DEPTHBUFFER_MODE__ON;
 
-/// @brief Finds the closest color index in the palette.
-/// @param r The red color component.
-/// @param g The green color component.
-/// @param b The blue color component.
-/// @param palette The palette to search (an array of 32-bit colors).
-/// @param paletteColors The number of colors in the palette.
-/// @return The index of the closest color in the palette.
-uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, uint8_t b, const uint32_t *palette, uint32_t paletteColors) {
-    auto minDistance = std::numeric_limits<uint32_t>::max();
-    uint32_t closestIndex = 0;
-
-    for (auto i = 0u; i < paletteColors; i++) {
-        auto distance =
-            image_get_rgb_manhattan_distance(r, g, b, image_get_bgra_red(palette[i]), image_get_bgra_green(palette[i]), image_get_bgra_blue(palette[i]));
-
-        if (distance < minDistance) {
-            if (distance == 0) {
-                return i; // Exact match
-            }
-
-            closestIndex = i;
-            minDistance = distance;
-        }
-    }
-
-    return closestIndex;
-}
-
 void hsb2rgb(hsb_color *hsb, rgb_color *rgb) {
     double hu, hi, hf, pv, qv, tv;
 
