@@ -34,6 +34,7 @@
 #include "stb/stb_image_write.h"
 #include <algorithm>
 #include <cctype>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -392,16 +393,50 @@ static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette
     const size_t imageSize = static_cast<size_t>(w) * static_cast<size_t>(h);
 
     if (srcPalette) {
+        image_log_trace("Using provided palette");
         // Use the provided palette
         memcpy(dstPalette, srcPalette, 256 * sizeof(uint32_t));
     } else {
         // Generate adaptive palette
-        std::vector<uint8_t> adaptivePalette(256 * 3);
-        jo_gif_quantize(reinterpret_cast<uint8_t *>(const_cast<uint32_t *>(src32)), imageSize * sizeof(uint32_t), 0, adaptivePalette.data(), 256);
-        for (size_t i = 0; i < 256; i++) {
-            dstPalette[i] = image_make_bgra(adaptivePalette[i * 3 + 2], adaptivePalette[i * 3 + 1], adaptivePalette[i * 3 + 0]);
+        image_log_trace("Generating palette with uniform quantization");
+
+        struct ColorCube {
+            uint64_t r = 0, g = 0, b = 0;
+            uint32_t count = 0;
+        };
+
+        auto cubes = std::make_unique<ColorCube[]>(256);
+
+        for (size_t i = 0; i < imageSize; ++i) {
+            uint32_t pixel = src32[i];
+            uint8_t r = image_get_bgra_red(pixel);
+            uint8_t g = image_get_bgra_green(pixel);
+            uint8_t b = image_get_bgra_blue(pixel);
+
+            uint8_t index = (r >> 5) * 32 + (g >> 5) * 4 + (b >> 6);
+
+            cubes[index].r += r;
+            cubes[index].g += g;
+            cubes[index].b += b;
+            cubes[index].count++;
+        }
+
+        for (int i = 0; i < 256; ++i) {
+            if (cubes[i].count > 0) {
+                dstPalette[i] = image_make_bgra(cubes[i].b / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].r / cubes[i].count);
+            } else {
+                uint8_t r_part = (i >> 5) & 0x7;
+                uint8_t g_part = (i >> 2) & 0x7;
+                uint8_t b_part = (i & 0x3);
+                uint8_t r = (r_part * 255) / 7;
+                uint8_t g = (g_part * 255) / 7;
+                uint8_t b = (b_part * 255) / 3;
+                dstPalette[i] = image_make_bgra(b, g, r);
+            }
         }
     }
+
+    image_log_trace("Applying Floyd-Steinberg dithering");
 
     std::vector<float> errR(imageSize, 0.0f);
     std::vector<float> errG(imageSize, 0.0f);
@@ -475,7 +510,7 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
 
     const auto imageSize = static_cast<size_t>(w) * static_cast<size_t>(h);
 
-    // Map BGRA color -> palette index (first occurrence wins)
+    // Map BGRA color -> palette index
     std::unordered_map<uint32_t, int> colorMap;
     auto uniqueColors = 0;
 
@@ -505,7 +540,7 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
         std::vector<uint8_t> palMap(256, 0);
 
         // Build palette index remap
-        for (size_t i = 0; i < 256; i++) {
+        for (size_t i = 0; i < uniqueColors; i++) {
             palMap[i] = static_cast<uint8_t>(image_find_closest_palette_color(dstPalette[i], srcPalette, image_get_rgb_euclidean_distance));
         }
 
@@ -613,9 +648,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
 
     // Convert RGBA to BGRA
     size_t size = x * y;
-    for (size_t i = 0; i < size; i++) {
-        pixels[i] = image_swap_red_blue(pixels[i]);
-    }
+    image_swap_red_blue_buffer(pixels, size);
 
     auto i = func__newimage(x, y, bpp, 1);
     if (i == INVALID_IMAGE_HANDLE) {

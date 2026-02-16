@@ -303,6 +303,15 @@ static inline constexpr int32_t func__blue32(uint32_t col) {
     return col & 0xFF;
 }
 
+/// @brief Swaps the red and blue channels in a 32bpp image raw data (RGBA<->BGRA).
+/// @param buffer The source raw image data in RGBA format. This cannot be NULL.
+/// @param size The size of the raw image data in pixels.
+static inline void image_swap_red_blue_buffer(uint32_t *buffer, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        buffer[i] = image_swap_red_blue(buffer[i]);
+    }
+}
+
 /// @brief Finds the closest color index in the palette.
 /// @tparam DistFunc The distance function to use.
 /// @param r The red color component.
