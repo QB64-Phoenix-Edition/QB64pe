@@ -1,21 +1,21 @@
 #pragma once
 
 #include "libqb-common.h"
-#include <limits.h>
-#include <stdint.h>
+#include <cstdint>
+#include <limits>
 
 uint64_t getubits(uint32_t bsize, uint8_t *base, intptr_t i);
 int64_t getbits(uint32_t bsize, uint8_t *base, intptr_t i);
 void setbits(uint32_t bsize, uint8_t *base, intptr_t i, int64_t val);
 
 template <typename T> static inline constexpr T func__rol(T value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(T) - 1;
+    const unsigned int mask = std::numeric_limits<uint8_t>::digits * sizeof(T) - 1;
     count &= mask;
     return (value << count) | (value >> (-count & mask));
 }
 
 template <typename T> static inline constexpr T func__ror(T value, unsigned int count) {
-    const unsigned int mask = CHAR_BIT * sizeof(T) - 1;
+    const unsigned int mask = std::numeric_limits<uint8_t>::digits * sizeof(T) - 1;
     count &= mask;
     return (value >> count) | (value << (-count & mask));
 }

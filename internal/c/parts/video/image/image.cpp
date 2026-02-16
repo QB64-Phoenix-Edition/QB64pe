@@ -7,12 +7,12 @@
 //
 //  Powered by:
 //      stb_image & stb_image_write (https://github.com/nothings/stb)
-//      dr_pcx (https://github.com/mackron/dr_pcx)
+//      jo_gif (https://www.jonolick.com/code)
 //      nanosvg (https://github.com/memononen/nanosvg)
 //      qoi (https://qoiformat.org)
 //      pixelscalers (https://github.com/janert/pixelscalers)
 //      mmpx (https://github.com/ITotalJustice/mmpx)
-//      jo_gif (https://www.jonolick.com)
+//      sg_curico & sg_pcx (https://github.com/a740g)
 //
 //-----------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,6 @@
 #include "stb/stb_image_write.h"
 #include <algorithm>
 #include <cctype>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -390,22 +389,21 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
 static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette, int32_t w, int32_t h, uint8_t *dst, uint32_t *dstPalette) {
     image_log_info("Converting 32bpp image (%i, %i) to 8bpp", w, h);
 
-    const size_t imageSize = static_cast<size_t>(w) * static_cast<size_t>(h);
+    const auto imageSize = static_cast<size_t>(w) * static_cast<size_t>(h);
 
     if (srcPalette) {
         image_log_trace("Using provided palette");
-        // Use the provided palette
-        memcpy(dstPalette, srcPalette, 256 * sizeof(uint32_t));
+
+        memcpy(dstPalette, srcPalette, IMAGE_8BPP_MAX_COLORS * sizeof(uint32_t));
     } else {
-        // Generate adaptive palette
         image_log_trace("Generating palette with uniform quantization");
 
         struct ColorCube {
             uint64_t r = 0, g = 0, b = 0;
-            uint32_t count = 0;
+            uint64_t count = 0;
         };
 
-        auto cubes = std::make_unique<ColorCube[]>(256);
+        std::vector<ColorCube> cubes(IMAGE_8BPP_MAX_COLORS);
 
         for (size_t i = 0; i < imageSize; ++i) {
             uint32_t pixel = src32[i];
@@ -421,18 +419,9 @@ static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette
             cubes[index].count++;
         }
 
-        for (int i = 0; i < 256; ++i) {
-            if (cubes[i].count > 0) {
-                dstPalette[i] = image_make_bgra(cubes[i].b / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].r / cubes[i].count);
-            } else {
-                uint8_t r_part = (i >> 5) & 0x7;
-                uint8_t g_part = (i >> 2) & 0x7;
-                uint8_t b_part = (i & 0x3);
-                uint8_t r = (r_part * 255) / 7;
-                uint8_t g = (g_part * 255) / 7;
-                uint8_t b = (b_part * 255) / 3;
-                dstPalette[i] = image_make_bgra(b, g, r);
-            }
+        for (int i = 0; i < IMAGE_8BPP_MAX_COLORS; ++i) {
+            dstPalette[i] = (cubes[i].count > 0 ? image_make_bgra(cubes[i].r / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].b / cubes[i].count)
+                                                : image_make_bgra(0, 0, 0));
         }
     }
 
@@ -458,8 +447,8 @@ static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette
             float g = std::clamp(static_cast<float>(image_get_bgra_green(srcPixel)) + errG[i], 0.0f, 255.0f);
             float b = std::clamp(static_cast<float>(image_get_bgra_blue(srcPixel)) + errB[i], 0.0f, 255.0f);
 
-            size_t closestIndex = image_find_closest_palette_color(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), dstPalette,
-                                                                   image_get_rgb_euclidean_distance);
+            auto closestIndex = image_find_closest_palette_color(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), dstPalette,
+                                                                 image_get_rgb_euclidean_distance);
 
             dst[i] = static_cast<uint8_t>(closestIndex);
 
@@ -537,7 +526,7 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
     if (srcPalette) {
         image_log_trace("Remapping 8bpp image (%i, %i) palette", w, h);
 
-        std::vector<uint8_t> palMap(256, 0);
+        std::vector<uint8_t> palMap(IMAGE_8BPP_MAX_COLORS, 0);
 
         // Build palette index remap
         for (size_t i = 0; i < uniqueColors; i++) {
@@ -552,7 +541,7 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
             ++p;
         }
 
-        memcpy(dstPalette, srcPalette, 256 * sizeof(uint32_t));
+        memcpy(dstPalette, srcPalette, IMAGE_8BPP_MAX_COLORS * sizeof(uint32_t));
     }
 
     return true;

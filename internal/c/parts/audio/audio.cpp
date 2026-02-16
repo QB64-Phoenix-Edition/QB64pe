@@ -2982,8 +2982,8 @@ class AudioEngine {
             auto format = soundHandles[src_handle]->maAudioBuffer->ref.format;
 
             // First create a new _SNDNEW sound with the same properties at the source
-            dst_handle =
-                CreateSound(frames, channels, CHAR_BIT * ma_get_bytes_per_sample(format), soundHandles[src_handle]->maAudioBuffer->ref.sampleRate, 0b111);
+            dst_handle = CreateSound(frames, channels, std::numeric_limits<uint8_t>::digits * ma_get_bytes_per_sample(format),
+                                     soundHandles[src_handle]->maAudioBuffer->ref.sampleRate, 0b111);
             if (dst_handle < 1)
                 return AudioEngine::INVALID_SOUND_HANDLE;
 

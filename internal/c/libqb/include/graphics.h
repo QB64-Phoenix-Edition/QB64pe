@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
+
+inline constexpr auto IMAGE_8BPP_MAX_COLORS = std::size_t{1} << std::numeric_limits<uint8_t>::digits;
 
 struct img_struct {
     void *lock_offset;
@@ -323,7 +326,7 @@ static inline void image_swap_red_blue_buffer(uint32_t *buffer, size_t size) {
 /// @return The index of the closest color in the palette.
 template <typename DistFunc>
 static inline uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, uint8_t b, const uint32_t *palette, DistFunc distanceFunction,
-                                                        uint32_t paletteColors = 256) {
+                                                        uint32_t paletteColors = IMAGE_8BPP_MAX_COLORS) {
     using DistT = decltype(distanceFunction(uint8_t{}, uint8_t{}, uint8_t{}, uint8_t{}, uint8_t{}, uint8_t{}));
 
     DistT minDistance = std::numeric_limits<DistT>::max();
@@ -353,7 +356,8 @@ static inline uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, ui
 /// @param paletteColors The number of colors in the palette.
 /// @return The index of the closest color in the palette.
 template <typename DistFunc>
-static inline uint32_t image_find_closest_palette_color(uint32_t color, const uint32_t *palette, DistFunc distanceFunction, uint32_t paletteColors = 256) {
+static inline uint32_t image_find_closest_palette_color(uint32_t color, const uint32_t *palette, DistFunc distanceFunction,
+                                                        uint32_t paletteColors = IMAGE_8BPP_MAX_COLORS) {
     return image_find_closest_palette_color(image_get_bgra_red(color), image_get_bgra_green(color), image_get_bgra_blue(color), palette, distanceFunction,
                                             paletteColors);
 }
