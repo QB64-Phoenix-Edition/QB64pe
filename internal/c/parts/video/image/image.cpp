@@ -543,12 +543,12 @@ static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette
             auto eg = g - qG;
             auto eb = b - qB;
 
-            auto distribute = [&](int32_t x_offset, std::vector<ErrorPixel> &error_row, float factor) {
-                auto i = x + x_offset;
-                if (i >= 0 && i < w) {
-                    error_row[i].r += er * factor;
-                    error_row[i].g += eg * factor;
-                    error_row[i].b += eb * factor;
+            auto distribute = [&](int32_t xOffset, std::vector<ErrorPixel> &errorRow, float factor) {
+                auto j = x + xOffset;
+                if (j >= 0 && j < w) {
+                    errorRow[j].r += er * factor;
+                    errorRow[j].g += eg * factor;
+                    errorRow[j].b += eb * factor;
                 }
             };
 
@@ -999,23 +999,23 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
     case SaveFormat::HDR: {
         image_log_trace("Converting RGBA to linear float data");
 
-        const auto HDRComponents = 4;
+        const auto hdrComponents = 4;
 
-        std::vector<float> HDRPixels;
-        HDRPixels.resize(pixels.size() * HDRComponents);
+        std::vector<float> hdrPixels;
+        hdrPixels.resize(pixels.size() * hdrComponents);
 
         for (size_t j = 0, i = 0; i < pixels.size(); i++) {
-            HDRPixels[j] = pow((pixels[i] & 0xFFu) / 255.0f, 2.2f);
+            hdrPixels[j] = pow((pixels[i] & 0xFFu) / 255.0f, 2.2f);
             ++j;
-            HDRPixels[j] = pow(((pixels[i] >> 8) & 0xFFu) / 255.0f, 2.2f);
+            hdrPixels[j] = pow(((pixels[i] >> 8) & 0xFFu) / 255.0f, 2.2f);
             ++j;
-            HDRPixels[j] = pow(((pixels[i] >> 16) & 0xFFu) / 255.0f, 2.2f);
+            hdrPixels[j] = pow(((pixels[i] >> 16) & 0xFFu) / 255.0f, 2.2f);
             ++j;
-            HDRPixels[j] = (pixels[i] >> 24) / 255.0f;
+            hdrPixels[j] = (pixels[i] >> 24) / 255.0f;
             ++j;
         }
 
-        if (!stbi_write_hdr(fileName.c_str(), width, height, HDRComponents, HDRPixels.data())) {
+        if (!stbi_write_hdr(fileName.c_str(), width, height, hdrComponents, hdrPixels.data())) {
             image_log_error("stbi_write_hdr() failed");
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }
