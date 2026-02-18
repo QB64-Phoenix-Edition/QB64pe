@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "error_handle.h"
-#include "mem.h"
+#include "memblock.h"
 
 // QB64 memory blocks
 uint64_t mem_lock_id = 1073741823; // this value should never be 0 or 1

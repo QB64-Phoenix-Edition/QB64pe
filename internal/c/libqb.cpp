@@ -38,7 +38,7 @@
 #include "keyhandler.h"
 #include "logging.h"
 #include "mac-mouse-support.h"
-#include "mem.h"
+#include "memblock.h"
 #include "mutex.h"
 #include "qblist.h"
 #include "qbs.h"
@@ -954,10 +954,6 @@ int32 convert_unicode(int32 src_fmt, void *src_buf, int32 src_size, int32 dest_f
 
     return dest_size;
 }
-
-#ifdef QB64_WINDOWS
-void showvalue(__int64);
-#endif
 
 int32 lastfont = 48;
 int32 *font = (int32 *)calloc(4 * (48 + 1), 1); // NULL=unused index
@@ -7444,24 +7440,25 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 
         return;
     }
 
-    int32 opi = -1;         // originally passed image
-    int32 sod = -1;         // saved old destination
+    int32 opi = -1; // originally passed image
+    int32 sod = -1; // saved old destination
     if (passed & 8) {
         opi = i;
-        if (i >= 0) {       // validate i
+        if (i >= 0) { // validate i
             validatepage(i);
-        }
-        else {
+        } else {
             i = -i;
             if (i >= nextimg) {
-                error(258); return;
+                error(258);
+                return;
             }
-            if (!img[i].valid){
-                error(258); return;
+            if (!img[i].valid) {
+                error(258);
+                return;
             }
         }
     }
-    if (opi != -1) {        // set given image as destination
+    if (opi != -1) { // set given image as destination
         sod = func__dest();
         sub__dest(opi);
     }
@@ -7679,7 +7676,8 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 
 error:
     error(5);
 done:
-    if (opi != -1) sub__dest(sod);  // reset old destination, if required
+    if (opi != -1)
+        sub__dest(sod); // reset old destination, if required
     return;
 }
 
@@ -22517,16 +22515,6 @@ udlr:
     prefix_n = 0;
     goto nextchar;
 }
-
-#ifdef QB64_WINDOWS
-void showvalue(__int64 v) {
-    static qbs *s = NULL;
-    if (s == NULL)
-        s = qbs_new(0, 0);
-    qbs_set(s, qbs_str(v));
-    gui_alert((char *)s->chr, "showvalue", "ok");
-}
-#endif
 
 // Referenced: http://johnnie.jerrata.com/winsocktutorial/
 // Much of the unix sockets code based on http://beej.us/guide/bgnet/

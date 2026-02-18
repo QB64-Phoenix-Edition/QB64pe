@@ -18,7 +18,7 @@
 #include "filepath.h"
 #include "filesystem.h"
 #include "framework.h"
-#include "mem.h"
+#include "memblock.h"
 #include "mutex.h"
 #include "qbs.h"
 

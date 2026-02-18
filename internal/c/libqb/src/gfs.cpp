@@ -739,7 +739,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
         qbs_set(portname, qbs_add(qbs_new_txt("CO"), qbs_str(f->com_port)));
         qbs_set(portname, qbs_add(portname, qbs_new_txt_len(":\0", 2)));
         portname->chr[2] = 77; // replace " " with "M"
-        f->win_handle = CreateFile((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
+        f->win_handle = CreateFileA((char *)portname->chr, x, 0, NULL, OPEN_EXISTING, 0, NULL);
         if (f->win_handle == INVALID_HANDLE_VALUE) {
             gfs_free(i);
             return -8;
@@ -828,7 +828,7 @@ int32_t gfs_open(qbs *filename, int32_t access, int32_t restrictions, int32_t ho
     if (how)
         x3 = OPEN_ALWAYS;
 undefined_retry:
-    f->win_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
+    f->win_handle = CreateFileA(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
     if (f->win_handle == INVALID_HANDLE_VALUE) {
 
         if (how == 3) {
@@ -861,7 +861,7 @@ undefined_retry:
             return -8;
         if (e == 2)
             return -5;
-        // showvalue(e);
+
         return -5; // assume (2)
     } // invalid handle
 
@@ -872,7 +872,7 @@ undefined_retry:
         if (GetFileSize_low || GetFileSize_high) {
             CloseHandle(f->win_handle);
             x3 = TRUNCATE_EXISTING;
-            f->win_handle = CreateFile(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
+            f->win_handle = CreateFileA(filepath_fix_directory(filenamez), x, x2, NULL, x3, FILE_ATTRIBUTE_NORMAL, NULL);
 
             if (f->win_handle == INVALID_HANDLE_VALUE) {
                 gfs_free(i);
@@ -887,7 +887,7 @@ undefined_retry:
                     return -8;
                 if (e == 2)
                     return -5;
-                // showvalue(e);
+
                 return -5; // assume (2)
             } // invalid handle
         }
@@ -1074,7 +1074,7 @@ int32_t gfs_read(int32_t i, int64_t position, uint8_t *data, int64_t size) {
             auto e = GetLastError();
             if ((e == 5) || (e == 33))
                 return -7; // permission denied
-            // showvalue(e);
+
             return -9; // assume: path/file access error
         }
     }
@@ -1135,7 +1135,7 @@ int32_t gfs_lock(int32_t i, int64_t offset_start, int64_t offset_end) {
         auto e = GetLastError();
         if ((e == 5) || (e == 33))
             return -7; // permission denied
-        // showvalue(e);
+
         return -9; // assume: path/file access error
     }
     return 0;
@@ -1176,7 +1176,7 @@ int32_t gfs_unlock(int32_t i, int64_t offset_start, int64_t offset_end) {
         auto e = GetLastError();
         if ((e == 5) || (e == 33) || (e == 158))
             return -7; // permission denied
-        // showvalue(e);
+
         return -9; // assume: path/file access error
     }
     return 0;

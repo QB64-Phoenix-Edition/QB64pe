@@ -16,7 +16,7 @@
  * QB64_32: A 32bit system (the default)
  * QB64_64: A 64bit system (assumes all Macs are 64 bit)
  */
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 #    define QB64_WINDOWS
 #    ifndef _WIN32_WINNT
 // This supports Windows Vista and up
@@ -59,6 +59,8 @@
 
 #define QB_FALSE 0
 #define QB_TRUE -1
+
+#define QB_BOOL(expression) (-(bool(expression)))
 
 #ifndef _countof
 #    ifdef __cplusplus

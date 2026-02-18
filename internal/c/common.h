@@ -142,6 +142,6 @@ struct byte_element_struct {
     int32 length;
 };
 
-#    include "mem.h"
+#    include "memblock.h"
 
 #endif // INC_COMMON_CPP
