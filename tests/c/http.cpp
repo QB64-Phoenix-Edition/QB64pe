@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "http.h"
+#include "qb_http.h"
 #include "test.h"
 
 const char *example_result = "<!doctype html><html lang=\"en\"><head><title>Example Domain</title><meta name=\"viewport\" content=\"width=device-width, "

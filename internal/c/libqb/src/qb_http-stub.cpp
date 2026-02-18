@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "http.h"
+#include "qb_http.h"
 
 void libqb_http_init() {}
 

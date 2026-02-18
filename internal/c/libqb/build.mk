@@ -37,8 +37,8 @@ libqb-objs-$(win) += $(PATH_LIBQB)/src/logging/mingw/symbol.o
 # Unix symbol resolution
 libqb-objs-$(unix) += $(PATH_LIBQB)/src/logging/unix/symbol.o
 
-libqb-objs-$(DEP_HTTP) += $(PATH_LIBQB)/src/http.o
-libqb-objs-y$(DEP_HTTP) += $(PATH_LIBQB)/src/http-stub.o
+libqb-objs-$(DEP_HTTP) += $(PATH_LIBQB)/src/qb_http.o
+libqb-objs-y$(DEP_HTTP) += $(PATH_LIBQB)/src/qb_http-stub.o
 
 libqb-objs-y += $(PATH_LIBQB)/src/threading-$(PLATFORM).o
 
