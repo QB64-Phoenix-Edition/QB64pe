@@ -11,9 +11,9 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_60936:;
+S_60944:;
 if ((*__LONG_IDESELECT)||is_error_pending()){
-if(qbevent){evnt(24235,20550,"ide_methods.bas");if(r)goto S_60936;}
+if(qbevent){evnt(24235,20550,"ide_methods.bas");if(r)goto S_60944;}
 do{
 SUB_DELSELECT();
 if(!qbevent)break;evnt(24235,20550,"ide_methods.bas");}while(r);
@@ -22,9 +22,9 @@ do{
 qbs_set(_SUB_INSERTATCURSOR_STRING_A,FUNC_IDEGETLINE(__LONG_IDECY));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(24235,20551,"ide_methods.bas");}while(r);
-S_60940:;
+S_60948:;
 if ((qbs_cleanup(qbs_tmp_base,-((_SUB_INSERTATCURSOR_STRING_A->len)<(*__LONG_IDECX- 1 ))))||is_error_pending()){
-if(qbevent){evnt(24235,20552,"ide_methods.bas");if(r)goto S_60940;}
+if(qbevent){evnt(24235,20552,"ide_methods.bas");if(r)goto S_60948;}
 do{
 qbs_set(_SUB_INSERTATCURSOR_STRING_A,qbs_add(_SUB_INSERTATCURSOR_STRING_A,func_space(*__LONG_IDECX- 1 -_SUB_INSERTATCURSOR_STRING_A->len)));
 qbs_cleanup(qbs_tmp_base,0);
@@ -38,9 +38,9 @@ do{
 SUB_IDESETLINE(__LONG_IDECY,FUNC_CONVERTTABS(_SUB_INSERTATCURSOR_STRING_A));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(24235,20554,"ide_methods.bas");}while(r);
-S_60945:;
+S_60953:;
 if ((*__BYTE_PASTECURSORATEND)||is_error_pending()){
-if(qbevent){evnt(24235,20556,"ide_methods.bas");if(r)goto S_60945;}
+if(qbevent){evnt(24235,20556,"ide_methods.bas");if(r)goto S_60953;}
 do{
 *__LONG_IDECX=*__LONG_IDECX+_SUB_INSERTATCURSOR_STRING_TEMPK->len;
 qbs_cleanup(qbs_tmp_base,0);

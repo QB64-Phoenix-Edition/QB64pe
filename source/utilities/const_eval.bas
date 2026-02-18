@@ -1005,7 +1005,9 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
         CASE "LOG": n1 = LOG(args(1).f)
         CASE "EXP": n1 = EXP(args(1).f)
         CASE "ATN": n1 = ATN(args(1).f)
-        CASE "SQR": n1 = SQR(args(1).f)
+        CASE "SQR"
+            IF args(1).f < 0 THEN EvaluateFunction$ = "ERROR - Argument to SQR cannot be negative": EXIT FUNCTION
+            n1 = SQR(args(1).f)
         CASE "_D2R": n1 = 0.0174532925 * args(1).f
         CASE "_D2G": n1 = 1.1111111111 * args(1).f
         CASE "_R2D": n1 = 57.2957795 * args(1).f
@@ -1023,7 +1025,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
         CASE "_COT": n1 = _COT(args(1).f)
 
         CASE "CHR$":
-            IF args(1).ui > 255 THEN EvaluateFunction$ = "ERROR - Invalid argument to CHR$, valid range is 0-255: " + origArgs(1): EXIT FUNCTION
+            IF args(1).ui > 255 OR args(1).ui < 0 THEN EvaluateFunction$ = "ERROR - Invalid argument to CHR$, valid range is 0-255: " + origArgs(1): EXIT FUNCTION
 
             nstr = CHR$(args(1).ui)
             typ& = STRINGTYPE
@@ -1031,6 +1033,7 @@ FUNCTION EvaluateFunction$ (p, args AS STRING)
         CASE "ASC":
             IF argCount < 1 OR argCount > 2 THEN EvaluateFunction$ = "ERROR - Wrong number of arguments provided to ASC$": EXIT FUNCTION
             IF (args(1).typ AND ISSTRING) = 0 THEN EvaluateFunction$ = "ERROR - Unexpected argument: '" + origArgs(1) + "'": EXIT FUNCTION
+            IF LEN(args(1).s) < 1 THEN EvaluateFunction$ = "ERROR - ASC$ cannot apply to empty string": EXIT FUNCTION
 
             IF argCount = 1 THEN
                 n1 = ASC(args(1).s)
