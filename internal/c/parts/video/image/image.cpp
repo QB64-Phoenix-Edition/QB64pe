@@ -586,23 +586,25 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
 
     auto imageSize = size_t(w) * size_t(h);
 
-    std::unordered_map<uint32_t, int> colorMap;
-    auto uniqueColors = 0;
+    std::unordered_map<uint32_t, uint8_t> colorMap;
+    size_t uniqueColors = 0;
 
     for (size_t i = 0; i < imageSize; i++) {
         auto c = src32[i];
+        auto it = colorMap.find(c);
 
-        auto [it, inserted] = colorMap.try_emplace(c, uniqueColors);
-        if (inserted) {
-            if (uniqueColors > 255) {
+        if (it == colorMap.end()) {
+            if (uniqueColors >= IMAGE_8BPP_MAX_COLORS) {
                 image_log_info("Image has more than %i unique colors", uniqueColors);
                 return false;
             }
+
             dstPalette[uniqueColors] = c;
+            it = colorMap.emplace_hint(it, c, uniqueColors);
             ++uniqueColors;
         }
 
-        dst[i] = uint8_t(it->second);
+        dst[i] = it->second;
     }
 
     image_log_trace("Unique colors = %i", uniqueColors);
