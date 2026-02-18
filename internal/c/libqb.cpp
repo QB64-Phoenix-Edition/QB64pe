@@ -13702,7 +13702,7 @@ int32 func__blink() {
     return -H3C0_blink_enable;
 }
 
-int64 func__handle() {
+uintptr_t func__windowhandle() {
 #ifdef QB64_WINDOWS
 #    ifdef DEPENDENCY_CONSOLE_ONLY
     if (!window_handle) {
@@ -13738,7 +13738,7 @@ void set_foreground_window(ptrszint i) {
 int32 func__hasfocus() {
 #ifdef QB64_GUI
 #    ifdef QB64_WINDOWS
-    return -((HWND)func__handle() == GetForegroundWindow());
+    return -((HWND)func__windowhandle() == GetForegroundWindow());
 #    elif defined(QB64_LINUX)
     return window_focused;
 #    endif
@@ -21641,7 +21641,7 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
     }
 
 #        ifdef QB64_WINDOWS
-    HWND win = (HWND)func__handle();
+    HWND win = (HWND)func__windowhandle();
     if (!win) {
         return;
     }
@@ -21788,7 +21788,7 @@ int32 func_windowexists() {
 int32 func_screenicon() {
 #ifdef QB64_GLUT
 #    ifdef QB64_WINDOWS
-    HWND win = (HWND)func__handle();
+    HWND win = (HWND)func__windowhandle();
     if (!win) {
         return 0;
     }
@@ -28201,7 +28201,7 @@ void sub__writefile(qbs *filespec, qbs *contents) {
 
 void sub__filedrop(int32 on_off = NULL) {
 #ifdef QB64_WINDOWS
-    HWND win = (HWND)func__handle();
+    HWND win = (HWND)func__windowhandle();
     if (!win)
         return;
 

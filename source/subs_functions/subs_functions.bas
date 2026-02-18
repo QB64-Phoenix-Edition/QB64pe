@@ -643,8 +643,8 @@ SUB reginternal
     clearid
     id.n = "_WindowHandle"
     id.subfunc = 1
-    id.callname = "func__handle"
-    id.ret = INTEGER64TYPE - ISPOINTER
+    id.callname = "func__windowhandle"
+    id.ret = UOFFSETTYPE - ISPOINTER
     id.hr_syntax = "_WINDOWHANDLE"
     regid
 

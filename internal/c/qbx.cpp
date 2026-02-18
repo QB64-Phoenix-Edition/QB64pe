@@ -132,7 +132,7 @@ extern int32 func__blink();
 extern int32 func__hasfocus();
 extern void set_foreground_window(ptrszint i);
 extern qbs *func__title();
-extern int32 func__handle();
+extern uintptr_t func__windowhandle();
 extern int32 func_stick(int32 i, int32 axis_group, int32 passed);
 extern int32 func_strig(int32 i, int32 controller, int32 passed);
 extern void sub_paletteusing(void *element, int32 bits);
