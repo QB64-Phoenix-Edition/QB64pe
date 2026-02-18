@@ -18,7 +18,7 @@ buffer.src-y := ./tests/c/buffer.cpp \
 				$(PATH_LIBQB)/src/buffer.cpp
 
 http.src-y := ./tests/c/http.cpp \
-				$(PATH_LIBQB)/src/http.cpp \
+				$(PATH_LIBQB)/src/qb_http.cpp \
 				$(PATH_LIBQB)/src/buffer.cpp \
 				$(PATH_LIBQB)/src/threading-$(PLATFORM).cpp \
 				$(PATH_LIBQB)/src/threading.cpp
