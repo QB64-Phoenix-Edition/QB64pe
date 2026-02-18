@@ -379,7 +379,6 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
 }
 
 /// @brief This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
-/// See https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
 /// @param src32 The source raw image data. This must be in BGRA format and not NULL.
 /// @param srcPalette An optional source palette to use (256 colors in BGRA format). If NULL, an adaptive palette is generated.
 /// @param w The width of the image in pixels.
@@ -389,99 +388,207 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
 static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette, int32_t w, int32_t h, uint8_t *dst, uint32_t *dstPalette) {
     image_log_info("Converting 32bpp image (%i, %i) to 8bpp", w, h);
 
-    const auto imageSize = static_cast<size_t>(w) * static_cast<size_t>(h);
-
     if (srcPalette) {
         image_log_trace("Using provided palette");
 
         memcpy(dstPalette, srcPalette, IMAGE_8BPP_MAX_COLORS * sizeof(uint32_t));
     } else {
-        image_log_trace("Generating palette with uniform quantization");
+        image_log_trace("Generating adaptive palette");
 
-        struct ColorCube {
-            uint64_t r = 0, g = 0, b = 0;
-            uint64_t count = 0;
-        };
+        const size_t maxUnique = 4096u;
+        std::vector<uint32_t> histColors(maxUnique, 0);
+        std::vector<size_t> histCounts(maxUnique, 0);
+        std::unordered_map<uint32_t, size_t> uniqueColorMap;
 
-        std::vector<ColorCube> cubes(IMAGE_8BPP_MAX_COLORS);
+        auto stepX = std::max(w / 64, 1);
+        auto stepY = std::max(h / 64, 1);
 
-        for (size_t i = 0; i < imageSize; ++i) {
-            uint32_t pixel = src32[i];
-            uint8_t r = image_get_bgra_red(pixel);
-            uint8_t g = image_get_bgra_green(pixel);
-            uint8_t b = image_get_bgra_blue(pixel);
-
-            uint8_t index = (r >> 5) * 32 + (g >> 5) * 4 + (b >> 6);
-
-            cubes[index].r += r;
-            cubes[index].g += g;
-            cubes[index].b += b;
-            cubes[index].count++;
+        for (int32_t y = 0; y < h; y += stepY) {
+            for (int32_t x = 0; x < w; x += stepX) {
+                auto c = src32[size_t(y) * size_t(w) + size_t(x)];
+                auto it = uniqueColorMap.find(c);
+                if (it != uniqueColorMap.end()) {
+                    histCounts[it->second]++;
+                } else if (uniqueColorMap.size() < maxUnique) {
+                    uniqueColorMap[c] = histColors.size();
+                    histColors.push_back(c);
+                    histCounts.push_back(1);
+                }
+            }
         }
 
-        for (int i = 0; i < IMAGE_8BPP_MAX_COLORS; ++i) {
-            dstPalette[i] = (cubes[i].count > 0 ? image_make_bgra(cubes[i].r / cubes[i].count, cubes[i].g / cubes[i].count, cubes[i].b / cubes[i].count)
-                                                : image_make_bgra(0, 0, 0));
+        auto uniqueCount = histColors.size();
+        if (uniqueCount == 0) {
+            for (size_t i = 0; i < IMAGE_8BPP_MAX_COLORS; i++) {
+                auto gray = uint8_t((255u * i) / (IMAGE_8BPP_MAX_COLORS - 1u));
+                dstPalette[i] = image_make_bgr_gray(gray);
+            }
+        } else {
+            size_t maxCount = 1;
+            for (size_t i = 0; i < uniqueCount; i++) {
+                if (histCounts[i] > maxCount) {
+                    maxCount = histCounts[i];
+                }
+            }
+
+            std::vector<bool> chosen(uniqueCount, false);
+            std::vector<float> minDist2(uniqueCount, -1.0f);
+
+            size_t firstIdx = 0;
+            for (size_t i = 1; i < uniqueCount; i++) {
+                if (histCounts[i] > histCounts[firstIdx]) {
+                    firstIdx = i;
+                }
+            }
+
+            dstPalette[0] = histColors[firstIdx];
+            chosen[firstIdx] = true;
+            size_t paletteUsed = 1;
+
+            auto r1 = image_get_bgra_red(histColors[firstIdx]);
+            auto g1 = image_get_bgra_green(histColors[firstIdx]);
+            auto b1 = image_get_bgra_blue(histColors[firstIdx]);
+
+            for (size_t j = 0; j < uniqueCount; j++) {
+                if (!chosen[j]) {
+                    minDist2[j] = image_get_rgb_redmean_dist_sq(r1, g1, b1, image_get_bgra_red(histColors[j]), image_get_bgra_green(histColors[j]),
+                                                                image_get_bgra_blue(histColors[j]));
+                }
+            }
+
+            while (paletteUsed < IMAGE_8BPP_MAX_COLORS) {
+                auto bestScore = -1.0f;
+                int32_t bestIdx = -1;
+
+                for (size_t j = 0; j < uniqueCount; j++) {
+                    if (!chosen[j]) {
+                        auto popWeight = 1 + (histCounts[j] * 255) / maxCount;
+                        auto d2 = minDist2[j] < 0.0f ? 0.0f : minDist2[j];
+                        auto score = d2 * popWeight;
+
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestIdx = int32_t(j);
+                        }
+                    }
+                }
+
+                if (bestIdx < 0) {
+                    break;
+                }
+
+                dstPalette[paletteUsed] = histColors[bestIdx];
+                chosen[bestIdx] = true;
+                ++paletteUsed;
+
+                r1 = image_get_bgra_red(histColors[bestIdx]);
+                g1 = image_get_bgra_green(histColors[bestIdx]);
+                b1 = image_get_bgra_blue(histColors[bestIdx]);
+
+                for (size_t j = 0; j < uniqueCount; j++) {
+                    if (!chosen[j]) {
+                        float d2 = image_get_rgb_redmean_dist_sq(r1, g1, b1, image_get_bgra_red(histColors[j]), image_get_bgra_green(histColors[j]),
+                                                                 image_get_bgra_blue(histColors[j]));
+                        if (minDist2[j] < 0 || d2 < minDist2[j]) {
+                            minDist2[j] = d2;
+                        }
+                    }
+                }
+            }
+
+            for (size_t i = paletteUsed; i < IMAGE_8BPP_MAX_COLORS; i++) {
+                dstPalette[i] = dstPalette[paletteUsed - 1];
+            }
         }
     }
 
     image_log_trace("Applying Floyd-Steinberg dithering");
 
-    std::vector<float> errR(imageSize, 0.0f);
-    std::vector<float> errG(imageSize, 0.0f);
-    std::vector<float> errB(imageSize, 0.0f);
+    std::vector<float> errR(w, 0.0f);
+    std::vector<float> errG(w, 0.0f);
+    std::vector<float> errB(w, 0.0f);
+    std::vector<float> nextErrR(w, 0.0f);
+    std::vector<float> nextErrG(w, 0.0f);
+    std::vector<float> nextErrB(w, 0.0f);
 
-    auto idx2D = [&](int32_t x, int32_t y) -> size_t { return static_cast<size_t>(y) * static_cast<size_t>(w) + static_cast<size_t>(x); };
+    for (int32_t y = 0; y < h; y++) {
+        std::fill(nextErrR.begin(), nextErrR.end(), 0.0f);
+        std::fill(nextErrG.begin(), nextErrG.end(), 0.0f);
+        std::fill(nextErrB.begin(), nextErrB.end(), 0.0f);
 
-    for (int32_t y = 0; y < h; ++y) {
         auto isSerpentine = (y & 1) != 0;
         int32_t xStart = isSerpentine ? (w - 1) : 0;
         int32_t xEnd = isSerpentine ? -1 : w;
         int32_t xStep = isSerpentine ? -1 : 1;
 
         for (int32_t x = xStart; x != xEnd; x += xStep) {
-            auto i = idx2D(x, y);
+            auto i = size_t(y) * size_t(w) + size_t(x);
             auto srcPixel = src32[i];
 
-            float r = std::clamp(static_cast<float>(image_get_bgra_red(srcPixel)) + errR[i], 0.0f, 255.0f);
-            float g = std::clamp(static_cast<float>(image_get_bgra_green(srcPixel)) + errG[i], 0.0f, 255.0f);
-            float b = std::clamp(static_cast<float>(image_get_bgra_blue(srcPixel)) + errB[i], 0.0f, 255.0f);
+            auto r = std::clamp(float(image_get_bgra_red(srcPixel)) + errR[x], 0.0f, 255.0f);
+            auto g = std::clamp(float(image_get_bgra_green(srcPixel)) + errG[x], 0.0f, 255.0f);
+            auto b = std::clamp(float(image_get_bgra_blue(srcPixel)) + errB[x], 0.0f, 255.0f);
 
-            auto closestIndex = image_find_closest_palette_color(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), dstPalette,
-                                                                 image_get_rgb_euclidean_distance);
+            auto closestIndex = image_find_closest_palette_color(uint8_t(r), uint8_t(g), uint8_t(b), dstPalette, image_get_rgb_redmean_dist_sq);
 
-            dst[i] = static_cast<uint8_t>(closestIndex);
+            dst[i] = uint8_t(closestIndex);
 
             auto qPixel = dstPalette[closestIndex];
-            auto qR = static_cast<float>(image_get_bgra_red(qPixel));
-            auto qG = static_cast<float>(image_get_bgra_green(qPixel));
-            auto qB = static_cast<float>(image_get_bgra_blue(qPixel));
+            auto qR = float(image_get_bgra_red(qPixel));
+            auto qG = float(image_get_bgra_green(qPixel));
+            auto qB = float(image_get_bgra_blue(qPixel));
 
             auto er = r - qR;
             auto eg = g - qG;
             auto eb = b - qB;
 
-            auto addErr = [&](int32_t nx, int32_t ny, float wgt) {
-                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-                    auto ni = idx2D(nx, ny);
-                    errR[ni] += er * wgt;
-                    errG[ni] += eg * wgt;
-                    errB[ni] += eb * wgt;
+            if (xStep == 1) {
+                if (x + 1 < w) {
+                    errR[x + 1] += er * (7.0f / 16.0f);
+                    errG[x + 1] += eg * (7.0f / 16.0f);
+                    errB[x + 1] += eb * (7.0f / 16.0f);
                 }
-            };
-
-            if (isSerpentine) {
-                addErr(x - 1, y, 7.0f / 16.0f);
-                addErr(x + 1, y + 1, 3.0f / 16.0f);
-                addErr(x, y + 1, 5.0f / 16.0f);
-                addErr(x - 1, y + 1, 1.0f / 16.0f);
+                if (y + 1 < h) {
+                    if (x > 0) {
+                        nextErrR[x - 1] += er * (3.0f / 16.0f);
+                        nextErrG[x - 1] += eg * (3.0f / 16.0f);
+                        nextErrB[x - 1] += eb * (3.0f / 16.0f);
+                    }
+                    nextErrR[x] += er * (5.0f / 16.0f);
+                    nextErrG[x] += eg * (5.0f / 16.0f);
+                    nextErrB[x] += eb * (5.0f / 16.0f);
+                    if (x + 1 < w) {
+                        nextErrR[x + 1] += er * (1.0f / 16.0f);
+                        nextErrG[x + 1] += eg * (1.0f / 16.0f);
+                        nextErrB[x + 1] += eb * (1.0f / 16.0f);
+                    }
+                }
             } else {
-                addErr(x + 1, y, 7.0f / 16.0f);
-                addErr(x - 1, y + 1, 3.0f / 16.0f);
-                addErr(x, y + 1, 5.0f / 16.0f);
-                addErr(x + 1, y + 1, 1.0f / 16.0f);
+                if (x > 0) {
+                    errR[x - 1] += er * (7.0f / 16.0f);
+                    errG[x - 1] += eg * (7.0f / 16.0f);
+                    errB[x - 1] += eb * (7.0f / 16.0f);
+                }
+                if (y + 1 < h) {
+                    if (x + 1 < w) {
+                        nextErrR[x + 1] += er * (3.0f / 16.0f);
+                        nextErrG[x + 1] += eg * (3.0f / 16.0f);
+                        nextErrB[x + 1] += eb * (3.0f / 16.0f);
+                    }
+                    nextErrR[x] += er * (5.0f / 16.0f);
+                    nextErrG[x] += eg * (5.0f / 16.0f);
+                    nextErrB[x] += eb * (5.0f / 16.0f);
+                    if (x > 0) {
+                        nextErrR[x - 1] += er * (1.0f / 16.0f);
+                        nextErrG[x - 1] += eg * (1.0f / 16.0f);
+                        nextErrB[x - 1] += eb * (1.0f / 16.0f);
+                    }
+                }
             }
         }
+        errR.swap(nextErrR);
+        errG.swap(nextErrG);
+        errB.swap(nextErrB);
     }
 }
 
@@ -497,43 +604,38 @@ static void image_convert_8bpp(const uint32_t *src32, const uint32_t *srcPalette
 static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette, int32_t w, int32_t h, uint8_t *dst, uint32_t *dstPalette) {
     image_log_info("Extracting 8bpp image (%i, %i) from 32bpp", w, h);
 
-    const auto imageSize = static_cast<size_t>(w) * static_cast<size_t>(h);
+    const auto imageSize = size_t(w) * size_t(h);
 
-    // Map BGRA color -> palette index
     std::unordered_map<uint32_t, int> colorMap;
     auto uniqueColors = 0;
 
     for (size_t i = 0; i < imageSize; i++) {
         auto c = src32[i];
 
-        // Try to insert. If inserted, assign new index
         auto [it, inserted] = colorMap.try_emplace(c, uniqueColors);
         if (inserted) {
             if (uniqueColors > 255) {
                 image_log_info("Image has more than %i unique colors", uniqueColors);
-                return false; // Too many unique colors
+                return false;
             }
             dstPalette[uniqueColors] = c;
             ++uniqueColors;
         }
 
-        dst[i] = static_cast<uint8_t>(it->second);
+        dst[i] = uint8_t(it->second);
     }
 
     image_log_trace("Unique colors = %i", uniqueColors);
 
-    // If a source palette is provided, remap the extracted image to it
     if (srcPalette) {
         image_log_trace("Remapping 8bpp image (%i, %i) palette", w, h);
 
         std::vector<uint8_t> palMap(IMAGE_8BPP_MAX_COLORS, 0);
 
-        // Build palette index remap
         for (size_t i = 0; i < uniqueColors; i++) {
-            palMap[i] = static_cast<uint8_t>(image_find_closest_palette_color(dstPalette[i], srcPalette, image_get_rgb_euclidean_distance));
+            palMap[i] = uint8_t(image_find_closest_palette_color(dstPalette[i], srcPalette, image_get_rgb_euclidean_dist_sq));
         }
 
-        // Remap pixels in-place
         auto p = dst;
         const auto pEnd = dst + imageSize;
         while (p < pEnd) {
@@ -655,7 +757,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         memcpy(img[-i].offset32, pixels, size * sizeof(uint32_t));
     }
 
-    // Free pixel memory. We can do this because both dr_pcx and stb_image uses free()
+    // Free pixel memory. We can do this because all image loader as know to use malloc()
     free(pixels);
 
     // This only executes if bpp is 32

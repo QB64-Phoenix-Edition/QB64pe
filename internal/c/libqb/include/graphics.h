@@ -232,6 +232,10 @@ static inline constexpr uint32_t image_make_bgra(uint8_t r, uint8_t g, uint8_t b
     return uint32_t(b) | (uint32_t(g) << 8) | (uint32_t(r) << 16) | (uint32_t(a) << 24);
 }
 
+static inline constexpr uint32_t image_make_bgr_gray(uint8_t v, uint8_t a = 0xFFu) {
+    return uint32_t(v) | (uint32_t(v) << 8) | (uint32_t(v) << 16) | (uint32_t(a) << 24);
+}
+
 static inline constexpr int image_scale_5bits_to_8bits(int v) {
     return (v << 3) | (v >> 2);
 }
@@ -248,22 +252,43 @@ static inline constexpr uint8_t image_clamp_color_component(int n) {
     return uint8_t(std::clamp(n, 0, 255));
 }
 
-static inline uint32_t image_get_rgb_manhattan_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    return uint32_t(::abs(long(r1) - long(r2)) + ::abs(long(g1) - long(g2)) + ::abs(long(b1) - long(b2)));
+static inline uint32_t image_get_rgb_manhattan_dist(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = std::abs(int32_t(r2) - int32_t(r1));
+    auto dg = std::abs(int32_t(g2) - int32_t(g1));
+    auto db = std::abs(int32_t(b2) - int32_t(b1));
+    return uint32_t(dr + dg + db);
 }
 
-static inline constexpr uint32_t image_get_rgb_squared_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto dr = int(r1) - int(r2);
-    auto dg = int(g1) - int(g2);
-    auto db = int(b1) - int(b2);
+static inline constexpr uint32_t image_get_rgb_euclidean_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = int32_t(r2) - int32_t(r1);
+    auto dg = int32_t(g2) - int32_t(g1);
+    auto db = int32_t(b2) - int32_t(b1);
     return uint32_t(dr * dr + dg * dg + db * db);
 }
 
-static inline float image_get_rgb_euclidean_distance(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto delta_r = float(r2) - float(r1);
-    auto delta_g = float(g2) - float(g1);
-    auto delta_b = float(b2) - float(b1);
-    return std::sqrt(delta_r * delta_r + delta_g * delta_g + delta_b * delta_b);
+static inline float image_get_rgb_euclidean_dist(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = float(r2) - float(r1);
+    auto dg = float(g2) - float(g1);
+    auto db = float(b2) - float(b1);
+    return std::sqrt(dr * dr + dg * dg + db * db);
+}
+
+static inline float constexpr image_get_rgb_luma_weighted_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = float(r2) - float(r1);
+    auto dg = float(g2) - float(g1);
+    auto db = float(b2) - float(b1);
+    return 0.299f * dr * dr + 0.587f * dg * dg + 0.114f * db * db;
+}
+
+static inline float constexpr image_get_rgb_redmean_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto r_mean = (float(r2) + float(r1)) / 2.0f;
+    auto dr = float(r2) - float(r1);
+    auto dg = float(g2) - float(g1);
+    auto db = float(b2) - float(b1);
+    auto weight_r = 2.0f + (r_mean / 256.0f);
+    auto weight_g = 4.0f;
+    auto weight_b = 2.0f + ((255.0f - r_mean) / 256.0f);
+    return weight_r * dr * dr + weight_g * dg * dg + weight_b * db * db;
 }
 
 static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b, int32_t a) {
@@ -316,12 +341,12 @@ static inline void image_swap_red_blue_buffer(uint32_t *buffer, size_t size) {
 }
 
 /// @brief Finds the closest color index in the palette.
-/// @tparam DistFunc The distance function to use.
+/// @tparam DistFunc The distance function to use (see above).
 /// @param r The red color component.
 /// @param g The green color component.
 /// @param b The blue color component.
 /// @param palette The palette to search (an array of 32-bit colors).
-/// @param distanceFunction The distance function to use.
+/// @param distanceFunction The distance function to use (see above).
 /// @param paletteColors The number of colors in the palette.
 /// @return The index of the closest color in the palette.
 template <typename DistFunc>
@@ -349,10 +374,10 @@ static inline uint32_t image_find_closest_palette_color(uint8_t r, uint8_t g, ui
 }
 
 /// @brief Finds the closest color index in the palette.
-/// @tparam DistFunc The distance function to use.
+/// @tparam DistFunc The distance function to use (see above).
 /// @param color The color to search (32-bit BGRA).
 /// @param palette The palette to search (an array of 32-bit colors).
-/// @param distanceFunction The distance function to use.
+/// @param distanceFunction The distance function to use (see above).
 /// @param paletteColors The number of colors in the palette.
 /// @return The index of the closest color in the palette.
 template <typename DistFunc>
