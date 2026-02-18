@@ -3732,7 +3732,7 @@ SUB reginternal
     clearid
     id.n = "_DesktopHeight"
     id.subfunc = 1
-    id.callname = "func_screenheight"
+    id.callname = "func__desktopheight"
     id.args = 0
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_DESKTOPHEIGHT"
@@ -3741,7 +3741,7 @@ SUB reginternal
     clearid
     id.n = "_DesktopWidth"
     id.subfunc = 1
-    id.callname = "func_screenwidth"
+    id.callname = "func__desktopwidth"
     id.args = 0
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_DESKTOPWIDTH"

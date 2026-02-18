@@ -21744,7 +21744,7 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 } // sub__icon
 #endif // DEPENDENCY_ICON
 
-int32 func_screenwidth() {
+int32_t func__desktopwidth() {
 #ifdef QB64_WINDOWS
     return GetSystemMetrics(SM_CXSCREEN);
 #else
@@ -21757,7 +21757,7 @@ int32 func_screenwidth() {
 #endif
 }
 
-int32 func_screenheight() {
+int32_t func__desktopheight() {
 #ifdef QB64_WINDOWS
     return GetSystemMetrics(SM_CYSCREEN);
 #else
@@ -23840,7 +23840,7 @@ int32 func__screenimage(int32 x1, int32 y1, int32 x2, int32 y2, int32 passed) {
     ReleaseDC(NULL, hdc);
     return i;
 #    else
-    return func__newimage(func_screenwidth(), func_screenheight(), 32, 1);
+    return func__newimage(func__desktopwidth(), func__desktopheight(), 32, 1);
 #    endif
 }
 #endif // DEPENDENCY_SCREENIMAGE
