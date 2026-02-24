@@ -9881,26 +9881,6 @@ DO
                         IF ASC(getelement$(a$, 2)) = 61 THEN GOTO notsubcall 'assignment, not sub call
                     END IF
                 END IF
-                'check for array assignment
-                IF n > 2 THEN
-                    IF firstelement$ <> "PRINT" AND firstelement$ <> "LPRINT" THEN
-                        IF getelement$(a$, 2) = "(" THEN
-                            B = 1
-                            FOR i = 3 TO n
-                                e$ = getelement$(a$, i)
-                                IF e$ = "(" THEN B = B + 1
-                                IF e$ = ")" THEN
-                                    B = B - 1
-                                    IF B = 0 THEN
-                                        IF i = n THEN EXIT FOR
-                                        IF getelement$(a$, i + 1) = "=" THEN GOTO notsubcall
-                                    END IF
-                                END IF
-                            NEXT
-                        END IF
-                    END IF
-                END IF
-
 
                 'generate error on driect _GL call
                 IF firstelement$ = "_GL" THEN
