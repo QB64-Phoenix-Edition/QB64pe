@@ -34,7 +34,7 @@
 #include "gui.h"
 #include "hashing.h"
 #include "image.h"
-#include "keyhandler.h"
+#include "keyboard.h"
 #include "logging.h"
 #include "memblock.h"
 #include "mutex.h"
@@ -18219,10 +18219,8 @@ int32 func_freefile() {
 void sub__mousehide() {
     // GLFW_TODO: We should extend sub__mousehide to accept a parameter to show/hide the cursor instead of always hiding it
 #ifdef QB64_GUI
-#    ifdef QB64_GLUT
     OPTIONAL_GLUT();
     GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Hidden);
-#    endif
 #endif
 }
 
@@ -18230,7 +18228,7 @@ void sub__mouseshow(qbs *qbsStyle, int32 passed) {
     if (is_error_pending())
         return;
 
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT();
 
     // GLFW_TODO: We should extend sub__mouseshow to accept a parameter to show/hide the cursor instead of always showing it
@@ -18272,12 +18270,10 @@ void sub__mouseshow(qbs *qbsStyle, int32 passed) {
 
 int32_t func__mousehidden() {
 #ifdef QB64_GUI
-#    ifdef QB64_GLUT
     OPTIONAL_GLUT(QB_FALSE);
     // GLFW_TODO: We need a better way to query the current cursor mode
     auto cursor_mode = GLUTEmu_MouseGetCursorMode();
     return QB_BOOL(cursor_mode == GLUTEnum_MouseCursorMode::Hidden || cursor_mode == GLUTEnum_MouseCursorMode::Disabled);
-#    endif
 #else
     return QB_FALSE;
 #endif
@@ -18294,7 +18290,7 @@ float func__mousemovementy() {
 }
 
 void sub__mousemove(float x, float y) {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     NEEDS_GLUT();
 
     int32 x2, y2, sx, sy;
@@ -21650,7 +21646,7 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 #endif // DEPENDENCY_ICON
 
 int32_t func__desktopwidth() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT(0);
     return std::get<0>(GLUTEmu_ScreenGetMode());
 #else
@@ -21659,7 +21655,7 @@ int32_t func__desktopwidth() {
 }
 
 int32_t func__desktopheight() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT(0);
     return std::get<1>(GLUTEmu_ScreenGetMode());
 #else
@@ -21670,22 +21666,22 @@ int32_t func__desktopheight() {
 // GLFW_TODO: Implement a func_screenrefreshrate() function
 
 void sub_screenicon() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     NEEDS_GLUT();
     GLUTEmu_WindowMinimize();
 #endif
 }
 
 int32 func_windowexists() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     return QB_BOOL(libqb_is_glut_up());
 #else
-    return -1;
+    return QB_TRUE;
 #endif
 }
 
 int32 func_screenicon() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     NEEDS_GLUT(0);
     return QB_BOOL(GLUTEmu_WindowIsMinimized());
 #else
@@ -24987,7 +24983,7 @@ qbs *func__os() {
 }
 
 int32_t func__screenx() {
-#if defined(QB64_GUI) && defined(QB64_GLUT)
+#ifdef QB64_GUI
     NEEDS_GLUT(0);
     return GLUTEmu_WindowGetPosition().first;
 #endif
@@ -24995,7 +24991,7 @@ int32_t func__screenx() {
 }
 
 int32_t func__screeny() {
-#if defined(QB64_GUI) && defined(QB64_GLUT)
+#ifdef QB64_GUI
     NEEDS_GLUT(0);
     return GLUTEmu_WindowGetPosition().second;
 #endif
@@ -25011,7 +25007,7 @@ void sub__screenmove(int32 x, int32 y, int32 passed) {
         goto error;
     }
 
-#if defined(QB64_GUI) && defined(QB64_GLUT)
+#ifdef QB64_GUI
     NEEDS_GLUT();
 
     if (passed == 2) {
@@ -25571,7 +25567,7 @@ void sub__console(int32 onoff) { // on=1 off=2
 }
 
 void sub__screenshow() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     screen_hide = 0;
     // $SCREENHIDE programs will not have the window running
     libqb_start_glut_thread();
@@ -25583,7 +25579,7 @@ void sub__screenhide() {
     if (screen_hide)
         return;
 
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     // This is probably unnecessary, no conditions allow for screen_hide==0
     // without GLUT running, but it doesn't hurt anything.
     libqb_start_glut_thread();
@@ -25674,260 +25670,6 @@ error:
     return b;
 }
 
-void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {
-#ifdef QB64_GLUT
-    // fprintf(stderr, "key: %d, scancode: %d, action: %d, modifiers: %d\n", key, scancode, action, modifiers);
-
-    int qbKey = -1;
-
-    switch (key) {
-    case GLUTEmu_KeyboardKey::Escape:
-        qbKey = QBVK_ESCAPE;
-        break;
-
-    case GLUTEmu_KeyboardKey::Enter:
-        qbKey = QBVK_RETURN;
-        break;
-
-    case GLUTEmu_KeyboardKey::Tab:
-        qbKey = QBVK_TAB;
-        break;
-
-    case GLUTEmu_KeyboardKey::Backspace:
-        qbKey = QBVK_BACKSPACE;
-        break;
-
-    case GLUTEmu_KeyboardKey::Insert:
-        qbKey = 0x5200;
-        break;
-
-    case GLUTEmu_KeyboardKey::Delete:
-        qbKey = 0x5300;
-        break;
-
-    case GLUTEmu_KeyboardKey::Right:
-        qbKey = 0x4D00;
-        break;
-
-    case GLUTEmu_KeyboardKey::Left:
-        qbKey = 0x4B00;
-        break;
-
-    case GLUTEmu_KeyboardKey::Down:
-        qbKey = 0x5000;
-        break;
-
-    case GLUTEmu_KeyboardKey::Up:
-        qbKey = 0x4800;
-        break;
-
-    case GLUTEmu_KeyboardKey::PageUp:
-        qbKey = 0x4900;
-        break;
-
-    case GLUTEmu_KeyboardKey::PageDown:
-        qbKey = 0x5100;
-        break;
-
-    case GLUTEmu_KeyboardKey::Home:
-        qbKey = 0x4700;
-        break;
-
-    case GLUTEmu_KeyboardKey::End:
-        qbKey = 0x4F00;
-        break;
-
-    case GLUTEmu_KeyboardKey::CapsLock:
-        qbKey = VK + QBVK_CAPSLOCK;
-        break;
-
-    case GLUTEmu_KeyboardKey::ScrollLock:
-        qbKey = VK + QBVK_SCROLLOCK;
-        break;
-
-    case GLUTEmu_KeyboardKey::NumLock:
-        qbKey = VK + QBVK_NUMLOCK;
-        break;
-
-    case GLUTEmu_KeyboardKey::PrintScreen:
-        qbKey = VK + QBVK_PRINT;
-        break;
-
-    case GLUTEmu_KeyboardKey::Pause:
-        qbKey = VK + QBVK_PAUSE;
-        break;
-
-    case GLUTEmu_KeyboardKey::F1:
-        qbKey = 0x3B00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F2:
-        qbKey = 0x3C00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F3:
-        qbKey = 0x3D00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F4:
-        qbKey = 0x3E00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F5:
-        qbKey = 0x3F00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F6:
-        qbKey = 0x4000;
-        break;
-
-    case GLUTEmu_KeyboardKey::F7:
-        qbKey = 0x4100;
-        break;
-
-    case GLUTEmu_KeyboardKey::F8:
-        qbKey = 0x4200;
-        break;
-
-    case GLUTEmu_KeyboardKey::F9:
-        qbKey = 0x4300;
-        break;
-
-    case GLUTEmu_KeyboardKey::F10:
-        qbKey = 0x4400;
-        break;
-
-    case GLUTEmu_KeyboardKey::F11:
-        qbKey = 0x8500;
-        break;
-
-    case GLUTEmu_KeyboardKey::F12:
-        qbKey = 0x8600;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftShift:
-        qbKey = VK + QBVK_LSHIFT;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftControl:
-        qbKey = VK + QBVK_LCTRL;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftAlt:
-        qbKey = VK + QBVK_LALT;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftSuper:
-        qbKey = VK + QBVK_LSUPER;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightShift:
-        qbKey = VK + QBVK_RSHIFT;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightControl:
-        qbKey = VK + QBVK_RCTRL;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightAlt:
-        qbKey = VK + QBVK_RALT;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightSuper:
-        qbKey = VK + QBVK_RSUPER;
-        break;
-
-    case GLUTEmu_KeyboardKey::Menu:
-        qbKey = VK + QBVK_MENU;
-        break;
-
-    default:
-        // Handle printable keys
-        bool isShift = modifiers & GLUTEmu_KeyboardKeyModifier::Shift;
-        // bool isControl = modifiers & GLUTEmu_KeyboardKeyModifier::Control;
-        // bool isAlt = modifiers & GLUTEmu_KeyboardKeyModifier::Alt;
-        // bool isSuper = modifiers & GLUTEmu_KeyboardKeyModifier::Super;
-        bool isCapsLock = modifiers & GLUTEmu_KeyboardKeyModifier::CapsLock;
-        // bool isNumLock = modifiers & GLUTEmu_KeyboardKeyModifier::NumLock;
-        // bool isScrollLock = modifiers & GLUTEmu_KeyboardKeyModifier::ScrollLock;
-
-        if (key >= GLUTEmu_KeyboardKey::A && key <= GLUTEmu_KeyboardKey::Z) {
-            qbKey = 'a' + (int(key) - int(GLUTEmu_KeyboardKey::A));
-            if (isShift)
-                qbKey -= 32;
-        } else if (key >= GLUTEmu_KeyboardKey::Zero && key <= GLUTEmu_KeyboardKey::Nine) {
-            qbKey = '0' + (int(key) - int(GLUTEmu_KeyboardKey::Zero));
-            if (isShift) {
-                const char shifted[] = ")!@#$%^&*(";
-                qbKey = shifted[qbKey - '0'];
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Space) {
-            qbKey = ' ';
-        } else if (key == GLUTEmu_KeyboardKey::Minus) {
-            qbKey = '-';
-            if (isShift)
-                qbKey = '_';
-        } else if (key == GLUTEmu_KeyboardKey::Equal) {
-            qbKey = '=';
-            if (isShift)
-                qbKey = '+';
-        } else if (key == GLUTEmu_KeyboardKey::LeftBracket) {
-            qbKey = '[';
-            if (isShift)
-                qbKey = '{';
-        } else if (key == GLUTEmu_KeyboardKey::RightBracket) {
-            qbKey = ']';
-            if (isShift)
-                qbKey = '}';
-        } else if (key == GLUTEmu_KeyboardKey::Backslash) {
-            qbKey = '\\';
-            if (isShift)
-                qbKey = '|';
-        } else if (key == GLUTEmu_KeyboardKey::Semicolon) {
-            qbKey = ';';
-            if (isShift)
-                qbKey = ':';
-        } else if (key == GLUTEmu_KeyboardKey::Apostrophe) {
-            qbKey = '\'';
-            if (isShift)
-                qbKey = '"';
-        } else if (key == GLUTEmu_KeyboardKey::Comma) {
-            qbKey = ',';
-            if (isShift)
-                qbKey = '<';
-        } else if (key == GLUTEmu_KeyboardKey::Period) {
-            qbKey = '.';
-            if (isShift)
-                qbKey = '>';
-        } else if (key == GLUTEmu_KeyboardKey::Slash) {
-            qbKey = '/';
-            if (isShift)
-                qbKey = '?';
-        } else if (key == GLUTEmu_KeyboardKey::GraveAccent) {
-            qbKey = '`';
-            if (isShift)
-                qbKey = '~';
-        } else {
-            libqb_log_error("Unhandled key: %d (%d)", int(key), scancode);
-        }
-        break;
-    }
-
-    if (qbKey != -1) {
-        switch (action) {
-        case GLUTEmu_ButtonAction::Pressed:
-        case GLUTEmu_ButtonAction::Repeated:
-            keydown(qbKey);
-            break;
-
-        case GLUTEmu_ButtonAction::Released:
-            keyup(qbKey);
-            break;
-        }
-    }
-#endif
-}
-
 static int64_t lastTick = 0;
 static double deltaTick = 0;
 
@@ -25940,7 +25682,7 @@ void GLUT_IDLE_FUNC() {
 #    endif
 #endif
 
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     int64_t curTime = GetTicks();
 
     // This is how long the frame took to render
@@ -27688,7 +27430,7 @@ void GLUT_DISPLAY_REQUEST() {
 } // GLUT_DISPLAY_REQUEST
 
 void GLUT_MouseButton_Up(int button, int x, int y) {
-#    ifdef QB64_GLUT
+#    ifdef QB64_GUI
     int32 i;
     mouse_message_queue_struct *queue = &mouse_message_queue;
 
@@ -27727,7 +27469,7 @@ void GLUT_MouseButton_Up(int button, int x, int y) {
 }
 
 void GLUT_MouseButton_Down(int button, int x, int y) {
-#    ifdef QB64_GLUT
+#    ifdef QB64_GUI
 
     int32 i;
     mouse_message_queue_struct *queue = &mouse_message_queue;
@@ -27787,7 +27529,7 @@ void GLUT_MouseButton_Down(int button, int x, int y) {
 }
 
 void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers) {
-#    ifdef QB64_GLUT
+#    ifdef QB64_GUI
     int qbMouseButton;
 
     if (button == GLUTEmu_MouseButton::Left) {
@@ -27810,14 +27552,17 @@ void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUT
         break;
     }
 #    else
+    (void)x;
+    (void)y;
     (void)button;
     (void)action;
-    (void)mods;
+    (void)mode;
+    (void)modifiers;
 #    endif
 }
 
 void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode) {
-#    ifdef QB64_GLUT
+#    ifdef QB64_GUI
     (void)xOffset;
     // GLFW_TODO: xOffset is not used currently, but we should make use of it in the future. xOffset and yOffset provides fractional values, so this needs to be
     // fixed in a way where we can pass the exact values to the user.
@@ -27838,8 +27583,9 @@ void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, 
 #    else
     (void)x;
     (void)y;
-    (void)offsetX;
-    (void)offsetY;
+    (void)xOffset;
+    (void)yOffset;
+    (void)mode;
 #    endif
 }
 
@@ -30657,7 +30403,7 @@ void GLUT_EXIT_FUNC() {
 }
 
 int32_t func__capslock() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT(0);
     return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock));
 #endif
@@ -30665,7 +30411,7 @@ int32_t func__capslock() {
 }
 
 int32_t func__scrolllock() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT(0);
     return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock));
 #endif
@@ -30673,7 +30419,7 @@ int32_t func__scrolllock() {
 }
 
 int32_t func__numlock() {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT(0);
     return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock));
 #endif

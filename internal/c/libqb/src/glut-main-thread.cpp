@@ -2,6 +2,7 @@
 
 #include "glut-thread.h"
 #include "gui.h"
+#include "keyboard.h"
 #include "logging.h"
 #include <atomic>
 #include <cstdint>
@@ -21,7 +22,6 @@ extern void GLUT_EXIT_FUNC();
 extern void GLUT_RESIZE_FUNC(int width, int height);
 extern void GLUT_DISPLAY_REQUEST();
 extern void GLUT_IDLE_FUNC();
-extern void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
 extern void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers);
 extern void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode);
 extern void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode);

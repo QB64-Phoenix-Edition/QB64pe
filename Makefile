@@ -169,7 +169,7 @@ ifeq ($(OS),lnx)
 endif
 
 ifeq ($(OS),win)
-	CXXLIBS += -static-libgcc -static-libstdc++ -lcomdlg32 -lole32 -luuid -lshlwapi -lwindowscodecs -lwinmm
+	CXXLIBS += -static-libgcc -static-libstdc++ -lopengl32 -lglu32 -lgdi32 -lcomdlg32 -lole32 -luuid -lshlwapi -lwindowscodecs -lwinmm
 endif
 
 ifeq ($(OS),osx)
@@ -370,25 +370,12 @@ ifeq ($(OS),win)
 		CXXLIBS += -mwindows
 	endif
 
-	ifneq ($(filter y,$(DEP_CONSOLE_ONLY)),)
-		CXXFLAGS := $(filter-out $(GLFW_DEFS),$(CXXFLAGS))
-		EXE_LIBS := $(filter-out $(QB_CORE_LIB),$(EXE_LIBS))
-
-		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
-	else
-		CXXLIBS += -lopengl32 -lglu32 -lgdi32
-	endif
-
 	ifneq ($(filter y,$(DEP_SOCKETS)),)
 		CXXLIBS += -lws2_32
 	endif
 
 	ifneq ($(filter y,$(DEP_PRINTER)),)
 		CXXLIBS += -lwinspool
-	endif
-
-	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
-		CXXLIBS += -lgdi32
 	endif
 endif
 

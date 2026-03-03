@@ -1,11 +1,14 @@
-#ifndef INCLUDE_LIBQB_KEYHANDLER_h
-#define INCLUDE_LIBQB_KEYHANDLER_h
+#pragma once
 
-#include <stdint.h>
+#include "glut-emu.h"
+#include "libqb-common.h"
+#include "logging.h"
+#include <cstdint>
 
 int32_t keyheld(uint32_t x);
 void keydown(uint32_t key);
 void keyup(uint32_t key);
+void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
 
 #define QBK 200000
 #define VK 100000
@@ -275,5 +278,3 @@ typedef enum {
     QBVK_UNDO = 322,  /* Atari keyboard has Undo */
     QBVK_LAST
 } QBVKs;
-
-#endif

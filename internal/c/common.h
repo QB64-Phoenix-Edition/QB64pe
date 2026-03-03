@@ -19,28 +19,20 @@
 #    define INC_COMMON_CPP
 #    include "os.h"
 
-#    define QB64_GL1
-#    define QB64_GLUT
-
-#    ifdef DEPENDENCY_CONSOLE_ONLY
-#        undef QB64_GLUT
-#    else
+#    ifndef DEPENDENCY_CONSOLE_ONLY
 #        define QB64_GUI
 #    endif
 
-// core
 #    ifdef QB64_GUI
-#        ifdef QB64_GLUT
-#            include <glad/gl.h>
-#            ifdef QB64_MACOSX
-#                include <OpenGL/gl.h>
-#                include <OpenGL/glext.h>
-#                include <OpenGL/glu.h>
-#            else
-#                include <GL/gl.h>
-#                include <GL/glext.h>
-#                include <GL/glu.h>
-#            endif
+#        include <glad/gl.h>
+#        ifdef QB64_MACOSX
+#            include <OpenGL/gl.h>
+#            include <OpenGL/glext.h>
+#            include <OpenGL/glu.h>
+#        else
+#            include <GL/gl.h>
+#            include <GL/glext.h>
+#            include <GL/glu.h>
 #        endif
 #    endif
 
