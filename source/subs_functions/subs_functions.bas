@@ -594,6 +594,33 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_CompileDate"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__compdate"
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_COMPILEDATE$"
+    regid
+
+    clearid
+    id.n = "_CompileTime"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__comptime"
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_COMPILETIME$"
+    regid
+
+    clearid
+    id.n = "_CompilerVersion"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__compvers"
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_COMPILERVERSION$"
+    regid
+
+    clearid
     id.n = "_Title"
     id.musthave = "$"
     id.subfunc = 1
