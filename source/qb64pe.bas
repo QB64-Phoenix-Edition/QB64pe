@@ -14433,6 +14433,15 @@ SUB closemain
     FOR i = 0 TO subfuncnlast
         WriteBufLine mainincbuf, "#include " + CHR$(34) + "main" + _TOSTR$(i) + ".txt" + CHR$(34)
     NEXT i
+    WriteBufLine mainincbuf, "qbs *func__compdate() {"
+    WriteBufLine mainincbuf, "return qbs_new_txt(__DATE__);"
+    WriteBufLine mainincbuf, "}"
+    WriteBufLine mainincbuf, "qbs *func__comptime() {"
+    WriteBufLine mainincbuf, "return qbs_new_txt(__TIME__);"
+    WriteBufLine mainincbuf, "}"
+    WriteBufLine mainincbuf, "qbs *func__compvers() {"
+    WriteBufLine mainincbuf, "return qbs_new_txt(" + CHR$(34) + "QB64-PE v" + version$ + CHR$(34) + ");"
+    WriteBufLine mainincbuf, "}"
 
     firstLineNumberLabelvWatch = 0
 END SUB
