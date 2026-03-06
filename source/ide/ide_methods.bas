@@ -5522,7 +5522,11 @@ FUNCTION ide2 (ignore)
                 helpabout:
                 PCOPY 2, 0
                 m$ = "QB64 Phoenix Edition Version " + Version$
-                IF IsCiVersion THEN m$ = m$ + CHR$(10) + "CI Build"
+                IF INSTR(Version$, "-") = 0 THEN m$ = m$ + "\nOfficial Release Build"
+                IF IsCiVersion THEN m$ = m$ + "\nGitHub CI Build"
+                IF RIGHT$(Version$, 8) = "-UNKNOWN" THEN m$ = m$ + "\nLocal User Build"
+                m$ = m$ + "\n__________________________________"
+                m$ = m$ + "\nBuild time: " + _COMPILEDATE$ + " - " + _COMPILETIME$
                 result = idemessagebox("About", m$, "")
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -20263,7 +20267,6 @@ SUB UpdateIdeInfo
         versionStringStatus$ = " v" + Version$
         versionStringStatus$ = versionStringStatus$ + " "
     END IF
-    '_PRINTSTRING (idewx - 22 - LEN(versionStringStatus$), idewy + idesubwindow), CHR$(179)
     COLOR 2, 3
     _PRINTSTRING (idewx - 21 - LEN(versionStringStatus$), idewy + idesubwindow), versionStringStatus$
 
