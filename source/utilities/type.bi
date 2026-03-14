@@ -71,5 +71,10 @@ REDIM SHARED udtesize(1000) AS LONG
 REDIM SHARED udtetype(1000) AS LONG
 REDIM SHARED udtetypesize(1000) AS LONG
 REDIM SHARED udtearrayelements(1000) AS LONG
+REDIM SHARED udtearraybase(1000) AS LONG
+REDIM SHARED udtearraydims(1000) AS LONG
+' Serialized per-dimension bounds for static array members stored inline inside a TYPE.
+' This metadata is consumed by indexing, LBOUND/UBOUND and _MEM/_OFFSET support.
+REDIM SHARED udtearraydesc(1000) AS STRING
 REDIM SHARED udtenext(1000) AS LONG
 
