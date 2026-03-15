@@ -651,6 +651,10 @@ DIM SHARED inputfunctioncalled AS _BYTE
 DIM SHARED recompile AS INTEGER 'forces recompilation
 'COMMON SHARED cmemlist() AS INTEGER
 DIM SHARED optionbase AS INTEGER
+'During the preprocessing TYPE pass, OPTION BASE has not been applied to the main
+'compiler state yet. We track the source-order value separately so TYPE member-array
+'bounds can use the same implicit lower bound as normal arrays declared at that point.
+DIM SHARED udtparse_optionbase AS INTEGER
 
 DIM SHARED addmetastatic AS INTEGER
 DIM SHARED addmetadynamic AS INTEGER
@@ -949,7 +953,7 @@ IF C = 9 THEN 'run
             prefix$ = "": suffix$ = ""
         END IF
 
-        ExecuteLine$ = prefix$ + QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$ + suffix$
+        ExecuteLine$ = prefix$ + QuotedFilename$(_FULLPATH$(lastBinaryGenerated$)) + ModifyCOMMAND$ + suffix$
     ELSEIF os$ = "LNX" THEN
         IF path.exe$ = "" THEN path.exe$ = "./"
 
@@ -957,18 +961,18 @@ IF C = 9 THEN 'run
             ExecuteLine$ = DefaultTerminal$
 
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(lastBinaryGenerated$))
+                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(_FULLPATH$(lastBinaryGenerated$)))
             ELSE
-                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(path.exe$ + lastBinaryGenerated$))
+                ExecuteLine$ = StrReplace$(ExecuteLine$, "$$", QuotedFilename$(_FULLPATH$(path.exe$ + lastBinaryGenerated$)))
             END IF
 
             ExecuteLine$ = StrReplace$(ExecuteLine$, "$@", ModifyCOMMAND$)
             ExecuteLine$ = ExecuteLine$ + _IIF(LogToConsole, " && read -rsn1 -p 'Press any key...'; echo", "")
         ELSE
             IF LEFT$(lastBinaryGenerated$, LEN(path.exe$)) = path.exe$ THEN
-                ExecuteLine$ = QuotedFilename$(lastBinaryGenerated$) + ModifyCOMMAND$
+                ExecuteLine$ = QuotedFilename$(_FULLPATH$(lastBinaryGenerated$)) + ModifyCOMMAND$
             ELSE
-                ExecuteLine$ = QuotedFilename$(path.exe$ + lastBinaryGenerated$) + ModifyCOMMAND$
+                ExecuteLine$ = QuotedFilename$(_FULLPATH$(path.exe$ + lastBinaryGenerated$)) + ModifyCOMMAND$
             END IF
         END IF
 
@@ -1364,6 +1368,7 @@ addmetastatic = 0
 addmetadynamic = 0
 DynamicMode = 0
 optionbase = 0
+udtparse_optionbase = 0
 ExeIconSet = 0 '!!! If set, then this is the respective source line number. !!!
 VersionInfoSet = _FALSE
 viFileVersionNum$ = "": viProductVersionNum$ = "": viCompanyName$ = ""
@@ -1976,6 +1981,20 @@ DO
                             a$ = "Expected SUB/FUNCTION definition or END DECLARE (#2)": GOTO errmes
                         END IF
 
+                        'Track OPTION BASE during the preprocessing pass.
+                        'TYPE member arrays are parsed here before the main compiler pass
+                        'updates the global OPTION BASE state, so we must preserve the
+                        'source-order value separately for ParseUDTArrayBoundsEx().
+                        IF firstelement$ = "OPTION" THEN
+                            IF n >= 3 THEN
+                                IF secondelement$ = "BASE" THEN
+                                    IF thirdelement$ = "0" OR thirdelement$ = "1" THEN
+                                        udtparse_optionbase = VAL(thirdelement$)
+                                    END IF
+                                END IF
+                            END IF
+                        END IF
+
                         'UDT TYPE definition
                         IF definingtype THEN
                             i = definingtype
@@ -2023,8 +2042,8 @@ DO
                                             END IF
                                             i3 = i3 + 1
                                         LOOP
-                                        IF b2 <> 0 THEN a$ = "Expected )": GOTO errmes
-                                        IF ParseUDTArrayBounds(getelements$(a$, ii + 1, i3 - 1), udtearraybase(i2), udtearrayelements(i2), udtearraydims(i2), udtearraydesc(i2)) = 0 THEN GOTO errmes
+                                        IF b2 <> 0 THEN a$ = "Expected)": GOTO errmes
+                                        IF ParseUDTArrayBoundsEx(getelements$(a$, ii + 1, i3 - 1), udtparse_optionbase, udtearraybase(i2), udtearrayelements(i2), udtearraydims(i2), udtearraydesc(i2)) = 0 THEN GOTO errmes
                                         ii = i3 + 1
                                     END IF
                                 END IF
@@ -2098,73 +2117,81 @@ DO
                                 IF newAsTypeBlockSyntax THEN RETURN
                                 GOTO finishedlinepp
                             ELSE
-                                'new AS type variable-list syntax, multiple elements
-                                ii = 2
-
-                                FOR i3 = ii TO n
-                                    IF getelement$(a$, i3) = "(" THEN
-                                        a$ = "Array members in 'AS type element-list' syntax are not yet supported; use 'element(dim) AS type'": GOTO errmes
+                                'new AS type element-list syntax, now with static array declarators
+                                'Accepted form inside TYPE:
+                                '    AS <type> a, b(0 TO 3), c(1, 2)
+                                'A second AS token on the same line is invalid.
+                                declStart = 0
+                                FOR i3 = 3 TO n
+                                    n$ = getelement$(a$, i3)
+                                    IF validname(n$) THEN
+                                        t$ = getelements$(a$, 2, i3 - 1)
+                                        IF t$ = RTRIM$(udtxname(definingtype)) THEN a$ = "Invalid self-reference": GOTO errmes
+                                        typ = typname2typ(t$)
+                                        IF Error_Happened THEN GOTO errmes
+                                        IF typ THEN
+                                            declStart = i3
+                                            EXIT FOR
+                                        END IF
                                     END IF
                                 NEXT
-
-                                IF ii >= n THEN a$ = "Expected element-name AS type, AS type element-list, or END TYPE": GOTO errmes
-                                previousElement$ = ""
-                                t$ = ""
-                                lastElement$ = ""
-                                buildTypeName:
-                                lastElement$ = getelement$(a$, ii)
-                                IF lastElement$ <> "," AND lastElement$ <> "" THEN
-                                    n$ = lastElement$
-                                    cn$ = getelement$(ca$, ii)
-                                    IF LEN(previousElement$) THEN t$ = t$ + previousElement$ + " "
-                                    previousElement$ = n$
-                                    lastElement$ = ""
-                                    ii = ii + 1
-                                    GOTO buildTypeName
-                                END IF
-
-                                t$ = RTRIM$(t$)
-                                IF t$ = RTRIM$(udtxname(definingtype)) THEN a$ = "Invalid self-reference": GOTO errmes
-                                typ = typname2typ(t$)
-                                IF Error_Happened THEN GOTO errmes
-                                IF typ = 0 THEN a$ = "Undefined type [2] t$=" + t$: GOTO errmes
+                                IF declStart = 0 THEN a$ = "Expected element-name AS type, AS type element-list, or END TYPE": GOTO errmes
                                 typsize = typname2typsize
 
-                                previousElement$ = lastElement$
-                                nexttypeelement:
-                                lasttypeelement = lasttypeelement + 1
-                                i2 = lasttypeelement
-                                WHILE i2 > UBOUND(udtenext): increaseUDTArrays: WEND
-                                udtenext(i2) = 0
-                                udtearrayelements(i2) = 0
-                                udtearraybase(i2) = 0
-                                udtearraydims(i2) = 0
-                                udtearraydesc(i2) = ""
+                                ii = declStart
+                                DO
+                                    IF ii > n THEN EXIT DO
+                                    n$ = getelement$(a$, ii)
+                                    cn$ = getelement$(ca$, ii)
+                                    IF validname(n$) = 0 THEN a$ = "Expected element-name": GOTO errmes
 
-                                udtename(i2) = n$
-                                udtecname(i2) = cn$
+                                    lasttypeelement = lasttypeelement + 1
+                                    i2 = lasttypeelement
+                                    WHILE i2 > UBOUND(udtenext): increaseUDTArrays: WEND
+                                    udtenext(i2) = 0
+                                    udtearrayelements(i2) = 0
+                                    udtearraybase(i2) = 0
+                                    udtearraydims(i2) = 0
+                                    udtearraydesc(i2) = ""
 
-                                IF validname(n$) = 0 THEN a$ = "Invalid name": GOTO errmes
+                                    ii = ii + 1
+                                    IF ii <= n THEN
+                                        IF getelement$(a$, ii) = "(" THEN
+                                            b2 = 1
+                                            i3 = ii + 1
+                                            DO WHILE i3 <= n
+                                                l$ = getelement$(a$, i3)
+                                                IF l$ = "(" THEN b2 = b2 + 1
+                                                IF l$ = ")" THEN
+                                                    b2 = b2 - 1
+                                                    IF b2 = 0 THEN EXIT DO
+                                                END IF
+                                                i3 = i3 + 1
+                                            LOOP
+                                            IF b2 <> 0 THEN a$ = "Expected)": GOTO errmes
+                                            IF ParseUDTArrayBoundsEx(getelements$(a$, ii + 1, i3 - 1), udtparse_optionbase, udtearraybase(i2), udtearrayelements(i2), udtearraydims(i2), udtearraydesc(i2)) = 0 THEN GOTO errmes
+                                            ii = i3 + 1
+                                        END IF
+                                    END IF
 
-                                newAsTypeBlockSyntax = -1
-                                GOSUB NormalTypeBlock
-                                newAsTypeBlockSyntax = 0
+                                    IF ii <= n THEN
+                                        IF getelement$(a$, ii) = "AS" THEN a$ = "Expected,": GOTO errmes
+                                    END IF
 
-                                getNextElement:
-                                ii = ii + 1
-                                lastElement$ = getelement$(a$, ii)
-                                IF lastElement$ = "" THEN GOTO finishedlinepp
-                                IF ii = n AND lastElement$ = "," THEN a$ = "Expected element-name": GOTO errmes
-                                IF lastElement$ = "," THEN
-                                    IF previousElement$ = "," THEN a$ = "Expected element-name": GOTO errmes
-                                    previousElement$ = lastElement$
-                                    GOTO getNextElement
-                                END IF
-                                n$ = lastElement$
-                                IF previousElement$ <> "," THEN a$ = "Expected ,": GOTO errmes
-                                previousElement$ = lastElement$
-                                cn$ = getelement$(ca$, ii)
-                                GOTO nexttypeelement
+                                    udtename(i2) = n$
+                                    udtecname(i2) = cn$
+                                    IF validname(n$) = 0 THEN a$ = "Invalid name": GOTO errmes
+
+                                    newAsTypeBlockSyntax = -1
+                                    GOSUB NormalTypeBlock
+                                    newAsTypeBlockSyntax = 0
+
+                                    IF ii > n THEN EXIT DO
+                                    IF getelement$(a$, ii) <> "," THEN a$ = "Expected,": GOTO errmes
+                                    ii = ii + 1
+                                    IF ii > n THEN a$ = "Expected element-name": GOTO errmes
+                                LOOP
+                                GOTO finishedlinepp
                             END IF
                         END IF 'definingtype
 
@@ -2261,7 +2288,7 @@ DO
                                 IF e2$ = "," AND B = 0 THEN
                                     pending = 1
                                     i = i2 + 1
-                                    IF i > n - 2 THEN a$ = "Expected CONST ... , name = value/expression": GOTO errmes
+                                    IF i > n - 2 THEN a$ = "Expected CONST ..., name = value/expression": GOTO errmes
                                     EXIT FOR
                                 END IF
 
@@ -2532,8 +2559,8 @@ DO
                                 e$ = getelement$(a$, 3)
                                 IF e$ <> "(" THEN a$ = "Expected (": GOTO errmes
                                 e$ = getelement$(a$, n)
-                                IF e$ <> ")" THEN a$ = "Expected )": GOTO errmes
-                                IF n < 4 THEN a$ = "Expected ( ... )": GOTO errmes
+                                IF e$ <> ")" THEN a$ = "Expected)": GOTO errmes
+                                IF n < 4 THEN a$ = "Expected (...)": GOTO errmes
                                 IF n = 4 THEN GOTO nosfparams
                                 B = 0
                                 a2$ = ""
@@ -2542,9 +2569,9 @@ DO
                                     IF e$ = "(" THEN B = B + 1
                                     IF e$ = ")" THEN B = B - 1
                                     IF e$ = "," AND B = 0 THEN
-                                        IF i = n - 1 THEN a$ = "Expected , ... )": GOTO errmes
+                                        IF i = n - 1 THEN a$ = "Expected, ...)": GOTO errmes
                                         getlastparam:
-                                        IF a2$ = "" THEN a$ = "Expected ... ,": GOTO errmes
+                                        IF a2$ = "" THEN a$ = "Expected ...,": GOTO errmes
                                         a2$ = LEFT$(a2$, LEN(a2$) - 1)
                                         'possible format: [BYVAL]a[%][(1)][AS][type]
                                         n2 = numelements(a2$)
@@ -2676,7 +2703,7 @@ DO
                                     ctype$ = typ2ctyp$(id.ret, "")
                                     IF Error_Happened THEN GOTO errmes
                                     IF ctype$ = "qbs" THEN ctype$ = "char*"
-                                    id.callname = "(  " + ctype$ + "  )" + RTRIM$(id.callname)
+                                    id.callname = "(" + ctype$ + ")" + RTRIM$(id.callname)
 
                                 END IF
 
@@ -2691,8 +2718,8 @@ DO
                                 END IF
 
                                 IF declaringlibrary = 0 THEN
-                                    pwl$ = StrReplace$(cwholeline$, CHR$(13), " "): pwl$ = StrReplace$(pwl$, "( ", "(")
-                                    pwl$ = StrReplace$(pwl$, " ,", ","): pwl$ = StrReplace$(pwl$, " )", ")")
+                                    pwl$ = StrReplace$(cwholeline$, CHR$(13), " "): pwl$ = StrReplace$(pwl$, "(", "(")
+                                    pwl$ = StrReplace$(pwl$, ",", ","): pwl$ = StrReplace$(pwl$, ")", ")")
                                     pwl$ = MID$(pwl$, INSTR(UCASE$(pwl$), "FUNCTION") + 9 + LEN(n$))
                                     pwl$ = LTRIM$(MID$(pwl$, INSTR(pwl$, " ")))
                                     apo% = INSTR(UCASE$(pwl$), "STATIC")
@@ -2729,8 +2756,8 @@ DO
                                 id.nelereq = nelereq$
 
                                 IF declaringlibrary = 0 THEN
-                                    pwl$ = StrReplace$(cwholeline$, CHR$(13), " "): pwl$ = StrReplace$(pwl$, "( ", "(")
-                                    pwl$ = StrReplace$(pwl$, " ,", ","): pwl$ = StrReplace$(pwl$, " )", ")")
+                                    pwl$ = StrReplace$(cwholeline$, CHR$(13), " "): pwl$ = StrReplace$(pwl$, "(", "(")
+                                    pwl$ = StrReplace$(pwl$, ",", ","): pwl$ = StrReplace$(pwl$, ")", ")")
                                     pwl$ = MID$(pwl$, INSTR(UCASE$(pwl$), "SUB") + 4 + LEN(n$))
                                     pwl$ = LTRIM$(MID$(pwl$, INSTR(pwl$, " ")))
                                     apo% = INSTR(UCASE$(pwl$), "STATIC")
@@ -3966,34 +3993,26 @@ DO
         IF n < 3 THEN a$ = "Expected element-name AS type or AS type element-list": GOTO errmes
         definingtype = 2
         IF firstelement$ = "AS" THEN
-            FOR i = 2 TO n
-                IF getelement$(a$, i) = "(" THEN
-                    a$ = "Array members in 'AS type element-list' syntax are not yet supported; use 'element(dim) AS type'": GOTO errmes
+            'Support TYPE lines in the form:
+            '    AS <type> a, b(0 TO 3), c(1, 2)
+            'The leading AS type applies to the whole line.
+            'A second AS token on the same declaration line is invalid.
+            declStart = 0
+            FOR i = 3 TO n
+                thisElement$ = getelement$(a$, i)
+                IF validname(thisElement$) THEN
+                    t$ = getelements$(a$, 2, i - 1)
+                    typ = typname2typ(t$)
+                    IF Error_Happened THEN GOTO errmes
+                    IF typ THEN
+                        declStart = i
+                        EXIT FOR
+                    END IF
                 END IF
             NEXT
+            IF declStart = 0 THEN a$ = "Undefined type": GOTO errmes
+
             l$ = SCase$("As")
-            t$ = ""
-            wordsInTypeName = 0
-            DO
-                nextElement$ = getelement$(a$, 2 + wordsInTypeName)
-                IF nextElement$ = "," THEN
-                    'element-list
-                    wordsInTypeName = wordsInTypeName - 2
-                    EXIT DO
-                END IF
-
-                wordsInTypeName = wordsInTypeName + 1
-                IF wordsInTypeName = n - 2 THEN
-                    'single element in line
-                    wordsInTypeName = wordsInTypeName - 1
-                    EXIT DO
-                END IF
-            LOOP
-
-            t$ = getelements$(a$, 2, 2 + wordsInTypeName)
-            typ = typname2typ(t$)
-            IF Error_Happened THEN GOTO errmes
-            IF typ = 0 THEN a$ = "Undefined type": GOTO errmes
             IF typ AND ISUDT THEN
                 t$ = RTRIM$(udtxcname(typ AND 511))
                 l$ = l$ + sp + t$
@@ -4001,15 +4020,7 @@ DO
                 l$ = l$ + sp + SCase2$(t$)
             END IF
 
-            'Now add each variable:
-            FOR i = 3 + wordsInTypeName TO n
-                thisElement$ = getelement$(ca$, i)
-                IF thisElement$ = "," THEN
-                    l$ = l$ + thisElement$
-                ELSE
-                    l$ = l$ + sp + thisElement$
-                END IF
-            NEXT
+            l$ = l$ + sp + CompactMemberRefLayout$(getelements$(ca$, declStart, n))
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
         ELSE
             l$ = getelement$(ca$, 1)
@@ -4027,15 +4038,8 @@ DO
                         END IF
                         i3 = i3 + 1
                     LOOP
-                    IF b2 <> 0 THEN a$ = "Expected )": GOTO errmes
-                    FOR i = ii TO i3
-                        thisElement$ = getelement$(ca$, i)
-                        IF thisElement$ = "(" OR thisElement$ = ")" THEN
-                            l$ = l$ + sp2 + thisElement$
-                        ELSE
-                            l$ = l$ + sp + thisElement$
-                        END IF
-                    NEXT
+                    IF b2 <> 0 THEN a$ = "Expected)": GOTO errmes
+                    l$ = l$ + CompactMemberRefLayout$(getelements$(ca$, ii, i3))
                     ii = i3 + 1
                 END IF
             END IF
@@ -4916,9 +4920,9 @@ DO
 
                     IF n > x THEN
                         IF dynamiclibrary THEN a$ = "Cannot specify multiple DYNAMIC LIBRARY names in a single DECLARE statement": GOTO errmes
-                        x = x + 1: x2$ = getelement$(a$, x): IF x2$ <> "," THEN a$ = "Expected ,": GOTO errmes
+                        x = x + 1: x2$ = getelement$(a$, x): IF x2$ <> "," THEN a$ = "Expected,": GOTO errmes
                         l$ = l$ + sp2 + ","
-                        x = x + 1: IF x > n THEN a$ = "Expected , ...": GOTO errmes
+                        x = x + 1: IF x > n THEN a$ = "Expected, ...": GOTO errmes
                         GOTO addlibrary
                     END IF
 
@@ -5152,10 +5156,10 @@ DO
                 e$ = getelement$(a$, 3)
                 IF e$ <> "(" THEN a$ = "Expected (": GOTO errmes
                 e$ = getelement$(a$, n)
-                IF e$ <> ")" THEN a$ = "Expected )": GOTO errmes
+                IF e$ <> ")" THEN a$ = "Expected)": GOTO errmes
                 l$ = l$ + sp + "("
                 IF n = 4 THEN GOTO nosfparams2
-                IF n < 4 THEN a$ = "Expected ( ... )": GOTO errmes
+                IF n < 4 THEN a$ = "Expected (...)": GOTO errmes
                 B = 0
                 a2$ = ""
                 FOR i = 4 TO n - 1
@@ -5163,9 +5167,9 @@ DO
                     IF e$ = "(" THEN B = B + 1
                     IF e$ = ")" THEN B = B - 1
                     IF e$ = "," AND B = 0 THEN
-                        IF i = n - 1 THEN a$ = "Expected , ... )": GOTO errmes
+                        IF i = n - 1 THEN a$ = "Expected, ...)": GOTO errmes
                         getlastparam2:
-                        IF a2$ = "" THEN a$ = "Expected ... ,": GOTO errmes
+                        IF a2$ = "" THEN a$ = "Expected ...,": GOTO errmes
                         a2$ = LEFT$(a2$, LEN(a2$) - 1)
                         'possible format: [BYVAL]a[%][(1)][AS][type]
                         params = params + 1
@@ -5659,7 +5663,7 @@ DO
             IF e2$ = "," AND B = 0 THEN
                 pending = 1
                 i = i2 + 1
-                IF i > n - 2 THEN a$ = "Expected CONST ... , name = value/expression": GOTO errmes
+                IF i > n - 2 THEN a$ = "Expected CONST ..., name = value/expression": GOTO errmes
                 EXIT FOR
             END IF
             IF LEN(e$) = 0 THEN e$ = e2$ ELSE e$ = e$ + sp + e2$
@@ -5738,7 +5742,7 @@ DO
 
             'expects "-" or ","
             i = i + 1: e$ = getelement$(a$, i)
-            IF e$ <> "-" AND e$ <> "," THEN a$ = "_DEFINE: Expected - or ,": GOTO errmes
+            IF e$ <> "-" AND e$ <> "," THEN a$ = "_DEFINE: Expected - or,": GOTO errmes
             IF e$ = "-" THEN
                 l$ = l$ + sp2 + "-"
                 IF i = n THEN a$ = "_DEFINE: Syntax incomplete": GOTO errmes
@@ -5762,7 +5766,7 @@ DO
                 END IF
                 'expects ","
                 i = i + 1: e$ = getelement$(a$, i)
-                IF e$ <> "," THEN a$ = "_DEFINE: Expected ,": GOTO errmes
+                IF e$ <> "," THEN a$ = "_DEFINE: Expected,": GOTO errmes
             END IF
             l$ = l$ + sp2 + ","
             GOTO definenext
@@ -6986,7 +6990,7 @@ DO
         IF i < n THEN
             i = i + 1
             e$ = getelement(a$, i)
-            IF e$ <> "," THEN a$ = "Expected ,": GOTO errmes
+            IF e$ <> "," THEN a$ = "Expected,": GOTO errmes
             l$ = l$ + sp2 + "," + sp
             i = i + 1
             GOTO fieldnext
@@ -7118,17 +7122,17 @@ DO
                 IF B = -1 THEN GOTO onstriggotarg
                 IF a = 44 AND B = 0 THEN
                     x = x + 1
-                    IF x > 1 THEN a$ = "Expected )": GOTO errmes
-                    IF e2$ = "" THEN a$ = "Expected ... ,": GOTO errmes
+                    IF x > 1 THEN a$ = "Expected)": GOTO errmes
+                    IF e2$ = "" THEN a$ = "Expected ...,": GOTO errmes
                     e3$ = e2$
                     e2$ = ""
                 ELSE
                     IF LEN(e2$) THEN e2$ = e2$ + sp + e$ ELSE e2$ = e$
                 END IF
             NEXT
-            a$ = "Expected )": GOTO errmes
+            a$ = "Expected)": GOTO errmes
             onstriggotarg:
-            IF e2$ = "" THEN a$ = "Expected ... )": GOTO errmes
+            IF e2$ = "" THEN a$ = "Expected ...)": GOTO errmes
             WriteBufRawData MainTxtBuf, "onstrig_setup("
 
             'sort scanned results
@@ -7309,17 +7313,17 @@ DO
                 IF B = -1 THEN GOTO ontimgotarg
                 IF a = 44 AND B = 0 THEN
                     x = x + 1
-                    IF x > 1 THEN a$ = "Expected )": GOTO errmes
-                    IF e2$ = "" THEN a$ = "Expected ... ,": GOTO errmes
+                    IF x > 1 THEN a$ = "Expected)": GOTO errmes
+                    IF e2$ = "" THEN a$ = "Expected ...,": GOTO errmes
                     e3$ = e2$
                     e2$ = ""
                 ELSE
                     IF LEN(e2$) THEN e2$ = e2$ + sp + e$ ELSE e2$ = e$
                 END IF
             NEXT
-            a$ = "Expected )": GOTO errmes
+            a$ = "Expected)": GOTO errmes
             ontimgotarg:
-            IF e2$ = "" THEN a$ = "Expected ... )": GOTO errmes
+            IF e2$ = "" THEN a$ = "Expected ...)": GOTO errmes
             WriteBufRawData MainTxtBuf, "ontimer_setup("
             'i
             IF LEN(e3$) THEN
@@ -7489,8 +7493,8 @@ DO
                 IF B = -1 THEN EXIT FOR
                 IF LEN(e2$) THEN e2$ = e2$ + sp + e$ ELSE e2$ = e$
             NEXT
-            IF i = n + 1 THEN a$ = "Expected )": GOTO errmes
-            IF e2$ = "" THEN a$ = "Expected ... )": GOTO errmes
+            IF i = n + 1 THEN a$ = "Expected)": GOTO errmes
+            IF e2$ = "" THEN a$ = "Expected ...)": GOTO errmes
 
             e$ = fixoperationorder$(e2$)
             IF Error_Happened THEN GOTO errmes
@@ -7787,7 +7791,7 @@ DO
                 IF newSharedSyntax THEN RETURN
 
                 IF getelement$(a$, i) = "," THEN i = i + 1: l$ = l$ + sp2 + ",": GOTO subfuncshr
-                IF getelement$(a$, i) <> "" THEN a$ = "Expected ,": GOTO errmes
+                IF getelement$(a$, i) <> "" THEN a$ = "Expected,": GOTO errmes
 
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -7865,7 +7869,7 @@ DO
                     n$ = getelement$(ca$, i): i = i + 1
                     GOTO subfuncshr2
                 END IF
-                IF getelement$(a$, i) <> "" THEN a$ = "Expected ,": GOTO errmes
+                IF getelement$(a$, i) <> "" THEN a$ = "Expected,": GOTO errmes
 
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -7904,7 +7908,7 @@ DO
     'ASC statement (fully inline)
     IF n >= 1 THEN
         IF firstelement$ = "ASC" THEN
-            IF getelement$(a$, 2) <> "(" THEN a$ = "Expected ( after ASC": GOTO errmes
+            IF getelement$(a$, 2) <> "(" THEN a$ = "Expected (after ASC": GOTO errmes
 
             'calculate 3 parts
             useposition = 0
@@ -7917,7 +7921,7 @@ DO
             DO
 
                 IF i > n THEN 'got part 3
-                    IF part <> 3 OR LEN(a3$) = 0 THEN a$ = "Expected ASC ( ... , ... ) = ...": GOTO errmes
+                    IF part <> 3 OR LEN(a3$) = 0 THEN a$ = "Expected ASC (..., ...) = ...": GOTO errmes
                     expression$ = a3$
                     EXIT DO
                 END IF
@@ -7954,7 +7958,7 @@ DO
                 ascgotpart:
                 i = i + 1
             LOOP
-            IF LEN(stringvariable$) = 0 OR LEN(position$) = 0 THEN a$ = "Expected ASC ( ... , ... ) = ...": GOTO errmes
+            IF LEN(stringvariable$) = 0 OR LEN(position$) = 0 THEN a$ = "Expected ASC (..., ...) = ...": GOTO errmes
 
             'validate stringvariable$
             stringvariable$ = fixoperationorder$(stringvariable$)
@@ -7963,7 +7967,7 @@ DO
 
             e$ = evaluate(stringvariable$, sourcetyp)
             IF Error_Happened THEN GOTO errmes
-            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISSTRING) = 0 THEN a$ = "Expected ASC ( string-variable , ...": GOTO errmes
+            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISSTRING) = 0 THEN a$ = "Expected ASC (string-variable, ...": GOTO errmes
             stringvariable$ = evaluatetotyp(stringvariable$, ISSTRING)
             IF Error_Happened THEN GOTO errmes
 
@@ -8012,7 +8016,7 @@ DO
     'MID$ statement
     IF n >= 1 THEN
         IF firstelement$ = "MID$" THEN
-            IF getelement$(a$, 2) <> "(" THEN a$ = "Expected ( after MID$": GOTO errmes
+            IF getelement$(a$, 2) <> "(" THEN a$ = "Expected (after MID$": GOTO errmes
             'calculate 4 parts
             length$ = ""
             part = 1
@@ -8032,12 +8036,12 @@ DO
                 IF a2$ = ")" THEN B = B - 1
                 IF B = -1 THEN
                     IF part = 2 THEN
-                        IF getelement$(a$, i + 1) <> "=" THEN a$ = "Expected = after )": GOTO errmes
+                        IF getelement$(a$, i + 1) <> "=" THEN a$ = "Expected = after)": GOTO errmes
                         start$ = a3$: part = 4: a3$ = "": i = i + 1: GOTO midgotpart
                     END IF
                     IF part = 3 THEN
-                        IF getelement$(a$, i + 1) <> "=" THEN a$ = "Expected = after )": GOTO errmes
-                        IF a3$ = "" THEN a$ = "Omit , before ) if omitting length in MID$ statement": GOTO errmes
+                        IF getelement$(a$, i + 1) <> "=" THEN a$ = "Expected = after)": GOTO errmes
+                        IF a3$ = "" THEN a$ = "Omit, before) if omitting length in MID$ statement": GOTO errmes
                         length$ = a3$: part = 4: a3$ = "": i = i + 1: GOTO midgotpart
                     END IF
                 END IF
@@ -8104,9 +8108,11 @@ DO
                 targettoken$ = getelement$(ca$, i)
                 IF targettoken$ = "(" THEN B = B + 1
                 IF targettoken$ = ")" THEN B = B - 1
+                IF B < 0 THEN a$ = "Expected (": GOTO errmes
                 IF B = 0 AND targettoken$ = "," THEN EXIT DO
                 i = i + 1
             LOOP
+            IF B <> 0 THEN a$ = "Expected)": GOTO errmes
             targetlast = i - 1
             IF targetlast < targetfirst THEN a$ = "Expected array-name": GOTO errmes
             var$ = getelements$(ca$, targetfirst, targetlast)
@@ -8245,6 +8251,7 @@ DO
 
                         memberbytes = udtesize(E) \ 8
                         memberelems = udtearrayelements(E)
+                        IF memberelems <= 0 THEN a$ = "Expected array-name": GOTO errmes
                         elementbytes = memberbytes \ memberelems
 
                         IF (udtetype(E) AND ISSTRING) <> 0 AND (udtetype(E) AND ISFIXEDLENGTH) = 0 THEN
@@ -8252,7 +8259,9 @@ DO
                                 WriteBufLine MainTxtBuf, "(*(qbs**)(" + ptr$ + "+" + _TOSTR$(i2 * elementbytes) + "))->len=0;"
                             NEXT
                         ELSEIF (udtetype(E) AND ISSTRING) <> 0 AND (udtetype(E) AND ISFIXEDLENGTH) <> 0 THEN
-                            WriteBufLine MainTxtBuf, "memset((void*)" + ptr$ + ",32," + _TOSTR$(memberbytes) + ");"
+                            ' Match ordinary QB64PE static-array reset semantics for STRING * N.
+                            ' Fixed-length string storage is cleared to NUL bytes here, not spaces.
+                            WriteBufLine MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
                         ELSEIF (udtetype(E) AND ISUDT) <> 0 AND udtxvariable(udtetype(E) AND 511) THEN
                             FOR i2 = 0 TO memberelems - 1
                                 clear_udt_with_varstrings ptr$, udtetype(E) AND 511, MainTxtBuf, i2 * elementbytes
@@ -8271,9 +8280,9 @@ DO
             erasedarray:
             IF i <= n THEN
                 n$ = getelement$(a$, i)
-                IF n$ <> "," THEN a$ = "Expected ,": GOTO errmes
+                IF n$ <> "," THEN a$ = "Expected,": GOTO errmes
                 l$ = l$ + sp2 + ","
-                i = i + 1: IF i > n THEN a$ = "Expected , ...": GOTO errmes
+                i = i + 1: IF i > n THEN a$ = "Expected, ...": GOTO errmes
                 GOTO erasenextarray
             END IF
 
@@ -8331,6 +8340,146 @@ DO
                 'old chain code
                 'chaincommonarray=0
 
+                ' REDIM needs one extra parser path for static array members stored inline inside a TYPE.
+                ' Historical REDIM parsing only accepts a simple variable token followed by (...), so forms like:
+                '   REDIM Item.Values(0 TO 3)
+                '   REDIM Items(0).Values(0 TO 3)
+                ' would otherwise stop at the dot and raise "Expected ,".
+                '
+                ' Keep the legacy parser untouched for ordinary arrays. Only switch to the nested-member path
+                ' when the current REDIM target actually contains a member dereference.
+                redimMemberHandled = 0
+                redimTargetComma = 0
+                IF redimoption THEN
+                    redimTargetFirst = i
+                    B = 0
+                    DO WHILE i <= n
+                        redimTok$ = getelement$(ca$, i)
+                        IF redimTok$ = "(" THEN B = B + 1
+                        IF redimTok$ = ")" THEN B = B - 1
+                        IF B = 0 AND redimTok$ = "," THEN EXIT DO
+                        i = i + 1
+                    LOOP
+                    redimTargetComma = i
+                    redimTargetLast = i - 1
+                    IF redimTargetLast >= redimTargetFirst THEN
+                        redimFullTarget$ = getelements$(ca$, redimTargetFirst, redimTargetLast)
+                        IF INSTR(redimFullTarget$, ".") THEN
+                            redimLastOpen = 0
+                            redimLastClose = 0
+                            redimDepth = 0
+                            redimOpenCandidate = 0
+                            FOR redimScan = redimTargetFirst TO redimTargetLast
+                                redimTok$ = getelement$(ca$, redimScan)
+                                IF redimTok$ = "(" THEN
+                                    IF redimDepth = 0 THEN redimOpenCandidate = redimScan
+                                    redimDepth = redimDepth + 1
+                                ELSEIF redimTok$ = ")" THEN
+                                    redimDepth = redimDepth - 1
+                                    IF redimDepth < 0 THEN a$ = "Expected)": GOTO errmes
+                                    IF redimDepth = 0 THEN
+                                        redimLastOpen = redimOpenCandidate
+                                        redimLastClose = redimScan
+                                    END IF
+                                END IF
+                            NEXT
+                            IF redimDepth <> 0 THEN a$ = "Expected)": GOTO errmes
+                            IF redimLastOpen = 0 OR redimLastClose <> redimTargetLast THEN
+                                a$ = "Expected array bounds": GOTO errmes
+                            END IF
+
+                            redimTargetExpr$ = getelements$(ca$, redimTargetFirst, redimLastOpen - 1)
+                            redimBounds$ = getelements$(ca$, redimLastOpen + 1, redimLastClose - 1)
+                            IF redimTargetExpr$ = "" OR redimBounds$ = "" THEN a$ = "Expected array bounds": GOTO errmes
+
+                            ' Evaluate the target as a whole bare member-array reference.
+                            udt_allow_bare_array = -1
+                            redimTargetRef$ = evaluate(redimTargetExpr$, redimTargetTyp)
+                            udt_allow_bare_array = 0
+                            IF Error_Happened THEN GOTO errmes
+                            IF (redimTargetTyp AND ISREFERENCE) = 0 OR (redimTargetTyp AND ISARRAY) = 0 THEN
+                                a$ = "Expected array-name": GOTO errmes
+                            END IF
+
+                            redimS1 = INSTR(redimTargetRef$, sp3)
+                            IF redimS1 THEN redimS2 = INSTR(redimS1 + LEN(sp3), redimTargetRef$, sp3) ELSE redimS2 = 0
+                            IF redimS2 THEN redimS3 = INSTR(redimS2 + LEN(sp3), redimTargetRef$, sp3) ELSE redimS3 = 0
+                            IF redimS3 = 0 THEN a$ = "Expected array-name": GOTO errmes
+
+                            redimIdNum = VAL(LEFT$(redimTargetRef$, redimS1 - 1))
+                            redimE = VAL(MID$(redimTargetRef$, redimS2 + LEN(sp3), redimS3 - (redimS2 + LEN(sp3))))
+                            redimOffset$ = MID$(redimTargetRef$, redimS3 + LEN(sp3))
+
+                            getid redimIdNum
+                            IF Error_Happened THEN GOTO errmes
+
+                            ' The requested bounds must describe the exact same inline storage layout.
+                            ' A static TYPE member array has fixed bounds at compile time, so REDIM may only
+                            ' reinitialize it when the bounds match exactly.
+                            IF ParseUDTArrayBounds(redimBounds$, redimLowerBound, redimElementCount, redimDimCount, redimDesc$) = 0 THEN GOTO errmes
+                            IF redimDimCount <> udtearraydims(redimE) OR redimDesc$ <> udtearraydesc(redimE) THEN
+                                a$ = "Cannot change the number of elements an array has!": GOTO errmes
+                            END IF
+
+                            ' Build a pointer to the first byte of the inline member-array storage.
+                            redimBase$ = "UDT_" + RTRIM$(id.n)
+                            IF id.t = 0 THEN redimBase$ = "ARRAY_" + redimBase$ + "[0]"
+                            redimBase$ = scope$ + redimBase$
+                            redimPtr$ = "((char*)" + redimBase$ + "+(" + redimOffset$ + "))"
+
+                            l$ = l$ + sp + CompactMemberRefLayout$(redimTargetExpr$) + "(" + sp2 + redimBounds$ + ")"
+
+                            IF redimoption = 1 THEN
+                                redimMemberBytes = udtesize(redimE) \ 8
+                                redimMemberElems = udtearrayelements(redimE)
+                                redimElementBytes = redimMemberBytes \ redimMemberElems
+
+                                ' Static TYPE member arrays have compile-time fixed storage.
+                                ' Plain REDIM on a matching descriptor reinitializes that inline storage.
+                                ' REDIM _PRESERVE on the same descriptor must leave the bytes untouched.
+                                IF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) = 0 THEN
+                                    FOR redimI2 = 0 TO redimMemberElems - 1
+                                        WriteBufLine MainTxtBuf, "(*(qbs**)(" + redimPtr$ + "+" + _TOSTR$(redimI2 * redimElementBytes) + "))->len=0;"
+                                    NEXT
+                                ELSEIF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) <> 0 THEN
+                                    ' Match ordinary QB64PE static-array REDIM semantics for STRING * N.
+                                    ' Fixed-length string storage is reinitialized to NUL bytes, not spaces.
+                                    WriteBufLine MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
+                                ELSEIF (udtetype(redimE) AND ISUDT) <> 0 AND udtxvariable(udtetype(redimE) AND 511) THEN
+                                    FOR redimI2 = 0 TO redimMemberElems - 1
+                                        clear_udt_with_varstrings redimPtr$, udtetype(redimE) AND 511, MainTxtBuf, redimI2 * redimElementBytes
+                                    NEXT
+                                ELSE
+                                    WriteBufLine MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
+                                END IF
+                            END IF
+
+                            redimMemberHandled = -1
+                        END IF
+                    END IF
+                END IF
+
+                IF redimMemberHandled THEN
+                    IF redimTargetComma <= n THEN
+                        l$ = l$ + sp2 + ","
+                        i = redimTargetComma + 1
+                        IF i > n THEN a$ = "Expected, ...": GOTO errmes
+                        GOTO dimnext
+                    END IF
+
+                    dimoption = 0
+                    dimshared = 0
+                    redimoption = 0
+                    IF dimstatic = 1 THEN dimstatic = 0
+                    AllowLocalName = 0
+
+                    layoutdone = 1
+                    IF LEN(layout$) = 0 THEN layout$ = l$ ELSE layout$ = layout$ + sp + l$
+
+                    GOTO finishedline
+                END IF
+
+                IF redimoption THEN i = redimTargetFirst
                 varname$ = getelement(ca$, i): i = i + 1
                 IF varname$ = "" THEN a$ = "Expected " + firstelement$ + " variable-name or " + firstelement$ + " AS type variable-list": GOTO errmes
 
@@ -8349,7 +8498,7 @@ DO
                         IF B = 0 THEN EXIT FOR
                         IF LEN(elements$) THEN elements$ = elements$ + sp + e$ ELSE elements$ = e$
                     NEXT
-                    IF B <> 0 THEN a$ = "Expected )": GOTO errmes
+                    IF B <> 0 THEN a$ = "Expected)": GOTO errmes
                     i = i + 1 'set i to point to the next element
 
                     IF commonoption THEN elements$ = "?"
@@ -8414,7 +8563,7 @@ DO
                 GOTO dimgottyp
 
                 dimgottyp:
-                IF d$ <> "" AND d$ <> "," THEN a$ = "DIM: Expected ,": GOTO errmes
+                IF d$ <> "" AND d$ <> "," THEN a$ = "DIM: Expected,": GOTO errmes
 
                 'In QBASIC, if no type info is given it can refer to an explicit/formally defined array
                 IF notype <> 0 AND dimoption <> 3 AND dimoption <> 1 THEN 'not DIM or STATIC which only create new content
@@ -8920,7 +9069,7 @@ DO
                         IF B = 0 THEN EXIT FOR
                         IF LEN(elements$) THEN elements$ = elements$ + sp + e$ ELSE elements$ = e$
                     NEXT
-                    IF B <> 0 THEN a$ = "Expected )": GOTO errmes
+                    IF B <> 0 THEN a$ = "Expected)": GOTO errmes
                     i = i + 1 'set i to point to the next element
 
                     IF commonoption THEN elements$ = "?"
@@ -8958,7 +9107,7 @@ DO
                     GOTO errmes
                 END IF
 
-                IF d$ <> "" AND d$ <> "," THEN a$ = "DIM: Expected ,": GOTO errmes
+                IF d$ <> "" AND d$ <> "," THEN a$ = "DIM: Expected,": GOTO errmes
 
                 newDimSyntax = -1
                 GOSUB NormalDimBlock
@@ -9376,7 +9525,7 @@ DO
                 l$ = l$ + sp + SCase$("_NewHandler")
             ELSEIF hhc$ = "_LASTHANDLER" THEN
                 WriteBufLine MainTxtBuf, "error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));"
-                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
+                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1, NULL, 0));"
                 WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + SCase$("_LastHandler")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -9548,12 +9697,12 @@ DO
                 'safe version:
                 WriteBufLine MainTxtBuf, "tmp_long=" + offs$ + ";"
                 'is mem block init?
-                WriteBufLine MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
+                WriteBufLine MainTxtBuf, "if (((mem_block*)(" + blkoffs$ + "))->lock_offset){"
                 'are region and id valid?
                 WriteBufLine MainTxtBuf, "if ("
                 WriteBufLine MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
-                WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
-                WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
+                WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > (((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
+                WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id){"
                 'diagnose error
                 WriteBufLine MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
                 WriteBufLine MainTxtBuf, "}else{"
@@ -9648,12 +9797,12 @@ DO
                     'safe version:
                     WriteBufLine MainTxtBuf, "tmp_long=" + offs$ + ";"
                     'is mem block init?
-                    WriteBufLine MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
+                    WriteBufLine MainTxtBuf, "if (((mem_block*)(" + blkoffs$ + "))->lock_offset){"
                     'are region and id valid?
                     WriteBufLine MainTxtBuf, "if ("
                     WriteBufLine MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
-                    WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
-                    WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
+                    WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > (((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
+                    WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id){"
                     'diagnose error
                     WriteBufLine MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
                     WriteBufLine MainTxtBuf, "}else{"
@@ -9688,12 +9837,12 @@ DO
                     'safe version:
                     WriteBufLine MainTxtBuf, "tmp_long=" + offs$ + ";"
                     'is mem block init?
-                    WriteBufLine MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
+                    WriteBufLine MainTxtBuf, "if (((mem_block*)(" + blkoffs$ + "))->lock_offset){"
                     'are region and id valid?
                     WriteBufLine MainTxtBuf, "if ("
                     WriteBufLine MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
-                    WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
-                    WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
+                    WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > (((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
+                    WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id){"
                     'diagnose error
                     WriteBufLine MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
                     WriteBufLine MainTxtBuf, "}else{"
@@ -9924,7 +10073,7 @@ DO
                     IF e2$ = ")" THEN B = B - 1
                     IF (e2$ = "," AND B = 0) OR i = n THEN
                         IF i < n THEN
-                            IF e$ = "" THEN a$ = "Expected expression before , or )": GOTO errmes
+                            IF e$ = "" THEN a$ = "Expected expression before, or)": GOTO errmes
                             '1. variable or value?
                             e$ = fixoperationorder$(e$)
                             IF Error_Happened THEN GOTO errmes
@@ -10147,7 +10296,7 @@ DO
                                     s = 0
                                     GOTO closenexta
                                 ELSE
-                                    a$ = "Expected expression before ,": GOTO errmes
+                                    a$ = "Expected expression before,": GOTO errmes
                                 END IF
                             END IF
 
@@ -10248,7 +10397,7 @@ DO
 
                             u$ = _TOSTR$(uniquenumber)
                             'which file?
-                            IF n = 2 THEN a$ = "Expected # ... , ...": GOTO errmes
+                            IF n = 2 THEN a$ = "Expected # ..., ...": GOTO errmes
                             a3$ = ""
                             B = 0
                             FOR i = 3 TO n
@@ -10256,7 +10405,7 @@ DO
                                 IF a2$ = "(" THEN B = B + 1
                                 IF a2$ = ")" THEN B = B - 1
                                 IF a2$ = "," AND B = 0 THEN
-                                    IF a3$ = "" THEN a$ = "Expected # ... , ...": GOTO errmes
+                                    IF a3$ = "" THEN a$ = "Expected # ..., ...": GOTO errmes
                                     GOTO inputgotfn
                                 END IF
                                 IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
@@ -10270,7 +10419,7 @@ DO
                             WriteBufLine MainTxtBuf, "tmp_fileno=" + e$ + ";"
                             WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                             i = i + 1
-                            IF i > n THEN a$ = "Expected , ...": GOTO errmes
+                            IF i > n THEN a$ = "Expected, ...": GOTO errmes
                             a3$ = ""
                             B = 0
                             FOR i = i TO n
@@ -10282,7 +10431,7 @@ DO
                                     a2$ = ",": B = 0
                                 END IF
                                 IF a2$ = "," AND B = 0 THEN
-                                    IF a3$ = "" THEN a$ = "Expected , ...": GOTO errmes
+                                    IF a3$ = "" THEN a$ = "Expected, ...": GOTO errmes
                                     e$ = fixoperationorder$(a3$)
                                     IF Error_Happened THEN GOTO errmes
                                     l$ = l$ + sp2 + "," + sp + tlayout$
@@ -10591,7 +10740,7 @@ DO
 
                 'SWAP
                 IF firstelement$ = "SWAP" THEN
-                    IF n < 4 THEN a$ = "Expected SWAP ... , ...": GOTO errmes
+                    IF n < 4 THEN a$ = "Expected SWAP ..., ...": GOTO errmes
                     B = 0
                     ele = 1
                     e1$ = ""
@@ -10601,13 +10750,13 @@ DO
                         IF e$ = "(" THEN B = B + 1
                         IF e$ = ")" THEN B = B - 1
                         IF e$ = "," AND B = 0 THEN
-                            IF ele = 2 THEN a$ = "Expected SWAP ... , ...": GOTO errmes
+                            IF ele = 2 THEN a$ = "Expected SWAP ..., ...": GOTO errmes
                             ele = 2
                         ELSE
                             IF ele = 1 THEN e1$ = e1$ + sp + e$ ELSE e2$ = e2$ + sp + e$
                         END IF
                     NEXT
-                    IF e2$ = "" THEN a$ = "Expected SWAP ... , ...": GOTO errmes
+                    IF e2$ = "" THEN a$ = "Expected SWAP ..., ...": GOTO errmes
                     e1$ = RIGHT$(e1$, LEN(e1$) - 1): e2$ = RIGHT$(e2$, LEN(e2$) - 1)
 
                     e1$ = fixoperationorder(e1$)
@@ -11253,7 +11402,7 @@ DO
                                                     n$ = scope$ + "UDT_" + RTRIM$(id.n)
                                                 END IF
 
-                                                e$ = "(void*)( ((char*)(" + n$ + ")) + (" + o$ + ") )"
+                                                e$ = "(void*)(((char*)(" + n$ + ")) + (" + o$ + "))"
 
                                                 'convert void* to target type*
                                                 IF passudtelement THEN e$ = "(" + typ2ctyp$(targettyp2 + (targettyp AND ISUNSIGNED), "") + "*)" + e$
@@ -11389,7 +11538,7 @@ DO
                     IF id2.ccall THEN
 
                         'if a forced cast from a returned ccall function is in e$, remove it
-                        IF LEFT$(e$, 3) = "(  " THEN
+                        IF LEFT$(e$, 3) = "(" THEN
                             e$ = removecast$(e$)
                         END IF
 
@@ -14209,7 +14358,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     WriteBufLine FreeTxtBuf, "free((void*)(" + n$ + "[0]));"
                     WriteBufLine FreeTxtBuf, "}"
                     'free lock (_MEM)
-                    WriteBufLine FreeTxtBuf, "free_mem_lock( (mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "] );"
+                    WriteBufLine FreeTxtBuf, "free_mem_lock((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "]);"
                 END IF
 
 
@@ -14276,7 +14425,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     WriteBufLine FreeTxtBuf, "}" 'cmem
                     WriteBufLine FreeTxtBuf, "}" 'init
                     'free lock (_MEM)
-                    WriteBufLine FreeTxtBuf, "free_mem_lock( (mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "] );"
+                    WriteBufLine FreeTxtBuf, "free_mem_lock((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "]);"
                 END IF
             END IF 'not string array
 
@@ -14449,7 +14598,19 @@ FUNCTION ParseNextUDTArrayDescriptorDim& (descriptor$, descriptor_position AS LO
     ParseNextUDTArrayDescriptorDim = -1
 END FUNCTION
 
+'Preserves the original ParseUDTArrayBounds() behavior for existing callers that should
+'use the current compiler OPTION BASE state.
 FUNCTION ParseUDTArrayBounds& (indexes$, lower_bound AS LONG, element_count AS LONG, dimension_count AS LONG, descriptor$)
+    ParseUDTArrayBounds = ParseUDTArrayBoundsEx(indexes$, optionbase, lower_bound, element_count, dimension_count, descriptor$)
+END FUNCTION
+
+'Extended helper that accepts the effective OPTION BASE explicitly.
+'Why the new parameter exists:
+'  TYPE member arrays are parsed during the preprocessing pass, before the main
+'  compiler pass updates the global OPTION BASE state. Passing the effective
+'  source-order OPTION BASE keeps classic TYPE member arrays and normal arrays
+'  aligned without changing existing ParseUDTArrayBounds() callers.
+FUNCTION ParseUDTArrayBoundsEx& (indexes$, effective_optionbase AS LONG, lower_bound AS LONG, element_count AS LONG, dimension_count AS LONG, descriptor$)
     n = numelements(indexes$)
     IF n = 0 THEN Give_Error "Array bounds missing": EXIT FUNCTION
 
@@ -14490,7 +14651,7 @@ FUNCTION ParseUDTArrayBounds& (indexes$, lower_bound AS LONG, element_count AS L
                 upper_expr$ = getelements$(dim_expr$, to_pos + 1, dn)
                 IF lower_expr$ = "" OR upper_expr$ = "" THEN Give_Error "Invalid array bounds": EXIT FUNCTION
             ELSE
-                lower_expr$ = _TOSTR$(optionbase + 0)
+                lower_expr$ = _TOSTR$(effective_optionbase + 0)
                 upper_expr$ = dim_expr$
             END IF
 
@@ -14529,7 +14690,7 @@ FUNCTION ParseUDTArrayBounds& (indexes$, lower_bound AS LONG, element_count AS L
 
     IF dimension_count = 0 THEN Give_Error "Array bounds missing": EXIT FUNCTION
 
-    ParseUDTArrayBounds = -1
+    ParseUDTArrayBoundsEx = -1
 END FUNCTION
 
 FUNCTION UDTArrayIndexExpr$ (indexes$, dimension_count AS LONG, descriptor$)
@@ -14860,6 +15021,15 @@ SUB closemain
     FOR i = 0 TO subfuncnlast
         WriteBufLine mainincbuf, "#include " + CHR$(34) + "main" + _TOSTR$(i) + ".txt" + CHR$(34)
     NEXT i
+    WriteBufLine mainincbuf, "qbs *func__compdate() {"
+    WriteBufLine mainincbuf, "return qbs_new_txt(__DATE__);"
+    WriteBufLine mainincbuf, "}"
+    WriteBufLine mainincbuf, "qbs *func__comptime() {"
+    WriteBufLine mainincbuf, "return qbs_new_txt(__TIME__);"
+    WriteBufLine mainincbuf, "}"
+    WriteBufLine mainincbuf, "qbs *func__compvers() {"
+    WriteBufLine mainincbuf, "return qbs_new_txt(" + CHR$(34) + "QB64-PE v" + Version$ + CHR$(34) + ");"
+    WriteBufLine mainincbuf, "}"
 
     firstLineNumberLabelvWatch = 0
 END SUB
@@ -14871,7 +15041,7 @@ FUNCTION countelements (a$)
         e$ = getelement$(a$, i)
         IF e$ = "(" THEN b = b + 1
         IF e$ = ")" THEN b = b - 1
-        IF b < 0 THEN Give_Error "Unexpected ) encountered": EXIT FUNCTION
+        IF b < 0 THEN Give_Error "Unexpected) encountered": EXIT FUNCTION
         IF e$ = "," AND b = 0 THEN c = c + 1
     NEXT
     countelements = c
@@ -16152,7 +16322,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
                 END IF
                 memberarrayend = memberarrayend + 1
             LOOP
-            IF b2 <> 0 THEN Give_Error "Expected )": EXIT FUNCTION
+            IF b2 <> 0 THEN Give_Error "Expected)": EXIT FUNCTION
         END IF
     END IF
     udtfindele:
@@ -17814,7 +17984,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END IF
                         Give_Error "String expression or variable name required in LEN statement": EXIT FUNCTION
                     END IF
-                    r$ = "(" + evaluatetotyp$(e2$, -5) + ")" 'use evaluatetotyp to get 'element' size
+                    r$ = evaluatetotyp$(e2$, -5) 'use evaluatetotyp to get 'element' size
                     IF Error_Happened THEN EXIT FUNCTION
                     GOTO evalfuncspecial
                 END IF
@@ -18314,7 +18484,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             r$ = "varptr_dblock_check(((uint8*)" + r$ + ")+(" + o$ + "))"
                         ELSE 'definitely in DBLOCK
                             'give offset relative to DBLOCK
-                            r$ = "((unsigned short)(((uint8*)" + r$ + ") - &cmem[1280] + (" + o$ + ") ))"
+                            r$ = "((unsigned short)(((uint8*)" + r$ + ") - &cmem[1280] + (" + o$ + ")))"
                         END IF
 
                         GOTO evalfuncspecial
@@ -18376,7 +18546,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             END IF
                         END IF
                         typ = 64&
-                        r$ = "( ( ((ptrszint)(" + refer(e$, sourcetyp, 1) + "[0])) - ((ptrszint)(&cmem[0])) ) /16)"
+                        r$ = "((((ptrszint)(" + refer(e$, sourcetyp, 1) + "[0])) - ((ptrszint)(&cmem[0]))) /16)"
                         IF Error_Happened THEN EXIT FUNCTION
                         GOTO evalfuncspecial
                     END IF
@@ -18605,7 +18775,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                             n2$ = scope$ + "UDT_" + RTRIM$(id.n)
                                         END IF
 
-                                        e$ = "(void*)( ((char*)(" + n2$ + ")) + (" + o$ + ") )"
+                                        e$ = "(void*)(((char*)(" + n2$ + ")) + (" + o$ + "))"
 
                                         'convert void* to target type*
                                         IF passudtelement THEN e$ = "(" + typ2ctyp$(targettyp2 + (targettyp AND ISUNSIGNED), "") + "*)" + e$
@@ -18784,7 +18954,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF id2.ccall THEN
 
                     'if a forced cast from a returned ccall function is in e$, remove it
-                    IF LEFT$(e$, 3) = "(  " THEN
+                    IF LEFT$(e$, 3) = "(" THEN
                         e$ = removecast$(e$)
                     END IF
 
@@ -18911,7 +19081,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     END IF
 
     IF id2.ccall THEN
-        IF LEFT$(r$, 11) = "(  char*  )" THEN
+        IF LEFT$(r$, 11) = "(char*)" THEN
             r$ = "qbs_new_txt(" + r$ + ")"
         END IF
     END IF
@@ -19457,7 +19627,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             ELSE
                 bytes = (sourcetyp AND 511) \ 8
             END IF
-            bytes$ = bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + "))"
+            bytes$ = "(" + bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + ")))"
 
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(bytes) + "," + lk$
@@ -19576,7 +19746,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             ELSE
                 bytes = (sourcetyp AND 511) \ 8
             END IF
-            bytes$ = bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + "))"
+            bytes$ = "(" + bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + ")))"
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
             IF targettyp = -5 THEN evaluatetotyp$ = bytes$
             IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -19960,7 +20130,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b < 0 THEN Give_Error "Missing (": EXIT FUNCTION
             GOTO findmmb
         END IF
-        IF b > 0 THEN Give_Error "Missing )": EXIT FUNCTION
+        IF b > 0 THEN Give_Error "Missing)": EXIT FUNCTION
 
         '----------------B. 'Quick' correction of over-use of +,- ----------------
         'note: the results of this change are beneficial to foolayout
@@ -21639,7 +21809,7 @@ FUNCTION lineformat$ (a$)
                         END IF '","
 
                         IF commanext = 1 THEN
-                            IF c <> 32 AND c <> 9 THEN Give_Error "Expected , after quoted string in DATA statement": EXIT FUNCTION
+                            IF c <> 32 AND c <> 9 THEN Give_Error "Expected, after quoted string in DATA statement": EXIT FUNCTION
                         END IF
 
                         IF c = 34 THEN
@@ -21916,6 +22086,17 @@ FUNCTION lineformat$ (a$)
 
     lineformatdone2:
     IF LEFT$(a2$, 1) = sp THEN a2$ = RIGHT$(a2$, LEN(a2$) - 1)
+
+    'Normalize spacing around delimiters after token formatting.
+    'This is especially important for generated/reformatted declarations like
+    '"AS Long a(3), b". Positive numeric tokens are formatted without context,
+    'so a literal after "(" can otherwise become "( 3".
+    DO
+        prev_a2$ = a2$
+        a2$ = StrReplace$(a2$, "(", "(")
+        a2$ = StrReplace$(a2$, ",", ",")
+        a2$ = StrReplace$(a2$, ")", ")")
+    LOOP UNTIL a2$ = prev_a2$
 
     'fix for trailing : error
     IF RIGHT$(a2$, 1) = ":" THEN a2$ = a2$ + sp + "'" 'add nop
@@ -23160,10 +23341,10 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             ELSE
                 WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
                 IF method = 0 THEN
-                    l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
+                    l$ = "if (!is_error_pending()) qbs_set(((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
                     IF Error_Happened THEN EXIT SUB
                 ELSE
-                    l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
+                    l$ = "if (!is_error_pending()) qbs_set(((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
                 END IF
                 WriteBufLine MainTxtBuf, l$
             END IF
@@ -23455,7 +23636,7 @@ END SUB
 SUB xfileprint (a$, ca$, n)
     u$ = _TOSTR$(uniquenumber)
     WriteBufLine MainTxtBuf, "tab_spc_cr_size=2;"
-    IF n = 2 THEN Give_Error "Expected # ... , ...": EXIT SUB
+    IF n = 2 THEN Give_Error "Expected # ..., ...": EXIT SUB
     a3$ = ""
     b = 0
     FOR i = 3 TO n
@@ -23463,12 +23644,12 @@ SUB xfileprint (a$, ca$, n)
         IF a2$ = "(" THEN b = b + 1
         IF a2$ = ")" THEN b = b - 1
         IF a2$ = "," AND b = 0 THEN
-            IF a3$ = "" THEN Give_Error "Expected # ... , ...": EXIT SUB
+            IF a3$ = "" THEN Give_Error "Expected # ..., ...": EXIT SUB
             GOTO printgotfn
         END IF
         IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
     NEXT
-    Give_Error "Expected # ... ,": EXIT SUB
+    Give_Error "Expected # ...,": EXIT SUB
     printgotfn:
     e$ = fixoperationorder$(a3$)
     IF Error_Happened THEN EXIT SUB
@@ -23686,12 +23867,12 @@ SUB xfilewrite (ca$, n)
         IF a2$ = "(" THEN b = b + 1
         IF a2$ = ")" THEN b = b - 1
         IF a2$ = "," AND b = 0 THEN
-            IF a3$ = "" THEN Give_Error "Expected # ... , ...": EXIT SUB
+            IF a3$ = "" THEN Give_Error "Expected # ..., ...": EXIT SUB
             GOTO writegotfn
         END IF
         IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
     NEXT
-    Give_Error "Expected # ... ,": EXIT SUB
+    Give_Error "Expected # ...,": EXIT SUB
     writegotfn:
     e$ = fixoperationorder$(a3$)
     IF Error_Happened THEN EXIT SUB
@@ -23841,11 +24022,11 @@ SUB xongotogosub (a$, ca$, n)
         e$ = getelement$(ca$, i)
         IF e$ = "," THEN
             l$ = l$ + sp2 + ","
-            IF i = n THEN Give_Error "Trailing , invalid": EXIT SUB
+            IF i = n THEN Give_Error "Trailing, invalid": EXIT SUB
             ln = ln + 1
             labelwaslast = 0
         ELSE
-            IF labelwaslast THEN Give_Error "Expected ,": EXIT SUB
+            IF labelwaslast THEN Give_Error "Expected,": EXIT SUB
             IF validlabel(e$) = 0 THEN Give_Error "Invalid label!": EXIT SUB
 
             v = HashFind(e$, HASHFLAG_LABEL, ignore, r)
@@ -24122,7 +24303,7 @@ SUB xread (ca$, n)
     l$ = SCase$("Read")
     IF n = 1 THEN Give_Error "Expected variable": EXIT SUB
     i = 2
-    IF i > n THEN Give_Error "Expected , ...": EXIT SUB
+    IF i > n THEN Give_Error "Expected, ...": EXIT SUB
     a3$ = ""
     b = 0
     FOR i = i TO n
@@ -24133,7 +24314,7 @@ SUB xread (ca$, n)
             IF i = n THEN
                 IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
             END IF
-            IF a3$ = "" THEN Give_Error "Expected , ...": EXIT SUB
+            IF a3$ = "" THEN Give_Error "Expected, ...": EXIT SUB
             e$ = fixoperationorder$(a3$)
             IF Error_Happened THEN EXIT SUB
             l$ = l$ + sp + tlayout$: IF i <> n THEN l$ = l$ + sp2 + ","
@@ -24402,8 +24583,8 @@ END FUNCTION
 
 FUNCTION removecast$ (a$)
     removecast$ = a$
-    IF INSTR(a$, "  )") THEN
-        removecast$ = RIGHT$(a$, LEN(a$) - INSTR(a$, "  )") - 2)
+    IF INSTR(a$, ")") THEN
+        removecast$ = RIGHT$(a$, LEN(a$) - INSTR(a$, ")") - 2)
     END IF
 END FUNCTION
 

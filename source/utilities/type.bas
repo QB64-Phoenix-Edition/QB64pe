@@ -1,3 +1,4 @@
+
 FUNCTION typevalue2symbol$ (t)
 
     IF t AND ISSTRING THEN
