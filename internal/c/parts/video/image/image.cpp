@@ -7,30 +7,23 @@
 //
 //  Powered by:
 //      stb_image & stb_image_write (https://github.com/nothings/stb)
-//      jo_gif (https://www.jonolick.com/code)
+//      tiny_webp (https://github.com/justus2510/tiny-webp)
 //      nanosvg (https://github.com/memononen/nanosvg)
 //      qoi (https://qoiformat.org)
+//      sg_curico & sg_pcx (https://github.com/a740g)
+//      jo_gif (https://www.jonolick.com/code)
 //      pixelscalers (https://github.com/janert/pixelscalers)
 //      mmpx (https://github.com/ITotalJustice/mmpx)
-//      sg_curico & sg_pcx (https://github.com/a740g)
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "image.h"
 #include "../../../libqb.h"
 #include "error_handle.h"
-#include "filepath.h"
+#include "framework.hpp"
 #include "graphics.h"
 #include "jo_gif/jo_gif.h"
 #include "libqb-common.h"
-#include "nanosvg/nanosvg.h"
-#include "nanosvg/nanosvgrast.h"
-#include "pixelscalers/pixelscalers.h"
 #include "qbs.h"
-#include "qoi/qoi.h"
-#include "sg_curico/sg_curico.h"
-#include "sg_pcx/sg_pcx.h"
-#include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 #include <algorithm>
 #include <cctype>
@@ -45,338 +38,6 @@ extern const int32_t *page;                   // used by func__saveimage
 extern const int32_t nextimg;                 // used by func__saveimage
 extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
 extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
-
-/// @brief Pixel scaler algorithms
-enum class ImageScaler { NONE = 0, SXBR2, SXBR3, SXBR4, MMPX2, HQ2XA, HQ2XB, HQ3XA, HQ3XB };
-/// @brief This is the scaling factors for ImageScaler enum
-static const int g_ImageScaleFactor[] = {1, 2, 3, 4, 2, 2, 2, 3, 3};
-/// @brief Pixel scaler names for ImageScaler enum
-static const char *g_ImageScalerName[] = {"NONE", "SXBR2", "SXBR3", "SXBR4", "MMPX2", "HQ2XA", "HQ2XB", "HQ3XA", "HQ3XB"};
-
-/// @brief Runs a pixel scaler algorithm on raw image pixels. It will free 'data' if scaling occurs!
-/// @param data In + Out: The source raw image data in RGBA format
-/// @param xOut In + Out: The image width
-/// @param yOut In + Out: The image height
-/// @param scaler The scaler algorithm to use
-/// @return A pointer to the scaled image or 'data' if there is no change
-static uint32_t *image_scale(uint32_t *data, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
-    if (scaler > ImageScaler::NONE) {
-        auto newX = *xOut * g_ImageScaleFactor[size_t(scaler)];
-        auto newY = *yOut * g_ImageScaleFactor[size_t(scaler)];
-
-        auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * newX * newY);
-        if (pixels) {
-            image_log_info("Scaler %i: (%i x %i) -> (%i x %i)", (int)scaler, *xOut, *yOut, newX, newY);
-
-            switch (scaler) {
-            case ImageScaler::SXBR2:
-                scaleSuperXBR2(data, *xOut, *yOut, pixels);
-                break;
-
-            case ImageScaler::SXBR3:
-                scaleSuperXBR3(data, *xOut, *yOut, pixels);
-                break;
-
-            case ImageScaler::SXBR4:
-                scaleSuperXBR4(data, *xOut, *yOut, pixels);
-                break;
-
-            case ImageScaler::MMPX2:
-                mmpx_scale2x(data, pixels, *xOut, *yOut);
-                break;
-
-            case ImageScaler::HQ2XA:
-                hq2xA(data, *xOut, *yOut, pixels);
-                break;
-
-            case ImageScaler::HQ2XB:
-                hq2xB(data, *xOut, *yOut, pixels);
-                break;
-
-            case ImageScaler::HQ3XA:
-                hq3xA(data, *xOut, *yOut, pixels);
-                break;
-
-            case ImageScaler::HQ3XB:
-                hq3xB(data, *xOut, *yOut, pixels);
-                break;
-
-            default:
-                image_log_warn("Unsupported scaler %i", (int)scaler);
-                free(pixels);
-                return data;
-            }
-
-            free(data);
-            data = pixels;
-            *xOut = newX;
-            *yOut = newY;
-        }
-    }
-
-    return data;
-}
-
-/// @brief This is internally used by image_svg_load_from_file() and image_svg_load_fron_memory(). It always frees 'image' once done!
-/// @param image nanosvg image object pointer
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param scaler An optional pixel scaler to use (it just used this to scale internally)
-/// @param components Out: color channels. This cannot be NULL
-/// @param isVG Out: vector graphics? Always set to true
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_svg_load(NSVGimage *image, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
-    auto rast = nsvgCreateRasterizer();
-    if (!rast) {
-        nsvgDelete(image);
-        return nullptr;
-    }
-
-    auto w = (int32_t)image->width * g_ImageScaleFactor[size_t(scaler)];
-    auto h = (int32_t)image->height * g_ImageScaleFactor[size_t(scaler)];
-
-    auto pixels = (uint32_t *)malloc(sizeof(uint32_t) * w * h);
-    if (!pixels) {
-        nsvgDeleteRasterizer(rast);
-        nsvgDelete(image);
-        return nullptr;
-    }
-
-    nsvgRasterize(rast, image, 0, 0, g_ImageScaleFactor[size_t(scaler)], reinterpret_cast<unsigned char *>(pixels), w, h, sizeof(uint32_t) * w);
-    nsvgDeleteRasterizer(rast);
-    nsvgDelete(image);
-
-    *xOut = w;
-    *yOut = h;
-    *components = sizeof(uint32_t);
-    *isVG = true;
-    return pixels;
-}
-
-/// @brief Loads an SVG image file from disk
-/// @param fileName The file path name to load
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param scaler An optional pixel scaler to use (it just used this to scale internally)
-/// @param components Out: color channels. This cannot be NULL
-/// @param isVG Out: vector graphics? Always set to true
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_svg_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
-    if (!filepath_has_extension(fileName, "svg"))
-        return nullptr;
-
-    auto fp = fopen(fileName, "rb");
-    if (!fp)
-        return nullptr;
-
-    if (fseek(fp, 0, SEEK_END)) {
-        fclose(fp);
-        return nullptr;
-    }
-
-    auto size = ftell(fp);
-    if (size < 0) {
-        fclose(fp);
-        return nullptr;
-    }
-
-    rewind(fp);
-
-    auto svgString = (char *)malloc(size + 1);
-    if (!svgString) {
-        fclose(fp);
-        return nullptr;
-    }
-
-    if (long(fread(svgString, sizeof(uint8_t), size, fp)) != size) {
-        free(svgString);
-        fclose(fp);
-        return nullptr;
-    }
-    svgString[size] = '\0'; // must be null terminated
-
-    fclose(fp);
-
-    // Check if it has a valid SVG start tag
-    if (!strstr(svgString, "<svg")) {
-        free(svgString);
-        return nullptr;
-    }
-
-    auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
-    if (!image) {
-        free(svgString);
-        return nullptr;
-    }
-
-    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG); // this is where everything else is freed
-    free(svgString);
-
-    return pixels;
-}
-
-/// @brief Loads an SVG image file from memory
-/// @param buffer The raw pointer to the file in memory
-/// @param size The size of the file in memory
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param scaler An optional pixel scaler to use (it just used this to scale internally)
-/// @param components Out: color channels. This cannot be NULL
-/// @param isVG Out: vector graphics? Always set to true
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_svg_load_from_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler, int *components, bool *isVG) {
-    auto svgString = (char *)malloc(size + 1);
-    if (!svgString)
-        return nullptr;
-
-    memcpy(svgString, buffer, size);
-    svgString[size] = '\0'; // must be null terminated
-
-    // Check if it has a valid SVG start tag
-    if (!strstr(svgString, "<svg")) {
-        free(svgString);
-        return nullptr;
-    }
-
-    auto image = nsvgParse(svgString, "px", 96.0f); // important note: changes the string
-    if (!image) {
-        free(svgString);
-        return nullptr;
-    }
-
-    auto pixels = image_svg_load(image, xOut, yOut, scaler, components, isVG); // this is where everything else is freed
-    free(svgString);
-
-    return pixels;
-}
-
-/// @brief Loads a QOI image file from disk
-/// @param fileName The file path name to load
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param components Out: color channels. This cannot be NULL
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_qoi_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, int *components) {
-    qoi_desc desc;
-    auto pixels = reinterpret_cast<uint32_t *>(qoi_read(fileName, &desc, sizeof(uint32_t)));
-    if (pixels) {
-        *xOut = desc.width;
-        *yOut = desc.height;
-        *components = desc.channels;
-    }
-    return pixels;
-}
-
-/// @brief Loads a QOI image file from memory
-/// @param buffer The raw pointer to the file in memory
-/// @param size The size of the file in memory
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param components Out: color channels. This cannot be NULL
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_qoi_load_from_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, int *components) {
-    qoi_desc desc;
-    auto pixels = reinterpret_cast<uint32_t *>(qoi_decode(buffer, size, &desc, sizeof(uint32_t)));
-    if (pixels) {
-        *xOut = desc.width;
-        *yOut = desc.height;
-        *components = desc.channels;
-    }
-    return pixels;
-}
-
-/// @brief Decodes an image file from a file using the sg_pcx & stb_image libraries.
-/// @param fileName A valid filename
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param scaler An optional pixel scaler to use
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
-    auto compOut = 0;
-    auto isVG = false; // we will not use scalers for vector graphics
-
-    image_log_info("Loading image from file %s", fileName);
-
-    auto pixels = reinterpret_cast<uint32_t *>(stbi_load(fileName, xOut, yOut, &compOut, 4));
-    image_log_trace("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
-
-    if (!pixels) {
-        pixels = pcx_load_file(fileName, xOut, yOut, &compOut);
-        image_log_trace("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
-
-        if (!pixels) {
-            pixels = image_qoi_load_from_file(fileName, xOut, yOut, &compOut);
-            image_log_trace("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
-
-            if (!pixels) {
-                pixels = curico_load_file(fileName, xOut, yOut, &compOut);
-                image_log_trace("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
-
-                if (!pixels) {
-                    pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
-                    image_log_trace("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
-
-                    if (!pixels)
-                        return nullptr; // Return NULL if all attempts failed
-                }
-            }
-        }
-    }
-
-    IMAGE_DEBUG_CHECK(compOut > 2);
-
-    if (!isVG)
-        pixels = image_scale(pixels, xOut, yOut, scaler);
-
-    return pixels;
-}
-
-/// @brief Decodes an image file from memory using the sg_pcx & stb_image libraries
-/// @param data The raw pointer to the file in memory
-/// @param size The size of the file in memory
-/// @param xOut Out: width in pixels. This cannot be NULL
-/// @param yOut Out: height in pixels. This cannot be NULL
-/// @param scaler An optional pixel scaler to use
-/// @return A pointer to the raw pixel data in RGBA format or NULL on failure
-static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int32_t *xOut, int32_t *yOut, ImageScaler scaler) {
-    auto compOut = 0;
-    auto isVG = false; // we will not use scalers for vector graphics
-
-    image_log_info("Loading image from memory");
-
-    auto pixels = reinterpret_cast<uint32_t *>(stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(data), size, xOut, yOut, &compOut, 4));
-    image_log_trace("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
-
-    if (!pixels) {
-        pixels = pcx_load_memory(data, size, xOut, yOut, &compOut);
-        image_log_trace("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
-
-        if (!pixels) {
-            pixels = image_qoi_load_from_memory(data, size, xOut, yOut, &compOut);
-            image_log_trace("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
-
-            if (!pixels) {
-                pixels = curico_load_memory(data, size, xOut, yOut, &compOut);
-                image_log_trace("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
-
-                if (!pixels) {
-                    pixels = image_svg_load_from_memory(data, size, xOut, yOut, scaler, &compOut, &isVG);
-                    image_log_trace("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
-
-                    if (!pixels)
-                        return nullptr; // Return NULL if all attempts failed
-                }
-            }
-        }
-    }
-
-    IMAGE_DEBUG_CHECK(compOut > 2);
-
-    if (!isVG)
-        pixels = image_scale(pixels, xOut, yOut, scaler);
-
-    return pixels;
-}
 
 /// @brief This takes in a 32bpp (BGRA) image raw data and spits out an 8bpp raw image along with it's 256 color (BGRA) palette.
 /// @param src32 The source raw image data. This must be in BGRA format and not NULL.
@@ -641,10 +302,10 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
     if (new_error || !qbsFileName->len) // leave if we do not have a file name, data or there was an error
         return INVALID_IMAGE_HANDLE;
 
-    auto isLoadFromMemory = false;   // should the image be loaded from memory?
-    auto isHardwareImage = false;    // should the image be converted to a hardware image?
-    auto srcPalette = palette_256;   // use the QB64 256 color palette by default for 8bpp images
-    auto scaler = ImageScaler::NONE; // default to no scaling
+    auto isLoadFromMemory = false;                // should the image be loaded from memory?
+    auto isHardwareImage = false;                 // should the image be converted to a hardware image?
+    auto srcPalette = palette_256;                // use the QB64 256 color palette by default for 8bpp images
+    const ImageScalerBase *scaler = &gScalerNone; // default to no scaling
 
     // Handle special cases and set the above flags if required
     image_log_trace("bpp = %i, passed = 0x%X", bpp, passed);
@@ -696,38 +357,41 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         }
 
         // Parse scaler string
-        for (size_t i = 0; i < _countof(g_ImageScalerName); i++) {
-            image_log_trace("Checking for: %s", g_ImageScalerName[i]);
-            if (requirements.find(g_ImageScalerName[i]) != std::string::npos) {
-                scaler = (ImageScaler)i;
-                image_log_trace("%s scaler selected", g_ImageScalerName[size_t(scaler)]);
+        for (size_t i = 0; i < ScalerCount; i++) {
+            image_log_trace("Checking for: %s", gScalerRegistry[i].name);
+            if (requirements.find(gScalerRegistry[i].name) != std::string::npos) {
+                scaler = gScalerRegistry[i].scaler;
+                image_log_trace("%s scaler selected", scaler->GetName());
                 break;
             }
         }
     }
 
-    auto x = 0, y = 0;
-    uint32_t *pixels;
+    Image loadedImage;
 
     if (isLoadFromMemory) {
-        pixels = image_decode_from_memory(qbsFileName->chr, qbsFileName->len, &x, &y, scaler);
+        auto src = ImageSource::FromMemory(qbsFileName->chr, qbsFileName->len);
+        loadedImage = Image::Load(src, scaler);
     } else {
         std::string fileName(reinterpret_cast<char *>(qbsFileName->chr), qbsFileName->len);
-        pixels = image_decode_from_file(filepath_fix_directory(fileName), &x, &y, scaler);
+        auto src = ImageSource::FromFile(filepath_fix_directory(fileName));
+        loadedImage = Image::Load(src, scaler);
     }
 
-    if (!pixels)
+    if (!loadedImage.IsValid())
         return INVALID_IMAGE_HANDLE; // Return invalid handle if loading the image failed
 
+    auto x = loadedImage.GetWidth();
+    auto y = loadedImage.GetHeight();
+    auto pixels = loadedImage.GetData();
+
     // Convert RGBA to BGRA
-    size_t size = x * y;
+    size_t size = size_t(x) * size_t(y);
     image_swap_red_blue_buffer(pixels, size);
 
     auto i = func__newimage(x, y, bpp, 1);
-    if (i == INVALID_IMAGE_HANDLE) {
-        free(pixels);
+    if (i == INVALID_IMAGE_HANDLE)
         return INVALID_IMAGE_HANDLE;
-    }
 
     // Convert image to 8bpp if requested by the user
     if (bpp == 256) {
@@ -739,8 +403,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         memcpy(img[-i].offset32, pixels, size * sizeof(uint32_t));
     }
 
-    // Free pixel memory. We can do this because all image loader as know to use malloc()
-    free(pixels);
+    // loadedImage goes out of scope here and frees pixel memory automatically
 
     // This only executes if bpp is 32
     if (isHardwareImage) {
@@ -1033,7 +696,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
     } break;
 
     case SaveFormat::ICO: {
-        if (!curico_save_file(fileName.c_str(), width, height, sizeof(uint32_t), pixels.data())) {
+        if (!curico_save_file(fileName.c_str(), width, height, pixels.data())) {
             image_log_error("curico_save_file() failed");
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
         }

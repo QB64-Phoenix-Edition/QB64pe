@@ -19,6 +19,6 @@
 #include <cstdint>
 #include <cstdlib>
 
-uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, int *components);
-uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components);
-bool curico_save_file(const char *filename, int x, int y, int components, const void *data);
+uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y);
+uint32_t *curico_load_file(const char *filename, int *x, int *y);
+bool curico_save_file(const char *filename, int x, int y, const void *data);
