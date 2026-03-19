@@ -590,13 +590,14 @@ class PCXImage {
     }
 };
 
-uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y) {
+uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y, int *components) {
     uint32_t *out_data = nullptr;
 
     try {
         std::unique_ptr<PCXImage> pcx = std::make_unique<PCXImage>(); // use unique_ptr for memory management
 
         pcx->LoadFromMemory(data, dataSize, &out_data, x, y);
+        *components = 4; // always 32bpp BGRA
     } catch (const std::exception &e) {
         image_log_warn("Failed to load PCX: %s", e.what());
 
@@ -610,8 +611,8 @@ uint32_t *pcx_load_memory(const void *data, size_t dataSize, int *x, int *y) {
     return out_data;
 }
 
-uint32_t *pcx_load_file(const char *filename, int *x, int *y) {
-    if (!filename || !filename[0] || !x || !y) {
+uint32_t *pcx_load_file(const char *filename, int *x, int *y, int *components) {
+    if (!filename || !filename[0] || !x || !y || !components) {
         image_log_warn("Invalid parameters");
         return nullptr;
     }
@@ -647,5 +648,5 @@ uint32_t *pcx_load_file(const char *filename, int *x, int *y) {
 
     fclose(pFile);
 
-    return pcx_load_memory(&buffer[0], len, x, y);
+    return pcx_load_memory(&buffer[0], len, x, y, components);
 }

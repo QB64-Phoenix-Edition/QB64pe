@@ -671,13 +671,14 @@ class CurIcoImage {
     }
 };
 
-uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y) {
+uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y, int *components) {
     uint32_t *out_data = nullptr;
 
     try {
         std::unique_ptr<CurIcoImage> curico = std::make_unique<CurIcoImage>(); // use unique_ptr for memory management
 
         curico->LoadFromMemory(data, dataSize, &out_data, x, y);
+        *components = 4; // always 32bpp BGRA
     } catch (const std::exception &e) {
         image_log_warn("Failed to load ICO/CUR: %s", e.what());
 
@@ -691,8 +692,8 @@ uint32_t *curico_load_memory(const void *data, size_t dataSize, int *x, int *y) 
     return out_data;
 }
 
-uint32_t *curico_load_file(const char *filename, int *x, int *y) {
-    if (!filename || !filename[0] || !x || !y) {
+uint32_t *curico_load_file(const char *filename, int *x, int *y, int *components) {
+    if (!filename || !filename[0] || !x || !y || !components) {
         image_log_warn("Invalid parameters");
         return nullptr;
     }
@@ -728,11 +729,11 @@ uint32_t *curico_load_file(const char *filename, int *x, int *y) {
 
     fclose(pFile);
 
-    return curico_load_memory(&buffer[0], len, x, y);
+    return curico_load_memory(&buffer[0], len, x, y, components);
 }
 
-bool curico_save_file(const char *filename, int x, int y, const void *data) {
-    if (!filename || !filename[0] || !data || x < 1 || y < 1) {
+bool curico_save_file(const char *filename, int x, int y, int components, const void *data) {
+    if (!filename || !filename[0] || !data || x < 1 || y < 1 || components != sizeof(uint32_t)) {
         image_log_warn("Invalid parameters");
         return false;
     }
@@ -740,7 +741,7 @@ bool curico_save_file(const char *filename, int x, int y, const void *data) {
     // Just write a PNG using the stb_image_writer callback
     CurIcoImage::WriteToFileContext context = {filename, false};
     stbi_write_png_compression_level = 100;
-    auto stbiResult = stbi_write_png_to_func(&CurIcoImage::WriteToFileCallback, &context, x, y, sizeof(uint32_t), data, 0) != 0;
+    auto stbiResult = stbi_write_png_to_func(&CurIcoImage::WriteToFileCallback, &context, x, y, components, data, 0) != 0;
 
     return stbiResult && context.success;
 }
