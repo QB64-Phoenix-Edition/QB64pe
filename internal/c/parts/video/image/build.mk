@@ -9,6 +9,7 @@ IMAGE_SRCS := \
 	qoi/qoi.cpp \
 	sg_curico/sg_curico.cpp \
 	sg_pcx/sg_pcx.cpp \
+	tiny_webp/tiny_webp.cpp \
 	stb/stb_image.cpp
 
 IMAGE_OBJS := $(patsubst %.cpp,$(PATH_INTERNAL_C)/parts/video/image/%.o,$(IMAGE_SRCS))
