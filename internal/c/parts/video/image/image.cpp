@@ -304,6 +304,7 @@ static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int
 
     if (!pixels) {
         pixels = reinterpret_cast<uint32_t *>(twp_read(fileName, xOut, yOut, twp_FORMAT_RGBA, 0));
+        compOut = sizeof(uint32_t);
         image_log_trace("Image dimensions (tiny_webp) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
@@ -357,6 +358,7 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
     if (!pixels) {
         pixels =
             reinterpret_cast<uint32_t *>(twp_read_from_memory(reinterpret_cast<void *>(const_cast<uint8_t *>(data)), size, xOut, yOut, twp_FORMAT_RGBA, 0));
+        compOut = sizeof(uint32_t);
         image_log_trace("Image dimensions (tiny_webp) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
