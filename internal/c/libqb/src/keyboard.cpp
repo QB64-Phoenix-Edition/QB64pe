@@ -808,6 +808,43 @@ bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey,
     return false;
 }
 
+bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int32_t *flagsMask) {
+    switch (key) {
+    case VK + QBVK_LSHIFT:
+        *scancode = 42;
+        *flagsMask = 3;
+        return true;
+    case VK + QBVK_RSHIFT:
+        *scancode = 54;
+        *flagsMask = 3;
+        return true;
+    case VK + QBVK_LALT:
+    case VK + QBVK_RALT:
+        *scancode = 56;
+        *flagsMask = 8;
+        return true;
+    case VK + QBVK_LCTRL:
+    case VK + QBVK_RCTRL:
+        *scancode = 29;
+        *flagsMask = 4;
+        return true;
+    case VK + QBVK_NUMLOCK:
+        *scancode = 69;
+        *flagsMask = 32;
+        return true;
+    case VK + QBVK_CAPSLOCK:
+        *scancode = 58;
+        *flagsMask = 64;
+        return true;
+    case VK + QBVK_SCROLLOCK:
+        *scancode = 70;
+        *flagsMask = 0;
+        return true;
+    default:
+        return false;
+    }
+}
+
 void update_shift_state() {
     int32_t x;
     /*

@@ -28807,41 +28807,14 @@ void keyup(uint32_t x) {
         goto key_handled;
     } // x<=65536
 
-    if (x == (VK + QBVK_LSHIFT)) {
-        scancodeup(42);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RSHIFT)) {
-        scancodeup(54);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LALT)) {
-        scancodeup(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RALT)) {
-        scancodeup(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LCTRL)) {
-        scancodeup(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RCTRL)) {
-        scancodeup(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_NUMLOCK)) {
-        scancodeup(69);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_CAPSLOCK)) {
-        scancodeup(58);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_SCROLLOCK)) {
-        scancodeup(70);
-        update_shift_state();
+    { // scope
+        uint8_t modifierScancode;
+        int32 modifierFlagsMask;
+        if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
+            (void)modifierFlagsMask;
+            scancodeup(modifierScancode);
+            update_shift_state();
+        }
     }
 
 key_handled:;
@@ -29017,41 +28990,11 @@ void keydown(uint32_t x) {
         onkey_gotscancode:
 
             // check modifier keys
-            if (x == (VK + QBVK_LSHIFT)) {
-                scancode = 42;
-                flags_mask = 3;
-            }
-            if (x == (VK + QBVK_RSHIFT)) {
-                scancode = 54;
-                flags_mask = 3;
-            }
-            if (x == (VK + QBVK_LALT)) {
-                scancode = 56;
-                flags_mask = 8;
-            }
-            if (x == (VK + QBVK_RALT)) {
-                scancode = 56;
-                flags_mask = 8;
-            }
-            if (x == (VK + QBVK_LCTRL)) {
-                scancode = 29;
-                flags_mask = 4;
-            }
-            if (x == (VK + QBVK_RCTRL)) {
-                scancode = 29;
-                flags_mask = 4;
-            }
-            if (x == (VK + QBVK_NUMLOCK)) {
-                scancode = 69;
-                flags_mask = 32;
-            }
-            if (x == (VK + QBVK_CAPSLOCK)) {
-                scancode = 58;
-                flags_mask = 64;
-            }
-            if (x == (VK + QBVK_SCROLLOCK)) {
-                scancode = 70;
-                // note: no mask required
+            { // scope
+                uint8_t modifierScancode;
+                if (keyboard_try_get_modifier_data(x, &modifierScancode, &flags_mask)) {
+                    scancode = modifierScancode;
+                }
             }
 
             // establish if key is an extended key
@@ -29371,56 +29314,30 @@ void keydown(uint32_t x) {
         goto key_handled;
     } // x<=65536
 
-    if (x == (VK + QBVK_LSHIFT)) {
-        scancodedown(42);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RSHIFT)) {
-        scancodedown(54);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LALT)) {
-        scancodedown(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RALT)) {
-        scancodedown(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LCTRL)) {
-        scancodedown(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RCTRL)) {
-        scancodedown(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_NUMLOCK)) {
-        scancodedown(69);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_CAPSLOCK)) {
-        scancodedown(58);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_SCROLLOCK)) {
-        scancodedown(70);
+    { // scope
+        uint8_t modifierScancode;
+        int32 modifierFlagsMask;
+        if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
+            scancodedown(modifierScancode);
 
-        if (scroll_lock_held == 0) { // nullify effects of key repeats
-            ctrl = 0;
-            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                ctrl = 1;
-            if (ctrl == 0) {
-                // toggle insert mode
-                if (keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
-                    keyheld_remove(QBK + QBK_SCROLL_LOCK_MODE);
-                } else {
-                    keyheld_add(QBK + QBK_SCROLL_LOCK_MODE);
+            if (x == (VK + QBVK_SCROLLOCK)) {
+                if (scroll_lock_held == 0) { // nullify effects of key repeats
+                    ctrl = 0;
+                    if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
+                        ctrl = 1;
+                    if (ctrl == 0) {
+                        // toggle insert mode
+                        if (keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
+                            keyheld_remove(QBK + QBK_SCROLL_LOCK_MODE);
+                        } else {
+                            keyheld_add(QBK + QBK_SCROLL_LOCK_MODE);
+                        }
+                    }
                 }
             }
-        }
 
-        update_shift_state();
+            update_shift_state();
+        }
     }
 
 key_handled:

@@ -16,6 +16,7 @@ void update_shift_state();
 bool keyboard_keyup_mask_consume(uint32_t key);
 void keyboard_keyup_mask_add(uint32_t key);
 bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey, int64_t *keyhitFlag);
+bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int32_t *flagsMask);
 
 #define QBK 200000
 #define VK 100000
