@@ -762,6 +762,52 @@ void keyboard_keyup_mask_add(uint32_t key) {
     }
 }
 
+bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey, int64_t *keyhitFlag) {
+    *normalizedKey = key;
+    *keyhitFlag = 0;
+
+    if ((key >= (VK + QBVK_KP0)) && (key <= (VK + QBVK_KP_ENTER))) {
+        *keyhitFlag = 4294967296ll;
+
+        if ((key >= (VK + QBVK_KP0)) && (key <= (VK + QBVK_KP9))) {
+            *normalizedKey = key - (VK + QBVK_KP0) + 48;
+            return true;
+        }
+
+        switch (key) {
+        case VK + QBVK_KP_PERIOD:
+            *normalizedKey = 46;
+            return true;
+        case VK + QBVK_KP_DIVIDE:
+            *normalizedKey = 47;
+            return true;
+        case VK + QBVK_KP_MULTIPLY:
+            *normalizedKey = 42;
+            return true;
+        case VK + QBVK_KP_MINUS:
+            *normalizedKey = 45;
+            return true;
+        case VK + QBVK_KP_PLUS:
+            *normalizedKey = 43;
+            return true;
+        case VK + QBVK_KP_ENTER:
+            *normalizedKey = 13;
+            return true;
+        }
+    }
+
+    if ((key >= (QBK + 0)) && (key <= (QBK + 10))) {
+        *keyhitFlag = 4294967296ll;
+        const uint32_t offset = key - QBK;
+        static constexpr uint16_t kQbkNumpadLookup[] = {82 << 8, 79 << 8, 80 << 8, 81 << 8, 75 << 8, 76 << 8, 77 << 8, 71 << 8, 72 << 8, 73 << 8, 83 << 8};
+
+        *normalizedKey = kQbkNumpadLookup[offset];
+        return true;
+    }
+
+    return false;
+}
+
 void update_shift_state() {
     int32_t x;
     /*
