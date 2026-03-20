@@ -845,6 +845,52 @@ bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int32_t *fl
     }
 }
 
+void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancode, int32_t *flagsMask) {
+    if (key <= 255) {
+        *scancode = keyboard_scancode_get_scancode(key);
+    } else {
+        uint32_t x3 = key;
+
+        if ((x3 >= (VK + QBVK_KP0)) && (x3 <= (VK + QBVK_KP_ENTER))) {
+            x3 = (x3 - (VK + QBVK_KP0) + 256) * 256;
+        } else if ((x3 >= (QBK + 0)) && (x3 <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
+            x3 = (x3 - (QBK + 0) + 256) * 256;
+        }
+
+        if (x3 <= 65535) {
+            int32_t r = (x3 >> 8) + 256;
+            if (keyboard_scancode_has_variant(r, 0))
+                *scancode = keyboard_scancode_get_scancode(r);
+        }
+    }
+
+    uint8_t modifierScancode;
+    if (keyboard_try_get_modifier_data(key, &modifierScancode, flagsMask))
+        *scancode = modifierScancode;
+}
+
+bool keyboard_is_onkey_extended_key(uint32_t key) {
+    switch (key) {
+    case 0x4B00:
+    case 0x4800:
+    case 0x4D00:
+    case 0x5000:
+    case VK + QBVK_KP_DIVIDE:
+    case VK + QBVK_KP_ENTER:
+    case 0x5200:
+    case 0x4700:
+    case 0x4900:
+    case 0x5300:
+    case 0x4F00:
+    case 0x5100:
+    case VK + QBVK_RCTRL:
+    case VK + QBVK_RALT:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void update_shift_state() {
     int32_t x;
     /*

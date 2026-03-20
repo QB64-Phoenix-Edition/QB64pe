@@ -28962,75 +28962,15 @@ void keydown(uint32_t x) {
         // ON KEY trapping
         { // new scope
             static int32 block_onkey = 0;
-            static int32 f, x3, scancode, extended, c, flags_mask;
+            static int32 f, scancode, extended, flags_mask;
             int32 i, i2; // must not be static!
 
             // establish scancode (if any)
             scancode = 0;
-            if (x <= 255) {
-                scancode = keyboard_scancode_get_scancode(x);
-                goto onkey_gotscancode;
-            }
-            //*check for 2 byte scancodes here
-            x3 = x;
-            if ((x3 >= (VK + QBVK_KP0)) && (x3 <= (VK + QBVK_KP_ENTER))) {
-                x3 = (x3 - (VK + QBVK_KP0) + 256) * 256;
-                goto onkey_numpadkey;
-            }
-            if ((x3 >= (QBK + 0)) && (x3 <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
-                x3 = (x3 - (QBK + 0) + 256) * 256;
-                goto onkey_numpadkey;
-            }
-            if (x3 <= 65535) {
-            onkey_numpadkey:
-                i = (x3 >> 8) + 256;
-                if (keyboard_scancode_has_variant(i, 0))
-                    scancode = keyboard_scancode_get_scancode(i);
-            }
-        onkey_gotscancode:
-
-            // check modifier keys
-            { // scope
-                uint8_t modifierScancode;
-                if (keyboard_try_get_modifier_data(x, &modifierScancode, &flags_mask)) {
-                    scancode = modifierScancode;
-                }
-            }
+            keyboard_get_onkey_scancode_and_flags(x, &scancode, &flags_mask);
 
             // establish if key is an extended key
-            extended = 0;
-            // arrow-pad (note: num-pad is ignored because x is a QB64 pure key value and only refers to the arrow-pad)
-            if (x == 0x4B00)
-                extended = 1;
-            if (x == 0x4800)
-                extended = 1;
-            if (x == 0x4D00)
-                extended = 1;
-            if (x == 0x5000)
-                extended = 1;
-            // num-pad extended keys
-            if (x == VK + QBVK_KP_DIVIDE)
-                extended = 1;
-            if (x == VK + QBVK_KP_ENTER)
-                extended = 1;
-            // ins/del/hom/end/pgu/pgd pad
-            if (x == 0x5200)
-                extended = 1;
-            if (x == 0x4700)
-                extended = 1;
-            if (x == 0x4900)
-                extended = 1;
-            if (x == 0x5300)
-                extended = 1;
-            if (x == 0x4F00)
-                extended = 1;
-            if (x == 0x5100)
-                extended = 1;
-            // right alt/right control
-            if (x == VK + QBVK_RCTRL)
-                extended = 1;
-            if (x == VK + QBVK_RALT)
-                extended = 1;
+            extended = keyboard_is_onkey_extended_key(x);
 
             if (!block_onkey) {
 
