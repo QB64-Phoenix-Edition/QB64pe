@@ -11,7 +11,9 @@
 
 #include "libqb-common.h"
 
+#include "completion.h"
 #include "logging.h"
+#include "mutex.h"
 
 #include "glut-emu.h"
 #if defined(QB64_WINDOWS)
@@ -27,8 +29,6 @@
 #include <algorithm>
 #include <cmath>
 #include <concepts>
-#include <latch>
-#include <mutex>
 #include <queue>
 #include <string>
 #include <thread>
@@ -38,33 +38,42 @@ class GLUTEmu {
   public:
     class Message {
       public:
-        Message(bool withCompletion) : hasCompletion(withCompletion), done(withCompletion ? 1 : 0) {}
-
         void Finish() {
-            if (hasCompletion) {
-                done.count_down();
+            if (finished) {
+                completion_finish(finished);
             } else {
                 delete this;
             }
         }
 
         void WaitForResponse() {
-            if (hasCompletion) {
-                done.wait();
-            }
+            completion_wait(finished);
         }
 
         virtual ~Message() {
-            if (hasCompletion) {
-                done.wait();
+            if (finished) {
+                completion_wait(finished);
+                completion_clear(finished);
+                delete finished;
             }
         }
 
         virtual void Execute() = 0;
 
+      protected:
+        Message(bool withCompletion) {
+            if (withCompletion) {
+                InitCompletion();
+            }
+        }
+
       private:
-        const bool hasCompletion;
-        std::latch done;
+        void InitCompletion() {
+            finished = new completion();
+            completion_init(finished);
+        }
+
+        completion *finished = nullptr;
     };
 
     class MessageScreenGetMode : public Message {
