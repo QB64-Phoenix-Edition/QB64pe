@@ -1,6 +1,14 @@
 #include "keyboard.h"
 #include "cmem.h"
 
+extern int64_t keyhit[8192];
+extern int32_t keyhit_nextfree;
+extern int32_t keyhit_next;
+extern int32_t asciicode_reading;
+
+extern void keyheld_remove(uint32_t x);
+extern void scancodeup(uint8_t scancode);
+
 // clang-format off
 const int32_t keyboard_scancode_lookup_table[]={
     //DESCRIPTION OFFSET  SCANCODE      ASCII      SHIFT       CTRL        ALT        NUM       CAPS SHIFT+CAPS  SHIFT+NUM
@@ -889,6 +897,83 @@ bool keyboard_is_onkey_extended_key(uint32_t key) {
     default:
         return false;
     }
+}
+
+void keyup(uint32_t x) {
+    if (!x)
+        x = QBK + QBK_CHR0;
+
+    keyheld_remove(x);
+
+    if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
+        // identify and revert numpad specific key codes to non-numpad codes
+        static uint32_t x2;
+        static int64_t numpadkey;
+        keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
+
+        if (keyboard_keyup_mask_consume(x))
+            goto key_handled;
+
+        // add x2 to keyhit buffer
+        static int32_t z;
+        z = (keyhit_nextfree + 1) & 0x1FFF;
+        if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
+            keyhit_next = (keyhit_next + 1) & 0x1FFF;
+        }
+        static int32_t sx;
+        sx = x2;
+        sx = -sx;
+        x2 = sx; // negate x2
+        keyhit[keyhit_nextfree] = x2 | numpadkey;
+        keyhit_nextfree = z;
+    } // asciicode_reading!=2
+
+    static int32_t numlock;
+    numlock = 0;
+
+    if (x <= 255) {
+        if (keyboard_scancode_has_variant(x, 0))
+            scancodeup(keyboard_scancode_get_scancode(x));
+        goto key_handled;
+    } // x<=255
+
+    // NUMPAD?
+    if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
+        if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_PERIOD)))
+            numlock = 1;
+        x = (x - (VK + QBVK_KP0) + 256) * 256;
+        goto numpadkey;
+    }
+    if ((x >= (QBK + 0)) && (x <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
+        x = (x - (QBK + 0) + 256) * 256;
+        goto numpadkey;
+    }
+
+    if (x <= 65535) {
+        static int32_t r;
+    numpadkey:
+        r = (x >> 8) + 256;
+        if (keyboard_scancode_has_variant(r, 0))
+            scancodeup(keyboard_scancode_get_scancode(r));
+
+        if (x == 0x5200) { // INSERT lock emulation
+            update_shift_state();
+        }
+
+        goto key_handled;
+    } // x<=65536
+
+    { // scope
+        uint8_t modifierScancode;
+        int32_t modifierFlagsMask;
+        if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
+            (void)modifierFlagsMask;
+            scancodeup(modifierScancode);
+            update_shift_state();
+        }
+    }
+
+key_handled:;
 }
 
 void update_shift_state() {
