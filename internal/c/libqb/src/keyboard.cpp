@@ -1,9 +1,180 @@
 #include "keyboard.h"
 
-void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {
-    // fprintf(stderr, "key: %d, scancode: %d, action: %d, modifiers: %d\n", key, scancode, action, modifiers);
+struct KeyMapEntry {
+    GLUTEmu_KeyboardKey key;
+    int qbKey;
+};
 
-    int qbKey = -1;
+struct PunctuationMapEntry {
+    GLUTEmu_KeyboardKey key;
+    int normal;
+    int shifted;
+    int control;
+};
+
+static constexpr KeyMapEntry kDirectKeyMap[] = {
+    {GLUTEmu_KeyboardKey::Escape, QBVK_ESCAPE},
+    {GLUTEmu_KeyboardKey::Enter, QBVK_RETURN},
+    {GLUTEmu_KeyboardKey::Tab, QBVK_TAB},
+    {GLUTEmu_KeyboardKey::Backspace, QBVK_BACKSPACE},
+    {GLUTEmu_KeyboardKey::Insert, 0x5200},
+    {GLUTEmu_KeyboardKey::Delete, 0x5300},
+    {GLUTEmu_KeyboardKey::Right, 0x4D00},
+    {GLUTEmu_KeyboardKey::Left, 0x4B00},
+    {GLUTEmu_KeyboardKey::Down, 0x5000},
+    {GLUTEmu_KeyboardKey::Up, 0x4800},
+    {GLUTEmu_KeyboardKey::PageUp, 0x4900},
+    {GLUTEmu_KeyboardKey::PageDown, 0x5100},
+    {GLUTEmu_KeyboardKey::Home, 0x4700},
+    {GLUTEmu_KeyboardKey::End, 0x4F00},
+    {GLUTEmu_KeyboardKey::CapsLock, VK + QBVK_CAPSLOCK},
+    {GLUTEmu_KeyboardKey::ScrollLock, VK + QBVK_SCROLLOCK},
+    {GLUTEmu_KeyboardKey::NumLock, VK + QBVK_NUMLOCK},
+    {GLUTEmu_KeyboardKey::PrintScreen, VK + QBVK_PRINT},
+    {GLUTEmu_KeyboardKey::Pause, VK + QBVK_PAUSE},
+    {GLUTEmu_KeyboardKey::F1, 0x3B00},
+    {GLUTEmu_KeyboardKey::F2, 0x3C00},
+    {GLUTEmu_KeyboardKey::F3, 0x3D00},
+    {GLUTEmu_KeyboardKey::F4, 0x3E00},
+    {GLUTEmu_KeyboardKey::F5, 0x3F00},
+    {GLUTEmu_KeyboardKey::F6, 0x4000},
+    {GLUTEmu_KeyboardKey::F7, 0x4100},
+    {GLUTEmu_KeyboardKey::F8, 0x4200},
+    {GLUTEmu_KeyboardKey::F9, 0x4300},
+    {GLUTEmu_KeyboardKey::F10, 0x4400},
+    {GLUTEmu_KeyboardKey::F11, 0x8500},
+    {GLUTEmu_KeyboardKey::F12, 0x8600},
+    {GLUTEmu_KeyboardKey::KPDivide, VK + QBVK_KP_DIVIDE},
+    {GLUTEmu_KeyboardKey::KPMultiply, VK + QBVK_KP_MULTIPLY},
+    {GLUTEmu_KeyboardKey::KPSubtract, VK + QBVK_KP_MINUS},
+    {GLUTEmu_KeyboardKey::KPAdd, VK + QBVK_KP_PLUS},
+    {GLUTEmu_KeyboardKey::KPEnter, VK + QBVK_KP_ENTER},
+    {GLUTEmu_KeyboardKey::KPEqual, VK + QBVK_KP_EQUALS},
+    {GLUTEmu_KeyboardKey::LeftShift, VK + QBVK_LSHIFT},
+    {GLUTEmu_KeyboardKey::LeftControl, VK + QBVK_LCTRL},
+    {GLUTEmu_KeyboardKey::LeftAlt, VK + QBVK_LALT},
+    {GLUTEmu_KeyboardKey::LeftSuper, VK + QBVK_LSUPER},
+    {GLUTEmu_KeyboardKey::RightShift, VK + QBVK_RSHIFT},
+    {GLUTEmu_KeyboardKey::RightControl, VK + QBVK_RCTRL},
+    {GLUTEmu_KeyboardKey::RightAlt, VK + QBVK_RALT},
+    {GLUTEmu_KeyboardKey::RightSuper, VK + QBVK_RSUPER},
+    {GLUTEmu_KeyboardKey::Menu, VK + QBVK_MENU},
+};
+
+static constexpr PunctuationMapEntry kPunctuationMap[] = {
+    {GLUTEmu_KeyboardKey::Minus, '-', '_', 31},        {GLUTEmu_KeyboardKey::Equal, '=', '+', -1},       {GLUTEmu_KeyboardKey::LeftBracket, '[', '{', 27},
+    {GLUTEmu_KeyboardKey::RightBracket, ']', '}', 29}, {GLUTEmu_KeyboardKey::Backslash, '\\', '|', 28},  {GLUTEmu_KeyboardKey::Semicolon, ';', ':', -1},
+    {GLUTEmu_KeyboardKey::Apostrophe, '\'', '"', -1},  {GLUTEmu_KeyboardKey::Comma, ',', '<', -1},       {GLUTEmu_KeyboardKey::Period, '.', '>', -1},
+    {GLUTEmu_KeyboardKey::Slash, '/', '?', -1},        {GLUTEmu_KeyboardKey::GraveAccent, '`', '~', -1},
+};
+
+static constexpr char kShiftedDigits[] = ")!@#$%^&*(";
+
+static int constexpr TranslateDirectKey(GLUTEmu_KeyboardKey key) {
+    for (const auto &entry : kDirectKeyMap) {
+        if (entry.key == key) {
+            return entry.qbKey;
+        }
+    }
+
+    return -1;
+}
+
+static int constexpr TranslateKeypadDigitOrDecimal(GLUTEmu_KeyboardKey key, bool useKeypadNumber) {
+    if (key >= GLUTEmu_KeyboardKey::KP0 && key <= GLUTEmu_KeyboardKey::KP9) {
+        const int offset = int(key) - int(GLUTEmu_KeyboardKey::KP0);
+        return useKeypadNumber ? (VK + QBVK_KP0 + offset) : (QBK + offset);
+    }
+
+    if (key == GLUTEmu_KeyboardKey::KPDecimal) {
+        return useKeypadNumber ? (VK + QBVK_KP_PERIOD) : (QBK + 10);
+    }
+
+    return -1;
+}
+
+static int constexpr TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
+    if (key < GLUTEmu_KeyboardKey::A || key > GLUTEmu_KeyboardKey::Z) {
+        return -1;
+    }
+
+    const int offset = int(key) - int(GLUTEmu_KeyboardKey::A);
+
+    if (isControl && !isAlt) {
+        int ctrlValue = offset + 1;
+        return isShift ? (ctrlValue - 1 + 'A') : (ctrlValue - 1 + 'a');
+    }
+
+    return (isShift ^ isCapsLock ? 'A' : 'a') + offset;
+}
+
+static int constexpr TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
+    if (key < GLUTEmu_KeyboardKey::Zero || key > GLUTEmu_KeyboardKey::Nine) {
+        return -1;
+    }
+
+    const int offset = int(key) - int(GLUTEmu_KeyboardKey::Zero);
+    int translated = '0' + offset;
+
+    if (isShift) {
+        translated = kShiftedDigits[offset];
+    }
+
+    if (isControl && !isAlt && key == GLUTEmu_KeyboardKey::Six) {
+        translated = 30;
+    }
+
+    return translated;
+}
+
+static int constexpr TranslatePunctuation(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
+    for (const auto &entry : kPunctuationMap) {
+        if (entry.key == key) {
+            if (isControl && !isAlt && entry.control != -1) {
+                return entry.control;
+            }
+
+            return isShift ? entry.shifted : entry.normal;
+        }
+    }
+
+    return -1;
+}
+
+static int constexpr TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
+    int translated = TranslateLetter(key, isShift, isControl, isAlt, isCapsLock);
+    if (translated != -1) {
+        return translated;
+    }
+
+    translated = TranslateDigit(key, isShift, isControl, isAlt);
+    if (translated != -1) {
+        return translated;
+    }
+
+    if (key == GLUTEmu_KeyboardKey::Space) {
+        return ' ';
+    }
+
+    return TranslatePunctuation(key, isShift, isControl, isAlt);
+}
+
+static int constexpr TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber) {
+    int translated = TranslateDirectKey(key);
+    if (translated != -1) {
+        return translated;
+    }
+
+    translated = TranslateKeypadDigitOrDecimal(key, useKeypadNumber);
+    if (translated != -1) {
+        return translated;
+    }
+
+    return TranslatePrintableKey(key, isShift, isControl, isAlt, isCapsLock);
+}
+
+void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {
+    (void)scancode;
 
     const bool isNumLock = modifiers & GLUTEmu_KeyboardKeyModifier::NumLock;
     const bool isShift = modifiers & GLUTEmu_KeyboardKeyModifier::Shift;
@@ -12,330 +183,7 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     const bool isCapsLock = modifiers & GLUTEmu_KeyboardKeyModifier::CapsLock;
     const bool useKeypadNumber = isAlt || (isNumLock && !isShift);
 
-    switch (key) {
-    case GLUTEmu_KeyboardKey::Escape:
-        qbKey = QBVK_ESCAPE;
-        break;
-
-    case GLUTEmu_KeyboardKey::Enter:
-        qbKey = QBVK_RETURN;
-        break;
-
-    case GLUTEmu_KeyboardKey::Tab:
-        qbKey = QBVK_TAB;
-        break;
-
-    case GLUTEmu_KeyboardKey::Backspace:
-        qbKey = QBVK_BACKSPACE;
-        break;
-
-    case GLUTEmu_KeyboardKey::KP0:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP0) : (QBK + 0);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP1:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP1) : (QBK + 1);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP2:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP2) : (QBK + 2);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP3:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP3) : (QBK + 3);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP4:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP4) : (QBK + 4);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP5:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP5) : (QBK + 5);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP6:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP6) : (QBK + 6);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP7:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP7) : (QBK + 7);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP8:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP8) : (QBK + 8);
-        break;
-
-    case GLUTEmu_KeyboardKey::KP9:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP9) : (QBK + 9);
-        break;
-
-    case GLUTEmu_KeyboardKey::KPDecimal:
-        qbKey = useKeypadNumber ? (VK + QBVK_KP_PERIOD) : (QBK + 10);
-        break;
-
-    case GLUTEmu_KeyboardKey::KPDivide:
-        qbKey = VK + QBVK_KP_DIVIDE;
-        break;
-
-    case GLUTEmu_KeyboardKey::KPMultiply:
-        qbKey = VK + QBVK_KP_MULTIPLY;
-        break;
-
-    case GLUTEmu_KeyboardKey::KPSubtract:
-        qbKey = VK + QBVK_KP_MINUS;
-        break;
-
-    case GLUTEmu_KeyboardKey::KPAdd:
-        qbKey = VK + QBVK_KP_PLUS;
-        break;
-
-    case GLUTEmu_KeyboardKey::KPEnter:
-        qbKey = VK + QBVK_KP_ENTER;
-        break;
-
-    case GLUTEmu_KeyboardKey::KPEqual:
-        qbKey = VK + QBVK_KP_EQUALS;
-        break;
-
-    case GLUTEmu_KeyboardKey::Insert:
-        qbKey = 0x5200;
-        break;
-
-    case GLUTEmu_KeyboardKey::Delete:
-        qbKey = 0x5300;
-        break;
-
-    case GLUTEmu_KeyboardKey::Right:
-        qbKey = 0x4D00;
-        break;
-
-    case GLUTEmu_KeyboardKey::Left:
-        qbKey = 0x4B00;
-        break;
-
-    case GLUTEmu_KeyboardKey::Down:
-        qbKey = 0x5000;
-        break;
-
-    case GLUTEmu_KeyboardKey::Up:
-        qbKey = 0x4800;
-        break;
-
-    case GLUTEmu_KeyboardKey::PageUp:
-        qbKey = 0x4900;
-        break;
-
-    case GLUTEmu_KeyboardKey::PageDown:
-        qbKey = 0x5100;
-        break;
-
-    case GLUTEmu_KeyboardKey::Home:
-        qbKey = 0x4700;
-        break;
-
-    case GLUTEmu_KeyboardKey::End:
-        qbKey = 0x4F00;
-        break;
-
-    case GLUTEmu_KeyboardKey::CapsLock:
-        qbKey = VK + QBVK_CAPSLOCK;
-        break;
-
-    case GLUTEmu_KeyboardKey::ScrollLock:
-        qbKey = VK + QBVK_SCROLLOCK;
-        break;
-
-    case GLUTEmu_KeyboardKey::NumLock:
-        qbKey = VK + QBVK_NUMLOCK;
-        break;
-
-    case GLUTEmu_KeyboardKey::PrintScreen:
-        qbKey = VK + QBVK_PRINT;
-        break;
-
-    case GLUTEmu_KeyboardKey::Pause:
-        qbKey = VK + QBVK_PAUSE;
-        break;
-
-    case GLUTEmu_KeyboardKey::F1:
-        qbKey = 0x3B00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F2:
-        qbKey = 0x3C00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F3:
-        qbKey = 0x3D00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F4:
-        qbKey = 0x3E00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F5:
-        qbKey = 0x3F00;
-        break;
-
-    case GLUTEmu_KeyboardKey::F6:
-        qbKey = 0x4000;
-        break;
-
-    case GLUTEmu_KeyboardKey::F7:
-        qbKey = 0x4100;
-        break;
-
-    case GLUTEmu_KeyboardKey::F8:
-        qbKey = 0x4200;
-        break;
-
-    case GLUTEmu_KeyboardKey::F9:
-        qbKey = 0x4300;
-        break;
-
-    case GLUTEmu_KeyboardKey::F10:
-        qbKey = 0x4400;
-        break;
-
-    case GLUTEmu_KeyboardKey::F11:
-        qbKey = 0x8500;
-        break;
-
-    case GLUTEmu_KeyboardKey::F12:
-        qbKey = 0x8600;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftShift:
-        qbKey = VK + QBVK_LSHIFT;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftControl:
-        qbKey = VK + QBVK_LCTRL;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftAlt:
-        qbKey = VK + QBVK_LALT;
-        break;
-
-    case GLUTEmu_KeyboardKey::LeftSuper:
-        qbKey = VK + QBVK_LSUPER;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightShift:
-        qbKey = VK + QBVK_RSHIFT;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightControl:
-        qbKey = VK + QBVK_RCTRL;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightAlt:
-        qbKey = VK + QBVK_RALT;
-        break;
-
-    case GLUTEmu_KeyboardKey::RightSuper:
-        qbKey = VK + QBVK_RSUPER;
-        break;
-
-    case GLUTEmu_KeyboardKey::Menu:
-        qbKey = VK + QBVK_MENU;
-        break;
-
-    default:
-        if (key >= GLUTEmu_KeyboardKey::A && key <= GLUTEmu_KeyboardKey::Z) {
-            if (isControl && !isAlt) {
-                qbKey = int(key) - int(GLUTEmu_KeyboardKey::A) + 1;
-                if (isShift) {
-                    qbKey = qbKey - 1 + 'A';
-                } else {
-                    qbKey = qbKey - 1 + 'a';
-                }
-            } else {
-                qbKey = (isShift ^ isCapsLock ? 'A' : 'a') + (int(key) - int(GLUTEmu_KeyboardKey::A));
-            }
-        } else if (key >= GLUTEmu_KeyboardKey::Zero && key <= GLUTEmu_KeyboardKey::Nine) {
-            qbKey = '0' + (int(key) - int(GLUTEmu_KeyboardKey::Zero));
-            if (isShift) {
-                const char shifted[] = ")!@#$%^&*(";
-                qbKey = shifted[qbKey - '0'];
-            }
-            if (isControl && !isAlt) {
-                if (key == GLUTEmu_KeyboardKey::Six) {
-                    qbKey = 30;
-                }
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Space) {
-            qbKey = ' ';
-        } else if (key == GLUTEmu_KeyboardKey::Minus) {
-            qbKey = '-';
-            if (isShift) {
-                qbKey = '_';
-            }
-            if (isControl && !isAlt) {
-                qbKey = 31;
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Equal) {
-            qbKey = '=';
-            if (isShift) {
-                qbKey = '+';
-            }
-        } else if (key == GLUTEmu_KeyboardKey::LeftBracket) {
-            qbKey = '[';
-            if (isShift) {
-                qbKey = '{';
-            }
-            if (isControl && !isAlt) {
-                qbKey = 27;
-            }
-        } else if (key == GLUTEmu_KeyboardKey::RightBracket) {
-            qbKey = ']';
-            if (isShift) {
-                qbKey = '}';
-            }
-            if (isControl && !isAlt) {
-                qbKey = 29;
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Backslash) {
-            qbKey = '\\';
-            if (isShift) {
-                qbKey = '|';
-            }
-            if (isControl && !isAlt) {
-                qbKey = 28;
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Semicolon) {
-            qbKey = ';';
-            if (isShift) {
-                qbKey = ':';
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Apostrophe) {
-            qbKey = '\'';
-            if (isShift) {
-                qbKey = '"';
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Comma) {
-            qbKey = ',';
-            if (isShift) {
-                qbKey = '<';
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Period) {
-            qbKey = '.';
-            if (isShift) {
-                qbKey = '>';
-            }
-        } else if (key == GLUTEmu_KeyboardKey::Slash) {
-            qbKey = '/';
-            if (isShift) {
-                qbKey = '?';
-            }
-        } else if (key == GLUTEmu_KeyboardKey::GraveAccent) {
-            qbKey = '`';
-            if (isShift) {
-                qbKey = '~';
-            }
-        }
-        break;
-    }
+    int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
 
     if (qbKey != -1) {
         switch (action) {
