@@ -61,7 +61,23 @@ if "%~1"=="32" set OS_BITS=32
 echo Platform selected: %CPU_ARCH%-%OS_BITS%
 
 rem Query GitHub API for latest LLVM-MinGW release
+
+set LLVM_RELEASE_TAG=
+set LLVM_RELEASE_URL=
+
 for /f "usebackq tokens=1" %%a in (`powershell -c "(Invoke-RestMethod 'https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest').tag_name"`) do set LLVM_RELEASE_TAG=%%a
+
+if "%LLVM_RELEASE_TAG%"=="" (
+    for /f "usebackq tokens=*" %%a in (`powershell -NoProfile -Command "$headers = @{ 'Accept' = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }; if ($env:GITHUB_TOKEN) { $headers.Authorization = 'Bearer ' + $env:GITHUB_TOKEN }; try { (Invoke-RestMethod -ErrorAction Stop -Headers $headers 'https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest').tag_name } catch { '' }" 2^>NUL`) do set LLVM_RELEASE_TAG=%%a
+)
+
+if "%LLVM_RELEASE_TAG%"=="" (
+    for /f "usebackq tokens=*" %%a in (`curl -fsSIL -o NUL -w "%%{url_effective}" "https://github.com/mstorsjo/llvm-mingw/releases/latest" 2^>NUL`) do set LLVM_RELEASE_URL=%%a
+)
+
+if "%LLVM_RELEASE_TAG%"=="" if defined LLVM_RELEASE_URL (
+    for /f "usebackq tokens=*" %%a in (`powershell -NoProfile -Command "([System.Uri]'%LLVM_RELEASE_URL%').Segments[-1].TrimEnd('/')" 2^>NUL`) do set LLVM_RELEASE_TAG=%%a
+)
 
 if "%LLVM_RELEASE_TAG%"=="" (
     echo.

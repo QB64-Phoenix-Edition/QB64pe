@@ -287,6 +287,35 @@ static uint32_t *image_qoi_load_from_memory(const uint8_t *buffer, size_t size, 
     return pixels;
 }
 
+/// @brief Loads a tiny_webp image file from disk.
+/// @param fileName The file path name to load.
+/// @param xOut Out: width in pixels. This cannot be NULL.
+/// @param yOut Out: height in pixels. This cannot be NULL.
+/// @param components Out: color channels. This cannot be NULL.
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure.
+static uint32_t *image_tiny_webp_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, int *components) {
+    auto pixels = reinterpret_cast<uint32_t *>(twp_read(fileName, xOut, yOut, twp_FORMAT_RGBA, 0));
+    if (pixels) {
+        *components = sizeof(uint32_t);
+    }
+    return pixels;
+}
+
+/// @brief Loads a tiny_webp image file from memory.
+/// @param buffer The raw pointer to the file in memory.
+/// @param size The size of the file in memory.
+/// @param xOut Out: width in pixels. This cannot be NULL.
+/// @param yOut Out: height in pixels. This cannot be NULL.
+/// @param components Out: color channels. This cannot be NULL.
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure.
+static uint32_t *image_tiny_webp_load_from_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, int *components) {
+    auto pixels = reinterpret_cast<uint32_t *>(twp_read_from_memory(const_cast<uint8_t *>(buffer), size, xOut, yOut, twp_FORMAT_RGBA, 0));
+    if (pixels) {
+        *components = sizeof(uint32_t);
+    }
+    return pixels;
+}
+
 /// @brief Decodes an image file from a file using the sg_pcx & stb_image libraries.
 /// @param fileName A valid filename
 /// @param xOut Out: width in pixels. This cannot be NULL
@@ -303,8 +332,7 @@ static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int
     image_log_trace("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
     if (!pixels) {
-        pixels = reinterpret_cast<uint32_t *>(twp_read(fileName, xOut, yOut, twp_FORMAT_RGBA, 0));
-        compOut = sizeof(uint32_t);
+        pixels = image_tiny_webp_load_from_file(fileName, xOut, yOut, &compOut);
         image_log_trace("Image dimensions (tiny_webp) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
@@ -356,9 +384,7 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
     image_log_trace("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
     if (!pixels) {
-        pixels =
-            reinterpret_cast<uint32_t *>(twp_read_from_memory(reinterpret_cast<void *>(const_cast<uint8_t *>(data)), size, xOut, yOut, twp_FORMAT_RGBA, 0));
-        compOut = sizeof(uint32_t);
+        pixels = image_tiny_webp_load_from_memory(data, size, xOut, yOut, &compOut);
         image_log_trace("Image dimensions (tiny_webp) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
