@@ -7,12 +7,13 @@
 //
 //  Powered by:
 //      stb_image & stb_image_write (https://github.com/nothings/stb)
-//      jo_gif (https://www.jonolick.com/code)
+//      tiny_webp (https://github.com/justus2510/tiny-webp)
 //      nanosvg (https://github.com/memononen/nanosvg)
 //      qoi (https://qoiformat.org)
+//      sg_curico & sg_pcx (https://github.com/a740g)
+//      jo_gif (https://www.jonolick.com/code)
 //      pixelscalers (https://github.com/janert/pixelscalers)
 //      mmpx (https://github.com/ITotalJustice/mmpx)
-//      sg_curico & sg_pcx (https://github.com/a740g)
 //
 //-----------------------------------------------------------------------------------------------------
 
@@ -32,6 +33,7 @@
 #include "sg_pcx/sg_pcx.h"
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
+#include "tiny_webp/tiny_webp.h"
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -285,6 +287,35 @@ static uint32_t *image_qoi_load_from_memory(const uint8_t *buffer, size_t size, 
     return pixels;
 }
 
+/// @brief Loads a tiny_webp image file from disk.
+/// @param fileName The file path name to load.
+/// @param xOut Out: width in pixels. This cannot be NULL.
+/// @param yOut Out: height in pixels. This cannot be NULL.
+/// @param components Out: color channels. This cannot be NULL.
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure.
+static uint32_t *image_tiny_webp_load_from_file(const char *fileName, int32_t *xOut, int32_t *yOut, int *components) {
+    auto pixels = reinterpret_cast<uint32_t *>(twp_read(fileName, xOut, yOut, twp_FORMAT_RGBA, 0));
+    if (pixels) {
+        *components = sizeof(uint32_t);
+    }
+    return pixels;
+}
+
+/// @brief Loads a tiny_webp image file from memory.
+/// @param buffer The raw pointer to the file in memory.
+/// @param size The size of the file in memory.
+/// @param xOut Out: width in pixels. This cannot be NULL.
+/// @param yOut Out: height in pixels. This cannot be NULL.
+/// @param components Out: color channels. This cannot be NULL.
+/// @return A pointer to the raw pixel data in RGBA format or NULL on failure.
+static uint32_t *image_tiny_webp_load_from_memory(const uint8_t *buffer, size_t size, int32_t *xOut, int32_t *yOut, int *components) {
+    auto pixels = reinterpret_cast<uint32_t *>(twp_read_from_memory(const_cast<uint8_t *>(buffer), size, xOut, yOut, twp_FORMAT_RGBA, 0));
+    if (pixels) {
+        *components = sizeof(uint32_t);
+    }
+    return pixels;
+}
+
 /// @brief Decodes an image file from a file using the sg_pcx & stb_image libraries.
 /// @param fileName A valid filename
 /// @param xOut Out: width in pixels. This cannot be NULL
@@ -301,23 +332,28 @@ static uint32_t *image_decode_from_file(const char *fileName, int32_t *xOut, int
     image_log_trace("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
     if (!pixels) {
-        pixels = pcx_load_file(fileName, xOut, yOut, &compOut);
-        image_log_trace("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
+        pixels = image_tiny_webp_load_from_file(fileName, xOut, yOut, &compOut);
+        image_log_trace("Image dimensions (tiny_webp) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
-            pixels = image_qoi_load_from_file(fileName, xOut, yOut, &compOut);
-            image_log_trace("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
+            pixels = pcx_load_file(fileName, xOut, yOut, &compOut);
+            image_log_trace("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
 
             if (!pixels) {
-                pixels = curico_load_file(fileName, xOut, yOut, &compOut);
-                image_log_trace("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
+                pixels = image_qoi_load_from_file(fileName, xOut, yOut, &compOut);
+                image_log_trace("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
                 if (!pixels) {
-                    pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
-                    image_log_trace("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+                    pixels = curico_load_file(fileName, xOut, yOut, &compOut);
+                    image_log_trace("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
 
-                    if (!pixels)
-                        return nullptr; // Return NULL if all attempts failed
+                    if (!pixels) {
+                        pixels = image_svg_load_from_file(fileName, xOut, yOut, scaler, &compOut, &isVG);
+                        image_log_trace("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+
+                        if (!pixels)
+                            return nullptr; // Return NULL if all attempts failed
+                    }
                 }
             }
         }
@@ -348,23 +384,28 @@ static uint32_t *image_decode_from_memory(const uint8_t *data, size_t size, int3
     image_log_trace("Image dimensions (stb_image) = (%i, %i)", *xOut, *yOut);
 
     if (!pixels) {
-        pixels = pcx_load_memory(data, size, xOut, yOut, &compOut);
-        image_log_trace("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
+        pixels = image_tiny_webp_load_from_memory(data, size, xOut, yOut, &compOut);
+        image_log_trace("Image dimensions (tiny_webp) = (%i, %i)", *xOut, *yOut);
 
         if (!pixels) {
-            pixels = image_qoi_load_from_memory(data, size, xOut, yOut, &compOut);
-            image_log_trace("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
+            pixels = pcx_load_memory(data, size, xOut, yOut, &compOut);
+            image_log_trace("Image dimensions (sg_pcx) = (%i, %i)", *xOut, *yOut);
 
             if (!pixels) {
-                pixels = curico_load_memory(data, size, xOut, yOut, &compOut);
-                image_log_trace("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
+                pixels = image_qoi_load_from_memory(data, size, xOut, yOut, &compOut);
+                image_log_trace("Image dimensions (qoi) = (%i, %i)", *xOut, *yOut);
 
                 if (!pixels) {
-                    pixels = image_svg_load_from_memory(data, size, xOut, yOut, scaler, &compOut, &isVG);
-                    image_log_trace("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+                    pixels = curico_load_memory(data, size, xOut, yOut, &compOut);
+                    image_log_trace("Image dimensions (sg_curico) = (%i, %i)", *xOut, *yOut);
 
-                    if (!pixels)
-                        return nullptr; // Return NULL if all attempts failed
+                    if (!pixels) {
+                        pixels = image_svg_load_from_memory(data, size, xOut, yOut, scaler, &compOut, &isVG);
+                        image_log_trace("Image dimensions (nanosvg) = (%i, %i)", *xOut, *yOut);
+
+                        if (!pixels)
+                            return nullptr; // Return NULL if all attempts failed
+                    }
                 }
             }
         }
@@ -999,20 +1040,26 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
     case SaveFormat::HDR: {
         image_log_trace("Converting RGBA to linear float data");
 
-        const auto hdrComponents = 4;
+        constexpr auto hdrComponents = 4ULL;
 
         std::vector<float> hdrPixels;
         hdrPixels.resize(pixels.size() * hdrComponents);
 
-        for (size_t j = 0, i = 0; i < pixels.size(); i++) {
-            hdrPixels[j] = pow((pixels[i] & 0xFFu) / 255.0f, 2.2f);
-            ++j;
-            hdrPixels[j] = pow(((pixels[i] >> 8) & 0xFFu) / 255.0f, 2.2f);
-            ++j;
-            hdrPixels[j] = pow(((pixels[i] >> 16) & 0xFFu) / 255.0f, 2.2f);
-            ++j;
-            hdrPixels[j] = (pixels[i] >> 24) / 255.0f;
-            ++j;
+        constexpr auto inv255 = 1.0f / 255.0f;
+
+        for (size_t i = 0; i < pixels.size(); i++) {
+            const auto px = pixels[i];
+            const auto j = i * hdrComponents;
+
+            const auto r = (px & 0xFF) * inv255;
+            const auto g = ((px >> 8) & 0xFF) * inv255;
+            const auto b = ((px >> 16) & 0xFF) * inv255;
+            const auto a = ((px >> 24) & 0xFF) * inv255;
+
+            hdrPixels[j + 0] = powf(r, 2.2f);
+            hdrPixels[j + 1] = powf(g, 2.2f);
+            hdrPixels[j + 2] = powf(b, 2.2f);
+            hdrPixels[j + 3] = a;
         }
 
         if (!stbi_write_hdr(fileName.c_str(), width, height, hdrComponents, hdrPixels.data())) {

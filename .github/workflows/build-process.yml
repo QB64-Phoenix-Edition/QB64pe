@@ -31,7 +31,7 @@ jobs:
       PLATFORM: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -71,6 +71,8 @@ jobs:
 
     - name: Bootstrap compiler Windows
       if: ${{ matrix.prefix == 'win' }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: .ci/bootstrap.bat
 
     - name: Compile Linux/OSX
@@ -116,7 +118,7 @@ jobs:
       if: ${{ github.event_name == 'push' &&  matrix.prefix == 'lnx' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
       run: .ci/push-internal-source.sh
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       if: always()
       with:
         name: qb64pe-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
