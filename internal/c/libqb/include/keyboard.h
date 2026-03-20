@@ -9,6 +9,12 @@ int32_t keyheld(uint32_t x);
 void keydown(uint32_t key);
 void keyup(uint32_t key);
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
+int32_t keyboard_scancode_get_scancode(int32_t keyIndex);
+int32_t keyboard_scancode_get_variant(int32_t keyIndex, int32_t modifierOffset);
+bool keyboard_scancode_has_variant(int32_t keyIndex, int32_t modifierOffset);
+void update_shift_state();
+bool keyboard_keyup_mask_consume(uint32_t key);
+void keyboard_keyup_mask_add(uint32_t key);
 
 #define QBK 200000
 #define VK 100000
