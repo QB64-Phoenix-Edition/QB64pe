@@ -1,4 +1,4 @@
-' 05_redim_long.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

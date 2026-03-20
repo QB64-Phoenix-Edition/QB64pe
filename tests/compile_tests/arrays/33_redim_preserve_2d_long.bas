@@ -1,4 +1,4 @@
-' 33_redim_preserve_2d_long.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

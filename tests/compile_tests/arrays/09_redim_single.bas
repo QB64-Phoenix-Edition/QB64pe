@@ -1,4 +1,4 @@
-' 09_redim_single.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

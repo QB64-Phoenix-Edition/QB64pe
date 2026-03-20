@@ -1,4 +1,4 @@
-' 22_redim_preserve_ubyte.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

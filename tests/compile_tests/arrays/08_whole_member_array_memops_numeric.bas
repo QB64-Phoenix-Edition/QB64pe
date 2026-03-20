@@ -1,13 +1,8 @@
+$CONSOLE:ONLY
 OPTION _EXPLICIT
-
-Declare Sub CheckTrue (label As String, condition As Long)
-Declare Sub CheckText (label As String, actual As String, expected As String)
-Declare Sub CheckNear (label As String, actual As Double, expected As Double, tolerance As Double)
-Declare Sub FinishTest
 
 DIM SHARED PassCount AS LONG
 DIM SHARED FailCount AS LONG
-
 
 TYPE IntGridHolder
     G( 0 To 2 , 0 To 1) AS INTEGER

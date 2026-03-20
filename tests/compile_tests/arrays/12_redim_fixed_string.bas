@@ -1,4 +1,4 @@
-' 12_redim_fixed_string.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

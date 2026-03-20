@@ -1,4 +1,4 @@
-' 01_redim_byte.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

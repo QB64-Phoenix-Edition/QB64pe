@@ -1,4 +1,4 @@
-' 29_redim_preserve_single.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

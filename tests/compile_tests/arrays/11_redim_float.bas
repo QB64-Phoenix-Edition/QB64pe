@@ -1,4 +1,4 @@
-' 11_redim_float.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

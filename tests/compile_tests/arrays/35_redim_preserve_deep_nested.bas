@@ -1,4 +1,4 @@
-' 35_redim_preserve_deep_nested.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type Level2Type

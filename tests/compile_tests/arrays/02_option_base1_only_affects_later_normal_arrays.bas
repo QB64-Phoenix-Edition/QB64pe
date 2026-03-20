@@ -1,3 +1,4 @@
+$CONSOLE:ONLY
 Option _Explicit
 
 ReDim beforeArray(3) As Long

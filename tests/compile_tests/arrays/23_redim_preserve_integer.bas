@@ -1,4 +1,4 @@
-' 23_redim_preserve_integer.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

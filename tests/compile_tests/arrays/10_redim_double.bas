@@ -1,4 +1,4 @@
-' 10_redim_double.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

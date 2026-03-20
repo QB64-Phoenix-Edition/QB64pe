@@ -1,4 +1,4 @@
-' 06_redim_ulong.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType

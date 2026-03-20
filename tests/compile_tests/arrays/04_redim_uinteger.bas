@@ -1,13 +1,13 @@
-' 04_redim_uinteger.bas
-Option _Explicit
+$CONSOLE:ONLY
+OPTION _EXPLICIT
 
-Type ItemType
-    Values(0 To 3) As _Unsigned Integer
-End Type
+TYPE ItemType
+    Values(0 To 3) AS _UNSIGNED INTEGER
+END TYPE
 
-ReDim reference(0 To 3) As _Unsigned Integer
-ReDim item(0) As ItemType
-Dim idx As Long
+REDIM reference(0 TO 3) AS _UNSIGNED INTEGER
+REDIM item(0) AS ItemType
+DIM idx AS LONG
 
 reference(0) = 1
 reference(1) = 2
@@ -18,15 +18,16 @@ item(0).Values(1) = 2
 item(0).Values(2) = 40000
 item(0).Values(3) = 65535
 
-ReDim reference(0 To 3) As _Unsigned Integer
-ReDim item(0).Values(0 To 3)
+REDIM reference(0 TO 3) AS _UNSIGNED INTEGER
+REDIM item(0).Values(0 To 3)
 
-For idx = 0 To 3
-    If item(0).Values(idx) <> reference(idx) Then
-        Print "FAIL 04_redim_uinteger.bas: index"; idx; " expected "; reference(idx); " got "; item(0).Values(idx)
-        System
-    End If
-Next idx
+FOR idx = 0 TO 3
+    IF item(0).Values(idx) <> reference(idx) THEN
+        PRINT "FAIL 04_redim_uinteger.bas: index"; idx; " expected "; reference(idx); " got "; item(0).Values(idx)
+        SYSTEM
+    END IF
+NEXT idx
 
-Print "PASS 04_redim_uinteger.bas"
-System
+PRINT "PASS 04_redim_uinteger.bas"
+
+SYSTEM

@@ -1,3 +1,4 @@
+$CONSOLE:ONLY
 Option _Explicit
 
 Type T

@@ -1,4 +1,4 @@
-' 34_redim_preserve_instance_isolation.bas
+$CONSOLE:ONLY
 Option _Explicit
 
 Type ItemType
