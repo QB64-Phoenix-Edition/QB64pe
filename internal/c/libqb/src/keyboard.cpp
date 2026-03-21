@@ -3,10 +3,10 @@
 #include "event.h"
 #include "glut-thread.h"
 #include "key-events.h"
-
 #include <cstdlib>
 #include <cstring>
 
+// TODO: Most of these variables should be moved to keyboard.cpp and wrapped
 extern int64_t keyhit[8192];
 extern int32_t keyhit_nextfree;
 extern int32_t keyhit_next;
@@ -598,33 +598,33 @@ static constexpr KeyMapEntry kDirectKeyMap[] = {
     {GLUTEmu_KeyboardKey::Enter, QBVK_RETURN},
     {GLUTEmu_KeyboardKey::Tab, QBVK_TAB},
     {GLUTEmu_KeyboardKey::Backspace, QBVK_BACKSPACE},
-    {GLUTEmu_KeyboardKey::Insert, 0x5200},
-    {GLUTEmu_KeyboardKey::Delete, 0x5300},
-    {GLUTEmu_KeyboardKey::Right, 0x4D00},
-    {GLUTEmu_KeyboardKey::Left, 0x4B00},
-    {GLUTEmu_KeyboardKey::Down, 0x5000},
-    {GLUTEmu_KeyboardKey::Up, 0x4800},
-    {GLUTEmu_KeyboardKey::PageUp, 0x4900},
-    {GLUTEmu_KeyboardKey::PageDown, 0x5100},
-    {GLUTEmu_KeyboardKey::Home, 0x4700},
-    {GLUTEmu_KeyboardKey::End, 0x4F00},
+    {GLUTEmu_KeyboardKey::Insert, QBKC_INSERT},
+    {GLUTEmu_KeyboardKey::Delete, QBKC_DELETE},
+    {GLUTEmu_KeyboardKey::Right, QBKC_RIGHT},
+    {GLUTEmu_KeyboardKey::Left, QBKC_LEFT},
+    {GLUTEmu_KeyboardKey::Down, QBKC_DOWN},
+    {GLUTEmu_KeyboardKey::Up, QBKC_UP},
+    {GLUTEmu_KeyboardKey::PageUp, QBKC_PAGEUP},
+    {GLUTEmu_KeyboardKey::PageDown, QBKC_PAGEDOWN},
+    {GLUTEmu_KeyboardKey::Home, QBKC_HOME},
+    {GLUTEmu_KeyboardKey::End, QBKC_END},
     {GLUTEmu_KeyboardKey::CapsLock, VK + QBVK_CAPSLOCK},
     {GLUTEmu_KeyboardKey::ScrollLock, VK + QBVK_SCROLLOCK},
     {GLUTEmu_KeyboardKey::NumLock, VK + QBVK_NUMLOCK},
     {GLUTEmu_KeyboardKey::PrintScreen, VK + QBVK_PRINT},
     {GLUTEmu_KeyboardKey::Pause, VK + QBVK_PAUSE},
-    {GLUTEmu_KeyboardKey::F1, 0x3B00},
-    {GLUTEmu_KeyboardKey::F2, 0x3C00},
-    {GLUTEmu_KeyboardKey::F3, 0x3D00},
-    {GLUTEmu_KeyboardKey::F4, 0x3E00},
-    {GLUTEmu_KeyboardKey::F5, 0x3F00},
-    {GLUTEmu_KeyboardKey::F6, 0x4000},
-    {GLUTEmu_KeyboardKey::F7, 0x4100},
-    {GLUTEmu_KeyboardKey::F8, 0x4200},
-    {GLUTEmu_KeyboardKey::F9, 0x4300},
-    {GLUTEmu_KeyboardKey::F10, 0x4400},
-    {GLUTEmu_KeyboardKey::F11, 0x8500},
-    {GLUTEmu_KeyboardKey::F12, 0x8600},
+    {GLUTEmu_KeyboardKey::F1, QBKC_F1},
+    {GLUTEmu_KeyboardKey::F2, QBKC_F2},
+    {GLUTEmu_KeyboardKey::F3, QBKC_F3},
+    {GLUTEmu_KeyboardKey::F4, QBKC_F4},
+    {GLUTEmu_KeyboardKey::F5, QBKC_F5},
+    {GLUTEmu_KeyboardKey::F6, QBKC_F6},
+    {GLUTEmu_KeyboardKey::F7, QBKC_F7},
+    {GLUTEmu_KeyboardKey::F8, QBKC_F8},
+    {GLUTEmu_KeyboardKey::F9, QBKC_F9},
+    {GLUTEmu_KeyboardKey::F10, QBKC_F10},
+    {GLUTEmu_KeyboardKey::F11, QBKC_F11},
+    {GLUTEmu_KeyboardKey::F12, QBKC_F12},
     {GLUTEmu_KeyboardKey::KPDivide, VK + QBVK_KP_DIVIDE},
     {GLUTEmu_KeyboardKey::KPMultiply, VK + QBVK_KP_MULTIPLY},
     {GLUTEmu_KeyboardKey::KPSubtract, VK + QBVK_KP_MINUS},
@@ -651,6 +651,25 @@ static constexpr PunctuationMapEntry kPunctuationMap[] = {
 
 static constexpr char kShiftedDigits[] = ")!@#$%^&*(";
 static constexpr int kScancodeEntryWidth = 10;
+static constexpr int32_t kCtrlCaretAscii = 30;
+static constexpr int32_t kKeyhitRingMask = 0x1FFF;
+static constexpr int64_t kKeyhitFlagNumpad = 4294967296ll;
+static constexpr int32_t kPort60hEventCapacity = 256;
+static constexpr int32_t kPort60hEventMaxIndex = 255;
+static constexpr int32_t kScancodeReleaseBias = 128;
+static constexpr uint32_t kAsciiMask = 0xFF00;
+static constexpr uint32_t kFullwidthAsciiStart = 0x0000FF01;
+static constexpr uint32_t kFullwidthAsciiEnd = 0x0000FF5E;
+static constexpr uint32_t kIdeographicSpace = 0x3000;
+static constexpr int32_t kBiosKeyboardBufferStart = 30;
+static constexpr int32_t kBiosKeyboardBufferEndExclusive = 62;
+static constexpr int32_t kBiosKeyboardBufferHeadOffset = 0x41a;
+static constexpr int32_t kBiosKeyboardBufferTailOffset = 0x41c;
+static constexpr int32_t kBiosKeyboardDataOffset = 0x400;
+static constexpr int32_t kBiosShiftStatusOffset = 0x417;
+static constexpr int32_t kBiosExtendedShiftStatusOffset = 0x418;
+static constexpr int32_t kBiosKeyboardStatusFlagsOffset = 0x496;
+static constexpr uint8_t kKeyboardLockScancode = 0x45;
 static int32_t keyboard_keyup_mask_last = -1;
 static uint32_t keyboard_keyup_mask[256]; // NULL values indicate removed masks
 
@@ -705,7 +724,7 @@ static int constexpr TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool 
     }
 
     if (isControl && !isAlt && key == GLUTEmu_KeyboardKey::Six) {
-        translated = 30;
+        translated = kCtrlCaretAscii;
     }
 
     return translated;
@@ -820,24 +839,24 @@ static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, 
 }
 
 static inline void keyboard_push_keyhit_value(int32_t value, int64_t keyhitFlag) {
-    int32_t nextKeyhit = (keyhit_nextfree + 1) & 0x1FFF;
+    int32_t nextKeyhit = (keyhit_nextfree + 1) & kKeyhitRingMask;
     if (nextKeyhit == keyhit_next) { // remove oldest message when cyclic buffer is full
-        keyhit_next = (keyhit_next + 1) & 0x1FFF;
+        keyhit_next = (keyhit_next + 1) & kKeyhitRingMask;
     }
     keyhit[keyhit_nextfree] = static_cast<int64_t>(static_cast<uint32_t>(value)) | keyhitFlag;
     keyhit_nextfree = nextKeyhit;
 }
 
 static inline void keyboard_push_bios_keystroke(int32_t b1, int32_t b2) {
-    int32_t head = cmem[0x41a];
-    int32_t tail = cmem[0x41c];
+    int32_t head = cmem[kBiosKeyboardBufferHeadOffset];
+    int32_t tail = cmem[kBiosKeyboardBufferTailOffset];
     int32_t nextTail = tail + 2;
-    if (nextTail == 62)
-        nextTail = 30;
+    if (nextTail == kBiosKeyboardBufferEndExclusive)
+        nextTail = kBiosKeyboardBufferStart;
     if (head != nextTail) { // fits in buffer
-        cmem[0x400 + tail] = b1;
-        cmem[0x400 + tail + 1] = b2; // (scancode)
-        cmem[0x41c] = nextTail;      // fix tail location
+        cmem[kBiosKeyboardDataOffset + tail] = b1;
+        cmem[kBiosKeyboardDataOffset + tail + 1] = b2;  // (scancode)
+        cmem[kBiosKeyboardBufferTailOffset] = nextTail; // fix tail location
     }
 }
 
@@ -846,7 +865,7 @@ static bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normali
     *keyhitFlag = 0;
 
     if ((key >= (VK + QBVK_KP0)) && (key <= (VK + QBVK_KP_ENTER))) {
-        *keyhitFlag = 4294967296ll;
+        *keyhitFlag = kKeyhitFlagNumpad;
 
         if ((key >= (VK + QBVK_KP0)) && (key <= (VK + QBVK_KP9))) {
             *normalizedKey = key - (VK + QBVK_KP0) + 48;
@@ -876,7 +895,7 @@ static bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normali
     }
 
     if ((key >= (QBK + 0)) && (key <= (QBK + 10))) {
-        *keyhitFlag = 4294967296ll;
+        *keyhitFlag = kKeyhitFlagNumpad;
         const uint32_t offset = key - QBK;
         static constexpr uint16_t kQbkNumpadLookup[] = {82 << 8, 79 << 8, 80 << 8, 81 << 8, 75 << 8, 76 << 8, 77 << 8, 71 << 8, 72 << 8, 73 << 8, 83 << 8};
 
@@ -950,18 +969,18 @@ static void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancod
 
 static bool keyboard_is_onkey_extended_key(uint32_t key) {
     switch (key) {
-    case 0x4B00:
-    case 0x4800:
-    case 0x4D00:
-    case 0x5000:
+    case QBKC_LEFT:
+    case QBKC_UP:
+    case QBKC_RIGHT:
+    case QBKC_DOWN:
     case VK + QBVK_KP_DIVIDE:
     case VK + QBVK_KP_ENTER:
-    case 0x5200:
-    case 0x4700:
-    case 0x4900:
-    case 0x5300:
-    case 0x4F00:
-    case 0x5100:
+    case QBKC_INSERT:
+    case QBKC_HOME:
+    case QBKC_PAGEUP:
+    case QBKC_DELETE:
+    case QBKC_END:
+    case QBKC_PAGEDOWN:
     case VK + QBVK_RCTRL:
     case VK + QBVK_RALT:
         return true;
@@ -982,7 +1001,7 @@ int32_t func__keyhit() {
     */
     if (keyhit_next != keyhit_nextfree) {
         int32_t x = *(int32_t *)&keyhit[keyhit_next];
-        keyhit_next = (keyhit_next + 1) & 0x1FFF;
+        keyhit_next = (keyhit_next + 1) & kKeyhitRingMask;
         return x;
     }
 
@@ -1028,7 +1047,7 @@ static int32_t keyheld(uint32_t x) {
     }
     if (x == 13)
         return keyheld(VK + QBVK_KP_ENTER);
-    if (x & 0xFF00) {
+    if (x & kAsciiMask) {
         const uint32_t x2 = (x >> 8) & 255;
         if ((x2 >= 71) && (x2 <= 83)) {
             if (x2 == 82)
@@ -1102,9 +1121,9 @@ static void scancodedown(uint8_t scancode) {
         if (port60h_event[port60h_events - 1] == scancode)
             return; // avoid duplicate entries in buffer (eg. from key-repeats)
     }
-    if (port60h_events == 256) {
-        memmove(port60h_event, port60h_event + 1, 255);
-        port60h_events = 255;
+    if (port60h_events == kPort60hEventCapacity) {
+        memmove(port60h_event, port60h_event + 1, kPort60hEventMaxIndex);
+        port60h_events = kPort60hEventMaxIndex;
     }
     port60h_event[port60h_events] = scancode;
     port60h_events++;
@@ -1112,14 +1131,14 @@ static void scancodedown(uint8_t scancode) {
 
 static void scancodeup(uint8_t scancode) {
     if (port60h_events) {
-        if (port60h_event[port60h_events - 1] == (scancode + 128))
+        if (port60h_event[port60h_events - 1] == (scancode + kScancodeReleaseBias))
             return; // avoid duplicate entries in buffer
     }
-    if (port60h_events == 256) {
-        memmove(port60h_event, port60h_event + 1, 255);
-        port60h_events = 255;
+    if (port60h_events == kPort60hEventCapacity) {
+        memmove(port60h_event, port60h_event + 1, kPort60hEventMaxIndex);
+        port60h_events = kPort60hEventMaxIndex;
     }
-    port60h_event[port60h_events] = scancode + 128;
+    port60h_event[port60h_events] = scancode + kScancodeReleaseBias;
     port60h_events++;
 }
 
@@ -1152,12 +1171,12 @@ static void keydown_unicode(uint32_t x) {
     // Wikipedia note: Range U+FF01\96FF5E reproduces the characters of ASCII 21 to 7E as fullwidth forms, that is, a fixed width form used in CJK computing.
     // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
     // role is already fulfilled by U+3000 "ideographic space."
-    if ((x >= 0x0000FF01) && (x <= 0x0000FF5E)) {
-        keydown(x - 0x0000FF01 + 0x21);
+    if ((x >= kFullwidthAsciiStart) && (x <= kFullwidthAsciiEnd)) {
+        keydown(x - kFullwidthAsciiStart + 0x21);
         return;
     }
 
-    if (x == 0x3000) {
+    if (x == kIdeographicSpace) {
         keydown(32);
         return;
     }
@@ -1184,12 +1203,12 @@ static void keyup_unicode(uint32_t x) {
     // Wikipedia note: Range U+FF01\96FF5E reproduces the characters of ASCII 21 to 7E as fullwidth forms, that is, a fixed width form used in CJK computing.
     // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
     // role is already fulfilled by U+3000 "ideographic space."
-    if ((x >= 0x0000FF01) && (x <= 0x0000FF5E)) {
-        keyup(x - 0x0000FF01 + 0x21);
+    if ((x >= kFullwidthAsciiStart) && (x <= kFullwidthAsciiEnd)) {
+        keyup(x - kFullwidthAsciiStart + 0x21);
         return;
     }
 
-    if (x == 0x3000) {
+    if (x == kIdeographicSpace) {
         keyup(32);
         return;
     }
@@ -1244,7 +1263,7 @@ void keyup(uint32_t x) {
         if (keyboard_scancode_has_variant(r, 0))
             scancodeup(keyboard_scancode_get_scancode(r));
 
-        if (x == 0x5200) { // INSERT lock emulation
+        if (x == QBKC_INSERT) { // INSERT lock emulation
             update_shift_state();
         }
 
@@ -1274,8 +1293,8 @@ void keydown(uint32_t x) {
 
     // INSERT lock emulation
     static int32_t insert_held;
-    if (x == 0x5200)
-        insert_held = keyheld(0x5200);
+    if (x == QBKC_INSERT)
+        insert_held = keyheld(QBKC_INSERT);
 
     // SCROLL lock tracking
     static int32_t scroll_lock_held;
@@ -1298,7 +1317,7 @@ void keydown(uint32_t x) {
 #ifdef QB64_WINDOWS
     // note: Alt+F4 is supposed to close the window, but glut windows don't seem to be affected;
     // this addresses the issue:
-    if ((x == (0x3E00)) && keyboard_is_alt_held()) {
+    if ((x == QBKC_F4) && keyboard_is_alt_held()) {
         if (exit_blocked) {
             exit_value |= 1;
             goto key_handled;
@@ -1575,7 +1594,7 @@ void keydown(uint32_t x) {
             z = keyboard_scancode_get_variant(x, o);
             if (!z)
                 goto key_handled; // not possible
-            if (z & 0xFF00) {
+            if (z & kAsciiMask) {
                 b1 = 0;
                 b2 = z >> 8;
             } else {
@@ -1609,7 +1628,7 @@ void keydown(uint32_t x) {
             // check relevant modifiers
             keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
 
-            if (x == 0x5200) {          // INSERT lock emulation
+            if (x == QBKC_INSERT) {     // INSERT lock emulation
                 if (insert_held == 0) { // nullify effects of key repeats
                     if ((alt == 0) && (shift == 0) && (ctrl == 0)) {
                         // toggle insert mode
@@ -1637,7 +1656,7 @@ void keydown(uint32_t x) {
             z = keyboard_scancode_get_variant(r, o);
             if (!z)
                 goto key_handled; // invalid combination
-            if (z & 0xFF00) {
+            if (z & kAsciiMask) {
                 b1 = 0;
                 b2 = z >> 8;
             } else {
@@ -1709,7 +1728,7 @@ void update_shift_state() {
     // note: insert state is emulated (off by default)
     if (keyheld(QBK + QBK_INSERT_MODE))
         x |= 128;
-    cmem[0x417] = x;
+    cmem[kBiosShiftStatusOffset] = x;
     /*
         0:418h                   Extended Shift Status
         (interpret the word 'pressed' as "being held down")
@@ -1736,9 +1755,9 @@ void update_shift_state() {
         x |= 16;
     // if (keyheld(VK+QBVK_NUMLOCK)) x|=32;
     // if (keyheld(VK+QBVK_CAPSLOCK)) x|=64;
-    if (keyheld(0x5200))
+    if (keyheld(QBKC_INSERT))
         x |= 128;
-    cmem[0x418] = x;
+    cmem[kBiosExtendedShiftStatusOffset] = x;
     /*
         0:496h                   Keyboard Status and Type Flags
         This byte holds keyboard status information.
@@ -1759,7 +1778,7 @@ void update_shift_state() {
     if (keyheld(VK + QBVK_RALT))
         x |= 2;
     x |= 16;
-    cmem[0x496] = x;
+    cmem[kBiosKeyboardStatusFlagsOffset] = x;
 }
 
 int32_t func__capslock() {
@@ -1788,8 +1807,8 @@ int32_t func__numlock() {
 
 static void toggle_lock_key(int32_t key_code) {
 #ifdef QB64_WINDOWS
-    keybd_event(key_code, 0x45, 1, 0);
-    keybd_event(key_code, 0x45, 3, 0);
+    keybd_event(key_code, kKeyboardLockScancode, 1, 0);
+    keybd_event(key_code, kKeyboardLockScancode, 3, 0);
 #else
     (void)key_code;
 #endif

@@ -43,6 +43,32 @@ int32_t func__keydown(int32_t key);
 #define QBK_CHR0 13
 
 typedef enum {
+    // Extended _KEYHIT style codes (high-byte scan code, low-byte 0)
+    QBKC_F1 = 0x3B00,
+    QBKC_F2 = 0x3C00,
+    QBKC_F3 = 0x3D00,
+    QBKC_F4 = 0x3E00,
+    QBKC_F5 = 0x3F00,
+    QBKC_F6 = 0x4000,
+    QBKC_F7 = 0x4100,
+    QBKC_F8 = 0x4200,
+    QBKC_F9 = 0x4300,
+    QBKC_F10 = 0x4400,
+    QBKC_F11 = 0x8500,
+    QBKC_F12 = 0x8600,
+    QBKC_HOME = 0x4700,
+    QBKC_UP = 0x4800,
+    QBKC_PAGEUP = 0x4900,
+    QBKC_LEFT = 0x4B00,
+    QBKC_RIGHT = 0x4D00,
+    QBKC_END = 0x4F00,
+    QBKC_DOWN = 0x5000,
+    QBKC_PAGEDOWN = 0x5100,
+    QBKC_INSERT = 0x5200,
+    QBKC_DELETE = 0x5300,
+} QBKCs;
+
+typedef enum {
     QBVK_UNKNOWN = 0,
     QBVK_FIRST = 0,
     QBVK_BACKSPACE = 8,
