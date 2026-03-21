@@ -13,6 +13,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/gfs.o
 libqb-objs-y += $(PATH_LIBQB)/src/qblist.o
 libqb-objs-y += $(PATH_LIBQB)/src/hexoctbin.o
 libqb-objs-y += $(PATH_LIBQB)/src/keyboard.o
+libqb-objs-y += $(PATH_LIBQB)/src/key-events.o
 libqb-objs-y += $(PATH_LIBQB)/src/memblock.o
 libqb-objs-y += $(PATH_LIBQB)/src/shell.o
 libqb-objs-y += $(PATH_LIBQB)/src/qbs.o

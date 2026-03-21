@@ -20,6 +20,7 @@
 #include "hashing.h"
 #include "hexoctbin.h"
 #include "image.h"
+#include "key-events.h"
 #include "keyboard.h"
 #include "libqb.h"
 #include "logging.h"
@@ -1274,9 +1275,6 @@ void sub_strig(int32 i, int32 controller, int32 option, int32 passed) {
         }
     } // i
 }
-
-onkey_struct *onkey = (onkey_struct *)calloc(32, sizeof(onkey_struct));
-int32 onkey_inprogress = 0;
 
 void onkey_setup(int32 i, uint32 id, int64 pass) {
     // note: pass is ignored by ids not requiring a pass value

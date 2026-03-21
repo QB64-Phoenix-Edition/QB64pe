@@ -34,6 +34,7 @@
 #include "gui.h"
 #include "hashing.h"
 #include "image.h"
+#include "key-events.h"
 #include "keyboard.h"
 #include "logging.h"
 #include "memblock.h"

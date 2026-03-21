@@ -1,29 +1,31 @@
 #include "keyboard.h"
-#include "../../common.h"
 #include "cmem.h"
 #include "event.h"
 #include "glut-thread.h"
+#include "key-events.h"
 
-extern int64 keyhit[8192];
-extern int32 keyhit_nextfree;
-extern int32 keyhit_next;
-extern int32 asciicode_reading;
+#include <cstdlib>
+#include <cstring>
 
-extern int32 keydown_glyph;
-extern int32 exit_blocked;
-extern int32 exit_value;
-extern uint8 close_program;
-extern uint8 suspend_program;
-extern int32 fullscreen_allowedmode;
-extern int32 fullscreen_allowedsmooth;
-extern int32 fullscreen_smooth;
-extern int32 full_screen;
-extern int32 full_screen_set;
-extern int32 force_display_update;
-extern onkey_struct *onkey;
-extern int32 sleep_break;
-extern uint8 port60h_event[256];
-extern int32 port60h_events;
+extern int64_t keyhit[8192];
+extern int32_t keyhit_nextfree;
+extern int32_t keyhit_next;
+extern int32_t asciicode_reading;
+
+extern int32_t keydown_glyph;
+extern int32_t exit_blocked;
+extern int32_t exit_value;
+extern uint8_t close_program;
+extern uint8_t suspend_program;
+extern int32_t fullscreen_allowedmode;
+extern int32_t fullscreen_allowedsmooth;
+extern int32_t fullscreen_smooth;
+extern int32_t full_screen;
+extern int32_t full_screen_set;
+extern int32_t force_display_update;
+extern int32_t sleep_break;
+extern uint8_t port60h_event[256];
+extern int32_t port60h_events;
 extern uint16_t codepage437_to_unicode16[];
 
 static uint32_t bindkey = 0;
@@ -925,11 +927,11 @@ bool keyboard_is_onkey_extended_key(uint32_t key) {
 int32_t func__keyhit() {
     /*
         //keyhit cyclic buffer
-        int64 keyhit[8192];
+        int64_t keyhit[8192];
         //    keyhit specific internal flags: (stored in high 32-bits)
         //    &4294967296->numpad was used
-        int32 keyhit_nextfree=0;
-        int32 keyhit_next=0;
+        int32_t keyhit_nextfree=0;
+        int32_t keyhit_next=0;
         //note: if full, the oldest message is discarded to make way for the new message
     */
     if (keyhit_next != keyhit_nextfree) {
@@ -1049,7 +1051,7 @@ void keyheld_unbind(uint32_t x) {
     }
 }
 
-void scancodedown(uint8 scancode) {
+void scancodedown(uint8_t scancode) {
     if (port60h_events) {
         if (port60h_event[port60h_events - 1] == scancode)
             return; // avoid duplicate entries in buffer (eg. from key-repeats)
@@ -1062,7 +1064,7 @@ void scancodedown(uint8 scancode) {
     port60h_events++;
 }
 
-void scancodeup(uint8 scancode) {
+void scancodeup(uint8_t scancode) {
     if (port60h_events) {
         if (port60h_event[port60h_events - 1] == (scancode + 128))
             return; // avoid duplicate entries in buffer
@@ -1075,8 +1077,8 @@ void scancodeup(uint8 scancode) {
     port60h_events++;
 }
 
-static uint32 unicode_to_cp437(uint32 x) {
-    for (int32 i = 0; i <= 255; i++) {
+static uint32_t unicode_to_cp437(uint32_t x) {
+    for (int32_t i = 0; i <= 255; i++) {
         if (x == codepage437_to_unicode16[i])
             return i;
     }
@@ -1231,17 +1233,17 @@ void keydown(uint32_t x) {
     if (!x)
         x = QBK + QBK_CHR0;
 
-    static int32 glyph;
+    static int32_t glyph;
     glyph = keydown_glyph;
     keydown_glyph = 0;
 
     // INSERT lock emulation
-    static int32 insert_held;
+    static int32_t insert_held;
     if (x == 0x5200)
         insert_held = keyheld(0x5200);
 
     // SCROLL lock tracking
-    static int32 scroll_lock_held;
+    static int32_t scroll_lock_held;
     if (x == (VK + QBVK_SCROLLOCK))
         scroll_lock_held = keyheld(VK + QBVK_SCROLLOCK);
 
@@ -1289,13 +1291,13 @@ void keydown(uint32_t x) {
     if (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT)) {
         if (x == 13) {
             if (fullscreen_allowedmode >= 0) { // fullscreen_allowedmode==-1 bypasses alt+enter allowing it to be user-trappable
-                static int32 fs_mode, fs_smooth;
+                static int32_t fs_mode, fs_smooth;
                 fs_mode = full_screen_set;
                 if (fs_mode == -1)
                     fs_mode = full_screen;
                 fs_smooth = fullscreen_smooth;
 
-                int32 fs_combo;
+                int32_t fs_combo;
                 if (fs_mode == 0)
                     fs_combo = 0;
                 if ((fs_mode == 1) && (fs_smooth == 0))
@@ -1307,7 +1309,7 @@ void keydown(uint32_t x) {
                 if ((fs_mode == 2) && (fs_smooth == 1))
                     fs_combo = 4;
 
-                int32 fs_validmode = 0;
+                int32_t fs_validmode = 0;
                 while (fs_validmode == 0) {
                     fs_combo++;
                     if (fs_combo > 4)
@@ -1360,15 +1362,15 @@ void keydown(uint32_t x) {
 
     if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
         // identify and revert numpad specific key codes to non-numpad codes
-        static uint32 x2;
-        static int64 numpadkey;
+        static uint32_t x2;
+        static int64_t numpadkey;
         keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
 
         // ON KEY trapping
         { // new scope
-            static int32 block_onkey = 0;
-            static int32 f, scancode, extended, flags_mask;
-            int32 i, i2; // must not be static!
+            static int32_t block_onkey = 0;
+            static int32_t f, scancode, extended, flags_mask;
+            int32_t i, i2; // must not be static!
 
             // establish scancode (if any)
             scancode = 0;
@@ -1500,15 +1502,15 @@ void keydown(uint32_t x) {
 
         /*
             //keyhit cyclic buffer
-            int64 keyhit[8192];
+            int64_t keyhit[8192];
             //    keyhit specific internal flags: (stored in high 32-bits)
             //    &4294967296->numpad was used
-            int32 keyhit_nextfree=0;
-            int32 keyhit_next=0;
+            int32_t keyhit_nextfree=0;
+            int32_t keyhit_next=0;
             //note: if full, the oldest message is discarded to make way for the new message
         */
         // add x2 to keyhit buffer
-        static int32 z;
+        static int32_t z;
         z = (keyhit_nextfree + 1) & 0x1FFF;
         if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
             keyhit_next = (keyhit_next + 1) & 0x1FFF;
@@ -1517,7 +1519,7 @@ void keydown(uint32_t x) {
         keyhit_nextfree = z;
     } // asciicode_reading!=2
 
-    static int32 shift, alt, ctrl, capslock, numlock;
+    static int32_t shift, alt, ctrl, capslock, numlock;
     numlock = 0;
     capslock = 0;
 
@@ -1525,7 +1527,7 @@ void keydown(uint32_t x) {
         x = 0;
 
     if (x <= 255) {
-        static int32 b1, b2, z, o;
+        static int32_t b1, b2, z, o;
         b1 = x;
         if ((b2 = keyboard_scancode_get_scancode(x))) { // table entry exists
             scancodedown(b2);
@@ -1561,7 +1563,7 @@ void keydown(uint32_t x) {
                 b1 = z;
             }
         } // b2
-        static int32 i, i2, i3;
+        static int32_t i, i2, i3;
         i = cmem[0x41a];
         i2 = cmem[0x41c];
         i3 = i2 + 2;
@@ -1588,7 +1590,7 @@ void keydown(uint32_t x) {
     }
 
     if (x <= 65535) {
-        static int32 b1, b2, z, o, r;
+        static int32_t b1, b2, z, o, r;
     numpadkey:
         b1 = 0;
         b2 = x >> 8;
@@ -1642,7 +1644,7 @@ void keydown(uint32_t x) {
                 b2 = keyboard_scancode_get_scancode(r);
             }
         } // z
-        static int32 i, i2, i3;
+        static int32_t i, i2, i3;
         i = cmem[0x41a];
         i2 = cmem[0x41c];
         i3 = i2 + 2;
@@ -1658,7 +1660,7 @@ void keydown(uint32_t x) {
 
     { // scope
         uint8_t modifierScancode;
-        int32 modifierFlagsMask;
+        int32_t modifierFlagsMask;
         if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
             scancodedown(modifierScancode);
 
@@ -1795,7 +1797,7 @@ int32_t func__numlock() {
     return QB_FALSE;
 }
 
-static void toggle_lock_key(int32 key_code) {
+static void toggle_lock_key(int32_t key_code) {
 #ifdef QB64_WINDOWS
     keybd_event(key_code, 0x45, 1, 0);
     keybd_event(key_code, 0x45, 3, 0);
@@ -1804,10 +1806,10 @@ static void toggle_lock_key(int32 key_code) {
 #endif
 }
 
-void sub__capslock(int32 options) {
+void sub__capslock(int32_t options) {
 #ifdef QB64_WINDOWS
     // VK_CAPITAL
-    int32 currentState = func__capslock();
+    int32_t currentState = func__capslock();
     switch (options) {
     case 1: // ON
         if (currentState == -1)
@@ -1825,10 +1827,10 @@ void sub__capslock(int32 options) {
 #endif
 }
 
-void sub__scrolllock(int32 options) {
+void sub__scrolllock(int32_t options) {
 #ifdef QB64_WINDOWS
     // VK_SCROLL
-    int32 currentState = func__scrolllock();
+    int32_t currentState = func__scrolllock();
     switch (options) {
     case 1: // ON
         if (currentState == -1)
@@ -1846,10 +1848,10 @@ void sub__scrolllock(int32 options) {
 #endif
 }
 
-void sub__numlock(int32 options) {
+void sub__numlock(int32_t options) {
 #ifdef QB64_WINDOWS
     // VK_NUMLOCK
-    int32 currentState = func__numlock();
+    int32_t currentState = func__numlock();
     switch (options) {
     case 1: // ON
         if (currentState == -1)
