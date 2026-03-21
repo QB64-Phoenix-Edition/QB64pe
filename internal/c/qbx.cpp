@@ -1276,53 +1276,6 @@ void sub_strig(int32 i, int32 controller, int32 option, int32 passed) {
     } // i
 }
 
-void onkey_setup(int32 i, uint32 id, int64 pass) {
-    // note: pass is ignored by ids not requiring a pass value
-    if (is_error_pending())
-        return;
-    if ((i < 1) || (i > 31)) {
-        error(5);
-        return;
-    }
-    onkey[i].state = 0;
-    onkey[i].pass = pass;
-    onkey[i].id = id; // id must be set last because it is the trigger variable
-}
-
-void sub_key(int32 i, int32 option) {
-    // ref: "(?){ON|OFF|STOP}"
-    if (is_error_pending())
-        return;
-    if ((i < 0) || (i > 31)) {
-        error(5);
-        return;
-    }
-    static int32 i1, i2;
-    i1 = i;
-    i2 = i;
-    if (!i) {
-        i1 = i;
-        i2 = 31;
-    } // set all keys!
-    for (i = i1; i <= i2; i++) {
-        // ref: uint8 active;//0=OFF, 1=ON, 2=STOP
-        if (option == 1) { // ON
-            onkey[i].active = 1;
-            if (onkey[i].state)
-                qbevent = 1;
-        }
-        if (option == 2) { // OFF
-            onkey[i].active = 0;
-            onkey[i].state = 0;
-        }
-        if (option == 3) { // STOP
-            onkey[i].active = 2;
-            if (onkey[i].state)
-                onkey[i].state = 1;
-        }
-    } // i
-}
-
 int32 ontimer_nextfree = 1;
 int32 *ontimer_freelist = (int32 *)malloc(32);
 uint32 ontimer_freelist_size = 8;      // number of elements in the freelist

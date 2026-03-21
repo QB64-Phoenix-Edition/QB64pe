@@ -22,3 +22,6 @@ struct onkey_struct {
 
 extern onkey_struct *onkey;
 extern int32_t onkey_inprogress;
+
+void onkey_setup(int32_t i, uint32_t id, int64_t pass);
+void sub_key(int32_t i, int32_t option);
