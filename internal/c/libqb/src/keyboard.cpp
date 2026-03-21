@@ -1,13 +1,36 @@
 #include "keyboard.h"
+#include "../../common.h"
 #include "cmem.h"
+#include "event.h"
+#include "glut-thread.h"
 
-extern int64_t keyhit[8192];
-extern int32_t keyhit_nextfree;
-extern int32_t keyhit_next;
-extern int32_t asciicode_reading;
+extern int64 keyhit[8192];
+extern int32 keyhit_nextfree;
+extern int32 keyhit_next;
+extern int32 asciicode_reading;
 
-extern void keyheld_remove(uint32_t x);
-extern void scancodeup(uint8_t scancode);
+extern int32 keydown_glyph;
+extern int32 exit_blocked;
+extern int32 exit_value;
+extern uint8 close_program;
+extern uint8 suspend_program;
+extern int32 fullscreen_allowedmode;
+extern int32 fullscreen_allowedsmooth;
+extern int32 fullscreen_smooth;
+extern int32 full_screen;
+extern int32 full_screen_set;
+extern int32 force_display_update;
+extern onkey_struct *onkey;
+extern int32 sleep_break;
+extern uint8 port60h_event[256];
+extern int32 port60h_events;
+extern uint16_t codepage437_to_unicode16[];
+
+static uint32_t bindkey = 0;
+static uint32_t *keyheld_buffer = (uint32_t *)malloc(1);
+static uint32_t *keyheld_bind_buffer = (uint32_t *)malloc(1);
+static int32_t keyheld_n = 0;
+static int32_t keyheld_size = 0;
 
 // clang-format off
 const int32_t keyboard_scancode_lookup_table[]={
@@ -899,6 +922,203 @@ bool keyboard_is_onkey_extended_key(uint32_t key) {
     }
 }
 
+void keyboard_set_bindkey(uint32_t key) {
+    bindkey = key;
+}
+
+int32_t keyheld(uint32_t x) {
+    for (int32_t i = 0; i < keyheld_n; i++) {
+        if (keyheld_buffer[i] == x)
+            return 1;
+    }
+
+    // check multimapped NUMPAD keys
+    if ((x >= 42) && (x <= 57)) {
+        if ((x >= 48) && (x <= 57))
+            return keyheld(VK + QBVK_KP0 + (x - 48)); // 0-9
+        if (x == 46)
+            return keyheld(VK + QBVK_KP_PERIOD);
+        if (x == 47)
+            return keyheld(VK + QBVK_KP_DIVIDE);
+        if (x == 42)
+            return keyheld(VK + QBVK_KP_MULTIPLY);
+        if (x == 45)
+            return keyheld(VK + QBVK_KP_MINUS);
+        if (x == 43)
+            return keyheld(VK + QBVK_KP_PLUS);
+    }
+    if (x == 13)
+        return keyheld(VK + QBVK_KP_ENTER);
+    if (x & 0xFF00) {
+        const uint32_t x2 = (x >> 8) & 255;
+        if ((x2 >= 71) && (x2 <= 83)) {
+            if (x2 == 82)
+                return keyheld(QBK + QBVK_KP0 - QBVK_KP0);
+            if (x2 == 79)
+                return keyheld(QBK + QBVK_KP1 - QBVK_KP0);
+            if (x2 == 80)
+                return keyheld(QBK + QBVK_KP2 - QBVK_KP0);
+            if (x2 == 81)
+                return keyheld(QBK + QBVK_KP3 - QBVK_KP0);
+            if (x2 == 75)
+                return keyheld(QBK + QBVK_KP4 - QBVK_KP0);
+            if (x2 == 76)
+                return keyheld(QBK + QBVK_KP5 - QBVK_KP0);
+            if (x2 == 77)
+                return keyheld(QBK + QBVK_KP6 - QBVK_KP0);
+            if (x2 == 71)
+                return keyheld(QBK + QBVK_KP7 - QBVK_KP0);
+            if (x2 == 72)
+                return keyheld(QBK + QBVK_KP8 - QBVK_KP0);
+            if (x2 == 73)
+                return keyheld(QBK + QBVK_KP9 - QBVK_KP0);
+            if (x2 == 83)
+                return keyheld(QBK + QBVK_KP_PERIOD - QBVK_KP0);
+        }
+    }
+
+    return 0;
+}
+
+void keyheld_add(uint32_t x) {
+    for (int32_t i = 0; i < keyheld_n; i++) {
+        if (keyheld_buffer[i] == x)
+            return;
+    } // already in buffer
+
+    if (keyheld_n == keyheld_size) {
+        keyheld_size++;
+        keyheld_buffer = (uint32_t *)realloc(keyheld_buffer, keyheld_size * 4);
+        keyheld_bind_buffer = (uint32_t *)realloc(keyheld_bind_buffer, keyheld_size * 4);
+    } // expand buffer
+
+    keyheld_buffer[keyheld_n] = x; // add entry
+    keyheld_bind_buffer[keyheld_n] = bindkey;
+    bindkey = 0; // add binded key (0=none)
+    keyheld_n++; // note: inc. must occur after setting entry (threading reasons)
+}
+
+void keyheld_remove(uint32_t x) {
+    for (int32_t i = 0; i < keyheld_n; i++) {
+        if (keyheld_buffer[i] == x) { // exists
+            memmove(&keyheld_buffer[i], &keyheld_buffer[i + 1], (keyheld_n - i - 1) * 4);
+            memmove(&keyheld_bind_buffer[i], &keyheld_bind_buffer[i + 1], (keyheld_n - i - 1) * 4);
+            keyheld_n--; // note: dec. must occur after memmove (threading reasons)
+            return;
+        }
+    }
+}
+
+void keyheld_unbind(uint32_t x) {
+    for (int32_t i = 0; i < keyheld_n; i++) {
+        if (keyheld_bind_buffer[i] == x) { // exists
+            keyup(keyheld_buffer[i]);
+            return;
+        }
+    }
+}
+
+void scancodedown(uint8 scancode) {
+    if (port60h_events) {
+        if (port60h_event[port60h_events - 1] == scancode)
+            return; // avoid duplicate entries in buffer (eg. from key-repeats)
+    }
+    if (port60h_events == 256) {
+        memmove(port60h_event, port60h_event + 1, 255);
+        port60h_events = 255;
+    }
+    port60h_event[port60h_events] = scancode;
+    port60h_events++;
+}
+
+void scancodeup(uint8 scancode) {
+    if (port60h_events) {
+        if (port60h_event[port60h_events - 1] == (scancode + 128))
+            return; // avoid duplicate entries in buffer
+    }
+    if (port60h_events == 256) {
+        memmove(port60h_event, port60h_event + 1, 255);
+        port60h_events = 255;
+    }
+    port60h_event[port60h_events] = scancode + 128;
+    port60h_events++;
+}
+
+static uint32 unicode_to_cp437(uint32 x) {
+    for (int32 i = 0; i <= 255; i++) {
+        if (x == codepage437_to_unicode16[i])
+            return i;
+    }
+
+    return 0;
+}
+
+void keydown_unicode(uint32_t x) {
+    keydown_glyph = 1;
+
+    // note: UNICODE 0-127 map directly to ASCII 0-127
+    if (x <= 127) {
+        keydown(x);
+        return;
+    }
+
+    // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
+    auto x2 = unicode_to_cp437(x);
+    if (x2) {
+        keydown(x2);
+        return;
+    }
+
+    // note: full width latin characters will be mapped to their normal width equivalents
+    // Wikipedia note: Range U+FF01\96FF5E reproduces the characters of ASCII 21 to 7E as fullwidth forms, that is, a fixed width form used in CJK computing.
+    // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
+    // role is already fulfilled by U+3000 "ideographic space."
+    if ((x >= 0x0000FF01) && (x <= 0x0000FF5E)) {
+        keydown(x - 0x0000FF01 + 0x21);
+        return;
+    }
+
+    if (x == 0x3000) {
+        keydown(32);
+        return;
+    }
+
+    x |= UC;
+    keydown(x);
+}
+
+void keyup_unicode(uint32_t x) {
+    // note: UNICODE 0-127 map directly to ASCII 0-127
+    if (x <= 127) {
+        keyup(x);
+        return;
+    }
+
+    // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
+    auto x2 = unicode_to_cp437(x);
+    if (x2) {
+        keyup(x2);
+        return;
+    }
+
+    // note: full width latin characters will be mapped to their normal width equivalents
+    // Wikipedia note: Range U+FF01\96FF5E reproduces the characters of ASCII 21 to 7E as fullwidth forms, that is, a fixed width form used in CJK computing.
+    // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
+    // role is already fulfilled by U+3000 "ideographic space."
+    if ((x >= 0x0000FF01) && (x <= 0x0000FF5E)) {
+        keyup(x - 0x0000FF01 + 0x21);
+        return;
+    }
+
+    if (x == 0x3000) {
+        keyup(32);
+        return;
+    }
+
+    x |= UC;
+    keyup(x);
+}
+
 void keyup(uint32_t x) {
     if (!x)
         x = QBK + QBK_CHR0;
@@ -974,6 +1194,465 @@ void keyup(uint32_t x) {
     }
 
 key_handled:;
+}
+
+void keydown(uint32_t x) {
+    if (!x)
+        x = QBK + QBK_CHR0;
+
+    static int32 glyph;
+    glyph = keydown_glyph;
+    keydown_glyph = 0;
+
+    // INSERT lock emulation
+    static int32 insert_held;
+    if (x == 0x5200)
+        insert_held = keyheld(0x5200);
+
+    // SCROLL lock tracking
+    static int32 scroll_lock_held;
+    if (x == (VK + QBVK_SCROLLOCK))
+        scroll_lock_held = keyheld(VK + QBVK_SCROLLOCK);
+
+    keyheld_add(x);
+
+    // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
+    // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. CTRL+BREAK handling
+    if ((x == (VK + QBVK_BREAK)) || ((x == (VK + QBVK_SCROLLOCK)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))) ||
+        ((x == (VK + QBVK_F15)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL)))) {
+        if (exit_blocked) {
+            exit_value |= 2;
+            goto key_handled;
+        }
+        close_program = 1;
+        goto key_handled;
+    }
+
+#ifdef QB64_WINDOWS
+    // note: Alt+F4 is supposed to close the window, but glut windows don't seem to be affected;
+    // this addresses the issue:
+    if ((x == (0x3E00)) && (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT))) {
+        if (exit_blocked) {
+            exit_value |= 1;
+            goto key_handled;
+        }
+        close_program = 1;
+        goto key_handled;
+    }
+#endif
+
+    // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
+    // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. PAUSE handling
+    if ((x == (VK + QBVK_PAUSE)) || ((x == (VK + QBVK_NUMLOCK)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL)))) {
+        suspend_program |= 1;
+        qbevent = 1;
+        goto key_handled;
+    } else {
+        if (suspend_program & 1) {
+            suspend_program ^= 1;
+            goto key_handled;
+        }
+    }
+
+    // ALT+ENTER
+    if (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT)) {
+        if (x == 13) {
+            if (fullscreen_allowedmode >= 0) { // fullscreen_allowedmode==-1 bypasses alt+enter allowing it to be user-trappable
+                static int32 fs_mode, fs_smooth;
+                fs_mode = full_screen_set;
+                if (fs_mode == -1)
+                    fs_mode = full_screen;
+                fs_smooth = fullscreen_smooth;
+
+                int32 fs_combo;
+                if (fs_mode == 0)
+                    fs_combo = 0;
+                if ((fs_mode == 1) && (fs_smooth == 0))
+                    fs_combo = 1;
+                if ((fs_mode == 1) && (fs_smooth == 1))
+                    fs_combo = 2;
+                if ((fs_mode == 2) && (fs_smooth == 0))
+                    fs_combo = 3;
+                if ((fs_mode == 2) && (fs_smooth == 1))
+                    fs_combo = 4;
+
+                int32 fs_validmode = 0;
+                while (fs_validmode == 0) {
+                    fs_combo++;
+                    if (fs_combo > 4)
+                        fs_combo = 0;
+
+                    switch (fs_combo) {
+                    case 0:
+                        fs_mode = 0;
+                        fullscreen_smooth = 0;
+                        break;
+                    case 1:
+                        fs_mode = 1;
+                        fullscreen_smooth = 0;
+                        break;
+                    case 2:
+                        fs_mode = 1;
+                        fullscreen_smooth = 1;
+                        break;
+                    case 3:
+                        fs_mode = 2;
+                        fullscreen_smooth = 0;
+                        break;
+                    case 4:
+                        fs_mode = 2;
+                        fullscreen_smooth = 1;
+                        break;
+                    }
+
+                    if (fs_combo == 0)
+                        break; // 0 is always valid (= _OFF)
+
+                    fs_validmode = 1;
+                    // check _ALLOWFULLSCREEN's settings
+                    if ((fullscreen_allowedmode > 0) && (fs_mode != fullscreen_allowedmode))
+                        fs_validmode = 0;
+                    if ((fullscreen_allowedsmooth == 1) && (fullscreen_smooth != 1))
+                        fs_validmode = 0;
+                    if ((fullscreen_allowedsmooth == -1) && (fullscreen_smooth != 0))
+                        fs_validmode = 0;
+                }
+
+                // apply
+                if (full_screen != fs_mode)
+                    full_screen_set = fs_mode;
+                force_display_update = 1;
+                goto key_handled;
+            }
+        }
+    }
+
+    if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
+        // identify and revert numpad specific key codes to non-numpad codes
+        static uint32 x2;
+        static int64 numpadkey;
+        keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
+
+        // ON KEY trapping
+        { // new scope
+            static int32 block_onkey = 0;
+            static int32 f, scancode, extended, flags_mask;
+            int32 i, i2; // must not be static!
+
+            // establish scancode (if any)
+            scancode = 0;
+            keyboard_get_onkey_scancode_and_flags(x, &scancode, &flags_mask);
+
+            // establish if key is an extended key
+            extended = keyboard_is_onkey_extended_key(x);
+
+            if (!block_onkey) {
+                // priority #1: user defined keys
+                if (scancode) {
+                    for (i = 0; i <= 31; i++) {
+                        if (onkey[i].key_scancode == scancode) {
+                            if (onkey[i].active) {
+                                if (onkey[i].id) {
+                                    // check keyboard flags
+                                    f = onkey[i].key_flags;
+                                    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key,32 NumLock key,64 Caps Lock key, 128 Extended keys on a
+                                    // 101-key keyboard To specify multiple shift states, add the values together. For example, a value of 12 specifies that the
+                                    // user-defined key is used in combination with the Ctrl and Alt keys.
+                                    if ((flags_mask & 3) == 0) {
+                                        if (f & 3) {
+                                            if (keyheld(VK + QBVK_LSHIFT) == 0 && keyheld(VK + QBVK_RSHIFT) == 0)
+                                                goto wrong_flags;
+                                        } else {
+                                            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
+                                                goto wrong_flags;
+                                        }
+                                    }
+                                    if ((flags_mask & 4) == 0) {
+                                        if (f & 4) {
+                                            if (keyheld(VK + QBVK_LCTRL) == 0 && keyheld(VK + QBVK_RCTRL) == 0)
+                                                goto wrong_flags;
+                                        } else {
+                                            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
+                                                goto wrong_flags;
+                                        }
+                                    }
+                                    if ((flags_mask & 8) == 0) {
+                                        if (f & 8) {
+                                            if (keyheld(VK + QBVK_LALT) == 0 && keyheld(VK + QBVK_RALT) == 0)
+                                                goto wrong_flags;
+                                        } else {
+                                            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
+                                                goto wrong_flags;
+                                        }
+                                    }
+                                    if ((flags_mask & 32) == 0) {
+                                        if (f & 32) {
+                                            if (keyheld(VK + QBVK_NUMLOCK) == 0)
+                                                goto wrong_flags;
+                                            //*revise
+                                        }
+                                    }
+                                    if ((flags_mask & 64) == 0) {
+                                        if (f & 64) {
+                                            if (keyheld(VK + QBVK_CAPSLOCK) == 0)
+                                                goto wrong_flags;
+                                            //*revise
+                                        }
+                                    }
+                                    if ((flags_mask & 128) == 0) {
+                                        if (((f & 128) / 128) != extended)
+                                            goto wrong_flags;
+                                    }
+                                    if (onkey[i].active == 1) { //(1)ON
+                                        onkey[i].state++;
+                                    } else { //(2)STOP
+                                        onkey[i].state = 1;
+                                    }
+
+                                    qbevent = 1;
+
+                                    // mask trigger key
+                                    keyboard_keyup_mask_add(x);
+
+                                    goto key_handled;
+
+                                } // id
+                            } // active
+                        } // scancode==
+                    wrong_flags:;
+                    } // i
+                } // scancode
+
+                // priority #2: fixed index F1-F12, arrows
+                for (i = 0; i <= 31; i++) {
+                    if (onkey[i].active) {
+                        if (onkey[i].id) {
+                            if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
+                                if (onkey[i].active == 1) { //(1)ON
+                                    onkey[i].state++;
+                                } else { //(2)STOP
+                                    onkey[i].state = 1;
+                                }
+                                qbevent = 1;
+
+                                // mask trigger key
+                                keyboard_keyup_mask_add(x);
+
+                                goto key_handled;
+                            } // keycode
+                        } // id
+                    } // active
+                } // i
+
+            } // block_onkey
+
+            // priority #3: string insertion
+            for (i = 0; i <= 31; i++) {
+                if (onkey[i].text) {
+                    if (onkey[i].text->len) {
+                        if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
+                            // mask trigger key
+                            keyboard_keyup_mask_add(x);
+
+                            for (i2 = 0; i2 < onkey[i].text->len; i2++) {
+                                block_onkey = 1;
+                                keydown(onkey[i].text->chr[i2]);
+                                keyup(onkey[i].text->chr[i2]);
+                                block_onkey = 0;
+                            } // i2
+                            goto key_handled;
+                        } // keycode
+                    }
+                } // text
+            } // i
+        } // descope
+
+        /*
+            //keyhit cyclic buffer
+            int64 keyhit[8192];
+            //    keyhit specific internal flags: (stored in high 32-bits)
+            //    &4294967296->numpad was used
+            int32 keyhit_nextfree=0;
+            int32 keyhit_next=0;
+            //note: if full, the oldest message is discarded to make way for the new message
+        */
+        // add x2 to keyhit buffer
+        static int32 z;
+        z = (keyhit_nextfree + 1) & 0x1FFF;
+        if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
+            keyhit_next = (keyhit_next + 1) & 0x1FFF;
+        }
+        keyhit[keyhit_nextfree] = x2 | numpadkey;
+        keyhit_nextfree = z;
+    } // asciicode_reading!=2
+
+    static int32 shift, alt, ctrl, capslock, numlock;
+    numlock = 0;
+    capslock = 0;
+
+    if (x == QBK + QBK_CHR0)
+        x = 0;
+
+    if (x <= 255) {
+        static int32 b1, b2, z, o;
+        b1 = x;
+        if ((b2 = keyboard_scancode_get_scancode(x))) { // table entry exists
+            scancodedown(b2);
+
+            // check for relevant table modifiers
+            shift = 0;
+            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
+                shift = 1;
+            ctrl = 0;
+            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
+                ctrl = 1;
+            alt = 0;
+            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
+                alt = 1;
+            o = 0;
+            if (shift)
+                o = 1;
+            if (ctrl)
+                o = 2;
+            if (alt)
+                o = 3;
+            if (glyph) {
+                if ((keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_LCTRL) && keyheld(VK + QBVK_RALT))
+                    o = 0; // assume alt-gr combo-key
+            }
+            z = keyboard_scancode_get_variant(x, o);
+            if (!z)
+                goto key_handled; // not possible
+            if (z & 0xFF00) {
+                b1 = 0;
+                b2 = z >> 8;
+            } else {
+                b1 = z;
+            }
+        } // b2
+        static int32 i, i2, i3;
+        i = cmem[0x41a];
+        i2 = cmem[0x41c];
+        i3 = i2 + 2;
+        if (i3 == 62)
+            i3 = 30;
+        if (i != i3) { // fits in buffer
+            cmem[0x400 + i2] = b1;
+            cmem[0x400 + i2 + 1] = b2; //(scancode)
+            cmem[0x41c] = i3;          // fix tail location
+        }
+        goto key_handled;
+    } // x<=255
+
+    // NUMPAD?
+    if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
+        if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_PERIOD)))
+            numlock = 1;
+        x = (x - (VK + QBVK_KP0) + 256) * 256;
+        goto numpadkey;
+    }
+    if ((x >= (QBK + 0)) && (x <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
+        x = (x - (QBK + 0) + 256) * 256;
+        goto numpadkey;
+    }
+
+    if (x <= 65535) {
+        static int32 b1, b2, z, o, r;
+    numpadkey:
+        b1 = 0;
+        b2 = x >> 8;
+        r = (x >> 8) + 256;
+        if (keyboard_scancode_has_variant(r, 0)) {
+            scancodedown(keyboard_scancode_get_scancode(r));
+            // check relevant modifiers
+            shift = 0;
+            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
+                shift = 1;
+            ctrl = 0;
+            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
+                ctrl = 1;
+            alt = 0;
+            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
+                alt = 1;
+
+            if (x == 0x5200) {          // INSERT lock emulation
+                if (insert_held == 0) { // nullify effects of key repeats
+                    if ((alt == 0) && (shift == 0) && (ctrl == 0)) {
+                        // toggle insert mode
+                        if (keyheld(QBK + QBK_INSERT_MODE)) {
+                            keyheld_remove(QBK + QBK_INSERT_MODE);
+                        } else {
+                            keyheld_add(QBK + QBK_INSERT_MODE);
+                        }
+                        update_shift_state();
+                    }
+                }
+            }
+
+            o = 0;
+            if (shift)
+                o = 1;
+            if (numlock)
+                o = 4;
+            if (numlock && shift)
+                o = 7;
+            if (ctrl)
+                o = 2;
+            if (alt)
+                o = 3;
+            z = keyboard_scancode_get_variant(r, o);
+            if (!z)
+                goto key_handled; // invalid combination
+            if (z & 0xFF00) {
+                b1 = 0;
+                b2 = z >> 8;
+            } else {
+                b1 = z;
+                b2 = keyboard_scancode_get_scancode(r);
+            }
+        } // z
+        static int32 i, i2, i3;
+        i = cmem[0x41a];
+        i2 = cmem[0x41c];
+        i3 = i2 + 2;
+        if (i3 == 62)
+            i3 = 30;
+        if (i != i3) { // fits in buffer
+            cmem[0x400 + i2] = b1;
+            cmem[0x400 + i2 + 1] = b2; //(scancode)
+            cmem[0x41c] = i3;          // fix tail location
+        }
+        goto key_handled;
+    } // x<=65536
+
+    { // scope
+        uint8_t modifierScancode;
+        int32 modifierFlagsMask;
+        if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
+            scancodedown(modifierScancode);
+
+            if (x == (VK + QBVK_SCROLLOCK)) {
+                if (scroll_lock_held == 0) { // nullify effects of key repeats
+                    ctrl = 0;
+                    if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
+                        ctrl = 1;
+                    if (ctrl == 0) {
+                        // toggle insert mode
+                        if (keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
+                            keyheld_remove(QBK + QBK_SCROLL_LOCK_MODE);
+                        } else {
+                            keyheld_add(QBK + QBK_SCROLL_LOCK_MODE);
+                        }
+                    }
+                }
+            }
+
+            update_shift_state();
+        }
+    }
+
+key_handled:
+    sleep_break = 1;
 }
 
 void update_shift_state() {
@@ -1059,6 +1738,102 @@ void update_shift_state() {
         x |= 2;
     x |= 16;
     cmem[0x496] = x;
+}
+
+int32_t func__capslock() {
+#ifdef QB64_GUI
+    OPTIONAL_GLUT(0);
+    return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock));
+#endif
+    return QB_FALSE;
+}
+
+int32_t func__scrolllock() {
+#ifdef QB64_GUI
+    OPTIONAL_GLUT(0);
+    return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock));
+#endif
+    return QB_FALSE;
+}
+
+int32_t func__numlock() {
+#ifdef QB64_GUI
+    OPTIONAL_GLUT(0);
+    return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock));
+#endif
+    return QB_FALSE;
+}
+
+static void toggle_lock_key(int32 key_code) {
+#ifdef QB64_WINDOWS
+    keybd_event(key_code, 0x45, 1, 0);
+    keybd_event(key_code, 0x45, 3, 0);
+#else
+    (void)key_code;
+#endif
+}
+
+void sub__capslock(int32 options) {
+#ifdef QB64_WINDOWS
+    // VK_CAPITAL
+    int32 currentState = func__capslock();
+    switch (options) {
+    case 1: // ON
+        if (currentState == -1)
+            return;
+        break;
+    case 2: // OFF
+        if (currentState == 0)
+            return;
+        break;
+    }
+    // _TOGGLE:
+    toggle_lock_key(VK_CAPITAL);
+#else
+    (void)options;
+#endif
+}
+
+void sub__scrolllock(int32 options) {
+#ifdef QB64_WINDOWS
+    // VK_SCROLL
+    int32 currentState = func__scrolllock();
+    switch (options) {
+    case 1: // ON
+        if (currentState == -1)
+            return;
+        break;
+    case 2: // OFF
+        if (currentState == 0)
+            return;
+        break;
+    }
+    // _TOGGLE:
+    toggle_lock_key(VK_SCROLL);
+#else
+    (void)options;
+#endif
+}
+
+void sub__numlock(int32 options) {
+#ifdef QB64_WINDOWS
+    // VK_NUMLOCK
+    int32 currentState = func__numlock();
+    switch (options) {
+    case 1: // ON
+        if (currentState == -1)
+            return;
+        break;
+    case 2: // OFF
+        if (currentState == 0)
+            return;
+        break;
+    }
+    // _TOGGLE:
+    toggle_lock_key(VK_NUMLOCK);
+#else
+    (void)options;
+#endif
 }
 
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {

@@ -6,8 +6,22 @@
 #include <cstdint>
 
 int32_t keyheld(uint32_t x);
+void keyheld_add(uint32_t key);
+void keyheld_remove(uint32_t key);
+void keyheld_unbind(uint32_t key);
+void keyboard_set_bindkey(uint32_t key);
 void keydown(uint32_t key);
 void keyup(uint32_t key);
+int32_t func__capslock();
+int32_t func__scrolllock();
+int32_t func__numlock();
+void sub__capslock(int32_t options);
+void sub__scrolllock(int32_t options);
+void sub__numlock(int32_t options);
+void keydown_unicode(uint32_t key);
+void keyup_unicode(uint32_t key);
+void scancodedown(uint8_t scancode);
+void scancodeup(uint8_t scancode);
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
 int32_t keyboard_scancode_get_scancode(int32_t keyIndex);
 int32_t keyboard_scancode_get_variant(int32_t keyIndex, int32_t modifierOffset);

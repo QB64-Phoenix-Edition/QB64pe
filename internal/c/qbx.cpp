@@ -20,6 +20,7 @@
 #include "hashing.h"
 #include "hexoctbin.h"
 #include "image.h"
+#include "keyboard.h"
 #include "libqb.h"
 #include "logging.h"
 #include "memblock.h"
@@ -30,12 +31,6 @@
 #include "shell.h"
 
 extern int32 func__cinp(int32 toggle, int32 passed); // Console INP scan code reader
-extern int func__capslock();
-extern int func__scrolllock();
-extern int func__numlock();
-extern void sub__capslock(int32 options);
-extern void sub__scrolllock(int32 options);
-extern void sub__numlock(int32 options);
 extern void sub__consolefont(qbs *FontName, int FontSize);
 extern void sub__console_cursor(int32 visible, int32 cursorsize, int32 passed);
 extern int32 func__getconsoleinput();
