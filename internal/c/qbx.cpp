@@ -134,8 +134,6 @@ extern qbs *func__comptime();
 extern qbs *func__compvers();
 extern void sub__mapunicode(int32 unicode_code, int32 ascii_code);
 extern int32 func__mapunicode(int32 ascii_code);
-extern int32 func__keydown(int32 x);
-extern int32 func__keyhit();
 extern int32 func_lpos(int32);
 extern float func__mousemovementx();
 extern float func__mousemovementy();

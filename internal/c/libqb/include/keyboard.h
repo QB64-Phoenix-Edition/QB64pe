@@ -33,6 +33,8 @@ bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey,
 bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int32_t *flagsMask);
 void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancode, int32_t *flagsMask);
 bool keyboard_is_onkey_extended_key(uint32_t key);
+int32_t func__keyhit();
+int32_t func__keydown(int32_t key);
 
 #define QBK 200000
 #define VK 100000

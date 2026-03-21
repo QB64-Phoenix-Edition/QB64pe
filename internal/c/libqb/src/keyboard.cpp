@@ -922,6 +922,37 @@ bool keyboard_is_onkey_extended_key(uint32_t key) {
     }
 }
 
+int32_t func__keyhit() {
+    /*
+        //keyhit cyclic buffer
+        int64 keyhit[8192];
+        //    keyhit specific internal flags: (stored in high 32-bits)
+        //    &4294967296->numpad was used
+        int32 keyhit_nextfree=0;
+        int32 keyhit_next=0;
+        //note: if full, the oldest message is discarded to make way for the new message
+    */
+    if (keyhit_next != keyhit_nextfree) {
+        int32_t x = *(int32_t *)&keyhit[keyhit_next];
+        keyhit_next = (keyhit_next + 1) & 0x1FFF;
+        return x;
+    }
+
+    return 0;
+}
+
+int32_t func__keydown(int32_t x) {
+    if (x <= 0) {
+        error(5);
+        return 0;
+    }
+
+    if (keyheld(x))
+        return -1;
+
+    return 0;
+}
+
 void keyboard_set_bindkey(uint32_t key) {
     bindkey = key;
 }
