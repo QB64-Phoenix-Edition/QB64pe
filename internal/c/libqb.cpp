@@ -20695,13 +20695,7 @@ no_exponent_provided:
 void sub_run_init() {
     // Reset ON KEY trapping
     // note: KEY bar F-key bindings are not affected
-    static int32 i;
-    for (i = 1; i <= 31; i++) {
-        onkey[i].id = 0;
-        onkey[i].active = 0;
-        onkey[i].state = 0;
-    }
-    onkey_inprogress = 0;
+    onkey_reset_runtime_state();
     // note: if already in screen 0:80x25, screen pages are left intact
     // set screen mode to 0 (80x25)
     qbg_screen(0, NULL, 0, 0, NULL, 1 | 4 | 8);
@@ -27267,26 +27261,7 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    onkey[1].keycode = 59 << 8; // F1-F10
-    onkey[2].keycode = 60 << 8;
-    onkey[3].keycode = 61 << 8;
-    onkey[4].keycode = 62 << 8;
-    onkey[5].keycode = 63 << 8;
-    onkey[6].keycode = 64 << 8;
-    onkey[7].keycode = 65 << 8;
-    onkey[8].keycode = 66 << 8;
-    onkey[9].keycode = 67 << 8;
-    onkey[10].keycode = 68 << 8;
-    onkey[11].keycode = 72 << 8; // up,left,right,down
-    onkey[11].keycode_alternate = VK + QBVK_KP8;
-    onkey[12].keycode = 75 << 8;
-    onkey[12].keycode_alternate = VK + QBVK_KP4;
-    onkey[13].keycode = 77 << 8;
-    onkey[13].keycode_alternate = VK + QBVK_KP6;
-    onkey[14].keycode = 80 << 8;
-    onkey[14].keycode_alternate = VK + QBVK_KP2;
-    onkey[30].keycode = 133 << 8; // F11,F12
-    onkey[31].keycode = 134 << 8;
+    onkey_init_default_bindings();
 
     ontimer[0].allocated = 1;
     ontimer[0].id = 0;
