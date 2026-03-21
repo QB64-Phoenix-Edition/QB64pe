@@ -795,6 +795,50 @@ void keyboard_keyup_mask_add(uint32_t key) {
     }
 }
 
+static inline int32_t keyboard_is_shift_held() {
+    return keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT);
+}
+
+static inline int32_t keyboard_is_ctrl_held() {
+    return keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL);
+}
+
+static inline int32_t keyboard_is_alt_held() {
+    return keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT);
+}
+
+static inline bool keyboard_is_altgr_combo() {
+    return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_LCTRL) && keyheld(VK + QBVK_RALT);
+}
+
+static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, int32_t *alt) {
+    *shift = keyboard_is_shift_held() ? 1 : 0;
+    *ctrl = keyboard_is_ctrl_held() ? 1 : 0;
+    *alt = keyboard_is_alt_held() ? 1 : 0;
+}
+
+static inline void keyboard_push_keyhit_value(int32_t value, int64_t keyhitFlag) {
+    int32_t nextKeyhit = (keyhit_nextfree + 1) & 0x1FFF;
+    if (nextKeyhit == keyhit_next) { // remove oldest message when cyclic buffer is full
+        keyhit_next = (keyhit_next + 1) & 0x1FFF;
+    }
+    keyhit[keyhit_nextfree] = static_cast<int64_t>(static_cast<uint32_t>(value)) | keyhitFlag;
+    keyhit_nextfree = nextKeyhit;
+}
+
+static inline void keyboard_push_bios_keystroke(int32_t b1, int32_t b2) {
+    int32_t head = cmem[0x41a];
+    int32_t tail = cmem[0x41c];
+    int32_t nextTail = tail + 2;
+    if (nextTail == 62)
+        nextTail = 30;
+    if (head != nextTail) { // fits in buffer
+        cmem[0x400 + tail] = b1;
+        cmem[0x400 + tail + 1] = b2; // (scancode)
+        cmem[0x41c] = nextTail;      // fix tail location
+    }
+}
+
 bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey, int64_t *keyhitFlag) {
     *normalizedKey = key;
     *keyhitFlag = 0;
@@ -1167,18 +1211,7 @@ void keyup(uint32_t x) {
         if (keyboard_keyup_mask_consume(x))
             goto key_handled;
 
-        // add x2 to keyhit buffer
-        static int32_t z;
-        z = (keyhit_nextfree + 1) & 0x1FFF;
-        if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
-            keyhit_next = (keyhit_next + 1) & 0x1FFF;
-        }
-        static int32_t sx;
-        sx = x2;
-        sx = -sx;
-        x2 = sx; // negate x2
-        keyhit[keyhit_nextfree] = x2 | numpadkey;
-        keyhit_nextfree = z;
+        keyboard_push_keyhit_value(-static_cast<int32_t>(x2), numpadkey);
     } // asciicode_reading!=2
 
     static int32_t numlock;
@@ -1251,8 +1284,7 @@ void keydown(uint32_t x) {
 
     // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
     // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. CTRL+BREAK handling
-    if ((x == (VK + QBVK_BREAK)) || ((x == (VK + QBVK_SCROLLOCK)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))) ||
-        ((x == (VK + QBVK_F15)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL)))) {
+    if ((x == (VK + QBVK_BREAK)) || ((x == (VK + QBVK_SCROLLOCK)) && keyboard_is_ctrl_held()) || ((x == (VK + QBVK_F15)) && keyboard_is_ctrl_held())) {
         if (exit_blocked) {
             exit_value |= 2;
             goto key_handled;
@@ -1264,7 +1296,7 @@ void keydown(uint32_t x) {
 #ifdef QB64_WINDOWS
     // note: Alt+F4 is supposed to close the window, but glut windows don't seem to be affected;
     // this addresses the issue:
-    if ((x == (0x3E00)) && (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT))) {
+    if ((x == (0x3E00)) && keyboard_is_alt_held()) {
         if (exit_blocked) {
             exit_value |= 1;
             goto key_handled;
@@ -1276,7 +1308,7 @@ void keydown(uint32_t x) {
 
     // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
     // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. PAUSE handling
-    if ((x == (VK + QBVK_PAUSE)) || ((x == (VK + QBVK_NUMLOCK)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL)))) {
+    if ((x == (VK + QBVK_PAUSE)) || ((x == (VK + QBVK_NUMLOCK)) && keyboard_is_ctrl_held())) {
         suspend_program |= 1;
         qbevent = 1;
         goto key_handled;
@@ -1288,7 +1320,7 @@ void keydown(uint32_t x) {
     }
 
     // ALT+ENTER
-    if (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT)) {
+    if (keyboard_is_alt_held()) {
         if (x == 13) {
             if (fullscreen_allowedmode >= 0) { // fullscreen_allowedmode==-1 bypasses alt+enter allowing it to be user-trappable
                 static int32_t fs_mode, fs_smooth;
@@ -1509,14 +1541,7 @@ void keydown(uint32_t x) {
             int32_t keyhit_next=0;
             //note: if full, the oldest message is discarded to make way for the new message
         */
-        // add x2 to keyhit buffer
-        static int32_t z;
-        z = (keyhit_nextfree + 1) & 0x1FFF;
-        if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
-            keyhit_next = (keyhit_next + 1) & 0x1FFF;
-        }
-        keyhit[keyhit_nextfree] = x2 | numpadkey;
-        keyhit_nextfree = z;
+        keyboard_push_keyhit_value(static_cast<int32_t>(x2), numpadkey);
     } // asciicode_reading!=2
 
     static int32_t shift, alt, ctrl, capslock, numlock;
@@ -1533,15 +1558,7 @@ void keydown(uint32_t x) {
             scancodedown(b2);
 
             // check for relevant table modifiers
-            shift = 0;
-            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
-                shift = 1;
-            ctrl = 0;
-            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                ctrl = 1;
-            alt = 0;
-            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-                alt = 1;
+            keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
             o = 0;
             if (shift)
                 o = 1;
@@ -1550,7 +1567,7 @@ void keydown(uint32_t x) {
             if (alt)
                 o = 3;
             if (glyph) {
-                if ((keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_LCTRL) && keyheld(VK + QBVK_RALT))
+                if (keyboard_is_altgr_combo())
                     o = 0; // assume alt-gr combo-key
             }
             z = keyboard_scancode_get_variant(x, o);
@@ -1563,17 +1580,7 @@ void keydown(uint32_t x) {
                 b1 = z;
             }
         } // b2
-        static int32_t i, i2, i3;
-        i = cmem[0x41a];
-        i2 = cmem[0x41c];
-        i3 = i2 + 2;
-        if (i3 == 62)
-            i3 = 30;
-        if (i != i3) { // fits in buffer
-            cmem[0x400 + i2] = b1;
-            cmem[0x400 + i2 + 1] = b2; //(scancode)
-            cmem[0x41c] = i3;          // fix tail location
-        }
+        keyboard_push_bios_keystroke(b1, b2);
         goto key_handled;
     } // x<=255
 
@@ -1598,15 +1605,7 @@ void keydown(uint32_t x) {
         if (keyboard_scancode_has_variant(r, 0)) {
             scancodedown(keyboard_scancode_get_scancode(r));
             // check relevant modifiers
-            shift = 0;
-            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
-                shift = 1;
-            ctrl = 0;
-            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                ctrl = 1;
-            alt = 0;
-            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-                alt = 1;
+            keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
 
             if (x == 0x5200) {          // INSERT lock emulation
                 if (insert_held == 0) { // nullify effects of key repeats
@@ -1644,17 +1643,7 @@ void keydown(uint32_t x) {
                 b2 = keyboard_scancode_get_scancode(r);
             }
         } // z
-        static int32_t i, i2, i3;
-        i = cmem[0x41a];
-        i2 = cmem[0x41c];
-        i3 = i2 + 2;
-        if (i3 == 62)
-            i3 = 30;
-        if (i != i3) { // fits in buffer
-            cmem[0x400 + i2] = b1;
-            cmem[0x400 + i2 + 1] = b2; //(scancode)
-            cmem[0x41c] = i3;          // fix tail location
-        }
+        keyboard_push_bios_keystroke(b1, b2);
         goto key_handled;
     } // x<=65536
 
@@ -1666,9 +1655,7 @@ void keydown(uint32_t x) {
 
             if (x == (VK + QBVK_SCROLLOCK)) {
                 if (scroll_lock_held == 0) { // nullify effects of key repeats
-                    ctrl = 0;
-                    if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                        ctrl = 1;
+                    ctrl = keyboard_is_ctrl_held();
                     if (ctrl == 0) {
                         // toggle insert mode
                         if (keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
