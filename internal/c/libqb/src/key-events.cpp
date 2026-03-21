@@ -84,3 +84,36 @@ void onkey_init_default_bindings() {
     onkey[30].keycode = 133 << 8; // F11,F12
     onkey[31].keycode = 134 << 8;
 }
+
+bool onkey_assign_binding(int32_t i, qbs *str) {
+    if (is_error_pending())
+        return false;
+
+    if (((i >= 1) && (i <= 10)) || (i == 30) || (i == 31)) { // F1-F10,F11,F12
+        if (str->len > 15) {
+            error(5);
+            return false;
+        }
+        if (!onkey[i].text)
+            onkey[i].text = qbs_new(0, 0);
+        qbs_set(onkey[i].text, str);
+        return true;
+    } // F1-F10,F11,F12
+
+    if ((i >= 15) && (i <= 29)) { // user defined key
+        if (str->len == 0) {
+            onkey[i].key_scancode = 0;
+        } else {
+            int32_t x = str->chr[str->len - 1];
+            int32_t x2 = 0;
+            for (int32_t i2 = 0; i2 < str->len - 1; i2++)
+                x2 |= str->chr[i2];
+            onkey[i].key_scancode = x;
+            onkey[i].key_flags = x2;
+        }
+        return true;
+    } // user defined key
+
+    error(5);
+    return false;
+}

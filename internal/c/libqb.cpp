@@ -24598,39 +24598,10 @@ void key_list() {
 }
 
 void key_assign(int32 i, qbs *str) {
-    if (is_error_pending())
-        return;
-    static int32 x, x2, i2;
-
-    if (((i >= 1) && (i <= 10)) || (i == 30) || (i == 31)) { // F1-F10,F11,F12
-        if (str->len > 15) {
-            error(5);
-            return;
-        }
-        if (!onkey[i].text)
-            onkey[i].text = qbs_new(0, 0);
-        qbs_set(onkey[i].text, str);
+    if (onkey_assign_binding(i, str)) {
         key_display_redraw = 1;
         key_update();
-        return;
-    } // F1-F10,F11,F12
-
-    if ((i >= 15) && (i <= 29)) { // user defined key
-        if (str->len == 0) {
-            onkey[i].key_scancode = 0;
-        } else {
-            x = str->chr[str->len - 1];
-            x2 = 0;
-            for (i2 = 0; i2 < str->len - 1; i2++)
-                x2 |= str->chr[i2];
-            onkey[i].key_scancode = x;
-            onkey[i].key_flags = x2;
-        }
-        return;
-    } // user defined key
-
-    error(5);
-    return;
+    }
 }
 
 void sub_paletteusing(void *element, int32 bits) {
