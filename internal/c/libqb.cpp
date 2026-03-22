@@ -26242,31 +26242,34 @@ void GLUT_DISPLAY_REQUEST() {
 
     } // not in (or attempting to enter) full screen
 
-    if (resize_pending && full_screen_set != -1 && full_screen == 0) {
-        if (display_x == display_frame[i].w && display_y == display_frame[i].h) {
-            resize_pending = 0;
-        }
-    }
-
-    if (!resize_pending) {           // avoid switching to fullscreen before resize
-                                     // operations take effect
-        if (full_screen_set != -1) { // full screen mode change requested
-            if (full_screen_set == 0) {
-                if (full_screen != 0) {
-                    GLUTEmu_WindowFullScreen(false);
-                    GLUTEmu_WindowRefresh();
+    if (full_screen_set != -1) { // full screen mode change requested
+        if (full_screen_set == 0) {
+            // Exiting fullscreen should not wait on resize_pending, otherwise
+            // stale resize state can block returning to windowed mode.
+            if (full_screen != 0) {
+                GLUTEmu_WindowFullScreen(false);
+                GLUTEmu_WindowRefresh();
+            }
+            full_screen = 0;
+            full_screen_set = -1;
+        } else {
+            // Entering fullscreen should wait until pending window resizes have
+            // taken effect so that fullscreen picks up the intended base size.
+            if (resize_pending && full_screen == 0) {
+                if (display_x == display_frame[i].w && display_y == display_frame[i].h) {
+                    resize_pending = 0;
                 }
-                full_screen = 0;
-                full_screen_set = -1;
-            } else {
+            }
+
+            if (!resize_pending) {
                 if (full_screen == 0) {
                     GLUTEmu_WindowFullScreen(true);
                 }
                 full_screen = full_screen_set;
                 full_screen_set = -1;
-            } // enter full screen
-        } // full_screen_set check
-    } // size pending check
+            }
+        } // enter full screen
+    } // full_screen_set check
 
     // This code is deprecated but kept for reference purposes
     // 1) It was found to be unstable
