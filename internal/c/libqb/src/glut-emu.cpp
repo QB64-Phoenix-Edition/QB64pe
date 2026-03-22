@@ -651,7 +651,14 @@ class GLUTEmu {
     }
 
     void WindowFullscreen(bool fullscreen) {
-        if (monitor && window) {
+        if (window) {
+            monitor = WindowGetCurrentMonitor();
+
+            if (!monitor) {
+                libqb_log_error("No monitor available");
+                return;
+            }
+
             if (fullscreen) {
                 if (isWindowFullscreen) {
                     libqb_log_trace("Window already in fullscreen mode, ignoring request");
@@ -665,6 +672,10 @@ class GLUTEmu {
                     glfwGetWindowPos(window, &windowedX, &windowedY);
                     glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
                     auto mode = glfwGetVideoMode(monitor);
+                    if (!mode) {
+                        libqb_log_error("Failed to query monitor video mode");
+                        return;
+                    }
                     glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
                     isWindowFullscreen = glfwGetWindowMonitor(window) != nullptr;
                 }
@@ -992,7 +1003,10 @@ class GLUTEmu {
         if (window) {
             windowResizedFunction = function;
 
-            // We are already listening for window size changes
+            // We are already listening for window size changes, but send the new size to the callback immediately
+            if (windowResizedFunction) {
+                windowResizedFunction(windowWidth, windowHeight);
+            }
 
             libqb_log_trace("Window resize function set: %p", function);
         } else {
@@ -1004,7 +1018,10 @@ class GLUTEmu {
         if (window) {
             windowFramebufferResizedFunction = function;
 
-            // We are already listening for framebuffer size changes
+            // We are already listening for framebuffer size changes, but send the new size to the callback immediately
+            if (windowFramebufferResizedFunction) {
+                windowFramebufferResizedFunction(framebufferWidth, framebufferHeight);
+            }
 
             libqb_log_trace("Window framebuffer resize function set: %p", function);
         } else {

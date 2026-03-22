@@ -26242,15 +26242,18 @@ void GLUT_DISPLAY_REQUEST() {
 
     } // not in (or attempting to enter) full screen
 
-    // Pseudo-Fullscreen
+    if (resize_pending && full_screen_set != -1 && full_screen == 0) {
+        if (display_x == display_frame[i].w && display_y == display_frame[i].h) {
+            resize_pending = 0;
+        }
+    }
+
     if (!resize_pending) {           // avoid switching to fullscreen before resize
                                      // operations take effect
         if (full_screen_set != -1) { // full screen mode change requested
             if (full_screen_set == 0) {
                 if (full_screen != 0) {
-                    // exit full screen
-                    resize_pending = 1;
-                    GLUTEmu_WindowResize(display_frame[i].w, display_frame[i].h);
+                    GLUTEmu_WindowFullScreen(false);
                     GLUTEmu_WindowRefresh();
                 }
                 full_screen = 0;

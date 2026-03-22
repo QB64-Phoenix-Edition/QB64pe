@@ -1384,8 +1384,10 @@ void keydown(uint32_t x) {
 
     // ALT+ENTER
     if (keyboard_is_alt_held()) {
-        if (x == 13) {
+        if (x == QBVK_RETURN) {
             if (fullscreen_allowedmode >= 0) { // fullscreen_allowedmode==-1 bypasses alt+enter allowing it to be user-trappable
+                libqb_log_trace("ALT+ENTER detected, attempting to change fullscreen mode");
+
                 static int32_t fs_mode, fs_smooth;
                 fs_mode = full_screen_set;
                 if (fs_mode == -1)
