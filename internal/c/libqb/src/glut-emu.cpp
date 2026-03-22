@@ -1292,14 +1292,16 @@ class GLUTEmu {
 
         if (MessageIsMainThread()) {
             while (!glfwWindowShouldClose(window)) {
+                if (windowIdleFunction) {
+                    glfwPollEvents();
+                } else {
+                    glfwWaitEvents();
+                }
+
                 MessageProcess();
 
                 if (windowIdleFunction) {
                     windowIdleFunction();
-
-                    glfwPollEvents();
-                } else {
-                    glfwWaitEvents();
                 }
             }
         } else {
@@ -1342,6 +1344,17 @@ class GLUTEmu {
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
         keyboardScrollLockState = false;
 #endif
+
+#ifdef QB64_WINDOWS
+        // Set the Windows multimedia timer resolution to 1ms, matching FreeGLUT's behavior.
+        auto result = timeBeginPeriod(1);
+        if (result == TIMERR_NOERROR) {
+            libqb_log_trace("Windows timer resolution set to 1ms");
+        } else {
+            libqb_log_warn("Failed to set Windows timer resolution, result code: %d", result);
+        }
+#endif
+
         // Listen for GLFW error messages and route them to libqb logging
         glfwSetErrorCallback([](int error_code, const char *description) { libqb_log_error("GLFW error %d: %s", error_code, description); });
 
@@ -1378,7 +1391,19 @@ class GLUTEmu {
         glfwTerminate();
         libqb_log_trace("GLFW terminated");
 
-        libqb_mutex_free(msgQueueMutex);
+#ifdef QB64_WINDOWS
+        auto result = timeEndPeriod(1);
+        if (result == TIMERR_NOERROR) {
+            libqb_log_trace("Windows timer resolution reset to default");
+        } else {
+            libqb_log_warn("Failed to reset Windows timer resolution, result code: %d", result);
+        }
+#endif
+
+        if (msgQueueMutex) {
+            libqb_mutex_free(msgQueueMutex);
+            msgQueueMutex = nullptr;
+        }
     }
 
     GLUTEmu(const GLUTEmu &) = delete;
