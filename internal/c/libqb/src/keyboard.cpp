@@ -39,7 +39,7 @@ static int32_t keyheld_n = 0;
 static int32_t keyheld_size = 0;
 
 // clang-format off
-const int32_t keyboard_scancode_lookup_table[]={
+static constexpr int32_t keyboard_scancode_lookup_table[]={
     //DESCRIPTION OFFSET  SCANCODE      ASCII      SHIFT       CTRL        ALT        NUM       CAPS SHIFT+CAPS  SHIFT+NUM
     /* ?       */    0 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */    1 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
@@ -677,7 +677,7 @@ static constexpr uint8_t kKeyboardLockScancode = 0x45;
 static int32_t keyboard_keyup_mask_last = -1;
 static uint32_t keyboard_keyup_mask[256]; // NULL values indicate removed masks
 
-static int constexpr TranslateDirectKey(GLUTEmu_KeyboardKey key) {
+static constexpr inline int TranslateDirectKey(GLUTEmu_KeyboardKey key) {
     for (const auto &entry : kDirectKeyMap) {
         if (entry.key == key) {
             return entry.qbKey;
@@ -687,7 +687,7 @@ static int constexpr TranslateDirectKey(GLUTEmu_KeyboardKey key) {
     return -1;
 }
 
-static int constexpr TranslateKeypadDigitOrDecimal(GLUTEmu_KeyboardKey key, bool useKeypadNumber) {
+static constexpr inline int TranslateKeypadDigitOrDecimal(GLUTEmu_KeyboardKey key, bool useKeypadNumber) {
     if (key >= GLUTEmu_KeyboardKey::KP0 && key <= GLUTEmu_KeyboardKey::KP9) {
         const int offset = int(key) - int(GLUTEmu_KeyboardKey::KP0);
         return useKeypadNumber ? (VK + QBVK_KP0 + offset) : (QBK + offset);
@@ -700,7 +700,7 @@ static int constexpr TranslateKeypadDigitOrDecimal(GLUTEmu_KeyboardKey key, bool
     return -1;
 }
 
-static int constexpr TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
+static constexpr inline int TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
     if (key < GLUTEmu_KeyboardKey::A || key > GLUTEmu_KeyboardKey::Z) {
         return -1;
     }
@@ -715,7 +715,7 @@ static int constexpr TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool
     return (isShift ^ isCapsLock ? 'A' : 'a') + offset;
 }
 
-static int constexpr TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
+static constexpr inline int TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
     if (key < GLUTEmu_KeyboardKey::Zero || key > GLUTEmu_KeyboardKey::Nine) {
         return -1;
     }
@@ -734,7 +734,7 @@ static int constexpr TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool 
     return translated;
 }
 
-static int constexpr TranslatePunctuation(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
+static constexpr inline int TranslatePunctuation(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
     for (const auto &entry : kPunctuationMap) {
         if (entry.key == key) {
             if (isControl && !isAlt && entry.control != -1) {
@@ -748,7 +748,7 @@ static int constexpr TranslatePunctuation(GLUTEmu_KeyboardKey key, bool isShift,
     return -1;
 }
 
-static int constexpr TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
+static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
     int translated = TranslateLetter(key, isShift, isControl, isAlt, isCapsLock);
     if (translated != -1) {
         return translated;
@@ -766,7 +766,7 @@ static int constexpr TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift
     return TranslatePunctuation(key, isShift, isControl, isAlt);
 }
 
-static int constexpr TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber) {
+static constexpr inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber) {
     int translated = TranslateDirectKey(key);
     if (translated != -1) {
         return translated;
@@ -782,19 +782,19 @@ static int constexpr TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool is
 
 static int32_t keyheld(uint32_t x);
 
-static inline int32_t keyboard_scancode_get_scancode(int32_t keyIndex) {
+static constexpr inline int32_t keyboard_scancode_get_scancode(int32_t keyIndex) {
     return keyboard_scancode_lookup_table[keyIndex * kScancodeEntryWidth + 1];
 }
 
-static inline int32_t keyboard_scancode_get_variant(int32_t keyIndex, int32_t modifierOffset) {
+static constexpr inline int32_t keyboard_scancode_get_variant(int32_t keyIndex, int32_t modifierOffset) {
     return keyboard_scancode_lookup_table[keyIndex * kScancodeEntryWidth + 2 + modifierOffset];
 }
 
-static inline bool keyboard_scancode_has_variant(int32_t keyIndex, int32_t modifierOffset) {
+static constexpr inline bool keyboard_scancode_has_variant(int32_t keyIndex, int32_t modifierOffset) {
     return keyboard_scancode_get_variant(keyIndex, modifierOffset) != 0;
 }
 
-static bool keyboard_keyup_mask_consume(uint32_t key) {
+static inline bool keyboard_keyup_mask_consume(uint32_t key) {
     for (int32_t i = 0; i <= keyboard_keyup_mask_last; i++) {
         if (key == keyboard_keyup_mask[i]) {
             keyboard_keyup_mask[i] = 0;
@@ -805,7 +805,7 @@ static bool keyboard_keyup_mask_consume(uint32_t key) {
     return false;
 }
 
-static void keyboard_keyup_mask_add(uint32_t key) {
+static inline void keyboard_keyup_mask_add(uint32_t key) {
     int32_t i = 0;
     for (i = 0; i <= keyboard_keyup_mask_last; i++) {
         if (!keyboard_keyup_mask[i]) {
@@ -864,7 +864,7 @@ static inline void keyboard_push_bios_keystroke(int32_t b1, int32_t b2) {
     }
 }
 
-static bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey, int64_t *keyhitFlag) {
+static inline bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normalizedKey, int64_t *keyhitFlag) {
     *normalizedKey = key;
     *keyhitFlag = 0;
 
@@ -910,7 +910,7 @@ static bool keyboard_try_translate_numpad_keyhit(uint32_t key, uint32_t *normali
     return false;
 }
 
-static bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int32_t *flagsMask) {
+static constexpr inline bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int32_t *flagsMask) {
     switch (key) {
     case VK + QBVK_LSHIFT:
         *scancode = 42;
@@ -947,7 +947,7 @@ static bool keyboard_try_get_modifier_data(uint32_t key, uint8_t *scancode, int3
     }
 }
 
-static void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancode, int32_t *flagsMask) {
+static inline void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancode, int32_t *flagsMask) {
     if (key <= 255) {
         *scancode = keyboard_scancode_get_scancode(key);
     } else {
@@ -971,7 +971,7 @@ static void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancod
         *scancode = modifierScancode;
 }
 
-static bool keyboard_is_onkey_extended_key(uint32_t key) {
+static constexpr inline bool keyboard_is_onkey_extended_key(uint32_t key) {
     switch (key) {
     case QBKC_LEFT:
     case QBKC_UP:
@@ -1082,7 +1082,7 @@ static int32_t keyheld(uint32_t x) {
     return 0;
 }
 
-static void keyheld_add(uint32_t x) {
+static inline void keyheld_add(uint32_t x) {
     for (int32_t i = 0; i < keyheld_n; i++) {
         if (keyheld_buffer[i] == x)
             return;
@@ -1100,7 +1100,7 @@ static void keyheld_add(uint32_t x) {
     keyheld_n++; // note: inc. must occur after setting entry (threading reasons)
 }
 
-static void keyheld_remove(uint32_t x) {
+static inline void keyheld_remove(uint32_t x) {
     for (int32_t i = 0; i < keyheld_n; i++) {
         if (keyheld_buffer[i] == x) { // exists
             memmove(&keyheld_buffer[i], &keyheld_buffer[i + 1], (keyheld_n - i - 1) * 4);
@@ -1111,7 +1111,7 @@ static void keyheld_remove(uint32_t x) {
     }
 }
 
-static void keyheld_unbind(uint32_t x) {
+static inline void keyheld_unbind(uint32_t x) {
     for (int32_t i = 0; i < keyheld_n; i++) {
         if (keyheld_bind_buffer[i] == x) { // exists
             keyup(keyheld_buffer[i]);
@@ -1120,7 +1120,7 @@ static void keyheld_unbind(uint32_t x) {
     }
 }
 
-static void scancodedown(uint8_t scancode) {
+static inline void scancodedown(uint8_t scancode) {
     if (port60h_events) {
         if (port60h_event[port60h_events - 1] == scancode)
             return; // avoid duplicate entries in buffer (eg. from key-repeats)
@@ -1133,7 +1133,7 @@ static void scancodedown(uint8_t scancode) {
     port60h_events++;
 }
 
-static void scancodeup(uint8_t scancode) {
+static inline void scancodeup(uint8_t scancode) {
     if (port60h_events) {
         if (port60h_event[port60h_events - 1] == (scancode + kScancodeReleaseBias))
             return; // avoid duplicate entries in buffer
@@ -1146,7 +1146,7 @@ static void scancodeup(uint8_t scancode) {
     port60h_events++;
 }
 
-static uint32_t unicode_to_cp437(uint32_t x) {
+static constexpr inline uint32_t unicode_to_cp437(uint32_t x) {
     for (int32_t i = 0; i <= 255; i++) {
         if (x == codepage437_to_unicode16[i])
             return i;
@@ -1155,7 +1155,7 @@ static uint32_t unicode_to_cp437(uint32_t x) {
     return 0;
 }
 
-static void keydown_unicode(uint32_t x) {
+static inline void keydown_unicode(uint32_t x) {
     keydown_glyph = 1;
 
     // note: UNICODE 0-127 map directly to ASCII 0-127
@@ -1189,7 +1189,7 @@ static void keydown_unicode(uint32_t x) {
     keydown(x);
 }
 
-static void keyup_unicode(uint32_t x) {
+static inline void keyup_unicode(uint32_t x) {
     // note: UNICODE 0-127 map directly to ASCII 0-127
     if (x <= 127) {
         keyup(x);
