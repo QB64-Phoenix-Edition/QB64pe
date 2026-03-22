@@ -53,7 +53,6 @@ These libraries are pulled in if `_LOADIMAGE()` or `_SAVEIMAGE()` functionality 
 | :------ | :-----: | :----------- | :------- |
 | stb_image | MIT/Public Domain | license_stb_image.txt | internal/c/parts/video/image/stb/stb_image.h |
 | nanosvg | zlib | license_nanosvg.txt | internal/c/parts/video/image/nanosvg |
-| dr_pcx | Unlicense/Public Domain | license_dr_pcx.txt | internal/c/parts/video/image/dr_pcx.h |
 | QOI | MIT | license_qoi.txt | internal/c/parts/video/image/qoi.h |
 | stb_image_write | MIT/Public Domain | license_stb_image_write.txt | internal/c/parts/video/image/stb/stb_image_write.h |
 | HQx | Apache License v2 | license_hqx.txt | internal/c/parts/video/image/pixelscalers/hqx.hpp |
