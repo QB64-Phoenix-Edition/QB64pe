@@ -638,7 +638,7 @@ class GLUTEmu {
     }
 
     std::string_view WindowGetTitle() const {
-        return windowTitle;
+        return std::string_view(windowTitle.data(), windowTitle.size());
     }
 
     void WindowSetIcon(int32_t imageHandle) const {
@@ -1320,7 +1320,7 @@ class GLUTEmu {
 
     void MessageQueue(Message *msg) {
         {
-            std::lock_guard guard(msgQueueMutex);
+            libqb_mutex_guard guard(msgQueueMutex);
             msgQueue.push(msg);
         }
         glfwPostEmptyEvent();
@@ -1337,6 +1337,7 @@ class GLUTEmu {
           keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr), mousePositionFunction(nullptr), mouseButtonFunction(nullptr),
           mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr) {
         mainThreadId = std::this_thread::get_id();
+        msgQueueMutex = libqb_mutex_new();
 
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
         keyboardScrollLockState = false;
@@ -1376,6 +1377,8 @@ class GLUTEmu {
 
         glfwTerminate();
         libqb_log_trace("GLFW terminated");
+
+        libqb_mutex_free(msgQueueMutex);
     }
 
     GLUTEmu(const GLUTEmu &) = delete;
@@ -1517,7 +1520,7 @@ class GLUTEmu {
     void MessageProcess() {
         std::queue<Message *> localQueue;
         {
-            std::lock_guard guard(msgQueueMutex);
+            libqb_mutex_guard guard(msgQueueMutex);
             std::swap(msgQueue, localQueue);
         }
 
@@ -1570,7 +1573,7 @@ class GLUTEmu {
     GLUTEmu_CallbackMouseScroll mouseScrollFunction;
     GLUTEmu_CallbackDropFiles dropFilesFunction;
     std::thread::id mainThreadId;
-    std::mutex msgQueueMutex;
+    libqb_mutex *msgQueueMutex;
     std::queue<Message *> msgQueue;
 };
 

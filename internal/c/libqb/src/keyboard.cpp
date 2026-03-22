@@ -6,6 +6,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef QB64_WINDOWS
+#    include <windows.h>
+#endif
+
 // TODO: Most of these variables should be moved to keyboard.cpp and wrapped
 extern int64_t keyhit[8192];
 extern int32_t keyhit_nextfree;
@@ -1805,15 +1809,17 @@ int32_t func__numlock() {
     return QB_FALSE;
 }
 
+// GLFW_TODO: Move this function to GLUTEmu and implement it for all platforms
 static void toggle_lock_key(int32_t key_code) {
 #ifdef QB64_WINDOWS
-    keybd_event(key_code, kKeyboardLockScancode, 1, 0);
-    keybd_event(key_code, kKeyboardLockScancode, 3, 0);
+    keybd_event(key_code, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+    keybd_event(key_code, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
 #else
     (void)key_code;
 #endif
 }
 
+// GLFW_TODO: Implement lock key state changes for non-Windows platforms
 void sub__capslock(int32_t options) {
 #ifdef QB64_WINDOWS
     // VK_CAPITAL
@@ -1835,6 +1841,7 @@ void sub__capslock(int32_t options) {
 #endif
 }
 
+// GLFW_TODO: Implement lock key state changes for non-Windows platforms
 void sub__scrolllock(int32_t options) {
 #ifdef QB64_WINDOWS
     // VK_SCROLL
@@ -1856,6 +1863,7 @@ void sub__scrolllock(int32_t options) {
 #endif
 }
 
+// GLFW_TODO: Implement lock key state changes for non-Windows platforms
 void sub__numlock(int32_t options) {
 #ifdef QB64_WINDOWS
     // VK_NUMLOCK
