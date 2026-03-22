@@ -36,7 +36,7 @@ if not exist "internal\c\c_compiler\" (
 )
 
 rem Detect architecture
-for /f %%a in ('powershell -c "(Get-WmiObject Win32_Processor).Architecture"') do set CPU_ARCH_CODE=%%a
+for /f %%a in ('powershell -NoProfile -Command "(Get-WmiObject Win32_Processor).Architecture"') do set CPU_ARCH_CODE=%%a
 
 rem Map Windows architecture codes
 rem These values are from https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-processor#properties
@@ -52,7 +52,7 @@ if "%CPU_ARCH%"=="" (
 )
 
 rem Detect OS architecture
-for /f %%a in ('powershell -c "(Get-CimInstance Win32_OperatingSystem).OSArchitecture -match '64'"') do set OS_BITS=64
+for /f %%a in ('powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).OSArchitecture -match '64'"') do set OS_BITS=64
 if not defined OS_BITS set OS_BITS=32
 
 rem Allow forcing 32-bit
@@ -65,7 +65,7 @@ rem Query GitHub API for latest LLVM-MinGW release
 set LLVM_RELEASE_TAG=
 set LLVM_RELEASE_URL=
 
-for /f "usebackq tokens=1" %%a in (`powershell -c "(Invoke-RestMethod 'https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest').tag_name"`) do set LLVM_RELEASE_TAG=%%a
+for /f "usebackq tokens=1" %%a in (`powershell -NoProfile -Command "(Invoke-RestMethod 'https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest').tag_name"`) do set LLVM_RELEASE_TAG=%%a
 
 if "%LLVM_RELEASE_TAG%"=="" (
     for /f "usebackq tokens=*" %%a in (`powershell -NoProfile -Command "$headers = @{ 'Accept' = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }; if ($env:GITHUB_TOKEN) { $headers.Authorization = 'Bearer ' + $env:GITHUB_TOKEN }; try { (Invoke-RestMethod -ErrorAction Stop -Headers $headers 'https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest').tag_name } catch { '' }" 2^>NUL`) do set LLVM_RELEASE_TAG=%%a
