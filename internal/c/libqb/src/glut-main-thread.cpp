@@ -61,7 +61,7 @@ static void initialize_glut() {
     GLUTEmu_WindowSetIdleFunction(GLUT_IDLE_FUNC);
 
     GLUTEmu_KeyboardSetButtonFunction(GLUT_KEYBOARD_BUTTON_FUNC);
-    // GLFW_TODO: Character input handling?
+    GLUTEmu_KeyboardSetCharacterFunction(GLUT_KEYBOARD_CHARACTER_FUNC);
 
     GLUTEmu_MouseSetButtonFunction(GLUT_MOUSE_BUTTON_FUNC);
     GLUTEmu_MouseSetPositionFunction(GLUT_MOUSE_POSITION_FUNC);

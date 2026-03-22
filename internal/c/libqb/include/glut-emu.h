@@ -167,7 +167,8 @@ enum class GLUTEmu_KeyboardKey : int {
     RightControl = GLFW_KEY_RIGHT_CONTROL,
     RightAlt = GLFW_KEY_RIGHT_ALT,
     RightSuper = GLFW_KEY_RIGHT_SUPER,
-    Menu = GLFW_KEY_MENU
+    Menu = GLFW_KEY_MENU,
+    Last = GLFW_KEY_LAST
 };
 
 enum GLUTEmu_KeyboardKeyModifier : int {
