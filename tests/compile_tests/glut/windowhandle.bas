@@ -1,11 +1,6 @@
 $CONSOLE
-_Dest _Console
+_DEST _CONSOLE
 
-' _WindowHandle only returns an actual handle on Windows
-$IF WIN THEN
-Print _WindowHandle <> 0
-$ELSE
-Print _WindowHandle = 0
-$END IF
+PRINT _WINDOWHANDLE <> 0
 
-System
+SYSTEM

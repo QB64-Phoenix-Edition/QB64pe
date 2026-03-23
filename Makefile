@@ -359,7 +359,7 @@ endif
 
 EXE_LIBS += $(QB_CORE_LIB)
 
-LICENSE_IN_USE += freeglut
+LICENSE_IN_USE += glfw
 
 ifeq ($(OS),win)
 	LICENSE_IN_USE += mingw-base-runtime libstdc++

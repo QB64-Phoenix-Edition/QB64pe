@@ -39,11 +39,11 @@ On Windows MinGW-w64 is used to compiled the C++ code produced by QB64-PE, and s
 
 ## Display Support
 
-This is always used unless you use `$CONSOLE:ONLY`. On Mac OS the system's own GLUT implementation is used rather than `FreeGLUT`.
+This is always used unless you use `$CONSOLE:ONLY`.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| FreeGLUT | MIT | license_freeglut.txt | internal/c/parts/core/ |
+| GLFW | zlib | license_glfw.txt | internal/c/parts/core/glfw/ |
 
 ## Image Support
 
@@ -51,13 +51,14 @@ These libraries are pulled in if `_LOADIMAGE()` or `_SAVEIMAGE()` functionality 
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| stb_image | MIT/Public Domain | license_stb_image.txt | internal/c/parts/video/image/stb/stb_image.h |
-| nanosvg | zlib | license_nanosvg.txt | internal/c/parts/video/image/nanosvg |
-| QOI | MIT | license_qoi.txt | internal/c/parts/video/image/qoi.h |
-| stb_image_write | MIT/Public Domain | license_stb_image_write.txt | internal/c/parts/video/image/stb/stb_image_write.h |
-| HQx | Apache License v2 | license_hqx.txt | internal/c/parts/video/image/pixelscalers/hqx.hpp |
-| MMPX | MIT | license_mmpx.txt | internal/c/parts/video/image/pixelscalers/mmpx.hpp |
-| Super-xBR | MIT | license_hqx.txt | internal/c/parts/video/image/pixelscalers/sxbr.hpp |
+| stb_image | MIT/Public Domain | license_stb_image.txt | internal/c/parts/video/image/stb/ |
+| nanosvg | zlib | license_nanosvg.txt | internal/c/parts/video/image/nanosvg/ |
+| tiny_webp | BSD-3-Clause | license_tiny_webp.txt | internal/c/parts/video/image/tiny_webp/ |
+| QOI | MIT | license_qoi.txt | internal/c/parts/video/image/qoi/ |
+| stb_image_write | MIT/Public Domain | license_stb_image_write.txt | internal/c/parts/video/image/stb/ |
+| HQx | Apache License v2 | license_hqx.txt | internal/c/parts/video/image/pixelscalers/ |
+| MMPX | MIT | license_mmpx.txt | internal/c/parts/video/image/pixelscalers/ |
+| Super-xBR | MIT | license_hqx.txt | internal/c/parts/video/image/pixelscalers/ |
 
 ## Font Support
 
@@ -65,7 +66,7 @@ These libraries are pulled in if `_LOADFONT()` functionality is used.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| FreeTYPE | FLT | license_freetype_ftl.txt | internal/c/parts/video/font/tff/ |
+| FreeTYPE | FLT | license_freetype_ftl.txt | internal/c/parts/video/font/freetype/ |
 
 ## Compression Support
 
@@ -99,7 +100,7 @@ These libraries are pulled in when using any sound-related functionality.
 | :------ | :-----: | :----------- | :------- |
 | miniaudio | MIT/Public Domain | license_miniaudio.txt | internal/c/parts/audio/miniaudio/ |
 | foo_midi | MIT | license_foo_midi.txt | internal/c/parts/audio/extras/foo_midi/ & internal/c/parts/audio/extras/libmidi/ |
-| HivelyTracker | BSD 3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
+| HivelyTracker | BSD-3-Clause | license_hivelytracker.txt | internal/c/parts/audio/extras/hivelytracker/ |
 | libxmp-lite  | MIT | license_libxmp-lite.txt | internal/c/parts/audio/extras/libxmp-lite/ |
 | primesynth | MIT | license_primesynth.txt | internal/c/parts/audio/extras/primesynth/ |
 | QOA | MIT | license_qoa.txt | internal/c/parts/audio/extras/qoa/ |
@@ -114,7 +115,7 @@ This is used if you make use of game controller related functionality.
 
 | Library | License | License file | Location |
 | :------ | :-----: | :----------- | :------- |
-| libstem Gamepad | MIT | license_libstem_gamepad.txt | internal/c/parts/input/game_controller/libstem_gamepad |
+| libstem Gamepad | MIT | license_libstem_gamepad.txt | internal/c/parts/input/game_controller/libstem_gamepad/ |
 
 ## Common Dialogs Support
 
