@@ -27,6 +27,7 @@
 #include <GLFW/glfw3native.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <concepts>
 #include <queue>
@@ -1308,6 +1309,9 @@ class GLUTEmu {
         libqb_log_trace("Entering main loop");
 
         if (MessageIsMainThread()) {
+            ScreenModeCacheSet(ScreenGetMode());
+            isMainLoopRunning = true;
+
             while (!glfwWindowShouldClose(window)) {
                 if (windowIdleFunction) {
                     glfwPollEvents();
@@ -1321,6 +1325,8 @@ class GLUTEmu {
                     windowIdleFunction();
                 }
             }
+
+            isMainLoopRunning = false;
         } else {
             libqb_log_error("Main loop must be called from the main thread");
         }
@@ -1335,6 +1341,20 @@ class GLUTEmu {
 
     bool MessageIsMainThread() const {
         return std::this_thread::get_id() == mainThreadId;
+    }
+
+    bool MainLoopIsRunning() const {
+        return isMainLoopRunning;
+    }
+
+    void ScreenModeCacheSet(const std::tuple<int, int, int> &mode) {
+        screenModeCachedWidth = std::get<0>(mode);
+        screenModeCachedHeight = std::get<1>(mode);
+        screenModeCachedRefreshRate = std::get<2>(mode);
+    }
+
+    std::tuple<int, int, int> ScreenModeCacheGet() const {
+        return {screenModeCachedWidth, screenModeCachedHeight, screenModeCachedRefreshRate};
     }
 
     void MessageQueue(Message *msg) {
@@ -1354,7 +1374,8 @@ class GLUTEmu {
           windowCloseFunction(nullptr), windowResizedFunction(nullptr), windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr),
           windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr), windowRefreshFunction(nullptr), windowIdleFunction(nullptr),
           keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr), mousePositionFunction(nullptr), mouseButtonFunction(nullptr),
-          mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr) {
+          mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr), isMainLoopRunning(false), screenModeCachedWidth(0),
+          screenModeCachedHeight(0), screenModeCachedRefreshRate(0) {
         mainThreadId = std::this_thread::get_id();
         msgQueueMutex = libqb_mutex_new();
 
@@ -1386,6 +1407,7 @@ class GLUTEmu {
 
         if (glfwInit()) {
             libqb_log_trace("GLFW %s initialized", glfwGetVersionString());
+            ScreenModeCacheSet(ScreenGetMode());
         } else {
             // This will get caught outside because the window creation will fail
             libqb_log_error("Failed to initialize GLFW");
@@ -1615,19 +1637,29 @@ class GLUTEmu {
     GLUTEmu_CallbackMouseScroll mouseScrollFunction;
     GLUTEmu_CallbackDropFiles dropFilesFunction;
     std::thread::id mainThreadId;
+    std::atomic_bool isMainLoopRunning;
+    std::atomic_int screenModeCachedWidth;
+    std::atomic_int screenModeCachedHeight;
+    std::atomic_int screenModeCachedRefreshRate;
     libqb_mutex *msgQueueMutex;
     std::queue<Message *> msgQueue;
 };
 
 std::tuple<int, int, int> GLUTEmu_ScreenGetMode() {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
-        return GLUTEmu::Instance().ScreenGetMode();
-    } else {
-        GLUTEmu::MessageScreenGetMode msg;
-        GLUTEmu::Instance().MessageQueue(&msg);
-        msg.WaitForResponse();
-        return msg.responseValue;
+        auto mode = GLUTEmu::Instance().ScreenGetMode();
+        GLUTEmu::Instance().ScreenModeCacheSet(mode);
+        return mode;
     }
+
+    if (!GLUTEmu::Instance().MainLoopIsRunning()) {
+        return GLUTEmu::Instance().ScreenModeCacheGet();
+    }
+
+    GLUTEmu::MessageScreenGetMode msg;
+    GLUTEmu::Instance().MessageQueue(&msg);
+    msg.WaitForResponse();
+    return msg.responseValue;
 }
 
 template <typename T> void GLUTEmu_WindowSetHint(GLUTEmu_WindowHint hint, const T value) {

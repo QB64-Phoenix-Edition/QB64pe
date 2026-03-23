@@ -20924,7 +20924,6 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 
 int32_t func__desktopwidth() {
 #ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
     return std::get<0>(GLUTEmu_ScreenGetMode());
 #else
     return 0;
@@ -20933,7 +20932,6 @@ int32_t func__desktopwidth() {
 
 int32_t func__desktopheight() {
 #ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
     return std::get<1>(GLUTEmu_ScreenGetMode());
 #else
     return 0;
