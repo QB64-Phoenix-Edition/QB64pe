@@ -20957,10 +20957,9 @@ int32 func_windowexists() {
 
 int32 func_screenicon() {
 #ifdef QB64_GUI
-    NEEDS_GLUT(0);
     return QB_BOOL(GLUTEmu_WindowIsMinimized());
 #else
-    return 0;
+    return QB_FALSE;
 #endif
 }
 
