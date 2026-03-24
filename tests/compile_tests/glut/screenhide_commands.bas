@@ -23,15 +23,8 @@ PRINT "Got past ScreenHide"
 
 PRINT _SCREENICON <> 0
 
-$IF LINUX THEN
-' Since these functions don't work on linux they also don't trigger errors
-' We're just printing the error manually so the test passes on Linux
-    Print "Error:"; 5
-    Print "Error:"; 5
-$ELSE
-    PRINT _SCREENX >= 0
-    PRINT _SCREENY >= 0
-$END IF
+PRINT _SCREENX >= 0
+PRINT _SCREENY >= 0
 
 _TITLE "foobar"
 PRINT "Title: "; _TITLE$
