@@ -2040,6 +2040,9 @@ void GLUTEmu_ProgramExit(int exitCode) {
         GLUTEmu::Instance().WindowSetCloseFunction(nullptr);
         GLUTEmu::Instance().WindowSetShouldClose(true);
         exit(exitCode);
+    } else if (!GLUTEmu::Instance().MainLoopIsRunning()) {
+        libqb_log_trace("Program exiting with code %d before main loop start", exitCode);
+        exit(exitCode);
     } else {
         GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageProgramExit(exitCode));
     }
