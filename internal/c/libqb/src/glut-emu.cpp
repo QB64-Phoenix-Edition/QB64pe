@@ -1316,7 +1316,7 @@ class GLUTEmu {
                 if (windowIdleFunction) {
                     glfwPollEvents();
                 } else {
-                    glfwWaitEvents();
+                    glfwWaitEventsTimeout(0.05);
                 }
 
                 MessageProcess();
