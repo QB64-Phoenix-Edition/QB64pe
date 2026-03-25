@@ -71,6 +71,7 @@ uint32 rotateLeft(uint32 word, uint32 shift) {
 #    include <libgen.h> //required for dirname()
 #    include <pthread.h>
 #endif
+#include <atomic>
 
 // forward references
 void sub__printimage(int32 i);
@@ -934,7 +935,7 @@ int32 keyhit_next = 0;
     0 anywhere else means a key cannot be entered
 */
 
-int32 exit_ok = 0;
+std::atomic_int32_t exit_ok(0);
 
 // substitute Windows functionality
 #ifndef QB64_WINDOWS
@@ -5959,7 +5960,7 @@ void sub__assert(int32 expression, qbs *assert_message, int32 passed) {
 
 void end() {
     dont_call_sub_gl = 1;
-    exit_ok |= 1;
+    exit_ok.fetch_or(1, std::memory_order_release);
     while (!stop_program)
         Sleep(16);
     while (1)
@@ -27633,7 +27634,7 @@ main_loop:
 end_program:
     stop_program = 1;
     qbevent = 1;
-    while (exit_ok != 3)
+    while (exit_ok.load(std::memory_order_acquire) != 3)
         Sleep(16);
 
     if (lprint_buffered) {
