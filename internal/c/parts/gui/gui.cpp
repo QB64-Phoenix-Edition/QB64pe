@@ -350,6 +350,7 @@ int gui_alert(const char *message, const char *title, const char *type) {
     // This can be helpful when running tests in a GitHub runner environment where the dialog box may not be visible.
     // TODO: Probably we should adapt this to a timed terminal message box or prompt when running in $CONSOLE:ONLY mode.
     fprintf(stderr, "\nRuntime error: %s: %s\n", title, message);
+    fflush(stderr);
     exit(555); // we exit intentionally for now to debug runner hangs in CI environment
     // return tinyfd_messageBox(title, message, type, "error", 1);
 }

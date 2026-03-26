@@ -77,29 +77,6 @@ class GLUTEmu {
         completion *finished = nullptr;
     };
 
-    class MessageScreenGetMode : public Message {
-      public:
-        std::tuple<int, int, int> responseValue;
-
-        MessageScreenGetMode() : Message(true), responseValue(0, 0, 0) {}
-
-        void Execute() override {
-            responseValue = GLUTEmu::Instance().ScreenGetMode();
-        }
-    };
-
-    template <typename T> class MessageWindowSetHint : public Message {
-      public:
-        GLUTEmu_WindowHint hint;
-        T value;
-
-        MessageWindowSetHint(GLUTEmu_WindowHint hint, T value) : Message(false), hint(hint), value(value) {}
-
-        void Execute() override {
-            GLUTEmu::Instance().WindowSetHint<T>(hint, value);
-        }
-    };
-
     class MessageWindowSetTitle : public Message {
       public:
         std::string newTitle;
@@ -429,15 +406,7 @@ class GLUTEmu {
     };
 
     std::tuple<int, int, int> ScreenGetMode() {
-        monitor = WindowGetCurrentMonitor();
-        if (monitor) {
-            auto mode = glfwGetVideoMode(monitor);
-            if (mode) {
-                return {ToPixelCoordsX(mode->width), ToPixelCoordsY(mode->height), mode->refreshRate};
-            }
-        }
-
-        return {0, 0, 0};
+        return screenMode;
     }
 
     template <typename T> void WindowSetHint(GLUTEmu_WindowHint hint, T value) const {
@@ -515,12 +484,12 @@ class GLUTEmu {
                     glfwGetWindowPos(window, &windowX, &windowY);
                     windowX = ToPixelCoordsX(windowX);
                     windowY = ToPixelCoordsY(windowY);
-                    monitor = WindowGetCurrentMonitor();
+                    monitor = WindowGetCurrentMonitorInfo();
                     glfwSetWindowPosCallback(window, [](GLFWwindow *win, int x, int y) {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->windowX = instance->ToPixelCoordsX(x);
                         instance->windowY = instance->ToPixelCoordsY(y);
-                        instance->monitor = instance->WindowGetCurrentMonitor();
+                        instance->monitor = instance->WindowGetCurrentMonitorInfo();
                     });
 
                     // Get the framebuffer size (already in pixels) and set a callback to track changes
@@ -615,10 +584,18 @@ class GLUTEmu {
 
                     return true;
                 } else {
-                    libqb_log_error("Window must be created from the main thread");
+                    const char *description = nullptr;
+                    auto glfwError = glfwGetError(&description);
+
+                    if (glfwError != GLFW_NO_ERROR && description) {
+                        fprintf(stderr, "\nRuntime error: Failed to create window (%dx%d): GLFW error %d: %s\n", width, height, glfwError, description);
+                        fflush(stderr);
+                    } else {
+                        libqb_log_error("Failed to create window (%dx%d)", width, height);
+                    }
                 }
             } else {
-                libqb_log_error("Failed to create window");
+                libqb_log_error("Window must be created from the main thread");
             }
         }
 
@@ -653,7 +630,7 @@ class GLUTEmu {
 
     void WindowFullscreen(bool fullscreen) {
         if (window) {
-            monitor = WindowGetCurrentMonitor();
+            monitor = WindowGetCurrentMonitorInfo();
 
             if (!monitor) {
                 libqb_log_error("No monitor available");
@@ -1309,7 +1286,6 @@ class GLUTEmu {
         libqb_log_trace("Entering main loop");
 
         if (MessageIsMainThread()) {
-            ScreenModeCacheSet(ScreenGetMode());
             isMainLoopRunning = true;
 
             while (!glfwWindowShouldClose(window)) {
@@ -1347,16 +1323,6 @@ class GLUTEmu {
         return isMainLoopRunning;
     }
 
-    void ScreenModeCacheSet(const std::tuple<int, int, int> &mode) {
-        screenModeCachedWidth = std::get<0>(mode);
-        screenModeCachedHeight = std::get<1>(mode);
-        screenModeCachedRefreshRate = std::get<2>(mode);
-    }
-
-    std::tuple<int, int, int> ScreenModeCacheGet() const {
-        return {screenModeCachedWidth, screenModeCachedHeight, screenModeCachedRefreshRate};
-    }
-
     void MessageQueue(Message *msg) {
         {
             libqb_mutex_guard guard(msgQueueMutex);
@@ -1374,8 +1340,7 @@ class GLUTEmu {
           windowCloseFunction(nullptr), windowResizedFunction(nullptr), windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr),
           windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr), windowRefreshFunction(nullptr), windowIdleFunction(nullptr),
           keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr), mousePositionFunction(nullptr), mouseButtonFunction(nullptr),
-          mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr), isMainLoopRunning(false), screenModeCachedWidth(0),
-          screenModeCachedHeight(0), screenModeCachedRefreshRate(0) {
+          mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr), isMainLoopRunning(false), screenMode(0, 0, 0) {
         mainThreadId = std::this_thread::get_id();
         msgQueueMutex = libqb_mutex_new();
 
@@ -1407,7 +1372,7 @@ class GLUTEmu {
 
         if (glfwInit()) {
             libqb_log_trace("GLFW %s initialized", glfwGetVersionString());
-            ScreenModeCacheSet(ScreenGetMode());
+            monitor = WindowGetCurrentMonitorInfo();
         } else {
             // This will get caught outside because the window creation will fail
             libqb_log_error("Failed to initialize GLFW");
@@ -1490,7 +1455,7 @@ class GLUTEmu {
         }
     }
 
-    GLFWmonitor *WindowGetCurrentMonitor() const {
+    GLFWmonitor *WindowGetCurrentMonitorInfo() {
         GLFWmonitor *best = nullptr;
 
         if (window) {
@@ -1525,7 +1490,18 @@ class GLUTEmu {
             libqb_log_warn("Window not created, using primary monitor");
         }
 
-        return best ? best : glfwGetPrimaryMonitor();
+        if (!best) {
+            best = glfwGetPrimaryMonitor();
+        }
+
+        if (best) {
+            auto mode = glfwGetVideoMode(best);
+            if (mode) {
+                screenMode = {ToPixelCoordsX(mode->width), ToPixelCoordsY(mode->height), mode->refreshRate};
+            }
+        }
+
+        return best;
     }
 
     int KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey key, int mods) {
@@ -1615,6 +1591,7 @@ class GLUTEmu {
     int windowedX, windowedY;                // windowed mode position for restoring from fullscreen (in screen coordinates)
     int windowedWidth, windowedHeight;       // windowed mode size for restoring from fullscreen (in screen coordinates)
     int framebufferWidth, framebufferHeight; // current framebuffer size (in pixel coordinates)
+    std::tuple<int, int, int> screenMode;    // current screen mode (width, height, refresh rate)
     GLFWcursor *cursor;                      // current mouse cursor
     GLUTEnum_MouseCursorMode cursorMode;     // current mouse cursor mode (normal, hidden, disabled, captured)
     int keyboardModifiers;                   // current keyboard modifiers
@@ -1638,35 +1615,19 @@ class GLUTEmu {
     GLUTEmu_CallbackDropFiles dropFilesFunction;
     std::thread::id mainThreadId;
     std::atomic_bool isMainLoopRunning;
-    std::atomic_int screenModeCachedWidth;
-    std::atomic_int screenModeCachedHeight;
-    std::atomic_int screenModeCachedRefreshRate;
     libqb_mutex *msgQueueMutex;
     std::queue<Message *> msgQueue;
 };
 
 std::tuple<int, int, int> GLUTEmu_ScreenGetMode() {
-    if (GLUTEmu::Instance().MessageIsMainThread()) {
-        auto mode = GLUTEmu::Instance().ScreenGetMode();
-        GLUTEmu::Instance().ScreenModeCacheSet(mode);
-        return mode;
-    }
-
-    if (!GLUTEmu::Instance().MainLoopIsRunning()) {
-        return GLUTEmu::Instance().ScreenModeCacheGet();
-    }
-
-    GLUTEmu::MessageScreenGetMode msg;
-    GLUTEmu::Instance().MessageQueue(&msg);
-    msg.WaitForResponse();
-    return msg.responseValue;
+    return GLUTEmu::Instance().ScreenGetMode();
 }
 
 template <typename T> void GLUTEmu_WindowSetHint(GLUTEmu_WindowHint hint, const T value) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetHint<T>(hint, value);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetHint<T>(hint, value));
+        libqb_log_error("Window hints must be set from the main thread");
     }
 }
 

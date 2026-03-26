@@ -31,8 +31,6 @@
 #include "rounding.h"
 #include "shell.h"
 
-#include <atomic>
-
 extern int32 func__cinp(int32 toggle, int32 passed); // Console INP scan code reader
 extern void sub__consolefont(qbs *FontName, int FontSize);
 extern void sub__console_cursor(int32 visible, int32 cursorsize, int32 passed);
@@ -346,7 +344,7 @@ extern int32 sleep_break;
 extern int64 exit_code;
 extern int32 lock_mainloop; // 0=unlocked, 1=lock requested, 2=locked
 extern int64 device_event_index;
-extern std::atomic_int32_t exit_ok;
+extern int32_t exit_ok;
 int32 timer_event_occurred = 0; // inc/dec as each GOSUB to QBMAIN ()
                                 // begins/ends
 int32 timer_event_id = 0;
@@ -1437,7 +1435,7 @@ void TIMERTHREAD(void *unused) {
         } // not locked
         Sleep(1);
         if (stop_program) {
-            exit_ok.fetch_or(2, std::memory_order_release);
+            exit_ok |= 2;
             return;
         } // close thread #2
     } // while(1)
