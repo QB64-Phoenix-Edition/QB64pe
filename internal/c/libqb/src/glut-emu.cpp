@@ -584,15 +584,7 @@ class GLUTEmu {
 
                     return true;
                 } else {
-                    const char *description = nullptr;
-                    auto glfwError = glfwGetError(&description);
-
-                    if (glfwError != GLFW_NO_ERROR && description) {
-                        fprintf(stderr, "\nRuntime error: Failed to create window (%dx%d): GLFW error %d: %s\n", width, height, glfwError, description);
-                        fflush(stderr);
-                    } else {
-                        libqb_log_error("Failed to create window (%dx%d)", width, height);
-                    }
+                    libqb_log_error("Failed to create window (%dx%d)", width, height);
                 }
             } else {
                 libqb_log_error("Window must be created from the main thread");
@@ -1638,7 +1630,12 @@ template void GLUTEmu_WindowSetHint<char *>(GLUTEmu_WindowHint, char *);
 template void GLUTEmu_WindowSetHint<const char *>(GLUTEmu_WindowHint, const char *);
 
 bool GLUTEmu_WindowCreate(const char *title, int width, int height) {
-    return GLUTEmu::Instance().WindowCreate(title, width, height);
+    if (GLUTEmu::Instance().MessageIsMainThread()) {
+        return GLUTEmu::Instance().WindowCreate(title, width, height);
+    } else {
+        libqb_log_error("Window must be created from the main thread");
+        return false;
+    }
 }
 
 bool GLUTEmu_WindowIsCreated() {

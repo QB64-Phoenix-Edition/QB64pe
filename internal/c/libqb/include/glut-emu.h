@@ -45,7 +45,6 @@ enum class GLUTEmu_WindowHint : int {
     LinuxX11InstanceName = GLFW_X11_INSTANCE_NAME
 };
 
-// GLFW_TODO: We need QB64 compatible keycodes here which should be mapped to/from GLFW keycodes
 enum class GLUTEmu_KeyboardKey : int {
     Unknown = GLFW_KEY_UNKNOWN,
     Space = GLFW_KEY_SPACE,
