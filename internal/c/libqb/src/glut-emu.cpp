@@ -81,7 +81,7 @@ class GLUTEmu {
       public:
         std::string newTitle;
 
-        MessageWindowSetTitle(std::string_view title) : Message(false), newTitle(title) {}
+        MessageWindowSetTitle(std::string_view title) : Message(true), newTitle(title) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetTitle(newTitle);
@@ -1659,7 +1659,9 @@ void GLUTEmu_WindowSetTitle(std::string_view title) {
     if (GLUTEmu::Instance().MessageIsMainThread() || (!GLUTEmu::Instance().WindowIsCreated() && !GLUTEmu::Instance().MainLoopIsRunning())) {
         GLUTEmu::Instance().WindowSetTitle(title);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetTitle(title));
+        GLUTEmu::MessageWindowSetTitle msg(title);
+        GLUTEmu::Instance().MessageQueue(&msg);
+        msg.WaitForResponse();
     }
 }
 

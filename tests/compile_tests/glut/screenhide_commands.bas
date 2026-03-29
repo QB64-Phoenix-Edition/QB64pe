@@ -5,7 +5,7 @@ $IF WINDOWS OR MACOSX THEN
     PRINT _TRUE
     PRINT "Got past icon!"
     PRINT "Got past MouseHide!"
-    PRINT "Got past MouseHide!"
+    PRINT "Got past MouseShow!"
     PRINT _FALSE
     PRINT "Got past ScreenHide"
     PRINT _FALSE
@@ -34,7 +34,7 @@ _MOUSEHIDE
 PRINT "Got past MouseHide!"
 
 _MOUSESHOW
-PRINT "Got past MouseHide!"
+PRINT "Got past MouseShow!"
 
 PRINT _SCREENEXISTS
 
