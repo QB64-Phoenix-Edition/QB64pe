@@ -9,8 +9,8 @@ $IF WINDOWS OR MACOSX THEN
     PRINT _FALSE
     PRINT "Got past ScreenHide"
     PRINT _FALSE
-    PRINT "Error: 5"
-    PRINT "Error: 5"
+    PRINT "Error:"; 5
+    PRINT "Error:"; 5
     PRINT "Title: foobar"
     PRINT _FALSE
     PRINT _TRUE
