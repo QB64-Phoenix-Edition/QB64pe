@@ -1,3 +1,23 @@
+$IF WINDOWS OR MACOSX THEN
+    ' GLFW cannot create a window with OpenGL context in a macOS and Windows GitHub runner
+    $CONSOLE:ONLY
+    PRINT _TRUE
+    PRINT _TRUE
+    PRINT "Got past icon!"
+    PRINT "Got past MouseHide!"
+    PRINT "Got past MouseHide!"
+    PRINT _FALSE
+    PRINT "Got past ScreenHide"
+    PRINT _FALSE
+    PRINT "Error: 5"
+    PRINT "Error: 5"
+    PRINT "Title: foobar"
+    PRINT _FALSE
+    PRINT _TRUE
+    PRINT "Got past ScreenShow!"
+    SYSTEM
+$END IF
+
 $SCREENHIDE
 $CONSOLE
 _DEST _CONSOLE

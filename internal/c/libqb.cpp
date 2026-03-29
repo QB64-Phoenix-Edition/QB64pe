@@ -108,8 +108,6 @@ float environment_2d__screen_y_scale = 1.0f;
 int32 environment_2d__screen_smooth = 0; // 1(LINEAR) or 0(NEAREST)
 int32 environment_2d__letterbox = 0;     // 1=vertical black stripes required, 2=horizontal black stripes required
 
-uint8 *window_title = NULL;
-
 double max_fps = 60; // 60 is the default
 int32 auto_fps = 0;  // set to 1 to make QB64 auto-adjust fps based on load
 
@@ -12929,14 +12927,6 @@ uintptr_t func__windowhandle() {
 #else
     return 0;
 #endif
-}
-
-qbs *func__title() {
-    if (!window_title) {
-        return qbs_new_txt("");
-    } else {
-        return qbs_new_txt((char *)window_title);
-    }
 }
 
 void set_foreground_window(ptrszint i) {
@@ -26914,30 +26904,13 @@ void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode)
 #endif
 
 void sub__title(qbs *title) {
-    if (is_error_pending())
-        return;
-    static qbs *cz = NULL;
-    if (!cz) {
-        cz = qbs_new(1, 0);
-        cz->chr[0] = 0;
-    }
-    static qbs *str = NULL;
-    if (!str)
-        str = qbs_new(0, 0);
-    qbs_set(str, qbs_add(title, cz));
+    GLUTEmu_WindowSetTitle(std::string_view(reinterpret_cast<const char *>(title->chr), title->len));
+}
 
-    uint8 *buf, *old_buf;
-    buf = (uint8 *)malloc(str->len);
-    memcpy(buf, str->chr, str->len);
-    old_buf = window_title;
-    window_title = buf;
-    if (old_buf)
-        free(old_buf);
-
-    OPTIONAL_GLUT();
-
-    GLUTEmu_WindowSetTitle((char *)window_title);
-} // title
+qbs *func__title() {
+    auto svTitle = GLUTEmu_WindowGetTitle();
+    return qbs_new_txt_len(svTitle.data(), svTitle.length());
+}
 
 void sub__echo(qbs *message) {
     if (is_error_pending())

@@ -11,7 +11,6 @@
 
 // FIXME: These extern variable and function definitions should probably go
 // somewhere more global so that they can be referenced by libqb.cpp
-extern uint8_t *window_title;
 extern int32_t framebufferobjects_supported;
 extern int32_t screen_hide;
 extern const void *generic_window_handle;
@@ -32,8 +31,11 @@ static void initialize_glut() {
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::WindowScaleToMonitor, true);
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::WindowScaleFramebuffer, true);
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::WindowVisible, !screen_hide);
+    GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::Win32ShowDefault, !screen_hide);
+    GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::Win32KeyboardMenu, false);
+    GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::macOSCocoaGraphicsSwitching, true);
 
-    if (!GLUTEmu_WindowCreate(window_title ? reinterpret_cast<const char *>(window_title) : "Untitled", 640, 400)) {
+    if (!GLUTEmu_WindowCreate(640, 400)) {
         gui_alert("Failed to initialize window");
         exit(EXIT_FAILURE);
     }

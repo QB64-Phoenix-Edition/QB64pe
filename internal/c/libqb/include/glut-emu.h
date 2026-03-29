@@ -34,15 +34,22 @@ enum class GLUTEmu_WindowHint : int {
     FramebufferSamples = GLFW_SAMPLES,
     FramebufferDoubleBuffer = GLFW_DOUBLEBUFFER,
     MonitorRefreshRate = GLFW_REFRESH_RATE,
-    ContextVersionMajor = GLFW_CONTEXT_VERSION_MAJOR,
-    ContextVersionMinor = GLFW_CONTEXT_VERSION_MINOR,
-    ContextOpenGLProfile = GLFW_OPENGL_PROFILE,
+    OpenGLContextVersionMajor = GLFW_CONTEXT_VERSION_MAJOR,
+    OpenGLContextVersionMinor = GLFW_CONTEXT_VERSION_MINOR,
+    OpenGLContextProfile = GLFW_OPENGL_PROFILE,
+    OpenGLContextForwardCompatible = GLFW_OPENGL_FORWARD_COMPAT,
     Win32KeyboardMenu = GLFW_WIN32_KEYBOARD_MENU,
     Win32ShowDefault = GLFW_WIN32_SHOWDEFAULT,
     macOSCocoaFrameName = GLFW_COCOA_FRAME_NAME,
     macOSCocoaGraphicsSwitching = GLFW_COCOA_GRAPHICS_SWITCHING,
     LinuxX11ClassName = GLFW_X11_CLASS_NAME,
     LinuxX11InstanceName = GLFW_X11_INSTANCE_NAME
+};
+
+enum class GLUTEmu_WindowHintValue : int {
+    OpenGLContextAnyProfile = GLFW_OPENGL_ANY_PROFILE,
+    OpenGLContextCoreProfile = GLFW_OPENGL_CORE_PROFILE,
+    OpenGLContextCompatProfile = GLFW_OPENGL_COMPAT_PROFILE
 };
 
 enum class GLUTEmu_KeyboardKey : int {
@@ -232,9 +239,9 @@ typedef void (*GLUTEmu_CallbackDropFiles)(int count, const char *paths[]);
 
 std::tuple<int, int, int> GLUTEmu_ScreenGetMode();
 template <typename T> void GLUTEmu_WindowSetHint(GLUTEmu_WindowHint hint, const T value);
-bool GLUTEmu_WindowCreate(const char *title, int width, int height);
+bool GLUTEmu_WindowCreate(int width, int height);
 bool GLUTEmu_WindowIsCreated();
-void GLUTEmu_WindowSetTitle(const char *title);
+void GLUTEmu_WindowSetTitle(std::string_view title);
 std::string_view GLUTEmu_WindowGetTitle();
 void GLUTEmu_WindowSetIcon(int32_t imageHandle);
 void GLUTEmu_WindowFullScreen(bool fullscreen);

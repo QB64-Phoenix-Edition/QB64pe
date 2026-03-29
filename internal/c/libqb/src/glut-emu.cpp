@@ -81,10 +81,10 @@ class GLUTEmu {
       public:
         std::string newTitle;
 
-        MessageWindowSetTitle(const char *title) : Message(false), newTitle(title) {}
+        MessageWindowSetTitle(std::string_view title) : Message(false), newTitle(title) {}
 
         void Execute() override {
-            GLUTEmu::Instance().WindowSetTitle(newTitle.c_str());
+            GLUTEmu::Instance().WindowSetTitle(newTitle);
         }
     };
 
@@ -410,28 +410,36 @@ class GLUTEmu {
     }
 
     template <typename T> void WindowSetHint(GLUTEmu_WindowHint hint, T value) const {
-        if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int> || std::is_same_v<T, bool>) {
-            glfwWindowHint(int(hint), value);
-            libqb_log_trace("Window hint set: %d = %d", hint, value);
-        } else if constexpr (std::is_same_v<T, const char *> || std::is_same_v<T, char *>) {
-            glfwWindowHintString(int(hint), value);
-            libqb_log_trace("Window hint set: %d = '%s'", hint, value);
+        if (std::this_thread::get_id() == mainThreadId) {
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int>) {
+                glfwWindowHint(int(hint), value);
+                libqb_log_trace("Window hint set: %d = %d", hint, value);
+            } else if constexpr (std::is_same_v<T, bool>) {
+                glfwWindowHint(int(hint), value ? GLFW_TRUE : GLFW_FALSE);
+                libqb_log_trace("Window hint set: %d = %s", hint, value ? "true" : "false");
+            } else if constexpr (std::is_same_v<T, const char *> || std::is_same_v<T, char *>) {
+                glfwWindowHintString(int(hint), value);
+                libqb_log_trace("Window hint set: %d = '%s'", hint, value);
+            } else if constexpr (std::is_same_v<T, GLUTEmu_WindowHintValue>) {
+                glfwWindowHint(int(hint), int(value));
+                libqb_log_trace("Window hint set: %d = %d", hint, int(value));
+            } else {
+                static_assert(!sizeof(T), "Unsupported type");
+            }
         } else {
-            static_assert(!sizeof(T), "Unsupported type");
+            libqb_log_error("Window hints must be set from the main thread");
         }
     }
 
-    bool WindowCreate(const char *title, int width, int height) {
+    bool WindowCreate(int width, int height) {
         if (window) {
             // GLFW_TODO: sure we can; maybe we'll use it in a future version of QB64-PE
             libqb_log_error("Window already created, cannot create another window");
         } else {
-            if (MessageIsMainThread()) {
+            if (std::this_thread::get_id() == mainThreadId) {
                 // GLFW creates the window using screen coordinates, so we need to fix it below
-                window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+                window = glfwCreateWindow(width, height, windowTitle.empty() ? "Untitled" : windowTitle.c_str(), nullptr, nullptr);
                 if (window) {
-                    windowTitle = title;
-
                     glfwSetWindowUserPointer(window, this);
                     glfwMakeContextCurrent(window);
 
@@ -444,7 +452,11 @@ class GLUTEmu {
                     }
 
                     libqb_log_trace("GLAD %s initialized", GLAD_GENERATOR_VERSION);
-                    libqb_log_trace("OpenGL %d.%d loaded", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+                    libqb_log_trace("GLAD loaded with OpenGL %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+                    libqb_log_trace("OpenGL renderer: %s", glGetString(GL_RENDERER));
+                    libqb_log_trace("OpenGL vendor: %s", glGetString(GL_VENDOR));
+                    libqb_log_trace("OpenGL version: %s", glGetString(GL_VERSION));
+                    libqb_log_trace("OpenGL shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
                     glfwSwapInterval(1);
 
@@ -598,12 +610,13 @@ class GLUTEmu {
         return window != nullptr;
     }
 
-    void WindowSetTitle(const char *title) {
+    void WindowSetTitle(std::string_view title) {
+        windowTitle = title;
         if (window) {
-            glfwSetWindowTitle(window, title);
+            glfwSetWindowTitle(window, windowTitle.c_str());
             windowTitle = glfwGetWindowTitle(window);
         } else {
-            libqb_log_error("Window not created, cannot set title");
+            libqb_log_warn("Window not created, cannot set title");
         }
     }
 
@@ -1277,24 +1290,32 @@ class GLUTEmu {
     void MainLoop() {
         libqb_log_trace("Entering main loop");
 
-        if (MessageIsMainThread()) {
-            isMainLoopRunning = true;
+        if (std::this_thread::get_id() == mainThreadId) {
+            if (window) {
+                if (!isMainLoopRunning) {
+                    isMainLoopRunning = true;
 
-            while (!glfwWindowShouldClose(window)) {
-                if (windowIdleFunction) {
-                    glfwPollEvents();
+                    while (!glfwWindowShouldClose(window)) {
+                        if (windowIdleFunction) {
+                            glfwPollEvents();
+                        } else {
+                            glfwWaitEventsTimeout(1.0);
+                        }
+
+                        MessageProcess();
+
+                        if (windowIdleFunction) {
+                            windowIdleFunction();
+                        }
+                    }
+
+                    isMainLoopRunning = false;
                 } else {
-                    glfwWaitEventsTimeout(1.0);
+                    libqb_log_warn("Main loop is already running");
                 }
-
-                MessageProcess();
-
-                if (windowIdleFunction) {
-                    windowIdleFunction();
-                }
+            } else {
+                libqb_log_error("Window not created, cannot enter main loop");
             }
-
-            isMainLoopRunning = false;
         } else {
             libqb_log_error("Main loop must be called from the main thread");
         }
@@ -1616,11 +1637,7 @@ std::tuple<int, int, int> GLUTEmu_ScreenGetMode() {
 }
 
 template <typename T> void GLUTEmu_WindowSetHint(GLUTEmu_WindowHint hint, const T value) {
-    if (GLUTEmu::Instance().MessageIsMainThread()) {
-        GLUTEmu::Instance().WindowSetHint<T>(hint, value);
-    } else {
-        libqb_log_error("Window hints must be set from the main thread");
-    }
+    GLUTEmu::Instance().WindowSetHint<T>(hint, value);
 }
 
 // We only need to instantiate the template for the types we need
@@ -1628,22 +1645,18 @@ template void GLUTEmu_WindowSetHint<bool>(GLUTEmu_WindowHint, bool);
 template void GLUTEmu_WindowSetHint<int>(GLUTEmu_WindowHint, int);
 template void GLUTEmu_WindowSetHint<char *>(GLUTEmu_WindowHint, char *);
 template void GLUTEmu_WindowSetHint<const char *>(GLUTEmu_WindowHint, const char *);
+template void GLUTEmu_WindowSetHint<GLUTEmu_WindowHintValue>(GLUTEmu_WindowHint, GLUTEmu_WindowHintValue);
 
-bool GLUTEmu_WindowCreate(const char *title, int width, int height) {
-    if (GLUTEmu::Instance().MessageIsMainThread()) {
-        return GLUTEmu::Instance().WindowCreate(title, width, height);
-    } else {
-        libqb_log_error("Window must be created from the main thread");
-        return false;
-    }
+bool GLUTEmu_WindowCreate(int width, int height) {
+    return GLUTEmu::Instance().WindowCreate(width, height);
 }
 
 bool GLUTEmu_WindowIsCreated() {
     return GLUTEmu::Instance().WindowIsCreated();
 }
 
-void GLUTEmu_WindowSetTitle(const char *title) {
-    if (GLUTEmu::Instance().MessageIsMainThread()) {
+void GLUTEmu_WindowSetTitle(std::string_view title) {
+    if (GLUTEmu::Instance().MessageIsMainThread() || (!GLUTEmu::Instance().WindowIsCreated() && !GLUTEmu::Instance().MainLoopIsRunning())) {
         GLUTEmu::Instance().WindowSetTitle(title);
     } else {
         GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetTitle(title));
