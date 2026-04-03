@@ -1346,14 +1346,15 @@ class GLUTEmu {
 
   private:
     GLUTEmu()
-        : monitor(nullptr), window(nullptr), windowX(0), windowY(0), windowWidth(0), windowHeight(0), windowScaleX(1.0f), windowScaleY(1.0f),
-          isWindowFullscreen(false), isWindowMaximized(false), isWindowMinimized(false), isWindowFocused(false), isWindowHidden(false), isWindowFloating(false),
-          windowOpacity(1.0f), isWindowBordered(true), isWindowMousePassthrough(false), windowedX(0), windowedY(0), windowedWidth(0), windowedHeight(0),
-          framebufferWidth(0), framebufferHeight(0), cursor(nullptr), cursorMode(GLUTEnum_MouseCursorMode::Normal), keyboardModifiers(0),
-          windowCloseFunction(nullptr), windowResizedFunction(nullptr), windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr),
-          windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr), windowRefreshFunction(nullptr), windowIdleFunction(nullptr),
-          keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr), mousePositionFunction(nullptr), mouseButtonFunction(nullptr),
-          mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr), isMainLoopRunning(false), screenMode(0, 0, 0) {
+        : monitor(nullptr), monitorScaleX(1.0f), monitorScaleY(1.0f), window(nullptr), windowX(0), windowY(0), windowWidth(0), windowHeight(0),
+          windowScaleX(1.0f), windowScaleY(1.0f), isWindowFullscreen(false), isWindowMaximized(false), isWindowMinimized(false), isWindowFocused(false),
+          isWindowHidden(false), isWindowFloating(false), windowOpacity(1.0f), isWindowBordered(true), isWindowMousePassthrough(false), windowedX(0),
+          windowedY(0), windowedWidth(0), windowedHeight(0), framebufferWidth(0), framebufferHeight(0), cursor(nullptr),
+          cursorMode(GLUTEnum_MouseCursorMode::Normal), keyboardModifiers(0), windowCloseFunction(nullptr), windowResizedFunction(nullptr),
+          windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr), windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr),
+          windowRefreshFunction(nullptr), windowIdleFunction(nullptr), keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr),
+          mousePositionFunction(nullptr), mouseButtonFunction(nullptr), mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr),
+          isMainLoopRunning(false), screenMode(0, 0, 0) {
         mainThreadId = std::this_thread::get_id();
         msgQueueMutex = libqb_mutex_new();
 
@@ -1510,7 +1511,9 @@ class GLUTEmu {
         if (best) {
             auto mode = glfwGetVideoMode(best);
             if (mode) {
-                screenMode = {ToPixelCoordsX(mode->width), ToPixelCoordsY(mode->height), mode->refreshRate};
+                glfwGetMonitorContentScale(best, &monitorScaleX, &monitorScaleY);
+                screenMode = {static_cast<int>(std::round(mode->width * monitorScaleX)), static_cast<int>(std::round(mode->height * monitorScaleY)),
+                              mode->refreshRate};
             }
         }
 
@@ -1587,6 +1590,7 @@ class GLUTEmu {
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
     GLFWmonitor *monitor;                    // current monitor
+    float monitorScaleX, monitorScaleY;      // current monitor content scale for DPI scaling
     GLFWwindow *window;                      // current window
     std::string windowTitle;                 // current window title
     int windowX, windowY;                    // current window position (in pixel coordinates)
