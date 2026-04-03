@@ -55,8 +55,7 @@ static void initialize_glut() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     GLUTEmu_WindowSetCloseFunction(GLUT_EXIT_FUNC);
-    GLUTEmu_WindowSetResizedFunction(GLUT_RESIZE_FUNC);
-    // GLFW_TODO: Framebuffer resize handling
+    GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_RESIZE_FUNC);
     // GLFW_TODO: Maximize/Minimize handling
     // GLFW_TODO: Focus handling
     GLUTEmu_WindowSetRefreshFunction(GLUT_DISPLAY_REQUEST);
