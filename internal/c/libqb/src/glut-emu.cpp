@@ -466,25 +466,21 @@ class GLUTEmu {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->windowScaleX = xScale;
                         instance->windowScaleY = yScale;
-                        instance->RefreshWindowScaleFromActualSizes();
                         instance->monitor = instance->WindowGetCurrentMonitorInfo();
+
+                        libqb_log_trace("Window content scale changed to (%fx%f)", xScale, yScale);
                     });
 
-                    // Get the window and framebuffer sizes and keep scale synchronized with actual pixel ratio.
-                    int windowWidthScreen = 0;
-                    int windowHeightScreen = 0;
-                    glfwGetWindowSize(window, &windowWidthScreen, &windowHeightScreen);
-                    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-                    RefreshWindowScaleFromActualSizes();
-                    windowWidth = ToPixelCoordsX(windowWidthScreen);
-                    windowHeight = ToPixelCoordsY(windowHeightScreen);
+                    // Get the window size and scale to actual pixel size and set a callback to track changes
+                    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+                    windowWidth = ToPixelCoordsX(windowWidth);
+                    windowHeight = ToPixelCoordsY(windowHeight);
                     glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->RefreshWindowScaleFromActualSizes();
                         instance->windowWidth = instance->ToPixelCoordsX(width);
                         instance->windowHeight = instance->ToPixelCoordsY(height);
 
-                        libqb_log_trace("Window resized to (%d x %d)", width, height);
+                        libqb_log_trace("Window resized to (%d x %d)", instance->windowWidth, instance->windowHeight);
 
                         if (instance->windowResizedFunction) {
                             instance->windowResizedFunction(instance->windowWidth, instance->windowHeight);
@@ -508,9 +504,11 @@ class GLUTEmu {
                     windowY = ToPixelDesktopCoordsY(windowY);
                     glfwSetWindowPosCallback(window, [](GLFWwindow *win, int x, int y) {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->monitor = instance->WindowGetCurrentMonitorInfo();
                         instance->windowX = instance->ToPixelDesktopCoordsX(x);
                         instance->windowY = instance->ToPixelDesktopCoordsY(y);
+                        instance->monitor = instance->WindowGetCurrentMonitorInfo();
+
+                        libqb_log_trace("Window moved to (%d, %d)", instance->windowX, instance->windowY);
                     });
 
                     // Get the framebuffer size (already in pixels) and set a callback to track changes
@@ -518,13 +516,6 @@ class GLUTEmu {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->framebufferWidth = width;
                         instance->framebufferHeight = height;
-                        instance->RefreshWindowScaleFromActualSizes();
-
-                        int windowWidthScreen = 0;
-                        int windowHeightScreen = 0;
-                        glfwGetWindowSize(instance->window, &windowWidthScreen, &windowHeightScreen);
-                        instance->windowWidth = instance->ToPixelCoordsX(windowWidthScreen);
-                        instance->windowHeight = instance->ToPixelCoordsY(windowHeightScreen);
 
                         libqb_log_trace("Window framebuffer resized to (%d x %d)", width, height);
 
@@ -541,6 +532,8 @@ class GLUTEmu {
                         instance->windowHeight = instance->ToPixelCoordsY(instance->windowHeight);
                         instance->isWindowMaximized = bool(maximized);
 
+                        libqb_log_trace("Window %s", maximized ? "maximized" : "restored");
+
                         if (instance->windowMaximizedFunction) {
                             instance->windowMaximizedFunction(instance->windowWidth, instance->windowHeight, bool(maximized));
                         }
@@ -550,6 +543,9 @@ class GLUTEmu {
                     glfwSetWindowIconifyCallback(window, [](GLFWwindow *win, int iconified) {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->isWindowMinimized = bool(iconified);
+
+                        libqb_log_trace("Window %s", iconified ? "minimized" : "restored");
+
                         if (instance->windowMinimizedFunction) {
                             if (iconified) {
                                 instance->windowMinimizedFunction(instance->windowWidth, instance->windowHeight, true);
@@ -567,6 +563,9 @@ class GLUTEmu {
                     glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused) {
                         auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->isWindowFocused = bool(focused);
+
+                        libqb_log_trace("Window %s", focused ? "focused" : "unfocused");
+
                         if (instance->windowFocusedFunction) {
                             instance->windowFocusedFunction(bool(focused));
                         }
@@ -1523,27 +1522,6 @@ class GLUTEmu {
             return static_cast<T>(std::round(y / monitorScaleY));
         } else {
             return y / monitorScaleY;
-        }
-    }
-
-    void RefreshWindowScaleFromActualSizes() {
-        if (!window) {
-            return;
-        }
-
-        int ww = 0;
-        int wh = 0;
-        int fw = 0;
-        int fh = 0;
-        glfwGetWindowSize(window, &ww, &wh);
-        glfwGetFramebufferSize(window, &fw, &fh);
-
-        if (ww > 0 && fw > 0) {
-            windowScaleX = static_cast<float>(fw) / static_cast<float>(ww);
-        }
-
-        if (wh > 0 && fh > 0) {
-            windowScaleY = static_cast<float>(fh) / static_cast<float>(wh);
         }
     }
 

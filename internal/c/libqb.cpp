@@ -79,12 +79,6 @@ void sub__printimage(int32 i);
 
 // GUI notification variables
 int32 force_display_update = 0;
-
-int32 acceptFileDrop = 0;
-#ifdef QB64_WINDOWS
-HDROP hdrop = NULL;
-int32 totalDroppedFiles = 0;
-#endif
 //...
 
 // forward references
@@ -26646,79 +26640,6 @@ void sub__writefile(qbs *filespec, qbs *contents) {
     } else {
         error(QB_ERROR_PATH_NOT_FOUND); // most common when making a new file
     }
-}
-
-void sub__filedrop(int32 on_off = NULL) {
-#ifdef QB64_WINDOWS
-    HWND win = (HWND)func__windowhandle();
-    if (!win)
-        return;
-
-    if ((on_off == NULL) || (on_off == 1)) {
-        DragAcceptFiles(win, TRUE);
-        acceptFileDrop = -1;
-    }
-    if (on_off == 2) {
-        DragAcceptFiles(win, FALSE);
-        acceptFileDrop = 0;
-    }
-#endif
-}
-
-int32 func__filedrop() {
-    return acceptFileDrop;
-}
-
-void sub__finishdrop() {
-#ifdef QB64_WINDOWS
-    DragFinish(hdrop);
-    totalDroppedFiles = 0;
-#endif
-}
-
-int32 func__totaldroppedfiles() {
-#ifdef QB64_WINDOWS
-    return totalDroppedFiles;
-#endif
-    return 0;
-}
-
-qbs *func__droppedfile(int32 fileIndex, int32 passed) {
-#ifdef QB64_WINDOWS
-    static int32 index = -1;
-    static char szNextFile[MAX_PATH];
-
-    if (totalDroppedFiles > 0) {
-        index++;
-        if (passed)
-            index = fileIndex - 1;
-        if ((index > totalDroppedFiles - 1) || (index < 0)) {
-            // out of bounds;
-            // if reading _DROPPEDFILE$ sequentially (without an
-            // index), hdrop is reset and the list is cleared.
-            if (!passed)
-                sub__finishdrop();
-            index = -1;
-            return qbs_new_txt("");
-        }
-        // fetch file[index] from hdrop:
-        if (DragQueryFileA(hdrop, index, szNextFile, MAX_PATH) > 0) {
-            if ((!passed) && (index == totalDroppedFiles - 1)) {
-                // last file read sequentially
-                sub__finishdrop();
-                index = -1;
-            }
-            return qbs_new_txt(szNextFile);
-        } else {
-            // error fetching file from hdrop;
-            sub__finishdrop();
-            index = -1;
-        }
-    } else {
-        index = -1;
-    }
-#endif
-    return qbs_new_txt("");
 }
 
 int32 func__scaledwidth() {

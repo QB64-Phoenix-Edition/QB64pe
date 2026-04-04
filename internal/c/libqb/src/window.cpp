@@ -1,14 +1,13 @@
 #include "window.h"
-
 #include "error_handle.h"
 #include "glut-thread.h"
 #include "graphics.h"
+#include <string>
+#include <vector>
 
 extern int32_t force_display_update;
 extern int32_t screen_hide;
 extern void set_view(int32_t new_mode);
-
-const void *generic_window_handle = nullptr;
 
 int32_t environment__window_width = 0;
 int32_t environment__window_height = 0;
@@ -38,6 +37,11 @@ int32_t display_required_x = 640;
 int32_t display_required_y = 400;
 int32_t full_screen = 0;      // 0,1(stretched/closest),2(1:1)
 int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
+
+static const void *generic_window_handle = nullptr;
+static int32_t acceptFileDrop = 0;
+static int32_t droppedFileIndex = -1;
+static std::vector<std::string> droppedFiles;
 
 // GLFW_TODO: Implement a func_screenrefreshrate() function
 
@@ -320,6 +324,86 @@ void sub__title(qbs *title) {
 qbs *func__title() {
     auto svTitle = GLUTEmu_WindowGetTitle();
     return qbs_new_txt_len(svTitle.data(), svTitle.length());
+}
+
+void GLUT_DROPFILES_FUNC(int count, const char *paths[]) {
+    if (!acceptFileDrop) {
+        return;
+    }
+
+    droppedFiles.clear();
+    droppedFileIndex = -1;
+
+    if (count <= 0 || !paths) {
+        return;
+    }
+
+    droppedFiles.reserve(static_cast<std::size_t>(count));
+
+    for (int index = 0; index < count; ++index) {
+        if (paths[index]) {
+            droppedFiles.emplace_back(paths[index]);
+        }
+    }
+}
+
+void sub__filedrop(int32_t on_off) {
+#ifdef QB64_GUI
+    if (on_off == 2) {
+        acceptFileDrop = 0;
+        sub__finishdrop();
+        return;
+    }
+
+    if ((on_off == 0) || (on_off == 1)) {
+        acceptFileDrop = -1;
+    }
+#else
+    static_cast<void>(on_off);
+#endif
+}
+
+int32_t func__filedrop() {
+    return acceptFileDrop;
+}
+
+void sub__finishdrop() {
+    droppedFiles.clear();
+    droppedFileIndex = -1;
+}
+
+int32_t func__totaldroppedfiles() {
+    return static_cast<int32_t>(droppedFiles.size());
+}
+
+qbs *func__droppedfile(int32_t fileIndex, int32_t passed) {
+    if (droppedFiles.empty()) {
+        droppedFileIndex = -1;
+        return qbs_new_txt("");
+    }
+
+    if (passed) {
+        droppedFileIndex = fileIndex - 1;
+    } else {
+        ++droppedFileIndex;
+    }
+
+    if ((droppedFileIndex < 0) || (droppedFileIndex >= static_cast<int32_t>(droppedFiles.size()))) {
+        if (!passed) {
+            sub__finishdrop();
+        }
+
+        droppedFileIndex = -1;
+        return qbs_new_txt("");
+    }
+
+    const auto result = qbs_new_txt(droppedFiles[static_cast<std::size_t>(droppedFileIndex)].c_str());
+
+    if (!passed && droppedFileIndex == static_cast<int32_t>(droppedFiles.size()) - 1) {
+        sub__finishdrop();
+    }
+
+    return result;
 }
 
 uintptr_t func__windowhandle() {

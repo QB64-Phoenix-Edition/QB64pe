@@ -45,8 +45,6 @@ static void initialize_glut() {
         libqb_log_trace("GLAD_GL_EXT_framebuffer_object supported");
     }
 
-    generic_window_handle = GLUTEmu_WindowGetNativeHandle(0);
-
     // GLFW_TODO: check implementation - glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
@@ -69,7 +67,7 @@ static void initialize_glut() {
     GLUTEmu_MouseSetScrollFunction(GLUT_MOUSE_SCROLL_FUNC);
     // GLFW_TODO: Mouse enter/leave handling
 
-    // GLFW_TODO: File drop handling
+    GLUTEmu_DropSetFilesFunction(GLUT_DROPFILES_FUNC);
 }
 
 static bool glut_is_started;

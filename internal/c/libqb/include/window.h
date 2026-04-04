@@ -2,8 +2,6 @@
 
 #include "../../libqb.h"
 
-extern const void *generic_window_handle;
-
 extern int32_t environment__window_width;
 extern int32_t environment__window_height;
 extern int32_t os_resize_event;
@@ -37,6 +35,7 @@ void sync_resize_auto_aspect_constraint();
 void window_update_for_frame(int32_t frame_width, int32_t frame_height);
 void window_update_environment_size();
 void GLUT_RESIZE_FUNC(int width, int height);
+void GLUT_DROPFILES_FUNC(int count, const char *paths[]);
 
 void sub__fullscreen(int32_t method, int32_t passed);
 void sub__allowfullscreen(int32_t method, int32_t smooth);
@@ -61,6 +60,11 @@ void sub__screenhide();
 int32_t func__screenhide();
 void sub__title(qbs *title);
 qbs *func__title();
+void sub__filedrop(int32_t on_off);
+int32_t func__filedrop();
+void sub__finishdrop();
+int32_t func__totaldroppedfiles();
+qbs *func__droppedfile(int32_t fileIndex, int32_t passed);
 
 uintptr_t func__windowhandle();
 int32_t func_windowexists();
