@@ -14,7 +14,8 @@ struct onkey_struct {
     uint8_t key_scancode;
     uint8_t key_flags;
     // flags:
-    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key,32 NumLock key,64 Caps Lock key, 128 Extended keys on a 101-key keyboard
+    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key, 16 Super(Windows/Command),
+    // 32 NumLock key, 64 Caps Lock key, 128 Extended keys on a 101-key keyboard
     // To specify multiple shift states, add the values together. For example, a value of 12 specifies that the user-defined key is used in combination with the
     // Ctrl and Alt keys.
     qbs *text;

@@ -868,6 +868,10 @@ static inline int32_t keyboard_is_alt_held() {
     return keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT);
 }
 
+static inline int32_t keyboard_is_super_held() {
+    return keyheld(VK + QBVK_LSUPER) || keyheld(VK + QBVK_RSUPER);
+}
+
 static inline bool keyboard_is_altgr_combo() {
     return (keyheld(VK + QBVK_LALT) == 0) && keyheld(VK + QBVK_RALT) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL));
 }
@@ -966,6 +970,14 @@ static constexpr inline bool keyboard_try_get_modifier_data(uint32_t key, uint8_
         *scancode = 29;
         *flagsMask = 4;
         return true;
+    case VK + QBVK_LSUPER:
+        *scancode = 91;
+        *flagsMask = 16;
+        return true;
+    case VK + QBVK_RSUPER:
+        *scancode = 92;
+        *flagsMask = 16;
+        return true;
     case VK + QBVK_NUMLOCK:
         *scancode = 69;
         *flagsMask = 32;
@@ -984,6 +996,8 @@ static constexpr inline bool keyboard_try_get_modifier_data(uint32_t key, uint8_
 }
 
 static inline void keyboard_get_onkey_scancode_and_flags(uint32_t key, int32_t *scancode, int32_t *flagsMask) {
+    *flagsMask = 0;
+
     if (key <= 255) {
         *scancode = keyboard_scancode_get_scancode(key);
     } else {
@@ -1503,7 +1517,8 @@ void keydown(uint32_t x) {
                                 if (onkey[i].id) {
                                     // check keyboard flags
                                     f = onkey[i].key_flags;
-                                    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key,32 NumLock key,64 Caps Lock key, 128 Extended keys on a
+                                    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key, 16 Super(Windows/Command),
+                                    // 32 NumLock key,64 Caps Lock key, 128 Extended keys on a
                                     // 101-key keyboard To specify multiple shift states, add the values together. For example, a value of 12 specifies that the
                                     // user-defined key is used in combination with the Ctrl and Alt keys.
                                     if ((flags_mask & 3) == 0) {
@@ -1530,6 +1545,15 @@ void keydown(uint32_t x) {
                                                 goto wrong_flags;
                                         } else {
                                             if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
+                                                goto wrong_flags;
+                                        }
+                                    }
+                                    if ((flags_mask & 16) == 0) {
+                                        if (f & 16) {
+                                            if (keyboard_is_super_held() == 0)
+                                                goto wrong_flags;
+                                        } else {
+                                            if (keyboard_is_super_held())
                                                 goto wrong_flags;
                                         }
                                     }
