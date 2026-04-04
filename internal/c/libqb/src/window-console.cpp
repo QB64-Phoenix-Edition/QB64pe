@@ -2,6 +2,10 @@
 #include "libqb-common.h"
 #include "window.h"
 
+#ifdef QB64_WINDOWS
+#    include <windows.h>
+#endif
+
 // Most of these are stubs, but we could wire these up to to a library to do something useful in the future
 
 extern void sub__consoletitle(qbs *);
