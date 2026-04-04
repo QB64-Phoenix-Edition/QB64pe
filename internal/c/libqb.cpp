@@ -6155,58 +6155,6 @@ qbs *func_varptr_helper(uint8 type, uint16 offset) {
     return tqbs;
 }
 
-qbs *qbs_inkey() {
-    if (is_error_pending())
-        return qbs_new(0, 1);
-    qbs *tqbs;
-    // Sleep(0);
-    tqbs = qbs_new(2, 1);
-    if (cmem[0x41a] != cmem[0x41c]) {
-        tqbs->chr[0] = cmem[0x400 + cmem[0x41a]];
-        tqbs->chr[1] = cmem[0x400 + cmem[0x41a] + 1];
-        if (tqbs->chr[0]) {
-            tqbs->len = 1;
-        } else {
-            if (tqbs->chr[1] == 0)
-                tqbs->len = 1;
-        }
-        cmem[0x41a] += 2;
-        if (cmem[0x41a] == 62)
-            cmem[0x41a] = 30;
-    } else {
-        tqbs->len = 0;
-    }
-    return tqbs;
-}
-
-void sub__keyclear(int32 buf, int32 passed) {
-    if (is_error_pending())
-        return;
-    if (passed && (buf > 3 || buf < 1))
-        error(5);
-    //  Sleep(10);
-    if ((buf == 1 && passed) || !passed) {
-        // INKEY$ buffer
-        cmem[0x41a] = 30;
-        cmem[0x41b] = 0; // head
-        cmem[0x41c] = 30;
-        cmem[0x41d] = 0; // tail
-    }
-    if ((buf == 2 && passed) || !passed) {
-        //_KEYHIT buffer
-        keyhit_nextfree = 0;
-        keyhit_next = 0;
-    }
-    if ((buf == 3 && passed) || !passed) {
-        // INP(&H60) buffer
-        port60h_events = 0;
-    }
-#ifdef QB64_WINDOWS
-    // Windows Console Buffer
-    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
-#endif
-}
-
 // QBG BLOCK
 int32 qbg_mode = -1; //-1 means not initialized!
 int32 qbg_text_only;

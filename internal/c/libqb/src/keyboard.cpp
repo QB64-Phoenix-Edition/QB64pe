@@ -1,6 +1,7 @@
 #include "libqb-common.h"
 
 #include "cmem.h"
+#include "error_handle.h"
 #include "event.h"
 #include "key-events.h"
 #include "keyboard.h"
@@ -1072,6 +1073,64 @@ int32_t func__keydown(int32_t x) {
         return -1;
 
     return 0;
+}
+
+qbs *qbs_inkey() {
+    if (is_error_pending())
+        return qbs_new(0, 1);
+
+    auto tqbs = qbs_new(2, 1);
+
+    if (cmem[0x41a] != cmem[0x41c]) {
+        tqbs->chr[0] = cmem[0x400 + cmem[0x41a]];
+        tqbs->chr[1] = cmem[0x400 + cmem[0x41a] + 1];
+
+        if (tqbs->chr[0]) {
+            tqbs->len = 1;
+        } else if (tqbs->chr[1] == 0) {
+            tqbs->len = 1;
+        }
+
+        cmem[0x41a] += 2;
+        if (cmem[0x41a] == 62)
+            cmem[0x41a] = 30;
+    } else {
+        tqbs->len = 0;
+    }
+
+    return tqbs;
+}
+
+void sub__keyclear(int32_t buf, int32_t passed) {
+    if (is_error_pending())
+        return;
+
+    if (passed && (buf > 3 || buf < 1))
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+
+    if ((buf == 1 && passed) || !passed) {
+        // INKEY$ buffer
+        cmem[0x41a] = 30;
+        cmem[0x41b] = 0; // head
+        cmem[0x41c] = 30;
+        cmem[0x41d] = 0; // tail
+    }
+
+    if ((buf == 2 && passed) || !passed) {
+        // _KEYHIT buffer
+        keyhit_nextfree = 0;
+        keyhit_next = 0;
+    }
+
+    if ((buf == 3 && passed) || !passed) {
+        // INP(&H60) buffer
+        port60h_events = 0;
+    }
+
+    // GLFW_TODO: We should really have a $CONSOLE:ONLY version of the functions in the TU
+#ifdef QB64_WINDOWS
+    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+#endif
 }
 
 void keyboard_set_bindkey(uint32_t key) {

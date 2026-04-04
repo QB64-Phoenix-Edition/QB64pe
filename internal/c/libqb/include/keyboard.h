@@ -3,6 +3,8 @@
 #include "glut-emu.h"
 #include <cstdint>
 
+struct qbs;
+
 void keyboard_set_bindkey(uint32_t key);
 void keydown(uint32_t key);
 void keyup(uint32_t key);
@@ -17,6 +19,8 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint);
 void update_shift_state();
 int32_t func__keyhit();
 int32_t func__keydown(int32_t key);
+qbs *qbs_inkey();
+void sub__keyclear(int32_t buf, int32_t passed);
 
 #define QBK 200000
 #define VK 100000
