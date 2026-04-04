@@ -1,8 +1,6 @@
 #pragma once
 
 #include "glut-emu.h"
-#include "libqb-common.h"
-#include "logging.h"
 #include <cstdint>
 
 void keyboard_set_bindkey(uint32_t key);

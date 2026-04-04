@@ -1,12 +1,14 @@
-#include "keyboard.h"
+#include "libqb-common.h"
+
 #include "cmem.h"
 #include "event.h"
-#include "glut-thread.h"
 #include "key-events.h"
+#include "keyboard.h"
+#include "logging.h"
+#include "main-thread.h"
 #include "window.h"
 #include <cstdlib>
 #include <cstring>
-
 #ifdef QB64_WINDOWS
 #    include <windows.h>
 #endif

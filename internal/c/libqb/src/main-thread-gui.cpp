@@ -1,10 +1,10 @@
 #include "libqb-common.h"
 
 #include "completion.h"
-#include "glut-thread.h"
 #include "gui.h"
 #include "keyboard.h"
 #include "logging.h"
+#include "main-thread.h"
 #include "thread.h"
 #include "window.h"
 #include <cstdint>

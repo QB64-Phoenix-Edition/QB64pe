@@ -2,8 +2,7 @@
 
 #include "libqb-common.h"
 
-#include "glut-thread.h"
-
+#include "main-thread.h"
 #include <cstdlib>
 
 // FIXME: Put this definition somewhere else

@@ -1,7 +1,7 @@
-#include "error_handle.h"
 #include "libqb-common.h"
-#include "window.h"
 
+#include "error_handle.h"
+#include "window.h"
 #ifdef QB64_WINDOWS
 #    include <windows.h>
 #endif
