@@ -869,7 +869,7 @@ static inline int32_t keyboard_is_alt_held() {
 }
 
 static inline bool keyboard_is_altgr_combo() {
-    return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_LCTRL) && keyheld(VK + QBVK_RALT);
+    return (keyheld(VK + QBVK_LALT) == 0) && keyheld(VK + QBVK_RALT) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL));
 }
 
 static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, int32_t *alt) {
