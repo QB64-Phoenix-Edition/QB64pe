@@ -25,6 +25,7 @@ libqb-objs-y += $(PATH_LIBQB)/src/qbs_val.o
 libqb-objs-y += $(PATH_LIBQB)/src/string_functions.o
 libqb-objs-y += $(PATH_LIBQB)/src/graphics.o
 libqb-objs-y += $(PATH_LIBQB)/src/glut-emu.o
+libqb-objs-y += $(PATH_LIBQB)/src/window.o
 
 libqb-objs-y += $(PATH_LIBQB)/src/logging/logging.o
 libqb-objs-y += $(PATH_LIBQB)/src/logging/qb64pe_symbol.o

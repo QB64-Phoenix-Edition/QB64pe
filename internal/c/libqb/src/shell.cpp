@@ -15,6 +15,7 @@
 #include "error_handle.h"
 #include "qbs.h"
 #include "shell.h"
+#include "window.h"
 
 // FIXME
 extern int32_t console;
@@ -163,10 +164,6 @@ static int32_t cmd_command(qbs *str2) {
     return s;
 }
 #endif
-
-// FIXME: Move this elsewhere
-extern int32_t full_screen;
-extern int32_t full_screen_set;
 
 int64_t func_shell(qbs *str) {
     if (is_error_pending())

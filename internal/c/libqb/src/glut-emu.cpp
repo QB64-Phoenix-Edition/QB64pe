@@ -484,6 +484,8 @@ class GLUTEmu {
                         instance->windowWidth = instance->ToPixelCoordsX(width);
                         instance->windowHeight = instance->ToPixelCoordsY(height);
 
+                        libqb_log_trace("Window resized to (%d x %d)", width, height);
+
                         if (instance->windowResizedFunction) {
                             instance->windowResizedFunction(instance->windowWidth, instance->windowHeight);
                         }
@@ -523,6 +525,8 @@ class GLUTEmu {
                         glfwGetWindowSize(instance->window, &windowWidthScreen, &windowHeightScreen);
                         instance->windowWidth = instance->ToPixelCoordsX(windowWidthScreen);
                         instance->windowHeight = instance->ToPixelCoordsY(windowHeightScreen);
+
+                        libqb_log_trace("Window framebuffer resized to (%d x %d)", width, height);
 
                         if (instance->windowFramebufferResizedFunction) {
                             instance->windowFramebufferResizedFunction(instance->framebufferWidth, instance->framebufferHeight);

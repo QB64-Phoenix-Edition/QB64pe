@@ -3,6 +3,7 @@
 #include "event.h"
 #include "glut-thread.h"
 #include "key-events.h"
+#include "window.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -21,11 +22,6 @@ extern int32_t exit_blocked;
 extern int32_t exit_value;
 extern uint8_t close_program;
 extern uint8_t suspend_program;
-extern int32_t fullscreen_allowedmode;
-extern int32_t fullscreen_allowedsmooth;
-extern int32_t fullscreen_smooth;
-extern int32_t full_screen;
-extern int32_t full_screen_set;
 extern int32_t force_display_update;
 extern int32_t sleep_break;
 extern uint8_t port60h_event[256];
@@ -1394,59 +1390,79 @@ void keydown(uint32_t x) {
                     fs_mode = full_screen;
                 fs_smooth = fullscreen_smooth;
 
-                int32_t fs_combo;
-                if (fs_mode == 0)
-                    fs_combo = 0;
-                if ((fs_mode == 1) && (fs_smooth == 0))
-                    fs_combo = 1;
-                if ((fs_mode == 1) && (fs_smooth == 1))
-                    fs_combo = 2;
-                if ((fs_mode == 2) && (fs_smooth == 0))
-                    fs_combo = 3;
-                if ((fs_mode == 2) && (fs_smooth == 1))
-                    fs_combo = 4;
+                auto get_fs_combo = [](int32_t mode, int32_t smooth) -> int32_t {
+                    if (mode == 0)
+                        return 0;
+                    if ((mode == 1) && (smooth == 0))
+                        return 1;
+                    if ((mode == 1) && (smooth == 1))
+                        return 2;
+                    if ((mode == 2) && (smooth == 0))
+                        return 3;
+                    return 4;
+                };
 
-                int32_t fs_validmode = 0;
-                while (fs_validmode == 0) {
-                    fs_combo++;
-                    if (fs_combo > 4)
-                        fs_combo = 0;
-
-                    switch (fs_combo) {
+                auto set_from_fs_combo = [](int32_t combo, int32_t &mode, int32_t &smooth) {
+                    switch (combo) {
                     case 0:
-                        fs_mode = 0;
-                        fullscreen_smooth = 0;
+                        mode = 0;
+                        smooth = 0;
                         break;
                     case 1:
-                        fs_mode = 1;
-                        fullscreen_smooth = 0;
+                        mode = 1;
+                        smooth = 0;
                         break;
                     case 2:
-                        fs_mode = 1;
-                        fullscreen_smooth = 1;
+                        mode = 1;
+                        smooth = 1;
                         break;
                     case 3:
-                        fs_mode = 2;
-                        fullscreen_smooth = 0;
+                        mode = 2;
+                        smooth = 0;
                         break;
                     case 4:
-                        fs_mode = 2;
-                        fullscreen_smooth = 1;
+                    default:
+                        mode = 2;
+                        smooth = 1;
                         break;
                     }
+                };
 
-                    if (fs_combo == 0)
-                        break; // 0 is always valid (= _OFF)
+                auto append_mode_combos = [](int32_t mode, int32_t smoothPreference, int32_t *combos, int32_t &comboCount) {
+                    // smoothPreference: 1 => smooth first, -1 => off first, 0 => default off first
+                    if (smoothPreference == 1) {
+                        combos[comboCount++] = (mode == 1 ? 2 : 4);
+                        combos[comboCount++] = (mode == 1 ? 1 : 3);
+                    } else {
+                        combos[comboCount++] = (mode == 1 ? 1 : 3);
+                        combos[comboCount++] = (mode == 1 ? 2 : 4);
+                    }
+                };
 
-                    fs_validmode = 1;
-                    // check _ALLOWFULLSCREEN's settings
-                    if ((fullscreen_allowedmode > 0) && (fs_mode != fullscreen_allowedmode))
-                        fs_validmode = 0;
-                    if ((fullscreen_allowedsmooth == 1) && (fullscreen_smooth != 1))
-                        fs_validmode = 0;
-                    if ((fullscreen_allowedsmooth == -1) && (fullscreen_smooth != 0))
-                        fs_validmode = 0;
+                int32_t combos[5];
+                int32_t comboCount = 0;
+                combos[comboCount++] = 0; // _OFF is always part of the ALT+ENTER cycle unless _ALLOWFULLSCREEN _OFF disables handling entirely
+
+                if (fullscreen_allowedmode > 0) {
+                    append_mode_combos(fullscreen_allowedmode, fullscreen_allowedsmooth, combos, comboCount);
+                } else {
+                    append_mode_combos(1, fullscreen_allowedsmooth, combos, comboCount); // _STRETCH
+                    append_mode_combos(2, fullscreen_allowedsmooth, combos, comboCount); // _SQUAREPIXELS
                 }
+
+                const int32_t current_combo = get_fs_combo(fs_mode, fs_smooth);
+                int32_t current_index = -1;
+                for (int32_t i = 0; i < comboCount; i++) {
+                    if (combos[i] == current_combo) {
+                        current_index = i;
+                        break;
+                    }
+                }
+                int32_t next_index = current_index + 1;
+                if (next_index >= comboCount)
+                    next_index = 0;
+
+                set_from_fs_combo(combos[next_index], fs_mode, fullscreen_smooth);
 
                 // apply
                 if (full_screen != fs_mode)
