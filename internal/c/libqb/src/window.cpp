@@ -4,50 +4,52 @@
 #include "glut-thread.h"
 #include "graphics.h"
 
-extern int32 force_display_update;
-extern int32 screen_hide;
-extern void set_view(int32 new_mode);
+extern int32_t force_display_update;
+extern int32_t screen_hide;
+extern void set_view(int32_t new_mode);
 
-int32 environment__window_width = 0;
-int32 environment__window_height = 0;
-int32 os_resize_event = 0;
-int32 resize_auto = 0; // 1=_STRETCH, 2=_SMOOTH
+const void *generic_window_handle = nullptr;
+
+int32_t environment__window_width = 0;
+int32_t environment__window_height = 0;
+int32_t os_resize_event = 0;
+int32_t resize_auto = 0; // 1=_STRETCH, 2=_SMOOTH
 float resize_auto_ideal_aspect = 640.0 / 400.0;
-int32 fullscreen_allowedmode = 0;
-int32 fullscreen_allowedsmooth = 0;
-int32 fullscreen_smooth = 0;
-int32 fullscreen_width = 0;
-int32 fullscreen_height = 0;
-int32 screen_scale = 0;
-int32 resize_pending = 1;
-int32 resize_snapback = 1;
-int32 resize_snapback_x = 640;
-int32 resize_snapback_y = 400;
-int32 resize_event = 0;
-int32 resize_event_x = 0;
-int32 resize_event_y = 0;
-int32 ScreenResizeScale = 0;
-int32 ScreenResize = 0;
-int32 display_x = 640;
-int32 display_y = 400;
-int32 display_x_prev = 640;
-int32 display_y_prev = 400;
-int32 display_required_x = 640;
-int32 display_required_y = 400;
-int32 full_screen = 0;      // 0,1(stretched/closest),2(1:1)
-int32 full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
+int32_t fullscreen_allowedmode = 0;
+int32_t fullscreen_allowedsmooth = 0;
+int32_t fullscreen_smooth = 0;
+int32_t fullscreen_width = 0;
+int32_t fullscreen_height = 0;
+int32_t screen_scale = 0;
+int32_t resize_pending = 1;
+int32_t resize_snapback = 1;
+int32_t resize_snapback_x = 640;
+int32_t resize_snapback_y = 400;
+int32_t resize_event = 0;
+int32_t resize_event_x = 0;
+int32_t resize_event_y = 0;
+int32_t ScreenResizeScale = 0;
+int32_t ScreenResize = 0;
+int32_t display_x = 640;
+int32_t display_y = 400;
+int32_t display_x_prev = 640;
+int32_t display_y_prev = 400;
+int32_t display_required_x = 640;
+int32_t display_required_y = 400;
+int32_t full_screen = 0;      // 0,1(stretched/closest),2(1:1)
+int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
 
 // GLFW_TODO: Implement a func_screenrefreshrate() function
 
 void sync_resize_auto_aspect_constraint() {
-    static int32 last_constraint_enabled = -1;
-    static int32 last_constraint_w = 0;
-    static int32 last_constraint_h = 0;
+    static int32_t last_constraint_enabled = -1;
+    static int32_t last_constraint_w = 0;
+    static int32_t last_constraint_h = 0;
 
-    const int32 should_enable = (resize_auto && full_screen == 0 && full_screen_set == -1) ? 1 : 0;
+    const int32_t should_enable = (resize_auto && full_screen == 0 && full_screen_set == -1) ? 1 : 0;
     if (should_enable) {
-        const int32 target_w = display_required_x;
-        const int32 target_h = display_required_y;
+        const int32_t target_w = display_required_x;
+        const int32_t target_h = display_required_y;
         if (target_w > 0 && target_h > 0) {
             if (!last_constraint_enabled || target_w != last_constraint_w || target_h != last_constraint_h) {
                 GLUTEmu_WindowSetAspectRatio(target_w, target_h);
@@ -78,14 +80,14 @@ void GLUT_RESIZE_FUNC(int width, int height) {
     set_view(VIEW_MODE__UNKNOWN);
 }
 
-void window_update_for_frame(int32 frame_width, int32 frame_height) {
+void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
     os_resize_event = 0;
 
     if ((full_screen == 0) && (full_screen_set == -1)) {
         display_required_x = frame_width;
         display_required_y = frame_height;
 
-        int32 framesize_changed = 0;
+        int32_t framesize_changed = 0;
         if ((display_required_x != resize_snapback_x) || (display_required_y != resize_snapback_y))
             framesize_changed = 1;
 
@@ -135,8 +137,8 @@ void window_update_environment_size() {
     environment__window_height = display_y;
 }
 
-void sub__fullscreen(int32 method, int32 passed) {
-    int32 x = 0;
+void sub__fullscreen(int32_t method, int32_t passed) {
+    int32_t x = 0;
     if (method == 0)
         x = 1;
     if (method == 1 || method == 4)
@@ -154,7 +156,7 @@ void sub__fullscreen(int32 method, int32 passed) {
     force_display_update = 1;
 }
 
-void sub__allowfullscreen(int32 method, int32 smooth) {
+void sub__allowfullscreen(int32_t method, int32_t smooth) {
     fullscreen_allowedmode = method;
     if (method == 3 || method == 5)
         fullscreen_allowedmode = -1;
@@ -168,17 +170,17 @@ void sub__allowfullscreen(int32 method, int32 smooth) {
         fullscreen_allowedsmooth = 0;
 }
 
-int32 func__fullscreen() {
+int32_t func__fullscreen() {
     if (full_screen_set != -1)
         return full_screen_set;
     return full_screen;
 }
 
-int32 func__fullscreensmooth() {
+int32_t func__fullscreensmooth() {
     return -fullscreen_smooth;
 }
 
-void sub__resize(int32 on_off, int32 stretch_smooth) {
+void sub__resize(int32_t on_off, int32_t stretch_smooth) {
     if (on_off == 1)
         resize_snapback = 0;
     if (on_off == 2)
@@ -193,7 +195,7 @@ void sub__resize(int32 on_off, int32 stretch_smooth) {
     sync_resize_auto_aspect_constraint();
 }
 
-int32 func__resize() {
+int32_t func__resize() {
     if (resize_snapback)
         return 0;
     if (resize_event) {
@@ -203,11 +205,11 @@ int32 func__resize() {
     return 0;
 }
 
-int32 func__resizewidth() {
+int32_t func__resizewidth() {
     return resize_event_x;
 }
 
-int32 func__resizeheight() {
+int32_t func__resizeheight() {
     return resize_event_y;
 }
 
@@ -234,7 +236,7 @@ void sub_screenicon() {
 #endif
 }
 
-int32 func_screenicon() {
+int32_t func_screenicon() {
 #ifdef QB64_GUI
     return QB_BOOL(GLUTEmu_WindowIsMinimized());
 #else
@@ -266,7 +268,7 @@ int32_t func__screeny() {
     return 0;
 }
 
-void sub__screenmove(int32 x, int32 y, int32 passed) {
+void sub__screenmove(int32_t x, int32_t y, int32_t passed) {
     if (is_error_pending() || full_screen) {
         return;
     }
@@ -307,7 +309,7 @@ void sub__screenhide() {
     screen_hide = 1;
 }
 
-int32 func__screenhide() {
+int32_t func__screenhide() {
     return -screen_hide;
 }
 
@@ -318,4 +320,35 @@ void sub__title(qbs *title) {
 qbs *func__title() {
     auto svTitle = GLUTEmu_WindowGetTitle();
     return qbs_new_txt_len(svTitle.data(), svTitle.length());
+}
+
+uintptr_t func__windowhandle() {
+#ifdef QB64_WINDOWS
+#    ifdef DEPENDENCY_CONSOLE_ONLY
+    if (!generic_window_handle) {
+        char pszConsoleTitle[1024];
+        GetConsoleTitle(pszConsoleTitle, 1024);
+        generic_window_handle = FindWindow(NULL, pszConsoleTitle);
+    }
+    return reinterpret_cast<uintptr_t>(generic_window_handle);
+#    endif
+#endif
+
+#ifdef QB64_GUI
+    OPTIONAL_GLUT(0);
+
+    generic_window_handle = GLUTEmu_WindowGetNativeHandle(0);
+
+    return reinterpret_cast<uintptr_t>(generic_window_handle);
+#else
+    return 0;
+#endif
+}
+
+int32_t func_windowexists() {
+#ifdef QB64_GUI
+    return QB_BOOL(libqb_is_glut_up());
+#else
+    return QB_TRUE;
+#endif
 }

@@ -80,7 +80,6 @@ void sub__printimage(int32 i);
 // GUI notification variables
 int32 force_display_update = 0;
 
-const void *generic_window_handle = nullptr;
 int32 acceptFileDrop = 0;
 #ifdef QB64_WINDOWS
 HDROP hdrop = NULL;
@@ -12873,29 +12872,6 @@ int32 func__blink() {
     return -H3C0_blink_enable;
 }
 
-uintptr_t func__windowhandle() {
-#ifdef QB64_WINDOWS
-#    ifdef DEPENDENCY_CONSOLE_ONLY
-    if (!generic_window_handle) {
-        char pszConsoleTitle[1024];
-        GetConsoleTitle(pszConsoleTitle, 1024);
-        generic_window_handle = FindWindow(NULL, pszConsoleTitle);
-    }
-    return reinterpret_cast<uintptr_t>(generic_window_handle);
-#    endif
-#endif
-
-#ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
-
-    generic_window_handle = GLUTEmu_WindowGetNativeHandle(0);
-
-    return reinterpret_cast<uintptr_t>(generic_window_handle);
-#else
-    return 0;
-#endif
-}
-
 void set_foreground_window(ptrszint i) {
 #ifdef QB64_WINDOWS
     SetForegroundWindow((HWND)i);
@@ -20870,14 +20846,6 @@ void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
 #    endif     // DEPENDENCY_CONSOLE_ONLY
 } // sub__icon
 #endif // DEPENDENCY_ICON
-
-int32 func_windowexists() {
-#ifdef QB64_GUI
-    return QB_BOOL(libqb_is_glut_up());
-#else
-    return QB_TRUE;
-#endif
-}
 
 int32 func__autodisplay() {
     return QB_BOOL(autodisplay);

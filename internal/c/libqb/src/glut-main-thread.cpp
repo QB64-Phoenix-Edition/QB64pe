@@ -6,6 +6,7 @@
 #include "keyboard.h"
 #include "logging.h"
 #include "thread.h"
+#include "window.h"
 #include <cstdint>
 #include <cstdlib>
 
@@ -13,11 +14,9 @@
 // somewhere more global so that they can be referenced by libqb.cpp
 extern int32_t framebufferobjects_supported;
 extern int32_t screen_hide;
-extern const void *generic_window_handle;
 
 extern void MAIN_LOOP(void *);
 extern void GLUT_EXIT_FUNC();
-extern void GLUT_RESIZE_FUNC(int width, int height);
 extern void GLUT_DISPLAY_REQUEST();
 extern void GLUT_IDLE_FUNC();
 extern void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers);
