@@ -1,4 +1,5 @@
 #include "error_handle.h"
+#include "libqb-common.h"
 #include "window.h"
 
 // Most of these are stubs, but we could wire these up to to a library to do something useful in the future

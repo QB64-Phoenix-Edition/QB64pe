@@ -1,6 +1,7 @@
 #include "error_handle.h"
 #include "glut-thread.h"
 #include "graphics.h"
+#include "libqb-common.h"
 #include "window.h"
 #include <string>
 #include <string_view>
