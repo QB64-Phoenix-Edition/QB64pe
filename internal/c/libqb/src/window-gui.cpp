@@ -224,12 +224,10 @@ int32_t func__resizeheight() {
 }
 
 int32_t func__desktopwidth() {
-    OPTIONAL_GLUT(0);
     return std::get<0>(GLUTEmu_ScreenGetMode());
 }
 
 int32_t func__desktopheight() {
-    OPTIONAL_GLUT(0);
     return std::get<1>(GLUTEmu_ScreenGetMode());
 }
 
