@@ -82,7 +82,6 @@ int32 force_display_update = 0;
 //...
 
 // forward references
-void set_view(int32 new_mode);
 void set_render_source(int32 new_handle);
 void set_render_dest(int32 new_handle);
 
@@ -25152,8 +25151,8 @@ void set_cull_mode(int32 new_mode) {
     render_state.cull_mode = new_mode;
 }
 
-void set_view(int32 new_mode) { // set view can only be called after the correct
-                                // destination is chosen
+void set_view(int32_t new_mode) { // set view can only be called after the correct
+                                  // destination is chosen
     static int32 current_mode;
     current_mode = render_state.view_mode;
     if (new_mode == current_mode)

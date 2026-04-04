@@ -194,6 +194,8 @@ struct hardware_graphics_command_struct {
 #define HARDWARE_GRAPHICS_COMMAND__MAPTRIANGLE3D 5
 #define HARDWARE_GRAPHICS_COMMAND__CLEAR_DEPTHBUFFER 6
 
+void set_view(int32_t new_mode);
+
 uint32_t func__hsb32(double hue, double sat, double bri);
 uint32_t func__hsba32(double hue, double sat, double bri, double alf);
 double func__hue32(uint32_t argb);

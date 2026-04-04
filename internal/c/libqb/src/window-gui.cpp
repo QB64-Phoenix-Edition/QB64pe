@@ -1,13 +1,13 @@
-#include "window.h"
 #include "error_handle.h"
 #include "glut-thread.h"
 #include "graphics.h"
+#include "window.h"
 #include <string>
+#include <string_view>
 #include <vector>
 
 extern int32_t force_display_update;
 extern int32_t screen_hide;
-extern void set_view(int32_t new_mode);
 
 int32_t environment__window_width = 0;
 int32_t environment__window_height = 0;
@@ -38,14 +38,13 @@ int32_t display_required_y = 400;
 int32_t full_screen = 0;      // 0,1(stretched/closest),2(1:1)
 int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
 
-static const void *generic_window_handle = nullptr;
 static int32_t acceptFileDrop = 0;
 static int32_t droppedFileIndex = -1;
 static std::vector<std::string> droppedFiles;
 
 // GLFW_TODO: Implement a func_screenrefreshrate() function
 
-void sync_resize_auto_aspect_constraint() {
+static void sync_resize_auto_aspect_constraint() {
     static int32_t last_constraint_enabled = -1;
     static int32_t last_constraint_w = 0;
     static int32_t last_constraint_h = 0;
@@ -142,6 +141,8 @@ void window_update_environment_size() {
 }
 
 void sub__fullscreen(int32_t method, int32_t passed) {
+    // ref: "[{_OFF|_STRETCH|_SQUAREPIXELS|OFF}][, _SMOOTH]"
+    //          1      2           3        4         1
     int32_t x = 0;
     if (method == 0)
         x = 1;
@@ -161,6 +162,8 @@ void sub__fullscreen(int32_t method, int32_t passed) {
 }
 
 void sub__allowfullscreen(int32_t method, int32_t smooth) {
+    // ref: "[{_STRETCH|_SQUAREPIXELS|_OFF|_ALL|OFF}][, _SMOOTH|_OFF|_ALL|OFF]"
+    //            1          2         3    4   5         1      2    3   4
     fullscreen_allowedmode = method;
     if (method == 3 || method == 5)
         fullscreen_allowedmode = -1;
@@ -185,15 +188,17 @@ int32_t func__fullscreensmooth() {
 }
 
 void sub__resize(int32_t on_off, int32_t stretch_smooth) {
+    //                   0 1  2          0 1       2
     if (on_off == 1)
         resize_snapback = 0;
     if (on_off == 2)
         resize_snapback = 1;
+    // no change if omitted
 
     if (stretch_smooth) {
         resize_auto = stretch_smooth;
     } else {
-        resize_auto = 0;
+        resize_auto = 0; // revert if omitted
     }
 
     sync_resize_auto_aspect_constraint();
@@ -201,7 +206,7 @@ void sub__resize(int32_t on_off, int32_t stretch_smooth) {
 
 int32_t func__resize() {
     if (resize_snapback)
-        return 0;
+        return 0; // resize must be enabled
     if (resize_event) {
         resize_event = 0;
         return -1;
@@ -218,58 +223,38 @@ int32_t func__resizeheight() {
 }
 
 int32_t func__desktopwidth() {
-#ifdef QB64_GUI
+    OPTIONAL_GLUT(0);
     return std::get<0>(GLUTEmu_ScreenGetMode());
-#else
-    return 0;
-#endif
 }
 
 int32_t func__desktopheight() {
-#ifdef QB64_GUI
+    OPTIONAL_GLUT(0);
     return std::get<1>(GLUTEmu_ScreenGetMode());
-#else
-    return 0;
-#endif
 }
 
 void sub_screenicon() {
-#ifdef QB64_GUI
     NEEDS_GLUT();
     GLUTEmu_WindowMinimize();
-#endif
 }
 
 int32_t func_screenicon() {
-#ifdef QB64_GUI
+    OPTIONAL_GLUT(QB_FALSE);
     return QB_BOOL(GLUTEmu_WindowIsMinimized());
-#else
-    return QB_FALSE;
-#endif
 }
 
 int32_t func__hasfocus() {
-#ifdef QB64_GUI
     OPTIONAL_GLUT(QB_FALSE);
     return QB_BOOL(GLUTEmu_WindowIsFocused());
-#endif
-    return QB_TRUE;
 }
 
 int32_t func__screenx() {
-#ifdef QB64_GUI
     NEEDS_GLUT(0);
     return GLUTEmu_WindowGetPosition().first;
-#endif
-    return 0;
 }
 
 int32_t func__screeny() {
-#ifdef QB64_GUI
     NEEDS_GLUT(0);
     return GLUTEmu_WindowGetPosition().second;
-#endif
-    return 0;
 }
 
 void sub__screenmove(int32_t x, int32_t y, int32_t passed) {
@@ -282,7 +267,6 @@ void sub__screenmove(int32_t x, int32_t y, int32_t passed) {
         return;
     }
 
-#ifdef QB64_GUI
     NEEDS_GLUT();
 
     if (passed == 2) {
@@ -290,25 +274,23 @@ void sub__screenmove(int32_t x, int32_t y, int32_t passed) {
     } else {
         GLUTEmu_WindowCenter();
     }
-#endif
 }
 
 void sub__screenshow() {
-#ifdef QB64_GUI
     screen_hide = 0;
+
+    // $SCREENHIDE programs will not have the window running
     libqb_start_glut_thread();
     GLUTEmu_WindowHide(false);
-#endif
 }
 
 void sub__screenhide() {
     if (screen_hide)
         return;
 
-#ifdef QB64_GUI
+    // This is probably unnecessary, no conditions allow for screen_hide==0 without GLUT running, but it doesn't hurt anything.
     libqb_start_glut_thread();
     GLUTEmu_WindowHide(true);
-#endif
 
     screen_hide = 1;
 }
@@ -348,7 +330,6 @@ void GLUT_DROPFILES_FUNC(int count, const char *paths[]) {
 }
 
 void sub__filedrop(int32_t on_off) {
-#ifdef QB64_GUI
     if (on_off == 2) {
         acceptFileDrop = 0;
         sub__finishdrop();
@@ -358,9 +339,6 @@ void sub__filedrop(int32_t on_off) {
     if ((on_off == 0) || (on_off == 1)) {
         acceptFileDrop = -1;
     }
-#else
-    static_cast<void>(on_off);
-#endif
 }
 
 int32_t func__filedrop() {
@@ -407,32 +385,15 @@ qbs *func__droppedfile(int32_t fileIndex, int32_t passed) {
 }
 
 uintptr_t func__windowhandle() {
-#ifdef QB64_WINDOWS
-#    ifdef DEPENDENCY_CONSOLE_ONLY
+    static const void *generic_window_handle = nullptr;
+
     if (!generic_window_handle) {
-        char pszConsoleTitle[1024];
-        GetConsoleTitle(pszConsoleTitle, 1024);
-        generic_window_handle = FindWindow(NULL, pszConsoleTitle);
+        generic_window_handle = GLUTEmu_WindowGetNativeHandle(0);
     }
-    return reinterpret_cast<uintptr_t>(generic_window_handle);
-#    endif
-#endif
-
-#ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
-
-    generic_window_handle = GLUTEmu_WindowGetNativeHandle(0);
 
     return reinterpret_cast<uintptr_t>(generic_window_handle);
-#else
-    return 0;
-#endif
 }
 
 int32_t func_windowexists() {
-#ifdef QB64_GUI
     return QB_BOOL(libqb_is_glut_up());
-#else
-    return QB_TRUE;
-#endif
 }

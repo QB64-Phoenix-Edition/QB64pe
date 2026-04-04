@@ -25,7 +25,8 @@ libqb-objs-y += $(PATH_LIBQB)/src/qbs_val.o
 libqb-objs-y += $(PATH_LIBQB)/src/string_functions.o
 libqb-objs-y += $(PATH_LIBQB)/src/graphics.o
 libqb-objs-y += $(PATH_LIBQB)/src/glut-emu.o
-libqb-objs-y += $(PATH_LIBQB)/src/window.o
+libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/window-gui.o
+libqb-objs-$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/window-console.o
 
 libqb-objs-y += $(PATH_LIBQB)/src/logging/logging.o
 libqb-objs-y += $(PATH_LIBQB)/src/logging/qb64pe_symbol.o
@@ -46,9 +47,8 @@ libqb-objs-y$(DEP_HTTP) += $(PATH_LIBQB)/src/qb_http-stub.o
 
 libqb-objs-y += $(PATH_LIBQB)/src/threading-$(PLATFORM).o
 
-libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/glut-main-thread.o
-
-libqb-objs-$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/console-only-main-thread.o
+libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/main-thread-gui.o
+libqb-objs-$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/main-thread-console.o
 
 $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall -Wextra $< -c -o $@

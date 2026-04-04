@@ -30,6 +30,7 @@
 #include "qbs.h"
 #include "rounding.h"
 #include "shell.h"
+#include "window.h"
 
 extern int32 func__cinp(int32 toggle, int32 passed); // Console INP scan code reader
 extern void sub__consolefont(qbs *FontName, int FontSize);
@@ -72,21 +73,10 @@ extern int32 func__scaledheight();
 
 extern void sub__fps(double fps, int32 passed);
 
-extern void sub__resize(int32 on_off, int32 stretch_smooth);
-extern int32 func__resize();
-extern int32 func__resizewidth();
-extern int32 func__resizeheight();
-
-extern void sub__title(qbs *title);
 extern void sub__echo(qbs *message);
 extern qbs *func__readfile(qbs *filespec);
 extern void sub__writefile(qbs *filespec, qbs *contents);
 extern void sub__assert(int32 expression, qbs *assert_message, int32 passed);
-extern void sub__finishdrop();
-extern int32 func__filedrop();
-extern void sub__filedrop(int32 on_off = NULL);
-extern int32 func__totaldroppedfiles();
-extern qbs *func__droppedfile(int32 fileIndex, int32 passed);
 
 extern qbs *func__embedded(qbs *handle);
 
@@ -98,24 +88,13 @@ extern int64 GetTicks();
 extern mem_block func__memimage(int32, int32);
 
 extern void sub__consoletitle(qbs *);
-extern void sub__screenshow();
-extern void sub__screenhide();
-extern int32 func__screenhide();
-extern int32 func_windowexists();
-extern int32 func_screenicon();
-extern int32_t func__desktopwidth();
-extern int32_t func__desktopheight();
-extern void sub_screenicon();
 extern void sub__console(int32);
 extern int32 func__console();
 extern void sub__controlchr(int32);
 extern int32 func__controlchr();
 extern void sub__blink(int32);
 extern int32 func__blink();
-extern int32 func__hasfocus();
 extern void set_foreground_window(ptrszint i);
-extern qbs *func__title();
-extern uintptr_t func__windowhandle();
 extern int32 func_stick(int32 i, int32 axis_group, int32 passed);
 extern int32 func_strig(int32 i, int32 controller, int32 passed);
 extern void sub_paletteusing(void *element, int32 bits);
@@ -125,9 +104,6 @@ extern void key_on();
 extern void key_off();
 extern void key_list();
 extern void key_assign(int32 i, qbs *str);
-extern int32_t func__screeny();
-extern int32_t func__screenx();
-extern void sub__screenmove(int32 x, int32 y, int32 passed);
 extern void sub__mousemove(float x, float y);
 extern qbs *func__os();
 extern qbs *func__compdate();
@@ -145,10 +121,6 @@ extern void sub_lock(int32 i, int64 start, int64 end, int32 passed);
 extern void sub_unlock(int32 i, int64 start, int64 end, int32 passed);
 void chain_restorescreenstate(int32);
 void chain_savescreenstate(int32);
-extern void sub__fullscreen(int32 method, int32 passed);
-extern void sub__allowfullscreen(int32 method, int32 smooth);
-extern int32 func__fullscreen();
-extern int32 func__fullscreensmooth();
 extern int32 func__exit();
 extern void revert_input_check();
 extern int32 func__openhost(qbs *);

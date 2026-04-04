@@ -31,7 +31,6 @@ extern int32_t display_required_y;
 extern int32_t full_screen;
 extern int32_t full_screen_set;
 
-void sync_resize_auto_aspect_constraint();
 void window_update_for_frame(int32_t frame_width, int32_t frame_height);
 void window_update_environment_size();
 void GLUT_RESIZE_FUNC(int width, int height);
