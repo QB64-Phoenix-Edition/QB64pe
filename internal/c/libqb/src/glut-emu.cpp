@@ -40,7 +40,7 @@ class GLUTEmu {
     class Message {
       public:
         void Finish() {
-            if (finished) {
+            if (finished != nullptr) {
                 completion_finish(finished);
             } else {
                 delete this;
@@ -52,7 +52,7 @@ class GLUTEmu {
         }
 
         virtual ~Message() {
-            if (finished) {
+            if (finished != nullptr) {
                 completion_wait(finished);
                 completion_clear(finished);
                 delete finished;
@@ -412,17 +412,17 @@ class GLUTEmu {
     template <typename T> void WindowSetHint(GLUTEmu_WindowHint hint, T value) const {
         if (std::this_thread::get_id() == mainThreadId) {
             if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int>) {
-                glfwWindowHint(int(hint), value);
-                libqb_log_trace("Window hint set: %d = %d", hint, value);
+                glfwWindowHint(static_cast<int>(hint), value);
+                libqb_log_trace("Window hint set: %d = %d", static_cast<int>(hint), value);
             } else if constexpr (std::is_same_v<T, bool>) {
-                glfwWindowHint(int(hint), value ? GLFW_TRUE : GLFW_FALSE);
-                libqb_log_trace("Window hint set: %d = %s", hint, value ? "true" : "false");
+                glfwWindowHint(static_cast<int>(hint), value ? GLFW_TRUE : GLFW_FALSE);
+                libqb_log_trace("Window hint set: %d = %s", static_cast<int>(hint), value ? "true" : "false");
             } else if constexpr (std::is_same_v<T, const char *> || std::is_same_v<T, char *>) {
-                glfwWindowHintString(int(hint), value);
-                libqb_log_trace("Window hint set: %d = '%s'", hint, value);
+                glfwWindowHintString(static_cast<int>(hint), value);
+                libqb_log_trace("Window hint set: %d = '%s'", static_cast<int>(hint), value);
             } else if constexpr (std::is_same_v<T, GLUTEmu_WindowHintValue>) {
-                glfwWindowHint(int(hint), int(value));
-                libqb_log_trace("Window hint set: %d = %d", hint, int(value));
+                glfwWindowHint(static_cast<int>(hint), static_cast<int>(value));
+                libqb_log_trace("Window hint set: %d = %d", static_cast<int>(hint), static_cast<int>(value));
             } else {
                 static_assert(!sizeof(T), "Unsupported type");
             }
@@ -431,20 +431,20 @@ class GLUTEmu {
         }
     }
 
-    bool WindowCreate(int width, int height) {
-        if (window) {
+    [[nodiscard]] bool WindowCreate(int width, int height) {
+        if (window != nullptr) {
             // GLFW_TODO: sure we can; maybe we'll use it in a future version of QB64-PE
             libqb_log_error("Window already created, cannot create another window");
         } else {
             if (std::this_thread::get_id() == mainThreadId) {
                 // GLFW creates the window using screen coordinates, so we need to fix it below
                 window = glfwCreateWindow(width, height, windowTitle.empty() ? "Untitled" : windowTitle.c_str(), nullptr, nullptr);
-                if (window) {
+                if (window != nullptr) {
                     glfwSetWindowUserPointer(window, this);
                     glfwMakeContextCurrent(window);
 
                     auto version = gladLoadGL(glfwGetProcAddress);
-                    if (!version) {
+                    if (version == 0) {
                         libqb_log_error("Failed to initialize OpenGL context");
                         glfwDestroyWindow(window);
                         window = nullptr;
@@ -463,7 +463,7 @@ class GLUTEmu {
                     // Get the current window content scale and set a callback to track changes
                     glfwGetWindowContentScale(window, &windowScaleX, &windowScaleY);
                     glfwSetWindowContentScaleCallback(window, [](GLFWwindow *win, float xScale, float yScale) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->windowScaleX = xScale;
                         instance->windowScaleY = yScale;
                         instance->monitor = instance->WindowGetCurrentMonitorInfo();
@@ -476,7 +476,7 @@ class GLUTEmu {
                     windowWidth = ToPixelCoordsX(windowWidth);
                     windowHeight = ToPixelCoordsY(windowHeight);
                     glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->windowWidth = instance->ToPixelCoordsX(width);
                         instance->windowHeight = instance->ToPixelCoordsY(height);
 
@@ -503,7 +503,7 @@ class GLUTEmu {
                     windowX = ToPixelDesktopCoordsX(windowX);
                     windowY = ToPixelDesktopCoordsY(windowY);
                     glfwSetWindowPosCallback(window, [](GLFWwindow *win, int x, int y) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->windowX = instance->ToPixelDesktopCoordsX(x);
                         instance->windowY = instance->ToPixelDesktopCoordsY(y);
                         instance->monitor = instance->WindowGetCurrentMonitorInfo();
@@ -513,7 +513,7 @@ class GLUTEmu {
 
                     // Get the framebuffer size (already in pixels) and set a callback to track changes
                     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->framebufferWidth = width;
                         instance->framebufferHeight = height;
 
@@ -526,28 +526,28 @@ class GLUTEmu {
 
                     // Set a hook into the maximization callback to track restore events
                     glfwSetWindowMaximizeCallback(window, [](GLFWwindow *win, int maximized) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         glfwGetWindowSize(instance->window, &instance->windowWidth, &instance->windowHeight);
                         instance->windowWidth = instance->ToPixelCoordsX(instance->windowWidth);
                         instance->windowHeight = instance->ToPixelCoordsY(instance->windowHeight);
-                        instance->isWindowMaximized = bool(maximized);
+                        instance->isWindowMaximized = (maximized == GLFW_TRUE);
 
                         libqb_log_trace("Window %s", maximized ? "maximized" : "restored");
 
                         if (instance->windowMaximizedFunction) {
-                            instance->windowMaximizedFunction(instance->windowWidth, instance->windowHeight, bool(maximized));
+                            instance->windowMaximizedFunction(instance->windowWidth, instance->windowHeight, (maximized == GLFW_TRUE));
                         }
                     });
 
                     // Set a hook into the minimization callback to track restore events
                     glfwSetWindowIconifyCallback(window, [](GLFWwindow *win, int iconified) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->isWindowMinimized = bool(iconified);
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        instance->isWindowMinimized = (iconified == GLFW_TRUE);
 
-                        libqb_log_trace("Window %s", iconified ? "minimized" : "restored");
+                        libqb_log_trace("Window %s", iconified == GLFW_TRUE ? "minimized" : "restored");
 
                         if (instance->windowMinimizedFunction) {
-                            if (iconified) {
+                            if (iconified == GLFW_TRUE) {
                                 instance->windowMinimizedFunction(instance->windowWidth, instance->windowHeight, true);
                             } else {
                                 glfwGetWindowSize(instance->window, &instance->windowWidth, &instance->windowHeight);
@@ -559,15 +559,15 @@ class GLUTEmu {
                     });
 
                     // Get and save the window focus state and set a callback to track changes
-                    isWindowFocused = bool(glfwGetWindowAttrib(window, GLFW_FOCUSED));
+                    isWindowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) == GLFW_TRUE);
                     glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->isWindowFocused = bool(focused);
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        instance->isWindowFocused = (focused == GLFW_TRUE);
 
-                        libqb_log_trace("Window %s", focused ? "focused" : "unfocused");
+                        libqb_log_trace("Window %s", focused == GLFW_TRUE ? "focused" : "unfocused");
 
                         if (instance->windowFocusedFunction) {
-                            instance->windowFocusedFunction(bool(focused));
+                            instance->windowFocusedFunction(focused == GLFW_TRUE);
                         }
                     });
 
@@ -577,9 +577,9 @@ class GLUTEmu {
                     keyboardModifiers = KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::NumLock, keyboardModifiers);
                     keyboardModifiers = KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, keyboardModifiers);
                     glfwSetKeyCallback(window, [](GLFWwindow *win, int key, int scancode, int action, int mods) {
-                        auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
-                        if (key == int(GLUTEmu_KeyboardKey::ScrollLock) && action == GLFW_RELEASE) {
+                        if (key == static_cast<int>(GLUTEmu_KeyboardKey::ScrollLock) && action == GLFW_RELEASE) {
                             instance->keyboardScrollLockState = !instance->keyboardScrollLockState;
                         }
 #endif
@@ -589,7 +589,7 @@ class GLUTEmu {
                         }
                     });
 
-                    if (glfwRawMouseMotionSupported()) {
+                    if (glfwRawMouseMotionSupported() == GLFW_TRUE) {
                         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
                         libqb_log_trace("Raw mouse motion supported and enabled");
                     } else {
@@ -598,14 +598,14 @@ class GLUTEmu {
                     }
 
                     // Refresh state variables
-                    isWindowFullscreen = glfwGetWindowMonitor(window) != nullptr;
-                    isWindowMaximized = bool(glfwGetWindowAttrib(window, GLFW_MAXIMIZED));
-                    isWindowMinimized = bool(glfwGetWindowAttrib(window, GLFW_ICONIFIED));
-                    isWindowFocused = bool(glfwGetWindowAttrib(window, GLFW_FOCUSED));
-                    isWindowHidden = !glfwGetWindowAttrib(window, GLFW_VISIBLE);
-                    isWindowFloating = bool(glfwGetWindowAttrib(window, GLFW_FLOATING));
-                    isWindowBordered = bool(glfwGetWindowAttrib(window, GLFW_DECORATED));
-                    isWindowMousePassthrough = bool(glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH));
+                    isWindowFullscreen = (glfwGetWindowMonitor(window) != nullptr);
+                    isWindowMaximized = (glfwGetWindowAttrib(window, GLFW_MAXIMIZED) == GLFW_TRUE);
+                    isWindowMinimized = (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE);
+                    isWindowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) == GLFW_TRUE);
+                    isWindowHidden = (glfwGetWindowAttrib(window, GLFW_VISIBLE) == GLFW_FALSE);
+                    isWindowFloating = (glfwGetWindowAttrib(window, GLFW_FLOATING) == GLFW_TRUE);
+                    isWindowBordered = (glfwGetWindowAttrib(window, GLFW_DECORATED) == GLFW_TRUE);
+                    isWindowMousePassthrough = (glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE);
                     windowOpacity = glfwGetWindowOpacity(window);
 
                     libqb_log_trace("Window created (%u x %u)", width, height);
@@ -622,13 +622,13 @@ class GLUTEmu {
         return false;
     }
 
-    bool WindowIsCreated() const {
+    [[nodiscard]] bool WindowIsCreated() const {
         return window != nullptr;
     }
 
     void WindowSetTitle(std::string_view title) {
         windowTitle = title;
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowTitle(window, windowTitle.c_str());
             windowTitle = glfwGetWindowTitle(window);
         } else {
@@ -636,12 +636,12 @@ class GLUTEmu {
         }
     }
 
-    std::string_view WindowGetTitle() const {
-        return std::string_view(windowTitle.data(), windowTitle.size());
+    [[nodiscard]] std::string_view WindowGetTitle() const {
+        return {windowTitle.data(), windowTitle.size()};
     }
 
     void WindowSetIcon(int32_t imageHandle) const {
-        if (window) {
+        if (window != nullptr) {
             // GLFW_TODO: implement icon support
             libqb_log_warn("WindowSetIcon is not implemented");
         } else {
@@ -650,61 +650,59 @@ class GLUTEmu {
     }
 
     void WindowFullscreen(bool fullscreen) {
-        if (window) {
+        if (window != nullptr) {
             monitor = WindowGetCurrentMonitorInfo();
+            if (monitor != nullptr) {
+                if (fullscreen) {
+                    if (isWindowFullscreen) {
+                        libqb_log_trace("Window already in fullscreen mode, ignoring request");
+                    } else {
+                        libqb_log_trace("Entering fullscreen mode");
 
-            if (!monitor) {
-                libqb_log_error("No monitor available");
-                return;
-            }
+                        if (isWindowMaximized || isWindowMinimized) {
+                            glfwRestoreWindow(window);
+                        }
 
-            if (fullscreen) {
-                if (isWindowFullscreen) {
-                    libqb_log_trace("Window already in fullscreen mode, ignoring request");
+                        glfwGetWindowPos(window, &windowedX, &windowedY);
+                        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+                        const auto *mode = glfwGetVideoMode(monitor);
+                        if (mode == nullptr) {
+                            libqb_log_error("Failed to query monitor video mode");
+                            return;
+                        }
+                        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+                        isWindowFullscreen = glfwGetWindowMonitor(window) != nullptr;
+                    }
                 } else {
-                    libqb_log_trace("Entering fullscreen mode");
+                    if (isWindowFullscreen) {
+                        libqb_log_trace("Exiting fullscreen mode");
 
-                    if (isWindowMaximized || isWindowMinimized) {
-                        glfwRestoreWindow(window);
-                    }
+                        glfwSetWindowMonitor(window, nullptr, windowedX, windowedY, windowedWidth, windowedHeight, 0);
+                        isWindowFullscreen = glfwGetWindowMonitor(window) != nullptr;
 
-                    glfwGetWindowPos(window, &windowedX, &windowedY);
-                    glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
-                    auto mode = glfwGetVideoMode(monitor);
-                    if (!mode) {
-                        libqb_log_error("Failed to query monitor video mode");
-                        return;
+                        if (!isWindowFullscreen && isWindowMaximized) {
+                            glfwMaximizeWindow(window);
+                        }
+                    } else {
+                        libqb_log_trace("Window already in windowed mode, ignoring request");
                     }
-                    glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-                    isWindowFullscreen = glfwGetWindowMonitor(window) != nullptr;
                 }
             } else {
-                if (isWindowFullscreen) {
-                    libqb_log_trace("Exiting fullscreen mode");
-
-                    glfwSetWindowMonitor(window, nullptr, windowedX, windowedY, windowedWidth, windowedHeight, 0);
-                    isWindowFullscreen = glfwGetWindowMonitor(window) != nullptr;
-
-                    if (!isWindowFullscreen && isWindowMaximized) {
-                        glfwMaximizeWindow(window);
-                    }
-                } else {
-                    libqb_log_trace("Window already in windowed mode, ignoring request");
-                }
+                libqb_log_error("No monitor available");
             }
         } else {
             libqb_log_error("Window not created, cannot set fullscreen");
         }
     }
 
-    bool WindowIsFullscreen() const {
+    [[nodiscard]] bool WindowIsFullscreen() const {
         return isWindowFullscreen;
     }
 
     void WindowMaximize() {
-        if (window) {
+        if (window != nullptr) {
             glfwMaximizeWindow(window);
-            isWindowMaximized = bool(glfwGetWindowAttrib(window, GLFW_MAXIMIZED));
+            isWindowMaximized = (glfwGetWindowAttrib(window, GLFW_MAXIMIZED) == GLFW_TRUE);
 
             libqb_log_trace("Window maximized");
         } else {
@@ -712,14 +710,14 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsMaximized() const {
+    [[nodiscard]] bool WindowIsMaximized() const {
         return isWindowMaximized;
     }
 
     void WindowMinimize() {
-        if (window) {
+        if (window != nullptr) {
             glfwIconifyWindow(window);
-            isWindowMinimized = bool(glfwGetWindowAttrib(window, GLFW_ICONIFIED));
+            isWindowMinimized = (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE);
 
             libqb_log_trace("Window minimized");
         } else {
@@ -727,15 +725,15 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsMinimized() const {
+    [[nodiscard]] bool WindowIsMinimized() const {
         return isWindowMinimized;
     }
 
     void WindowRestore() {
-        if (window) {
+        if (window != nullptr) {
             glfwRestoreWindow(window);
-            isWindowMaximized = bool(glfwGetWindowAttrib(window, GLFW_MAXIMIZED));
-            isWindowMinimized = bool(glfwGetWindowAttrib(window, GLFW_ICONIFIED));
+            isWindowMaximized = (glfwGetWindowAttrib(window, GLFW_MAXIMIZED) == GLFW_TRUE);
+            isWindowMinimized = (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE);
 
             libqb_log_trace("Window restored");
         } else {
@@ -743,19 +741,19 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsRestored() const {
+    [[nodiscard]] bool WindowIsRestored() const {
         return !isWindowMaximized && !isWindowMinimized;
     }
 
     void WindowHide(bool hide) {
-        if (window) {
+        if (window != nullptr) {
             if (hide) {
                 glfwHideWindow(window);
             } else {
                 glfwShowWindow(window);
             }
 
-            isWindowHidden = !glfwGetWindowAttrib(window, GLFW_VISIBLE);
+            isWindowHidden = (glfwGetWindowAttrib(window, GLFW_VISIBLE) == GLFW_FALSE);
 
             libqb_log_trace("Window %s", isWindowHidden ? "hidden" : "shown");
         } else {
@@ -763,8 +761,8 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsHidden() const {
-        if (window) {
+    [[nodiscard]] bool WindowIsHidden() const {
+        if (window != nullptr) {
             return isWindowHidden;
         } else {
             libqb_log_error("Window not created, cannot check visibility");
@@ -774,9 +772,9 @@ class GLUTEmu {
     }
 
     void WindowFocus() {
-        if (window) {
+        if (window != nullptr) {
             glfwFocusWindow(window);
-            isWindowFocused = bool(glfwGetWindowAttrib(window, GLFW_FOCUSED));
+            isWindowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) == GLFW_TRUE);
 
             libqb_log_trace("Window focused");
         } else {
@@ -784,14 +782,14 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsFocused() const {
+    [[nodiscard]] bool WindowIsFocused() const {
         return isWindowFocused;
     }
 
     void WindowSetFloating(bool floating) {
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowAttrib(window, GLFW_FLOATING, floating ? GLFW_TRUE : GLFW_FALSE);
-            isWindowFloating = bool(glfwGetWindowAttrib(window, GLFW_FLOATING));
+            isWindowFloating = (glfwGetWindowAttrib(window, GLFW_FLOATING) == GLFW_TRUE);
 
             libqb_log_trace("Window floating state set to %s", isWindowFloating ? "true" : "false");
         } else {
@@ -799,12 +797,12 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsFloating() const {
+    [[nodiscard]] bool WindowIsFloating() const {
         return isWindowFloating;
     }
 
     void WindowSetOpacity(float opacity) {
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowOpacity(window, opacity);
             windowOpacity = glfwGetWindowOpacity(window);
 
@@ -814,14 +812,14 @@ class GLUTEmu {
         }
     }
 
-    float WindowGetOpacity() const {
+    [[nodiscard]] float WindowGetOpacity() const {
         return windowOpacity;
     }
 
     void WindowSetBordered(bool bordered) {
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowAttrib(window, GLFW_DECORATED, bordered ? GLFW_TRUE : GLFW_FALSE);
-            isWindowBordered = bool(glfwGetWindowAttrib(window, GLFW_DECORATED));
+            isWindowBordered = (glfwGetWindowAttrib(window, GLFW_DECORATED) == GLFW_TRUE);
 
             libqb_log_trace("Window border state set to %s", isWindowBordered ? "true" : "false");
         } else {
@@ -829,27 +827,27 @@ class GLUTEmu {
         }
     }
 
-    bool WindowIsBordered() const {
+    [[nodiscard]] bool WindowIsBordered() const {
         return isWindowBordered;
     }
 
     void WindowSetMousePassthrough(bool passthrough) {
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH, passthrough ? GLFW_TRUE : GLFW_FALSE);
-            isWindowMousePassthrough = bool(glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH));
+            isWindowMousePassthrough = (glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE);
 
-            libqb_log_trace("Window mouse passthrough set to %s", passthrough ? "true" : "false");
+            libqb_log_trace("Window mouse passthrough set to %s", isWindowMousePassthrough ? "true" : "false");
         } else {
             libqb_log_error("Window not created, cannot set mouse passthrough");
         }
     }
 
-    bool WindowAllowsMousePassthrough() const {
+    [[nodiscard]] bool WindowAllowsMousePassthrough() const {
         return isWindowMousePassthrough;
     }
 
     void WindowResize(int width, int height) {
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowSize(window, ToScreenCoordsX(width), ToScreenCoordsY(height));
 
             libqb_log_trace("Window resized to (%d x %d)", width, height);
@@ -858,16 +856,16 @@ class GLUTEmu {
         }
     }
 
-    std::pair<int, int> WindowGetSize() const {
+    [[nodiscard]] std::pair<int, int> WindowGetSize() const {
         return {windowWidth, windowHeight};
     }
 
-    std::pair<int, int> WindowGetFramebufferSize() const {
+    [[nodiscard]] std::pair<int, int> WindowGetFramebufferSize() const {
         return {framebufferWidth, framebufferHeight};
     }
 
     void WindowMove(int x, int y) {
-        if (window) {
+        if (window != nullptr) {
             glfwSetWindowPos(window, ToScreenDesktopCoordsX(x), ToScreenDesktopCoordsY(y));
 
             libqb_log_trace("Window moved to (%d, %d)", x, y);
@@ -876,12 +874,12 @@ class GLUTEmu {
         }
     }
 
-    std::pair<int, int> WindowGetPosition() const {
+    [[nodiscard]] std::pair<int, int> WindowGetPosition() const {
         return {windowX, windowY};
     }
 
     void WindowCenter() {
-        if (monitor && window && !isWindowFullscreen && !isWindowMaximized && !isWindowMinimized && !isWindowHidden) {
+        if ((monitor != nullptr) && (window != nullptr) && !isWindowFullscreen && !isWindowMaximized && !isWindowMinimized && !isWindowHidden) {
             int mx, my;
             glfwGetMonitorPos(monitor, &mx, &my);
 
@@ -891,8 +889,8 @@ class GLUTEmu {
             int ww, wh;
             glfwGetWindowSize(window, &ww, &wh);
 
-            auto x = mx + (mw - ww) / 2;
-            auto y = my + (mh - wh) / 2;
+            auto x = mx + ((mw - ww) / 2);
+            auto y = my + ((mh - wh) / 2);
             glfwSetWindowPos(window, x, y);
 
             libqb_log_trace("Window centered");
@@ -902,7 +900,7 @@ class GLUTEmu {
     }
 
     void WindowSetAspectRatio(int width, int height) {
-        if (window) {
+        if (window != nullptr) {
             width = (width < 0 ? GLFW_DONT_CARE : width);
             height = (height < 0 ? GLFW_DONT_CARE : height);
             glfwSetWindowAspectRatio(window, width, height);
@@ -914,7 +912,7 @@ class GLUTEmu {
     }
 
     void WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) const {
-        if (window) {
+        if (window != nullptr) {
             minWidth = (minWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(minWidth));
             minHeight = (minHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(minHeight));
             maxWidth = (maxWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(maxWidth));
@@ -929,8 +927,8 @@ class GLUTEmu {
     }
 
     void WindowSetShouldClose(bool shouldClose) const {
-        if (window) {
-            glfwSetWindowShouldClose(window, shouldClose);
+        if (window != nullptr) {
+            glfwSetWindowShouldClose(window, static_cast<int>(shouldClose));
 
             libqb_log_trace("Window should close set to %s", shouldClose ? "true" : "false");
         } else {
@@ -939,7 +937,7 @@ class GLUTEmu {
     }
 
     void WindowSwapBuffers() const {
-        if (window) {
+        if (window != nullptr) {
             glfwSwapBuffers(window);
         } else {
             libqb_log_error("Window not created, cannot swap buffers");
@@ -947,13 +945,13 @@ class GLUTEmu {
     }
 
     void WindowRefresh() {
-        if (windowRefreshFunction) {
+        if (windowRefreshFunction != nullptr) {
             windowRefreshFunction();
         }
     }
 
-    const void *WindowGetNativeHandle(int32_t type) const {
-        if (window) {
+    [[nodiscard]] const void *WindowGetNativeHandle(int32_t type) const {
+        if (window != nullptr) {
             switch (type) {
             case 1:
 #if defined(QB64_WINDOWS)
@@ -982,11 +980,11 @@ class GLUTEmu {
     }
 
     void WindowSetCloseFunction(GLUTEmu_CallbackWindowClose function) {
-        if (window) {
+        if (window != nullptr) {
             windowCloseFunction = function;
 
             glfwSetWindowCloseCallback(window, [](GLFWwindow *win) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->windowCloseFunction) {
                     instance->windowCloseFunction();
                 }
@@ -999,11 +997,11 @@ class GLUTEmu {
     }
 
     void WindowSetResizedFunction(GLUTEmu_CallbackWindowResized function) {
-        if (window) {
+        if (window != nullptr) {
             windowResizedFunction = function;
 
             // We are already listening for window size changes, but send the new size to the callback immediately
-            if (windowResizedFunction) {
+            if (windowResizedFunction != nullptr) {
                 windowResizedFunction(windowWidth, windowHeight);
             }
 
@@ -1014,11 +1012,11 @@ class GLUTEmu {
     }
 
     void WindowSetFramebufferResizedFunction(GLUTEmu_CallbackWindowFramebufferResized function) {
-        if (window) {
+        if (window != nullptr) {
             windowFramebufferResizedFunction = function;
 
             // We are already listening for framebuffer size changes, but send the new size to the callback immediately
-            if (windowFramebufferResizedFunction) {
+            if (windowFramebufferResizedFunction != nullptr) {
                 windowFramebufferResizedFunction(framebufferWidth, framebufferHeight);
             }
 
@@ -1029,7 +1027,7 @@ class GLUTEmu {
     }
 
     void WindowSetMaximizedFunction(GLUTEmu_CallbackWindowMaximized function) {
-        if (window) {
+        if (window != nullptr) {
             windowMaximizedFunction = function;
 
             // We are already listening for window maximization changes
@@ -1041,7 +1039,7 @@ class GLUTEmu {
     }
 
     void WindowSetMinimizedFunction(GLUTEmu_CallbackWindowMinimized function) {
-        if (window) {
+        if (window != nullptr) {
             windowMinimizedFunction = function;
 
             // We are already listening for window minimization changes
@@ -1053,7 +1051,7 @@ class GLUTEmu {
     }
 
     void WindowSetFocusedFunction(GLUTEmu_CallbackWindowFocused function) {
-        if (window) {
+        if (window != nullptr) {
             windowFocusedFunction = function;
 
             // We are already listening for window focus changes
@@ -1065,11 +1063,11 @@ class GLUTEmu {
     }
 
     void WindowSetRefreshFunction(GLUTEmu_CallbackWindowRefresh function) {
-        if (window) {
+        if (window != nullptr) {
             windowRefreshFunction = function;
 
             glfwSetWindowRefreshCallback(window, [](GLFWwindow *win) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->windowRefreshFunction) {
                     instance->windowRefreshFunction();
                 }
@@ -1082,7 +1080,7 @@ class GLUTEmu {
     }
 
     void WindowSetIdleFunction(GLUTEmu_CallbackWindowIdle function) {
-        if (window) {
+        if (window != nullptr) {
             windowIdleFunction = function;
 
             libqb_log_trace("Idle function set: %p", function);
@@ -1092,7 +1090,7 @@ class GLUTEmu {
     }
 
     void KeyboardSetButtonFunction(GLUTEmu_CallbackKeyboardButton function) {
-        if (window) {
+        if (window != nullptr) {
             keyboardButtonFunction = function;
 
             // We are already listening for keyboard events
@@ -1104,13 +1102,13 @@ class GLUTEmu {
     }
 
     void KeyboardSetCharacterFunction(GLUTEmu_CallbackKeyboardCharacter function) {
-        if (window) {
+        if (window != nullptr) {
             keyboardCharacterFunction = function;
 
             glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->keyboardCharacterFunction) {
-                    instance->keyboardCharacterFunction(char32_t(codepoint));
+                    instance->keyboardCharacterFunction(static_cast<char32_t>(codepoint));
                 }
             });
 
@@ -1120,20 +1118,20 @@ class GLUTEmu {
         }
     }
 
-    bool KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier modifier) const {
-        return bool(keyboardModifiers & modifier);
+    [[nodiscard]] bool KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier modifier) const {
+        return (keyboardModifiers & modifier) != 0;
     }
 
     bool MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
-        if (window) {
-            if (cursor) {
+        if (window != nullptr) {
+            if (cursor != nullptr) {
                 glfwDestroyCursor(cursor);
                 cursor = nullptr;
                 libqb_log_trace("Mouse cursor freed");
             }
 
-            cursor = glfwCreateStandardCursor(int(style));
-            if (cursor) {
+            cursor = glfwCreateStandardCursor(static_cast<int>(style));
+            if (cursor != nullptr) {
                 glfwSetCursor(window, cursor);
 
                 libqb_log_trace("Mouse cursor set to standard style %d", int(style));
@@ -1150,7 +1148,7 @@ class GLUTEmu {
     }
 
     bool MouseSetCustomCursor(int32_t imageHandle) {
-        if (window) {
+        if (window != nullptr) {
             // GLFW_TODO: implement custom bitmap cursor support
             libqb_log_warn("MouseSetCustomCursor is not implemented");
             return false;
@@ -1162,8 +1160,8 @@ class GLUTEmu {
     }
 
     void MouseSetCursorMode(GLUTEnum_MouseCursorMode mode) {
-        if (window) {
-            glfwSetInputMode(window, GLFW_CURSOR, int(mode));
+        if (window != nullptr) {
+            glfwSetInputMode(window, GLFW_CURSOR, static_cast<int>(mode));
             cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(window, GLFW_CURSOR));
 
             libqb_log_trace("Mouse cursor mode set to %d", int(mode));
@@ -1172,12 +1170,12 @@ class GLUTEmu {
         }
     }
 
-    GLUTEnum_MouseCursorMode MouseGetCursorMode() const {
+    [[nodiscard]] GLUTEnum_MouseCursorMode MouseGetCursorMode() const {
         return cursorMode;
     }
 
     void MouseMove(double x, double y) {
-        if (window) {
+        if (window != nullptr) {
             cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(window, GLFW_CURSOR));
             if (cursorMode == GLUTEnum_MouseCursorMode::Disabled) {
                 glfwSetCursorPos(window, x, y);
@@ -1192,11 +1190,11 @@ class GLUTEmu {
     }
 
     void MouseSetPositionFunction(GLUTEmu_CallbackMousePosition function) {
-        if (window) {
+        if (window != nullptr) {
             mousePositionFunction = function;
 
             glfwSetCursorPosCallback(window, [](GLFWwindow *win, double xPos, double yPos) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->mousePositionFunction) {
                     instance->cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(win, GLFW_CURSOR));
                     if (instance->cursorMode != GLUTEnum_MouseCursorMode::Disabled) {
@@ -1214,13 +1212,14 @@ class GLUTEmu {
     }
 
     void MouseSetButtonFunction(GLUTEmu_CallbackMouseButton function) {
-        if (window) {
+        if (window != nullptr) {
             mouseButtonFunction = function;
 
             glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int mods) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->mouseButtonFunction) {
-                    double xPos, yPos;
+                    double xPos;
+                    double yPos;
                     glfwGetCursorPos(win, &xPos, &yPos);
                     instance->cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(win, GLFW_CURSOR));
                     if (instance->cursorMode != GLUTEnum_MouseCursorMode::Disabled) {
@@ -1239,11 +1238,11 @@ class GLUTEmu {
     }
 
     void MouseSetNotifyFunction(GLUTEmu_CallbackMouseNotify function) {
-        if (window) {
+        if (window != nullptr) {
             mouseNotifyFunction = function;
 
             glfwSetCursorEnterCallback(window, [](GLFWwindow *win, int entered) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->mouseNotifyFunction) {
                     double x, y;
                     glfwGetCursorPos(win, &x, &y);
@@ -1263,11 +1262,11 @@ class GLUTEmu {
     }
 
     void MouseSetScrollFunction(GLUTEmu_CallbackMouseScroll function) {
-        if (window) {
+        if (window != nullptr) {
             mouseScrollFunction = function;
 
             glfwSetScrollCallback(window, [](GLFWwindow *win, double scrollX, double scrollY) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->mouseScrollFunction) {
                     double x, y;
                     glfwGetCursorPos(win, &x, &y);
@@ -1287,11 +1286,11 @@ class GLUTEmu {
     }
 
     void DropSetFilesFunction(GLUTEmu_CallbackDropFiles function) {
-        if (window) {
+        if (window != nullptr) {
             dropFilesFunction = function;
 
             glfwSetDropCallback(window, [](GLFWwindow *win, int count, const char *paths[]) {
-                auto instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->dropFilesFunction) {
                     instance->dropFilesFunction(count, paths);
                 }
@@ -1307,12 +1306,12 @@ class GLUTEmu {
         libqb_log_trace("Entering main loop");
 
         if (std::this_thread::get_id() == mainThreadId) {
-            if (window) {
+            if (window != nullptr) {
                 if (!isMainLoopRunning) {
                     isMainLoopRunning = true;
 
-                    while (!glfwWindowShouldClose(window)) {
-                        if (windowIdleFunction) {
+                    while (glfwWindowShouldClose(window) == GLFW_FALSE) {
+                        if (windowIdleFunction != nullptr) {
                             glfwPollEvents();
                         } else {
                             glfwWaitEventsTimeout(1.0);
@@ -1320,7 +1319,7 @@ class GLUTEmu {
 
                         MessageProcess();
 
-                        if (windowIdleFunction) {
+                        if (windowIdleFunction != nullptr) {
                             windowIdleFunction();
                         }
                     }
@@ -1344,11 +1343,11 @@ class GLUTEmu {
         return instance;
     }
 
-    bool MessageIsMainThread() const {
+    [[nodiscard]] bool MessageIsMainThread() const {
         return std::this_thread::get_id() == mainThreadId;
     }
 
-    bool MainLoopIsRunning() const {
+    [[nodiscard]] bool MainLoopIsRunning() const {
         return isMainLoopRunning;
     }
 
@@ -1359,6 +1358,11 @@ class GLUTEmu {
         }
         glfwPostEmptyEvent();
     }
+
+    GLUTEmu(const GLUTEmu &) = delete;
+    GLUTEmu &operator=(const GLUTEmu &) = delete;
+    GLUTEmu(GLUTEmu &&) = delete;
+    GLUTEmu &operator=(GLUTEmu &&) = delete;
 
   private:
     GLUTEmu()
@@ -1392,7 +1396,7 @@ class GLUTEmu {
         glfwSetErrorCallback([](int error_code, const char *description) { libqb_log_error("GLFW error %d: %s", error_code, description); });
 
 #ifdef QB64_LINUX
-        if (glfwPlatformSupported(GLFW_PLATFORM_X11)) {
+        if (glfwPlatformSupported(GLFW_PLATFORM_X11) == GLFW_TRUE) {
             glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
             libqb_log_trace("Forcing GLFW to use X11 platform");
         } else {
@@ -1400,7 +1404,7 @@ class GLUTEmu {
         }
 #endif
 
-        if (glfwInit()) {
+        if (glfwInit() == GLFW_TRUE) {
             libqb_log_trace("GLFW %s initialized", glfwGetVersionString());
             monitor = WindowGetCurrentMonitorInfo();
         } else {
@@ -1410,13 +1414,13 @@ class GLUTEmu {
     }
 
     ~GLUTEmu() {
-        if (cursor) {
+        if (cursor != nullptr) {
             glfwDestroyCursor(cursor);
             cursor = nullptr;
             libqb_log_trace("Mouse cursor destroyed");
         }
 
-        if (window) {
+        if (window != nullptr) {
             glfwDestroyWindow(window);
             window = nullptr;
             libqb_log_trace("Window closed");
@@ -1434,16 +1438,11 @@ class GLUTEmu {
         }
 #endif
 
-        if (msgQueueMutex) {
+        if (msgQueueMutex != nullptr) {
             libqb_mutex_free(msgQueueMutex);
             msgQueueMutex = nullptr;
         }
     }
-
-    GLUTEmu(const GLUTEmu &) = delete;
-    GLUTEmu &operator=(const GLUTEmu &) = delete;
-    GLUTEmu(GLUTEmu &&) = delete;
-    GLUTEmu &operator=(GLUTEmu &&) = delete;
 
     template <typename T>
     requires std::is_arithmetic_v<T>
@@ -1528,15 +1527,15 @@ class GLUTEmu {
     GLFWmonitor *WindowGetCurrentMonitorInfo() {
         GLFWmonitor *best = nullptr;
 
-        if (window) {
+        if (window != nullptr) {
             best = glfwGetWindowMonitor(window);
-            if (!best) {
+            if (best == nullptr) {
                 int wx, wy, ww, wh;
                 glfwGetWindowPos(window, &wx, &wy);
                 glfwGetWindowSize(window, &ww, &wh);
 
                 int count = 0;
-                auto monitors = glfwGetMonitors(&count);
+                auto *monitors = glfwGetMonitors(&count);
                 int bestOverlap = 0;
 
                 for (int i = 0; i < count; i++) {
@@ -1560,13 +1559,13 @@ class GLUTEmu {
             libqb_log_warn("Window not created, using primary monitor");
         }
 
-        if (!best) {
+        if (best == nullptr) {
             best = glfwGetPrimaryMonitor();
         }
 
-        if (best) {
-            auto mode = glfwGetVideoMode(best);
-            if (mode) {
+        if (best != nullptr) {
+            const auto *mode = glfwGetVideoMode(best);
+            if (mode != nullptr) {
                 glfwGetMonitorContentScale(best, &monitorScaleX, &monitorScaleY);
                 screenMode = {static_cast<int>(std::round(mode->width * monitorScaleX)), static_cast<int>(std::round(mode->height * monitorScaleY)),
                               mode->refreshRate};
@@ -1599,15 +1598,15 @@ class GLUTEmu {
         if (XkbGetIndicatorState(glfwGetX11Display(), XkbUseCoreKbd, &n) == Success) {
             switch (key) {
             case GLUTEmu_KeyboardKey::ScrollLock:
-                mods = (n & 0x04) ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
+                mods = ((n & 0x04) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
                 break;
 
             case GLUTEmu_KeyboardKey::CapsLock:
-                mods = (n & 0x01) ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
+                mods = ((n & 0x01) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
                 break;
 
             case GLUTEmu_KeyboardKey::NumLock:
-                mods = (n & 0x02) ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
+                mods = ((n & 0x02) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
                 break;
 
             default:
@@ -1637,7 +1636,7 @@ class GLUTEmu {
         }
 
         while (!localQueue.empty()) {
-            auto msg = localQueue.front();
+            auto *msg = localQueue.front();
             localQueue.pop();
             msg->Execute();
             msg->Finish();
@@ -1984,23 +1983,21 @@ bool GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier modifier) {
 bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetStandardCursor(style);
-    } else {
-        GLUTEmu::MessageSetStandardCursor msg(style);
-        GLUTEmu::Instance().MessageQueue(&msg);
-        msg.WaitForResponse();
-        return msg.responseValue;
     }
+    GLUTEmu::MessageSetStandardCursor msg(style);
+    GLUTEmu::Instance().MessageQueue(&msg);
+    msg.WaitForResponse();
+    return msg.responseValue;
 }
 
 bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetCustomCursor(imageHandle);
-    } else {
-        GLUTEmu::MessageSetCustomCursor msg(imageHandle);
-        GLUTEmu::Instance().MessageQueue(&msg);
-        msg.WaitForResponse();
-        return msg.responseValue;
     }
+    GLUTEmu::MessageSetCustomCursor msg(imageHandle);
+    GLUTEmu::Instance().MessageQueue(&msg);
+    msg.WaitForResponse();
+    return msg.responseValue;
 }
 
 void GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode mode) {
