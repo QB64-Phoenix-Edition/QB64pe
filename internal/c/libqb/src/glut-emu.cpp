@@ -1374,17 +1374,12 @@ class GLUTEmu {
         libqb_log_trace("Exiting main loop");
     }
 
-    static GLUTEmu &Instance() {
-        static GLUTEmu instance;
-        return instance;
+    [[nodiscard]] bool MainLoopIsRunning() const {
+        return isMainLoopRunning;
     }
 
     [[nodiscard]] bool MessageIsMainThread() const {
         return std::this_thread::get_id() == mainThreadId;
-    }
-
-    [[nodiscard]] bool MainLoopIsRunning() const {
-        return isMainLoopRunning;
     }
 
     void MessageQueue(Message *msg) {
@@ -1393,6 +1388,19 @@ class GLUTEmu {
             msgQueue.push(msg);
         }
         glfwPostEmptyEvent();
+    }
+
+    [[nodiscard]] double TimeGet() const {
+        return glfwGetTime();
+    }
+
+    void TimeSet(double time) const {
+        glfwSetTime(time);
+    }
+
+    static GLUTEmu &Instance() {
+        static GLUTEmu instance;
+        return instance;
     }
 
     GLUTEmu(const GLUTEmu &) = delete;
@@ -2117,6 +2125,14 @@ void GLUTEmu_DropSetFilesFunction(GLUTEmu_CallbackDropFiles func) {
 
 void GLUTEmu_MainLoop() {
     GLUTEmu::Instance().MainLoop();
+}
+
+double GLUTEmu_TimeGet() {
+    return GLUTEmu::Instance().TimeGet();
+}
+
+void GLUTEmu_TimeSet(double time) {
+    GLUTEmu::Instance().TimeSet(time);
 }
 
 void GLUTEmu_ProgramExit(int exitCode) {

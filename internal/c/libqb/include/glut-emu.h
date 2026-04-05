@@ -300,4 +300,6 @@ void GLUTEmu_MouseSetNotifyFunction(GLUTEmu_CallbackMouseNotify func);
 void GLUTEmu_MouseSetScrollFunction(GLUTEmu_CallbackMouseScroll func);
 void GLUTEmu_DropSetFilesFunction(GLUTEmu_CallbackDropFiles func);
 void GLUTEmu_MainLoop();
+double GLUTEmu_TimeGet();
+void GLUTEmu_TimeSet(double time);
 void GLUTEmu_ProgramExit(int exitCode);
