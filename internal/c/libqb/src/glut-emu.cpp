@@ -255,6 +255,28 @@ class GLUTEmu {
         }
     };
 
+    class MessageSetWindowMinimumSizeLimits : public Message {
+      public:
+        int minWidth, minHeight;
+
+        MessageSetWindowMinimumSizeLimits(int minWidth, int minHeight) : Message(false), minWidth(minWidth), minHeight(minHeight) {}
+
+        void Execute() override {
+            GLUTEmu::Instance().WindowSetMinimumSizeLimits(minWidth, minHeight);
+        }
+    };
+
+    class MessageSetWindowMaximumSizeLimits : public Message {
+      public:
+        int maxWidth, maxHeight;
+
+        MessageSetWindowMaximumSizeLimits(int maxWidth, int maxHeight) : Message(false), maxWidth(maxWidth), maxHeight(maxHeight) {}
+
+        void Execute() override {
+            GLUTEmu::Instance().WindowSetMaximumSizeLimits(maxWidth, maxHeight);
+        }
+    };
+
     class MessageWindowSetCloseFunction : public Message {
       public:
         GLUTEmu_CallbackWindowClose func;
@@ -911,19 +933,33 @@ class GLUTEmu {
         }
     }
 
-    void WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) const {
+    void WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) {
+        windowMinWidthLimit = minWidth;
+        windowMinHeightLimit = minHeight;
+        windowMaxWidthLimit = maxWidth;
+        windowMaxHeightLimit = maxHeight;
+
         if (window != nullptr) {
-            minWidth = (minWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(minWidth));
-            minHeight = (minHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(minHeight));
-            maxWidth = (maxWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(maxWidth));
-            maxHeight = (maxHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(maxHeight));
+            const auto minWidthPixels = (windowMinWidthLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMinWidthLimit));
+            const auto minHeightPixels = (windowMinHeightLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMinHeightLimit));
+            const auto maxWidthPixels = (windowMaxWidthLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMaxWidthLimit));
+            const auto maxHeightPixels = (windowMaxHeightLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMaxHeightLimit));
 
-            glfwSetWindowSizeLimits(window, minWidth, minHeight, maxWidth, maxHeight);
+            glfwSetWindowSizeLimits(window, minWidthPixels, minHeightPixels, maxWidthPixels, maxHeightPixels);
 
-            libqb_log_trace("Window size limits set to (%d, %d) to (%d, %d)", minWidth, minHeight, maxWidth, maxHeight);
+            libqb_log_trace("Window size limits set to (%d, %d) to (%d, %d)", minWidthPixels, minHeightPixels, maxWidthPixels, maxHeightPixels);
         } else {
-            libqb_log_error("Window not created, cannot set size limits");
+            libqb_log_trace("Window not created; cached size limits (%d, %d) to (%d, %d)", windowMinWidthLimit, windowMinHeightLimit, windowMaxWidthLimit,
+                            windowMaxHeightLimit);
         }
+    }
+
+    void WindowSetMinimumSizeLimits(int minWidth, int minHeight) {
+        WindowSetSizeLimits(minWidth, minHeight, windowMaxWidthLimit, windowMaxHeightLimit);
+    }
+
+    void WindowSetMaximumSizeLimits(int maxWidth, int maxHeight) {
+        WindowSetSizeLimits(windowMinWidthLimit, windowMinHeightLimit, maxWidth, maxHeight);
     }
 
     void WindowSetShouldClose(bool shouldClose) const {
@@ -1369,7 +1405,8 @@ class GLUTEmu {
         : monitor(nullptr), monitorScaleX(1.0f), monitorScaleY(1.0f), window(nullptr), windowX(0), windowY(0), windowWidth(0), windowHeight(0),
           windowScaleX(1.0f), windowScaleY(1.0f), isWindowFullscreen(false), isWindowMaximized(false), isWindowMinimized(false), isWindowFocused(false),
           isWindowHidden(false), isWindowFloating(false), windowOpacity(1.0f), isWindowBordered(true), isWindowMousePassthrough(false), windowedX(0),
-          windowedY(0), windowedWidth(0), windowedHeight(0), framebufferWidth(0), framebufferHeight(0), cursor(nullptr),
+          windowedY(0), windowedWidth(0), windowedHeight(0), windowMinWidthLimit(GLFW_DONT_CARE), windowMinHeightLimit(GLFW_DONT_CARE),
+          windowMaxWidthLimit(GLFW_DONT_CARE), windowMaxHeightLimit(GLFW_DONT_CARE), framebufferWidth(0), framebufferHeight(0), cursor(nullptr),
           cursorMode(GLUTEnum_MouseCursorMode::Normal), keyboardModifiers(0), windowCloseFunction(nullptr), windowResizedFunction(nullptr),
           windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr), windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr),
           windowRefreshFunction(nullptr), windowIdleFunction(nullptr), keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr),
@@ -1644,24 +1681,26 @@ class GLUTEmu {
     }
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
-    GLFWmonitor *monitor;                    // current monitor
-    float monitorScaleX, monitorScaleY;      // current monitor content scale for DPI scaling
-    GLFWwindow *window;                      // current window
-    std::string windowTitle;                 // current window title
-    int windowX, windowY;                    // current window position (in pixel coordinates)
-    int windowWidth, windowHeight;           // current window size (in pixel coordinates)
-    float windowScaleX, windowScaleY;        // window scaling factors
-    bool isWindowFullscreen;                 // whether the window is in fullscreen mode
-    bool isWindowMaximized;                  // whether the window is currently maximized
-    bool isWindowMinimized;                  // whether the window is currently minimized
-    bool isWindowFocused;                    // whether the window is currently focused
-    bool isWindowHidden;                     // whether the window is currently hidden
-    bool isWindowFloating;                   // whether the window is currently floating
-    float windowOpacity;                     // current window opacity
-    bool isWindowBordered;                   // whether the window is currently bordered
-    bool isWindowMousePassthrough;           // whether the window is currently allowing mouse passthrough
-    int windowedX, windowedY;                // windowed mode position for restoring from fullscreen (in screen coordinates)
-    int windowedWidth, windowedHeight;       // windowed mode size for restoring from fullscreen (in screen coordinates)
+    GLFWmonitor *monitor;               // current monitor
+    float monitorScaleX, monitorScaleY; // current monitor content scale for DPI scaling
+    GLFWwindow *window;                 // current window
+    std::string windowTitle;            // current window title
+    int windowX, windowY;               // current window position (in pixel coordinates)
+    int windowWidth, windowHeight;      // current window size (in pixel coordinates)
+    float windowScaleX, windowScaleY;   // window scaling factors
+    bool isWindowFullscreen;            // whether the window is in fullscreen mode
+    bool isWindowMaximized;             // whether the window is currently maximized
+    bool isWindowMinimized;             // whether the window is currently minimized
+    bool isWindowFocused;               // whether the window is currently focused
+    bool isWindowHidden;                // whether the window is currently hidden
+    bool isWindowFloating;              // whether the window is currently floating
+    float windowOpacity;                // current window opacity
+    bool isWindowBordered;              // whether the window is currently bordered
+    bool isWindowMousePassthrough;      // whether the window is currently allowing mouse passthrough
+    int windowedX, windowedY;           // windowed mode position for restoring from fullscreen (in screen coordinates)
+    int windowedWidth, windowedHeight;  // windowed mode size for restoring from fullscreen (in screen coordinates)
+    int windowMinWidthLimit, windowMinHeightLimit;
+    int windowMaxWidthLimit, windowMaxHeightLimit;
     int framebufferWidth, framebufferHeight; // current framebuffer size (in pixel coordinates)
     std::tuple<int, int, int> screenMode;    // current screen mode (width, height, refresh rate)
     GLFWcursor *cursor;                      // current mouse cursor
@@ -1905,6 +1944,22 @@ void GLUTEmu_WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int 
         GLUTEmu::Instance().WindowSetSizeLimits(minWidth, minHeight, maxWidth, maxHeight);
     } else {
         GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowSizeLimits(minWidth, minHeight, maxWidth, maxHeight));
+    }
+}
+
+void GLUTEmu_WindowSetMinimumSizeLimits(int minWidth, int minHeight) {
+    if (GLUTEmu::Instance().MessageIsMainThread()) {
+        GLUTEmu::Instance().WindowSetMinimumSizeLimits(minWidth, minHeight);
+    } else {
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowMinimumSizeLimits(minWidth, minHeight));
+    }
+}
+
+void GLUTEmu_WindowSetMaximumSizeLimits(int maxWidth, int maxHeight) {
+    if (GLUTEmu::Instance().MessageIsMainThread()) {
+        GLUTEmu::Instance().WindowSetMaximumSizeLimits(maxWidth, maxHeight);
+    } else {
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowMaximumSizeLimits(maxWidth, maxHeight));
     }
 }
 

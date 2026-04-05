@@ -272,6 +272,8 @@ std::pair<int, int> GLUTEmu_WindowGetPosition();
 void GLUTEmu_WindowCenter();
 void GLUTEmu_WindowSetAspectRatio(int width, int height);
 void GLUTEmu_WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight);
+void GLUTEmu_WindowSetMinimumSizeLimits(int minWidth, int minHeight);
+void GLUTEmu_WindowSetMaximumSizeLimits(int maxWidth, int maxHeight);
 void GLUTEmu_WindowSetShouldClose(bool shouldClose);
 void GLUTEmu_WindowSwapBuffers();
 void GLUTEmu_WindowRefresh();
