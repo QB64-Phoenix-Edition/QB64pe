@@ -39,7 +39,7 @@ double func_timer(double accuracy, int32_t passed) {
     if (new_error)
         return 0;
 
-    double result = millis_since_midnight() / 1000.0;
+    auto result = millis_since_midnight() / 1000.0;
 
     // Default accuracy = 18.2 Hz
     if (!passed) {
@@ -73,25 +73,23 @@ void sub__delay(double seconds) {
         return;
     }
 
-    const double target_ms = seconds * 1000.0;
-    const int64_t start = GetTicks();
+    const auto start = std::chrono::steady_clock::now();
+    const auto target = start + std::chrono::duration<double>(seconds);
 
     while (true) {
-        int64_t now = GetTicks();
-        double elapsed = now - start;
-
-        if (elapsed >= target_ms)
+        auto now = std::chrono::steady_clock::now();
+        if (now >= target)
             break;
 
-        int64_t remaining = static_cast<int64_t>(target_ms - elapsed);
-        if (remaining <= 0)
-            remaining = 1;
+        auto remaining_us = std::chrono::duration_cast<std::chrono::microseconds>(target - now).count();
 
-        if (remaining >= 10) {
+        // If >= 10 ms remaining then sleep 9 ms and poll events
+        if (remaining_us >= 10000) {
             std::this_thread::sleep_for(std::chrono::milliseconds(9));
             evnt(0); // event polling
         } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(remaining));
+            // Final sleep
+            std::this_thread::sleep_for(std::chrono::microseconds(remaining_us));
         }
     }
 }
@@ -100,59 +98,61 @@ void sub__limit(double fps) {
     if (new_error)
         return;
 
-    static double prev = 0;
+    static std::chrono::steady_clock::time_point prev;
 
     if (fps <= 0.0) {
         error(5);
         return;
     }
 
-    const double frame_ms = 1000.0 / fps;
+    const auto frame_ms = 1000.0 / fps;
     if (frame_ms > 60000.0) {
         error(5);
         return;
     }
 
-recalculate:
-    double now = GetTicks();
+    const auto frame_us = static_cast<int64_t>(frame_ms * 1000.0);
 
-    if (prev == 0.0) {
-        prev = now;
-        return;
-    }
+    for (;;) {
+        auto now = std::chrono::steady_clock::now();
 
-    if (now < prev) { // tick counter wrapped
-        prev = now;
-        return;
-    }
-
-    double elapsed = now - prev;
-
-    if (elapsed == frame_ms) {
-        prev += frame_ms;
-        return;
-    }
-
-    if (elapsed < frame_ms) {
-        int64_t wait = static_cast<int64_t>(frame_ms - elapsed);
-        if (wait <= 0)
-            wait = 1;
-
-        if (wait >= 10) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(9));
-            evnt(0);
-        } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+        // First call or clock wrapped backwards?
+        if (prev.time_since_epoch().count() == 0 || now < prev) {
+            prev = now;
+            return;
         }
 
-        goto recalculate;
-    }
+        auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(now - prev).count();
 
-    // Too long since last frame
-    if (elapsed <= frame_ms + 32.0)
-        prev += frame_ms;
-    else
-        prev = now;
+        // Exact match
+        if (elapsed_us == frame_us) {
+            prev += std::chrono::microseconds(frame_us);
+            return;
+        }
+
+        // Not enough time has passed
+        if (elapsed_us < frame_us) {
+            int64_t remaining = frame_us - elapsed_us;
+
+            if (remaining >= 10000) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(9));
+                evnt(0); // event polling
+            } else {
+                std::this_thread::sleep_for(std::chrono::microseconds(remaining));
+            }
+
+            // Loop again to re-evaluate timing
+            continue;
+        }
+
+        // Too long since last frame
+        if (elapsed_us <= frame_us + 32000)
+            prev += std::chrono::microseconds(frame_us);
+        else
+            prev = now;
+
+        return;
+    }
 }
 
 void sub_date(qbs *str) {
