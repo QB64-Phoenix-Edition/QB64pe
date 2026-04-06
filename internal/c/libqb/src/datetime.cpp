@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <ctime>
 #include <thread>
 
 static std::chrono::steady_clock::time_point g_TimeStart;
@@ -28,11 +29,19 @@ void Sleep(uint32_t milliseconds) {
 #endif
 
 static uint64_t millis_since_midnight() {
-    const auto now = std::chrono::system_clock::now();
-    const auto today = std::chrono::floor<std::chrono::days>(now);
-    const auto since_midnight = now - today;
+    const auto current_time = std::chrono::system_clock::now();
 
-    return std::chrono::duration_cast<std::chrono::milliseconds>(since_midnight).count();
+    // Gives us the number of milliseconds past the current second
+    const auto millis_only = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()).count() % 1000;
+
+    // Convert to time_t and then hour/min/sec. localtime() takes the current timezone into account for us.
+    const auto cur_ttime = std::chrono::system_clock::to_time_t(current_time);
+    const auto local = localtime(&cur_ttime);
+
+    // Compute current time as number of seconds past midnight
+    const auto seconds = local->tm_hour * 3600 + local->tm_min * 60 + local->tm_sec;
+
+    return static_cast<uint64_t>(seconds * 1000) + static_cast<uint64_t>(millis_only);
 }
 
 double func_timer(double accuracy, int32_t passed) {
