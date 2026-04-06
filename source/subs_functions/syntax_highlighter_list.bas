@@ -128,7 +128,7 @@ listOfKeywords$ = listOfKeywords$ +_
 
 ' [U] - Keywords alphabetical (1st line = QB64, 2nd line = QB4.5, 3rd line = OpenGL)
 listOfKeywords$ = listOfKeywords$ +_
-"_UCHARPOS@_UFONTHEIGHT@_ULINESPACING@_UNSIGNED@_UPRINTSTRING@_UPRINTWIDTH@" +_
+"_UCHARPOS@_UFONTHEIGHT@_ULINESPACING@_UNSIGNED@_UPRINTSTRING@_UPRINTWIDTH@_UPTIME@" +_
 "UBOUND@UCASE$@UEVENT@UNLOCK@UNTIL@USING@" +_
 ""
 

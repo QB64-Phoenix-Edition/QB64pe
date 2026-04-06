@@ -53,7 +53,7 @@ static void initialize_glut() {
 
     GLUTEmu_WindowSetCloseFunction(GLUT_EXIT_FUNC);
     GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_RESIZE_FUNC);
-    // GLUTEmu_WindowSetResizedFunction(GLUT_RESIZE_FUNC);
+    GLUTEmu_WindowSetResizedFunction(GLUT_RESIZE_FUNC);
     //   GLFW_TODO: Maximize/Minimize handling
     //   GLFW_TODO: Focus handling
     GLUTEmu_WindowSetRefreshFunction(GLUT_DISPLAY_REQUEST);

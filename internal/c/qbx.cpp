@@ -516,9 +516,6 @@ inline uint16 varseg_dblock_check(uint8 *off) {
 #include "../temp/global.txt"
 #include "../temp/regsf.txt"
 
-extern int32 ScreenResize;
-extern int32 ScreenResizeScale;
-
 // set_dynamic_info is called immediately when
 // main() begins, to set global, static variables
 // controlling app init

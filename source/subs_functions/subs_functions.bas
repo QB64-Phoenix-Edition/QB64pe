@@ -3221,6 +3221,14 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_Uptime"
+    id.subfunc = 1
+    id.callname = "GLUTEmu_TimeGet"
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "_UPTIME"
+    regid
+
+    clearid
     id.n = "Rnd"
     id.subfunc = 1
     id.callname = "func_rnd"

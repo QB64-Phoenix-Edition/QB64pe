@@ -25884,73 +25884,6 @@ void GLUT_DISPLAY_REQUEST() {
     // Window resizing/fullscreen policy is centralized in the window module.
     window_update_for_frame(display_frame[i].w, display_frame[i].h);
 
-    // This code is deprecated but kept for reference purposes
-    // 1) It was found to be unstable
-    // 2) Switching modes means a high chance of losing pre-loaded OpenGL
-    // hardware textures/surfaces
-    /*
-        static int32 glut_window;
-        //fullscreen
-        if (!resize_pending){//avoid switching to fullscreen before resize
-       operations take effect if (full_screen_set!=-1){//full screen mode change
-       requested if (full_screen_set==0){
-        //exit full screen
-        glutLeaveGameMode();
-        glutSetWindow(glut_window);
-        reinit_glut_callbacks();
-        full_screen=0;
-        full_screen_set=-1;
-        return;
-        }else{
-        static char game_mode_string[1000];
-        static int32 game_mode_string_i;
-        game_mode_string_i=0;
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       display_frame[i].w); game_mode_string[game_mode_string_i++]=120;//"x"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       display_frame[i].h); game_mode_string[game_mode_string_i++]=58;//":"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       32); glutGameModeString(game_mode_string);
-        if(glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)){
-        //full screen using native dimensions which match the frame size
-        if (full_screen==0) glut_window=glutGetWindow();
-        glutEnterGameMode();
-        fullscreen_width=display_frame[i].w;
-       fullscreen_height=display_frame[i].h; reinit_glut_callbacks();
-        full_screen=full_screen_set;//it's currently irrelevant if it is
-       stretched or 1:1 full_screen_set=-1; return; }else{ //native dimensions
-       not possible
-        //attempt full screen using desktop dimensions
-        static int32 w; w=glutGet(GLUT_SCREEN_WIDTH);
-        static int32 h; h=glutGet(GLUT_SCREEN_HEIGHT);
-        game_mode_string_i=0;
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       w); game_mode_string[game_mode_string_i++]=120;//"x"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       h); game_mode_string[game_mode_string_i++]=58;//":"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       32); glutGameModeString(game_mode_string);
-        if(glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)){
-        //full screen using desktop dimensions
-        if (full_screen==0) glut_window=glutGetWindow();
-        glutEnterGameMode();
-        fullscreen_width=w; fullscreen_height=h;
-        reinit_glut_callbacks();
-        screen_scale=full_screen_set;
-        full_screen=full_screen_set;
-        full_screen_set=-1;
-        return;
-        }else{
-        //cannot enter full screen
-        full_screen=0;
-        full_screen_set=-1;
-        }
-        }
-        }//enter full screen
-        }//full_screen_set check
-        }//size pending check
-    */
-
     // set window environment variables
     window_update_environment_size();
 
@@ -26686,7 +26619,7 @@ int main(int argc, char *argv[]) {
 
     set_dynamic_info();
     if (ScreenResize) {
-        resize_snapback = 0;
+        resize_snapback = false;
     }
     if (ScreenResizeScale) {
         resize_auto = ScreenResizeScale;

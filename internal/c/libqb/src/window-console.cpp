@@ -17,51 +17,44 @@ int32_t environment__window_width = 0;
 int32_t environment__window_height = 0;
 int32_t os_resize_event = 0;
 int32_t resize_auto = 0; // 1=_STRETCH, 2=_SMOOTH
-float resize_auto_ideal_aspect = 640.0 / 400.0;
 int32_t fullscreen_allowedmode = 0;
 int32_t fullscreen_allowedsmooth = 0;
 int32_t fullscreen_smooth = 0;
-int32_t fullscreen_width = 0;
-int32_t fullscreen_height = 0;
-int32_t screen_scale = 0;
-int32_t resize_pending = 1;
-int32_t resize_snapback = 1;
-int32_t resize_snapback_x = 640;
-int32_t resize_snapback_y = 400;
-int32_t resize_event = 0;
-int32_t resize_event_x = 0;
-int32_t resize_event_y = 0;
+bool resize_snapback = true;
 int32_t ScreenResizeScale = 0;
 int32_t ScreenResize = 0;
-int32_t display_x = 640;
-int32_t display_y = 400;
-int32_t display_x_prev = 640;
-int32_t display_y_prev = 400;
-int32_t display_required_x = 640;
-int32_t display_required_y = 400;
 int32_t full_screen = 0;      // 0,1(stretched/closest),2(1:1)
 int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
 
+static int32_t display_x = 640;
+static int32_t display_y = 400;
+static bool resize_pending = true;
+static int32_t resize_snapback_x = 640;
+static int32_t resize_snapback_y = 400;
+static bool resize_event = false;
+static int32_t resize_event_x = 0;
+static int32_t resize_event_y = 0;
+static int32_t display_required_x = 640;
+static int32_t display_required_y = 400;
 static int32_t acceptFileDrop = 0;
 static int32_t droppedFileIndex = -1;
 
-void GLUT_RESIZE_FUNC([[maybe_unused]] int width, [[maybe_unused]] int height) {
-    resize_event_x = width;
-    resize_event_y = height;
-    resize_event = -1;
-    display_x_prev = display_x;
-    display_y_prev = display_y;
-    display_x = width;
-    display_y = height;
-    resize_pending = 0;
-    os_resize_event = 1;
+void GLUT_RESIZE_FUNC(int width, int height) {
+    if ((display_x != width) || (display_y != height)) {
+        resize_event_x = width;
+        resize_event_y = height;
+        resize_event = true;
+        display_x = width;
+        display_y = height;
+        resize_pending = false;
+        os_resize_event = 1;
+    }
 }
 
 void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
     os_resize_event = 0;
     display_required_x = frame_width;
     display_required_y = frame_height;
-    resize_auto_ideal_aspect = (float)frame_width / (float)frame_height;
     resize_snapback_x = display_required_x;
     resize_snapback_y = display_required_y;
     display_x = frame_width;
@@ -123,9 +116,9 @@ int32_t func__fullscreensmooth() {
 
 void sub__resize(int32_t on_off, int32_t stretch_smooth) {
     if (on_off == 1)
-        resize_snapback = 0;
+        resize_snapback = false;
     if (on_off == 2)
-        resize_snapback = 1;
+        resize_snapback = true;
 
     if (stretch_smooth) {
         resize_auto = stretch_smooth;
@@ -136,12 +129,14 @@ void sub__resize(int32_t on_off, int32_t stretch_smooth) {
 
 int32_t func__resize() {
     if (resize_snapback)
-        return 0;
+        return QB_FALSE; // resize must be enabled
+
     if (resize_event) {
-        resize_event = 0;
-        return -1;
+        resize_event = false;
+        return QB_TRUE;
     }
-    return 0;
+
+    return QB_FALSE;
 }
 
 int32_t func__resizewidth() {
