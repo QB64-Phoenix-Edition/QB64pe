@@ -2104,6 +2104,10 @@ DO
 
                                 ii = 2
 
+                                'Tady se kazdemu novemu clenu TYPE predem vynuluje metadata blok pro pripad, ze to nakonec nebude pole. Bez toho by se mohly tahnout stare hodnoty z predchoziho clenu.
+
+                                ' Initialize static-member-array metadata to the non-array state.
+                                ' If no (...) declarator is parsed, this TYPE member remains a scalar / non-array field.
                                 udtearrayelements(i2) = 0
                                 udtearraybase(i2) = 0
                                 udtearraydims(i2) = 0
@@ -2123,6 +2127,12 @@ DO
                                             i3 = i3 + 1
                                         LOOP
                                         IF b2 <> 0 THEN a$ = "Expected )": GOTO errmes
+
+                                        'parsovani konstantnich mezi clenskeho statickeho pole v type a taky se vytvari deskriptor kterej se pak pouziva pro indexovani LBOUND/UBOUND, ERASE, REDIM a _MEM
+
+                                        ' Parse compile-time bounds for an inline static TYPE member array.
+                                        ' The resulting descriptor is later reused by indexing, LBOUND/UBOUND, ERASE, REDIM and _MEM handling.
+
                                         IF ParseUDTArrayBoundsEx(getelements$(a$, ii + 1, i3 - 1), udtparse_optionbase, udtearraybase(i2), udtearrayelements(i2), udtearraydims(i2), udtearraydesc(i2)) = 0 THEN GOTO errmes
                                         ii = i3 + 1
                                     END IF
@@ -2179,6 +2189,10 @@ DO
                                 ELSE
                                     udtesize(i2) = typ AND 511
                                 END IF
+                                'tady se velikost clena prepina z velikost ijednoho prvku na velikost celyho inline bloku
+
+                                ' For static TYPE member arrays, udtesize() must store the size of the whole inline block,
+                                ' not the size of a single element.
                                 IF udtearrayelements(i2) THEN
                                     udtesize(i2) = udtesize(i2) * udtearrayelements(i2)
                                 END IF
@@ -4102,6 +4116,11 @@ DO
                 l$ = l$ + sp + SCase2$(t$)
             END IF
 
+            'formater / layout vetev - pro zachovani zapisu clenskych poli bez rozflakani formateru
+
+            ' Normalize the member declaration for layout / auto-format output.
+            ' Keep array declarators and dotted member syntax compact and readable.
+            '
             l$ = l$ + sp + CompactMemberRefLayout$(getelements$(ca$, declStart, n))
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
         ELSE
@@ -8446,33 +8465,38 @@ DO
                     redimTargetLast = i - 1
                     IF redimTargetLast >= redimTargetFirst THEN
                         redimFullTarget$ = getelements$(ca$, redimTargetFirst, redimTargetLast)
-                        IF INSTR(redimFullTarget$, ".") THEN
-                            redimLastOpen = 0
-                            redimLastClose = 0
-                            redimDepth = 0
-                            redimOpenCandidate = 0
-                            FOR redimScan = redimTargetFirst TO redimTargetLast
-                                redimTok$ = getelement$(ca$, redimScan)
-                                IF redimTok$ = "(" THEN
-                                    IF redimDepth = 0 THEN redimOpenCandidate = redimScan
-                                    redimDepth = redimDepth + 1
-                                ELSEIF redimTok$ = ")" THEN
-                                    redimDepth = redimDepth - 1
-                                    IF redimDepth < 0 THEN a$ = "Expected )": GOTO errmes
-                                    IF redimDepth = 0 THEN
-                                        redimLastOpen = redimOpenCandidate
-                                        redimLastClose = redimScan
-                                    END IF
-                                END IF
-                            NEXT
-                            IF redimDepth <> 0 THEN a$ = "Expected )": GOTO errmes
-                            IF redimLastOpen = 0 OR redimLastClose <> redimTargetLast THEN
-                                a$ = "Expected array bounds": GOTO errmes
-                            END IF
 
+                        '------
+                        redimLastOpen = 0
+                        redimLastClose = 0
+                        redimDepth = 0
+                        redimOpenCandidate = 0
+                        redimTargetExpr$ = ""
+                        redimBounds$ = ""
+
+                        FOR redimScan = redimTargetFirst TO redimTargetLast
+                            redimTok$ = getelement$(ca$, redimScan)
+                            IF redimTok$ = "(" THEN
+                                IF redimDepth = 0 THEN redimOpenCandidate = redimScan
+                                redimDepth = redimDepth + 1
+                            ELSEIF redimTok$ = ")" THEN
+                                redimDepth = redimDepth - 1
+                                IF redimDepth < 0 THEN a$ = "Expected )": GOTO errmes
+                                IF redimDepth = 0 THEN
+                                    redimLastOpen = redimOpenCandidate
+                                    redimLastClose = redimScan
+                                END IF
+                            END IF
+                        NEXT
+                        IF redimDepth <> 0 THEN a$ = "Expected )": GOTO errmes
+
+                        IF redimLastOpen <> 0 AND redimLastClose = redimTargetLast THEN
                             redimTargetExpr$ = getelements$(ca$, redimTargetFirst, redimLastOpen - 1)
                             redimBounds$ = getelements$(ca$, redimLastOpen + 1, redimLastClose - 1)
-                            IF redimTargetExpr$ = "" OR redimBounds$ = "" THEN a$ = "Expected array bounds": GOTO errmes
+                        END IF
+
+                        IF redimTargetExpr$ <> "" AND redimBounds$ <> "" AND INSTR(redimTargetExpr$, ".") THEN 'repaired bug - in previous version sometimes read function with array in parameter as nested array
+                            '-----
 
                             ' Evaluate the target as a whole bare member-array reference.
                             udt_allow_bare_array = -1
@@ -11360,8 +11384,8 @@ DO
 
                                 'note: array pointer
                                 IF (targettyp AND ISARRAY) THEN
-                                    IF (sourcetyp AND ISREFERENCE) = 0 THEN a$ = "Expected arrayname()": GOTO errmes
-                                    IF (sourcetyp AND ISARRAY) = 0 THEN a$ = "Expected arrayname()": GOTO errmes
+                                    IF (sourcetyp AND ISREFERENCE) = 0 THEN a$ = "EA_SUB_1": GOTO errmes ' "Expected arrayname()": GOTO errmes
+                                    IF (sourcetyp AND ISARRAY) = 0 THEN a$ = "EA_SUB_2": GOTO errmes ' "Expected arrayname()": GOTO errmes
                                     IF Debug THEN PRINT #9, "sub:array reference:[" + e$ + "]"
 
                                     'check arrays are of same type
@@ -11370,23 +11394,37 @@ DO
                                     sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
                                     IF sourcetyp2 <> targettyp2 THEN a$ = "Incorrect array type passed to sub": GOTO errmes
 
+
                                     'check arrayname was followed by '()'
-                                    IF targettyp AND ISUDT THEN
-                                        IF Debug THEN PRINT #9, "sub:array reference:udt reference:[" + e$ + "]"
-                                        'get UDT info
-                                        udtrefid = VAL(e$)
-                                        getid udtrefid
-                                        IF Error_Happened THEN GOTO errmes
-                                        udtrefi = INSTR(e$, sp3) 'end of id
-                                        udtrefi2 = INSTR(udtrefi + 1, e$, sp3) 'end of u
-                                        udtrefu = VAL(MID$(e$, udtrefi + 1, udtrefi2 - udtrefi - 1))
-                                        udtrefi3 = INSTR(udtrefi2 + 1, e$, sp3) 'skip e
-                                        udtrefe = VAL(MID$(e$, udtrefi2 + 1, udtrefi3 - udtrefi2 - 1))
-                                        o$ = RIGHT$(e$, LEN(e$) - udtrefi3)
-                                        'note: most of the UDT info above is not required
-                                        IF LEFT$(o$, 4) <> "(0)*" THEN a$ = "Expected arrayname()": GOTO errmes
+                                    IF RIGHT$(e$, 2) = sp3 + "0" THEN
+                                        ' classic whole-array reference: array()
                                     ELSE
-                                        IF RIGHT$(e$, 2) <> sp3 + "0" THEN a$ = "Expected arrayname()": GOTO errmes
+                                        s1 = INSTR(e$, sp3)
+                                        IF s1 THEN
+                                            s2 = INSTR(s1 + LEN(sp3), e$, sp3)
+                                        ELSE
+                                            s2 = 0
+                                        END IF
+
+                                        IF s2 THEN
+                                            s3 = INSTR(s2 + LEN(sp3), e$, sp3)
+                                        ELSE
+                                            s3 = 0
+                                        END IF
+
+                                        IF s3 = 0 THEN a$ = "Expected arrayname()": GOTO errmes
+
+                                        member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
+                                        o$ = MID$(e$, s3 + LEN(sp3))
+
+                                        IF member_element_id > 0 THEN
+                                            IF udtearrayelements(member_element_id) = 0 THEN a$ = "Expected arrayname()": GOTO errmes
+                                            ' nested whole static TYPE member-array reference
+                                        ELSEIF LEFT$(o$, 4) = "(0)*" OR LEFT$(o$, 5) = "((0)*" THEN
+                                            ' classic whole UDT array reference
+                                        ELSE
+                                            a$ = "Expected arrayname()": GOTO errmes
+                                        END IF
                                     END IF
 
                                     idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1))
@@ -14886,7 +14924,13 @@ END FUNCTION
 
 
 FUNCTION CompactMemberRefLayout$ (src AS STRING)
-    DIM compacttxt AS STRING
+    'Tahle funkce sklada referenci na clena TYPE zpatky do kompaktniho a stabilniho textového tvaru pro layout/autofmt.
+    ' Je dulezita hlavne pro clenska pole a zapisy s teckou, aby se nerozsypaly mezery.
+
+    ' Rebuild a TYPE member reference into compact, stable source text for layout output.
+    ' This preserves member-array declarators and dotted member chains without introducing unwanted spaces.
+
+    DIM compacttxt AS STRING '
     DIM tok AS STRING
     DIM prevtok AS STRING
     DIM needspace AS LONG
@@ -18746,12 +18790,10 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF (targettyp AND ISPOINTER) THEN
                     IF dereference = 0 THEN 'check dereferencing wasn't used
 
-
-
                         'note: array pointer
                         IF (targettyp AND ISARRAY) THEN
-                            IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
-                            IF (sourcetyp AND ISARRAY) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "EA_FUN_1": EXIT FUNCTION '"Expected arrayname()": EXIT FUNCTION
+                            IF (sourcetyp AND ISARRAY) = 0 THEN Give_Error "EA_FUN_2": EXIT FUNCTION '"Expected arrayname()": EXIT FUNCTION
                             IF Debug THEN PRINT #9, "evaluatefunc:array reference:[" + e$ + "]"
 
                             'check arrays are of same type
@@ -18761,24 +18803,37 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             IF sourcetyp2 <> targettyp2 THEN Give_Error "Incorrect array type passed to function": EXIT FUNCTION
 
                             'check arrayname was followed by '()'
-                            IF targettyp AND ISUDT THEN
-                                IF Debug THEN PRINT #9, "evaluatefunc:array reference:udt reference:[" + e$ + "]"
-                                'get UDT info
-                                udtrefid = VAL(e$)
-                                getid udtrefid
-                                IF Error_Happened THEN EXIT FUNCTION
-                                udtrefi = INSTR(e$, sp3) 'end of id
-                                udtrefi2 = INSTR(udtrefi + 1, e$, sp3) 'end of u
-                                udtrefu = VAL(MID$(e$, udtrefi + 1, udtrefi2 - udtrefi - 1))
-                                udtrefi3 = INSTR(udtrefi2 + 1, e$, sp3) 'skip e
-                                udtrefe = VAL(MID$(e$, udtrefi2 + 1, udtrefi3 - udtrefi2 - 1))
-                                o$ = RIGHT$(e$, LEN(e$) - udtrefi3)
-                                'note: most of the UDT info above is not required
-                                IF LEFT$(o$, 4) <> "(0)*" THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            IF RIGHT$(e$, 2) = sp3 + "0" THEN
+                                ' classic whole-array reference: array()
                             ELSE
-                                IF RIGHT$(e$, 2) <> sp3 + "0" THEN Give_Error "Expected arrayname()": EXIT FUNCTION
-                            END IF
+                                s1 = INSTR(e$, sp3)
+                                IF s1 THEN
+                                    s2 = INSTR(s1 + LEN(sp3), e$, sp3)
+                                ELSE
+                                    s2 = 0
+                                END IF
 
+                                IF s2 THEN
+                                    s3 = INSTR(s2 + LEN(sp3), e$, sp3)
+                                ELSE
+                                    s3 = 0
+                                END IF
+
+                                IF s3 = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+
+                                member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
+                                o$ = MID$(e$, s3 + LEN(sp3))
+
+                                IF member_element_id > 0 THEN
+                                    IF udtearrayelements(member_element_id) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                                    ' nested whole static TYPE member-array reference
+                                ELSEIF LEFT$(o$, 4) = "(0)*" OR LEFT$(o$, 5) = "((0)*" THEN
+                                    ' classic whole UDT array reference
+                                ELSE
+                                    Give_Error "Expected arrayname()": EXIT FUNCTION
+                                END IF
+
+                            END IF
 
                             idnum = VAL(LEFT$(e$, INSTR(e$, sp3) - 1))
                             getid idnum
@@ -19469,7 +19524,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             IF id.arraytype THEN
                 n$ = "ARRAY_" + n$ + "[0]"
                 'whole array reference examplename()?
-                IF LEFT$(o$, 5) = "((0)*" THEN ' LEN for nested array size - without this return size for whole array is size for 1 element
+                IF LEFT$(o$, 5) = "((0)*" THEN ' LEN for nested array size - without this returned size for whole array is size for 1 element
                     'use -7 type method
                     GOTO method2usealludt__7
                 END IF
