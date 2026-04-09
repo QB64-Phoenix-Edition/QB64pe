@@ -1689,31 +1689,31 @@ class GLUTEmu {
     }
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
-    GLFWmonitor *monitor;               // current monitor
-    float monitorScaleX, monitorScaleY; // current monitor content scale for DPI scaling
-    GLFWwindow *window;                 // current window
-    std::string windowTitle;            // current window title
-    int windowX, windowY;               // current window position (in pixel coordinates)
-    int windowWidth, windowHeight;      // current window size (in pixel coordinates)
-    float windowScaleX, windowScaleY;   // window scaling factors
-    bool isWindowFullscreen;            // whether the window is in fullscreen mode
-    bool isWindowMaximized;             // whether the window is currently maximized
-    bool isWindowMinimized;             // whether the window is currently minimized
-    bool isWindowFocused;               // whether the window is currently focused
-    bool isWindowHidden;                // whether the window is currently hidden
-    bool isWindowFloating;              // whether the window is currently floating
-    float windowOpacity;                // current window opacity
-    bool isWindowBordered;              // whether the window is currently bordered
-    bool isWindowMousePassthrough;      // whether the window is currently allowing mouse passthrough
-    int windowedX, windowedY;           // windowed mode position for restoring from fullscreen (in screen coordinates)
-    int windowedWidth, windowedHeight;  // windowed mode size for restoring from fullscreen (in screen coordinates)
-    int windowMinWidthLimit, windowMinHeightLimit;
-    int windowMaxWidthLimit, windowMaxHeightLimit;
-    int framebufferWidth, framebufferHeight; // current framebuffer size (in pixel coordinates)
-    std::tuple<int, int, int> screenMode;    // current screen mode (width, height, refresh rate)
-    GLFWcursor *cursor;                      // current mouse cursor
-    GLUTEnum_MouseCursorMode cursorMode;     // current mouse cursor mode (normal, hidden, disabled, captured)
-    int keyboardModifiers;                   // current keyboard modifiers
+    GLFWmonitor *monitor;                          // current monitor
+    float monitorScaleX, monitorScaleY;            // current monitor content scale for DPI scaling
+    GLFWwindow *window;                            // current window
+    std::string windowTitle;                       // current window title
+    int windowX, windowY;                          // current window position (in pixel coordinates)
+    int windowWidth, windowHeight;                 // current window size (in pixel coordinates)
+    float windowScaleX, windowScaleY;              // window scaling factors
+    bool isWindowFullscreen;                       // whether the window is in fullscreen mode
+    bool isWindowMaximized;                        // whether the window is currently maximized
+    bool isWindowMinimized;                        // whether the window is currently minimized
+    bool isWindowFocused;                          // whether the window is currently focused
+    bool isWindowHidden;                           // whether the window is currently hidden
+    bool isWindowFloating;                         // whether the window is currently floating
+    float windowOpacity;                           // current window opacity
+    bool isWindowBordered;                         // whether the window is currently bordered
+    bool isWindowMousePassthrough;                 // whether the window is currently allowing mouse passthrough
+    int windowedX, windowedY;                      // windowed mode position for restoring from fullscreen (in screen coordinates)
+    int windowedWidth, windowedHeight;             // windowed mode size for restoring from fullscreen (in screen coordinates)
+    int windowMinWidthLimit, windowMinHeightLimit; // current window size limits (in screen coordinates, -1 for no limit)
+    int windowMaxWidthLimit, windowMaxHeightLimit; // current window size limits (in screen coordinates, -1 for no limit)
+    int framebufferWidth, framebufferHeight;       // current framebuffer size (in pixel coordinates)
+    std::tuple<int, int, int> screenMode;          // current screen mode (width, height, refresh rate)
+    GLFWcursor *cursor;                            // current mouse cursor
+    GLUTEnum_MouseCursorMode cursorMode;           // current mouse cursor mode (normal, hidden, disabled, captured)
+    int keyboardModifiers;                         // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
     bool keyboardScrollLockState; // scroll Lock state for macOS and Linux
 #endif

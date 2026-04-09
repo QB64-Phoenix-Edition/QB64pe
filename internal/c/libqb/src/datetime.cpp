@@ -85,7 +85,7 @@ void sub__delay(double seconds) {
     const auto start = std::chrono::steady_clock::now();
     const auto target = start + std::chrono::duration<double>(seconds);
 
-    while (true) {
+    for (;;) {
         auto now = std::chrono::steady_clock::now();
         if (now >= target)
             break;
