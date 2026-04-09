@@ -874,7 +874,7 @@ static inline int32_t keyboard_is_super_held() {
 }
 
 static inline bool keyboard_is_altgr_combo() {
-    return (keyheld(VK + QBVK_LALT) == 0) && keyheld(VK + QBVK_RALT) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL));
+    return (keyheld(VK + QBVK_LALT) == 0) && keyheld(VK + QBVK_RALT);
 }
 
 static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, int32_t *alt) {
@@ -2025,7 +2025,7 @@ void sub__numlock(int32_t options) {
 #endif
 }
 
-void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint) {
+void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown)
         return;
 

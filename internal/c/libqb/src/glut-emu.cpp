@@ -1141,10 +1141,10 @@ class GLUTEmu {
         if (window != nullptr) {
             keyboardCharacterFunction = function;
 
-            glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint) {
+            glfwSetCharModsCallback(window, [](GLFWwindow *win, unsigned int codepoint, int mods) {
                 auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->keyboardCharacterFunction) {
-                    instance->keyboardCharacterFunction(static_cast<char32_t>(codepoint));
+                    instance->keyboardCharacterFunction(static_cast<char32_t>(codepoint), mods);
                 }
             });
 

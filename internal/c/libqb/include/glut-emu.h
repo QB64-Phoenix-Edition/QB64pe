@@ -229,7 +229,7 @@ typedef void (*GLUTEmu_CallbackWindowFocused)(bool focused);
 typedef void (*GLUTEmu_CallbackWindowRefresh)();
 typedef void (*GLUTEmu_CallbackWindowIdle)();
 typedef void (*GLUTEmu_CallbackKeyboardButton)(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
-typedef void (*GLUTEmu_CallbackKeyboardCharacter)(char32_t codepoint);
+typedef void (*GLUTEmu_CallbackKeyboardCharacter)(char32_t codepoint, int modifiers);
 typedef void (*GLUTEmu_CallbackMousePosition)(double x, double y, GLUTEnum_MouseCursorMode mode);
 typedef void (*GLUTEmu_CallbackMouseButton)(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode,
                                             int modifiers);

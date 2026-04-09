@@ -15,7 +15,7 @@ void sub__capslock(int32_t options);
 void sub__scrolllock(int32_t options);
 void sub__numlock(int32_t options);
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
-void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint);
+void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers);
 void update_shift_state();
 int32_t func__keyhit();
 int32_t func__keydown(int32_t key);
