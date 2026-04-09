@@ -32,8 +32,8 @@ extern int32_t port60h_events;
 extern uint16_t codepage437_to_unicode16[];
 
 static uint32_t bindkey = 0;
-static uint32_t *keyheld_buffer = (uint32_t *)malloc(1);
-static uint32_t *keyheld_bind_buffer = (uint32_t *)malloc(1);
+static uint32_t *keyheld_buffer = (uint32_t *)malloc(sizeof(uint32_t));
+static uint32_t *keyheld_bind_buffer = (uint32_t *)malloc(sizeof(uint32_t));
 static int32_t keyheld_n = 0;
 static int32_t keyheld_size = 0;
 
@@ -1215,15 +1215,6 @@ static inline void keyheld_remove(uint32_t x) {
             memmove(&keyheld_buffer[i], &keyheld_buffer[i + 1], (keyheld_n - i - 1) * 4);
             memmove(&keyheld_bind_buffer[i], &keyheld_bind_buffer[i + 1], (keyheld_n - i - 1) * 4);
             keyheld_n--; // note: dec. must occur after memmove (threading reasons)
-            return;
-        }
-    }
-}
-
-static inline void keyheld_unbind(uint32_t x) {
-    for (int32_t i = 0; i < keyheld_n; i++) {
-        if (keyheld_bind_buffer[i] == x) { // exists
-            keyup(keyheld_buffer[i]);
             return;
         }
     }

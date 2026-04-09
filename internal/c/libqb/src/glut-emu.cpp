@@ -1419,7 +1419,7 @@ class GLUTEmu {
           windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr), windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr),
           windowRefreshFunction(nullptr), windowIdleFunction(nullptr), keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr),
           mousePositionFunction(nullptr), mouseButtonFunction(nullptr), mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr),
-          isMainLoopRunning(false), screenMode(0, 0, 0) {
+          screenMode(0, 0, 0), isMainLoopRunning(false) {
         mainThreadId = std::this_thread::get_id();
         msgQueueMutex = libqb_mutex_new();
 
