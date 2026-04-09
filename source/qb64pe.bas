@@ -14975,16 +14975,27 @@ FUNCTION CompactMemberRefLayout$ (src AS STRING)
 END FUNCTION
 
 FUNCTION UDTArrayBoundExpr$ (descriptor$, dimension_count AS LONG, dimension_expr$, want_upper AS LONG)
+    DIM helper_name AS STRING
+    DIM desc_pos AS LONG
+    DIM dim_i AS LONG
+    DIM dim_lower AS LONG
+    DIM dim_elements AS LONG
+    DIM bound_value AS LONG
+
     ' This helper is only used for static array members stored inline inside a TYPE.
     ' Such members do not have a normal QB64 array descriptor at runtime, so LBOUND/UBOUND
-    ' cannot call func_lbound/func_ubound. Instead we evaluate the requested dimension and build
-    ' a direct expression from the metadata captured while the TYPE was parsed.
+    ' cannot call func_lbound/func_ubound directly.
+    '
+    ' IMPORTANT:
+    ' Do not generate inline expressions like (error(9),0) here. They can behave
+    ' differently across compilers/platforms and break ON ERROR handling in CI.
+    ' Instead emit a small normal C helper function and call it.
     IF dimension_count <= 0 THEN Give_Error "TYPE member is not an array": EXIT FUNCTION
 
-    dim_var$ = "udtbounddim" + _TOSTR$(uniquenumber)
-    WriteBufLine defdatahandle, "int64 " + dim_var$ + ";"
+    helper_name = "udt_array_bound_" + _TOSTR$(uniquenumber)
 
-    expr$ = "((" + dim_var$ + "=" + dimension_expr$ + "),"
+    WriteBufLine GlobTxtBuf, "static int64 " + helper_name + "(int64 qb_dim){"
+    WriteBufLine GlobTxtBuf, "switch(qb_dim){"
 
     desc_pos = 1
     FOR dim_i = 1 TO dimension_count
@@ -14998,17 +15009,16 @@ FUNCTION UDTArrayBoundExpr$ (descriptor$, dimension_count AS LONG, dimension_exp
             bound_value = dim_lower
         END IF
 
-        expr$ = expr$ + "(" + dim_var$ + "==" + _TOSTR$(dim_i) + "?" + _TOSTR$(bound_value) + ":"
+        WriteBufLine GlobTxtBuf, "case " + _TOSTR$(dim_i) + ": return " + _TOSTR$(bound_value) + ";"
     NEXT
 
-    expr$ = expr$ + "(error(9),0)"
-    FOR dim_i = 1 TO dimension_count
-        expr$ = expr$ + ")"
-    NEXT
-    expr$ = expr$ + ")"
+    WriteBufLine GlobTxtBuf, "default: error(9); return 0;"
+    WriteBufLine GlobTxtBuf, "}"
+    WriteBufLine GlobTxtBuf, "}"
 
-    UDTArrayBoundExpr$ = expr$
+    UDTArrayBoundExpr$ = helper_name + "(" + dimension_expr$ + ")"
 END FUNCTION
+
 
 SUB assign (a$, n)
     FOR i = 1 TO n
@@ -17453,6 +17463,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     DIM ulboundarraytyp AS LONG
     DIM ulboundarrayisnested AS INTEGER
 
+
     IF Debug THEN PRINT #9, "evaluatingfunction:" + RTRIM$(id.n) + ":" + a$
 
     DIM id2 AS idstruct
@@ -17700,6 +17711,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF
 
                 IF n$ = "UBOUND" OR n$ = "LBOUND" THEN
+
                     IF curarg = 1 THEN
                         original_e$ = e$
                         ulboundarrayisnested = 0
@@ -19208,6 +19220,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
         arrayelements = id.arrayelements '2009
         IF arrayelements = -1 THEN arrayelements = 1 '2009
+
 
         r$ = r2$ + e$ + r$ + "," + _TOSTR$(arrayelements) + ")"
         typ& = INTEGER64TYPE - ISPOINTER
