@@ -2026,6 +2026,8 @@ void sub__numlock(int32_t options) {
 }
 
 void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
+    (void)modifiers;
+
     if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown)
         return;
 

@@ -34,6 +34,7 @@ int32_t func__resizeheight();
 
 int32_t func__desktopwidth();
 int32_t func__desktopheight();
+int32_t func__desktoprefreshrate();
 void sub_screenicon();
 int32_t func_screenicon();
 int32_t func__hasfocus();

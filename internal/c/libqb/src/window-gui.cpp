@@ -226,6 +226,10 @@ int32_t func__desktopheight() {
     return std::get<1>(GLUTEmu_ScreenGetMode());
 }
 
+int32_t func__desktoprefreshrate() {
+    return std::get<2>(GLUTEmu_ScreenGetMode());
+}
+
 void sub_screenicon() {
     NEEDS_GLUT();
     GLUTEmu_WindowMinimize();

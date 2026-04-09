@@ -155,6 +155,10 @@ int32_t func__desktopheight() {
     return 0;
 }
 
+int32_t func__desktoprefreshrate() {
+    return 0;
+}
+
 void sub_screenicon() {}
 
 int32_t func_screenicon() {

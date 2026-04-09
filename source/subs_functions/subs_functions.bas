@@ -3783,6 +3783,15 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_DesktopRefreshRate"
+    id.subfunc = 1
+    id.callname = "func__desktoprefreshrate"
+    id.args = 0
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_DESKTOPREFRESHRATE"
+    regid
+
+    clearid
     id.n = "_ScreenIcon" 'name change to from _ICONIFYWINDOW to _SCREENICON to match the screenshow and screenhide
     id.subfunc = 2
     id.callname = "sub_screenicon"
