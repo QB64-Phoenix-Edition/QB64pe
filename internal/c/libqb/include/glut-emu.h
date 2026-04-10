@@ -243,7 +243,7 @@ bool GLUTEmu_WindowCreate(int width, int height);
 bool GLUTEmu_WindowIsCreated();
 void GLUTEmu_WindowSetTitle(std::string_view title);
 std::string_view GLUTEmu_WindowGetTitle();
-void GLUTEmu_WindowSetIcon(int32_t imageHandle);
+void GLUTEmu_WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle);
 void GLUTEmu_WindowFullScreen(bool fullscreen);
 bool GLUTEmu_WindowIsFullscreen();
 void GLUTEmu_WindowMaximize();

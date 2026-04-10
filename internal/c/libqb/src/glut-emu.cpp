@@ -90,12 +90,14 @@ class GLUTEmu {
 
     class MessageWindowSetIcon : public Message {
       public:
-        int32_t imageHandle;
+        int32_t largeImageHandle;
+        int32_t smallImageHandle;
 
-        MessageWindowSetIcon(int32_t imageHandle) : Message(false), imageHandle(imageHandle) {}
+        MessageWindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle)
+            : Message(false), largeImageHandle(largeImageHandle), smallImageHandle(smallImageHandle) {}
 
         void Execute() override {
-            GLUTEmu::Instance().WindowSetIcon(imageHandle);
+            GLUTEmu::Instance().WindowSetIcon(largeImageHandle, smallImageHandle);
         }
     };
 
@@ -662,7 +664,7 @@ class GLUTEmu {
         return {windowTitle.data(), windowTitle.size()};
     }
 
-    void WindowSetIcon(int32_t imageHandle) const {
+    void WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle) const {
         if (window != nullptr) {
             // GLFW_TODO: implement icon support
             libqb_log_warn("WindowSetIcon is not implemented");
@@ -1775,11 +1777,11 @@ std::string_view GLUTEmu_WindowGetTitle() {
     return GLUTEmu::Instance().WindowGetTitle();
 }
 
-void GLUTEmu_WindowSetIcon(int32_t imageHandle) {
+void GLUTEmu_WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
-        GLUTEmu::Instance().WindowSetIcon(imageHandle);
+        GLUTEmu::Instance().WindowSetIcon(largeImageHandle, smallImageHandle);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetIcon(imageHandle));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetIcon(largeImageHandle, smallImageHandle));
     }
 }
 
