@@ -11384,8 +11384,8 @@ DO
 
                                 'note: array pointer
                                 IF (targettyp AND ISARRAY) THEN
-                                    IF (sourcetyp AND ISREFERENCE) = 0 THEN a$ = "EA_SUB_1": GOTO errmes ' "Expected arrayname()": GOTO errmes
-                                    IF (sourcetyp AND ISARRAY) = 0 THEN a$ = "EA_SUB_2": GOTO errmes ' "Expected arrayname()": GOTO errmes
+                                    IF (sourcetyp AND ISREFERENCE) = 0 THEN a$ = "Expected arrayname()": GOTO errmes
+                                    IF (sourcetyp AND ISARRAY) = 0 THEN a$ = "Expected arrayname()": GOTO errmes
                                     IF Debug THEN PRINT #9, "sub:array reference:[" + e$ + "]"
 
                                     'check arrays are of same type
@@ -18804,8 +18804,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                         'note: array pointer
                         IF (targettyp AND ISARRAY) THEN
-                            IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "EA_FUN_1": EXIT FUNCTION '"Expected arrayname()": EXIT FUNCTION
-                            IF (sourcetyp AND ISARRAY) = 0 THEN Give_Error "EA_FUN_2": EXIT FUNCTION '"Expected arrayname()": EXIT FUNCTION
+                            IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
+                            IF (sourcetyp AND ISARRAY) = 0 THEN Give_Error "Expected arrayname()": EXIT FUNCTION
                             IF Debug THEN PRINT #9, "evaluatefunc:array reference:[" + e$ + "]"
 
                             'check arrays are of same type
