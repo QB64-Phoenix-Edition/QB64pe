@@ -68,6 +68,10 @@ SUB CopyFromOther
                 WriteConfigSetting loggingSettingsSection$, "LogScopes", "qb64,libqb,libqb-image,libqb-audio"
                 WriteConfigSetting loggingSettingsSection$, "LogHandlers", "console"
             END IF
+            IF ReadConfigSetting(generalSettingsSection$, "ShowErrorsImmediately", value$) THEN
+               IF value$ = "FALSE" THEN  WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "False"
+               IniDeleteKey ConfigFile$, generalSettingsSection$, "ShowErrorsImmediately"
+            END IF
         ELSE
             IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning") = 1 GOTO cfoAgain
         END IF
@@ -167,16 +171,17 @@ SUB ReadInitialConfig
         WriteConfigSetting generalSettingsSection$, "EnableQuickNav", "True"
     END IF
 
-    IF ReadConfigSetting(generalSettingsSection$, "ShowErrorsImmediately", value$) THEN
+    IF ReadConfigSetting(generalSettingsSection$, "SyntaxChecking", value$) THEN
         IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
-            IDEShowErrorsImmediately = _TRUE
+            IDEShowErrorManually = _FALSE
+            WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "True"
         ELSE
-            IDEShowErrorsImmediately = _FALSE
-            WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "False"
+            IDEShowErrorManually = _TRUE
+            WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "False"
         END IF
     ELSE
-        IDEShowErrorsImmediately = _TRUE
-        WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "True"
+        IDEShowErrorManually = _FALSE
+        WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ShowLineNumbers", value$) THEN

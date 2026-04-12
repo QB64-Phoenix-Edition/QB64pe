@@ -221,7 +221,7 @@ DIM SHARED menusize(1 TO 12)
 DIM SHARED menus AS INTEGER, idecontextualmenuID AS INTEGER
 DIM SHARED ideeditmenuID AS INTEGER, SearchMenuID AS INTEGER
 DIM SHARED OptionsMenuID AS INTEGER, OptionsMenuSwapMouse AS INTEGER, OptionsMenuPasteCursor AS INTEGER
-DIM SHARED OptionsMenuShowErrorsImmediately AS INTEGER, OptionsMenuIgnoreWarnings AS INTEGER
+DIM SHARED OptionsMenuIgnoreWarnings AS INTEGER, OptionsMenuShowErrorManually AS INTEGER
 DIM SHARED OptionsMenuDisableSyntax AS INTEGER, OptionsMenuAutoCloseBrackets AS INTEGER ', OptionsMenuAutoComplete
 DIM SHARED ViewMenuID AS INTEGER, ViewMenuShowLineNumbersSubMenuID AS INTEGER
 DIM SHARED ViewMenuShowSeparatorID AS INTEGER, ViewMenuShowBGID AS INTEGER
