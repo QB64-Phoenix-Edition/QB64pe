@@ -16,7 +16,7 @@ DIM SHARED MouseButtonSwapped AS _BYTE
 DIM SHARED PasteCursorAtEnd AS _BYTE
 DIM SHARED AutoCloseBrackets AS _BYTE
 DIM SHARED DefaultExeSaveFolder$, SaveExeWithSource AS LONG, EnableQuickNav AS _BYTE
-DIM SHARED IDEShowErrorsImmediately AS _BYTE
+DIM SHARED IDEShowErrorsImmediately AS _BYTE, IDEShowErrorManually AS _BYTE
 DIM SHARED ShowLineNumbers AS _BYTE, ShowLineNumbersSeparator AS _BYTE, ShowLineNumbersUseBG AS _BYTE
 DIM SHARED IgnoreWarnings AS _BYTE, QB64VersionPrinted AS _BYTE
 DIM SHARED DisableSyntaxHighlighter AS _BYTE, ExeToSourceFolderFirstTimeMsg AS _BYTE

@@ -411,12 +411,16 @@ FUNCTION ide2 (ignore)
         IF AutoCloseBrackets THEN
             menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets)
         END IF
-        OptionsMenuShowErrorsImmediately = i
-        menu$(m, i) = "Syntax Ch#ecker": i = i + 1
-        menuDesc$(m, i - 1) = "Toggles instant syntax checker (status area)"
-        IF IDEShowErrorsImmediately THEN
-            menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately)
+
+        OptionsMenuShowErrorManually = i
+        IF IDEShowErrorManually = _FALSE THEN
+            menu$(m, i) = "Syntax Checker (M#anual)"
+        ELSE
+            menu$(m, i) = "Syntax Checker (#Automatic)"
         END IF
+        menuDesc$(m, i) = "Toggles instant syntax checker. (status area)  Use Shift+F9 when set to Manual to check syntax."
+        i = i + 1
+
         OptionsMenuIgnoreWarnings = i
         menu$(m, i) = "Ignore #Warnings": i = i + 1
         menuDesc$(m, i - 1) = "Toggles display of warning messages (unused variables, etc)"
@@ -895,7 +899,6 @@ FUNCTION ide2 (ignore)
         IF c$ <> CHR$(3) THEN
             clearStatusWindow 0
             IF ready THEN
-                IF IDEShowErrorsImmediately THEN
                     _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
                     menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
                     statusarealink = 0
@@ -908,7 +911,6 @@ FUNCTION ide2 (ignore)
                         statusarealink = 4
                     END IF
                     IF waitingForVarList THEN GOSUB showVarListReady
-                END IF
             END IF
             IF showexecreated THEN
                 showexecreated = 0
@@ -1070,7 +1072,6 @@ FUNCTION ide2 (ignore)
 
             'display error message (if necessary)
             IF failed THEN
-                IF IDEShowErrorsImmediately OR IDECompilationRequested OR compfailed <> 0 THEN
                     IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
                     UpdateIdeInfo
                     menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
@@ -1136,18 +1137,14 @@ FUNCTION ide2 (ignore)
                                 NEXT
                             END IF
                         END IF
-
                     END IF
-                END IF
             END IF
 
             IF idechangemade THEN
-                IF IDEShowErrorsImmediately OR IDECompilationRequested THEN
                     clearStatusWindow 0
                     IdeInfo = ""
                     _PRINTSTRING (2, idewy - 3), STRING$(3, 250) 'assume new compilation will begin "..."
                     menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
-                END IF
             END IF
 
             ideshowtext
@@ -1383,18 +1380,21 @@ FUNCTION ide2 (ignore)
                 idenoundo = 0
             END IF
 
-            'begin new compilation
-            IF IDEBuildModeChanged = 0 THEN
-                ideautorun = 0
-            END IF
-            IDEBuildModeChanged = 0
+            IF IDEShowErrorManually = _FALSE THEN
+                'begin new compilation
+                IF IDEBuildModeChanged = 0 THEN
+                    ideautorun = 0
+                END IF
+                IDEBuildModeChanged = 0
 
-            idecompiling = 1
-            ide2 = 2
-            idecompiledline$ = idegetline(1)
-            idereturn$ = idecompiledline$
-            idecompiledline = 1
-            EXIT FUNCTION
+                idecompiling = 1
+                ide2 = 2
+                idecompiledline$ = idegetline(1)
+                idereturn$ = idecompiledline$
+                idecompiledline = 1
+                EXIT FUNCTION
+            END IF
+
         END IF 'idechangemade
 
 
@@ -1696,6 +1696,22 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
+        if kshift and kb = _key_f9 _andalso IDEShowErrorManually then
+            'begin new compilation
+            IF IDEBuildModeChanged = 0 THEN
+                ideautorun = 0
+            END IF
+            IDEBuildModeChanged = 0
+
+            idecompiling = 1
+            ide2 = 2
+            idecompiledline$ = idegetline(1)
+            idereturn$ = idecompiledline$
+            idecompiledline = 1
+            EXIT FUNCTION
+        end if
+
+
         IF KB = _KEY_F7 OR KB = _KEY_F8 THEN
             GOTO startPausedMenuHandler
         END IF
@@ -1981,7 +1997,6 @@ FUNCTION ide2 (ignore)
             IdeSystem = 3
             GOTO specialchar
         END IF
-
 
         'Scroll bar code goes here
         STATIC Help_Scrollbar, Help_Scrollbar_Method
@@ -3157,7 +3172,6 @@ FUNCTION ide2 (ignore)
                             clearStatusWindow 0
 
                             IF tempInclude1$ = tempInclude2$ THEN
-                                IF IDEShowErrorsImmediately THEN
                                     IF idecompiling = 1 THEN
                                         _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
                                         menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
@@ -3175,7 +3189,6 @@ FUNCTION ide2 (ignore)
                                         END IF
                                         IF waitingForVarList THEN GOSUB showVarListReady
                                     END IF
-                                END IF
                             ELSE
                                 idechangemade = 1
                                 startPausedPending = 0
@@ -4505,6 +4518,8 @@ FUNCTION ide2 (ignore)
             KALT = 0
             COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
         END IF
+
+        if idechangemade _andalso IDEShowErrorManually then failed = 0
     LOOP
 
     '--------------------------------------------------------------------------------
@@ -5286,22 +5301,25 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF RIGHT$(menu$(m, s), 15) = "Syntax Ch#ecker" THEN
+            IF LEFT$(menu$(m, s), 6) = "Syntax" THEN
                 PCOPY 2, 0
-                IDEShowErrorsImmediately = NOT IDEShowErrorsImmediately
-                IF IDEShowErrorsImmediately THEN
-                    WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "True"
-                    menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = CHR$(7) + "Syntax Ch#ecker"
+                IDEShowErrorManually = NOT IDEShowErrorManually
+                IF IDEShowErrorManually = _FALSE THEN
+                    WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "True"
+                    menu$(OptionsMenuID, OptionsMenuShowErrorManually) = "Syntax Checker (M#anual)"
                 ELSE
-                    WriteConfigSetting generalSettingsSection$, "ShowErrorsImmediately", "False"
-                    menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = "Syntax Ch#ecker"
+                    WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "False"
+                    menu$(OptionsMenuID, OptionsMenuShowErrorManually) = "Syntax Checker (#Automatic)"
                 END IF
+
                 idechangemade = 1 'trigger immediate re-check for syntax errors
                 IF ideunsaved = 0 THEN ideunsaved = -1 'but signal to keep saved state
                 startPausedPending = 0
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
+
+
 
             IF RIGHT$(menu$(m, s), 16) = "Ignore #Warnings" THEN
                 PCOPY 2, 0
@@ -5526,7 +5544,7 @@ FUNCTION ide2 (ignore)
                 IF IsCiVersion THEN m$ = m$ + "\nGitHub CI Build"
                 IF RIGHT$(Version$, 8) = "-UNKNOWN" THEN m$ = m$ + "\nLocal User Build"
                 m$ = m$ + "\n__________________________________"
-                m$ = m$ + "\nBuild time: " + _COMPILEDATE$ + " - " + _COMPILETIME$
+                'm$ = m$ + "\nBuild time: " + _COMPILEDATE$ + " - " + _COMPILETIME$
                 result = idemessagebox("About", m$, "")
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -6863,7 +6881,6 @@ FUNCTION ide2 (ignore)
         GOSUB HelpAreaShowBackLinks
     END IF
 
-    IF IDEShowErrorsImmediately OR IDECompilationRequested THEN
         clearStatusWindow 0
 
         IdeInfo = ""
@@ -6889,7 +6906,6 @@ FUNCTION ide2 (ignore)
             END IF
             IF waitingForVarList THEN GOSUB showVarListReady
         END IF
-    END IF
     RETURN
 
     HelpAreaShowBackLinks:
