@@ -5544,7 +5544,7 @@ FUNCTION ide2 (ignore)
                 IF IsCiVersion THEN m$ = m$ + "\nGitHub CI Build"
                 IF RIGHT$(Version$, 8) = "-UNKNOWN" THEN m$ = m$ + "\nLocal User Build"
                 m$ = m$ + "\n__________________________________"
-                'm$ = m$ + "\nBuild time: " + _COMPILEDATE$ + " - " + _COMPILETIME$
+                m$ = m$ + "\nBuild time: " + _COMPILEDATE$ + " - " + _COMPILETIME$
                 result = idemessagebox("About", m$, "")
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
