@@ -68,6 +68,10 @@ SUB CopyFromOther
                 WriteConfigSetting loggingSettingsSection$, "LogScopes", "qb64,libqb,libqb-image,libqb-audio"
                 WriteConfigSetting loggingSettingsSection$, "LogHandlers", "console"
             END IF
+            IF ReadConfigSetting(generalSettingsSection$, "ShowErrorsImmediately", value$) THEN
+               IF value$ = "FALSE" THEN  WriteConfigSetting generalSettingsSection$, "SyntaxChecking", "False"
+               IniDeleteKey ConfigFile$, generalSettingsSection$, "ShowErrorsImmediately"
+            END IF
         ELSE
             IF _MESSAGEBOX("QB64-PE IDE", "No qb64pe executable found, so that seems not to be a QB64-PE installation, select another folder?", "yesno", "warning") = 1 GOTO cfoAgain
         END IF
