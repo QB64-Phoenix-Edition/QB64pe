@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glut-emu.h"
+#include "error_handle.h"
 
 // Called to potentially setup GLUT before starting the program.
 void libqb_glut_presetup();
@@ -24,7 +24,7 @@ void libqb_exit(int);
 #define NEEDS_GLUT(error_result)                                                                                                                               \
     do {                                                                                                                                                       \
         if (!libqb_is_glut_up()) {                                                                                                                             \
-            error(5);                                                                                                                                          \
+            error(QB_ERROR_ILLEGAL_FUNCTION_CALL);                                                                                                             \
             return error_result;                                                                                                                               \
         }                                                                                                                                                      \
     } while (0)

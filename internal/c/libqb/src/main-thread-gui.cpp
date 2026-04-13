@@ -1,6 +1,7 @@
 #include "libqb-common.h"
 
 #include "completion.h"
+#include "glut-emu.h"
 #include "gui.h"
 #include "keyboard.h"
 #include "logging.h"

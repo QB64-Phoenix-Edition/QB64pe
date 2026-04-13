@@ -1,6 +1,7 @@
 #include "libqb-common.h"
 
 #include "error_handle.h"
+#include "glut-emu.h"
 #include "graphics.h"
 #include "main-thread.h"
 #include "window.h"
