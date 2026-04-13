@@ -1,8 +1,7 @@
 #pragma once
 
+#include "qbs.h"
 #include <cstdint>
-
-struct qbs;
 
 struct onkey_struct {
     uint32_t id;                // the event ID to trigger (0=no event)

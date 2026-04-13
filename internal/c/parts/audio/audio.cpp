@@ -11,13 +11,15 @@
 
 #define _USE_MATH_DEFINES
 
-#include "../../libqb.h"
+#include "../../common.h"
+
+#include "framework.h"
+
 #include "cmem.h"
 #include "datetime.h"
 #include "error_handle.h"
 #include "filepath.h"
 #include "filesystem.h"
-#include "framework.h"
 #include "memblock.h"
 #include "mutex.h"
 #include "qbs.h"

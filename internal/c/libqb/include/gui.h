@@ -12,10 +12,9 @@
 
 #pragma once
 
-#include <stdarg.h>
-#include <stdint.h>
-
-struct qbs;
+#include "qbs.h"
+#include <cstdarg>
+#include <cstdint>
 
 void sub__guiNotifyPopup(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsIconType, int32_t passed);
 int32_t func__guiMessageBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDialogType, qbs *qbsIconType, int32_t nDefaultButton, int32_t passed);

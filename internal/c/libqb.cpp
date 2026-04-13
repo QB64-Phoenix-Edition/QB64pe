@@ -1,4 +1,3 @@
-#include "libqb.h"
 #include "common.h"
 
 #ifdef QB64_WINDOWS
@@ -39,6 +38,7 @@
 #include "main-thread.h"
 #include "memblock.h"
 #include "mutex.h"
+#include "printer.h"
 #include "qb_http.h"
 #include "qblist.h"
 #include "qbs.h"
@@ -47,7 +47,6 @@
 #include "thread.h"
 #include "window.h"
 
-// These are here because they are used in func__loadfont()
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -73,9 +72,6 @@ uint32 rotateLeft(uint32 word, uint32 shift) {
 #    include <libgen.h> //required for dirname()
 #    include <pthread.h>
 #endif
-
-// forward references
-void sub__printimage(int32 i);
 
 // GUI notification variables
 int32 force_display_update = 0;
@@ -2562,7 +2558,7 @@ static const uint8 file_qb64ega_pal[] = {
     0,  85, 85, 0, 170, 85, 85, 0, 0,  255, 85, 0, 170, 255, 85, 0, 0,  85, 255, 0, 170, 85, 255, 0, 0,  255, 255, 0, 170, 255, 255, 0,
     85, 85, 85, 0, 255, 85, 85, 0, 85, 255, 85, 0, 255, 255, 85, 0, 85, 85, 255, 0, 255, 85, 255, 0, 85, 255, 255, 0, 255, 255, 255, 0};
 
-uint16 *unicode16_buf = (uint16 *)malloc(1);
+uint16 *unicode16_buf = (uint16 *)malloc(sizeof(uint16));
 int32 unicode16_buf_size = 1;
 
 void convert_text_to_utf16(int32 fonthandle, void *buf, int32 size) {
@@ -6824,7 +6820,7 @@ void defaultcolors() {
 }
 
 // Note: Cannot be used to setup page 0, just to validate it
-void validatepage(int32 n) {
+void validatepage(int32_t n) {
     static int32 i, i2;
     // add new page indexes if necessary
     if (n >= pages) {
@@ -10590,7 +10586,7 @@ int32 func__controlchr() {
     return -no_control_characters2;
 }
 
-void qbs_print(qbs *str, int32 finish_on_new_line) {
+void qbs_print(qbs *str, int32_t finish_on_new_line) {
     if (is_error_pending())
         return;
     int32 i, i2, entered_new_line, x, x2, y, y2, z, z2, w;
@@ -10984,7 +10980,7 @@ null_length:
     return;
 }
 
-void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
+void qbg_sub_window(float x1, float y1, float x2, float y2, int32_t passed) {
     //                  &1
     //(passed&2)->SCREEN
     if (is_error_pending())
@@ -11097,7 +11093,7 @@ qbg_sub_window_error:
     return;
 }
 
-void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed) {
+void qbg_sub_view_print(int32_t topline, int32_t bottomline, int32_t passed) {
     if (is_error_pending())
         return;
 
@@ -11275,7 +11271,7 @@ error:
 
 void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
 
-void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
+void sub_clsDest(int32_t method, uint32_t use_color, int32_t dest, int32_t passed) {
     int32 tempDest;
     if (passed & 4) {
         tempDest = func__dest(); // get the old dest
@@ -11289,7 +11285,7 @@ void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
     } // restore the old dest
 }
 
-void sub_cls(int32 method, uint32 use_color, int32 passed) {
+void sub_cls(int32_t method, uint32_t use_color, int32_t passed) {
     if (is_error_pending())
         return;
     static int32 characters, i;
@@ -16187,7 +16183,7 @@ int32 func_csrlin() {
     return write_page->cursor_y;
 }
 
-int32 func_pos(int32 ignore) {
+int32_t func_pos(int32_t ignore) {
 #ifdef QB64_WINDOWS
     if (write_page->console) { // qb64 console CSRLIN
         CONSOLE_SCREEN_BUFFER_INFO cl_bufinfo;
@@ -17759,7 +17755,7 @@ void call_int(int32 i) {
 
 // Creating/destroying an image surface:
 
-int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
+int32_t func__newimage(int32_t x, int32_t y, int32_t bpp, int32_t passed) {
     static int32 i;
     if (is_error_pending())
         return 0;
@@ -17807,7 +17803,7 @@ int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
     return -i;
 }
 
-int32 func__copyimage(int32 i, int32 mode, int32 passed) {
+int32_t func__copyimage(int32_t i, int32_t mode, int32_t passed) {
     static int32 i2, bytes;
     static img_struct *s, *d;
     if (is_error_pending())
@@ -17880,7 +17876,7 @@ int32 func__copyimage(int32 i, int32 mode, int32 passed) {
     return -i2;
 }
 
-void sub__freeimage(int32 i, int32 passed) {
+void sub__freeimage(int32_t i, int32_t passed) {
     if (is_error_pending())
         return;
     if (passed) {
@@ -17959,7 +17955,7 @@ void freeallimages() {
 
 // Selecting images:
 
-void sub__source(int32 i) {
+void sub__source(int32_t i) {
     if (is_error_pending())
         return;
     if (i >= 0) { // validate i
@@ -17980,7 +17976,7 @@ void sub__source(int32 i) {
     read_page = &img[i];
 }
 
-void sub__dest(int32 i) {
+void sub__dest(int32_t i) {
     if (is_error_pending())
         return;
     if (i >= 0) { // validate i
@@ -18001,15 +17997,15 @@ void sub__dest(int32 i) {
     write_page = &img[i];
 }
 
-int32 func__source() {
+int32_t func__source() {
     return -read_page_index;
 }
 
-int32 func__dest() {
+int32_t func__dest() {
     return -write_page_index;
 }
 
-int32 func__display() {
+int32_t func__display() {
     return -display_page_index;
 }
 
@@ -18870,7 +18866,7 @@ int32 func__fontwidth(int32 f, int32 passed);
 int32 func__fontheight(int32 f, int32 passed);
 int32 func__font(int32 f, int32 passed);
 
-int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
+int32_t func__printwidth(qbs *text, int32_t screenhandle, int32_t passed) {
     // Validate screenhandle (taken from func__font)
     if (passed) {
         if (screenhandle >= 0) {
@@ -23836,13 +23832,14 @@ void sub__screenprint(qbs *txt) {
 #ifndef DEPENDENCY_PRINTER
 
 // stubs
-void sub__printimage(int32 i) {
+void sub__printimage(int32_t i) {
+    (void)i;
     return;
 }
 
 #else
 
-void sub__printimage(int32 i) {
+void sub__printimage(int32_t i) {
 
 #    ifdef QB64_WINDOWS
 

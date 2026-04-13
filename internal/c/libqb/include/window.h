@@ -1,8 +1,7 @@
 #pragma once
 
+#include "qbs.h"
 #include <cstdint>
-
-struct qbs;
 
 extern int32_t environment__window_width;
 extern int32_t environment__window_height;

@@ -5,9 +5,6 @@
 
 #include "libqb-common.h"
 
-// We need 'qbs' and 'image' structs stuff from here. Stop using this when image and friends are refactored
-#include "../../../libqb.h"
-
 // Comment the following bypass custom clipboard code in func__clipboard() and sub__clipboard()
 #define QB64_USE_CUSTOM_CLIPBOARD_CODE 1
 // This is not strictly needed. But we'll leave it here for VSCode to do it's magic
@@ -24,10 +21,10 @@
 #    include <ApplicationServices/ApplicationServices.h>
 #endif
 
-extern const img_struct *img;                 // used by sub__clipboardimage()
-extern const img_struct *write_page;          // used by func__clipboardimage()
-extern const int32_t *page;                   // used by sub__clipboardimage()
-extern const int32_t nextimg;                 // used by sub__clipboardimage()
+#ifdef QB64_WINDOWS
+#    include <windows.h>
+#endif
+
 extern const uint8_t charset8x8[256][8][8];   // used by sub__clipboardimage()
 extern const uint8_t charset8x16[256][16][8]; // used by sub__clipboardimage()
 
@@ -165,7 +162,7 @@ void sub__clipboard(const qbs *qbsText) {
 /// @brief Returns an image handle of an image from the clipboard (if present).
 /// @return A valid image handle. Returns -1 if clipboard format is not supported or if there is nothing.
 int32_t func__clipboardimage() {
-    int32_t qb64Img = INVALID_IMAGE_HANDLE; // assume failure
+    int32_t qb64Img = IMAGE_INVALID_HANDLE; // assume failure
 
     if (is_error_pending())
         return qb64Img;
@@ -186,7 +183,7 @@ int32_t func__clipboardimage() {
                 // We only support 32bpp images. Images in other formats are converted to 32bpp BGRA
                 qb64Img = func__newimage(spec.width, spec.height, 32, 1);
 
-                if (qb64Img < INVALID_IMAGE_HANDLE) {
+                if (Image_IsHandleValid(qb64Img)) {
                     sub__dest(qb64Img);
                     auto dst = write_page->offset32;
 

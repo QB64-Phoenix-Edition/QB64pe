@@ -15,9 +15,9 @@
 #endif
 
 // TODO: Most of these variables should be moved to keyboard.cpp and wrapped
-extern int64_t keyhit[8192];
+extern int64_t keyhit[8192]; // keyhit cyclic buffer. keyhit specific internal flags: (stored in high 32-bits). &4294967296->numpad was used
 extern int32_t keyhit_nextfree;
-extern int32_t keyhit_next;
+extern int32_t keyhit_next; // note: if full, the oldest message is discarded to make way for the new message
 extern int32_t asciicode_reading;
 
 extern int32_t keydown_glyph;

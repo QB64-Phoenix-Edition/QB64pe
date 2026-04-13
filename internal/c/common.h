@@ -120,4 +120,10 @@ struct byte_element_struct {
 
 #    include "memblock.h"
 
+#    ifndef QB64_WINDOWS
+static inline void ZeroMemory(void *ptr, size_t bytes) {
+    ::memset(ptr, 0, bytes);
+}
+#    endif
+
 #endif // INC_COMMON_CPP

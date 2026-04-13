@@ -1,9 +1,8 @@
 #pragma once
 
 #include "glut-emu.h"
+#include "qbs.h"
 #include <cstdint>
-
-struct qbs;
 
 void keyboard_set_bindkey(uint32_t key);
 void keydown(uint32_t key);

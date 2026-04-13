@@ -12538,7 +12538,7 @@ OPEN "O", #eflFF, tmpdir$ + "embedded.cpp"
 'write required header stuff
 PRINT #eflFF, "#include <stdint.h>"
 PRINT #eflFF, "#include <string.h>"
-PRINT #eflFF, "#include "; AddQuotes$("../c/libqb.h")
+PRINT #eflFF, "#include "; AddQuotes$("../c/common.h")
 PRINT #eflFF, "#include "; AddQuotes$("../c/libqb/include/compression.h")
 PRINT #eflFF, ""
 CLOSE #eflFF
