@@ -5,8 +5,6 @@
 
 #include "libqb-common.h"
 
-// Comment the following bypass custom clipboard code in func__clipboard() and sub__clipboard()
-#define QB64_USE_CUSTOM_CLIPBOARD_CODE 1
 // This is not strictly needed. But we'll leave it here for VSCode to do it's magic
 #define CLIP_ENABLE_IMAGE 1
 #include "clip/clip.h"
@@ -15,6 +13,8 @@
 #include "graphics.h"
 #include "image.h"
 #include "qbs.h"
+#include <cstring>
+#include <string>
 #include <vector>
 
 #ifdef QB64_MACOSX
@@ -24,6 +24,9 @@
 #ifdef QB64_WINDOWS
 #    include <windows.h>
 #endif
+
+// Comment the following bypass custom clipboard code in func__clipboard() and sub__clipboard()
+#define QB64_USE_CUSTOM_CLIPBOARD_CODE 1
 
 extern const uint8_t charset8x8[256][8][8];   // used by sub__clipboardimage()
 extern const uint8_t charset8x16[256][16][8]; // used by sub__clipboardimage()
