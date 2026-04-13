@@ -41,11 +41,7 @@
 #include <unordered_map>
 #include <vector>
 
-extern const img_struct *img;                 // used by func__loadimage
-extern const img_struct *write_page;          // used by func__loadimage
 extern const uint32_t palette_256[];          // used by func__loadimage
-extern const int32_t *page;                   // used by func__saveimage
-extern const int32_t nextimg;                 // used by func__saveimage
 extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
 extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
 
