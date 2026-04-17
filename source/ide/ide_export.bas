@@ -637,8 +637,8 @@ FUNCTION StripDiscordANSI$ (clip$)
     'remove those sequences again when pasting.
     temp$ = clip$
     '--- strip block start (if any) ---
-    IF LEFT$(temp$, 9) = "```ansi"  + CHR$(13) + CHR$(10) THEN temp$ = MID$(temp$, 10)
-    IF LEFT$(temp$, 8) = "```ansi"  + CHR$(10) THEN temp$ = MID$(temp$, 9)
+    IF LEFT$(temp$, 9) = "```ansi" + CHR$(13) + CHR$(10) THEN temp$ = MID$(temp$, 10)
+    IF LEFT$(temp$, 8) = "```ansi" + CHR$(10) THEN temp$ = MID$(temp$, 9)
     '--- strip all ANSI sequences we use for Discord exports (if any) ---
     temp$ = StrRemove$(temp$, CHR$(27) + "[0;0;1;37m")
     FOR i% = 0 TO 7

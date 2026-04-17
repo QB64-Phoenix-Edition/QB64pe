@@ -886,18 +886,18 @@ FUNCTION ide2 (ignore)
         IF c$ <> CHR$(3) THEN
             clearStatusWindow 0
             IF ready THEN
-                    _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
-                    statusarealink = 0
-                    IF totalWarnings > 0 AND showexecreated = 0 THEN
-                        COLOR 11, 1
-                        msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
-                        IF totalWarnings > 1 THEN msg$ = msg$ + "s"
-                        msg$ = msg$ + " - click here or Ctrl+W to view)"
-                        _PRINTSTRING (4, idewy - 3), msg$
-                        statusarealink = 4
-                    END IF
-                    IF waitingForVarList THEN GOSUB showVarListReady
+                _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
+                menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                statusarealink = 0
+                IF totalWarnings > 0 AND showexecreated = 0 THEN
+                    COLOR 11, 1
+                    msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
+                    IF totalWarnings > 1 THEN msg$ = msg$ + "s"
+                    msg$ = msg$ + " - click here or Ctrl+W to view)"
+                    _PRINTSTRING (4, idewy - 3), msg$
+                    statusarealink = 4
+                END IF
+                IF waitingForVarList THEN GOSUB showVarListReady
             END IF
             IF showexecreated THEN
                 showexecreated = 0
@@ -1059,80 +1059,80 @@ FUNCTION ide2 (ignore)
 
             'display error message (if necessary)
             IF failed THEN
-                    IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
-                    UpdateIdeInfo
-                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                IF LEFT$(IdeInfo, 19) <> "Selection length = " THEN IdeInfo = ""
+                UpdateIdeInfo
+                menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
 
-                    clearStatusWindow 0
-                    'scrolling unavailable, but may span multiple lines
-                    IF compfailed THEN
-                        a$ = MID$(c$, 2, LEN(c$) - 5)
-                        x = 2
-                        y = idewy - 3
-                        printWrapStatus x, y, x, a$
-                        statusarealink = 1
+                clearStatusWindow 0
+                'scrolling unavailable, but may span multiple lines
+                IF compfailed THEN
+                    a$ = MID$(c$, 2, LEN(c$) - 5)
+                    x = 2
+                    y = idewy - 3
+                    printWrapStatus x, y, x, a$
+                    statusarealink = 1
+                ELSE
+                    a$ = MID$(c$, 2, LEN(c$) - 5)
+
+                    l = CVL(RIGHT$(c$, 4)): IF l <> 0 THEN idefocusline = l
+
+                    x = 2
+                    y = idewy - 3
+
+                    IF l <> 0 AND idecy = l THEN onCurrentLine = LEN(a$): a$ = a$ + CHR$(1) + " on current line"
+
+                    hasReference = INSTR(a$, " - Reference: ")
+                    IF hasReference THEN
+                        hasReference = hasReference + 13
+                        a$ = LEFT$(a$, hasReference) + CHR$(2) + MID$(a$, hasReference + 1)
                     ELSE
-                        a$ = MID$(c$, 2, LEN(c$) - 5)
-
-                        l = CVL(RIGHT$(c$, 4)): IF l <> 0 THEN idefocusline = l
-
-                        x = 2
-                        y = idewy - 3
-
-                        IF l <> 0 AND idecy = l THEN onCurrentLine = LEN(a$): a$ = a$ + CHR$(1) + " on current line"
-
-                        hasReference = INSTR(a$, " - Reference: ")
+                        hasReference = INSTR(a$, "Expected ")
                         IF hasReference THEN
-                            hasReference = hasReference + 13
+                            hasReference = hasReference + 8
                             a$ = LEFT$(a$, hasReference) + CHR$(2) + MID$(a$, hasReference + 1)
-                        ELSE
-                            hasReference = INSTR(a$, "Expected ")
-                            IF hasReference THEN
-                                hasReference = hasReference + 8
-                                a$ = LEFT$(a$, hasReference) + CHR$(2) + MID$(a$, hasReference + 1)
-                            END IF
                         END IF
-
-                        errininc = INSTR(a$, "included")
-                        printWrapStatus x, y, x, a$
-
-                        IF l <> 0 AND idecy <> l THEN
-                            a$ = " on line" + STR$(l) + " (click here or Ctrl+Shift+G to jump there)"
-                            COLOR 11, 1
-                            printWrapStatus POS(0), CSRLIN, 2, a$
-                            statusarealink = 2
-                        END IF
-
-                        y = CSRLIN
-                        IF y < idewy - 1 AND linefragment <> "[INFORMATION UNAVAILABLE]" THEN
-                            temp$ = linefragment
-                            FOR i = 1 TO LEN(temp$)
-                                IF MID$(temp$, i, 1) = sp$ THEN MID$(temp$, i, 1) = " "
-                            NEXT
-                            temp$ = _TRIM$(temp$)
-                            IF UCASE$(LEFT$(temp$, 10)) = "SUB VWATCH" THEN temp$ = "End of Program"
-                            IF LEN(temp$) THEN
-                                y = y + 1: x = 1
-                                temp$ = "Caused by (or after): " + CHR$(1) + temp$
-
-                                COLOR 7, 1
-                                FOR i = 1 TO LEN(temp$)
-                                    x = x + 1: IF x = idewx THEN x = 2: y = y + 1
-                                    IF y > idewy - 1 THEN EXIT FOR
-                                    IF ASC(temp$, i) = 1 THEN i = i + 1: COLOR 11, 1
-                                    _PRINTSTRING (x, y), CHR$(ASC(temp$, i))
-                                NEXT
-                            END IF
-                        END IF
-
                     END IF
+
+                    errininc = INSTR(a$, "included")
+                    printWrapStatus x, y, x, a$
+
+                    IF l <> 0 AND idecy <> l THEN
+                        a$ = " on line" + STR$(l) + " (click here or Ctrl+Shift+G to jump there)"
+                        COLOR 11, 1
+                        printWrapStatus POS(0), CSRLIN, 2, a$
+                        statusarealink = 2
+                    END IF
+
+                    y = CSRLIN
+                    IF y < idewy - 1 AND linefragment <> "[INFORMATION UNAVAILABLE]" THEN
+                        temp$ = linefragment
+                        FOR i = 1 TO LEN(temp$)
+                            IF MID$(temp$, i, 1) = sp$ THEN MID$(temp$, i, 1) = " "
+                        NEXT
+                        temp$ = _TRIM$(temp$)
+                        IF UCASE$(LEFT$(temp$, 10)) = "SUB VWATCH" THEN temp$ = "End of Program"
+                        IF LEN(temp$) THEN
+                            y = y + 1: x = 1
+                            temp$ = "Caused by (or after): " + CHR$(1) + temp$
+
+                            COLOR 7, 1
+                            FOR i = 1 TO LEN(temp$)
+                                x = x + 1: IF x = idewx THEN x = 2: y = y + 1
+                                IF y > idewy - 1 THEN EXIT FOR
+                                IF ASC(temp$, i) = 1 THEN i = i + 1: COLOR 11, 1
+                                _PRINTSTRING (x, y), CHR$(ASC(temp$, i))
+                            NEXT
+                        END IF
+                    END IF
+
+                END IF
             END IF
 
             IF idechangemade THEN
-                    clearStatusWindow 0
-                    IdeInfo = ""
-                    _PRINTSTRING (2, idewy - 3), _IIF(IDEShowErrorsImmediately, STRING$(3, 250), "Manual Syntax Check Mode, press Shift+F9 to trigger...") 'assume new compilation will begin "..."
-                    menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
+                clearStatusWindow 0
+                IdeInfo = ""
+                _PRINTSTRING (2, idewy - 3), _IIF(IDEShowErrorsImmediately, STRING$(3, 250), "Manual Syntax Check Mode, press Shift+F9 to trigger...") 'assume new compilation will begin "..."
+                menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
             END IF
 
             ideshowtext
@@ -3161,23 +3161,23 @@ FUNCTION ide2 (ignore)
                             clearStatusWindow 0
 
                             IF tempInclude1$ = tempInclude2$ THEN
-                                    IF idecompiling = 1 THEN
-                                        _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
-                                        menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
-                                    ELSE
-                                        _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-                                        menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
-                                        statusarealink = 0
-                                        IF totalWarnings > 0 THEN
-                                            COLOR 11, 1
-                                            msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
-                                            IF totalWarnings > 1 THEN msg$ = msg$ + "s"
-                                            msg$ = msg$ + " - click here or Ctrl+W to view)"
-                                            _PRINTSTRING (4, idewy - 3), msg$
-                                            statusarealink = 4
-                                        END IF
-                                        IF waitingForVarList THEN GOSUB showVarListReady
+                                IF idecompiling = 1 THEN
+                                    _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
+                                    menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
+                                ELSE
+                                    _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
+                                    menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+                                    statusarealink = 0
+                                    IF totalWarnings > 0 THEN
+                                        COLOR 11, 1
+                                        msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
+                                        IF totalWarnings > 1 THEN msg$ = msg$ + "s"
+                                        msg$ = msg$ + " - click here or Ctrl+W to view)"
+                                        _PRINTSTRING (4, idewy - 3), msg$
+                                        statusarealink = 4
                                     END IF
+                                    IF waitingForVarList THEN GOSUB showVarListReady
+                                END IF
                             ELSE
                                 idechangemade = 1
                                 startPausedPending = 0
@@ -4111,7 +4111,7 @@ FUNCTION ide2 (ignore)
         'In Mac it's properly delivered as Control+Backspace.
         'Key combo not yet supported in Linux.
         IF (INSTR(_OS$, "WIN") > 0 AND KCONTROL AND K$ = CHR$(0) + CHR$(83)) OR _
-            (INSTR(_OS$, "MAC") > 0 AND K$ = CHR$(8) AND KCONTROL) THEN
+           (INSTR(_OS$, "MAC") > 0 AND K$ = CHR$(8) AND KCONTROL) THEN
             ideselect = 0
             idechangemade = 1
             startPausedPending = 0
@@ -4402,58 +4402,58 @@ FUNCTION ide2 (ignore)
         IF LEN(a$) < idecx - 1 THEN a$ = a$ + SPACE$(idecx - 1 - LEN(a$))
 
 
-     IF AutoCloseBrackets THEN 'enable new behavior if autoclosebrackets is in use
-        skipInsert = 0
-        IF ideinsert = 0 THEN 'Insert mode
-            nextChar$ = MID$(a$, idecx, 1)
-            IF (K$ = ")" AND nextChar$ = ")") OR _
-               (K$ = "]" AND nextChar$ = "]") OR _
-               (K$ = "}" AND nextChar$ = "}") OR _
-               (K$ = CHR$(34) AND nextChar$ = CHR$(34)) THEN
-                skipInsert = 1
+        IF AutoCloseBrackets THEN 'enable new behavior if autoclosebrackets is in use
+            skipInsert = 0
+            IF ideinsert = 0 THEN 'Insert mode
+                nextChar$ = MID$(a$, idecx, 1)
+                IF (K$ = ")" AND nextChar$ = ")") OR _
+                   (K$ = "]" AND nextChar$ = "]") OR _
+                   (K$ = "}" AND nextChar$ = "}") OR _
+                   (K$ = CHR$(34) AND nextChar$ = CHR$(34)) THEN
+                    skipInsert = 1
+                END IF
             END IF
-        END IF
 
-        IF skipInsert = 0 THEN
+            IF skipInsert = 0 THEN
+                IF ideinsert THEN
+                    a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
+                    IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
+                    a$ = LEFT$(a$, idecx - 1) + K$ + a2$
+                ELSE
+                    extraChar$ = ""
+                    IF AutoCloseBrackets THEN
+                        IF K$ = "(" THEN extraChar$ = ")"
+                        IF K$ = "[" THEN extraChar$ = "]"
+                        IF K$ = "{" THEN extraChar$ = "}"
+                        IF K$ = CHR$(34) THEN
+                            'Check if we are inside a string (odd number of quotes before cursor)
+                            quoteCount = 0
+                            tempStr$ = LEFT$(a$, idecx - 1)
+                            FOR i = 1 TO LEN(tempStr$)
+                                IF MID$(tempStr$, i, 1) = CHR$(34) THEN quoteCount = quoteCount + 1
+                            NEXT
+                            IF (quoteCount MOD 2) = 0 THEN extraChar$ = CHR$(34)
+                        END IF
+                    END IF
+
+                    a$ = LEFT$(a$, idecx - 1) + K$ + extraChar$ + RIGHT$(a$, LEN(a$) - idecx + 1)
+                END IF
+                idesetline idecy, a$
+            END IF
+        ELSE 'otherwise go back to the old behavior
+            'Replace old code back
+
             IF ideinsert THEN
                 a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
                 IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
                 a$ = LEFT$(a$, idecx - 1) + K$ + a2$
             ELSE
-                extraChar$ = ""
-                IF AutoCloseBrackets THEN
-                    IF K$ = "(" THEN extraChar$ = ")"
-                    IF K$ = "[" THEN extraChar$ = "]"
-                    IF K$ = "{" THEN extraChar$ = "}"
-                    IF K$ = CHR$(34) THEN
-                        'Check if we are inside a string (odd number of quotes before cursor)
-                        quoteCount = 0
-                        tempStr$ = LEFT$(a$, idecx - 1)
-                        FOR i = 1 TO LEN(tempStr$)
-                            IF MID$(tempStr$, i, 1) = CHR$(34) THEN quoteCount = quoteCount + 1
-                        NEXT
-                        IF (quoteCount MOD 2) = 0 THEN extraChar$ = CHR$(34)
-                    END IF
-                END IF
-
-                a$ = LEFT$(a$, idecx - 1) + K$ + extraChar$ + RIGHT$(a$, LEN(a$) - idecx + 1)
+                a$ = LEFT$(a$, idecx - 1) + K$ + RIGHT$(a$, LEN(a$) - idecx + 1)
             END IF
+
             idesetline idecy, a$
+            'end of old code
         END IF
-      ELSE 'otherwise go back to the old behavior
-        'Replace old code back
-
-        IF ideinsert THEN
-            a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
-            IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
-            a$ = LEFT$(a$, idecx - 1) + K$ + a2$
-        ELSE
-            a$ = LEFT$(a$, idecx - 1) + K$ + RIGHT$(a$, LEN(a$) - idecx + 1)
-        END IF
-
-        idesetline idecy, a$
-        'end of old code
-       END IF
 
         idecx = idecx + LEN(K$)
         specialchar:
@@ -6867,30 +6867,30 @@ FUNCTION ide2 (ignore)
         GOSUB HelpAreaShowBackLinks
     END IF
 
-        clearStatusWindow 0
-        IdeInfo = ""
+    clearStatusWindow 0
+    IdeInfo = ""
 
-        IF idecompiling = 1 THEN
+    IF idecompiling = 1 THEN
+        _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
+        menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
+    ELSE
+        menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
+        IF idefocusline THEN
             _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
-            menu$(1, FileMenuExportAs) = "~#Export As...  " + CHR$(16)
         ELSE
-            menu$(1, FileMenuExportAs) = "#Export As...  " + CHR$(16)
-            IF idefocusline THEN
-                _PRINTSTRING (2, idewy - 3), STRING$(3, 250) '"..."
-            ELSE
-                _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
-            END IF
-            statusarealink = 0
-            IF totalWarnings > 0 THEN
-                COLOR 11, 1
-                msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
-                IF totalWarnings > 1 THEN msg$ = msg$ + "s"
-                msg$ = msg$ + " - click here or Ctrl+W to view)"
-                _PRINTSTRING (4, idewy - 3), msg$
-                statusarealink = 4
-            END IF
-            IF waitingForVarList THEN GOSUB showVarListReady
+            _PRINTSTRING (2, idewy - 3), "OK" 'report OK status
         END IF
+        statusarealink = 0
+        IF totalWarnings > 0 THEN
+            COLOR 11, 1
+            msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
+            IF totalWarnings > 1 THEN msg$ = msg$ + "s"
+            msg$ = msg$ + " - click here or Ctrl+W to view)"
+            _PRINTSTRING (4, idewy - 3), msg$
+            statusarealink = 4
+        END IF
+        IF waitingForVarList THEN GOSUB showVarListReady
+    END IF
     RETURN
 
     HelpAreaShowBackLinks:
