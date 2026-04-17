@@ -13,7 +13,6 @@
 #include "condvar.h"
 #include "mutex.h"
 #include "qb_http.h"
-#include "qbs.h"
 #include "thread.h"
 
 struct handle {
