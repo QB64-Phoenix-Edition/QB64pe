@@ -7,7 +7,6 @@ _CONTROLCHR OFF
 
 DIM SHARED AltSpecial AS _BYTE
 
-DIM SHARED IDEBuildModeChanged
 DIM SHARED IdeInfo AS STRING
 DIM SHARED IdeContextHelpSF AS _BYTE
 
@@ -214,14 +213,14 @@ TYPE idedbotype
 END TYPE
 '--------------------------------------------------------------------------------
 DIM SHARED idefocusline 'simply stores the location of the line to highlight in red
-DIM SHARED ideautorun, startPaused
+DIM SHARED ideautorun, idemanualcheck, startPaused
 DIM SHARED menu$(1 TO 12, 0 TO 20)
 DIM SHARED menuDesc$(1 TO 12, 0 TO 20)
 DIM SHARED menusize(1 TO 12)
 DIM SHARED menus AS INTEGER, idecontextualmenuID AS INTEGER
 DIM SHARED ideeditmenuID AS INTEGER, SearchMenuID AS INTEGER
 DIM SHARED OptionsMenuID AS INTEGER, OptionsMenuSwapMouse AS INTEGER, OptionsMenuPasteCursor AS INTEGER
-DIM SHARED OptionsMenuIgnoreWarnings AS INTEGER, OptionsMenuShowErrorManually AS INTEGER
+DIM SHARED OptionsMenuShowErrorsImmediately AS INTEGER, OptionsMenuIgnoreWarnings AS INTEGER
 DIM SHARED OptionsMenuDisableSyntax AS INTEGER, OptionsMenuAutoCloseBrackets AS INTEGER ', OptionsMenuAutoComplete
 DIM SHARED ViewMenuID AS INTEGER, ViewMenuShowLineNumbersSubMenuID AS INTEGER
 DIM SHARED ViewMenuShowSeparatorID AS INTEGER, ViewMenuShowBGID AS INTEGER

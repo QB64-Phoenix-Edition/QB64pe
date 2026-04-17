@@ -515,7 +515,7 @@ SUB IniLoad (file$)
             IniWholeFile$ = SPACE$(currentIniFileLOF)
             GET #fileNum, 1, IniWholeFile$
             CLOSE #fileNum
-            
+
             'Check if this ini file uses CRLF or LF
             IF INSTR(IniWholeFile$, CHR$(13)) THEN IniLF$ = CHR$(13) + CHR$(10) ELSE IniLF$ = CHR$(10)
         ELSE

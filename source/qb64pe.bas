@@ -24067,7 +24067,7 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
 
                     'if there have been changes in TYPEs, this variable won't be preselected
                     IF (LEN(backupUsedVariableList(j).elements) > 0 AND backupTypeDefinitions$ = typeDefinitions$) OR _
-                        (LEN(backupUsedVariableList(j).elements) = 0) THEN
+                       (LEN(backupUsedVariableList(j).elements) = 0) THEN
                         usedVariableList(i).watch = backupUsedVariableList(j).watch
                         usedVariableList(i).watchRange = backupUsedVariableList(j).watchRange
                         usedVariableList(i).indexes = backupUsedVariableList(j).indexes
