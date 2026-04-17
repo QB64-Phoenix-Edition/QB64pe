@@ -11,20 +11,20 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_32612:;
+S_32611:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
-if(qbevent){evnt(24226,6,"build.bas");if(r)goto S_32612;}
+if(qbevent){evnt(24226,6,"build.bas");if(r)goto S_32611;}
 do{
 sub_shell2(qbs_add(qbs_add(qbs_new_txt_len("cmd /c ",7),FUNC_GETMAKEEXECUTABLE()),qbs_new_txt_len(" OS=win clean",13)),2);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(24226,7,"build.bas");}while(r);
-S_32614:;
+S_32613:;
 }else{
 if (qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("LNX",3)))){
-if(qbevent){evnt(24226,8,"build.bas");if(r)goto S_32614;}
-S_32615:;
+if(qbevent){evnt(24226,8,"build.bas");if(r)goto S_32613;}
+S_32614:;
 if ((*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC)||is_error_pending()){
-if(qbevent){evnt(24226,9,"build.bas");if(r)goto S_32615;}
+if(qbevent){evnt(24226,9,"build.bas");if(r)goto S_32614;}
 do{
 sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=osx clean",13)),2);
 qbs_cleanup(qbs_tmp_base,0);
