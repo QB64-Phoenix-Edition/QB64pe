@@ -4418,28 +4418,33 @@ resolve_coordinates:
         int32 clipLeadY = 0;
         int32 clipTrailY = 0;
 
+        const int32 srcClipX1 = s->clipping_or_scaling ? s->view_x1 : 0;
+        const int32 srcClipY1 = s->clipping_or_scaling ? s->view_y1 : 0;
+        const int32 srcClipX2 = s->clipping_or_scaling ? s->view_x2 : (sw - 1);
+        const int32 srcClipY2 = s->clipping_or_scaling ? s->view_y2 : (sh - 1);
+
         if (srcCellStepX > 0) {
-            if (sx1 < 0)
-                clipLeadX = -sx1;
-            if (sx2 >= sw)
-                clipTrailX = sx2 - (sw - 1);
+            if (sx1 < srcClipX1)
+                clipLeadX = srcClipX1 - sx1;
+            if (sx2 > srcClipX2)
+                clipTrailX = sx2 - srcClipX2;
         } else {
-            if (sx1 >= sw)
-                clipLeadX = sx1 - (sw - 1);
-            if (sx2 < 0)
-                clipTrailX = -sx2;
+            if (sx1 > srcClipX2)
+                clipLeadX = sx1 - srcClipX2;
+            if (sx2 < srcClipX1)
+                clipTrailX = srcClipX1 - sx2;
         }
 
         if (srcCellStepY > 0) {
-            if (sy1 < 0)
-                clipLeadY = -sy1;
-            if (sy2 >= sh)
-                clipTrailY = sy2 - (sh - 1);
+            if (sy1 < srcClipY1)
+                clipLeadY = srcClipY1 - sy1;
+            if (sy2 > srcClipY2)
+                clipTrailY = sy2 - srcClipY2;
         } else {
-            if (sy1 >= sh)
-                clipLeadY = sy1 - (sh - 1);
-            if (sy2 < 0)
-                clipTrailY = -sy2;
+            if (sy1 > srcClipY2)
+                clipLeadY = sy1 - srcClipY2;
+            if (sy2 < srcClipY1)
+                clipTrailY = srcClipY1 - sy2;
         }
 
         if ((clipLeadX + clipTrailX >= srcCellsW) || (clipLeadY + clipTrailY >= srcCellsH))
@@ -4465,11 +4470,15 @@ resolve_coordinates:
 
         if (d->text) {
             auto dstData = reinterpret_cast<uint16 *>(d->offset);
+            const int32 viewPrintTop = d->top_row - 1;
+            const int32 viewPrintBottom = d->bottom_row - 1;
 
             for (int32 cellY = 0; cellY < clippedCellsH; ++cellY) {
                 const int32 srcY = sy1 + cellY * srcCellStepY;
                 const int32 dstY = dy1 + cellY * dstStepY;
                 if ((dstY < 0) || (dstY >= d->height))
+                    continue;
+                if ((dstY < viewPrintTop) || (dstY > viewPrintBottom))
                     continue;
 
                 for (int32 cellX = 0; cellX < clippedCellsW; ++cellX) {
@@ -4484,6 +4493,11 @@ resolve_coordinates:
                 }
             }
         } else {
+            const int32 dstClipX1 = d->clipping_or_scaling ? d->view_x1 : 0;
+            const int32 dstClipY1 = d->clipping_or_scaling ? d->view_y1 : 0;
+            const int32 dstClipX2 = d->clipping_or_scaling ? d->view_x2 : (d->width - 1);
+            const int32 dstClipY2 = d->clipping_or_scaling ? d->view_y2 : (d->height - 1);
+
             for (int32 cellY = 0; cellY < clippedCellsH; ++cellY) {
                 const int32 srcY = sy1 + cellY * srcCellStepY;
 
@@ -4514,12 +4528,12 @@ resolve_coordinates:
                     if (d->bits_per_pixel == 32) {
                         for (int32 py = 0; py < fontHeight; ++py) {
                             const int32 dstY = dy1 + dstStepY * (cellY * fontHeight + py);
-                            if ((dstY < 0) || (dstY >= d->height))
+                            if ((dstY < dstClipY1) || (dstY > dstClipY2))
                                 continue;
 
                             for (int32 px = 0; px < fontWidth; ++px) {
                                 const int32 dstX = dx1 + dstStepX * (cellX * fontWidth + px);
-                                if ((dstX < 0) || (dstX >= d->width))
+                                if ((dstX < dstClipX1) || (dstX > dstClipX2))
                                     continue;
 
                                 const uint8 bit = glyphBits[py * fontWidth + px];
@@ -4529,12 +4543,12 @@ resolve_coordinates:
                     } else {
                         for (int32 py = 0; py < fontHeight; ++py) {
                             const int32 dstY = dy1 + dstStepY * (cellY * fontHeight + py);
-                            if ((dstY < 0) || (dstY >= d->height))
+                            if ((dstY < dstClipY1) || (dstY > dstClipY2))
                                 continue;
 
                             for (int32 px = 0; px < fontWidth; ++px) {
                                 const int32 dstX = dx1 + dstStepX * (cellX * fontWidth + px);
-                                if ((dstX < 0) || (dstX >= d->width))
+                                if ((dstX < dstClipX1) || (dstX > dstClipX2))
                                     continue;
 
                                 const uint8 bit = glyphBits[py * fontWidth + px];
