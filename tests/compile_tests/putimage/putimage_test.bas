@@ -42,6 +42,8 @@ TestTextToGraphicsScaleIllegal
 TestTextToGraphics2Illegal
 TestGraphicsToTextIllegal
 
+TestTextToGraphics32TTFFont
+
 _FREEIMAGE srcText
 
 IF stats.failed = 0 THEN
@@ -144,19 +146,22 @@ SUB PrepareGraphicsDestinationIndexed (img AS LONG)
     _DEST oldDest
 END SUB
 
-FUNCTION TextCell~% (img AS LONG, cx AS INTEGER, cy AS INTEGER)
+FUNCTION TextCell~% (img AS LONG, cx AS LONG, cy AS LONG)
+    ' DOES NOT CLIP!
     DIM p AS _MEM: p = _MEMIMAGE(img)
     TextCell = _MEMGET(p, p.OFFSET + ((cy - 1) * _WIDTH(img) + (cx - 1)) * _SIZE_OF_INTEGER, _UNSIGNED INTEGER)
     _MEMFREE p
 END FUNCTION
 
 FUNCTION Pixel32~& (img AS LONG, x AS LONG, y AS LONG)
+    ' DOES NOT CLIP!
     DIM p AS _MEM: p = _MEMIMAGE(img)
     Pixel32 = _MEMGET(p, p.OFFSET + (y * _WIDTH(img) + x) * _SIZE_OF_LONG, _UNSIGNED LONG)
     _MEMFREE p
 END FUNCTION
 
 FUNCTION PixelIndex~%% (img AS LONG, x AS LONG, y AS LONG)
+    ' DOES NOT CLIP!
     DIM p AS _MEM: p = _MEMIMAGE(img)
     PixelIndex = _MEMGET(p, p.OFFSET + (y * _WIDTH(img) + x), _UNSIGNED _BYTE)
     _MEMFREE p
@@ -719,4 +724,43 @@ SUB TestGraphicsToTextIllegal
 
     _FREEIMAGE dst
     _FREEIMAGE src
+END SUB
+
+SUB TestTextToGraphics32TTFFont
+    DIM fnt AS LONG: fnt = _LOADFONT("../font/LiberationMono-Regular.ttf", 16, "monospace")
+    IF fnt <= 0 THEN
+        ReportCheck "text->graphics 32bpp TTF font", _FALSE
+        EXIT SUB
+    END IF
+
+    DIM fW AS INTEGER: fW = _FONTWIDTH(fnt)
+    DIM fH AS INTEGER: fH = _FONTHEIGHT(fnt)
+    DIM src AS LONG: src = _NEWIMAGE(10, 4, 0)
+    DIM oldDest AS LONG: oldDest = _DEST
+
+    _DEST src
+    _FONT fnt
+    COLOR 15, 1
+    CLS
+    LOCATE 1, 1: PRINT "ABCDEFGHIJ";
+    LOCATE 2, 1: PRINT "abcdefghij";
+    _DEST oldDest
+
+    DIM expectedW AS LONG: expectedW = 10 * fW
+    DIM expectedH AS LONG: expectedH = 4 * fH
+    DIM dst AS LONG: dst = _NEWIMAGE(expectedW + 40, expectedH + 40, 32)
+    PrepareGraphicsDestination32 dst
+
+    _PUTIMAGE (20, 20), src, dst
+    '_SAVEIMAGE "TestTextToGraphics32TTFFont", dst
+
+    DIM ok AS _BYTE: ok = _TRUE
+    IF CountNonBlack32(dst, 20, 20, 20 + expectedW - 1, 20 + expectedH - 1) <= 0 THEN ok = _FALSE
+    IF CountNonBlackOutsideRect32(dst, 20, 20, 20 + expectedW - 1, 20 + expectedH - 1) <> 0 THEN ok = _FALSE
+
+    ReportCheck "text->graphics 32bpp TTF font", ok
+
+    _FREEIMAGE src
+    _FREEIMAGE dst
+    _FREEFONT fnt
 END SUB

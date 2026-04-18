@@ -4387,8 +4387,8 @@ resolve_coordinates:
 
         const int32 srcCellsW = abs(sx2 - sx1) + 1;
         const int32 srcCellsH = abs(sy2 - sy1) + 1;
-        const int32 fontWidth = 8;
-        const int32 fontHeight = (s->font == 8 || s->font == 14) ? s->font : 16;
+        const int32 fontWidth = fontwidth[s->font];
+        const int32 fontHeight = fontheight[s->font];
         const int32 expectedDstW = d->text ? srcCellsW : (srcCellsW * fontWidth);
         const int32 expectedDstH = d->text ? srcCellsH : (srcCellsH * fontHeight);
 
@@ -4513,16 +4513,25 @@ resolve_coordinates:
                     const uint8 bc = uint8(((attr >> 4) & 7) + ((attr >> 7) << 3));
 
                     const uint8 *glyphBits;
-                    switch (fontHeight) {
-                    case 8:
-                        glyphBits = &charset8x8[c][0][0];
-                        break;
-                    case 14:
-                        glyphBits = &charset8x16[c][1][0];
-                        break;
-                    default:
-                        glyphBits = &charset8x16[c][0][0];
-                        break;
+                    uint8 *ttfGlyphData = nullptr;
+
+                    if (s->font >= 32) {
+                        int32 rt_w, rt_h;
+                        if (!FontRenderTextASCII(font[s->font], &c, 1, FONT_RENDER_MONOCHROME, &ttfGlyphData, &rt_w, &rt_h))
+                            continue;
+                        glyphBits = ttfGlyphData;
+                    } else {
+                        switch (fontHeight) {
+                        case 8:
+                            glyphBits = &charset8x8[c][0][0];
+                            break;
+                        case 14:
+                            glyphBits = &charset8x16[c][1][0];
+                            break;
+                        default:
+                            glyphBits = &charset8x16[c][0][0];
+                            break;
+                        }
                     }
 
                     if (d->bits_per_pixel == 32) {
@@ -4555,6 +4564,11 @@ resolve_coordinates:
                                 d->offset[dstY * d->width + dstX] = bit ? fc : bc;
                             }
                         }
+                    }
+
+                    if (ttfGlyphData) {
+                        free(ttfGlyphData);
+                        ttfGlyphData = nullptr;
                     }
                 }
             }
