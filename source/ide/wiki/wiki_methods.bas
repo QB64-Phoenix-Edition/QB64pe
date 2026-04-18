@@ -63,8 +63,11 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         PCOPY 3, 0
     END IF
 
-    'Url query and output file name
-    url$ = wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&action=edit"
+    'Url query and output file name (&qbide=1 is used to identify a request
+    'from the IDE to distinguish it from regular browser or bot requests,
+    'it won't hurt wiki operations but may be used on the server side to
+    'implement rewrite rules to fight bots)
+    url$ = wikiBaseAddress$ + "/index.php?title=" + PageName2$ + "&qbide=1&action=edit"
     outputFile$ = Cache_Folder$ + "/" + PageName3$ + ".txt"
     'Wikitext delimiters
     s1$ = "name=" + CHR$(34) + "wpTextbox1" + CHR$(34) + ">"

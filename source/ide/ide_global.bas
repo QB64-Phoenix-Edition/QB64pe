@@ -7,7 +7,6 @@ _CONTROLCHR OFF
 
 DIM SHARED AltSpecial AS _BYTE
 
-DIM SHARED IDEBuildModeChanged
 DIM SHARED IdeInfo AS STRING
 DIM SHARED IdeContextHelpSF AS _BYTE
 
@@ -214,7 +213,7 @@ TYPE idedbotype
 END TYPE
 '--------------------------------------------------------------------------------
 DIM SHARED idefocusline 'simply stores the location of the line to highlight in red
-DIM SHARED ideautorun, startPaused
+DIM SHARED ideautorun, idemanualcheck, startPaused
 DIM SHARED menu$(1 TO 12, 0 TO 20)
 DIM SHARED menuDesc$(1 TO 12, 0 TO 20)
 DIM SHARED menusize(1 TO 12)
