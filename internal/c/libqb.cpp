@@ -19248,9 +19248,23 @@ void sub__clearcolor(uint32 c, int32 i, int32 passed) {
     im = &img[i];
     // text?
     if (im->text) {
-        if ((passed & 1) && (!(passed & 2)))
-            return; // you can disable clearcolor using _CLEARCOLOR _NONE in text modes
-        error(5);
+        if (passed & 1) {
+            if (passed & 2) {
+                error(5);
+                return;
+            } // invalid options
+            im->transparent_color = -1; // _CLEARCOLOR _NONE: disable transparency
+            return;
+        }
+        if (!(passed & 2)) {
+            error(5);
+            return;
+        } // invalid options
+        if (c > 65535) {
+            error(5);
+            return;
+        } // invalid cell value for a text surface
+        im->transparent_color = (int32)c;
         return;
     }
     // palette?
@@ -19534,7 +19548,7 @@ int32 func__clearcolor(int32 i, int32 passed) {
         i = write_page_index;
     }
     if (img[i].text)
-        return -1;
+        return img[i].transparent_color; // -1 = none, 0-65535 = cell value
     if (img[i].compatible_mode == 32)
         return 0;
     return img[i].transparent_color;
