@@ -2104,8 +2104,7 @@ DO
 
                                 ii = 2
 
-                                'Tady se kazdemu novemu clenu TYPE predem vynuluje metadata blok pro pripad, ze to nakonec nebude pole. Bez toho by se mohly tahnout stare hodnoty z predchoziho clenu.
-
+                               
                                 ' Initialize static-member-array metadata to the non-array state.
                                 ' If no (...) declarator is parsed, this TYPE member remains a scalar / non-array field.
                                 udtearrayelements(i2) = 0
@@ -2127,8 +2126,6 @@ DO
                                             i3 = i3 + 1
                                         LOOP
                                         IF b2 <> 0 THEN a$ = "Expected )": GOTO errmes
-
-                                        'parsovani konstantnich mezi clenskeho statickeho pole v type a taky se vytvari deskriptor kterej se pak pouziva pro indexovani LBOUND/UBOUND, ERASE, REDIM a _MEM
 
                                         ' Parse compile-time bounds for an inline static TYPE member array.
                                         ' The resulting descriptor is later reused by indexing, LBOUND/UBOUND, ERASE, REDIM and _MEM handling.
@@ -2189,8 +2186,7 @@ DO
                                 ELSE
                                     udtesize(i2) = typ AND 511
                                 END IF
-                                'tady se velikost clena prepina z velikost ijednoho prvku na velikost celyho inline bloku
-
+                               
                                 ' For static TYPE member arrays, udtesize() must store the size of the whole inline block,
                                 ' not the size of a single element.
                                 IF udtearrayelements(i2) THEN
@@ -3036,8 +3032,6 @@ totallinenumber = reallinenumber
 
 'prepass finished
 
-'Reset compiler state that must be rebuilt again in source order during the main pass.
-optionbase = 0
 lineinput3index = 1 'reset input line
 
 'ide specific
@@ -4115,8 +4109,6 @@ DO
             ELSE
                 l$ = l$ + sp + SCase2$(t$)
             END IF
-
-            'formater / layout vetev - pro zachovani zapisu clenskych poli bez rozflakani formateru
 
             ' Normalize the member declaration for layout / auto-format output.
             ' Keep array declarators and dotted member syntax compact and readable.
@@ -8217,6 +8209,7 @@ DO
             targetlast = i - 1
             IF targetlast < targetfirst THEN a$ = "Expected array-name": GOTO errmes
             var$ = getelements$(ca$, targetfirst, targetlast)
+            IF HasIndexedFinalMemberArray%(var$) THEN a$ = "Incorrect number of arguments": GOTO errmes
 
             x$ = var$: ls$ = removesymbol(x$)
             IF Error_Happened THEN Error_Happened = 0
@@ -10792,6 +10785,10 @@ DO
 
                 IF firstelement$ = "CLEAR" THEN
                     IF subfunc$ <> "" THEN a$ = "CLEAR cannot be used inside a SUB/FUNCTION": GOTO errmes
+                    FOR i2 = 2 TO n
+                        a2$ = getelement$(ca$, i2)
+                        IF a2$ = "(" OR a2$ = ")" THEN a$ = "Incorrect number of arguments": GOTO errmes
+                    NEXT
                 END IF
 
                 'LSET/RSET
@@ -16454,6 +16451,66 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 END FUNCTION
 
 
+
+'Added a function for handling nested fields. Its purpose is to determine
+'whether the current field is the last nested field in the given field
+'tree, so that calls such as:
+
+'TYPE test
+'T(12) AS LONG
+'END TYPE
+'DIM Foo(10) AS _BYTE
+
+'PRINT LBOUND(Foo(5).T(5))
+
+'are rejected. If T is the last field in the branch, this and similar
+'calls must produce a parser error, and adding brackets and an index
+'is not allowed. This modification applies to LBOUND, UBOUND, ERASE,
+'and CLEAR. In contrast, such usage is allowed for _MEM (operation on
+'a specific field element), PRINT, and LEN.
+
+FUNCTION HasIndexedFinalMemberArray% (expr$)
+    n = numelements(expr$)
+    IF n = 0 THEN EXIT FUNCTION
+
+    DO WHILE n >= 2
+        IF getelement$(expr$, 1) <> "(" OR getelement$(expr$, n) <> ")" THEN EXIT DO
+
+        b = 0
+        wrapped = -1
+        FOR i = 1 TO n
+            t$ = getelement$(expr$, i)
+            IF t$ = "(" THEN b = b + 1
+            IF t$ = ")" THEN
+                b = b - 1
+                IF b = 0 AND i <> n THEN wrapped = 0: EXIT FOR
+            END IF
+        NEXT
+        IF wrapped = 0 OR b <> 0 THEN EXIT DO
+
+        expr$ = getelements$(expr$, 2, n - 1)
+        n = numelements(expr$)
+        IF n = 0 THEN EXIT FUNCTION
+    LOOP
+
+    IF getelement$(expr$, n) <> ")" THEN EXIT FUNCTION
+
+    b = 1
+    FOR i = n - 1 TO 1 STEP -1
+        t$ = getelement$(expr$, i)
+        IF t$ = ")" THEN b = b + 1
+        IF t$ = "(" THEN
+            b = b - 1
+            IF b = 0 THEN
+                IF i >= 3 THEN
+                    IF getelement$(expr$, i - 2) = "." THEN HasIndexedFinalMemberArray% = -1
+                END IF
+                EXIT FUNCTION
+            END IF
+        END IF
+    NEXT
+END FUNCTION
+
 FUNCTION udtreference$ (o$, a$, typ AS LONG)
     'UDT REFERENCE FORMAT
     'idno|udtno|udtelementno|byteoffset
@@ -17715,6 +17772,10 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF curarg = 1 THEN
                         original_e$ = e$
                         ulboundarrayisnested = 0
+
+                        IF HasIndexedFinalMemberArray%(original_e$) THEN
+                            Give_Error "Incorrect number of arguments": EXIT FUNCTION
+                        END IF
 
                         ' Only expressions that actually contain a member dereference can use the
                         ' new nested static TYPE member-array syntax.
