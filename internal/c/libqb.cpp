@@ -4067,6 +4067,9 @@ void flush_old_hardware_commands() {
     } // next_hardware_command_to_remove&&last_hardware_command_rendered
 } // flush_old_hardware_commands
 
+uint8 charset8x8[256][8][8];
+uint8 charset8x16[256][16][8];
+
 void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32 src, int32 dst, double f_sx1, double f_sy1, double f_sx2, double f_sy2,
                    int32 passed) {
 
@@ -4168,10 +4171,6 @@ void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32
     } else {
         s = read_page;
     } // src
-    if (s->text) {
-        error(5);
-        return;
-    }
     sbpp = s->bytes_per_pixel;
 
     if (passed & 32) { // dst
@@ -4194,11 +4193,18 @@ void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32
     } else {
         d = write_page;
     } // dst
-    if (d->text) {
+    if (!s->text && d->text) {
         error(5);
         return;
     }
     dbpp = d->bytes_per_pixel;
+    if (s->text && !d->text) {
+        // Text glyphs use up to 16 palette indices; destination must be able to represent all of them.
+        if ((d->bits_per_pixel != 32) && (d->bits_per_pixel < 4)) {
+            error(5);
+            return;
+        }
+    }
     if ((sbpp == 4) && (dbpp == 1)) {
         error(5);
         return;
@@ -4357,6 +4363,191 @@ resolve_coordinates:
     } // sx1,sy1
 
     // all co-ordinates resolved (but omitted co-ordinates are set to 0!)
+
+    if (s->text) {
+        int32 srcCellStepX = 1;
+        int32 srcCellStepY = 1;
+        int32 dstStepX = 1;
+        int32 dstStepY = 1;
+
+        if (passed & 64) {
+            if (passed & 512) {
+                srcCellStepX = (sx2 >= sx1) ? 1 : -1;
+                srcCellStepY = (sy2 >= sy1) ? 1 : -1;
+            } else {
+                sx2 = sw - 1;
+                sy2 = sh - 1;
+            }
+        } else {
+            sx1 = 0;
+            sy1 = 0;
+            sx2 = sw - 1;
+            sy2 = sh - 1;
+        }
+
+        const int32 srcCellsW = abs(sx2 - sx1) + 1;
+        const int32 srcCellsH = abs(sy2 - sy1) + 1;
+        const int32 fontWidth = 8;
+        const int32 fontHeight = (s->font == 8 || s->font == 14) ? s->font : 16;
+        const int32 expectedDstW = d->text ? srcCellsW : (srcCellsW * fontWidth);
+        const int32 expectedDstH = d->text ? srcCellsH : (srcCellsH * fontHeight);
+
+        if (passed & 1) {
+            if (passed & 4) {
+                dstStepX = (dx2 >= dx1) ? 1 : -1;
+                dstStepY = (dy2 >= dy1) ? 1 : -1;
+
+                // Text source blit is copy-only (no scaling).
+                if (((abs(dx2 - dx1) + 1) != expectedDstW) || ((abs(dy2 - dy1) + 1) != expectedDstH)) {
+                    error(5);
+                    return;
+                }
+            } else {
+                dx2 = dx1 + expectedDstW - 1;
+                dy2 = dy1 + expectedDstH - 1;
+            }
+        } else {
+            dx1 = 0;
+            dy1 = 0;
+            dx2 = expectedDstW - 1;
+            dy2 = expectedDstH - 1;
+        }
+
+        int32 clipLeadX = 0;
+        int32 clipTrailX = 0;
+        int32 clipLeadY = 0;
+        int32 clipTrailY = 0;
+
+        if (srcCellStepX > 0) {
+            if (sx1 < 0)
+                clipLeadX = -sx1;
+            if (sx2 >= sw)
+                clipTrailX = sx2 - (sw - 1);
+        } else {
+            if (sx1 >= sw)
+                clipLeadX = sx1 - (sw - 1);
+            if (sx2 < 0)
+                clipTrailX = -sx2;
+        }
+
+        if (srcCellStepY > 0) {
+            if (sy1 < 0)
+                clipLeadY = -sy1;
+            if (sy2 >= sh)
+                clipTrailY = sy2 - (sh - 1);
+        } else {
+            if (sy1 >= sh)
+                clipLeadY = sy1 - (sh - 1);
+            if (sy2 < 0)
+                clipTrailY = -sy2;
+        }
+
+        if ((clipLeadX + clipTrailX >= srcCellsW) || (clipLeadY + clipTrailY >= srcCellsH))
+            return;
+
+        sx1 += srcCellStepX * clipLeadX;
+        sy1 += srcCellStepY * clipLeadY;
+        sx2 -= srcCellStepX * clipTrailX;
+        sy2 -= srcCellStepY * clipTrailY;
+
+        const int32 dstUnitX = d->text ? 1 : fontWidth;
+        const int32 dstUnitY = d->text ? 1 : fontHeight;
+        dx1 += dstStepX * clipLeadX * dstUnitX;
+        dy1 += dstStepY * clipLeadY * dstUnitY;
+        dx2 -= dstStepX * clipTrailX * dstUnitX;
+        dy2 -= dstStepY * clipTrailY * dstUnitY;
+
+        const int32 clippedCellsW = abs(sx2 - sx1) + 1;
+        const int32 clippedCellsH = abs(sy2 - sy1) + 1;
+
+        auto srcData = reinterpret_cast<uint16 *>(s->offset);
+        const uint32 textTransparentColor = uint32(s->transparent_color);
+
+        if (d->text) {
+            auto dstData = reinterpret_cast<uint16 *>(d->offset);
+
+            for (int32 cellY = 0; cellY < clippedCellsH; ++cellY) {
+                const int32 srcY = sy1 + cellY * srcCellStepY;
+                const int32 dstY = dy1 + cellY * dstStepY;
+                if ((dstY < 0) || (dstY >= d->height))
+                    continue;
+
+                for (int32 cellX = 0; cellX < clippedCellsW; ++cellX) {
+                    const int32 srcX = sx1 + cellX * srcCellStepX;
+                    const int32 dstX = dx1 + cellX * dstStepX;
+                    if ((dstX < 0) || (dstX >= d->width))
+                        continue;
+
+                    const uint16 cell = srcData[srcY * s->width + srcX];
+                    if (uint32(cell) != textTransparentColor)
+                        dstData[dstY * d->width + dstX] = cell;
+                }
+            }
+        } else {
+            for (int32 cellY = 0; cellY < clippedCellsH; ++cellY) {
+                const int32 srcY = sy1 + cellY * srcCellStepY;
+
+                for (int32 cellX = 0; cellX < clippedCellsW; ++cellX) {
+                    const int32 srcX = sx1 + cellX * srcCellStepX;
+                    const uint16 cell = srcData[srcY * s->width + srcX];
+                    if (uint32(cell) == textTransparentColor)
+                        continue;
+
+                    const uint8 c = uint8(cell & 0xFF);
+                    const uint8 attr = uint8(cell >> 8);
+                    const uint8 fc = uint8(attr & 0x0F);
+                    const uint8 bc = uint8(((attr >> 4) & 7) + ((attr >> 7) << 3));
+
+                    const uint8 *glyphBits;
+                    switch (fontHeight) {
+                    case 8:
+                        glyphBits = &charset8x8[c][0][0];
+                        break;
+                    case 14:
+                        glyphBits = &charset8x16[c][1][0];
+                        break;
+                    default:
+                        glyphBits = &charset8x16[c][0][0];
+                        break;
+                    }
+
+                    if (d->bits_per_pixel == 32) {
+                        for (int32 py = 0; py < fontHeight; ++py) {
+                            const int32 dstY = dy1 + dstStepY * (cellY * fontHeight + py);
+                            if ((dstY < 0) || (dstY >= d->height))
+                                continue;
+
+                            for (int32 px = 0; px < fontWidth; ++px) {
+                                const int32 dstX = dx1 + dstStepX * (cellX * fontWidth + px);
+                                if ((dstX < 0) || (dstX >= d->width))
+                                    continue;
+
+                                const uint8 bit = glyphBits[py * fontWidth + px];
+                                d->offset32[dstY * d->width + dstX] = bit ? s->pal[fc] : s->pal[bc];
+                            }
+                        }
+                    } else {
+                        for (int32 py = 0; py < fontHeight; ++py) {
+                            const int32 dstY = dy1 + dstStepY * (cellY * fontHeight + py);
+                            if ((dstY < 0) || (dstY >= d->height))
+                                continue;
+
+                            for (int32 px = 0; px < fontWidth; ++px) {
+                                const int32 dstX = dx1 + dstStepX * (cellX * fontWidth + px);
+                                if ((dstX < 0) || (dstX >= d->width))
+                                    continue;
+
+                                const uint8 bit = glyphBits[py * fontWidth + px];
+                                d->offset[dstY * d->width + dstX] = bit ? fc : bc;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return;
+    }
 
     if (use_hardware) {
         // calculate omitted co-ordinates
@@ -7077,9 +7268,6 @@ int32 qbg_visual_page;
 uint8 *qbg_visual_page_offset;
 int32 qbg_color_assign[256]; // for modes with quasi palettes!
 uint32 pal_mode10[2][9];
-
-uint8 charset8x8[256][8][8];
-uint8 charset8x16[256][16][8];
 
 int32 lineclip_draw; // 1=draw, 0=don't draw
 int32 lineclip_x1, lineclip_y1, lineclip_x2, lineclip_y2;
