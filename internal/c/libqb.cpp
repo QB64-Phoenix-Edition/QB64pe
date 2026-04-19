@@ -4675,6 +4675,15 @@ resolve_coordinates:
     //(decided not to throw error, QB64 will use linear filtering if/when available)
     // if (passed&128){error(5); return;}//software surfaces do not support pixel _SMOOTHing yet
 
+    const int32 srcClipX1 = s->clipping_or_scaling ? s->view_x1 : 0;
+    const int32 srcClipY1 = s->clipping_or_scaling ? s->view_y1 : 0;
+    const int32 srcClipX2 = s->clipping_or_scaling ? s->view_x2 : (sw - 1);
+    const int32 srcClipY2 = s->clipping_or_scaling ? s->view_y2 : (sh - 1);
+    const int32 dstClipX1 = d->clipping_or_scaling ? d->view_x1 : 0;
+    const int32 dstClipY1 = d->clipping_or_scaling ? d->view_y1 : 0;
+    const int32 dstClipX2 = d->clipping_or_scaling ? d->view_x2 : (dw - 1);
+    const int32 dstClipY2 = d->clipping_or_scaling ? d->view_y2 : (dh - 1);
+
     if ((passed & 4) && (passed & 512)) { // all co-ords given
         // could be stretched
         if ((abs(dx2 - dx1) == abs(sx2 - sx1)) && (abs(dy2 - dy1) == abs(sy2 - sy1))) { // non-stretched
@@ -4857,47 +4866,47 @@ stretch:
         my = 0.0;
     // note: mx & my represent the amount of change per dest pixel
 
-    // crop dest offscreen pixels
-    if (dx1 < 0) {
+    // crop dest pixels against destination clipping bounds
+    if (dx1 < dstClipX1) {
         if (mirror)
-            fsx2 += ((double)dx1) * mx;
+            fsx2 += ((double)(dx1 - dstClipX1)) * mx;
         else
-            fsx1 -= ((double)dx1) * mx;
-        dx1 = 0;
+            fsx1 -= ((double)(dx1 - dstClipX1)) * mx;
+        dx1 = dstClipX1;
     }
-    if (dy1 < 0) {
+    if (dy1 < dstClipY1) {
         if (flip)
-            fsy2 += ((double)dy1) * my;
+            fsy2 += ((double)(dy1 - dstClipY1)) * my;
         else
-            fsy1 -= ((double)dy1) * my;
-        dy1 = 0;
+            fsy1 -= ((double)(dy1 - dstClipY1)) * my;
+        dy1 = dstClipY1;
     }
-    if (dx2 >= dw) {
+    if (dx2 > dstClipX2) {
         if (mirror)
-            fsx1 += ((double)(dx2 - dw + 1)) * mx;
+            fsx1 += ((double)(dx2 - dstClipX2)) * mx;
         else
-            fsx2 -= ((double)(dx2 - dw + 1)) * mx;
-        dx2 = dw - 1;
+            fsx2 -= ((double)(dx2 - dstClipX2)) * mx;
+        dx2 = dstClipX2;
     }
-    if (dy2 >= dh) {
+    if (dy2 > dstClipY2) {
         if (flip)
-            fsy1 += ((double)(dy2 - dh + 1)) * my;
+            fsy1 += ((double)(dy2 - dstClipY2)) * my;
         else
-            fsy2 -= ((double)(dy2 - dh + 1)) * my;
-        dy2 = dh - 1;
+            fsy2 -= ((double)(dy2 - dstClipY2)) * my;
+        dy2 = dstClipY2;
     }
-    // crop source offscreen pixels
+    // crop source pixels against source clipping bounds
     if (w) { // gradient cannot be 0
-        if (fsx1 < -0.4999999) {
-            x = (-fsx1 - 0.499999) / mx + 1.0;
+        if (fsx1 < (((double)srcClipX1) - 0.4999999)) {
+            x = ((((double)srcClipX1) - 0.499999) - fsx1) / mx + 1.0;
             if (mirror)
                 dx2 -= x;
             else
                 dx1 += x;
             fsx1 += ((double)x) * mx;
         }
-        if (fsx2 > (((double)sw) - 0.5000001)) {
-            x = (fsx2 - (((double)sw) - 0.500001)) / mx + 1.0;
+        if (fsx2 > (((double)srcClipX2) + 0.4999999)) {
+            x = (fsx2 - (((double)srcClipX2) + 0.499999)) / mx + 1.0;
             if (mirror)
                 dx1 += x;
             else
@@ -4906,16 +4915,16 @@ stretch:
         }
     } // w
     if (h) { // gradient cannot be 0
-        if (fsy1 < -0.4999999) {
-            y = (-fsy1 - 0.499999) / my + 1.0;
+        if (fsy1 < (((double)srcClipY1) - 0.4999999)) {
+            y = ((((double)srcClipY1) - 0.499999) - fsy1) / my + 1.0;
             if (flip)
                 dy2 -= y;
             else
                 dy1 += y;
             fsy1 += ((double)y) * my;
         }
-        if (fsy2 > (((double)sh) - 0.5000001)) {
-            y = (fsy2 - (((double)sh) - 0.500001)) / my + 1.0;
+        if (fsy2 > (((double)srcClipY2) + 0.4999999)) {
+            y = (fsy2 - (((double)srcClipY2) + 0.499999)) / my + 1.0;
             if (flip)
                 dy1 += y;
             else
@@ -5258,63 +5267,63 @@ reverse:
     }
 
 clip:
-    // crop dest offscreen pixels
-    if (dx1 < 0) {
+    // crop destination against destination clipping bounds
+    if (dx1 < dstClipX1) {
         if (mirror)
-            sx2 += dx1;
+            sx2 += (dx1 - dstClipX1);
         else
-            sx1 -= dx1;
-        dx1 = 0;
+            sx1 -= (dx1 - dstClipX1);
+        dx1 = dstClipX1;
     }
-    if (dy1 < 0) {
+    if (dy1 < dstClipY1) {
         if (flip)
-            sy2 += dy1;
+            sy2 += (dy1 - dstClipY1);
         else
-            sy1 -= dy1;
-        dy1 = 0;
+            sy1 -= (dy1 - dstClipY1);
+        dy1 = dstClipY1;
     }
-    if (dx2 >= dw) {
+    if (dx2 > dstClipX2) {
         if (mirror)
-            sx1 += (dx2 - dw + 1);
+            sx1 += (dx2 - dstClipX2);
         else
-            sx2 -= (dx2 - dw + 1);
-        dx2 = dw - 1;
+            sx2 -= (dx2 - dstClipX2);
+        dx2 = dstClipX2;
     }
-    if (dy2 >= dh) {
+    if (dy2 > dstClipY2) {
         if (flip)
-            sy1 += (dy2 - dh + 1);
+            sy1 += (dy2 - dstClipY2);
         else
-            sy2 -= (dy2 - dh + 1);
-        dy2 = dh - 1;
+            sy2 -= (dy2 - dstClipY2);
+        dy2 = dstClipY2;
     }
-    // crop source offscreen pixels
-    if (sx1 < 0) {
+    // crop source against source clipping bounds
+    if (sx1 < srcClipX1) {
         if (mirror)
-            dx2 += sx1;
+            dx2 += (sx1 - srcClipX1);
         else
-            dx1 -= sx1;
-        sx1 = 0;
+            dx1 -= (sx1 - srcClipX1);
+        sx1 = srcClipX1;
     }
-    if (sy1 < 0) {
+    if (sy1 < srcClipY1) {
         if (flip)
-            dy2 += sy1;
+            dy2 += (sy1 - srcClipY1);
         else
-            dy1 -= sy1;
-        sy1 = 0;
+            dy1 -= (sy1 - srcClipY1);
+        sy1 = srcClipY1;
     }
-    if (sx2 >= sw) {
+    if (sx2 > srcClipX2) {
         if (mirror)
-            dx1 += (sx2 - sw + 1);
+            dx1 += (sx2 - srcClipX2);
         else
-            dx2 -= (sx2 - sw + 1);
-        sx2 = sw - 1;
+            dx2 -= (sx2 - srcClipX2);
+        sx2 = srcClipX2;
     }
-    if (sy2 >= sh) {
+    if (sy2 > srcClipY2) {
         if (flip)
-            dy1 += (sy2 - sh + 1);
+            dy1 += (sy2 - srcClipY2);
         else
-            dy2 -= (sy2 - sh + 1);
-        sy2 = sh - 1;
+            dy2 -= (sy2 - srcClipY2);
+        sy2 = srcClipY2;
     }
     //<0-size/offscreen?
     // note: <0-size will cause reversal of dest
