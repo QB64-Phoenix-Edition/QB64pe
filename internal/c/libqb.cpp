@@ -12143,12 +12143,19 @@ void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
         }
         // Note: Window's coordinates are not based on prev. WINDOW values
         write_page->clipping_or_scaling = 2;
-        write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (x2 - x1);
-        write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (y2 - y1);
-        write_page->scaling_offset_x = -x1 * write_page->scaling_x; // scaling offset should be applied before scaling
-        write_page->scaling_offset_y = -y1 * write_page->scaling_y;
-        if (!(passed & 2)) {
-            write_page->scaling_offset_y = -y2 * write_page->scaling_y + (write_page->view_y2 - write_page->view_y1);
+        if (passed & 2) {
+            // WINDOW SCREEN uses the active viewport dimensions and offset behavior.
+            write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (x2 - x1);
+            write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (y2 - y1);
+            write_page->scaling_offset_x = write_page->view_x1 - write_page->view_offset_x - x1 * write_page->scaling_x;
+            write_page->scaling_offset_y = write_page->view_y1 - write_page->view_offset_y - y1 * write_page->scaling_y;
+        } else {
+            // WINDOW (without SCREEN) scaling remains screen-based even when VIEW is active.
+            // VIEW then applies clipping and offsets afterwards.
+            write_page->scaling_x = ((float)(write_page->width - 1)) / (x2 - x1);
+            write_page->scaling_y = ((float)(write_page->height - 1)) / (y2 - y1);
+            write_page->scaling_offset_x = -x1 * write_page->scaling_x;
+            write_page->scaling_offset_y = -y1 * write_page->scaling_y;
         }
         write_page->window_x1 = x1;
         write_page->window_x2 = x2;
@@ -12329,16 +12336,6 @@ void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor, int32
         write_page->view_offset_y = 0;
         if (write_page->clipping_or_scaling == 1)
             write_page->clipping_or_scaling = 0;
-    }
-
-    // recalculate window values based on new viewport (if necessary)
-    if (write_page->clipping_or_scaling == 2) { // WINDOW'ing in use
-        write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (write_page->window_x2 - write_page->window_x1);
-        write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (write_page->window_y2 - write_page->window_y1);
-        write_page->scaling_offset_x = -write_page->window_x1 * write_page->scaling_x;
-        write_page->scaling_offset_y = -write_page->window_y1 * write_page->scaling_y;
-        if (write_page->window_y2 < write_page->window_y1)
-            write_page->scaling_offset_y = -write_page->window_y2 * write_page->scaling_y + write_page->view_y2;
     }
 
     if (passed & 4) { // fillcolor
