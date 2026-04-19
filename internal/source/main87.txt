@@ -1,4 +1,4 @@
-qbs* FUNC_GETFILEEXTENSION(qbs*_FUNC_GETFILEEXTENSION_STRING_F){
+int16 FUNC_READWRITEBOOLEANSETTINGVALUE(qbs*_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SETTING,int16*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_DEFAULT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,58 +11,39 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_32559:;
-fornext_value3739=_FUNC_GETFILEEXTENSION_STRING_F->len;
-fornext_finalvalue3739= 1 ;
-fornext_step3739= -1 ;
-if (fornext_step3739<0) fornext_step_negative3739=1; else fornext_step_negative3739=0;
-if (is_error_pending()) goto fornext_error3739;
-goto fornext_entrylabel3739;
-while(1){
-fornext_value3739=fornext_step3739+(*_FUNC_GETFILEEXTENSION_LONG_I);
-fornext_entrylabel3739:
-*_FUNC_GETFILEEXTENSION_LONG_I=fornext_value3739;
+do{
+if(!qbevent)break;evnt(25386,97,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(25386,98,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(25386,99,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SECTION,_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SETTING,_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_VALUE);
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative3739){
-if (fornext_value3739<fornext_finalvalue3739) break;
+if(!qbevent)break;evnt(25386,101,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_CHECKRESULT=FUNC_TFSTRINGTOBOOL(_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_VALUE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25386,103,"strings.bas");}while(r);
+S_33604:;
+if ((-(*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_CHECKRESULT== -2 ))||is_error_pending()){
+if(qbevent){evnt(25386,105,"strings.bas");if(r)goto S_33604;}
+do{
+SUB_WRITECONFIGSETTING(_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SECTION,_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SETTING,FUNC_BOOLTOTFSTRING(&(pass3892=*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_DEFAULT)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25386,106,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_READWRITEBOOLEANSETTINGVALUE=*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_DEFAULT;
+if(!qbevent)break;evnt(25386,107,"strings.bas");}while(r);
 }else{
-if (fornext_value3739>fornext_finalvalue3739) break;
+do{
+*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_READWRITEBOOLEANSETTINGVALUE=*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_CHECKRESULT;
+if(!qbevent)break;evnt(25386,109,"strings.bas");}while(r);
 }
-fornext_error3739:;
-if(qbevent){evnt(24225,62,"file.bas");if(r)goto S_32559;}
-do{
-*_FUNC_GETFILEEXTENSION_LONG_A=qbs_asc(_FUNC_GETFILEEXTENSION_STRING_F,*_FUNC_GETFILEEXTENSION_LONG_I);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,63,"file.bas");}while(r);
-S_32561:;
-if (((-(*_FUNC_GETFILEEXTENSION_LONG_A== 47 ))|(-(*_FUNC_GETFILEEXTENSION_LONG_A== 92 )))||is_error_pending()){
-if(qbevent){evnt(24225,64,"file.bas");if(r)goto S_32561;}
-do{
-goto fornext_exit_3738;
-if(!qbevent)break;evnt(24225,64,"file.bas");}while(r);
-}
-S_32564:;
-if ((-(*_FUNC_GETFILEEXTENSION_LONG_A== 46 ))||is_error_pending()){
-if(qbevent){evnt(24225,65,"file.bas");if(r)goto S_32564;}
-do{
-qbs_set(_FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION,func_mid(_FUNC_GETFILEEXTENSION_STRING_F,*_FUNC_GETFILEEXTENSION_LONG_I+ 1 ,NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,65,"file.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(24225,65,"file.bas");}while(r);
-}
-fornext_continue_3738:;
-}
-fornext_exit_3738:;
-do{
-qbs_set(_FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,67,"file.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free87.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION);return _FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION;
+return *_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_READWRITEBOOLEANSETTINGVALUE;
 }

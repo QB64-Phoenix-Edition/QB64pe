@@ -1,4 +1,4 @@
-qbs* FUNC_GETELEMENTSAFTER(qbs*_FUNC_GETELEMENTSAFTER_STRING_A,int32*_FUNC_GETELEMENTSAFTER_LONG_I1){
+qbs* FUNC_GETELEMENT(qbs*_FUNC_GETELEMENT_STRING_A,int32*_FUNC_GETELEMENT_LONG_ELENUM){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,43 +12,66 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-if(!qbevent)break;evnt(24227,121,"elements.bas");}while(r);
-do{
-*_FUNC_GETELEMENTSAFTER_LONG_N= 1 ;
-if(!qbevent)break;evnt(24227,123,"elements.bas");}while(r);
-do{
-*_FUNC_GETELEMENTSAFTER_LONG_P= 1 ;
-if(!qbevent)break;evnt(24227,124,"elements.bas");}while(r);
-LABEL_GETELEMENTSNEXT:;
-if(qbevent){evnt(24227,126,"elements.bas");r=0;}
-do{
-*_FUNC_GETELEMENTSAFTER_LONG_I=func_instr(*_FUNC_GETELEMENTSAFTER_LONG_P,_FUNC_GETELEMENTSAFTER_STRING_A,__STRING1_SP,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,127,"elements.bas");}while(r);
-S_32728:;
-if ((-(*_FUNC_GETELEMENTSAFTER_LONG_N==*_FUNC_GETELEMENTSAFTER_LONG_I1))||is_error_pending()){
-if(qbevent){evnt(24227,129,"elements.bas");if(r)goto S_32728;}
-do{
-qbs_set(_FUNC_GETELEMENTSAFTER_STRING_GETELEMENTSAFTER,qbs_right(_FUNC_GETELEMENTSAFTER_STRING_A,_FUNC_GETELEMENTSAFTER_STRING_A->len-*_FUNC_GETELEMENTSAFTER_LONG_P+ 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,130,"elements.bas");}while(r);
+if(!qbevent)break;evnt(25389,3,"elements.bas");}while(r);
+S_33743:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_GETELEMENT_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25389,5,"elements.bas");if(r)goto S_33743;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(24227,131,"elements.bas");}while(r);
+if(!qbevent)break;evnt(25389,5,"elements.bas");}while(r);
 }
 do{
-*_FUNC_GETELEMENTSAFTER_LONG_N=*_FUNC_GETELEMENTSAFTER_LONG_N+ 1 ;
-if(!qbevent)break;evnt(24227,134,"elements.bas");}while(r);
+*_FUNC_GETELEMENT_LONG_N= 1 ;
+if(!qbevent)break;evnt(25389,7,"elements.bas");}while(r);
 do{
-*_FUNC_GETELEMENTSAFTER_LONG_P=*_FUNC_GETELEMENTSAFTER_LONG_I+ 1 ;
-if(!qbevent)break;evnt(24227,135,"elements.bas");}while(r);
+*_FUNC_GETELEMENT_LONG_P= 1 ;
+if(!qbevent)break;evnt(25389,8,"elements.bas");}while(r);
+LABEL_GETELEMENTNEXT:;
+if(qbevent){evnt(25389,9,"elements.bas");r=0;}
 do{
-goto LABEL_GETELEMENTSNEXT;
-if(!qbevent)break;evnt(24227,136,"elements.bas");}while(r);
+*_FUNC_GETELEMENT_LONG_I=func_instr(*_FUNC_GETELEMENT_LONG_P,_FUNC_GETELEMENT_STRING_A,__STRING1_SP,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25389,10,"elements.bas");}while(r);
+S_33749:;
+if ((-(*_FUNC_GETELEMENT_LONG_ELENUM==*_FUNC_GETELEMENT_LONG_N))||is_error_pending()){
+if(qbevent){evnt(25389,12,"elements.bas");if(r)goto S_33749;}
+S_33750:;
+if ((*_FUNC_GETELEMENT_LONG_I)||is_error_pending()){
+if(qbevent){evnt(25389,13,"elements.bas");if(r)goto S_33750;}
+do{
+qbs_set(_FUNC_GETELEMENT_STRING_GETELEMENT,func_mid(_FUNC_GETELEMENT_STRING_A,*_FUNC_GETELEMENT_LONG_P,*_FUNC_GETELEMENT_LONG_I-*_FUNC_GETELEMENT_LONG_P,0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25389,14,"elements.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_GETELEMENT_STRING_GETELEMENT,qbs_right(_FUNC_GETELEMENT_STRING_A,_FUNC_GETELEMENT_STRING_A->len-*_FUNC_GETELEMENT_LONG_P+ 1 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25389,16,"elements.bas");}while(r);
+}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25389,18,"elements.bas");}while(r);
+}
+S_33757:;
+if ((-(*_FUNC_GETELEMENT_LONG_I== 0 ))||is_error_pending()){
+if(qbevent){evnt(25389,21,"elements.bas");if(r)goto S_33757;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25389,21,"elements.bas");}while(r);
+}
+do{
+*_FUNC_GETELEMENT_LONG_N=*_FUNC_GETELEMENT_LONG_N+ 1 ;
+if(!qbevent)break;evnt(25389,22,"elements.bas");}while(r);
+do{
+*_FUNC_GETELEMENT_LONG_P=*_FUNC_GETELEMENT_LONG_I+ 1 ;
+if(!qbevent)break;evnt(25389,23,"elements.bas");}while(r);
+do{
+goto LABEL_GETELEMENTNEXT;
+if(!qbevent)break;evnt(25389,24,"elements.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free103.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_GETELEMENTSAFTER_STRING_GETELEMENTSAFTER);return _FUNC_GETELEMENTSAFTER_STRING_GETELEMENTSAFTER;
+qbs_maketmp(_FUNC_GETELEMENT_STRING_GETELEMENT);return _FUNC_GETELEMENT_STRING_GETELEMENT;
 }

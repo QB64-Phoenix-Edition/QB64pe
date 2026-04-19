@@ -1,4 +1,4 @@
-qbs* FUNC_GETESCAPEDPATH(qbs*_FUNC_GETESCAPEDPATH_STRING_PATH_NAME){
+int32 FUNC_READWRITELONGSETTINGVALUE(qbs*_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,int32*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,53 +12,38 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-if(!qbevent)break;evnt(24225,87,"file.bas");}while(r);
-S_32584:;
-fornext_value3750= 1 ;
-fornext_finalvalue3750=_FUNC_GETESCAPEDPATH_STRING_PATH_NAME->len;
-fornext_step3750= 1 ;
-if (fornext_step3750<0) fornext_step_negative3750=1; else fornext_step_negative3750=0;
-if (is_error_pending()) goto fornext_error3750;
-goto fornext_entrylabel3750;
-while(1){
-fornext_value3750=fornext_step3750+(*_FUNC_GETESCAPEDPATH_ULONG_Z);
-fornext_entrylabel3750:
-*_FUNC_GETESCAPEDPATH_ULONG_Z=fornext_value3750;
+if(!qbevent)break;evnt(25386,136,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(25386,137,"strings.bas");}while(r);
+do{
+if(!qbevent)break;evnt(25386,138,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITELONGSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITELONGSETTINGVALUE_STRING_VALUE);
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative3750){
-if (fornext_value3750<fornext_finalvalue3750) break;
+if(!qbevent)break;evnt(25386,140,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT=qbr(qbs_val<long double>(_FUNC_READWRITELONGSETTINGVALUE_STRING_VALUE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25386,142,"strings.bas");}while(r);
+S_33624:;
+if (((-(*_FUNC_READWRITELONGSETTINGVALUE_INTEGER_RESULT== 0 ))|(-(*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT<= 0 )))||is_error_pending()){
+if(qbevent){evnt(25386,144,"strings.bas");if(r)goto S_33624;}
+do{
+SUB_WRITECONFIGSETTING(_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,qbs__tostr((int32)(*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25386,145,"strings.bas");}while(r);
+do{
+*_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE=*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT;
+if(!qbevent)break;evnt(25386,146,"strings.bas");}while(r);
 }else{
-if (fornext_value3750>fornext_finalvalue3750) break;
+do{
+*_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE=*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT;
+if(!qbevent)break;evnt(25386,148,"strings.bas");}while(r);
 }
-fornext_error3750:;
-if(qbevent){evnt(24225,89,"file.bas");if(r)goto S_32584;}
-do{
-*_FUNC_GETESCAPEDPATH_UBYTE_A=qbs_asc(_FUNC_GETESCAPEDPATH_STRING_PATH_NAME,*_FUNC_GETESCAPEDPATH_ULONG_Z);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,90,"file.bas");}while(r);
-do{
-qbs_set(_FUNC_GETESCAPEDPATH_STRING_BUF,qbs_add(_FUNC_GETESCAPEDPATH_STRING_BUF,func_chr(*_FUNC_GETESCAPEDPATH_UBYTE_A)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,91,"file.bas");}while(r);
-S_32587:;
-if ((-(*_FUNC_GETESCAPEDPATH_UBYTE_A== 92 ))||is_error_pending()){
-if(qbevent){evnt(24225,92,"file.bas");if(r)goto S_32587;}
-do{
-qbs_set(_FUNC_GETESCAPEDPATH_STRING_BUF,qbs_add(_FUNC_GETESCAPEDPATH_STRING_BUF,qbs_new_txt_len("\\",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,92,"file.bas");}while(r);
-}
-fornext_continue_3749:;
-}
-fornext_exit_3749:;
-do{
-qbs_set(_FUNC_GETESCAPEDPATH_STRING_GETESCAPEDPATH,_FUNC_GETESCAPEDPATH_STRING_BUF);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,95,"file.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free89.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_GETESCAPEDPATH_STRING_GETESCAPEDPATH);return _FUNC_GETESCAPEDPATH_STRING_GETESCAPEDPATH;
+return *_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE;
 }

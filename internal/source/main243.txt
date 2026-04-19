@@ -1,4 +1,4 @@
-int8 FUNC_TYPE_ISUNSIGNED(int32*_FUNC_TYPE_ISUNSIGNED_LONG_TYPEID){
+int32 FUNC_ISUINTEGER(qbs*_FUNC_ISUINTEGER_STRING_I){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,13 +11,60 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_38701:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ISUINTEGER_STRING_I->len== 0 )))||is_error_pending()){
+if(qbevent){evnt(25396,864,"type.bas");if(r)goto S_38701;}
 do{
-*_FUNC_TYPE_ISUNSIGNED_BYTE_TYPE_ISUNSIGNED=-((*_FUNC_TYPE_ISUNSIGNED_LONG_TYPEID&*__LONG_ISUNSIGNED)!= 0ll );
-if(!qbevent)break;evnt(24234,854,"type.bas");}while(r);
+goto exit_subfunc;
+if(!qbevent)break;evnt(25396,864,"type.bas");}while(r);
+}
+S_38704:;
+if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(_FUNC_ISUINTEGER_STRING_I, 1 )== 48 ))&(-(_FUNC_ISUINTEGER_STRING_I->len> 1 ))))||is_error_pending()){
+if(qbevent){evnt(25396,865,"type.bas");if(r)goto S_38704;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25396,865,"type.bas");}while(r);
+}
+S_38707:;
+fornext_value4557= 1 ;
+fornext_finalvalue4557=_FUNC_ISUINTEGER_STRING_I->len;
+fornext_step4557= 1 ;
+if (fornext_step4557<0) fornext_step_negative4557=1; else fornext_step_negative4557=0;
+if (is_error_pending()) goto fornext_error4557;
+goto fornext_entrylabel4557;
+while(1){
+fornext_value4557=fornext_step4557+(*_FUNC_ISUINTEGER_LONG_C);
+fornext_entrylabel4557:
+*_FUNC_ISUINTEGER_LONG_C=fornext_value4557;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative4557){
+if (fornext_value4557<fornext_finalvalue4557) break;
+}else{
+if (fornext_value4557>fornext_finalvalue4557) break;
+}
+fornext_error4557:;
+if(qbevent){evnt(25396,866,"type.bas");if(r)goto S_38707;}
+do{
+*_FUNC_ISUINTEGER_LONG_V=qbs_asc(_FUNC_ISUINTEGER_STRING_I,*_FUNC_ISUINTEGER_LONG_C);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25396,867,"type.bas");}while(r);
+S_38709:;
+if (((-(*_FUNC_ISUINTEGER_LONG_V< 48 ))|(-(*_FUNC_ISUINTEGER_LONG_V> 57 )))||is_error_pending()){
+if(qbevent){evnt(25396,868,"type.bas");if(r)goto S_38709;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25396,868,"type.bas");}while(r);
+}
+fornext_continue_4556:;
+}
+fornext_exit_4556:;
+do{
+*_FUNC_ISUINTEGER_LONG_ISUINTEGER= -1 ;
+if(!qbevent)break;evnt(25396,870,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free243.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_TYPE_ISUNSIGNED_BYTE_TYPE_ISUNSIGNED;
+return *_FUNC_ISUINTEGER_LONG_ISUINTEGER;
 }

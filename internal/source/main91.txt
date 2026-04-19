@@ -1,4 +1,4 @@
-qbs* FUNC_FIXDIRECTORYNAME(qbs*_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME){
+qbs* FUNC_GETFILEPATH(qbs*_FUNC_GETFILEPATH_STRING_F){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,23 +11,51 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_32606:;
-if ((qbs_cleanup(qbs_tmp_base,(-(_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME->len> 0 ))&(qbs_notequal(qbs_right(_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME, 1 ),__STRING1_PATHSEP))))||is_error_pending()){
-if(qbevent){evnt(24225,116,"file.bas");if(r)goto S_32606;}
-do{
-qbs_set(_FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME,qbs_add(_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME,__STRING1_PATHSEP));
+S_33640:;
+fornext_value3902=_FUNC_GETFILEPATH_STRING_F->len;
+fornext_finalvalue3902= 1 ;
+fornext_step3902= -1 ;
+if (fornext_step3902<0) fornext_step_negative3902=1; else fornext_step_negative3902=0;
+if (is_error_pending()) goto fornext_error3902;
+goto fornext_entrylabel3902;
+while(1){
+fornext_value3902=fornext_step3902+(*_FUNC_GETFILEPATH_LONG_I);
+fornext_entrylabel3902:
+*_FUNC_GETFILEPATH_LONG_I=fornext_value3902;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,117,"file.bas");}while(r);
+if (fornext_step_negative3902){
+if (fornext_value3902<fornext_finalvalue3902) break;
 }else{
-do{
-qbs_set(_FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME,_FUNC_FIXDIRECTORYNAME_STRING_DIR_NAME);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,119,"file.bas");}while(r);
+if (fornext_value3902>fornext_finalvalue3902) break;
 }
+fornext_error3902:;
+if(qbevent){evnt(25387,21,"file.bas");if(r)goto S_33640;}
+do{
+qbs_set(_FUNC_GETFILEPATH_STRING_A,func_mid(_FUNC_GETFILEPATH_STRING_F,*_FUNC_GETFILEPATH_LONG_I, 1 ,0|1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25387,22,"file.bas");}while(r);
+S_33642:;
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_GETFILEPATH_STRING_A,qbs_new_txt_len("/",1)))|(qbs_equal(_FUNC_GETFILEPATH_STRING_A,qbs_new_txt_len("\\",1)))))||is_error_pending()){
+if(qbevent){evnt(25387,23,"file.bas");if(r)goto S_33642;}
+do{
+qbs_set(_FUNC_GETFILEPATH_STRING_GETFILEPATH,qbs_left(_FUNC_GETFILEPATH_STRING_F,*_FUNC_GETFILEPATH_LONG_I));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25387,24,"file.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25387,25,"file.bas");}while(r);
+}
+fornext_continue_3901:;
+}
+fornext_exit_3901:;
+do{
+qbs_set(_FUNC_GETFILEPATH_STRING_GETFILEPATH,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25387,28,"file.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free91.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME);return _FUNC_FIXDIRECTORYNAME_STRING_FIXDIRECTORYNAME;
+qbs_maketmp(_FUNC_GETFILEPATH_STRING_GETFILEPATH);return _FUNC_GETFILEPATH_STRING_GETFILEPATH;
 }

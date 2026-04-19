@@ -146,6 +146,28 @@ free((void*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYELEMENTS)[8] );
+if (__ARRAY_LONG_UDTEARRAYBASE[2]&1){
+if (__ARRAY_LONG_UDTEARRAYBASE[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTEARRAYBASE[0]));
+}else{
+free((void*)(__ARRAY_LONG_UDTEARRAYBASE[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYBASE)[8] );
+if (__ARRAY_LONG_UDTEARRAYDIMS[2]&1){
+if (__ARRAY_LONG_UDTEARRAYDIMS[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTEARRAYDIMS[0]));
+}else{
+free((void*)(__ARRAY_LONG_UDTEARRAYDIMS[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYDIMS)[8] );
+if (__ARRAY_STRING_UDTEARRAYDESC[2]&1){
+tmp_long=__ARRAY_STRING_UDTEARRAYDESC[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]);
+free((void*)(__ARRAY_STRING_UDTEARRAYDESC[0]));
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_UDTEARRAYDESC)[8] );
 if (__ARRAY_LONG_UDTENEXT[2]&1){
 if (__ARRAY_LONG_UDTENEXT[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTENEXT[0]));
@@ -1048,8 +1070,6 @@ qbs_free(__STRING_SIZ);
 qbs_free(__STRING_N);
 qbs_free(__STRING_T);
 qbs_free(__STRING_HASHNAME);
-qbs_free(__STRING_PREVIOUSELEMENT);
-qbs_free(__STRING_LASTELEMENT);
 qbs_free(__STRING_CN);
 qbs_free(__STRING_S);
 qbs_free(__STRING_E2);
@@ -1090,8 +1110,8 @@ qbs_free(__STRING_INCLINENUMP);
 qbs_free(__STRING_THISINCNAME);
 qbs_free(__STRING_E1);
 qbs_free(__STRING_AA);
-qbs_free(__STRING_NEXTELEMENT);
 qbs_free(__STRING_THISELEMENT);
+qbs_free(__STRING_NEXTELEMENT);
 qbs_free(__STRING_LIBNAME);
 qbs_free(__STRING_HEADERNAME);
 qbs_free(__STRING_AUTOFORMAT_X);
@@ -1130,15 +1150,31 @@ qbs_free(__STRING_L2);
 qbs_free(__STRING_TS);
 qbs_free(__STRING_OLDSUBFUNC);
 qbs_free(__STRING_L3);
+qbs_free(__STRING_PREVIOUSELEMENT);
 qbs_free(__STRING_STRINGVARIABLE);
 qbs_free(__STRING_POSITION);
 qbs_free(__STRING_EXPRESSION);
 qbs_free(__STRING_LENGTH);
 qbs_free(__STRING_START);
 qbs_free(__STRING_STRINGEXPRESSION);
+qbs_free(__STRING_TARGETTOKEN);
 qbs_free(__STRING_VAR);
 qbs_free(__STRING_LS);
 qbs_free(__STRING_BYTESPERELEMENT);
+qbs_free(__STRING_ACC);
+qbs_free(__STRING_TARGETREF);
+qbs_free(__STRING_OFFSET);
+qbs_free(__STRING_BASE);
+qbs_free(__STRING_PTR);
+qbs_free(__STRING_REDIMTOK);
+qbs_free(__STRING_REDIMFULLTARGET);
+qbs_free(__STRING_REDIMTARGETEXPR);
+qbs_free(__STRING_REDIMBOUNDS);
+qbs_free(__STRING_REDIMTARGETREF);
+qbs_free(__STRING_REDIMOFFSET);
+qbs_free(__STRING_REDIMDESC);
+qbs_free(__STRING_REDIMBASE);
+qbs_free(__STRING_REDIMPTR);
 qbs_free(__STRING_VARNAME);
 qbs_free(__STRING_ELEMENTS);
 qbs_free(__STRING_D);

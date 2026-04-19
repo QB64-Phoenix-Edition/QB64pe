@@ -1,4 +1,4 @@
-qbs* FUNC_ADDQUOTES(qbs*_FUNC_ADDQUOTES_STRING_S){
+qbs* FUNC_SCASE(qbs*_FUNC_SCASE_STRING_T){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,14 +11,37 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_33460:;
+if(qbevent){evnt(25316);if(r)goto S_33460;}
+S_33461:;
+if (((*__LONG_IDEAUTOLAYOUTKWSTYLE<( 0 )))||is_error_pending()){
+if(qbevent){evnt(25317);if(r)goto S_33461;}
 do{
-qbs_set(_FUNC_ADDQUOTES_STRING_ADDQUOTES,qbs_add(qbs_add(func_chr( 34 ),_FUNC_ADDQUOTES_STRING_S),func_chr( 34 )));
+qbs_set(_FUNC_SCASE_STRING_SCASE,qbs_lcase(_FUNC_SCASE_STRING_T));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24224,52,"strings.bas");}while(r);
+if(!qbevent)break;evnt(25317);}while(r);
+sc_ec_103_end:;
+goto sc_3848_end;
+}
+S_33463:;
+if (((*__LONG_IDEAUTOLAYOUTKWSTYLE>( 0 )))||is_error_pending()){
+if(qbevent){evnt(25318);if(r)goto S_33463;}
+do{
+qbs_set(_FUNC_SCASE_STRING_SCASE,qbs_ucase(_FUNC_SCASE_STRING_T));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25318);}while(r);
+sc_ec_104_end:;
+goto sc_3848_end;
+}
+do{
+qbs_set(_FUNC_SCASE_STRING_SCASE,_FUNC_SCASE_STRING_T);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25319);}while(r);
+sc_3848_end:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free75.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_ADDQUOTES_STRING_ADDQUOTES);return _FUNC_ADDQUOTES_STRING_ADDQUOTES;
+qbs_maketmp(_FUNC_SCASE_STRING_SCASE);return _FUNC_SCASE_STRING_SCASE;
 }

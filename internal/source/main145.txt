@@ -1,4 +1,4 @@
-int16 FUNC_SETBUFMARK(int16*_FUNC_SETBUFMARK_INTEGER_HANDLE){
+void SUB_BUFTOFILE(int16*_SUB_BUFTOFILE_INTEGER_HANDLE,qbs*_SUB_BUFTOFILE_STRING_FILESPEC){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,38 +12,52 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-if(!qbevent)break;evnt(24230,407,"simplebuffer.bm");}while(r);
-S_34245:;
-if ((~(FUNC_CHECKHANDLE(_FUNC_SETBUFMARK_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(24230,409,"simplebuffer.bm");if(r)goto S_34245;}
+if(!qbevent)break;evnt(25392,115,"simplebuffer.bm");}while(r);
+S_35192:;
+if ((~(FUNC_CHECKHANDLE(_SUB_BUFTOFILE_INTEGER_HANDLE)))||is_error_pending()){
+if(qbevent){evnt(25392,117,"simplebuffer.bm");if(r)goto S_35192;}
 do{
 error( 258 );
-if(!qbevent)break;evnt(24230,409,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(25392,117,"simplebuffer.bm");}while(r);
 do{
 close_program=1;
 end();
-if(!qbevent)break;evnt(24230,409,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(25392,117,"simplebuffer.bm");}while(r);
 }
 do{
-*_FUNC_SETBUFMARK_LONG_BUF=*_FUNC_SETBUFMARK_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(24230,410,"simplebuffer.bm");}while(r);
+*_SUB_BUFTOFILE_LONG_BUF=*_SUB_BUFTOFILE_INTEGER_HANDLE* 106 ;
+if(!qbevent)break;evnt(25392,118,"simplebuffer.bm");}while(r);
 do{
-*_FUNC_SETBUFMARK_INTEGER_FID=FUNC_FREEID(_FUNC_SETBUFMARK_INTEGER_HANDLE,&(pass3966= 2 ));
-if(!qbevent)break;evnt(24230,412,"simplebuffer.bm");}while(r);
-S_34251:;
-if ((-(*_FUNC_SETBUFMARK_INTEGER_FID> 0 ))||is_error_pending()){
-if(qbevent){evnt(24230,413,"simplebuffer.bm");if(r)goto S_34251;}
+*_SUB_BUFTOFILE_INTEGER_FF=func_freefile();
+if(!qbevent)break;evnt(25392,120,"simplebuffer.bm");}while(r);
 do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_SETBUFMARK_LONG_BUF+ 2 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_FUNC_SETBUFMARK_INTEGER_FID* 4 , 4 ,func_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_SETBUFMARK_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 1 , 4 ,0|1),1);
-if(!qbevent)break;evnt(24230,413,"simplebuffer.bm");}while(r);
-}
+qbs_set(_SUB_BUFTOFILE_STRING_DAT,qbs_left(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_BUFTOFILE_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),FUNC_GETBUFLEN(_SUB_BUFTOFILE_INTEGER_HANDLE)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25392,120,"simplebuffer.bm");}while(r);
 do{
-*_FUNC_SETBUFMARK_INTEGER_SETBUFMARK=*_FUNC_SETBUFMARK_INTEGER_FID;
-if(!qbevent)break;evnt(24230,415,"simplebuffer.bm");}while(r);
+sub_open(_SUB_BUFTOFILE_STRING_FILESPEC, 4 ,NULL, 4 ,*_SUB_BUFTOFILE_INTEGER_FF,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25392,121,"simplebuffer.bm");}while(r);
+do{
+sub_close(*_SUB_BUFTOFILE_INTEGER_FF,1);
+if(!qbevent)break;evnt(25392,121,"simplebuffer.bm");}while(r);
+do{
+sub_open(_SUB_BUFTOFILE_STRING_FILESPEC, 2 ,NULL, 4 ,*_SUB_BUFTOFILE_INTEGER_FF,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25392,122,"simplebuffer.bm");}while(r);
+do{
+sub_put2(*_SUB_BUFTOFILE_INTEGER_FF,NULL,byte_element((uint64)_SUB_BUFTOFILE_STRING_DAT->chr,_SUB_BUFTOFILE_STRING_DAT->len,byte_element_4121),0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25392,123,"simplebuffer.bm");}while(r);
+do{
+sub_close(*_SUB_BUFTOFILE_INTEGER_FF,1);
+if(!qbevent)break;evnt(25392,124,"simplebuffer.bm");}while(r);
+do{
+sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_BUFTOFILE_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 13 , 4 ,l2string( 0 ),1);
+if(!qbevent)break;evnt(25392,126,"simplebuffer.bm");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free145.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_SETBUFMARK_INTEGER_SETBUFMARK;
 }
