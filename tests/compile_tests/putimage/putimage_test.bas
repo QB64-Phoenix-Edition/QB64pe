@@ -27,6 +27,9 @@ TestTextToGraphics32Reversed
 TestTextToGraphics32Mirrored
 TestTextToGraphics32Flipped
 TestTextToGraphics32Clipping
+TestGraphicsToGraphics32ViewClip
+TestGraphicsToGraphics32WindowNoScale
+TestGraphicsToGraphics32SourceViewClip
 
 TestTextToGraphics8Basic
 TestTextToGraphics8Mirrored
@@ -131,6 +134,18 @@ SUB PrepareGraphicsDestination32 (img AS LONG)
     _DEST img
     CLS , _RGB32(0, 0, 0)
     LINE (0, 0)-(_WIDTH(img) - 1, _HEIGHT(img) - 1), _RGB32(0, 0, 0), BF
+
+    _DEST oldDest
+END SUB
+
+SUB PrepareGraphicsSource32 (img AS LONG)
+    DIM oldDest AS LONG: oldDest = _DEST
+
+    _DEST img
+    CLS , _RGB32(0, 0, 0)
+    LINE (0, 0)-(_WIDTH(img) - 1, _HEIGHT(img) - 1), _RGB32(255, 64, 32), BF
+    LINE (8, 8)-(_WIDTH(img) - 9, _HEIGHT(img) - 9), _RGB32(32, 192, 255), BF
+    LINE (16, 16)-(_WIDTH(img) - 17, _HEIGHT(img) - 17), _RGB32(255, 255, 64), BF
 
     _DEST oldDest
 END SUB
@@ -534,6 +549,80 @@ SUB TestTextToGraphics32Clipping
 
     ReportCheck "text->graphics 32bpp clipping", ok
     _FREEIMAGE dst
+END SUB
+
+SUB TestGraphicsToGraphics32ViewClip
+    DIM src AS LONG: src = _NEWIMAGE(80, 80, 32)
+    PrepareGraphicsSource32 src
+    DIM dst AS LONG: dst = _NEWIMAGE(320, 200, 32)
+    PrepareGraphicsDestination32 dst
+
+    _DEST dst
+    VIEW (40, 40)-(99, 99)
+    _PUTIMAGE (0, 0), src, dst
+    VIEW
+    '_SAVEIMAGE "TestGraphicsToGraphics32ViewClip", dst
+
+    DIM ok AS _BYTE: ok = _TRUE
+    IF CountNonBlack32(dst, 40, 40, 99, 99) <= 0 THEN ok = _FALSE
+    IF CountNonBlackOutsideRect32(dst, 40, 40, 99, 99) <> 0 THEN ok = _FALSE
+    IF Pixel32(dst, 40, 40) <> _RGB32(255, 64, 32) THEN ok = _FALSE
+    IF Pixel32(dst, 48, 48) <> _RGB32(32, 192, 255) THEN ok = _FALSE
+    IF Pixel32(dst, 56, 56) <> _RGB32(255, 255, 64) THEN ok = _FALSE
+    IF Pixel32(dst, 99, 99) <> _RGB32(255, 255, 64) THEN ok = _FALSE
+
+    ReportCheck "graphics->graphics 32bpp VIEW clip", ok
+    _FREEIMAGE dst
+    _FREEIMAGE src
+END SUB
+
+SUB TestGraphicsToGraphics32WindowNoScale
+    DIM src AS LONG: src = _NEWIMAGE(80, 80, 32)
+    PrepareGraphicsSource32 src
+    DIM dst AS LONG: dst = _NEWIMAGE(320, 200, 32)
+    PrepareGraphicsDestination32 dst
+    DIM ref AS LONG: ref = _NEWIMAGE(320, 200, 32)
+    PrepareGraphicsDestination32 ref
+
+    _PUTIMAGE (80, 80), src, ref
+
+    _DEST dst
+    VIEW (40, 40)-(199, 199)
+    WINDOW SCREEN(0, 0)-(159, 159)
+    _PUTIMAGE (40, 40), src, dst
+    WINDOW
+    VIEW
+    '_SAVEIMAGE "TestGraphicsToGraphics32WindowNoScale", dst
+
+    DIM ok AS _BYTE: ok = _TRUE
+    IF RegionsEqual32(ref, 80, 80, dst, 80, 80, 80, 80, 1, 1) = _FALSE THEN ok = _FALSE
+    IF CountNonBlackOutsideRect32(dst, 80, 80, 159, 159) <> 0 THEN ok = _FALSE
+
+    ReportCheck "graphics->graphics 32bpp WINDOW", ok
+    _FREEIMAGE ref
+    _FREEIMAGE dst
+    _FREEIMAGE src
+END SUB
+
+SUB TestGraphicsToGraphics32SourceViewClip
+    DIM src AS LONG: src = _NEWIMAGE(80, 80, 32)
+    PrepareGraphicsSource32 src
+    DIM dst AS LONG: dst = _NEWIMAGE(320, 200, 32)
+    PrepareGraphicsDestination32 dst
+
+    _DEST src
+    VIEW (20, 20)-(59, 59)
+    _PUTIMAGE (30, 30), src, dst
+    VIEW
+    '_SAVEIMAGE "TestGraphicsToGraphics32SourceViewClip", dst
+
+    DIM ok AS _BYTE: ok = _TRUE
+    IF CountNonBlack32(dst, 50, 50, 89, 89) <= 0 THEN ok = _FALSE
+    IF CountNonBlackOutsideRect32(dst, 50, 50, 89, 89) <> 0 THEN ok = _FALSE
+
+    ReportCheck "graphics->graphics 32bpp source VIEW", ok
+    _FREEIMAGE dst
+    _FREEIMAGE src
 END SUB
 
 SUB TestTextToGraphics8Basic
