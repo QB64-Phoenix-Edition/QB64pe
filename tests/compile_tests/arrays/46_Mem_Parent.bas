@@ -12,9 +12,7 @@ e = _MEM(Parent(0).a)
 f = _MEM(Parent(1).a)
 g = _MEM(Parent())
 
-PRINT g.SIZE
-PRINT f.SIZE
-PRINT e.SIZE
+if g.SIZE = 400 and f.SIZE = 200 and e.SIZE = 200 then print "PASS" else print "Fail"; e.size; f.size; g.size
 
 _MEMFREE e
 _MEMFREE f
