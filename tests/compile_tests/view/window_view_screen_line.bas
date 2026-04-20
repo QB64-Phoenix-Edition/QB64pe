@@ -1,0 +1,37 @@
+OPTION _EXPLICIT
+$CONSOLE:ONLY
+
+CHDIR _STARTDIR$
+
+CONST IMG_W = 320
+CONST IMG_H = 200
+CONST WXMIN = -0.5
+CONST WYMIN = -0.5
+CONST WXMAX = 0.5
+CONST WYMAX = 0.5
+
+DIM img AS LONG: img = _NEWIMAGE(IMG_W, IMG_H, 32)
+_DEST img
+CLS , _RGB32(0, 0, 0)
+
+WINDOW (-1, 1)-(1, -1)
+
+DIM VXMin AS LONG: VXMin = PMAP(WXMIN, 0)
+DIM VYMin AS LONG: VYMin = PMAP(WYMIN, 1)
+DIM VXMax AS LONG: VXMax = PMAP(WXMAX, 0)
+DIM VYMax AS LONG: VYMax = PMAP(WYMAX, 1)
+
+VIEW SCREEN(VXMin, VYMin)-(VXMax, VYMax)
+WINDOW (-1, 1)-(1, -1)
+VIEW SCREEN(VXMin, VYMin)-(VXMax, VYMax), _RGB32(64), _RGB32(0, 255, 255)
+LINE (WXMIN, WYMIN)-(WXMAX, WYMAX), _RGB32(255, 255, 255)
+
+'_SAVEIMAGE "window_view_screen_line.png", img
+
+_DEST _CONSOLE
+AssertImage2 img, "window_view_screen_line.png", 0
+
+_FREEIMAGE img
+SYSTEM
+
+'$INCLUDE:'../utilities/imageassert.bm'

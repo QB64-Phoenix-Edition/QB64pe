@@ -1,4 +1,4 @@
-qbs* FUNC_REMOVEDOUBLESLASHES(qbs*_FUNC_REMOVEDOUBLESLASHES_STRING_F2){
+int32 FUNC_COPYFILE(qbs*_FUNC_COPYFILE_STRING_SOURCEFILE,qbs*_FUNC_COPYFILE_STRING_DESTFILE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,57 +12,41 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_F,_FUNC_REMOVEDOUBLESLASHES_STRING_F2);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,100,"file.bas");}while(r);
-S_32593:;
+qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
+qbs_cleanup(qbs_tmp_base, 0);
+error_goto_line=11;
+if(!qbevent)break;evnt(25387,8,"file.bas");}while(r);
 do{
-if(qbevent){evnt(24225,102,"file.bas");if(r)goto S_32593;}
+*__LONG_E= 0 ;
+if(!qbevent)break;evnt(25387,9,"file.bas");}while(r);
 do{
-*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP=func_instr(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_new_txt_len("//",2),0|1);
+qbs_set(_FUNC_COPYFILE_STRING_DAT,func__readfile(_FUNC_COPYFILE_STRING_SOURCEFILE));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,103,"file.bas");}while(r);
-S_32595:;
-if ((-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP> 0 ))||is_error_pending()){
-if(qbevent){evnt(24225,104,"file.bas");if(r)goto S_32595;}
+if(!qbevent)break;evnt(25387,9,"file.bas");}while(r);
+S_33633:;
+if ((-(*__LONG_E== 0 ))||is_error_pending()){
+if(qbevent){evnt(25387,10,"file.bas");if(r)goto S_33633;}
 do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_add(qbs_left(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP- 1 ),func_mid(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,NULL,0)));
+sub__writefile(_FUNC_COPYFILE_STRING_DESTFILE,_FUNC_COPYFILE_STRING_DAT);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,104,"file.bas");}while(r);
+if(!qbevent)break;evnt(25387,10,"file.bas");}while(r);
+}else{
+do{
+*__LONG_E= -1 ;
+if(!qbevent)break;evnt(25387,10,"file.bas");}while(r);
 }
-S_32598:;
-dl_continue_3753:;
-}while((!(-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP== 0 )))&&(!is_error_pending()));
-dl_exit_3753:;
-if(qbevent){evnt(24225,105,"file.bas");if(r)goto S_32598;}
-S_32599:;
 do{
-if(qbevent){evnt(24225,106,"file.bas");if(r)goto S_32599;}
+error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
+qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
+qbs_cleanup(qbs_tmp_base, 0);
+if(!qbevent)break;evnt(25387,11,"file.bas");}while(r);
 do{
-*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP=func_instr(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_new_txt_len("\\\\",2),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,107,"file.bas");}while(r);
-S_32601:;
-if ((-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP> 0 ))||is_error_pending()){
-if(qbevent){evnt(24225,108,"file.bas");if(r)goto S_32601;}
-do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_add(qbs_left(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP- 1 ),func_mid(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,NULL,0)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,108,"file.bas");}while(r);
-}
-S_32604:;
-dl_continue_3754:;
-}while((!(-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP== 0 )))&&(!is_error_pending()));
-dl_exit_3754:;
-if(qbevent){evnt(24225,109,"file.bas");if(r)goto S_32604;}
-do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_REMOVEDOUBLESLASHES,_FUNC_REMOVEDOUBLESLASHES_STRING_F);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,111,"file.bas");}while(r);
+*_FUNC_COPYFILE_LONG_COPYFILE=*__LONG_E;
+if(!qbevent)break;evnt(25387,13,"file.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free90.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_REMOVEDOUBLESLASHES_STRING_REMOVEDOUBLESLASHES);return _FUNC_REMOVEDOUBLESLASHES_STRING_REMOVEDOUBLESLASHES;
+return *_FUNC_COPYFILE_LONG_COPYFILE;
 }

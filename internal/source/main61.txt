@@ -1,4 +1,4 @@
-uint32 FUNC_VRGBS(qbs*_FUNC_VRGBS_STRING_TEXT,uint32*_FUNC_VRGBS_ULONG_DEFAULTCOLOR){
+void SUB_SETDEPENDENCY(int32*_SUB_SETDEPENDENCY_LONG_REQUIREMENT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,42 +11,19 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_32895:;
+if ((*_SUB_SETDEPENDENCY_LONG_REQUIREMENT)||is_error_pending()){
+if(qbevent){evnt(24800);if(r)goto S_32895;}
 do{
-*_FUNC_VRGBS_ULONG_VRGBS=*_FUNC_VRGBS_ULONG_DEFAULTCOLOR;
-if(!qbevent)break;evnt(23761);}while(r);
-S_31895:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_ucase(qbs_left(_FUNC_VRGBS_STRING_TEXT, 4 )),qbs_new_txt_len("_RGB",4))))||is_error_pending()){
-if(qbevent){evnt(23762);if(r)goto S_31895;}
+tmp_long=array_check((*_SUB_SETDEPENDENCY_LONG_REQUIREMENT)-__ARRAY_LONG_DEPENDENCY[4],__ARRAY_LONG_DEPENDENCY[5]);
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_DEPENDENCY[0]))[tmp_long]= 1 ;
+if(!qbevent)break;evnt(24801);}while(r);
+S_32897:;
+if ((-(*_SUB_SETDEPENDENCY_LONG_REQUIREMENT== 6ll ))||is_error_pending()){
+if(qbevent){evnt(24802);if(r)goto S_32897;}
 do{
-*_FUNC_VRGBS_LONG_RPOS=func_instr(NULL,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len("(",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23763);}while(r);
-do{
-*_FUNC_VRGBS_LONG_GPOS=func_instr(*_FUNC_VRGBS_LONG_RPOS,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23764);}while(r);
-do{
-*_FUNC_VRGBS_LONG_BPOS=func_instr(*_FUNC_VRGBS_LONG_GPOS+ 1 ,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23765);}while(r);
-S_31899:;
-if (((-(*_FUNC_VRGBS_LONG_RPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_BPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_GPOS!= 0 )))||is_error_pending()){
-if(qbevent){evnt(23766);if(r)goto S_31899;}
-do{
-*_FUNC_VRGBS_LONG_RED=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_RPOS+ 1 ,NULL,0))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23767);}while(r);
-do{
-*_FUNC_VRGBS_LONG_GREEN=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_GPOS+ 1 ,NULL,0))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23768);}while(r);
-do{
-*_FUNC_VRGBS_LONG_BLUE=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_BPOS+ 1 ,NULL,0))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23769);}while(r);
-do{
-*_FUNC_VRGBS_ULONG_VRGBS=func__rgb32(*_FUNC_VRGBS_LONG_RED,*_FUNC_VRGBS_LONG_GREEN,*_FUNC_VRGBS_LONG_BLUE);
-if(!qbevent)break;evnt(23770);}while(r);
+SUB_SETRCSTATEVAR((void*)( ((char*)(__UDT_SOCKDEPON)) + (0) ),&(pass3759= 1 ));
+if(!qbevent)break;evnt(24802);}while(r);
 }
 }
 exit_subfunc:;
@@ -54,5 +31,4 @@ free_mem_lock(sf_mem_lock);
 #include "free61.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_VRGBS_ULONG_VRGBS;
 }

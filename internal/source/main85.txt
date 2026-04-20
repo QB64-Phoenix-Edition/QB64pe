@@ -1,4 +1,4 @@
-int32 FUNC_FILEHASEXTENSION(qbs*_FUNC_FILEHASEXTENSION_STRING_F){
+void SUB_WRITECONFIGSETTING(qbs*_SUB_WRITECONFIGSETTING_STRING_SECTION,qbs*_SUB_WRITECONFIGSETTING_STRING_ITEM,qbs*_SUB_WRITECONFIGSETTING_STRING_VALUE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,53 +11,13 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_32538:;
-fornext_value3731=_FUNC_FILEHASEXTENSION_STRING_F->len;
-fornext_finalvalue3731= 1 ;
-fornext_step3731= -1 ;
-if (fornext_step3731<0) fornext_step_negative3731=1; else fornext_step_negative3731=0;
-if (is_error_pending()) goto fornext_error3731;
-goto fornext_entrylabel3731;
-while(1){
-fornext_value3731=fornext_step3731+(*_FUNC_FILEHASEXTENSION_LONG_I);
-fornext_entrylabel3731:
-*_FUNC_FILEHASEXTENSION_LONG_I=fornext_value3731;
+do{
+SUB_WRITESETTING(__STRING_CONFIGFILE,_SUB_WRITECONFIGSETTING_STRING_SECTION,_SUB_WRITECONFIGSETTING_STRING_ITEM,_SUB_WRITECONFIGSETTING_STRING_VALUE);
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative3731){
-if (fornext_value3731<fornext_finalvalue3731) break;
-}else{
-if (fornext_value3731>fornext_finalvalue3731) break;
-}
-fornext_error3731:;
-if(qbevent){evnt(24225,36,"file.bas");if(r)goto S_32538;}
-do{
-*_FUNC_FILEHASEXTENSION_LONG_A=qbs_asc(_FUNC_FILEHASEXTENSION_STRING_F,*_FUNC_FILEHASEXTENSION_LONG_I);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24225,37,"file.bas");}while(r);
-S_32540:;
-if (((-(*_FUNC_FILEHASEXTENSION_LONG_A== 47 ))|(-(*_FUNC_FILEHASEXTENSION_LONG_A== 92 )))||is_error_pending()){
-if(qbevent){evnt(24225,38,"file.bas");if(r)goto S_32540;}
-do{
-goto fornext_exit_3730;
-if(!qbevent)break;evnt(24225,38,"file.bas");}while(r);
-}
-S_32543:;
-if ((-(*_FUNC_FILEHASEXTENSION_LONG_A== 46 ))||is_error_pending()){
-if(qbevent){evnt(24225,39,"file.bas");if(r)goto S_32543;}
-do{
-*_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION= -1 ;
-if(!qbevent)break;evnt(24225,39,"file.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(24225,39,"file.bas");}while(r);
-}
-fornext_continue_3730:;
-}
-fornext_exit_3730:;
+if(!qbevent)break;evnt(25386,85,"strings.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free85.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION;
 }

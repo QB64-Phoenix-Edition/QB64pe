@@ -1,4 +1,4 @@
-void SUB_DISPOSEBUF(int16*_SUB_DISPOSEBUF_INTEGER_HANDLE){
+void SUB_WRITESETTING(qbs*_SUB_WRITESETTING_STRING_FILE,qbs*_SUB_WRITESETTING_STRING___SECTION,qbs*_SUB_WRITESETTING_STRING___KEY,qbs*_SUB_WRITESETTING_STRING___VALUE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,130 +12,433 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-if(!qbevent)break;evnt(24230,56,"simplebuffer.bm");}while(r);
-S_34035:;
-if ((~(FUNC_CHECKHANDLE(_SUB_DISPOSEBUF_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(24230,58,"simplebuffer.bm");if(r)goto S_34035;}
+if(!qbevent)break;evnt(25391,292,"ini.bm");}while(r);
 do{
-error( 258 );
-if(!qbevent)break;evnt(24230,58,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(25391,293,"ini.bm");}while(r);
 do{
-close_program=1;
-end();
-if(!qbevent)break;evnt(24230,58,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(25391,294,"ini.bm");}while(r);
+do{
+if(!qbevent)break;evnt(25391,295,"ini.bm");}while(r);
+do{
+if(!qbevent)break;evnt(25391,297,"ini.bm");}while(r);
+do{
+*__LONG_INICODE= 0 ;
+if(!qbevent)break;evnt(25391,299,"ini.bm");}while(r);
+do{
+qbs_set(_SUB_WRITESETTING_STRING_SECTION,FUNC_INIFORMATSECTION(_SUB_WRITESETTING_STRING___SECTION));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,302,"ini.bm");}while(r);
+S_34920:;
+if ((*__LONG_INICODE)||is_error_pending()){
+if(qbevent){evnt(25391,303,"ini.bm");if(r)goto S_34920;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,303,"ini.bm");}while(r);
 }
 do{
-*_SUB_DISPOSEBUF_LONG_BUF=*_SUB_DISPOSEBUF_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(24230,59,"simplebuffer.bm");}while(r);
-S_34040:;
-fornext_value3941= 0 ;
-fornext_finalvalue3941= 105 ;
-fornext_step3941= 1 ;
-if (fornext_step3941<0) fornext_step_negative3941=1; else fornext_step_negative3941=0;
-if (is_error_pending()) goto fornext_error3941;
-goto fornext_entrylabel3941;
+qbs_set(_SUB_WRITESETTING_STRING_KEY,qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___KEY)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,305,"ini.bm");}while(r);
+S_34924:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_KEY,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25391,306,"ini.bm");if(r)goto S_34924;}
+do{
+*__LONG_INICODE= 12 ;
+if(!qbevent)break;evnt(25391,306,"ini.bm");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,306,"ini.bm");}while(r);
+}
+do{
+qbs_set(__STRING_INILASTKEY,_SUB_WRITESETTING_STRING_KEY);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,307,"ini.bm");}while(r);
+do{
+qbs_set(_SUB_WRITESETTING_STRING_VALUE,qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___VALUE)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,309,"ini.bm");}while(r);
+S_34930:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_ltrim(qbs_str((long double)(qbs_val<long double>(_SUB_WRITESETTING_STRING_VALUE)))),_SUB_WRITESETTING_STRING_VALUE)))||is_error_pending()){
+if(qbevent){evnt(25391,310,"ini.bm");if(r)goto S_34930;}
+S_34931:;
+if ((~(*__LONG_INIDISABLEADDQUOTES))||is_error_pending()){
+if(qbevent){evnt(25391,311,"ini.bm");if(r)goto S_34931;}
+S_34932:;
+if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,_SUB_WRITESETTING_STRING_VALUE,func_chr( 32 ),0)))||is_error_pending()){
+if(qbevent){evnt(25391,313,"ini.bm");if(r)goto S_34932;}
+do{
+qbs_set(_SUB_WRITESETTING_STRING_VALUE,qbs_add(qbs_add(func_chr( 34 ),_SUB_WRITESETTING_STRING_VALUE),func_chr( 34 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,313,"ini.bm");}while(r);
+}
+}
+}
+do{
+qbs_set(_SUB_WRITESETTING_STRING_TEMPVALUE,FUNC_READSETTING(_SUB_WRITESETTING_STRING_FILE,_SUB_WRITESETTING_STRING_SECTION,_SUB_WRITESETTING_STRING_KEY));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,318,"ini.bm");}while(r);
+do{
+*__ULONG_INIPOSITION=func_instr(NULL,__STRING_INIWHOLEFILE,__STRING_INISECTIONDATA,0)+*__ULONG_INIPOSITION- 1 ;
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,321,"ini.bm");}while(r);
+S_34939:;
+if (((-(*__LONG_INICODE== 1 ))|(-(*__LONG_INICODE== 17 )))||is_error_pending()){
+if(qbevent){evnt(25391,323,"ini.bm");if(r)goto S_34939;}
+S_34940:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_FILE,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25391,325,"ini.bm");if(r)goto S_34940;}
+do{
+qbs_set(_SUB_WRITESETTING_STRING_FILE,__STRING_CURRENTINIFILENAME);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,325,"ini.bm");}while(r);
+}
+S_34943:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_FILE,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25391,326,"ini.bm");if(r)goto S_34943;}
+do{
+*__LONG_INICODE= 21 ;
+if(!qbevent)break;evnt(25391,326,"ini.bm");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,326,"ini.bm");}while(r);
+}
+do{
+qbs_set(__STRING_CURRENTINIFILENAME,_SUB_WRITESETTING_STRING_FILE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,328,"ini.bm");}while(r);
+S_34948:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_SUB_WRITESETTING_STRING_SECTION,qbs_new_txt_len("[]",2))))||is_error_pending()){
+if(qbevent){evnt(25391,330,"ini.bm");if(r)goto S_34948;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(_SUB_WRITESETTING_STRING_SECTION,__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,331,"ini.bm");}while(r);
+}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,334,"ini.bm");}while(r);
+do{
+*__LONG_INICODE= 0 ;
+if(!qbevent)break;evnt(25391,336,"ini.bm");}while(r);
+do{
+SUB_INICOMMIT();
+if(!qbevent)break;evnt(25391,337,"ini.bm");}while(r);
+do{
+SUB_INILOAD(_SUB_WRITESETTING_STRING_FILE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,338,"ini.bm");}while(r);
+S_34955:;
+if ((-(*__LONG_INICODE== 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,339,"ini.bm");if(r)goto S_34955;}
+do{
+*__LONG_INICODE= 11 ;
+if(!qbevent)break;evnt(25391,339,"ini.bm");}while(r);
+}
+do{
+qbs_set(__STRING_INILASTSECTION,_SUB_WRITESETTING_STRING_SECTION);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,340,"ini.bm");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,341,"ini.bm");}while(r);
+}
+S_34961:;
+if (((-(*__LONG_INICODE== 0 ))|(-(*__LONG_INICODE== 2 )))||is_error_pending()){
+if(qbevent){evnt(25391,344,"ini.bm");if(r)goto S_34961;}
+S_34962:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_lcase(__STRING_INILASTSECTION),qbs_lcase(_SUB_WRITESETTING_STRING_SECTION))))||is_error_pending()){
+if(qbevent){evnt(25391,345,"ini.bm");if(r)goto S_34962;}
+S_34963:;
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___VALUE)),_SUB_WRITESETTING_STRING_TEMPVALUE))&(-(((int32)(qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___VALUE)))->len)> 0 ))))||is_error_pending()){
+if(qbevent){evnt(25391,346,"ini.bm");if(r)goto S_34963;}
+do{
+*__LONG_INICODE= 8 ;
+if(!qbevent)break;evnt(25391,348,"ini.bm");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,349,"ini.bm");}while(r);
+}
+do{
+if(!qbevent)break;evnt(25391,352,"ini.bm");}while(r);
+do{
+*_SUB_WRITESETTING_ULONG_NEXTLINE=func_instr(*__ULONG_INIPOSITION+ 1 ,__STRING_INIWHOLEFILE,__STRING_INILF,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,353,"ini.bm");}while(r);
+do{
+qbs_set(__STRING_ININEWFILE,qbs_left(__STRING_INIWHOLEFILE,*__ULONG_INIPOSITION- 1 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,356,"ini.bm");}while(r);
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,357,"ini.bm");}while(r);
+S_34971:;
+if ((-(*_SUB_WRITESETTING_ULONG_NEXTLINE> 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,359,"ini.bm");if(r)goto S_34971;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,func_mid(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_NEXTLINE,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,360,"ini.bm");}while(r);
+}
+do{
+SUB_INICOMMIT();
+if(!qbevent)break;evnt(25391,363,"ini.bm");}while(r);
+do{
+*__LONG_INICODE= 4 ;
+if(!qbevent)break;evnt(25391,365,"ini.bm");}while(r);
+}
+S_34977:;
+}else{
+if ((-(*__LONG_INICODE== 3 ))|(-(*__LONG_INICODE== 14 ))){
+if(qbevent){evnt(25391,367,"ini.bm");if(r)goto S_34977;}
+do{
+*__LONG_INICODE= 0 ;
+if(!qbevent)break;evnt(25391,368,"ini.bm");}while(r);
+S_34979:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_lcase(__STRING_INILASTSECTION),qbs_lcase(_SUB_WRITESETTING_STRING_SECTION))))||is_error_pending()){
+if(qbevent){evnt(25391,369,"ini.bm");if(r)goto S_34979;}
+do{
+if(!qbevent)break;evnt(25391,371,"ini.bm");}while(r);
+do{
+if(!qbevent)break;evnt(25391,372,"ini.bm");}while(r);
+do{
+if(!qbevent)break;evnt(25391,373,"ini.bm");}while(r);
+do{
+*_SUB_WRITESETTING_ULONG_BEGINSECTION= 0 ;
+if(!qbevent)break;evnt(25391,375,"ini.bm");}while(r);
+do{
+*_SUB_WRITESETTING_ULONG_ENDSECTION= 0 ;
+if(!qbevent)break;evnt(25391,376,"ini.bm");}while(r);
+LABEL_CHECKSECTION:;
+if(qbevent){evnt(25391,378,"ini.bm");r=0;}
+do{
+*_SUB_WRITESETTING_ULONG_BEGINSECTION=func_instr(*_SUB_WRITESETTING_ULONG_BEGINSECTION+ 1 ,qbs_lcase(__STRING_INIWHOLEFILE),qbs_lcase(_SUB_WRITESETTING_STRING_SECTION),0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,379,"ini.bm");}while(r);
+S_34986:;
+if ((-(*_SUB_WRITESETTING_ULONG_BEGINSECTION== 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,380,"ini.bm");if(r)goto S_34986;}
+do{
+goto LABEL_CREATESECTION;
+if(!qbevent)break;evnt(25391,380,"ini.bm");}while(r);
+}
+S_34989:;
+fornext_value4102=*_SUB_WRITESETTING_ULONG_BEGINSECTION- 1 ;
+fornext_finalvalue4102= 1 ;
+fornext_step4102= -1 ;
+if (fornext_step4102<0) fornext_step_negative4102=1; else fornext_step_negative4102=0;
+if (is_error_pending()) goto fornext_error4102;
+goto fornext_entrylabel4102;
 while(1){
-fornext_value3941=fornext_step3941+(*_SUB_DISPOSEBUF_INTEGER_IDX);
-fornext_entrylabel3941:
-*_SUB_DISPOSEBUF_INTEGER_IDX=fornext_value3941;
-if (fornext_step_negative3941){
-if (fornext_value3941<fornext_finalvalue3941) break;
+fornext_value4102=fornext_step4102+(*_SUB_WRITESETTING_ULONG_I);
+fornext_entrylabel4102:
+*_SUB_WRITESETTING_ULONG_I=fornext_value4102;
+if (fornext_step_negative4102){
+if (fornext_value4102<fornext_finalvalue4102) break;
 }else{
-if (fornext_value3941>fornext_finalvalue3941) break;
+if (fornext_value4102>fornext_finalvalue4102) break;
 }
-fornext_error3941:;
-if(qbevent){evnt(24230,61,"simplebuffer.bm");if(r)goto S_34040;}
+fornext_error4102:;
+if(qbevent){evnt(25391,383,"ini.bm");if(r)goto S_34989;}
+S_34990:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)== 10 )))||is_error_pending()){
+if(qbevent){evnt(25391,384,"ini.bm");if(r)goto S_34990;}
 do{
-tmp_long=array_check((*_SUB_DISPOSEBUF_LONG_BUF+*_SUB_DISPOSEBUF_INTEGER_IDX)-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long])),qbs_new_txt_len("",0));
+goto fornext_exit_4101;
+if(!qbevent)break;evnt(25391,384,"ini.bm");}while(r);
+}
+S_34993:;
+if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)!= 10 ))&(-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)!= 32 ))))||is_error_pending()){
+if(qbevent){evnt(25391,385,"ini.bm");if(r)goto S_34993;}
+do{
+goto LABEL_CHECKSECTION;
+if(!qbevent)break;evnt(25391,387,"ini.bm");}while(r);
+}
+fornext_continue_4101:;
+}
+fornext_exit_4101:;
+do{
+*_SUB_WRITESETTING_ULONG_BRACKET1=func_instr(*_SUB_WRITESETTING_ULONG_BEGINSECTION+ 1 ,__STRING_INIWHOLEFILE,qbs_new_txt_len("[",1),0|1);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24230,62,"simplebuffer.bm");}while(r);
-fornext_continue_3940:;
+if(!qbevent)break;evnt(25391,393,"ini.bm");}while(r);
+S_34998:;
+if ((-(*_SUB_WRITESETTING_ULONG_BRACKET1> 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,394,"ini.bm");if(r)goto S_34998;}
+S_34999:;
+fornext_value4104=*_SUB_WRITESETTING_ULONG_BRACKET1- 1 ;
+fornext_finalvalue4104= 1 ;
+fornext_step4104= -1 ;
+if (fornext_step4104<0) fornext_step_negative4104=1; else fornext_step_negative4104=0;
+if (is_error_pending()) goto fornext_error4104;
+goto fornext_entrylabel4104;
+while(1){
+fornext_value4104=fornext_step4104+(*_SUB_WRITESETTING_ULONG_I);
+fornext_entrylabel4104:
+*_SUB_WRITESETTING_ULONG_I=fornext_value4104;
+if (fornext_step_negative4104){
+if (fornext_value4104<fornext_finalvalue4104) break;
+}else{
+if (fornext_value4104>fornext_finalvalue4104) break;
 }
-fornext_exit_3940:;
+fornext_error4104:;
+if(qbevent){evnt(25391,395,"ini.bm");if(r)goto S_34999;}
+S_35000:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)== 10 )))||is_error_pending()){
+if(qbevent){evnt(25391,396,"ini.bm");if(r)goto S_35000;}
 do{
-*_SUB_DISPOSEBUF_LONG_AUB=func_ubound(__ARRAY_STRING_SIMPLEBUFFER_ARRAY,1,1);
+*_SUB_WRITESETTING_ULONG_ENDSECTION=*_SUB_WRITESETTING_ULONG_I+ 1 -__STRING_INILF->len;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24230,65,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(25391,396,"ini.bm");}while(r);
 do{
-*_SUB_DISPOSEBUF_LONG_OUB=*_SUB_DISPOSEBUF_LONG_AUB;
-if(!qbevent)break;evnt(24230,65,"simplebuffer.bm");}while(r);
+goto fornext_exit_4103;
+if(!qbevent)break;evnt(25391,396,"ini.bm");}while(r);
+}
+S_35004:;
+if ((-(*_SUB_WRITESETTING_ULONG_I<=*_SUB_WRITESETTING_ULONG_BEGINSECTION))||is_error_pending()){
+if(qbevent){evnt(25391,397,"ini.bm");if(r)goto S_35004;}
 do{
-*_SUB_DISPOSEBUF_LONG_BUF=*_SUB_DISPOSEBUF_LONG_AUB- 105 ;
-if(!qbevent)break;evnt(24230,66,"simplebuffer.bm");}while(r);
-S_34046:;
-while((-(*_SUB_DISPOSEBUF_LONG_BUF>= 1060 ))||is_error_pending()){
-if(qbevent){evnt(24230,67,"simplebuffer.bm");if(r)goto S_34046;}
-S_34047:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DISPOSEBUF_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(24230,68,"simplebuffer.bm");if(r)goto S_34047;}
+goto fornext_exit_4103;
+if(!qbevent)break;evnt(25391,397,"ini.bm");}while(r);
+}
+fornext_continue_4103:;
+}
+fornext_exit_4103:;
+}
+S_35009:;
+if ((-(*_SUB_WRITESETTING_ULONG_ENDSECTION> 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,401,"ini.bm");if(r)goto S_35009;}
 do{
-goto ww_exit_3942;
-if(!qbevent)break;evnt(24230,68,"simplebuffer.bm");}while(r);
+qbs_set(__STRING_ININEWFILE,qbs_left(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_ENDSECTION- 1 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,403,"ini.bm");}while(r);
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,404,"ini.bm");}while(r);
+S_35012:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(func_mid(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_ENDSECTION,__STRING_INILF->len,0|1),__STRING_INILF)))||is_error_pending()){
+if(qbevent){evnt(25391,405,"ini.bm");if(r)goto S_35012;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,405,"ini.bm");}while(r);
 }
 do{
-*_SUB_DISPOSEBUF_LONG_BUF=*_SUB_DISPOSEBUF_LONG_BUF- 106 ;
-if(!qbevent)break;evnt(24230,69,"simplebuffer.bm");}while(r);
-ww_continue_3942:;
-}
-ww_exit_3942:;
-S_34052:;
-while((-((*_SUB_DISPOSEBUF_LONG_AUB- 1059 )>(*_SUB_DISPOSEBUF_LONG_BUF+ 105 )))||is_error_pending()){
-if(qbevent){evnt(24230,71,"simplebuffer.bm");if(r)goto S_34052;}
-do{
-*_SUB_DISPOSEBUF_LONG_AUB=*_SUB_DISPOSEBUF_LONG_AUB- 1060 ;
-if(!qbevent)break;evnt(24230,71,"simplebuffer.bm");}while(r);
-ww_continue_3943:;
-}
-ww_exit_3943:;
-S_34055:;
-if ((-(*_SUB_DISPOSEBUF_LONG_AUB<*_SUB_DISPOSEBUF_LONG_OUB))||is_error_pending()){
-if(qbevent){evnt(24230,72,"simplebuffer.bm");if(r)goto S_34055;}
-do{
-
-if (__ARRAY_STRING_SIMPLEBUFFER_ARRAY[2]&2){
-error(10);
+qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,func_mid(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_ENDSECTION,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,406,"ini.bm");}while(r);
 }else{
-((mem_lock*)((ptrszint*)__ARRAY_STRING_SIMPLEBUFFER_ARRAY)[8])->id=(++mem_lock_id);
-static int32 preserved_elements;
-if (__ARRAY_STRING_SIMPLEBUFFER_ARRAY[2]&1){
-preserved_elements=__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5];
-}
-else preserved_elements=0;
-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4]= 0 ;
-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5]=(*_SUB_DISPOSEBUF_LONG_AUB)-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4]+1;
-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[6]=1;
-if (preserved_elements){
-static ptrszint tmp_long2;
-tmp_long2=__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5];
-if (tmp_long2<preserved_elements){
-for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {
-qbs_free((qbs*)((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long]);
-}}
-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]=(ptrszint)realloc((void*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]),tmp_long2*8);
-if (!__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]) error(257);
-if (preserved_elements<tmp_long2){
-for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){
-if (__ARRAY_STRING_SIMPLEBUFFER_ARRAY[2]&4){
-((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+do{
+qbs_set(__STRING_ININEWFILE,__STRING_INIWHOLEFILE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,409,"ini.bm");}while(r);
+S_35018:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(__STRING_ININEWFILE,__STRING_INILF->len),__STRING_INILF)))||is_error_pending()){
+if(qbevent){evnt(25391,410,"ini.bm");if(r)goto S_35018;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,411,"ini.bm");}while(r);
 }else{
-((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long]=(uint64)qbs_new(0,0);
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,413,"ini.bm");}while(r);
 }
 }
+do{
+SUB_INICOMMIT();
+if(!qbevent)break;evnt(25391,417,"ini.bm");}while(r);
+S_35025:;
+if ((-(*__LONG_INICODE== 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,419,"ini.bm");if(r)goto S_35025;}
+do{
+*__LONG_INICODE= 7 ;
+if(!qbevent)break;evnt(25391,419,"ini.bm");}while(r);
 }
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,420,"ini.bm");}while(r);
 }else{
-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]=(ptrszint)malloc(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5]*8);
-if (!__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]) error(257);
-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[2]|=1;
-tmp_long=__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5];
-if (__ARRAY_STRING_SIMPLEBUFFER_ARRAY[2]&4){
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+LABEL_CREATESECTION:;
+if(qbevent){evnt(25391,422,"ini.bm");r=0;}
+do{
+qbs_set(__STRING_ININEWFILE,__STRING_INIWHOLEFILE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,423,"ini.bm");}while(r);
+S_35031:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_SECTION,qbs_new_txt_len("[]",2))))||is_error_pending()){
+if(qbevent){evnt(25391,424,"ini.bm");if(r)goto S_35031;}
+do{
+goto LABEL_WRITEATTOP;
+if(!qbevent)break;evnt(25391,424,"ini.bm");}while(r);
+}
+S_35034:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal((qbs_right(__STRING_ININEWFILE,__STRING_INILF->len* 2 )),(qbs_add(__STRING_INILF,__STRING_INILF)))))||is_error_pending()){
+if(qbevent){evnt(25391,426,"ini.bm");if(r)goto S_35034;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_SECTION),__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,427,"ini.bm");}while(r);
+S_35036:;
 }else{
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long]=(uint64)qbs_new(0,0);
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(__STRING_ININEWFILE,__STRING_INILF->len),__STRING_INILF))){
+if(qbevent){evnt(25391,428,"ini.bm");if(r)goto S_35036;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,__STRING_INILF),_SUB_WRITESETTING_STRING_SECTION),__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,429,"ini.bm");}while(r);
+}else{
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,__STRING_INILF),__STRING_INILF),_SUB_WRITESETTING_STRING_SECTION),__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,431,"ini.bm");}while(r);
 }
 }
+do{
+SUB_INICOMMIT();
+if(!qbevent)break;evnt(25391,434,"ini.bm");}while(r);
+S_35042:;
+if ((-(*__LONG_INICODE== 0 ))||is_error_pending()){
+if(qbevent){evnt(25391,436,"ini.bm");if(r)goto S_35042;}
+do{
+*__LONG_INICODE= 9 ;
+if(!qbevent)break;evnt(25391,436,"ini.bm");}while(r);
+}else{
+do{
+*__LONG_INICODE= 16 ;
+if(!qbevent)break;evnt(25391,436,"ini.bm");}while(r);
 }
-if(!qbevent)break;evnt(24230,72,"simplebuffer.bm");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25391,437,"ini.bm");}while(r);
+}
+LABEL_WRITEATTOP:;
+if(qbevent){evnt(25391,441,"ini.bm");r=0;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(_SUB_WRITESETTING_STRING_KEY,qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,442,"ini.bm");}while(r);
+S_35050:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(qbs_ltrim(__STRING_INIWHOLEFILE), 1 ),qbs_new_txt_len("[",1))))||is_error_pending()){
+if(qbevent){evnt(25391,443,"ini.bm");if(r)goto S_35050;}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,__STRING_INILF));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,443,"ini.bm");}while(r);
+}
+do{
+qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,__STRING_INIWHOLEFILE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25391,444,"ini.bm");}while(r);
+do{
+SUB_INICOMMIT();
+if(!qbevent)break;evnt(25391,446,"ini.bm");}while(r);
+do{
+*__LONG_INICODE= 5 ;
+if(!qbevent)break;evnt(25391,448,"ini.bm");}while(r);
+}
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);

@@ -1,4 +1,4 @@
-void SUB_FIXUPERRORMESSAGE(void*_SUB_FIXUPERRORMESSAGE_UDT_STATE,qbs*_SUB_FIXUPERRORMESSAGE_STRING_OP){
+int32 FUNC_EXPONENT(qbs*_FUNC_EXPONENT_STRING_EXP,void*_FUNC_EXPONENT_UDT_STATE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,17 +11,170 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_35599:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(*((qbs**)((char*)_SUB_FIXUPERRORMESSAGE_UDT_STATE+(56))),qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(24231,788,"const_eval.bas");if(r)goto S_35599;}
+S_36557:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(25393,633,"const_eval.bas");if(r)goto S_36557;}
 do{
-qbs_set(*((qbs**)((char*)(_SUB_FIXUPERRORMESSAGE_UDT_STATE)+(68))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Expected variable/value after '",39),_SUB_FIXUPERRORMESSAGE_STRING_OP),qbs_new_txt_len("'",1)));
+sub__echo(qbs_new_txt_len("Exponent",8));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24231,788,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25393,633,"const_eval.bas");}while(r);
 }
+S_36560:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_NUMERIC(_FUNC_EXPONENT_STRING_EXP,(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25393,634,"const_eval.bas");if(r)goto S_36560;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,634,"const_eval.bas");}while(r);
+}
+S_36563:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(25393,635,"const_eval.bas");if(r)goto S_36563;}
+do{
+sub__echo(qbs_new_txt_len("Check exponent",14));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,635,"const_eval.bas");}while(r);
+}
+do{
+if(!qbevent)break;evnt(25393,637,"const_eval.bas");}while(r);
+do{
+memcpy((((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 0),(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 0), 32);
+memcpy((((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 32),(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 32), 8);
+memcpy((((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 40),(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 40), 8);
+qbs_set(*(qbs**)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 48), *(qbs**)(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 48));
+memcpy((((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 56),(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 56), 4);
+if(!qbevent)break;evnt(25393,638,"const_eval.bas");}while(r);
+S_36568:;
+do{
+if(qbevent){evnt(25393,640,"const_eval.bas");if(r)goto S_36568;}
+do{
+qbs_set(_FUNC_EXPONENT_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_EXPONENT_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,641,"const_eval.bas");}while(r);
+S_36570:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(25393,642,"const_eval.bas");if(r)goto S_36570;}
+do{
+sub__echo(qbs_add(qbs_new_txt_len("Exponent ele! ",14),_FUNC_EXPONENT_STRING_ELE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,642,"const_eval.bas");}while(r);
+}
+S_36573:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_EXPONENT_STRING_ELE,qbs_new_txt_len("^",1))))||is_error_pending()){
+if(qbevent){evnt(25393,643,"const_eval.bas");if(r)goto S_36573;}
+do{
+qbs_set(_FUNC_EXPONENT_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_EXPONENT_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,644,"const_eval.bas");}while(r);
+S_36575:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_UNARY(_FUNC_EXPONENT_STRING_EXP,(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25393,650,"const_eval.bas");if(r)goto S_36575;}
+do{
+SUB_FIXUPERRORMESSAGE((void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ),qbs_new_txt_len("^",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,650,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,650,"const_eval.bas");}while(r);
+}
+S_36579:;
+if (((*(int32*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(56))&*__LONG_ISFLOAT)|(*(int32*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(64))&*__LONG_ISFLOAT))||is_error_pending()){
+if(qbevent){evnt(25393,652,"const_eval.bas");if(r)goto S_36579;}
+do{
+SUB_PARSENUMSETF((void*)( ((char*)(_FUNC_EXPONENT_UDT_NUM)) + (0) ),&(pass4359=*__LONG_FLOATTYPE-*__LONG_ISPOINTER),&(pass4360=pow2(*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)),*(long double*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)))));
+if(!qbevent)break;evnt(25393,653,"const_eval.bas");}while(r);
+S_36581:;
+}else{
+if ((*(int32*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(56))&*__LONG_ISUNSIGNED)|(*(int32*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(64))&*__LONG_ISUNSIGNED)){
+if(qbevent){evnt(25393,654,"const_eval.bas");if(r)goto S_36581;}
+do{
+SUB_PARSENUMSETUI((void*)( ((char*)(_FUNC_EXPONENT_UDT_NUM)) + (0) ),&(pass4361=*__LONG_UINTEGER64TYPE-*__LONG_ISPOINTER),&(pass4362=qbr(pow2(*(uint64*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(40)),*(uint64*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(48))))));
+if(!qbevent)break;evnt(25393,655,"const_eval.bas");}while(r);
+}else{
+do{
+SUB_PARSENUMSETI((void*)( ((char*)(_FUNC_EXPONENT_UDT_NUM)) + (0) ),&(pass4363=*__LONG_INTEGER64TYPE-*__LONG_ISPOINTER),&(pass4364=qbr(pow2(*(int64*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(32)),*(int64*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(40))))));
+if(!qbevent)break;evnt(25393,657,"const_eval.bas");}while(r);
+}
+}
+S_36586:;
+}else{
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_EXPONENT_STRING_ELE,qbs_new_txt_len("ROOT",4)))){
+if(qbevent){evnt(25393,659,"const_eval.bas");if(r)goto S_36586;}
+do{
+qbs_set(_FUNC_EXPONENT_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_EXPONENT_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,660,"const_eval.bas");}while(r);
+S_36588:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_UNARY(_FUNC_EXPONENT_STRING_EXP,(void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25393,666,"const_eval.bas");if(r)goto S_36588;}
+do{
+SUB_FIXUPERRORMESSAGE((void*)( ((char*)(_FUNC_EXPONENT_UDT_STATE)) + (0) ),qbs_new_txt_len("ROOT",4));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,666,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,666,"const_eval.bas");}while(r);
+}
+S_36592:;
+if (((-(*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0))< 0 ))&(-(*(long double*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(8))>= 1 )))||is_error_pending()){
+if(qbevent){evnt(25393,668,"const_eval.bas");if(r)goto S_36592;}
+do{
+*_FUNC_EXPONENT_LONG_SIG= -1 ;
+if(!qbevent)break;evnt(25393,668,"const_eval.bas");}while(r);
+do{
+*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0))=-(*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)));
+if(!qbevent)break;evnt(25393,668,"const_eval.bas");}while(r);
+}else{
+do{
+*_FUNC_EXPONENT_LONG_SIG= 1 ;
+if(!qbevent)break;evnt(25393,668,"const_eval.bas");}while(r);
+}
+do{
+*_FUNC_EXPONENT_FLOAT_EXPON=( 1E+0L / *(long double*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)));
+if(!qbevent)break;evnt(25393,669,"const_eval.bas");}while(r);
+S_36599:;
+if (((-(*_FUNC_EXPONENT_FLOAT_EXPON!=std::floor(*_FUNC_EXPONENT_FLOAT_EXPON)))&(-(*(long double*)(((char*)_FUNC_EXPONENT_UDT_STATE)+(8))< 1 )))||is_error_pending()){
+if(qbevent){evnt(25393,670,"const_eval.bas");if(r)goto S_36599;}
+do{
+*_FUNC_EXPONENT_LONG_SIG=func_sgn((long double)(*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0))));
+if(!qbevent)break;evnt(25393,670,"const_eval.bas");}while(r);
+do{
+*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0))=func_abs((long double)(*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0))));
+if(!qbevent)break;evnt(25393,670,"const_eval.bas");}while(r);
+}
+do{
+SUB_PARSENUMSETF((void*)( ((char*)(_FUNC_EXPONENT_UDT_NUM)) + (0) ),&(pass4365=*__LONG_FLOATTYPE-*__LONG_ISPOINTER),&(pass4366=*_FUNC_EXPONENT_LONG_SIG*(pow2(*(long double*)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)),*_FUNC_EXPONENT_FLOAT_EXPON))));
+if(!qbevent)break;evnt(25393,672,"const_eval.bas");}while(r);
+}else{
+S_36605:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(25393,674,"const_eval.bas");if(r)goto S_36605;}
+do{
+sub__echo(qbs_new_txt_len("Exponent done!",14));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,674,"const_eval.bas");}while(r);
+}
+do{
+memcpy((((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 0),(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 0), 32);
+memcpy((((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 32),(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 32), 8);
+memcpy((((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 40),(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 40), 8);
+qbs_set(*(qbs**)(((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 48), *(qbs**)(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 48));
+memcpy((((char*)_FUNC_EXPONENT_UDT_STATE)+(8)+ 56),(((char*)_FUNC_EXPONENT_UDT_NUM)+(0)+ 56), 4);
+if(!qbevent)break;evnt(25393,675,"const_eval.bas");}while(r);
+do{
+*_FUNC_EXPONENT_LONG_EXPONENT= -1 ;
+if(!qbevent)break;evnt(25393,676,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,677,"const_eval.bas");}while(r);
+}
+}
+dl_continue_4358:;
+}while(1);
+dl_exit_4358:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free195.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_EXPONENT_LONG_EXPONENT;
 }

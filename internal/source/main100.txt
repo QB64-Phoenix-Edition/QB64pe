@@ -1,4 +1,4 @@
-qbs* FUNC_GETPREVELEMENT(qbs*_FUNC_GETPREVELEMENT_STRING_A,int32*_FUNC_GETPREVELEMENT_LONG_INDEX,int32*_FUNC_GETPREVELEMENT_LONG_STRINDEX){
+qbs* FUNC_GETMAKEEXECUTABLE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,82 +11,23 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_33730:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(25388,21,"build.bas");if(r)goto S_33730;}
 do{
-if(!qbevent)break;evnt(24227,68,"elements.bas");}while(r);
-S_32676:;
-if ((-(*_FUNC_GETPREVELEMENT_LONG_STRINDEX== 0 ))||is_error_pending()){
-if(qbevent){evnt(24227,70,"elements.bas");if(r)goto S_32676;}
-do{
-*_FUNC_GETPREVELEMENT_LONG_STRINDEX=_FUNC_GETPREVELEMENT_STRING_A->len;
+qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_add(FUNC_GETCOMPILERPATH(),qbs_new_txt_len("mingw32-make.exe",16)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,70,"elements.bas");}while(r);
-do{
-*_FUNC_GETPREVELEMENT_LONG_INDEX=FUNC_NUMELEMENTS(_FUNC_GETPREVELEMENT_STRING_A)+ 1 ;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,70,"elements.bas");}while(r);
-}
-S_32680:;
-if ((-(*_FUNC_GETPREVELEMENT_LONG_STRINDEX== -1 ))||is_error_pending()){
-if(qbevent){evnt(24227,71,"elements.bas");if(r)goto S_32680;}
-do{
-*_FUNC_GETPREVELEMENT_LONG_INDEX= -1 ;
-if(!qbevent)break;evnt(24227,71,"elements.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(24227,71,"elements.bas");}while(r);
-}
-S_32684:;
-if ((-(*_FUNC_GETPREVELEMENT_LONG_STRINDEX> 0 ))||is_error_pending()){
-if(qbevent){evnt(24227,73,"elements.bas");if(r)goto S_32684;}
-do{
-*_FUNC_GETPREVELEMENT_LONG_I=func__instrrev(*_FUNC_GETPREVELEMENT_LONG_STRINDEX,_FUNC_GETPREVELEMENT_STRING_A,__STRING1_SP,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,73,"elements.bas");}while(r);
-}
-S_32687:;
-if ((*_FUNC_GETPREVELEMENT_LONG_I)||is_error_pending()){
-if(qbevent){evnt(24227,75,"elements.bas");if(r)goto S_32687;}
-do{
-qbs_set(_FUNC_GETPREVELEMENT_STRING_GETPREVELEMENT,func_mid(_FUNC_GETPREVELEMENT_STRING_A,*_FUNC_GETPREVELEMENT_LONG_I+ 1 ,*_FUNC_GETPREVELEMENT_LONG_STRINDEX-*_FUNC_GETPREVELEMENT_LONG_I,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,76,"elements.bas");}while(r);
-do{
-*_FUNC_GETPREVELEMENT_LONG_STRINDEX=*_FUNC_GETPREVELEMENT_LONG_I- 1 ;
-if(!qbevent)break;evnt(24227,77,"elements.bas");}while(r);
-do{
-*_FUNC_GETPREVELEMENT_LONG_INDEX=*_FUNC_GETPREVELEMENT_LONG_INDEX- 1 ;
-if(!qbevent)break;evnt(24227,78,"elements.bas");}while(r);
-S_32691:;
-if ((-(*_FUNC_GETPREVELEMENT_LONG_STRINDEX== 0 ))||is_error_pending()){
-if(qbevent){evnt(24227,82,"elements.bas");if(r)goto S_32691;}
-do{
-*_FUNC_GETPREVELEMENT_LONG_STRINDEX= -2 ;
-if(!qbevent)break;evnt(24227,82,"elements.bas");}while(r);
-}
-S_32694:;
-}else{
-if (-(*_FUNC_GETPREVELEMENT_LONG_STRINDEX!= -1 )){
-if(qbevent){evnt(24227,83,"elements.bas");if(r)goto S_32694;}
-do{
-qbs_set(_FUNC_GETPREVELEMENT_STRING_GETPREVELEMENT,func_mid(_FUNC_GETPREVELEMENT_STRING_A, 1 ,*_FUNC_GETPREVELEMENT_LONG_STRINDEX,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,84,"elements.bas");}while(r);
-do{
-*_FUNC_GETPREVELEMENT_LONG_STRINDEX= -1 ;
-if(!qbevent)break;evnt(24227,85,"elements.bas");}while(r);
-do{
-*_FUNC_GETPREVELEMENT_LONG_INDEX=*_FUNC_GETPREVELEMENT_LONG_INDEX- 1 ;
-if(!qbevent)break;evnt(24227,86,"elements.bas");}while(r);
+if(!qbevent)break;evnt(25388,22,"build.bas");}while(r);
 }else{
 do{
-*_FUNC_GETPREVELEMENT_LONG_INDEX= -1 ;
-if(!qbevent)break;evnt(24227,88,"elements.bas");}while(r);
-}
+qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_new_txt_len("make",4));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25388,24,"build.bas");}while(r);
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free100.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_GETPREVELEMENT_STRING_GETPREVELEMENT);return _FUNC_GETPREVELEMENT_STRING_GETPREVELEMENT;
+qbs_maketmp(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE);return _FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE;
 }

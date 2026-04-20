@@ -1,4 +1,4 @@
-void SUB_ASSIGN(qbs*_SUB_ASSIGN_STRING_A,int32*_SUB_ASSIGN_LONG_N){
+int32 FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM(qbs*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,int32*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,int32*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_LOWER_BOUND,int32*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_ELEMENT_COUNT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,200 +11,77 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_16772:;
-fornext_value2449= 1 ;
-fornext_finalvalue2449=*_SUB_ASSIGN_LONG_N;
-fornext_step2449= 1 ;
-if (fornext_step2449<0) fornext_step_negative2449=1; else fornext_step_negative2449=0;
-if (is_error_pending()) goto fornext_error2449;
-goto fornext_entrylabel2449;
-while(1){
-fornext_value2449=fornext_step2449+(*_SUB_ASSIGN_LONG_I);
-fornext_entrylabel2449:
-*_SUB_ASSIGN_LONG_I=fornext_value2449;
-if (fornext_step_negative2449){
-if (fornext_value2449<fornext_finalvalue2449) break;
-}else{
-if (fornext_value2449>fornext_finalvalue2449) break;
+S_17160:;
+if ((-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION<= 0 ))||is_error_pending()){
+if(qbevent){evnt(14740);if(r)goto S_17160;}
+do{
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION= 1 ;
+if(!qbevent)break;evnt(14740);}while(r);
 }
-fornext_error2449:;
-if(qbevent){evnt(14253);if(r)goto S_16772;}
-do{
-*_SUB_ASSIGN_LONG_C=qbs_asc(FUNC_GETELEMENT(_SUB_ASSIGN_STRING_A,_SUB_ASSIGN_LONG_I));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14254);}while(r);
-S_16774:;
-if ((-(*_SUB_ASSIGN_LONG_C== 40 ))||is_error_pending()){
-if(qbevent){evnt(14255);if(r)goto S_16774;}
-do{
-*_SUB_ASSIGN_LONG_B=*_SUB_ASSIGN_LONG_B+ 1 ;
-if(!qbevent)break;evnt(14255);}while(r);
-}
-S_16777:;
-if ((-(*_SUB_ASSIGN_LONG_C== 41 ))||is_error_pending()){
-if(qbevent){evnt(14256);if(r)goto S_16777;}
-do{
-*_SUB_ASSIGN_LONG_B=*_SUB_ASSIGN_LONG_B- 1 ;
-if(!qbevent)break;evnt(14256);}while(r);
-}
-S_16780:;
-if (((-(*_SUB_ASSIGN_LONG_C== 61 ))&(-(*_SUB_ASSIGN_LONG_B== 0 )))||is_error_pending()){
-if(qbevent){evnt(14257);if(r)goto S_16780;}
-S_16781:;
-if ((-(*_SUB_ASSIGN_LONG_I== 1 ))||is_error_pending()){
-if(qbevent){evnt(14258);if(r)goto S_16781;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Expected ... =",14));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14258);}while(r);
+S_17163:;
+if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION>_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR->len)))||is_error_pending()){
+if(qbevent){evnt(14741);if(r)goto S_17163;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(14258);}while(r);
+if(!qbevent)break;evnt(14741);}while(r);
 }
-S_16785:;
-if ((-(*_SUB_ASSIGN_LONG_I==*_SUB_ASSIGN_LONG_N))||is_error_pending()){
-if(qbevent){evnt(14259);if(r)goto S_16785;}
 do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Expected = ...",14));
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR=func_instr(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,qbs_new_txt_len(";",1),0|1);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14259);}while(r);
+if(!qbevent)break;evnt(14743);}while(r);
+S_17167:;
+if ((*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR)||is_error_pending()){
+if(qbevent){evnt(14744);if(r)goto S_17167;}
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14259);}while(r);
-}
-do{
-qbs_set(_SUB_ASSIGN_STRING_A2,FUNC_FIXOPERATIONORDER(FUNC_GETELEMENTS(_SUB_ASSIGN_STRING_A,&(pass2450= 1 ),&(pass2451=*_SUB_ASSIGN_LONG_I- 1 ))));
+qbs_set(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,func_mid(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,0|1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14261);}while(r);
-S_16790:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(14262);if(r)goto S_16790;}
+if(!qbevent)break;evnt(14745);}while(r);
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14262);}while(r);
-}
-do{
-qbs_set(_SUB_ASSIGN_STRING_L,qbs_add(qbs_add(qbs_add(__STRING_TLAYOUT,__STRING1_SP),qbs_new_txt_len("=",1)),__STRING1_SP));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14263);}while(r);
-S_16794:;
-if ((-(*_SUB_ASSIGN_LONG_I== 2 ))||is_error_pending()){
-if(qbevent){evnt(14266);if(r)goto S_16794;}
-do{
-*_SUB_ASSIGN_LONG_TRY=FUNC_FINDID(_SUB_ASSIGN_STRING_A2);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14267);}while(r);
-S_16796:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(14268);if(r)goto S_16796;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14268);}while(r);
-}
-S_16799:;
-while((*_SUB_ASSIGN_LONG_TRY)||is_error_pending()){
-if(qbevent){evnt(14269);if(r)goto S_16799;}
-S_16800:;
-if ((*(int32*)(((char*)__UDT_ID)+(536)))||is_error_pending()){
-if(qbevent){evnt(14270);if(r)goto S_16800;}
-S_16801:;
-if ((-(*__LONG_SUBFUNCN==*(int32*)(((char*)__UDT_ID)+(2641))))||is_error_pending()){
-if(qbevent){evnt(14271);if(r)goto S_16801;}
-S_16802:;
-if ((-((*(int32*)(((char*)__UDT_ID)+(536))&*__LONG_ISUDT)== 0 ))||is_error_pending()){
-if(qbevent){evnt(14272);if(r)goto S_16802;}
-do{
-SUB_MAKEIDREFER(_SUB_ASSIGN_STRING_A2,_SUB_ASSIGN_LONG_TYP);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14273);}while(r);
-do{
-goto LABEL_ASSIGNSIMPLEVARIABLE;
-if(!qbevent)break;evnt(14274);}while(r);
-}
-}
-}
-S_16808:;
-if ((-(*_SUB_ASSIGN_LONG_TRY== 2 ))||is_error_pending()){
-if(qbevent){evnt(14278);if(r)goto S_16808;}
-do{
-*__INTEGER_FINDANOTHERID= 1 ;
-if(!qbevent)break;evnt(14278);}while(r);
-do{
-*_SUB_ASSIGN_LONG_TRY=FUNC_FINDID(_SUB_ASSIGN_STRING_A2);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14278);}while(r);
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION=*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR+ 1 ;
+if(!qbevent)break;evnt(14746);}while(r);
 }else{
 do{
-*_SUB_ASSIGN_LONG_TRY= 0 ;
-if(!qbevent)break;evnt(14278);}while(r);
-}
-S_16814:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(14279);if(r)goto S_16814;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14279);}while(r);
-}
-dl_continue_2452:;
-}
-dl_exit_2452:;
-}
-do{
-qbs_set(_SUB_ASSIGN_STRING_A2,FUNC_EVALUATE(_SUB_ASSIGN_STRING_A2,_SUB_ASSIGN_LONG_TYP));
+qbs_set(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,func_mid(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14283);}while(r);
-S_16820:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(14283);if(r)goto S_16820;}
+if(!qbevent)break;evnt(14748);}while(r);
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14283);}while(r);
-}
-LABEL_ASSIGNSIMPLEVARIABLE:;
-if(qbevent){evnt(14284);r=0;}
-S_16823:;
-if ((-((*_SUB_ASSIGN_LONG_TYP&*__LONG_ISREFERENCE)== 0 ))||is_error_pending()){
-if(qbevent){evnt(14285);if(r)goto S_16823;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Expected variable =, look for conflict with a CONST name",56));
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION=_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR->len+ 1 ;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14285);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14285);}while(r);
+if(!qbevent)break;evnt(14749);}while(r);
 }
 do{
-SUB_SETREFER(_SUB_ASSIGN_STRING_A2,_SUB_ASSIGN_LONG_TYP,FUNC_GETELEMENTS(_SUB_ASSIGN_STRING_A,&(pass2453=*_SUB_ASSIGN_LONG_I+ 1 ),_SUB_ASSIGN_LONG_N),&(pass2454= 0 ));
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS=func_instr(NULL,_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,qbs_new_txt_len(",",1),0);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14286);}while(r);
-S_16828:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(14287);if(r)goto S_16828;}
+if(!qbevent)break;evnt(14752);}while(r);
+S_17175:;
+if ((-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS== 0 ))||is_error_pending()){
+if(qbevent){evnt(14753);if(r)goto S_17175;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(14287);}while(r);
+if(!qbevent)break;evnt(14753);}while(r);
 }
 do{
-qbs_set(__STRING_TLAYOUT,qbs_add(_SUB_ASSIGN_STRING_L,__STRING_TLAYOUT));
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_LOWER_BOUND=qbr(qbs_val<long double>(qbs_left(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS- 1 )));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14288);}while(r);
+if(!qbevent)break;evnt(14755);}while(r);
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(14290);}while(r);
-}
-fornext_continue_2448:;
-}
-fornext_exit_2448:;
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Expected =",10));
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_ELEMENT_COUNT=qbr(qbs_val<long double>(func_mid(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS+ 1 ,NULL,0)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(14294);}while(r);
+if(!qbevent)break;evnt(14756);}while(r);
+S_17180:;
+if ((-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_ELEMENT_COUNT<= 0 ))||is_error_pending()){
+if(qbevent){evnt(14757);if(r)goto S_17180;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(14294);}while(r);
+if(!qbevent)break;evnt(14757);}while(r);
+}
+do{
+*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_PARSENEXTUDTARRAYDESCRIPTORDIM= -1 ;
+if(!qbevent)break;evnt(14759);}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free11.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_PARSENEXTUDTARRAYDESCRIPTORDIM;
 }

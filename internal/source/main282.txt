@@ -1,4 +1,4 @@
-void SUB_IDEDRAWPAR(void*_SUB_IDEDRAWPAR_UDT_P){
+void SUB_IDEBOX(int32*_SUB_IDEBOX_LONG_X,int32*_SUB_IDEBOX_LONG_Y,int32*_SUB_IDEBOX_LONG_W,int32*_SUB_IDEBOX_LONG_H){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,26 +12,38 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbg_sub_color( 0 , 7 ,NULL,NULL,3);
-if(!qbevent)break;evnt(24244,11526,"ide_methods.bas");}while(r);
-do{
-SUB_IDEBOXSHADOW((int32*)(void*)( ((char*)(_SUB_IDEDRAWPAR_UDT_P)) + (0) ),(int32*)(void*)( ((char*)(_SUB_IDEDRAWPAR_UDT_P)) + (4) ),&(pass5803=*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(8))+ 2 ),&(pass5804=*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(12))+ 2 ));
-if(!qbevent)break;evnt(24244,11526,"ide_methods.bas");}while(r);
-S_50864:;
-if ((*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(16)))||is_error_pending()){
-if(qbevent){evnt(24244,11527,"ide_methods.bas");if(r)goto S_50864;}
-do{
-*_SUB_IDEDRAWPAR_LONG_X=((qbs*)(((uint64*)(__ARRAY_STRING_IDETXT[0]))[array_check((*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(16)))-__ARRAY_STRING_IDETXT[4],__ARRAY_STRING_IDETXT[5])]))->len+ 2 ;
+sub__printstring(*_SUB_IDEBOX_LONG_X,*_SUB_IDEBOX_LONG_Y,qbs_add(qbs_add(func_chr( 218 ),func_string(*_SUB_IDEBOX_LONG_W- 2 , 196 )),func_chr( 191 )),NULL,0);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24244,11528,"ide_methods.bas");}while(r);
-do{
-qbg_sub_color( 0 , 7 ,NULL,NULL,3);
-if(!qbevent)break;evnt(24244,11529,"ide_methods.bas");}while(r);
-do{
-sub__printstring(*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(0))+((*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(8))/  2 ))-((*_SUB_IDEDRAWPAR_LONG_X- 1 )/  2 ),*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(4)),qbs_add(qbs_add(qbs_new_txt_len(" ",1),((qbs*)(((uint64*)(__ARRAY_STRING_IDETXT[0]))[array_check((*(int32*)(((char*)_SUB_IDEDRAWPAR_UDT_P)+(16)))-__ARRAY_STRING_IDETXT[4],__ARRAY_STRING_IDETXT[5])]))),qbs_new_txt_len(" ",1)),NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24244,11529,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25406,10659,"ide_methods.bas");}while(r);
+S_51140:;
+fornext_value5912=*_SUB_IDEBOX_LONG_Y+ 1 ;
+fornext_finalvalue5912=*_SUB_IDEBOX_LONG_Y+*_SUB_IDEBOX_LONG_H- 2 ;
+fornext_step5912= 1 ;
+if (fornext_step5912<0) fornext_step_negative5912=1; else fornext_step_negative5912=0;
+if (is_error_pending()) goto fornext_error5912;
+goto fornext_entrylabel5912;
+while(1){
+fornext_value5912=fornext_step5912+(*_SUB_IDEBOX_LONG_Y2);
+fornext_entrylabel5912:
+*_SUB_IDEBOX_LONG_Y2=fornext_value5912;
+if (fornext_step_negative5912){
+if (fornext_value5912<fornext_finalvalue5912) break;
+}else{
+if (fornext_value5912>fornext_finalvalue5912) break;
 }
+fornext_error5912:;
+if(qbevent){evnt(25406,10660,"ide_methods.bas");if(r)goto S_51140;}
+do{
+sub__printstring(*_SUB_IDEBOX_LONG_X,*_SUB_IDEBOX_LONG_Y2,qbs_add(qbs_add(func_chr( 179 ),func_space(*_SUB_IDEBOX_LONG_W- 2 )),func_chr( 179 )),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,10661,"ide_methods.bas");}while(r);
+fornext_continue_5911:;
+}
+fornext_exit_5911:;
+do{
+sub__printstring(*_SUB_IDEBOX_LONG_X,*_SUB_IDEBOX_LONG_Y+*_SUB_IDEBOX_LONG_H- 1 ,qbs_add(qbs_add(func_chr( 192 ),func_string(*_SUB_IDEBOX_LONG_W- 2 , 196 )),func_chr( 217 )),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,10663,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free282.txt"

@@ -1,4 +1,4 @@
-qbs* FUNC_NEWBYTEELEMENT(){
+void SUB_LINEINPUT3LOAD(qbs*_SUB_LINEINPUT3LOAD_STRING_F){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,42 +12,41 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbs_set(_FUNC_NEWBYTEELEMENT_STRING_A,qbs_add(qbs_new_txt_len("byte_element_",13),qbs__tostr((int32)(FUNC_UNIQUENUMBER()),NULL,0)));
+sub_open(_SUB_LINEINPUT3LOAD_STRING_F, 2 ,NULL,NULL, 1 ,NULL,0);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23679);}while(r);
+if(!qbevent)break;evnt(24660);}while(r);
 do{
-qbs_set(_FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT,_FUNC_NEWBYTEELEMENT_STRING_A);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23680);}while(r);
-S_31816:;
-if ((*__LONG_USE_GLOBAL_BYTE_ELEMENTS)||is_error_pending()){
-if(qbevent){evnt(23681);if(r)goto S_31816;}
+*_SUB_LINEINPUT3LOAD_LONG_L=func_lof( 1 );
+if(!qbevent)break;evnt(24661);}while(r);
 do{
-SUB_WRITEBUFLINE(&(pass3591=*__LONG_GLOBTXTBUF),qbs_add(qbs_add(qbs_new_txt_len("byte_element_struct *",21),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)malloc(12);",34)));
+qbs_set(__STRING_LINEINPUT3BUFFER,func_space(*_SUB_LINEINPUT3LOAD_LONG_L));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23682);}while(r);
-}else{
+if(!qbevent)break;evnt(24662);}while(r);
 do{
-SUB_WRITEBUFLINE(&(pass3592=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_new_txt_len("byte_element_struct *",21),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=NULL;",6)));
+sub_get2( 1 ,NULL,__STRING_LINEINPUT3BUFFER,0);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23684);}while(r);
+if(!qbevent)break;evnt(24663);}while(r);
+S_32759:;
+if ((qbs_cleanup(qbs_tmp_base,__STRING_LINEINPUT3BUFFER->len))||is_error_pending()){
+if(qbevent){evnt(24664);if(r)goto S_32759;}
+S_32760:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(__STRING_LINEINPUT3BUFFER, 1 ),func_chr( 26 ))))||is_error_pending()){
+if(qbevent){evnt(24664);if(r)goto S_32760;}
 do{
-SUB_WRITEBUFLINE(&(pass3593=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_new_txt_len("if (!",5),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("){",2)));
+qbs_set(__STRING_LINEINPUT3BUFFER,qbs_left(__STRING_LINEINPUT3BUFFER,__STRING_LINEINPUT3BUFFER->len- 1 ));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23685);}while(r);
-do{
-SUB_WRITEBUFLINE(&(pass3594=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("if ((mem_static_pointer+=12)<mem_static_limit) ",47),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)(mem_static_pointer-12); else ",53)),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)mem_static_malloc(12);",45)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23686);}while(r);
-do{
-SUB_WRITEBUFLINE(&(pass3595=*__LONG_DATATXTBUF),qbs_new_txt_len("}",1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23687);}while(r);
+if(!qbevent)break;evnt(24664);}while(r);
 }
+}
+do{
+sub_close( 1 ,1);
+if(!qbevent)break;evnt(24665);}while(r);
+do{
+*__LONG_LINEINPUT3INDEX= 1 ;
+if(!qbevent)break;evnt(24666);}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free58.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT);return _FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT;
 }

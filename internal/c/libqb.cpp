@@ -4067,6 +4067,9 @@ void flush_old_hardware_commands() {
     } // next_hardware_command_to_remove&&last_hardware_command_rendered
 } // flush_old_hardware_commands
 
+uint8 charset8x8[256][8][8];
+uint8 charset8x16[256][16][8];
+
 void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32 src, int32 dst, double f_sx1, double f_sy1, double f_sx2, double f_sy2,
                    int32 passed) {
 
@@ -4168,10 +4171,6 @@ void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32
     } else {
         s = read_page;
     } // src
-    if (s->text) {
-        error(5);
-        return;
-    }
     sbpp = s->bytes_per_pixel;
 
     if (passed & 32) { // dst
@@ -4194,11 +4193,18 @@ void sub__putimage(double f_dx1, double f_dy1, double f_dx2, double f_dy2, int32
     } else {
         d = write_page;
     } // dst
-    if (d->text) {
+    if (!s->text && d->text) {
         error(5);
         return;
     }
     dbpp = d->bytes_per_pixel;
+    if (s->text && !d->text) {
+        // Text glyphs use up to 16 palette indices; destination must be able to represent all of them.
+        if ((d->bits_per_pixel != 32) && (d->bits_per_pixel < 4)) {
+            error(5);
+            return;
+        }
+    }
     if ((sbpp == 4) && (dbpp == 1)) {
         error(5);
         return;
@@ -4358,6 +4364,219 @@ resolve_coordinates:
 
     // all co-ordinates resolved (but omitted co-ordinates are set to 0!)
 
+    if (s->text) {
+        int32 srcCellStepX = 1;
+        int32 srcCellStepY = 1;
+        int32 dstStepX = 1;
+        int32 dstStepY = 1;
+
+        if (passed & 64) {
+            if (passed & 512) {
+                srcCellStepX = (sx2 >= sx1) ? 1 : -1;
+                srcCellStepY = (sy2 >= sy1) ? 1 : -1;
+            } else {
+                sx2 = sw - 1;
+                sy2 = sh - 1;
+            }
+        } else {
+            sx1 = 0;
+            sy1 = 0;
+            sx2 = sw - 1;
+            sy2 = sh - 1;
+        }
+
+        const int32 srcCellsW = abs(sx2 - sx1) + 1;
+        const int32 srcCellsH = abs(sy2 - sy1) + 1;
+        const int32 fontWidth = fontwidth[s->font];
+        const int32 fontHeight = fontheight[s->font];
+        const int32 expectedDstW = d->text ? srcCellsW : (srcCellsW * fontWidth);
+        const int32 expectedDstH = d->text ? srcCellsH : (srcCellsH * fontHeight);
+
+        if (passed & 1) {
+            if (passed & 4) {
+                dstStepX = (dx2 >= dx1) ? 1 : -1;
+                dstStepY = (dy2 >= dy1) ? 1 : -1;
+
+                // Text source blit is copy-only (no scaling).
+                if (((abs(dx2 - dx1) + 1) != expectedDstW) || ((abs(dy2 - dy1) + 1) != expectedDstH)) {
+                    error(5);
+                    return;
+                }
+            } else {
+                dx2 = dx1 + expectedDstW - 1;
+                dy2 = dy1 + expectedDstH - 1;
+            }
+        } else {
+            dx1 = 0;
+            dy1 = 0;
+            dx2 = expectedDstW - 1;
+            dy2 = expectedDstH - 1;
+        }
+
+        int32 clipLeadX = 0;
+        int32 clipTrailX = 0;
+        int32 clipLeadY = 0;
+        int32 clipTrailY = 0;
+
+        const int32 srcClipX1 = s->clipping_or_scaling ? s->view_x1 : 0;
+        const int32 srcClipY1 = s->clipping_or_scaling ? s->view_y1 : 0;
+        const int32 srcClipX2 = s->clipping_or_scaling ? s->view_x2 : (sw - 1);
+        const int32 srcClipY2 = s->clipping_or_scaling ? s->view_y2 : (sh - 1);
+
+        if (srcCellStepX > 0) {
+            if (sx1 < srcClipX1)
+                clipLeadX = srcClipX1 - sx1;
+            if (sx2 > srcClipX2)
+                clipTrailX = sx2 - srcClipX2;
+        } else {
+            if (sx1 > srcClipX2)
+                clipLeadX = sx1 - srcClipX2;
+            if (sx2 < srcClipX1)
+                clipTrailX = srcClipX1 - sx2;
+        }
+
+        if (srcCellStepY > 0) {
+            if (sy1 < srcClipY1)
+                clipLeadY = srcClipY1 - sy1;
+            if (sy2 > srcClipY2)
+                clipTrailY = sy2 - srcClipY2;
+        } else {
+            if (sy1 > srcClipY2)
+                clipLeadY = sy1 - srcClipY2;
+            if (sy2 < srcClipY1)
+                clipTrailY = srcClipY1 - sy2;
+        }
+
+        if ((clipLeadX + clipTrailX >= srcCellsW) || (clipLeadY + clipTrailY >= srcCellsH))
+            return;
+
+        sx1 += srcCellStepX * clipLeadX;
+        sy1 += srcCellStepY * clipLeadY;
+        sx2 -= srcCellStepX * clipTrailX;
+        sy2 -= srcCellStepY * clipTrailY;
+
+        const int32 dstUnitX = d->text ? 1 : fontWidth;
+        const int32 dstUnitY = d->text ? 1 : fontHeight;
+        dx1 += dstStepX * clipLeadX * dstUnitX;
+        dy1 += dstStepY * clipLeadY * dstUnitY;
+        dx2 -= dstStepX * clipTrailX * dstUnitX;
+        dy2 -= dstStepY * clipTrailY * dstUnitY;
+
+        const int32 clippedCellsW = abs(sx2 - sx1) + 1;
+        const int32 clippedCellsH = abs(sy2 - sy1) + 1;
+
+        auto srcData = reinterpret_cast<uint16 *>(s->offset);
+        const uint32 textTransparentColor = uint32(s->transparent_color);
+
+        if (d->text) {
+            auto dstData = reinterpret_cast<uint16 *>(d->offset);
+            const int32 viewPrintTop = d->top_row - 1;
+            const int32 viewPrintBottom = d->bottom_row - 1;
+
+            for (int32 cellY = 0; cellY < clippedCellsH; ++cellY) {
+                const int32 srcY = sy1 + cellY * srcCellStepY;
+                const int32 dstY = dy1 + cellY * dstStepY;
+                if ((dstY < 0) || (dstY >= d->height))
+                    continue;
+                if ((dstY < viewPrintTop) || (dstY > viewPrintBottom))
+                    continue;
+
+                for (int32 cellX = 0; cellX < clippedCellsW; ++cellX) {
+                    const int32 srcX = sx1 + cellX * srcCellStepX;
+                    const int32 dstX = dx1 + cellX * dstStepX;
+                    if ((dstX < 0) || (dstX >= d->width))
+                        continue;
+
+                    const uint16 cell = srcData[srcY * s->width + srcX];
+                    if (uint32(cell) != textTransparentColor)
+                        dstData[dstY * d->width + dstX] = cell;
+                }
+            }
+        } else {
+            const int32 dstClipX1 = d->clipping_or_scaling ? d->view_x1 : 0;
+            const int32 dstClipY1 = d->clipping_or_scaling ? d->view_y1 : 0;
+            const int32 dstClipX2 = d->clipping_or_scaling ? d->view_x2 : (d->width - 1);
+            const int32 dstClipY2 = d->clipping_or_scaling ? d->view_y2 : (d->height - 1);
+
+            for (int32 cellY = 0; cellY < clippedCellsH; ++cellY) {
+                const int32 srcY = sy1 + cellY * srcCellStepY;
+
+                for (int32 cellX = 0; cellX < clippedCellsW; ++cellX) {
+                    const int32 srcX = sx1 + cellX * srcCellStepX;
+                    const uint16 cell = srcData[srcY * s->width + srcX];
+                    if (uint32(cell) == textTransparentColor)
+                        continue;
+
+                    const uint8 c = uint8(cell & 0xFF);
+                    const uint8 attr = uint8(cell >> 8);
+                    const uint8 fc = uint8(attr & 0x0F);
+                    const uint8 bc = uint8(((attr >> 4) & 7) + ((attr >> 7) << 3));
+
+                    const uint8 *glyphBits;
+                    uint8 *ttfGlyphData = nullptr;
+
+                    if (s->font >= 32) {
+                        int32 rt_w, rt_h;
+                        if (!FontRenderTextASCII(font[s->font], &c, 1, FONT_RENDER_MONOCHROME, &ttfGlyphData, &rt_w, &rt_h))
+                            continue;
+                        glyphBits = ttfGlyphData;
+                    } else {
+                        switch (fontHeight) {
+                        case 8:
+                            glyphBits = &charset8x8[c][0][0];
+                            break;
+                        case 14:
+                            glyphBits = &charset8x16[c][1][0];
+                            break;
+                        default:
+                            glyphBits = &charset8x16[c][0][0];
+                            break;
+                        }
+                    }
+
+                    if (d->bits_per_pixel == 32) {
+                        for (int32 py = 0; py < fontHeight; ++py) {
+                            const int32 dstY = dy1 + dstStepY * (cellY * fontHeight + py);
+                            if ((dstY < dstClipY1) || (dstY > dstClipY2))
+                                continue;
+
+                            for (int32 px = 0; px < fontWidth; ++px) {
+                                const int32 dstX = dx1 + dstStepX * (cellX * fontWidth + px);
+                                if ((dstX < dstClipX1) || (dstX > dstClipX2))
+                                    continue;
+
+                                const uint8 bit = glyphBits[py * fontWidth + px];
+                                d->offset32[dstY * d->width + dstX] = bit ? s->pal[fc] : s->pal[bc];
+                            }
+                        }
+                    } else {
+                        for (int32 py = 0; py < fontHeight; ++py) {
+                            const int32 dstY = dy1 + dstStepY * (cellY * fontHeight + py);
+                            if ((dstY < dstClipY1) || (dstY > dstClipY2))
+                                continue;
+
+                            for (int32 px = 0; px < fontWidth; ++px) {
+                                const int32 dstX = dx1 + dstStepX * (cellX * fontWidth + px);
+                                if ((dstX < dstClipX1) || (dstX > dstClipX2))
+                                    continue;
+
+                                const uint8 bit = glyphBits[py * fontWidth + px];
+                                d->offset[dstY * d->width + dstX] = bit ? fc : bc;
+                            }
+                        }
+                    }
+
+                    if (ttfGlyphData) {
+                        free(ttfGlyphData);
+                        ttfGlyphData = nullptr;
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
     if (use_hardware) {
         // calculate omitted co-ordinates
         if ((passed & 4) && (passed & 512))
@@ -4455,6 +4674,15 @@ resolve_coordinates:
 
     //(decided not to throw error, QB64 will use linear filtering if/when available)
     // if (passed&128){error(5); return;}//software surfaces do not support pixel _SMOOTHing yet
+
+    const int32 srcClipX1 = s->clipping_or_scaling ? s->view_x1 : 0;
+    const int32 srcClipY1 = s->clipping_or_scaling ? s->view_y1 : 0;
+    const int32 srcClipX2 = s->clipping_or_scaling ? s->view_x2 : (sw - 1);
+    const int32 srcClipY2 = s->clipping_or_scaling ? s->view_y2 : (sh - 1);
+    const int32 dstClipX1 = d->clipping_or_scaling ? d->view_x1 : 0;
+    const int32 dstClipY1 = d->clipping_or_scaling ? d->view_y1 : 0;
+    const int32 dstClipX2 = d->clipping_or_scaling ? d->view_x2 : (dw - 1);
+    const int32 dstClipY2 = d->clipping_or_scaling ? d->view_y2 : (dh - 1);
 
     if ((passed & 4) && (passed & 512)) { // all co-ords given
         // could be stretched
@@ -4638,47 +4866,47 @@ stretch:
         my = 0.0;
     // note: mx & my represent the amount of change per dest pixel
 
-    // crop dest offscreen pixels
-    if (dx1 < 0) {
+    // crop dest pixels against destination clipping bounds
+    if (dx1 < dstClipX1) {
         if (mirror)
-            fsx2 += ((double)dx1) * mx;
+            fsx2 += ((double)(dx1 - dstClipX1)) * mx;
         else
-            fsx1 -= ((double)dx1) * mx;
-        dx1 = 0;
+            fsx1 -= ((double)(dx1 - dstClipX1)) * mx;
+        dx1 = dstClipX1;
     }
-    if (dy1 < 0) {
+    if (dy1 < dstClipY1) {
         if (flip)
-            fsy2 += ((double)dy1) * my;
+            fsy2 += ((double)(dy1 - dstClipY1)) * my;
         else
-            fsy1 -= ((double)dy1) * my;
-        dy1 = 0;
+            fsy1 -= ((double)(dy1 - dstClipY1)) * my;
+        dy1 = dstClipY1;
     }
-    if (dx2 >= dw) {
+    if (dx2 > dstClipX2) {
         if (mirror)
-            fsx1 += ((double)(dx2 - dw + 1)) * mx;
+            fsx1 += ((double)(dx2 - dstClipX2)) * mx;
         else
-            fsx2 -= ((double)(dx2 - dw + 1)) * mx;
-        dx2 = dw - 1;
+            fsx2 -= ((double)(dx2 - dstClipX2)) * mx;
+        dx2 = dstClipX2;
     }
-    if (dy2 >= dh) {
+    if (dy2 > dstClipY2) {
         if (flip)
-            fsy1 += ((double)(dy2 - dh + 1)) * my;
+            fsy1 += ((double)(dy2 - dstClipY2)) * my;
         else
-            fsy2 -= ((double)(dy2 - dh + 1)) * my;
-        dy2 = dh - 1;
+            fsy2 -= ((double)(dy2 - dstClipY2)) * my;
+        dy2 = dstClipY2;
     }
-    // crop source offscreen pixels
+    // crop source pixels against source clipping bounds
     if (w) { // gradient cannot be 0
-        if (fsx1 < -0.4999999) {
-            x = (-fsx1 - 0.499999) / mx + 1.0;
+        if (fsx1 < (((double)srcClipX1) - 0.4999999)) {
+            x = ((((double)srcClipX1) - 0.499999) - fsx1) / mx + 1.0;
             if (mirror)
                 dx2 -= x;
             else
                 dx1 += x;
             fsx1 += ((double)x) * mx;
         }
-        if (fsx2 > (((double)sw) - 0.5000001)) {
-            x = (fsx2 - (((double)sw) - 0.500001)) / mx + 1.0;
+        if (fsx2 > (((double)srcClipX2) + 0.4999999)) {
+            x = (fsx2 - (((double)srcClipX2) + 0.499999)) / mx + 1.0;
             if (mirror)
                 dx1 += x;
             else
@@ -4687,16 +4915,16 @@ stretch:
         }
     } // w
     if (h) { // gradient cannot be 0
-        if (fsy1 < -0.4999999) {
-            y = (-fsy1 - 0.499999) / my + 1.0;
+        if (fsy1 < (((double)srcClipY1) - 0.4999999)) {
+            y = ((((double)srcClipY1) - 0.499999) - fsy1) / my + 1.0;
             if (flip)
                 dy2 -= y;
             else
                 dy1 += y;
             fsy1 += ((double)y) * my;
         }
-        if (fsy2 > (((double)sh) - 0.5000001)) {
-            y = (fsy2 - (((double)sh) - 0.500001)) / my + 1.0;
+        if (fsy2 > (((double)srcClipY2) + 0.4999999)) {
+            y = (fsy2 - (((double)srcClipY2) + 0.499999)) / my + 1.0;
             if (flip)
                 dy1 += y;
             else
@@ -5039,63 +5267,63 @@ reverse:
     }
 
 clip:
-    // crop dest offscreen pixels
-    if (dx1 < 0) {
+    // crop destination against destination clipping bounds
+    if (dx1 < dstClipX1) {
         if (mirror)
-            sx2 += dx1;
+            sx2 += (dx1 - dstClipX1);
         else
-            sx1 -= dx1;
-        dx1 = 0;
+            sx1 -= (dx1 - dstClipX1);
+        dx1 = dstClipX1;
     }
-    if (dy1 < 0) {
+    if (dy1 < dstClipY1) {
         if (flip)
-            sy2 += dy1;
+            sy2 += (dy1 - dstClipY1);
         else
-            sy1 -= dy1;
-        dy1 = 0;
+            sy1 -= (dy1 - dstClipY1);
+        dy1 = dstClipY1;
     }
-    if (dx2 >= dw) {
+    if (dx2 > dstClipX2) {
         if (mirror)
-            sx1 += (dx2 - dw + 1);
+            sx1 += (dx2 - dstClipX2);
         else
-            sx2 -= (dx2 - dw + 1);
-        dx2 = dw - 1;
+            sx2 -= (dx2 - dstClipX2);
+        dx2 = dstClipX2;
     }
-    if (dy2 >= dh) {
+    if (dy2 > dstClipY2) {
         if (flip)
-            sy1 += (dy2 - dh + 1);
+            sy1 += (dy2 - dstClipY2);
         else
-            sy2 -= (dy2 - dh + 1);
-        dy2 = dh - 1;
+            sy2 -= (dy2 - dstClipY2);
+        dy2 = dstClipY2;
     }
-    // crop source offscreen pixels
-    if (sx1 < 0) {
+    // crop source against source clipping bounds
+    if (sx1 < srcClipX1) {
         if (mirror)
-            dx2 += sx1;
+            dx2 += (sx1 - srcClipX1);
         else
-            dx1 -= sx1;
-        sx1 = 0;
+            dx1 -= (sx1 - srcClipX1);
+        sx1 = srcClipX1;
     }
-    if (sy1 < 0) {
+    if (sy1 < srcClipY1) {
         if (flip)
-            dy2 += sy1;
+            dy2 += (sy1 - srcClipY1);
         else
-            dy1 -= sy1;
-        sy1 = 0;
+            dy1 -= (sy1 - srcClipY1);
+        sy1 = srcClipY1;
     }
-    if (sx2 >= sw) {
+    if (sx2 > srcClipX2) {
         if (mirror)
-            dx1 += (sx2 - sw + 1);
+            dx1 += (sx2 - srcClipX2);
         else
-            dx2 -= (sx2 - sw + 1);
-        sx2 = sw - 1;
+            dx2 -= (sx2 - srcClipX2);
+        sx2 = srcClipX2;
     }
-    if (sy2 >= sh) {
+    if (sy2 > srcClipY2) {
         if (flip)
-            dy1 += (sy2 - sh + 1);
+            dy1 += (sy2 - srcClipY2);
         else
-            dy2 -= (sy2 - sh + 1);
-        sy2 = sh - 1;
+            dy2 -= (sy2 - srcClipY2);
+        sy2 = srcClipY2;
     }
     //<0-size/offscreen?
     // note: <0-size will cause reversal of dest
@@ -7077,9 +7305,6 @@ int32 qbg_visual_page;
 uint8 *qbg_visual_page_offset;
 int32 qbg_color_assign[256]; // for modes with quasi palettes!
 uint32 pal_mode10[2][9];
-
-uint8 charset8x8[256][8][8];
-uint8 charset8x16[256][16][8];
 
 int32 lineclip_draw; // 1=draw, 0=don't draw
 int32 lineclip_x1, lineclip_y1, lineclip_x2, lineclip_y2;
@@ -11918,12 +12143,26 @@ void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
         }
         // Note: Window's coordinates are not based on prev. WINDOW values
         write_page->clipping_or_scaling = 2;
-        write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (x2 - x1);
-        write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (y2 - y1);
-        write_page->scaling_offset_x = -x1 * write_page->scaling_x; // scaling offset should be applied before scaling
-        write_page->scaling_offset_y = -y1 * write_page->scaling_y;
-        if (!(passed & 2)) {
-            write_page->scaling_offset_y = -y2 * write_page->scaling_y + (write_page->view_y2 - write_page->view_y1);
+        if (passed & 2) {
+            // WINDOW SCREEN uses the active viewport dimensions and offset behavior.
+            write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (x2 - x1);
+            write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (y2 - y1);
+            write_page->scaling_offset_x = write_page->view_x1 - write_page->view_offset_x - x1 * write_page->scaling_x;
+            write_page->scaling_offset_y = write_page->view_y1 - write_page->view_offset_y - y1 * write_page->scaling_y;
+        } else {
+            if ((write_page->view_offset_x == write_page->view_x1) && (write_page->view_offset_y == write_page->view_y1)) {
+                // Regular VIEW uses viewport-relative coordinates, so WINDOW should scale against that viewport.
+                write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (x2 - x1);
+                write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (y2 - y1);
+                write_page->scaling_offset_x = write_page->view_x1 - write_page->view_offset_x - x1 * write_page->scaling_x;
+                write_page->scaling_offset_y = write_page->view_y1 - write_page->view_offset_y - y1 * write_page->scaling_y;
+            } else {
+                // VIEW SCREEN keeps window coordinates screen-based.
+                write_page->scaling_x = ((float)(write_page->width - 1)) / (x2 - x1);
+                write_page->scaling_y = ((float)(write_page->height - 1)) / (y2 - y1);
+                write_page->scaling_offset_x = -x1 * write_page->scaling_x;
+                write_page->scaling_offset_y = -y1 * write_page->scaling_y;
+            }
         }
         write_page->window_x1 = x1;
         write_page->window_x2 = x2;
@@ -12104,16 +12343,6 @@ void qbg_sub_view(int32 x1, int32 y1, int32 x2, int32 y2, int32 fillcolor, int32
         write_page->view_offset_y = 0;
         if (write_page->clipping_or_scaling == 1)
             write_page->clipping_or_scaling = 0;
-    }
-
-    // recalculate window values based on new viewport (if necessary)
-    if (write_page->clipping_or_scaling == 2) { // WINDOW'ing in use
-        write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (write_page->window_x2 - write_page->window_x1);
-        write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (write_page->window_y2 - write_page->window_y1);
-        write_page->scaling_offset_x = -write_page->window_x1 * write_page->scaling_x;
-        write_page->scaling_offset_y = -write_page->window_y1 * write_page->scaling_y;
-        if (write_page->window_y2 < write_page->window_y1)
-            write_page->scaling_offset_y = -write_page->window_y2 * write_page->scaling_y + write_page->view_y2;
     }
 
     if (passed & 4) { // fillcolor
@@ -19060,9 +19289,23 @@ void sub__clearcolor(uint32 c, int32 i, int32 passed) {
     im = &img[i];
     // text?
     if (im->text) {
-        if ((passed & 1) && (!(passed & 2)))
-            return; // you can disable clearcolor using _CLEARCOLOR _NONE in text modes
-        error(5);
+        if (passed & 1) {
+            if (passed & 2) {
+                error(5);
+                return;
+            } // invalid options
+            im->transparent_color = -1; // _CLEARCOLOR _NONE: disable transparency
+            return;
+        }
+        if (!(passed & 2)) {
+            error(5);
+            return;
+        } // invalid options
+        if (c > 65535) {
+            error(5);
+            return;
+        } // invalid cell value for a text surface
+        im->transparent_color = (int32)c;
         return;
     }
     // palette?
@@ -19346,7 +19589,7 @@ int32 func__clearcolor(int32 i, int32 passed) {
         i = write_page_index;
     }
     if (img[i].text)
-        return -1;
+        return img[i].transparent_color; // -1 = none, 0-65535 = cell value
     if (img[i].compatible_mode == 32)
         return 0;
     return img[i].transparent_color;
