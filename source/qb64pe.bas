@@ -19379,6 +19379,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     'note: 'evaluatetotyp' no longer performs 'fixoperationorder' on a2$ (in many cases, this has already been done)
 
     DIM member_element_id AS LONG 'member_element_id is variable for nested static arrays
+    DIM final_member_array_indexed AS LONG 'nested static arrays LEN fix
 
     a$ = a2$
 
@@ -19389,6 +19390,12 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     IF targettyp = -2 OR targettyp = -4 OR targettyp = -5 OR targettyp = -6 OR targettyp = -7 OR targettyp = -8 THEN
         allow_bare_member_array = -1
     END IF
+
+    final_member_array_indexed = 0 'static array LEN fix
+    IF targettyp = -4 OR targettyp = -5 OR targettyp = -6 THEN
+        final_member_array_indexed = HasIndexedFinalMemberArray%(a$)
+    END IF
+
 
     IF allow_bare_member_array THEN udt_allow_bare_array = -1
     e$ = evaluate(a$, sourcetyp)
@@ -19414,7 +19421,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                IF member_element_id > 0 THEN
+                IF member_element_id > 0 AND final_member_array_indexed = 0 THEN
                     IF udtearrayelements(member_element_id) THEN
                         o$ = MID$(e$, s3 + LEN(sp3))
                         getid idnumber
@@ -19491,8 +19498,8 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                IF member_element_id > 0 THEN 'conditions for PARENT nested Arrays
-                    
+                IF member_element_id > 0 AND final_member_array_indexed = 0 THEN 'conditions for PARENT nested Arrays
+
                     ' Whole static TYPE member array: use the inline member block from the encoded
                     ' UDT reference instead of the generic parent-UDT path.
                     IF udtearrayelements(member_element_id) THEN
