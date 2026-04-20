@@ -1,4 +1,4 @@
-int32 FUNC_LOGICALNOT(qbs*_FUNC_LOGICALNOT_STRING_EXP,void*_FUNC_LOGICALNOT_UDT_STATE){
+int32 FUNC_PARSESTRING(qbs*_FUNC_PARSESTRING_STRING_EXP,void*_FUNC_PARSESTRING_UDT_STATE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,59 +11,67 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_35171:;
+S_36125:;
 if (( 0ll )||is_error_pending()){
-if(qbevent){evnt(24231,386,"const_eval.bas");if(r)goto S_35171;}
+if(qbevent){evnt(25393,229,"const_eval.bas");if(r)goto S_36125;}
 do{
-sub__echo(qbs_new_txt_len("LogicalNot",10));
+sub__echo(qbs_new_txt_len("ParseString",11));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24231,386,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25393,229,"const_eval.bas");}while(r);
 }
 do{
-qbs_set(_FUNC_LOGICALNOT_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_LOGICALNOT_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (4) )));
+qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (4) )));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24231,387,"const_eval.bas");}while(r);
-S_35175:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_LOGICALNOT_STRING_ELE,qbs_new_txt_len("NOT",3))))||is_error_pending()){
-if(qbevent){evnt(24231,388,"const_eval.bas");if(r)goto S_35175;}
+if(!qbevent)break;evnt(25393,230,"const_eval.bas");}while(r);
+S_36129:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_ELEMENTISSTRING(_FUNC_PARSESTRING_STRING_ELE)))||is_error_pending()){
+if(qbevent){evnt(25393,232,"const_eval.bas");if(r)goto S_36129;}
 do{
-qbs_set(_FUNC_LOGICALNOT_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_LOGICALNOT_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (4) )));
+qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (4) )));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24231,388,"const_eval.bas");}while(r);
-}
-S_35178:;
-if ((qbs_cleanup(qbs_tmp_base,-(FUNC_RELATION(_FUNC_LOGICALNOT_STRING_EXP,(void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
-if(qbevent){evnt(24231,390,"const_eval.bas");if(r)goto S_35178;}
+if(!qbevent)break;evnt(25393,233,"const_eval.bas");}while(r);
 do{
-SUB_FIXUPERRORMESSAGE((void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (0) ),qbs_new_txt_len("NOT",3));
+SUB_PARSENUMSETS((void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (8) ),_FUNC_PARSESTRING_STRING_ELE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24231,390,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25393,235,"const_eval.bas");}while(r);
+do{
+*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
+if(!qbevent)break;evnt(25393,237,"const_eval.bas");}while(r);
+}else{
+S_36134:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_PARSENUMHASHLOOKUP(_FUNC_PARSESTRING_STRING_ELE,(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ))))||is_error_pending()){
+if(qbevent){evnt(25393,239,"const_eval.bas");if(r)goto S_36134;}
+S_36135:;
+if ((-((*(int32*)(((char*)_FUNC_PARSESTRING_UDT_STATE)+(64))&*__LONG_ISSTRING)== 0 ))||is_error_pending()){
+if(qbevent){evnt(25393,240,"const_eval.bas");if(r)goto S_36135;}
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+(68))),qbs_new_txt_len("ERROR - Expecting a string value",32));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,240,"const_eval.bas");}while(r);
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(24231,390,"const_eval.bas");}while(r);
-}
-S_35182:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_LOGICALNOT_STRING_ELE,qbs_new_txt_len("NOT",3))))||is_error_pending()){
-if(qbevent){evnt(24231,392,"const_eval.bas");if(r)goto S_35182;}
-S_35183:;
-if (((*_FUNC_LOGICALNOT_LONG_NUM__ASCII_CHR_046__TYP&*__LONG_ISUNSIGNED)|(*(int32*)(((char*)_FUNC_LOGICALNOT_UDT_STATE)+(64))&*__LONG_ISUNSIGNED))||is_error_pending()){
-if(qbevent){evnt(24231,393,"const_eval.bas");if(r)goto S_35183;}
-do{
-SUB_PARSENUMSETUI((void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (8) ),&(pass4099=*__LONG_UINTEGER64TYPE-*__LONG_ISPOINTER),&(pass4100=~(*(uint64*)(((char*)_FUNC_LOGICALNOT_UDT_STATE)+(48)))));
-if(!qbevent)break;evnt(24231,394,"const_eval.bas");}while(r);
-}else{
-do{
-SUB_PARSENUMSETI((void*)( ((char*)(_FUNC_LOGICALNOT_UDT_STATE)) + (8) ),&(pass4101=*__LONG_INTEGER64TYPE-*__LONG_ISPOINTER),&(pass4102=~(*(int64*)(((char*)_FUNC_LOGICALNOT_UDT_STATE)+(40)))));
-if(!qbevent)break;evnt(24231,396,"const_eval.bas");}while(r);
-}
+if(!qbevent)break;evnt(25393,240,"const_eval.bas");}while(r);
 }
 do{
-*_FUNC_LOGICALNOT_LONG_LOGICALNOT= -1 ;
-if(!qbevent)break;evnt(24231,400,"const_eval.bas");}while(r);
+qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,242,"const_eval.bas");}while(r);
+do{
+*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
+if(!qbevent)break;evnt(25393,243,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,244,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+(68))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Unexpected element '",28),_FUNC_PARSESTRING_STRING_ELE),qbs_new_txt_len("'",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,247,"const_eval.bas");}while(r);
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free181.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_LOGICALNOT_LONG_LOGICALNOT;
+return *_FUNC_PARSESTRING_LONG_PARSESTRING;
 }

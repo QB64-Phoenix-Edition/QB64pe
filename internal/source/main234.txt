@@ -1,4 +1,4 @@
-int32 FUNC_ISUINTEGER(qbs*_FUNC_ISUINTEGER_STRING_I){
+int32 FUNC_UDT_ARRAY_MEMBER_BYTES(int32*_FUNC_UDT_ARRAY_MEMBER_BYTES_LONG_ELEMENT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,60 +11,20 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_37467:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ISUINTEGER_STRING_I->len== 0 )))||is_error_pending()){
-if(qbevent){evnt(24234,727,"type.bas");if(r)goto S_37467;}
+S_38466:;
+if ((-(((int32*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]))[array_check((*_FUNC_UDT_ARRAY_MEMBER_BYTES_LONG_ELEMENT)-__ARRAY_LONG_UDTEARRAYELEMENTS[4],__ARRAY_LONG_UDTEARRAYELEMENTS[5])]== 0 ))||is_error_pending()){
+if(qbevent){evnt(25396,604,"type.bas");if(r)goto S_38466;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(24234,727,"type.bas");}while(r);
+if(!qbevent)break;evnt(25396,604,"type.bas");}while(r);
 }
-S_37470:;
-if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(_FUNC_ISUINTEGER_STRING_I, 1 )== 48 ))&(-(_FUNC_ISUINTEGER_STRING_I->len> 1 ))))||is_error_pending()){
-if(qbevent){evnt(24234,728,"type.bas");if(r)goto S_37470;}
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(24234,728,"type.bas");}while(r);
-}
-S_37473:;
-fornext_value4342= 1 ;
-fornext_finalvalue4342=_FUNC_ISUINTEGER_STRING_I->len;
-fornext_step4342= 1 ;
-if (fornext_step4342<0) fornext_step_negative4342=1; else fornext_step_negative4342=0;
-if (is_error_pending()) goto fornext_error4342;
-goto fornext_entrylabel4342;
-while(1){
-fornext_value4342=fornext_step4342+(*_FUNC_ISUINTEGER_LONG_C);
-fornext_entrylabel4342:
-*_FUNC_ISUINTEGER_LONG_C=fornext_value4342;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4342){
-if (fornext_value4342<fornext_finalvalue4342) break;
-}else{
-if (fornext_value4342>fornext_finalvalue4342) break;
-}
-fornext_error4342:;
-if(qbevent){evnt(24234,729,"type.bas");if(r)goto S_37473;}
-do{
-*_FUNC_ISUINTEGER_LONG_V=qbs_asc(_FUNC_ISUINTEGER_STRING_I,*_FUNC_ISUINTEGER_LONG_C);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24234,730,"type.bas");}while(r);
-S_37475:;
-if (((-(*_FUNC_ISUINTEGER_LONG_V< 48 ))|(-(*_FUNC_ISUINTEGER_LONG_V> 57 )))||is_error_pending()){
-if(qbevent){evnt(24234,731,"type.bas");if(r)goto S_37475;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(24234,731,"type.bas");}while(r);
-}
-fornext_continue_4341:;
-}
-fornext_exit_4341:;
-do{
-*_FUNC_ISUINTEGER_LONG_ISUINTEGER= -1 ;
-if(!qbevent)break;evnt(24234,733,"type.bas");}while(r);
+*_FUNC_UDT_ARRAY_MEMBER_BYTES_LONG_UDT_ARRAY_MEMBER_BYTES=(((int32*)(__ARRAY_LONG_UDTESIZE[0]))[array_check((*_FUNC_UDT_ARRAY_MEMBER_BYTES_LONG_ELEMENT)-__ARRAY_LONG_UDTESIZE[4],__ARRAY_LONG_UDTESIZE[5])]/  8 )/ ((int32*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]))[array_check((*_FUNC_UDT_ARRAY_MEMBER_BYTES_LONG_ELEMENT)-__ARRAY_LONG_UDTEARRAYELEMENTS[4],__ARRAY_LONG_UDTEARRAYELEMENTS[5])];
+if(!qbevent)break;evnt(25396,605,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free234.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_ISUINTEGER_LONG_ISUINTEGER;
+return *_FUNC_UDT_ARRAY_MEMBER_BYTES_LONG_UDT_ARRAY_MEMBER_BYTES;
 }

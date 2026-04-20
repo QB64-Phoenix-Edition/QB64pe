@@ -1,4 +1,4 @@
-uint32 FUNC_GETCURRENTCOLOR(int16*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION){
+void SUB_IDESETTCPPORTBOX(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,103 +11,39 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_57869:;
-if(qbevent){evnt(24244,17768,"ide_methods.bas");if(r)goto S_57869;}
-S_57870:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 1 )))||is_error_pending()){
-if(qbevent){evnt(24244,17769,"ide_methods.bas");if(r)goto S_57870;}
 do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDETEXTCOLOR;
-if(!qbevent)break;evnt(24244,17769,"ide_methods.bas");}while(r);
-sc_ec_418_end:;
-goto sc_6493_end;
-}
-S_57872:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 2 )))||is_error_pending()){
-if(qbevent){evnt(24244,17770,"ide_methods.bas");if(r)goto S_57872;}
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,15761,"ide_methods.bas");}while(r);
 do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDEKEYWORDCOLOR;
-if(!qbevent)break;evnt(24244,17770,"ide_methods.bas");}while(r);
-sc_ec_419_end:;
-goto sc_6493_end;
-}
-S_57874:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 3 )))||is_error_pending()){
-if(qbevent){evnt(24244,17771,"ide_methods.bas");if(r)goto S_57874;}
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6521= 45 ),&(pass6522= 5 ),&(pass6523= 0 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,15762,"ide_methods.bas");}while(r);
+S_56688:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25406,15763,"ide_methods.bas");if(r)goto S_56688;}
 do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDENUMBERSCOLOR;
-if(!qbevent)break;evnt(24244,17771,"ide_methods.bas");}while(r);
-sc_ec_420_end:;
-goto sc_6493_end;
+goto exit_subfunc;
+if(!qbevent)break;evnt(25406,15763,"ide_methods.bas");}while(r);
 }
-S_57876:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 4 )))||is_error_pending()){
-if(qbevent){evnt(24244,17772,"ide_methods.bas");if(r)goto S_57876;}
 do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDEQUOTECOLOR;
-if(!qbevent)break;evnt(24244,17772,"ide_methods.bas");}while(r);
-sc_ec_421_end:;
-goto sc_6493_end;
-}
-S_57878:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 5 )))||is_error_pending()){
-if(qbevent){evnt(24244,17773,"ide_methods.bas");if(r)goto S_57878;}
+*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,15765,"ide_methods.bas");}while(r);
+S_56692:;
+if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+if(qbevent){evnt(25406,15766,"ide_methods.bas");if(r)goto S_56692;}
 do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDEMETACOMMANDCOLOR;
-if(!qbevent)break;evnt(24244,17773,"ide_methods.bas");}while(r);
-sc_ec_422_end:;
-goto sc_6493_end;
+*__LONG_IDEBASETCPPORT= 9000 ;
+if(!qbevent)break;evnt(25406,15766,"ide_methods.bas");}while(r);
 }
-S_57880:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 6 )))||is_error_pending()){
-if(qbevent){evnt(24244,17774,"ide_methods.bas");if(r)goto S_57880;}
 do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDECOMMENTCOLOR;
-if(!qbevent)break;evnt(24244,17774,"ide_methods.bas");}while(r);
-sc_ec_423_end:;
-goto sc_6493_end;
-}
-S_57882:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 7 )))||is_error_pending()){
-if(qbevent){evnt(24244,17775,"ide_methods.bas");if(r)goto S_57882;}
-do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDEBACKGROUNDCOLOR;
-if(!qbevent)break;evnt(24244,17775,"ide_methods.bas");}while(r);
-sc_ec_424_end:;
-goto sc_6493_end;
-}
-S_57884:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 8 )))||is_error_pending()){
-if(qbevent){evnt(24244,17776,"ide_methods.bas");if(r)goto S_57884;}
-do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDEBACKGROUNDCOLOR2;
-if(!qbevent)break;evnt(24244,17776,"ide_methods.bas");}while(r);
-sc_ec_425_end:;
-goto sc_6493_end;
-}
-S_57886:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 9 )))||is_error_pending()){
-if(qbevent){evnt(24244,17777,"ide_methods.bas");if(r)goto S_57886;}
-do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDEBRACKETHIGHLIGHTCOLOR;
-if(!qbevent)break;evnt(24244,17777,"ide_methods.bas");}while(r);
-sc_ec_426_end:;
-goto sc_6493_end;
-}
-S_57888:;
-if (((*_FUNC_GETCURRENTCOLOR_INTEGER_SELECTION==( 10 )))||is_error_pending()){
-if(qbevent){evnt(24244,17778,"ide_methods.bas");if(r)goto S_57888;}
-do{
-*_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR=*__ULONG_IDECHROMACOLOR;
-if(!qbevent)break;evnt(24244,17778,"ide_methods.bas");}while(r);
-sc_ec_427_end:;
-goto sc_6493_end;
-}
-sc_6493_end:;
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,15767,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free329.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_GETCURRENTCOLOR_ULONG_GETCURRENTCOLOR;
 }

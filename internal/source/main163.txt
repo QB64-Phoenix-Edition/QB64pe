@@ -1,4 +1,4 @@
-int16 FUNC_FREEID(int16*_FUNC_FREEID_INTEGER_HANDLE,int16*_FUNC_FREEID_INTEGER_SLOT){
+int16 FUNC_ENDOFBUF(int16*_FUNC_ENDOFBUF_INTEGER_HANDLE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,49 +11,24 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_35692:;
+if ((~(FUNC_CHECKHANDLE(_FUNC_ENDOFBUF_INTEGER_HANDLE)))||is_error_pending()){
+if(qbevent){evnt(25392,771,"simplebuffer.bm");if(r)goto S_35692;}
 do{
-if(!qbevent)break;evnt(24230,906,"simplebuffer.bm");}while(r);
+error( 258 );
+if(!qbevent)break;evnt(25392,771,"simplebuffer.bm");}while(r);
 do{
-*_FUNC_FREEID_LONG_BUF=*_FUNC_FREEID_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(24230,908,"simplebuffer.bm");}while(r);
-do{
-*_FUNC_FREEID_INTEGER_FREEID= -2ll ;
-if(!qbevent)break;evnt(24230,908,"simplebuffer.bm");}while(r);
-S_34701:;
-fornext_value4022= 1 ;
-fornext_finalvalue4022= 100 ;
-fornext_step4022= 1 ;
-if (fornext_step4022<0) fornext_step_negative4022=1; else fornext_step_negative4022=0;
-if (is_error_pending()) goto fornext_error4022;
-goto fornext_entrylabel4022;
-while(1){
-fornext_value4022=fornext_step4022+(*_FUNC_FREEID_INTEGER_IDX);
-fornext_entrylabel4022:
-*_FUNC_FREEID_INTEGER_IDX=fornext_value4022;
-if (fornext_step_negative4022){
-if (fornext_value4022<fornext_finalvalue4022) break;
-}else{
-if (fornext_value4022>fornext_finalvalue4022) break;
+close_program=1;
+end();
+if(!qbevent)break;evnt(25392,771,"simplebuffer.bm");}while(r);
 }
-fornext_error4022:;
-if(qbevent){evnt(24230,909,"simplebuffer.bm");if(r)goto S_34701;}
-S_34702:;
-if ((qbs_cleanup(qbs_tmp_base,-(string2l(func_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_FREEID_LONG_BUF+*_FUNC_FREEID_INTEGER_SLOT)-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_FUNC_FREEID_INTEGER_IDX* 4 , 4 ,0|1))== -889275714 )))||is_error_pending()){
-if(qbevent){evnt(24230,910,"simplebuffer.bm");if(r)goto S_34702;}
 do{
-*_FUNC_FREEID_INTEGER_FREEID=*_FUNC_FREEID_INTEGER_IDX;
-if(!qbevent)break;evnt(24230,911,"simplebuffer.bm");}while(r);
-do{
-goto fornext_exit_4021;
-if(!qbevent)break;evnt(24230,911,"simplebuffer.bm");}while(r);
-}
-fornext_continue_4021:;
-}
-fornext_exit_4021:;
+*_FUNC_ENDOFBUF_INTEGER_ENDOFBUF=(-(FUNC_GETBUFPOS(_FUNC_ENDOFBUF_INTEGER_HANDLE)>FUNC_GETBUFLEN(_FUNC_ENDOFBUF_INTEGER_HANDLE)));
+if(!qbevent)break;evnt(25392,773,"simplebuffer.bm");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free163.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_FREEID_INTEGER_FREEID;
+return *_FUNC_ENDOFBUF_INTEGER_ENDOFBUF;
 }

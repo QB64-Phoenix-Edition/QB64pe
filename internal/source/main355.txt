@@ -1,4 +1,4 @@
-void SUB_UPDATEMENUHELPLINE(qbs*_SUB_UPDATEMENUHELPLINE_STRING_A){
+void SUB_RETRIEVESEARCHHISTORY(ptrszint*_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,25 +11,135 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_60674:;
-if ((qbs_cleanup(qbs_tmp_base,-(_SUB_UPDATEMENUHELPLINE_STRING_A->len>(*__LONG_IDEWX- 2 ))))||is_error_pending()){
-if(qbevent){evnt(24244,20288,"ide_methods.bas");if(r)goto S_60674;}
 do{
-qbs_set(_SUB_UPDATEMENUHELPLINE_STRING_A,qbs_add(qbs_left(_SUB_UPDATEMENUHELPLINE_STRING_A,(*__LONG_IDEWX- 4 )),func_string( 3 , 250 )));
+*_SUB_RETRIEVESEARCHHISTORY_INTEGER_BH=FUNC_FILETOBUF(__STRING_SEARCHEDFILE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24244,20288,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25406,19421,"ide_methods.bas");}while(r);
+S_60959:;
+if ((FUNC_GETBUFLEN(_SUB_RETRIEVESEARCHHISTORY_INTEGER_BH))||is_error_pending()){
+if(qbevent){evnt(25406,19422,"ide_methods.bas");if(r)goto S_60959;}
+do{
+
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&2){
+error(10);
+}else{
+((mem_lock*)((ptrszint*)_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR)[8])->id=(++mem_lock_id);
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&1){
+tmp_long=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]);
+free((void*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]));
+}
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4]= 1 ;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]=(*__LONG_IDEMAXSEARCH)-_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4]+1;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[6]=1;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]=(ptrszint)malloc(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]*8);
+if (!_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]) error(257);
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]|=1;
+tmp_long=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&4){
+while(tmp_long--) ((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+if(!qbevent)break;evnt(25406,19423,"ide_methods.bas");}while(r);
+do{
+*_SUB_RETRIEVESEARCHHISTORY_INTEGER_LC= 0 ;
+if(!qbevent)break;evnt(25406,19423,"ide_methods.bas");}while(r);
+S_60962:;
+while(((-(FUNC_ENDOFBUF(_SUB_RETRIEVESEARCHHISTORY_INTEGER_BH)== 0 ))&(-(*_SUB_RETRIEVESEARCHHISTORY_INTEGER_LC<*__LONG_IDEMAXSEARCH)))||is_error_pending()){
+if(qbevent){evnt(25406,19424,"ide_methods.bas");if(r)goto S_60962;}
+do{
+*_SUB_RETRIEVESEARCHHISTORY_INTEGER_LC=*_SUB_RETRIEVESEARCHHISTORY_INTEGER_LC+ 1 ;
+if(!qbevent)break;evnt(25406,19425,"ide_methods.bas");}while(r);
+do{
+tmp_long=array_check((*_SUB_RETRIEVESEARCHHISTORY_INTEGER_LC)-_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4],_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]);
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long])),FUNC_READBUFLINE(_SUB_RETRIEVESEARCHHISTORY_INTEGER_BH));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,19425,"ide_methods.bas");}while(r);
+ww_continue_6887:;
+}
+ww_exit_6887:;
+do{
+
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&2){
+error(10);
+}else{
+((mem_lock*)((ptrszint*)_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR)[8])->id=(++mem_lock_id);
+static int32 preserved_elements;
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&1){
+preserved_elements=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+}
+else preserved_elements=0;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4]= 1 ;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]=(*_SUB_RETRIEVESEARCHHISTORY_INTEGER_LC)-_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4]+1;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[6]=1;
+if (preserved_elements){
+static ptrszint tmp_long2;
+tmp_long2=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+if (tmp_long2<preserved_elements){
+for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {
+qbs_free((qbs*)((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]);
+}}
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]=(ptrszint)realloc((void*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]),tmp_long2*8);
+if (!_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]) error(257);
+if (preserved_elements<tmp_long2){
+for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&4){
+((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+}
+}else{
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]=(ptrszint)malloc(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]*8);
+if (!_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]) error(257);
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]|=1;
+tmp_long=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&4){
+while(tmp_long--) ((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+}
+if(!qbevent)break;evnt(25406,19427,"ide_methods.bas");}while(r);
+}else{
+do{
+
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&2){
+error(10);
+}else{
+((mem_lock*)((ptrszint*)_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR)[8])->id=(++mem_lock_id);
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&1){
+tmp_long=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+while(tmp_long--) qbs_free((qbs*)((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]);
+free((void*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]));
+}
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4]= 1 ;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]=( 1 )-_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4]+1;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[6]=1;
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]=(ptrszint)malloc(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]*8);
+if (!_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]) error(257);
+_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]|=1;
+tmp_long=_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5];
+if (_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[2]&4){
+while(tmp_long--) ((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+if(!qbevent)break;evnt(25406,19429,"ide_methods.bas");}while(r);
+do{
+tmp_long=array_check(( 1 )-_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[4],_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[5]);
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_SUB_RETRIEVESEARCHHISTORY_ARRAY_STRING_SHARR[0]))[tmp_long])),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25406,19429,"ide_methods.bas");}while(r);
 }
 do{
-qbg_sub_color( 0 , 3 ,NULL,NULL,3);
-if(!qbevent)break;evnt(24244,20289,"ide_methods.bas");}while(r);
-do{
-sub__printstring( 1 ,*__LONG_IDEWY+*__LONG_IDESUBWINDOW,func_space(*__LONG_IDEWX),NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24244,20290,"ide_methods.bas");}while(r);
-do{
-sub__printstring( 2 ,*__LONG_IDEWY+*__LONG_IDESUBWINDOW,_SUB_UPDATEMENUHELPLINE_STRING_A,NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24244,20291,"ide_methods.bas");}while(r);
+SUB_DISPOSEBUF(_SUB_RETRIEVESEARCHHISTORY_INTEGER_BH);
+if(!qbevent)break;evnt(25406,19431,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free355.txt"

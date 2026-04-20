@@ -1,4 +1,4 @@
-void SUB_PUSHELEMENT(qbs*_SUB_PUSHELEMENT_STRING_A,qbs*_SUB_PUSHELEMENT_STRING_B){
+void SUB_PURGETEMPORARYBUILDFILES(qbs*_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,int32*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,18 +11,31 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_32670:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_SUB_PUSHELEMENT_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(24227,58,"elements.bas");if(r)goto S_32670;}
+S_33721:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(25388,6,"build.bas");if(r)goto S_33721;}
 do{
-qbs_set(_SUB_PUSHELEMENT_STRING_A,qbs_add(qbs_add(_SUB_PUSHELEMENT_STRING_A,__STRING1_SP),_SUB_PUSHELEMENT_STRING_B));
+sub_shell2(qbs_add(qbs_add(qbs_new_txt_len("cmd /c ",7),FUNC_GETMAKEEXECUTABLE()),qbs_new_txt_len(" OS=win clean",13)),2);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,58,"elements.bas");}while(r);
+if(!qbevent)break;evnt(25388,7,"build.bas");}while(r);
+S_33723:;
+}else{
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("LNX",3)))){
+if(qbevent){evnt(25388,8,"build.bas");if(r)goto S_33723;}
+S_33724:;
+if ((*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC)||is_error_pending()){
+if(qbevent){evnt(25388,9,"build.bas");if(r)goto S_33724;}
+do{
+sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=osx clean",13)),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25388,10,"build.bas");}while(r);
 }else{
 do{
-qbs_set(_SUB_PUSHELEMENT_STRING_A,_SUB_PUSHELEMENT_STRING_B);
+sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=lnx clean",13)),2);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24227,58,"elements.bas");}while(r);
+if(!qbevent)break;evnt(25388,12,"build.bas");}while(r);
+}
+}
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);

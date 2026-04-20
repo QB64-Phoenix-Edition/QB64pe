@@ -1,4 +1,4 @@
-void SUB_PARSENUMSETF(void*_SUB_PARSENUMSETF_UDT_NUM,int32*_SUB_PARSENUMSETF_LONG_T,long double*_SUB_PARSENUMSETF_FLOAT_F){
+int32 FUNC_PARSEMOD(qbs*_FUNC_PARSEMOD_STRING_EXP,void*_FUNC_PARSEMOD_UDT_STATE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,25 +11,96 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_36436:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(25393,526,"const_eval.bas");if(r)goto S_36436;}
 do{
-qbs_set(*((qbs**)((char*)(_SUB_PARSENUMSETF_UDT_NUM)+(48))),qbs_new_txt_len("",0));
+sub__echo(qbs_new_txt_len("ParseMod",8));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(24231,760,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25393,526,"const_eval.bas");}while(r);
+}
+S_36439:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_INTDIV(_FUNC_PARSEMOD_STRING_EXP,(void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25393,527,"const_eval.bas");if(r)goto S_36439;}
 do{
-*(long double*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+(0))=*_SUB_PARSENUMSETF_FLOAT_F;
-if(!qbevent)break;evnt(24231,761,"const_eval.bas");}while(r);
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,527,"const_eval.bas");}while(r);
+}
 do{
-*(int64*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+(32))=qbr(*_SUB_PARSENUMSETF_FLOAT_F);
-if(!qbevent)break;evnt(24231,762,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25393,529,"const_eval.bas");}while(r);
 do{
-*(uint64*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+(40))=qbr(*_SUB_PARSENUMSETF_FLOAT_F);
-if(!qbevent)break;evnt(24231,763,"const_eval.bas");}while(r);
+memcpy((((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 0),(((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 0), 32);
+memcpy((((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 32),(((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 32), 8);
+memcpy((((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 40),(((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 40), 8);
+qbs_set(*(qbs**)(((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 48), *(qbs**)(((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 48));
+memcpy((((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 56),(((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 56), 4);
+if(!qbevent)break;evnt(25393,530,"const_eval.bas");}while(r);
+S_36444:;
 do{
-*(int32*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+(56))=*_SUB_PARSENUMSETF_LONG_T;
-if(!qbevent)break;evnt(24231,764,"const_eval.bas");}while(r);
+if(qbevent){evnt(25393,532,"const_eval.bas");if(r)goto S_36444;}
+do{
+qbs_set(_FUNC_PARSEMOD_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_PARSEMOD_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,533,"const_eval.bas");}while(r);
+S_36446:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEMOD_STRING_ELE,qbs_new_txt_len("MOD",3))))||is_error_pending()){
+if(qbevent){evnt(25393,534,"const_eval.bas");if(r)goto S_36446;}
+do{
+qbs_set(_FUNC_PARSEMOD_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSEMOD_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (0) ),(int32*)(void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (4) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,535,"const_eval.bas");}while(r);
+S_36448:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_INTDIV(_FUNC_PARSEMOD_STRING_EXP,(void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (0) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25393,536,"const_eval.bas");if(r)goto S_36448;}
+do{
+SUB_FIXUPERRORMESSAGE((void*)( ((char*)(_FUNC_PARSEMOD_UDT_STATE)) + (0) ),qbs_new_txt_len("MOD",3));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,536,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,536,"const_eval.bas");}while(r);
+}
+S_36452:;
+if (((*(int32*)(((char*)_FUNC_PARSEMOD_UDT_NUM)+(56))&*__LONG_ISUNSIGNED)|(*(int32*)(((char*)_FUNC_PARSEMOD_UDT_STATE)+(64))&*__LONG_ISUNSIGNED))||is_error_pending()){
+if(qbevent){evnt(25393,538,"const_eval.bas");if(r)goto S_36452;}
+do{
+SUB_PARSENUMSETUI((void*)( ((char*)(_FUNC_PARSEMOD_UDT_NUM)) + (0) ),&(pass4332=*__LONG_UINTEGER64TYPE-*__LONG_ISPOINTER),&(pass4333=*(uint64*)(((char*)_FUNC_PARSEMOD_UDT_NUM)+(40))%*(uint64*)(((char*)_FUNC_PARSEMOD_UDT_STATE)+(48))));
+if(!qbevent)break;evnt(25393,539,"const_eval.bas");}while(r);
+}else{
+do{
+SUB_PARSENUMSETI((void*)( ((char*)(_FUNC_PARSEMOD_UDT_NUM)) + (0) ),&(pass4334=*__LONG_INTEGER64TYPE-*__LONG_ISPOINTER),&(pass4335=*(int64*)(((char*)_FUNC_PARSEMOD_UDT_NUM)+(32))%*(int64*)(((char*)_FUNC_PARSEMOD_UDT_STATE)+(40))));
+if(!qbevent)break;evnt(25393,541,"const_eval.bas");}while(r);
+}
+}else{
+S_36458:;
+if (( 0ll )||is_error_pending()){
+if(qbevent){evnt(25393,544,"const_eval.bas");if(r)goto S_36458;}
+do{
+sub__echo(qbs_new_txt_len("ParseMod done!",14));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25393,544,"const_eval.bas");}while(r);
+}
+do{
+memcpy((((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 0),(((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 0), 32);
+memcpy((((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 32),(((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 32), 8);
+memcpy((((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 40),(((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 40), 8);
+qbs_set(*(qbs**)(((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 48), *(qbs**)(((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 48));
+memcpy((((char*)_FUNC_PARSEMOD_UDT_STATE)+(8)+ 56),(((char*)_FUNC_PARSEMOD_UDT_NUM)+(0)+ 56), 4);
+if(!qbevent)break;evnt(25393,545,"const_eval.bas");}while(r);
+do{
+*_FUNC_PARSEMOD_LONG_PARSEMOD= -1 ;
+if(!qbevent)break;evnt(25393,546,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25393,547,"const_eval.bas");}while(r);
+}
+dl_continue_4331:;
+}while(1);
+dl_exit_4331:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free191.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_PARSEMOD_LONG_PARSEMOD;
 }

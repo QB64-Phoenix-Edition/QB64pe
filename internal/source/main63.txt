@@ -1,4 +1,4 @@
-void SUB_SETPRELET(qbs*_SUB_SETPRELET_STRING_FLAGNAME,qbs*_SUB_SETPRELET_STRING_FLAGVALUE){
+qbs* FUNC_REMOVECAST(qbs*_FUNC_REMOVECAST_STRING_A){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,111 +11,22 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_31907:;
-fornext_value3607=*__INTEGER_USERDEFINECOUNTPRESETS+ 1 ;
-fornext_finalvalue3607=*__INTEGER_USERDEFINECOUNT;
-fornext_step3607= 1 ;
-if (fornext_step3607<0) fornext_step_negative3607=1; else fornext_step_negative3607=0;
-if (is_error_pending()) goto fornext_error3607;
-goto fornext_entrylabel3607;
-while(1){
-fornext_value3607=fornext_step3607+(*_SUB_SETPRELET_LONG_I);
-fornext_entrylabel3607:
-*_SUB_SETPRELET_LONG_I=fornext_value3607;
-if (fornext_step_negative3607){
-if (fornext_value3607<fornext_finalvalue3607) break;
-}else{
-if (fornext_value3607>fornext_finalvalue3607) break;
-}
-fornext_error3607:;
-if(qbevent){evnt(23781);if(r)goto S_31907;}
-S_31908:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[array_check(( 0 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*_SUB_SETPRELET_LONG_I)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6]])),_SUB_SETPRELET_STRING_FLAGNAME)))||is_error_pending()){
-if(qbevent){evnt(23782);if(r)goto S_31908;}
 do{
-tmp_long=array_check(( 1 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*_SUB_SETPRELET_LONG_I)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGVALUE);
+qbs_set(_FUNC_REMOVECAST_STRING_REMOVECAST,_FUNC_REMOVECAST_STRING_A);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23782);}while(r);
+if(!qbevent)break;evnt(24823);}while(r);
+S_32910:;
+if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,_FUNC_REMOVECAST_STRING_A,qbs_new_txt_len("  )",3),0)))||is_error_pending()){
+if(qbevent){evnt(24824);if(r)goto S_32910;}
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(23782);}while(r);
-}
-fornext_continue_3606:;
-}
-fornext_exit_3606:;
-do{
-*__INTEGER_USERDEFINECOUNT=*__INTEGER_USERDEFINECOUNT+ 1 ;
-if(!qbevent)break;evnt(23785);}while(r);
-S_31914:;
-if ((qbs_cleanup(qbs_tmp_base,-(*__INTEGER_USERDEFINECOUNT>func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2))))||is_error_pending()){
-if(qbevent){evnt(23786);if(r)goto S_31914;}
-do{
-
-if (__ARRAY_STRING_USERDEFINE[2]&2){
-error(10);
-}else{
-((mem_lock*)((ptrszint*)__ARRAY_STRING_USERDEFINE)[12])->id=(++mem_lock_id);
-static int32 preserved_elements;
-if (__ARRAY_STRING_USERDEFINE[2]&1){
-preserved_elements=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
-}
-else preserved_elements=0;
-__ARRAY_STRING_USERDEFINE[8]= 0 ;
-__ARRAY_STRING_USERDEFINE[9]=( 1 )-__ARRAY_STRING_USERDEFINE[8]+1;
-__ARRAY_STRING_USERDEFINE[10]=1;
-__ARRAY_STRING_USERDEFINE[4]= 0 ;
-__ARRAY_STRING_USERDEFINE[5]=(func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2)+ 10 )-__ARRAY_STRING_USERDEFINE[4]+1;
-__ARRAY_STRING_USERDEFINE[6]=__ARRAY_STRING_USERDEFINE[10]*__ARRAY_STRING_USERDEFINE[9];
-if (preserved_elements){
-static ptrszint tmp_long2;
-tmp_long2=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
-if (tmp_long2<preserved_elements){
-for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {
-qbs_free((qbs*)((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]);
-}}
-__ARRAY_STRING_USERDEFINE[0]=(ptrszint)realloc((void*)(__ARRAY_STRING_USERDEFINE[0]),tmp_long2*8);
-if (!__ARRAY_STRING_USERDEFINE[0]) error(257);
-if (preserved_elements<tmp_long2){
-for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){
-if (__ARRAY_STRING_USERDEFINE[2]&4){
-((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-}
-}else{
-__ARRAY_STRING_USERDEFINE[0]=(ptrszint)malloc(__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9]*8);
-if (!__ARRAY_STRING_USERDEFINE[0]) error(257);
-__ARRAY_STRING_USERDEFINE[2]|=1;
-tmp_long=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
-if (__ARRAY_STRING_USERDEFINE[2]&4){
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-}
-if(!qbevent)break;evnt(23787);}while(r);
-}
-do{
-tmp_long=array_check(( 0 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*__INTEGER_USERDEFINECOUNT)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGNAME);
+qbs_set(_FUNC_REMOVECAST_STRING_REMOVECAST,qbs_right(_FUNC_REMOVECAST_STRING_A,_FUNC_REMOVECAST_STRING_A->len-func_instr(NULL,_FUNC_REMOVECAST_STRING_A,qbs_new_txt_len("  )",3),0)- 2 ));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23789);}while(r);
-do{
-tmp_long=array_check(( 1 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*__INTEGER_USERDEFINECOUNT)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGVALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23790);}while(r);
-do{
-qbs_set(__STRING_USERDEFINELIST,qbs_add(qbs_add(__STRING_USERDEFINELIST,_SUB_SETPRELET_STRING_FLAGNAME),qbs_new_txt_len("@",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(23791);}while(r);
+if(!qbevent)break;evnt(24825);}while(r);
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free63.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_REMOVECAST_STRING_REMOVECAST);return _FUNC_REMOVECAST_STRING_REMOVECAST;
 }
