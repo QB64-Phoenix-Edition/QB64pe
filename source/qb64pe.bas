@@ -16503,8 +16503,13 @@ FUNCTION HasIndexedFinalMemberArray% (expr$)
             b = b - 1
             IF b = 0 THEN
                 IF i >= 3 THEN
-                    IF getelement$(expr$, i - 2) = "." THEN HasIndexedFinalMemberArray% = -1
+                    ' Member(index) -> indexed final member array
+                    ' Member()      -> whole-array request, not indexed
+                    IF i < n - 1 THEN
+                        IF getelement$(expr$, i - 2) = "." THEN HasIndexedFinalMemberArray% = -1
+                    END IF
                 END IF
+
                 EXIT FUNCTION
             END IF
         END IF
@@ -19860,7 +19865,19 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             o$ = e$
             getid idnumber
             IF Error_Happened THEN EXIT FUNCTION
-            n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+
+            n$ = "UDT_" + RTRIM$(id.n)
+            IF id.arraytype THEN
+                n$ = "ARRAY_" + n$ + "[0]"
+
+                ' Whole UDT array reference like Parent() must start at byte offset 0.
+                ' The encoded o$ form used here is not reliable for _MEM size/address on the
+                ' parent whole-array case, so force the base of the array.
+                IF LEFT$(o$, 4) = "(0)*" OR LEFT$(o$, 5) = "((0)*" THEN
+                    o$ = "0"
+                END IF
+            END IF
+
             method2usealludt__7:
             bytes$ = variablesize$(-1) + "-(" + o$ + ")"
             IF Error_Happened THEN EXIT FUNCTION

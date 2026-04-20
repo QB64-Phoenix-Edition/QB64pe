@@ -1,0 +1,8 @@
+OPTION _EXPLICIT
+$CONSOLE:ONLY
+
+DIM z(1 TO 50) AS DOUBLE
+DIM m AS _MEM
+m = _MEM(z())
+IF m.SIZE = 400 AND m.ELEMENTSIZE = 8 AND LEN(z()) = 400 AND LEN(z(1)) = 8 THEN PRINT "Test mem classic pass"
+system
