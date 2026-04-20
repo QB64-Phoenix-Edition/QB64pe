@@ -16503,8 +16503,13 @@ FUNCTION HasIndexedFinalMemberArray% (expr$)
             b = b - 1
             IF b = 0 THEN
                 IF i >= 3 THEN
-                    IF getelement$(expr$, i - 2) = "." THEN HasIndexedFinalMemberArray% = -1
+                    ' Member(index) -> indexed final member array
+                    ' Member()      -> whole-array request, not indexed
+                    IF i < n - 1 THEN
+                        IF getelement$(expr$, i - 2) = "." THEN HasIndexedFinalMemberArray% = -1
+                    END IF
                 END IF
+
                 EXIT FUNCTION
             END IF
         END IF
@@ -19379,6 +19384,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     'note: 'evaluatetotyp' no longer performs 'fixoperationorder' on a2$ (in many cases, this has already been done)
 
     DIM member_element_id AS LONG 'member_element_id is variable for nested static arrays
+    DIM final_member_array_indexed AS LONG 'nested static arrays LEN fix
 
     a$ = a2$
 
@@ -19389,6 +19395,12 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     IF targettyp = -2 OR targettyp = -4 OR targettyp = -5 OR targettyp = -6 OR targettyp = -7 OR targettyp = -8 THEN
         allow_bare_member_array = -1
     END IF
+
+    final_member_array_indexed = 0 'static array LEN fix
+    IF targettyp = -4 OR targettyp = -5 OR targettyp = -6 THEN
+        final_member_array_indexed = HasIndexedFinalMemberArray%(a$)
+    END IF
+
 
     IF allow_bare_member_array THEN udt_allow_bare_array = -1
     e$ = evaluate(a$, sourcetyp)
@@ -19402,6 +19414,35 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
 
         ' print "-4: evaluated as ["+e$+"]":sleep 1
+
+        ' Whole static TYPE member arrays carry both ISARRAY and the element type flags (often ISUDT).
+        ' Detect that encoded id|parentUDT|memberElement|byteOffset form before the generic UDT branch so
+        ' LEN/_OFFSET and related helpers operate on the full inline array block instead of one element.
+        IF (sourcetyp AND ISARRAY) THEN
+            s1 = INSTR(e$, sp3)
+            IF s1 THEN s2 = INSTR(s1 + LEN(sp3), e$, sp3) ELSE s2 = 0
+            IF s2 THEN s3 = INSTR(s2 + LEN(sp3), e$, sp3) ELSE s3 = 0
+            IF s3 THEN
+                idnumber = VAL(LEFT$(e$, s1 - 1))
+                u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
+                member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
+                IF member_element_id > 0 AND final_member_array_indexed = 0 THEN
+                    IF udtearrayelements(member_element_id) THEN
+                        o$ = MID$(e$, s3 + LEN(sp3))
+                        getid idnumber
+                        IF Error_Happened THEN EXIT FUNCTION
+                        n$ = "UDT_" + RTRIM$(id.n)
+                        IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                        dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                        bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                        evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
+                        IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+                        IF targettyp = -6 THEN evaluatetotyp$ = dst$
+                        EXIT FUNCTION
+                    END IF
+                END IF
+            END IF
+        END IF
 
         IF (sourcetyp AND ISUDT) THEN 'User Defined Type -> byte_element(offset,bytes)
             IF udtxvariable(sourcetyp AND 511) THEN Give_Error "UDT must have fixed size": EXIT FUNCTION
@@ -19462,17 +19503,24 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                o$ = MID$(e$, s3 + LEN(sp3))
-                getid idnumber
-                IF Error_Happened THEN EXIT FUNCTION
-                n$ = "UDT_" + RTRIM$(id.n)
-                IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
-                dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-                bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
-                evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
-                IF targettyp = -5 THEN evaluatetotyp$ = bytes$
-                IF targettyp = -6 THEN evaluatetotyp$ = dst$
-                EXIT FUNCTION
+                IF member_element_id > 0 AND final_member_array_indexed = 0 THEN 'conditions for PARENT nested Arrays
+
+                    ' Whole static TYPE member array: use the inline member block from the encoded
+                    ' UDT reference instead of the generic parent-UDT path.
+                    IF udtearrayelements(member_element_id) THEN
+                        o$ = MID$(e$, s3 + LEN(sp3))
+                        getid idnumber
+                        IF Error_Happened THEN EXIT FUNCTION
+                        n$ = "UDT_" + RTRIM$(id.n)
+                        IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                        dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                        bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                        evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
+                        IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+                        IF targettyp = -6 THEN evaluatetotyp$ = dst$
+                        EXIT FUNCTION
+                    END IF
+                END IF
             END IF
 
             'whole array reference examplename()?
@@ -19572,16 +19620,23 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             idnumber = VAL(LEFT$(e$, s1 - 1))
             u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
             member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-            o$ = MID$(e$, s3 + LEN(sp3))
-            getid idnumber
-            IF Error_Happened THEN EXIT FUNCTION
-            n$ = "UDT_" + RTRIM$(id.n)
-            IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
-            bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
-            dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-            t = Type2MemTypeValue(sourcetyp)
-            evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
-            EXIT FUNCTION
+                     
+            ' Whole static TYPE member array: build the _MEM descriptor from the inline
+            ' member block so the member array gets its own correct memory view.
+            IF member_element_id > 0 THEN
+                IF udtearrayelements(member_element_id) THEN
+                    o$ = MID$(e$, s3 + LEN(sp3))
+                    getid idnumber
+                    IF Error_Happened THEN EXIT FUNCTION
+                    n$ = "UDT_" + RTRIM$(id.n)
+                    IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                    bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                    dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                    t = Type2MemTypeValue(sourcetyp)
+                    evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
+                    EXIT FUNCTION
+                END IF
+            END IF
         END IF
 
         IF (sourcetyp AND ISUDT) THEN 'User Defined Type -> byte_element(offset,bytes)
@@ -19632,21 +19687,28 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                o$ = MID$(e$, s3 + LEN(sp3))
-                IF sourcetyp AND ISSTRING THEN
-                    IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
-                        Give_Error "Cannot pass array of variable-length strings": EXIT FUNCTION
+             
+                'Whole static TYPE member array: return a mem block that starts at the first
+                ' inline element of the member array.
+                IF member_element_id > 0 THEN
+                    IF udtearrayelements(member_element_id) THEN
+                        o$ = MID$(e$, s3 + LEN(sp3))
+                        IF sourcetyp AND ISSTRING THEN
+                            IF (sourcetyp AND ISFIXEDLENGTH) = 0 THEN
+                                Give_Error "Cannot pass array of variable-length strings": EXIT FUNCTION
+                            END IF
+                        END IF
+                        getid idnumber
+                        IF Error_Happened THEN EXIT FUNCTION
+                        n$ = "UDT_" + RTRIM$(id.n)
+                        IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                        bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                        dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                        t = Type2MemTypeValue(sourcetyp)
+                        evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
+                        EXIT FUNCTION
                     END IF
                 END IF
-                getid idnumber
-                IF Error_Happened THEN EXIT FUNCTION
-                n$ = "UDT_" + RTRIM$(id.n)
-                IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
-                bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
-                dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-                t = Type2MemTypeValue(sourcetyp)
-                evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
-                EXIT FUNCTION
             END IF
 
             'whole array reference examplename()?
@@ -19771,16 +19833,23 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             idnumber = VAL(LEFT$(e$, s1 - 1))
             u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
             member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-            o$ = MID$(e$, s3 + LEN(sp3))
-            getid idnumber
-            IF Error_Happened THEN EXIT FUNCTION
-            n$ = "UDT_" + RTRIM$(id.n)
-            IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
-            bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
-            dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-            t = Type2MemTypeValue(sourcetyp)
-            evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
-            EXIT FUNCTION
+            
+            ' Whole static TYPE member array: resolve the inline member block before the
+            ' generic parent-UDT path can consume the reference.
+            IF member_element_id > 0 THEN
+                IF udtearrayelements(member_element_id) THEN
+                    o$ = MID$(e$, s3 + LEN(sp3))
+                    getid idnumber
+                    IF Error_Happened THEN EXIT FUNCTION
+                    n$ = "UDT_" + RTRIM$(id.n)
+                    IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                    bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                    dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                    t = Type2MemTypeValue(sourcetyp)
+                    evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
+                    EXIT FUNCTION
+                END IF
+            END IF
         END IF
 
         'User Defined Type
@@ -19796,7 +19865,19 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             o$ = e$
             getid idnumber
             IF Error_Happened THEN EXIT FUNCTION
-            n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+
+            n$ = "UDT_" + RTRIM$(id.n)
+            IF id.arraytype THEN
+                n$ = "ARRAY_" + n$ + "[0]"
+
+                ' Whole UDT array reference like Parent() must start at byte offset 0.
+                ' The encoded o$ form used here is not reliable for _MEM size/address on the
+                ' parent whole-array case, so force the base of the array.
+                IF LEFT$(o$, 4) = "(0)*" OR LEFT$(o$, 5) = "((0)*" THEN
+                    o$ = "0"
+                END IF
+            END IF
+
             method2usealludt__7:
             bytes$ = variablesize$(-1) + "-(" + o$ + ")"
             IF Error_Happened THEN EXIT FUNCTION
@@ -19831,15 +19912,21 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                o$ = MID$(e$, s3 + LEN(sp3))
-                getid idnumber
-                IF Error_Happened THEN EXIT FUNCTION
-                n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
-                bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
-                dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-                t = Type2MemTypeValue(sourcetyp)
-                evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
-                EXIT FUNCTION
+                ' Whole static TYPE member array: use the inline member block directly because
+                ' this storage has no separate array descriptor.
+                IF member_element_id > 0 THEN
+                    IF udtearrayelements(member_element_id) THEN
+                        o$ = MID$(e$, s3 + LEN(sp3))
+                        getid idnumber
+                        IF Error_Happened THEN EXIT FUNCTION
+                        n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                        bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                        dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                        t = Type2MemTypeValue(sourcetyp)
+                        evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + _TOSTR$(t) + "," + _TOSTR$(udt_array_member_bytes(member_element_id)) + ",sf_mem_lock"
+                        EXIT FUNCTION
+                    END IF
+                END IF
             END IF
 
             IF sourcetyp AND ISSTRING THEN
@@ -19919,6 +20006,34 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
         IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
 
+        ' Whole static TYPE member arrays carry both ISARRAY and the element type flags (often ISUDT).
+        ' Recognize the special id|parentUDT|memberElement|byteOffset reference before the generic UDT
+        ' branch so whole-array helper requests do not collapse to a single element size.
+        IF (sourcetyp AND ISARRAY) THEN
+            s1 = INSTR(e$, sp3)
+            IF s1 THEN s2 = INSTR(s1 + LEN(sp3), e$, sp3) ELSE s2 = 0
+            IF s2 THEN s3 = INSTR(s2 + LEN(sp3), e$, sp3) ELSE s3 = 0
+            IF s3 THEN
+                idnumber = VAL(LEFT$(e$, s1 - 1))
+                u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
+                member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
+                IF member_element_id > 0 THEN
+                    IF udtearrayelements(member_element_id) THEN
+                        o$ = MID$(e$, s3 + LEN(sp3))
+                        getid idnumber
+                        IF Error_Happened THEN EXIT FUNCTION
+                        n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                        bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                        dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                        evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
+                        IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+                        IF targettyp = -6 THEN evaluatetotyp$ = dst$
+                        EXIT FUNCTION
+                    END IF
+                END IF
+            END IF
+        END IF
+
         'User Defined Type -> byte_element(offset,bytes)
         IF (sourcetyp AND ISUDT) THEN
             '           print "CI: -2 type from a UDT":sleep 1
@@ -19954,16 +20069,23 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                o$ = MID$(e$, s3 + LEN(sp3))
-                getid idnumber
-                IF Error_Happened THEN EXIT FUNCTION
-                n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
-                bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
-                dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-                evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
-                IF targettyp = -5 THEN evaluatetotyp$ = bytes$
-                IF targettyp = -6 THEN evaluatetotyp$ = dst$
-                EXIT FUNCTION
+         
+                ' Whole static TYPE member array: build the byte_element view from the inline
+                ' member block instead of treating it like a normal indexed array reference.
+                IF member_element_id > 0 THEN
+                    IF udtearrayelements(member_element_id) THEN
+                        o$ = MID$(e$, s3 + LEN(sp3))
+                        getid idnumber
+                        IF Error_Happened THEN EXIT FUNCTION
+                        n$ = "UDT_" + RTRIM$(id.n): IF id.arraytype THEN n$ = "ARRAY_" + n$ + "[0]"
+                        bytes$ = _TOSTR$(udtesize(member_element_id) \ 8)
+                        dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
+                        evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
+                        IF targettyp = -5 THEN evaluatetotyp$ = bytes$
+                        IF targettyp = -6 THEN evaluatetotyp$ = dst$
+                        EXIT FUNCTION
+                    END IF
+                END IF
             END IF
 
             'array of variable length strings (special case, can only refer to single element)
