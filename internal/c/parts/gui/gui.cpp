@@ -349,8 +349,10 @@ int gui_alert(const char *message, const char *title, const char *type) {
     // It is prudent to also write this to stderr.
     // This can be helpful when running tests in a GitHub runner environment where the dialog box may not be visible.
     // TODO: Probably we should adapt this to a timed terminal message box or prompt when running in $CONSOLE:ONLY mode.
-    fprintf(stderr, "\nRuntime error: %s: %s\n", title, message);
-    return tinyfd_messageBox(title, message, type, "error", 1);
+    fprintf(stderr, "\nRuntime error: %s\n", message);
+    fflush(stderr);
+    return 0; // temporarily disable the dialog box to debug CI hangs
+    //return tinyfd_messageBox(title, message, type, "error", 1);
 }
 
 /// @brief This is used internally by libqb to show warning and failure messages
