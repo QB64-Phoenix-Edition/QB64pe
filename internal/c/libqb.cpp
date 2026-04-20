@@ -12150,12 +12150,19 @@ void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
             write_page->scaling_offset_x = write_page->view_x1 - write_page->view_offset_x - x1 * write_page->scaling_x;
             write_page->scaling_offset_y = write_page->view_y1 - write_page->view_offset_y - y1 * write_page->scaling_y;
         } else {
-            // WINDOW (without SCREEN) scaling remains screen-based even when VIEW is active.
-            // VIEW then applies clipping and offsets afterwards.
-            write_page->scaling_x = ((float)(write_page->width - 1)) / (x2 - x1);
-            write_page->scaling_y = ((float)(write_page->height - 1)) / (y2 - y1);
-            write_page->scaling_offset_x = -x1 * write_page->scaling_x;
-            write_page->scaling_offset_y = -y1 * write_page->scaling_y;
+            if ((write_page->view_offset_x == write_page->view_x1) && (write_page->view_offset_y == write_page->view_y1)) {
+                // Regular VIEW uses viewport-relative coordinates, so WINDOW should scale against that viewport.
+                write_page->scaling_x = ((float)(write_page->view_x2 - write_page->view_x1)) / (x2 - x1);
+                write_page->scaling_y = ((float)(write_page->view_y2 - write_page->view_y1)) / (y2 - y1);
+                write_page->scaling_offset_x = write_page->view_x1 - write_page->view_offset_x - x1 * write_page->scaling_x;
+                write_page->scaling_offset_y = write_page->view_y1 - write_page->view_offset_y - y1 * write_page->scaling_y;
+            } else {
+                // VIEW SCREEN keeps window coordinates screen-based.
+                write_page->scaling_x = ((float)(write_page->width - 1)) / (x2 - x1);
+                write_page->scaling_y = ((float)(write_page->height - 1)) / (y2 - y1);
+                write_page->scaling_offset_x = -x1 * write_page->scaling_x;
+                write_page->scaling_offset_y = -y1 * write_page->scaling_y;
+            }
         }
         write_page->window_x1 = x1;
         write_page->window_x2 = x2;
