@@ -1158,7 +1158,7 @@ FUNCTION wikiDLPage$ (url$, timeout#)
     retry:
     FOR r% = 1 TO 3
         ch& = _OPENCLIENT(wik$)
-        IF ch& = 0 THEN _DELAY 5: ELSE EXIT FOR
+        IF ch& = 0 THEN _DELAY 3.33: ELSE EXIT FOR
     NEXT r%
     IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
         IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
@@ -1211,12 +1211,12 @@ FUNCTION wikiDLPage$ (url$, timeout#)
             IF LCASE$(LEFT$(wik$, 7)) = "http://" THEN wik$ = "https://" + MID$(wik$, 8)
             '--- issue curl request ---
             responseFile$ = Cache_Folder$ + "/curlResponse.txt"
-            SHELL _HIDE "curl --silent -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
-            '--- read the response ---
-            res$ = _READFILE$(responseFile$)
-            KILL responseFile$
-            '--- set result ---
-            wikiDLPage$ = res$
+            SHELL _HIDE "curl --silent --retry 3 -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
+            IF _FILEEXISTS(responseFile$) THEN
+                '--- read the response ---
+                wikiDLPage$ = _READFILE$(responseFile$)
+                KILL responseFile$
+            END IF
         END IF
     END IF
 END FUNCTION
