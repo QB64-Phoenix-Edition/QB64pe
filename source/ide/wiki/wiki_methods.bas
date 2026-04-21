@@ -1158,7 +1158,7 @@ FUNCTION wikiDLPage$ (url$, timeout#)
     retry:
     FOR r% = 1 TO 3
         ch& = _OPENCLIENT(wik$)
-        IF ch& = 0 THEN _DELAY 5: ELSE EXIT FOR
+        IF ch& = 0 THEN _DELAY 3.33: ELSE EXIT FOR
     NEXT r%
     IF Help_Recaching < 2 THEN 'avoid messages for 'qb64pe -u' (build time update)
         IF ch& = 0 AND LCASE$(LEFT$(wik$, 8)) = "https://" THEN
