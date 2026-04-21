@@ -62,7 +62,7 @@ S_64238:;
 if ((-(*_FUNC_WIKIDLPAGE_LONG_CH== 0 ))||is_error_pending()){
 if(qbevent){evnt(25528,1161,"wiki_methods.bas");if(r)goto S_64238;}
 do{
-sub__delay( 5 );
+sub__delay( 3.33E+0 );
 if(!qbevent)break;evnt(25528,1161,"wiki_methods.bas");}while(r);
 }else{
 do{
@@ -196,21 +196,21 @@ qbs_set(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE,qbs_add(__STRING_CACHE_FOLDER,qbs_n
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(25528,1213,"wiki_methods.bas");}while(r);
 do{
-sub_shell2(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("curl --silent -o ",17),func_chr( 34 )),_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE),func_chr( 34 )),qbs_new_txt_len(" ",1)),func_chr( 34 )),_FUNC_WIKIDLPAGE_STRING_WIK),func_chr( 34 )),2);
+sub_shell2(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("curl --silent --retry 3 -o ",27),func_chr( 34 )),_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE),func_chr( 34 )),qbs_new_txt_len(" ",1)),func_chr( 34 )),_FUNC_WIKIDLPAGE_STRING_WIK),func_chr( 34 )),2);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(25528,1214,"wiki_methods.bas");}while(r);
+S_64289:;
+if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE)))||is_error_pending()){
+if(qbevent){evnt(25528,1215,"wiki_methods.bas");if(r)goto S_64289;}
 do{
-qbs_set(_FUNC_WIKIDLPAGE_STRING_RES,func__readfile(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,1216,"wiki_methods.bas");}while(r);
-do{
-sub_kill(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE);
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE,func__readfile(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(25528,1217,"wiki_methods.bas");}while(r);
 do{
-qbs_set(_FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE,_FUNC_WIKIDLPAGE_STRING_RES);
+sub_kill(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,1219,"wiki_methods.bas");}while(r);
+if(!qbevent)break;evnt(25528,1218,"wiki_methods.bas");}while(r);
+}
 }
 }
 exit_subfunc:;
