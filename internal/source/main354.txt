@@ -11,45 +11,45 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_60946:;
-if(qbevent){evnt(25406,19410,"ide_methods.bas");if(r)goto S_60946;}
-S_60947:;
+S_61062:;
+if(qbevent){evnt(25528,19410,"ide_methods.bas");if(r)goto S_61062;}
+S_61063:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_ASKCLEARHISTORY_STRING_WHICH,qbs_new_txt_len("RECENT",6))))||is_error_pending()){
-if(qbevent){evnt(25406,19411,"ide_methods.bas");if(r)goto S_60947;}
+if(qbevent){evnt(25528,19411,"ide_methods.bas");if(r)goto S_61063;}
 do{
 qbs_set(_FUNC_ASKCLEARHISTORY_STRING_T,qbs_new_txt_len("Clear recent files",18));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25406,19411,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25528,19411,"ide_methods.bas");}while(r);
 sc_ec_430_end:;
-goto sc_6886_end;
+goto sc_6900_end;
 }
-S_60949:;
+S_61065:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_ASKCLEARHISTORY_STRING_WHICH,qbs_new_txt_len("SEARCH",6))))||is_error_pending()){
-if(qbevent){evnt(25406,19412,"ide_methods.bas");if(r)goto S_60949;}
+if(qbevent){evnt(25528,19412,"ide_methods.bas");if(r)goto S_61065;}
 do{
 qbs_set(_FUNC_ASKCLEARHISTORY_STRING_T,qbs_new_txt_len("Clear search history",20));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25406,19412,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25528,19412,"ide_methods.bas");}while(r);
 sc_ec_431_end:;
-goto sc_6886_end;
+goto sc_6900_end;
 }
-sc_6886_end:;
+sc_6900_end:;
 do{
 *_FUNC_ASKCLEARHISTORY_LONG_RESULT=FUNC_IDEMESSAGEBOX(_FUNC_ASKCLEARHISTORY_STRING_T,qbs_new_txt_len("This cannot be undone. Proceed?",31),qbs_new_txt_len("#Yes;#No",8));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25406,19414,"ide_methods.bas");}while(r);
-S_60953:;
+if(!qbevent)break;evnt(25528,19414,"ide_methods.bas");}while(r);
+S_61069:;
 if ((-(*_FUNC_ASKCLEARHISTORY_LONG_RESULT== 1 ))||is_error_pending()){
-if(qbevent){evnt(25406,19415,"ide_methods.bas");if(r)goto S_60953;}
+if(qbevent){evnt(25528,19415,"ide_methods.bas");if(r)goto S_61069;}
 do{
 qbs_set(_FUNC_ASKCLEARHISTORY_STRING_ASKCLEARHISTORY,qbs_new_txt_len("Y",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25406,19415,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25528,19415,"ide_methods.bas");}while(r);
 }else{
 do{
 qbs_set(_FUNC_ASKCLEARHISTORY_STRING_ASKCLEARHISTORY,qbs_new_txt_len("N",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25406,19415,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25528,19415,"ide_methods.bas");}while(r);
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
