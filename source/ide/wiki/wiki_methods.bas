@@ -1211,12 +1211,12 @@ FUNCTION wikiDLPage$ (url$, timeout#)
             IF LCASE$(LEFT$(wik$, 7)) = "http://" THEN wik$ = "https://" + MID$(wik$, 8)
             '--- issue curl request ---
             responseFile$ = Cache_Folder$ + "/curlResponse.txt"
-            SHELL _HIDE "curl --silent -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
-            '--- read the response ---
-            res$ = _READFILE$(responseFile$)
-            KILL responseFile$
-            '--- set result ---
-            wikiDLPage$ = res$
+            SHELL _HIDE "curl --silent --retry 3 -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
+            IF _FILEEXISTS(responseFile$) THEN
+                '--- read the response ---
+                wikiDLPage$ = _READFILE$(responseFile$)
+                KILL responseFile$
+            END IF
         END IF
     END IF
 END FUNCTION
