@@ -1,0 +1,4 @@
+$CONSOLE:ONLY
+REDIM a(3 to 1) AS LONG
+
+
