@@ -15812,30 +15812,35 @@ FUNCTION ideCompilerSettingsBox
     o(i).y = 4
     o(i).nam = idenewtxt("#Add C++ Debug Information")
     o(i).sel = ABS(IncludeDebugInfo)
+    i = i + 1: farChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 5
+    o(i).nam = idenewtxt("Force 1:1 aspect #ratio")
+    o(i).sel = ABS(ForceAspectRatio)
 
     i = i + 1: ecfBox = i
     o(i).typ = 1 'text box
-    o(i).y = 6
+    o(i).y = 7
     o(i).nam = idenewtxt("C++ Compiler #Flags"): a2$ = ExtraCppFlags$
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
     i = i + 1: elfBox = i
     o(i).typ = 1 'text box
-    o(i).y = 9
+    o(i).y = 10
     o(i).nam = idenewtxt("C++ #Linker Flags"): a2$ = ExtraLinkerFlags$
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
 
     i = i + 1: mppBox = i
     o(i).typ = 1 'text box
-    o(i).y = 12
+    o(i).y = 13
     o(i).nam = idenewtxt("#Max C++ Compiler Processes"): a2$ = _TOSTR$(MaxParallelProcesses)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: mppSymUp = i
     o(i).typ = 5 'symbol button
-    o(i).x = 41: o(i).y = 12
+    o(i).x = 41: o(i).y = 14
     o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
     i = i + 1: mppSymDn = i
     o(i).typ = 5 'symbol button
-    o(i).x = 44: o(i).y = 12
+    o(i).x = 44: o(i).y = 14
     o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
     IF os$ = "WIN" THEN
@@ -15966,6 +15971,8 @@ FUNCTION ideCompilerSettingsBox
             IF StripDebugSymbols <> v% THEN StripDebugSymbols = v%: optChg% = _TRUE
             v% = o(idiChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF IncludeDebugInfo <> v% THEN IncludeDebugInfo = v%: optChg% = _TRUE
+            v% = o(farChk).sel: IF v% <> 0 THEN v% = _TRUE
+            IF ForceAspectRatio <> v% THEN ForceAspectRatio = v%: optChg% = _TRUE
 
             v$ = idetxt(o(ecfBox).txt)
             IF ExtraCppFlags$ <> v$ THEN ExtraCppFlags$ = v$: optChg% = _TRUE
@@ -15985,6 +15992,7 @@ FUNCTION ideCompilerSettingsBox
                 WriteConfigSetting compilerSettingsSection$, "OptimizeCppProgram", BoolToTFString$(OptimizeCppProgram)
                 WriteConfigSetting compilerSettingsSection$, "StripDebugSymbols", BoolToTFString$(StripDebugSymbols)
                 WriteConfigSetting compilerSettingsSection$, "IncludeDebugInfo", BoolToTFString$(IncludeDebugInfo)
+                WriteConfigSetting compilerSettingsSection$, "ForceAspectRatio", BoolToTFString$(ForceAspectRatio)
 
                 WriteConfigSetting compilerSettingsSection$, "ExtraCppFlags", ExtraCppFlags$
                 WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$

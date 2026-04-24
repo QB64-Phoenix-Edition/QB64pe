@@ -22303,6 +22303,7 @@ void sub_draw(qbs *s) {
     draw_ta = write_page->draw_ta;
     draw_scale = write_page->draw_scale;
 
+#ifndef LIBQB_FORCE_ASPECT_R1
     if (write_page->compatible_mode <= 13) {
         if (write_page->compatible_mode == 1)
             r = 4.0 / ((3.0 / 200.0) * 320.0);
@@ -22328,6 +22329,10 @@ void sub_draw(qbs *s) {
         r = 1;
         ir = 1;
     }
+#else // LIBQB_FORCE_ASPECT_R1
+    r = 1;
+    ir = 1;
+#endif // LIBQB_FORCE_ASPECT_R1
 
     vx = 0;
     vy = -1;

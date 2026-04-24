@@ -35,6 +35,7 @@ DIM SHARED ExtraCppFlags$, ExtraLinkerFlags$
 DIM SHARED StripDebugSymbols AS LONG
 DIM SHARED OptimizeCppProgram AS LONG
 DIM SHARED IncludeDebugInfo AS LONG
+DIM SHARED ForceAspectRatio AS LONG
 DIM SHARED UseSystemMinGW AS LONG
 DIM SHARED UseGuiDialogs AS _BYTE
 DIM SHARED LoggingEnabled AS _BYTE, LogToConsole AS _BYTE
