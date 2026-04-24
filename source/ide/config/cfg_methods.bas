@@ -630,6 +630,7 @@ SUB ReadInitialConfig
     OptimizeCppProgram = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "OptimizeCppProgram", 0)
     StripDebugSymbols = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "StripDebugSymbols", -1)
     IncludeDebugInfo = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "IncludeDebugInfo", 0)
+    ForceAspectRatio = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "ForceAspectRatio", 0)
 
     MaxParallelProcesses = ReadWriteLongSettingValue&(compilerSettingsSection$, "MaxParallelProcesses", 3)
     IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN
