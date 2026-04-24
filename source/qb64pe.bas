@@ -14148,7 +14148,17 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             'set the base
 
             basegiven = 1
-            IF e3base$ = "" THEN e3base$ = _TOSTR$(optionbase + 0): basegiven = 0
+            IF e3base$ = "" THEN
+                ' Keep the classic zero-element bootstrap idiom valid:
+                ' DIM A(0) / REDIM A(0) must create a valid 0 TO 0 array,
+                ' even if OPTION BASE 1 is currently active.
+                IF LTRIM$(RTRIM$(e3$)) = "0" THEN
+                    e3base$ = "0"
+                ELSE
+                    e3base$ = _TOSTR$(optionbase + 0)
+                END IF
+                basegiven = 0
+            END IF
             constequation = 1
 
             e3base$ = fixoperationorder$(e3base$)
@@ -14173,9 +14183,18 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             IF constequation = 0 THEN constdimensions = 0
             upper_bound_is_const = constequation
             ' Catch constant reversed bounds here and guard runtime bounds below.
-            IF lower_bound_is_const AND upper_bound_is_const THEN
-                IF VAL(e3$) < VAL(e3base$) THEN Give_Error "Invalid array bounds": EXIT FUNCTION
+            ' Explicit TO ranges reject reversed bounds.
+            ' Single-bound declarations reject only negative constants.
+            IF upper_bound_is_const THEN
+                IF basegiven THEN
+                    IF lower_bound_is_const THEN
+                        IF VAL(e3$) < VAL(e3base$) THEN Give_Error "Invalid array bounds": EXIT FUNCTION
+                    END IF
+                ELSE
+                    IF VAL(e3$) < 0 THEN Give_Error "Invalid array bounds": EXIT FUNCTION
+                END IF
             END IF
+
             ei = ei + 1
             sd$ = sd$ + n$ + "[" + _TOSTR$(ei) + "]=(" + e3$ + ")-" + n$ + "[" + _TOSTR$(ei - 1) + "]+1;" + cr$
             sd$ = sd$ + "if (" + n$ + "[" + _TOSTR$(ei) + "]<=0) error(5);" + cr$
@@ -14352,7 +14371,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             IF redimoption = 0 THEN
                 f12$ = f12$ + CRLF + "if (" + n$ + "[2]&1){" 'array is defined
                 f12$ = f12$ + CRLF + "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
-                f12$ = f12$ + CRLF + "}else{" 
+                f12$ = f12$ + CRLF + "}else{"
             ELSE
                 '--------CAPTURE EXISTING ARRAY IF NECESSARY--------
                 'Do not destroy the old allocation until the new one has succeeded.
@@ -15074,7 +15093,7 @@ END FUNCTION
 
 
 FUNCTION CompactMemberRefLayout$ (src AS STRING)
-      ' Rebuild a TYPE member reference into compact, stable source text for layout output.
+    ' Rebuild a TYPE member reference into compact, stable source text for layout output.
     ' This preserves member-array declarators and dotted member chains without introducing unwanted spaces.
 
     DIM compacttxt AS STRING '
