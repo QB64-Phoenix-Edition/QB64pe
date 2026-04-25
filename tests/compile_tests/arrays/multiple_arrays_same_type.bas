@@ -11,6 +11,7 @@ TYPE MultiArrays
     B( - 1 To 1 , 2 To 3) AS LONG
     Tail AS LONG
     C( 0 To 1 , 0 To 1 , 0 To 1) AS _BYTE
+    S( 2) AS STRING * 5
 END TYPE
 
 DIM x(0) AS MultiArrays
@@ -59,6 +60,14 @@ CheckTrue "Erase member keeps A", x(0).A(2) = 20
 CheckTrue "Erase member zeroes B", x(0).B(-1, 2) = 0 AND x(0).B(1, 3) = 0
 CheckTrue "Erase member keeps tail", x(0).Tail = 3000
 CheckTrue "Erase member keeps C", x(0).C(1, 1, 1) = 7
+
+x ( 0 ) . S ( 0 ) = "hello"
+ERASE x ( 0 ) . S
+CheckTrue "Erase member sets fixed string to 0s", x().s(0) = STRING$(5, 0)
+
+x ( 0 ) . S ( 0 ) = "hello"
+ERASE x
+CheckTrue "Erase array sets nested fixed string to 0s", x().s(0) = STRING$(5, 0)
 
 FinishTest
 'sleep
