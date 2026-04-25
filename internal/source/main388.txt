@@ -1,4 +1,4 @@
-void SUB_HELP_CHECKBLANKLINE(){
+void SUB_HELP_CHECKFINISHLINE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,27 +11,17 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_63240:;
-if ((-(*__LONG_HELP_TXT_LEN>= 8 ))||is_error_pending()){
-if(qbevent){evnt(25767,225,"wiki_methods.bas");if(r)goto S_63240;}
-S_63241:;
+S_63247:;
+if ((-(*__LONG_HELP_TXT_LEN>= 4 ))||is_error_pending()){
+if(qbevent){evnt(25769,219,"wiki_methods.bas");if(r)goto S_63247;}
+S_63248:;
 if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_HELP_TXT,*__LONG_HELP_TXT_LEN- 2 )< 128 )))||is_error_pending()){
-if(qbevent){evnt(25767,226,"wiki_methods.bas");if(r)goto S_63241;}
+if(qbevent){evnt(25769,220,"wiki_methods.bas");if(r)goto S_63248;}
 do{
 SUB_HELP_NEWLINE();
-if(!qbevent)break;evnt(25767,226,"wiki_methods.bas");}while(r);
-}
-S_63244:;
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_HELP_TXT,*__LONG_HELP_TXT_LEN- 6 )< 128 )))||is_error_pending()){
-if(qbevent){evnt(25767,227,"wiki_methods.bas");if(r)goto S_63244;}
-do{
-SUB_HELP_NEWLINE();
-if(!qbevent)break;evnt(25767,227,"wiki_methods.bas");}while(r);
+if(!qbevent)break;evnt(25769,220,"wiki_methods.bas");}while(r);
 }
 }
-do{
-*__LONG_HELP_CHKBLANK= 0 ;
-if(!qbevent)break;evnt(25767,229,"wiki_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free388.txt"

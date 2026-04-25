@@ -1,4 +1,4 @@
-int32 FUNC_IDEGETLINENUMBERBOX(qbs*_FUNC_IDEGETLINENUMBERBOX_STRING_TITLE,int32*_FUNC_IDEGETLINENUMBERBOX_LONG_INITIALVALUE){
+void SUB_IDESETTCPPORTBOX(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,53 +12,38 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbs_set(_FUNC_IDEGETLINENUMBERBOX_STRING_A2,qbs__tostr((int32)(*_FUNC_IDEGETLINENUMBERBOX_LONG_INITIALVALUE),NULL,0));
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,15771,"ide_methods.bas");}while(r);
-S_57064:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_IDEGETLINENUMBERBOX_STRING_A2,qbs_new_txt_len("0",1))))||is_error_pending()){
-if(qbevent){evnt(25767,15772,"ide_methods.bas");if(r)goto S_57064;}
+if(!qbevent)break;evnt(25769,15761,"ide_methods.bas");}while(r);
 do{
-qbs_set(_FUNC_IDEGETLINENUMBERBOX_STRING_A2,qbs_new_txt_len("",0));
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6568= 45 ),&(pass6569= 5 ),&(pass6570= 0 )));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,15772,"ide_methods.bas");}while(r);
-}
-do{
-qbs_set(_FUNC_IDEGETLINENUMBERBOX_STRING_V,FUNC_IDEINPUTBOX(_FUNC_IDEGETLINENUMBERBOX_STRING_TITLE,qbs_new_txt_len("#Line",5),_FUNC_IDEGETLINENUMBERBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6572= 30 ),&(pass6573= 8 ),&(pass6574= 0 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,15773,"ide_methods.bas");}while(r);
-S_57068:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_IDEGETLINENUMBERBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(25767,15774,"ide_methods.bas");if(r)goto S_57068;}
+if(!qbevent)break;evnt(25769,15762,"ide_methods.bas");}while(r);
+S_57067:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25769,15763,"ide_methods.bas");if(r)goto S_57067;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25767,15774,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25769,15763,"ide_methods.bas");}while(r);
 }
 do{
-*_FUNC_IDEGETLINENUMBERBOX_LONG_V=qbr(qbs_val<long double>(_FUNC_IDEGETLINENUMBERBOX_STRING_V));
+*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,15776,"ide_methods.bas");}while(r);
-S_57072:;
-if ((-(*_FUNC_IDEGETLINENUMBERBOX_LONG_V< 1 ))||is_error_pending()){
-if(qbevent){evnt(25767,15777,"ide_methods.bas");if(r)goto S_57072;}
+if(!qbevent)break;evnt(25769,15765,"ide_methods.bas");}while(r);
+S_57071:;
+if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+if(qbevent){evnt(25769,15766,"ide_methods.bas");if(r)goto S_57071;}
 do{
-*_FUNC_IDEGETLINENUMBERBOX_LONG_V= 1 ;
-if(!qbevent)break;evnt(25767,15777,"ide_methods.bas");}while(r);
-}
-S_57075:;
-if ((-(*_FUNC_IDEGETLINENUMBERBOX_LONG_V>*__LONG_IDEN))||is_error_pending()){
-if(qbevent){evnt(25767,15778,"ide_methods.bas");if(r)goto S_57075;}
-do{
-*_FUNC_IDEGETLINENUMBERBOX_LONG_V=*__LONG_IDEN;
-if(!qbevent)break;evnt(25767,15778,"ide_methods.bas");}while(r);
+*__LONG_IDEBASETCPPORT= 9000 ;
+if(!qbevent)break;evnt(25769,15766,"ide_methods.bas");}while(r);
 }
 do{
-*_FUNC_IDEGETLINENUMBERBOX_LONG_IDEGETLINENUMBERBOX=*_FUNC_IDEGETLINENUMBERBOX_LONG_V;
-if(!qbevent)break;evnt(25767,15780,"ide_methods.bas");}while(r);
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25769,15767,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free331.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_IDEGETLINENUMBERBOX_LONG_IDEGETLINENUMBERBOX;
 }

@@ -11,7 +11,7 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_33384:;
+S_33385:;
 fornext_value3829=*__INTEGER_USERDEFINECOUNTPRESETS+ 1 ;
 fornext_finalvalue3829=*__INTEGER_USERDEFINECOUNT;
 fornext_step3829= 1 ;
@@ -28,91 +28,145 @@ if (fornext_value3829<fornext_finalvalue3829) break;
 if (fornext_value3829>fornext_finalvalue3829) break;
 }
 fornext_error3829:;
-if(qbevent){evnt(25304);if(r)goto S_33384;}
-S_33385:;
+if(qbevent){evnt(25306);if(r)goto S_33385;}
+S_33386:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[array_check(( 0 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*_SUB_SETPRELET_LONG_I)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6]])),_SUB_SETPRELET_STRING_FLAGNAME)))||is_error_pending()){
-if(qbevent){evnt(25305);if(r)goto S_33385;}
+if(qbevent){evnt(25307);if(r)goto S_33386;}
 do{
 tmp_long=array_check(( 1 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*_SUB_SETPRELET_LONG_I)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
 if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGVALUE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25305);}while(r);
+if(!qbevent)break;evnt(25307);}while(r);
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25305);}while(r);
+if(!qbevent)break;evnt(25307);}while(r);
 }
 fornext_continue_3828:;
 }
 fornext_exit_3828:;
 do{
 *__INTEGER_USERDEFINECOUNT=*__INTEGER_USERDEFINECOUNT+ 1 ;
-if(!qbevent)break;evnt(25308);}while(r);
-S_33391:;
+if(!qbevent)break;evnt(25310);}while(r);
+S_33392:;
 if ((qbs_cleanup(qbs_tmp_base,-(*__INTEGER_USERDEFINECOUNT>func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2))))||is_error_pending()){
-if(qbevent){evnt(25309);if(r)goto S_33391;}
+if(qbevent){evnt(25311);if(r)goto S_33392;}
 do{
 
 if (__ARRAY_STRING_USERDEFINE[2]&2){
 error(10);
 }else{
+static int64 alloc_new_desc[12];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
 ((mem_lock*)((ptrszint*)__ARRAY_STRING_USERDEFINE)[12])->id=(++mem_lock_id);
-static int32 preserved_elements;
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
 if (__ARRAY_STRING_USERDEFINE[2]&1){
-preserved_elements=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
+preserve_old_ptr=__ARRAY_STRING_USERDEFINE[0];
+preserve_old_flags=__ARRAY_STRING_USERDEFINE[2];
+preserve_old_total=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
 }
-else preserved_elements=0;
-__ARRAY_STRING_USERDEFINE[8]= 0 ;
-__ARRAY_STRING_USERDEFINE[9]=( 1 )-__ARRAY_STRING_USERDEFINE[8]+1;
-__ARRAY_STRING_USERDEFINE[10]=1;
-__ARRAY_STRING_USERDEFINE[4]= 0 ;
-__ARRAY_STRING_USERDEFINE[5]=(func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2)+ 10 )-__ARRAY_STRING_USERDEFINE[4]+1;
-__ARRAY_STRING_USERDEFINE[6]=__ARRAY_STRING_USERDEFINE[10]*__ARRAY_STRING_USERDEFINE[9];
-if (preserved_elements){
-static ptrszint tmp_long2;
-tmp_long2=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
-if (tmp_long2<preserved_elements){
-for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {
-qbs_free((qbs*)((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]);
-}}
-__ARRAY_STRING_USERDEFINE[0]=(ptrszint)realloc((void*)(__ARRAY_STRING_USERDEFINE[0]),tmp_long2*8);
-if (!__ARRAY_STRING_USERDEFINE[0]) error(257);
-if (preserved_elements<tmp_long2){
-for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){
+alloc_new_desc[8]= 0 ;
+alloc_new_desc[9]=( 1 )-alloc_new_desc[8]+1;
+if (alloc_new_desc[9]<=0) error(5);
+alloc_new_desc[10]=1;
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(func_ubound(__ARRAY_STRING_USERDEFINE, 2 ,2)+ 10 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=alloc_new_desc[10]*alloc_new_desc[9];
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (((int64)((ptrszint)alloc_new_desc[8]))!=alloc_new_desc[8]) error(257);
+if (alloc_new_desc[9]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[9]))!=alloc_new_desc[9]) error(257);
+if (alloc_new_desc[10]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[10]))!=alloc_new_desc[10]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[9];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+__ARRAY_STRING_USERDEFINE[0]=preserve_new_ptr;
+__ARRAY_STRING_USERDEFINE[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
 if (__ARRAY_STRING_USERDEFINE[2]&4){
-((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
 }else{
-((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
 }
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
 }
-}
+tmp_long=preserve_old_total;
+while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+free((void*)(preserve_old_ptr));
+__ARRAY_STRING_USERDEFINE[0]=preserve_new_ptr;
 }else{
-__ARRAY_STRING_USERDEFINE[0]=(ptrszint)malloc(__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9]*8);
+__ARRAY_STRING_USERDEFINE[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
 if (!__ARRAY_STRING_USERDEFINE[0]) error(257);
 __ARRAY_STRING_USERDEFINE[2]|=1;
-tmp_long=__ARRAY_STRING_USERDEFINE[5]*__ARRAY_STRING_USERDEFINE[9];
+tmp_long=(ptrszint)alloc_req_elems;
 if (__ARRAY_STRING_USERDEFINE[2]&4){
 while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
 }else{
 while(tmp_long--) ((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long]=(uint64)qbs_new(0,0);
 }
 }
+__ARRAY_STRING_USERDEFINE[4]=alloc_new_desc[4];
+__ARRAY_STRING_USERDEFINE[5]=alloc_new_desc[5];
+__ARRAY_STRING_USERDEFINE[6]=alloc_new_desc[6];
+__ARRAY_STRING_USERDEFINE[7]=alloc_new_desc[7];
+__ARRAY_STRING_USERDEFINE[8]=alloc_new_desc[8];
+__ARRAY_STRING_USERDEFINE[9]=alloc_new_desc[9];
+__ARRAY_STRING_USERDEFINE[10]=alloc_new_desc[10];
+__ARRAY_STRING_USERDEFINE[11]=alloc_new_desc[11];
 }
-if(!qbevent)break;evnt(25310);}while(r);
+if(!qbevent)break;evnt(25312);}while(r);
 }
 do{
 tmp_long=array_check(( 0 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*__INTEGER_USERDEFINECOUNT)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
 if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGNAME);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25312);}while(r);
+if(!qbevent)break;evnt(25314);}while(r);
 do{
 tmp_long=array_check(( 1 )-__ARRAY_STRING_USERDEFINE[8],__ARRAY_STRING_USERDEFINE[9])+array_check((*__INTEGER_USERDEFINECOUNT)-__ARRAY_STRING_USERDEFINE[4],__ARRAY_STRING_USERDEFINE[5])*__ARRAY_STRING_USERDEFINE[6];
 if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_USERDEFINE[0]))[tmp_long])),_SUB_SETPRELET_STRING_FLAGVALUE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25313);}while(r);
+if(!qbevent)break;evnt(25315);}while(r);
 do{
 qbs_set(__STRING_USERDEFINELIST,qbs_add(qbs_add(__STRING_USERDEFINELIST,_SUB_SETPRELET_STRING_FLAGNAME),qbs_new_txt_len("@",1)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25314);}while(r);
+if(!qbevent)break;evnt(25316);}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free71.txt"

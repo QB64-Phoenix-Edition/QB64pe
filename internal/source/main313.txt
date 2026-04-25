@@ -1,4 +1,4 @@
-void SUB_IDESETLINE(int32*_SUB_IDESETLINE_LONG_I,qbs*_SUB_IDESETLINE_STRING_TEXT){
+qbs* FUNC_IDESAVENOW(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,27 +12,50 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbs_set(_SUB_IDESETLINE_STRING_TEXT,qbs_rtrim(_SUB_IDESETLINE_STRING_TEXT));
+qbs_set(_FUNC_IDESAVENOW_STRING_M,qbs_new_txt_len("Program is not saved. Save it now?",34));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,12797,"ide_methods.bas");}while(r);
-S_53823:;
-if ((-(*_SUB_IDESETLINE_LONG_I!= -1 ))||is_error_pending()){
-if(qbevent){evnt(25767,12799,"ide_methods.bas");if(r)goto S_53823;}
+if(!qbevent)break;evnt(25769,12786,"ide_methods.bas");}while(r);
 do{
-SUB_IDEGOTOLINE(_SUB_IDESETLINE_LONG_I);
-if(!qbevent)break;evnt(25767,12799,"ide_methods.bas");}while(r);
+*_FUNC_IDESAVENOW_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("",0),_FUNC_IDESAVENOW_STRING_M,qbs_new_txt_len("#Yes;#No;#Cancel",16));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25769,12787,"ide_methods.bas");}while(r);
+S_53826:;
+if(qbevent){evnt(25769,12788,"ide_methods.bas");if(r)goto S_53826;}
+S_53827:;
+if (((*_FUNC_IDESAVENOW_LONG_RESULT==( 1 )))||is_error_pending()){
+if(qbevent){evnt(25769,12789,"ide_methods.bas");if(r)goto S_53827;}
+do{
+qbs_set(_FUNC_IDESAVENOW_STRING_IDESAVENOW,qbs_new_txt_len("Y",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25769,12789,"ide_methods.bas");}while(r);
+sc_ec_374_end:;
+goto sc_6209_end;
 }
+S_53829:;
+if (((*_FUNC_IDESAVENOW_LONG_RESULT==( 2 )))||is_error_pending()){
+if(qbevent){evnt(25769,12790,"ide_methods.bas");if(r)goto S_53829;}
 do{
-*_SUB_IDESETLINE_LONG_TEXTLEN=_SUB_IDESETLINE_STRING_TEXT->len;
+qbs_set(_FUNC_IDESAVENOW_STRING_IDESAVENOW,qbs_new_txt_len("N",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,12800,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25769,12790,"ide_methods.bas");}while(r);
+sc_ec_375_end:;
+goto sc_6209_end;
+}
+S_53831:;
+if (((*_FUNC_IDESAVENOW_LONG_RESULT==( 0 ))||(*_FUNC_IDESAVENOW_LONG_RESULT==( 3 )))||is_error_pending()){
+if(qbevent){evnt(25769,12791,"ide_methods.bas");if(r)goto S_53831;}
 do{
-qbs_set(__STRING_IDET,qbs_add(qbs_add(qbs_left(__STRING_IDET,*__LONG_IDELI- 1 ),(qbs_add(qbs_add(l2string(*_SUB_IDESETLINE_LONG_TEXTLEN),_SUB_IDESETLINE_STRING_TEXT),l2string(*_SUB_IDESETLINE_LONG_TEXTLEN)))),qbs_right(__STRING_IDET,__STRING_IDET->len-*__LONG_IDELI+ 1 -string2l(func_mid(__STRING_IDET,*__LONG_IDELI, 4 ,0|1))- 8 )));
+qbs_set(_FUNC_IDESAVENOW_STRING_IDESAVENOW,qbs_new_txt_len("C",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25767,12801,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25769,12791,"ide_methods.bas");}while(r);
+sc_ec_376_end:;
+goto sc_6209_end;
+}
+sc_6209_end:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free313.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_IDESAVENOW_STRING_IDESAVENOW);return _FUNC_IDESAVENOW_STRING_IDESAVENOW;
 }

@@ -1,4 +1,4 @@
-int32 FUNC_HELP_COL(){
+void SUB_HELP_CHECKREMOVEBLANKLINE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,52 +11,65 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_63261:;
+if ((-(*__LONG_HELP_TXT_LEN>= 8 ))||is_error_pending()){
+if(qbevent){evnt(25769,233,"wiki_methods.bas");if(r)goto S_63261;}
+S_63262:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_HELP_TXT,*__LONG_HELP_TXT_LEN- 2 )> 127 )))||is_error_pending()){
+if(qbevent){evnt(25769,234,"wiki_methods.bas");if(r)goto S_63262;}
 do{
-*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_NORMAL;
-if(!qbevent)break;evnt(25767,249,"wiki_methods.bas");}while(r);
-S_63266:;
-if ((*__LONG_HELP_ITALIC)||is_error_pending()){
-if(qbevent){evnt(25767,250,"wiki_methods.bas");if(r)goto S_63266;}
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN- 4 ;
+if(!qbevent)break;evnt(25769,235,"wiki_methods.bas");}while(r);
 do{
-*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_ITALIC;
-if(!qbevent)break;evnt(25767,250,"wiki_methods.bas");}while(r);
+*__LONG_HELP_H=*__LONG_HELP_H- 1 ;
+if(!qbevent)break;evnt(25769,236,"wiki_methods.bas");}while(r);
+do{
+qbs_set(__STRING_HELP_LINE,qbs_left(__STRING_HELP_LINE,__STRING_HELP_LINE->len- 4 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25769,237,"wiki_methods.bas");}while(r);
 }
-S_63269:;
-if ((*__LONG_HELP_BOLD)||is_error_pending()){
-if(qbevent){evnt(25767,251,"wiki_methods.bas");if(r)goto S_63269;}
-do{
-*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_BOLD;
-if(!qbevent)break;evnt(25767,251,"wiki_methods.bas");}while(r);
-}
-S_63272:;
-if ((*__LONG_HELP_HEADING)||is_error_pending()){
-if(qbevent){evnt(25767,252,"wiki_methods.bas");if(r)goto S_63272;}
-do{
-*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_SECTION;
-if(!qbevent)break;evnt(25767,252,"wiki_methods.bas");}while(r);
-}
-S_63275:;
-if ((*__LONG_HELP_LINKTXT)||is_error_pending()){
-if(qbevent){evnt(25767,253,"wiki_methods.bas");if(r)goto S_63275;}
-S_63276:;
-if ((-(*__LONG_HELP_LOCKPARSE== 0 ))||is_error_pending()){
-if(qbevent){evnt(25767,255,"wiki_methods.bas");if(r)goto S_63276;}
-do{
-*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_LINK;
-if(!qbevent)break;evnt(25767,255,"wiki_methods.bas");}while(r);
+S_63267:;
+fornext_value7121=*__LONG_HELP_TXT_LEN- 3 ;
+fornext_finalvalue7121= 1 ;
+fornext_step7121= -4 ;
+if (fornext_step7121<0) fornext_step_negative7121=1; else fornext_step_negative7121=0;
+if (is_error_pending()) goto fornext_error7121;
+goto fornext_entrylabel7121;
+while(1){
+fornext_value7121=fornext_step7121+(*_SUB_HELP_CHECKREMOVEBLANKLINE_LONG_I);
+fornext_entrylabel7121:
+*_SUB_HELP_CHECKREMOVEBLANKLINE_LONG_I=fornext_value7121;
+if (fornext_step_negative7121){
+if (fornext_value7121<fornext_finalvalue7121) break;
 }else{
+if (fornext_value7121>fornext_finalvalue7121) break;
+}
+fornext_error7121:;
+if(qbevent){evnt(25769,239,"wiki_methods.bas");if(r)goto S_63267;}
+S_63268:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_HELP_TXT,*_SUB_HELP_CHECKREMOVEBLANKLINE_LONG_I)!= 32 )))||is_error_pending()){
+if(qbevent){evnt(25769,240,"wiki_methods.bas");if(r)goto S_63268;}
 do{
-*_FUNC_HELP_COL_LONG_COL=*__LONG_HELP_COL_ITALIC;
-if(!qbevent)break;evnt(25767,255,"wiki_methods.bas");}while(r);
+*__LONG_HELP_TXT_LEN=*_SUB_HELP_CHECKREMOVEBLANKLINE_LONG_I+ 3 ;
+if(!qbevent)break;evnt(25769,241,"wiki_methods.bas");}while(r);
+do{
+goto fornext_exit_7120;
+if(!qbevent)break;evnt(25769,241,"wiki_methods.bas");}while(r);
+}
+fornext_continue_7120:;
+}
+fornext_exit_7120:;
+S_63273:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_HELP_TXT,*__LONG_HELP_TXT_LEN- 2 )< 128 )))||is_error_pending()){
+if(qbevent){evnt(25769,244,"wiki_methods.bas");if(r)goto S_63273;}
+do{
+SUB_HELP_NEWLINE();
+if(!qbevent)break;evnt(25769,244,"wiki_methods.bas");}while(r);
 }
 }
-do{
-*_FUNC_HELP_COL_LONG_HELP_COL=*_FUNC_HELP_COL_LONG_COL;
-if(!qbevent)break;evnt(25767,257,"wiki_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free390.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_HELP_COL_LONG_HELP_COL;
 }
