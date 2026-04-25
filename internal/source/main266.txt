@@ -1,4 +1,4 @@
-void SUB_EMITLOGGINGSTATEMENT(qbs*_SUB_EMITLOGGINGSTATEMENT_STRING_ELEMENTS,qbs*_SUB_EMITLOGGINGSTATEMENT_STRING_LOGLEVEL){
+void SUB_GENERATEMACOSLOGSCRIPT(qbs*_SUB_GENERATEMACOSLOGSCRIPT_STRING_EXE,qbs*_SUB_GENERATEMACOSLOGSCRIPT_STRING_CMDSTR,qbs*_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,132 +11,182 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_39127:;
-if(qbevent){evnt(25522,3,"logging.bas");if(r)goto S_39127;}
-S_39128:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_EMITLOGGINGSTATEMENT_STRING_LOGLEVEL,qbs_new_txt_len("TRACE",5))))||is_error_pending()){
-if(qbevent){evnt(25522,4,"logging.bas");if(r)goto S_39128;}
 do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("sub__logtrace",13));
+qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
+qbs_cleanup(qbs_tmp_base, 0);
+error_goto_line=12;
+if(!qbevent)break;evnt(25760,31,"terminal.bas");}while(r);
+do{
+sub_kill(_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,4,"logging.bas");}while(r);
+if(!qbevent)break;evnt(25760,32,"terminal.bas");}while(r);
 do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_SCASELAYOUT,qbs_new_txt_len("_LogTrace",9));
+error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
+qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
+qbs_cleanup(qbs_tmp_base, 0);
+if(!qbevent)break;evnt(25760,33,"terminal.bas");}while(r);
+do{
+sub__delay( 0.05E+0 );
+if(!qbevent)break;evnt(25760,35,"terminal.bas");}while(r);
+do{
+*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF=func_freefile();
+if(!qbevent)break;evnt(25760,37,"terminal.bas");}while(r);
+do{
+sub_open(_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT, 4 ,NULL,NULL,*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF,NULL,0);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,4,"logging.bas");}while(r);
-sc_ec_220_end:;
-goto sc_4620_end;
-}
-S_39131:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_EMITLOGGINGSTATEMENT_STRING_LOGLEVEL,qbs_new_txt_len("INFO",4))))||is_error_pending()){
-if(qbevent){evnt(25522,5,"logging.bas");if(r)goto S_39131;}
+if(!qbevent)break;evnt(25760,38,"terminal.bas");}while(r);
+S_39364:;
+if ((*__BYTE_LOGGINGENABLED)||is_error_pending()){
+if(qbevent){evnt(25760,40,"terminal.bas");if(r)goto S_39364;}
 do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("sub__loginfo",12));
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4642;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_LEVEL=",24), 0, 0, 0);
+if (is_error_pending()) goto skip4642;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4642;
+sub_file_print(tmp_fileno,__STRING_LOGMINLEVEL, 0, 0, 0);
+if (is_error_pending()) goto skip4642;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4642;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4642;
+skip4642:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,5,"logging.bas");}while(r);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,41,"terminal.bas");}while(r);
 do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_SCASELAYOUT,qbs_new_txt_len("_LogInfo",8));
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4643;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_SCOPES=",25), 0, 0, 0);
+if (is_error_pending()) goto skip4643;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4643;
+sub_file_print(tmp_fileno,__STRING_LOGSCOPES, 0, 0, 0);
+if (is_error_pending()) goto skip4643;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4643;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4643;
+skip4643:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,5,"logging.bas");}while(r);
-sc_ec_221_end:;
-goto sc_4620_end;
-}
-S_39134:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_EMITLOGGINGSTATEMENT_STRING_LOGLEVEL,qbs_new_txt_len("WARN",4))))||is_error_pending()){
-if(qbevent){evnt(25522,6,"logging.bas");if(r)goto S_39134;}
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,42,"terminal.bas");}while(r);
 do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("sub__logwarn",12));
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4644;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_HANDLERS=",27), 0, 0, 0);
+if (is_error_pending()) goto skip4644;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4644;
+sub_file_print(tmp_fileno,__STRING_LOGHANDLERS, 0, 0, 0);
+if (is_error_pending()) goto skip4644;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4644;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4644;
+skip4644:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,6,"logging.bas");}while(r);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,43,"terminal.bas");}while(r);
 do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_SCASELAYOUT,qbs_new_txt_len("_LogWarn",8));
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4645;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_FILE_PATH=",28), 0, 0, 0);
+if (is_error_pending()) goto skip4645;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4645;
+sub_file_print(tmp_fileno,__STRING_LOGFILENAME, 0, 0, 0);
+if (is_error_pending()) goto skip4645;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4645;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4645;
+skip4645:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,6,"logging.bas");}while(r);
-sc_ec_222_end:;
-goto sc_4620_end;
-}
-S_39137:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_EMITLOGGINGSTATEMENT_STRING_LOGLEVEL,qbs_new_txt_len("ERROR",5))))||is_error_pending()){
-if(qbevent){evnt(25522,7,"logging.bas");if(r)goto S_39137;}
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("sub__logerror",13));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,7,"logging.bas");}while(r);
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_SCASELAYOUT,qbs_new_txt_len("_LogError",9));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,7,"logging.bas");}while(r);
-sc_ec_223_end:;
-goto sc_4620_end;
-}
-sc_4620_end:;
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_E,FUNC_FIXOPERATIONORDER(_SUB_EMITLOGGINGSTATEMENT_STRING_ELEMENTS));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,10,"logging.bas");}while(r);
-S_39142:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(25522,11,"logging.bas");if(r)goto S_39142;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25522,11,"logging.bas");}while(r);
-}
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_L,qbs_add(qbs_add(FUNC_SCASE(_SUB_EMITLOGGINGSTATEMENT_STRING_SCASELAYOUT),__STRING1_SP),__STRING_TLAYOUT));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,13,"logging.bas");}while(r);
-do{
-*__LONG_LAYOUTDONE= 1 ;
-if(!qbevent)break;evnt(25522,14,"logging.bas");}while(r);
-do{
-SUB_PUSHELEMENT(__STRING_LAYOUT,_SUB_EMITLOGGINGSTATEMENT_STRING_L);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,14,"logging.bas");}while(r);
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_E,FUNC_EVALUATETOTYP(_SUB_EMITLOGGINGSTATEMENT_STRING_E,__LONG_ISSTRING));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,16,"logging.bas");}while(r);
-S_39149:;
-if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
-if(qbevent){evnt(25522,17,"logging.bas");if(r)goto S_39149;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25522,17,"logging.bas");}while(r);
-}
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_SUBFUNCNAME,__STRING_SUBFUNC);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,19,"logging.bas");}while(r);
-S_39153:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_EMITLOGGINGSTATEMENT_STRING_SUBFUNCNAME,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(25522,21,"logging.bas");if(r)goto S_39153;}
-do{
-qbs_set(_SUB_EMITLOGGINGSTATEMENT_STRING_SUBFUNCNAME,qbs_new_txt_len("Main QB64 Code",14));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,21,"logging.bas");}while(r);
-}
-S_39156:;
-if ((-(*__LONG_INCLEVEL== 0 ))||is_error_pending()){
-if(qbevent){evnt(25522,23,"logging.bas");if(r)goto S_39156;}
-S_39157:;
-if ((*__BYTE_NOIDEMODE)||is_error_pending()){
-if(qbevent){evnt(25522,24,"logging.bas");if(r)goto S_39157;}
-do{
-SUB_WRITEBUFLINE(&(pass4621=*__LONG_MAINTXTBUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("(",1)),FUNC_ADDQUOTES(FUNC_ESCAPESTRING(__STRING_SOURCEFILE))),qbs_new_txt_len(", ",2)),FUNC_ADDQUOTES(FUNC_ESCAPESTRING(_SUB_EMITLOGGINGSTATEMENT_STRING_SUBFUNCNAME))),qbs_new_txt_len(", ",2)),qbs__tostr((int32)(*__LONG_LINENUMBER),NULL,0)),qbs_new_txt_len(", ",2)),_SUB_EMITLOGGINGSTATEMENT_STRING_E),qbs_new_txt_len(");",2)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,25,"logging.bas");}while(r);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,44,"terminal.bas");}while(r);
 }else{
 do{
-SUB_WRITEBUFLINE(&(pass4622=*__LONG_MAINTXTBUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("(",1)),FUNC_ADDQUOTES(FUNC_ESCAPESTRING(__STRING_IDEPROGNAME))),qbs_new_txt_len(", ",2)),FUNC_ADDQUOTES(FUNC_ESCAPESTRING(_SUB_EMITLOGGINGSTATEMENT_STRING_SUBFUNCNAME))),qbs_new_txt_len(", ",2)),qbs__tostr((int32)(*__LONG_LINENUMBER),NULL,0)),qbs_new_txt_len(", ",2)),_SUB_EMITLOGGINGSTATEMENT_STRING_E),qbs_new_txt_len(");",2)));
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4646;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_LEVEL=",24), 0, 0, 0);
+if (is_error_pending()) goto skip4646;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4646;
+skip4646:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,27,"logging.bas");}while(r);
-}
-}else{
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,46,"terminal.bas");}while(r);
 do{
-SUB_WRITEBUFLINE(&(pass4623=*__LONG_MAINTXTBUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_SUB_EMITLOGGINGSTATEMENT_STRING_FUNC,qbs_new_txt_len("(",1)),FUNC_ADDQUOTES(FUNC_ESCAPESTRING(((qbs*)(((uint64*)(__ARRAY_STRING_INCNAME[0]))[array_check((*__LONG_INCLEVEL)-__ARRAY_STRING_INCNAME[4],__ARRAY_STRING_INCNAME[5])]))))),qbs_new_txt_len(", ",2)),FUNC_ADDQUOTES(FUNC_ESCAPESTRING(_SUB_EMITLOGGINGSTATEMENT_STRING_SUBFUNCNAME))),qbs_new_txt_len(", ",2)),qbs__tostr((int32)(((int32*)(__ARRAY_LONG_INCLINENUMBER[0]))[array_check((*__LONG_INCLEVEL)-__ARRAY_LONG_INCLINENUMBER[4],__ARRAY_LONG_INCLINENUMBER[5])]),NULL,0)),qbs_new_txt_len(", ",2)),_SUB_EMITLOGGINGSTATEMENT_STRING_E),qbs_new_txt_len(");",2)));
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4647;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_SCOPES=",25), 0, 0, 0);
+if (is_error_pending()) goto skip4647;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4647;
+skip4647:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25522,30,"logging.bas");}while(r);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,47,"terminal.bas");}while(r);
+do{
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4648;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_HANDLERS=",27), 0, 0, 0);
+if (is_error_pending()) goto skip4648;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4648;
+skip4648:
+qbs_cleanup(qbs_tmp_base,0);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,48,"terminal.bas");}while(r);
+do{
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4649;
+sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_FILE_PATH=",28), 0, 0, 0);
+if (is_error_pending()) goto skip4649;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4649;
+skip4649:
+qbs_cleanup(qbs_tmp_base,0);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,49,"terminal.bas");}while(r);
 }
+do{
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
+if (is_error_pending()) goto skip4650;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4650;
+sub_file_print(tmp_fileno,_SUB_GENERATEMACOSLOGSCRIPT_STRING_EXE, 0, 0, 0);
+if (is_error_pending()) goto skip4650;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
+if (is_error_pending()) goto skip4650;
+sub_file_print(tmp_fileno,qbs_new_txt_len(" ",1), 0, 0, 0);
+if (is_error_pending()) goto skip4650;
+sub_file_print(tmp_fileno,_SUB_GENERATEMACOSLOGSCRIPT_STRING_CMDSTR, 0, 0, 0);
+if (is_error_pending()) goto skip4650;
+sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
+if (is_error_pending()) goto skip4650;
+skip4650:
+qbs_cleanup(qbs_tmp_base,0);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25760,51,"terminal.bas");}while(r);
+do{
+sub_close(*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF,1);
+if(!qbevent)break;evnt(25760,53,"terminal.bas");}while(r);
+do{
+sub_shell2(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("chmod +x ",9),qbs_new_txt_len("\042",1)),_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT),qbs_new_txt_len("\042",1)),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25760,55,"terminal.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free266.txt"

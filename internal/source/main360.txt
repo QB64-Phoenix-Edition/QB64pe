@@ -1,4 +1,4 @@
-qbs* FUNC_FINDPROPOSEDTITLE(){
+void SUB_SORT(ptrszint*_SUB_SORT_ARRAY_STRING998_ARR){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,114 +11,64 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-do{
-if(!qbevent)break;evnt(25528,20134,"ide_methods.bas");}while(r);
-S_61863:;
-fornext_value6978= 1 ;
-fornext_finalvalue6978=*__LONG_IDEN;
-fornext_step6978= 1 ;
-if (fornext_step6978<0) fornext_step_negative6978=1; else fornext_step_negative6978=0;
-if (is_error_pending()) goto fornext_error6978;
-goto fornext_entrylabel6978;
+S_62101:;
+fornext_value7008=func_lbound(_SUB_SORT_ARRAY_STRING998_ARR,1,1)+ 1 ;
+fornext_finalvalue7008=func_ubound(_SUB_SORT_ARRAY_STRING998_ARR,1,1);
+fornext_step7008= 1 ;
+if (fornext_step7008<0) fornext_step_negative7008=1; else fornext_step_negative7008=0;
+if (is_error_pending()) goto fornext_error7008;
+goto fornext_entrylabel7008;
 while(1){
-fornext_value6978=fornext_step6978+(*_FUNC_FINDPROPOSEDTITLE_LONG_I);
-fornext_entrylabel6978:
-*_FUNC_FINDPROPOSEDTITLE_LONG_I=fornext_value6978;
-if (fornext_step_negative6978){
-if (fornext_value6978<fornext_finalvalue6978) break;
+fornext_value7008=fornext_step7008+(*_SUB_SORT_LONG_I);
+fornext_entrylabel7008:
+*_SUB_SORT_LONG_I=fornext_value7008;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative7008){
+if (fornext_value7008<fornext_finalvalue7008) break;
 }else{
-if (fornext_value6978>fornext_finalvalue6978) break;
+if (fornext_value7008>fornext_finalvalue7008) break;
 }
-fornext_error6978:;
-if(qbevent){evnt(25528,20135,"ide_methods.bas");if(r)goto S_61863;}
+fornext_error7008:;
+if(qbevent){evnt(25767,20118,"ide_methods.bas");if(r)goto S_62101;}
 do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,FUNC_IDEGETLINE(_FUNC_FINDPROPOSEDTITLE_LONG_I));
+qbs_set(_SUB_SORT_STRING_X,qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[(array_check((*_SUB_SORT_LONG_I)-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]))*998],998,1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20136,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25767,20119,"ide_methods.bas");}while(r);
 do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,qbs_ltrim(qbs_rtrim(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20137,"ide_methods.bas");}while(r);
+*_SUB_SORT_LONG_J=*_SUB_SORT_LONG_I- 1 ;
+if(!qbevent)break;evnt(25767,20120,"ide_methods.bas");}while(r);
+S_62104:;
+while((qbs_cleanup(qbs_tmp_base,-(*_SUB_SORT_LONG_J>=func_lbound(_SUB_SORT_ARRAY_STRING998_ARR,1,1))))||is_error_pending()){
+if(qbevent){evnt(25767,20121,"ide_methods.bas");if(r)goto S_62104;}
+S_62105:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_lessorequal(qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[(array_check((*_SUB_SORT_LONG_J)-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]))*998],998,1),_SUB_SORT_STRING_X)))||is_error_pending()){
+if(qbevent){evnt(25767,20122,"ide_methods.bas");if(r)goto S_62105;}
 do{
-*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE=func_instr(NULL,qbs_ucase(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE),qbs_add(qbs_new_txt_len("_TITLE ",7),func_chr( 34 )),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20138,"ide_methods.bas");}while(r);
-S_61867:;
-if ((-(*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE> 0 ))||is_error_pending()){
-if(qbevent){evnt(25528,20139,"ide_methods.bas");if(r)goto S_61867;}
-do{
-SUB_FINDQUOTECOMMENT(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE,_FUNC_FINDPROPOSEDTITLE_BYTE_C,_FUNC_FINDPROPOSEDTITLE_BYTE_Q);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20140,"ide_methods.bas");}while(r);
-S_61869:;
-if ((~(*_FUNC_FINDPROPOSEDTITLE_BYTE_Q))||is_error_pending()){
-if(qbevent){evnt(25528,20141,"ide_methods.bas");if(r)goto S_61869;}
-do{
-*_FUNC_FINDPROPOSEDTITLE_LONG_FIND_CLOSINGQUOTE=func_instr(*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE+ 8 ,_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,func_chr( 34 ),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20142,"ide_methods.bas");}while(r);
-S_61871:;
-if ((-(*_FUNC_FINDPROPOSEDTITLE_LONG_FIND_CLOSINGQUOTE> 0 ))||is_error_pending()){
-if(qbevent){evnt(25528,20143,"ide_methods.bas");if(r)goto S_61871;}
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_TEMPFOUND_TITLE,func_mid(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE+ 8 ,(*_FUNC_FINDPROPOSEDTITLE_LONG_FIND_CLOSINGQUOTE-*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE)- 8 ,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20144,"ide_methods.bas");}while(r);
+goto ww_exit_7009;
+if(!qbevent)break;evnt(25767,20122,"ide_methods.bas");}while(r);
 }
 do{
-goto fornext_exit_6977;
-if(!qbevent)break;evnt(25528,20146,"ide_methods.bas");}while(r);
-}
-}
-fornext_continue_6977:;
-}
-fornext_exit_6977:;
+tmp_long=array_check((*_SUB_SORT_LONG_J+ 1 )-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]);
+if (!is_error_pending()) qbs_set(qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[tmp_long*998],998,1),qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[(array_check((*_SUB_SORT_LONG_J)-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]))*998],998,1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25767,20123,"ide_methods.bas");}while(r);
 do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_INVALIDCHARS,qbs_add(qbs_new_txt_len(":/\\?*><|",8),func_chr( 34 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20151,"ide_methods.bas");}while(r);
-S_61879:;
-fornext_value6980= 1 ;
-fornext_finalvalue6980=_FUNC_FINDPROPOSEDTITLE_STRING_TEMPFOUND_TITLE->len;
-fornext_step6980= 1 ;
-if (fornext_step6980<0) fornext_step_negative6980=1; else fornext_step_negative6980=0;
-if (is_error_pending()) goto fornext_error6980;
-goto fornext_entrylabel6980;
-while(1){
-fornext_value6980=fornext_step6980+(*_FUNC_FINDPROPOSEDTITLE_LONG_I);
-fornext_entrylabel6980:
-*_FUNC_FINDPROPOSEDTITLE_LONG_I=fornext_value6980;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative6980){
-if (fornext_value6980<fornext_finalvalue6980) break;
-}else{
-if (fornext_value6980>fornext_finalvalue6980) break;
+*_SUB_SORT_LONG_J=*_SUB_SORT_LONG_J- 1 ;
+if(!qbevent)break;evnt(25767,20124,"ide_methods.bas");}while(r);
+ww_continue_7009:;
 }
-fornext_error6980:;
-if(qbevent){evnt(25528,20152,"ide_methods.bas");if(r)goto S_61879;}
+ww_exit_7009:;
 do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_THISCHAR,func_mid(_FUNC_FINDPROPOSEDTITLE_STRING_TEMPFOUND_TITLE,*_FUNC_FINDPROPOSEDTITLE_LONG_I, 1 ,0|1));
+tmp_long=array_check((*_SUB_SORT_LONG_J+ 1 )-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]);
+if (!is_error_pending()) qbs_set(qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[tmp_long*998],998,1),_SUB_SORT_STRING_X);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20153,"ide_methods.bas");}while(r);
-S_61881:;
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_FINDPROPOSEDTITLE_STRING_INVALIDCHARS,_FUNC_FINDPROPOSEDTITLE_STRING_THISCHAR,0)== 0 )))||is_error_pending()){
-if(qbevent){evnt(25528,20154,"ide_methods.bas");if(r)goto S_61881;}
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_FOUND_TITLE,qbs_add(_FUNC_FINDPROPOSEDTITLE_STRING_FOUND_TITLE,_FUNC_FINDPROPOSEDTITLE_STRING_THISCHAR));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20155,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25767,20126,"ide_methods.bas");}while(r);
+fornext_continue_7007:;
 }
-fornext_continue_6979:;
-}
-fornext_exit_6979:;
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_FINDPROPOSEDTITLE,qbs_ltrim(qbs_rtrim(_FUNC_FINDPROPOSEDTITLE_STRING_FOUND_TITLE)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20159,"ide_methods.bas");}while(r);
+fornext_exit_7007:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free360.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_FINDPROPOSEDTITLE_STRING_FINDPROPOSEDTITLE);return _FUNC_FINDPROPOSEDTITLE_STRING_FINDPROPOSEDTITLE;
 }

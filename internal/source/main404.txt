@@ -1,4 +1,4 @@
-qbs* FUNC__WHATISMYIP(){
+qbs* FUNC__DECODEURL(qbs*_FUNC__DECODEURL_STRING__URL){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,41 +11,44 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-*_FUNC__WHATISMYIP_LONG__CH=func__openclient(qbs_new_txt_len("http://qb64phoenix.com/qb64_files/ip.php",40));
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
-if ((-(*_FUNC__WHATISMYIP_LONG__CH== 0ll ))||is_error_pending()){
-goto exit_subfunc;
-}
-if ((-(func__statusCode(*_FUNC__WHATISMYIP_LONG__CH)== 200 ))||is_error_pending()){
-qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_new_txt_len("",0));
+fornext_value7525= 1 ;
+fornext_finalvalue7525=_FUNC__DECODEURL_STRING__URL->len;
+fornext_step7525= 1 ;
+if (fornext_step7525<0) fornext_step_negative7525=1; else fornext_step_negative7525=0;
+if (is_error_pending()) goto fornext_error7525;
+goto fornext_entrylabel7525;
+while(1){
+fornext_value7525=fornext_step7525+(*_FUNC__DECODEURL_INTEGER__P);
+fornext_entrylabel7525:
+*_FUNC__DECODEURL_INTEGER__P=fornext_value7525;
 qbs_cleanup(qbs_tmp_base,0);
-*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
-do{
-sub__delay( 0.1E+0 );
-sub_get2(*_FUNC__WHATISMYIP_LONG__CH,NULL,_FUNC__WHATISMYIP_STRING__REC,0);
+if (fornext_step_negative7525){
+if (fornext_value7525<fornext_finalvalue7525) break;
+}else{
+if (fornext_value7525>fornext_finalvalue7525) break;
+}
+fornext_error7525:;
+*_FUNC__DECODEURL_INTEGER__A=qbs_asc(_FUNC__DECODEURL_STRING__URL,*_FUNC__DECODEURL_INTEGER__P);
 qbs_cleanup(qbs_tmp_base,0);
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC__WHATISMYIP_STRING__REC->len> 0 )))||is_error_pending()){
-*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
-}
-qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_add(_FUNC__WHATISMYIP_STRING__RES,_FUNC__WHATISMYIP_STRING__REC));
+if ((-(*_FUNC__DECODEURL_INTEGER__A!= 37ll ))||is_error_pending()){
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_add(_FUNC__DECODEURL_STRING__TMP,func_chr(*_FUNC__DECODEURL_INTEGER__A)));
 qbs_cleanup(qbs_tmp_base,0);
-if ((func_eof(*_FUNC__WHATISMYIP_LONG__CH))||is_error_pending()){
-qbs_set(_FUNC__WHATISMYIP_STRING__WHATISMYIP,_FUNC__WHATISMYIP_STRING__RES);
+}else{
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_add(_FUNC__DECODEURL_STRING__TMP,func_chr(qbr(qbs_val<long double>(qbs_add(qbs_new_txt_len("&H",2),func_mid(_FUNC__DECODEURL_STRING__URL,*_FUNC__DECODEURL_INTEGER__P+ 1 , 2 ,0|1))))& 255 )));
 qbs_cleanup(qbs_tmp_base,0);
-goto dl_exit_7494;
+*_FUNC__DECODEURL_INTEGER__P=*_FUNC__DECODEURL_INTEGER__P+ 2 ;
 }
-if ((-((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 )>=( 86400ll )))||is_error_pending()){
-*_FUNC__WHATISMYIP_DOUBLE__ST=*_FUNC__WHATISMYIP_DOUBLE__ST- 86400ll ;
+fornext_continue_7524:;
 }
-dl_continue_7494:;
-}while((!(-(((float)((func_timer( 0.001E+0 ,0|1))))>((float)((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 ))))))&&(!is_error_pending()));
-dl_exit_7494:;
-}
-sub_close(*_FUNC__WHATISMYIP_LONG__CH,1);
+fornext_exit_7524:;
+qbs_set(_FUNC__DECODEURL_STRING__DECODEURL,_FUNC__DECODEURL_STRING__TMP);
+qbs_cleanup(qbs_tmp_base,0);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free404.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC__WHATISMYIP_STRING__WHATISMYIP);return _FUNC__WHATISMYIP_STRING__WHATISMYIP;
+qbs_maketmp(_FUNC__DECODEURL_STRING__DECODEURL);return _FUNC__DECODEURL_STRING__DECODEURL;
 }

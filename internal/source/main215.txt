@@ -1,4 +1,4 @@
-void SUB_HASHDUMP(){
+void SUB_HASHREMOVE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,230 +12,120 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-*_SUB_HASHDUMP_LONG_FH=func_freefile();
-if(!qbevent)break;evnt(25516,258,"hash.bas");}while(r);
+*_SUB_HASHREMOVE_LONG_I=*__LONG_HASHREMOVE_LASTFOUND;
+if(!qbevent)break;evnt(25755,215,"hash.bas");}while(r);
 do{
-sub_open(qbs_new_txt_len("hashdump.txt",12), 4 ,NULL,NULL,*_SUB_HASHDUMP_LONG_FH,NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25516,259,"hash.bas");}while(r);
+*__LONG_HASHLISTFREELAST=*__LONG_HASHLISTFREELAST+ 1 ;
+if(!qbevent)break;evnt(25755,218,"hash.bas");}while(r);
+S_37704:;
+if ((-(*__LONG_HASHLISTFREELAST>*__LONG_HASHLISTFREESIZE))||is_error_pending()){
+if(qbevent){evnt(25755,219,"hash.bas");if(r)goto S_37704;}
 do{
-qbs_set(_SUB_HASHDUMP_STRING_B,qbs_new_txt_len("12345678901234567890123456789012}",33));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25516,260,"hash.bas");}while(r);
-S_37483:;
-fornext_value4431= 0 ;
-fornext_finalvalue4431= 16777215 ;
-fornext_step4431= 1 ;
-if (fornext_step4431<0) fornext_step_negative4431=1; else fornext_step_negative4431=0;
-if (is_error_pending()) goto fornext_error4431;
-goto fornext_entrylabel4431;
-while(1){
-fornext_value4431=fornext_step4431+(*_SUB_HASHDUMP_LONG_X);
-fornext_entrylabel4431:
-*_SUB_HASHDUMP_LONG_X=fornext_value4431;
-if (fornext_step_negative4431){
-if (fornext_value4431<fornext_finalvalue4431) break;
+*__LONG_HASHLISTFREESIZE=*__LONG_HASHLISTFREESIZE* 2 ;
+if(!qbevent)break;evnt(25755,220,"hash.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_HASHLISTFREE[2]&2){
+error(10);
 }else{
-if (fornext_value4431>fornext_finalvalue4431) break;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_HASHLISTFREE)[8])->id=(++mem_lock_id);
+static int32 preserved_elements;
+if (__ARRAY_LONG_HASHLISTFREE[2]&1){
+preserved_elements=__ARRAY_LONG_HASHLISTFREE[5];
 }
-fornext_error4431:;
-if(qbevent){evnt(25516,261,"hash.bas");if(r)goto S_37483;}
-S_37484:;
-if ((((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((*_SUB_HASHDUMP_LONG_X)-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])])||is_error_pending()){
-if(qbevent){evnt(25516,262,"hash.bas");if(r)goto S_37484;}
-do{
-tab_spc_cr_size=2;
-tab_fileno=tmp_fileno=*_SUB_HASHDUMP_LONG_FH;
-if (is_error_pending()) goto skip4432;
-sub_file_print(tmp_fileno,qbs_new_txt_len("START HashTable(",16), 0, 0, 0);
-if (is_error_pending()) goto skip4432;
-sub_file_print(tmp_fileno,qbs_str((int32)(*_SUB_HASHDUMP_LONG_X)), 1, 0, 0);
-if (is_error_pending()) goto skip4432;
-sub_file_print(tmp_fileno,qbs_new_txt_len("):",2), 0, 0, 1);
-if (is_error_pending()) goto skip4432;
-skip4432:
-qbs_cleanup(qbs_tmp_base,0);
-tab_spc_cr_size=1;
-if(!qbevent)break;evnt(25516,264,"hash.bas");}while(r);
-do{
-*_SUB_HASHDUMP_LONG_I=((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((*_SUB_HASHDUMP_LONG_X)-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])];
-if(!qbevent)break;evnt(25516,265,"hash.bas");}while(r);
-do{
-*_SUB_HASHDUMP_LONG_LASTI=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)));
-if(!qbevent)break;evnt(25516,268,"hash.bas");}while(r);
-S_37488:;
-if ((qbs_cleanup(qbs_tmp_base,(-(*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))== 0 ))|(-(*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)))!= 0 ))|(-(FUNC_HASHVALUE(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1))!=*_SUB_HASHDUMP_LONG_X))))||is_error_pending()){
-if(qbevent){evnt(25516,269,"hash.bas");if(r)goto S_37488;}
-do{
-goto LABEL_CORRUPT;
-if(!qbevent)break;evnt(25516,269,"hash.bas");}while(r);
-}
-do{
-tab_spc_cr_size=2;
-tab_fileno=tmp_fileno=*_SUB_HASHDUMP_LONG_FH;
-if (is_error_pending()) goto skip4433;
-sub_file_print(tmp_fileno,qbs_new_txt_len("  HashList(",11), 0, 0, 0);
-if (is_error_pending()) goto skip4433;
-sub_file_print(tmp_fileno,qbs_str((int32)(*_SUB_HASHDUMP_LONG_I)), 1, 0, 0);
-if (is_error_pending()) goto skip4433;
-sub_file_print(tmp_fileno,qbs_new_txt_len(").LastItem=",11), 0, 0, 0);
-if (is_error_pending()) goto skip4433;
-sub_file_print(tmp_fileno,qbs_str((int32)(*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16))))), 1, 0, 1);
-if (is_error_pending()) goto skip4433;
-skip4433:
-qbs_cleanup(qbs_tmp_base,0);
-tab_spc_cr_size=1;
-if(!qbevent)break;evnt(25516,271,"hash.bas");}while(r);
-LABEL_HASHDUMPNEXTITEM:;
-if(qbevent){evnt(25516,272,"hash.bas");r=0;}
-do{
-qbs_set(_SUB_HASHDUMP_STRING_X,qbs_add(qbs_add(qbs_add(qbs_new_txt_len("  [",3),qbs__tostr((int32)(*_SUB_HASHDUMP_LONG_I),NULL,0)),qbs_new_txt_len("]",1)),qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25516,273,"hash.bas");}while(r);
-do{
-*_SUB_HASHDUMP_LONG_F=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+0)));
-if(!qbevent)break;evnt(25516,275,"hash.bas");}while(r);
-do{
-qbs_set(_SUB_HASHDUMP_STRING_X,qbs_add(qbs_add(qbs_add(_SUB_HASHDUMP_STRING_X,qbs_new_txt_len(",.Flags=",8)),qbs__tostr((int32)(*_SUB_HASHDUMP_LONG_F),NULL,0)),qbs_new_txt_len("{",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25516,276,"hash.bas");}while(r);
-S_37495:;
-fornext_value4435= 1 ;
-fornext_finalvalue4435= 32 ;
-fornext_step4435= 1 ;
-if (fornext_step4435<0) fornext_step_negative4435=1; else fornext_step_negative4435=0;
-if (is_error_pending()) goto fornext_error4435;
-goto fornext_entrylabel4435;
-while(1){
-fornext_value4435=fornext_step4435+(*_SUB_HASHDUMP_LONG_Z);
-fornext_entrylabel4435:
-*_SUB_HASHDUMP_LONG_Z=fornext_value4435;
-if (fornext_step_negative4435){
-if (fornext_value4435<fornext_finalvalue4435) break;
+else preserved_elements=0;
+__ARRAY_LONG_HASHLISTFREE[4]= 1 ;
+__ARRAY_LONG_HASHLISTFREE[5]=(*__LONG_HASHLISTFREESIZE)-__ARRAY_LONG_HASHLISTFREE[4]+1;
+__ARRAY_LONG_HASHLISTFREE[6]=1;
+if (__ARRAY_LONG_HASHLISTFREE[2]&4){
+if (preserved_elements){
+memcpy(redim_preserve_cmem_buffer,(void*)(__ARRAY_LONG_HASHLISTFREE[0]),preserved_elements*4);
+cmem_dynamic_free((uint8*)(__ARRAY_LONG_HASHLISTFREE[0]));
+tmp_long=__ARRAY_LONG_HASHLISTFREE[5];
+__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)cmem_dynamic_malloc(tmp_long*4);
+memcpy((void*)(__ARRAY_LONG_HASHLISTFREE[0]),redim_preserve_cmem_buffer,preserved_elements*4);
+if (preserved_elements<tmp_long) ZeroMemory(((uint8*)(__ARRAY_LONG_HASHLISTFREE[0]))+preserved_elements*4,(tmp_long*4)-(preserved_elements*4));
 }else{
-if (fornext_value4435>fornext_finalvalue4435) break;
+__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)cmem_dynamic_malloc(__ARRAY_LONG_HASHLISTFREE[5]*4);
+memset((void*)(__ARRAY_LONG_HASHLISTFREE[0]),0,__ARRAY_LONG_HASHLISTFREE[5]*4);
 }
-fornext_error4435:;
-if(qbevent){evnt(25516,277,"hash.bas");if(r)goto S_37495;}
-do{
-tqbs=_SUB_HASHDUMP_STRING_B; if (!is_error_pending()){
-tmp_fileno=*_SUB_HASHDUMP_LONG_Z; if (!is_error_pending()){
-tmp_long=(*_SUB_HASHDUMP_LONG_F& 1 )+ 48 ; if (!is_error_pending()){
-if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
-}}}
-if(!qbevent)break;evnt(25516,278,"hash.bas");}while(r);
-do{
-*_SUB_HASHDUMP_LONG_F=*_SUB_HASHDUMP_LONG_F/  2 ;
-if(!qbevent)break;evnt(25516,279,"hash.bas");}while(r);
-fornext_continue_4434:;
+}else{
+if (preserved_elements){
+tmp_long=__ARRAY_LONG_HASHLISTFREE[5];
+__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)realloc((void*)(__ARRAY_LONG_HASHLISTFREE[0]),tmp_long*4);
+if (!__ARRAY_LONG_HASHLISTFREE[0]) error(257);
+if (preserved_elements<tmp_long) ZeroMemory(((uint8*)(__ARRAY_LONG_HASHLISTFREE[0]))+preserved_elements*4,(tmp_long*4)-(preserved_elements*4));
+}else{
+__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)calloc(__ARRAY_LONG_HASHLISTFREE[5]*4,1);
+if (!__ARRAY_LONG_HASHLISTFREE[0]) error(257);
 }
-fornext_exit_4434:;
+}
+__ARRAY_LONG_HASHLISTFREE[2]|=1;
+}
+if(!qbevent)break;evnt(25755,221,"hash.bas");}while(r);
+}
 do{
-qbs_set(_SUB_HASHDUMP_STRING_X,qbs_add(_SUB_HASHDUMP_STRING_X,_SUB_HASHDUMP_STRING_B));
+tmp_long=array_check((*__LONG_HASHLISTFREELAST)-__ARRAY_LONG_HASHLISTFREE[4],__ARRAY_LONG_HASHLISTFREE[5]);
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_HASHLISTFREE[0]))[tmp_long]=*_SUB_HASHREMOVE_LONG_I;
+if(!qbevent)break;evnt(25755,223,"hash.bas");}while(r);
+do{
+*_SUB_HASHREMOVE_LONG_I1=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)));
+if(!qbevent)break;evnt(25755,226,"hash.bas");}while(r);
+S_37710:;
+if ((*_SUB_HASHREMOVE_LONG_I1)||is_error_pending()){
+if(qbevent){evnt(25755,227,"hash.bas");if(r)goto S_37710;}
+do{
+*_SUB_HASHREMOVE_LONG_I2=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
+if(!qbevent)break;evnt(25755,229,"hash.bas");}while(r);
+S_37712:;
+if ((*_SUB_HASHREMOVE_LONG_I2)||is_error_pending()){
+if(qbevent){evnt(25755,230,"hash.bas");if(r)goto S_37712;}
+do{
+*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I1)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)))=*_SUB_HASHREMOVE_LONG_I2;
+if(!qbevent)break;evnt(25755,232,"hash.bas");}while(r);
+do{
+*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))=*_SUB_HASHREMOVE_LONG_I1;
+if(!qbevent)break;evnt(25755,233,"hash.bas");}while(r);
+}else{
+do{
+*_SUB_HASHREMOVE_LONG_X=((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((FUNC_HASHVALUE(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1)))-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])];
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25516,281,"hash.bas");}while(r);
+if(!qbevent)break;evnt(25755,236,"hash.bas");}while(r);
 do{
-qbs_set(_SUB_HASHDUMP_STRING_X,qbs_add(qbs_add(_SUB_HASHDUMP_STRING_X,qbs_new_txt_len(",.Reference=",12)),qbs__tostr((int32)(*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+4)))),NULL,0)));
+*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_X)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))=*_SUB_HASHREMOVE_LONG_I1;
+if(!qbevent)break;evnt(25755,237,"hash.bas");}while(r);
+do{
+*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I1)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)))= 0 ;
+if(!qbevent)break;evnt(25755,238,"hash.bas");}while(r);
+}
+}else{
+do{
+*_SUB_HASHREMOVE_LONG_X=((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((FUNC_HASHVALUE(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1)))-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])];
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25516,283,"hash.bas");}while(r);
+if(!qbevent)break;evnt(25755,242,"hash.bas");}while(r);
 do{
-tab_spc_cr_size=2;
-tab_fileno=tmp_fileno=*_SUB_HASHDUMP_LONG_FH;
-if (is_error_pending()) goto skip4436;
-sub_file_print(tmp_fileno,_SUB_HASHDUMP_STRING_X, 0, 0, 1);
-if (is_error_pending()) goto skip4436;
-skip4436:
-qbs_cleanup(qbs_tmp_base,0);
-tab_spc_cr_size=1;
-if(!qbevent)break;evnt(25516,285,"hash.bas");}while(r);
+*_SUB_HASHREMOVE_LONG_I2=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
+if(!qbevent)break;evnt(25755,243,"hash.bas");}while(r);
+S_37723:;
+if ((*_SUB_HASHREMOVE_LONG_I2)||is_error_pending()){
+if(qbevent){evnt(25755,244,"hash.bas");if(r)goto S_37723;}
 do{
-*_SUB_HASHDUMP_LONG_I1=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)));
-if(!qbevent)break;evnt(25516,288,"hash.bas");}while(r);
+tmp_long=array_check((*_SUB_HASHREMOVE_LONG_X)-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5]);
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_HASHTABLE[0]))[tmp_long]=*_SUB_HASHREMOVE_LONG_I2;
+if(!qbevent)break;evnt(25755,246,"hash.bas");}while(r);
 do{
-*_SUB_HASHDUMP_LONG_I2=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
-if(!qbevent)break;evnt(25516,289,"hash.bas");}while(r);
-S_37504:;
-if ((*_SUB_HASHDUMP_LONG_I1)||is_error_pending()){
-if(qbevent){evnt(25516,290,"hash.bas");if(r)goto S_37504;}
-S_37505:;
-if ((-(*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I1)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)))!=*_SUB_HASHDUMP_LONG_I))||is_error_pending()){
-if(qbevent){evnt(25516,291,"hash.bas");if(r)goto S_37505;}
+*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)))= 0 ;
+if(!qbevent)break;evnt(25755,247,"hash.bas");}while(r);
 do{
-goto LABEL_CORRUPT;
-if(!qbevent)break;evnt(25516,291,"hash.bas");}while(r);
+*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)));
+if(!qbevent)break;evnt(25755,248,"hash.bas");}while(r);
+}else{
+do{
+tmp_long=array_check((*_SUB_HASHREMOVE_LONG_X)-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5]);
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_HASHTABLE[0]))[tmp_long]= 0 ;
+if(!qbevent)break;evnt(25755,251,"hash.bas");}while(r);
 }
 }
-S_37509:;
-if ((*_SUB_HASHDUMP_LONG_I2)||is_error_pending()){
-if(qbevent){evnt(25516,293,"hash.bas");if(r)goto S_37509;}
-S_37510:;
-if ((-(*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)))!=*_SUB_HASHDUMP_LONG_I))||is_error_pending()){
-if(qbevent){evnt(25516,294,"hash.bas");if(r)goto S_37510;}
-do{
-goto LABEL_CORRUPT;
-if(!qbevent)break;evnt(25516,294,"hash.bas");}while(r);
-}
-}
-S_37514:;
-if ((-(*_SUB_HASHDUMP_LONG_I2== 0 ))||is_error_pending()){
-if(qbevent){evnt(25516,296,"hash.bas");if(r)goto S_37514;}
-S_37515:;
-if ((-(*_SUB_HASHDUMP_LONG_LASTI!=*_SUB_HASHDUMP_LONG_I))||is_error_pending()){
-if(qbevent){evnt(25516,297,"hash.bas");if(r)goto S_37515;}
-do{
-goto LABEL_CORRUPT;
-if(!qbevent)break;evnt(25516,297,"hash.bas");}while(r);
-}
-}
-do{
-*_SUB_HASHDUMP_LONG_I=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHDUMP_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
-if(!qbevent)break;evnt(25516,300,"hash.bas");}while(r);
-S_37520:;
-if ((*_SUB_HASHDUMP_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25516,301,"hash.bas");if(r)goto S_37520;}
-do{
-goto LABEL_HASHDUMPNEXTITEM;
-if(!qbevent)break;evnt(25516,301,"hash.bas");}while(r);
-}
-do{
-tab_spc_cr_size=2;
-tab_fileno=tmp_fileno=*_SUB_HASHDUMP_LONG_FH;
-if (is_error_pending()) goto skip4437;
-sub_file_print(tmp_fileno,qbs_new_txt_len("END HashTable(",14), 0, 0, 0);
-if (is_error_pending()) goto skip4437;
-sub_file_print(tmp_fileno,qbs_str((int32)(*_SUB_HASHDUMP_LONG_X)), 1, 0, 0);
-if (is_error_pending()) goto skip4437;
-sub_file_print(tmp_fileno,qbs_new_txt_len(")",1), 0, 0, 1);
-if (is_error_pending()) goto skip4437;
-skip4437:
-qbs_cleanup(qbs_tmp_base,0);
-tab_spc_cr_size=1;
-if(!qbevent)break;evnt(25516,303,"hash.bas");}while(r);
-}
-fornext_continue_4430:;
-}
-fornext_exit_4430:;
-do{
-sub_close(*_SUB_HASHDUMP_LONG_FH,1);
-if(!qbevent)break;evnt(25516,306,"hash.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25516,308,"hash.bas");}while(r);
-LABEL_CORRUPT:;
-if(qbevent){evnt(25516,309,"hash.bas");r=0;}
-do{
-tab_spc_cr_size=2;
-tab_fileno=tmp_fileno=*_SUB_HASHDUMP_LONG_FH;
-if (is_error_pending()) goto skip4438;
-sub_file_print(tmp_fileno,qbs_new_txt_len("HASH TABLE CORRUPT!",19), 0, 0, 1);
-if (is_error_pending()) goto skip4438;
-skip4438:
-qbs_cleanup(qbs_tmp_base,0);
-tab_spc_cr_size=1;
-if(!qbevent)break;evnt(25516,310,"hash.bas");}while(r);
-do{
-sub_close(*_SUB_HASHDUMP_LONG_FH,1);
-if(!qbevent)break;evnt(25516,311,"hash.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free215.txt"

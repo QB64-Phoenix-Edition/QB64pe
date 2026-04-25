@@ -1,4 +1,4 @@
-void SUB_FORCERCSTATEVAR(void*_SUB_FORCERCSTATEVAR_UDT_STVAR,int8*_SUB_FORCERCSTATEVAR_BYTE_FORCEVAL){
+void SUB_SETRCSTATEVAR(void*_SUB_SETRCSTATEVAR_UDT_STVAR,int8*_SUB_SETRCSTATEVAR_BYTE_SETVAL){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,8 +12,15 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-*(int8*)(((char*)_SUB_FORCERCSTATEVAR_UDT_STVAR)+((0+3)))=*_SUB_FORCERCSTATEVAR_BYTE_FORCEVAL;
-if(!qbevent)break;evnt(25517,27,"statevars.bas");}while(r);
+*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+0)))=*_SUB_SETRCSTATEVAR_BYTE_SETVAL;
+if(!qbevent)break;evnt(25756,17,"statevars.bas");}while(r);
+S_37799:;
+if (((-(*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+1)))!=*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+0)))))&(-(*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+2)))== 0ll )))||is_error_pending()){
+if(qbevent){evnt(25756,18,"statevars.bas");if(r)goto S_37799;}
+do{
+*__INTEGER_RECOMPILE= 1 ;
+if(!qbevent)break;evnt(25756,19,"statevars.bas");}while(r);
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free219.txt"

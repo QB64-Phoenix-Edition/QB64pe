@@ -1,4 +1,4 @@
-void SUB_IDESAVE(qbs*_SUB_IDESAVE_STRING_F){
+qbs* FUNC_IDERESTORE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,77 +12,38 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-*__LONG_IDEERROR= 6 ;
-if(!qbevent)break;evnt(25528,12771,"ide_methods.bas");}while(r);
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(25767,12762,"ide_methods.bas");}while(r);
 do{
-sub_open(_SUB_IDESAVE_STRING_F, 4 ,NULL,NULL, 151 ,NULL,0);
+sub_pcopy( 0 , 2 );
+if(!qbevent)break;evnt(25767,12763,"ide_methods.bas");}while(r);
+do{
+sub_pcopy( 0 , 1 );
+if(!qbevent)break;evnt(25767,12764,"ide_methods.bas");}while(r);
+do{
+qbg_screen(NULL,NULL, 1 , 0 ,NULL,12);
+if(!qbevent)break;evnt(25767,12765,"ide_methods.bas");}while(r);
+do{
+*_FUNC_IDERESTORE_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Backup found",12),qbs_new_txt_len("Recover program from auto-saved backup?",39),qbs_new_txt_len("#Yes;#No",8));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12772,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25767,12766,"ide_methods.bas");}while(r);
+S_53790:;
+if ((-(*_FUNC_IDERESTORE_LONG_RESULT== 1 ))||is_error_pending()){
+if(qbevent){evnt(25767,12767,"ide_methods.bas");if(r)goto S_53790;}
 do{
-sub_close( 151 ,1);
-if(!qbevent)break;evnt(25528,12772,"ide_methods.bas");}while(r);
-do{
-sub_open(_SUB_IDESAVE_STRING_F, 2 ,NULL,NULL, 151 ,NULL,0);
+qbs_set(_FUNC_IDERESTORE_STRING_IDERESTORE,qbs_new_txt_len("Y",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12773,"ide_methods.bas");}while(r);
-do{
-*__LONG_IDEERROR= 1 ;
-if(!qbevent)break;evnt(25528,12774,"ide_methods.bas");}while(r);
-S_53549:;
-if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
-if(qbevent){evnt(25528,12775,"ide_methods.bas");if(r)goto S_53549;}
-do{
-qbs_set(_SUB_IDESAVE_STRING_LINEENDING,qbs_add(func_chr( 13 ),func_chr( 10 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12775,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25767,12767,"ide_methods.bas");}while(r);
 }else{
 do{
-qbs_set(_SUB_IDESAVE_STRING_LINEENDING,func_chr( 10 ));
+qbs_set(_FUNC_IDERESTORE_STRING_IDERESTORE,qbs_new_txt_len("N",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12775,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25767,12767,"ide_methods.bas");}while(r);
 }
-S_53554:;
-fornext_value6174= 1 ;
-fornext_finalvalue6174=*__LONG_IDEN;
-fornext_step6174= 1 ;
-if (fornext_step6174<0) fornext_step_negative6174=1; else fornext_step_negative6174=0;
-if (is_error_pending()) goto fornext_error6174;
-goto fornext_entrylabel6174;
-while(1){
-fornext_value6174=fornext_step6174+(*_SUB_IDESAVE_LONG_I);
-fornext_entrylabel6174:
-*_SUB_IDESAVE_LONG_I=fornext_value6174;
-if (fornext_step_negative6174){
-if (fornext_value6174<fornext_finalvalue6174) break;
-}else{
-if (fornext_value6174>fornext_finalvalue6174) break;
-}
-fornext_error6174:;
-if(qbevent){evnt(25528,12776,"ide_methods.bas");if(r)goto S_53554;}
-do{
-qbs_set(_SUB_IDESAVE_STRING_OUTFILE,qbs_add(FUNC_IDEGETLINE(_SUB_IDESAVE_LONG_I),_SUB_IDESAVE_STRING_LINEENDING));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12777,"ide_methods.bas");}while(r);
-do{
-sub_put2( 151 ,NULL,byte_element((uint64)_SUB_IDESAVE_STRING_OUTFILE->chr,_SUB_IDESAVE_STRING_OUTFILE->len,byte_element_6175),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12778,"ide_methods.bas");}while(r);
-fornext_continue_6173:;
-}
-fornext_exit_6173:;
-do{
-sub_close( 151 ,1);
-if(!qbevent)break;evnt(25528,12780,"ide_methods.bas");}while(r);
-do{
-SUB_IDESAVEBOOKMARKS(_SUB_IDESAVE_STRING_F);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,12781,"ide_methods.bas");}while(r);
-do{
-*__LONG_IDEUNSAVED= 0 ;
-if(!qbevent)break;evnt(25528,12782,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free310.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_IDERESTORE_STRING_IDERESTORE);return _FUNC_IDERESTORE_STRING_IDERESTORE;
 }

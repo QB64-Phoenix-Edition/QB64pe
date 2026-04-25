@@ -1,4 +1,4 @@
-int32 FUNC_PARSESTRING(qbs*_FUNC_PARSESTRING_STRING_EXP,void*_FUNC_PARSESTRING_UDT_STATE){
+int32 FUNC_STREXPRESSION(qbs*_FUNC_STREXPRESSION_STRING_EXP,void*_FUNC_STREXPRESSION_UDT_STATE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,67 +11,67 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_36241:;
-if (( 0ll )||is_error_pending()){
-if(qbevent){evnt(25515,229,"const_eval.bas");if(r)goto S_36241;}
+S_36472:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_PARSESTRING(_FUNC_STREXPRESSION_STRING_EXP,(void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+0)) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25754,208,"const_eval.bas");if(r)goto S_36472;}
 do{
-sub__echo(qbs_new_txt_len("ParseString",11));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,229,"const_eval.bas");}while(r);
+goto exit_subfunc;
+if(!qbevent)break;evnt(25754,208,"const_eval.bas");}while(r);
 }
 do{
-qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+4)) )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,230,"const_eval.bas");}while(r);
-S_36245:;
-if ((qbs_cleanup(qbs_tmp_base,FUNC_ELEMENTISSTRING(_FUNC_PARSESTRING_STRING_ELE)))||is_error_pending()){
-if(qbevent){evnt(25515,232,"const_eval.bas");if(r)goto S_36245;}
+if(!qbevent)break;evnt(25754,210,"const_eval.bas");}while(r);
 do{
-qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+4)) )));
+qbs_set(_FUNC_STREXPRESSION_STRING_S,*((qbs**)((char*)_FUNC_STREXPRESSION_UDT_STATE+((0+56)))));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,233,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25754,211,"const_eval.bas");}while(r);
+S_36477:;
 do{
-SUB_PARSENUMSETS((void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+8)) ),_FUNC_PARSESTRING_STRING_ELE);
+if(qbevent){evnt(25754,213,"const_eval.bas");if(r)goto S_36477;}
+do{
+qbs_set(_FUNC_STREXPRESSION_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_STREXPRESSION_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+4)) )));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,235,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25754,214,"const_eval.bas");}while(r);
+S_36479:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_STREXPRESSION_STRING_ELE,qbs_new_txt_len("+",1))))||is_error_pending()){
+if(qbevent){evnt(25754,215,"const_eval.bas");if(r)goto S_36479;}
 do{
-*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
-if(!qbevent)break;evnt(25515,237,"const_eval.bas");}while(r);
+qbs_set(_FUNC_STREXPRESSION_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_STREXPRESSION_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+4)) )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25754,216,"const_eval.bas");}while(r);
+S_36481:;
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_PARSESTRING(_FUNC_STREXPRESSION_STRING_EXP,(void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+0)) ))== 0 )))||is_error_pending()){
+if(qbevent){evnt(25754,217,"const_eval.bas");if(r)goto S_36481;}
+do{
+SUB_FIXUPERRORMESSAGE((void*)( ((char*)(_FUNC_STREXPRESSION_UDT_STATE)) + ((0+0)) ),qbs_new_txt_len("+",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25754,217,"const_eval.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25754,217,"const_eval.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_STREXPRESSION_STRING_S,FUNC_ELEMENTSTRINGCONCAT(_FUNC_STREXPRESSION_STRING_S,*((qbs**)((char*)_FUNC_STREXPRESSION_UDT_STATE+((0+56))))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25754,219,"const_eval.bas");}while(r);
 }else{
-S_36250:;
-if ((qbs_cleanup(qbs_tmp_base,FUNC_PARSENUMHASHLOOKUP(_FUNC_PARSESTRING_STRING_ELE,(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ))))||is_error_pending()){
-if(qbevent){evnt(25515,239,"const_eval.bas");if(r)goto S_36250;}
-S_36251:;
-if ((-((*(int32*)(((char*)_FUNC_PARSESTRING_UDT_STATE)+((0+64)))&*__LONG_ISSTRING)== 0 ))||is_error_pending()){
-if(qbevent){evnt(25515,240,"const_eval.bas");if(r)goto S_36251;}
 do{
-qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+((0+68)))),qbs_new_txt_len("ERROR - Expecting a string value",32));
+qbs_set(*((qbs**)((char*)(_FUNC_STREXPRESSION_UDT_STATE)+((0+56)))),_FUNC_STREXPRESSION_STRING_S);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,240,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25754,221,"const_eval.bas");}while(r);
+do{
+*_FUNC_STREXPRESSION_LONG_STREXPRESSION= -1 ;
+if(!qbevent)break;evnt(25754,222,"const_eval.bas");}while(r);
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25515,240,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(25754,223,"const_eval.bas");}while(r);
 }
-do{
-qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+4)) )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,242,"const_eval.bas");}while(r);
-do{
-*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
-if(!qbevent)break;evnt(25515,243,"const_eval.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25515,244,"const_eval.bas");}while(r);
-}
-do{
-qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+((0+68)))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Unexpected element '",28),_FUNC_PARSESTRING_STRING_ELE),qbs_new_txt_len("'",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25515,247,"const_eval.bas");}while(r);
-}
+dl_continue_4287:;
+}while(1);
+dl_exit_4287:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free181.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_PARSESTRING_LONG_PARSESTRING;
+return *_FUNC_STREXPRESSION_LONG_STREXPRESSION;
 }
