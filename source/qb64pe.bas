@@ -14083,7 +14083,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     IF autoarray = 1 THEN autoarray = 0: autoary = 1 'clear global value & set local value
 
-    f12$ = ""
+    f12Buf% = CreateBuf% 'temporary buffer for code accumulation
 
     'changelog:
     'added 4 to [2] to indicate cmem array where appropriate
@@ -14356,101 +14356,101 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
 
             'Generate error if array is static
-            f12$ = f12$ + CRLF + "if (" + n$ + "[2]&2){" 'static array
-            f12$ = f12$ + CRLF + "error(10);" 'cannot redefine a static array!
-            f12$ = f12$ + CRLF + "}else{"
+            WriteBufLine f12Buf%, "if (" + n$ + "[2]&2){" 'static array
+            WriteBufLine f12Buf%, "error(10);" 'cannot redefine a static array!
+            WriteBufLine f12Buf%, "}else{"
             'Note: Array is either undefined or dynamically defined at this point
 
 
             'REDIM (not DIM) must be used to redefine an array
-            f12$ = f12$ + CRLF + "static int64 alloc_new_desc[" + _TOSTR$(4 * nume + 4) + "];"
-            f12$ = f12$ + CRLF + "static uint64 alloc_req_elems;"
-            f12$ = f12$ + CRLF + "static uint64 alloc_req_bytes;"
-            f12$ = f12$ + CRLF + "static uint64 alloc_dim_value;"
-            f12$ = f12$ + CRLF + "static uint64 alloc_bytes_per_element;"
+            WriteBufLine f12Buf%, "static int64 alloc_new_desc[" + _TOSTR$(4 * nume + 4) + "];"
+            WriteBufLine f12Buf%, "static uint64 alloc_req_elems;"
+            WriteBufLine f12Buf%, "static uint64 alloc_req_bytes;"
+            WriteBufLine f12Buf%, "static uint64 alloc_dim_value;"
+            WriteBufLine f12Buf%, "static uint64 alloc_bytes_per_element;"
             IF redimoption = 0 THEN
-                f12$ = f12$ + CRLF + "if (" + n$ + "[2]&1){" 'array is defined
-                f12$ = f12$ + CRLF + "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
-                f12$ = f12$ + CRLF + "}else{"
+                WriteBufLine f12Buf%, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLine f12Buf%, "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
+                WriteBufLine f12Buf%, "}else{"
             ELSE
                 '--------CAPTURE EXISTING ARRAY IF NECESSARY--------
                 'Do not destroy the old allocation until the new one has succeeded.
 
                 'refresh lock ID (_MEM)
-                f12$ = f12$ + CRLF + "((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "])->id=(++mem_lock_id);"
-                f12$ = f12$ + CRLF + "static ptrszint preserve_old_ptr;"
-                f12$ = f12$ + CRLF + "static ptrszint preserve_old_flags;"
-                f12$ = f12$ + CRLF + "static uint64 preserve_old_total;"
-                f12$ = f12$ + CRLF + "static uint64 preserve_new_total;"
-                f12$ = f12$ + CRLF + "static uint64 preserve_copy_count;"
-                f12$ = f12$ + CRLF + "static ptrszint preserve_new_ptr;"
+                WriteBufLine f12Buf%, "((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "])->id=(++mem_lock_id);"
+                WriteBufLine f12Buf%, "static ptrszint preserve_old_ptr;"
+                WriteBufLine f12Buf%, "static ptrszint preserve_old_flags;"
+                WriteBufLine f12Buf%, "static uint64 preserve_old_total;"
+                WriteBufLine f12Buf%, "static uint64 preserve_new_total;"
+                WriteBufLine f12Buf%, "static uint64 preserve_copy_count;"
+                WriteBufLine f12Buf%, "static ptrszint preserve_new_ptr;"
                 IF redimoption = 3 THEN
-                    f12$ = f12$ + CRLF + "static int32 preserve_any;"
-                    f12$ = f12$ + CRLF + "static int64 preserve_old_desc[" + _TOSTR$(4 * nume + 4) + "];"
-                    f12$ = f12$ + CRLF + "static int64 preserve_lo[" + _TOSTR$(nume) + "];"
-                    f12$ = f12$ + CRLF + "static int64 preserve_hi[" + _TOSTR$(nume) + "];"
-                    f12$ = f12$ + CRLF + "static int64 preserve_idx[" + _TOSTR$(nume) + "];"
-                    f12$ = f12$ + CRLF + "static int64 preserve_old_off;"
-                    f12$ = f12$ + CRLF + "static int64 preserve_new_off;"
-                    f12$ = f12$ + CRLF + "static ptrszint preserve_dim;"
+                    WriteBufLine f12Buf%, "static int32 preserve_any;"
+                    WriteBufLine f12Buf%, "static int64 preserve_old_desc[" + _TOSTR$(4 * nume + 4) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_lo[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_hi[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_idx[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_old_off;"
+                    WriteBufLine f12Buf%, "static int64 preserve_new_off;"
+                    WriteBufLine f12Buf%, "static ptrszint preserve_dim;"
                 END IF
 
-                f12$ = f12$ + CRLF + "if (" + n$ + "[2]&1){" 'array is defined
-                f12$ = f12$ + CRLF + "preserve_old_ptr=" + n$ + "[0];"
-                f12$ = f12$ + CRLF + "preserve_old_flags=" + n$ + "[2];"
-                f12$ = f12$ + CRLF + "preserve_old_total=" + elesizestr$ + ";"
+                WriteBufLine f12Buf%, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLine f12Buf%, "preserve_old_ptr=" + n$ + "[0];"
+                WriteBufLine f12Buf%, "preserve_old_flags=" + n$ + "[2];"
+                WriteBufLine f12Buf%, "preserve_old_total=" + elesizestr$ + ";"
                 IF redimoption = 3 THEN
                     FOR i = 4 TO 4 + nume * 4 - 1
-                        f12$ = f12$ + CRLF + "preserve_old_desc[" + _TOSTR$(i) + "]=" + n$ + "[" + _TOSTR$(i) + "];"
+                        WriteBufLine f12Buf%, "preserve_old_desc[" + _TOSTR$(i) + "]=" + n$ + "[" + _TOSTR$(i) + "];"
                     NEXT
                 END IF
-                f12$ = f12$ + CRLF + "}else{"
-                f12$ = f12$ + CRLF + "preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;"
-                IF redimoption = 3 THEN f12$ = f12$ + CRLF + "preserve_any=0;"
-                f12$ = f12$ + CRLF + "}"
+                WriteBufLine f12Buf%, "}else{"
+                WriteBufLine f12Buf%, "preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;"
+                IF redimoption = 3 THEN WriteBufLine f12Buf%, "preserve_any=0;"
+                WriteBufLine f12Buf%, "}"
                 '--------EXISTING ARRAY CAPTURED AS NECESSARY--------
             END IF 'redim specified
 
 
             '--------CREATE ARRAY & CLEAN-UP CODE--------
             'Build the new descriptor in temporary storage first.
-            f12$ = f12$ + CRLF + newsd$
-            f12$ = f12$ + CRLF + "alloc_req_elems=1;"
-            f12$ = f12$ + CRLF + "alloc_bytes_per_element=(uint64)(" + bytesperelement$ + ");"
-            f12$ = f12$ + CRLF + "if (!alloc_bytes_per_element) error(257);"
+            WriteBufLine f12Buf%, newsd$
+            WriteBufLine f12Buf%, "alloc_req_elems=1;"
+            WriteBufLine f12Buf%, "alloc_bytes_per_element=(uint64)(" + bytesperelement$ + ");"
+            WriteBufLine f12Buf%, "if (!alloc_bytes_per_element) error(257);"
             FOR i = 1 TO nume
                 argi = i * 4 - 4 + 4
-                f12$ = f12$ + CRLF + "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi) + "]))!=alloc_new_desc[" + _TOSTR$(argi) + "]) error(257);"
-                f12$ = f12$ + CRLF + "if (alloc_new_desc[" + _TOSTR$(argi + 1) + "]<0) error(257);"
-                f12$ = f12$ + CRLF + "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 1) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 1) + "]) error(257);"
-                f12$ = f12$ + CRLF + "if (alloc_new_desc[" + _TOSTR$(argi + 2) + "]<0) error(257);"
-                f12$ = f12$ + CRLF + "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 2) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 2) + "]) error(257);"
-                f12$ = f12$ + CRLF + "alloc_dim_value=(uint64)alloc_new_desc[" + _TOSTR$(argi + 1) + "];"
-                f12$ = f12$ + CRLF + "if (alloc_dim_value){"
-                f12$ = f12$ + CRLF + "if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);"
-                f12$ = f12$ + CRLF + "alloc_req_elems*=alloc_dim_value;"
-                f12$ = f12$ + CRLF + "}"
+                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi) + "]))!=alloc_new_desc[" + _TOSTR$(argi) + "]) error(257);"
+                WriteBufLine f12Buf%, "if (alloc_new_desc[" + _TOSTR$(argi + 1) + "]<0) error(257);"
+                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 1) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 1) + "]) error(257);"
+                WriteBufLine f12Buf%, "if (alloc_new_desc[" + _TOSTR$(argi + 2) + "]<0) error(257);"
+                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 2) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 2) + "]) error(257);"
+                WriteBufLine f12Buf%, "alloc_dim_value=(uint64)alloc_new_desc[" + _TOSTR$(argi + 1) + "];"
+                WriteBufLine f12Buf%, "if (alloc_dim_value){"
+                WriteBufLine f12Buf%, "if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);"
+                WriteBufLine f12Buf%, "alloc_req_elems*=alloc_dim_value;"
+                WriteBufLine f12Buf%, "}"
             NEXT
-            f12$ = f12$ + CRLF + "if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);"
-            f12$ = f12$ + CRLF + "alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;"
-            f12$ = f12$ + CRLF + "if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);"
-            f12$ = f12$ + CRLF + "if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);"
+            WriteBufLine f12Buf%, "if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);"
+            WriteBufLine f12Buf%, "alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;"
+            WriteBufLine f12Buf%, "if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);"
+            WriteBufLine f12Buf%, "if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);"
 
             IF redimoption THEN
-                f12$ = f12$ + CRLF + "preserve_new_total=alloc_req_elems;"
-                f12$ = f12$ + CRLF + "preserve_copy_count=preserve_old_total;"
-                f12$ = f12$ + CRLF + "if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;"
+                WriteBufLine f12Buf%, "preserve_new_total=alloc_req_elems;"
+                WriteBufLine f12Buf%, "preserve_copy_count=preserve_old_total;"
+                WriteBufLine f12Buf%, "if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;"
             END IF
 
             IF redimoption = 3 THEN 'for _Retain, preserve overlap region by coordinates
-                f12$ = f12$ + CRLF + "preserve_any=(preserve_old_total!=0);"
+                WriteBufLine f12Buf%, "preserve_any=(preserve_old_total!=0);"
                 FOR i = 1 TO nume
                     argi = (nume - i) * 4 + 4
-                    f12$ = f12$ + CRLF + "preserve_lo[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "];"
-                    f12$ = f12$ + CRLF + "if (preserve_old_desc[" + _TOSTR$(argi) + "]>preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_lo[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "];"
-                    f12$ = f12$ + CRLF + "preserve_hi[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "]+(alloc_new_desc[" + _TOSTR$(argi + 1) + "]-1);"
-                    f12$ = f12$ + CRLF + "if ((preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1))<preserve_hi[" + _TOSTR$(i - 1) + "]) preserve_hi[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1);"
-                    f12$ = f12$ + CRLF + "if (preserve_hi[" + _TOSTR$(i - 1) + "]<preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_any=0;"
+                    WriteBufLine f12Buf%, "preserve_lo[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "];"
+                    WriteBufLine f12Buf%, "if (preserve_old_desc[" + _TOSTR$(argi) + "]>preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_lo[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "];"
+                    WriteBufLine f12Buf%, "preserve_hi[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "]+(alloc_new_desc[" + _TOSTR$(argi + 1) + "]-1);"
+                    WriteBufLine f12Buf%, "if ((preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1))<preserve_hi[" + _TOSTR$(i - 1) + "]) preserve_hi[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1);"
+                    WriteBufLine f12Buf%, "if (preserve_hi[" + _TOSTR$(i - 1) + "]<preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_any=0;"
                 NEXT
             END IF
 
@@ -14459,118 +14459,118 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 'Note: String and variable-length udt arrays are always created in 64bit memory
 
                 IF redimoption THEN
-                    f12$ = f12$ + CRLF + "if (preserve_old_total){"
-                    f12$ = f12$ + CRLF + "preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);"
-                    f12$ = f12$ + CRLF + "if (!preserve_new_ptr) error(257);" 'not enough memory
-                    f12$ = f12$ + CRLF + n$ + "[0]=preserve_new_ptr;"
-                    f12$ = f12$ + CRLF + n$ + "[2]|=1;" 'ADD initialized flag
-                    f12$ = f12$ + CRLF + "tmp_long=(ptrszint)alloc_req_elems;"
+                    WriteBufLine f12Buf%, "if (preserve_old_total){"
+                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);" 'not enough memory
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
+                    WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
 
                     'init individual strings / var-len UDT members in the NEW array
                     IF stringarray THEN
-                        f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array/string content in cmem
-                        f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
-                        f12$ = f12$ + CRLF + "}else{" 'not in cmem
-                        f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
-                        f12$ = f12$ + CRLF + "}" 'not in cmem
+                        WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array/string content in cmem
+                        WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                        WriteBufLine f12Buf%, "}else{" 'not in cmem
+                        WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                        WriteBufLine f12Buf%, "}" 'not in cmem
                     ELSE
-                        f12$ = f12$ + CRLF + "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
-                        f12$ = f12$ + CRLF + "while(tmp_long--){"
+                        WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "while(tmp_long--){"
                         acc$ = ""
                         initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        f12$ = f12$ + acc$ + "}"
+                        WriteBufLine f12Buf%, acc$ + "}"
                     END IF
 
                     IF redimoption = 2 THEN
-                        f12$ = f12$ + CRLF + "tmp_long=preserve_copy_count;"
-                        f12$ = f12$ + CRLF + "while(tmp_long--){"
+                        WriteBufLine f12Buf%, "tmp_long=preserve_copy_count;"
+                        WriteBufLine f12Buf%, "while(tmp_long--){"
                         IF stringarray THEN
-                            f12$ = f12$ + CRLF + "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
+                            WriteBufLine f12Buf%, "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
                         ELSE
                             acc$ = ""
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(tmp_long*" + bytesperelement$ + ")", "(tmp_long*" + bytesperelement$ + ")", acc$
-                            f12$ = f12$ + acc$
+                            WriteBufLine f12Buf%, acc$
                         END IF
-                        f12$ = f12$ + CRLF + "}"
+                        WriteBufLine f12Buf%, "}"
                     ELSEIF redimoption = 3 THEN
                         'copy overlap region by coordinates
-                        f12$ = f12$ + CRLF + "if (preserve_any){"
+                        WriteBufLine f12Buf%, "if (preserve_any){"
                         FOR i = 0 TO nume - 1
-                            f12$ = f12$ + CRLF + "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
+                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
                         NEXT
-                        f12$ = f12$ + CRLF + "for(;;){"
+                        WriteBufLine f12Buf%, "for(;;){"
                         argi = (nume - 1) * 4 + 4
-                        f12$ = f12$ + CRLF + "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                        f12$ = f12$ + CRLF + "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
                         FOR i = 2 TO nume
                             argi = (nume - i) * 4 + 4
-                            f12$ = f12$ + CRLF + "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                            f12$ = f12$ + CRLF + "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
                         NEXT
 
                         IF stringarray THEN
-                            f12$ = f12$ + CRLF + "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[preserve_new_off],(qbs*)((uint64*)(preserve_old_ptr))[preserve_old_off]);"
+                            WriteBufLine f12Buf%, "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[preserve_new_off],(qbs*)((uint64*)(preserve_old_ptr))[preserve_old_off]);"
                         ELSE
                             acc$ = ""
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", acc$
-                            f12$ = f12$ + acc$
+                            WriteBufLine f12Buf%, acc$
                         END IF
 
-                        f12$ = f12$ + CRLF + "preserve_dim=0;"
-                        f12$ = f12$ + CRLF + "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                        f12$ = f12$ + CRLF + "preserve_idx[preserve_dim]++;"
-                        f12$ = f12$ + CRLF + "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                        f12$ = f12$ + CRLF + "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                        f12$ = f12$ + CRLF + "preserve_dim++;"
-                        f12$ = f12$ + CRLF + "}"
-                        f12$ = f12$ + CRLF + "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                        f12$ = f12$ + CRLF + "}"
-                        f12$ = f12$ + CRLF + "}"
+                        WriteBufLine f12Buf%, "preserve_dim=0;"
+                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
+                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+                        WriteBufLine f12Buf%, "preserve_dim++;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "}"
                     END IF
 
                     'free OLD array content and OLD raw block
                     IF stringarray THEN
-                        f12$ = f12$ + CRLF + "tmp_long=preserve_old_total;"
-                        f12$ = f12$ + CRLF + "while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
-                        f12$ = f12$ + CRLF + "free((void*)(preserve_old_ptr));"
+                        WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
+                        WriteBufLine f12Buf%, "while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
+                        WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
                     ELSE
-                        f12$ = f12$ + CRLF + n$ + "[0]=preserve_old_ptr;"
-                        f12$ = f12$ + CRLF + "tmp_long=preserve_old_total;"
-                        f12$ = f12$ + CRLF + "while(tmp_long--){"
+                        WriteBufLine f12Buf%, n$ + "[0]=preserve_old_ptr;"
+                        WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
+                        WriteBufLine f12Buf%, "while(tmp_long--){"
                         acc$ = ""
                         free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        f12$ = f12$ + acc$ + "}"
-                        f12$ = f12$ + CRLF + "free((void*)(preserve_old_ptr));"
+                        WriteBufLine f12Buf%, acc$ + "}"
+                        WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
                     END IF
 
-                    f12$ = f12$ + CRLF + n$ + "[0]=preserve_new_ptr;"
-                    f12$ = f12$ + CRLF + "}else{"
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, "}else{"
                 END IF
 
                 '1. Create array
-                f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)malloc((size_t)alloc_req_bytes);"
-                f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
-                f12$ = f12$ + CRLF + n$ + "[2]|=1;" 'ADD initialized flag
-                f12$ = f12$ + CRLF + "tmp_long=(ptrszint)alloc_req_elems;"
+                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)malloc((size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);" 'not enough memory
+                WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
+                WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
 
 
                 'init individual strings
                 IF stringarray THEN
-                    f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array is in cmem
-                    f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
-                    f12$ = f12$ + CRLF + "}else{" 'not in cmem
-                    f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
-                    f12$ = f12$ + CRLF + "}" 'not in cmem
+                    WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array is in cmem
+                    WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                    WriteBufLine f12Buf%, "}else{" 'not in cmem
+                    WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                    WriteBufLine f12Buf%, "}" 'not in cmem
                 ELSE 'initialise udt's
-                    f12$ = f12$ + CRLF + "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
-                    f12$ = f12$ + CRLF + "while(tmp_long--){"
+                    WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
+                    WriteBufLine f12Buf%, "while(tmp_long--){"
                     acc$ = ""
                     initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                    f12$ = f12$ + acc$ + "}"
+                    WriteBufLine f12Buf%, acc$ + "}"
                 END IF
 
                 IF redimoption THEN
-                    f12$ = f12$ + CRLF + "}"
+                    WriteBufLine f12Buf%, "}"
                 END IF
 
 
@@ -14596,111 +14596,111 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             ELSE 'not string/var-udt array
 
                 '1. Create array
-                f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array will be in cmem
+                WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array will be in cmem
 
                 IF redimoption THEN
-                    f12$ = f12$ + CRLF + "if (preserve_old_total){"
-                    f12$ = f12$ + CRLF + "preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
-                    f12$ = f12$ + CRLF + "if (!preserve_new_ptr) error(257);"
-                    f12$ = f12$ + CRLF + "memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf%, "if (preserve_old_total){"
+                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
+                    WriteBufLine f12Buf%, "memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);"
                     IF redimoption = 2 THEN
-                        f12$ = f12$ + CRLF + "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
                     ELSEIF redimoption = 3 THEN
-                        f12$ = f12$ + CRLF + "if (preserve_any){"
+                        WriteBufLine f12Buf%, "if (preserve_any){"
                         FOR i = 0 TO nume - 1
-                            f12$ = f12$ + CRLF + "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
+                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
                         NEXT
-                        f12$ = f12$ + CRLF + "for(;;){"
+                        WriteBufLine f12Buf%, "for(;;){"
                         argi = (nume - 1) * 4 + 4
-                        f12$ = f12$ + CRLF + "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                        f12$ = f12$ + CRLF + "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
                         FOR i = 2 TO nume
                             argi = (nume - i) * 4 + 4
-                            f12$ = f12$ + CRLF + "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                            f12$ = f12$ + CRLF + "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
                         NEXT
-                        f12$ = f12$ + CRLF + "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
-                        f12$ = f12$ + CRLF + "preserve_dim=0;"
-                        f12$ = f12$ + CRLF + "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                        f12$ = f12$ + CRLF + "preserve_idx[preserve_dim]++;"
-                        f12$ = f12$ + CRLF + "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                        f12$ = f12$ + CRLF + "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                        f12$ = f12$ + CRLF + "preserve_dim++;"
-                        f12$ = f12$ + CRLF + "}"
-                        f12$ = f12$ + CRLF + "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                        f12$ = f12$ + CRLF + "}"
-                        f12$ = f12$ + CRLF + "}"
+                        WriteBufLine f12Buf%, "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "preserve_dim=0;"
+                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
+                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+                        WriteBufLine f12Buf%, "preserve_dim++;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "}"
                     END IF
-                    f12$ = f12$ + CRLF + "if (preserve_old_flags&4){"
-                    f12$ = f12$ + CRLF + "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
-                    f12$ = f12$ + CRLF + "}else{"
-                    f12$ = f12$ + CRLF + "free((void*)(preserve_old_ptr));"
-                    f12$ = f12$ + CRLF + "}"
-                    f12$ = f12$ + CRLF + n$ + "[0]=preserve_new_ptr;"
-                    f12$ = f12$ + CRLF + "}else{"
+                    WriteBufLine f12Buf%, "if (preserve_old_flags&4){"
+                    WriteBufLine f12Buf%, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, "}else{"
                 END IF
 
                 'standard cmem method
-                f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
-                f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);"
-                f12$ = f12$ + CRLF + "memset((void*)(" + n$ + "[0]),0,(size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);"
+                WriteBufLine f12Buf%, "memset((void*)(" + n$ + "[0]),0,(size_t)alloc_req_bytes);"
 
                 IF redimoption THEN
-                    f12$ = f12$ + CRLF + "}"
+                    WriteBufLine f12Buf%, "}"
                 END IF
 
-                f12$ = f12$ + CRLF + "}else{" 'not in cmem
+                WriteBufLine f12Buf%, "}else{" 'not in cmem
 
                 IF redimoption THEN
-                    f12$ = f12$ + CRLF + "if (preserve_old_total){"
-                    f12$ = f12$ + CRLF + "preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
-                    f12$ = f12$ + CRLF + "if (!preserve_new_ptr) error(257);"
+                    WriteBufLine f12Buf%, "if (preserve_old_total){"
+                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
+                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
                     IF redimoption = 2 THEN
-                        f12$ = f12$ + CRLF + "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
                     ELSEIF redimoption = 3 THEN
-                        f12$ = f12$ + CRLF + "if (preserve_any){"
+                        WriteBufLine f12Buf%, "if (preserve_any){"
                         FOR i = 0 TO nume - 1
-                            f12$ = f12$ + CRLF + "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
+                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
                         NEXT
-                        f12$ = f12$ + CRLF + "for(;;){"
+                        WriteBufLine f12Buf%, "for(;;){"
                         argi = (nume - 1) * 4 + 4
-                        f12$ = f12$ + CRLF + "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                        f12$ = f12$ + CRLF + "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
                         FOR i = 2 TO nume
                             argi = (nume - i) * 4 + 4
-                            f12$ = f12$ + CRLF + "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                            f12$ = f12$ + CRLF + "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
                         NEXT
-                        f12$ = f12$ + CRLF + "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
-                        f12$ = f12$ + CRLF + "preserve_dim=0;"
-                        f12$ = f12$ + CRLF + "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                        f12$ = f12$ + CRLF + "preserve_idx[preserve_dim]++;"
-                        f12$ = f12$ + CRLF + "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                        f12$ = f12$ + CRLF + "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                        f12$ = f12$ + CRLF + "preserve_dim++;"
-                        f12$ = f12$ + CRLF + "}"
-                        f12$ = f12$ + CRLF + "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                        f12$ = f12$ + CRLF + "}"
-                        f12$ = f12$ + CRLF + "}"
+                        WriteBufLine f12Buf%, "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "preserve_dim=0;"
+                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
+                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+                        WriteBufLine f12Buf%, "preserve_dim++;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "}"
                     END IF
-                    f12$ = f12$ + CRLF + "if (preserve_old_flags&4){"
-                    f12$ = f12$ + CRLF + "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
-                    f12$ = f12$ + CRLF + "}else{"
-                    f12$ = f12$ + CRLF + "free((void*)(preserve_old_ptr));"
-                    f12$ = f12$ + CRLF + "}"
-                    f12$ = f12$ + CRLF + n$ + "[0]=preserve_new_ptr;"
-                    f12$ = f12$ + CRLF + "}else{"
+                    WriteBufLine f12Buf%, "if (preserve_old_flags&4){"
+                    WriteBufLine f12Buf%, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, "}else{"
                 END IF
                 'standard allocation method
-                f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
-                f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
+                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
+                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);" 'not enough memory
                 IF redimoption THEN
-                    f12$ = f12$ + CRLF + "}"
+                    WriteBufLine f12Buf%, "}"
                 END IF
 
 
-                f12$ = f12$ + CRLF + "}" 'not in cmem
-                f12$ = f12$ + CRLF + n$ + "[2]|=1;" 'ADD initialized flag
+                WriteBufLine f12Buf%, "}" 'not in cmem
+                WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
 
                 '2. Generate "clean up" code (called when EXITING A SUB/FUNCTION)
                 IF arraydesc = 0 THEN 'only add for first declaration of the array
@@ -14716,7 +14716,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 END IF
             END IF 'not string array
 
-            f12$ = f12$ + CRLF + commitdesc$
+            WriteBufLine f12Buf%, commitdesc$
 
         END IF 'undefined=0
 
@@ -14743,8 +14743,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
         IF undefined = 0 THEN
 
-            IF redimoption = 0 THEN f12$ = f12$ + CRLF + "}" 'if REDIM not specified the above is conditional
-            f12$ = f12$ + CRLF + "}" 'not static
+            IF redimoption = 0 THEN WriteBufLine f12Buf%, "}" 'if REDIM not specified the above is conditional
+            WriteBufLine f12Buf%, "}" 'not static
 
         END IF 'undefined=0
 
@@ -14755,9 +14755,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     IF autoary = 0 THEN
         IF dimoption = 3 THEN 'STATIC a(100) puts creation code in main
-            WriteBufLine DataTxtBuf, f12$
+            BufInsertBuf DataTxtBuf, f12Buf% 'insert accumulated code into target buffer
         ELSE
-            WriteBufLine MainTxtBuf, f12$
+            BufInsertBuf MainTxtBuf, f12Buf% 'insert accumulated code into target buffer
         END IF
     END IF
 
@@ -14768,6 +14768,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     '[4] number of indexes
     '[4] multiplier (the last multiplier doesn't actually exist)
     '[4] reserved
+
+    DisposeBuf f12Buf% 'destroy and free temporary buffer
 
     dimshared = dimsharedlast
 
