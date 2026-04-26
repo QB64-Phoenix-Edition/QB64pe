@@ -10,9 +10,9 @@ DIM SHARED IsCiVersion AS _BYTE
 ' string as needed on the BASIC level by incorporating the version number
 ' string defined below.
 
-Version$ = "4.4.0"
-$VERSIONINFO:FILEVERSION#=4,4,0,0
-$VERSIONINFO:PRODUCTVERSION#=4,4,0,0
+Version$ = "4.5.0"
+$VERSIONINFO:FILEVERSION#=4,5,0,0
+$VERSIONINFO:PRODUCTVERSION#=4,5,0,0
 
 ' If ./internal/version.txt exist, then this is some kind of CI build with a label
 IF _FILEEXISTS("internal/version.txt") THEN
