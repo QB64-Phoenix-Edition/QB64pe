@@ -536,6 +536,7 @@ class GLUTEmu {
                     });
 
                     // Get the framebuffer size (already in pixels) and set a callback to track changes
+                    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
                     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->framebufferWidth = width;
