@@ -1,4 +1,4 @@
-qbs* FUNC_TYPE_GETCPPARITHMETICTYPE(int32*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID){
+int32 FUNC_ISUINTEGER(qbs*_FUNC_ISUINTEGER_STRING_I){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,165 +11,60 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-do{
-if(!qbevent)break;evnt(25518,937,"type.bas");}while(r);
-do{
-*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS=FUNC_TYPE_GETSIZEINBITS(_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID);
-if(!qbevent)break;evnt(25518,937,"type.bas");}while(r);
-do{
-if(!qbevent)break;evnt(25518,938,"type.bas");}while(r);
-S_38900:;
-if ((*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID&*__LONG_ISOFFSETINBITS)||is_error_pending()){
-if(qbevent){evnt(25518,940,"type.bas");if(r)goto S_38900;}
-S_38901:;
-if ((-(*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS<= 32 ))||is_error_pending()){
-if(qbevent){evnt(25518,941,"type.bas");if(r)goto S_38901;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("int32_t",7));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,941,"type.bas");}while(r);
-}else{
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("int64_t",7));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,941,"type.bas");}while(r);
-}
-S_38906:;
-if ((*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID&*__LONG_ISUNSIGNED)||is_error_pending()){
-if(qbevent){evnt(25518,942,"type.bas");if(r)goto S_38906;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_add(qbs_new_txt_len("u",1),_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,942,"type.bas");}while(r);
-}
-S_38909:;
-}else{
-if (*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID&*__LONG_ISFLOAT){
-if(qbevent){evnt(25518,943,"type.bas");if(r)goto S_38909;}
-S_38910:;
-if(qbevent){evnt(25518,944,"type.bas");if(r)goto S_38910;}
-S_38911:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 32 )))||is_error_pending()){
-if(qbevent){evnt(25518,945,"type.bas");if(r)goto S_38911;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("float",5));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,945,"type.bas");}while(r);
-sc_ec_213_end:;
-goto sc_4575_end;
-}
-S_38913:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 64 )))||is_error_pending()){
-if(qbevent){evnt(25518,946,"type.bas");if(r)goto S_38913;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("double",6));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,946,"type.bas");}while(r);
-sc_ec_214_end:;
-goto sc_4575_end;
-}
-S_38915:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 256 )))||is_error_pending()){
-if(qbevent){evnt(25518,947,"type.bas");if(r)goto S_38915;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("long double",11));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,947,"type.bas");}while(r);
-sc_ec_215_end:;
-goto sc_4575_end;
-}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid floating point type size",32));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,948,"type.bas");}while(r);
-sc_4575_end:;
-S_38920:;
-}else{
-if (*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID&*__LONG_ISOFFSET){
-if(qbevent){evnt(25518,950,"type.bas");if(r)goto S_38920;}
-S_38921:;
-if ((*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID&*__LONG_ISUNSIGNED)||is_error_pending()){
-if(qbevent){evnt(25518,951,"type.bas");if(r)goto S_38921;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("uintptr_t",9));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,951,"type.bas");}while(r);
-}else{
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("intptr_t",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,951,"type.bas");}while(r);
-}
-}else{
-S_38927:;
-if(qbevent){evnt(25518,953,"type.bas");if(r)goto S_38927;}
-S_38928:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 8 )))||is_error_pending()){
-if(qbevent){evnt(25518,954,"type.bas");if(r)goto S_38928;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("int8_t",6));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,954,"type.bas");}while(r);
-sc_ec_216_end:;
-goto sc_4576_end;
-}
-S_38930:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 16 )))||is_error_pending()){
-if(qbevent){evnt(25518,955,"type.bas");if(r)goto S_38930;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("int16_t",7));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,955,"type.bas");}while(r);
-sc_ec_217_end:;
-goto sc_4576_end;
-}
-S_38932:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 32 )))||is_error_pending()){
-if(qbevent){evnt(25518,956,"type.bas");if(r)goto S_38932;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("int32_t",7));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,956,"type.bas");}while(r);
-sc_ec_218_end:;
-goto sc_4576_end;
-}
-S_38934:;
-if (((*_FUNC_TYPE_GETCPPARITHMETICTYPE_ULONG_SIZEINBITS==( 64 )))||is_error_pending()){
-if(qbevent){evnt(25518,957,"type.bas");if(r)goto S_38934;}
-do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_new_txt_len("int64_t",7));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,957,"type.bas");}while(r);
-sc_ec_219_end:;
-goto sc_4576_end;
-}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid integer type size",25));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,958,"type.bas");}while(r);
+S_39080:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ISUINTEGER_STRING_I->len== 0 )))||is_error_pending()){
+if(qbevent){evnt(25759,864,"type.bas");if(r)goto S_39080;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25518,958,"type.bas");}while(r);
-sc_4576_end:;
-S_38940:;
-if ((*_FUNC_TYPE_GETCPPARITHMETICTYPE_LONG_TYPEID&*__LONG_ISUNSIGNED)||is_error_pending()){
-if(qbevent){evnt(25518,960,"type.bas");if(r)goto S_38940;}
+if(!qbevent)break;evnt(25759,864,"type.bas");}while(r);
+}
+S_39083:;
+if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(_FUNC_ISUINTEGER_STRING_I, 1 )== 48 ))&(-(_FUNC_ISUINTEGER_STRING_I->len> 1 ))))||is_error_pending()){
+if(qbevent){evnt(25759,865,"type.bas");if(r)goto S_39083;}
 do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE,qbs_add(qbs_new_txt_len("u",1),_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE));
+goto exit_subfunc;
+if(!qbevent)break;evnt(25759,865,"type.bas");}while(r);
+}
+S_39086:;
+fornext_value4604= 1 ;
+fornext_finalvalue4604=_FUNC_ISUINTEGER_STRING_I->len;
+fornext_step4604= 1 ;
+if (fornext_step4604<0) fornext_step_negative4604=1; else fornext_step_negative4604=0;
+if (is_error_pending()) goto fornext_error4604;
+goto fornext_entrylabel4604;
+while(1){
+fornext_value4604=fornext_step4604+(*_FUNC_ISUINTEGER_LONG_C);
+fornext_entrylabel4604:
+*_FUNC_ISUINTEGER_LONG_C=fornext_value4604;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,960,"type.bas");}while(r);
+if (fornext_step_negative4604){
+if (fornext_value4604<fornext_finalvalue4604) break;
+}else{
+if (fornext_value4604>fornext_finalvalue4604) break;
 }
-}
-}
-}
+fornext_error4604:;
+if(qbevent){evnt(25759,866,"type.bas");if(r)goto S_39086;}
 do{
-qbs_set(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_TYPE_GETCPPARITHMETICTYPE,_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_CTYPE);
+*_FUNC_ISUINTEGER_LONG_V=qbs_asc(_FUNC_ISUINTEGER_STRING_I,*_FUNC_ISUINTEGER_LONG_C);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,963,"type.bas");}while(r);
+if(!qbevent)break;evnt(25759,867,"type.bas");}while(r);
+S_39088:;
+if (((-(*_FUNC_ISUINTEGER_LONG_V< 48 ))|(-(*_FUNC_ISUINTEGER_LONG_V> 57 )))||is_error_pending()){
+if(qbevent){evnt(25759,868,"type.bas");if(r)goto S_39088;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25759,868,"type.bas");}while(r);
+}
+fornext_continue_4603:;
+}
+fornext_exit_4603:;
+do{
+*_FUNC_ISUINTEGER_LONG_ISUINTEGER= -1 ;
+if(!qbevent)break;evnt(25759,870,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free245.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_TYPE_GETCPPARITHMETICTYPE);return _FUNC_TYPE_GETCPPARITHMETICTYPE_STRING_TYPE_GETCPPARITHMETICTYPE;
+return *_FUNC_ISUINTEGER_LONG_ISUINTEGER;
 }

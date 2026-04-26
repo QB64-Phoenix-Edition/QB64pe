@@ -1,4 +1,4 @@
-void SUB_INITIALISE_UDT_VARSTRINGS(qbs*_SUB_INITIALISE_UDT_VARSTRINGS_STRING_N,int32*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_UDT,int32*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BUF,int32*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BASE_OFFSET){
+void SUB_INCREASEUDTARRAYS(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,105 +11,1326 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_38586:;
-if ((~(((int16*)(__ARRAY_INTEGER_UDTXVARIABLE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_UDT)-__ARRAY_INTEGER_UDTXVARIABLE[4],__ARRAY_INTEGER_UDTXVARIABLE[5])]))||is_error_pending()){
-if(qbevent){evnt(25518,609,"type.bas");if(r)goto S_38586;}
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25518,609,"type.bas");}while(r);
-}
-do{
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT=((int32*)(__ARRAY_LONG_UDTXNEXT[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_UDT)-__ARRAY_LONG_UDTXNEXT[4],__ARRAY_LONG_UDTXNEXT[5])];
-if(!qbevent)break;evnt(25518,610,"type.bas");}while(r);
-do{
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_OFFSET=*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BASE_OFFSET;
-if(!qbevent)break;evnt(25518,611,"type.bas");}while(r);
-S_38591:;
-while((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)||is_error_pending()){
-if(qbevent){evnt(25518,612,"type.bas");if(r)goto S_38591;}
-S_38592:;
-if ((((int32*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTEARRAYELEMENTS[4],__ARRAY_LONG_UDTEARRAYELEMENTS[5])])||is_error_pending()){
-if(qbevent){evnt(25518,613,"type.bas");if(r)goto S_38592;}
-do{
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEM_BYTES=FUNC_UDT_ARRAY_MEMBER_BYTES(_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT);
-if(!qbevent)break;evnt(25518,614,"type.bas");}while(r);
-S_38594:;
-fornext_value4491= 0 ;
-fornext_finalvalue4491=((int32*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTEARRAYELEMENTS[4],__ARRAY_LONG_UDTEARRAYELEMENTS[5])]- 1 ;
-fornext_step4491= 1 ;
-if (fornext_step4491<0) fornext_step_negative4491=1; else fornext_step_negative4491=0;
-if (is_error_pending()) goto fornext_error4491;
-goto fornext_entrylabel4491;
-while(1){
-fornext_value4491=fornext_step4491+(*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ARRAY_I);
-fornext_entrylabel4491:
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ARRAY_I=fornext_value4491;
-if (fornext_step_negative4491){
-if (fornext_value4491<fornext_finalvalue4491) break;
-}else{
-if (fornext_value4491>fornext_finalvalue4491) break;
-}
-fornext_error4491:;
-if(qbevent){evnt(25518,615,"type.bas");if(r)goto S_38594;}
-do{
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ARRAY_OFFSET=*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_OFFSET+(*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ARRAY_I**_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEM_BYTES);
-if(!qbevent)break;evnt(25518,616,"type.bas");}while(r);
-S_38596:;
-if ((((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISSTRING)||is_error_pending()){
-if(qbevent){evnt(25518,617,"type.bas");if(r)goto S_38596;}
-S_38597:;
-if ((-((((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISFIXEDLENGTH)== 0 ))||is_error_pending()){
-if(qbevent){evnt(25518,618,"type.bas");if(r)goto S_38597;}
-do{
-SUB_WRITEBUFLINE(&(pass4492=*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("*(qbs**)(((char*)",17),_SUB_INITIALISE_UDT_VARSTRINGS_STRING_N),qbs_new_txt_len(")+",2)),qbs_str((int32)(*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ARRAY_OFFSET))),qbs_new_txt_len(") = qbs_new(0,0);",17)));
+*_SUB_INCREASEUDTARRAYS_LONG_X=func_ubound(__ARRAY_STRING256_UDTXNAME,1,1);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,619,"type.bas");}while(r);
-}
-S_38600:;
+if(!qbevent)break;evnt(25759,584,"type.bas");}while(r);
+do{
+
+if (__ARRAY_STRING256_UDTXNAME[2]&2){
+error(10);
 }else{
-if (((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISUDT){
-if(qbevent){evnt(25518,621,"type.bas");if(r)goto S_38600;}
-do{
-SUB_INITIALISE_UDT_VARSTRINGS(_SUB_INITIALISE_UDT_VARSTRINGS_STRING_N,&(pass4493=((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]& 511 ),_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BUF,_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ARRAY_OFFSET);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,622,"type.bas");}while(r);
-}
-}
-fornext_continue_4490:;
-}
-fornext_exit_4490:;
-S_38604:;
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTXNAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING256_UDTXNAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING256_UDTXNAME[0];
+preserve_old_flags=__ARRAY_STRING256_UDTXNAME[2];
+preserve_old_total=__ARRAY_STRING256_UDTXNAME[5];
 }else{
-if (((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISSTRING){
-if(qbevent){evnt(25518,625,"type.bas");if(r)goto S_38604;}
-S_38605:;
-if ((-((((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISFIXEDLENGTH)== 0 ))||is_error_pending()){
-if(qbevent){evnt(25518,626,"type.bas");if(r)goto S_38605;}
-do{
-SUB_WRITEBUFLINE(&(pass4494=*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("*(qbs**)(((char*)",17),_SUB_INITIALISE_UDT_VARSTRINGS_STRING_N),qbs_new_txt_len(")+",2)),qbs_str((int32)(*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_OFFSET))),qbs_new_txt_len(") = qbs_new(0,0);",17)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,627,"type.bas");}while(r);
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
 }
-S_38608:;
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(256);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_STRING256_UDTXNAME[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
 }else{
-if (((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISUDT){
-if(qbevent){evnt(25518,629,"type.bas");if(r)goto S_38608;}
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTXNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTXNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING256_UDTXNAME[0]) error(257);
+memset((void*)(__ARRAY_STRING256_UDTXNAME[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTXNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTXNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_STRING256_UDTXNAME[0]) error(257);
+}
+}
+__ARRAY_STRING256_UDTXNAME[2]|=1;
+__ARRAY_STRING256_UDTXNAME[4]=alloc_new_desc[4];
+__ARRAY_STRING256_UDTXNAME[5]=alloc_new_desc[5];
+__ARRAY_STRING256_UDTXNAME[6]=alloc_new_desc[6];
+__ARRAY_STRING256_UDTXNAME[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,585,"type.bas");}while(r);
 do{
-SUB_INITIALISE_UDT_VARSTRINGS(_SUB_INITIALISE_UDT_VARSTRINGS_STRING_N,&(pass4495=((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]& 511 ),_SUB_INITIALISE_UDT_VARSTRINGS_LONG_BUF,_SUB_INITIALISE_UDT_VARSTRINGS_LONG_OFFSET);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25518,630,"type.bas");}while(r);
+
+if (__ARRAY_STRING256_UDTXCNAME[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTXCNAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING256_UDTXCNAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING256_UDTXCNAME[0];
+preserve_old_flags=__ARRAY_STRING256_UDTXCNAME[2];
+preserve_old_total=__ARRAY_STRING256_UDTXCNAME[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(256);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_STRING256_UDTXCNAME[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTXCNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTXCNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING256_UDTXCNAME[0]) error(257);
+memset((void*)(__ARRAY_STRING256_UDTXCNAME[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTXCNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTXCNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_STRING256_UDTXCNAME[0]) error(257);
 }
 }
+__ARRAY_STRING256_UDTXCNAME[2]|=1;
+__ARRAY_STRING256_UDTXCNAME[4]=alloc_new_desc[4];
+__ARRAY_STRING256_UDTXCNAME[5]=alloc_new_desc[5];
+__ARRAY_STRING256_UDTXCNAME[6]=alloc_new_desc[6];
+__ARRAY_STRING256_UDTXCNAME[7]=alloc_new_desc[7];
 }
+if(!qbevent)break;evnt(25759,586,"type.bas");}while(r);
 do{
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_OFFSET=*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_OFFSET+(((int32*)(__ARRAY_LONG_UDTESIZE[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTESIZE[4],__ARRAY_LONG_UDTESIZE[5])]/  8 );
-if(!qbevent)break;evnt(25518,632,"type.bas");}while(r);
-do{
-*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT=((int32*)(__ARRAY_LONG_UDTENEXT[0]))[array_check((*_SUB_INITIALISE_UDT_VARSTRINGS_LONG_ELEMENT)-__ARRAY_LONG_UDTENEXT[4],__ARRAY_LONG_UDTENEXT[5])];
-if(!qbevent)break;evnt(25518,633,"type.bas");}while(r);
-dl_continue_4489:;
+
+if (__ARRAY_LONG_UDTXSIZE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXSIZE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTXSIZE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTXSIZE[0];
+preserve_old_flags=__ARRAY_LONG_UDTXSIZE[2];
+preserve_old_total=__ARRAY_LONG_UDTXSIZE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
 }
-dl_exit_4489:;
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTXSIZE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTXSIZE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTXSIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTXSIZE[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTXSIZE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTXSIZE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTXSIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTXSIZE[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTXSIZE[2]|=1;
+__ARRAY_LONG_UDTXSIZE[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTXSIZE[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTXSIZE[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTXSIZE[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,587,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTXNEXT[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXNEXT)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTXNEXT[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTXNEXT[0];
+preserve_old_flags=__ARRAY_LONG_UDTXNEXT[2];
+preserve_old_total=__ARRAY_LONG_UDTXNEXT[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTXNEXT[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTXNEXT[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTXNEXT[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTXNEXT[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTXNEXT[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTXNEXT[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTXNEXT[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTXNEXT[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTXNEXT[2]|=1;
+__ARRAY_LONG_UDTXNEXT[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTXNEXT[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTXNEXT[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTXNEXT[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,588,"type.bas");}while(r);
+do{
+
+if (__ARRAY_INTEGER_UDTXVARIABLE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTXVARIABLE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_INTEGER_UDTXVARIABLE[2]&1){
+preserve_old_ptr=__ARRAY_INTEGER_UDTXVARIABLE[0];
+preserve_old_flags=__ARRAY_INTEGER_UDTXVARIABLE[2];
+preserve_old_total=__ARRAY_INTEGER_UDTXVARIABLE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(2);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_INTEGER_UDTXVARIABLE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*2);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_INTEGER_UDTXVARIABLE[0]=preserve_new_ptr;
+}else{
+__ARRAY_INTEGER_UDTXVARIABLE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_INTEGER_UDTXVARIABLE[0]) error(257);
+memset((void*)(__ARRAY_INTEGER_UDTXVARIABLE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*2);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_INTEGER_UDTXVARIABLE[0]=preserve_new_ptr;
+}else{
+__ARRAY_INTEGER_UDTXVARIABLE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_INTEGER_UDTXVARIABLE[0]) error(257);
+}
+}
+__ARRAY_INTEGER_UDTXVARIABLE[2]|=1;
+__ARRAY_INTEGER_UDTXVARIABLE[4]=alloc_new_desc[4];
+__ARRAY_INTEGER_UDTXVARIABLE[5]=alloc_new_desc[5];
+__ARRAY_INTEGER_UDTXVARIABLE[6]=alloc_new_desc[6];
+__ARRAY_INTEGER_UDTXVARIABLE[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,589,"type.bas");}while(r);
+do{
+
+if (__ARRAY_STRING256_UDTENAME[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTENAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING256_UDTENAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING256_UDTENAME[0];
+preserve_old_flags=__ARRAY_STRING256_UDTENAME[2];
+preserve_old_total=__ARRAY_STRING256_UDTENAME[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(256);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_STRING256_UDTENAME[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTENAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTENAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING256_UDTENAME[0]) error(257);
+memset((void*)(__ARRAY_STRING256_UDTENAME[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTENAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTENAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_STRING256_UDTENAME[0]) error(257);
+}
+}
+__ARRAY_STRING256_UDTENAME[2]|=1;
+__ARRAY_STRING256_UDTENAME[4]=alloc_new_desc[4];
+__ARRAY_STRING256_UDTENAME[5]=alloc_new_desc[5];
+__ARRAY_STRING256_UDTENAME[6]=alloc_new_desc[6];
+__ARRAY_STRING256_UDTENAME[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,591,"type.bas");}while(r);
+do{
+
+if (__ARRAY_STRING256_UDTECNAME[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTECNAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING256_UDTECNAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING256_UDTECNAME[0];
+preserve_old_flags=__ARRAY_STRING256_UDTECNAME[2];
+preserve_old_total=__ARRAY_STRING256_UDTECNAME[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(256);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_STRING256_UDTECNAME[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTECNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTECNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING256_UDTECNAME[0]) error(257);
+memset((void*)(__ARRAY_STRING256_UDTECNAME[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_UDTECNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_UDTECNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_STRING256_UDTECNAME[0]) error(257);
+}
+}
+__ARRAY_STRING256_UDTECNAME[2]|=1;
+__ARRAY_STRING256_UDTECNAME[4]=alloc_new_desc[4];
+__ARRAY_STRING256_UDTECNAME[5]=alloc_new_desc[5];
+__ARRAY_STRING256_UDTECNAME[6]=alloc_new_desc[6];
+__ARRAY_STRING256_UDTECNAME[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,592,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTESIZE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTESIZE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTESIZE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTESIZE[0];
+preserve_old_flags=__ARRAY_LONG_UDTESIZE[2];
+preserve_old_total=__ARRAY_LONG_UDTESIZE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTESIZE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTESIZE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTESIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTESIZE[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTESIZE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTESIZE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTESIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTESIZE[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTESIZE[2]|=1;
+__ARRAY_LONG_UDTESIZE[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTESIZE[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTESIZE[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTESIZE[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,593,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTETYPE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTETYPE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTETYPE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTETYPE[0];
+preserve_old_flags=__ARRAY_LONG_UDTETYPE[2];
+preserve_old_total=__ARRAY_LONG_UDTETYPE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTETYPE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTETYPE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTETYPE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTETYPE[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTETYPE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTETYPE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTETYPE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTETYPE[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTETYPE[2]|=1;
+__ARRAY_LONG_UDTETYPE[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTETYPE[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTETYPE[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTETYPE[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,594,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTETYPESIZE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTETYPESIZE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTETYPESIZE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTETYPESIZE[0];
+preserve_old_flags=__ARRAY_LONG_UDTETYPESIZE[2];
+preserve_old_total=__ARRAY_LONG_UDTETYPESIZE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTETYPESIZE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTETYPESIZE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTETYPESIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTETYPESIZE[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTETYPESIZE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTETYPESIZE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTETYPESIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTETYPESIZE[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTETYPESIZE[2]|=1;
+__ARRAY_LONG_UDTETYPESIZE[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTETYPESIZE[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTETYPESIZE[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTETYPESIZE[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,595,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTEARRAYELEMENTS[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYELEMENTS)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTEARRAYELEMENTS[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTEARRAYELEMENTS[0];
+preserve_old_flags=__ARRAY_LONG_UDTEARRAYELEMENTS[2];
+preserve_old_total=__ARRAY_LONG_UDTEARRAYELEMENTS[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTEARRAYELEMENTS[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTEARRAYELEMENTS[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTEARRAYELEMENTS[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTEARRAYELEMENTS[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTEARRAYELEMENTS[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTEARRAYELEMENTS[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTEARRAYELEMENTS[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTEARRAYELEMENTS[2]|=1;
+__ARRAY_LONG_UDTEARRAYELEMENTS[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTEARRAYELEMENTS[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTEARRAYELEMENTS[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTEARRAYELEMENTS[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,596,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTEARRAYBASE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYBASE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTEARRAYBASE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTEARRAYBASE[0];
+preserve_old_flags=__ARRAY_LONG_UDTEARRAYBASE[2];
+preserve_old_total=__ARRAY_LONG_UDTEARRAYBASE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTEARRAYBASE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTEARRAYBASE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTEARRAYBASE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTEARRAYBASE[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTEARRAYBASE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTEARRAYBASE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTEARRAYBASE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTEARRAYBASE[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTEARRAYBASE[2]|=1;
+__ARRAY_LONG_UDTEARRAYBASE[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTEARRAYBASE[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTEARRAYBASE[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTEARRAYBASE[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,597,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTEARRAYDIMS[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYDIMS)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTEARRAYDIMS[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTEARRAYDIMS[0];
+preserve_old_flags=__ARRAY_LONG_UDTEARRAYDIMS[2];
+preserve_old_total=__ARRAY_LONG_UDTEARRAYDIMS[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTEARRAYDIMS[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTEARRAYDIMS[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTEARRAYDIMS[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTEARRAYDIMS[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTEARRAYDIMS[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTEARRAYDIMS[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTEARRAYDIMS[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTEARRAYDIMS[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTEARRAYDIMS[2]|=1;
+__ARRAY_LONG_UDTEARRAYDIMS[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTEARRAYDIMS[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTEARRAYDIMS[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTEARRAYDIMS[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,598,"type.bas");}while(r);
+do{
+
+if (__ARRAY_STRING_UDTEARRAYDESC[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING_UDTEARRAYDESC)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING_UDTEARRAYDESC[2]&1){
+preserve_old_ptr=__ARRAY_STRING_UDTEARRAYDESC[0];
+preserve_old_flags=__ARRAY_STRING_UDTEARRAYDESC[2];
+preserve_old_total=__ARRAY_STRING_UDTEARRAYDESC[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+__ARRAY_STRING_UDTEARRAYDESC[0]=preserve_new_ptr;
+__ARRAY_STRING_UDTEARRAYDESC[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_UDTEARRAYDESC[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+}
+tmp_long=preserve_old_total;
+while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+free((void*)(preserve_old_ptr));
+__ARRAY_STRING_UDTEARRAYDESC[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING_UDTEARRAYDESC[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING_UDTEARRAYDESC[0]) error(257);
+__ARRAY_STRING_UDTEARRAYDESC[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_UDTEARRAYDESC[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+__ARRAY_STRING_UDTEARRAYDESC[4]=alloc_new_desc[4];
+__ARRAY_STRING_UDTEARRAYDESC[5]=alloc_new_desc[5];
+__ARRAY_STRING_UDTEARRAYDESC[6]=alloc_new_desc[6];
+__ARRAY_STRING_UDTEARRAYDESC[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,599,"type.bas");}while(r);
+do{
+
+if (__ARRAY_LONG_UDTENEXT[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTENEXT)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_UDTENEXT[2]&1){
+preserve_old_ptr=__ARRAY_LONG_UDTENEXT[0];
+preserve_old_flags=__ARRAY_LONG_UDTENEXT[2];
+preserve_old_total=__ARRAY_LONG_UDTENEXT[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_UDTENEXT[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTENEXT[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTENEXT[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_UDTENEXT[0]) error(257);
+memset((void*)(__ARRAY_LONG_UDTENEXT[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_UDTENEXT[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_UDTENEXT[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_UDTENEXT[0]) error(257);
+}
+}
+__ARRAY_LONG_UDTENEXT[2]|=1;
+__ARRAY_LONG_UDTENEXT[4]=alloc_new_desc[4];
+__ARRAY_LONG_UDTENEXT[5]=alloc_new_desc[5];
+__ARRAY_LONG_UDTENEXT[6]=alloc_new_desc[6];
+__ARRAY_LONG_UDTENEXT[7]=alloc_new_desc[7];
+}
+if(!qbevent)break;evnt(25759,600,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free235.txt"

@@ -1,4 +1,4 @@
-int32 FUNC_MULTISEARCH(qbs*_FUNC_MULTISEARCH_STRING___FULLTEXT,qbs*_FUNC_MULTISEARCH_STRING___SEARCHSTRING){
+float FUNC_MAP(float*_FUNC_MAP_SINGLE_VALUE,float*_FUNC_MAP_SINGLE_MINRANGE,float*_FUNC_MAP_SINGLE_MAXRANGE,float*_FUNC_MAP_SINGLE_NEWMINRANGE,float*_FUNC_MAP_SINGLE_NEWMAXRANGE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,77 +12,12 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbs_set(_FUNC_MULTISEARCH_STRING_FULLTEXT,qbs__trim(qbs_ucase(_FUNC_MULTISEARCH_STRING___FULLTEXT)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,8737,"ide_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,qbs__trim(qbs_ucase(_FUNC_MULTISEARCH_STRING___SEARCHSTRING)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,8738,"ide_methods.bas");}while(r);
-S_49272:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_MULTISEARCH_STRING_FULLTEXT->len== 0 )))||is_error_pending()){
-if(qbevent){evnt(25528,8739,"ide_methods.bas");if(r)goto S_49272;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25528,8739,"ide_methods.bas");}while(r);
-}
-S_49275:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_MULTISEARCH_STRING_SEARCHSTRING->len== 0 )))||is_error_pending()){
-if(qbevent){evnt(25528,8740,"ide_methods.bas");if(r)goto S_49275;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25528,8740,"ide_methods.bas");}while(r);
-}
-do{
-*_FUNC_MULTISEARCH_LONG_MULTISEARCH= -1 ;
-if(!qbevent)break;evnt(25528,8742,"ide_methods.bas");}while(r);
-do{
-*_FUNC_MULTISEARCH_LONG_FINDPLUS=func_instr(NULL,_FUNC_MULTISEARCH_STRING_SEARCHSTRING,qbs_new_txt_len("+",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,8743,"ide_methods.bas");}while(r);
-S_49280:;
-while((*_FUNC_MULTISEARCH_LONG_FINDPLUS)||is_error_pending()){
-if(qbevent){evnt(25528,8744,"ide_methods.bas");if(r)goto S_49280;}
-do{
-qbs_set(_FUNC_MULTISEARCH_STRING_THISTERM,qbs_left(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,*_FUNC_MULTISEARCH_LONG_FINDPLUS- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,8745,"ide_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,func_mid(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,*_FUNC_MULTISEARCH_LONG_FINDPLUS+ 1 ,NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,8746,"ide_methods.bas");}while(r);
-S_49283:;
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_MULTISEARCH_STRING_FULLTEXT,_FUNC_MULTISEARCH_STRING_THISTERM,0)== 0 )))||is_error_pending()){
-if(qbevent){evnt(25528,8747,"ide_methods.bas");if(r)goto S_49283;}
-do{
-*_FUNC_MULTISEARCH_LONG_MULTISEARCH= 0 ;
-if(!qbevent)break;evnt(25528,8747,"ide_methods.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25528,8747,"ide_methods.bas");}while(r);
-}
-do{
-*_FUNC_MULTISEARCH_LONG_FINDPLUS=func_instr(NULL,_FUNC_MULTISEARCH_STRING_SEARCHSTRING,qbs_new_txt_len("+",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,8748,"ide_methods.bas");}while(r);
-ww_continue_5718:;
-}
-ww_exit_5718:;
-S_49289:;
-if ((qbs_cleanup(qbs_tmp_base,_FUNC_MULTISEARCH_STRING_SEARCHSTRING->len))||is_error_pending()){
-if(qbevent){evnt(25528,8751,"ide_methods.bas");if(r)goto S_49289;}
-S_49290:;
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_MULTISEARCH_STRING_FULLTEXT,_FUNC_MULTISEARCH_STRING_SEARCHSTRING,0)== 0 )))||is_error_pending()){
-if(qbevent){evnt(25528,8752,"ide_methods.bas");if(r)goto S_49290;}
-do{
-*_FUNC_MULTISEARCH_LONG_MULTISEARCH= 0 ;
-if(!qbevent)break;evnt(25528,8752,"ide_methods.bas");}while(r);
-}
-}
+*_FUNC_MAP_SINGLE_MAP=(((*_FUNC_MAP_SINGLE_VALUE-*_FUNC_MAP_SINGLE_MINRANGE)/ (*_FUNC_MAP_SINGLE_MAXRANGE-*_FUNC_MAP_SINGLE_MINRANGE))*(*_FUNC_MAP_SINGLE_NEWMAXRANGE-*_FUNC_MAP_SINGLE_NEWMINRANGE))+*_FUNC_MAP_SINGLE_NEWMINRANGE;
+if(!qbevent)break;evnt(25769,8500,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free275.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_MULTISEARCH_LONG_MULTISEARCH;
+return *_FUNC_MAP_SINGLE_MAP;
 }

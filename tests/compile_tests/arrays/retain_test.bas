@@ -1,0 +1,11 @@
+$CONSOLE:ONLY
+OPTION _EXPLICIT
+
+REDIM a(55, 66, 12) AS STRING
+a(33, 33, 10) = "six"
+a(11, 11, 11) = "seven"
+REDIM _RETAIN a(11 TO 1024, 5 TO 66, -3 TO 12) AS STRING
+a(11, 66, -3) = "nothing"
+PRINT a(33, 33, 10)
+PRINT a(11, 11, 11)
+system

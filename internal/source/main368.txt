@@ -1,4 +1,4 @@
-qbs* FUNC_REMOVESYMBOL2(qbs*_FUNC_REMOVESYMBOL2_STRING_VARNAME){
+void SUB_HIDEBRACKETHIGHLIGHT(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,110 +12,47 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("~",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20428,"ide_methods.bas");}while(r);
-S_62150:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20428,"ide_methods.bas");if(r)goto S_62150;}
+*_SUB_HIDEBRACKETHIGHLIGHT_LONG_OLDBRACKETHIGHLIGHTSETTING=*__BYTE_BRACKETHIGHLIGHT;
+if(!qbevent)break;evnt(25769,20340,"ide_methods.bas");}while(r);
 do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20428,"ide_methods.bas");}while(r);
-}
+*_SUB_HIDEBRACKETHIGHLIGHT_LONG_OLDMULTIHIGHLIGHTSETTING=*__BYTE_MULTIHIGHLIGHT;
+if(!qbevent)break;evnt(25769,20341,"ide_methods.bas");}while(r);
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("`",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20429,"ide_methods.bas");}while(r);
-S_62154:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20429,"ide_methods.bas");if(r)goto S_62154;}
+*_SUB_HIDEBRACKETHIGHLIGHT_LONG_OLDSHOWLINENUMBERSUSEBG=*__BYTE_SHOWLINENUMBERSUSEBG;
+if(!qbevent)break;evnt(25769,20342,"ide_methods.bas");}while(r);
 do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20429,"ide_methods.bas");}while(r);
-}
+*__BYTE_BRACKETHIGHLIGHT= 0ll ;
+if(!qbevent)break;evnt(25769,20343,"ide_methods.bas");}while(r);
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("%",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20430,"ide_methods.bas");}while(r);
-S_62158:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20430,"ide_methods.bas");if(r)goto S_62158;}
+*__BYTE_MULTIHIGHLIGHT= 0ll ;
+if(!qbevent)break;evnt(25769,20344,"ide_methods.bas");}while(r);
 do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20430,"ide_methods.bas");}while(r);
-}
+*__BYTE_SHOWLINENUMBERSUSEBG= 0ll ;
+if(!qbevent)break;evnt(25769,20345,"ide_methods.bas");}while(r);
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("&",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20431,"ide_methods.bas");}while(r);
-S_62162:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20431,"ide_methods.bas");if(r)goto S_62162;}
+qbg_screen(NULL,NULL, 0 ,NULL,NULL,4);
+if(!qbevent)break;evnt(25769,20346,"ide_methods.bas");}while(r);
 do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20431,"ide_methods.bas");}while(r);
-}
+*__BYTE_HIDECURRENTLINEHIGHLIGHT= -1 ;
+if(!qbevent)break;evnt(25769,20347,"ide_methods.bas");}while(r);
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("!",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20432,"ide_methods.bas");}while(r);
-S_62166:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20432,"ide_methods.bas");if(r)goto S_62166;}
+SUB_IDESHOWTEXT();
+if(!qbevent)break;evnt(25769,20348,"ide_methods.bas");}while(r);
 do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20432,"ide_methods.bas");}while(r);
-}
+*__BYTE_HIDECURRENTLINEHIGHLIGHT= 0 ;
+if(!qbevent)break;evnt(25769,20349,"ide_methods.bas");}while(r);
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("#",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20433,"ide_methods.bas");}while(r);
-S_62170:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20433,"ide_methods.bas");if(r)goto S_62170;}
+*__BYTE_BRACKETHIGHLIGHT=*_SUB_HIDEBRACKETHIGHLIGHT_LONG_OLDBRACKETHIGHLIGHTSETTING;
+if(!qbevent)break;evnt(25769,20350,"ide_methods.bas");}while(r);
 do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20433,"ide_methods.bas");}while(r);
-}
+*__BYTE_MULTIHIGHLIGHT=*_SUB_HIDEBRACKETHIGHLIGHT_LONG_OLDMULTIHIGHLIGHTSETTING;
+if(!qbevent)break;evnt(25769,20351,"ide_methods.bas");}while(r);
 do{
-*_FUNC_REMOVESYMBOL2_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL2_STRING_VARNAME,qbs_new_txt_len("$",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20434,"ide_methods.bas");}while(r);
-S_62174:;
-if ((*_FUNC_REMOVESYMBOL2_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25528,20434,"ide_methods.bas");if(r)goto S_62174;}
-do{
-goto LABEL_FOUNDSYMBOL;
-if(!qbevent)break;evnt(25528,20434,"ide_methods.bas");}while(r);
-}
-do{
-qbs_set(_FUNC_REMOVESYMBOL2_STRING_REMOVESYMBOL2,_FUNC_REMOVESYMBOL2_STRING_VARNAME);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20435,"ide_methods.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25528,20436,"ide_methods.bas");}while(r);
-LABEL_FOUNDSYMBOL:;
-if(qbevent){evnt(25528,20437,"ide_methods.bas");r=0;}
-S_62179:;
-if ((-(*_FUNC_REMOVESYMBOL2_LONG_I== 1 ))||is_error_pending()){
-if(qbevent){evnt(25528,20438,"ide_methods.bas");if(r)goto S_62179;}
-do{
-qbs_set(_FUNC_REMOVESYMBOL2_STRING_REMOVESYMBOL2,_FUNC_REMOVESYMBOL2_STRING_VARNAME);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20438,"ide_methods.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25528,20438,"ide_methods.bas");}while(r);
-}
-do{
-qbs_set(_FUNC_REMOVESYMBOL2_STRING_REMOVESYMBOL2,qbs_left(_FUNC_REMOVESYMBOL2_STRING_VARNAME,*_FUNC_REMOVESYMBOL2_LONG_I- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20439,"ide_methods.bas");}while(r);
+*__BYTE_SHOWLINENUMBERSUSEBG=*_SUB_HIDEBRACKETHIGHLIGHT_LONG_OLDSHOWLINENUMBERSUSEBG;
+if(!qbevent)break;evnt(25769,20352,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free368.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_REMOVESYMBOL2_STRING_REMOVESYMBOL2);return _FUNC_REMOVESYMBOL2_STRING_REMOVESYMBOL2;
 }

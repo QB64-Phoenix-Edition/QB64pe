@@ -1,4 +1,4 @@
-void SUB_PARSENUMSETUI(void*_SUB_PARSENUMSETUI_UDT_NUM,int32*_SUB_PARSENUMSETUI_LONG_T,uint64*_SUB_PARSENUMSETUI_UINTEGER64_UI){
+void SUB_PARSENUMSETF(void*_SUB_PARSENUMSETF_UDT_NUM,int32*_SUB_PARSENUMSETF_LONG_T,long double*_SUB_PARSENUMSETF_FLOAT_F){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,17 +12,21 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-*(uint64*)(((char*)_SUB_PARSENUMSETUI_UDT_NUM)+((0+40)))=*_SUB_PARSENUMSETUI_UINTEGER64_UI;
-if(!qbevent)break;evnt(25515,776,"const_eval.bas");}while(r);
+qbs_set(*((qbs**)((char*)(_SUB_PARSENUMSETF_UDT_NUM)+((0+48)))),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25756,760,"const_eval.bas");}while(r);
 do{
-*(int64*)(((char*)_SUB_PARSENUMSETUI_UDT_NUM)+((0+32)))=*_SUB_PARSENUMSETUI_UINTEGER64_UI;
-if(!qbevent)break;evnt(25515,777,"const_eval.bas");}while(r);
+*(long double*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+((0+0)))=*_SUB_PARSENUMSETF_FLOAT_F;
+if(!qbevent)break;evnt(25756,761,"const_eval.bas");}while(r);
 do{
-*(long double*)(((char*)_SUB_PARSENUMSETUI_UDT_NUM)+((0+0)))=*_SUB_PARSENUMSETUI_UINTEGER64_UI;
-if(!qbevent)break;evnt(25515,778,"const_eval.bas");}while(r);
+*(int64*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+((0+32)))=qbr(*_SUB_PARSENUMSETF_FLOAT_F);
+if(!qbevent)break;evnt(25756,762,"const_eval.bas");}while(r);
 do{
-*(int32*)(((char*)_SUB_PARSENUMSETUI_UDT_NUM)+((0+56)))=*_SUB_PARSENUMSETUI_LONG_T;
-if(!qbevent)break;evnt(25515,779,"const_eval.bas");}while(r);
+*(uint64*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+((0+40)))=qbr(*_SUB_PARSENUMSETF_FLOAT_F);
+if(!qbevent)break;evnt(25756,763,"const_eval.bas");}while(r);
+do{
+*(int32*)(((char*)_SUB_PARSENUMSETF_UDT_NUM)+((0+56)))=*_SUB_PARSENUMSETF_LONG_T;
+if(!qbevent)break;evnt(25756,764,"const_eval.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free200.txt"

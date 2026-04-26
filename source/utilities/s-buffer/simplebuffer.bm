@@ -165,16 +165,16 @@ END SUB
 
 '--- docs\BufInsertBuf.html
 '---------------------------------------------------------------------
-'SUB BufInsertBuf (handle%, fromHandle%)
-'    '--- option _explicit requirements ---
-'    DIM fbuf&
-'    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-'    IF NOT CheckHandle%(fromHandle%) THEN ERROR 258: STOP 'invalid fromHandle
-'    fbuf& = fromHandle% * 106
-'    '--- insert data of another buffer ---
-'    WriteBufRawData handle%, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle%))
-'END SUB
+SUB BufInsertBuf (handle%, fromHandle%)
+    '--- option _explicit requirements ---
+    DIM fbuf&
+    '--- check handle ---
+    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+    IF NOT CheckHandle%(fromHandle%) THEN ERROR 258: STOP 'invalid fromHandle
+    fbuf& = fromHandle% * 106
+    '--- insert data of another buffer ---
+    WriteBufRawData handle%, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle%))
+END SUB
 
 '--- docs\ReadBufLine.html
 '---------------------------------------------------------------------

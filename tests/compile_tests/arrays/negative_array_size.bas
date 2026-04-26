@@ -1,0 +1,4 @@
+$CONSOLE:ONLY
+REDIM a(-5) AS LONG
+
+

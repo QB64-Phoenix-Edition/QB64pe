@@ -1,4 +1,4 @@
-void SUB_WRITECONFIGSETTING(qbs*_SUB_WRITECONFIGSETTING_STRING_SECTION,qbs*_SUB_WRITECONFIGSETTING_STRING_ITEM,qbs*_SUB_WRITECONFIGSETTING_STRING_VALUE){
+int16 FUNC_TFSTRINGTOBOOL(qbs*_FUNC_TFSTRINGTOBOOL_STRING_S){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,12 +12,34 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-SUB_WRITESETTING(__STRING_CONFIGFILE,_SUB_WRITECONFIGSETTING_STRING_SECTION,_SUB_WRITECONFIGSETTING_STRING_ITEM,_SUB_WRITECONFIGSETTING_STRING_VALUE);
+if(!qbevent)break;evnt(25749,72,"strings.bas");}while(r);
+do{
+qbs_set(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs__trim(qbs_ucase(_FUNC_TFSTRINGTOBOOL_STRING_S)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,85,"strings.bas");}while(r);
+if(!qbevent)break;evnt(25749,73,"strings.bas");}while(r);
+S_33957:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("TRUE",4))))||is_error_pending()){
+if(qbevent){evnt(25749,75,"strings.bas");if(r)goto S_33957;}
+do{
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -1 ;
+if(!qbevent)break;evnt(25749,76,"strings.bas");}while(r);
+S_33959:;
+}else{
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("FALSE",5)))){
+if(qbevent){evnt(25749,77,"strings.bas");if(r)goto S_33959;}
+do{
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= 0 ;
+if(!qbevent)break;evnt(25749,78,"strings.bas");}while(r);
+}else{
+do{
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -2 ;
+if(!qbevent)break;evnt(25749,80,"strings.bas");}while(r);
+}
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free85.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL;
 }
