@@ -25042,10 +25042,14 @@ void set_view(int32_t new_mode) { // set view can only be called after the corre
 
         if (render_state.dest_handle == 0) {
             static int32 dst_w, dst_h;
-            static int32 scale_factor = 1;
+            static int32 vp_w, vp_h;
 
             dst_w = environment__window_width;
             dst_h = environment__window_height;
+
+            auto framebuffer_size = GLUTEmu_WindowGetFramebufferSize();
+            vp_w = (framebuffer_size.first > 0) ? framebuffer_size.first : dst_w;
+            vp_h = (framebuffer_size.second > 0) ? framebuffer_size.second : dst_h;
 
             // alert(dst_w);
             // alert(dst_h);
@@ -25057,7 +25061,7 @@ void set_view(int32_t new_mode) { // set view can only be called after the corre
             glLoadIdentity();
             glScalef(1, -1, 1);         // flip vertically
             glTranslatef(0, -dst_h, 0); // move to new vertical position
-            glViewport(0, 0, dst_w * scale_factor, dst_h * scale_factor);
+            glViewport(0, 0, vp_w, vp_h);
 
         } else {
             static hardware_img_struct *hardware_img;
@@ -25083,9 +25087,15 @@ void set_view(int32_t new_mode) { // set view can only be called after the corre
         }
         if (render_state.dest_handle == 0) {
             static int32 dst_w, dst_h;
+            static int32 vp_w, vp_h;
             dst_w = environment__window_width;
             dst_h = environment__window_height;
-            glViewport(0, 0, (GLsizei)dst_w, (GLsizei)dst_h);
+
+            auto framebuffer_size = GLUTEmu_WindowGetFramebufferSize();
+            vp_w = (framebuffer_size.first > 0) ? framebuffer_size.first : dst_w;
+            vp_h = (framebuffer_size.second > 0) ? framebuffer_size.second : dst_h;
+
+            glViewport(0, 0, (GLsizei)vp_w, (GLsizei)vp_h);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
 
