@@ -6499,8 +6499,9 @@ FUNCTION ide2 (ignore)
                     IF r$ = "Y" THEN
                         IF ideprogname = "" THEN
                             ProposedTitle$ = FindProposedTitle$
-                            IF ProposedTitle$ = "" THEN
-                                r$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                            IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                            IF UseGuiDialogs THEN
+                                r$ = SaveFile$(ProposedTitle$ + ".bas")
                             ELSE
                                 r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF
@@ -6527,8 +6528,9 @@ FUNCTION ide2 (ignore)
                     IF r$ = "Y" THEN
                         IF ideprogname = "" THEN
                             ProposedTitle$ = FindProposedTitle$
-                            IF ProposedTitle$ = "" THEN
-                                r$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                            IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                            IF UseGuiDialogs THEN
+                                r$ = SaveFile$(ProposedTitle$ + ".bas")
                             ELSE
                                 r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF

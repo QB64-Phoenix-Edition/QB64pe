@@ -426,7 +426,7 @@ int libqb_http_open(const char *url, int id) {
     // soon as GitHub Issue #619 is properly implemented. We may use this to
     // identify requests comming from the IDE wiki module or any legitimate
     // user program and distinguish it from browser and bot/crawler requests.
-    curl_easy_setopt(handle->con, CURLOPT_USERAGENT, "QB64-PE/4.4.0 (compatible; libcurl;)");
+    curl_easy_setopt(handle->con, CURLOPT_USERAGENT, "QB64-PE/4.5.0 (compatible; libcurl;)");
     // End of temporary block.
 
     curl_easy_setopt(handle->con, CURLOPT_WRITEFUNCTION, receive_http_block);
