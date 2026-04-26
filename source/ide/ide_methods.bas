@@ -414,7 +414,7 @@ FUNCTION ide2 (ignore)
         END IF
         OptionsMenuGuiDialogs = i
         menu$(m, i) = "#GUI Dialogs": i = i + 1
-        menuDesc$(m, i - 1) = "Uses GUI-based File Dialog and Messagebox Windows"
+        menuDesc$(m, i - 1) = "Toggels the use of native GUI-based File Dialog Windows"
         IF UseGuiDialogs THEN
             menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuGuiDialogs)
         END IF
