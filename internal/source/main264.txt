@@ -1,4 +1,4 @@
-qbs* FUNC_FINDWORKINGTERMINAL(){
+void SUB_GIVE_ERROR(qbs*_SUB_GIVE_ERROR_STRING_A){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,174 +12,15 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-
-if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&2){
-error(10);
-}else{
-if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&1){
-if (!error_occurred) error(10);
-}else{
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4]= 0 ;
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]=( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4]+1;
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[6]=1;
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]=(ptrszint)malloc(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]*8);
-if (!_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]) error(257);
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]|=1;
-tmp_long=_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5];
-if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&4){
-while(tmp_long--) ((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-}
-
-if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&2){
-error(10);
-}else{
-if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&1){
-if (!error_occurred) error(10);
-}else{
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4]= 0 ;
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]=( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4]+1;
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[6]=1;
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]=(ptrszint)malloc(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]*8);
-if (!_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]) error(257);
-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]|=1;
-tmp_long=_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5];
-if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&4){
-while(tmp_long--) ((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-}
-if(!qbevent)break;evnt(25521,8,"terminal.bas");}while(r);
+*__LONG_ERROR_HAPPENED= 1 ;
+if(!qbevent)break;evnt(25760,3,"give_error.bas");}while(r);
 do{
-tmp_long=array_check(( 1 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("gnome-terminal",14));
+qbs_set(__STRING_ERROR_MESSAGE,_SUB_GIVE_ERROR_STRING_A);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,9,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 1 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-- $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,9,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 2 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("konsole",7));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,10,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 2 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-e $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,10,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 3 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("lxterminal",10));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,11,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 3 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-e $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,11,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 4 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("mate-terminal",13));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,12,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 4 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-x $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,12,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 5 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("xfce4-terminal",14));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,13,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 5 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-x $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,13,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 6 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("urxvt",5));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,14,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 6 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-e $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,14,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 7 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("xterm",5));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,15,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 7 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-e $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,15,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long])),qbs_new_txt_len("ptyxis",6));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,16,"terminal.bas");}while(r);
-do{
-tmp_long=array_check(( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long])),qbs_new_txt_len("-- $$ $@",8));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,16,"terminal.bas");}while(r);
-S_39099:;
-fornext_value4605= 1 ;
-fornext_finalvalue4605=func_ubound(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES,1,1);
-fornext_step4605= 1 ;
-if (fornext_step4605<0) fornext_step_negative4605=1; else fornext_step_negative4605=0;
-if (is_error_pending()) goto fornext_error4605;
-goto fornext_entrylabel4605;
-while(1){
-fornext_value4605=fornext_step4605+(*_FUNC_FINDWORKINGTERMINAL_LONG_I);
-fornext_entrylabel4605:
-*_FUNC_FINDWORKINGTERMINAL_LONG_I=fornext_value4605;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4605){
-if (fornext_value4605<fornext_finalvalue4605) break;
-}else{
-if (fornext_value4605>fornext_finalvalue4605) break;
-}
-fornext_error4605:;
-if(qbevent){evnt(25521,18,"terminal.bas");if(r)goto S_39099;}
-do{
-*_FUNC_FINDWORKINGTERMINAL_LONG_RET=func_shell(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("command -v ",11),func_chr( 34 )),((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5])]))),func_chr( 34 )),qbs_new_txt_len(" >/dev/null 2>&1",16)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,19,"terminal.bas");}while(r);
-S_39101:;
-if ((-(*_FUNC_FINDWORKINGTERMINAL_LONG_RET== 0 ))||is_error_pending()){
-if(qbevent){evnt(25521,21,"terminal.bas");if(r)goto S_39101;}
-do{
-qbs_set(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL,qbs_add(qbs_add(((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5])])),qbs_new_txt_len(" ",1)),((qbs*)(((uint64*)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5])]))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,22,"terminal.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25521,23,"terminal.bas");}while(r);
-}
-fornext_continue_4604:;
-}
-fornext_exit_4604:;
-do{
-qbs_set(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25521,27,"terminal.bas");}while(r);
+if(!qbevent)break;evnt(25760,4,"give_error.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free264.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL);return _FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL;
 }

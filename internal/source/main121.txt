@@ -1,4 +1,4 @@
-int32 FUNC_ELEMENTISSTRING(qbs*_FUNC_ELEMENTISSTRING_STRING_ELE){
+int32 FUNC_ELEMENTISNUMBER(qbs*_FUNC_ELEMENTISNUMBER_STRING_OELE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,13 +12,45 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-*_FUNC_ELEMENTISSTRING_LONG_ELEMENTISSTRING=-(func_instr(NULL,_FUNC_ELEMENTISSTRING_STRING_ELE,func_chr( 34 ),0)!= 0 );
+if(!qbevent)break;evnt(25752,533,"elements.bas");}while(r);
+S_34530:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_ELEMENTISNUMBER_STRING_OELE,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25752,534,"elements.bas");if(r)goto S_34530;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(25752,534,"elements.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_ELEMENTISNUMBER_STRING_ELE,_FUNC_ELEMENTISNUMBER_STRING_OELE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25511,549,"elements.bas");}while(r);
+if(!qbevent)break;evnt(25752,535,"elements.bas");}while(r);
+S_34534:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_FUNC_ELEMENTISNUMBER_STRING_ELE)==qbs_asc(qbs_new_txt_len("-",1)))))||is_error_pending()){
+if(qbevent){evnt(25752,538,"elements.bas");if(r)goto S_34534;}
+do{
+qbs_set(_FUNC_ELEMENTISNUMBER_STRING_ELE,func_mid(_FUNC_ELEMENTISNUMBER_STRING_ELE, 2 ,NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25752,538,"elements.bas");}while(r);
+}
+do{
+*_FUNC_ELEMENTISNUMBER_LONG_RES=((-(qbs_asc(_FUNC_ELEMENTISNUMBER_STRING_ELE)>=qbs_asc(qbs_new_txt_len("0",1))))&(-(qbs_asc(_FUNC_ELEMENTISNUMBER_STRING_ELE)<=qbs_asc(qbs_new_txt_len("9",1)))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25752,541,"elements.bas");}while(r);
+S_34538:;
+if ((qbs_cleanup(qbs_tmp_base,(~(*_FUNC_ELEMENTISNUMBER_LONG_RES))&(-(_FUNC_ELEMENTISNUMBER_STRING_ELE->len> 1 ))))||is_error_pending()){
+if(qbevent){evnt(25752,542,"elements.bas");if(r)goto S_34538;}
+do{
+*_FUNC_ELEMENTISNUMBER_LONG_RES=((-(qbs_asc(_FUNC_ELEMENTISNUMBER_STRING_ELE)==qbs_asc(qbs_new_txt_len(".",1))))&(((-(qbs_asc(_FUNC_ELEMENTISNUMBER_STRING_ELE, 2 )>=qbs_asc(qbs_new_txt_len("0",1))))&(-(qbs_asc(_FUNC_ELEMENTISNUMBER_STRING_ELE, 2 )<=qbs_asc(qbs_new_txt_len("9",1)))))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25752,542,"elements.bas");}while(r);
+}
+do{
+*_FUNC_ELEMENTISNUMBER_LONG_ELEMENTISNUMBER=*_FUNC_ELEMENTISNUMBER_LONG_RES;
+if(!qbevent)break;evnt(25752,544,"elements.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free121.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_ELEMENTISSTRING_LONG_ELEMENTISSTRING;
+return *_FUNC_ELEMENTISNUMBER_LONG_ELEMENTISNUMBER;
 }

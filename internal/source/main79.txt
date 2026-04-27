@@ -1,4 +1,4 @@
-qbs* FUNC_STRREPLACE(qbs*_FUNC_STRREPLACE_STRING_MYSTRING,qbs*_FUNC_STRREPLACE_STRING_FIND,qbs*_FUNC_STRREPLACE_STRING_REPLACEWITH){
+qbs* FUNC_STRREMOVE(qbs*_FUNC_STRREMOVE_STRING_MYSTRING,qbs*_FUNC_STRREMOVE_STRING_WHATTOREMOVE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,57 +12,43 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-if(!qbevent)break;evnt(25508,19,"strings.bas");}while(r);
+if(!qbevent)break;evnt(25749,5,"strings.bas");}while(r);
 do{
-if(!qbevent)break;evnt(25508,20,"strings.bas");}while(r);
-S_33676:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_STRREPLACE_STRING_MYSTRING->len== 0 )))||is_error_pending()){
-if(qbevent){evnt(25508,21,"strings.bas");if(r)goto S_33676;}
+if(!qbevent)break;evnt(25749,6,"strings.bas");}while(r);
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25508,21,"strings.bas");}while(r);
+qbs_set(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_MYSTRING);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25749,8,"strings.bas");}while(r);
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_B,qbs_lcase(_FUNC_STRREMOVE_STRING_WHATTOREMOVE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25749,9,"strings.bas");}while(r);
+do{
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25749,10,"strings.bas");}while(r);
+S_33921:;
+while((*_FUNC_STRREMOVE_LONG_I)||is_error_pending()){
+if(qbevent){evnt(25749,11,"strings.bas");if(r)goto S_33921;}
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_A,qbs_add(qbs_left(_FUNC_STRREMOVE_STRING_A,*_FUNC_STRREMOVE_LONG_I- 1 ),qbs_right(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_A->len-*_FUNC_STRREMOVE_LONG_I-_FUNC_STRREMOVE_STRING_B->len+ 1 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25749,12,"strings.bas");}while(r);
+do{
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25749,13,"strings.bas");}while(r);
+dl_continue_3909:;
 }
+dl_exit_3909:;
 do{
-qbs_set(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_MYSTRING);
+qbs_set(_FUNC_STRREMOVE_STRING_STRREMOVE,_FUNC_STRREMOVE_STRING_A);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,22,"strings.bas");}while(r);
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_B,qbs_lcase(_FUNC_STRREPLACE_STRING_FIND));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,23,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_BASEI= 1 ;
-if(!qbevent)break;evnt(25508,24,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,25,"strings.bas");}while(r);
-S_33683:;
-while((*_FUNC_STRREPLACE_LONG_I)||is_error_pending()){
-if(qbevent){evnt(25508,26,"strings.bas");if(r)goto S_33683;}
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_A,qbs_add(qbs_add(qbs_left(_FUNC_STRREPLACE_STRING_A,*_FUNC_STRREPLACE_LONG_I- 1 ),_FUNC_STRREPLACE_STRING_REPLACEWITH),qbs_right(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_A->len-*_FUNC_STRREPLACE_LONG_I-_FUNC_STRREPLACE_STRING_B->len+ 1 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,27,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_BASEI=*_FUNC_STRREPLACE_LONG_I+_FUNC_STRREPLACE_STRING_REPLACEWITH->len;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,28,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,29,"strings.bas");}while(r);
-dl_continue_3883:;
-}
-dl_exit_3883:;
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_STRREPLACE,_FUNC_STRREPLACE_STRING_A);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,31,"strings.bas");}while(r);
+if(!qbevent)break;evnt(25749,15,"strings.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free79.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_STRREPLACE_STRING_STRREPLACE);return _FUNC_STRREPLACE_STRING_STRREPLACE;
+qbs_maketmp(_FUNC_STRREMOVE_STRING_STRREMOVE);return _FUNC_STRREMOVE_STRING_STRREMOVE;
 }

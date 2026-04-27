@@ -1,4 +1,4 @@
-int16 FUNC_TFSTRINGTOBOOL(qbs*_FUNC_TFSTRINGTOBOOL_STRING_S){
+qbs* FUNC_BOOLTOTFSTRING(int32*_FUNC_BOOLTOTFSTRING_LONG_B){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,35 +11,23 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_33950:;
+if ((*_FUNC_BOOLTOTFSTRING_LONG_B)||is_error_pending()){
+if(qbevent){evnt(25749,59,"strings.bas");if(r)goto S_33950;}
 do{
-if(!qbevent)break;evnt(25508,72,"strings.bas");}while(r);
-do{
-qbs_set(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs__trim(qbs_ucase(_FUNC_TFSTRINGTOBOOL_STRING_S)));
+qbs_set(_FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING,qbs_new_txt_len("True",4));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25508,73,"strings.bas");}while(r);
-S_33705:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("TRUE",4))))||is_error_pending()){
-if(qbevent){evnt(25508,75,"strings.bas");if(r)goto S_33705;}
-do{
-*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -1 ;
-if(!qbevent)break;evnt(25508,76,"strings.bas");}while(r);
-S_33707:;
-}else{
-if (qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("FALSE",5)))){
-if(qbevent){evnt(25508,77,"strings.bas");if(r)goto S_33707;}
-do{
-*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= 0 ;
-if(!qbevent)break;evnt(25508,78,"strings.bas");}while(r);
+if(!qbevent)break;evnt(25749,60,"strings.bas");}while(r);
 }else{
 do{
-*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -2 ;
-if(!qbevent)break;evnt(25508,80,"strings.bas");}while(r);
-}
+qbs_set(_FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING,qbs_new_txt_len("False",5));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25749,62,"strings.bas");}while(r);
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free84.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL;
+qbs_maketmp(_FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING);return _FUNC_BOOLTOTFSTRING_STRING_BOOLTOTFSTRING;
 }

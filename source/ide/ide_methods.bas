@@ -414,7 +414,7 @@ FUNCTION ide2 (ignore)
         END IF
         OptionsMenuGuiDialogs = i
         menu$(m, i) = "#GUI Dialogs": i = i + 1
-        menuDesc$(m, i - 1) = "Uses GUI-based File Dialog and Messagebox Windows"
+        menuDesc$(m, i - 1) = "Toggles the use of native GUI-based File Dialog Windows"
         IF UseGuiDialogs THEN
             menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuGuiDialogs)
         END IF
@@ -3516,19 +3516,7 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF KCONTROL AND UCASE$(K$) = "S" THEN 'File -> #Save
-            IF ideprogname = "" THEN
-                ProposedTitle$ = FindProposedTitle$
-                IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
-                IF UseGuiDialogs THEN
-                    a$ = SaveFile$(ProposedTitle$ + ".bas")
-                ELSE
-                    a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
-                END IF
-                IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
-            ELSE
-                idesave idepath$ + idepathsep$ + ideprogname$
-            END IF
-            PCOPY 3, 0: SCREEN , , 3, 0: GOTO ideloop
+            GOTO ctrlSave
         END IF
 
         IF K$ = CHR$(0) + CHR$(60) THEN 'F2
@@ -6492,26 +6480,27 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "E#xit" THEN
                 PCOPY 2, 0
                 quickexit:
-                IF ideunsaved = 1 THEN
+                IF ideunsaved THEN
                     r$ = idesavenow
                     PCOPY 3, 0: SCREEN , , 3, 0
-                    IF r$ = "C" THEN GOTO ideloop
+                    IF r$ = "C" GOTO ideloop
                     IF r$ = "Y" THEN
-                        IF ideprogname = "" THEN
+                        IF ideprogname$ = "" THEN
                             ProposedTitle$ = FindProposedTitle$
-                            IF ProposedTitle$ = "" THEN
-                                r$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                            IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                            IF UseGuiDialogs THEN
+                                r$ = SaveFile$(ProposedTitle$ + ".bas")
                             ELSE
                                 r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF
                             PCOPY 3, 0: SCREEN , , 3, 0
-                            IF ideerror > 1 THEN GOTO IDEerrorMessage
                             IF r$ = "C" THEN GOTO ideloop
                         ELSE
                             idesave idepath$ + idepathsep$ + ideprogname$
                         END IF
+                        PCOPY 3, 0: SCREEN , , 3, 0
+                        IF ideerror > 1 THEN GOTO IDEerrorMessage
                     END IF
-
                 END IF
                 IF _FILEEXISTS(AutosaveFile$) THEN KILL AutosaveFile$ 'remove flag file
                 SYSTEM
@@ -6520,26 +6509,30 @@ FUNCTION ide2 (ignore)
             IF menu$(m, s) = "#New  Ctrl+N" THEN
                 PCOPY 2, 0
                 ctrlNew:
-                IF ideunsaved = 1 THEN
+                IF ideunsaved THEN
                     r$ = idesavenow
                     PCOPY 3, 0: SCREEN , , 3, 0
-                    IF r$ = "C" THEN GOTO ideloop
+                    IF r$ = "C" GOTO ideloop
                     IF r$ = "Y" THEN
-                        IF ideprogname = "" THEN
+                        IF ideprogname$ = "" THEN
                             ProposedTitle$ = FindProposedTitle$
-                            IF ProposedTitle$ = "" THEN
-                                r$ = idefiledialog$("untitled" + tempfolderindexstr$ + ".bas", 2)
+                            IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
+                            IF UseGuiDialogs THEN
+                                r$ = SaveFile$(ProposedTitle$ + ".bas")
                             ELSE
                                 r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF
                             PCOPY 3, 0: SCREEN , , 3, 0
-                            IF ideerror > 1 THEN GOTO IDEerrorMessage
-                            IF r$ = "C" THEN GOTO ideloop
+                            IF r$ = "C" GOTO ideloop
                         ELSE
                             idesave idepath$ + idepathsep$ + ideprogname$
                         END IF
+                        PCOPY 3, 0: SCREEN , , 3, 0
+                        IF ideerror > 1 GOTO IDEerrorMessage
                     END IF
                 END IF
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOSUB redrawItAll
                 ideunsaved = -1
                 'new blank text field
                 REDIM IdeBreakpoints(1) AS _BYTE
@@ -6567,8 +6560,6 @@ FUNCTION ide2 (ignore)
                 ideundobase = 0 'reset
                 'reset formatting to defaults
                 IDEAutoIndent = DEFAutoIndent: IDEAutoLayout = DEFAutoLayout
-                PCOPY 3, 0: SCREEN , , 3, 0
-                GOSUB redrawItAll
                 GOTO ideloop
             END IF
 
@@ -6630,22 +6621,23 @@ FUNCTION ide2 (ignore)
                 IF ideunsaved THEN
                     r$ = idesavenow
                     PCOPY 3, 0: SCREEN , , 3, 0
-                    IF r$ = "C" THEN GOTO ideloop
+                    IF r$ = "C" GOTO ideloop
                     IF r$ = "Y" THEN
-                        IF ideprogname = "" THEN
+                        IF ideprogname$ = "" THEN
                             ProposedTitle$ = FindProposedTitle$
                             IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
                             IF UseGuiDialogs THEN
-                                a$ = SaveFile$(ProposedTitle$ + ".bas")
+                                r$ = SaveFile$(ProposedTitle$ + ".bas")
                             ELSE
-                                a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
+                                r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                             END IF
-                            IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
-                            IF r$ = "C" THEN GOTO ideloop
+                            PCOPY 3, 0: SCREEN , , 3, 0
+                            IF r$ = "C" GOTO ideloop
                         ELSE
                             idesave idepath$ + idepathsep$ + ideprogname$
                         END IF
                         PCOPY 3, 0: SCREEN , , 3, 0
+                        IF ideerror > 1 GOTO IDEerrorMessage
                     END IF '"Y"
                 END IF 'unsaved
                 IF UseGuiDialogs THEN
@@ -6653,7 +6645,8 @@ FUNCTION ide2 (ignore)
                 ELSE
                     r$ = idefiledialog$("", 1) 'for old dialog file open routine.
                 END IF
-                IF ideerror > 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: GOTO IDEerrorMessage
+                PCOPY 3, 0: SCREEN , , 3, 0
+                IF ideerror > 1 GOTO IDEerrorMessage
                 IF r$ <> "C" THEN
                     IF ideprogname$ = "beforefirstline.bi" OR ideprogname$ = "afterlastline.bm" THEN ForceOptExpl = -2 ELSE ForceOptExpl = _FALSE
                     ideFirstCompileFromDisk = -1: ideunsaved = -1: idechangemade = 1: idelayoutallow = 2: ideundobase = 0: QuickNavTotal = 0: ModifyCOMMAND$ = "": idefocusline = 0: startPausedPending = 0
@@ -6678,40 +6671,43 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#Save  Ctrl+S" THEN
                 PCOPY 2, 0
-                IF ideprogname = "" THEN
+                ctrlSave:
+                IF ideprogname$ = "" THEN
                     ProposedTitle$ = FindProposedTitle$
                     IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
                     IF UseGuiDialogs THEN
-                        a$ = SaveFile$(ProposedTitle$ + ".bas")
+                        r$ = SaveFile$(ProposedTitle$ + ".bas")
                     ELSE
-                        a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
+                        r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                     END IF
                 ELSE
-                    idesave idepath$ + idepathsep$ + ideprogname
+                    idesave idepath$ + idepathsep$ + ideprogname$
                 END IF
-                PCOPY 3, 0: SCREEN , , 3, 0: GOTO ideloop
+                PCOPY 3, 0: SCREEN , , 3, 0
+                IF ideerror > 1 GOTO IDEerrorMessage
+                GOTO ideloop
             END IF
 
 
             IF menu$(m, s) = "Save #As..." THEN
                 PCOPY 2, 0
-                IF ideprogname = "" THEN
+                IF ideprogname$ = "" THEN
                     ProposedTitle$ = FindProposedTitle$
                     IF ProposedTitle$ = "" THEN ProposedTitle$ = "untitled" + tempfolderindexstr$
                     IF UseGuiDialogs THEN
-                        a$ = SaveFile$(ProposedTitle$ + ".bas")
+                        r$ = SaveFile$(ProposedTitle$ + ".bas")
                     ELSE
-                        a$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
+                        r$ = idefiledialog$(ProposedTitle$ + ".bas", 2)
                     END IF
                 ELSE
                     IF UseGuiDialogs THEN
-                        a$ = SaveFile$(ideprogname$)
+                        r$ = SaveFile$(ideprogname$)
                     ELSE
-                        a$ = idefiledialog$(ideprogname$, 2)
+                        r$ = idefiledialog$(ideprogname$, 2)
                     END IF
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
-                IF ideerror > 1 THEN GOTO IDEerrorMessage
+                IF ideerror > 1 GOTO IDEerrorMessage
                 GOTO ideloop
             END IF
 

@@ -1,4 +1,4 @@
-void SUB_LOADCOLORSCHEMES(){
+int32 FUNC_DARKENFGBG(int8*_FUNC_DARKENFGBG_BYTE_ACTION){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,318 +11,114 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_62286:;
+if ((-(*_FUNC_DARKENFGBG_BYTE_ACTION== 1 ))||is_error_pending()){
+if(qbevent){evnt(25769,20293,"ide_methods.bas");if(r)goto S_62286;}
 do{
-if(!qbevent)break;evnt(25528,20356,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERBGCOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDEBACKGROUNDCOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDEBACKGROUNDCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDEBACKGROUNDCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20294,"ide_methods.bas");}while(r);
 do{
-*__INTEGER_PRESETCOLORSCHEMES= 14 ;
-if(!qbevent)break;evnt(25528,20362,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERBG2COLOR=func__rgb32(qbr(func__red32(*__ULONG_IDEBACKGROUNDCOLOR2)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDEBACKGROUNDCOLOR2)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDEBACKGROUNDCOLOR2)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20295,"ide_methods.bas");}while(r);
 do{
-
-if (__ARRAY_STRING_COLORSCHEMES[2]&2){
-error(10);
-}else{
-((mem_lock*)((ptrszint*)__ARRAY_STRING_COLORSCHEMES)[8])->id=(++mem_lock_id);
-if (__ARRAY_STRING_COLORSCHEMES[2]&1){
-tmp_long=__ARRAY_STRING_COLORSCHEMES[5];
-while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]);
-free((void*)(__ARRAY_STRING_COLORSCHEMES[0]));
-}
-__ARRAY_STRING_COLORSCHEMES[4]= 1 ;
-__ARRAY_STRING_COLORSCHEMES[5]=(*__INTEGER_PRESETCOLORSCHEMES)-__ARRAY_STRING_COLORSCHEMES[4]+1;
-__ARRAY_STRING_COLORSCHEMES[6]=1;
-__ARRAY_STRING_COLORSCHEMES[0]=(ptrszint)malloc(__ARRAY_STRING_COLORSCHEMES[5]*8);
-if (!__ARRAY_STRING_COLORSCHEMES[0]) error(257);
-__ARRAY_STRING_COLORSCHEMES[2]|=1;
-tmp_long=__ARRAY_STRING_COLORSCHEMES[5];
-if (__ARRAY_STRING_COLORSCHEMES[2]&4){
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-if(!qbevent)break;evnt(25528,20363,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERFGCOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDETEXTCOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDETEXTCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDETEXTCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20296,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I= 0 ;
-if(!qbevent)break;evnt(25528,20363,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERKWCOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDEKEYWORDCOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDEKEYWORDCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDEKEYWORDCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20297,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20364,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERNUMCOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDENUMBERSCOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDENUMBERSCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDENUMBERSCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20298,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Super Dark Blue|216216216069118147216098078255167000085206085098098098000000039000049078000088108170170170",106));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20364,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERCOMMENTCOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDECOMMENTCOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDECOMMENTCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDECOMMENTCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20299,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20365,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERIDECHROMACOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDECHROMACOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDECHROMACOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDECHROMACOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20300,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Dark Blue|226226226069147216245128177255177000085255085049196196000000069000068108000147177170170170",100));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20365,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERMETACOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDEMETACOMMANDCOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDEMETACOMMANDCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDEMETACOMMANDCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20301,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20366,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERQUOTECOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDEQUOTECOLOR)* 0.5E+0 ),qbr(func__green32(*__ULONG_IDEQUOTECOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDEQUOTECOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20302,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("QB64 Original|226226226147196235245128177255255085085255085085255255000000170000108177000147177170170170",104));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20366,"ide_methods.bas");}while(r);
+*_FUNC_DARKENFGBG_ULONG_TEMPDARKERERRORCOLOR=func__rgb32(qbr(func__red32(*__ULONG_IDEERRORCOLOR)* 0.5E+0 ),qbr(func__green32(*_FUNC_DARKENFGBG_LONG_IDEERRROCOLOR)* 0.5E+0 ),qbr(func__blue32(*__ULONG_IDEERRORCOLOR)* 0.5E+0 ));
+if(!qbevent)break;evnt(25769,20303,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20367,"ide_methods.bas");}while(r);
+sub__palettecolor( 1 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERBGCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20304,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Classic QB4.5|177177177177177177177177177177177177177177177177177177000000170000000170000147177170170170",104));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20367,"ide_methods.bas");}while(r);
+sub__palettecolor( 4 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERERRORCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20305,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20368,"ide_methods.bas");}while(r);
+sub__palettecolor( 5 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERBGCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20306,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Dark Side|255255255206206000245010098000177000085255085049186245011022029100100100000147177170170170",100));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20368,"ide_methods.bas");}while(r);
+sub__palettecolor( 6 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERBG2COLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20307,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20369,"ide_methods.bas");}while(r);
+sub__palettecolor( 7 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERIDECHROMACOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20308,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Camouflage|196196196255255255245128177255177000137177147147137020000039029098069020000147177170170170",101));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20369,"ide_methods.bas");}while(r);
+sub__palettecolor( 8 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERNUMCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20309,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20370,"ide_methods.bas");}while(r);
+sub__palettecolor( 10 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERMETACOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20310,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Plum|186186186255255255245128177255108000085186078085186255059000059088088128000147177170170170",95));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20370,"ide_methods.bas");}while(r);
+sub__palettecolor( 11 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERCOMMENTCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20311,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20371,"ide_methods.bas");}while(r);
+sub__palettecolor( 12 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERKWCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20312,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Cornfield|255255180065130255255130065065255130255130255190160130100080060110090070170000000200200130",100));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20371,"ide_methods.bas");}while(r);
+sub__palettecolor( 13 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERFGCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20313,"ide_methods.bas");}while(r);
 do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20372,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("CF Dark|226226226115222227255043138255178034185237049157118137043045037010000020088088088170170170",98));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20372,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20373,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Broadcast|228224220034085170221068051238238068221136000051153034024024024036036036034136170170170170",100));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20373,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20374,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("VS Code|212212212086156214212099162206145120070201176106153085031031031040040040034136170170170170",98));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20374,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20375,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("X11 SgiColors|197193170113113198198113113142142056113198113085085085024024024036036036142056142170170170",104));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20375,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20376,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("Light Green|051051051000000216245128177255157255147177093206206206234255234206255206000147177170170170",102));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20376,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20377,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*_SUB_LOADCOLORSCHEMES_LONG_I)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("All White|051051051000000216245128177206147000059177000206206206255255255245245245000147177170170170",100));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20377,"ide_methods.bas");}while(r);
-do{
-*__INTEGER_TOTALCOLORSCHEMES=*__INTEGER_PRESETCOLORSCHEMES;
-if(!qbevent)break;evnt(25528,20378,"ide_methods.bas");}while(r);
-do{
-*__INTEGER_LASTVALIDCOLORSCHEME=*__INTEGER_TOTALCOLORSCHEMES;
-if(!qbevent)break;evnt(25528,20379,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I= 0 ;
-if(!qbevent)break;evnt(25528,20382,"ide_methods.bas");}while(r);
-S_62114:;
-do{
-if(qbevent){evnt(25528,20383,"ide_methods.bas");if(r)goto S_62114;}
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_I=*_SUB_LOADCOLORSCHEMES_LONG_I+ 1 ;
-if(!qbevent)break;evnt(25528,20384,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_COLORSCHEMESSECTION,qbs_add(qbs_add(qbs_new_txt_len("Scheme",6),qbs__tostr((int32)(*_SUB_LOADCOLORSCHEMES_LONG_I),NULL,0)),qbs_new_txt_len("$",1)),_SUB_LOADCOLORSCHEMES_STRING_VALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20385,"ide_methods.bas");}while(r);
-S_62117:;
-if ((*_SUB_LOADCOLORSCHEMES_LONG_RESULT)||is_error_pending()){
-if(qbevent){evnt(25528,20386,"ide_methods.bas");if(r)goto S_62117;}
-do{
-*__INTEGER_TOTALCOLORSCHEMES=*__INTEGER_TOTALCOLORSCHEMES+ 1 ;
-if(!qbevent)break;evnt(25528,20387,"ide_methods.bas");}while(r);
-S_62119:;
-if ((qbs_cleanup(qbs_tmp_base,-(*__INTEGER_TOTALCOLORSCHEMES>func_ubound(__ARRAY_STRING_COLORSCHEMES,1,1))))||is_error_pending()){
-if(qbevent){evnt(25528,20388,"ide_methods.bas");if(r)goto S_62119;}
-do{
-
-if (__ARRAY_STRING_COLORSCHEMES[2]&2){
-error(10);
-}else{
-((mem_lock*)((ptrszint*)__ARRAY_STRING_COLORSCHEMES)[8])->id=(++mem_lock_id);
-static int32 preserved_elements;
-if (__ARRAY_STRING_COLORSCHEMES[2]&1){
-preserved_elements=__ARRAY_STRING_COLORSCHEMES[5];
-}
-else preserved_elements=0;
-__ARRAY_STRING_COLORSCHEMES[4]= 1 ;
-__ARRAY_STRING_COLORSCHEMES[5]=(func_ubound(__ARRAY_STRING_COLORSCHEMES,1,1)+ 10 )-__ARRAY_STRING_COLORSCHEMES[4]+1;
-__ARRAY_STRING_COLORSCHEMES[6]=1;
-if (preserved_elements){
-static ptrszint tmp_long2;
-tmp_long2=__ARRAY_STRING_COLORSCHEMES[5];
-if (tmp_long2<preserved_elements){
-for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {
-qbs_free((qbs*)((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]);
-}}
-__ARRAY_STRING_COLORSCHEMES[0]=(ptrszint)realloc((void*)(__ARRAY_STRING_COLORSCHEMES[0]),tmp_long2*8);
-if (!__ARRAY_STRING_COLORSCHEMES[0]) error(257);
-if (preserved_elements<tmp_long2){
-for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){
-if (__ARRAY_STRING_COLORSCHEMES[2]&4){
-((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-}
-}else{
-__ARRAY_STRING_COLORSCHEMES[0]=(ptrszint)malloc(__ARRAY_STRING_COLORSCHEMES[5]*8);
-if (!__ARRAY_STRING_COLORSCHEMES[0]) error(257);
-__ARRAY_STRING_COLORSCHEMES[2]|=1;
-tmp_long=__ARRAY_STRING_COLORSCHEMES[5];
-if (__ARRAY_STRING_COLORSCHEMES[2]&4){
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-}
-if(!qbevent)break;evnt(25528,20389,"ide_methods.bas");}while(r);
-}
-do{
-tmp_long=array_check((*__INTEGER_TOTALCOLORSCHEMES)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),_SUB_LOADCOLORSCHEMES_STRING_VALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20391,"ide_methods.bas");}while(r);
-do{
-*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE=func_instr(NULL,_SUB_LOADCOLORSCHEMES_STRING_VALUE,qbs_new_txt_len("|",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20392,"ide_methods.bas");}while(r);
-S_62124:;
-if ((-(*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE> 0 ))||is_error_pending()){
-if(qbevent){evnt(25528,20393,"ide_methods.bas");if(r)goto S_62124;}
-S_62125:;
-if ((qbs_cleanup(qbs_tmp_base,-(((int32)(func_mid(_SUB_LOADCOLORSCHEMES_STRING_VALUE,*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE+ 1 ,NULL,0))->len)== 81 )))||is_error_pending()){
-if(qbevent){evnt(25528,20394,"ide_methods.bas");if(r)goto S_62125;}
-do{
-*__INTEGER_LASTVALIDCOLORSCHEME=*__INTEGER_TOTALCOLORSCHEMES;
-if(!qbevent)break;evnt(25528,20396,"ide_methods.bas");}while(r);
-do{
-qbs_set(_SUB_LOADCOLORSCHEMES_STRING_VALUE,qbs_add(_SUB_LOADCOLORSCHEMES_STRING_VALUE,qbs_new_txt_len("170170170",9)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20397,"ide_methods.bas");}while(r);
-do{
-SUB_WRITECONFIGSETTING(__STRING_COLORSCHEMESSECTION,qbs_add(qbs_add(qbs_new_txt_len("Scheme",6),qbs__tostr((int32)(*_SUB_LOADCOLORSCHEMES_LONG_I),NULL,0)),qbs_new_txt_len("$",1)),_SUB_LOADCOLORSCHEMES_STRING_VALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20398,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*__INTEGER_TOTALCOLORSCHEMES)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),_SUB_LOADCOLORSCHEMES_STRING_VALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20399,"ide_methods.bas");}while(r);
-S_62130:;
-}else{
-if (qbs_cleanup(qbs_tmp_base,-(((int32)(func_mid(_SUB_LOADCOLORSCHEMES_STRING_VALUE,*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE+ 1 ,NULL,0))->len)== 90 ))){
-if(qbevent){evnt(25528,20400,"ide_methods.bas");if(r)goto S_62130;}
-do{
-*__INTEGER_LASTVALIDCOLORSCHEME=*__INTEGER_TOTALCOLORSCHEMES;
-if(!qbevent)break;evnt(25528,20402,"ide_methods.bas");}while(r);
-S_62132:;
-}else{
-if (qbs_cleanup(qbs_tmp_base,-(((int32)(func_mid(_SUB_LOADCOLORSCHEMES_STRING_VALUE,*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE+ 1 ,NULL,0))->len)== 54 ))){
-if(qbevent){evnt(25528,20403,"ide_methods.bas");if(r)goto S_62132;}
-do{
-qbs_set(_SUB_LOADCOLORSCHEMES_STRING_TEMP,qbs_left(_SUB_LOADCOLORSCHEMES_STRING_VALUE,*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20406,"ide_methods.bas");}while(r);
-do{
-qbs_set(_SUB_LOADCOLORSCHEMES_STRING_TEMP,qbs_add(qbs_add(_SUB_LOADCOLORSCHEMES_STRING_TEMP,func_mid(_SUB_LOADCOLORSCHEMES_STRING_VALUE,*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE+ 1 , 9 ,0|1)),qbs_new_txt_len("069147216245128177",18)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20407,"ide_methods.bas");}while(r);
-do{
-qbs_set(_SUB_LOADCOLORSCHEMES_STRING_TEMP,qbs_add(qbs_add(_SUB_LOADCOLORSCHEMES_STRING_TEMP,func_mid(_SUB_LOADCOLORSCHEMES_STRING_VALUE,*_SUB_LOADCOLORSCHEMES_LONG_FOUNDPIPE+ 10 ,NULL,0)),qbs_new_txt_len("000147177170170170",18)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20408,"ide_methods.bas");}while(r);
-do{
-tmp_long=array_check((*__INTEGER_TOTALCOLORSCHEMES)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),_SUB_LOADCOLORSCHEMES_STRING_TEMP);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20409,"ide_methods.bas");}while(r);
-do{
-SUB_WRITECONFIGSETTING(__STRING_COLORSCHEMESSECTION,qbs_add(qbs_add(qbs_new_txt_len("Scheme",6),qbs__tostr((int32)(*_SUB_LOADCOLORSCHEMES_LONG_I),NULL,0)),qbs_new_txt_len("$",1)),_SUB_LOADCOLORSCHEMES_STRING_TEMP);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20410,"ide_methods.bas");}while(r);
-do{
-*__INTEGER_LASTVALIDCOLORSCHEME=*__INTEGER_TOTALCOLORSCHEMES;
-if(!qbevent)break;evnt(25528,20411,"ide_methods.bas");}while(r);
+sub__palettecolor( 14 ,*_FUNC_DARKENFGBG_ULONG_TEMPDARKERQUOTECOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20314,"ide_methods.bas");}while(r);
 }else{
 do{
-goto LABEL_DISCARDINVALID;
-if(!qbevent)break;evnt(25528,20413,"ide_methods.bas");}while(r);
-}
-}
-}
-}else{
-LABEL_DISCARDINVALID:;
-if(qbevent){evnt(25528,20416,"ide_methods.bas");r=0;}
+sub__palettecolor( 1 ,*__ULONG_IDEBACKGROUNDCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20316,"ide_methods.bas");}while(r);
 do{
-tmp_long=array_check((*__INTEGER_TOTALCOLORSCHEMES)-__ARRAY_STRING_COLORSCHEMES[4],__ARRAY_STRING_COLORSCHEMES[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_COLORSCHEMES[0]))[tmp_long])),qbs_new_txt_len("0",1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,20417,"ide_methods.bas");}while(r);
-}
-}else{
+sub__palettecolor( 4 ,*__ULONG_IDEERRORCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20317,"ide_methods.bas");}while(r);
 do{
-goto dl_exit_6999;
-if(!qbevent)break;evnt(25528,20421,"ide_methods.bas");}while(r);
+sub__palettecolor( 5 ,*__ULONG_IDEBRACKETHIGHLIGHTCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20318,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 6 ,*__ULONG_IDEBACKGROUNDCOLOR2, 0 ,1);
+if(!qbevent)break;evnt(25769,20319,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 7 ,*__ULONG_IDECHROMACOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20320,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 8 ,*__ULONG_IDENUMBERSCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20321,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 10 ,*__ULONG_IDEMETACOMMANDCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20322,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 11 ,*__ULONG_IDECOMMENTCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20323,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 12 ,*__ULONG_IDEKEYWORDCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20324,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 13 ,*__ULONG_IDETEXTCOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20325,"ide_methods.bas");}while(r);
+do{
+sub__palettecolor( 14 ,*__ULONG_IDEQUOTECOLOR, 0 ,1);
+if(!qbevent)break;evnt(25769,20326,"ide_methods.bas");}while(r);
 }
-dl_continue_6999:;
-}while(1);
-dl_exit_6999:;
+do{
+*_FUNC_DARKENFGBG_LONG_DARKENFGBG= 0 ;
+if(!qbevent)break;evnt(25769,20329,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free367.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_DARKENFGBG_LONG_DARKENFGBG;
 }

@@ -1,4 +1,4 @@
-qbs* FUNC_WIKILOOKAHEAD(qbs*_FUNC_WIKILOOKAHEAD_STRING_A,int32*_FUNC_WIKILOOKAHEAD_LONG_I,qbs*_FUNC_WIKILOOKAHEAD_STRING_TOKEN){
+qbs* FUNC_WIKISAFENAME(qbs*_FUNC_WIKISAFENAME_STRING_PAGE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,37 +12,79 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
 do{
-qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,qbs_new_txt_len("",0));
+qbs_set(_FUNC_WIKISAFENAME_STRING_EXT,func_space(_FUNC_WIKISAFENAME_STRING_PAGE->len));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,1225,"wiki_methods.bas");}while(r);
-S_64296:;
-if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_WIKILOOKAHEAD_LONG_I>=_FUNC_WIKILOOKAHEAD_STRING_A->len)))||is_error_pending()){
-if(qbevent){evnt(25528,1225,"wiki_methods.bas");if(r)goto S_64296;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25528,1225,"wiki_methods.bas");}while(r);
-}
-do{
-*_FUNC_WIKILOOKAHEAD_LONG_J=func_instr(*_FUNC_WIKILOOKAHEAD_LONG_I,_FUNC_WIKILOOKAHEAD_STRING_A,_FUNC_WIKILOOKAHEAD_STRING_TOKEN,0|1);
+if(!qbevent)break;evnt(25769,1140,"wiki_methods.bas");}while(r);
+S_64473:;
+fornext_value7352= 1 ;
+fornext_finalvalue7352=_FUNC_WIKISAFENAME_STRING_PAGE->len;
+fornext_step7352= 1 ;
+if (fornext_step7352<0) fornext_step_negative7352=1; else fornext_step_negative7352=0;
+if (is_error_pending()) goto fornext_error7352;
+goto fornext_entrylabel7352;
+while(1){
+fornext_value7352=fornext_step7352+(*_FUNC_WIKISAFENAME_LONG_I);
+fornext_entrylabel7352:
+*_FUNC_WIKISAFENAME_LONG_I=fornext_value7352;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,1226,"wiki_methods.bas");}while(r);
-S_64300:;
-if ((-(*_FUNC_WIKILOOKAHEAD_LONG_J== 0 ))||is_error_pending()){
-if(qbevent){evnt(25528,1227,"wiki_methods.bas");if(r)goto S_64300;}
-do{
-qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,func_mid(_FUNC_WIKILOOKAHEAD_STRING_A,*_FUNC_WIKILOOKAHEAD_LONG_I,NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,1228,"wiki_methods.bas");}while(r);
+if (fornext_step_negative7352){
+if (fornext_value7352<fornext_finalvalue7352) break;
 }else{
-do{
-qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,func_mid(_FUNC_WIKILOOKAHEAD_STRING_A,*_FUNC_WIKILOOKAHEAD_LONG_I,*_FUNC_WIKILOOKAHEAD_LONG_J-*_FUNC_WIKILOOKAHEAD_LONG_I,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25528,1230,"wiki_methods.bas");}while(r);
+if (fornext_value7352>fornext_finalvalue7352) break;
 }
+fornext_error7352:;
+if(qbevent){evnt(25769,1141,"wiki_methods.bas");if(r)goto S_64473;}
+do{
+*_FUNC_WIKISAFENAME_LONG_C=qbs_asc(_FUNC_WIKISAFENAME_STRING_PAGE,*_FUNC_WIKISAFENAME_LONG_I);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25769,1142,"wiki_methods.bas");}while(r);
+S_64475:;
+if(qbevent){evnt(25769,1143,"wiki_methods.bas");if(r)goto S_64475;}
+S_64476:;
+if ((((*_FUNC_WIKISAFENAME_LONG_C>=( 65 ))&&(*_FUNC_WIKISAFENAME_LONG_C<=( 90 ))))||is_error_pending()){
+if(qbevent){evnt(25769,1144,"wiki_methods.bas");if(r)goto S_64476;}
+do{
+tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
+tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
+tmp_long= 49 ; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(25769,1144,"wiki_methods.bas");}while(r);
+sc_ec_476_end:;
+goto sc_7354_end;
+}
+S_64478:;
+if ((((*_FUNC_WIKISAFENAME_LONG_C>=( 97 ))&&(*_FUNC_WIKISAFENAME_LONG_C<=( 122 ))))||is_error_pending()){
+if(qbevent){evnt(25769,1145,"wiki_methods.bas");if(r)goto S_64478;}
+do{
+tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
+tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
+tmp_long= 48 ; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(25769,1145,"wiki_methods.bas");}while(r);
+sc_ec_477_end:;
+goto sc_7354_end;
+}
+do{
+tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
+tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
+tmp_long=*_FUNC_WIKISAFENAME_LONG_C; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(25769,1146,"wiki_methods.bas");}while(r);
+sc_7354_end:;
+fornext_continue_7351:;
+}
+fornext_exit_7351:;
+do{
+qbs_set(_FUNC_WIKISAFENAME_STRING_WIKISAFENAME,qbs_add(qbs_add(_FUNC_WIKISAFENAME_STRING_PAGE,qbs_new_txt_len("_",1)),_FUNC_WIKISAFENAME_STRING_EXT));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25769,1149,"wiki_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free393.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD);return _FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD;
+qbs_maketmp(_FUNC_WIKISAFENAME_STRING_WIKISAFENAME);return _FUNC_WIKISAFENAME_STRING_WIKISAFENAME;
 }
