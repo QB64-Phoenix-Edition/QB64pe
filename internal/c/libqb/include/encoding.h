@@ -5,7 +5,7 @@
 
 #pragma once
 
-struct qbs;
+#include "qbs.h"
 
 qbs *func__base64encode(qbs *src);
 qbs *func__base64decode(qbs *src);

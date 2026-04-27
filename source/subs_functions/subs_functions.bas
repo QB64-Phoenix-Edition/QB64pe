@@ -3221,6 +3221,14 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_Uptime"
+    id.subfunc = 1
+    id.callname = "GLUTEmu_TimeGet"
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "_UPTIME"
+    regid
+
+    clearid
     id.n = "Rnd"
     id.subfunc = 1
     id.callname = "func_rnd"
@@ -3772,6 +3780,15 @@ SUB reginternal
     id.args = 0
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_DESKTOPWIDTH"
+    regid
+
+    clearid
+    id.n = "_DesktopRefreshRate"
+    id.subfunc = 1
+    id.callname = "func__desktoprefreshrate"
+    id.args = 0
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_DESKTOPREFRESHRATE"
     regid
 
     clearid

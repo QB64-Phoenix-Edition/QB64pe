@@ -1,6 +1,13 @@
-$CONSOLE
-_Dest _Console
+$IF WINDOWS OR MACOSX THEN
+    ' GLFW cannot create a window with OpenGL context in a macOS and Windows GitHub runner
+    $CONSOLE:ONLY
+    PRINT "Got past Title!"
+    SYSTEM
+$END IF
 
-_Title "foobar"
-Print "Got past Title!"
-System
+$CONSOLE
+_DEST _CONSOLE
+
+_TITLE "foobar"
+PRINT "Got past Title!"
+SYSTEM

@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include "error_handle.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 
+inline constexpr auto IMAGE_INVALID_HANDLE = -1; // This is returned to the caller if something goes wrong
 inline constexpr auto IMAGE_8BPP_MAX_COLORS = std::size_t{1} << std::numeric_limits<uint8_t>::digits;
 
 struct img_struct {
@@ -194,6 +196,29 @@ struct hardware_graphics_command_struct {
 #define HARDWARE_GRAPHICS_COMMAND__MAPTRIANGLE3D 5
 #define HARDWARE_GRAPHICS_COMMAND__CLEAR_DEPTHBUFFER 6
 
+// REFACTOR_TODO: These should be eventually moved inside graphics.cpp with proper getters/setters
+extern img_struct *img;
+extern int32_t nextimg;
+extern int32_t *page;
+extern img_struct *write_page;
+
+// REFACTOR_TODO: The following functions should be eventually moved inside graphics.cpp
+void set_view(int32_t new_mode);
+void validatepage(int32_t n);
+void display();
+int32_t func__display();
+int32_t func__newimage(int32_t x, int32_t y, int32_t bpp, int32_t passed);
+int32_t func__copyimage(int32_t i, int32_t mode, int32_t passed);
+void sub__freeimage(int32_t i, int32_t passed);
+int32_t func__dest();
+void sub__dest(int32_t i);
+int32_t func__source();
+void sub__source(int32_t i);
+void sub_cls(int32_t method, uint32_t use_color, int32_t passed);
+void sub_clsDest(int32_t method, uint32_t use_color, int32_t dest, int32_t passed);
+void qbg_sub_view_print(int32_t topline, int32_t bottomline, int32_t passed);
+void qbg_sub_window(float x1, float y1, float x2, float y2, int32_t passed);
+
 uint32_t func__hsb32(double hue, double sat, double bri);
 uint32_t func__hsba32(double hue, double sat, double bri, double alf);
 double func__hue32(uint32_t argb);
@@ -252,45 +277,6 @@ static inline constexpr uint8_t image_clamp_color_component(int n) {
     return uint8_t(std::clamp(n, 0, 255));
 }
 
-static inline uint32_t image_get_rgb_manhattan_dist(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto dr = std::abs(int32_t(r2) - int32_t(r1));
-    auto dg = std::abs(int32_t(g2) - int32_t(g1));
-    auto db = std::abs(int32_t(b2) - int32_t(b1));
-    return uint32_t(dr + dg + db);
-}
-
-static inline constexpr uint32_t image_get_rgb_euclidean_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto dr = int32_t(r2) - int32_t(r1);
-    auto dg = int32_t(g2) - int32_t(g1);
-    auto db = int32_t(b2) - int32_t(b1);
-    return uint32_t(dr * dr + dg * dg + db * db);
-}
-
-static inline float image_get_rgb_euclidean_dist(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto dr = float(r2) - float(r1);
-    auto dg = float(g2) - float(g1);
-    auto db = float(b2) - float(b1);
-    return std::sqrt(dr * dr + dg * dg + db * db);
-}
-
-static inline float constexpr image_get_rgb_luma_weighted_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto dr = float(r2) - float(r1);
-    auto dg = float(g2) - float(g1);
-    auto db = float(b2) - float(b1);
-    return 0.299f * dr * dr + 0.587f * dg * dg + 0.114f * db * db;
-}
-
-static inline float constexpr image_get_rgb_redmean_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
-    auto r_mean = (float(r2) + float(r1)) / 2.0f;
-    auto dr = float(r2) - float(r1);
-    auto dg = float(g2) - float(g1);
-    auto db = float(b2) - float(b1);
-    auto weight_r = 2.0f + (r_mean / 256.0f);
-    auto weight_g = 4.0f;
-    auto weight_b = 2.0f + ((255.0f - r_mean) / 256.0f);
-    return weight_r * dr * dr + weight_g * dg * dg + weight_b * db * db;
-}
-
 static inline constexpr uint32_t func__rgb32(int32_t r, int32_t g, int32_t b, int32_t a) {
     return (image_clamp_color_component(a) << 24) | (image_clamp_color_component(r) << 16) | (image_clamp_color_component(g) << 8) |
            image_clamp_color_component(b);
@@ -340,6 +326,45 @@ static inline void image_swap_red_blue_buffer(uint32_t *buffer, size_t size) {
     }
 }
 
+static inline uint32_t image_get_rgb_manhattan_dist(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = std::abs(int32_t(r2) - int32_t(r1));
+    auto dg = std::abs(int32_t(g2) - int32_t(g1));
+    auto db = std::abs(int32_t(b2) - int32_t(b1));
+    return uint32_t(dr + dg + db);
+}
+
+static inline constexpr uint32_t image_get_rgb_euclidean_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = int32_t(r2) - int32_t(r1);
+    auto dg = int32_t(g2) - int32_t(g1);
+    auto db = int32_t(b2) - int32_t(b1);
+    return uint32_t(dr * dr + dg * dg + db * db);
+}
+
+static inline float image_get_rgb_euclidean_dist(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = float(r2) - float(r1);
+    auto dg = float(g2) - float(g1);
+    auto db = float(b2) - float(b1);
+    return std::sqrt(dr * dr + dg * dg + db * db);
+}
+
+static inline constexpr float image_get_rgb_luma_weighted_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto dr = float(r2) - float(r1);
+    auto dg = float(g2) - float(g1);
+    auto db = float(b2) - float(b1);
+    return 0.299f * dr * dr + 0.587f * dg * dg + 0.114f * db * db;
+}
+
+static inline constexpr float image_get_rgb_redmean_dist_sq(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2) {
+    auto r_mean = (float(r2) + float(r1)) / 2.0f;
+    auto dr = float(r2) - float(r1);
+    auto dg = float(g2) - float(g1);
+    auto db = float(b2) - float(b1);
+    auto weight_r = 2.0f + (r_mean / 256.0f);
+    auto weight_g = 4.0f;
+    auto weight_b = 2.0f + ((255.0f - r_mean) / 256.0f);
+    return weight_r * dr * dr + weight_g * dg * dg + weight_b * db * db;
+}
+
 /// @brief Finds the closest color index in the palette.
 /// @tparam DistFunc The distance function to use (see above).
 /// @param r The red color component.
@@ -385,4 +410,34 @@ static inline uint32_t image_find_closest_palette_color(uint32_t color, const ui
                                                         uint32_t paletteColors = IMAGE_8BPP_MAX_COLORS) {
     return image_find_closest_palette_color(image_get_bgra_red(color), image_get_bgra_green(color), image_get_bgra_blue(color), palette, distanceFunction,
                                             paletteColors);
+}
+
+/// @brief Checks if an image handle is valid. This only checks if the handle is within a valid range, it does not check if the image itself is valid. Use
+/// Image_ValidateHandle for that.
+/// @param imageHandle The image handle to check.
+/// @return true if the handle is valid, false otherwise.
+static inline constexpr bool Image_IsHandleValid(int32_t imageHandle) {
+    return imageHandle < IMAGE_INVALID_HANDLE;
+};
+
+/// @brief Validates an image handle and returns a pointer to the corresponding image descriptor. If the handle is invalid, an error is raised and nullptr is
+/// returned.
+/// @param imageHandle The image handle to validate.
+/// @return A pointer to the corresponding image descriptor if the handle is valid, nullptr otherwise.
+static inline img_struct *Image_GetDescriptor(int32_t imageHandle) {
+    if (imageHandle >= 0) {
+        validatepage(imageHandle);
+        return &img[page[imageHandle]];
+    } else {
+        imageHandle = -imageHandle;
+        if (imageHandle >= nextimg) {
+            error(QB_ERROR_INVALID_HANDLE);
+            return nullptr;
+        }
+        if (!img[imageHandle].valid) {
+            error(QB_ERROR_INVALID_HANDLE);
+            return nullptr;
+        }
+    }
+    return &img[imageHandle];
 }
