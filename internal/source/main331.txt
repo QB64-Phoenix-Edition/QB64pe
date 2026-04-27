@@ -1,4 +1,4 @@
-void SUB_IDESETTCPPORTBOX(){
+void SUB_IDEGOTOBOX(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,36 +11,63 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_57088:;
+if ((-(*__LONG_IDEGOTOBOX_LASTLINENUM> 0 ))||is_error_pending()){
+if(qbevent){evnt(25813,15742,"ide_methods.bas");if(r)goto S_57088;}
 do{
-qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+qbs_set(_SUB_IDEGOTOBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEGOTOBOX_LASTLINENUM),NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25769,15757,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25813,15742,"ide_methods.bas");}while(r);
+}else{
 do{
-qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6565= 45 ),&(pass6566= 5 ),&(pass6567= 0 )));
+qbs_set(_SUB_IDEGOTOBOX_STRING_A2,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25769,15758,"ide_methods.bas");}while(r);
-S_57060:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(25769,15759,"ide_methods.bas");if(r)goto S_57060;}
+if(!qbevent)break;evnt(25813,15742,"ide_methods.bas");}while(r);
+}
+do{
+qbs_set(_SUB_IDEGOTOBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Go To Line",10),qbs_new_txt_len("#Line",5),_SUB_IDEGOTOBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6570= 30 ),&(pass6571= 8 ),&(pass6572= 0 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25813,15743,"ide_methods.bas");}while(r);
+S_57094:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDEGOTOBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(25813,15744,"ide_methods.bas");if(r)goto S_57094;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25769,15759,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25813,15744,"ide_methods.bas");}while(r);
 }
 do{
-*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
+*_SUB_IDEGOTOBOX_LONG_V=qbr(qbs_val<long double>(_SUB_IDEGOTOBOX_STRING_V));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25769,15761,"ide_methods.bas");}while(r);
-S_57064:;
-if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
-if(qbevent){evnt(25769,15762,"ide_methods.bas");if(r)goto S_57064;}
+if(!qbevent)break;evnt(25813,15746,"ide_methods.bas");}while(r);
+S_57098:;
+if ((-(*_SUB_IDEGOTOBOX_LONG_V< 1 ))||is_error_pending()){
+if(qbevent){evnt(25813,15747,"ide_methods.bas");if(r)goto S_57098;}
 do{
-*__LONG_IDEBASETCPPORT= 9000 ;
-if(!qbevent)break;evnt(25769,15762,"ide_methods.bas");}while(r);
+*_SUB_IDEGOTOBOX_LONG_V= 1 ;
+if(!qbevent)break;evnt(25813,15747,"ide_methods.bas");}while(r);
+}
+S_57101:;
+if ((-(*_SUB_IDEGOTOBOX_LONG_V>*__LONG_IDEN))||is_error_pending()){
+if(qbevent){evnt(25813,15748,"ide_methods.bas");if(r)goto S_57101;}
+do{
+*_SUB_IDEGOTOBOX_LONG_V=*__LONG_IDEN;
+if(!qbevent)break;evnt(25813,15748,"ide_methods.bas");}while(r);
 }
 do{
-SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25769,15763,"ide_methods.bas");}while(r);
+*__LONG_IDEGOTOBOX_LASTLINENUM=*_SUB_IDEGOTOBOX_LONG_V;
+if(!qbevent)break;evnt(25813,15749,"ide_methods.bas");}while(r);
+do{
+SUB_ADDQUICKNAVHISTORY();
+if(!qbevent)break;evnt(25813,15750,"ide_methods.bas");}while(r);
+do{
+*__LONG_IDECY=*_SUB_IDEGOTOBOX_LONG_V;
+if(!qbevent)break;evnt(25813,15751,"ide_methods.bas");}while(r);
+do{
+SUB_IDECENTERCURRENTLINE();
+if(!qbevent)break;evnt(25813,15752,"ide_methods.bas");}while(r);
+do{
+*__LONG_IDESELECT= 0 ;
+if(!qbevent)break;evnt(25813,15753,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free331.txt"

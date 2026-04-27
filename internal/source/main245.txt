@@ -1,4 +1,4 @@
-int32 FUNC_ISUINTEGER(qbs*_FUNC_ISUINTEGER_STRING_I){
+void SUB_DUMP_UDTS(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,60 +11,123 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_39080:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ISUINTEGER_STRING_I->len== 0 )))||is_error_pending()){
-if(qbevent){evnt(25759,864,"type.bas");if(r)goto S_39080;}
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25759,864,"type.bas");}while(r);
-}
-S_39083:;
-if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(_FUNC_ISUINTEGER_STRING_I, 1 )== 48 ))&(-(_FUNC_ISUINTEGER_STRING_I->len> 1 ))))||is_error_pending()){
-if(qbevent){evnt(25759,865,"type.bas");if(r)goto S_39083;}
+*_SUB_DUMP_UDTS_LONG_FH=func_freefile();
+if(!qbevent)break;evnt(25803,850,"type.bas");}while(r);
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25759,865,"type.bas");}while(r);
-}
-S_39086:;
-fornext_value4604= 1 ;
-fornext_finalvalue4604=_FUNC_ISUINTEGER_STRING_I->len;
-fornext_step4604= 1 ;
-if (fornext_step4604<0) fornext_step_negative4604=1; else fornext_step_negative4604=0;
-if (is_error_pending()) goto fornext_error4604;
-goto fornext_entrylabel4604;
+sub_open(qbs_new_txt_len("types.txt",9), 4 ,NULL,NULL,*_SUB_DUMP_UDTS_LONG_FH,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25803,851,"type.bas");}while(r);
+do{
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_DUMP_UDTS_LONG_FH;
+if (is_error_pending()) goto skip4600;
+sub_file_print(tmp_fileno,qbs_new_txt_len("Name   Size   Next   Var?",25), 0, 0, 1);
+if (is_error_pending()) goto skip4600;
+skip4600:
+qbs_cleanup(qbs_tmp_base,0);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25803,852,"type.bas");}while(r);
+S_39123:;
+fornext_value4602= 1 ;
+fornext_finalvalue4602=*__LONG_LASTTYPE;
+fornext_step4602= 1 ;
+if (fornext_step4602<0) fornext_step_negative4602=1; else fornext_step_negative4602=0;
+if (is_error_pending()) goto fornext_error4602;
+goto fornext_entrylabel4602;
 while(1){
-fornext_value4604=fornext_step4604+(*_FUNC_ISUINTEGER_LONG_C);
-fornext_entrylabel4604:
-*_FUNC_ISUINTEGER_LONG_C=fornext_value4604;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4604){
-if (fornext_value4604<fornext_finalvalue4604) break;
+fornext_value4602=fornext_step4602+(*_SUB_DUMP_UDTS_LONG_I);
+fornext_entrylabel4602:
+*_SUB_DUMP_UDTS_LONG_I=fornext_value4602;
+if (fornext_step_negative4602){
+if (fornext_value4602<fornext_finalvalue4602) break;
 }else{
-if (fornext_value4604>fornext_finalvalue4604) break;
+if (fornext_value4602>fornext_finalvalue4602) break;
 }
-fornext_error4604:;
-if(qbevent){evnt(25759,866,"type.bas");if(r)goto S_39086;}
+fornext_error4602:;
+if(qbevent){evnt(25803,853,"type.bas");if(r)goto S_39123;}
 do{
-*_FUNC_ISUINTEGER_LONG_V=qbs_asc(_FUNC_ISUINTEGER_STRING_I,*_FUNC_ISUINTEGER_LONG_C);
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_DUMP_UDTS_LONG_FH;
+if (is_error_pending()) goto skip4603;
+sub_file_print(tmp_fileno,qbs_rtrim(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_UDTXNAME[0]))[(array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_STRING256_UDTXNAME[4],__ARRAY_STRING256_UDTXNAME[5]))*256],256,1)), 0, 1, 0);
+if (is_error_pending()) goto skip4603;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTXSIZE[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTXSIZE[4],__ARRAY_LONG_UDTXSIZE[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4603;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTXNEXT[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTXNEXT[4],__ARRAY_LONG_UDTXNEXT[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4603;
+sub_file_print(tmp_fileno,qbs_str((int16)(((int16*)(__ARRAY_INTEGER_UDTXVARIABLE[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_INTEGER_UDTXVARIABLE[4],__ARRAY_INTEGER_UDTXVARIABLE[5])])), 1, 0, 1);
+if (is_error_pending()) goto skip4603;
+skip4603:
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25759,867,"type.bas");}while(r);
-S_39088:;
-if (((-(*_FUNC_ISUINTEGER_LONG_V< 48 ))|(-(*_FUNC_ISUINTEGER_LONG_V> 57 )))||is_error_pending()){
-if(qbevent){evnt(25759,868,"type.bas");if(r)goto S_39088;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25759,868,"type.bas");}while(r);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25803,854,"type.bas");}while(r);
+fornext_continue_4601:;
 }
-fornext_continue_4603:;
-}
-fornext_exit_4603:;
+fornext_exit_4601:;
 do{
-*_FUNC_ISUINTEGER_LONG_ISUINTEGER= -1 ;
-if(!qbevent)break;evnt(25759,870,"type.bas");}while(r);
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_DUMP_UDTS_LONG_FH;
+if (is_error_pending()) goto skip4604;
+sub_file_print(tmp_fileno,qbs_new_txt_len("Name   Size   Next   Type   Tsize  Arr",38), 0, 0, 1);
+if (is_error_pending()) goto skip4604;
+skip4604:
+qbs_cleanup(qbs_tmp_base,0);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25803,856,"type.bas");}while(r);
+S_39127:;
+fornext_value4606= 1 ;
+fornext_finalvalue4606=*__LONG_LASTTYPEELEMENT;
+fornext_step4606= 1 ;
+if (fornext_step4606<0) fornext_step_negative4606=1; else fornext_step_negative4606=0;
+if (is_error_pending()) goto fornext_error4606;
+goto fornext_entrylabel4606;
+while(1){
+fornext_value4606=fornext_step4606+(*_SUB_DUMP_UDTS_LONG_I);
+fornext_entrylabel4606:
+*_SUB_DUMP_UDTS_LONG_I=fornext_value4606;
+if (fornext_step_negative4606){
+if (fornext_value4606<fornext_finalvalue4606) break;
+}else{
+if (fornext_value4606>fornext_finalvalue4606) break;
+}
+fornext_error4606:;
+if(qbevent){evnt(25803,857,"type.bas");if(r)goto S_39127;}
+do{
+tab_spc_cr_size=2;
+tab_fileno=tmp_fileno=*_SUB_DUMP_UDTS_LONG_FH;
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_rtrim(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_UDTENAME[0]))[(array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_STRING256_UDTENAME[4],__ARRAY_STRING256_UDTENAME[5]))*256],256,1)), 0, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTESIZE[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTESIZE[4],__ARRAY_LONG_UDTESIZE[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTENEXT[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTENEXT[4],__ARRAY_LONG_UDTENEXT[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTETYPESIZE[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTETYPESIZE[4],__ARRAY_LONG_UDTETYPESIZE[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTEARRAYELEMENTS[4],__ARRAY_LONG_UDTEARRAYELEMENTS[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTEARRAYBASE[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTEARRAYBASE[4],__ARRAY_LONG_UDTEARRAYBASE[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,qbs_str((int32)(((int32*)(__ARRAY_LONG_UDTEARRAYDIMS[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_LONG_UDTEARRAYDIMS[4],__ARRAY_LONG_UDTEARRAYDIMS[5])])), 1, 1, 0);
+if (is_error_pending()) goto skip4607;
+sub_file_print(tmp_fileno,((qbs*)(((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[array_check((*_SUB_DUMP_UDTS_LONG_I)-__ARRAY_STRING_UDTEARRAYDESC[4],__ARRAY_STRING_UDTEARRAYDESC[5])])), 0, 0, 1);
+if (is_error_pending()) goto skip4607;
+skip4607:
+qbs_cleanup(qbs_tmp_base,0);
+tab_spc_cr_size=1;
+if(!qbevent)break;evnt(25803,858,"type.bas");}while(r);
+fornext_continue_4605:;
+}
+fornext_exit_4605:;
+do{
+sub_close(*_SUB_DUMP_UDTS_LONG_FH,1);
+if(!qbevent)break;evnt(25803,860,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free245.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_ISUINTEGER_LONG_ISUINTEGER;
 }

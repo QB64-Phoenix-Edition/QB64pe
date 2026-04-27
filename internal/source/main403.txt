@@ -1,4 +1,4 @@
-void SUB_VWATCH(){
+qbs* FUNC_ANSITEXTTOUTF8TEXT(qbs*_FUNC_ANSITEXTTOUTF8TEXT_STRING_TEXT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,9 +11,67 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(_FUNC_ANSITEXTTOUTF8TEXT_STRING_UTF,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25813,676,"ide_export.bas");}while(r);
+S_66143:;
+fornext_value7521= 1 ;
+fornext_finalvalue7521=_FUNC_ANSITEXTTOUTF8TEXT_STRING_TEXT->len;
+fornext_step7521= 1 ;
+if (fornext_step7521<0) fornext_step_negative7521=1; else fornext_step_negative7521=0;
+if (is_error_pending()) goto fornext_error7521;
+goto fornext_entrylabel7521;
+while(1){
+fornext_value7521=fornext_step7521+(*_FUNC_ANSITEXTTOUTF8TEXT_LONG_CHI);
+fornext_entrylabel7521:
+*_FUNC_ANSITEXTTOUTF8TEXT_LONG_CHI=fornext_value7521;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative7521){
+if (fornext_value7521<fornext_finalvalue7521) break;
+}else{
+if (fornext_value7521>fornext_finalvalue7521) break;
+}
+fornext_error7521:;
+if(qbevent){evnt(25813,677,"ide_export.bas");if(r)goto S_66143;}
+do{
+*_FUNC_ANSITEXTTOUTF8TEXT_INTEGER_ASCII=qbs_asc(_FUNC_ANSITEXTTOUTF8TEXT_STRING_TEXT,*_FUNC_ANSITEXTTOUTF8TEXT_LONG_CHI);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25813,679,"ide_export.bas");}while(r);
+S_66145:;
+if ((-(*_FUNC_ANSITEXTTOUTF8TEXT_INTEGER_ASCII> 127 ))||is_error_pending()){
+if(qbevent){evnt(25813,680,"ide_export.bas");if(r)goto S_66145;}
+do{
+*_FUNC_ANSITEXTTOUTF8TEXT_LONG_UNICODE=func__mapunicode(*_FUNC_ANSITEXTTOUTF8TEXT_INTEGER_ASCII);
+if(!qbevent)break;evnt(25813,682,"ide_export.bas");}while(r);
+S_66147:;
+if ((-(*_FUNC_ANSITEXTTOUTF8TEXT_LONG_UNICODE== 0 ))||is_error_pending()){
+if(qbevent){evnt(25813,684,"ide_export.bas");if(r)goto S_66147;}
+do{
+*_FUNC_ANSITEXTTOUTF8TEXT_LONG_UNICODE= 65533 ;
+if(!qbevent)break;evnt(25813,684,"ide_export.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_ANSITEXTTOUTF8TEXT_STRING_UTF,qbs_add(_FUNC_ANSITEXTTOUTF8TEXT_STRING_UTF,FUNC_UNICODETOUTF8CHAR(_FUNC_ANSITEXTTOUTF8TEXT_LONG_UNICODE)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25813,685,"ide_export.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_ANSITEXTTOUTF8TEXT_STRING_UTF,qbs_add(_FUNC_ANSITEXTTOUTF8TEXT_STRING_UTF,func_chr(*_FUNC_ANSITEXTTOUTF8TEXT_INTEGER_ASCII)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25813,688,"ide_export.bas");}while(r);
+}
+fornext_continue_7520:;
+}
+fornext_exit_7520:;
+do{
+qbs_set(_FUNC_ANSITEXTTOUTF8TEXT_STRING_ANSITEXTTOUTF8TEXT,_FUNC_ANSITEXTTOUTF8TEXT_STRING_UTF);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25813,691,"ide_export.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free403.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_ANSITEXTTOUTF8TEXT_STRING_ANSITEXTTOUTF8TEXT);return _FUNC_ANSITEXTTOUTF8TEXT_STRING_ANSITEXTTOUTF8TEXT;
 }

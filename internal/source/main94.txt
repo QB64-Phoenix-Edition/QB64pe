@@ -1,4 +1,4 @@
-qbs* FUNC_REMOVEFILEEXTENSION(qbs*_FUNC_REMOVEFILEEXTENSION_STRING_F){
+int32 FUNC_FILEHASEXTENSION(qbs*_FUNC_FILEHASEXTENSION_STRING_F){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,58 +11,53 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_34026:;
-fornext_value3957=_FUNC_REMOVEFILEEXTENSION_STRING_F->len;
-fornext_finalvalue3957= 1 ;
-fornext_step3957= -1 ;
-if (fornext_step3957<0) fornext_step_negative3957=1; else fornext_step_negative3957=0;
-if (is_error_pending()) goto fornext_error3957;
-goto fornext_entrylabel3957;
+S_34067:;
+fornext_value3961=_FUNC_FILEHASEXTENSION_STRING_F->len;
+fornext_finalvalue3961= 1 ;
+fornext_step3961= -1 ;
+if (fornext_step3961<0) fornext_step_negative3961=1; else fornext_step_negative3961=0;
+if (is_error_pending()) goto fornext_error3961;
+goto fornext_entrylabel3961;
 while(1){
-fornext_value3957=fornext_step3957+(*_FUNC_REMOVEFILEEXTENSION_LONG_I);
-fornext_entrylabel3957:
-*_FUNC_REMOVEFILEEXTENSION_LONG_I=fornext_value3957;
+fornext_value3961=fornext_step3961+(*_FUNC_FILEHASEXTENSION_LONG_I);
+fornext_entrylabel3961:
+*_FUNC_FILEHASEXTENSION_LONG_I=fornext_value3961;
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative3957){
-if (fornext_value3957<fornext_finalvalue3957) break;
+if (fornext_step_negative3961){
+if (fornext_value3961<fornext_finalvalue3961) break;
 }else{
-if (fornext_value3957>fornext_finalvalue3957) break;
+if (fornext_value3961>fornext_finalvalue3961) break;
 }
-fornext_error3957:;
-if(qbevent){evnt(25750,48,"file.bas");if(r)goto S_34026;}
+fornext_error3961:;
+if(qbevent){evnt(25794,36,"file.bas");if(r)goto S_34067;}
 do{
-*_FUNC_REMOVEFILEEXTENSION_LONG_A=qbs_asc(_FUNC_REMOVEFILEEXTENSION_STRING_F,*_FUNC_REMOVEFILEEXTENSION_LONG_I);
+*_FUNC_FILEHASEXTENSION_LONG_A=qbs_asc(_FUNC_FILEHASEXTENSION_STRING_F,*_FUNC_FILEHASEXTENSION_LONG_I);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25750,49,"file.bas");}while(r);
-S_34028:;
-if (((-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 47 ))|(-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 92 )))||is_error_pending()){
-if(qbevent){evnt(25750,50,"file.bas");if(r)goto S_34028;}
+if(!qbevent)break;evnt(25794,37,"file.bas");}while(r);
+S_34069:;
+if (((-(*_FUNC_FILEHASEXTENSION_LONG_A== 47 ))|(-(*_FUNC_FILEHASEXTENSION_LONG_A== 92 )))||is_error_pending()){
+if(qbevent){evnt(25794,38,"file.bas");if(r)goto S_34069;}
 do{
-goto fornext_exit_3956;
-if(!qbevent)break;evnt(25750,50,"file.bas");}while(r);
+goto fornext_exit_3960;
+if(!qbevent)break;evnt(25794,38,"file.bas");}while(r);
 }
-S_34031:;
-if ((-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 46 ))||is_error_pending()){
-if(qbevent){evnt(25750,51,"file.bas");if(r)goto S_34031;}
+S_34072:;
+if ((-(*_FUNC_FILEHASEXTENSION_LONG_A== 46 ))||is_error_pending()){
+if(qbevent){evnt(25794,39,"file.bas");if(r)goto S_34072;}
 do{
-qbs_set(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION,qbs_left(_FUNC_REMOVEFILEEXTENSION_STRING_F,*_FUNC_REMOVEFILEEXTENSION_LONG_I- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25750,51,"file.bas");}while(r);
+*_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION= -1 ;
+if(!qbevent)break;evnt(25794,39,"file.bas");}while(r);
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25750,51,"file.bas");}while(r);
+if(!qbevent)break;evnt(25794,39,"file.bas");}while(r);
 }
-fornext_continue_3956:;
+fornext_continue_3960:;
 }
-fornext_exit_3956:;
-do{
-qbs_set(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION,_FUNC_REMOVEFILEEXTENSION_STRING_F);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25750,53,"file.bas");}while(r);
+fornext_exit_3960:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free94.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION);return _FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION;
+return *_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION;
 }
