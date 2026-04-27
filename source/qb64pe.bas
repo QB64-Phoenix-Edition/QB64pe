@@ -8209,6 +8209,12 @@ DO
             targetlast = i - 1
             IF targetlast < targetfirst THEN a$ = "Expected array-name": GOTO errmes
             var$ = getelements$(ca$, targetfirst, targetlast)
+
+            ' Keep ERASE () on the old diagnostic path. The nested member-array ERASE parser
+            ' accepts full expressions, so an empty parenthesized target must be rejected
+            ' before it reaches expression evaluation, where it can turn into a generic
+            ' compiler error instead of the historical undefined-array message.
+            IF IsEmptyParenthesizedTarget%(var$) THEN a$ = "Undefined array passed to ERASE": GOTO errmes
             IF HasIndexedFinalMemberArray%(var$) THEN a$ = "Incorrect number of arguments": GOTO errmes
 
             x$ = var$: ls$ = removesymbol(x$)
@@ -16644,6 +16650,32 @@ END FUNCTION
 'and CLEAR. In contrast, such usage is allowed for _MEM (operation on
 'a specific field element), PRINT, and LEN.
 
+FUNCTION IsEmptyParenthesizedTarget% (expr$)
+    n = numelements(expr$)
+    IF n = 0 THEN IsEmptyParenthesizedTarget% = -1: EXIT FUNCTION
+
+    DO WHILE n >= 2
+        IF getelement$(expr$, 1) <> "(" OR getelement$(expr$, n) <> ")" THEN EXIT FUNCTION
+
+        b = 0
+        wrapped = -1
+        FOR i = 1 TO n
+            t$ = getelement$(expr$, i)
+            IF t$ = "(" THEN b = b + 1
+            IF t$ = ")" THEN
+                b = b - 1
+                IF b = 0 AND i <> n THEN wrapped = 0: EXIT FOR
+            END IF
+        NEXT
+        IF wrapped = 0 OR b <> 0 THEN EXIT FUNCTION
+
+        IF n = 2 THEN IsEmptyParenthesizedTarget% = -1: EXIT FUNCTION
+        expr$ = getelements$(expr$, 2, n - 1)
+        n = numelements(expr$)
+        IF n = 0 THEN IsEmptyParenthesizedTarget% = -1: EXIT FUNCTION
+    LOOP
+END FUNCTION
+
 FUNCTION HasIndexedFinalMemberArray% (expr$)
     n = numelements(expr$)
     IF n = 0 THEN EXIT FUNCTION
@@ -16934,12 +16966,24 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                 IF l2$ = ")" THEN
                                     b2 = b2 - 1
                                     IF b2 = -1 THEN
-                                        c$ = arrayreference(getelements$(a$, i + 2, i2 - 1), typ2)
+                                        arrayindexes$ = getelements$(a$, i + 2, i2 - 1)
+                                        c$ = arrayreference(arrayindexes$, typ2)
                                         IF Error_Happened THEN EXIT FUNCTION
                                         i = i2
 
                                         'UDT
                                         IF typ2 AND ISUDT THEN
+                                            ' A whole top-level UDT array reference, eg. X(), is valid only as
+                                            ' a whole-array reference. It must not be silently reused as the
+                                            ' parent object for a nested member access, eg. X().S(0), because
+                                            ' that collapses the parent array offset to zero and effectively
+                                            ' addresses the first element without an explicit index.
+                                            IF arrayindexes$ = "" THEN
+                                                IF i2 < n THEN
+                                                    IF getelement$(a$, i2 + 1) = "." THEN Give_Error "Expected array index": EXIT FUNCTION
+                                                END IF
+                                            END IF
+
                                             'print "arrayref returned:"+c$
                                             getid arrayid
                                             IF Error_Happened THEN EXIT FUNCTION
