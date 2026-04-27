@@ -8209,6 +8209,12 @@ DO
             targetlast = i - 1
             IF targetlast < targetfirst THEN a$ = "Expected array-name": GOTO errmes
             var$ = getelements$(ca$, targetfirst, targetlast)
+
+            ' Keep ERASE () on the old diagnostic path. The nested member-array ERASE parser
+            ' accepts full expressions, so an empty parenthesized target must be rejected
+            ' before it reaches expression evaluation, where it can turn into a generic
+            ' compiler error instead of the historical undefined-array message.
+            IF IsEmptyParenthesizedTarget%(var$) THEN a$ = "Undefined array passed to ERASE": GOTO errmes
             IF HasIndexedFinalMemberArray%(var$) THEN a$ = "Incorrect number of arguments": GOTO errmes
 
             x$ = var$: ls$ = removesymbol(x$)
@@ -8398,6 +8404,11 @@ DO
                 l$ = l$ + sp + SCase$("_Preserve")
                 IF n = 2 THEN a$ = "Expected REDIM _PRESERVE ...": GOTO errmes
             END IF
+            IF secondelement$ = "_RETAIN" THEN
+                redimoption = 3
+                l$ = l$ + sp + SCase$("_Retain")
+                IF n = 2 THEN a$ = "Expected REDIM _RETAIN ...": GOTO errmes
+            END IF
         END IF
         IF firstelement$ = "STATIC" THEN l$ = SCase$("Static"): dimoption = 3
         IF firstelement$ = "COMMON" THEN l$ = SCase$("Common"): dimoption = 1: commonoption = 1
@@ -8407,7 +8418,7 @@ DO
             IF commonoption = 1 AND subfuncn <> 0 THEN a$ = "COMMON cannot be used within a SUB/FUNCTION": GOTO errmes
 
             i = 2
-            IF redimoption = 2 THEN i = 3
+            IF redimoption >= 2 THEN i = 3
 
             IF dimoption <> 3 THEN 'shared cannot be static
                 a2$ = getelement(a$, i)
@@ -8535,7 +8546,7 @@ DO
 
                                 ' Static TYPE member arrays have compile-time fixed storage.
                                 ' Plain REDIM on a matching descriptor reinitializes that inline storage.
-                                ' REDIM _PRESERVE on the same descriptor must leave the bytes untouched.
+                                ' REDIM _PRESERVE/_RETAIN on the same descriptor must leave the bytes untouched.
                                 IF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) = 0 THEN
                                     FOR redimI2 = 0 TO redimMemberElems - 1
                                         WriteBufLine MainTxtBuf, "(*(qbs**)(" + redimPtr$ + "+" + _TOSTR$(redimI2 * redimElementBytes) + "))->len=0;"
@@ -14078,7 +14089,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     IF autoarray = 1 THEN autoarray = 0: autoary = 1 'clear global value & set local value
 
-    f12$ = ""
+    f12Buf% = CreateBuf% 'temporary buffer for code accumulation
 
     'changelog:
     'added 4 to [2] to indicate cmem array where appropriate
@@ -14143,7 +14154,17 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             'set the base
 
             basegiven = 1
-            IF e3base$ = "" THEN e3base$ = _TOSTR$(optionbase + 0): basegiven = 0
+            IF e3base$ = "" THEN
+                ' Keep the classic zero-element bootstrap idiom valid:
+                ' DIM A(0) / REDIM A(0) must create a valid 0 TO 0 array,
+                ' even if OPTION BASE 1 is currently active.
+                IF LTRIM$(RTRIM$(e3$)) = "0" THEN
+                    e3base$ = "0"
+                ELSE
+                    e3base$ = _TOSTR$(optionbase + 0)
+                END IF
+                basegiven = 0
+            END IF
             constequation = 1
 
             e3base$ = fixoperationorder$(e3base$)
@@ -14153,6 +14174,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             IF Error_Happened THEN EXIT FUNCTION
 
             IF constequation = 0 THEN constdimensions = 0
+            lower_bound_is_const = constequation
             sd$ = sd$ + n$ + "[" + _TOSTR$(ei) + "]=" + e3base$ + ";" + cr$
             'set the number of indexes
             constequation = 1
@@ -14165,8 +14187,23 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             IF Error_Happened THEN EXIT FUNCTION
 
             IF constequation = 0 THEN constdimensions = 0
+            upper_bound_is_const = constequation
+            ' Catch constant reversed bounds here and guard runtime bounds below.
+            ' Explicit TO ranges reject reversed bounds.
+            ' Single-bound declarations reject only negative constants.
+            IF upper_bound_is_const THEN
+                IF basegiven THEN
+                    IF lower_bound_is_const THEN
+                        IF VAL(e3$) < VAL(e3base$) THEN Give_Error "Invalid array bounds": EXIT FUNCTION
+                    END IF
+                ELSE
+                    IF VAL(e3$) < 0 THEN Give_Error "Invalid array bounds": EXIT FUNCTION
+                END IF
+            END IF
+
             ei = ei + 1
             sd$ = sd$ + n$ + "[" + _TOSTR$(ei) + "]=(" + e3$ + ")-" + n$ + "[" + _TOSTR$(ei - 1) + "]+1;" + cr$
+            sd$ = sd$ + "if (" + n$ + "[" + _TOSTR$(ei) + "]<=0) error(5);" + cr$
             ei = ei + 1
             'calc muliplier
             IF cure = 1 THEN
@@ -14249,6 +14286,18 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     elesizestr$ = sizestr$ 'elements in entire array
     sizestr$ = sizestr$ + "*" + bytesperelement$ 'bytes in entire array
 
+    'Build alternative descriptor/size expressions for dynamic arrays.
+    'These let the generated C code validate and allocate first, and only then
+    'commit the descriptor back into the real array descriptor.
+    newsd$ = StrReplace$(sd$, n$ + "[", "alloc_new_desc[")
+    newelesizestr$ = StrReplace$(elesizestr$, n$ + "[", "alloc_new_desc[")
+    newsizestr$ = StrReplace$(sizestr$, n$ + "[", "alloc_new_desc[")
+    commitdesc$ = ""
+    FOR i = 4 TO 4 + nume * 4 - 1
+        commitdesc$ = commitdesc$ + n$ + "[" + _TOSTR$(i) + "]=alloc_new_desc[" + _TOSTR$(i) + "];" + cr$
+    NEXT
+    IF LEN(commitdesc$) THEN commitdesc$ = LEFT$(commitdesc$, LEN(commitdesc$) - 2)
+
 
 
     '------------------STATIC ARRAY CREATION--------------------------------
@@ -14313,150 +14362,221 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
 
             'Generate error if array is static
-            f12$ = f12$ + CRLF + "if (" + n$ + "[2]&2){" 'static array
-            f12$ = f12$ + CRLF + "error(10);" 'cannot redefine a static array!
-            f12$ = f12$ + CRLF + "}else{"
+            WriteBufLine f12Buf%, "if (" + n$ + "[2]&2){" 'static array
+            WriteBufLine f12Buf%, "error(10);" 'cannot redefine a static array!
+            WriteBufLine f12Buf%, "}else{"
             'Note: Array is either undefined or dynamically defined at this point
 
 
             'REDIM (not DIM) must be used to redefine an array
+            WriteBufLine f12Buf%, "static int64 alloc_new_desc[" + _TOSTR$(4 * nume + 4) + "];"
+            WriteBufLine f12Buf%, "static uint64 alloc_req_elems;"
+            WriteBufLine f12Buf%, "static uint64 alloc_req_bytes;"
+            WriteBufLine f12Buf%, "static uint64 alloc_dim_value;"
+            WriteBufLine f12Buf%, "static uint64 alloc_bytes_per_element;"
             IF redimoption = 0 THEN
-                f12$ = f12$ + CRLF + "if (" + n$ + "[2]&1){" 'array is defined
-                f12$ = f12$ + CRLF + "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
-                f12$ = f12$ + CRLF + "}else{"
+                WriteBufLine f12Buf%, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLine f12Buf%, "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
+                WriteBufLine f12Buf%, "}else{"
             ELSE
-                '--------ERASE EXISTING ARRAY IF NECESSARY--------
-
-                'IMPORTANT: If array is not going to be preserved, it should be cleared before
-                '           creating the new array for memory considerations
+                '--------CAPTURE EXISTING ARRAY IF NECESSARY--------
+                'Do not destroy the old allocation until the new one has succeeded.
 
                 'refresh lock ID (_MEM)
-                f12$ = f12$ + CRLF + "((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "])->id=(++mem_lock_id);"
-
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "static int32 preserved_elements;" 'must be put here for scope considerations
+                WriteBufLine f12Buf%, "((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "])->id=(++mem_lock_id);"
+                WriteBufLine f12Buf%, "static ptrszint preserve_old_ptr;"
+                WriteBufLine f12Buf%, "static ptrszint preserve_old_flags;"
+                WriteBufLine f12Buf%, "static uint64 preserve_old_total;"
+                WriteBufLine f12Buf%, "static uint64 preserve_new_total;"
+                WriteBufLine f12Buf%, "static uint64 preserve_copy_count;"
+                WriteBufLine f12Buf%, "static ptrszint preserve_new_ptr;"
+                IF redimoption = 3 THEN
+                    WriteBufLine f12Buf%, "static int32 preserve_any;"
+                    WriteBufLine f12Buf%, "static int64 preserve_old_desc[" + _TOSTR$(4 * nume + 4) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_lo[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_hi[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_idx[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf%, "static int64 preserve_old_off;"
+                    WriteBufLine f12Buf%, "static int64 preserve_new_off;"
+                    WriteBufLine f12Buf%, "static ptrszint preserve_dim;"
                 END IF
 
-                'If array is defined, it must be destroyed first
-                f12$ = f12$ + CRLF + "if (" + n$ + "[2]&1){" 'array is defined
-
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "preserved_elements=" + elesizestr$ + ";"
-                    GOTO skiperase
+                WriteBufLine f12Buf%, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLine f12Buf%, "preserve_old_ptr=" + n$ + "[0];"
+                WriteBufLine f12Buf%, "preserve_old_flags=" + n$ + "[2];"
+                WriteBufLine f12Buf%, "preserve_old_total=" + elesizestr$ + ";"
+                IF redimoption = 3 THEN
+                    FOR i = 4 TO 4 + nume * 4 - 1
+                        WriteBufLine f12Buf%, "preserve_old_desc[" + _TOSTR$(i) + "]=" + n$ + "[" + _TOSTR$(i) + "];"
+                    NEXT
                 END IF
-
-                'Note: pointers to strings must be freed before array can be freed
-                IF stringarray THEN
-                    f12$ = f12$ + CRLF + "tmp_long=" + elesizestr$ + ";"
-                    f12$ = f12$ + CRLF + "while(tmp_long--) qbs_free((qbs*)((uint64*)(" + n$ + "[0]))[tmp_long]);"
-                END IF
-                'As must any variable length strings in UDT's
-                IF udt > 0 AND udtxvariable(udt) THEN
-                    f12$ = f12$ + CRLF + "tmp_long=" + elesizestr$ + ";"
-                    f12$ = f12$ + CRLF + "while(tmp_long--) {"
-                    free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                    f12$ = f12$ + acc$ + "}"
-                END IF
-
-                'Free array's memory
-                IF stringarray THEN
-                    'Note: String arrays are never in cmem
-                    f12$ = f12$ + CRLF + "free((void*)(" + n$ + "[0]));"
-                ELSE
-                    'Note: Array may be in cmem!
-                    f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array is in cmem
-                    f12$ = f12$ + CRLF + "cmem_dynamic_free((uint8*)(" + n$ + "[0]));"
-                    f12$ = f12$ + CRLF + "}else{" 'not in cmem
-                    f12$ = f12$ + CRLF + "free((void*)(" + n$ + "[0]));"
-                    f12$ = f12$ + CRLF + "}"
-                END IF
-
-                skiperase:
-
-                f12$ = f12$ + CRLF + "}" 'array was defined
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "else preserved_elements=0;" 'if array wasn't defined, no elements are preserved
-                END IF
-
-
-                '--------ERASED ARRAY AS NECESSARY--------
+                WriteBufLine f12Buf%, "}else{"
+                WriteBufLine f12Buf%, "preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;"
+                IF redimoption = 3 THEN WriteBufLine f12Buf%, "preserve_any=0;"
+                WriteBufLine f12Buf%, "}"
+                '--------EXISTING ARRAY CAPTURED AS NECESSARY--------
             END IF 'redim specified
 
 
             '--------CREATE ARRAY & CLEAN-UP CODE--------
-            'Overwrite existing array dimension sizes/ranges
-            f12$ = f12$ + CRLF + sd$
+            'Build the new descriptor in temporary storage first.
+            WriteBufLine f12Buf%, newsd$
+            WriteBufLine f12Buf%, "alloc_req_elems=1;"
+            WriteBufLine f12Buf%, "alloc_bytes_per_element=(uint64)(" + bytesperelement$ + ");"
+            WriteBufLine f12Buf%, "if (!alloc_bytes_per_element) error(257);"
+            FOR i = 1 TO nume
+                argi = i * 4 - 4 + 4
+                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi) + "]))!=alloc_new_desc[" + _TOSTR$(argi) + "]) error(257);"
+                WriteBufLine f12Buf%, "if (alloc_new_desc[" + _TOSTR$(argi + 1) + "]<0) error(257);"
+                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 1) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 1) + "]) error(257);"
+                WriteBufLine f12Buf%, "if (alloc_new_desc[" + _TOSTR$(argi + 2) + "]<0) error(257);"
+                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 2) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 2) + "]) error(257);"
+                WriteBufLine f12Buf%, "alloc_dim_value=(uint64)alloc_new_desc[" + _TOSTR$(argi + 1) + "];"
+                WriteBufLine f12Buf%, "if (alloc_dim_value){"
+                WriteBufLine f12Buf%, "if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);"
+                WriteBufLine f12Buf%, "alloc_req_elems*=alloc_dim_value;"
+                WriteBufLine f12Buf%, "}"
+            NEXT
+            WriteBufLine f12Buf%, "if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);"
+            WriteBufLine f12Buf%, "alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;"
+            WriteBufLine f12Buf%, "if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);"
+            WriteBufLine f12Buf%, "if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);"
+
+            IF redimoption THEN
+                WriteBufLine f12Buf%, "preserve_new_total=alloc_req_elems;"
+                WriteBufLine f12Buf%, "preserve_copy_count=preserve_old_total;"
+                WriteBufLine f12Buf%, "if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;"
+            END IF
+
+            IF redimoption = 3 THEN 'for _Retain, preserve overlap region by coordinates
+                WriteBufLine f12Buf%, "preserve_any=(preserve_old_total!=0);"
+                FOR i = 1 TO nume
+                    argi = (nume - i) * 4 + 4
+                    WriteBufLine f12Buf%, "preserve_lo[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "];"
+                    WriteBufLine f12Buf%, "if (preserve_old_desc[" + _TOSTR$(argi) + "]>preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_lo[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "];"
+                    WriteBufLine f12Buf%, "preserve_hi[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "]+(alloc_new_desc[" + _TOSTR$(argi + 1) + "]-1);"
+                    WriteBufLine f12Buf%, "if ((preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1))<preserve_hi[" + _TOSTR$(i - 1) + "]) preserve_hi[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1);"
+                    WriteBufLine f12Buf%, "if (preserve_hi[" + _TOSTR$(i - 1) + "]<preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_any=0;"
+                NEXT
+            END IF
+
             IF stringarray OR ((udt > 0) AND udtxvariable(udt)) THEN
 
                 'Note: String and variable-length udt arrays are always created in 64bit memory
 
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "if (preserved_elements){"
+                IF redimoption THEN
+                    WriteBufLine f12Buf%, "if (preserve_old_total){"
+                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);" 'not enough memory
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
+                    WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
 
-                    f12$ = f12$ + CRLF + "static ptrszint tmp_long2;"
-
-                    'free any qbs strings which will be lost in the realloc
-                    f12$ = f12$ + CRLF + "tmp_long2=" + elesizestr$ + ";"
-                    f12$ = f12$ + CRLF + "if (tmp_long2<preserved_elements){"
-                    f12$ = f12$ + CRLF + "for(tmp_long=tmp_long2;tmp_long<preserved_elements;tmp_long++) {"
+                    'init individual strings / var-len UDT members in the NEW array
                     IF stringarray THEN
-                        f12$ = f12$ + CRLF + "qbs_free((qbs*)((uint64*)(" + n$ + "[0]))[tmp_long]);"
+                        WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array/string content in cmem
+                        WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                        WriteBufLine f12Buf%, "}else{" 'not in cmem
+                        WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                        WriteBufLine f12Buf%, "}" 'not in cmem
                     ELSE
-                        acc$ = ""
-                        free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        f12$ = f12$ + acc$
-                    END IF
-                    f12$ = f12$ + CRLF + "}}"
-                    'reallocate the array
-                    f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)realloc((void*)(" + n$ + "[0]),tmp_long2*" + bytesperelement$ + ");"
-                    f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
-                    f12$ = f12$ + CRLF + "if (preserved_elements<tmp_long2){"
-                    IF stringarray = 0 THEN
-                        'ensure any numeric udt elements are zeroed
-                        f12$ = f12$ + CRLF + "ZeroMemory(((uint8*)(" + n$ + "[0]))+preserved_elements*" + bytesperelement$ + ",(tmp_long2*" + bytesperelement$ + ")-(preserved_elements*" + bytesperelement$ + "));"
-                    END IF
-                    f12$ = f12$ + CRLF + "for(tmp_long=preserved_elements;tmp_long<tmp_long2;tmp_long++){"
-                    IF stringarray THEN
-                        f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array is in cmem
-                        f12$ = f12$ + CRLF + "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
-                        f12$ = f12$ + CRLF + "}else{" 'not in cmem
-                        f12$ = f12$ + CRLF + "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
-                        f12$ = f12$ + CRLF + "}" 'not in cmem
-                    ELSE
+                        WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "while(tmp_long--){"
                         acc$ = ""
                         initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        f12$ = f12$ + acc$
+                        WriteBufLine f12Buf%, acc$ + "}"
                     END IF
-                    f12$ = f12$ + CRLF + "}"
-                    f12$ = f12$ + CRLF + "}"
 
-                    f12$ = f12$ + CRLF + "}else{"
+                    IF redimoption = 2 THEN
+                        WriteBufLine f12Buf%, "tmp_long=preserve_copy_count;"
+                        WriteBufLine f12Buf%, "while(tmp_long--){"
+                        IF stringarray THEN
+                            WriteBufLine f12Buf%, "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
+                        ELSE
+                            acc$ = ""
+                            copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(tmp_long*" + bytesperelement$ + ")", "(tmp_long*" + bytesperelement$ + ")", acc$
+                            WriteBufLine f12Buf%, acc$
+                        END IF
+                        WriteBufLine f12Buf%, "}"
+                    ELSEIF redimoption = 3 THEN
+                        'copy overlap region by coordinates
+                        WriteBufLine f12Buf%, "if (preserve_any){"
+                        FOR i = 0 TO nume - 1
+                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
+                        NEXT
+                        WriteBufLine f12Buf%, "for(;;){"
+                        argi = (nume - 1) * 4 + 4
+                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
+                        FOR i = 2 TO nume
+                            argi = (nume - i) * 4 + 4
+                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
+                        NEXT
+
+                        IF stringarray THEN
+                            WriteBufLine f12Buf%, "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[preserve_new_off],(qbs*)((uint64*)(preserve_old_ptr))[preserve_old_off]);"
+                        ELSE
+                            acc$ = ""
+                            copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", acc$
+                            WriteBufLine f12Buf%, acc$
+                        END IF
+
+                        WriteBufLine f12Buf%, "preserve_dim=0;"
+                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
+                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+                        WriteBufLine f12Buf%, "preserve_dim++;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "}"
+                    END IF
+
+                    'free OLD array content and OLD raw block
+                    IF stringarray THEN
+                        WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
+                        WriteBufLine f12Buf%, "while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
+                        WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                    ELSE
+                        WriteBufLine f12Buf%, n$ + "[0]=preserve_old_ptr;"
+                        WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
+                        WriteBufLine f12Buf%, "while(tmp_long--){"
+                        acc$ = ""
+                        free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
+                        WriteBufLine f12Buf%, acc$ + "}"
+                        WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                    END IF
+
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, "}else{"
                 END IF
 
                 '1. Create array
-                f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)malloc(" + sizestr$ + ");"
-                f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
-                f12$ = f12$ + CRLF + n$ + "[2]|=1;" 'ADD initialized flag
-                f12$ = f12$ + CRLF + "tmp_long=" + elesizestr$ + ";"
+                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)malloc((size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);" 'not enough memory
+                WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
+                WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
 
 
                 'init individual strings
                 IF stringarray THEN
-                    f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array is in cmem
-                    f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
-                    f12$ = f12$ + CRLF + "}else{" 'not in cmem
-                    f12$ = f12$ + CRLF + "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
-                    f12$ = f12$ + CRLF + "}" 'not in cmem
+                    WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array is in cmem
+                    WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                    WriteBufLine f12Buf%, "}else{" 'not in cmem
+                    WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                    WriteBufLine f12Buf%, "}" 'not in cmem
                 ELSE 'initialise udt's
-                    f12$ = f12$ + CRLF + "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
-                    f12$ = f12$ + CRLF + "while(tmp_long--){"
+                    WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
+                    WriteBufLine f12Buf%, "while(tmp_long--){"
                     acc$ = ""
                     initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                    f12$ = f12$ + acc$ + "}"
+                    WriteBufLine f12Buf%, acc$ + "}"
                 END IF
 
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "}"
+                IF redimoption THEN
+                    WriteBufLine f12Buf%, "}"
                 END IF
 
 
@@ -14482,55 +14602,111 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             ELSE 'not string/var-udt array
 
                 '1. Create array
-                f12$ = f12$ + CRLF + "if (" + n$ + "[2]&4){" 'array will be in cmem
+                WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array will be in cmem
 
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "if (preserved_elements){"
-
-                    'reallocation method
-                    'backup data
-                    f12$ = f12$ + CRLF + "memcpy(redim_preserve_cmem_buffer,(void*)(" + n$ + "[0]),preserved_elements*" + bytesperelement$ + ");"
-                    'free old array
-                    f12$ = f12$ + CRLF + "cmem_dynamic_free((uint8*)(" + n$ + "[0]));"
-                    f12$ = f12$ + CRLF + "tmp_long=" + elesizestr$ + ";"
-                    f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)cmem_dynamic_malloc(tmp_long*" + bytesperelement$ + ");"
-                    f12$ = f12$ + CRLF + "memcpy((void*)(" + n$ + "[0]),redim_preserve_cmem_buffer,preserved_elements*" + bytesperelement$ + ");"
-                    f12$ = f12$ + CRLF + "if (preserved_elements<tmp_long) ZeroMemory(((uint8*)(" + n$ + "[0]))+preserved_elements*" + bytesperelement$ + ",(tmp_long*" + bytesperelement$ + ")-(preserved_elements*" + bytesperelement$ + "));"
-
-                    f12$ = f12$ + CRLF + "}else{"
+                IF redimoption THEN
+                    WriteBufLine f12Buf%, "if (preserve_old_total){"
+                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
+                    WriteBufLine f12Buf%, "memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);"
+                    IF redimoption = 2 THEN
+                        WriteBufLine f12Buf%, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
+                    ELSEIF redimoption = 3 THEN
+                        WriteBufLine f12Buf%, "if (preserve_any){"
+                        FOR i = 0 TO nume - 1
+                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
+                        NEXT
+                        WriteBufLine f12Buf%, "for(;;){"
+                        argi = (nume - 1) * 4 + 4
+                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
+                        FOR i = 2 TO nume
+                            argi = (nume - i) * 4 + 4
+                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
+                        NEXT
+                        WriteBufLine f12Buf%, "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "preserve_dim=0;"
+                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
+                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+                        WriteBufLine f12Buf%, "preserve_dim++;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "}"
+                    END IF
+                    WriteBufLine f12Buf%, "if (preserve_old_flags&4){"
+                    WriteBufLine f12Buf%, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, "}else{"
                 END IF
 
                 'standard cmem method
-                f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)cmem_dynamic_malloc(" + sizestr$ + ");"
-                'clear array
-                f12$ = f12$ + CRLF + "memset((void*)(" + n$ + "[0]),0," + sizestr$ + ");"
+                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);"
+                WriteBufLine f12Buf%, "memset((void*)(" + n$ + "[0]),0,(size_t)alloc_req_bytes);"
 
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "}"
+                IF redimoption THEN
+                    WriteBufLine f12Buf%, "}"
                 END IF
 
+                WriteBufLine f12Buf%, "}else{" 'not in cmem
 
-                f12$ = f12$ + CRLF + "}else{" 'not in cmem
-
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "if (preserved_elements){"
-                    'reallocation method
-                    f12$ = f12$ + CRLF + "tmp_long=" + elesizestr$ + ";"
-                    f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)realloc((void*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
-                    f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
-                    f12$ = f12$ + CRLF + "if (preserved_elements<tmp_long) ZeroMemory(((uint8*)(" + n$ + "[0]))+preserved_elements*" + bytesperelement$ + ",(tmp_long*" + bytesperelement$ + ")-(preserved_elements*" + bytesperelement$ + "));"
-
-                    f12$ = f12$ + CRLF + "}else{"
+                IF redimoption THEN
+                    WriteBufLine f12Buf%, "if (preserve_old_total){"
+                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
+                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
+                    IF redimoption = 2 THEN
+                        WriteBufLine f12Buf%, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
+                    ELSEIF redimoption = 3 THEN
+                        WriteBufLine f12Buf%, "if (preserve_any){"
+                        FOR i = 0 TO nume - 1
+                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
+                        NEXT
+                        WriteBufLine f12Buf%, "for(;;){"
+                        argi = (nume - 1) * 4 + 4
+                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
+                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
+                        FOR i = 2 TO nume
+                            argi = (nume - i) * 4 + 4
+                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
+                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
+                        NEXT
+                        WriteBufLine f12Buf%, "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
+                        WriteBufLine f12Buf%, "preserve_dim=0;"
+                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
+                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+                        WriteBufLine f12Buf%, "preserve_dim++;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
+                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf%, "}"
+                    END IF
+                    WriteBufLine f12Buf%, "if (preserve_old_flags&4){"
+                    WriteBufLine f12Buf%, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf%, "}else{"
                 END IF
                 'standard allocation method
-                f12$ = f12$ + CRLF + n$ + "[0]=(ptrszint)calloc(" + sizestr$ + ",1);"
-                f12$ = f12$ + CRLF + "if (!" + n$ + "[0]) error(257);" 'not enough memory
-                IF redimoption = 2 THEN
-                    f12$ = f12$ + CRLF + "}"
+                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
+                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);" 'not enough memory
+                IF redimoption THEN
+                    WriteBufLine f12Buf%, "}"
                 END IF
 
-                f12$ = f12$ + CRLF + "}" 'not in cmem
-                f12$ = f12$ + CRLF + n$ + "[2]|=1;" 'ADD initialized flag
+
+                WriteBufLine f12Buf%, "}" 'not in cmem
+                WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
 
                 '2. Generate "clean up" code (called when EXITING A SUB/FUNCTION)
                 IF arraydesc = 0 THEN 'only add for first declaration of the array
@@ -14545,6 +14721,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     WriteBufLine FreeTxtBuf, "free_mem_lock( (mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "] );"
                 END IF
             END IF 'not string array
+
+            WriteBufLine f12Buf%, commitdesc$
 
         END IF 'undefined=0
 
@@ -14571,8 +14749,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
         IF undefined = 0 THEN
 
-            IF redimoption = 0 THEN f12$ = f12$ + CRLF + "}" 'if REDIM not specified the above is conditional
-            f12$ = f12$ + CRLF + "}" 'not static
+            IF redimoption = 0 THEN WriteBufLine f12Buf%, "}" 'if REDIM not specified the above is conditional
+            WriteBufLine f12Buf%, "}" 'not static
 
         END IF 'undefined=0
 
@@ -14583,9 +14761,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     IF autoary = 0 THEN
         IF dimoption = 3 THEN 'STATIC a(100) puts creation code in main
-            WriteBufLine DataTxtBuf, f12$
+            BufInsertBuf DataTxtBuf, f12Buf% 'insert accumulated code into target buffer
         ELSE
-            WriteBufLine MainTxtBuf, f12$
+            BufInsertBuf MainTxtBuf, f12Buf% 'insert accumulated code into target buffer
         END IF
     END IF
 
@@ -14596,6 +14774,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     '[4] number of indexes
     '[4] multiplier (the last multiplier doesn't actually exist)
     '[4] reserved
+
+    DisposeBuf f12Buf% 'destroy and free temporary buffer
 
     dimshared = dimsharedlast
 
@@ -14921,9 +15101,6 @@ END FUNCTION
 
 
 FUNCTION CompactMemberRefLayout$ (src AS STRING)
-    'Tahle funkce sklada referenci na clena TYPE zpatky do kompaktniho a stabilniho textového tvaru pro layout/autofmt.
-    ' Je dulezita hlavne pro clenska pole a zapisy s teckou, aby se nerozsypaly mezery.
-
     ' Rebuild a TYPE member reference into compact, stable source text for layout output.
     ' This preserves member-array declarators and dotted member chains without introducing unwanted spaces.
 
@@ -15453,6 +15630,8 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                     IF Error_Happened THEN EXIT FUNCTION
                     DO WHILE try
                         IF (id.arraytype) THEN
+                            ' Reject REDIM/DIM type changes between STRING and STRING * N arrays.
+                            IF (id.arraytype AND ISSTRING) = 0 OR (id.arraytype AND ISFIXEDLENGTH) = 0 OR id.tsize <> bytes THEN Give_Error "Type mismatch": EXIT FUNCTION
                             l$ = RTRIM$(id.cn)
                             arraydesc = currentid: scope2$ = scope$
                             EXIT DO
@@ -15556,6 +15735,8 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 IF Error_Happened THEN EXIT FUNCTION
                 DO WHILE try
                     IF (id.arraytype) THEN
+                        ' Reject REDIM/DIM type changes between STRING and STRING * N arrays.
+                        IF (id.arraytype AND ISSTRING) = 0 OR (id.arraytype AND ISFIXEDLENGTH) <> 0 THEN Give_Error "Type mismatch": EXIT FUNCTION
                         l$ = RTRIM$(id.cn)
                         arraydesc = currentid: scope2$ = scope$
                         EXIT DO
@@ -16469,6 +16650,32 @@ END FUNCTION
 'and CLEAR. In contrast, such usage is allowed for _MEM (operation on
 'a specific field element), PRINT, and LEN.
 
+FUNCTION IsEmptyParenthesizedTarget% (expr$)
+    n = numelements(expr$)
+    IF n = 0 THEN IsEmptyParenthesizedTarget% = -1: EXIT FUNCTION
+
+    DO WHILE n >= 2
+        IF getelement$(expr$, 1) <> "(" OR getelement$(expr$, n) <> ")" THEN EXIT FUNCTION
+
+        b = 0
+        wrapped = -1
+        FOR i = 1 TO n
+            t$ = getelement$(expr$, i)
+            IF t$ = "(" THEN b = b + 1
+            IF t$ = ")" THEN
+                b = b - 1
+                IF b = 0 AND i <> n THEN wrapped = 0: EXIT FOR
+            END IF
+        NEXT
+        IF wrapped = 0 OR b <> 0 THEN EXIT FUNCTION
+
+        IF n = 2 THEN IsEmptyParenthesizedTarget% = -1: EXIT FUNCTION
+        expr$ = getelements$(expr$, 2, n - 1)
+        n = numelements(expr$)
+        IF n = 0 THEN IsEmptyParenthesizedTarget% = -1: EXIT FUNCTION
+    LOOP
+END FUNCTION
+
 FUNCTION HasIndexedFinalMemberArray% (expr$)
     n = numelements(expr$)
     IF n = 0 THEN EXIT FUNCTION
@@ -16759,12 +16966,24 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                 IF l2$ = ")" THEN
                                     b2 = b2 - 1
                                     IF b2 = -1 THEN
-                                        c$ = arrayreference(getelements$(a$, i + 2, i2 - 1), typ2)
+                                        arrayindexes$ = getelements$(a$, i + 2, i2 - 1)
+                                        c$ = arrayreference(arrayindexes$, typ2)
                                         IF Error_Happened THEN EXIT FUNCTION
                                         i = i2
 
                                         'UDT
                                         IF typ2 AND ISUDT THEN
+                                            ' A whole top-level UDT array reference, eg. X(), is valid only as
+                                            ' a whole-array reference. It must not be silently reused as the
+                                            ' parent object for a nested member access, eg. X().S(0), because
+                                            ' that collapses the parent array offset to zero and effectively
+                                            ' addresses the first element without an explicit index.
+                                            IF arrayindexes$ = "" THEN
+                                                IF i2 < n THEN
+                                                    IF getelement$(a$, i2 + 1) = "." THEN Give_Error "Expected array index": EXIT FUNCTION
+                                                END IF
+                                            END IF
+
                                             'print "arrayref returned:"+c$
                                             getid arrayid
                                             IF Error_Happened THEN EXIT FUNCTION
@@ -19620,7 +19839,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             idnumber = VAL(LEFT$(e$, s1 - 1))
             u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
             member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-                     
+
             ' Whole static TYPE member array: build the _MEM descriptor from the inline
             ' member block so the member array gets its own correct memory view.
             IF member_element_id > 0 THEN
@@ -22962,6 +23181,72 @@ SUB regid
 
 END SUB
 
+SUB copy_preserve_udt_varstrings (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff$, acc$) 'helper for _Preserve for UDT contains strings and strings array
+    DIM e AS LONG
+    DIM offbytes AS LONG
+    DIM memberbytes AS LONG
+    DIM elembytes AS LONG
+    DIM t AS LONG
+    DIM i AS LONG
+    DIM dstmember$
+    DIM srcmember$
+    DIM dstq$
+    DIM srcq$
+    DIM nextdstoff$
+    DIM nextsrcoff$
+
+    offbytes = 0
+    e = udtxnext(u)
+
+    DO WHILE e
+        memberbytes = udtesize(e) \ 8
+        t = udtetype(e)
+
+        IF udtearrayelements(e) THEN
+            elembytes = memberbytes \ udtearrayelements(e)
+
+            IF (t AND ISSTRING) <> 0 AND (t AND ISFIXEDLENGTH) = 0 THEN
+                FOR i = 0 TO udtearrayelements(e) - 1
+                    dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + "))"
+                    srcmember$ = "((char*)(" + srcbase$ + ")+((" + srcoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + "))"
+                    dstq$ = "(*(qbs**)(" + dstmember$ + "))"
+                    srcq$ = "(*(qbs**)(" + srcmember$ + "))"
+                    acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
+                NEXT
+            ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND 511) THEN
+                FOR i = 0 TO udtearrayelements(e) - 1
+                    nextdstoff$ = "((" + dstoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + ")"
+                    nextsrcoff$ = "((" + srcoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + ")"
+                    copy_preserve_udt_varstrings dstbase$, srcbase$, t AND 511, nextdstoff$, nextsrcoff$, acc$
+                NEXT
+            ELSE
+                dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes) + "))"
+                srcmember$ = "((char*)(" + srcbase$ + ")+((" + srcoff$ + ")+" + _TOSTR$(offbytes) + "))"
+                acc$ = acc$ + CRLF + "memcpy((void*)(" + dstmember$ + "),(void*)(" + srcmember$ + ")," + _TOSTR$(memberbytes) + ");"
+            END IF
+
+        ELSE
+            dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes) + "))"
+            srcmember$ = "((char*)(" + srcbase$ + ")+((" + srcoff$ + ")+" + _TOSTR$(offbytes) + "))"
+
+            IF (t AND ISSTRING) <> 0 AND (t AND ISFIXEDLENGTH) = 0 THEN
+                dstq$ = "(*(qbs**)(" + dstmember$ + "))"
+                srcq$ = "(*(qbs**)(" + srcmember$ + "))"
+                acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
+            ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND 511) THEN
+                copy_preserve_udt_varstrings dstbase$, srcbase$, t AND 511, "((" + dstoff$ + ")+" + _TOSTR$(offbytes) + ")", "((" + srcoff$ + ")+" + _TOSTR$(offbytes) + ")", acc$
+            ELSE
+                acc$ = acc$ + CRLF + "memcpy((void*)(" + dstmember$ + "),(void*)(" + srcmember$ + ")," + _TOSTR$(memberbytes) + ");"
+            END IF
+        END IF
+
+        offbytes = offbytes + memberbytes
+        e = udtenext(e)
+    LOOP
+END SUB
+
+
+
 '$INCLUDE:'subs_functions\subs_functions.bas'
 
 FUNCTION scope$
@@ -25351,7 +25636,7 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
 
                     'if there have been changes in TYPEs, this variable won't be preselected
                     IF (LEN(backupUsedVariableList(j).elements) > 0 AND backupTypeDefinitions$ = typeDefinitions$) OR _
-                       (LEN(backupUsedVariableList(j).elements) = 0) THEN
+                        (LEN(backupUsedVariableList(j).elements) = 0) THEN
                         usedVariableList(i).watch = backupUsedVariableList(j).watch
                         usedVariableList(i).watchRange = backupUsedVariableList(j).watchRange
                         usedVariableList(i).indexes = backupUsedVariableList(j).indexes
