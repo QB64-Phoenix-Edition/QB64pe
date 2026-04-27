@@ -4,7 +4,7 @@
 
 QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows (7 and up), Linux and macOS (Catalina and up).
 
-The [Phoenix Edition](https://www.qb64phoenix.com) is one of the new offshoots created when the old project related pages went offline in April 20222, but note this is still the same programming language and we'll continue development in the spririts of our predecessors. More than that, after four years this seems to be the only offshoot remaining under active development.
+The [Phoenix Edition](https://www.qb64phoenix.com) is one of the new offshoots created when the old project related pages went offline in April 2022, but note this is still the same programming language and we'll continue development in the spririts of our predecessors. More than that, after four years this seems to be the only offshoot remaining under active development.
 
 # Table of Contents
 
