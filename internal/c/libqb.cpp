@@ -172,7 +172,7 @@ extern "C" int QB64_Resizable() {
     return ScreenResize;
 }
 
-thread_local int32 sub_gl_called = 0;
+int32 sub_gl_called = 0;
 
 static int32 image_qbicon16_handle;
 static int32 image_qbicon32_handle;
