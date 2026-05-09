@@ -64,6 +64,15 @@ static void gui_free_tokens(char **tokens) {
     free(tokens);
 }
 
+class gui_modal_guard {
+  public:
+    gui_modal_guard() { gui_modal_lock_begin(); }
+    ~gui_modal_guard() { gui_modal_lock_end(); }
+
+    gui_modal_guard(const gui_modal_guard &) = delete;
+    gui_modal_guard &operator=(const gui_modal_guard &) = delete;
+};
+
 /// @brief Shows a system notification (on Windows this will be an action center notification)
 /// @param qbsTitle [OPTIONAL] Title of the notification
 /// @param qbsMessage [OPTIONAL] The message that will be displayed
@@ -113,6 +122,7 @@ void sub__guiMessageBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsIconType, int32_
         aIconType.assign("info");
     }
 
+    gui_modal_guard modalGuard;
     tinyfd_messageBox(aTitle.c_str(), aMessage.c_str(), "ok", aIconType.c_str(), 1);
 }
 
@@ -153,6 +163,7 @@ int32_t func__guiMessageBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDialogType, 
     if (!(passed & 16))
         nDefaultButton = 1;
 
+    gui_modal_guard modalGuard;
     return tinyfd_messageBox(aTitle.c_str(), aMessage.c_str(), aDialogType.c_str(), aIconType.c_str(), nDefaultButton);
 }
 
@@ -181,7 +192,11 @@ qbs *func__guiInputBox(qbs *qbsTitle, qbs *qbsMessage, qbs *qbsDefaultInput, int
         sDefaultInput = aDefaultInput.c_str();
     }
 
-    auto sInput = tinyfd_inputBox(aTitle.c_str(), aMessage.c_str(), sDefaultInput);
+    const char *sInput;
+    {
+        gui_modal_guard modalGuard;
+        sInput = tinyfd_inputBox(aTitle.c_str(), aMessage.c_str(), sDefaultInput);
+    }
 
     // Create a new qbs and then copy the string to it
     auto qbsInput = qbs_new(sInput ? strlen(sInput) : 0, 1);
@@ -206,7 +221,11 @@ qbs *func__guiSelectFolderDialog(qbs *qbsTitle, qbs *qbsDefaultPath, int32_t pas
     if (passed & 2)
         aDefaultPath.assign((const char *)qbsDefaultPath->chr, qbsDefaultPath->len);
 
-    auto sFolder = tinyfd_selectFolderDialog(aTitle.c_str(), aDefaultPath.c_str());
+    const char *sFolder;
+    {
+        gui_modal_guard modalGuard;
+        sFolder = tinyfd_selectFolderDialog(aTitle.c_str(), aDefaultPath.c_str());
+    }
 
     // Create a new qbs and then copy the string to it
     auto qbsFolder = qbs_new(sFolder ? strlen(sFolder) : 0, 1);
@@ -233,8 +252,14 @@ uint32_t func__guiColorChooserDialog(qbs *qbsTitle, uint32_t nDefaultRGB, int32_
     // Break the color into RGB components
     uint8_t lRGB[3] = {image_get_bgra_red(nDefaultRGB), image_get_bgra_green(nDefaultRGB), image_get_bgra_blue(nDefaultRGB)};
 
+    char *lChosen;
+    {
+        gui_modal_guard modalGuard;
+        lChosen = tinyfd_colorChooser(aTitle.c_str(), nullptr, lRGB, lRGB);
+    }
+
     // On cancel, return 0 (i.e. no color, no alpha, nothing). Else, return color with alpha set to 255
-    return !tinyfd_colorChooser(aTitle.c_str(), nullptr, lRGB, lRGB) ? 0 : image_make_bgra(lRGB[0], lRGB[1], lRGB[2], 0xFF);
+    return !lChosen ? 0 : image_make_bgra(lRGB[0], lRGB[1], lRGB[2], 0xFF);
 }
 
 /// @brief Shows the system file open dialog box
@@ -278,8 +303,12 @@ qbs *func__guiOpenFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
     int32_t aNumOfFilterPatterns;
     auto psaFilterPatterns = gui_tokenize(aFilterPatterns.c_str(), &aNumOfFilterPatterns); // get the number of file filters & count
 
-    auto sFileName = tinyfd_openFileDialog(aTitle.c_str(), aDefaultPathAndFile.c_str(), aNumOfFilterPatterns, psaFilterPatterns, sSingleFilterDescription,
-                                           nAllowMultipleSelects);
+    const char *sFileName;
+    {
+        gui_modal_guard modalGuard;
+        sFileName = tinyfd_openFileDialog(aTitle.c_str(), aDefaultPathAndFile.c_str(), aNumOfFilterPatterns, psaFilterPatterns, sSingleFilterDescription,
+                                          nAllowMultipleSelects);
+    }
 
     gui_free_tokens(psaFilterPatterns); // free memory used by tokenizer
 
@@ -323,7 +352,11 @@ qbs *func__guiSaveFileDialog(qbs *qbsTitle, qbs *qbsDefaultPathAndFile, qbs *qbs
     int32_t aNumOfFilterPatterns;
     auto psaFilterPatterns = gui_tokenize(aFilterPatterns.c_str(), &aNumOfFilterPatterns); // get the number of file filters & count
 
-    auto sFileName = tinyfd_saveFileDialog(aTitle.c_str(), aDefaultPathAndFile.c_str(), aNumOfFilterPatterns, psaFilterPatterns, sSingleFilterDescription);
+    const char *sFileName;
+    {
+        gui_modal_guard modalGuard;
+        sFileName = tinyfd_saveFileDialog(aTitle.c_str(), aDefaultPathAndFile.c_str(), aNumOfFilterPatterns, psaFilterPatterns, sSingleFilterDescription);
+    }
 
     gui_free_tokens(psaFilterPatterns); // free memory used by tokenizer
 
@@ -351,6 +384,7 @@ int gui_alert(const char *message, const char *title, const char *type) {
     // TODO: Probably we should adapt this to a timed terminal message box or prompt when running in $CONSOLE:ONLY mode.
     fprintf(stderr, "\nRuntime error: %s\n", message);
     fflush(stderr);
+    gui_modal_guard modalGuard;
     return tinyfd_messageBox(title, message, type, "error", 1);
 }
 
