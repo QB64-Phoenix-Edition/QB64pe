@@ -48,6 +48,7 @@
 
 // These are here because they are used in func__loadfont()
 #include <algorithm>
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -171,7 +172,7 @@ extern "C" int QB64_Resizable() {
     return ScreenResize;
 }
 
-int32 sub_gl_called = 0;
+thread_local int32 sub_gl_called = 0;
 
 static int32 image_qbicon16_handle;
 static int32 image_qbicon32_handle;
@@ -732,6 +733,49 @@ void hardware_img_requires_depthbuffer(hardware_img_struct *hardware_img) {
 int64 display_lock_request = 0;
 int64 display_lock_confirmed = 0;
 int64 display_lock_released = 0;
+
+extern uint8 close_program;
+extern uint8 suspend_program;
+extern uint8 stop_program;
+
+#ifdef DEPENDENCY_GL
+static std::atomic<int32> display_lock_modal_count{0};
+#endif
+
+void gui_modal_lock_begin() {
+#ifdef DEPENDENCY_GL
+    if (sub_gl_called)
+        return;
+
+    display_lock_modal_count.fetch_add(1, std::memory_order_acq_rel);
+
+    // If the render thread is already waiting for the QB thread to acknowledge
+    // a display lock, acknowledge it before entering a modal OS dialog. The
+    // dialog blocks the QB thread and would otherwise prevent evnt() from doing
+    // this acknowledgement.
+    if (display_lock_request > display_lock_confirmed)
+        display_lock_confirmed = display_lock_request;
+#endif
+}
+
+void gui_modal_lock_end() {
+#ifdef DEPENDENCY_GL
+    if (sub_gl_called)
+        return;
+
+    if (display_lock_modal_count.load(std::memory_order_acquire) > 0)
+        display_lock_modal_count.fetch_sub(1, std::memory_order_acq_rel);
+
+    // Close any last race where the render thread requested the display lock
+    // just as the modal dialog returned. Do not resume QB code until that
+    // in-flight SUB _GL call has released the cooperative display lock.
+    if (display_lock_request > display_lock_confirmed)
+        display_lock_confirmed = display_lock_request;
+
+    while ((display_lock_released < display_lock_confirmed) && (!close_program) && (!suspend_program) && (!stop_program))
+        Sleep(1);
+#endif
+}
 
 // note: only to be used by user functions, not internal functions
 hardware_img_struct *get_hardware_img(int32 handle) {
@@ -27827,6 +27871,10 @@ void GLUT_DISPLAY_REQUEST() {
                 while (display_lock_confirmed < display_lock_request) {
                     if (close_program || dont_call_sub_gl || suspend_program || stop_program)
                         goto abort_gl;
+                    if (display_lock_modal_count.load(std::memory_order_acquire) > 0) {
+                        display_lock_confirmed = display_lock_request;
+                        break;
+                    }
                     qbevent = 1;
                     Sleep(0);
                 }
