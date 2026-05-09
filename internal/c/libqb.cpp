@@ -744,10 +744,7 @@ static std::atomic<int32> display_lock_modal_count{0};
 
 void gui_modal_lock_begin() {
 #ifdef DEPENDENCY_GL
-    if (sub_gl_called)
-        return;
-
-    display_lock_modal_count.fetch_add(1, std::memory_order_acq_rel);
+       display_lock_modal_count.fetch_add(1, std::memory_order_acq_rel);
 
     // If the render thread is already waiting for the QB thread to acknowledge
     // a display lock, acknowledge it before entering a modal OS dialog. The
@@ -760,9 +757,6 @@ void gui_modal_lock_begin() {
 
 void gui_modal_lock_end() {
 #ifdef DEPENDENCY_GL
-    if (sub_gl_called)
-        return;
-
     if (display_lock_modal_count.load(std::memory_order_acquire) > 0)
         display_lock_modal_count.fetch_sub(1, std::memory_order_acq_rel);
 
