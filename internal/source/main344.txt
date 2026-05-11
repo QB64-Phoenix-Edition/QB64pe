@@ -1,4 +1,4 @@
-void SUB_IDERESTRICT417(int32*_SUB_IDERESTRICT417_LONG_P417){
+int32 FUNC_COUNTITEMS(qbs*_FUNC_COUNTITEMS_STRING_SEARCHSTRING,qbs*_FUNC_COUNTITEMS_STRING_ITEM){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,33 +11,33 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+S_60469:;
 do{
-*_SUB_IDERESTRICT417_LONG_X= 0 ;
-if(!qbevent)break;evnt(25813,18287,"ide_methods.bas");}while(r);
-S_60103:;
-if ((*_SUB_IDERESTRICT417_LONG_P417& 4 )||is_error_pending()){
-if(qbevent){evnt(25813,18288,"ide_methods.bas");if(r)goto S_60103;}
+if(qbevent){evnt(25825,18611,"ide_methods.bas");if(r)goto S_60469;}
 do{
-*_SUB_IDERESTRICT417_LONG_X=*_SUB_IDERESTRICT417_LONG_X+ 1 ;
-if(!qbevent)break;evnt(25813,18288,"ide_methods.bas");}while(r);
+*_FUNC_COUNTITEMS_LONG_FOUND=func_instr(*_FUNC_COUNTITEMS_LONG_FOUND+ 1 ,_FUNC_COUNTITEMS_STRING_SEARCHSTRING,_FUNC_COUNTITEMS_STRING_ITEM,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(25825,18612,"ide_methods.bas");}while(r);
+S_60471:;
+if ((-(*_FUNC_COUNTITEMS_LONG_FOUND== 0 ))||is_error_pending()){
+if(qbevent){evnt(25825,18613,"ide_methods.bas");if(r)goto S_60471;}
+do{
+goto dl_exit_6852;
+if(!qbevent)break;evnt(25825,18613,"ide_methods.bas");}while(r);
 }
-S_60106:;
-if ((*_SUB_IDERESTRICT417_LONG_P417& 8 )||is_error_pending()){
-if(qbevent){evnt(25813,18289,"ide_methods.bas");if(r)goto S_60106;}
 do{
-*_SUB_IDERESTRICT417_LONG_X=*_SUB_IDERESTRICT417_LONG_X+ 1 ;
-if(!qbevent)break;evnt(25813,18289,"ide_methods.bas");}while(r);
-}
-S_60109:;
-if ((-(*_SUB_IDERESTRICT417_LONG_X> 1 ))||is_error_pending()){
-if(qbevent){evnt(25813,18290,"ide_methods.bas");if(r)goto S_60109;}
+*_FUNC_COUNTITEMS_LONG_TOTAL=*_FUNC_COUNTITEMS_LONG_TOTAL+ 1 ;
+if(!qbevent)break;evnt(25825,18614,"ide_methods.bas");}while(r);
+dl_continue_6852:;
+}while(1);
+dl_exit_6852:;
 do{
-*_SUB_IDERESTRICT417_LONG_P417=*_SUB_IDERESTRICT417_LONG_P417& 243 ;
-if(!qbevent)break;evnt(25813,18290,"ide_methods.bas");}while(r);
-}
+*_FUNC_COUNTITEMS_LONG_COUNTITEMS=*_FUNC_COUNTITEMS_LONG_TOTAL;
+if(!qbevent)break;evnt(25825,18616,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free344.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_COUNTITEMS_LONG_COUNTITEMS;
 }

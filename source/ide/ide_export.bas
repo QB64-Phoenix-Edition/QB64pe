@@ -276,7 +276,7 @@ SUB ExportCodeAs (docFormat$)
     SELECT CASE LCASE$(docFormat$)
         CASE "html": tmp$ = "<!DOCTYPE html><html lang=" + CHR$(34) + "en" + CHR$(34) + "><head><meta charset=" + CHR$(34) + "UTF-8" + CHR$(34) + "><title>" + AnsiTextToUtf8Text$(pNam$) + "</title></head><body><pre style=" + CHR$(34) + "font-size: 18px; background-color: " + bgc$ + "; color: " + txc$ + ";" + CHR$(34) + ">"
         CASE "rich": tmp$ = "{\rtf1\ansi\deff0{\fonttbl{\f0 Courier New;}}{\colortbl " + rtc$ + "}\pard\f0\fs32\cbpat6\paperh23811\paperw16838\margl142\margr142\margt142\margb142"
-        CASE "disc": tmp$ = "```ansi" + cEol$ + CHR$(27) + "[0;0;1;37m"
+        CASE "disc": tmp$ = "```ansi" + cEol$ + CHR$(27) + "[0;0;1;38m"
         CASE "foru": tmp$ = "[qb=export]"
         CASE "wiki": tmp$ = "{{CodeStart}}"
         CASE ELSE: RETURN
@@ -320,7 +320,7 @@ SUB ExportCodeAs (docFormat$)
             END SELECT
         CASE "disc"
             SELECT CASE LCASE$(what$)
-                CASE "co": tmp$ = CHR$(27) + "[30m"
+                CASE "co": tmp$ = CHR$(27) + "[37m"
                 CASE "nu": tmp$ = CHR$(27) + "[31m"
                 CASE "qu": tmp$ = CHR$(27) + "[33m"
                 CASE ELSE: RETURN
@@ -358,7 +358,7 @@ SUB ExportCodeAs (docFormat$)
             END SELECT
         CASE "disc"
             SELECT CASE LCASE$(what$)
-                CASE "co", "nu", "qu": tmp$ = CHR$(27) + "[37m"
+                CASE "co", "nu", "qu": tmp$ = CHR$(27) + "[38m"
                 CASE ELSE: RETURN
             END SELECT
         CASE "foru"
@@ -514,7 +514,7 @@ SUB ExportCodeAs (docFormat$)
         CASE "disc"
             'linking to wiki not supported in Discord, hence we do coloring only
             IF me% OR pc% THEN lkc$ = CHR$(27) + "[32m": ELSE lkc$ = CHR$(27) + "[34m"
-            MID$(eTxt$, ePos&, lkl% + 10) = lkc$ + lnk$ + CHR$(27) + "[37m"
+            MID$(eTxt$, ePos&, lkl% + 10) = lkc$ + lnk$ + CHR$(27) + "[38m"
             ePos& = ePos& + lkl% + 10
         CASE "foru"
             IF me% OR pc% THEN lkc$ = "#55FF55": ELSE lkc$ = "#4593D8"
@@ -544,7 +544,7 @@ SUB ExportCodeAs (docFormat$)
             MID$(eTxt$, ePos&, kwl% + 10) = "\cf2 " + kw$ + "\cf0 "
             ePos& = ePos& + kwl% + 10
         CASE "disc"
-            MID$(eTxt$, ePos&, kwl% + 10) = CHR$(27) + "[32m" + kw$ + CHR$(27) + "[37m"
+            MID$(eTxt$, ePos&, kwl% + 10) = CHR$(27) + "[36m" + kw$ + CHR$(27) + "[38m"
             ePos& = ePos& + kwl% + 10
         CASE "foru"
             MID$(eTxt$, ePos&, kwl% + 23) = "[color=#55FF55]" + kw$ + "[/color]"
@@ -641,7 +641,8 @@ FUNCTION StripDiscordANSI$ (clip$)
     IF LEFT$(temp$, 8) = "```ansi" + CHR$(10) THEN temp$ = MID$(temp$, 9)
     '--- strip all ANSI sequences we use for Discord exports (if any) ---
     temp$ = StrRemove$(temp$, CHR$(27) + "[0;0;1;37m")
-    FOR i% = 0 TO 7
+    temp$ = StrRemove$(temp$, CHR$(27) + "[0;0;1;38m")
+    FOR i% = 0 TO 8
         temp$ = StrRemove$(temp$, CHR$(27) + "[3" + _TOSTR$(i%) + "m")
     NEXT i%
     '--- strip block end (if any) ---

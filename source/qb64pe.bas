@@ -24460,7 +24460,13 @@ SUB xfileprint (a$, ca$, n)
                     e$ = fixoperationorder$(e$)
                     IF Error_Happened THEN EXIT SUB
                     IF pnrtnum = 0 THEN
-                        IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
+                        IF last THEN
+                            l$ = l$ + sp + tlayout$
+                        ELSEIF gotofpu THEN
+                            l$ = l$ + sp + tlayout$
+                        ELSE
+                            l$ = l$ + sp + tlayout$ + sp2 + a2$
+                        END IF
                     END IF
                     e$ = evaluate(e$, typ)
                     IF Error_Happened THEN EXIT SUB
@@ -24893,7 +24899,13 @@ SUB xprint (a$, ca$, n)
                     e$ = fixoperationorder$(e$)
                     IF Error_Happened THEN EXIT SUB
                     IF pnrtnum = 0 THEN
-                        IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
+                        IF last THEN
+                            l$ = l$ + sp + tlayout$
+                        ELSEIF gotopu THEN
+                            l$ = l$ + sp + tlayout$
+                        ELSE
+                            l$ = l$ + sp + tlayout$ + sp2 + a2$
+                        END IF
                     END IF
                     e$ = evaluate(e$, typ)
                     IF Error_Happened THEN EXIT SUB

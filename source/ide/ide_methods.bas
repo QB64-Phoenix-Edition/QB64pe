@@ -320,6 +320,9 @@ FUNCTION ide2 (ignore)
         menuDesc$(m, i - 1) = "Set default EXE output folder used if 'Output EXE to Source Folder' is off"
         menu$(m, i) = "Configure #Logging...": i = i + 1
         menuDesc$(m, i - 1) = "Configure logging options used when running a program from the IDE"
+        menu$(m, i) = "-": i = i + 1
+        menu$(m, i) = "#QBJS Web Build...": i = i + 1
+        menuDesc$(m, i - 1) = "Build the current program and run in QBJS"
         menusize(m) = i - 1
 
         m = m + 1: i = 0: DebugMenuID = m
@@ -5358,6 +5361,13 @@ FUNCTION ide2 (ignore)
                 PCOPY 2, 0
                 retval = ideTerminalBox
                 PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "#QBJS Web Build..." THEN
+                PCOPY 2, 0
+                PCOPY 3, 0: SCREEN , , 3, 0
+                ideQBJSBuildBox
                 GOTO ideloop
             END IF
 
@@ -14060,6 +14070,330 @@ FUNCTION idesubs$
     SubClosed = _TRUE
     RETURN
 END FUNCTION
+
+
+SUB ideQBJSBuildBox
+    qbjsPort$ = "8080"
+    compileOnly$ = "0"
+    copyProjectFiles$ = "1"
+    qbjsBuildDetected = 0
+    webBuildStatus$ = "Ready"
+    REDIM errorLines(0) AS STRING
+
+    '-------- generic dialog box header --------
+    PCOPY 0, 2
+    PCOPY 0, 1
+    SCREEN , , 1, 0
+    focus = 1
+    DIM p AS idedbptype
+    DIM o(1 TO 100) AS idedbotype
+    DIM sep AS STRING * 1
+    sep = CHR$(0)
+    '-------- end of generic dialog box header --------
+
+    '-------- init dialog box & objects --------
+    i = 0: h = idewy + idesubwindow - 8: IF h > 31 THEN h = 31
+    idepar p, idewx - 14, h, "QBJS Web Build"
+
+    i = i + 1: helpBut = i
+    o(i).typ = 3
+    o(i).y = 1
+    o(i).x = p.w - 25
+    o(i).txt = idenewtxt("QB64 Language Support")
+
+    i = i + 1: portBox = i
+    o(i).typ = 1 'text box
+    o(i).y = 3
+    o(i).w = 5
+    o(i).nam = idenewtxt("Port")
+    o(i).txt = idenewtxt("")
+
+    i = i + 1: coChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 3
+    o(i).x = 19
+    o(i).nam = idenewtxt("Compile only")
+
+    i = i + 1: cpfChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 3
+    o(i).x = 38
+    o(i).nam = idenewtxt("Copy project files")
+
+    GOSUB ReadSettings
+
+    i = i + 1: warnList = i
+    o(i).typ = 2 'list box
+    o(i).y = 5: o(i).h = h - 7
+    o(i).nam = idenewtxt("Complier Warnings")
+    o(i).txt = idenewtxt("")
+    warningsLst = i
+
+    i = i + 1: buildBut = i: gotoBut = i + 1: closeBut = i + 2
+    o(i).typ = 3 'action buttons
+    o(i).y = h
+    o(i).txt = idenewtxt("#Run Web Build" + sep + "#Go to Selected" + sep + "#Close"): o(1).dft = 1
+    focus = buildBut
+    '-------- end of init dialog box & objects --------
+
+    '-------- generic init --------
+    FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
+    '-------- end of generic init --------
+
+    DO 'main loop
+        '-------- generic display dialog box & objects --------
+        idedrawpar p
+        f = 1: cx = 0: cy = 0
+        FOR i = 1 TO 100
+            IF o(i).typ THEN
+                'prepare object
+                o(i).foc = focus - f 'focus offset
+                o(i).cx = 0: o(i).cy = 0 'clear cursor pos
+                IF i = focus _ANDALSO focus <> oldfocus THEN
+                    oldfocus = focus
+                    IF o(i).typ = 1 THEN 'if text box
+                        'start with values selected upon getting focus
+                        o(i).v1 = LEN(idetxt(o(i).txt)) 'selection len
+                        IF o(i).v1 > 0 THEN o(i).issel = -1 ELSE o(i).issel = 0
+                        o(focus).sx1 = 0 'selection start
+                    END IF
+                END IF
+                idedrawobj o(i), f 'display object
+                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy 'get new cursor pos
+            END IF
+        NEXT i
+        lastfocus = f - 1
+        '-------- end of generic display dialog box & objects --------
+
+        '-------- custom display changes --------
+        COLOR 2, 7: LOCATE p.y + 1, p.x + 2
+        PRINT "Status: ";
+        COLOR 0, 7
+        PRINT webBuildStatus$;
+        ' If the compile-only option is selected, make the copy project dependencies
+        ' option appear disabled
+        IF o(coChk).sel THEN
+            COLOR 2, 7: LOCATE p.y + o(cpfChk).y, p.x + o(cpfChk).x
+            PRINT "[ ] Copy project files";
+            IF o(cpfChk).sel THEN
+                LOCATE p.y + o(cpfChk).y, p.x + o(cpfChk).x + 1
+                PRINT "X"
+            END IF
+        END IF
+        ' If no compiler warning or error message is selected, make the "Go to Selected"
+        ' button appear disabled
+        sel = o(warnList).sel
+        IF sel < 1 OR sel > UBOUND(errorLines) THEN
+            y = p.y + o(buildBut).y
+            x = p.x + (p.w - 44) \ 2 + 17
+            IF CHR$(SCREEN(y, x)) <> "<" THEN x = x + 1
+            COLOR 2, 7: LOCATE y, x
+            PRINT "< Go to Selected >"
+        END IF
+        '-------- end of custom display changes --------
+
+        'update visual page and cursor position
+        PCOPY 1, 0
+        IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
+
+        '-------- run build steps --------------------------------
+        Q$ = CHR$(34)  ' double quote character
+        EQ$ = "^" + Q$ ' escaped double quote
+        skipEvents = 0
+        IF webBuildStatus$ = "Compiling qbjs-build tool..." THEN
+            IF INSTR(_OS$, "WIN") > 0 THEN
+                SHELL _HIDE Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal\support\converter\qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "internal\support\converter\qbjs-build.exe" + Q$
+            ELSE
+                SHELL Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal/support/converter/qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "internal/support/converter/qbjs-build" + Q$
+            END IF
+            webBuildStatus$ = "Building..."
+            skipEvents = 1
+
+        ELSEIF webBuildStatus$ = "Building..." Then
+            qbjsWarningFile$ = _CWD$ + ".qbjs-warnings-" + _TRIM$(STR$(TIMER))
+            IF _FILEEXISTS(qbjsWarningFile$) THEN KILL qbjsWarningFile$
+            qbjsOpts$ = "-port:" + qbjsPort$ + " " + Q$ + "-warnings:" + qbjsWarningFile$ + Q$
+            IF compileOnly$ = "1" THEN qbjsOpts$ = qbjsOpts$ + " -compileOnly"
+            IF copyProjectFiles$ = "0" THEN qbjsOpts$ = qbjsOpts$ + " -noProjectFiles"
+
+            ' Save a temp copy of the file
+            tempSrcFile$ = idepath$ + idepathsep$ + ".qbjs-temp.bas"
+            IF _FILEEXISTS(tempSrcFile$) THEN KILL tempSrcFile$
+            OPEN tempSrcFile$ FOR BINARY AS #150
+            IF INSTR(_OS$, "WIN") THEN LineEnding$ = CHR$(13) + CHR$(10) ELSE LineEnding$ = CHR$(10)
+            FOR i = 1 TO iden
+                outfile$ = idegetline(i) + LineEnding$
+                PUT #150, , outfile$
+            NEXT
+            CLOSE #150
+            IF INSTR(_OS$, "WIN") > 0 THEN
+                SHELL _HIDE "cmd.exe /c " + Q$ + Q$ + _CWD$ + "internal\support\converter\qbjs-build" + Q$ + " " + qbjsOpts$ + " " + EQ$ + tempSrcFile$ + EQ$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + " & call echo %^errorlevel% > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$ + Q$
+            ELSE
+                SHELL Q$ + _CWD$ + "internal/support/converter/qbjs-build" + Q$ + " " + qbjsOpts$ + " " + Q$ + tempSrcFile$ + Q$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + ";  echo $? > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$
+            END IF
+            exitCode = 0
+            IF _FILEEXISTS(_CWD$ + ".qbjs-exit-code") THEN
+                exitCode = Val(_ReadFile$(_CWD$ + ".qbjs-exit-code"))
+                KILL _CWD$ + ".qbjs-exit-code"
+            END IF
+
+            IF exitCode = 1 THEN '     No nodejs detected
+                idetxt$(o(warningsLst).txt) = "  -- Node.js not detected! --" + sep + _
+                                              "Node.js must be installed and in the system path to use this feature."
+            ELSEIF exitCode = 2 THEN ' No network detected
+                idetxt$(o(warningsLst).txt) = " -- No network detected! --" + sep + _
+                                              "Unable to download QBJS build dependencies."
+            ELSE
+                GOSUB UpdateWarnings
+            END IF
+            IF _FILEEXISTS(tempSrcFile$) THEN KILL tempSrcFile$
+            webBuildStatus$ = "Build Complete."
+            skipEvents = 1
+        END IF
+        '-------- end run build steps --------------------------------
+
+        IF skipEvents THEN _CONTINUE
+
+        '-------- read input --------
+        change = 0
+        DO
+            GetInput
+            IF mWHEEL THEN change = 1
+            IF KB THEN change = 1
+            IF mCLICK THEN mousedown = 1: change = 1
+            IF mRELEASE THEN mouseup = 1: change = 1
+            IF mB THEN change = 1
+            alt = KALT: IF alt <> oldalt THEN change = 1
+            oldalt = alt
+            _LIMIT 100
+        LOOP UNTIL change
+        IF alt AND NOT KCTRL THEN idehl = 1 ELSE idehl = 0
+        'convert "alt+letter" scancode to letter's ASCII character
+        altletter$ = ""
+        IF alt AND NOT KCTRL THEN
+            IF LEN(K$) = 1 THEN
+                k = ASC(UCASE$(K$))
+                IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
+            END IF
+        END IF
+        SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
+        '-------- end of read input --------
+
+        '-------- generic input response --------
+        info = 0: invdata = 0
+        IF K$ = "" THEN K$ = CHR$(255)
+        IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
+        IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
+        IF focus < 1 THEN focus = lastfocus
+        IF focus > lastfocus THEN focus = 1
+        f = 1
+        FOR i = 1 TO 100
+            IF o(i).typ THEN
+                focusoffset = focus - f
+                ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
+            END IF
+        NEXT
+        '-------- end of generic input response --------
+
+
+        '-------- custom input response --------
+        IF focus = helpBut AND info <> 0 THEN
+            GOSUB LaunchHelpURL
+        END IF
+        IF K$ = CHR$(27) OR (focus = closeBut AND info <> 0) THEN
+            GOSUB UpdateSettings
+            EXIT FUNCTION
+        END IF
+        IF focus = buildBut AND info <> 0 THEN
+            GOSUB UpdateSettings
+            ' Detect qbjs-build tool
+            qbjsBuildExists = -1
+            IF INSTR(_OS$, "WIN") > 0 THEN
+                IF NOT _FILEEXISTS(_CWD$ + "internal\support\converter\qbjs-build.exe") THEN qbjsBuildExists = 0
+            ELSE
+                If NOT _FILEEXISTS(_CWD$ + "internal/support/converter/qbjs-build") THEN qbjsBuildExists = 0
+            END IF
+
+            IF NOT qbjsBuildExists THEN
+                webBuildStatus$ = "Compiling qbjs-build tool..."
+            ELSE
+                webBuildStatus$ = "Building..."
+                idetxt$(o(warningsLst).txt) = ""
+            END IF
+        END IF
+        IF focus = gotoBut AND info <> 0 THEN
+            sel = o(warnList).sel
+            If sel > 0 AND sel <= UBOUND(errorLines) THEN
+                sidx = INSTR(errorLines(sel), ":") + 1
+                eidx = INSTR(sidx, errorLines(sel), ":")
+                IF sidx > 0 _ANDALSO eidx > 0 THEN
+                    linenum$ = Mid$(errorLines(sel), sidx, eidx - sidx)
+                    idecy = VAL(linenum$)
+                    EXIT FUNCTION
+                END IF
+            END IF
+        END IF
+        '-------- end of custom input response --------
+
+        mousedown = 0
+        mouseup = 0
+    LOOP
+    EXIT FUNCTION
+
+UpdateWarnings:
+    qbjsErrors$ = ""
+    REDIM errorLines(0) AS STRING
+    IF _FILEEXISTS(qbjsWarningFile$) THEN
+        Open qbjsWarningFile$ FOR INPUT AS #150
+        DO
+            LINE INPUT #150, eline$
+            IF _Trim$(eline$) <> "" THEN
+                IF qbjsErrors$ <> "" THEN qbjsErrors$ = qbjsErrors$ + sep
+                qbjsErrors$ = qbjsErrors$ + eline$
+                eli = UBOUND(errorLines) + 1
+                REDIM _PRESERVE errorLines(eli) AS STRING
+                errorLines(eli) = eline$
+            END IF
+        LOOP UNTIL EOF(150)
+        CLOSE #150
+        KILL qbjsWarningFile$
+    END IF
+    IF UBound(errorLines) < 1 THEN
+        idetxt$(o(warningsLst).txt) = "-- Build completed with no errors or warnings --"
+    ELSE
+        idetxt$(o(warningsLst).txt) = qbjsErrors$
+    END IF
+    RETURN
+
+ReadSettings:
+    result = ReadConfigSetting("QBJS", "Port", qbjsPort$): IF NOT result THEN qbjsPort$ = "8080"
+    result = ReadConfigSetting("QBJS", "CompileOnly", compileOnly$): IF NOT result THEN compileOnly$ = "0"
+    result = ReadConfigSetting("QBJS", "CopyProjectFiles", copyProjectFiles$): IF NOT result THEN copyProjectFiles$ = "1"
+    idetxt$(o(portBox).txt) = qbjsPort$
+    o(coChk).sel = Val(compileOnly$)
+    o(cpfChk).sel = Val(copyProjectFiles$)
+    RETURN
+
+UpdateSettings:
+    qbjsPort$ = idetxt$(o(portBox).txt)
+    compileOnly$ = _Trim$(Str$(o(coChk).sel))
+    copyProjectFiles$ = _Trim$(Str$(o(cpfChk).sel))
+    WriteConfigSetting "QBJS", "Port", qbjsPort$
+    WriteConfigSetting "QBJS", "CompileOnly", compileOnly$
+    WriteConfigSetting "QBJS", "CopyProjectFiles", copyProjectFiles$
+    RETURN
+
+LaunchHelpURL:
+    url$ = "https://github.com/boxgaming/qbjs/wiki/QBasic-Language-Support"
+    IF INSTR(_OS$, "WIN") > 0 THEN
+        SHELL _DONTWAIT _HIDE "start " + url$
+    ELSEIF INSTR(_OS$, "MAC") THEN
+        Shell _DONTWAIT _HIDE "open " + url$
+    ELSE ' LINUX
+        Shell _DONTWAIT _HIDE "xdg-open " + url$
+    END IF
+    RETURN
+END SUB
 
 
 FUNCTION ideLanguageBox
