@@ -4,14 +4,14 @@
 #include <limits>
 
 // bit-array access functions (note: used to be included through 'bit.cpp')
-static inline constexpr uint64_t getubits(uint32_t bsize, uint8_t *base, intptr_t i) {
+static inline uint64_t getubits(uint32_t bsize, const uint8_t *base, intptr_t i) {
     int64_t bmask;
     bmask = ~(-(((int64_t)1) << bsize));
     i *= bsize;
     return ((*(uint64_t *)(base + (i >> 3))) >> (i & 7)) & bmask;
 }
 
-static inline constexpr int64_t getbits(uint32_t bsize, uint8_t *base, intptr_t i) {
+static inline int64_t getbits(uint32_t bsize, const uint8_t *base, intptr_t i) {
     int64_t bmask, bval64;
     bmask = ~(-(((int64_t)1) << bsize));
     i *= bsize;
@@ -21,7 +21,7 @@ static inline constexpr int64_t getbits(uint32_t bsize, uint8_t *base, intptr_t 
     return bval64;
 }
 
-static inline void setbits(uint32_t bsize, uint8_t *base, intptr_t i, int64_t val) {
+static inline void setbits(uint32_t bsize, const uint8_t *base, intptr_t i, int64_t val) {
     int64_t bmask;
     uint64_t *bptr64;
     bmask = (((uint64_t)1) << bsize) - 1;

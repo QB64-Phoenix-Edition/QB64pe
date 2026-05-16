@@ -10,9 +10,6 @@
 #include "window.h"
 #include <cstdlib>
 #include <cstring>
-#ifdef QB64_WINDOWS
-#    include <windows.h>
-#endif
 
 // TODO: Most of these variables should be moved to keyboard.cpp and wrapped
 extern int64_t keyhit[8192]; // keyhit cyclic buffer. keyhit specific internal flags: (stored in high 32-bits). &4294967296->numpad was used
@@ -1940,79 +1937,66 @@ int32_t func__numlock() {
     return QB_FALSE;
 }
 
-// GLFW_TODO: Move this function to GLUTEmu and implement it for all platforms
-static void toggle_lock_key(int32_t key_code) {
-#ifdef QB64_WINDOWS
-    keybd_event(key_code, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
-    keybd_event(key_code, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
-#else
-    (void)key_code;
-#endif
-}
-
-// GLFW_TODO: Implement lock key state changes for non-Windows platforms
 void sub__capslock(int32_t options) {
-#ifdef QB64_WINDOWS
-    // VK_CAPITAL
-    int32_t currentState = func__capslock();
+#ifdef QB64_GUI
+    OPTIONAL_GLUT();
+
+    auto currentState = GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock);
     switch (options) {
     case 1: // ON
-        if (currentState == -1)
+        if (currentState)
             return;
         break;
     case 2: // OFF
-        if (currentState == 0)
+        if (!currentState)
             return;
         break;
     }
+
     // _TOGGLE:
-    toggle_lock_key(VK_CAPITAL);
-#else
-    (void)options;
+    GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::CapsLock);
 #endif
 }
 
-// GLFW_TODO: Implement lock key state changes for non-Windows platforms
 void sub__scrolllock(int32_t options) {
-#ifdef QB64_WINDOWS
-    // VK_SCROLL
-    int32_t currentState = func__scrolllock();
+#ifdef QB64_GUI
+    OPTIONAL_GLUT();
+
+    auto currentState = GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock);
     switch (options) {
     case 1: // ON
-        if (currentState == -1)
+        if (currentState)
             return;
         break;
     case 2: // OFF
-        if (currentState == 0)
+        if (!currentState)
             return;
         break;
     }
+
     // _TOGGLE:
-    toggle_lock_key(VK_SCROLL);
-#else
-    (void)options;
+    GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::ScrollLock);
 #endif
 }
 
-// GLFW_TODO: Implement lock key state changes for non-Windows platforms
 void sub__numlock(int32_t options) {
-#ifdef QB64_WINDOWS
-    // VK_NUMLOCK
-    int32_t currentState = func__numlock();
+#ifdef QB64_GUI
+    OPTIONAL_GLUT();
+
+    auto currentState = GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock);
     switch (options) {
     case 1: // ON
-        if (currentState == -1)
+        if (currentState)
             return;
         break;
     case 2: // OFF
-        if (currentState == 0)
+        if (!currentState)
             return;
         break;
     }
+
     // _TOGGLE:
-    toggle_lock_key(VK_NUMLOCK);
-#else
-    (void)options;
+    GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::NumLock);
 #endif
 }
 

@@ -1242,6 +1242,41 @@ class GLUTEmu {
         return (keyboardModifiers & modifier) != 0;
     }
 
+    bool KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier lockKey) {
+#ifdef QB64_WINDOWS
+
+        switch (lockKey) {
+        case GLUTEmu_KeyboardKeyModifier::CapsLock:
+            keybd_event(VK_CAPITAL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+            keybd_event(VK_CAPITAL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+            break;
+        case GLUTEmu_KeyboardKeyModifier::NumLock:
+            keybd_event(VK_NUMLOCK, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+            keybd_event(VK_NUMLOCK, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+            break;
+        case GLUTEmu_KeyboardKeyModifier::ScrollLock:
+            keybd_event(VK_SCROLL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+            keybd_event(VK_SCROLL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+            break;
+        default:
+            libqb_log_warn("Invalid lock key specified for toggling: %d", int(lockKey));
+        }
+
+#else
+
+        if (lockKey != GLUTEmu_KeyboardKeyModifier::CapsLock && lockKey != GLUTEmu_KeyboardKeyModifier::NumLock &&
+            lockKey != GLUTEmu_KeyboardKeyModifier::ScrollLock) {
+            libqb_log_warn("Invalid lock key specified for toggling: %d", int(lockKey));
+            return false;
+        }
+
+        libqb_log_warn("Toggling lock key state is not supported on this platform");
+
+#endif
+
+        return false;
+    }
+
     bool MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
         if (window != nullptr) {
             if (cursor != nullptr) {
@@ -1706,6 +1741,7 @@ class GLUTEmu {
 
     int KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey key, int mods) {
 #if defined(QB64_WINDOWS)
+
         switch (key) {
         case GLUTEmu_KeyboardKey::ScrollLock:
             mods = (GetKeyState(VK_SCROLL) & 0x0001) ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
@@ -1722,7 +1758,9 @@ class GLUTEmu {
         default:
             break;
         }
+
 #elif defined(QB64_LINUX)
+
         unsigned int n = 0;
         if (XkbGetIndicatorState(glfwGetX11Display(), XkbUseCoreKbd, &n) == Success) {
             switch (key) {
@@ -1742,6 +1780,17 @@ class GLUTEmu {
                 break;
             }
         } else // note the else here
+
+#elif defined(QB64_MACOSX)
+
+        if (key == GLUTEmu_KeyboardKey::CapsLock) {
+            // Only Caps Lock is detectable via public API on macOS
+            CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+            bool capsOn = (flags & kCGEventFlagMaskAlphaShift) != 0;
+
+            mods = capsOn ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
+        } else // note the else here
+
 #elif defined(QB64_MACOSX) || defined(QB64_LINUX)
         {
             // No indicator API, toggle manually
@@ -1752,6 +1801,7 @@ class GLUTEmu {
                 libqb_log_warn("Unsupported platform for keyboard lock key modifier retrieval");
             }
         }
+
 #endif
 
         return mods;
@@ -2375,6 +2425,10 @@ void GLUTEmu_KeyboardSetCharacterFunction(GLUTEmu_CallbackKeyboardCharacter func
 
 bool GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier modifier) {
     return GLUTEmu::Instance().KeyboardIsKeyModifierSet(modifier);
+}
+
+bool GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier lockKey) {
+    return GLUTEmu::Instance().KeyboardToggleLockKeyState(lockKey);
 }
 
 bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
