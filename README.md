@@ -4,9 +4,9 @@
 
 QB64 is a modern extended BASIC+OpenGL language that retains QB4.5/QBasic compatibility and compiles native binaries for Windows (7 and up), Linux and macOS (Catalina and up).
 
-The [Phoenix Edition](https://www.qb64phoenix.com) is one of the new offshoots created when the old project related pages went offline in April 2022, but note this is still the same programming language and we'll continue development in the spririts of our predecessors. More than that, after four years this seems to be the only offshoot remaining under active development.
+The [Phoenix Edition](https://www.qb64phoenix.com) is one of the new offshoots created when the old project related pages went offline in April 2022, but note this is still the same programming language and we'll continue development in the spirits of our predecessors. More than that, after four years this seems to be the only offshoot remaining under active development.
 
-# Table of Contents
+## Table of Contents
 
 1. [Installation](#installation)
     1. [Windows](#windows)
@@ -16,17 +16,17 @@ The [Phoenix Edition](https://www.qb64phoenix.com) is one of the new offshoots c
 2. [Usage](#usage)
 3. [Additional Information](#additional-information)
 
-# Installation
+## Installation
 
 Download the appropriate package for your operating system over at <https://github.com/QB64-Phoenix-Edition/QB64pe/releases/latest>
 
-## Windows
+### Windows
 
 Make sure to extract the package contents to a folder with full write permissions (failing to do so may result in IDE or compilation errors).
 
 * It is advisable to whitelist the 'qb64pe' folder in your antivirus/antimalware software *
 
-## macOS
+### macOS
 
 Before using QB64-PE make sure to install the Xcode command line tools with:
 
@@ -36,13 +36,13 @@ xcode-select --install
 
 Run ```./setup_osx.command``` to compile QB64-PE for your OS version.
 
-## Linux
+### Linux
 
 Compile QB64-PE with ```./setup_lnx.sh```.
 
 Dependencies should be automatically installed. Required packages include OpenGL, ALSA and the GNU C++ Compiler.
 
-# Usage
+## Usage
 
 Run the ```qb64pe``` executable to launch the IDE, which you can use to edit your .BAS files. From there, hit F5 to compile and run your code.
 
@@ -56,7 +56,7 @@ Additionally, if you do not wish to use the integrated IDE and to only compile y
 
 Replacing `-c` with `-x` will compile without opening a separate compiler window.
 
-# Additional Information
+## Additional Information
 
 More about QB64-PE at our wiki: <https://qb64phoenix.com/qb64wiki>
 
