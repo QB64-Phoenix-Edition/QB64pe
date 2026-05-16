@@ -1260,7 +1260,10 @@ class GLUTEmu {
             break;
         default:
             libqb_log_warn("Invalid lock key specified for toggling: %d", int(lockKey));
+            return false;
         }
+
+        return true;
 
 #else
 
@@ -1779,27 +1782,28 @@ class GLUTEmu {
             default:
                 break;
             }
-        } else // note the else here
+        } else {
+            // No indicator API, toggle manually
+            if (key == GLUTEmu_KeyboardKey::ScrollLock) {
+                // We need this for scroll lock only since GLFW supports caps lock and num lock natively
+                mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
+            } else {
+                libqb_log_warn("Lock key modifier query not available for key = %d on this platform", int(key));
+            }
+        }
 
 #elif defined(QB64_MACOSX)
 
         if (key == GLUTEmu_KeyboardKey::CapsLock) {
             // Only Caps Lock is detectable via public API on macOS
             CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
-            bool capsOn = (flags & kCGEventFlagMaskAlphaShift) != 0;
 
-            mods = capsOn ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
-        } else // note the else here
-
-#elif defined(QB64_MACOSX) || defined(QB64_LINUX)
-        {
-            // No indicator API, toggle manually
-            if (key == GLUTEmu_KeyboardKey::ScrollLock) {
-                // We need this for scroll lock only since GLFW supports caps lock and num lock natively
-                mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
-            } else {
-                libqb_log_warn("Unsupported platform for keyboard lock key modifier retrieval");
-            }
+            mods = (flags & kCGEventFlagMaskAlphaShift) != 0 ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
+        } else if (key == GLUTEmu_KeyboardKey::ScrollLock) {
+            // We need this for scroll lock only since GLFW supports caps lock and num lock natively
+            mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
+        } else {
+            libqb_log_warn("Lock key modifier query not available for key = %d on this platform", int(key));
         }
 
 #endif
