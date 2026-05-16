@@ -291,7 +291,7 @@ void GLUTEmu_KeyboardSetCharacterFunction(GLUTEmu_CallbackKeyboardCharacter func
 bool GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier modifier);
 bool GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier lockKey);
 bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style);
-bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle);
+bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY);
 void GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode mode);
 GLUTEnum_MouseCursorMode GLUTEmu_MouseGetCursorMode();
 void GLUTEmu_MouseMove(double x, double y);

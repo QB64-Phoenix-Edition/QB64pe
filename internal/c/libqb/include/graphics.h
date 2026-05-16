@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 inline constexpr auto IMAGE_INVALID_HANDLE = -1; // This is returned to the caller if something goes wrong
 inline constexpr auto IMAGE_8BPP_MAX_COLORS = std::size_t{1} << std::numeric_limits<uint8_t>::digits;
@@ -273,6 +274,32 @@ static inline constexpr uint32_t image_swap_red_blue(uint32_t clr) {
     return ((clr & 0xFF00FF00u) | ((clr & 0x00FF0000u) >> 16) | ((clr & 0x000000FFu) << 16));
 }
 
+/// @brief Converts an image to 32bpp RGBA format. If the image is already in 32bpp format, it just swaps the red and blue channels. If the image is in 8bpp
+/// format, it uses the palette to convert each pixel to 32bpp RGBA format. The converted pixel data is stored in the provided vector, which should be
+/// pre-allocated to the correct size (width * height of the image). The function returns a pointer to the raw pixel data of the converted image, which can be
+/// used for rendering or further processing. This does no checking of the input image format, it assumes that the image is either 8bpp or 32bpp. The caller is
+/// responsible for ensuring that the input image is in a valid format and that the converted vector is properly sized.
+/// @param img The image to convert. This cannot be NULL and must be either 8bpp or 32bpp format.
+/// @param converted The vector to store the converted pixel data. This should be pre-allocated to the correct size (width * height of the image).
+/// @return A pointer to the raw pixel data of the converted image.
+static inline uint8_t *image_convert_to_32bpp_rgba(const img_struct *img, std::vector<uint32_t> &converted) {
+    if (img->bits_per_pixel != 32) {
+        auto src = img->offset;
+        for (size_t i = 0; i < converted.size(); i++) {
+            converted[i] = image_swap_red_blue(img->pal[*src]);
+            ++src;
+        }
+    } else {
+        auto src = img->offset32;
+        for (size_t i = 0; i < converted.size(); i++) {
+            converted[i] = image_swap_red_blue(*src);
+            ++src;
+        }
+    }
+
+    return reinterpret_cast<uint8_t *>(converted.data());
+}
+
 static inline constexpr uint8_t image_clamp_color_component(int n) {
     return uint8_t(std::clamp(n, 0, 255));
 }
@@ -413,7 +440,7 @@ static inline uint32_t image_find_closest_palette_color(uint32_t color, const ui
 }
 
 /// @brief Checks if an image handle is valid. This only checks if the handle is within a valid range, it does not check if the image itself is valid. Use
-/// Image_ValidateHandle for that.
+/// Image_GetDescriptor for that.
 /// @param imageHandle The image handle to check.
 /// @return true if the handle is valid, false otherwise.
 static inline constexpr bool Image_IsHandleValid(int32_t imageHandle) {

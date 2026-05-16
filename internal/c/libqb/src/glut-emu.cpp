@@ -3,7 +3,6 @@
 // This abstracts the underlying windowing library and provides a GLUT-like API for QB64-PE
 //
 // TODO:
-// Custom bitmap cursor support
 // Desktop image capture support
 // Mouse capture/release support
 //--------------------------------------------------------------------------------------------------------
@@ -327,12 +326,14 @@ class GLUTEmu {
     class MessageSetCustomCursor : public Message {
       public:
         int32_t imageHandle;
+        int hotspotX, hotspotY;
         bool responseValue;
 
-        MessageSetCustomCursor(int32_t imageHandle) : Message(true), imageHandle(imageHandle), responseValue(false) {}
+        MessageSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY)
+            : Message(true), imageHandle(imageHandle), hotspotX(hotspotX), hotspotY(hotspotY), responseValue(false) {}
 
         void Execute() override {
-            responseValue = GLUTEmu::Instance().MouseSetCustomCursor(imageHandle);
+            responseValue = GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
         }
     };
 
@@ -709,40 +710,16 @@ class GLUTEmu {
 
                 libqb_log_trace("Setting window icons (large handle: %d, small handle: %d)", largeImageHandle, smallImageHandle);
 
-                uint8_t *imgLargeData = nullptr;
-                uint8_t *imgSmallData = nullptr;
                 std::vector<uint32_t> imgLargeConvertedData(imgLarge->width * imgLarge->height);
                 std::vector<uint32_t> imgSmallConvertedData(imgSmall->width * imgSmall->height);
-
-                // Ensure both icons are in 32bpp RGBA format, converting if necessary
-                auto convertTo32bpp = [](img_struct *img, std::vector<uint32_t> &converted) -> uint8_t * {
-                    libqb_log_trace("Converting icon to 32bpp RGBA format");
-
-                    if (img->bits_per_pixel != 32) {
-                        auto src = img->offset;
-                        for (size_t i = 0; i < converted.size(); i++) {
-                            converted[i] = image_swap_red_blue(img->pal[*src]);
-                            ++src;
-                        }
-                    } else {
-                        auto src = img->offset32;
-                        for (size_t i = 0; i < converted.size(); i++) {
-                            converted[i] = image_swap_red_blue(*src);
-                            ++src;
-                        }
-                    }
-
-                    return reinterpret_cast<uint8_t *>(converted.data());
-                };
-
-                imgLargeData = convertTo32bpp(imgLarge, imgLargeConvertedData);
-                imgSmallData = convertTo32bpp(imgSmall, imgSmallConvertedData);
-
                 GLFWimage images[2];
-                images[0].pixels = imgLargeData;
+
+                libqb_log_trace("Converting icons to 32bpp RGBA format");
+
+                images[0].pixels = image_convert_to_32bpp_rgba(imgLarge, imgLargeConvertedData);
                 images[0].width = imgLarge->width;
                 images[0].height = imgLarge->height;
-                images[1].pixels = imgSmallData;
+                images[1].pixels = image_convert_to_32bpp_rgba(imgSmall, imgSmallConvertedData);
                 images[1].width = imgSmall->width;
                 images[1].height = imgSmall->height;
 
@@ -1305,11 +1282,44 @@ class GLUTEmu {
         return false;
     }
 
-    bool MouseSetCustomCursor(int32_t imageHandle) {
+    bool MouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY) {
         if (window != nullptr) {
-            // GLFW_TODO: implement custom bitmap cursor support
-            libqb_log_warn("MouseSetCustomCursor is not implemented");
-            return false;
+            if (!Image_IsHandleValid(imageHandle)) {
+                libqb_log_warn("Invalid image handle provided, attempting to set default cursor");
+                return MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::Arrow);
+            }
+
+            auto img = Image_GetDescriptor(imageHandle);
+            if (img == nullptr || img->text || img->width <= 0 || img->height <= 0) {
+                libqb_log_error("Invalid image handle provided for custom cursor: %d", imageHandle);
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                return false;
+            }
+
+            std::vector<uint32_t> imgConvertedData(img->width * img->height);
+            GLFWimage cursorImage;
+
+            libqb_log_trace("Converting custom cursor image to 32bpp RGBA format");
+            cursorImage.pixels = image_convert_to_32bpp_rgba(img, imgConvertedData);
+            cursorImage.width = img->width;
+            cursorImage.height = img->height;
+
+            if (cursor != nullptr) {
+                glfwDestroyCursor(cursor);
+                cursor = nullptr;
+                libqb_log_trace("Mouse cursor freed");
+            }
+
+            cursor = glfwCreateCursor(&cursorImage, hotspotX, hotspotY);
+            if (cursor != nullptr) {
+                glfwSetCursor(window, cursor);
+
+                libqb_log_trace("Mouse cursor set to custom image (handle: %d, hotspot: (%d, %d))", imageHandle, hotspotX, hotspotY);
+
+                return true;
+            } else {
+                libqb_log_error("Failed to set custom cursor with image handle %d", imageHandle);
+            }
         } else {
             libqb_log_error("Window not created, cannot set custom mouse cursor");
         }
@@ -2445,11 +2455,11 @@ bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
     return msg.responseValue;
 }
 
-bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle) {
+bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
-        return GLUTEmu::Instance().MouseSetCustomCursor(imageHandle);
+        return GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
     }
-    GLUTEmu::MessageSetCustomCursor msg(imageHandle);
+    GLUTEmu::MessageSetCustomCursor msg(imageHandle, hotspotX, hotspotY);
     GLUTEmu::Instance().MessageQueue(&msg);
     msg.WaitForResponse();
     return msg.responseValue;
