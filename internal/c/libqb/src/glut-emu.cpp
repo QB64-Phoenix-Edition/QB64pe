@@ -1221,19 +1221,20 @@ class GLUTEmu {
 
     bool KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier lockKey) {
 #ifdef QB64_WINDOWS
+        static constexpr uint8_t KeyboardLockScanCode = 0x45;
 
         switch (lockKey) {
         case GLUTEmu_KeyboardKeyModifier::CapsLock:
-            keybd_event(VK_CAPITAL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
-            keybd_event(VK_CAPITAL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_CAPITAL, KeyboardLockScanCode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+            keybd_event(VK_CAPITAL, KeyboardLockScanCode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
             break;
         case GLUTEmu_KeyboardKeyModifier::NumLock:
-            keybd_event(VK_NUMLOCK, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
-            keybd_event(VK_NUMLOCK, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_NUMLOCK, KeyboardLockScanCode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+            keybd_event(VK_NUMLOCK, KeyboardLockScanCode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
             break;
         case GLUTEmu_KeyboardKeyModifier::ScrollLock:
-            keybd_event(VK_SCROLL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | 0, 0);
-            keybd_event(VK_SCROLL, kKeyboardLockScancode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_SCROLL, KeyboardLockScanCode, KEYEVENTF_EXTENDEDKEY | 0, 0);
+            keybd_event(VK_SCROLL, KeyboardLockScanCode, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
             break;
         default:
             libqb_log_warn("Invalid lock key specified for toggling: %d", int(lockKey));

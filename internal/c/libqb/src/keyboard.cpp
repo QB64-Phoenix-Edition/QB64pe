@@ -674,7 +674,6 @@ static constexpr int32_t kBiosKeyboardDataOffset = 0x400;
 static constexpr int32_t kBiosShiftStatusOffset = 0x417;
 static constexpr int32_t kBiosExtendedShiftStatusOffset = 0x418;
 static constexpr int32_t kBiosKeyboardStatusFlagsOffset = 0x496;
-static constexpr uint8_t kKeyboardLockScancode = 0x45;
 static int32_t keyboard_keyup_mask_last = -1;
 static uint32_t keyboard_keyup_mask[256]; // NULL values indicate removed masks
 
