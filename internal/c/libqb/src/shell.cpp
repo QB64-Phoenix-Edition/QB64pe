@@ -721,7 +721,7 @@ void sub_shell(qbs *str, int32_t passed) {
                 freopen("stdout.buf", "w", stdout);
                 freopen("stderr.buf", "w", stderr);
             */
-            system((char *)strz->chr);
+            [[maybe_unused]] auto systemResult = system((char *)strz->chr);
             /*
                 freopen("CON", "w", stdout);
                 freopen("CON", "w", stderr);
@@ -911,7 +911,7 @@ void sub_shell(qbs *str, int32_t passed) {
 
         qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
         shell_call_in_progress = 1;
-        system((char *)strz->chr);
+        [[maybe_unused]] auto systemResult = system((char *)strz->chr);
         shell_call_in_progress = 0;
 
 #endif
@@ -926,7 +926,7 @@ void sub_shell(qbs *str, int32_t passed) {
             AllocConsole();
         qbs_set(strz, qbs_new_txt_len("cmd\0", 4));
         shell_call_in_progress = 1;
-        system((char *)strz->chr);
+        [[maybe_unused]] auto systemResult = system((char *)strz->chr);
         shell_call_in_progress = 0;
         if (!use_console)
             FreeConsole();
@@ -1147,7 +1147,7 @@ void sub_shell2(qbs *str, int32_t passed) { // HIDE
 
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
     shell_call_in_progress = 1;
-    system((char *)strz->chr);
+    [[maybe_unused]] auto systemResult = system((char *)strz->chr);
     shell_call_in_progress = 0;
     return;
 
