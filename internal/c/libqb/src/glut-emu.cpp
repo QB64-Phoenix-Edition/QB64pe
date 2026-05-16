@@ -1296,6 +1296,12 @@ class GLUTEmu {
                 return false;
             }
 
+            if (hotspotX < 0 || hotspotY < 0 || hotspotX >= img->width || hotspotY >= img->height) {
+                libqb_log_error("Invalid cursor hotspot (%d, %d) for image dimensions (%d, %d)", hotspotX, hotspotY, int(img->width), int(img->height));
+                error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+                return false;
+            }
+
             std::vector<uint32_t> imgConvertedData(img->width * img->height);
             GLFWimage cursorImage;
 
