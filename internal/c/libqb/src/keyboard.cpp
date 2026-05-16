@@ -11,6 +11,11 @@
 #include <cstdlib>
 #include <cstring>
 
+// GLFW_TODO: Get rid of this after refactoring platform-specific code out of this file.
+#ifdef QB64_WINDOWS
+#    include <windows.h>
+#endif
+
 // TODO: Most of these variables should be moved to keyboard.cpp and wrapped
 extern int64_t keyhit[8192]; // keyhit cyclic buffer. keyhit specific internal flags: (stored in high 32-bits). &4294967296->numpad was used
 extern int32_t keyhit_nextfree;
@@ -1955,6 +1960,8 @@ void sub__capslock(int32_t options) {
 
     // _TOGGLE:
     GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::CapsLock);
+#else
+    (void)options;
 #endif
 }
 
@@ -1976,6 +1983,8 @@ void sub__scrolllock(int32_t options) {
 
     // _TOGGLE:
     GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::ScrollLock);
+#else
+    (void)options;
 #endif
 }
 
@@ -1997,6 +2006,8 @@ void sub__numlock(int32_t options) {
 
     // _TOGGLE:
     GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::NumLock);
+#else
+    (void)options;
 #endif
 }
 
