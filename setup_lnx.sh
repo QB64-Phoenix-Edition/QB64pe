@@ -75,25 +75,25 @@ fi
 #Find and install packages
 if [ "$DISTRO" == "arch" ]; then
   echo "ArchLinux detected."
-  pkg_list="gcc make zlib curl $GET_WGET"
+  pkg_list="gcc make zlib curl libx11 libxcursor libxrandr libxinerama libxi $GET_WGET"
   installed_packages=`pacman -Q`
   installer_command="sudo pacman -S "
   pkg_install
 elif [ "$DISTRO" == "linuxmint" ] || [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "debian" ] || [ "$DISTRO" == "zorin" ]; then
   echo "Debian based distro detected."
-  pkg_list="build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev libcurl4-openssl-dev $GET_WGET"
+  pkg_list="build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev libcurl4-openssl-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev $GET_WGET"
   installed_packages=`dpkg -l`
   installer_command="sudo apt-get -y install "
   pkg_install
 elif [ "$DISTRO" == "fedora" ] || [ "$DISTRO" == "redhat" ] || [ "$DISTRO" == "centos" ]; then
   echo "Fedora/Redhat based distro detected."
-  pkg_list="gcc-c++ make mesa-libGLU-devel alsa-lib-devel libpng-devel libcurl-devel $GET_WGET"
+  pkg_list="gcc-c++ make mesa-libGLU-devel alsa-lib-devel libpng-devel libcurl-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel $GET_WGET"
   installed_packages=`yum list installed`
   installer_command="sudo yum install "
   pkg_install
 elif [ "$DISTRO" == "voidlinux" ]; then
   echo "VoidLinux detected."
-  pkg_list="gcc make glu-devel libpng-devel alsa-lib-devel libcurl-devel $GET_WGET"
+  pkg_list="gcc make glu-devel libpng-devel alsa-lib-devel libcurl-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel $GET_WGET"
    installed_packages=`xbps-query -l |grep -v libgcc`
   installer_command="sudo xbps-install -Sy "
   pkg_install

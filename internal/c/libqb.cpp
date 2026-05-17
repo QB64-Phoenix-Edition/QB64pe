@@ -1,4 +1,3 @@
-#include "libqb.h"
 #include "common.h"
 
 #ifdef QB64_WINDOWS
@@ -29,25 +28,28 @@
 #include "font.h"
 #include "game_controller.h"
 #include "gfs.h"
-#include "glut-thread.h"
+#include "glut-emu.h"
 #include "graphics.h"
 #include "gui.h"
 #include "hashing.h"
 #include "image.h"
-#include "keyhandler.h"
+#include "key-events.h"
+#include "keyboard.h"
 #include "logging.h"
-#include "mac-mouse-support.h"
+#include "main-thread.h"
 #include "memblock.h"
 #include "mutex.h"
+#include "printer.h"
 #include "qb_http.h"
 #include "qblist.h"
 #include "qbs.h"
 #include "rounding.h"
 #include "shell.h"
 #include "thread.h"
+#include "window.h"
 
-// These are here because they are used in func__loadfont()
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -72,52 +74,11 @@ uint32 rotateLeft(uint32 word, uint32 shift) {
 #    include <pthread.h>
 #endif
 
-#ifdef QB64_LINUX
-#    include <X11/Xatom.h>
-#    include <X11/Xlib.h>
-#    include <X11/Xutil.h>
-Display *X11_display = NULL;
-Window X11_window;
-#endif
-
-int32 x11_locked = 0;
-int32 x11_lock_request = 0;
-
-void x11_lock() {
-    x11_lock_request = 1;
-    while (x11_locked == 0)
-        Sleep(1);
-}
-
-void x11_unlock() {
-    x11_locked = 0;
-}
-
-// forward references
-void sub__printimage(int32 i);
-
 // GUI notification variables
 int32 force_display_update = 0;
-
-void *generic_window_handle = NULL;
-int32 acceptFileDrop = 0;
-#ifdef QB64_WINDOWS
-HWND window_handle = NULL;
-HDROP hdrop = NULL;
-int32 totalDroppedFiles = 0;
-#endif
 //...
 
-extern "C" void QB64_Window_Handle(void *handle) {
-    generic_window_handle = handle;
-#ifdef QB64_WINDOWS
-    window_handle = (HWND)handle;
-#endif
-    //...
-}
-
 // forward references
-void set_view(int32 new_mode);
 void set_render_source(int32 new_handle);
 void set_render_dest(int32 new_handle);
 
@@ -125,8 +86,6 @@ int32 framebufferobjects_supported = 0;
 
 int32 environment_2d__screen_width = 0; // the size of the software SCREEN
 int32 environment_2d__screen_height = 0;
-int32 environment__window_width = 0; // window may be larger or smaller than the SCREEN
-int32 environment__window_height = 0;
 int32 environment_2d__screen_x1 = 0; // offsets of 'screen' within the window
 int32 environment_2d__screen_y1 = 0;
 int32 environment_2d__screen_x2 = 0;
@@ -138,260 +97,11 @@ float environment_2d__screen_y_scale = 1.0f;
 int32 environment_2d__screen_smooth = 0; // 1(LINEAR) or 0(NEAREST)
 int32 environment_2d__letterbox = 0;     // 1=vertical black stripes required, 2=horizontal black stripes required
 
-int32 window_focused = 0; // Not used on Windows
-uint8 *window_title = NULL;
-
 double max_fps = 60; // 60 is the default
 int32 auto_fps = 0;  // set to 1 to make QB64 auto-adjust fps based on load
 
-int32 os_resize_event = 0;
-
-int32 resize_auto = 0; // 1=_STRETCH, 2=_SMOOTH
-float resize_auto_ideal_aspect = 640.0 / 400.0;
-float resize_auto_accept_aspect = 640.0 / 400.0;
-
-int32 fullscreen_allowedmode = 0;
-int32 fullscreen_allowedsmooth = 0;
-int32 fullscreen_smooth = 0;
-int32 fullscreen_width = 0;
-int32 fullscreen_height = 0;
-int32 screen_scale = 0;
-int32 resize_pending = 1;
-int32 resize_snapback = 1;
-int32 resize_snapback_x = 640;
-int32 resize_snapback_y = 400;
-int32 resize_event = 0;
-int32 resize_event_x = 0;
-int32 resize_event_y = 0;
-
-int32 ScreenResizeScale = 0;
-int32 ScreenResize = 0;
-
-extern "C" int QB64_Resizable() {
-    return ScreenResize;
-}
-
 int32 sub_gl_called = 0;
-
-static int32 image_qbicon16_handle;
-static int32 image_qbicon32_handle;
-
-static int32 image_qbicon16_w = 16;
-static int32 image_qbicon16_h = 16;
-static const uint8 image_qbicon16[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x05, 0x07, 0x07, 0x38, 0x55, 0x12, 0x12, 0x56, 0x96, 0x59, 0x51, 0x31, 0xBE, 0x4F, 0x47,
-    0x25, 0x8B, 0x05, 0x04, 0x03, 0x0F, 0x19, 0x08, 0x06, 0x30, 0x6E, 0x1C, 0x11, 0x99, 0x6F, 0x24, 0x1B, 0xBD, 0x17, 0x12, 0x4F, 0x9A, 0x07, 0x07, 0x37, 0x54,
-    0x01, 0x01, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x09, 0x09, 0x09, 0xA3, 0xC9, 0x06, 0x06,
-    0xC3, 0xDB, 0x3A, 0x35, 0x22, 0x79, 0x52, 0x4B, 0x27, 0x93, 0x52, 0x4A, 0x26, 0x92, 0x38, 0x32, 0x1B, 0x67, 0x32, 0x0E, 0x0A, 0x52, 0xAA, 0x2B, 0x19, 0xE2,
-    0xAD, 0x2B, 0x19, 0xE2, 0x2E, 0x10, 0x0E, 0x5D, 0x07, 0x07, 0xBE, 0xD7, 0x0A, 0x0A, 0x96, 0xBB, 0x02, 0x02, 0x02, 0x09, 0x00, 0x00, 0x00, 0x00, 0x05, 0x05,
-    0x1A, 0x2D, 0x0B, 0x0B, 0x6C, 0x97, 0x07, 0x07, 0xE0, 0xFC, 0x07, 0x07, 0x55, 0x71, 0x1E, 0x1B, 0x0F, 0x3F, 0x7A, 0x6F, 0x38, 0xCE, 0x85, 0x78, 0x3B, 0xD2,
-    0x23, 0x20, 0x12, 0x4D, 0x30, 0x0E, 0x0A, 0x52, 0xA7, 0x2A, 0x18, 0xDF, 0x9C, 0x28, 0x19, 0xDA, 0x31, 0x0E, 0x0A, 0x52, 0x07, 0x07, 0x5E, 0x7A, 0x07, 0x07,
-    0xE2, 0xFD, 0x0A, 0x0A, 0x71, 0x9C, 0x05, 0x05, 0x1B, 0x2F, 0x07, 0x07, 0x8A, 0xA7, 0x06, 0x06, 0xD5, 0xEA, 0x09, 0x09, 0xC8, 0xEE, 0x07, 0x07, 0x60, 0x7D,
-    0x00, 0x00, 0x00, 0x00, 0x08, 0x1A, 0x22, 0x47, 0x23, 0x4E, 0x58, 0xB4, 0x0D, 0x0C, 0x07, 0x23, 0x01, 0x01, 0x01, 0x07, 0x0D, 0x23, 0x4D, 0x85, 0x0D, 0x26,
-    0x55, 0x8B, 0x00, 0x00, 0x00, 0x00, 0x07, 0x07, 0x72, 0x8F, 0x0A, 0x0A, 0xC4, 0xED, 0x05, 0x05, 0xDA, 0xEE, 0x07, 0x07, 0x89, 0xA6, 0x0C, 0x0C, 0x6B, 0x9C,
-    0x00, 0x00, 0xFF, 0xFF, 0x02, 0x02, 0xF7, 0xFF, 0x08, 0x08, 0x9B, 0xBB, 0x03, 0x09, 0x0C, 0x1B, 0x0F, 0x85, 0xB5, 0xE0, 0x10, 0x70, 0x97, 0xCD, 0x04, 0x12,
-    0x17, 0x2B, 0x09, 0x1D, 0x43, 0x65, 0x13, 0x44, 0x9C, 0xE6, 0x0D, 0x3D, 0x94, 0xBE, 0x01, 0x01, 0x02, 0x07, 0x07, 0x07, 0x9D, 0xBB, 0x02, 0x02, 0xF6, 0xFF,
-    0x00, 0x00, 0xFF, 0xFF, 0x0C, 0x0C, 0x75, 0xA6, 0x0F, 0x0F, 0x96, 0xCF, 0x0E, 0x0E, 0x9C, 0xD3, 0x00, 0x00, 0xFE, 0xFF, 0x0F, 0x0F, 0x6D, 0xAA, 0x07, 0x14,
-    0x1B, 0x3A, 0x10, 0x78, 0xA3, 0xD6, 0x10, 0x74, 0x9E, 0xD1, 0x06, 0x1E, 0x28, 0x42, 0x09, 0x1D, 0x41, 0x63, 0x12, 0x38, 0x7E, 0xC1, 0x0F, 0x45, 0xA9, 0xD8,
-    0x05, 0x06, 0x0A, 0x21, 0x0F, 0x0F, 0x6B, 0xA8, 0x00, 0x00, 0xFD, 0xFF, 0x0E, 0x0E, 0xAC, 0xE5, 0x0F, 0x0F, 0xA4, 0xDE, 0x07, 0x07, 0xAA, 0xC8, 0x03, 0x03,
-    0xF2, 0xFE, 0x05, 0x05, 0xEC, 0xFF, 0x0D, 0x0D, 0x9B, 0xCF, 0x0A, 0x0A, 0x8F, 0xB8, 0x04, 0x04, 0x09, 0x1D, 0x02, 0x02, 0x02, 0x0E, 0x08, 0x08, 0x58, 0x78,
-    0x08, 0x08, 0x9D, 0xBF, 0x09, 0x09, 0x33, 0x59, 0x03, 0x03, 0x05, 0x10, 0x0B, 0x0B, 0x82, 0xAF, 0x0C, 0x0C, 0x8E, 0xBF, 0x06, 0x06, 0xE9, 0xFF, 0x02, 0x02,
-    0xF6, 0xFF, 0x07, 0x07, 0xB0, 0xCE, 0x04, 0x04, 0x18, 0x29, 0x0E, 0x0E, 0x92, 0xCD, 0x09, 0x09, 0xCA, 0xEF, 0x04, 0x04, 0xF1, 0xFF, 0x0F, 0x0F, 0xB6, 0xF2,
-    0x0B, 0x0B, 0xC3, 0xEE, 0x0E, 0x0E, 0x3B, 0x74, 0x0B, 0x0B, 0x9A, 0xC6, 0x05, 0x05, 0xE7, 0xFC, 0x07, 0x07, 0x1D, 0x38, 0x0B, 0x0B, 0xBE, 0xEA, 0x0F, 0x0F,
-    0xAE, 0xEA, 0x04, 0x04, 0xEF, 0xFF, 0x09, 0x09, 0xC8, 0xEB, 0x0F, 0x0F, 0x8C, 0xC8, 0x04, 0x04, 0x15, 0x26, 0x00, 0x00, 0x00, 0x00, 0x06, 0x06, 0x30, 0x49,
-    0x0A, 0x0A, 0xC0, 0xE9, 0x08, 0x08, 0xDE, 0xFF, 0x06, 0x06, 0xE6, 0xFE, 0x10, 0x7D, 0xBB, 0xFF, 0x12, 0x95, 0x9B, 0xEC, 0x0A, 0x44, 0xB9, 0xF6, 0x04, 0x0A,
-    0xE7, 0xFF, 0x12, 0xA7, 0xA8, 0xF0, 0x14, 0x92, 0xA4, 0xFF, 0x07, 0x09, 0xBD, 0xFF, 0x08, 0x08, 0xE1, 0xFF, 0x0B, 0x0B, 0xB0, 0xDE, 0x06, 0x06, 0x27, 0x40,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x04, 0x0E, 0x07, 0x07, 0x53, 0x70, 0x11, 0x11, 0x5E, 0xA4, 0x12, 0xBD,
-    0xB6, 0xFC, 0x0D, 0x82, 0xA9, 0xFF, 0x0B, 0x62, 0xA3, 0xFF, 0x08, 0x37, 0xD9, 0xFF, 0x0F, 0xBF, 0xBE, 0xFF, 0x10, 0x66, 0x7D, 0xF2, 0x0F, 0x0F, 0x5E, 0xAB,
-    0x08, 0x08, 0x47, 0x65, 0x01, 0x01, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x14, 0x13, 0x32, 0x0E, 0x9D, 0x95, 0xE7, 0x0B, 0x28, 0x4B, 0xAF, 0x01, 0x01, 0xDA, 0xFF, 0x0A, 0x68, 0xD6, 0xFF,
-    0x10, 0x91, 0x8A, 0xEA, 0x0C, 0x42, 0x3F, 0xB0, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x08, 0x08, 0x1B, 0x07, 0x17, 0x1D, 0x6A,
-    0x0C, 0x0C, 0xAC, 0xDF, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0x17, 0xD3, 0xFF, 0x0F, 0x33, 0x87, 0xF7, 0x07, 0x19, 0x1C, 0x6C, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x05, 0x0C, 0x20, 0x0D, 0x0D, 0x8B, 0xBD, 0x09, 0x09, 0xD9, 0xFE, 0x0B, 0x0B, 0xCC, 0xF7, 0x0D, 0x0D,
-    0x92, 0xC7, 0x04, 0x04, 0x08, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x09,
-    0xAD, 0xD0, 0x0E, 0x0E, 0x9D, 0xD4, 0x0E, 0x0E, 0x8B, 0xC2, 0x08, 0x08, 0xB5, 0xD7, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x12, 0x24, 0x10, 0x10, 0x4D, 0x8F, 0x10, 0x10, 0x51, 0x90, 0x05, 0x05, 0x19, 0x2D,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x04, 0x04, 0x05, 0x15, 0x08, 0x08, 0x0E, 0x2D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-static int32 image_qbicon32_w = 32;
-static int32 image_qbicon32_h = 32;
-static const uint8 image_qbicon32[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x09, 0x0B, 0x2F, 0x0F, 0x0F, 0x3C, 0x7B, 0x1C, 0x1C, 0x26, 0x9A, 0x15, 0x14, 0x14, 0x6F, 0x0A, 0x0A, 0x09, 0x3A,
-    0x01, 0x01, 0x01, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x1B, 0x08, 0x08, 0x08, 0x33, 0x08, 0x08,
-    0x08, 0x33, 0x10, 0x10, 0x10, 0x5F, 0x1E, 0x1E, 0x22, 0x9D, 0x12, 0x12, 0x42, 0x89, 0x0B, 0x0B, 0x10, 0x3A, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x12, 0x0F, 0x0F, 0x3E, 0x79,
-    0x0F, 0x0F, 0xA1, 0xDA, 0x0D, 0x0D, 0xCA, 0xFB, 0x22, 0x20, 0x46, 0xB3, 0x85, 0x79, 0x3F, 0xEE, 0xAC, 0x9B, 0x4B, 0xFF, 0xAC, 0x9B, 0x4B, 0xFF, 0x86, 0x79,
-    0x3F, 0xEB, 0x13, 0x12, 0x0C, 0x3D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5F, 0x1D, 0x14, 0xA4, 0xDC, 0x31, 0x1B, 0xFF, 0xD0, 0x31, 0x1B, 0xFF,
-    0xD3, 0x31, 0x1B, 0xFF, 0xBB, 0x2F, 0x1B, 0xFA, 0x33, 0x1C, 0x31, 0xB3, 0x0D, 0x0D, 0xBA, 0xF1, 0x0F, 0x0F, 0xA2, 0xDC, 0x0F, 0x0F, 0x37, 0x71, 0x02, 0x02,
-    0x02, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C, 0x2C, 0x5C, 0x0B, 0x0B, 0xC1, 0xF0, 0x00, 0x00, 0xFF, 0xFF, 0x08, 0x08,
-    0xDA, 0xF9, 0x0B, 0x0B, 0x1D, 0x4A, 0x66, 0x5D, 0x31, 0xC2, 0xA4, 0x94, 0x49, 0xFF, 0x14, 0x13, 0x0E, 0x4E, 0x13, 0x12, 0x0E, 0x4D, 0xA4, 0x93, 0x49, 0xFF,
-    0x67, 0x5E, 0x32, 0xC4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0x1D, 0x14, 0xA4, 0xE0, 0x32, 0x1A, 0xFF, 0x15, 0x15, 0x15, 0x8C, 0x1B, 0x15,
-    0x14, 0x8B, 0xDD, 0x31, 0x1B, 0xFF, 0x6E, 0x1F, 0x16, 0xB2, 0x08, 0x08, 0x10, 0x32, 0x09, 0x09, 0xCB, 0xF2, 0x00, 0x00, 0xFD, 0xFF, 0x0E, 0x0E, 0xB2, 0xE7,
-    0x0A, 0x0A, 0x1C, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x04, 0x04, 0x04, 0x14, 0x03, 0x03, 0x03, 0x11, 0x0E, 0x0E, 0xA2, 0xD9, 0x00, 0x00, 0xFF, 0xFF, 0x01, 0x01, 0xFC, 0xFF, 0x0F, 0x0F, 0x37, 0x74,
-    0x00, 0x00, 0x00, 0x00, 0x76, 0x6B, 0x38, 0xD7, 0x91, 0x83, 0x43, 0xFD, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0x82, 0x43, 0xFC, 0x78, 0x6D,
-    0x38, 0xD9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0x1D, 0x14, 0xA4, 0xE6, 0x32, 0x1A, 0xFF, 0xCF, 0x31, 0x1B, 0xFF, 0xD4, 0x31, 0x1B, 0xFF,
-    0xE6, 0x32, 0x1A, 0xFF, 0x41, 0x18, 0x13, 0x91, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x0F, 0x30, 0x6B, 0x01, 0x01, 0xFC, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0F, 0x0F,
-    0x8A, 0xC3, 0x02, 0x02, 0x02, 0x0A, 0x05, 0x05, 0x05, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x03, 0x03, 0x0F,
-    0x13, 0x13, 0x86, 0xD1, 0x0A, 0x0A, 0x0A, 0x34, 0x0E, 0x0E, 0xC2, 0xF8, 0x00, 0x00, 0xFF, 0xFF, 0x0C, 0x0C, 0xC0, 0xF3, 0x02, 0x02, 0x02, 0x08, 0x00, 0x00,
-    0x00, 0x00, 0x66, 0x5D, 0x31, 0xC2, 0xA4, 0x94, 0x49, 0xFF, 0x14, 0x13, 0x0E, 0x4E, 0x13, 0x12, 0x0E, 0x4D, 0xA4, 0x94, 0x49, 0xFF, 0x67, 0x5E, 0x32, 0xC4,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0x1D, 0x14, 0xA4, 0xE0, 0x32, 0x1A, 0xFF, 0x13, 0x13, 0x13, 0x81, 0x11, 0x10, 0x10, 0x6D, 0xC9, 0x30,
-    0x1C, 0xFF, 0x8D, 0x26, 0x19, 0xD3, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x0B, 0x0C, 0x0C, 0xCA, 0xFA, 0x00, 0x00, 0xFF, 0xFF, 0x0E, 0x0E, 0xC2, 0xF8,
-    0x0A, 0x0A, 0x0A, 0x31, 0x12, 0x12, 0x93, 0xDC, 0x04, 0x04, 0x04, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x63, 0xA4, 0x00, 0x00,
-    0xFE, 0xFF, 0x0E, 0x0E, 0x20, 0x57, 0x0E, 0x0E, 0xC2, 0xF9, 0x00, 0x00, 0xFF, 0xFF, 0x0D, 0x0D, 0x93, 0xCA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x13, 0x11, 0x0C, 0x3C, 0x85, 0x79, 0x3E, 0xEB, 0xAC, 0x9B, 0x4B, 0xFF, 0xAD, 0x9C, 0x4B, 0xFF, 0xB2, 0xA0, 0x4D, 0xFF, 0x26, 0x23, 0x17, 0x71, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5F, 0x1D, 0x14, 0xA4, 0xDB, 0x31, 0x1B, 0xFF, 0xD0, 0x31, 0x1B, 0xFF, 0xD2, 0x31, 0x1B, 0xFF, 0xC5, 0x30, 0x1C, 0xFE,
-    0x37, 0x14, 0x0F, 0x75, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x0D, 0xAD, 0xE4, 0x00, 0x00, 0xFF, 0xFF, 0x0D, 0x0D, 0xC8, 0xFD, 0x0F, 0x0F,
-    0x2A, 0x64, 0x00, 0x00, 0xFF, 0xFF, 0x10, 0x10, 0x67, 0xA7, 0x00, 0x00, 0x00, 0x00, 0x08, 0x08, 0x0A, 0x2A, 0x07, 0x07, 0xE3, 0xFE, 0x00, 0x00, 0xFF, 0xFF,
-    0x0F, 0x0F, 0x6F, 0xAB, 0x0E, 0x0E, 0xA3, 0xDB, 0x00, 0x00, 0xFF, 0xFF, 0x0E, 0x0E, 0x9C, 0xD4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x01, 0x01, 0x01, 0x09, 0x0C, 0x0C, 0x0B, 0x49, 0x17, 0x1B, 0x1B, 0x8E, 0x59, 0x53, 0x33, 0xD9, 0x35, 0x31, 0x1D, 0x8B, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x1A, 0x08, 0x08, 0x08, 0x33, 0x11, 0x16, 0x21, 0x7C, 0x13, 0x1E, 0x32, 0x96, 0x08, 0x09, 0x0B, 0x39, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x04, 0x0D, 0x0D, 0xC3, 0xF7, 0x00, 0x00, 0xFF, 0xFF, 0x0E, 0x0E, 0xA0, 0xD8, 0x0F, 0x0F, 0x7E, 0xBA,
-    0x00, 0x00, 0xFF, 0xFF, 0x07, 0x07, 0xE0, 0xFE, 0x07, 0x07, 0x08, 0x26, 0x0E, 0x0E, 0x3C, 0x74, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x06, 0x06,
-    0xE6, 0xFE, 0x19, 0x19, 0x7E, 0xE0, 0x00, 0x00, 0xFF, 0xFF, 0x08, 0x08, 0xDD, 0xFD, 0x07, 0x07, 0x08, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x01, 0x01, 0x01, 0x08, 0x12, 0x5C, 0x7A, 0xC3, 0x0F, 0xA6, 0xE4, 0xFF, 0x0C, 0x26, 0x31, 0x6C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x17, 0x2D, 0x67, 0x0F, 0x59, 0xDE, 0xFE, 0x0D, 0x5E, 0xF2, 0xFF, 0x0B, 0x14, 0x25, 0x5E, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C, 0x14, 0x43, 0x03, 0x03, 0xF4, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x1B, 0x1B, 0x71, 0xDD, 0x05, 0x05, 0xED, 0xFF, 0x00, 0x00,
-    0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0E, 0x0E, 0x3E, 0x76, 0x0D, 0x0D, 0x26, 0x5A, 0x02, 0x02, 0xF6, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF,
-    0x08, 0x08, 0xE0, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x10, 0x10, 0x5E, 0x9F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x11, 0x48,
-    0x5F, 0xAA, 0x0D, 0xAE, 0xF1, 0xFF, 0x13, 0x84, 0xB2, 0xF3, 0x0D, 0x2D, 0x3B, 0x7A, 0x01, 0x01, 0x01, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x0B, 0x14, 0x25, 0x5A, 0x10, 0x56, 0xD8, 0xFD, 0x15, 0x47, 0xA5, 0xF6, 0x0D, 0x5E, 0xF2, 0xFF, 0x0B, 0x14, 0x25, 0x5E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x0F, 0x0F, 0x62, 0x9F, 0x00, 0x00, 0xFF, 0xFF, 0x02, 0x02, 0xF9, 0xFF, 0x07, 0x07, 0xE3, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF,
-    0x01, 0x01, 0xFB, 0xFF, 0x0E, 0x0E, 0x27, 0x5E, 0x11, 0x11, 0x15, 0x59, 0x11, 0x11, 0x7A, 0xBC, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
-    0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x03, 0x03, 0xF3, 0xFF, 0x0C, 0x0C, 0x1C, 0x4D, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x24, 0x2E, 0x69, 0x0E, 0xAA, 0xEB, 0xFF,
-    0x11, 0x72, 0x9A, 0xD9, 0x11, 0x64, 0x85, 0xC8, 0x0E, 0xAA, 0xEB, 0xFF, 0x10, 0x45, 0x5C, 0xA1, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0E, 0x17, 0x41, 0x10, 0x54,
-    0xD2, 0xFA, 0x15, 0x46, 0x9E, 0xF3, 0x14, 0x2C, 0x57, 0xB3, 0x0D, 0x5E, 0xF2, 0xFF, 0x12, 0x23, 0x44, 0x9A, 0x04, 0x05, 0x06, 0x1B, 0x00, 0x00, 0x00, 0x00,
-    0x0D, 0x0D, 0x1D, 0x4F, 0x02, 0x02, 0xF5, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0F, 0x0F,
-    0x98, 0xD5, 0x13, 0x13, 0x1A, 0x65, 0x15, 0x15, 0x9F, 0xF5, 0x10, 0x10, 0x24, 0x62, 0x0F, 0x0F, 0x99, 0xD5, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF,
-    0x00, 0x00, 0xFF, 0xFF, 0x0E, 0x0E, 0xB2, 0xE9, 0x0C, 0x0C, 0x0C, 0x3B, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x41, 0x55, 0x93, 0x0D, 0xAF, 0xF2, 0xFF, 0x10, 0x2A,
-    0x35, 0x87, 0x0C, 0x18, 0x1D, 0x5E, 0x10, 0x9F, 0xD9, 0xFF, 0x11, 0x65, 0x88, 0xC8, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x1C, 0x36, 0x77, 0x12, 0x53, 0xCA, 0xFF,
-    0x12, 0x53, 0xCA, 0xFF, 0x11, 0x56, 0xD5, 0xFF, 0x0D, 0x5E, 0xF2, 0xFF, 0x11, 0x55, 0xD0, 0xFF, 0x0B, 0x11, 0x1D, 0x57, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C,
-    0x0C, 0x3A, 0x0E, 0x0E, 0xB7, 0xED, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0D, 0x0D, 0xB6, 0xE7, 0x15, 0x15, 0x3C, 0x90,
-    0x14, 0x14, 0xAB, 0xFB, 0x0E, 0x0E, 0xB2, 0xE9, 0x06, 0x06, 0xE4, 0xFD, 0x14, 0x14, 0x54, 0xA4, 0x15, 0x15, 0x83, 0xD5, 0x01, 0x01, 0xFA, 0xFF, 0x00, 0x00,
-    0xFF, 0xFF, 0x0E, 0x0E, 0x96, 0xCD, 0x15, 0x15, 0x64, 0xB8, 0x09, 0x09, 0x11, 0x35, 0x05, 0x06, 0x07, 0x20, 0x12, 0x68, 0x8B, 0xD2, 0x10, 0x9E, 0xD9, 0xFF,
-    0x0F, 0xA2, 0xDE, 0xFF, 0x12, 0x7A, 0xA6, 0xE7, 0x08, 0x13, 0x17, 0x40, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x04, 0x02, 0x02, 0x02, 0x10, 0x0C, 0x0C,
-    0x12, 0x45, 0x1B, 0x2A, 0x45, 0xBF, 0x13, 0x50, 0xC0, 0xFF, 0x0D, 0x13, 0x20, 0x62, 0x00, 0x00, 0x00, 0x02, 0x08, 0x08, 0x0C, 0x2B, 0x16, 0x16, 0x52, 0xAC,
-    0x0E, 0x0E, 0x96, 0xCD, 0x00, 0x00, 0xFF, 0xFF, 0x02, 0x02, 0xF9, 0xFF, 0x16, 0x16, 0x8F, 0xE7, 0x16, 0x16, 0x6F, 0xC7, 0x04, 0x04, 0xF0, 0xFF, 0x0E, 0x0E,
-    0xB9, 0xEF, 0x0E, 0x0E, 0x85, 0xBD, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0C, 0x0C, 0xCD, 0xFB, 0x13, 0x13, 0xB1, 0xFF, 0x00, 0x00, 0xFF, 0xFF,
-    0x0C, 0x0C, 0xC2, 0xF3, 0x11, 0x11, 0x55, 0x99, 0x0C, 0x0C, 0xB1, 0xE3, 0x07, 0x07, 0x09, 0x24, 0x00, 0x00, 0x00, 0x01, 0x05, 0x05, 0x05, 0x23, 0x06, 0x06,
-    0x06, 0x2A, 0x01, 0x01, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x0A, 0x0E, 0x35, 0x0E, 0x0E, 0x3B, 0x72, 0x0F, 0x0F, 0x56, 0x8F, 0x14, 0x14, 0x9A, 0xEB,
-    0x04, 0x04, 0x04, 0x16, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x19, 0x0E, 0x0E, 0xA3, 0xDA, 0x10, 0x10, 0x40, 0x7F, 0x0D, 0x0D,
-    0xBA, 0xEE, 0x01, 0x01, 0xFA, 0xFF, 0x15, 0x15, 0xAC, 0xFF, 0x0A, 0x0A, 0xD8, 0xFE, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0E, 0x0E, 0x90, 0xC8,
-    0x0E, 0x0E, 0x2C, 0x63, 0x02, 0x02, 0xF9, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
-    0xFE, 0xFF, 0x16, 0x16, 0x57, 0xB0, 0x0B, 0x0B, 0xC2, 0xEF, 0x0B, 0x0B, 0xBE, 0xEB, 0x0C, 0x0C, 0x20, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x02, 0x02, 0x02, 0x0C, 0x11, 0x11, 0x69, 0xAB, 0x05, 0x05, 0xEB, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x06, 0x06, 0xE3, 0xFC, 0x0D, 0x0D, 0x2F, 0x62, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x0A, 0x15, 0x3D, 0x0D, 0x0D, 0xAD, 0xE1, 0x0D, 0x0D, 0xB5, 0xE8, 0x13, 0x13, 0x42, 0x90, 0x01, 0x01, 0xFB, 0xFF,
-    0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x01, 0x01, 0xFB, 0xFF, 0x0E, 0x0E, 0x38, 0x72, 0x01, 0x01,
-    0x01, 0x03, 0x11, 0x11, 0x5E, 0xA1, 0x08, 0x08, 0xDE, 0xFE, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF,
-    0x03, 0x03, 0xF1, 0xFF, 0x1A, 0x1A, 0x68, 0xD3, 0x0C, 0x0C, 0xCA, 0xF9, 0x04, 0x04, 0xEF, 0xFF, 0x0F, 0x0F, 0x7D, 0xBB, 0x08, 0x08, 0x10, 0x2E, 0x12, 0x12,
-    0x4F, 0x97, 0x10, 0x10, 0x83, 0xC4, 0x0D, 0x0D, 0xC9, 0xFD, 0x00, 0x00, 0xFF, 0xFF, 0x0D, 0x0D, 0xBE, 0xF4, 0x00, 0x00, 0x00, 0x01, 0x06, 0x06, 0x0B, 0x25,
-    0x0F, 0x0F, 0x71, 0xAD, 0x06, 0x06, 0xE6, 0xFE, 0x0B, 0x0B, 0xC9, 0xF5, 0x19, 0x19, 0x57, 0xBB, 0x05, 0x05, 0xE9, 0xFE, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
-    0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0A, 0x0A, 0xD2, 0xFA, 0x10, 0x10, 0x55, 0x95, 0x01, 0x01, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x17, 0x17, 0x23, 0x7F, 0x1B, 0x1B, 0x4A, 0xB8, 0x15, 0x15, 0x7C, 0xD0, 0x0F, 0x0F, 0xAF, 0xEC, 0x09, 0x09, 0xDA, 0xFF, 0x02, 0x02,
-    0xF9, 0xFF, 0x01, 0x01, 0xFD, 0xFF, 0x15, 0x15, 0xAA, 0xFE, 0x16, 0x16, 0xA7, 0xFF, 0x02, 0x02, 0xF8, 0xFF, 0x0F, 0x0F, 0x77, 0xB2, 0x11, 0x11, 0x15, 0x59,
-    0x0D, 0x0D, 0x22, 0x58, 0x02, 0x02, 0xF9, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x08, 0x08, 0xE0, 0xFF, 0x06, 0x06, 0x06, 0x1F, 0x0F, 0x0F, 0x61, 0x9C, 0x01, 0x01,
-    0xFA, 0xFF, 0x15, 0x15, 0xA9, 0xFF, 0x16, 0x16, 0xA2, 0xFA, 0x01, 0x01, 0xFA, 0xFF, 0x01, 0x01, 0xFB, 0xFF, 0x09, 0x09, 0xDA, 0xFF, 0x0E, 0x0E, 0xAB, 0xE7,
-    0x14, 0x14, 0x76, 0xC7, 0x1B, 0x1B, 0x40, 0xAC, 0x16, 0x16, 0x20, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x08, 0x08, 0x0D, 0x2C, 0x0D, 0x0D, 0xAD, 0xE4, 0x07, 0x07, 0xE4, 0xFF, 0x0C, 0x0C, 0xCD, 0xFE, 0x10, 0x10, 0xC0, 0xFF, 0x10, 0x10, 0xBD, 0xFF,
-    0x02, 0x02, 0xF6, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0C, 0x26, 0xC3, 0xFF, 0x17, 0x82, 0x99, 0xFF, 0x14, 0x7E, 0xA5, 0xFD, 0x10, 0x71, 0x6C, 0xB6, 0x12, 0x2B,
-    0x77, 0xDA, 0x00, 0x00, 0xF7, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0x05, 0xE0, 0xFF, 0x14, 0x78, 0x73, 0xCA, 0x13, 0x7D, 0x9F, 0xF8, 0x17, 0x81, 0x9B, 0xFF,
-    0x12, 0x7D, 0xAC, 0xFF, 0x08, 0x0E, 0xB7, 0xFF, 0x00, 0x00, 0xFC, 0xFF, 0x0E, 0x0E, 0xC5, 0xFF, 0x10, 0x10, 0xBF, 0xFE, 0x0D, 0x0D, 0xCB, 0xFE, 0x08, 0x08,
-    0xDF, 0xFF, 0x11, 0x11, 0x92, 0xD3, 0x07, 0x07, 0x0A, 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x16, 0x10, 0x10, 0x68, 0xA8, 0x06, 0x06, 0xE8, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x01, 0x01, 0xFC, 0xFF, 0x12, 0x12,
-    0xB5, 0xFB, 0x04, 0x04, 0xED, 0xFF, 0x0F, 0x6C, 0xB8, 0xFF, 0x0F, 0xE2, 0xD6, 0xFF, 0x12, 0x9F, 0x9F, 0xFF, 0x11, 0xC8, 0xC0, 0xFF, 0x10, 0xDB, 0xD0, 0xFF,
-    0x07, 0x09, 0xA5, 0xFF, 0x00, 0x00, 0xFD, 0xFF, 0x0B, 0x24, 0xC0, 0xFF, 0x0D, 0xF2, 0xE5, 0xFF, 0x13, 0xB1, 0xAB, 0xFF, 0x12, 0xA9, 0xA7, 0xFF, 0x13, 0xA1,
-    0xA0, 0xFF, 0x09, 0x09, 0x76, 0xFF, 0x0C, 0x0C, 0xCC, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x0A, 0x0A, 0xCF, 0xF7, 0x0F, 0x0F, 0x45, 0x83,
-    0x02, 0x02, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x09, 0x11, 0x37, 0x0F, 0x0F, 0x71, 0xAD, 0x0A, 0x0A, 0xD5, 0xFB, 0x0C, 0x0C, 0xBB, 0xEA,
-    0x14, 0x14, 0x22, 0x73, 0x14, 0x9F, 0x9F, 0xF3, 0x13, 0xA9, 0xA4, 0xFF, 0x01, 0x01, 0x7E, 0xFF, 0x10, 0x5A, 0x92, 0xFF, 0x0E, 0xEB, 0xDE, 0xFF, 0x09, 0x0C,
-    0x7A, 0xFF, 0x00, 0x00, 0xF9, 0xFF, 0x0E, 0x55, 0xBB, 0xFF, 0x0E, 0xEC, 0xDF, 0xFF, 0x11, 0x37, 0x59, 0xFF, 0x0C, 0x30, 0x79, 0xFF, 0x10, 0x20, 0x3F, 0xDA,
-    0x11, 0x11, 0x20, 0x8C, 0x0A, 0x0A, 0xCD, 0xF5, 0x0B, 0x0B, 0xC3, 0xF3, 0x0F, 0x0F, 0x56, 0x92, 0x05, 0x05, 0x06, 0x1C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x19, 0x0E, 0x0E, 0x36, 0x6F, 0x15, 0x15,
-    0x63, 0xC2, 0x12, 0xCC, 0xC1, 0xFF, 0x10, 0xDD, 0xD1, 0xFF, 0x13, 0xC4, 0xBA, 0xFF, 0x0E, 0xE8, 0xDC, 0xFF, 0x13, 0x8F, 0x93, 0xFF, 0x01, 0x01, 0xA1, 0xFF,
-    0x00, 0x00, 0xFC, 0xFF, 0x11, 0x87, 0xB6, 0xFF, 0x0D, 0xF0, 0xE3, 0xFF, 0x0E, 0xEB, 0xDE, 0xFF, 0x0E, 0xEB, 0xDE, 0xFF, 0x14, 0x5C, 0x5D, 0xF0, 0x12, 0x12,
-    0x5D, 0xC4, 0x0E, 0x0E, 0x2F, 0x68, 0x03, 0x03, 0x03, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x12, 0x11, 0x4B,
-    0x0D, 0xEE, 0xE2, 0xFF, 0x12, 0x7D, 0x77, 0xF0, 0x0E, 0x56, 0x52, 0xD2, 0x11, 0x3D, 0x47, 0xE3, 0x03, 0x03, 0x87, 0xFF, 0x00, 0x00, 0xE9, 0xFF, 0x01, 0x01,
-    0xF8, 0xFF, 0x13, 0xB7, 0xB7, 0xFF, 0x12, 0x90, 0x89, 0xF7, 0x0B, 0x0B, 0x0B, 0xB3, 0x0E, 0x0E, 0x0E, 0xAF, 0x04, 0x04, 0x04, 0x74, 0x00, 0x00, 0x00, 0x0C,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x3F, 0x3D, 0x7F, 0x0D, 0xF0,
-    0xE3, 0xFF, 0x0A, 0x17, 0x16, 0xAE, 0x01, 0x01, 0x01, 0x29, 0x0D, 0x0D, 0x94, 0xDE, 0x00, 0x00, 0xF8, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x07, 0x07, 0xD3, 0xFF,
-    0x0F, 0xE2, 0xD6, 0xFF, 0x10, 0xDE, 0xD2, 0xFF, 0x12, 0xCC, 0xC2, 0xFF, 0x12, 0xCC, 0xC2, 0xFF, 0x0D, 0x28, 0x26, 0x9E, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x22, 0x21, 0x67, 0x0E, 0x4D, 0x4A, 0xC9,
-    0x02, 0x02, 0x02, 0x68, 0x10, 0x10, 0x45, 0x89, 0x02, 0x02, 0xF7, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x06, 0x09, 0xD6, 0xFF, 0x0E, 0x54,
-    0x8D, 0xFF, 0x0E, 0x55, 0x7E, 0xFF, 0x11, 0x58, 0x65, 0xF0, 0x0E, 0x53, 0x4F, 0xCE, 0x05, 0x07, 0x07, 0x7C, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x17, 0x0C, 0x0C,
-    0x26, 0x62, 0x07, 0x07, 0xE1, 0xFE, 0x19, 0x19, 0x91, 0xF5, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFD, 0xFF, 0x00, 0x00, 0xEB, 0xFF,
-    0x19, 0x19, 0x72, 0xEF, 0x07, 0x07, 0xC6, 0xFC, 0x0A, 0x0A, 0x19, 0x59, 0x00, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0E, 0x29, 0x62,
-    0x12, 0x12, 0x6F, 0xB5, 0x0E, 0x0E, 0xA6, 0xE0, 0x09, 0x09, 0xDD, 0xFF, 0x03, 0x03, 0xF3, 0xFF, 0x0A, 0x0A, 0xD8, 0xFF, 0x06, 0x06, 0xE9, 0xFF, 0x0F, 0x0F,
-    0xA6, 0xE0, 0x12, 0x12, 0x77, 0xBD, 0x0D, 0x0D, 0x1D, 0x53, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x06, 0x06, 0x1D, 0x10, 0x10,
-    0x21, 0x61, 0x03, 0x03, 0xF5, 0xFF, 0x0F, 0x0F, 0xC0, 0xFA, 0x0B, 0x0B, 0xD1, 0xFE, 0x0E, 0x0E, 0xB8, 0xEF, 0x0D, 0x0D, 0xBA, 0xF1, 0x02, 0x02, 0xF9, 0xFF,
-    0x13, 0x13, 0x31, 0x80, 0x03, 0x03, 0x03, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x10, 0x10, 0x95, 0xD4,
-    0x00, 0x00, 0xFF, 0xFF, 0x0D, 0x0D, 0xAD, 0xE3, 0x0E, 0x0E, 0xAB, 0xE2, 0x0E, 0x0E, 0x9C, 0xD3, 0x0E, 0x0E, 0x95, 0xCC, 0x00, 0x00, 0xFF, 0xFF, 0x0F, 0x0F,
-    0xAA, 0xE7, 0x01, 0x01, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x0F, 0x34, 0x6E, 0x05, 0x05,
-    0xEA, 0xFE, 0x0E, 0x0E, 0x9A, 0xD1, 0x0E, 0x0E, 0x82, 0xB9, 0x0E, 0x0E, 0x81, 0xB8, 0x0D, 0x0D, 0x7C, 0xB3, 0x03, 0x03, 0xF2, 0xFF, 0x0F, 0x0F, 0x3B, 0x78,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x48, 0x89,
-    0x0E, 0x0E, 0x85, 0xBE, 0x0E, 0x0E, 0x58, 0x8F, 0x0D, 0x0D, 0x66, 0x9C, 0x0D, 0x0D, 0x6C, 0xA3, 0x11, 0x11, 0x60, 0xA3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x06, 0x17, 0x17,
-    0x29, 0x88, 0x0E, 0x0E, 0x2F, 0x66, 0x0E, 0x0E, 0x4A, 0x81, 0x16, 0x16, 0x28, 0x81, 0x03, 0x03, 0x03, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x04,
-    0x0C, 0x0C, 0x0E, 0x3D, 0x10, 0x10, 0x28, 0x66, 0x01, 0x01, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x04,
-    0x04, 0x13, 0x0F, 0x0F, 0x0F, 0x49, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-static int32 display_x = 640;
-static int32 display_y = 400;
-int32 display_x_prev = 640, display_y_prev = 400;
-
-static int32 display_required_x = 640;
-static int32 display_required_y = 400;
-
 int32 dont_call_sub_gl = 0;
-
-void GLUT_DISPLAY_REQUEST();
 
 struct display_frame_struct {
     int32 state;
@@ -825,7 +535,6 @@ uint16_t codepage437_to_unicode16[] = {
 */
 
 int64 device_event_index = 0;
-int32 device_mouse_relative = 0;
 
 int32 lock_mainloop = 0; // 0=unlocked, 1=lock requested, 2=locked
 
@@ -855,19 +564,6 @@ int32 console_active = 1;
 int32 console_child = 0; // set if console is only being used by this program
 int32 console_image = -1;
 int32 screen_hide = 0;
-
-// format:[deadkey's symbol in UTF16],[ASCII code of alphabet letter],[resulting UTF16 character]...0
-static uint16 deadchar_lookup[] = {
-    96,  97,   224,  96,  65,   192, 180, 97,   225,  180,  65,   193, 94,  97,   226, 94,   65,   194,  126, 97,   227,  126, 65,   195,  168, 97,
-    228, 168,  65,   196, 730,  97,  229, 730,  65,   197,  180,  99,  263, 94,   99,  265,  96,   101,  232, 96,   69,   200, 180,  101,  233, 180,
-    69,  201,  94,   101, 234,  94,  69,  202,  126,  101,  7869, 168, 101, 235,  168, 69,   203,  180,  103, 501,  94,   103, 285,  94,   104, 293,
-    168, 104,  7719, 96,  105,  236, 96,  73,   204,  180,  105,  237, 180, 73,   205, 94,   105,  238,  94,  73,   206,  126, 105,  297,  168, 105,
-    239, 168,  73,   207, 94,   106, 309, 180,  107,  7729, 180,  108, 314, 180,  109, 7743, 96,   110,  505, 180,  110,  324, 126,  110,  241, 126,
-    78,  209,  96,   111, 242,  96,  79,  210,  180,  111,  243,  180, 79,  211,  94,  111,  244,  94,   79,  212,  126,  111, 245,  126,  79,  213,
-    168, 111,  246,  168, 79,   214, 180, 112,  7765, 180,  114,  341, 180, 115,  347, 94,   115,  349,  168, 116,  7831, 96,  117,  249,  96,  85,
-    217, 180,  117,  250, 180,  85,  218, 94,   117,  251,  94,   85,  219, 126,  117, 361,  168,  117,  252, 168,  85,   220, 730,  117,  367, 126,
-    118, 7805, 96,   119, 7809, 180, 119, 7811, 94,   119,  373,  168, 119, 7813, 730, 119,  7832, 168,  120, 7821, 96,   121, 7923, 180,  121, 253,
-    180, 89,   221,  94,  121,  375, 126, 121,  7929, 168,  121,  255, 168, 89,   376, 730,  121,  7833, 180, 122,  378,  94,  122,  7825, 0};
 
 int32 keydown_glyph = 0;
 
@@ -969,13 +665,6 @@ int32 keyhit_nextfree = 0;
 int32 keyhit_next = 0;
 // note: if full, the oldest message is discarded to make way for the new message
 
-void update_shift_state();
-
-uint32 bindkey = 0;
-
-void scancodedown(uint8 scancode);
-void scancodeup(uint8 scancode);
-
 /*
     QB64 Mapping of audio control keyboard keys:
     MEDIA_PLAY_PAUSE 0x2200
@@ -992,737 +681,7 @@ void scancodeup(uint8 scancode);
     0 anywhere else means a key cannot be entered
 */
 
-// clang-format off
-static const int32 scancode_lookup[]={
-    //DESCRIPTION OFFSET  SCANCODE      ASCII      SHIFT       CTRL        ALT        NUM       CAPS SHIFT+CAPS  SHIFT+NUM
-    /* ?       */    0 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    1 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    2 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    3 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    4 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    5 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    6 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    7 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* Bksp    */    8 ,      0x0E,      0x08,      0x08,      0x7F,    0x0E00,         0,         0,         0,         0,
-    /* Tab     */    9 ,      0x0F,      0x09,    0x0F00,    0x9400,         0,         0,         0,         0,         0,
-    /* ?       */   10 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   11 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   12 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* enter   */   13 ,      0x1C,      0x0D,      0x0D,      0x0A,         0,         0,         0,         0,         0,
-    /* ?       */   14 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   15 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   16 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   17 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   18 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   19 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   20 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   21 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   22 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   23 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   24 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   25 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   26 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* Esc     */   27 ,      0x01,      0x1B,      0x1B,      0x1B,         0,         0,         0,         0,         0,
-    /* ?       */   28 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   29 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   30 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   31 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* space   */   32 ,      0x39,      0x20,      0x20,      0x20,         0,         0,         0,         0,         0,
-    /* 1 !     */   33 ,      0x02,      0x21,      0x21,         0,    0x7800,         0,         0,         0,         0,
-    /* \91 \93     */   34 ,      0x28,      0x22,      0x22,         0,    0x2800,         0,         0,         0,         0,
-    /* 3 #     */   35 ,      0x04,      0x23,      0x23,         0,    0x7A00,         0,         0,         0,         0,
-    /* 4 $     */   36 ,      0x05,      0x24,      0x24,         0,    0x7B00,         0,         0,         0,         0,
-    /* 5 %     */   37 ,      0x06,      0x25,      0x25,         0,    0x7C00,         0,         0,         0,         0,
-    /* 7 &     */   38 ,      0x08,      0x26,      0x26,         0,    0x7E00,         0,         0,         0,         0,
-    /* \91 \93     */   39 ,      0x28,      0x27,      0x27,         0,    0x2800,         0,         0,         0,         0,
-    /* 9 (     */   40 ,      0x0A,      0x28,      0x28,         0,    0x8000,         0,         0,         0,         0,
-    /* 0 )     */   41 ,      0x0B,      0x29,      0x29,         0,    0x8100,         0,         0,         0,         0,
-    /* 8 *     */   42 ,      0x09,      0x2A,      0x2A,         0,    0x7F00,         0,         0,         0,         0,
-    /* = +     */   43 ,      0x0D,      0x2B,      0x2B,         0,    0x8300,         0,         0,         0,         0,
-    /* , <     */   44 ,      0x33,      0x2C,      0x2C,         0,    0x3300,         0,         0,         0,         0,
-    /* - _     */   45 ,      0x0C,      0x2D,      0x2D,      0x1F,    0x8200,         0,         0,         0,         0,
-    /* . >     */   46 ,      0x34,      0x2E,      0x2E,         0,    0x3400,         0,         0,         0,         0,
-    /* / ?     */   47 ,      0x35,      0x2F,      0x2F,         0,    0x3500,         0,         0,         0,         0,
-    /* 0 )     */   48 ,      0x0B,      0x30,      0x30,         0,    0x8100,         0,         0,         0,         0,
-    /* 1 !     */   49 ,      0x02,      0x31,      0x31,         0,    0x7800,         0,         0,         0,         0,
-    /* 2 @     */   50 ,      0x03,      0x32,      0x32,    0x0300,    0x7900,         0,         0,         0,         0,
-    /* 3 #     */   51 ,      0x04,      0x33,      0x33,         0,    0x7A00,         0,         0,         0,         0,
-    /* 4 $     */   52 ,      0x05,      0x34,      0x34,         0,    0x7B00,         0,         0,         0,         0,
-    /* 5 %     */   53 ,      0x06,      0x35,      0x35,         0,    0x7C00,         0,         0,         0,         0,
-    /* 6 ^     */   54 ,      0x07,      0x36,      0x36,      0x1E,    0x7D00,         0,         0,         0,         0,
-    /* 7 &     */   55 ,      0x08,      0x37,      0x37,         0,    0x7E00,         0,         0,         0,         0,
-    /* 8 *     */   56 ,      0x09,      0x38,      0x38,         0,    0x7F00,         0,         0,         0,         0,
-    /* 9 (     */   57 ,      0x0A,      0x39,      0x39,         0,    0x8000,         0,         0,         0,         0,
-    /* ; :     */   58 ,      0x27,      0x3A,      0x3A,         0,    0x2700,         0,         0,         0,         0,
-    /* ; :     */   59 ,      0x27,      0x3B,      0x3B,         0,    0x2700,         0,         0,         0,         0,
-    /* , <     */   60 ,      0x33,      0x3C,      0x3C,         0,    0x3300,         0,         0,         0,         0,
-    /* = +     */   61 ,      0x0D,      0x3D,      0x3D,         0,    0x8300,         0,         0,         0,         0,
-    /* . >     */   62 ,      0x34,      0x3E,      0x3E,         0,    0x3400,         0,         0,         0,         0,
-    /* / ?     */   63 ,      0x35,      0x3F,      0x3F,         0,    0x3500,         0,         0,         0,         0,
-    /* 2 @     */   64 ,      0x03,      0x40,      0x40,    0x0300,    0x7900,         0,         0,         0,         0,
-    /* A       */   97 ,      0x1E,      0x41,      0x41,      0x01,    0x1E00,         0,         0,         0,         0,
-    /* B       */   98 ,      0x30,      0x42,      0x42,      0x02,    0x3000,         0,         0,         0,         0,
-    /* C       */   99 ,      0x2E,      0x43,      0x43,      0x03,    0x2E00,         0,         0,         0,         0,
-    /* D       */  100 ,      0x20,      0x44,      0x44,      0x04,    0x2000,         0,         0,         0,         0,
-    /* E       */  101 ,      0x12,      0x45,      0x45,      0x05,    0x1200,         0,         0,         0,         0,
-    /* F       */  102 ,      0x21,      0x46,      0x46,      0x06,    0x2100,         0,         0,         0,         0,
-    /* G       */  103 ,      0x22,      0x47,      0x47,      0x07,    0x2200,         0,         0,         0,         0,
-    /* H       */  104 ,      0x23,      0x48,      0x48,      0x08,    0x2300,         0,         0,         0,         0,
-    /* I       */  105 ,      0x17,      0x49,      0x49,      0x09,    0x1700,         0,         0,         0,         0,
-    /* J       */  106 ,      0x24,      0x4A,      0x4A,      0x0A,    0x2400,         0,         0,         0,         0,
-    /* K       */  107 ,      0x25,      0x4B,      0x4B,      0x0B,    0x2500,         0,         0,         0,         0,
-    /* L       */  108 ,      0x26,      0x4C,      0x4C,      0x0C,    0x2600,         0,         0,         0,         0,
-    /* M       */  109 ,      0x32,      0x4D,      0x4D,      0x0D,    0x3200,         0,         0,         0,         0,
-    /* N       */  110 ,      0x31,      0x4E,      0x4E,      0x0E,    0x3100,         0,         0,         0,         0,
-    /* O       */  111 ,      0x18,      0x4F,      0x4F,      0x0F,    0x1800,         0,         0,         0,         0,
-    /* P       */  112 ,      0x19,      0x50,      0x50,      0x10,    0x1900,         0,         0,         0,         0,
-    /* Q       */  113 ,      0x10,      0x51,      0x51,      0x11,    0x1000,         0,         0,         0,         0,
-    /* R       */  114 ,      0x13,      0x52,      0x52,      0x12,    0x1300,         0,         0,         0,         0,
-    /* S       */  115 ,      0x1F,      0x53,      0x53,      0x13,    0x1F00,         0,         0,         0,         0,
-    /* T       */  116 ,      0x14,      0x54,      0x54,      0x14,    0x1400,         0,         0,         0,         0,
-    /* U       */  117 ,      0x16,      0x55,      0x55,      0x15,    0x1600,         0,         0,         0,         0,
-    /* V       */  118 ,      0x2F,      0x56,      0x56,      0x16,    0x2F00,         0,         0,         0,         0,
-    /* W       */  119 ,      0x11,      0x57,      0x57,      0x17,    0x1100,         0,         0,         0,         0,
-    /* X       */  120 ,      0x2D,      0x58,      0x58,      0x18,    0x2D00,         0,         0,         0,         0,
-    /* Y       */  121 ,      0x15,      0x59,      0x59,      0x19,    0x1500,         0,         0,         0,         0,
-    /* Z       */  122 ,      0x2C,      0x5A,      0x5A,      0x1A,    0x2C00,         0,         0,         0,         0,
-    /* [ {     */   91 ,      0x1A,      0x5B,      0x5B,      0x1B,    0x1A00,         0,         0,         0,         0,
-    /* \ |     */   92 ,      0x2B,      0x5C,      0x5C,      0x1C,    0x2B00,         0,         0,         0,         0,
-    /* ] }     */   93 ,      0x1B,      0x5D,      0x5D,      0x1D,    0x1B00,         0,         0,         0,         0,
-    /* 6 ^     */   94 ,      0x07,      0x5E,      0x5E,      0x1E,    0x7D00,         0,         0,         0,         0,
-    /* - _     */   95 ,      0x0C,      0x5F,      0x5F,      0x1F,    0x8200,         0,         0,         0,         0,
-    /* ` ~     */   96 ,      0x29,      0x60,      0x60,         0,    0x2900,         0,         0,         0,         0,
-    /* A       */   97 ,      0x1E,      0x61,      0x61,      0x01,    0x1E00,         0,         0,         0,         0,
-    /* B       */   98 ,      0x30,      0x62,      0x62,      0x02,    0x3000,         0,         0,         0,         0,
-    /* C       */   99 ,      0x2E,      0x63,      0x63,      0x03,    0x2E00,         0,         0,         0,         0,
-    /* D       */  100 ,      0x20,      0x64,      0x64,      0x04,    0x2000,         0,         0,         0,         0,
-    /* E       */  101 ,      0x12,      0x65,      0x65,      0x05,    0x1200,         0,         0,         0,         0,
-    /* F       */  102 ,      0x21,      0x66,      0x66,      0x06,    0x2100,         0,         0,         0,         0,
-    /* G       */  103 ,      0x22,      0x67,      0x67,      0x07,    0x2200,         0,         0,         0,         0,
-    /* H       */  104 ,      0x23,      0x68,      0x68,      0x08,    0x2300,         0,         0,         0,         0,
-    /* I       */  105 ,      0x17,      0x69,      0x69,      0x09,    0x1700,         0,         0,         0,         0,
-    /* J       */  106 ,      0x24,      0x6A,      0x6A,      0x0A,    0x2400,         0,         0,         0,         0,
-    /* K       */  107 ,      0x25,      0x6B,      0x6B,      0x0B,    0x2500,         0,         0,         0,         0,
-    /* L       */  108 ,      0x26,      0x6C,      0x6C,      0x0C,    0x2600,         0,         0,         0,         0,
-    /* M       */  109 ,      0x32,      0x6D,      0x6D,      0x0D,    0x3200,         0,         0,         0,         0,
-    /* N       */  110 ,      0x31,      0x6E,      0x6E,      0x0E,    0x3100,         0,         0,         0,         0,
-    /* O       */  111 ,      0x18,      0x6F,      0x6F,      0x0F,    0x1800,         0,         0,         0,         0,
-    /* P       */  112 ,      0x19,      0x70,      0x70,      0x10,    0x1900,         0,         0,         0,         0,
-    /* Q       */  113 ,      0x10,      0x71,      0x71,      0x11,    0x1000,         0,         0,         0,         0,
-    /* R       */  114 ,      0x13,      0x72,      0x72,      0x12,    0x1300,         0,         0,         0,         0,
-    /* S       */  115 ,      0x1F,      0x73,      0x73,      0x13,    0x1F00,         0,         0,         0,         0,
-    /* T       */  116 ,      0x14,      0x74,      0x74,      0x14,    0x1400,         0,         0,         0,         0,
-    /* U       */  117 ,      0x16,      0x75,      0x75,      0x15,    0x1600,         0,         0,         0,         0,
-    /* V       */  118 ,      0x2F,      0x76,      0x76,      0x16,    0x2F00,         0,         0,         0,         0,
-    /* W       */  119 ,      0x11,      0x77,      0x77,      0x17,    0x1100,         0,         0,         0,         0,
-    /* X       */  120 ,      0x2D,      0x78,      0x78,      0x18,    0x2D00,         0,         0,         0,         0,
-    /* Y       */  121 ,      0x15,      0x79,      0x79,      0x19,    0x1500,         0,         0,         0,         0,
-    /* Z       */  122 ,      0x2C,      0x7A,      0x7A,      0x1A,    0x2C00,         0,         0,         0,         0,
-    /* [ {     */  123 ,      0x1A,      0x7B,      0x7B,      0x1B,    0x1A00,         0,         0,         0,         0,
-    /* \ |     */  124 ,      0x2B,      0x7C,      0x7C,      0x1C,    0x2B00,         0,         0,         0,         0,
-    /* ] }     */  125 ,      0x1B,      0x7D,      0x7D,      0x1D,    0x1B00,         0,         0,         0,         0,
-    /* ` ~     */  126 ,      0x29,      0x7E,      0x7E,         0,    0x2900,         0,         0,         0,         0,
-    /* ?       */  127 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  128 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  129 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  130 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  131 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  132 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  133 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  134 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  135 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  136 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  137 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  138 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  139 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  140 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  141 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  142 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  143 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  144 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  145 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  146 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  147 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  148 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  149 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  150 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  151 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  152 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  153 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  154 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  155 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  156 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  157 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  158 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  159 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  160 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  161 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  162 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  163 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  164 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  165 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  166 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  167 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  168 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  169 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  170 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  171 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  172 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  173 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  174 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  175 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  176 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  177 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  178 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  179 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  180 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  181 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  182 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  183 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  184 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  185 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  186 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  187 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  188 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  189 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  190 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  191 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  192 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  193 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    
-    /* ?       */  194 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  195 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  196 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  197 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  198 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  199 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  200 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  201 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  202 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  203 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  204 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  205 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  206 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  207 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  208 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  209 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  210 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  211 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  212 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  213 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  214 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  215 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  216 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  217 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  218 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  219 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  220 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  221 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  222 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  223 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  224 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  225 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  226 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  227 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  228 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  229 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  230 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  231 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  232 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  233 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  234 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  235 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  236 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  237 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  238 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  239 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  240 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  241 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  242 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  243 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  244 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  245 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  246 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  247 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  248 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  249 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  250 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  251 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  252 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  253 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  254 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  255 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    0 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    1 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    2 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    3 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    4 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    5 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    6 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    7 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    8 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */    9 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   10 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   11 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   12 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   13 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   14 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   15 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   16 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   17 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   18 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   19 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   20 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   21 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   22 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   23 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   24 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   25 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   26 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   27 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   28 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   29 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   30 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   31 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   32 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   33 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   34 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   35 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   36 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   37 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   38 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   39 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   40 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   41 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   42 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   43 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   44 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   45 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   46 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   47 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   48 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   49 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   50 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   51 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   52 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   53 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   54 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   55 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   56 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   57 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   58 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* F1      */   59 ,      0x3B,    0x3B00,    0x5400,    0x5E00,    0x6800,         0,         0,         0,         0,
-    /* F2      */   60 ,      0x3C,    0x3C00,    0x5500,    0x5F00,    0x6900,         0,         0,         0,         0,
-    /* F3      */   61 ,      0x3D,    0x3D00,    0x5600,    0x6000,    0x6A00,         0,         0,         0,         0,
-    /* F4      */   62 ,      0x3E,    0x3E00,    0x5700,    0x6100,    0x6B00,         0,         0,         0,         0,
-    /* F5      */   63 ,      0x3F,    0x3F00,    0x5800,    0x6200,    0x6C00,         0,         0,         0,         0,
-    /* F6      */   64 ,      0x40,    0x4000,    0x5900,    0x6300,    0x6D00,         0,         0,         0,         0,
-    /* F7      */   65 ,      0x41,    0x4100,    0x5A00,    0x6400,    0x6E00,         0,         0,         0,         0,
-    /* F8      */   66 ,      0x42,    0x4200,    0x5B00,    0x6500,    0x6F00,         0,         0,         0,         0,
-    /* F9      */   67 ,      0x43,    0x4300,    0x5C00,    0x6600,    0x7000,         0,         0,         0,         0,
-    /* F10     */   68 ,      0x44,    0x4400,    0x5D00,    0x6700,    0x7100,         0,         0,         0,         0,
-    /* ?       */   69 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   70 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* home *X */   71 ,      0x47,    0x4700,    0x4700,    0x7700,    0x9700,         0,         0,         0,         0, //note: X=not on NUMPAD
-    /* up *X   */   72 ,      0x48,    0x4800,    0x4800,    0x8D00,    0x9800,         0,         0,         0,         0,
-    /* pgup *X */   73 ,      0x49,    0x4900,    0x4900,    0x8400,    0x9900,         0,         0,         0,         0,
-    /* ?       */   74 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* left *X */   75 ,      0x4B,    0x4B00,    0x4B00,    0x7300,    0x9B00,         0,         0,         0,         0,
-    /* (center)*/   76 ,         0,         0,         0,         0,         0,         0,         0,         0,         0, //note: not used
-    /* right *X*/   77 ,      0x4D,    0x4D00,    0x4D00,    0x7400,    0x9D00,         0,         0,         0,         0,
-    /* ?       */   78 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* end  *X */   79 ,      0x4F,    0x4F00,    0x4F00,    0x7500,    0x9F00,         0,         0,         0,         0,
-    /* down *X */   80 ,      0x50,    0x5000,    0x5000,    0x9100,    0xA000,         0,         0,         0,         0,
-    /* pgdn *X */   81 ,      0x51,    0x5100,    0x5100,    0x7600,    0xA100,         0,         0,         0,         0,
-    /* ins *X  */   82 ,      0x52,    0x5200,    0x5200,    0x9200,    0xA200,         0,         0,         0,         0,
-    /* del *X  */   83 ,      0x53,    0x5300,    0x5300,    0x9300,    0xA300,         0,         0,         0,         0,
-    /* ?       */   84 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   85 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   86 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   87 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   88 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   89 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   90 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   91 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   92 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   93 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   94 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   95 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   96 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   97 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   98 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */   99 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  100 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  101 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  102 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  103 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  104 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  105 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  106 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  107 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  108 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  109 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  110 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  111 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  112 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  113 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  114 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  115 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  116 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  117 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  118 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  119 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  120 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  121 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  122 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  123 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  124 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  125 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  126 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  127 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  128 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  129 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  130 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  131 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  132 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* F11     */  133 ,      0x57,    0x8500,    0x8500,    0x8900,    0x8B00,         0,         0,         0,         0,
-    /* F12     */  134 ,      0x58,    0x8600,    0x8600,    0x8A00,    0x8C00,         0,         0,         0,         0,
-    /* ?       */  135 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  136 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  137 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  138 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  139 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  140 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  141 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  142 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  143 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  144 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  145 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  146 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  147 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  148 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  149 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  150 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  151 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  152 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  153 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  154 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  155 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  156 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  157 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  158 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  159 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  160 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  161 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  162 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  163 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  164 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  165 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  166 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  167 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  168 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  169 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  170 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  171 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  172 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  173 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  174 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  175 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  176 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  177 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  178 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  179 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  180 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  181 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  182 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  183 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  184 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  185 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  186 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  187 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  188 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  189 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  190 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  191 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  192 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  193 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  194 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  195 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  196 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  197 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  198 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  199 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  200 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  201 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  202 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  203 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  204 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  205 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  206 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    
-    
-    /* ?       */  207 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  208 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  209 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  210 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  211 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  212 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  213 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  214 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  215 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  216 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  217 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  218 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  219 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  220 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  221 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  222 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  223 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  224 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  225 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  226 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  227 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  228 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  229 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  230 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  231 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  232 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  233 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  234 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  235 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  236 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  237 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  238 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  239 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  240 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  241 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  242 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  243 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  244 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  245 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  246 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  247 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  248 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  249 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  250 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  251 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  252 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  253 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  254 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* ?       */  255 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    //NUMPAD keys in VK order
-    /* ins     */  512 ,      0x52,    0x5200,      0x30,    0x9200,         0,      0x30,         0,         0,    0x5200,
-    /* end     */  513 ,      0x4F,    0x4F00,      0x31,    0x7500,         0,      0x31,         0,         0,    0x4F00,
-    /* down    */  514 ,      0x50,    0x5000,      0x32,    0x9100,         0,      0x32,         0,         0,    0x5000,
-    /* pgdn    */  515 ,      0x51,    0x5100,      0x33,    0x7600,         0,      0x33,         0,         0,    0x5100,
-    /* left    */  516 ,      0x4B,    0x4B00,      0x34,    0x7300,         0,      0x34,         0,         0,    0x4B00,
-    /* center  */  517 ,      0x4C,    0x4C00,      0x35,    0x8F00,         0,      0x35,         0,         0,    0x4C00,
-    /* right   */  518 ,      0x4D,    0x4D00,      0x36,    0x7400,         0,      0x36,         0,         0,    0x4D00,
-    /* home    */  519 ,      0x47,    0x4700,      0x37,    0x7700,         0,      0x37,         0,         0,    0x4700,
-    /* up      */  520 ,      0x48,    0x4800,      0x38,    0x8D00,         0,      0x38,         0,         0,    0x4800,
-    /* pgup    */  521 ,      0x49,    0x4900,      0x39,    0x8400,         0,      0x39,         0,         0,    0x4900,
-    /* del     */  522 ,      0x53,    0x5300,      0x2E,    0x9300,         0,      0x2E,         0,         0,    0x5300,
-    /* divide  */  523 ,      0x35,      0x2F,      0x2F,    0x9500,    0xA400,      0x2F,         0,         0,      0x2F,
-    /* mult    */  524 ,      0x37,      0x2A,      0x2A,    0x9600,    0x3700,      0x2A,         0,         0,      0x2A,
-    /* -d      */  525 ,      0x4A,      0x2D,      0x2D,    0x8E00,    0x4A00,      0x2D,         0,         0,      0x2D,
-    /* +e      */  526 ,      0x4E,      0x2B,      0x2B,    0x9000,    0x4E00,      0x2B,         0,         0,      0x2B,
-    /* enter   */  527 ,      0x1C,      0x0D,      0x0D,      0x0A,    0xA600,      0x0D,         0,         0,      0x0D,
-    
-    /* ctrl    */  000 ,         0,         0,         0,         0,         0,         0,         0,         0,      0x1D,
-    /* Lshift  */  000 ,      0x2A,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* Rshift  */  000 ,      0x36,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* alt     */  000 ,      0x38,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* caps    */  000 ,      0x3A,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* num     */  000 ,      0x45,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* scrl    */  000 ,      0x46,         0,         0,         0,         0,         0,         0,         0,         0,
-    /* * PrtSc */  000 ,      0x37,      0x2A,         0,      0x10,         0,      0x2A,      0x2A,         0,         0,
-};
-// clang-format on
-
-void keydown(uint32 x);
-void keyup(uint32 x);
-
-uint32 unicode_to_cp437(uint32 x) {
-    static int32 i;
-    for (i = 0; i <= 255; i++) {
-        if (x == codepage437_to_unicode16[i])
-            return i;
-    }
-    return 0;
-}
-
-uint32 *keyheld_buffer = (uint32 *)malloc(1);
-uint32 *keyheld_bind_buffer = (uint32 *)malloc(1);
-int32 keyheld_n = 0;
-int32 keyheld_size = 0;
-
-int32 keyheld(uint32 x) {
-    static int32 i;
-    for (i = 0; i < keyheld_n; i++) {
-        if (keyheld_buffer[i] == x)
-            return 1;
-    }
-    // check multimapped NUMPAD keys
-    if ((x >= 42) && (x <= 57)) {
-        if ((x >= 48) && (x <= 57))
-            return keyheld(VK + QBVK_KP0 + (x - 48)); // 0-9
-        if (x == 46)
-            return keyheld(VK + QBVK_KP_PERIOD);
-        if (x == 47)
-            return keyheld(VK + QBVK_KP_DIVIDE);
-        if (x == 42)
-            return keyheld(VK + QBVK_KP_MULTIPLY);
-        if (x == 45)
-            return keyheld(VK + QBVK_KP_MINUS);
-        if (x == 43)
-            return keyheld(VK + QBVK_KP_PLUS);
-    }
-    if (x == 13)
-        return keyheld(VK + QBVK_KP_ENTER);
-    if (x & 0xFF00) {
-        static uint32 x2;
-        x2 = (x >> 8) & 255;
-        if ((x2 >= 71) && (x2 <= 83)) {
-            if (x2 == 82)
-                return keyheld(QBK + QBVK_KP0 - QBVK_KP0);
-            if (x2 == 79)
-                return keyheld(QBK + QBVK_KP1 - QBVK_KP0);
-            if (x2 == 80)
-                return keyheld(QBK + QBVK_KP2 - QBVK_KP0);
-            if (x2 == 81)
-                return keyheld(QBK + QBVK_KP3 - QBVK_KP0);
-            if (x2 == 75)
-                return keyheld(QBK + QBVK_KP4 - QBVK_KP0);
-            if (x2 == 76)
-                return keyheld(QBK + QBVK_KP5 - QBVK_KP0);
-            if (x2 == 77)
-                return keyheld(QBK + QBVK_KP6 - QBVK_KP0);
-            if (x2 == 71)
-                return keyheld(QBK + QBVK_KP7 - QBVK_KP0);
-            if (x2 == 72)
-                return keyheld(QBK + QBVK_KP8 - QBVK_KP0);
-            if (x2 == 73)
-                return keyheld(QBK + QBVK_KP9 - QBVK_KP0);
-            if (x2 == 83)
-                return keyheld(QBK + QBVK_KP_PERIOD - QBVK_KP0);
-        }
-    }
-    return 0;
-}
-
-void keyheld_add(uint32 x) {
-    static int32 i;
-    for (i = 0; i < keyheld_n; i++) {
-        if (keyheld_buffer[i] == x)
-            return;
-    } // already in buffer
-    if (keyheld_n == keyheld_size) {
-        keyheld_size++;
-        keyheld_buffer = (uint32 *)realloc(keyheld_buffer, keyheld_size * 4);
-        keyheld_bind_buffer = (uint32 *)realloc(keyheld_bind_buffer, keyheld_size * 4);
-    } // expand buffer
-    keyheld_buffer[keyheld_n] = x; // add entry
-    keyheld_bind_buffer[keyheld_n] = bindkey;
-    bindkey = 0; // add binded key (0=none)
-    keyheld_n++; // note: inc. must occur after setting entry (threading reasons)
-}
-
-void keyheld_remove(uint32 x) {
-    static int32 i;
-    for (i = 0; i < keyheld_n; i++) {
-        if (keyheld_buffer[i] == x) { // exists
-            memmove(&keyheld_buffer[i], &keyheld_buffer[i + 1], (keyheld_n - i - 1) * 4);
-            memmove(&keyheld_bind_buffer[i], &keyheld_bind_buffer[i + 1], (keyheld_n - i - 1) * 4);
-            keyheld_n--; // note: dec. must occur after memmove (threading reasons)
-            return;
-        }
-    }
-}
-
-void keyheld_unbind(uint32 x) {
-    static int32 i;
-    for (i = 0; i < keyheld_n; i++) {
-        if (keyheld_bind_buffer[i] == x) { // exists
-            keyup(keyheld_buffer[i]);
-            return;
-        }
-    }
-}
-
-void keydown_ascii(uint32 x) {
-    keydown(x);
-}
-
-void keydown_unicode(uint32 x) {
-    keydown_glyph = 1;
-    // note: UNICODE 0-127 map directly to ASCII 0-127
-    if (x <= 127) {
-        keydown_ascii(x);
-        return;
-    }
-    // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
-    auto x2 = unicode_to_cp437(x);
-    if (x2) {
-        keydown_ascii(x2);
-        return;
-    }
-    // note: full width latin characters will be mapped to their normal width equivalents
-    // Wikipedia note: Range U+FF01\96FF5E reproduces the characters of ASCII 21 to 7E as fullwidth forms, that is, a fixed width form used in CJK computing.
-    // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
-    // role is already fulfilled by U+3000 "ideographic space."
-    if ((x >= 0x0000FF01) && (x <= 0x0000FF5E)) {
-        keydown_ascii(x - 0x0000FF01 + 0x21);
-        return;
-    }
-    if (x == 0x3000) {
-        keydown_ascii(32);
-        return;
-    }
-    x |= UC;
-    keydown(x);
-}
-
-void keydown_vk(uint32 x) {
-    keydown(x);
-}
-
-void keyup_ascii(uint32 x) {
-    keyup(x);
-}
-
-void keyup_unicode(uint32 x) {
-    // note: UNICODE 0-127 map directly to ASCII 0-127
-    if (x <= 127) {
-        keyup_ascii(x);
-        return;
-    }
-    // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
-    auto x2 = unicode_to_cp437(x);
-    if (x2) {
-        keyup_ascii(x2);
-        return;
-    }
-    // note: full width latin characters will be mapped to their normal width equivalents
-    // Wikipedia note: Range U+FF01\96FF5E reproduces the characters of ASCII 21 to 7E as fullwidth forms, that is, a fixed width form used in CJK computing.
-    // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
-    // role is already fulfilled by U+3000 "ideographic space."
-    if ((x >= 0x0000FF01) && (x <= 0x0000FF5E)) {
-        keyup_ascii(x - 0x0000FF01 + 0x21);
-        return;
-    }
-    if (x == 0x3000) {
-        keyup_ascii(32);
-        return;
-    }
-    x |= UC;
-    keyup(x);
-}
-
-void keyup_vk(uint32 x) {
-    keyup(x);
-}
-
-int32 exit_ok = 0;
+int32_t exit_ok = 0;
 
 // substitute Windows functionality
 #ifndef QB64_WINDOWS
@@ -1740,10 +699,6 @@ void FreeConsole() {
 
 extern void QBMAIN(void *);
 extern void TIMERTHREAD(void *);
-void MAIN_LOOP(void *);
-
-void GLUT_MAINLOOP_THREAD(void *);
-void GLUT_DISPLAY_REQUEST();
 
 extern qbs *FUNC__DECODEURL(qbs *_FUNC__DECODEURL_STRING__URL);
 extern qbs *FUNC__WHATISMYIP();
@@ -3394,7 +2349,7 @@ static const uint8 file_qb64ega_pal[] = {
     0,  85, 85, 0, 170, 85, 85, 0, 0,  255, 85, 0, 170, 255, 85, 0, 0,  85, 255, 0, 170, 85, 255, 0, 0,  255, 255, 0, 170, 255, 255, 0,
     85, 85, 85, 0, 255, 85, 85, 0, 85, 255, 85, 0, 255, 255, 85, 0, 85, 85, 255, 0, 255, 85, 255, 0, 85, 255, 255, 0, 255, 255, 255, 0};
 
-uint16 *unicode16_buf = (uint16 *)malloc(1);
+uint16 *unicode16_buf = (uint16 *)malloc(sizeof(uint16));
 int32 unicode16_buf_size = 1;
 
 void convert_text_to_utf16(int32 fonthandle, void *buf, int32 size) {
@@ -5735,14 +4690,12 @@ uint32 frame = 0;
 
 extern uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword in conv memory)
 
-static int32 mouse_hiddden = 0;
-
 struct mouse_message {
-    int16 x;
-    int16 y;
-    uint32 buttons;
-    int16 movementx;
-    int16 movementy;
+    double x;
+    double y;
+    uint32_t buttons;
+    double movementx;
+    double movementy;
 };
 
 // Mouse message queue
@@ -6936,9 +5889,6 @@ extern uint64 *nothingvalue;
 
 uint8 wait_needed = 1;
 
-int32 full_screen = 0;      // 0,1(stretched/closest),2(1:1)
-int32 full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
-
 int32 vertical_retrace_in_progress = 0;
 int32 vertical_retrace_happened = 0;
 
@@ -7218,58 +6168,6 @@ qbs *func_varptr_helper(uint8 type, uint16 offset) {
     tqbs->chr[1] = offset & 255;
     tqbs->chr[2] = offset >> 8;
     return tqbs;
-}
-
-qbs *qbs_inkey() {
-    if (is_error_pending())
-        return qbs_new(0, 1);
-    qbs *tqbs;
-    // Sleep(0);
-    tqbs = qbs_new(2, 1);
-    if (cmem[0x41a] != cmem[0x41c]) {
-        tqbs->chr[0] = cmem[0x400 + cmem[0x41a]];
-        tqbs->chr[1] = cmem[0x400 + cmem[0x41a] + 1];
-        if (tqbs->chr[0]) {
-            tqbs->len = 1;
-        } else {
-            if (tqbs->chr[1] == 0)
-                tqbs->len = 1;
-        }
-        cmem[0x41a] += 2;
-        if (cmem[0x41a] == 62)
-            cmem[0x41a] = 30;
-    } else {
-        tqbs->len = 0;
-    }
-    return tqbs;
-}
-
-void sub__keyclear(int32 buf, int32 passed) {
-    if (is_error_pending())
-        return;
-    if (passed && (buf > 3 || buf < 1))
-        error(5);
-    //  Sleep(10);
-    if ((buf == 1 && passed) || !passed) {
-        // INKEY$ buffer
-        cmem[0x41a] = 30;
-        cmem[0x41b] = 0; // head
-        cmem[0x41c] = 30;
-        cmem[0x41d] = 0; // tail
-    }
-    if ((buf == 2 && passed) || !passed) {
-        //_KEYHIT buffer
-        keyhit_nextfree = 0;
-        keyhit_next = 0;
-    }
-    if ((buf == 3 && passed) || !passed) {
-        // INP(&H60) buffer
-        port60h_events = 0;
-    }
-#ifdef QB64_WINDOWS
-    // Windows Console Buffer
-    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
-#endif
 }
 
 // QBG BLOCK
@@ -7938,7 +6836,7 @@ void defaultcolors() {
 }
 
 // Note: Cannot be used to setup page 0, just to validate it
-void validatepage(int32 n) {
+void validatepage(int32_t n) {
     static int32 i, i2;
     // add new page indexes if necessary
     if (n >= pages) {
@@ -11704,7 +10602,7 @@ int32 func__controlchr() {
     return -no_control_characters2;
 }
 
-void qbs_print(qbs *str, int32 finish_on_new_line) {
+void qbs_print(qbs *str, int32_t finish_on_new_line) {
     if (is_error_pending())
         return;
     int32 i, i2, entered_new_line, x, x2, y, y2, z, z2, w;
@@ -12098,7 +10996,7 @@ null_length:
     return;
 }
 
-void qbg_sub_window(float x1, float y1, float x2, float y2, int32 passed) {
+void qbg_sub_window(float x1, float y1, float x2, float y2, int32_t passed) {
     //                  &1
     //(passed&2)->SCREEN
     if (is_error_pending())
@@ -12225,7 +11123,7 @@ qbg_sub_window_error:
     return;
 }
 
-void qbg_sub_view_print(int32 topline, int32 bottomline, int32 passed) {
+void qbg_sub_view_print(int32_t topline, int32_t bottomline, int32_t passed) {
     if (is_error_pending())
         return;
 
@@ -12393,7 +11291,7 @@ error:
 
 void qbg_sub_locate(int32 row, int32 column, int32 cursor, int32 start, int32 stop, int32 passed);
 
-void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
+void sub_clsDest(int32_t method, uint32_t use_color, int32_t dest, int32_t passed) {
     int32 tempDest;
     if (passed & 4) {
         tempDest = func__dest(); // get the old dest
@@ -12407,7 +11305,7 @@ void sub_clsDest(int32 method, uint32 use_color, int32 dest, int32 passed) {
     } // restore the old dest
 }
 
-void sub_cls(int32 method, uint32 use_color, int32 passed) {
+void sub_cls(int32_t method, uint32_t use_color, int32_t passed) {
     if (is_error_pending())
         return;
     static int32 characters, i;
@@ -13931,48 +12829,10 @@ int32 func__blink() {
     return -H3C0_blink_enable;
 }
 
-uintptr_t func__windowhandle() {
-#ifdef QB64_WINDOWS
-#    ifdef DEPENDENCY_CONSOLE_ONLY
-    if (!window_handle) {
-        char pszConsoleTitle[1024];
-        GetConsoleTitle(pszConsoleTitle, 1024);
-        window_handle = FindWindow(NULL, pszConsoleTitle);
-    }
-    return (ptrszint)window_handle;
-#    endif
-
-    OPTIONAL_GLUT(0);
-    return (ptrszint)window_handle;
-#else
-    return 0;
-#endif
-}
-
-qbs *func__title() {
-    if (!window_title) {
-        return qbs_new_txt("");
-    } else {
-        return qbs_new_txt((char *)window_title);
-    }
-}
-
 void set_foreground_window(ptrszint i) {
 #ifdef QB64_WINDOWS
-    BOOL result = SetForegroundWindow((HWND)i);
+    SetForegroundWindow((HWND)i);
 #endif
-    return;
-}
-
-int32 func__hasfocus() {
-#ifdef QB64_GUI
-#    ifdef QB64_WINDOWS
-    return -((HWND)func__windowhandle() == GetForegroundWindow());
-#    elif defined(QB64_LINUX)
-    return window_focused;
-#    endif
-#endif
-    return -1;
 }
 
 void sub_out(int32 port, int32 data) {
@@ -17343,7 +16203,7 @@ int32 func_csrlin() {
     return write_page->cursor_y;
 }
 
-int32 func_pos(int32 ignore) {
+int32_t func_pos(int32_t ignore) {
 #ifdef QB64_WINDOWS
     if (write_page->console) { // qb64 console CSRLIN
         CONSOLE_SCREEN_BUFFER_INFO cl_bufinfo;
@@ -18522,89 +17382,66 @@ int32 func_freefile() {
 }
 
 void sub__mousehide() {
+    // GLFW_TODO: We should extend sub__mousehide to accept a parameter to show/hide the cursor instead of always hiding it
 #ifdef QB64_GUI
-#    ifdef QB64_GLUT
     OPTIONAL_GLUT();
-    libqb_glut_set_cursor(GLUT_CURSOR_NONE);
-#    endif
+    GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Hidden);
 #endif
-    mouse_hiddden = -1;
 }
 
-#ifdef QB64_GLUT
-int mouse_cursor_style = GLUT_CURSOR_LEFT_ARROW;
-#else
-int mouse_cursor_style = 1;
-#endif
-
-void sub__mouseshow(qbs *style, int32 passed) {
+void sub__mouseshow(qbs *qbsStyle, int32 passed) {
     if (is_error_pending())
         return;
 
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     OPTIONAL_GLUT();
 
-    static qbs *str = NULL;
-    if (str == NULL)
-        str = qbs_new(0, 0);
-    if (passed) {
-        qbs_set(str, qbs_ucase(style));
-        if (qbs_equal(str, qbs_new_txt("DEFAULT"))) {
-            mouse_cursor_style = GLUT_CURSOR_LEFT_ARROW;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("LINK"))) {
-            mouse_cursor_style = GLUT_CURSOR_INFO;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("TEXT"))) {
-            mouse_cursor_style = GLUT_CURSOR_TEXT;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("CROSSHAIR"))) {
-            mouse_cursor_style = GLUT_CURSOR_CROSSHAIR;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("VERTICAL"))) {
-            mouse_cursor_style = GLUT_CURSOR_UP_DOWN;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("HORIZONTAL"))) {
-            mouse_cursor_style = GLUT_CURSOR_LEFT_RIGHT;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("TOPLEFT_BOTTOMRIGHT"))) {
-            mouse_cursor_style = GLUT_CURSOR_TOP_LEFT_CORNER;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("TOPRIGHT_BOTTOMLEFT"))) {
-            mouse_cursor_style = GLUT_CURSOR_TOP_RIGHT_CORNER;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("WAIT"))) {
-            mouse_cursor_style = GLUT_CURSOR_WAIT;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("HELP"))) {
-            mouse_cursor_style = GLUT_CURSOR_HELP;
-            goto cursor_valid;
-        }
-        if (qbs_equal(str, qbs_new_txt("CYCLE")) || qbs_equal(str, qbs_new_txt("MOVE"))) {
-            mouse_cursor_style = GLUT_CURSOR_CYCLE;
-            goto cursor_valid;
-        }
-        error(5);
-        return;
-    }
-cursor_valid:
+    // GLFW_TODO: We should extend sub__mouseshow to accept a parameter to show/hide the cursor instead of always showing it
+    GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Normal);
 
-    libqb_glut_set_cursor(mouse_cursor_style);
+    std::string style;
+    if (passed && qbsStyle) {
+        style.assign((char *)qbsStyle->chr, qbsStyle->len);
+        std::transform(style.begin(), style.end(), style.begin(), ::toupper);
+    } else {
+        style = "DEFAULT";
+    }
+
+    if (style == "DEFAULT" || style == "ARROW") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::Arrow);
+    } else if (style == "LINK" || style == "HELP" || style == "POINTINGHAND") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::PointingHand);
+    } else if (style == "TEXT" || style == "IBEAM") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::IBeam);
+    } else if (style == "CROSSHAIR") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::Crosshair);
+    } else if (style == "VERTICAL" || style == "RESIZENS") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeNS);
+    } else if (style == "HORIZONTAL" || style == "RESIZEEW") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeEW);
+    } else if (style == "TOPLEFT_BOTTOMRIGHT" || style == "RESIZENESW") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeNESW);
+    } else if (style == "TOPRIGHT_BOTTOMLEFT" || style == "RESIZENWSE") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeNWSE);
+    } else if (style == "WAIT" || style == "NOTALLOWED") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::NotAllowed);
+    } else if (style == "CYCLE" || style == "MOVE" || style == "RESIZEALL") {
+        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeAll);
+    } else {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+    }
 #endif
-    mouse_hiddden = 0;
 }
 
 int32_t func__mousehidden() {
-    return mouse_hiddden;
+#ifdef QB64_GUI
+    OPTIONAL_GLUT(QB_FALSE);
+    // GLFW_TODO: We need a better way to query the current cursor mode
+    auto cursor_mode = GLUTEmu_MouseGetCursorMode();
+    return QB_BOOL(cursor_mode == GLUTEnum_MouseCursorMode::Hidden || cursor_mode == GLUTEnum_MouseCursorMode::Disabled);
+#else
+    return QB_FALSE;
+#endif
 }
 
 float func__mousemovementx() {
@@ -18618,7 +17455,7 @@ float func__mousemovementy() {
 }
 
 void sub__mousemove(float x, float y) {
-#ifdef QB64_GLUT
+#ifdef QB64_GUI
     NEEDS_GLUT();
 
     int32 x2, y2, sx, sy;
@@ -18669,7 +17506,7 @@ void sub__mousemove(float x, float y) {
     x2 += environment_2d__screen_x1;
     y2 += environment_2d__screen_y1;
 
-    libqb_glut_warp_pointer(x2, y2);
+    GLUTEmu_MouseMove(x2, y2);
     return;
 
 error:
@@ -18938,7 +17775,7 @@ void call_int(int32 i) {
 
 // Creating/destroying an image surface:
 
-int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
+int32_t func__newimage(int32_t x, int32_t y, int32_t bpp, int32_t passed) {
     static int32 i;
     if (is_error_pending())
         return 0;
@@ -18986,7 +17823,7 @@ int32 func__newimage(int32 x, int32 y, int32 bpp, int32 passed) {
     return -i;
 }
 
-int32 func__copyimage(int32 i, int32 mode, int32 passed) {
+int32_t func__copyimage(int32_t i, int32_t mode, int32_t passed) {
     static int32 i2, bytes;
     static img_struct *s, *d;
     if (is_error_pending())
@@ -19059,7 +17896,7 @@ int32 func__copyimage(int32 i, int32 mode, int32 passed) {
     return -i2;
 }
 
-void sub__freeimage(int32 i, int32 passed) {
+void sub__freeimage(int32_t i, int32_t passed) {
     if (is_error_pending())
         return;
     if (passed) {
@@ -19138,7 +17975,7 @@ void freeallimages() {
 
 // Selecting images:
 
-void sub__source(int32 i) {
+void sub__source(int32_t i) {
     if (is_error_pending())
         return;
     if (i >= 0) { // validate i
@@ -19159,7 +17996,7 @@ void sub__source(int32 i) {
     read_page = &img[i];
 }
 
-void sub__dest(int32 i) {
+void sub__dest(int32_t i) {
     if (is_error_pending())
         return;
     if (i >= 0) { // validate i
@@ -19180,15 +18017,15 @@ void sub__dest(int32 i) {
     write_page = &img[i];
 }
 
-int32 func__source() {
+int32_t func__source() {
     return -read_page_index;
 }
 
-int32 func__dest() {
+int32_t func__dest() {
     return -write_page_index;
 }
 
-int32 func__display() {
+int32_t func__display() {
     return -display_page_index;
 }
 
@@ -20063,7 +18900,7 @@ int32 func__fontwidth(int32 f, int32 passed);
 int32 func__fontheight(int32 f, int32 passed);
 int32 func__font(int32 f, int32 passed);
 
-int32 func__printwidth(qbs *text, int32 screenhandle, int32 passed) {
+int32_t func__printwidth(qbs *text, int32_t screenhandle, int32_t passed) {
     // Validate screenhandle (taken from func__font)
     if (passed) {
         if (screenhandle >= 0) {
@@ -21754,13 +20591,7 @@ no_exponent_provided:
 void sub_run_init() {
     // Reset ON KEY trapping
     // note: KEY bar F-key bindings are not affected
-    static int32 i;
-    for (i = 1; i <= 31; i++) {
-        onkey[i].id = 0;
-        onkey[i].active = 0;
-        onkey[i].state = 0;
-    }
-    onkey_inprogress = 0;
+    onkey_reset_runtime_state();
     // note: if already in screen 0:80x25, screen pages are left intact
     // set screen mode to 0 (80x25)
     qbg_screen(0, NULL, 0, 0, NULL, 1 | 4 | 8);
@@ -21828,240 +20659,26 @@ run_exit:
 
 #ifdef DEPENDENCY_ICON
 void sub__icon(int32 handle_icon, int32 handle_window_icon, int32 passed) {
-
-    if (is_error_pending())
+    if (is_error_pending()) {
         return;
+    }
+
 #    ifndef DEPENDENCY_CONSOLE_ONLY
-    if (!(passed & 2))
-        handle_window_icon = handle_icon;
-    if (!(passed & 1)) {
-        if (!image_qbicon16_handle) {
-            image_qbicon16_handle = func__newimage(image_qbicon16_w, image_qbicon16_h, 32, 1);
-            memcpy(img[-image_qbicon16_handle].offset32, &image_qbicon16[0], image_qbicon16_w * image_qbicon16_h * 4);
-        }
-
-        if (!image_qbicon32_handle) {
-            image_qbicon32_handle = func__newimage(image_qbicon32_w, image_qbicon32_h, 32, 1);
-            memcpy(img[-image_qbicon32_handle].offset32, &image_qbicon32[0], image_qbicon32_w * image_qbicon32_h * 4);
-        }
-
-        handle_icon = image_qbicon32_handle;
-        handle_window_icon = image_qbicon16_handle;
+    if ((passed & 1) && (passed & 2)) {
+        GLUTEmu_WindowSetIcon(handle_icon, handle_window_icon);
+    } else if (passed & 1) {
+        GLUTEmu_WindowSetIcon(handle_icon, 0);
+    } else if (passed & 2) {
+        GLUTEmu_WindowSetIcon(0, handle_window_icon);
+    } else {
+        GLUTEmu_WindowSetIcon(0, 0);
     }
-
-    static int32 i, i2, ii, w, h;
-    static uint32 *o, *o2;
-    static int32 x, y, n, c, i3, c2;
-
-    // validation
-    for (ii = 1; ii <= 2; ii++) {
-        if (ii == 1)
-            i = handle_icon;
-        if (ii == 2)
-            i = handle_window_icon;
-        if (i >= 0) { // validate i
-            validatepage(i);
-            i = page[i];
-        } else {
-            i = -i;
-            if (i >= nextimg) {
-                error(258);
-                return;
-            }
-            if (!img[i].valid) {
-                error(258);
-                return;
-            }
-        }
-        if (img[i].text) {
-            error(5);
-            return;
-        }
-        if (ii == 1)
-            handle_icon = i;
-        if (ii == 2)
-            handle_window_icon = i;
-    }
-
-#        ifdef QB64_WINDOWS
-    HWND win = (HWND)func__windowhandle();
-    if (!win) {
-        return;
-    }
-
-    static HANDLE ExeIcon;
-    static HANDLE ExeIcon16;
-
-    // Attempt to load the first icon embedded in the .exe
-    if (!ExeIcon)
-        ExeIcon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 32, 32, 0);
-    if (!ExeIcon16)
-        ExeIcon16 = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(0), IMAGE_ICON, 16, 16, 0);
-
-    // If we have an embedded icon, we'll use it instead of QB64-PE's default
-    if (!(passed & 1) && (ExeIcon)) {
-        SendMessage(win, WM_SETICON, ICON_BIG, (LPARAM)ExeIcon);
-
-        if (ExeIcon16) {
-            SendMessage(win, WM_SETICON, ICON_SMALL, (LPARAM)ExeIcon16);
-        } else {
-            SendMessage(win, WM_SETICON, ICON_SMALL, (LPARAM)ExeIcon);
-        }
-        return;
-    }
-    for (ii = 1; ii <= 2; ii++) {
-
-        if (ii == 1) {
-            i = handle_icon;
-            w = GetSystemMetrics(SM_CXICON);
-            h = GetSystemMetrics(SM_CYICON);
-        }
-        if (ii == 2) {
-            i = handle_window_icon;
-            w = GetSystemMetrics(SM_CXSMICON);
-            h = GetSystemMetrics(SM_CYSMICON);
-        }
-
-        // source[http://support.microsoft.com/kb/318876]
-        ICONINFO iinfo;
-        HDC hdc;
-        BITMAPV5HEADER bi;
-        HBITMAP hBitmap, hOldBitmap;
-        void *lpBits;
-        HCURSOR hAlphaCursor = NULL;
-        ZeroMemory(&bi, sizeof(BITMAPV5HEADER));
-        bi.bV5Size = sizeof(BITMAPV5HEADER);
-        bi.bV5Width = w;
-        bi.bV5Height = h;
-        bi.bV5Planes = 1;
-        bi.bV5BitCount = 32;
-        bi.bV5Compression = BI_BITFIELDS;
-        // The following mask specification specifies a supported 32 BPP
-        // alpha format for Windows XP.
-        bi.bV5RedMask = 0x00FF0000;
-        bi.bV5GreenMask = 0x0000FF00;
-        bi.bV5BlueMask = 0x000000FF;
-        bi.bV5AlphaMask = 0xFF000000;
-        hdc = GetDC(NULL);
-        // Create the DIB section with an alpha channel.
-        hBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&lpBits, NULL, (DWORD)0);
-        ReleaseDC(NULL, hdc);
-
-        i2 = func__newimage(w, h, 32, 1);
-        sub__dontblend(i2, 1);
-        sub__putimage(NULL, NULL, NULL, NULL, -i, i2, NULL, NULL, NULL, NULL, 8 + 32);
-
-        o = img[-i2].offset32;
-        o2 = (uint32 *)lpBits;
-        for (y = 0; y < h; y++) {
-            for (x = 0; x < w; x++) {
-                c = o[(h - 1 - y) * w + x];
-                o2[y * w + x] = c;
-            }
-        }
-
-        sub__freeimage(i2, 1);
-
-        // Create an empty mask bitmap.
-        HBITMAP hMonoBitmap = CreateBitmap(w, h, 1, 1, NULL);
-
-        iinfo.fIcon = TRUE; // Change fIcon to TRUE to create an alpha icon
-        iinfo.xHotspot = 0;
-        iinfo.yHotspot = 0;
-        iinfo.hbmMask = hMonoBitmap;
-        iinfo.hbmColor = hBitmap;
-        // Create the alpha cursor with the alpha DIB section.
-        hAlphaCursor = CreateIconIndirect(&iinfo);
-
-        DeleteObject(hBitmap);
-        DeleteObject(hMonoBitmap);
-
-        if (ii == 1)
-            SendMessage(win, WM_SETICON, ICON_BIG, (LPARAM)hAlphaCursor);
-        if (ii == 2)
-            SendMessage(win, WM_SETICON, ICON_SMALL, (LPARAM)hAlphaCursor);
-
-    } // ii
-#        endif // QB64_WINDOWS
-#    endif     // DEPENDENCY_CONSOLE_ONLY
+#    endif // DEPENDENCY_CONSOLE_ONLY
 } // sub__icon
 #endif // DEPENDENCY_ICON
 
-int32_t func__desktopwidth() {
-#ifdef QB64_WINDOWS
-    return GetSystemMetrics(SM_CXSCREEN);
-#else
-#    ifdef QB64_GLUT
-    OPTIONAL_GLUT(0);
-    return libqb_glut_get(GLUT_SCREEN_WIDTH);
-#    else
-    return 0;
-#    endif
-#endif
-}
-
-int32_t func__desktopheight() {
-#ifdef QB64_WINDOWS
-    return GetSystemMetrics(SM_CYSCREEN);
-#else
-#    ifdef QB64_GLUT
-    OPTIONAL_GLUT(0);
-    return libqb_glut_get(GLUT_SCREEN_HEIGHT);
-#    else
-    return 0;
-#    endif
-#endif
-}
-
-void sub_screenicon() {
-#ifdef QB64_GLUT
-    NEEDS_GLUT();
-    libqb_glut_iconify_window();
-#endif
-}
-
-int32 func_windowexists() {
-#ifdef QB64_GLUT
-    return libqb_is_glut_up();
-#else
-    return -1;
-#endif
-}
-
-int32 func_screenicon() {
-#ifdef QB64_GLUT
-#    ifdef QB64_WINDOWS
-    HWND win = (HWND)func__windowhandle();
-    if (!win) {
-        return 0;
-    }
-    return -IsIconic(win);
-#    else
-    /*
-        Linux code not compiling for now
-        #include <X11/X.h>
-        #include <X11/Xlib.h>
-        extern Display *X11_display;
-        extern Window X11_window;
-        extern int32 screen_hide;
-        XWindowAttributes attribs;
-        while (!(X11_display && X11_window));
-        XGetWindowAttributes(X11_display, X11_window, &attribs);
-        if (attribs.map_state == IsUnmapped) return -1;
-        return 0;
-    #endif */
-    return 0; // if we get here and haven't exited already, we failed somewhere along the way.
-#    endif
-#else
-    return 0;
-#endif
-}
-
 int32 func__autodisplay() {
-    if (autodisplay) {
-        return -1;
-    }
-    return 0;
+    return QB_BOOL(autodisplay);
 }
 
 void sub__autodisplay() {
@@ -22762,7 +21379,7 @@ udlr:
 // Referenced: http://johnnie.jerrata.com/winsocktutorial/
 // Much of the unix sockets code based on http://beej.us/guide/bgnet/
 #ifdef QB64_WINDOWS
-#    include <winsock2.h>
+// winsock2.h must be included before windows.h
 WSADATA wsaData;
 WORD sockVersion;
 #else
@@ -23640,56 +22257,6 @@ void display_now() {
     }
 }
 
-void sub__fullscreen(int32 method, int32 passed) {
-    // ref: "[{_OFF|_STRETCH|_SQUAREPIXELS|OFF}][, _SMOOTH]"
-    //          1      2           3        4         1
-    int32 x;
-    if (method == 0)
-        x = 1;
-    if (method == 1 || method == 4)
-        x = 0;
-    if (method == 2)
-        x = 1;
-    if (method == 3)
-        x = 2;
-    if (passed & 1)
-        fullscreen_smooth = 1;
-    else
-        fullscreen_smooth = 0;
-    if (full_screen != x)
-        full_screen_set = x;
-    force_display_update = 1;
-}
-
-void sub__allowfullscreen(int32 method, int32 smooth) {
-    // ref: "[{_STRETCH|_SQUAREPIXELS|_OFF|_ALL|OFF}][, _SMOOTH|_OFF|_ALL|OFF]"
-    //            1          2         3    4   5         1      2    3   4
-
-    fullscreen_allowedmode = method;
-    if (method == 3 || method == 5)
-        fullscreen_allowedmode = -1;
-    if (method == 4 || method == 0)
-        fullscreen_allowedmode = 0;
-
-    fullscreen_allowedsmooth = smooth;
-    if (smooth == 2 || smooth == 4)
-        fullscreen_allowedsmooth = -1;
-    if (smooth == 3 || smooth == 0)
-        fullscreen_allowedsmooth = 0;
-}
-
-int32 func__fullscreen() {
-    static int32 x;
-    x = full_screen_set;
-    if (x != -1)
-        return x;
-    return full_screen;
-}
-
-int32 func__fullscreensmooth() {
-    return -fullscreen_smooth;
-}
-
 void chain_restorescreenstate(int32 i) {
     static int32 i32, i32b, i32c, x, x2;
     generic_get(i, -1, (uint8 *)&i32, 4);
@@ -24083,6 +22650,7 @@ int32 func__screenimage(int32 x1, int32 y1, int32 x2, int32 y2, int32 passed) {
     ReleaseDC(NULL, hdc);
     return i;
 #    else
+    // GLFW_TODO: Implement screenimage for other platforms
     return func__newimage(func__desktopwidth(), func__desktopheight(), 32, 1);
 #    endif
 }
@@ -25157,13 +23725,14 @@ void sub__screenprint(qbs *txt) {
 #ifndef DEPENDENCY_PRINTER
 
 // stubs
-void sub__printimage(int32 i) {
+void sub__printimage(int32_t i) {
+    (void)i;
     return;
 }
 
 #else
 
-void sub__printimage(int32 i) {
+void sub__printimage(int32_t i) {
 
 #    ifdef QB64_WINDOWS
 
@@ -25262,35 +23831,6 @@ failed:;
 
 #endif
 
-int32 func__keyhit() {
-    /*
-        //keyhit cyclic buffer
-        int64 keyhit[8192];
-        //    keyhit specific internal flags: (stored in high 32-bits)
-        //    &4294967296->numpad was used
-        int32 keyhit_nextfree=0;
-        int32 keyhit_next=0;
-        //note: if full, the oldest message is discarded to make way for the new message
-    */
-    if (keyhit_next != keyhit_nextfree) {
-        static int32 x;
-        x = *(int32 *)&keyhit[keyhit_next];
-        keyhit_next = (keyhit_next + 1) & 0x1FFF;
-        return x;
-    }
-    return 0;
-}
-
-int32 func__keydown(int32 x) {
-    if (x <= 0) {
-        error(5);
-        return 0;
-    }
-    if (keyheld(x))
-        return -1;
-    return 0;
-}
-
 void sub__mapunicode(int32 unicode_code, int32 ascii_code) {
     if (is_error_pending())
         return;
@@ -25350,63 +23890,6 @@ qbs *func__os() {
 
     // Have the compiler combine all our selections into one string
     return qbs_new_txt(QB64_OS_SYSTEM_STR QB64_OS_SYSTEM_EXTRA_STR QB64_OS_BITS_STR QB64_OS_ARCH_STR);
-}
-
-int32 func__screenx() {
-#if defined(QB64_GUI) && defined(QB64_WINDOWS) && defined(QB64_GLUT)
-    NEEDS_GLUT(0);
-    return libqb_glut_get(GLUT_WINDOW_X) - libqb_glut_get(GLUT_WINDOW_BORDER_WIDTH);
-#elif defined(QB64_GUI) && defined(QB64_MACOSX) && defined(QB64_GLUT)
-    NEEDS_GLUT(0);
-    return libqb_glut_get(GLUT_WINDOW_X);
-#endif
-    return 0; // if not windows then return 0
-}
-
-int32 func__screeny() {
-#if defined(QB64_GUI) && defined(QB64_WINDOWS) && defined(QB64_GLUT)
-    NEEDS_GLUT(0);
-    return libqb_glut_get(GLUT_WINDOW_Y) - libqb_glut_get(GLUT_WINDOW_BORDER_WIDTH) - libqb_glut_get(GLUT_WINDOW_HEADER_HEIGHT);
-#elif defined(QB64_GUI) && defined(QB64_MACOSX) && defined(QB64_GLUT)
-    NEEDS_GLUT(0);
-    return libqb_glut_get(GLUT_WINDOW_Y);
-#endif
-    return 0; // if not windows then return 0
-}
-
-void sub__screenmove(int32 x, int32 y, int32 passed) {
-    if (is_error_pending())
-        return;
-    if (!passed)
-        goto error;
-    if (passed == 3)
-        goto error;
-    if (full_screen)
-        return;
-
-#if defined(QB64_GUI) && defined(QB64_GLUT)
-    NEEDS_GLUT();
-
-    if (passed == 2) {
-        libqb_glut_position_window(x, y);
-    } else {
-        int32 SW = -1, SH, WW, WH;
-        while (SW == -1) {
-            SW = libqb_glut_get(GLUT_SCREEN_WIDTH);
-        }
-        SH = libqb_glut_get(GLUT_SCREEN_HEIGHT);
-        WW = libqb_glut_get(GLUT_WINDOW_WIDTH);
-        WH = libqb_glut_get(GLUT_WINDOW_HEIGHT);
-        x = (SW - WW) / 2;
-        y = (SH - WH) / 2;
-        libqb_glut_position_window(x, y);
-    }
-#endif
-
-    return;
-
-error:
-    error(5);
 }
 
 void key_update() {
@@ -25737,39 +24220,10 @@ void key_list() {
 }
 
 void key_assign(int32 i, qbs *str) {
-    if (is_error_pending())
-        return;
-    static int32 x, x2, i2;
-
-    if (((i >= 1) && (i <= 10)) || (i == 30) || (i == 31)) { // F1-F10,F11,F12
-        if (str->len > 15) {
-            error(5);
-            return;
-        }
-        if (!onkey[i].text)
-            onkey[i].text = qbs_new(0, 0);
-        qbs_set(onkey[i].text, str);
+    if (onkey_assign_binding(i, str)) {
         key_display_redraw = 1;
         key_update();
-        return;
-    } // F1-F10,F11,F12
-
-    if ((i >= 15) && (i <= 29)) { // user defined key
-        if (str->len == 0) {
-            onkey[i].key_scancode = 0;
-        } else {
-            x = str->chr[str->len - 1];
-            x2 = 0;
-            for (i2 = 0; i2 < str->len - 1; i2++)
-                x2 |= str->chr[i2];
-            onkey[i].key_scancode = x;
-            onkey[i].key_flags = x2;
-        }
-        return;
-    } // user defined key
-
-    error(5);
-    return;
+    }
 }
 
 void sub_paletteusing(void *element, int32 bits) {
@@ -25953,33 +24407,6 @@ void sub__console(int32 onoff) { // on=1 off=2
     }
 }
 
-void sub__screenshow() {
-#ifdef QB64_GLUT
-    screen_hide = 0;
-    // $SCREENHIDE programs will not have the window running
-    libqb_start_glut_thread();
-    libqb_glut_show_window();
-#endif
-}
-
-void sub__screenhide() {
-    if (screen_hide)
-        return;
-
-#ifdef QB64_GLUT
-    // This is probably unnecessary, no conditions allow for screen_hide==0
-    // without GLUT running, but it doesn't hurt anything.
-    libqb_start_glut_thread();
-    libqb_glut_hide_window();
-#endif
-
-    screen_hide = 1;
-}
-
-int32 func__screenhide() {
-    return -screen_hide;
-}
-
 void sub__consoletitle(qbs *s) {
 #ifdef QB64_WINDOWS
     char *title;
@@ -26057,249 +24484,10 @@ error:
     return b;
 }
 
-void GLUT_key_ascii(int32 key, int32 down) {
-#ifdef QB64_GLUT
-    static int32 v;
-
-    static int32 mod;
-    mod = glutGetModifiers(); // shift=1, control=2, alt=4
-
-#    ifndef CORE_FREEGLUT
-    /*
-        if (mod&GLUT_ACTIVE_SHIFT){
-        keydown_vk(VK+QBVK_LSHIFT);
-        }else{
-        keyup_vk(VK+QBVK_LSHIFT);
-        }
-
-        if (mod&GLUT_ACTIVE_CTRL){
-        keydown_vk(VK+QBVK_LCTRL);
-        }else{
-        keyup_vk(VK+QBVK_LCTRL);
-        }
-
-        if (mod&GLUT_ACTIVE_ALT){
-        keydown_vk(VK+QBVK_LALT);
-        }else{
-        keyup_vk(VK+QBVK_LALT);
-        }
-    */
-#    endif
-
-    // Note: The following is required regardless of whether FREEGLUT is/isn't being used
-    // #ifdef CORE_FREEGLUT
-    // Is CTRL key down? If so, unencode character (applying shift as required)
-    if (mod & 2) {
-        // if (key==127){ //Removed: Might clash with CTRL+DELETE
-        // key=8;
-        // goto ctrl_mod;
-        //}//127
-        // if (key==3){//CTRL+(BREAK|SCROLL-LOCK)
-        // if (down) keydown_vk(VK+QBVK_BREAK); else keyup_vk(VK+QBVK_BREAK);
-        // return;
-        //}
-        if (key == 10) {
-            key = 13;
-            goto ctrl_mod;
-        } // 10
-        if ((key >= 1) && (key <= 26)) {
-            if (mod & 1)
-                key = key - 1 + 65;
-            else
-                key = key - 1 + 97; // assume caps lock off
-            goto ctrl_mod;
-        } // 1-26
-    }
-ctrl_mod:
-    // #endif
-
-#    ifdef QB64_MACOSX
-
-    // swap DEL and backspace keys
-
-    if (key == 8) {
-        key = 127;
-    } else {
-        if (key == 127) {
-            key = 8;
-        }
-    }
-
-#    endif
-
-    if (key == 127) { // delete
-        if (down)
-            keydown_vk(0x5300);
-        else
-            keyup_vk(0x5300);
-        return;
-    }
-    if (down)
-        keydown_ascii(key);
-    else
-        keyup_ascii(key);
-#endif
-}
-
-void GLUT_KEYBOARD_FUNC(unsigned char key, int x, int y) {
-
-    // glutPostRedisplay();
-
-    // qbs_print(qbs_str(key),0);
-    // qbs_print(qbs_str((int32)glutGetModifiers()),1);
-
-    GLUT_key_ascii(key, 1);
-}
-
-void GLUT_KEYBOARDUP_FUNC(unsigned char key, int x, int y) {
-    GLUT_key_ascii(key, 0);
-}
-
-void GLUT_key_special(int32 key, int32 down) {
-#ifdef QB64_GLUT
-#    ifndef CORE_FREEGLUT
-    /*
-        static int32 mod;
-        mod=glutGetModifiers();//shift=1, control=2, alt=4
-        if (mod&GLUT_ACTIVE_SHIFT){
-        keydown_vk(VK+QBVK_LSHIFT);
-        }else{
-        keyup_vk(VK+QBVK_LSHIFT);
-        }
-
-        if (mod&GLUT_ACTIVE_CTRL){
-        keydown_vk(VK+QBVK_LCTRL);
-        }else{
-        keyup_vk(VK+QBVK_LCTRL);
-        }
-
-        if (mod&GLUT_ACTIVE_ALT){
-        keydown_vk(VK+QBVK_LALT);
-        }else{
-        keyup_vk(VK+QBVK_LALT);
-        }
-    */
-#    endif
-
-    static int32 vk;
-    vk = -1;
-    if (key == GLUT_KEY_F1) {
-        vk = 0x3B00;
-    }
-    if (key == GLUT_KEY_F2) {
-        vk = 0x3C00;
-    }
-    if (key == GLUT_KEY_F3) {
-        vk = 0x3D00;
-    }
-    if (key == GLUT_KEY_F4) {
-        vk = 0x3E00;
-    }
-    if (key == GLUT_KEY_F5) {
-        vk = 0x3F00;
-    }
-    if (key == GLUT_KEY_F6) {
-        vk = 0x4000;
-    }
-    if (key == GLUT_KEY_F7) {
-        vk = 0x4100;
-    }
-    if (key == GLUT_KEY_F8) {
-        vk = 0x4200;
-    }
-    if (key == GLUT_KEY_F9) {
-        vk = 0x4300;
-    }
-    if (key == GLUT_KEY_F10) {
-        vk = 0x4400;
-    }
-    if (key == GLUT_KEY_F11) {
-        vk = 0x8500;
-    }
-    if (key == GLUT_KEY_F12) {
-        vk = 0x8600;
-    }
-    if (key == GLUT_KEY_LEFT) {
-        vk = 0x4B00;
-    }
-    if (key == GLUT_KEY_UP) {
-        vk = 0x4800;
-    }
-    if (key == GLUT_KEY_RIGHT) {
-        vk = 0x4D00;
-    }
-    if (key == GLUT_KEY_DOWN) {
-        vk = 0x5000;
-    }
-    if (key == GLUT_KEY_PAGE_UP) {
-        vk = 0x4900;
-    }
-    if (key == GLUT_KEY_PAGE_DOWN) {
-        vk = 0x5100;
-    }
-    if (key == GLUT_KEY_HOME) {
-        vk = 0x4700;
-    }
-    if (key == GLUT_KEY_END) {
-        vk = 0x4F00;
-    }
-    if (key == GLUT_KEY_INSERT) {
-        vk = 0x5200;
-    }
-
-#    ifdef CORE_FREEGLUT
-    if (key == 112) {
-        vk = VK + QBVK_LSHIFT;
-    }
-    if (key == 113) {
-        vk = VK + QBVK_RSHIFT;
-    }
-    if (key == 114) {
-        vk = VK + QBVK_LCTRL;
-    }
-    if (key == 115) {
-        vk = VK + QBVK_RCTRL;
-    }
-    if (key == 116) {
-        vk = VK + QBVK_LALT;
-    }
-    if (key == 117) {
-        vk = VK + QBVK_RALT;
-    }
-#    endif
-
-    if (vk != -1) {
-#    ifdef QB64_WINDOWS
-        if (!func__hasfocus() && !(keyheld(vk) && !down))
-            return;
-#    endif
-
-        if (down)
-            keydown_vk(vk);
-        else
-            keyup_vk(vk);
-    }
-
-#endif
-}
-
-void GLUT_SPECIAL_FUNC(int key, int x, int y) {
-
-    // qbs_print(qbs_str((int32)glutGetModifiers()),1);
-
-    GLUT_key_special(key, 1);
-}
-
-void GLUT_SPECIALUP_FUNC(int key, int x, int y) {
-    GLUT_key_special(key, 0);
-}
-
 static int64_t lastTick = 0;
 static double deltaTick = 0;
 
-void GLUT_IDLEFUNC() {
-    libqb_process_glut_queue();
-
+void GLUT_IDLE_FUNC() {
 #ifdef QB64_MACOSX
 #    ifdef DEPENDENCY_DEVICEINPUT
     // must be in same thread as GLUT for OSX
@@ -26308,16 +24496,7 @@ void GLUT_IDLEFUNC() {
 #    endif
 #endif
 
-#ifdef QB64_GLUT
-
-#    ifdef QB64_LINUX
-    if (x11_lock_request) {
-        x11_locked = 1;
-        x11_lock_request = 0;
-        while (x11_locked)
-            Sleep(1);
-    }
-#    endif
+#ifdef QB64_GUI
     int64_t curTime = GetTicks();
 
     // This is how long the frame took to render
@@ -26345,7 +24524,7 @@ void GLUT_IDLEFUNC() {
             deltaTick += ((double)1000 / max_fps);
     }
 
-    glutPostRedisplay();
+    GLUTEmu_WindowRefresh();
 #endif
 }
 
@@ -26425,20 +24604,6 @@ void sub__glrender(int32 method) {
 #ifndef QB64_GUI // begin stubs
 
 #else // end stubs
-
-void GLUT_RESHAPE_FUNC(int width, int height) {
-    resize_event_x = width;
-    resize_event_y = height;
-    resize_event = -1;
-    display_x_prev = display_x, display_y_prev = display_y;
-    display_x = width;
-    display_y = height;
-    resize_pending = 0;
-    os_resize_event = 1;
-    set_view(VIEW_MODE__UNKNOWN);
-    //***glutReshapeWindow(...) has no effect if called
-    //   within GLUT_RESHAPE_FUNC***
-}
 
 // displaycall is the window of time to update our display
 
@@ -26568,7 +24733,17 @@ void prepare_environment_2d() { // called prior to rendering 2D content
             environment_2d__screen_y2 = environment_2d__screen_height - 1;
             goto cant_scale;
         }
-        if (need_square_pixels == 0 || (window_ratio == screen_ratio)) {
+        static int32 use_letterbox;
+        use_letterbox = 0;
+
+        if (need_square_pixels) {
+            use_letterbox = (window_ratio != screen_ratio);
+        } else if (resize_auto > 0) {
+            static constexpr float resize_ratio_epsilon = 0.0025f;
+            use_letterbox = (std::fabs(window_ratio - screen_ratio) > resize_ratio_epsilon);
+        }
+
+        if (!use_letterbox) {
             // can stretch, no 'letter-box' required
             environment_2d__screen_x1 = 0;
             environment_2d__screen_y1 = 0;
@@ -26576,37 +24751,34 @@ void prepare_environment_2d() { // called prior to rendering 2D content
             environment_2d__screen_y2 = environment__window_height - 1;
         } else {
             //'letter-box' required
-            // this section needs revision
-            static float x_scale, y_scale;
-            static int32 x1, y1, x2, y2, z, x_limit, y_limit, x_offset, y_offset;
-            // x_scale=(float)environment_2d__screen_width/(float)environment__window_width;
-            // y_scale=(float)environment_2d__screen_height/(float)environment__window_height;
-            // x_offset=0; y_offset=0;
+            static int32 x1, y1, x2, y2, z;
 
             x1 = 0;
             y1 = 0;
             x2 = environment__window_width - 1;
             y2 = environment__window_height - 1;
-            // x_limit=x2; y_limit=y2;
-            if (window_ratio > screen_ratio) {
+
+            static int64 window_ratio_numerator, screen_ratio_numerator;
+            window_ratio_numerator = (int64)environment__window_width * (int64)environment_2d__screen_height;
+            screen_ratio_numerator = (int64)environment__window_height * (int64)environment_2d__screen_width;
+
+            if (window_ratio_numerator > screen_ratio_numerator) {
                 // pad sides
-                z = (float)environment__window_height * screen_ratio; // new width
-                x1 = environment__window_width / 2 - z / 2;
+                z = (int32)(((int64)environment__window_height * (int64)environment_2d__screen_width) / (int64)environment_2d__screen_height);
+                if (z < 1)
+                    z = 1;
+                x1 = (environment__window_width - z) / 2;
                 x2 = x1 + z - 1;
                 environment_2d__letterbox = 1; // vertical black stripes
                                                // required
-                // x_offset=-x1;
-                // x_scale=(float)environment_2d__screen_width/(float)z;
-                // x_limit=z-1;
             } else {
                 // pad top/bottom
-                z = (float)environment__window_width / screen_ratio; // new height
-                y1 = environment__window_height / 2 - z / 2;
+                z = (int32)(((int64)environment__window_width * (int64)environment_2d__screen_height) / (int64)environment_2d__screen_width);
+                if (z < 1)
+                    z = 1;
+                y1 = (environment__window_height - z) / 2;
                 y2 = y1 + z - 1;
                 environment_2d__letterbox = 2; // horizontal black stripes required
-                // y_offset=-y1;
-                // y_scale=(float)environment_2d__screen_height/(float)z;
-                // y_limit=z-1;
             }
             environment_2d__screen_x1 = x1;
             environment_2d__screen_y1 = y1;
@@ -26817,8 +24989,8 @@ void set_cull_mode(int32 new_mode) {
     render_state.cull_mode = new_mode;
 }
 
-void set_view(int32 new_mode) { // set view can only be called after the correct
-                                // destination is chosen
+void set_view(int32_t new_mode) { // set view can only be called after the correct
+                                  // destination is chosen
     static int32 current_mode;
     current_mode = render_state.view_mode;
     if (new_mode == current_mode)
@@ -26870,53 +25042,14 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
 
         if (render_state.dest_handle == 0) {
             static int32 dst_w, dst_h;
-            static int32 scale_factor = 0;
-
-#    ifdef QB64_MACOSX
-            if (scale_factor == 0) {
-                // by default scale_factor should be 1, but in macOS Catalina
-                // (10.15.*) scale_factor must be setted in 2
-                // * in cases where the app is executed on system with Retina
-                // Display
-                scale_factor = 1; // by default
-
-                // lookup for retina/5k output from system_profiler (storing all
-                // outpun in stream)
-                bool b_isRetina, b_is5k;
-                FILE *consoleStream = popen("system_profiler SPDisplaysDataType 2>/dev/null", "r");
-                if (consoleStream) {
-                    char buffer[128];
-                    while (!feof(consoleStream)) {
-                        if (fgets(buffer, 128, consoleStream) != NULL) {
-                            std::string szBuffer(buffer);
-
-                            if (!b_isRetina)
-                                b_isRetina = (szBuffer.rfind("Retina") != ULONG_MAX);
-                            if (!b_is5k)
-                                b_is5k = (szBuffer.rfind("5K") != ULONG_MAX);
-                        }
-                    }
-                }
-                pclose(consoleStream);
-
-                if (b_isRetina || b_is5k) {
-                    // apply only factor = 2 if macOS is Catalina (11.15.* //
-                    // kern.osrelease 19.*)
-                    char str[256];
-                    size_t size = sizeof(str);
-                    int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
-
-                    std::string sz_osrelease(str);
-                    if (sz_osrelease.rfind("19.") == 0)
-                        scale_factor = 2;
-                }
-            }
-#    else
-            scale_factor = 1;
-#    endif
+            static int32 vp_w, vp_h;
 
             dst_w = environment__window_width;
             dst_h = environment__window_height;
+
+            auto framebuffer_size = GLUTEmu_WindowGetFramebufferSize();
+            vp_w = (framebuffer_size.first > 0) ? framebuffer_size.first : dst_w;
+            vp_h = (framebuffer_size.second > 0) ? framebuffer_size.second : dst_h;
 
             // alert(dst_w);
             // alert(dst_h);
@@ -26928,7 +25061,7 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
             glLoadIdentity();
             glScalef(1, -1, 1);         // flip vertically
             glTranslatef(0, -dst_h, 0); // move to new vertical position
-            glViewport(0, 0, dst_w * scale_factor, dst_h * scale_factor);
+            glViewport(0, 0, vp_w, vp_h);
 
         } else {
             static hardware_img_struct *hardware_img;
@@ -26954,9 +25087,15 @@ void set_view(int32 new_mode) { // set view can only be called after the correct
         }
         if (render_state.dest_handle == 0) {
             static int32 dst_w, dst_h;
+            static int32 vp_w, vp_h;
             dst_w = environment__window_width;
             dst_h = environment__window_height;
-            glViewport(0, 0, (GLsizei)dst_w, (GLsizei)dst_h);
+
+            auto framebuffer_size = GLUTEmu_WindowGetFramebufferSize();
+            vp_w = (framebuffer_size.first > 0) ? framebuffer_size.first : dst_w;
+            vp_h = (framebuffer_size.second > 0) ? framebuffer_size.second : dst_h;
+
+            glViewport(0, 0, (GLsizei)vp_w, (GLsizei)vp_h);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
 
@@ -27642,160 +25781,11 @@ void GLUT_DISPLAY_REQUEST() {
     environment_2d__screen_width = display_frame[i].w;
     environment_2d__screen_height = display_frame[i].h;
 
-    os_resize_event = 0; // turn off flag which forces a render to take place
-                         // even if no content has changed
-
-    if ((full_screen == 0) && (full_screen_set == -1)) { // not in (or attempting to enter) full screen
-
-        display_required_x = display_frame[i].w;
-        display_required_y = display_frame[i].h;
-        static int32 framesize_changed;
-        framesize_changed = 0;
-        if ((display_required_x != resize_snapback_x) || (display_required_y != resize_snapback_y))
-            framesize_changed = 1;
-
-        resize_auto_ideal_aspect = (float)display_frame[i].w / (float)display_frame[i].h;
-        resize_snapback_x = display_required_x;
-        resize_snapback_y = display_required_y;
-
-        if (resize_auto) {
-            // maintain aspect ratio
-            static float ar;
-            ar = (float)display_x / (float)display_y;
-            if ((ar != resize_auto_accept_aspect) && (ar != resize_auto_ideal_aspect)) {
-                // set new size
-                static int32 x, y;
-                if (display_x_prev == display_x) {
-                    y = display_y;
-                    x = (float)y * resize_auto_ideal_aspect;
-                }
-                if (display_y_prev == display_y) {
-                    x = display_x;
-                    y = (float)x / resize_auto_ideal_aspect;
-                }
-                if ((display_y_prev != display_y) && (display_x_prev != display_x)) {
-                    if (abs(display_y_prev - display_y) < abs(display_x_prev - display_x)) {
-                        x = display_x;
-                        y = (float)x / resize_auto_ideal_aspect;
-                    } else {
-                        y = display_y;
-                        x = (float)y * resize_auto_ideal_aspect;
-                    }
-                }
-                resize_auto_accept_aspect = (float)x / (float)y;
-                resize_pending = 1;
-                glutReshapeWindow(x, y);
-                glutPostRedisplay();
-
-                goto auto_resized;
-            }
-        } // resize_auto
-
-        if ((display_required_x != display_x) || (display_required_y != display_y)) {
-            if (resize_snapback || framesize_changed) {
-                glutReshapeWindow(display_required_x, display_required_y);
-                glutPostRedisplay();
-                resize_pending = 1;
-            }
-        }
-
-    auto_resized:;
-
-    } // not in (or attempting to enter) full screen
-
-    // Pseudo-Fullscreen
-    if (!resize_pending) {           // avoid switching to fullscreen before resize
-                                     // operations take effect
-        if (full_screen_set != -1) { // full screen mode change requested
-            if (full_screen_set == 0) {
-                if (full_screen != 0) {
-                    // exit full screen
-                    resize_pending = 1;
-                    glutReshapeWindow(display_frame[i].w, display_frame[i].h);
-                    glutPostRedisplay();
-                }
-                full_screen = 0;
-                full_screen_set = -1;
-            } else {
-                if (full_screen == 0) {
-                    glutFullScreen();
-                }
-                full_screen = full_screen_set;
-                full_screen_set = -1;
-            } // enter full screen
-        } // full_screen_set check
-    } // size pending check
-
-    // This code is deprecated but kept for reference purposes
-    // 1) It was found to be unstable
-    // 2) Switching modes means a high chance of losing pre-loaded OpenGL
-    // hardware textures/surfaces
-    /*
-        static int32 glut_window;
-        //fullscreen
-        if (!resize_pending){//avoid switching to fullscreen before resize
-       operations take effect if (full_screen_set!=-1){//full screen mode change
-       requested if (full_screen_set==0){
-        //exit full screen
-        glutLeaveGameMode();
-        glutSetWindow(glut_window);
-        reinit_glut_callbacks();
-        full_screen=0;
-        full_screen_set=-1;
-        return;
-        }else{
-        static char game_mode_string[1000];
-        static int32 game_mode_string_i;
-        game_mode_string_i=0;
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       display_frame[i].w); game_mode_string[game_mode_string_i++]=120;//"x"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       display_frame[i].h); game_mode_string[game_mode_string_i++]=58;//":"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       32); glutGameModeString(game_mode_string);
-        if(glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)){
-        //full screen using native dimensions which match the frame size
-        if (full_screen==0) glut_window=glutGetWindow();
-        glutEnterGameMode();
-        fullscreen_width=display_frame[i].w;
-       fullscreen_height=display_frame[i].h; reinit_glut_callbacks();
-        full_screen=full_screen_set;//it's currently irrelevant if it is
-       stretched or 1:1 full_screen_set=-1; return; }else{ //native dimensions
-       not possible
-        //attempt full screen using desktop dimensions
-        static int32 w; w=glutGet(GLUT_SCREEN_WIDTH);
-        static int32 h; h=glutGet(GLUT_SCREEN_HEIGHT);
-        game_mode_string_i=0;
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       w); game_mode_string[game_mode_string_i++]=120;//"x"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       h); game_mode_string[game_mode_string_i++]=58;//":"
-        game_mode_string_i+=sprintf(&game_mode_string[game_mode_string_i], "%d",
-       32); glutGameModeString(game_mode_string);
-        if(glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)){
-        //full screen using desktop dimensions
-        if (full_screen==0) glut_window=glutGetWindow();
-        glutEnterGameMode();
-        fullscreen_width=w; fullscreen_height=h;
-        reinit_glut_callbacks();
-        screen_scale=full_screen_set;
-        full_screen=full_screen_set;
-        full_screen_set=-1;
-        return;
-        }else{
-        //cannot enter full screen
-        full_screen=0;
-        full_screen_set=-1;
-        }
-        }
-        }//enter full screen
-        }//full_screen_set check
-        }//size pending check
-    */
+    // Window resizing/fullscreen policy is centralized in the window module.
+    window_update_for_frame(display_frame[i].w, display_frame[i].h);
 
     // set window environment variables
-    environment__window_width = display_x;
-    environment__window_height = display_y;
+    window_update_environment_size();
 
     prepare_environment_2d();
 
@@ -28102,7 +26092,7 @@ void GLUT_DISPLAY_REQUEST() {
                            // "invisible"
         //...
     } else {
-        glutSwapBuffers();
+        GLUTEmu_WindowSwapBuffers();
     }
 
     in_GLUT_DISPLAY_REQUEST = 0;
@@ -28110,7 +26100,7 @@ void GLUT_DISPLAY_REQUEST() {
 } // GLUT_DISPLAY_REQUEST
 
 void GLUT_MouseButton_Up(int button, int x, int y) {
-#    ifdef QB64_GLUT
+#    ifdef QB64_GUI
     int32 i;
     mouse_message_queue_struct *queue = &mouse_message_queue;
 
@@ -28149,7 +26139,7 @@ void GLUT_MouseButton_Up(int button, int x, int y) {
 }
 
 void GLUT_MouseButton_Down(int button, int x, int y) {
-#    ifdef QB64_GLUT
+#    ifdef QB64_GUI
 
     int32 i;
     mouse_message_queue_struct *queue = &mouse_message_queue;
@@ -28208,22 +26198,69 @@ void GLUT_MouseButton_Down(int button, int x, int y) {
 #    endif
 }
 
-void GLUT_MOUSE_FUNC(int glut_button, int state, int x, int y) {
-#    ifdef QB64_GLUT
-    if (state == GLUT_DOWN)
-        GLUT_MouseButton_Down(glut_button + 1, x, y);
-    if (state == GLUT_UP)
-        GLUT_MouseButton_Up(glut_button + 1, x, y);
+void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers) {
+#    ifdef QB64_GUI
+    int qbMouseButton;
+
+    if (button == GLUTEmu_MouseButton::Left) {
+        qbMouseButton = 1; // QB64 mouse button 1
+    } else if (button == GLUTEmu_MouseButton::Middle) {
+        qbMouseButton = 2; // QB64 mouse button 3
+    } else if (button == GLUTEmu_MouseButton::Right) {
+        qbMouseButton = 3; // QB64 mouse button 2
+    } else {
+        qbMouseButton = int(button) + 3; // Extended buttons 6+ (4 and 5 are mouse wheel)
+    }
+    switch (action) {
+    case GLUTEmu_ButtonAction::Pressed:
+    case GLUTEmu_ButtonAction::Repeated:
+        GLUT_MouseButton_Down(qbMouseButton, x, y);
+        break;
+
+    case GLUTEmu_ButtonAction::Released:
+        GLUT_MouseButton_Up(qbMouseButton, x, y);
+        break;
+    }
+#    else
+    (void)x;
+    (void)y;
+    (void)button;
+    (void)action;
+    (void)mode;
+    (void)modifiers;
 #    endif
 }
 
-void GLUT_MOTION_FUNC(int x, int y) {
+void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode) {
+#    ifdef QB64_GUI
+    (void)xOffset;
+    // GLFW_TODO: xOffset is not used currently, but we should make use of it in the future. xOffset and yOffset provides fractional values, so this needs to be
+    // fixed in a way where we can pass the exact values to the user.
+    auto iScroll = int(yOffset);
+    if (iScroll > 0) {
+        while (iScroll) {
+            GLUT_MouseButton_Down(4, x, y);
+            GLUT_MouseButton_Up(4, x, y);
+            --iScroll;
+        }
+    } else if (iScroll < 0) {
+        while (iScroll) {
+            GLUT_MouseButton_Down(5, x, y);
+            GLUT_MouseButton_Up(5, x, y);
+            ++iScroll;
+        }
+    }
+#    else
+    (void)x;
+    (void)y;
+    (void)xOffset;
+    (void)yOffset;
+    (void)mode;
+#    endif
+}
 
+void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode) {
     int32 i, last_i;
-    int32 xrel, yrel;
-
-    // This is used to save the last mouse position which is then paired with the mouse wheel event on macOS
-    MacMouse_UpdatePosition(x, y);
 
     mouse_message_queue_struct *queue = &mouse_message_queue;
 
@@ -28239,44 +26276,56 @@ void GLUT_MOTION_FUNC(int x, int y) {
         queue->current = nextIndex;
     }
 
-#    if defined(QB64_WINDOWS) || defined(QB64_MACOSX)
-    // Windows calculates relative movement by intercepting WM_INPUT events
-    // macOS uses the Quartz Event Services to get relative movements
-    xrel = 0;
-    yrel = 0;
-#    else
-    // TODO: This needs to be correctly implemented on Linux
-    xrel = x - queue->queue[queue->last].x;
-    yrel = y - queue->queue[queue->last].y;
-#    endif
-
-    queue->queue[i].x = x;
-    queue->queue[i].y = y;
-    queue->queue[i].movementx = xrel;
-    queue->queue[i].movementy = yrel;
-    queue->queue[i].buttons = queue->queue[last_i].buttons;
-    queue->last = i;
-
-    // message #2 (clears movement values to avoid confusion)
-    last_i = queue->last;
-    i = queue->last + 1;
-    if (i > queue->lastIndex)
-        i = 0;
-    if (i == queue->current) {
-        int32 nextIndex = queue->last + 1;
-        if (nextIndex > queue->lastIndex)
-            nextIndex = 0;
-        queue->current = nextIndex;
+    if (GLUTEnum_MouseCursorMode::Disabled == mode) {
+        queue->queue[i].x = 0;
+        queue->queue[i].y = 0;
+        queue->queue[i].movementx = x;
+        queue->queue[i].movementy = y;
+    } else {
+        queue->queue[i].x = x;
+        queue->queue[i].y = y;
+        queue->queue[i].movementx = x - queue->queue[last_i].x;
+        queue->queue[i].movementy = y - queue->queue[last_i].y;
     }
-    queue->queue[i].x = x;
-    queue->queue[i].y = y;
-    queue->queue[i].movementx = 0;
-    queue->queue[i].movementy = 0;
+
     queue->queue[i].buttons = queue->queue[last_i].buttons;
     queue->last = i;
+
+    if (GLUTEnum_MouseCursorMode::Disabled == mode) {
+        // message #2 (clears movement values to avoid confusion)
+        last_i = queue->last;
+        i = queue->last + 1;
+        if (i > queue->lastIndex)
+            i = 0;
+        if (i == queue->current) {
+            int32 nextIndex = queue->last + 1;
+            if (nextIndex > queue->lastIndex)
+                nextIndex = 0;
+            queue->current = nextIndex;
+        }
+        queue->queue[i].x = 0;
+        queue->queue[i].y = 0;
+        queue->queue[i].movementx = 0;
+        queue->queue[i].movementy = 0;
+        queue->queue[i].buttons = queue->queue[last_i].buttons;
+        queue->last = i;
+    }
 
     if (device_last) { // core devices required?
-        if (!device_mouse_relative) {
+        if (GLUTEnum_MouseCursorMode::Disabled == mode) {
+            static device_struct *d;
+            d = &devices[2]; // mouse
+
+            int32 eventIndex = createDeviceEvent(d);
+            setDeviceEventWheelValue(d, eventIndex, 0, x);
+            setDeviceEventWheelValue(d, eventIndex, 1, y);
+            commitDeviceEvent(d);
+
+            eventIndex = createDeviceEvent(d);
+            setDeviceEventWheelValue(d, eventIndex, 0, 0);
+            setDeviceEventWheelValue(d, eventIndex, 1, 0);
+            commitDeviceEvent(d);
+        } else {
             static device_struct *d;
             d = &devices[2]; // mouse
 
@@ -28306,80 +26355,11 @@ void GLUT_MOTION_FUNC(int x, int y) {
             setDeviceEventAxisValue(d, eventIndex, 0, fx);
             setDeviceEventAxisValue(d, eventIndex, 1, fy);
             commitDeviceEvent(d);
-
-        } else {
-            static device_struct *d;
-            d = &devices[2]; // mouse
-
-            int32 eventIndex = createDeviceEvent(d);
-            static float fx, fy;
-            static int32 z;
-            fx = xrel;
-            fy = yrel;
-            setDeviceEventWheelValue(d, eventIndex, 0, fx);
-            setDeviceEventWheelValue(d, eventIndex, 1, fy);
-            commitDeviceEvent(d);
-
-            eventIndex = createDeviceEvent(d);
-            fx = 0;
-            fy = 0;
-            setDeviceEventWheelValue(d, eventIndex, 0, fx);
-            setDeviceEventWheelValue(d, eventIndex, 1, fy);
-            commitDeviceEvent(d);
         }
     } // core devices required
 }
 
-void GLUT_PASSIVEMOTION_FUNC(int x, int y) {
-    GLUT_MOTION_FUNC(x, y);
-}
-
-void GLUT_MOUSEWHEEL_FUNC(int wheel, int direction, int x, int y) {
-#    ifdef QB64_GLUT
-    // Note: freeglut specific, limited documentation existed so the following
-    // research was done:
-    //  qbs_print(qbs_str(wheel),NULL); <-- was always 0 [could 1 indicate
-    //  horizontal wheel?] qbs_print(qbs_str(direction),NULL); <-- 1(up) or
-    //  -1(down) qbs_print(qbs_str(x),NULL); <--mouse x,y co-ordinates
-    //  qbs_print(qbs_str(y),1);    <
-    if (direction > 0) {
-        GLUT_MouseButton_Down(4, x, y);
-        GLUT_MouseButton_Up(4, x, y);
-    }
-    if (direction < 0) {
-        GLUT_MouseButton_Down(5, x, y);
-        GLUT_MouseButton_Up(5, x, y);
-    }
-#    endif
-}
-
 #endif
-
-void sub__title(qbs *title) {
-    if (is_error_pending())
-        return;
-    static qbs *cz = NULL;
-    if (!cz) {
-        cz = qbs_new(1, 0);
-        cz->chr[0] = 0;
-    }
-    static qbs *str = NULL;
-    if (!str)
-        str = qbs_new(0, 0);
-    qbs_set(str, qbs_add(title, cz));
-
-    uint8 *buf, *old_buf;
-    buf = (uint8 *)malloc(str->len);
-    memcpy(buf, str->chr, str->len);
-    old_buf = window_title;
-    window_title = buf;
-    if (old_buf)
-        free(old_buf);
-
-    OPTIONAL_GLUT();
-
-    libqb_glut_set_window_title((char *)window_title);
-} // title
 
 void sub__echo(qbs *message) {
     if (is_error_pending())
@@ -28440,113 +26420,6 @@ void sub__writefile(qbs *filespec, qbs *contents) {
     } else {
         error(QB_ERROR_PATH_NOT_FOUND); // most common when making a new file
     }
-}
-
-void sub__filedrop(int32 on_off = NULL) {
-#ifdef QB64_WINDOWS
-    HWND win = (HWND)func__windowhandle();
-    if (!win)
-        return;
-
-    if ((on_off == NULL) || (on_off == 1)) {
-        DragAcceptFiles(win, TRUE);
-        acceptFileDrop = -1;
-    }
-    if (on_off == 2) {
-        DragAcceptFiles(win, FALSE);
-        acceptFileDrop = 0;
-    }
-#endif
-}
-
-int32 func__filedrop() {
-    return acceptFileDrop;
-}
-
-void sub__finishdrop() {
-#ifdef QB64_WINDOWS
-    DragFinish(hdrop);
-    totalDroppedFiles = 0;
-#endif
-}
-
-int32 func__totaldroppedfiles() {
-#ifdef QB64_WINDOWS
-    return totalDroppedFiles;
-#endif
-    return 0;
-}
-
-qbs *func__droppedfile(int32 fileIndex, int32 passed) {
-#ifdef QB64_WINDOWS
-    static int32 index = -1;
-    static char szNextFile[MAX_PATH];
-
-    if (totalDroppedFiles > 0) {
-        index++;
-        if (passed)
-            index = fileIndex - 1;
-        if ((index > totalDroppedFiles - 1) || (index < 0)) {
-            // out of bounds;
-            // if reading _DROPPEDFILE$ sequentially (without an
-            // index), hdrop is reset and the list is cleared.
-            if (!passed)
-                sub__finishdrop();
-            index = -1;
-            return qbs_new_txt("");
-        }
-        // fetch file[index] from hdrop:
-        if (DragQueryFileA(hdrop, index, szNextFile, MAX_PATH) > 0) {
-            if ((!passed) && (index == totalDroppedFiles - 1)) {
-                // last file read sequentially
-                sub__finishdrop();
-                index = -1;
-            }
-            return qbs_new_txt(szNextFile);
-        } else {
-            // error fetching file from hdrop;
-            sub__finishdrop();
-            index = -1;
-        }
-    } else {
-        index = -1;
-    }
-#endif
-    return qbs_new_txt("");
-}
-
-//                     0 1  2        0 1       2
-void sub__resize(int32 on_off, int32 stretch_smooth) {
-
-    if (on_off == 1)
-        resize_snapback = 0;
-    if (on_off == 2)
-        resize_snapback = 1;
-    // no change if omitted
-
-    if (stretch_smooth) {
-        resize_auto = stretch_smooth;
-    } else {
-        resize_auto = 0; // revert if omitted
-    }
-}
-
-int32 func__resize() {
-    if (resize_snapback)
-        return 0; // resize must be enabled
-    if (resize_event) {
-        resize_event = 0;
-        return -1;
-    }
-    return 0;
-}
-
-int32 func__resizewidth() {
-    return resize_event_x;
-}
-
-int32 func__resizeheight() {
-    return resize_event_y;
 }
 
 int32 func__scaledwidth() {
@@ -28646,7 +26519,7 @@ int main(int argc, char *argv[]) {
 
     set_dynamic_info();
     if (ScreenResize) {
-        resize_snapback = 0;
+        resize_snapback = false;
     }
     if (ScreenResizeScale) {
         resize_auto = ScreenResizeScale;
@@ -28677,26 +26550,7 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    onkey[1].keycode = 59 << 8; // F1-F10
-    onkey[2].keycode = 60 << 8;
-    onkey[3].keycode = 61 << 8;
-    onkey[4].keycode = 62 << 8;
-    onkey[5].keycode = 63 << 8;
-    onkey[6].keycode = 64 << 8;
-    onkey[7].keycode = 65 << 8;
-    onkey[8].keycode = 66 << 8;
-    onkey[9].keycode = 67 << 8;
-    onkey[10].keycode = 68 << 8;
-    onkey[11].keycode = 72 << 8; // up,left,right,down
-    onkey[11].keycode_alternate = VK + QBVK_KP8;
-    onkey[12].keycode = 75 << 8;
-    onkey[12].keycode_alternate = VK + QBVK_KP4;
-    onkey[13].keycode = 77 << 8;
-    onkey[13].keycode_alternate = VK + QBVK_KP6;
-    onkey[14].keycode = 80 << 8;
-    onkey[14].keycode_alternate = VK + QBVK_KP2;
-    onkey[30].keycode = 133 << 8; // F11,F12
-    onkey[31].keycode = 134 << 8;
+    onkey_init_default_bindings();
 
     ontimer[0].allocated = 1;
     ontimer[0].id = 0;
@@ -28831,50 +26685,33 @@ int main(int argc, char *argv[]) {
 
     command_initialize(argc, argv);
 
-#ifdef QB64_WINDOWS
-    // for caps lock, use the state of the lock (=1)
-    // for held keys check against (=-127)
-    if (GetKeyState(VK_SCROLL) & 1)
-        keyheld_add(QBK + QBK_SCROLL_LOCK_MODE);
-    if (GetKeyState(VK_SCROLL) < 0) {
-        bindkey = QBVK_SCROLLOCK;
-        keydown_vk(VK + QBVK_SCROLLOCK);
+    // GLFW_TODO: Check if we really need these at startup
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::Shift)) {
+        keyboard_set_bindkey(QBVK_LSHIFT);
+        keydown(VK + QBVK_LSHIFT);
     }
-    if (GetKeyState(VK_LSHIFT) < 0) {
-        bindkey = QBVK_LSHIFT;
-        keydown_vk(VK + QBVK_LSHIFT);
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::Control)) {
+        keyboard_set_bindkey(QBVK_LCTRL);
+        keydown(VK + QBVK_LCTRL);
     }
-    if (GetKeyState(VK_RSHIFT) < 0) {
-        bindkey = QBVK_RSHIFT;
-        keydown_vk(VK + QBVK_RSHIFT);
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::Alt)) {
+        keyboard_set_bindkey(QBVK_LALT);
+        keydown(VK + QBVK_LALT);
     }
-    if (GetKeyState(VK_LCONTROL) < 0) {
-        bindkey = QBVK_LCTRL;
-        keydown_vk(VK + QBVK_LCTRL);
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock)) {
+        keyboard_set_bindkey(QBVK_CAPSLOCK);
+        keydown(VK + QBVK_CAPSLOCK);
     }
-    if (GetKeyState(VK_RCONTROL) < 0) {
-        bindkey = QBVK_RCTRL;
-        keydown_vk(VK + QBVK_RCTRL);
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock)) {
+        keyboard_set_bindkey(QBVK_NUMLOCK);
+        keydown(VK + QBVK_NUMLOCK);
     }
-    if (GetKeyState(VK_LMENU) < 0) {
-        bindkey = QBVK_LALT;
-        keydown_vk(VK + QBVK_LALT);
-    }
-    if (GetKeyState(VK_RMENU) < 0) {
-        bindkey = QBVK_RALT;
-        keydown_vk(VK + QBVK_RALT);
-    }
-    if (GetKeyState(VK_CAPITAL) & 1) {
-        bindkey = QBVK_CAPSLOCK;
-        keydown_vk(VK + QBVK_CAPSLOCK);
-    }
-    if (GetKeyState(VK_NUMLOCK) & 1) {
-        bindkey = QBVK_NUMLOCK;
-        keydown_vk(VK + QBVK_NUMLOCK);
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock)) {
+        keyboard_set_bindkey(QBVK_SCROLLOCK);
+        keydown(VK + QBVK_SCROLLOCK);
     }
     update_shift_state();
     keyhit_next = keyhit_nextfree; // skip hitkey events generated by above code
-#endif
 
     // init fake keyb. cyclic buffer
     cmem[0x41a] = 30;
@@ -28959,7 +26796,7 @@ int main(int argc, char *argv[]) {
 
     libqb_http_init();
 
-    libqb_glut_presetup(argc, argv);
+    libqb_glut_presetup();
 
     struct libqb_thread *qbmain = libqb_thread_new();
     libqb_thread_start(qbmain, QBMAIN, NULL);
@@ -28969,7 +26806,9 @@ int main(int argc, char *argv[]) {
 
     lock_display_required = 1;
 
-    libqb_start_main_thread(argc, argv);
+    libqb_start_main_thread();
+
+    libqb_log_trace("Main thread exited");
 
     return 0; // Should never get here
 }
@@ -29098,38 +26937,6 @@ main_loop:
             0,  0,  0,  0,  0,   0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,  0,  0,  0,  0,
             0,  0,  0,  0,  0,   0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,  0,  0,  0,  0,
             0,  0,  0,  0,  0,   0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
-
-#ifdef QB64_WINDOWS
-        // manage important external keyboard lock/state changes
-        if ((GetKeyState(VK_SCROLL) & 1) != keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
-            if (keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
-                keyheld_remove(QBK + QBK_SCROLL_LOCK_MODE);
-            } else {
-                keyheld_add(QBK + QBK_SCROLL_LOCK_MODE);
-            }
-            update_shift_state();
-        }
-        if ((GetKeyState(VK_CAPITAL) & 1) != keyheld(VK + QBVK_CAPSLOCK)) {
-            if (keyheld(VK + QBVK_CAPSLOCK)) {
-                bindkey = QBVK_CAPSLOCK;
-                keyup_vk(VK + QBVK_CAPSLOCK);
-            } else {
-                bindkey = QBVK_CAPSLOCK;
-                keydown_vk(VK + QBVK_CAPSLOCK);
-            }
-            update_shift_state();
-        }
-        if ((GetKeyState(VK_NUMLOCK) & 1) != keyheld(VK + QBVK_NUMLOCK)) {
-            if (keyheld(VK + QBVK_NUMLOCK)) {
-                bindkey = QBVK_NUMLOCK;
-                keyup_vk(VK + QBVK_NUMLOCK);
-            } else {
-                bindkey = QBVK_NUMLOCK;
-                keydown_vk(VK + QBVK_NUMLOCK);
-            }
-            update_shift_state();
-        }
-#endif
 
         if (shell_call_in_progress)
             goto main_loop;
@@ -29999,1011 +27806,6 @@ void display() {
     }
 */
 
-void update_shift_state() {
-    int32 x;
-    /*
-        0:417h                   Shift Status
-        7 6 5 4 3 2 1 0
-        x . . . . . . .      Insert locked
-        . x . . . . . .      Caps Lock locked
-        . . x . . . . .      Num Lock locked
-        . . . x . . . .      Scroll Lock locked
-        . . . . x . . .      Alt key is pressed
-        . . . . . x . .      Ctrl key is pressed
-        . . . . . . x .      Left Shift key is pressed
-        . . . . . . . x      Right Shift key is pressed
-    */
-    x = 0;
-    if (keyheld(VK + QBVK_RSHIFT))
-        x |= 1;
-    if (keyheld(VK + QBVK_LSHIFT))
-        x |= 2;
-    if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-        x |= 4;
-    if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-        x |= 8;
-    if (keyheld(QBK + QBK_SCROLL_LOCK_MODE))
-        x |= 16;
-    if (keyheld(VK + QBVK_NUMLOCK))
-        x |= 32;
-    if (keyheld(VK + QBVK_CAPSLOCK))
-        x |= 64;
-    // note: insert state is emulated (off by default)
-    if (keyheld(QBK + QBK_INSERT_MODE))
-        x |= 128;
-    cmem[0x417] = x;
-    /*
-        0:418h                   Extended Shift Status
-        (interpret the word 'pressed' as "being held down")
-        7 6 5 4 3 2 1 0
-        x . . . . . . .      Ins key is pressed
-        . x . . . . . .      Caps Lock key is pressed (detection not possible, return 0)
-        . . x . . . . .      Num Lock key is pressed (detection not possible, return 0)
-        . . . x . . . .      Scroll Lock key is pressed
-        . . . . x . . .      Pause key locked
-        . . . . . x . .      SysReq key is pressed
-        . . . . . . x .      Left Alt key is pressed
-        . . . . . . . x      Left Ctrl key is pressed
-    */
-    x = 0;
-    if (keyheld(VK + QBVK_LCTRL))
-        x |= 1;
-    if (keyheld(VK + QBVK_LALT))
-        x |= 2;
-    if (keyheld(VK + QBVK_SYSREQ))
-        x |= 4;
-    if (keyheld(VK + QBVK_PAUSE))
-        x |= 8;
-    if (keyheld(VK + QBVK_SCROLLOCK))
-        x |= 16;
-    // if (keyheld(VK+QBVK_NUMLOCK)) x|=32;
-    // if (keyheld(VK+QBVK_CAPSLOCK)) x|=64;
-    if (keyheld(0x5200))
-        x |= 128;
-    cmem[0x418] = x;
-    /*
-        0:496h                   Keyboard Status and Type Flags
-        This byte holds keyboard status information.
-        Keyboard Status Information
-        7 6 5 4 3 2 1 0
-        x . . . . . . .       Read ID in progress (always 0)
-        . x . . . . . .       Last character was first ID character (always 0)
-        . . x . . . . .       Force Num Lock if read ID and KBX (always 0)
-        . . . x . . . .       101/102-key keyboard installed (always 1)
-        . . . . x . . .       Right Alt key is pressed
-        . . . . . x . .       Right Ctrl key is pressed
-        . . . . . . x .       Last code was E0 Hidden Code (always 0)
-        . . . . . . . x       last code was E1 Hidden Code (always 0)
-    */
-    x = 0;
-    if (keyheld(VK + QBVK_RCTRL))
-        x |= 1;
-    if (keyheld(VK + QBVK_RALT))
-        x |= 2;
-    x |= 16;
-    cmem[0x496] = x;
-}
-
-int32 keyup_mask_last = -1;
-uint32 keyup_mask[256]; // NULL values indicate removed masks
-
-void keyup(uint32 x) {
-
-    if (!x)
-        x = QBK + QBK_CHR0;
-
-    keyheld_remove(x);
-
-    if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
-        // identify and revert numpad specific key codes to non-numpad codes
-        static uint32 x2;
-        static int64 numpadkey;
-        numpadkey = 0;
-        x2 = x;
-        // check multimapped NUMPAD keys
-        if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
-            numpadkey = 4294967296ll;
-            if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP9))) {
-                x2 = x - (VK + QBVK_KP0) + 48;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_PERIOD)) {
-                x2 = 46;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_DIVIDE)) {
-                x2 = 47;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_MULTIPLY)) {
-                x2 = 42;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_MINUS)) {
-                x2 = 45;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_PLUS)) {
-                x2 = 43;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_ENTER)) {
-                x2 = 13;
-                goto onnumpad;
-            }
-        }
-        if ((x >= (QBK + 0)) && (x <= (QBK + 10))) {
-            numpadkey = 4294967296ll;
-            x2 = x - QBK;
-            if (x2 == 0) {
-                x2 = 82 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 1) {
-                x2 = 79 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 2) {
-                x2 = 80 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 3) {
-                x2 = 81 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 4) {
-                x2 = 75 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 5) {
-                x2 = 76 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 6) {
-                x2 = 77 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 7) {
-                x2 = 71 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 8) {
-                x2 = 72 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 9) {
-                x2 = 73 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 10) {
-                x2 = 83 << 8;
-                goto onnumpad;
-            }
-        }
-    onnumpad:;
-
-        static int32 i;
-        for (i = 0; i <= keyup_mask_last; i++) {
-            if (x == keyup_mask[i]) {
-                keyup_mask[i] = 0;
-                goto key_handled;
-            }
-        }
-
-        // add x2 to keyhit buffer
-        static int32 z;
-        z = (keyhit_nextfree + 1) & 0x1FFF;
-        if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
-            keyhit_next = (keyhit_next + 1) & 0x1FFF;
-        }
-        static int32 sx;
-        sx = x2;
-        sx = -sx;
-        x2 = sx; // negate x2
-        keyhit[keyhit_nextfree] = x2 | numpadkey;
-        keyhit_nextfree = z;
-    } // asciicode_reading!=2
-
-    static int32 shift, alt, ctrl, capslock, numlock;
-    numlock = 0;
-    capslock = 0;
-
-    if (x <= 255) {
-        if (scancode_lookup[x * 10 + 2])
-            scancodeup(scancode_lookup[x * 10 + 1]);
-        goto key_handled;
-    } // x<=255
-
-    // NUMPAD?
-    if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
-        if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_PERIOD)))
-            numlock = 1;
-        x = (x - (VK + QBVK_KP0) + 256) * 256;
-        goto numpadkey;
-    }
-    if ((x >= (QBK + 0)) && (x <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
-        x = (x - (QBK + 0) + 256) * 256;
-        goto numpadkey;
-    }
-
-    if (x <= 65535) {
-        static int32 r;
-    numpadkey:
-        r = (x >> 8) + 256;
-        if (scancode_lookup[r * 10 + 2])
-            scancodeup(scancode_lookup[r * 10 + 1]);
-
-        if (x == 0x5200) { // INSERT lock emulation
-            update_shift_state();
-        }
-
-        goto key_handled;
-    } // x<=65536
-
-    if (x == (VK + QBVK_LSHIFT)) {
-        scancodeup(42);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RSHIFT)) {
-        scancodeup(54);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LALT)) {
-        scancodeup(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RALT)) {
-        scancodeup(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LCTRL)) {
-        scancodeup(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RCTRL)) {
-        scancodeup(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_NUMLOCK)) {
-        scancodeup(69);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_CAPSLOCK)) {
-        scancodeup(58);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_SCROLLOCK)) {
-        scancodeup(70);
-        update_shift_state();
-    }
-
-key_handled:;
-}
-
-void keydown(uint32 x) {
-
-    if (!x)
-        x = QBK + QBK_CHR0;
-
-    static int32 glyph;
-    glyph = keydown_glyph;
-    keydown_glyph = 0;
-
-    // INSERT lock emulation
-    static int32 insert_held;
-    if (x == 0x5200)
-        insert_held = keyheld(0x5200);
-
-    // SCROLL lock tracking
-    static int32 scroll_lock_held;
-    if (x == (VK + QBVK_SCROLLOCK))
-        scroll_lock_held = keyheld(VK + QBVK_SCROLLOCK);
-
-    keyheld_add(x);
-
-    // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
-    // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. CTRL+BREAK handling
-    if ((x == (VK + QBVK_BREAK)) || ((x == (VK + QBVK_SCROLLOCK)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))) ||
-        ((x == (VK + QBVK_F15)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL)))) {
-        if (exit_blocked) {
-            exit_value |= 2;
-            goto key_handled;
-        }
-        close_program = 1;
-        goto key_handled;
-    }
-
-#ifdef QB64_WINDOWS
-    // note: Alt+F4 is supposed to close the window, but glut windows don't seem to be affected;
-    // this addresses the issue:
-    if ((x == (0x3E00)) && (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT))) {
-        if (exit_blocked) {
-            exit_value |= 1;
-            goto key_handled;
-        }
-        close_program = 1;
-        goto key_handled;
-    }
-#endif
-
-    // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
-    // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. PAUSE handling
-    if ((x == (VK + QBVK_PAUSE)) || ((x == (VK + QBVK_NUMLOCK)) && (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL)))) {
-        suspend_program |= 1;
-        qbevent = 1;
-        goto key_handled;
-    } else {
-        if (suspend_program & 1) {
-            suspend_program ^= 1;
-            goto key_handled;
-        }
-    }
-
-    // ALT+ENTER
-    if (keyheld(VK + QBVK_RALT) || keyheld(VK + QBVK_LALT)) {
-        if (x == 13) {
-            if (fullscreen_allowedmode >= 0) { // fullscreen_allowedmode==-1 bypasses alt+enter allowing it to be user-trappable
-                static int32 fs_mode, fs_smooth;
-                fs_mode = full_screen_set;
-                if (fs_mode == -1)
-                    fs_mode = full_screen;
-                fs_smooth = fullscreen_smooth;
-
-                int32 fs_combo;
-                if (fs_mode == 0)
-                    fs_combo = 0;
-                if ((fs_mode == 1) && (fs_smooth == 0))
-                    fs_combo = 1;
-                if ((fs_mode == 1) && (fs_smooth == 1))
-                    fs_combo = 2;
-                if ((fs_mode == 2) && (fs_smooth == 0))
-                    fs_combo = 3;
-                if ((fs_mode == 2) && (fs_smooth == 1))
-                    fs_combo = 4;
-
-                int32 fs_validmode = 0;
-                while (fs_validmode == 0) {
-                    fs_combo++;
-                    if (fs_combo > 4)
-                        fs_combo = 0;
-
-                    switch (fs_combo) {
-                    case 0:
-                        fs_mode = 0;
-                        fullscreen_smooth = 0;
-                        break;
-                    case 1:
-                        fs_mode = 1;
-                        fullscreen_smooth = 0;
-                        break;
-                    case 2:
-                        fs_mode = 1;
-                        fullscreen_smooth = 1;
-                        break;
-                    case 3:
-                        fs_mode = 2;
-                        fullscreen_smooth = 0;
-                        break;
-                    case 4:
-                        fs_mode = 2;
-                        fullscreen_smooth = 1;
-                        break;
-                    }
-
-                    if (fs_combo == 0)
-                        break; // 0 is always valid (= _OFF)
-
-                    fs_validmode = 1;
-                    // check _ALLOWFULLSCREEN's settings
-                    if ((fullscreen_allowedmode > 0) && (fs_mode != fullscreen_allowedmode))
-                        fs_validmode = 0;
-                    if ((fullscreen_allowedsmooth == 1) && (fullscreen_smooth != 1))
-                        fs_validmode = 0;
-                    if ((fullscreen_allowedsmooth == -1) && (fullscreen_smooth != 0))
-                        fs_validmode = 0;
-                }
-
-                // apply
-                if (full_screen != fs_mode)
-                    full_screen_set = fs_mode;
-                force_display_update = 1;
-                goto key_handled;
-            }
-        }
-    }
-
-    if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
-
-        // identify and revert numpad specific key codes to non-numpad codes
-        static uint32 x2;
-        static int64 numpadkey;
-        numpadkey = 0;
-        x2 = x;
-        // check multimapped NUMPAD keys
-        if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
-            numpadkey = 4294967296ll;
-            if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP9))) {
-                x2 = x - (VK + QBVK_KP0) + 48;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_PERIOD)) {
-                x2 = 46;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_DIVIDE)) {
-                x2 = 47;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_MULTIPLY)) {
-                x2 = 42;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_MINUS)) {
-                x2 = 45;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_PLUS)) {
-                x2 = 43;
-                goto onnumpad;
-            }
-            if (x == (VK + QBVK_KP_ENTER)) {
-                x2 = 13;
-                goto onnumpad;
-            }
-        }
-        if ((x >= (QBK + 0)) && (x <= (QBK + 10))) {
-            numpadkey = 4294967296ll;
-            x2 = x - QBK;
-            if (x2 == 0) {
-                x2 = 82 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 1) {
-                x2 = 79 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 2) {
-                x2 = 80 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 3) {
-                x2 = 81 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 4) {
-                x2 = 75 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 5) {
-                x2 = 76 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 6) {
-                x2 = 77 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 7) {
-                x2 = 71 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 8) {
-                x2 = 72 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 9) {
-                x2 = 73 << 8;
-                goto onnumpad;
-            }
-            if (x2 == 10) {
-                x2 = 83 << 8;
-                goto onnumpad;
-            }
-        }
-    onnumpad:;
-
-        // ON KEY trapping
-        { // new scope
-            static int32 block_onkey = 0;
-            static int32 f, x3, scancode, extended, c, flags_mask;
-            int32 i, i2; // must not be static!
-
-            // establish scancode (if any)
-            scancode = 0;
-            if (x <= 255) {
-                scancode = scancode_lookup[x * 10 + 1];
-                goto onkey_gotscancode;
-            }
-            //*check for 2 byte scancodes here
-            x3 = x;
-            if ((x3 >= (VK + QBVK_KP0)) && (x3 <= (VK + QBVK_KP_ENTER))) {
-                x3 = (x3 - (VK + QBVK_KP0) + 256) * 256;
-                goto onkey_numpadkey;
-            }
-            if ((x3 >= (QBK + 0)) && (x3 <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
-                x3 = (x3 - (QBK + 0) + 256) * 256;
-                goto onkey_numpadkey;
-            }
-            if (x3 <= 65535) {
-            onkey_numpadkey:
-                i = (x3 >> 8) + 256;
-                if (scancode_lookup[i * 10 + 2])
-                    scancode = scancode_lookup[i * 10 + 1];
-            }
-        onkey_gotscancode:
-
-            // check modifier keys
-            if (x == (VK + QBVK_LSHIFT)) {
-                scancode = 42;
-                flags_mask = 3;
-            }
-            if (x == (VK + QBVK_RSHIFT)) {
-                scancode = 54;
-                flags_mask = 3;
-            }
-            if (x == (VK + QBVK_LALT)) {
-                scancode = 56;
-                flags_mask = 8;
-            }
-            if (x == (VK + QBVK_RALT)) {
-                scancode = 56;
-                flags_mask = 8;
-            }
-            if (x == (VK + QBVK_LCTRL)) {
-                scancode = 29;
-                flags_mask = 4;
-            }
-            if (x == (VK + QBVK_RCTRL)) {
-                scancode = 29;
-                flags_mask = 4;
-            }
-            if (x == (VK + QBVK_NUMLOCK)) {
-                scancode = 69;
-                flags_mask = 32;
-            }
-            if (x == (VK + QBVK_CAPSLOCK)) {
-                scancode = 58;
-                flags_mask = 64;
-            }
-            if (x == (VK + QBVK_SCROLLOCK)) {
-                scancode = 70;
-                // note: no mask required
-            }
-
-            // establish if key is an extended key
-            extended = 0;
-            // arrow-pad (note: num-pad is ignored because x is a QB64 pure key value and only refers to the arrow-pad)
-            if (x == 0x4B00)
-                extended = 1;
-            if (x == 0x4800)
-                extended = 1;
-            if (x == 0x4D00)
-                extended = 1;
-            if (x == 0x5000)
-                extended = 1;
-            // num-pad extended keys
-            if (x == VK + QBVK_KP_DIVIDE)
-                extended = 1;
-            if (x == VK + QBVK_KP_ENTER)
-                extended = 1;
-            // ins/del/hom/end/pgu/pgd pad
-            if (x == 0x5200)
-                extended = 1;
-            if (x == 0x4700)
-                extended = 1;
-            if (x == 0x4900)
-                extended = 1;
-            if (x == 0x5300)
-                extended = 1;
-            if (x == 0x4F00)
-                extended = 1;
-            if (x == 0x5100)
-                extended = 1;
-            // right alt/right control
-            if (x == VK + QBVK_RCTRL)
-                extended = 1;
-            if (x == VK + QBVK_RALT)
-                extended = 1;
-
-            if (!block_onkey) {
-
-                // priority #1: user defined keys
-                if (scancode) {
-                    for (i = 0; i <= 31; i++) {
-                        if (onkey[i].key_scancode == scancode) {
-                            if (onkey[i].active) {
-                                if (onkey[i].id) {
-                                    // check keyboard flags
-                                    f = onkey[i].key_flags;
-                                    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key,32 NumLock key,64 Caps Lock key, 128 Extended keys on a
-                                    // 101-key keyboard To specify multiple shift states, add the values together. For example, a value of 12 specifies that the
-                                    // user-defined key is used in combination with the Ctrl and Alt keys.
-                                    if ((flags_mask & 3) == 0) {
-                                        if (f & 3) {
-                                            if (keyheld(VK + QBVK_LSHIFT) == 0 && keyheld(VK + QBVK_RSHIFT) == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 4) == 0) {
-                                        if (f & 4) {
-                                            if (keyheld(VK + QBVK_LCTRL) == 0 && keyheld(VK + QBVK_RCTRL) == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 8) == 0) {
-                                        if (f & 8) {
-                                            if (keyheld(VK + QBVK_LALT) == 0 && keyheld(VK + QBVK_RALT) == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 32) == 0) {
-                                        if (f & 32) {
-                                            if (keyheld(VK + QBVK_NUMLOCK) == 0)
-                                                goto wrong_flags;
-                                            //*revise
-                                        }
-                                    }
-                                    if ((flags_mask & 64) == 0) {
-                                        if (f & 64) {
-                                            if (keyheld(VK + QBVK_CAPSLOCK) == 0)
-                                                goto wrong_flags;
-                                            //*revise
-                                        }
-                                    }
-                                    if ((flags_mask & 128) == 0) {
-                                        if (((f & 128) / 128) != extended)
-                                            goto wrong_flags;
-                                    }
-                                    if (onkey[i].active == 1) { //(1)ON
-                                        onkey[i].state++;
-                                    } else { //(2)STOP
-                                        onkey[i].state = 1;
-                                    }
-
-                                    qbevent = 1;
-
-                                    // mask trigger key
-                                    for (i = 0; i <= keyup_mask_last; i++) {
-                                        if (!keyup_mask[i]) {
-                                            keyup_mask[i] = x;
-                                            break;
-                                        }
-                                    }
-                                    if (i == keyup_mask_last + 1) {
-                                        if (keyup_mask_last < 255) {
-                                            keyup_mask[i] = x;
-                                            keyup_mask_last++;
-                                        }
-                                    }
-
-                                    goto key_handled;
-
-                                } // id
-                            } // active
-                        } // scancode==
-                    wrong_flags:;
-                    } // i
-                } // scancode
-
-                // priority #2: fixed index F1-F12, arrows
-                for (i = 0; i <= 31; i++) {
-                    if (onkey[i].active) {
-                        if (onkey[i].id) {
-                            if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
-                                if (onkey[i].active == 1) { //(1)ON
-                                    onkey[i].state++;
-                                } else { //(2)STOP
-                                    onkey[i].state = 1;
-                                }
-                                qbevent = 1;
-
-                                // mask trigger key
-                                for (i = 0; i <= keyup_mask_last; i++) {
-                                    if (!keyup_mask[i]) {
-                                        keyup_mask[i] = x;
-                                        break;
-                                    }
-                                }
-                                if (i == keyup_mask_last + 1) {
-                                    if (keyup_mask_last < 255) {
-                                        keyup_mask[i] = x;
-                                        keyup_mask_last++;
-                                    }
-                                }
-
-                                goto key_handled;
-                            } // keycode
-                        } // id
-                    } // active
-                } // i
-
-            } // block_onkey
-
-            // priority #3: string insertion
-            for (i = 0; i <= 31; i++) {
-                if (onkey[i].text) {
-                    if (onkey[i].text->len) {
-                        if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
-
-                            // mask trigger key
-                            { // scope
-                                static int32 i;
-                                for (i = 0; i <= keyup_mask_last; i++) {
-                                    if (!keyup_mask[i]) {
-                                        keyup_mask[i] = x;
-                                        break;
-                                    }
-                                }
-                                if (i == keyup_mask_last + 1) {
-                                    if (keyup_mask_last < 255) {
-                                        keyup_mask[i] = x;
-                                        keyup_mask_last++;
-                                    }
-                                }
-                            } // descope
-
-                            for (i2 = 0; i2 < onkey[i].text->len; i2++) {
-                                block_onkey = 1;
-                                keydown_ascii(onkey[i].text->chr[i2]);
-                                keyup_ascii(onkey[i].text->chr[i2]);
-                                block_onkey = 0;
-                            } // i2
-                            goto key_handled;
-                        } // keycode
-                    }
-                } // text
-            } // i
-
-        } // descope
-
-        /*
-            //keyhit cyclic buffer
-            int64 keyhit[8192];
-            //    keyhit specific internal flags: (stored in high 32-bits)
-            //    &4294967296->numpad was used
-            int32 keyhit_nextfree=0;
-            int32 keyhit_next=0;
-            //note: if full, the oldest message is discarded to make way for the new message
-        */
-        // add x2 to keyhit buffer
-        static int32 z;
-        z = (keyhit_nextfree + 1) & 0x1FFF;
-        if (z == keyhit_next) { // remove oldest message when cyclic buffer is full
-            keyhit_next = (keyhit_next + 1) & 0x1FFF;
-        }
-        keyhit[keyhit_nextfree] = x2 | numpadkey;
-        keyhit_nextfree = z;
-    } // asciicode_reading!=2
-
-    static int32 shift, alt, ctrl, capslock, numlock;
-    numlock = 0;
-    capslock = 0;
-
-    if (x == QBK + QBK_CHR0)
-        x = 0;
-
-    if (x <= 255) {
-        static int32 b1, b2, z, o;
-        b1 = x;
-        if ((b2 = scancode_lookup[x * 10 + 1])) { // table entry exists
-            scancodedown(b2);
-
-            // check for relevant table modifiers
-            shift = 0;
-            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
-                shift = 1;
-            ctrl = 0;
-            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                ctrl = 1;
-            alt = 0;
-            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-                alt = 1;
-            o = 0;
-            if (shift)
-                o = 1;
-            if (ctrl)
-                o = 2;
-            if (alt)
-                o = 3;
-            if (glyph) {
-                if ((keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_LCTRL) && keyheld(VK + QBVK_RALT))
-                    o = 0; // assume alt-gr combo-key
-            }
-            z = scancode_lookup[x * 10 + 2 + o];
-            if (!z)
-                goto key_handled; // not possible
-            if (z & 0xFF00) {
-                b1 = 0;
-                b2 = z >> 8;
-            } else {
-                b1 = z;
-            }
-        } // b2
-        static int32 i, i2, i3;
-        i = cmem[0x41a];
-        i2 = cmem[0x41c];
-        i3 = i2 + 2;
-        if (i3 == 62)
-            i3 = 30;
-        if (i != i3) { // fits in buffer
-            cmem[0x400 + i2] = b1;
-            cmem[0x400 + i2 + 1] = b2; //(scancode)
-            cmem[0x41c] = i3;          // fix tail location
-        }
-        goto key_handled;
-    } // x<=255
-
-    // NUMPAD?
-    if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
-        if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_PERIOD)))
-            numlock = 1;
-        x = (x - (VK + QBVK_KP0) + 256) * 256;
-        goto numpadkey;
-    }
-    if ((x >= (QBK + 0)) && (x <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
-        x = (x - (QBK + 0) + 256) * 256;
-        goto numpadkey;
-    }
-
-    if (x <= 65535) {
-        static int32 b1, b2, z, o, r;
-    numpadkey:
-        b1 = 0;
-        b2 = x >> 8;
-        r = (x >> 8) + 256;
-        if (scancode_lookup[r * 10 + 2]) {
-            scancodedown(scancode_lookup[r * 10 + 1]);
-            // check relevant modifiers
-            shift = 0;
-            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
-                shift = 1;
-            ctrl = 0;
-            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                ctrl = 1;
-            alt = 0;
-            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-                alt = 1;
-
-            if (x == 0x5200) {          // INSERT lock emulation
-                if (insert_held == 0) { // nullify effects of key repeats
-                    if ((alt == 0) && (shift == 0) && (ctrl == 0)) {
-                        // toggle insert mode
-                        if (keyheld(QBK + QBK_INSERT_MODE)) {
-                            keyheld_remove(QBK + QBK_INSERT_MODE);
-                        } else {
-                            keyheld_add(QBK + QBK_INSERT_MODE);
-                        }
-                        update_shift_state();
-                    }
-                }
-            }
-
-            o = 0;
-            if (shift)
-                o = 1;
-            if (numlock)
-                o = 4;
-            if (numlock && shift)
-                o = 7;
-            if (ctrl)
-                o = 2;
-            if (alt)
-                o = 3;
-            z = scancode_lookup[r * 10 + 2 + o];
-            if (!z)
-                goto key_handled; // invalid combination
-            if (z & 0xFF00) {
-                b1 = 0;
-                b2 = z >> 8;
-            } else {
-                b1 = z;
-                b2 = scancode_lookup[r * 10 + 1];
-            }
-        } // z
-        static int32 i, i2, i3;
-        i = cmem[0x41a];
-        i2 = cmem[0x41c];
-        i3 = i2 + 2;
-        if (i3 == 62)
-            i3 = 30;
-        if (i != i3) { // fits in buffer
-            cmem[0x400 + i2] = b1;
-            cmem[0x400 + i2 + 1] = b2; //(scancode)
-            cmem[0x41c] = i3;          // fix tail location
-        }
-        goto key_handled;
-    } // x<=65536
-
-    if (x == (VK + QBVK_LSHIFT)) {
-        scancodedown(42);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RSHIFT)) {
-        scancodedown(54);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LALT)) {
-        scancodedown(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RALT)) {
-        scancodedown(56);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_LCTRL)) {
-        scancodedown(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_RCTRL)) {
-        scancodedown(29);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_NUMLOCK)) {
-        scancodedown(69);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_CAPSLOCK)) {
-        scancodedown(58);
-        update_shift_state();
-    }
-    if (x == (VK + QBVK_SCROLLOCK)) {
-        scancodedown(70);
-
-        if (scroll_lock_held == 0) { // nullify effects of key repeats
-            ctrl = 0;
-            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                ctrl = 1;
-            if (ctrl == 0) {
-                // toggle insert mode
-                if (keyheld(QBK + QBK_SCROLL_LOCK_MODE)) {
-                    keyheld_remove(QBK + QBK_SCROLL_LOCK_MODE);
-                } else {
-                    keyheld_add(QBK + QBK_SCROLL_LOCK_MODE);
-                }
-            }
-        }
-
-        update_shift_state();
-    }
-
-key_handled:
-    sleep_break = 1;
-}
-
-void scancodedown(uint8 scancode) {
-    if (port60h_events) {
-        if (port60h_event[port60h_events - 1] == scancode)
-            return; // avoid duplicate entries in buffer (eg. from key-repeats)
-    }
-    if (port60h_events == 256) {
-        memmove(port60h_event, port60h_event + 1, 255);
-        port60h_events = 255;
-    }
-    port60h_event[port60h_events] = scancode;
-    port60h_events++;
-}
-
-void scancodeup(uint8 scancode) {
-    if (port60h_events) {
-        if (port60h_event[port60h_events - 1] == (scancode + 128))
-            return; // avoid duplicate entries in buffer
-    }
-    if (port60h_events == 256) {
-        memmove(port60h_event, port60h_event + 1, 255);
-        port60h_events = 255;
-    }
-    port60h_event[port60h_events] = scancode + 128;
-    port60h_events++;
-}
-
 #define OS_EVENT_PRE_PROCESSING 1
 #define OS_EVENT_POST_PROCESSING 2
 #define OS_EVENT_RETURN_IMMEDIATELY 3
@@ -31072,35 +27874,6 @@ extern "C" LRESULT qb64_os_event_windows(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 }
 #endif
 
-#if defined(QB64_LINUX) && defined(QB64_GUI)
-extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_os_event_info) {
-    if (*qb64_os_event_info == OS_EVENT_PRE_PROCESSING) {
-
-        if (X11_display == NULL) {
-            X11_display = display;
-            X11_window = event->xexpose.window;
-        }
-    }
-
-    if (*qb64_os_event_info == OS_EVENT_POST_PROCESSING) {
-        switch (event->type) {
-        case FocusIn:
-            window_focused = -1;
-            break;
-
-        case FocusOut:
-            window_focused = 0;
-            // Iterate over all modifiers
-            for (uint32 key = VK + QBVK_RSHIFT; key <= VK + QBVK_MODE; key++) {
-                if (keyheld(key))
-                    keyup(key);
-            }
-            break;
-        }
-    }
-}
-#endif
-
 void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY) {
     mouse_message_queue_struct *queue = &mouse_message_queue;
     // message #1
@@ -31137,133 +27910,9 @@ void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY) {
     queue->last = i;
 }
 
-extern "C" int qb64_custom_event(int event, int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, void *p1, void *p2) {
-    if (event == QB64_EVENT_CLOSE) {
-        exit_value |= 1;
-        return 0;
-    } // close
-
-    if (event == QB64_EVENT_KEY) {
-        if (v1 == VK + QBVK_PAUSE) {
-            if (v2 > 0)
-                keydown_vk(v1);
-            else
-                keyup_vk(v1);
-            return 0;
-        }
-        if (v1 == VK + QBVK_BREAK) {
-            if (v2 > 0)
-                keydown_vk(v1);
-            else
-                keyup_vk(v1);
-            return 0;
-        }
-        return -1;
-    } // key
-
-    // qb64_custom_event(QB64_EVENT_RELATIVE_MOUSE_MOVEMENT,xPosRelative,yPosRelative,0,0,0,0,0,0,NULL,NULL);
-    if (event == QB64_EVENT_RELATIVE_MOUSE_MOVEMENT) {
-        qb64_custom_event_relative_mouse_movement(v1, v2);
-        return 0;
-    } // QB64_EVENT_RELATIVE_MOUSE_MOVEMENT
-
-    if (event == QB64_EVENT_FILE_DROP) {
-#ifdef QB64_WINDOWS
-        if (totalDroppedFiles > 0)
-            sub__finishdrop();
-
-        hdrop = (HDROP)p1;
-        totalDroppedFiles = DragQueryFile(hdrop, -1, NULL, 0);
-#endif
-        return 0;
-    }
-
-    return -1; // Unknown command (use for debugging purposes only)
-}
-
-int32 func__capslock() {
-#ifdef QB64_WINDOWS
-    return -GetKeyState(VK_CAPITAL);
-#endif
-    return 0;
-}
-
-int32 func__scrolllock() {
-#ifdef QB64_WINDOWS
-    return -GetKeyState(VK_SCROLL);
-#endif
-    return 0;
-}
-
-int32 func__numlock() {
-#ifdef QB64_WINDOWS
-    return -GetKeyState(VK_NUMLOCK);
-#endif
-    return 0;
-}
-
-void toggle_lock_key(int32 key_code) {
-#ifdef QB64_WINDOWS
-    keybd_event(key_code, 0x45, 1, 0);
-    keybd_event(key_code, 0x45, 3, 0);
-#endif
-}
-
-void sub__capslock(int32 options) {
-#ifdef QB64_WINDOWS
-    // VK_CAPITAL
-    int32 currentState = func__capslock();
-    switch (options) {
-    case 1: // ON
-        if (currentState == -1)
-            return;
-        break;
-    case 2: // OFF
-        if (currentState == 0)
-            return;
-        break;
-    }
-    // _TOGGLE:
-    toggle_lock_key(VK_CAPITAL);
-#endif
-}
-
-void sub__scrolllock(int32 options) {
-#ifdef QB64_WINDOWS
-    // VK_SCROLL
-    int32 currentState = func__scrolllock();
-    switch (options) {
-    case 1: // ON
-        if (currentState == -1)
-            return;
-        break;
-    case 2: // OFF
-        if (currentState == 0)
-            return;
-        break;
-    }
-    // _TOGGLE:
-    toggle_lock_key(VK_SCROLL);
-#endif
-}
-
-void sub__numlock(int32 options) {
-#ifdef QB64_WINDOWS
-    // VK_NUMLOCK
-    int32 currentState = func__numlock();
-    switch (options) {
-    case 1: // ON
-        if (currentState == -1)
-            return;
-        break;
-    case 2: // OFF
-        if (currentState == 0)
-            return;
-        break;
-    }
-    // _TOGGLE:
-    toggle_lock_key(VK_NUMLOCK);
-#endif
+void GLUT_EXIT_FUNC() {
+    GLUTEmu_WindowSetShouldClose(false);
+    exit_value |= 1;
 }
 
 void sub__consolefont(qbs *FontName, int FontSize) {

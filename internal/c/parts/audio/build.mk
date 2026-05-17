@@ -12,7 +12,7 @@ MINIAUDIO_SRCS := miniaudio/miniaudio.c
 MINIAUDIO_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/audio/%.o,$(MINIAUDIO_SRCS))
 
 # DEPENDENCY_CONSOLE_ONLY is added here to keep these .cpp files from including
-# the FreeGLUT headers via `libqb.h`. Ideally this is fixed properly in the future.
+# the GLFW headers via `common.h`. Ideally this is fixed properly in the future.
 $(PATH_INTERNAL_C)/parts/audio/%.o: $(PATH_INTERNAL_C)/parts/audio/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -DDEPENDENCY_CONSOLE_ONLY -Wall $< -c -o $@
 

@@ -2,8 +2,21 @@
 # Disable implicit rules
 MAKEFLAGS += --no-builtin-rules
 
-ifndef OS
-$(error "OS must be set to 'lnx', 'win', or 'osx'")
+# We must really consider using something other than OS
+ifeq ($(filter-out Windows_NT,$(OS)),)
+# Attempt to auto-detect the OS
+	ifeq ($(OS),Windows_NT)
+		OS := win
+	else
+		OS_RAW := $(shell uname -s)
+		ifeq ($(OS_RAW),Darwin)
+			OS := osx
+		else ifeq ($(OS_RAW),Linux)
+			OS := lnx
+		else
+			$(error "OS must be set to 'lnx', 'win', or 'osx'")
+		endif
+	endif
 endif
 
 # The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
@@ -161,18 +174,19 @@ CXXFLAGS += -fno-strict-aliasing
 # the warning list actually usable.
 CXXFLAGS += -Wno-conversion-null
 
+# After we moved to LLVM-MingW, libpthread is available on all platforms
+CXXLIBS += -lpthread
+
 ifeq ($(OS),lnx)
-	CXXLIBS += -lGL -lGLU -lX11 -lpthread -ldl -lrt -lxcb
-	CXXFLAGS += -DFREEGLUT_STATIC
+	CXXLIBS += -lGL -lGLU -lX11 -lXrandr -lxcb -ldl -lrt
 endif
 
 ifeq ($(OS),win)
-	CXXLIBS += -static-libgcc -static-libstdc++ -lcomdlg32 -lole32 -luuid -lshlwapi -lwindowscodecs
-	CXXFLAGS += -DGLEW_STATIC -DFREEGLUT_STATIC
+	CXXLIBS += -static-libgcc -static-libstdc++ -lopengl32 -lglu32 -lgdi32 -lcomdlg32 -lole32 -luuid -lshlwapi -lwindowscodecs -lwinmm
 endif
 
 ifeq ($(OS),osx)
-	CXXLIBS += -framework OpenGL -framework IOKit -framework GLUT -framework Cocoa -framework ApplicationServices -framework CoreFoundation
+	CXXLIBS += -framework OpenGL -framework IOKit -framework Cocoa -framework CoreVideo -framework ApplicationServices -framework CoreFoundation
 
 	# OSX doesn't strip using objcopy, so we're using `-s` instead
 	ifneq ($(STRIP_SYMBOLS),n)
@@ -248,7 +262,7 @@ ifneq ($(filter y,$(DEP_SCREENIMAGE) $(DEP_IMAGE_CODEC)),)
 	CXXFLAGS += -DDEPENDENCY_IMAGE_CODEC
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
 
-	LICENSE_IN_USE += stb_image nanosvg dr_pcx qoi stb_image_write hqx mmpx sxbr
+	LICENSE_IN_USE += stb_image nanosvg qoi stb_image_write hqx mmpx sxbr
 else
 	QBLIB_NAME := $(addsuffix 0,$(QBLIB_NAME))
 endif
@@ -313,7 +327,7 @@ ifneq ($(filter y,$(DEP_DEVICEINPUT)),)
 
 	CXXFLAGS += -DDEPENDENCY_DEVICEINPUT
 	ifeq ($(OS),win)
-		CXXLIBS += -lwinmm -lxinput -ldinput8 -ldxguid -lwbemuuid -lole32 -loleaut32
+		CXXLIBS += -lxinput -ldinput8 -ldxguid -lwbemuuid -loleaut32
 	endif
 
 	QBLIB_NAME := $(addsuffix 1,$(QBLIB_NAME))
@@ -331,10 +345,10 @@ ifneq ($(filter y,$(DEP_AUDIO_MINIAUDIO)),)
 		CXXLIBS += -lm -lasound
 	endif
 	ifeq ($(OS),win)
-		CXXLIBS += -lwinmm -lksguid -ldxguid -lole32
+		CXXLIBS += -lm -lksguid -ldxguid
 	endif
 	ifeq ($(OS),osx)
-		CXXLIBS += -lpthread -lm -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
+		CXXLIBS += -lm -framework CoreAudio -framework CoreMIDI -framework AudioUnit -framework AudioToolbox
 	endif
 
 	LICENSE_IN_USE += miniaudio stb_vorbis libxmp-lite radv2 hivelytracker qoa foo_midi ymfmidi primesynth tinysoundfont
@@ -356,13 +370,9 @@ ifneq ($(filter y,$(DEP_HTTP)),)
 	LICENSE_IN_USE += libcurl
 endif
 
-ifneq ($(OS),osx)
-	EXE_LIBS += $(QB_CORE_LIB) $(GLEW_OBJS)
+EXE_LIBS += $(QB_CORE_LIB)
 
-	LICENSE_IN_USE += freeglut
-else
-	EXE_LIBS += $(GLEW_OBJS)
-endif
+LICENSE_IN_USE += glfw
 
 ifeq ($(OS),win)
 	LICENSE_IN_USE += mingw-base-runtime libstdc++
@@ -373,25 +383,12 @@ ifeq ($(OS),win)
 		CXXLIBS += -mwindows
 	endif
 
-	ifneq ($(filter y,$(DEP_CONSOLE_ONLY)),)
-		CXXFLAGS := $(filter-out -DFREEGLUT_STATIC,$(CXXFLAGS))
-		EXE_LIBS := $(filter-out $(QB_CORE_LIB) $(GLEW_OBJS),$(EXE_LIBS))
-
-		LICENSE_IN_USE := $(filter-out freeglut,$(LICENSE_IN_USE))
-	else
-		CXXLIBS += -lopengl32 -lglu32 -lwinmm -lgdi32
-	endif
-
 	ifneq ($(filter y,$(DEP_SOCKETS)),)
 		CXXLIBS += -lws2_32
 	endif
 
 	ifneq ($(filter y,$(DEP_PRINTER)),)
 		CXXLIBS += -lwinspool
-	endif
-
-	ifneq ($(filter y,$(DEP_ICON) $(DEP_ICON_RC) $(DEP_SCREENIMAGE) $(DEP_PRINTER)),)
-		CXXLIBS += -lgdi32
 	endif
 endif
 
@@ -419,11 +416,6 @@ EXE_OBJS := $(QBLIB) $(EXE_OBJS)
 # qbx produces thousands of warnings due to passing NULL for every unused parameter
 $(QB_QBX_OBJ): $(QB_QBX_SRC)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
-
-ifeq ($(OS),osx)
-%.o: %.mm
-	$(CXX) $(CXXFLAGS) $< -c -o $@
-endif
 
 $(PATH_INTERNAL_TEMP)/embedded.o: $(PATH_INTERNAL_TEMP)/embedded.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@

@@ -1,7 +1,6 @@
 'this is a test for $INCLUDEONCE behavior
 
-$CONSOLE
-_DEST _CONSOLE
+$CONSOLE:ONLY
 
 PRINT "This prints from the test.bas main program."
 

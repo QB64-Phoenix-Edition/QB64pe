@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdio.h>
+#include "qbs.h"
+#include <cstdint>
+#include <cstdio>
 
 #define INVALID_FONT_HANDLE 0
 
@@ -17,8 +18,6 @@
 #define FONT_LOAD_AUTOMONO 64
 // Font render options
 #define FONT_RENDER_MONOCHROME 1
-
-struct qbs;
 
 /// @brief CP437 to UTF-16 LUT
 extern uint16_t codepage437_to_unicode16[];
@@ -38,3 +37,9 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed);
 void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t dst_img,
                        int32_t passed);
 int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t qb64_fh, int32_t passed);
+
+// REFACTOR_TODO: The following functions should be eventually moved inside font.cpp
+int32_t func__printwidth(qbs *text, int32_t screenhandle, int32_t passed);
+void qbs_print(qbs *str, int32_t finish_on_new_line);
+int32_t func_pos(int32_t ignore);
+void makefit(qbs *text);

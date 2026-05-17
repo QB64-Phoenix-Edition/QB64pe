@@ -7,12 +7,14 @@
 #include "error_handle.h"
 #include "filepath.h"
 #include "filesystem.h"
-
-#include "../../libqb.h"
-
+#include "font.h"
+#include "qbs.h"
 #include <algorithm>
+#include <cerrno>
+#include <cstring>
 #include <dirent.h>
 #include <memory>
+#include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 #ifdef QB64_WINDOWS

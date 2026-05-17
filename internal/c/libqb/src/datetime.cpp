@@ -1,109 +1,56 @@
 
 #include "libqb-common.h"
 
-#include <chrono>
-#include <sys/time.h>
-
-#ifdef QB64_WINDOWS
-#    include <profileapi.h>
-#    include <synchapi.h>
-#endif
-
 #include "datetime.h"
 #include "error_handle.h"
 #include "event.h"
 #include "qbs.h"
 #include "rounding.h"
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <ctime>
+#include <thread>
 
-#ifdef QB64_MACOSX
-#    include <mach/mach_time.h>
-#    define ORWL_NANO (+1.0E-9)
-#    define ORWL_GIGA UINT64_C(1000000000)
-static double orwl_timebase = 0.0;
-static uint64_t orwl_timestart = 0;
-
-static int64_t orwl_gettime(void) {
-    if (!orwl_timestart) {
-        mach_timebase_info_data_t tb{};
-        mach_timebase_info(&tb);
-        orwl_timebase = tb.numer;
-        orwl_timebase /= tb.denom;
-        orwl_timestart = mach_absolute_time();
-    }
-    struct timespec t;
-    double diff = (mach_absolute_time() - orwl_timestart) * orwl_timebase;
-    t.tv_sec = diff * ORWL_NANO;
-    t.tv_nsec = diff - (t.tv_sec * ORWL_GIGA);
-    return t.tv_sec * 1000 + t.tv_nsec / 1000000;
-}
-#endif
-
-#if defined(QB64_LINUX)
-static int64_t initial_tick = 0;
+static std::chrono::steady_clock::time_point g_TimeStart;
 
 void clock_init() {
-    // When GetTicks() is called here initial_tick is zero, so as a result
-    // GetTicks() returns the original value of the clock.
-    initial_tick = GetTicks();
+    g_TimeStart = std::chrono::steady_clock::now();
 }
 
 int64_t GetTicks() {
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-    return (tp.tv_sec * 1000 + tp.tv_nsec / 1000000) - initial_tick;
-}
-#elif defined QB64_WINDOWS
-static int64_t initial_tick = 0;
-static LARGE_INTEGER tick_freq;
-
-void clock_init() {
-    QueryPerformanceFrequency(&tick_freq);
-
-    // When GetTicks() is called here initial_tick is zero, so as a result
-    // GetTicks() returns the original value of the clock.
-    initial_tick = GetTicks();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_TimeStart).count();
 }
 
-int64_t GetTicks() {
-    LARGE_INTEGER count;
-
-    QueryPerformanceCounter(&count);
-
-    uint64_t sec = count.QuadPart / tick_freq.QuadPart;
-    uint64_t milli = ((count.QuadPart % tick_freq.QuadPart) * 1000 + tick_freq.QuadPart / 2) / tick_freq.QuadPart;
-
-    return sec * 1000 + milli - initial_tick;
-}
-#elif defined QB64_MACOSX
-int64_t GetTicks() {
-    return orwl_gettime();
+#ifndef QB64_WINDOWS
+void Sleep(uint32_t milliseconds) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
 #endif
 
 static uint64_t millis_since_midnight() {
-    auto currenttime = std::chrono::system_clock::now();
+    const auto current_time = std::chrono::system_clock::now();
 
     // Gives us the number of milliseconds past the current second
-    uint64_t millis_only = std::chrono::duration_cast<std::chrono::milliseconds>(currenttime.time_since_epoch()).count() % 1000;
+    const auto millis_only = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()).count() % 1000;
 
-    // Convert to time_t and then hour/min/sec. localtime() takes the current
-    // timezone into account for us.
-    time_t curttime = std::chrono::system_clock::to_time_t(currenttime);
-    struct tm *local = localtime(&curttime);
+    // Convert to time_t and then hour/min/sec. localtime() takes the current timezone into account for us.
+    const auto cur_ttime = std::chrono::system_clock::to_time_t(current_time);
+    const auto local = localtime(&cur_ttime);
 
     // Compute current time as number of seconds past midnight
-    uint64_t seconds = local->tm_hour * 3600 + local->tm_min * 60 + local->tm_sec;
+    const auto seconds = local->tm_hour * 3600 + local->tm_min * 60 + local->tm_sec;
 
-    return seconds * 1000 + millis_only;
+    return static_cast<uint64_t>(seconds * 1000) + static_cast<uint64_t>(millis_only);
 }
 
 double func_timer(double accuracy, int32_t passed) {
     if (new_error)
         return 0;
 
-    double result = (double)millis_since_midnight() / 1000;
+    auto result = millis_since_midnight() / 1000.0;
 
-    // Adjust result for requested accuracy, or default accuracy.
+    // Default accuracy = 18.2 Hz
     if (!passed) {
         accuracy = 18.2;
     } else {
@@ -113,9 +60,11 @@ double func_timer(double accuracy, int32_t passed) {
         }
         accuracy = 1.0 / accuracy;
     }
+
     result *= accuracy;
-    result = qbr(result);
+    result = qbr(result); // rounding
     result /= accuracy;
+
     if (!passed) {
         float f = result;
         result = f;
@@ -124,52 +73,32 @@ double func_timer(double accuracy, int32_t passed) {
     return result;
 }
 
-#ifndef QB64_WINDOWS
-void Sleep(uint32_t milliseconds) {
-    static uint64_t sec, nsec;
-    sec = milliseconds / 1000;
-    nsec = (milliseconds % 1000) * 1000000;
-    static timespec ts;
-    ts.tv_sec = sec;
-    ts.tv_nsec = nsec;
-    nanosleep(&ts, NULL);
-}
-#endif
-
 void sub__delay(double seconds) {
-    double ms, base, elapsed, prev_now, now; // cannot be static
-    base = GetTicks();
     if (new_error)
         return;
-    if (seconds < 0) {
+
+    if (seconds < 0 || seconds > 2147483.647) {
         error(5);
         return;
     }
-    if (seconds > 2147483.647) {
-        error(5);
-        return;
-    }
-    ms = seconds * 1000.0;
-    now = base; // force first prev=... assignment to equal base
-recalculate:
-    prev_now = now;
-    now = GetTicks();
-    elapsed = now - base;
-    if (elapsed < 0) {                  // GetTicks looped
-        base = now - (prev_now - base); // calculate new base
-    }
-    if (elapsed < ms) {
-        int64_t wait; // cannot be static
-        wait = ms - elapsed;
-        if (!wait)
-            wait = 1;
-        if (wait >= 10) {
-            Sleep(9);
-            evnt(0); // check for new events
-            // recalculate time
-            goto recalculate;
+
+    const auto start = std::chrono::steady_clock::now();
+    const auto target = start + std::chrono::duration<double>(seconds);
+
+    for (;;) {
+        auto now = std::chrono::steady_clock::now();
+        if (now >= target)
+            break;
+
+        auto remaining_us = std::chrono::duration_cast<std::chrono::microseconds>(target - now).count();
+
+        // If >= 10 ms remaining then sleep 9 ms and poll events
+        if (remaining_us >= 10000) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(9));
+            evnt(0); // event polling
         } else {
-            Sleep(wait);
+            // Final sleep
+            std::this_thread::sleep_for(std::chrono::microseconds(remaining_us));
         }
     }
 }
@@ -177,55 +106,62 @@ recalculate:
 void sub__limit(double fps) {
     if (new_error)
         return;
-    static double prev = 0;
-    double ms, now, elapsed; // cannot be static
+
+    static std::chrono::steady_clock::time_point prev;
+
     if (fps <= 0.0) {
         error(5);
         return;
     }
-    ms = 1000.0 / fps;
-    if (ms > 60000.0) {
+
+    const auto frame_ms = 1000.0 / fps;
+    if (frame_ms > 60000.0) {
         error(5);
         return;
-    } // max. 1 min delay between frames allowed to avoid accidental lock-up of program
-recalculate:
-    now = GetTicks();
-    if (prev == 0.0) { // first call?
-        prev = now;
-        return;
-    }
-    if (now < prev) { // value looped?
-        prev = now;
-        return;
-    }
-    elapsed = now - prev; // elapsed time since prev
-
-    if (elapsed == ms) {
-        prev = prev + ms;
-        return;
     }
 
-    if (elapsed < ms) {
-        int64_t wait; // cannot be static
-        wait = ms - elapsed;
-        if (!wait)
-            wait = 1;
-        if (wait >= 10) {
-            Sleep(9);
-            evnt(0); // check for new events
-        } else {
-            Sleep(wait);
+    const auto frame_us = static_cast<int64_t>(frame_ms * 1000.0);
+
+    for (;;) {
+        auto now = std::chrono::steady_clock::now();
+
+        // First call or clock wrapped backwards?
+        if (prev.time_since_epoch().count() == 0 || now < prev) {
+            prev = now;
+            return;
         }
-        // recalculate time
-        goto recalculate;
-    }
 
-    // too long since last call, adjust prev to current time
-    // minor overshoot up to 32ms is recovered, otherwise time is re-seeded
-    if (elapsed <= (ms + 32.0))
-        prev = prev + ms;
-    else
-        prev = now;
+        auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(now - prev).count();
+
+        // Exact match
+        if (elapsed_us == frame_us) {
+            prev += std::chrono::microseconds(frame_us);
+            return;
+        }
+
+        // Not enough time has passed
+        if (elapsed_us < frame_us) {
+            int64_t remaining = frame_us - elapsed_us;
+
+            if (remaining >= 10000) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(9));
+                evnt(0); // event polling
+            } else {
+                std::this_thread::sleep_for(std::chrono::microseconds(remaining));
+            }
+
+            // Loop again to re-evaluate timing
+            continue;
+        }
+
+        // Too long since last frame
+        if (elapsed_us <= frame_us + 32000)
+            prev += std::chrono::microseconds(frame_us);
+        else
+            prev = now;
+
+        return;
+    }
 }
 
 void sub_date(qbs *str) {
