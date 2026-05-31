@@ -5871,6 +5871,16 @@ DO
 
     statementn = statementn + 1
 
+    'Track the current BASIC source line before executing generated code.
+    'Fatal runtime errors such as division by zero may occur before the
+    'normal post-statement evnt() path is reached, so keep this separately.
+    IF inclinenumber(inclevel) THEN
+        thisincname$ = getfilepath$(incname$(inclevel))
+        thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
+        WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
+    ELSE
+        WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
+    END IF
 
     IF n >= 1 THEN
         IF firstelement$ = "NEXT" THEN
@@ -16729,6 +16739,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
     '     ^udt of the element, not of the id
 
     obak$ = o$
+    DIM udtElem AS LONG
     IF o$ = "" THEN o$ = "0" 'nested arrays
 
     'PRINT "called udtreference!"
@@ -16747,7 +16758,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
         u = id.arraytype AND 511
         IF id.arraytype AND ISINCONVENTIONALMEMORY THEN incmem = 1
     END IF
-    E = 0
+    udtElem = 0
 
     n = numelements(a$)
     IF n = 0 THEN GOTO fulludt
@@ -16779,28 +16790,28 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
         END IF
     END IF
     udtfindele:
-    IF E = 0 THEN E = udtxnext(u) ELSE E = udtenext(E)
-    IF E = 0 THEN Give_Error "Element not defined": EXIT FUNCTION
-    n2$ = RTRIM$(udtename(E))
+    IF udtElem = 0 THEN udtElem = udtxnext(u) ELSE udtElem = udtenext(udtElem)
+    IF udtElem = 0 THEN Give_Error "Element not defined": EXIT FUNCTION
+    n2$ = RTRIM$(udtename(udtElem))
 
     IF n$ <> n2$ THEN
         'increment fixed offset
-        o = o + udtesize(E)
+        o = o + udtesize(udtElem)
         GOTO udtfindele
     END IF
 
     'check symbol after element's name (if given) is correct
     IF LEN(nsym$) THEN
 
-        IF udtetype(E) AND ISUDT THEN Give_Error "Invalid symbol after user defined type": EXIT FUNCTION
-        IF ntyp <> udtetype(E) OR ntypsize <> udtetypesize(E) THEN
-            IF nsym$ = "$" AND ((udtetype(E) AND ISFIXEDLENGTH) <> 0) THEN GOTO correctsymbol
+        IF udtetype(udtElem) AND ISUDT THEN Give_Error "Invalid symbol after user defined type": EXIT FUNCTION
+        IF ntyp <> udtetype(udtElem) OR ntypsize <> udtetypesize(udtElem) THEN
+            IF nsym$ = "$" AND ((udtetype(udtElem) AND ISFIXEDLENGTH) <> 0) THEN GOTO correctsymbol
             Give_Error "Incorrect symbol after element name": EXIT FUNCTION
         END IF
     END IF
     correctsymbol:
 
-    IF udtearrayelements(E) THEN
+    IF udtearrayelements(udtElem) THEN
         memberindexes$ = ""
         IF memberarrayend THEN memberindexes$ = getelements$(a$, i + 2, memberarrayend - 1)
 
@@ -16815,7 +16826,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
             IF memberarrayend THEN i = memberarrayend
             IF i <> n THEN Give_Error "Expected array index": EXIT FUNCTION
 
-            r$ = r$ + _TOSTR$(u) + sp3 + _TOSTR$(E) + sp3
+            r$ = r$ + _TOSTR$(u) + sp3 + _TOSTR$(udtElem) + sp3
 
             IF o MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT FUNCTION
             o = o \ 8
@@ -16824,15 +16835,15 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 
             r$ = r$ + o$
             udtreference$ = r$
-            typ = udtetype(E) + ISREFERENCE + ISARRAY
+            typ = udtetype(udtElem) + ISREFERENCE + ISARRAY
             IF incmem THEN typ = typ + ISINCONVENTIONALMEMORY
             EXIT FUNCTION
         END IF
 
-        arrindex$ = UDTArrayIndexExpr$(memberindexes$, udtearraydims(E), udtearraydesc(E))
+        arrindex$ = UDTArrayIndexExpr$(memberindexes$, udtearraydims(udtElem), udtearraydesc(udtElem))
         IF Error_Happened THEN EXIT FUNCTION
         IF o MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT FUNCTION
-        arrbytes = (udtesize(E) \ 8) \ udtearrayelements(E)
+        arrbytes = (udtesize(udtElem) \ 8) \ udtearrayelements(udtElem)
         o = o \ 8
 
         o$ = "(" + o$ + "+" + _TOSTR$(o) + ")" 'Block for indexed static member array
@@ -16847,22 +16858,22 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 
     'Move into another UDT structure?
     IF i <> n THEN
-        IF (udtetype(E) AND ISUDT) = 0 THEN Give_Error "Expected user defined type": EXIT FUNCTION
-        u = udtetype(E) AND 511
-        E = 0
+        IF (udtetype(udtElem) AND ISUDT) = 0 THEN Give_Error "Expected user defined type": EXIT FUNCTION
+        u = udtetype(udtElem) AND 511
+        udtElem = 0
         i = i + 1
         GOTO udtfindelenext
     END IF
 
     'Change e reference to u | 0 reference?
-    IF udtetype(E) AND ISUDT THEN
-        u = udtetype(E) AND 511
-        E = 0
+    IF udtetype(udtElem) AND ISUDT THEN
+        u = udtetype(udtElem) AND 511
+        udtElem = 0
     END IF
 
     fulludt:
 
-    r$ = r$ + _TOSTR$(u) + sp3 + _TOSTR$(E) + sp3
+    r$ = r$ + _TOSTR$(u) + sp3 + _TOSTR$(udtElem) + sp3
 
     IF o MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT FUNCTION
     o = o \ 8
@@ -16872,10 +16883,10 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
     r$ = r$ + o$
 
     udtreference$ = r$
-    typ = udtetype(E) + ISUDT + ISREFERENCE
+    typ = udtetype(udtElem) + ISUDT + ISREFERENCE
 
     'full udt override:
-    IF E = 0 THEN
+    IF udtElem = 0 THEN
         typ = u + ISUDT + ISREFERENCE
     END IF
 
@@ -21408,6 +21419,37 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
                                             removeelements a$, i, i, 0
                                             insertelements a$, i - 1, UCASE$(f2$)
                                             f$ = f$ + f2$
+
+                                            'If this UDT element is an inline member array, skip its index list here.
+                                            'The index expression is recursively formatted later by the normal bracket pass.
+                                            'This keeps the UDT context alive for chains such as f.z(1).xx(1), so the
+                                            'member after the indexed UDT array element is also corrected to its declared case.
+                                            IF udtearrayelements(E) THEN
+                                                IF i < n THEN
+                                                    IF ASC(getelement(a$, i + 1)) = 40 THEN
+                                                        f$ = f$ + sp + "(" + sp
+                                                        b2 = 1
+                                                        FOR i2 = i + 2 TO n
+                                                            c2 = ASC(getelement(a$, i2))
+                                                            IF c2 = 40 THEN b2 = b2 + 1
+                                                            IF c2 = 41 THEN b2 = b2 - 1
+                                                            IF b2 = 0 THEN EXIT FOR
+                                                            f$ = f$ + sp
+                                                        NEXT
+                                                        IF b2 <> 0 THEN Give_Error "Missing )": EXIT FUNCTION
+                                                        i = i2
+                                                        f$ = f$ + ")"
+                                                        IF i = n THEN f$ = f$ + sp: GOTO classdone_special
+                                                        nextc = ASC(getelement(a$, i + 1))
+                                                        IF nextc = 46 THEN
+                                                            t = udtetype(E)
+                                                            IF (t AND ISUDT) = 0 THEN Give_Error "Invalid . after element": EXIT FUNCTION
+                                                            GOTO fooudt
+                                                        END IF
+                                                        f$ = f$ + sp: GOTO classdone_special
+                                                    END IF
+                                                END IF
+                                            END IF
 
                                             IF i = n THEN f$ = f$ + sp: GOTO classdone_special
                                             nextc = ASC(getelement(a$, i + 1))
