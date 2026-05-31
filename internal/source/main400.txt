@@ -14,95 +14,95 @@ if (is_error_pending()) goto exit_subfunc;
 do{
 qbs_set(_FUNC_OFFERNOPREFIXCONVERSION_STRING_WHAT,FUNC_IDEYESNOBOX(qbs_new_txt_len("$NOPREFIX",9),qbs_new_txt_len("This program uses the $NOPREFIX directive which is unsupported.\\n\\nQB64PE can automatically convert this file and any included files to\\nremove $NOPREFIX. Backups of all files will be made.\\n\\nConvert this program?",214)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,108,"ide_converters.bas");}while(r);
-S_65275:;
+if(!qbevent)break;evnt(25867,108,"ide_converters.bas");}while(r);
+S_65325:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_OFFERNOPREFIXCONVERSION_STRING_WHAT,qbs_new_txt_len("Y",1))))||is_error_pending()){
-if(qbevent){evnt(25825,109,"ide_converters.bas");if(r)goto S_65275;}
+if(qbevent){evnt(25867,109,"ide_converters.bas");if(r)goto S_65325;}
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25825,109,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,109,"ide_converters.bas");}while(r);
 }
 do{
 qbg_screen(NULL,NULL, 3 , 0 ,NULL,12);
-if(!qbevent)break;evnt(25825,111,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,111,"ide_converters.bas");}while(r);
 do{
-*_FUNC_OFFERNOPREFIXCONVERSION_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7460= 1 ));
-if(!qbevent)break;evnt(25825,112,"ide_converters.bas");}while(r);
+*_FUNC_OFFERNOPREFIXCONVERSION_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7467= 1 ));
+if(!qbevent)break;evnt(25867,112,"ide_converters.bas");}while(r);
 do{
 qbg_sub_color( 15 , 1 ,NULL,NULL,3);
-if(!qbevent)break;evnt(25825,113,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,113,"ide_converters.bas");}while(r);
 do{
 sub__printstring( 2 ,*__LONG_IDEWY- 3 ,qbs_new_txt_len("Converting...          ",23),NULL,0);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,114,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,114,"ide_converters.bas");}while(r);
 do{
 sub_pcopy( 3 , 0 );
-if(!qbevent)break;evnt(25825,115,"ide_converters.bas");}while(r);
-S_65283:;
+if(!qbevent)break;evnt(25867,115,"ide_converters.bas");}while(r);
+S_65333:;
 if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
-if(qbevent){evnt(25825,117,"ide_converters.bas");if(r)goto S_65283;}
+if(qbevent){evnt(25867,117,"ide_converters.bas");if(r)goto S_65333;}
 do{
 qbs_set(_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTUTILITY,qbs_new_txt_len("internal\\utilities\\AddPREFIX.exe",32));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,118,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,118,"ide_converters.bas");}while(r);
 }else{
 do{
 qbs_set(_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTUTILITY,qbs_new_txt_len("./internal/utilities/AddPREFIX",30));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,120,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,120,"ide_converters.bas");}while(r);
 }
-S_65288:;
+S_65338:;
 if ((qbs_cleanup(qbs_tmp_base,~(func__fileexists(_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTUTILITY))))||is_error_pending()){
-if(qbevent){evnt(25825,122,"ide_converters.bas");if(r)goto S_65288;}
-S_65289:;
+if(qbevent){evnt(25867,122,"ide_converters.bas");if(r)goto S_65338;}
+S_65339:;
 if ((qbs_cleanup(qbs_tmp_base,-(func__direxists(qbs_new_txt_len("./internal/utilities",20))== 0 )))||is_error_pending()){
-if(qbevent){evnt(25825,123,"ide_converters.bas");if(r)goto S_65289;}
+if(qbevent){evnt(25867,123,"ide_converters.bas");if(r)goto S_65339;}
 do{
 sub_mkdir(qbs_new_txt_len("./internal/utilities",20));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,123,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,123,"ide_converters.bas");}while(r);
 }
-S_65292:;
+S_65342:;
 if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
-if(qbevent){evnt(25825,124,"ide_converters.bas");if(r)goto S_65292;}
+if(qbevent){evnt(25867,124,"ide_converters.bas");if(r)goto S_65342;}
 do{
 sub_shell2(qbs_add(qbs_new_txt_len("qb64pe -x internal/support/converter/AddPREFIX.bas -o ",54),_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTUTILITY),2);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,125,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,125,"ide_converters.bas");}while(r);
 }else{
 do{
 sub_shell2(qbs_add(qbs_new_txt_len("./qb64pe -x ./internal/support/converter/AddPREFIX.bas -o ",58),_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTUTILITY),2);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,127,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,127,"ide_converters.bas");}while(r);
 }
 }
 do{
 qbs_set(_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTLINE,qbs_add(qbs_add(_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTUTILITY,qbs_new_txt_len(" ",1)),FUNC_QUOTEDFILENAME(_FUNC_OFFERNOPREFIXCONVERSION_STRING_FILE)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,131,"ide_converters.bas");}while(r);
-S_65299:;
+if(!qbevent)break;evnt(25867,131,"ide_converters.bas");}while(r);
+S_65349:;
 if ((qbs_cleanup(qbs_tmp_base,-((-(func__shellhide(_FUNC_OFFERNOPREFIXCONVERSION_STRING_CONVERTLINE)== 0 ))&&(qbs_notequal(FUNC_OPENFILE(_FUNC_OFFERNOPREFIXCONVERSION_STRING_FILE),qbs_new_txt_len("C",1))))))||is_error_pending()){
-if(qbevent){evnt(25825,132,"ide_converters.bas");if(r)goto S_65299;}
+if(qbevent){evnt(25867,132,"ide_converters.bas");if(r)goto S_65349;}
 do{
 *_FUNC_OFFERNOPREFIXCONVERSION_INTEGER_OFFERNOPREFIXCONVERSION= -1ll ;
-if(!qbevent)break;evnt(25825,133,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,133,"ide_converters.bas");}while(r);
 }else{
 do{
-SUB_CLEARSTATUSWINDOW(&(pass7461= 0 ));
-if(!qbevent)break;evnt(25825,135,"ide_converters.bas");}while(r);
+SUB_CLEARSTATUSWINDOW(&(pass7468= 0 ));
+if(!qbevent)break;evnt(25867,135,"ide_converters.bas");}while(r);
 do{
-*_FUNC_OFFERNOPREFIXCONVERSION_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7462= 0 ));
-if(!qbevent)break;evnt(25825,136,"ide_converters.bas");}while(r);
+*_FUNC_OFFERNOPREFIXCONVERSION_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7469= 0 ));
+if(!qbevent)break;evnt(25867,136,"ide_converters.bas");}while(r);
 do{
 sub_pcopy( 3 , 0 );
-if(!qbevent)break;evnt(25825,137,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,137,"ide_converters.bas");}while(r);
 do{
 qbg_screen(NULL,NULL, 3 , 0 ,NULL,12);
-if(!qbevent)break;evnt(25825,138,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,138,"ide_converters.bas");}while(r);
 do{
 *_FUNC_OFFERNOPREFIXCONVERSION_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("$NOPREFIX",9),qbs_new_txt_len("Error running conversion utility.",33),qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,139,"ide_converters.bas");}while(r);
+if(!qbevent)break;evnt(25867,139,"ide_converters.bas");}while(r);
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
