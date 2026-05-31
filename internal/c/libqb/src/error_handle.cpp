@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+
 #include "command.h"
 #include "error_handle.h"
 #include "logging.h"
@@ -324,7 +326,7 @@ void error(int32_t error_number) {
 
     // other critical errors
     if (error_number == QB_ERROR_DIVISION_BY_ZERO) {
-        char errmess[512];
+        std::string errmess;
         uint32_t srcLine = 0;
         const char *srcFile = NULL;
 
@@ -343,12 +345,12 @@ void error(int32_t error_number) {
         }
 
         if (srcLine) {
-            snprintf(errmess, sizeof(errmess), "Line: %u (in %s)\nDivision by zero", (unsigned int)srcLine, srcFile);
+            errmess = "Line: " + std::to_string(srcLine) + " (in " + srcFile + ")\nDivision by zero";
         } else {
-            snprintf(errmess, sizeof(errmess), "Line: unknown\nDivision by zero");
+            errmess = "Line: unknown\nDivision by zero";
         }
 
-        gui_alert(errmess, "Critical Error", "ok");
+        gui_alert(errmess.c_str(), "Critical Error", "ok");
         exit(0);
     }
     if (error_number == 256) {
