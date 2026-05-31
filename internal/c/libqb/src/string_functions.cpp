@@ -13,6 +13,8 @@ extern qbs *nothingstring;
 void sub_lset(qbs *dest, qbs *source) {
     if (is_error_pending())
         return;
+    if (dest->len <= 0 || source->len < 0)
+        goto field_check;
     if (source->len >= dest->len) {
         if (dest->len)
             memcpy(dest->chr, source->chr, dest->len);
@@ -29,6 +31,8 @@ field_check:
 void sub_rset(qbs *dest, qbs *source) {
     if (is_error_pending())
         return;
+    if (dest->len <= 0 || source->len < 0)
+        goto field_check;
     if (source->len >= dest->len) {
         if (dest->len)
             memcpy(dest->chr, source->chr, dest->len);
