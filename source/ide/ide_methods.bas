@@ -563,7 +563,8 @@ FUNCTION ide2 (ignore)
                     'bookmark info [v2]
                     GET #150, , IdeBmkN: REDIM IdeBmk(IdeBmkN + 1) AS IdeBmkType
                     FOR bi = 1 TO IdeBmkN: GET #150, , IdeBmk(bi).y: GET #150, , IdeBmk(bi).x: NEXT
-                    GET #150, , x&: idet$ = SPACE$(x&): GET #150, , idet$
+                    GET #150, , x&: GET #150, , ox&: ideundotxt$ = SPACE$(x&): GET #150, , ideundotxt$
+                    idet$ = _INFLATE$(ideundotxt$, ox&)
                 END IF
                 CLOSE #150
             END IF
@@ -1263,9 +1264,9 @@ FUNCTION ide2 (ignore)
                 'bookmark info [v2]
                 a$ = a$ + MKL$(IdeBmkN)
                 FOR bi = 1 TO IdeBmkN: a$ = a$ + MKL$(IdeBmk(bi).y) + MKL$(IdeBmk(bi).x): NEXT
-                l& = LEN(idet$)
-                a$ = a$ + MKL$(l&) 'data size
-                a$ = MKL$(l& + LEN(a$)) + a$ + idet$ + MKL$(l& + LEN(a$)) 'header, data & encapsulation (reverse navigatable list)
+                ideundotxt$ = _DEFLATE$(idet$): l& = LEN(ideundotxt$) 'compress edited text
+                a$ = a$ + MKL$(l&) + MKL$(LEN(idet$)) 'compressed data size + original text size
+                a$ = MKL$(l& + LEN(a$)) + a$ + ideundotxt$ + MKL$(l& + LEN(a$)) 'header, data & encapsulation (reverse navigatable list)
 
                 'add undo event
 
@@ -3621,7 +3622,8 @@ FUNCTION ide2 (ignore)
                     'bookmark info [v2]
                     GET #150, , IdeBmkN: REDIM IdeBmk(IdeBmkN + 1) AS IdeBmkType
                     FOR bi = 1 TO IdeBmkN: GET #150, , IdeBmk(bi).y: GET #150, , IdeBmk(bi).x: NEXT
-                    GET #150, , x&: idet$ = SPACE$(x&): GET #150, , idet$
+                    GET #150, , x&: GET #150, , ox&: ideundotxt$ = SPACE$(x&): GET #150, , ideundotxt$
+                    idet$ = _INFLATE$(ideundotxt$, ox&)
 
                     idechangemade = 1: idenoundo = 1: startPausedPending = 0
 
@@ -3682,7 +3684,8 @@ FUNCTION ide2 (ignore)
                     'bookmark info [v2]
                     GET #150, , IdeBmkN: REDIM IdeBmk(IdeBmkN + 1) AS IdeBmkType
                     FOR bi = 1 TO IdeBmkN: GET #150, , IdeBmk(bi).y: GET #150, , IdeBmk(bi).x: NEXT
-                    GET #150, , x&: idet$ = SPACE$(x&): GET #150, , idet$
+                    GET #150, , x&: GET #150, , ox&: ideundotxt$ = SPACE$(x&): GET #150, , ideundotxt$
+                    idet$ = _INFLATE$(ideundotxt$, ox&)
 
                     idechangemade = 1: idenoundo = 1: startPausedPending = 0
 
