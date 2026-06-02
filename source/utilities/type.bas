@@ -1,6 +1,6 @@
-FUNCTION typevalue2symbol$ (t)
+Function typevalue2symbol$ (t)
 
-    IF t AND ISSTRING THEN
+    If t And ISSTRING Then
         IF t AND ISFIXEDLENGTH THEN Give_Error "Cannot convert expression type to symbol": EXIT FUNCTION
         typevalue2symbol$ = "$"
         EXIT FUNCTION
@@ -581,24 +581,1489 @@ FUNCTION tryRemoveSymbol$ (varname$)
 END FUNCTION
 
 SUB increaseUDTArrays
+    ' The dynamic-member metadata is parallel to the legacy UDT tables.
+    ' *_dyn* stores the normal REDIM/runtime descriptor layout; *_fdyn* stores
+    ' the forced-only layout used when explicit _DynamicField members appear in
+    ' otherwise inline/DIM-created UDT storage. Both layouts are kept because
+    ' the same TYPE can be instantiated through different storage paths.
     x = UBOUND(udtxname)
     REDIM _PRESERVE udtxname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtxcname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtxsize(x + 1000) AS LONG
+    REDIM _PRESERVE udtxdynsize(x + 1000) AS LONG
+    REDIM _PRESERVE udtxfdynsize(x + 1000) AS LONG
     REDIM _PRESERVE udtxnext(x + 1000) AS LONG
     REDIM _PRESERVE udtxvariable(x + 1000) AS INTEGER 'true if the udt contains variable length elements
     'elements
     REDIM _PRESERVE udtename(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtecname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtesize(x + 1000) AS LONG
+    REDIM _PRESERVE udtedynoffset(x + 1000) AS LONG
+    REDIM _PRESERVE udtedynsize(x + 1000) AS LONG
+    REDIM _PRESERVE udtefdynoffset(x + 1000) AS LONG
+    REDIM _PRESERVE udtefdynsize(x + 1000) AS LONG
     REDIM _PRESERVE udtetype(x + 1000) AS LONG
     REDIM _PRESERVE udtetypesize(x + 1000) AS LONG
     REDIM _PRESERVE udtearrayelements(x + 1000) AS LONG
     REDIM _PRESERVE udtearraybase(x + 1000) AS LONG
     REDIM _PRESERVE udtearraydims(x + 1000) AS LONG
+    ' udtearraydesc stores serialized member-array bounds. Compile-time bounds
+    ' are encoded as numeric lower/count pairs; runtime-bound descriptor fields
+    ' use an @ prefix and keep the original bound expressions for later C prep.
     REDIM _PRESERVE udtearraydesc(x + 1000) AS STRING
+    ' udtearrayfieldmode: 0 = legacy/default inline member array,
+    ' 1 = explicit _StaticField, 2 = explicit _DynamicField descriptor member.
+    ' Unmarked compile-time arrays must remain inline for compatibility, even
+    ' when the parent UDT variable/array is created with REDIM.
+    REDIM _PRESERVE udtearrayfieldmode(x + 1000) AS LONG
     REDIM _PRESERVE udtenext(x + 1000) AS LONG
 END SUB
+
+' Build the alternate physical layouts used by nested member arrays.
+' Layout mode 1 is the forced-only descriptor layout for explicit _DynamicField
+' members under otherwise inline storage. Layout mode 2 is the full dynamic
+' layout used by REDIM/runtime descriptor paths. Static legacy layout remains
+' stored in udtxsize/udtesize and is not modified here.
+SUB BuildUDTDynLayout (udt_index AS LONG)
+    BuildUDTDynLayoutM udt_index, 1
+    BuildUDTDynLayoutM udt_index, 2
+END SUB
+
+SUB BuildUDTDynLayoutM (udt_index AS LONG, layout_mode AS LONG)
+    ' Each descriptor-backed member occupies one pointer-sized slot in the
+    ' parent UDT layout. Inline members keep their byte size, except nested UDTs
+    ' that themselves contain descriptor-backed members: those must use the
+    ' corresponding dynamic layout size so offsets stay consistent recursively.
+    DIM member_id AS LONG
+    DIM nested_udt AS LONG
+    DIM dynbits AS LONG
+    DIM ptrbits AS LONG
+    DIM membersize AS LONG
+
+    member_id = udtxnext(udt_index)
+    dynbits = 0
+    ptrbits = OFFSETTYPE AND 511
+
+    DO WHILE member_id
+        IF layout_mode = 1 THEN
+            udtefdynoffset(member_id) = dynbits
+        ELSE
+            udtedynoffset(member_id) = dynbits
+        END IF
+
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            ' Descriptor-backed members occupy only a pointer-sized slot in the
+            ' parent layout. Descriptor headers and payloads are allocated later
+            ' by the initialization helpers.
+            membersize = ptrbits
+        ELSEIF udtearrayelements(member_id) THEN
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    membersize = udtearrayelements(member_id) * UDTDynLayoutSize&(nested_udt, layout_mode)
+                ELSE
+                    membersize = udtesize(member_id)
+                END IF
+            ELSE
+                membersize = udtesize(member_id)
+            END IF
+        ELSEIF udtetype(member_id) AND ISUDT THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                membersize = UDTDynLayoutSize&(nested_udt, layout_mode)
+            ELSE
+                membersize = udtesize(member_id)
+            END IF
+        ELSE
+            membersize = udtesize(member_id)
+        END IF
+
+        IF layout_mode = 1 THEN
+            udtefdynsize(member_id) = membersize
+        ELSE
+            udtedynsize(member_id) = membersize
+        END IF
+
+        dynbits = dynbits + membersize
+        member_id = udtenext(member_id)
+    LOOP
+
+    IF layout_mode = 1 THEN
+        udtxfdynsize(udt_index) = dynbits
+    ELSE
+        udtxdynsize(udt_index) = dynbits
+    END IF
+END SUB
+
+' Return true when this UDT, or any nested UDT member, contains descriptor-backed
+' member arrays in the requested layout mode. This is the cheap gate used by
+' init/free/copy code to decide whether plain memcpy is safe.
+FUNCTION UDTDynHasMemberArrays% (udt_index AS LONG, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM nested_udt AS LONG
+
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            UDTDynHasMemberArrays% = -1
+            EXIT FUNCTION
+        END IF
+        IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                UDTDynHasMemberArrays% = -1
+                EXIT FUNCTION
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END FUNCTION
+
+' Return true when a descriptor-backed member array uses runtime-evaluated
+' bounds. Runtime metadata is marked by an @ prefix in udtearraydesc and requires
+' bound-prep code from qb64pe.bas before descriptors can be allocated.
+FUNCTION UDTDynHasRunArrays% (udt_index AS LONG, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM nested_udt AS LONG
+
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            IF LEFT$(udtearraydesc(member_id), 1) = "@" THEN
+                UDTDynHasRunArrays% = -1
+                EXIT FUNCTION
+            END IF
+        END IF
+        IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF UDTDynHasRunArrays%(nested_udt, layout_mode) THEN
+                UDTDynHasRunArrays% = -1
+                EXIT FUNCTION
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END FUNCTION
+
+' Validate the subset of member-array/owner combinations supported by the
+' descriptor implementation. This keeps parser/runtime behavior predictable:
+' unsupported ownership graphs are rejected before any C code is generated.
+FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM nested_udt AS LONG
+    member_id = udtxnext(udt_index)
+    UDTDynMembersOK% = -1
+
+    DO WHILE member_id
+        IF udtearrayelements(member_id) THEN
+            IF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+                IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                    ' Variable-length STRING arrays are ownership-bearing. If they are
+                    ' descriptor-backed, they must be explicitly marked _DynamicField so
+                    ' legacy inline arrays do not silently change storage model.
+                    IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+                        IF udtearrayfieldmode(member_id) <> 2 THEN
+                            Give_Error "Dynamic TYPE variable-length STRING member arrays require _DynamicField for now"
+                            UDTDynMembersOK% = 0
+                            EXIT FUNCTION
+                        END IF
+                    ELSE
+                        'Inline/static-bound variable-length STRING arrays are allowed in
+                        'owner layouts now; the owner lifecycle helpers initialize/free
+                        'each qbs* slot instead of treating the member as one scalar string.
+                        IF UDTDynOwnerOK%(udt_index, layout_mode) = 0 THEN
+                            UDTDynMembersOK% = 0
+                            EXIT FUNCTION
+                        END IF
+                        IF Error_Happened THEN
+                            UDTDynMembersOK% = 0
+                            EXIT FUNCTION
+                        END IF
+                    END IF
+                END IF
+            END IF
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                ' A descriptor-backed UDT array whose element owns variable strings needs
+                ' the recursive owner helpers. Keep that path explicit so ordinary inline
+                ' UDT arrays remain compatible with legacy layout.
+                IF UDTMemberDynDesc%(member_id, layout_mode) AND udtxvariable(nested_udt) THEN
+                    IF udtearrayfieldmode(member_id) <> 2 THEN
+                        Give_Error "Dynamic TYPE UDT member arrays containing variable-length strings require _DynamicField for now"
+                        UDTDynMembersOK% = 0
+                        EXIT FUNCTION
+                    END IF
+                    IF UDTDynOwnerOK%(nested_udt, layout_mode) = 0 THEN
+                        UDTDynMembersOK% = 0
+                        EXIT FUNCTION
+                    END IF
+                ELSE
+                    IF UDTDynMembersOK%(nested_udt, layout_mode) = 0 THEN
+                        UDTDynMembersOK% = 0
+                        EXIT FUNCTION
+                    END IF
+                END IF
+            END IF
+        ' Scalar variable STRINGs are only accepted when the enclosing UDT qualifies
+        ' as an owner layout. Otherwise this older path still only supports fixed-size
+        ' scalar storage in dynamic TYPE layouts.
+        ELSEIF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+            IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                IF UDTDynOwnerOK%(udt_index, layout_mode) THEN EXIT FUNCTION
+                IF Error_Happened THEN
+                    UDTDynMembersOK% = 0
+                    EXIT FUNCTION
+                END IF
+                Give_Error "Dynamic TYPE layout supports only fixed-length strings for now"
+                UDTDynMembersOK% = 0
+                EXIT FUNCTION
+            END IF
+        ELSEIF udtetype(member_id) AND ISUDT THEN
+            IF UDTDynMembersOK%(udtetype(member_id) AND 511, layout_mode) = 0 THEN
+                UDTDynMembersOK% = 0
+                EXIT FUNCTION
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END FUNCTION
+
+' True for descriptor-backed _DynamicField AS STRING member arrays. The payload
+' is an array of qbs* slots, not raw character bytes; callers use this to select
+' qbs init/free/copy and to keep _MEM/PUT/GET paths rejected elsewhere.
+FUNCTION DynMemVarStr% (member_id AS LONG)
+    IF member_id <= 0 THEN EXIT FUNCTION
+    IF udtearrayelements(member_id) = 0 THEN EXIT FUNCTION
+    IF udtearrayfieldmode(member_id) <> 2 THEN EXIT FUNCTION
+    IF (udtetype(member_id) AND ISSTRING) = 0 THEN EXIT FUNCTION
+    IF (udtetype(member_id) AND ISFIXEDLENGTH) <> 0 THEN EXIT FUNCTION
+    DynMemVarStr% = -1
+END FUNCTION
+
+' True for descriptor-backed _DynamicField AS UDT where the element UDT owns
+' variable-length strings. Such payloads require owner-aware recursive handling
+' instead of memcpy, even though the descriptor header itself is fixed-size.
+FUNCTION DynMemUDTVarStr% (member_id AS LONG)
+    DIM nested_udt AS LONG
+    IF member_id <= 0 THEN EXIT FUNCTION
+    IF udtearrayelements(member_id) = 0 THEN EXIT FUNCTION
+    IF udtearrayfieldmode(member_id) <> 2 THEN EXIT FUNCTION
+    IF (udtetype(member_id) AND ISUDT) = 0 THEN EXIT FUNCTION
+    nested_udt = udtetype(member_id) AND 511
+    IF udtxvariable(nested_udt) = 0 THEN EXIT FUNCTION
+    DynMemUDTVarStr% = -1
+END FUNCTION
+
+' Return true if this layout contains any descriptor payload that owns variable
+' string storage directly or through nested UDT elements. This is a safety gate
+' for operations that cannot expose or serialize qbs*/descriptor ownership.
+FUNCTION UDTDynHasVarDesc% (udt_index AS LONG, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM nested_udt AS LONG
+
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            seen_dyn = -1
+            IF DynMemVarStr%(member_id) THEN
+                UDTDynHasVarDesc% = -1
+                EXIT FUNCTION
+            END IF
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF udtxvariable(nested_udt) THEN
+                    UDTDynHasVarDesc% = -1
+                    EXIT FUNCTION
+                END IF
+                IF UDTDynHasVarDesc%(nested_udt, layout_mode) THEN
+                    UDTDynHasVarDesc% = -1
+                    EXIT FUNCTION
+                END IF
+            END IF
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF UDTDynHasVarDesc%(nested_udt, layout_mode) THEN
+                UDTDynHasVarDesc% = -1
+                EXIT FUNCTION
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END FUNCTION
+
+' Validate owner-layout UDTs. An owner layout is a dynamic physical layout that
+' contains scalar variable strings and/or descriptor-owned member arrays, so it
+' must be initialized, freed and copied member-by-member instead of by raw bytes.
+FUNCTION UDTDynOwnerOK% (udt_index AS LONG, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM nested_udt AS LONG
+    DIM seen_dyn AS LONG
+
+    UDTDynOwnerOK% = -1
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            seen_dyn = -1
+            '_DynamicField AS STRING is now allowed in dynamic TYPE owner layouts.
+            'The descriptor helpers initialize/free/copy the qbs* element slots, while
+            '_MEM and PUT/GET remain rejected through the existing variable-string guards.
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                ' A descriptor-backed _DynamicField AS UDT element may itself be an owner
+                ' layout. The recursive owner lifecycle helpers below now initialize, free and
+                ' copy scalar variable STRINGs, _DynamicField AS STRING payloads, and nested
+                ' descriptor-owned members, so this validation recurses instead of enforcing the
+                ' older fixed-size-only restriction.
+                IF UDTDynOwnerOK%(nested_udt, layout_mode) = 0 THEN
+                    UDTDynOwnerOK% = 0
+                    EXIT FUNCTION
+                END IF
+            END IF
+        ELSEIF udtearrayelements(member_id) THEN
+            IF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+                IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                    'Inline/static-bound variable-length STRING arrays are owner-managed
+                    'qbs* slots. They are not fixed-length strings, but they are now
+                    'initialized/freed/copied slot-by-slot in the owner helpers.
+                END IF
+            END IF
+        ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+            ' Scalar variable strings are allowed before, after, or between descriptor-backed
+            ' member arrays. Unsupported descriptor-owning member types are still rejected
+            ' when their own _DynamicField member is visited.
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF UDTDynOwnerOK%(nested_udt, layout_mode) = 0 THEN
+                UDTDynOwnerOK% = 0
+                EXIT FUNCTION
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END FUNCTION
+
+' Helper for order-sensitive owner validation. It answers whether a later member
+' in the same TYPE still needs descriptor-backed storage in this layout mode.
+FUNCTION UDTDynHasFollowingDynMember% (member_id AS LONG, layout_mode AS LONG)
+    DIM scan_id AS LONG
+
+    scan_id = udtenext(member_id)
+    DO WHILE scan_id
+        IF UDTMemberDynDesc%(scan_id, layout_mode) THEN
+            UDTDynHasFollowingDynMember% = -1
+            EXIT FUNCTION
+        END IF
+        scan_id = udtenext(scan_id)
+    LOOP
+END FUNCTION
+
+' Generate C code to initialize legacy inline qbs* slots inside one UDT element.
+' This is used for nested variable STRING ownership that is stored inline rather
+' than behind a descriptor slot.
+SUB AppendDynUDTVarInitAt (base_expr AS STRING, udt_index AS LONG, root_offset AS LONG, elem_bytes AS STRING, index_expr AS STRING, acc AS STRING)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM cr AS STRING
+
+    IF udtxvariable(udt_index) = 0 THEN EXIT SUB
+    cr = CHR$(13) + CHR$(10)
+    member_offset = root_offset
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF udtearrayelements(member_id) THEN
+            elem_step = udt_array_member_bytes(member_id)
+            FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                array_offset = member_offset + array_idx * elem_step
+                IF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+                    IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                        acc = acc + cr + "*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(array_offset)) + ")=qbs_new(0,0);"
+                    END IF
+                ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                    nested_udt = udtetype(member_id) AND 511
+                    AppendDynUDTVarInitAt base_expr, nested_udt, array_offset, elem_bytes, index_expr, acc
+                END IF
+            NEXT
+        ELSEIF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+            IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                acc = acc + cr + "*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(member_offset)) + ")=qbs_new(0,0);"
+            END IF
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            AppendDynUDTVarInitAt base_expr, nested_udt, member_offset, elem_bytes, index_expr, acc
+        END IF
+        member_offset = member_offset + udtesize(member_id) \ 8
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Generate C code to free legacy inline qbs* slots inside one UDT element before
+' the containing storage is released or replaced.
+SUB AppendDynUDTVarFreeAt (base_expr AS STRING, udt_index AS LONG, root_offset AS LONG, elem_bytes AS STRING, index_expr AS STRING, acc AS STRING)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM cr AS STRING
+
+    IF udtxvariable(udt_index) = 0 THEN EXIT SUB
+    cr = CHR$(13) + CHR$(10)
+    member_offset = root_offset
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF udtearrayelements(member_id) THEN
+            elem_step = udt_array_member_bytes(member_id)
+            FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                array_offset = member_offset + array_idx * elem_step
+                IF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+                    IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                        acc = acc + cr + "qbs_free(*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(array_offset)) + "));"
+                    END IF
+                ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                    nested_udt = udtetype(member_id) AND 511
+                    AppendDynUDTVarFreeAt base_expr, nested_udt, array_offset, elem_bytes, index_expr, acc
+                END IF
+            NEXT
+        ELSEIF (udtetype(member_id) AND ISSTRING) <> 0 THEN
+            IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+                acc = acc + cr + "qbs_free(*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(member_offset)) + "));"
+            END IF
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            AppendDynUDTVarFreeAt base_expr, nested_udt, member_offset, elem_bytes, index_expr, acc
+        END IF
+        member_offset = member_offset + udtesize(member_id) \ 8
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Generate C code for deep assignment of legacy inline variable STRING members.
+' Numeric/fixed-size fields still use memcpy; qbs* fields use qbs_set to avoid
+' aliasing string ownership between source and destination.
+SUB AppendDynUDTVarSetAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS LONG, dst_root AS LONG, src_root AS LONG, elem_bytes AS STRING, dst_index AS STRING, src_index AS STRING, acc AS STRING)
+    DIM member_id AS LONG
+    DIM dst_offset AS LONG
+    DIM src_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM dst_array_offset AS LONG
+    DIM src_array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM cr AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    dst_offset = dst_root
+    src_offset = src_root
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF udtearrayelements(member_id) THEN
+            elem_step = udt_array_member_bytes(member_id)
+            IF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    dst_array_offset = dst_offset + array_idx * elem_step
+                    src_array_offset = src_offset + array_idx * elem_step
+                    acc = acc + cr + "{qbs **dyn_udt_qbs_dst=(qbs**)(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_array_offset)) + "); qbs *dyn_udt_qbs_src=*(qbs**)(((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_array_offset)) + "); if(!*dyn_udt_qbs_dst) *dyn_udt_qbs_dst=qbs_new(0,0); if(dyn_udt_qbs_src) qbs_set(*dyn_udt_qbs_dst,dyn_udt_qbs_src);}" 
+                NEXT
+            ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF udtxvariable(nested_udt) THEN
+                    FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                        dst_array_offset = dst_offset + array_idx * elem_step
+                        src_array_offset = src_offset + array_idx * elem_step
+                        AppendDynUDTVarSetAt dst_expr, src_expr, nested_udt, dst_array_offset, src_array_offset, elem_bytes, dst_index, src_index, acc
+                    NEXT
+                ELSE
+                    acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+                END IF
+            ELSE
+                acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+            END IF
+        ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+            acc = acc + cr + "{qbs **dyn_udt_qbs_dst=(qbs**)(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + "); qbs *dyn_udt_qbs_src=*(qbs**)(((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + "); if(!*dyn_udt_qbs_dst) *dyn_udt_qbs_dst=qbs_new(0,0); if(dyn_udt_qbs_src) qbs_set(*dyn_udt_qbs_dst,dyn_udt_qbs_src);}" 
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF udtxvariable(nested_udt) THEN
+                AppendDynUDTVarSetAt dst_expr, src_expr, nested_udt, dst_offset, src_offset, elem_bytes, dst_index, src_index, acc
+            ELSE
+                acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+            END IF
+        ELSE
+            acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+        END IF
+        dst_offset = dst_offset + udtesize(member_id) \ 8
+        src_offset = src_offset + udtesize(member_id) \ 8
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Descriptor payload helper for _DynamicField AS STRING. The payload stores qbs*
+' slots at elem_bytes stride, so each element needs qbs_new/qbs_free/qbs_set
+' rather than raw byte initialization or memcpy.
+SUB AppendDynStrInit (base_expr AS STRING, total_expr AS STRING, elem_bytes AS LONG, acc AS STRING)
+    DIM cr AS STRING
+    cr = CHR$(13) + CHR$(10)
+    acc = acc + cr + "for(ptrszint dyn_udt_str_i=0; dyn_udt_str_i<(" + total_expr + "); dyn_udt_str_i++){"
+    acc = acc + cr + "*(qbs**)(((uint8*)(" + base_expr + "))+dyn_udt_str_i*" + LTRIM$(STR$(elem_bytes)) + ")=qbs_new(0,0);"
+    acc = acc + cr + "}"
+END SUB
+
+SUB AppendDynStrFree (base_expr AS STRING, total_expr AS STRING, elem_bytes AS LONG, acc AS STRING)
+    DIM cr AS STRING
+    cr = CHR$(13) + CHR$(10)
+    acc = acc + cr + "for(ptrszint dyn_udt_str_i=0; dyn_udt_str_i<(" + total_expr + "); dyn_udt_str_i++){"
+    acc = acc + cr + "qbs **dyn_udt_str_slot=(qbs**)(((uint8*)(" + base_expr + "))+dyn_udt_str_i*" + LTRIM$(STR$(elem_bytes)) + ");"
+    acc = acc + cr + "if (*dyn_udt_str_slot) qbs_free(*dyn_udt_str_slot);"
+    acc = acc + cr + "}"
+END SUB
+
+SUB AppendDynStrSet (dst_expr AS STRING, src_expr AS STRING, total_expr AS STRING, elem_bytes AS LONG, acc AS STRING)
+    DIM cr AS STRING
+    cr = CHR$(13) + CHR$(10)
+    acc = acc + cr + "for(ptrszint dyn_udt_str_i=0; dyn_udt_str_i<(" + total_expr + "); dyn_udt_str_i++){"
+    acc = acc + cr + "qbs *dyn_udt_str_src=*(qbs**)(((uint8*)(" + src_expr + "))+dyn_udt_str_i*" + LTRIM$(STR$(elem_bytes)) + ");"
+    acc = acc + cr + "qbs **dyn_udt_str_dst_slot=(qbs**)(((uint8*)(" + dst_expr + "))+dyn_udt_str_i*" + LTRIM$(STR$(elem_bytes)) + ");"
+    acc = acc + cr + "if (!*dyn_udt_str_dst_slot) *dyn_udt_str_dst_slot=qbs_new(0,0);"
+    acc = acc + cr + "if (dyn_udt_str_src) qbs_set(*dyn_udt_str_dst_slot,dyn_udt_str_src);"
+    acc = acc + cr + "}"
+END SUB
+
+
+' Generate C code to initialize one owner-layout UDT element. The first
+' descriptor-backed member triggers descriptor initialization for the whole UDT;
+' scalar/inline variable strings and nested owner UDTs are then initialized
+' recursively at their dynamic-layout offsets.
+SUB AppendDynUDTOwnInitAt (base_expr AS STRING, udt_index AS LONG, root_offset AS LONG, elem_bytes AS STRING, index_expr AS STRING, acc AS STRING, prep_prefix AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM desc_inited AS LONG
+    DIM cr AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        member_offset = root_offset + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            IF desc_inited = 0 THEN
+                AppendDynUDTDescInitAt base_expr, udt_index, root_offset, elem_bytes, index_expr, acc, prep_prefix, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                desc_inited = -1
+            END IF
+        ELSEIF udtearrayelements(member_id) THEN
+            elem_step = UDTDynInlineElemBytes&(member_id, layout_mode)
+            IF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+                elem_step = udt_array_member_bytes(member_id)
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    array_offset = member_offset + array_idx * elem_step
+                    acc = acc + cr + "*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(array_offset)) + ")=qbs_new(0,0);"
+                NEXT
+            ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                        array_offset = member_offset + array_idx * elem_step
+                        AppendDynUDTOwnInitAt base_expr, nested_udt, array_offset, elem_bytes, index_expr, acc, prep_prefix, layout_mode
+                        IF Error_Happened THEN EXIT SUB
+                    NEXT
+                END IF
+            END IF
+        ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+            acc = acc + cr + "*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(member_offset)) + ")=qbs_new(0,0);"
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                AppendDynUDTOwnInitAt base_expr, nested_udt, member_offset, elem_bytes, index_expr, acc, prep_prefix, layout_mode
+                IF Error_Happened THEN EXIT SUB
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Generate C code to release one owner-layout UDT element. Descriptor payloads
+' are freed once per containing UDT element, while scalar/inline qbs* slots and
+' nested owner UDTs are walked recursively.
+SUB AppendDynUDTOwnFreeAt (base_expr AS STRING, udt_index AS LONG, root_offset AS LONG, elem_bytes AS STRING, index_expr AS STRING, acc AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM desc_freed AS LONG
+    DIM cr AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        member_offset = root_offset + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            IF desc_freed = 0 THEN
+                AppendDynUDTDescFreeAt base_expr, udt_index, root_offset, elem_bytes, index_expr, acc, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                desc_freed = -1
+            END IF
+        ELSEIF udtearrayelements(member_id) THEN
+            elem_step = UDTDynInlineElemBytes&(member_id, layout_mode)
+            IF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+                elem_step = udt_array_member_bytes(member_id)
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    array_offset = member_offset + array_idx * elem_step
+                    acc = acc + cr + "qbs_free(*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(array_offset)) + "));"
+                NEXT
+            ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                        array_offset = member_offset + array_idx * elem_step
+                        AppendDynUDTOwnFreeAt base_expr, nested_udt, array_offset, elem_bytes, index_expr, acc, layout_mode
+                        IF Error_Happened THEN EXIT SUB
+                    NEXT
+                END IF
+            END IF
+        ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+            acc = acc + cr + "qbs_free(*(qbs**)(((uint8*)(" + base_expr + "))+" + elem_bytes + "*(" + index_expr + ")+" + LTRIM$(STR$(member_offset)) + "));"
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                AppendDynUDTOwnFreeAt base_expr, nested_udt, member_offset, elem_bytes, index_expr, acc, layout_mode
+                IF Error_Happened THEN EXIT SUB
+            END IF
+        END IF
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Generate C code for assignment into an already-live owner-layout UDT element.
+' Existing destination descriptors are erased before cloning from source; qbs*
+' scalar/inline members use qbs_set, and nested owner UDTs recurse.
+SUB AppendDynUDTOwnSetAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS LONG, dst_root AS LONG, src_root AS LONG, elem_bytes AS STRING, dst_index AS STRING, src_index AS STRING, acc AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM dst_offset AS LONG
+    DIM src_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM dst_array_offset AS LONG
+    DIM src_array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM member_elem_bytes AS LONG
+    DIM dst_slot AS STRING
+    DIM src_slot AS STRING
+    DIM cr AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    dst_offset = dst_root
+    src_offset = src_root
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            member_elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
+            nested_udt = 0
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN nested_udt = udtetype(member_id) AND 511
+            dst_slot = "((uint8*)" + dst_expr + "+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ")"
+            src_slot = "((uint8*)" + src_expr + "+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ")"
+            AppendDynMemberEraseEx dst_slot, member_elem_bytes, nested_udt, DynMemVarStr%(member_id), acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+            AppendDynMemberCloneAfterRaw src_slot, dst_slot, member_elem_bytes, nested_udt, DynMemVarStr%(member_id), acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        ELSEIF udtearrayelements(member_id) THEN
+            elem_step = udt_array_member_bytes(member_id)
+            IF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    dst_array_offset = dst_offset + array_idx * elem_step
+                    src_array_offset = src_offset + array_idx * elem_step
+                    acc = acc + cr + "{qbs **dyn_udt_qbs_dst=(qbs**)(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_array_offset)) + "); qbs *dyn_udt_qbs_src=*(qbs**)(((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_array_offset)) + "); if(!*dyn_udt_qbs_dst) *dyn_udt_qbs_dst=qbs_new(0,0); if(dyn_udt_qbs_src) qbs_set(*dyn_udt_qbs_dst,dyn_udt_qbs_src);}" 
+                NEXT
+            ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    dst_array_offset = dst_offset + array_idx * elem_step
+                    src_array_offset = src_offset + array_idx * elem_step
+                    IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                        AppendDynUDTOwnSetAt dst_expr, src_expr, nested_udt, dst_array_offset, src_array_offset, elem_bytes, dst_index, src_index, acc, layout_mode
+                    ELSE
+                        acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_array_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_array_offset)) + ",(size_t)" + LTRIM$(STR$(elem_step)) + ");"
+                    END IF
+                    IF Error_Happened THEN EXIT SUB
+                NEXT
+            ELSE
+                acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+            END IF
+        ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+            acc = acc + cr + "{qbs **dyn_udt_qbs_dst=(qbs**)(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + "); qbs *dyn_udt_qbs_src=*(qbs**)(((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + "); if(!*dyn_udt_qbs_dst) *dyn_udt_qbs_dst=qbs_new(0,0); if(dyn_udt_qbs_src) qbs_set(*dyn_udt_qbs_dst,dyn_udt_qbs_src);}" 
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                AppendDynUDTOwnSetAt dst_expr, src_expr, nested_udt, dst_offset, src_offset, elem_bytes, dst_index, src_index, acc, layout_mode
+            ELSE
+                acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+            END IF
+        ELSE
+            acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+        END IF
+        dst_offset = dst_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
+        src_offset = src_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Clone an owner-layout UDT element into zero-filled destination storage.
+' Unlike AppendDynUDTOwnSetAt, this helper must not erase destination members first.
+' It is used by whole-array assignment replace-copy: the new parent payload is
+' calloc/zeroed, then each source element is deep-cloned into the clean slot.
+' This avoids the unsafe init -> erase -> clone pattern for nested owner graphs.
+SUB AppendDynUDTOwnCloneAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS LONG, dst_root AS LONG, src_root AS LONG, elem_bytes AS STRING, dst_index AS STRING, src_index AS STRING, acc AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM dst_offset AS LONG
+    DIM src_offset AS LONG
+    DIM elem_step AS LONG
+    DIM array_idx AS LONG
+    DIM dst_array_offset AS LONG
+    DIM src_array_offset AS LONG
+    DIM nested_udt AS LONG
+    DIM member_elem_bytes AS LONG
+    DIM dst_slot AS STRING
+    DIM src_slot AS STRING
+    DIM cr AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    dst_offset = dst_root
+    src_offset = src_root
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            member_elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
+            nested_udt = 0
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN nested_udt = udtetype(member_id) AND 511
+            dst_slot = "((uint8*)" + dst_expr + "+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ")"
+            src_slot = "((uint8*)" + src_expr + "+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ")"
+            AppendDynMemberCloneAfterRaw src_slot, dst_slot, member_elem_bytes, nested_udt, DynMemVarStr%(member_id), acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        ELSEIF udtearrayelements(member_id) THEN
+            elem_step = udt_array_member_bytes(member_id)
+            IF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    dst_array_offset = dst_offset + array_idx * elem_step
+                    src_array_offset = src_offset + array_idx * elem_step
+                    acc = acc + cr + "{qbs **dyn_udt_qbs_dst=(qbs**)(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_array_offset)) + "); qbs *dyn_udt_qbs_src=*(qbs**)(((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_array_offset)) + "); if(!*dyn_udt_qbs_dst) *dyn_udt_qbs_dst=qbs_new(0,0); if(dyn_udt_qbs_src) qbs_set(*dyn_udt_qbs_dst,dyn_udt_qbs_src);}" 
+                NEXT
+            ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                    dst_array_offset = dst_offset + array_idx * elem_step
+                    src_array_offset = src_offset + array_idx * elem_step
+                    IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                        AppendDynUDTOwnCloneAt dst_expr, src_expr, nested_udt, dst_array_offset, src_array_offset, elem_bytes, dst_index, src_index, acc, layout_mode
+                    ELSE
+                        acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_array_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_array_offset)) + ",(size_t)" + LTRIM$(STR$(elem_step)) + ");"
+                    END IF
+                    IF Error_Happened THEN EXIT SUB
+                NEXT
+            ELSE
+                acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+            END IF
+        ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
+            acc = acc + cr + "{qbs **dyn_udt_qbs_dst=(qbs**)(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + "); qbs *dyn_udt_qbs_src=*(qbs**)(((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + "); if(!*dyn_udt_qbs_dst) *dyn_udt_qbs_dst=qbs_new(0,0); if(dyn_udt_qbs_src) qbs_set(*dyn_udt_qbs_dst,dyn_udt_qbs_src);}" 
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND 511
+            IF udtxvariable(nested_udt) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                AppendDynUDTOwnCloneAt dst_expr, src_expr, nested_udt, dst_offset, src_offset, elem_bytes, dst_index, src_index, acc, layout_mode
+            ELSE
+                acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+            END IF
+        ELSE
+            acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
+        END IF
+        dst_offset = dst_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
+        src_offset = src_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Entry point used by qb64pe.bas when an array of UDT elements needs descriptor
+' initialization. Variable-string owner layouts go through the owner initializer;
+' pure descriptor layouts can initialize descriptor slots directly.
+SUB AppendDynUDTDescInit (n$, udt_index AS LONG, root_offset AS LONG, bytesperelement$, acc$, prep_prefix AS STRING, layout_mode AS LONG)
+    IF udtxvariable(udt_index) THEN
+        AppendDynUDTOwnInitAt "(void*)" + n$ + "[0]", udt_index, root_offset, bytesperelement$, "tmp_long", acc$, prep_prefix, layout_mode
+    ELSE
+        AppendDynUDTDescInitAt n$ + "[0]", udt_index, root_offset, bytesperelement$, "tmp_long", acc$, prep_prefix, layout_mode
+    END IF
+END SUB
+
+' Generate the C descriptor headers and payload allocations for nested member
+' arrays. Each descriptor records payload pointer, dimension metadata and a mem
+' lock. Runtime-bound descriptors consume prepared lower/upper variables;
+' compile-time descriptors use serialized lower/count metadata from type parsing.
+SUB AppendDynUDTDescInitAt (data_expr AS STRING, udt_index AS LONG, root_offset AS LONG, bytesperelement AS STRING, index_expr AS STRING, acc AS STRING, prep_prefix AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM elem_bytes AS LONG
+    DIM dims_count AS LONG
+    DIM desc_slots AS LONG
+    DIM count_total AS LONG
+    DIM desc_pos AS LONG
+    DIM dim_idx AS LONG
+    DIM lower_val AS LONG
+    DIM count_val AS LONG
+    DIM stride_val AS LONG
+    DIM desc_idx AS LONG
+    DIM member_ptr AS STRING
+    DIM desc_var AS STRING
+    DIM member_desc AS STRING
+    DIM lower_expr AS STRING
+    DIM upper_expr AS STRING
+    DIM lower_text AS STRING
+    DIM upper_text AS STRING
+    DIM total_expr AS STRING
+    DIM nested_udt AS LONG
+    DIM elem_idx AS STRING
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM inline_bytes AS LONG
+    DIM cr AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        member_offset = root_offset + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            ' A descriptor-backed member stores only a pointer-sized slot in the
+            ' parent layout; this generated C block allocates the descriptor
+            ' header and the actual payload behind that slot.
+            elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
+            dims_count = udtearraydims(member_id)
+            desc_slots = 4 * dims_count + 4 + 1
+            count_total = 1
+            desc_pos = 1
+            stride_val = 1
+            member_desc = udtearraydesc(member_id)
+            member_ptr = "((ptrszint**)((uint8*)(" + data_expr + ")+" + bytesperelement + "*(" + index_expr + ")+" + LTRIM$(STR$(member_offset)) + "))"
+            desc_var = "dyn_udt_desc"
+
+            acc = acc + cr + "{"
+            acc = acc + cr + "ptrszint **dyn_udt_slot=" + member_ptr + ";"
+            acc = acc + cr + "ptrszint *dyn_udt_desc=(ptrszint*)calloc((size_t)" + LTRIM$(STR$(desc_slots)) + ",ptrsz);"
+            acc = acc + cr + "if (!dyn_udt_desc) error(257);"
+            acc = acc + cr + "*dyn_udt_slot=dyn_udt_desc;"
+            acc = acc + cr + "new_mem_lock();"
+            acc = acc + cr + "mem_lock_tmp->type=4;"
+            acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_slots - 1)) + "]=(ptrszint)mem_lock_tmp;"
+            acc = acc + cr + desc_var + "[1]=0;"
+            acc = acc + cr + desc_var + "[2]=1;"
+            acc = acc + cr + desc_var + "[3]=" + LTRIM$(STR$(dims_count)) + ";"
+
+            ' Runtime-bound descriptors cannot be resolved while parsing TYPE.
+            ' qb64pe.bas emits prep variables for each dimension; this block consumes
+            ' those values and performs runtime bounds validation before allocation.
+            IF LEFT$(member_desc, 1) = "@" THEN
+                IF prep_prefix = "" THEN
+                    Give_Error "Invalid TYPE member array metadata"
+                    EXIT SUB
+                END IF
+
+                acc = acc + cr + "ptrszint dyn_udt_total=1;"
+                acc = acc + cr + "ptrszint dyn_udt_stride=1;"
+                acc = acc + cr + "ptrszint dyn_udt_lower=0;"
+                acc = acc + cr + "ptrszint dyn_udt_upper=0;"
+
+                FOR dim_idx = 1 TO dims_count
+                    IF ParseNextUDTRunDescDim(member_desc, desc_pos, lower_expr, upper_expr) = 0 THEN
+                        Give_Error "Invalid TYPE member array metadata"
+                        EXIT SUB
+                    END IF
+
+                    lower_text = prep_prefix + "_m" + LTRIM$(STR$(member_id)) + "_d" + LTRIM$(STR$(dim_idx)) + "_lo"
+                    upper_text = prep_prefix + "_m" + LTRIM$(STR$(member_id)) + "_d" + LTRIM$(STR$(dim_idx)) + "_hi"
+
+                    desc_idx = (dims_count - dim_idx) * 4 + 4
+                    acc = acc + cr + "dyn_udt_lower=" + lower_text + ";"
+                    acc = acc + cr + "dyn_udt_upper=" + upper_text + ";"
+                    acc = acc + cr + "if (dyn_udt_upper<dyn_udt_lower) error(5);"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx)) + "]=dyn_udt_lower;"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx + 1)) + "]=dyn_udt_upper-dyn_udt_lower+1;"
+                    acc = acc + cr + "if (" + desc_var + "[" + LTRIM$(STR$(desc_idx + 1)) + "]<=0) error(5);"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx + 2)) + "]=dyn_udt_stride;"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx + 3)) + "]=0;"
+                    acc = acc + cr + "dyn_udt_total*=" + desc_var + "[" + LTRIM$(STR$(desc_idx + 1)) + "];"
+                    acc = acc + cr + "dyn_udt_stride*=" + desc_var + "[" + LTRIM$(STR$(desc_idx + 1)) + "];"
+                NEXT
+
+                acc = acc + cr + desc_var + "[0]=(ptrszint)calloc((size_t)(dyn_udt_total*" + LTRIM$(STR$(elem_bytes)) + "),1);"
+                acc = acc + cr + "if (!" + desc_var + "[0]) error(257);"
+                total_expr = "dyn_udt_total"
+            ELSE
+                ' Compile-time descriptor metadata is stored as lower/count pairs.
+                ' Count_total is checked against udtearrayelements to catch corrupt
+                ' or mismatched TYPE metadata before C code is emitted.
+                FOR dim_idx = 1 TO dims_count
+                    IF ParseNextUDTArrayDescriptorDim(member_desc, desc_pos, lower_val, count_val) = 0 THEN
+                        Give_Error "Invalid TYPE member array metadata"
+                        EXIT SUB
+                    END IF
+                    desc_idx = (dims_count - dim_idx) * 4 + 4
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx)) + "]=" + LTRIM$(STR$(lower_val)) + ";"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx + 1)) + "]=" + LTRIM$(STR$(count_val)) + ";"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx + 2)) + "]=" + LTRIM$(STR$(stride_val)) + ";"
+                    acc = acc + cr + desc_var + "[" + LTRIM$(STR$(desc_idx + 3)) + "]=0;"
+                    stride_val = stride_val * count_val
+                    count_total = count_total * count_val
+                NEXT
+
+                IF count_total <> udtearrayelements(member_id) THEN
+                    Give_Error "Invalid TYPE member array metadata"
+                    EXIT SUB
+                END IF
+
+                acc = acc + cr + desc_var + "[0]=(ptrszint)calloc((size_t)(" + LTRIM$(STR$(count_total)) + "*" + LTRIM$(STR$(elem_bytes)) + "),1);"
+                acc = acc + cr + "if (!" + desc_var + "[0]) error(257);"
+                total_expr = LTRIM$(STR$(count_total))
+            END IF
+
+            IF DynMemVarStr%(member_id) THEN
+                AppendDynStrInit "(void*)" + desc_var + "[0]", total_expr, elem_bytes, acc
+            END IF
+
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF DynMemUDTVarStr%(member_id) OR UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    elem_idx = "dyn_udt_own_m" + LTRIM$(STR$(member_id))
+                    acc = acc + cr + "for(ptrszint " + elem_idx + "=0;" + elem_idx + "<" + total_expr + ";" + elem_idx + "++){"
+                    AppendDynUDTOwnInitAt "(void*)" + desc_var + "[0]", nested_udt, 0, LTRIM$(STR$(elem_bytes)), elem_idx, acc, prep_prefix, layout_mode
+                    IF Error_Happened THEN EXIT SUB
+                    acc = acc + cr + "}"
+                END IF
+            END IF
+
+            acc = acc + cr + "}"
+        ELSEIF udtearrayelements(member_id) THEN
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    inline_bytes = UDTDynInlineElemBytes&(member_id, layout_mode)
+                    FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                        array_offset = member_offset + array_idx * inline_bytes
+                        AppendDynUDTDescInitAt data_expr, nested_udt, array_offset, bytesperelement, index_expr, acc, prep_prefix, layout_mode
+                        IF Error_Happened THEN EXIT SUB
+                    NEXT
+                END IF
+            END IF
+        ELSEIF udtetype(member_id) AND ISUDT THEN
+            AppendDynUDTDescInitAt data_expr, udtetype(member_id) AND 511, member_offset, bytesperelement, index_expr, acc, prep_prefix, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        END IF
+
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+' Parse one runtime-bound dimension from an @ descriptor string. The parser keeps
+' nested parentheses balanced so expressions like f(a, b) do not split at the
+' wrong comma or semicolon.
+FUNCTION ParseNextUDTRunDescDim& (descriptor AS STRING, descriptor_position AS LONG, lower_expr AS STRING, upper_expr AS STRING)
+    DIM start_at AS LONG
+    DIM scan_i AS LONG
+    DIM desc_chars AS LONG
+    DIM depth_count AS LONG
+    DIM semi_at AS LONG
+    DIM comma_at AS LONG
+    DIM dim_text AS STRING
+    DIM ch AS STRING
+
+    IF descriptor_position <= 0 THEN descriptor_position = 1
+    IF LEFT$(descriptor, 1) = "@" AND descriptor_position = 1 THEN descriptor_position = 2
+
+    desc_chars = LEN(descriptor)
+    IF descriptor_position > desc_chars THEN EXIT FUNCTION
+
+    start_at = descriptor_position
+    depth_count = 0
+    semi_at = 0
+    FOR scan_i = start_at TO desc_chars
+        ch = MID$(descriptor, scan_i, 1)
+        IF ch = "(" THEN depth_count = depth_count + 1
+        IF ch = ")" THEN depth_count = depth_count - 1
+        IF depth_count < 0 THEN EXIT FUNCTION
+        IF depth_count = 0 AND ch = ";" THEN
+            semi_at = scan_i
+            EXIT FOR
+        END IF
+    NEXT
+    IF depth_count <> 0 THEN EXIT FUNCTION
+
+    IF semi_at THEN
+        dim_text = MID$(descriptor, start_at, semi_at - start_at)
+        descriptor_position = semi_at + 1
+    ELSE
+        dim_text = MID$(descriptor, start_at)
+        descriptor_position = desc_chars + 1
+    END IF
+
+    dim_text = LTRIM$(RTRIM$(dim_text))
+    IF dim_text = "" THEN EXIT FUNCTION
+
+    depth_count = 0
+    comma_at = 0
+    FOR scan_i = 1 TO LEN(dim_text)
+        ch = MID$(dim_text, scan_i, 1)
+        IF ch = "(" THEN depth_count = depth_count + 1
+        IF ch = ")" THEN depth_count = depth_count - 1
+        IF depth_count < 0 THEN EXIT FUNCTION
+        IF depth_count = 0 AND ch = "," THEN
+            IF comma_at THEN EXIT FUNCTION
+            comma_at = scan_i
+        END IF
+    NEXT
+    IF depth_count <> 0 THEN EXIT FUNCTION
+    IF comma_at <= 1 OR comma_at >= LEN(dim_text) THEN EXIT FUNCTION
+
+    lower_expr = LTRIM$(RTRIM$(LEFT$(dim_text, comma_at - 1)))
+    upper_expr = LTRIM$(RTRIM$(MID$(dim_text, comma_at + 1)))
+    IF lower_expr = "" OR upper_expr = "" THEN EXIT FUNCTION
+
+    ParseNextUDTRunDescDim& = -1
+END FUNCTION
+
+' Entry point for freeing descriptor-backed member arrays inside UDT storage.
+' Owner layouts need recursive owner cleanup; pure descriptor layouts can walk
+' descriptor slots directly.
+SUB AppendDynUDTDescFree (base_ptr AS STRING, udt_index AS LONG, root_offset AS LONG, bytesperelement AS STRING, acc AS STRING, layout_mode AS LONG)
+    IF udtxvariable(udt_index) THEN
+        AppendDynUDTOwnFreeAt "(void*)" + base_ptr, udt_index, root_offset, bytesperelement, "tmp_long", acc, layout_mode
+    ELSE
+        AppendDynUDTDescFreeAt base_ptr, udt_index, root_offset, bytesperelement, "tmp_long", acc, layout_mode
+    END IF
+END SUB
+
+' Generate C code that frees descriptor payloads reachable from one UDT element,
+' including nested inline UDT arrays whose element layout contains descriptors.
+SUB AppendDynUDTDescFreeAt (data_expr AS STRING, udt_index AS LONG, root_offset AS LONG, bytesperelement AS STRING, index_expr AS STRING, acc AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM member_slot AS STRING
+    DIM elem_bytes AS LONG
+    DIM nested_udt AS LONG
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM inline_bytes AS LONG
+
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        member_offset = root_offset + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            member_slot = "((uint8*)(" + data_expr + ")+" + bytesperelement + "*(" + index_expr + ")+" + LTRIM$(STR$(member_offset)) + ")"
+            elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
+            nested_udt = 0
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN nested_udt = udtetype(member_id) AND 511
+            AppendDynMemberEraseEx member_slot, elem_bytes, nested_udt, DynMemVarStr%(member_id), acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        ELSEIF udtearrayelements(member_id) THEN
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    inline_bytes = UDTDynInlineElemBytes&(member_id, layout_mode)
+                    FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                        array_offset = member_offset + array_idx * inline_bytes
+                        AppendDynUDTDescFreeAt data_expr, nested_udt, array_offset, bytesperelement, index_expr, acc, layout_mode
+                        IF Error_Happened THEN EXIT SUB
+                    NEXT
+                END IF
+            END IF
+        ELSEIF udtetype(member_id) AND ISUDT THEN
+            AppendDynUDTDescFreeAt data_expr, udtetype(member_id) AND 511, member_offset, bytesperelement, index_expr, acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        END IF
+
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+SUB AppendDynMemberErase (desc_slot AS STRING, acc AS STRING, layout_mode AS LONG)
+    AppendDynMemberEraseEx desc_slot, 0, 0, 0, acc, layout_mode
+END SUB
+
+SUB AppendDynMemberEraseTyped (desc_slot AS STRING, elem_bytes AS LONG, elem_udt AS LONG, elem_varstr AS LONG, acc AS STRING, layout_mode AS LONG)
+    AppendDynMemberEraseEx desc_slot, elem_bytes, elem_udt, elem_varstr, acc, layout_mode
+END SUB
+
+' Generate C code to erase one descriptor-backed member array. The helper first
+' releases element-owned qbs*/nested descriptors when needed, then frees payload,
+' mem lock and descriptor header, and finally clears the parent slot.
+SUB AppendDynMemberEraseEx (desc_slot AS STRING, elem_bytes AS LONG, elem_udt AS LONG, elem_varstr AS LONG, acc AS STRING, layout_mode AS LONG)
+    DIM cr AS STRING
+    DIM elem_idx AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    elem_idx = "dyn_udt_erase_i"
+
+    acc = acc + cr + "{"
+    acc = acc + cr + "ptrszint **dyn_udt_slot=(ptrszint**)(" + desc_slot + ");"
+    acc = acc + cr + "ptrszint *dyn_udt_old=*dyn_udt_slot;"
+    ' After the new descriptor has been populated, release the old descriptor and
+    ' any element-owned payload that was not transferred. The parent slot is not
+    ' updated until the cleanup path has been emitted.
+    acc = acc + cr + "if (dyn_udt_old){"
+    IF elem_varstr THEN
+        acc = acc + cr + "if (dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue && dyn_udt_old[3]>0){"
+        acc = acc + cr + "ptrszint dyn_udt_erase_total=1;"
+        acc = acc + cr + "for(ptrszint dyn_udt_erase_dim=0;dyn_udt_erase_dim<dyn_udt_old[3];dyn_udt_erase_dim++){dyn_udt_erase_total*=dyn_udt_old[4+dyn_udt_erase_dim*4+1];}"
+        AppendDynStrFree "(void*)dyn_udt_old[0]", "dyn_udt_erase_total", elem_bytes, acc
+        acc = acc + cr + "}"
+    ELSEIF elem_udt <> 0 THEN
+        IF udtxvariable(elem_udt) OR UDTDynHasMemberArrays%(elem_udt, layout_mode) THEN
+            acc = acc + cr + "if (dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue && dyn_udt_old[3]>0){"
+            acc = acc + cr + "ptrszint dyn_udt_erase_total=1;"
+            acc = acc + cr + "for(ptrszint dyn_udt_erase_dim=0;dyn_udt_erase_dim<dyn_udt_old[3];dyn_udt_erase_dim++){dyn_udt_erase_total*=dyn_udt_old[4+dyn_udt_erase_dim*4+1];}"
+            acc = acc + cr + "for(ptrszint " + elem_idx + "=0;" + elem_idx + "<dyn_udt_erase_total;" + elem_idx + "++){"
+            AppendDynUDTOwnFreeAt "(void*)dyn_udt_old[0]", elem_udt, 0, LTRIM$(STR$(elem_bytes)), elem_idx, acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+            acc = acc + cr + "}"
+            acc = acc + cr + "}"
+        END IF
+    END IF
+    acc = acc + cr + "if (dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue) free((void*)dyn_udt_old[0]);"
+    acc = acc + cr + "if (dyn_udt_old[3]>0){ptrszint dyn_udt_lock_index=4*dyn_udt_old[3]+4; if (dyn_udt_old[dyn_udt_lock_index]) free_mem_lock((mem_lock*)dyn_udt_old[dyn_udt_lock_index]);}"
+    acc = acc + cr + "free((void*)dyn_udt_old);"
+    acc = acc + cr + "*dyn_udt_slot=NULL;"
+    acc = acc + cr + "}"
+    acc = acc + cr + "}"
+END SUB
+
+' Generate C code to deep-clone one descriptor-backed member array from an
+' already-existing source descriptor into a clean destination slot. The generated
+' symbol prefix includes element size/type tags so multiple clones can appear in
+' the same emitted C scope without name collisions.
+SUB AppendDynMemberCloneAfterRaw (src_slot AS STRING, dst_slot AS STRING, elem_bytes AS LONG, elem_udt AS LONG, elem_varstr AS LONG, acc AS STRING, layout_mode AS LONG)
+    DIM cr AS STRING
+    DIM pfx AS STRING
+    DIM udt_tag AS STRING
+    DIM var_tag AS STRING
+
+    cr = CHR$(13) + CHR$(10)
+    IF elem_udt < 0 THEN
+        udt_tag = "m" + LTRIM$(STR$(-elem_udt))
+    ELSE
+        udt_tag = LTRIM$(STR$(elem_udt))
+    END IF
+    IF elem_varstr < 0 THEN
+        var_tag = "m" + LTRIM$(STR$(-elem_varstr))
+    ELSE
+        var_tag = LTRIM$(STR$(elem_varstr))
+    END IF
+    pfx = "dyn_udt_c" + LTRIM$(STR$(elem_bytes)) + "_" + udt_tag + "_" + var_tag + "_"
+
+    acc = acc + cr + "{"
+    acc = acc + cr + "ptrszint *" + pfx + "src=*((ptrszint**)(" + src_slot + "));"
+    acc = acc + cr + "ptrszint **" + pfx + "dst_slot=(ptrszint**)(" + dst_slot + ");"
+    acc = acc + cr + "*" + pfx + "dst_slot=NULL;"
+    acc = acc + cr + "if (" + pfx + "src && " + pfx + "src[3]>0){"
+    acc = acc + cr + "ptrszint " + pfx + "dims=" + pfx + "src[3];"
+    acc = acc + cr + "ptrszint " + pfx + "slots=4*" + pfx + "dims+4+1;"
+    acc = acc + cr + "ptrszint *" + pfx + "dst=(ptrszint*)calloc((size_t)" + pfx + "slots,ptrsz);"
+    acc = acc + cr + "if (!" + pfx + "dst) error(257);"
+    acc = acc + cr + "memcpy((void*)" + pfx + "dst,(void*)" + pfx + "src,(size_t)((" + pfx + "slots-1)*ptrsz));"
+    acc = acc + cr + "new_mem_lock();"
+    acc = acc + cr + "mem_lock_tmp->type=4;"
+    acc = acc + cr + pfx + "dst[" + pfx + "slots-1]=(ptrszint)mem_lock_tmp;"
+    acc = acc + cr + "ptrszint " + pfx + "total=1;"
+    acc = acc + cr + "for(ptrszint " + pfx + "dim=0;" + pfx + "dim<" + pfx + "dims;" + pfx + "dim++){"
+    acc = acc + cr + pfx + "total*=" + pfx + "src[4+" + pfx + "dim*4+1];"
+    acc = acc + cr + "}"
+    acc = acc + cr + pfx + "dst[0]=(ptrszint)calloc((size_t)(" + pfx + "total*" + LTRIM$(STR$(elem_bytes)) + "),1);"
+    acc = acc + cr + "if (!" + pfx + "dst[0]) error(257);"
+    IF elem_varstr THEN
+        AppendDynStrInit "(void*)" + pfx + "dst[0]", pfx + "total", elem_bytes, acc
+        acc = acc + cr + "if (" + pfx + "src[0] && " + pfx + "src[0]!=(ptrszint)nothingvalue && " + pfx + "total){"
+        AppendDynStrSet "(void*)" + pfx + "dst[0]", "(void*)" + pfx + "src[0]", pfx + "total", elem_bytes, acc
+        acc = acc + cr + "}"
+    ELSEIF elem_udt <> 0 AND (udtxvariable(elem_udt) OR UDTDynHasMemberArrays%(elem_udt, layout_mode)) THEN
+        ' Clone into zero-filled owner elements. AppendDynUDTOwnSetAt now creates
+        ' scalar qbs* slots lazily, so the clone path no longer has to initialize
+        ' every destination element and then immediately erase its descriptors.
+        acc = acc + cr + "if (" + pfx + "src[0] && " + pfx + "src[0]!=(ptrszint)nothingvalue && " + pfx + "total){"
+        acc = acc + cr + "for(ptrszint " + pfx + "own_i=0; " + pfx + "own_i<" + pfx + "total; " + pfx + "own_i++){"
+        AppendDynUDTOwnSetAt "(void*)" + pfx + "dst[0]", "(void*)" + pfx + "src[0]", elem_udt, 0, 0, LTRIM$(STR$(elem_bytes)), pfx + "own_i", pfx + "own_i", acc, layout_mode
+        IF Error_Happened THEN EXIT SUB
+        acc = acc + cr + "}"
+        acc = acc + cr + "}else{"
+        acc = acc + cr + "for(ptrszint " + pfx + "own_i=0; " + pfx + "own_i<" + pfx + "total; " + pfx + "own_i++){"
+        AppendDynUDTOwnInitAt "(void*)" + pfx + "dst[0]", elem_udt, 0, LTRIM$(STR$(elem_bytes)), pfx + "own_i", acc, "", layout_mode
+        IF Error_Happened THEN EXIT SUB
+        acc = acc + cr + "}"
+        acc = acc + cr + "}"
+    ELSE
+        acc = acc + cr + "if (" + pfx + "src[0] && " + pfx + "src[0]!=(ptrszint)nothingvalue && " + pfx + "total) memcpy((void*)" + pfx + "dst[0],(void*)" + pfx + "src[0],(size_t)(" + pfx + "total*" + LTRIM$(STR$(elem_bytes)) + "));"
+    END IF
+    acc = acc + cr + "*" + pfx + "dst_slot=" + pfx + "dst;"
+    acc = acc + cr + "}"
+    acc = acc + cr + "}"
+END SUB
+
+' Generate C code to clone all descriptor-backed members inside one UDT element.
+' Scalar bytes are deliberately not copied here; callers pair this with the
+' appropriate scalar/owner copy path for the surrounding layout.
+SUB AppendDynUDTDescCloneAfterRaw (src_base AS STRING, dst_base AS STRING, udt_index AS LONG, root_offset AS LONG, bytesperelement AS STRING, src_index AS STRING, dst_index AS STRING, acc AS STRING, layout_mode AS LONG)
+    DIM member_id AS LONG
+    DIM member_offset AS LONG
+    DIM elem_bytes AS LONG
+    DIM src_slot AS STRING
+    DIM dst_slot AS STRING
+    DIM nested_udt AS LONG
+    DIM array_idx AS LONG
+    DIM array_offset AS LONG
+    DIM inline_bytes AS LONG
+
+    member_id = udtxnext(udt_index)
+    DO WHILE member_id
+        member_offset = root_offset + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
+            nested_udt = 0
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN nested_udt = udtetype(member_id) AND 511
+            src_slot = "((uint8*)" + src_base + "+" + bytesperelement + "*(" + src_index + ")+" + LTRIM$(STR$(member_offset)) + ")"
+            dst_slot = "((uint8*)" + dst_base + "+" + bytesperelement + "*(" + dst_index + ")+" + LTRIM$(STR$(member_offset)) + ")"
+            AppendDynMemberCloneAfterRaw src_slot, dst_slot, elem_bytes, nested_udt, DynMemVarStr%(member_id), acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        ELSEIF udtearrayelements(member_id) THEN
+            IF (udtetype(member_id) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(member_id) AND 511
+                IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+                    inline_bytes = UDTDynInlineElemBytes&(member_id, layout_mode)
+                    FOR array_idx = 0 TO udtearrayelements(member_id) - 1
+                        array_offset = member_offset + array_idx * inline_bytes
+                        AppendDynUDTDescCloneAfterRaw src_base, dst_base, nested_udt, array_offset, bytesperelement, src_index, dst_index, acc, layout_mode
+                        IF Error_Happened THEN EXIT SUB
+                    NEXT
+                END IF
+            END IF
+        ELSEIF udtetype(member_id) AND ISUDT THEN
+            AppendDynUDTDescCloneAfterRaw src_base, dst_base, udtetype(member_id) AND 511, member_offset, bytesperelement, src_index, dst_index, acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        END IF
+
+        member_id = udtenext(member_id)
+    LOOP
+END SUB
+
+SUB AppendDynMemberRedim (prep_prefix AS STRING, total_dims AS LONG, desc_slot AS STRING, elem_bytes AS LONG, elem_udt AS LONG, elem_varstr AS LONG, redim_kind AS LONG, acc AS STRING, layout_mode AS LONG)
+    ' redim_kind follows the ordinary REDIM parser: 1 = REDIM,
+    ' 2 = REDIM _PRESERVE, 3 = REDIM _RETAIN. The member-array syntax is the
+    ' same as ordinary dynamic arrays; only the storage target is a descriptor
+    ' slot inside an owning UDT element.
+    'The bounds were evaluated in qb64pe.bas by BuildDynMemberBoundsPrep(),
+    'using the same expression path as ordinary dynamic arrays. This routine only
+    'consumes the prepared descriptor and performs allocation/preserve/retain.
+    DIM cr AS STRING
+    DIM desc_name AS STRING
+    DIM desc_slots AS LONG
+    DIM desc_index AS LONG
+    DIM dim_index AS LONG
+    DIM retain_dim AS LONG
+
+    cr = CHR$(13) + CHR$(10)
+    IF total_dims <= 0 THEN Give_Error "Array bounds missing": EXIT SUB
+
+    desc_name = prep_prefix + "_desc"
+    desc_slots = 4 * total_dims + 4 + 1
+
+    acc = acc + cr + "{"
+    acc = acc + cr + "ptrszint **dyn_udt_slot=(ptrszint**)(" + desc_slot + ");"
+    acc = acc + cr + "ptrszint *dyn_udt_old=*dyn_udt_slot;"
+    acc = acc + cr + "ptrszint *dyn_udt_new=(ptrszint*)calloc((size_t)" + LTRIM$(STR$(desc_slots)) + ",ptrsz);"
+    acc = acc + cr + "if (!dyn_udt_new) error(257);"
+    acc = acc + cr + "new_mem_lock();"
+    acc = acc + cr + "mem_lock_tmp->type=4;"
+    acc = acc + cr + "dyn_udt_new[" + LTRIM$(STR$(desc_slots - 1)) + "]=(ptrszint)mem_lock_tmp;"
+    acc = acc + cr + "dyn_udt_new[1]=0;"
+    acc = acc + cr + "dyn_udt_new[2]=1;"
+    acc = acc + cr + "dyn_udt_new[3]=" + LTRIM$(STR$(total_dims)) + ";"
+    acc = acc + cr + "ptrszint dyn_udt_total=1;"
+
+    FOR dim_index = 1 TO total_dims
+        desc_index = (total_dims - dim_index) * 4 + 4
+        acc = acc + cr + "dyn_udt_new[" + LTRIM$(STR$(desc_index)) + "]=" + desc_name + "[" + LTRIM$(STR$(desc_index)) + "];"
+        acc = acc + cr + "dyn_udt_new[" + LTRIM$(STR$(desc_index + 1)) + "]=" + desc_name + "[" + LTRIM$(STR$(desc_index + 1)) + "];"
+        acc = acc + cr + "dyn_udt_new[" + LTRIM$(STR$(desc_index + 2)) + "]=" + desc_name + "[" + LTRIM$(STR$(desc_index + 2)) + "];"
+        acc = acc + cr + "dyn_udt_new[" + LTRIM$(STR$(desc_index + 3)) + "]=0;"
+        acc = acc + cr + "dyn_udt_total*=dyn_udt_new[" + LTRIM$(STR$(desc_index + 1)) + "];"
+    NEXT
+
+    ' Allocate the new payload before copying from the old descriptor. Element-owned
+    ' strings or nested owner UDTs are initialized immediately so later qbs_set or
+    ' owner assignment writes into valid destination slots.
+    acc = acc + cr + "dyn_udt_new[0]=(ptrszint)calloc((size_t)(dyn_udt_total*" + LTRIM$(STR$(elem_bytes)) + "),1);"
+    acc = acc + cr + "if (!dyn_udt_new[0]) error(257);"
+
+    IF elem_varstr THEN
+        AppendDynStrInit "(void*)dyn_udt_new[0]", "dyn_udt_total", elem_bytes, acc
+    ELSEIF elem_udt <> 0 AND (udtxvariable(elem_udt) OR UDTDynHasMemberArrays%(elem_udt, layout_mode)) THEN
+        IF UDTDynHasMemberArrays%(elem_udt, layout_mode) THEN acc = acc + cr + "unsigned char *dyn_udt_moved=NULL;"
+        acc = acc + cr + "for(ptrszint dyn_udt_own_init_i=0; dyn_udt_own_init_i<dyn_udt_total; dyn_udt_own_init_i++){"
+        AppendDynUDTOwnInitAt "(void*)dyn_udt_new[0]", elem_udt, 0, LTRIM$(STR$(elem_bytes)), "dyn_udt_own_init_i", acc, prep_prefix, layout_mode
+        IF Error_Happened THEN EXIT SUB
+        acc = acc + cr + "}"
+    END IF
+
+    ' REDIM _PRESERVE keeps the leading linear prefix, matching ordinary QB64PE
+    ' dynamic-array preserve semantics. It does not preserve by coordinates.
+    IF redim_kind = 2 THEN
+        acc = acc + cr + "if (dyn_udt_old && dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue && dyn_udt_old[3]>0){"
+        acc = acc + cr + "ptrszint dyn_udt_old_total=1;"
+        acc = acc + cr + "for(ptrszint dyn_udt_dim=0;dyn_udt_dim<dyn_udt_old[3];dyn_udt_dim++){"
+        acc = acc + cr + "dyn_udt_old_total*=dyn_udt_old[4+dyn_udt_dim*4+1];"
+        acc = acc + cr + "}"
+        acc = acc + cr + "ptrszint dyn_udt_copy_total=(dyn_udt_old_total<dyn_udt_total)?dyn_udt_old_total:dyn_udt_total;"
+        IF elem_udt <> 0 AND (udtxvariable(elem_udt) OR UDTDynHasMemberArrays%(elem_udt, layout_mode)) THEN
+            acc = acc + cr + "for(ptrszint dyn_udt_copy_i=0; dyn_udt_copy_i<dyn_udt_copy_total; dyn_udt_copy_i++){"
+            AppendDynUDTOwnSetAt "(void*)dyn_udt_new[0]", "(void*)dyn_udt_old[0]", elem_udt, 0, 0, LTRIM$(STR$(elem_bytes)), "dyn_udt_copy_i", "dyn_udt_copy_i", acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+            acc = acc + cr + "}"
+        ELSEIF elem_varstr THEN
+            acc = acc + cr + "if (dyn_udt_copy_total>0){"
+            AppendDynStrSet "(void*)dyn_udt_new[0]", "(void*)dyn_udt_old[0]", "dyn_udt_copy_total", elem_bytes, acc
+            acc = acc + cr + "}"
+        ELSEIF elem_udt <> 0 AND UDTDynHasMemberArrays%(elem_udt, layout_mode) THEN
+            acc = acc + cr + "if (dyn_udt_old_total>0){dyn_udt_moved=(unsigned char*)calloc((size_t)dyn_udt_old_total,1); if(!dyn_udt_moved) error(257);}"
+            acc = acc + cr + "for(ptrszint dyn_udt_copy_i=0; dyn_udt_copy_i<dyn_udt_copy_total; dyn_udt_copy_i++){"
+            AppendDynUDTDescFreeAt "(void*)dyn_udt_new[0]", elem_udt, 0, LTRIM$(STR$(elem_bytes)), "dyn_udt_copy_i", acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+            acc = acc + cr + "memcpy(((uint8*)dyn_udt_new[0])+dyn_udt_copy_i*" + LTRIM$(STR$(elem_bytes)) + ",((uint8*)dyn_udt_old[0])+dyn_udt_copy_i*" + LTRIM$(STR$(elem_bytes)) + ",(size_t)" + LTRIM$(STR$(elem_bytes)) + ");"
+            acc = acc + cr + "dyn_udt_moved[dyn_udt_copy_i]=1;"
+            acc = acc + cr + "}"
+        ELSE
+            acc = acc + cr + "if (dyn_udt_copy_total>0) memcpy((void*)dyn_udt_new[0],(void*)dyn_udt_old[0],(size_t)(dyn_udt_copy_total*" + LTRIM$(STR$(elem_bytes)) + "));"
+        END IF
+        acc = acc + cr + "}"
+    ' REDIM _RETAIN preserves the coordinate intersection of old and new bounds.
+    ' This is the important path for multidimensional descriptor member arrays.
+    ELSEIF redim_kind = 3 THEN
+        acc = acc + cr + "if (dyn_udt_old && dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue && dyn_udt_old[3]==" + LTRIM$(STR$(total_dims)) + "){"
+        IF elem_udt <> 0 AND UDTDynHasMemberArrays%(elem_udt, layout_mode) THEN
+            acc = acc + cr + "ptrszint dyn_udt_old_total=1;"
+            acc = acc + cr + "for(ptrszint dyn_udt_old_dim=0;dyn_udt_old_dim<dyn_udt_old[3];dyn_udt_old_dim++){dyn_udt_old_total*=dyn_udt_old[4+dyn_udt_old_dim*4+1];}"
+            acc = acc + cr + "if (dyn_udt_old_total>0){dyn_udt_moved=(unsigned char*)calloc((size_t)dyn_udt_old_total,1); if(!dyn_udt_moved) error(257);}"
+        END IF
+        acc = acc + cr + "ptrszint dyn_udt_retain_lo[" + LTRIM$(STR$(total_dims)) + "];"
+        acc = acc + cr + "ptrszint dyn_udt_retain_hi[" + LTRIM$(STR$(total_dims)) + "];"
+        acc = acc + cr + "ptrszint dyn_udt_retain_idx[" + LTRIM$(STR$(total_dims)) + "];"
+        acc = acc + cr + "ptrszint dyn_udt_retain_old_off;"
+        acc = acc + cr + "ptrszint dyn_udt_retain_new_off;"
+        acc = acc + cr + "ptrszint dyn_udt_retain_dim;"
+        acc = acc + cr + "int dyn_udt_retain_any=1;"
+        FOR retain_dim = 1 TO total_dims
+            desc_index = (total_dims - retain_dim) * 4 + 4
+            acc = acc + cr + "dyn_udt_retain_lo[" + LTRIM$(STR$(retain_dim - 1)) + "]=dyn_udt_new[" + LTRIM$(STR$(desc_index)) + "];"
+            acc = acc + cr + "if (dyn_udt_old[" + LTRIM$(STR$(desc_index)) + "]>dyn_udt_retain_lo[" + LTRIM$(STR$(retain_dim - 1)) + "]) dyn_udt_retain_lo[" + LTRIM$(STR$(retain_dim - 1)) + "]=dyn_udt_old[" + LTRIM$(STR$(desc_index)) + "];"
+            acc = acc + cr + "dyn_udt_retain_hi[" + LTRIM$(STR$(retain_dim - 1)) + "]=dyn_udt_new[" + LTRIM$(STR$(desc_index)) + "]+(dyn_udt_new[" + LTRIM$(STR$(desc_index + 1)) + "]-1);"
+            acc = acc + cr + "if ((dyn_udt_old[" + LTRIM$(STR$(desc_index)) + "]+(dyn_udt_old[" + LTRIM$(STR$(desc_index + 1)) + "]-1))<dyn_udt_retain_hi[" + LTRIM$(STR$(retain_dim - 1)) + "]) dyn_udt_retain_hi[" + LTRIM$(STR$(retain_dim - 1)) + "]=dyn_udt_old[" + LTRIM$(STR$(desc_index)) + "]+(dyn_udt_old[" + LTRIM$(STR$(desc_index + 1)) + "]-1);"
+            acc = acc + cr + "if (dyn_udt_retain_hi[" + LTRIM$(STR$(retain_dim - 1)) + "]<dyn_udt_retain_lo[" + LTRIM$(STR$(retain_dim - 1)) + "]) dyn_udt_retain_any=0;"
+        NEXT
+        acc = acc + cr + "if (dyn_udt_retain_any){"
+        FOR retain_dim = 1 TO total_dims
+            acc = acc + cr + "dyn_udt_retain_idx[" + LTRIM$(STR$(retain_dim - 1)) + "]=dyn_udt_retain_lo[" + LTRIM$(STR$(retain_dim - 1)) + "];"
+        NEXT
+        acc = acc + cr + "for(;;){"
+        desc_index = (total_dims - 1) * 4 + 4
+        acc = acc + cr + "dyn_udt_retain_old_off=dyn_udt_retain_idx[0]-dyn_udt_old[" + LTRIM$(STR$(desc_index)) + "];"
+        acc = acc + cr + "dyn_udt_retain_new_off=dyn_udt_retain_idx[0]-dyn_udt_new[" + LTRIM$(STR$(desc_index)) + "];"
+        FOR retain_dim = 2 TO total_dims
+            desc_index = (total_dims - retain_dim) * 4 + 4
+            acc = acc + cr + "dyn_udt_retain_old_off+=(dyn_udt_retain_idx[" + LTRIM$(STR$(retain_dim - 1)) + "]-dyn_udt_old[" + LTRIM$(STR$(desc_index)) + "])*dyn_udt_old[" + LTRIM$(STR$(desc_index + 2)) + "];"
+            acc = acc + cr + "dyn_udt_retain_new_off+=(dyn_udt_retain_idx[" + LTRIM$(STR$(retain_dim - 1)) + "]-dyn_udt_new[" + LTRIM$(STR$(desc_index)) + "])*dyn_udt_new[" + LTRIM$(STR$(desc_index + 2)) + "];"
+        NEXT
+        IF elem_udt <> 0 AND (udtxvariable(elem_udt) OR UDTDynHasMemberArrays%(elem_udt, layout_mode)) THEN
+            AppendDynUDTOwnSetAt "(void*)dyn_udt_new[0]", "(void*)dyn_udt_old[0]", elem_udt, 0, 0, LTRIM$(STR$(elem_bytes)), "dyn_udt_retain_new_off", "dyn_udt_retain_old_off", acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+        ELSEIF elem_varstr THEN
+            acc = acc + cr + "qbs_set(*(qbs**)(((uint8*)dyn_udt_new[0])+dyn_udt_retain_new_off*" + LTRIM$(STR$(elem_bytes)) + "),*(qbs**)(((uint8*)dyn_udt_old[0])+dyn_udt_retain_old_off*" + LTRIM$(STR$(elem_bytes)) + "));"
+        ELSEIF elem_udt <> 0 AND UDTDynHasMemberArrays%(elem_udt, layout_mode) THEN
+            AppendDynUDTDescFreeAt "(void*)dyn_udt_new[0]", elem_udt, 0, LTRIM$(STR$(elem_bytes)), "dyn_udt_retain_new_off", acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+            acc = acc + cr + "memcpy(((uint8*)dyn_udt_new[0])+dyn_udt_retain_new_off*" + LTRIM$(STR$(elem_bytes)) + ",((uint8*)dyn_udt_old[0])+dyn_udt_retain_old_off*" + LTRIM$(STR$(elem_bytes)) + ",(size_t)" + LTRIM$(STR$(elem_bytes)) + ");"
+            acc = acc + cr + "dyn_udt_moved[dyn_udt_retain_old_off]=1;"
+        ELSE
+            acc = acc + cr + "memcpy(((uint8*)dyn_udt_new[0])+dyn_udt_retain_new_off*" + LTRIM$(STR$(elem_bytes)) + ",((uint8*)dyn_udt_old[0])+dyn_udt_retain_old_off*" + LTRIM$(STR$(elem_bytes)) + ",(size_t)" + LTRIM$(STR$(elem_bytes)) + ");"
+        END IF
+        acc = acc + cr + "dyn_udt_retain_dim=0;"
+        acc = acc + cr + "while (dyn_udt_retain_dim<" + LTRIM$(STR$(total_dims)) + "){"
+        acc = acc + cr + "dyn_udt_retain_idx[dyn_udt_retain_dim]++;"
+        acc = acc + cr + "if (dyn_udt_retain_idx[dyn_udt_retain_dim]<=dyn_udt_retain_hi[dyn_udt_retain_dim]) break;"
+        acc = acc + cr + "dyn_udt_retain_idx[dyn_udt_retain_dim]=dyn_udt_retain_lo[dyn_udt_retain_dim];"
+        acc = acc + cr + "dyn_udt_retain_dim++;"
+        acc = acc + cr + "}"
+        acc = acc + cr + "if (dyn_udt_retain_dim==" + LTRIM$(STR$(total_dims)) + ") break;"
+        acc = acc + cr + "}"
+        acc = acc + cr + "}"
+        acc = acc + cr + "}"
+    END IF
+
+    acc = acc + cr + "if (dyn_udt_old){"
+    IF elem_varstr THEN
+        acc = acc + cr + "if (dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue && dyn_udt_old[3]>0){"
+        acc = acc + cr + "ptrszint dyn_udt_old_free_total=1;"
+        acc = acc + cr + "for(ptrszint dyn_udt_old_free_dim=0;dyn_udt_old_free_dim<dyn_udt_old[3];dyn_udt_old_free_dim++){dyn_udt_old_free_total*=dyn_udt_old[4+dyn_udt_old_free_dim*4+1];}"
+        AppendDynStrFree "(void*)dyn_udt_old[0]", "dyn_udt_old_free_total", elem_bytes, acc
+        acc = acc + cr + "}"
+    ELSEIF elem_udt <> 0 AND (udtxvariable(elem_udt) OR UDTDynHasMemberArrays%(elem_udt, layout_mode)) THEN
+        acc = acc + cr + "if (dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue && dyn_udt_old[3]>0){"
+        acc = acc + cr + "ptrszint dyn_udt_old_free_total=1;"
+        acc = acc + cr + "for(ptrszint dyn_udt_old_free_dim=0;dyn_udt_old_free_dim<dyn_udt_old[3];dyn_udt_old_free_dim++){dyn_udt_old_free_total*=dyn_udt_old[4+dyn_udt_old_free_dim*4+1];}"
+        acc = acc + cr + "for(ptrszint dyn_udt_old_free_i=0;dyn_udt_old_free_i<dyn_udt_old_free_total;dyn_udt_old_free_i++){"
+        AppendDynUDTOwnFreeAt "(void*)dyn_udt_old[0]", elem_udt, 0, LTRIM$(STR$(elem_bytes)), "dyn_udt_old_free_i", acc, layout_mode
+        IF Error_Happened THEN EXIT SUB
+        acc = acc + cr + "}"
+        acc = acc + cr + "}"
+        IF UDTDynHasMemberArrays%(elem_udt, layout_mode) THEN acc = acc + cr + "if (dyn_udt_moved) free((void*)dyn_udt_moved);"
+    END IF
+    acc = acc + cr + "if (dyn_udt_old[0] && dyn_udt_old[0]!=(ptrszint)nothingvalue) free((void*)dyn_udt_old[0]);"
+    acc = acc + cr + "if (dyn_udt_old[3]>0){ptrszint dyn_udt_lock_index=4*dyn_udt_old[3]+4; if (dyn_udt_old[dyn_udt_lock_index]) free_mem_lock((mem_lock*)dyn_udt_old[dyn_udt_lock_index]);}"
+    acc = acc + cr + "free((void*)dyn_udt_old);"
+    acc = acc + cr + "}"
+    acc = acc + cr + "*dyn_udt_slot=dyn_udt_new;"
+    acc = acc + cr + "}"
+END SUB
+
+' Element size for descriptor payloads. UDT elements use the selected dynamic
+' layout size because nested descriptor/owner fields are stored by that layout,
+' not by the legacy inline udtesize value.
+FUNCTION udt_dyn_array_elem_bytes& (element, layout_mode AS LONG)
+    IF udtearrayelements(element) = 0 THEN EXIT FUNCTION
+    IF (udtetype(element) AND ISUDT) <> 0 THEN
+        udt_dyn_array_elem_bytes& = UDTDynLayoutSize&(udtetype(element) AND 511, layout_mode) \ 8
+    ELSE
+        udt_dyn_array_elem_bytes& = (udtesize(element) \ 8) \ udtearrayelements(element)
+    END IF
+END FUNCTION
+
+' Element stride for inline member arrays that contain nested UDTs. Plain inline
+' arrays keep their legacy stride; nested UDTs with descriptor-backed members use
+' the selected dynamic layout stride so recursive offsets remain valid.
+FUNCTION UDTDynInlineElemBytes& (element, layout_mode AS LONG)
+    DIM nested_udt AS LONG
+
+    IF udtearrayelements(element) = 0 THEN EXIT FUNCTION
+    IF (udtetype(element) AND ISUDT) <> 0 THEN
+        nested_udt = udtetype(element) AND 511
+        IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN
+            UDTDynInlineElemBytes& = UDTDynLayoutSize&(nested_udt, layout_mode) \ 8
+        ELSE
+            UDTDynInlineElemBytes& = udt_array_member_bytes(element)
+        END IF
+    ELSE
+        UDTDynInlineElemBytes& = udt_array_member_bytes(element)
+    END IF
+END FUNCTION
 
 FUNCTION udt_array_member_bytes& (element)
     IF udtearrayelements(element) = 0 THEN EXIT FUNCTION
@@ -846,6 +2311,95 @@ SUB copy_full_udt (dst$, src$, buf, base_offset, udt)
     LOOP
 END SUB
 
+
+' Copy one UDT value using the selected dynamic layout. Owner layouts require a
+' deep owner-aware assignment; pure descriptor layouts copy scalar fields first
+' and then clone descriptor slots so source and destination do not share payload.
+SUB copy_full_udt_dyn (dst$, src$, buf, base_offset, udt, layout_mode AS LONG)
+    dyn_acc$ = ""
+
+    IF udtxvariable(udt) THEN
+        ' Owner-layout UDTs contain qbs* scalar slots and/or descriptor-owned
+        ' members. Never raw-copy their scalar area first: doing so aliases qbs*
+        ' owners and can leak or double-free the previous destination strings.
+        ' AppendDynUDTOwnSetAt performs the full ownership-aware assignment:
+        ' qbs_set for scalar strings, descriptor erase/clone for _DynamicField
+        ' members, and recursive handling for nested owner UDTs.
+        AppendDynUDTOwnSetAt dst$, src$, udt, base_offset, base_offset, LTRIM$(STR$(UDTDynLayoutSize&(udt, layout_mode) \ 8)), "0", "0", dyn_acc$, layout_mode
+        IF Error_Happened THEN EXIT SUB
+        IF dyn_acc$ <> "" THEN WriteBufLine buf, dyn_acc$
+        EXIT SUB
+    END IF
+
+    copy_dyn_udt_scalars dst$, src$, buf, base_offset, udt, layout_mode
+    IF Error_Happened THEN EXIT SUB
+
+    IF UDTDynHasMemberArrays%(udt, layout_mode) THEN
+        AppendDynUDTDescCopy dst$, src$, udt, LTRIM$(STR$(base_offset)), LTRIM$(STR$(base_offset)), LTRIM$(STR$(UDTDynLayoutSize&(udt, layout_mode) \ 8)), dyn_acc$, layout_mode
+        IF Error_Happened THEN EXIT SUB
+        IF dyn_acc$ <> "" THEN WriteBufLine buf, dyn_acc$
+    END IF
+END SUB
+
+' Copy only the scalar/inline part of a dynamic-layout UDT. Descriptor pointer
+' slots are skipped because they must be cloned, not memcpy'd, to avoid shared
+' descriptors and double-free hazards.
+SUB copy_dyn_udt_scalars (dst$, src$, buf, base_offset, udt, layout_mode AS LONG)
+    copyoff& = base_offset
+    member_id& = udtxnext(udt)
+    DO WHILE member_id&
+        IF UDTMemberDynDesc%(member_id&, layout_mode) THEN
+            'Descriptor slots are handled by AppendDynUDTDescCopy(). Do not memcpy them.
+        ELSEIF udtearrayelements(member_id&) THEN
+            IF (udtetype(member_id&) AND ISUDT) <> 0 THEN
+                nested_udt& = udtetype(member_id&) AND 511
+                IF udtxvariable(nested_udt&) OR UDTDynHasMemberArrays%(nested_udt&, layout_mode) THEN
+                    inline_bytes& = UDTDynInlineElemBytes&(member_id&, layout_mode)
+                    FOR arr_idx& = 0 TO udtearrayelements(member_id&) - 1
+                        arr_off& = copyoff& + arr_idx& * inline_bytes&
+                        IF udtxvariable(nested_udt&) THEN
+                            static_copy$ = ""
+                            AppendDynUDTOwnSetAt dst$, src$, nested_udt&, arr_off&, arr_off&, LTRIM$(STR$(inline_bytes&)), "0", "0", static_copy$, layout_mode
+                            IF Error_Happened THEN EXIT SUB
+                            IF static_copy$ <> "" THEN WriteBufLine buf, static_copy$
+                        ELSE
+                            copy_dyn_udt_scalars dst$, src$, buf, arr_off&, nested_udt&, layout_mode
+                            IF Error_Happened THEN EXIT SUB
+                            static_copy$ = ""
+                            AppendDynUDTDescCopy dst$, src$, nested_udt&, LTRIM$(STR$(arr_off&)), LTRIM$(STR$(arr_off&)), LTRIM$(STR$(inline_bytes&)), static_copy$, layout_mode
+                            IF Error_Happened THEN EXIT SUB
+                            IF static_copy$ <> "" THEN WriteBufLine buf, static_copy$
+                        END IF
+                    NEXT
+                ELSE
+                    WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&, layout_mode) \ 8)) + ");"
+                END IF
+            ELSE
+                WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&, layout_mode) \ 8)) + ");"
+            END IF
+        ELSEIF ((udtetype(member_id&) AND ISSTRING) <> 0) AND ((udtetype(member_id&) AND ISFIXEDLENGTH) = 0) THEN
+            WriteBufLine buf, "qbs_set(*(qbs**)(" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "), *(qbs**)(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + "));"
+        ELSEIF (udtetype(member_id&) AND ISUDT) <> 0 THEN
+            nested_udt& = udtetype(member_id&) AND 511
+            IF udtxvariable(nested_udt&) THEN
+                static_copy$ = ""
+                AppendDynUDTOwnSetAt dst$, src$, nested_udt&, copyoff&, copyoff&, LTRIM$(STR$(UDTDynMemberSize&(member_id&, layout_mode) \ 8)), "0", "0", static_copy$, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                IF static_copy$ <> "" THEN WriteBufLine buf, static_copy$
+            ELSEIF UDTDynHasMemberArrays%(nested_udt&, layout_mode) THEN
+                copy_dyn_udt_scalars dst$, src$, buf, copyoff&, nested_udt&, layout_mode
+                IF Error_Happened THEN EXIT SUB
+            ELSE
+                WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&, layout_mode) \ 8)) + ");"
+            END IF
+        ELSE
+            WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&, layout_mode) \ 8)) + ");"
+        END IF
+        copyoff& = copyoff& + (UDTDynMemberSize&(member_id&, layout_mode) \ 8)
+        member_id& = udtenext(member_id&)
+    LOOP
+END SUB
+
 SUB dump_udts
     fh = FREEFILE
     OPEN "types.txt" FOR OUTPUT AS #fh
@@ -853,9 +2407,9 @@ SUB dump_udts
     FOR i = 1 TO lasttype
         PRINT #fh, RTRIM$(udtxname(i)), udtxsize(i), udtxnext(i), udtxvariable(i)
     NEXT i
-    PRINT #fh, "Name   Size   Next   Type   Tsize  Arr"
+    PRINT #fh, "Name   Size   Next   Type   Tsize  Arr   FieldMode"
     FOR i = 1 TO lasttypeelement
-        PRINT #fh, RTRIM$(udtename(i)), udtesize(i), udtenext(i), udtetype(i), udtetypesize(i), udtearrayelements(i), udtearraybase(i), udtearraydims(i), udtearraydesc(i)
+        PRINT #fh, RTRIM$(udtename(i)), udtesize(i), udtenext(i), udtetype(i), udtetypesize(i), udtearrayelements(i), udtearraybase(i), udtearraydims(i), udtearraydesc(i), udtearrayfieldmode(i)
     NEXT i
     CLOSE #fh
 END SUB
