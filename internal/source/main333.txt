@@ -11,36 +11,46 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(25867,16098,"ide_methods.bas");
 do{
 qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,16091,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25867,16098,"ide_methods.bas");}while(r);
+error_track_line(25867,16099,"ide_methods.bas");
 do{
-qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6601= 45 ),&(pass6602= 5 ),&(pass6603= 0 )));
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6605= 45 ),&(pass6606= 5 ),&(pass6607= 0 )));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,16092,"ide_methods.bas");}while(r);
-S_57536:;
+if(!qbevent)break;evnt(25867,16099,"ide_methods.bas");}while(r);
+error_track_line(25867,16100,"ide_methods.bas");
+S_57547:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(25867,16093,"ide_methods.bas");if(r)goto S_57536;}
+if(qbevent){evnt(25867,16100,"ide_methods.bas");if(r)goto S_57547;}
+error_track_line(25867,16100,"ide_methods.bas");
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25867,16093,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25867,16100,"ide_methods.bas");}while(r);
+error_track_line(25867,16100,"ide_methods.bas");
 }
+error_track_line(25867,16102,"ide_methods.bas");
 do{
 *__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,16095,"ide_methods.bas");}while(r);
-S_57540:;
+if(!qbevent)break;evnt(25867,16102,"ide_methods.bas");}while(r);
+error_track_line(25867,16103,"ide_methods.bas");
+S_57551:;
 if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
-if(qbevent){evnt(25867,16096,"ide_methods.bas");if(r)goto S_57540;}
+if(qbevent){evnt(25867,16103,"ide_methods.bas");if(r)goto S_57551;}
+error_track_line(25867,16103,"ide_methods.bas");
 do{
 *__LONG_IDEBASETCPPORT= 9000 ;
-if(!qbevent)break;evnt(25867,16096,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25867,16103,"ide_methods.bas");}while(r);
+error_track_line(25867,16103,"ide_methods.bas");
 }
+error_track_line(25867,16104,"ide_methods.bas");
 do{
 SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,16097,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25867,16104,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free333.txt"
