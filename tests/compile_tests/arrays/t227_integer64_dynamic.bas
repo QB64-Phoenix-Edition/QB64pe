@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T227
-    nums(0 TO 2) _DynamicField AS _INTEGER64
+    nums(0 TO 2) _Dynamic AS _INTEGER64
 END TYPE
 
 DIM ok AS _BYTE

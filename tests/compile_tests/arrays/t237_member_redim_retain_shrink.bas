@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T237
-    nums(0 TO 3) _DynamicField AS LONG
+    nums(0 TO 3) _Dynamic AS LONG
 END TYPE
 
 DIM ok AS _BYTE

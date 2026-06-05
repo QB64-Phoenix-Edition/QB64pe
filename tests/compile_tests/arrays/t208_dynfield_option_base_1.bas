@@ -2,7 +2,7 @@ $Console:Only
 Option Base 1
 
 Type Ob1T
-    nums(3) _DynamicField As Long
+    nums(3) _Dynamic As Long
 End Type
 
 Dim failText As String

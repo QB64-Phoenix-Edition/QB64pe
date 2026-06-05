@@ -7,7 +7,7 @@ TYPE P245
 END TYPE
 
 TYPE T245
-    pts(0 TO 1, 0 TO 1) _DynamicField AS P245
+    pts(0 TO 1, 0 TO 1) _Dynamic AS P245
 END TYPE
 
 DIM ok AS _BYTE

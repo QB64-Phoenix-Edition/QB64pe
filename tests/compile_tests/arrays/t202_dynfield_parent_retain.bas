@@ -1,7 +1,7 @@
 $Console:Only
 
 Type BucketT
-    nums(1) _DynamicField As Long
+    nums(1) _Dynamic As Long
 End Type
 
 Dim failText As String

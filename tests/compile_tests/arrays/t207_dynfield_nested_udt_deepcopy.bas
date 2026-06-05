@@ -2,11 +2,11 @@ $Console:Only
 
 Type NodeT
     labelText As String
-    samples(1) _DynamicField As Long
+    samples(1) _Dynamic As Long
 End Type
 
 Type HolderT
-    nodes(1) _DynamicField As NodeT
+    nodes(1) _Dynamic As NodeT
 End Type
 
 Dim failText As String

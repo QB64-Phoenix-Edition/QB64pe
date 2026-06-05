@@ -788,7 +788,7 @@ END FUNCTION
 SUB increaseUDTArrays
     ' The dynamic-member metadata is parallel to the legacy UDT tables.
     ' *_dyn* stores the normal REDIM/runtime descriptor layout; *_fdyn* stores
-    ' the forced-only layout used when explicit _DynamicField members appear in
+    ' the forced-only layout used when explicit _Dynamic members appear in
     ' otherwise inline/DIM-created UDT storage. Both layouts are kept because
     ' the same TYPE can be instantiated through different storage paths.
     x = UBOUND(udtxname)
@@ -817,7 +817,7 @@ SUB increaseUDTArrays
     ' use an @ prefix and keep the original bound expressions for later C prep.
     REDIM _PRESERVE udtearraydesc(x + 1000) AS STRING
     ' udtearrayfieldmode: 0 = legacy/default inline member array,
-    ' 1 = explicit _StaticField, 2 = explicit _DynamicField descriptor member.
+    ' 1 = explicit _Static, 2 = explicit _Dynamic descriptor member.
     ' Unmarked compile-time arrays must remain inline for compatibility, even
     ' when the parent UDT variable/array is created with REDIM.
     REDIM _PRESERVE udtearrayfieldmode(x + 1000) AS LONG
@@ -825,7 +825,7 @@ SUB increaseUDTArrays
 END SUB
 
 ' Build the alternate physical layouts used by nested member arrays.
-' Layout mode 1 is the forced-only descriptor layout for explicit _DynamicField
+' Layout mode 1 is the forced-only descriptor layout for explicit _Dynamic
 ' members under otherwise inline storage. Layout mode 2 is the full dynamic
 ' layout used by REDIM/runtime descriptor paths. Static legacy layout remains
 ' stored in udtxsize/udtesize and is not modified here.
@@ -964,11 +964,11 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
             IF (udtetype(member_id) AND ISSTRING) <> 0 THEN
                 IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
                     ' Variable-length STRING arrays are ownership-bearing. If they are
-                    ' descriptor-backed, they must be explicitly marked _DynamicField so
+                    ' descriptor-backed, they must be explicitly marked _Dynamic so
                     ' legacy inline arrays do not silently change storage model.
                     IF UDTMemberDynDesc%(member_id, layout_mode) THEN
                         IF udtearrayfieldmode(member_id) <> 2 THEN
-                            Give_Error "Dynamic TYPE variable-length STRING member arrays require _DynamicField for now"
+                            Give_Error "Dynamic TYPE variable-length STRING member arrays require _Dynamic for now"
                             UDTDynMembersOK% = 0
                             EXIT FUNCTION
                         END IF
@@ -994,7 +994,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
                 ' UDT arrays remain compatible with legacy layout.
                 IF UDTMemberDynDesc%(member_id, layout_mode) AND udtxvariable(nested_udt) THEN
                     IF udtearrayfieldmode(member_id) <> 2 THEN
-                        Give_Error "Dynamic TYPE UDT member arrays containing variable-length strings require _DynamicField for now"
+                        Give_Error "Dynamic TYPE UDT member arrays containing variable-length strings require _Dynamic for now"
                         UDTDynMembersOK% = 0
                         EXIT FUNCTION
                     END IF
@@ -1033,7 +1033,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
     LOOP
 END FUNCTION
 
-' True for descriptor-backed _DynamicField AS STRING member arrays. The payload
+' True for descriptor-backed _Dynamic AS STRING member arrays. The payload
 ' is an array of qbs* slots, not raw character bytes; callers use this to select
 ' qbs init/free/copy and to keep _MEM/PUT/GET paths rejected elsewhere.
 FUNCTION DynMemVarStr% (member_id AS LONG)
@@ -1045,7 +1045,7 @@ FUNCTION DynMemVarStr% (member_id AS LONG)
     DynMemVarStr% = -1
 END FUNCTION
 
-' True for descriptor-backed _DynamicField AS UDT where the element UDT owns
+' True for descriptor-backed _Dynamic AS UDT where the element UDT owns
 ' variable-length strings. Such payloads require owner-aware recursive handling
 ' instead of memcpy, even though the descriptor header itself is fixed-size.
 FUNCTION DynMemUDTVarStr% (member_id AS LONG)
@@ -1109,14 +1109,14 @@ FUNCTION UDTDynOwnerOK% (udt_index AS LONG, layout_mode AS LONG)
     DO WHILE member_id
         IF UDTMemberDynDesc%(member_id, layout_mode) THEN
             seen_dyn = -1
-            '_DynamicField AS STRING is now allowed in dynamic TYPE owner layouts.
+            '_Dynamic AS STRING is now allowed in dynamic TYPE owner layouts.
             'The descriptor helpers initialize/free/copy the qbs* element slots, while
             '_MEM and PUT/GET remain rejected through the existing variable-string guards.
             IF (udtetype(member_id) AND ISUDT) <> 0 THEN
                 nested_udt = udtetype(member_id) AND 511
-                ' A descriptor-backed _DynamicField AS UDT element may itself be an owner
+                ' A descriptor-backed _Dynamic AS UDT element may itself be an owner
                 ' layout. The recursive owner lifecycle helpers below now initialize, free and
-                ' copy scalar variable STRINGs, _DynamicField AS STRING payloads, and nested
+                ' copy scalar variable STRINGs, _Dynamic AS STRING payloads, and nested
                 ' descriptor-owned members, so this validation recurses instead of enforcing the
                 ' older fixed-size-only restriction.
                 IF UDTDynOwnerOK%(nested_udt, layout_mode) = 0 THEN
@@ -1135,7 +1135,7 @@ FUNCTION UDTDynOwnerOK% (udt_index AS LONG, layout_mode AS LONG)
         ELSEIF ((udtetype(member_id) AND ISSTRING) <> 0) AND ((udtetype(member_id) AND ISFIXEDLENGTH) = 0) THEN
             ' Scalar variable strings are allowed before, after, or between descriptor-backed
             ' member arrays. Unsupported descriptor-owning member types are still rejected
-            ' when their own _DynamicField member is visited.
+            ' when their own _Dynamic member is visited.
         ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
             nested_udt = udtetype(member_id) AND 511
             IF UDTDynOwnerOK%(nested_udt, layout_mode) = 0 THEN
@@ -1306,7 +1306,7 @@ SUB AppendDynUDTVarSetAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS L
     LOOP
 END SUB
 
-' Descriptor payload helper for _DynamicField AS STRING. The payload stores qbs*
+' Descriptor payload helper for _Dynamic AS STRING. The payload stores qbs*
 ' slots at elem_bytes stride, so each element needs qbs_new/qbs_free/qbs_set
 ' rather than raw byte initialization or memcpy.
 SUB AppendDynStrInit (base_expr AS STRING, total_expr AS STRING, elem_bytes AS LONG, acc AS STRING)
@@ -2528,7 +2528,7 @@ SUB copy_full_udt_dyn (dst$, src$, buf, base_offset, udt, layout_mode AS LONG)
         ' members. Never raw-copy their scalar area first: doing so aliases qbs*
         ' owners and can leak or double-free the previous destination strings.
         ' AppendDynUDTOwnSetAt performs the full ownership-aware assignment:
-        ' qbs_set for scalar strings, descriptor erase/clone for _DynamicField
+        ' qbs_set for scalar strings, descriptor erase/clone for _Dynamic
         ' members, and recursive handling for nested owner UDTs.
         AppendDynUDTOwnSetAt dst$, src$, udt, base_offset, base_offset, LTRIM$(STR$(UDTDynLayoutSize&(udt, layout_mode) \ 8)), "0", "0", dyn_acc$, layout_mode
         IF Error_Happened THEN EXIT SUB

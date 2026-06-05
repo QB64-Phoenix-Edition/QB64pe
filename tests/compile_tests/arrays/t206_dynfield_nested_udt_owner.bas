@@ -2,12 +2,12 @@ $Console:Only
 
 Type LeafT
     title As String
-    nums(1) _DynamicField As Long
+    nums(1) _Dynamic As Long
     tailText As String
 End Type
 
 Type TreeT
-    leaves(1) _DynamicField As LeafT
+    leaves(1) _Dynamic As LeafT
 End Type
 
 Dim failText As String

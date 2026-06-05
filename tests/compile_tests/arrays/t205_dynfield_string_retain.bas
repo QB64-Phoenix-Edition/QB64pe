@@ -1,7 +1,7 @@
 $Console:Only
 
 Type TextPackT
-    names(1) _DynamicField As String
+    names(1) _Dynamic As String
     marker As Long
 End Type
 

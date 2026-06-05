@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T260
-    nums(1 TO 3) _DynamicField AS LONG
+    nums(1 TO 3) _Dynamic AS LONG
     tagText AS STRING * 4
 END TYPE
 

@@ -1,8 +1,8 @@
 $Console:Only
 
 Type FixedMixT
-    codes(2) _StaticField As String * 8
-    values(1) _DynamicField As Long
+    codes(2) _Static As String * 8
+    values(1) _Dynamic As Long
 End Type
 
 Dim failText As String

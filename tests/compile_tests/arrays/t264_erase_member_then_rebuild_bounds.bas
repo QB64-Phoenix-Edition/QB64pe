@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T264
-    nums(0 TO 2) _DynamicField AS LONG
+    nums(0 TO 2) _Dynamic AS LONG
     marker AS LONG
 END TYPE
 

@@ -2,13 +2,13 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE Leaf246
-    numsA(0 TO 1) _DynamicField AS LONG
+    numsA(0 TO 1) _Dynamic AS LONG
     gapText AS STRING
-    numsB(0 TO 1) _DynamicField AS LONG
+    numsB(0 TO 1) _Dynamic AS LONG
 END TYPE
 
 TYPE T246
-    item(0 TO 1) _DynamicField AS Leaf246
+    item(0 TO 1) _Dynamic AS Leaf246
 END TYPE
 
 DIM ok AS _BYTE

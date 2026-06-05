@@ -3,7 +3,7 @@ OPTION _EXPLICIT
 
 TYPE T268
     labelText AS STRING
-    nums(0 TO 1) _DynamicField AS LONG
+    nums(0 TO 1) _Dynamic AS LONG
 END TYPE
 
 DIM fileName AS STRING

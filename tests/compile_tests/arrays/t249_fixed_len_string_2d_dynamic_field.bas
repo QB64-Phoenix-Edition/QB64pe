@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T249
-    codes(1 TO 2, 1 TO 2) _DynamicField AS STRING * 3
+    codes(1 TO 2, 1 TO 2) _Dynamic AS STRING * 3
 END TYPE
 
 DIM ok AS _BYTE

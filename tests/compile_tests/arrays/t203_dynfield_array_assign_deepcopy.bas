@@ -1,7 +1,7 @@
 $Console:Only
 
 Type DataT
-    values(2) _DynamicField As Long
+    values(2) _Dynamic As Long
 End Type
 
 Dim failText As String

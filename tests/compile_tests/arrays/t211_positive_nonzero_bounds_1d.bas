@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T211
-    nums(5 TO 7) _DynamicField AS LONG
+    nums(5 TO 7) _Dynamic AS LONG
 END TYPE
 
 DIM ok AS _BYTE

@@ -3,7 +3,7 @@ OPTION _EXPLICIT
 
 TYPE T267
     labelText AS STRING * 8
-    nums(1 TO 2) _DynamicField AS INTEGER
+    nums(1 TO 2) _Dynamic AS INTEGER
 END TYPE
 
 DIM ok AS _BYTE

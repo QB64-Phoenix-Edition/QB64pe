@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T261
-    names(0 TO 4) _DynamicField AS STRING * 6
+    names(0 TO 4) _Dynamic AS STRING * 6
 END TYPE
 
 DIM ok AS _BYTE

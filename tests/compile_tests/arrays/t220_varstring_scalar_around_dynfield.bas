@@ -3,7 +3,7 @@ OPTION _EXPLICIT
 
 TYPE T220
     headText AS STRING
-    nums(0 TO 1) _DynamicField AS LONG
+    nums(0 TO 1) _Dynamic AS LONG
     tailText AS STRING
 END TYPE
 

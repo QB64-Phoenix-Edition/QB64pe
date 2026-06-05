@@ -2,7 +2,7 @@ $Console:Only
 Option _Explicit
 
 Type T263
-    nums(0 TO 1) _DynamicField As Long
+    nums(0 TO 1) _Dynamic As Long
     tagText As String * 5
 End Type
 

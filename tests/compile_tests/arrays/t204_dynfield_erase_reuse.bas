@@ -1,7 +1,7 @@
 $Console:Only
 
 Type ClearT
-    nums(2) _DynamicField As Long
+    nums(2) _Dynamic As Long
 End Type
 
 Dim failText As String

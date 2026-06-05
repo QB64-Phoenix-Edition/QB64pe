@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T223
-    nums(0 TO 2) _DynamicField AS INTEGER
+    nums(0 TO 2) _Dynamic AS INTEGER
 END TYPE
 
 DIM ok AS _BYTE

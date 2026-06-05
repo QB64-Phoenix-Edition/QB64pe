@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T248
-    nums(0 TO 1) _DynamicField AS LONG
+    nums(0 TO 1) _Dynamic AS LONG
     noteText AS STRING
 END TYPE
 

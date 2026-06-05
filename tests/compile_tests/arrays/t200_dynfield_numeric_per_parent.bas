@@ -2,7 +2,7 @@ $Console:Only
 
 Type RecT
     id As Long
-    vals(2) _DynamicField As Long
+    vals(2) _Dynamic As Long
 End Type
 
 Dim failText As String

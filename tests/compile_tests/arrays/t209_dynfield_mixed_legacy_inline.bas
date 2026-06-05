@@ -2,7 +2,7 @@ $Console:Only
 
 Type MixedT
     fixedNums(2) As Long
-    dynNums(1) _DynamicField As Long
+    dynNums(1) _Dynamic As Long
 End Type
 
 Dim failText As String

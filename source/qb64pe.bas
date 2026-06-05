@@ -553,12 +553,12 @@ TYPE idstruct
     staticarray AS INTEGER 'set for arrays declared in the main module with static elements
     ' Dynamic nested TYPE-member arrays have two physical UDT layouts:
     '   mode 0 = legacy inline storage;
-    '   mode 1 = forced descriptor storage used when explicit _DynamicField members exist under DIM;
+    '   mode 1 = forced descriptor storage used when explicit _Dynamic members exist under DIM;
     '   mode 2 = full descriptor storage used by REDIM/runtime-bound dynamic member-array paths.
     ' These fields record which layout this identifier uses so later address, copy, _MEM,
     ' ERASE and PUT/GET code can avoid mixing inline and descriptor payloads.
     dynudt AS INTEGER 'non-zero when this UDT scalar/array uses descriptor-aware layout handling
-    dynudtmode AS INTEGER '0 inline, 1 forced-only _DynamicField layout, 2 full REDIM/runtime descriptor layout
+    dynudtmode AS INTEGER '0 inline, 1 forced-only _Dynamic layout, 2 full REDIM/runtime descriptor layout
 
     mayhave AS STRING * 8 'mayhave and musthave are exclusive of each other
     musthave AS STRING * 8
@@ -591,7 +591,7 @@ TYPE idstruct
     nelereq AS STRING * 100
     ' Per-argument descriptor-layout mode for UDT parameters.
     ' This lets a SUB/FUNCTION parameter remember whether callers resolved the argument as
-    ' inline, forced-only _DynamicField, or full REDIM descriptor storage across recompiles.
+    ' inline, forced-only _Dynamic, or full REDIM descriptor storage across recompiles.
     dynudtargmode AS STRING * 100 'per SUB/FUNCTION UDT array/scalar argument descriptor layout mode
     linkid AS LONG
     linkarg AS INTEGER
@@ -1243,8 +1243,8 @@ HashAdd "ON", f, 0
 HashAdd "STOP", f, 0
 HashAdd "TO", f, 0
 HashAdd "USING", f, 0
-HashAdd "_DYNAMICFIELD", f, 0
-HashAdd "_STATICFIELD", f, 0
+HashAdd "_DYNAMIC", f, 0
+HashAdd "_STATIC", f, 0
 'PUT(graphics) statement:
 HashAdd "PRESET", f, 0
 HashAdd "PSET", f, 0
@@ -1384,7 +1384,7 @@ REDIM SHARED udtxname(1000) AS STRING * 256
 REDIM SHARED udtxcname(1000) AS STRING * 256
 REDIM SHARED udtxsize(1000) AS LONG
 REDIM SHARED udtxdynsize(1000) AS LONG 'full descriptor-layout TYPE size used by REDIM-created UDT arrays
-REDIM SHARED udtxfdynsize(1000) AS LONG 'forced-only descriptor-layout TYPE size used by DIM-created UDT arrays with _DynamicField members
+REDIM SHARED udtxfdynsize(1000) AS LONG 'forced-only descriptor-layout TYPE size used by DIM-created UDT arrays with _Dynamic members
 REDIM SHARED udtxnext(1000) AS LONG
 REDIM SHARED udtxvariable(1000) AS INTEGER 'true if the udt contains variable length elements
 
@@ -1461,8 +1461,8 @@ REDIM SHARED udtxvariable(1000) AS INTEGER 'true if the udt contains variable le
 '      Per-member storage override for TYPE member arrays:
 '          0 = default legacy selection. Compile-time bounds stay inline, even under REDIM;
 '              future runtime-bound metadata is the only default case that may need descriptors.
-'          1 = _StaticField  force inline storage for this member array
-'          2 = _DynamicField force descriptor storage for this member array
+'          1 = _Static  force inline storage for this member array
+'          2 = _Dynamic force descriptor storage for this member array
 '      The value is only valid when udtearrayelements(member_element_id) is non-zero.
 '
 '      Examples:
@@ -1489,7 +1489,7 @@ REDIM SHARED udtearrayelements(1000) AS LONG
 REDIM SHARED udtearraybase(1000) AS LONG 'convenience / compatibility field for first dimension only
 REDIM SHARED udtearraydims(1000) AS LONG
 REDIM SHARED udtearraydesc(1000) AS STRING 'full descriptor for all dimensions, in source order  descriptor: "<lower1>,<count1>;<lower2>,<count2>;..."
-REDIM SHARED udtearrayfieldmode(1000) AS LONG '0 legacy/default inline for compile-time bounds, 1 _StaticField, 2 _DynamicField
+REDIM SHARED udtearrayfieldmode(1000) AS LONG '0 legacy/default inline for compile-time bounds, 1 _Static, 2 _Dynamic
 REDIM SHARED udtenext(1000) AS LONG
 ' _MEM over descriptor-backed member arrays must be tied to the member descriptor's own
 ' mem_lock, not only to the parent UDT storage. udtreference$ sets this expression while
@@ -2244,10 +2244,10 @@ DO
                                 udtename(i2) = n$
                                 udtecname(i2) = getelement$(ca$, udtmembernamepos)
                                 NormalTypeBlock:
-                                ' _StaticField/_DynamicField are storage-mode markers for member arrays only.
+                                ' _Static/_Dynamic are storage-mode markers for member arrays only.
                                 ' Reject scalar use here so later layout code never has to interpret a marker
                                 ' without array metadata, descriptor bounds, or inline element count.
-                                IF udtfieldmode <> 0 AND udtearrayelements(i2) = 0 THEN a$ = "_DynamicField/_StaticField require TYPE member array": GOTO errmes
+                                IF udtfieldmode <> 0 AND udtearrayelements(i2) = 0 THEN a$ = "_Dynamic/_Static require TYPE member array": GOTO errmes
                                 udtearrayfieldmode(i2) = udtfieldmode
                                 typeDefinitions$ = typeDefinitions$ + MKL$(i2) + MKL$(LEN(n$)) + n$
                                 udtetype(i2) = typ
@@ -2310,8 +2310,8 @@ DO
                             ELSE
                                 'new AS type element-list syntax, now with static/dynamic field-mode markers
                                 'Accepted forms inside TYPE include:
-                                '    AS <type> a, b(0 TO 3) _DynamicField, c(1, 2) _StaticField
-                                '    AS <type> _DynamicField b(0 TO 3), _StaticField c(1, 2)
+                                '    AS <type> a, b(0 TO 3) _Dynamic, c(1, 2) _Static
+                                '    AS <type> _Dynamic b(0 TO 3), _Static c(1, 2)
                                 'A second AS token on the same line is invalid.
                                 declStart = 0
                                 declModeStart = 0
@@ -8470,7 +8470,7 @@ DO
                 WriteBufLine MainTxtBuf, "if (" + n$ + "[2]&2){" 'array is static
                 IF udt > 0 AND id.dynudt AND UDTDynHasMemberArrays%(udt, id.dynudtmode) THEN
                     ' Static parent arrays can still contain descriptor-backed TYPE member arrays
-                    ' when _DynamicField forces the member dynamic under DIM.  ERASE must free
+                    ' when _Dynamic forces the member dynamic under DIM.  ERASE must free
                     ' those nested descriptors first, otherwise old _MEM blocks remain valid and
                     ' the descriptor/data allocations are leaked before the raw parent storage is
                     ' cleared below.
@@ -11713,7 +11713,7 @@ DO
                             'Whole UDT array references like dynArr() are normally evaluated via
                             'the UDT-reference path, not as the raw arrayreference id|0 token.
                             'Detect that simple source form before evaluate(), otherwise GET/PUT
-                            'falls back to the physical descriptor layout and corrupts _DynamicField
+                            'falls back to the physical descriptor layout and corrupts _Dynamic
                             'descriptors by reading/writing descriptor bytes directly.
                             dynfilearr$ = WholeArrayName$(e$)
                             IF dynfilearr$ <> "" THEN
@@ -14864,7 +14864,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
         IF udt > 0 AND dynarrmode <> 0 THEN
             IF UDTDynHasMemberArrays%(udt, dynarrmode) THEN
                 ' Static parent arrays can still need descriptor initialization when explicit
-                ' _DynamicField members force mode 1. The parent storage stays static, but each
+                ' _Dynamic members force mode 1. The parent storage stays static, but each
                 ' element owns live member-array descriptors that must be initialized and freed.
                 WriteBufLine DataTxtBuf, n$ + "[2]|=8;" 'dynamic UDT descriptor-layout flag
                 dyn_udt_prefix$ = "dyn_udt_static_" + _TOSTR$(uniquenumber)
@@ -15615,9 +15615,9 @@ END FUNCTION
 'Main helper roles:
 FUNCTION UDTFieldModeToken% (token AS STRING)
     SELECT CASE UCASE$(token)
-        CASE "_STATICFIELD"
+        CASE "_STATIC"
             UDTFieldModeToken% = 1
-        CASE "_DYNAMICFIELD"
+        CASE "_DYNAMIC"
             UDTFieldModeToken% = 2
     END SELECT
 END FUNCTION
@@ -15637,15 +15637,15 @@ END SUB
 FUNCTION UDTFieldModeLayout$ (fieldmode AS LONG)
     SELECT CASE fieldmode
         CASE 1
-            UDTFieldModeLayout$ = SCase2$("_StaticField")
+            UDTFieldModeLayout$ = SCase2$("_Static")
         CASE 2
-            UDTFieldModeLayout$ = SCase2$("_DynamicField")
+            UDTFieldModeLayout$ = SCase2$("_Dynamic")
     END SELECT
 END FUNCTION
 
 'Central decision point for whether a TYPE member array is physically stored as
 'a descriptor slot in the selected UDT layout. Keep this conservative: explicit
-'_DynamicField always uses descriptor storage, explicit _StaticField never does,
+'_Dynamic always uses descriptor storage, explicit _Static never does,
 'and unmarked compile-time arrays remain inline for source/binary compatibility.
 FUNCTION UDTMemberDynDesc% (member_id AS LONG, layout_mode AS LONG)
     IF member_id <= 0 THEN EXIT FUNCTION
@@ -15654,7 +15654,7 @@ FUNCTION UDTMemberDynDesc% (member_id AS LONG, layout_mode AS LONG)
     IF udtearrayfieldmode(member_id) = 2 THEN UDTMemberDynDesc% = -1: EXIT FUNCTION
     'Unmarked TYPE member arrays with compile-time bounds are legacy inline
     'members even when the parent UDT array is created with REDIM. Only
-    'explicit _DynamicField members, and future runtime-bound metadata, use
+    'explicit _Dynamic members, and future runtime-bound metadata, use
     'the descriptor-backed member-array path.
     IF layout_mode = 2 THEN
         IF LEFT$(udtearraydesc(member_id), 1) = "@" THEN UDTMemberDynDesc% = -1
@@ -15686,7 +15686,7 @@ FUNCTION UDTDynLayoutSize& (udt_index AS LONG, layout_mode AS LONG)
 END FUNCTION
 
 'Return true when this UDT, or a nested UDT member, contains an explicit
-'_DynamicField member. This forces descriptor-aware layout even for DIM-created
+'_Dynamic member. This forces descriptor-aware layout even for DIM-created
 'instances, while ordinary unmarked compile-time member arrays do not.
 FUNCTION UDTForcedDynMembers% (udt_index AS LONG)
     DIM member_id AS LONG
@@ -17315,7 +17315,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                     END IF
                 ELSEIF redimoption OR dynparamarray THEN
                     'REDIM must not force descriptor layout for legacy inline member arrays
-                    'with compile-time bounds. Only explicit _DynamicField members or
+                    'with compile-time bounds. Only explicit _Dynamic members or
                     'future runtime-bound metadata need the descriptor layout here.
                     IF UDTRuntimeMemberArrays%(i) OR UDTForcedDynMembers%(i) THEN
                         IF UDTDynMembersOK%(i, 2) = 0 THEN EXIT FUNCTION
@@ -17324,7 +17324,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                         dyn_udt_mode = 2
                     END IF
                 ELSEIF UDTForcedDynMembers%(i) THEN
-                    ' DIM-created UDT arrays normally use legacy inline layout. Explicit _DynamicField
+                    ' DIM-created UDT arrays normally use legacy inline layout. Explicit _Dynamic
                     ' is the exception: it forces the descriptor-aware mode-1 layout while leaving
                     ' unmarked compile-time member arrays inline.
                     IF UDTDynMembersOK%(i, 1) = 0 THEN EXIT FUNCTION
@@ -28207,8 +28207,8 @@ FUNCTION SCase2$ (t$)
             SELECT CASE UCASE$(t$)
                 CASE "_ANDALSO": SCase2$ = "_AndAlso"
                 CASE "_ORELSE": SCase2$ = "_OrElse"
-                CASE "_DYNAMICFIELD": SCase2$ = "_DynamicField"
-                CASE "_STATICFIELD": SCase2$ = "_StaticField"
+                CASE "_DYNAMIC": SCase2$ = "_Dynamic"
+                CASE "_STATIC": SCase2$ = "_Static"
                 CASE ELSE
                     newWord = -1
                     temp$ = ""

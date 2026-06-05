@@ -3,7 +3,7 @@ OPTION _EXPLICIT
 
 TYPE T219
     headText AS STRING * 4
-    nums(0 TO 1) _DynamicField AS LONG
+    nums(0 TO 1) _Dynamic AS LONG
     tailText AS STRING * 4
 END TYPE
 

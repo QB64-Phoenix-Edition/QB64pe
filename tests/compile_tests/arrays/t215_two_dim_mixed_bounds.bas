@@ -2,7 +2,7 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T215
-    grid(2 TO 3, -1 TO 1) _DynamicField AS LONG
+    grid(2 TO 3, -1 TO 1) _Dynamic AS LONG
 END TYPE
 
 DIM ok AS _BYTE

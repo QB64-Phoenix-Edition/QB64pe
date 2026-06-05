@@ -7,7 +7,7 @@ TYPE P244
 END TYPE
 
 TYPE T244
-    pts(1 TO 2) _DynamicField AS P244
+    pts(1 TO 2) _Dynamic AS P244
 END TYPE
 
 DIM ok AS _BYTE

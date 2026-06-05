@@ -2,8 +2,8 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T269
-    textItems(0 TO 1) _DynamicField AS STRING
-    nums(0 TO 1) _DynamicField AS LONG
+    textItems(0 TO 1) _Dynamic AS STRING
+    nums(0 TO 1) _Dynamic AS LONG
 END TYPE
 
 DIM fileName AS STRING

@@ -1,7 +1,7 @@
 $Console:Only
 
 Type GridT
-    cells(1, 1) _DynamicField As Long
+    cells(1, 1) _Dynamic As Long
 End Type
 
 Dim failText As String

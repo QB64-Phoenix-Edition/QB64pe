@@ -3,9 +3,9 @@ OPTION _EXPLICIT
 
 TYPE T218
     idNum AS LONG
-    numsA(0 TO 1) _DynamicField AS LONG
+    numsA(0 TO 1) _Dynamic AS LONG
     middleNum AS LONG
-    numsB(0 TO 1) _DynamicField AS LONG
+    numsB(0 TO 1) _Dynamic AS LONG
     tailNum AS LONG
 END TYPE
 
