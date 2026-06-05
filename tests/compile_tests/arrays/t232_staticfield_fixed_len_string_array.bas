@@ -2,8 +2,8 @@ $Console:Only
 OPTION _EXPLICIT
 
 TYPE T232
-    codes(0 TO 1) _StaticField AS STRING * 4
-    nums(0 TO 1) _DynamicField AS LONG
+    codes(0 TO 1) _Static AS STRING * 4
+    nums(0 TO 1) _Dynamic AS LONG
 END TYPE
 
 DIM ok AS _BYTE
