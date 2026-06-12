@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type RecT
     id As Long

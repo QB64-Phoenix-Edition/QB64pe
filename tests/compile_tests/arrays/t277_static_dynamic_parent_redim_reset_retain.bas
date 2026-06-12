@@ -1,4 +1,6 @@
 $Console:Only
+$Unstable:TypeFields
+
 OPTION _EXPLICIT
 
 TYPE T277

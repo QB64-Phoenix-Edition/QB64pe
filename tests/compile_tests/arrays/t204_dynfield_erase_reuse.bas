@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type ClearT
     nums(2) _Dynamic As Long

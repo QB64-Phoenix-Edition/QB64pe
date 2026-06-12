@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type MixedT
     fixedNums(2) As Long

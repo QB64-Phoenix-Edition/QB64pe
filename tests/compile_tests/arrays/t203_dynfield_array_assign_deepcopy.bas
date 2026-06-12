@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type DataT
     values(2) _Dynamic As Long

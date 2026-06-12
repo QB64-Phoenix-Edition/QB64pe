@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type FixedMixT
     codes(2) _Static As String * 8

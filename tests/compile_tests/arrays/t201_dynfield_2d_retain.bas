@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type GridT
     cells(1, 1) _Dynamic As Long

@@ -1,5 +1,6 @@
 $Console:Only
 OPTION _EXPLICIT
+$Unstable:TypeFields
 
 TYPE Leaf278
     fixedNums(0 TO 1) _Static AS LONG

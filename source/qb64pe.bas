@@ -766,9 +766,10 @@ DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
 '
 ' Collection of flags indicating which unstable features should be used during compilation
 '
-REDIM SHARED unstableFlags(1 TO 2) AS _BYTE
+REDIM SHARED unstableFlags(1 TO 3) AS _BYTE
 DIM UNSTABLE_MIDI: UNSTABLE_MIDI = 1
 DIM UNSTABLE_HTTP: UNSTABLE_HTTP = 2
+DIM SHARED UNSTABLE_TYPEFIELDS AS LONG: UNSTABLE_TYPEFIELDS = 3
 
 
 
@@ -2031,6 +2032,9 @@ DO
 
                 CASE "HTTP"
                     unstableFlags(UNSTABLE_HTTP) = -1
+
+                CASE "TYPEFIELDS"
+                    unstableFlags(UNSTABLE_TYPEFIELDS) = -1
 
                 CASE ELSE
                     a$ = "Unrecognized unstable flag " + AddQuotes$(token$)
@@ -3827,6 +3831,9 @@ DO
                 CASE "HTTP"
                     layout$ = layout$ + SCase$("Http")
                     addWarning linenumber, inclevel, inclinenumber(inclevel), incname$(inclevel), "No longer required, feature is stable now", "$UNSTABLE:HTTP"
+
+                CASE "TYPEFIELDS"
+                    layout$ = layout$ + SCase$("TypeFields")
             END SELECT
 
             GOTO finishednonexec
@@ -15627,6 +15634,10 @@ SUB UDTApplyFieldMode (token AS STRING, fieldmode AS LONG)
 
     parsed_mode = UDTFieldModeToken%(token)
     IF parsed_mode = 0 THEN EXIT SUB
+    IF unstableFlags(UNSTABLE_TYPEFIELDS) = 0 THEN
+        Give_Error "_Static/_Dynamic require $Unstable:TypeFields"
+        EXIT SUB
+    END IF
     IF fieldmode <> 0 THEN
         Give_Error "Only one TYPE member array field mode may be specified"
         EXIT SUB
@@ -22724,9 +22735,18 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             index$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3)) 'get element index
             bytes$ = variablesize$(-1)
             IF Error_Happened THEN EXIT FUNCTION
-            e$ = refer(e$, sourcetyp, 0)
-            IF Error_Happened THEN EXIT FUNCTION
-            e$ = "(&(" + e$ + "))"
+            IF ((sourcetyp AND ISSTRING) <> 0) AND ((sourcetyp AND ISFIXEDLENGTH) <> 0) THEN
+                ' Fixed-length string arrays are stored as one flat byte buffer. Do not
+                ' use refer() here: refer() returns a temporary qbs* wrapper for one
+                ' element, and taking &(qbs_new_fixed(...)) is invalid C++ and points
+                ' at the temporary wrapper expression, not at the array payload.
+                n$ = RTRIM$(id.callname)
+                e$ = "(&((uint8*)(" + n$ + "[0]))[(" + index$ + ")*" + _TOSTR$(tsize) + "])"
+            ELSE
+                e$ = refer(e$, sourcetyp, 0)
+                IF Error_Happened THEN EXIT FUNCTION
+                e$ = "(&(" + e$ + "))"
+            END IF
             '           print "CI: array: e$["+e$+"], bytes$["+bytes$+"]":sleep 1
             'calculate size of elements
             IF sourcetyp AND ISSTRING THEN

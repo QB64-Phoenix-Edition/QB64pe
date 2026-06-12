@@ -1,4 +1,5 @@
 $Console:Only
+$Unstable:TypeFields
 
 Type NodeT
     labelText As String
