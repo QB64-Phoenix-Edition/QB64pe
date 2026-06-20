@@ -1,4 +1,4 @@
-qbs* FUNC_READWRITESTRINGSETTINGVALUE(qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT){
+void SUB_SETDEPENDENCY(int32*_SUB_SETDEPENDENCY_LONG_REQUIREMENT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,44 +11,30 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25847,117,"strings.bas");
+error_track_line(27698,0,NULL);
+S_36061:;
+if ((*_SUB_SETDEPENDENCY_LONG_REQUIREMENT)||is_error_pending()){
+if(qbevent){evnt(27698);if(r)goto S_36061;}
+error_track_line(27699,0,NULL);
 do{
-if(!qbevent)break;evnt(25847,117,"strings.bas");}while(r);
-error_track_line(25847,118,"strings.bas");
+tmp_long=array_check((*_SUB_SETDEPENDENCY_LONG_REQUIREMENT)-__ARRAY_LONG_DEPENDENCY[4],__ARRAY_LONG_DEPENDENCY[5]);
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_DEPENDENCY[0]))[tmp_long]= 1 ;
+if(!qbevent)break;evnt(27699);}while(r);
+error_track_line(27700,0,NULL);
+S_36063:;
+if ((-(*_SUB_SETDEPENDENCY_LONG_REQUIREMENT== 6ll ))||is_error_pending()){
+if(qbevent){evnt(27700);if(r)goto S_36063;}
+error_track_line(27700,0,NULL);
 do{
-if(!qbevent)break;evnt(25847,118,"strings.bas");}while(r);
-error_track_line(25847,120,"strings.bas");
-do{
-*_FUNC_READWRITESTRINGSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_VALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25847,120,"strings.bas");}while(r);
-error_track_line(25847,122,"strings.bas");
-S_34090:;
-if ((-(*_FUNC_READWRITESTRINGSETTINGVALUE_INTEGER_RESULT== 0 ))||is_error_pending()){
-if(qbevent){evnt(25847,122,"strings.bas");if(r)goto S_34090;}
-error_track_line(25847,123,"strings.bas");
-do{
-SUB_WRITECONFIGSETTING(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25847,123,"strings.bas");}while(r);
-error_track_line(25847,124,"strings.bas");
-do{
-qbs_set(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25847,124,"strings.bas");}while(r);
-error_track_line(25847,125,"strings.bas");
-}else{
-error_track_line(25847,126,"strings.bas");
-do{
-qbs_set(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_VALUE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25847,126,"strings.bas");}while(r);
-error_track_line(25847,127,"strings.bas");
+SUB_SETRCSTATEVAR((void*)( ((char*)(__UDT_SOCKDEPON)) + ((0+0)) ),&(pass4298= 1 ));
+if(!qbevent)break;evnt(27700);}while(r);
+error_track_line(27700,0,NULL);
+}
+error_track_line(27701,0,NULL);
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free90.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE);return _FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE;
 }

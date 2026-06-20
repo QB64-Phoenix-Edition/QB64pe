@@ -1,4 +1,4 @@
-qbs* FUNC_PEEKNEXTELEMENT(qbs*_FUNC_PEEKNEXTELEMENT_STRING_A,int32*_FUNC_PEEKNEXTELEMENT_LONG_INDEX,int32*_FUNC_PEEKNEXTELEMENT_LONG_STRINDEX){
+qbs* FUNC_STRREMOVE(qbs*_FUNC_STRREMOVE_STRING_MYSTRING,qbs*_FUNC_STRREMOVE_STRING_WHATTOREMOVE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,15 +11,54 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25850,54,"elements.bas");
+error_track_line(28286,5,"strings.bas");
 do{
-qbs_set(_FUNC_PEEKNEXTELEMENT_STRING_PEEKNEXTELEMENT,FUNC_GETNEXTELEMENT(_FUNC_PEEKNEXTELEMENT_STRING_A,&(pass4002=*_FUNC_PEEKNEXTELEMENT_LONG_INDEX),&(pass4003=*_FUNC_PEEKNEXTELEMENT_LONG_STRINDEX)));
+if(!qbevent)break;evnt(28286,5,"strings.bas");}while(r);
+error_track_line(28286,6,"strings.bas");
+do{
+if(!qbevent)break;evnt(28286,6,"strings.bas");}while(r);
+error_track_line(28286,8,"strings.bas");
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_MYSTRING);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,54,"elements.bas");}while(r);
+if(!qbevent)break;evnt(28286,8,"strings.bas");}while(r);
+error_track_line(28286,9,"strings.bas");
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_B,qbs_lcase(_FUNC_STRREMOVE_STRING_WHATTOREMOVE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28286,9,"strings.bas");}while(r);
+error_track_line(28286,10,"strings.bas");
+do{
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28286,10,"strings.bas");}while(r);
+error_track_line(28286,11,"strings.bas");
+S_36723:;
+while((*_FUNC_STRREMOVE_LONG_I)||is_error_pending()){
+if(qbevent){evnt(28286,11,"strings.bas");if(r)goto S_36723;}
+error_track_line(28286,12,"strings.bas");
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_A,qbs_add(qbs_left(_FUNC_STRREMOVE_STRING_A,*_FUNC_STRREMOVE_LONG_I- 1 ),qbs_right(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_A->len-*_FUNC_STRREMOVE_LONG_I-_FUNC_STRREMOVE_STRING_B->len+ 1 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28286,12,"strings.bas");}while(r);
+error_track_line(28286,13,"strings.bas");
+do{
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28286,13,"strings.bas");}while(r);
+error_track_line(28286,14,"strings.bas");
+dl_continue_4401:;
+}
+dl_exit_4401:;
+error_track_line(28286,15,"strings.bas");
+do{
+qbs_set(_FUNC_STRREMOVE_STRING_STRREMOVE,_FUNC_STRREMOVE_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28286,15,"strings.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free107.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_PEEKNEXTELEMENT_STRING_PEEKNEXTELEMENT);return _FUNC_PEEKNEXTELEMENT_STRING_PEEKNEXTELEMENT;
+qbs_maketmp(_FUNC_STRREMOVE_STRING_STRREMOVE);return _FUNC_STRREMOVE_STRING_STRREMOVE;
 }

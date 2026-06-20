@@ -1,4 +1,4 @@
-void SUB_UPDATEMENUHELPLINE(qbs*_SUB_UPDATEMENUHELPLINE_STRING_A){
+void SUB_IDEHPRINT(qbs*_SUB_IDEHPRINT_STRING_A){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,31 +11,76 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25867,20625,"ide_methods.bas");
-S_62767:;
-if ((qbs_cleanup(qbs_tmp_base,-(_SUB_UPDATEMENUHELPLINE_STRING_A->len>(*__LONG_IDEWX- 2 ))))||is_error_pending()){
-if(qbevent){evnt(25867,20625,"ide_methods.bas");if(r)goto S_62767;}
-error_track_line(25867,20625,"ide_methods.bas");
+error_track_line(28306,12062,"ide_methods.bas");
 do{
-qbs_set(_SUB_UPDATEMENUHELPLINE_STRING_A,qbs_add(qbs_left(_SUB_UPDATEMENUHELPLINE_STRING_A,(*__LONG_IDEWX- 4 )),func_string( 3 , 250 )));
+*_SUB_IDEHPRINT_LONG_DC=func__defaultcolor(NULL,0);
+if(!qbevent)break;evnt(28306,12062,"ide_methods.bas");}while(r);
+error_track_line(28306,12063,"ide_methods.bas");
+do{
+qbg_sub_color(*_SUB_IDEHPRINT_LONG_DC, 7 ,NULL,NULL,3);
+if(!qbevent)break;evnt(28306,12063,"ide_methods.bas");}while(r);
+error_track_line(28306,12064,"ide_methods.bas");
+S_57414:;
+fornext_value6828= 1 ;
+fornext_finalvalue6828=_SUB_IDEHPRINT_STRING_A->len;
+fornext_step6828= 1 ;
+if (fornext_step6828<0) fornext_step_negative6828=1; else fornext_step_negative6828=0;
+if (is_error_pending()) goto fornext_error6828;
+goto fornext_entrylabel6828;
+while(1){
+fornext_value6828=fornext_step6828+(*_SUB_IDEHPRINT_LONG_I);
+fornext_entrylabel6828:
+*_SUB_IDEHPRINT_LONG_I=fornext_value6828;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,20625,"ide_methods.bas");}while(r);
-error_track_line(25867,20625,"ide_methods.bas");
+if (fornext_step_negative6828){
+if (fornext_value6828<fornext_finalvalue6828) break;
+}else{
+if (fornext_value6828>fornext_finalvalue6828) break;
 }
-error_track_line(25867,20626,"ide_methods.bas");
+fornext_error6828:;
+if(qbevent){evnt(28306,12064,"ide_methods.bas");if(r)goto S_57414;}
+error_track_line(28306,12065,"ide_methods.bas");
 do{
-qbg_sub_color( 0 , 3 ,NULL,NULL,3);
-if(!qbevent)break;evnt(25867,20626,"ide_methods.bas");}while(r);
-error_track_line(25867,20627,"ide_methods.bas");
-do{
-sub__printstring( 1 ,*__LONG_IDEWY+*__LONG_IDESUBWINDOW,func_space(*__LONG_IDEWX),NULL,0);
+qbs_set(_SUB_IDEHPRINT_STRING_C,func_mid(_SUB_IDEHPRINT_STRING_A,*_SUB_IDEHPRINT_LONG_I, 1 ,0|1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,20627,"ide_methods.bas");}while(r);
-error_track_line(25867,20628,"ide_methods.bas");
+if(!qbevent)break;evnt(28306,12065,"ide_methods.bas");}while(r);
+error_track_line(28306,12066,"ide_methods.bas");
+S_57416:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDEHPRINT_STRING_C,qbs_new_txt_len("#",1))))||is_error_pending()){
+if(qbevent){evnt(28306,12066,"ide_methods.bas");if(r)goto S_57416;}
+error_track_line(28306,12067,"ide_methods.bas");
+S_57417:;
+if ((*__LONG_IDEHL)||is_error_pending()){
+if(qbevent){evnt(28306,12067,"ide_methods.bas");if(r)goto S_57417;}
+error_track_line(28306,12067,"ide_methods.bas");
 do{
-sub__printstring( 2 ,*__LONG_IDEWY+*__LONG_IDESUBWINDOW,_SUB_UPDATEMENUHELPLINE_STRING_A,NULL,0);
+qbg_sub_color( 15 , 7 ,NULL,NULL,3);
+if(!qbevent)break;evnt(28306,12067,"ide_methods.bas");}while(r);
+error_track_line(28306,12067,"ide_methods.bas");
+}
+error_track_line(28306,12068,"ide_methods.bas");
+}else{
+error_track_line(28306,12069,"ide_methods.bas");
+do{
+tqbs=qbs_new(0,0);
+qbs_set(tqbs,_SUB_IDEHPRINT_STRING_C);
+if (is_error_pending()) goto skip6830;
+makefit(tqbs);
+qbs_print(tqbs,0);
+skip6830:
+qbs_free(tqbs);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25867,20628,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(28306,12069,"ide_methods.bas");}while(r);
+error_track_line(28306,12069,"ide_methods.bas");
+do{
+qbg_sub_color(*_SUB_IDEHPRINT_LONG_DC, 7 ,NULL,NULL,3);
+if(!qbevent)break;evnt(28306,12069,"ide_methods.bas");}while(r);
+error_track_line(28306,12070,"ide_methods.bas");
+}
+error_track_line(28306,12071,"ide_methods.bas");
+fornext_continue_6827:;
+}
+fornext_exit_6827:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free368.txt"

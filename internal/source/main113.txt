@@ -1,4 +1,4 @@
-void SUB_INSERTELEMENTS(qbs*_SUB_INSERTELEMENTS_STRING_A,int32*_SUB_INSERTELEMENTS_LONG_I,qbs*_SUB_INSERTELEMENTS_STRING_ELEMENTS){
+int16 FUNC_TFSTRINGTOBOOL(qbs*_FUNC_TFSTRINGTOBOOL_STRING_S){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,107 +11,44 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25850,140,"elements.bas");
+error_track_line(28286,72,"strings.bas");
 do{
-if(!qbevent)break;evnt(25850,140,"elements.bas");}while(r);
-error_track_line(25850,142,"elements.bas");
-S_34323:;
-if ((-(*_SUB_INSERTELEMENTS_LONG_I== 0 ))||is_error_pending()){
-if(qbevent){evnt(25850,142,"elements.bas");if(r)goto S_34323;}
-error_track_line(25850,143,"elements.bas");
-S_34324:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_INSERTELEMENTS_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(25850,143,"elements.bas");if(r)goto S_34324;}
-error_track_line(25850,144,"elements.bas");
+if(!qbevent)break;evnt(28286,72,"strings.bas");}while(r);
+error_track_line(28286,73,"strings.bas");
 do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A,_SUB_INSERTELEMENTS_STRING_ELEMENTS);
+qbs_set(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs__trim(qbs_ucase(_FUNC_TFSTRINGTOBOOL_STRING_S)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,144,"elements.bas");}while(r);
-error_track_line(25850,145,"elements.bas");
+if(!qbevent)break;evnt(28286,73,"strings.bas");}while(r);
+error_track_line(28286,75,"strings.bas");
+S_36759:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("TRUE",4))))||is_error_pending()){
+if(qbevent){evnt(28286,75,"strings.bas");if(r)goto S_36759;}
+error_track_line(28286,76,"strings.bas");
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25850,145,"elements.bas");}while(r);
-error_track_line(25850,146,"elements.bas");
-}
-error_track_line(25850,147,"elements.bas");
-do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A,qbs_add(qbs_add(_SUB_INSERTELEMENTS_STRING_ELEMENTS,__STRING1_SP),_SUB_INSERTELEMENTS_STRING_A));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,147,"elements.bas");}while(r);
-error_track_line(25850,148,"elements.bas");
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25850,148,"elements.bas");}while(r);
-error_track_line(25850,149,"elements.bas");
-}
-error_track_line(25850,151,"elements.bas");
-do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A2,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,151,"elements.bas");}while(r);
-error_track_line(25850,152,"elements.bas");
-do{
-*_SUB_INSERTELEMENTS_LONG_N=FUNC_NUMELEMENTS(_SUB_INSERTELEMENTS_STRING_A);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,152,"elements.bas");}while(r);
-error_track_line(25850,154,"elements.bas");
-S_34333:;
-fornext_value4017= 1 ;
-fornext_finalvalue4017=*_SUB_INSERTELEMENTS_LONG_N;
-fornext_step4017= 1 ;
-if (fornext_step4017<0) fornext_step_negative4017=1; else fornext_step_negative4017=0;
-if (is_error_pending()) goto fornext_error4017;
-goto fornext_entrylabel4017;
-while(1){
-fornext_value4017=fornext_step4017+(*_SUB_INSERTELEMENTS_LONG_I2);
-fornext_entrylabel4017:
-*_SUB_INSERTELEMENTS_LONG_I2=fornext_value4017;
-if (fornext_step_negative4017){
-if (fornext_value4017<fornext_finalvalue4017) break;
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -1 ;
+if(!qbevent)break;evnt(28286,76,"strings.bas");}while(r);
+error_track_line(28286,77,"strings.bas");
+S_36761:;
 }else{
-if (fornext_value4017>fornext_finalvalue4017) break;
-}
-fornext_error4017:;
-if(qbevent){evnt(25850,154,"elements.bas");if(r)goto S_34333;}
-error_track_line(25850,155,"elements.bas");
-S_34334:;
-if ((-(*_SUB_INSERTELEMENTS_LONG_I2> 1 ))||is_error_pending()){
-if(qbevent){evnt(25850,155,"elements.bas");if(r)goto S_34334;}
-error_track_line(25850,155,"elements.bas");
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("FALSE",5)))){
+if(qbevent){evnt(28286,77,"strings.bas");if(r)goto S_36761;}
+error_track_line(28286,78,"strings.bas");
 do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A2,qbs_add(_SUB_INSERTELEMENTS_STRING_A2,__STRING1_SP));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,155,"elements.bas");}while(r);
-error_track_line(25850,155,"elements.bas");
-}
-error_track_line(25850,156,"elements.bas");
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= 0 ;
+if(!qbevent)break;evnt(28286,78,"strings.bas");}while(r);
+error_track_line(28286,79,"strings.bas");
+}else{
+error_track_line(28286,80,"strings.bas");
 do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A2,qbs_add(_SUB_INSERTELEMENTS_STRING_A2,FUNC_GETELEMENT(_SUB_INSERTELEMENTS_STRING_A,_SUB_INSERTELEMENTS_LONG_I2)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,156,"elements.bas");}while(r);
-error_track_line(25850,157,"elements.bas");
-S_34338:;
-if ((-(*_SUB_INSERTELEMENTS_LONG_I==*_SUB_INSERTELEMENTS_LONG_I2))||is_error_pending()){
-if(qbevent){evnt(25850,157,"elements.bas");if(r)goto S_34338;}
-error_track_line(25850,157,"elements.bas");
-do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A2,qbs_add(qbs_add(_SUB_INSERTELEMENTS_STRING_A2,__STRING1_SP),_SUB_INSERTELEMENTS_STRING_ELEMENTS));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,157,"elements.bas");}while(r);
-error_track_line(25850,157,"elements.bas");
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -2 ;
+if(!qbevent)break;evnt(28286,80,"strings.bas");}while(r);
+error_track_line(28286,81,"strings.bas");
 }
-error_track_line(25850,158,"elements.bas");
-fornext_continue_4016:;
 }
-fornext_exit_4016:;
-error_track_line(25850,160,"elements.bas");
-do{
-qbs_set(_SUB_INSERTELEMENTS_STRING_A,_SUB_INSERTELEMENTS_STRING_A2);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25850,160,"elements.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free113.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL;
 }

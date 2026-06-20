@@ -1,4 +1,4 @@
-int16 FUNC_ENDOFBUF(int16*_FUNC_ENDOFBUF_INTEGER_HANDLE){
+void SUB_INISETADDQUOTES(int8*_SUB_INISETADDQUOTES_BYTE_STATE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,29 +11,28 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25853,771,"simplebuffer.bm");
-S_36180:;
-if ((~(FUNC_CHECKHANDLE(_FUNC_ENDOFBUF_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(25853,771,"simplebuffer.bm");if(r)goto S_36180;}
-error_track_line(25853,771,"simplebuffer.bm");
+error_track_line(28291,453,"ini.bm");
 do{
-error( 258 );
-if(!qbevent)break;evnt(25853,771,"simplebuffer.bm");}while(r);
-error_track_line(25853,771,"simplebuffer.bm");
+if(!qbevent)break;evnt(28291,453,"ini.bm");}while(r);
+error_track_line(28291,454,"ini.bm");
+S_38228:;
+if ((*_SUB_INISETADDQUOTES_BYTE_STATE)||is_error_pending()){
+if(qbevent){evnt(28291,454,"ini.bm");if(r)goto S_38228;}
+error_track_line(28291,455,"ini.bm");
 do{
-close_program=1;
-end();
-if(!qbevent)break;evnt(25853,771,"simplebuffer.bm");}while(r);
-error_track_line(25853,771,"simplebuffer.bm");
+*__LONG_INIDISABLEADDQUOTES= 0 ;
+if(!qbevent)break;evnt(28291,455,"ini.bm");}while(r);
+error_track_line(28291,456,"ini.bm");
+}else{
+error_track_line(28291,457,"ini.bm");
+do{
+*__LONG_INIDISABLEADDQUOTES= -1 ;
+if(!qbevent)break;evnt(28291,457,"ini.bm");}while(r);
+error_track_line(28291,458,"ini.bm");
 }
-error_track_line(25853,773,"simplebuffer.bm");
-do{
-*_FUNC_ENDOFBUF_INTEGER_ENDOFBUF=(-(FUNC_GETBUFPOS(_FUNC_ENDOFBUF_INTEGER_HANDLE)>FUNC_GETBUFLEN(_FUNC_ENDOFBUF_INTEGER_HANDLE)));
-if(!qbevent)break;evnt(25853,773,"simplebuffer.bm");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free166.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_ENDOFBUF_INTEGER_ENDOFBUF;
 }

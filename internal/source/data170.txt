@@ -1,27 +1,19 @@
-int32 *_SUB_CONVBUFTOLNXMACEOL_LONG_BUF=NULL;
-if(_SUB_CONVBUFTOLNXMACEOL_LONG_BUF==NULL){
-_SUB_CONVBUFTOLNXMACEOL_LONG_BUF=(int32*)mem_static_malloc(4);
-*_SUB_CONVBUFTOLNXMACEOL_LONG_BUF=0;
+qbs*oldstr4649=NULL;
+if(_SUB_INILOAD_STRING_FILE->tmp||_SUB_INILOAD_STRING_FILE->fixed||_SUB_INILOAD_STRING_FILE->readonly){
+oldstr4649=_SUB_INILOAD_STRING_FILE;
+if (oldstr4649->cmem_descriptor){
+_SUB_INILOAD_STRING_FILE=qbs_new_cmem(oldstr4649->len,0);
+}else{
+_SUB_INILOAD_STRING_FILE=qbs_new(oldstr4649->len,0);
 }
-int32 *_SUB_CONVBUFTOLNXMACEOL_LONG_RES=NULL;
-if(_SUB_CONVBUFTOLNXMACEOL_LONG_RES==NULL){
-_SUB_CONVBUFTOLNXMACEOL_LONG_RES=(int32*)mem_static_malloc(4);
-*_SUB_CONVBUFTOLNXMACEOL_LONG_RES=0;
+memcpy(_SUB_INILOAD_STRING_FILE->chr,oldstr4649->chr,oldstr4649->len);
 }
-int32 *_SUB_CONVBUFTOLNXMACEOL_LONG_PO=NULL;
-if(_SUB_CONVBUFTOLNXMACEOL_LONG_PO==NULL){
-_SUB_CONVBUFTOLNXMACEOL_LONG_PO=(int32*)mem_static_malloc(4);
-*_SUB_CONVBUFTOLNXMACEOL_LONG_PO=0;
+int16 *_SUB_INILOAD_INTEGER_FILENUM=NULL;
+if(_SUB_INILOAD_INTEGER_FILENUM==NULL){
+_SUB_INILOAD_INTEGER_FILENUM=(int16*)mem_static_malloc(2);
+*_SUB_INILOAD_INTEGER_FILENUM=0;
 }
-int32 pass4233;
-int16 pass4234;
-int32 pass4235;
-int16 pass4236;
-int16 pass4238;
-int16 pass4239;
-int16 pass4240;
-int32 pass4241;
-int32 pass4242;
-int16 pass4243;
-int16 pass4244;
-int16 pass4245;
+byte_element_struct *byte_element_4650=NULL;
+if (!byte_element_4650){
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_4650=(byte_element_struct*)(mem_static_pointer-12); else byte_element_4650=(byte_element_struct*)mem_static_malloc(12);
+}

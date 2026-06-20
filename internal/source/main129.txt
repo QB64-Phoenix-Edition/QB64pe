@@ -1,4 +1,4 @@
-qbs* FUNC_READCHUNK(qbs*_FUNC_READCHUNK_STRING_A,qbs*_FUNC_READCHUNK_STRING_LAST_CHARACTER){
+qbs* FUNC_GETMAKEEXECUTABLE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,84 +11,28 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25851,58,"opengl_methods.bas");
+error_track_line(28288,21,"build.bas");
+S_36900:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(28288,21,"build.bas");if(r)goto S_36900;}
+error_track_line(28288,22,"build.bas");
 do{
-qbs_set(_FUNC_READCHUNK_STRING_A,qbs_ltrim(qbs_rtrim(_FUNC_READCHUNK_STRING_A)));
+qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_add(FUNC_GETCOMPILERPATH(),qbs_new_txt_len("mingw32-make.exe",16)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,58,"opengl_methods.bas");}while(r);
-error_track_line(25851,59,"opengl_methods.bas");
-S_34798:;
-fornext_value4079= 1 ;
-fornext_finalvalue4079=_FUNC_READCHUNK_STRING_A->len;
-fornext_step4079= 1 ;
-if (fornext_step4079<0) fornext_step_negative4079=1; else fornext_step_negative4079=0;
-if (is_error_pending()) goto fornext_error4079;
-goto fornext_entrylabel4079;
-while(1){
-fornext_value4079=fornext_step4079+(*_FUNC_READCHUNK_LONG_X);
-fornext_entrylabel4079:
-*_FUNC_READCHUNK_LONG_X=fornext_value4079;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4079){
-if (fornext_value4079<fornext_finalvalue4079) break;
+if(!qbevent)break;evnt(28288,22,"build.bas");}while(r);
+error_track_line(28288,23,"build.bas");
 }else{
-if (fornext_value4079>fornext_finalvalue4079) break;
+error_track_line(28288,24,"build.bas");
+do{
+qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_new_txt_len("make",4));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28288,24,"build.bas");}while(r);
+error_track_line(28288,25,"build.bas");
 }
-fornext_error4079:;
-if(qbevent){evnt(25851,59,"opengl_methods.bas");if(r)goto S_34798;}
-error_track_line(25851,60,"opengl_methods.bas");
-do{
-*_FUNC_READCHUNK_LONG_C=qbs_asc(_FUNC_READCHUNK_STRING_A,*_FUNC_READCHUNK_LONG_X);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,60,"opengl_methods.bas");}while(r);
-error_track_line(25851,61,"opengl_methods.bas");
-S_34800:;
-if (((-(*_FUNC_READCHUNK_LONG_C== 32 ))|(-(*_FUNC_READCHUNK_LONG_C== 44 ))|(-(*_FUNC_READCHUNK_LONG_C== 40 ))|(-(*_FUNC_READCHUNK_LONG_C== 41 )))||is_error_pending()){
-if(qbevent){evnt(25851,61,"opengl_methods.bas");if(r)goto S_34800;}
-error_track_line(25851,61,"opengl_methods.bas");
-do{
-qbs_set(_FUNC_READCHUNK_STRING_LAST_CHARACTER,func_chr(*_FUNC_READCHUNK_LONG_C));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,61,"opengl_methods.bas");}while(r);
-error_track_line(25851,61,"opengl_methods.bas");
-do{
-qbs_set(_FUNC_READCHUNK_STRING_READCHUNK,qbs_left(_FUNC_READCHUNK_STRING_A,*_FUNC_READCHUNK_LONG_X- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,61,"opengl_methods.bas");}while(r);
-error_track_line(25851,61,"opengl_methods.bas");
-do{
-qbs_set(_FUNC_READCHUNK_STRING_A,qbs_ltrim(qbs_right(_FUNC_READCHUNK_STRING_A,_FUNC_READCHUNK_STRING_A->len-*_FUNC_READCHUNK_LONG_X)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,61,"opengl_methods.bas");}while(r);
-error_track_line(25851,61,"opengl_methods.bas");
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25851,61,"opengl_methods.bas");}while(r);
-error_track_line(25851,61,"opengl_methods.bas");
-}
-error_track_line(25851,62,"opengl_methods.bas");
-fornext_continue_4078:;
-}
-fornext_exit_4078:;
-error_track_line(25851,63,"opengl_methods.bas");
-do{
-qbs_set(_FUNC_READCHUNK_STRING_READCHUNK,_FUNC_READCHUNK_STRING_A);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,63,"opengl_methods.bas");}while(r);
-error_track_line(25851,63,"opengl_methods.bas");
-do{
-qbs_set(_FUNC_READCHUNK_STRING_LAST_CHARACTER,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,63,"opengl_methods.bas");}while(r);
-error_track_line(25851,63,"opengl_methods.bas");
-do{
-qbs_set(_FUNC_READCHUNK_STRING_A,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25851,63,"opengl_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free129.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_READCHUNK_STRING_READCHUNK);return _FUNC_READCHUNK_STRING_READCHUNK;
+qbs_maketmp(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE);return _FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE;
 }

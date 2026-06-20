@@ -1,4 +1,4 @@
-int32 FUNC_COPYFILE(qbs*_FUNC_COPYFILE_STRING_SOURCEFILE,qbs*_FUNC_COPYFILE_STRING_DESTFILE){
+qbs* FUNC_REMOVECAST(qbs*_FUNC_REMOVECAST_STRING_A){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,52 +11,26 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(25848,8,"file.bas");
+error_track_line(27721,0,NULL);
 do{
-qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
-qbs_cleanup(qbs_tmp_base, 0);
-error_goto_line=11;
-if(!qbevent)break;evnt(25848,8,"file.bas");}while(r);
-error_track_line(25848,9,"file.bas");
-do{
-*__LONG_E= 0 ;
-if(!qbevent)break;evnt(25848,9,"file.bas");}while(r);
-error_track_line(25848,9,"file.bas");
-do{
-qbs_set(_FUNC_COPYFILE_STRING_DAT,func__readfile(_FUNC_COPYFILE_STRING_SOURCEFILE));
+qbs_set(_FUNC_REMOVECAST_STRING_REMOVECAST,_FUNC_REMOVECAST_STRING_A);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25848,9,"file.bas");}while(r);
-error_track_line(25848,10,"file.bas");
-S_34110:;
-if ((-(*__LONG_E== 0 ))||is_error_pending()){
-if(qbevent){evnt(25848,10,"file.bas");if(r)goto S_34110;}
-error_track_line(25848,10,"file.bas");
+if(!qbevent)break;evnt(27721);}while(r);
+error_track_line(27722,0,NULL);
+S_36076:;
+if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,_FUNC_REMOVECAST_STRING_A,qbs_new_txt_len("  )",3),0)))||is_error_pending()){
+if(qbevent){evnt(27722);if(r)goto S_36076;}
+error_track_line(27723,0,NULL);
 do{
-sub__writefile(_FUNC_COPYFILE_STRING_DESTFILE,_FUNC_COPYFILE_STRING_DAT);
+qbs_set(_FUNC_REMOVECAST_STRING_REMOVECAST,qbs_right(_FUNC_REMOVECAST_STRING_A,_FUNC_REMOVECAST_STRING_A->len-func_instr(NULL,_FUNC_REMOVECAST_STRING_A,qbs_new_txt_len("  )",3),0)- 2 ));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25848,10,"file.bas");}while(r);
-error_track_line(25848,10,"file.bas");
-}else{
-error_track_line(25848,10,"file.bas");
-do{
-*__LONG_E= -1 ;
-if(!qbevent)break;evnt(25848,10,"file.bas");}while(r);
-error_track_line(25848,10,"file.bas");
+if(!qbevent)break;evnt(27723);}while(r);
+error_track_line(27724,0,NULL);
 }
-error_track_line(25848,11,"file.bas");
-do{
-error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
-qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
-qbs_cleanup(qbs_tmp_base, 0);
-if(!qbevent)break;evnt(25848,11,"file.bas");}while(r);
-error_track_line(25848,13,"file.bas");
-do{
-*_FUNC_COPYFILE_LONG_COPYFILE=*__LONG_E;
-if(!qbevent)break;evnt(25848,13,"file.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free92.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_COPYFILE_LONG_COPYFILE;
+qbs_maketmp(_FUNC_REMOVECAST_STRING_REMOVECAST);return _FUNC_REMOVECAST_STRING_REMOVECAST;
 }

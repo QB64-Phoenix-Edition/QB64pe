@@ -1,0 +1,86 @@
+void SUB_SORT(ptrszint*_SUB_SORT_ARRAY_STRING998_ARR){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data428.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+error_track_line(28306,20455,"ide_methods.bas");
+S_66861:;
+fornext_value7735=func_lbound(_SUB_SORT_ARRAY_STRING998_ARR,1,1)+ 1 ;
+fornext_finalvalue7735=func_ubound(_SUB_SORT_ARRAY_STRING998_ARR,1,1);
+fornext_step7735= 1 ;
+if (fornext_step7735<0) fornext_step_negative7735=1; else fornext_step_negative7735=0;
+if (is_error_pending()) goto fornext_error7735;
+goto fornext_entrylabel7735;
+while(1){
+fornext_value7735=fornext_step7735+(*_SUB_SORT_LONG_I);
+fornext_entrylabel7735:
+*_SUB_SORT_LONG_I=fornext_value7735;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative7735){
+if (fornext_value7735<fornext_finalvalue7735) break;
+}else{
+if (fornext_value7735>fornext_finalvalue7735) break;
+}
+fornext_error7735:;
+if(qbevent){evnt(28306,20455,"ide_methods.bas");if(r)goto S_66861;}
+error_track_line(28306,20456,"ide_methods.bas");
+do{
+qbs_set(_SUB_SORT_STRING_X,qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[(array_check((*_SUB_SORT_LONG_I)-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]))*998],998,1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28306,20456,"ide_methods.bas");}while(r);
+error_track_line(28306,20457,"ide_methods.bas");
+do{
+*_SUB_SORT_LONG_J=*_SUB_SORT_LONG_I- 1 ;
+if(!qbevent)break;evnt(28306,20457,"ide_methods.bas");}while(r);
+error_track_line(28306,20458,"ide_methods.bas");
+S_66864:;
+while((qbs_cleanup(qbs_tmp_base,-(*_SUB_SORT_LONG_J>=func_lbound(_SUB_SORT_ARRAY_STRING998_ARR,1,1))))||is_error_pending()){
+if(qbevent){evnt(28306,20458,"ide_methods.bas");if(r)goto S_66864;}
+error_track_line(28306,20459,"ide_methods.bas");
+S_66865:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_lessorequal(qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[(array_check((*_SUB_SORT_LONG_J)-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]))*998],998,1),_SUB_SORT_STRING_X)))||is_error_pending()){
+if(qbevent){evnt(28306,20459,"ide_methods.bas");if(r)goto S_66865;}
+error_track_line(28306,20459,"ide_methods.bas");
+do{
+goto ww_exit_7736;
+if(!qbevent)break;evnt(28306,20459,"ide_methods.bas");}while(r);
+error_track_line(28306,20459,"ide_methods.bas");
+}
+error_track_line(28306,20460,"ide_methods.bas");
+do{
+tmp_long=array_check((*_SUB_SORT_LONG_J+ 1 )-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]);
+if (!is_error_pending()) qbs_set(qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[tmp_long*998],998,1),qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[(array_check((*_SUB_SORT_LONG_J)-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]))*998],998,1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28306,20460,"ide_methods.bas");}while(r);
+error_track_line(28306,20461,"ide_methods.bas");
+do{
+*_SUB_SORT_LONG_J=*_SUB_SORT_LONG_J- 1 ;
+if(!qbevent)break;evnt(28306,20461,"ide_methods.bas");}while(r);
+error_track_line(28306,20462,"ide_methods.bas");
+ww_continue_7736:;
+}
+ww_exit_7736:;
+error_track_line(28306,20463,"ide_methods.bas");
+do{
+tmp_long=array_check((*_SUB_SORT_LONG_J+ 1 )-_SUB_SORT_ARRAY_STRING998_ARR[4],_SUB_SORT_ARRAY_STRING998_ARR[5]);
+if (!is_error_pending()) qbs_set(qbs_new_fixed(&((uint8*)(_SUB_SORT_ARRAY_STRING998_ARR[0]))[tmp_long*998],998,1),_SUB_SORT_STRING_X);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28306,20463,"ide_methods.bas");}while(r);
+error_track_line(28306,20464,"ide_methods.bas");
+fornext_continue_7734:;
+}
+fornext_exit_7734:;
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free428.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+}
