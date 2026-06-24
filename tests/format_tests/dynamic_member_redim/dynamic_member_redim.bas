@@ -1,3 +1,5 @@
+$Unstable:TypeFields
+
 Type BufferType
     sample(1, 1) _Dynamic As Long
 End Type
