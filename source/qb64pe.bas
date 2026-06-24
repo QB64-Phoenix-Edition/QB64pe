@@ -15968,6 +15968,8 @@ SUB BuildDynMemberBoundsPrep (bounds AS STRING, prep_prefix AS STRING, total_dim
     DIM dim_tokens AS LONG
     DIM dim_token_index AS LONG
     DIM to_position AS LONG
+    DIM lower_is_const AS LONG
+    DIM upper_is_const AS LONG
     DIM current_dim AS LONG
     DIM desc_slots AS LONG
     DIM desc_index AS LONG
@@ -16046,12 +16048,26 @@ SUB BuildDynMemberBoundsPrep (bounds AS STRING, prep_prefix AS STRING, total_dim
             IF Error_Happened THEN EXIT SUB
             lower_text = evaluatetotyp$(lower_ordered, 64&)
             IF Error_Happened THEN EXIT SUB
+            lower_is_const = constequation
 
             constequation = 1
             upper_ordered = fixoperationorder$(upper_expr)
             IF Error_Happened THEN EXIT SUB
             upper_text = evaluatetotyp$(upper_ordered, 64&)
             IF Error_Happened THEN EXIT SUB
+            upper_is_const = constequation
+
+            'Match allocarray(): reject impossible constant bounds in the IDE,
+            'while retaining the generated runtime guard for variable expressions.
+            IF upper_is_const THEN
+                IF to_position THEN
+                    IF lower_is_const THEN
+                        IF VAL(upper_text) < VAL(lower_text) THEN Give_Error "Invalid array bounds": EXIT SUB
+                    END IF
+                ELSE
+                    IF VAL(upper_text) < 0 THEN Give_Error "Invalid array bounds": EXIT SUB
+                END IF
+            END IF
 
             current_dim = current_dim + 1
             desc_index = (total_dims - current_dim) * 4 + 4
@@ -16502,7 +16518,8 @@ FUNCTION CompactMemberRefLayout$ (src AS STRING)
         ELSEIF tok = ")" THEN
             compacttxt = RTRIM$(compacttxt) + ")"
             needspace = 1
-        ELSE
+
+        ELSE 'update (previous version add space before minus if negative arrays bounds in valid range is declared)
             IF LEN(compacttxt) = 0 THEN
                 compacttxt = tok
             ELSEIF needspace THEN
@@ -16512,8 +16529,17 @@ FUNCTION CompactMemberRefLayout$ (src AS STRING)
             ELSE
                 compacttxt = compacttxt + tok
             END IF
+
             needspace = 1
+
+            'Unary + or - must remain attached to its operand.
+            IF tok = "-" OR tok = "+" THEN
+                IF prevtok = "" OR prevtok = "(" OR prevtok = "," OR UCASE$(prevtok) = "TO" THEN
+                    needspace = 0
+                END IF
+            END IF
         END IF
+
         prevtok = tok
     NEXT
 
