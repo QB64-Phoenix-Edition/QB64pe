@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Disable Cloudflare Bot Fight Mode
-        run: curl -g -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/bot_management" -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" -H "Content-Type: application/json" --data '{"fight_mode": false}'
+        run: |
+          curl -g -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/bot_management" \
+               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data '{"fight_mode": false}'
 
   # 2. Main-Job: Wait for Job 1, then call the Matrix-Build
   build:
@@ -27,4 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Re-enable Cloudflare Bot Fight Mode
-        run: curl -g -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/bot_management" -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" -H "Content-Type: application/json" --data '{"fight_mode": true}'
+        run: |
+          curl -g -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/bot_management" \
+               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data '{"fight_mode": true}'
