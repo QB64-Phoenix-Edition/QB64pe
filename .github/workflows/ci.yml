@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Disable Cloudflare Bot Fight Mode
         run: |
-          curl -X PATCH "https://cloudflare.com{{ secrets.CLOUDFLARE_ZONE_ID }}/botmanagement" \
+          curl -g -X PATCH "https://cloudflare.com{{ secrets.CLOUDFLARE_ZONE_ID }}/botmanagement" \
                -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
                -H "Content-Type: application/json" \
                --data '{"fight_mode": false}'
@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Re-enable Cloudflare Bot Fight Mode
         run: |
-          curl -X PATCH "https://cloudflare.com{{ secrets.CLOUDFLARE_ZONE_ID }}/botmanagement" \
+          curl -g -X PATCH "https://cloudflare.com{{ secrets.CLOUDFLARE_ZONE_ID }}/botmanagement" \
                -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
                -H "Content-Type: application/json" \
                --data '{"fight_mode": true}'
