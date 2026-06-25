@@ -1659,6 +1659,8 @@ reginternal
 
 DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer%("O", tmpdir$ + "global.txt")
 defdatahandle = GlobTxtBuf
+WriteBufLine GlobTxtBuf, "template <typename QBL, typename QBR> static inline auto qb_safe_idiv(QBL qb_l,QBR qb_r)->decltype(qb_l/qb_r){if (!qb_r){error(11);return (decltype(qb_l/qb_r))0;}return qb_l/qb_r;}"
+WriteBufLine GlobTxtBuf, "template <typename QBL, typename QBR> static inline auto qb_safe_mod(QBL qb_l,QBR qb_r)->decltype(qb_l%qb_r){if (!qb_r){error(11);return (decltype(qb_l%qb_r))0;}return qb_l%qb_r;}"
 
 IF iderecompile THEN
     iderecompile = 0
@@ -25234,8 +25236,8 @@ FUNCTION operatorusage (operator$, typ AS LONG, info$, lhs AS LONG, rhs AS LONG,
 
     lhs = 1: rhs = 1: result = 1
     operator$ = UCASE$(operator$)
-    IF operator$ = "MOD" THEN info$ = "%": operatorusage = 1: EXIT FUNCTION
-    IF operator$ = "\" THEN info$ = "/ ": operatorusage = 1: EXIT FUNCTION
+    IF operator$ = "MOD" THEN info$ = "qb_safe_mod": operatorusage = 2: EXIT FUNCTION
+    IF operator$ = "\" THEN info$ = "qb_safe_idiv": operatorusage = 2: EXIT FUNCTION
     IF operator$ = "IMP" THEN info$ = "|": operatorusage = 4: EXIT FUNCTION
     IF operator$ = "EQV" THEN info$ = "^": operatorusage = 4: EXIT FUNCTION
     IF operator$ = "XOR" THEN info$ = "^": operatorusage = 1: EXIT FUNCTION
