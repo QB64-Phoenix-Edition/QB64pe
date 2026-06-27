@@ -338,7 +338,7 @@ if (((-(*_SUB_GETINPUT_LONG_K>= 256 ))&(-(*_SUB_GETINPUT_LONG_K<= 65535 ))&((-((
 if(qbevent){evnt(28334,18715,"ide_methods.bas");if(r)goto S_64938;}
 error_track_line(28334,18715,"ide_methods.bas");
 do{
-qbs_set(__STRING_K,qbs_add(func_chr( 0 ),func_chr(*_SUB_GETINPUT_LONG_K/  256 )));
+qbs_set(__STRING_K,qbs_add(func_chr( 0 ),func_chr(qb_safe_idiv(*_SUB_GETINPUT_LONG_K, 256 ))));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28334,18715,"ide_methods.bas");}while(r);
 error_track_line(28334,18715,"ide_methods.bas");

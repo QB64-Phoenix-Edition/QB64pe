@@ -122,7 +122,7 @@ error_track_line(28334,149,"wiki_methods.bas");
 do{
 tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
 tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
-tmp_long=*_SUB_HELP_ADDTXT_LONG_LINK/  256 ; if (!is_error_pending()){
+tmp_long=qb_safe_idiv(*_SUB_HELP_ADDTXT_LONG_LINK, 256 ); if (!is_error_pending()){
 if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
 }}}
 if(!qbevent)break;evnt(28334,149,"wiki_methods.bas");}while(r);
@@ -172,7 +172,7 @@ qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28334,165,"wiki_methods.bas");}while(r);
 error_track_line(28334,167,"wiki_methods.bas");
 do{
-*__LONG_HELP_POS=*__LONG_HELP_POS+(_SUB_HELP_ADDTXT_STRING_B->len/  4 );
+*__LONG_HELP_POS=*__LONG_HELP_POS+(qb_safe_idiv(_SUB_HELP_ADDTXT_STRING_B->len, 4 ));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28334,167,"wiki_methods.bas");}while(r);
 error_track_line(28334,168,"wiki_methods.bas");
@@ -225,7 +225,7 @@ error_track_line(28334,176,"wiki_methods.bas");
 do{
 tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
 tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
-tmp_long=*_SUB_HELP_ADDTXT_LONG_LINK/  256 ; if (!is_error_pending()){
+tmp_long=qb_safe_idiv(*_SUB_HELP_ADDTXT_LONG_LINK, 256 ); if (!is_error_pending()){
 if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
 }}}
 if(!qbevent)break;evnt(28334,176,"wiki_methods.bas");}while(r);
