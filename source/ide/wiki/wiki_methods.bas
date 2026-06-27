@@ -1152,7 +1152,9 @@ END FUNCTION
 FUNCTION wikiDLPage$ (url$, timeout#)
     '--- set default result & avoid side effects ---
     wikiDLPage$ = ""
-    wik$ = url$: tio# = timeout#
+    'for 'qb64pe -u' (build time update) replace domain with IP to bypass Cloudflare
+    wik$ = _IIF(Help_Recaching = 2, StrReplace$(url$, "qb64phoenix.com", "162.144.13.150"), url$)
+    tio# = timeout#
     redirDev$ = "/dev/null": IF INSTR(_OS$, "WIN") > 0 THEN redirDev$ = "NUL"
     '--- request wiki page ---
     retry:
