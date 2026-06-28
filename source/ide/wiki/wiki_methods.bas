@@ -1207,20 +1207,20 @@ FUNCTION wikiDLPage$ (url$, timeout#)
     'and instead only give that information to people who complain about
     'not working Wiki downloads in the Forum/Discord.
     '--- check for curl ---
-    IF Help_Recaching < 2 THEN 'avoid using cUrl for 'qb64pe -u' (build time update)
+    'IF Help_Recaching < 2 THEN 'avoid using cUrl for 'qb64pe -u' (build time update)
         IF _SHELLHIDE("curl --version >" + redirDev$) = 0 THEN
             '--- 1st restore https: protocol, if changed above ---
             IF LCASE$(LEFT$(wik$, 7)) = "http://" THEN wik$ = "https://" + MID$(wik$, 8)
             '--- issue curl request ---
             responseFile$ = Cache_Folder$ + "/curlResponse.txt"
-            SHELL _HIDE "curl --silent --retry 3 -o " + CHR$(34) + responseFile$ + CHR$(34) + " " + CHR$(34) + wik$ + CHR$(34)
+            SHELL _HIDE "curl --silent --retry 3 -o " + CHR$(34) + responseFile$ + CHR$(34) + " -k " + CHR$(34) + wik$ + CHR$(34)
             IF _FILEEXISTS(responseFile$) THEN
                 '--- read the response ---
                 wikiDLPage$ = _READFILE$(responseFile$)
                 KILL responseFile$
             END IF
         END IF
-    END IF
+    'END IF
 END FUNCTION
 
 FUNCTION wikiLookAhead$ (a$, i, token$) 'Prefetch further wiki text
