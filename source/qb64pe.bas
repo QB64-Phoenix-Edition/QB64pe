@@ -10663,6 +10663,9 @@ DO
         DO WHILE try
             IF id.subfunc = 2 THEN
 
+                'Keep the SUB origin before any helper can change the current id record.
+                subIsInternal = ids(currentid).internal_subfunc
+
                 'check symbol
                 s$ = removesymbol$(firstelement$ + "")
                 IF Error_Happened THEN GOTO errmes
@@ -10678,21 +10681,26 @@ DO
                     END IF
                 END IF
                 'check for array assignment
-                IF n > 2 THEN
-                    IF firstelement$ <> "PRINT" AND firstelement$ <> "LPRINT" THEN
-                        IF getelement$(a$, 2) = "(" THEN
-                            B = 1
-                            FOR i = 3 TO n
-                                e$ = getelement$(a$, i)
-                                IF e$ = "(" THEN B = B + 1
-                                IF e$ = ")" THEN
-                                    B = B - 1
-                                    IF B = 0 THEN
-                                        IF i = n THEN EXIT FOR
-                                        IF getelement$(a$, i + 1) = "=" THEN GOTO notsubcall
+                'Only internal SUBs can legally share a name with a variable/array
+                '(for example WIDTH). A user-defined SUB name cannot, so do not
+                'reinterpret its parenthesized first argument as an array assignment.
+                IF subIsInternal THEN
+                    IF n > 2 THEN
+                        IF firstelement$ <> "PRINT" AND firstelement$ <> "LPRINT" THEN
+                            IF getelement$(a$, 2) = "(" THEN
+                                B = 1
+                                FOR i = 3 TO n
+                                    e$ = getelement$(a$, i)
+                                    IF e$ = "(" THEN B = B + 1
+                                    IF e$ = ")" THEN
+                                        B = B - 1
+                                        IF B = 0 THEN
+                                            IF i = n THEN EXIT FOR
+                                            IF getelement$(a$, i + 1) = "=" THEN GOTO notsubcall
+                                        END IF
                                     END IF
-                                END IF
-                            NEXT
+                                NEXT
+                            END IF
                         END IF
                     END IF
                 END IF

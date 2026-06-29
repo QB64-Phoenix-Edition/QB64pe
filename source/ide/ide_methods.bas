@@ -8792,7 +8792,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
     TYPE varDlgList
         AS LONG index, bgColorFlag, colorFlag, colorFlag2, indicator, indicator2
         AS _BYTE selected
-        AS STRING varType
+        AS STRING varType, arrayIndex
     END TYPE
 
     REDIM varDlgList(1 TO totalVariablesCreated) AS varDlgList
@@ -9125,8 +9125,12 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
 
                             '-------
                             v$ = lineformat$(UCASE$(v$))
+                            watchHasArray = INSTR(v$, "(") <> 0
+                            watchChecking = CheckingOn
+                            IF watchHasArray THEN CheckingOn = 0
                             Error_Happened = 0
                             result$ = udtreference$("", v$, typ)
+                            CheckingOn = watchChecking
                             IF Error_Happened THEN
                                 'shouldn't ever happen
                                 Error_Happened = 0
@@ -9179,7 +9183,13 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                                             GOTO dlgLoop
                                         END IF
                                 END SELECT
-                                tempElementOffset$ = MKL$(VAL(MID$(result$, _INSTRREV(result$, sp3) + 1)))
+                                watchOffset& = idewatchoffset&(result$, watchOffsetOK)
+                                IF watchOffsetOK = 0 THEN
+                                    result = idemessagebox("Error", "The debugger can currently watch only TYPE members with a static byte offset.", "#OK")
+                                    _KEYCLEAR
+                                    _CONTINUE
+                                END IF
+                                tempElementOffset$ = MKL$(watchOffset&)
                             END IF
                             '-------
                         ELSE
@@ -9651,8 +9661,12 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                                 END IF
                                 usedVariableList(varDlgList(y).index).elements = usedVariableList(varDlgList(y).index).elements + v$ + sp
                                 v$ = lineformat$(UCASE$(v$))
+                                watchHasArray = INSTR(v$, "(") <> 0
+                                watchChecking = CheckingOn
+                                IF watchHasArray THEN CheckingOn = 0
                                 Error_Happened = 0
                                 result$ = udtreference$("", v$, typ)
+                                CheckingOn = watchChecking
                                 IF Error_Happened THEN
                                     'shouldn't ever happen
                                     Error_Happened = 0
@@ -9711,7 +9725,16 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                                                 GOTO unWatch
                                             END IF
                                     END SELECT
-                                    usedVariableList(varDlgList(y).index).elementOffset = usedVariableList(varDlgList(y).index).elementOffset + MKL$(VAL(MID$(result$, _INSTRREV(result$, sp3) + 1)))
+                                    watchOffset& = idewatchoffset&(result$, watchOffsetOK)
+                                    IF watchOffsetOK = 0 THEN
+                                        usedVariableList(varDlgList(y).index).watch = 0
+                                        usedVariableList(varDlgList(y).index).elements = ""
+                                        usedVariableList(varDlgList(y).index).elementTypes = ""
+                                        usedVariableList(varDlgList(y).index).elementOffset = ""
+                                        result = idemessagebox("Error", "The debugger can currently watch only TYPE members with a static byte offset.", "#OK")
+                                        GOTO unWatch
+                                    END IF
+                                    usedVariableList(varDlgList(y).index).elementOffset = usedVariableList(varDlgList(y).index).elementOffset + MKL$(watchOffset&)
                                 END IF
                                 '-------
                             LOOP
@@ -10007,6 +10030,11 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
     DIM p AS idedbptype
     DIM o(1 TO 100) AS idedbotype
     DIM sep AS STRING * 1
+    DIM thisElement AS LONG
+    DIM watchDims AS LONG, watchDim AS LONG, watchComma AS LONG
+    DIM watchPartStart AS LONG, watchDigitStart AS LONG, watchChar AS LONG
+    DIM watchDescAt AS LONG, watchLower AS LONG, watchCount AS LONG
+    DIM watchUpper AS _INTEGER64, watchValue AS _INTEGER64
     sep = CHR$(0)
     '-------- end of generic dialog box header --------
 
@@ -10146,7 +10174,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                     varType$ = varDlgList(y).varType
                     IF INSTR(varType$, "STRING *") THEN varType$ = "STRING"
                     IF INSTR(varType$, "_BIT *") THEN varType$ = "_BIT"
-                    IF INSTR(nativeDataTypes$, varType$) > 0 THEN
+                    IF INSTR(nativeDataTypes$, varType$) > 0 AND udtearrayelements(varDlgList(y).index) = 0 THEN
                         varDlgList(y).selected = -1
                         ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag) = variableNameColor
                         ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag2) = typeColumnColor
@@ -10191,6 +10219,10 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                         IF INSTR(nativeDataTypes$, varType$) > 0 THEN
                             'non-native data types will have already been added to the return list
                             thisName$ = RTRIM$(udtecname(varDlgList(y).index))
+                            IF udtearrayelements(varDlgList(y).index) THEN
+                                IF LEN(varDlgList(y).arrayIndex) = 0 THEN _CONTINUE
+                                thisName$ = thisName$ + varDlgList(y).arrayIndex
+                            END IF
                             IF LEN(returnList$) THEN returnList$ = returnList$ + sp
                             returnList$ = returnList$ + currentPath$ + thisName$
                         END IF
@@ -10244,6 +10276,21 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                     varDlgList(y).selected = NOT varDlgList(y).selected
                 END IF
                 IF varDlgList(y).selected THEN
+                    IF udtearrayelements(varDlgList(y).index) THEN
+                        thisElement = varDlgList(y).index
+                        GOSUB getStaticArrayIndex
+                        IF arrayIndexOK = 0 THEN
+                            varDlgList(y).selected = 0
+                            ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag) = 16
+                            ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag2) = 2
+                            ASC(idetxt(o(varListBox).txt), varDlgList(y).bgColorFlag) = 17
+                            ASC(idetxt(o(varListBox).txt), varDlgList(y).indicator) = 32 'space
+                            IF toggleAndReturn THEN RETURN
+                            _CONTINUE
+                        END IF
+                        varDlgList(y).arrayIndex = arrayIndexSuffix$
+                    END IF
+
                     IF singleElementSelection THEN
                         FOR i = 1 TO totalElements
                             IF i = y THEN _CONTINUE
@@ -10274,7 +10321,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                             elementIndexes2$ = elementIndexes2$ + MKL$(E)
                             i = i + 1
                         LOOP
-                        v$ = ideelementwatchbox$(currentPath$ + RTRIM$(udtecname(varDlgList(y).index)) + ".", elementIndexes2$, level + 1, singleElementSelection, ok2)
+                        v$ = ideelementwatchbox$(currentPath$ + RTRIM$(udtecname(varDlgList(y).index)) + varDlgList(y).arrayIndex + ".", elementIndexes2$, level + 1, singleElementSelection, ok2)
                         ok = ok2
                         IF ok2 = -2 THEN
                             'single selection
@@ -10285,6 +10332,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                         ELSEIF ok2 = -4 THEN
                             i = y
                             varDlgList(i).selected = 0
+                            varDlgList(i).arrayIndex = ""
                             ASC(idetxt(o(varListBox).txt), varDlgList(i).colorFlag) = 16
                             ASC(idetxt(o(varListBox).txt), varDlgList(i).colorFlag2) = 2
                             ASC(idetxt(o(varListBox).txt), varDlgList(i).bgColorFlag) = 17
@@ -10298,6 +10346,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
                     ASC(idetxt(o(varListBox).txt), varDlgList(y).bgColorFlag) = selectedBG
                     ASC(idetxt(o(varListBox).txt), varDlgList(y).indicator) = 43 '+
                 ELSE
+                    varDlgList(y).arrayIndex = ""
                     ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag) = 16
                     ASC(idetxt(o(varListBox).txt), varDlgList(y).colorFlag2) = 2
                     ASC(idetxt(o(varListBox).txt), varDlgList(y).bgColorFlag) = 17
@@ -10319,9 +10368,12 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
     maxTypeLen = 0
     FOR x = 1 TO totalElements
         thisType = CVL(MID$(elementIndexes$, x * 4 - 3, 4))
-        IF LEN(RTRIM$(udtecname(thisType))) > longestName THEN longestName = LEN(RTRIM$(udtecname(thisType)))
+        thisName$ = RTRIM$(udtecname(thisType))
+        IF udtearrayelements(thisType) THEN thisName$ = thisName$ + "()"
+        IF LEN(thisName$) > longestName THEN longestName = LEN(thisName$)
         varDlgList(x).index = thisType
         varDlgList(x).selected = 0
+        varDlgList(x).arrayIndex = ""
         id.t = udtetype(thisType)
         id.tsize = udtesize(thisType)
 
@@ -10347,6 +10399,7 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
         l$ = l$ + CHR$(16) + " "
 
         thisName$ = RTRIM$(udtecname(thisElement))
+        IF udtearrayelements(thisElement) THEN thisName$ = thisName$ + "()"
         text$ = thisName$ + CHR$(16)
         varDlgList(x).colorFlag2 = LEN(l$) + LEN(text$) + 1
         text$ = text$ + CHR$(2) + " "
@@ -10357,6 +10410,125 @@ FUNCTION ideelementwatchbox$ (currentPath$, elementIndexes$, level, singleElemen
         IF x < totalElements THEN l$ = l$ + sep
     NEXT
     RETURN
+
+    getStaticArrayIndex:
+    arrayIndexOK = 0
+    arrayIndexSuffix$ = ""
+    watchInput$ = ""
+    watchDims = udtearraydims(thisElement)
+    IF watchDims < 1 THEN RETURN
+
+    watchPrompt$ = "#Index"
+    IF watchDims > 1 THEN watchPrompt$ = "#Indexes (" + _TOSTR$(watchDims) + " dimensions)"
+
+    DO
+        watchInput$ = ideinputbox$("Choose Array Element", watchPrompt$, watchInput$, "-0123456789,", 45, 0, watchInputOK)
+        _KEYCLEAR
+        IF watchInputOK = 0 THEN RETURN
+
+        watchInput$ = _TRIM$(watchInput$)
+        DO WHILE LEN(watchInput$) AND RIGHT$(watchInput$, 1) = ","
+            watchInput$ = LEFT$(watchInput$, LEN(watchInput$) - 1)
+        LOOP
+
+        watchValid = -1
+        watchError$ = ""
+        watchNormalized$ = ""
+        watchPartStart = 1
+        watchDescAt = 1
+
+        FOR watchDim = 1 TO watchDims
+            watchComma = INSTR(watchPartStart, watchInput$, ",")
+            IF watchDim < watchDims THEN
+                IF watchComma = 0 THEN
+                    watchValid = 0
+                    watchError$ = "Array has" + STR$(watchDims) + " dimension(s)."
+                    EXIT FOR
+                END IF
+                watchPart$ = MID$(watchInput$, watchPartStart, watchComma - watchPartStart)
+                watchPartStart = watchComma + 1
+            ELSE
+                IF watchComma THEN
+                    watchValid = 0
+                    watchError$ = "Array has" + STR$(watchDims) + " dimension(s)."
+                    EXIT FOR
+                END IF
+                watchPart$ = MID$(watchInput$, watchPartStart)
+            END IF
+
+            watchPart$ = _TRIM$(watchPart$)
+            watchDigitStart = 1
+            IF LEFT$(watchPart$, 1) = "-" THEN watchDigitStart = 2
+            IF LEN(watchPart$) < watchDigitStart THEN
+                watchValid = 0
+                watchError$ = "Enter a valid integer index."
+                EXIT FOR
+            END IF
+
+            FOR watchChar = watchDigitStart TO LEN(watchPart$)
+                watchChar$ = MID$(watchPart$, watchChar, 1)
+                IF watchChar$ < "0" OR watchChar$ > "9" THEN
+                    watchValid = 0
+                    watchError$ = "Enter a valid integer index."
+                    EXIT FOR
+                END IF
+            NEXT
+            IF watchValid = 0 THEN EXIT FOR
+
+            IF ParseNextUDTArrayDescriptorDim(udtearraydesc(thisElement), watchDescAt, watchLower, watchCount) = 0 THEN
+                watchValid = 0
+                watchError$ = "Invalid static TYPE member array metadata."
+                EXIT FOR
+            END IF
+
+            watchValue = VAL(watchPart$)
+            watchUpper = watchLower
+            watchUpper = watchUpper + watchCount - 1
+            IF watchValue < watchLower OR watchValue > watchUpper THEN
+                watchValid = 0
+                watchError$ = "Index" + STR$(watchValue) + " is outside" + STR$(watchLower) + " TO" + STR$(watchUpper) + "."
+                EXIT FOR
+            END IF
+
+            IF LEN(watchNormalized$) THEN watchNormalized$ = watchNormalized$ + ","
+            watchNormalized$ = watchNormalized$ + watchPart$
+        NEXT
+
+        IF watchValid THEN
+            arrayIndexSuffix$ = "(" + watchNormalized$ + ")"
+            arrayIndexOK = -1
+            RETURN
+        END IF
+
+        result = idemessagebox("Error", watchError$, "#OK")
+        _KEYCLEAR
+    LOOP
+
+END FUNCTION
+
+FUNCTION idewatchoffset& (referenceText$, ok)
+    DIM offsetText AS STRING
+    DIM evalText AS STRING
+    DIM parsedNumber AS ParseNum
+    DIM offsetValue AS _INTEGER64
+
+    ok = 0
+    offsetText = MID$(referenceText$, _INSTRREV(referenceText$, sp3) + LEN(sp3))
+    IF LEN(offsetText) = 0 THEN EXIT FUNCTION
+
+    Error_Happened = 0
+    evalText = Evaluate_Expression$(lineformat$(offsetText), parsedNumber)
+    IF Error_Happened THEN
+        Error_Happened = 0
+        EXIT FUNCTION
+    END IF
+    IF INSTR(UCASE$(evalText), "ERROR") THEN EXIT FUNCTION
+
+    offsetValue = parsedNumber.i
+    IF offsetValue < 0 OR offsetValue > 2147483647 THEN EXIT FUNCTION
+
+    idewatchoffset& = offsetValue
+    ok = -1
 END FUNCTION
 
 FUNCTION formatRange$ (__text$)
