@@ -1,4 +1,4 @@
-qbs* FUNC_WIKILOOKAHEAD(qbs*_FUNC_WIKILOOKAHEAD_STRING_A,int32*_FUNC_WIKILOOKAHEAD_LONG_I,qbs*_FUNC_WIKILOOKAHEAD_STRING_TOKEN){
+qbs* FUNC_WIKIDLPAGE(qbs*_FUNC_WIKIDLPAGE_STRING_URL,double*_FUNC_WIKIDLPAGE_DOUBLE_TIMEOUT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,48 +11,278 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28334,1225,"wiki_methods.bas");
+error_track_line(28342,1154,"wiki_methods.bas");
 do{
-qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,qbs_new_txt_len("",0));
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28334,1225,"wiki_methods.bas");}while(r);
-error_track_line(28334,1225,"wiki_methods.bas");
-S_69333:;
-if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_WIKILOOKAHEAD_LONG_I>=_FUNC_WIKILOOKAHEAD_STRING_A->len)))||is_error_pending()){
-if(qbevent){evnt(28334,1225,"wiki_methods.bas");if(r)goto S_69333;}
-error_track_line(28334,1225,"wiki_methods.bas");
+if(!qbevent)break;evnt(28342,1154,"wiki_methods.bas");}while(r);
+error_track_line(28342,1155,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIK,_FUNC_WIKIDLPAGE_STRING_URL);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1155,"wiki_methods.bas");}while(r);
+error_track_line(28342,1155,"wiki_methods.bas");
+do{
+*_FUNC_WIKIDLPAGE_DOUBLE_TIO=*_FUNC_WIKIDLPAGE_DOUBLE_TIMEOUT;
+if(!qbevent)break;evnt(28342,1155,"wiki_methods.bas");}while(r);
+error_track_line(28342,1156,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_REDIRDEV,qbs_new_txt_len("/dev/null",9));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1156,"wiki_methods.bas");}while(r);
+error_track_line(28342,1156,"wiki_methods.bas");
+S_69452:;
+if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)> 0 )))||is_error_pending()){
+if(qbevent){evnt(28342,1156,"wiki_methods.bas");if(r)goto S_69452;}
+error_track_line(28342,1156,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_REDIRDEV,qbs_new_txt_len("NUL",3));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1156,"wiki_methods.bas");}while(r);
+error_track_line(28342,1156,"wiki_methods.bas");
+}
+LABEL_RETRY:;
+if(qbevent){evnt(28342,1158,"wiki_methods.bas");r=0;}
+error_track_line(28342,1159,"wiki_methods.bas");
+S_69455:;
+fornext_value8107= 1 ;
+fornext_finalvalue8107= 3 ;
+fornext_step8107= 1 ;
+if (fornext_step8107<0) fornext_step_negative8107=1; else fornext_step_negative8107=0;
+if (is_error_pending()) goto fornext_error8107;
+goto fornext_entrylabel8107;
+while(1){
+fornext_value8107=fornext_step8107+(*_FUNC_WIKIDLPAGE_INTEGER_R);
+fornext_entrylabel8107:
+*_FUNC_WIKIDLPAGE_INTEGER_R=fornext_value8107;
+if (fornext_step_negative8107){
+if (fornext_value8107<fornext_finalvalue8107) break;
+}else{
+if (fornext_value8107>fornext_finalvalue8107) break;
+}
+fornext_error8107:;
+if(qbevent){evnt(28342,1159,"wiki_methods.bas");if(r)goto S_69455;}
+error_track_line(28342,1160,"wiki_methods.bas");
+do{
+*_FUNC_WIKIDLPAGE_LONG_CH=func__openclient(_FUNC_WIKIDLPAGE_STRING_WIK);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1160,"wiki_methods.bas");}while(r);
+error_track_line(28342,1161,"wiki_methods.bas");
+S_69457:;
+if ((-(*_FUNC_WIKIDLPAGE_LONG_CH== 0 ))||is_error_pending()){
+if(qbevent){evnt(28342,1161,"wiki_methods.bas");if(r)goto S_69457;}
+error_track_line(28342,1161,"wiki_methods.bas");
+do{
+sub__delay( 3.33E+0 );
+if(!qbevent)break;evnt(28342,1161,"wiki_methods.bas");}while(r);
+error_track_line(28342,1161,"wiki_methods.bas");
+}else{
+error_track_line(28342,1161,"wiki_methods.bas");
+do{
+goto fornext_exit_8106;
+if(!qbevent)break;evnt(28342,1161,"wiki_methods.bas");}while(r);
+error_track_line(28342,1161,"wiki_methods.bas");
+}
+error_track_line(28342,1162,"wiki_methods.bas");
+fornext_continue_8106:;
+}
+fornext_exit_8106:;
+error_track_line(28342,1163,"wiki_methods.bas");
+S_69463:;
+if ((-(*__LONG_HELP_RECACHING< 2 ))||is_error_pending()){
+if(qbevent){evnt(28342,1163,"wiki_methods.bas");if(r)goto S_69463;}
+error_track_line(28342,1164,"wiki_methods.bas");
+S_69464:;
+if ((qbs_cleanup(qbs_tmp_base,(-(*_FUNC_WIKIDLPAGE_LONG_CH== 0 ))&(qbs_equal(qbs_lcase(qbs_left(_FUNC_WIKIDLPAGE_STRING_WIK, 8 )),qbs_new_txt_len("https://",8)))))||is_error_pending()){
+if(qbevent){evnt(28342,1164,"wiki_methods.bas");if(r)goto S_69464;}
+error_track_line(28342,1165,"wiki_methods.bas");
+S_69465:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__shellhide(qbs_add(qbs_new_txt_len("curl --version >",16),_FUNC_WIKIDLPAGE_STRING_REDIRDEV))!= 0 )))||is_error_pending()){
+if(qbevent){evnt(28342,1165,"wiki_methods.bas");if(r)goto S_69465;}
+error_track_line(28342,1167,"wiki_methods.bas");
+S_69466:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__guiMessageBox(qbs_new_txt_len("QB64-PE Help",12),qbs_new_txt_len("Can't make secure connection (https:) to Wiki, shall the IDE use unsecure (http:) instead?",90),qbs_new_txt_len("yesno",5),qbs_new_txt_len("warning",7),NULL,0|1|2|4|8)== 1 )))||is_error_pending()){
+if(qbevent){evnt(28342,1167,"wiki_methods.bas");if(r)goto S_69466;}
+error_track_line(28342,1168,"wiki_methods.bas");
+S_69467:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__guiMessageBox(qbs_new_txt_len("QB64-PE Help",12),qbs_new_txt_len("Do you wanna save your choice permanently for the future?",57),qbs_new_txt_len("yesno",5),qbs_new_txt_len("question",8),NULL,0|1|2|4|8)== 1 )))||is_error_pending()){
+if(qbevent){evnt(28342,1168,"wiki_methods.bas");if(r)goto S_69467;}
+error_track_line(28342,1169,"wiki_methods.bas");
+do{
+qbs_set(__STRING_WIKIBASEADDRESS,qbs_add(qbs_new_txt_len("http://",7),func_mid(__STRING_WIKIBASEADDRESS, 9 ,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1169,"wiki_methods.bas");}while(r);
+error_track_line(28342,1170,"wiki_methods.bas");
+do{
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("WikiBaseAddress",15),__STRING_WIKIBASEADDRESS);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1170,"wiki_methods.bas");}while(r);
+error_track_line(28342,1171,"wiki_methods.bas");
+}
+error_track_line(28342,1172,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIK,qbs_add(qbs_new_txt_len("http://",7),func_mid(_FUNC_WIKIDLPAGE_STRING_WIK, 9 ,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1172,"wiki_methods.bas");}while(r);
+error_track_line(28342,1172,"wiki_methods.bas");
+do{
+goto LABEL_RETRY;
+if(!qbevent)break;evnt(28342,1172,"wiki_methods.bas");}while(r);
+error_track_line(28342,1173,"wiki_methods.bas");
+}
+error_track_line(28342,1174,"wiki_methods.bas");
+}
+error_track_line(28342,1175,"wiki_methods.bas");
+}
+error_track_line(28342,1176,"wiki_methods.bas");
+}
+error_track_line(28342,1177,"wiki_methods.bas");
+S_69477:;
+if ((-(*_FUNC_WIKIDLPAGE_LONG_CH== 0 ))||is_error_pending()){
+if(qbevent){evnt(28342,1177,"wiki_methods.bas");if(r)goto S_69477;}
+error_track_line(28342,1177,"wiki_methods.bas");
+do{
+goto LABEL_ONELASTCHANCE;
+if(!qbevent)break;evnt(28342,1177,"wiki_methods.bas");}while(r);
+error_track_line(28342,1177,"wiki_methods.bas");
+}
+error_track_line(28342,1179,"wiki_methods.bas");
+S_69480:;
+if ((-(func__statusCode(*_FUNC_WIKIDLPAGE_LONG_CH)== 200 ))||is_error_pending()){
+if(qbevent){evnt(28342,1179,"wiki_methods.bas");if(r)goto S_69480;}
+error_track_line(28342,1180,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_RES,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1180,"wiki_methods.bas");}while(r);
+error_track_line(28342,1180,"wiki_methods.bas");
+do{
+*_FUNC_WIKIDLPAGE_DOUBLE_ST=func_timer( 0.001E+0 ,0|1);
+if(!qbevent)break;evnt(28342,1180,"wiki_methods.bas");}while(r);
+error_track_line(28342,1181,"wiki_methods.bas");
+S_69483:;
+do{
+if(qbevent){evnt(28342,1181,"wiki_methods.bas");if(r)goto S_69483;}
+error_track_line(28342,1182,"wiki_methods.bas");
+do{
+sub__delay( 0.05E+0 );
+if(!qbevent)break;evnt(28342,1182,"wiki_methods.bas");}while(r);
+error_track_line(28342,1183,"wiki_methods.bas");
+do{
+sub_get2(*_FUNC_WIKIDLPAGE_LONG_CH,NULL,_FUNC_WIKIDLPAGE_STRING_REC,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1183,"wiki_methods.bas");}while(r);
+error_track_line(28342,1184,"wiki_methods.bas");
+S_69486:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_WIKIDLPAGE_STRING_REC->len> 0 )))||is_error_pending()){
+if(qbevent){evnt(28342,1184,"wiki_methods.bas");if(r)goto S_69486;}
+error_track_line(28342,1184,"wiki_methods.bas");
+do{
+*_FUNC_WIKIDLPAGE_DOUBLE_ST=func_timer( 0.001E+0 ,0|1);
+if(!qbevent)break;evnt(28342,1184,"wiki_methods.bas");}while(r);
+error_track_line(28342,1184,"wiki_methods.bas");
+}
+error_track_line(28342,1185,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_RES,qbs_add(_FUNC_WIKIDLPAGE_STRING_RES,_FUNC_WIKIDLPAGE_STRING_REC));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1185,"wiki_methods.bas");}while(r);
+error_track_line(28342,1186,"wiki_methods.bas");
+S_69490:;
+if ((func_eof(*_FUNC_WIKIDLPAGE_LONG_CH))||is_error_pending()){
+if(qbevent){evnt(28342,1186,"wiki_methods.bas");if(r)goto S_69490;}
+error_track_line(28342,1187,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE,_FUNC_WIKIDLPAGE_STRING_RES);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1187,"wiki_methods.bas");}while(r);
+error_track_line(28342,1187,"wiki_methods.bas");
+do{
+goto dl_exit_8108;
+if(!qbevent)break;evnt(28342,1187,"wiki_methods.bas");}while(r);
+error_track_line(28342,1188,"wiki_methods.bas");
+}
+error_track_line(28342,1189,"wiki_methods.bas");
+S_69494:;
+if ((-((*_FUNC_WIKIDLPAGE_DOUBLE_ST+*_FUNC_WIKIDLPAGE_DOUBLE_TIO)>=( 86400 )))||is_error_pending()){
+if(qbevent){evnt(28342,1189,"wiki_methods.bas");if(r)goto S_69494;}
+error_track_line(28342,1189,"wiki_methods.bas");
+do{
+*_FUNC_WIKIDLPAGE_DOUBLE_ST=*_FUNC_WIKIDLPAGE_DOUBLE_ST- 86400 ;
+if(!qbevent)break;evnt(28342,1189,"wiki_methods.bas");}while(r);
+error_track_line(28342,1189,"wiki_methods.bas");
+}
+error_track_line(28342,1190,"wiki_methods.bas");
+S_69497:;
+dl_continue_8108:;
+}while((!(-(((float)((func_timer( 0.001E+0 ,0|1))))>((float)((*_FUNC_WIKIDLPAGE_DOUBLE_ST+*_FUNC_WIKIDLPAGE_DOUBLE_TIO))))))&&(!is_error_pending()));
+dl_exit_8108:;
+if(qbevent){evnt(28342,1190,"wiki_methods.bas");if(r)goto S_69497;}
+error_track_line(28342,1191,"wiki_methods.bas");
+}
+error_track_line(28342,1192,"wiki_methods.bas");
+do{
+sub_close(*_FUNC_WIKIDLPAGE_LONG_CH,1);
+if(!qbevent)break;evnt(28342,1192,"wiki_methods.bas");}while(r);
+error_track_line(28342,1193,"wiki_methods.bas");
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(28334,1225,"wiki_methods.bas");}while(r);
-error_track_line(28334,1225,"wiki_methods.bas");
+if(!qbevent)break;evnt(28342,1193,"wiki_methods.bas");}while(r);
+LABEL_ONELASTCHANCE:;
+if(qbevent){evnt(28342,1195,"wiki_methods.bas");r=0;}
+error_track_line(28342,1208,"wiki_methods.bas");
+S_69501:;
+if ((-(*__LONG_HELP_RECACHING< 2 ))||is_error_pending()){
+if(qbevent){evnt(28342,1208,"wiki_methods.bas");if(r)goto S_69501;}
+error_track_line(28342,1209,"wiki_methods.bas");
+S_69502:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__shellhide(qbs_add(qbs_new_txt_len("curl --version >",16),_FUNC_WIKIDLPAGE_STRING_REDIRDEV))== 0 )))||is_error_pending()){
+if(qbevent){evnt(28342,1209,"wiki_methods.bas");if(r)goto S_69502;}
+error_track_line(28342,1211,"wiki_methods.bas");
+S_69503:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_lcase(qbs_left(_FUNC_WIKIDLPAGE_STRING_WIK, 7 )),qbs_new_txt_len("http://",7))))||is_error_pending()){
+if(qbevent){evnt(28342,1211,"wiki_methods.bas");if(r)goto S_69503;}
+error_track_line(28342,1211,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIK,qbs_add(qbs_new_txt_len("https://",8),func_mid(_FUNC_WIKIDLPAGE_STRING_WIK, 8 ,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1211,"wiki_methods.bas");}while(r);
+error_track_line(28342,1211,"wiki_methods.bas");
 }
-error_track_line(28334,1226,"wiki_methods.bas");
+error_track_line(28342,1213,"wiki_methods.bas");
 do{
-*_FUNC_WIKILOOKAHEAD_LONG_J=func_instr(*_FUNC_WIKILOOKAHEAD_LONG_I,_FUNC_WIKILOOKAHEAD_STRING_A,_FUNC_WIKILOOKAHEAD_STRING_TOKEN,0|1);
+qbs_set(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE,qbs_add(__STRING_CACHE_FOLDER,qbs_new_txt_len("/curlResponse.txt",17)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28334,1226,"wiki_methods.bas");}while(r);
-error_track_line(28334,1227,"wiki_methods.bas");
-S_69337:;
-if ((-(*_FUNC_WIKILOOKAHEAD_LONG_J== 0 ))||is_error_pending()){
-if(qbevent){evnt(28334,1227,"wiki_methods.bas");if(r)goto S_69337;}
-error_track_line(28334,1228,"wiki_methods.bas");
+if(!qbevent)break;evnt(28342,1213,"wiki_methods.bas");}while(r);
+error_track_line(28342,1214,"wiki_methods.bas");
 do{
-qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,func_mid(_FUNC_WIKILOOKAHEAD_STRING_A,*_FUNC_WIKILOOKAHEAD_LONG_I,NULL,0));
+sub_shell2(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("curl --silent --retry 3 -o ",27),func_chr( 34 )),_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE),func_chr( 34 )),qbs_new_txt_len(" ",1)),func_chr( 34 )),_FUNC_WIKIDLPAGE_STRING_WIK),func_chr( 34 )),2);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28334,1228,"wiki_methods.bas");}while(r);
-error_track_line(28334,1229,"wiki_methods.bas");
-}else{
-error_track_line(28334,1230,"wiki_methods.bas");
+if(!qbevent)break;evnt(28342,1214,"wiki_methods.bas");}while(r);
+error_track_line(28342,1215,"wiki_methods.bas");
+S_69508:;
+if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE)))||is_error_pending()){
+if(qbevent){evnt(28342,1215,"wiki_methods.bas");if(r)goto S_69508;}
+error_track_line(28342,1217,"wiki_methods.bas");
 do{
-qbs_set(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD,func_mid(_FUNC_WIKILOOKAHEAD_STRING_A,*_FUNC_WIKILOOKAHEAD_LONG_I,*_FUNC_WIKILOOKAHEAD_LONG_J-*_FUNC_WIKILOOKAHEAD_LONG_I,0|1));
+qbs_set(_FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE,func__readfile(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28334,1230,"wiki_methods.bas");}while(r);
-error_track_line(28334,1231,"wiki_methods.bas");
+if(!qbevent)break;evnt(28342,1217,"wiki_methods.bas");}while(r);
+error_track_line(28342,1218,"wiki_methods.bas");
+do{
+sub_kill(_FUNC_WIKIDLPAGE_STRING_RESPONSEFILE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28342,1218,"wiki_methods.bas");}while(r);
+error_track_line(28342,1219,"wiki_methods.bas");
+}
+error_track_line(28342,1220,"wiki_methods.bas");
+}
+error_track_line(28342,1221,"wiki_methods.bas");
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free462.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD);return _FUNC_WIKILOOKAHEAD_STRING_WIKILOOKAHEAD;
+qbs_maketmp(_FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE);return _FUNC_WIKIDLPAGE_STRING_WIKIDLPAGE;
 }

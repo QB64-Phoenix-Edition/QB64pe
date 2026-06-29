@@ -1,4 +1,4 @@
-qbs* FUNC__WHATISMYIP(){
+qbs* FUNC__DECODEURL(qbs*_FUNC__DECODEURL_STRING__URL){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,66 +11,56 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28335,146,"afterlastline.bm");
-error_track_line(28335,148,"afterlastline.bm");
-*_FUNC__WHATISMYIP_LONG__CH=func__openclient(qbs_new_txt_len("http://qb64phoenix.com/qb64_files/ip.php",40));
+error_track_line(28343,101,"afterlastline.bm");
+error_track_line(28343,103,"afterlastline.bm");
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
-error_track_line(28335,149,"afterlastline.bm");
-if ((-(*_FUNC__WHATISMYIP_LONG__CH== 0ll ))||is_error_pending()){
-error_track_line(28335,149,"afterlastline.bm");
-goto exit_subfunc;
-error_track_line(28335,149,"afterlastline.bm");
-}
-error_track_line(28335,151,"afterlastline.bm");
-if ((-(func__statusCode(*_FUNC__WHATISMYIP_LONG__CH)== 200 ))||is_error_pending()){
-error_track_line(28335,152,"afterlastline.bm");
-qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_new_txt_len("",0));
+error_track_line(28343,105,"afterlastline.bm");
+fornext_value8272= 1 ;
+fornext_finalvalue8272=_FUNC__DECODEURL_STRING__URL->len;
+fornext_step8272= 1 ;
+if (fornext_step8272<0) fornext_step_negative8272=1; else fornext_step_negative8272=0;
+if (is_error_pending()) goto fornext_error8272;
+goto fornext_entrylabel8272;
+while(1){
+fornext_value8272=fornext_step8272+(*_FUNC__DECODEURL_INTEGER__P);
+fornext_entrylabel8272:
+*_FUNC__DECODEURL_INTEGER__P=fornext_value8272;
 qbs_cleanup(qbs_tmp_base,0);
-error_track_line(28335,152,"afterlastline.bm");
-*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
-error_track_line(28335,153,"afterlastline.bm");
-do{
-error_track_line(28335,154,"afterlastline.bm");
-sub__delay( 0.1E+0 );
-error_track_line(28335,155,"afterlastline.bm");
-sub_get2(*_FUNC__WHATISMYIP_LONG__CH,NULL,_FUNC__WHATISMYIP_STRING__REC,0);
+if (fornext_step_negative8272){
+if (fornext_value8272<fornext_finalvalue8272) break;
+}else{
+if (fornext_value8272>fornext_finalvalue8272) break;
+}
+fornext_error8272:;
+error_track_line(28343,106,"afterlastline.bm");
+*_FUNC__DECODEURL_INTEGER__A=qbs_asc(_FUNC__DECODEURL_STRING__URL,*_FUNC__DECODEURL_INTEGER__P);
 qbs_cleanup(qbs_tmp_base,0);
-error_track_line(28335,156,"afterlastline.bm");
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC__WHATISMYIP_STRING__REC->len> 0 )))||is_error_pending()){
-error_track_line(28335,156,"afterlastline.bm");
-*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
-error_track_line(28335,156,"afterlastline.bm");
-}
-error_track_line(28335,157,"afterlastline.bm");
-qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_add(_FUNC__WHATISMYIP_STRING__RES,_FUNC__WHATISMYIP_STRING__REC));
+error_track_line(28343,108,"afterlastline.bm");
+if ((-(*_FUNC__DECODEURL_INTEGER__A!= 37ll ))||is_error_pending()){
+error_track_line(28343,109,"afterlastline.bm");
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_add(_FUNC__DECODEURL_STRING__TMP,func_chr(*_FUNC__DECODEURL_INTEGER__A)));
 qbs_cleanup(qbs_tmp_base,0);
-error_track_line(28335,158,"afterlastline.bm");
-if ((func_eof(*_FUNC__WHATISMYIP_LONG__CH))||is_error_pending()){
-error_track_line(28335,159,"afterlastline.bm");
-qbs_set(_FUNC__WHATISMYIP_STRING__WHATISMYIP,_FUNC__WHATISMYIP_STRING__RES);
+error_track_line(28343,110,"afterlastline.bm");
+}else{
+error_track_line(28343,111,"afterlastline.bm");
+qbs_set(_FUNC__DECODEURL_STRING__TMP,qbs_add(_FUNC__DECODEURL_STRING__TMP,func_chr(qbr(qbs_val<long double>(qbs_add(qbs_new_txt_len("&H",2),func_mid(_FUNC__DECODEURL_STRING__URL,*_FUNC__DECODEURL_INTEGER__P+ 1 , 2 ,0|1))))& 255 )));
 qbs_cleanup(qbs_tmp_base,0);
-error_track_line(28335,159,"afterlastline.bm");
-goto dl_exit_8256;
-error_track_line(28335,160,"afterlastline.bm");
+error_track_line(28343,112,"afterlastline.bm");
+*_FUNC__DECODEURL_INTEGER__P=*_FUNC__DECODEURL_INTEGER__P+ 2 ;
+error_track_line(28343,113,"afterlastline.bm");
 }
-error_track_line(28335,161,"afterlastline.bm");
-if ((-((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 )>=( 86400ll )))||is_error_pending()){
-error_track_line(28335,161,"afterlastline.bm");
-*_FUNC__WHATISMYIP_DOUBLE__ST=*_FUNC__WHATISMYIP_DOUBLE__ST- 86400ll ;
-error_track_line(28335,161,"afterlastline.bm");
+error_track_line(28343,114,"afterlastline.bm");
+fornext_continue_8271:;
 }
-error_track_line(28335,162,"afterlastline.bm");
-dl_continue_8256:;
-}while((!(-(((float)((func_timer( 0.001E+0 ,0|1))))>((float)((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 ))))))&&(!is_error_pending()));
-dl_exit_8256:;
-error_track_line(28335,163,"afterlastline.bm");
-}
-error_track_line(28335,164,"afterlastline.bm");
-sub_close(*_FUNC__WHATISMYIP_LONG__CH,1);
+fornext_exit_8271:;
+error_track_line(28343,116,"afterlastline.bm");
+qbs_set(_FUNC__DECODEURL_STRING__DECODEURL,_FUNC__DECODEURL_STRING__TMP);
+qbs_cleanup(qbs_tmp_base,0);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free473.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC__WHATISMYIP_STRING__WHATISMYIP);return _FUNC__WHATISMYIP_STRING__WHATISMYIP;
+qbs_maketmp(_FUNC__DECODEURL_STRING__DECODEURL);return _FUNC__DECODEURL_STRING__DECODEURL;
 }
