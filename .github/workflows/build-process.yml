@@ -116,6 +116,7 @@ jobs:
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
+      timeout-minutes: 10
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}"
 
