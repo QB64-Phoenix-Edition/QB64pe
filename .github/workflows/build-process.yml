@@ -31,7 +31,7 @@ jobs:
       PLATFORM: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -116,6 +116,7 @@ jobs:
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
+      timeout-minutes: 30
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}"
 
