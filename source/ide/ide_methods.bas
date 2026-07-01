@@ -21108,7 +21108,7 @@ FUNCTION findHelpTopic$ (topic$, lnks, firstOnly AS _BYTE)
             lnks = 1: lnks$ = lnks$ + "Initialize" + CHR$(0)
             GOTO noLinksFile
         END IF
-        Help_ww = 78: WikiParse a$ 'assume standard IDE width for parsing
+        Help_ww = idewx - 2: WikiParse a$ 'use IDE width - border for parsing
     END IF
     '----------
     a2$ = UCASE$(topic$)

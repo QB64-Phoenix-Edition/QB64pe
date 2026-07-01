@@ -14393,10 +14393,10 @@ FUNCTION ParseCMDLineArgs$ ()
                 CMDLineSwitch = _TRUE
 
             CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden CI build option)
-                Help_Recaching = 2: Help_IgnoreCache = 1
+                Help_Recaching = 2: Help_IgnoreCache = 0
                 IF ideupdatehelpbox THEN
                     _DEST _CONSOLE
-                    PRINT "Help update failed: Can't make connection to Wiki."
+                    PRINT "Help update incomplete, missing pages will be fetched on demand when a user requests it."
                     SYSTEM 1
                 END IF
                 SYSTEM
