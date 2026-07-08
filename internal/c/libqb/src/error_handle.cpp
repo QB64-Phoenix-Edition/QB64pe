@@ -6,13 +6,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <string>
+#ifdef QB64_WINDOWS
+#include <windows.h>
+#elif defined(QB64_LINUX) || defined(QB64_MACOSX)
+#include <pthread.h>
+#endif
 
 #include "command.h"
 #include "error_handle.h"
 #include "logging.h"
 #include "event.h"
 #include "gui.h"
+#include "glut-thread.h"
 
 uint32_t new_error;
 uint32_t error_occurred;
@@ -28,15 +33,119 @@ static uint32_t inclercl;
 
 static const char *includedfilename;
 
-// Tracks the BASIC source line before each generated statement executes.
-// This is intentionally separate from ercl/inclercl, because fatal errors
-// such as SIGFPE division by zero can occur before the normal qbevent/evnt()
-// path has a chance to update the standard runtime error line fields.
+// Tracks the BASIC source line before each generated statement executes when
+// the whole-program $ErrorLocation:ON diagnostic mode is enabled. This is
+// intentionally separate from ercl/inclercl, because fatal errors can occur
+// before the normal qbevent/evnt() path updates the standard error-line fields.
 static uint32_t current_ercl;
 static uint32_t current_inclercl;
 static const char *current_includedfilename;
 
-static const char *human_error(int32_t errorcode) {
+// False only for executables produced by an older bootstrap compiler that
+// emits no explicit error_track_line(...) calls. A newly generated program
+// clears the tracker once at startup, and $ErrorLocation:ON then updates it
+// before statements. The legacy event path must not repopulate it afterwards.
+static bool explicit_line_tracking_seen;
+
+// Returns the BASIC source position most recently emitted by
+// $ErrorLocation:ON. Included-file coordinates take precedence so the
+// location matches the existing _INCLERRORLINE/_INCLERRORFILE behavior.
+static bool get_current_error_location(uint32_t &srcLine, const char *&srcFile) {
+    if (current_inclercl) {
+        srcLine = current_inclercl;
+        srcFile = current_includedfilename ? current_includedfilename : "included file";
+        return true;
+    }
+
+    if (current_ercl) {
+        srcLine = current_ercl;
+        srcFile = "main module";
+        return true;
+    }
+
+    srcLine = 0;
+    srcFile = NULL;
+    return false;
+}
+
+// Formats fatal runtime errors without dynamic allocation. Static storage
+// keeps the out-of-stack path from allocating another object while reporting
+// the original failure.
+static const char *critical_error_message(const char *message) {
+    static char errmess[1024];
+    uint32_t srcLine;
+    const char *srcFile;
+
+    if (get_current_error_location(srcLine, srcFile))
+        snprintf(errmess, sizeof(errmess), "Line: %u (in %s)\n%s", srcLine, srcFile, message);
+    else
+        snprintf(errmess, sizeof(errmess), "%s\nEnable $ErrorLocation:ON for source location details.", message);
+
+    return errmess;
+}
+
+// Returns true after reporting error 256 when the current native thread is
+// close enough to its stack limit that another recursive BASIC call would be
+// unsafe. Stack-bound discovery is platform-specific, but the policy and
+// reporting path are shared by Windows, Linux and macOS.
+bool error_check_stack() {
+    // Keep enough stack available for error formatting, the native dialog and
+    // the platform-specific shutdown path. The check is emitted for every user
+    // SUB/FUNCTION; $ErrorLocation affects only source-position reporting.
+    static constexpr uintptr_t STACK_REPORT_RESERVE = 256u * 1024u;
+    static thread_local bool stack_bounds_checked;
+    static thread_local bool stack_bounds_available;
+    static thread_local uintptr_t stack_lower_bound;
+    static thread_local bool stack_error_reported;
+
+    uint8_t stack_marker;
+
+    if (!stack_bounds_checked) {
+#ifdef QB64_WINDOWS
+        MEMORY_BASIC_INFORMATION stack_info;
+        if (VirtualQuery(&stack_marker, &stack_info, sizeof(stack_info)) == sizeof(stack_info)) {
+            // AllocationBase is the low address of the thread's reserved stack
+            // region. Supported Windows targets use downward-growing stacks.
+            stack_lower_bound = reinterpret_cast<uintptr_t>(stack_info.AllocationBase);
+            stack_bounds_available = stack_lower_bound != 0;
+        }
+#elif defined(QB64_LINUX)
+        pthread_attr_t stack_attributes;
+        if (pthread_getattr_np(pthread_self(), &stack_attributes) == 0) {
+            void *stack_address = NULL;
+            size_t stack_size = 0;
+
+            if (pthread_attr_getstack(&stack_attributes, &stack_address, &stack_size) == 0 && stack_address && stack_size) {
+                stack_lower_bound = reinterpret_cast<uintptr_t>(stack_address);
+                stack_bounds_available = true;
+            }
+
+            pthread_attr_destroy(&stack_attributes);
+        }
+#elif defined(QB64_MACOSX)
+        const uintptr_t stack_upper_bound = reinterpret_cast<uintptr_t>(pthread_get_stackaddr_np(pthread_self()));
+        const size_t stack_size = pthread_get_stacksize_np(pthread_self());
+
+        if (stack_upper_bound && stack_size) {
+            stack_lower_bound = stack_upper_bound - stack_size;
+            stack_bounds_available = true;
+        }
+#endif
+        stack_bounds_checked = true;
+    }
+
+    const uintptr_t current_stack = reinterpret_cast<uintptr_t>(&stack_marker);
+    if (!stack_error_reported && stack_bounds_available && current_stack > stack_lower_bound &&
+        current_stack - stack_lower_bound < STACK_REPORT_RESERVE) {
+        stack_error_reported = true;
+        error(256);
+        return true;
+    }
+
+    return stack_error_reported;
+}
+
+static const char *error_code_to_text(int32_t errorcode) {
     // clang-format off
     switch (errorcode) {
         case 0: return "No error";
@@ -150,17 +259,19 @@ void error_set_line(uint32_t errorline, uint32_t incerrorline, const char *incfi
     inclercl = incerrorline;
     includedfilename = incfilename;
 
-    // Keep the division-by-zero tracker warm even in a bootstrap build that
-    // was generated by an older compiler and therefore has no explicit
-    // error_track_line(...) calls inside the QB64PE executable itself.
-    // In fully rebuilt code, error_track_line(...) still wins because it is
-    // emitted immediately before each executable BASIC statement.
-    current_ercl = errorline;
-    current_inclercl = incerrorline;
-    current_includedfilename = incfilename;
+    // Bootstrap compatibility: an executable generated by an older compiler
+    // has no explicit error_track_line(...) calls, so keep its critical-error
+    // position warm through the legacy event path. A new compiler clears the
+    // tracker at startup; after that, $ErrorLocation controls this tracker.
+    if (!explicit_line_tracking_seen) {
+        current_ercl = errorline;
+        current_inclercl = incerrorline;
+        current_includedfilename = incfilename;
+    }
 }
 
 void error_track_line(uint32_t errorline, uint32_t incerrorline, const char *incfilename) {
+    explicit_line_tracking_seen = true;
     current_ercl = errorline;
     current_inclercl = incerrorline;
     current_includedfilename = incfilename;
@@ -169,12 +280,21 @@ void error_track_line(uint32_t errorline, uint32_t incerrorline, const char *inc
 qbs *func__errormessage(int32_t errorcode, int32_t passed) {
     if (!passed)
         errorcode = get_error_err();
-    return qbs_new_txt(human_error(errorcode));
+    return qbs_new_txt(error_code_to_text(errorcode));
 }
 
 extern uint8_t close_program;
 extern double last_line;
 void end();
+
+// Fatal errors may be raised from the BASIC thread or from SUB _GL. Route the
+// final shutdown through libqb_exit(), which transfers exit handling to the
+// GLUT thread when a graphics window is active and exits directly otherwise.
+// This is the same cross-platform path on Windows, Linux and macOS.
+static void exit_after_fatal_error() {
+    close_program = 1;
+    libqb_exit(0);
+}
 
 extern void QBMAIN(void *);
 
@@ -198,7 +318,7 @@ void fix_error() {
             }
         }
 
-        cp = human_error(new_error);
+        cp = error_code_to_text(new_error);
 #define FIXERRMSG_TITLE "%s%u - %s"
 #define FIXERRMSG_BODY "Line: %u (in %s)\n%s%s"
 #define FIXERRMSG_MAINFILE "main module"
@@ -209,20 +329,25 @@ void fix_error() {
         len = snprintf(errmess, 0, FIXERRMSG_BODY, (inclercl ? inclercl : ercl), (inclercl ? includedfilename : FIXERRMSG_MAINFILE), cp,
                        (!prevent_handling ? FIXERRMSG_CONT : ""));
         errmess = (char *)malloc(len + 1);
-        if (!errmess)
-            exit(0); // At this point we just give up
+        if (!errmess) {
+            exit_after_fatal_error(); // At this point we just give up
+            return;
+        }
         snprintf(errmess, len + 1, FIXERRMSG_BODY, (inclercl ? inclercl : ercl), (inclercl ? includedfilename : FIXERRMSG_MAINFILE), cp,
                  (!prevent_handling ? FIXERRMSG_CONT : ""));
 
         len = snprintf(errtitle, 0, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
         errtitle = (char *)malloc(len + 1);
-        if (!errtitle)
-            exit(0); // At this point we just give up
+        if (!errtitle) {
+            exit_after_fatal_error(); // At this point we just give up
+            return;
+        }
         snprintf(errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
 
         if (prevent_handling) {
             v = gui_alert(errmess, errtitle, "ok");
-            exit(0);
+            exit_after_fatal_error();
+            return;
         } else {
             v = gui_alert(errmess, errtitle, "yesno");
         }
@@ -245,138 +370,67 @@ void fix_error() {
 }
 
 void error(int32_t error_number) {
-    libqb_log_error("QB64 Error %d reported: %s", error_number, human_error(error_number));
+    libqb_log_error("QB64 Error %d reported: %s", error_number, error_code_to_text(error_number));
 
     // critical errors:
 
-    // out of memory errors
-    if (error_number == 257) {
-        gui_alert("Out of memory", "Critical Error #1", "ok");
-        exit(0);
-    } // generic "Out of memory" error
-    // tracable "Out of memory" errors
-    if (error_number == 502) {
-        gui_alert("Out of memory", "Critical Error #2", "ok");
-        exit(0);
-    }
-    if (error_number == 503) {
-        gui_alert("Out of memory", "Critical Error #3", "ok");
-        exit(0);
-    }
-    if (error_number == 504) {
-        gui_alert("Out of memory", "Critical Error #4", "ok");
-        exit(0);
-    }
-    if (error_number == 505) {
-        gui_alert("Out of memory", "Critical Error #5", "ok");
-        exit(0);
-    }
-    if (error_number == 506) {
-        gui_alert("Out of memory", "Critical Error #6", "ok");
-        exit(0);
-    }
-    if (error_number == 507) {
-        gui_alert("Out of memory", "Critical Error #7", "ok");
-        exit(0);
-    }
-    if (error_number == 508) {
-        gui_alert("Out of memory", "Critical Error #8", "ok");
-        exit(0);
-    }
-    if (error_number == 509) {
-        gui_alert("Out of memory", "Critical Error #9", "ok");
-        exit(0);
-    }
-    if (error_number == 510) {
-        gui_alert("Out of memory", "Critical Error #10", "ok");
-        exit(0);
-    }
-    if (error_number == 511) {
-        gui_alert("Out of memory", "Critical Error #11", "ok");
-        exit(0);
-    }
-    if (error_number == 512) {
-        gui_alert("Out of memory", "Critical Error #12", "ok");
-        exit(0);
-    }
-    if (error_number == 513) {
-        gui_alert("Out of memory", "Critical Error #13", "ok");
-        exit(0);
-    }
-    if (error_number == 514) {
-        gui_alert("Out of memory", "Critical Error #14", "ok");
-        exit(0);
-    }
-    if (error_number == 515) {
-        gui_alert("Out of memory", "Critical Error #15", "ok");
-        exit(0);
-    }
-    if (error_number == 516) {
-        gui_alert("Out of memory", "Critical Error #16", "ok");
-        exit(0);
-    }
-    if (error_number == 517) {
-        gui_alert("Out of memory", "Critical Error #17", "ok");
-        exit(0);
-    }
-    if (error_number == 518) {
-        gui_alert("Out of memory", "Critical Error #18", "ok");
-        exit(0);
+    // Out-of-memory errors include the BASIC source module and line that were executing.
+    // Use fixed-size stack buffers here: allocating memory while reporting an
+    // allocation failure could itself fail.
+    int32_t critical_number = 0;
+    if (error_number == 257)
+        critical_number = 1;
+    else if (error_number >= 502 && error_number <= 518)
+        critical_number = error_number - 500;
+
+    if (critical_number) {
+        char errmess[512];
+        char errtitle[32];
+        uint32_t srcLine;
+        const char *srcFile;
+
+        if (get_current_error_location(srcLine, srcFile))
+            snprintf(errmess, sizeof(errmess), "Out of memory (in %s) on line %u", srcFile, srcLine);
+        else
+            snprintf(errmess, sizeof(errmess), "Out of memory\nEnable $ErrorLocation:ON for source location details.");
+
+        snprintf(errtitle, sizeof(errtitle), "Critical Error #%d", critical_number);
+        gui_alert(errmess, errtitle, "ok");
+        exit_after_fatal_error();
+        return;
     }
 
-    // other critical errors
-    if (error_number == QB_ERROR_DIVISION_BY_ZERO) {
-        std::string errmess;
-        uint32_t srcLine = 0;
-        const char *srcFile = NULL;
-
-        if (current_inclercl) {
-            srcLine = current_inclercl;
-            srcFile = current_includedfilename ? current_includedfilename : "included file";
-        } else if (current_ercl) {
-            srcLine = current_ercl;
-            srcFile = "main module";
-        } else if (inclercl) {
-            srcLine = inclercl;
-            srcFile = includedfilename ? includedfilename : "included file";
-        } else if (ercl) {
-            srcLine = ercl;
-            srcFile = "main module";
-        }
-
-        if (srcLine) {
-            errmess = "Line: " + std::to_string(srcLine) + " (in " + srcFile + ")\nDivision by zero";
-        } else {
-            errmess = "Line: unknown\nDivision by zero";
-        }
-
-        gui_alert(errmess.c_str(), "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 256) {
-        gui_alert("Out of stack space", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 259) {
-        gui_alert("Cannot find dynamic library file", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 260) {
-        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 261) {
-        gui_alert("Sub/Function does not exist in dynamic library", "Critical Error", "ok");
-        exit(0);
+    // Other fatal runtime errors used to bypass the standard error-event
+    // path and therefore discarded the source position captured by
+    // $ErrorLocation:ON. Keep their existing messages and titles, but route
+    // all of them through the same allocation-free location formatter.
+    const char *critical_message = NULL;
+    switch (error_number) {
+        case QB_ERROR_DIVISION_BY_ZERO:
+            critical_message = "Division by zero";
+            break;
+        case 256:
+            critical_message = "Out of stack space";
+            break;
+        case 259:
+            critical_message = "Cannot find dynamic library file";
+            break;
+        case 260:
+        case 261:
+            critical_message = "Sub/Function does not exist in dynamic library";
+            break;
+        case 270:
+            critical_message = "_GL command called outside of SUB _GL's scope";
+            break;
+        case 271:
+            critical_message = "END/SYSTEM called within SUB _GL's scope";
+            break;
     }
 
-    if (error_number == 270) {
-        gui_alert("_GL command called outside of SUB _GL's scope", "Critical Error", "ok");
-        exit(0);
-    }
-    if (error_number == 271) {
-        gui_alert("END/SYSTEM called within SUB _GL's scope", "Critical Error", "ok");
-        exit(0);
+    if (critical_message) {
+        gui_alert(critical_error_message(critical_message), "Critical Error", "ok");
+        exit_after_fatal_error();
+        return;
     }
 
     if (!new_error) {

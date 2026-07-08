@@ -761,13 +761,16 @@ void gui_modal_lock_end() {
         display_lock_modal_count.fetch_sub(1, std::memory_order_acq_rel);
 
     // Close any last race where the render thread requested the display lock
-    // just as the modal dialog returned. Do not resume QB code until that
-    // in-flight SUB _GL call has released the cooperative display lock.
+    // just as the modal dialog returned. A dialog opened from SUB _GL already
+    // runs on the GLUT thread, so it must not wait for the lock that the same
+    // thread can release only after SUB _GL returns.
     if (display_lock_request > display_lock_confirmed)
         display_lock_confirmed = display_lock_request;
 
-    while ((display_lock_released < display_lock_confirmed) && (!close_program) && (!suspend_program) && (!stop_program))
-        Sleep(1);
+    if (!libqb_is_glut_thread()) {
+        while ((display_lock_released < display_lock_confirmed) && (!close_program) && (!suspend_program) && (!stop_program))
+            Sleep(1);
+    }
 #endif
 }
 

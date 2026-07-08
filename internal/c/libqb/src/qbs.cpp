@@ -2,6 +2,7 @@
 #include "libqb-common.h"
 
 #include <algorithm>
+#include <limits>
 #include <stdlib.h>
 #include <string.h>
 
@@ -76,8 +77,33 @@ uint32_t qbs_tmp_list_nexti;
 // entended string memory
 
 static uint8_t *qbs_data = (uint8_t *)malloc(1048576);
-static uint32_t qbs_data_size = 1048576;
-static uint32_t qbs_sp = 0;
+static size_t qbs_data_size = 1048576;
+static size_t qbs_sp = 0;
+
+#ifdef QB64_QBS_TEST
+static void *(*qbs_data_realloc)(void *, size_t) = realloc;
+#else
+static void *qbs_data_realloc(void *memory, size_t size) {
+    return realloc(memory, size);
+}
+#endif
+
+static bool qbs_size_add_overflow(size_t left, size_t right, size_t *result) {
+    if (left > std::numeric_limits<size_t>::max() - right)
+        return true;
+
+    *result = left + right;
+    return false;
+}
+
+static size_t qbs_data_offset(const uint8_t *position) {
+    return (size_t)((uintptr_t)position - (uintptr_t)qbs_data);
+}
+
+static bool qbs_data_has_space(const uint8_t *position, size_t bytes) {
+    size_t offset = qbs_data_offset(position);
+    return offset <= qbs_data_size && bytes <= qbs_data_size - offset;
+}
 
 void qbs_free(qbs *str) {
 
@@ -105,9 +131,15 @@ void qbs_free(qbs *str) {
                 goto retry;
         }
         if (qbs_list_nexti) {
-            qbs_sp = ((qbs *)qbs_list[qbs_list_nexti - 1])->chr - qbs_data + ((qbs *)qbs_list[qbs_list_nexti - 1])->len + 32;
-            if (qbs_sp > qbs_data_size)
-                qbs_sp = qbs_data_size; // adding 32 could overflow buffer!
+            qbs *laststr = (qbs *)qbs_list[qbs_list_nexti - 1];
+            size_t offset = qbs_data_offset(laststr->chr);
+            size_t length = laststr->len;
+            size_t used;
+
+            if (offset > qbs_data_size || qbs_size_add_overflow(offset, length, &used) || used > qbs_data_size ||
+                qbs_size_add_overflow(used, 32, &qbs_sp) || qbs_sp > qbs_data_size) {
+                qbs_sp = qbs_data_size;
+            }
         } else {
             qbs_sp = 0;
         }
@@ -149,7 +181,26 @@ static void qbs_tmp_concat_list() {
     }
 }
 
-static void qbs_concat(uint32_t bytesrequired) {
+static bool qbs_resize_data(size_t new_size) {
+    uintptr_t oldbase = (uintptr_t)qbs_data;
+    uint8_t *newbase = (uint8_t *)qbs_data_realloc(qbs_data, new_size);
+    if (newbase == NULL)
+        return false;
+
+    qbs_data = newbase;
+    qbs_data_size = new_size;
+
+    for (uint32_t i = 0; i < qbs_list_nexti; i++) {
+        if (qbs_list[i] != -1) {
+            qbs *tqbs = (qbs *)qbs_list[i];
+            tqbs->chr = qbs_data + (size_t)((uintptr_t)tqbs->chr - oldbase);
+        }
+    }
+
+    return true;
+}
+
+static void qbs_concat(size_t bytesrequired) {
     // this does not change indexing, only ->chr pointers and the location of their data
     static uint32_t i;
     static uint8_t *dest;
@@ -160,30 +211,66 @@ static void qbs_concat(uint32_t bytesrequired) {
         for (i = 0; i < qbs_list_nexti; i++) {
             if (qbs_list[i] != -1) {
                 tqbs = (qbs *)qbs_list[i];
-                if ((tqbs->chr - dest) > 32) {
+                if ((size_t)((uintptr_t)tqbs->chr - (uintptr_t)dest) > 32) {
                     if (tqbs->len) {
                         memmove(dest, tqbs->chr, tqbs->len);
                     }
                     tqbs->chr = dest;
                 }
                 dest = tqbs->chr + tqbs->len;
-                qbs_sp = dest - qbs_data;
+                qbs_sp = qbs_data_offset(dest);
             }
         }
     }
 
-    if (((qbs_sp * 2) + (bytesrequired + 32)) >= qbs_data_size) {
-        static uint8_t *oldbase;
-        oldbase = qbs_data;
-        qbs_data_size = qbs_data_size * 2 + bytesrequired;
-        qbs_data = (uint8_t *)realloc(qbs_data, qbs_data_size);
-        if (qbs_data == NULL)
-            error(512); // realloc failed!
-        for (i = 0; i < qbs_list_nexti; i++) {
-            if (qbs_list[i] != -1) {
-                tqbs = (qbs *)qbs_list[i];
-                tqbs->chr = tqbs->chr - oldbase + qbs_data;
+    size_t required_size;
+    if (qbs_size_add_overflow(qbs_sp, bytesrequired, &required_size)) {
+        error(512);
+        return;
+    }
+
+    // Keep the existing growth policy without performing an overflowing 2 * qbs_sp calculation.
+    size_t reserve;
+    bool grow = required_size > qbs_data_size;
+    if (!grow) {
+        if (qbs_size_add_overflow(bytesrequired, 32, &reserve) || reserve >= qbs_data_size) {
+            grow = true;
+        } else {
+            size_t threshold = qbs_data_size - reserve;
+            grow = qbs_sp >= (threshold / 2 + threshold % 2);
+        }
+    }
+
+    if (grow) {
+        size_t new_size;
+        const size_t max_size = std::numeric_limits<size_t>::max();
+
+        if (qbs_data_size <= (max_size - bytesrequired) / 2) {
+            new_size = qbs_data_size * 2 + bytesrequired;
+        } else {
+            // Geometric growth no longer fits in size_t. Grow only by the amount actually required
+            // so 32-bit targets can still use the remaining address space instead of wrapping.
+            new_size = required_size;
+        }
+
+        if (new_size > qbs_data_size) {
+            if (!qbs_resize_data(new_size)) {
+                // The geometric reserve is optional. On constrained address spaces (especially
+                // 32-bit targets), allocating both the old arena and a doubled replacement can
+                // fail even though the bytes required by the current request would still fit.
+                if (required_size <= qbs_data_size)
+                    return;
+
+                // realloc leaves the old allocation untouched on failure, so retry with only
+                // the minimum size needed by this request before reporting an actual OOM.
+                if (new_size == required_size || !qbs_resize_data(required_size)) {
+                    error(512);
+                    return;
+                }
             }
+        } else if (required_size > qbs_data_size) {
+            error(512);
+            return;
         }
     }
 }
@@ -244,12 +331,29 @@ qbs *qbs_new_fixed(uint8_t *offset, uint32_t size, uint8_t tmp) {
 
 qbs *qbs_new(int32_t size, uint8_t tmp) {
     static qbs *newstr;
-    if ((qbs_sp + size + 32) > qbs_data_size)
-        qbs_concat(size + 32);
+    if (size < 0) {
+        error(512);
+        return NULL;
+    }
+
+    size_t bytesrequired;
+    size_t new_sp;
+    if (qbs_size_add_overflow((size_t)size, 32, &bytesrequired) || qbs_size_add_overflow(qbs_sp, bytesrequired, &new_sp)) {
+        error(512);
+        return NULL;
+    }
+    if (new_sp > qbs_data_size) {
+        qbs_concat(bytesrequired);
+        if (qbs_size_add_overflow(qbs_sp, bytesrequired, &new_sp) || new_sp > qbs_data_size) {
+            error(512);
+            return NULL;
+        }
+    }
+
     newstr = qbs_new_descriptor();
     newstr->len = size;
     newstr->chr = qbs_data + qbs_sp;
-    qbs_sp += size + 32;
+    qbs_sp = new_sp;
     if (qbs_list_nexti > qbs_list_lasti)
         qbs_concat_list();
     newstr->listi = qbs_list_nexti;
@@ -338,10 +442,10 @@ qbs *qbs_set(qbs *deststr, qbs *srcstr) {
 
     // not in cmem
     if (deststr->listi == (qbs_list_nexti - 1)) {                                                       // last index
-        if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + (intptr_t)qbs_data_size)) { // space available
+        if (qbs_data_has_space(deststr->chr, (size_t)srcstr->len)) { // space available
             memcpy(deststr->chr, srcstr->chr, srcstr->len);
             deststr->len = srcstr->len;
-            qbs_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - (intptr_t)qbs_data;
+            qbs_sp = qbs_data_offset(deststr->chr) + (size_t)deststr->len;
             goto qbs_set_return;
         }
         goto qbs_set_concat_required;
@@ -355,7 +459,7 @@ qbs_set_nextindex2:
             if (srcstr->tmp == 1)
                 goto skippedtmpsrcindex2;
         }
-        if ((deststr->chr + srcstr->len) > tqbs->chr)
+        if ((size_t)srcstr->len > (size_t)((uintptr_t)tqbs->chr - (uintptr_t)deststr->chr))
             goto qbs_set_concat_required;
         memcpy(deststr->chr, srcstr->chr, srcstr->len);
         deststr->len = srcstr->len;
@@ -368,19 +472,28 @@ skippedtmpsrcindex2:
     // all next indexes invalid!
 
     qbs_list_nexti = deststr->listi + 1;                                                            // adjust nexti
-    if (((intptr_t)deststr->chr + srcstr->len) <= ((intptr_t)qbs_data + (intptr_t)qbs_data_size)) { // space available
+    if (qbs_data_has_space(deststr->chr, (size_t)srcstr->len)) { // space available
         memmove(deststr->chr, srcstr->chr, srcstr->len); // overlap possible due to sometimes acquiring srcstr's space
         deststr->len = srcstr->len;
-        qbs_sp = ((intptr_t)deststr->chr) + (intptr_t)deststr->len - (intptr_t)qbs_data;
+        qbs_sp = qbs_data_offset(deststr->chr) + (size_t)deststr->len;
         goto qbs_set_return;
     }
 
 qbs_set_concat_required:
     // srcstr could not fit in deststr
     //"realloc" deststr
-    qbs_list[deststr->listi] = -1;                // unlist
-    if ((qbs_sp + srcstr->len) > qbs_data_size) { // must concat!
-        qbs_concat(srcstr->len);
+    qbs_list[deststr->listi] = -1; // unlist
+    size_t new_sp;
+    if (qbs_size_add_overflow(qbs_sp, (size_t)srcstr->len, &new_sp)) {
+        error(512);
+        return deststr;
+    }
+    if (new_sp > qbs_data_size) { // must concat!
+        qbs_concat((size_t)srcstr->len);
+        if (qbs_size_add_overflow(qbs_sp, (size_t)srcstr->len, &new_sp) || new_sp > qbs_data_size) {
+            error(512);
+            return deststr;
+        }
     }
     if (qbs_list_nexti > qbs_list_lasti)
         qbs_concat_list();
@@ -390,7 +503,7 @@ qbs_set_concat_required:
 
     deststr->chr = qbs_data + qbs_sp;
     deststr->len = srcstr->len;
-    qbs_sp += deststr->len;
+    qbs_sp = new_sp;
     memcpy(deststr->chr, srcstr->chr, srcstr->len);
 
 //(fall through to qbs_set_return)
@@ -408,13 +521,21 @@ qbs *qbs_add(qbs *str1, qbs *str2) {
         return str1; // pass on
     if (!str1->len)
         return str2; // pass on
+
+    size_t combined_length;
+    if (str1->len < 0 || str2->len < 0 ||
+        qbs_size_add_overflow((size_t)str1->len, (size_t)str2->len, &combined_length) ||
+        combined_length > (size_t)std::numeric_limits<int32_t>::max()) {
+        error(512);
+        return NULL;
+    }
     // may be possible to acquire str1 or str2's space but...
     // 1. check if dest has enough space (because its data is already in the correct place)
     // 2. check if source has enough space
     // 3. give up
     // nb. they would also have to be a tmp, var. len str in ext memory!
     // brute force method...
-    tqbs = qbs_new(str1->len + str2->len, 1);
+    tqbs = qbs_new((int32_t)combined_length, 1);
     memcpy(tqbs->chr, str1->chr, str1->len);
     memcpy(tqbs->chr + str1->len, str2->chr, str2->len);
 

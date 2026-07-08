@@ -166,6 +166,7 @@ DIM SHARED AssertsOn AS RCStateVar
 DIM SHARED ConsoleOn AS RCStateVar
 DIM SHARED vWatchOn AS RCStateVar
 DIM SHARED SockDepOn AS RCStateVar
+DIM SHARED ErrorLocationMode AS RCStateVar
 DIM SHARED CheckingOn
 DIM SHARED ScreenHideOn
 DIM SHARED ResizeOn, ResizeScale
@@ -1178,6 +1179,7 @@ ClearRCStateVar AssertsOn
 ClearRCStateVar ConsoleOn
 ClearRCStateVar vWatchOn
 ClearRCStateVar SockDepOn
+ClearRCStateVar ErrorLocationMode
 
 '--------------------
 recompile:
@@ -1191,6 +1193,7 @@ ExecuteRCStateVar ConsoleOn
 ExecuteRCStateVar vWatchOn
 vWatchVariable "", -1 'reset internal variables list
 ExecuteRCStateVar SockDepOn
+ExecuteRCStateVar ErrorLocationMode
 
 lastLineReturn = 0
 lastLine = 0
@@ -1685,6 +1688,11 @@ SetPreLET "_DEBUG_", _TOSTR$(GetRCStateVar(vWatchOn))
 'auto-includes beforefirstline.bi and afterlastline.bm to include/exclude
 'network specific code
 SetPreLET "_SOCKETS_", _TOSTR$(GetRCStateVar(SockDepOn))
+IF GetRCStateVar(ErrorLocationMode) = 2 THEN
+    SetPreLET "_ERRORLOCATION_", "1"
+ELSE
+    SetPreLET "_ERRORLOCATION_", "0"
+END IF
 RETURN
 
 autoIncludeManager:
@@ -1969,6 +1977,18 @@ DO
         IF temp$ = "$DEBUG" THEN
             SetRCStateVar vWatchOn, 1
             SetPreLET "_DEBUG_", "1"
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$ERRORLOCATION:ON" THEN
+            SetRCStateVar ErrorLocationMode, 2
+            SetPreLET "_ERRORLOCATION_", "1"
+            GOTO finishedlinepp
+        END IF
+
+        IF temp$ = "$ERRORLOCATION:OFF" THEN
+            SetRCStateVar ErrorLocationMode, 1
+            SetPreLET "_ERRORLOCATION_", "0"
             GOTO finishedlinepp
         END IF
 
@@ -3225,6 +3245,9 @@ FOR i = 1 TO 27: defineaz(i) = "SINGLE": defineextaz(i) = "!": NEXT
 DIM SHARED DataBinBuf: DataBinBuf = OpenBuffer%("O", tmpdir$ + "data.bin")
 
 DIM SHARED MainTxtBuf: MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main0.txt")
+'Mark source-location tracking as explicitly controlled by this generated program.
+'This one-time clear keeps $ErrorLocation:OFF independent of the legacy evnt() path.
+WriteBufLine MainTxtBuf, "error_track_line(0,0,NULL);"
 DIM SHARED DataTxtBuf: DataTxtBuf = OpenBuffer%("O", tmpdir$ + "maindata.txt")
 DIM SHARED VWatchMainDispatchBuf: VWatchMainDispatchBuf = OpenBuffer%("O", tmpdir$ + "vw_main_dispatch.txt")
 DIM SHARED VWatchMainSkipBuf: VWatchMainSkipBuf = OpenBuffer%("O", tmpdir$ + "vw_main_skip.txt")
@@ -3524,6 +3547,21 @@ DO
         IF a3u$ = "$CHECKING:ON" THEN
             layout$ = SCase$("$Checking:On")
             CheckingOn = 1
+            GOTO finishednonexec
+        END IF
+
+        IF a3u$ = "$ERRORLOCATION:ON" THEN
+            layout$ = SCase$("$ErrorLocation:On")
+            IF GetRCStateVar(ErrorLocationMode) <> 2 THEN
+                a$ = "$ErrorLocation is a whole-program option and cannot be changed within the program": GOTO errmes
+            END IF
+            GOTO finishednonexec
+        END IF
+        IF a3u$ = "$ERRORLOCATION:OFF" THEN
+            layout$ = SCase$("$ErrorLocation:Off")
+            IF GetRCStateVar(ErrorLocationMode) = 2 THEN
+                a$ = "$ErrorLocation is a whole-program option and cannot be changed within the program": GOTO errmes
+            END IF
             GOTO finishednonexec
         END IF
 
@@ -5192,11 +5230,26 @@ DO
 
                                 IF sfdeclare THEN
 
+                                    'Dynamic libraries are loaded during generated initialization code,
+                                    'before normal BASIC statement tracking can identify the declaration.
+                                    'Record the DECLARE line only on loader failure, avoiding stale locations
+                                    'after a successful load.
+                                    errortrackcall$ = ""
+                                    IF GetRCStateVar(ErrorLocationMode) = 2 THEN
+                                        IF inclinenumber(inclevel) THEN
+                                            thisincname$ = getfilepath$(incname$(inclevel))
+                                            thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
+                                            errortrackcall$ = "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
+                                        ELSE
+                                            errortrackcall$ = "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
+                                        END IF
+                                    END IF
+
                                     IF os$ = "WIN" THEN
                                         WriteBufLine RegTxtBuf, "HINSTANCE DLL_" + x2$ + "=NULL;"
                                         WriteBufLine f, "if (!DLL_" + x2$ + "){"
                                         WriteBufLine f, "DLL_" + x2$ + "=LoadLibrary(" + CHR$(34) + inlinelibname$ + CHR$(34) + ");"
-                                        WriteBufLine f, "if (!DLL_" + x2$ + ") error(259);"
+                                        WriteBufLine f, "if (!DLL_" + x2$ + "){" + errortrackcall$ + "error(259);}"
                                         WriteBufLine f, "}"
                                     END IF
 
@@ -5204,7 +5257,7 @@ DO
                                         WriteBufLine RegTxtBuf, "void *DLL_" + x2$ + "=NULL;"
                                         WriteBufLine f, "if (!DLL_" + x2$ + "){"
                                         WriteBufLine f, "DLL_" + x2$ + "=dlopen(" + CHR$(34) + inlinelibname$ + CHR$(34) + ",RTLD_LAZY);"
-                                        WriteBufLine f, "if (!DLL_" + x2$ + ") error(259);"
+                                        WriteBufLine f, "if (!DLL_" + x2$ + "){" + errortrackcall$ + "error(259);}"
                                         WriteBufLine f, "}"
                                     END IF
 
@@ -5718,6 +5771,15 @@ DO
             WriteBufLine MainTxtBuf, "sf_mem_lock=mem_lock_tmp;"
             WriteBufLine MainTxtBuf, "sf_mem_lock->type=3;"
 
+            ' Native recursion can exhaust the C++ thread stack before error(256)
+            ' is reached. Check every user SUB/FUNCTION entry while enough stack
+            ' remains to report the error. $ErrorLocation controls only whether
+            ' the report includes a BASIC source position; stack exhaustion must
+            ' still be caught when source tracking is disabled. The runtime helper
+            ' uses platform-specific stack bounds behind one common interface.
+            WriteBufLine MainTxtBuf, "extern bool error_check_stack();"
+            WriteBufLine MainTxtBuf, "if (error_check_stack()) goto exit_subfunc;"
+
             IF GetRCStateVar(vWatchOn) THEN
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL+ 1 ;"
                 IF subfunc <> "SUB_VWATCH" THEN
@@ -5788,14 +5850,27 @@ DO
                             f = DataTxtBuf
                         END IF
 
+                        'Dynamic symbol resolution also runs outside the normal statement path.
+                        'Capture the individual SUB/FUNCTION declaration line only if lookup fails.
+                        errortrackcall$ = ""
+                        IF GetRCStateVar(ErrorLocationMode) = 2 THEN
+                            IF inclinenumber(inclevel) THEN
+                                thisincname$ = getfilepath$(incname$(inclevel))
+                                thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
+                                errortrackcall$ = "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
+                            ELSE
+                                errortrackcall$ = "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
+                            END IF
+                        END IF
+
                         WriteBufLine f, "if (!" + removecast$(RTRIM$(id2.callname)) + "){"
                         IF os$ = "WIN" THEN
                             WriteBufLine f, removecast$(RTRIM$(id2.callname)) + "=(DLLCALL_" + removecast$(RTRIM$(id2.callname)) + ")GetProcAddress(DLL_" + DLLname$ + "," + CHR$(34) + aliasname$ + CHR$(34) + ");"
-                            WriteBufLine f, "if (!" + removecast$(RTRIM$(id2.callname)) + ") error(260);"
+                            WriteBufLine f, "if (!" + removecast$(RTRIM$(id2.callname)) + "){" + errortrackcall$ + "error(260);}"
                         END IF
                         IF os$ = "LNX" THEN
                             WriteBufLine f, removecast$(RTRIM$(id2.callname)) + "=(DLLCALL_" + removecast$(RTRIM$(id2.callname)) + ")dlsym(DLL_" + DLLname$ + "," + CHR$(34) + aliasname$ + CHR$(34) + ");"
-                            WriteBufLine f, "if (dlerror()) error(260);"
+                            WriteBufLine f, "if (dlerror()){" + errortrackcall$ + "error(260);}"
                         END IF
                         WriteBufLine f, "}"
 
@@ -6101,12 +6176,15 @@ DO
     'Track the current BASIC source line before executing generated code.
     'Fatal runtime errors such as division by zero may occur before the
     'normal post-statement evnt() path is reached, so keep this separately.
-    IF inclinenumber(inclevel) THEN
-        thisincname$ = getfilepath$(incname$(inclevel))
-        thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
-        WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
-    ELSE
-        WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
+    '$ErrorLocation is a whole-program opt-in diagnostic mode; it is OFF by default.
+    IF GetRCStateVar(ErrorLocationMode) = 2 THEN
+        IF inclinenumber(inclevel) THEN
+            thisincname$ = getfilepath$(incname$(inclevel))
+            thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
+            WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
+        ELSE
+            WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
+        END IF
     END IF
 
     IF n >= 1 THEN
@@ -8885,7 +8963,12 @@ DO
                                 IF Error_Happened THEN GOTO errmes
                                 AppendDynMemberRedim redimDynPrefix$, redimDynDims, redimSlot$, redimElementBytes, redimElemUDT, DynMemVarStr%(redimE), redimoption, redimAcc$, id.dynudtmode
                                 IF Error_Happened THEN GOTO errmes
+                                'Keep REDIM runtime-bound temporaries in a local C++ scope even
+                                'under $CHECKING:OFF. Otherwise the SUB prologue's early
+                                'goto exit_subfunc can jump over initialized dyn_mem_rt_* locals.
+                                WriteBufLine MainTxtBuf, "{"
                                 WriteBufLine MainTxtBuf, redimAcc$
+                                WriteBufLine MainTxtBuf, "}"
                             ELSE
                                 ' The requested bounds must describe the exact same inline storage layout.
                                 ' A static TYPE member array has fixed bounds at compile time, so REDIM may only
@@ -14393,10 +14476,10 @@ FUNCTION ParseCMDLineArgs$ ()
                 CMDLineSwitch = _TRUE
 
             CASE "-u" 'Invoke "Update all pages" to populate internal/help files (hidden CI build option)
-                Help_Recaching = 2: Help_IgnoreCache = 0
+                Help_Recaching = 2: Help_IgnoreCache = 1
                 IF ideupdatehelpbox THEN
                     _DEST _CONSOLE
-                    PRINT "Help update incomplete, missing pages will be fetched on demand when a user requests it."
+                    PRINT "Help update failed: Can't make connection to Wiki."
                     SYSTEM 1
                 END IF
                 SYSTEM
@@ -17487,11 +17570,23 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                         IF Error_Happened THEN EXIT FUNCTION
                         WriteBufLine DataTxtBuf, acc$
                         acc$ = ""
-                        AppendDynUDTDescInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, dyn_udt_prefix$, scalar_dyn_mode
+                        IF udtxvariable(i) THEN
+                            ' A descriptor-layout scalar UDT may also own variable STRING slots.
+                            ' Use the ownership-aware walker so qbs* members are initialized at
+                            ' dynamic-layout offsets; the legacy inline walker could overwrite
+                            ' descriptor slots when a _Dynamic member appears before a STRING.
+                            AppendDynUDTOwnInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, dyn_udt_prefix$, scalar_dyn_mode
+                        ELSE
+                            AppendDynUDTDescInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, dyn_udt_prefix$, scalar_dyn_mode
+                        END IF
                         IF Error_Happened THEN EXIT FUNCTION
                         WriteBufLine DataTxtBuf, acc$
                         acc$ = ""
-                        AppendDynUDTDescFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
+                        IF udtxvariable(i) THEN
+                            AppendDynUDTOwnFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
+                        ELSE
+                            AppendDynUDTDescFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
+                        END IF
                         IF Error_Happened THEN EXIT FUNCTION
                         IF acc$ <> "" THEN WriteBufLine FreeTxtBuf, acc$
                     END IF
@@ -17509,11 +17604,23 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                         IF Error_Happened THEN EXIT FUNCTION
                         WriteBufLine DataTxtBuf, acc$
                         acc$ = ""
-                        AppendDynUDTDescInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, dyn_udt_prefix$, scalar_dyn_mode
+                        IF udtxvariable(i) THEN
+                            ' A descriptor-layout scalar UDT may also own variable STRING slots.
+                            ' Use the ownership-aware walker so qbs* members are initialized at
+                            ' dynamic-layout offsets; the legacy inline walker could overwrite
+                            ' descriptor slots when a _Dynamic member appears before a STRING.
+                            AppendDynUDTOwnInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, dyn_udt_prefix$, scalar_dyn_mode
+                        ELSE
+                            AppendDynUDTDescInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, dyn_udt_prefix$, scalar_dyn_mode
+                        END IF
                         IF Error_Happened THEN EXIT FUNCTION
                         WriteBufLine DataTxtBuf, acc$
                         acc$ = ""
-                        AppendDynUDTDescFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
+                        IF udtxvariable(i) THEN
+                            AppendDynUDTOwnFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
+                        ELSE
+                            AppendDynUDTDescFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
+                        END IF
                         IF Error_Happened THEN EXIT FUNCTION
                         IF acc$ <> "" THEN WriteBufLine FreeTxtBuf, acc$
                     END IF
