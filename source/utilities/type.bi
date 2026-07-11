@@ -1,4 +1,11 @@
 
+'Width of the low bit-field of an encoded type id. For primitives it holds the
+'size in bits (max 256); when ISUDT is set it holds the UDT index. Bits above
+'this mask up to ISOFFSET (bit 20) are unused, so the field can grow to &HFFFFF
+'if ever needed. Was 511 (9 bits), which silently aliased user-defined TYPEs
+'past #511; TYPE registration now errors out honestly at UDTMASK.
+CONST UDTMASK = 4095
+
 DIM SHARED ISSTRING AS LONG
 DIM SHARED ISFLOAT AS LONG
 DIM SHARED ISUNSIGNED AS LONG
