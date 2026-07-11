@@ -634,7 +634,7 @@ cleariddata.dynudtargmode = ""
 DIM SHARED gosubid AS LONG
 DIM SHARED redimoption AS INTEGER
 DIM SHARED dimoption AS INTEGER
-DIM SHARED arraydesc AS INTEGER
+DIM SHARED arraydesc AS LONG 'holds currentid (LONG); as INTEGER it wrapped negative once a program registered >32767 ids
 DIM SHARED qberrorhappened AS INTEGER
 DIM SHARED qberrorcode AS INTEGER
 DIM SHARED qberrorline AS INTEGER
@@ -3128,6 +3128,7 @@ DO
             qberrorhappened = 0
         NEXT
         IF qberrorhappened <> -3 THEN qberrorhappened = 0: a$ = "File " + a$ + " not found": GOTO errmes
+        qberrorhappened = 0 'disarm the include-open error trap after success, else later internal errors resume here and report as a bogus "File ... not found"
         inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0
     END IF 'fall through to next section...
     '--------------------
@@ -12440,6 +12441,7 @@ DO
                 qberrorhappened = 0
             NEXT
             IF qberrorhappened <> -2 THEN qberrorhappened = 0: a$ = "File " + a$ + " not found": GOTO errmes
+            qberrorhappened = 0 'disarm the include-open error trap after success (see manager #1)
             inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0
         END IF 'fall through to next section...
         '--------------------
