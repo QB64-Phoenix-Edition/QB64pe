@@ -2278,12 +2278,12 @@ DO
 
                                 'Calculate element's size
                                 IF typ AND ISUDT THEN
-                                    u = typ AND 511
+                                    u = typ AND UDTMASK
                                     udtesize(i2) = udtxsize(u)
                                     IF udtxvariable(u) THEN udtxvariable(i) = -1
                                 ELSEIF typ AND ISSTRING THEN
                                     IF (typ AND ISFIXEDLENGTH) = 0 THEN
-                                        udtesize(i2) = OFFSETTYPE AND 511
+                                        udtesize(i2) = OFFSETTYPE AND UDTMASK
                                         udtxvariable(i) = -1
                                     ELSE
                                         udtesize(i2) = typsize * 8
@@ -2291,7 +2291,7 @@ DO
                                 ELSEIF typ AND ISOFFSETINBITS THEN
                                     a$ = "Cannot use _BIT inside user defined types": GOTO errmes
                                 ELSE
-                                    udtesize(i2) = typ AND 511
+                                    udtesize(i2) = typ AND UDTMASK
                                 END IF
 
                                 ' For TYPE member arrays, udtesize() stores the declared inline block size.
@@ -2436,6 +2436,7 @@ DO
                         IF n >= 1 THEN
                             IF firstelement$ = "TYPE" THEN
                                 IF n <> 2 THEN a$ = "Expected TYPE typename": GOTO errmes
+                                IF lasttype >= UDTMASK THEN a$ = "Too many user-defined types (maximum" + STR$(UDTMASK) + ")": GOTO errmes
                                 lasttype = lasttype + 1
                                 typeDefinitions$ = typeDefinitions$ + MKL$(-1) + MKL$(lasttype)
                                 definingtype = lasttype
@@ -2560,7 +2561,7 @@ DO
                                     constval&& = constval##
                                     constval~&& = constval&&
                                 ELSE
-                                    IF (t AND ISUNSIGNED) AND (t AND 511) = 64 THEN
+                                    IF (t AND ISUNSIGNED) AND (t AND UDTMASK) = 64 THEN
                                         constval~&& = tempNum.ui
                                         constval&& = constval~&&
                                         constval## = constval&&
@@ -4281,7 +4282,7 @@ DO
             l$ = SCase$("As")
             IF declModeStart THEN layoutMemberStart = declModeStart ELSE layoutMemberStart = declStart
             IF typ AND ISUDT THEN
-                t$ = RTRIM$(udtxcname(typ AND 511))
+                t$ = RTRIM$(udtxcname(typ AND UDTMASK))
                 l$ = l$ + sp + t$
             ELSE
                 l$ = l$ + sp + SCase2$(t$)
@@ -4357,7 +4358,7 @@ DO
             IF Error_Happened THEN GOTO errmes
             IF typ = 0 THEN a$ = "Undefined type": GOTO errmes
             IF typ AND ISUDT THEN
-                t$ = RTRIM$(udtxcname(typ AND 511))
+                t$ = RTRIM$(udtxcname(typ AND UDTMASK))
                 l$ = l$ + sp + t$
             ELSE
                 l$ = l$ + sp + SCase2$(t$)
@@ -5559,7 +5560,7 @@ DO
                             IF Error_Happened THEN GOTO errmes
                             IF typ = 0 THEN a$ = "Undefined type": GOTO errmes
                             IF typ AND ISUDT THEN
-                                t3$ = RTRIM$(udtxcname(typ AND 511))
+                                t3$ = RTRIM$(udtxcname(typ AND UDTMASK))
                                 l$ = l$ + sp + t3$
                             ELSE
                                 FOR t3i = 1 TO LEN(t3$)
@@ -6411,7 +6412,7 @@ DO
             'markup to cater for greater range/accuracy
             ctype$ = ""
             ctyp = typ - ISPOINTER
-            bits = typ AND 511
+            bits = typ AND UDTMASK
             IF (typ AND ISFLOAT) THEN
                 IF bits = 32 THEN ctype$ = "double": ctyp = 64& + ISFLOAT
                 IF bits = 64 THEN ctype$ = "long double": ctyp = 256& + ISFLOAT
@@ -6747,9 +6748,9 @@ DO
 
                 IF (typ AND ISFLOAT) THEN
 
-                    IF (typ AND 511) > 64 THEN t = 3: t$ = "long double"
-                    IF (typ AND 511) = 32 THEN t = 4: t$ = "float"
-                    IF (typ AND 511) = 64 THEN t = 5: t$ = "double"
+                    IF (typ AND UDTMASK) > 64 THEN t = 3: t$ = "long double"
+                    IF (typ AND UDTMASK) = 32 THEN t = 4: t$ = "float"
+                    IF (typ AND UDTMASK) = 64 THEN t = 5: t$ = "double"
                     IF (typ AND ISUDT) = 0 AND (typ AND ISARRAY) = 0 AND (typ AND ISREFERENCE) <> 0 THEN
                         controlvalue(controllevel) = VAL(e$)
                     ELSE
@@ -6766,11 +6767,11 @@ DO
                     'non-float
                     t = 1: t$ = "int64"
                     IF (typ AND ISUNSIGNED) THEN
-                        IF (typ AND 511) <= 32 THEN t = 7: t$ = "uint32"
-                        IF (typ AND 511) > 32 THEN t = 2: t$ = "uint64"
+                        IF (typ AND UDTMASK) <= 32 THEN t = 7: t$ = "uint32"
+                        IF (typ AND UDTMASK) > 32 THEN t = 2: t$ = "uint64"
                     ELSE
-                        IF (typ AND 511) <= 32 THEN t = 6: t$ = "int32"
-                        IF (typ AND 511) > 32 THEN t = 1: t$ = "int64"
+                        IF (typ AND UDTMASK) <= 32 THEN t = 6: t$ = "int32"
+                        IF (typ AND UDTMASK) > 32 THEN t = 1: t$ = "int64"
                     END IF
                     IF (typ AND ISUDT) = 0 AND (typ AND ISARRAY) = 0 AND (typ AND ISREFERENCE) <> 0 THEN
                         controlvalue(controllevel) = VAL(e$)
@@ -6898,7 +6899,7 @@ DO
             '16=SELECT CASE int32
             '17=SELECT CASE uint32
 
-            '    bits = targettyp AND 511
+            '    bits = targettyp AND UDTMASK
             '                                IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
             '                                IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
             '                                IF bits >= 32 THEN e$ = "qbr(" + e$ + ")"
@@ -7020,7 +7021,7 @@ DO
                     '16=SELECT CASE int32
                     '17=SELECT CASE uint32
 
-                    '    bits = targettyp AND 511
+                    '    bits = targettyp AND UDTMASK
                     '                                IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
                     '                                IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
                     '                                IF bits >= 32 THEN e$ = "qbr(" + e$ + ")"
@@ -7147,14 +7148,14 @@ DO
                     IF Error_Happened THEN GOTO errmes
                     z = 1
                     t = id.arraytype
-                    IF (t AND 511) <> 16 AND (t AND 511) <> 32 THEN z = 0
+                    IF (t AND UDTMASK) <> 16 AND (t AND UDTMASK) <> 32 THEN z = 0
                     IF t AND ISFLOAT THEN z = 0
                     IF t AND ISOFFSETINBITS THEN z = 0
                     IF t AND ISSTRING THEN z = 0
                     IF t AND ISUDT THEN z = 0
                     IF t AND ISUNSIGNED THEN z = 0
                     IF z = 0 THEN a$ = "Array must be of type INTEGER or LONG": GOTO errmes
-                    bits = t AND 511
+                    bits = t AND UDTMASK
                     GOTO pu_gotarray
                 END IF
                 IF Error_Happened THEN GOTO errmes
@@ -7584,7 +7585,7 @@ DO
                     IF id.args = 0 THEN a$ = "SUB has no arguments": GOTO errmes
 
                     t = CVL(id.arg)
-                    B = t AND 511
+                    B = t AND UDTMASK
                     IF B = 0 OR (t AND ISARRAY) <> 0 OR (t AND ISFLOAT) <> 0 OR (t AND ISSTRING) <> 0 OR (t AND ISOFFSETINBITS) <> 0 THEN a$ = "Only SUB arguments of integer-type allowed": GOTO errmes
                     IF B = 8 THEN ct$ = "int8"
                     IF B = 16 THEN ct$ = "int16"
@@ -7771,7 +7772,7 @@ DO
                     IF id.args = 0 THEN a$ = "SUB has no arguments": GOTO errmes
 
                     t = CVL(id.arg)
-                    B = t AND 511
+                    B = t AND UDTMASK
                     IF B = 0 OR (t AND ISARRAY) <> 0 OR (t AND ISFLOAT) <> 0 OR (t AND ISSTRING) <> 0 OR (t AND ISOFFSETINBITS) <> 0 THEN a$ = "Only SUB arguments of integer-type allowed": GOTO errmes
                     IF B = 8 THEN ct$ = "int8"
                     IF B = 16 THEN ct$ = "int16"
@@ -7922,7 +7923,7 @@ DO
                     IF id.args = 0 THEN a$ = "SUB has no arguments": GOTO errmes
 
                     t = CVL(id.arg)
-                    B = t AND 511
+                    B = t AND UDTMASK
                     IF B = 0 OR (t AND ISARRAY) <> 0 OR (t AND ISFLOAT) <> 0 OR (t AND ISSTRING) <> 0 OR (t AND ISOFFSETINBITS) <> 0 THEN a$ = "Only SUB arguments of integer-type allowed": GOTO errmes
                     IF B = 8 THEN ct$ = "int8"
                     IF B = 16 THEN ct$ = "int16"
@@ -8017,7 +8018,7 @@ DO
                         ts$ = type2symbol$(t$)
                         l2$ = l2$ + sp + SCase2$(t3$)
                     ELSE
-                        t3$ = RTRIM$(udtxcname(t AND 511))
+                        t3$ = RTRIM$(udtxcname(t AND UDTMASK))
                         l2$ = l2$ + sp + t3$
                     END IF
                     IF Error_Happened THEN GOTO errmes
@@ -8165,7 +8166,7 @@ DO
                     ts$ = type2symbol$(t$)
                     l2$ = l2$ + sp + SCase2$(t3$)
                 ELSE
-                    t3$ = RTRIM$(udtxcname(t AND 511))
+                    t3$ = RTRIM$(udtxcname(t AND UDTMASK))
                     l2$ = l2$ + sp + t3$
                 END IF
                 IF Error_Happened THEN GOTO errmes
@@ -8464,12 +8465,12 @@ DO
                 'erase the array
                 clearerase:
                 n$ = RTRIM$(id.callname)
-                bytesperelement$ = _TOSTR$((id.arraytype AND 511) \ 8)
+                bytesperelement$ = _TOSTR$((id.arraytype AND UDTMASK) \ 8)
                 udt = 0
                 IF id.arraytype AND ISSTRING THEN bytesperelement$ = _TOSTR$(id.tsize)
-                IF id.arraytype AND ISOFFSETINBITS THEN bytesperelement$ = _TOSTR$((id.arraytype AND 511)) + "/8+1"
+                IF id.arraytype AND ISOFFSETINBITS THEN bytesperelement$ = _TOSTR$((id.arraytype AND UDTMASK)) + "/8+1"
                 IF id.arraytype AND ISUDT THEN
-                    udt = id.arraytype AND 511
+                    udt = id.arraytype AND UDTMASK
                     IF id.dynudt THEN
                         bytesperelement$ = _TOSTR$(UDTDynLayoutSize&(udt, id.dynudtmode) \ 8)
                     ELSE
@@ -8648,9 +8649,9 @@ DO
                             ' Match ordinary QB64PE static-array reset semantics for STRING * N.
                             ' Fixed-length string storage is cleared to NUL bytes here, not spaces.
                             WriteBufLine MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
-                        ELSEIF (udtetype(member_element_id) AND ISUDT) <> 0 AND udtxvariable(udtetype(member_element_id) AND 511) THEN
+                        ELSEIF (udtetype(member_element_id) AND ISUDT) <> 0 AND udtxvariable(udtetype(member_element_id) AND UDTMASK) THEN
                             FOR i2 = 0 TO memberelems - 1
-                                clear_udt_with_varstrings ptr$, udtetype(member_element_id) AND 511, MainTxtBuf, i2 * elementbytes
+                                clear_udt_with_varstrings ptr$, udtetype(member_element_id) AND UDTMASK, MainTxtBuf, i2 * elementbytes
                             NEXT
                         ELSE
                             WriteBufLine MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
@@ -8838,8 +8839,8 @@ DO
                                 IF Error_Happened THEN GOTO errmes
                                 IF redimTypeValue = 0 THEN a$ = "Undefined type": GOTO errmes
                                 redimTypeSize = typname2typsize
-                                redimTypeMask = redimTypeValue AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSETINBITS)
-                                redimMemberMask = udtetype(redimE) AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSETINBITS)
+                                redimTypeMask = redimTypeValue AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSETINBITS)
+                                redimMemberMask = udtetype(redimE) AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSETINBITS)
                                 IF redimTypeMask <> redimMemberMask OR redimTypeSize <> udtetypesize(redimE) THEN
                                     a$ = "TYPE member array REDIM type mismatch": GOTO errmes
                                 END IF
@@ -8876,7 +8877,7 @@ DO
                                 redimMemberElems = udtearrayelements(redimE)
                                 redimElementBytes = udt_dyn_array_elem_bytes(redimE, id.dynudtmode)
                                 redimElemUDT = 0
-                                IF (udtetype(redimE) AND ISUDT) <> 0 THEN redimElemUDT = udtetype(redimE) AND 511
+                                IF (udtetype(redimE) AND ISUDT) <> 0 THEN redimElemUDT = udtetype(redimE) AND UDTMASK
                                 redimSlot$ = "((char*)" + redimBase$ + "+(" + redimOffset$ + "))"
                                 redimAcc$ = ""
                                 redimDynPrefix$ = "dyn_mem_rt_" + _TOSTR$(uniquenumber)
@@ -8915,9 +8916,9 @@ DO
                                         ' Match ordinary QB64PE static-array REDIM semantics for STRING * N.
                                         ' Fixed-length string storage is reinitialized to NUL bytes, not spaces.
                                         WriteBufLine MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
-                                    ELSEIF (udtetype(redimE) AND ISUDT) <> 0 AND udtxvariable(udtetype(redimE) AND 511) THEN
+                                    ELSEIF (udtetype(redimE) AND ISUDT) <> 0 AND udtxvariable(udtetype(redimE) AND UDTMASK) THEN
                                         FOR redimI2 = 0 TO redimMemberElems - 1
-                                            clear_udt_with_varstrings redimPtr$, udtetype(redimE) AND 511, MainTxtBuf, redimI2 * redimElementBytes
+                                            clear_udt_with_varstrings redimPtr$, udtetype(redimE) AND UDTMASK, MainTxtBuf, redimI2 * redimElementBytes
                                         NEXT
                                     ELSE
                                         WriteBufLine MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
@@ -9058,7 +9059,7 @@ DO
                         IF id.insubfuncn = subfuncn THEN 'global cannot conflict with static
                             IF LEN(RTRIM$(id.musthave)) THEN
                                 'if types match then fail
-                                IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                     IF ts = id.tsize THEN
                                         a$ = "Name already in use (" + varname$ + ")": GOTO errmes
                                     END IF
@@ -9068,7 +9069,7 @@ DO
                                     a$ = "Name already in use (" + varname$ + ")": GOTO errmes 'explicit over explicit
                                 ELSE
                                     'if types match then fail
-                                    IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                    IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                         IF ts = id.tsize THEN
                                             a$ = "Name already in use (" + varname$ + ")": GOTO errmes
                                         END IF
@@ -9085,7 +9086,7 @@ DO
                             IF id.insubfuncn = subfuncn THEN 'global cannot conflict with static
                                 IF LEN(RTRIM$(id.musthave)) THEN
                                     'if types match then fail
-                                    IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                    IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                         IF ts = id.tsize THEN
                                             a$ = "Name already in use (" + varname$ + s2$ + ")": GOTO errmes
                                         END IF
@@ -9095,7 +9096,7 @@ DO
                                         a$ = "Name already in use (" + varname$ + s2$ + ")": GOTO errmes 'explicit over explicit
                                     ELSE
                                         'if types match then fail
-                                        IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                        IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                             IF ts = id.tsize THEN
                                                 a$ = "Name already in use (" + varname$ + s2$ + ")": GOTO errmes
                                             END IF
@@ -9141,7 +9142,7 @@ DO
                         IF id.insubfuncn = subfuncn THEN 'global cannot conflict with static
                             IF LEN(RTRIM$(id.musthave)) THEN
                                 'if types match then fail
-                                IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                     IF ts = id.tsize THEN
                                         a$ = "Name already in use (" + varname$ + ")": GOTO errmes
                                     END IF
@@ -9151,7 +9152,7 @@ DO
                                     a$ = "Name already in use (" + varname$ + ")": GOTO errmes 'explicit over explicit
                                 ELSE
                                     'if types match then fail
-                                    IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                    IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                         IF ts = id.tsize THEN
                                             a$ = "Name already in use (" + varname$ + ")": GOTO errmes
                                         END IF
@@ -9168,7 +9169,7 @@ DO
                             IF id.insubfuncn = subfuncn THEN 'global cannot conflict with static
                                 IF LEN(RTRIM$(id.musthave)) THEN
                                     'if types match then fail
-                                    IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                    IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                         IF ts = id.tsize THEN
                                             a$ = "Name already in use (" + varname$ + s2$ + ")": GOTO errmes
                                         END IF
@@ -9178,7 +9179,7 @@ DO
                                         a$ = "Name already in use (" + varname$ + s2$ + ")": GOTO errmes 'explicit over explicit
                                     ELSE
                                         'if types match then fail
-                                        IF (id.arraytype AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + 511 + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
+                                        IF (id.arraytype AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) = (t AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH)) THEN
                                             IF ts = id.tsize THEN
                                                 a$ = "Name already in use (" + varname$ + s2$ + ")": GOTO errmes
                                             END IF
@@ -9263,7 +9264,7 @@ DO
                                         IF (t AND ISFIXEDLENGTH) <> (t2 AND ISFIXEDLENGTH) THEN match = 0
                                         IF (t AND ISOFFSETINBITS) <> (t2 AND ISOFFSETINBITS) THEN match = 0
                                         IF (t AND ISUDT) <> (t2 AND ISUDT) THEN match = 0
-                                        IF (t AND 511) <> (t2 AND 511) THEN match = 0
+                                        IF (t AND UDTMASK) <> (t2 AND UDTMASK) THEN match = 0
                                         IF s <> s2 THEN match = 0
                                         'check for implicit/explicit declaration match
                                         oldmethod = 0: IF LEN(RTRIM$(id.musthave)) THEN oldmethod = 1
@@ -9277,7 +9278,7 @@ DO
 
                                         IF dimmethod = 0 THEN
                                             IF t AND ISUDT THEN
-                                                dim2typepassback$ = RTRIM$(udtxcname(t AND 511))
+                                                dim2typepassback$ = RTRIM$(udtxcname(t AND UDTMASK))
                                             ELSE
                                                 dim2typepassback$ = typ$
                                                 DO WHILE INSTR(dim2typepassback$, " ")
@@ -9373,8 +9374,8 @@ DO
                         WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
                         t = id.t
-                        bits = t AND 511
-                        IF t AND ISUDT THEN bits = udtxsize(t AND 511)
+                        bits = t AND UDTMASK
+                        IF t AND ISUDT THEN bits = udtxsize(t AND UDTMASK)
                         IF t AND ISSTRING THEN
                             IF t AND ISFIXEDLENGTH THEN
                                 bits = id.tsize * 8
@@ -10124,7 +10125,7 @@ DO
             l$ = SCase$("_MemGet") + sp + tlayout$
 
             test$ = evaluate(e$, typ): IF Error_Happened THEN GOTO errmes
-            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
+            IF (typ AND ISUDT) = 0 OR (typ AND UDTMASK) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
             '            IF typ AND ISREFERENCE THEN e$ = refer(e$, typ, 0)
@@ -10223,7 +10224,7 @@ DO
             l$ = SCase$("_MemPut") + sp + tlayout$
 
             test$ = evaluate(e$, typ): IF Error_Happened THEN GOTO errmes
-            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
+            IF (typ AND ISUDT) = 0 OR (typ AND UDTMASK) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
             e$ = fixoperationorder$(offs$): IF Error_Happened THEN GOTO errmes
@@ -10300,7 +10301,7 @@ DO
                 l$ = l$ + sp2 + "," + sp + tlayout$ + sp + SCase$("As") + sp + SCase2$(typ$)
                 e$ = evaluatetotyp(e$, t): IF Error_Happened THEN GOTO errmes
                 st$ = typ2ctyp$(t, "")
-                varsize$ = _TOSTR$((t AND 511) \ 8)
+                varsize$ = _TOSTR$((t AND UDTMASK) \ 8)
                 IF CheckingOn = 0 THEN
                     'fast version:
                     WriteBufLine MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=" + e$ + ";"
@@ -10363,7 +10364,7 @@ DO
             l$ = SCase$("_MemFill") + sp + tlayout$
 
             test$ = evaluate(e$, typ): IF Error_Happened THEN GOTO errmes
-            IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected " + "_MEM type": GOTO errmes
+            IF (typ AND ISUDT) = 0 OR (typ AND UDTMASK) <> 1 THEN a$ = "Expected " + "_MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
             e$ = fixoperationorder$(offs$): IF Error_Happened THEN GOTO errmes
@@ -10418,11 +10419,11 @@ DO
                     c$ = c$ + "OFFSET"
                 ELSE
                     IF t AND ISFLOAT THEN
-                        IF (t AND 511) = 32 THEN c$ = c$ + "SINGLE"
-                        IF (t AND 511) = 64 THEN c$ = c$ + "DOUBLE"
-                        IF (t AND 511) = 256 THEN c$ = c$ + "FLOAT" 'padded variable
+                        IF (t AND UDTMASK) = 32 THEN c$ = c$ + "SINGLE"
+                        IF (t AND UDTMASK) = 64 THEN c$ = c$ + "DOUBLE"
+                        IF (t AND UDTMASK) = 256 THEN c$ = c$ + "FLOAT" 'padded variable
                     ELSE
-                        c$ = c$ + _TOSTR$((t AND 511) \ 8)
+                        c$ = c$ + _TOSTR$((t AND UDTMASK) \ 8)
                     END IF
                 END IF
                 c$ = c$ + "("
@@ -10565,7 +10566,7 @@ DO
                                 'assume not string
                                 'single, double or integer64?
                                 IF typ AND ISFLOAT THEN
-                                    IF (typ AND 511) = 32 THEN
+                                    IF (typ AND UDTMASK) = 32 THEN
                                         e$ = evaluatetotyp(e$, SINGLETYPE - ISPOINTER)
                                         IF Error_Happened THEN GOTO errmes
                                         v$ = "pass" + _TOSTR$(uniquenumber)
@@ -10932,7 +10933,7 @@ DO
                                         IF lineinput THEN a$ = "Expected string-variable": GOTO errmes
 
                                         'numeric variable
-                                        IF (t AND ISFLOAT) <> 0 OR (t AND 511) <> 64 THEN
+                                        IF (t AND ISFLOAT) <> 0 OR (t AND UDTMASK) <> 64 THEN
                                             IF (t AND ISOFFSETINBITS) THEN
                                                 setrefer e$, t, "((int64)func_file_input_float(tmp_fileno," + _TOSTR$(t) + "))", 1
                                                 IF Error_Happened THEN GOTO errmes
@@ -11345,7 +11346,7 @@ DO
                     IF e1typc <> e2typc THEN a$ = "Type mismatch": GOTO errmes
                     t = e1typ
                     IF t AND ISOFFSETINBITS THEN a$ = "Cannot SWAP bit-length variables": GOTO errmes
-                    B = t AND 511
+                    B = t AND UDTMASK
                     t$ = _TOSTR$(B): IF B > 64 THEN t$ = "longdouble"
                     WriteBufLine MainTxtBuf, "swap_" + t$ + "(&" + refer(e1$, e1typ, 0) + ",&" + refer(e2$, e2typ, 0) + ");"
                     IF Error_Happened THEN GOTO errmes
@@ -11666,7 +11667,7 @@ DO
                             END IF
 
                             ' Only _BYTE array is allowed
-                            IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND ISUNSIGNED) OR (sourcetyp AND 511) <> 8 THEN
+                            IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND ISUNSIGNED) OR (sourcetyp AND UDTMASK) <> 8 THEN
                                 a$ = "Expected _BYTE array name": GOTO errmes
                             END IF
 
@@ -11686,7 +11687,7 @@ DO
                             END IF
 
                             ' Only 32-bit floating-point array is allowed
-                            IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND 511) <> 32 THEN
+                            IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND UDTMASK) <> 32 THEN
                                 a$ = "Expected SINGLE array name": GOTO errmes
                             END IF
 
@@ -11740,7 +11741,7 @@ DO
                                 DO WHILE try
                                     IF id.arraytype AND ISUDT THEN
                                         IF id.dynudt THEN
-                                            udt = id.arraytype AND 511
+                                            udt = id.arraytype AND UDTMASK
                                             IF UDTDynHasMemberArrays%(udt, id.dynudtmode) THEN
                                                 IF firstelement$ = "GET" THEN
                                                     e$ = UDTFileArrayBE$(RTRIM$(id.callname), udt, id.dynudtmode, id.arrayelements, -1, dynfilepost$)
@@ -11765,7 +11766,7 @@ DO
                                     getid idnumber
                                     IF Error_Happened THEN GOTO errmes
                                     IF id.dynudt THEN
-                                        udt = id.arraytype AND 511
+                                        udt = id.arraytype AND UDTMASK
                                         IF UDTDynHasMemberArrays%(udt, id.dynudtmode) THEN
                                             IF firstelement$ = "GET" THEN
                                                 e$ = UDTFileArrayBE$(RTRIM$(id.callname), udt, id.dynudtmode, id.arrayelements, -1, dynfilepost$)
@@ -11836,8 +11837,8 @@ DO
 
                                     'check arrays are of same type
                                     targettyp2 = targettyp: sourcetyp2 = sourcetyp
-                                    targettyp2 = targettyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
-                                    sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
+                                    targettyp2 = targettyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
+                                    sourcetyp2 = sourcetyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
                                     IF sourcetyp2 <> targettyp2 THEN a$ = "Incorrect array type passed to sub": GOTO errmes
 
 
@@ -11958,8 +11959,8 @@ DO
                                         passudtelement = 0: IF (targettyp2 AND ISUDT) = 0 AND (sourcetyp2 AND ISUDT) <> 0 THEN passudtelement = 1: sourcetyp2 = sourcetyp2 - ISUDT
 
                                         'remove flags irrelevant for comparison... ISPOINTER,ISREFERENCE,ISINCONVENTIONALMEMORY,ISARRAY
-                                        targettyp2 = targettyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
-                                        sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
+                                        targettyp2 = targettyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
+                                        sourcetyp2 = sourcetyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
 
                                         'compare types
                                         IF sourcetyp2 = targettyp2 THEN
@@ -12098,7 +12099,7 @@ DO
                         IF explicitreference = 0 THEN
                             IF targettyp AND ISUDT THEN
                                 nth = i
-                                x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
+                                x$ = "'" + RTRIM$(udtxcname(targettyp AND UDTMASK)) + "'"
                                 IF ids(targetid).args = 1 THEN a$ = "TYPE " + x$ + " required for sub": GOTO errmes
                                 a$ = str_nth$(nth) + " sub argument requires TYPE " + x$: GOTO errmes
                             END IF
@@ -12110,7 +12111,7 @@ DO
                         IF (sourcetyp AND ISFLOAT) THEN
                             IF (targettyp AND ISFLOAT) = 0 THEN
                                 '**32 rounding fix
-                                bits = targettyp AND 511
+                                bits = targettyp AND UDTMASK
                                 IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
                                 IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
                                 IF bits >= 32 THEN e$ = "qbr(" + e$ + ")"
@@ -12124,7 +12125,7 @@ DO
                             v$ = "pass" + _TOSTR$(uniquenumber)
                             'assume numeric type
                             IF MID$(sfcmemargs(targetid), i, 1) = CHR$(1) THEN 'cmem required?
-                                bytesreq = ((targettyp AND 511) + 7) \ 8
+                                bytesreq = ((targettyp AND UDTMASK) + 7) \ 8
                                 WriteBufLine defdatahandle, t$ + " *" + v$ + "=NULL;"
                                 WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
                                 WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
@@ -12620,7 +12621,7 @@ FOR i = 1 TO idn
             'create a reference
             typ = id.t + ISREFERENCE
             IF typ AND ISUDT THEN
-                e$ = _TOSTR$(i) + sp3 + _TOSTR$(typ AND 511) + sp3 + "0" + sp3 + "0"
+                e$ = _TOSTR$(i) + sp3 + _TOSTR$(typ AND UDTMASK) + sp3 + "0" + sp3 + "0"
             ELSE
                 e$ = _TOSTR$(i)
             END IF
@@ -12638,9 +12639,9 @@ FOR i = 1 TO idn
                 END IF
             END IF
             IF typ AND ISUDT THEN
-                IF udtxvariable(typ AND 511) THEN
+                IF udtxvariable(typ AND UDTMASK) THEN
                     'this next procedure resets values of UDT variables with variable-length strings
-                    clear_udt_with_varstrings e$, typ AND 511, MainTxtBuf, 0
+                    clear_udt_with_varstrings e$, typ AND UDTMASK, MainTxtBuf, 0
                 ELSE
                     WriteBufLine MainTxtBuf, "memset((void*)" + e$ + ",0," + bytes$ + ");"
                 END IF
@@ -13204,8 +13205,8 @@ FOR x = 1 TO commonarraylistn
 
         IF command = 3 THEN
             'size of each element in bits
-            bits = t AND 511
-            IF t AND ISUDT THEN bits = udtxsize(t AND 511)
+            bits = t AND UDTMASK
+            IF t AND ISUDT THEN bits = udtxsize(t AND UDTMASK)
             IF t AND ISSTRING THEN bits = tsize * 8
             WriteBufLine MainTxtBuf, "int64val=" + _TOSTR$(bits) + ";" 'size in bits
             WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
@@ -14548,7 +14549,7 @@ FUNCTION Type2MemTypeValue (t1)
     t = 0
     IF t1 AND ISARRAY THEN t = t + 65536
     IF t1 AND ISUDT THEN
-        IF (t1 AND 511) = 1 THEN
+        IF (t1 AND UDTMASK) = 1 THEN
             t = t + 4096 '_MEM type
         ELSE
             t = t + 32768
@@ -14564,7 +14565,7 @@ FUNCTION Type2MemTypeValue (t1)
                 IF t1 AND ISUNSIGNED THEN t = t + 1024
                 IF t1 AND ISOFFSET THEN t = t + 8192 'offset type
             END IF
-            t1s = (t1 AND 511) \ 8
+            t1s = (t1 AND UDTMASK) \ 8
             IF t1s = 1 THEN t = t + t1s
             IF t1s = 2 THEN t = t + t1s
             IF t1s = 4 THEN t = t + t1s
@@ -14613,7 +14614,7 @@ FUNCTION UDTRuntimeMemberArrays% (udt AS LONG)
             IF LEFT$(udtearraydesc(elemnum), 1) = "@" THEN UDTRuntimeMemberArrays% = -1: EXIT FUNCTION
         END IF
         IF (udtetype(elemnum) AND ISUDT) <> 0 THEN
-            nestedudt = udtetype(elemnum) AND 511
+            nestedudt = udtetype(elemnum) AND UDTMASK
             IF UDTRuntimeMemberArrays%(nestedudt) THEN UDTRuntimeMemberArrays% = -1: EXIT FUNCTION
         END IF
         elemnum = udtenext(elemnum)
@@ -15721,7 +15722,7 @@ FUNCTION UDTForcedDynMembers% (udt_index AS LONG)
             IF udtearrayfieldmode(member_id) = 2 THEN UDTForcedDynMembers% = -1: EXIT FUNCTION
         END IF
         IF (udtetype(member_id) AND ISUDT) <> 0 THEN
-            nested_udt = udtetype(member_id) AND 511
+            nested_udt = udtetype(member_id) AND UDTMASK
             IF UDTForcedDynMembers%(nested_udt) THEN UDTForcedDynMembers% = -1: EXIT FUNCTION
         END IF
         member_id = udtenext(member_id)
@@ -16225,12 +16226,12 @@ SUB AppendDynUDTBoundsPrepSeen (udt_index AS LONG, prep_prefix AS STRING, acc AS
                 END IF
             END IF
             IF udtetype(member_id) AND ISUDT THEN
-                nested_udt = udtetype(member_id) AND 511
+                nested_udt = udtetype(member_id) AND UDTMASK
                 AppendDynUDTBoundsPrepSeen nested_udt, prep_prefix, acc, seen_members
                 IF Error_Happened THEN EXIT SUB
             END IF
         ELSEIF udtetype(member_id) AND ISUDT THEN
-            nested_udt = udtetype(member_id) AND 511
+            nested_udt = udtetype(member_id) AND UDTMASK
             AppendDynUDTBoundsPrepSeen nested_udt, prep_prefix, acc, seen_members
             IF Error_Happened THEN EXIT SUB
         END IF
@@ -16834,7 +16835,7 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
         stat_bytes = udtesize(elemnum) \ 8
         dyn_bytes = UDTDynMemberSize&(elemnum, layout_mode) \ 8
         nested_udt = 0
-        IF (udtetype(elemnum) AND ISUDT) <> 0 THEN nested_udt = udtetype(elemnum) AND 511
+        IF (udtetype(elemnum) AND ISUDT) <> 0 THEN nested_udt = udtetype(elemnum) AND UDTMASK
 
         IF UDTMemberDynDesc%(elemnum, layout_mode) THEN
             desc_name = "file_dyn_desc_" + _TOSTR$(uniquenumber)
@@ -17046,8 +17047,8 @@ SUB assign (a$, n)
                     IF Error_Happened THEN EXIT SUB
                 LOOP
                 IF lhsok AND rhsok THEN
-                    lhsudt = lhsid.arraytype AND 511
-                    rhsudt = rhsid.arraytype AND 511
+                    lhsudt = lhsid.arraytype AND UDTMASK
+                    rhsudt = rhsid.arraytype AND UDTMASK
                     IF lhsudt = rhsudt AND lhsid.dynudt AND rhsid.dynudt THEN
                         IF lhsid.dynudtmode <> rhsid.dynudtmode THEN Give_Error "Cannot assign between different descriptor-layout user defined type modes": EXIT SUB
                         IF lhsid.arrayelements <> rhsid.arrayelements THEN Give_Error "Cannot assign arrays with different dimensions": EXIT SUB
@@ -18802,10 +18803,10 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 
     incmem = 0
     IF id.t THEN
-        u = id.t AND 511
+        u = id.t AND UDTMASK
         IF id.t AND ISINCONVENTIONALMEMORY THEN incmem = 1
     ELSE
-        u = id.arraytype AND 511
+        u = id.arraytype AND UDTMASK
         IF id.arraytype AND ISINCONVENTIONALMEMORY THEN incmem = 1
     END IF
     udtElem = 0
@@ -18904,7 +18905,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
             base_ptr = root_base_ptr
             IF id.t = 0 AND CheckingOn THEN
                 guard_desc = scope$ + "ARRAY_UDT_" + RTRIM$(id.n)
-                guard_udt = id.arraytype AND 511
+                guard_udt = id.arraytype AND UDTMASK
                 guard_mode = id.dynudtmode
                 IF guard_mode = 0 THEN guard_mode = id.dynudt
                 base_ptr = "((char*)" + UDTRootDataGuard$(guard_desc, guard_udt, guard_mode) + ")"
@@ -18944,7 +18945,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
     'Move into another UDT structure?
     IF i <> n THEN
         IF (udtetype(udtElem) AND ISUDT) = 0 THEN Give_Error "Expected user defined type": EXIT FUNCTION
-        u = udtetype(udtElem) AND 511
+        u = udtetype(udtElem) AND UDTMASK
         udtElem = 0
         i = i + 1
         GOTO udtfindelenext
@@ -18952,7 +18953,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 
     'Change e reference to u | 0 reference?
     IF udtetype(udtElem) AND ISUDT THEN
-        u = udtetype(udtElem) AND 511
+        u = udtetype(udtElem) AND UDTMASK
         udtElem = 0
     END IF
 
@@ -19085,7 +19086,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                             IF Error_Happened THEN EXIT FUNCTION
                                             o$ = RIGHT$(c$, LEN(c$) - INSTR(c$, sp3))
                                             'change o$ to a byte offset
-                                            u = typ2 AND 511
+                                            u = typ2 AND UDTMASK
                                             s = udtxsize(u) \ 8
                                             IF id.dynudt THEN s = UDTDynLayoutSize&(u, id.dynudtmode) \ 8
                                             o$ = "(" + o$ + ")*" + _TOSTR$(s)
@@ -19349,7 +19350,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                         blocktype(i) = typname2typ(removesymbol$(num$))
                         IF Error_Happened THEN EXIT FUNCTION
                         IF blocktype(i) AND ISPOINTER THEN blocktype(i) = blocktype(i) - ISPOINTER
-                        IF (blocktype(i) AND 511) > 32 THEN
+                        IF (blocktype(i) AND UDTMASK) > 32 THEN
                             IF blocktype(i) AND ISUNSIGNED THEN num$ = num$ + "ull" ELSE num$ = num$ + "ll"
                         END IF
                     END IF
@@ -19665,7 +19666,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                     '2. Comparison of a double higher/lower than single range may fail
                     'solution: out of range values convert to +/-1.#INF, making comparison still possible
                     IF (oldtyp AND ISFLOAT) <> 0 AND (newtyp AND ISFLOAT) <> 0 THEN 'both floating point
-                        s1 = oldtyp AND 511: s2 = newtyp AND 511
+                        s1 = oldtyp AND UDTMASK: s2 = newtyp AND UDTMASK
                         IF s2 < s1 THEN s1 = s2
                         IF s1 = 32 THEN
                             block(i - 1) = "((float)(" + block(i - 1) + "))": oldtyp = 32& + ISFLOAT
@@ -19688,16 +19689,16 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                 IF (oldtyp AND ISSTRING) = 0 AND (newtyp AND ISSTRING) = 0 THEN
                     IF (oldtyp AND ISFLOAT) <> 0 OR (newtyp AND ISFLOAT) <> 0 THEN
                         'float
-                        b = 0: IF (oldtyp AND ISFLOAT) THEN b = oldtyp AND 511
+                        b = 0: IF (oldtyp AND ISFLOAT) THEN b = oldtyp AND UDTMASK
                         IF (newtyp AND ISFLOAT) THEN
-                            b2 = newtyp AND 511: IF b2 > b THEN b = b2
+                            b2 = newtyp AND UDTMASK: IF b2 > b THEN b = b2
                         END IF
                         typ = ISFLOAT + b
                     ELSE
                         'integer
                         '***THIS IS THE IDEAL MARKUP FOR A 64-BIT SYSTEM***
                         'In reality 32-bit C++ only marks-up to 32-bit integers
-                        b = oldtyp AND 511: b2 = newtyp AND 511: IF b2 > b THEN b = b2
+                        b = oldtyp AND UDTMASK: b2 = newtyp AND UDTMASK: IF b2 > b THEN b = b2
                         typ = 64&
                         IF b = 64 THEN
                             IF (oldtyp AND ISUNSIGNED) <> 0 AND (newtyp AND ISUNSIGNED) <> 0 THEN typ = 64& + ISUNSIGNED
@@ -19733,7 +19734,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
                         'QB-like conversion of math functions returning floating point values
                         'reassess oldtype & newtype
-                        b = oldtyp AND 511
+                        b = oldtyp AND UDTMASK
                         IF oldtyp AND ISFLOAT THEN
                             'no change to b
                         ELSE
@@ -19741,7 +19742,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                             IF b > 32 THEN b = 256 'larger than LONG? return _FLOAT
                             IF b <= 16 THEN b = 32
                         END IF
-                        b2 = newtyp AND 511
+                        b2 = newtyp AND UDTMASK
                         IF newtyp AND ISFLOAT THEN
                             IF b2 > b THEN b = b2
                         ELSE
@@ -19820,7 +19821,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
         IF (typ AND ISPOINTER) THEN PRINT #9, "[ISPOINTER]";
         IF (typ AND ISFIXEDLENGTH) THEN PRINT #9, "[ISFIXEDLENGTH]";
         IF (typ AND ISINCONVENTIONALMEMORY) THEN PRINT #9, "[ISINCONVENTIONALMEMORY]";
-        PRINT #9, "(size in bits=" + _TOSTR$(typ AND 511) + ")"
+        PRINT #9, "(size in bits=" + _TOSTR$(typ AND UDTMASK) + ")"
     END IF
 
 
@@ -20208,10 +20209,10 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                             memget_ctyp$ = "qbs*"
                         ELSE
                             IF t AND ISUDT THEN
-                                memget_size = udtxsize(t AND 511) \ 8
+                                memget_size = udtxsize(t AND UDTMASK) \ 8
                                 memget_ctyp$ = "void*"
                             ELSE
-                                memget_size = (t AND 511) \ 8
+                                memget_size = (t AND UDTMASK) \ 8
                                 memget_ctyp$ = typ2ctyp$(t, "")
                             END IF
                         END IF
@@ -20232,7 +20233,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         ELSE
                             IF t AND ISUDT THEN
                                 r$ = "((void*)+" + offs$ + ")"
-                                t = ISUDT + ISPOINTER + (t AND 511)
+                                t = ISUDT + ISPOINTER + (t AND UDTMASK)
                             ELSE
                                 r$ = "*(" + memget_ctyp$ + "*)(" + offs$ + ")"
                                 IF t AND ISPOINTER THEN t = t - ISPOINTER
@@ -20486,7 +20487,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END IF
 
                         ' Cannot be one of these
-                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND 511) <> 32 THEN
+                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND UDTMASK) <> 32 THEN
                             Give_Error "Expected LONG array-name"
                             EXIT FUNCTION
                         END IF
@@ -20554,13 +20555,13 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 '*special case*
                 IF n$ = "_BIN" THEN
                     IF RTRIM$(id2.musthave) = "$" THEN
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
 
                         IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                         wasref = 0
                         IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0): wasref = 1
                         IF Error_Happened THEN EXIT FUNCTION
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
                         IF (sourcetyp AND ISOFFSETINBITS) THEN
                             e$ = "func__bin(" + e$ + "," + _TOSTR$(bits) + ")"
                         ELSE
@@ -20582,13 +20583,13 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 '*special case*
                 IF n$ = "OCT" THEN
                     IF RTRIM$(id2.musthave) = "$" THEN
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
 
                         IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                         wasref = 0
                         IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0): wasref = 1
                         IF Error_Happened THEN EXIT FUNCTION
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
                         IF (sourcetyp AND ISOFFSETINBITS) THEN
                             e$ = "func_oct(" + e$ + "," + _TOSTR$(bits) + ")"
                         ELSE
@@ -20610,12 +20611,12 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 '*special case*
                 IF n$ = "HEX" THEN
                     IF RTRIM$(id2.musthave) = "$" THEN
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
                         IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                         wasref = 0
                         IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0): wasref = 1
                         IF Error_Happened THEN EXIT FUNCTION
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
                         IF (sourcetyp AND ISOFFSETINBITS) THEN
                             chars = (bits + 3) \ 4
                             e$ = "func_hex(" + e$ + "," + _TOSTR$(chars) + ")"
@@ -20641,11 +20642,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                 '*special case*
                 IF n$ = "EXP" THEN
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     IF (sourcetyp AND ISSTRING) THEN Give_Error "Expected numeric value": EXIT FUNCTION
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     typ& = SINGLETYPE - ISPOINTER
                     IF (sourcetyp AND ISFLOAT) THEN
                         IF bits = 32 THEN e$ = "func_exp_single(" + e$ + ")" ELSE e$ = "func_exp_float(" + e$ + ")": typ& = FLOATTYPE - ISPOINTER
@@ -20678,7 +20679,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     IF (sourcetyp AND ISFLOAT) THEN
                         IF bits > 64 THEN e$ = "func_fix_float(" + e$ + ")" ELSE e$ = "func_fix_double(" + e$ + ")"
                     ELSE
@@ -20696,7 +20697,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
                     IF (sourcetyp AND ISFLOAT) THEN
-                        bits = sourcetyp AND 511
+                        bits = sourcetyp AND UDTMASK
                         IF bits > 64 THEN e$ = "func_round_float(" + e$ + ")" ELSE e$ = "func_round_double(" + e$ + ")"
                     ELSE
                         e$ = "(" + e$ + ")"
@@ -20716,7 +20717,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     IF (sourcetyp AND ISFLOAT) THEN
                         IF bits > 64 THEN e$ = "func_cdbl_float(" + e$ + ")"
                     ELSE
@@ -20733,7 +20734,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     IF (sourcetyp AND ISFLOAT) THEN
                         IF bits = 64 THEN e$ = "func_csng_double(" + e$ + ")"
                         IF bits > 64 THEN e$ = "func_csng_float(" + e$ + ")"
@@ -20752,7 +20753,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     IF (sourcetyp AND ISFLOAT) THEN
                         IF bits > 64 THEN e$ = "func_clng_float(" + e$ + ")" ELSE e$ = "func_clng_double(" + e$ + ")"
                     ELSE 'integer
@@ -20774,7 +20775,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (sourcetyp AND ISREFERENCE) THEN e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
                     'establish which function (if any!) should be used
-                    bits = sourcetyp AND 511
+                    bits = sourcetyp AND UDTMASK
                     IF (sourcetyp AND ISFLOAT) THEN
                         IF bits > 64 THEN e$ = "func_cint_float(" + e$ + ")" ELSE e$ = "func_cint_double(" + e$ + ")"
                     ELSE 'integer
@@ -20949,7 +20950,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                 t = t + 64
                                 t = t + (sourcetyp AND 63)
                             ELSE
-                                bits = sourcetyp AND 511
+                                bits = sourcetyp AND UDTMASK
                                 IF (sourcetyp AND ISFLOAT) THEN
                                     IF bits = 32 THEN t = t + 4
                                     IF bits = 64 THEN t = t + 8
@@ -21019,7 +21020,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END IF
 
                         'non-UDT array
-                        m = (sourcetyp AND 511) \ 8 'calculate size multiplier
+                        m = (sourcetyp AND UDTMASK) \ 8 'calculate size multiplier
                         index$ = RIGHT$(e$, LEN(e$) - INSTR(e$, sp3))
                         typ = 64&
                         r$ = "((" + index$ + ")*" + _TOSTR$(m) + ")"
@@ -21198,8 +21199,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                             'check arrays are of same type
                             targettyp2 = targettyp: sourcetyp2 = sourcetyp
-                            targettyp2 = targettyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
-                            sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
+                            targettyp2 = targettyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
+                            sourcetyp2 = sourcetyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISSTRING + ISFIXEDLENGTH + ISFLOAT)
                             IF sourcetyp2 <> targettyp2 THEN Give_Error "Incorrect array type passed to function": EXIT FUNCTION
 
                             'check arrayname was followed by '()'
@@ -21337,8 +21338,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                 passudtelement = 0: IF (targettyp2 AND ISUDT) = 0 AND (sourcetyp2 AND ISUDT) <> 0 THEN passudtelement = 1: sourcetyp2 = sourcetyp2 - ISUDT
 
                                 'remove flags irrelevant for comparison... ISPOINTER,ISREFERENCE,ISINCONVENTIONALMEMORY,ISARRAY
-                                targettyp2 = targettyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
-                                sourcetyp2 = sourcetyp2 AND (511 + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
+                                targettyp2 = targettyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
+                                sourcetyp2 = sourcetyp2 AND (UDTMASK + ISOFFSETINBITS + ISUDT + ISFLOAT + ISSTRING)
 
                                 'compare types
                                 IF sourcetyp2 = targettyp2 THEN
@@ -21503,7 +21504,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF targettyp AND ISUDT THEN
                         nth = curarg
                         IF skipFirstArg THEN nth = nth - 1
-                        x$ = "'" + RTRIM$(udtxcname(targettyp AND 511)) + "'"
+                        x$ = "'" + RTRIM$(udtxcname(targettyp AND UDTMASK)) + "'"
                         IF ids(targetid).args = 1 THEN Give_Error "TYPE " + x$ + " required for function": EXIT FUNCTION
                         Give_Error str_nth$(nth) + " function argument requires TYPE " + x$: EXIT FUNCTION
                     END IF
@@ -21515,7 +21516,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 IF (sourcetyp AND ISFLOAT) THEN
                     IF (targettyp AND ISFLOAT) = 0 THEN
                         '**32 rounding fix
-                        bits = targettyp AND 511
+                        bits = targettyp AND UDTMASK
                         IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
                         IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
                         IF bits >= 32 THEN e$ = "qbr(" + e$ + ")"
@@ -21528,20 +21529,20 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         e$ = "(int64)(" + e$ + ")"
                     ELSE
                         IF (targettyp AND ISFLOAT) THEN
-                            IF (targettyp AND 511) = 32 THEN e$ = "(float)(" + e$ + ")"
-                            IF (targettyp AND 511) = 64 THEN e$ = "(double)(" + e$ + ")"
-                            IF (targettyp AND 511) = 256 THEN e$ = "(long double)(" + e$ + ")"
+                            IF (targettyp AND UDTMASK) = 32 THEN e$ = "(float)(" + e$ + ")"
+                            IF (targettyp AND UDTMASK) = 64 THEN e$ = "(double)(" + e$ + ")"
+                            IF (targettyp AND UDTMASK) = 256 THEN e$ = "(long double)(" + e$ + ")"
                         ELSE
                             IF (targettyp AND ISUNSIGNED) THEN
-                                IF (targettyp AND 511) = 8 THEN e$ = "(uint8)(" + e$ + ")"
-                                IF (targettyp AND 511) = 16 THEN e$ = "(uint16)(" + e$ + ")"
-                                IF (targettyp AND 511) = 32 THEN e$ = "(uint32)(" + e$ + ")"
-                                IF (targettyp AND 511) = 64 THEN e$ = "(uint64)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 8 THEN e$ = "(uint8)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 16 THEN e$ = "(uint16)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 32 THEN e$ = "(uint32)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 64 THEN e$ = "(uint64)(" + e$ + ")"
                             ELSE
-                                IF (targettyp AND 511) = 8 THEN e$ = "(int8)(" + e$ + ")"
-                                IF (targettyp AND 511) = 16 THEN e$ = "(int16)(" + e$ + ")"
-                                IF (targettyp AND 511) = 32 THEN e$ = "(int32)(" + e$ + ")"
-                                IF (targettyp AND 511) = 64 THEN e$ = "(int64)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 8 THEN e$ = "(int8)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 16 THEN e$ = "(int16)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 32 THEN e$ = "(int32)(" + e$ + ")"
+                                IF (targettyp AND UDTMASK) = 64 THEN e$ = "(int64)(" + e$ + ")"
                             END IF
                         END IF 'float?
                     END IF 'offset in bits?
@@ -21556,7 +21557,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     v$ = "pass" + _TOSTR$(uniquenumber)
                     'assume numeric type
                     IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
-                        bytesreq = ((targettyp AND 511) + 7) \ 8
+                        bytesreq = ((targettyp AND UDTMASK) + 7) \ 8
                         WriteBufLine defdatahandle, t$ + " *" + v$ + "=NULL;"
                         WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
                         WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
@@ -21701,7 +21702,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     'QB-like conversion of math functions returning floating point values
     IF n$ = "SIN" OR n$ = "COS" OR n$ = "TAN" OR n$ = "ATN" OR n$ = "SQR" OR n$ = "LOG" THEN
-        b = sourcetyp AND 511
+        b = sourcetyp AND UDTMASK
         IF sourcetyp AND ISFLOAT THEN
             'Default is FLOATTYPE
             IF b = 64 THEN typ& = DOUBLETYPE - ISPOINTER
@@ -21736,10 +21737,10 @@ FUNCTION variablesize$ (i AS LONG) 'ID or -1 (if ID already 'loaded')
     IF Error_Happened THEN EXIT FUNCTION
     'find base size from type
     t = id.t: IF t = 0 THEN t = id.arraytype
-    bytes = (t AND 511) \ 8
+    bytes = (t AND UDTMASK) \ 8
 
     IF t AND ISUDT THEN 'correct size for UDTs
-        u = t AND 511
+        u = t AND UDTMASK
         bytes = udtxsize(u) \ 8
         IF id.dynudt THEN bytes = UDTDynLayoutSize&(u, id.dynudtmode) \ 8
     END IF
@@ -21850,7 +21851,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         END IF
 
         IF (sourcetyp AND ISUDT) THEN 'User Defined Type -> byte_element(offset,bytes)
-            IF udtxvariable(sourcetyp AND 511) THEN Give_Error "UDT must have fixed size": EXIT FUNCTION
+            IF udtxvariable(sourcetyp AND UDTMASK) THEN Give_Error "UDT must have fixed size": EXIT FUNCTION
             idnumber = VAL(e$)
             i = INSTR(e$, sp3): e$ = RIGHT$(e$, LEN(e$) - i)
             u = VAL(e$) 'closest parent
@@ -21990,7 +21991,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             e$ = refer(e$, sourcetyp, 0)
             IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
-            bytes$ = _TOSTR$((sourcetyp AND 511) \ 8)
+            bytes$ = _TOSTR$((sourcetyp AND UDTMASK) \ 8)
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
             IF targettyp = -5 THEN evaluatetotyp$ = bytes$
             IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -22019,7 +22020,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
         IF Error_Happened THEN EXIT FUNCTION
-        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
+        size = (sourcetyp AND UDTMASK) \ 8 'calculate its size in bytes
         evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + _TOSTR$(size) + "," + NewByteElement$ + ")"
         IF targettyp = -5 THEN evaluatetotyp$ = _TOSTR$(size)
         IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -22254,7 +22255,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             getid idnumber
             IF Error_Happened THEN EXIT FUNCTION
             IF (id.arraytype AND ISUDT) <> 0 THEN
-                u = id.arraytype AND 511
+                u = id.arraytype AND UDTMASK
                 IF id.dynudt AND UDTDynHasMemberArrays%(u, id.dynudtmode) THEN Give_Error "_MEM cannot reference descriptor-owning user-defined type elements": EXIT FUNCTION
                 IF id.dynudt AND udtxvariable(u) THEN Give_Error "_MEM cannot reference variable-length strings": EXIT FUNCTION
             END IF
@@ -22286,7 +22287,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             e$ = refer(e$, sourcetyp, 0)
             IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
-            bytes$ = _TOSTR$((sourcetyp AND 511) \ 8)
+            bytes$ = _TOSTR$((sourcetyp AND UDTMASK) \ 8)
             'evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
             'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
             'IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -22301,7 +22302,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             IF (sourcetyp AND ISARRAY) = 0 AND (sourcetyp AND ISUDT) = 0 AND (sourcetyp AND ISSTRING) = 0 THEN
                 e$ = refer(e$, sourcetyp, 1)
                 IF Error_Happened THEN EXIT FUNCTION
-                size = (sourcetyp AND 511) \ 8
+                size = (sourcetyp AND UDTMASK) \ 8
                 t = Type2MemTypeValue(sourcetyp)
                 evaluatetotyp$ = "(ptrszint)" + e$ + "," + _TOSTR$(size) + "," + _TOSTR$(t) + "," + _TOSTR$(size) + "," + dynmemlockexpr
                 EXIT FUNCTION
@@ -22333,7 +22334,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
         IF Error_Happened THEN EXIT FUNCTION
-        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
+        size = (sourcetyp AND UDTMASK) \ 8 'calculate its size in bytes
         'evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + _TOSTR$(size) + "," + NewByteElement$ + ")"
         'IF targettyp = -5 THEN evaluatetotyp$ = _TOSTR$(size)
         'IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -22589,7 +22590,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             getid idnumber
             IF Error_Happened THEN EXIT FUNCTION
             IF (id.arraytype AND ISUDT) <> 0 THEN
-                u = id.arraytype AND 511
+                u = id.arraytype AND UDTMASK
                 IF id.dynudt AND UDTDynHasMemberArrays%(u, id.dynudtmode) THEN Give_Error "_MEM cannot reference descriptor-owning user-defined type elements": EXIT FUNCTION
                 IF id.dynudt AND udtxvariable(u) THEN Give_Error "_MEM cannot reference variable-length strings": EXIT FUNCTION
             END IF
@@ -22616,7 +22617,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             IF sourcetyp AND ISSTRING THEN
                 bytes = tsize
             ELSE
-                bytes = (sourcetyp AND 511) \ 8
+                bytes = (sourcetyp AND UDTMASK) \ 8
             END IF
             bytes$ = bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + "))"
 
@@ -22630,7 +22631,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             IF (sourcetyp AND ISARRAY) = 0 AND (sourcetyp AND ISUDT) = 0 AND (sourcetyp AND ISSTRING) = 0 THEN
                 e$ = refer(e$, sourcetyp, 1)
                 IF Error_Happened THEN EXIT FUNCTION
-                size = (sourcetyp AND 511) \ 8
+                size = (sourcetyp AND UDTMASK) \ 8
                 t = Type2MemTypeValue(sourcetyp)
                 evaluatetotyp$ = "(ptrszint)" + e$ + "," + _TOSTR$(size) + "," + _TOSTR$(t) + "," + _TOSTR$(size) + "," + dynmemlockexpr
                 EXIT FUNCTION
@@ -22655,7 +22656,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
         IF Error_Happened THEN EXIT FUNCTION
-        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
+        size = (sourcetyp AND UDTMASK) \ 8 'calculate its size in bytes
 
         t = Type2MemTypeValue(sourcetyp)
         evaluatetotyp$ = "(ptrszint)" + e$ + "," + _TOSTR$(size) + "," + _TOSTR$(t) + "," + _TOSTR$(size) + ",sf_mem_lock"
@@ -22790,7 +22791,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             IF sourcetyp AND ISSTRING THEN
                 bytes = tsize
             ELSE
-                bytes = (sourcetyp AND 511) \ 8
+                bytes = (sourcetyp AND UDTMASK) \ 8
             END IF
             bytes$ = "(" + bytes$ + "-(" + _TOSTR$(bytes) + "*(" + index$ + ")))"
             evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
@@ -22823,7 +22824,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         'Standard variable -> byte_element(offset,bytes)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
         IF Error_Happened THEN EXIT FUNCTION
-        size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
+        size = (sourcetyp AND UDTMASK) \ 8 'calculate its size in bytes
         evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + _TOSTR$(size) + "," + NewByteElement$ + ")"
         IF targettyp = -5 THEN evaluatetotyp$ = _TOSTR$(size)
         IF targettyp = -6 THEN evaluatetotyp$ = e$
@@ -22867,7 +22868,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     'round to integer if required
     IF (sourcetyp AND ISFLOAT) THEN
         IF (targettyp AND ISFLOAT) = 0 THEN
-            bits = targettyp AND 511
+            bits = targettyp AND UDTMASK
             '**32 rounding fix
             IF bits <= 16 THEN e$ = "qbr_float_to_long(" + e$ + ")"
             IF bits > 16 AND bits < 32 THEN e$ = "qbr_double_to_long(" + e$ + ")"
@@ -23688,7 +23689,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
 
                                     'floats returned by str$ must be converted to qb64 standard format
                                     IF t AND ISFLOAT THEN
-                                        t2 = t AND 511
+                                        t2 = t AND UDTMASK
                                         'find E,D or F
                                         s$ = ""
                                         IF INSTR(e$, "E") THEN s$ = "E"
@@ -23842,7 +23843,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
                                         fooudt:
 
                                         f$ = f$ + sp + "." + sp
-                                        udtElem = udtxnext(t AND 511) 'next element to check
+                                        udtElem = udtxnext(t AND UDTMASK) 'next element to check
                                         i = i + 2
 
                                         'loop
@@ -25308,7 +25309,7 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
 
         IF id.t = 0 AND CheckingOn THEN
             IF udtearrayelements(udtElem) THEN
-                guard_udt = id.arraytype AND 511
+                guard_udt = id.arraytype AND UDTMASK
                 guard_mode = 0
                 IF id.dynudt THEN guard_mode = id.dynudtmode
                 data_ref$ = UDTRootDataGuard$(arr_desc_expr$, guard_udt, guard_mode)
@@ -25365,9 +25366,9 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
 
         IF (typ AND ISOFFSETINBITS) THEN
             'IF (typ AND ISUNSIGNED) THEN r$ = "getubits_" ELSE r$ = "getbits_"
-            'r$ = r$ + _TOSTR$(typ AND 511) + "("
+            'r$ = r$ + _TOSTR$(typ AND UDTMASK) + "("
             IF (typ AND ISUNSIGNED) THEN r$ = "getubits" ELSE r$ = "getbits"
-            r$ = r$ + "(" + _TOSTR$(typ AND 511) + ","
+            r$ = r$ + "(" + _TOSTR$(typ AND UDTMASK) + ","
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ","
             r$ = r$ + a$ + ")"
             refer$ = r$
@@ -25375,21 +25376,21 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
         ELSE
             t$ = ""
             IF (typ AND ISFLOAT) THEN
-                IF (typ AND 511) = 32 THEN t$ = "float"
-                IF (typ AND 511) = 64 THEN t$ = "double"
-                IF (typ AND 511) = 256 THEN t$ = "long double"
+                IF (typ AND UDTMASK) = 32 THEN t$ = "float"
+                IF (typ AND UDTMASK) = 64 THEN t$ = "double"
+                IF (typ AND UDTMASK) = 256 THEN t$ = "long double"
             ELSE
                 IF (typ AND ISUNSIGNED) THEN
-                    IF (typ AND 511) = 8 THEN t$ = "uint8"
-                    IF (typ AND 511) = 16 THEN t$ = "uint16"
-                    IF (typ AND 511) = 32 THEN t$ = "uint32"
-                    IF (typ AND 511) = 64 THEN t$ = "uint64"
+                    IF (typ AND UDTMASK) = 8 THEN t$ = "uint8"
+                    IF (typ AND UDTMASK) = 16 THEN t$ = "uint16"
+                    IF (typ AND UDTMASK) = 32 THEN t$ = "uint32"
+                    IF (typ AND UDTMASK) = 64 THEN t$ = "uint64"
                     IF typ AND ISOFFSET THEN t$ = "uptrszint"
                 ELSE
-                    IF (typ AND 511) = 8 THEN t$ = "int8"
-                    IF (typ AND 511) = 16 THEN t$ = "int16"
-                    IF (typ AND 511) = 32 THEN t$ = "int32"
-                    IF (typ AND 511) = 64 THEN t$ = "int64"
+                    IF (typ AND UDTMASK) = 8 THEN t$ = "int8"
+                    IF (typ AND UDTMASK) = 16 THEN t$ = "int16"
+                    IF (typ AND UDTMASK) = 32 THEN t$ = "int32"
+                    IF (typ AND UDTMASK) = 64 THEN t$ = "int64"
                     IF typ AND ISOFFSET THEN t$ = "ptrszint"
                 END IF
             END IF
@@ -25416,9 +25417,9 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
         'bit-length single variable?
         IF (t AND ISOFFSETINBITS) THEN
             IF (t AND ISUNSIGNED) THEN
-                r$ = "*" + scope$ + "UBIT" + _TOSTR$(t AND 511) + "_" + r$
+                r$ = "*" + scope$ + "UBIT" + _TOSTR$(t AND UDTMASK) + "_" + r$
             ELSE
-                r$ = "*" + scope$ + "BIT" + _TOSTR$(t AND 511) + "_" + r$
+                r$ = "*" + scope$ + "BIT" + _TOSTR$(t AND UDTMASK) + "_" + r$
             END IF
             GOTO ref
         END IF
@@ -25717,11 +25718,11 @@ SUB copy_preserve_udt_varstrings (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff
                     srcq$ = "(*(qbs**)(" + srcmember$ + "))"
                     acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
                 NEXT
-            ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND 511) THEN
+            ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND UDTMASK) THEN
                 FOR i = 0 TO udtearrayelements(e) - 1
                     nextdstoff$ = "((" + dstoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + ")"
                     nextsrcoff$ = "((" + srcoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + ")"
-                    copy_preserve_udt_varstrings dstbase$, srcbase$, t AND 511, nextdstoff$, nextsrcoff$, acc$
+                    copy_preserve_udt_varstrings dstbase$, srcbase$, t AND UDTMASK, nextdstoff$, nextsrcoff$, acc$
                 NEXT
             ELSE
                 dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes) + "))"
@@ -25737,8 +25738,8 @@ SUB copy_preserve_udt_varstrings (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff
                 dstq$ = "(*(qbs**)(" + dstmember$ + "))"
                 srcq$ = "(*(qbs**)(" + srcmember$ + "))"
                 acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
-            ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND 511) THEN
-                copy_preserve_udt_varstrings dstbase$, srcbase$, t AND 511, "((" + dstoff$ + ")+" + _TOSTR$(offbytes) + ")", "((" + srcoff$ + ")+" + _TOSTR$(offbytes) + ")", acc$
+            ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND UDTMASK) THEN
+                copy_preserve_udt_varstrings dstbase$, srcbase$, t AND UDTMASK, "((" + dstoff$ + ")+" + _TOSTR$(offbytes) + ")", "((" + srcoff$ + ")+" + _TOSTR$(offbytes) + ")", acc$
             ELSE
                 acc$ = acc$ + CRLF + "memcpy((void*)(" + dstmember$ + "),(void*)(" + srcmember$ + ")," + _TOSTR$(memberbytes) + ");"
             END IF
@@ -26409,10 +26410,10 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             IF (t2 AND ISREFERENCE) = 0 THEN
                 IF t2 AND ISPOINTER THEN
                     src$ = "((char*)" + e$ + ")"
-                    e2 = 0: u2 = t2 AND 511
+                    e2 = 0: u2 = t2 AND UDTMASK
                 ELSE
                     src$ = "((char*)&" + e$ + ")"
-                    e2 = 0: u2 = t2 AND 511
+                    e2 = 0: u2 = t2 AND UDTMASK
                 END IF
                 GOTO directudt
             END IF
@@ -26517,8 +26518,8 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
         END IF
 
         IF (typ AND ISOFFSETINBITS) THEN
-            'r$ = "setbits_" + _TOSTR$(typ AND 511) + "("
-            r$ = "setbits(" + _TOSTR$(typ AND 511) + ","
+            'r$ = "setbits_" + _TOSTR$(typ AND UDTMASK) + "("
+            r$ = "setbits(" + _TOSTR$(typ AND UDTMASK) + ","
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ",tmp_long,"
             WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
             IF method = 0 THEN
@@ -26533,21 +26534,21 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
         ELSE
             t$ = ""
             IF (typ AND ISFLOAT) THEN
-                IF (typ AND 511) = 32 THEN t$ = "float"
-                IF (typ AND 511) = 64 THEN t$ = "double"
-                IF (typ AND 511) = 256 THEN t$ = "long double"
+                IF (typ AND UDTMASK) = 32 THEN t$ = "float"
+                IF (typ AND UDTMASK) = 64 THEN t$ = "double"
+                IF (typ AND UDTMASK) = 256 THEN t$ = "long double"
             ELSE
                 IF (typ AND ISUNSIGNED) THEN
-                    IF (typ AND 511) = 8 THEN t$ = "uint8"
-                    IF (typ AND 511) = 16 THEN t$ = "uint16"
-                    IF (typ AND 511) = 32 THEN t$ = "uint32"
-                    IF (typ AND 511) = 64 THEN t$ = "uint64"
+                    IF (typ AND UDTMASK) = 8 THEN t$ = "uint8"
+                    IF (typ AND UDTMASK) = 16 THEN t$ = "uint16"
+                    IF (typ AND UDTMASK) = 32 THEN t$ = "uint32"
+                    IF (typ AND UDTMASK) = 64 THEN t$ = "uint64"
                     IF typ AND ISOFFSET THEN t$ = "uptrszint"
                 ELSE
-                    IF (typ AND 511) = 8 THEN t$ = "int8"
-                    IF (typ AND 511) = 16 THEN t$ = "int16"
-                    IF (typ AND 511) = 32 THEN t$ = "int32"
-                    IF (typ AND 511) = 64 THEN t$ = "int64"
+                    IF (typ AND UDTMASK) = 8 THEN t$ = "int8"
+                    IF (typ AND UDTMASK) = 16 THEN t$ = "int16"
+                    IF (typ AND UDTMASK) = 32 THEN t$ = "int32"
+                    IF (typ AND UDTMASK) = 64 THEN t$ = "int64"
                     IF typ AND ISOFFSET THEN t$ = "ptrszint"
                 END IF
             END IF
@@ -26593,15 +26594,15 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
 
         'bit-length variable?
         IF (t AND ISOFFSETINBITS) THEN
-            b = t AND 511
+            b = t AND UDTMASK
             IF (t AND ISUNSIGNED) THEN
-                r$ = "*" + scope$ + "UBIT" + _TOSTR$(t AND 511) + "_" + r$
+                r$ = "*" + scope$ + "UBIT" + _TOSTR$(t AND UDTMASK) + "_" + r$
                 IF method = 0 THEN e$ = evaluatetotyp(e$, 64& + ISUNSIGNED)
                 IF Error_Happened THEN EXIT SUB
                 l$ = r$ + "=(" + e$ + ")&" + _TOSTR$(bitmask(b)) + ";"
                 WriteBufLine MainTxtBuf, l$
             ELSE
-                r$ = "*" + scope$ + "BIT" + _TOSTR$(t AND 511) + "_" + r$
+                r$ = "*" + scope$ + "BIT" + _TOSTR$(t AND UDTMASK) + "_" + r$
                 IF method = 0 THEN e$ = evaluatetotyp(e$, 64&)
                 IF Error_Happened THEN EXIT SUB
                 l$ = "if ((" + r$ + "=" + e$ + ")&" + _TOSTR$(2 ^ (b - 1)) + "){"
@@ -26907,11 +26908,11 @@ SUB xfileprint (a$, ca$, n)
 
                         ELSE 'not a string
                             IF typ AND ISFLOAT THEN
-                                IF (typ AND 511) = 32 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND 511) = 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND 511) > 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 32 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) > 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                             ELSE
-                                IF ((typ AND 511) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
+                                IF ((typ AND UDTMASK) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
                                     WriteBufLine MainTxtBuf, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                                 ELSE
                                     WriteBufLine MainTxtBuf, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
@@ -27352,11 +27353,11 @@ SUB xprint (a$, ca$, n)
 
                         ELSE 'not a string
                             IF typ AND ISFLOAT THEN
-                                IF (typ AND 511) = 32 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND 511) = 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND 511) > 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 32 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) > 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                             ELSE
-                                IF ((typ AND 511) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
+                                IF ((typ AND UDTMASK) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
                                     WriteBufLine MainTxtBuf, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                                 ELSE
                                     WriteBufLine MainTxtBuf, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
@@ -27503,7 +27504,7 @@ SUB xread (ca$, n)
                 stringprocessinghappened = 1
             ELSE
                 'numeric variable
-                IF (t AND ISFLOAT) <> 0 OR (t AND 511) <> 64 THEN
+                IF (t AND ISFLOAT) <> 0 OR (t AND UDTMASK) <> 64 THEN
                     IF (t AND ISOFFSETINBITS) THEN
                         setrefer e$, t, "((int64)func_read_float(data,&data_offset,data_size," + _TOSTR$(t) + "))", 1
                         IF Error_Happened THEN EXIT SUB
