@@ -9102,7 +9102,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                         IF ok = -2 THEN
                             getid usedVariableList(tempIndex&).id
                             IF id.t = 0 THEN
-                                typ = id.arraytype AND 511
+                                typ = id.arraytype AND UDTMASK
                                 IF id.arraytype AND ISINCONVENTIONALMEMORY THEN
                                     typ = typ - ISINCONVENTIONALMEMORY
                                 END IF
@@ -9634,7 +9634,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                             usedVariableList(varDlgList(y).index).elementOffset = ""
                             getid usedVariableList(varDlgList(y).index).id
                             IF id.t = 0 THEN
-                                typ = id.arraytype AND 511
+                                typ = id.arraytype AND UDTMASK
                                 IF id.arraytype AND ISINCONVENTIONALMEMORY THEN
                                     typ = typ - ISINCONVENTIONALMEMORY
                                 END IF
