@@ -93,9 +93,9 @@ jobs:
       run: ./qb64pe -?
 
     # Note we can use a short wait time for whitelist propagation throughout the
-    # Cloudflare neutwork, as we only need whitelisting for the 'Create Atrifact'
-    # step. Before that the 'Test' step is running for approx. 20 minutes, which
-    # should be more than enough time for the propagation.
+    # Cloudflare network, as we only need whitelisting for the 'Create Atrifact'
+    # step. Before that the 'Testing' step is running for approx. 20-30 minutes,
+    # which should be more than enough time for the propagation.
     - name: Whitelist runner IP at Cloudflare
       id: whitelist
       uses: DiyRex/gh-cf-ip-whitelist@v1
@@ -105,7 +105,8 @@ jobs:
         action: 'create'
         wait-time: '5'
 
-    - name: Test
+    - name: Testing
+      timeout-minutes: 105
       shell: bash
       env:
         CI_TESTING: y
@@ -116,7 +117,7 @@ jobs:
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
-      timeout-minutes: 30
+      timeout-minutes: 45
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}"
 

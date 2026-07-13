@@ -634,7 +634,7 @@ cleariddata.dynudtargmode = ""
 DIM SHARED gosubid AS LONG
 DIM SHARED redimoption AS INTEGER
 DIM SHARED dimoption AS INTEGER
-DIM SHARED arraydesc AS LONG 'holds currentid (LONG); as INTEGER it wrapped negative once a program registered >32767 ids
+DIM SHARED arraydesc AS LONG 'holds currentid
 DIM SHARED qberrorhappened AS INTEGER
 DIM SHARED qberrorcode AS INTEGER
 DIM SHARED qberrorline AS INTEGER
@@ -3129,7 +3129,7 @@ DO
             qberrorhappened = 0
         NEXT
         IF qberrorhappened <> -3 THEN qberrorhappened = 0: a$ = "File " + a$ + " not found": GOTO errmes
-        qberrorhappened = 0 'disarm the include-open error trap after success, else later internal errors resume here and report as a bogus "File ... not found"
+        qberrorhappened = 0
         inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0
     END IF 'fall through to next section...
     '--------------------
@@ -12442,7 +12442,7 @@ DO
                 qberrorhappened = 0
             NEXT
             IF qberrorhappened <> -2 THEN qberrorhappened = 0: a$ = "File " + a$ + " not found": GOTO errmes
-            qberrorhappened = 0 'disarm the include-open error trap after success (see manager #1)
+            qberrorhappened = 0
             inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0
         END IF 'fall through to next section...
         '--------------------
@@ -22216,7 +22216,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-             
+
                 'Whole static TYPE member array: return a mem block that starts at the first
                 ' inline element of the member array.
                 IF member_element_id > 0 THEN
@@ -22405,7 +22405,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             idnumber = VAL(LEFT$(e$, s1 - 1))
             u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
             member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-            
+
             ' Whole static TYPE member array: resolve the inline member block before the
             ' generic parent-UDT path can consume the reference.
             IF member_element_id > 0 THEN
@@ -22736,7 +22736,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 idnumber = VAL(LEFT$(e$, s1 - 1))
                 u = VAL(MID$(e$, s1 + LEN(sp3), s2 - s1 - LEN(sp3)))
                 member_element_id = VAL(MID$(e$, s2 + LEN(sp3), s3 - s2 - LEN(sp3)))
-         
+
                 ' Whole static TYPE member array: build the byte_element view from the inline
                 ' member block instead of treating it like a normal indexed array reference.
                 IF member_element_id > 0 THEN
