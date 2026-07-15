@@ -9173,8 +9173,10 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                                             IF (typ AND ISFIXEDLENGTH) = 0 THEN
                                                 varType$ = "STRING"
                                             ELSE
-                                                'E contains the UDT element index at this point
-                                                varType$ = "STRING *" + STR$(udtetypesize(E))
+                                                watchRef$ = MID$(result$, INSTR(result$, sp3) + LEN(sp3))
+                                                watchRef$ = MID$(watchRef$, INSTR(watchRef$, sp3) + LEN(sp3))
+                                                watchMember& = VAL(watchRef$)
+                                                varType$ = "STRING *" + STR$(udtetypesize(watchMember&))
                                             END IF
                                         ELSE
                                             'shouldn't ever happen
@@ -9712,8 +9714,10 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
                                                 IF (typ AND ISFIXEDLENGTH) = 0 THEN
                                                     usedVariableList(varDlgList(y).index).elementTypes = usedVariableList(varDlgList(y).index).elementTypes + "STRING" + sp
                                                 ELSE
-                                                    'E contains the UDT element index at this point
-                                                    usedVariableList(varDlgList(y).index).elementTypes = usedVariableList(varDlgList(y).index).elementTypes + "STRING *" + STR$(udtetypesize(E)) + sp
+                                                    watchRef$ = MID$(result$, INSTR(result$, sp3) + LEN(sp3))
+                                                    watchRef$ = MID$(watchRef$, INSTR(watchRef$, sp3) + LEN(sp3))
+                                                    watchMember& = VAL(watchRef$)
+                                                    usedVariableList(varDlgList(y).index).elementTypes = usedVariableList(varDlgList(y).index).elementTypes + "STRING *" + STR$(udtetypesize(watchMember&)) + sp
                                                 END IF
                                             ELSE
                                                 'shouldn't ever happen
